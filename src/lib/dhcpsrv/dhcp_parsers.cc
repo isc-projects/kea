@@ -29,6 +29,7 @@
 #include <vector>
 
 using namespace std;
+using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::hooks;
 
@@ -125,6 +126,8 @@ DebugParser::commit() {
 // **************************** BooleanParser  *************************
 
 template<> void ValueParser<bool>::build(isc::data::ConstElementPtr value) {
+    // Invoke common code for all specializations of build().
+    buildCommon(value);
     // The Config Manager checks if user specified a
     // valid value for a boolean parameter: True or False.
     // We should have a boolean Element, use value directly
@@ -132,28 +135,35 @@ template<> void ValueParser<bool>::build(isc::data::ConstElementPtr value) {
         value_ = value->boolValue();
     } catch (const isc::data::TypeError &) {
         isc_throw(BadValue, " Wrong value type for " << param_name_
-                  << " : build called with a non-boolean element.");
+                  << " : build called with a non-boolean element "
+                  << "(" << value->getPosition() << ").");
     }
 }
 
 // **************************** Uin32Parser  *************************
 
 template<> void ValueParser<uint32_t>::build(ConstElementPtr value) {
+    // Invoke common code for all specializations of build().
+    buildCommon(value);
+
     int64_t check;
     string x = value->str();
     try {
         check = boost::lexical_cast<int64_t>(x);
     } catch (const boost::bad_lexical_cast &) {
         isc_throw(BadValue, "Failed to parse value " << value->str()
-                  << " as unsigned 32-bit integer.");
+                  << " as unsigned 32-bit integer "
+                  "(" << value->getPosition() << ").");
     }
     if (check > std::numeric_limits<uint32_t>::max()) {
-        isc_throw(BadValue, "Value " << value->str() << "is too large"
-                  << " for unsigned 32-bit integer.");
+        isc_throw(BadValue, "Value " << value->str() << " is too large"
+                  " for unsigned 32-bit integer "
+                  "(" << value->getPosition() << ").");
     }
     if (check < 0) {
-        isc_throw(BadValue, "Value " << value->str() << "is negative."
-               << " Only 0 or larger are allowed for unsigned 32-bit integer.");
+        isc_throw(BadValue, "Value " << value->str() << " is negative."
+               << " Only 0 or larger are allowed for unsigned 32-bit integer "
+                  "(" << value->getPosition() << ").");
     }
 
     // value is small enough to fit
@@ -163,6 +173,9 @@ template<> void ValueParser<uint32_t>::build(ConstElementPtr value) {
 // **************************** StringParser  *************************
 
 template <> void ValueParser<std::string>::build(ConstElementPtr value) {
+    // Invoke common code for all specializations of build().
+    buildCommon(value);
+
     value_ = value->str();
     boost::erase_all(value_, "\"");
 }
@@ -194,7 +207,8 @@ InterfaceListConfigParser::build(ConstElementPtr value) {
             if (isIfaceAdded(iface_name)) {
                 isc_throw(isc::dhcp::DhcpConfigError, "duplicate interface"
                           << " name '" << iface_name << "' specified in '"
-                          << param_name_ << "' configuration parameter");
+                          << param_name_ << "' configuration parameter "
+                          "(" << value->getPosition() << ")");
             }
             // @todo check that this interface exists in the system!
             // The IfaceMgr exposes mechanisms to check this.
@@ -285,7 +299,8 @@ HooksLibrariesParser::build(ConstElementPtr value) {
             error_list += (string(", ") + error_libs[i]);
         }
         isc_throw(DhcpConfigError, "hooks libraries failed to validate - "
-                  "library or libraries in error are: " + error_list);
+                  "library or libraries in error are: " << error_list
+                  << " (" << value->getPosition() << ")");
     }
 
     // The library list has changed and the libraries are valid, so flag for
@@ -349,8 +364,8 @@ OptionDataParser::build(ConstElementPtr option_data_entries) {
             parser = value_parser;
         } else {
             isc_throw(DhcpConfigError,
-                      "Parser error: option-data parameter not supported: "
-                      << param.first);
+                      "option-data parameter not supported: " << param.first
+                      << " (" << param.second->getPosition() << ")");
         }
 
         parser->build(param.second);
@@ -364,7 +379,7 @@ OptionDataParser::build(ConstElementPtr option_data_entries) {
     }
 
     // Try to create the option instance.
-    createOption();
+    createOption(option_data_entries);
 }
 
 void
@@ -397,70 +412,93 @@ OptionDataParser::commit() {
 }
 
 void
-OptionDataParser::createOption() {
+OptionDataParser::createOption(ConstElementPtr option_data) {
+    // Check if mandatory parameters are specified.
+    uint32_t code;
+    std::string name;
+    std::string data;
+    try {
+        code = uint32_values_->getParam("code");
+        name = string_values_->getParam("name");
+        data = string_values_->getParam("data");
+    } catch (const std::exception& ex) {
+        isc_throw(DhcpConfigError,
+                  ex.what() << "(" << option_data->getPosition() << ")");
+    }
+    // Check parameters having default values.
+    std::string space = string_values_->getOptionalParam("space",
+              global_context_->universe_ == Option::V4 ? "dhcp4" : "dhcp6");
+    bool csv_format = boolean_values_->getOptionalParam("csv-format", false);
+
     // Option code is held in the uint32_t storage but is supposed to
     // be uint16_t value. We need to check that value in the configuration
     // does not exceed range of uint8_t for DHCPv4, uint16_t for DHCPv6 and
     // is not zero.
-    uint32_t option_code = uint32_values_->getParam("code");
-    if (option_code == 0) {
-        isc_throw(DhcpConfigError, "option code must not be zero."
-                << " Option code '0' is reserved.");
+    if (code == 0) {
+        isc_throw(DhcpConfigError, "option code must not be zero "
+                  "(" << uint32_values_->getPosition("code") << ")");
 
     } else if (global_context_->universe_ == Option::V4 &&
-               option_code > std::numeric_limits<uint8_t>::max()) {
-        isc_throw(DhcpConfigError, "invalid option code '" << option_code
+               code > std::numeric_limits<uint8_t>::max()) {
+        isc_throw(DhcpConfigError, "invalid option code '" << code
                 << "', it must not exceed '"
                   << static_cast<int>(std::numeric_limits<uint8_t>::max())
-                  << "'");
+                  << "' (" << uint32_values_->getPosition("code") << ")");
 
     } else if (global_context_->universe_ == Option::V6 &&
-               option_code > std::numeric_limits<uint16_t>::max()) {
-        isc_throw(DhcpConfigError, "invalid option code '" << option_code
+               code > std::numeric_limits<uint16_t>::max()) {
+        isc_throw(DhcpConfigError, "invalid option code '" << code
                 << "', it must not exceed '"
                   << std::numeric_limits<uint16_t>::max()
-                  << "'");
+                  << "' (" << uint32_values_->getPosition("code") << ")");
 
     }
 
-    // Check that the option name has been specified, is non-empty and does not
-    // contain spaces
-    std::string option_name = string_values_->getParam("name");
-    if (option_name.empty()) {
+    // Check that the option name is non-empty and does not contain spaces
+    if (name.empty()) {
         isc_throw(DhcpConfigError, "name of the option with code '"
-                << option_code << "' is empty");
-    } else if (option_name.find(" ") != std::string::npos) {
-        isc_throw(DhcpConfigError, "invalid option name '" << option_name
-                << "', space character is not allowed");
+                  << code << "' is empty ("
+                  << string_values_->getPosition("name") << ")");
+    } else if (name.find(" ") != std::string::npos) {
+        isc_throw(DhcpConfigError, "invalid option name '" << name
+                  << "', space character is not allowed ("
+                  << string_values_->getPosition("name") << ")");
     }
 
-    std::string option_space = string_values_->getParam("space");
-    if (!OptionSpace::validateName(option_space)) {
+    if (!OptionSpace::validateName(space)) {
         isc_throw(DhcpConfigError, "invalid option space name '"
-                << option_space << "' specified for option '"
-                << option_name << "' (code '" << option_code
-                << "')");
+                << space << "' specified for option '"
+                << name << "', code '" << code
+                  << "' (" << string_values_->getPosition("space") << ")");
     }
-
-    const bool csv_format = boolean_values_->getParam("csv-format");
 
     // Find the Option Definition for the option by its option code.
     // findOptionDefinition will throw if not found, no need to test.
+    // Find the definition for the option by its code. This function
+    // may throw so we catch exceptions to log the culprit line of the
+    // configuration.
     OptionDefinitionPtr def;
-    if (!(def = findServerSpaceOptionDefinition(option_space, option_code))) {
+    try {
+        def = findServerSpaceOptionDefinition(space, code);
+
+    } catch (const std::exception& ex) {
+        isc_throw(DhcpConfigError, ex.what()
+                  << " (" << string_values_->getPosition("space") << ")");
+    }
+    if (!def) {
         // If we are not dealing with a standard option then we
         // need to search for its definition among user-configured
         // options. They are expected to be in the global storage
         // already.
         OptionDefContainerPtr defs =
-            global_context_->option_defs_->getItems(option_space);
+            global_context_->option_defs_->getItems(space);
 
         // The getItems() should never return the NULL pointer. If there are
         // no option definitions for the particular option space a pointer
         // to an empty container should be returned.
         assert(defs);
         const OptionDefContainerTypeIndex& idx = defs->get<1>();
-        OptionDefContainerTypeRange range = idx.equal_range(option_code);
+        OptionDefContainerTypeRange range = idx.equal_range(code);
         if (std::distance(range.first, range.second) > 0) {
             def = *range.first;
         }
@@ -469,14 +507,12 @@ OptionDataParser::createOption() {
         // specified as hex
         if (!def && csv_format) {
             isc_throw(DhcpConfigError, "definition for the option '"
-                      << option_space << "." << option_name
-                      << "' having code '" <<  option_code
-                      << "' does not exist");
+                      << space << "." << name
+                      << "' having code '" << code
+                      << "' does not exist ("
+                      << string_values_->getPosition("name") << ")");
         }
     }
-
-    // Get option data from the configuration database ('data' field).
-    std::string option_data = string_values_->getParam("data");
 
     // Transform string of hexadecimal digits into binary format.
     std::vector<uint8_t> binary;
@@ -487,7 +523,7 @@ OptionDataParser::createOption() {
         // separated values then we need to split this string into
         // individual values - each value will be used to initialize
         // one data field of an option.
-        data_tokens = isc::util::str::tokens(option_data, ",");
+        data_tokens = isc::util::str::tokens(data, ",");
     } else {
         // Otherwise, the option data is specified as a string of
         // hexadecimal digits that we have to turn into binary format.
@@ -495,13 +531,14 @@ OptionDataParser::createOption() {
             // The decodeHex function expects that the string contains an
             // even number of digits. If we don't meet this requirement,
             // we have to insert a leading 0.
-            if (!option_data.empty() && option_data.length() % 2) {
-                option_data = option_data.insert(0, "0");
+            if (!data.empty() && data.length() % 2) {
+                data = data.insert(0, "0");
             }
-            util::encode::decodeHex(option_data, binary);
+            util::encode::decodeHex(data, binary);
         } catch (...) {
             isc_throw(DhcpConfigError, "option data is not a valid"
-                      << " string of hexadecimal digits: " << option_data);
+                      << " string of hexadecimal digits: " << data
+                      << " (" << string_values_->getPosition("data") << ")");
         }
     }
 
@@ -510,17 +547,18 @@ OptionDataParser::createOption() {
         if (csv_format) {
             isc_throw(DhcpConfigError, "the CSV option data format can be"
                       " used to specify values for an option that has a"
-                      " definition. The option with code " << option_code
-                      << " does not have a definition.");
+                      " definition. The option with code " << code
+                      << " does not have a definition ("
+                      << boolean_values_->getPosition("csv-format") << ")");
         }
 
-        // @todo We have a limited set of option definitions intiialized at
+        // @todo We have a limited set of option definitions initalized at
         // the moment.  In the future we want to initialize option definitions
         // for all options.  Consequently an error will be issued if an option
         // definition does not exist for a particular option code. For now it is
         // ok to create generic option if definition does not exist.
         OptionPtr option(new Option(global_context_->universe_,
-                        static_cast<uint16_t>(option_code), binary));
+                        static_cast<uint16_t>(code), binary));
         // The created option is stored in option_descriptor_ class member
         // until the commit stage when it is inserted into the main storage.
         // If an option with the same code exists in main storage already the
@@ -534,11 +572,12 @@ OptionDataParser::createOption() {
         // to reference options and definitions using their names
         // and/or option codes so keeping the option name in the
         // definition of option value makes sense.
-        if (def->getName() != option_name) {
+        if (def->getName() != name) {
             isc_throw(DhcpConfigError, "specified option name '"
-                      << option_name << "' does not match the "
-                      << "option definition: '" << option_space
-                      << "." << def->getName() << "'");
+                      << name << "' does not match the "
+                      << "option definition: '" << space
+                      << "." << def->getName() << "' ("
+                      << string_values_->getPosition("name") << ")");
         }
 
         // Option definition has been found so let's use it to create
@@ -546,22 +585,23 @@ OptionDataParser::createOption() {
         try {
             OptionPtr option = csv_format ?
                 def->optionFactory(global_context_->universe_,
-                                  option_code, data_tokens) :
+                                  code, data_tokens) :
                 def->optionFactory(global_context_->universe_,
-                                  option_code, binary);
+                                   code, binary);
             Subnet::OptionDescriptor desc(option, false);
             option_descriptor_.option = option;
             option_descriptor_.persistent = false;
         } catch (const isc::Exception& ex) {
             isc_throw(DhcpConfigError, "option data does not match"
-                      << " option definition (space: " << option_space
-                      << ", code: " << option_code << "): "
-                      << ex.what());
+                      << " option definition (space: " << space
+                      << ", code: " << code << "): "
+                      << ex.what() << " ("
+                      << string_values_->getPosition("data") << ")");
         }
     }
 
     // All went good, so we can set the option space name.
-    option_space_ = option_space;
+    option_space_ = space;
 }
 
 // **************************** OptionDataListParser *************************
@@ -617,9 +657,13 @@ OptionDataListParser::commit() {
 
 // ******************************** OptionDefParser ****************************
 OptionDefParser::OptionDefParser(const std::string&,
-                                OptionDefStoragePtr storage)
-    : storage_(storage), boolean_values_(new BooleanStorage()),
-    string_values_(new StringStorage()), uint32_values_(new Uint32Storage()) {
+                                 OptionDefStoragePtr storage,
+                                 ParserContextPtr global_context)
+    : storage_(storage),
+      boolean_values_(new BooleanStorage()),
+      string_values_(new StringStorage()),
+      uint32_values_(new Uint32Storage()),
+      global_context_(global_context) {
     if (!storage_) {
         isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
              << "options storage may not be NULL");
@@ -629,7 +673,7 @@ OptionDefParser::OptionDefParser(const std::string&,
 void
 OptionDefParser::build(ConstElementPtr option_def) {
     // Parse the elements that make up the option definition.
-     BOOST_FOREACH(ConfigPair param, option_def->mapValue()) {
+    BOOST_FOREACH(ConfigPair param, option_def->mapValue()) {
         std::string entry(param.first);
         ParserPtr parser;
         if (entry == "name" || entry == "type" || entry == "record-types"
@@ -646,15 +690,15 @@ OptionDefParser::build(ConstElementPtr option_def) {
                                          boolean_values_));
             parser = array_parser;
         } else {
-            isc_throw(DhcpConfigError, "invalid parameter: " << entry);
+            isc_throw(DhcpConfigError, "invalid parameter '" << entry
+                      << "' (" << param.second->getPosition() << ")");
         }
 
         parser->build(param.second);
         parser->commit();
     }
-
     // Create an instance of option definition.
-    createOptionDef();
+    createOptionDef(option_def);
 
     // Get all items we collected so far for the particular option space.
     OptionDefContainerPtr defs = storage_->getItems(option_space_name_);
@@ -670,7 +714,8 @@ OptionDefParser::build(ConstElementPtr option_def) {
     // option definitions within an option space.
     if (std::distance(range.first, range.second) > 0) {
         isc_throw(DhcpConfigError, "duplicated option definition for"
-                << " code '" << option_definition_->getCode() << "'");
+                  << " code '" << option_definition_->getCode() << "' ("
+                  << option_def->getPosition() << ")");
     }
 }
 
@@ -683,21 +728,33 @@ OptionDefParser::commit() {
 }
 
 void
-OptionDefParser::createOptionDef() {
-    // Get the option space name and validate it.
-    std::string space = string_values_->getParam("space");
-    if (!OptionSpace::validateName(space)) {
-        isc_throw(DhcpConfigError, "invalid option space name '"
-                  << space << "'");
+OptionDefParser::createOptionDef(ConstElementPtr option_def_element) {
+    // Check if mandatory parameters have been specified.
+    std::string name;
+    uint32_t code;
+    std::string type;
+    try {
+        name = string_values_->getParam("name");
+        code = uint32_values_->getParam("code");
+        type = string_values_->getParam("type");
+    } catch (const std::exception& ex) {
+        isc_throw(DhcpConfigError, ex.what() << " ("
+                  << option_def_element->getPosition() << ")");
     }
 
-    // Get other parameters that are needed to create the
-    // option definition.
-    std::string name = string_values_->getParam("name");
-    uint32_t code = uint32_values_->getParam("code");
-    std::string type = string_values_->getParam("type");
-    bool array_type = boolean_values_->getParam("array");
-    std::string encapsulates = string_values_->getParam("encapsulate");
+    bool array_type = boolean_values_->getOptionalParam("array", false);
+    std::string record_types =
+        string_values_->getOptionalParam("record-types", "");
+    std::string space = string_values_->getOptionalParam("space",
+              global_context_->universe_ == Option::V4 ? "dhcp4" : "dhcp6");
+    std::string encapsulates =
+        string_values_->getOptionalParam("encapsulate", "");
+
+    if (!OptionSpace::validateName(space)) {
+        isc_throw(DhcpConfigError, "invalid option space name '"
+                  << space << "' ("
+                  << string_values_->getPosition("space") << ")");
+    }
 
     // Create option definition.
     OptionDefinitionPtr def;
@@ -708,13 +765,15 @@ OptionDefParser::createOptionDef() {
         if (array_type) {
             isc_throw(DhcpConfigError, "option '" << space << "."
                       << "name" << "', comprising an array of data"
-                      << " fields may not encapsulate any option space");
+                      << " fields may not encapsulate any option space ("
+                      << option_def_element->getPosition() << ")");
 
         } else if (encapsulates == space) {
             isc_throw(DhcpConfigError, "option must not encapsulate"
                       << " an option space it belongs to: '"
                       << space << "." << name << "' is set to"
-                      << " encapsulate '" << space << "'");
+                      << " encapsulate '" << space << "' ("
+                      << option_def_element->getPosition() << ")");
 
         } else {
             def.reset(new OptionDefinition(name, code, type,
@@ -725,10 +784,6 @@ OptionDefParser::createOptionDef() {
         def.reset(new OptionDefinition(name, code, type, array_type));
 
     }
-
-    // The record-types field may carry a list of comma separated names
-    // of data types that form a record.
-    std::string record_types = string_values_->getParam("record-types");
 
     // Split the list of record types into tokens.
     std::vector<std::string> record_tokens =
@@ -744,16 +799,17 @@ OptionDefParser::createOptionDef() {
         } catch (const Exception& ex) {
             isc_throw(DhcpConfigError, "invalid record type values"
                       << " specified for the option definition: "
-                      << ex.what());
+                      << ex.what() << " ("
+                      << string_values_->getPosition("record-types") << ")");
         }
     }
 
-    // Check the option definition parameters are valid.
+    // Validate the definition.
     try {
         def->validate();
-    } catch (const isc::Exception& ex) {
-        isc_throw(DhcpConfigError, "invalid option definition"
-                  << " parameters: " << ex.what());
+    } catch (const std::exception& ex) {
+        isc_throw(DhcpConfigError, ex.what()
+                  << " (" << option_def_element->getPosition() << ")");
     }
 
     // Option definition has been created successfully.
@@ -763,7 +819,9 @@ OptionDefParser::createOptionDef() {
 
 // ******************************** OptionDefListParser ************************
 OptionDefListParser::OptionDefListParser(const std::string&,
-    OptionDefStoragePtr storage) :storage_(storage) {
+                                         ParserContextPtr global_context)
+    : storage_(global_context->option_defs_),
+      global_context_(global_context) {
     if (!storage_) {
         isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
              << "storage may not be NULL");
@@ -778,26 +836,24 @@ OptionDefListParser::build(ConstElementPtr option_def_list) {
 
     if (!option_def_list) {
         isc_throw(DhcpConfigError, "parser error: a pointer to a list of"
-                  << " option definitions is NULL");
+                  << " option definitions is NULL ("
+                  << option_def_list->getPosition() << ")");
     }
 
     BOOST_FOREACH(ConstElementPtr option_def, option_def_list->listValue()) {
         boost::shared_ptr<OptionDefParser>
-                parser(new OptionDefParser("single-option-def", storage_));
+            parser(new OptionDefParser("single-option-def", storage_,
+                                       global_context_));
         parser->build(option_def);
         parser->commit();
     }
-}
 
-void
-OptionDefListParser::commit() {
     CfgMgr& cfg_mgr = CfgMgr::instance();
     cfg_mgr.deleteOptionDefs();
 
     // We need to move option definitions from the temporary
     // storage to the storage.
-    std::list<std::string> space_names =
-    storage_->getOptionSpaceNames();
+    std::list<std::string> space_names = storage_->getOptionSpaceNames();
 
     BOOST_FOREACH(std::string space_name, space_names) {
         BOOST_FOREACH(OptionDefinitionPtr def,
@@ -806,9 +862,22 @@ OptionDefListParser::commit() {
             // values. The validation is expected to be made by the
             // OptionDefParser when creating an option definition.
             assert(def);
-            cfg_mgr.addOptionDef(def, space_name);
+            // The Config Manager may thrown an exception if the duplicated
+            // definition is being added. Catch the exceptions here to and
+            // append the position in the config.
+            try {
+                cfg_mgr.addOptionDef(def, space_name);
+            } catch (const std::exception& ex) {
+                isc_throw(DhcpConfigError, ex.what() << " ("
+                          << option_def_list->getPosition() << ")");
+            }
         }
     }
+}
+
+void
+OptionDefListParser::commit() {
+    // Do nothing.
 }
 
 //****************************** RelayInfoParser ********************************
@@ -840,14 +909,16 @@ RelayInfoParser::build(ConstElementPtr relay_info) {
         ip.reset(new asiolink::IOAddress(string_values_->getParam("ip-address")));
     } catch (...)  {
         isc_throw(DhcpConfigError, "Failed to parse ip-address "
-                  "value: " << string_values_->getParam("ip-address"));
+                  "value: " << string_values_->getParam("ip-address")
+                  << " (" << string_values_->getPosition("ip-address") << ")");
     }
 
     if ( (ip->isV4() && family_ != Option::V4) ||
          (ip->isV6() && family_ != Option::V6) ) {
         isc_throw(DhcpConfigError, "ip-address field " << ip->toText()
                   << "does not have IP address of expected family type: "
-                  << (family_ == Option::V4?"IPv4":"IPv6"));
+                  << (family_ == Option::V4 ? "IPv4" : "IPv6")
+                  << " (" << string_values_->getPosition("ip-address") << ")");
     }
 
     local_.addr_ = *ip;
@@ -916,7 +987,8 @@ PoolParser::build(ConstElementPtr pools_list) {
                 len = boost::lexical_cast<int>(prefix_len);
             } catch (...)  {
                 isc_throw(DhcpConfigError, "Failed to parse pool "
-                          "definition: " << text_pool->stringValue());
+                          "definition: " << text_pool->stringValue()
+                          << " (" << text_pool->getPosition() << ")");
             }
 
             PoolPtr pool(poolMaker(addr, len));
@@ -936,9 +1008,11 @@ PoolParser::build(ConstElementPtr pools_list) {
             continue;
         }
 
-        isc_throw(DhcpConfigError, "Failed to parse pool definition:"
+        isc_throw(DhcpConfigError, "invalid pool definition: "
                   << text_pool->stringValue() <<
-                  ". Does not contain - (for min-max) nor / (prefix/len)");
+                  ". There are two acceptable formats <min address-max address>"
+                  " or <prefix/len> ("
+                  << text_pool->getPosition() << ")");
         }
 }
 
@@ -972,7 +1046,16 @@ SubnetConfigParser::SubnetConfigParser(const std::string&,
 void
 SubnetConfigParser::build(ConstElementPtr subnet) {
     BOOST_FOREACH(ConfigPair param, subnet->mapValue()) {
-        ParserPtr parser(createSubnetConfigParser(param.first));
+        ParserPtr parser;
+        // When unsupported parameter is specified, the function called
+        // below will thrown an exception. We have to catch this exception
+        // to append the line number where the parameter is.
+        try {
+            parser.reset(createSubnetConfigParser(param.first));
+        } catch (const std::exception& ex) {
+            isc_throw(DhcpConfigError, ex.what() << " ("
+                      << param.second->getPosition() << ")");
+        }
         parser->build(param.second);
         parsers_.push_back(parser);
     }
@@ -990,7 +1073,13 @@ SubnetConfigParser::build(ConstElementPtr subnet) {
     }
 
     // Create a subnet.
-    createSubnet();
+    try {
+        createSubnet();
+    } catch (const std::exception& ex) {
+        isc_throw(DhcpConfigError,
+                  "subnet configuration failed (" << subnet->getPosition()
+                  << "): " << ex.what());
+    }
 }
 
 void
@@ -1056,7 +1145,8 @@ SubnetConfigParser::createSubnet() {
     } catch (const DhcpConfigError &) {
         // rethrow with precise error
         isc_throw(DhcpConfigError,
-                 "Mandatory subnet definition in subnet missing");
+                 "mandatory 'subnet' parameter is missing for a subnet being"
+                  " configured");
     }
 
     // Remove any spaces or tabs.
@@ -1071,7 +1161,8 @@ SubnetConfigParser::createSubnet() {
     size_t pos = subnet_txt.find("/");
     if (pos == string::npos) {
         isc_throw(DhcpConfigError,
-                  "Invalid subnet syntax (prefix/len expected):" << subnet_txt);
+                  "Invalid subnet syntax (prefix/len expected):" << subnet_txt
+                  << " (" << string_values_->getPosition("subnet") << ")");
     }
 
     // Try to create the address object. It also validates that
@@ -1102,8 +1193,9 @@ SubnetConfigParser::createSubnet() {
     if (!iface.empty()) {
         if (!IfaceMgr::instance().getIface(iface)) {
             isc_throw(DhcpConfigError, "Specified interface name " << iface
-                     << " for subnet " << subnet_->toText()
-                     << " is not present" << " in the system.");
+                      << " for subnet " << subnet_->toText()
+                      << " is not present" << " in the system ("
+                      << string_values_->getPosition("interface") << ")");
         }
 
         subnet_->setIface(iface);
@@ -1257,100 +1349,125 @@ D2ClientConfigParser::~D2ClientConfigParser() {
 void
 D2ClientConfigParser::build(isc::data::ConstElementPtr client_config) {
     BOOST_FOREACH(ConfigPair param, client_config->mapValue()) {
-        ParserPtr parser(createConfigParser(param.first));
+        ParserPtr parser;
+        try {
+            parser = createConfigParser(param.first);
+        } catch (std::exception& ex) {
+            // Catch exception in case the configuration contains the
+            // unsupported parameter. In this case, we will need to
+            // append the position of this element.
+            isc_throw(DhcpConfigError, ex.what() << " ("
+                      << param.second->getPosition() << ")");
+        }
+
         parser->build(param.second);
         parser->commit();
     }
 
-    bool enable_updates = boolean_values_->getParam("enable-updates");
-    if (!enable_updates && (client_config->mapValue().size() == 1)) {
-        // If enable-updates is the only parameter and it is false then
-        // we're done.  This allows for an abbreviated configuration entry
-        // that only contains that flag.  Use the default D2ClientConfig
-        // constructor to a create a disabled instance.
-        local_client_config_.reset(new D2ClientConfig());
-        return;
-    }
+    /// @todo Create configuration from the configuration parameters. Because
+    /// the validation of the D2 configuration is atomic, there is no way to
+    /// tell which parameter is invalid. Therefore, we catch all exceptions
+    /// and append the line number of the parent element. In the future we
+    /// may should extend D2ClientConfig code so as it returns the name of
+    /// the invalid parameter.
+    try {
+        bool enable_updates = boolean_values_->getParam("enable-updates");
+        if (!enable_updates && (client_config->mapValue().size() == 1)) {
+            // If enable-updates is the only parameter and it is false then
+            // we're done.  This allows for an abbreviated configuration entry
+            // that only contains that flag.  Use the default D2ClientConfig
+            // constructor to a create a disabled instance.
+            local_client_config_.reset(new D2ClientConfig());
 
-    // Get all parameters that are needed to create the D2ClientConfig.
-    asiolink::IOAddress server_ip(string_values_->
-                                  getOptionalParam("server-ip",
-                                                   D2ClientConfig::
-                                                   DFT_SERVER_IP));
+            return;
+        }
 
-    uint32_t server_port = uint32_values_->getOptionalParam("server-port",
-                                                             D2ClientConfig::
-                                                             DFT_SERVER_PORT);
+        // Get all parameters that are needed to create the D2ClientConfig.
+        IOAddress server_ip =
+            IOAddress(string_values_->getOptionalParam("server-ip",
+                                                       D2ClientConfig::
+                                                       DFT_SERVER_IP));
 
-    // The default sender IP depends on the server IP family
-    asiolink::IOAddress
-        sender_ip(string_values_->
-                  getOptionalParam("sender-ip",
-                                   (server_ip.isV4() ?
-                                    D2ClientConfig::DFT_V4_SENDER_IP :
-                                    D2ClientConfig::DFT_V6_SENDER_IP)));
+        uint32_t server_port =
+            uint32_values_->getOptionalParam("server-port",
+                                             D2ClientConfig::DFT_SERVER_PORT);
 
-    uint32_t sender_port = uint32_values_->getOptionalParam("sender-port",
-                                                             D2ClientConfig::
-                                                             DFT_SENDER_PORT);
-    uint32_t max_queue_size
-        = uint32_values_->getOptionalParam("max-queue-size",
-                                            D2ClientConfig::
-                                            DFT_MAX_QUEUE_SIZE);
+        // The default sender IP depends on the server IP family
+        asiolink::IOAddress
+            sender_ip(string_values_->
+                      getOptionalParam("sender-ip",
+                                       (server_ip.isV4() ?
+                                        D2ClientConfig::DFT_V4_SENDER_IP :
+                                        D2ClientConfig::DFT_V6_SENDER_IP)));
 
-    dhcp_ddns::NameChangeProtocol ncr_protocol
-        = dhcp_ddns::stringToNcrProtocol(string_values_->
-                                         getOptionalParam("ncr-protocol",
-                                                          D2ClientConfig::
-                                                          DFT_NCR_PROTOCOL));
-    dhcp_ddns::NameChangeFormat ncr_format
-        = dhcp_ddns::stringToNcrFormat(string_values_->
-                                       getOptionalParam("ncr-format",
-                                                          D2ClientConfig::
-                                                          DFT_NCR_FORMAT));
-    std::string generated_prefix = string_values_->
-                                   getOptionalParam("generated-prefix",
-                                                    D2ClientConfig::
-                                                    DFT_GENERATED_PREFIX);
-    std::string qualifying_suffix = string_values_->
-                                    getOptionalParam("qualifying-suffix",
-                                                     D2ClientConfig::
-                                                     DFT_QUALIFYING_SUFFIX);
+        uint32_t sender_port =
+            uint32_values_->getOptionalParam("sender-port",
+                                             D2ClientConfig::
+                                             DFT_SENDER_PORT);
+        uint32_t max_queue_size
+            = uint32_values_->getOptionalParam("max-queue-size",
+                                               D2ClientConfig::
+                                               DFT_MAX_QUEUE_SIZE);
 
-    bool always_include_fqdn = boolean_values_->
-                               getOptionalParam("always-include-fqdn",
+        dhcp_ddns::NameChangeProtocol ncr_protocol =
+            dhcp_ddns::stringToNcrProtocol(string_values_->
+                                           getOptionalParam("ncr-protocol",
+                                                            D2ClientConfig::
+                                                            DFT_NCR_PROTOCOL));
+        dhcp_ddns::NameChangeFormat ncr_format
+            = dhcp_ddns::stringToNcrFormat(string_values_->
+                                           getOptionalParam("ncr-format",
+                                                            D2ClientConfig::
+                                                            DFT_NCR_FORMAT));
+        std::string generated_prefix =
+            string_values_->getOptionalParam("generated-prefix",
+                                             D2ClientConfig::
+                                             DFT_GENERATED_PREFIX);
+        std::string qualifying_suffix =
+            string_values_->getOptionalParam("qualifying-suffix",
+                                             D2ClientConfig::
+                                             DFT_QUALIFYING_SUFFIX);
+
+        bool always_include_fqdn =
+            boolean_values_->getOptionalParam("always-include-fqdn",
                                                 D2ClientConfig::
                                                 DFT_ALWAYS_INCLUDE_FQDN);
 
-    bool override_no_update = boolean_values_->
-                              getOptionalParam("override-no-update",
-                                               D2ClientConfig::
-                                               DFT_OVERRIDE_NO_UPDATE);
+        bool override_no_update =
+            boolean_values_->getOptionalParam("override-no-update",
+                                              D2ClientConfig::
+                                              DFT_OVERRIDE_NO_UPDATE);
 
-    bool override_client_update = boolean_values_->
-                                  getOptionalParam("override-client-update",
-                                                   D2ClientConfig::
-                                                   DFT_OVERRIDE_CLIENT_UPDATE);
-    bool replace_client_name = boolean_values_->
-                               getOptionalParam("replace-client-name",
-                                                D2ClientConfig::
-                                                DFT_REPLACE_CLIENT_NAME);
+        bool override_client_update =
+            boolean_values_->getOptionalParam("override-client-update",
+                                              D2ClientConfig::
+                                              DFT_OVERRIDE_CLIENT_UPDATE);
 
-    // Attempt to create the new client config.
-    local_client_config_.reset(new D2ClientConfig(enable_updates,
-                                                  server_ip,
-                                                  server_port,
-                                                  sender_ip,
-                                                  sender_port,
-                                                  max_queue_size,
-                                                  ncr_protocol,
-                                                  ncr_format,
-                                                  always_include_fqdn,
-                                                  override_no_update,
-                                                  override_client_update,
-                                                  replace_client_name,
-                                                  generated_prefix,
-                                                  qualifying_suffix));
+        bool replace_client_name =
+            boolean_values_->getOptionalParam("replace-client-name",
+                                              D2ClientConfig::
+                                              DFT_REPLACE_CLIENT_NAME);
+
+        // Attempt to create the new client config.
+        local_client_config_.reset(new D2ClientConfig(enable_updates,
+                                                      server_ip,
+                                                      server_port,
+                                                      sender_ip,
+                                                      sender_port,
+                                                      max_queue_size,
+                                                      ncr_protocol,
+                                                      ncr_format,
+                                                      always_include_fqdn,
+                                                      override_no_update,
+                                                      override_client_update,
+                                                      replace_client_name,
+                                                      generated_prefix,
+                                                      qualifying_suffix));
+
+    }  catch (const std::exception& ex) {
+        isc_throw(DhcpConfigError, ex.what() << " ("
+                  << client_config->getPosition() << ")");
+    }
 }
 
 isc::dhcp::ParserPtr

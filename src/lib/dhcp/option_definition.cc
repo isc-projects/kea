@@ -273,7 +273,7 @@ OptionDefinition::validate() const {
 
     } else if (type_ >= OPT_UNKNOWN_TYPE) {
         // Option definition must be of a known type.
-        err_str << "option type value " << type_ << " is out of range.";
+        err_str << "option type " << type_ << " not supported.";
 
     } else if (array_type_) {
         if (type_ == OPT_STRING_TYPE) {

@@ -29,6 +29,7 @@
 
 using namespace std;
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::util;
@@ -40,33 +41,66 @@ using boost::scoped_ptr;
 
 namespace {
 
+template <typename Storage>
+bool isZeroPosition(const Storage& storage, const std::string& param_name) {
+    Element::Position position = storage.getPosition(param_name);
+    return ((position.line_ == 0) && (position.pos_ == 0) &&
+            (position.file_.empty()));
+}
+
 // This test verifies that BooleanStorage functions properly.
 TEST(ValueStorageTest, BooleanTesting) {
     BooleanStorage testStore;
 
     // Verify that we can add and retrieve parameters.
-    testStore.setParam("firstBool", false);
-    testStore.setParam("secondBool", true);
+    testStore.setParam("firstBool", false, Element::Position("kea.conf", 123, 234));
+    testStore.setParam("secondBool", true, Element::Position("keax.conf", 10, 20));
 
     EXPECT_FALSE(testStore.getParam("firstBool"));
     EXPECT_TRUE(testStore.getParam("secondBool"));
 
+    EXPECT_EQ(123, testStore.getPosition("firstBool").line_);
+    EXPECT_EQ(234, testStore.getPosition("firstBool").pos_);
+    EXPECT_EQ("kea.conf", testStore.getPosition("firstBool").file_);
+
+    EXPECT_EQ(10, testStore.getPosition("secondBool").line_);
+    EXPECT_EQ(20, testStore.getPosition("secondBool").pos_);
+    EXPECT_EQ("keax.conf", testStore.getPosition("secondBool").file_);
+
     // Verify that we can update parameters.
-    testStore.setParam("firstBool", true);
-    testStore.setParam("secondBool", false);
+    testStore.setParam("firstBool", true, Element::Position("keax.conf", 555, 111));
+    testStore.setParam("secondBool", false, Element::Position("kea.conf", 1, 3));
 
     EXPECT_TRUE(testStore.getParam("firstBool"));
     EXPECT_FALSE(testStore.getParam("secondBool"));
+
+    EXPECT_EQ(555, testStore.getPosition("firstBool").line_);
+    EXPECT_EQ(111, testStore.getPosition("firstBool").pos_);
+    EXPECT_EQ("keax.conf", testStore.getPosition("firstBool").file_);
+
+    EXPECT_EQ(1, testStore.getPosition("secondBool").line_);
+    EXPECT_EQ(3, testStore.getPosition("secondBool").pos_);
+    EXPECT_EQ("kea.conf", testStore.getPosition("secondBool").file_);
 
     // Verify that we can delete a parameter and it will no longer be found.
     testStore.delParam("firstBool");
     EXPECT_THROW(testStore.getParam("firstBool"), isc::dhcp::DhcpConfigError);
 
+    // Verify that the "zero" position is returned when parameter doesn't exist.
+    EXPECT_TRUE(isZeroPosition(testStore, "firstBool"));
+
     // Verify that the delete was safe and the store still operates.
     EXPECT_FALSE(testStore.getParam("secondBool"));
 
+    EXPECT_EQ(1, testStore.getPosition("secondBool").line_);
+    EXPECT_EQ(3, testStore.getPosition("secondBool").pos_);
+    EXPECT_EQ("kea.conf", testStore.getPosition("secondBool").file_);
+
     // Verify that looking for a parameter that never existed throws.
     ASSERT_THROW(testStore.getParam("bogusBool"), isc::dhcp::DhcpConfigError);
+
+    // Verify that the "zero" position is returned when parameter doesn't exist.
+    EXPECT_TRUE(isZeroPosition(testStore, "bogusBool"));
 
     // Verify that attempting to delete a parameter that never existed does not throw.
     EXPECT_NO_THROW(testStore.delParam("bogusBool"));
@@ -75,35 +109,60 @@ TEST(ValueStorageTest, BooleanTesting) {
     testStore.clear();
     EXPECT_THROW(testStore.getParam("secondBool"), isc::dhcp::DhcpConfigError);
 
+    // Verify that the "zero" position is returned when parameter doesn't exist.
+    EXPECT_TRUE(isZeroPosition(testStore, "secondBool"));
 }
 
 // This test verifies that Uint32Storage functions properly.
 TEST(ValueStorageTest, Uint32Testing) {
     Uint32Storage testStore;
 
-    uint32_t intOne = 77;
-    uint32_t intTwo = 33;
+    uint32_t int_one = 77;
+    uint32_t int_two = 33;
 
     // Verify that we can add and retrieve parameters.
-    testStore.setParam("firstInt", intOne);
-    testStore.setParam("secondInt", intTwo);
+    testStore.setParam("firstInt", int_one, Element::Position("kea.conf", 123, 234));
+    testStore.setParam("secondInt", int_two, Element::Position("keax.conf", 10, 20));
 
-    EXPECT_EQ(testStore.getParam("firstInt"), intOne);
-    EXPECT_EQ(testStore.getParam("secondInt"), intTwo);
+    EXPECT_EQ(testStore.getParam("firstInt"), int_one);
+    EXPECT_EQ(testStore.getParam("secondInt"), int_two);
+
+    EXPECT_EQ(123, testStore.getPosition("firstInt").line_);
+    EXPECT_EQ(234, testStore.getPosition("firstInt").pos_);
+    EXPECT_EQ("kea.conf", testStore.getPosition("firstInt").file_);
+
+    EXPECT_EQ(10, testStore.getPosition("secondInt").line_);
+    EXPECT_EQ(20, testStore.getPosition("secondInt").pos_);
+    EXPECT_EQ("keax.conf", testStore.getPosition("secondInt").file_);
 
     // Verify that we can update parameters.
-    testStore.setParam("firstInt", --intOne);
-    testStore.setParam("secondInt", ++intTwo);
+    testStore.setParam("firstInt", --int_one, Element::Position("keax.conf", 555, 111));
+    testStore.setParam("secondInt", ++int_two, Element::Position("kea.conf", 1, 3));
 
-    EXPECT_EQ(testStore.getParam("firstInt"), intOne);
-    EXPECT_EQ(testStore.getParam("secondInt"), intTwo);
+    EXPECT_EQ(testStore.getParam("firstInt"), int_one);
+    EXPECT_EQ(testStore.getParam("secondInt"), int_two);
+
+    EXPECT_EQ(555, testStore.getPosition("firstInt").line_);
+    EXPECT_EQ(111, testStore.getPosition("firstInt").pos_);
+    EXPECT_EQ("keax.conf", testStore.getPosition("firstInt").file_);
+
+    EXPECT_EQ(1, testStore.getPosition("secondInt").line_);
+    EXPECT_EQ(3, testStore.getPosition("secondInt").pos_);
+    EXPECT_EQ("kea.conf", testStore.getPosition("secondInt").file_);
 
     // Verify that we can delete a parameter and it will no longer be found.
     testStore.delParam("firstInt");
     EXPECT_THROW(testStore.getParam("firstInt"), isc::dhcp::DhcpConfigError);
 
+    // Verify that the "zero" position is returned when parameter doesn't exist.
+    EXPECT_TRUE(isZeroPosition(testStore, "firstInt"));
+
     // Verify that the delete was safe and the store still operates.
-    EXPECT_EQ(testStore.getParam("secondInt"), intTwo);
+    EXPECT_EQ(testStore.getParam("secondInt"), int_two);
+
+    EXPECT_EQ(1, testStore.getPosition("secondInt").line_);
+    EXPECT_EQ(3, testStore.getPosition("secondInt").pos_);
+    EXPECT_EQ("kea.conf", testStore.getPosition("secondInt").file_);
 
     // Verify that looking for a parameter that never existed throws.
     ASSERT_THROW(testStore.getParam("bogusInt"), isc::dhcp::DhcpConfigError);
@@ -111,41 +170,74 @@ TEST(ValueStorageTest, Uint32Testing) {
     // Verify that attempting to delete a parameter that never existed does not throw.
     EXPECT_NO_THROW(testStore.delParam("bogusInt"));
 
+    // Verify that the "zero" position is returned when parameter doesn't exist.
+    EXPECT_TRUE(isZeroPosition(testStore, "bogusInt"));
+
     // Verify that we can empty the list.
     testStore.clear();
     EXPECT_THROW(testStore.getParam("secondInt"), isc::dhcp::DhcpConfigError);
+
+    // Verify that the "zero" position is returned when parameter doesn't exist.
+    EXPECT_TRUE(isZeroPosition(testStore, "secondInt"));
 }
 
 // This test verifies that StringStorage functions properly.
 TEST(ValueStorageTest, StringTesting) {
     StringStorage testStore;
 
-    std::string stringOne = "seventy-seven";
-    std::string stringTwo = "thirty-three";
+    std::string string_one = "seventy-seven";
+    std::string string_two = "thirty-three";
 
     // Verify that we can add and retrieve parameters.
-    testStore.setParam("firstString", stringOne);
-    testStore.setParam("secondString", stringTwo);
+    testStore.setParam("firstString", string_one,
+                       Element::Position("kea.conf", 123, 234));
+    testStore.setParam("secondString", string_two,
+                       Element::Position("keax.conf", 10, 20));
 
-    EXPECT_EQ(testStore.getParam("firstString"), stringOne);
-    EXPECT_EQ(testStore.getParam("secondString"), stringTwo);
+    EXPECT_EQ(testStore.getParam("firstString"), string_one);
+    EXPECT_EQ(testStore.getParam("secondString"), string_two);
+
+    EXPECT_EQ(123, testStore.getPosition("firstString").line_);
+    EXPECT_EQ(234, testStore.getPosition("firstString").pos_);
+    EXPECT_EQ("kea.conf", testStore.getPosition("firstString").file_);
+
+    EXPECT_EQ(10, testStore.getPosition("secondString").line_);
+    EXPECT_EQ(20, testStore.getPosition("secondString").pos_);
+    EXPECT_EQ("keax.conf", testStore.getPosition("secondString").file_);
 
     // Verify that we can update parameters.
-    stringOne.append("-boo");
-    stringTwo.append("-boo");
+    string_one.append("-boo");
+    string_two.append("-boo");
 
-    testStore.setParam("firstString", stringOne);
-    testStore.setParam("secondString", stringTwo);
+    testStore.setParam("firstString", string_one,
+                       Element::Position("kea.conf", 555, 111));
+    testStore.setParam("secondString", string_two,
+                       Element::Position("keax.conf", 1, 3));
 
-    EXPECT_EQ(testStore.getParam("firstString"), stringOne);
-    EXPECT_EQ(testStore.getParam("secondString"), stringTwo);
+    EXPECT_EQ(testStore.getParam("firstString"), string_one);
+    EXPECT_EQ(testStore.getParam("secondString"), string_two);
+
+    EXPECT_EQ(555, testStore.getPosition("firstString").line_);
+    EXPECT_EQ(111, testStore.getPosition("firstString").pos_);
+    EXPECT_EQ("kea.conf", testStore.getPosition("firstString").file_);
+
+    EXPECT_EQ(1, testStore.getPosition("secondString").line_);
+    EXPECT_EQ(3, testStore.getPosition("secondString").pos_);
+    EXPECT_EQ("keax.conf", testStore.getPosition("secondString").file_);
 
     // Verify that we can delete a parameter and it will no longer be found.
     testStore.delParam("firstString");
     EXPECT_THROW(testStore.getParam("firstString"), isc::dhcp::DhcpConfigError);
 
+    // Verify that the "zero" position is returned when parameter doesn't exist.
+    EXPECT_TRUE(isZeroPosition(testStore, "firstString"));
+
     // Verify that the delete was safe and the store still operates.
-    EXPECT_EQ(testStore.getParam("secondString"), stringTwo);
+    EXPECT_EQ(testStore.getParam("secondString"), string_two);
+
+    EXPECT_EQ(1, testStore.getPosition("secondString").line_);
+    EXPECT_EQ(3, testStore.getPosition("secondString").pos_);
+    EXPECT_EQ("keax.conf", testStore.getPosition("secondString").file_);
 
     // Verify that looking for a parameter that never existed throws.
     ASSERT_THROW(testStore.getParam("bogusString"), isc::dhcp::DhcpConfigError);
@@ -153,9 +245,15 @@ TEST(ValueStorageTest, StringTesting) {
     // Verify that attempting to delete a parameter that never existed does not throw.
     EXPECT_NO_THROW(testStore.delParam("bogusString"));
 
+    // Verify that the "zero" position is returned when parameter doesn't exist.
+    EXPECT_TRUE(isZeroPosition(testStore, "bogusString"));
+
     // Verify that we can empty the list.
     testStore.clear();
     EXPECT_THROW(testStore.getParam("secondString"), isc::dhcp::DhcpConfigError);
+
+    // Verify that the "zero" position is returned when parameter doesn't exist.
+    EXPECT_TRUE(isZeroPosition(testStore, "secondString"));
 }
 
 
