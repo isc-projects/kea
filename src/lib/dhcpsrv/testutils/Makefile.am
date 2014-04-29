@@ -15,10 +15,11 @@ if HAVE_GTEST
 
 noinst_LTLIBRARIES = libdhcpsrvtest.la
 
-libdhcpsrvtest_la_SOURCES = config_result_check.cc config_result_check.h
+libdhcpsrvtest_la_SOURCES  = config_result_check.cc config_result_check.h
 libdhcpsrvtest_la_CXXFLAGS = $(AM_CXXFLAGS)
 libdhcpsrvtest_la_CPPFLAGS = $(AM_CPPFLAGS)
 libdhcpsrvtest_la_LDFLAGS  = $(AM_LDFLAGS)
-libdhcpsrvtest_la_LIBADD   = $(top_builddir)/src/lib/cc/libkea-cc.la 
+libdhcpsrvtest_la_LIBADD   = $(top_builddir)/src/lib/cc/libkea-cc.la
+libdhcpsrvtest_la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
 
 endif
