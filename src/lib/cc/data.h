@@ -77,8 +77,8 @@ public:
     /// \brief Represents the position of the data element within a
     /// configuration string.
     ///
-    /// Position comprises a line number and an offset within this line
-    /// where the element value starts. For example, if the JSON string is
+    /// Position comprises a file name, line number and an offset within this
+    /// line where the element value starts. For example, if the JSON string is
     ///
     /// \code
     /// { "foo": "some string",
@@ -94,26 +94,39 @@ public:
     /// uint32_t arguments holding line number and position within the line are
     /// not confused with the @c Element values passed to these functions.
     struct Position {
-        uint32_t line_; ///< Line number.
-        uint32_t pos_;  ///< Position within the line.
+        std::string file_; ///< File name.
+        uint32_t line_;    ///< Line number.
+        uint32_t pos_;     ///< Position within the line.
+
+        /// \brief Default constructor.
+        Position() : file_(""), line_(0), pos_(0) {
+        }
 
         /// \brief Constructor.
         ///
+        /// \param file File name.
         /// \param line Line number.
         /// \param pos Position within the line.
-        Position(const uint32_t line, const uint32_t pos)
-            : line_(line), pos_(pos) {
+        Position(const std::string& file, const uint32_t line,
+                 const uint32_t pos)
+            : file_(file), line_(line), pos_(pos) {
         }
+
+        /// \brief Returns the position in the textual format.
+        ///
+        /// The returned position has the following format: file:line:pos.
+        std::string str() const;
     };
 
-    /// \brief Returns @c Position object with line_ and pos_ set to 0.
+    /// \brief Returns @c Position object with line_ and pos_ set to 0, and
+    /// with an empty file name.
     ///
     /// The object containing two zeros is a default for most of the
     /// methods creating @c Element objects. The returned value is static
     /// so as it is not created everytime the function with the default
     /// position argument is called.
     static const Position& ZERO_POSITION() {
-        static Position position(0, 0);
+        static Position position("", 0, 0);
         return (position);
     }
 
@@ -656,6 +669,19 @@ ConstElementPtr removeIdentical(ConstElementPtr a, ConstElementPtr b);
 /// to the default).
 /// Raises a TypeError if either ElementPtr is not a MapElement
 void merge(ElementPtr element, ConstElementPtr other);
+
+///
+/// \brief Insert Element::Position as a string into stream.
+///
+/// This operator converts the \c Element::Position into a string and
+/// inserts it into the output stream \c out.
+///
+/// \param out A \c std::ostream object on which the insertion operation is
+/// performed.
+/// \param pos The \c Element::Position structure to insert.
+/// \return A reference to the same \c std::ostream object referenced by
+/// parameter \c out after the insertion operation.
+std::ostream& operator<<(std::ostream& out, const Element::Position& pos);
 
 ///
 /// \brief Insert the Element as a string into stream.

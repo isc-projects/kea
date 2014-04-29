@@ -167,9 +167,13 @@ public:
         :SubnetConfigParser("", globalContext(), IOAddress("0.0.0.0")) {
     }
 
-    /// @brief Adds the created subnet to a server's configuration.
-    /// @throw throws Unexpected if dynamic cast fails.
-    void commit() {
+    /// @brief Parses a single IPv4 subnet configuration and adds to the
+    /// Configuration Manager.
+    ///
+    /// @param subnet A new subnet being configured.
+    void build(ConstElementPtr subnet) {
+        SubnetConfigParser::build(subnet);
+
         if (subnet_) {
             Subnet4Ptr sub4ptr = boost::dynamic_pointer_cast<Subnet4>(subnet_);
             if (!sub4ptr) {
@@ -183,9 +187,23 @@ public:
                 sub4ptr->setRelayInfo(*relay_info_);
             }
 
-            isc::dhcp::CfgMgr::instance().addSubnet4(sub4ptr);
+            // Adding a subnet to the Configuration Manager may fail if the
+            // subnet id is invalid (duplicate). Thus, we catch exceptions
+            // here to append a position in the configuration string.
+            try {
+                isc::dhcp::CfgMgr::instance().addSubnet4(sub4ptr);
+            } catch (const std::exception& ex) {
+                isc_throw(DhcpConfigError, ex.what() << " ("
+                          << subnet->getPosition() << ")");
+            }
         }
     }
+
+    /// @brief Commits subnet configuration.
+    ///
+    /// This function is currently no-op because subnet should already
+    /// be added into the Config Manager in the build().
+    void commit() { }
 
 protected:
 
@@ -218,8 +236,7 @@ protected:
                                              global_context_,
                                              Dhcp4OptionDataParser::factory);
         } else {
-            isc_throw(NotImplemented,
-                "parser error: Subnet4 parameter not supported: " << config_id);
+            isc_throw(NotImplemented, "unsupported parameter: " << config_id);
         }
 
         return (parser);
@@ -294,6 +311,10 @@ protected:
             }
         } catch (const DhcpConfigError&) {
             // Don't care. next_server is optional. We can live without it
+        } catch (...) {
+            isc_throw(DhcpConfigError, "invalid parameter next-server ("
+                      << globalContext()->string_values_->getPosition("next-server")
+                      << ")");
         }
 
         // Try subnet specific value if it's available
@@ -304,7 +325,12 @@ protected:
             }
         } catch (const DhcpConfigError&) {
             // Don't care. next_server is optional. We can live without it
+        } catch (...) {
+            isc_throw(DhcpConfigError, "invalid parameter next-server ("
+                      << string_values_->getPosition("next-server")
+                      << ")");
         }
+
 
         // Try setting up client class (if specified)
         try {
@@ -338,6 +364,12 @@ public:
     ///
     /// @param subnets_list pointer to a list of IPv4 subnets
     void build(ConstElementPtr subnets_list) {
+        // @todo: Implement more subtle reconfiguration than toss
+        // the old one and replace with the new one.
+
+        // remove old subnets
+        CfgMgr::instance().deleteSubnets4();
+
         BOOST_FOREACH(ConstElementPtr subnet, subnets_list->listValue()) {
             ParserPtr parser(new Subnet4ConfigParser("subnet"));
             parser->build(subnet);
@@ -350,12 +382,6 @@ public:
     /// Iterates over all Subnet4 parsers. Each parser contains definitions of
     /// a single subnet and its parameters and commits each subnet separately.
     void commit() {
-        // @todo: Implement more subtle reconfiguration than toss
-        // the old one and replace with the new one.
-
-        // remove old subnets
-        CfgMgr::instance().deleteSubnets4();
-
         BOOST_FOREACH(ParserPtr subnet, subnets_) {
             subnet->commit();
         }
@@ -388,7 +414,8 @@ namespace dhcp {
 /// @return parser for specified global DHCPv4 parameter
 /// @throw NotImplemented if trying to create a parser for unknown
 /// config element
-DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id) {
+    DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id,
+                                                    ConstElementPtr element) {
     DhcpConfigParser* parser = NULL;
     if ((config_id.compare("valid-lifetime") == 0)  ||
         (config_id.compare("renew-timer") == 0)  ||
@@ -405,8 +432,7 @@ DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id) {
                                           globalContext(),
                                           Dhcp4OptionDataParser::factory);
     } else if (config_id.compare("option-def") == 0) {
-        parser  = new OptionDefListParser(config_id,
-                                          globalContext()->option_defs_);
+        parser  = new OptionDefListParser(config_id, globalContext());
     } else if ((config_id.compare("version") == 0) ||
                (config_id.compare("next-server") == 0)) {
         parser  = new StringParser(config_id,
@@ -420,9 +446,9 @@ DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id) {
     } else if (config_id.compare("dhcp-ddns") == 0) {
         parser = new D2ClientConfigParser(config_id);
     } else {
-        isc_throw(NotImplemented,
-                "Parser error: Global configuration parameter not supported: "
-                << config_id);
+        isc_throw(DhcpConfigError,
+                "unsupported global configuration parameter: "
+                  << config_id << " (" << element->getPosition() << ")");
     }
 
     return (parser);
@@ -500,7 +526,8 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
         const std::map<std::string, ConstElementPtr>& values_map =
                                                         config_set->mapValue();
         BOOST_FOREACH(config_pair, values_map) {
-            ParserPtr parser(createGlobalDhcp4ConfigParser(config_pair.first));
+            ParserPtr parser(createGlobalDhcp4ConfigParser(config_pair.first,
+                                                           config_pair.second));
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PARSER_CREATED)
                       .arg(config_pair.first);
             if (config_pair.first == "subnet4") {
@@ -534,6 +561,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
         std::map<std::string, ConstElementPtr>::const_iterator option_config =
             values_map.find("option-data");
         if (option_config != values_map.end()) {
+            config_pair.first = "option-data";
             option_parser->build(option_config->second);
             option_parser->commit();
         }
@@ -542,6 +570,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
         std::map<std::string, ConstElementPtr>::const_iterator subnet_config =
             values_map.find("subnet4");
         if (subnet_config != values_map.end()) {
+            config_pair.first = "subnet4";
             subnet_parser->build(subnet_config->second);
         }
 
