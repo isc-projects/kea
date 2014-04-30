@@ -80,6 +80,8 @@ struct PsqlBindArray {
     void add(const std::vector<uint8_t>& data);
     void add(const uint32_t& value);
     void add(const bool& value);
+    std::string toText();
+    std::string toHexText(const char* data, size_t len);
 };
 
 /// @brief Defines all parameters for binding a compiled statement
