@@ -28,6 +28,20 @@
 #include <string>
 #include <time.h>
 
+// PostgreSQL errors should be tested based on the SQL state code.  These are
+// each state code is 5 decimal digits, the first two define the category of
+// error, the last three are the specific error.  PostgreSQL makes the state
+// code as a char* of 5 ASCII digits.  Macros for each code are defined in
+// PostgreSQL's errorcodes.h, although they require a second macro,
+// MAKE_SQLSTATE for completion.  They deliberately do not define this
+// this second macro in errorlogs.h, so callers can supply their own.
+#define MAKE_SQLSTATE(ch1,ch2,ch3,ch4,ch5) {ch1,ch2,ch3,ch4,ch5}
+#include <server/utils/errcodes.h>
+const size_t STATECODE_LEN = 5;
+
+// Currently the only one we care to look for is duplicate key.
+const char DUPLICATE_KEY[] = ERRCODE_UNIQUE_VIOLATION;
+
 using namespace isc;
 using namespace isc::dhcp;
 using namespace std;
@@ -60,120 +74,133 @@ struct TaggedStatement {
     const char* text;
 };
 
-#if 0
-const OID_BOOL = 16;
-const OID_BTYEA = 17;
-const OID_INT8 = 20;  // 8 byte int
-const OID_INT4 = 23;  // 8 byte int
-const OID_INT2 = 21;  // 2 byte int
-const OID_TIMESTAMP = 1114;
-const OID_VARCHAR = 1043;  // ? what's diff between this and OID/25 = text
-#endif
+/// @brief Constants for PostgreSQL data types
+/// This are defined by PostreSQL in <catalog/pg_type.h>, but including
+/// this file is extrordinarily convoluted, so we'll use these to fill-in.
+const size_t OID_NONE = 0;  // PostgreSQL infers proper type
+const size_t OID_BOOL = 16;
+const size_t OID_BYTEA = 17;
+const size_t OID_INT8 = 20;  // 8 byte int
+const size_t OID_INT4 = 23;  // 4 byte int
+const size_t OID_INT2 = 21;  // 2 byte int
+const size_t OID_TIMESTAMP = 1114;
+const size_t OID_VARCHAR = 1043;
 
 /// @brief Catalog of all the SQL statements currently supported.  Note
 /// that the order columns appear in statement body must match the order they
 /// that the occur in the table.  This does not apply to the where clause.
 TaggedStatement tagged_statements[] = {
     {PgSqlLeaseMgr::DELETE_LEASE4, 1,
-        { 20 },
+        { OID_INT8 },
         "delete_lease4",
-     "DELETE FROM lease4 WHERE address = $1"},
+        "DELETE FROM lease4 WHERE address = $1"},
     {PgSqlLeaseMgr::DELETE_LEASE6, 1,
-        { 1043 },
+        { OID_VARCHAR },
         "delete_lease6",
-     "DELETE FROM lease6 WHERE address = $1"},
+        "DELETE FROM lease6 WHERE address = $1"},
     {PgSqlLeaseMgr::GET_LEASE4_ADDR, 1,
-        { 20 },
+        { OID_INT8 },
         "get_lease4_addr",
-     "SELECT address, hwaddr, client_id, "
-     "valid_lifetime, extract(epoch from expire), subnet_id, fqdn_fwd, fqdn_rev, hostname "
-     "FROM lease4 "
-     "WHERE address = $1"},
+        "SELECT address, hwaddr, client_id, "
+            "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
+            "fqdn_fwd, fqdn_rev, hostname "
+            "FROM lease4 "
+            "WHERE address = $1"},
     {PgSqlLeaseMgr::GET_LEASE4_CLIENTID, 1,
-        { 17 },
+        { OID_BYTEA },
         "get_lease4_clientid",
-     "SELECT address, hwaddr, client_id, "
-     "valid_lifetime, extract(epoch from expire), subnet_id, fqdn_fwd, fqdn_rev, hostname "
-     "FROM lease4 "
-     "WHERE client_id = $1"},
+        "SELECT address, hwaddr, client_id, "
+            "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
+            "fqdn_fwd, fqdn_rev, hostname "
+            "FROM lease4 "
+            "WHERE client_id = $1"},
     {PgSqlLeaseMgr::GET_LEASE4_CLIENTID_SUBID, 2,
-        { 17, 20 },
+        { OID_BYTEA, OID_INT8 },
         "get_lease4_clientid_subid",
-     "SELECT address, hwaddr, client_id, "
-     "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, fqdn_fwd, fqdn_rev, hostname "
-     "FROM lease4 "
-     "WHERE client_id = $1 AND subnet_id = $2"},
+        "SELECT address, hwaddr, client_id, "
+            "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
+            "fqdn_fwd, fqdn_rev, hostname "
+            "FROM lease4 "
+            "WHERE client_id = $1 AND subnet_id = $2"},
     {PgSqlLeaseMgr::GET_LEASE4_HWADDR, 1,
-         { 17 },
-         "get_lease4_hwaddr",
-     "SELECT address, hwaddr, client_id, "
-     "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, fqdn_fwd, fqdn_rev, hostname "
-     "FROM lease4 "
-     "WHERE hwaddr = $1"},
+        { OID_BYTEA },
+        "get_lease4_hwaddr",
+        "SELECT address, hwaddr, client_id, "
+            "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
+            "fqdn_fwd, fqdn_rev, hostname "
+            "FROM lease4 "
+            "WHERE hwaddr = $1"},
     {PgSqlLeaseMgr::GET_LEASE4_HWADDR_SUBID, 2,
-         { 17, 20 },
-         "get_lease4_hwaddr_subid",
-     "SELECT address, hwaddr, client_id, "
-     "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, fqdn_fwd, fqdn_rev, hostname "
-     "FROM lease4 "
-     "WHERE hwaddr = $1 AND subnet_id = $2"},
+        { OID_BYTEA, OID_INT8 },
+        "get_lease4_hwaddr_subid",
+        "SELECT address, hwaddr, client_id, "
+            "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
+            "fqdn_fwd, fqdn_rev, hostname "
+            "FROM lease4 "
+            "WHERE hwaddr = $1 AND subnet_id = $2"},
     {PgSqlLeaseMgr::GET_LEASE6_ADDR, 2,
-        { 1043, 21 },
+        { OID_VARCHAR, OID_INT2 },
         "get_lease6_addr",
-     "SELECT address, duid, valid_lifetime, "
-     "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
-     "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
-     "FROM lease6 "
-     "WHERE address = $1 AND lease_type = $2"},
+        "SELECT address, duid, valid_lifetime, "
+            "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
+            "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
+            "FROM lease6 "
+            "WHERE address = $1 AND lease_type = $2"},
     {PgSqlLeaseMgr::GET_LEASE6_DUID_IAID, 3,
-        { 17, 20, 21 },
+        { OID_BYTEA, OID_INT8, OID_INT2 },
         "get_lease6_duid_iaid",
-     "SELECT address, duid, valid_lifetime, "
-     "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
-     "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
-     "FROM lease6 "
-     "WHERE duid = $1 AND iaid = $2 AND lease_type = $3"},
+        "SELECT address, duid, valid_lifetime, "
+            "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
+            "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
+            "FROM lease6 "
+            "WHERE duid = $1 AND iaid = $2 AND lease_type = $3"},
     {PgSqlLeaseMgr::GET_LEASE6_DUID_IAID_SUBID, 4,
-        { 21, 17, 20, 20 },
+        { OID_INT2, OID_BYTEA, OID_INT8, OID_INT8 },
         "get_lease6_duid_iaid_subid",
-     "SELECT address, duid, valid_lifetime, "
-     "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
-     "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
-     "FROM lease6 "
-     "WHERE lease_type = $1 AND duid = $2 AND iaid = $3 AND subnet_id = $4"},
+        "SELECT address, duid, valid_lifetime, "
+            "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
+            "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
+            "FROM lease6 "
+            "WHERE lease_type = $1 "
+            "AND duid = $2 AND iaid = $3 AND subnet_id = $4"},
     {PgSqlLeaseMgr::GET_VERSION, 0,
-        { 0 },
-     "get_version",
-     "SELECT version, minor FROM schema_version"},
+        { OID_NONE },
+        "get_version",
+        "SELECT version, minor FROM schema_version"},
     {PgSqlLeaseMgr::INSERT_LEASE4, 9,
-         { 20, 17, 17, 20, 1114, 20, 16, 16, 1043 },
-         "insert_lease4",
-     "INSERT INTO lease4(address, hwaddr, client_id, "
-     "valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname) "
-     "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"},
+        { OID_INT8, OID_BYTEA, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
+           OID_BOOL, OID_BOOL, OID_VARCHAR },
+        "insert_lease4",
+        "INSERT INTO lease4(address, hwaddr, client_id, "
+            "valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname) "
+            "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"},
     {PgSqlLeaseMgr::INSERT_LEASE6, 12,
-        { 1043, 17, 20, 1114, 20, 20, 21, 20, 21, 16, 16, 1043 },
+        { OID_VARCHAR, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
+          OID_INT8, OID_INT2, OID_INT8, OID_INT2, OID_BOOL, OID_BOOL,
+          OID_VARCHAR },
         "insert_lease6",
-     "INSERT INTO lease6(address, duid, valid_lifetime, "
-     "expire, subnet_id, pref_lifetime, "
-     "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname) "
-     "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"},
+        "INSERT INTO lease6(address, duid, valid_lifetime, "
+            "expire, subnet_id, pref_lifetime, "
+            "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname) "
+            "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"},
     {PgSqlLeaseMgr::UPDATE_LEASE4, 10,
-        { 20, 17, 17, 20, 1114, 20, 16, 16, 1043, 20 },
+        { OID_INT8, OID_BYTEA, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
+          OID_BOOL, OID_BOOL, OID_VARCHAR, OID_INT8 },
         "update_lease4",
-     "UPDATE lease4 SET address = $1, hwaddr = $2, "
-     "client_id = $3, valid_lifetime = $4, expire = $5, "
-     "subnet_id = $6, fqdn_fwd = $7, fqdn_rev = $8, hostname = $9 "
-     "WHERE address = $10"},
+        "UPDATE lease4 SET address = $1, hwaddr = $2, "
+            "client_id = $3, valid_lifetime = $4, expire = $5, "
+            "subnet_id = $6, fqdn_fwd = $7, fqdn_rev = $8, hostname = $9 "
+            "WHERE address = $10"},
     {PgSqlLeaseMgr::UPDATE_LEASE6, 13,
-        { 1043, 17, 20, 1114, 20, 20, 21, 20, 21, 16, 16, 1043, 1043 },
+        { OID_VARCHAR, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8, OID_INT8,
+          OID_INT2, OID_INT8, OID_INT2, OID_BOOL, OID_BOOL, OID_VARCHAR,
+          OID_VARCHAR },
         "update_lease6",
-     "UPDATE lease6 SET address = $1, duid = $2, "
-     "valid_lifetime = $3, expire = $4, subnet_id = $5, "
-     "pref_lifetime = $6, lease_type = $7, iaid = $8, "
-     "prefix_len = $9, fqdn_fwd = $10, fqdn_rev = $11, hostname = $12 "
-     "WHERE address = $13"},
-
+        "UPDATE lease6 SET address = $1, duid = $2, "
+            "valid_lifetime = $3, expire = $4, subnet_id = $5, "
+            "pref_lifetime = $6, lease_type = $7, iaid = $8, "
+            "prefix_len = $9, fqdn_fwd = $10, fqdn_rev = $11, hostname = $12 "
+        "WHERE address = $13"},
     // End of list sentinel
     {PgSqlLeaseMgr::NUM_STATEMENTS, 0,  { 0 }, NULL, NULL}
 };
@@ -307,7 +334,7 @@ public:
     ///
     /// @return a const char* pointer to the column's raw data
     /// @throw  DbOperationError if the value cannot be fetched.
-    const char* getColumnValue(PGresult* &r, const int row, const size_t col) {
+    const char* getColumnValue(PGresult*& r, const int row, const size_t col) {
         const char* value = PQgetvalue(r, row, col);
         if (!value) {
             isc_throw(DbOperationError, "getColumnValue no data for :"
@@ -326,7 +353,7 @@ public:
     ///
     /// @throw  DbOperationError if the value cannot be fetched or is
     /// invalid.
-    void getColumnValue(PGresult* &r, const int row, const size_t col,
+    void getColumnValue(PGresult*& r, const int row, const size_t col,
                         bool &value) {
         const char* data = getColumnValue(r, row, col);
         if (!strlen(data) || *data == 'f') {
@@ -349,7 +376,7 @@ public:
     ///
     /// @throw  DbOperationError if the value cannot be fetched or is
     /// invalid.
-    void getColumnValue(PGresult* &r, const int row, const size_t col,
+    void getColumnValue(PGresult*& r, const int row, const size_t col,
                         uint32_t &value) {
         const char* data = getColumnValue(r, row, col);
         try {
@@ -370,7 +397,7 @@ public:
     ///
     /// @throw  DbOperationError if the value cannot be fetched or is
     /// invalid.
-    void getColumnValue(PGresult* &r, const int row, const size_t col,
+    void getColumnValue(PGresult*& r, const int row, const size_t col,
                         uint8_t &value) {
         const char* data = getColumnValue(r, row, col);
         try {
@@ -393,7 +420,7 @@ public:
     ///
     /// @throw  DbOperationError if the value cannot be fetched or is
     /// invalid.
-    void getColumnValue(PGresult* &r, const int row, const size_t col,
+    void getColumnValue(PGresult*& r, const int row, const size_t col,
                         Lease6::Type& value) {
         uint32_t raw_value = 0;
         getColumnValue(r, row , col, raw_value);
@@ -432,7 +459,7 @@ public:
     ///
     /// @throw  DbOperationError if the value cannot be fetched or is
     /// invalid.
-    void convertFromBytea(PGresult* &r, const int row, const size_t col,
+    void convertFromBytea(PGresult*& r, const int row, const size_t col,
                           uint8_t* buffer,
                           const size_t buffer_size, size_t &bytes_converted) {
 
@@ -557,6 +584,10 @@ public:
     ///
     /// @throw DbOperationError if bind_array cannot be populated.
     void createBindForSend(const Lease4Ptr& lease, PsqlBindArray& bind_array) {
+        if (!lease) {
+            isc_throw(BadValue, "createBindForSend:: Lease4 object is NULL");
+        }
+
         // Store lease object to ensure it remains valid.
         lease_ = lease;
 
@@ -617,7 +648,7 @@ public:
     ///
     /// @return Lease4Ptr to the newly created Lease4 object
     /// @throw DbOperationError if the lease cannot be created.
-    Lease4Ptr convertFromDatabase(PGresult *& r, int row) {
+    Lease4Ptr convertFromDatabase(PGresult*& r, int row) {
         try {
             getColumnValue(r, row, ADDRESS_COL, addr4_);
 
@@ -734,6 +765,10 @@ public:
     ///
     /// @throw DbOperationError if bind_array cannot be populated.
     void createBindForSend(const Lease6Ptr& lease, PsqlBindArray& bind_array) {
+        if (!lease) {
+            isc_throw(BadValue, "createBindForSend:: Lease6 object is NULL");
+        }
+
         // Store lease object to ensure it remains valid.
         lease_ = lease;
         try {
@@ -788,7 +823,7 @@ public:
     ///
     /// @return Lease6Ptr to the newly created Lease4 object
     /// @throw DbOperationError if the lease cannot be created.
-    Lease6Ptr convertFromDatabase(PGresult* &r, int row) {
+    Lease6Ptr convertFromDatabase(PGresult*& r, int row) {
         try {
             isc::asiolink::IOAddress addr(getIPv6Value(r, row, ADDRESS_COL));
 
@@ -840,7 +875,7 @@ public:
     /// @return isc::asiolink::IOAddress containing the IPv6 address.
     /// @throw  DbOperationError if the value cannot be fetched or is
     /// invalid.
-    isc::asiolink::IOAddress getIPv6Value(PGresult* &r, const int row,
+    isc::asiolink::IOAddress getIPv6Value(PGresult*& r, const int row,
                                           const size_t col) {
         const char* data = getColumnValue(r, row, col);
         try {
@@ -973,25 +1008,25 @@ PgSqlLeaseMgr::openDatabase() {
 bool
 PgSqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
                               PsqlBindArray& bind_array) {
-    PGresult * r = PQexecPrepared(conn_, tagged_statements[stindex].name,
+    PGresult* r = PQexecPrepared(conn_, tagged_statements[stindex].name,
                                   tagged_statements[stindex].nbparams,
                                   &bind_array.values_[0],
                                   &bind_array.lengths_[0],
                                   &bind_array.formats_[0], 0);
 
     int s = PQresultStatus(r);
-    if (s != PGRES_COMMAND_OK) {
-        const char * errorMsg = PQerrorMessage(conn_);
-        PQclear(r);
 
-        /// @todo - ok, do we have to rely on error message text??
-        /// and why is failing on duplicate key NOT an error?
-        /// should be looking at global sqlca struct
-        if(!strncmp(errorMsg, "ERROR:  duplicate key",
-           sizeof("ERROR:  duplicate key") - 1)) {
+    if (s != PGRES_COMMAND_OK) {
+        // Failure: check for the special case of duplicate entry.  If this is
+        // the case, we return false to indicate that the row was not added.
+        // Otherwise we throw an exception.
+        if (compareError(r, DUPLICATE_KEY)) {
+            PQclear(r);
             return (false);
         }
 
+        const char* errorMsg = PQerrorMessage(conn_);
+        PQclear(r);
         isc_throw(DbOperationError, "unable to INSERT for " <<
                   tagged_statements[stindex].name << ", reason: " <<
                   errorMsg);
@@ -1000,6 +1035,13 @@ PgSqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
     PQclear(r);
 
     return (true);
+}
+
+bool PgSqlLeaseMgr::compareError(PGresult*& r, const char* error_state) {
+    const char* sqlstate = PQresultErrorField(r, PG_DIAG_SQLSTATE);
+    // PostgreSQL garuantees it will always be 5 characters long
+    return ((sqlstate != NULL) &&
+            (memcmp(sqlstate, error_state, STATECODE_LEN) == 0));
 }
 
 bool
@@ -1306,7 +1348,7 @@ PgSqlLeaseMgr::updateLeaseCommon(StatementIndex stindex,
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_ADD_ADDR4).arg(tagged_statements[stindex].name);
 
-    PGresult * r = PQexecPrepared(conn_, tagged_statements[stindex].name,
+    PGresult* r = PQexecPrepared(conn_, tagged_statements[stindex].name,
                                   tagged_statements[stindex].nbparams,
                                   &bind_array.values_[0],
                                   &bind_array.lengths_[0],
@@ -1377,7 +1419,7 @@ PgSqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
 bool
 PgSqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex,
                                  PsqlBindArray& bind_array) {
-    PGresult * r = PQexecPrepared(conn_, tagged_statements[stindex].name,
+    PGresult* r = PQexecPrepared(conn_, tagged_statements[stindex].name,
                                   tagged_statements[stindex].nbparams,
                                   &bind_array.values_[0],
                                   &bind_array.lengths_[0],
@@ -1422,14 +1464,14 @@ PgSqlLeaseMgr::getName() const {
 }
 
 void
-PgSqlLeaseMgr::checkStatementError(PGresult* r, StatementIndex index) const {
+PgSqlLeaseMgr::checkStatementError(PGresult*& r, StatementIndex index) const {
     int s = PQresultStatus(r);
     if (s != PGRES_COMMAND_OK && s != PGRES_TUPLES_OK) {
+        const char* error_message = PQerrorMessage(conn_);
         PQclear(r);
-
-        isc_throw(DbOperationError, "Statement exec faild:" << " for: " <<
-                  tagged_statements[index].name << ", reason: " <<
-                  PQerrorMessage(conn_));
+        isc_throw(DbOperationError, "Statement exec faild:" << " for: "
+                  << tagged_statements[index].name << ", reason: "
+                  << error_message);
     }
 }
 
@@ -1465,9 +1507,11 @@ PgSqlLeaseMgr::getVersion() const {
 void
 PgSqlLeaseMgr::commit() {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_COMMIT);
-    PGresult * r = PQexec(conn_, "COMMIT");
+    PGresult* r = PQexec(conn_, "COMMIT");
     if (PQresultStatus(r) != PGRES_COMMAND_OK) {
-        isc_throw(DbOperationError, "commit failed: " << PQerrorMessage(conn_));
+        const char* error_message = PQerrorMessage(conn_);
+        PQclear(r);
+        isc_throw(DbOperationError, "commit failed: " << error_message);
     }
 
     PQclear(r);
@@ -1476,10 +1520,11 @@ PgSqlLeaseMgr::commit() {
 void
 PgSqlLeaseMgr::rollback() {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_ROLLBACK);
-    PGresult * r = PQexec(conn_, "ROLLBACK");
+    PGresult* r = PQexec(conn_, "ROLLBACK");
     if (PQresultStatus(r) != PGRES_COMMAND_OK) {
-        isc_throw(DbOperationError, "rollback failed: "
-                                    << PQerrorMessage(conn_));
+        const char* error_message = PQerrorMessage(conn_);
+        PQclear(r);
+        isc_throw(DbOperationError, "rollback failed: " << error_message);
     }
 
     PQclear(r);
