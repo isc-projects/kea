@@ -27,65 +27,67 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief An auxiliary structure for marshalling data for compiled statements
+/// @brief Structure used to bind C++ input values to dynamic SQL parameters
+/// The structure contains three vectors which storing the input values,
+/// data lengths, and formats.  These vectors are passed directly into the
+/// PostgreSQL execute call.
 ///
-/// It represents a single field used in a query (e.g. one field used in WHERE
-/// or UPDATE clauses).
-struct PgSqlParam {
-    std::string value; ///< The actual value represented as text
-    bool isbinary;     ///< Boolean flag that indicates if data is binary
-    int binarylen;     ///< Specified binary length
-
-    /// @brief Constructor for text parameters
-    ///
-    /// Constructs a text (i.e. non-binary) instance given a string value.
-    /// @param val string containing the text value of the parameter.  The
-    /// default is an empty string which serves as the default or empty
-    /// parameter constructor.
-    PgSqlParam (const std::string& val = "")
-        : value(val), isbinary(false), binarylen(0) {
-    }
-
-    /// @brief Constructor for binary data parameters
-    ///
-    /// Constructs a binary data instance given a vector of binary data.
-    /// @param data vector of binary data from which to set the parameter's
-    /// value.
-    PgSqlParam (const std::vector<uint8_t>& data)
-      : value(data.begin(), data.end()), isbinary(true),
-          binarylen(data.size()) {
-    }
-};
-
+/// Note that the data values are stored as pointers. These pointers need to
+/// valid for the duration of the PostgreSQL statement execution.  In other
+/// words populating them with pointers to values that go out of scope before
+/// statement is executed is a bad idea.
 struct PsqlBindArray {
+    /// @brief Vector of pointers to the data values.
     std::vector<const char *> values_;
+    /// @brief Vector of data lengths for each value.
     std::vector<int> lengths_;
+    /// @brief Vector of "format" for each value. A value of 0 means the
+    /// value is text, 1 means the value is binary.
     std::vector<int> formats_;
 
+    /// @brief Format value for text data.
     static const int TEXT_FMT;
+    /// @brief Format value for binary data.
     static const int BINARY_FMT;
+
+    /// @brief Constant string passed to DB for boolean true values.
     static const char* TRUE_STR;
+    /// @brief Constant string passed to DB for boolean false values.
     static const char* FALSE_STR;
 
+    /// @brief Fetches the number of entries in the array.
+    /// @return Returns size_t containing the number of entries.
     size_t size() {
         return (values_.size());
     }
 
+    /// @brief Indicates it the array is empty.
+    /// @return Returns true if there are no entries in the array, false
+    /// otherwise.
     bool empty() {
+
         return (values_.empty());
     }
 
+    /// @brief Adds a char value to the array.
     void add(const char* value);
-    void add(const std::string& value);
-    void add(const std::vector<uint8_t>& data);
-    void add(const uint32_t& value);
-    void add(const bool& value);
-    std::string toText();
-    std::string toHexText(const char* data, size_t len);
-};
 
-/// @brief Defines all parameters for binding a compiled statement
-typedef std::vector<PgSqlParam> BindParams;
+    /// @brief Adds a string value to the array.
+    void add(const std::string& value);
+
+    /// @brief Adds a vector to the array.
+    void add(const std::vector<uint8_t>& data);
+
+    /// @brief Adds a uint32_t value to the array.
+    void add(const uint32_t& value);
+
+    /// @brief Adds a bool value to the array.
+    void add(const bool& value);
+
+    /// @brief Dumps the contents of the array to a string.
+    /// @return std::string containing the dump
+    std::string toText();
+};
 
 /// @brief Describes a single compiled statement
 struct PgSqlStatementBind {
@@ -172,9 +174,6 @@ public:
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
     ///
-    /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
-    ///        fit into the space allocated for the result.  This indicates a
-    ///        programming error.
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress& addr) const;
@@ -190,9 +189,6 @@ public:
     ///
     /// @return lease collection
     ///
-    /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
-    ///        fit into the space allocated for the result.  This indicates a
-    ///        programming error.
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease4Collection getLease4(const isc::dhcp::HWAddr& hwaddr) const;
@@ -208,9 +204,6 @@ public:
     ///
     /// @return a pointer to the lease (or NULL if a lease is not found)
     ///
-    /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
-    ///        fit into the space allocated for the result.  This indicates a
-    ///        programming error.
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease4Ptr getLease4(const isc::dhcp::HWAddr& hwaddr,
@@ -227,9 +220,6 @@ public:
     ///
     /// @return lease collection
     ///
-    /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
-    ///        fit into the space allocated for the result.  This indicates a
-    ///        programming error.
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease4Collection getLease4(const ClientId& clientid) const;
@@ -402,7 +392,8 @@ public:
 
     /// @brief Statement Tags
     ///
-    /// The contents of the enum are indexes into the list of compiled SQL statements
+    /// The contents of the enum are indexes into the list of compiled SQL
+    /// statements
     enum StatementIndex {
         DELETE_LEASE4,              // Delete from lease4 by address
         DELETE_LEASE6,              // Delete from lease6 by address
@@ -450,8 +441,8 @@ private:
     /// of the addLease method.  It binds the contents of the lease object to
     /// the prepared statement and adds it to the database.
     ///
-    /// @param stindex Index of statemnent being executed
-    /// @param bind MYSQL_BIND array that has been created for the type
+    /// @param stindex Index of statement being executed
+    /// @param bind_array array that has been created for the type
     ///        of lease in question.
     ///
     /// @return true if the lease was added, false if it was not added because
@@ -459,8 +450,6 @@ private:
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    bool addLeaseCommon(StatementIndex stindex, BindParams& params);
-
     bool addLeaseCommon(StatementIndex stindex, PsqlBindArray& bind_array);
 
     /// @brief Get Lease Collection Common Code
@@ -469,7 +458,7 @@ private:
     /// from the database.
     ///
     /// @param stindex Index of statement being executed
-    /// @param params PostgreSQL parameters for the query
+    /// @param bind_array array containing the where clause input parameters
     /// @param exchange Exchange object to use
     /// @param result Returned collection of Leases Note that any leases in
     ///        the collection when this method is called are not erased: the
@@ -484,7 +473,7 @@ private:
     /// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
     template <typename Exchange, typename LeaseCollection>
-    void getLeaseCollection(StatementIndex stindex, BindParams& params,
+    void getLeaseCollection(StatementIndex stindex, PsqlBindArray& bind_array,
                             Exchange& exchange, LeaseCollection& result,
                             bool single = false) const;
 
@@ -494,7 +483,7 @@ private:
     /// the get lease collection common code.
     ///
     /// @param stindex Index of statement being executed
-    /// @param params PostgreSQL parameters for the query
+    /// @param bind_array array containing the where clause input parameters
     /// @param lease LeaseCollection object returned.  Note that any leases in
     ///        the collection when this method is called are not erased: the
     ///        new data is appended to the end.
@@ -504,9 +493,9 @@ private:
     ///        failed.
     /// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
-    void getLeaseCollection(StatementIndex stindex, BindParams& params,
+    void getLeaseCollection(StatementIndex stindex, PsqlBindArray& bind_array,
                             Lease4Collection& result) const {
-        getLeaseCollection(stindex, params, exchange4_, result);
+        getLeaseCollection(stindex, bind_array, exchange4_, result);
     }
 
     /// @brief Get Lease6 Collection
@@ -515,7 +504,7 @@ private:
     /// the get lease collection common code.
     ///
     /// @param stindex Index of statement being executed
-    /// @param params PostgreSQL parameters for the query
+    /// @param bind_array array containing input parameters for the query
     /// @param lease LeaseCollection object returned.  Note that any existing
     ///        data in the collection is erased first.
     ///
@@ -524,9 +513,9 @@ private:
     ///        failed.
     /// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
-    void getLeaseCollection(StatementIndex stindex, BindParams& params,
+    void getLeaseCollection(StatementIndex stindex, PsqlBindArray& bind_array,
                             Lease6Collection& result) const {
-        getLeaseCollection(stindex, params, exchange6_, result);
+        getLeaseCollection(stindex, bind_array, exchange6_, result);
     }
 
     /// @brief Checks result of the r object
@@ -540,19 +529,6 @@ private:
     /// @throw isc::dhcp::DbOperationError Detailed PostgreSQL failure
     inline void checkStatementError(PGresult* r, StatementIndex index) const;
 
-    /// @brief Converts query parameters to format accepted by PostgreSQL
-    ///
-    /// Converts parameters stored in params into 3 vectors: out_params,
-    /// out_lengths and out_formats.
-    /// @param params input parameters
-    /// @param out_values [out] values of specified parameters
-    /// @param out_lengths [out] lengths of specified values
-    /// @param out_formats [out] specifies format (text (0) or binary (1))
-    inline void convertToQuery(const BindParams& params,
-                               std::vector<const char *>& out_values,
-                               std::vector<int>& out_lengths,
-                               std::vector<int>& out_formats) const;
-
     /// @brief Get Lease4 Common Code
     ///
     /// This method performs the common actions for the various getLease4()
@@ -560,9 +536,9 @@ private:
     /// but retrieveing only a single lease.
     ///
     /// @param stindex Index of statement being executed
-    /// @param BindParams PostgreSQL array for input parameters
+    /// @param bind_array array containing input parameters for the query
     /// @param lease Lease4 object returned
-    void getLease(StatementIndex stindex, BindParams& params,
+    void getLease(StatementIndex stindex, PsqlBindArray& bind_array,
                   Lease4Ptr& result) const;
 
     /// @brief Get Lease6 Common Code
@@ -572,9 +548,9 @@ private:
     /// but retrieveing only a single lease.
     ///
     /// @param stindex Index of statement being executed
-    /// @param BindParams PostgreSQL array for input parameters
+    /// @param bind_array array containing input parameters for the query
     /// @param lease Lease6 object returned
-    void getLease(StatementIndex stindex, BindParams& params,
+    void getLease(StatementIndex stindex, PsqlBindArray& bind_array,
                   Lease6Ptr& result) const;
 
 
@@ -585,19 +561,14 @@ private:
     /// were affected.
     ///
     /// @param stindex Index of prepared statement to be executed
-    /// @param BindParams Array of PostgreSQL objects representing the parameters.
-    ///        (Note that the number is determined by the number of parameters
-    ///        in the statement.)
+    /// @param bind_array array containing lease values and where clause
+    /// parameters for the update.
     /// @param lease Pointer to the lease object whose record is being updated.
     ///
     /// @throw NoSuchLease Could not update a lease because no lease matches
     ///        the address given.
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    template <typename LeasePtr>
-    void updateLeaseCommon(StatementIndex stindex, BindParams& params,
-                           const LeasePtr& lease);
-
     template <typename LeasePtr>
     void updateLeaseCommon(StatementIndex stindex, PsqlBindArray& bind_array,
                            const LeasePtr& lease);
@@ -609,16 +580,15 @@ private:
     /// see how many rows were deleted.
     ///
     /// @param stindex Index of prepared statement to be executed
-    /// @param BindParams Array of PostgreSQL objects representing the parameters.
-    ///        (Note that the number is determined by the number of parameters
-    ///        in the statement.)
+    /// @param bind_array array containing lease values and where clause
+    /// parameters for the delete
     ///
     /// @return true if one or more rows were deleted, false if none were
     ///         deleted.
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    bool deleteLeaseCommon(StatementIndex stindex, BindParams& params);
+    bool deleteLeaseCommon(StatementIndex stindex, PsqlBindArray& bind_array);
 
     /// The exchange objects are used for transfer of data to/from the database.
     /// They are pointed-to objects as the contents may change in "const" calls,
