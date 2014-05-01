@@ -50,7 +50,7 @@ struct TaggedStatement {
 
     /// @brief OID types
     ///
-    /// Sspecify parameter types. See /usr/include/postgresql/catalog/pg_type.h.
+    /// Specify parameter types. See /usr/include/postgresql/catalog/pg_type.h.
     /// For some reason that header does not export those parameters.
     /// Those OIDs must match both input and output parameters.
     const Oid types[MAX_PARAMETERS_IN_QUERY];
@@ -58,7 +58,7 @@ struct TaggedStatement {
     /// Short name of the query.
     const char* name;
 
-    /// Text represenation of the actual query.
+    /// Text representation of the actual query.
     const char* text;
 };
 
@@ -72,6 +72,9 @@ const OID_TIMESTAMP = 1114;
 const OID_VARCHAR = 1043;  // ? what's diff between this and OID/25 = text
 #endif
 
+/// @brief Catalog of all the SQL statements currently supported.  Note
+/// that the order columns appear in statement body must match the order they
+/// that the occur in the table.  This does not apply to the where clause.
 TaggedStatement tagged_statements[] = {
     {PgSqlLeaseMgr::DELETE_LEASE4, 1,
         { 20 },
@@ -219,42 +222,48 @@ void PsqlBindArray::add(const bool& value)  {
 std::string PsqlBindArray::toText() {
     std::ostringstream stream;
     for (int i = 0; i < values_.size(); ++i) {
-        stream << i << " : [";
+        stream << i << " : ";
         if (formats_[i] == TEXT_FMT) {
-            stream << values_[i];
+            stream << "\"" << values_[i] << "\"" << std::endl;
         } else {
-           stream << toHexText(values_[i], lengths_[i]);
+            const char *data = values_[i];
+            if (lengths_[i] == 0) {
+                stream << "empty" << std::endl;
+            } else {
+                stream << "0x";
+                for (int i = 0; i < lengths_[i]; ++i) {
+                    stream << setfill('0') << setw(2) << setbase(16)
+                         << static_cast<unsigned int>(data[i]);
+                }
+                stream << std::endl;
+            }
         }
-        stream <<  "]\n";
     }
 
     return (stream.str());
 }
 
-std::string PsqlBindArray::toHexText(const char* data, size_t len) {
-    std::ostringstream stream;
-    stream << "Data length is: " << len << std::endl;
-    for (int i = 0; i < len; ++i) {
-        if (i > 0 && ((i % 16) == 0)) {
-            stream << std::endl;
-        }
-
-        stream << setfill('0') << setw(2) << setbase(16)
-               << static_cast<unsigned int>(data[i]) << " ";
-    }
-
-    return (stream.str());
-}
-
-/// @brief Auxiliary PostgreSQL exchange class
+/// @brief Base class for marshalling leases to and from PostgreSQL.
+///
+/// Provides the common functionality to set up binding information between
+/// lease objects in the program and their database representation in the
+/// database.
 class PgSqlLeaseExchange {
 public:
+
+    PgSqlLeaseExchange()
+        : addr_str_(""), valid_lifetime_(0), valid_lft_str_(""),
+         expire_(0), expire_str_(""), subnet_id_(0), subnet_id_str_(""),
+         cltt_(0), fqdn_fwd_(false), fqdn_rev_(false), hostname_("") {
+    }
+
+    virtual ~PgSqlLeaseExchange(){}
 
     /// @brief Converts time_t structure to a text representation in local time.
     ///
     /// The format of the output string is "%Y-%m-%d %H:%M:%S".  Database
     /// table columns using this value should be typed as TIMESTAMP WITH
-    /// TIME ZONE. For such columns Postgres assumes input strings without
+    /// TIME ZONE. For such columns PostgreSQL assumes input strings without
     /// timezones should be treated as in local time and are converted to UTC
     /// when stored.  Likewise, these columns are automatically adjusted
     /// upon retrieval unless fetched via "extract(epoch from <column>))".
@@ -286,27 +295,20 @@ public:
         }
     }
 
-    /// @brief Converts Postgres text boolean representations to bool
+    /// @brief Gets a pointer to the raw column value in a result set row
     ///
-    /// Allowed values are "t" or "f", or "" which is false.
-    //  Any other will throw.
-    /// @param value text value to be converted
-    /// @throw BadValue if passed any value other than "t" or "f"
-    bool stringToBool(const char* value) {
-        if (!value || !strlen(value)) {
-            return (false);
-        }
-        switch (value[0]) {
-        case 't':
-            return (true);
-        case 'f':
-            return (false);
-        default:
-            isc_throw(BadValue, "invalid bool value: " << value);
-        }
-    }
-
-
+    /// Given a result set, row, and column return a const char* pointer to
+    /// the data value in the result set.  The pointer is valid as long as
+    /// the result set has not been freed.  It may point to text or binary
+    /// data depending on how query was structured.  You should not attempt
+    /// to free this pointer.
+    ///
+    /// @param r the result set containing the query results
+    /// @param row the row number within the result set
+    /// @param col the column number within the row
+    ///
+    /// @return a const char* pointer to the column's raw data
+    /// @throw  DbOperationError if the value cannot be fetched.
     const char* getColumnValue(PGresult* &r, const int row, const size_t col) {
         const char* value = PQgetvalue(r, row, col);
         if (!value) {
@@ -317,6 +319,15 @@ public:
         return (value);
     }
 
+    /// @brief Converts a column in a row in a result set to a boolean.
+    ///
+    /// @param r the result set containing the query results
+    /// @param row the row number within the result set
+    /// @param col the column number within the row
+    /// @param[out] value parameter to receive the converted value
+    ///
+    /// @throw  DbOperationError if the value cannot be fetched or is
+    /// invalid.
     void getColumnValue(PGresult* &r, const int row, const size_t col,
                         bool &value) {
         const char* data = getColumnValue(r, row, col);
@@ -325,37 +336,65 @@ public:
         } else if (*data == 't') {
             value = true;
         } else {
-            isc_throw(DbOperationError, "Cannot convert data: " << data
-                      << " for: " << getColumnLabel(col) << " row:" << row);
+            isc_throw(DbOperationError, "Invalid boolean data: " << data
+                      << " for: " << getColumnLabel(col) << " row:" << row
+                      << " : must be 't' or 'f'");
         }
     }
 
+    /// @brief Converts a column in a row in a result set to a uint32_t.
+    ///
+    /// @param r the result set containing the query results
+    /// @param row the row number within the result set
+    /// @param col the column number within the row
+    /// @param[out] value parameter to receive the converted value
+    ///
+    /// @throw  DbOperationError if the value cannot be fetched or is
+    /// invalid.
     void getColumnValue(PGresult* &r, const int row, const size_t col,
                         uint32_t &value) {
         const char* data = getColumnValue(r, row, col);
         try {
             value = boost::lexical_cast<uint32_t>(data);
         } catch (const std::exception& ex) {
-            isc_throw(DbOperationError, "Cannot convert data: " << data
+            isc_throw(DbOperationError, "Invalid uint32_t data: " << data
                       << " for: " << getColumnLabel(col) << " row:" << row
                       << " : " << ex.what());
         }
     }
 
+    /// @brief Converts a column in a row in a result set to a uint8_t.
+    ///
+    /// @param r the result set containing the query results
+    /// @param row the row number within the result set
+    /// @param col the column number within the row
+    /// @param[out] value parameter to receive the converted value
+    ///
+    /// @throw  DbOperationError if the value cannot be fetched or is
+    /// invalid.
     void getColumnValue(PGresult* &r, const int row, const size_t col,
                         uint8_t &value) {
         const char* data = getColumnValue(r, row, col);
         try {
             // lexically casting as uint8_t doesn't convert from char
+            // so we use uint16_t and implicitly convert.
             value = boost::lexical_cast<uint16_t>(data);
         } catch (const std::exception& ex) {
-            isc_throw(DbOperationError, "uint8_t:Cannot convert data: " << data
+            isc_throw(DbOperationError, "Invalid uint8_t data: " << data
                       << " for: " << getColumnLabel(col) << " row:" << row
                       << " : " << ex.what());
         }
     }
 
-
+    /// @brief Converts a column in a row in a result set to a Lease6::Type
+    ///
+    /// @param r the result set containing the query results
+    /// @param row the row number within the result set
+    /// @param col the column number within the row
+    /// @param[out] value parameter to receive the converted value
+    ///
+    /// @throw  DbOperationError if the value cannot be fetched or is
+    /// invalid.
     void getColumnValue(PGresult* &r, const int row, const size_t col,
                         Lease6::Type& value) {
         uint32_t raw_value = 0;
@@ -379,50 +418,95 @@ public:
         }
     }
 
+    /// @brief Converts a column in a row in a result set to a binary bytes
+    ///
+    /// Method is used to convert columns stored as BYTEA into a buffer of
+    /// binary bytes, (uint8_t).  It uses PQunescapeBytea to do the conversion.
+    ///
+    /// @param r the result set containing the query results
+    /// @param row the row number within the result set
+    /// @param col the column number within the row
+    /// @param[out] buffer pre-allocated buffer to which the converted bytes
+    /// will be stored.
+    /// @param buffer_size size of the output buffer
+    /// @param[out] bytes_converted number of bytes converted
+    /// value
+    ///
+    /// @throw  DbOperationError if the value cannot be fetched or is
+    /// invalid.
     void convertFromBytea(PGresult* &r, const int row, const size_t col,
-                          uint8_t* dest,
-                          const size_t max, size_t &bytes_converted) {
+                          uint8_t* buffer,
+                          const size_t buffer_size, size_t &bytes_converted) {
 
-        unsigned char* bytes
-            = PQunescapeBytea((const unsigned char*)
-                              (getColumnValue(r, row, col)), &bytes_converted);
+        // Returns converted bytes in a dynamically allocated buffer, and
+        // sets bytes_converted.
+        unsigned char* bytes = PQunescapeBytea((const unsigned char*)
+                                               (getColumnValue(r, row, col)),
+                                               &bytes_converted);
+
+        // Unlikely it couldn't allocate it but you never know.
         if (!bytes) {
             isc_throw (DbOperationError, "PQunescapeBytea failed for:"
                        << getColumnLabel(col) << " row:" << row);
         }
 
-        if (bytes_converted > max) {
+        // Make sure it's not larger than expected.
+        if (bytes_converted > buffer_size) {
+            // Free the allocated buffer first!
             PQfreemem(bytes);
             isc_throw (DbOperationError, "Converted data size: "
                        << bytes_converted << " is too large for: "
                        << getColumnLabel(col) << " row:" << row);
         }
 
-        memcpy(dest, bytes, bytes_converted);
+        // Copy from the allocated buffer to caller's buffer the free up
+        // the allocated buffer.
+        memcpy(buffer, bytes, bytes_converted);
         PQfreemem(bytes);
     }
 
-    /// Compiled statement bind parameters
-    BindParams params;
-
-    std::vector<std::string>columnLabels_;
-
-    std::string getColumnLabel(const size_t index) {
-        if (index > columnLabels_.size()) {
+    /// @brief Returns column label given a column number
+    std::string getColumnLabel(const size_t column) {
+        if (column > columnLabels_.size()) {
             ostringstream os;
-            os << "Unknown column:" << index;
+            os << "Unknown column:" << column;
             return (os.str());
         }
 
-        return (columnLabels_[index]);
+        return (columnLabels_[column]);
     }
+
+protected:
+    /// @brief Stores text labels for columns, currently only used for
+    /// logging and errors.
+    std::vector<std::string>columnLabels_;
+
+    /// @brief Common Instance members used for binding and conversion
+    //@{
+    std::string addr_str_;
+    uint32_t valid_lifetime_;
+    std::string valid_lft_str_;
+    time_t expire_;
+    std::string expire_str_;
+    uint32_t subnet_id_;
+    std::string subnet_id_str_;
+    time_t cltt_;
+    bool fqdn_fwd_;
+    bool fqdn_rev_;
+    std::string hostname_;
+    //@}
+
 };
 
 
-/// @brief Represents a single Lease4 exchange
+/// @brief Supports exchanging IPv4 leases with PostgreSQL.
 class PgSqlLease4Exchange : public PgSqlLeaseExchange {
 private:
 
+    /// @brief Column numbers for each column in the Lease4 table.
+    /// These are used for both retrieving data and for looking up
+    /// column labels for logging.  Note that their numeric order
+    /// MUST match that of the column order in the Lease4 table.
     static const size_t ADDRESS_COL = 0;
     static const size_t HWADDR_COL = 1;
     static const size_t CLIENT_ID_COL = 2;
@@ -438,7 +522,9 @@ private:
 public:
 
     /// @brief Default constructor
-    PgSqlLease4Exchange() : addr4_(0), hwaddr_length_(0), client_id_length_(0) {
+    PgSqlLease4Exchange()
+        : lease_(), addr4_(0), hwaddr_length_(0), hwaddr_(hwaddr_length_),
+        client_id_length_(0) {
 
         BOOST_STATIC_ASSERT(8 < LEASE_COLUMNS);
 
@@ -446,7 +532,6 @@ public:
         memset(client_id_buffer_, 0, sizeof(client_id_buffer_));
 
         // Set the column names (for error messages)
-        /// @todo something more elegant than this
         columnLabels_.push_back("address");
         columnLabels_.push_back("hwaddr");
         columnLabels_.push_back("client_id");
@@ -458,109 +543,142 @@ public:
         columnLabels_.push_back("hostname");
     }
 
-    void
-    createBindForSend(const Lease4Ptr& lease, PsqlBindArray& bind_array) {
+    /// @brief Creates the bind array for sending Lease4 data to the database.
+    ///
+    /// Converts each Lease4 member into the appropriate form and adds it
+    /// to the bind array.  Note that the array additions must occur in the
+    /// order the columns are specified in the SQL statement.  By convention
+    /// all columns in the table are explicitly listed in the SQL statement(s)
+    /// in the same order as they occur in the table.
+    ///
+    /// @todo Bindings currently turn everything into strings, performance
+    /// could be improved by using binary-to-binary where possible.
+    ///
+    /// @param lease Lease4 object that is to be written to the database
+    /// @param[out] bind_array array to populate with the lease data values
+    ///
+    /// @throw DbOperationError if bind_array cannot be populated.
+    void createBindForSend(const Lease4Ptr& lease, PsqlBindArray& bind_array) {
         // Store lease object to ensure it remains valid.
         lease_ = lease;
 
-        addr4_str_ = boost::lexical_cast<std::string>
-                     (static_cast<uint32_t>(lease->addr_));
+        try {
+            addr_str_ = boost::lexical_cast<std::string>
+                        (static_cast<uint32_t>(lease->addr_));
+            bind_array.add(addr_str_);
 
-        bind_array.add(addr4_str_);
+            if (!lease->hwaddr_.empty()) {
+                // PostgreSql does not provide MAX on variable length types
+                // so we have to enforce it ourselves.
+                if (lease->hwaddr_.size() > HWAddr::MAX_HWADDR_LEN) {
+                        isc_throw(DbOperationError, "Hardware address length : "
+                                  << lease_->hwaddr_.size()
+                                  << " exceeds maximum allowed of: "
+                                  << HWAddr::MAX_HWADDR_LEN);
+                }
 
-        // Although HWADDR object will always be there, it may be just an
-        // empty vector
-        if (!lease->hwaddr_.empty()) {
-            if (lease->hwaddr_.size() > HWAddr::MAX_HWADDR_LEN) {
-                isc_throw(DbOperationError, "Hardware address length : "
-                          << lease->hwaddr_.size()
-                          << " exceeds maximum allowed of: "
-                          << HWAddr::MAX_HWADDR_LEN);
+                bind_array.add(lease->hwaddr_);
+            } else {
+                bind_array.add("");
             }
 
-            bind_array.add(lease->hwaddr_);
-        } else {
-            bind_array.add("");
+            if (lease->client_id_) {
+                bind_array.add(lease->client_id_->getClientId());
+            } else {
+                bind_array.add("");
+            }
+
+            valid_lft_str_ = boost::lexical_cast<std::string>
+                             (lease->valid_lft_);
+            bind_array.add(valid_lft_str_);
+
+            expire_str_ = convertToDatabaseTime(lease->valid_lft_ +
+                                                lease->cltt_);
+            bind_array.add(expire_str_);
+
+            subnet_id_str_ = boost::lexical_cast<std::string>
+                             (lease->subnet_id_);
+            bind_array.add(subnet_id_str_);
+
+            bind_array.add(lease->fqdn_fwd_);
+            bind_array.add(lease->fqdn_rev_);
+
+            bind_array.add(lease->hostname_);
+        } catch (const std::exception& ex) {
+            isc_throw(DbOperationError,
+                      "Could not create bind array for Lease4 lease: "
+                      << lease_->addr_.toText() << " reason: " << ex.what());
         }
-
-        if (lease->client_id_) {
-            bind_array.add(lease->client_id_->getClientId());
-        } else {
-            bind_array.add("");
-        }
-
-        valid_lft_str_ = boost::lexical_cast<std::string>(lease->valid_lft_);
-        bind_array.add(valid_lft_str_);
-
-        expire_str_ = convertToDatabaseTime(lease->valid_lft_ + lease->cltt_);
-        bind_array.add(expire_str_);
-
-        subnet_id_str_ = boost::lexical_cast<std::string>(lease->subnet_id_);
-        bind_array.add(subnet_id_str_);
-
-        bind_array.add(lease->fqdn_fwd_);
-        bind_array.add(lease->fqdn_rev_);
-
-        bind_array.add(lease->hostname_);
     }
 
-    Lease4Ptr
-    convertFromDatabase(PGresult *& r, int row) {
+    /// @brief Creates a Lease4 object from a given row in a result set.
+    ///
+    /// @param r result set containing one or rows from the Lease4 table
+    /// @param row row number within the result set from to create the Lease4
+    /// object.
+    ///
+    /// @return Lease4Ptr to the newly created Lease4 object
+    /// @throw DbOperationError if the lease cannot be created.
+    Lease4Ptr convertFromDatabase(PGresult *& r, int row) {
+        try {
+            getColumnValue(r, row, ADDRESS_COL, addr4_);
 
-        getColumnValue(r, row, ADDRESS_COL, addr4_);
+            convertFromBytea(r, row, HWADDR_COL, hwaddr_buffer_,
+                             sizeof(hwaddr_buffer_), hwaddr_length_);
 
-        convertFromBytea(r, row, HWADDR_COL, hwaddr_buffer_,
-                         sizeof(hwaddr_buffer_), hwaddr_length_);
+            convertFromBytea(r, row, CLIENT_ID_COL, client_id_buffer_,
+                             sizeof(client_id_buffer_), client_id_length_);
 
-        convertFromBytea(r, row, CLIENT_ID_COL, client_id_buffer_,
-                         sizeof(client_id_buffer_), client_id_length_);
+            getColumnValue(r, row, VALID_LIFETIME_COL, valid_lifetime_);
 
-        getColumnValue(r, row, VALID_LIFETIME_COL, valid_lifetime_);
+            expire_ = convertFromDatabaseTime(getColumnValue(r, row,
+                                                             EXPIRE_COL));
 
-        expire_ = convertFromDatabaseTime(getColumnValue(r, row, EXPIRE_COL));
+            getColumnValue(r, row , SUBNET_ID_COL, subnet_id_);
 
-        getColumnValue(r, row , SUBNET_ID_COL, subnet_id_);
+            cltt_ = expire_ - valid_lifetime_;
 
-        cltt_ = expire_ - valid_lifetime_;
+            getColumnValue(r, row, FQDN_FWD_COL, fqdn_fwd_);
+            getColumnValue(r, row, FQDN_REV_COL, fqdn_rev_);
 
-        getColumnValue(r, row, FQDN_FWD_COL, fqdn_fwd_);
-        getColumnValue(r, row, FQDN_REV_COL, fqdn_rev_);
+            hostname_ = getColumnValue(r, row, HOSTNAME_COL);
 
-        hostname_ = getColumnValue(r, row, HOSTNAME_COL);
-
-        return (Lease4Ptr(new Lease4(addr4_, hwaddr_buffer_, hwaddr_length_,
-                                     client_id_buffer_, client_id_length_,
-                                     valid_lifetime_, 0, 0, cltt_, subnet_id_,
-                                     fqdn_fwd_, fqdn_rev_, hostname_)));
+            return (Lease4Ptr(new Lease4(addr4_, hwaddr_buffer_, hwaddr_length_,
+                                         client_id_buffer_, client_id_length_,
+                                         valid_lifetime_, 0, 0, cltt_,
+                                         subnet_id_, fqdn_fwd_, fqdn_rev_,
+                                         hostname_)));
+        } catch (const std::exception& ex) {
+            isc_throw(DbOperationError,
+                      "Could not convert data to Lease4, reason: "
+                       << ex.what());
+        }
     }
 
 private:
+    /// @brief Lease4 object currently being sent to the database.
+    /// Storing this value ensures that it remains in scope while any bindings
+    /// that refer to its contents are in use.
+    Lease4Ptr       lease_;
+
+    /// @Brief Lease4 specific members used for binding and conversion.
     uint32_t        addr4_;
-    std::string     columns_[LEASE_COLUMNS];
+    unsigned long   hwaddr_length_;
     std::vector<uint8_t> hwaddr_;
     uint8_t         hwaddr_buffer_[HWAddr::MAX_HWADDR_LEN];
-    uint8_t         client_id_buffer_[ClientId::MAX_CLIENT_ID_LEN];
-    Lease4Ptr       lease_;
-    time_t          expire_;
-    time_t          cltt_;
-    uint32_t        subnet_id_;
-    uint32_t        valid_lifetime_;
-    unsigned long   hwaddr_length_;
     unsigned long   client_id_length_;
-    bool fqdn_fwd_;
-    bool fqdn_rev_;
-    std::string hostname_;
-
-    std::string addr4_str_;
-    std::string valid_lft_str_;
-    std::string expire_str_;
-    std::string subnet_id_str_;
-
+    uint8_t         client_id_buffer_[ClientId::MAX_CLIENT_ID_LEN];
 };
 
-
+/// @brief Supports exchanging IPv6 leases with PostgreSQL.
 class PgSqlLease6Exchange : public PgSqlLeaseExchange {
 private:
+
+    /// @brief Column numbers for each column in the Lease6 table.
+    /// These are used for both retrieving data and for looking up
+    /// column labels for logging.  Note that their numeric order
+    /// MUST match that of the column order in the Lease6 table.
+    //@{
     static const int ADDRESS_COL = 0;
     static const int DUID_COL = 1;
     static const int VALID_LIFETIME_COL = 2;
@@ -573,10 +691,15 @@ private:
     static const int FQDN_FWD_COL = 9;
     static const int FQDN_REV_COL = 10;
     static const int HOSTNAME_COL = 11;
+    //@}
+    /// @brief Number of columns in the table holding DHCPv4 leases.
     static const size_t LEASE_COLUMNS = 12;
 
 public:
-    PgSqlLease6Exchange() : duid_length_(0) {
+    PgSqlLease6Exchange()
+        : lease_(), duid_length_(0), duid_(), iaid_(0), iaid_str_(""),
+         lease_type_(Lease6::TYPE_NA), lease_type_str_(""), prefix_len_(0),
+         prefix_len_str_(""), pref_lifetime_(0), preferred_lft_str_("") {
 
         BOOST_STATIC_ASSERT(11 < LEASE_COLUMNS);
 
@@ -595,92 +718,132 @@ public:
         columnLabels_.push_back("fqdn_fwd");
         columnLabels_.push_back("fqdn_rev");
         columnLabels_.push_back("hostname");
-
-        params.reserve(LEASE_COLUMNS);
     }
 
-    void
-    createBindForSend(const Lease6Ptr& lease, PsqlBindArray& bind_array) {
+    /// @brief Creates the bind array for sending Lease6 data to the database.
+    ///
+    /// Converts each Lease6 member into the appropriate form and adds it
+    /// to the bind array.  Note that the array additions must occur in the
+    /// order the columns are specified in the SQL statement.  By convention
+    /// all columns in the table are explicitly listed in the SQL statement(s)
+    /// in the same order as they occur in the table.
+    ///
+    /// @todo Bindings currently turn everything into strings, performance
+    /// could be improved by using binary-to-binary where possible.
+    ///
+    /// @param lease Lease6 object that is to be written to the database
+    /// @param[out] bind_array array to populate with the lease data values
+    ///
+    /// @throw DbOperationError if bind_array cannot be populated.
+    void createBindForSend(const Lease6Ptr& lease, PsqlBindArray& bind_array) {
         // Store lease object to ensure it remains valid.
         lease_ = lease;
+        try {
+            addr_str_ = lease_->addr_.toText();
+            bind_array.add(addr_str_);
 
-        addr6_ = lease_->addr_.toText();
-        bind_array.add(addr6_);
+            bind_array.add(lease_->duid_->getDuid());
 
-        bind_array.add(lease_->duid_->getDuid());
+            valid_lft_str_ = boost::lexical_cast<std::string>
+                             (lease->valid_lft_);
+            bind_array.add(valid_lft_str_);
 
-        valid_lft_str_ = boost::lexical_cast<std::string>(lease->valid_lft_);
-        bind_array.add(valid_lft_str_);
+            expire_str_ = convertToDatabaseTime(lease->valid_lft_ +
+                                                lease->cltt_);
+            bind_array.add(expire_str_);
 
-        expire_str_ = convertToDatabaseTime(lease->valid_lft_ + lease->cltt_);
-        bind_array.add(expire_str_);
+            subnet_id_str_ = boost::lexical_cast<std::string>
+                             (lease->subnet_id_);
+            bind_array.add(subnet_id_str_);
 
-        subnet_id_str_ = boost::lexical_cast<std::string>(lease->subnet_id_);
-        bind_array.add(subnet_id_str_);
+            preferred_lft_str_ = boost::lexical_cast<std::string>
+                                 (lease_->preferred_lft_);
+            bind_array.add(preferred_lft_str_);
 
-        preferred_lft_str_ = boost::lexical_cast<std::string>
-                            (lease_->preferred_lft_);
-        bind_array.add(preferred_lft_str_);
+            lease_type_str_ = boost::lexical_cast<std::string>(lease_->type_);
+            bind_array.add(lease_type_str_);
 
-        type_str_ = boost::lexical_cast<std::string>(lease_->type_);
-        bind_array.add(type_str_);
+            iaid_str_ = boost::lexical_cast<std::string>(lease_->iaid_);
+            bind_array.add(iaid_str_);
 
-        iaid_str_ = boost::lexical_cast<std::string>(lease_->iaid_);
-        bind_array.add(iaid_str_);
+            prefix_len_str_ = boost::lexical_cast<std::string>
+                              (static_cast<unsigned int>(lease_->prefixlen_));
 
-        prefix_len_str_ = boost::lexical_cast<std::string>
-                          (static_cast<unsigned int>(lease_->prefixlen_));
+            bind_array.add(prefix_len_str_);
 
-        bind_array.add(prefix_len_str_);
+            bind_array.add(lease->fqdn_fwd_);
+            bind_array.add(lease->fqdn_rev_);
 
-        bind_array.add(lease->fqdn_fwd_);
-        bind_array.add(lease->fqdn_rev_);
-
-        bind_array.add(lease->hostname_);
+            bind_array.add(lease->hostname_);
+        } catch (const std::exception& ex) {
+            isc_throw(DbOperationError,
+                      "Could not create bind array from Lease6: "
+                      << lease_->addr_.toText() << " reason: " << ex.what());
+        }
     }
 
-    Lease6Ptr
-    convertFromDatabase(PGresult * r, int row) {
+    /// @brief Creates a Lease6 object from a given row in a result set.
+    ///
+    /// @param r result set containing one or rows from the Lease6 table
+    /// @param row row number within the result set from to create the Lease6
+    /// object.
+    ///
+    /// @return Lease6Ptr to the newly created Lease4 object
+    /// @throw DbOperationError if the lease cannot be created.
+    Lease6Ptr convertFromDatabase(PGresult* &r, int row) {
+        try {
+            isc::asiolink::IOAddress addr(getIPv6Value(r, row, ADDRESS_COL));
 
-        isc::asiolink::IOAddress addr(getIPv6Value(r, row, ADDRESS_COL));
+            convertFromBytea(r, row, DUID_COL, duid_buffer_,
+                             sizeof(duid_buffer_), duid_length_);
+            DuidPtr duid_ptr(new DUID(duid_buffer_, duid_length_));
 
-        convertFromBytea(r, row, DUID_COL, duid_buffer_,
-                         sizeof(duid_buffer_), duid_length_);
-        DuidPtr duid_ptr(new DUID(duid_buffer_, duid_length_));
+            getColumnValue(r, row, VALID_LIFETIME_COL, valid_lifetime_);
 
-        getColumnValue(r, row, VALID_LIFETIME_COL, valid_lifetime_);
+            expire_ = convertFromDatabaseTime(getColumnValue(r, row,
+                                                             EXPIRE_COL));
 
-        expire_ = convertFromDatabaseTime(getColumnValue(r, row, EXPIRE_COL));
+            cltt_ = expire_ - valid_lifetime_;
 
-        cltt_ = expire_ - valid_lifetime_;
+            getColumnValue(r, row , SUBNET_ID_COL, subnet_id_);
 
-        getColumnValue(r, row , SUBNET_ID_COL, subnet_id_);
+            getColumnValue(r, row , PREF_LIFETIME_COL, pref_lifetime_);
 
-        getColumnValue(r, row , PREF_LIFETIME_COL, pref_lifetime_);
+            getColumnValue(r, row, LEASE_TYPE_COL, lease_type_);
 
-        getColumnValue(r, row, LEASE_TYPE_COL, lease_type_);
+            getColumnValue(r, row , IAID_COL, iaid_);
 
-        getColumnValue(r, row , IAID_COL, iaid_);
+            getColumnValue(r, row , PREFIX_LEN_COL, prefix_len_);
 
-        getColumnValue(r, row , PREFIX_LEN_COL, prefix_len_);
+            getColumnValue(r, row, FQDN_FWD_COL, fqdn_fwd_);
+            getColumnValue(r, row, FQDN_REV_COL, fqdn_rev_);
 
-        getColumnValue(r, row, FQDN_FWD_COL, fqdn_fwd_);
-        getColumnValue(r, row, FQDN_REV_COL, fqdn_rev_);
+            hostname_ = getColumnValue(r, row, HOSTNAME_COL);
 
-        hostname_ = getColumnValue(r, row, HOSTNAME_COL);
-
-        Lease6Ptr result(new Lease6(lease_type_, addr, duid_ptr, iaid_,
-                                    pref_lifetime_, valid_lifetime_, 0, 0,
-                                    subnet_id_, fqdn_fwd_, fqdn_rev_,
-                                    hostname_, prefix_len_));
-
-        result->cltt_ = cltt_;
-
-        return (result);
+            Lease6Ptr result(new Lease6(lease_type_, addr, duid_ptr, iaid_,
+                                        pref_lifetime_, valid_lifetime_, 0, 0,
+                                        subnet_id_, fqdn_fwd_, fqdn_rev_,
+                                        hostname_, prefix_len_));
+            result->cltt_ = cltt_;
+            return (result);
+        } catch (const std::exception& ex) {
+            isc_throw(DbOperationError,
+                      "Could not convert data to Lease6, reason: "
+                       << ex.what());
+        }
     }
 
-    isc::asiolink::IOAddress
-    getIPv6Value(PGresult* &r, const int row, const size_t col) {
+    /// @brief Converts a column in a row in a result set into IPv6 address.
+    ///
+    /// @param r the result set containing the query results
+    /// @param row the row number within the result set
+    /// @param col the column number within the row
+    ///
+    /// @return isc::asiolink::IOAddress containing the IPv6 address.
+    /// @throw  DbOperationError if the value cannot be fetched or is
+    /// invalid.
+    isc::asiolink::IOAddress getIPv6Value(PGresult* &r, const int row,
+                                          const size_t col) {
         const char* data = getColumnValue(r, row, col);
         try {
             return (isc::asiolink::IOAddress(data));
@@ -692,31 +855,25 @@ public:
     }
 
 private:
-    string     addr6_;
-    string     columns_[LEASE_COLUMNS];
-    time_t          expire_;
+    /// @brief Lease6 object currently being sent to the database.
+    /// Storing this value ensures that it remains in scope while any bindings
+    /// that refer to its contents are in use.
+    Lease6Ptr       lease_;
+
+    /// @brief Lease6 specific members for binding and conversion.
+    //@{
+    unsigned long   duid_length_;
     vector<uint8_t> duid_;
     uint8_t         duid_buffer_[DUID::MAX_DUID_LEN];
     uint32_t        iaid_;
-    Lease6Ptr       lease_;
-    Lease6::Type    lease_type_;
-    uint8_t         prefix_len_;
-    uint32_t        pref_lifetime_;
-    uint32_t        subnet_id_;
-    uint32_t        valid_lifetime_;
-    unsigned long   duid_length_;
-    bool fqdn_fwd_;
-    bool fqdn_rev_;
-    std::string hostname_;
-    time_t          cltt_;
-
-    std::string valid_lft_str_;
-    std::string expire_str_;
-    std::string subnet_id_str_;
-    std::string preferred_lft_str_;
-    std::string type_str_;
     std::string iaid_str_;
+    Lease6::Type    lease_type_;
+    std::string lease_type_str_;
+    uint8_t         prefix_len_;
     std::string prefix_len_str_;
+    uint32_t        pref_lifetime_;
+    std::string preferred_lft_str_;
+    //@}
 };
 
 PgSqlLeaseMgr::PgSqlLeaseMgr(const LeaseMgr::ParameterMap& parameters)
@@ -742,7 +899,8 @@ PgSqlLeaseMgr::~PgSqlLeaseMgr() {
     }
 }
 
-void PgSqlLeaseMgr::prepareStatements() {
+void
+PgSqlLeaseMgr::prepareStatements() {
     statements_.clear();
     statements_.resize(NUM_STATEMENTS, PgSqlStatementBind());
 
@@ -822,50 +980,12 @@ PgSqlLeaseMgr::openDatabase() {
 bool
 PgSqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
                               PsqlBindArray& bind_array) {
-
-    std::cout << "addLeaseCommon: bind_array: " << bind_array.toText();
+//    std::cout << "addLeaseCommon: bind_array: " << bind_array.toText();
     PGresult * r = PQexecPrepared(conn_, statements_[stindex].stmt_name,
                                   statements_[stindex].stmt_nbparams,
                                   &bind_array.values_[0],
                                   &bind_array.lengths_[0],
                                   &bind_array.formats_[0], 0);
-
-    int s = PQresultStatus(r);
-    if (s != PGRES_COMMAND_OK) {
-        const char * errorMsg = PQerrorMessage(conn_);
-        PQclear(r);
-
-        /// @todo - ok, do we have to rely on error message text??
-        /// and why is failing on duplicate key NOT an error?
-        /// should be looking at global sqlca struct
-        if(!strncmp(errorMsg, "ERROR:  duplicate key",
-           sizeof("ERROR:  duplicate key") - 1)) {
-            return (false);
-        }
-
-        isc_throw(DbOperationError, "unable to INSERT for " <<
-                  statements_[stindex].stmt_name << ", reason: " <<
-                  errorMsg);
-    }
-
-    PQclear(r);
-
-    return (true);
-}
-
-
-bool
-PgSqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
-                              BindParams& params) {
-    vector<const char *> out_values;
-    vector<int> out_lengths;
-    vector<int> out_formats;
-    convertToQuery(params, out_values, out_lengths, out_formats);
-
-    PGresult * r = PQexecPrepared(conn_, statements_[stindex].stmt_name,
-                                  statements_[stindex].stmt_nbparams,
-                                  &out_values[0], &out_lengths[0],
-                                  &out_formats[0], 0);
 
     int s = PQresultStatus(r);
     if (s != PGRES_COMMAND_OK) {
@@ -912,21 +1032,18 @@ PgSqlLeaseMgr::addLease(const Lease6Ptr& lease) {
 
 template <typename Exchange, typename LeaseCollection>
 void PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
-                                       BindParams & params,
+                                       PsqlBindArray& bind_array,
                                        Exchange& exchange,
                                        LeaseCollection& result,
                                        bool single) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_GET_ADDR4).arg(statements_[stindex].stmt_name);
 
-    vector<const char *> out_values;
-    vector<int> out_lengths;
-    vector<int> out_formats;
-    convertToQuery(params, out_values, out_lengths, out_formats);
-
     PGresult* r = PQexecPrepared(conn_, statements_[stindex].stmt_name,
-                       statements_[stindex].stmt_nbparams, &out_values[0],
-                       &out_lengths[0], &out_formats[0], 0);
+                       statements_[stindex].stmt_nbparams,
+                       &bind_array.values_[0],
+                       &bind_array.lengths_[0],
+                       &bind_array.formats_[0], 0);
 
     checkStatementError(r, stindex);
 
@@ -945,16 +1062,17 @@ void PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
     PQclear(r);
 }
 
+
 void
-PgSqlLeaseMgr::getLease(StatementIndex stindex, BindParams & params,
+PgSqlLeaseMgr::getLease(StatementIndex stindex, PsqlBindArray& bind_array,
                              Lease4Ptr& result) const {
     // Create appropriate collection object and get all leases matching
-    // the selection criteria.  The "single" paraeter is true to indicate
+    // the selection criteria.  The "single" parameter is true to indicate
     // that the called method should throw an exception if multiple
     // matching records are found: this particular method is called when only
     // one or zero matches is expected.
     Lease4Collection collection;
-    getLeaseCollection(stindex, params, exchange4_, collection, true);
+    getLeaseCollection(stindex, bind_array, exchange4_, collection, true);
 
     // Return single record if present, else clear the lease.
     if (collection.empty()) {
@@ -964,16 +1082,17 @@ PgSqlLeaseMgr::getLease(StatementIndex stindex, BindParams & params,
     }
 }
 
+
 void
-PgSqlLeaseMgr::getLease(StatementIndex stindex, BindParams & params,
+PgSqlLeaseMgr::getLease(StatementIndex stindex, PsqlBindArray& bind_array,
                              Lease6Ptr& result) const {
     // Create appropriate collection object and get all leases matching
-    // the selection criteria.  The "single" paraeter is true to indicate
+    // the selection criteria.  The "single" parameter is true to indicate
     // that the called method should throw an exception if multiple
     // matching records are found: this particular method is called when only
     // one or zero matches is expected.
     Lease6Collection collection;
-    getLeaseCollection(stindex, params, exchange6_, collection, true);
+    getLeaseCollection(stindex, bind_array, exchange6_, collection, true);
 
     // Return single record if present, else clear the lease.
     if (collection.empty()) {
@@ -989,15 +1108,16 @@ PgSqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
               DHCPSRV_PGSQL_GET_ADDR4).arg(addr.toText());
 
     // Set up the WHERE clause value
-    BindParams inparams;
-    ostringstream tmp;
+    PsqlBindArray bind_array;
 
-    tmp << static_cast<uint32_t>(addr);
-    inparams.push_back(PgSqlParam(tmp.str()));
+    // LEASE ADDRESS
+    std::string addr_str = boost::lexical_cast<std::string>
+                           (static_cast<uint32_t>(addr));
+    bind_array.add(addr_str);
 
     // Get the data
     Lease4Ptr result;
-    getLease(GET_LEASE4_ADDR, inparams, result);
+    getLease(GET_LEASE4_ADDR, bind_array, result);
 
     return (result);
 }
@@ -1008,17 +1128,18 @@ PgSqlLeaseMgr::getLease4(const HWAddr& hwaddr) const {
               DHCPSRV_PGSQL_GET_HWADDR).arg(hwaddr.toText());
 
     // Set up the WHERE clause value
-    BindParams inparams;
+    PsqlBindArray bind_array;
 
+    // HWADDR
     if (!hwaddr.hwaddr_.empty()) {
-        inparams.push_back(PgSqlParam(hwaddr.hwaddr_));
+        bind_array.add(hwaddr.hwaddr_);
     } else {
-        inparams.push_back(PgSqlParam());
+        bind_array.add("");
     }
 
     // Get the data
     Lease4Collection result;
-    getLeaseCollection(GET_LEASE4_HWADDR, inparams, result);
+    getLeaseCollection(GET_LEASE4_HWADDR, bind_array, result);
 
     return (result);
 }
@@ -1030,21 +1151,22 @@ PgSqlLeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
               .arg(subnet_id).arg(hwaddr.toText());
 
     // Set up the WHERE clause value
-    BindParams inparams;
-    ostringstream tmp;
+    PsqlBindArray bind_array;
 
+    // HWADDR
     if (!hwaddr.hwaddr_.empty()) {
-        inparams.push_back(PgSqlParam(hwaddr.hwaddr_));
+        bind_array.add(hwaddr.hwaddr_);
     } else {
-        inparams.push_back(PgSqlParam());
+        bind_array.add("");
     }
 
-    tmp << static_cast<unsigned long>(subnet_id);
-    inparams.push_back(PgSqlParam(tmp.str()));
+    // SUBNET_ID
+    std::string subnet_id_str = boost::lexical_cast<std::string>(subnet_id);
+    bind_array.add(subnet_id_str);
 
     // Get the data
     Lease4Ptr result;
-    getLease(GET_LEASE4_HWADDR_SUBID, inparams, result);
+    getLease(GET_LEASE4_HWADDR_SUBID, bind_array, result);
 
     return (result);
 }
@@ -1055,14 +1177,14 @@ PgSqlLeaseMgr::getLease4(const ClientId& clientid) const {
               DHCPSRV_PGSQL_GET_CLIENTID).arg(clientid.toText());
 
     // Set up the WHERE clause value
-    BindParams inparams;
+    PsqlBindArray bind_array;
 
     // CLIENT_ID
-    inparams.push_back(PgSqlParam(clientid.getClientId()));
+    bind_array.add(clientid.getClientId());
 
     // Get the data
     Lease4Collection result;
-    getLeaseCollection(GET_LEASE4_CLIENTID, inparams, result);
+    getLeaseCollection(GET_LEASE4_CLIENTID, bind_array, result);
 
     return (result);
 }
@@ -1074,18 +1196,18 @@ PgSqlLeaseMgr::getLease4(const ClientId& clientid, SubnetID subnet_id) const {
               .arg(subnet_id).arg(clientid.toText());
 
     // Set up the WHERE clause value
-    BindParams inparams;
-    ostringstream tmp;
+    PsqlBindArray bind_array;
 
     // CLIENT_ID
-    inparams.push_back(PgSqlParam(clientid.getClientId()));
+    bind_array.add(clientid.getClientId());
 
-    tmp << static_cast<unsigned long>(subnet_id);
-    inparams.push_back(PgSqlParam(tmp.str()));
+    // SUBNET_ID
+    std::string subnet_id_str = boost::lexical_cast<std::string>(subnet_id);
+    bind_array.add(subnet_id_str);
 
     // Get the data
     Lease4Ptr result;
-    getLease(GET_LEASE4_CLIENTID_SUBID, inparams, result);
+    getLease(GET_LEASE4_CLIENTID_SUBID, bind_array, result);
 
     return (result);
 }
@@ -1107,50 +1229,47 @@ PgSqlLeaseMgr::getLease6(Lease::Type lease_type,
               .arg(addr.toText()).arg(lease_type);
 
     // Set up the WHERE clause value
-    BindParams inparams;
-    ostringstream tmp;
+    PsqlBindArray bind_array;
 
-    // ADDRESS
-    inparams.push_back(PgSqlParam(addr.toText()));
+    // LEASE ADDRESS
+    std::string addr_str = addr.toText();
+    bind_array.add(addr_str);
 
     // LEASE_TYPE
-    tmp << static_cast<uint16_t>(lease_type);
-    inparams.push_back(PgSqlParam(tmp.str()));
+    std::string type_str_ = boost::lexical_cast<std::string>(lease_type);
+    bind_array.add(type_str_);
 
     // ... and get the data
     Lease6Ptr result;
-    getLease(GET_LEASE6_ADDR, inparams, result);
+    getLease(GET_LEASE6_ADDR, bind_array, result);
 
     return (result);
 }
 
 Lease6Collection
-PgSqlLeaseMgr::getLeases6(Lease::Type type, const DUID& duid,
+PgSqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid,
                           uint32_t iaid) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_GET_IAID_DUID)
-              .arg(iaid).arg(duid.toText()).arg(type);
+              .arg(iaid).arg(duid.toText()).arg(lease_type);
 
     // Set up the WHERE clause value
-    BindParams inparams;
-    ostringstream tmp;
+    PsqlBindArray bind_array;
 
     // DUID
-    inparams.push_back(PgSqlParam(duid.getDuid()));
+    bind_array.add(duid.getDuid());
 
     // IAID
-    tmp << static_cast<unsigned long>(iaid);
-    inparams.push_back(PgSqlParam(tmp.str()));
-    tmp.str("");
-    tmp.clear();
+    std::string iaid_str = boost::lexical_cast<std::string>(iaid);
+    bind_array.add(iaid_str);
 
     // LEASE_TYPE
-    tmp << static_cast<uint16_t>(type);
-    inparams.push_back(PgSqlParam(tmp.str()));
+    std::string lease_type_str = boost::lexical_cast<std::string>(lease_type);
+    bind_array.add(lease_type_str);
 
     // ... and get the data
     Lease6Collection result;
-    getLeaseCollection(GET_LEASE6_DUID_IAID, inparams, result);
+    getLeaseCollection(GET_LEASE6_DUID_IAID, bind_array, result);
 
     return (result);
 }
@@ -1163,33 +1282,26 @@ PgSqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid,
               .arg(iaid).arg(subnet_id).arg(duid.toText()).arg(lease_type);
 
     // Set up the WHERE clause value
-    BindParams inparams;
-    ostringstream tmp;
+    PsqlBindArray bind_array;
 
     // LEASE_TYPE
-    tmp << static_cast<uint16_t>(lease_type);
-    inparams.push_back(PgSqlParam(tmp.str()));
-    tmp.str("");
-    tmp.clear();
+    std::string lease_type_str = boost::lexical_cast<std::string>(lease_type);
+    bind_array.add(lease_type_str);
 
     // DUID
-    inparams.push_back(PgSqlParam(duid.getDuid()));
+    bind_array.add(duid.getDuid());
 
     // IAID
-    tmp << static_cast<unsigned long>(iaid);
-    inparams.push_back(PgSqlParam(tmp.str()));
-    tmp.str("");
-    tmp.clear();
+    std::string iaid_str = boost::lexical_cast<std::string>(iaid);
+    bind_array.add(iaid_str);
 
-    // Subnet ID
-    tmp << static_cast<unsigned long>(subnet_id);
-    inparams.push_back(PgSqlParam(tmp.str()));
-    tmp.str("");
-    tmp.clear();
+    // SUBNET ID
+    std::string subnet_id_str = boost::lexical_cast<std::string>(subnet_id);
+    bind_array.add(subnet_id_str);
 
     // ... and get the data
     Lease6Collection result;
-    getLeaseCollection(GET_LEASE6_DUID_IAID_SUBID, inparams, result);
+    getLeaseCollection(GET_LEASE6_DUID_IAID_SUBID, bind_array, result);
 
     return (result);
 }
@@ -1231,43 +1343,6 @@ PgSqlLeaseMgr::updateLeaseCommon(StatementIndex stindex,
 }
 
 
-template <typename LeasePtr>
-void
-PgSqlLeaseMgr::updateLeaseCommon(StatementIndex stindex, BindParams & params,
-                                 const LeasePtr& lease) {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_PGSQL_ADD_ADDR4).arg(statements_[stindex].stmt_name);
-
-    vector<const char *> params_;
-    vector<int> lengths_;
-    vector<int> formats_;
-    convertToQuery(params, params_, lengths_, formats_);
-
-    PGresult * r = PQexecPrepared(conn_, statements_[stindex].stmt_name,
-                                  statements_[stindex].stmt_nbparams,
-                                  &params_[0], &lengths_[0], &formats_[0], 0);
-    checkStatementError(r, stindex);
-
-    int affected_rows = boost::lexical_cast<int>(PQcmdTuples(r));
-    PQclear(r);
-
-    // Check success case first as it is the most likely outcome.
-    if (affected_rows == 1) {
-      return;
-    }
-
-    // If no rows affected, lease doesn't exist.
-    if (affected_rows == 0) {
-        isc_throw(NoSuchLease, "unable to update lease for address " <<
-                  lease->addr_.toText() << " as it does not exist");
-    }
-
-    // Should not happen - primary key constraint should only have selected
-    // one row.
-    isc_throw(DbOperationError, "apparently updated more than one lease "
-                  "that had the address " << lease->addr_.toText());
-}
-
 void
 PgSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     const StatementIndex stindex = UPDATE_LEASE4;
@@ -1308,15 +1383,14 @@ PgSqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
 }
 
 bool
-PgSqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex, BindParams & params) {
-    vector<const char *> params_;
-    vector<int> lengths_;
-    vector<int> formats_;
-    convertToQuery(params, params_, lengths_, formats_);
-
+PgSqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex,
+                                 PsqlBindArray& bind_array) {
     PGresult * r = PQexecPrepared(conn_, statements_[stindex].stmt_name,
                                   statements_[stindex].stmt_nbparams,
-                                  &params_[0], &lengths_[0], &formats_[0], 0);
+                                  &bind_array.values_[0],
+                                  &bind_array.lengths_[0],
+                                  &bind_array.formats_[0], 0);
+
     checkStatementError(r, stindex);
     int affected_rows = boost::lexical_cast<int>(PQcmdTuples(r));
     PQclear(r);
@@ -1330,17 +1404,18 @@ PgSqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
               DHCPSRV_PGSQL_DELETE_ADDR).arg(addr.toText());
 
     // Set up the WHERE clause value
-    BindParams inparams;
+    PsqlBindArray bind_array;
 
     if (addr.isV4()) {
-        ostringstream tmp;
-        tmp << static_cast<uint32_t>(addr);
-        inparams.push_back(PgSqlParam(tmp.str()));
-        return (deleteLeaseCommon(DELETE_LEASE4, inparams));
+        std::string addr4_str = boost::lexical_cast<std::string>
+                                 (static_cast<uint32_t>(addr));
+        bind_array.add(addr4_str);
+        return (deleteLeaseCommon(DELETE_LEASE4, bind_array));
     }
 
-    inparams.push_back(PgSqlParam(addr.toText()));
-    return (deleteLeaseCommon(DELETE_LEASE6, inparams));
+    std::string addr6_str = addr.toText();
+    bind_array.add(addr6_str);
+    return (deleteLeaseCommon(DELETE_LEASE6, bind_array));
 }
 
 string
@@ -1363,23 +1438,6 @@ PgSqlLeaseMgr::checkStatementError(PGresult* r, StatementIndex index) const {
         isc_throw(DbOperationError, "Statement exec faild:" << " for: " <<
                   statements_[index].stmt_name << ", reason: " <<
                   PQerrorMessage(conn_));
-    }
-}
-
-void
-PgSqlLeaseMgr::convertToQuery(const BindParams& params,
-                              std::vector<const char *>& out_values,
-                              std::vector<int>& out_lengths,
-                              std::vector<int>& out_formats) const {
-    out_values.reserve(params.size());
-    out_lengths.reserve(params.size());
-    out_formats.reserve(params.size());
-
-    for(BindParams::const_iterator it = params.begin(); it != params.end();
-        ++it) {
-        out_values.push_back((* it).value.c_str());
-        out_lengths.push_back((* it).binarylen);
-        out_formats.push_back((* it).isbinary);
     }
 }
 
