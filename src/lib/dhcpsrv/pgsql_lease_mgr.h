@@ -89,12 +89,6 @@ struct PsqlBindArray {
     std::string toText();
 };
 
-/// @brief Describes a single compiled statement
-struct PgSqlStatementBind {
-    const char* stmt_name; ///< Name of the compiled statement
-    int stmt_nbparams; ///< Number of statement parameters
-};
-
 // Forward definitions (needed for shared_ptr definitions)
 // See pgsql_lease_mgr.cc file for actual class definitions
 class PgSqlLease4Exchange;
@@ -596,9 +590,6 @@ private:
     /// declare them as "mutable".)
     boost::scoped_ptr<PgSqlLease4Exchange> exchange4_; ///< Exchange object
     boost::scoped_ptr<PgSqlLease6Exchange> exchange6_; ///< Exchange object
-
-    /// A vector of compiled SQL statements
-    std::vector<PgSqlStatementBind> statements_;
 
     /// PostgreSQL connection handle
     PGconn* conn_;

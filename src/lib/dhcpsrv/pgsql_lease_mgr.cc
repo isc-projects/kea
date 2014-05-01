@@ -41,8 +41,6 @@ const size_t MAX_PARAMETERS_IN_QUERY = 13;
 struct TaggedStatement {
 
     /// Query index
-    /// @todo cppcheck flags index as unused
-    // cppcheck-suppress unusedStructMember
     PgSqlLeaseMgr::StatementIndex index;
 
     /// Number of parameters for a given query
@@ -901,9 +899,6 @@ PgSqlLeaseMgr::~PgSqlLeaseMgr() {
 
 void
 PgSqlLeaseMgr::prepareStatements() {
-    statements_.clear();
-    statements_.resize(NUM_STATEMENTS, PgSqlStatementBind());
-
     for(int i = 0; tagged_statements[i].text != NULL; ++ i) {
         // Prepare all statements queries with all known fields datatype
         PGresult* r = PQprepare(conn_, tagged_statements[i].name,
@@ -919,8 +914,6 @@ PgSqlLeaseMgr::prepareStatements() {
                       << PQerrorMessage(conn_));
         }
 
-        statements_[i].stmt_name = tagged_statements[i].name;
-        statements_[i].stmt_nbparams = tagged_statements[i].nbparams;
         PQclear(r);
     }
 }
@@ -980,9 +973,8 @@ PgSqlLeaseMgr::openDatabase() {
 bool
 PgSqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
                               PsqlBindArray& bind_array) {
-//    std::cout << "addLeaseCommon: bind_array: " << bind_array.toText();
-    PGresult * r = PQexecPrepared(conn_, statements_[stindex].stmt_name,
-                                  statements_[stindex].stmt_nbparams,
+    PGresult * r = PQexecPrepared(conn_, tagged_statements[stindex].name,
+                                  tagged_statements[stindex].nbparams,
                                   &bind_array.values_[0],
                                   &bind_array.lengths_[0],
                                   &bind_array.formats_[0], 0);
@@ -1001,7 +993,7 @@ PgSqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
         }
 
         isc_throw(DbOperationError, "unable to INSERT for " <<
-                  statements_[stindex].stmt_name << ", reason: " <<
+                  tagged_statements[stindex].name << ", reason: " <<
                   errorMsg);
     }
 
@@ -1037,10 +1029,10 @@ void PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
                                        LeaseCollection& result,
                                        bool single) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_PGSQL_GET_ADDR4).arg(statements_[stindex].stmt_name);
+              DHCPSRV_PGSQL_GET_ADDR4).arg(tagged_statements[stindex].name);
 
-    PGresult* r = PQexecPrepared(conn_, statements_[stindex].stmt_name,
-                       statements_[stindex].stmt_nbparams,
+    PGresult* r = PQexecPrepared(conn_, tagged_statements[stindex].name,
+                       tagged_statements[stindex].nbparams,
                        &bind_array.values_[0],
                        &bind_array.lengths_[0],
                        &bind_array.formats_[0], 0);
@@ -1052,7 +1044,7 @@ void PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
         PQclear(r);
         isc_throw(MultipleRecords, "multiple records were found in the "
                       "database where only one was expected for query "
-                      << statements_[stindex].stmt_name);
+                      << tagged_statements[stindex].name);
     }
 
     for(int i = 0; i < rows; ++ i) {
@@ -1312,10 +1304,10 @@ PgSqlLeaseMgr::updateLeaseCommon(StatementIndex stindex,
                                  PsqlBindArray& bind_array,
                                  const LeasePtr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_PGSQL_ADD_ADDR4).arg(statements_[stindex].stmt_name);
+              DHCPSRV_PGSQL_ADD_ADDR4).arg(tagged_statements[stindex].name);
 
-    PGresult * r = PQexecPrepared(conn_, statements_[stindex].stmt_name,
-                                  statements_[stindex].stmt_nbparams,
+    PGresult * r = PQexecPrepared(conn_, tagged_statements[stindex].name,
+                                  tagged_statements[stindex].nbparams,
                                   &bind_array.values_[0],
                                   &bind_array.lengths_[0],
                                   &bind_array.formats_[0], 0);
@@ -1385,8 +1377,8 @@ PgSqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
 bool
 PgSqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex,
                                  PsqlBindArray& bind_array) {
-    PGresult * r = PQexecPrepared(conn_, statements_[stindex].stmt_name,
-                                  statements_[stindex].stmt_nbparams,
+    PGresult * r = PQexecPrepared(conn_, tagged_statements[stindex].name,
+                                  tagged_statements[stindex].nbparams,
                                   &bind_array.values_[0],
                                   &bind_array.lengths_[0],
                                   &bind_array.formats_[0], 0);
@@ -1436,7 +1428,7 @@ PgSqlLeaseMgr::checkStatementError(PGresult* r, StatementIndex index) const {
         PQclear(r);
 
         isc_throw(DbOperationError, "Statement exec faild:" << " for: " <<
-                  statements_[index].stmt_name << ", reason: " <<
+                  tagged_statements[index].name << ", reason: " <<
                   PQerrorMessage(conn_));
     }
 }
