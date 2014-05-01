@@ -710,6 +710,7 @@ GenericLeaseMgrTest::testBasicLease4() {
     detailCompareLease(leases[3], l_returned);
 
     // Check that we can't add a second lease with the same address
+std::cout << "OK - Duplicate check here!!!!!!" << std::endl;
     EXPECT_FALSE(lmptr_->addLease(leases[1]));
 
     // Delete a lease, check that it's gone, and that we can't delete it
