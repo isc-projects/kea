@@ -110,14 +110,13 @@ validConnectionString() {
 // tests will (should) fall over.
 void destroySchema() {
     // Open database
-    PGconn * conn = 0;
+    PGconn* conn = 0;
     conn = PQconnectdb("host = 'localhost' user = 'keatest'"
                        " password = 'keatest' dbname = 'keatest'");
 
-    PGresult * r;
     // Get rid of everything in it.
     for (int i = 0; destroy_statement[i] != NULL; ++i) {
-        r = PQexec(conn, destroy_statement[i]);
+        PGresult* r = PQexec(conn, destroy_statement[i]);
         PQclear(r);
     }
 
@@ -132,14 +131,13 @@ void destroySchema() {
 // will fall over.
 void createSchema() {
     // Open database
-    PGconn * conn = 0;
+    PGconn* conn = 0;
     conn = PQconnectdb("host = 'localhost' user = 'keatest'"
                        " password = 'keatest' dbname = 'keatest'");
 
-    PGresult * r;
     // Get rid of everything in it.
     for (int i = 0; create_statement[i] != NULL; ++i) {
-        r = PQexec(conn, create_statement[i]);
+        PGresult* r = PQexec(conn, create_statement[i]);
         PQclear(r);
     }
 
