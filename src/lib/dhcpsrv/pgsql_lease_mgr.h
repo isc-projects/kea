@@ -227,7 +227,7 @@ public:
     ///
     /// @return A pointer to the lease or NULL if the lease is not found.
     /// @throw isc::NotImplemented On every call as this function is currently
-    /// not implemented for the MySQL backend.
+    /// not implemented for the PostgreSQL backend.
     virtual Lease4Ptr getLease4(const ClientId& client_id, const HWAddr& hwaddr,
                                 SubnetID subnet_id) const;
 
@@ -384,6 +384,15 @@ public:
     /// @throw DbOperationError If the rollback failed.
     virtual void rollback();
 
+    /// @brief Checks a result set's SQL state against an error state.
+    ///
+    /// @param r result set to check
+    /// @param error_state error state to compare against
+    ///
+    /// @return True if the result set's SQL state equals the error_state,
+    /// false otherwise.
+    bool compareError(PGresult*& r, const char* error_state);
+
     /// @brief Statement Tags
     ///
     /// The contents of the enum are indexes into the list of compiled SQL
@@ -521,7 +530,7 @@ private:
     /// @param index will be used to print out compiled statement name
     ///
     /// @throw isc::dhcp::DbOperationError Detailed PostgreSQL failure
-    inline void checkStatementError(PGresult* r, StatementIndex index) const;
+    void checkStatementError(PGresult*& r, StatementIndex index) const;
 
     /// @brief Get Lease4 Common Code
     ///
