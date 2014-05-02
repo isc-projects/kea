@@ -28,13 +28,13 @@
 #include <string>
 #include <time.h>
 
-// PostgreSQL errors should be tested based on the SQL state code.  These are
-// each state code is 5 decimal digits, the first two define the category of
+// PostgreSQL errors should be tested based on the SQL state code.  Each state
+// code is 5 decimal, ASCII, digits, the first two define the category of
 // error, the last three are the specific error.  PostgreSQL makes the state
-// code as a char* of 5 ASCII digits.  Macros for each code are defined in
-// PostgreSQL's errorcodes.h, although they require a second macro,
-// MAKE_SQLSTATE for completion.  They deliberately do not define this
-// this second macro in errorlogs.h, so callers can supply their own.
+// code as a char[5].  Macros for each code are defined in PostgreSQL's
+// errorcodes.h, although they require a second macro, MAKE_SQLSTATE for
+// completion.  PostgreSQL deliberately omits this macro from errocodes.h
+// so callers can supply their own.
 #define MAKE_SQLSTATE(ch1,ch2,ch3,ch4,ch5) {ch1,ch2,ch3,ch4,ch5}
 #include <server/utils/errcodes.h>
 const size_t STATECODE_LEN = 5;
@@ -77,7 +77,7 @@ struct TaggedStatement {
 /// @brief Constants for PostgreSQL data types
 /// This are defined by PostreSQL in <catalog/pg_type.h>, but including
 /// this file is extrordinarily convoluted, so we'll use these to fill-in.
-const size_t OID_NONE = 0;  // PostgreSQL infers proper type
+const size_t OID_NONE = 0;   // PostgreSQL infers proper type
 const size_t OID_BOOL = 16;
 const size_t OID_BYTEA = 17;
 const size_t OID_INT8 = 20;  // 8 byte int
@@ -230,13 +230,6 @@ void PsqlBindArray::add(const std::string& value) {
 void PsqlBindArray::add(const std::vector<uint8_t>& data) {
     values_.push_back(reinterpret_cast<const char*>(&(data[0])));
     lengths_.push_back(data.size());
-    formats_.push_back(BINARY_FMT);
-}
-
-/// @todo not using yet
-void PsqlBindArray::add(const uint32_t& value)  {
-    values_.push_back(reinterpret_cast<const char*>(&value));
-    lengths_.push_back(sizeof(uint32_t));
     formats_.push_back(BINARY_FMT);
 }
 
@@ -576,9 +569,6 @@ public:
     /// all columns in the table are explicitly listed in the SQL statement(s)
     /// in the same order as they occur in the table.
     ///
-    /// @todo Bindings currently turn everything into strings, performance
-    /// could be improved by using binary-to-binary where possible.
-    ///
     /// @param lease Lease4 object that is to be written to the database
     /// @param[out] bind_array array to populate with the lease data values
     ///
@@ -756,9 +746,6 @@ public:
     /// order the columns are specified in the SQL statement.  By convention
     /// all columns in the table are explicitly listed in the SQL statement(s)
     /// in the same order as they occur in the table.
-    ///
-    /// @todo Bindings currently turn everything into strings, performance
-    /// could be improved by using binary-to-binary where possible.
     ///
     /// @param lease Lease6 object that is to be written to the database
     /// @param[out] bind_array array to populate with the lease data values
