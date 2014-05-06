@@ -103,7 +103,7 @@ void Daemon::loggerInit(const char* log_name, bool verbose, bool ) {
     // @todo: Find out why this is needed. Without this, the logger doesn't
     // work.
     setenv("B10_LOCKFILE_DIR_FROM_BUILD", TOP_BUILDDIR, 1);
-    
+
     // Initialize logging
     initLogger(log_name, severity, isc::log::MAX_DEBUG_LEVEL, NULL);
 
