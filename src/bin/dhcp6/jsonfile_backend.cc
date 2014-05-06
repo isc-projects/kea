@@ -42,13 +42,6 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-// Need to provide dummy reader. JSON-file backend does not use any control
-// readers for now. Eventually, we may consider having a socket (named socket?)
-// that other processes (like IPAM) could write to, triggering specific actions.
-// For now, it's a no-op method.
-void ControlledDhcpv6Srv::sessionReader(void) {
-}
-
 bool
 ControlledDhcpv6Srv::init(const std::string& file_name) {
     // This is a configuration backend implementation that reads the
@@ -70,7 +63,7 @@ ControlledDhcpv6Srv::init(const std::string& file_name) {
         json = Element::fromJSON(config);
 
         // Use parsed JSON structures to configure the server
-        result = configureDhcp6Server(*this, json);
+        result = processCommand("config-reload", json);
 
     }  catch (const std::exception& ex) {
         LOG_ERROR(dhcp6_logger, DHCP6_CONFIG_LOAD_FAIL).arg(ex.what());
@@ -101,36 +94,15 @@ ControlledDhcpv6Srv::init(const std::string& file_name) {
         return (false);
     }
 
-    // Configuration may disable or enable interfaces so we have to
-    // reopen sockets according to new configuration.
-    openActiveSockets(getPort());
-
-    // Server will start DDNS communications if its enabled.
-    this->startD2();
+    // We don't need to call openActiveSockets() or startD2() as these
+    // methods are called in processConfig() which is called by
+    // processCommand("reload-config", ...)
 
     return (true);
 }
 
 void ControlledDhcpv6Srv::cleanup() {
     // Nothing to do here. No need to disconnect from anything.
-}
-
-ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port)
-    : Dhcpv6Srv(port), cc_session_(NULL), config_session_(NULL) {
-}
-
-void ControlledDhcpv6Srv::shutdown() {
-
-    // Stop ASIO transmissions. Even though we didn't use it for
-    // configuration reading, there may be on-going transmissions
-    // with D2.
-    io_service_.stop();
-
-    Dhcpv6Srv::shutdown(); // Initiate DHCPv6 shutdown procedure.
-}
-
-ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
-    cleanup();
 }
 
 };

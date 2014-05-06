@@ -15,7 +15,7 @@
 #include <config.h>
 
 #include <config/ccsession.h>
-#include <dhcp/dhcp6.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <hooks/hooks_manager.h>
 
@@ -25,17 +25,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
-#include <fstream>
-#include <iostream>
-#include <sstream>
-
-#include <arpa/inet.h>
-#include <unistd.h>
-
 using namespace std;
-using namespace isc;
-using namespace isc::asiolink;
-using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
@@ -85,13 +75,13 @@ TEST_F(CtrlDhcpv6SrvTest, commands) {
     int rcode = -1;
 
     // Case 1: send bogus command
-    ConstElementPtr result = ControlledDhcpv6Srv::execDhcpv6ServerCommand("blah", params);
-    ConstElementPtr comment = parseAnswer(rcode, result);
+    ConstElementPtr result = ControlledDhcpv6Srv::processCommand("blah", params);
+    ConstElementPtr comment = isc::config::parseAnswer(rcode, result);
     EXPECT_EQ(1, rcode); // expect failure (no such command as blah)
 
     // Case 2: send shutdown command without any parameters
-    result = ControlledDhcpv6Srv::execDhcpv6ServerCommand("shutdown", params);
-    comment = parseAnswer(rcode, result);
+    result = ControlledDhcpv6Srv::processCommand("shutdown", params);
+    comment = isc::config::parseAnswer(rcode, result);
     EXPECT_EQ(0, rcode); // expect success
 
     const pid_t pid(getpid());
@@ -99,14 +89,21 @@ TEST_F(CtrlDhcpv6SrvTest, commands) {
     params->set("pid", x);
 
     // Case 3: send shutdown command with 1 parameter: pid
-    result = ControlledDhcpv6Srv::execDhcpv6ServerCommand("shutdown", params);
-    comment = parseAnswer(rcode, result);
+    result = ControlledDhcpv6Srv::processCommand("shutdown", params);
+    comment = isc::config::parseAnswer(rcode, result);
     EXPECT_EQ(0, rcode); // Expect success
 }
 
 // Check that the "libreload" command will reload libraries
-
 TEST_F(CtrlDhcpv6SrvTest, libreload) {
+
+    // Sending commands for processing now requires a server that can process
+    // them.
+    boost::scoped_ptr<ControlledDhcpv6Srv> srv;
+    ASSERT_NO_THROW(
+        srv.reset(new ControlledDhcpv6Srv(0))
+    );
+
     // Ensure no marker files to start with.
     ASSERT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
     ASSERT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
@@ -137,8 +134,8 @@ TEST_F(CtrlDhcpv6SrvTest, libreload) {
     int rcode = -1;
 
     ConstElementPtr result =
-        ControlledDhcpv6Srv::execDhcpv6ServerCommand("libreload", params);
-    ConstElementPtr comment = parseAnswer(rcode, result);
+        ControlledDhcpv6Srv::processCommand("libreload", params);
+    ConstElementPtr comment = isc::config::parseAnswer(rcode, result);
     EXPECT_EQ(0, rcode); // Expect success
 
     // Check that the libraries have unloaded and reloaded.  The libraries are
@@ -146,6 +143,60 @@ TEST_F(CtrlDhcpv6SrvTest, libreload) {
     // they should append information to the loading marker file.
     EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "21"));
     EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "1212"));
+}
+
+// Check that the "configReload" command will reload libraries
+TEST_F(CtrlDhcpv6SrvTest, configReload) {
+
+    // Sending commands for processing now requires a server that can process
+    // them.
+    boost::scoped_ptr<ControlledDhcpv6Srv> srv;
+    ASSERT_NO_THROW(
+        srv.reset(new ControlledDhcpv6Srv(0))
+    );
+
+    // Now execute the "libreload" command.  This should cause the libraries
+    // to unload and to reload.
+
+    // Use empty parameters list
+    // Prepare configuration file.
+    string config_txt = "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/80\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:2::/80\" ],"
+        "    \"subnet\": \"2001:db8:2::/64\", "
+        "    \"id\": 0"
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:3::/80\" ],"
+        "    \"subnet\": \"2001:db8:3::/64\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr config = Element::fromJSON(config_txt);
+
+    // Make sure there are no subnets configured.
+    CfgMgr::instance().deleteSubnets6();
+
+    // Now send the command
+    int rcode = -1;
+    ConstElementPtr result =
+        ControlledDhcpv6Srv::processCommand("config-reload", config);
+    ConstElementPtr comment = isc::config::parseAnswer(rcode, result);
+    EXPECT_EQ(0, rcode); // Expect success
+
+    // Check that the config was indeed applied.
+    const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
+    EXPECT_EQ(3, subnets->size());
+
+    // Clean up after the test.
+    CfgMgr::instance().deleteSubnets6();
 }
 
 } // End of anonymous namespace
