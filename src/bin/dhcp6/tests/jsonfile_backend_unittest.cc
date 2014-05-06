@@ -46,12 +46,12 @@ public:
 };
 
 
-class ControlledJSONDhcpv6SrvTest : public ::testing::Test {
+class JSONFileBackendTest : public ::testing::Test {
 public:
-    ControlledJSONDhcpv6SrvTest() {
+    JSONFileBackendTest() {
     }
 
-    ~ControlledJSONDhcpv6SrvTest() {
+    ~JSONFileBackendTest() {
     };
 
     void writeFile(const std::string& file_name, const std::string& content) {
@@ -66,10 +66,10 @@ public:
     static const char* TEST_FILE;
 };
 
-const char* ControlledJSONDhcpv6SrvTest::TEST_FILE = "test-config.json";
+const char* JSONFileBackendTest::TEST_FILE = "test-config.json";
 
 // This test checks if configuration can be read from a JSON file.
-TEST_F(ControlledJSONDhcpv6SrvTest, jsonFile) {
+TEST_F(JSONFileBackendTest, jsonFile) {
 
     // Prepare configuration file.
     string config = "{ \"interfaces\": [ \"*\" ],"
@@ -141,7 +141,7 @@ TEST_F(ControlledJSONDhcpv6SrvTest, jsonFile) {
 }
 
 // This test checks if configuration can be read from a JSON file.
-TEST_F(ControlledJSONDhcpv6SrvTest, comments) {
+TEST_F(JSONFileBackendTest, comments) {
 
     string config_hash_comments = "# This is a comment. It should be \n"
         "#ignored. Real config starts in line below\n"
