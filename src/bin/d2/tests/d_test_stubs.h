@@ -135,9 +135,9 @@ public:
     /// indicate an abnormal termination.
     virtual void run();
 
-    /// @brief Implements the process shutdown procedure. 
+    /// @brief Implements the process shutdown procedure.
     ///
-    /// This sets the instance shutdown flag monitored by run()  and stops 
+    /// This sets the instance shutdown flag monitored by run()  and stops
     /// the IO service.
     virtual isc::data::ConstElementPtr shutdown(isc::data::ConstElementPtr);
 
@@ -446,9 +446,12 @@ public:
     }
 };
 
-/// @brief Simple parser derivation for testing the basics of configuration
-/// parsing.
-class TestParser : public isc::dhcp::DhcpConfigParser {
+/// @brief a collection of elements that store uint32 values
+typedef isc::dhcp::ValueStorage<isc::data::ConstElementPtr> ObjectStorage;
+typedef boost::shared_ptr<ObjectStorage> ObjectStoragePtr;
+
+/// @brief Simple parser derivation for parsing object elements.
+class ObjectParser : public isc::dhcp::DhcpConfigParser {
 public:
 
     /// @brief Constructor
@@ -456,10 +459,10 @@ public:
     /// See @ref DhcpConfigParser class for details.
     ///
     /// @param param_name name of the parsed parameter
-    TestParser(const std::string& param_name);
+    ObjectParser(const std::string& param_name, ObjectStoragePtr& object_values);
 
     /// @brief Destructor
-    virtual ~TestParser();
+    virtual ~ObjectParser();
 
     /// @brief Builds parameter value.
     ///
@@ -486,7 +489,11 @@ private:
 
     /// pointer to the parsed value of the parameter
     isc::data::ConstElementPtr value_;
+
+    /// Pointer to the storage where committed value is stored.
+    ObjectStoragePtr object_values_;
 };
+
 
 /// @brief Test Derivation of the DCfgContextBase class.
 ///
@@ -505,6 +512,11 @@ public:
     /// @brief Destructor
     virtual ~DStubContext();
 
+    /// @brief Creates a clone of a DStubContext.
+    ///
+    /// @return returns a pointer to the new clone.
+    virtual DCfgContextBasePtr clone();
+
     /// @brief Fetches the value for a given "extra" configuration parameter
     /// from the context.
     ///
@@ -513,17 +525,10 @@ public:
     /// value.
     /// @throw throws DhcpConfigError if the context does not contain the
     /// parameter.
-    void getExtraParam(const std::string& name, uint32_t& value);
+    void getObjectParam(const std::string& name,
+                        isc::data::ConstElementPtr& value);
 
-    /// @brief Fetches the extra storage.
-    ///
-    /// @return returns a pointer to the extra storage.
-    isc::dhcp::Uint32StoragePtr getExtraStorage();
-
-    /// @brief Creates a clone of a DStubContext.
-    ///
-    /// @return returns a pointer to the new clone.
-    virtual DCfgContextBasePtr clone();
+    ObjectStoragePtr& getObjectStorage();
 
 protected:
     /// @brief Copy constructor
@@ -533,8 +538,8 @@ private:
     /// @brief Private assignment operator, not implemented.
     DStubContext& operator=(const DStubContext& rhs);
 
-    /// @brief Extra storage for uint32 parameters.
-    isc::dhcp::Uint32StoragePtr extra_values_;
+    /// @brief Stores non-scalar configuration elements
+    ObjectStoragePtr object_values_;
 };
 
 /// @brief Defines a pointer to DStubContext.
@@ -579,6 +584,9 @@ public:
     /// @brief A list for remembering the element ids in the order they were
     /// parsed.
     ElementIdList parsed_order_;
+
+    /// @todo
+    virtual DCfgContextBasePtr createNewContext();
 };
 
 /// @brief Defines a pointer to DStubCfgMgr.
@@ -609,9 +617,9 @@ public:
         try  {
             config_set_ = isc::data::Element::fromJSON(json_text);
         } catch (const isc::Exception &ex) {
-            return (::testing::AssertionFailure(::testing::Message() << 
-                                                "JSON text failed to parse:" 
-                                                << ex.what())); 
+            return (::testing::AssertionFailure(::testing::Message() <<
+                                                "JSON text failed to parse:"
+                                                << ex.what()));
         }
 
         return (::testing::AssertionSuccess());
@@ -631,7 +639,7 @@ public:
     /// @brief Compares the status in the given parse result to a given value.
     ///
     /// @param answer Element set containing an integer response and string
-    /// comment. 
+    /// comment.
     /// @param should_be is an integer against which to compare the status.
     ///
     /// @return returns AssertionSuccess if there were no parsing errors,
@@ -645,8 +653,8 @@ public:
             return (testing::AssertionSuccess());
         }
 
-        return (::testing::AssertionFailure(::testing::Message() << 
-                                            "checkAnswer rcode:" << rcode 
+        return (::testing::AssertionFailure(::testing::Message() <<
+                                            "checkAnswer rcode:" << rcode
                                             << " comment: " << *comment));
     }
 
