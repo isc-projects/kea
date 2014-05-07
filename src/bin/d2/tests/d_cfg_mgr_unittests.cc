@@ -18,6 +18,7 @@
 #include <d2/d_cfg_mgr.h>
 #include <d_test_stubs.h>
 
+#include <boost/foreach.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
 
@@ -43,6 +44,11 @@ public:
 
     /// @brief Destructor
     virtual ~DCtorTestCfgMgr() {
+    }
+
+    /// @brief Dummy implementation as this method is abstract.
+    virtual DCfgContextBasePtr createNewContext() {
+        return (DCfgContextBasePtr());
     }
 
     /// @brief Dummy implementation as this method is abstract.
@@ -112,7 +118,7 @@ TEST(DCfgMgrBase, construction) {
 /// 4. An unknown element error is handled.
 TEST_F(DStubCfgMgrTest, basicParseTest) {
     // Create a simple configuration.
-    string config = "{ \"test-value\": 1000 } ";
+    string config = "{ \"test-value\": [] } ";
     ASSERT_TRUE(fromJSON(config));
 
     // Verify that we can parse a simple configuration.
@@ -151,6 +157,9 @@ TEST_F(DStubCfgMgrTest, parseOrderTest) {
     std::string charlie("charlie");
     std::string bravo("bravo");
     std::string alpha("alpha");
+    std::string string_test("string_test");
+    std::string uint32_test("uint32_test");
+    std::string bool_test("bool_test");
 
     // Create the test configuration with the elements in "random" order.
 
@@ -158,9 +167,15 @@ TEST_F(DStubCfgMgrTest, parseOrderTest) {
     // are in lexical order by element_id. This means that iterating over
     // such an element set, will present the elements in lexical order. Should
     // this change, this test will need to be modified accordingly.
-    string config = "{ \"bravo\": 2,  "
-                     " \"alpha\": 1,  "
-                     " \"charlie\": 3 } ";
+    string config = "{"
+                    " \"string_test\": \"hoopla\", "
+                    " \"bravo\": [],  "
+                    " \"uint32_test\": 55, "
+                    " \"alpha\": {},  "
+                    " \"charlie\": [], "
+                    " \"bool_test\": true "
+                    "} ";
+
     ASSERT_TRUE(fromJSON(config));
 
     // Verify that non-ordered parsing, results in an as-they-come parse order.
@@ -169,6 +184,13 @@ TEST_F(DStubCfgMgrTest, parseOrderTest) {
     // present the elements in lexical order.  Should this change, the expected
     // order list below would need to be changed accordingly).
     ElementIdList order_expected;
+
+    // scalar params should be first and lexically
+    order_expected.push_back(bool_test);
+    order_expected.push_back(string_test);
+    order_expected.push_back(uint32_test);
+
+    // objects second and lexically
     order_expected.push_back(alpha);
     order_expected.push_back(bravo);
     order_expected.push_back(charlie);
@@ -183,6 +205,9 @@ TEST_F(DStubCfgMgrTest, parseOrderTest) {
 
     // Verify that the parsed order matches what we expected.
     EXPECT_TRUE(cfg_mgr_->parsed_order_ ==  order_expected);
+    for (int i = 0; i < cfg_mgr_->parsed_order_.size(); ++i) {
+        std::cout << i << ":" << cfg_mgr_->parsed_order_[i] << std::endl;
+    }
 
     // Clear the manager's parse order "memory".
     cfg_mgr_->parsed_order_.clear();
@@ -212,8 +237,20 @@ TEST_F(DStubCfgMgrTest, parseOrderTest) {
     answer_ = cfg_mgr_->parseConfig(config_set_);
     EXPECT_TRUE(checkAnswer(0));
 
+    // Build expected order
+    // primitives should be first and lexically
+    order_expected.clear();
+    order_expected.push_back(bool_test);
+    order_expected.push_back(string_test);
+    order_expected.push_back(uint32_test);
+
+    // objects second and by the parse order
+    order_expected.push_back(charlie);
+    order_expected.push_back(bravo);
+    order_expected.push_back(alpha);
+
     // Verify that the parsed order is the order we configured.
-    EXPECT_TRUE(cfg_mgr_->getParseOrder() == cfg_mgr_->parsed_order_);
+    EXPECT_TRUE(cfg_mgr_->parsed_order_ ==  order_expected);
 
     // Create a parse order list that has too many entries.  Verify that
     // when parsing the test config, it fails.
@@ -233,24 +270,24 @@ TEST_F(DStubCfgMgrTest, parseOrderTest) {
 /// 1. Boolean parameters can be parsed and retrieved.
 /// 2. Uint32 parameters can be parsed and retrieved.
 /// 3. String parameters can be parsed and retrieved.
-/// 4. Derivation-specific parameters can be parsed and retrieved.
-/// 5. Parsing a second configuration, updates the existing context values
+/// 4. Map elements can be parsed and retrieved.
+/// 5. List elements can be parsed and retrieved.
+/// 6. Parsing a second configuration, updates the existing context values
 /// correctly.
 TEST_F(DStubCfgMgrTest, simpleTypesTest) {
-    // Fetch a derivation specific pointer to the context.
-    DStubContextPtr context = getStubContext();
-    ASSERT_TRUE(context);
-
     // Create a configuration with all of the parameters.
     string config = "{ \"bool_test\": true , "
                     "  \"uint32_test\": 77 , "
                     "  \"string_test\": \"hmmm chewy\" , "
-                    "  \"extra_test\": 430 } ";
+                    "  \"map_test\" : {} , "
+                    "  \"list_test\": [] }";
     ASSERT_TRUE(fromJSON(config));
 
     // Verify that the configuration parses without error.
     answer_ = cfg_mgr_->parseConfig(config_set_);
     ASSERT_TRUE(checkAnswer(0));
+    DStubContextPtr context = getStubContext();
+    ASSERT_TRUE(context);
 
     // Verify that the boolean parameter was parsed correctly by retrieving
     // its value from the context.
@@ -270,22 +307,26 @@ TEST_F(DStubCfgMgrTest, simpleTypesTest) {
     EXPECT_NO_THROW(context->getParam("string_test", actual_string));
     EXPECT_EQ("hmmm chewy", actual_string);
 
-    // Verify that the "extra" parameter was parsed correctly by retrieving
-    // its value from the context.
-    uint32_t actual_extra = 0;
-    EXPECT_NO_THROW(context->getExtraParam("extra_test", actual_extra));
-    EXPECT_EQ(430, actual_extra);
+    isc::data::ConstElementPtr object;
+    EXPECT_NO_THROW(context->getObjectParam("map_test", object));
+    EXPECT_TRUE(object);
+
+    EXPECT_NO_THROW(context->getObjectParam("list_test", object));
+    EXPECT_TRUE(object);
 
     // Create a configuration which "updates" all of the parameter values.
     string config2 = "{ \"bool_test\": false , "
                     "  \"uint32_test\": 88 , "
                     "  \"string_test\": \"ewww yuk!\" , "
-                    "  \"extra_test\": 11 } ";
+                    "  \"map_test2\" : {} , "
+                    "  \"list_test2\": [] }";
     ASSERT_TRUE(fromJSON(config2));
 
     // Verify that the configuration parses without error.
     answer_ = cfg_mgr_->parseConfig(config_set_);
     EXPECT_TRUE(checkAnswer(0));
+    context = getStubContext();
+    ASSERT_TRUE(context);
 
     // Verify that the boolean parameter was updated correctly by retrieving
     // its value from the context.
@@ -305,31 +346,38 @@ TEST_F(DStubCfgMgrTest, simpleTypesTest) {
     EXPECT_NO_THROW(context->getParam("string_test", actual_string));
     EXPECT_EQ("ewww yuk!", actual_string);
 
-    // Verify that the "extra" parameter was updated correctly by retrieving
-    // its value from the context.
-    actual_extra = 0;
-    EXPECT_NO_THROW(context->getExtraParam("extra_test", actual_extra));
-    EXPECT_EQ(11, actual_extra);
+    // Verify previous objects are not there.
+    EXPECT_THROW(context->getObjectParam("map_test", object),
+                                         isc::dhcp::DhcpConfigError);
+    EXPECT_THROW(context->getObjectParam("list_test", object),
+                                         isc::dhcp::DhcpConfigError);
+
+    // Verify new map object is there.
+    EXPECT_NO_THROW(context->getObjectParam("map_test2", object));
+    EXPECT_TRUE(object);
+
+    // Verify new list object is there.
+    EXPECT_NO_THROW(context->getObjectParam("list_test2", object));
+    EXPECT_TRUE(object);
 }
 
 /// @brief Tests that the configuration context is preserved after failure
 /// during parsing causes a rollback.
 /// 1. Verifies configuration context rollback.
 TEST_F(DStubCfgMgrTest, rollBackTest) {
-    // Fetch a derivation specific pointer to the context.
-    DStubContextPtr context = getStubContext();
-    ASSERT_TRUE(context);
-
     // Create a configuration with all of the parameters.
     string config = "{ \"bool_test\": true , "
                     "  \"uint32_test\": 77 , "
                     "  \"string_test\": \"hmmm chewy\" , "
-                    "  \"extra_test\": 430 } ";
+                    "  \"map_test\" : {} , "
+                    "  \"list_test\": [] }";
     ASSERT_TRUE(fromJSON(config));
 
     // Verify that the configuration parses without error.
     answer_ = cfg_mgr_->parseConfig(config_set_);
     EXPECT_TRUE(checkAnswer(0));
+    DStubContextPtr context = getStubContext();
+    ASSERT_TRUE(context);
 
     // Verify that all of parameters have the expected values.
     bool actual_bool = false;
@@ -344,16 +392,20 @@ TEST_F(DStubCfgMgrTest, rollBackTest) {
     EXPECT_NO_THROW(context->getParam("string_test", actual_string));
     EXPECT_EQ("hmmm chewy", actual_string);
 
-    uint32_t actual_extra = 0;
-    EXPECT_NO_THROW(context->getExtraParam("extra_test", actual_extra));
-    EXPECT_EQ(430, actual_extra);
+    isc::data::ConstElementPtr object;
+    EXPECT_NO_THROW(context->getObjectParam("map_test", object));
+    EXPECT_TRUE(object);
+
+    EXPECT_NO_THROW(context->getObjectParam("list_test", object));
+    EXPECT_TRUE(object);
 
     // Create a configuration which "updates" all of the parameter values
     // plus one unknown at the end.
     string config2 = "{ \"bool_test\": false , "
                     "  \"uint32_test\": 88 , "
                     "  \"string_test\": \"ewww yuk!\" , "
-                    "  \"extra_test\": 11 , "
+                    "  \"map_test2\" : {} , "
+                    "  \"list_test2\": [] , "
                     "  \"zeta_unknown\": 33 } ";
     ASSERT_TRUE(fromJSON(config2));
 
@@ -361,9 +413,8 @@ TEST_F(DStubCfgMgrTest, rollBackTest) {
     SimFailure::set(SimFailure::ftElementUnknown);
     answer_ = cfg_mgr_->parseConfig(config_set_);
     EXPECT_TRUE(checkAnswer(1));
-
-    // Refresh our local pointer.
     context = getStubContext();
+    ASSERT_TRUE(context);
 
     // Verify that all of parameters have the original values.
     actual_bool = false;
@@ -378,9 +429,11 @@ TEST_F(DStubCfgMgrTest, rollBackTest) {
     EXPECT_NO_THROW(context->getParam("string_test", actual_string));
     EXPECT_EQ("hmmm chewy", actual_string);
 
-    actual_extra = 0;
-    EXPECT_NO_THROW(context->getExtraParam("extra_test", actual_extra));
-    EXPECT_EQ(430, actual_extra);
+    EXPECT_NO_THROW(context->getObjectParam("map_test", object));
+    EXPECT_TRUE(object);
+
+    EXPECT_NO_THROW(context->getObjectParam("list_test", object));
+    EXPECT_TRUE(object);
 }
 
 } // end of anonymous namespace

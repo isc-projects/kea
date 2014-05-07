@@ -22,7 +22,6 @@ namespace isc {
 namespace d2 {
 
 const char* valid_d2_config = "{ "
-                        "\"interface\" : \"eth1\" , "
                         "\"ip_address\" : \"127.0.0.1\" , "
                         "\"port\" : 5031, "
                         "\"tsig_keys\": ["
@@ -218,16 +217,18 @@ DStubController::~DStubController() {
 // Initialize controller wrapper's static instance getter member.
 DControllerTest::InstanceGetter DControllerTest::instanceGetter_ = NULL;
 
-//************************** TestParser *************************
+//************************** ObjectParser *************************
 
-TestParser::TestParser(const std::string& param_name):param_name_(param_name) {
+ObjectParser::ObjectParser(const std::string& param_name,
+                       ObjectStoragePtr& object_values)
+    : param_name_(param_name), object_values_(object_values) {
 }
 
-TestParser::~TestParser(){
+ObjectParser::~ObjectParser(){
 }
 
 void
-TestParser::build(isc::data::ConstElementPtr new_config) {
+ObjectParser::build(isc::data::ConstElementPtr new_config) {
     if (SimFailure::shouldFailOn(SimFailure::ftElementBuild)) {
         // Simulates an error during element data parsing.
         isc_throw (DCfgMgrBaseError, "Simulated build exception");
@@ -237,29 +238,33 @@ TestParser::build(isc::data::ConstElementPtr new_config) {
 }
 
 void
-TestParser::commit() {
+ObjectParser::commit() {
     if (SimFailure::shouldFailOn(SimFailure::ftElementCommit)) {
         // Simulates an error while committing the parsed element data.
         throw std::runtime_error("Simulated commit exception");
     }
+
+    object_values_->setParam(param_name_, value_,
+                             isc::data::Element::Position());
 }
 
 //************************** DStubContext *************************
 
-DStubContext::DStubContext(): extra_values_(new isc::dhcp::Uint32Storage()) {
+DStubContext::DStubContext(): object_values_(new ObjectStorage()) {
 }
 
 DStubContext::~DStubContext() {
 }
 
 void
-DStubContext::getExtraParam(const std::string& name, uint32_t& value) {
-    value = extra_values_->getParam(name);
+DStubContext::getObjectParam(const std::string& name,
+                             isc::data::ConstElementPtr& value) {
+    value = object_values_->getParam(name);
 }
 
-isc::dhcp::Uint32StoragePtr
-DStubContext::getExtraStorage() {
-    return (extra_values_);
+ObjectStoragePtr&
+DStubContext::getObjectStorage() {
+    return (object_values_);
 }
 
 DCfgContextBasePtr
@@ -268,7 +273,7 @@ DStubContext::clone() {
 }
 
 DStubContext::DStubContext(const DStubContext& rhs): DCfgContextBase(rhs),
-    extra_values_(new isc::dhcp::Uint32Storage(*(rhs.extra_values_))) {
+    object_values_(new ObjectStorage(*(rhs.object_values_))) {
 }
 
 //************************** DStubCfgMgr *************************
@@ -280,40 +285,43 @@ DStubCfgMgr::DStubCfgMgr()
 DStubCfgMgr::~DStubCfgMgr() {
 }
 
+DCfgContextBasePtr 
+DStubCfgMgr::createNewContext() {
+    return (DCfgContextBasePtr (new DStubContext()));
+}
+
 isc::dhcp::ParserPtr
 DStubCfgMgr::createConfigParser(const std::string& element_id) {
-    isc::dhcp::DhcpConfigParser* parser = NULL;
-    DStubContextPtr context =
-                    boost::dynamic_pointer_cast<DStubContext>(getContext());
+    isc::dhcp::ParserPtr parser;
+    DStubContextPtr context
+        = boost::dynamic_pointer_cast<DStubContext>(getContext());
 
     if (element_id == "bool_test") {
-        parser = new isc::dhcp::BooleanParser(element_id,
-                                              context->getBooleanStorage());
+        parser.reset(new isc::dhcp::
+                         BooleanParser(element_id,
+                                       context->getBooleanStorage()));
     } else if (element_id == "uint32_test") {
-        parser = new isc::dhcp::Uint32Parser(element_id,
-                                             context->getUint32Storage());
+        parser.reset(new isc::dhcp::Uint32Parser(element_id,
+                                                 context->getUint32Storage()));
     } else if (element_id == "string_test") {
-        parser = new isc::dhcp::StringParser(element_id,
-                                             context->getStringStorage());
-    } else if (element_id == "extra_test") {
-        parser = new isc::dhcp::Uint32Parser(element_id,
-                                             context->getExtraStorage());
+        parser.reset(new isc::dhcp::StringParser(element_id,
+                                                 context->getStringStorage()));
     } else {
         // Fail only if SimFailure dictates we should.  This makes it easier
         // to test parse ordering, by permitting a wide range of element ids
         // to "succeed" without specifically supporting them.
         if (SimFailure::shouldFailOn(SimFailure::ftElementUnknown)) {
-            isc_throw(DCfgMgrBaseError, "Configuration parameter not supported: "
-                      << element_id);
+            isc_throw(DCfgMgrBaseError,
+                      "Configuration parameter not supported: " << element_id);
         }
 
-        parsed_order_.push_back(element_id);
-        parser = new TestParser(element_id);
+        // Going to assume anything else is an object element.
+        parser.reset(new ObjectParser(element_id, context->getObjectStorage()));
     }
 
-    return (isc::dhcp::ParserPtr(parser));
+    parsed_order_.push_back(element_id);
+    return (parser);
 }
-
 
 }; // namespace isc::d2
 }; // namespace isc

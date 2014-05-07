@@ -97,13 +97,26 @@ DCfgContextBase::~DCfgContextBase() {
 // *********************** DCfgMgrBase  *************************
 
 DCfgMgrBase::DCfgMgrBase(DCfgContextBasePtr context)
-    : parse_order_(), context_(context) {
-    if (!context_) {
-        isc_throw(DCfgMgrBaseError, "DCfgMgrBase ctor: context cannot be NULL");
-    }
+    : parse_order_() {
+    setContext(context);
 }
 
 DCfgMgrBase::~DCfgMgrBase() {
+}
+
+void
+DCfgMgrBase::resetContext() {
+    DCfgContextBasePtr context = createNewContext();
+    setContext(context);
+}
+
+void
+DCfgMgrBase::setContext(DCfgContextBasePtr& context) {
+    if (!context) {
+        isc_throw(DCfgMgrBaseError, "DCfgMgrBase: context cannot be NULL");
+    }
+
+    context_ = context;
 }
 
 isc::data::ConstElementPtr
@@ -122,7 +135,9 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
     // inconsistency if the parsing operation fails after the context has been
     // modified. We need to preserve the original context here
     // so as we can rollback changes when an error occurs.
-    DCfgContextBasePtr original_context = context_->clone();
+//    DCfgContextBasePtr original_context = context_->clone();
+    DCfgContextBasePtr original_context = context_;
+    resetContext();
 
     // Answer will hold the result returned to the caller.
     ConstElementPtr answer;
@@ -131,15 +146,43 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
     std::string element_id;
 
     try {
-        // Grab a map of element_ids and their data values from the new
-        // configuration set.
-        const std::map<std::string, ConstElementPtr>& values_map =
-                                                        config_set->mapValue();
+        // Split the configuration into two maps. The first containing only
+        // top-level scalar parameters (i.e. globals), the second containing
+        // non-scalar or object elements (maps, lists, etc...).  This allows
+        // us to parse and validate all of the global values before we do
+        // objects which may depend on them.
+        ElementMap params_map;
+        ElementMap objects_map;
+
+        isc::dhcp::ConfigPair config_pair;
+        BOOST_FOREACH(config_pair, config_set->mapValue()) {
+            std::string element_id = config_pair.first;
+            isc::data::ConstElementPtr element = config_pair.second;
+            switch (element->getType()) {
+                case isc::data::Element::integer:
+                case isc::data::Element::real:
+                case isc::data::Element::boolean:
+                case isc::data::Element::string:
+                    params_map[element_id] = element;
+                    break;
+                default:
+                    objects_map[element_id] = element;
+                    break;
+            }
+        }
+
+        // Parse the global, scalar parameters. These are "committed" to
+        // the context to make them available during object parsing.
+        boost::shared_ptr<MapElement> params_config(new MapElement());
+        params_config->setValue(params_map);
+        buildParams(params_config);
+
+        // Now parse the configuration objects.
+        const ElementMap& values_map = objects_map;
 
         // Use a pre-ordered list of element ids to parse the elements in a
         // specific order if the list (parser_order_) is not empty; otherwise
         // elements are parsed in the order the value_map presents them.
-
         if (!parse_order_.empty()) {
             // For each element_id in the parse order list, look for it in the
             // value map.  If the element exists in the map, pass it and it's
@@ -205,6 +248,17 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
     }
 
     return (answer);
+}
+
+void
+DCfgMgrBase::buildParams(isc::data::ConstElementPtr params_config) {
+    // Loop through scalars parsing them and committing them to storage.
+    BOOST_FOREACH(dhcp::ConfigPair param, params_config->mapValue()) {
+        // Call derivation's method to create the proper parser.
+        dhcp::ParserPtr parser(createConfigParser(param.first));
+        parser->build(param.second);
+        parser->commit();
+    }
 }
 
 void DCfgMgrBase::buildAndCommit(std::string& element_id,
