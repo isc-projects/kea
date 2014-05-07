@@ -143,6 +143,107 @@ public:
         isc::Exception(file, line, what) { };
 };
 
+/// @brief Acts as a storage vault for D2 global scalar parameters
+class D2Params {
+public:
+    /// @brief Default configuration constants.
+    /// @todo For now these are hard-coded as configuration layer cannot
+    /// readily provide them (see Trac #3358).
+    static const char *DFT_IP_ADDRESS;
+    static const size_t DFT_PORT;
+    static const size_t DFT_DNS_SERVER_TIMEOUT;
+    static const char *DFT_NCR_PROTOCOL;
+    static const char *DFT_NCR_FORMAT;
+
+    /// @brief Constructor
+    ///
+    /// @throw D2CfgError if given an invalid protocol or format.
+    D2Params(const isc::asiolink::IOAddress& ip_address,
+                   const size_t port,
+                   const size_t DFT_DNS_SERVER_TIMEOUT,
+                   const dhcp_ddns::NameChangeProtocol& ncr_protocol,
+                   const dhcp_ddns::NameChangeFormat& ncr_format);
+
+    /// @brief Default constructor
+    /// The default constructor creates an instance that has updates disabled.
+    D2Params();
+
+    /// @brief Destructor
+    virtual ~D2Params();
+
+    /// @brief Return the IP D2 listens on.
+    const isc::asiolink::IOAddress& getIpAddress() const {
+        return(ip_address_);
+    }
+
+    /// @brief Return the IP port D2 listens on.
+    size_t getPort() const {
+        return(port_);
+    }
+
+    /// @brief Return the DNS server timeout value.
+    size_t getDnsServerTimeout() const {
+        return(dns_server_timeout_);
+    }
+
+    /// @brief Return the socket protocol in use.
+    const dhcp_ddns::NameChangeProtocol& getNcrProtocol() const {
+         return(ncr_protocol_);
+    }
+
+    /// @brief Return the expected format of inbound requests (NCRs).
+    const dhcp_ddns::NameChangeFormat& getNcrFormat() const {
+        return(ncr_format_);
+    }
+
+    /// @brief Compares two D2Paramss for equality
+    bool operator == (const D2Params& other) const;
+
+    /// @brief Compares two D2Paramss for inequality
+    bool operator != (const D2Params& other) const;
+
+    /// @brief Generates a string representation of the class contents.
+    std::string toText() const;
+
+protected:
+    /// @brief Validates member values.
+    ///
+    /// Method is used by the constructor to validate member contents.
+    /// Currently checks:
+    /// -# ip_address is not 0.0.0.0 or ::
+    /// -# port is not 0
+    /// -# dns_server_timeout is 0
+    /// -# ncr_protocol is UDP
+    /// -# ncr_format is JSON
+    ///
+    /// @throw D2CfgError if contents are invalid
+    virtual void validateContents();
+
+private:
+    /// @brief IP address D2 listens on.
+    isc::asiolink::IOAddress ip_address_;
+
+    /// @brief IP port D2 listens on.
+    size_t port_;
+
+    /// @brief Timeout for a single DNS packet exchange in milliseconds.
+    size_t dns_server_timeout_;
+
+    /// @brief The socket protocol to use.
+    /// Currently only UDP is supported.
+    dhcp_ddns::NameChangeProtocol ncr_protocol_;
+
+    /// @brief Format of the inbound requests (NCRs).
+    /// Currently only JSON format is supported.
+    dhcp_ddns::NameChangeFormat ncr_format_;
+};
+
+std::ostream&
+operator<<(std::ostream& os, const D2Params& config);
+
+/// @brief Defines a pointer for D2Params instances.
+typedef boost::shared_ptr<D2Params> D2ParamsPtr;
+
 /// @brief Represents a TSIG Key.
 ///
 /// Currently, this is simple storage class containing the basic attributes of
