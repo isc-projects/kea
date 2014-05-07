@@ -39,7 +39,7 @@ class D2CfgMgrTest : public ConfigParseTest {
 public:
 
     /// @brief Constructor
-    D2CfgMgrTest():cfg_mgr_(new D2CfgMgr) {
+    D2CfgMgrTest():cfg_mgr_(new D2CfgMgr), d2_params_() {
     }
 
     /// @brief Destructor
@@ -48,6 +48,58 @@ public:
 
     /// @brief Configuration manager instance.
     D2CfgMgrPtr cfg_mgr_;
+
+    /// @brief Build JSON configuration string for a D2Params element
+    ///
+    /// Constructs a JSON string for "params" element using replacable
+    /// parameters.
+    ///
+    /// @param ip_address string to insert as ip_address value
+    /// @param port integer to insert as port value
+    /// @param dns_server_timeout integer to insert as dns_server_timeout value
+    /// @param ncr_protocol string to insert as ncr_protocol value
+    /// @param ncr_format string to insert as ncr_format value
+    ///
+    /// @return std::string containing the JSON configuration text
+    std::string makeParamsConfigString(const std::string& ip_address,
+                                       const int port,
+                                       const int dns_server_timeout,
+                                       const std::string& ncr_protocol,
+                                       const std::string& ncr_format) {
+        std::ostringstream config;
+        config <<
+            "{"
+            " \"ip_address\": \"" << ip_address << "\" , "
+            " \"port\": " << port << " , "
+            " \"dns_server_timeout\": " << dns_server_timeout << " , "
+            " \"ncr_protocol\": \"" << ncr_protocol << "\" , "
+            " \"ncr_format\": \"" << ncr_format << "\", "
+            "\"tsig_keys\": [], "
+            "\"forward_ddns\" : {}, "
+            "\"reverse_ddns\" : {} "
+            "}";
+
+        return (config.str());
+    }
+
+    void runConfig(std::string config_str, bool should_fail=false) {
+        // We assume the config string is valid JSON.
+        ASSERT_TRUE(fromJSON(config_str));
+
+        // Parse the configuration and verify we got the expected outcome.
+        answer_ = cfg_mgr_->parseConfig(config_set_);
+        ASSERT_TRUE(checkAnswer(should_fail));
+
+        // Verify that the D2 context can be retrieved and is not null.
+        D2CfgContextPtr context;
+        ASSERT_NO_THROW(context = cfg_mgr_->getD2CfgContext());
+
+        // Verify that the global scalars have the proper values.
+        d2_params_ = context->getD2Params();
+        ASSERT_TRUE(d2_params_);
+    }
+
+    D2ParamsPtr d2_params_;
 };
 
 /// @brief Tests that the spec file is valid.
@@ -244,6 +296,150 @@ public:
     /// @brief Pointer to the current parser instance.
     isc::dhcp::ParserPtr parser_;
 };
+
+/// @brief Tests a basic valid configuration for D2Param.
+TEST_F(D2CfgMgrTest, validParamsEntry) {
+    // Verify that ip_address can be valid v4 address.
+    std::string config = makeParamsConfigString ("192.0.0.1", 777, 333,
+                                           "UDP", "JSON");
+    runConfig(config);
+
+    EXPECT_EQ(isc::asiolink::IOAddress("192.0.0.1"),
+              d2_params_->getIpAddress());
+    EXPECT_EQ(777, d2_params_->getPort());
+    EXPECT_EQ(333, d2_params_->getDnsServerTimeout());
+    EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_params_->getNcrProtocol());
+    EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_params_->getNcrFormat());
+
+    // Verify that ip_address can be valid v6 address.
+    config = makeParamsConfigString ("3001::5", 777, 333, "UDP", "JSON");
+    runConfig(config);
+
+    // Verify that the global scalars have the proper values.
+    EXPECT_EQ(isc::asiolink::IOAddress("3001::5"),
+              d2_params_->getIpAddress());
+}
+
+/// @brief Tests default values for D2Params.
+/// It verifies that D2Params is populated with default value for optional
+/// parameter if not supplied in the configuration.
+/// Currently they are all optional.
+TEST_F(D2CfgMgrTest, defaultValues) {
+
+    // Check that omitting ip_address gets you its default
+    std::string config =
+            "{"
+            " \"port\": 777 , "
+            " \"dns_server_timeout\": 333 , "
+            " \"ncr_protocol\": \"UDP\" , "
+            " \"ncr_format\": \"JSON\", "
+            "\"tsig_keys\": [], "
+            "\"forward_ddns\" : {}, "
+            "\"reverse_ddns\" : {} "
+            "}";
+
+    runConfig(config);
+    EXPECT_EQ(isc::asiolink::IOAddress(D2Params::DFT_IP_ADDRESS),
+              d2_params_->getIpAddress());
+
+    // Check that omitting port gets you its default
+    config =
+            "{"
+            " \"ip_address\": \"192.0.0.1\" , "
+            " \"dns_server_timeout\": 333 , "
+            " \"ncr_protocol\": \"UDP\" , "
+            " \"ncr_format\": \"JSON\", "
+            "\"tsig_keys\": [], "
+            "\"forward_ddns\" : {}, "
+            "\"reverse_ddns\" : {} "
+            "}";
+
+    runConfig(config);
+    EXPECT_EQ(D2Params::DFT_PORT, d2_params_->getPort());
+
+    // Check that omitting timeout gets you its default
+    config =
+            "{"
+            " \"ip_address\": \"192.0.0.1\" , "
+            " \"port\": 777 , "
+            " \"ncr_protocol\": \"UDP\" , "
+            " \"ncr_format\": \"JSON\", "
+            "\"tsig_keys\": [], "
+            "\"forward_ddns\" : {}, "
+            "\"reverse_ddns\" : {} "
+            "}";
+
+    runConfig(config);
+    EXPECT_EQ(D2Params::DFT_DNS_SERVER_TIMEOUT,
+              d2_params_->getDnsServerTimeout());
+
+    // Check that protocol timeout gets you its default
+    config =
+            "{"
+            " \"ip_address\": \"192.0.0.1\" , "
+            " \"port\": 777 , "
+            " \"dns_server_timeout\": 333 , "
+            " \"ncr_format\": \"JSON\", "
+            "\"tsig_keys\": [], "
+            "\"forward_ddns\" : {}, "
+            "\"reverse_ddns\" : {} "
+            "}";
+
+    runConfig(config);
+    EXPECT_EQ(dhcp_ddns::stringToNcrProtocol(D2Params::DFT_NCR_PROTOCOL),
+              d2_params_->getNcrProtocol());
+
+    // Check that format timeout gets you its default
+    config =
+            "{"
+            " \"ip_address\": \"192.0.0.1\" , "
+            " \"port\": 777 , "
+            " \"dns_server_timeout\": 333 , "
+            " \"ncr_protocol\": \"UDP\", "
+            "\"tsig_keys\": [], "
+            "\"forward_ddns\" : {}, "
+            "\"reverse_ddns\" : {} "
+            "}";
+
+    runConfig(config);
+    EXPECT_EQ(dhcp_ddns::stringToNcrFormat(D2Params::DFT_NCR_FORMAT),
+              d2_params_->getNcrFormat());
+}
+
+/// @brief Tests the enforcement of data validation when parsing D2Params.
+/// It verifies that:
+/// -# ip_address cannot be "0.0.0.0"
+/// -# ip_address cannot be "::"
+/// -# port cannot be 0
+/// -# dns_server_timeout cannat be 0
+/// -# ncr_protocol must be valid
+/// -# ncr_format must be valid
+TEST_F(D2CfgMgrTest, invalidEntry) {
+    // Cannot use IPv4 ANY address
+    std::string config = makeParamsConfigString ("0.0.0.0", 777, 333,
+                                           "UDP", "JSON");
+    runConfig(config, 1);
+
+    // Cannot use IPv6 ANY address
+    config = makeParamsConfigString ("::", 777, 333, "UDP", "JSON");
+    runConfig(config, 1);
+
+    // Cannot use port  0
+    config = makeParamsConfigString ("127.0.0.1", 0, 333, "UDP", "JSON");
+    runConfig(config, 1);
+
+    // Cannot use dns server timeout of 0
+    config = makeParamsConfigString ("127.0.0.1", 777, 0, "UDP", "JSON");
+    runConfig(config, 1);
+
+    // Invalid protocol
+    config = makeParamsConfigString ("127.0.0.1", 777, 333, "BOGUS", "JSON");
+    runConfig(config, 1);
+
+    // Invalid format
+    config = makeParamsConfigString ("127.0.0.1", 777, 333, "UDP", "BOGUS");
+    runConfig(config, 1);
+}
 
 /// @brief Tests the enforcement of data validation when parsing TSIGKeyInfos.
 /// It verifies that:
@@ -864,6 +1060,9 @@ TEST(D2CfgMgr, construction) {
     EXPECT_NO_THROW(delete cfg_mgr);
 }
 
+TEST_F(D2CfgMgrTest, paramsConfig) {
+}
+
 /// @brief Tests the parsing of a complete, valid DHCP-DDNS configuration.
 /// This tests passes the configuration into an instance of D2CfgMgr just
 /// as it would be done by d2_process in response to a configuration update
@@ -873,9 +1072,11 @@ TEST_F(D2CfgMgrTest, fullConfig) {
     // both the forward and reverse ddns managers.  Both managers have two
     // domains with three servers per domain.
     std::string config = "{ "
-                        "\"interface\" : \"eth1\" , "
                         "\"ip_address\" : \"192.168.1.33\" , "
                         "\"port\" : 88 , "
+                        " \"dns_server_timeout\": 333 , "
+                        " \"ncr_protocol\": \"UDP\" , "
+                        " \"ncr_format\": \"JSON\", "
                         "\"tsig_keys\": ["
                         "{"
                         "  \"name\": \"d2_key.tmark.org\" , "
@@ -924,6 +1125,7 @@ TEST_F(D2CfgMgrTest, fullConfig) {
                         "  { \"hostname\": \"six.rev\" } "
                         "  ] } "
                         "] } }";
+
     ASSERT_TRUE(fromJSON(config));
 
     // Verify that we can parse the configuration.
@@ -934,18 +1136,16 @@ TEST_F(D2CfgMgrTest, fullConfig) {
     D2CfgContextPtr context;
     ASSERT_NO_THROW(context = cfg_mgr_->getD2CfgContext());
 
-    // Verify that the application level scalars have the proper values.
-    std::string interface;
-    EXPECT_NO_THROW (context->getParam("interface", interface));
-    EXPECT_EQ("eth1", interface);
+    // Verify that the global scalars have the proper values.
+    D2ParamsPtr& d2_params = context->getD2Params();
+    ASSERT_TRUE(d2_params);
 
-    std::string ip_address;
-    EXPECT_NO_THROW (context->getParam("ip_address", ip_address));
-    EXPECT_EQ("192.168.1.33", ip_address);
-
-    uint32_t port = 0;
-    EXPECT_NO_THROW (context->getParam("port", port));
-    EXPECT_EQ(88, port);
+    EXPECT_EQ(isc::asiolink::IOAddress("192.168.1.33"),
+              d2_params->getIpAddress());
+    EXPECT_EQ(88, d2_params->getPort());
+    EXPECT_EQ(333, d2_params->getDnsServerTimeout());
+    EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_params->getNcrProtocol());
+    EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_params->getNcrFormat());
 
     // Verify that the forward manager can be retrieved.
     DdnsDomainListMgrPtr mgr = context->getForwardMgr();
@@ -1014,7 +1214,6 @@ TEST_F(D2CfgMgrTest, forwardMatch) {
     // Create  configuration with one domain, one sub domain, and the wild
     // card.
     std::string config = "{ "
-                        "\"interface\" : \"eth1\" , "
                         "\"ip_address\" : \"192.168.1.33\" , "
                         "\"port\" : 88 , "
                         "\"tsig_keys\": [] ,"
@@ -1088,7 +1287,6 @@ TEST_F(D2CfgMgrTest, forwardMatch) {
 TEST_F(D2CfgMgrTest, matchNoWildcard) {
     // Create a configuration with one domain, one sub-domain, and NO wild card.
     std::string config = "{ "
-                        "\"interface\" : \"eth1\" , "
                         "\"ip_address\" : \"192.168.1.33\" , "
                         "\"port\" : 88 , "
                         "\"tsig_keys\": [] ,"
@@ -1136,7 +1334,6 @@ TEST_F(D2CfgMgrTest, matchNoWildcard) {
 /// This test verifies that any FQDN matches the wild card.
 TEST_F(D2CfgMgrTest, matchAll) {
     std::string config = "{ "
-                        "\"interface\" : \"eth1\" , "
                         "\"ip_address\" : \"192.168.1.33\" , "
                         "\"port\" : 88 , "
                         "\"tsig_keys\": [] ,"
@@ -1183,7 +1380,6 @@ TEST_F(D2CfgMgrTest, matchAll) {
 /// as a match.
 TEST_F(D2CfgMgrTest, matchReverse) {
     std::string config = "{ "
-                        "\"interface\" : \"eth1\" , "
                         "\"ip_address\" : \"192.168.1.33\" , "
                         "\"port\" : 88 , "
                         "\"tsig_keys\": [] ,"
