@@ -35,7 +35,6 @@ namespace {
 
 /// @brief Valid configuration containing an unavailable IP address.
 const char* bad_ip_d2_config = "{ "
-                        "\"interface\" : \"eth1\" , "
                         "\"ip_address\" : \"1.1.1.1\" , "
                         "\"port\" : 5031, "
                         "\"tsig_keys\": ["
@@ -607,7 +606,6 @@ TEST_F(D2ProcessTest, fatalErrorShutdown) {
 /// loopback.
 TEST_F(D2ProcessTest, notLoopbackTest) {
     const char* config = "{ "
-                        "\"interface\" : \"\" , "
                         "\"ip_address\" : \"0.0.0.0\" , "
                         "\"port\" : 53001, "
                         "\"tsig_keys\": [],"
@@ -626,7 +624,6 @@ TEST_F(D2ProcessTest, notLoopbackTest) {
 /// DHCP_DDNS_NOT_ON_LOOPBACK is not issued.
 TEST_F(D2ProcessTest, v4LoopbackTest) {
     const char* config = "{ "
-                        "\"interface\" : \"\" , "
                         "\"ip_address\" : \"127.0.0.1\" , "
                         "\"port\" : 53001, "
                         "\"tsig_keys\": [],"
@@ -640,7 +637,6 @@ TEST_F(D2ProcessTest, v4LoopbackTest) {
 /// DHCP_DDNS_NOT_ON_LOOPBACK is not issued.
 TEST_F(D2ProcessTest, v6LoopbackTest) {
     const char* config = "{ "
-                        "\"interface\" : \"\" , "
                         "\"ip_address\" : \"::1\" , "
                         "\"port\" : 53001, "
                         "\"tsig_keys\": [],"
