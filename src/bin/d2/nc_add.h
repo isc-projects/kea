@@ -87,13 +87,15 @@ public:
     /// @param ncr is the NameChangeRequest to fulfill
     /// @param forward_domain is the domain to use for forward DNS updates
     /// @param reverse_domain is the domain to use for reverse DNS updates
+    /// @param cfg_mgr pointer to the configuration manager
     ///
     /// @throw NameAddTransaction error if given request is not a CHG_ADD,
     /// NameChangeTransaction error for base class construction errors.
     NameAddTransaction(IOServicePtr& io_service,
                        dhcp_ddns::NameChangeRequestPtr& ncr,
                        DdnsDomainPtr& forward_domain,
-                       DdnsDomainPtr& reverse_domain);
+                       DdnsDomainPtr& reverse_domain,
+                       D2CfgMgrPtr& cfg_mgr);
 
     /// @brief Destructor
     virtual ~NameAddTransaction();

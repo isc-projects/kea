@@ -197,7 +197,7 @@ const unsigned int TransactionTest::FORWARD_CHG = 0x01;
 const unsigned int TransactionTest::REVERSE_CHG = 0x02;
 const unsigned int TransactionTest::FWD_AND_REV_CHG = REVERSE_CHG | FORWARD_CHG;
 
-TransactionTest::TransactionTest() : ncr_() {
+TransactionTest::TransactionTest() : ncr_(), cfg_mgr_(new D2CfgMgr()) {
 }
 
 TransactionTest::~TransactionTest() {
