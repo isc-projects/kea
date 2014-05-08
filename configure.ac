@@ -1287,19 +1287,19 @@ AC_SUBST(AWK)
 
 
 # Kea configuration backend section
-# Currently there are 2 backends available: BIND10 and JSON
+# Currently there are 2 backends available: BUNDY and JSON
 # It is possible that we may extend this to accept additional backends.
 AC_ARG_WITH(kea-config,
     AC_HELP_STRING([--with-kea-config],
-    [Selects configuration backend; currently available options are: BIND10 (default) or JSON]),
+    [Selects configuration backend; currently available options are: BUNDY (default) or JSON]),
     [CONFIG_BACKEND="$withval"],
-    [CONFIG_BACKEND=BIND10])
+    [CONFIG_BACKEND=BUNDY])
 
-AM_CONDITIONAL(CONFIG_BACKEND_BIND10, test "x$CONFIG_BACKEND" = "xBIND10")
+AM_CONDITIONAL(CONFIG_BACKEND_BUNDY, test "x$CONFIG_BACKEND" = "xBUNDY")
 AM_CONDITIONAL(CONFIG_BACKEND_JSON,   test "x$CONFIG_BACKEND" = "xJSON")
 
-if test "x$CONFIG_BACKEND" = "xBIND10"; then
-    AC_DEFINE(CONFIG_BACKEND_BIND10, 1, [Define to 1 if Kea config was set to BIND10])
+if test "x$CONFIG_BACKEND" = "xBUNDY"; then
+    AC_DEFINE(CONFIG_BACKEND_BUNDY, 1, [Define to 1 if Kea config was set to BUNDY])
 fi
 
 if test "x$CONFIG_BACKEND" = "xJSON"; then
@@ -1307,8 +1307,8 @@ if test "x$CONFIG_BACKEND" = "xJSON"; then
 fi
 
 # Let's sanity check if the specified backend value is allowed
-if test "x$CONFIG_BACKEND" != "xBIND10" && test "x$CONFIG_BACKEND" != "xJSON"; then
-   AC_MSG_ERROR("Invalid configuration backend specified: $CONFIG_BACKEND. The only supported are: BIND10 JSON")
+if test "x$CONFIG_BACKEND" != "xBUNDY" && test "x$CONFIG_BACKEND" != "xJSON"; then
+   AC_MSG_ERROR("Invalid configuration backend specified: $CONFIG_BACKEND. The only supported are: BUNDY JSON")
 fi
 
 AC_ARG_ENABLE(generate_docs, [AC_HELP_STRING([--enable-generate-docs],
@@ -1651,7 +1651,6 @@ SQLite:
 
 Kea config backend:
   CONFIG_BACKEND: ${CONFIG_BACKEND}
-
 END
 
 # Avoid confusion on DNS/DHCP and only mention MySQL if it
