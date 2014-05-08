@@ -406,7 +406,6 @@ public:
     static ElementPtr fromJSON(std::istream& in, bool preproc = false)
         throw(JSONError);
 
-
     /// Creates an Element from the given input stream containing JSON
     /// formatted data.
     ///
@@ -435,6 +434,16 @@ public:
     static ElementPtr fromJSON(std::istream& in, const std::string& file,
                                int& line, int &pos)
         throw(JSONError);
+
+    /// Reads contents of specified file and interprets it as JSON.
+    ///
+    /// @param file_name name of the file to read
+    /// @param preproc specified whether preprocessing (e.g. comment removal)
+    ///                should be performed
+    /// @return An ElementPtr that contains the element(s) specified
+    /// if the given file.
+    static ElementPtr fromJSONFile(const std::string& file_name,
+                                   bool preproc = false);
     //@}
 
     /// \name Type name conversion functions
