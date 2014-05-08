@@ -24,6 +24,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <fstream>
 #include <cerrno>
 #include <climits>
 
@@ -688,7 +689,7 @@ Element::fromJSON(const std::string& in, bool preproc) {
     ss << in;
 
     int line = 1, pos = 1;
-    ElementPtr result(fromJSON(preproc?preprocess(ss):ss, "<string>", 
+    ElementPtr result(fromJSON(preproc?preprocess(ss):ss, "<string>",
                                line, pos));
     skipChars(ss, WHITESPACE, line, pos);
     // ss must now be at end
@@ -696,6 +697,19 @@ Element::fromJSON(const std::string& in, bool preproc) {
         throwJSONError("Extra data", "<string>", line, pos);
     }
     return result;
+}
+
+ElementPtr
+Element::fromJSONFile(const std::string& file_name,
+                      bool preproc) {
+    std::ifstream infile(file_name.c_str(), std::ios::in | std::ios::binary);
+    if (!infile.is_open())
+    {
+        isc_throw(InvalidOperation, "Failed to read file " << file_name
+                  << ",error:" << errno);
+    }
+
+    return (fromJSON(infile, file_name, preproc));
 }
 
 // to JSON format
