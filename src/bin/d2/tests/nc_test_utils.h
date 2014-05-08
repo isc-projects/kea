@@ -166,6 +166,7 @@ public:
     dhcp_ddns::NameChangeRequestPtr ncr_;
     DdnsDomainPtr forward_domain_;
     DdnsDomainPtr reverse_domain_;
+    D2CfgMgrPtr cfg_mgr_;
 
     /// #brief constants used to specify change directions for a transaction.
     static const unsigned int FORWARD_CHG;      // Only forward change.
