@@ -22,6 +22,12 @@
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp6/spec_config.h>
+#include <log/logger_level.h>
+#include <log/logger_name.h>
+#include <log/logger_manager.h>
+#include <log/logger_specification.h>
+#include <log/logger_support.h>
+#include <log/output_option.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
 
@@ -118,6 +124,39 @@ ControlledDhcpv6Srv::init(const std::string& file_name) {
 
 void ControlledDhcpv6Srv::cleanup() {
     // Nothing to do here. No need to disconnect from anything.
+}
+
+/// This is a logger initialization for JSON file backend.
+/// For now, it's just setting log messages to be printed on stdout.
+/// @todo: Implement this properly (see #3427)
+void Daemon::loggerInit(const char* log_name, bool verbose, bool ) {
+    // This method configures logger. For now it is very simple.
+    // We'll make it more robust once we add support for JSON-based logging
+    // configuration.
+
+    using namespace isc::log;
+
+    Severity severity = b10LoggerSeverity(verbose ? isc::log::DEBUG : isc::log::INFO);
+
+    // Set a directory for creating lockfiles when running tests
+    // @todo: Find out why this is needed. Without this, the logger doesn't
+    // work.
+    setenv("B10_LOCKFILE_DIR_FROM_BUILD", TOP_BUILDDIR, 1);
+
+    // Initialize logging
+    initLogger(log_name, severity, isc::log::MAX_DEBUG_LEVEL, NULL);
+
+    // Now configure logger output to stdout.
+    /// @todo: Make this configurable as part of #3427.
+    LoggerSpecification spec(log_name, severity,
+                             b10LoggerDbglevel(isc::log::MAX_DEBUG_LEVEL));
+    OutputOption option;
+    option.destination = OutputOption::DEST_CONSOLE;
+    option.stream = OutputOption::STR_STDOUT;
+
+    spec.addOutputOption(option);
+    LoggerManager manager;
+    manager.process(spec);
 }
 
 };

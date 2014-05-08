@@ -216,5 +216,12 @@ void ControlledDhcpv6Srv::cleanup() {
     }
 }
 
+void
+Daemon::loggerInit(const char* log_name, bool verbose, bool stand_alone) {
+    isc::log::initLogger(log_name,
+                         (verbose ? isc::log::DEBUG : isc::log::INFO),
+                         isc::log::MAX_DEBUG_LEVEL, NULL, !stand_alone);
+}
+
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
