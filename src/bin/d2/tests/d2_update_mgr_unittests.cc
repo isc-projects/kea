@@ -120,7 +120,6 @@ public:
     void makeCannedConfig() {
         std::string canned_config_ =
                  "{ "
-                  "\"interface\" : \"eth1\" , "
                   "\"ip_address\" : \"192.168.1.33\" , "
                   "\"port\" : 88 , "
                   "\"tsig_keys\": [] ,"
