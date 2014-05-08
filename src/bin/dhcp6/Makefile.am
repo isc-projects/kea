@@ -3,6 +3,7 @@ SUBDIRS = . tests
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/cc -I$(top_builddir)/src/lib/cc
+AM_CPPFLAGS += -DTOP_BUILDDIR="\"$(top_builddir)\""
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
@@ -57,7 +58,7 @@ b10_dhcp6_SOURCES += dhcp6_srv.cc dhcp6_srv.h
 b10_dhcp6_SOURCES += ctrl_dhcp6_srv.cc ctrl_dhcp6_srv.h
 b10_dhcp6_SOURCES += json_config_parser.cc json_config_parser.h
 
-if CONFIG_BACKEND_BIND10
+if CONFIG_BACKEND_BUNDY
 b10_dhcp6_SOURCES += bundy_backend.cc
 endif
 
