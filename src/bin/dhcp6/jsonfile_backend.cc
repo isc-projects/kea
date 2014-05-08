@@ -48,6 +48,7 @@ ControlledDhcpv6Srv::init(const std::string& file_name) {
     // configuration from a JSON file.
 
     isc::data::ConstElementPtr json;
+    isc::data::ConstElementPtr dhcp6;
     isc::data::ConstElementPtr result;
 
     // Basic sanity check: file name must not be empty.
@@ -59,8 +60,25 @@ ControlledDhcpv6Srv::init(const std::string& file_name) {
         // Read contents of the file and parse it as JSON
         json = Element::fromJSONFile(file_name, true);
 
+        if (!json) {
+            LOG_ERROR(dhcp6_logger, DHCP6_CONFIG_LOAD_FAIL)
+                .arg("Config file " + file_name + " missing or empty.");
+            isc_throw(BadValue, "Unable to process JSON configuration file:"
+                      + file_name);
+        }
+
+        // Get Dhcp6 component from the config
+        dhcp6 = json->get("Dhcp6");
+
+        if (!dhcp6) {
+            LOG_ERROR(dhcp6_logger, DHCP6_CONFIG_LOAD_FAIL)
+                .arg("Config file " + file_name + " does not include 'Dhcp6' entry.");
+            isc_throw(BadValue, "Unable to process JSON configuration file:"
+                      + file_name);
+        }
+
         // Use parsed JSON structures to configure the server
-        result = processCommand("config-reload", json);
+        result = processCommand("config-reload", dhcp6);
 
     }  catch (const std::exception& ex) {
         LOG_ERROR(dhcp6_logger, DHCP6_CONFIG_LOAD_FAIL).arg(ex.what());
