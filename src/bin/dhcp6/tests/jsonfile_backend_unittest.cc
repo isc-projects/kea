@@ -73,7 +73,7 @@ const char* JSONFileBackendTest::TEST_FILE = "test-config.json";
 TEST_F(JSONFileBackendTest, jsonFile) {
 
     // Prepare configuration file.
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ \"Dhcp6\": { \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -90,7 +90,8 @@ TEST_F(JSONFileBackendTest, jsonFile) {
         "    \"pool\": [ \"2001:db8:3::/80\" ],"
         "    \"subnet\": \"2001:db8:3::/64\" "
         " } ],"
-        "\"valid-lifetime\": 4000 }";
+        "\"valid-lifetime\": 4000 }"
+        "}";
     writeFile(TEST_FILE, config);
 
     // Now initialize the server
@@ -146,7 +147,7 @@ TEST_F(JSONFileBackendTest, comments) {
 
     string config_hash_comments = "# This is a comment. It should be \n"
         "#ignored. Real config starts in line below\n"
-        "{ \"interfaces\": [ \"*\" ],"
+        "{ \"Dhcp6\": { \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, \n"
@@ -155,7 +156,8 @@ TEST_F(JSONFileBackendTest, comments) {
         "    \"pool\": [ \"2001:db8:1::/80\" ],"
         "    \"subnet\": \"2001:db8:1::/64\" "
         " } ],"
-        "\"valid-lifetime\": 4000 }";
+        "\"valid-lifetime\": 4000 }"
+        "}";
 
     /// @todo: Implement C++-style (// ...) comments
     /// @todo: Implement C-style (/* ... */) comments

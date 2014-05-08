@@ -2,6 +2,8 @@
 # It's a basic scenario with four IPv6 subnets configured. In each
 # subnet, there's a smaller pool of dynamic addresses.
 
+{ "Dhcp6":
+
 { 
 # Kea is told to listen on eth0 interface only.
   "interfaces": [ "eth0" ],
@@ -29,3 +31,6 @@
   {    "pool": [ "2001:db8:4::/80" ],
        "subnet": "2001:db8:4::/64"  } ]
 }
+
+}
+
