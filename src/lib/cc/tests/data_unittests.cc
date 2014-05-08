@@ -930,6 +930,60 @@ TEST(Element, merge) {
 
 }
 
+// This test checks whether it is possible to ignore comments. It also checks
+// that the comments are ignored only when told to.
+TEST(Element, preprocessor) {
+
+    string no_comment = "{ \"a\": 1,\n"
+                        " \"b\": 2}";
+
+    string head_comment = "# this is a comment, ignore me\n"
+                          "{ \"a\": 1,\n"
+                          " \"b\": 2}";
+
+    string mid_comment = "{ \"a\": 1,\n"
+                         "# this is a comment, ignore me\n"
+                         " \"b\": 2}";
+
+    string tail_comment = "{ \"a\": 1,\n"
+                          " \"b\": 2}"
+                          "# this is a comment, ignore me\n";
+
+    string dbl_head_comment = "# this is a comment, ignore me\n"
+                              "# second line, still ignored\n"
+                              "{ \"a\": 1,\n"
+                              " \"b\": 2}";
+
+    string dbl_mid_comment = "{ \"a\": 1,\n"
+                             "# this is a comment, ignore me\n"
+                             "# second line, still ignored\n"
+                             " \"b\": 2}";
+
+    string dbl_tail_comment = "{ \"a\": 1,\n"
+                              " \"b\": 2}"
+                              "# this is a comment, ignore me\n"
+                              "# second line, still ignored\n";
+
+    // This is what we expect in all cases.
+    ElementPtr exp = Element::fromJSON(no_comment);
+
+    // Let's convert them all and see that the result it the same every time
+    EXPECT_TRUE(exp->equals(*Element::fromJSON(head_comment, true)));
+    EXPECT_TRUE(exp->equals(*Element::fromJSON(mid_comment, true)));
+    EXPECT_TRUE(exp->equals(*Element::fromJSON(tail_comment, true)));
+    EXPECT_TRUE(exp->equals(*Element::fromJSON(dbl_head_comment, true)));
+    EXPECT_TRUE(exp->equals(*Element::fromJSON(dbl_mid_comment, true)));
+    EXPECT_TRUE(exp->equals(*Element::fromJSON(dbl_tail_comment, true)));
+
+    // With preprocessing disabled, it should fail all around
+    EXPECT_THROW(Element::fromJSON(head_comment), JSONError);
+    EXPECT_THROW(Element::fromJSON(mid_comment), JSONError);
+    EXPECT_THROW(Element::fromJSON(tail_comment), JSONError);
+    EXPECT_THROW(Element::fromJSON(dbl_head_comment), JSONError);
+    EXPECT_THROW(Element::fromJSON(dbl_mid_comment), JSONError);
+    EXPECT_THROW(Element::fromJSON(dbl_tail_comment), JSONError);
+}
+
 TEST(Element, getPosition) {
     // Create a JSON string holding different type of values. Some of the
     // values in the config string are not aligned, so as we can check that
