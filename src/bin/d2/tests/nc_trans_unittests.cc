@@ -28,11 +28,13 @@
 
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;
 using namespace isc::d2;
+using namespace boost::posix_time;
 
 namespace {
 
@@ -59,10 +61,11 @@ public:
     /// Parameters match those needed by NameChangeTransaction.
     NameChangeStub(IOServicePtr& io_service,
                    dhcp_ddns::NameChangeRequestPtr& ncr,
-                   DdnsDomainPtr forward_domain,
-                   DdnsDomainPtr reverse_domain)
+                   DdnsDomainPtr& forward_domain,
+                   DdnsDomainPtr& reverse_domain,
+                   D2CfgMgrPtr& cfg_mgr)
         : NameChangeTransaction(io_service, ncr, forward_domain,
-                                reverse_domain),
+                                reverse_domain, cfg_mgr),
                                 use_stub_callback_(false) {
     }
 
@@ -296,7 +299,7 @@ public:
         // Now create the test transaction as would occur in update manager.
         // Instantiate the transaction as would be done by update manager.
         return (NameChangeStubPtr(new NameChangeStub(io_service_, ncr_,
-                                  forward_domain_, reverse_domain_)));
+                                  forward_domain_, reverse_domain_, cfg_mgr_)));
     }
 
     /// @brief Builds and then sends an update request
@@ -348,6 +351,7 @@ public:
 /// 4. Valid construction functions properly
 TEST(NameChangeTransaction, construction) {
     IOServicePtr io_service(new isc::asiolink::IOService());
+    D2CfgMgrPtr cfg_mgr(new D2CfgMgr());
 
     const char* msg_str =
         "{"
@@ -377,43 +381,54 @@ TEST(NameChangeTransaction, construction) {
     // @todo Subject to change if multi-threading is implemented.
     IOServicePtr empty;
     EXPECT_THROW(NameChangeTransaction(empty, ncr,
-                                       forward_domain, reverse_domain),
+                                       forward_domain, reverse_domain, cfg_mgr),
                                        NameChangeTransactionError);
 
     // Verify that construction with an empty NameChangeRequest throws.
     EXPECT_THROW(NameChangeTransaction(io_service, empty_ncr,
-                                       forward_domain, reverse_domain),
+                                       forward_domain, reverse_domain, cfg_mgr),
                                         NameChangeTransactionError);
+
+    // Verify that construction with an empty D2CfgMgr throws.
+    D2CfgMgrPtr empty_cfg;
+    EXPECT_THROW(NameChangeTransaction(io_service, empty_ncr,
+                                       forward_domain, reverse_domain,
+                                       empty_cfg),
+                                       NameChangeTransactionError);
+
 
     // Verify that construction with an empty forward domain when the
     // NameChangeRequest calls for a forward change throws.
     EXPECT_THROW(NameChangeTransaction(io_service, ncr,
-                                       empty_domain, reverse_domain),
+                                       empty_domain, reverse_domain, cfg_mgr),
                                        NameChangeTransactionError);
 
     // Verify that construction with an empty reverse domain when the
     // NameChangeRequest calls for a reverse change throws.
     EXPECT_THROW(NameChangeTransaction(io_service, ncr,
-                                       forward_domain, empty_domain),
+                                       forward_domain, empty_domain, cfg_mgr),
                                        NameChangeTransactionError);
 
     // Verify that a valid construction attempt works.
     EXPECT_NO_THROW(NameChangeTransaction(io_service, ncr,
-                                          forward_domain, reverse_domain));
+                                          forward_domain, reverse_domain,
+                                          cfg_mgr));
 
     // Verify that an empty forward domain is allowed when the requests does
     // not include a forward change.
     ncr->setForwardChange(false);
     ncr->setReverseChange(true);
     EXPECT_NO_THROW(NameChangeTransaction(io_service, ncr,
-                                          empty_domain, reverse_domain));
+                                          empty_domain, reverse_domain,
+                                          cfg_mgr));
 
     // Verify that an empty reverse domain is allowed when the requests does
     // not include a reverse change.
     ncr->setForwardChange(true);
     ncr->setReverseChange(false);
     EXPECT_NO_THROW(NameChangeTransaction(io_service, ncr,
-                                          forward_domain, empty_domain));
+                                          forward_domain, empty_domain,
+                                          cfg_mgr));
 }
 
 /// @brief General testing of member accessors.
@@ -944,9 +959,11 @@ TEST_F(NameChangeTransactionTest, sendUpdateTimeout) {
     // not only it but the invoking test as well. In other words, if the
     // doOneExchange blows up the rest of test is pointless. I use
     // ASSERT_NO_FATAL_FAILURE to abort the test immediately.
-    ASSERT_NO_FATAL_FAILURE(doOneExchange(name_change,
-                                          NameChangeTransaction::
-                                          DNS_UPDATE_DEFAULT_TIMEOUT + 100));
+
+    D2ParamsPtr d2_params = cfg_mgr_->getD2Params();
+    size_t timeout = d2_params->getDnsServerTimeout() + 100;
+
+    ASSERT_NO_FATAL_FAILURE(doOneExchange(name_change, timeout));
 
     // Verify that next event is IO_COMPLETED_EVT and DNS status is TIMEOUT.
     ASSERT_EQ(NameChangeTransaction::IO_COMPLETED_EVT,

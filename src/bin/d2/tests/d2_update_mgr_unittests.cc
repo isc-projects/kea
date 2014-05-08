@@ -201,29 +201,22 @@ public:
     /// timer, the number of passes through the loop is also limited to
     /// a given number.  This is a failsafe to guard against an infinite loop
     /// in the test.
-    ///
-    /// @param timeout_millisec Maximum amount of time to allow IOService to
-    /// run before failing the test.  Note, If the intent of a test is to
-    /// verify proper handling of DNSClient timeouts, the value must be
-    /// slightly larger than that being used for DNSClient timeout value.
-    /// @param max_passes Maximum number of times through the loop before
-    /// failing the test.  The default value of twenty is likely large enough
-    /// for most tests.  The number of passes required for a given test can
-    /// vary.
-    void processAll(unsigned int timeout_millisec =
-                    NameChangeTransaction::DNS_UPDATE_DEFAULT_TIMEOUT + 100,
-                    size_t max_passes = 100) {
+    void processAll(size_t max_passes = 100) {
         // Loop until all the transactions have been dequeued and run through to
         // completion.
         size_t passes = 0;
         size_t handlers = 0;
+
+        // Set the timeout to slightly more than DNSClient timeout to allow
+        // timeout processing to occur naturally.
+        size_t timeout = cfg_mgr_->getD2Params()->getDnsServerTimeout() + 100;
         while (update_mgr_->getQueueCount() ||
             update_mgr_->getTransactionCount()) {
             ++passes;
             update_mgr_->sweep();
             // If any transactions are waiting on IO, run the service.
             if (anyoneWaiting()) {
-                int cnt = runTimedIO(timeout_millisec);
+                int cnt = runTimedIO(timeout);
 
                 // If cnt is zero then the service stopped unexpectedly.
                 if (cnt == 0) {
