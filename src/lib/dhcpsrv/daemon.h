@@ -87,21 +87,6 @@ public:
     ///
     /// This method initializes logger. I
     static void loggerInit(const char* log_name, bool verbose, bool stand_alone);
-
-    protected:
-
-    /// @brief reads file and return its content as a string
-    ///
-    /// This is an utility method that is expected to be used by several daemons.
-    /// It reads contents of a text file and return it as a string.
-    ///
-    /// For now, comments are defined as lines starting with a hash.
-    ///
-    /// @param file_name name of the file to read
-    /// @param ignore_comments whether ignore comment lines
-    /// @return content of the file
-    std::string readFile(const std::string& file_name,
-                         bool ingore_comments = false);
 };
 
 }; // end of isc::dhcp namespace

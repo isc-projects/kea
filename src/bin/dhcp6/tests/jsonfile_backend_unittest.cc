@@ -52,6 +52,7 @@ public:
     }
 
     ~JSONFileBackendTest() {
+        static_cast<void>(unlink(TEST_FILE));
     };
 
     void writeFile(const std::string& file_name, const std::string& content) {
