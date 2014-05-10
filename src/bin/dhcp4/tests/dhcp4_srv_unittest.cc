@@ -1706,9 +1706,6 @@ TEST_F(Dhcpv4SrvTest, nextServerGlobal) {
 }
 
 
-// a dummy MAC address
-const uint8_t dummyMacAddr[] = {0, 1, 2, 3, 4, 5};
-
 // A dummy MAC address, padded with 0s
 const uint8_t dummyChaddr[16] = {0, 1, 2, 3, 4, 5, 0, 0,
                                  0, 0, 0, 0, 0, 0, 0, 0 };
