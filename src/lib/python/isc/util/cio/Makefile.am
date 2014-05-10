@@ -4,6 +4,13 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
+# There is a build problem with python3.4 (a new field tp_finalize) has been
+# added and now compiler complains about it not being properly initialized in
+# construtor. Since the whole python thing goes away, it's counter-productive
+# to spend any time on making this work on both python3.3 and 3.4, so
+# ingoring the warning seems the way to go.
+AM_CXXFLAGS += -Wno-error
+
 python_PYTHON = __init__.py
 pythondir = $(PYTHON_SITEPKG_DIR)/isc/util/cio
 
