@@ -21,6 +21,7 @@
 #include <dns/rcode.h>
 #include <dns/rrclass.h>
 #include <dns/rrset.h>
+#include <dns/tsig.h>
 
 #include <map>
 
@@ -62,6 +63,17 @@ public:
     NotUpdateMessage(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
+
+/// @brief Exception indicating that a signed, inbound message failed to verfiy
+///
+/// This exception is thrown when TSIG verification of a DNS server's response
+/// fails.
+class TSIGVerifyError : public Exception {
+public:
+    TSIGVerifyError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 
 class D2UpdateMessage;
 
@@ -250,6 +262,9 @@ public:
     /// RRs respectively. The ZOCOUNT must be equal to 1 because RFC2136
     /// requires that the message comprises exactly one Zone record.
     ///
+    /// If given a TSIG context, this method will pass the context down into
+    /// dns::Message.toWire() method which signs the message using the context.
+    ///
     /// This function does not guarantee exception safety. However, exceptions
     /// should be rare because @c D2UpdateMessage class API prevents invalid
     /// use of the class. The typical case, when this function may throw an
@@ -260,18 +275,23 @@ public:
     ///
     /// @param renderer A renderer object used to generate the message wire
     /// format.
-    void toWire(dns::AbstractMessageRenderer& renderer);
+    /// @param tsig_ctx A TSIG context that is to be used for signing the
+    /// message. If NULL the message will not be signed.
+    void toWire(dns::AbstractMessageRenderer& renderer,
+                dns::TSIGContext* const tsig_ctx = NULL);
 
     /// @brief Decode incoming message from the wire format.
     ///
     /// This function decodes the DNS Update message stored in the buffer
-    /// specified by the function argument. In the first turn, this function
-    /// parses message header and extracts the section counters: ZOCOUNT,
-    /// PRCOUNT, UPCOUNT and ADCOUNT. Using these counters, function identifies
-    /// message sections, which follow message header. These sections can be
-    /// later accessed using: @c D2UpdateMessage::getZone,
-    /// @c D2UpdateMessage::beginSection and @c D2UpdateMessage::endSection
-    /// functions.
+    /// specified by the function argument.  If given a TSIG context, then
+    /// the function will first attempt to use that context to verify the
+    /// message signature.  If verification fails a TSIGVefiryError exception
+    /// will be thrown. The function then parses message header and extracts
+    /// the section counters: ZOCOUNT, PRCOUNT, UPCOUNT and ADCOUNT. Using
+    /// these counters, function identifies message sections, which follow
+    /// message header. These sections can be later accessed using:
+    /// @c D2UpdateMessage::getZone, @c D2UpdateMessage::beginSection and
+    /// @c D2UpdateMessage::endSection functions.
     ///
     /// This function is NOT exception safe. It signals message decoding errors
     /// through exceptions. Message decoding error may occur if the received
@@ -282,8 +302,12 @@ public:
     /// message is the server response.
     /// - The number of records in the Zone section is greater than 1.
     ///
-    /// @param buffer input buffer, holding DNS Update message to be parsed.
-    void fromWire(isc::util::InputBuffer& buffer);
+    /// @param received_data buffer holding DNS Update message to be parsed.
+    /// @param bytes_received the number of bytes in received_data
+    /// @param tsig_ctx A TSIG context that is to be used to verify the
+    /// message. If NULL TSIG verification will not be attempted.
+    void fromWire(const void* data, size_t datalen,
+                  dns::TSIGContext* const tsig_context = NULL);
     //@}
 
 private:
