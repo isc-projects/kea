@@ -45,8 +45,8 @@ if test x$rpath != xno; then
 	    # Apple clang 5.1 is now considers unknown parameters passed to linker (ld) as errors.
 	    # However, the same unknown parameters passed to compiler (g++ ) are merely threated
 	    # as warnings. To make sure that we pick those up, is to use -Werror.
-            CXXFLAGS="$CXXFLAGS_SAVED -Werror -R"
-            CCFLAGS="$CCFLAGS_SAVED -Werror -R"
+            CXXFLAGS="$CXXFLAGS_SAVED -R/usr/lib"
+            CCFLAGS="$CCFLAGS_SAVED -R/usr/lib"
         AC_TRY_LINK([], [],
             [ AC_MSG_RESULT([yes; note that -R is more sensitive about the position in option arguments])
                 ISC_RPATH_FLAG=-R
