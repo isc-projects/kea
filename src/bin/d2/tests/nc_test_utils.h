@@ -40,8 +40,9 @@ typedef boost::shared_ptr<asio::ip::udp::socket> SocketPtr;
 class FauxServer {
 public:
     enum  ResponseMode {
-        USE_RCODE,   // Generate a response with a given RCODE
-        CORRUPT_RESP  // Generate a corrupt response
+        USE_RCODE,    // Generate a response with a given RCODE
+        CORRUPT_RESP, // Generate a corrupt response
+        INVALID_TSIG  // Generate a repsonse with the wrong TSIG key
     };
 
     // Reference to IOService to use for IO processing.
@@ -63,6 +64,9 @@ public:
     // a receive has been completed, a new one will be automatically
     // initiated.
     bool perpetual_receive_;
+    // TSIG Key to use to verify requests and sign responses.  If its
+    // NULL TSIG is not used.
+    dns::TSIGKeyPtr tsig_key_;
 
     /// @brief Constructor
     ///
@@ -96,7 +100,9 @@ public:
     /// @brief Socket IO Completion callback
     ///
     /// This method servers as the Server's UDP socket receive callback handler.
-    /// When the receive completes the handler is invoked with the
+    /// When the receive completes the handler is invoked with the parameters
+    /// listed.
+    ///
     /// @param error result code of the receive (determined by asio layer)
     /// @param bytes_recvd number of bytes received, if any
     /// @param response_mode type of response the handler should produce
@@ -110,6 +116,14 @@ public:
     /// @brief Returns true if a receive has been started but not completed.
     bool isReceivePending() {
         return receive_pending_;
+    }
+
+    /// @breif Sets the TSIG key to the given value.
+    ///
+    /// @param tsig_key Pointer to the TSIG key to use.  If the pointer is
+    /// empty, TSIG will not be used.
+    void setTSIGKey (const dns::TSIGKeyPtr tsig_key) {
+        tsig_key_ = tsig_key;
     }
 };
 

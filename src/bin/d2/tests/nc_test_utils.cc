@@ -31,7 +31,6 @@ namespace d2 {
 const char* TEST_DNS_SERVER_IP = "127.0.0.1";
 size_t TEST_DNS_SERVER_PORT = 5301;
 
-const bool HAS_RDATA = true;
 const bool NO_RDATA = false;
 
 //*************************** FauxServer class ***********************
@@ -39,7 +38,8 @@ const bool NO_RDATA = false;
 FauxServer::FauxServer(asiolink::IOService& io_service,
                        asiolink::IOAddress& address, size_t port)
     :io_service_(io_service), address_(address), port_(port),
-     server_socket_(), receive_pending_(false), perpetual_receive_(true) {
+     server_socket_(), receive_pending_(false), perpetual_receive_(true),
+     tsig_key_() {
 
     server_socket_.reset(new asio::ip::udp::socket(io_service_.get_io_service(),
                                                    asio::ip::udp::v4()));
@@ -53,7 +53,7 @@ FauxServer::FauxServer(asiolink::IOService& io_service,
                        DnsServerInfo& server)
     :io_service_(io_service), address_(server.getIpAddress()),
      port_(server.getPort()), server_socket_(), receive_pending_(false),
-     perpetual_receive_(true) {
+     perpetual_receive_(true), tsig_key_() {
     server_socket_.reset(new asio::ip::udp::socket(io_service_.get_io_service(),
                                                    asio::ip::udp::v4()));
     server_socket_->set_option(asio::socket_base::reuse_address(true));
@@ -95,6 +95,13 @@ FauxServer::requestHandler(const asio::error_code& error,
         return;
     }
 
+    // If TSIG key isn't NULL, create a context and use to verify the
+    // request and sign the response.
+    dns::TSIGContextPtr context;
+    if (tsig_key_) {
+        context.reset(new dns::TSIGContext(*tsig_key_));
+    }
+
     // We have a successfully received data. We need to turn it into
     // a request in order to build a proper response.
     // Note D2UpdateMessage is geared towards making requests and
@@ -104,6 +111,17 @@ FauxServer::requestHandler(const asio::error_code& error,
     util::InputBuffer request_buf(receive_buffer_, bytes_recvd);
     try {
         request.fromWire(request_buf);
+
+        // If contex is not NULL, then we need to verify the message.
+        if (context) {
+            dns::TSIGError error = context->verify(request.getTSIGRecord(),
+                                                   receive_buffer_,
+                                                   bytes_recvd);
+            if (error != dns::TSIGError::NOERROR()) {
+                isc_throw(TSIGVerifyError, "TSIG verification failed: "
+                          << error.toText());
+            }
+        }
     } catch (const std::exception& ex) {
         // If the request cannot be parsed, then fail the test.
         // We expect the client to send good requests.
@@ -131,7 +149,19 @@ FauxServer::requestHandler(const asio::error_code& error,
     dns::MessageRenderer renderer;
     util::OutputBuffer response_buf(TEST_MSG_MAX);
     renderer.setBuffer(&response_buf);
-    response.toWire(renderer);
+
+    if (response_mode == INVALID_TSIG) {
+        // Create a different key to sign the response.
+        std::string secret ("key that doesn't match");
+        dns::TSIGKeyPtr key;
+        ASSERT_NO_THROW(key.reset(new
+                                  dns::TSIGKey(dns::Name("badkey"),
+                                               dns::TSIGKey::HMACMD5_NAME(),
+                                               secret.c_str(), secret.size())));
+        context.reset(new dns::TSIGContext(*key));
+    }
+
+    response.toWire(renderer, context.get());
 
     // If mode is to ship garbage, then stomp on part of the rendered
     // message.
@@ -160,6 +190,7 @@ FauxServer::requestHandler(const asio::error_code& error,
         receive (response_mode, response_rcode);
     }
 }
+
 
 
 //********************** TimedIO class ***********************
