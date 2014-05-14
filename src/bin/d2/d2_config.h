@@ -19,6 +19,7 @@
 #include <d2/d2_asio.h>
 #include <d2/d_cfg_mgr.h>
 #include <dhcpsrv/dhcp_parsers.h>
+#include <dns/tsig.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/foreach.hpp>
@@ -145,22 +146,39 @@ public:
 
 /// @brief Represents a TSIG Key.
 ///
-/// Currently, this is simple storage class containing the basic attributes of
-/// a TSIG Key.  It is intended primarily as a reference for working with
-/// actual keys and may eventually be replaced by isc::dns::TSIGKey.  TSIG Key
-/// functionality at this stage is strictly limited to configuration parsing.
-/// @todo full functionality for using TSIG during DNS updates will be added
-/// in a future release.
+/// Acts as both a storage class containing the basic attributes which
+/// describe a TSIG Key, as well as owning and providing access to an
+/// instance of the actual key (@ref isc::dns::TSIGKey) that can be used
+/// by the IO layer for signing and verifying messages.
+///
 class TSIGKeyInfo {
 public:
+    /// @brief Defines string values for the supported TSIG algorithms
+    //@{
+    static const char* MD5_STR;
+    static const char* SHA1_STR;
+    static const char* SHA256_STR;
+    static const char* SHA224_STR;
+    static const char* SHA384_STR;
+    static const char* SHA512_STR;
+    //}@
 
     /// @brief Constructor
     ///
     /// @param name the unique label used to identify this key
-    /// @param algorithm the name of the encryption alogirthm this key uses.
-    /// (@todo This will be a fixed list of choices)
+    /// @param algorithm the id of the encryption alogirthm this key uses.
+    /// Currently supported values are (case insensitive):
+    /// -# "MD5"
+    /// -# "SHA1"
+    /// -# "SHA224"
+    /// -# "SHA256"
+    /// -# "SHA384"
+    /// -# "SHA512"
     ///
     /// @param secret the secret component of this key
+    /// @throw D2CfgError if values supplied are invalid:
+    /// name cannot be blank, algorithm must be a supported value,
+    /// secret cannot be blank
     TSIGKeyInfo(const std::string& name, const std::string& algorithm,
                 const std::string& secret);
 
@@ -174,7 +192,7 @@ public:
         return (name_);
     }
 
-    /// @brief Getter which returns the key's algorithm.
+    /// @brief Getter which returns the key's algorithm string ID
     ///
     /// @return returns the algorithm as as std::string.
     const std::string getAlgorithm() const {
@@ -188,18 +206,55 @@ public:
         return (secret_);
     }
 
+    /// @brief Getter which returns the TSIG key used to sign and verify
+    /// messages
+    ///
+    /// @return const pointer reference to dns::TSIGKey.
+    const dns::TSIGKeyPtr& getTSIGKey() const {
+        return (tsig_key_);
+    }
+
+    /// @brief Converts algorithm id to dns::TSIGKey algorithm dns::Name
+    ///
+    /// @param algorithm_id string value to translate into an algorithm name.
+    /// Currently supported values are (case insensitive):
+    /// -# "MD5"
+    /// -# "SHA1"
+    /// -# "SHA224"
+    /// -# "SHA256"
+    /// -# "SHA384"
+    /// -# "SHA512"
+    ///
+    /// @return const reference to a dns::Name containing the alogorithm name
+    /// @throw BadValue if ID isn't recognized.
+    static const dns::Name& stringToAlgorithmName(const std::string&
+                                                  algorithm_id);
+
 private:
+    /// @brief Creates the actual TSIG key instance member
+    ///
+    /// Replaces this tsig_key member with a key newly created using the key
+    /// name, algorithm id, and secret.
+    /// This method is currently only called by the constructor, however it
+    /// could be called post-construction should keys ever support expiration.
+    ///
+    /// @throw D2CfgError with an explanation if the key could not be created.
+    void remakeKey();
+
     /// @brief The name of the key.
     ///
     /// This value is the unique identifier that domains use to
     /// to specify which TSIG key they need.
     std::string name_;
 
-    /// @brief The algorithm that should be used for this key.
+    /// @brief The string ID of the algorithm that should be used for this key.
     std::string algorithm_;
 
     /// @brief The secret value component of this key.
     std::string secret_;
+
+    /// @brief The actual TSIG key.
+    dns::TSIGKeyPtr tsig_key_;
 };
 
 /// @brief Defines a pointer for TSIGKeyInfo instances.

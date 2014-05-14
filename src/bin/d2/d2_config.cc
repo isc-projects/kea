@@ -29,14 +29,56 @@ namespace d2 {
 
 // *********************** TSIGKeyInfo  *************************
 
+const char* TSIGKeyInfo::MD5_STR = "MD5";
+const char* TSIGKeyInfo::SHA1_STR = "SHA1";
+const char* TSIGKeyInfo::SHA224_STR = "SHA224";
+const char* TSIGKeyInfo::SHA256_STR = "SHA256";
+const char* TSIGKeyInfo::SHA384_STR = "SHA384";
+const char* TSIGKeyInfo::SHA512_STR = "SHA512";
+
 TSIGKeyInfo::TSIGKeyInfo(const std::string& name, const std::string& algorithm,
                          const std::string& secret)
-    :name_(name), algorithm_(algorithm), secret_(secret) {
+    :name_(name), algorithm_(algorithm), secret_(secret), tsig_key_() {
+    remakeKey();
 }
 
 TSIGKeyInfo::~TSIGKeyInfo() {
 }
 
+const dns::Name&
+TSIGKeyInfo::stringToAlgorithmName(const std::string& algorithm_id) {
+    if (boost::iequals(algorithm_id, MD5_STR)) {
+        return (dns::TSIGKey::HMACMD5_NAME());
+    }
+    if (boost::iequals(algorithm_id, SHA1_STR)) {
+        return (dns::TSIGKey::HMACSHA1_NAME());
+    }
+    if (boost::iequals(algorithm_id, SHA224_STR)) {
+        return (dns::TSIGKey::HMACSHA224_NAME());
+    }
+    if (boost::iequals(algorithm_id, SHA256_STR)) {
+        return (dns::TSIGKey::HMACSHA256_NAME());
+    }
+    if (boost::iequals(algorithm_id, SHA384_STR)) {
+        return (dns::TSIGKey::HMACSHA384_NAME());
+    }
+    if (boost::iequals(algorithm_id, SHA512_STR)) {
+        return (dns::TSIGKey::HMACSHA512_NAME());
+    }
+
+    isc_throw(BadValue, "Unknown TSIG Key algorithm:" << algorithm_id);
+}
+
+void
+TSIGKeyInfo::remakeKey() {
+    try {
+        tsig_key_.reset(new dns::TSIGKey(dns::Name(name_),
+                                         stringToAlgorithmName(algorithm_),
+                                         secret_.c_str(), secret_.size()));
+    } catch (const std::exception& ex) {
+        isc_throw(D2CfgError, "Cannot make TSIGKey: " << ex.what());
+    }
+}
 
 // *********************** DnsServerInfo  *************************
 
@@ -212,9 +254,6 @@ TSIGKeyInfoParser::build(isc::data::ConstElementPtr key_config) {
     local_scalars_.getParam("algorithm", algorithm);
     local_scalars_.getParam("secret", secret);
 
-    // @todo Validation here is very superficial. This will expand as TSIG
-    // Key use is more fully implemented.
-
     // Name cannot be blank.
     if (name.empty()) {
         isc_throw(D2CfgError, "TSIG Key Info must specify name");
@@ -265,9 +304,6 @@ TSIGKeyInfoParser::createConfigParser(const std::string& config_id) {
 
 void
 TSIGKeyInfoParser::commit() {
-    /// @todo if at some point  TSIG keys need some form of runtime resource
-    /// initialization, such as creating some sort of hash instance in
-    /// crytpolib.  Once TSIG is fully implemented under Trac #3432 we'll know.
 }
 
 // *********************** TSIGKeyInfoListParser  *************************
