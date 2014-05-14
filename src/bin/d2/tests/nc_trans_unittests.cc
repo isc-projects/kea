@@ -264,6 +264,7 @@ public:
     using NameChangeTransaction::addPtrRdata;
     using NameChangeTransaction::responseString;
     using NameChangeTransaction::transactionOutcomeString;
+    using NameChangeTransaction::setTSIGKey;
 };
 
 // Declare them so Gtest can see them.
@@ -996,6 +997,154 @@ TEST_F(NameChangeTransactionTest, sendUpdate) {
 
     // Verify that we have a response and it's Rcode is NOERROR,
     // and the zone is as expected.
+    D2UpdateMessagePtr response = name_change->getDnsUpdateResponse();
+    ASSERT_TRUE(response);
+    ASSERT_EQ(dns::Rcode::NOERROR().getCode(), response->getRcode().getCode());
+    D2ZonePtr zone = response->getZone();
+    EXPECT_TRUE(zone);
+    EXPECT_EQ("response.example.com.", zone->getName().toText());
+}
+
+/// @brief Tests that an unsigned response to a signed request is an error
+TEST_F(NameChangeTransactionTest, tsigUnsignedResponse) {
+    NameChangeStubPtr name_change;
+    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+    ASSERT_NO_THROW(name_change->initDictionaries());
+    ASSERT_TRUE(name_change->selectFwdServer());
+
+    // Create a server and start it listening.
+    FauxServer server(*io_service_, *(name_change->getCurrentServer()));
+    server.receive (FauxServer::USE_RCODE, dns::Rcode::NOERROR());
+
+    // Create a key and manually set it as the transaction's TSIG key
+    std::string secret ("key number one");
+    dns::TSIGKeyPtr key_one;
+    ASSERT_NO_THROW(key_one.reset(new
+                                  dns::TSIGKey(dns::Name("one.com"),
+                                               dns::TSIGKey::HMACMD5_NAME(),
+                                               secret.c_str(), secret.size())));
+    name_change->setTSIGKey(key_one);
+    ASSERT_NO_FATAL_FAILURE(doOneExchange(name_change));
+
+    // Verify that next event is IO_COMPLETED_EVT and DNS status is
+    // INVALID_RESPONSE.
+    ASSERT_EQ(NameChangeTransaction::IO_COMPLETED_EVT,
+              name_change->getNextEvent());
+
+    ASSERT_EQ(DNSClient::INVALID_RESPONSE, name_change->getDnsUpdateStatus());
+
+    // When TSIG errors occur, only the message header (including Rcode) is
+    // unpacked.  In this case, it should be NOERROR but have no other
+    // information.
+    D2UpdateMessagePtr response = name_change->getDnsUpdateResponse();
+    ASSERT_TRUE(response);
+    ASSERT_EQ(dns::Rcode::NOERROR().getCode(), response->getRcode().getCode());
+    EXPECT_FALSE(response->getZone());
+}
+
+/// @brief Tests that a response signed with the wrong key is an error
+TEST_F(NameChangeTransactionTest, tsigInvalidResponse) {
+    NameChangeStubPtr name_change;
+    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+    ASSERT_NO_THROW(name_change->initDictionaries());
+    ASSERT_TRUE(name_change->selectFwdServer());
+
+    // Create a server, tell it to sign responses with a "random" key,
+    // then start it listening.
+    FauxServer server(*io_service_, *(name_change->getCurrentServer()));
+    server.receive (FauxServer::INVALID_TSIG, dns::Rcode::NOERROR());
+
+    // Create a key and manually set it as the transaction's TSIG key
+    std::string secret ("key number one");
+    dns::TSIGKeyPtr key_one;
+    ASSERT_NO_THROW(key_one.reset(new
+                                  dns::TSIGKey(dns::Name("one.com"),
+                                               dns::TSIGKey::HMACMD5_NAME(),
+                                               secret.c_str(), secret.size())));
+    name_change->setTSIGKey(key_one);
+    ASSERT_NO_FATAL_FAILURE(doOneExchange(name_change));
+
+    // Verify that next event is IO_COMPLETED_EVT and DNS status is
+    // INVALID_RESPONSE.
+    ASSERT_EQ(NameChangeTransaction::IO_COMPLETED_EVT,
+              name_change->getNextEvent());
+
+    ASSERT_EQ(DNSClient::INVALID_RESPONSE, name_change->getDnsUpdateStatus());
+
+    // When TSIG errors occur, only the message header (including Rcode) is
+    // unpacked.  In this case, it should be NOERROR but have no other
+    // information.
+    D2UpdateMessagePtr response = name_change->getDnsUpdateResponse();
+    ASSERT_TRUE(response);
+    ASSERT_EQ(dns::Rcode::NOERROR().getCode(), response->getRcode().getCode());
+    EXPECT_FALSE(response->getZone());
+}
+
+/// @brief Tests that a signed response to an unsigned request is ok.
+/// Currently our policy is to accept a signed response to an unsigned request
+/// even though the spec says a server MUST not do that.
+TEST_F(NameChangeTransactionTest, tsigUnexpectedSignedResponse) {
+    NameChangeStubPtr name_change;
+    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+    ASSERT_NO_THROW(name_change->initDictionaries());
+    ASSERT_TRUE(name_change->selectFwdServer());
+
+    // Create a server, tell it to sign responses with a "random" key,
+    // then start it listening.
+    FauxServer server(*io_service_, *(name_change->getCurrentServer()));
+    server.receive (FauxServer::INVALID_TSIG, dns::Rcode::NOERROR());
+
+    // Perform an update without TSIG.
+    ASSERT_NO_FATAL_FAILURE(doOneExchange(name_change));
+
+    // Verify that next event is IO_COMPLETED_EVT and DNS status is SUCCESS.
+    ASSERT_EQ(NameChangeTransaction::IO_COMPLETED_EVT,
+              name_change->getNextEvent());
+
+    ASSERT_EQ(DNSClient::SUCCESS, name_change->getDnsUpdateStatus());
+
+    D2UpdateMessagePtr response = name_change->getDnsUpdateResponse();
+    ASSERT_TRUE(response);
+    ASSERT_EQ(dns::Rcode::NOERROR().getCode(), response->getRcode().getCode());
+    D2ZonePtr zone = response->getZone();
+    EXPECT_TRUE(zone);
+    EXPECT_EQ("response.example.com.", zone->getName().toText());
+}
+
+
+/// @brief Tests that a TSIG udpate succeeds when client and server both use
+/// the right key.
+TEST_F(NameChangeTransactionTest, tsigValidExchange) {
+    NameChangeStubPtr name_change;
+    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+    ASSERT_NO_THROW(name_change->initDictionaries());
+    ASSERT_TRUE(name_change->selectFwdServer());
+
+    // Create a key
+    std::string secret ("key number one");
+    dns::TSIGKeyPtr key_one;
+    ASSERT_NO_THROW(key_one.reset(new
+                                  dns::TSIGKey(dns::Name("one.com"),
+                                               dns::TSIGKey::HMACMD5_NAME(),
+                                               secret.c_str(), secret.size())));
+
+    // Create a server, set its TSIG key, and then start it listening.
+    FauxServer server(*io_service_, *(name_change->getCurrentServer()));
+    server.setTSIGKey(key_one);
+    server.receive (FauxServer::USE_RCODE, dns::Rcode::NOERROR());
+
+    // Manually set the transaction's key to the same key as the server.
+    name_change->setTSIGKey(key_one);
+
+    // Do the update.
+    ASSERT_NO_FATAL_FAILURE(doOneExchange(name_change));
+
+    // Verify that next event is IO_COMPLETED_EVT and DNS status is SUCCESS.
+    ASSERT_EQ(NameChangeTransaction::IO_COMPLETED_EVT,
+              name_change->getNextEvent());
+
+    ASSERT_EQ(DNSClient::SUCCESS, name_change->getDnsUpdateStatus());
+
     D2UpdateMessagePtr response = name_change->getDnsUpdateResponse();
     ASSERT_TRUE(response);
     ASSERT_EQ(dns::Rcode::NOERROR().getCode(), response->getRcode().getCode());
