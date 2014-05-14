@@ -54,7 +54,7 @@ NameChangeTransaction(IOServicePtr& io_service,
      dns_update_status_(DNSClient::OTHER), dns_update_response_(),
      forward_change_completed_(false), reverse_change_completed_(false),
      current_server_list_(), current_server_(), next_server_pos_(0),
-     update_attempts_(0) {
+     update_attempts_(0), tsig_key_() {
     // @todo if io_service is NULL we are multi-threading and should
     // instantiate our own
     if (!io_service_) {
@@ -163,8 +163,7 @@ NameChangeTransaction::transactionOutcomeString() const {
 
 
 void
-NameChangeTransaction::sendUpdate(const std::string& comment,
-                                  bool /* use_tsig_ */) {
+NameChangeTransaction::sendUpdate(const std::string& comment) {
     try {
         ++update_attempts_;
         // @todo add logic to add/replace TSIG key info in request if
@@ -173,9 +172,18 @@ NameChangeTransaction::sendUpdate(const std::string& comment,
 
         // @todo time out should ultimately be configurable, down to
         // server level?
-        dns_client_->doUpdate(*io_service_, current_server_->getIpAddress(),
-                              current_server_->getPort(), *dns_update_request_,
-                              DNS_UPDATE_DEFAULT_TIMEOUT);
+        if (tsig_key_) {
+            dns_client_->doUpdate(*io_service_, current_server_->getIpAddress(),
+                                  current_server_->getPort(),
+                                  *dns_update_request_,
+                                  DNS_UPDATE_DEFAULT_TIMEOUT,
+                                  *tsig_key_);
+        } else {
+            dns_client_->doUpdate(*io_service_, current_server_->getIpAddress(),
+                                  current_server_->getPort(),
+                                  *dns_update_request_,
+                                  DNS_UPDATE_DEFAULT_TIMEOUT);
+        }
 
         // Message is on its way, so the next event should be NOP_EVT.
         postNextEvent(NOP_EVT);
@@ -420,6 +428,7 @@ NameChangeTransaction::initServerSelection(const DdnsDomainPtr& domain) {
         isc_throw(NameChangeTransactionError,
                   "initServerSelection called with an empty domain");
     }
+
     current_server_list_ = domain->getServers();
     next_server_pos_ = 0;
     current_server_.reset();
@@ -444,6 +453,11 @@ NameChangeTransaction::selectNextServer() {
     }
 
     return (false);
+}
+
+void
+NameChangeTransaction::setTSIGKey(const dns::TSIGKeyPtr& tsig_key) {
+    tsig_key_ = tsig_key;
 }
 
 const DNSClientPtr&

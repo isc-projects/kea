@@ -23,6 +23,7 @@
 #include <d2/dns_client.h>
 #include <d2/state_model.h>
 #include <dhcp_ddns/ncr_msg.h>
+#include <dns/tsig.h>
 
 #include <boost/shared_ptr.hpp>
 #include <map>
@@ -207,14 +208,15 @@ protected:
     /// currently selected server.  Since the send is asynchronous, the method
     /// posts NOP_EVT as the next event and then returns.
     ///
+    /// If tsig_key_ is not NULL, then the update will be conducted using
+    /// the key to sign the request and verify the response, otherwise it
+    /// will be conducted without TSIG.
+    ///
     /// @param comment text to include in log detail
-    /// @param use_tsig True if the update should be include a TSIG key. This
-    /// is not yet implemented.
     ///
     /// If an exception occurs it will be logged and and the transaction will
     /// be failed.
-    virtual void sendUpdate(const std::string& comment = "",
-                            bool use_tsig = false);
+    virtual void sendUpdate(const std::string& comment = "");
 
     /// @brief Adds events defined by NameChangeTransaction to the event set.
     ///
@@ -347,6 +349,12 @@ protected:
     /// servers from which to select.
     bool selectNextServer();
 
+    /// @brief Sets the TSIG key to be used.
+    ///
+    /// @param tsig_key TSIG Key value to be used for signing and verifying
+    /// messages.  If set to an emtpy pointer, TSIG will not be used.
+    void setTSIGKey(const dns::TSIGKeyPtr& tsig_key);
+
     /// @brief Sets the update attempt count to the given value.
     ///
     /// @param value is the new value to assign.
@@ -469,6 +477,12 @@ public:
     /// @return A const pointer reference to the DNSClient
     const DNSClientPtr& getDNSClient() const;
 
+    /// @brief Pointer to the TSIG key which should be used (if any).
+    ///
+    /// @return A const pointer reference to the current TSIG key. Pointer
+    /// will be empty if TSIG is not being used.
+    const dns::TSIGKeyPtr& getTSIGKey() const;
+
     /// @brief Fetches the current DNS update request packet.
     ///
     /// @return A const pointer reference to the current D2UpdateMessage
@@ -570,6 +584,9 @@ private:
 
     /// @brief Number of transmit attempts for the current request.
     size_t update_attempts_;
+
+    /// @brief Pointer to the TSIG key which should be used (if any).
+    dns::TSIGKeyPtr tsig_key_;
 };
 
 /// @brief Defines a pointer to a NameChangeTransaction.
