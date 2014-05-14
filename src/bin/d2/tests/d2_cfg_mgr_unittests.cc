@@ -145,6 +145,11 @@ bool checkKey(TSIGKeyInfoPtr key, const char* name,
         result = false;
     }
 
+    if (!key->getTSIGKey()) {
+        EXPECT_TRUE (key->getTSIGKey());
+        return false;
+    }
+
     return (result);
 }
 
@@ -256,7 +261,7 @@ TEST_F(TSIGKeyInfoTest, invalidEntry) {
     // Config with a blank name entry.
     std::string config = "{"
                          " \"name\": \"\" , "
-                         " \"algorithm\": \"md5\" , "
+                         " \"algorithm\": \"MD5\" , "
                          " \"secret\": \"0123456789\" "
                          "}";
     ASSERT_TRUE(fromJSON(config));
@@ -276,10 +281,23 @@ TEST_F(TSIGKeyInfoTest, invalidEntry) {
     // Verify that build fails on blank algorithm.
     EXPECT_THROW(parser_->build(config_set_), D2CfgError);
 
+    // Config with an invalid algorithm entry.
+    config = "{"
+                         " \"name\": \"d2_key_one\" , "
+                         " \"algorithm\": \"bogus\" , "
+                         " \"secret\": \"0123456789\" "
+                         "}";
+
+    ASSERT_TRUE(fromJSON(config));
+
+    // Verify that build fails on blank algorithm.
+    EXPECT_THROW(parser_->build(config_set_), D2CfgError);
+
+
     // Config with a blank secret entry.
     config = "{"
                          " \"name\": \"d2_key_one\" , "
-                         " \"algorithm\": \"md5\" , "
+                         " \"algorithm\": \"MD5\" , "
                          " \"secret\": \"\" "
                          "}";
 
@@ -295,7 +313,7 @@ TEST_F(TSIGKeyInfoTest, validEntry) {
     // Valid entries for TSIG key, all items are required.
     std::string config = "{"
                          " \"name\": \"d2_key_one\" , "
-                         " \"algorithm\": \"md5\" , "
+                         " \"algorithm\": \"MD5\" , "
                          " \"secret\": \"0123456789\" "
                          "}";
     ASSERT_TRUE(fromJSON(config));
@@ -314,7 +332,7 @@ TEST_F(TSIGKeyInfoTest, validEntry) {
     TSIGKeyInfoPtr& key = gotit->second;
 
     // Verify the key contents.
-    EXPECT_TRUE(checkKey(key, "d2_key_one", "md5", "0123456789"));
+    EXPECT_TRUE(checkKey(key, "d2_key_one", "MD5", "0123456789"));
 }
 
 /// @brief Verifies that attempting to parse an invalid list of TSIGKeyInfo
@@ -324,7 +342,7 @@ TEST_F(TSIGKeyInfoTest, invalidTSIGKeyList) {
     std::string config = "["
 
                          " { \"name\": \"key1\" , "
-                         "   \"algorithm\": \"algo1\" ,"
+                         "   \"algorithm\": \"MD5\" ,"
                          "   \"secret\": \"secret11\" "
                          " },"
                          " { \"name\": \"key2\" , "
@@ -332,7 +350,7 @@ TEST_F(TSIGKeyInfoTest, invalidTSIGKeyList) {
                          "   \"secret\": \"secret12\" "
                          " },"
                          " { \"name\": \"key3\" , "
-                         "   \"algorithm\": \"algo3\" ,"
+                         "   \"algorithm\": \"MD5\" ,"
                          "   \"secret\": \"secret13\" "
                          " }"
                          " ]";
@@ -354,15 +372,15 @@ TEST_F(TSIGKeyInfoTest, duplicateTSIGKey) {
     std::string config = "["
 
                          " { \"name\": \"key1\" , "
-                         "   \"algorithm\": \"algo1\" ,"
+                         "   \"algorithm\": \"MD5\" ,"
                          "   \"secret\": \"secret11\" "
                          " },"
                          " { \"name\": \"key2\" , "
-                         "   \"algorithm\": \"algo2\" ,"
+                         "   \"algorithm\": \"MD5\" ,"
                          "   \"secret\": \"secret12\" "
                          " },"
                          " { \"name\": \"key1\" , "
-                         "   \"algorithm\": \"algo3\" ,"
+                         "   \"algorithm\": \"MD5\" ,"
                          "   \"secret\": \"secret13\" "
                          " }"
                          " ]";
@@ -378,21 +396,34 @@ TEST_F(TSIGKeyInfoTest, duplicateTSIGKey) {
 }
 
 /// @brief Verifies a valid list of TSIG Keys parses correctly.
+/// Also verifies that all of the supported algorithm names work.
 TEST_F(TSIGKeyInfoTest, validTSIGKeyList) {
     // Construct a valid list of keys.
     std::string config = "["
 
                          " { \"name\": \"key1\" , "
-                         "   \"algorithm\": \"algo1\" ,"
+                         "   \"algorithm\": \"MD5\" ,"
                          "   \"secret\": \"secret1\" "
                          " },"
                          " { \"name\": \"key2\" , "
-                         "   \"algorithm\": \"algo2\" ,"
+                         "   \"algorithm\": \"SHA1\" ,"
                          "   \"secret\": \"secret2\" "
                          " },"
                          " { \"name\": \"key3\" , "
-                         "   \"algorithm\": \"algo3\" ,"
+                         "   \"algorithm\": \"SHA256\" ,"
                          "   \"secret\": \"secret3\" "
+                         " },"
+                         " { \"name\": \"key4\" , "
+                         "   \"algorithm\": \"SHA224\" ,"
+                         "   \"secret\": \"secret4\" "
+                         " },"
+                         " { \"name\": \"key5\" , "
+                         "   \"algorithm\": \"SHA384\" ,"
+                         "   \"secret\": \"secret5\" "
+                         " },"
+                         " { \"name\": \"key6\" , "
+                         "   \"algorithm\": \"SHA512\" ,"
+                         "   \"secret\": \"secret6\" "
                          " }"
                          " ]";
 
@@ -407,7 +438,7 @@ TEST_F(TSIGKeyInfoTest, validTSIGKeyList) {
 
     // Verify the correct number of keys are present
     int count =  keys_->size();
-    ASSERT_EQ(3, count);
+    ASSERT_EQ(6, count);
 
     // Find the 1st key and retrieve it.
     TSIGKeyInfoMap::iterator gotit = keys_->find("key1");
@@ -415,7 +446,7 @@ TEST_F(TSIGKeyInfoTest, validTSIGKeyList) {
     TSIGKeyInfoPtr& key = gotit->second;
 
     // Verify the key contents.
-    EXPECT_TRUE(checkKey(key, "key1", "algo1", "secret1"));
+    EXPECT_TRUE(checkKey(key, "key1", TSIGKeyInfo::MD5_STR, "secret1"));
 
     // Find the 2nd key and retrieve it.
     gotit = keys_->find("key2");
@@ -423,7 +454,7 @@ TEST_F(TSIGKeyInfoTest, validTSIGKeyList) {
     key = gotit->second;
 
     // Verify the key contents.
-    EXPECT_TRUE(checkKey(key, "key2", "algo2", "secret2"));
+    EXPECT_TRUE(checkKey(key, "key2", TSIGKeyInfo::SHA1_STR, "secret2"));
 
     // Find the 3rd key and retrieve it.
     gotit = keys_->find("key3");
@@ -431,7 +462,31 @@ TEST_F(TSIGKeyInfoTest, validTSIGKeyList) {
     key = gotit->second;
 
     // Verify the key contents.
-    EXPECT_TRUE(checkKey(key, "key3", "algo3", "secret3"));
+    EXPECT_TRUE(checkKey(key, "key3", TSIGKeyInfo::SHA256_STR, "secret3"));
+
+    // Find the 4th key and retrieve it.
+    gotit = keys_->find("key4");
+    ASSERT_TRUE(gotit != keys_->end());
+    key = gotit->second;
+
+    // Verify the key contents.
+    EXPECT_TRUE(checkKey(key, "key4", TSIGKeyInfo::SHA224_STR, "secret4"));
+
+    // Find the 5th key and retrieve it.
+    gotit = keys_->find("key5");
+    ASSERT_TRUE(gotit != keys_->end());
+    key = gotit->second;
+
+    // Verify the key contents.
+    EXPECT_TRUE(checkKey(key, "key5", TSIGKeyInfo::SHA384_STR, "secret5"));
+
+    // Find the 6th key and retrieve it.
+    gotit = keys_->find("key6");
+    ASSERT_TRUE(gotit != keys_->end());
+    key = gotit->second;
+
+    // Verify the key contents.
+    EXPECT_TRUE(checkKey(key, "key6", TSIGKeyInfo::SHA512_STR, "secret6"));
 }
 
 /// @brief Tests the enforcement of data validation when parsing DnsServerInfos.
@@ -743,8 +798,8 @@ TEST_F(DdnsDomainTest, DdnsDomainListParsing) {
     ASSERT_TRUE(fromJSON(config));
 
     // Add keys to key map so key validation passes.
-    addKey("d2_key.tmark.org", "algo1", "secret1");
-    addKey("d2_key.billcat.net", "algo2", "secret2");
+    addKey("d2_key.tmark.org", "MD5", "secret1");
+    addKey("d2_key.billcat.net", "MD5", "secret2");
 
     // Create the list parser
     isc::dhcp::ParserPtr list_parser;
