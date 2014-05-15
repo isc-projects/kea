@@ -59,11 +59,11 @@ b10_dhcp6_SOURCES += ctrl_dhcp6_srv.cc ctrl_dhcp6_srv.h
 b10_dhcp6_SOURCES += json_config_parser.cc json_config_parser.h
 
 if CONFIG_BACKEND_BUNDY
-b10_dhcp6_SOURCES += bundy_backend.cc
+b10_dhcp6_SOURCES += bundy_controller.cc
 endif
 
 if CONFIG_BACKEND_JSON
-b10_dhcp6_SOURCES += jsonfile_backend.cc
+b10_dhcp6_SOURCES += jsonfile_controller.cc
 endif
 
 nodist_b10_dhcp6_SOURCES = dhcp6_messages.h dhcp6_messages.cc
