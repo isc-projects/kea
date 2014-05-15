@@ -349,12 +349,6 @@ protected:
     /// servers from which to select.
     bool selectNextServer();
 
-    /// @brief Sets the TSIG key to be used.
-    ///
-    /// @param tsig_key TSIG Key value to be used for signing and verifying
-    /// messages.  If set to an emtpy pointer, TSIG will not be used.
-    void setTSIGKey(const dns::TSIGKeyPtr& tsig_key);
-
     /// @brief Sets the update attempt count to the given value.
     ///
     /// @param value is the new value to assign.
