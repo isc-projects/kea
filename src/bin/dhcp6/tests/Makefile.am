@@ -91,12 +91,12 @@ dhcp6_unittests_SOURCES += config_parser_unittest.cc
 if CONFIG_BACKEND_BUNDY
 # For Bundy backend, we only need to run the usual tests. There are no
 # Bundy-specific tests yet.
-dhcp6_unittests_SOURCES += ../bundy_backend.cc
+dhcp6_unittests_SOURCES += ../bundy_controller.cc
 dhcp6_unittests_SOURCES += bundy_backend_unittest.cc
 endif
 
 if CONFIG_BACKEND_JSON
-dhcp6_unittests_SOURCES += ../jsonfile_backend.cc
+dhcp6_unittests_SOURCES += ../jsonfile_controller.cc
 dhcp6_unittests_SOURCES += jsonfile_backend_unittest.cc
 endif
 
