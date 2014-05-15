@@ -418,8 +418,25 @@ DdnsDomainPtr makeDomain(const std::string& zone_name,
                          const std::string& key_name) {
     DdnsDomainPtr domain;
     DnsServerInfoStoragePtr servers(new DnsServerInfoStorage());
-    domain.reset(new DdnsDomain(zone_name, key_name, servers));
+    domain.reset(new DdnsDomain(zone_name, servers, makeTSIGKey(key_name)));
     return (domain);
+}
+
+TSIGKeyInfoPtr makeTSIGKey(const std::string& key_name,
+                           const std::string& secret,
+                           const std::string& algorithm) {
+    TSIGKeyInfoPtr key_info;
+    if (!key_name.empty()) {
+        if (!secret.empty()) {
+            key_info.reset(new TSIGKeyInfo(key_name, algorithm, secret));
+        } else {
+            // if no secret, then just use the key_name for it
+            key_info.reset(new TSIGKeyInfo(key_name, algorithm, key_name));
+        }
+    }
+
+    return (key_info);
+
 }
 
 void addDomainServer(DdnsDomainPtr& domain, const std::string& name,

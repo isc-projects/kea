@@ -349,11 +349,25 @@ dhcp_ddns::NameChangeRequestPtr makeNcrFromString(const std::string& ncr_str);
 /// @brief Creates a DdnsDomain with the one server.
 ///
 /// @param zone_name zone name of the domain
-/// @param key_name TSIG key name of the TSIG key for this domain
+/// @param key_name TSIG key name of the TSIG key for this domain. Defaults to
+/// blank which means the DdnsDomain does not have a key.
 ///
 /// @throw Underlying methods may throw.
 extern DdnsDomainPtr makeDomain(const std::string& zone_name,
                                 const std::string& key_name = "");
+
+/// @brief Creates a TSIGKeyInfo
+///
+/// @param key_name name of the key
+/// @param secret key secret data.  If blank, the key_name will be used.
+/// @param algorithm algorithm to use. Defaults to MD5.
+/// @return a TSIGKeyInfoPtr for the newly created key.  If key_name is blank
+/// the pointer will be empty.
+/// @throw Underlying methods may throw.
+extern
+TSIGKeyInfoPtr makeTSIGKey(const std::string& key_name,
+                           const std::string& secret = "",
+                           const std::string& algorithm = TSIGKeyInfo::MD5_STR);
 
 /// @brief Creates a DnsServerInfo and adds it to the given DdnsDomain.
 ///
