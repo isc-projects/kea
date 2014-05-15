@@ -1053,8 +1053,7 @@ public:
     /// to another context.
     /// @param values A storage holding value to be checked.
     /// @tparam ContainerType A type of the storage.
-    /// @tparam ValueType A type of the value in the container.
-    template<typename ContainerType, typename ValueType>
+    template<typename ContainerType>
     void checkValueEq(const boost::shared_ptr<ContainerType>& ref_values,
                       const boost::shared_ptr<ContainerType>& values) {
         ASSERT_NO_THROW(values->getParam("foo"));
@@ -1070,8 +1069,7 @@ public:
     /// to another context.
     /// @param values A storage holding position to be checked.
     /// @tparam ContainerType A type of the storage.
-    /// @tparam ValueType A type of the value in the container.
-    template<typename ContainerType, typename ValueType>
+    template<typename ContainerType>
     void checkPositionEq(const std::string& name,
                          const boost::shared_ptr<ContainerType>& ref_values,
                          const boost::shared_ptr<ContainerType>& values) {
@@ -1098,7 +1096,7 @@ public:
     /// @param values A storage holding value to be checked.
     /// @tparam ContainerType A type of the storage.
     /// @tparam ValueType A type of the value in the container.
-    template<typename ContainerType, typename ValueType>
+    template<typename ContainerType>
     void checkValueNeq(const boost::shared_ptr<ContainerType>& ref_values,
                        const boost::shared_ptr<ContainerType>& values) {
         ASSERT_NO_THROW(values->getParam("foo"));
@@ -1114,8 +1112,7 @@ public:
     /// to another context.
     /// @param values A storage holding position to be checked.
     /// @tparam ContainerType A type of the storage.
-    /// @tparam ValueType A type of the value in the container.
-    template<typename ContainerType, typename ValueType>
+    template<typename ContainerType>
     void checkPositionNeq(const std::string& name,
                           const boost::shared_ptr<ContainerType>& ref_values,
                           const boost::shared_ptr<ContainerType>& values) {
@@ -1274,20 +1271,19 @@ public:
         {
             SCOPED_TRACE("Check that boolean values are equal in both"
                          " contexts");
-            checkValueEq<BooleanStorage, bool>(ctx.boolean_values_,
-                                               ctx_new->boolean_values_);
+            checkValueEq(ctx.boolean_values_, ctx_new->boolean_values_);
         }
 
         // New context has the same boolean values' positions.
         {
             SCOPED_TRACE("Check that positions of boolean values are equal"
                          " in both contexts");
-            checkPositionEq<BooleanStorage, bool>("pos0", ctx.boolean_values_,
-                                                  ctx_new->boolean_values_);
-            checkPositionEq<BooleanStorage, bool>("pos1", ctx.boolean_values_,
-                                                  ctx_new->boolean_values_);
-            checkPositionEq<BooleanStorage, bool>("pos2", ctx.boolean_values_,
-                                                  ctx_new->boolean_values_);
+            checkPositionEq("pos0", ctx.boolean_values_,
+                            ctx_new->boolean_values_);
+            checkPositionEq("pos1", ctx.boolean_values_,
+                            ctx_new->boolean_values_);
+            checkPositionEq("pos2", ctx.boolean_values_,
+                            ctx_new->boolean_values_);
         }
 
         // New context has the same uint32 value.
@@ -1295,48 +1291,45 @@ public:
         {
             SCOPED_TRACE("Check that uint32_t values are equal in both"
                          " contexts");
-            checkValueEq<Uint32Storage, uint32_t>(ctx.uint32_values_,
-                                                  ctx_new->uint32_values_);
+            checkValueEq(ctx.uint32_values_, ctx_new->uint32_values_);
         }
 
         // New context has the same uint32 values' positions.
         {
             SCOPED_TRACE("Check that positions of uint32 values are equal"
                          " in both contexts");
-            checkPositionEq<Uint32Storage, bool>("pos0", ctx.uint32_values_,
-                                                  ctx_new->uint32_values_);
-            checkPositionEq<Uint32Storage, bool>("pos1", ctx.uint32_values_,
-                                                  ctx_new->uint32_values_);
-            checkPositionEq<Uint32Storage, bool>("pos2", ctx.uint32_values_,
-                                                  ctx_new->uint32_values_);
+            checkPositionEq("pos0", ctx.uint32_values_,
+                            ctx_new->uint32_values_);
+            checkPositionEq("pos1", ctx.uint32_values_,
+                            ctx_new->uint32_values_);
+            checkPositionEq("pos2", ctx.uint32_values_,
+                            ctx_new->uint32_values_);
         }
 
         // New context has the same uint32 value position.
         {
             SCOPED_TRACE("Check that positions of uint32_t values are equal"
                          " in both contexts");
-            checkPositionEq<Uint32Storage, uint32_t>("foo", ctx.uint32_values_,
-                                                     ctx_new->uint32_values_);
+            checkPositionEq("foo", ctx.uint32_values_, ctx_new->uint32_values_);
         }
 
         // New context has the same string value.
         ASSERT_TRUE(ctx_new->string_values_);
         {
             SCOPED_TRACE("Check that string values are equal in both contexts");
-            checkValueEq<StringStorage, std::string>(ctx.string_values_,
-                                                     ctx_new->string_values_);
+            checkValueEq(ctx.string_values_, ctx_new->string_values_);
         }
 
         // New context has the same string values' positions.
         {
             SCOPED_TRACE("Check that positions of string values are equal"
                          " in both contexts");
-            checkPositionEq<StringStorage, bool>("pos0", ctx.string_values_,
-                                                  ctx_new->string_values_);
-            checkPositionEq<StringStorage, bool>("pos1", ctx.string_values_,
-                                                  ctx_new->string_values_);
-            checkPositionEq<StringStorage, bool>("pos2", ctx.string_values_,
-                                                  ctx_new->string_values_);
+            checkPositionEq("pos0", ctx.string_values_,
+                            ctx_new->string_values_);
+            checkPositionEq("pos1", ctx.string_values_,
+                            ctx_new->string_values_);
+            checkPositionEq("pos2", ctx.string_values_,
+                            ctx_new->string_values_);
         }
 
         // New context has the same option.
@@ -1373,8 +1366,7 @@ public:
             ctx.boolean_values_->setParam("foo", false,
                                           Element::Position("kea.conf",
                                                             12, 10));
-            checkValueNeq<BooleanStorage, bool>(ctx.boolean_values_,
-                                                ctx_new->boolean_values_);
+            checkValueNeq(ctx.boolean_values_, ctx_new->boolean_values_);
 
         }
 
@@ -1386,20 +1378,20 @@ public:
             ctx.boolean_values_->setParam("pos0", false,
                                           Element::Position("foo.conf",
                                                             1, 2));
-            checkPositionNeq<BooleanStorage, bool>("pos0", ctx.boolean_values_,
-                                                   ctx_new->boolean_values_);
+            checkPositionNeq("pos0", ctx.boolean_values_,
+                             ctx_new->boolean_values_);
             // Modify line number.
             ctx.boolean_values_->setParam("pos1", false,
                                           Element::Position("kea.conf",
                                                             11, 20));
-            checkPositionNeq<BooleanStorage, bool>("pos1", ctx.boolean_values_,
-                                                   ctx_new->boolean_values_);
+            checkPositionNeq("pos1", ctx.boolean_values_,
+                             ctx_new->boolean_values_);
             // Modify position within a line.
             ctx.boolean_values_->setParam("pos2", false,
                                           Element::Position("kea.conf",
                                                             101, 201));
-            checkPositionNeq<BooleanStorage, bool>("pos2", ctx.boolean_values_,
-                                                   ctx_new->boolean_values_);
+            checkPositionNeq("pos2", ctx.boolean_values_,
+                             ctx_new->boolean_values_);
 
         }
 
@@ -1410,8 +1402,7 @@ public:
                          " value and position is changed");
             ctx.uint32_values_->setParam("foo", 987,
                                          Element::Position("kea.conf", 10, 11));
-            checkValueNeq<Uint32Storage, uint32_t>(ctx.uint32_values_,
-                                                   ctx_new->uint32_values_);
+            checkValueNeq(ctx.uint32_values_, ctx_new->uint32_values_);
         }
 
         {
@@ -1421,20 +1412,20 @@ public:
             // Modify file name.
             ctx.uint32_values_->setParam("pos0", 123,
                                           Element::Position("foo.conf", 1, 2));
-            checkPositionNeq<Uint32Storage, bool>("pos0", ctx.uint32_values_,
-                                                   ctx_new->uint32_values_);
+            checkPositionNeq("pos0", ctx.uint32_values_,
+                             ctx_new->uint32_values_);
             // Modify line number.
             ctx.uint32_values_->setParam("pos1", 123,
                                           Element::Position("kea.conf",
                                                             11, 20));
-            checkPositionNeq<Uint32Storage, bool>("pos1", ctx.uint32_values_,
-                                                   ctx_new->uint32_values_);
+            checkPositionNeq("pos1", ctx.uint32_values_,
+                             ctx_new->uint32_values_);
             // Modify position within a line.
             ctx.uint32_values_->setParam("pos2", 123,
                                           Element::Position("kea.conf",
                                                             101, 201));
-            checkPositionNeq<Uint32Storage, bool>("pos2", ctx.uint32_values_,
-                                                   ctx_new->uint32_values_);
+            checkPositionNeq("pos2", ctx.uint32_values_,
+                             ctx_new->uint32_values_);
 
         }
 
@@ -1445,8 +1436,7 @@ public:
                          " value and position is changed");
             ctx.string_values_->setParam("foo", "different string",
                                          Element::Position("kea.conf", 10, 11));
-            checkValueNeq<StringStorage, std::string>(ctx.string_values_,
-                                                      ctx_new->string_values_);
+            checkValueNeq(ctx.string_values_, ctx_new->string_values_);
         }
 
         {
@@ -1456,20 +1446,20 @@ public:
             // Modify file name.
             ctx.string_values_->setParam("pos0", "some string",
                                           Element::Position("foo.conf", 1, 2));
-            checkPositionNeq<StringStorage, bool>("pos0", ctx.string_values_,
-                                                   ctx_new->string_values_);
+            checkPositionNeq("pos0", ctx.string_values_,
+                             ctx_new->string_values_);
             // Modify line number.
             ctx.string_values_->setParam("pos1", "some string",
                                           Element::Position("kea.conf",
                                                             11, 20));
-            checkPositionNeq<StringStorage, bool>("pos1", ctx.string_values_,
-                                                   ctx_new->string_values_);
+            checkPositionNeq("pos1", ctx.string_values_,
+                             ctx_new->string_values_);
             // Modify position within a line.
             ctx.string_values_->setParam("pos2", "some string",
                                           Element::Position("kea.conf",
                                                             101, 201));
-            checkPositionNeq<StringStorage, bool>("pos2", ctx.string_values_,
-                                                   ctx_new->string_values_);
+            checkPositionNeq("pos2", ctx.string_values_,
+                             ctx_new->string_values_);
 
         }
 
