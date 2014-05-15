@@ -27,6 +27,7 @@
 #include <dhcp/classify.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/testutils/config_result_check.h>
 #include <hooks/hooks_manager.h>
 
 #include "marker_file.h"
@@ -286,9 +287,8 @@ public:
         std::string config = createConfigWithOption(param_value, parameter);
         ElementPtr json = Element::fromJSON(config);
         EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
-        ASSERT_TRUE(x);
-        comment_ = parseAnswer(rcode_, x);
-        ASSERT_EQ(1, rcode_);
+        checkResult(x, 1);
+        EXPECT_TRUE(errorContainsPosition(x, "<string>"));
     }
 
     /// @brief Test invalid option paramater value.
@@ -304,9 +304,8 @@ public:
         std::string config = createConfigWithOption(params);
         ElementPtr json = Element::fromJSON(config);
         EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
-        ASSERT_TRUE(x);
-        comment_ = parseAnswer(rcode_, x);
-        ASSERT_EQ(1, rcode_);
+        checkResult(x, 1);
+        EXPECT_TRUE(errorContainsPosition(x, "<string>"));
     }
 
     /// @brief Test option against given code and data.
@@ -580,9 +579,7 @@ TEST_F(Dhcp4ParserTest, multipleSubnets) {
 
     do {
         EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
-        ASSERT_TRUE(x);
-        comment_ = parseAnswer(rcode_, x);
-        ASSERT_EQ(0, rcode_);
+        checkResult(x, 0);
 
         const Subnet4Collection* subnets = CfgMgr::instance().getSubnets4();
         ASSERT_TRUE(subnets);
@@ -635,9 +632,7 @@ TEST_F(Dhcp4ParserTest, multipleSubnetsExplicitIDs) {
     int cnt = 0; // Number of reconfigurations
     do {
         EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
-        ASSERT_TRUE(x);
-        comment_ = parseAnswer(rcode_, x);
-        ASSERT_EQ(0, rcode_);
+        checkResult(x, 0);
 
         const Subnet4Collection* subnets = CfgMgr::instance().getSubnets4();
         ASSERT_TRUE(subnets);
@@ -686,9 +681,8 @@ TEST_F(Dhcp4ParserTest, multipleSubnetsOverlapingIDs) {
     ElementPtr json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-    EXPECT_NE(rcode_, 0);
+    checkResult(x, 1);
+    EXPECT_TRUE(errorContainsPosition(x, "<string>"));
 }
 
 // Goal of this test is to verify that a previously configured subnet can be
@@ -769,9 +763,7 @@ TEST_F(Dhcp4ParserTest, reconfigureRemoveSubnet) {
 
     ElementPtr json = Element::fromJSON(config4);
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-    ASSERT_EQ(0, rcode_);
+    checkResult(x, 0);
 
     const Subnet4Collection* subnets = CfgMgr::instance().getSubnets4();
     ASSERT_TRUE(subnets);
@@ -780,9 +772,7 @@ TEST_F(Dhcp4ParserTest, reconfigureRemoveSubnet) {
     // Do the reconfiguration (the last subnet is removed)
     json = Element::fromJSON(config_first3);
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-    ASSERT_EQ(0, rcode_);
+    checkResult(x, 0);
 
     subnets = CfgMgr::instance().getSubnets4();
     ASSERT_TRUE(subnets);
@@ -799,16 +789,12 @@ TEST_F(Dhcp4ParserTest, reconfigureRemoveSubnet) {
     /// @todo: Uncomment subnet removal test as part of #3281.
     json = Element::fromJSON(config4);
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-    ASSERT_EQ(0, rcode_);
+    checkResult(x, 0);
 
     // Do reconfiguration
     json = Element::fromJSON(config_second_removed);
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-    ASSERT_EQ(0, rcode_);
+    checkResult(x, 0);
 
     subnets = CfgMgr::instance().getSubnets4();
     ASSERT_TRUE(subnets);
@@ -932,12 +918,15 @@ TEST_F(Dhcp4ParserTest, nextServerNegative) {
     // check if returned status is always a failure
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json1));
     checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json2));
     checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json3));
     checkResult(status, 0);
+    EXPECT_FALSE(errorContainsPosition(status, "<string>"));
 }
 
 // Checks if the next-server defined as global value is overridden by subnet
@@ -1065,6 +1054,7 @@ TEST_F(Dhcp4ParserTest, poolOutOfSubnet) {
     // returned value must be 1 (values error)
     // as the pool does not belong to that subnet
     checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
 // Goal of this test is to verify if pools can be defined
@@ -1284,6 +1274,7 @@ TEST_F(Dhcp4ParserTest, optionDefDuplicate) {
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
 // The goal of this test is to verify that the option definition
@@ -1392,6 +1383,7 @@ TEST_F(Dhcp4ParserTest, optionDefInvalidName) {
     ASSERT_TRUE(status);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
 /// The purpose of this test is to verify that the option definition
@@ -1418,6 +1410,7 @@ TEST_F(Dhcp4ParserTest, optionDefInvalidType) {
     ASSERT_TRUE(status);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
 /// The purpose of this test is to verify that the option definition
@@ -1444,6 +1437,7 @@ TEST_F(Dhcp4ParserTest, optionDefInvalidRecordType) {
     ASSERT_TRUE(status);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
 /// The goal of this test is to verify that the invalid encapsulated
@@ -1470,6 +1464,7 @@ TEST_F(Dhcp4ParserTest, optionDefInvalidEncapsulatedSpace) {
     ASSERT_TRUE(status);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
 /// The goal of this test is to verify that the encapsulated
@@ -1498,6 +1493,7 @@ TEST_F(Dhcp4ParserTest, optionDefEncapsulatedSpaceAndArray) {
     ASSERT_TRUE(status);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
 /// The goal of this test is to verify that the option may not
@@ -1524,6 +1520,7 @@ TEST_F(Dhcp4ParserTest, optionDefEncapsulateOwnSpace) {
     ASSERT_TRUE(status);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
 /// The purpose of this test is to verify that it is not allowed
@@ -1588,6 +1585,7 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
     ASSERT_TRUE(status);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
     /// @todo The option 65 is a standard DHCPv4 option. However, at this point
     /// there is no definition for this option in libdhcp++, so it should be
@@ -1655,9 +1653,7 @@ TEST_F(Dhcp4ParserTest, optionDataDefaults) {
     ElementPtr json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-    ASSERT_EQ(0, rcode_);
+    checkResult(x, 0);
 
     Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"),
                                                       classify_);
@@ -1960,9 +1956,7 @@ TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
     ElementPtr json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-    ASSERT_EQ(0, rcode_);
+    checkResult(x, 0);
 
     Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.24"),
                                                       classify_);
@@ -2113,9 +2107,7 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
     ElementPtr json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-    ASSERT_EQ(0, rcode_);
+    checkResult(x, 0);
 
     Subnet4Ptr subnet1 = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.100"),
                                                        classify_);
@@ -2218,9 +2210,7 @@ TEST_F(Dhcp4ParserTest, optionDataLowerCase) {
     ElementPtr json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-    ASSERT_EQ(0, rcode_);
+    checkResult(x, 0);
 
     Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"),
                                                       classify_);
@@ -2263,9 +2253,7 @@ TEST_F(Dhcp4ParserTest, stdOptionData) {
     ElementPtr json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-    ASSERT_EQ(0, rcode_);
+    checkResult(x, 0);
 
     Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"),
                                                       classify_);
@@ -2343,6 +2331,7 @@ TEST_F(Dhcp4ParserTest, DISABLED_Uint32Parser) {
 
     // returned value must be rejected (1 configuration error)
     checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
     // CASE 4: -1 (UINT_MIN -1 ) should not work
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_,
@@ -2351,6 +2340,7 @@ TEST_F(Dhcp4ParserTest, DISABLED_Uint32Parser) {
 
     // returned value must be rejected (1 configuration error)
     checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
 // The goal of this test is to verify that the standard option can
@@ -2856,6 +2846,9 @@ TEST_F(Dhcp4ParserTest, d2ClientConfig) {
         "     \"enable-updates\" : true, "
         "     \"server-ip\" : \"192.168.2.1\", "
         "     \"server-port\" : 777, "
+        "     \"sender-ip\" : \"192.168.2.2\", "
+        "     \"sender-port\" : 778, "
+        "     \"max-queue-size\" : 2048, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
         "     \"always-include-fqdn\" : true, "
@@ -2888,6 +2881,9 @@ TEST_F(Dhcp4ParserTest, d2ClientConfig) {
     EXPECT_TRUE(d2_client_config->getEnableUpdates());
     EXPECT_EQ("192.168.2.1", d2_client_config->getServerIp().toText());
     EXPECT_EQ(777, d2_client_config->getServerPort());
+    EXPECT_EQ("192.168.2.2", d2_client_config->getSenderIp().toText());
+    EXPECT_EQ(778, d2_client_config->getSenderPort());
+    EXPECT_EQ(2048, d2_client_config->getMaxQueueSize());
     EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
     EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
     EXPECT_TRUE(d2_client_config->getAlwaysIncludeFqdn());
@@ -2935,6 +2931,7 @@ TEST_F(Dhcp4ParserTest, invalidD2ClientConfig) {
 
     // check if returned status is failed.
     checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
     // Verify that the D2 configuraiton can be fetched and is set to disabled.
     D2ClientConfigPtr d2_client_config = CfgMgr::instance().getD2ClientConfig();
@@ -3008,9 +3005,7 @@ TEST_F(Dhcp4ParserTest, classifySubnets) {
     ElementPtr json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-    ASSERT_EQ(0, rcode_);
+    checkResult(x, 0);
 
     const Subnet4Collection* subnets = CfgMgr::instance().getSubnets4();
     ASSERT_TRUE(subnets);

@@ -2167,6 +2167,9 @@ Dhcp4/subnet4/	list
 Dhcp4/dhcp-ddns/enable-updates	true	boolean
 Dhcp4/dhcp-ddns/server-ip	"127.0.0.1"	string
 Dhcp4/dhcp-ddns/server-port	53001	integer
+Dhcp4/dhcp-ddns/sender-ip	""	string
+Dhcp4/dhcp-ddns/sender-port	0	integer
+Dhcp4/dhcp-ddns/max-queue-size	1024	integer
 Dhcp4/dhcp-ddns/ncr-protocol	"UDP"	string
 Dhcp4/dhcp-ddns/ncr-format	"JSON"	string
 Dhcp4/dhcp-ddns/override-no-update	false	boolean
@@ -3052,7 +3055,7 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
     <section id="dhcp4-ddns-config">
       <title>Configuring DHCPv4 for DDNS</title>
       <para>
-      As mentioned earlier, DHCPv4 can be configured to generate requests to the
+      As mentioned earlier, b10-dhcp4 can be configured to generate requests to the
       DHCP-DDNS server to update DNS entries.  These requests are known as
       NameChangeRequests or NCRs.  Each NCR contains the following information:
       <orderedlist>
@@ -3068,13 +3071,16 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       </para></listitem>
       </orderedlist>
       The parameters for controlling the generation of NCRs for submission to D2
-      are contained in the "dhcp-ddns" section of the DHCPv4 server
+      are contained in the "dhcp-ddns" section of the b10-dhcp4 server
       configuration. The default values for this section appears as follows:
 <screen>
 &gt; <userinput>config show Dhcp4/dhcp-ddns</userinput>
 Dhcp4/dhcp-ddns/enable-updates	true	boolean
 Dhcp4/dhcp-ddns/server-ip	"127.0.0.1"	string
 Dhcp4/dhcp-ddns/server-port	53001	integer
+Dhcp4/dhcp-ddns/sender-ip	""	string
+Dhcp4/dhcp-ddns/sender-port	0	integer
+Dhcp4/dhcp-ddns/max-queue-size	1024	integer
 Dhcp4/dhcp-ddns/ncr-protocol	"UDP"	string
 Dhcp4/dhcp-ddns/ncr-format	"JSON"	string
 Dhcp4/dhcp-ddns/override-no-update	false	boolean
@@ -3085,7 +3091,7 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
 </screen>
       </para>
       <para>
-      The "enable-updates" parameter determines whether or not DHCPv4 will
+      The "enable-updates" parameter determines whether or not b10-dhcp4 will
       generate NCRs.  By default, this value is false hence DDNS updates are
       disabled.  To enable DDNS updates set this value to true:
       </para>
@@ -3096,47 +3102,74 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       <section id="dhcpv4-d2-io-config">
       <title>DHCP-DDNS Server Connectivity</title>
       <para>
-      In order for NCRs to reach the D2 server, DHCPv4 must be able
-      to communicate with it and so the relevant parameters must be set
-      appropriately.  The parameters, "server-ip" and "server-port", specify
-      the address of the D2 server.  By default, D2 is assumed to running
-      on the same machine as DHCPv4, and the default values for these two
-      parameters should be sufficient. However, if D2 has been configured
-      to listen on a different address or port, these values must altered
-      accordingly.  For example, if D2 has been configured to listen on
-      198.162.1.10 port 900, the following commands would be required:
+      In order for NCRs to reach the D2 server, b10-dhcp4 must be able
+      to communicate with it.  b10-dhcp4 uses the following configuration
+      parameters to control how it communications with D2:
+      <orderedlist>
+      <listitem><para>
+      server-ip - IP address on which D2 listens for requests. The default is
+      the local loopback interface at address 127.0.0.1. You may specify
+      either an IPv4 or IPv6 address.
+      </para></listitem>
+      <listitem><para>
+      server-port - port on which D2 listens for requests.  The default value
+      is 53001.
+      </para></listitem>
+      <listitem><para>
+      sender-ip - IP address which b10-dhcp4 should use to send requests to D2.
+      The default value is blank which instructs b10-dhcp4 to select a suitable
+      address.
+      </para></listitem>
+      <listitem><para>
+      sender-port - port which b10-dhcp4 should use to send requests to D2. The
+      default value of 0 instructs b10-dhcp4 to select suitable port.
+      </para></listitem>
+      <listitem><para>
+      ncr-format - Socket protocol use when sending requests to D2.  Currently
+      only UDP is supported.  TCP may be available in an upcoming release.
+      </para></listitem>
+      <listitem><para>
+      ncr-protocol - Packet format to use when sending requests to D2.
+      Currently only JSON format is supported.  Other formats may be available
+      in future releases.
+      </para></listitem>
+      <listitem><para>
+      max-queue-size - maximum number of requests allowed to queue waiting to
+      be sent to D2. This value guards against requests accumulating
+      uncontrollably if they are being generated faster than they can be
+      delivered.  If the number of requests queued for transmission reaches
+      this value, DDNS updating will be turned off until the queue backlog has
+      been sufficiently reduced.  The intent is allow the b10-dhcp4 server to
+      continue lease operations.  The default value is 1024.
+      </para></listitem>
+      </orderedlist>
+      By default, D2 is assumed to running on the same machine as b10-dhcp4, and
+      all of the default values mentioned above should be sufficient.
+      If, however, D2 has been configured to listen on a different address or
+      port, these values must altered accordingly. For example, if D2 has been
+      configured to listen on 198.162.1.10 port 900, the following commands
+      would be required:
 <screen>
 &gt; <userinput>config set Dhcp4/dhcp-ddns/server-ip "198.162.1.10"</userinput>
 &gt; <userinput>config set Dhcp4/dhcp-ddns/server-port 900</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
-      D2 can be configured to listen over IPv4 or IPv6, therefore server-ip
-      may be either an IPv4 or IPv6 address.
-      </para>
-      <para>
-      The socket protocol that DHCPv4 should use to communicate with D2 is
-      specified with the "ncr-protocol" parameter.  Currently only UDP is
-      supported.
-      </para>
-      <para>
-      The internal format for DDNS update requests sent by DHCPv4 is specified
-      with the "ncr-format" parameter. Currently only JSON is supported.
       </para>
       </section>
       <section id="dhcpv4-d2-rules-config">
-      <title>When does the DHCPv4 server generate DDNS requests?</title>
-      DHCPv4 follows the behavior prescribed for DHCP servers in RFC 4702.
-      It is important to keep in mind that DHCPv4 provides the initial decision
+      <title>When does the b10-dhcp4 server generate DDNS requests?</title>
+      b10-dhcp4 follows the behavior prescribed for DHCP servers in RFC 4702.
+      It is important to keep in mind that b10-dhcp4 provides the initial decision
       making of when and what to update and forwards that information to D2 in
       the form of NCRs. Carrying out the actual DNS updates and dealing with
       such things as conflict resolution are the purview of D2 (<xref linkend="dhcp-ddns-server"/>).
       <para>
-      This section describes when DHCPv4 will generate NCRs and the
+      This section describes when b10-dhcp4 will generate NCRs and the
       configuration parameters that can be used to influence this decision.
       It assumes that the "enable-updates" parameter is true.
       </para>
       <para>
-      In general, DHCPv4 will generate DDNS update requests when:
+      In general, b10-dhcp4 will generate DDNS update requests when:
       <orderedlist>
       <listitem><para>
       A new lease is granted in response to a DHCP REQUEST
@@ -3157,10 +3190,10 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       involved and is discussed next.
       </para>
       <para>
-      When a new lease is granted, the DHCPv4 server will generate a DDNS
+      When a new lease is granted, b10-dhcp4 will generate a DDNS
       update request if the DHCP REQUEST contains either the FQDN option
       (code 81) or the Host Name option (code 12). If both are present,
-      the server will use the FQDN option. By default the DHCPv4 server
+      the server will use the FQDN option. By default b10-dhcp4
       will respect the FQDN N and S flags specified by the client as shown
       in the following table:
       </para>
@@ -3206,11 +3239,11 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       <para>
       The first row in the table above represents "client delegation". Here
       the DHCP client states that it intends to do the forward DNS updates and
-      the server should do the reverse updates.  By default, DHCPv4 will honor
+      the server should do the reverse updates.  By default, b10-dhcp4 will honor
       the client's wishes and generate a DDNS request to D2 to update only
       reverse DNS data.  The parameter, "override-client-update", can be used
       to instruct the server to override client delegation requests.  When
-      this parameter is true, DHCPv4 will disregard requests for client
+      this parameter is true, b10-dhcp4 will disregard requests for client
       delegation and generate a DDNS request to update both forward and
       reverse DNS data.  In this case, the N-S-O flags in the server's
       response to the client will be 0-1-1 respectively.
@@ -3218,7 +3251,7 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       <para>
       (Note that the flag combination N=1, S=1 is prohibited according to
       RFC 4702. If such a combination is received from the client, the packet
-      will be dropped by the DHCPv4 server.)
+      will be dropped by the b10-dhcp4.)
       </para>
       <para>
       To override client delegation, issue the following commands:
@@ -3231,7 +3264,7 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       The third row in the table above describes the case in which the client
       requests that no DNS updates be done. The parameter, "override-no-update",
       can be used to instruct the server to disregard the client's wishes. When
-      this parameter is true, DHCPv4 will generate DDNS update request to D2
+      this parameter is true, b10-dhcp4 will generate DDNS update request to D2
       even if the client requests no updates be done.  The N-S-O flags in the
       server's response to the client will be 0-1-1.
       </para>
@@ -3243,7 +3276,7 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
 &gt; <userinput>config commit</userinput>
 </screen>
       <para>
-      DHCPv4 will always generate DDNS update requests if the client request
+      b10-dhcp4 will always generate DDNS update requests if the client request
       only contains the Host Name option. In addition it will include an FQDN
       option in the response to the client with the FQDN N-S-O flags set to
       0-1-0 respectively. The domain name portion of the FQDN option will be
@@ -3251,9 +3284,9 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       </para>
       </section>
       <section id="dhcpv4-fqdn-name-generation">
-      <title>DHCPv4 name generation for DDNS update requests</title>
+      <title>b10-dhcp4 name generation for DDNS update requests</title>
       Each NameChangeRequest must of course include the fully qualified domain
-      name whose DNS entries are to be affected.  DHCPv4 can be configured to
+      name whose DNS entries are to be affected.  b10-dhcp4 can be configured to
       supply a portion or all of that name based upon what it receives from
       the client in the DHCP REQUEST.
       <para>
@@ -3282,7 +3315,7 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       </orderedlist>
       </para></listitem>
       </orderedlist>
-      To instruct DHCPv4 to always generate the FQDN for a client, set the
+      To instruct b10-dhcp4 to always generate the FQDN for a client, set the
       parameter "replace-client-name" to true as follows:
       </para>
 <screen>
@@ -3310,7 +3343,7 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
 </screen>
       </section>
       <para>
-      When generating a name, DHCPv4 will construct name of the format:
+      When generating a name, b10-dhcp4 will construct name of the format:
       </para>
       <para>
         [generated-prefix]-[address-text].[qualifying-suffix].
@@ -3326,7 +3359,7 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       </para>
     </section>
 
-  </section> <!-- end of configuring DHCPv4 server section with many subsections -->
+  </section> <!-- end of configuring b10-dhcp4 server section with many subsections -->
 
     <section id="dhcp4-serverid">
       <title>Server Identifier in DHCPv4</title>
@@ -3671,6 +3704,9 @@ Dhcp6/subnet6/  list
 Dhcp6/dhcp-ddns/enable-updates  true    boolean
 Dhcp6/dhcp-ddns/server-ip   "127.0.0.1" string
 Dhcp6/dhcp-ddns/server-port 53001   integer
+Dhcp6/dhcp-ddns/sender-ip	""	string
+Dhcp6/dhcp-ddns/sender-port	0	integer
+Dhcp6/dhcp-ddns/max-queue-size	1024  integer
 Dhcp6/dhcp-ddns/ncr-protocol    "UDP"   string
 Dhcp6/dhcp-ddns/ncr-format  "JSON"  string
 Dhcp6/dhcp-ddns/always-include-fqdn false   boolean
@@ -4604,7 +4640,7 @@ should include options from the isc option space:
     <section id="dhcp6-ddns-config">
       <title>Configuring DHCPv6 for DDNS</title>
       <para>
-      As mentioned earlier, DHCPv6 can be configured to generate requests to
+      As mentioned earlier, b10-dhcp6 can be configured to generate requests to
       the DHCP-DDNS server (referred to here as the "D2" server) to update
       DNS entries.  These requests are known as NameChangeRequests or NCRs.
       Each NCR contains the following information:
@@ -4621,13 +4657,16 @@ should include options from the isc option space:
       </para></listitem>
       </orderedlist>
       The parameters controlling the generation of NCRs for submission to D2
-      are contained in the "dhcp-ddns" section of the DHCPv6 server
+      are contained in the "dhcp-ddns" section of b10-dhcp6
       configuration. The default values for this section appears as follows:
 <screen>
 &gt; <userinput>config show Dhcp6/dhcp-ddns</userinput>
 Dhcp6/dhcp-ddns/enable-updates	true	boolean
 Dhcp6/dhcp-ddns/server-ip	"127.0.0.1"	string
 Dhcp6/dhcp-ddns/server-port	53001	integer
+Dhcp6/dhcp-ddns/sender-ip	""	string
+Dhcp6/dhcp-ddns/sender-port	0	integer
+Dhcp6/dhcp-ddns/max-queue-size	1024 integer
 Dhcp6/dhcp-ddns/ncr-protocol	"UDP"	string
 Dhcp6/dhcp-ddns/ncr-format	"JSON"	string
 Dhcp6/dhcp-ddns/override-no-update	false	boolean
@@ -4638,7 +4677,7 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
 </screen>
       </para>
       <para>
-      The "enable-updates" parameter determines whether or not DHCPv6 will
+      The "enable-updates" parameter determines whether or not b10-dhcp6 will
       generate NCRs.  By default, this value is false hence DDNS updates are
       disabled.  To enable DDNS updates set this value to true as follows:
       </para>
@@ -4648,58 +4687,84 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
 </screen>
       <section id="dhcpv6-d2-io-config">
       <title>DHCP-DDNS Server Connectivity</title>
-      In order for NCRs to reach D2, DHCPv6 must be able to communicate with it.
-      The following parameters are used to establish connectivty between DHCPv6
-      and D2.
       <para>
-      The parameters, "server-ip" and "server-port", specify the address of the
-      D2 server.  By default, D2 is assumed to running on the same machine as
-      DHCPv6, and the default values for these two parameters should be
-      sufficient. However, if D2 has been configured to listen on a different
-      address or port, these values must altered accordingly.  For example, if
-      D2 has been configured to listen on 198.162.1.10 port 900, the following
-      commands would be required:
-      </para>
+      In order for NCRs to reach the D2 server, b10-dhcp6 must be able
+      to communicate with it.  b10-dhcp6 uses the following configuration
+      parameters to control how it communications with D2:
+      <orderedlist>
+      <listitem><para>
+      server-ip - IP address on which D2 listens for requests. The default is
+      the local loopback interface at address 127.0.0.1. You may specify
+      either an IPv4 or IPv6 address.
+      </para></listitem>
+      <listitem><para>
+      server-port - port on which D2 listens for requests.  The default value
+      is 53001.
+      </para></listitem>
+      <listitem><para>
+      sender-ip - IP address which b10-dhcp6 should use to send requests to D2.
+      The default value is blank which instructs b10-dhcp6 to select a suitable
+      address.
+      </para></listitem>
+      <listitem><para>
+      sender-port - port which b10-dhcp6 should use to send requests to D2. The
+      default value of 0 instructs b10-dhcp6 to select suitable port.
+      </para></listitem>
+      <listitem><para>
+      ncr-format - Socket protocol use when sending requests to D2.  Currently
+      only UDP is supported.  TCP may be available in an upcoming release.
+      </para></listitem>
+      <listitem><para>
+      ncr-protocol - Packet format to use when sending requests to D2.
+      Currently only JSON format is supported.  Other formats may be available
+      in future releases.
+      </para></listitem>
+      <listitem><para>
+      max-queue-size - maximum number of requests allowed to queue waiting to
+      be sent to D2. This value guards against requests accumulating
+      uncontrollably if they are being generated faster than they can be
+      delivered.  If the number of requests queued for transmission reaches
+      this value, DDNS updating will be turned off until the queue backlog has
+      been sufficiently reduced.  The intent is allow b10-dhcp6 to
+      continue lease operations.  The default value is 1024.
+      </para></listitem>
+      </orderedlist>
+      By default, D2 is assumed to running on the same machine as b10-dhcp6, and
+      all of the default values mentioned above should be sufficient.
+      If, however, D2 has been configured to listen on a different address or
+      port, these values must altered accordingly. For example, if D2 has been
+      configured to listen on 3001::5 port 900, the following commands
+      would be required:
 <screen>
-&gt; <userinput>config set Dhcp6/dhcp-ddns/server-ip "198.162.1.10"</userinput>
+&gt; <userinput>config set Dhcp6/dhcp-ddns/server-ip "3001::5"</userinput>
 &gt; <userinput>config set Dhcp6/dhcp-ddns/server-port 900</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
-      D2 can be configured to listen over IPv4 or IPv6, therefore server-ip
-      may be either an IPv4 or IPv6 address.
-      <para>
-      The socket protocol that DHCPv6 should use to communicate with D2 is
-      specified with the "ncr-protocol" parameter.  Currently only UDP is
-      supported.
-      </para>
-      <para>
-      The internal format for DDNS update requests sent by DHCPv6 is specified
-      with the "ncr-format" parameter. Currently only JSON is supported.
       </para>
       </section>
       <section id="dhcpv6-d2-rules-config">
-      <title>When does DHCPv6 generate DDNS request</title>
-      DHCPv6 follows the behavior prescribed for DHCP servers in RFC 4704.
-      It is important to keep in mind that DHCPv6 provides the initial decision
+      <title>When does b10-dhcp6 generate DDNS request</title>
+      b10-dhcp6 follows the behavior prescribed for DHCP servers in RFC 4704.
+      It is important to keep in mind that b10-dhcp6 provides the initial decision
       making of when and what to update and forwards that information to D2 in
       the form of NCRs. Carrying out the actual DNS updates and dealing with
       such things as conflict resolution are the purview of D2 (<xref linkend="dhcp-ddns-server"/>).
       <para>
-      This section describes when DHCPv6 will generate NCRs and the
+      This section describes when b10-dhcp6 will generate NCRs and the
       configuration parameters that can be used to influence this decision.
       It assumes that the "enable-updates" parameter is true.
       </para>
       <note>
         <para>
-        Currently the interface between DHCPv6 and D2 only supports requests
+        Currently the interface between b10-dhcp6 and D2 only supports requests
         which update DNS entries for a single IP address.  If a lease grants
-        more than one address, DHCPv6 will create the DDNS update request for
+        more than one address, b10-dhcp6 will create the DDNS update request for
         only the first of these addresses.  Support for multiple address
         mappings may be provided in a future release.
         </para>
       </note>
       <para>
-      In general, DHCPv6 will generate DDNS update requests when:
+      In general, b10-dhcp6 will generate DDNS update requests when:
       <orderedlist>
       <listitem><para>
       A new lease is granted in response to a DHCP REQUEST
@@ -4720,8 +4785,8 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
       discussed next.
       </para>
       <para>
-      DHCPv6 will generate a DDNS update request only if the DHCP REQUEST
-      contains the FQDN option (code 39). By default the DHCPv6 server will
+      b10-dhcp6 will generate a DDNS update request only if the DHCP REQUEST
+      contains the FQDN option (code 39). By default b10-dhcp6 will
       respect the FQDN N and S flags specified by the client as shown in the
       following table:
       </para>
@@ -4767,11 +4832,11 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
       <para>
       The first row in the table above represents "client delegation". Here
       the DHCP client states that it intends to do the forward DNS updates and
-      the server should do the reverse updates.  By default, DHCPv6 will honor
+      the server should do the reverse updates.  By default, b10-dhcp6 will honor
       the client's wishes and generate a DDNS request to D2 to update only
       reverse DNS data.  The parameter, "override-client-update", can be used
       to instruct the server to override client delegation requests.  When
-      this parameter is true, DHCPv6 will disregard requests for client
+      this parameter is true, b10-dhcp6 will disregard requests for client
       delegation and generate a DDNS request to update both forward and
       reverse DNS data.  In this case, the N-S-O flags in the server's
       response to the client will be 0-1-1 respectively.
@@ -4779,7 +4844,7 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
       <para>
       (Note that the flag combination N=1, S=1 is prohibited according to
       RFC 4702. If such a combination is received from the client, the packet
-      will be dropped by the DHCPv6 server.)
+      will be dropped by b10-dhcp6.)
       </para>
       <para>
       To override client delegation, issue the following commands:
@@ -4792,7 +4857,7 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
       The third row in the table above describes the case in which the client
       requests that no DNS updates be done. The parameter, "override-no-update",
       can be used to instruct the server to disregard the client's wishes. When
-      this parameter is true, DHCPv6 will generate DDNS update request to D2
+      this parameter is true, b10-dhcp6 will generate DDNS update request to D2
       even if the client requests no updates be done.  The N-S-O flags in the
       server's response to the client will be 0-1-1.
       </para>
@@ -4805,9 +4870,9 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
 </screen>
       </section>
       <section id="dhcpv6-fqdn-name-generation">
-      <title>DHCPv6 name generation for DDNS update requests</title>
+      <title>b10-dhcp6 name generation for DDNS update requests</title>
       Each NameChangeRequest must of course include the fully qualified domain
-      name whose DNS entries are to be affected.  DHCPv6 can be configured to
+      name whose DNS entries are to be affected.  b10-dhcp6 can be configured to
       supply a portion or all of that name based upon what it receives from
       the client in the DHCP REQUEST.
       <para>
@@ -4835,7 +4900,7 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
       </orderedlist>
       </para></listitem>
       </orderedlist>
-      To instruct DHCPv6 to always generate a FQDN, set the parameter
+      To instruct b10-dhcp6 to always generate a FQDN, set the parameter
       "replace-client-name" to true:
       </para>
 <screen>
@@ -4863,7 +4928,7 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
 </screen>
       </section>
       <para>
-      When qualifying a partial name, DHCPv6 will construct a name with the
+      When qualifying a partial name, b10-dhcp6 will construct a name with the
       format:
       </para>
       <para>
@@ -4878,7 +4943,7 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
         some-computer.example.com.
       </para>
       <para>
-      When generating a the entire name, DHCPv6 will construct name of the
+      When generating a the entire name, b10-dhcp6 will construct name of the
       format:
       </para>
       <para>
@@ -5108,9 +5173,9 @@ Dhcp6/renew-timer	1000	integer	(default)
   <chapter id="dhcp-ddns-server">
     <title>The DHCP-DDNS Server</title>
     <para>
-    The DHCP-DDNS Server (known informally as D2) conducts the client side of
+    The DHCP-DDNS Server (b10-dhcp-ddns, known informally as D2) conducts the client side of
     the DDNS protocol (defined in RFC 2136) on behalf of the DHCPv4 and DHCPv6
-    servers. The DHCP servers construct
+    servers (b10-dhcp4 and b10-dhcp6 respectively). The DHCP servers construct
     DDNS update requests, known as NameChangeRequests (NCRs), based upon DHCP
     lease change events and then post these to D2. D2 attempts to match
     each such request to the appropriate DNS server(s) and carry out the

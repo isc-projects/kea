@@ -90,8 +90,11 @@ Dhcp6SrvD2Test::reset() {
 
 void
 Dhcp6SrvD2Test::configureD2(bool enable_d2, const bool exp_result,
-                            const std::string& ip_address,
-                            const uint32_t port) {
+                            const std::string& server_ip,
+                            const size_t port,
+                            const std::string& sender_ip,
+                            const size_t sender_port,
+                            const size_t max_queue_size) {
     std::ostringstream config;
     config <<
         "{ \"interfaces\": [ \"*\" ],"
@@ -104,8 +107,11 @@ Dhcp6SrvD2Test::configureD2(bool enable_d2, const bool exp_result,
         "    \"subnet\": \"2001:db8:1::/64\" } ],"
         " \"dhcp-ddns\" : {"
         "     \"enable-updates\" : " << (enable_d2 ? "true" : "false") <<  ", "
-        "     \"server-ip\" : \"" << ip_address << "\", "
+        "     \"server-ip\" : \"" << server_ip << "\", "
         "     \"server-port\" : " << port << ", "
+        "     \"sender-ip\" : \"" << sender_ip << "\", "
+        "     \"sender-port\" : " << sender_port << ", "
+        "     \"max-queue-size\" : " << max_queue_size << ", "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
         "     \"always-include-fqdn\" : true, "
@@ -169,10 +175,10 @@ TEST_F(Dhcp6SrvD2Test, enableDisable) {
     ASSERT_FALSE(mgr.amSending());
 }
 
-// Tests Dhcp6 server's ability to correctly handle a flawed dhcp-ddns configuration.
-// It does so by first enabling updates by submitting a valid configuration and then
-// ensuring they remain on after submitting a flawed configuration.
-// and then invoking its startD2() method.
+// Tests Dhcp6 server's ability to correctly handle a flawed dhcp-ddns
+// configuration.  It does so by first enabling updates by submitting a valid
+// configuration and then ensuring they remain on after submitting a flawed
+// configuration and then invoking its startD2() method.
 TEST_F(Dhcp6SrvD2Test, badConfig) {
     // Grab the manager and verify that be default ddns is off
     // and a sender was not started.
@@ -244,7 +250,7 @@ TEST_F(Dhcp6SrvD2Test, differentConfig) {
     ASSERT_TRUE(mgr.amSending());
 
     // Now enable it on a different port.
-    ASSERT_NO_FATAL_FAILURE(configureD2(true, SHOULD_PASS, "127.0.0.1", 54001));
+    ASSERT_NO_FATAL_FAILURE(configureD2(true, SHOULD_PASS, "::1", 54001));
 
     // Configuration was altered, so ddns should still enabled but not sending.
     ASSERT_TRUE(mgr.ddnsEnabled());
@@ -297,7 +303,10 @@ TEST_F(Dhcp6SrvD2Test, forceUDPSendFailure) {
 
     // Configure it enabled and start it.
     // Using server address of 0.0.0.0/0 should induce failure on send.
-    ASSERT_NO_FATAL_FAILURE(configureD2(true, SHOULD_PASS, "0.0.0.0", 0));
+    // Pass in a non-zero sender port to avoid validation error when
+    // server-ip/port are same as sender-ip/port
+    ASSERT_NO_FATAL_FAILURE(configureD2(true, SHOULD_PASS, "::", 0,
+                                        "::", 53001));
     ASSERT_TRUE(mgr.ddnsEnabled());
     ASSERT_NO_THROW(srv_.startD2());
     ASSERT_TRUE(mgr.amSending());

@@ -1,4 +1,4 @@
-SUBDIRS = . tests
+SUBDIRS = . testutils tests
 
 dhcp_data_dir = @localstatedir@/@PACKAGE@
 

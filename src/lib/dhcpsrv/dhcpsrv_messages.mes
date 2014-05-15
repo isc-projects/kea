@@ -236,7 +236,7 @@ address.
 A debug message issued when the server is attempting to obtain an IPv4
 lease from the memory file database for the specified address.
 
-% DHCPSRV_MEMFILE_GET_ADDR6 obtaining IPv6 lease for address %1
+% DHCPSRV_MEMFILE_GET_ADDR6 obtaining IPv6 lease for address %1 and lease type %2
 A debug message issued when the server is attempting to obtain an IPv6
 lease from the memory file database for the specified address.
 
@@ -255,12 +255,12 @@ A debug message issued when the server is attempting to obtain a set of
 IPv4 leases from the memory file database for a client with the specified
 hardware address.
 
-% DHCPSRV_MEMFILE_GET_IAID_DUID obtaining IPv6 leases for IAID %1 and DUID %2
+% DHCPSRV_MEMFILE_GET_IAID_DUID obtaining IPv6 leases for IAID %1 and DUID %2 and lease type %3
 A debug message issued when the server is attempting to obtain a set of
 IPv6 lease from the memory file database for a client with the specified
 IAID (Identity Association ID) and DUID (DHCP Unique Identifier).
 
-% DHCPSRV_MEMFILE_GET_IAID_SUBID_DUID obtaining IPv6 leases for IAID %1, Subnet ID %2 and DUID %3
+% DHCPSRV_MEMFILE_GET_IAID_SUBID_DUID obtaining IPv6 leases for IAID %1, Subnet ID %2, DUID %3 and lease type %4
 A debug message issued when the server is attempting to obtain an IPv6
 lease from the memory file database for a client with the specified IAID
 (Identity Association ID), Subnet ID and DUID (DHCP Unique Identifier).
