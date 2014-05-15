@@ -429,6 +429,14 @@ NameChangeTransaction::initServerSelection(const DdnsDomainPtr& domain) {
                   "initServerSelection called with an empty domain");
     }
 
+    // Set the tsig_key to that of the DdnsDomain.
+    TSIGKeyInfoPtr tsig_key_info = domain->getTSIGKeyInfo();
+    if (tsig_key_info) {
+        tsig_key_ = tsig_key_info->getTSIGKey();
+    } else {
+        tsig_key_.reset();
+    }
+
     current_server_list_ = domain->getServers();
     next_server_pos_ = 0;
     current_server_.reset();
@@ -453,11 +461,6 @@ NameChangeTransaction::selectNextServer() {
     }
 
     return (false);
-}
-
-void
-NameChangeTransaction::setTSIGKey(const dns::TSIGKeyPtr& tsig_key) {
-    tsig_key_ = tsig_key;
 }
 
 const DNSClientPtr&

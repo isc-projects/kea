@@ -200,8 +200,11 @@ public:
     /// CHG_REMOVE.
     /// @param change_mask determines which change directions are requested
     /// FORWARD_CHG, REVERSE_CHG, or FWD_AND_REV_CHG.
+    /// @param key_name value to use to create TSIG key, if blank TSIG will not
+    /// be used.
     void setupForIPv4Transaction(dhcp_ddns::NameChangeType change_type,
-                                 int change_mask);
+                                 int change_mask,
+                                 const std::string& key_name = "");
 
     /// @brief Creates a transaction which requests an IPv6 DNS update.
     ///
@@ -214,8 +217,11 @@ public:
     /// CHG_REMOVE.
     /// @param change_mask determines which change directions are requested
     /// FORWARD_CHG, REVERSE_CHG, or FWD_AND_REV_CHG.
+    /// @param key_name value to use to create TSIG key, if blank TSIG will not
+    /// be used.
     void setupForIPv6Transaction(dhcp_ddns::NameChangeType change_type,
-                                 int change_mask);
+                                 int change_mask,
+                                 const std::string& key_name = "");
 };
 
 
@@ -365,9 +371,10 @@ extern DdnsDomainPtr makeDomain(const std::string& zone_name,
 /// the pointer will be empty.
 /// @throw Underlying methods may throw.
 extern
-TSIGKeyInfoPtr makeTSIGKey(const std::string& key_name,
-                           const std::string& secret = "",
-                           const std::string& algorithm = TSIGKeyInfo::MD5_STR);
+TSIGKeyInfoPtr makeTSIGKeyInfo(const std::string& key_name,
+                               const std::string& secret = "",
+                               const std::string& algorithm
+                               = TSIGKeyInfo::MD5_STR);
 
 /// @brief Creates a DnsServerInfo and adds it to the given DdnsDomain.
 ///

@@ -264,7 +264,6 @@ public:
     using NameChangeTransaction::addPtrRdata;
     using NameChangeTransaction::responseString;
     using NameChangeTransaction::transactionOutcomeString;
-    using NameChangeTransaction::setTSIGKey;
 };
 
 // Declare them so Gtest can see them.
@@ -290,9 +289,11 @@ public:
     /// The transaction is constructed around a predefined (i.e "canned")
     /// NameChangeRequest. The request has both forward and reverse DNS
     /// changes requested, and both forward and reverse domains are populated.
-    NameChangeStubPtr makeCannedTransaction() {
+    /// @param key_name value to use to create TSIG key, if blank TSIG will not
+    /// be used.
+    NameChangeStubPtr makeCannedTransaction(const std::string& key_name = "") {
         // Creates IPv4 remove request, forward, and reverse domains.
-        setupForIPv4Transaction(dhcp_ddns::CHG_ADD, FWD_AND_REV_CHG);
+        setupForIPv4Transaction(dhcp_ddns::CHG_ADD, FWD_AND_REV_CHG, key_name);
 
         // Now create the test transaction as would occur in update manager.
         // Instantiate the transaction as would be done by update manager.
@@ -1008,7 +1009,7 @@ TEST_F(NameChangeTransactionTest, sendUpdate) {
 /// @brief Tests that an unsigned response to a signed request is an error
 TEST_F(NameChangeTransactionTest, tsigUnsignedResponse) {
     NameChangeStubPtr name_change;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+    ASSERT_NO_THROW(name_change = makeCannedTransaction("key_one"));
     ASSERT_NO_THROW(name_change->initDictionaries());
     ASSERT_TRUE(name_change->selectFwdServer());
 
@@ -1016,14 +1017,7 @@ TEST_F(NameChangeTransactionTest, tsigUnsignedResponse) {
     FauxServer server(*io_service_, *(name_change->getCurrentServer()));
     server.receive (FauxServer::USE_RCODE, dns::Rcode::NOERROR());
 
-    // Create a key and manually set it as the transaction's TSIG key
-    std::string secret ("key number one");
-    dns::TSIGKeyPtr key_one;
-    ASSERT_NO_THROW(key_one.reset(new
-                                  dns::TSIGKey(dns::Name("one.com"),
-                                               dns::TSIGKey::HMACMD5_NAME(),
-                                               secret.c_str(), secret.size())));
-    name_change->setTSIGKey(key_one);
+    // Do the udpate.
     ASSERT_NO_FATAL_FAILURE(doOneExchange(name_change));
 
     // Verify that next event is IO_COMPLETED_EVT and DNS status is
@@ -1045,7 +1039,7 @@ TEST_F(NameChangeTransactionTest, tsigUnsignedResponse) {
 /// @brief Tests that a response signed with the wrong key is an error
 TEST_F(NameChangeTransactionTest, tsigInvalidResponse) {
     NameChangeStubPtr name_change;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+    ASSERT_NO_THROW(name_change = makeCannedTransaction("key_one"));
     ASSERT_NO_THROW(name_change->initDictionaries());
     ASSERT_TRUE(name_change->selectFwdServer());
 
@@ -1054,14 +1048,7 @@ TEST_F(NameChangeTransactionTest, tsigInvalidResponse) {
     FauxServer server(*io_service_, *(name_change->getCurrentServer()));
     server.receive (FauxServer::INVALID_TSIG, dns::Rcode::NOERROR());
 
-    // Create a key and manually set it as the transaction's TSIG key
-    std::string secret ("key number one");
-    dns::TSIGKeyPtr key_one;
-    ASSERT_NO_THROW(key_one.reset(new
-                                  dns::TSIGKey(dns::Name("one.com"),
-                                               dns::TSIGKey::HMACMD5_NAME(),
-                                               secret.c_str(), secret.size())));
-    name_change->setTSIGKey(key_one);
+    // Do the udpate.
     ASSERT_NO_FATAL_FAILURE(doOneExchange(name_change));
 
     // Verify that next event is IO_COMPLETED_EVT and DNS status is
@@ -1116,25 +1103,15 @@ TEST_F(NameChangeTransactionTest, tsigUnexpectedSignedResponse) {
 /// the right key.
 TEST_F(NameChangeTransactionTest, tsigValidExchange) {
     NameChangeStubPtr name_change;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+    ASSERT_NO_THROW(name_change = makeCannedTransaction("key_one"));
     ASSERT_NO_THROW(name_change->initDictionaries());
     ASSERT_TRUE(name_change->selectFwdServer());
 
-    // Create a key
-    std::string secret ("key number one");
-    dns::TSIGKeyPtr key_one;
-    ASSERT_NO_THROW(key_one.reset(new
-                                  dns::TSIGKey(dns::Name("one.com"),
-                                               dns::TSIGKey::HMACMD5_NAME(),
-                                               secret.c_str(), secret.size())));
-
     // Create a server, set its TSIG key, and then start it listening.
     FauxServer server(*io_service_, *(name_change->getCurrentServer()));
-    server.setTSIGKey(key_one);
+    TSIGKeyInfoPtr key_one = makeTSIGKeyInfo("key_one");
+    server.setTSIGKey(key_one->getTSIGKey());
     server.receive (FauxServer::USE_RCODE, dns::Rcode::NOERROR());
-
-    // Manually set the transaction's key to the same key as the server.
-    name_change->setTSIGKey(key_one);
 
     // Do the update.
     ASSERT_NO_FATAL_FAILURE(doOneExchange(name_change));
