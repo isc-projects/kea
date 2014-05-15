@@ -741,6 +741,8 @@ TEST_F(DdnsDomainTest, ddnsDomainParsing) {
     // Verify the name and key_name values.
     EXPECT_EQ("tmark.org", domain->getName());
     EXPECT_EQ("d2_key.tmark.org", domain->getKeyName());
+    ASSERT_TRUE(domain->getTSIGKeyInfo());
+    ASSERT_TRUE(domain->getTSIGKeyInfo()->getTSIGKey());
 
     // Verify that the server list exists and contains the correct number of
     // servers.
@@ -822,6 +824,8 @@ TEST_F(DdnsDomainTest, DdnsDomainListParsing) {
     // Verify the name and key_name values of the first domain.
     EXPECT_EQ("tmark.org", domain->getName());
     EXPECT_EQ("d2_key.tmark.org", domain->getKeyName());
+    ASSERT_TRUE(domain->getTSIGKeyInfo());
+    ASSERT_TRUE(domain->getTSIGKeyInfo()->getTSIGKey());
 
     // Verify the each of the first domain's servers
     DnsServerInfoStoragePtr servers = domain->getServers();
@@ -849,6 +853,8 @@ TEST_F(DdnsDomainTest, DdnsDomainListParsing) {
     // Verify the name and key_name values of the second domain.
     EXPECT_EQ("billcat.net", domain->getName());
     EXPECT_EQ("d2_key.billcat.net", domain->getKeyName());
+    ASSERT_TRUE(domain->getTSIGKeyInfo());
+    ASSERT_TRUE(domain->getTSIGKeyInfo()->getTSIGKey());
 
     // Verify the each of second domain's servers
     servers = domain->getServers();
