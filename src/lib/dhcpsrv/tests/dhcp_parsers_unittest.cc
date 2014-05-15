@@ -1045,16 +1045,15 @@ public:
     /// @brief Check that the storages of the specific type hold the
     /// same value.
     ///
-    /// This function assumes that the ref_values storage holds exactly
-    /// one parameter called 'foo'.
+    /// This function assumes that the ref_values storage holds parameter
+    /// called 'foo'.
     ///
     /// @param ref_values A storage holding reference value. In the typical
     /// case it is a storage held in the original context, which is assigned
     /// to another context.
     /// @param values A storage holding value to be checked.
     /// @tparam ContainerType A type of the storage.
-    /// @tparam ValueType A type of the value in the container.
-    template<typename ContainerType, typename ValueType>
+    template<typename ContainerType>
     void checkValueEq(const boost::shared_ptr<ContainerType>& ref_values,
                       const boost::shared_ptr<ContainerType>& values) {
         ASSERT_NO_THROW(values->getParam("foo"));
@@ -1062,29 +1061,27 @@ public:
     }
 
     /// @brief Check that the storages of the specific type hold the same
-    /// position.
+    /// position of the parameter.
     ///
-    /// This function assumes that the @c ref_values storage holds exactly
-    /// one parameter called 'foo'.
-    ///
+    /// @param name A name of the parameter to check.
     /// @param ref_values A storage holding reference position. In the typical
     /// case it is a storage held in the original context, which is assigned
     /// to another context.
     /// @param values A storage holding position to be checked.
     /// @tparam ContainerType A type of the storage.
-    /// @tparam ValueType A type of the value in the container.
-    template<typename ContainerType, typename ValueType>
-    void checkPositionEq(const boost::shared_ptr<ContainerType>& ref_values,
+    template<typename ContainerType>
+    void checkPositionEq(const std::string& name,
+                         const boost::shared_ptr<ContainerType>& ref_values,
                          const boost::shared_ptr<ContainerType>& values) {
         // Verify that the position is correct.
-        EXPECT_EQ(ref_values->getPosition("foo").line_,
-                  values->getPosition("foo").line_);
+        EXPECT_EQ(ref_values->getPosition(name).line_,
+                  values->getPosition(name).line_);
 
-        EXPECT_EQ(ref_values->getPosition("foo").pos_,
-                  values->getPosition("foo").pos_);
+        EXPECT_EQ(ref_values->getPosition(name).pos_,
+                  values->getPosition(name).pos_);
 
-        EXPECT_EQ(ref_values->getPosition("foo").file_,
-                  values->getPosition("foo").file_);
+        EXPECT_EQ(ref_values->getPosition(name).file_,
+                  values->getPosition(name).file_);
     }
 
     /// @brief Check that the storages of the specific type hold different
@@ -1099,35 +1096,33 @@ public:
     /// @param values A storage holding value to be checked.
     /// @tparam ContainerType A type of the storage.
     /// @tparam ValueType A type of the value in the container.
-    template<typename ContainerType, typename ValueType>
+    template<typename ContainerType>
     void checkValueNeq(const boost::shared_ptr<ContainerType>& ref_values,
                        const boost::shared_ptr<ContainerType>& values) {
         ASSERT_NO_THROW(values->getParam("foo"));
         EXPECT_NE(ref_values->getParam("foo"), values->getParam("foo"));
     }
 
-    /// @brief Check that the storages of the specific type hold fifferent
+    /// @brief Check that the storages of the specific type hold different
     /// position.
     ///
-    /// This function assumes that the ref_values storage holds exactly
-    /// one parameter called 'foo'.
-    ///
+    /// @param name A name of the parameter to be checked.
     /// @param ref_values A storage holding reference position. In the typical
     /// case it is a storage held in the original context, which is assigned
     /// to another context.
     /// @param values A storage holding position to be checked.
     /// @tparam ContainerType A type of the storage.
-    /// @tparam ValueType A type of the value in the container.
-    template<typename ContainerType, typename ValueType>
-    void checkPositionNeq(const boost::shared_ptr<ContainerType>& ref_values,
+    template<typename ContainerType>
+    void checkPositionNeq(const std::string& name,
+                          const boost::shared_ptr<ContainerType>& ref_values,
                           const boost::shared_ptr<ContainerType>& values) {
         // At least one of the position fields must be different.
-        EXPECT_TRUE((ref_values->getPosition("foo").line_ !=
-                     values->getPosition("foo").line_) ||
-                    (ref_values->getPosition("foo").pos_ !=
-                     values->getPosition("foo").pos_) ||
-                    (ref_values->getPosition("foo").pos_ !=
-                     values->getPosition("foo").pos_));
+        EXPECT_TRUE((ref_values->getPosition(name).line_ !=
+                     values->getPosition(name).line_) ||
+                    (ref_values->getPosition(name).pos_ !=
+                     values->getPosition(name).pos_) ||
+                    (ref_values->getPosition(name).file_ !=
+                     values->getPosition(name).file_));
     }
 
     /// @brief Check that option definition storage in the context holds
@@ -1207,15 +1202,43 @@ public:
         ctx.boolean_values_->setParam("foo", true,
                                       Element::Position("kea.conf", 123, 234));
 
+        // Set various parameters to test that position is copied between
+        // contexts.
+        ctx.boolean_values_->setParam("pos0", true,
+                                      Element::Position("kea.conf", 1, 2));
+        ctx.boolean_values_->setParam("pos1", true,
+                                      Element::Position("kea.conf", 10, 20));
+        ctx.boolean_values_->setParam("pos2", true,
+                                      Element::Position("kea.conf", 100, 200));
+
         // Set uint32 parameter 'foo'.
         ASSERT_TRUE(ctx.uint32_values_);
         ctx.uint32_values_->setParam("foo", 123,
                                      Element::Position("kea.conf", 123, 234));
 
+        // Set various parameters to test that position is copied between
+        // contexts.
+        ctx.uint32_values_->setParam("pos0", 123,
+                                      Element::Position("kea.conf", 1, 2));
+        ctx.uint32_values_->setParam("pos1", 123,
+                                      Element::Position("kea.conf", 10, 20));
+        ctx.uint32_values_->setParam("pos2", 123,
+                                      Element::Position("kea.conf", 100, 200));
+
         // Ser string parameter 'foo'.
         ASSERT_TRUE(ctx.string_values_);
         ctx.string_values_->setParam("foo", "some string",
                                      Element::Position("kea.conf", 123, 234));
+
+        // Set various parameters to test that position is copied between
+        // contexts.
+        ctx.string_values_->setParam("pos0", "some string",
+                                      Element::Position("kea.conf", 1, 2));
+        ctx.string_values_->setParam("pos1", "some string",
+                                      Element::Position("kea.conf", 10, 20));
+        ctx.string_values_->setParam("pos2", "some string",
+                                      Element::Position("kea.conf", 100, 200));
+
 
         // Add new option, with option code 10, to the context.
         ASSERT_TRUE(ctx.options_);
@@ -1248,16 +1271,19 @@ public:
         {
             SCOPED_TRACE("Check that boolean values are equal in both"
                          " contexts");
-            checkValueEq<BooleanStorage, bool>(ctx.boolean_values_,
-                                               ctx_new->boolean_values_);
+            checkValueEq(ctx.boolean_values_, ctx_new->boolean_values_);
         }
 
-        // New context has the same boolean value position.
+        // New context has the same boolean values' positions.
         {
             SCOPED_TRACE("Check that positions of boolean values are equal"
                          " in both contexts");
-            checkPositionEq<BooleanStorage, bool>(ctx.boolean_values_,
-                                                  ctx_new->boolean_values_);
+            checkPositionEq("pos0", ctx.boolean_values_,
+                            ctx_new->boolean_values_);
+            checkPositionEq("pos1", ctx.boolean_values_,
+                            ctx_new->boolean_values_);
+            checkPositionEq("pos2", ctx.boolean_values_,
+                            ctx_new->boolean_values_);
         }
 
         // New context has the same uint32 value.
@@ -1265,32 +1291,45 @@ public:
         {
             SCOPED_TRACE("Check that uint32_t values are equal in both"
                          " contexts");
-            checkValueEq<Uint32Storage, uint32_t>(ctx.uint32_values_,
-                                                  ctx_new->uint32_values_);
+            checkValueEq(ctx.uint32_values_, ctx_new->uint32_values_);
+        }
+
+        // New context has the same uint32 values' positions.
+        {
+            SCOPED_TRACE("Check that positions of uint32 values are equal"
+                         " in both contexts");
+            checkPositionEq("pos0", ctx.uint32_values_,
+                            ctx_new->uint32_values_);
+            checkPositionEq("pos1", ctx.uint32_values_,
+                            ctx_new->uint32_values_);
+            checkPositionEq("pos2", ctx.uint32_values_,
+                            ctx_new->uint32_values_);
         }
 
         // New context has the same uint32 value position.
         {
             SCOPED_TRACE("Check that positions of uint32_t values are equal"
                          " in both contexts");
-            checkPositionEq<Uint32Storage, uint32_t>(ctx.uint32_values_,
-                                                     ctx_new->uint32_values_);
+            checkPositionEq("foo", ctx.uint32_values_, ctx_new->uint32_values_);
         }
 
         // New context has the same string value.
         ASSERT_TRUE(ctx_new->string_values_);
         {
             SCOPED_TRACE("Check that string values are equal in both contexts");
-            checkValueEq<StringStorage, std::string>(ctx.string_values_,
-                                                     ctx_new->string_values_);
+            checkValueEq(ctx.string_values_, ctx_new->string_values_);
         }
 
-        // New context has the same string value position.
+        // New context has the same string values' positions.
         {
-            SCOPED_TRACE("Check that position of string values are equal"
+            SCOPED_TRACE("Check that positions of string values are equal"
                          " in both contexts");
-            checkPositionEq<StringStorage, std::string>(ctx.string_values_,
-                                                        ctx_new->string_values_);
+            checkPositionEq("pos0", ctx.string_values_,
+                            ctx_new->string_values_);
+            checkPositionEq("pos1", ctx.string_values_,
+                            ctx_new->string_values_);
+            checkPositionEq("pos2", ctx.string_values_,
+                            ctx_new->string_values_);
         }
 
         // New context has the same option.
@@ -1322,48 +1361,105 @@ public:
         // Change the value of the boolean parameter. This should not affect the
         // corresponding value in the new context.
         {
-            SCOPED_TRACE("Check that boolean value and position isn't changed"
-                         " when original value and position is changed");
+            SCOPED_TRACE("Check that boolean value isn't changed when original"
+                         " value and position is changed");
             ctx.boolean_values_->setParam("foo", false,
                                           Element::Position("kea.conf",
                                                             12, 10));
-            checkValueNeq<BooleanStorage, bool>(ctx.boolean_values_,
-                                                ctx_new->boolean_values_);
+            checkValueNeq(ctx.boolean_values_, ctx_new->boolean_values_);
 
-            checkPositionNeq<BooleanStorage, bool>(ctx.boolean_values_,
-                                                   ctx_new->boolean_values_);
+        }
+
+        {
+            SCOPED_TRACE("Check that positions of the boolean parameters aren't"
+                         " changed when the corresponding positions in the"
+                         " original context are changed");
+            // Modify file name.
+            ctx.boolean_values_->setParam("pos0", false,
+                                          Element::Position("foo.conf",
+                                                            1, 2));
+            checkPositionNeq("pos0", ctx.boolean_values_,
+                             ctx_new->boolean_values_);
+            // Modify line number.
+            ctx.boolean_values_->setParam("pos1", false,
+                                          Element::Position("kea.conf",
+                                                            11, 20));
+            checkPositionNeq("pos1", ctx.boolean_values_,
+                             ctx_new->boolean_values_);
+            // Modify position within a line.
+            ctx.boolean_values_->setParam("pos2", false,
+                                          Element::Position("kea.conf",
+                                                            101, 201));
+            checkPositionNeq("pos2", ctx.boolean_values_,
+                             ctx_new->boolean_values_);
+
         }
 
         // Change the value of the uint32_t parameter. This should not affect
         // the corresponding value in the new context.
         {
-            SCOPED_TRACE("Check that uint32_t value and position isn't changed"
-                         " when original value and position is changed");
+            SCOPED_TRACE("Check that uint32_t value isn't changed when original"
+                         " value and position is changed");
             ctx.uint32_values_->setParam("foo", 987,
-                                         Element::Position("kea.conf",
-                                                           10, 11));
-            checkValueNeq<Uint32Storage, uint32_t>(ctx.uint32_values_,
-                                                   ctx_new->uint32_values_);
+                                         Element::Position("kea.conf", 10, 11));
+            checkValueNeq(ctx.uint32_values_, ctx_new->uint32_values_);
+        }
 
-            checkPositionNeq<Uint32Storage, uint32_t>(ctx.uint32_values_,
-                                                      ctx_new->uint32_values_);
+        {
+            SCOPED_TRACE("Check that positions of the uint32 parameters aren't"
+                         " changed when the corresponding positions in the"
+                         " original context are changed");
+            // Modify file name.
+            ctx.uint32_values_->setParam("pos0", 123,
+                                          Element::Position("foo.conf", 1, 2));
+            checkPositionNeq("pos0", ctx.uint32_values_,
+                             ctx_new->uint32_values_);
+            // Modify line number.
+            ctx.uint32_values_->setParam("pos1", 123,
+                                          Element::Position("kea.conf",
+                                                            11, 20));
+            checkPositionNeq("pos1", ctx.uint32_values_,
+                             ctx_new->uint32_values_);
+            // Modify position within a line.
+            ctx.uint32_values_->setParam("pos2", 123,
+                                          Element::Position("kea.conf",
+                                                            101, 201));
+            checkPositionNeq("pos2", ctx.uint32_values_,
+                             ctx_new->uint32_values_);
 
         }
 
         // Change the value of the string parameter. This should not affect the
         // corresponding value in the new context.
         {
-            SCOPED_TRACE("Check that string value and position isn't changed"
-                         " when original value and position is changed");
+            SCOPED_TRACE("Check that string value isn't changed when original"
+                         " value and position is changed");
             ctx.string_values_->setParam("foo", "different string",
-                                         Element::Position("kea.conf",
-                                                           10, 11));
-            checkValueNeq<StringStorage, std::string>(ctx.string_values_,
-                                                      ctx_new->string_values_);
+                                         Element::Position("kea.conf", 10, 11));
+            checkValueNeq(ctx.string_values_, ctx_new->string_values_);
+        }
 
-            checkPositionNeq<
-                StringStorage, std::string>(ctx.string_values_,
-                                            ctx_new->string_values_);
+        {
+            SCOPED_TRACE("Check that positions of the string parameters aren't"
+                         " changed when the corresponding positions in the"
+                         " original context are changed");
+            // Modify file name.
+            ctx.string_values_->setParam("pos0", "some string",
+                                          Element::Position("foo.conf", 1, 2));
+            checkPositionNeq("pos0", ctx.string_values_,
+                             ctx_new->string_values_);
+            // Modify line number.
+            ctx.string_values_->setParam("pos1", "some string",
+                                          Element::Position("kea.conf",
+                                                            11, 20));
+            checkPositionNeq("pos1", ctx.string_values_,
+                             ctx_new->string_values_);
+            // Modify position within a line.
+            ctx.string_values_->setParam("pos2", "some string",
+                                          Element::Position("kea.conf",
+                                                            101, 201));
+            checkPositionNeq("pos2", ctx.string_values_,
+                             ctx_new->string_values_);
 
         }
 
@@ -1409,6 +1505,7 @@ public:
         EXPECT_EQ(Option::V6, ctx_new->universe_);
 
     }
+
 };
 
 // Check that the assignment operator of the ParserContext class copies all
