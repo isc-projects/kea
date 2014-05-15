@@ -87,6 +87,10 @@
  *   - @subpage cfgmgr
  *   - @subpage allocengine
  * - @subpage dhcpDatabaseBackends
+ * - @subpage configBackend
+ *   - @subpage configBackendMotivation
+ *   - @subpage configBackendJSONDesign
+ *   - @subpage configBackendAdding
  * - @subpage perfdhcpInternals
  * - @subpage libdhcp_ddns
  *
@@ -95,6 +99,7 @@
  *   - @subpage logBasicIdeas
  *   - @subpage logDeveloperUse
  *   - @subpage logNotes
+ * - @subpage LoggingApi
  * - @subpage SocketSessionUtility
  * - <a href="./doxygen-error.log">Documentation warnings and errors</a>
  *

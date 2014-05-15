@@ -261,9 +261,8 @@ TEST_F(TSIGKeyInfoTest, invalidEntry) {
                          "}";
     ASSERT_TRUE(fromJSON(config));
 
-    // Verify that build succeeds but commit fails on blank name.
-    EXPECT_NO_THROW(parser_->build(config_set_));
-    EXPECT_THROW(parser_->commit(), D2CfgError);
+    // Verify that build fails on blank name.
+    EXPECT_THROW(parser_->build(config_set_), D2CfgError);
 
     // Config with a blank algorithm entry.
     config = "{"
@@ -274,9 +273,8 @@ TEST_F(TSIGKeyInfoTest, invalidEntry) {
 
     ASSERT_TRUE(fromJSON(config));
 
-    // Verify that build succeeds but commit fails on blank algorithm.
-    EXPECT_NO_THROW(parser_->build(config_set_));
-    EXPECT_THROW(parser_->commit(), D2CfgError);
+    // Verify that build fails on blank algorithm.
+    EXPECT_THROW(parser_->build(config_set_), D2CfgError);
 
     // Config with a blank secret entry.
     config = "{"
@@ -287,9 +285,8 @@ TEST_F(TSIGKeyInfoTest, invalidEntry) {
 
     ASSERT_TRUE(fromJSON(config));
 
-    // Verify that build succeeds but commit fails on blank secret.
-    EXPECT_NO_THROW(parser_->build(config_set_));
-    EXPECT_THROW(parser_->commit(), D2CfgError);
+    // Verify that build fails blank secret
+    EXPECT_THROW(parser_->build(config_set_), D2CfgError);
 }
 
 /// @brief Verifies that TSIGKeyInfo parsing creates a proper TSIGKeyInfo
@@ -347,10 +344,7 @@ TEST_F(TSIGKeyInfoTest, invalidTSIGKeyList) {
     ASSERT_NO_THROW(parser.reset(new TSIGKeyInfoListParser("test", keys_)));
 
     // Verify that the list builds without errors.
-    ASSERT_NO_THROW(parser->build(config_set_));
-
-    // Verify that the list commit fails.
-    EXPECT_THROW(parser->commit(), D2CfgError);
+    EXPECT_THROW(parser->build(config_set_), D2CfgError);
 }
 
 /// @brief Verifies that attempting to parse an invalid list of TSIGKeyInfo
@@ -380,10 +374,7 @@ TEST_F(TSIGKeyInfoTest, duplicateTSIGKey) {
     ASSERT_NO_THROW(parser.reset(new TSIGKeyInfoListParser("test", keys_)));
 
     // Verify that the list builds without errors.
-    ASSERT_NO_THROW(parser->build(config_set_));
-
-    // Verify that the list commit fails.
-    EXPECT_THROW(parser->commit(), D2CfgError);
+    EXPECT_THROW(parser->build(config_set_), D2CfgError);
 }
 
 /// @brief Verifies a valid list of TSIG Keys parses correctly.
@@ -450,20 +441,18 @@ TEST_F(TSIGKeyInfoTest, validTSIGKeyList) {
 /// 3. Specifying a negative port number is not allowed.
 TEST_F(DnsServerInfoTest, invalidEntry) {
     // Create a config in which both host and ip address are supplied.
-    // Verify that it builds without throwing but commit fails.
+    // Verify that build fails.
     std::string config = "{ \"hostname\": \"pegasus.tmark\", "
                          "  \"ip_address\": \"127.0.0.1\" } ";
     ASSERT_TRUE(fromJSON(config));
-    EXPECT_NO_THROW(parser_->build(config_set_));
-    EXPECT_THROW(parser_->commit(), D2CfgError);
+    EXPECT_THROW(parser_->build(config_set_), D2CfgError);
 
     // Neither host nor ip address supplied
-    // Verify that it builds without throwing but commit fails.
+    // Verify that builds fails.
     config = "{ \"hostname\": \"\", "
              "  \"ip_address\": \"\" } ";
     ASSERT_TRUE(fromJSON(config));
-    EXPECT_NO_THROW(parser_->build(config_set_));
-    EXPECT_THROW(parser_->commit(), D2CfgError);
+    EXPECT_THROW(parser_->build(config_set_), D2CfgError);
 
     // Create a config with a negative port number.
     // Verify that build fails.
@@ -554,11 +543,8 @@ TEST_F(ConfigParseTest, invalidServerList) {
     isc::dhcp::ParserPtr parser;
     ASSERT_NO_THROW(parser.reset(new DnsServerInfoListParser("test", servers)));
 
-    // Verify that the list builds without errors.
-    ASSERT_NO_THROW(parser->build(config_set_));
-
-    // Verify that the list commit fails.
-    EXPECT_THROW(parser->commit(), D2CfgError);
+    // Verify that build fails.
+    EXPECT_THROW(parser->build(config_set_), D2CfgError);
 }
 
 /// @brief Verifies that a list of DnsServerInfo entries parses correctly given
@@ -623,9 +609,8 @@ TEST_F(DdnsDomainTest, invalidDdnsDomainEntry) {
                          "    \"port\": 300 } ] } ";
     ASSERT_TRUE(fromJSON(config));
 
-    // Verify that the domain configuration builds but commit fails.
-    ASSERT_NO_THROW(parser_->build(config_set_));
-    ASSERT_THROW(parser_->commit(), isc::dhcp::DhcpConfigError);
+    // Verify that the domain configuration builds fails.
+    EXPECT_THROW(parser_->build(config_set_), isc::dhcp::DhcpConfigError);
 
     // Create a domain configuration with an empty server list.
     config = "{ \"name\": \"tmark.org\" , "
@@ -635,7 +620,7 @@ TEST_F(DdnsDomainTest, invalidDdnsDomainEntry) {
     ASSERT_TRUE(fromJSON(config));
 
     // Verify that the domain configuration build fails.
-    ASSERT_THROW(parser_->build(config_set_), D2CfgError);
+    EXPECT_THROW(parser_->build(config_set_), D2CfgError);
 
     // Create a domain configuration with a mal-formed server entry.
     config = "{ \"name\": \"tmark.org\" , "
@@ -646,7 +631,7 @@ TEST_F(DdnsDomainTest, invalidDdnsDomainEntry) {
     ASSERT_TRUE(fromJSON(config));
 
     // Verify that the domain configuration build fails.
-    ASSERT_THROW(parser_->build(config_set_), isc::BadValue);
+    EXPECT_THROW(parser_->build(config_set_), isc::BadValue);
 
     // Create a domain configuration without an defined key name
     config = "{ \"name\": \"tmark.org\" , "
@@ -656,9 +641,8 @@ TEST_F(DdnsDomainTest, invalidDdnsDomainEntry) {
              "    \"port\": 300 } ] } ";
     ASSERT_TRUE(fromJSON(config));
 
-    // Verify that the domain configuration build succeeds but commit fails.
-    ASSERT_NO_THROW(parser_->build(config_set_));
-    ASSERT_THROW(parser_->commit(), D2CfgError);
+    // Verify that the domain configuration build fails.
+    EXPECT_THROW(parser_->build(config_set_), D2CfgError);
 }
 
 /// @brief Verifies the basics of parsing DdnsDomains.
@@ -853,9 +837,8 @@ TEST_F(DdnsDomainTest, duplicateDomain) {
     ASSERT_NO_THROW(list_parser.reset(
                     new DdnsDomainListParser("test", domains_, keys_)));
 
-    // Verify that the parse build succeeds but the commit fails.
-    ASSERT_NO_THROW(list_parser->build(config_set_));
-    ASSERT_THROW(list_parser->commit(), D2CfgError);
+    // Verify that the parse build fails.
+    EXPECT_THROW(list_parser->build(config_set_), D2CfgError);
 }
 
 /// @brief Tests construction of D2CfgMgr
@@ -1013,7 +996,7 @@ TEST_F(D2CfgMgrTest, fullConfig) {
     EXPECT_TRUE(cfg_mgr_->reverseUpdatesEnabled());
 
     // Verify that parsing the exact same configuration a second time
-    // does not cause a duplicate value errors. 
+    // does not cause a duplicate value errors.
     answer_ = cfg_mgr_->parseConfig(config_set_);
     ASSERT_TRUE(checkAnswer(0));
 }

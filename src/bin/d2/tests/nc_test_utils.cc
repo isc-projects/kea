@@ -31,7 +31,6 @@ namespace d2 {
 const char* TEST_DNS_SERVER_IP = "127.0.0.1";
 size_t TEST_DNS_SERVER_PORT = 5301;
 
-const bool HAS_RDATA = true;
 const bool NO_RDATA = false;
 
 //*************************** FauxServer class ***********************

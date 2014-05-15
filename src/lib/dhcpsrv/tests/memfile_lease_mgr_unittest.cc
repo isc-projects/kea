@@ -319,7 +319,7 @@ TEST_F(MemfileLeaseMgrTest, basicLease6) {
 /// a combination of DUID and IAID.
 /// @todo: test disabled, because Memfile_LeaseMgr::getLeases6(Lease::Type,
 /// const DUID& duid, uint32_t iaid) const is not implemented yet.
-TEST_F(MemfileLeaseMgrTest, DISABLED_getLeases6DuidIaid) {
+TEST_F(MemfileLeaseMgrTest, getLeases6DuidIaid) {
     startBackend(V6);
     testGetLeases6DuidIaid();
 }
@@ -328,7 +328,7 @@ TEST_F(MemfileLeaseMgrTest, DISABLED_getLeases6DuidIaid) {
 
 /// @todo: test disabled, because Memfile_LeaseMgr::getLeases6(Lease::Type,
 /// const DUID& duid, uint32_t iaid) const is not implemented yet.
-TEST_F(MemfileLeaseMgrTest, DISABLED_getLeases6DuidSize) {
+TEST_F(MemfileLeaseMgrTest, getLeases6DuidSize) {
     startBackend(V6);
     testGetLeases6DuidSize();
 }
@@ -341,7 +341,7 @@ TEST_F(MemfileLeaseMgrTest, DISABLED_getLeases6DuidSize) {
 /// discriminate between the leases based on lease type alone.
 /// @todo: Disabled, because type parameter in Memfile_LeaseMgr::getLease6
 /// (Lease::Type, const isc::asiolink::IOAddress& addr) const is not used.
-TEST_F(MemfileLeaseMgrTest, DISABLED_lease6LeaseTypeCheck) {
+TEST_F(MemfileLeaseMgrTest, lease6LeaseTypeCheck) {
     startBackend(V6);
     testLease6LeaseTypeCheck();
 }

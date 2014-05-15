@@ -81,36 +81,6 @@ OptionCustom::checkIndex(const uint32_t index) const {
     }
 }
 
-template<typename T>
-void
-OptionCustom::checkDataType(const uint32_t index) const {
-    // Check that the requested return type is a supported integer.
-    if (!OptionDataTypeTraits<T>::integer_type) {
-        isc_throw(isc::dhcp::InvalidDataType, "specified data type"
-                  " is not a supported integer type.");
-    }
-
-    // Get the option definition type.
-    OptionDataType data_type = definition_.getType();
-    if (data_type == OPT_RECORD_TYPE) {
-        const OptionDefinition::RecordFieldsCollection& record_fields =
-            definition_.getRecordFields();
-        // When we initialized buffers we have already checked that
-        // the number of these buffers is equal to number of option
-        // fields in the record so the condition below should be met.
-        assert(index < record_fields.size());
-        // Get the data type to be returned.
-        data_type = record_fields[index];
-    }
-
-    if (OptionDataTypeTraits<T>::type != data_type) {
-        isc_throw(isc::dhcp::InvalidDataType,
-                  "specified data type " << data_type << " does not"
-                  " match the data type in an option definition for field"
-                  " index " << index);
-    }
-}
-
 void
 OptionCustom::createBuffers() {
     definition_.validate();

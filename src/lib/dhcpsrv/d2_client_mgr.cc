@@ -68,21 +68,15 @@ D2ClientMgr::setD2ClientConfig(D2ClientConfigPtr& new_config) {
             dhcp_ddns::NameChangeSenderPtr new_sender;
             switch (new_config->getNcrProtocol()) {
             case dhcp_ddns::NCR_UDP: {
-                /// @todo Should we be able to configure a sender's client
-                /// side ip and port?  We should certainly be able to
-                /// configure a maximum queue size.  These were overlooked
-                /// but are covered in Trac# 3328.
-                isc::asiolink::IOAddress any_addr("0.0.0.0");
-                uint32_t any_port = 0;
-                uint32_t queue_max = 1024;
-
                 // Instantiate a new sender.
                 new_sender.reset(new dhcp_ddns::NameChangeUDPSender(
-                                                any_addr, any_port,
+                                                new_config->getSenderIp(),
+                                                new_config->getSenderPort(),
                                                 new_config->getServerIp(),
                                                 new_config->getServerPort(),
                                                 new_config->getNcrFormat(),
-                                                *this, queue_max));
+                                                *this,
+                                                new_config->getMaxQueueSize()));
                 break;
                 }
             default:
