@@ -390,10 +390,12 @@ public:
     /// @brief Constructor
     ///
     /// @param name is the domain name of the domain.
-    /// @param key_name is the TSIG key name for use with this domain.
     /// @param servers is the list of server(s) supporting this domain.
-    DdnsDomain(const std::string& name, const std::string& key_name,
-               DnsServerInfoStoragePtr servers);
+    /// @param tsig_key_info pointer to the TSIGKeyInfo for the dommain's key
+    /// It defaults to an empty pointer, signifying the domain has no key.
+    DdnsDomain(const std::string& name,
+               DnsServerInfoStoragePtr servers,
+               const TSIGKeyInfoPtr& tsig_key_info = TSIGKeyInfoPtr());
 
     /// @brief Destructor
     virtual ~DdnsDomain();
@@ -405,12 +407,11 @@ public:
         return (name_);
     }
 
-    /// @brief Getter which returns the domain's TSIG key name.
+    /// @brief Conveneince method which returns the domain's TSIG key name.
     ///
-    /// @return returns the key name in an std::string.
-    const std::string getKeyName() const {
-        return (key_name_);
-    }
+    /// @return returns the key name in an std::string. If domain has no
+    /// TSIG key, the string will empty.
+    const std::string getKeyName() const;
 
     /// @brief Getter which returns the domain's list of servers.
     ///
@@ -419,15 +420,19 @@ public:
         return (servers_);
     }
 
+    const TSIGKeyInfoPtr& getTSIGKeyInfo() {
+        return (tsig_key_info_);
+    }
+
 private:
     /// @brief The domain name of the domain.
     std::string name_;
 
-    /// @brief The name of the TSIG key for use with this domain.
-    std::string key_name_;
-
     /// @brief The list of server(s) supporting this domain.
     DnsServerInfoStoragePtr servers_;
+
+    /// @brief
+    TSIGKeyInfoPtr tsig_key_info_;
 };
 
 /// @brief Defines a pointer for DdnsDomain instances.

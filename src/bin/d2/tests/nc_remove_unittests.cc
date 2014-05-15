@@ -286,8 +286,8 @@ TEST(NameRemoveTransaction, construction) {
     DdnsDomainPtr empty_domain;
 
     ASSERT_NO_THROW(ncr = dhcp_ddns::NameChangeRequest::fromJSON(msg_str));
-    ASSERT_NO_THROW(forward_domain.reset(new DdnsDomain("*", "", servers)));
-    ASSERT_NO_THROW(reverse_domain.reset(new DdnsDomain("*", "", servers)));
+    ASSERT_NO_THROW(forward_domain.reset(new DdnsDomain("*", servers)));
+    ASSERT_NO_THROW(reverse_domain.reset(new DdnsDomain("*", servers)));
 
     // Verify that construction with wrong change type fails.
     EXPECT_THROW(NameRemoveTransaction(io_service, ncr,

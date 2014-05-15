@@ -110,12 +110,23 @@ operator<<(std::ostream& os, const DnsServerInfo& server) {
 
 // *********************** DdnsDomain  *************************
 
-DdnsDomain::DdnsDomain(const std::string& name, const std::string& key_name,
-                       DnsServerInfoStoragePtr servers)
-    : name_(name), key_name_(key_name), servers_(servers) {
+DdnsDomain::DdnsDomain(const std::string& name,
+                       DnsServerInfoStoragePtr servers,
+                       const TSIGKeyInfoPtr& tsig_key_info)
+    : name_(name), servers_(servers),
+      tsig_key_info_(tsig_key_info) {
 }
 
 DdnsDomain::~DdnsDomain() {
+}
+
+const std::string
+DdnsDomain::getKeyName() const {
+    if (tsig_key_info_) {
+        return (tsig_key_info_->getName());
+    }
+
+    return ("");
 }
 
 // *********************** DdnsDomainLstMgr  *************************
@@ -546,18 +557,26 @@ DdnsDomainParser::build(isc::data::ConstElementPtr domain_config) {
         isc_throw(D2CfgError, "Duplicate domain specified:" << name);
     }
 
-    // Key name is optional. If it is not blank, then validate it against
-    // the defined list of keys.
+    // Key name is optional. If it is not blank, then find the key in the
+    /// list of defined keys.
+    TSIGKeyInfoPtr tsig_key_info;
     local_scalars_.getParam("key_name", key_name, DCfgContextBase::OPTIONAL);
     if (!key_name.empty()) {
-        if ((!keys_) || (keys_->find(key_name) == keys_->end())) {
+        if (keys_) {
+            TSIGKeyInfoMap::iterator kit = keys_->find(key_name);
+            if (kit != keys_->end()) {
+                tsig_key_info = kit->second;
+            }
+        }
+
+        if (!tsig_key_info) {
             isc_throw(D2CfgError, "DdnsDomain :" << name <<
-                     " specifies and undefined key:" << key_name);
+                     " specifies an undefined key:" << key_name);
         }
     }
 
     // Instantiate the new domain and add it to domain storage.
-    DdnsDomainPtr domain(new DdnsDomain(name, key_name, local_servers_));
+    DdnsDomainPtr domain(new DdnsDomain(name, local_servers_, tsig_key_info));
 
     // Add the new domain to the domain storage.
     (*domains_)[name] = domain;
