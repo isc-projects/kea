@@ -292,7 +292,7 @@ case "$host" in
 	;;
 esac
 
-m4_define([_AM_PYTHON_INTERPRETER_LIST], [python python3.3 python3.2 python3.1 python3])
+m4_define([_AM_PYTHON_INTERPRETER_LIST], [python python3.4 python3.3 python3.2 python3.1 python3])
 AC_ARG_WITH([pythonpath],
 AC_HELP_STRING([--with-pythonpath=PATH],
   [specify an absolute path to python executable when automatic version check (incorrectly) fails]),
@@ -916,7 +916,7 @@ if test "$MYSQL_CONFIG" != "" ; then
 fi
 
 # Solaris puts FIONREAD in filio.h
-AC_CHECK_HEADER(sys/filio.h)
+AC_CHECK_HEADERS(sys/filio.h,,,)
 
 # ... and at the shell level, so Makefile.am can take action depending on this.
 AM_CONDITIONAL(HAVE_MYSQL, test "$MYSQL_CONFIG" != "")
@@ -1495,6 +1495,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/dhcp_ddns/tests/Makefile
                  src/lib/dhcp/Makefile
                  src/lib/dhcpsrv/Makefile
+                 src/lib/dhcpsrv/testutils/Makefile
                  src/lib/dhcpsrv/tests/Makefile
                  src/lib/dhcpsrv/tests/test_libraries.h
                  src/lib/dhcp/tests/Makefile

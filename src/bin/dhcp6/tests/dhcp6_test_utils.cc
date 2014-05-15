@@ -273,7 +273,7 @@ Dhcpv6SrvTest::testRenewBasic(Lease::Type type, const std::string& existing_addr
         EXPECT_EQ(pd_pool_->getLength(), prefix_opt->getLength());
 
         // Check that the lease is really in the database
-        l = checkLease(duid_, reply->getOption(D6O_IA_PD), prefix_opt);
+        l = checkPdLease(duid_, reply->getOption(D6O_IA_PD), prefix_opt);
         ASSERT_TRUE(l);
         break;
     }
@@ -428,7 +428,7 @@ Dhcpv6SrvTest::testReleaseBasic(Lease::Type type, const IOAddress& existing,
     ASSERT_TRUE(subnet_->inPool(type, existing));
 
     // Let's prepopulate the database
-    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, existing, duid_, iaid,
+    Lease6Ptr lease(new Lease6(type, existing, duid_, iaid,
                                501, 502, 503, 504, subnet_->getID(),
                                prefix_len));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));

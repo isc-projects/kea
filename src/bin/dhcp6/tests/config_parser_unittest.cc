@@ -25,6 +25,7 @@
 #include <dhcpsrv/addr_utilities.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/subnet.h>
+#include <dhcpsrv/testutils/config_result_check.h>
 #include <hooks/hooks_manager.h>
 
 #include "test_data_files_config.h"
@@ -375,9 +376,8 @@ public:
         std::string config = createConfigWithOption(param_value, parameter);
         ElementPtr json = Element::fromJSON(config);
         EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
-        ASSERT_TRUE(x);
-        comment_ = parseAnswer(rcode_, x);
-        ASSERT_EQ(1, rcode_);
+        checkResult(x, 1);
+        EXPECT_TRUE(errorContainsPosition(x, "<string>"));
     }
 
     /// @brief Test invalid option paramater value.
@@ -393,9 +393,8 @@ public:
         std::string config = createConfigWithOption(params);
         ElementPtr json = Element::fromJSON(config);
         EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
-        ASSERT_TRUE(x);
-        comment_ = parseAnswer(rcode_, x);
-        ASSERT_EQ(1, rcode_);
+        checkResult(x, 1);
+        EXPECT_TRUE(errorContainsPosition(x, "<string>"));
     }
 
     /// @brief Test option against given code and data.
@@ -491,9 +490,7 @@ TEST_F(Dhcp6ParserTest, version) {
                     Element::fromJSON("{\"version\": 0}")));
 
     // returned value must be 0 (configuration accepted)
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-    EXPECT_EQ(0, rcode_);
+    checkResult(x, 0);
 }
 
 /// The goal of this test is to verify that the code accepts only
@@ -506,9 +503,7 @@ TEST_F(Dhcp6ParserTest, bogusCommand) {
                     Element::fromJSON("{\"bogus\": 5}")));
 
     // returned value must be 1 (configuration parse error)
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-    EXPECT_EQ(1, rcode_);
+    checkResult(x, 1);
 }
 
 /// The goal of this test is to verify if configuration without any
@@ -526,9 +521,7 @@ TEST_F(Dhcp6ParserTest, emptySubnet) {
                                       "\"valid-lifetime\": 4000 }")));
 
     // returned value should be 0 (success)
-    ASSERT_TRUE(status);
-    comment_ = parseAnswer(rcode_, status);
-    EXPECT_EQ(0, rcode_);
+    checkResult(status, 0);
 }
 
 /// The goal of this test is to verify if defined subnet uses global
@@ -551,9 +544,7 @@ TEST_F(Dhcp6ParserTest, subnetGlobalDefaults) {
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
     // check if returned status is OK
-    ASSERT_TRUE(status);
-    comment_ = parseAnswer(rcode_, status);
-    EXPECT_EQ(0, rcode_);
+    checkResult(status, 0);
 
     // Now check if the configuration was indeed handled and we have
     // expected pool configured.
@@ -607,9 +598,7 @@ TEST_F(Dhcp6ParserTest, multipleSubnets) {
 
     do {
         EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
-        ASSERT_TRUE(x);
-        comment_ = parseAnswer(rcode_, x);
-        ASSERT_EQ(0, rcode_);
+        checkResult(x, 0);
 
         const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
         ASSERT_TRUE(subnets);
@@ -664,9 +653,7 @@ TEST_F(Dhcp6ParserTest, multipleSubnetsExplicitIDs) {
 
     do {
         EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
-        ASSERT_TRUE(x);
-        comment_ = parseAnswer(rcode_, x);
-        ASSERT_EQ(0, rcode_);
+        checkResult(x, 0);
 
         const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
         ASSERT_TRUE(subnets);
@@ -716,9 +703,8 @@ TEST_F(Dhcp6ParserTest, multipleSubnetsOverlapingIDs) {
     ElementPtr json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-    ASSERT_NE(rcode_, 0);
+    checkResult(x, 1);
+    EXPECT_TRUE(errorContainsPosition(x, "<string>"));
 }
 
 
@@ -803,9 +789,7 @@ TEST_F(Dhcp6ParserTest, reconfigureRemoveSubnet) {
 
     ElementPtr json = Element::fromJSON(config4);
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-    ASSERT_EQ(0, rcode_);
+    checkResult(x, 0);
 
     const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
     ASSERT_TRUE(subnets);
@@ -814,9 +798,7 @@ TEST_F(Dhcp6ParserTest, reconfigureRemoveSubnet) {
     // Do the reconfiguration (the last subnet is removed)
     json = Element::fromJSON(config_first3);
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-    ASSERT_EQ(0, rcode_);
+    checkResult(x, 0);
 
     subnets = CfgMgr::instance().getSubnets6();
     ASSERT_TRUE(subnets);
@@ -831,16 +813,12 @@ TEST_F(Dhcp6ParserTest, reconfigureRemoveSubnet) {
 
     json = Element::fromJSON(config4);
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-    ASSERT_EQ(0, rcode_);
+    checkResult(x, 0);
 
     // Do reconfiguration
     json = Element::fromJSON(config_second_removed);
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-    ASSERT_EQ(0, rcode_);
+    checkResult(x, 0);
 
     subnets = CfgMgr::instance().getSubnets6();
     ASSERT_TRUE(subnets);
@@ -878,9 +856,7 @@ TEST_F(Dhcp6ParserTest, subnetLocal) {
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
     // returned value should be 0 (configuration success)
-    ASSERT_TRUE(status);
-    comment_ = parseAnswer(rcode_, status);
-    EXPECT_EQ(0, rcode_);
+    checkResult(status, 0);
 
     Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
                                                       classify_);
@@ -915,9 +891,7 @@ TEST_F(Dhcp6ParserTest, subnetInterface) {
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
     // returned value should be 0 (configuration success)
-    ASSERT_TRUE(status);
-    comment_ = parseAnswer(rcode_, status);
-    EXPECT_EQ(0, rcode_);
+    checkResult(status, 0);
 
     Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
                                                       classify_);
@@ -949,9 +923,8 @@ TEST_F(Dhcp6ParserTest, subnetInterfaceBogus) {
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
     // returned value should be 1 (configuration error)
-    ASSERT_TRUE(status);
-    comment_ = parseAnswer(rcode_, status);
-    EXPECT_EQ(1, rcode_);
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
     Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
                                                       classify_);
@@ -981,9 +954,8 @@ TEST_F(Dhcp6ParserTest, interfaceGlobal) {
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
     // returned value should be 1 (parse error)
-    ASSERT_TRUE(status);
-    comment_ = parseAnswer(rcode_, status);
-    EXPECT_EQ(1, rcode_);
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
 
@@ -1012,9 +984,7 @@ TEST_F(Dhcp6ParserTest, subnetInterfaceId) {
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
     // Returned value should be 0 (configuration success)
-    ASSERT_TRUE(status);
-    comment_ = parseAnswer(rcode_, status);
-    EXPECT_EQ(0, rcode_);
+    checkResult(status, 0);
 
     // Try to get a subnet based on bogus interface-id option
     OptionBuffer tmp(bogus_interface_id.begin(), bogus_interface_id.end());
@@ -1051,9 +1021,8 @@ TEST_F(Dhcp6ParserTest, interfaceIdGlobal) {
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
     // Returned value should be 1 (parse error)
-    ASSERT_TRUE(status);
-    comment_ = parseAnswer(rcode_, status);
-    EXPECT_EQ(1, rcode_);
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
 // This test checks if it is not possible to define a subnet with an
@@ -1076,10 +1045,8 @@ TEST_F(Dhcp6ParserTest, subnetInterfaceAndInterfaceId) {
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
     // Returned value should be 1 (configuration error)
-    ASSERT_TRUE(status);
-    comment_ = parseAnswer(rcode_, status);
-    EXPECT_EQ(1, rcode_);
-
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
 
@@ -1106,9 +1073,8 @@ TEST_F(Dhcp6ParserTest, poolOutOfSubnet) {
 
     // returned value must be 1 (values error)
     // as the pool does not belong to that subnet
-    ASSERT_TRUE(status);
-    comment_ = parseAnswer(rcode_, status);
-    EXPECT_EQ(1, rcode_);
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
 // Goal of this test is to verify if pools can be defined
@@ -1134,9 +1100,7 @@ TEST_F(Dhcp6ParserTest, poolPrefixLen) {
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
 
     // returned value must be 1 (configuration parse error)
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-    EXPECT_EQ(0, rcode_);
+    checkResult(x, 0);
 
     Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
                                                       classify_);
@@ -1177,9 +1141,7 @@ TEST_F(Dhcp6ParserTest, pdPoolBasics) {
     // Returned value must be non-empty ConstElementPtr to config result.
     // rcode should be 0 which indicates successful configuration processing.
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-    EXPECT_EQ(0, rcode_);
+    checkResult(x, 0);
 
     // Test that we can retrieve the subnet.
     Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
@@ -1251,9 +1213,7 @@ TEST_F(Dhcp6ParserTest, pdPoolList) {
     // Returned value must be non-empty ConstElementPtr to config result.
     // rcode should be 0 which indicates successful configuration processing.
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-    EXPECT_EQ(0, rcode_);
+    checkResult(x, 0);
 
     // Test that we can retrieve the subnet.
     Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
@@ -1309,9 +1269,7 @@ TEST_F(Dhcp6ParserTest, subnetAndPrefixDelegated) {
     // Returned value must be non-empty ConstElementPtr to config result.
     // rcode should be 0 which indicates successful configuration processing.
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-    EXPECT_EQ(0, rcode_);
+    checkResult(x, 0);
 
     // Test that we can retrieve the subnet.
     Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
@@ -1428,9 +1386,8 @@ TEST_F(Dhcp6ParserTest, invalidPdPools) {
 
         // Returned value must be non-empty ConstElementPtr to config result.
         // rcode should be 1 which indicates configuration error.
-        ASSERT_TRUE(x);
-        comment_ = parseAnswer(rcode_, x);
-        EXPECT_EQ(1, rcode_);
+        checkResult(x, 1);
+        EXPECT_TRUE(errorContainsPosition(x, "<string>"));
     }
 }
 
@@ -1616,6 +1573,7 @@ TEST_F(Dhcp6ParserTest, optionDefDuplicate) {
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
 // The goal of this test is to verify that the option definition
@@ -1723,6 +1681,7 @@ TEST_F(Dhcp6ParserTest, optionDefInvalidName) {
     ASSERT_TRUE(status);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
 /// The purpose of this test is to verify that the option definition
@@ -1749,6 +1708,7 @@ TEST_F(Dhcp6ParserTest, optionDefInvalidType) {
     ASSERT_TRUE(status);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
 /// The purpose of this test is to verify that the option definition
@@ -1775,6 +1735,7 @@ TEST_F(Dhcp6ParserTest, optionDefInvalidRecordType) {
     ASSERT_TRUE(status);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
 /// The goal of this test is to verify that the invalid encapsulated
@@ -1801,6 +1762,7 @@ TEST_F(Dhcp6ParserTest, optionDefInvalidEncapsulatedSpace) {
     ASSERT_TRUE(status);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
 /// The goal of this test is to verify that the encapsulated
@@ -1829,6 +1791,7 @@ TEST_F(Dhcp6ParserTest, optionDefEncapsulatedSpaceAndArray) {
     ASSERT_TRUE(status);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
 /// The goal of this test is to verify that the option may not
@@ -1855,6 +1818,7 @@ TEST_F(Dhcp6ParserTest, optionDefEncapsulateOwnSpace) {
     ASSERT_TRUE(status);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
 /// The purpose of this test is to verify that it is not allowed
@@ -1920,6 +1884,7 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
     ASSERT_TRUE(status);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
     /// @todo The option 59 is a standard DHCPv6 option. However, at this point
     /// there is no definition for this option in libdhcp++, so it should be
@@ -1987,9 +1952,7 @@ TEST_F(Dhcp6ParserTest, optionDataDefaults) {
     ElementPtr json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-    ASSERT_EQ(0, rcode_);
+    checkResult(x, 0);
 
     Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
                                                       classify_);
@@ -2297,9 +2260,7 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
     ElementPtr json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-    ASSERT_EQ(0, rcode_);
+    checkResult(x, 0);
 
     Subnet6Ptr subnet1 = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
                                                        classify_);
@@ -2494,9 +2455,7 @@ TEST_F(Dhcp6ParserTest, optionDataLowerCase) {
     ElementPtr json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-    ASSERT_EQ(0, rcode_);
+    checkResult(x, 0);
 
     Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
                                                       classify_);
@@ -2539,9 +2498,7 @@ TEST_F(Dhcp6ParserTest, stdOptionData) {
     ElementPtr json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-    ASSERT_EQ(0, rcode_);
+    checkResult(x, 0);
 
     Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
                                                       classify_);
@@ -3030,9 +2987,7 @@ TEST_F(Dhcp6ParserTest, selectedInterfaces) {
 
     // returned value must be 1 (values error)
     // as the pool does not belong to that subnet
-    ASSERT_TRUE(status);
-    comment_ = parseAnswer(rcode_, status);
-    EXPECT_EQ(0, rcode_);
+    checkResult(status, 0);
 
     // eth0 and eth1 were explicitly selected. eth2 was not.
     EXPECT_TRUE(CfgMgr::instance().isActiveIface("eth0"));
@@ -3068,9 +3023,7 @@ TEST_F(Dhcp6ParserTest, allInterfaces) {
 
     // returned value must be 1 (values error)
     // as the pool does not belong to that subnet
-    ASSERT_TRUE(status);
-    comment_ = parseAnswer(rcode_, status);
-    EXPECT_EQ(0, rcode_);
+    checkResult(status, 0);
 
     // All interfaces should be now active.
     EXPECT_TRUE(CfgMgr::instance().isActiveIface("eth0"));
@@ -3142,9 +3095,7 @@ TEST_F(Dhcp6ParserTest, classifySubnets) {
     ElementPtr json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-    ASSERT_EQ(0, rcode_);
+    checkResult(x, 0);
 
     const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
     ASSERT_TRUE(subnets);
@@ -3218,8 +3169,11 @@ TEST_F(Dhcp6ParserTest, d2ClientConfig) {
         "    \"subnet\": \"2001:db8:1::/64\" } ], "
         " \"dhcp-ddns\" : {"
         "     \"enable-updates\" : true, "
-        "     \"server-ip\" : \"192.168.2.1\", "
+        "     \"server-ip\" : \"3001::1\", "
         "     \"server-port\" : 777, "
+        "     \"sender-ip\" : \"3001::2\", "
+        "     \"sender-port\" : 778, "
+        "     \"max-queue-size\" : 2048, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
         "     \"always-include-fqdn\" : true, "
@@ -3250,8 +3204,11 @@ TEST_F(Dhcp6ParserTest, d2ClientConfig) {
 
     // Verify that the configuration values are correct.
     EXPECT_TRUE(d2_client_config->getEnableUpdates());
-    EXPECT_EQ("192.168.2.1", d2_client_config->getServerIp().toText());
+    EXPECT_EQ("3001::1", d2_client_config->getServerIp().toText());
     EXPECT_EQ(777, d2_client_config->getServerPort());
+    EXPECT_EQ("3001::2", d2_client_config->getSenderIp().toText());
+    EXPECT_EQ(778, d2_client_config->getSenderPort());
+    EXPECT_EQ(2048, d2_client_config->getMaxQueueSize());
     EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
     EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
     EXPECT_TRUE(d2_client_config->getAlwaysIncludeFqdn());
@@ -3299,6 +3256,7 @@ TEST_F(Dhcp6ParserTest, invalidD2ClientConfig) {
 
     // check if returned status is failed.
     checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
     // Verify that the D2 configuraiton can be fetched and is set to disabled.
     D2ClientConfigPtr d2_client_config = CfgMgr::instance().getD2ClientConfig();
