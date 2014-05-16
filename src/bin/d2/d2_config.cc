@@ -28,13 +28,14 @@ namespace isc {
 namespace d2 {
 
 // *********************** TSIGKeyInfo  *************************
-
-const char* TSIGKeyInfo::MD5_STR = "MD5";
-const char* TSIGKeyInfo::SHA1_STR = "SHA1";
-const char* TSIGKeyInfo::SHA224_STR = "SHA224";
-const char* TSIGKeyInfo::SHA256_STR = "SHA256";
-const char* TSIGKeyInfo::SHA384_STR = "SHA384";
-const char* TSIGKeyInfo::SHA512_STR = "SHA512";
+// Note these values match correpsonding values for Bind9's
+// dnssec-keygen
+const char* TSIGKeyInfo::HMAC_MD5_STR = "HMAC-MD5";
+const char* TSIGKeyInfo::HMAC_SHA1_STR = "HMAC-SHA1";
+const char* TSIGKeyInfo::HMAC_SHA224_STR = "HMAC-SHA224";
+const char* TSIGKeyInfo::HMAC_SHA256_STR = "HMAC-SHA256";
+const char* TSIGKeyInfo::HMAC_SHA384_STR = "HMAC-SHA384";
+const char* TSIGKeyInfo::HMAC_SHA512_STR = "HMAC-SHA512";
 
 TSIGKeyInfo::TSIGKeyInfo(const std::string& name, const std::string& algorithm,
                          const std::string& secret)
@@ -47,22 +48,22 @@ TSIGKeyInfo::~TSIGKeyInfo() {
 
 const dns::Name&
 TSIGKeyInfo::stringToAlgorithmName(const std::string& algorithm_id) {
-    if (boost::iequals(algorithm_id, MD5_STR)) {
+    if (boost::iequals(algorithm_id, HMAC_MD5_STR)) {
         return (dns::TSIGKey::HMACMD5_NAME());
     }
-    if (boost::iequals(algorithm_id, SHA1_STR)) {
+    if (boost::iequals(algorithm_id, HMAC_SHA1_STR)) {
         return (dns::TSIGKey::HMACSHA1_NAME());
     }
-    if (boost::iequals(algorithm_id, SHA224_STR)) {
+    if (boost::iequals(algorithm_id, HMAC_SHA224_STR)) {
         return (dns::TSIGKey::HMACSHA224_NAME());
     }
-    if (boost::iequals(algorithm_id, SHA256_STR)) {
+    if (boost::iequals(algorithm_id, HMAC_SHA256_STR)) {
         return (dns::TSIGKey::HMACSHA256_NAME());
     }
-    if (boost::iequals(algorithm_id, SHA384_STR)) {
+    if (boost::iequals(algorithm_id, HMAC_SHA384_STR)) {
         return (dns::TSIGKey::HMACSHA384_NAME());
     }
-    if (boost::iequals(algorithm_id, SHA512_STR)) {
+    if (boost::iequals(algorithm_id, HMAC_SHA512_STR)) {
         return (dns::TSIGKey::HMACSHA512_NAME());
     }
 
