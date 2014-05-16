@@ -155,12 +155,12 @@ class TSIGKeyInfo {
 public:
     /// @brief Defines string values for the supported TSIG algorithms
     //@{
-    static const char* MD5_STR;
-    static const char* SHA1_STR;
-    static const char* SHA256_STR;
-    static const char* SHA224_STR;
-    static const char* SHA384_STR;
-    static const char* SHA512_STR;
+    static const char* HMAC_MD5_STR;
+    static const char* HMAC_SHA1_STR;
+    static const char* HMAC_SHA256_STR;
+    static const char* HMAC_SHA224_STR;
+    static const char* HMAC_SHA384_STR;
+    static const char* HMAC_SHA512_STR;
     //}@
 
     /// @brief Constructor
@@ -168,12 +168,12 @@ public:
     /// @param name the unique label used to identify this key
     /// @param algorithm the id of the encryption alogirthm this key uses.
     /// Currently supported values are (case insensitive):
-    /// -# "MD5"
-    /// -# "SHA1"
-    /// -# "SHA224"
-    /// -# "SHA256"
-    /// -# "SHA384"
-    /// -# "SHA512"
+    /// -# "HMAC-MD5"
+    /// -# "HMAC-SHA1"
+    /// -# "HMAC-SHA224"
+    /// -# "HMAC-SHA256"
+    /// -# "HMAC-SHA384"
+    /// -# "HMAC-SHA512"
     ///
     /// @param secret the base-64 encoded secret component for this key
     /// such as one would typically see in a key file for the entry "Key"
@@ -230,12 +230,12 @@ public:
     ///
     /// @param algorithm_id string value to translate into an algorithm name.
     /// Currently supported values are (case insensitive):
-    /// -# "MD5"
-    /// -# "SHA1"
-    /// -# "SHA224"
-    /// -# "SHA256"
-    /// -# "SHA384"
-    /// -# "SHA512"
+    /// -# "HMAC-MD5"
+    /// -# "HMAC-SHA1"
+    /// -# "HMAC-SHA224"
+    /// -# "HMAC-SHA256"
+    /// -# "HMAC-SHA384"
+    /// -# "HMAC-SHA512"
     ///
     /// @return const reference to a dns::Name containing the alogorithm name
     /// @throw BadValue if ID isn't recognized.

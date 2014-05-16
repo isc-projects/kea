@@ -14,6 +14,7 @@
 
 #include <config.h>
 
+#include <d2/d2_config.h>
 #include <d2/d2_update_message.h>
 #include <d2/d2_zone.h>
 #include <dns/messagerenderer.h>
@@ -652,5 +653,53 @@ TEST_F(D2UpdateMessageTest, validTSIG) {
     ASSERT_THROW(msg2.fromWire(wire_data, wire_size, context.get()),
                  InvalidQRFlag);
 }
+
+// Tests message signing and verification for all supported algorithms.
+TEST_F(D2UpdateMessageTest, allValidTSIG) {
+    std::vector<std::string>algorithms;
+    algorithms.push_back(TSIGKeyInfo::HMAC_MD5_STR);
+    algorithms.push_back(TSIGKeyInfo::HMAC_SHA1_STR);
+    algorithms.push_back(TSIGKeyInfo::HMAC_SHA224_STR);
+    algorithms.push_back(TSIGKeyInfo::HMAC_SHA256_STR);
+    algorithms.push_back(TSIGKeyInfo::HMAC_SHA384_STR);
+    algorithms.push_back(TSIGKeyInfo::HMAC_SHA512_STR);
+
+    dns::Name key_name("test_key");
+    std::string secret("random text for secret");
+    for (int i = 0; i < algorithms.size(); ++i) {
+        dns::TSIGKey key(key_name,
+                         TSIGKeyInfo::stringToAlgorithmName(algorithms[i]),
+                         secret.c_str(), secret.size());
+
+        // Build a request message
+        D2UpdateMessage msg;
+        msg.setId(0x1234);
+        msg.setRcode(Rcode(Rcode::NOERROR_CODE));
+        msg.setZone(Name("example.com"), RRClass::IN());
+
+        // Make a context to send the message with and use it to render
+        // the message into the wire format.
+        TSIGContextPtr context;
+        ASSERT_NO_THROW(context.reset(new TSIGContext(key)));
+        MessageRenderer renderer;
+        ASSERT_NO_THROW(msg.toWire(renderer, context.get()));
+
+        // Grab the wire data from the signed message.
+        const void* wire_data = renderer.getData();
+        const size_t wire_size = renderer.getLength();
+
+        // Create a fresh context to "receive" the message. (We can't use the
+        // one we signed it with, as its expecting a signed response to its
+        // request. Here we are acting like the server).
+        // If the message passes TSIG verification, then the QR Flag test in
+        // the subsequent call to D2UpdateMessage::validateResponse should
+        // fail because this isn't really received message.
+        ASSERT_NO_THROW(context.reset(new TSIGContext(key)));
+        D2UpdateMessage msg2(D2UpdateMessage::INBOUND);
+        ASSERT_THROW(msg2.fromWire(wire_data, wire_size, context.get()),
+                                   InvalidQRFlag);
+    }
+}
+
 
 } // End of anonymous namespace

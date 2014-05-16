@@ -75,15 +75,11 @@ public:
     /// sendUpdate without incorporating exectution of the state model
     /// into the test.
     /// It sets the DNS status update and posts IO_COMPLETED_EVT as does
-    /// the normal callback, but rather than invoking runModel it stops
-    /// the IO service.  This allows tests to be constructed that consisted
-    /// of generating a DNS request and invoking sendUpdate to post it and
-    /// wait for response.
+    /// the normal callback.
     virtual void operator()(DNSClient::Status status) {
         if (use_stub_callback_) {
             setDnsUpdateStatus(status);
             postNextEvent(IO_COMPLETED_EVT);
-            getIOService()->stop();
         } else {
             // For tests which need to use the real callback.
             NameChangeTransaction::operator()(status);
@@ -285,13 +281,26 @@ public:
     virtual ~NameChangeTransactionTest() {
     }
 
+
     /// @brief  Instantiates a NameChangeStub test transaction
     /// The transaction is constructed around a predefined (i.e "canned")
     /// NameChangeRequest. The request has both forward and reverse DNS
     /// changes requested, and both forward and reverse domains are populated.
     /// @param key_name value to use to create TSIG key, if blank TSIG will not
     /// be used.
-    NameChangeStubPtr makeCannedTransaction(const std::string& key_name = "") {
+    NameChangeStubPtr makeCannedTransaction(const TSIGKeyInfoPtr&
+                                            tsig_key_info = TSIGKeyInfoPtr()) {
+        // Creates IPv4 remove request, forward, and reverse domains.
+        setupForIPv4Transaction(dhcp_ddns::CHG_ADD, FWD_AND_REV_CHG,
+                                tsig_key_info);
+
+        // Now create the test transaction as would occur in update manager.
+        // Instantiate the transaction as would be done by update manager.
+        return (NameChangeStubPtr(new NameChangeStub(io_service_, ncr_,
+                                  forward_domain_, reverse_domain_)));
+    }
+
+    NameChangeStubPtr makeCannedTransaction(const std::string& key_name) {
         // Creates IPv4 remove request, forward, and reverse domains.
         setupForIPv4Transaction(dhcp_ddns::CHG_ADD, FWD_AND_REV_CHG, key_name);
 
@@ -299,6 +308,7 @@ public:
         // Instantiate the transaction as would be done by update manager.
         return (NameChangeStubPtr(new NameChangeStub(io_service_, ncr_,
                                   forward_domain_, reverse_domain_)));
+
     }
 
     /// @brief Builds and then sends an update request
@@ -1009,7 +1019,7 @@ TEST_F(NameChangeTransactionTest, sendUpdate) {
 /// @brief Tests that an unsigned response to a signed request is an error
 TEST_F(NameChangeTransactionTest, tsigUnsignedResponse) {
     NameChangeStubPtr name_change;
-    /*ASSERT_NO_THROW*/(name_change = makeCannedTransaction("key_one"));
+    ASSERT_NO_THROW(name_change = makeCannedTransaction("key_one"));
     ASSERT_NO_THROW(name_change->initDictionaries());
     ASSERT_TRUE(name_change->selectFwdServer());
 
@@ -1098,37 +1108,54 @@ TEST_F(NameChangeTransactionTest, tsigUnexpectedSignedResponse) {
     EXPECT_EQ("response.example.com.", zone->getName().toText());
 }
 
-
 /// @brief Tests that a TSIG udpate succeeds when client and server both use
-/// the right key.
-TEST_F(NameChangeTransactionTest, tsigValidExchange) {
-    NameChangeStubPtr name_change;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction("key_one"));
-    ASSERT_NO_THROW(name_change->initDictionaries());
-    ASSERT_TRUE(name_change->selectFwdServer());
+/// the right key.  Runs the test for all supported algorithms.
+TEST_F(NameChangeTransactionTest, tsigAllValid) {
+    std::vector<std::string>algorithms;
+    algorithms.push_back(TSIGKeyInfo::HMAC_MD5_STR);
+    algorithms.push_back(TSIGKeyInfo::HMAC_SHA1_STR);
+    algorithms.push_back(TSIGKeyInfo::HMAC_SHA224_STR);
+    algorithms.push_back(TSIGKeyInfo::HMAC_SHA256_STR);
+    algorithms.push_back(TSIGKeyInfo::HMAC_SHA384_STR);
+    algorithms.push_back(TSIGKeyInfo::HMAC_SHA512_STR);
 
-    // Create a server, set its TSIG key, and then start it listening.
-    FauxServer server(*io_service_, *(name_change->getCurrentServer()));
-    TSIGKeyInfoPtr key_one = makeTSIGKeyInfo("key_one");
-    server.setTSIGKey(key_one->getTSIGKey());
-    server.receive (FauxServer::USE_RCODE, dns::Rcode::NOERROR());
+    for (int i = 0; i < algorithms.size(); ++i) {
+        TSIGKeyInfoPtr key;
+        ASSERT_NO_THROW(key.reset(new TSIGKeyInfo("test_key",
+                                                  algorithms[i],
+                                                  "GWG/Xfbju4O2iXGqkSu4PQ==")));
+        NameChangeStubPtr name_change;
+        ASSERT_NO_THROW(name_change = makeCannedTransaction(key));
+        ASSERT_NO_THROW(name_change->initDictionaries());
+        ASSERT_TRUE(name_change->selectFwdServer());
 
-    // Do the update.
-    ASSERT_NO_FATAL_FAILURE(doOneExchange(name_change));
+        // Create a server, set its TSIG key, and then start it listening.
+        FauxServer server(*io_service_, *(name_change->getCurrentServer()));
+        // Since we create a new server instance each time we need to tell
+        // it not reschedule receives automatically.
+        server.perpetual_receive_ = false;
+        server.setTSIGKey(key->getTSIGKey());
+        server.receive (FauxServer::USE_RCODE, dns::Rcode::NOERROR());
 
-    // Verify that next event is IO_COMPLETED_EVT and DNS status is SUCCESS.
-    ASSERT_EQ(NameChangeTransaction::IO_COMPLETED_EVT,
-              name_change->getNextEvent());
+        // Do the update.
+        ASSERT_NO_FATAL_FAILURE(doOneExchange(name_change));
 
-    ASSERT_EQ(DNSClient::SUCCESS, name_change->getDnsUpdateStatus());
+        // Verify that next event is IO_COMPLETED_EVT and DNS status is SUCCESS.
+        ASSERT_EQ(NameChangeTransaction::IO_COMPLETED_EVT,
+                  name_change->getNextEvent());
 
-    D2UpdateMessagePtr response = name_change->getDnsUpdateResponse();
-    ASSERT_TRUE(response);
-    ASSERT_EQ(dns::Rcode::NOERROR().getCode(), response->getRcode().getCode());
-    D2ZonePtr zone = response->getZone();
-    EXPECT_TRUE(zone);
-    EXPECT_EQ("response.example.com.", zone->getName().toText());
+        ASSERT_EQ(DNSClient::SUCCESS, name_change->getDnsUpdateStatus());
+
+        D2UpdateMessagePtr response = name_change->getDnsUpdateResponse();
+        ASSERT_TRUE(response);
+        ASSERT_EQ(dns::Rcode::NOERROR().getCode(),
+                  response->getRcode().getCode());
+        D2ZonePtr zone = response->getZone();
+        EXPECT_TRUE(zone);
+        EXPECT_EQ("response.example.com.", zone->getName().toText());
+    }
 }
+
 
 /// @brief Tests the prepNewRequest method
 TEST_F(NameChangeTransactionTest, prepNewRequest) {
