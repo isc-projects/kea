@@ -72,9 +72,15 @@ TSIGKeyInfo::stringToAlgorithmName(const std::string& algorithm_id) {
 void
 TSIGKeyInfo::remakeKey() {
     try {
-        tsig_key_.reset(new dns::TSIGKey(dns::Name(name_),
-                                         stringToAlgorithmName(algorithm_),
-                                         secret_.c_str(), secret_.size()));
+        // Since our secret value is base64 encoded already, we need to
+        // build the input string for the appropriate TSIGKey constructor.
+        // If secret isn't a valid base64 value, the constructor will throw.
+        std::ostringstream stream;
+        stream << dns::Name(name_).toText() << ":"
+               << secret_ << ":"
+               << stringToAlgorithmName(algorithm_);
+
+        tsig_key_.reset(new dns::TSIGKey(stream.str()));
     } catch (const std::exception& ex) {
         isc_throw(D2CfgError, "Cannot make TSIGKey: " << ex.what());
     }
