@@ -91,7 +91,7 @@ FauxServer::requestHandler(const asio::error_code& error,
     // If we encountered an error or received no data then fail.
     // We expect the client to send good requests.
     if (error.value() != 0 || bytes_recvd < 1) {
-        ADD_FAILURE() << "FauxServer receive failed" << error.message();
+        ADD_FAILURE() << "FauxServer receive failed: " << error.message();
         receive_pending_ = false;
         return;
     }
@@ -238,7 +238,7 @@ TransactionTest::~TransactionTest() {
 void
 TransactionTest::setupForIPv4Transaction(dhcp_ddns::NameChangeType chg_type,
                                          int change_mask,
-                                         const std::string& key_name) {
+                                         const TSIGKeyInfoPtr& tsig_key_info) {
     const char* msg_str =
         "{"
         " \"change_type\" : 0 , "
@@ -264,7 +264,7 @@ TransactionTest::setupForIPv4Transaction(dhcp_ddns::NameChangeType chg_type,
         forward_domain_.reset();
     } else {
         // Create the forward domain and then its servers.
-        forward_domain_ = makeDomain("example.com.", key_name);
+        forward_domain_ = makeDomain("example.com.", tsig_key_info);
         addDomainServer(forward_domain_, "forward.example.com",
                         "127.0.0.1", 5301);
         addDomainServer(forward_domain_, "forward2.example.com",
@@ -278,7 +278,7 @@ TransactionTest::setupForIPv4Transaction(dhcp_ddns::NameChangeType chg_type,
         reverse_domain_.reset();
     } else {
         // Create the reverse domain and its server.
-        reverse_domain_ = makeDomain("2.168.192.in.addr.arpa.", key_name);
+        reverse_domain_ = makeDomain("2.168.192.in.addr.arpa.", tsig_key_info);
         addDomainServer(reverse_domain_, "reverse.example.com",
                         "127.0.0.1", 5301);
         addDomainServer(reverse_domain_, "reverse2.example.com",
@@ -287,9 +287,16 @@ TransactionTest::setupForIPv4Transaction(dhcp_ddns::NameChangeType chg_type,
 }
 
 void
-TransactionTest::setupForIPv6Transaction(dhcp_ddns::NameChangeType chg_type,
+TransactionTest::setupForIPv4Transaction(dhcp_ddns::NameChangeType chg_type,
                                          int change_mask,
                                          const std::string& key_name) {
+    setupForIPv4Transaction(chg_type, change_mask, makeTSIGKeyInfo(key_name));
+}
+
+void
+TransactionTest::setupForIPv6Transaction(dhcp_ddns::NameChangeType chg_type,
+                                         int change_mask,
+                                         const TSIGKeyInfoPtr& tsig_key_info) {
     const char* msg_str =
         "{"
         " \"change_type\" : 0 , "
@@ -315,7 +322,7 @@ TransactionTest::setupForIPv6Transaction(dhcp_ddns::NameChangeType chg_type,
         forward_domain_.reset();
     } else {
         // Create the forward domain and then its servers.
-        forward_domain_ = makeDomain("example.com.", key_name);
+        forward_domain_ = makeDomain("example.com.", tsig_key_info);
         addDomainServer(forward_domain_, "fwd6-server.example.com",
                         "::1", 5301);
         addDomainServer(forward_domain_, "fwd6-server2.example.com",
@@ -329,12 +336,19 @@ TransactionTest::setupForIPv6Transaction(dhcp_ddns::NameChangeType chg_type,
         reverse_domain_.reset();
     } else {
         // Create the reverse domain and its server.
-        reverse_domain_ = makeDomain("1.2001.ip6.arpa.", key_name);
+        reverse_domain_ = makeDomain("1.2001.ip6.arpa.", tsig_key_info);
         addDomainServer(reverse_domain_, "rev6-server.example.com",
                         "::1", 5301);
         addDomainServer(reverse_domain_, "rev6-server2.example.com",
                         "::1", 5302);
     }
+}
+
+void
+TransactionTest::setupForIPv6Transaction(dhcp_ddns::NameChangeType chg_type,
+                                         int change_mask,
+                                         const std::string& key_name) {
+    setupForIPv6Transaction(chg_type, change_mask, makeTSIGKeyInfo(key_name));
 }
 
 
@@ -422,6 +436,14 @@ DdnsDomainPtr makeDomain(const std::string& zone_name,
     DdnsDomainPtr domain;
     DnsServerInfoStoragePtr servers(new DnsServerInfoStorage());
     domain.reset(new DdnsDomain(zone_name, servers, makeTSIGKeyInfo(key_name)));
+    return (domain);
+}
+
+DdnsDomainPtr makeDomain(const std::string& zone_name,
+                         const TSIGKeyInfoPtr &tsig_key_info) {
+    DdnsDomainPtr domain;
+    DnsServerInfoStoragePtr servers(new DnsServerInfoStorage());
+    domain.reset(new DdnsDomain(zone_name, servers, tsig_key_info));
     return (domain);
 }
 

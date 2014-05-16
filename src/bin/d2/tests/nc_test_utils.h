@@ -200,11 +200,28 @@ public:
     /// CHG_REMOVE.
     /// @param change_mask determines which change directions are requested
     /// FORWARD_CHG, REVERSE_CHG, or FWD_AND_REV_CHG.
-    /// @param key_name value to use to create TSIG key, if blank TSIG will not
-    /// be used.
+    /// @param tsig_key_info pointer to the TSIGKeyInfo to assign to both
+    /// domains in the transaction.  This will cause the transaction to
+    /// use TSIG.  If the pointer is empty, TSIG will not be used.
     void setupForIPv4Transaction(dhcp_ddns::NameChangeType change_type,
                                  int change_mask,
-                                 const std::string& key_name = "");
+                                 const TSIGKeyInfoPtr& tsig_key_info =
+                                 TSIGKeyInfoPtr());
+
+    /// @brief Creates a transaction which requests an IPv4 DNS update.
+    ///
+    /// Convenience wrapper around the above method which accepts a string
+    /// key_name from which the TSIGKeyInfo is constructed.  Note the string
+    /// may not be blank.
+    ///
+    /// @param change_type selects the type of change requested, CHG_ADD or
+    /// CHG_REMOVE.
+    /// @param change_mask determines which change directions are requested
+    /// FORWARD_CHG, REVERSE_CHG, or FWD_AND_REV_CHG.
+    /// @param key_name value to use to create TSIG key. The value may not
+    /// be blank.
+    void setupForIPv4Transaction(dhcp_ddns::NameChangeType change_type,
+                                 int change_mask, const std::string& key_name);
 
     /// @brief Creates a transaction which requests an IPv6 DNS update.
     ///
@@ -217,11 +234,29 @@ public:
     /// CHG_REMOVE.
     /// @param change_mask determines which change directions are requested
     /// FORWARD_CHG, REVERSE_CHG, or FWD_AND_REV_CHG.
+    /// @param tsig_key_info pointer to the TSIGKeyInfo to assign to both
+    /// domains in the transaction.  This will cause the transaction to
+    /// use TSIG.  If the pointer is empty, TSIG will not be used.
+    void setupForIPv6Transaction(dhcp_ddns::NameChangeType change_type,
+                                 int change_mask,
+                                 const TSIGKeyInfoPtr& tsig_key_info =
+                                 TSIGKeyInfoPtr());
+
+    /// @brief Creates a transaction which requests an IPv6 DNS update.
+    ///
+    /// Convenience wrapper around the above method which accepts a string
+    /// key_name from which the TSIGKeyInfo is constructed.  Note the string
+    /// may not be blank.
+    ///
+    /// @param change_type selects the type of change requested, CHG_ADD or
+    /// CHG_REMOVE.
+    /// @param change_mask determines which change directions are requested
+    /// FORWARD_CHG, REVERSE_CHG, or FWD_AND_REV_CHG.
     /// @param key_name value to use to create TSIG key, if blank TSIG will not
     /// be used.
     void setupForIPv6Transaction(dhcp_ddns::NameChangeType change_type,
-                                 int change_mask,
-                                 const std::string& key_name = "");
+                                 int change_mask, const std::string& key_name);
+
 };
 
 
@@ -355,12 +390,23 @@ dhcp_ddns::NameChangeRequestPtr makeNcrFromString(const std::string& ncr_str);
 /// @brief Creates a DdnsDomain with the one server.
 ///
 /// @param zone_name zone name of the domain
-/// @param key_name TSIG key name of the TSIG key for this domain. Defaults to
-/// blank which means the DdnsDomain does not have a key.
+/// @param key_name TSIG key name of the TSIG key for this domain. It will
+/// create a TSIGKeyInfo based on the key_name and assign it to the domain.
 ///
 /// @throw Underlying methods may throw.
 extern DdnsDomainPtr makeDomain(const std::string& zone_name,
-                                const std::string& key_name = "");
+                                const std::string& key_name);
+
+/// @brief Creates a DdnsDomain with the one server.
+///
+/// @param zone_name zone name of the domain
+/// @param tsig_key_info pointer to the TSIGInfog key for this domain.
+/// Defaults to an empty pointer, meaning this domain has no key.
+///
+/// @throw Underlying methods may throw.
+extern DdnsDomainPtr makeDomain(const std::string& zone_name,
+                                const TSIGKeyInfoPtr&
+                                tsig_key_info = TSIGKeyInfoPtr());
 
 /// @brief Creates a TSIGKeyInfo
 ///
@@ -375,7 +421,7 @@ extern
 TSIGKeyInfoPtr makeTSIGKeyInfo(const std::string& key_name,
                                const std::string& secret = "",
                                const std::string& algorithm
-                               = TSIGKeyInfo::MD5_STR);
+                               = TSIGKeyInfo::HMAC_MD5_STR);
 
 /// @brief Creates a DnsServerInfo and adds it to the given DdnsDomain.
 ///
