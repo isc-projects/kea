@@ -596,6 +596,7 @@ TEST_F(D2UpdateMessageTest, validTSIG) {
                                     TSIGKey(Name("right.com"),
                                             TSIGKey::HMACMD5_NAME(),
                                             secret.c_str(), secret.size())));
+
     TSIGKeyPtr wrong_key;
     secret = "this key will not match";
     ASSERT_NO_THROW(wrong_key.reset(new

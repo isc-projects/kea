@@ -18,6 +18,7 @@
 #include <nc_test_utils.h>
 #include <asio.hpp>
 #include <asiolink/udp_endpoint.h>
+#include <util/encode/base64.h>
 
 #include <gtest/gtest.h>
 
@@ -432,8 +433,17 @@ TSIGKeyInfoPtr makeTSIGKeyInfo(const std::string& key_name,
         if (!secret.empty()) {
             key_info.reset(new TSIGKeyInfo(key_name, algorithm, secret));
         } else {
-            // if no secret, then just use the key_name for it
-            key_info.reset(new TSIGKeyInfo(key_name, algorithm, key_name));
+            // Since secret was left blank, we'll convert key_name into a
+            // base64 encoded string and use that.
+            const uint8_t* bytes = reinterpret_cast<const uint8_t*>
+                                                   (key_name.c_str());
+            size_t len = key_name.size();
+            const vector<uint8_t> key_name_v(bytes, bytes + len);
+            std::string key_name64
+                = isc::util::encode::encodeBase64(key_name_v);
+
+            // Now, make the TSIGKeyInfo with a real base64 secret.
+            key_info.reset(new TSIGKeyInfo(key_name, algorithm, key_name64));
         }
     }
 

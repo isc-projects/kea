@@ -175,10 +175,22 @@ public:
     /// -# "SHA384"
     /// -# "SHA512"
     ///
-    /// @param secret the secret component of this key
+    /// @param secret the base-64 encoded secret component for this key
+    /// such as one would typically see in a key file for the entry "Key"
+    /// in the example below:
+    /// @code
+    ///   Private-key-format: v1.3
+    ///   Algorithm: 157 (HMAC_MD5)
+    ///   Key: LSWXnfkKZjdPJI5QxlpnfQ==
+    ///   Bits: AAA=
+    ///   Created: 20140515143700
+    ///   Publish: 20140515143700
+    ///   Activate: 20140515143700
+    /// @endcode
+    ///
     /// @throw D2CfgError if values supplied are invalid:
     /// name cannot be blank, algorithm must be a supported value,
-    /// secret cannot be blank
+    /// secret must be a non-blank, base64 encoded string.
     TSIGKeyInfo(const std::string& name, const std::string& algorithm,
                 const std::string& secret);
 
@@ -250,7 +262,7 @@ private:
     /// @brief The string ID of the algorithm that should be used for this key.
     std::string algorithm_;
 
-    /// @brief The secret value component of this key.
+    /// @brief The base64 encoded string secret value component of this key.
     std::string secret_;
 
     /// @brief The actual TSIG key.
