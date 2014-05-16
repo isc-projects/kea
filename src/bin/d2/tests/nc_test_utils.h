@@ -365,7 +365,8 @@ extern DdnsDomainPtr makeDomain(const std::string& zone_name,
 /// @brief Creates a TSIGKeyInfo
 ///
 /// @param key_name name of the key
-/// @param secret key secret data.  If blank, the key_name will be used.
+/// @param secret key secret data as a base64 encoded string. If blank,
+/// then the secret value will be generated from key_name.
 /// @param algorithm algorithm to use. Defaults to MD5.
 /// @return a TSIGKeyInfoPtr for the newly created key.  If key_name is blank
 /// the pointer will be empty.
