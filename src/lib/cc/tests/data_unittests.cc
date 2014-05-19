@@ -1011,7 +1011,7 @@ TEST(Element, getPosition) {
     // Create a JSON string holding different type of values. Some of the
     // values in the config string are not aligned, so as we can check that
     // the position is set correctly for the elements.
-    ElementPtr top = Element::fromJSON(ss, "kea.conf");
+    ElementPtr top = Element::fromJSON(ss, string("kea.conf"));
     ASSERT_TRUE(top);
 
     // Element "a"
@@ -1103,7 +1103,7 @@ TEST(Element, getPositionCommented) {
     // Create a JSON string holding different type of values. Some of the
     // values in the config string are not aligned, so as we can check that
     // the position is set correctly for the elements.
-    ElementPtr top = Element::fromJSON(ss, "kea.conf");
+    ElementPtr top = Element::fromJSON(ss, string("kea.conf"), true);
     ASSERT_TRUE(top);
 
     // Element "a"
