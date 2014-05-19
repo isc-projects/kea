@@ -81,7 +81,6 @@ const size_t OID_NONE = 0;   // PostgreSQL infers proper type
 const size_t OID_BOOL = 16;
 const size_t OID_BYTEA = 17;
 const size_t OID_INT8 = 20;  // 8 byte int
-const size_t OID_INT4 = 23;  // 4 byte int
 const size_t OID_INT2 = 21;  // 2 byte int
 const size_t OID_TIMESTAMP = 1114;
 const size_t OID_VARCHAR = 1043;
