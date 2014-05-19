@@ -27,7 +27,7 @@ namespace dhcp {
 Daemon::Daemon() {
 }
 
-bool Daemon::init(const std::string&) {
+void Daemon::init(const std::string&) {
     return false;
 }
 

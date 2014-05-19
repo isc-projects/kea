@@ -105,7 +105,6 @@ main(int argc, char* argv[]) {
 
 
     int ret = EXIT_SUCCESS;
-    bool status = true;
     try {
         // Initialize logging.  If verbose, we'll use maximum verbosity.
         // If standalone is enabled, do not buffer initial log messages
@@ -123,8 +122,8 @@ main(int argc, char* argv[]) {
             try {
                 // Initialize the server, i.e. establish control session
                 // if BIND10 backend is used or read a configuration file
-                // 
-                status = server.init(config_file);
+                server.init(config_file);
+
             } catch (const std::exception& ex) {
                 LOG_ERROR(dhcp6_logger, DHCP6_INIT_FAIL).arg(ex.what());
 
@@ -138,9 +137,6 @@ main(int argc, char* argv[]) {
             }
         } else {
             LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_STANDALONE);
-        }
-        if (!status) {
-            isc_throw(isc::Unexpected, "Failed to initialize configuration backend.");
         }
 
         server.run();

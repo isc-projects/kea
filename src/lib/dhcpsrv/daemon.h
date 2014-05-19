@@ -61,8 +61,8 @@ public:
     /// likely that the D2 will be started, it will analyze its config file,
     /// decide that it is not needed and will shut down.
     ///
-    /// @return true if initialization was successful, false if it was not
-    virtual bool init(const std::string& config_file);
+    /// @note this method may throw
+    virtual void init(const std::string& config_file);
 
     /// @brief Performs final deconfiguration.
     ///
