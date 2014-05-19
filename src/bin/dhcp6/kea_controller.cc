@@ -48,7 +48,7 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-bool
+void
 ControlledDhcpv6Srv::init(const std::string& file_name) {
     // This is a configuration backend implementation that reads the
     // configuration from a JSON file.
@@ -58,11 +58,13 @@ ControlledDhcpv6Srv::init(const std::string& file_name) {
     isc::data::ConstElementPtr result;
 
     // Basic sanity check: file name must not be empty.
-    if (file_name.empty()) {
-        isc_throw(BadValue, "JSON configuration file not specified");
-    }
-
     try {
+        if (file_name.empty()) {
+            // Basic sanity check: file name must not be empty.
+            isc_throw(BadValue, "JSON configuration file not specified. Please"
+                      "use -c command line option.");
+        }
+
         // Read contents of the file and parse it as JSON
         json = Element::fromJSONFile(file_name, true);
 
@@ -99,7 +101,7 @@ ControlledDhcpv6Srv::init(const std::string& file_name) {
         LOG_ERROR(dhcp6_logger, DHCP6_CONFIG_LOAD_FAIL)
             .arg("Configuration failed: Undefined result of configureDhcp6Server"
                  "() function after attempting to read " + file_name);
-        return (false);
+        return;
     }
 
     // Now check is the returned result is successful (rcode=0) or not
@@ -112,14 +114,12 @@ ControlledDhcpv6Srv::init(const std::string& file_name) {
             reason = string(" (") + comment->stringValue() + string(")");
         }
         LOG_ERROR(dhcp6_logger, DHCP6_CONFIG_LOAD_FAIL).arg(reason);
-        return (false);
+        isc_throw(BadValue, "Failed to apply configuration:" << reason);
     }
 
     // We don't need to call openActiveSockets() or startD2() as these
     // methods are called in processConfig() which is called by
     // processCommand("reload-config", ...)
-
-    return (true);
 }
 
 void ControlledDhcpv6Srv::cleanup() {
@@ -129,34 +129,14 @@ void ControlledDhcpv6Srv::cleanup() {
 /// This is a logger initialization for JSON file backend.
 /// For now, it's just setting log messages to be printed on stdout.
 /// @todo: Implement this properly (see #3427)
-void Daemon::loggerInit(const char* log_name, bool verbose, bool ) {
-    // This method configures logger. For now it is very simple.
-    // We'll make it more robust once we add support for JSON-based logging
-    // configuration.
+void Daemon::loggerInit(const char*, bool verbose, bool ) {
 
-    using namespace isc::log;
-
-    Severity severity = b10LoggerSeverity(verbose ? isc::log::DEBUG : isc::log::INFO);
-
-    // Set a directory for creating lockfiles when running tests
-    // @todo: Find out why this is needed. Without this, the logger doesn't
-    // work.
-    setenv("B10_LOCKFILE_DIR_FROM_BUILD", TOP_BUILDDIR, 1);
-
-    // Initialize logging
-    initLogger(log_name, severity, isc::log::MAX_DEBUG_LEVEL, NULL);
-
-    // Now configure logger output to stdout.
-    /// @todo: Make this configurable as part of #3427.
-    LoggerSpecification spec(log_name, severity,
-                             b10LoggerDbglevel(isc::log::MAX_DEBUG_LEVEL));
-    OutputOption option;
-    option.destination = OutputOption::DEST_CONSOLE;
-    option.stream = OutputOption::STR_STDOUT;
-
-    spec.addOutputOption(option);
-    LoggerManager manager;
-    manager.process(spec);
+    setenv("B10_LOCKFILE_DIR_FROM_BUILD", "/tmp", 1);
+    setenv("B10_LOGGER_ROOT", "kea", 0);
+    setenv("B10_LOGGER_SEVERITY", (verbose ? "DEBUG":"INFO"), 0);
+    setenv("B10_LOGGER_DBGLEVEL", "99", 0);
+    setenv("B10_LOGGER_DESTINATION",  "stdout", 0);
+    isc::log::initLogger();
 }
 
 };

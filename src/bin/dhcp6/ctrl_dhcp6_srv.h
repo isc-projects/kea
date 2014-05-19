@@ -54,7 +54,7 @@ public:
     /// *_backend.cc
     ///
     /// @return true if initialization was successful, false if it failed
-    bool init(const std::string& config_file);
+    void init(const std::string& config_file);
 
     /// @brief Performs cleanup, immediately before termination
     ///

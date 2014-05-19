@@ -101,7 +101,7 @@ TEST_F(JSONFileBackendTest, jsonFile) {
     );
 
     // And configure it using the config file.
-    EXPECT_TRUE(srv->init(TEST_FILE));
+    EXPECT_NO_THROW(srv->init(TEST_FILE));
 
     // Now check if the configuration has been applied correctly.
     const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
@@ -171,7 +171,7 @@ TEST_F(JSONFileBackendTest, comments) {
     );
 
     // And configure it using config without
-    EXPECT_TRUE(srv->init(TEST_FILE));
+    EXPECT_NO_THROW(srv->init(TEST_FILE));
 
     // Now check if the configuration has been applied correctly.
     const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
@@ -188,6 +188,51 @@ TEST_F(JSONFileBackendTest, comments) {
     EXPECT_EQ("2001:db8:1::", pools1.at(0)->getFirstAddress().toText());
     EXPECT_EQ("2001:db8:1::ffff:ffff:ffff", pools1.at(0)->getLastAddress().toText());
     EXPECT_EQ(Lease::TYPE_NA, pools1.at(0)->getType());
+}
+
+// This test checks if configuration detects failure when trying:
+// - empty file
+// - empty filename
+// - no Dhcp6 element
+// - Config file that contains Dhcp6 but has a content error
+TEST_F(JSONFileBackendTest, configBroken) {
+
+    // Empty config is not allowed, because Dhcp6 element is missing
+    string config_empty = "";
+
+    // This config does not have mandatory Dhcp6 element
+    string config_v4 = "{ \"Dhcp4\": { \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.0/24\" ],"
+        "    \"subnet\": \"192.0.2.0/24\" "
+        " } ]}";
+
+    // This has Dhcp6 element, but it's utter nonsense
+    string config_nonsense = "{ \"Dhcp6\": { \"reviews\": \"are so much fun\" } }";
+
+    // Now initialize the server
+    boost::scoped_ptr<ControlledDhcpv6Srv> srv;
+    ASSERT_NO_THROW(
+        srv.reset(new ControlledDhcpv6Srv(0))
+    );
+
+    // Try to configure without filename. Should fail.
+    EXPECT_THROW(srv->init(""), BadValue);
+
+    // Try to configure it using empty file. Should fail.
+    writeFile(TEST_FILE, config_empty);
+    EXPECT_THROW(srv->init(TEST_FILE), BadValue);
+
+    // Now try to load a config that does not have Dhcp6 component.
+    writeFile(TEST_FILE, config_v4);
+    EXPECT_THROW(srv->init(TEST_FILE), BadValue);
+
+    // Now try to load a config with Dhcp6 full of nonsense.
+    writeFile(TEST_FILE, config_nonsense);
+    EXPECT_THROW(srv->init(TEST_FILE), BadValue);
 }
 
 } // End of anonymous namespace
