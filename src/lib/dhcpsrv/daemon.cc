@@ -28,7 +28,6 @@ Daemon::Daemon() {
 }
 
 void Daemon::init(const std::string&) {
-    return false;
 }
 
 void Daemon::cleanup() {
