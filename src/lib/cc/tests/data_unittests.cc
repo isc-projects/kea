@@ -993,40 +993,6 @@ TEST(Element, preprocessor) {
     EXPECT_THROW(Element::fromJSON(dbl_tail_comment), JSONError);
 }
 
-// This test checks whether positions are stored properly is possible to ignore comments. It also checks
-// that the comments are ignored only when told to.
-TEST(Element, preprocessorLocation) {
-
-    string commented = "# this is a comment, ignore me\n"
-        "{ \"a\": 1,\n"
-        "# this is a comment, ignore me\n"
-        " \"b\": 2}\n"
-        "# this is a comment, ignore me\n";
-
-    // This is what we expect in all cases.
-    ElementPtr exp = Element::fromJSON(commented);
-
-    // Let's convert them all and see that the result it the same every time
-    ElementPtr a = cfg->get("a");
-    ElementPtr b = cfg->get("b");
-    EXPECT_RQ(
-    EXPECT_TRUE(exp->equals(*Element::fromJSON(head_comment, true)));
-    EXPECT_TRUE(exp->equals(*Element::fromJSON(mid_comment, true)));
-    EXPECT_TRUE(exp->equals(*Element::fromJSON(tail_comment, true)));
-    EXPECT_TRUE(exp->equals(*Element::fromJSON(dbl_head_comment, true)));
-    EXPECT_TRUE(exp->equals(*Element::fromJSON(dbl_mid_comment, true)));
-    EXPECT_TRUE(exp->equals(*Element::fromJSON(dbl_tail_comment, true)));
-
-    // With preprocessing disabled, it should fail all around
-    EXPECT_THROW(Element::fromJSON(head_comment), JSONError);
-    EXPECT_THROW(Element::fromJSON(mid_comment), JSONError);
-    EXPECT_THROW(Element::fromJSON(tail_comment), JSONError);
-    EXPECT_THROW(Element::fromJSON(dbl_head_comment), JSONError);
-    EXPECT_THROW(Element::fromJSON(dbl_mid_comment), JSONError);
-    EXPECT_THROW(Element::fromJSON(dbl_tail_comment), JSONError);
-}
-
-
 TEST(Element, getPosition) {
     std::istringstream ss("{\n"
                           "    \"a\":  2,\n"
@@ -1120,7 +1086,6 @@ TEST(Element, getPosition) {
     EXPECT_EQ("kea.conf", level2_el->getPosition().file_);
 
 }
-
 
 // Tests whether position is returned properly for a commented input JSON text.
 TEST(Element, getPositionCommented) {
