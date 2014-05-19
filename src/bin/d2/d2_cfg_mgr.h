@@ -53,7 +53,7 @@ public:
         return (DCfgContextBasePtr(new D2CfgContext(*this)));
     }
 
-    /// @brief Fetches a reference to the D2params
+    /// @brief Fetches a reference to the D2Params
     D2ParamsPtr& getD2Params() {
         return (d2_params_);
     }
@@ -243,7 +243,7 @@ protected:
     ///
     /// Iterates over the set of parameters, creating a parser based on the
     /// parameter's id and then invoking its build method passing in the
-    /// paramter's configuration value.
+    /// parameter's configuration value.
     ///
     /// @param params_config set of scalar configuration elements to parse
     virtual void buildParams(isc::data::ConstElementPtr params_config);
