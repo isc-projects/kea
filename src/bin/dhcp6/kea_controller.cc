@@ -61,7 +61,7 @@ ControlledDhcpv6Srv::init(const std::string& file_name) {
     try {
         if (file_name.empty()) {
             // Basic sanity check: file name must not be empty.
-            isc_throw(BadValue, "JSON configuration file not specified. Please"
+            isc_throw(BadValue, "JSON configuration file not specified. Please "
                       "use -c command line option.");
         }
 
