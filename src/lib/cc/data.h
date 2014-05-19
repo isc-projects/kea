@@ -481,14 +481,15 @@ public:
     /// expected to contain a text version of to be parsed JSON). For now the
     /// sole supported operation is bash-style (line starting with #) comment
     /// removal, but it will be extended later to cover more cases (C, C++ style
-    /// comments, file inclusions, maybe macro replacements?)
+    /// comments, file inclusions, maybe macro replacements?).
     ///
-    /// It reads all contents of the input stream, filters the content and
-    /// returns the result in a different stream.
+    /// This method processes the whole input stream. It reads all contents of
+    /// the input stream, filters the content and returns the result in a
+    /// different stream.
     ///
     /// @param in input stream to be preprocessed
-    /// @return a new stream that has the content filtered.
-    static std::istream& preprocess(std::istream& in);
+    /// @param out output stream (filtered content will be written here)
+    static void preprocess(std::istream& in, std::stringstream& out);
 
     /// \name Wire format factory functions
 

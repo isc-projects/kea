@@ -614,7 +614,14 @@ ElementPtr
 Element::fromJSON(std::istream& in, bool preproc) throw(JSONError) {
 
     int line = 1, pos = 1;
-    return (fromJSON(preproc?preprocess(in):in, "<istream>", line, pos));
+    stringstream filtered;
+    if (preproc) {
+        preprocess(in, filtered);
+    }
+
+    ElementPtr value = fromJSON(preproc?filtered:in, "<istream>", line, pos);
+
+    return (value);
 }
 
 ElementPtr
@@ -622,7 +629,11 @@ Element::fromJSON(std::istream& in, const std::string& file_name, bool preproc)
     throw(JSONError)
 {
     int line = 1, pos = 1;
-    return (fromJSON(preproc?preprocess(in):in, file_name, line, pos));
+    stringstream filtered;
+    if (preproc) {
+        preprocess(in, filtered);
+    }
+    return (fromJSON(preproc?filtered:in, file_name, line, pos));
 }
 
 ElementPtr
@@ -705,8 +716,11 @@ Element::fromJSON(const std::string& in, bool preproc) {
     ss << in;
 
     int line = 1, pos = 1;
-    ElementPtr result(fromJSON(preproc?preprocess(ss):ss, "<string>",
-                               line, pos));
+    stringstream filtered;
+    if (preproc) {
+        preprocess(ss, filtered);
+    }
+    ElementPtr result(fromJSON(preproc?filtered:ss, "<string>", line, pos));
     skipChars(ss, WHITESPACE, line, pos);
     // ss must now be at end
     if (ss.peek() != EOF) {
@@ -1046,7 +1060,7 @@ merge(ElementPtr element, ConstElementPtr other) {
     }
 }
 
-std::istream& Element::preprocess(std::istream& in) {
+void Element::preprocess(std::istream& in, std::stringstream& out) {
 
     // There is no assignment operator defined for streams, so we can't return
     // stream as an object. If we return a pointer, someone would have to free
@@ -1054,11 +1068,8 @@ std::istream& Element::preprocess(std::istream& in) {
     // it's not allowed to return references to automatic variables, we must
     // make sure that the reference is valid after this method returns. So
     // returning a value to static object seems the only feasible way to go.
-    static stringstream filtered;
     std::string line;
 
-    filtered.clear();
-    filtered.str("");
     while (std::getline(in, line)) {
         // If this is a comments line, replace it with empty line
         // (so the line numbers will still match
@@ -1069,11 +1080,9 @@ std::istream& Element::preprocess(std::istream& in) {
         // getline() removes end line charaters. Unfortunately, we need
         // it for getting the line numbers right (in case we report an
         // error.
-        filtered << line;
-        filtered << "\n";
+        out << line;
+        out << "\n";
     }
-
-    return filtered;
 }
 
 }
