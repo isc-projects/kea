@@ -619,7 +619,7 @@ Element::fromJSON(std::istream& in, bool preproc) throw(JSONError) {
         preprocess(in, filtered);
     }
 
-    ElementPtr value = fromJSON(preproc?filtered:in, "<istream>", line, pos);
+    ElementPtr value = fromJSON(preproc ? filtered : in, "<istream>", line, pos);
 
     return (value);
 }
@@ -633,7 +633,7 @@ Element::fromJSON(std::istream& in, const std::string& file_name, bool preproc)
     if (preproc) {
         preprocess(in, filtered);
     }
-    return (fromJSON(preproc?filtered:in, file_name, line, pos));
+    return (fromJSON(preproc ? filtered : in, file_name, line, pos));
 }
 
 ElementPtr
@@ -720,7 +720,7 @@ Element::fromJSON(const std::string& in, bool preproc) {
     if (preproc) {
         preprocess(ss, filtered);
     }
-    ElementPtr result(fromJSON(preproc?filtered:ss, "<string>", line, pos));
+    ElementPtr result(fromJSON(preproc ? filtered : ss, "<string>", line, pos));
     skipChars(ss, WHITESPACE, line, pos);
     // ss must now be at end
     if (ss.peek() != EOF) {
@@ -735,8 +735,9 @@ Element::fromJSONFile(const std::string& file_name,
     std::ifstream infile(file_name.c_str(), std::ios::in | std::ios::binary);
     if (!infile.is_open())
     {
+        const char* error = strerror(errno);
         isc_throw(InvalidOperation, "Failed to read file " << file_name
-                  << ",error:" << errno);
+                  << ",error:" << error);
     }
 
     return (fromJSON(infile, file_name, preproc));
