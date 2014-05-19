@@ -304,9 +304,9 @@ public:
     ///
     /// @param received_data buffer holding DNS Update message to be parsed.
     /// @param bytes_received the number of bytes in received_data
-    /// @param tsig_ctx A TSIG context that is to be used to verify the
+    /// @param tsig_context A TSIG context that is to be used to verify the
     /// message. If NULL TSIG verification will not be attempted.
-    void fromWire(const void* data, size_t datalen,
+    void fromWire(const void* received_data, size_t bytes_received,
                   dns::TSIGContext* const tsig_context = NULL);
     //@}
 
