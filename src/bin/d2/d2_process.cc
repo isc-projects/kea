@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -207,7 +207,7 @@ D2Process::configure(isc::data::ConstElementPtr config_set) {
 
     if (rcode) {
         // Non-zero means we got an invalid configuration, take no further
-        // action.  In integrated mode, this will send a failed response back
+        // action. In integrated mode, this will send a failed response back
         // to BIND10.
         reconf_queue_flag_ = false;
         return (answer);

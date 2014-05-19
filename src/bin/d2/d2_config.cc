@@ -38,8 +38,8 @@ const char *D2Params::DFT_NCR_FORMAT = "JSON";
 D2Params::D2Params(const isc::asiolink::IOAddress& ip_address,
                    const size_t port,
                    const size_t dns_server_timeout,
-                   const dhcp_ddns:: NameChangeProtocol& ncr_protocol,
-                   const dhcp_ddns:: NameChangeFormat& ncr_format)
+                   const dhcp_ddns::NameChangeProtocol& ncr_protocol,
+                   const dhcp_ddns::NameChangeFormat& ncr_format)
     : ip_address_(ip_address),
     port_(port),
     dns_server_timeout_(dns_server_timeout),
