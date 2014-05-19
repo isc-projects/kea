@@ -1291,7 +1291,9 @@ AC_SUBST(AWK)
 # It is possible that we may extend this to accept additional backends.
 AC_ARG_WITH(kea-config,
     AC_HELP_STRING([--with-kea-config],
-    [Selects configuration backend; currently available options are: BUNDY (default) or JSON]),
+    [Selects configuration backend; currently available options are: BUNDY (default,
+    Kea reads configuration and commands from Bundy framework) or JSON (Kea reads
+    configuration from a JSON file from disk)]),
     [CONFIG_BACKEND="$withval"],
     [CONFIG_BACKEND=BUNDY])
 
