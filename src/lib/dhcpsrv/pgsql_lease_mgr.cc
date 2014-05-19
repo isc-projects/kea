@@ -36,7 +36,7 @@
 // completion.  PostgreSQL deliberately omits this macro from errocodes.h
 // so callers can supply their own.
 #define MAKE_SQLSTATE(ch1,ch2,ch3,ch4,ch5) {ch1,ch2,ch3,ch4,ch5}
-#include <server/utils/errcodes.h>
+#include <utils/errcodes.h>
 const size_t STATECODE_LEN = 5;
 
 // Currently the only one we care to look for is duplicate key.
