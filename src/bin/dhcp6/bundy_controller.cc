@@ -132,7 +132,7 @@ bundyConfigHandler(ConstElementPtr new_config) {
     return (ControlledDhcpv6Srv::processConfig(merged_config));
 }
 
-bool
+void
 ControlledDhcpv6Srv::init(const std::string& /* config_file*/) {
     // This is Bundy configuration backed. It established control session
     // that is used to connect to Bundy framework.
@@ -195,7 +195,7 @@ ControlledDhcpv6Srv::init(const std::string& /* config_file*/) {
               .arg(ctrl_socket);
     IfaceMgr::instance().addExternalSocket(ctrl_socket, sessionReader);
 
-    return (true);
+    return;
 }
 
 void ControlledDhcpv6Srv::cleanup() {
