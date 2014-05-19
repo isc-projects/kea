@@ -90,11 +90,11 @@ TEST_F(DataFileTest, readFileComments) {
     writeFile(commented_content);
 
     // Check that the read will fail (without comment elimination)
-//    EXPECT_THROW(Element::fromJSONFile(TEMP_FILE), JSONError);
+    EXPECT_THROW(Element::fromJSONFile(TEMP_FILE), JSONError);
 
     // Check that the read content is correct (with comment elimination)
     EXPECT_NO_THROW(Element::fromJSONFile(TEMP_FILE, true));
-    //EXPECT_TRUE(exp->equals(*Element::fromJSONFile(TEMP_FILE, true)));
+    EXPECT_TRUE(exp->equals(*Element::fromJSONFile(TEMP_FILE, true)));
 }
 
 // This test checks that missing file will generate an exception.
