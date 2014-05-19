@@ -96,8 +96,8 @@ dhcp6_unittests_SOURCES += bundy_controller_unittest.cc
 endif
 
 if CONFIG_BACKEND_JSON
-dhcp6_unittests_SOURCES += ../jsonfile_controller.cc
-dhcp6_unittests_SOURCES += jsonfile_controller_unittest.cc
+dhcp6_unittests_SOURCES += ../kea_controller.cc
+dhcp6_unittests_SOURCES += kea_controller_unittest.cc
 endif
 
 nodist_dhcp6_unittests_SOURCES  = ../dhcp6_messages.h ../dhcp6_messages.cc
