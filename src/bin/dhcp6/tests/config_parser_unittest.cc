@@ -20,7 +20,7 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int.h>
-#include <dhcp6/config_parser.h>
+#include <dhcp6/json_config_parser.h>
 #include <dhcp6/dhcp6_srv.h>
 #include <dhcpsrv/addr_utilities.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -590,6 +590,11 @@ TEST_F(Dhcp6ParserTest, multipleSubnets) {
     int cnt = 0; // Number of reconfigurations
 
     ElementPtr json = Element::fromJSON(config);
+
+    ofstream out("config.json");
+    out << config;
+    out.close();
+    
 
     do {
         EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));

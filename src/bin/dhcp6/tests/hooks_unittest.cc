@@ -17,7 +17,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/duid.h>
-#include <dhcp6/config_parser.h>
+#include <dhcp6/json_config_parser.h>
 #include <dhcp/dhcp6.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>

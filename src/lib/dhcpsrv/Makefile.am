@@ -3,6 +3,7 @@ SUBDIRS = . testutils tests
 dhcp_data_dir = @localstatedir@/@PACKAGE@
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib -DDHCP_DATA_DIR="\"$(dhcp_data_dir)\""
+AM_CPPFLAGS += -DTOP_BUILDDIR="\"$(top_builddir)\""
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 if HAVE_MYSQL
 AM_CPPFLAGS += $(MYSQL_CPPFLAGS)
@@ -48,6 +49,7 @@ libkea_dhcpsrv_la_SOURCES += csv_lease_file4.cc csv_lease_file4.h
 libkea_dhcpsrv_la_SOURCES += csv_lease_file6.cc csv_lease_file6.h
 libkea_dhcpsrv_la_SOURCES += d2_client_cfg.cc d2_client_cfg.h
 libkea_dhcpsrv_la_SOURCES += d2_client_mgr.cc d2_client_mgr.h
+libkea_dhcpsrv_la_SOURCES += daemon.cc daemon.h
 libkea_dhcpsrv_la_SOURCES += dbaccess_parser.cc dbaccess_parser.h
 libkea_dhcpsrv_la_SOURCES += dhcpsrv_log.cc dhcpsrv_log.h
 libkea_dhcpsrv_la_SOURCES += cfgmgr.cc cfgmgr.h
@@ -58,6 +60,7 @@ libkea_dhcpsrv_la_SOURCES += lease.cc lease.h
 libkea_dhcpsrv_la_SOURCES += lease_mgr.cc lease_mgr.h
 libkea_dhcpsrv_la_SOURCES += lease_mgr_factory.cc lease_mgr_factory.h
 libkea_dhcpsrv_la_SOURCES += memfile_lease_mgr.cc memfile_lease_mgr.h
+
 if HAVE_MYSQL
 libkea_dhcpsrv_la_SOURCES += mysql_lease_mgr.cc mysql_lease_mgr.h
 endif

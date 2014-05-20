@@ -151,6 +151,7 @@ protected:
         : type_(t), position_(pos) {
     }
 
+
 public:
 
     // any is a special type used in list specifications, specifying
@@ -401,18 +402,34 @@ public:
     //@{
     /// Creates an Element from the given JSON string
     /// \param in The string to parse the element from
+    /// \param preproc specified whether preprocessing (e.g. comment removal)
+    ///                should be performed
     /// \return An ElementPtr that contains the element(s) specified
     /// in the given string.
-    static ElementPtr fromJSON(const std::string& in);
+    static ElementPtr fromJSON(const std::string& in, bool preproc = false);
 
     /// Creates an Element from the given input stream containing JSON
     /// formatted data.
     ///
     /// \param in The string to parse the element from
+    /// \param preproc specified whether preprocessing (e.g. comment removal)
+    ///                should be performed
     /// \return An ElementPtr that contains the element(s) specified
     /// in the given input stream.
-    static ElementPtr fromJSON(std::istream& in) throw(JSONError);
-    static ElementPtr fromJSON(std::istream& in, const std::string& file_name)
+    static ElementPtr fromJSON(std::istream& in, bool preproc = false)
+        throw(JSONError);
+
+    /// Creates an Element from the given input stream containing JSON
+    /// formatted data.
+    ///
+    /// \param in The string to parse the element from
+    /// \param file_name specified input file name (used in error reporting)
+    /// \param preproc specified whether preprocessing (e.g. comment removal)
+    ///                should be performed
+    /// \return An ElementPtr that contains the element(s) specified
+    /// in the given input stream.
+    static ElementPtr fromJSON(std::istream& in, const std::string& file_name,
+                               bool preproc = false)
         throw(JSONError);
 
     /// Creates an Element from the given input stream, where we keep
@@ -430,6 +447,16 @@ public:
     static ElementPtr fromJSON(std::istream& in, const std::string& file,
                                int& line, int &pos)
         throw(JSONError);
+
+    /// Reads contents of specified file and interprets it as JSON.
+    ///
+    /// @param file_name name of the file to read
+    /// @param preproc specified whether preprocessing (e.g. comment removal)
+    ///                should be performed
+    /// @return An ElementPtr that contains the element(s) specified
+    /// if the given file.
+    static ElementPtr fromJSONFile(const std::string& file_name,
+                                   bool preproc = false);
     //@}
 
     /// \name Type name conversion functions
@@ -447,6 +474,22 @@ public:
     /// \param type_name The name to get the type of
     /// \return the corresponding type value
     static Element::types nameToType(const std::string& type_name);
+
+    /// \brief input text preprocessor
+    ///
+    /// This method performs preprocessing of the input stream (which is
+    /// expected to contain a text version of to be parsed JSON). For now the
+    /// sole supported operation is bash-style (line starting with #) comment
+    /// removal, but it will be extended later to cover more cases (C, C++ style
+    /// comments, file inclusions, maybe macro replacements?).
+    ///
+    /// This method processes the whole input stream. It reads all contents of
+    /// the input stream, filters the content and returns the result in a
+    /// different stream.
+    ///
+    /// @param in input stream to be preprocessed
+    /// @param out output stream (filtered content will be written here)
+    static void preprocess(std::istream& in, std::stringstream& out);
 
     /// \name Wire format factory functions
 

@@ -1,3 +1,10 @@
+7XX.	[func]*		tomek
+	b10-dhcp6: New parameter added to configure: --with-kea-config.
+	It allows selecting configuration backend and accepts one of two
+	values: BIND10, which uses BIND10 framework as Kea 0.8 did, or
+	JSON, which reads configuration from a JSON file.
+	(Trac #3400, git TBD)
+
 782.	[func]		tmark
 	Added sender-ip, sender-port, and max-queue-size parameters to
 	the dhcp-ddns configuration section of both b10-dhcp4 and b10-dhcp6.
