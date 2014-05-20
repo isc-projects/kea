@@ -208,12 +208,6 @@ public:
           iface_mgr_test_config_(true) {
     }
 
-    /// @brief Configure the DHCPv6 server using the JSON string.
-    ///
-    /// @param config New configuration in JSON format.
-    /// @param srv Server to be configured.
-    void configure(const std::string& config, NakedDhcpv6Srv& srv);
-
     /// @brief Make 4-way exchange to obtain a lease.
     ///
     /// @param config_index Index of the configuration held in @c REBIND_CONFIGS
@@ -228,19 +222,6 @@ public:
     IfaceMgrTestConfig iface_mgr_test_config_;
 
 };
-
-void
-RebindTest::configure(const std::string& config, NakedDhcpv6Srv& srv) {
-    ElementPtr json = Element::fromJSON(config);
-    ConstElementPtr status;
-
-    // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv, json));
-    ASSERT_TRUE(status);
-    int rcode;
-    ConstElementPtr comment = config::parseAnswer(rcode, status);
-    ASSERT_EQ(0, rcode);
-}
 
 void
 RebindTest::requestLease(const int config_index, const int subnets_num,
