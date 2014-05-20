@@ -135,7 +135,6 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
     // inconsistency if the parsing operation fails after the context has been
     // modified. We need to preserve the original context here
     // so as we can rollback changes when an error occurs.
-//    DCfgContextBasePtr original_context = context_->clone();
     DCfgContextBasePtr original_context = context_;
     resetContext();
 
@@ -178,7 +177,6 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
         buildParams(params_config);
 
         // Now parse the configuration objects.
-        const ElementMap& values_map = objects_map;
 
         // Use a pre-ordered list of element ids to parse the elements in a
         // specific order if the list (parser_order_) is not empty; otherwise
@@ -194,8 +192,8 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
             int parsed_count = 0;
             std::map<std::string, ConstElementPtr>::const_iterator it;
             BOOST_FOREACH(element_id, parse_order_) {
-                it = values_map.find(element_id);
-                if (it != values_map.end()) {
+                it = objects_map.find(element_id);
+                if (it != objects_map.end()) {
                     ++parsed_count;
                     buildAndCommit(element_id, it->second);
                 }
@@ -218,7 +216,7 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
             // or we parsed fewer than are in the map; then either the parse i
             // order is incomplete OR the map has unsupported values.
             if (!parsed_count ||
-                (parsed_count && ((parsed_count + 1) < values_map.size()))) {
+                (parsed_count && ((parsed_count + 1) < objects_map.size()))) {
                 LOG_ERROR(dctl_logger, DCTL_ORDER_ERROR);
                 isc_throw(DCfgMgrBaseError,
                         "Configuration contains elements not in parse order");
@@ -227,7 +225,7 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
             // Order doesn't matter so iterate over the value map directly.
             // Pass each element and it's associated data in to be parsed.
             ConfigPair config_pair;
-            BOOST_FOREACH(config_pair, values_map) {
+            BOOST_FOREACH(config_pair, objects_map) {
                 element_id = config_pair.first;
                 buildAndCommit(element_id, config_pair.second);
             }

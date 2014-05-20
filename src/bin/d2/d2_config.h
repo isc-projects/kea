@@ -147,6 +147,7 @@ public:
 class D2Params {
 public:
     /// @brief Default configuration constants.
+    //@{
     /// @todo For now these are hard-coded as configuration layer cannot
     /// readily provide them (see Trac #3358).
     static const char *DFT_IP_ADDRESS;
@@ -154,13 +155,26 @@ public:
     static const size_t DFT_DNS_SERVER_TIMEOUT;
     static const char *DFT_NCR_PROTOCOL;
     static const char *DFT_NCR_FORMAT;
+    //@}
 
     /// @brief Constructor
     ///
-    /// @throw D2CfgError if given an invalid protocol or format.
+    /// @param ip_address IP address at which D2 should listen for NCRs
+    /// @param port port on which D2 should listen NCRs
+    /// @param dns_server_timeout  maximum amount of time in milliseconds to
+    /// wait for a response to a single DNS update request.
+    /// @param ncr_protocol socket protocol D2 should use to receive NCRS
+    /// @param ncr_format packet format of the inbound NCRs
+    ///
+    /// @throw D2CfgError if:
+    /// -# ip_address is 0.0.0.0 or ::
+    /// -# port is 0
+    /// -# dns_server_timeout is < 1
+    /// -# ncr_protocol is invalid, currently only NCR_UDP is supported
+    /// -# ncr_format is invalid, currently only FMT_JSON is supported
     D2Params(const isc::asiolink::IOAddress& ip_address,
                    const size_t port,
-                   const size_t DFT_DNS_SERVER_TIMEOUT,
+                   const size_t dns_server_timeout,
                    const dhcp_ddns::NameChangeProtocol& ncr_protocol,
                    const dhcp_ddns::NameChangeFormat& ncr_format);
 
@@ -171,12 +185,12 @@ public:
     /// @brief Destructor
     virtual ~D2Params();
 
-    /// @brief Return the IP D2 listens on.
+    /// @brief Return the IP address D2 listens on.
     const isc::asiolink::IOAddress& getIpAddress() const {
         return(ip_address_);
     }
 
-    /// @brief Return the IP port D2 listens on.
+    /// @brief Return the TCP/UPD port D2 listens on.
     size_t getPort() const {
         return(port_);
     }
@@ -238,6 +252,10 @@ private:
     dhcp_ddns::NameChangeFormat ncr_format_;
 };
 
+/// @brief Dumps the contents of a D2Params as text to an output stream
+///
+/// @param os output stream to which text should be sent
+/// @param config D2Param instnace to dump
 std::ostream&
 operator<<(std::ostream& os, const D2Params& config);
 

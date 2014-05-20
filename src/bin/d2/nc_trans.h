@@ -168,6 +168,7 @@ public:
     /// @param ncr is the NameChangeRequest to fulfill
     /// @param forward_domain is the domain to use for forward DNS updates
     /// @param reverse_domain is the domain to use for reverse DNS updates
+    /// @param cfg_mgr reference to the current configuration manager
     ///
     /// @throw NameChangeTransactionError if given an null request,
     /// if forward change is enabled but forward domain is null, if
