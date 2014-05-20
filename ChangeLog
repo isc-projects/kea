@@ -1,9 +1,9 @@
-7XX.	[func]*		tomek
+783.	[func]*		tomek
 	b10-dhcp6: New parameter added to configure: --with-kea-config.
 	It allows selecting configuration backend and accepts one of two
-	values: BIND10, which uses BIND10 framework as Kea 0.8 did, or
-	JSON, which reads configuration from a JSON file.
-	(Trac #3400, git TBD)
+	values: BUNDY, which uses Bundy (former BIND10 framework as Kea
+	0.8 did, or JSON, which reads configuration from a JSON file.
+	(Trac #3400, git 7e9fdfa644b81f72bfa5300b7ddcdb9754400769)
 
 782.	[func]		tmark
 	Added sender-ip, sender-port, and max-queue-size parameters to
