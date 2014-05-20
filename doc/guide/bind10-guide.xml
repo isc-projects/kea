@@ -710,7 +710,9 @@ as a dependency earlier -->
           <note>
             <para>
               For additional instructions concerning the building and installation of
-              Kea, see <xref linkend="dhcp-install-configure"/>.
+              Kea for various databases, see <xref linkend="dhcp-install-configure"/>.
+              For additional instructions concerning configuration backends, see
+              <xref linkend="dhcp-config-backend" />.
             </para>
           </note>
         </para>
@@ -1863,6 +1865,46 @@ address, but the usual ones don't." mean? -->
     while those details specific to DHCPv6 are described in <xref linkend="dhcp6"/>.
     The DHCP-DDNS server details are covered in <xref linkend="dhcp-ddns-server"/>
     </para>
+
+
+    <section id="dhcp-config-backend">
+      <title>Selecting configuration backend</title>
+      <para>Kea 0.9 introduces configuration backends that are switchable during
+      compilation phase. There is a new parameter for configure script:
+      --with-kea-config. It currently supports two values: BIND10 and
+      JSON. This is currently only supported by DHCPv6 component.</para>
+
+      <variablelist>
+
+        <varlistentry>
+          <term>BIND10</term>
+          <listitem>
+            <simpara>BIND10 (which is the default value as of April 2014) means
+            that Kea6 is linked with the BIND10 configuration backend that
+            connects to the BIND10 framework and in general works exactly the
+            same as Kea 0.8 and earlier versions. The benefits of that backend
+            are uniform integration with BIND10 framework, easy on-line
+            reconfiguration using bindctl, available RESTful API. On the other
+            hand, it requires the whole heavy BIND10 framework that requires
+            Python3 to be present. That backend is likely to go away with the
+            release of Kea 0.9.</simpara>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>JSON</term>
+          <listitem>
+            <simpara>JSON is a new configuration backend that causes Kea to read
+            JSON configuration file from disk. It does not require any framework
+            and thus is considered more lightweight. It will allow dynamic
+            on-line reconfiguration, but will lack remote capabilities (i.e. no
+            RESTful API). This configuration backend is expected to be the
+            default for upcoming Kea 0.9.</simpara>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+
+    </section>
 
     <section id="dhcp-install-configure">
       <title>DHCP Database Installation and Configuration</title>

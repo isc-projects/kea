@@ -565,6 +565,9 @@ AC_SUBST(PYCOVERAGE)
 AC_SUBST(PYCOVERAGE_RUN)
 AC_SUBST(USE_PYCOVERAGE)
 
+
+
+
 enable_gtest="no"
 GTEST_INCLUDES=
 
@@ -1282,6 +1285,34 @@ AC_SUBST(PERL)
 AC_PATH_PROGS(AWK, gawk awk)
 AC_SUBST(AWK)
 
+
+# Kea configuration backend section
+# Currently there are 2 backends available: BUNDY and JSON
+# It is possible that we may extend this to accept additional backends.
+AC_ARG_WITH(kea-config,
+    AC_HELP_STRING([--with-kea-config],
+    [Selects configuration backend; currently available options are: BUNDY (default,
+    Kea reads configuration and commands from Bundy framework) or JSON (Kea reads
+    configuration from a JSON file from disk)]),
+    [CONFIG_BACKEND="$withval"],
+    [CONFIG_BACKEND=BUNDY])
+
+AM_CONDITIONAL(CONFIG_BACKEND_BUNDY, test "x$CONFIG_BACKEND" = "xBUNDY")
+AM_CONDITIONAL(CONFIG_BACKEND_JSON,   test "x$CONFIG_BACKEND" = "xJSON")
+
+if test "x$CONFIG_BACKEND" = "xBUNDY"; then
+    AC_DEFINE(CONFIG_BACKEND_BUNDY, 1, [Define to 1 if Kea config was set to BUNDY])
+fi
+
+if test "x$CONFIG_BACKEND" = "xJSON"; then
+    AC_DEFINE(CONFIG_BACKEND_JSON, 1, [Define to 1 if Kea config was set to JSON])
+fi
+
+# Let's sanity check if the specified backend value is allowed
+if test "x$CONFIG_BACKEND" != "xBUNDY" && test "x$CONFIG_BACKEND" != "xJSON"; then
+   AC_MSG_ERROR("Invalid configuration backend specified: $CONFIG_BACKEND. The only supported are: BUNDY JSON")
+fi
+
 AC_ARG_ENABLE(generate_docs, [AC_HELP_STRING([--enable-generate-docs],
   [regenerate documentation using Docbook [default=no]])],
   enable_generate_docs=$enableval, enable_generate_docs=no)
@@ -1620,6 +1651,9 @@ SQLite:
   SQLITE_VERSION:  ${SQLITE_VERSION}
   SQLITE_CFLAGS:   ${SQLITE_CFLAGS}
   SQLITE_LIBS:     ${SQLITE_LIBS}
+
+Kea config backend:
+  CONFIG_BACKEND: ${CONFIG_BACKEND}
 END
 
 # Avoid confusion on DNS/DHCP and only mention MySQL if it
