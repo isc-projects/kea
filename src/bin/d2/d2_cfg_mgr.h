@@ -270,6 +270,15 @@ protected:
     virtual isc::dhcp::ParserPtr
     createConfigParser(const std::string& element_id);
 
+    /// @brief Creates an new, blank D2CfgContext context
+    ///
+    /// This method is used at the beginning of configuration process to
+    /// create a fresh, empty copy of a D2CfgContext. This new context will
+    /// be populated during the configuration process and will replace the
+    /// existing context provided the configuration process completes without
+    /// error.
+    ///
+    /// @return Returns a DCfgContextBasePtr to the new context instance.
     virtual DCfgContextBasePtr createNewContext();
 };
 

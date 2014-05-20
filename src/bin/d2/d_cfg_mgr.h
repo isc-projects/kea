@@ -116,7 +116,7 @@ public:
     /// into parsers.
     ///
     /// @return returns a pointer to the Boolean Storage.
-    isc::dhcp::BooleanStoragePtr& getBooleanStorage() {
+    isc::dhcp::BooleanStoragePtr getBooleanStorage() {
         return (boolean_values_);
     }
 
@@ -124,7 +124,7 @@ public:
     /// into parsers.
     ///
     /// @return returns a pointer to the uint32 Storage.
-    isc::dhcp::Uint32StoragePtr& getUint32Storage() {
+    isc::dhcp::Uint32StoragePtr getUint32Storage() {
         return (uint32_values_);
     }
 
@@ -132,7 +132,7 @@ public:
     /// into parsers.
     ///
     /// @return returns a pointer to the string Storage.
-    isc::dhcp::StringStoragePtr& getStringStorage() {
+    isc::dhcp::StringStoragePtr getStringStorage() {
         return (string_values_);
     }
 
@@ -184,10 +184,7 @@ private:
     isc::dhcp::StringStoragePtr string_values_;
 };
 
-/// @brief Defines an unsorted, list of string Element IDs.
-typedef std::vector<std::string> ElementIdList;
-
-/// @brief Defines an unsorted, list of string Element IDs.
+/// @brief Defines a sequence of Element IDs used to specify a parsing order.
 typedef std::vector<std::string> ElementIdList;
 
 /// @brief Configuration Manager
@@ -326,6 +323,12 @@ protected:
     createConfigParser(const std::string& element_id) = 0;
 
     /// @brief Abstract factory which creates a context instance.
+    ///
+    /// This method is used at the beginning of configuration process to
+    /// create a fresh, empty copy of the derivation-specific context. This
+    /// new context will be populated during the configuration process
+    /// and will replace the existing context provided the configuration
+    /// process completes without error.
     ///
     /// @return Returns a DCfgContextBasePtr to the new context instance.
     virtual DCfgContextBasePtr createNewContext() = 0;

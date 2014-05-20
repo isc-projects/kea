@@ -61,12 +61,9 @@ D2Params::~D2Params(){};
 
 void
 D2Params::validateContents() {
-    if (ip_address_.toText() == "0.0.0.0") {
-        isc_throw(D2CfgError, "D2Params: IP address cannot be \"0.0.0.0\"");
-    }
-
-    if (ip_address_.toText() == "::") {
-        isc_throw(D2CfgError, "D2Params: IP address cannot be \"::\"");
+    if ((ip_address_.toText() == "0.0.0.0") || (ip_address_.toText() == "::")) {
+        isc_throw(D2CfgError,
+                  "D2Params: IP address cannot be \"" << ip_address_ << "\"");
     }
 
     if (port_ == 0) {

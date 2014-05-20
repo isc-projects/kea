@@ -82,6 +82,18 @@ public:
         return (config.str());
     }
 
+    /// @brief Parses a configuration string and tests against a given outcome
+    ///
+    /// Convenience method which accepts JSON text and an expected pass or fail
+    /// outcome. It converts the text into an ElementPtr and passes that to
+    /// configuration manager's parseConfig method.  It then tests the
+    /// parse result against the expected outcome  If they do not match it
+    /// the method asserts a failure.   If they do match, it refreshes the
+    /// the D2Params pointer with the newly parsed instance.
+    ///
+    /// @param config_str the JSON configuration text to parse
+    /// @param should_fail boolean indicator if the parsing should fail or not.
+    /// It defaults to false.
     void runConfig(std::string config_str, bool should_fail=false) {
         // We assume the config string is valid JSON.
         ASSERT_TRUE(fromJSON(config_str));
@@ -99,6 +111,7 @@ public:
         ASSERT_TRUE(d2_params_);
     }
 
+    /// @brief Pointer the D2Params most recently parsed.
     D2ParamsPtr d2_params_;
 };
 
@@ -1058,9 +1071,6 @@ TEST(D2CfgMgr, construction) {
 
     // Verify that the manager can be destructed without error.
     EXPECT_NO_THROW(delete cfg_mgr);
-}
-
-TEST_F(D2CfgMgrTest, paramsConfig) {
 }
 
 /// @brief Tests the parsing of a complete, valid DHCP-DDNS configuration.

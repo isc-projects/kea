@@ -205,9 +205,6 @@ TEST_F(DStubCfgMgrTest, parseOrderTest) {
 
     // Verify that the parsed order matches what we expected.
     EXPECT_TRUE(cfg_mgr_->parsed_order_ ==  order_expected);
-    for (int i = 0; i < cfg_mgr_->parsed_order_.size(); ++i) {
-        std::cout << i << ":" << cfg_mgr_->parsed_order_[i] << std::endl;
-    }
 
     // Clear the manager's parse order "memory".
     cfg_mgr_->parsed_order_.clear();
