@@ -354,8 +354,13 @@ public:
     /// @brief Runs DHCPv6 configuration from the JSON string.
     ///
     /// @param config String holding server configuration in JSON format.
-    void
-    configure(const std::string& config);
+    void configure(const std::string& config);
+
+    /// @brief Configure the DHCPv6 server using the JSON string.
+    ///
+    /// @param config String holding server configuration in JSON format.
+    /// @param srv Server to be configured.
+    void configure(const std::string& config, NakedDhcpv6Srv& srv);
 
     /// @brief Checks that server response (ADVERTISE or REPLY) contains proper
     ///        IA_NA option
