@@ -1063,12 +1063,6 @@ merge(ElementPtr element, ConstElementPtr other) {
 
 void Element::preprocess(std::istream& in, std::stringstream& out) {
 
-    // There is no assignment operator defined for streams, so we can't return
-    // stream as an object. If we return a pointer, someone would have to free
-    // it. So the most convenient way is to return a reference. However, since
-    // it's not allowed to return references to automatic variables, we must
-    // make sure that the reference is valid after this method returns. So
-    // returning a value to static object seems the only feasible way to go.
     std::string line;
 
     while (std::getline(in, line)) {
