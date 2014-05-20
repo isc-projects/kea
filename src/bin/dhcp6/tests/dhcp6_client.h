@@ -26,7 +26,6 @@ namespace isc {
 namespace dhcp {
 namespace test {
 
-
 /// @brief DHCPv6 client used for unit testing.
 ///
 /// This class implements a DHCPv6 "client" which interoperates with the
@@ -76,6 +75,11 @@ public:
     /// Currently it simply contains the collection of leases acquired.
     struct Configuration {
         std::vector<LeaseInfo> leases_;
+
+        /// @brief Clears configuration.
+        void clear() {
+            leases_.clear();
+        }
     };
 
     /// @brief Holds the DHCPv6 messages taking part in transaction between
@@ -175,6 +179,13 @@ public:
     /// @todo Perform sanity checks on returned messages.
     void doRequest();
 
+    /// @brief Removes the stateful configuration obtained from the server.
+    ///
+    /// It removes all leases held by the client.
+    void clearConfig() {
+        config_.clear();
+    }
+
     /// @brief Simulates aging of leases by the specified number of seconds.
     ///
     /// This function moves back the time of acquired leases by the specified
@@ -249,6 +260,15 @@ public:
     void setDestAddress(const asiolink::IOAddress& dest_addr) {
         dest_addr_ = dest_addr;
     }
+
+    /// @brief Sets a prefix hint to be sent to a server.
+    ///
+    /// @param pref_lft Preferred lifetime.
+    /// @param valid_lft Valid lifetime.
+    /// @param len Prefix length.
+    /// @param prefix Prefix for which the client has a preference.
+    void useHint(const uint32_t pref_lft, const uint32_t valid_lft,
+                 const uint8_t len, const std::string& prefix);
 
     /// @brief Place IA_NA options to request address assignment.
     ///
@@ -383,6 +403,9 @@ private:
     bool use_na_;    ///< Enable address assignment.
     bool use_pd_;    ///< Enable prefix delegation.
     bool use_relay_; ///< Enable relaying messages to the server.
+
+    /// @brief Pointer to the option holding a prefix hint.
+    Option6IAPrefixPtr prefix_hint_;
 };
 
 } // end of namespace isc::dhcp::test

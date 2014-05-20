@@ -590,17 +590,21 @@ Dhcpv6SrvTest::testReleaseReject(Lease::Type type, const IOAddress& addr) {
 
 void
 Dhcpv6SrvTest::configure(const std::string& config) {
+    configure(config, srv_);
+}
+
+void
+Dhcpv6SrvTest::configure(const std::string& config, NakedDhcpv6Srv& srv) {
     ElementPtr json = data::Element::fromJSON(config);
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv, json));
     ASSERT_TRUE(status);
     int rcode;
     ConstElementPtr comment = config::parseAnswer(rcode, status);
     ASSERT_EQ(0, rcode);
 }
-
 
 // Generate IA_NA option with specified parameters
 boost::shared_ptr<Option6IA>
