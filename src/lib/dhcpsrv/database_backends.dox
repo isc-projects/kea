@@ -22,16 +22,22 @@
   the abstract isc::dhcp::LeaseMgr class.  This provides methods to
   create, retrieve, modify and delete leases in the database.
 
-  There are currently two available Lease Managers, MySQL and Memfile:
+  There are currently three available Lease Managers, Memfile, MySQL and
+  PostgreSQL:
+
+  - Memfile is an in-memory lease database which can be configured to persist
+  its content to disk in a flat-file.  Support for the Memfile database
+  backend is built into Kea DHCP.
 
   - The MySQL lease manager uses the freely available MySQL as its backend
-  database.  This is not included in BIND 10 DHCP by default:
+  database.  This is not included in Kea DHCP by default:
   the \--with-dhcp-mysql switch must be supplied to "configure" for support
   to be compiled into the software.
-  - Memfile is an in-memory lease database, with (currently) nothing being
-  written to persistent storage.  The long-term plans for the backend do
-  include the ability to store this on disk, but it is currently a
-  low-priority item.
+
+  - The PostgreSQL lease manager uses the freely available PostgreSQL as its
+  backend database.  This is not included in Kea DHCP by default:
+  the \--with-dhcp-pgsql switch must be supplied to "configure" for
+  support to be compiled into the software.
 
   @section dhcpdb-instantiation Instantiation of Lease Managers
 
@@ -74,6 +80,16 @@
   - <b>user</b> - database user ID under which the database is accessed.  If not
     specified, no user ID is used - the database is assumed to be open.
 
+  @subsection dhcpdb-keywords-pgsql PostgreSQL connection string keywords
+
+  - <b>host</b> - host on which the selected database is running.  If not
+  supplied, "localhost" is assumed.
+  - <b>name</b> - name of the PostgreSQL database to access.  There is no
+  default - this must always be supplied.
+  - <b>password</b> - password for the selected user ID (see below).  If not
+  specified, no password is used.
+  - <b>user</b> - database user ID under which the database is accessed.  If not
+    specified, no user ID is used - the database is assumed to be open.
 
   @section dhcp-backend-unittest Running Unit Tests
 
@@ -81,7 +97,7 @@
   certain database-specific pre-requisites for successfully running the unit
   tests.  These are listed in the following sections.
 
-  @subsection dhcp-mysql-unittest MySQL
+  @subsection dhcp-mysql-unittest MySQL Unit Tests
 
   A database called <i>keatest</i> must be created. A database user, also called
   <i>keatest</i> (and with a password <i>keatest</i>) must also be created and
@@ -122,7 +138,7 @@
   that BIND 10 has been build with the \--with-dhcp-mysql switch (see the installation
   section in the <a href="http://bind10.isc.org/docs/bind10-guide.html">BIND 10 Guide</a>).
 
- @subsection dhcp-pgsql-unittest PostgreSQL unit-tests
+ @subsection dhcp-pgsql-unittest PostgreSQL Unit Tests
 
   Conceptually, the steps required to run PostgreSQL unit-tests are the same as
   in MySQL. First, a database called <i>keatest</i> must be created. A database

@@ -683,6 +683,29 @@ GenericLeaseMgrTest::testAddGetDelete6(bool check_t1_t2) {
 }
 
 void
+GenericLeaseMgrTest::testMaxDate4() {
+    // Get the leases to be used for the test.
+    vector<Lease4Ptr> leases = createLeases4();
+    Lease4Ptr lease = leases[1];
+
+    // Set valid_lft_ to 1 day, cllt_ to max time. This should make expire
+    // time too large to store.
+    lease->valid_lft_ = 24*60*60;
+    lease->cltt_ = LeaseMgr::MAX_DB_TIME;
+
+    // Insert should throw.
+    ASSERT_THROW(lmptr_->addLease(leases[1]), DbOperationError);
+
+    // Set valid_lft_ to 0, which should make expire time small enough to
+    // store and try again.
+    lease->valid_lft_ = 0;
+    EXPECT_TRUE(lmptr_->addLease(leases[1]));
+    Lease4Ptr l_returned = lmptr_->getLease4(ioaddress4_[1]);
+    ASSERT_TRUE(l_returned);
+    detailCompareLease(leases[1], l_returned);
+}
+
+void
 GenericLeaseMgrTest::testBasicLease4() {
     // Get the leases to be used for the test.
     vector<Lease4Ptr> leases = createLeases4();
@@ -710,7 +733,6 @@ GenericLeaseMgrTest::testBasicLease4() {
     detailCompareLease(leases[3], l_returned);
 
     // Check that we can't add a second lease with the same address
-std::cout << "OK - Duplicate check here!!!!!!" << std::endl;
     EXPECT_FALSE(lmptr_->addLease(leases[1]));
 
     // Delete a lease, check that it's gone, and that we can't delete it
@@ -827,6 +849,29 @@ GenericLeaseMgrTest::testBasicLease6() {
     l_returned = lmptr_->getLease6(leasetype6_[2], ioaddress6_[2]);
     ASSERT_TRUE(l_returned);
     detailCompareLease(leases[2], l_returned);
+}
+
+void
+GenericLeaseMgrTest::testMaxDate6() {
+    // Get the leases to be used for the test.
+    vector<Lease6Ptr> leases = createLeases6();
+    Lease6Ptr lease = leases[1];
+
+    // Set valid_lft_ to 1 day, cllt_ to max time. This should make expire
+    // time too large to store.
+    lease->valid_lft_ = 24*60*60;
+    lease->cltt_ = LeaseMgr::MAX_DB_TIME;
+
+    // Insert should throw.
+    ASSERT_THROW(lmptr_->addLease(leases[1]), DbOperationError);
+
+    // Set valid_lft_ to 0, which should make expire time small enough to
+    // store and try again.
+    lease->valid_lft_ = 0;
+    EXPECT_TRUE(lmptr_->addLease(leases[1]));
+    Lease6Ptr l_returned = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
+    ASSERT_TRUE(l_returned);
+    detailCompareLease(leases[1], l_returned);
 }
 
 void

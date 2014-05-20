@@ -268,6 +268,7 @@ std::string PsqlBindArray::toText() {
 class PgSqlLeaseExchange {
 public:
 
+
     PgSqlLeaseExchange()
         : addr_str_(""), valid_lifetime_(0), valid_lft_str_(""),
          expire_(0), expire_str_(""), subnet_id_(0), subnet_id_str_(""),
@@ -289,6 +290,14 @@ public:
     /// @return std::string containing the stringified time
     std::string
     convertToDatabaseTime(const time_t& time_val) {
+        // PostgreSQL does funny things with time if you get past Y2038.  It
+        // will accept the values (unlike MySQL which throws) but it
+        // stops correctly adjusting to local time when reading them back
+        // out. So lets disallow it here.
+        if (time_val > LeaseMgr::MAX_DB_TIME) {
+            isc_throw(BadValue, "Time value is too large: " << time_val);
+        }
+
         struct tm tinfo;
         char buffer[20];
         localtime_r(&time_val, &tinfo);
@@ -326,10 +335,11 @@ public:
     ///
     /// @return a const char* pointer to the column's raw data
     /// @throw  DbOperationError if the value cannot be fetched.
-    const char* getColumnValue(PGresult*& r, const int row, const size_t col) {
+    const char* getRawColumnValue(PGresult*& r, const int row,
+                                  const size_t col) {
         const char* value = PQgetvalue(r, row, col);
         if (!value) {
-            isc_throw(DbOperationError, "getColumnValue no data for :"
+            isc_throw(DbOperationError, "getRawColumnValue no data for :"
                       << getColumnLabel(col) << " row:" << row);
         }
 
@@ -347,7 +357,7 @@ public:
     /// invalid.
     void getColumnValue(PGresult*& r, const int row, const size_t col,
                         bool &value) {
-        const char* data = getColumnValue(r, row, col);
+        const char* data = getRawColumnValue(r, row, col);
         if (!strlen(data) || *data == 'f') {
             value = false;
         } else if (*data == 't') {
@@ -370,7 +380,7 @@ public:
     /// invalid.
     void getColumnValue(PGresult*& r, const int row, const size_t col,
                         uint32_t &value) {
-        const char* data = getColumnValue(r, row, col);
+        const char* data = getRawColumnValue(r, row, col);
         try {
             value = boost::lexical_cast<uint32_t>(data);
         } catch (const std::exception& ex) {
@@ -391,7 +401,7 @@ public:
     /// invalid.
     void getColumnValue(PGresult*& r, const int row, const size_t col,
                         uint8_t &value) {
-        const char* data = getColumnValue(r, row, col);
+        const char* data = getRawColumnValue(r, row, col);
         try {
             // lexically casting as uint8_t doesn't convert from char
             // so we use uint16_t and implicitly convert.
@@ -458,7 +468,7 @@ public:
         // Returns converted bytes in a dynamically allocated buffer, and
         // sets bytes_converted.
         unsigned char* bytes = PQunescapeBytea((const unsigned char*)
-                                               (getColumnValue(r, row, col)),
+                                               (getRawColumnValue(r, row, col)),
                                                &bytes_converted);
 
         // Unlikely it couldn't allocate it but you never know.
@@ -649,8 +659,8 @@ public:
 
             getColumnValue(r, row, VALID_LIFETIME_COL, valid_lifetime_);
 
-            expire_ = convertFromDatabaseTime(getColumnValue(r, row,
-                                                             EXPIRE_COL));
+            expire_ = convertFromDatabaseTime(getRawColumnValue(r, row,
+                                                                EXPIRE_COL));
 
             getColumnValue(r, row , SUBNET_ID_COL, subnet_id_);
 
@@ -659,7 +669,7 @@ public:
             getColumnValue(r, row, FQDN_FWD_COL, fqdn_fwd_);
             getColumnValue(r, row, FQDN_REV_COL, fqdn_rev_);
 
-            hostname_ = getColumnValue(r, row, HOSTNAME_COL);
+            hostname_ = getRawColumnValue(r, row, HOSTNAME_COL);
 
             return (Lease4Ptr(new Lease4(addr4_, hwaddr_buffer_, hwaddr_length_,
                                          client_id_buffer_, client_id_length_,
@@ -761,7 +771,11 @@ public:
             addr_str_ = lease_->addr_.toText();
             bind_array.add(addr_str_);
 
-            bind_array.add(lease_->duid_->getDuid());
+            if (lease_->duid_) {
+                bind_array.add(lease_->duid_->getDuid());
+            } else {
+                isc_throw (BadValue, "IPv6 Lease cannot have a null DUID");
+            }
 
             valid_lft_str_ = boost::lexical_cast<std::string>
                              (lease->valid_lft_);
@@ -819,8 +833,8 @@ public:
 
             getColumnValue(r, row, VALID_LIFETIME_COL, valid_lifetime_);
 
-            expire_ = convertFromDatabaseTime(getColumnValue(r, row,
-                                                             EXPIRE_COL));
+            expire_ = convertFromDatabaseTime(getRawColumnValue(r, row,
+                                                                EXPIRE_COL));
 
             cltt_ = expire_ - valid_lifetime_;
 
@@ -837,7 +851,7 @@ public:
             getColumnValue(r, row, FQDN_FWD_COL, fqdn_fwd_);
             getColumnValue(r, row, FQDN_REV_COL, fqdn_rev_);
 
-            hostname_ = getColumnValue(r, row, HOSTNAME_COL);
+            hostname_ = getRawColumnValue(r, row, HOSTNAME_COL);
 
             Lease6Ptr result(new Lease6(lease_type_, addr, duid_ptr, iaid_,
                                         pref_lifetime_, valid_lifetime_, 0, 0,
@@ -863,7 +877,7 @@ public:
     /// invalid.
     isc::asiolink::IOAddress getIPv6Value(PGresult*& r, const int row,
                                           const size_t col) {
-        const char* data = getColumnValue(r, row, col);
+        const char* data = getRawColumnValue(r, row, col);
         try {
             return (isc::asiolink::IOAddress(data));
         } catch (const std::exception& ex) {

@@ -333,6 +333,11 @@ TEST_F(MySqlLeaseMgrTest, basicLease4) {
     testBasicLease4();
 }
 
+/// @brief Check that Lease4 code safely handles invalid dates.
+TEST_F(MySqlLeaseMgrTest, maxDate4) {
+    testMaxDate4();
+}
+
 /// @brief Lease4 update tests
 ///
 /// Checks that we are able to update a lease in the database.
@@ -435,6 +440,11 @@ TEST_F(MySqlLeaseMgrTest, testAddGetDelete6) {
 /// IPv6 address) works.
 TEST_F(MySqlLeaseMgrTest, basicLease6) {
     testBasicLease6();
+}
+
+/// @brief Check that Lease6 code safely handles invalid dates.
+TEST_F(MySqlLeaseMgrTest, maxDate6) {
+    testMaxDate6();
 }
 
 /// @brief Verify that too long hostname for Lease6 is not accepted.

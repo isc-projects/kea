@@ -28,7 +28,7 @@ namespace isc {
 namespace dhcp {
 
 /// @brief Structure used to bind C++ input values to dynamic SQL parameters
-/// The structure contains three vectors which storing the input values,
+/// The structure contains three vectors which store the input values,
 /// data lengths, and formats.  These vectors are passed directly into the
 /// PostgreSQL execute call.
 ///
@@ -69,19 +69,37 @@ struct PsqlBindArray {
         return (values_.empty());
     }
 
-    /// @brief Adds a char value to the array.
+    /// @brief Adds a char array to bind array based
+    ///
+    /// Adds a TEXT_FMT value to the end of the bind array, using the given
+    /// char* as the data source. Note that value is expected to be NULL
+    /// terminated.
+    ///
+    /// @param value char array containing the null-terminated text to add.
     void add(const char* value);
 
-    /// @brief Adds a string value to the array.
+    /// @brief Adds an string value to the bind array
+    ///
+    /// Adds a TEXT formatted value to the end of the bind array using the
+    /// given string as the data source.
+    ///
+    /// @param value std::string containing the value to add.
     void add(const std::string& value);
 
-    /// @brief Adds a vector to the array.
+    /// @brief Adds a binary value to the bind array.
+    ///
+    /// Adds a BINARY_FMT value to the end of the bind array using the
+    /// given vector as the data source.
+    ///
+    /// @param value vector of binary bytes.
     void add(const std::vector<uint8_t>& data);
 
-    /// @brief Adds a uint32_t value to the array.
-    void add(const uint32_t& value);
-
-    /// @brief Adds a bool value to the array.
+    /// @brief Adds a boolean value to the bind array.
+    ///
+    /// Converts the given boolean value to its corresponding to PostgreSQL
+    /// string value and adds it as a TEXT_FMT value to the bind array.
+    ///
+    /// @param value std::string containing the value to add.
     void add(const bool& value);
 
     /// @brief Dumps the contents of the array to a string.
@@ -370,16 +388,14 @@ public:
 
     /// @brief Commit Transactions
     ///
-    /// Commits all pending database operations.  On databases that don't
-    /// support transactions, this is a no-op.
+    /// Commits all pending database operations.
     ///
     /// @throw DbOperationError Iif the commit failed.
     virtual void commit();
 
     /// @brief Rollback Transactions
     ///
-    /// Rolls back all pending database operations.  On databases that don't
-    /// support transactions, this is a no-op.
+    /// Rolls back all pending database operations.
     ///
     /// @throw DbOperationError If the rollback failed.
     virtual void rollback();
