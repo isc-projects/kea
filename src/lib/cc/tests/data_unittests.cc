@@ -939,6 +939,60 @@ TEST(Element, merge) {
 
 }
 
+// This test checks whether it is possible to ignore comments. It also checks
+// that the comments are ignored only when told to.
+TEST(Element, preprocessor) {
+
+    string no_comment = "{ \"a\": 1,\n"
+                        " \"b\": 2}";
+
+    string head_comment = "# this is a comment, ignore me\n"
+                          "{ \"a\": 1,\n"
+                          " \"b\": 2}";
+
+    string mid_comment = "{ \"a\": 1,\n"
+                         "# this is a comment, ignore me\n"
+                         " \"b\": 2}";
+
+    string tail_comment = "{ \"a\": 1,\n"
+                          " \"b\": 2}"
+                          "# this is a comment, ignore me\n";
+
+    string dbl_head_comment = "# this is a comment, ignore me\n"
+                              "# second line, still ignored\n"
+                              "{ \"a\": 1,\n"
+                              " \"b\": 2}";
+
+    string dbl_mid_comment = "{ \"a\": 1,\n"
+                             "# this is a comment, ignore me\n"
+                             "# second line, still ignored\n"
+                             " \"b\": 2}";
+
+    string dbl_tail_comment = "{ \"a\": 1,\n"
+                              " \"b\": 2}"
+                              "# this is a comment, ignore me\n"
+                              "# second line, still ignored\n";
+
+    // This is what we expect in all cases.
+    ElementPtr exp = Element::fromJSON(no_comment);
+
+    // Let's convert them all and see that the result it the same every time
+    EXPECT_TRUE(exp->equals(*Element::fromJSON(head_comment, true)));
+    EXPECT_TRUE(exp->equals(*Element::fromJSON(mid_comment, true)));
+    EXPECT_TRUE(exp->equals(*Element::fromJSON(tail_comment, true)));
+    EXPECT_TRUE(exp->equals(*Element::fromJSON(dbl_head_comment, true)));
+    EXPECT_TRUE(exp->equals(*Element::fromJSON(dbl_mid_comment, true)));
+    EXPECT_TRUE(exp->equals(*Element::fromJSON(dbl_tail_comment, true)));
+
+    // With preprocessing disabled, it should fail all around
+    EXPECT_THROW(Element::fromJSON(head_comment), JSONError);
+    EXPECT_THROW(Element::fromJSON(mid_comment), JSONError);
+    EXPECT_THROW(Element::fromJSON(tail_comment), JSONError);
+    EXPECT_THROW(Element::fromJSON(dbl_head_comment), JSONError);
+    EXPECT_THROW(Element::fromJSON(dbl_mid_comment), JSONError);
+    EXPECT_THROW(Element::fromJSON(dbl_tail_comment), JSONError);
+}
+
 TEST(Element, getPosition) {
     std::istringstream ss("{\n"
                           "    \"a\":  2,\n"
@@ -957,7 +1011,7 @@ TEST(Element, getPosition) {
     // Create a JSON string holding different type of values. Some of the
     // values in the config string are not aligned, so as we can check that
     // the position is set correctly for the elements.
-    ElementPtr top = Element::fromJSON(ss, "kea.conf");
+    ElementPtr top = Element::fromJSON(ss, string("kea.conf"));
     ASSERT_TRUE(top);
 
     // Element "a"
@@ -1033,4 +1087,58 @@ TEST(Element, getPosition) {
 
 }
 
+// Tests whether position is returned properly for a commented input JSON text.
+TEST(Element, getPositionCommented) {
+    std::istringstream ss("{\n"
+                          "    \"a\":  2,\n"
+                          "# comment\n"
+                          "    \"cy\": \"a string\",\n"
+                          "    \"dyz\": {\n"
+                          "# another comment\n"
+                          "      \"e\": 3,\n"
+                          "        \"f\": null\n"
+                          "\n"
+                          "    } }\n");
+
+    // Create a JSON string holding different type of values. Some of the
+    // values in the config string are not aligned, so as we can check that
+    // the position is set correctly for the elements.
+    ElementPtr top = Element::fromJSON(ss, string("kea.conf"), true);
+    ASSERT_TRUE(top);
+
+    // Element "a"
+    ConstElementPtr level1_el = top->get("a");
+    ASSERT_TRUE(level1_el);
+    EXPECT_EQ(2, level1_el->getPosition().line_);
+    EXPECT_EQ(11, level1_el->getPosition().pos_);
+    EXPECT_EQ("kea.conf", level1_el->getPosition().file_);
+
+    // Element "cy"
+    level1_el = top->get("cy");
+    ASSERT_TRUE(level1_el);
+    EXPECT_EQ(4, level1_el->getPosition().line_);
+    EXPECT_EQ(11, level1_el->getPosition().pos_);
+    EXPECT_EQ("kea.conf", level1_el->getPosition().file_);
+
+    // Element "dyz"
+    level1_el = top->get("dyz");
+    ASSERT_TRUE(level1_el);
+    EXPECT_EQ(5, level1_el->getPosition().line_);
+    EXPECT_EQ(13, level1_el->getPosition().pos_);
+    EXPECT_EQ("kea.conf", level1_el->getPosition().file_);
+
+    // Element "e" is a sub element of "dyz".
+    ConstElementPtr level2_el = level1_el->get("e");
+    ASSERT_TRUE(level2_el);
+    EXPECT_EQ(7, level2_el->getPosition().line_);
+    EXPECT_EQ(12, level2_el->getPosition().pos_);
+    EXPECT_EQ("kea.conf", level2_el->getPosition().file_);
+
+    // Element "f" is also a sub element of "dyz"
+    level2_el = level1_el->get("f");
+    ASSERT_TRUE(level2_el);
+    EXPECT_EQ(8, level2_el->getPosition().line_);
+    EXPECT_EQ(14, level2_el->getPosition().pos_);
+    EXPECT_EQ("kea.conf", level2_el->getPosition().file_);
+}
 }

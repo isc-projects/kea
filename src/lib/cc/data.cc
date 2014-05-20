@@ -24,6 +24,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <fstream>
 #include <cerrno>
 #include <climits>
 
@@ -610,17 +611,29 @@ Element::nameToType(const std::string& type_name) {
 }
 
 ElementPtr
-Element::fromJSON(std::istream& in) throw(JSONError) {
+Element::fromJSON(std::istream& in, bool preproc) throw(JSONError) {
+
     int line = 1, pos = 1;
-    return (fromJSON(in, "<istream>", line, pos));
+    stringstream filtered;
+    if (preproc) {
+        preprocess(in, filtered);
+    }
+
+    ElementPtr value = fromJSON(preproc ? filtered : in, "<istream>", line, pos);
+
+    return (value);
 }
 
 ElementPtr
-Element::fromJSON(std::istream& in, const std::string& file_name)
+Element::fromJSON(std::istream& in, const std::string& file_name, bool preproc)
     throw(JSONError)
 {
     int line = 1, pos = 1;
-    return (fromJSON(in, file_name, line, pos));
+    stringstream filtered;
+    if (preproc) {
+        preprocess(in, filtered);
+    }
+    return (fromJSON(preproc ? filtered : in, file_name, line, pos));
 }
 
 ElementPtr
@@ -698,17 +711,36 @@ Element::fromJSON(std::istream& in, const std::string& file, int& line,
 }
 
 ElementPtr
-Element::fromJSON(const std::string& in) {
+Element::fromJSON(const std::string& in, bool preproc) {
     std::stringstream ss;
     ss << in;
+
     int line = 1, pos = 1;
-    ElementPtr result(fromJSON(ss, "<string>", line, pos));
+    stringstream filtered;
+    if (preproc) {
+        preprocess(ss, filtered);
+    }
+    ElementPtr result(fromJSON(preproc ? filtered : ss, "<string>", line, pos));
     skipChars(ss, WHITESPACE, line, pos);
     // ss must now be at end
     if (ss.peek() != EOF) {
         throwJSONError("Extra data", "<string>", line, pos);
     }
     return result;
+}
+
+ElementPtr
+Element::fromJSONFile(const std::string& file_name,
+                      bool preproc) {
+    std::ifstream infile(file_name.c_str(), std::ios::in | std::ios::binary);
+    if (!infile.is_open())
+    {
+        const char* error = strerror(errno);
+        isc_throw(InvalidOperation, "Failed to read file " << file_name
+                  << ",error:" << error);
+    }
+
+    return (fromJSON(infile, file_name, preproc));
 }
 
 // to JSON format
@@ -1026,6 +1058,25 @@ merge(ElementPtr element, ConstElementPtr other) {
         } else if (element->contains((*it).first)) {
             element->remove((*it).first);
         }
+    }
+}
+
+void Element::preprocess(std::istream& in, std::stringstream& out) {
+
+    std::string line;
+
+    while (std::getline(in, line)) {
+        // If this is a comments line, replace it with empty line
+        // (so the line numbers will still match
+        if (!line.empty() && line[0] == '#') {
+            line = "";
+        }
+
+        // getline() removes end line charaters. Unfortunately, we need
+        // it for getting the line numbers right (in case we report an
+        // error.
+        out << line;
+        out << "\n";
     }
 }
 

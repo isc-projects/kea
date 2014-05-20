@@ -499,10 +499,11 @@ to recover.
 The IPv6 DHCP server has encountered a fatal error and is terminating.
 The reason for the failure is included in the message.
 
-% DHCP6_SESSION_FAIL failed to establish BIND 10 session (%1), running stand-alone
-The server has failed to establish communication with the rest of BIND
-10 and is running in stand-alone mode.  (This behavior will change once
-the IPv6 DHCP server is properly integrated with the rest of BIND 10.)
+% DHCP6_INIT_FAIL failed to initialize Kea server: %1
+The server has failed to establish communication with the rest of BIND 10,
+failed to read JSON configuration file or excountered any other critical
+issue that prevents it from starting up properly. Attached error message
+provides more details about the issue.
 
 % DHCP6_SHUTDOWN server shutdown
 The IPv6 DHCP server has terminated normally.

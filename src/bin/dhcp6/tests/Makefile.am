@@ -24,6 +24,7 @@ check-local:
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/bin # for generated spec_config.h header
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin
+AM_CPPFLAGS += -DTOP_BUILDDIR="\"$(top_builddir)\""
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
@@ -75,17 +76,29 @@ dhcp6_unittests_SOURCES += dhcp6_srv_unittest.cc
 dhcp6_unittests_SOURCES += fqdn_unittest.cc
 dhcp6_unittests_SOURCES += hooks_unittest.cc
 dhcp6_unittests_SOURCES += dhcp6_test_utils.cc dhcp6_test_utils.h
-dhcp6_unittests_SOURCES += ctrl_dhcp6_srv_unittest.cc
-dhcp6_unittests_SOURCES += config_parser_unittest.cc
 dhcp6_unittests_SOURCES += d2_unittest.cc d2_unittest.h
 dhcp6_unittests_SOURCES += marker_file.cc
 dhcp6_unittests_SOURCES += ../dhcp6_srv.h ../dhcp6_srv.cc
 dhcp6_unittests_SOURCES += ../dhcp6_log.h ../dhcp6_log.cc
-dhcp6_unittests_SOURCES += ../ctrl_dhcp6_srv.cc
-dhcp6_unittests_SOURCES += ../config_parser.cc ../config_parser.h
+dhcp6_unittests_SOURCES += ../ctrl_dhcp6_srv.h ../ctrl_dhcp6_srv.cc
+dhcp6_unittests_SOURCES += ctrl_dhcp6_srv_unittest.cc
 dhcp6_unittests_SOURCES += wireshark.cc
 dhcp6_unittests_SOURCES += dhcp6_client.cc dhcp6_client.h
 dhcp6_unittests_SOURCES += rebind_unittest.cc
+dhcp6_unittests_SOURCES += ../json_config_parser.cc ../json_config_parser.h
+dhcp6_unittests_SOURCES += config_parser_unittest.cc
+
+if CONFIG_BACKEND_BUNDY
+# For Bundy backend, we only need to run the usual tests. There are no
+# Bundy-specific tests yet.
+dhcp6_unittests_SOURCES += ../bundy_controller.cc
+dhcp6_unittests_SOURCES += bundy_controller_unittest.cc
+endif
+
+if CONFIG_BACKEND_JSON
+dhcp6_unittests_SOURCES += ../kea_controller.cc
+dhcp6_unittests_SOURCES += kea_controller_unittest.cc
+endif
 
 nodist_dhcp6_unittests_SOURCES  = ../dhcp6_messages.h ../dhcp6_messages.cc
 nodist_dhcp6_unittests_SOURCES += marker_file.h test_libraries.h
