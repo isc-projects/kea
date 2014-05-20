@@ -5224,8 +5224,8 @@ Dhcp6/renew-timer	1000	integer	(default)
 DhcpDdns/ip_address "127.0.0.1" string  (default)
 DhcpDdns/port   53001   integer (default)
 DhcpDdns/dns_server_timeout   100   integer (default)
-DhcpDdns/ncr-protocol	"UDP"	string (default)
-DhcpDdns/ncr-format	"JSON"	string (default)
+DhcpDdns/ncr_protocol	"UDP"	string (default)
+DhcpDdns/ncr_format	"JSON"	string (default)
 DhcpDdns/tsig_keys  []  list    (default)
 DhcpDdns/forward_ddns/ddns_domains  []  list    (default)
 DhcpDdns/reverse_ddns/ddns_domains  []  list    (default)
@@ -5278,17 +5278,18 @@ DhcpDdns/reverse_ddns/ddns_domains  []  list    (default)
       is 53001.
       </para></listitem>
       <listitem><para>
-      ncr-format - Socket protocol use when sending requests to D2.  Currently
-      only UDP is supported.  TCP may be available in an upcoming release.
+      ncr_format - Socket protocol to use when sending requests to D2.
+      Currently only UDP is supported.  TCP may be available in an upcoming
+      release.
       </para></listitem>
       <listitem><para>
-      ncr-protocol - Packet format to use when sending requests to D2.
+      ncr_protocol - Packet format to use when sending requests to D2.
       Currently only JSON format is supported.  Other formats may be available
       in future releases.
       </para></listitem>
       <listitem><para>
       dns_server_timeout - The maximum amount of time in milliseconds, that
-      D2 will wait for a response from a DNS server to a single DDNS update
+      D2 will wait for a response from a DNS server to a single DNS update
       message.
       </para></listitem>
       </orderedlist>
@@ -5302,8 +5303,6 @@ DhcpDdns/reverse_ddns/ddns_domains  []  list    (default)
 &gt; <userinput>config set DhcpDdns/port 900</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
-        The server may be configured to listen over IPv4 or IPv6, therefore
-        ip-address may an IPv4 or IPv6 address.
         </para>
         <warning>
           <simpara>
