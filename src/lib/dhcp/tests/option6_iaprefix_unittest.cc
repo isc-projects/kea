@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -36,7 +36,7 @@ using namespace isc::asiolink;
 namespace {
 class Option6IAPrefixTest : public ::testing::Test {
 public:
-    Option6IAPrefixTest() : buf_(255), outBuf_(255) {
+    Option6IAPrefixTest() : buf_(255), out_buf_(255) {
         for (int i = 0; i < 255; i++) {
             buf_[i] = 255 - i;
         }
@@ -45,7 +45,7 @@ public:
     /// @brief creates on-wire representation of IAPREFIX option
     ///
     /// buf_ field is set up to have IAPREFIX with preferred=1000,
-    /// valid=3000000000 and prefix beign 2001:db8:1::dead:beef/77
+    /// valid=3000000000 and prefix being 2001:db8:1:0:ffff:0:dead:beef/77
     void setExampleBuffer() {
         for (int i = 0; i < 255; i++) {
             buf_[i] = 0;
@@ -69,10 +69,12 @@ public:
         buf_[12] = 0xb8;
         buf_[13] = 0x00;
         buf_[14] = 0x01;
+        buf_[17] = 0xff;
+        buf_[18] = 0xff;
         buf_[21] = 0xde;
         buf_[22] = 0xad;
         buf_[23] = 0xbe;
-        buf_[24] = 0xef; // 2001:db8:1::dead:beef
+        buf_[24] = 0xef; // 2001:db8:1:0:ffff:0:dead:beef
     }
 
 
@@ -82,15 +84,22 @@ public:
     ///
     /// @param opt IAPREFIX option being tested
     /// @param expected_type expected option type
-    void checkOption(Option6IAPrefix& opt, uint16_t expected_type) {
+    /// @param expected_length Expected length of the prefix.
+    /// @param expected_address Expected prefix value in the textual format.
+    void checkOption(Option6IAPrefix& opt, const uint16_t expected_type,
+                     const uint8_t expected_length,
+                     const std::string& expected_address) {
 
         // Check if all fields have expected values
         EXPECT_EQ(Option::V6, opt.getUniverse());
         EXPECT_EQ(expected_type, opt.getType());
-        EXPECT_EQ("2001:db8:1::dead:beef", opt.getAddress().toText());
+        EXPECT_EQ(expected_address, opt.getAddress().toText());
         EXPECT_EQ(1000, opt.getPreferred());
         EXPECT_EQ(3000000000U, opt.getValid());
-        EXPECT_EQ(77, opt.getLength());
+        // uint8_t is often represented as a character type (char). Convert it
+        // to integer so as it is logged as a numeric value instead.
+        EXPECT_EQ(static_cast<int>(expected_length),
+                  static_cast<int>(opt.getLength()));
 
         // 4 bytes header + 25 bytes content
         EXPECT_EQ(Option::OPTION6_HDR_LEN + Option6IAPrefix::OPTION6_IAPREFIX_LEN,
@@ -105,7 +114,7 @@ public:
     /// @param expected_type expected option type
     void checkOutputBuffer(uint16_t expected_type) {
         // Check if pack worked properly:
-        const uint8_t* out = (const uint8_t*)outBuf_.getData();
+        const uint8_t* out = static_cast<const uint8_t*>(out_buf_.getData());
 
         // - if option type is correct
         EXPECT_EQ(expected_type, out[0]*256 + out[1]);
@@ -118,11 +127,12 @@ public:
     }
 
     OptionBuffer buf_;
-    OutputBuffer outBuf_;
+    OutputBuffer out_buf_;
 };
 
-// Tests if receiving option can be parsed correctly
-TEST_F(Option6IAPrefixTest, basic) {
+// Tests if a received option is parsed correctly. For the prefix length between
+// 0 and 128 the non-significant bits should be set to 0.
+TEST_F(Option6IAPrefixTest, parseShort) {
 
     setExampleBuffer();
 
@@ -133,16 +143,74 @@ TEST_F(Option6IAPrefixTest, basic) {
     ASSERT_TRUE(opt);
 
     // Pack this option
-    opt->pack(outBuf_);
-    EXPECT_EQ(29, outBuf_.getLength());
+    opt->pack(out_buf_);
+    EXPECT_EQ(29, out_buf_.getLength());
 
-    checkOption(*opt, D6O_IAPREFIX);
+    // The non-significant bits (above 77) of the received prefix should be
+    // set to zero.
+    checkOption(*opt, D6O_IAPREFIX, 77, "2001:db8:1:0:fff8::");
+
+    // Set non-significant bits in the reference buffer to 0, so as the buffer
+    // can be directly compared with the option buffer.
+    buf_[18] = 0xf8;
+    buf_.insert(buf_.begin() + 19, 5, 0);
+    checkOutputBuffer(D6O_IAPREFIX);
+
+    // Check that option can be disposed safely
+    EXPECT_NO_THROW(opt.reset());
+}
+
+// Tests if a received option holding prefix of 128 bits is parsed correctly. 
+TEST_F(Option6IAPrefixTest, parseLong) {
+
+    setExampleBuffer();
+    // Set prefix length to the maximal value.
+    buf_[8] = 128;
+
+    // Create an option (unpack content)
+    boost::scoped_ptr<Option6IAPrefix> opt;
+    ASSERT_NO_THROW(opt.reset(new Option6IAPrefix(D6O_IAPREFIX, buf_.begin(),
+                                                  buf_.begin() + 25)));
+    ASSERT_TRUE(opt);
+
+    // Pack this option
+    opt->pack(out_buf_);
+    EXPECT_EQ(29, out_buf_.getLength());
+
+    checkOption(*opt, D6O_IAPREFIX, 128, "2001:db8:1:0:ffff:0:dead:beef");
 
     checkOutputBuffer(D6O_IAPREFIX);
 
     // Check that option can be disposed safely
     EXPECT_NO_THROW(opt.reset());
 }
+
+// Check that the prefix having length of zero is represented as a "::".
+TEST_F(Option6IAPrefixTest, parseZero) {
+    setExampleBuffer();
+    // Set prefix length to 0.
+    buf_[8] = 0;
+
+    // Create an option (unpack content)
+    boost::scoped_ptr<Option6IAPrefix> opt;
+    ASSERT_NO_THROW(opt.reset(new Option6IAPrefix(D6O_IAPREFIX, buf_.begin(),
+                                                  buf_.begin() + 25)));
+    ASSERT_TRUE(opt);
+
+    // Pack this option
+    opt->pack(out_buf_);
+    EXPECT_EQ(29, out_buf_.getLength());
+
+    checkOption(*opt, D6O_IAPREFIX, 0, "::");
+
+    // Fill the address in the reference buffer with zeros.
+    buf_.insert(buf_.begin() + 9, 16, 0);
+    checkOutputBuffer(D6O_IAPREFIX);
+
+    // Check that option can be disposed safely
+    EXPECT_NO_THROW(opt.reset());
+}
+
 
 // Checks whether a new option can be built correctly
 TEST_F(Option6IAPrefixTest, build) {
@@ -151,14 +219,15 @@ TEST_F(Option6IAPrefixTest, build) {
     setExampleBuffer();
 
     ASSERT_NO_THROW(opt.reset(new Option6IAPrefix(12345,
-                    IOAddress("2001:db8:1::dead:beef"), 77, 1000, 3000000000u)));
+                    IOAddress("2001:db8:1:0:ffff:0:dead:beef"), 77,
+                                                  1000, 3000000000u)));
     ASSERT_TRUE(opt);
 
-    checkOption(*opt, 12345);
+    checkOption(*opt, 12345, 77, "2001:db8:1:0:ffff:0:dead:beef");
 
     // Check if we can build it properly
-    EXPECT_NO_THROW(opt->pack(outBuf_));
-    EXPECT_EQ(29, outBuf_.getLength());
+    EXPECT_NO_THROW(opt->pack(out_buf_));
+    EXPECT_EQ(29, out_buf_.getLength());
     checkOutputBuffer(12345);
 
     // Check that option can be disposed safely
@@ -181,7 +250,8 @@ TEST_F(Option6IAPrefixTest, negative) {
                  BadValue);
 
     // Prefix length can't be larger than 128
-    EXPECT_THROW(Option6IAPrefix(12345, IOAddress("192.0.2.1"), 255, 1000, 2000),
+    EXPECT_THROW(Option6IAPrefix(12345, IOAddress("192.0.2.1"),
+                                 255, 1000, 2000),
                  BadValue);
 }
 
