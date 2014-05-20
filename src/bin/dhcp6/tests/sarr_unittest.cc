@@ -79,7 +79,7 @@ TEST_F(SARRTest, directClientPrefixHint) {
     const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
     ASSERT_EQ(1, subnets->size());
     // Append IAPREFIX option to the client's message.
-    ASSERT_NO_THROW(client.useHint(100, 200, 56, "2001:db8:3:33::33"));
+    ASSERT_NO_THROW(client.useHint(100, 200, 64, "2001:db8:3:33::33"));
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
     // Server should have assigned a prefix.
@@ -103,7 +103,7 @@ TEST_F(SARRTest, directClientPrefixHint) {
     client.modifyDUID();
 
     // Use the hint with some least significant bytes set.
-    ASSERT_NO_THROW(client.useHint(100, 200, 56, "2001:db8:3:33::34"));
+    ASSERT_NO_THROW(client.useHint(100, 200, 64, "2001:db8:3:33::34"));
     ASSERT_NO_THROW(client.doSARR());
     // Server should assign a lease.
     ASSERT_EQ(1, client.getLeaseNum());
