@@ -649,6 +649,7 @@ const char* const root_servers[] = {
     "j.root-servers.net", "k.root-servers.net", "l.root-servers.net",
     "m.root-servers.net", NULL
 };
+#if 0
 const char* const gtld_servers[] = {
     "a.gtld-servers.net", "b.gtld-servers.net", "c.gtld-servers.net",
     "d.gtld-servers.net", "e.gtld-servers.net", "f.gtld-servers.net",
@@ -656,6 +657,7 @@ const char* const gtld_servers[] = {
     "j.gtld-servers.net", "k.gtld-servers.net", "l.gtld-servers.net",
     "m.gtld-servers.net", NULL
 };
+#endif
 const char* const jp_servers[] = {
     "a.dns.jp", "b.dns.jp", "c.dns.jp", "d.dns.jp", "e.dns.jp",
     "f.dns.jp", "g.dns.jp", NULL

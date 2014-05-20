@@ -204,12 +204,12 @@ D2CfgMgr::buildParams(isc::data::ConstElementPtr params_config) {
 
     // Fetch the parameters from the context to create the D2Params.
     D2CfgContextPtr context = getD2CfgContext();
-    isc::dhcp::StringStoragePtr& strings = context->getStringStorage();
+    isc::dhcp::StringStoragePtr strings = context->getStringStorage();
     asiolink::IOAddress ip_address(strings->
                                    getOptionalParam("ip_address",
                                                     D2Params::DFT_IP_ADDRESS));
 
-    isc::dhcp::Uint32StoragePtr& ints = context->getUint32Storage();
+    isc::dhcp::Uint32StoragePtr ints = context->getUint32Storage();
     uint32_t port = ints->getOptionalParam("port", D2Params::DFT_PORT);
 
     uint32_t dns_server_timeout
