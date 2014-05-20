@@ -105,6 +105,9 @@ public:
     /// @brief checks that addLease, getLease4(addr) and deleteLease() works
     void testBasicLease4();
 
+    /// @brief checks that invalid dates are safely handled.
+    void testMaxDate4();
+
     /// @brief Test lease retrieval using client id.
     void testGetLease4ClientId();
 
@@ -179,6 +182,10 @@ public:
     /// Checks that the addLease, getLease6 (by address) and deleteLease (with an
     /// IPv6 address) works.
     void testBasicLease6();
+
+    /// @brief checks that invalid dates are safely handled.
+    void testMaxDate6();
+
 
     /// @brief Test that IPv6 lease can be added, retrieved and deleted.
     ///
