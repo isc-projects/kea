@@ -464,4 +464,8 @@ TEST_F(PgSqlLeaseMgrTest, updateLease6) {
     testUpdateLease6();
 }
 
+TEST_F(PgSqlLeaseMgrTest, nullDuid) {
+    testNullDuid();
+}
+
 };
