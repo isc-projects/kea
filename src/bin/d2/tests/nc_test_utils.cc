@@ -31,6 +31,7 @@ namespace d2 {
 const char* TEST_DNS_SERVER_IP = "127.0.0.1";
 size_t TEST_DNS_SERVER_PORT = 5301;
 
+//const bool HAS_RDATA = true;
 const bool NO_RDATA = false;
 
 //*************************** FauxServer class ***********************
@@ -196,7 +197,7 @@ const unsigned int TransactionTest::FORWARD_CHG = 0x01;
 const unsigned int TransactionTest::REVERSE_CHG = 0x02;
 const unsigned int TransactionTest::FWD_AND_REV_CHG = REVERSE_CHG | FORWARD_CHG;
 
-TransactionTest::TransactionTest() : ncr_() {
+TransactionTest::TransactionTest() : ncr_(), cfg_mgr_(new D2CfgMgr()) {
 }
 
 TransactionTest::~TransactionTest() {

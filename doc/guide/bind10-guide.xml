@@ -5263,9 +5263,11 @@ Dhcp6/renew-timer	1000	integer	(default)
         configuration will be available. It will look similar to this:
 <screen>
 &gt; <userinput>config show DhcpDdns</userinput>
-DhcpDdns/interface  "eth0"  string  (default)
 DhcpDdns/ip_address "127.0.0.1" string  (default)
 DhcpDdns/port   53001   integer (default)
+DhcpDdns/dns_server_timeout   100   integer (default)
+DhcpDdns/ncr_protocol	"UDP"	string (default)
+DhcpDdns/ncr_format	"JSON"	string (default)
 DhcpDdns/tsig_keys  []  list    (default)
 DhcpDdns/forward_ddns/ddns_domains  []  list    (default)
 DhcpDdns/reverse_ddns/ddns_domains  []  list    (default)
@@ -5282,7 +5284,7 @@ DhcpDdns/reverse_ddns/ddns_domains  []  list    (default)
         <itemizedlist>
           <listitem>
             <simpara>
-              <command>General Server Parameters</command> &mdash;
+              <command>Global Server Parameters</command> &mdash;
               values which control connectivity and global server behavior
             </simpara>
           </listitem>
@@ -5306,20 +5308,43 @@ DhcpDdns/reverse_ddns/ddns_domains  []  list    (default)
           </listitem>
         </itemizedlist>
       <section id="d2-server-parameter-config">
-        <title>General Server Parameters</title>
+        <title>Global Server Parameters</title>
+      <orderedlist>
+      <listitem><para>
+      ip_address - IP address on which D2 listens for requests. The default is
+      the local loopback interface at address 127.0.0.1. You may specify
+      either an IPv4 or IPv6 address.
+      </para></listitem>
+      <listitem><para>
+      port - Port on which D2 listens for requests.  The default value
+      is 53001.
+      </para></listitem>
+      <listitem><para>
+      ncr_format - Socket protocol to use when sending requests to D2.
+      Currently only UDP is supported.  TCP may be available in an upcoming
+      release.
+      </para></listitem>
+      <listitem><para>
+      ncr_protocol - Packet format to use when sending requests to D2.
+      Currently only JSON format is supported.  Other formats may be available
+      in future releases.
+      </para></listitem>
+      <listitem><para>
+      dns_server_timeout - The maximum amount of time in milliseconds, that
+      D2 will wait for a response from a DNS server to a single DNS update
+      message.
+      </para></listitem>
+      </orderedlist>
         <para>
-        The DHCP-DDNS server must listen for requests on a known address and
-        port. By default, it will listen at 127.0.0.1 on port 53001.  This is
-        governed by the parameters, "ip-address" and "port".  Either value
-        may be changed using config set/commit. For example to change the
-        server to listen at 192.168.1.10 port 900:
+        D2 must listen for change requests on a known address and port.  By
+        default it listens at 127.0.0.1 on port 53001. The following example
+        illustrates how to change D2's global parameters so it will listen
+        at 192.168.1.10 port 900:
 <screen>
 &gt; <userinput>config set DhcpDdns/ip_address "192.168.1.10"</userinput>
 &gt; <userinput>config set DhcpDdns/port 900</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
-        The server may be configured to listen over IPv4 or IPv6, therefore
-        ip-address may an IPv4 or IPv6 address.
         </para>
         <warning>
           <simpara>
@@ -5332,7 +5357,6 @@ DhcpDdns/reverse_ddns/ddns_domains  []  list    (default)
             authentication to guard against such attacks.
           </simpara>
         </warning>
-
 <note>
 <simpara>
 If the ip_address and port are changed, it will be necessary to change the

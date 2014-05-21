@@ -53,6 +53,11 @@ public:
         return (DCfgContextBasePtr(new D2CfgContext(*this)));
     }
 
+    /// @brief Fetches a reference to the D2Params
+    D2ParamsPtr& getD2Params() {
+        return (d2_params_);
+    }
+
     /// @brief Fetches the forward DNS domain list manager.
     ///
     /// @return returns a pointer to the forward manager.
@@ -81,6 +86,9 @@ protected:
 private:
     /// @brief Private assignment operator to avoid potential for slicing.
     D2CfgContext& operator=(const D2CfgContext& rhs);
+
+    /// @brief Global level parameter storage
+    D2ParamsPtr d2_params_;
 
     /// @brief Forward domain list manager.
     DdnsDomainListMgrPtr forward_mgr_;
@@ -226,17 +234,33 @@ public:
     /// @throw D2CfgError if not given an IPv6 address.
     static std::string reverseV6Address(const isc::asiolink::IOAddress& ioaddr);
 
+    /// @brief Convenience method fetches the D2Params from context
+    /// @return reference to const D2ParamsPtr
+    const D2ParamsPtr& getD2Params();
+
 protected:
+    /// @brief Performs the parsing of the given "params" element.
+    ///
+    /// Iterates over the set of parameters, creating a parser based on the
+    /// parameter's id and then invoking its build method passing in the
+    /// parameter's configuration value.
+    ///
+    /// @param params_config set of scalar configuration elements to parse
+    virtual void buildParams(isc::data::ConstElementPtr params_config);
+
     /// @brief Given an element_id returns an instance of the appropriate
     /// parser.
     ///
     /// It is responsible for top-level or outermost DHCP-DDNS configuration
     /// elements (see dhcp-ddns.spec):
-    ///     1. interface
-    ///     2. ip_address
-    ///     3. port
-    ///     4. forward_ddns
-    ///     5. reverse_ddns
+    ///     -# ip_address
+    ///     -# port
+    ///     -# dns_server_timeout
+    ///     -# ncr_protocol
+    ///     -# ncr_format
+    ///     -# tsig_keys
+    ///     -# forward_ddns
+    ///     -# reverse_ddns
     ///
     /// @param element_id is the string name of the element as it will appear
     /// in the configuration set.
@@ -245,6 +269,17 @@ protected:
     /// @throw throws DCfgMgrBaseError if an error occurs.
     virtual isc::dhcp::ParserPtr
     createConfigParser(const std::string& element_id);
+
+    /// @brief Creates an new, blank D2CfgContext context
+    ///
+    /// This method is used at the beginning of configuration process to
+    /// create a fresh, empty copy of a D2CfgContext. This new context will
+    /// be populated during the configuration process and will replace the
+    /// existing context provided the configuration process completes without
+    /// error.
+    ///
+    /// @return Returns a DCfgContextBasePtr to the new context instance.
+    virtual DCfgContextBasePtr createNewContext();
 };
 
 /// @brief Defines a shared pointer to D2CfgMgr.

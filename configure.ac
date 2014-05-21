@@ -245,11 +245,13 @@ case "$host" in
 	# it should be avoided to rely on 'osx_version' unless there's no
 	# viable alternative.
 	osx_version=`/usr/bin/sw_vers -productVersion`
+
 	if [ test $osx_version = "10.9" \
-         -o $osx_version = "10.9.1" \
-         -o $osx_version = "10.9.2" ]; then
-		bind10_undefined_pthread_behavior=yes
-	fi
+        -o $osx_version = "10.9.1" \
+        -o $osx_version = "10.9.2" \
+        -o $osx_version = "10.9.3" ]; then
+	    bind10_undefined_pthread_behavior=yes
+    fi
 
 	# libtool doesn't work perfectly with Darwin: libtool embeds the
 	# final install path in dynamic libraries and our loadable python
