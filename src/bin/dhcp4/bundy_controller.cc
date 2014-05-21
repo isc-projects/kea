@@ -19,7 +19,7 @@
 #include <cc/session.h>
 #include <config/ccsession.h>
 #include <dhcp/iface_mgr.h>
-#include <dhcp4/config_parser.h>
+#include <dhcp4/json_config_parser.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/spec_config.h>
@@ -48,10 +48,33 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-ControlledDhcpv4Srv* ControlledDhcpv4Srv::server_ = NULL;
+/// @brief Helper session object that represents raw connection to msgq.
+isc::cc::Session* cc_session_ = NULL;
 
+/// @brief Session that receives configuration and commands
+isc::config::ModuleCCSession* config_session_ = NULL;
+
+/// @brief A dummy configuration handler that always returns success.
+///
+/// This configuration handler does not perform configuration
+/// parsing and always returns success. A dummy handler should
+/// be installed using \ref isc::config::ModuleCCSession ctor
+/// to get the initial configuration. This initial configuration
+/// comprises values for only those elements that were modified
+/// the previous session. The \ref dhcp4ConfigHandler can't be
+/// used to parse the initial configuration because it needs the
+/// full configuration to satisfy dependencies between the
+/// various configuration values. Installing the dummy handler
+/// that guarantees to return success causes initial configuration
+/// to be stored for the session being created and that it can
+/// be later accessed with
+/// \ref isc::config::ConfigData::getFullConfig().
+///
+/// @param new_config new configuration.
+///
+/// @return success configuration status.
 ConstElementPtr
-ControlledDhcpv4Srv::dhcp4StubConfigHandler(ConstElementPtr) {
+dhcp4StubConfigHandler(ConstElementPtr) {
     // This configuration handler is intended to be used only
     // when the initial configuration comes in. To receive this
     // configuration a pointer to this handler must be passed
@@ -66,8 +89,8 @@ ControlledDhcpv4Srv::dhcp4StubConfigHandler(ConstElementPtr) {
 }
 
 ConstElementPtr
-ControlledDhcpv4Srv::dhcp4ConfigHandler(ConstElementPtr new_config) {
-    if (!server_ || !server_->config_session_) {
+bundyConfigHandler(ConstElementPtr new_config) {
+    if (!ControlledDhcpv4Srv::getInstance() || !config_session_) {
         // That should never happen as we install config_handler
         // after we instantiate the server.
         ConstElementPtr answer =
@@ -91,7 +114,7 @@ ControlledDhcpv4Srv::dhcp4ConfigHandler(ConstElementPtr new_config) {
     // Let's create a new object that will hold the merged configuration.
     boost::shared_ptr<MapElement> merged_config(new MapElement());
     // Let's get the existing configuration.
-    ConstElementPtr full_config = server_->config_session_->getFullConfig();
+    ConstElementPtr full_config = config_session_->getFullConfig();
     // The full_config and merged_config should be always non-NULL
     // but to provide some level of exception safety we check that they
     // really are (in case we go out of memory).
@@ -105,88 +128,13 @@ ControlledDhcpv4Srv::dhcp4ConfigHandler(ConstElementPtr new_config) {
     }
 
     // Configure the server.
-    ConstElementPtr answer = configureDhcp4Server(*server_, merged_config);
-
-    // Check that configuration was successful. If not, do not reopen sockets.
-    int rcode = 0;
-    parseAnswer(rcode, answer);
-    if (rcode != 0) {
-        return (answer);
-    }
-
-    // Server will start DDNS communications if its enabled.
-    try {
-        server_->startD2();
-    } catch (const std::exception& ex) {
-        std::ostringstream err;
-        err << "error starting DHCP_DDNS client "
-                " after server reconfiguration: " << ex.what();
-        return (isc::config::createAnswer(1, err.str()));
-    }
-
-    // Configuration may change active interfaces. Therefore, we have to reopen
-    // sockets according to new configuration. This operation is not exception
-    // safe and we really don't want to emit exceptions to the callback caller.
-    // Instead, catch an exception and create appropriate answer.
-    try {
-        server_->openActiveSockets(server_->getPort(), server_->useBroadcast());
-    } catch (std::exception& ex) {
-        std::ostringstream err;
-        err << "failed to open sockets after server reconfiguration: " << ex.what();
-        answer = isc::config::createAnswer(1, err.str());
-    }
-    return (answer);
+    return (ControlledDhcpv4Srv::processConfig(merged_config));
 }
 
-ConstElementPtr
-ControlledDhcpv4Srv::dhcp4CommandHandler(const string& command, ConstElementPtr args) {
-    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_COMMAND_RECEIVED)
-              .arg(command).arg(args->str());
 
-    if (command == "shutdown") {
-        if (ControlledDhcpv4Srv::server_) {
-            ControlledDhcpv4Srv::server_->shutdown();
-        } else {
-            LOG_WARN(dhcp4_logger, DHCP4_NOT_RUNNING);
-            ConstElementPtr answer = isc::config::createAnswer(1,
-                                     "Shutdown failure.");
-            return (answer);
-        }
-        ConstElementPtr answer = isc::config::createAnswer(0,
-                                 "Shutting down.");
-        return (answer);
 
-    } else if (command == "libreload") {
-        // TODO delete any stored CalloutHandles referring to the old libraries
-        // Get list of currently loaded libraries and reload them.
-        vector<string> loaded = HooksManager::getLibraryNames();
-        bool status = HooksManager::loadLibraries(loaded);
-        if (!status) {
-            LOG_ERROR(dhcp4_logger, DHCP4_HOOKS_LIBS_RELOAD_FAIL);
-            ConstElementPtr answer = isc::config::createAnswer(1,
-                                     "Failed to reload hooks libraries.");
-            return (answer);
-        }
-        ConstElementPtr answer = isc::config::createAnswer(0,
-                                 "Hooks libraries successfully reloaded.");
-        return (answer);
-    }
 
-    ConstElementPtr answer = isc::config::createAnswer(1,
-                             "Unrecognized command.");
-
-    return (answer);
-}
-
-void ControlledDhcpv4Srv::sessionReader(void) {
-    // Process one asio event. If there are more events, iface_mgr will call
-    // this callback more than once.
-    if (server_) {
-        server_->io_service_.run_one();
-    }
-}
-
-void ControlledDhcpv4Srv::establishSession() {
+void ControlledDhcpv4Srv::init(const std::string& /*config_file*/) {
 
     string specfile;
     if (getenv("B10_FROM_BUILD")) {
@@ -210,14 +158,14 @@ void ControlledDhcpv4Srv::establishSession() {
     // been lost.
     config_session_ = new ModuleCCSession(specfile, *cc_session_,
                                           dhcp4StubConfigHandler,
-                                          dhcp4CommandHandler, false);
+                                          processCommand, false);
     config_session_->start();
 
     // We initially create ModuleCCSession() without configHandler, as
     // the session module is too eager to send partial configuration.
     // We want to get the full configuration, so we explicitly call
     // getFullConfig() and then pass it to our configHandler.
-    config_session_->setConfigHandler(dhcp4ConfigHandler);
+    config_session_->setConfigHandler(bundyConfigHandler);
 
     try {
         configureDhcp4Server(*this, config_session_->getFullConfig());
@@ -243,7 +191,8 @@ void ControlledDhcpv4Srv::establishSession() {
     IfaceMgr::instance().addExternalSocket(ctrl_socket, sessionReader);
 }
 
-void ControlledDhcpv4Srv::disconnectSession() {
+
+void ControlledDhcpv4Srv::cleanup() {
     if (config_session_) {
         delete config_session_;
         config_session_ = NULL;
@@ -259,32 +208,11 @@ void ControlledDhcpv4Srv::disconnectSession() {
     }
 }
 
-ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t port /*= DHCP4_SERVER_PORT*/)
-    :Dhcpv4Srv(port), cc_session_(NULL), config_session_(NULL) {
-    server_ = this; // remember this instance for use in callback
-}
-
-void ControlledDhcpv4Srv::shutdown() {
-    io_service_.stop(); // Stop ASIO transmissions
-    Dhcpv4Srv::shutdown(); // Initiate DHCPv4 shutdown procedure.
-}
-
-ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
-    disconnectSession();
-
-    server_ = NULL; // forget this instance. There should be no callback anymore
-                    // at this stage anyway.
-}
-
-isc::data::ConstElementPtr
-ControlledDhcpv4Srv::execDhcpv4ServerCommand(const std::string& command_id,
-                                             isc::data::ConstElementPtr args) {
-    try {
-        return (dhcp4CommandHandler(command_id, args));
-    } catch (const Exception& ex) {
-        ConstElementPtr answer = isc::config::createAnswer(1, ex.what());
-        return (answer);
-    }
+void
+Daemon::loggerInit(const char* log_name, bool verbose, bool stand_alone) {
+    isc::log::initLogger(log_name,
+                         (verbose ? isc::log::DEBUG : isc::log::INFO),
+                         isc::log::MAX_DEBUG_LEVEL, NULL, !stand_alone);
 }
 
 };
