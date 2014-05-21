@@ -252,6 +252,9 @@ public:
     /// persistent storage has been updated as expected.
     void testRecreateLease6();
 
+    /// @brief Verifies that a null DUID is not allowed.
+    void testNullDuid();
+
     /// @brief String forms of IPv4 addresses
     std::vector<std::string>  straddress4_;
 

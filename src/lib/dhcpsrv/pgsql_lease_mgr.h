@@ -99,7 +99,7 @@ struct PsqlBindArray {
     /// Converts the given boolean value to its corresponding to PostgreSQL
     /// string value and adds it as a TEXT_FMT value to the bind array.
     ///
-    /// @param value std::string containing the value to add.
+    /// @param value bool value to add.
     void add(const bool& value);
 
     /// @brief Dumps the contents of the array to a string.

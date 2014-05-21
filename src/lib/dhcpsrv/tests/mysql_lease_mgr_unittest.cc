@@ -516,4 +516,10 @@ TEST_F(MySqlLeaseMgrTest, testRecreateLease6) {
     testRecreateLease6();
 }
 
+/// @brief Checks that null DUID is not allowed.
+/// Test is disabled as MySqlLeaseMgr does not currently defend against a null DUID.
+TEST_F(MySqlLeaseMgrTest, DISABLED_nullDuid) {
+    testNullDuid();
+}
+
 }; // Of anonymous namespace
