@@ -1552,6 +1552,18 @@ GenericLeaseMgrTest::testRecreateLease6() {
     detailCompareLease(lease, l_returned);
 }
 
+void
+GenericLeaseMgrTest::testNullDuid() {
+    // Create leases, although we need only one.
+    vector<Lease6Ptr> leases = createLeases6();
+
+    // Set DUID to empty pointer.
+    leases[1]->duid_.reset();
+
+    // Insert should throw.
+    ASSERT_THROW(lmptr_->addLease(leases[1]), DbOperationError);
+}
+
 
 }; // namespace test
 }; // namespace dhcp
