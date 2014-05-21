@@ -105,6 +105,9 @@ public:
     /// @brief checks that addLease, getLease4(addr) and deleteLease() works
     void testBasicLease4();
 
+    /// @brief checks that invalid dates are safely handled.
+    void testMaxDate4();
+
     /// @brief Test lease retrieval using client id.
     void testGetLease4ClientId();
 
@@ -180,6 +183,10 @@ public:
     /// IPv6 address) works.
     void testBasicLease6();
 
+    /// @brief checks that invalid dates are safely handled.
+    void testMaxDate6();
+
+
     /// @brief Test that IPv6 lease can be added, retrieved and deleted.
     ///
     /// This method checks basic IPv6 lease operations. There's check_t1_t2
@@ -244,6 +251,9 @@ public:
     /// of the attributes changed. Next it verifies that the lease in the
     /// persistent storage has been updated as expected.
     void testRecreateLease6();
+
+    /// @brief Verifies that a null DUID is not allowed.
+    void testNullDuid();
 
     /// @brief String forms of IPv4 addresses
     std::vector<std::string>  straddress4_;
