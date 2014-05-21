@@ -25,6 +25,9 @@
 namespace isc {
 namespace d2 {
 
+/// @brief Defines a map of ConstElementPtrs keyed by name
+typedef std::map<std::string, isc::data::ConstElementPtr> ElementMap;
+
 /// @brief Exception thrown if the configuration manager encounters an error.
 class DCfgMgrBaseError : public isc::Exception {
 public:
@@ -181,7 +184,7 @@ private:
     isc::dhcp::StringStoragePtr string_values_;
 };
 
-/// @brief Defines an unsorted, list of string Element IDs.
+/// @brief Defines a sequence of Element IDs used to specify a parsing order.
 typedef std::vector<std::string> ElementIdList;
 
 /// @brief Configuration Manager
@@ -198,7 +201,16 @@ typedef std::vector<std::string> ElementIdList;
 ///
 /// @code
 ///    make backup copy of configuration context
-///    for each top level element in new configuration
+///    Split top-level configuration elements into to sets:
+///      1. Set of scalar elements (strings, booleans, ints, etc..)
+///      2. Set of object elements (maps, lists, etc...)
+///    For each entry in the scalar set:
+///        get derivation-specific parser for element
+///        run parser
+///        update context with parsed results
+///        break on error
+///
+///    For each entry in the object set;
 ///        get derivation-specific parser for element
 ///        run parser
 ///        update context with parsed results
@@ -208,9 +220,9 @@ typedef std::vector<std::string> ElementIdList;
 ///        restore configuration context from backup
 /// @endcode
 ///
-/// After making a backup of the current context, it iterates over the top-level
-/// elements in the new configuration.  The order in which the elements are
-/// processed is either:
+/// The above structuring ensures that global parameters are parsed first
+/// making them available during subsequent object element parsing. The order
+/// in which the object elements are processed is either:
 ///
 ///    1. Natural order presented by the configuration set
 ///    2. Specific order determined by a list of element ids
@@ -256,9 +268,10 @@ public:
 
     /// @brief Adds a given element id to the end of the parse order list.
     ///
-    /// The order in which elements are retrieved from this is the order in
-    /// which they are added to the list. Derivations should use this method
-    /// to populate the parse order as part of their constructor.
+    /// The order in which object elements are retrieved from this is the
+    /// order in which they are added to the list. Derivations should use this
+    /// method to populate the parse order as part of their constructor.
+    /// Scalar parameters should NOT be included in this list.
     ///
     /// @param element_id is the string name of the element as it will appear
     /// in the configuration set.
@@ -281,6 +294,20 @@ public:
     }
 
 protected:
+    /// @brief Parses a set of scalar configuration elements into global
+    /// parameters
+    ///
+    /// For each scalar element in the set:
+    ///  - create a parser for the element
+    ///  - invoke the parser's build method
+    ///  - invoke the parser's commit method
+    ///
+    /// This will commit the values to context storage making them accessible
+    /// during object parsing.
+    ///
+    /// @param params_config set of scalar configuration elements to parse
+    virtual void buildParams(isc::data::ConstElementPtr params_config);
+
     /// @brief  Create a parser instance based on an element id.
     ///
     /// Given an element_id returns an instance of the appropriate parser.
@@ -294,6 +321,27 @@ protected:
     /// @throw throws DCfgMgrBaseError if an error occurs.
     virtual isc::dhcp::ParserPtr
     createConfigParser(const std::string& element_id) = 0;
+
+    /// @brief Abstract factory which creates a context instance.
+    ///
+    /// This method is used at the beginning of configuration process to
+    /// create a fresh, empty copy of the derivation-specific context. This
+    /// new context will be populated during the configuration process
+    /// and will replace the existing context provided the configuration
+    /// process completes without error.
+    ///
+    /// @return Returns a DCfgContextBasePtr to the new context instance.
+    virtual DCfgContextBasePtr createNewContext() = 0;
+
+    /// @brief Replaces existing context with a new, emtpy context.
+    void resetContext();
+
+    /// @brief Update the current context.
+    ///
+    /// Replaces the existing context with the given context.
+    /// @param context Pointer to the new context.
+    /// @throw DCfgMgrBaseError if context is NULL.
+    void setContext(DCfgContextBasePtr& context);
 
 private:
 

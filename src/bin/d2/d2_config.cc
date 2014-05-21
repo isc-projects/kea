@@ -27,6 +27,102 @@
 namespace isc {
 namespace d2 {
 
+// *********************** D2Params  *************************
+
+const char *D2Params::DFT_IP_ADDRESS = "127.0.0.1";
+const size_t D2Params::DFT_PORT = 53001;
+const size_t D2Params::DFT_DNS_SERVER_TIMEOUT = 100;
+const char *D2Params::DFT_NCR_PROTOCOL = "UDP";
+const char *D2Params::DFT_NCR_FORMAT = "JSON";
+
+D2Params::D2Params(const isc::asiolink::IOAddress& ip_address,
+                   const size_t port,
+                   const size_t dns_server_timeout,
+                   const dhcp_ddns::NameChangeProtocol& ncr_protocol,
+                   const dhcp_ddns::NameChangeFormat& ncr_format)
+    : ip_address_(ip_address),
+    port_(port),
+    dns_server_timeout_(dns_server_timeout),
+    ncr_protocol_(ncr_protocol),
+    ncr_format_(ncr_format) {
+    validateContents();
+}
+
+D2Params::D2Params()
+    : ip_address_(isc::asiolink::IOAddress(DFT_IP_ADDRESS)),
+     port_(DFT_PORT),
+     dns_server_timeout_(DFT_DNS_SERVER_TIMEOUT),
+     ncr_protocol_(dhcp_ddns::NCR_UDP),
+     ncr_format_(dhcp_ddns::FMT_JSON) {
+    validateContents();
+}
+
+D2Params::~D2Params(){};
+
+void
+D2Params::validateContents() {
+    if ((ip_address_.toText() == "0.0.0.0") || (ip_address_.toText() == "::")) {
+        isc_throw(D2CfgError,
+                  "D2Params: IP address cannot be \"" << ip_address_ << "\"");
+    }
+
+    if (port_ == 0) {
+        isc_throw(D2CfgError, "D2Params: port cannot be 0");
+    }
+
+    if (dns_server_timeout_ < 1) {
+        isc_throw(D2CfgError,
+                  "D2Params: DNS server timeout must be larger than 0");
+    }
+
+    if (ncr_format_ != dhcp_ddns::FMT_JSON) {
+        isc_throw(D2CfgError, "D2Params: NCR Format:"
+                  << dhcp_ddns::ncrFormatToString(ncr_format_)
+                  << " is not yet supported");
+    }
+
+    if (ncr_protocol_ != dhcp_ddns::NCR_UDP) {
+        isc_throw(D2CfgError, "D2Params: NCR Protocol:"
+                  << dhcp_ddns::ncrProtocolToString(ncr_protocol_)
+                  << " is not yet supported");
+    }
+}
+
+bool
+D2Params::operator == (const D2Params& other) const {
+    return ((ip_address_ == other.ip_address_) &&
+            (port_ == other.port_) &&
+            (dns_server_timeout_ == other.dns_server_timeout_) &&
+            (ncr_protocol_ == other.ncr_protocol_) &&
+            (ncr_format_ == other.ncr_format_));
+}
+
+bool
+D2Params::operator != (const D2Params& other) const {
+    return (!(*this == other));
+}
+
+std::string
+D2Params::toText() const {
+    std::ostringstream stream;
+
+    stream << ", ip_address: " << ip_address_.toText()
+           << ", port: " << port_
+           << ", dns_server_timeout_: " << dns_server_timeout_
+           << ", ncr_protocol: "
+           << dhcp_ddns::ncrProtocolToString(ncr_protocol_)
+           << ", ncr_format: " << ncr_format_
+           << dhcp_ddns::ncrFormatToString(ncr_format_);
+
+    return (stream.str());
+}
+
+std::ostream&
+operator<<(std::ostream& os, const D2Params& config) {
+    os << config.toText();
+    return (os);
+}
+
 // *********************** TSIGKeyInfo  *************************
 
 TSIGKeyInfo::TSIGKeyInfo(const std::string& name, const std::string& algorithm,

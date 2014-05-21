@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -207,7 +207,7 @@ D2Process::configure(isc::data::ConstElementPtr config_set) {
 
     if (rcode) {
         // Non-zero means we got an invalid configuration, take no further
-        // action.  In integrated mode, this will send a failed response back 
+        // action. In integrated mode, this will send a failed response back
         // to BIND10.
         reconf_queue_flag_ = false;
         return (answer);
@@ -248,7 +248,7 @@ D2Process::checkQueueStatus() {
                 queue_mgr_->stopListening();
             } catch (const isc::Exception& ex) {
                 // It is very unlikey that we would experience an error
-                // here, but theoretically possible. 
+                // here, but theoretically possible.
                 LOG_ERROR(dctl_logger, DHCP_DDNS_QUEUE_MGR_STOP_ERROR)
                           .arg(ex.what());
             }
@@ -325,37 +325,42 @@ D2Process::reconfigureQueueMgr() {
         queue_mgr_->removeListener();
 
         // Get the configuration parameters that affect Queue Manager.
-        // @todo Need to add parameters for listener TYPE, FORMAT, address reuse
-        std::string ip_address;
-        uint32_t port;
-        getCfgMgr()->getContext()->getParam("ip_address", ip_address);
+        const D2ParamsPtr& d2_params = getD2CfgMgr()->getD2Params();
 
         // Warn the user if the server address is not the loopback.
         /// @todo Remove this once we provide a secure mechanism.
+        std::string ip_address =  d2_params->getIpAddress().toText();
         if (ip_address != "127.0.0.1" && ip_address != "::1") {
             LOG_WARN(dctl_logger, DHCP_DDNS_NOT_ON_LOOPBACK).arg(ip_address);
         }
 
-        getCfgMgr()->getContext()->getParam("port", port);
-        isc::asiolink::IOAddress addr(ip_address);
-
         // Instantiate the listener.
-        queue_mgr_->initUDPListener(addr, port, dhcp_ddns::FMT_JSON, true);
+        if (d2_params->getNcrProtocol() == dhcp_ddns::NCR_UDP) {
+            queue_mgr_->initUDPListener(d2_params->getIpAddress(),
+                                        d2_params->getPort(),
+                                        d2_params->getNcrFormat(), true);
+        } else {
+            /// @todo Add TCP/IP once it's supported
+            // We should never get this far but if we do deal with it.
+            isc_throw(DProcessBaseError, "Unsupported NCR listener protocol:"
+                      << dhcp_ddns::ncrProtocolToString(d2_params->
+                                                        getNcrProtocol()));
+        }
 
         // Now start it. This assumes that starting is a synchronous,
         // blocking call that executes quickly.  @todo Should that change then
         // we will have to expand the state model to accommodate this.
         queue_mgr_->startListening();
     } catch (const isc::Exception& ex) {
-        // Queue manager failed to initialize and therefore not listening. 
-        // This is most likely due to an unavailable IP address or port, 
+        // Queue manager failed to initialize and therefore not listening.
+        // This is most likely due to an unavailable IP address or port,
         // which is a configuration issue.
         LOG_ERROR(dctl_logger, DHCP_DDNS_QUEUE_MGR_START_ERROR).arg(ex.what());
     }
 }
 
 isc::data::ConstElementPtr
-D2Process::command(const std::string& command, 
+D2Process::command(const std::string& command,
                    isc::data::ConstElementPtr args) {
     // @todo This is the initial implementation.  If and when D2 is extended
     // to support its own commands, this implementation must change. Otherwise

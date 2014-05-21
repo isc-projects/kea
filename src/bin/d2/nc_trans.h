@@ -19,7 +19,7 @@
 
 #include <exceptions/exceptions.h>
 #include <d2/d2_asio.h>
-#include <d2/d2_config.h>
+#include <d2/d2_cfg_mgr.h>
 #include <d2/dns_client.h>
 #include <d2/state_model.h>
 #include <dhcp_ddns/ncr_msg.h>
@@ -168,6 +168,7 @@ public:
     /// @param ncr is the NameChangeRequest to fulfill
     /// @param forward_domain is the domain to use for forward DNS updates
     /// @param reverse_domain is the domain to use for reverse DNS updates
+    /// @param cfg_mgr reference to the current configuration manager
     ///
     /// @throw NameChangeTransactionError if given an null request,
     /// if forward change is enabled but forward domain is null, if
@@ -175,7 +176,8 @@ public:
     NameChangeTransaction(IOServicePtr& io_service,
                           dhcp_ddns::NameChangeRequestPtr& ncr,
                           DdnsDomainPtr& forward_domain,
-                          DdnsDomainPtr& reverse_domain);
+                          DdnsDomainPtr& reverse_domain,
+                          D2CfgMgrPtr& cfg_mgr);
 
     /// @brief Destructor
     virtual ~NameChangeTransaction();
@@ -570,6 +572,9 @@ private:
 
     /// @brief Number of transmit attempts for the current request.
     size_t update_attempts_;
+
+    /// @brief Pointer to the configuration manager.
+    D2CfgMgrPtr cfg_mgr_;
 };
 
 /// @brief Defines a pointer to a NameChangeTransaction.

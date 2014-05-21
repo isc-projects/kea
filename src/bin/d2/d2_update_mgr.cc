@@ -195,10 +195,12 @@ D2UpdateMgr::makeTransaction(dhcp_ddns::NameChangeRequestPtr& next_ncr) {
     NameChangeTransactionPtr trans;
     if (next_ncr->getChangeType() == dhcp_ddns::CHG_ADD) {
         trans.reset(new NameAddTransaction(io_service_, next_ncr,
-                                           forward_domain, reverse_domain));
+                                           forward_domain, reverse_domain,
+                                           cfg_mgr_));
     } else {
         trans.reset(new NameRemoveTransaction(io_service_, next_ncr,
-                                              forward_domain, reverse_domain));
+                                              forward_domain, reverse_domain,
+                                              cfg_mgr_));
     }
 
     // Add the new transaction to the list.

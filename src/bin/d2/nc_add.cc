@@ -38,8 +38,10 @@ NameAddTransaction::
 NameAddTransaction(IOServicePtr& io_service,
                    dhcp_ddns::NameChangeRequestPtr& ncr,
                    DdnsDomainPtr& forward_domain,
-                   DdnsDomainPtr& reverse_domain)
-    : NameChangeTransaction(io_service, ncr, forward_domain, reverse_domain) {
+                   DdnsDomainPtr& reverse_domain,
+                   D2CfgMgrPtr& cfg_mgr)
+    : NameChangeTransaction(io_service, ncr, forward_domain, reverse_domain,
+                            cfg_mgr) {
     if (ncr->getChangeType() != isc::dhcp_ddns::CHG_ADD) {
         isc_throw (NameAddTransactionError,
                    "NameAddTransaction, request type must be CHG_ADD");

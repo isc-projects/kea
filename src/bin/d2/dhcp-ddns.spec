@@ -5,24 +5,34 @@
     "module_description": "DHPC-DDNS Service",
     "config_data": [
     { 
-        "item_name": "interface",
-        "item_type": "string",
-        "item_optional": true,
-        "item_default": "eth0"
-    },
-
-    { 
         "item_name": "ip_address",
         "item_type": "string",
         "item_optional": false,
         "item_default": "127.0.0.1" 
     },
-
     { 
         "item_name": "port",
         "item_type": "integer",
         "item_optional": true,
         "item_default": 53001 
+    },
+    {
+        "item_name": "dns_server_timeout",
+        "item_type": "integer",
+        "item_optional": true,
+        "item_default": 100
+    },
+    {
+        "item_name": "ncr_protocol",
+        "item_type": "string",
+        "item_optional": true,
+        "item_default": "UDP"
+    },
+    {
+        "item_name": "ncr_format",
+        "item_type": "string",
+        "item_optional": true,
+        "item_default": "JSON"
     },
     {
         "item_name": "tsig_keys",
