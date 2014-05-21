@@ -683,6 +683,29 @@ GenericLeaseMgrTest::testAddGetDelete6(bool check_t1_t2) {
 }
 
 void
+GenericLeaseMgrTest::testMaxDate4() {
+    // Get the leases to be used for the test.
+    vector<Lease4Ptr> leases = createLeases4();
+    Lease4Ptr lease = leases[1];
+
+    // Set valid_lft_ to 1 day, cllt_ to max time. This should make expire
+    // time too large to store.
+    lease->valid_lft_ = 24*60*60;
+    lease->cltt_ = LeaseMgr::MAX_DB_TIME;
+
+    // Insert should throw.
+    ASSERT_THROW(lmptr_->addLease(leases[1]), DbOperationError);
+
+    // Set valid_lft_ to 0, which should make expire time small enough to
+    // store and try again.
+    lease->valid_lft_ = 0;
+    EXPECT_TRUE(lmptr_->addLease(leases[1]));
+    Lease4Ptr l_returned = lmptr_->getLease4(ioaddress4_[1]);
+    ASSERT_TRUE(l_returned);
+    detailCompareLease(leases[1], l_returned);
+}
+
+void
 GenericLeaseMgrTest::testBasicLease4() {
     // Get the leases to be used for the test.
     vector<Lease4Ptr> leases = createLeases4();
@@ -826,6 +849,29 @@ GenericLeaseMgrTest::testBasicLease6() {
     l_returned = lmptr_->getLease6(leasetype6_[2], ioaddress6_[2]);
     ASSERT_TRUE(l_returned);
     detailCompareLease(leases[2], l_returned);
+}
+
+void
+GenericLeaseMgrTest::testMaxDate6() {
+    // Get the leases to be used for the test.
+    vector<Lease6Ptr> leases = createLeases6();
+    Lease6Ptr lease = leases[1];
+
+    // Set valid_lft_ to 1 day, cllt_ to max time. This should make expire
+    // time too large to store.
+    lease->valid_lft_ = 24*60*60;
+    lease->cltt_ = LeaseMgr::MAX_DB_TIME;
+
+    // Insert should throw.
+    ASSERT_THROW(lmptr_->addLease(leases[1]), DbOperationError);
+
+    // Set valid_lft_ to 0, which should make expire time small enough to
+    // store and try again.
+    lease->valid_lft_ = 0;
+    EXPECT_TRUE(lmptr_->addLease(leases[1]));
+    Lease6Ptr l_returned = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
+    ASSERT_TRUE(l_returned);
+    detailCompareLease(leases[1], l_returned);
 }
 
 void
@@ -1504,6 +1550,18 @@ GenericLeaseMgrTest::testRecreateLease6() {
     l_returned = lmptr_->getLease6(Lease::TYPE_NA, ioaddress6_[0]);
     ASSERT_TRUE(l_returned);
     detailCompareLease(lease, l_returned);
+}
+
+void
+GenericLeaseMgrTest::testNullDuid() {
+    // Create leases, although we need only one.
+    vector<Lease6Ptr> leases = createLeases6();
+
+    // Set DUID to empty pointer.
+    leases[1]->duid_.reset();
+
+    // Insert should throw.
+    ASSERT_THROW(lmptr_->addLease(leases[1]), DbOperationError);
 }
 
 

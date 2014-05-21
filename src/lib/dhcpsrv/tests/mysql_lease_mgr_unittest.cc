@@ -333,6 +333,11 @@ TEST_F(MySqlLeaseMgrTest, basicLease4) {
     testBasicLease4();
 }
 
+/// @brief Check that Lease4 code safely handles invalid dates.
+TEST_F(MySqlLeaseMgrTest, maxDate4) {
+    testMaxDate4();
+}
+
 /// @brief Lease4 update tests
 ///
 /// Checks that we are able to update a lease in the database.
@@ -437,6 +442,11 @@ TEST_F(MySqlLeaseMgrTest, basicLease6) {
     testBasicLease6();
 }
 
+/// @brief Check that Lease6 code safely handles invalid dates.
+TEST_F(MySqlLeaseMgrTest, maxDate6) {
+    testMaxDate6();
+}
+
 /// @brief Verify that too long hostname for Lease6 is not accepted.
 ///
 /// Checks that the it is not possible to create a lease when the hostname
@@ -504,6 +514,12 @@ TEST_F(MySqlLeaseMgrTest, testRecreateLease4) {
 /// correctly stored in the lease database.
 TEST_F(MySqlLeaseMgrTest, testRecreateLease6) {
     testRecreateLease6();
+}
+
+/// @brief Checks that null DUID is not allowed.
+/// Test is disabled as MySqlLeaseMgr does not currently defend against a null DUID.
+TEST_F(MySqlLeaseMgrTest, DISABLED_nullDuid) {
+    testNullDuid();
 }
 
 }; // Of anonymous namespace
