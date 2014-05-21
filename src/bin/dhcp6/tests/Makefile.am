@@ -1,6 +1,7 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
 PYTESTS = dhcp6_test.py
-EXTRA_DIST = $(PYTESTS)
+SHTESTS = dhcp6_reconfigure_test.sh
+EXTRA_DIST = $(PYTESTS) $(SHTESTS)
 
 # Explicitly specify paths to dynamic libraries required by loadable python
 # modules. That is required on Mac OS systems. Otherwise we will get exception
@@ -20,6 +21,12 @@ check-local:
 		$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done
 
+	for shtest in $(SHTESTS) ; do \
+	echo Running test: $$shtest ; \
+	B10_LOCKFILE_DIR_FROM_BUILD=$(abs_top_builddir) \
+	$(abs_srcdir)/$$shtest || exit ; \
+	done
+
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/bin # for generated spec_config.h header
@@ -30,6 +37,7 @@ AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
 CLEANFILES  = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
 CLEANFILES += $(builddir)/load_marker.txt $(builddir)/unload_marker.txt
+CLEANFILES += *.json *.log
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 if USE_CLANGPP
@@ -41,6 +49,7 @@ TESTS_ENVIRONMENT = \
         $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
 TESTS =
+TEST_EXTENSIONS = .sh
 if HAVE_GTEST
 # Build shared libraries for testing. The libtool way to create a shared library
 # is to specify "-avoid-version -export-dynamic -module" in the library LDFLAGS
