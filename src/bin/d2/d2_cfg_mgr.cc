@@ -30,12 +30,14 @@ typedef std::vector<uint8_t> ByteAddress;
 // *********************** D2CfgContext  *************************
 
 D2CfgContext::D2CfgContext()
-    : forward_mgr_(new DdnsDomainListMgr("forward_mgr")),
+    : d2_params_(new D2Params()),
+      forward_mgr_(new DdnsDomainListMgr("forward_mgr")),
       reverse_mgr_(new DdnsDomainListMgr("reverse_mgr")),
       keys_(new TSIGKeyInfoMap()) {
 }
 
 D2CfgContext::D2CfgContext(const D2CfgContext& rhs) : DCfgContextBase(rhs) {
+    d2_params_ = rhs.d2_params_;
     if (rhs.forward_mgr_) {
         forward_mgr_.reset(new DdnsDomainListMgr(rhs.forward_mgr_->getName()));
         forward_mgr_->setDomains(rhs.forward_mgr_->getDomains());
@@ -61,15 +63,17 @@ const char* D2CfgMgr::IPV6_REV_ZONE_SUFFIX = "ip6.arpa.";
 D2CfgMgr::D2CfgMgr() : DCfgMgrBase(DCfgContextBasePtr(new D2CfgContext())) {
     // TSIG keys need to parse before the Domains, so we can catch Domains
     // that specify undefined keys. Create the necessary parsing order now.
-    addToParseOrder("interface");
-    addToParseOrder("ip_address");
-    addToParseOrder("port");
     addToParseOrder("tsig_keys");
     addToParseOrder("forward_ddns");
     addToParseOrder("reverse_ddns");
 }
 
 D2CfgMgr::~D2CfgMgr() {
+}
+
+DCfgContextBasePtr
+D2CfgMgr::createNewContext() {
+    return (DCfgContextBasePtr(new D2CfgContext()));
 }
 
 bool
@@ -187,6 +191,47 @@ D2CfgMgr::reverseV6Address(const isc::asiolink::IOAddress& ioaddr) {
     return(stream.str());
 }
 
+const D2ParamsPtr&
+D2CfgMgr::getD2Params() {
+    return (getD2CfgContext()->getD2Params());
+}
+
+void
+D2CfgMgr::buildParams(isc::data::ConstElementPtr params_config) {
+    // Base class build creates parses and invokes build on each parser.
+    // This populate the context scalar stores with all of the parameters.
+    DCfgMgrBase::buildParams(params_config);
+
+    // Fetch the parameters from the context to create the D2Params.
+    D2CfgContextPtr context = getD2CfgContext();
+    isc::dhcp::StringStoragePtr strings = context->getStringStorage();
+    asiolink::IOAddress ip_address(strings->
+                                   getOptionalParam("ip_address",
+                                                    D2Params::DFT_IP_ADDRESS));
+
+    isc::dhcp::Uint32StoragePtr ints = context->getUint32Storage();
+    uint32_t port = ints->getOptionalParam("port", D2Params::DFT_PORT);
+
+    uint32_t dns_server_timeout
+        = ints->getOptionalParam("dns_server_timeout",
+                                 D2Params::DFT_DNS_SERVER_TIMEOUT);
+
+    dhcp_ddns::NameChangeProtocol ncr_protocol
+        = dhcp_ddns::stringToNcrProtocol(strings->
+                                         getOptionalParam("ncr_protocol",
+                                                          D2Params::
+                                                          DFT_NCR_PROTOCOL));
+    dhcp_ddns::NameChangeFormat ncr_format
+        = dhcp_ddns::stringToNcrFormat(strings->
+                                       getOptionalParam("ncr_format",
+                                                          D2Params::
+                                                          DFT_NCR_FORMAT));
+    // Attempt to create the new client config.
+    D2ParamsPtr params(new D2Params(ip_address, port, dns_server_timeout,
+                                    ncr_protocol, ncr_format));
+
+    context->getD2Params() = params;
+}
 
 isc::dhcp::ParserPtr
 D2CfgMgr::createConfigParser(const std::string& config_id) {
@@ -194,31 +239,34 @@ D2CfgMgr::createConfigParser(const std::string& config_id) {
     D2CfgContextPtr context = getD2CfgContext();
 
     // Create parser instance based on element_id.
-    isc::dhcp::DhcpConfigParser* parser = NULL;
-    if ((config_id == "interface")  ||
-        (config_id == "ip_address")) {
-        parser = new isc::dhcp::StringParser(config_id,
-                                             context->getStringStorage());
-    } else if (config_id == "port") {
-        parser = new isc::dhcp::Uint32Parser(config_id,
-                                             context->getUint32Storage());
+    isc::dhcp::ParserPtr parser;
+    if ((config_id.compare("port") == 0) ||
+        (config_id.compare("dns_server_timeout") == 0)) {
+        parser.reset(new isc::dhcp::Uint32Parser(config_id,
+                                                 context->getUint32Storage()));
+    } else if ((config_id.compare("ip_address") == 0) ||
+        (config_id.compare("ncr_protocol") == 0) ||
+        (config_id.compare("ncr_format") == 0)) {
+        parser.reset(new isc::dhcp::StringParser(config_id,
+                                                 context->getStringStorage()));
     } else if (config_id ==  "forward_ddns") {
-        parser = new DdnsDomainListMgrParser("forward_mgr",
-                                             context->getForwardMgr(),
-                                             context->getKeys());
+        parser.reset(new DdnsDomainListMgrParser("forward_mgr",
+                                                 context->getForwardMgr(),
+                                                 context->getKeys()));
     } else if (config_id ==  "reverse_ddns") {
-        parser = new DdnsDomainListMgrParser("reverse_mgr",
-                                             context->getReverseMgr(),
-                                             context->getKeys());
+        parser.reset(new DdnsDomainListMgrParser("reverse_mgr",
+                                                 context->getReverseMgr(),
+                                                 context->getKeys()));
     } else if (config_id ==  "tsig_keys") {
-        parser = new TSIGKeyInfoListParser("tsig_key_list", context->getKeys());
+        parser.reset(new TSIGKeyInfoListParser("tsig_key_list",
+                                               context->getKeys()));
     } else {
         isc_throw(NotImplemented,
                   "parser error: D2CfgMgr parameter not supported: "
                   << config_id);
     }
 
-    return (isc::dhcp::ParserPtr(parser));
+    return (parser);
 }
 
 }; // end of isc::dhcp namespace

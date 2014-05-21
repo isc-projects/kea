@@ -649,6 +649,7 @@ const char* const root_servers[] = {
     "j.root-servers.net", "k.root-servers.net", "l.root-servers.net",
     "m.root-servers.net", NULL
 };
+
 const char* const jp_servers[] = {
     "a.dns.jp", "b.dns.jp", "c.dns.jp", "d.dns.jp", "e.dns.jp",
     "f.dns.jp", "g.dns.jp", NULL
