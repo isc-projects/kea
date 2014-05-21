@@ -43,8 +43,8 @@ ControlledDhcpv6Srv::commandShutdownHandler(const string&, ConstElementPtr) {
 
 ConstElementPtr
 ControlledDhcpv6Srv::commandLibReloadHandler(const string&, ConstElementPtr) {
-    // TODO delete any stored CalloutHandles referring to the old libraries
-    // Get list of currently loaded libraries and reload them.
+    /// @todo delete any stored CalloutHandles referring to the old libraries
+    /// Get list of currently loaded libraries and reload them.
     vector<string> loaded = HooksManager::getLibraryNames();
     bool status = HooksManager::loadLibraries(loaded);
     if (!status) {
