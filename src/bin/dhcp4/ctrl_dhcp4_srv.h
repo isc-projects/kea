@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -46,44 +46,51 @@ public:
     /// @brief Destructor.
     ~ControlledDhcpv4Srv();
 
-    /// @brief Establishes msgq session.
+    /// @brief Initializes the server.
     ///
-    /// Creates session that will be used to receive commands and updated
-    /// configuration from cfgmgr (or indirectly from user via bindctl).
-    void establishSession();
+    /// Depending on the configuration backend, it establishes msgq session,
+    /// reads the JSON file from disk or may perform any other setup
+    /// operation. For specific details, see actual implementation in
+    /// *_backend.cc
+    ///
+    /// @return true if initialization was successful, false if it failed
+    void init(const std::string& config_file);
 
-    /// @brief Terminates existing msgq session.
+    /// @brief Performs cleanup, immediately before termination
     ///
-    /// This method terminates existing session with msgq. After calling
+    /// This method performs final clean up, just before the Dhcpv6Srv object
+    /// is destroyed. The actual behavior is backend dependent. For Bundy
+    /// backend, it terminates existing session with msgq. After calling
     /// it, no further messages over msgq (commands or configuration updates)
-    /// may be received.
+    /// may be received. For JSON backend, it is no-op.
     ///
-    /// It is ok to call this method when session is disconnected already.
-    void disconnectSession();
+    /// For specific details, see actual implementation in *_backend.cc
+    void cleanup();
 
     /// @brief Initiates shutdown procedure for the whole DHCPv4 server.
     void shutdown();
 
-    /// @brief Session callback, processes received commands.
+    /// @brief command processor
+    ///
+    /// This method is uniform for all config backends. It processes received
+    /// command (as a string + JSON arguments). Internally, it's just a
+    /// wrapper that calls process*Command() methods and catches exceptions
+    /// in them.
+    ///
+    /// @note It never throws.
     ///
     /// @param command Text represenation of the command (e.g. "shutdown")
     /// @param args Optional parameters
-    /// @param command text represenation of the command (e.g. "shutdown")
-    /// @param args optional parameters
     ///
     /// @return status of the command
     static isc::data::ConstElementPtr
-    execDhcpv4ServerCommand(const std::string& command,
-                            isc::data::ConstElementPtr args);
+    processCommand(const std::string& command, isc::data::ConstElementPtr args);
 
-protected:
-    /// @brief Static pointer to the sole instance of the DHCP server.
+    /// @brief configuration processor
     ///
-    /// This is required for config and command handlers to gain access to
-    /// the server
-    static ControlledDhcpv4Srv* server_;
-
-    /// @brief A callback for handling incoming configuration updates.
+    /// This is a callback for handling incoming configuration updates.
+    /// This method should be called by all configuration backends when the
+    /// server is starting up or when configuration has changed.
     ///
     /// As pointer to this method is used a callback in ASIO used in
     /// ModuleCCSession, it has to be static.
@@ -92,54 +99,72 @@ protected:
     ///
     /// @return status of the config update
     static isc::data::ConstElementPtr
-    dhcp4ConfigHandler(isc::data::ConstElementPtr new_config);
+    processConfig(isc::data::ConstElementPtr new_config);
 
-    /// @brief A dummy configuration handler that always returns success.
+    /// @brief returns pointer to the sole instance of Dhcpv4Srv
     ///
-    /// This configuration handler does not perform configuration
-    /// parsing and always returns success. A dummy handler should
-    /// be installed using \ref isc::config::ModuleCCSession ctor
-    /// to get the initial configuration. This initial configuration
-    /// comprises values for only those elements that were modified
-    /// the previous session. The \ref dhcp4ConfigHandler can't be
-    /// used to parse the initial configuration because it needs the
-    /// full configuration to satisfy dependencies between the
-    /// various configuration values. Installing the dummy handler
-    /// that guarantees to return success causes initial configuration
-    /// to be stored for the session being created and that it can
-    /// be later accessed with
-    /// \ref isc::config::ConfigData::getFullConfig().
-    ///
-    /// @param new_config new configuration.
-    ///
-    /// @return success configuration status.
-    static isc::data::ConstElementPtr
-    dhcp4StubConfigHandler(isc::data::ConstElementPtr new_config);
+    /// @note may return NULL, if called before server is spawned
+    static ControlledDhcpv4Srv* getInstance() {
+        return (server_);
+    }
 
-    /// @brief A callback for handling incoming commands.
-    ///
-    /// @param command textual representation of the command
-    /// @param args parameters of the command
-    ///
-    /// @return status of the processed command
-    static isc::data::ConstElementPtr
-    dhcp4CommandHandler(const std::string& command, isc::data::ConstElementPtr args);
 
-    /// @brief Callback that will be called from iface_mgr when command/config arrives.
+protected:
+    /// @brief Static pointer to the sole instance of the DHCP server.
     ///
-    /// This static callback method is called from IfaceMgr::receive4() method,
-    /// when there is a new command or configuration sent over msgq.
+    /// This is required for config and command handlers to gain access to
+    /// the server
+    static ControlledDhcpv4Srv* server_;
+
+    /// @brief Callback that will be called from iface_mgr when data
+    /// is received over control socket.
+    ///
+    /// This static callback method is called from IfaceMgr::receive6() method,
+    /// when there is a new command or configuration sent over control socket
+    /// (that was sent from msgq if backend is Bundy, or some yet unspecified
+    /// sender if the backend is JSON file).
     static void sessionReader(void);
-
 
     /// @brief IOService object, used for all ASIO operations.
     isc::asiolink::IOService io_service_;
 
-    /// @brief Helper session object that represents raw connection to msgq.
-    isc::cc::Session* cc_session_;
+    /// @brief handler for processing 'shutdown' command
+    ///
+    /// This handler processes shutdown command, which initializes shutdown
+    /// procedure.
+    /// @param command (parameter ignored)
+    /// @param args (parameter ignored)
+    ///
+    /// @return status of the command
+    isc::data::ConstElementPtr
+    commandShutdownHandler(const std::string& command,
+                           isc::data::ConstElementPtr args);
 
-    /// @brief Session that receives configuration and commands
-    isc::config::ModuleCCSession* config_session_;
+    /// @brief handler for processing 'libreload' command
+    ///
+    /// This handler processes libreload command, which unloads all hook
+    /// libraries and reloads them.
+    ///
+    /// @param command (parameter ignored)
+    /// @param args (parameter ignored)
+    ///
+    /// @return status of the command
+    isc::data::ConstElementPtr
+    commandLibReloadHandler(const std::string& command,
+                            isc::data::ConstElementPtr args);
+
+    /// @brief handler for processing 'config-reload' command
+    ///
+    /// This handler processes config-reload command, which processes
+    /// configuration specified in args parameter.
+    ///
+    /// @param command (parameter ignored)
+    /// @param args configuration to be processed
+    ///
+    /// @return status of the command
+    isc::data::ConstElementPtr
+    commandConfigReloadHandler(const std::string& command,
+                               isc::data::ConstElementPtr args);
 };
 
 }; // namespace isc::dhcp
