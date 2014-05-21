@@ -411,4 +411,14 @@ TEST_F(MemfileLeaseMgrTest, testRecreateLease6) {
 // testGetLease4HWAddrSubnetIdSize() - memfile just keeps Lease structure
 //     and does not do any checks of HWAddr content
 
+/// @brief Checks that null DUID is not allowed.
+/// Test is disabled as Memfile does not currently defend against a null DUID.
+TEST_F(MemfileLeaseMgrTest, DISABLED_nullDuid) {
+    // Create leases, although we need only one.
+    vector<Lease6Ptr> leases = createLeases6();
+
+    leases[1]->duid_.reset();
+    ASSERT_THROW(lmptr_->addLease(leases[1]), DbOperationError);
+}
+
 }; // end of anonymous namespace

@@ -32,6 +32,8 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
+const time_t LeaseMgr::MAX_DB_TIME = 2147483647;
+
 std::string LeaseMgr::getParameter(const std::string& name) const {
     ParameterMap::const_iterator param = parameters_.find(name);
     if (param == parameters_.end()) {

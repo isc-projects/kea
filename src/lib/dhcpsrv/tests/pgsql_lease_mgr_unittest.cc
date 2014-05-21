@@ -110,14 +110,13 @@ validConnectionString() {
 // tests will (should) fall over.
 void destroySchema() {
     // Open database
-    PGconn * conn = 0;
+    PGconn* conn = 0;
     conn = PQconnectdb("host = 'localhost' user = 'keatest'"
                        " password = 'keatest' dbname = 'keatest'");
 
-    PGresult * r;
     // Get rid of everything in it.
     for (int i = 0; destroy_statement[i] != NULL; ++i) {
-        r = PQexec(conn, destroy_statement[i]);
+        PGresult* r = PQexec(conn, destroy_statement[i]);
         PQclear(r);
     }
 
@@ -132,14 +131,13 @@ void destroySchema() {
 // will fall over.
 void createSchema() {
     // Open database
-    PGconn * conn = 0;
+    PGconn* conn = 0;
     conn = PQconnectdb("host = 'localhost' user = 'keatest'"
                        " password = 'keatest' dbname = 'keatest'");
 
-    PGresult * r;
     // Get rid of everything in it.
     for (int i = 0; create_statement[i] != NULL; ++i) {
-        r = PQexec(conn, create_statement[i]);
+        PGresult* r = PQexec(conn, create_statement[i]);
         PQclear(r);
     }
 
@@ -301,6 +299,11 @@ TEST_F(PgSqlLeaseMgrTest, basicLease4) {
     testBasicLease4();
 }
 
+/// @brief Check that Lease4 code safely handles invalid dates.
+TEST_F(PgSqlLeaseMgrTest, maxDate4) {
+    testMaxDate4();
+}
+
 /// @brief Lease4 update tests
 ///
 /// Checks that we are able to update a lease in the database.
@@ -405,6 +408,11 @@ TEST_F(PgSqlLeaseMgrTest, basicLease6) {
     testBasicLease6();
 }
 
+/// @brief Check that Lease6 code safely handles invalid dates.
+TEST_F(PgSqlLeaseMgrTest, maxDate6) {
+    testMaxDate6();
+}
+
 /// @brief Verify that too long hostname for Lease6 is not accepted.
 ///
 /// Checks that the it is not possible to create a lease when the hostname
@@ -454,6 +462,10 @@ TEST_F(PgSqlLeaseMgrTest, getLease6DuidIaidSubnetIdSize) {
 /// Checks that we are able to update a lease in the database.
 TEST_F(PgSqlLeaseMgrTest, updateLease6) {
     testUpdateLease6();
+}
+
+TEST_F(PgSqlLeaseMgrTest, nullDuid) {
+    testNullDuid();
 }
 
 };

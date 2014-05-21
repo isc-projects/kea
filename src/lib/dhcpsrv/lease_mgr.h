@@ -122,6 +122,10 @@ public:
 /// see the documentation of those classes for details.
 class LeaseMgr {
 public:
+    /// @brief Defines maximum value for time that can be reliably stored.
+    // If I'm still alive I'll be too old to care. You fix it.
+    static const time_t MAX_DB_TIME;
+
     /// Database configuration parameter map
     typedef std::map<std::string, std::string> ParameterMap;
 
