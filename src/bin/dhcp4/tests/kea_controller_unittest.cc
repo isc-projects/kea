@@ -16,7 +16,7 @@
 
 #include <config/ccsession.h>
 #include <dhcp/dhcp4.h>
-#include <dhcp6/ctrl_dhcp4_srv.h>
+#include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcpsrv/cfgmgr.h>
 
 #include <boost/scoped_ptr.hpp>
@@ -73,7 +73,7 @@ const char* JSONFileBackendTest::TEST_FILE = "test-config.json";
 TEST_F(JSONFileBackendTest, jsonFile) {
 
     // Prepare configuration file.
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ \"Dhcp4\": { \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -89,7 +89,8 @@ TEST_F(JSONFileBackendTest, jsonFile) {
         "    \"pool\": [ \"192.0.4.101 - 192.0.4.150\" ],"
         "    \"subnet\": \"192.0.4.0/24\" "
         " } ],"
-        "\"valid-lifetime\": 4000 }";
+        "\"valid-lifetime\": 4000 }"
+        "}";
 
     writeFile(TEST_FILE, config);
 
@@ -138,7 +139,7 @@ TEST_F(JSONFileBackendTest, jsonFile) {
     const PoolCollection& pools3 = subnets->at(2)->getPools(Lease::TYPE_V4);
     EXPECT_EQ("192.0.4.101", pools3.at(0)->getFirstAddress().toText());
     EXPECT_EQ("192.0.4.150", pools3.at(0)->getLastAddress().toText());
-    EXPECT_EQ(Lease::TYPE_NA, pools3.at(0)->getType());
+    EXPECT_EQ(Lease::TYPE_V4, pools3.at(0)->getType());
 }
 
 // This test checks if configuration can be read from a JSON file.
@@ -181,11 +182,11 @@ TEST_F(JSONFileBackendTest, comments) {
     EXPECT_EQ(22, subnets->at(0)->get().second);
 
     // Check pools in the first subnet.
-    const PoolCollection& pools1 = subnets->at(0)->getPools(Lease::TYPE_NA);
+    const PoolCollection& pools1 = subnets->at(0)->getPools(Lease::TYPE_V4);
     ASSERT_EQ(1, pools1.size());
     EXPECT_EQ("192.0.2.0", pools1.at(0)->getFirstAddress().toText());
     EXPECT_EQ("192.0.2.255", pools1.at(0)->getLastAddress().toText());
-    EXPECT_EQ(Lease::TYPE_NA, pools1.at(0)->getType());
+    EXPECT_EQ(Lease::TYPE_V4, pools1.at(0)->getType());
 }
 
 // This test checks if configuration detects failure when trying:
