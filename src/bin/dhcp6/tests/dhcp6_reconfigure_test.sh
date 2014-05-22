@@ -130,8 +130,7 @@ sleep 1
 # Make sure that exactly one process has been started.
 getpids
 if [ ${_GETPIDS2} -ne 1 ]; then
-    printf "ERROR: expected one Kea process to be started. Found %d " \
-        "processes started.\n" ${_GETPIDS2}
+    printf "ERROR: expected one Kea process to be started. Found %d processes started.\n" ${_GETPIDS2}
     cleanexit 1
 fi
 
@@ -149,8 +148,7 @@ printf "Creating configuration file with invalid configuration: %s.\n" ${CFG_FIL
 printf "%b" ${CONFIG_INVALID} > ${CFG_FILE}
 
 # Reconfigure the server with SIGHUP.
-printf "Sending SIGHUP to Kea process (pid=%s) to reconfigure the server.\n" \
-    ${_GETPIDS1}
+printf "Sending SIGHUP to Kea process (pid=%s) to reconfigure the server.\n" ${_GETPIDS1}
 kill -1 ${_GETPIDS1}
 
 # Be patient. Kea may need a while to reconfigure or shut down
@@ -184,8 +182,7 @@ fi
 printf "%b" ${CONFIG} > ${CFG_FILE}
 
 # Reconfigure the server with SIGHUP.
-printf "Sending SIGHUP to Kea process (pid=%s) to reconfigure the server.\n" \
-    ${_GETPIDS1}
+printf "Sending SIGHUP to Kea process (pid=%s) to reconfigure the server.\n" ${_GETPIDS1}
 kill -1 ${_GETPIDS1}
 
 # After receiving SIGHUP the server should get reconfigured and the
