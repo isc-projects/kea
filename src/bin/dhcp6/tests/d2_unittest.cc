@@ -294,8 +294,14 @@ TEST_F(Dhcp6SrvD2Test, simpleUDPSend) {
 // Checks that an IO error in sending a request to D2, results in ddns updates
 // being suspended.  This indicates that Dhcp6Srv's error handler has been
 // invoked as expected.  Note that this unit test relies on an attempt to send
-// to a server address of 0.0.0.0 port 0 fails under all OSs.
+// to a server address of 0.0.0.0 port 0 fails, which it does  under all OSs
+// except Solaris 11.
+/// @todo Eventually we should find a way to test this under Solaris.
+#ifndef OS_SOLARIS
 TEST_F(Dhcp6SrvD2Test, forceUDPSendFailure) {
+#else
+TEST_F(Dhcp6SrvD2Test, DISABLED_forceUDPSendFailure) {
+#endif
     // Grab the manager and verify that be default ddns is off
     // and a sender was not started.
     dhcp::D2ClientMgr& mgr = CfgMgr::instance().getD2ClientMgr();
