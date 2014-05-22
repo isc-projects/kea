@@ -1,3 +1,15 @@
+785.	[bug]		marcin
+	DHCPv6 server avoids collisions between prefixes that are allocated
+	as a result of receiving hints from the clients. Previously the
+	whole prefix (including bits beyond the prefix length) was used to
+	search existing leases in the lease database. If not found, the
+	new lease was crated for the prefix sent by the client. If another
+	client sent the same prefix but with different non-significant bits
+	the prefix was allocated. This led to prefix collisions. Currently,
+	server ignores bits beyond the prefix length when searching for
+	existing leases.
+	(Trac #3246, git 50de7df4195195e981ae9c8c6f1b4100047d5bb5)
+
 784.	[func]		tmark
 	DHCP_DDNS's configuration was changed. The unused parameter, "interface"
 	was deleted.  Three new parameters, "ncr_protocol", "ncr_format", and
