@@ -133,8 +133,18 @@ Option6IAPrefix::mask(OptionBuffer::const_iterator begin,
     if (len >= 128) {
         std::copy(begin, end, output_address.begin());
     } else if (len > 0) {
+        // All the bits that represent whole octets of the prefix are copied with
+        // no change.
         std::copy(begin, begin + static_cast<uint8_t>(len/8), output_address.begin());
-        output_address[len/8] = (0xff << (8 - (len % 8)));
+        // The remaining significant bits of the last octet have to be left unchanged,
+        // but the remaining bits of this octet must be set to zero. The number of
+        // significant bits is calculated as a reminder from the devision of the
+        // prefix length by 8 (by size of the octet). The number of bits to be set
+        // to zero is therefore calculated as: 8 - (len % 8).
+        // Next, the mask is created by shifting the 0xFF by the number of bits
+        // to be set to 0. By performing logical AND of this mask with the original
+        // value of the last octet we get the final value for the new octet.
+        output_address[len/8] = (*(begin + len/8) & (0xFF << (8 - (len % 8))));
     }
 }
 
