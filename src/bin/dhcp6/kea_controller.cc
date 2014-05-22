@@ -133,8 +133,17 @@ void configure(const std::string& file_name) {
 ///
 /// @param signo Signal number received.
 void signalHandler(int signo) {
+    // SIGHUP signals a request to reconfigure the server.
     if (signo == SIGHUP) {
-        configure(ControlledDhcpv6Srv::getInstance()->getConfigFile());
+        try {
+            LOG_INFO(dhcp6_logger, DHCP6_DYNAMIC_RECONFIGURATION);
+            configure(ControlledDhcpv6Srv::getInstance()->getConfigFile());
+        } catch (const std::exception& ex) {
+            // Log the unsuccessful reconfiguration. The reason for failure
+            // should be already logged. Don't rethrow an exception so as
+            // the server keeps working.
+            LOG_ERROR(dhcp6_logger, DHCP6_DYNAMIC_RECONFIGURATION_FAIL);
+        }
     }
 }
 
