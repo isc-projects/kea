@@ -12,6 +12,8 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
+# Test name
+TEST_NAME="DynamicReconfiguration"
 # Name of the Kea executable.
 BIN="../b10-dhcp6"
 # Path to the temporary configuration file.
@@ -54,12 +56,32 @@ cleanup() {
         printf "Shutting down Kea proccess having pid %d.\n" ${pid}
         kill -9 ${pid}
     done
+    rm -rf ${LOG_FILE}
 }
 
 cleanexit() {
-    cleanup
+    if [ $1 -eq 0 ]; then
+        cleanup
+        printf "PASSED ${TEST_NAME}\n\n"
+    else
+        printf "Log file dump:\n"
+        cat ${LOG_FILE}
+        cleanup
+        printf "FAILED ${TEST_NAME}\n\n"
+    fi
     exit $1
 }
+
+_GETRECONFIGS=
+getreconfigs() {
+    # Grep log file for DHCP6_CONFIG_COMPLETE occurences. There should
+    # be one occurence per (re)configuration.
+    _GETRECONFIGS=`grep -o DHCP6_CONFIG_COMPLETE ${LOG_FILE} | wc -w`
+    # Remove whitespace
+    ${_GETRECONFIGS##*[! ]}
+}
+
+printf "\nSTART TEST ${TEST_NAME}\n"
 
 printf "Creating Kea configuration file: %s.\n" ${CFG_FILE}
 printf "%b" ${CONFIG} > ${CFG_FILE}
@@ -84,6 +106,16 @@ if [ ${_GETPIDS2} -ne 1 ]; then
     cleanexit 1
 fi
 
+# Check in the log file, how many times server has been configured. It should
+# be just once on startup.
+getreconfigs
+if [ ${_GETRECONFIGS} -ne 1 ]; then
+    printf "ERROR: server hasn't been configured.\n"
+    cleanexit 1
+else
+    printf "Server successfully configured\n"
+fi
+
 # Reconfigure the server with SIGUP.
 printf "Sending SIGUP to Kea process (pid=%s) to reconfigure the server.\n" ${_GETPIDS1}
 kill -1 ${_GETPIDS1}
@@ -92,7 +124,18 @@ kill -1 ${_GETPIDS1}
 # didn't work.
 sleep 1
 
-# Make sure it is still operational.
+# After receiving SIGHUP the server should get reconfigured and the
+# reconfiguration should be noted in the log file. We should now
+# have two configurations logged in the log file.
+getreconfigs
+if [ ${_GETRECONFIGS} -ne 2 ]; then
+    printf "ERROR: server hasn't been reconfigured.\n"
+    cleanexit 1
+else
+    printf "Server successfully configured\n"
+fi
+
+# Make sure the server is still operational.
 getpids
 if [ ${_GETPIDS2} -ne 1 ]; then
     printf "ERROR: Kea process was killed when attempting reconfiguration.\n"
