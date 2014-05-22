@@ -41,6 +41,28 @@ CONFIG="{
         } ]
     }
 }"
+# Invalid configuration (negative preferred-lifetime) to check that Kea
+# gracefully handles reconfiguration errors.
+CONFIG_INVALID="{
+    \"Dhcp6\":
+    {
+        \"interfaces\": [ ],
+        \"preferred-lifetime\": -3,
+        \"valid-lifetime\": 4000,
+        \"renew-timer\": 1000,
+        \"rebind-timer\": 2000,
+        \"lease-database\":
+        {
+            \"type\": \"memfile\",
+            \"persist\": false
+        },
+        \"subnet6\": [
+        {
+            \"subnet\": \"2001:db8:1::/64\",
+            \"pool\": [ \"2001:db8:1::10-2001:db8:1::100\" ]
+        } ]
+    }
+}"
 
 _GETPIDS1=
 _GETPIDS2=
@@ -57,6 +79,7 @@ cleanup() {
         kill -9 ${pid}
     done
     rm -rf ${LOG_FILE}
+    rm -rf ${CONFIG_FILE}
 }
 
 cleanexit() {
@@ -73,12 +96,17 @@ cleanexit() {
 }
 
 _GETRECONFIGS=
+_GETRECONFIGERRORS=
 getreconfigs() {
     # Grep log file for DHCP6_CONFIG_COMPLETE occurences. There should
     # be one occurence per (re)configuration.
     _GETRECONFIGS=`grep -o DHCP6_CONFIG_COMPLETE ${LOG_FILE} | wc -w`
-    # Remove whitespace
+    # Grep log file for DHCP6_CONFIG_LOAD_FAIL to check for configuration
+    # failures.
+    _GETRECONFIGERRORS=`grep -o DHCP6_CONFIG_LOAD_FAIL ${LOG_FILE} | wc -w`
+    # Remove whitespaces
     ${_GETRECONFIGS##*[! ]}
+    ${_GETRECONFIGERRORS##*[! ]}
 }
 
 printf "\nSTART TEST ${TEST_NAME}\n"
@@ -114,8 +142,11 @@ if [ ${_GETRECONFIGS} -ne 1 ]; then
     printf "ERROR: server hasn't been configured.\n"
     cleanexit 1
 else
-    printf "Server successfully configured\n"
+    printf "Server successfully configured.\n"
 fi
+
+printf "Creating configuration file with invalid configuration: %s.\n" ${CFG_FILE}
+printf "%b" ${CONFIG_INVALID} > ${CFG_FILE}
 
 # Reconfigure the server with SIGHUP.
 printf "Sending SIGHUP to Kea process (pid=%s) to reconfigure the server.\n" \
@@ -126,6 +157,37 @@ kill -1 ${_GETPIDS1}
 # if reconfiguration didn't work.
 sleep 1
 
+# After receiving SIGHUP the server should try to reconfigure itself.
+# The configuration provided is invalid so it should result in
+# reconfiguration failure but the server should still be running.
+getreconfigs
+if [ ${_GETRECONFIGS} -ne 1 ]; then
+    printf "ERROR: server has been reconfigured despite bogus configuration.\n"
+    cleanexit 1
+elif [ ${_GETRECONFIGERRORS} -ne 1 ]; then
+    printf "ERROR: server did not report reconfiguration error despite attempt" \
+        " to configure it with invalid configuration.\n"
+    cleanexit 1
+fi
+
+# Be patient. Kea may terminate and we need to give it a time to do so.
+sleep 1
+
+# Make sure the server is still operational.
+getpids
+if [ ${_GETPIDS2} -ne 1 ]; then
+    printf "ERROR: Kea process was killed when attempting reconfiguration.\n"
+    cleanexit 1
+fi
+
+# Restore the good configuration.
+printf "%b" ${CONFIG} > ${CFG_FILE}
+
+# Reconfigure the server with SIGHUP.
+printf "Sending SIGHUP to Kea process (pid=%s) to reconfigure the server.\n" \
+    ${_GETPIDS1}
+kill -1 ${_GETPIDS1}
+
 # After receiving SIGHUP the server should get reconfigured and the
 # reconfiguration should be noted in the log file. We should now
 # have two configurations logged in the log file.
@@ -134,7 +196,7 @@ if [ ${_GETRECONFIGS} -ne 2 ]; then
     printf "ERROR: server hasn't been reconfigured.\n"
     cleanexit 1
 else
-    printf "Server successfully reconfigured\n"
+    printf "Server successfully reconfigured.\n"
 fi
 
 # Make sure the server is still operational.
