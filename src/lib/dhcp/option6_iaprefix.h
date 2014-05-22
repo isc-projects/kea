@@ -94,6 +94,11 @@ public:
 
     /// @brief Parses received buffer.
     ///
+    /// This function calls the @c Option6IAPrefix::mask function to set the
+    /// non-significant bits of the prefix (bits beyond the length of the
+    /// prefix) to zero. See the @c Option6IAPrefix class documentation for
+    /// details why it is done.
+    ///
     /// @throw OutOfRange when buffer is shorter than 25 bytes
     ///
     /// @param begin iterator to first byte of option data

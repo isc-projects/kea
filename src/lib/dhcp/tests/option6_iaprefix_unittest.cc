@@ -45,7 +45,7 @@ public:
     /// @brief creates on-wire representation of IAPREFIX option
     ///
     /// buf_ field is set up to have IAPREFIX with preferred=1000,
-    /// valid=3000000000 and prefix being 2001:db8:1:0:ffff:0:dead:beef/77
+    /// valid=3000000000 and prefix being 2001:db8:1:0:afaf:0:dead:beef/77
     void setExampleBuffer() {
         for (int i = 0; i < 255; i++) {
             buf_[i] = 0;
@@ -69,12 +69,12 @@ public:
         buf_[12] = 0xb8;
         buf_[13] = 0x00;
         buf_[14] = 0x01;
-        buf_[17] = 0xff;
-        buf_[18] = 0xff;
+        buf_[17] = 0xaf;
+        buf_[18] = 0xaf;
         buf_[21] = 0xde;
         buf_[22] = 0xad;
         buf_[23] = 0xbe;
-        buf_[24] = 0xef; // 2001:db8:1:0:ffff:0:dead:beef
+        buf_[24] = 0xef; // 2001:db8:1:0:afaf:0:dead:beef
     }
 
 
@@ -148,11 +148,11 @@ TEST_F(Option6IAPrefixTest, parseShort) {
 
     // The non-significant bits (above 77) of the received prefix should be
     // set to zero.
-    checkOption(*opt, D6O_IAPREFIX, 77, "2001:db8:1:0:fff8::");
+    checkOption(*opt, D6O_IAPREFIX, 77, "2001:db8:1:0:afa8::");
 
     // Set non-significant bits in the reference buffer to 0, so as the buffer
     // can be directly compared with the option buffer.
-    buf_[18] = 0xf8;
+    buf_[18] = 0xa8;
     buf_.insert(buf_.begin() + 19, 5, 0);
     checkOutputBuffer(D6O_IAPREFIX);
 
@@ -177,7 +177,7 @@ TEST_F(Option6IAPrefixTest, parseLong) {
     opt->pack(out_buf_);
     EXPECT_EQ(29, out_buf_.getLength());
 
-    checkOption(*opt, D6O_IAPREFIX, 128, "2001:db8:1:0:ffff:0:dead:beef");
+    checkOption(*opt, D6O_IAPREFIX, 128, "2001:db8:1:0:afaf:0:dead:beef");
 
     checkOutputBuffer(D6O_IAPREFIX);
 
@@ -219,11 +219,11 @@ TEST_F(Option6IAPrefixTest, build) {
     setExampleBuffer();
 
     ASSERT_NO_THROW(opt.reset(new Option6IAPrefix(12345,
-                    IOAddress("2001:db8:1:0:ffff:0:dead:beef"), 77,
+                    IOAddress("2001:db8:1:0:afaf:0:dead:beef"), 77,
                                                   1000, 3000000000u)));
     ASSERT_TRUE(opt);
 
-    checkOption(*opt, 12345, 77, "2001:db8:1:0:ffff:0:dead:beef");
+    checkOption(*opt, 12345, 77, "2001:db8:1:0:afaf:0:dead:beef");
 
     // Check if we can build it properly
     EXPECT_NO_THROW(opt->pack(out_buf_));
