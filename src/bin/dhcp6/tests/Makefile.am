@@ -1,6 +1,11 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
 PYTESTS = dhcp6_test.py
-SHTESTS = dhcp6_reconfigure_test.sh
+SHTESTS =
+# The test of dynamic reconfiguration based on signals will work only
+# if we are using file based configuration approach.
+if CONFIG_BACKEND_JSON
+SHTESTS += dhcp6_reconfigure_test.sh
+endif
 EXTRA_DIST = $(PYTESTS) $(SHTESTS)
 
 # Explicitly specify paths to dynamic libraries required by loadable python
@@ -49,7 +54,6 @@ TESTS_ENVIRONMENT = \
         $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
 TESTS =
-TEST_EXTENSIONS = .sh
 if HAVE_GTEST
 # Build shared libraries for testing. The libtool way to create a shared library
 # is to specify "-avoid-version -export-dynamic -module" in the library LDFLAGS
