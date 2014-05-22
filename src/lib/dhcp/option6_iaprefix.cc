@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -86,7 +86,9 @@ void Option6IAPrefix::unpack(OptionBuffer::const_iterator begin,
     begin += sizeof(uint8_t);
 
     // 16 bytes: IPv6 address
-    addr_ = IOAddress::fromBytes(AF_INET6, &(*begin));
+    OptionBuffer address_with_mask;
+    mask(begin, begin + V6ADDRESS_LEN, prefix_len_, address_with_mask);
+    addr_ = IOAddress::fromBytes(AF_INET6, &(*address_with_mask.begin()));
     begin += V6ADDRESS_LEN;
 
     // unpack encapsulated options (the only defined so far is PD_EXCLUDE)
@@ -121,6 +123,31 @@ uint16_t Option6IAPrefix::len() {
     }
     return (length);
 }
+
+void
+Option6IAPrefix::mask(OptionBuffer::const_iterator begin,
+                      OptionBuffer::const_iterator end,
+                      const uint8_t len,
+                      OptionBuffer& output_address) {
+    output_address.resize(16, 0);
+    if (len >= 128) {
+        std::copy(begin, end, output_address.begin());
+    } else if (len > 0) {
+        // All the bits that represent whole octets of the prefix are copied with
+        // no change.
+        std::copy(begin, begin + static_cast<uint8_t>(len/8), output_address.begin());
+        // The remaining significant bits of the last octet have to be left unchanged,
+        // but the remaining bits of this octet must be set to zero. The number of
+        // significant bits is calculated as a reminder from the devision of the
+        // prefix length by 8 (by size of the octet). The number of bits to be set
+        // to zero is therefore calculated as: 8 - (len % 8).
+        // Next, the mask is created by shifting the 0xFF by the number of bits
+        // to be set to 0. By performing logical AND of this mask with the original
+        // value of the last octet we get the final value for the new octet.
+        output_address[len/8] = (*(begin + len/8) & (0xFF << (8 - (len % 8))));
+    }
+}
+
 
 } // end of namespace isc::dhcp
 } // end of namespace isc

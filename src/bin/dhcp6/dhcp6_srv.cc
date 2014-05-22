@@ -1365,16 +1365,16 @@ Dhcpv6Srv::assignIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
     // Check if the client sent us a hint in his IA_PD. Clients may send an
     // address in their IA_NA options as a suggestion (e.g. the last address
     // they used before).
-    boost::shared_ptr<Option6IAPrefix> hintOpt =
+    boost::shared_ptr<Option6IAPrefix> hint_opt =
       boost::dynamic_pointer_cast<Option6IAPrefix>(ia->getOption(D6O_IAPREFIX));
     IOAddress hint("::");
-    if (hintOpt) {
-        hint = hintOpt->getAddress();
+    if (hint_opt) {
+        hint = hint_opt->getAddress();
     }
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_PROCESS_IA_PD_REQUEST)
         .arg(duid ? duid->toText() : "(no-duid)").arg(ia->getIAID())
-        .arg(hintOpt ? hint.toText() : "(no hint)");
+        .arg(hint_opt ? hint.toText() : "(no hint)");
 
     // "Fake" allocation is processing of SOLICIT message. We pretend to do an
     // allocation, but we do not put the lease in the database. That is ok,
