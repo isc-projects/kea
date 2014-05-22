@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -33,9 +33,29 @@ namespace dhcp {
 /// a prefix length) 2 methods are used: getAddress() and getLength(). Although
 /// using getAddress() to obtain base prefix is somewhat counter-intuitive at
 /// first, it becomes obvious when one realizes that an address is a special
-/// case of a prefix with /128. It makes everyone's like much easier, because
+/// case of a prefix with /128. It makes everyone's life much easier, because
 /// the base prefix doubles as a regular address in many cases, e.g. when
 /// searching for a lease.
+///
+/// When searching for a prefix in the database or simply comparing two prefixes
+/// for equality, it is important that only the significant parts of the
+/// prefixes are compared. It is possible that the client or a server sends a
+/// prefix which has non-significant bits (beyond prefix length) set. The
+/// server or client receiving such a prefix should be liberal and not discard
+/// this prefix. It should rather ignore the non-significant bits. Therefore
+/// the unpack() function, which parses the prefix from the wire, always sets
+/// the non-significant bits to 0 so as two prefixes received on the wire can
+/// be compared without additional processing.
+///
+/// @todo Currently, the constructor which creates the option from the textual
+/// format doesn't set non-significant bits to 0. This is because it is assumed
+/// that the prefixes from the string are created locally (not received over the
+/// wire) and should be validated before the option is created. If we wanted
+/// to set non-significant bits to 0 when the prefix is created from the textual
+/// format it would have some peformance implications, because the option would
+/// need to be turned into wire format, appropriate bits set to 0 and then
+/// option would need to be created again from the wire format. We may consider
+/// doing it if we find a use case where it is required.
 class Option6IAPrefix : public Option6IAAddr {
 
 public:
@@ -74,6 +94,11 @@ public:
 
     /// @brief Parses received buffer.
     ///
+    /// This function calls the @c Option6IAPrefix::mask function to set the
+    /// non-significant bits of the prefix (bits beyond the length of the
+    /// prefix) to zero. See the @c Option6IAPrefix class documentation for
+    /// details why it is done.
+    ///
     /// @throw OutOfRange when buffer is shorter than 25 bytes
     ///
     /// @param begin iterator to first byte of option data
@@ -100,7 +125,21 @@ public:
     /// returns data length (data length + DHCPv4/DHCPv6 option header)
     virtual uint16_t len();
 
-protected:
+private:
+
+    /// @brief Apply mask of the specific length to the IPv6 address.
+    ///
+    /// @param begin Iterator pointing to the buffer holding IPv6 address.
+    /// @param end Iterator pointing to the end of the buffer holding IPv6
+    /// address.
+    /// @param len Length of the mask to be applied.
+    /// @param [out] output_address Reference to the buffer where the address
+    /// with a mask applied is output.
+    void mask(OptionBuffer::const_iterator begin,
+              OptionBuffer::const_iterator end,
+              const uint8_t len,
+              OptionBuffer& output_address);
+
     uint8_t prefix_len_;
 };
 

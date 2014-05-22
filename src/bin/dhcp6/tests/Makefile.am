@@ -85,6 +85,7 @@ dhcp6_unittests_SOURCES += ctrl_dhcp6_srv_unittest.cc
 dhcp6_unittests_SOURCES += wireshark.cc
 dhcp6_unittests_SOURCES += dhcp6_client.cc dhcp6_client.h
 dhcp6_unittests_SOURCES += rebind_unittest.cc
+dhcp6_unittests_SOURCES += sarr_unittest.cc
 dhcp6_unittests_SOURCES += ../json_config_parser.cc ../json_config_parser.h
 dhcp6_unittests_SOURCES += config_parser_unittest.cc
 
