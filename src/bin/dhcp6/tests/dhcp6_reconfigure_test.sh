@@ -29,13 +29,13 @@ CONFIG="{
         \"rebind-timer\": 2000,
         \"lease-database\":
         {
-            \"type\": \"memfile\"
+            \"type\": \"memfile\",
+            \"persist\": false
         },
         \"subnet6\": [
         {
             \"subnet\": \"2001:db8:1::/64\",
-            \"pool\": [ \"2001:db8:1::10-2001:db8:1::100\" ],
-            \"interface\": \"vboxnet0\"
+            \"pool\": [ \"2001:db8:1::10-2001:db8:1::100\" ]
         } ]
     }
 }"
@@ -86,7 +86,7 @@ fi
 
 # Reconfigure the server with SIGUP.
 printf "Sending SIGUP to Kea process (pid=%s) to reconfigure the server.\n" ${_GETPIDS1}
-kill -SIGHUP ${_GETPIDS1}
+kill -1 ${_GETPIDS1}
 
 # Be patient. Kea may need a while to reconfigure or shut down if reconfiguration
 # didn't work.
