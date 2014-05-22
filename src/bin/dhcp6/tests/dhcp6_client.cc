@@ -39,7 +39,8 @@ Dhcp6Client::Dhcp6Client() :
     srv_(boost::shared_ptr<NakedDhcpv6Srv>(new NakedDhcpv6Srv(0))),
     use_na_(false),
     use_pd_(false),
-    use_relay_(false) {
+    use_relay_(false),
+    prefix_hint_() {
 }
 
 Dhcp6Client::Dhcp6Client(boost::shared_ptr<NakedDhcpv6Srv>& srv) :
@@ -234,8 +235,11 @@ Dhcp6Client::doSolicit() {
                                                               1234)));
     }
     if (use_pd_) {
-        context_.query_->addOption(Option6IAPtr(new Option6IA(D6O_IA_PD,
-                                                              5678)));
+        Option6IAPtr ia(new Option6IA(D6O_IA_PD, 5678));
+        if (prefix_hint_) {
+            ia->addOption(prefix_hint_);
+        }
+        context_.query_->addOption(ia);
     }
     sendMsg(context_.query_);
     context_.response_ = receiveOneMsg();
@@ -356,6 +360,14 @@ Dhcp6Client::sendMsg(const Pkt6Ptr& msg) {
     msg_copy->setIface("eth0");
     srv_->fakeReceive(msg_copy);
     srv_->run();
+}
+
+void
+Dhcp6Client::useHint(const uint32_t pref_lft, const uint32_t valid_lft,
+                     const uint8_t len, const std::string& prefix) {
+    prefix_hint_.reset(new Option6IAPrefix(D6O_IAPREFIX,
+                                           asiolink::IOAddress(prefix),
+                                           len, pref_lft, valid_lft));
 }
 
 
