@@ -90,7 +90,7 @@ send_signal ${SIG_NUM}
 
 # Wait up to 10s for the server's graceful shutdown. The graceful shut down
 # should be recorded in the log file with the appropriate message.
-wait_for_message 10 "DHCP6_SHUTDOWN"
+wait_for_message 10 "DHCP6_SHUTDOWN" 1
 if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
     printf "ERROR: Server did not record shutdown in the log.\n"
     clean_exit 1
