@@ -78,14 +78,15 @@ report-cpp-coverage:
 			ext/coroutine/\* \
 			gtest/\* \
 			log4cplus/\* \
-			usr/include/\* \
+			include/\* \
 			tests/\* \
 			unittests/\* \
 			\*_unittests.cc \
 			\*_unittest.cc \
 			\*_unittests.h \
 			--output report.info ; \
-		$(GENHTML) --legend -o $(abs_top_builddir)/coverage-cpp-html report.info ; \
+		sed -e "s|$(abs_top_srcdir)|$(abs_top_builddir)|g" < report.info > report.info.2 ; \
+		$(GENHTML) --legend -o $(abs_top_builddir)/coverage-cpp-html report.info.2 ; \
 		echo "Generated C++ Code Coverage report in HTML at $(abs_top_builddir)/coverage-cpp-html" ; \
 	else \
 		echo "C++ code coverage not enabled at configuration time." ; \
