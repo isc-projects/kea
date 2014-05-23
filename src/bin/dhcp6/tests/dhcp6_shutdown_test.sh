@@ -48,7 +48,7 @@ CONFIG="{
 }"
 
 # Import common test library.
-. dhcp6_test_func.sh
+. $(dirname $0)/dhcp6_test_func.sh
 
 # Log the start of the test and print test name.
 test_start
