@@ -234,4 +234,51 @@ TEST_F(JSONFileBackendTest, configBroken) {
     EXPECT_THROW(srv->init(TEST_FILE), BadValue);
 }
 
+// This unit-test reads all files enumerated in configs-test.txt file, loads
+// each of them and verify that they can be loaded.
+//
+// @todo: Unfortunately, we have this test disabled, because all loaded
+// configs use memfile, which attempts to create lease file in
+// /usr/local/var/bind10/kea-leases4.csv. We have couple options here:
+// a) disable persistence in example configs - a very bad thing to do
+//    as users will forget to reenable it and then will be surprised when their
+//    leases disappear
+// b) change configs to store lease file in /tmp. It's almost as bad as the
+//    previous one. Users will then be displeased when all their leases are
+//    wiped. (most systems wipe /tmp during boot)
+// c) read each config and rewrite it on the fly, so persistence is disabled.
+//    This is probably the way to go, but this is a work for a dedicated ticket.
+//
+// Hence I'm leaving the test in, but it is disabled.
+TEST_F(JSONFileBackendTest, DISABLED_loadAllConfigs) {
+
+    // Create server first
+    boost::scoped_ptr<ControlledDhcpv4Srv> srv;
+    ASSERT_NO_THROW(
+        srv.reset(new ControlledDhcpv4Srv(0))
+    );
+
+    const char* configs_list = "configs-list.txt";
+    fstream configs(configs_list, ios::in);
+    ASSERT_TRUE(configs.is_open());
+    std::string config_name;
+    while (std::getline(configs, config_name)) {
+
+        // Ignore empty and commented lines
+        if (config_name.empty() || config_name[0] == '#') {
+            continue;
+        }
+
+        // Unit-tests usually do not print out anything, but in this case I
+        // think printing out tests configs is warranted.
+        std::cout << "Loading config file " << config_name << std::endl;
+
+        try {
+            srv->init(config_name);
+        } catch (const std::exception& ex) {
+            ADD_FAILURE() << "Exception thrown" << ex.what() << endl;
+        }
+    }
+}
+
 } // End of anonymous namespace
