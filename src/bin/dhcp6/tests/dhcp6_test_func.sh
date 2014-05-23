@@ -141,20 +141,21 @@ wait_for_kea() {
 # been taken. Typically, the test expects that the message
 # is logged when the SIGHUP or SIGTERM signal has been sent to the
 # Kea process.
-# This function waits a specified number of seconds for the message
-# to occur. If the expected message doesn't occur, the error status
-# is returned.
+# This function waits a specified number of seconds for the number
+# of message occurrences to show up. If the expected number of
+# message doesn't occur, the error status is returned.
 _WAIT_FOR_MESSAGE=0  # Holds 0 if the message hasn't occured, 1 otherwise.
 wait_for_message() {
-    timeout=${1}  # Timeout value in seconds.
-    message=${2}  # Expected message id.
-    loops=0       # Number of loops performed so far.
+    timeout=${1}     # Timeout value in seconds.
+    message=${2}     # Expected message id.
+    occurrences=${3} # Number of expected occurrences.
+    loops=0          # Number of loops performed so far.
     _WAIT_FOR_MESSAGE=0
     # Check if log file exists and if we reached timeout.
     while [ ! -s {LOG_FILE} ] && [ ${loops} -le ${timeout} ]; do
         # Check if the message has been logged.
         get_log_messages ${message}
-        if [ ${_GET_LOG_MESSAGES} -gt 0 ]; then
+        if [ ${_GET_LOG_MESSAGES} -eq ${occurrences} ]; then
             printf "\n"
             _WAIT_FOR_MESSAGE=1            
             return
