@@ -202,7 +202,7 @@ TEST_F(DStubControllerTest, launchNormalShutdown) {
     // by an io_service event and callback.
     time_duration elapsed = stop - start;
     EXPECT_TRUE(elapsed.total_milliseconds() >= 1900 &&
-                elapsed.total_milliseconds() <= 2100);
+                elapsed.total_milliseconds() <= 2200);
 }
 
 /// @brief Tests launch with an operational error during application execution.
@@ -233,7 +233,7 @@ TEST_F(DStubControllerTest, launchRuntimeError) {
     // by an io_service event and callback.
     time_duration elapsed = stop - start;
     EXPECT_TRUE(elapsed.total_milliseconds() >= 1900 &&
-                elapsed.total_milliseconds() <= 2100);
+                elapsed.total_milliseconds() <= 2200);
 }
 
 /// @brief Tests launch with a session establishment failure.
