@@ -14,8 +14,6 @@
 
 # Test name
 TEST_NAME="DynamicReconfiguration"
-# Name of the Kea executable.
-BIN="../b10-dhcp6"
 # Path to the temporary configuration file.
 CFG_FILE="test_config.json"
 # Path to the Kea log file.
@@ -64,144 +62,99 @@ CONFIG_INVALID="{
     }
 }"
 
-_GETPIDS1=
-_GETPIDS2=
-getpids() {
-    _GETPIDS1=`ps -o pid,command | grep b10-dhcp | grep -v grep | awk '{print $1}'`
-    _GETPIDS2=`printf "%s" "${_GETPIDS1}" | wc -w | awk '{print $1}'`
-}
+# Import common test library.
+. dhcp6_test_func.sh
 
-cleanup() {
-    getpids
-    for pid in ${_GETPIDS1}
-    do
-        printf "Shutting down Kea proccess having pid %d.\n" ${pid}
-        kill -9 ${pid}
-    done
-    rm -rf ${LOG_FILE}
-    rm -rf ${CONFIG_FILE}
-}
-
-cleanexit() {
-    if [ $1 -eq 0 ]; then
-        cleanup
-        printf "PASSED ${TEST_NAME}\n\n"
-    else
-        printf "Log file dump:\n"
-        cat ${LOG_FILE}
-        cleanup
-        printf "FAILED ${TEST_NAME}\n\n"
-    fi
-    exit $1
-}
-
-_GETRECONFIGS=
-_GETRECONFIGERRORS=
-getreconfigs() {
-    # Grep log file for DHCP6_CONFIG_COMPLETE occurences. There should
-    # be one occurence per (re)configuration.
-    _GETRECONFIGS=`grep -o DHCP6_CONFIG_COMPLETE ${LOG_FILE} | wc -w`
-    # Grep log file for DHCP6_CONFIG_LOAD_FAIL to check for configuration
-    # failures.
-    _GETRECONFIGERRORS=`grep -o DHCP6_CONFIG_LOAD_FAIL ${LOG_FILE} | wc -w`
-    # Remove whitespaces
-    ${_GETRECONFIGS##*[! ]}
-    ${_GETRECONFIGERRORS##*[! ]}
-}
-
-printf "\nSTART TEST ${TEST_NAME}\n"
-
-printf "Creating Kea configuration file: %s.\n" ${CFG_FILE}
-printf "%b" ${CONFIG} > ${CFG_FILE}
-
-printf "Kea log will be stored in %s.\n" ${LOG_FILE}
-export B10_LOGGER_DESTINATION=${LOG_FILE}
-
-# Kill any dangling Kea processes.
+# Log the start of the test and print test name.
+test_start
+# Remove dangling Kea instances and remove log files.
 cleanup
+# Create new configuration file.
+create_config "${CONFIG}"
+# Instruct Kea to log to the specific file.
+set_logger
+# Start Kea.
+start_kea
+# Wait up to 20s for Kea to start.
+wait_for_kea 20
+if [ ${_WAIT_FOR_KEA} -eq 0 ]; then
+    printf "ERROR: timeout waiting for Kea to start.\n"
+    clean_exit 1
+fi
 
-# Start fresh Kea process using a test configuration.
-printf "Running command %s.\n" "\"$BIN -c ${CFG_FILE}\""
-$BIN -c ${CFG_FILE} &
-
-# Wait a second. It may take a bit before it starts.
-sleep 1
-
-# Make sure that exactly one process has been started.
-getpids
-if [ ${_GETPIDS2} -ne 1 ]; then
-    printf "ERROR: expected one Kea process to be started. Found %d processes started.\n" ${_GETPIDS2}
-    cleanexit 1
+# Check if it is still running. It could have terminated (e.g. as a result
+# of configuration failure).
+get_pids
+if [ ${_GET_PIDS_NUM} -ne 1 ]; then
+    printf "ERROR: expected one Kea process to be started. Found %d processes started.\n" ${_GET_PIDS_NUM}
+    clean_exit 1
 fi
 
 # Check in the log file, how many times server has been configured. It should
 # be just once on startup.
-getreconfigs
-if [ ${_GETRECONFIGS} -ne 1 ]; then
+get_reconfigs
+if [ ${_GET_RECONFIGS} -ne 1 ]; then
     printf "ERROR: server hasn't been configured.\n"
-    cleanexit 1
+    clean_exit 1
 else
     printf "Server successfully configured.\n"
 fi
 
-printf "Creating configuration file with invalid configuration: %s.\n" ${CFG_FILE}
-printf "%b" ${CONFIG_INVALID} > ${CFG_FILE}
+# Now use invalid configuration.
+create_config "${CONFIG_INVALID}"
 
-# Reconfigure the server with SIGHUP.
-printf "Sending SIGHUP to Kea process (pid=%s) to reconfigure the server.\n" ${_GETPIDS1}
-kill -1 ${_GETPIDS1}
+# Try to reconfigure by sending SIGHUP
+send_signal 1
 
-# Be patient. Kea may need a while to reconfigure or shut down
-# if reconfiguration didn't work.
-sleep 1
+# The configuration should fail and the error message should be there.
+wait_for_message 10 "DHCP6_CONFIG_LOAD_FAIL" 1
 
 # After receiving SIGHUP the server should try to reconfigure itself.
 # The configuration provided is invalid so it should result in
 # reconfiguration failure but the server should still be running.
-getreconfigs
-if [ ${_GETRECONFIGS} -ne 1 ]; then
+get_reconfigs
+if [ ${_GET_RECONFIGS} -ne 1 ]; then
     printf "ERROR: server has been reconfigured despite bogus configuration.\n"
-    cleanexit 1
-elif [ ${_GETRECONFIGERRORS} -ne 1 ]; then
+    clean_exit 1
+elif [ ${_GET_RECONFIG_ERRORS} -ne 1 ]; then
     printf "ERROR: server did not report reconfiguration error despite attempt" \
         " to configure it with invalid configuration.\n"
-    cleanexit 1
+    clean_exit 1
 fi
 
-# Be patient. Kea may terminate and we need to give it a time to do so.
-sleep 1
-
 # Make sure the server is still operational.
-getpids
-if [ ${_GETPIDS2} -ne 1 ]; then
+get_pids
+if [ ${_GET_PIDS_NUM} -ne 1 ]; then
     printf "ERROR: Kea process was killed when attempting reconfiguration.\n"
-    cleanexit 1
+    clean_exit 1
 fi
 
 # Restore the good configuration.
-printf "%b" ${CONFIG} > ${CFG_FILE}
+create_config "${CONFIG}"
 
 # Reconfigure the server with SIGHUP.
-printf "Sending SIGHUP to Kea process (pid=%s) to reconfigure the server.\n" ${_GETPIDS1}
-kill -1 ${_GETPIDS1}
+send_signal 1
+
+# There should be two occurrences of the DHCP6_CONFIG_COMPLETE messages.
+# Wait for it up to 10s.
+wait_for_message 10 "DHCP6_CONFIG_COMPLETE" 2
 
 # After receiving SIGHUP the server should get reconfigured and the
 # reconfiguration should be noted in the log file. We should now
 # have two configurations logged in the log file.
-getreconfigs
-if [ ${_GETRECONFIGS} -ne 2 ]; then
+if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
     printf "ERROR: server hasn't been reconfigured.\n"
-    cleanexit 1
+    clean_exit 1
 else
     printf "Server successfully reconfigured.\n"
 fi
 
 # Make sure the server is still operational.
-getpids
-if [ ${_GETPIDS2} -ne 1 ]; then
+get_pids
+if [ ${_GET_PIDS_NUM} -ne 1 ]; then
     printf "ERROR: Kea process was killed when attempting reconfiguration.\n"
-    cleanexit 1
+    clean_exit 1
 fi
 
 # All ok. Shut down Kea and exit.
-cleanexit 0
+clean_exit 0
