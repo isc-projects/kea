@@ -128,8 +128,11 @@ void configure(const std::string& file_name) {
 
 /// @brief Signals handler for DHCPv6 server.
 ///
-/// Currently, this function handles SIGHUP signal only. When this signal
-/// is received it triggeres DHCSP server reconfiguration.
+/// This signal handler handles the following signals received by the DHCPv6
+/// server process:
+/// - SIGHUP - triggers server's dynamic reconfiguration.
+/// - SIGTERM - triggers server's shut down.
+/// - SIGINT - triggers server's shut down.
 ///
 /// @param signo Signal number received.
 void signalHandler(int signo) {
@@ -144,6 +147,9 @@ void signalHandler(int signo) {
             // the server keeps working.
             LOG_ERROR(dhcp6_logger, DHCP6_DYNAMIC_RECONFIGURATION_FAIL);
         }
+    } else if ((signo == SIGTERM) || (signo == SIGINT)) {
+        ElementPtr params(new isc::data::MapElement());
+        ControlledDhcpv6Srv::processCommand("shutdown", params);
     }
 }
 
@@ -164,9 +170,12 @@ ControlledDhcpv6Srv::init(const std::string& file_name) {
     // methods are called in processConfig() which is called by
     // processCommand("reload-config", ...)
 
-    // Set signal handler function for SIGHUP. When the SIGHUP is received
-    // by the process the server reconfiguration will be triggered.
+    // Set signal handlers. When the SIGHUP is received by the process
+    // the server reconfiguration will be triggered. When SIGTERM or
+    // SIGINT will be received, the server will start shutting down.
     signal(SIGHUP, signalHandler);
+    signal(SIGTERM, signalHandler);
+    signal(SIGINT, signalHandler);
 }
 
 void ControlledDhcpv6Srv::cleanup() {

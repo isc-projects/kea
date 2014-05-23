@@ -153,6 +153,7 @@ wait_for_message() {
     _WAIT_FOR_MESSAGE=0
     # Check if log file exists and if we reached timeout.
     while [ ! -s {LOG_FILE} ] && [ ${loops} -le ${timeout} ]; do
+        printf "."
         # Check if the message has been logged.
         get_log_messages ${message}
         if [ ${_GET_LOG_MESSAGES} -eq ${occurrences} ]; then
@@ -161,7 +162,6 @@ wait_for_message() {
             return
         fi
         # Message not recorded. Keep going.
-        printf "."
         sleep 1
         loops=`expr ${loops} + 1`
     done
