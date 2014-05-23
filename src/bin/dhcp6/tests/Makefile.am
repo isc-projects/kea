@@ -1,12 +1,16 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
 PYTESTS = dhcp6_test.py
+SHLIBS =
 SHTESTS =
 # The test of dynamic reconfiguration based on signals will work only
 # if we are using file based configuration approach.
 if CONFIG_BACKEND_JSON
+SHLIBS  += dhcp6_test_func.sh
 SHTESTS += dhcp6_reconfigure_test.sh
+SHTESTS += dhcp6_sigterm_test.sh
+SHTESTS += dhcp6_sigint_test.sh
 endif
-EXTRA_DIST = $(PYTESTS) $(SHTESTS)
+EXTRA_DIST = $(PYTESTS) $(SHTESTS) $(SHLIBS)
 
 # Explicitly specify paths to dynamic libraries required by loadable python
 # modules. That is required on Mac OS systems. Otherwise we will get exception
