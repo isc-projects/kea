@@ -573,7 +573,7 @@ TEST_F(D2ProcessTest, normalShutdown) {
     // by an io_service event and callback.
     time_duration elapsed = stop - start;
     EXPECT_TRUE(elapsed.total_milliseconds() >= 1900 &&
-                elapsed.total_milliseconds() <= 2100);
+                elapsed.total_milliseconds() <= 2200);
 }
 
 
@@ -598,7 +598,7 @@ TEST_F(D2ProcessTest, fatalErrorShutdown) {
     // during io callback processing.
     time_duration elapsed = stop - start;
     EXPECT_TRUE(elapsed.total_milliseconds() >= 1900 &&
-                elapsed.total_milliseconds() <= 2100);
+                elapsed.total_milliseconds() <= 2200);
 }
 
 /// @brief Used to permit visual inspection of logs to ensure

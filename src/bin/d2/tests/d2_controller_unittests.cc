@@ -141,7 +141,7 @@ TEST_F(D2ControllerTest, launchNormalShutdown) {
     // by an io_service event and callback.
     time_duration elapsed = stop - start;
     EXPECT_TRUE(elapsed.total_milliseconds() >= 1900 &&
-                elapsed.total_milliseconds() <= 2100);
+                elapsed.total_milliseconds() <= 2200);
 }
 
 /// @brief Configuration update event testing.
