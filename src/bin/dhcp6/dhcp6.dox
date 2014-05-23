@@ -234,24 +234,25 @@ cases it would be convenient to keep configuration in XML files.
 
 Kea 0.9 introduces configuration backends that are switchable during compilation phase.
 There is a new parameter for configure script: --with-kea-config. It currently supports
-two values: BIND10 and JSON.
+two values: BUNDY and JSON.
 
-BIND10 (which is the default value as of April 2014) means that Kea6 is linked with the
-BIND10 configuration backend that connects to the BIND10 framework and in general works
+BUNDY (which is the default value as of April 2014) means that Kea6 is linked with the
+Bundy (former BIND10) configuration backend that connects to the BIND10 framework and in general works
 exactly the same as Kea 0.8 and earlier versions. The benefits of that backend are uniform
-integration with BIND10 framework, easy on-line reconfiguration using bindctl, available
-RESTful API. On the other hand, it requires the whole heavy BIND10 framework that requires
-Python3 to be present. That backend is likely to go away with the release of Kea 0.9.
+integration with Bundy/BIND10 framework, easy on-line reconfiguration using bindctl, available
+RESTful API. On the other hand, it requires the whole heavy Bundy framework that requires
+Python3 to be present. That framework is going away with the release of Kea 0.9.
 
 JSON is a new configuration backend that causes Kea to read JSON configuration file from
 disk. It does not require any framework and thus is considered more lightweight. It will
 allow dynamic on-line reconfiguration, but will lack remote capabilities (i.e. no RESTful
-API). This configuration backend is expected to be the default for upcoming Kea 0.9.
+API). This configuration backend is expected to be the default for upcoming Kea 0.9. It
+requires <tt> -c config-file </tt> command-line option.
 
 Internally, configuration backends are implemented as different implementations of the
-isc::dhcp::ControlledDhcpv6Srv class, stored in ctrl_*_dhcpv6_srv.cc files. Depending on
+isc::dhcp::ControlledDhcpv6Srv class, stored in {kea,bundy}_controller.cc files. Depending on
 the choice made by ./configure script, only one of those files is compiled and linked.
-There are backend specific tests in src/bin/dhcp6/tests/ctrl_*_dhcpv6_srv_unittest.cc.
+There are backend specific tests in src/bin/dhcp6/tests/{kea,bundy}_controller_unittest.cc.
 Only tests specific to selected backend are linked and executed during make distcheck.
 
 While it is unlikely that ISC will support more than one backend at any given time, there
