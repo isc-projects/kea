@@ -591,11 +591,6 @@ TEST_F(Dhcp6ParserTest, multipleSubnets) {
 
     ElementPtr json = Element::fromJSON(config);
 
-    ofstream out("config.json");
-    out << config;
-    out.close();
-    
-
     do {
         EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
         checkResult(x, 0);
