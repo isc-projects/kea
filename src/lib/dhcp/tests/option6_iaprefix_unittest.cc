@@ -85,15 +85,15 @@ public:
     /// @param opt IAPREFIX option being tested
     /// @param expected_type expected option type
     /// @param expected_length Expected length of the prefix.
-    /// @param expected_address Expected prefix value in the textual format.
+    /// @param expected_address Expected prefix value.
     void checkOption(Option6IAPrefix& opt, const uint16_t expected_type,
                      const uint8_t expected_length,
-                     const std::string& expected_address) {
+                     const IOAddress& expected_address) {
 
         // Check if all fields have expected values
         EXPECT_EQ(Option::V6, opt.getUniverse());
         EXPECT_EQ(expected_type, opt.getType());
-        EXPECT_EQ(expected_address, opt.getAddress().toText());
+        EXPECT_EQ(expected_address, opt.getAddress());
         EXPECT_EQ(1000, opt.getPreferred());
         EXPECT_EQ(3000000000U, opt.getValid());
         // uint8_t is often represented as a character type (char). Convert it
@@ -148,7 +148,7 @@ TEST_F(Option6IAPrefixTest, parseShort) {
 
     // The non-significant bits (above 77) of the received prefix should be
     // set to zero.
-    checkOption(*opt, D6O_IAPREFIX, 77, "2001:db8:1:0:afa8::");
+    checkOption(*opt, D6O_IAPREFIX, 77, IOAddress("2001:db8:1:0:afa8::"));
 
     // Set non-significant bits in the reference buffer to 0, so as the buffer
     // can be directly compared with the option buffer.
@@ -160,7 +160,7 @@ TEST_F(Option6IAPrefixTest, parseShort) {
     EXPECT_NO_THROW(opt.reset());
 }
 
-// Tests if a received option holding prefix of 128 bits is parsed correctly. 
+// Tests if a received option holding prefix of 128 bits is parsed correctly.
 TEST_F(Option6IAPrefixTest, parseLong) {
 
     setExampleBuffer();
@@ -177,7 +177,8 @@ TEST_F(Option6IAPrefixTest, parseLong) {
     opt->pack(out_buf_);
     EXPECT_EQ(29, out_buf_.getLength());
 
-    checkOption(*opt, D6O_IAPREFIX, 128, "2001:db8:1:0:afaf:0:dead:beef");
+    checkOption(*opt, D6O_IAPREFIX, 128,
+                IOAddress("2001:db8:1:0:afaf:0:dead:beef"));
 
     checkOutputBuffer(D6O_IAPREFIX);
 
@@ -201,7 +202,7 @@ TEST_F(Option6IAPrefixTest, parseZero) {
     opt->pack(out_buf_);
     EXPECT_EQ(29, out_buf_.getLength());
 
-    checkOption(*opt, D6O_IAPREFIX, 0, "::");
+    checkOption(*opt, D6O_IAPREFIX, 0, IOAddress("::"));
 
     // Fill the address in the reference buffer with zeros.
     buf_.insert(buf_.begin() + 9, 16, 0);
@@ -223,7 +224,7 @@ TEST_F(Option6IAPrefixTest, build) {
                                                   1000, 3000000000u)));
     ASSERT_TRUE(opt);
 
-    checkOption(*opt, 12345, 77, "2001:db8:1:0:afaf:0:dead:beef");
+    checkOption(*opt, 12345, 77, IOAddress("2001:db8:1:0:afaf:0:dead:beef"));
 
     // Check if we can build it properly
     EXPECT_NO_THROW(opt->pack(out_buf_));
