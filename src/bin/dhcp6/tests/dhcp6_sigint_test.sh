@@ -13,4 +13,4 @@
 # PERFORMANCE OF THIS SOFTWARE.
 
 # Run a test that sends SIGINT to Kea and checks if it shuts down gracefully.
-./dhcp6_shutdown_test.sh "Sigint" 2
+$(dirname $0)/dhcp6_shutdown_test.sh "Sigint" 2
