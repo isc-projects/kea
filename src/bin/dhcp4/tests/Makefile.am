@@ -122,6 +122,6 @@ dhcp4_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
 endif
 
-noinst_DATA = configs-list.txt
+noinst_EXTRA_DIST = configs-list.txt
 
 noinst_PROGRAMS = $(TESTS)
