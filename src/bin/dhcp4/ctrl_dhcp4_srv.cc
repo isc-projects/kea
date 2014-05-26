@@ -39,7 +39,7 @@ ControlledDhcpv4Srv::commandShutdownHandler(const string&, ConstElementPtr) {
         return (answer);
     }
     ConstElementPtr answer = isc::config::createAnswer(0, "Shutting down.");
-        return (answer);
+    return (answer);
 }
 
 ConstElementPtr

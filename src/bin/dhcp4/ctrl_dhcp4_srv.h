@@ -58,7 +58,7 @@ public:
 
     /// @brief Performs cleanup, immediately before termination
     ///
-    /// This method performs final clean up, just before the Dhcpv6Srv object
+    /// This method performs final clean up, just before the Dhcpv4Srv object
     /// is destroyed. The actual behavior is backend dependent. For Bundy
     /// backend, it terminates existing session with msgq. After calling
     /// it, no further messages over msgq (commands or configuration updates)
@@ -70,7 +70,7 @@ public:
     /// @brief Initiates shutdown procedure for the whole DHCPv4 server.
     void shutdown();
 
-    /// @brief command processor
+    /// @brief Command processor
     ///
     /// This method is uniform for all config backends. It processes received
     /// command (as a string + JSON arguments). Internally, it's just a
@@ -86,7 +86,7 @@ public:
     static isc::data::ConstElementPtr
     processCommand(const std::string& command, isc::data::ConstElementPtr args);
 
-    /// @brief configuration processor
+    /// @brief Configuration processor
     ///
     /// This is a callback for handling incoming configuration updates.
     /// This method should be called by all configuration backends when the
@@ -101,7 +101,7 @@ public:
     static isc::data::ConstElementPtr
     processConfig(isc::data::ConstElementPtr new_config);
 
-    /// @brief returns pointer to the sole instance of Dhcpv4Srv
+    /// @brief Returns pointer to the sole instance of Dhcpv4Srv
     ///
     /// @note may return NULL, if called before server is spawned
     static ControlledDhcpv4Srv* getInstance() {
@@ -128,7 +128,7 @@ protected:
     /// @brief IOService object, used for all ASIO operations.
     isc::asiolink::IOService io_service_;
 
-    /// @brief handler for processing 'shutdown' command
+    /// @brief Handler for processing 'shutdown' command
     ///
     /// This handler processes shutdown command, which initializes shutdown
     /// procedure.
@@ -140,7 +140,7 @@ protected:
     commandShutdownHandler(const std::string& command,
                            isc::data::ConstElementPtr args);
 
-    /// @brief handler for processing 'libreload' command
+    /// @brief Handler for processing 'libreload' command
     ///
     /// This handler processes libreload command, which unloads all hook
     /// libraries and reloads them.
@@ -153,7 +153,7 @@ protected:
     commandLibReloadHandler(const std::string& command,
                             isc::data::ConstElementPtr args);
 
-    /// @brief handler for processing 'config-reload' command
+    /// @brief Handler for processing 'config-reload' command
     ///
     /// This handler processes config-reload command, which processes
     /// configuration specified in args parameter.
