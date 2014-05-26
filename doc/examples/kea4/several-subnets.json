@@ -1,5 +1,5 @@
 # This is an example configuration file for DHCPv4 server in Kea.
-# It's a basic scenario with four IPv6 subnets configured. In each
+# It's a basic scenario with three IPv4 subnets configured. In each
 # subnet, there's a smaller pool of dynamic addresses.
 
 { "Dhcp4":
@@ -15,12 +15,11 @@
     "type": "memfile"
   },
 
-# Addresses will be assigned with preferred and valid lifetimes
-# being 3000 and 4000, respectively. Client is told to start
-# renewing after 1000 seconds. If the server does not repond
-# after 2000 seconds since the lease was granted, client is supposed
-# to start REBIND procedure (emergency renewal that allows switching
-# to a different server).
+# Addresses will be assigned with the valid lifetimes being 4000.
+# Client is told to start renewing after 1000 seconds. If the server
+# does not repond after 2000 seconds since the lease was granted, client
+# is supposed to start REBIND procedure (emergency renewal that allows
+# switching to a different server).
   "valid-lifetime": 4000,
   "renew-timer": 1000,
   "rebind-timer": 2000,
