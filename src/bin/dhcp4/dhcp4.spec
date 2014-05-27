@@ -32,13 +32,13 @@
 
       { "item_name": "renew-timer",
         "item_type": "integer",
-        "item_optional": false,
+        "item_optional": true,
         "item_default": 1000
       },
 
       { "item_name": "rebind-timer",
         "item_type": "integer",
-        "item_optional": false,
+        "item_optional": true,
         "item_default": 2000
       },
 
