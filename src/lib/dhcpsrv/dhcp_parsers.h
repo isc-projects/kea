@@ -993,6 +993,18 @@ protected:
     /// @throw DhcpConfigError when requested parameter is not present
     isc::dhcp::Triplet<uint32_t> getParam(const std::string& name);
 
+    /// @brief Returns optional value for a given parameter.
+    ///
+    /// This method checks if an optional parameter has been specified for
+    /// a subnet. If not, it will try to use a global value. If the global
+    /// value is not specified it will return an object representing an
+    /// unspecified value.
+    ///
+    /// @param name name of the configuration parameter.
+    /// @return An optional value or a @c Triplet object representing
+    /// unspecified value.
+    isc::dhcp::Triplet<uint32_t> getOptionalParam(const std::string& name);
+
 private:
 
     /// @brief Append sub-options to an option.
