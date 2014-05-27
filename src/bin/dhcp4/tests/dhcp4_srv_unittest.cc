@@ -558,13 +558,51 @@ TEST_F(Dhcpv4SrvTest, DiscoverBasic) {
 
     // Check that address was returned from proper range, that its lease
     // lifetime is correct, that T1 and T2 are returned properly
-    checkAddressParams(offer, subnet_);
+    checkAddressParams(offer, subnet_, true, true);
 
     // Check identifiers
     checkServerId(offer, srv->getServerID());
     checkClientId(offer, clientid);
 }
 
+// Check that option 58 and 59 are not included if they are not specified.
+TEST_F(Dhcpv4SrvTest, DiscoverNoTimers) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    boost::scoped_ptr<NakedDhcpv4Srv> srv;
+    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    dis->setIface("eth1");
+
+    // Recreate a subnet but set T1 and T2 to "unspecified".
+    subnet_.reset(new Subnet4(IOAddress("192.0.2.0"), 24,
+                              Triplet<uint32_t>(),
+                              Triplet<uint32_t>(),
+                              3000));
+    pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"),
+                               IOAddress("192.0.2.110")));
+    subnet_->addPool(pool_);
+    CfgMgr::instance().deleteSubnets4();
+    CfgMgr::instance().addSubnet4(subnet_);
+
+    // Pass it to the server and get an offer
+    Pkt4Ptr offer = srv->processDiscover(dis);
+
+    // Check if we get response at all
+    checkResponse(offer, DHCPOFFER, 1234);
+
+    // T1 and T2 timers must not be present.
+    checkAddressParams(offer, subnet_, false, false);
+
+    // Check identifiers
+    checkServerId(offer, srv->getServerID());
+    checkClientId(offer, clientid);
+}
 
 // This test verifies that incoming DISCOVER can be handled properly, that an
 // OFFER is generated, that the response has an address and that address
@@ -601,7 +639,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverHint) {
 
     // Check that address was returned from proper range, that its lease
     // lifetime is correct, that T1 and T2 are returned properly
-    checkAddressParams(offer, subnet_);
+    checkAddressParams(offer, subnet_, true, true);
 
     EXPECT_EQ(offer->getYiaddr(), hint);
 
@@ -644,7 +682,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverNoClientId) {
 
     // Check that address was returned from proper range, that its lease
     // lifetime is correct, that T1 and T2 are returned properly
-    checkAddressParams(offer, subnet_);
+    checkAddressParams(offer, subnet_, true, true);
 
     EXPECT_EQ(offer->getYiaddr(), hint);
 
@@ -687,7 +725,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverInvalidHint) {
 
     // Check that address was returned from proper range, that its lease
     // lifetime is correct, that T1 and T2 are returned properly
-    checkAddressParams(offer, subnet_);
+    checkAddressParams(offer, subnet_, true, true);
 
     EXPECT_NE(offer->getYiaddr(), hint);
 
@@ -750,9 +788,9 @@ TEST_F(Dhcpv4SrvTest, ManyDiscovers) {
     IOAddress addr3 = offer3->getYiaddr();
 
     // Check that the assigned address is indeed from the configured pool
-    checkAddressParams(offer1, subnet_);
-    checkAddressParams(offer2, subnet_);
-    checkAddressParams(offer3, subnet_);
+    checkAddressParams(offer1, subnet_, true, true);
+    checkAddressParams(offer2, subnet_, true, true);
+    checkAddressParams(offer3, subnet_, true, true);
 
     // Check server-ids
     checkServerId(offer1, srv->getServerID());
@@ -840,7 +878,7 @@ TEST_F(Dhcpv4SrvTest, RequestBasic) {
 
     // Check that address was returned from proper range, that its lease
     // lifetime is correct, that T1 and T2 are returned properly
-    checkAddressParams(ack, subnet_);
+    checkAddressParams(ack, subnet_, true, true);
 
     // Check identifiers
     checkServerId(ack, srv->getServerID());
@@ -851,6 +889,45 @@ TEST_F(Dhcpv4SrvTest, RequestBasic) {
 
     ASSERT_TRUE(l);
     LeaseMgrFactory::instance().deleteLease(l->addr_);
+}
+
+// Check that option 58 and 59 are not included if they are not specified.
+TEST_F(Dhcpv4SrvTest, RequestNoTimers) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    boost::scoped_ptr<NakedDhcpv4Srv> srv;
+    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
+
+    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
+    req->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    req->addOption(clientid);
+    req->setIface("eth1");
+
+    // Recreate a subnet but set T1 and T2 to "unspecified".
+    subnet_.reset(new Subnet4(IOAddress("192.0.2.0"), 24,
+                              Triplet<uint32_t>(),
+                              Triplet<uint32_t>(),
+                              3000));
+    pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"),
+                               IOAddress("192.0.2.110")));
+    subnet_->addPool(pool_);
+    CfgMgr::instance().deleteSubnets4();
+    CfgMgr::instance().addSubnet4(subnet_);
+
+    // Pass it to the server and get an ACK.
+    Pkt4Ptr ack = srv->processRequest(req);
+
+    // Check if we get response at all
+    checkResponse(ack, DHCPACK, 1234);
+
+    // T1 and T2 timers must not be present.
+    checkAddressParams(ack, subnet_, false, false);
+
+    // Check identifiers
+    checkServerId(ack, srv->getServerID());
+    checkClientId(ack, clientid);
 }
 
 // This test verifies that incoming REQUEST can be handled properly, that an
@@ -927,9 +1004,9 @@ TEST_F(Dhcpv4SrvTest, ManyRequests) {
     EXPECT_EQ(req_addr3, addr3);
 
     // Check that the assigned address is indeed from the configured pool
-    checkAddressParams(ack1, subnet_);
-    checkAddressParams(ack2, subnet_);
-    checkAddressParams(ack3, subnet_);
+    checkAddressParams(ack1, subnet_, true, true);
+    checkAddressParams(ack2, subnet_, true, true);
+    checkAddressParams(ack3, subnet_, true, true);
 
     // Check DUIDs
     checkServerId(ack1, srv->getServerID());
@@ -1049,7 +1126,7 @@ TEST_F(Dhcpv4SrvTest, RenewBasic) {
 
     // Check that address was returned from proper range, that its lease
     // lifetime is correct, that T1 and T2 are returned properly
-    checkAddressParams(ack, subnet_);
+    checkAddressParams(ack, subnet_, true, true);
 
     // Check identifiers
     checkServerId(ack, srv->getServerID());
