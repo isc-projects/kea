@@ -188,6 +188,29 @@ public:
                         *remote);
     }
 
+    // @brief Request handler for testing clients using TSIG
+    //
+    // This callback handler is installed when performing async read on a
+    // socket to emulate reception of the DNS Update request with TSIG by a
+    // server.  As a result, this handler will send an appropriate DNS Update
+    // response message back to the address from which the request has come.
+    //
+    // @param socket A pointer to a socket used to receive a query and send a
+    // response.
+    // @param remote A pointer to an object which specifies the host (address
+    // and port) from which a request has come.
+    // @param receive_length A length (in bytes) of the received data.
+    // @param corrupt_response A bool value which indicates that the server's
+    // response should be invalid (true) or valid (false)
+    // @param client_key TSIG key the server should use to verify the inbound
+    // request.  If the pointer is NULL, the server will not attempt to
+    // verify the request.
+    // @param server_key TSIG key the server should use to sign the outbound
+    // request. If the pointer is NULL, the server will not sign the outbound
+    // response.  If the pointer is not NULL and not the same value as the
+    // client_key, the server will use a new context to sign the response then
+    // the one used to verify it.  This allows us to simulate the server
+    // signing with the wrong key.
     void TSIGReceiveHandler(udp::socket* socket, udp::endpoint* remote,
                             size_t receive_length,
                             TSIGKeyPtr client_key,
@@ -428,13 +451,8 @@ public:
         // response.
         const int timeout = 500;
         expected_++;
-        if (client_key) {
-            dns_client_->doUpdate(service_, IOAddress(TEST_ADDRESS), TEST_PORT,
-                                  message, timeout, *client_key);
-        } else {
-            dns_client_->doUpdate(service_, IOAddress(TEST_ADDRESS), TEST_PORT,
-                                  message, timeout);
-        }
+        dns_client_->doUpdate(service_, IOAddress(TEST_ADDRESS), TEST_PORT,
+                              message, timeout, client_key);
 
         // Kick of the message exchange by actually running the scheduled
         // "send" and "receive" operations.

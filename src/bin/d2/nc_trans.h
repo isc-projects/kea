@@ -471,12 +471,6 @@ public:
     /// @return A const pointer reference to the DNSClient
     const DNSClientPtr& getDNSClient() const;
 
-    /// @brief Pointer to the TSIG key which should be used (if any).
-    ///
-    /// @return A const pointer reference to the current TSIG key. Pointer
-    /// will be empty if TSIG is not being used.
-    const dns::TSIGKeyPtr& getTSIGKey() const;
-
     /// @brief Fetches the current DNS update request packet.
     ///
     /// @return A const pointer reference to the current D2UpdateMessage

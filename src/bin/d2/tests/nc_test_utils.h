@@ -118,11 +118,11 @@ public:
         return receive_pending_;
     }
 
-    /// @breif Sets the TSIG key to the given value.
+    /// @brief Sets the TSIG key to the given value.
     ///
     /// @param tsig_key Pointer to the TSIG key to use.  If the pointer is
     /// empty, TSIG will not be used.
-    void setTSIGKey (const dns::TSIGKeyPtr tsig_key) {
+    void setTSIGKey (const dns::TSIGKeyPtr& tsig_key) {
         tsig_key_ = tsig_key;
     }
 };

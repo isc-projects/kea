@@ -50,24 +50,19 @@ const dns::Name&
 TSIGKeyInfo::stringToAlgorithmName(const std::string& algorithm_id) {
     if (boost::iequals(algorithm_id, HMAC_MD5_STR)) {
         return (dns::TSIGKey::HMACMD5_NAME());
-    }
-    if (boost::iequals(algorithm_id, HMAC_SHA1_STR)) {
+    } else if (boost::iequals(algorithm_id, HMAC_SHA1_STR)) {
         return (dns::TSIGKey::HMACSHA1_NAME());
-    }
-    if (boost::iequals(algorithm_id, HMAC_SHA224_STR)) {
+    } else if (boost::iequals(algorithm_id, HMAC_SHA224_STR)) {
         return (dns::TSIGKey::HMACSHA224_NAME());
-    }
-    if (boost::iequals(algorithm_id, HMAC_SHA256_STR)) {
+    } else if (boost::iequals(algorithm_id, HMAC_SHA256_STR)) {
         return (dns::TSIGKey::HMACSHA256_NAME());
-    }
-    if (boost::iequals(algorithm_id, HMAC_SHA384_STR)) {
+    } else if (boost::iequals(algorithm_id, HMAC_SHA384_STR)) {
         return (dns::TSIGKey::HMACSHA384_NAME());
-    }
-    if (boost::iequals(algorithm_id, HMAC_SHA512_STR)) {
+    } else if (boost::iequals(algorithm_id, HMAC_SHA512_STR)) {
         return (dns::TSIGKey::HMACSHA512_NAME());
     }
 
-    isc_throw(BadValue, "Unknown TSIG Key algorithm:" << algorithm_id);
+    isc_throw(BadValue, "Unknown TSIG Key algorithm: " << algorithm_id);
 }
 
 void
@@ -577,8 +572,8 @@ DdnsDomainParser::build(isc::data::ConstElementPtr domain_config) {
         }
 
         if (!tsig_key_info) {
-            isc_throw(D2CfgError, "DdnsDomain :" << name <<
-                     " specifies an undefined key:" << key_name);
+            isc_throw(D2CfgError, "DdnsDomain " << name <<
+                     " specifies an undefined key: " << key_name);
         }
     }
 
