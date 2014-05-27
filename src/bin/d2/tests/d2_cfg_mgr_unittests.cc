@@ -108,9 +108,6 @@ bool checkServer(DnsServerInfoPtr server, const char* hostname,
 /// @brief Convenience function which compares the contents of the given
 /// TSIGKeyInfo against the given set of values.
 ///
-/// It is structured in such a way that each value is checked, and output
-/// is generate for all that do not match.
-///
 /// @param key is a pointer to the key to check against.
 /// @param name is the value to compare against key's name_.
 /// @param algorithm is the string value to compare against key's algorithm.
@@ -119,39 +116,13 @@ bool checkServer(DnsServerInfoPtr server, const char* hostname,
 /// @return returns true if there is a match across the board, otherwise it
 /// returns false.
 bool checkKey(TSIGKeyInfoPtr key, const std::string& name,
-                 const std::string& algorithm, const std::string& secret)
-{
+                 const std::string& algorithm, const std::string& secret) {
     // Return value, assume its a match.
-    bool result = true;
-    if (!key) {
-        EXPECT_TRUE(key);
-        return false;
-    }
-
-    // Check name.
-    if (key->getName() != name) {
-        EXPECT_EQ(name, key->getName());
-        result = false;
-    }
-
-    // Check algorithm.
-    if (key->getAlgorithm() != algorithm) {
-        EXPECT_EQ(algorithm, key->getAlgorithm());
-        result = false;
-    }
-
-    // Check secret.
-    if (key->getSecret() !=  secret) {
-        EXPECT_EQ (secret, key->getSecret());
-        result = false;
-    }
-
-    if (!key->getTSIGKey()) {
-        EXPECT_TRUE (key->getTSIGKey());
-        return false;
-    }
-
-    return (result);
+    return (((key) &&
+        (key->getName() == name) &&
+        (key->getAlgorithm() == algorithm)  &&
+        (key->getSecret() ==  secret)  &&
+        (key->getTSIGKey())));
 }
 
 /// @brief Test fixture class for testing DnsServerInfo parsing.

@@ -88,11 +88,11 @@ FauxServer::requestHandler(const asio::error_code& error,
                            std::size_t bytes_recvd,
                            const ResponseMode& response_mode,
                            const dns::Rcode& response_rcode) {
+    receive_pending_ = false;
     // If we encountered an error or received no data then fail.
     // We expect the client to send good requests.
     if (error.value() != 0 || bytes_recvd < 1) {
         ADD_FAILURE() << "FauxServer receive failed: " << error.message();
-        receive_pending_ = false;
         return;
     }
 
@@ -127,7 +127,6 @@ FauxServer::requestHandler(const asio::error_code& error,
         // If the request cannot be parsed, then fail the test.
         // We expect the client to send good requests.
         ADD_FAILURE() << "FauxServer request is corrupt:" << ex.what();
-        receive_pending_ = false;
         return;
     }
 
@@ -185,7 +184,6 @@ FauxServer::requestHandler(const asio::error_code& error,
         ADD_FAILURE() << "FauxServer send failed: " << ex.what();
     }
 
-    receive_pending_ = false;
     if (perpetual_receive_) {
         // Schedule the next receive
         receive (response_mode, response_rcode);
@@ -433,9 +431,9 @@ dhcp_ddns::NameChangeRequestPtr makeNcrFromString(const std::string& ncr_str) {
 
 DdnsDomainPtr makeDomain(const std::string& zone_name,
                          const std::string& key_name) {
-    DdnsDomainPtr domain;
     DnsServerInfoStoragePtr servers(new DnsServerInfoStorage());
-    domain.reset(new DdnsDomain(zone_name, servers, makeTSIGKeyInfo(key_name)));
+    DdnsDomainPtr domain(new DdnsDomain(zone_name, servers,
+                         makeTSIGKeyInfo(key_name)));
     return (domain);
 }
 

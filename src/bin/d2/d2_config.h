@@ -175,9 +175,10 @@ public:
     /// -# "HMAC-SHA384"
     /// -# "HMAC-SHA512"
     ///
-    /// @param secret the base-64 encoded secret component for this key
-    /// such as one would typically see in a key file for the entry "Key"
-    /// in the example below:
+    /// @param secret  The base-64 encoded secret component for this key.
+    /// (A suitable string for use here could be obtained by running the
+    /// BIND 9 dnssec-keygen program; the contents of resulting key file
+    /// will look similar to:
     /// @code
     ///   Private-key-format: v1.3
     ///   Algorithm: 157 (HMAC_MD5)
@@ -187,6 +188,7 @@ public:
     ///   Publish: 20140515143700
     ///   Activate: 20140515143700
     /// @endcode
+    /// where the value the "Key:" entry is the secret component of the key.)
     ///
     /// @throw D2CfgError if values supplied are invalid:
     /// name cannot be blank, algorithm must be a supported value,
@@ -237,7 +239,7 @@ public:
     /// -# "HMAC-SHA384"
     /// -# "HMAC-SHA512"
     ///
-    /// @return const reference to a dns::Name containing the alogorithm name
+    /// @return const reference to a dns::Name containing the algorithm name
     /// @throw BadValue if ID isn't recognized.
     static const dns::Name& stringToAlgorithmName(const std::string&
                                                   algorithm_id);
@@ -419,7 +421,7 @@ public:
         return (name_);
     }
 
-    /// @brief Conveneince method which returns the domain's TSIG key name.
+    /// @brief Convenience method which returns the domain's TSIG key name.
     ///
     /// @return returns the key name in an std::string. If domain has no
     /// TSIG key, the string will empty.
@@ -432,6 +434,10 @@ public:
         return (servers_);
     }
 
+    /// @brief Getter which returns the domain's TSIGKey info
+    ///
+    /// @return returns the pointer to the server storage.  If the domain
+    /// is not configured to use TSIG the pointer will be empty.
     const TSIGKeyInfoPtr& getTSIGKeyInfo() {
         return (tsig_key_info_);
     }
@@ -443,7 +449,8 @@ private:
     /// @brief The list of server(s) supporting this domain.
     DnsServerInfoStoragePtr servers_;
 
-    /// @brief
+    /// @brief Pointer to domain's the TSIGKeyInfo.
+    /// Value is empty if the domain is not configured for TSIG.
     TSIGKeyInfoPtr tsig_key_info_;
 };
 

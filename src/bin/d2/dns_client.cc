@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -81,14 +81,7 @@ public:
                   const uint16_t ns_port,
                   D2UpdateMessage& update,
                   const unsigned int wait,
-                  const dns::TSIGKey& tsig_key);
-
-    // Starts asynchronous DNS Update.
-    void doUpdate(asiolink::IOService& io_service,
-                  const asiolink::IOAddress& ns_addr,
-                  const uint16_t ns_port,
-                  D2UpdateMessage& update,
-                  const unsigned int wait);
+                  const dns::TSIGKeyPtr& tsig_key);
 
     // This function maps the IO error to the DNSClient error.
     DNSClient::Status getStatus(const asiodns::IOFetch::Result);
@@ -194,17 +187,7 @@ DNSClientImpl::doUpdate(asiolink::IOService& io_service,
                         const uint16_t ns_port,
                         D2UpdateMessage& update,
                         const unsigned int wait,
-                        const dns::TSIGKey& tsig_key) {
-    tsig_context_.reset(new TSIGContext(tsig_key));
-    doUpdate(io_service, ns_addr, ns_port, update, wait);
-}
-
-void
-DNSClientImpl::doUpdate(asiolink::IOService& io_service,
-                        const IOAddress& ns_addr,
-                        const uint16_t ns_port,
-                        D2UpdateMessage& update,
-                        const unsigned int wait) {
+                        const dns::TSIGKeyPtr& tsig_key) {
     // The underlying implementation which we use to send DNS Updates uses
     // signed integers for timeout. If we want to avoid overflows we need to
     // respect this limitation here.
@@ -212,6 +195,15 @@ DNSClientImpl::doUpdate(asiolink::IOService& io_service,
         isc_throw(isc::BadValue, "A timeout value for DNS Update request must"
                   " not exceed " << DNSClient::getMaxTimeout()
                   << ". Provided timeout value is '" << wait << "'");
+    }
+
+    // Create a TSIG context if we have a key, otherwise clear the context
+    // pointer.  Message marshalling uses non-null context is the indicator
+    // that TSIG should be used.
+    if (tsig_key) {
+        tsig_context_.reset(new TSIGContext(*tsig_key));
+    } else {
+        tsig_context_.reset();
     }
 
     // A renderer is used by the toWire function which creates the on-wire data
@@ -244,7 +236,6 @@ DNSClientImpl::doUpdate(asiolink::IOService& io_service,
     io_service.post(io_fetch);
 }
 
-
 DNSClient::DNSClient(D2UpdateMessagePtr& response_placeholder,
                      Callback* callback, const DNSClient::Protocol proto)
     : impl_(new DNSClientImpl(response_placeholder, callback, proto)) {
@@ -266,19 +257,9 @@ DNSClient::doUpdate(asiolink::IOService& io_service,
                     const uint16_t ns_port,
                     D2UpdateMessage& update,
                     const unsigned int wait,
-                    const dns::TSIGKey& tsig_key) {
+                    const dns::TSIGKeyPtr& tsig_key) {
     impl_->doUpdate(io_service, ns_addr, ns_port, update, wait, tsig_key);
-}
-
-void
-DNSClient::doUpdate(asiolink::IOService& io_service,
-                    const IOAddress& ns_addr,
-                    const uint16_t ns_port,
-                    D2UpdateMessage& update,
-                    const unsigned int wait) {
-    impl_->doUpdate(io_service, ns_addr, ns_port, update, wait);
 }
 
 } // namespace d2
 } // namespace isc
-

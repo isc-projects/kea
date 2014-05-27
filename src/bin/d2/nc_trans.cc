@@ -172,18 +172,11 @@ NameChangeTransaction::sendUpdate(const std::string& comment) {
 
         // @todo time out should ultimately be configurable, down to
         // server level?
-        if (tsig_key_) {
-            dns_client_->doUpdate(*io_service_, current_server_->getIpAddress(),
-                                  current_server_->getPort(),
-                                  *dns_update_request_,
-                                  DNS_UPDATE_DEFAULT_TIMEOUT,
-                                  *tsig_key_);
-        } else {
-            dns_client_->doUpdate(*io_service_, current_server_->getIpAddress(),
-                                  current_server_->getPort(),
-                                  *dns_update_request_,
-                                  DNS_UPDATE_DEFAULT_TIMEOUT);
-        }
+        dns_client_->doUpdate(*io_service_, current_server_->getIpAddress(),
+                              current_server_->getPort(),
+                              *dns_update_request_,
+                              DNS_UPDATE_DEFAULT_TIMEOUT,
+                              tsig_key_);
 
         // Message is on its way, so the next event should be NOP_EVT.
         postNextEvent(NOP_EVT);
