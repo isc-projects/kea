@@ -54,6 +54,8 @@ public:
         min_ = other;
         default_ = other;
         max_ = other;
+        // The value is now specified because we just assigned one.
+        unspecified_ = false;
         return (*this);
     }
 
@@ -65,6 +67,14 @@ public:
         return (default_);
     }
 
+    /// @brief Constructor without parameters.
+    ///
+    /// Marks value in @c Triplet unspecified.
+    Triplet()
+        : min_(0), default_(0), max_(0),
+          unspecified_(true) {
+    }
+
     /// @brief Sets a fixed value.
     ///
     /// This constructor assigns a fixed (i.e. no range, just a single value)
@@ -72,14 +82,16 @@ public:
     ///
     /// @param value A number to be assigned as min, max and default value.
     Triplet(T value)
-        :min_(value), default_(value), max_(value) {
+        : min_(value), default_(value), max_(value),
+          unspecified_(false) {
     }
 
     /// @brief Sets the default value and thresholds
     ///
     /// @throw BadValue if min <= def <= max rule is violated
     Triplet(T min, T def, T max)
-        :min_(min), default_(def), max_(max) {
+        : min_(min), default_(def), max_(max),
+          unspecified_(false) {
         if ( (min_ > def) || (def > max_) ) {
             isc_throw(BadValue, "Invalid triplet values.");
         }
@@ -118,6 +130,13 @@ public:
     /// @brief Returns a maximum allowed value
     T getMax() const { return (max_); }
 
+    /// @brief Check if the value has been specified.
+    ///
+    /// @return true if the value hasn't been specified, or false otherwise.
+    bool unspecified() const {
+        return (unspecified_);
+    }
+
 private:
 
     /// @brief the minimum value
@@ -128,6 +147,9 @@ private:
 
     /// @brief the maximum value
     T max_;
+
+    /// @brief Indicates whether the value is unspecified.
+    bool unspecified_;
 };
 
 
