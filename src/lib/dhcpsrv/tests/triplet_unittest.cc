@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -94,7 +94,7 @@ TEST(TripletTest, operator) {
 }
 
 // check if specified values are sane
-TEST(TripletTest, sanity_check) {
+TEST(TripletTest, sanityCheck) {
 
     // min is larger than default
     EXPECT_THROW(Triplet<uint32_t>(6,5,5), BadValue);
