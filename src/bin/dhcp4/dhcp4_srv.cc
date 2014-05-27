@@ -1044,15 +1044,28 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
         }
 
         // IP Address Lease time (type 51)
-        opt = OptionPtr(new Option(Option::V4, DHO_DHCP_LEASE_TIME));
-        opt->setUint32(lease->valid_lft_);
+        opt.reset(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME,
+                                   lease->valid_lft_));
         answer->addOption(opt);
 
         // Subnet mask (type 1)
         answer->addOption(getNetmaskOption(subnet));
 
-        /// @todo: send renew timer option (T1, option 58)
-        /// @todo: send rebind timer option (T2, option 59)
+        // renewal-timer (type 58)
+        if (!subnet->getT1().unspecified()) {
+            OptionUint32Ptr t1(new OptionUint32(Option::V4,
+                                                DHO_DHCP_RENEWAL_TIME,
+                                                subnet->getT1()));
+            answer->addOption(t1);
+        }
+
+        // rebind timer (type 59)
+        if (!subnet->getT2().unspecified()) {
+            OptionUint32Ptr t2(new OptionUint32(Option::V4,
+                                                DHO_DHCP_REBINDING_TIME,
+                                                subnet->getT2()));
+            answer->addOption(t2);
+        }
 
         // Create NameChangeRequests if DDNS is enabled and this is a
         // real allocation.
