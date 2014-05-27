@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -591,7 +591,7 @@ TEST_F(D2UpdateMessageTest, toWireInvalidQRFlag) {
 // TSIG test
 TEST_F(D2UpdateMessageTest, validTSIG) {
     // Create a TSIG Key and context
-    std::string secret ("this key will match");
+    std::string secret("this key will match");
     TSIGKeyPtr right_key;
     ASSERT_NO_THROW(right_key.reset(new
                                     TSIGKey(Name("right.com"),
