@@ -42,7 +42,7 @@ set_logger() {
 _GET_PIDS=     # Return value: holds space separated list of DHCPv6 pids.
 _GET_PIDS_NUM= # Return value: holds the number of DHCPv6 server pids.
 get_pids() {
-    _GET_PIDS=`ps axo pid,command | grep ${BIN} | grep -v grep | awk '{print $1}'`
+    _GET_PIDS=`ps axwwo pid,command | grep ${BIN} | grep -v grep | awk '{print $1}'`
     _GET_PIDS_NUM=`printf "%s" "${_GET_PIDS}" | wc -w | awk '{print $1}'`
 }
 
