@@ -16,7 +16,7 @@
 BIN="../b10-dhcp6"
 
 # Begins a test by prining its name.
-# It requires the ${TEST_NAME} variable to be hold the test name.
+# It requires the ${TEST_NAME} variable to hold the test name.
 test_start() {
     printf "\nSTART TEST ${TEST_NAME}\n"
 }
@@ -37,10 +37,10 @@ set_logger() {
 
 # Returns the number of running b10-dhcp6 process pids and
 # the list of pids.
-_GET_PIDS=     # Holds space separated list of DHCPv6 pids.
-_GET_PIDS_NUM= # Holds the number of DHCPv6 server pids.
+_GET_PIDS=     # Return value: holds space separated list of DHCPv6 pids.
+_GET_PIDS_NUM= # Return value: holds the number of DHCPv6 server pids.
 get_pids() {
-    _GET_PIDS=`ps -ax -o pid,command | grep b10-dhcp6 | grep -v grep | awk '{print $1}'`
+    _GET_PIDS=`ps axo pid,command | grep b10-dhcp6 | grep -v grep | awk '{print $1}'`
     _GET_PIDS_NUM=`printf "%s" "${_GET_PIDS}" | wc -w | awk '{print $1}'`
 }
 
@@ -56,8 +56,8 @@ get_log_messages() {
 
 # Returns the number of server configurations performed so far. Also
 # returns the number of configuration errors.
-_GET_RECONFIGS=      # Number of configurations so far.
-_GET_RECONFIG_ERRORS=  # Number of configuration errors.
+_GET_RECONFIGS=        # Return value: number of configurations so far.
+_GET_RECONFIG_ERRORS=  # Return value: number of configuration errors.
 get_reconfigs() {
     # Grep log file for DHCP6_CONFIG_COMPLETE occurences. There should
     # be one occurence per (re)configuration.
@@ -72,6 +72,9 @@ get_reconfigs() {
 
 # Performs cleanup for a test.
 # It shuts down running Kea processes and removes temporary files.
+# The location of the log file and the configuration file should be set
+# in the ${LOG_FILE} and ${CFG_FILE} variables recpectively, prior to
+# calling this function.
 cleanup() {
     get_pids
     # Shut down running Kea processes.
@@ -89,7 +92,8 @@ cleanup() {
 # It peformes the cleanup and prints whether the test has passed or failed.
 # If a test fails, the Kea log is dumped.
 clean_exit() {
-    if [ $1 -eq 0 ]; then
+    exit_code=${1}  # Exit code to be returned by the exit function.
+    if [ ${exit_code} -eq 0 ]; then
         cleanup
         printf "PASSED ${TEST_NAME}\n\n"
     else
@@ -101,7 +105,7 @@ clean_exit() {
         cleanup
         printf "FAILED ${TEST_NAME}\n\n"
     fi
-    exit $1
+    exit ${exit_code}
 }
 
 # Starts Kea process in background using a configuration file specified
@@ -114,15 +118,15 @@ start_kea() {
 # Waits for Kea to startup with timeout.
 # This function repeatedly checs if the Kea log file has been created
 # and is non-empty. If it is, the function assumes that Kea has started.
-# It doesn't check the contents of the log file though. 
+# It doesn't check the contents of the log file though.
 # If the log file doesn't exist the function sleeps for a second and
 # checks again. This is repeated until timeout is reached or non-empty
 # log file is found. If timeout is reached, the function reports an
 # error.
-_WAIT_FOR_KEA=0  # Holds 0 if Kea hasn't started, 1 otherwise
+_WAIT_FOR_KEA=0  # Return value: Holds 0 if Kea hasn't started, 1 otherwise
 wait_for_kea() {
     timeout=${1} # Desired timeout in seconds.
-    loops=0
+    loops=0 # Loops counter
     _WAIT_FOR_KEA=0
     while [ ! -s ${LOG_FILE} ] && [ ${loops} -le ${timeout} ]; do
         printf "."
@@ -144,9 +148,10 @@ wait_for_kea() {
 # This function waits a specified number of seconds for the number
 # of message occurrences to show up. If the expected number of
 # message doesn't occur, the error status is returned.
-_WAIT_FOR_MESSAGE=0  # Holds 0 if the message hasn't occured, 1 otherwise.
+_WAIT_FOR_MESSAGE=0  # Return value: holds 0 if the message hasn't occured,
+                     # 1 otherwise.
 wait_for_message() {
-    timeout=${1}     # Timeout value in seconds.
+    timeout=${1}     # Expecte timeout value in seconds.
     message=${2}     # Expected message id.
     occurrences=${3} # Number of expected occurrences.
     loops=0          # Number of loops performed so far.
@@ -158,7 +163,7 @@ wait_for_message() {
         get_log_messages ${message}
         if [ ${_GET_LOG_MESSAGES} -eq ${occurrences} ]; then
             printf "\n"
-            _WAIT_FOR_MESSAGE=1            
+            _WAIT_FOR_MESSAGE=1
             return
         fi
         # Message not recorded. Keep going.
@@ -171,13 +176,13 @@ wait_for_message() {
 
 # Sends specified signal to the Kea process.
 send_signal() {
-    sig=$1   # Signal number.
+    sig=${1}  # Signal number.
     # Get Kea pid.
     get_pids
     if [ ${_GET_PIDS_NUM} -ne 1 ]; then
         printf "ERROR: expected one Kea process to be started. Found %d processes started.\n" ${_GET_PIDS_NUM}
         clean_exit 1
-    fi 
+    fi
     printf "Sending signal ${sig} to Kea process (pid=%s).\n" ${_GET_PIDS}
     # Actually send a signal.
     kill -${sig} ${_GET_PIDS}
