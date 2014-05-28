@@ -289,8 +289,8 @@ public:
     /// The transaction is constructed around a predefined (i.e "canned")
     /// NameChangeRequest. The request has both forward and reverse DNS
     /// changes requested, and both forward and reverse domains are populated.
-    /// @param key_name value to use to create TSIG key, if blank TSIG will not
-    /// be used.
+    /// @param tsig_key_info pointer to the TSIGKeyInfo to use, defaults to
+    /// an empty pointer, in which case TSIG will not be used.
     NameChangeStubPtr makeCannedTransaction(const TSIGKeyInfoPtr&
                                             tsig_key_info = TSIGKeyInfoPtr()) {
         // Creates IPv4 remove request, forward, and reverse domains.
@@ -300,9 +300,15 @@ public:
         // Now create the test transaction as would occur in update manager.
         // Instantiate the transaction as would be done by update manager.
         return (NameChangeStubPtr(new NameChangeStub(io_service_, ncr_,
-                                  forward_domain_, reverse_domain_)));
+                                  forward_domain_, reverse_domain_, cfg_mgr_)));
     }
 
+    /// @brief  Instantiates a NameChangeStub test transaction
+    /// The transaction is constructed around a predefined (i.e "canned")
+    /// NameChangeRequest. The request has both forward and reverse DNS
+    /// changes requested, and both forward and reverse domains are populated.
+    /// @param key_name value to use to create TSIG key, if blank TSIG will not
+    /// be used.
     NameChangeStubPtr makeCannedTransaction(const std::string& key_name) {
         // Creates IPv4 remove request, forward, and reverse domains.
         setupForIPv4Transaction(dhcp_ddns::CHG_ADD, FWD_AND_REV_CHG, key_name);
