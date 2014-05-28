@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,6 +14,7 @@
 
 #include <config.h>
 
+#include <d2/d2_config.h>
 #include <d2/d2_update_message.h>
 #include <d2/d2_zone.h>
 #include <dns/messagerenderer.h>
@@ -201,12 +202,12 @@ TEST_F(D2UpdateMessageTest, fromWire) {
         0x20, 0x01, 0x0D, 0xB8, 0x00, 0x01, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01
     };
-    InputBuffer buf(bin_msg, sizeof(bin_msg));
 
     // Create an object to be used to decode the message from the wire format.
     D2UpdateMessage msg(D2UpdateMessage::INBOUND);
+
     // Decode the message.
-    ASSERT_NO_THROW(msg.fromWire(buf));
+    ASSERT_NO_THROW(msg.fromWire(bin_msg, sizeof(bin_msg)));
 
     // Check that the message header is valid.
     EXPECT_EQ(0x05AF, msg.getId());
@@ -287,14 +288,14 @@ TEST_F(D2UpdateMessageTest, fromWireInvalidOpcode) {
         0x0, 0x0,   // UPCOUNT=0
         0x0, 0x0    // ADCOUNT=0
     };
-    InputBuffer buf(bin_msg, sizeof(bin_msg));
     // The 'true' argument passed to the constructor turns the
     // message into the parse mode in which the fromWire function
     // can be used to decode the binary mesasage data.
     D2UpdateMessage msg(D2UpdateMessage::INBOUND);
     // When using invalid Opcode, the fromWire function should
     // throw NotUpdateMessage exception.
-    EXPECT_THROW(msg.fromWire(buf), isc::d2::NotUpdateMessage);
+    EXPECT_THROW(msg.fromWire(bin_msg, sizeof(bin_msg)),
+                 isc::d2::NotUpdateMessage);
 }
 
 // This test verifies that the fromWire function throws appropriate exception
@@ -311,14 +312,14 @@ TEST_F(D2UpdateMessageTest, fromWireInvalidQRFlag) {
         0x0, 0x0,   // UPCOUNT=0
         0x0, 0x0    // ADCOUNT=0
     };
-    InputBuffer buf(bin_msg, sizeof(bin_msg));
     // The 'true' argument passed to the constructor turns the
     // message into the parse mode in which the fromWire function
     // can be used to decode the binary mesasage data.
     D2UpdateMessage msg(D2UpdateMessage::INBOUND);
     // When using invalid QR flag, the fromWire function should
     // throw InvalidQRFlag exception.
-    EXPECT_THROW(msg.fromWire(buf), isc::d2::InvalidQRFlag);
+    EXPECT_THROW(msg.fromWire(bin_msg, sizeof(bin_msg)),
+                              isc::d2::InvalidQRFlag);
 }
 
 // This test verifies that the fromWire function throws appropriate exception
@@ -349,7 +350,6 @@ TEST_F(D2UpdateMessageTest, fromWireTooManyZones) {
         0x0, 0x6, // ZTYPE='SOA'
         0x0, 0x1  // ZCLASS='IN'
     };
-    InputBuffer buf(bin_msg, sizeof(bin_msg));
 
     // The 'true' argument passed to the constructor turns the
     // message into the parse mode in which the fromWire function
@@ -357,7 +357,8 @@ TEST_F(D2UpdateMessageTest, fromWireTooManyZones) {
     D2UpdateMessage msg(D2UpdateMessage::INBOUND);
     // When parsing a message with more than one Zone record,
     // exception should be thrown.
-    EXPECT_THROW(msg.fromWire(buf), isc::d2::InvalidZoneSection);
+    EXPECT_THROW(msg.fromWire(bin_msg, sizeof(bin_msg)),
+                 isc::d2::InvalidZoneSection);
 }
 
 // This test verifies that the wire format of the message is produced
@@ -571,12 +572,11 @@ TEST_F(D2UpdateMessageTest, toWireInvalidQRFlag) {
         0x0, 0x0    // ADCOUNT=0
     };
 
-    InputBuffer buf(bin_msg, sizeof(bin_msg));
     // The 'true' argument passed to the constructor turns the
     // message into the parse mode in which the fromWire function
     // can be used to decode the binary mesasage data.
     D2UpdateMessage msg(D2UpdateMessage::INBOUND);
-    ASSERT_NO_THROW(msg.fromWire(buf));
+    ASSERT_NO_THROW(msg.fromWire(bin_msg, sizeof(bin_msg)));
 
     // The message is parsed. The QR Flag should now indicate that
     // it is a Response message.
@@ -587,5 +587,119 @@ TEST_F(D2UpdateMessageTest, toWireInvalidQRFlag) {
     MessageRenderer renderer;
     EXPECT_THROW(msg.toWire(renderer), isc::d2::InvalidQRFlag);
 }
+
+// TSIG test
+TEST_F(D2UpdateMessageTest, validTSIG) {
+    // Create a TSIG Key and context
+    std::string secret("this key will match");
+    TSIGKeyPtr right_key;
+    ASSERT_NO_THROW(right_key.reset(new
+                                    TSIGKey(Name("right.com"),
+                                            TSIGKey::HMACMD5_NAME(),
+                                            secret.c_str(), secret.size())));
+
+    TSIGKeyPtr wrong_key;
+    secret = "this key will not match";
+    ASSERT_NO_THROW(wrong_key.reset(new
+                                    TSIGKey(Name("wrong.com"),
+                                            TSIGKey::HMACMD5_NAME(),
+                                            secret.c_str(), secret.size())));
+
+
+    // Build a request message
+    D2UpdateMessage msg;
+    msg.setId(0x1234);
+    msg.setRcode(Rcode(Rcode::NOERROR_CODE));
+    msg.setZone(Name("example.com"), RRClass::IN());
+    RRsetPtr prereq1(new RRset(Name("foo.example.com"), RRClass::NONE(),
+                               RRType::ANY(), RRTTL(0)));
+    msg.addRRset(D2UpdateMessage::SECTION_PREREQUISITE, prereq1);
+    RRsetPtr prereq2(new RRset(Name("bar.example.com"), RRClass::ANY(),
+                               RRType::ANY(), RRTTL(0)));
+    msg.addRRset(D2UpdateMessage::SECTION_PREREQUISITE, prereq2);
+    RRsetPtr updaterr1(new RRset(Name("foo.example.com"), RRClass::IN(),
+                                 RRType::A(), RRTTL(10)));
+    char rdata1[] = {
+        0xA, 0xA , 0x1, 0x1
+    };
+    InputBuffer buf_rdata1(rdata1, 4);
+    updaterr1->addRdata(createRdata(RRType::A(), RRClass::IN(), buf_rdata1,
+                                    buf_rdata1.getLength()));
+    msg.addRRset(D2UpdateMessage::SECTION_UPDATE, updaterr1);
+
+    // Make a context to send the message with and use it to render
+    // the message into the wire format.
+    TSIGContextPtr context;
+    ASSERT_NO_THROW(context.reset(new TSIGContext(*right_key)));
+    MessageRenderer renderer;
+    ASSERT_NO_THROW(msg.toWire(renderer, context.get()));
+
+    // Grab the wire data from the signed message.
+    const void* wire_data = renderer.getData();
+    const size_t wire_size = renderer.getLength();
+
+    // Make a context with the wrong key and use it to convert the wired data.
+    // Verification should fail.
+    D2UpdateMessage msg2(D2UpdateMessage::INBOUND);
+    ASSERT_NO_THROW(context.reset(new TSIGContext(*wrong_key)));
+    ASSERT_THROW(msg2.fromWire(wire_data, wire_size, context.get()),
+                 TSIGVerifyError);
+
+    // Now make a context with the correct key and try again.
+    // If the message passes TSIG verification, then the QR Flag test in
+    // the subsequent call to D2UpdateMessage::validateResponse should
+    // fail because this isn't really received message.
+    ASSERT_NO_THROW(context.reset(new TSIGContext(*right_key)));
+    ASSERT_THROW(msg2.fromWire(wire_data, wire_size, context.get()),
+                 InvalidQRFlag);
+}
+
+// Tests message signing and verification for all supported algorithms.
+TEST_F(D2UpdateMessageTest, allValidTSIG) {
+    std::vector<std::string>algorithms;
+    algorithms.push_back(TSIGKeyInfo::HMAC_MD5_STR);
+    algorithms.push_back(TSIGKeyInfo::HMAC_SHA1_STR);
+    algorithms.push_back(TSIGKeyInfo::HMAC_SHA224_STR);
+    algorithms.push_back(TSIGKeyInfo::HMAC_SHA256_STR);
+    algorithms.push_back(TSIGKeyInfo::HMAC_SHA384_STR);
+    algorithms.push_back(TSIGKeyInfo::HMAC_SHA512_STR);
+
+    dns::Name key_name("test_key");
+    std::string secret("random text for secret");
+    for (int i = 0; i < algorithms.size(); ++i) {
+        dns::TSIGKey key(key_name,
+                         TSIGKeyInfo::stringToAlgorithmName(algorithms[i]),
+                         secret.c_str(), secret.size());
+
+        // Build a request message
+        D2UpdateMessage msg;
+        msg.setId(0x1234);
+        msg.setRcode(Rcode(Rcode::NOERROR_CODE));
+        msg.setZone(Name("example.com"), RRClass::IN());
+
+        // Make a context to send the message with and use it to render
+        // the message into the wire format.
+        TSIGContextPtr context;
+        ASSERT_NO_THROW(context.reset(new TSIGContext(key)));
+        MessageRenderer renderer;
+        ASSERT_NO_THROW(msg.toWire(renderer, context.get()));
+
+        // Grab the wire data from the signed message.
+        const void* wire_data = renderer.getData();
+        const size_t wire_size = renderer.getLength();
+
+        // Create a fresh context to "receive" the message. (We can't use the
+        // one we signed it with, as its expecting a signed response to its
+        // request. Here we are acting like the server).
+        // If the message passes TSIG verification, then the QR Flag test in
+        // the subsequent call to D2UpdateMessage::validateResponse should
+        // fail because this isn't really received message.
+        ASSERT_NO_THROW(context.reset(new TSIGContext(key)));
+        D2UpdateMessage msg2(D2UpdateMessage::INBOUND);
+        ASSERT_THROW(msg2.fromWire(wire_data, wire_size, context.get()),
+                                   InvalidQRFlag);
+    }
+}
+
 
 } // End of anonymous namespace

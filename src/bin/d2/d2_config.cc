@@ -124,15 +124,59 @@ operator<<(std::ostream& os, const D2Params& config) {
 }
 
 // *********************** TSIGKeyInfo  *************************
+// Note these values match correpsonding values for Bind9's
+// dnssec-keygen
+const char* TSIGKeyInfo::HMAC_MD5_STR = "HMAC-MD5";
+const char* TSIGKeyInfo::HMAC_SHA1_STR = "HMAC-SHA1";
+const char* TSIGKeyInfo::HMAC_SHA224_STR = "HMAC-SHA224";
+const char* TSIGKeyInfo::HMAC_SHA256_STR = "HMAC-SHA256";
+const char* TSIGKeyInfo::HMAC_SHA384_STR = "HMAC-SHA384";
+const char* TSIGKeyInfo::HMAC_SHA512_STR = "HMAC-SHA512";
 
 TSIGKeyInfo::TSIGKeyInfo(const std::string& name, const std::string& algorithm,
                          const std::string& secret)
-    :name_(name), algorithm_(algorithm), secret_(secret) {
+    :name_(name), algorithm_(algorithm), secret_(secret), tsig_key_() {
+    remakeKey();
 }
 
 TSIGKeyInfo::~TSIGKeyInfo() {
 }
 
+const dns::Name&
+TSIGKeyInfo::stringToAlgorithmName(const std::string& algorithm_id) {
+    if (boost::iequals(algorithm_id, HMAC_MD5_STR)) {
+        return (dns::TSIGKey::HMACMD5_NAME());
+    } else if (boost::iequals(algorithm_id, HMAC_SHA1_STR)) {
+        return (dns::TSIGKey::HMACSHA1_NAME());
+    } else if (boost::iequals(algorithm_id, HMAC_SHA224_STR)) {
+        return (dns::TSIGKey::HMACSHA224_NAME());
+    } else if (boost::iequals(algorithm_id, HMAC_SHA256_STR)) {
+        return (dns::TSIGKey::HMACSHA256_NAME());
+    } else if (boost::iequals(algorithm_id, HMAC_SHA384_STR)) {
+        return (dns::TSIGKey::HMACSHA384_NAME());
+    } else if (boost::iequals(algorithm_id, HMAC_SHA512_STR)) {
+        return (dns::TSIGKey::HMACSHA512_NAME());
+    }
+
+    isc_throw(BadValue, "Unknown TSIG Key algorithm: " << algorithm_id);
+}
+
+void
+TSIGKeyInfo::remakeKey() {
+    try {
+        // Since our secret value is base64 encoded already, we need to
+        // build the input string for the appropriate TSIGKey constructor.
+        // If secret isn't a valid base64 value, the constructor will throw.
+        std::ostringstream stream;
+        stream << dns::Name(name_).toText() << ":"
+               << secret_ << ":"
+               << stringToAlgorithmName(algorithm_);
+
+        tsig_key_.reset(new dns::TSIGKey(stream.str()));
+    } catch (const std::exception& ex) {
+        isc_throw(D2CfgError, "Cannot make TSIGKey: " << ex.what());
+    }
+}
 
 // *********************** DnsServerInfo  *************************
 
@@ -164,12 +208,23 @@ operator<<(std::ostream& os, const DnsServerInfo& server) {
 
 // *********************** DdnsDomain  *************************
 
-DdnsDomain::DdnsDomain(const std::string& name, const std::string& key_name,
-                       DnsServerInfoStoragePtr servers)
-    : name_(name), key_name_(key_name), servers_(servers) {
+DdnsDomain::DdnsDomain(const std::string& name,
+                       DnsServerInfoStoragePtr servers,
+                       const TSIGKeyInfoPtr& tsig_key_info)
+    : name_(name), servers_(servers),
+      tsig_key_info_(tsig_key_info) {
 }
 
 DdnsDomain::~DdnsDomain() {
+}
+
+const std::string
+DdnsDomain::getKeyName() const {
+    if (tsig_key_info_) {
+        return (tsig_key_info_->getName());
+    }
+
+    return ("");
 }
 
 // *********************** DdnsDomainLstMgr  *************************
@@ -308,9 +363,6 @@ TSIGKeyInfoParser::build(isc::data::ConstElementPtr key_config) {
     local_scalars_.getParam("algorithm", algorithm);
     local_scalars_.getParam("secret", secret);
 
-    // @todo Validation here is very superficial. This will expand as TSIG
-    // Key use is more fully implemented.
-
     // Name cannot be blank.
     if (name.empty()) {
         isc_throw(D2CfgError, "TSIG Key Info must specify name");
@@ -361,9 +413,6 @@ TSIGKeyInfoParser::createConfigParser(const std::string& config_id) {
 
 void
 TSIGKeyInfoParser::commit() {
-    /// @todo if at some point  TSIG keys need some form of runtime resource
-    /// initialization, such as creating some sort of hash instance in
-    /// crytpolib.  Once TSIG is fully implemented under Trac #3432 we'll know.
 }
 
 // *********************** TSIGKeyInfoListParser  *************************
@@ -606,18 +655,26 @@ DdnsDomainParser::build(isc::data::ConstElementPtr domain_config) {
         isc_throw(D2CfgError, "Duplicate domain specified:" << name);
     }
 
-    // Key name is optional. If it is not blank, then validate it against
-    // the defined list of keys.
+    // Key name is optional. If it is not blank, then find the key in the
+    /// list of defined keys.
+    TSIGKeyInfoPtr tsig_key_info;
     local_scalars_.getParam("key_name", key_name, DCfgContextBase::OPTIONAL);
     if (!key_name.empty()) {
-        if ((!keys_) || (keys_->find(key_name) == keys_->end())) {
-            isc_throw(D2CfgError, "DdnsDomain :" << name <<
-                     " specifies and undefined key:" << key_name);
+        if (keys_) {
+            TSIGKeyInfoMap::iterator kit = keys_->find(key_name);
+            if (kit != keys_->end()) {
+                tsig_key_info = kit->second;
+            }
+        }
+
+        if (!tsig_key_info) {
+            isc_throw(D2CfgError, "DdnsDomain " << name <<
+                     " specifies an undefined key: " << key_name);
         }
     }
 
     // Instantiate the new domain and add it to domain storage.
-    DdnsDomainPtr domain(new DdnsDomain(name, key_name, local_servers_));
+    DdnsDomainPtr domain(new DdnsDomain(name, local_servers_, tsig_key_info));
 
     // Add the new domain to the domain storage.
     (*domains_)[name] = domain;
