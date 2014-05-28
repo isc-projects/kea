@@ -44,7 +44,7 @@
             "item_name": "tsig_key",
             "item_type": "map",
             "item_optional": false,
-            "item_default": {"algorithm" : "hmac_md5"},
+            "item_default": {"algorithm" : "HMAC-MD5"},
             "map_item_spec": [ 
             {
                 "item_name": "name",
