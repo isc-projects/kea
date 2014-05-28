@@ -24,10 +24,14 @@
 namespace isc {
 namespace dhcp {
 
+// This is an initial config file location.
+std::string Daemon::config_file_ = "";
+
 Daemon::Daemon() {
 }
 
-void Daemon::init(const std::string&) {
+void Daemon::init(const std::string& config_file) {
+    config_file_ = config_file;
 }
 
 void Daemon::cleanup() {

@@ -1,6 +1,14 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
 PYTESTS = dhcp6_test.py
-EXTRA_DIST = $(PYTESTS)
+SHTESTS =
+# The test of dynamic reconfiguration based on signals will work only
+# if we are using file based configuration approach.
+if CONFIG_BACKEND_JSON
+SHTESTS += dhcp6_reconfigure_test.sh
+SHTESTS += dhcp6_sigterm_test.sh
+SHTESTS += dhcp6_sigint_test.sh
+endif
+EXTRA_DIST = $(PYTESTS) $(SHTESTS)
 
 # Explicitly specify paths to dynamic libraries required by loadable python
 # modules. That is required on Mac OS systems. Otherwise we will get exception
@@ -20,6 +28,12 @@ check-local:
 		$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done
 
+	for shtest in $(SHTESTS) ; do \
+	echo Running test: $$shtest ; \
+	export B10_LOCKFILE_DIR_FROM_BUILD=$(abs_top_builddir); \
+	$(abs_srcdir)/$$shtest || exit ; \
+	done
+
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/bin # for generated spec_config.h header
@@ -30,6 +44,7 @@ AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
 CLEANFILES  = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
 CLEANFILES += $(builddir)/load_marker.txt $(builddir)/unload_marker.txt
+CLEANFILES += *.json *.log
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 if USE_CLANGPP

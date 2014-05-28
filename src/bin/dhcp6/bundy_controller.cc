@@ -133,7 +133,10 @@ bundyConfigHandler(ConstElementPtr new_config) {
 }
 
 void
-ControlledDhcpv6Srv::init(const std::string& /* config_file*/) {
+ControlledDhcpv6Srv::init(const std::string& config_file) {
+    // Call base class's init.
+    Daemon::init(config_file);
+
     // This is Bundy configuration backed. It established control session
     // that is used to connect to Bundy framework.
     //
