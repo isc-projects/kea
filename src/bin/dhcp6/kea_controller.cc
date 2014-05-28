@@ -33,6 +33,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <signal.h>
 #include <string>
 #include <vector>
 
@@ -45,11 +46,18 @@ using namespace isc::log;
 using namespace isc::util;
 using namespace std;
 
-namespace isc {
-namespace dhcp {
+namespace {
 
-void
-ControlledDhcpv6Srv::init(const std::string& file_name) {
+/// @brief Configure DHCPv6 server using the configuration file specified.
+///
+/// This function is used to both configure the DHCP server on its startup
+/// and dynamically reconfigure the server when SIGHUP signal is received.
+///
+/// It fetches DHCPv6 server's configuration from the 'Dhcp6' section of
+/// the JSON configuration file.
+///
+/// @param file_name Configuration file location.
+void configure(const std::string& file_name) {
     // This is a configuration backend implementation that reads the
     // configuration from a JSON file.
 
@@ -61,7 +69,7 @@ ControlledDhcpv6Srv::init(const std::string& file_name) {
     try {
         if (file_name.empty()) {
             // Basic sanity check: file name must not be empty.
-            isc_throw(BadValue, "JSON configuration file not specified. Please "
+            isc_throw(isc::BadValue, "JSON configuration file not specified. Please "
                       "use -c command line option.");
         }
 
@@ -71,7 +79,7 @@ ControlledDhcpv6Srv::init(const std::string& file_name) {
         if (!json) {
             LOG_ERROR(dhcp6_logger, DHCP6_CONFIG_LOAD_FAIL)
                 .arg("Config file " + file_name + " missing or empty.");
-            isc_throw(BadValue, "Unable to process JSON configuration file:"
+            isc_throw(isc::BadValue, "Unable to process JSON configuration file:"
                       + file_name);
         }
 
@@ -81,16 +89,16 @@ ControlledDhcpv6Srv::init(const std::string& file_name) {
         if (!dhcp6) {
             LOG_ERROR(dhcp6_logger, DHCP6_CONFIG_LOAD_FAIL)
                 .arg("Config file " + file_name + " does not include 'Dhcp6' entry.");
-            isc_throw(BadValue, "Unable to process JSON configuration file:"
+            isc_throw(isc::BadValue, "Unable to process JSON configuration file:"
                       + file_name);
         }
 
         // Use parsed JSON structures to configure the server
-        result = processCommand("config-reload", dhcp6);
+        result = ControlledDhcpv6Srv::processCommand("config-reload", dhcp6);
 
     }  catch (const std::exception& ex) {
         LOG_ERROR(dhcp6_logger, DHCP6_CONFIG_LOAD_FAIL).arg(ex.what());
-        isc_throw(BadValue, "Unable to process JSON configuration file:"
+        isc_throw(isc::BadValue, "Unable to process JSON configuration file:"
                   + file_name);
     }
 
@@ -114,12 +122,63 @@ ControlledDhcpv6Srv::init(const std::string& file_name) {
             reason = string(" (") + comment->stringValue() + string(")");
         }
         LOG_ERROR(dhcp6_logger, DHCP6_CONFIG_LOAD_FAIL).arg(reason);
-        isc_throw(BadValue, "Failed to apply configuration:" << reason);
+        isc_throw(isc::BadValue, "Failed to apply configuration:" << reason);
     }
+}
+
+/// @brief Signals handler for DHCPv6 server.
+///
+/// This signal handler handles the following signals received by the DHCPv6
+/// server process:
+/// - SIGHUP - triggers server's dynamic reconfiguration.
+/// - SIGTERM - triggers server's shut down.
+/// - SIGINT - triggers server's shut down.
+///
+/// @param signo Signal number received.
+void signalHandler(int signo) {
+    // SIGHUP signals a request to reconfigure the server.
+    if (signo == SIGHUP) {
+        // Get configuration file name.
+        std::string file = ControlledDhcpv6Srv::getInstance()->getConfigFile();
+        try {
+            LOG_INFO(dhcp6_logger, DHCP6_DYNAMIC_RECONFIGURATION).arg(file);
+            configure(file);
+        } catch (const std::exception& ex) {
+            // Log the unsuccessful reconfiguration. The reason for failure
+            // should be already logged. Don't rethrow an exception so as
+            // the server keeps working.
+            LOG_ERROR(dhcp6_logger, DHCP6_DYNAMIC_RECONFIGURATION_FAIL)
+                .arg(file);
+        }
+    } else if ((signo == SIGTERM) || (signo == SIGINT)) {
+        ElementPtr params(new isc::data::MapElement());
+        ControlledDhcpv6Srv::processCommand("shutdown", params);
+    }
+}
+
+}
+
+namespace isc {
+namespace dhcp {
+
+void
+ControlledDhcpv6Srv::init(const std::string& file_name) {
+    // Call parent class's init to initialize file name.
+    Daemon::init(file_name);
+
+    // Configure the server using JSON file.
+    configure(file_name);
 
     // We don't need to call openActiveSockets() or startD2() as these
     // methods are called in processConfig() which is called by
     // processCommand("reload-config", ...)
+
+    // Set signal handlers. When the SIGHUP is received by the process
+    // the server reconfiguration will be triggered. When SIGTERM or
+    // SIGINT will be received, the server will start shutting down.
+    signal(SIGHUP, signalHandler);
+    signal(SIGTERM, signalHandler);
+    signal(SIGINT, signalHandler);
 }
 
 void ControlledDhcpv6Srv::cleanup() {
