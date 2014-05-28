@@ -106,9 +106,10 @@ bool checkServer(DnsServerInfoPtr server, const char* hostname,
 }
 
 /// @brief Convenience function which compares the contents of the given
-/// TSIGKeyInfo against the given set of values.
+/// TSIGKeyInfo against the given set of values, and that the TSIGKey
+/// member points to a key.
 ///
-/// @param key is a pointer to the key to check against.
+/// @param key is a pointer to the TSIGKeyInfo instance to verify
 /// @param name is the value to compare against key's name_.
 /// @param algorithm is the string value to compare against key's algorithm.
 /// @param secret is the value to compare against key's secret.
