@@ -115,6 +115,14 @@ This message is printed when DHCPv6 server disables an interface from being
 used to receive DHCPv6 traffic. Sockets on this interface will not be opened
 by the Interface Manager until interface is enabled.
 
+% DHCP6_DYNAMIC_RECONFIGURATION initate server reconfiguration using file: %1, after receiving SIGHUP signal
+This is the info message logged when the DHCPv6 server starts reconfiguration
+as a result of receiving SIGHUP signal.
+
+% DHCP6_DYNAMIC_RECONFIGURATION_FAIL dynamic server reconfiguration failed with file: %1
+This is an error message logged when the dynamic reconfiguration of the
+DHCP server failed.
+
 % DHCP6_EXTEND_LEASE_SUBNET_SELECTED the %1 subnet was selected for client extending its lease
 This is a debug message informing that a given subnet was selected. It will
 be used for extending lifetime of the lease. This is one of the early steps
