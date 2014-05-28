@@ -12,8 +12,11 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Name of the Kea executable.
-BIN="../b10-dhcp6"
+# The following two parameters must to be specified in a script
+# including this library.
+# - BIN - Name of the Kea executable (excluding a path), e.g. b10-dhcp6
+# - BIN_PATH - Path to the Kea executable (excluding an executable name),
+#              e.g. ../
 
 # Begins a test by prining its name.
 # It requires the ${TEST_NAME} variable to hold the test name.
@@ -35,12 +38,11 @@ set_logger() {
     export B10_LOGGER_DESTINATION=${LOG_FILE}
 }
 
-# Returns the number of running b10-dhcp6 process pids and
-# the list of pids.
+# Returns the number of running process pids and the list of pids.
 _GET_PIDS=     # Return value: holds space separated list of DHCPv6 pids.
 _GET_PIDS_NUM= # Return value: holds the number of DHCPv6 server pids.
 get_pids() {
-    _GET_PIDS=`ps axo pid,command | grep b10-dhcp6 | grep -v grep | awk '{print $1}'`
+    _GET_PIDS=`ps axo pid,command | grep ${BIN} | grep -v grep | awk '{print $1}'`
     _GET_PIDS_NUM=`printf "%s" "${_GET_PIDS}" | wc -w | awk '{print $1}'`
 }
 
@@ -111,8 +113,8 @@ clean_exit() {
 # Starts Kea process in background using a configuration file specified
 # in the global variable ${CFG_FILE}
 start_kea() {
-    printf "Running command %s.\n" "\"$BIN -c ${CFG_FILE}\""
-    $BIN -c ${CFG_FILE} &
+    printf "Running command %s.\n" "\"${BIN_PATH}/${BIN} -c ${CFG_FILE}\""
+    ${BIN_PATH}/$BIN -c ${CFG_FILE} &
 }
 
 # Waits for Kea to startup with timeout.

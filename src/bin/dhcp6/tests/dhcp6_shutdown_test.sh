@@ -47,8 +47,12 @@ CONFIG="{
     }
 }"
 
+# Set the location of the executable.
+BIN="b10-dhcp6"
+BIN_PATH=".."
+
 # Import common test library.
-. $(dirname $0)/dhcp6_test_func.sh
+. $(dirname $0)/../../../lib/testutils/dhcp_test_lib.sh
 
 # Log the start of the test and print test name.
 test_start
