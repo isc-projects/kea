@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -108,7 +108,8 @@ D2UpdateMessage::addRRset(const UpdateMsgSection section,
 }
 
 void
-D2UpdateMessage::toWire(AbstractMessageRenderer& renderer) {
+D2UpdateMessage::toWire(AbstractMessageRenderer& renderer,
+                        TSIGContext* const tsig_context) {
     // We are preparing the wire format of the message, meaning
     // that this message will be sent as a request to the DNS.
     // Therefore, we expect that this message is a REQUEST.
@@ -122,16 +123,29 @@ D2UpdateMessage::toWire(AbstractMessageRenderer& renderer) {
         isc_throw(InvalidZoneSection, "Zone section of the DNS Update message"
                   " must comprise exactly one record (RFC2136, section 2.3)");
     }
-    message_.toWire(renderer);
+    message_.toWire(renderer, tsig_context);
 }
 
 void
-D2UpdateMessage::fromWire(isc::util::InputBuffer& buffer) {
+D2UpdateMessage::fromWire(const void* received_data, size_t bytes_received,
+                          dns::TSIGContext* const tsig_context) {
     // First, use the underlying dns::Message implementation to get the
     // contents of the DNS response message. Note that it may or may
     // not be the message that we are interested in, but needs to be
     // parsed so as we can check its ID, Opcode etc.
-    message_.fromWire(buffer);
+    isc::util::InputBuffer received_data_buffer(received_data, bytes_received);
+    message_.fromWire(received_data_buffer);
+
+    // If tsig_contex is not NULL, then we need to verify the message.
+    if (tsig_context) {
+        TSIGError error = tsig_context->verify(message_.getTSIGRecord(),
+                                               received_data, bytes_received);
+        if (error != TSIGError::NOERROR()) {
+            isc_throw(TSIGVerifyError, "TSIG verification failed: "
+                      << error.toText());
+        }
+    }
+
     // This class exposes the getZone() function. This function will return
     // pointer to the D2Zone object if non-empty Zone section exists in the
     // received message. It will return NULL pointer if it doesn't exist.

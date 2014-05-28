@@ -14,12 +14,11 @@
 
 #include <config.h>
 #include <d2/dns_client.h>
+#include <dns/opcode.h>
 #include <asiodns/io_fetch.h>
 #include <asiodns/logger.h>
 #include <asiolink/interval_timer.h>
-#include <dns/rcode.h>
-#include <dns/rrclass.h>
-#include <dns/tsig.h>
+#include <dns/messagerenderer.h>
 #include <asio/ip/udp.hpp>
 #include <asio/socket_base.hpp>
 #include <boost/bind.hpp>
@@ -189,6 +188,80 @@ public:
                         *remote);
     }
 
+    // @brief Request handler for testing clients using TSIG
+    //
+    // This callback handler is installed when performing async read on a
+    // socket to emulate reception of the DNS Update request with TSIG by a
+    // server.  As a result, this handler will send an appropriate DNS Update
+    // response message back to the address from which the request has come.
+    //
+    // @param socket A pointer to a socket used to receive a query and send a
+    // response.
+    // @param remote A pointer to an object which specifies the host (address
+    // and port) from which a request has come.
+    // @param receive_length A length (in bytes) of the received data.
+    // @param corrupt_response A bool value which indicates that the server's
+    // response should be invalid (true) or valid (false)
+    // @param client_key TSIG key the server should use to verify the inbound
+    // request.  If the pointer is NULL, the server will not attempt to
+    // verify the request.
+    // @param server_key TSIG key the server should use to sign the outbound
+    // request. If the pointer is NULL, the server will not sign the outbound
+    // response.  If the pointer is not NULL and not the same value as the
+    // client_key, the server will use a new context to sign the response then
+    // the one used to verify it.  This allows us to simulate the server
+    // signing with the wrong key.
+    void TSIGReceiveHandler(udp::socket* socket, udp::endpoint* remote,
+                            size_t receive_length,
+                            TSIGKeyPtr client_key,
+                            TSIGKeyPtr server_key) {
+
+        TSIGContextPtr context;
+        if (client_key) {
+            context.reset(new TSIGContext(*client_key));
+        }
+
+        isc::util::InputBuffer received_data_buffer(receive_buffer_,
+                                                    receive_length);
+
+        dns::Message request(Message::PARSE);
+        request.fromWire(received_data_buffer);
+
+        // If contex is not NULL, then we need to verify the message.
+        if (context) {
+            TSIGError error = context->verify(request.getTSIGRecord(),
+                                              receive_buffer_, receive_length);
+            if (error != TSIGError::NOERROR()) {
+                isc_throw(TSIGVerifyError, "TSIG verification failed: "
+                          << error.toText());
+            }
+        }
+
+        dns::Message response(Message::RENDER);
+        response.setOpcode(Opcode(Opcode::UPDATE_CODE));
+        response.setHeaderFlag(dns::Message::HEADERFLAG_QR, true);
+        response.setQid(request.getQid());
+        response.setRcode(Rcode::NOERROR());
+        dns::Question question(Name("example.com."),
+                                    RRClass::IN(), RRType::SOA());
+        response.addQuestion(question);
+
+        MessageRenderer renderer;
+
+        if (!server_key) {
+            // don't sign the response.
+            context.reset();
+        } else if (server_key != client_key) {
+            // use a different key to sign the response.
+            context.reset(new TSIGContext(*server_key));
+        }  // otherwise use the context based on client_key.
+
+        response.toWire(renderer, context.get());
+        // A response message is now ready to send. Send it!
+        socket->send_to(asio::buffer(renderer.getData(), renderer.getLength()),
+                        *remote);
+    }
+
     // This test verifies that when invalid response placeholder object is
     // passed to a constructor, constructor throws the appropriate exception.
     // It also verifies that the constructor will not throw if the supplied
@@ -227,26 +300,6 @@ public:
         EXPECT_THROW(dns_client_->doUpdate(service_, IOAddress(TEST_ADDRESS),
                                            TEST_PORT, message, timeout),
                      isc::BadValue);
-    }
-
-    // This test verifies that isc::NotImplemented exception is thrown when
-    // attempt to send DNS Update message with TSIG is attempted.
-    void runTSIGTest() {
-        // Create outgoing message. Simply set the required message fields:
-        // error code and Zone section. This is enough to create on-wire format
-        // of this message and send it.
-        D2UpdateMessage message(D2UpdateMessage::OUTBOUND);
-        ASSERT_NO_THROW(message.setRcode(Rcode(Rcode::NOERROR_CODE)));
-        ASSERT_NO_THROW(message.setZone(Name("example.com"), RRClass::IN()));
-
-        const int timeout = 0;
-        // Try to send DNS Update with TSIG key. Currently TSIG is not supported
-        // and therefore we expect an exception.
-        TSIGKey tsig_key("key.example:MSG6Ng==");
-        EXPECT_THROW(dns_client_->doUpdate(service_, IOAddress(TEST_ADDRESS),
-                                           TEST_PORT, message, timeout,
-                                           tsig_key),
-                     isc::NotImplemented);
     }
 
     // This test verifies the DNSClient behavior when a server does not respond
@@ -359,6 +412,59 @@ public:
         // run_one() to work.
         service_.get_io_service().reset();
     }
+
+    // Performs a single request-response exchange with or without TSIG
+    //
+    // @param client_key TSIG passed to dns_client and also used by the
+    // ""server" to verify the request.
+    // request.
+    // @param server_key TSIG key the "server" should use to sign the response.
+    // If this is NULL, then client_key is used.
+    // @param should_pass indicates if the test should pass.
+    void runTSIGTest(TSIGKeyPtr client_key, TSIGKeyPtr server_key,
+                     bool should_pass = true) {
+        // Tell operator() method if we expect an invalid response.
+        corrupt_response_ = !should_pass;
+
+        // Create a request DNS Update message.
+        D2UpdateMessage message(D2UpdateMessage::OUTBOUND);
+        ASSERT_NO_THROW(message.setRcode(Rcode(Rcode::NOERROR_CODE)));
+        ASSERT_NO_THROW(message.setZone(Name("example.com"), RRClass::IN()));
+
+        // Setup our "loopback" server.
+        udp::socket udp_socket(service_.get_io_service(), asio::ip::udp::v4());
+        udp_socket.set_option(socket_base::reuse_address(true));
+        udp_socket.bind(udp::endpoint(address::from_string(TEST_ADDRESS),
+                                      TEST_PORT));
+        udp::endpoint remote;
+        udp_socket.async_receive_from(asio::buffer(receive_buffer_,
+                                                   sizeof(receive_buffer_)),
+                                      remote,
+                                      boost::bind(&DNSClientTest::
+                                                  TSIGReceiveHandler, this,
+                                                  &udp_socket, &remote, _2,
+                                                  client_key, server_key));
+
+        // The socket is now ready to receive the data. Let's post some request
+        // message then. Set timeout to some reasonable value to make sure that
+        // there is sufficient amount of time for the test to generate a
+        // response.
+        const int timeout = 500;
+        expected_++;
+        dns_client_->doUpdate(service_, IOAddress(TEST_ADDRESS), TEST_PORT,
+                              message, timeout, client_key);
+
+        // Kick of the message exchange by actually running the scheduled
+        // "send" and "receive" operations.
+        service_.run();
+
+        udp_socket.close();
+
+        // Since the callback, operator(), calls stop() on the io_service,
+        // we must reset it in order for subsequent calls to run() or
+        // run_one() to work.
+        service_.get_io_service().reset();
+    }
 };
 
 // Verify that the DNSClient object can be created if provided parameters are
@@ -384,10 +490,38 @@ TEST_F(DNSClientTest, invalidTimeout) {
     runInvalidTimeoutTest();
 }
 
-// Verify that exception is thrown when an attempt to send DNS Update with TSIG
-// is made. This test will be removed/changed once TSIG support is added.
+// Verifies that TSIG can be used to sign requests and verify responses.
 TEST_F(DNSClientTest, runTSIGTest) {
-    runTSIGTest();
+    std::string secret ("key number one");
+    TSIGKeyPtr key_one;
+    ASSERT_NO_THROW(key_one.reset(new
+                                    TSIGKey(Name("one.com"),
+                                            TSIGKey::HMACMD5_NAME(),
+                                            secret.c_str(), secret.size())));
+    secret = "key number two";
+    TSIGKeyPtr key_two;
+    ASSERT_NO_THROW(key_two.reset(new
+                                    TSIGKey(Name("two.com"),
+                                            TSIGKey::HMACMD5_NAME(),
+                                            secret.c_str(), secret.size())));
+    TSIGKeyPtr nokey;
+
+    // Should be able to send and receive with no keys.
+    // Neither client nor server will attempt to sign or verify.
+    runTSIGTest(nokey, nokey);
+
+    // Client signs the request, server verfies but doesn't sign.
+    runTSIGTest(key_one, nokey, false);
+
+    // Client and server use the same key to sign and verify.
+    runTSIGTest(key_one, key_one);
+
+    // Server uses different key to sign the response.
+    runTSIGTest(key_one, key_two, false);
+
+    // Client neither signs nor verifies, server responds with a signed answer
+    // Since we are "liberal" in what we accept this should be ok.
+    runTSIGTest(nokey, key_two);
 }
 
 // Verify that the DNSClient receives the response from DNS and the received

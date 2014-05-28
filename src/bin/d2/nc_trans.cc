@@ -54,7 +54,7 @@ NameChangeTransaction(IOServicePtr& io_service,
      dns_update_status_(DNSClient::OTHER), dns_update_response_(),
      forward_change_completed_(false), reverse_change_completed_(false),
      current_server_list_(), current_server_(), next_server_pos_(0),
-     update_attempts_(0), cfg_mgr_(cfg_mgr) {
+     update_attempts_(0), cfg_mgr_(cfg_mgr), tsig_key_() {
     /// @todo if io_service is NULL we are multi-threading and should
     /// instantiate our own
     if (!io_service_) {
@@ -168,8 +168,7 @@ NameChangeTransaction::transactionOutcomeString() const {
 
 
 void
-NameChangeTransaction::sendUpdate(const std::string& comment,
-                                  bool /* use_tsig_ */) {
+NameChangeTransaction::sendUpdate(const std::string& comment) {
     try {
         ++update_attempts_;
         // @todo add logic to add/replace TSIG key info in request if
@@ -179,8 +178,7 @@ NameChangeTransaction::sendUpdate(const std::string& comment,
         D2ParamsPtr d2_params = cfg_mgr_->getD2Params();
         dns_client_->doUpdate(*io_service_, current_server_->getIpAddress(),
                               current_server_->getPort(), *dns_update_request_,
-                              d2_params->getDnsServerTimeout());
-
+                              d2_params->getDnsServerTimeout(), tsig_key_);
         // Message is on its way, so the next event should be NOP_EVT.
         postNextEvent(NOP_EVT);
         LOG_DEBUG(dctl_logger, DBGLVL_TRACE_DETAIL,
@@ -424,6 +422,15 @@ NameChangeTransaction::initServerSelection(const DdnsDomainPtr& domain) {
         isc_throw(NameChangeTransactionError,
                   "initServerSelection called with an empty domain");
     }
+
+    // Set the tsig_key to that of the DdnsDomain.
+    TSIGKeyInfoPtr tsig_key_info = domain->getTSIGKeyInfo();
+    if (tsig_key_info) {
+        tsig_key_ = tsig_key_info->getTSIGKey();
+    } else {
+        tsig_key_.reset();
+    }
+
     current_server_list_ = domain->getServers();
     next_server_pos_ = 0;
     current_server_.reset();

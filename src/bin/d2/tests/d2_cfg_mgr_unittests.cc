@@ -17,6 +17,7 @@
 #include <d2/d2_cfg_mgr.h>
 #include <d_test_stubs.h>
 #include <test_data_files_config.h>
+#include <util/encode/base64.h>
 
 #include <boost/foreach.hpp>
 #include <gtest/gtest.h>
@@ -170,47 +171,24 @@ bool checkServer(DnsServerInfoPtr server, const char* hostname,
 }
 
 /// @brief Convenience function which compares the contents of the given
-/// TSIGKeyInfo against the given set of values.
+/// TSIGKeyInfo against the given set of values, and that the TSIGKey
+/// member points to a key.
 ///
-/// It is structured in such a way that each value is checked, and output
-/// is generate for all that do not match.
-///
-/// @param key is a pointer to the key to check against.
+/// @param key is a pointer to the TSIGKeyInfo instance to verify
 /// @param name is the value to compare against key's name_.
 /// @param algorithm is the string value to compare against key's algorithm.
 /// @param secret is the value to compare against key's secret.
 ///
 /// @return returns true if there is a match across the board, otherwise it
 /// returns false.
-bool checkKey(TSIGKeyInfoPtr key, const char* name,
-                 const char *algorithm, const char* secret)
-{
+bool checkKey(TSIGKeyInfoPtr key, const std::string& name,
+                 const std::string& algorithm, const std::string& secret) {
     // Return value, assume its a match.
-    bool result = true;
-    if (!key) {
-        EXPECT_TRUE(key);
-        return false;
-    }
-
-    // Check name.
-    if (key->getName() != name) {
-        EXPECT_EQ(name, key->getName());
-        result = false;
-    }
-
-    // Check algorithm.
-    if (key->getAlgorithm() != algorithm) {
-        EXPECT_EQ(algorithm, key->getAlgorithm());
-        result = false;
-    }
-
-    // Check secret.
-    if (key->getSecret() !=  secret) {
-        EXPECT_EQ (secret, key->getSecret());
-        result = false;
-    }
-
-    return (result);
+    return (((key) &&
+        (key->getName() == name) &&
+        (key->getAlgorithm() == algorithm)  &&
+        (key->getSecret() ==  secret)  &&
+        (key->getTSIGKey())));
 }
 
 /// @brief Test fixture class for testing DnsServerInfo parsing.
@@ -459,14 +437,12 @@ TEST_F(D2CfgMgrTest, invalidEntry) {
 /// 1. Name cannot be blank.
 /// 2. Algorithm cannot be blank.
 /// 3. Secret cannot be blank.
-/// @TODO TSIG keys are not fully functional. Only basic validation is
-/// currently supported. This test will need to expand as they evolve.
 TEST_F(TSIGKeyInfoTest, invalidEntry) {
     // Config with a blank name entry.
     std::string config = "{"
                          " \"name\": \"\" , "
-                         " \"algorithm\": \"md5\" , "
-                         " \"secret\": \"0123456789\" "
+                         " \"algorithm\": \"HMAC-MD5\" , "
+                         "   \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\" "
                          "}";
     ASSERT_TRUE(fromJSON(config));
 
@@ -477,7 +453,19 @@ TEST_F(TSIGKeyInfoTest, invalidEntry) {
     config = "{"
                          " \"name\": \"d2_key_one\" , "
                          " \"algorithm\": \"\" , "
-                         " \"secret\": \"0123456789\" "
+                         "   \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\" "
+                         "}";
+
+    ASSERT_TRUE(fromJSON(config));
+
+    // Verify that build fails on blank algorithm.
+    EXPECT_THROW(parser_->build(config_set_), D2CfgError);
+
+    // Config with an invalid algorithm entry.
+    config = "{"
+                         " \"name\": \"d2_key_one\" , "
+                         " \"algorithm\": \"bogus\" , "
+                         "   \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\" "
                          "}";
 
     ASSERT_TRUE(fromJSON(config));
@@ -488,13 +476,25 @@ TEST_F(TSIGKeyInfoTest, invalidEntry) {
     // Config with a blank secret entry.
     config = "{"
                          " \"name\": \"d2_key_one\" , "
-                         " \"algorithm\": \"md5\" , "
+                         " \"algorithm\": \"HMAC-MD5\" , "
                          " \"secret\": \"\" "
                          "}";
 
     ASSERT_TRUE(fromJSON(config));
 
     // Verify that build fails blank secret
+    EXPECT_THROW(parser_->build(config_set_), D2CfgError);
+
+    // Config with an invalid secret entry.
+    config = "{"
+                         " \"name\": \"d2_key_one\" , "
+                         " \"algorithm\": \"HMAC-MD5\" , "
+                         " \"secret\": \"bogus\" "
+                         "}";
+
+    ASSERT_TRUE(fromJSON(config));
+
+    // Verify that build fails an invalid secret
     EXPECT_THROW(parser_->build(config_set_), D2CfgError);
 }
 
@@ -504,13 +504,14 @@ TEST_F(TSIGKeyInfoTest, validEntry) {
     // Valid entries for TSIG key, all items are required.
     std::string config = "{"
                          " \"name\": \"d2_key_one\" , "
-                         " \"algorithm\": \"md5\" , "
-                         " \"secret\": \"0123456789\" "
+                         " \"algorithm\": \"HMAC-MD5\" , "
+                         " \"secret\": \"dGhpcyBrZXkgd2lsbCBtYXRjaA==\" "
                          "}";
     ASSERT_TRUE(fromJSON(config));
 
     // Verify that it builds and commits without throwing.
-    ASSERT_NO_THROW(parser_->build(config_set_));
+    //ASSERT_NO_THROW(parser_->build(config_set_));
+    (parser_->build(config_set_));
     ASSERT_NO_THROW(parser_->commit());
 
     // Verify the correct number of keys are present
@@ -523,7 +524,8 @@ TEST_F(TSIGKeyInfoTest, validEntry) {
     TSIGKeyInfoPtr& key = gotit->second;
 
     // Verify the key contents.
-    EXPECT_TRUE(checkKey(key, "d2_key_one", "md5", "0123456789"));
+    EXPECT_TRUE(checkKey(key, "d2_key_one", "HMAC-MD5",
+                         "dGhpcyBrZXkgd2lsbCBtYXRjaA=="));
 }
 
 /// @brief Verifies that attempting to parse an invalid list of TSIGKeyInfo
@@ -533,16 +535,17 @@ TEST_F(TSIGKeyInfoTest, invalidTSIGKeyList) {
     std::string config = "["
 
                          " { \"name\": \"key1\" , "
-                         "   \"algorithm\": \"algo1\" ,"
-                         "   \"secret\": \"secret11\" "
+                         "   \"algorithm\": \"HMAC-MD5\" ,"
+                         "   \"secret\": \"GWG/Xfbju4O2iXGqkSu4PQ==\" "
                          " },"
+                         // this entry has an invalid algorithm
                          " { \"name\": \"key2\" , "
                          "   \"algorithm\": \"\" ,"
-                         "   \"secret\": \"secret12\" "
+                         "   \"secret\": \"GWG/Xfbju4O2iXGqkSu4PQ==\" "
                          " },"
                          " { \"name\": \"key3\" , "
-                         "   \"algorithm\": \"algo3\" ,"
-                         "   \"secret\": \"secret13\" "
+                         "   \"algorithm\": \"HMAC-MD5\" ,"
+                         "   \"secret\": \"GWG/Xfbju4O2iXGqkSu4PQ==\" "
                          " }"
                          " ]";
 
@@ -563,16 +566,16 @@ TEST_F(TSIGKeyInfoTest, duplicateTSIGKey) {
     std::string config = "["
 
                          " { \"name\": \"key1\" , "
-                         "   \"algorithm\": \"algo1\" ,"
-                         "   \"secret\": \"secret11\" "
+                         "   \"algorithm\": \"HMAC-MD5\" ,"
+                         "   \"secret\": \"GWG/Xfbju4O2iXGqkSu4PQ==\" "
                          " },"
                          " { \"name\": \"key2\" , "
-                         "   \"algorithm\": \"algo2\" ,"
-                         "   \"secret\": \"secret12\" "
+                         "   \"algorithm\": \"HMAC-MD5\" ,"
+                         "   \"secret\": \"GWG/Xfbju4O2iXGqkSu4PQ==\" "
                          " },"
                          " { \"name\": \"key1\" , "
-                         "   \"algorithm\": \"algo3\" ,"
-                         "   \"secret\": \"secret13\" "
+                         "   \"algorithm\": \"HMAC-MD5\" ,"
+                         "   \"secret\": \"GWG/Xfbju4O2iXGqkSu4PQ==\" "
                          " }"
                          " ]";
 
@@ -587,21 +590,34 @@ TEST_F(TSIGKeyInfoTest, duplicateTSIGKey) {
 }
 
 /// @brief Verifies a valid list of TSIG Keys parses correctly.
+/// Also verifies that all of the supported algorithm names work.
 TEST_F(TSIGKeyInfoTest, validTSIGKeyList) {
     // Construct a valid list of keys.
     std::string config = "["
 
                          " { \"name\": \"key1\" , "
-                         "   \"algorithm\": \"algo1\" ,"
-                         "   \"secret\": \"secret1\" "
+                         "   \"algorithm\": \"HMAC-MD5\" ,"
+                         "  \"secret\": \"dGhpcyBrZXkgd2lsbCBtYXRjaA==\" "
                          " },"
                          " { \"name\": \"key2\" , "
-                         "   \"algorithm\": \"algo2\" ,"
-                         "   \"secret\": \"secret2\" "
+                         "   \"algorithm\": \"HMAC-SHA1\" ,"
+                         "  \"secret\": \"dGhpcyBrZXkgd2lsbCBtYXRjaA==\" "
                          " },"
                          " { \"name\": \"key3\" , "
-                         "   \"algorithm\": \"algo3\" ,"
-                         "   \"secret\": \"secret3\" "
+                         "   \"algorithm\": \"HMAC-SHA256\" ,"
+                         "  \"secret\": \"dGhpcyBrZXkgd2lsbCBtYXRjaA==\" "
+                         " },"
+                         " { \"name\": \"key4\" , "
+                         "   \"algorithm\": \"HMAC-SHA224\" ,"
+                         "  \"secret\": \"dGhpcyBrZXkgd2lsbCBtYXRjaA==\" "
+                         " },"
+                         " { \"name\": \"key5\" , "
+                         "   \"algorithm\": \"HMAC-SHA384\" ,"
+                         "  \"secret\": \"dGhpcyBrZXkgd2lsbCBtYXRjaA==\" "
+                         " },"
+                         " { \"name\": \"key6\" , "
+                         "   \"algorithm\": \"HMAC-SHA512\" ,"
+                         "   \"secret\": \"dGhpcyBrZXkgd2lsbCBtYXRjaA==\" "
                          " }"
                          " ]";
 
@@ -614,9 +630,10 @@ TEST_F(TSIGKeyInfoTest, validTSIGKeyList) {
     ASSERT_NO_THROW(parser->build(config_set_));
     ASSERT_NO_THROW(parser->commit());
 
+    std::string ref_secret = "dGhpcyBrZXkgd2lsbCBtYXRjaA==";
     // Verify the correct number of keys are present
     int count =  keys_->size();
-    ASSERT_EQ(3, count);
+    ASSERT_EQ(6, count);
 
     // Find the 1st key and retrieve it.
     TSIGKeyInfoMap::iterator gotit = keys_->find("key1");
@@ -624,7 +641,7 @@ TEST_F(TSIGKeyInfoTest, validTSIGKeyList) {
     TSIGKeyInfoPtr& key = gotit->second;
 
     // Verify the key contents.
-    EXPECT_TRUE(checkKey(key, "key1", "algo1", "secret1"));
+    EXPECT_TRUE(checkKey(key, "key1", TSIGKeyInfo::HMAC_MD5_STR, ref_secret));
 
     // Find the 2nd key and retrieve it.
     gotit = keys_->find("key2");
@@ -632,7 +649,7 @@ TEST_F(TSIGKeyInfoTest, validTSIGKeyList) {
     key = gotit->second;
 
     // Verify the key contents.
-    EXPECT_TRUE(checkKey(key, "key2", "algo2", "secret2"));
+    EXPECT_TRUE(checkKey(key, "key2", TSIGKeyInfo::HMAC_SHA1_STR, ref_secret));
 
     // Find the 3rd key and retrieve it.
     gotit = keys_->find("key3");
@@ -640,7 +657,35 @@ TEST_F(TSIGKeyInfoTest, validTSIGKeyList) {
     key = gotit->second;
 
     // Verify the key contents.
-    EXPECT_TRUE(checkKey(key, "key3", "algo3", "secret3"));
+    EXPECT_TRUE(checkKey(key, "key3", TSIGKeyInfo::HMAC_SHA256_STR,
+                         ref_secret));
+
+    // Find the 4th key and retrieve it.
+    gotit = keys_->find("key4");
+    ASSERT_TRUE(gotit != keys_->end());
+    key = gotit->second;
+
+    // Verify the key contents.
+    EXPECT_TRUE(checkKey(key, "key4", TSIGKeyInfo::HMAC_SHA224_STR,
+                         ref_secret));
+
+    // Find the 5th key and retrieve it.
+    gotit = keys_->find("key5");
+    ASSERT_TRUE(gotit != keys_->end());
+    key = gotit->second;
+
+    // Verify the key contents.
+    EXPECT_TRUE(checkKey(key, "key5", TSIGKeyInfo::HMAC_SHA384_STR,
+                         ref_secret));
+
+    // Find the 6th key and retrieve it.
+    gotit = keys_->find("key6");
+    ASSERT_TRUE(gotit != keys_->end());
+    key = gotit->second;
+
+    // Verify the key contents.
+    EXPECT_TRUE(checkKey(key, "key6", TSIGKeyInfo::HMAC_SHA512_STR,
+                         ref_secret));
 }
 
 /// @brief Tests the enforcement of data validation when parsing DnsServerInfos.
@@ -876,7 +921,7 @@ TEST_F(DdnsDomainTest, ddnsDomainParsing) {
     ASSERT_TRUE(fromJSON(config));
 
     // Add a TSIG key to the test key map, so key validation will pass.
-    addKey("d2_key.tmark.org", "md5", "0123456789");
+    addKey("d2_key.tmark.org", "HMAC-MD5", "GWG/Xfbju4O2iXGqkSu4PQ==");
 
     // Verify that the domain configuration builds and commits without error.
     ASSERT_NO_THROW(parser_->build(config_set_));
@@ -895,6 +940,8 @@ TEST_F(DdnsDomainTest, ddnsDomainParsing) {
     // Verify the name and key_name values.
     EXPECT_EQ("tmark.org", domain->getName());
     EXPECT_EQ("d2_key.tmark.org", domain->getKeyName());
+    ASSERT_TRUE(domain->getTSIGKeyInfo());
+    ASSERT_TRUE(domain->getTSIGKeyInfo()->getTSIGKey());
 
     // Verify that the server list exists and contains the correct number of
     // servers.
@@ -952,8 +999,8 @@ TEST_F(DdnsDomainTest, DdnsDomainListParsing) {
     ASSERT_TRUE(fromJSON(config));
 
     // Add keys to key map so key validation passes.
-    addKey("d2_key.tmark.org", "algo1", "secret1");
-    addKey("d2_key.billcat.net", "algo2", "secret2");
+    addKey("d2_key.tmark.org", "HMAC-MD5", "GWG/Xfbju4O2iXGqkSu4PQ==");
+    addKey("d2_key.billcat.net", "HMAC-MD5", "GWG/Xfbju4O2iXGqkSu4PQ==");
 
     // Create the list parser
     isc::dhcp::ParserPtr list_parser;
@@ -976,6 +1023,8 @@ TEST_F(DdnsDomainTest, DdnsDomainListParsing) {
     // Verify the name and key_name values of the first domain.
     EXPECT_EQ("tmark.org", domain->getName());
     EXPECT_EQ("d2_key.tmark.org", domain->getKeyName());
+    ASSERT_TRUE(domain->getTSIGKeyInfo());
+    ASSERT_TRUE(domain->getTSIGKeyInfo()->getTSIGKey());
 
     // Verify the each of the first domain's servers
     DnsServerInfoStoragePtr servers = domain->getServers();
@@ -1003,6 +1052,8 @@ TEST_F(DdnsDomainTest, DdnsDomainListParsing) {
     // Verify the name and key_name values of the second domain.
     EXPECT_EQ("billcat.net", domain->getName());
     EXPECT_EQ("d2_key.billcat.net", domain->getKeyName());
+    ASSERT_TRUE(domain->getTSIGKeyInfo());
+    ASSERT_TRUE(domain->getTSIGKeyInfo()->getTSIGKey());
 
     // Verify the each of second domain's servers
     servers = domain->getServers();
@@ -1090,13 +1141,13 @@ TEST_F(D2CfgMgrTest, fullConfig) {
                         "\"tsig_keys\": ["
                         "{"
                         "  \"name\": \"d2_key.tmark.org\" , "
-                        "  \"algorithm\": \"md5\" , "
-                        "  \"secret\": \"ssh-dont-tell\"  "
+                        "  \"algorithm\": \"hmac-md5\" , "
+                        "   \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\" "
                         "},"
                         "{"
                         "  \"name\": \"d2_key.billcat.net\" , "
-                        "  \"algorithm\": \"md5\" , "
-                        "  \"secret\": \"ollie-ollie-in-free\"  "
+                        "  \"algorithm\": \"hmac-md5\" , "
+                        "   \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\" "
                         "}"
                         "],"
                         "\"forward_ddns\" : {"
