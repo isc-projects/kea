@@ -15,4 +15,7 @@ libkea_testutils_la_LIBADD  = $(top_builddir)/src/lib/asiolink/libkea-asiolink.l
 libkea_testutils_la_LIBADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 endif
 
-EXTRA_DIST = portconfig.h socket_request.h
+# Include common libraries being used by shell-based tests.
+SHLIBS = dhcp_test_lib.sh
+
+EXTRA_DIST = portconfig.h socket_request.h $(SHLIBS)
