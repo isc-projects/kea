@@ -1,3 +1,10 @@
+787.	[func]		marcin
+	DHCPv6 server: Implemented dynamic reconfiguration of the server,
+	triggered when the SIGHUP signal is received by the server's
+	process. Also, server performs a graceful shut down when SIGINT
+	or SIGTERM signal is received.
+	(Trac #3406, git 3be60fa6ac521aecae6ae92d26dc03792bc76903)
+
 786.	[func]		tmark
 	DHCP-DDNS now supports DDNS updates with TSIG.  Please refer to the
 	Kea Guide for details. Prior to this TSIG keys could be defined but
