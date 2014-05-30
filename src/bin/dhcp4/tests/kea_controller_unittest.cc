@@ -47,7 +47,10 @@ public:
 
 /// @brief test class for Kea configuration backend
 ///
-/// This class is used for testing
+/// This class is used for testing Kea configuration backend.
+/// It is very simple and currently focuses on reading
+/// config file from disk. It is expected to be expanded in the
+/// near future.
 class JSONFileBackendTest : public ::testing::Test {
 public:
     JSONFileBackendTest() {
@@ -57,6 +60,12 @@ public:
         static_cast<void>(unlink(TEST_FILE));
     };
 
+    /// @brief writes specified content to a well known file
+    ///
+    /// Writes specified content to TEST_FILE. Tests will
+    /// attempt to read that file.
+    ///
+    /// @param content content to be written to file
     void writeFile(const std::string& content) {
         static_cast<void>(unlink(TEST_FILE));
 
@@ -66,10 +75,11 @@ public:
         out.close();
     }
 
+    /// Name of a config file used during tests
     static const char* TEST_FILE;
 };
 
-const char* JSONFileBackendTest::TEST_FILE = "test-config.json";
+const char* JSONFileBackendTest::TEST_FILE  = "test-config.json";
 
 // This test checks if configuration can be read from a JSON file.
 TEST_F(JSONFileBackendTest, jsonFile) {
