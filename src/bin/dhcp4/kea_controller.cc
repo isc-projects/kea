@@ -14,35 +14,15 @@
 
 #include <config.h>
 
-#include <asiolink/asiolink.h>
-#include <dhcp/iface_mgr.h>
-#include <dhcpsrv/dhcp_config_parser.h>
-#include <dhcpsrv/cfgmgr.h>
 #include <dhcp4/json_config_parser.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
-#include <dhcp4/spec_config.h>
-#include <log/logger_level.h>
-#include <log/logger_name.h>
-#include <log/logger_manager.h>
-#include <log/logger_specification.h>
-#include <log/logger_support.h>
-#include <log/output_option.h>
 #include <exceptions/exceptions.h>
-#include <util/buffer.h>
 
-#include <cassert>
-#include <iostream>
 #include <string>
-#include <vector>
 
 using namespace isc::asiolink;
-using namespace isc::cc;
-using namespace isc::config;
-using namespace isc::data;
 using namespace isc::dhcp;
-using namespace isc::log;
-using namespace isc::util;
 using namespace std;
 
 namespace isc {
@@ -66,7 +46,7 @@ ControlledDhcpv4Srv::init(const std::string& file_name) {
         }
 
         // Read contents of the file and parse it as JSON
-        json = Element::fromJSONFile(file_name, true);
+        json = isc::data::Element::fromJSONFile(file_name, true);
 
         if (!json) {
             LOG_ERROR(dhcp4_logger, DHCP4_CONFIG_LOAD_FAIL)
@@ -105,9 +85,9 @@ ControlledDhcpv4Srv::init(const std::string& file_name) {
     }
 
     // Now check is the returned result is successful (rcode=0) or not
-    ConstElementPtr comment; /// see @ref isc::config::parseAnswer
+    isc::data::ConstElementPtr comment; /// see @ref isc::config::parseAnswer
     int rcode;
-    comment = parseAnswer(rcode, result);
+    comment = isc::config::parseAnswer(rcode, result);
     if (rcode != 0) {
         string reason = "";
         if (comment) {
@@ -129,7 +109,7 @@ void ControlledDhcpv4Srv::cleanup() {
 /// This is a logger initialization for JSON file backend.
 /// For now, it's just setting log messages to be printed on stdout.
 /// @todo: Implement this properly (see #3427)
-void Daemon::loggerInit(const char*, bool verbose, bool ) {
+void Daemon::loggerInit(const char*, bool verbose) {
 
     setenv("B10_LOCKFILE_DIR_FROM_BUILD", "/tmp", 1);
     setenv("B10_LOGGER_ROOT", "kea", 0);

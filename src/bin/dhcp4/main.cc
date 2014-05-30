@@ -43,9 +43,8 @@ const char* const DHCP4_LOGGER_NAME = "kea";
 
 void
 usage() {
-    cerr << "Usage: " << DHCP4_NAME << " [-v] [-s] [-p number]" << endl;
+    cerr << "Usage: " << DHCP4_NAME << " [-v] [-p number] [-c file]" << endl;
     cerr << "  -v: verbose output" << endl;
-    cerr << "  -s: stand-alone mode (don't connect to BIND10)" << endl;
     cerr << "  -p number: specify non-standard port number 1-65535 "
          << "(useful for testing only)" << endl;
     cerr << "  -c file: specify configuration file" << endl;
@@ -58,20 +57,15 @@ main(int argc, char* argv[]) {
     int ch;
     int port_number = DHCP4_SERVER_PORT; // The default. any other values are
                                          // useful for testing only.
-    bool stand_alone = false;  // Should be connect to BIND10 msgq?
     bool verbose_mode = false; // Should server be verbose?
 
     // The standard config file
     std::string config_file("");
 
-    while ((ch = getopt(argc, argv, "vsp:c:")) != -1) {
+    while ((ch = getopt(argc, argv, "vp:c:")) != -1) {
         switch (ch) {
         case 'v':
             verbose_mode = true;
-            break;
-
-        case 's':
-            stand_alone = true;
             break;
 
         case 'p':
@@ -108,35 +102,34 @@ main(int argc, char* argv[]) {
     try {
         // Initialize logging.  If verbose, we'll use maximum verbosity.
         // If standalone is enabled, do not buffer initial log messages
-        Daemon::loggerInit(DHCP4_LOGGER_NAME, verbose_mode, stand_alone);
+        Daemon::loggerInit(DHCP4_LOGGER_NAME, verbose_mode);
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_START_INFO)
-            .arg(getpid()).arg(port_number).arg(verbose_mode ? "yes" : "no")
-            .arg(stand_alone ? "yes" : "no" );
-        
+            .arg(getpid()).arg(port_number).arg(verbose_mode ? "yes" : "no");
+
         LOG_INFO(dhcp4_logger, DHCP4_STARTING);
 
+        // Create the server instance.
         ControlledDhcpv4Srv server(port_number);
 
-        if (!stand_alone) {
+        try {
+            // Initialize the server.
+            server.init(config_file);
+        } catch (const std::exception& ex) {
+            LOG_ERROR(dhcp4_logger, DHCP4_SESSION_FAIL).arg(ex.what());
 
-            try {
-                server.init(config_file);
-            } catch (const std::exception& ex) {
-                LOG_ERROR(dhcp4_logger, DHCP4_SESSION_FAIL).arg(ex.what());
+            // We should not continue if were told to configure (either read
+            // config file or establish Bundy control session).
 
-                // We should not continue if were told to configure (either read
-                // config file or establish Bundy control session).
+            isc::log::LoggerManager log_manager;
+            log_manager.process();
 
-                isc::log::LoggerManager log_manager;
-                log_manager.process();
-
-                cerr << "Failed to initialize server: " << ex.what() << endl;
-                return (EXIT_FAILURE);
-            }
-        } else {
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_STANDALONE);
+            cerr << "Failed to initialize server: " << ex.what() << endl;
+            return (EXIT_FAILURE);
         }
+
+        // And run the main loop of the server.
         server.run();
+
         LOG_INFO(dhcp4_logger, DHCP4_SHUTDOWN);
 
     } catch (const std::exception& ex) {

@@ -209,10 +209,10 @@ void ControlledDhcpv4Srv::cleanup() {
 }
 
 void
-Daemon::loggerInit(const char* log_name, bool verbose, bool stand_alone) {
+Daemon::loggerInit(const char* log_name, bool verbose) {
     isc::log::initLogger(log_name,
                          (verbose ? isc::log::DEBUG : isc::log::INFO),
-                         isc::log::MAX_DEBUG_LEVEL, NULL, !stand_alone);
+                         isc::log::MAX_DEBUG_LEVEL, NULL, true);
 }
 
 };

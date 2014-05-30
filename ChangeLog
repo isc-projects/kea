@@ -1,3 +1,10 @@
+7XX.	[func]		tomek
+	DHCPv4 server: New parameter added to configure.ac: --with-kea-config.
+	It allows selecting configuration backend and accepts one of two
+	values: BUNDY, which uses Bundy (former BIND10) framework as Kea
+	0.8 did, or JSON, which reads configuration from a JSON file.
+	(Trac #3399, git TBD)
+
 784.	[func]		tmark
 	DHCP_DDNS's configuration was changed. The unused parameter, "interface"
 	was deleted.  Three new parameters, "ncr_protocol", "ncr_format", and
@@ -6,7 +13,7 @@
 	(Trac #3268,    git bd60252e679f19b062f61926647f661ab169f21c)
 
 783.	[func]*		tomek
-	b10-dhcp6: New parameter added to configure: --with-kea-config.
+	DHCPv6 server: New parameter added to configure: --with-kea-config.
 	It allows selecting configuration backend and accepts one of two
 	values: BUNDY, which uses Bundy (former BIND10 framework as Kea
 	0.8 did, or JSON, which reads configuration from a JSON file.
