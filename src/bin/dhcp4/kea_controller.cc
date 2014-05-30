@@ -79,9 +79,10 @@ ControlledDhcpv4Srv::init(const std::string& file_name) {
         // but as the configureDhcp4Server returns a pointer, it is theoretically
         // possible that it will return NULL.
         LOG_ERROR(dhcp4_logger, DHCP4_CONFIG_LOAD_FAIL)
-            .arg("Configuration failed: Undefined result of configureDhcp4Server"
-                 "() function after attempting to read " + file_name);
-        return;
+            .arg("Configuration failed: Undefined result of processCommand("
+                 "config-reload, " + file_name + ")");
+        isc_throw(BadValue, "Configuration failed: Undefined result of "
+                  "processCommand('config-reload', " + file_name + ")");
     }
 
     // Now check is the returned result is successful (rcode=0) or not
