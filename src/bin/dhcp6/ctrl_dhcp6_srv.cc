@@ -99,9 +99,12 @@ ControlledDhcpv6Srv::processCommand(const std::string& command,
     }
 }
 
-
 isc::data::ConstElementPtr
 ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
+
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND, DHCP6_CONFIG_RECEIVED)
+              .arg(config->str());
+
     ControlledDhcpv6Srv* srv = ControlledDhcpv6Srv::getInstance();
 
     if (!srv) {

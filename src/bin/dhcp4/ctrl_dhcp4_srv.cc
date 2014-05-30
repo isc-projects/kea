@@ -30,8 +30,8 @@ ControlledDhcpv4Srv* ControlledDhcpv4Srv::server_ = NULL;
 
 ConstElementPtr
 ControlledDhcpv4Srv::commandShutdownHandler(const string&, ConstElementPtr) {
-    if (ControlledDhcpv4Srv::server_) {
-        ControlledDhcpv4Srv::server_->shutdown();
+    if (ControlledDhcpv4Srv::getInstance()) {
+        ControlledDhcpv4Srv::getInstance()->shutdown();
     } else {
         LOG_WARN(dhcp4_logger, DHCP4_NOT_RUNNING);
         ConstElementPtr answer = isc::config::createAnswer(1,
@@ -76,8 +76,8 @@ ControlledDhcpv4Srv::processCommand(const string& command,
 
     if (!srv) {
         ConstElementPtr no_srv = isc::config::createAnswer(1,
-          "Server object not initialized, can't process command '" +
-          command + "'.");
+          "Server object not initialized, so can't process command '" +
+          command + "', arguments: '" + args->str() + "'.");
         return (no_srv);
     }
 
@@ -103,15 +103,22 @@ ControlledDhcpv4Srv::processCommand(const string& command,
 
 isc::data::ConstElementPtr
 ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
+
+    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_CONFIG_RECEIVED)
+              .arg(config->str());
+
     ControlledDhcpv4Srv* srv = ControlledDhcpv4Srv::getInstance();
 
+    // Single stream instance used in all error clauses
+    std::ostringstream err;
+
     if (!srv) {
-        ConstElementPtr no_srv = isc::config::createAnswer(1,
-          "Server object not initialized, can't process config.");
-        return (no_srv);
+        err << "Server object not initialized, can't process config.";
+        return (isc::config::createAnswer(1, err.str()));
     }
     
     ConstElementPtr answer = configureDhcp4Server(*srv, config);
+
 
     // Check that configuration was successful. If not, do not reopen sockets
     // and don't bother with DDNS stuff.
@@ -122,29 +129,28 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
             return (answer);
         }
     } catch (const std::exception& ex) {
-        return (isc::config::createAnswer(1, "Failed to process configuration:"
-                                          + string(ex.what())));
+        err << "Failed to process configuration:" << ex.what();
+        return (isc::config::createAnswer(1, err.str()));
     }
 
     // Server will start DDNS communications if its enabled.
     try {
         srv->startD2();
     } catch (const std::exception& ex) {
-        std::ostringstream err;
-        err << "error starting DHCP_DDNS client "
-                " after server reconfiguration: " << ex.what();
+        err << "Error starting DHCP_DDNS client after server reconfiguration: "
+            << ex.what();
         return (isc::config::createAnswer(1, err.str()));
     }
 
     // Configuration may change active interfaces. Therefore, we have to reopen
     // sockets according to new configuration. This operation is not exception
-    // safe and we really don't want to emit exceptions to the callback caller.
-    // Instead, catch an exception and create appropriate answer.
+    // safe and we really don't want to emit exceptions to whoever called this
+    // method. Instead, catch an exception and create appropriate answer.
     try {
-        srv->openActiveSockets(srv->getPort(), server_->useBroadcast());
+        srv->openActiveSockets(srv->getPort(), getInstance()->useBroadcast());
     } catch (std::exception& ex) {
-        std::ostringstream err;
-        err << "failed to open sockets after server reconfiguration: " << ex.what();
+        err << "failed to open sockets after server reconfiguration: "
+            << ex.what();
         answer = isc::config::createAnswer(1, err.str());
     }
     return (answer);
@@ -152,11 +158,11 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
 
 ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t port /*= DHCP4_SERVER_PORT*/)
     :Dhcpv4Srv(port) {
-    if (server_) {
+    if (getInstance()) {
         isc_throw(InvalidOperation,
                   "There is another Dhcpv4Srv instance already.");
     }
-    server_ = this; // remember this instance for use in callback
+    server_ = this; // remember this instance for later use in handlers
 }
 
 void ControlledDhcpv4Srv::shutdown() {
@@ -167,15 +173,15 @@ void ControlledDhcpv4Srv::shutdown() {
 ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
     cleanup();
     
-    server_ = NULL; // forget this instance. There should be no callback anymore
-                    // at this stage anyway.
+    server_ = NULL; // forget this instance. Noone should call any handlers at
+                    // this stage.
 }
 
 void ControlledDhcpv4Srv::sessionReader(void) {
     // Process one asio event. If there are more events, iface_mgr will call
     // this callback more than once.
-    if (server_) {
-        server_->io_service_.run_one();
+    if (getInstance()) {
+        getInstance()->io_service_.run_one();
     }
 }
 

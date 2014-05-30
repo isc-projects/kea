@@ -45,7 +45,9 @@ public:
     NakedControlledDhcpv4Srv():ControlledDhcpv4Srv(0) { }
 };
 
-
+/// @brief test class for Kea configuration backend
+///
+/// This class is used for testing
 class JSONFileBackendTest : public ::testing::Test {
 public:
     JSONFileBackendTest() {
@@ -55,10 +57,10 @@ public:
         static_cast<void>(unlink(TEST_FILE));
     };
 
-    void writeFile(const std::string& file_name, const std::string& content) {
-        static_cast<void>(unlink(file_name.c_str()));
+    void writeFile(const std::string& content) {
+        static_cast<void>(unlink(TEST_FILE));
 
-        ofstream out(file_name.c_str(), ios::trunc);
+        ofstream out(TEST_FILE, ios::trunc);
         EXPECT_TRUE(out.is_open());
         out << content;
         out.close();
@@ -92,7 +94,7 @@ TEST_F(JSONFileBackendTest, jsonFile) {
         "\"valid-lifetime\": 4000 }"
         "}";
 
-    writeFile(TEST_FILE, config);
+    writeFile(config);
 
     // Now initialize the server
     boost::scoped_ptr<ControlledDhcpv4Srv> srv;
@@ -161,7 +163,7 @@ TEST_F(JSONFileBackendTest, comments) {
     /// @todo: Implement C++-style (// ...) comments
     /// @todo: Implement C-style (/* ... */) comments
 
-    writeFile(TEST_FILE, config_hash_comments);
+    writeFile(config_hash_comments);
 
     // Now initialize the server
     boost::scoped_ptr<ControlledDhcpv4Srv> srv;
@@ -169,7 +171,7 @@ TEST_F(JSONFileBackendTest, comments) {
         srv.reset(new ControlledDhcpv4Srv(0))
     );
 
-    // And configure it using config without
+    // And configure it using config with comments.
     EXPECT_NO_THROW(srv->init(TEST_FILE));
 
     // Now check if the configuration has been applied correctly.
@@ -222,34 +224,34 @@ TEST_F(JSONFileBackendTest, configBroken) {
     EXPECT_THROW(srv->init(""), BadValue);
 
     // Try to configure it using empty file. Should fail.
-    writeFile(TEST_FILE, config_empty);
+    writeFile(config_empty);
     EXPECT_THROW(srv->init(TEST_FILE), BadValue);
 
     // Now try to load a config that does not have Dhcp4 component.
-    writeFile(TEST_FILE, config_v4);
+    writeFile(config_v4);
     EXPECT_THROW(srv->init(TEST_FILE), BadValue);
 
     // Now try to load a config with Dhcp4 full of nonsense.
-    writeFile(TEST_FILE, config_nonsense);
+    writeFile(config_nonsense);
     EXPECT_THROW(srv->init(TEST_FILE), BadValue);
 }
 
-// This unit-test reads all files enumerated in configs-test.txt file, loads
-// each of them and verify that they can be loaded.
-//
-// @todo: Unfortunately, we have this test disabled, because all loaded
-// configs use memfile, which attempts to create lease file in
-// /usr/local/var/bind10/kea-leases4.csv. We have couple options here:
-// a) disable persistence in example configs - a very bad thing to do
-//    as users will forget to reenable it and then will be surprised when their
-//    leases disappear
-// b) change configs to store lease file in /tmp. It's almost as bad as the
-//    previous one. Users will then be displeased when all their leases are
-//    wiped. (most systems wipe /tmp during boot)
-// c) read each config and rewrite it on the fly, so persistence is disabled.
-//    This is probably the way to go, but this is a work for a dedicated ticket.
-//
-// Hence I'm leaving the test in, but it is disabled.
+/// This unit-test reads all files enumerated in configs-test.txt file, loads
+/// each of them and verify that they can be loaded.
+///
+/// @todo: Unfortunately, we have this test disabled, because all loaded
+/// configs use memfile, which attempts to create lease file in
+/// /usr/local/var/bind10/kea-leases4.csv. We have couple options here:
+/// a) disable persistence in example configs - a very bad thing to do
+///    as users will forget to reenable it and then will be surprised when their
+///    leases disappear
+/// b) change configs to store lease file in /tmp. It's almost as bad as the
+///    previous one. Users will then be displeased when all their leases are
+///    wiped. (most systems wipe /tmp during boot)
+/// c) read each config and rewrite it on the fly, so persistence is disabled.
+///    This is probably the way to go, but this is a work for a dedicated ticket.
+///
+/// Hence I'm leaving the test in, but it is disabled.
 TEST_F(JSONFileBackendTest, DISABLED_loadAllConfigs) {
 
     // Create server first
