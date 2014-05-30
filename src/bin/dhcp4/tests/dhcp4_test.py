@@ -13,7 +13,7 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-from init import ProcessInfo, parse_args, dump_pid, unlink_pid_file, _BASETIME
+from init import ProcessInfo
 
 import unittest
 import sys
@@ -206,23 +206,6 @@ class TestDhcpv4Daemon(unittest.TestCase):
 
         # Check that there is an error message about invalid port number printed on stderr
         self.assertEqual( str(error).count("Failed to parse port number"), 1)
-
-    def test_portnumber_nonroot(self):
-        print("Check that specifying unprivileged port number will work.")
-
-        # Check that there is a message about running with an unprivileged port
-        (returncode, output, error) = self.runCommand(['../b10-dhcp4', '-v', '-s', '-p', '10057'])
-        output_text = str(output) + str(error)
-        self.assertEqual(output_text.count("DHCP4_OPEN_SOCKET opening sockets on port 10057"), 1)
-
-    def test_skip_msgq(self):
-        print("Check that connection to BIND10 msgq can be disabled.")
-
-        # Check that the system outputs a message on one of its streams about running
-        # standalone.
-        (returncode, output, error) = self.runCommand(['../b10-dhcp4', '-v', '-s', '-p', '10057'])
-        output_text = str(output) + str(error)
-        self.assertEqual(output_text.count("DHCP4_STANDALONE"), 1)
 
 if __name__ == '__main__':
     unittest.main()

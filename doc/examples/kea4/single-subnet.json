@@ -1,4 +1,4 @@
-# This is an example configuration file for DHCPv4 server in Kea.
+# This is an example configuration file for the DHCPv4 server in Kea.
 # It is a basic scenario with one IPv4 subnet configured. The subnet
 # contains a single pool of dynamically allocated addresses.
 
