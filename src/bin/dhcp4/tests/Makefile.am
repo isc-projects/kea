@@ -33,6 +33,7 @@ AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
 CLEANFILES = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
 CLEANFILES += $(builddir)/load_marker.txt $(builddir)/unload_marker.txt
+CLEANFILES += *.json
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 if USE_CLANGPP
@@ -77,7 +78,7 @@ TESTS += dhcp4_unittests
 
 dhcp4_unittests_SOURCES = ../dhcp4_srv.h ../dhcp4_srv.cc ../ctrl_dhcp4_srv.cc
 dhcp4_unittests_SOURCES += ../dhcp4_log.h ../dhcp4_log.cc
-dhcp4_unittests_SOURCES += ../config_parser.cc ../config_parser.h
+dhcp4_unittests_SOURCES += ../json_config_parser.cc ../json_config_parser.h
 dhcp4_unittests_SOURCES += d2_unittest.h d2_unittest.cc
 dhcp4_unittests_SOURCES += dhcp4_test_utils.h
 dhcp4_unittests_SOURCES += dhcp4_unittests.cc
@@ -89,6 +90,19 @@ dhcp4_unittests_SOURCES += ctrl_dhcp4_srv_unittest.cc
 dhcp4_unittests_SOURCES += config_parser_unittest.cc
 dhcp4_unittests_SOURCES += fqdn_unittest.cc
 dhcp4_unittests_SOURCES += marker_file.cc
+
+if CONFIG_BACKEND_BUNDY
+# For Bundy backend, we only need to run the usual tests. There are no
+# Bundy-specific tests yet.
+dhcp4_unittests_SOURCES += ../bundy_controller.cc
+dhcp4_unittests_SOURCES += bundy_controller_unittest.cc
+endif
+
+if CONFIG_BACKEND_JSON
+dhcp4_unittests_SOURCES += ../kea_controller.cc
+dhcp4_unittests_SOURCES += kea_controller_unittest.cc
+endif
+
 nodist_dhcp4_unittests_SOURCES = ../dhcp4_messages.h ../dhcp4_messages.cc
 nodist_dhcp4_unittests_SOURCES += marker_file.h test_libraries.h
 
@@ -108,5 +122,7 @@ dhcp4_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
 endif
+
+noinst_EXTRA_DIST = configs-list.txt
 
 noinst_PROGRAMS = $(TESTS)
