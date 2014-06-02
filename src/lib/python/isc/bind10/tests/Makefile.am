@@ -1,7 +1,7 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
 #PYTESTS = args_test.py bind10_test.py
 # NOTE: this has a generated test found in the builddir
-PYTESTS = sockcreator_test.py component_test.py socket_cache_test.py
+PYTESTS = 
 
 EXTRA_DIST = $(PYTESTS)
 

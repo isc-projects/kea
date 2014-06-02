@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10, 20140313, kea-dev@isc.org)
+AC_INIT(kea, 20140602-git, kea-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 
 # serial-tests is not available in automake version before 1.13, so
@@ -1415,31 +1415,6 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  ext/Makefile
                  m4macros/Makefile
                  Makefile
-                 src/bin/bind10/bind10
-                 src/bin/bind10/init.py
-                 src/bin/bind10/Makefile
-                 src/bin/bind10/run_bind10.sh
-                 src/bin/bind10/tests/init_test.py
-                 src/bin/bind10/tests/Makefile
-                 src/bin/bindctl/bindctl_main.py
-                 src/bin/bindctl/Makefile
-                 src/bin/bindctl/run_bindctl.sh
-                 src/bin/bindctl/tests/bindctl_test
-                 src/bin/bindctl/tests/Makefile
-                 src/bin/cfgmgr/b10-cfgmgr.py
-                 src/bin/cfgmgr/local_plugins/Makefile
-                 src/bin/cfgmgr/Makefile
-                 src/bin/cfgmgr/plugins/datasrc.spec.pre
-                 src/bin/cfgmgr/plugins/Makefile
-                 src/bin/cfgmgr/plugins/tests/Makefile
-                 src/bin/cfgmgr/tests/b10-cfgmgr_test.py
-                 src/bin/cfgmgr/tests/Makefile
-                 src/bin/cmdctl/cmdctl.py
-                 src/bin/cmdctl/cmdctl.spec.pre
-                 src/bin/cmdctl/Makefile
-                 src/bin/cmdctl/run_b10-cmdctl.sh
-                 src/bin/cmdctl/tests/cmdctl_test
-                 src/bin/cmdctl/tests/Makefile
                  src/bin/d2/Makefile
                  src/bin/d2/spec_config.h.pre
                  src/bin/d2/tests/Makefile
@@ -1457,26 +1432,8 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/dhcp6/tests/test_data_files_config.h
                  src/bin/dhcp6/tests/test_libraries.h
                  src/bin/Makefile
-                 src/bin/msgq/Makefile
-                 src/bin/msgq/msgq.py
-                 src/bin/msgq/run_msgq.sh
-                 src/bin/msgq/tests/Makefile
                  src/bin/sockcreator/Makefile
                  src/bin/sockcreator/tests/Makefile
-                 src/bin/stats/Makefile
-                 src/bin/stats/stats_httpd.py
-                 src/bin/stats/stats.py
-                 src/bin/stats/tests/Makefile
-                 src/bin/stats/tests/testdata/Makefile
-                 src/bin/sysinfo/Makefile
-                 src/bin/sysinfo/run_sysinfo.sh
-                 src/bin/sysinfo/sysinfo.py
-                 src/bin/tests/Makefile
-                 src/bin/tests/process_rename_test.py
-                 src/bin/usermgr/b10-cmdctl-usermgr.py
-                 src/bin/usermgr/Makefile
-                 src/bin/usermgr/run_b10-cmdctl-usermgr.sh
-                 src/bin/usermgr/tests/Makefile
                  src/hooks/dhcp/Makefile
                  src/hooks/dhcp/user_chk/Makefile
                  src/hooks/dhcp/user_chk/tests/Makefile
@@ -1581,15 +1538,6 @@ AC_CONFIG_FILES([compatcheck/Makefile
 ])
 
  AC_CONFIG_COMMANDS([permissions], [
-           chmod +x src/bin/bind10/bind10
-           chmod +x src/bin/bind10/run_bind10.sh
-           chmod +x src/bin/bindctl/run_bindctl.sh
-           chmod +x src/bin/bindctl/tests/bindctl_test
-           chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
-           chmod +x src/bin/cmdctl/tests/cmdctl_test
-           chmod +x src/bin/msgq/run_msgq.sh
-           chmod +x src/bin/sysinfo/run_sysinfo.sh
-           chmod +x src/bin/usermgr/run_b10-cmdctl-usermgr.sh
            chmod +x src/lib/dns/gen-rdatacode.py
            chmod +x src/lib/log/tests/console_test.sh
            chmod +x src/lib/log/tests/destination_test.sh

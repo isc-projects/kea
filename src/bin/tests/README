@@ -1,3 +1,0 @@
-This directory does not contain any code a user might want to run. It contains
-"global" tests -- tests that are not specific to a single library or program.
-Do not expect to find b10-tests here, there's no such program.
