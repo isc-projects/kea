@@ -44,6 +44,10 @@ name was malformed or due to internal server error.
 A debug message listing the command (and possible arguments) received
 from the BIND 10 control system by the DHCPv4 server.
 
+% DHCP4_CONFIG_RECEIVED received configuration %1
+A debug message listing the configuration received by the DHCPv4 server.
+The source of that configuration depends on used configuration backend.
+
 % DHCP4_CONFIG_COMPLETE DHCPv4 server has completed configuration: %1
 This is an informational message announcing the successful processing of a
 new configuration. It is output during server startup, and when an updated
@@ -339,17 +343,11 @@ core component within the DHCPv4 server (the Dhcpv4 server object)
 has failed.  As a result, the server will exit.  The reason for the
 failure is given within the message.
 
-% DHCP4_STANDALONE skipping message queue, running standalone
-This is a debug message indicating that the DHCPv4 server is running in
-standalone mode, not connected to the message queue.  Standalone mode
-is only useful during program development, and should not be used in a
-production environment.
-
 % DHCP4_STARTING server starting
 This informational message indicates that the DHCPv4 server has
 processed any command-line switches and is starting.
 
-% DHCP4_START_INFO pid: %1, port: %2, verbose: %3, standalone: %4
+% DHCP4_START_INFO pid: %1, port: %2, verbose: %3
 This is a debug message issued during the DHCPv4 server startup.
 It lists some information about the parameters with which the server
 is running.

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -26,6 +26,7 @@
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/alloc_engine.h>
 #include <hooks/callout_handle.h>
+#include <dhcpsrv/daemon.h>
 
 #include <boost/noncopyable.hpp>
 
@@ -57,7 +58,7 @@ public:
 ///
 /// For detailed explanation or relations between main(), ControlledDhcpv4Srv,
 /// Dhcpv4Srv and other classes, see \ref dhcpv4Session.
-class Dhcpv4Srv : public boost::noncopyable {
+class Dhcpv4Srv : public Daemon {
 
 public:
 

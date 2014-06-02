@@ -43,8 +43,8 @@ ControlledDhcpv6Srv::commandShutdownHandler(const string&, ConstElementPtr) {
 
 ConstElementPtr
 ControlledDhcpv6Srv::commandLibReloadHandler(const string&, ConstElementPtr) {
-    // TODO delete any stored CalloutHandles referring to the old libraries
-    // Get list of currently loaded libraries and reload them.
+    /// @todo delete any stored CalloutHandles referring to the old libraries
+    /// Get list of currently loaded libraries and reload them.
     vector<string> loaded = HooksManager::getLibraryNames();
     bool status = HooksManager::loadLibraries(loaded);
     if (!status) {
@@ -99,9 +99,12 @@ ControlledDhcpv6Srv::processCommand(const std::string& command,
     }
 }
 
-
 isc::data::ConstElementPtr
 ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
+
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND, DHCP6_CONFIG_RECEIVED)
+              .arg(config->str());
+
     ControlledDhcpv6Srv* srv = ControlledDhcpv6Srv::getInstance();
 
     if (!srv) {
