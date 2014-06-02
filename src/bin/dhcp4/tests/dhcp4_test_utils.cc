@@ -17,7 +17,7 @@
 #include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <config/ccsession.h>
-#include <dhcp4/config_parser.h>
+#include <dhcp4/json_config_parser.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option_int_array.h>

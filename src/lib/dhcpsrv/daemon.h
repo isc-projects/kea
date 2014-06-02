@@ -100,8 +100,12 @@ public:
 
     /// Initializes logger
     ///
-    /// This method initializes logger.
-    static void loggerInit(const char* log_name, bool verbose, bool stand_alone);
+    /// This method initializes logger. Currently its implementation is specific
+    /// to each configuration backend.
+    ///
+    /// @param log_name name used in logger initialization
+    /// @param verbose verbose mode (true usually enables DEBUG messages)
+    static void loggerInit(const char* log_name, bool verbose);
 
 private:
 

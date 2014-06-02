@@ -51,9 +51,17 @@ pkglibexec_PROGRAMS = b10-dhcp4
 
 b10_dhcp4_SOURCES  = main.cc
 b10_dhcp4_SOURCES += ctrl_dhcp4_srv.cc ctrl_dhcp4_srv.h
-b10_dhcp4_SOURCES += config_parser.cc config_parser.h
+b10_dhcp4_SOURCES += json_config_parser.cc json_config_parser.h
 b10_dhcp4_SOURCES += dhcp4_log.cc dhcp4_log.h
 b10_dhcp4_SOURCES += dhcp4_srv.cc dhcp4_srv.h
+
+if CONFIG_BACKEND_BUNDY
+b10_dhcp4_SOURCES += bundy_controller.cc
+endif
+
+if CONFIG_BACKEND_JSON
+b10_dhcp4_SOURCES += kea_controller.cc
+endif
 
 nodist_b10_dhcp4_SOURCES = dhcp4_messages.h dhcp4_messages.cc
 EXTRA_DIST += dhcp4_messages.mes
