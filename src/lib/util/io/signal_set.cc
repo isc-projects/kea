@@ -21,11 +21,23 @@ using namespace isc::util::io;
 
 namespace {
 
+/// @brief Returns a pointer to static collection of signals.
+///
+/// @return Static collection of signals.
 std::list<int>* getSignalStates() {
     static std::list<int> states;
     return (&states);
 }
 
+/// @brief Internal signal handler for @c isc::util::io::SignalSet class.
+///
+/// This signal handler adds a signal number for which it is being
+/// invoked to the queue of received signals. It prevents adding duplicated
+/// signals. All duplicated signals are dropped. This prevents hammering
+/// a process to invoke handlers (e.g. DHCP server reconfiguration), when
+/// many the same signals are received one after another.
+///
+/// @param sig Signal number.
 void internalHandler(int sig) {
     std::list<int>* states = getSignalStates();
     for (std::list<int>::const_iterator it = states->begin();
@@ -35,6 +47,18 @@ void internalHandler(int sig) {
         }
     }
     states->push_back(sig);
+}
+
+/// @brief Pops a next signal number from the static collection of signals.
+///
+/// The static collection of signals is updated by the internal signal
+/// handler being invoked when one of the installed signals is received by
+/// the process. This function removes the first element of the collection.
+void popNext() {
+    std::list<int>* states = getSignalStates();
+    if (!states->empty()) {
+        states->pop_front();
+    }
 }
 
 }
@@ -56,6 +80,11 @@ SignalSet::SignalSet(const int sig0, const int sig1, const int sig2) {
     add(sig0);
     add(sig1);
     add(sig2);
+}
+
+SignalSet::~SignalSet() {
+    // Set default signal handlers.
+    clear();
 }
 
 void
@@ -116,14 +145,6 @@ SignalSet::maskSignals(const int mask) const {
         sigaddset(&new_set, *it);
     }
     sigprocmask(mask, &new_set, 0);
-}
-
-void
-SignalSet::popNext() const {
-    std::list<int>* states = getSignalStates();
-    if (!states->empty()) {
-        states->pop_front();
-    }
 }
 
 void
