@@ -1,5 +1,3 @@
-PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
-PYTESTS = dhcp6_test.py
 SHTESTS =
 # The test of dynamic reconfiguration based on signals will work only
 # if we are using file based configuration approach.
@@ -8,7 +6,7 @@ SHTESTS += dhcp6_reconfigure_test.sh
 SHTESTS += dhcp6_sigterm_test.sh
 SHTESTS += dhcp6_sigint_test.sh
 endif
-EXTRA_DIST = $(PYTESTS) $(SHTESTS)
+EXTRA_DIST = $(SHTESTS)
 
 # Explicitly specify paths to dynamic libraries required by loadable python
 # modules. That is required on Mac OS systems. Otherwise we will get exception
@@ -20,14 +18,6 @@ endif
 
 # test using command-line arguments, so use check-local target instead of TESTS
 check-local:
-	for pytest in $(PYTESTS) ; do \
-	echo Running test: $$pytest ; \
-	$(LIBRARY_PATH_PLACEHOLDER) \
-	B10_LOCKFILE_DIR_FROM_BUILD=$(abs_top_builddir) \
-	PYTHONPATH=$(COMMON_PYTHON_PATH):$(abs_top_srcdir)/src/bin:$(abs_top_builddir)/src/bin/bind10:$(abs_top_builddir)/src/lib/util/io/.libs \
-		$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
-	done
-
 	for shtest in $(SHTESTS) ; do \
 	echo Running test: $$shtest ; \
 	export B10_LOCKFILE_DIR_FROM_BUILD=$(abs_top_builddir); \

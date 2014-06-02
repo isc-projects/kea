@@ -1,5 +1,5 @@
 PYCOVERAGE_RUN=@PYCOVERAGE_RUN@
-PYTESTS = ccsession_test.py cfgmgr_test.py config_data_test.py
+PYTESTS = config_data_test.py
 PYTESTS += module_spec_test.py
 EXTRA_DIST = $(PYTESTS)
 EXTRA_DIST += unittest_fakesession.py

@@ -1,2 +1,0 @@
-1. Start bindctl by run command "sh bindctl".
-2. Login to b10-cmdctl with the username and password. The username and password will be saved in file default_user.csv automatically after logining successfully, so next time bindctl will login with the username and password saved in default_user.csv. For more usage information, please turn to "man bindctl".
