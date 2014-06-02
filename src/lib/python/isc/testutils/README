@@ -1,3 +1,0 @@
-This contains some shared test code for other modules and python processes.
-That's why it doesn't have its own test subdirectory and why it isn't
-installed.
