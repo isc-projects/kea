@@ -26,9 +26,9 @@ using namespace isc::util::io;
 class SignalSetTest : public ::testing::Test {
 public:
 
-    SignalSetTest()
-        : handler_calls_(0),
-          signum_ (-1) {
+    SignalSetTest() {
+        handler_calls_ = 0;
+        signum_ = -1;
     }
 
     ~SignalSetTest() {
@@ -38,20 +38,22 @@ public:
     }
 
     void handleNext() {
-        signal_set_->handleNext(boost::bind(&SignalSetTest::testHandler,
-                                            this, _1));
+        signal_set_->handleNext(boost::bind(&SignalSetTest::testHandler, _1));
     }
 
-    void testHandler(int signum) {
+    static void testHandler(int signum) {
         signum_ = signum;
         ++handler_calls_;
     }
 
-    int handler_calls_;
-    int signum_;
+    static int handler_calls_;
+    static int signum_;
     boost::shared_ptr<SignalSet> signal_set_;
 
 };
+
+int SignalSetTest::handler_calls_ = 0;
+int SignalSetTest::signum_ = -1;
 
 TEST_F(SignalSetTest, twoSignals) {
     // Register handlers for two signals.
@@ -89,5 +91,6 @@ TEST_F(SignalSetTest, twoSignals) {
     EXPECT_NO_THROW(signal_set_->remove(SIGHUP));
     EXPECT_NO_THROW(signal_set_->remove(SIGINT));
 }
+
 
 } // end of anonymous namespace

@@ -13,8 +13,9 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
-#include <string>
+#include <util/io/signal_set.h>
 #include <boost/noncopyable.hpp>
+#include <string>
 
 
 namespace isc {
@@ -44,6 +45,11 @@ namespace dhcp {
 /// By default, the configuration file location is empty and its actual value
 /// is assigned to the static object in @c Daemon::init function.
 ///
+/// Classes derived from @c Daemon may install custom signal handlers using
+/// @c isc::util::io::SignalSet class. This base class provides a declaration
+/// of the @c SignalSet object that should be initialized in the derived
+/// classes to install the custom exception handlers.
+///
 /// @note Only one instance of this class is instantiated as it encompasses
 ///       the whole operation of the server.  Nothing, however, enforces the
 ///       singleton status of the object.
@@ -52,8 +58,15 @@ class Daemon : public boost::noncopyable {
 public:
     /// @brief Default constructor
     ///
-    /// Currently it does nothing.
+    /// Initializes the object installing custom signal handlers for the
+    /// process to NULL.
     Daemon();
+
+    /// @brief Desctructor
+    ///
+    /// Having virtual destructor ensures that all derived classes will have
+    /// virtual destructor as well.
+    virtual ~Daemon();
 
     /// @brief Initializes the server.
     ///
@@ -87,12 +100,6 @@ public:
     /// @brief Initiates shutdown procedure for the whole DHCPv6 server.
     virtual void shutdown();
 
-    /// @brief Desctructor
-    ///
-    /// Having virtual destructor ensures that all derived classes will have
-    /// virtual destructor as well.
-    virtual ~Daemon();
-
     /// @brief Returns config file name.
     static std::string getConfigFile() {
         return (config_file_);
@@ -106,6 +113,34 @@ public:
     /// @param log_name name used in logger initialization
     /// @param verbose verbose mode (true usually enables DEBUG messages)
     static void loggerInit(const char* log_name, bool verbose);
+
+protected:
+
+    /// @brief Invokes handler for the next received signal.
+    ///
+    /// This function provides a default implementation for the function
+    /// handling next signal received by the process. It checks if a pointer
+    /// to @c isc::util::io::SignalSet object and the signal handler function
+    /// have been set. If they have been set, the signal handler is invoked for
+    /// the the next signal registered in the @c SignalSet object.
+    ///
+    /// This function should be received in the main loop of the process.
+    virtual void handleSignal();
+
+    /// @brief A pointer to the object installing custom signal handlers.
+    ///
+    /// This pointer needs to be initialized to point to the @c SignalSet
+    /// object in the derived classes which need to handle signals received
+    /// by the process.
+    isc::util::io::SignalSetPtr signal_set_;
+
+    /// @brief Pointer to the common signal handler invoked by the handleSignal
+    /// function.
+    ///
+    /// This pointer needs to be initialized to point to the signal handler
+    /// function for signals being handled by the process. If signal handler
+    /// it not initialized, the signals will not be handled.
+    isc::util::io::SignalHandler signal_handler_;
 
 private:
 
