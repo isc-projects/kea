@@ -77,6 +77,7 @@ b10_dhcp6_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
+b10_dhcp6_LDADD += $(top_builddir)/src/lib/util/io/libkea-util-io.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 
 b10_dhcp6dir = $(pkgdatadir)

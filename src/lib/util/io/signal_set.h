@@ -18,6 +18,7 @@
 #include <exceptions/exceptions.h>
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
 #include <set>
 #include <signal.h>
 
@@ -30,6 +31,10 @@ public:
     SignalSetError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
+
+class SignalSet;
+
+typedef boost::shared_ptr<SignalSet> SignalSetPtr;
 
 typedef boost::function<void(int signum)> SignalHandler;
 
