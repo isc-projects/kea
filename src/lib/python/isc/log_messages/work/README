@@ -1,5 +1,0 @@
-The __init__.py.in in this directory is meant to be processed by
-configure so that the generated __init__.py ends up in the builddir, and
-not the srcdir. This is because Python associates a module with a
-directory, and you can't have portions of the module in two separate
-directories.

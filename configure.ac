@@ -1488,34 +1488,6 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/log/tests/severity_test.sh
                  src/lib/log/tests/tempdir.h
                  src/lib/Makefile
-                 src/lib/python/bind10_config.py
-                 src/lib/python/isc/bind10/Makefile
-                 src/lib/python/isc/bind10/tests/Makefile
-                 src/lib/python/isc/cc/cc_generated/Makefile
-                 src/lib/python/isc/cc/Makefile
-                 src/lib/python/isc/cc/tests/cc_test
-                 src/lib/python/isc/cc/tests/Makefile
-                 src/lib/python/isc/config/Makefile
-                 src/lib/python/isc/config/tests/config_test
-                 src/lib/python/isc/config/tests/Makefile
-                 src/lib/python/isc/dns/Makefile
-                 src/lib/python/isc/log/Makefile
-                 src/lib/python/isc/log_messages/Makefile
-                 src/lib/python/isc/log_messages/work/__init__.py
-                 src/lib/python/isc/log_messages/work/Makefile
-                 src/lib/python/isc/log/tests/log_console.py
-                 src/lib/python/isc/log/tests/Makefile
-                 src/lib/python/isc/Makefile
-                 src/lib/python/isc/net/Makefile
-                 src/lib/python/isc/net/tests/Makefile
-                 src/lib/python/isc/sysinfo/Makefile
-                 src/lib/python/isc/sysinfo/tests/Makefile
-                 src/lib/python/isc/testutils/Makefile
-                 src/lib/python/isc/util/cio/Makefile
-                 src/lib/python/isc/util/cio/tests/Makefile
-                 src/lib/python/isc/util/Makefile
-                 src/lib/python/isc/util/tests/Makefile
-                 src/lib/python/Makefile
                  src/lib/testutils/Makefile
                  src/lib/testutils/testdata/Makefile
                  src/lib/util/io/Makefile
