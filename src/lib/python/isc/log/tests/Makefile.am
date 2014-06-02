@@ -1,6 +1,6 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
 PYTESTS_GEN = log_console.py
-PYTESTS_NOGEN = log_test.py
+PYTESTS_NOGEN = 
 noinst_SCRIPTS = $(PYTESTS_GEN)
 EXTRA_DIST = console.out check_output.sh $(PYTESTS_NOGEN)
 
