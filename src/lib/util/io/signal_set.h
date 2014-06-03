@@ -26,6 +26,8 @@ namespace isc {
 namespace util {
 namespace io {
 
+/// @brief Exception thrown when the @c isc::util::io::SignalSet class
+/// experiences an error.
 class SignalSetError : public Exception {
 public:
     SignalSetError(const char* file, size_t line, const char* what) :
@@ -160,6 +162,13 @@ private:
     ///
     /// @param mask A mask to be applied to all signals.
     void maskSignals(const int mask) const;
+
+    /// @brief Pops a next signal number from the static collection of signals.
+    ///
+    /// The static collection of signals is updated by the internal signal
+    /// handler being invoked when one of the installed signals is received by
+    /// the process. This function removes the first element of the collection.
+    void popNext();
 
     /// @brief Unblocks signals in the set.
     ///
