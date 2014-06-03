@@ -65,18 +65,6 @@ void internalHandler(int sig) {
     states->push_back(sig);
 }
 
-/// @brief Pops a next signal number from the static collection of signals.
-///
-/// The static collection of signals is updated by the internal signal
-/// handler being invoked when one of the installed signals is received by
-/// the process. This function removes the first element of the collection.
-void popNext() {
-    std::list<int>* states = getSignalStates();
-    if (!states->empty()) {
-        states->pop_front();
-    }
-}
-
 }
 
 namespace isc {
@@ -137,10 +125,13 @@ SignalSet::clear() {
 int
 SignalSet::getNext() const {
     std::list<int>* states = getSignalStates();
-    if (states->empty()) {
-        return (-1);
+    for (std::list<int>::iterator it = states->begin();
+         it != states->end(); ++it) {
+        if (local_signals_.find(*it) != local_signals_.end()) {
+            return (*it);
+        }
     }
-    return (*states->begin());
+    return (-1);
 }
 
 void
@@ -150,7 +141,16 @@ SignalSet::erase(const int sig) {
                   << " from a signal set: signal is not owned by the"
                   " signal set");
     }
+    // Remove globally registered signal.
     getRegisteredSignals()->erase(sig);
+    // Remove unhandled signals from the queue.
+    for (std::list<int>::iterator it = getSignalStates()->begin();
+         it != getSignalStates()->end(); ++it) {
+        if (*it == sig) {
+            it = getSignalStates()->erase(it);
+        }
+    }
+    // Remove locally registered signal.
     local_signals_.erase(sig);
 }
 
@@ -190,6 +190,18 @@ SignalSet::maskSignals(const int mask) const {
         sigaddset(&new_set, *it);
     }
     sigprocmask(mask, &new_set, 0);
+}
+
+void
+SignalSet::popNext() {
+    std::list<int>* states = getSignalStates();
+    for (std::list<int>::iterator it = states->begin();
+         it != states->end(); ++it) {
+        if (local_signals_.find(*it) != local_signals_.end()) {
+            states->erase(it);
+            return;
+        }
+    }
 }
 
 void
