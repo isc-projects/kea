@@ -1463,9 +1463,6 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/dhcp/tests/Makefile
                  src/lib/dns/gen-rdatacode.py
                  src/lib/dns/Makefile
-                 src/lib/dns/python/Makefile
-                 src/lib/dns/python/pydnspp_config.h
-                 src/lib/dns/python/tests/Makefile
                  src/lib/dns/tests/Makefile
                  src/lib/dns/tests/testdata/Makefile
                  src/lib/exceptions/Makefile
