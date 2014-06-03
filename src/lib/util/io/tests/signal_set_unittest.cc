@@ -26,7 +26,8 @@ using namespace isc::util::io;
 class SignalSetTest : public ::testing::Test {
 public:
 
-    SignalSetTest() {
+    SignalSetTest()
+        : signal_set_() {
         handler_calls_ = 0;
         signum_ = -1;
     }
@@ -48,13 +49,14 @@ public:
 
     static int handler_calls_;
     static int signum_;
-    boost::shared_ptr<SignalSet> signal_set_;
+    SignalSetPtr signal_set_;
 
 };
 
 int SignalSetTest::handler_calls_ = 0;
 int SignalSetTest::signum_ = -1;
 
+/// Check that the signals are recorded by the signal handlers.
 TEST_F(SignalSetTest, twoSignals) {
     // Register handlers for two signals.
     signal_set_.reset(new SignalSet(SIGHUP, SIGINT));
@@ -90,6 +92,47 @@ TEST_F(SignalSetTest, twoSignals) {
     // Make sure that signals can be unregistered.
     EXPECT_NO_THROW(signal_set_->remove(SIGHUP));
     EXPECT_NO_THROW(signal_set_->remove(SIGINT));
+}
+
+// Check that each signal set removes only the signals that it has been used
+// to register.
+TEST_F(SignalSetTest, twoSignalSets) {
+    // Register handlers for SIGHUP using one signal set.
+    ASSERT_NO_THROW(signal_set_.reset(new SignalSet(SIGHUP)));
+    // Define another signal set and register a different signal.
+    SignalSetPtr other_set;
+    ASSERT_NO_THROW(other_set.reset(new SignalSet(SIGINT)));
+    // The SIGHUP has been already registsred with the other signal
+    // set, so it should not be possible to register it again.
+    ASSERT_THROW(other_set->add(SIGHUP), SignalSetError);
+    // It shouldn't be possible to remove the signal registered in a different
+    // signal set.
+    ASSERT_THROW(other_set->remove(SIGHUP), SignalSetError);
+    // Remove all signals from the first signal set. The signals registered
+    // with the other signal signal set should be preserved.
+    ASSERT_NO_THROW(signal_set_->clear());
+    // Check indirectly that the SIGINT is still registered. An attempt to
+    // register registered signal should result in failure.
+    EXPECT_THROW(other_set->add(SIGINT), SignalSetError);
+    // But, we should be able to regsiter SIGHUP.
+    EXPECT_NO_THROW(other_set->add(SIGHUP));
+}
+
+/// Check that it is not possible to duplicate signals.
+TEST_F(SignalSetTest, duplicates) {
+    ASSERT_NO_THROW(signal_set_.reset(new SignalSet(SIGHUP)));
+    // It shouldn't be possible to register the same signal.
+    EXPECT_THROW(signal_set_->add(SIGHUP), SignalSetError);
+    // But ok to register a different one.
+    EXPECT_NO_THROW(signal_set_->add(SIGTERM));
+    // Now, let's define other signal set.
+    SignalSetPtr other;
+    // SIGINT hasn't been registered in the first signal set
+    // so it should be fine to register.
+    ASSERT_NO_THROW(other.reset(new SignalSet(SIGINT)));
+    // SIGHUP has been already registered in the first signal set so
+    // an attempt to register it again should result in a failure.
+    EXPECT_THROW(other->add(SIGHUP), SignalSetError);
 }
 
 

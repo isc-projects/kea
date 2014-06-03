@@ -21,9 +21,25 @@ using namespace isc::util::io;
 
 namespace {
 
-/// @brief Returns a pointer to static collection of signals.
+/// @brief Returns a pointer to the global set of registered signals.
 ///
-/// @return Static collection of signals.
+/// Multiple instances of @c SignalSet may use this pointer to access
+/// and update the set.
+///
+/// @return Pointer to the global set of registered signals. This pointer
+/// is always initialized and points to a valid object.
+std::set<int>* getRegisteredSignals() {
+    static std::set<int> registered_signals;
+    return (&registered_signals);
+}
+
+/// @brief Returns a pointer to static collection of signals received.
+///
+/// Multiple instances of @c SignalSet may use this pointer to access
+/// and update the queue of signals received.
+///
+/// @return Static collection of signals received. This pointer is always
+/// initialized and points to a valid object.
 std::list<int>* getSignalStates() {
     static std::list<int> states;
     return (&states);
@@ -84,20 +100,22 @@ SignalSet::SignalSet(const int sig0, const int sig1, const int sig2) {
 
 SignalSet::~SignalSet() {
     // Set default signal handlers.
-    clear();
+    try {
+        clear();
+    } catch (...) {
+        // Not a good thing to throw from a destructor. in fact this should
+        // not throw an exception because we just unregister the signals
+        // that we have previously registered. So the signal codes are fine.
+    }
 }
 
 void
 SignalSet::add(const int sig) {
-    std::pair<Pool::iterator, bool> ret = registered_signals_.insert(sig);
-    if (!ret.second) {
-        isc_throw(SignalSetError, "attempt to register a duplicate signal "
-                  << sig);
-    }
+    insert(sig);
     struct sigaction sa;
     sa.sa_handler = internalHandler;
     if (sigaction(sig, &sa, 0) < 0) {
-        registered_signals_.erase(sig);
+        erase(sig);
         isc_throw(SignalSetError, "failed to register a signal handler for"
                   " signal " << sig << ": " << strerror(errno));
     }
@@ -105,8 +123,12 @@ SignalSet::add(const int sig) {
 
 void
 SignalSet::clear() {
-    Pool all_signals = registered_signals_;
-    for (Pool::const_iterator it = all_signals.begin();
+    // Iterate over a copy of the registered signal set because the
+    // remove function is erasing the elements and we don't want to
+    // erase the elements we are iterating over. This would cause
+    // a segfault.
+    std::set<int> all_signals = local_signals_;
+    for (std::set<int>::const_iterator it = all_signals.begin();
          it != all_signals.end(); ++it) {
         remove(*it);
     }
@@ -119,6 +141,17 @@ SignalSet::getNext() const {
         return (-1);
     }
     return (*states->begin());
+}
+
+void
+SignalSet::erase(const int sig) {
+    if (local_signals_.find(sig) == local_signals_.end()) {
+        isc_throw(SignalSetError, "failed to unregister signal " << sig
+                  << " from a signal set: signal is not owned by the"
+                  " signal set");
+    }
+    getRegisteredSignals()->erase(sig);
+    local_signals_.erase(sig);
 }
 
 void
@@ -138,10 +171,22 @@ SignalSet::handleNext(SignalHandler signal_handler) {
 }
 
 void
+SignalSet::insert(const int sig) {
+    std::set<int>* global_signals = getRegisteredSignals();
+    if ((global_signals->find(sig) != global_signals->end()) ||
+        (local_signals_.find(sig) != local_signals_.end())) {
+        isc_throw(SignalSetError, "attempt to register a duplicate signal "
+                  << sig);
+    }
+    global_signals->insert(sig);
+    local_signals_.insert(sig);
+}
+
+void
 SignalSet::maskSignals(const int mask) const {
     sigset_t new_set;
-    for (Pool::const_iterator it = registered_signals_.begin();
-         it != registered_signals_.end(); ++it) {
+    for (std::set<int>::const_iterator it = getRegisteredSignals()->begin();
+         it != getRegisteredSignals()->end(); ++it) {
         sigaddset(&new_set, *it);
     }
     sigprocmask(mask, &new_set, 0);
@@ -149,14 +194,18 @@ SignalSet::maskSignals(const int mask) const {
 
 void
 SignalSet::remove(const int sig) {
-    if (registered_signals_.find(sig) != registered_signals_.end()) {
+    // Unregister only if we own this signal.
+    if (local_signals_.find(sig) != local_signals_.end()) {
         struct sigaction sa;
         sa.sa_handler = SIG_DFL;
         if (sigaction(sig, &sa, 0) < 0) {
             isc_throw(SignalSetError, "unable to restore original signal"
                       " handler for signal: " << sig);
         }
-        registered_signals_.erase(sig);
+        erase(sig);
+    } else {
+        isc_throw(SignalSetError, "failed to unregister signal " << sig
+                  << ": this signal is not owned by the signal set");
     }
 }
 
