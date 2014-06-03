@@ -97,6 +97,14 @@ This error message is logged when the attempt to compute DHCID for a specified
 lease has failed. The lease details and reason for failure is logged in the
 message.
 
+% DHCP4_DYNAMIC_RECONFIGURATION initate server reconfiguration using file: %1, after receiving SIGHUP signal
+This is the info message logged when the DHCPv4 server starts reconfiguration
+as a result of receiving SIGHUP signal.
+
+% DHCP4_DYNAMIC_RECONFIGURATION_FAIL dynamic server reconfiguration failed with file: %1
+This is an error message logged when the dynamic reconfiguration of the
+DHCP server failed.
+
 % DHCP4_EMPTY_HOSTNAME received empty hostname from the client, skipping processing of this option
 This debug message is issued when the server received an empty Hostname option
 from a client. Server does not process empty Hostname options and therefore

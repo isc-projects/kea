@@ -175,6 +175,18 @@ Dhcpv4Srv::run() {
             LOG_ERROR(dhcp4_logger, DHCP4_PACKET_RECEIVE_FAIL).arg(e.what());
         }
 
+        // Handle next signal received by the process. It must be called after
+        // an attempt to receive a packet to properly handle server shut down.
+        // The SIGTERM or SIGINT will be received prior to, or during execution
+        // of select() (select is invoked by recivePacket()). When that happens,
+        // select will be interrupted. The signal handler will be invoked
+        // immediately after select(). The handler will set the shutdown flag
+        // and cause the process to terminate before the next select() function
+        // is called. If the function was called before receivePacket the
+        // process could wait up to the duration of timeout of select() to
+        // terminate.
+        handleSignal();
+
         // Timeout may be reached or signal received, which breaks select()
         // with no reception ocurred
         if (!query) {
