@@ -53,11 +53,11 @@ typedef boost::function<void(int signum)> SignalHandler;
 /// spent on handling the signal and process interruption. The process
 /// can later check the signals received and call the handlers on its
 /// descretion by calling a @c isc::util::io::SignalSet::handleNext function.
+///
+/// @note This class is not thread safe. It uses static variables and
+/// functions to track a global state of signal registration and received
+/// signals' queue.
 class SignalSet : public boost::noncopyable {
-private:
-    /// @brief Defines a type representing a collection of signals.
-    typedef std::set<int> Pool;
-
 public:
 
     /// @brief Constructor installing one signal.
@@ -83,6 +83,11 @@ public:
     /// @throw SignalSetError If attempting to add duplicated signal or
     /// the signal is invalid.
     SignalSet(const int sig0, const int sig1, const int sig2);
+
+    /// @brief Destructor.
+    ///
+    /// Removes installed handlers.
+    ~SignalSet();
 
     /// @brief Installs the handler for the specified signal.
     ///
@@ -132,6 +137,22 @@ private:
         maskSignals(SIG_BLOCK);
     }
 
+    /// @brief Removes the signal from the set.
+    ///
+    /// This function removes only a signal which is owned by this signal set.
+    ///
+    /// @param sig Signal to be removed.
+    /// @throw SignalSetError if the signal being removed is not owned by this
+    /// signal set.
+    void erase(const int sig);
+
+    /// @brief Insert a signal to the set.
+    ///
+    /// @param sig Signal to be inserted.
+    /// @throw SignalSetError if a signal being inserted has already been
+    /// registered in this or other signal set.
+    void insert(const int sig);
+
     /// @brief Applies a mask to all signals in the set.
     ///
     /// This function is used by @c SignalSet::block and @c SignalSet::unblock
@@ -147,8 +168,8 @@ private:
         maskSignals(SIG_UNBLOCK);
     }
 
-    /// @brief Holds a collection of installed signals.
-    Pool registered_signals_;
+    /// @brief Stores the set of signals registered in this signal set.
+    std::set<int> local_signals_;
 };
 
 }
