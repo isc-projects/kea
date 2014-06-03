@@ -1242,13 +1242,6 @@ if test "x$HAVE_PKG_CONFIG" = "xno" ; then
   AC_MSG_ERROR(Please install pkg-config)
 fi
 
-AX_SQLITE3_FOR_BIND10
-if test "x$have_sqlite" = "xyes" ; then
-  enable_features="$enable_features SQLite3"
-
-  AX_PYTHON_SQLITE3
-fi
-
 #
 # ASIO: we extensively use it as the C++ event management module.
 #
@@ -1566,11 +1559,6 @@ Log4cplus:
   LOG4CPLUS_VERSION: ${LOG4CPLUS_VERSION}
   LOG4CPLUS_INCLUDES: ${LOG4CPLUS_INCLUDES}
   LOG4CPLUS_LIBS:  ${LOG4CPLUS_LIBS}
-
-SQLite:
-  SQLITE_VERSION:  ${SQLITE_VERSION}
-  SQLITE_CFLAGS:   ${SQLITE_CFLAGS}
-  SQLITE_LIBS:     ${SQLITE_LIBS}
 
 Kea config backend:
   CONFIG_BACKEND: ${CONFIG_BACKEND}
