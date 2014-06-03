@@ -5372,75 +5372,118 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 
       <section id="d2-tsig-key-list-config">
         <title>TSIG Key List</title>
-<note>
-<simpara>
-        While this section may be displayed and edited using bindctl, the use
-        of TSIG in actual communications between D2 and DNS servers is not yet
-        implemented.
-</simpara>
-</note>
         <para>
-        DDNS protocol can be conducted with or without TSIG as defined in
-        RFC 2845. This configuration section allows the administrator to
-        define the dictionary of TSIG keys to may be used.  To use TSIG
-        when working with a specific DDNS Domain that key must be defined in
-        the TSIG Key List and referenced by name in that domain's entry in
-        the DDNS catalog.
-        </para>
+        A DDNS protocol exchange can be conducted with or without TSIG
+        (defined in <ulink url="http://tools.ietf/org/html/rfc2845">RFC
+        2845</ulink>). This configuration section allows the administrator
+        to define the set of TSIG keys that may be used in such
+        exchanges.</para>
+
+        <para>To use TSIG when updating entries in a DNS Domain,
+        a key must be defined in the TSIG Key List and referenced by
+        name in that domain's configuration entry.  When D2 matches a
+        change request to a domain, it checks whether the domain has
+        a TSIG key associated with it.  If so, D2 will use that key to
+        sign DNS update messages sent to and verify repsonses received
+        from the domain's DNS server(s). For each TSIG key required by
+        the DNS servers that D2 will be working with there must be a
+        corresponding TSIG key in the TSIG Key list.</para>
+
         <para>
-        As one might gather from its name, this section is a list of
-        TSIG keys. Each key has three parameters:
+        As one might gather from the name, the tsig_key section of the
+        D2 configuration lists the TSIG keys.  Each entry describes a
+        TSIG key used by one or more DNS servers to authenticate requests
+        and sign responses.  Every entry in the list has three parameters:
         <itemizedlist>
           <listitem>
             <simpara>
               <command>name</command> &mdash;
-              is a unique text label used to identify the this key within the
-              list.  It is this value that is used to specify which key (if any)
-              should be used with a specific DNS server. So long as it is
-              unique, its content is arbitrary.  It cannot be blank.
+              a unique text label used to identify this key within the
+              list.  This value is used to specify which key (if any) should be
+              used when updating a specific domain. So long as it is unique its
+              content is arbitrary, although for clarity and ease of maintenance
+              it is recommended that it match the name used on the DNS server(s).
+              It cannot be blank.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
               <command>algorithm</command> &mdash;
               specifies which hashing algorithm should be used with this
-              key.  This value is not currently used.
+              key.  This value must specify the same algorithm used for the
+              key on the DNS server(s). The supported algorithms are listed below:
+              <itemizedlist>
+                <listitem>
+                   <command>HMAC-MD5</command>
+                </listitem>
+                <listitem>
+                    <command>HMAC-SHA1</command>
+                </listitem>
+                <listitem>
+                  <command>HMAC-SHA224</command>
+              </listitem>
+              <listitem>
+                  <command>HMAC-SHA256</command>
+              </listitem>
+              <listitem>
+                  <command>HMAC-SHA384</command>
+                  </listitem>
+              <listitem>
+                  <command>HMAC-SHA512</command>
+              </listitem>
+              </itemizedlist>
+              This value is not case sensitive.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
               <command>secret</command> &mdash;
-              is used to specify the shared secret key code for this key. This
-              value is not currently used.
+              is used to specify the shared secret key code for this key.  This value is
+              case sensitive and must exactly match the value specified on the DNS server(s).
+              It is a base64-encoded text value.
             </simpara>
           </listitem>
         </itemizedlist>
         </para>
         <para>
+        As an example, suppose that a domain D2 will be updating is
+        maintained by a BIND9 DNS server which requires dynamic updates
+        to be secured with TSIG.  Suppose further that the entry for
+        the TSIG key in BIND9's named.conf file looks like this:
+<screen>
+   :
+   key "key.four.example.com." {
+       algorithm hmac-sha224;
+       secret "bZEG7Ow8OgAUPfLWV3aAUQ==";
+   };
+   :
+</screen>
         By default, the TSIG Key list is empty:
 <screen>
 <userinput>> config show DhcpDdns/tsig_keys</userinput>
 DhcpDdns/tsig_keys  []  list  (default)
 </screen>
-        To create a new key in the list, one must first add a new key element:
+        We must first create a new key in the list:
 <screen>
 <userinput>> config add DhcpDdns/tsig_keys</userinput>
 </screen>
-        Displaying the new element, reveals this:
+        Displaying the new element, reveals:
 <screen>
 <userinput>> config show DhcpDdns/tsig_keys[0]</userinput>
 DhcpDdns/tsig_keys[0]/name  ""  string  (default)
-DhcpDdns/tsig_keys[0]/algorithm "hmac_md5"  string  (modified)
+DhcpDdns/tsig_keys[0]/algorithm "HMAC-MD5"  string  (modified)
 DhcpDdns/tsig_keys[0]/secret  ""  string  (default)
 </screen>
-        Populating the key name and secret, while accepting the default value
-        for alogorithm:
+        Now set all three values to match BIND9's key:
 <screen>
-<userinput>> config set DhcpDdns/tsig_keys[0]/name "key1.example.com"</userinput>
-<userinput>> config set DhcpDdns/tsig_keys[0]/secret "123456789"</userinput>
+<userinput>> config set DhcpDdns/tsig_keys[0]/name "key.four.example.com"</userinput>
+<userinput>> config set DhcpDdns/tsig_keys[0]/algorithm "HMAC-SHA224"</userinput>
+<userinput>> config set DhcpDdns/tsig_keys[0]/secret "bZEG7Ow8OgAUPfLWV3aAUQ=="</userinput>
 <userinput>> config commit</userinput>
 </screen>
         </para>
+        These steps would be repeated for each TSIG key needed.  Note that the same TSIG key
+        can be used with more than one domain.
       </section> <!-- "d2-tsig-key-list-config" -->
 
       <section id="d2-forward-ddns-config">
@@ -5458,8 +5501,6 @@ DhcpDdns/forward_ddns/ddns_domains  [] list  (default)
         </para>
         <section id="add-forward-ddns-domain">
           <title>Adding Forward DDNS Domains</title>
-
-
           <para>
           A forward DDNS Domain maps a forward DNS zone to a set of DNS servers
           which maintain the forward DNS data for that zone.  You will need one
@@ -5638,8 +5679,8 @@ DhcpDdns/reverse_ddns/ddns_domains  [] list  (default)
               <simpara>
               <command>key_name</command> &mdash;
               If TSIG should be used with this domain's servers, then this
-              value should be the name of the key from within the TSIG Key List
-              to use.  If the value is blank (the default), TSIG will not be
+              value should be the name of that key from the TSIG Key List.
+              If the value is blank (the default), TSIG will not be
               used in DDNS conversations with this domain's servers.  Currently
               this value is not used as TSIG has not been implemented.
               </simpara>

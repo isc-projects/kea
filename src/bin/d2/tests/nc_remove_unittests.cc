@@ -57,10 +57,8 @@ public:
     /// the simulate_send_exception_ flag is true.
     ///
     /// @param comment Parameter is unused, but present in base class method
-    /// @param use_tsig Parameter is unused, but present in base class method.
     ///
-    virtual void sendUpdate(const std::string& /* comment */,
-                            bool /* use_tsig = false */) {
+    virtual void sendUpdate(const std::string& /* comment */) {
         if (simulate_send_exception_) {
             // Make the flag a one-shot by resetting it.
             simulate_send_exception_ = false;
@@ -292,8 +290,8 @@ TEST(NameRemoveTransaction, construction) {
     DdnsDomainPtr empty_domain;
 
     ASSERT_NO_THROW(ncr = dhcp_ddns::NameChangeRequest::fromJSON(msg_str));
-    ASSERT_NO_THROW(forward_domain.reset(new DdnsDomain("*", "", servers)));
-    ASSERT_NO_THROW(reverse_domain.reset(new DdnsDomain("*", "", servers)));
+    ASSERT_NO_THROW(forward_domain.reset(new DdnsDomain("*", servers)));
+    ASSERT_NO_THROW(reverse_domain.reset(new DdnsDomain("*", servers)));
 
     // Verify that construction with wrong change type fails.
     EXPECT_THROW(NameRemoveTransaction(io_service, ncr,

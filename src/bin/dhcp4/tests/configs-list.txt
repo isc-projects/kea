@@ -1,0 +1,5 @@
+# This is a list of config files that the unit-tests (specifically
+# JSONFileBackendTest.loadAllConfigs) is going to load.
+
+../../../../doc/examples/kea4/single-subnet.json
+../../../../doc/examples/kea4/several-subnets.json

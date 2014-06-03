@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -26,12 +26,10 @@ namespace dhcp {
 
 /// @brief Controlled version of the DHCPv6 server
 ///
-/// This is a class that is responsible for establishing connection
-/// with msqg (receving commands and configuration). This is an extended
-/// version of Dhcpv6Srv class that is purely a DHCPv6 server, without
-/// external control. ControlledDhcpv6Srv should be used in typical BIND10
-/// (i.e. featuring msgq) environment, while Dhcpv6Srv should be used in
-/// embedded environments.
+/// This is a class that is responsible for DHCPv6 server being controllable.
+/// It does various things, depending on the configuration backend.
+/// For Bundy backend it establishes a connection with msqg and later receives
+/// commands over it. For Kea backend, it reads configuration file from disk.
 ///
 /// For detailed explanation or relations between main(), ControlledDhcpv6Srv,
 /// Dhcpv6Srv and other classes, see \ref dhcpv6Session.
@@ -53,7 +51,8 @@ public:
     /// operation. For specific details, see actual implementation in
     /// *_backend.cc
     ///
-    /// @return true if initialization was successful, false if it failed
+    /// This method may throw if initialization fails. Exception types may be
+    /// specific to used configuration backend.
     void init(const std::string& config_file);
 
     /// @brief Performs cleanup, immediately before termination
@@ -77,6 +76,11 @@ public:
     /// wrapper that calls process*Command() methods and catches exceptions
     /// in them.
     ///
+    /// Currently supported commands are:
+    /// - shutdown
+    /// - libreload
+    /// - config-reload
+    ///
     /// @note It never throws.
     ///
     /// @param command Text represenation of the command (e.g. "shutdown")
@@ -88,7 +92,7 @@ public:
 
     /// @brief configuration processor
     ///
-    /// This is a callback for handling incoming configuration updates.
+    /// This is a method for handling incoming configuration updates.
     /// This method should be called by all configuration backends when the
     /// server is starting up or when configuration has changed.
     ///
@@ -103,7 +107,7 @@ public:
 
     /// @brief returns pointer to the sole instance of Dhcpv6Srv
     ///
-    /// @note may return NULL, if called before server is spawned
+    /// @return server instance (may return NULL, if called before server is spawned)
     static ControlledDhcpv6Srv* getInstance() {
         return (server_);
     }

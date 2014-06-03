@@ -18,6 +18,7 @@
 #include <nc_test_utils.h>
 #include <asio.hpp>
 #include <asiolink/udp_endpoint.h>
+#include <util/encode/base64.h>
 
 #include <gtest/gtest.h>
 
@@ -39,7 +40,8 @@ const bool NO_RDATA = false;
 FauxServer::FauxServer(asiolink::IOService& io_service,
                        asiolink::IOAddress& address, size_t port)
     :io_service_(io_service), address_(address), port_(port),
-     server_socket_(), receive_pending_(false), perpetual_receive_(true) {
+     server_socket_(), receive_pending_(false), perpetual_receive_(true),
+     tsig_key_() {
 
     server_socket_.reset(new asio::ip::udp::socket(io_service_.get_io_service(),
                                                    asio::ip::udp::v4()));
@@ -53,7 +55,7 @@ FauxServer::FauxServer(asiolink::IOService& io_service,
                        DnsServerInfo& server)
     :io_service_(io_service), address_(server.getIpAddress()),
      port_(server.getPort()), server_socket_(), receive_pending_(false),
-     perpetual_receive_(true) {
+     perpetual_receive_(true), tsig_key_() {
     server_socket_.reset(new asio::ip::udp::socket(io_service_.get_io_service(),
                                                    asio::ip::udp::v4()));
     server_socket_->set_option(asio::socket_base::reuse_address(true));
@@ -87,12 +89,19 @@ FauxServer::requestHandler(const asio::error_code& error,
                            std::size_t bytes_recvd,
                            const ResponseMode& response_mode,
                            const dns::Rcode& response_rcode) {
+    receive_pending_ = false;
     // If we encountered an error or received no data then fail.
     // We expect the client to send good requests.
     if (error.value() != 0 || bytes_recvd < 1) {
-        ADD_FAILURE() << "FauxServer receive failed" << error.message();
-        receive_pending_ = false;
+        ADD_FAILURE() << "FauxServer receive failed: " << error.message();
         return;
+    }
+
+    // If TSIG key isn't NULL, create a context and use to verify the
+    // request and sign the response.
+    dns::TSIGContextPtr context;
+    if (tsig_key_) {
+        context.reset(new dns::TSIGContext(*tsig_key_));
     }
 
     // We have a successfully received data. We need to turn it into
@@ -104,11 +113,21 @@ FauxServer::requestHandler(const asio::error_code& error,
     util::InputBuffer request_buf(receive_buffer_, bytes_recvd);
     try {
         request.fromWire(request_buf);
+
+        // If contex is not NULL, then we need to verify the message.
+        if (context) {
+            dns::TSIGError error = context->verify(request.getTSIGRecord(),
+                                                   receive_buffer_,
+                                                   bytes_recvd);
+            if (error != dns::TSIGError::NOERROR()) {
+                isc_throw(TSIGVerifyError, "TSIG verification failed: "
+                          << error.toText());
+            }
+        }
     } catch (const std::exception& ex) {
         // If the request cannot be parsed, then fail the test.
         // We expect the client to send good requests.
         ADD_FAILURE() << "FauxServer request is corrupt:" << ex.what();
-        receive_pending_ = false;
         return;
     }
 
@@ -131,7 +150,19 @@ FauxServer::requestHandler(const asio::error_code& error,
     dns::MessageRenderer renderer;
     util::OutputBuffer response_buf(TEST_MSG_MAX);
     renderer.setBuffer(&response_buf);
-    response.toWire(renderer);
+
+    if (response_mode == INVALID_TSIG) {
+        // Create a different key to sign the response.
+        std::string secret ("key that doesn't match");
+        dns::TSIGKeyPtr key;
+        ASSERT_NO_THROW(key.reset(new
+                                  dns::TSIGKey(dns::Name("badkey"),
+                                               dns::TSIGKey::HMACMD5_NAME(),
+                                               secret.c_str(), secret.size())));
+        context.reset(new dns::TSIGContext(*key));
+    }
+
+    response.toWire(renderer, context.get());
 
     // If mode is to ship garbage, then stomp on part of the rendered
     // message.
@@ -154,12 +185,12 @@ FauxServer::requestHandler(const asio::error_code& error,
         ADD_FAILURE() << "FauxServer send failed: " << ex.what();
     }
 
-    receive_pending_ = false;
     if (perpetual_receive_) {
         // Schedule the next receive
         receive (response_mode, response_rcode);
     }
 }
+
 
 
 //********************** TimedIO class ***********************
@@ -205,7 +236,8 @@ TransactionTest::~TransactionTest() {
 
 void
 TransactionTest::setupForIPv4Transaction(dhcp_ddns::NameChangeType chg_type,
-                                         int change_mask) {
+                                         int change_mask,
+                                         const TSIGKeyInfoPtr& tsig_key_info) {
     const char* msg_str =
         "{"
         " \"change_type\" : 0 , "
@@ -231,7 +263,7 @@ TransactionTest::setupForIPv4Transaction(dhcp_ddns::NameChangeType chg_type,
         forward_domain_.reset();
     } else {
         // Create the forward domain and then its servers.
-        forward_domain_ = makeDomain("example.com.");
+        forward_domain_ = makeDomain("example.com.", tsig_key_info);
         addDomainServer(forward_domain_, "forward.example.com",
                         "127.0.0.1", 5301);
         addDomainServer(forward_domain_, "forward2.example.com",
@@ -245,7 +277,7 @@ TransactionTest::setupForIPv4Transaction(dhcp_ddns::NameChangeType chg_type,
         reverse_domain_.reset();
     } else {
         // Create the reverse domain and its server.
-        reverse_domain_ = makeDomain("2.168.192.in.addr.arpa.");
+        reverse_domain_ = makeDomain("2.168.192.in.addr.arpa.", tsig_key_info);
         addDomainServer(reverse_domain_, "reverse.example.com",
                         "127.0.0.1", 5301);
         addDomainServer(reverse_domain_, "reverse2.example.com",
@@ -254,8 +286,16 @@ TransactionTest::setupForIPv4Transaction(dhcp_ddns::NameChangeType chg_type,
 }
 
 void
+TransactionTest::setupForIPv4Transaction(dhcp_ddns::NameChangeType chg_type,
+                                         int change_mask,
+                                         const std::string& key_name) {
+    setupForIPv4Transaction(chg_type, change_mask, makeTSIGKeyInfo(key_name));
+}
+
+void
 TransactionTest::setupForIPv6Transaction(dhcp_ddns::NameChangeType chg_type,
-                                         int change_mask) {
+                                         int change_mask,
+                                         const TSIGKeyInfoPtr& tsig_key_info) {
     const char* msg_str =
         "{"
         " \"change_type\" : 0 , "
@@ -281,7 +321,7 @@ TransactionTest::setupForIPv6Transaction(dhcp_ddns::NameChangeType chg_type,
         forward_domain_.reset();
     } else {
         // Create the forward domain and then its servers.
-        forward_domain_ = makeDomain("example.com.");
+        forward_domain_ = makeDomain("example.com.", tsig_key_info);
         addDomainServer(forward_domain_, "fwd6-server.example.com",
                         "::1", 5301);
         addDomainServer(forward_domain_, "fwd6-server2.example.com",
@@ -295,12 +335,19 @@ TransactionTest::setupForIPv6Transaction(dhcp_ddns::NameChangeType chg_type,
         reverse_domain_.reset();
     } else {
         // Create the reverse domain and its server.
-        reverse_domain_ = makeDomain("1.2001.ip6.arpa.");
+        reverse_domain_ = makeDomain("1.2001.ip6.arpa.", tsig_key_info);
         addDomainServer(reverse_domain_, "rev6-server.example.com",
                         "::1", 5301);
         addDomainServer(reverse_domain_, "rev6-server2.example.com",
                         "::1", 5302);
     }
+}
+
+void
+TransactionTest::setupForIPv6Transaction(dhcp_ddns::NameChangeType chg_type,
+                                         int change_mask,
+                                         const std::string& key_name) {
+    setupForIPv6Transaction(chg_type, change_mask, makeTSIGKeyInfo(key_name));
 }
 
 
@@ -385,10 +432,44 @@ dhcp_ddns::NameChangeRequestPtr makeNcrFromString(const std::string& ncr_str) {
 
 DdnsDomainPtr makeDomain(const std::string& zone_name,
                          const std::string& key_name) {
+    DnsServerInfoStoragePtr servers(new DnsServerInfoStorage());
+    DdnsDomainPtr domain(new DdnsDomain(zone_name, servers,
+                         makeTSIGKeyInfo(key_name)));
+    return (domain);
+}
+
+DdnsDomainPtr makeDomain(const std::string& zone_name,
+                         const TSIGKeyInfoPtr &tsig_key_info) {
     DdnsDomainPtr domain;
     DnsServerInfoStoragePtr servers(new DnsServerInfoStorage());
-    domain.reset(new DdnsDomain(zone_name, key_name, servers));
+    domain.reset(new DdnsDomain(zone_name, servers, tsig_key_info));
     return (domain);
+}
+
+TSIGKeyInfoPtr makeTSIGKeyInfo(const std::string& key_name,
+                           const std::string& secret,
+                           const std::string& algorithm) {
+    TSIGKeyInfoPtr key_info;
+    if (!key_name.empty()) {
+        if (!secret.empty()) {
+            key_info.reset(new TSIGKeyInfo(key_name, algorithm, secret));
+        } else {
+            // Since secret was left blank, we'll convert key_name into a
+            // base64 encoded string and use that.
+            const uint8_t* bytes = reinterpret_cast<const uint8_t*>
+                                                   (key_name.c_str());
+            size_t len = key_name.size();
+            const vector<uint8_t> key_name_v(bytes, bytes + len);
+            std::string key_name64
+                = isc::util::encode::encodeBase64(key_name_v);
+
+            // Now, make the TSIGKeyInfo with a real base64 secret.
+            key_info.reset(new TSIGKeyInfo(key_name, algorithm, key_name64));
+        }
+    }
+
+    return (key_info);
+
 }
 
 void addDomainServer(DdnsDomainPtr& domain, const std::string& name,

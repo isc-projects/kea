@@ -19,18 +19,19 @@
 #include <cc/session.h>
 #include <config/ccsession.h>
 #include <dhcp/iface_mgr.h>
-#include <dhcpsrv/dhcp_config_parser.h>
+#include <dhcp4/json_config_parser.h>
+#include <dhcp4/ctrl_dhcp4_srv.h>
+#include <dhcp4/dhcp4_log.h>
+#include <dhcp4/spec_config.h>
 #include <dhcpsrv/cfgmgr.h>
-#include <dhcp6/json_config_parser.h>
-#include <dhcp6/ctrl_dhcp6_srv.h>
-#include <dhcp6/dhcp6_log.h>
-#include <dhcp6/spec_config.h>
+#include <dhcpsrv/dhcp_config_parser.h>
 #include <exceptions/exceptions.h>
 #include <hooks/hooks_manager.h>
 #include <util/buffer.h>
 
 #include <cassert>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -60,7 +61,7 @@ isc::config::ModuleCCSession* config_session_ = NULL;
 /// be installed using \ref isc::config::ModuleCCSession ctor
 /// to get the initial configuration. This initial configuration
 /// comprises values for only those elements that were modified
-/// the previous session. The \ref dhcp6ConfigHandler can't be
+/// the previous session. The \ref dhcp4ConfigHandler can't be
 /// used to parse the initial configuration because it needs the
 /// full configuration to satisfy dependencies between the
 /// various configuration values. Installing the dummy handler
@@ -73,7 +74,7 @@ isc::config::ModuleCCSession* config_session_ = NULL;
 ///
 /// @return success configuration status.
 ConstElementPtr
-dhcp6StubConfigHandler(ConstElementPtr) {
+dhcp4StubConfigHandler(ConstElementPtr) {
     // This configuration handler is intended to be used only
     // when the initial configuration comes in. To receive this
     // configuration a pointer to this handler must be passed
@@ -89,8 +90,7 @@ dhcp6StubConfigHandler(ConstElementPtr) {
 
 ConstElementPtr
 bundyConfigHandler(ConstElementPtr new_config) {
-
-    if (!ControlledDhcpv6Srv::getInstance() || !config_session_) {
+    if (!ControlledDhcpv4Srv::getInstance() || !config_session_) {
         // That should never happen as we install config_handler
         // after we instantiate the server.
         ConstElementPtr answer =
@@ -123,37 +123,30 @@ bundyConfigHandler(ConstElementPtr new_config) {
 
         // Merge an existing and new configuration.
         isc::data::merge(merged_config, new_config);
-        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND, DHCP6_CONFIG_UPDATE)
-            .arg(merged_config->str());
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_CONFIG_UPDATE)
+            .arg(full_config->str());
     }
 
     // Configure the server.
-
-    return (ControlledDhcpv6Srv::processConfig(merged_config));
+    return (ControlledDhcpv4Srv::processConfig(merged_config));
 }
 
-void
-ControlledDhcpv6Srv::init(const std::string& config_file) {
-    // Call base class's init.
-    Daemon::init(config_file);
 
-    // This is Bundy configuration backed. It established control session
-    // that is used to connect to Bundy framework.
-    //
-    // Creates session that will be used to receive commands and updated
-    // configuration from cfgmgr (or indirectly from user via bindctl).
+
+
+void ControlledDhcpv4Srv::init(const std::string& /*config_file*/) {
 
     string specfile;
     if (getenv("B10_FROM_BUILD")) {
         specfile = string(getenv("B10_FROM_BUILD")) +
-            "/src/bin/dhcp6/dhcp6.spec";
+            "/src/bin/dhcp4/dhcp4.spec";
     } else {
-        specfile = string(DHCP6_SPECFILE_LOCATION);
+        specfile = string(DHCP4_SPECFILE_LOCATION);
     }
 
     /// @todo: Check if session is not established already. Throw, if it is.
 
-    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_CCSESSION_STARTING)
+    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_CCSESSION_STARTING)
               .arg(specfile);
     cc_session_ = new Session(io_service_.get_io_service());
     // Create a session with the dummy configuration handler.
@@ -164,44 +157,42 @@ ControlledDhcpv6Srv::init(const std::string& config_file) {
     // the dummy handler, the previous configuration would have
     // been lost.
     config_session_ = new ModuleCCSession(specfile, *cc_session_,
-                                          dhcp6StubConfigHandler,
+                                          dhcp4StubConfigHandler,
                                           processCommand, false);
     config_session_->start();
 
-    // The constructor already pulled the configuration that had
-    // been created in the previous session thanks to the dummy
-    // handler. We can switch to the handler that will be
-    // parsing future changes to the configuration.
+    // We initially create ModuleCCSession() without configHandler, as
+    // the session module is too eager to send partial configuration.
+    // We want to get the full configuration, so we explicitly call
+    // getFullConfig() and then pass it to our configHandler.
     config_session_->setConfigHandler(bundyConfigHandler);
 
     try {
-        // Pull the full configuration out from the session.
-        processConfig(config_session_->getFullConfig());
+        configureDhcp4Server(*this, config_session_->getFullConfig());
 
         // Server will start DDNS communications if its enabled.
         server_->startD2();
 
         // Configuration may disable or enable interfaces so we have to
         // reopen sockets according to new configuration.
-        openActiveSockets(getPort());
+        openActiveSockets(getPort(), useBroadcast());
 
     } catch (const std::exception& ex) {
-        LOG_ERROR(dhcp6_logger, DHCP6_CONFIG_LOAD_FAIL).arg(ex.what());
+        LOG_ERROR(dhcp4_logger, DHCP4_CONFIG_LOAD_FAIL).arg(ex.what());
 
     }
 
-    /// Integrate the asynchronous I/O model of Bundy configuration
+    /// Integrate the asynchronous I/O model of BIND 10 configuration
     /// control with the "select" model of the DHCP server.  This is
-    /// fully explained in \ref dhcpv6Session.
+    /// fully explained in \ref dhcpv4Session.
     int ctrl_socket = cc_session_->getSocketDesc();
-    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_CCSESSION_STARTED)
+    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_CCSESSION_STARTED)
               .arg(ctrl_socket);
     IfaceMgr::instance().addExternalSocket(ctrl_socket, sessionReader);
-
-    return;
 }
 
-void ControlledDhcpv6Srv::cleanup() {
+
+void ControlledDhcpv4Srv::cleanup() {
     if (config_session_) {
         delete config_session_;
         config_session_ = NULL;
@@ -211,9 +202,7 @@ void ControlledDhcpv6Srv::cleanup() {
         int ctrl_socket = cc_session_->getSocketDesc();
         cc_session_->disconnect();
 
-        // deregister session socket
         IfaceMgr::instance().deleteExternalSocket(ctrl_socket);
-
         delete cc_session_;
         cc_session_ = NULL;
     }
@@ -226,5 +215,5 @@ Daemon::loggerInit(const char* log_name, bool verbose) {
                          isc::log::MAX_DEBUG_LEVEL, NULL, true);
 }
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+};
+};
