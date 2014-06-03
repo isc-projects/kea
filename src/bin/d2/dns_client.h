@@ -146,41 +146,15 @@ public:
     /// @param wait A timeout (in milliseconds) for the response. If a response
     /// is not received within the timeout, exchange is interrupted. This value
     /// must not exceed maximal value for 'int' data type.
-    /// @param tsig_key An @c isc::dns::TSIGKey object representing TSIG
-    /// context which will be used to render the DNS Update message.
-    ///
-    /// @todo Implement TSIG Support. Currently any attempt to call this
-    /// function will result in exception.
+    /// @param tsig_key A pointer to an @c isc::dns::TSIGKey object that will
+    /// (if not null) be used to sign the DNS Update message and verify the
+    /// response.
     void doUpdate(asiolink::IOService& io_service,
                   const asiolink::IOAddress& ns_addr,
                   const uint16_t ns_port,
                   D2UpdateMessage& update,
                   const unsigned int wait,
-                  const dns::TSIGKey& tsig_key);
-
-    /// @brief Start asynchronous DNS Update without TSIG.
-    ///
-    /// This function starts asynchronous DNS Update and returns. The DNS Update
-    /// will be executed by the specified IO service. Once the message exchange
-    /// with a DNS server is complete, timeout occurs or IO operation is
-    /// interrupted, the caller-supplied callback function will be invoked.
-    ///
-    /// An address and port of the DNS server is specified through the function
-    /// arguments so as the same instance of the @c DNSClient can be used to
-    /// initiate multiple message exchanges.
-    ///
-    /// @param io_service IO service to be used to run the message exchange.
-    /// @param ns_addr DNS server address.
-    /// @param ns_port DNS server port.
-    /// @param update A DNS Update message to be sent to the server.
-    /// @param wait A timeout (in milliseconds) for the response. If a response
-    /// is not received within the timeout, exchange is interrupted. This value
-    /// must not exceed maximal value for 'int' data type.
-    void doUpdate(asiolink::IOService& io_service,
-                  const asiolink::IOAddress& ns_addr,
-                  const uint16_t ns_port,
-                  D2UpdateMessage& update,
-                  const unsigned int wait);
+                  const dns::TSIGKeyPtr& tsig_key = dns::TSIGKeyPtr());
 
 private:
     DNSClientImpl* impl_;  ///< Pointer to DNSClient implementation.

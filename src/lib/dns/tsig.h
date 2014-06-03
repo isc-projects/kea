@@ -16,6 +16,7 @@
 #define TSIG_H 1
 
 #include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <exceptions/exceptions.h>
 
@@ -430,6 +431,10 @@ private:
     struct TSIGContextImpl;
     TSIGContextImpl* impl_;
 };
+
+typedef boost::shared_ptr<TSIGContext> TSIGContextPtr;
+typedef boost::shared_ptr<TSIGKey> TSIGKeyPtr;
+
 }
 }
 

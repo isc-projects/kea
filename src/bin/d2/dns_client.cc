@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -60,6 +60,8 @@ public:
     DNSClient::Callback* callback_;
     // A Transport Layer protocol used to communicate with a DNS.
     DNSClient::Protocol proto_;
+    // TSIG context used to sign outbound and verify inbound messages.
+    dns::TSIGContextPtr tsig_context_;
 
     // Constructor and Destructor
     DNSClientImpl(D2UpdateMessagePtr& response_placeholder,
@@ -73,12 +75,13 @@ public:
     // type, representing a response from the server is set.
     virtual void operator()(asiodns::IOFetch::Result result);
 
-    // Starts asynchronous DNS Update.
+    // Starts asynchronous DNS Update using TSIG.
     void doUpdate(asiolink::IOService& io_service,
                   const asiolink::IOAddress& ns_addr,
                   const uint16_t ns_port,
                   D2UpdateMessage& update,
-                  const unsigned int wait);
+                  const unsigned int wait,
+                  const dns::TSIGKeyPtr& tsig_key);
 
     // This function maps the IO error to the DNSClient error.
     DNSClient::Status getStatus(const asiodns::IOFetch::Result);
@@ -130,7 +133,6 @@ DNSClientImpl::operator()(asiodns::IOFetch::Result result) {
     // and pass the status code.
     DNSClient::Status status = getStatus(result);
     if (status == DNSClient::SUCCESS) {
-        InputBuffer response_buf(in_buf_->getData(), in_buf_->getLength());
         // Allocate a new response message. (Note that Message::fromWire
         // may only be run once per message, so we need to start fresh
         // each time.)
@@ -140,13 +142,18 @@ DNSClientImpl::operator()(asiodns::IOFetch::Result result) {
         // throw an exception. We want to catch this exception to return
         // appropriate status code to the caller and log this event.
         try {
-            response_->fromWire(response_buf);
-
+            response_->fromWire(in_buf_->getData(), in_buf_->getLength(),
+                                tsig_context_.get());
         } catch (const isc::Exception& ex) {
             status = DNSClient::INVALID_RESPONSE;
             LOG_DEBUG(dctl_logger, DBGLVL_TRACE_DETAIL,
                       DHCP_DDNS_INVALID_RESPONSE).arg(ex.what());
 
+        }
+
+        if (tsig_context_) {
+            // Context is a one-shot deal, get rid of it.
+            tsig_context_.reset();
         }
     }
 
@@ -174,13 +181,31 @@ DNSClientImpl::getStatus(const asiodns::IOFetch::Result result) {
     }
     return (DNSClient::OTHER);
 }
-
 void
 DNSClientImpl::doUpdate(asiolink::IOService& io_service,
                         const IOAddress& ns_addr,
                         const uint16_t ns_port,
                         D2UpdateMessage& update,
-                        const unsigned int wait) {
+                        const unsigned int wait,
+                        const dns::TSIGKeyPtr& tsig_key) {
+    // The underlying implementation which we use to send DNS Updates uses
+    // signed integers for timeout. If we want to avoid overflows we need to
+    // respect this limitation here.
+    if (wait > DNSClient::getMaxTimeout()) {
+        isc_throw(isc::BadValue, "A timeout value for DNS Update request must"
+                  " not exceed " << DNSClient::getMaxTimeout()
+                  << ". Provided timeout value is '" << wait << "'");
+    }
+
+    // Create a TSIG context if we have a key, otherwise clear the context
+    // pointer.  Message marshalling uses non-null context is the indicator
+    // that TSIG should be used.
+    if (tsig_key) {
+        tsig_context_.reset(new TSIGContext(*tsig_key));
+    } else {
+        tsig_context_.reset();
+    }
+
     // A renderer is used by the toWire function which creates the on-wire data
     // from the DNS Update message. A renderer has its internal buffer where it
     // renders data by default. However, this buffer can't be directly accessed.
@@ -193,7 +218,7 @@ DNSClientImpl::doUpdate(asiolink::IOService& io_service,
 
     // Render DNS Update message. This may throw a bunch of exceptions if
     // invalid message object is given.
-    update.toWire(renderer);
+    update.toWire(renderer, tsig_context_.get());
 
     // IOFetch has all the mechanisms that we need to perform asynchronous
     // communication with the DNS server. The last but one argument points to
@@ -211,7 +236,6 @@ DNSClientImpl::doUpdate(asiolink::IOService& io_service,
     io_service.post(io_fetch);
 }
 
-
 DNSClient::DNSClient(D2UpdateMessagePtr& response_placeholder,
                      Callback* callback, const DNSClient::Protocol proto)
     : impl_(new DNSClientImpl(response_placeholder, callback, proto)) {
@@ -228,35 +252,14 @@ DNSClient::getMaxTimeout() {
 }
 
 void
-DNSClient::doUpdate(asiolink::IOService&,
-                    const IOAddress&,
-                    const uint16_t,
-                    D2UpdateMessage&,
-                    const unsigned int,
-                    const dns::TSIGKey&) {
-    isc_throw(isc::NotImplemented, "TSIG is currently not supported for"
-              "DNS Update message");
-}
-
-void
 DNSClient::doUpdate(asiolink::IOService& io_service,
                     const IOAddress& ns_addr,
                     const uint16_t ns_port,
                     D2UpdateMessage& update,
-                    const unsigned int wait) {
-    // The underlying implementation which we use to send DNS Updates uses
-    // signed integers for timeout. If we want to avoid overflows we need to
-    // respect this limitation here.
-    if (wait > getMaxTimeout()) {
-        isc_throw(isc::BadValue, "A timeout value for DNS Update request must"
-                  " not exceed " << getMaxTimeout()
-                  << ". Provided timeout value is '" << wait << "'");
-    }
-    impl_->doUpdate(io_service, ns_addr, ns_port, update, wait);
+                    const unsigned int wait,
+                    const dns::TSIGKeyPtr& tsig_key) {
+    impl_->doUpdate(io_service, ns_addr, ns_port, update, wait, tsig_key);
 }
-
-
 
 } // namespace d2
 } // namespace isc
-
