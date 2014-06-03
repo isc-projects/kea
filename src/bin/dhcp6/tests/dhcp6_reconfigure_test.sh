@@ -13,7 +13,7 @@
 # PERFORMANCE OF THIS SOFTWARE.
 
 # Test name
-TEST_NAME="DynamicReconfiguration"
+TEST_NAME="DHCPv6.dynamicReconfiguration"
 # Path to the temporary configuration file.
 CFG_FILE="test_config.json"
 # Path to the Kea log file.
