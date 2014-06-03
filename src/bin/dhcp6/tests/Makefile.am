@@ -6,7 +6,7 @@ SHTESTS += dhcp6_reconfigure_test.sh
 SHTESTS += dhcp6_sigterm_test.sh
 SHTESTS += dhcp6_sigint_test.sh
 endif
-EXTRA_DIST = $(SHTESTS)
+EXTRA_DIST = $(SHTESTS) dhcp6_shutdown_test.sh
 
 # Explicitly specify paths to dynamic libraries required by loadable python
 # modules. That is required on Mac OS systems. Otherwise we will get exception

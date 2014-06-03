@@ -321,141 +321,6 @@ else
 	AC_SUBST(pkgpyexecdir)
 fi
 
-# We need to store the default pyexecdir in a separate variable so that
-# we can specify in Makefile.am the install directory of various BIND 10
-# python scripts and loadable modules; in Makefile.am we cannot replace
-# $(pyexecdir) using itself, e.g, this doesn't work:
-# pyexecdir = $(pyexecdir)/isc/some_module
-# The separate variable makes this setup possible as follows:
-# pyexecdir = $(PYTHON_SITEPKG_DIR)/isc/some_module
-PYTHON_SITEPKG_DIR=${pyexecdir}
-AC_SUBST(PYTHON_SITEPKG_DIR)
-
-# This will be commonly used in various Makefile.am's that need to generate
-# python log messages.
-PYTHON_LOGMSGPKG_DIR="\$(top_builddir)/src/lib/python/isc/log_messages"
-AC_SUBST(PYTHON_LOGMSGPKG_DIR)
-
-# This is python package paths commonly used in python tests.  See
-# README of log_messages for why it's included.
-# lib/dns/python/.libs is necessary because __init__.py of isc package
-# automatically imports isc.datasrc, which then requires the DNS loadable
-# module.  #2145 should eliminate the need for it.
-COMMON_PYTHON_PATH="\$(abs_top_builddir)/src/lib/python/isc/log_messages:\$(abs_top_builddir)/src/lib/python/isc/cc:\$(abs_top_srcdir)/src/lib/python:\$(abs_top_builddir)/src/lib/python:\$(abs_top_builddir)/src/lib/dns/python/.libs"
-AC_SUBST(COMMON_PYTHON_PATH)
-
-# Check for python development environments
-if test -x ${PYTHON}-config; then
-	PYTHON_INCLUDES=`${PYTHON}-config --includes`
-
-	# Add any '-L..." flags to PYTHON_LDFLAGS.  We first make a copy of
-	# python-config --ldflags, removing any spaces and tabs
-	# between "-L" and its argument (some instances of python-config
-	# insert a space, which would confuse the code below).
-	# Notes: if -L isn't contained at all we can simply skip this process,
-	# so we only go through the flag if it's contained; also, protecting
-	# the output with [] seems necessary for environment to avoid getting
-	# an empty output accidentally.
-	python_config_ldflags=[`${PYTHON}-config --ldflags | ${SED} -ne 's/\([ \t]*-L\)[ ]*\([^ \t]*[ \t]*\)/\1\2/gp'`]
-	for flag in $python_config_ldflags; do
-		flag=`echo $flag | ${SED} -ne 's/^\(\-L.*\)$/\1/p'`
-		if test "X${flag}" != X; then
-			PYTHON_LDFLAGS="$PYTHON_LDFLAGS ${flag}"
-		fi
-	done
-	# on some platforms, ${PYTHON}-config --ldflags doesn't provide a -L
-	# option while having the library under a non trivial directory.
-	# as a workaround we try the "lib" sub directory under the common
-	# prefix for this python.
-	if test -z "${PYTHON_LDFLAGS}"; then
-		PYTHON_LDFLAGS="-L`${PYTHON}-config --prefix`/lib"
-	fi
-else
-	if test "X$PYTHON_INCLUDES" = X -o "X$PYTHON_LDFLAGS" = X; then
-		AC_MSG_WARN([${PYTHON}-config does not exist or is not executable, so we could not detect python development environment.  Your system may require an additional package (e.g. "python3-dev").  Alternatively, if you are sure you have python headers and libraries, define PYTHON_INCLUDES and PYTHON_LDFLAGS and run this script.])
-	fi
-fi
-
-# Some OSes including NetBSD don't install libpython.so in a well known path.
-# To avoid requiring dynamic library path with our python wrapper loadable
-# modules, we embed the path to the modules when possible.  We do this even
-# when the path is known in the common operational environment (e.g. when
-# it's stored in a common "hint" file) for simplicity.
-if test "x$ISC_RPATH_FLAG" != "x"; then
-	python_rpath=
-	for flag in ${PYTHON_LDFLAGS}; do
-		python_rpath="${python_rpath} `echo $flag | ${SED} -ne "s/^\(\-L\)/${ISC_RPATH_FLAG}/p"`"
-	done
-	PYTHON_LDFLAGS="${PYTHON_LDFLAGS} ${python_rpath}"
-fi
-
-AC_SUBST(PYTHON_INCLUDES)
-AC_SUBST(PYTHON_LDFLAGS)
-
-CPPFLAGS_SAVED="$CPPFLAGS"
-CPPFLAGS="$CPPFLAGS ${PYTHON_INCLUDES}"
-AC_CHECK_HEADERS([Python.h],, AC_MSG_ERROR([Missing Python.h]))
-CPPFLAGS="$CPPFLAGS_SAVED"
-
-# Check for python library.  Needed for Python-wrapper libraries.
-LDFLAGS_SAVED="$LDFLAGS"
-LDFLAGS="$LDFLAGS $PYTHON_LDFLAGS"
-python_bin="python${PYTHON_VERSION}"
-AC_CHECK_LIB($python_bin, main, python_lib=$python_bin, python_lib=no)
-if test $python_lib != "no"; then
-	PYTHON_LIB="-l$python_lib"
-fi
-AC_SUBST(PYTHON_LIB)
-LDFLAGS=$LDFLAGS_SAVED
-
-# Python 3.2 changed the return type of internal hash function to
-# Py_hash_t and some platforms (such as Solaris) strictly check for long
-# vs Py_hash_t. So we detect and use the appropriate return type.
-# Remove this test (and associated changes in pydnspp_config.h.in) when
-# we require Python 3.2.
-have_py_hash_t=0
-CPPFLAGS_SAVED="$CPPFLAGS"
-CPPFLAGS=${PYTHON_INCLUDES}
-AC_MSG_CHECKING(for Py_hash_t)
-AC_TRY_COMPILE([#include <Python.h>
-                Py_hash_t h;],,
-    [AC_MSG_RESULT(yes)
-     have_py_hash_t=1],
-    [AC_MSG_RESULT(no)])
-CPPFLAGS="$CPPFLAGS_SAVED"
-HAVE_PY_HASH_T=$have_py_hash_t
-AC_SUBST(HAVE_PY_HASH_T)
-
-# (g++ only check)
-# Python 3.2 has an unused parameter in one of its headers. This
-# has been reported, but not fixed as of yet, so we check if we need
-# to set -Wno-unused-parameter.
-if test "X$GXX" = "Xyes" -a "$werror_ok" = 1; then
-	CPPFLAGS_SAVED="$CPPFLAGS"
-	CPPFLAGS=${PYTHON_INCLUDES}
-	CXXFLAGS_SAVED="$CXXFLAGS"
-	CXXFLAGS="$CXXFLAGS $B10_CXXFLAGS -Werror"
-	AC_MSG_CHECKING([whether we need -Wno-unused-parameter for python])
-	AC_TRY_COMPILE(
-		[#include <Python.h>],
-		[],
-		[AC_MSG_RESULT(no)],
-		[
-		CXXFLAGS="$CXXFLAGS -Wno-unused-parameter"
-		AC_TRY_COMPILE([#include <Python.h>],
-		[],
-		[AC_MSG_RESULT(yes)
-		 PYTHON_CXXFLAGS="${PYTHON_CXXFLAGS} -Wno-unused-parameter"
-		 AC_SUBST(PYTHON_CXXFLAGS)
-		],
-		[AC_MSG_ERROR([Can't compile against Python.h.  If you're using MacOS X and have installed Python with Homebrew, see http://kea.isc.org/wiki/SystemNotesMacOSX])]
-                )
-                ]
-	)
-	CXXFLAGS="$CXXFLAGS_SAVED"
-	CPPFLAGS="$CPPFLAGS_SAVED"
-fi
-
 # produce PIC unless we disable shared libraries. need this for python bindings.
 if test $enable_shared != "no" -a "X$GXX" = "Xyes"; then
    B10_CXXFLAGS="$B10_CXXFLAGS -fPIC"
@@ -527,29 +392,6 @@ AC_TRY_COMPILE([
         [AC_MSG_RESULT(yes)
         AC_DEFINE(HAVE_SA_LEN, 1, [Define to 1 if sockaddr has a sa_len member, and corresponding sin_len and sun_len])],
         AC_MSG_RESULT(no))
-
-AC_ARG_WITH(pycoverage,
-[  --with-pycoverage[=PROGRAM]         enable python code coverage using the specified coverage], pycoverage="$withval", pycoverage="no")
-if test "$pycoverage" = "no" ; then
-	# just run the tests normally with python
-	PYCOVERAGE_RUN="${PYTHON}"
-	USE_PYCOVERAGE="no"
-elif test "$pycoverage" = "yes" ; then
-	PYCOVERAGE="coverage"
-	PYCOVERAGE_RUN="${PYCOVERAGE} run --branch --append"
-	USE_PYCOVERAGE="yes"
-else
-	PYCOVERAGE="$pycoverage"
-	PYCOVERAGE_RUN="${PYCOVERAGE} run --branch --append"
-	USE_PYCOVERAGE="yes"
-fi
-AM_CONDITIONAL(ENABLE_PYTHON_COVERAGE, test x$USE_PYCOVERAGE != xno)
-AC_SUBST(PYCOVERAGE)
-AC_SUBST(PYCOVERAGE_RUN)
-AC_SUBST(USE_PYCOVERAGE)
-
-
-
 
 enable_gtest="no"
 GTEST_INCLUDES=
@@ -1463,11 +1305,8 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/testutils/testdata/Makefile
                  src/lib/util/io/Makefile
                  src/lib/util/Makefile
-                 src/lib/util/python/doxygen2pydoc.py
                  src/lib/util/python/gen_wiredata.py
                  src/lib/util/python/Makefile
-                 src/lib/util/python/mkpywrapper.py
-                 src/lib/util/pyunittests/Makefile
                  src/lib/util/tests/Makefile
                  src/lib/util/threads/Makefile
                  src/lib/util/threads/tests/Makefile
@@ -1488,7 +1327,6 @@ AC_CONFIG_FILES([compatcheck/Makefile
            chmod +x src/lib/log/tests/local_file_test.sh
            chmod +x src/lib/log/tests/logger_lock_test.sh
            chmod +x src/lib/log/tests/severity_test.sh
-           chmod +x src/lib/python/isc/log/tests/log_console.py
            chmod +x src/lib/util/python/doxygen2pydoc.py
            chmod +x src/lib/util/python/gen_wiredata.py
            chmod +x src/lib/util/python/mkpywrapper.py
