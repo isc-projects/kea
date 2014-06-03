@@ -48,7 +48,7 @@ AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
 CLEANFILES = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
 CLEANFILES += $(builddir)/load_marker.txt $(builddir)/unload_marker.txt
-CLEANFILES += *.json
+CLEANFILES += *.json *.log
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 if USE_CLANGPP
