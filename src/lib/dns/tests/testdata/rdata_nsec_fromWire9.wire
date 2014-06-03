@@ -1,0 +1,12 @@
+###
+### This data file was auto-generated from rdata_nsec_fromWire9.spec
+###
+
+# NSEC RDATA, RDLEN=34
+0022
+# Next Name=next.example.com (18 bytes)
+046e657874076578616d706c6503636f6d00
+# Bitmap: Block=2, Length=6
+02 06 040000000003
+# Bitmap: Block=1, Length=6
+01 06 040000000003

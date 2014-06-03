@@ -1,0 +1,8 @@
+###
+### This data file was auto-generated from rdata_caa_fromWire3.spec
+###
+
+# CAA RDATA, RDLEN=7
+0007
+# FLAGS=0 TAG=issue VALUE=
+00 05 6973737565

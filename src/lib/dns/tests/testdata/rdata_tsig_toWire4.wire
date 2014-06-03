@@ -1,0 +1,17 @@
+###
+### This data file was auto-generated from rdata_tsig_toWire4.spec
+###
+
+# DNS Name: hmac-md5.sig-alg.reg.int.
+08686d61632d6d6435077369672d616c670372656703696e7400
+
+# TSIG RDATA, RDLEN=42
+002a
+# Algorithm=hmac-md5 Time-Signed=1286779327 Fudge=300
+08686d61632d6d6435077369672d616c670372656703696e7400 00004cb2b1bf 012c
+# MAC Size=0 MAC=(see hex)
+0000
+# Original-ID=16020 Error=17
+3e94 0011
+# Other-Len=0 Other-Data=(see hex)
+0000

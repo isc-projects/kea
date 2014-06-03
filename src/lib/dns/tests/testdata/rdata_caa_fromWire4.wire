@@ -1,0 +1,8 @@
+###
+### This data file was auto-generated from rdata_caa_fromWire4.spec
+###
+
+# CAA RDATA, RDLEN=16
+0010
+# FLAGS=0 TAG= VALUE=ca.example.net
+00 00 63612e6578616d706c652e6e6574

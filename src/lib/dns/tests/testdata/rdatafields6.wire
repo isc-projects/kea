@@ -1,0 +1,18 @@
+###
+### This data file was auto-generated from rdatafields6.spec
+###
+
+# DNS Name: com
+03636f6d00
+
+# RRSIG RDATA, RDLEN=46
+002e
+# Covered=A(1) Algorithm=RSASHA1(5) Labels=2 OrigTTL=3600
+0001 05 02 00000e10
+# Expiration=1264935600, Inception=1262343600
+4b6562b0 4b3dd5b0
+# Tag=4149 Signer=example.com and Signature
+1035 076578616d706c6503636f6d00 123456789abcdef123456789abcdef
+
+# DNS Name: www + compression pointer: 25
+03777777c019
