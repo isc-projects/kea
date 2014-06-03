@@ -54,9 +54,6 @@ const size_t MAX_PARAMETERS_IN_QUERY = 13;
 /// @brief  Defines a single query
 struct TaggedStatement {
 
-    /// Query index
-    PgSqlLeaseMgr::StatementIndex index;
-
     /// Number of parameters for a given query
     int nbparams;
 
@@ -89,119 +86,134 @@ const size_t OID_VARCHAR = 1043;
 /// that the order columns appear in statement body must match the order they
 /// that the occur in the table.  This does not apply to the where clause.
 TaggedStatement tagged_statements[] = {
-    {PgSqlLeaseMgr::DELETE_LEASE4, 1,
-        { OID_INT8 },
-        "delete_lease4",
-        "DELETE FROM lease4 WHERE address = $1"},
-    {PgSqlLeaseMgr::DELETE_LEASE6, 1,
-        { OID_VARCHAR },
-        "delete_lease6",
-        "DELETE FROM lease6 WHERE address = $1"},
-    {PgSqlLeaseMgr::GET_LEASE4_ADDR, 1,
-        { OID_INT8 },
-        "get_lease4_addr",
-        "SELECT address, hwaddr, client_id, "
-            "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
-            "fqdn_fwd, fqdn_rev, hostname "
-            "FROM lease4 "
-            "WHERE address = $1"},
-    {PgSqlLeaseMgr::GET_LEASE4_CLIENTID, 1,
-        { OID_BYTEA },
-        "get_lease4_clientid",
-        "SELECT address, hwaddr, client_id, "
-            "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
-            "fqdn_fwd, fqdn_rev, hostname "
-            "FROM lease4 "
-            "WHERE client_id = $1"},
-    {PgSqlLeaseMgr::GET_LEASE4_CLIENTID_SUBID, 2,
-        { OID_BYTEA, OID_INT8 },
-        "get_lease4_clientid_subid",
-        "SELECT address, hwaddr, client_id, "
-            "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
-            "fqdn_fwd, fqdn_rev, hostname "
-            "FROM lease4 "
-            "WHERE client_id = $1 AND subnet_id = $2"},
-    {PgSqlLeaseMgr::GET_LEASE4_HWADDR, 1,
-        { OID_BYTEA },
-        "get_lease4_hwaddr",
-        "SELECT address, hwaddr, client_id, "
-            "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
-            "fqdn_fwd, fqdn_rev, hostname "
-            "FROM lease4 "
-            "WHERE hwaddr = $1"},
-    {PgSqlLeaseMgr::GET_LEASE4_HWADDR_SUBID, 2,
-        { OID_BYTEA, OID_INT8 },
-        "get_lease4_hwaddr_subid",
-        "SELECT address, hwaddr, client_id, "
-            "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
-            "fqdn_fwd, fqdn_rev, hostname "
-            "FROM lease4 "
-            "WHERE hwaddr = $1 AND subnet_id = $2"},
-    {PgSqlLeaseMgr::GET_LEASE6_ADDR, 2,
-        { OID_VARCHAR, OID_INT2 },
-        "get_lease6_addr",
-        "SELECT address, duid, valid_lifetime, "
-            "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
-            "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
-            "FROM lease6 "
-            "WHERE address = $1 AND lease_type = $2"},
-    {PgSqlLeaseMgr::GET_LEASE6_DUID_IAID, 3,
-        { OID_BYTEA, OID_INT8, OID_INT2 },
-        "get_lease6_duid_iaid",
-        "SELECT address, duid, valid_lifetime, "
-            "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
-            "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
-            "FROM lease6 "
-            "WHERE duid = $1 AND iaid = $2 AND lease_type = $3"},
-    {PgSqlLeaseMgr::GET_LEASE6_DUID_IAID_SUBID, 4,
-        { OID_INT2, OID_BYTEA, OID_INT8, OID_INT8 },
-        "get_lease6_duid_iaid_subid",
-        "SELECT address, duid, valid_lifetime, "
-            "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
-            "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
-            "FROM lease6 "
-            "WHERE lease_type = $1 "
-            "AND duid = $2 AND iaid = $3 AND subnet_id = $4"},
-    {PgSqlLeaseMgr::GET_VERSION, 0,
-        { OID_NONE },
-        "get_version",
-        "SELECT version, minor FROM schema_version"},
-    {PgSqlLeaseMgr::INSERT_LEASE4, 9,
-        { OID_INT8, OID_BYTEA, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
+    // DELETE_LEASE4
+    { 1, { OID_INT8 },
+      "delete_lease4",
+      "DELETE FROM lease4 WHERE address = $1"},
+
+    // DELETE_LEASE6
+    { 1, { OID_VARCHAR },
+      "delete_lease6",
+      "DELETE FROM lease6 WHERE address = $1"},
+
+    // GET_LEASE4_ADDR
+    { 1, { OID_INT8 },
+      "get_lease4_addr",
+      "SELECT address, hwaddr, client_id, "
+        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
+        "fqdn_fwd, fqdn_rev, hostname "
+      "FROM lease4 "
+      "WHERE address = $1"},
+
+    // GET_LEASE4_CLIENTID
+    { 1, { OID_BYTEA },
+      "get_lease4_clientid",
+      "SELECT address, hwaddr, client_id, "
+        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
+        "fqdn_fwd, fqdn_rev, hostname "
+      "FROM lease4 "
+      "WHERE client_id = $1"},
+
+    // GET_LEASE4_CLIENTID_SUBID
+    { 2, { OID_BYTEA, OID_INT8 },
+      "get_lease4_clientid_subid",
+      "SELECT address, hwaddr, client_id, "
+        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
+        "fqdn_fwd, fqdn_rev, hostname "
+      "FROM lease4 "
+      "WHERE client_id = $1 AND subnet_id = $2"},
+
+    // GET_LEASE4_HWADDR
+    { 1, { OID_BYTEA },
+      "get_lease4_hwaddr",
+      "SELECT address, hwaddr, client_id, "
+        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
+        "fqdn_fwd, fqdn_rev, hostname "
+      "FROM lease4 "
+      "WHERE hwaddr = $1"},
+
+    // GET_LEASE4_HWADDR_SUBID
+    { 2, { OID_BYTEA, OID_INT8 },
+      "get_lease4_hwaddr_subid",
+      "SELECT address, hwaddr, client_id, "
+        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
+        "fqdn_fwd, fqdn_rev, hostname "
+      "FROM lease4 "
+      "WHERE hwaddr = $1 AND subnet_id = $2"},
+
+    // GET_LEASE6_ADDR
+    { 2, { OID_VARCHAR, OID_INT2 },
+      "get_lease6_addr",
+      "SELECT address, duid, valid_lifetime, "
+        "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
+        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
+      "FROM lease6 "
+      "WHERE address = $1 AND lease_type = $2"},
+
+    // GET_LEASE6_DUID_IAID
+    {  3, { OID_BYTEA, OID_INT8, OID_INT2 },
+       "get_lease6_duid_iaid",
+       "SELECT address, duid, valid_lifetime, "
+         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
+         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
+       "FROM lease6 "
+       "WHERE duid = $1 AND iaid = $2 AND lease_type = $3"},
+
+    // GET_LEASE6_DUID_IAID_SUBID
+    { 4, { OID_INT2, OID_BYTEA, OID_INT8, OID_INT8 },
+      "get_lease6_duid_iaid_subid",
+      "SELECT address, duid, valid_lifetime, "
+        "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
+        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
+      "FROM lease6 "
+      "WHERE lease_type = $1 "
+        "AND duid = $2 AND iaid = $3 AND subnet_id = $4"},
+
+    // GET_VERSION
+    { 0, { OID_NONE },
+      "get_version",
+      "SELECT version, minor FROM schema_version"},
+
+    // INSERT_LEASE4
+    { 9, { OID_INT8, OID_BYTEA, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
            OID_BOOL, OID_BOOL, OID_VARCHAR },
-        "insert_lease4",
-        "INSERT INTO lease4(address, hwaddr, client_id, "
-            "valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname) "
-            "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"},
-    {PgSqlLeaseMgr::INSERT_LEASE6, 12,
-        { OID_VARCHAR, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
-          OID_INT8, OID_INT2, OID_INT8, OID_INT2, OID_BOOL, OID_BOOL,
-          OID_VARCHAR },
-        "insert_lease6",
-        "INSERT INTO lease6(address, duid, valid_lifetime, "
-            "expire, subnet_id, pref_lifetime, "
-            "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname) "
-            "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"},
-    {PgSqlLeaseMgr::UPDATE_LEASE4, 10,
-        { OID_INT8, OID_BYTEA, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
-          OID_BOOL, OID_BOOL, OID_VARCHAR, OID_INT8 },
-        "update_lease4",
-        "UPDATE lease4 SET address = $1, hwaddr = $2, "
-            "client_id = $3, valid_lifetime = $4, expire = $5, "
-            "subnet_id = $6, fqdn_fwd = $7, fqdn_rev = $8, hostname = $9 "
-            "WHERE address = $10"},
-    {PgSqlLeaseMgr::UPDATE_LEASE6, 13,
-        { OID_VARCHAR, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8, OID_INT8,
-          OID_INT2, OID_INT8, OID_INT2, OID_BOOL, OID_BOOL, OID_VARCHAR,
-          OID_VARCHAR },
-        "update_lease6",
-        "UPDATE lease6 SET address = $1, duid = $2, "
-            "valid_lifetime = $3, expire = $4, subnet_id = $5, "
-            "pref_lifetime = $6, lease_type = $7, iaid = $8, "
-            "prefix_len = $9, fqdn_fwd = $10, fqdn_rev = $11, hostname = $12 "
-        "WHERE address = $13"},
+      "insert_lease4",
+      "INSERT INTO lease4(address, hwaddr, client_id, "
+        "valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname) "
+      "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"},
+
+    // INSERT_LEASE6
+    { 12, { OID_VARCHAR, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
+            OID_INT8, OID_INT2, OID_INT8, OID_INT2, OID_BOOL, OID_BOOL,
+            OID_VARCHAR },
+      "insert_lease6",
+      "INSERT INTO lease6(address, duid, valid_lifetime, "
+        "expire, subnet_id, pref_lifetime, "
+        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname) "
+      "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"},
+
+    // UPDATE_LEASE4
+    { 10, { OID_INT8, OID_BYTEA, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
+            OID_BOOL, OID_BOOL, OID_VARCHAR, OID_INT8 },
+      "update_lease4",
+      "UPDATE lease4 SET address = $1, hwaddr = $2, "
+        "client_id = $3, valid_lifetime = $4, expire = $5, "
+        "subnet_id = $6, fqdn_fwd = $7, fqdn_rev = $8, hostname = $9 "
+      "WHERE address = $10"},
+
+    // UPDATE_LEASE6
+    { 13, { OID_VARCHAR, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8, OID_INT8,
+            OID_INT2, OID_INT8, OID_INT2, OID_BOOL, OID_BOOL, OID_VARCHAR,
+            OID_VARCHAR },
+      "update_lease6",
+      "UPDATE lease6 SET address = $1, duid = $2, "
+        "valid_lifetime = $3, expire = $4, subnet_id = $5, "
+        "pref_lifetime = $6, lease_type = $7, iaid = $8, "
+        "prefix_len = $9, fqdn_fwd = $10, fqdn_rev = $11, hostname = $12 "
+      "WHERE address = $13"},
+
     // End of list sentinel
-    {PgSqlLeaseMgr::NUM_STATEMENTS, 0,  { 0 }, NULL, NULL}
+    { 0,  { 0 }, NULL, NULL}
 };
 
 };
