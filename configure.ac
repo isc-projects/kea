@@ -209,12 +209,6 @@ if test $enable_shared = no; then
 	AC_MSG_ERROR([BIND 10 requires shared libraries to be built])
 fi
 
-# allow configuring without setproctitle.
-AC_ARG_ENABLE(setproctitle-check,
-AC_HELP_STRING([--disable-setproctitle-check],
-  [do not check for python setproctitle module (used to give nice names to python processes)]),
-  setproctitle_check=$enableval, setproctitle_check=yes)
-
 # OS dependent configuration
 SET_ENV_LIBRARY_PATH=no
 ENV_LIBRARY_PATH=LD_LIBRARY_PATH
@@ -431,19 +425,6 @@ AC_TRY_COMPILE([#include <Python.h>
 CPPFLAGS="$CPPFLAGS_SAVED"
 HAVE_PY_HASH_T=$have_py_hash_t
 AC_SUBST(HAVE_PY_HASH_T)
-
-# Check for the setproctitle module
-if test "$setproctitle_check" = "yes" ; then
-    AC_MSG_CHECKING(for setproctitle module)
-    if "$PYTHON" -c 'import setproctitle' 2>/dev/null ; then
-        AC_MSG_RESULT(ok)
-    else
-        AC_MSG_RESULT(missing)
-        AC_MSG_WARN([Missing setproctitle python module.
-Use --disable-setproctitle-check to skip this check.
-In this case we will continue, but naming of python processes will not work.])
-    fi
-fi
 
 # (g++ only check)
 # Python 3.2 has an unused parameter in one of its headers. This
