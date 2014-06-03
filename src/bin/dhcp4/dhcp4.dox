@@ -231,6 +231,37 @@ for ISC-DHCP. Is at least possible that similar will happen for Kea. Finally, if
 extend the isc::dhcp::CfgMgr with configuration export, this approach could be used as
 a migration tool.
 
+@section dhcpv4SignalBasedReconfiguration Reconfiguring DHCPv4 server with SIGHUP signal
+
+Online reconfiguration (reconfiguration without a need to restart the server) is an
+important feature which is supported by all modern DHCP servers. When using the JSON
+configuration backend, a configuration file name is specified with a command line
+option of the DHCP server binary. The configuration file is used to configure the
+server at startup. If the initial configuration fails, the server will fail to start.
+If the server starts and configures successfully it will use the initial configuration
+until it is reconfigured.
+
+The reconfiguration request can be triggered externally (from other process) by editing
+a configuration file and sending a SIGHUP signal to DHCP server process. After receiving
+the SIGHUP signal, the server will re-read the configuration file specified at startup.
+If the reconfiguration fails, the server will continue to run and use the last good
+configuration.
+
+The signal handler for SIGHUP (also for SIGTERM and SIGINT) are installed in the
+kea_controller.cc using the @c isc::util::io::SignalSet class. The
+@c isc::dhcp::Dhcp6Srv calls @c isc::dhcp::Daemon::handleSignal on each pass
+through the main loop. This method fetches the last received signal and calls
+a handler function defined in the kea_controller.cc. The handler function
+calls a static function @c configure defined in the kea_controller.cc.
+
+In order for the signal handler to know the location of the configuration file
+(specified at process startup), the location of this file needs to be stored
+in a static variable so as it may be directly accessed by the signal handler.
+This static variable is stored in the @c dhcp::Daemon class and all Kea processes
+can use it (all processes derive from this class). The configuration file
+location is initialized when the @c Daemon::init method is called. Therefore,
+derived classes should call it in their implementations of the @c init method.
+
 @section dhcpv4Other Other DHCPv4 topics
 
  For hooks API support in DHCPv4, see @ref dhcpv4Hooks.
