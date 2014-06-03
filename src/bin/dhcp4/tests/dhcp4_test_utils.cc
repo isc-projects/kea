@@ -242,7 +242,7 @@ HWAddrPtr Dhcpv4SrvTest::generateHWAddr(size_t size /*= 6*/) {
 void Dhcpv4SrvTest::checkAddressParams(const Pkt4Ptr& rsp,
                                        const SubnetPtr subnet,
                                        bool t1_present,
-                                       bool t2_present /*= false*/) {
+                                       bool t2_present) {
 
     // Technically inPool implies inRange, but let's be on the safe
     // side and check both.
@@ -253,7 +253,8 @@ void Dhcpv4SrvTest::checkAddressParams(const Pkt4Ptr& rsp,
     OptionUint32Ptr opt = boost::dynamic_pointer_cast<
         OptionUint32>(rsp->getOption(DHO_DHCP_LEASE_TIME));
     if (!opt) {
-        ADD_FAILURE() << "Lease time option missing in response";
+        ADD_FAILURE() << "Lease time option missing in response or the"
+            " option has unexpected type";
     } else {
         EXPECT_EQ(opt->getValue(), subnet->getValid());
     }
@@ -262,7 +263,8 @@ void Dhcpv4SrvTest::checkAddressParams(const Pkt4Ptr& rsp,
     opt = boost::dynamic_pointer_cast<
         OptionUint32>(rsp->getOption(DHO_DHCP_RENEWAL_TIME));
     if (t1_present) {
-        ASSERT_TRUE(opt) << "Required T1 option missing";
+        ASSERT_TRUE(opt) << "Required T1 option missing or it has"
+            " an unexpected type";
         EXPECT_EQ(opt->getValue(), subnet->getT1());
     } else {
         EXPECT_FALSE(opt);
@@ -272,7 +274,8 @@ void Dhcpv4SrvTest::checkAddressParams(const Pkt4Ptr& rsp,
     opt = boost::dynamic_pointer_cast<
         OptionUint32>(rsp->getOption(DHO_DHCP_REBINDING_TIME));
     if (t2_present) {
-        ASSERT_TRUE(opt) << "Required T2 option missing";
+        ASSERT_TRUE(opt) << "Required T2 option missing or it has"
+            " an unexpected type";
         EXPECT_EQ(opt->getValue(), subnet->getT2());
     } else {
         EXPECT_FALSE(opt);
