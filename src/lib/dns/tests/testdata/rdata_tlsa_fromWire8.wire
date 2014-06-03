@@ -1,0 +1,8 @@
+###
+### This data file was auto-generated from rdata_tlsa_fromWire8.spec
+###
+
+# TLSA RDATA, RDLEN=4
+0004
+# CERTIFICATE_USAGE=0 SELECTOR=0 MATCHING_TYPE=1 CERTIFICATE_ASSOCIATION_DATA=0123
+00 00 01 0123

@@ -1,0 +1,8 @@
+###
+### This data file was auto-generated from rdata_sshfp_fromWire2.spec
+###
+
+# SSHFP RDATA, RDLEN=22
+0016
+# ALGORITHM=2 FINGERPRINT_TYPE=1 FINGERPRINT=123456789abcdef67890123456789abcdef67890
+02 01 123456789abcdef67890123456789abcdef67890

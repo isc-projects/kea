@@ -1,0 +1,10 @@
+###
+### This data file was auto-generated from rdata_soa_toWireUncompressed.spec
+###
+
+# SOA RDATA, RDLEN=54
+0036
+# NNAME=ns.example.com RNAME=root.example.com
+026e73076578616d706c6503636f6d00 04726f6f74076578616d706c6503636f6d00
+# SERIAL(2010012601) REFRESH(3600) RETRY(300) EXPIRE(3600000) MINIMUM(1200)
+77ce5bb9 00000e10 0000012c 0036ee80 000004b0
