@@ -23,34 +23,53 @@ namespace {
 using namespace isc;
 using namespace isc::util::io;
 
+/// @brief Test fixture class for @c isc::util::io::SignalSet class.
+///
+/// This class contains a handler function which records the signal
+/// being handled. It allows for checking whether the signal set
+/// has invoked the handler for the expected signal.
 class SignalSetTest : public ::testing::Test {
 public:
 
+    /// @brief Constructor.
+    ///
+    /// Resets the signal sets and variables being modified by the
+    /// signal handler function.
     SignalSetTest()
-        : signal_set_() {
+        : signal_set_(),
+          secondary_signal_set_() {
         handler_calls_ = 0;
         signum_ = -1;
     }
 
+    /// @brief Destructor.
+    ///
+    /// Uninstalls the signals from the signal sets.
     ~SignalSetTest() {
         if (signal_set_) {
             signal_set_->clear();
         }
+        if (secondary_signal_set_) {
+            secondary_signal_set_->clear();
+        }
     }
 
-    void handleNext() {
-        signal_set_->handleNext(boost::bind(&SignalSetTest::testHandler, _1));
-    }
-
+    /// @brief Signal handler used by unit tests.
+    ///
+    /// @param signum Signal being handled.
     static void testHandler(int signum) {
         signum_ = signum;
         ++handler_calls_;
     }
 
+    /// @brief Number of handler calls so far.
     static int handler_calls_;
+    /// @brief The last signal handled.
     static int signum_;
+    /// @brief Test signal set object.
     SignalSetPtr signal_set_;
-
+    /// @brief Second signal set object.
+    SignalSetPtr secondary_signal_set_;
 };
 
 int SignalSetTest::handler_calls_ = 0;
@@ -77,14 +96,14 @@ TEST_F(SignalSetTest, twoSignals) {
     // second one should be dropped.
     ASSERT_EQ(0, raise(SIGHUP));
     // Execute the first handler (for SIGHUP).
-    handleNext();
+    signal_set_->handleNext(boost::bind(&SignalSetTest::testHandler, _1));
     // The handler should have been called once and the signal
     // handled should be SIGHUP.
     EXPECT_EQ(1, handler_calls_);
     EXPECT_EQ(SIGHUP, signum_);
     // Next signal to be handled should be SIGINT.
     EXPECT_EQ(SIGINT, signal_set_->getNext());
-    handleNext();
+    signal_set_->handleNext(boost::bind(&SignalSetTest::testHandler, _1));
     EXPECT_EQ(2, handler_calls_);
     EXPECT_EQ(SIGINT, signum_);
     // There should be no more waiting handlers.
@@ -94,28 +113,58 @@ TEST_F(SignalSetTest, twoSignals) {
     EXPECT_NO_THROW(signal_set_->remove(SIGINT));
 }
 
+/// Check that the signal set can only handle signals owned by it.
+TEST_F(SignalSetTest, twoSignalSets) {
+    // Register handler for SIGHUP in the first signal set.
+    signal_set_.reset(new SignalSet(SIGHUP));
+    // Register handler for SIGINT in the second signal set.
+    secondary_signal_set_.reset(new SignalSet(SIGINT));
+    // Send SIGHUP.
+    ASSERT_EQ(0, raise(SIGHUP));
+    // Send SIGINT.
+    ASSERT_EQ(0, raise(SIGINT));
+    // Although the SIGHUP is the first signal received by the process
+    // it is not owned by the secondary signal set. The first signal
+    // to be handled by the secondary signal set is SIGINT.
+    EXPECT_EQ(SIGINT, secondary_signal_set_->getNext());
+    // The signal set owns SIGHUP so it should be the next to handle.
+    EXPECT_EQ(SIGHUP, signal_set_->getNext());
+    // Handle next signal owned by the secondary signal set.
+    secondary_signal_set_->handleNext(boost::bind(&SignalSetTest::testHandler,
+                                                  _1));
+    EXPECT_EQ(1, handler_calls_);
+    EXPECT_EQ(SIGINT, signum_);
+    // No more signals to be handled for this signal set.
+    EXPECT_EQ(-1, secondary_signal_set_->getNext());
+    // Handle next signal owned by the signal set.
+    signal_set_->handleNext(boost::bind(&SignalSetTest::testHandler, _1));
+    EXPECT_EQ(2, handler_calls_);
+    EXPECT_EQ(SIGHUP, signum_);
+    // No more signals to be handled by this signal set.
+    EXPECT_EQ(-1, signal_set_->getNext());
+}
+
 // Check that each signal set removes only the signals that it has been used
 // to register.
-TEST_F(SignalSetTest, twoSignalSets) {
+TEST_F(SignalSetTest, remove) {
     // Register handlers for SIGHUP using one signal set.
     ASSERT_NO_THROW(signal_set_.reset(new SignalSet(SIGHUP)));
     // Define another signal set and register a different signal.
-    SignalSetPtr other_set;
-    ASSERT_NO_THROW(other_set.reset(new SignalSet(SIGINT)));
+    ASSERT_NO_THROW(secondary_signal_set_.reset(new SignalSet(SIGINT)));
     // The SIGHUP has been already registsred with the other signal
     // set, so it should not be possible to register it again.
-    ASSERT_THROW(other_set->add(SIGHUP), SignalSetError);
+    ASSERT_THROW(secondary_signal_set_->add(SIGHUP), SignalSetError);
     // It shouldn't be possible to remove the signal registered in a different
     // signal set.
-    ASSERT_THROW(other_set->remove(SIGHUP), SignalSetError);
+    ASSERT_THROW(secondary_signal_set_->remove(SIGHUP), SignalSetError);
     // Remove all signals from the first signal set. The signals registered
     // with the other signal signal set should be preserved.
     ASSERT_NO_THROW(signal_set_->clear());
     // Check indirectly that the SIGINT is still registered. An attempt to
     // register registered signal should result in failure.
-    EXPECT_THROW(other_set->add(SIGINT), SignalSetError);
+    EXPECT_THROW(secondary_signal_set_->add(SIGINT), SignalSetError);
     // But, we should be able to regsiter SIGHUP.
-    EXPECT_NO_THROW(other_set->add(SIGHUP));
+    EXPECT_NO_THROW(secondary_signal_set_->add(SIGHUP));
 }
 
 /// Check that it is not possible to duplicate signals.
