@@ -17,7 +17,7 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_definition.h>
 #include <dhcpsrv/cfgmgr.h>
-#include <dhcp4/config_parser.h>
+#include <dhcp4/json_config_parser.h>
 #include <dhcpsrv/dbaccess_parser.h>
 #include <dhcpsrv/dhcp_parsers.h>
 #include <dhcpsrv/option_space_container.h>

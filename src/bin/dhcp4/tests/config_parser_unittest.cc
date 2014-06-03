@@ -19,7 +19,7 @@
 
 #include <config/ccsession.h>
 #include <dhcp4/dhcp4_srv.h>
-#include <dhcp4/config_parser.h>
+#include <dhcp4/json_config_parser.h>
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int.h>

@@ -1,0 +1,34 @@
+# This is an example configuration file for the DHCPv4 server in Kea.
+# It is a basic scenario with one IPv4 subnet configured. The subnet
+# contains a single pool of dynamically allocated addresses.
+
+{ "Dhcp4":
+
+{ 
+# Kea is told to listen on eth0 interface only.
+  "interfaces": [ "eth0" ],
+
+# We need to specify lease type. As of May 2014, three backends are supported:
+# memfile, mysql and pgsql. We'll just use memfile, because it doesn't require
+# any prior set up.
+  "lease-database": {
+    "type": "memfile"
+  },
+
+# Addresses will be assigned with valid lifetimes being 4000. Client
+# is told to start renewing after 1000 seconds. If the server does not respond
+# after 2000 seconds since the lease was granted, client is supposed
+# to start REBIND procedure (emergency renewal that allows switching
+# to a different server).
+  "valid-lifetime": 4000,
+  "renew-timer": 1000,
+  "rebind-timer": 2000,
+
+# The following list defines subnets. We have only one subnet
+# here.
+  "subnet4": [ 
+  {    "pool": [ "192.0.2.1 - 192.0.2.200" ],
+       "subnet": "192.0.2.0/24"  } ]
+}
+
+}

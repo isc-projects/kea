@@ -85,12 +85,12 @@ TEST_F(CtrlDhcpv4SrvTest, commands) {
     int rcode = -1;
 
     // Case 1: send bogus command
-    ConstElementPtr result = ControlledDhcpv4Srv::execDhcpv4ServerCommand("blah", params);
+    ConstElementPtr result = ControlledDhcpv4Srv::processCommand("blah", params);
     ConstElementPtr comment = parseAnswer(rcode, result);
     EXPECT_EQ(1, rcode); // expect failure (no such command as blah)
 
     // Case 2: send shutdown command without any parameters
-    result = ControlledDhcpv4Srv::execDhcpv4ServerCommand("shutdown", params);
+    result = ControlledDhcpv4Srv::processCommand("shutdown", params);
     comment = parseAnswer(rcode, result);
     EXPECT_EQ(0, rcode); // expect success
 
@@ -99,7 +99,7 @@ TEST_F(CtrlDhcpv4SrvTest, commands) {
     params->set("pid", x);
 
     // Case 3: send shutdown command with 1 parameter: pid
-    result = ControlledDhcpv4Srv::execDhcpv4ServerCommand("shutdown", params);
+    result = ControlledDhcpv4Srv::processCommand("shutdown", params);
     comment = parseAnswer(rcode, result);
     EXPECT_EQ(0, rcode); // expect success
 }
@@ -107,6 +107,14 @@ TEST_F(CtrlDhcpv4SrvTest, commands) {
 // Check that the "libreload" command will reload libraries
 
 TEST_F(CtrlDhcpv4SrvTest, libreload) {
+
+    // Sending commands for processing now requires a server that can process
+    // them.
+    boost::scoped_ptr<ControlledDhcpv4Srv> srv;
+    ASSERT_NO_THROW(
+        srv.reset(new ControlledDhcpv4Srv(0))
+    );
+
     // Ensure no marker files to start with.
     ASSERT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
     ASSERT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
@@ -137,7 +145,7 @@ TEST_F(CtrlDhcpv4SrvTest, libreload) {
     int rcode = -1;
 
     ConstElementPtr result =
-        ControlledDhcpv4Srv::execDhcpv4ServerCommand("libreload", params);
+        ControlledDhcpv4Srv::processCommand("libreload", params);
     ConstElementPtr comment = parseAnswer(rcode, result);
     EXPECT_EQ(0, rcode); // Expect success
 

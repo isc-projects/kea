@@ -1,3 +1,23 @@
+788.	[func]		tomek
+	DHCPv4 server: New parameter added to configure.ac: --with-kea-config.
+	It allows selecting configuration backend and accepts one of two
+	values: BUNDY, which uses Bundy (former BIND10) framework as Kea
+	0.8 did, or JSON, which reads configuration from a JSON file.
+	(Trac #3399, git 6e4dd3ae58c091ba0fd64c87fa8d7c268210f99b)
+
+787.	[func]		marcin
+	DHCPv6 server: Implemented dynamic reconfiguration of the server,
+	triggered when the SIGHUP signal is received by the server's
+	process. Also, server performs a graceful shut down when SIGINT
+	or SIGTERM signal is received.
+	(Trac #3406, git 3be60fa6ac521aecae6ae92d26dc03792bc76903)
+
+786.	[func]		tmark
+	DHCP-DDNS now supports DDNS updates with TSIG.  Please refer to the
+	Kea Guide for details. Prior to this TSIG keys could be defined but
+	were not used.
+	(Trac #3432, git 80fea12a53d1e832d4e7b710ca6ea613300f73ea)
+
 785.	[bug]		marcin
 	DHCPv6 server avoids collisions between prefixes that are allocated
 	as a result of receiving hints from the clients. Previously the
@@ -18,7 +38,7 @@
 	(Trac #3268,    git bd60252e679f19b062f61926647f661ab169f21c)
 
 783.	[func]*		tomek
-	b10-dhcp6: New parameter added to configure: --with-kea-config.
+	DHCPv6 server: New parameter added to configure: --with-kea-config.
 	It allows selecting configuration backend and accepts one of two
 	values: BUNDY, which uses Bundy (former BIND10 framework as Kea
 	0.8 did, or JSON, which reads configuration from a JSON file.

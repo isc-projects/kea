@@ -55,6 +55,7 @@
  *   - @subpage dhcpv4OptionsParse
  *   - @subpage dhcpv4DDNSIntegration
  *   - @subpage dhcpv4Classifier
+ *   - @subpage dhcpv4ConfigBackend
  *   - @subpage dhcpv4Other
  * - @subpage dhcp6
  *   - @subpage dhcpv6Session
@@ -64,6 +65,7 @@
  *   - @subpage dhcpv6OptionsParse
  *   - @subpage dhcpv6Classifier
  *   - @subpage dhcpv6ConfigBackend
+ *   - @subpage dhcpv6SignalBasedReconfiguration
  *   - @subpage dhcpv6Other
  * - @subpage d2
  *   - @subpage d2CPL
