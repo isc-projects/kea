@@ -1,0 +1,10 @@
+###
+### This data file was auto-generated from rdata_txt_fromWire3.spec
+###
+
+# TXT RDATA, RDLEN=24
+0018
+# String Len=11, String="Test-String"
+0b 546573742d537472696e67
+# String Len=11, String="Test-String"
+0b 546573742d537472696e67

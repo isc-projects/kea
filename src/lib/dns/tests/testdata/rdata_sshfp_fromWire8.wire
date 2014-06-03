@@ -1,0 +1,8 @@
+###
+### This data file was auto-generated from rdata_sshfp_fromWire8.spec
+###
+
+# SSHFP RDATA, RDLEN=8
+0008
+# ALGORITHM=255 FINGERPRINT_TYPE=255 FINGERPRINT=082359342fd9
+ff ff 082359342fd9
