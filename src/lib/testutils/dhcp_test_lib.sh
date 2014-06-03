@@ -63,10 +63,10 @@ _GET_RECONFIG_ERRORS=  # Return value: number of configuration errors.
 get_reconfigs() {
     # Grep log file for DHCP6_CONFIG_COMPLETE occurences. There should
     # be one occurence per (re)configuration.
-    _GET_RECONFIGS=`grep -o DHCP6_CONFIG_COMPLETE ${LOG_FILE} | wc -w`
+    _GET_RECONFIGS=`grep -o CONFIG_COMPLETE ${LOG_FILE} | wc -w`
     # Grep log file for DHCP6_CONFIG_LOAD_FAIL to check for configuration
     # failures.
-    _GET_RECONFIG_ERRORS=`grep -o DHCP6_CONFIG_LOAD_FAIL ${LOG_FILE} | wc -w`
+    _GET_RECONFIG_ERRORS=`grep -o CONFIG_LOAD_FAIL ${LOG_FILE} | wc -w`
     # Remove whitespaces
     ${_GET_RECONFIGS##*[! ]}
     ${_GET_RECONFIG_ERRORS##*[! ]}
