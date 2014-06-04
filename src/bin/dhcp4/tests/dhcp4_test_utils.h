@@ -27,6 +27,7 @@
 #include <dhcp/pkt_filter_inet.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/lease.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <asiolink/io_address.h>
 #include <config/ccsession.h>
@@ -117,8 +118,10 @@ public:
     /// @param port port number to listen on; the default value 0 indicates
     /// that sockets should not be opened.
     NakedDhcpv4Srv(uint16_t port = 0)
-        : Dhcpv4Srv(port, "type=memfile universe=4 persist=false",
-                    false, false) {
+        : Dhcpv4Srv(port, false, false) {
+        // Create a default lease database backend.
+        std::string dbconfig = "type=memfile universe=4 persist=false";
+        isc::dhcp::LeaseMgrFactory::create(dbconfig);
         // Create fixed server id.
         server_id_.reset(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
                                             asiolink::IOAddress("192.0.3.1")));

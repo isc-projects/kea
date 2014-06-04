@@ -82,11 +82,11 @@ namespace dhcp {
 
 const std::string Dhcpv4Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
 
-Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const char* dbconfig, const bool use_bcast,
+Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const bool use_bcast,
                      const bool direct_response_desired)
-: shutdown_(true), alloc_engine_(), port_(port),
-    use_bcast_(use_bcast), hook_index_pkt4_receive_(-1),
-    hook_index_subnet4_select_(-1), hook_index_pkt4_send_(-1) {
+    : shutdown_(true), alloc_engine_(), port_(port),
+      use_bcast_(use_bcast), hook_index_pkt4_receive_(-1),
+      hook_index_subnet4_select_(-1), hook_index_pkt4_send_(-1) {
 
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_OPEN_SOCKET).arg(port);
     try {
@@ -111,12 +111,6 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const char* dbconfig, const bool use_bcast,
                 boost::bind(&Dhcpv4Srv::ifaceMgrSocket4ErrorHandler, _1);
             IfaceMgr::instance().openSockets4(port_, use_bcast_, error_handler);
         }
-
-        // Instantiate LeaseMgr
-        LeaseMgrFactory::create(dbconfig);
-        LOG_INFO(dhcp4_logger, DHCP4_DB_BACKEND_STARTED)
-            .arg(LeaseMgrFactory::instance().getType())
-            .arg(LeaseMgrFactory::instance().getName());
 
         // Instantiate allocation engine
         alloc_engine_.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100,
