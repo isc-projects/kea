@@ -12,13 +12,13 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <util/io/signal_set.h>
+#include <util/signal_set.h>
 
 #include <cerrno>
 #include <list>
 
 using namespace isc;
-using namespace isc::util::io;
+using namespace isc::util;
 
 namespace {
 
@@ -70,7 +70,6 @@ void internalHandler(int sig) {
 
 namespace isc {
 namespace util {
-namespace io {
 
 SignalSet::SignalSet(const int sig0) {
     add(sig0);
@@ -222,6 +221,5 @@ SignalSet::remove(const int sig) {
     }
 }
 
-} // end of isc::util::io
 } // end of isc::util
 } // end of isc
