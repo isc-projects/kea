@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,6 +24,22 @@
 
 namespace isc {
 namespace dhcp {
+
+template<typename T>
+class OptionInt;
+
+/// @defgroup option_int_array_defs Typedefs for OptionInt class.
+///
+/// @brief Classes that represent options comprising an integer.
+///
+/// @{
+typedef OptionInt<uint8_t> OptionUint8;
+typedef boost::shared_ptr<OptionUint8> OptionUint8Ptr;
+typedef OptionInt<uint16_t> OptionUint16;
+typedef boost::shared_ptr<OptionUint16> OptionUint16Ptr;
+typedef OptionInt<uint32_t> OptionUint32;
+typedef boost::shared_ptr<OptionUint32> OptionUint32Ptr;
+/// @}
 
 /// This template class represents DHCP option with single value.
 /// This value is of integer type and can be any of the following:

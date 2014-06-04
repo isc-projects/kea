@@ -358,6 +358,8 @@ public:
         // all interfaces before each test and later check that this setting
         // has been overriden by the configuration used in the test.
         CfgMgr::instance().deleteActiveIfaces();
+        // Create fresh context.
+        globalContext()->copyContext(ParserContext(Option::V6));
     }
 
     /// @brief Test invalid option parameter value.
@@ -2002,6 +2004,8 @@ TEST_F(Dhcp6ParserTest, optionDataTwoSpaces) {
     // belongs to the 'dhcp6' option space as it is the
     // standard option.
     string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"valid-lifetime\": 4000,"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -2081,6 +2085,8 @@ TEST_F(Dhcp6ParserTest, optionDataEncapsulate) {
 
     // Starting stage 1. Configure sub-options and their definitions.
     string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"valid-lifetime\": 4000,"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -2540,6 +2546,8 @@ TEST_F(Dhcp6ParserTest, vendorOptionsHex) {
     // sharing the code 1 and belonging to the different vendor spaces.
     // (different vendor-id values).
     string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"valid-lifetime\": 4000,"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -2598,6 +2606,8 @@ TEST_F(Dhcp6ParserTest, vendorOptionsCsv) {
     // sharing the code 1 and belonging to the different vendor spaces.
     // (different vendor-id values).
     string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"valid-lifetime\": 4000,"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -2658,6 +2668,8 @@ TEST_F(Dhcp6ParserTest, stdOptionDataEncapsulate) {
     // that we will add to the base option.
     // Let's create some dummy options: foo and foo2.
     string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"valid-lifetime\": 4000,"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -3157,6 +3169,8 @@ TEST_F(Dhcp6ParserTest, d2ClientConfig) {
     ASSERT_FALSE(CfgMgr::instance().ddnsEnabled());
 
     string config_str = "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"valid-lifetime\": 4000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "

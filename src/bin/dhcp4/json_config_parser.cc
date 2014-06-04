@@ -281,24 +281,32 @@ protected:
     /// @param addr is IPv4 address of the subnet.
     /// @param len is the prefix length
     void initSubnet(isc::asiolink::IOAddress addr, uint8_t len) {
-        // Get all 'time' parameters using inheritance.
-        // If the subnet-specific value is defined then use it, else
-        // use the global value. The global value must always be
-        // present. If it is not, it is an internal error and exception
-        // is thrown.
-        Triplet<uint32_t> t1 = getParam("renew-timer");
-        Triplet<uint32_t> t2 = getParam("rebind-timer");
+        // The renew-timer and rebind-timer are optional. If not set, the
+        // option 58 and 59 will not be sent to a client. In this case the
+        // client will use default values based on the valid-lifetime.
+        Triplet<uint32_t> t1 = getOptionalParam("renew-timer");
+        Triplet<uint32_t> t2 = getOptionalParam("rebind-timer");
+        // The valid-lifetime is mandatory. It may be specified for a
+        // particular subnet. If not, the global value should be present.
+        // If there is no global value, exception is thrown.
         Triplet<uint32_t> valid = getParam("valid-lifetime");
         // Subnet ID is optional. If it is not supplied the value of 0 is used,
         // which means autogenerate.
         SubnetID subnet_id =
             static_cast<SubnetID>(uint32_values_->getOptionalParam("id", 0));
 
-        stringstream tmp;
-        tmp << addr << "/" << (int)len
-            << " with params t1=" << t1 << ", t2=" << t2 << ", valid=" << valid;
+        stringstream s;
+        s << addr << "/" << static_cast<int>(len) << " with params: ";
+        // t1 and t2 are optional may be not specified.
+        if (!t1.unspecified()) {
+            s << "t1=" << t1 << ", ";
+        }
+        if (!t2.unspecified()) {
+            s << "t2=" << t2 << ", ";
+        }
+        s <<"valid-lifetime=" << valid;
 
-        LOG_INFO(dhcp4_logger, DHCP4_CONFIG_NEW_SUBNET).arg(tmp.str());
+        LOG_INFO(dhcp4_logger, DHCP4_CONFIG_NEW_SUBNET).arg(s.str());
 
         Subnet4Ptr subnet4(new Subnet4(addr, len, t1, t2, valid, subnet_id));
         subnet_ = subnet4;

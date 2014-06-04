@@ -79,6 +79,8 @@ public:
         // is sane.
         srv_.reset(new Dhcpv4Srv(0));
         CfgMgr::instance().deleteActiveIfaces();
+        // Create fresh context.
+        globalContext()->copyContext(ParserContext(Option::V4));
     }
 
     // Check that no hooks libraries are loaded.  This is a pre-condition for
@@ -508,6 +510,73 @@ TEST_F(Dhcp4ParserTest, emptySubnet) {
     checkGlobalUint32("rebind-timer", 2000);
     checkGlobalUint32("renew-timer", 1000);
     checkGlobalUint32("valid-lifetime", 4000);
+}
+
+/// Check that the renew-timer doesn't have to be specified, in which case
+/// it is marked unspecified in the Subnet.
+TEST_F(Dhcp4ParserTest, unspecifiedRenewTimer) {
+    ConstElementPtr status;
+
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+    checkGlobalUint32("rebind-timer", 2000);
+    checkGlobalUint32("valid-lifetime", 4000);
+
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"),
+                                                      classify_);
+    ASSERT_TRUE(subnet);
+    EXPECT_TRUE(subnet->getT1().unspecified());
+    EXPECT_FALSE(subnet->getT2().unspecified());
+    EXPECT_EQ(2000, subnet->getT2());
+    EXPECT_EQ(4000, subnet->getValid());
+
+    // Check that subnet-id is 1
+    EXPECT_EQ(1, subnet->getID());
+
+}
+
+/// Check that the rebind-timer doesn't have to be specified, in which case
+/// it is marked unspecified in the Subnet.
+TEST_F(Dhcp4ParserTest, unspecifiedRebindTimer) {
+    ConstElementPtr status;
+
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+    checkGlobalUint32("renew-timer", 1000);
+    checkGlobalUint32("valid-lifetime", 4000);
+
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"),
+                                                      classify_);
+    ASSERT_TRUE(subnet);
+    EXPECT_FALSE(subnet->getT1().unspecified());
+    EXPECT_EQ(1000, subnet->getT1());
+    EXPECT_TRUE(subnet->getT2().unspecified());
+    EXPECT_EQ(4000, subnet->getValid());
+
+    // Check that subnet-id is 1
+    EXPECT_EQ(1, subnet->getID());
 }
 
 /// The goal of this test is to verify if defined subnet uses global
@@ -1700,6 +1769,7 @@ TEST_F(Dhcp4ParserTest, optionDataTwoSpaces) {
     // belongs to the 'dhcp4' option space as it is the
     // standard option.
     string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"valid-lifetime\": 4000,"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -1779,6 +1849,7 @@ TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
 
     // Starting stage 1. Configure sub-options and their definitions.
     string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"valid-lifetime\": 4000,"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -2352,6 +2423,7 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
     // that we will add to the base option.
     // Let's create some dummy options: foo and foo2.
     string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"valid-lifetime\": 4000,"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -2512,6 +2584,7 @@ TEST_F(Dhcp4ParserTest, vendorOptionsHex) {
     // sharing the code 1 and belonging to the different vendor spaces.
     // (different vendor-id values).
     string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"valid-lifetime\": 4000,"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -2570,6 +2643,7 @@ TEST_F(Dhcp4ParserTest, vendorOptionsCsv) {
     // sharing the code 1 and belonging to the different vendor spaces.
     // (different vendor-id values).
     string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"valid-lifetime\": 4000,"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -2646,6 +2720,7 @@ buildHooksLibrariesConfig(const std::vector<std::string>& libraries) {
     // Append the remainder of the configuration.
     config += string(
         "],"
+        "\"valid-lifetime\": 4000,"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"

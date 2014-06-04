@@ -20,6 +20,7 @@
 #include <dhcp4/json_config_parser.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp/option4_addrlst.h>
+#include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/iface_mgr.h>
@@ -238,9 +239,10 @@ HWAddrPtr Dhcpv4SrvTest::generateHWAddr(size_t size /*= 6*/) {
     return (HWAddrPtr(new HWAddr(mac, hw_type)));
 }
 
-void Dhcpv4SrvTest::checkAddressParams(const Pkt4Ptr& rsp, const SubnetPtr subnet,
-                                       bool t1_mandatory /*= false*/,
-                                       bool t2_mandatory /*= false*/) {
+void Dhcpv4SrvTest::checkAddressParams(const Pkt4Ptr& rsp,
+                                       const SubnetPtr subnet,
+                                       bool t1_present,
+                                       bool t2_present) {
 
     // Technically inPool implies inRange, but let's be on the safe
     // side and check both.
@@ -248,31 +250,35 @@ void Dhcpv4SrvTest::checkAddressParams(const Pkt4Ptr& rsp, const SubnetPtr subne
     EXPECT_TRUE(subnet->inPool(Lease::TYPE_V4, rsp->getYiaddr()));
 
     // Check lease time
-    OptionPtr opt = rsp->getOption(DHO_DHCP_LEASE_TIME);
+    OptionUint32Ptr opt = boost::dynamic_pointer_cast<
+        OptionUint32>(rsp->getOption(DHO_DHCP_LEASE_TIME));
     if (!opt) {
-        ADD_FAILURE() << "Lease time option missing in response";
+        ADD_FAILURE() << "Lease time option missing in response or the"
+            " option has unexpected type";
     } else {
-        EXPECT_EQ(opt->getUint32(), subnet->getValid());
+        EXPECT_EQ(opt->getValue(), subnet->getValid());
     }
 
     // Check T1 timer
-    opt = rsp->getOption(DHO_DHCP_RENEWAL_TIME);
-    if (opt) {
-        EXPECT_EQ(opt->getUint32(), subnet->getT1());
+    opt = boost::dynamic_pointer_cast<
+        OptionUint32>(rsp->getOption(DHO_DHCP_RENEWAL_TIME));
+    if (t1_present) {
+        ASSERT_TRUE(opt) << "Required T1 option missing or it has"
+            " an unexpected type";
+        EXPECT_EQ(opt->getValue(), subnet->getT1());
     } else {
-        if (t1_mandatory) {
-            ADD_FAILURE() << "Required T1 option missing";
-        }
+        EXPECT_FALSE(opt);
     }
 
     // Check T2 timer
-    opt = rsp->getOption(DHO_DHCP_REBINDING_TIME);
-    if (opt) {
-        EXPECT_EQ(opt->getUint32(), subnet->getT2());
+    opt = boost::dynamic_pointer_cast<
+        OptionUint32>(rsp->getOption(DHO_DHCP_REBINDING_TIME));
+    if (t2_present) {
+        ASSERT_TRUE(opt) << "Required T2 option missing or it has"
+            " an unexpected type";
+        EXPECT_EQ(opt->getValue(), subnet->getT2());
     } else {
-        if (t2_mandatory) {
-            ADD_FAILURE() << "Required T2 option missing";
-        }
+        EXPECT_FALSE(opt);
     }
 }
 
