@@ -1562,7 +1562,6 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/testutils/Makefile
                  src/lib/testutils/testdata/Makefile
                  src/lib/util/io/Makefile
-                 src/lib/util/io/tests/Makefile
                  src/lib/util/Makefile
                  src/lib/util/python/doxygen2pydoc.py
                  src/lib/util/python/gen_wiredata.py

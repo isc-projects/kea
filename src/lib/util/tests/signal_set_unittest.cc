@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <util/io/signal_set.h>
+#include <util/signal_set.h>
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
@@ -21,9 +21,9 @@
 namespace {
 
 using namespace isc;
-using namespace isc::util::io;
+using namespace isc::util;
 
-/// @brief Test fixture class for @c isc::util::io::SignalSet class.
+/// @brief Test fixture class for @c isc::util::SignalSet class.
 ///
 /// This class contains a handler function which records the signal
 /// being handled. It allows for checking whether the signal set
