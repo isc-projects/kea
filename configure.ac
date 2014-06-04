@@ -1456,6 +1456,8 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/dhcp6/tests/marker_file.h
                  src/bin/dhcp6/tests/test_data_files_config.h
                  src/bin/dhcp6/tests/test_libraries.h
+                 src/bin/keactrl/keactrl
+                 src/bin/keactrl/Makefile
                  src/bin/Makefile
                  src/bin/msgq/Makefile
                  src/bin/msgq/msgq.py
@@ -1587,6 +1589,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
            chmod +x src/bin/bindctl/tests/bindctl_test
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/cmdctl/tests/cmdctl_test
+           chmod +x src/bin/keactrl/keactrl
            chmod +x src/bin/msgq/run_msgq.sh
            chmod +x src/bin/sysinfo/run_sysinfo.sh
            chmod +x src/bin/usermgr/run_b10-cmdctl-usermgr.sh
