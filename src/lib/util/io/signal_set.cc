@@ -14,6 +14,7 @@
 
 #include <util/io/signal_set.h>
 
+#include <cerrno>
 #include <list>
 
 using namespace isc;

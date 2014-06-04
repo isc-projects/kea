@@ -76,6 +76,7 @@ b10_dhcp4_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 b10_dhcp4_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 b10_dhcp4_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 b10_dhcp4_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+b10_dhcp4_LDADD += $(top_builddir)/src/lib/util/io/libkea-util-io.la
 
 b10_dhcp4dir = $(pkgdatadir)
 b10_dhcp4_DATA = dhcp4.spec
