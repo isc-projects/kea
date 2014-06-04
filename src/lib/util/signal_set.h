@@ -24,7 +24,6 @@
 
 namespace isc {
 namespace util {
-namespace io {
 
 /// @brief Exception thrown when the @c isc::util::io::SignalSet class
 /// experiences an error.
@@ -181,7 +180,6 @@ private:
     std::set<int> local_signals_;
 };
 
-}
 }
 }
 

@@ -160,7 +160,7 @@ ControlledDhcpv6Srv::init(const std::string& file_name) {
     // Set signal handlers. When the SIGHUP is received by the process
     // the server reconfiguration will be triggered. When SIGTERM or
     // SIGINT will be received, the server will start shutting down.
-    signal_set_.reset(new isc::util::io::SignalSet(SIGINT, SIGHUP, SIGTERM));
+    signal_set_.reset(new isc::util::SignalSet(SIGINT, SIGHUP, SIGTERM));
     // Set the pointer to the handler function.
     signal_handler_ = signalHandler;
 }

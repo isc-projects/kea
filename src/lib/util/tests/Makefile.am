@@ -47,6 +47,7 @@ run_unittests_SOURCES += socketsession_unittest.cc
 run_unittests_SOURCES += strutil_unittest.cc
 run_unittests_SOURCES += time_utilities_unittest.cc
 run_unittests_SOURCES += range_utilities_unittest.cc
+run_unittests_SOURCES += signal_set_unittest.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)

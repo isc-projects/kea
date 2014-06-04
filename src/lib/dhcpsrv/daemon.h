@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
-#include <util/io/signal_set.h>
+#include <util/signal_set.h>
 #include <boost/noncopyable.hpp>
 #include <string>
 
@@ -46,7 +46,7 @@ namespace dhcp {
 /// is assigned to the static object in @c Daemon::init function.
 ///
 /// Classes derived from @c Daemon may install custom signal handlers using
-/// @c isc::util::io::SignalSet class. This base class provides a declaration
+/// @c isc::util::SignalSet class. This base class provides a declaration
 /// of the @c SignalSet object that should be initialized in the derived
 /// classes to install the custom exception handlers.
 ///
@@ -120,7 +120,7 @@ protected:
     ///
     /// This function provides a default implementation for the function
     /// handling next signal received by the process. It checks if a pointer
-    /// to @c isc::util::io::SignalSet object and the signal handler function
+    /// to @c isc::util::SignalSet object and the signal handler function
     /// have been set. If they have been set, the signal handler is invoked for
     /// the the next signal registered in the @c SignalSet object.
     ///
@@ -132,7 +132,7 @@ protected:
     /// This pointer needs to be initialized to point to the @c SignalSet
     /// object in the derived classes which need to handle signals received
     /// by the process.
-    isc::util::io::SignalSetPtr signal_set_;
+    isc::util::SignalSetPtr signal_set_;
 
     /// @brief Pointer to the common signal handler invoked by the handleSignal
     /// function.
@@ -140,7 +140,7 @@ protected:
     /// This pointer needs to be initialized to point to the signal handler
     /// function for signals being handled by the process. If signal handler
     /// it not initialized, the signals will not be handled.
-    isc::util::io::SignalHandler signal_handler_;
+    isc::util::SignalHandler signal_handler_;
 
 private:
 
