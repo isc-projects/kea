@@ -1,0 +1,31 @@
+#!/bin/sh
+
+# This is keactrl script responsible for starting up Kea processes.
+# This script is used to run Kea from installation directory,
+# as well as for running tests.
+
+# Set locations of the Kea binaries.
+dhcpv4_srv=
+dhcpv6_srv=
+dhcp_ddns=
+
+# The environment variable is set when the script is ran from the
+# tests. If not set, the Kea installation directory is used.
+if test -n "${KEACTRL_BUILD_DIR}"; then
+    dhcpv4_srv=${KEACTRL_BUILD_DIR}/src/bin/dhcp4/b10-dhcp4
+    dhcpv6_srv=${KEACTRL_BUILD_DIR}/src/bin/dhcp6/b10-dhcp6
+    dhcp_ddns=${KEACTRL_BUILD_DIR}/src/bin/d2/b10-dhcp-ddns
+else
+    prefix=@prefix@
+    exec_prefix=@exec_prefix@
+    dhcpv4_srv=@libexecdir@/@PACKAGE@/b10-dhcp4
+    dhcpv6_srv=@libexecdir@/@PACKAGE@/dhcp6/b10-dhcp6
+    dhcp_ddns=@libexecdir@/@PACKAGE@/b10-dhcp-ddns
+fi
+
+# Currently, it doesn't do anything useful. Just prints the locations
+# of the binaries.
+printf "${dhcpv4_srv}\n"
+printf "${dhcpv6_srv}\n"
+printf "${dhcp_ddns}\n"
+

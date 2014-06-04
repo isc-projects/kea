@@ -1,0 +1,7 @@
+This directory contains the source for the "keactrl" script which is used to
+start, stop and reconfigure Kea processes:
+- DHCPv4 server,
+- DHCPv6 server,
+- DDNS module (a.k.a D2)
+
+The "tests" directory contains unit tests for the script.
