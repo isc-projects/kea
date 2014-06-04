@@ -23,9 +23,29 @@ else
     dhcp_ddns=@libexecdir@/@PACKAGE@/b10-dhcp-ddns
 fi
 
-# Currently, it doesn't do anything useful. Just prints the locations
-# of the binaries.
-printf "${dhcpv4_srv}\n"
-printf "${dhcpv6_srv}\n"
-printf "${dhcp_ddns}\n"
+optstring=c:v:46
+
+config_file=
+verbose=0
+kea4=0
+kea6=0
+
+while getopts ${optstring} opt
+do
+    case ${opt} in
+        c) config_file=${OPTARG} ;;
+        v) verbose=$(( ${verbose} + 1 )) ;;
+        4) kea4=$(( ${kea4} + 1 )) ;;
+        6) kea6=$(( ${kea6} + 1 )) ;;
+        *) exit 1;
+    esac
+done
+
+if [ ${kea4} -eq 0 -a ${kea6} -eq 0 ]; then
+    kea4=1
+    kea6=1
+fi
+
+printf "${kea4}\n"
+printf "${kea6}\n"
 
