@@ -25,7 +25,7 @@ namespace dhcp {
 /// This template class is used to store configuration parameters, like lifetime
 /// or T1. It defines 3 parameters: min, default, and max value. If the
 /// particular configuration parameter is not mandatory, it is possible to
-/// mark the parameter described by a @c Triplet "unspcified". For example, the
+/// mark the parameter described by a @c Triplet "unspecified". For example, the
 /// T1 and T2 values in DHCPv4 server are optional and may be not specified
 /// in the configuration. The @c Triplets describing these parameters will be
 /// marked "unspecified". If the server finds that the particular parameter
