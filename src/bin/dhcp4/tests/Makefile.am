@@ -9,7 +9,12 @@ SHTESTS += dhcp4_reconfigure_test.sh
 SHTESTS += dhcp4_sigterm_test.sh
 SHTESTS += dhcp4_sigint_test.sh
 endif
-EXTRA_DIST = $(PYTESTS) $(SHTESTS)
+
+EXTRA_DIST  = $(PYTESTS)
+EXTRA_DIST += dhcp4_reconfigure_test.sh
+EXTRA_DIST += dhcp4_sigterm_test.sh
+EXTRA_DIST += dhcp4_sigint_test.sh
+EXTRA_DIST += dhcp4_shutdown_test.sh
 
 # Explicitly specify paths to dynamic libraries required by loadable python
 # modules. That is required on Mac OS systems. Otherwise we will get exception
