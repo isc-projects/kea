@@ -1,3 +1,9 @@
+789.	[bug]		marcin
+	DHCPv4 server sends Renewal Time (58) and Rebinding Time (59)
+	options to the client when the appropriate timers are set
+	in the configuration. Previously, the timers were ignored.
+	(Trac #3336, git b3c8a079889411182ade517c85aa4fe5d6b8719a)
+
 788.	[func]		tomek
 	DHCPv4 server: New parameter added to configure.ac: --with-kea-config.
 	It allows selecting configuration backend and accepts one of two
