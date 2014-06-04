@@ -2191,6 +2191,11 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
         and apply to all defined subnets, unless they are overridden on a
         per-subnet basis.
       </para>
+      <para>
+        The renew-timer and rebind-timer are optional. If they are not specified,
+        the DHCPv4 options 58 and 59 are not sent in the server's response to the
+        client.
+      </para>
 
       <section>
       <title>Default storage for leases</title>

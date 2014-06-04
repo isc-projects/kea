@@ -1336,6 +1336,16 @@ SubnetConfigParser::getParam(const std::string& name) {
     return (Triplet<uint32_t>(value));
 }
 
+isc::dhcp::Triplet<uint32_t>
+SubnetConfigParser::getOptionalParam(const std::string& name) {
+    try {
+        return (getParam(name));
+    } catch (const DhcpConfigError &) {
+        // No error. We will return an unspecified value.
+    }
+    return (Triplet<uint32_t>());
+}
+
 //**************************** D2ClientConfigParser **********************
 D2ClientConfigParser::D2ClientConfigParser(const std::string& entry_name)
     : entry_name_(entry_name), boolean_values_(new BooleanStorage()),

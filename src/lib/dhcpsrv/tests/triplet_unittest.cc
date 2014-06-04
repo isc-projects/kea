@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -38,6 +38,7 @@ TEST(TripletTest, constructor) {
     EXPECT_EQ(min, x.getMin());
     EXPECT_EQ(value, x.get());
     EXPECT_EQ(max, x.getMax());
+    EXPECT_FALSE(x.unspecified());
 
     // requested values below min should return allowed min value
     EXPECT_EQ(min, x.get(min - 5));
@@ -58,11 +59,35 @@ TEST(TripletTest, constructor) {
     EXPECT_EQ(42, y.getMin()); // min, default and max are equal to 42
     EXPECT_EQ(42, y.get());    // it returns ...
     EXPECT_EQ(42, y.getMax()); // the exact value...
+    EXPECT_FALSE(x.unspecified());
 
     // requested values below or above are ignore
     EXPECT_EQ(42, y.get(5));   // all...
     EXPECT_EQ(42, y.get(42));  // the...
     EXPECT_EQ(42, y.get(80));  // time!
+}
+
+TEST(TripletTest, unspecified) {
+    Triplet<uint32_t> x;
+    // When using the constructor without parameters, the triplet
+    // value is unspecified.
+    EXPECT_EQ(0, x.getMin());
+    EXPECT_EQ(0, x.get());
+    EXPECT_EQ(0, x.getMax());
+    EXPECT_TRUE(x.unspecified());
+
+    // For the triplet which has unspecified value we can call accessors
+    // without an exception.
+    uint32_t exp_unspec = 0;
+    EXPECT_EQ(exp_unspec, x);
+
+    x = 72;
+    // Check if the new value has been assigned.
+    EXPECT_EQ(72, x.getMin());
+    EXPECT_EQ(72, x.get());
+    EXPECT_EQ(72, x.getMax());
+    // Triplet is now specified.
+    EXPECT_FALSE(x.unspecified());
 }
 
 // Triplets must be easy to use.
@@ -79,6 +104,7 @@ TEST(TripletTest, operator) {
     EXPECT_EQ(4, foo.getMin());
     EXPECT_EQ(5, foo.get());
     EXPECT_EQ(6, foo.getMax());
+    EXPECT_FALSE(foo.unspecified());
 
     // assignment operator: uint32_t => triplet
     Triplet<uint32_t> y(0);
@@ -94,7 +120,7 @@ TEST(TripletTest, operator) {
 }
 
 // check if specified values are sane
-TEST(TripletTest, sanity_check) {
+TEST(TripletTest, sanityCheck) {
 
     // min is larger than default
     EXPECT_THROW(Triplet<uint32_t>(6,5,5), BadValue);
