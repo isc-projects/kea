@@ -75,7 +75,8 @@ fi
 # of configuration failure).
 get_pids
 if [ ${_GET_PIDS_NUM} -ne 1 ]; then
-    printf "ERROR: expected one Kea process to be started. Found %d processes started.\n" ${_GET_PIDS_NUM}
+    printf "ERROR: expected one Kea process to be started. Found %d processes\
+ started.\n" ${_GET_PIDS_NUM}
     clean_exit 1
 fi
 
@@ -103,7 +104,8 @@ fi
 # Server should have shut down.
 get_pids
 if [ ${_GET_PIDS_NUM} -ne 0 ]; then
-    printf "ERROR: Kea did not shut down after receiving signal.\n" ${_GET_PIDS_NUM}
+    printf "ERROR: Kea did not shut down after receiving signal.\n"\
+ ${_GET_PIDS_NUM}
     clean_exit 1
 fi
 
