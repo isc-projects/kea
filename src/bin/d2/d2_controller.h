@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -47,7 +47,7 @@ public:
     static const char* d2_app_name_;
 
     /// @brief Defines the executable name. This is passed into the base class
-    /// by convention this should match the BIND10 module name.
+    /// by convention this should match the executable name.
     static const char* d2_bin_name_;
 
 private:

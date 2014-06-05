@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,11 +16,10 @@
 #define D_CONTROLLER_H
 
 #include <cc/data.h>
-#include <cc/session.h>
-#include <config/ccsession.h>
 #include <d2/d2_asio.h>
 #include <d2/d2_log.h>
 #include <d2/d_process.h>
+#include <dhcpsrv/daemon.h>
 #include <exceptions/exceptions.h>
 #include <log/logger_support.h>
 
@@ -49,13 +48,6 @@ public:
         isc::Exception(file, line, what) { };
 };
 
-/// @brief Exception thrown when the session start up fails.
-class SessionStartError: public isc::Exception {
-public:
-    SessionStartError (const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
-};
-
 /// @brief Exception thrown when the application process encounters an
 /// operation in its event loop (i.e. run method).
 class ProcessRunError: public isc::Exception {
@@ -63,14 +55,6 @@ public:
     ProcessRunError (const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
-
-/// @brief Exception thrown when the session end fails.
-class SessionEndError: public isc::Exception {
-public:
-    SessionEndError (const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
-};
-
 
 /// @brief Exception thrown when the controller encounters an operational error.
 class DControllerBaseError : public isc::Exception {
@@ -84,47 +68,33 @@ public:
 class DControllerBase;
 typedef boost::shared_ptr<DControllerBase> DControllerBasePtr;
 
-/// @brief Defines a shared pointer to a Session.
-typedef boost::shared_ptr<isc::cc::Session> SessionPtr;
-
-/// @brief Defines a shared pointer to a ModuleCCSession.
-typedef boost::shared_ptr<isc::config::ModuleCCSession> ModuleCCSessionPtr;
-
-
 /// @brief Application Controller
 ///
 /// DControllerBase is an abstract singleton which provides the framework and
 /// services for managing an application process that implements the
-/// DProcessBase interface.  It allows the process to run either in
-/// integrated mode as a BIND10 module or stand-alone. It coordinates command
-/// line argument parsing, process instantiation and initialization, and runtime
-/// control through external command and configuration event handling.
+/// DProcessBase interface.  It runs the process like a stand-alone, command
+/// line driven executable, which must be supplied a configuration file at
+/// startup. It coordinates command line argument parsing, process
+/// instantiation and initialization, and runtime control through external
+/// command and configuration event handling.
 /// It creates the IOService instance which is used for runtime control
 /// events and passes the IOService into the application process at process
-/// creation.  In integrated mode it is responsible for establishing BIND10
-/// session(s) and passes this IOService into the session creation method(s).
-/// It also provides the callback handlers for command and configuration events
-/// received from the external framework (aka BIND10).  For example, when
-/// running in integrated mode and a user alters the configuration with the
-/// bindctl tool, BIND10 will emit a configuration message which is sensed by
-/// the controller's IOService. The IOService in turn invokes the configuration
-/// callback, DControllerBase::configHandler().  If the user issues a command
-/// such as shutdown via bindctl,  BIND10 will emit a command message, which is
-/// sensed by controller's IOService which invokes the command callback,
-/// DControllerBase::commandHandler().
+/// creation.
+/// It provides the callback handlers for command and configuration events
+/// which could be triggered by an external source.  Such sources are intended
+/// to be registed with and monitored by the controller's IOService such that
+/// the appropriate handler can be invoked.
 ///
 /// NOTE: Derivations must supply their own static singleton instance method(s)
 /// for creating and fetching the instance. The base class declares the instance
-/// member in order for it to be available for BIND10 callback functions. This
-/// would not be required if BIND10 supported instance method callbacks.
-class DControllerBase : public boost::noncopyable {
+/// member in order for it to be available for static callback functions.
+class DControllerBase : public dhcp::Daemon {
 public:
     /// @brief Constructor
     ///
     /// @param app_name is display name of the application under control. This
     /// name appears in log statements.
-    /// @param bin_name is the name of the application executable. Typically
-    /// this matches the BIND10 module name.
+    /// @param bin_name is the name of the application executable.
     DControllerBase(const char* app_name, const char* bin_name);
 
     /// @brief Destructor
@@ -135,21 +105,17 @@ public:
     ///
     /// 1. parse command line arguments
     /// 2. instantiate and initialize the application process
-    /// 3. establish BIND10 session(s) if in integrated mode
+    /// 3. load the configuration file
     /// 4. start and wait on the application process event loop
-    /// 5. upon event loop completion, disconnect from BIND10 (if needed)
-    /// 6. exit to the caller
+    /// 5. exit to the caller
     ///
     /// It is intended to be called from main() and be given the command line
-    /// arguments. Note this method is deliberately not virtual to ensure the
-    /// proper sequence of events occur.
+    /// arguments.
     ///
-    /// This function can be run in the test mode. It prevents initialization
+    /// This function can be run in "test mode". It prevents initialization
     /// of D2 module logger. This is used in unit tests which initialize logger
-    /// in their main function. Such logger uses environmental variables to
-    /// control severity, verbosity etc. Reinitialization of logger by this
-    /// function would replace unit tests specific logger configuration with
-    /// this suitable for D2 running as a bind10 module.
+    /// in their main function. Such a logger uses environmental variables to
+    /// control severity, verbosity etc.
     ///
     /// @param argc  is the number of command line arguments supplied
     /// @param argv  is the array of string (char *) command line arguments
@@ -162,59 +128,9 @@ public:
     /// InvalidUsage - Indicates invalid command line.
     /// ProcessInitError  - Failed to create and initialize application
     /// process object.
-    /// SessionStartError  - Could not connect to BIND10 (integrated mode only).
     /// ProcessRunError - A fatal error occurred while in the application
     /// process event loop.
-    /// SessionEndError - Could not disconnect from BIND10 (integrated mode
-    /// only).
-    void launch(int argc, char* argv[], const bool test_mode);
-
-    /// @brief A dummy configuration handler that always returns success.
-    ///
-    /// This configuration handler does not perform configuration
-    /// parsing and always returns success. A dummy handler should
-    /// be installed using \ref isc::config::ModuleCCSession ctor
-    /// to get the initial configuration. This initial configuration
-    /// comprises values for only those elements that were modified
-    /// the previous session. The D2 configuration parsing can't be
-    /// used to parse the initial configuration because it may need the
-    /// full configuration to satisfy dependencies between the
-    /// various configuration values. Installing the dummy handler
-    /// that guarantees to return success causes initial configuration
-    /// to be stored for the session being created and that it can
-    /// be later accessed with \ref isc::config::ConfigData::getFullConfig.
-    ///
-    /// @param new_config new configuration.
-    ///
-    /// @return success configuration status.
-    static isc::data::ConstElementPtr
-    dummyConfigHandler(isc::data::ConstElementPtr new_config);
-
-    /// @brief A callback for handling all incoming configuration updates.
-    ///
-    /// As a pointer to this method is used as a callback in ASIO for
-    /// ModuleCCSession, it has to be static.  It acts as a wrapper around
-    /// the virtual instance method, updateConfig.
-    ///
-    /// @param new_config textual representation of the new configuration
-    ///
-    /// @return status of the config update
-    static isc::data::ConstElementPtr
-    configHandler(isc::data::ConstElementPtr new_config);
-
-    /// @brief A callback for handling all incoming commands.
-    ///
-    /// As a pointer to this method is used as a callback in ASIO for
-    /// ModuleCCSession, it has to be static.  It acts as a wrapper around
-    /// the virtual instance method, executeCommand.
-    ///
-    /// @param command textual representation of the command
-    /// @param args parameters of the command. It can be NULL pointer if no
-    /// arguments exist for a particular command.
-    ///
-    /// @return status of the processed command
-    static isc::data::ConstElementPtr
-    commandHandler(const std::string& command, isc::data::ConstElementPtr args);
+    virtual void launch(int argc, char* argv[], const bool test_mode);
 
     /// @brief Instance method invoked by the configuration event handler and
     /// which processes the actual configuration update.  Provides behavioral
@@ -222,17 +138,40 @@ public:
     /// implementation will merge the configuration update into the existing
     /// configuration and then invoke the application process' configure method.
     ///
-    /// @todo This implementation is will evolve as the D2 configuration
-    /// management task is implemented (trac #2957).
-    ///
     /// @param  new_config is the new configuration
     ///
     /// @return returns an Element that contains the results of configuration
     /// update composed of an integer status value (0 means successful,
     /// non-zero means failure), and a string explanation of the outcome.
-    virtual isc::data::ConstElementPtr
-    updateConfig(isc::data::ConstElementPtr new_config);
+    virtual isc::data::ConstElementPtr updateConfig(isc::data::ConstElementPtr
+                                                    new_config);
 
+    /// @brief Reconfigures the process from a configuration file
+    ///
+    /// By default the file is assumed to be a JSON text file whose contents
+    /// include at least:
+    ///
+    /// @code
+    ///  { "<module-name>": {<module-config>} }
+    ///
+    ///  where:
+    ///     module-name : is a label which uniquely identifies the
+    ///                   configuration data for this controller's application
+    ///
+    ///     module-config: a set of zero or more JSON elements which comprise
+    ///                    the application'ss configuration values
+    /// @endcode
+    ///
+    /// The method extracts the set of configuration elements for the
+    /// module-name which matches the controller's app_name_ and passes that
+    /// set into @c udpateConfig().
+    ///
+    /// The file may contain an arbitrary number of other modules.
+    ///
+    /// @return returns an Element that contains the results of configuration
+    /// update composed of an integer status value (0 means successful,
+    /// non-zero means failure), and a string explanation of the outcome.
+    virtual isc::data::ConstElementPtr configFromFile();
 
     /// @brief Instance method invoked by the command event handler and  which
     /// processes the actual command directive.
@@ -262,8 +201,51 @@ public:
     ///   failure.
     ///   D2::COMMAND_INVALID - Command is not recognized as valid be either
     ///   the controller or the application process.
-    virtual isc::data::ConstElementPtr
-    executeCommand(const std::string& command, isc::data::ConstElementPtr args);
+    virtual isc::data::ConstElementPtr executeCommand(const std::string&
+                                                      command,
+                                                      isc::data::
+                                                      ConstElementPtr args);
+
+    /// @brief A callback for handling all incoming configuration updates.
+    ///
+    /// Provides a static callback that can be used to handle asynchronsouly
+    /// received configurations. It acts as a wrapper around the singleton's
+    /// virtual instance method, updateConfig.
+    ///
+    /// @param new_config textual representation of the new configuration
+    ///
+    /// @return status of the config update
+    static isc::data::ConstElementPtr configHandler(isc::data::ConstElementPtr
+                                                    new_config);
+
+    /// @brief A callback for handling all incoming commands.
+    ///
+    /// Provides a static callback that can be used to handle asynchronsouly
+    /// received commands. It acts as a wrapper around the singleton's virtual
+    /// instance method, executeCommand.
+    ///
+    /// @param command textual representation of the command
+    /// @param args parameters of the command. It can be NULL pointer if no
+    /// arguments exist for a particular command.
+    ///
+    /// @return status of the processed command
+    static isc::data::ConstElementPtr commandHandler(const std::string& command,
+                                                     isc::data::ConstElementPtr
+                                                     args);
+
+    /// @brief Fetches the name of the application under control.
+    ///
+    /// @return returns the controller service name string
+    const std::string getAppName() const {
+        return (app_name_);
+    }
+
+    /// @brief Fetches the name of the application executable.
+    ///
+    /// @return returns the controller logger name string
+    const std::string getBinName() const {
+        return (bin_name_);
+    }
 
 protected:
     /// @brief Virtual method that provides derivations the opportunity to
@@ -309,26 +291,6 @@ protected:
     virtual isc::data::ConstElementPtr customControllerCommand(
             const std::string& command, isc::data::ConstElementPtr args);
 
-    /// @brief Virtual method which is invoked after the controller successfully
-    /// establishes BIND10 connectivity.  It provides an opportunity for the
-    /// derivation to execute any custom behavior associated with session
-    /// establishment.
-    ///
-    /// Note, it is not called  when running stand-alone.
-    ///
-    /// @throw should throw a DControllerBaseError if it fails.
-    virtual void onSessionConnect(){};
-
-    /// @brief Virtual method which is invoked as the first action taken when
-    /// the controller is terminating the session(s) with BIND10.  It provides
-    /// an opportunity for the derivation to execute any custom behavior
-    /// associated with session termination.
-    ///
-    /// Note, it is not called  when running stand-alone.
-    ///
-    /// @throw should throw a DControllerBaseError if it fails.
-    virtual void onSessionDisconnect(){};
-
     /// @brief Virtual method which can be used to contribute derivation
     /// specific usage text.  It is invoked by the usage() method under
     /// invalid usage conditions.
@@ -340,40 +302,12 @@ protected:
 
     /// @brief Virtual method which returns a string containing the option
     /// letters for any custom command line options supported by the derivation.
-    /// These are added to the stock options of "s" and "v" during command
+    /// These are added to the stock options of "c" and "v" during command
     /// line interpretation.
     ///
     /// @return returns a string containing the custom option letters.
     virtual const std::string getCustomOpts() const {
         return ("");
-    }
-
-    /// @brief Fetches the name of the application under control.
-    ///
-    /// @return returns the controller service name string
-    const std::string getAppName() const {
-        return (app_name_);
-    }
-
-    /// @brief Fetches the name of the application executable.
-    ///
-    /// @return returns the controller logger name string
-    const std::string getBinName() const {
-        return (bin_name_);
-    }
-
-    /// @brief Supplies whether or not the controller is in stand alone mode.
-    ///
-    /// @return returns true if in stand alone mode, false otherwise
-    bool isStandAlone() const {
-        return (stand_alone_);
-    }
-
-    /// @brief Method for enabling or disabling stand alone mode.
-    ///
-    /// @param value is the new value to assign the flag.
-    void setStandAlone(bool value) {
-        stand_alone_ = value;
     }
 
     /// @brief Supplies whether or not verbose logging is enabled.
@@ -397,7 +331,7 @@ protected:
         return (io_service_);
     }
 
-    /// @brief Getter for fetching the name of the controller's BIND10 spec
+    /// @brief Getter for fetching the name of the controller's config spec
     /// file.
     ///
     /// @return returns the file name string.
@@ -405,7 +339,7 @@ protected:
         return (spec_file_name_);
     }
 
-    /// @brief Setter for setting the name of the controller's BIND10 spec file.
+    /// @brief Setter for setting the name of the controller's config spec file.
     ///
     /// @param spec_file_name the file name string.
     void setSpecFileName(const std::string& spec_file_name) {
@@ -428,14 +362,13 @@ protected:
     /// instance a second time.
     static void setController(const DControllerBasePtr& controller);
 
-private:
     /// @brief Processes the command line arguments. It is the first step
     /// taken after the controller has been launched.  It combines the stock
     /// list of options with those returned by getCustomOpts(), and uses
     /// cstdlib's getopt to loop through the command line.  The stock options
     /// It handles stock options directly, and passes any custom options into
     /// the customOption method.  Currently there are only two stock options
-    /// -s for stand alone mode, and -v for verbose logging.
+    /// -c for specifying the configuration file, and -v for verbose logging.
     ///
     /// @param argc  is the number of command line arguments supplied
     /// @param argv  is the array of string (char *) command line arguments
@@ -453,18 +386,6 @@ private:
     /// if there is a failure creating or initializing the application process.
     void initProcess();
 
-    /// @brief Establishes connectivity with BIND10.  This method is used
-    /// invoked during launch, if running in integrated mode, following
-    /// successful process initialization.  It is responsible for establishing
-    /// the BIND10 control and config sessions. During the session creation,
-    /// it passes in the controller's IOService and the callbacks for command
-    /// directives and config events.  Lastly, it will invoke the onConnect
-    /// method providing the derivation an opportunity to execute any custom
-    /// logic associated with session establishment.
-    ///
-    /// @throw the BIND10 framework may throw std::exceptions.
-    void establishSession();
-
     /// @brief Invokes the application process's event loop,(DBaseProcess::run).
     /// It is called during launch only after successfully completing the
     /// requested setup: command line parsing, application initialization,
@@ -476,15 +397,6 @@ private:
     // @throw throws DControllerBaseError or indirectly DProcessBaseError
     void runProcess();
 
-    /// @brief Terminates connectivity with BIND10. This method is invoked
-    /// in integrated mode after the application event loop has exited. It
-    /// first calls the onDisconnect method providing the derivation an
-    /// opportunity to execute custom logic if needed, and then terminates the
-    /// BIND10 config and control sessions.
-    ///
-    /// @throw the BIND10 framework may throw std:exceptions.
-    void disconnectSession();
-
     /// @brief Initiates shutdown procedure.  This method is invoked
     /// by executeCommand in response to the shutdown command. It will invoke
     /// the application process's shutdown method which causes the process to
@@ -495,12 +407,24 @@ private:
     /// until the process has halted.  Rather it is used to convey the
     /// need to shutdown.  A successful return indicates that the shutdown
     /// has successfully commenced, but does not indicate that the process
-    /// has actually exited. 
+    /// has actually exited.
     ///
     /// @return returns an Element that contains the results of shutdown
     /// command composed of an integer status value (0 means successful,
     /// non-zero means failure), and a string explanation of the outcome.
-    isc::data::ConstElementPtr shutdown(isc::data::ConstElementPtr args);
+    isc::data::ConstElementPtr shutdownProcess(isc::data::ConstElementPtr args);
+
+    /// @brief Fetches the name of the configuration file
+    ///
+    /// @return the configuration file name as a string
+    virtual std::string getConfigFileName();
+
+    /// @brief Fetches the current process
+    ///
+    /// @return the a pointer to the current process instance.
+    DProcessBasePtr getProcess() {
+        return (process_);
+    }
 
     /// @brief Prints the program usage text to std error.
     ///
@@ -509,23 +433,20 @@ private:
     void usage(const std::string& text);
 
 private:
-    /// @brief Display name of the service under control. This name
-    /// appears in log statements.
+    /// @brief Name of the service under control.
+    /// This name is used as the configuration module name and appears in log
+    /// statements.
     std::string app_name_;
 
-    /// @brief Name of the service executable. By convention this matches
-    /// the BIND10 module name. It is also used to establish the logger
-    /// name.
+    /// @brief Name of the service executable.
+    /// By convention this matches the executable nam. It is also used to
+    /// establish the logger name.
     std::string bin_name_;
-
-    /// @brief Indicates if the controller stand alone mode is enabled. When
-    /// enabled, the controller will not establish connectivity with BIND10.
-    bool stand_alone_;
 
     /// @brief Indicates if the verbose logging mode is enabled.
     bool verbose_;
 
-    /// @brief The absolute file name of the BIND10 spec file.
+    /// @brief The absolute file name of the JSON spec file.
     std::string spec_file_name_;
 
     /// @brief Pointer to the instance of the process.
@@ -536,12 +457,6 @@ private:
 
     /// @brief Shared pointer to an IOService object, used for ASIO operations.
     IOServicePtr io_service_;
-
-    /// @brief Helper session object that represents raw connection to msgq.
-    SessionPtr cc_session_;
-
-    /// @brief Session that receives configuration and commands.
-    ModuleCCSessionPtr config_session_;
 
     /// @brief Singleton instance value.
     static DControllerBasePtr controller_;
