@@ -50,12 +50,12 @@ BUILT_SOURCES = spec_config.h d2_messages.h d2_messages.cc
 pkglibexec_PROGRAMS = b10-dhcp-ddns
 
 b10_dhcp_ddns_SOURCES  = main.cc
+b10_dhcp_ddns_SOURCES += d_process.h
+b10_dhcp_ddns_SOURCES += d_controller.cc d_controller.h
+b10_dhcp_ddns_SOURCES += d_cfg_mgr.cc d_cfg_mgr.h
 b10_dhcp_ddns_SOURCES += d2_asio.h
 b10_dhcp_ddns_SOURCES += d2_log.cc d2_log.h
 b10_dhcp_ddns_SOURCES += d2_process.cc d2_process.h
-b10_dhcp_ddns_SOURCES += d_controller.cc d_controller.h
-b10_dhcp_ddns_SOURCES += d2_controller.cc d2_controller.h
-b10_dhcp_ddns_SOURCES += d_cfg_mgr.cc d_cfg_mgr.h
 b10_dhcp_ddns_SOURCES += d2_config.cc d2_config.h
 b10_dhcp_ddns_SOURCES += d2_cfg_mgr.cc d2_cfg_mgr.h
 b10_dhcp_ddns_SOURCES += d2_queue_mgr.cc d2_queue_mgr.h
@@ -68,6 +68,14 @@ b10_dhcp_ddns_SOURCES += nc_add.cc nc_add.h
 b10_dhcp_ddns_SOURCES += nc_remove.cc nc_remove.h
 b10_dhcp_ddns_SOURCES += nc_trans.cc nc_trans.h
 b10_dhcp_ddns_SOURCES += state_model.cc state_model.h
+
+if CONFIG_BACKEND_BUNDY
+b10_dhcp_ddns_SOURCES += bundy_d2_controller.cc bundy_d2_controller.h
+else
+if CONFIG_BACKEND_JSON
+b10_dhcp_ddns_SOURCES += d2_controller.cc d2_controller.h
+endif
+endif
 
 nodist_b10_dhcp_ddns_SOURCES = d2_messages.h d2_messages.cc
 EXTRA_DIST += d2_messages.mes

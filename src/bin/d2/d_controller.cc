@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,6 +14,7 @@
 
 
 #include <d2/d2_log.h>
+#include <config/ccsession.h>
 #include <d2/d_controller.h>
 #include <exceptions/exceptions.h>
 #include <log/logger_support.h>
@@ -27,11 +28,10 @@ DControllerBasePtr DControllerBase::controller_;
 
 // Note that the constructor instantiates the controller's primary IOService.
 DControllerBase::DControllerBase(const char* app_name, const char* bin_name)
-    : app_name_(app_name), bin_name_(bin_name), stand_alone_(false),
+    : app_name_(app_name), bin_name_(bin_name),
       verbose_(false), spec_file_name_(""),
       io_service_(new isc::asiolink::IOService()){
 }
-
 
 void
 DControllerBase::setController(const DControllerBasePtr& controller) {
@@ -47,6 +47,7 @@ DControllerBase::setController(const DControllerBasePtr& controller) {
 
 void
 DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
+
     // Step 1 is to parse the command line arguments.
     try {
         parseArgs(argc, argv);
@@ -59,11 +60,7 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
     // replace an instance of unit test specific logger.
     if (!test_mode) {
         // Now that we know what the mode flags are, we can init logging.
-        // If standalone is enabled, do not buffer initial log messages
-        isc::log::initLogger(bin_name_,
-                             ((verbose_ && stand_alone_)
-                              ? isc::log::DEBUG : isc::log::INFO),
-                             isc::log::MAX_DEBUG_LEVEL, NULL, !stand_alone_);
+        Daemon::loggerInit(bin_name_.c_str(), verbose_);
     }
 
     LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DCTL_STARTING)
@@ -78,18 +75,17 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
                    "Application Process initialization failed: " << ex.what());
     }
 
-    // Next we connect if we are running integrated.
-    if (stand_alone_) {
-        LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DCTL_STANDALONE)
-                  .arg(app_name_);
-    } else {
-        try {
-            establishSession();
-        } catch (const std::exception& ex) {
-            LOG_FATAL(dctl_logger, DCTL_SESSION_FAIL).arg(ex.what());
-            isc_throw (SessionStartError,
-                       "Session start up failed: " << ex.what());
-        }
+    LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DCTL_STANDALONE).arg(app_name_);
+
+    // Step 3 is to load configuration from file.
+    int rcode;
+    isc::data::ConstElementPtr comment
+        = isc::config::parseAnswer(rcode, configFromFile());
+    if (rcode != 0) {
+        LOG_FATAL(dctl_logger, DCTL_CONFIG_FILE_LOAD_FAIL)
+                  .arg(app_name_).arg(comment->stringValue());
+        isc_throw (ProcessInitError, "Could Not load configration file: "
+                   << comment->stringValue());
     }
 
     // Everything is clear for launch, so start the application's
@@ -103,21 +99,9 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
                    "Application process event loop failed: " << ex.what());
     }
 
-    // If running integrated, disconnect.
-    if (!stand_alone_) {
-        try {
-            disconnectSession();
-        } catch (const std::exception& ex) {
-            LOG_ERROR(dctl_logger, DCTL_DISCONNECT_FAIL)
-                      .arg(app_name_).arg(ex.what());
-            isc_throw (SessionEndError, "Session end failed: " << ex.what());
-        }
-    }
-
     // All done, so bail out.
     LOG_INFO(dctl_logger, DCTL_STOPPING).arg(app_name_);
 }
-
 
 void
 DControllerBase::parseArgs(int argc, char* argv[])
@@ -128,7 +112,7 @@ DControllerBase::parseArgs(int argc, char* argv[])
     int ch;
     opterr = 0;
     optind = 1;
-    std::string opts(":vs" + getCustomOpts());
+    std::string opts("vc:" + getCustomOpts());
     while ((ch = getopt(argc, argv, opts.c_str())) != -1) {
         switch (ch) {
         case 'v':
@@ -136,9 +120,13 @@ DControllerBase::parseArgs(int argc, char* argv[])
             verbose_ = true;
             break;
 
-        case 's':
-            // Enables stand alone or "BINDLESS" operation.
-            stand_alone_ = true;
+        case 'c':
+            // config file name
+            if (optarg == NULL) {
+                isc_throw(InvalidUsage, "configuration file name missing");
+            }
+
+            Daemon::init(optarg);
             break;
 
         case '?': {
@@ -166,6 +154,28 @@ DControllerBase::parseArgs(int argc, char* argv[])
     if (argc > optind) {
         isc_throw(InvalidUsage, "extraneous command line information");
     }
+}
+
+isc::data::ConstElementPtr
+DControllerBase::configHandler(isc::data::ConstElementPtr new_config) {
+    LOG_DEBUG(dctl_logger, DBGLVL_COMMAND, DCTL_CONFIG_UPDATE)
+              .arg(controller_->getAppName()).arg(new_config->str());
+
+    // Invoke the instance method on the controller singleton.
+    return (controller_->updateConfig(new_config));
+}
+
+// Static callback which invokes non-static handler on singleton
+isc::data::ConstElementPtr
+DControllerBase::commandHandler(const std::string& command,
+                                isc::data::ConstElementPtr args) {
+
+    LOG_DEBUG(dctl_logger, DBGLVL_COMMAND, DCTL_COMMAND_RECEIVED)
+        .arg(controller_->getAppName()).arg(command)
+        .arg(args ? args->str() : "(no args)");
+
+    // Invoke the instance method on the controller singleton.
+    return (controller_->executeCommand(command, args));
 }
 
 bool
@@ -197,51 +207,40 @@ DControllerBase::initProcess() {
     process_->init();
 }
 
-void
-DControllerBase::establishSession() {
-    LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DCTL_CCSESSION_STARTING)
-              .arg(app_name_).arg(spec_file_name_);
+isc::data::ConstElementPtr
+DControllerBase::configFromFile() {
+    isc::data::ConstElementPtr module_config;
 
-    // Create the BIND10 command control session with the our IOService.
-    cc_session_ = SessionPtr(new isc::cc::Session(
-                             io_service_->get_io_service()));
+    try {
+        std::string config_file = getConfigFileName();
+        if (config_file.empty()) {
+            // Basic sanity check: file name must not be empty.
+            isc_throw(BadValue, "JSON configuration file not specified. Please "
+                                "use -c command line option.");
+        }
 
-    // Create the BIND10 config session with the stub configuration handler.
-    // This handler is internally invoked by the constructor and on success
-    // the constructor updates the current session with the configuration that
-    // had been committed in the previous session. If we do not install
-    // the dummy handler, the previous configuration would be lost.
-    config_session_ = ModuleCCSessionPtr(new isc::config::ModuleCCSession(
-                                         spec_file_name_, *cc_session_,
-                                         dummyConfigHandler, commandHandler,
-                                         false));
-    // Enable configuration even processing.
-    config_session_->start();
+        // Read contents of the file and parse it as JSON
+        isc::data::ConstElementPtr whole_config =
+            isc::data::Element::fromJSONFile(config_file, true);
 
-    // We initially create ModuleCCSession() with a dummy configHandler, as
-    // the session module is too eager to send partial configuration.
-    // Replace the dummy config handler with the real handler.
-    config_session_->setConfigHandler(configHandler);
-
-    // Call the real configHandler with the full configuration retrieved
-    // from the config session.
-    isc::data::ConstElementPtr answer = configHandler(
-                                            config_session_->getFullConfig());
-
-    // Parse the answer returned from the configHandler.  Log the error but
-    // keep running. This provides an opportunity for the user to correct
-    // the configuration dynamically.
-    int ret = 0;
-    isc::data::ConstElementPtr comment = isc::config::parseAnswer(ret, answer);
-    if (ret) {
-        LOG_ERROR(dctl_logger, DCTL_CONFIG_LOAD_FAIL)
-                  .arg(app_name_).arg(comment->str());
+        // Extract derivation-specific portion of the configuration.
+        module_config = whole_config->get(getAppName());
+        if (!module_config) {
+            isc_throw(BadValue, "Config file " << config_file <<
+                                " does not include '" <<
+                                 getAppName() << "' entry.");
+        }
+    } catch (const std::exception& ex) {
+        // build an error result
+        isc::data::ConstElementPtr error =
+            isc::config::createAnswer(1,
+                std::string("Configuration parsing failed: ") + ex.what());
+        return (error);
     }
 
-    // Lastly, call onConnect. This allows deriving class to execute custom
-    // logic predicated by session connect.
-    onSessionConnect();
+    return (updateConfig(module_config));
 }
+
 
 void
 DControllerBase::runProcess() {
@@ -256,105 +255,14 @@ DControllerBase::runProcess() {
     process_->run();
 }
 
-void DControllerBase::disconnectSession() {
-    LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DCTL_CCSESSION_ENDING)
-              .arg(app_name_);
-
-    // Call virtual onDisconnect. Allows deriving class to execute custom
-    // logic prior to session loss.
-    onSessionDisconnect();
-
-    // Destroy the BIND10 config session.
-    if (config_session_) {
-        config_session_.reset();
-    }
-
-    // Destroy the BIND10 command and control session.
-    if (cc_session_) {
-        cc_session_->disconnect();
-        cc_session_.reset();
-    }
-}
-
-isc::data::ConstElementPtr
-DControllerBase::dummyConfigHandler(isc::data::ConstElementPtr) {
-    LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DCTL_CONFIG_STUB)
-             .arg(controller_->getAppName());
-    return (isc::config::createAnswer(0, "Configuration accepted."));
-}
-
-isc::data::ConstElementPtr
-DControllerBase::configHandler(isc::data::ConstElementPtr new_config) {
-
-    LOG_DEBUG(dctl_logger, DBGLVL_COMMAND, DCTL_CONFIG_UPDATE)
-              .arg(controller_->getAppName()).arg(new_config->str());
-
-    // Invoke the instance method on the controller singleton.
-    return (controller_->updateConfig(new_config));
-}
-
-// Static callback which invokes non-static handler on singleton
-isc::data::ConstElementPtr
-DControllerBase::commandHandler(const std::string& command,
-                                isc::data::ConstElementPtr args) {
-
-    LOG_DEBUG(dctl_logger, DBGLVL_COMMAND, DCTL_COMMAND_RECEIVED)
-        .arg(controller_->getAppName()).arg(command)
-        .arg(args ? args->str() : "(no args)");
-
-    // Invoke the instance method on the controller singleton.
-    return (controller_->executeCommand(command, args));
-}
-
+// Instance method for handling new config
 isc::data::ConstElementPtr
 DControllerBase::updateConfig(isc::data::ConstElementPtr new_config) {
-    isc::data::ConstElementPtr full_config;
-    if (stand_alone_) {
-        // @todo Until there is a configuration manager to provide retrieval
-        // we'll just assume the incoming config is the full configuration set.
-        // It may also make more sense to isolate the controller from the
-        // configuration manager entirely. We could do something like
-        // process_->getFullConfig() here for stand-alone mode?
-        full_config = new_config;
-    } else {
-        if (!config_session_) {
-            // That should never happen as we install config_handler
-            // after we instantiate the server.
-            isc::data::ConstElementPtr answer =
-                    isc::config::createAnswer(1, "Configuration rejected,"
-                                              " Session has not started.");
-            return (answer);
-        }
-
-        // Let's get the existing configuration.
-        full_config = config_session_->getFullConfig();
-    }
-
-    // The configuration passed to this handler function is partial.
-    // In other words, it just includes the values being modified.
-    // In the same time, there may be dependencies between various
-    // configuration parsers. For example: the option value can
-    // be set if the definition of this option is set. If someone removes
-    // an existing option definition then the partial configuration that
-    // removes that definition is triggered while a relevant option value
-    // may remain configured. This eventually results in the
-    // configuration being in the inconsistent state.
-    // In order to work around this problem we need to merge the new
-    // configuration with the existing (full) configuration.
-
-    // Let's create a new object that will hold the merged configuration.
-    boost::shared_ptr<isc::data::MapElement>
-                            merged_config(new isc::data::MapElement());
-
-    // Merge an existing and new configuration.
-    merged_config->setValue(full_config->mapValue());
-    isc::data::merge(merged_config, new_config);
-
-    // Send the merged configuration to the application.
-    return (process_->configure(merged_config));
+    return (process_->configure(new_config));
 }
 
 
+// Instance method for executing commands
 isc::data::ConstElementPtr
 DControllerBase::executeCommand(const std::string& command,
                             isc::data::ConstElementPtr args) {
@@ -364,7 +272,7 @@ DControllerBase::executeCommand(const std::string& command,
     // as it may be supported there.
     isc::data::ConstElementPtr answer;
     if (command.compare(SHUT_DOWN_COMMAND) == 0) {
-        answer = shutdown(args);
+        answer = shutdownProcess(args);
     } else {
         // It wasn't shutdown, so may be a custom controller command.
         int rcode = 0;
@@ -390,10 +298,10 @@ DControllerBase::customControllerCommand(const std::string& command,
 }
 
 isc::data::ConstElementPtr
-DControllerBase::shutdown(isc::data::ConstElementPtr args) {
+DControllerBase::shutdownProcess(isc::data::ConstElementPtr args) {
     if (process_) {
         return (process_->shutdown(args));
-    } 
+    }
 
     // Not really a failure, but this condition is worth noting. In reality
     // it should be pretty hard to cause this.
@@ -408,16 +316,31 @@ DControllerBase::usage(const std::string & text)
         std::cerr << "Usage error: " << text << std::endl;
     }
 
-    std::cerr << "Usage: " << bin_name_ <<  std::endl;
-    std::cerr << "  -v: verbose output" << std::endl;
-    std::cerr << "  -s: stand-alone mode (don't connect to BIND10)"
-              << std::endl;
+    std::cerr << "Usage: " << bin_name_ <<  std::endl
+              << "  -c <config file name> : mandatory,"
+              <<   " specifies name of configuration file " << std::endl
+              << "  -v: optional, verbose output " << std::endl;
 
+    // add any derivation specific usage
     std::cerr << getUsageText() << std::endl;
 }
 
 DControllerBase::~DControllerBase() {
 }
 
+std::string
+DControllerBase::getConfigFileName() {
+    return (Daemon::getConfigFile());
+}
+
 }; // namespace isc::d2
+
+// Provide an implementation until we figure out a better way to do this.
+void
+dhcp::Daemon::loggerInit(const char* log_name, bool verbose) {
+    isc::log::initLogger(log_name,
+                         (verbose ? isc::log::DEBUG : isc::log::INFO),
+                         isc::log::MAX_DEBUG_LEVEL, NULL, true);
+}
+
 }; // namespace isc

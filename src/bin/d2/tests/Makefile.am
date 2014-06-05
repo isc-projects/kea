@@ -54,10 +54,9 @@ TESTS += d2_unittests
 d2_unittests_SOURCES = ../d2_asio.h
 d2_unittests_SOURCES += ../d2_log.h ../d2_log.cc
 d2_unittests_SOURCES += ../d_process.h
-d2_unittests_SOURCES += ../d_controller.cc ../d2_controller.h
-d2_unittests_SOURCES += ../d2_process.cc ../d2_process.h
-d2_unittests_SOURCES += ../d2_controller.cc ../d2_controller.h
+d2_unittests_SOURCES += ../d_controller.cc ../d_controller.h
 d2_unittests_SOURCES += ../d_cfg_mgr.cc ../d_cfg_mgr.h
+d2_unittests_SOURCES += ../d2_process.cc ../d2_process.h
 d2_unittests_SOURCES += ../d2_config.cc ../d2_config.h
 d2_unittests_SOURCES += ../d2_cfg_mgr.cc ../d2_cfg_mgr.h
 d2_unittests_SOURCES += ../d2_queue_mgr.cc ../d2_queue_mgr.h
@@ -73,8 +72,6 @@ d2_unittests_SOURCES += ../state_model.cc ../state_model.h
 d2_unittests_SOURCES += d_test_stubs.cc d_test_stubs.h
 d2_unittests_SOURCES += d2_unittests.cc
 d2_unittests_SOURCES += d2_process_unittests.cc
-d2_unittests_SOURCES += d_controller_unittests.cc
-d2_unittests_SOURCES += d2_controller_unittests.cc
 d2_unittests_SOURCES += d_cfg_mgr_unittests.cc
 d2_unittests_SOURCES += d2_cfg_mgr_unittests.cc
 d2_unittests_SOURCES += d2_queue_mgr_unittests.cc
@@ -89,6 +86,17 @@ d2_unittests_SOURCES += nc_test_utils.cc nc_test_utils.h
 d2_unittests_SOURCES += nc_trans_unittests.cc
 d2_unittests_SOURCES += state_model_unittests.cc
 nodist_d2_unittests_SOURCES = ../d2_messages.h ../d2_messages.cc
+
+if CONFIG_BACKEND_BUNDY
+d2_unittests_SOURCES += ../bundy_d2_controller.cc ../bundy_d2_controller.h
+d2_unittests_SOURCES += bundy_d2_controller_unittests.cc
+else
+if CONFIG_BACKEND_JSON
+d2_unittests_SOURCES += ../d2_controller.cc ../d2_controller.h
+d2_unittests_SOURCES += d2_controller_unittests.cc
+d2_unittests_SOURCES += d_controller_unittests.cc
+endif
+endif
 
 d2_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 d2_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
