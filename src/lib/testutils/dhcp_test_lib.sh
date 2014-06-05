@@ -182,7 +182,8 @@ send_signal() {
     # Get Kea pid.
     get_pids
     if [ ${_GET_PIDS_NUM} -ne 1 ]; then
-        printf "ERROR: expected one Kea process to be started. Found %d processes started.\n" ${_GET_PIDS_NUM}
+        printf "ERROR: expected one Kea process to be started.\
+ Found %d processes started.\n" ${_GET_PIDS_NUM}
         clean_exit 1
     fi
     printf "Sending signal ${sig} to Kea process (pid=%s).\n" ${_GET_PIDS}
