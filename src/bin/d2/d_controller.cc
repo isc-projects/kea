@@ -338,9 +338,12 @@ DControllerBase::getConfigFileName() {
 // Provide an implementation until we figure out a better way to do this.
 void
 dhcp::Daemon::loggerInit(const char* log_name, bool verbose) {
-    isc::log::initLogger(log_name,
-                         (verbose ? isc::log::DEBUG : isc::log::INFO),
-                         isc::log::MAX_DEBUG_LEVEL, NULL, true);
+    setenv("B10_LOCKFILE_DIR_FROM_BUILD", "/tmp", 1);
+    setenv("B10_LOGGER_ROOT", log_name, 0);
+    setenv("B10_LOGGER_SEVERITY", (verbose ? "DEBUG":"INFO"), 0);
+    setenv("B10_LOGGER_DBGLEVEL", "99", 0);
+    setenv("B10_LOGGER_DESTINATION",  "stdout", 0);
+    isc::log::initLogger();
 }
 
 }; // namespace isc
