@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,6 +24,10 @@
 #include <d2/d_cfg_mgr.h>
 
 #include <gtest/gtest.h>
+
+#include <fstream>
+#include <iostream>
+#include <sstream>
 
 namespace isc {
 namespace d2 {
@@ -293,6 +297,7 @@ public:
     /// a clean start between tests.
     virtual ~DControllerTest() {
         getController().reset();
+        static_cast<void>(unlink(CFG_TEST_FILE));
     }
 
     /// @brief Convenience method that destructs and then recreates the
@@ -361,24 +366,6 @@ public:
         return (getController()->io_service_);
     }
 
-    /// @brief Compares stand alone flag with the given value.
-    ///
-    /// @param value
-    ///
-    /// @return returns true if the stand alone flag is equal to the given
-    /// value.
-    bool checkStandAlone(bool value) {
-        return (getController()->isStandAlone() == value);
-    }
-
-    /// @brief Sets the controller's stand alone flag to the given value.
-    ///
-    /// @param value is the new value to assign.
-    ///
-    void setStandAlone(bool value) {
-        getController()->setStandAlone(value);
-    }
-
     /// @brief Compares verbose flag with the given value.
     ///
     /// @param value
@@ -386,6 +373,15 @@ public:
     /// @return returns true if the verbose flag is equal to the given value.
     bool checkVerbose(bool value) {
         return (getController()->isVerbose() == value);
+    }
+
+    /// @brief Compares configuration file name with the given value.
+    ///
+    /// @param value file name to compare against
+    ///
+    /// @return returns true if the verbose flag is equal to the given value.
+    bool checkConfigFileName(const std::string& value) {
+        return (getController()->getConfigFileName() == value);
     }
 
     /// @Wrapper to invoke the Controller's parseArgs method.  Please refer to
@@ -400,23 +396,11 @@ public:
         getController()->initProcess();
     }
 
-    /// @Wrapper to invoke the Controller's establishSession method.  Please
-    /// refer to DControllerBase::establishSession for details.
-    void establishSession() {
-        getController()->establishSession();
-    }
-
     /// @Wrapper to invoke the Controller's launch method.  Please refer to
     /// DControllerBase::launch for details.
     void launch(int argc, char* argv[]) {
         optind = 1;
         getController()->launch(argc, argv, true);
-    }
-
-    /// @Wrapper to invoke the Controller's disconnectSession method.  Please
-    /// refer to DControllerBase::disconnectSession for details.
-    void disconnectSession() {
-        getController()->disconnectSession();
     }
 
     /// @Wrapper to invoke the Controller's updateConfig method.  Please
@@ -444,6 +428,40 @@ public:
     static void genFatalErrorCallback() {
         isc_throw (DProcessBaseError, "simulated fatal error");
     }
+
+    /// @brief writes specified content to a well known file
+    ///
+    /// Writes given JSON content to CFG_TEST_FILE. It will wrap the
+    /// content within a JSON element whose name is equal to the controller's
+    /// app name or the given module name if not blank:
+    ///
+    /// @code
+    ///    { "<app_name>" : <content> }
+    /// @endcod
+    ///
+    /// suffix the content within a JSON element with the given module
+    /// name or  wrapped by a JSON
+    /// element  . Tests will
+    /// attempt to read that file.
+    ///
+    /// @param content JSON text to be written to file
+    /// @param module_name  content content to be written to file
+    void writeFile(const std::string& content,
+                   const std::string module_name = "") {
+        std::ofstream out(CFG_TEST_FILE, std::ios::trunc);
+        ASSERT_TRUE(out.is_open());
+
+        out << "{ \"" << (!module_name.empty() ? module_name :
+                          getController()->getAppName())
+             << "\": " << std::endl;
+
+        out << content;
+        out << " } " << std::endl;
+        out.close();
+    }
+
+    /// Name of a config file used during tests
+    static const char* CFG_TEST_FILE;
 };
 
 /// @brief a collection of elements that store uint32 values

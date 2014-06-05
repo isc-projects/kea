@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -22,11 +22,10 @@ namespace isc {
 namespace d2 {
 
 /// @brief Defines the application name, this is passed into base class
-/// and appears in log statements.
-const char* D2Controller::d2_app_name_ = "DHCP-DDNS";
+/// it may be used to locate configuration data and appears in log statement.
+const char* D2Controller::d2_app_name_ = "DhcpDdns";
 
 /// @brief Defines the executable name. This is passed into the base class
-/// by convention this should match the BIND10 module name.
 const char* D2Controller::d2_bin_name_ = "b10-dhcp-ddns";
 
 DControllerBasePtr&
@@ -51,7 +50,7 @@ DProcessBase* D2Controller::createProcess() {
 
 D2Controller::D2Controller()
     : DControllerBase(d2_app_name_, d2_bin_name_) {
-    // set the BIND10 spec file either from the environment or
+    // set the spec file either from the environment or
     // use the production value.
     if (getenv("B10_FROM_BUILD")) {
         setSpecFileName(std::string(getenv("B10_FROM_BUILD")) +
