@@ -78,7 +78,7 @@ int SignalSetTest::signum_ = -1;
 /// Check that the signals are recorded by the signal handlers.
 TEST_F(SignalSetTest, twoSignals) {
     // Register handlers for two signals.
-    signal_set_.reset(new SignalSet(SIGHUP, SIGINT));
+    ASSERT_NO_THROW(signal_set_.reset(new SignalSet(SIGHUP, SIGINT)));
     // Send SIGHUP signal to the process.
     ASSERT_EQ(0, raise(SIGHUP));
     // The SIGHUP should be the next one in the queue to be handled.
