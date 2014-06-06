@@ -101,7 +101,9 @@ void
 SignalSet::add(const int sig) {
     insert(sig);
     struct sigaction sa;
+    memset(&sa, 0, sizeof(sa));
     sa.sa_handler = internalHandler;
+    sigfillset(&sa.sa_mask);
     if (sigaction(sig, &sa, 0) < 0) {
         erase(sig);
         isc_throw(SignalSetError, "failed to register a signal handler for"
@@ -209,7 +211,9 @@ SignalSet::remove(const int sig) {
     // Unregister only if we own this signal.
     if (local_signals_.find(sig) != local_signals_.end()) {
         struct sigaction sa;
+        memset(&sa, 0, sizeof(sa));
         sa.sa_handler = SIG_DFL;
+        sigfillset(&sa.sa_mask);
         if (sigaction(sig, &sa, 0) < 0) {
             isc_throw(SignalSetError, "unable to restore original signal"
                       " handler for signal: " << sig);
