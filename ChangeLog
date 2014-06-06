@@ -1,3 +1,10 @@
+790.	[func]		marcin
+	DHCPv4 server: Implemented dynamic reconfiguration of the server,
+	triggered when the SIGHUP signal is received by the server's
+	process. Also, server performs a graceful shut down when SIGINT
+	or SIGTERM signal is received.
+	(Trac #3405, git dd0270bd91cf8fc958b8b388950d343d311ee99e)
+
 789.	[bug]		marcin
 	DHCPv4 server sends Renewal Time (58) and Rebinding Time (59)
 	options to the client when the appropriate timers are set
