@@ -36,7 +36,7 @@ public:
 
     /// @brief Constructor
     D2Dhcpv4Srv()
-        : Dhcpv4Srv(0, "type=memfile", false, false), error_count_(0) {
+        : Dhcpv4Srv(0, false, false), error_count_(0) {
     }
 
     /// @brief virtual Destructor.
