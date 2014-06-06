@@ -13,7 +13,7 @@
 # PERFORMANCE OF THIS SOFTWARE.
 
 # Test name
-TEST_NAME="DynamicReconfiguration"
+TEST_NAME="DHCPv6.dynamicReconfiguration"
 # Path to the temporary configuration file.
 CFG_FILE="test_config.json"
 # Path to the Kea log file.
@@ -90,7 +90,8 @@ fi
 # of configuration failure).
 get_pids
 if [ ${_GET_PIDS_NUM} -ne 1 ]; then
-    printf "ERROR: expected one Kea process to be started. Found %d processes started.\n" ${_GET_PIDS_NUM}
+    printf "ERROR: expected one Kea process to be started. Found %d processes\
+ started.\n" ${_GET_PIDS_NUM}
     clean_exit 1
 fi
 
@@ -121,8 +122,8 @@ if [ ${_GET_RECONFIGS} -ne 1 ]; then
     printf "ERROR: server has been reconfigured despite bogus configuration.\n"
     clean_exit 1
 elif [ ${_GET_RECONFIG_ERRORS} -ne 1 ]; then
-    printf "ERROR: server did not report reconfiguration error despite attempt" \
-        " to configure it with invalid configuration.\n"
+    printf "ERROR: server did not report reconfiguration error despite attempt\
+ to configure it with invalid configuration.\n"
     clean_exit 1
 fi
 

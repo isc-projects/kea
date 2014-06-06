@@ -83,13 +83,10 @@ public:
     /// root privileges.
     ///
     /// @param port specifies port number to listen on
-    /// @param dbconfig Lease manager configuration string.  The default
-    ///        of the "memfile" manager is used for testing.
     /// @param use_bcast configure sockets to support broadcast messages.
     /// @param direct_response_desired specifies if it is desired to
     /// use direct V4 traffic.
     Dhcpv4Srv(uint16_t port = DHCP4_SERVER_PORT,
-              const char* dbconfig = "type=memfile universe=4",
               const bool use_bcast = true,
               const bool direct_response_desired = true);
 
