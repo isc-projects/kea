@@ -401,8 +401,8 @@ TEST_F(Dhcpv4SrvTest, basic) {
 
     // Check that the base class can be instantiated
     boost::scoped_ptr<Dhcpv4Srv> srv;
-    ASSERT_NO_THROW(srv.reset(new Dhcpv4Srv(DHCP4_SERVER_PORT + 10000, "type=memfile",
-                                            false, false)));
+    ASSERT_NO_THROW(srv.reset(new Dhcpv4Srv(DHCP4_SERVER_PORT + 10000, false,
+                                            false)));
     srv.reset();
     // We have to close open sockets because further in this test we will
     // call the Dhcpv4Srv constructor again. This constructor will try to

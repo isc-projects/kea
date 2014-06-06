@@ -12,25 +12,17 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-if [ $# -ne 2 ]; then
-    printf "USAGE: dhcp6_shutdown_test.sh <test_name> <signal_num>\n"
-    exit 1
-fi
-
 # Test name
-TEST_NAME=$1
-# Signal number to be used for this test.
-SIG_NUM=$2
+TEST_NAME="DHCPv4.dynamicReconfiguration"
 # Path to the temporary configuration file.
 CFG_FILE="test_config.json"
 # Path to the Kea log file.
 LOG_FILE="test.log"
 # Kea configuration to be stored in the configuration file.
 CONFIG="{
-    \"Dhcp6\":
+    \"Dhcp4\":
     {
         \"interfaces\": [ ],
-        \"preferred-lifetime\": 3000,
         \"valid-lifetime\": 4000,
         \"renew-timer\": 1000,
         \"rebind-timer\": 2000,
@@ -39,16 +31,37 @@ CONFIG="{
             \"type\": \"memfile\",
             \"persist\": false
         },
-        \"subnet6\": [
+        \"subnet4\": [
         {
-            \"subnet\": \"2001:db8:1::/64\",
-            \"pool\": [ \"2001:db8:1::10-2001:db8:1::100\" ]
+            \"subnet\": \"10.0.0.0/8\",
+            \"pool\": [ \"10.0.0.10-10.0.0.100\" ]
+        } ]
+    }
+}"
+# Invalid configuration (negative valid-lifetime) to check that Kea
+# gracefully handles reconfiguration errors.
+CONFIG_INVALID="{
+    \"Dhcp4\":
+    {
+        \"interfaces\": [ ],
+        \"valid-lifetime\": -3,
+        \"renew-timer\": 1000,
+        \"rebind-timer\": 2000,
+        \"lease-database\":
+        {
+            \"type\": \"memfile\",
+            \"persist\": false
+        },
+        \"subnet4\": [
+        {
+            \"subnet\": \"10.0.0.0/8\",
+            \"pool\": [ \"10.0.0.10-10.0.0.100\" ]
         } ]
     }
 }"
 
 # Set the location of the executable.
-BIN="b10-dhcp6"
+BIN="b10-dhcp4"
 BIN_PATH=".."
 
 # Import common test library.
@@ -90,23 +103,61 @@ else
     printf "Server successfully configured.\n"
 fi
 
-# Send signal to Kea (SIGTERM, SIGINT etc.)
-send_signal ${SIG_NUM}
+# Now use invalid configuration.
+create_config "${CONFIG_INVALID}"
 
-# Wait up to 10s for the server's graceful shutdown. The graceful shut down
-# should be recorded in the log file with the appropriate message.
-wait_for_message 10 "DHCP6_SHUTDOWN" 1
-if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
-    printf "ERROR: Server did not record shutdown in the log.\n"
+# Try to reconfigure by sending SIGHUP
+send_signal 1
+
+# The configuration should fail and the error message should be there.
+wait_for_message 10 "DHCP4_CONFIG_LOAD_FAIL" 1
+
+# After receiving SIGHUP the server should try to reconfigure itself.
+# The configuration provided is invalid so it should result in
+# reconfiguration failure but the server should still be running.
+get_reconfigs
+if [ ${_GET_RECONFIGS} -ne 1 ]; then
+    printf "ERROR: server has been reconfigured despite bogus configuration.\n"
+    clean_exit 1
+elif [ ${_GET_RECONFIG_ERRORS} -ne 1 ]; then
+    printf "ERROR: server did not report reconfiguration error despite attempt\
+ to configure it with invalid configuration.\n"
     clean_exit 1
 fi
 
-# Server should have shut down.
+# Make sure the server is still operational.
 get_pids
-if [ ${_GET_PIDS_NUM} -ne 0 ]; then
-    printf "ERROR: Kea did not shut down after receiving signal.\n"\
- ${_GET_PIDS_NUM}
+if [ ${_GET_PIDS_NUM} -ne 1 ]; then
+    printf "ERROR: Kea process was killed when attempting reconfiguration.\n"
     clean_exit 1
 fi
 
+# Restore the good configuration.
+create_config "${CONFIG}"
+
+# Reconfigure the server with SIGHUP.
+send_signal 1
+
+# There should be two occurrences of the DHCP4_CONFIG_COMPLETE messages.
+# Wait for it up to 10s.
+wait_for_message 10 "DHCP4_CONFIG_COMPLETE" 2
+
+# After receiving SIGHUP the server should get reconfigured and the
+# reconfiguration should be noted in the log file. We should now
+# have two configurations logged in the log file.
+if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
+    printf "ERROR: server hasn't been reconfigured.\n"
+    clean_exit 1
+else
+    printf "Server successfully reconfigured.\n"
+fi
+
+# Make sure the server is still operational.
+get_pids
+if [ ${_GET_PIDS_NUM} -ne 1 ]; then
+    printf "ERROR: Kea process was killed when attempting reconfiguration.\n"
+    clean_exit 1
+fi
+
+# All ok. Shut down Kea and exit.
 clean_exit 0

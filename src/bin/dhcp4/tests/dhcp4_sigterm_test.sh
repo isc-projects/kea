@@ -12,5 +12,5 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Run a test that sends SIGINT to Kea and checks if it shuts down gracefully.
-$(dirname $0)/dhcp6_shutdown_test.sh "DHCPv6.sigint" 2
+# Run a test that sends SIGTERM to Kea and checks if it shuts down gracefully.
+$(dirname $0)/dhcp4_shutdown_test.sh "DHCPv4.sigterm" 15

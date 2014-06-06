@@ -77,11 +77,6 @@ change is committed by the administrator.
 A debug message indicating that the DHCPv4 server has received an
 updated configuration from the BIND 10 configuration system.
 
-% DHCP4_DB_BACKEND_STARTED lease database started (type: %1, name: %2)
-This informational message is printed every time DHCPv4 server is started
-and gives both the type and name of the database being used to store
-lease and other information.
-
 % DHCP4_DDNS_REQUEST_SEND_FAILED failed sending a request to b10-dhcp-ddns, error: %1,  ncr: %2
 This error message indicates that DHCP4 server attempted to send a DDNS
 update reqeust to the DHCP-DDNS server.  This is most likely a configuration or
@@ -96,6 +91,14 @@ by the Interface Manager until interface is enabled.
 This error message is logged when the attempt to compute DHCID for a specified
 lease has failed. The lease details and reason for failure is logged in the
 message.
+
+% DHCP4_DYNAMIC_RECONFIGURATION initate server reconfiguration using file: %1, after receiving SIGHUP signal
+This is the info message logged when the DHCPv4 server starts reconfiguration
+as a result of receiving SIGHUP signal.
+
+% DHCP4_DYNAMIC_RECONFIGURATION_FAIL dynamic server reconfiguration failed with file: %1
+This is an error message logged when the dynamic reconfiguration of the
+DHCP server failed.
 
 % DHCP4_EMPTY_HOSTNAME received empty hostname from the client, skipping processing of this option
 This debug message is issued when the server received an empty Hostname option
