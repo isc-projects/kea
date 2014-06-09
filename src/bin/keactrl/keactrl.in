@@ -35,6 +35,8 @@ log_info() {
     printf "INFO/keactrl: ${1}\n"
 }
 
+### Functions managing Kea processes ###
+
 # Returns a list of existing PIDs and a number of PIDs for the process
 # having a name specified as an argument to the function.
 get_pids() {
@@ -98,6 +100,8 @@ as another instance is already running."
         ${binary_path} ${args} &
     fi
 }
+
+### Script starts here ###
 
 command=
 if [ $# -ne 1 ]; then
