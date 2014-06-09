@@ -154,8 +154,7 @@ TEST_F(D2ControllerTest, launchNormalShutdown) {
 /// This really tests just the ability of the handlers to invoke the necessary
 /// chain of methods and handle error conditions. Configuration parsing and
 /// retrieval should be tested as part of the d2 configuration management
-/// implementation.  Note that this testing calls the configuration update event
-/// callback, configHandler, directly.
+/// implementation.
 /// This test verifies that:
 /// 1. A valid configuration yields a successful parse result.
 /// 2. That an application process error in configuration updating is handled
@@ -173,22 +172,21 @@ TEST_F(D2ControllerTest, configUpdateTests) {
                                 isc::data::Element::fromJSON(valid_d2_config);
 
     // Verify that given a valid config we get a successful update result.
-    answer = DControllerBase::configHandler(config_set);
+    answer = updateConfig(config_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(0, rcode);
 
     // Use an invalid configuration to verify parsing error return.
     std::string config = "{ \"bogus\": 1000 } ";
     config_set = isc::data::Element::fromJSON(config);
-    answer = DControllerBase::configHandler(config_set);
+    answer = updateConfig(config_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(1, rcode);
 }
 
 /// @brief Command execution tests.
 /// This really tests just the ability of the handler to invoke the necessary
-/// chain of methods and to handle error conditions. Note that this testing
-/// calls the executeCommand method directly.
+/// chain of methods and to handle error conditions.
 /// This test verifies that:
 /// 1. That an unrecognized command is detected and returns a status of
 /// d2::COMMAND_INVALID.
@@ -204,13 +202,13 @@ TEST_F(D2ControllerTest, executeCommandTests) {
 
     // Verify that an unknown command returns an COMMAND_INVALID response.
     std::string bogus_command("bogus");
-    answer = DControllerBase::commandHandler(bogus_command, arg_set);
+    answer = executeCommand(bogus_command, arg_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(COMMAND_INVALID, rcode);
 
     // Verify that shutdown command returns COMMAND_SUCCESS response.
     //answer = executeCommand(SHUT_DOWN_COMMAND, isc::data::ElementPtr());
-    answer = DControllerBase::commandHandler(SHUT_DOWN_COMMAND, arg_set);
+    answer = executeCommand(SHUT_DOWN_COMMAND, arg_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(COMMAND_SUCCESS, rcode);
 

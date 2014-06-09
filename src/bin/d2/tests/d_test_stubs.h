@@ -381,7 +381,7 @@ public:
     ///
     /// @return returns true if the verbose flag is equal to the given value.
     bool checkConfigFileName(const std::string& value) {
-        return (getController()->getConfigFileName() == value);
+        return (getController()->getConfigFile() == value);
     }
 
     /// @Wrapper to invoke the Controller's parseArgs method.  Please refer to
@@ -421,7 +421,7 @@ public:
     /// command callback function.
     static void genShutdownCallback() {
         isc::data::ElementPtr arg_set;
-        DControllerBase::commandHandler(SHUT_DOWN_COMMAND, arg_set);
+        getController()->executeCommand(SHUT_DOWN_COMMAND, arg_set);
     }
 
     /// @brief Callback that throws an exception.
@@ -447,7 +447,7 @@ public:
     /// @param content JSON text to be written to file
     /// @param module_name  content content to be written to file
     void writeFile(const std::string& content,
-                   const std::string module_name = "") {
+                   const std::string& module_name = "") {
         std::ofstream out(CFG_TEST_FILE, std::ios::trunc);
         ASSERT_TRUE(out.is_open());
 
