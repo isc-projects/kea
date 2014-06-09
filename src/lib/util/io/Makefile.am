@@ -1,3 +1,4 @@
+SUBDIRS = .
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib

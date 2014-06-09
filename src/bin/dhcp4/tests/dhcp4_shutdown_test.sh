@@ -13,7 +13,7 @@
 # PERFORMANCE OF THIS SOFTWARE.
 
 if [ $# -ne 2 ]; then
-    printf "USAGE: dhcp6_shutdown_test.sh <test_name> <signal_num>\n"
+    printf "USAGE: dhcp4_shutdown_test.sh <test_name> <signal_num>\n"
     exit 1
 fi
 
@@ -27,10 +27,9 @@ CFG_FILE="test_config.json"
 LOG_FILE="test.log"
 # Kea configuration to be stored in the configuration file.
 CONFIG="{
-    \"Dhcp6\":
+    \"Dhcp4\":
     {
         \"interfaces\": [ ],
-        \"preferred-lifetime\": 3000,
         \"valid-lifetime\": 4000,
         \"renew-timer\": 1000,
         \"rebind-timer\": 2000,
@@ -39,16 +38,16 @@ CONFIG="{
             \"type\": \"memfile\",
             \"persist\": false
         },
-        \"subnet6\": [
+        \"subnet4\": [
         {
-            \"subnet\": \"2001:db8:1::/64\",
-            \"pool\": [ \"2001:db8:1::10-2001:db8:1::100\" ]
+            \"subnet\": \"10.0.0.0/8\",
+            \"pool\": [ \"10.0.0.10-10.0.0.100\" ]
         } ]
     }
 }"
 
 # Set the location of the executable.
-BIN="b10-dhcp6"
+BIN="b10-dhcp4"
 BIN_PATH=".."
 
 # Import common test library.
@@ -73,7 +72,7 @@ fi
 
 # Check if it is still running. It could have terminated (e.g. as a result
 # of configuration failure).
-get_pids ${BIN}
+get_pids
 if [ ${_GET_PIDS_NUM} -ne 1 ]; then
     printf "ERROR: expected one Kea process to be started. Found %d processes\
  started.\n" ${_GET_PIDS_NUM}
@@ -91,18 +90,18 @@ else
 fi
 
 # Send signal to Kea (SIGTERM, SIGINT etc.)
-send_signal ${SIG_NUM} ${BIN}
+send_signal ${SIG_NUM}
 
 # Wait up to 10s for the server's graceful shutdown. The graceful shut down
 # should be recorded in the log file with the appropriate message.
-wait_for_message 10 "DHCP6_SHUTDOWN" 1
+wait_for_message 10 "DHCP4_SHUTDOWN" 1
 if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
     printf "ERROR: Server did not record shutdown in the log.\n"
     clean_exit 1
 fi
 
 # Server should have shut down.
-get_pids ${BIN}
+get_pids
 if [ ${_GET_PIDS_NUM} -ne 0 ]; then
     printf "ERROR: Kea did not shut down after receiving signal.\n"\
  ${_GET_PIDS_NUM}

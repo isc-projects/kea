@@ -13,17 +13,16 @@
 # PERFORMANCE OF THIS SOFTWARE.
 
 # Test name
-TEST_NAME="DHCPv6.dynamicReconfiguration"
+TEST_NAME="DHCPv4.dynamicReconfiguration"
 # Path to the temporary configuration file.
 CFG_FILE="test_config.json"
 # Path to the Kea log file.
 LOG_FILE="test.log"
 # Kea configuration to be stored in the configuration file.
 CONFIG="{
-    \"Dhcp6\":
+    \"Dhcp4\":
     {
         \"interfaces\": [ ],
-        \"preferred-lifetime\": 3000,
         \"valid-lifetime\": 4000,
         \"renew-timer\": 1000,
         \"rebind-timer\": 2000,
@@ -32,21 +31,20 @@ CONFIG="{
             \"type\": \"memfile\",
             \"persist\": false
         },
-        \"subnet6\": [
+        \"subnet4\": [
         {
-            \"subnet\": \"2001:db8:1::/64\",
-            \"pool\": [ \"2001:db8:1::10-2001:db8:1::100\" ]
+            \"subnet\": \"10.0.0.0/8\",
+            \"pool\": [ \"10.0.0.10-10.0.0.100\" ]
         } ]
     }
 }"
-# Invalid configuration (negative preferred-lifetime) to check that Kea
+# Invalid configuration (negative valid-lifetime) to check that Kea
 # gracefully handles reconfiguration errors.
 CONFIG_INVALID="{
-    \"Dhcp6\":
+    \"Dhcp4\":
     {
         \"interfaces\": [ ],
-        \"preferred-lifetime\": -3,
-        \"valid-lifetime\": 4000,
+        \"valid-lifetime\": -3,
         \"renew-timer\": 1000,
         \"rebind-timer\": 2000,
         \"lease-database\":
@@ -54,16 +52,16 @@ CONFIG_INVALID="{
             \"type\": \"memfile\",
             \"persist\": false
         },
-        \"subnet6\": [
+        \"subnet4\": [
         {
-            \"subnet\": \"2001:db8:1::/64\",
-            \"pool\": [ \"2001:db8:1::10-2001:db8:1::100\" ]
+            \"subnet\": \"10.0.0.0/8\",
+            \"pool\": [ \"10.0.0.10-10.0.0.100\" ]
         } ]
     }
 }"
 
 # Set the location of the executable.
-BIN="b10-dhcp6"
+BIN="b10-dhcp4"
 BIN_PATH=".."
 
 # Import common test library.
@@ -88,7 +86,7 @@ fi
 
 # Check if it is still running. It could have terminated (e.g. as a result
 # of configuration failure).
-get_pids ${BIN}
+get_pids
 if [ ${_GET_PIDS_NUM} -ne 1 ]; then
     printf "ERROR: expected one Kea process to be started. Found %d processes\
  started.\n" ${_GET_PIDS_NUM}
@@ -109,10 +107,10 @@ fi
 create_config "${CONFIG_INVALID}"
 
 # Try to reconfigure by sending SIGHUP
-send_signal 1 ${BIN}
+send_signal 1
 
 # The configuration should fail and the error message should be there.
-wait_for_message 10 "DHCP6_CONFIG_LOAD_FAIL" 1
+wait_for_message 10 "DHCP4_CONFIG_LOAD_FAIL" 1
 
 # After receiving SIGHUP the server should try to reconfigure itself.
 # The configuration provided is invalid so it should result in
@@ -128,7 +126,7 @@ elif [ ${_GET_RECONFIG_ERRORS} -ne 1 ]; then
 fi
 
 # Make sure the server is still operational.
-get_pids ${BIN}
+get_pids
 if [ ${_GET_PIDS_NUM} -ne 1 ]; then
     printf "ERROR: Kea process was killed when attempting reconfiguration.\n"
     clean_exit 1
@@ -138,11 +136,11 @@ fi
 create_config "${CONFIG}"
 
 # Reconfigure the server with SIGHUP.
-send_signal 1 ${BIN}
+send_signal 1
 
-# There should be two occurrences of the DHCP6_CONFIG_COMPLETE messages.
+# There should be two occurrences of the DHCP4_CONFIG_COMPLETE messages.
 # Wait for it up to 10s.
-wait_for_message 10 "DHCP6_CONFIG_COMPLETE" 2
+wait_for_message 10 "DHCP4_CONFIG_COMPLETE" 2
 
 # After receiving SIGHUP the server should get reconfigured and the
 # reconfiguration should be noted in the log file. We should now
@@ -155,7 +153,7 @@ else
 fi
 
 # Make sure the server is still operational.
-get_pids ${BIN}
+get_pids
 if [ ${_GET_PIDS_NUM} -ne 1 ]; then
     printf "ERROR: Kea process was killed when attempting reconfiguration.\n"
     clean_exit 1

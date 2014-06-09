@@ -279,21 +279,20 @@ the SIGHUP signal, the server will re-read the configuration file specified at s
 If the reconfiguration fails, the server will continue to run and use the last good
 configuration.
 
-The SIGHUP signal handler is defined in the kea_controller.cc. The handler calls the
-same function to reconfigure the server which is called to configure it at startup.
-The signal handler catches exceptions emitted during reconfiguration so as the
-uncaught exceptions don't cause the process to exit.
+The signal handler for SIGHUP (also for SIGTERM and SIGINT) are installed in the
+kea_controller.cc using the @c isc::util::SignalSet class. The
+@c isc::dhcp::Dhcp6Srv calls @c isc::dhcp::Daemon::handleSignal on each pass
+through the main loop. This method fetches the last received signal and calls
+a handler function defined in the kea_controller.cc. The handler function
+calls a static function @c configure defined in the kea_controller.cc.
 
-Signal handlers are static and therefore they must call static functions. The
-@c ControlledDhcpv6Srv::processCommand which performs the actual server
-reconfiguration is static, so it can be called from the signal handler. In order
-for the signal handler to know the location of the configuration file (specified
-at process startup), the location of this file needs to be stored in a static
-variable so as it may be directly accessed by the signal handler. This static
-variable is stored in the @c dhcp::Daemon class and all Kea processes can use
-it (all processes derive from this class). The configuration file location is
-initialized when the @c Daemon::init method is called. Therefore, derived
-classes should call it in their implementations of the @c init method.
+In order for the signal handler to know the location of the configuration file
+(specified at process startup), the location of this file needs to be stored
+in a static variable so as it may be directly accessed by the signal handler.
+This static variable is stored in the @c dhcp::Daemon class and all Kea processes
+can use it (all processes derive from this class). The configuration file
+location is initialized when the @c Daemon::init method is called. Therefore,
+derived classes should call it in their implementations of the @c init method.
 
  @section dhcpv6Other Other DHCPv6 topics
 
