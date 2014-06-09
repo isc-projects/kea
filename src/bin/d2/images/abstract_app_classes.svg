@@ -1,225 +1,222 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!-- Created with Bouml (http://bouml.free.fr/) -->
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg width="749" height="595" version="1.1" xmlns="http://www.w3.org/2000/svg">
+<svg width="770" height="641" version="1.1" xmlns="http://www.w3.org/2000/svg">
 <g>
-	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="733" y="357" width="3" height="225" />
-	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="627" y="579" width="109" height="3" />
-	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="623" y="353" width="110" height="226" />
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" font-style="italic" text-anchor="middle" x="678" y="366">DCfgContextBase</text>
-	<line stroke="black" stroke-opacity="1" x1="623" y1="368" x2="733" y2="368" />
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="627" y="381">OPTIONAL</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="627" y="394">REQUIRED</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="627" y="407">boolean_values_</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="627" y="420">uint32_values_</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="627" y="433">string_values_</text>
-	<line stroke="black" stroke-opacity="1" x1="623" y1="435" x2="733" y2="435" />
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="627" y="448">DCfgContextBase()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="627" y="461">~DCfgContextBase()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="627" y="474">getParam()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="627" y="487">getParam()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="627" y="500">getParam()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="627" y="513">getBooleanStorage()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="627" y="526">getUint32Storage()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="627" y="539">getStringStorage()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-style="italic" x="627" y="552">clone()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="627" y="565">DCfgContextBase()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="627" y="578">operator =()</text>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="588" y="279" width="3" height="193" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="474" y="469" width="117" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="470" y="275" width="118" height="194" />
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" font-weight="bold" font-style="italic" text-anchor="middle" x="529" y="289">DCfgMgrBase</text>
+	<line stroke="black" stroke-opacity="1" x1="470" y1="291" x2="588" y2="291" />
+	<line stroke="black" stroke-opacity="1" x1="470" y1="299" x2="588" y2="299" />
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="474" y="313">DCfgMgrBase()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="474" y="327">~DCfgMgrBase()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="474" y="341">parseConfig()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="474" y="355">addToParseOrder()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="474" y="369">getParseOrder()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="474" y="383">getContext()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="474" y="397">buildParams()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" font-style="italic" x="474" y="411">createConfigParser()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" font-style="italic" x="474" y="425">createNewContext()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="474" y="439">resetContext()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="474" y="453">setContext()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="474" y="467">buildAndCommit()</text>
 </g>
 <g>
-	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="179" y="15" width="3" height="511" />
-	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="35" y="523" width="147" height="3" />
-	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="31" y="11" width="148" height="512" />
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" font-style="italic" text-anchor="middle" x="105" y="24">DControllerBase</text>
-	<line stroke="black" stroke-opacity="1" x1="31" y1="26" x2="179" y2="26" />
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="39">app_name_</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="52">bin_name_</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="65">stand_alone_</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="78">verbose_</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="91">spec_file_name_</text>
-	<line stroke="black" stroke-opacity="1" x1="31" y1="93" x2="179" y2="93" />
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="106">DControllerBase()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="119">~DControllerBase()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="132">launch()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="35" y="145">dummyConfigHandler()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="35" y="158">configHandler()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="35" y="171">commandHandler()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="184">updateConfig()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="197">executeCommand()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="210">customOption()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-style="italic" x="35" y="223">createProcess()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="236">customControllerCommand()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="249">onSessionConnect()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="262">onSessionDisconnect()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="275">getUsageText()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="288">getCustomOpts()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="301">getAppName()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="314">getBinName()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="327">isStandAlone()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="340">setStandAlone()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="353">isVerbose()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="366">setVerbose()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="379">getIOService()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="392">getSpecFileName()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="405">setSpecFileName()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="35" y="418">getController()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="35" y="431">setController()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="444">parseArgs()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="457">initProcess()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="470">establishSession()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="483">runProcess()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="496">disconnectSession()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="509">shutdown()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="522">usage()</text>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="754" y="385" width="3" height="243" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="640" y="625" width="117" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="636" y="381" width="118" height="244" />
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" font-weight="bold" font-style="italic" text-anchor="middle" x="695" y="395">DCfgContextBase</text>
+	<line stroke="black" stroke-opacity="1" x1="636" y1="397" x2="754" y2="397" />
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" text-decoration="underline" x="640" y="411">OPTIONAL</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" text-decoration="underline" x="640" y="425">REQUIRED</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="640" y="439">boolean_values_</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="640" y="453">uint32_values_</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="640" y="467">string_values_</text>
+	<line stroke="black" stroke-opacity="1" x1="636" y1="469" x2="754" y2="469" />
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="640" y="483">DCfgContextBase()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="640" y="497">~DCfgContextBase()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="640" y="511">getParam()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="640" y="525">getParam()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="640" y="539">getParam()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="640" y="553">getBooleanStorage()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="640" y="567">getUint32Storage()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="640" y="581">getStringStorage()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" font-style="italic" x="640" y="595">clone()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="640" y="609">DCfgContextBase()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="640" y="623">operator =()</text>
 </g>
 <g>
-	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="420" y="119" width="3" height="213" />
-	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="324" y="329" width="99" height="3" />
-	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="320" y="115" width="100" height="214" />
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" font-style="italic" text-anchor="middle" x="370" y="128">DProcessBase</text>
-	<line stroke="black" stroke-opacity="1" x1="320" y1="130" x2="420" y2="130" />
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="324" y="143">app_name_</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="324" y="156">shut_down_flag_</text>
-	<line stroke="black" stroke-opacity="1" x1="320" y1="158" x2="420" y2="158" />
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="324" y="171">DProcessBase()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-style="italic" x="324" y="184">init()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-style="italic" x="324" y="197">run()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-style="italic" x="324" y="210">shutdown()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-style="italic" x="324" y="223">configure()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-style="italic" x="324" y="236">command()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="324" y="249">~DProcessBase()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="324" y="262">shouldShutdown()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="324" y="275">setShutdownFlag()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="324" y="288">getAppName()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="324" y="301">getIoService()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="324" y="314">stopIOService()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="324" y="327">getCfgMgr()</text>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="175" y="14" width="3" height="453" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="17" y="464" width="161" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="13" y="10" width="162" height="454" />
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" font-weight="bold" font-style="italic" text-anchor="middle" x="94" y="24">DControllerBase</text>
+	<line stroke="black" stroke-opacity="1" x1="13" y1="26" x2="175" y2="26" />
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="40">app_name_</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="54">bin_name_</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="68">verbose_</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="82">spec_file_name_</text>
+	<line stroke="black" stroke-opacity="1" x1="13" y1="84" x2="175" y2="84" />
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="98">DControllerBase()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="112">~DControllerBase()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="126">launch()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="140">updateConfig()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="154">configFromFile()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="168">executeCommand()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="182">getAppName()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="196">getBinName()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="210">customOption()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" font-style="italic" x="17" y="224">createProcess()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="238">customControllerCommand()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="252">getUsageText()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="266">getCustomOpts()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="280">isVerbose()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="294">setVerbose()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="308">getIOService()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="322">getSpecFileName()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="336">setSpecFileName()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" text-decoration="underline" x="17" y="350">getController()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" text-decoration="underline" x="17" y="364">setController()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="378">parseArgs()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="392">initProcess()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="406">runProcess()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="420">shutdownProcess()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="434">getConfigFileName()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="448">getProcess()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="462">usage()</text>
 </g>
 <g>
-	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="585" y="240" width="3" height="127" />
-	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="479" y="364" width="109" height="3" />
-	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="475" y="236" width="110" height="128" />
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" font-style="italic" text-anchor="middle" x="530" y="249">DCfgMgrBase</text>
-	<line stroke="black" stroke-opacity="1" x1="475" y1="251" x2="585" y2="251" />
-	<line stroke="black" stroke-opacity="1" x1="475" y1="259" x2="585" y2="259" />
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="479" y="272">DCfgMgrBase()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="479" y="285">~DCfgMgrBase()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="479" y="298">parseConfig()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="479" y="311">addToParseOrder()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="479" y="324">getParseOrder()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="479" y="337">getContext()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-style="italic" x="479" y="350">createConfigParser()</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="479" y="363">buildAndCommit()</text>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="274" y="165" width="3" height="47" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="198" y="209" width="79" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="194" y="161" width="80" height="48" />
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" text-anchor="middle" x="234" y="175">&lt;&lt;typedef&gt;&gt;</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="234" y="191">IOServicePtr</text>
+	<line stroke="black" stroke-opacity="1" x1="194" y1="193" x2="274" y2="193" />
+	<line stroke="black" stroke-opacity="1" x1="194" y1="201" x2="274" y2="201" />
 </g>
 <g>
-	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="419" y="56" width="3" height="45" />
-	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="323" y="98" width="99" height="3" />
-	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="319" y="52" width="100" height="46" />
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="369" y="65">&lt;&lt;typedef&gt;&gt;</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="369" y="80">DProcessBasePtr</text>
-	<line stroke="black" stroke-opacity="1" x1="319" y1="82" x2="419" y2="82" />
-	<line stroke="black" stroke-opacity="1" x1="319" y1="90" x2="419" y2="90" />
+	<line stroke="black" stroke-opacity="1" x1="179" y1="118" x2="236" y2="118" />
+	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="179,118 185,112 191,118 185,124" />
 </g>
 <g>
-	<line stroke="black" stroke-opacity="1" x1="371" y1="114" x2="377" y2="108" />
-	<line stroke="black" stroke-opacity="1" x1="371" y1="114" x2="365" y2="108" />
-	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="371" y1="102" x2="371" y2="114" />
+	<line stroke="black" stroke-opacity="1" x1="236" y1="160" x2="242" y2="154" />
+	<line stroke="black" stroke-opacity="1" x1="236" y1="160" x2="230" y2="154" />
+	<line stroke="black" stroke-opacity="1" x1="236" y1="118" x2="236" y2="160" />
 </g>
 <g>
-	<line stroke="black" stroke-opacity="1" x1="183" y1="34" x2="371" y2="34" />
-	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="183,34 189,28 195,34 189,40" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="426" y="148" width="3" height="229" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="322" y="374" width="107" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="318" y="144" width="108" height="230" />
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" font-weight="bold" font-style="italic" text-anchor="middle" x="372" y="158">DProcessBase</text>
+	<line stroke="black" stroke-opacity="1" x1="318" y1="160" x2="426" y2="160" />
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="322" y="174">app_name_</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="322" y="188">shut_down_flag_</text>
+	<line stroke="black" stroke-opacity="1" x1="318" y1="190" x2="426" y2="190" />
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="322" y="204">DProcessBase()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" font-style="italic" x="322" y="218">init()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" font-style="italic" x="322" y="232">run()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" font-style="italic" x="322" y="246">shutdown()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" font-style="italic" x="322" y="260">configure()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" font-style="italic" x="322" y="274">command()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="322" y="288">~DProcessBase()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="322" y="302">shouldShutdown()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="322" y="316">setShutdownFlag()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="322" y="330">getAppName()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="322" y="344">getIoService()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="322" y="358">stopIOService()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="322" y="372">getCfgMgr()</text>
 </g>
 <g>
-	<line stroke="black" stroke-opacity="1" x1="371" y1="51" x2="377" y2="45" />
-	<line stroke="black" stroke-opacity="1" x1="371" y1="51" x2="365" y2="45" />
-	<line stroke="black" stroke-opacity="1" x1="371" y1="34" x2="371" y2="51" />
+	<line stroke="black" stroke-opacity="1" x1="317" y1="260" x2="236" y2="260" />
+	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="317,260 311,266 305,260 311,254" />
 </g>
 <g>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="685" y="273">context_</text>
+	<line stroke="black" stroke-opacity="1" x1="236" y1="213" x2="230" y2="219" />
+	<line stroke="black" stroke-opacity="1" x1="236" y1="213" x2="242" y2="219" />
+	<line stroke="black" stroke-opacity="1" x1="236" y1="260" x2="236" y2="213" />
 </g>
 <g>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="381" y="48">process_</text>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="424" y="72" width="3" height="47" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="320" y="116" width="107" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="316" y="68" width="108" height="48" />
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" text-anchor="middle" x="370" y="82">&lt;&lt;typedef&gt;&gt;</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="370" y="98">DProcessBasePtr</text>
+	<line stroke="black" stroke-opacity="1" x1="316" y1="100" x2="424" y2="100" />
+	<line stroke="black" stroke-opacity="1" x1="316" y1="108" x2="424" y2="108" />
 </g>
 <g>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="251" y="174">io_service_</text>
+	<line stroke="black" stroke-opacity="1" x1="372" y1="143" x2="378" y2="137" />
+	<line stroke="black" stroke-opacity="1" x1="372" y1="143" x2="366" y2="137" />
+	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="372" y1="120" x2="372" y2="143" />
 </g>
 <g>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="535" y="155">cfg_mgr_</text>
+	<line stroke="black" stroke-opacity="1" x1="372" y1="67" x2="378" y2="61" />
+	<line stroke="black" stroke-opacity="1" x1="372" y1="67" x2="366" y2="61" />
+	<line stroke="black" stroke-opacity="1" x1="372" y1="39" x2="372" y2="67" />
 </g>
 <g>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="250" y="244">io_service_</text>
+	<line stroke="black" stroke-opacity="1" x1="179" y1="39" x2="372" y2="39" />
+	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="179,39 185,33 191,39 185,45" />
 </g>
 <g>
-	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="275" y="182" width="3" height="45" />
-	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="205" y="224" width="73" height="3" />
-	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="201" y="178" width="74" height="46" />
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="238" y="191">&lt;&lt;typedef&gt;&gt;</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="238" y="206">IOServicePtr</text>
-	<line stroke="black" stroke-opacity="1" x1="201" y1="208" x2="275" y2="208" />
-	<line stroke="black" stroke-opacity="1" x1="201" y1="216" x2="275" y2="216" />
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="382" y="63">process_</text>
 </g>
 <g>
-	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="571" y="163" width="3" height="45" />
-	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="479" y="205" width="95" height="3" />
-	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="475" y="159" width="96" height="46" />
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="523" y="172">&lt;&lt;typedef&gt;&gt;</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="523" y="187">DCfgMgrBasePtr</text>
-	<line stroke="black" stroke-opacity="1" x1="475" y1="189" x2="571" y2="189" />
-	<line stroke="black" stroke-opacity="1" x1="475" y1="197" x2="571" y2="197" />
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="534" y="196">cfg_mgr_</text>
 </g>
 <g>
-	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="731" y="281" width="3" height="45" />
-	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="619" y="323" width="115" height="3" />
-	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="615" y="277" width="116" height="46" />
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="673" y="290">&lt;&lt;typedef&gt;&gt;</text>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="673" y="305">DCfgContextBasePtr</text>
-	<line stroke="black" stroke-opacity="1" x1="615" y1="307" x2="731" y2="307" />
-	<line stroke="black" stroke-opacity="1" x1="615" y1="315" x2="731" y2="315" />
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="696" y="302">context_</text>
 </g>
 <g>
-	<line stroke="black" stroke-opacity="1" x1="319" y1="282" x2="240" y2="282" />
-	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="319,282 313,288 307,282 313,276" />
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="246" y="156">io_service_</text>
 </g>
 <g>
-	<line stroke="black" stroke-opacity="1" x1="183" y1="154" x2="241" y2="154" />
-	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="183,154 189,148 195,154 189,160" />
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="246" y="231">io_service_</text>
 </g>
 <g>
-	<line stroke="black" stroke-opacity="1" x1="424" y1="135" x2="525" y2="135" />
-	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="424,135 430,129 436,135 430,141" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="747" y="311" width="3" height="47" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="625" y="355" width="125" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="621" y="307" width="126" height="48" />
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" text-anchor="middle" x="684" y="321">&lt;&lt;typedef&gt;&gt;</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="684" y="337">DCfgContextBasePtr</text>
+	<line stroke="black" stroke-opacity="1" x1="621" y1="339" x2="747" y2="339" />
+	<line stroke="black" stroke-opacity="1" x1="621" y1="347" x2="747" y2="347" />
 </g>
 <g>
-	<line stroke="black" stroke-opacity="1" x1="525" y1="158" x2="531" y2="152" />
-	<line stroke="black" stroke-opacity="1" x1="525" y1="158" x2="519" y2="152" />
-	<line stroke="black" stroke-opacity="1" x1="525" y1="135" x2="525" y2="158" />
+	<line stroke="black" stroke-opacity="1" x1="688" y1="380" x2="693" y2="373" />
+	<line stroke="black" stroke-opacity="1" x1="688" y1="380" x2="681" y2="374" />
+	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="687" y1="359" x2="688" y2="380" />
 </g>
 <g>
-	<line stroke="black" stroke-opacity="1" x1="675" y1="352" x2="681" y2="346" />
-	<line stroke="black" stroke-opacity="1" x1="675" y1="352" x2="669" y2="346" />
-	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="675" y1="327" x2="675" y2="352" />
+	<line stroke="black" stroke-opacity="1" x1="686" y1="306" x2="692" y2="300" />
+	<line stroke="black" stroke-opacity="1" x1="686" y1="306" x2="680" y2="300" />
+	<line stroke="black" stroke-opacity="1" x1="686" y1="289" x2="686" y2="306" />
 </g>
 <g>
-	<line stroke="black" stroke-opacity="1" x1="589" y1="247" x2="675" y2="247" />
-	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="589,247 595,241 601,247 595,253" />
+	<line stroke="black" stroke-opacity="1" x1="592" y1="289" x2="686" y2="289" />
+	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="592,289 598,283 604,289 598,295" />
 </g>
 <g>
-	<line stroke="black" stroke-opacity="1" x1="675" y1="276" x2="681" y2="270" />
-	<line stroke="black" stroke-opacity="1" x1="675" y1="276" x2="669" y2="270" />
-	<line stroke="black" stroke-opacity="1" x1="675" y1="247" x2="675" y2="276" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="574" y="205" width="3" height="47" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="474" y="249" width="103" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="470" y="201" width="104" height="48" />
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" text-anchor="middle" x="522" y="215">&lt;&lt;typedef&gt;&gt;</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="522" y="231">DCfgMgrBasePtr</text>
+	<line stroke="black" stroke-opacity="1" x1="470" y1="233" x2="574" y2="233" />
+	<line stroke="black" stroke-opacity="1" x1="470" y1="241" x2="574" y2="241" />
 </g>
 <g>
-	<line stroke="black" stroke-opacity="1" x1="526" y1="235" x2="531" y2="228" />
-	<line stroke="black" stroke-opacity="1" x1="526" y1="235" x2="519" y2="229" />
-	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="525" y1="209" x2="526" y2="235" />
+	<line stroke="black" stroke-opacity="1" x1="524" y1="274" x2="530" y2="268" />
+	<line stroke="black" stroke-opacity="1" x1="524" y1="274" x2="518" y2="268" />
+	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="524" y1="253" x2="524" y2="274" />
 </g>
 <g>
-	<line stroke="black" stroke-opacity="1" x1="240" y1="228" x2="234" y2="234" />
-	<line stroke="black" stroke-opacity="1" x1="240" y1="228" x2="246" y2="234" />
-	<line stroke="black" stroke-opacity="1" x1="240" y1="282" x2="240" y2="228" />
+	<line stroke="black" stroke-opacity="1" x1="430" y1="168" x2="524" y2="168" />
+	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="430,168 436,162 442,168 436,174" />
 </g>
 <g>
-	<line stroke="black" stroke-opacity="1" x1="241" y1="177" x2="247" y2="171" />
-	<line stroke="black" stroke-opacity="1" x1="241" y1="177" x2="235" y2="171" />
-	<line stroke="black" stroke-opacity="1" x1="241" y1="154" x2="241" y2="177" />
+	<line stroke="black" stroke-opacity="1" x1="524" y1="200" x2="530" y2="194" />
+	<line stroke="black" stroke-opacity="1" x1="524" y1="200" x2="518" y2="194" />
+	<line stroke="black" stroke-opacity="1" x1="524" y1="168" x2="524" y2="200" />
 </g>
 </svg>

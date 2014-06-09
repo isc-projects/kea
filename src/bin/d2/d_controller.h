@@ -30,10 +30,6 @@
 namespace isc {
 namespace d2 {
 
-/// @brief DControllerBase launch exit status values.  Upon service shutdown
-/// normal or otherwise, the Controller's launch method will return one of
-/// these values.
-
 /// @brief Exception thrown when the command line is invalid.
 class InvalidUsage : public isc::Exception {
 public:
@@ -206,44 +202,17 @@ public:
                                                       isc::data::
                                                       ConstElementPtr args);
 
-    /// @brief A callback for handling all incoming configuration updates.
-    ///
-    /// Provides a static callback that can be used to handle asynchronsouly
-    /// received configurations. It acts as a wrapper around the singleton's
-    /// virtual instance method, updateConfig.
-    ///
-    /// @param new_config textual representation of the new configuration
-    ///
-    /// @return status of the config update
-    static isc::data::ConstElementPtr configHandler(isc::data::ConstElementPtr
-                                                    new_config);
-
-    /// @brief A callback for handling all incoming commands.
-    ///
-    /// Provides a static callback that can be used to handle asynchronsouly
-    /// received commands. It acts as a wrapper around the singleton's virtual
-    /// instance method, executeCommand.
-    ///
-    /// @param command textual representation of the command
-    /// @param args parameters of the command. It can be NULL pointer if no
-    /// arguments exist for a particular command.
-    ///
-    /// @return status of the processed command
-    static isc::data::ConstElementPtr commandHandler(const std::string& command,
-                                                     isc::data::ConstElementPtr
-                                                     args);
-
     /// @brief Fetches the name of the application under control.
     ///
     /// @return returns the controller service name string
-    const std::string getAppName() const {
+    std::string getAppName() const {
         return (app_name_);
     }
 
     /// @brief Fetches the name of the application executable.
     ///
     /// @return returns the controller logger name string
-    const std::string getBinName() const {
+    std::string getBinName() const {
         return (bin_name_);
     }
 
@@ -413,11 +382,6 @@ protected:
     /// command composed of an integer status value (0 means successful,
     /// non-zero means failure), and a string explanation of the outcome.
     isc::data::ConstElementPtr shutdownProcess(isc::data::ConstElementPtr args);
-
-    /// @brief Fetches the name of the configuration file
-    ///
-    /// @return the configuration file name as a string
-    virtual std::string getConfigFileName();
 
     /// @brief Fetches the current process
     ///
