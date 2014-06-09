@@ -134,7 +134,9 @@ bundyConfigHandler(ConstElementPtr new_config) {
 
 
 
-void ControlledDhcpv4Srv::init(const std::string& /*config_file*/) {
+void ControlledDhcpv4Srv::init(const std::string& config_file) {
+    // Call base class's init.
+    Daemon::init(config_file);
 
     string specfile;
     if (getenv("B10_FROM_BUILD")) {

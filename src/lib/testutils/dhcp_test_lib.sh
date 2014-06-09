@@ -86,10 +86,10 @@ _GET_RECONFIG_ERRORS=  # Return value: number of configuration errors.
 get_reconfigs() {
     # Grep log file for DHCP6_CONFIG_COMPLETE occurences. There should
     # be one occurence per (re)configuration.
-    _GET_RECONFIGS=`grep -o DHCP6_CONFIG_COMPLETE ${LOG_FILE} | wc -w`
+    _GET_RECONFIGS=`grep -o CONFIG_COMPLETE ${LOG_FILE} | wc -w`
     # Grep log file for DHCP6_CONFIG_LOAD_FAIL to check for configuration
     # failures.
-    _GET_RECONFIG_ERRORS=`grep -o DHCP6_CONFIG_LOAD_FAIL ${LOG_FILE} | wc -w`
+    _GET_RECONFIG_ERRORS=`grep -o CONFIG_LOAD_FAIL ${LOG_FILE} | wc -w`
     # Remove whitespaces
     ${_GET_RECONFIGS##*[! ]}
     ${_GET_RECONFIG_ERRORS##*[! ]}
@@ -211,7 +211,8 @@ send_signal() {
     # Get Kea pid.
     get_pids ${proc_name}
     if [ ${_GET_PIDS_NUM} -ne 1 ]; then
-        printf "ERROR: expected one Kea process to be started. Found %d processes started.\n" ${_GET_PIDS_NUM}
+        printf "ERROR: expected one Kea process to be started.\
+ Found %d processes started.\n" ${_GET_PIDS_NUM}
         clean_exit 1
     fi
     printf "Sending signal ${sig} to Kea process (pid=%s).\n" ${_GET_PIDS}
