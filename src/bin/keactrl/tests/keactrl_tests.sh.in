@@ -1,0 +1,150 @@
+#!/bin/sh
+
+# Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+# Include common test library.
+. @abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh
+
+# Set location of the keactrl.
+keactrl=@abs_top_builddir@/src/bin/keactrl/keactrl
+
+# A name of the configuration file to be used by Kea.
+CFG_FILE=@abs_top_builddir@/src/bin/keactrl/tests/test_config.json
+# A name of the keactrl config file
+KEACTRL_CFG_FILE=@abs_top_builddir@/src/bin/keactrl/tests/keactrl_test.conf
+# Path to the Kea log file.
+LOG_FILE=@abs_top_builddir@/src/bin/keactrl/tests/test.log
+# Binaries' names
+kea4_name="b10-dhcp4"
+kea6_name="b10-dhcp6"
+# Kea configuration
+config="{
+    \"Dhcp4\":
+    {
+        \"interfaces\": [ ],
+        \"valid-lifetime\": 4000,
+        \"renew-timer\": 1000,
+        \"rebind-timer\": 2000,
+        \"lease-database\":
+        {
+            \"type\": \"memfile\",
+            \"persist\": false
+        },
+        \"subnet4\": [
+        {
+            \"subnet\": \"10.0.0.0/24\",
+            \"pool\": [ \"10.0.0.10-10.0.0.100\" ]
+        } ]
+    },
+    \"Dhcp6\":
+    {
+        \"interfaces\": [ ],
+        \"preferred-lifetime\": 3000,
+        \"valid-lifetime\": 4000,
+        \"renew-timer\": 1000,
+        \"rebind-timer\": 2000,
+        \"lease-database\":
+        {
+            \"type\": \"memfile\",
+            \"persist\": false
+        },
+        \"subnet6\": [
+        {
+            \"subnet\": \"2001:db8:1::/64\",
+            \"pool\": [ \"2001:db8:1::10-2001:db8:1::100\" ]
+        } ]
+    }
+}"
+
+# This test checks that both DHCPv4 and DHCPv6 server can be started and
+# shut down.
+start_both_servers_test() {
+    # Test name.
+    TEST_NAME="keactrl.startStop"
+    # Create configuration file for keactrl. This configuration enables
+    # both DHCPv4 and DHCPv6 server.
+    keactrl_config="kea_config_file=${CFG_FILE}\nkea4=yes\nkea6=yes\n"
+
+    test_start
+
+    # Create configuration file for Kea and for keactrl.
+    create_config "${config}"
+    create_keactrl_config "${keactrl_config}"
+
+    # Set logging to a file.
+    set_logger
+
+    # Start servers using keactrl script.
+    printf "Starting Kea: ${keactrl} start\n"
+    ${keactrl} start
+    ret=${?}
+    assert_eq 0 ${ret} "Expected keactrl to retrun 0, returned value was ${ret}"
+
+    # Wait up to 20s for the DHCPv6 server to configure.
+    wait_for_message 20 "DHCP6_CONFIG_COMPLETE" 1
+    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+        "Timeout waiting for ${kea6_name} to start. \
+Expected wait_for_message return %d, returned %d."
+
+    # Wait up to 20s for the DHCPv4 server to configure.
+    wait_for_message 20 "DHCP4_CONFIG_COMPLETE" 1
+    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+        "Timeout waiting for ${kea4_name} to start. \
+Expected wait_for_message return %d, returned %d."
+
+    # Server may shut down imediatelly after configuration has competed.
+    # Give it some time to shutdown.
+    sleep 3
+
+    # Make sure that both servers are running.
+    get_pids ${kea4_name}
+    assert_eq 1 ${_GET_PIDS_NUM} \
+        "Expected %d ${kea4_name} process running, found %d processes running"
+
+    get_pids ${kea6_name}
+    assert_eq 1 ${_GET_PIDS_NUM} \
+        "Expected %d ${kea6_name} process running, found %d processes running"
+
+    # Use keactrl stop to shutdown the servers.
+    printf "Stopping Kea: ${keactrl} stop\n"
+    ${keactrl} stop
+    ret=${?}
+    assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d."
+
+    # Wait up to 10s for the DHCPv6 server to stop.
+    wait_for_message 10 "DHCP6_SHUTDOWN" 1
+    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+        "Timeout waiting for ${kea6_name} to shutdown. \
+Expected wait_for_message return %d, returned %d."
+
+    # Wait up to 10s for the DHCPv4 server to stop.
+    wait_for_message 10 "DHCP4_SHUTDOWN" 1
+    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+        "Timeout waiting for ${kea4_name} to shutdown. \
+Expected wait_for_message return %d, returned %d."
+    
+    # Make sure that the servers are down.
+    get_pids ${kea4_name}
+    assert_eq 0 ${_GET_PIDS_NUM} \
+        "Expected %d ${kea4_name} processes running, found %d processes running"
+
+    get_pids ${kea6_name}
+    assert_eq 0 ${_GET_PIDS_NUM} \
+        "Expected %d ${kea6_name} processes running, found %d processes running"
+}
+
+start_both_servers_test
+
+clean_exit 0
