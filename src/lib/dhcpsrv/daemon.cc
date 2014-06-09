@@ -15,6 +15,7 @@
 #include <config.h>
 #include <dhcpsrv/daemon.h>
 #include <exceptions/exceptions.h>
+#include <boost/bind.hpp>
 #include <errno.h>
 
 /// @brief provides default implementation for basic daemon operations
@@ -27,7 +28,11 @@ namespace dhcp {
 // This is an initial config file location.
 std::string Daemon::config_file_ = "";
 
-Daemon::Daemon() {
+Daemon::Daemon()
+    : signal_set_(), signal_handler_() {
+}
+
+Daemon::~Daemon() {
 }
 
 void Daemon::init(const std::string& config_file) {
@@ -42,8 +47,12 @@ void Daemon::shutdown() {
 
 }
 
-Daemon::~Daemon() {
+void Daemon::handleSignal() {
+    if (signal_set_ && signal_handler_) {
+        signal_set_->handleNext(boost::bind(signal_handler_, _1));
+    }
 }
+
 
 };
 };

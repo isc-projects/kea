@@ -1,7 +1,20 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
 
 PYTESTS = dhcp4_test.py
-EXTRA_DIST = $(PYTESTS)
+SHTESTS =
+# The test of dynamic reconfiguration based on signals will work only
+# if we are using file based configuration approach.
+if CONFIG_BACKEND_JSON
+SHTESTS += dhcp4_reconfigure_test.sh
+SHTESTS += dhcp4_sigterm_test.sh
+SHTESTS += dhcp4_sigint_test.sh
+endif
+
+EXTRA_DIST  = $(PYTESTS)
+EXTRA_DIST += dhcp4_reconfigure_test.sh
+EXTRA_DIST += dhcp4_sigterm_test.sh
+EXTRA_DIST += dhcp4_sigint_test.sh
+EXTRA_DIST += dhcp4_shutdown_test.sh
 
 # Explicitly specify paths to dynamic libraries required by loadable python
 # modules. That is required on Mac OS systems. Otherwise we will get exception
@@ -21,6 +34,13 @@ check-local:
 		$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done
 
+	for shtest in $(SHTESTS) ; do \
+	echo Running test: $$shtest ; \
+	export B10_LOCKFILE_DIR_FROM_BUILD=$(abs_top_builddir); \
+	$(abs_srcdir)/$$shtest || exit ; \
+	done
+
+
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/bin # for generated spec_config.h header
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin
@@ -33,7 +53,7 @@ AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
 CLEANFILES = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
 CLEANFILES += $(builddir)/load_marker.txt $(builddir)/unload_marker.txt
-CLEANFILES += *.json
+CLEANFILES += *.json *.log
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 if USE_CLANGPP
@@ -121,6 +141,7 @@ dhcp4_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/util/io/libkea-util-io.la
 endif
 
 noinst_EXTRA_DIST = configs-list.txt
