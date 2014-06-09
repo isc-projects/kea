@@ -18,6 +18,20 @@
 # - BIN_PATH - Path to the Kea executable (excluding an executable name),
 #              e.g. ../
 
+# A list of Kea processes, mainly used by the cleanup functions.
+KEA_PROCS="b10-dhcp4 b10-dhcp6 b10-dhcp-ddns"
+
+assert_eq() {
+    val1=${1}
+    val2=${2}
+    detailed_err=${3}
+    if [ ${val1} -ne ${val2} ]; then
+        printf "Assertion failure: ${val1} != ${val2}, for val1=${val1}, val2=${val2}\n"
+        printf "${detailed_err}\n" ${val1} ${val2}
+        clean_exit 1
+    fi
+}
+
 # Begins a test by prining its name.
 # It requires the ${TEST_NAME} variable to hold the test name.
 test_start() {
@@ -31,6 +45,11 @@ create_config() {
     printf "%b" ${1} > ${CFG_FILE}
 }
 
+create_keactrl_config() {
+    printf "Creating keactrl configuration file: %s.\n" ${KEACTRL_CFG_FILE}
+    printf "%b" ${1} > ${KEACTRL_CFG_FILE}
+}
+
 # Sets Kea logger to write to the file specified by the global value
 # ${LOG_FILE}.
 set_logger() {
@@ -42,18 +61,22 @@ set_logger() {
 _GET_PIDS=     # Return value: holds space separated list of DHCPv6 pids.
 _GET_PIDS_NUM= # Return value: holds the number of DHCPv6 server pids.
 get_pids() {
-    _GET_PIDS=`ps axwwo pid,command | grep ${BIN} | grep -v grep | awk '{print $1}'`
+    proc_name=${1} # Process name
+    _GET_PIDS=`ps axwwo pid,command | grep ${proc_name} | grep -v grep | awk '{print $1}'`
     _GET_PIDS_NUM=`printf "%s" "${_GET_PIDS}" | wc -w | awk '{print $1}'`
 }
 
 # Returns the number of occurrences of the Kea log message in the
 # log file.
-_GET_LOG_MESSAGES= # Holds the number of log message occurrences.
+_GET_LOG_MESSAGES=0 # Holds the number of log message occurrences.
 get_log_messages() {
-    # Grep log file for the logger message occurrences.
-    _GET_LOG_MESSAGES=`grep -o ${1} ${LOG_FILE} | wc -w`
-    # Remove whitespaces.
-    ${_GET_LOG_MESSAGES##*[! ]}
+    _GET_LOG_MESSAGES=0
+    if [ -s ${LOG_FILE} ]; then
+        # Grep log file for the logger message occurrences.
+        _GET_LOG_MESSAGES=`grep -o ${1} ${LOG_FILE} | wc -w`
+        # Remove whitespaces.
+        ${_GET_LOG_MESSAGES##*[! ]}
+    fi
 }
 
 # Returns the number of server configurations performed so far. Also
@@ -75,19 +98,24 @@ get_reconfigs() {
 # Performs cleanup for a test.
 # It shuts down running Kea processes and removes temporary files.
 # The location of the log file and the configuration file should be set
-# in the ${LOG_FILE} and ${CFG_FILE} variables recpectively, prior to
-# calling this function.
+# in the ${LOG_FILE}, ${CFG_FILE} and ${KEACTRL_CFG_FILE} variables
+# recpectively, prior to calling this function.
 cleanup() {
-    get_pids
-    # Shut down running Kea processes.
-    for pid in ${_GET_PIDS}
+    for proc_name in ${KEA_PROCS}
     do
-        printf "Shutting down Kea proccess having pid %d.\n" ${pid}
-        kill -9 ${pid}
+        get_pids ${proc_name}
+        # Shut down running Kea processes.
+        for pid in ${_GET_PIDS}
+        do
+            printf "Shutting down Kea proccess having pid %d.\n" ${pid}
+            kill -9 ${pid}
+        done
+        shift
     done
     # Remove temporary files.
     rm -rf ${LOG_FILE}
     rm -rf ${CFG_FILE}
+    rm -rf ${KEACTRL_CFG_FILE}
 }
 
 # Exists the test in the clean way.
@@ -159,7 +187,7 @@ wait_for_message() {
     loops=0          # Number of loops performed so far.
     _WAIT_FOR_MESSAGE=0
     # Check if log file exists and if we reached timeout.
-    while [ ! -s {LOG_FILE} ] && [ ${loops} -le ${timeout} ]; do
+    while [ ${loops} -le ${timeout} ]; do
         printf "."
         # Check if the message has been logged.
         get_log_messages ${message}
@@ -178,9 +206,10 @@ wait_for_message() {
 
 # Sends specified signal to the Kea process.
 send_signal() {
-    sig=${1}  # Signal number.
+    sig=${1}       # Signal number.
+    proc_name=${2} # Process name
     # Get Kea pid.
-    get_pids
+    get_pids ${proc_name}
     if [ ${_GET_PIDS_NUM} -ne 1 ]; then
         printf "ERROR: expected one Kea process to be started. Found %d processes started.\n" ${_GET_PIDS_NUM}
         clean_exit 1
