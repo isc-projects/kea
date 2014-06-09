@@ -290,8 +290,7 @@ TEST_F(DStubControllerTest, launchRuntimeError) {
 /// This really tests just the ability of the handlers to invoke the necessary
 /// chain of methods and handle error conditions. Configuration parsing and
 /// retrieval should be tested as part of the d2 configuration management
-/// implementation.  Note that this testing calls the configuration update event
-/// callback, configHandler, directly.
+/// implementation.
 /// This test verifies that:
 /// 1. That a valid configuration update results in successful status return.
 /// 2. That an application process error in configuration updating is handled
@@ -310,21 +309,20 @@ TEST_F(DStubControllerTest, configUpdateTests) {
     isc::data::ElementPtr config_set = isc::data::Element::fromJSON(config);
 
     // Verify that a valid config gets a successful update result.
-    answer = DControllerBase::configHandler(config_set);
+    answer = updateConfig(config_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(0, rcode);
 
     // Verify that an error in process configure method is handled.
     SimFailure::set(SimFailure::ftProcessConfigure);
-    answer = DControllerBase::configHandler(config_set);
+    answer = updateConfig(config_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(1, rcode);
 }
 
 /// @brief Command execution tests.
 /// This really tests just the ability of the handler to invoke the necessary
-/// chain of methods and to handle error conditions. Note that this testing
-/// calls the command callback, commandHandler, directly.
+/// chain of methods and to handle error conditions.
 /// This test verifies that:
 /// 1. That an unrecognized command is detected and returns a status of
 /// d2::COMMAND_INVALID.
@@ -346,42 +344,38 @@ TEST_F(DStubControllerTest, executeCommandTests) {
 
     // Verify that an unknown command returns an d2::COMMAND_INVALID response.
     std::string bogus_command("bogus");
-    answer = DControllerBase::commandHandler(bogus_command, arg_set);
+    answer = executeCommand(bogus_command, arg_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(COMMAND_INVALID, rcode);
 
     // Verify that shutdown command returns d2::COMMAND_SUCCESS response.
-    answer = DControllerBase::commandHandler(SHUT_DOWN_COMMAND, arg_set);
+    answer = executeCommand(SHUT_DOWN_COMMAND, arg_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(COMMAND_SUCCESS, rcode);
 
     // Verify that a valid custom controller command returns
     // d2::COMMAND_SUCCESS response.
-    answer = DControllerBase::commandHandler(DStubController::
-                                             stub_ctl_command_, arg_set);
+    answer = executeCommand(DStubController::stub_ctl_command_, arg_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(COMMAND_SUCCESS, rcode);
 
     // Verify that a valid custom process command returns d2::COMMAND_SUCCESS
     // response.
-    answer = DControllerBase::commandHandler(DStubProcess::
-                                             stub_proc_command_, arg_set);
+    answer = executeCommand(DStubProcess::stub_proc_command_, arg_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(COMMAND_SUCCESS, rcode);
 
     // Verify that a valid custom controller command that fails returns
     // a d2::COMMAND_ERROR.
     SimFailure::set(SimFailure::ftControllerCommand);
-    answer = DControllerBase::commandHandler(DStubController::
-                                             stub_ctl_command_, arg_set);
+    answer = executeCommand(DStubController::stub_ctl_command_, arg_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(COMMAND_ERROR, rcode);
 
     // Verify that a valid custom process command that fails returns
     // a d2::COMMAND_ERROR.
     SimFailure::set(SimFailure::ftProcessCommand);
-    answer = DControllerBase::commandHandler(DStubProcess::
-                                             stub_proc_command_, arg_set);
+    answer = executeCommand(DStubProcess::stub_proc_command_, arg_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(COMMAND_ERROR, rcode);
 }

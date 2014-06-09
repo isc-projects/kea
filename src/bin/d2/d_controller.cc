@@ -156,28 +156,6 @@ DControllerBase::parseArgs(int argc, char* argv[])
     }
 }
 
-isc::data::ConstElementPtr
-DControllerBase::configHandler(isc::data::ConstElementPtr new_config) {
-    LOG_DEBUG(dctl_logger, DBGLVL_COMMAND, DCTL_CONFIG_UPDATE)
-              .arg(controller_->getAppName()).arg(new_config->str());
-
-    // Invoke the instance method on the controller singleton.
-    return (controller_->updateConfig(new_config));
-}
-
-// Static callback which invokes non-static handler on singleton
-isc::data::ConstElementPtr
-DControllerBase::commandHandler(const std::string& command,
-                                isc::data::ConstElementPtr args) {
-
-    LOG_DEBUG(dctl_logger, DBGLVL_COMMAND, DCTL_COMMAND_RECEIVED)
-        .arg(controller_->getAppName()).arg(command)
-        .arg(args ? args->str() : "(no args)");
-
-    // Invoke the instance method on the controller singleton.
-    return (controller_->executeCommand(command, args));
-}
-
 bool
 DControllerBase::customOption(int /* option */, char* /*optarg*/)
 {
@@ -212,7 +190,7 @@ DControllerBase::configFromFile() {
     isc::data::ConstElementPtr module_config;
 
     try {
-        std::string config_file = getConfigFileName();
+        std::string config_file = getConfigFile();
         if (config_file.empty()) {
             // Basic sanity check: file name must not be empty.
             isc_throw(BadValue, "JSON configuration file not specified. Please "
@@ -326,11 +304,6 @@ DControllerBase::usage(const std::string & text)
 }
 
 DControllerBase::~DControllerBase() {
-}
-
-std::string
-DControllerBase::getConfigFileName() {
-    return (Daemon::getConfigFile());
 }
 
 }; // namespace isc::d2
