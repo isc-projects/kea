@@ -37,7 +37,8 @@ public:
     /// signal handler function.
     SignalSetTest()
         : signal_set_(),
-          secondary_signal_set_() {
+          secondary_signal_set_(),
+          onreceipt_trues_(0) {
         handler_calls_ = 0;
         signum_ = -1;
     }
@@ -54,12 +55,28 @@ public:
         }
     }
 
-    /// @brief Signal handler used by unit tests.
+    /// @brief Deferred processing signal handler used by unit tests.
     ///
     /// @param signum Signal being handled.
     static void testHandler(int signum) {
         signum_ = signum;
         ++handler_calls_;
+    }
+
+    /// @brief Immediate processing signal handler used by unit tests.
+    ///
+    /// The handler processes only SIGHUP.  All others will pass through.
+    ///
+    /// @param signum Signal being handled.
+    /// @return Boolean true if the handler has processed the signal, false
+    /// otherwise.
+    bool onReceiptHandler(int signum) {
+        if (signum == SIGHUP) {
+            ++onreceipt_trues_;
+            return (true);
+        }
+
+        return (false);
     }
 
     /// @brief Number of handler calls so far.
@@ -70,6 +87,8 @@ public:
     SignalSetPtr signal_set_;
     /// @brief Second signal set object.
     SignalSetPtr secondary_signal_set_;
+    /// @brief Number of true returns from onReceiptHandler so far.
+    int onreceipt_trues_;
 };
 
 int SignalSetTest::handler_calls_ = 0;
@@ -184,5 +203,47 @@ TEST_F(SignalSetTest, duplicates) {
     EXPECT_THROW(other->add(SIGHUP), SignalSetError);
 }
 
+/// Check that on-receipt processing works.
+TEST_F(SignalSetTest, onReceiptTests) {
+    // Install an on-receipt handler.
+    SignalSet::setOnReceiptHandler(boost::bind(&SignalSetTest::onReceiptHandler,
+                                               this, _1));
+    // Create a SignalSet for SIGHUP and SIGUSR1.
+    ASSERT_NO_THROW(signal_set_.reset(new SignalSet(SIGHUP, SIGUSR1)));
+
+    // Generate SIGHUP, which the on-receipt handler should process.
+    // Verify that the on-receipt handler processed the signal and that
+    // no signals are pending.
+    ASSERT_EQ(0, raise(SIGHUP));
+    EXPECT_EQ(1, onreceipt_trues_);
+    EXPECT_EQ(-1, signal_set_->getNext());
+
+    // Generate SIGHUP, which the on-receipt handler should NOT process.
+    // Verify the on-receipt handler did not the signal and that SIGUSR1
+    // is pending.
+    ASSERT_EQ(0, raise(SIGUSR1));
+    EXPECT_EQ(1, onreceipt_trues_);
+    EXPECT_EQ(SIGUSR1, signal_set_->getNext());
+
+    // Verify we can process SIGUSR1 with the deferred handler.
+    signal_set_->handleNext(boost::bind(&SignalSetTest::testHandler, _1));
+    EXPECT_EQ(1, handler_calls_);
+    EXPECT_EQ(SIGUSR1, signum_);
+
+    // Unregister the on-receipt handler.
+    SignalSet::clearOnReceiptHandler();
+
+    // Generate SIGHUP.
+    // Verify that the on-receipt handler did not process the signal, and
+    // that SIGHUP is pending.
+    ASSERT_EQ(0, raise(SIGHUP));
+    EXPECT_EQ(1, onreceipt_trues_);
+    EXPECT_EQ(SIGHUP, signal_set_->getNext());
+
+    // Verify we can process it with deferred handler.
+    signal_set_->handleNext(boost::bind(&SignalSetTest::testHandler, _1));
+    EXPECT_EQ(2, handler_calls_);
+    EXPECT_EQ(SIGHUP, signum_);
+}
 
 } // end of anonymous namespace
