@@ -139,7 +139,7 @@ TEST_F(BundyD2ControllerTest, configUpdateTests) {
     // Configuration should be rejected as there is no session.  This is a 
     // pretty contrived situation that shouldn't be possible other than the 
     // handler being called directly (like this does).
-    answer = DControllerBase::configHandler(config_set);
+    answer = D2Controller::configHandler(config_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(1, rcode);
 }
@@ -163,13 +163,13 @@ TEST_F(BundyD2ControllerTest, executeCommandTests) {
 
     // Verify that an unknown command returns an COMMAND_INVALID response.
     std::string bogus_command("bogus");
-    answer = DControllerBase::commandHandler(bogus_command, arg_set);
+    answer = D2Controller::commandHandler(bogus_command, arg_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(COMMAND_INVALID, rcode);
 
     // Verify that shutdown command returns COMMAND_SUCCESS response.
     //answer = executeCommand(SHUT_DOWN_COMMAND, isc::data::ElementPtr());
-    answer = DControllerBase::commandHandler(SHUT_DOWN_COMMAND, arg_set);
+    answer = D2Controller::commandHandler(SHUT_DOWN_COMMAND, arg_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(COMMAND_SUCCESS, rcode);
 }

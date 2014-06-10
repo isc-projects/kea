@@ -189,7 +189,7 @@ D2Controller::establishSession() {
     config_session_ = ModuleCCSessionPtr(new isc::config::ModuleCCSession(
                                          getSpecFileName(), *cc_session_,
                                          dummyConfigHandler, 
-                                         DControllerBase::commandHandler,
+                                         commandHandler,
                                          false));
     // Enable configuration even processing.
     config_session_->start();
@@ -197,7 +197,7 @@ D2Controller::establishSession() {
     // We initially create ModuleCCSession() with a dummy configHandler, as
     // the session module is too eager to send partial configuration.
     // Replace the dummy config handler with the real handler.
-    config_session_->setConfigHandler(DControllerBase::configHandler);
+    config_session_->setConfigHandler(configHandler);
 
     // Call the real configHandler with the full configuration retrieved
     // from the config session.
@@ -236,6 +236,29 @@ D2Controller::dummyConfigHandler(isc::data::ConstElementPtr) {
     LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DCTL_CONFIG_STUB)
              .arg(getController()->getAppName());
     return (isc::config::createAnswer(0, "Configuration accepted."));
+}
+
+isc::data::ConstElementPtr
+D2Controller::configHandler(isc::data::ConstElementPtr new_config) {
+
+    LOG_DEBUG(dctl_logger, DBGLVL_COMMAND, DCTL_CONFIG_UPDATE)
+              .arg(getController()->getAppName()).arg(new_config->str());
+
+    // Invoke the instance method on the controller singleton.
+    return (getController()->updateConfig(new_config));
+}
+
+// Static callback which invokes non-static handler on singleton
+isc::data::ConstElementPtr
+D2Controller::commandHandler(const std::string& command,
+                                isc::data::ConstElementPtr args) {
+
+    LOG_DEBUG(dctl_logger, DBGLVL_COMMAND, DCTL_COMMAND_RECEIVED)
+        .arg(getController()->getAppName()).arg(command)
+        .arg(args ? args->str() : "(no args)");
+
+    // Invoke the instance method on the controller singleton.
+    return (getController()->executeCommand(command, args));
 }
 
 isc::data::ConstElementPtr
