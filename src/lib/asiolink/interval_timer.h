@@ -31,13 +31,15 @@ class IntervalTimerImpl;
 /// This class is implemented to use \c asio::deadline_timer as interval
 /// timer.
 ///
-/// \c setup() sets a timer to expire on (now + interval) and a call back
-/// function.
+/// \c setup() sets a timer to expire on (now + interval), a call back
+/// function, and an interval mode.
 ///
 /// \c IntervalTimerImpl::callback() is called by the timer when it expires.
 ///
-/// The function calls the call back function set by \c setup() and updates
-/// the timer to expire in (now + interval) milliseconds.
+/// The function calls the call back function set by \c setup() and if the
+/// the interval mode indicates a repeating interval, will reschedule the
+/// timer to expire in (now + interval) milliseconds.
+///
 /// The type of call back function is \c void(void).
 ///
 /// The call back function will not be called if the instance of this class is
@@ -59,6 +61,15 @@ class IntervalTimer {
 public:
     /// \name The type of timer callback function
     typedef boost::function<void()> Callback;
+
+    /// \brief Defines possible timer modes used to setup a timer.
+    /// - REPEATING - Timer will reschedule itself after each expiration
+    /// - ONE_SHOT - Timer will expire after one interval and not reschedule.
+    enum Mode
+    {
+        REPEATING,
+        ONE_SHOT
+    };
 
     ///
     /// \name Constructors and Destructor
@@ -96,6 +107,9 @@ public:
     /// \param cbfunc A reference to a function \c void(void) to call back
     /// when the timer is expired (should not be an empty functor)
     /// \param interval Interval in milliseconds (greater than 0)
+    /// \param mode Determines if the timer will automatically reschedule after
+    /// each expiration (the default) or behave as a one-shot which will run
+    /// for a single interval and not reschedule.
     ///
     /// Note: IntervalTimer will not pass \c asio::error_code to
     /// call back function. In case the timer is canceled, the function
@@ -104,7 +118,8 @@ public:
     /// \throw isc::InvalidParameter cbfunc is empty
     /// \throw isc::BadValue interval is less than or equal to 0
     /// \throw isc::Unexpected internal runtime error
-    void setup(const Callback& cbfunc, const long interval);
+    void setup(const Callback& cbfunc, const long interval,
+                    const Mode& = REPEATING);
 
     /// Cancel the timer.
     ///
@@ -127,6 +142,8 @@ public:
 private:
     boost::shared_ptr<IntervalTimerImpl> impl_;
 };
+
+typedef boost::shared_ptr<isc::asiolink::IntervalTimer> IntervalTimerPtr;
 
 } // namespace asiolink
 } // namespace isc
