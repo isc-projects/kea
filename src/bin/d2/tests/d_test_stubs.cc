@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -54,6 +54,7 @@ const char*  DStubProcess::stub_proc_command_("cool_proc_cmd");
 DStubProcess::DStubProcess(const char* name, IOServicePtr io_service)
     : DProcessBase(name, io_service, DCfgMgrBasePtr(new DStubCfgMgr())) {
 };
+
 
 void
 DStubProcess::init() {
@@ -140,6 +141,7 @@ const char* DStubController::stub_app_name_ = "TestService";
 /// @brief Defines the bin name used to construct the controller
 const char* DStubController::stub_bin_name_ = "TestBin";
 
+
 DControllerBasePtr&
 DStubController::instance() {
     // If the singleton hasn't been created, do it now.
@@ -216,6 +218,9 @@ DStubController::~DStubController() {
 
 // Initialize controller wrapper's static instance getter member.
 DControllerTest::InstanceGetter DControllerTest::instanceGetter_ = NULL;
+
+/// @brief Defines the name of the configuration file to use
+const char* DControllerTest::CFG_TEST_FILE = "d2-test-config.json";
 
 //************************** ObjectParser *************************
 

@@ -37,6 +37,10 @@ This critical error message indicates that the initial application
 configuration has failed. The service will start, but will not
 process requests until the configuration has been corrected.
 
+% DCTL_CONFIG_FILE_LOAD_FAIL %1 configuration could not be loaded from file: %2
+This fatal error message indicates that the application attempted to load its
+initial configuration from file and has failed. The service will exit.
+
 % DCTL_CONFIG_START parsing new configuration: %1
 A debug message indicating that the application process has received an
 updated configuration and has passed it to its configuration manager
