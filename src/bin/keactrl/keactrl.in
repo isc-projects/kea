@@ -45,7 +45,7 @@ get_pids() {
     _get_pids=$(ps axwwo pid,command | grep ${proc_name} | grep -v grep \
         | awk '{print $1}')
     # Return the number of PIDs.
-    _get_pids_num=$(printf "%s" "${pids}" | wc -w | awk '{print $1}')
+    _get_pids_num=$(printf "%s" "${_get_pids}" | wc -w | awk '{print $1}')
 }
 
 # Checks if the specified process is running. Internally it calls get_pids
@@ -69,7 +69,7 @@ send_signal() {
     get_pids ${proc_name}
     # If no processes running, there is no process we can send the signal
     # to. This is not neccessarily an error.
-    if [ -z get_pids ]; then
+    if [ -z ${_get_pids} ]; then
         log_info "Skip sending signal ${sig} to process ${proc_name}: \
 process is not running\n"
         return
@@ -89,7 +89,7 @@ start_server() {
     # Extract the name of the binary from the path.
     local binary_name=$(basename ${binary_path})
     # Use the binary name to check if the process is already running.
-    check_running $(basename ${binary_name})
+    check_running ${binary_name}
     # If process is running, don't start another one. Just log a message.
     if [ ${_running} -ne 0 ]; then
         log_info "Skip starting ${binary_name} \
