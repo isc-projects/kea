@@ -52,39 +52,45 @@ base are shown in the following class diagram:
 - isc::d2::DControllerBase - provides all of the services necessary to manage
 an application process class derived from isc::d2::DProcess. These services include:
     - Command line argument handling
-    - Process instantiation and initialization
+    - Process instantiation and initialization0
     - Support for stand-alone execution
-    - Support for integrated operation as a BIND10 module (session management
+    - Support for integrated operation as a BUNDY module (session management
       and event handling)
     - Process event loop invocation and shutdown
-    .
-    It creates and manages an instance of isc::d2::DProcessBase.  The CPL is designed
-    for asynchronous event processing applications.  It is constructed to use ASIO
-    library for IO processing.  DControllerBase own an isc::asiolink::io_service instance and it pas    ses this into the @c DProcessBase constructor and it is this
-    service that is used drivel the process's event loop.
 
-    @c DControllerBase also provides the ability to operate one of two modes:
-    "stand-alone" mode or "managed" mode.  In stand-alone mode, the controller has
-    no IO of it's own, thus there is two-way control communication between the application and the outside world.
+    It creates and manages an instance of isc::d2::DProcessBase.  The CPL is
+    designed for asynchronous event processing applications.  It is constructed
+    to use ASIO library for IO processing.  @c DControllerBase owns an
+    isc::asiolink::IOService instance and it passes this into the @c
+    DProcessBase constructor. It is this @c IOService that is used to drive the
+    process's event loop.  The controller is designed to provide any interfaces
+    between the process it controls and the outside world.
 
-    In "managed mode" the controller creates a BIND10 Session, allowing it to
-    participate as a BIND10 module and therefore receive control commands such as
-    configuration updates, status requests, and shutdown.  BIND10 modules are
-    required to supply two callbacks: one for configuration events and one for
-    command events. @c DControllerBase supplies these callbacks which largely
-    pass the information through to its @c DProcessBase instance.  The key aspect
-    to take from this is that the controller handles the interface for receiving
-    asynchronous commands and the invokes the appropriate services in the process's
-    interface.
+    @c DControllerBase provides configuration for its process via a JSON file
+    specified as a mandatory command line argument. The file structure is
+    expected be as follows:
 
-    @todo DControllerBase does yet support reading the configuration from a
-    command line argument. It's command line argument processing can be very easily
-    extended to do so.
+    { "<module-name>": {<module-config>} }
 
-    @todo At the time of this writing Kea is being separated from the BIND10
-    framework.  As such, use of the BIND10 Session will be removed but could
-    readily be replaced with an authenticated socket connection for receiving and
-    responding to directives asynchronously.
+    where:
+        - module-name : is a label which uniquely identifies the
+        configuration data for the (i.e. the controlled process.)
+        It is the value returned by @ref
+        isc::d2::DControllerBase::getAppName()
+
+        - module-config: a set of zero or more JSON elements which comprise
+        application's configuration values.  Element syntax is governed
+        by those elements supported in isc::cc.
+
+    The file may contain an arbitrary number of other modules.
+
+    @todo DControllerBase will soon support dynamic reloading of the
+    configuration file upon receipt of the SIGHUP signal, and graceful
+    shutdown upon receipt of either SIGTERM or SIGINT.
+
+    @todo Eventually, some sort of secure socket interface which supports remote
+    control operations such as configuration changes or status reporting will
+    likely be implemented.
 
 - isc::d2::DProcessBase - defines an asynchronous-event processor (i.e.
 application) which provides a uniform interface to:
@@ -105,10 +111,10 @@ information or "context".  It provides a single enclosure for the storage of
 configuration parameters or any other information that needs to accessible
 within a given context.
 
-The following sequence diagram shows how a configuration update, received
-asynchronously through the session command channel, moves through the CPL:
+The following sequence diagram shows how a configuration from file moves
+through the CPL layer:
 
-@image html config_sequence.svg "CPL Configuration Update Sequence"
+@image html config_from_file_sequence.svg "CPL Configuration From File Sequence"
 
 The CPL classes will likely move into a common library.
 
@@ -121,6 +127,29 @@ in the diagram below:
 
 - isc::d2::D2Controller - entry point for running D2, it processes command line
 options, starts and controls the application process, @c D2Process.
+
+Currently there are two implementations of D2Controller selected through the
+configuration script switch, "--with-kea-config":
+
+-# --with-kea-config=JSON - The implementation is contained in isc/d2/d2_controller.*.  This form allows D2 to run as a stand-alone process configured via JSON
+text file specified as a command line argument.  The file content is described
+in isc/d2/dhcp-ddns.spec, unit tests are in
+isc/d2/tests/bundy_d2_controller_unittests.cc.  As of Kea 0.9, this form will
+be the default form.
+-# --with-kea-config=BUNDY - The implementation is contained in
+isc/d2/bundy_d2_controller.*, unit tests are in isc/d2/tests/d2_controller_unittests.cc and d_controller_unittests.cc  This form allows D2 to run as a Bundy
+module. It creates a BUNDY Session, allowing it to receive control commands
+such as configuration updates, status requests, and shutdown.  BUNDY modules
+are required to supply two callbacks: one for configuration events and one for
+command events.  This form of D2Controller supplies these callbacks which
+largely pass the information through to its @c D2Process instance.   If the
+controller cannot establish a BUNDY session it will exit with a fatal error.
+
+The configuration switch determines which of two forms and tests are compiled
+and they are mutually exclusive.
+
+@note The inclusion of the BUNDY form should be considered temporary. Long range
+planning should be based on the JSON form.
 
 - isc::d2::D2Process - creates and manages D2's primary resources and implements
 the main event loop described in @ref d2EventLoop.
@@ -294,7 +323,7 @@ D2's design addresses this by calling for two types of transactions: one for
 adding entries and one for removing them, each with their own state model.
 The transaction classes are shown in the following diagram:
 
-@image html trans_classes.svg "NameChangeTransaction Derviations"
+@image html trans_classes.svg "NameChangeTransaction Derivations"
 
 - isc::d2::NameAddTransaction - carries out a @c NameChangeRequest to add entries
 - isc::d2::NameRemoveTransaction - carries out a @c NameChangeRequest to remove entries

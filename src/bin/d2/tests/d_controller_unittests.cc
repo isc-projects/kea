@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -76,20 +76,22 @@ TEST_F(DStubControllerTest, basicInstanceTesting) {
 /// 4. Extraneous command line information is detected.
 TEST_F(DStubControllerTest, commandLineArgs) {
 
-    // Verify that both flags are false initially.
-    EXPECT_TRUE(checkStandAlone(false));
+    // Verify that verbose flag is false initially.
     EXPECT_TRUE(checkVerbose(false));
 
     // Verify that standard options can be parsed without error.
     char* argv[] = { const_cast<char*>("progName"),
-                     const_cast<char*>("-s"),
+                     const_cast<char*>("-c"),
+                     const_cast<char*>("cfgName"),
                      const_cast<char*>("-v") };
-    int argc = 3;
+    int argc = 4;
     EXPECT_NO_THROW(parseArgs(argc, argv));
 
-    // Verify that flags are now true.
-    EXPECT_TRUE(checkStandAlone(true));
+    // Verify that verbose is true.
     EXPECT_TRUE(checkVerbose(true));
+
+    // Verify configuration file name is correct
+    EXPECT_TRUE(checkConfigFileName("cfgName"));
 
     // Verify that the custom command line option is parsed without error.
     char xopt[3] = "- ";
@@ -166,9 +168,10 @@ TEST_F(DStubControllerTest, launchInvalidUsage) {
 TEST_F(DStubControllerTest, launchProcessInitError) {
     // Command line to run integrated
     char* argv[] = { const_cast<char*>("progName"),
-                     const_cast<char*>("-s"),
+                     const_cast<char*>("-c"),
+                     const_cast<char*>(DControllerTest::CFG_TEST_FILE),
                      const_cast<char*>("-v") };
-    int argc = 3;
+    int argc = 4;
 
     // Launch the controller in stand alone mode.
     SimFailure::set(SimFailure::ftCreateProcessException);
@@ -177,13 +180,19 @@ TEST_F(DStubControllerTest, launchProcessInitError) {
 
 /// @brief Tests launch and normal shutdown (stand alone mode).
 /// This creates an interval timer to generate a normal shutdown and then
-/// launches with a valid, stand-alone command line and no simulated errors.
+/// launches with a valid, command line, with a valid configuration file
+///  and no simulated errors.
 TEST_F(DStubControllerTest, launchNormalShutdown) {
     // command line to run standalone
     char* argv[] = { const_cast<char*>("progName"),
-                     const_cast<char*>("-s"),
+                     const_cast<char*>("-c"),
+                     const_cast<char*>(DControllerTest::CFG_TEST_FILE),
                      const_cast<char*>("-v") };
-    int argc = 3;
+    int argc = 4;
+
+    // Create a non-empty, config file.  writeFile will wrap the contents
+    // with the module name for us.
+    writeFile("{}");
 
     // Use an asiolink IntervalTimer and callback to generate the
     // shutdown invocation. (Note IntervalTimer setup is in milliseconds).
@@ -205,6 +214,42 @@ TEST_F(DStubControllerTest, launchNormalShutdown) {
                 elapsed.total_milliseconds() <= 2200);
 }
 
+/// @brief Tests launch with an nonexistant configuration file.
+TEST_F(DStubControllerTest, nonexistantConfigFile) {
+    // command line to run standalone
+    char* argv[] = { const_cast<char*>("progName"),
+                     const_cast<char*>("-c"),
+                     const_cast<char*>("bogus-file"),
+                     const_cast<char*>("-v") };
+    int argc = 4;
+
+    // Record start time, and invoke launch().
+    EXPECT_THROW(launch(argc, argv), ProcessInitError);
+}
+
+/// @brief Tests launch with configuration file argument but no file name
+TEST_F(DStubControllerTest, missingConfigFileName) {
+    // command line to run standalone
+    char* argv[] = { const_cast<char*>("progName"),
+                     const_cast<char*>("-c"),
+                     const_cast<char*>("-v") };
+    int argc = 3;
+
+    // Record start time, and invoke launch().
+    EXPECT_THROW(launch(argc, argv), ProcessInitError);
+}
+
+/// @brief Tests launch with no configuration file argument
+TEST_F(DStubControllerTest, missingConfigFileArgument) {
+    // command line to run standalone
+    char* argv[] = { const_cast<char*>("progName"),
+                     const_cast<char*>("-v") };
+    int argc = 2;
+
+    // Record start time, and invoke launch().
+    EXPECT_THROW(launch(argc, argv), ProcessInitError);
+}
+
 /// @brief Tests launch with an operational error during application execution.
 /// This test creates an interval timer to generate a runtime exception during
 /// the process event loop. It launches wih a valid, stand-alone command line
@@ -212,9 +257,14 @@ TEST_F(DStubControllerTest, launchNormalShutdown) {
 TEST_F(DStubControllerTest, launchRuntimeError) {
     // command line to run standalone
     char* argv[] = { const_cast<char*>("progName"),
-                     const_cast<char*>("-s"),
+                     const_cast<char*>("-c"),
+                     const_cast<char*>(DControllerTest::CFG_TEST_FILE),
                      const_cast<char*>("-v") };
-    int argc = 3;
+    int argc = 4;
+
+    // Create a non-empty, config file.  writeFile will wrap the contents
+    // with the module name for us.
+    writeFile("{}");
 
     // Use an asiolink IntervalTimer and callback to generate the
     // shutdown invocation. (Note IntervalTimer setup is in milliseconds).
@@ -236,31 +286,14 @@ TEST_F(DStubControllerTest, launchRuntimeError) {
                 elapsed.total_milliseconds() <= 2200);
 }
 
-/// @brief Tests launch with a session establishment failure.
-/// This test launches with a valid command line for integrated mode and no.
-/// Attempting to connect to BIND10 should fail, even if BIND10 is running
-/// UNLESS the test is run as root.  Launch should throw SessionStartError.
-TEST_F(DStubControllerTest, launchSessionFailure) {
-    // Command line to run integrated
-    char* argv[] = { (char*)"progName" };
-    int argc = 1;
-
-    // Launch the controller in integrated mode.
-    EXPECT_THROW(launch(argc, argv), SessionStartError);
-}
-
 /// @brief Configuration update event testing.
 /// This really tests just the ability of the handlers to invoke the necessary
 /// chain of methods and handle error conditions. Configuration parsing and
 /// retrieval should be tested as part of the d2 configuration management
-/// implementation.  Note that this testing calls the configuration update event
-/// callback, configHandler, directly.
+/// implementation.
 /// This test verifies that:
-/// 1. Configuration will be rejected in integrated mode when there is no
-/// session established. (This is a very contrived situation).
-/// 2. In stand-alone mode a configuration update results in successful
-/// status return.
-/// 3. That an application process error in configuration updating is handled
+/// 1. That a valid configuration update results in successful status return.
+/// 2. That an application process error in configuration updating is handled
 /// properly.
 TEST_F(DStubControllerTest, configUpdateTests) {
     int rcode = -1;
@@ -275,30 +308,21 @@ TEST_F(DStubControllerTest, configUpdateTests) {
     std::string config = "{ \"test-value\": 1000 } ";
     isc::data::ElementPtr config_set = isc::data::Element::fromJSON(config);
 
-    // We are not stand-alone, so configuration should be rejected as there is
-    // no session.  This is a pretty contrived situation that shouldn't be
-    // possible other than the handler being called directly (like this does).
-    answer = DControllerBase::configHandler(config_set);
-    isc::config::parseAnswer(rcode, answer);
-    EXPECT_EQ(1, rcode);
-
-    // Verify that in stand alone we get a successful update result.
-    setStandAlone(true);
-    answer = DControllerBase::configHandler(config_set);
+    // Verify that a valid config gets a successful update result.
+    answer = updateConfig(config_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(0, rcode);
 
     // Verify that an error in process configure method is handled.
     SimFailure::set(SimFailure::ftProcessConfigure);
-    answer = DControllerBase::configHandler(config_set);
+    answer = updateConfig(config_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(1, rcode);
 }
 
 /// @brief Command execution tests.
 /// This really tests just the ability of the handler to invoke the necessary
-/// chain of methods and to handle error conditions. Note that this testing
-/// calls the command callback, commandHandler, directly.
+/// chain of methods and to handle error conditions.
 /// This test verifies that:
 /// 1. That an unrecognized command is detected and returns a status of
 /// d2::COMMAND_INVALID.
@@ -320,42 +344,38 @@ TEST_F(DStubControllerTest, executeCommandTests) {
 
     // Verify that an unknown command returns an d2::COMMAND_INVALID response.
     std::string bogus_command("bogus");
-    answer = DControllerBase::commandHandler(bogus_command, arg_set);
+    answer = executeCommand(bogus_command, arg_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(COMMAND_INVALID, rcode);
 
     // Verify that shutdown command returns d2::COMMAND_SUCCESS response.
-    answer = DControllerBase::commandHandler(SHUT_DOWN_COMMAND, arg_set);
+    answer = executeCommand(SHUT_DOWN_COMMAND, arg_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(COMMAND_SUCCESS, rcode);
 
     // Verify that a valid custom controller command returns
     // d2::COMMAND_SUCCESS response.
-    answer = DControllerBase::commandHandler(DStubController::
-                                             stub_ctl_command_, arg_set);
+    answer = executeCommand(DStubController::stub_ctl_command_, arg_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(COMMAND_SUCCESS, rcode);
 
     // Verify that a valid custom process command returns d2::COMMAND_SUCCESS
     // response.
-    answer = DControllerBase::commandHandler(DStubProcess::
-                                             stub_proc_command_, arg_set);
+    answer = executeCommand(DStubProcess::stub_proc_command_, arg_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(COMMAND_SUCCESS, rcode);
 
     // Verify that a valid custom controller command that fails returns
     // a d2::COMMAND_ERROR.
     SimFailure::set(SimFailure::ftControllerCommand);
-    answer = DControllerBase::commandHandler(DStubController::
-                                             stub_ctl_command_, arg_set);
+    answer = executeCommand(DStubController::stub_ctl_command_, arg_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(COMMAND_ERROR, rcode);
 
     // Verify that a valid custom process command that fails returns
     // a d2::COMMAND_ERROR.
     SimFailure::set(SimFailure::ftProcessCommand);
-    answer = DControllerBase::commandHandler(DStubProcess::
-                                             stub_proc_command_, arg_set);
+    answer = executeCommand(DStubProcess::stub_proc_command_, arg_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(COMMAND_ERROR, rcode);
 }

@@ -1,4 +1,4 @@
-# Copyright (C) 2013 Internet Systems Consortium.
+# Copyright (C) 2013-2014 Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -159,8 +159,7 @@ class TestD2Daemon(unittest.TestCase):
         print("Note: Simple test to verify that D2 server can be started.")
         # note that "-s" for stand alone is necessary in order to flush the log output
         # soon enough to catch it.
-        (returncode, output, error) = self.runCommand(["../b10-dhcp-ddns", 
-                                                       "-s", "-v"])
+        (returncode, output, error) = self.runCommand(["../b10-dhcp-ddns", "-v"])
         output_text = str(output) + str(error)
         self.assertEqual(output_text.count("DCTL_STARTING"), 1)
 
