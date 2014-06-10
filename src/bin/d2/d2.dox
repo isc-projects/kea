@@ -60,9 +60,9 @@ an application process class derived from isc::d2::DProcess. These services incl
 
     It creates and manages an instance of isc::d2::DProcessBase.  The CPL is
     designed for asynchronous event processing applications.  It is constructed
-    to use ASIO library for IO processing.  DControllerBase owns an
-    isc::asiolink::io_service instance and it passes this into the @c
-    DProcessBase constructor. It is this io_service that is used drive the
+    to use ASIO library for IO processing.  @c DControllerBase owns an
+    isc::asiolink::IOService instance and it passes this into the @c
+    DProcessBase constructor. It is this @c IOService that is used to drive the
     process's event loop.  The controller is designed to provide any interfaces
     between the process it controls and the outside world.
 
@@ -73,12 +73,12 @@ an application process class derived from isc::d2::DProcess. These services incl
     { "<module-name>": {<module-config>} }
 
     where:
-        module-name : is a label which uniquely identifies the
+        - module-name : is a label which uniquely identifies the
         configuration data for the (i.e. the controlled process.)
         It is the value returned by @ref
         isc::d2::DControllerBase::getAppName()
 
-        module-config: a set of zero or more JSON elements which comprise
+        - module-config: a set of zero or more JSON elements which comprise
         application's configuration values.  Element syntax is governed
         by those elements supported in isc::cc.
 
@@ -131,14 +131,13 @@ options, starts and controls the application process, @c D2Process.
 Currently there are two implementations of D2Controller selected through the
 configuration script switch, "--with-kea-config":
 
-1. --with-kea-config=JSON - The implementation is contained in isc/d2/d2_controller.*.  This form allows D2 to run as a stand-alone process configured via JSON
+-# --with-kea-config=JSON - The implementation is contained in isc/d2/d2_controller.*.  This form allows D2 to run as a stand-alone process configured via JSON
 text file specified as a command line argument.  The file content is described
 in isc/d2/dhcp-ddns.spec, unit tests are in
 isc/d2/tests/bundy_d2_controller_unittests.cc.  As of Kea 0.9, this form will
 be the default form.
-
-2. --with-kea-config=BUNDY - The implementation is containd in
-isc/d2/bundy_d2_controller.*, unit tests are in isc/d2/tests/d2_controller_unittests.cc and d_controller_unittests.cc  This form allows D2 to run as a a Bundy
+-# --with-kea-config=BUNDY - The implementation is contained in
+isc/d2/bundy_d2_controller.*, unit tests are in isc/d2/tests/d2_controller_unittests.cc and d_controller_unittests.cc  This form allows D2 to run as a Bundy
 module. It creates a BUNDY Session, allowing it to receive control commands
 such as configuration updates, status requests, and shutdown.  BUNDY modules
 are required to supply two callbacks: one for configuration events and one for
@@ -146,7 +145,7 @@ command events.  This form of D2Controller supplies these callbacks which
 largely pass the information through to its @c D2Process instance.   If the
 controller cannot establish a BUNDY session it will exit with a fatal error.
 
-The configuration switch deteremines which of two forms and tests are compiled
+The configuration switch determines which of two forms and tests are compiled
 and they are mutually exclusive.
 
 @note The inclusion of the BUNDY form should be considered temporary. Long range
@@ -324,7 +323,7 @@ D2's design addresses this by calling for two types of transactions: one for
 adding entries and one for removing them, each with their own state model.
 The transaction classes are shown in the following diagram:
 
-@image html trans_classes.svg "NameChangeTransaction Derviations"
+@image html trans_classes.svg "NameChangeTransaction Derivations"
 
 - isc::d2::NameAddTransaction - carries out a @c NameChangeRequest to add entries
 - isc::d2::NameRemoveTransaction - carries out a @c NameChangeRequest to remove entries
