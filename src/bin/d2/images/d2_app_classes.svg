@@ -37,7 +37,7 @@
 	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="392">initProcess()</text>
 	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="406">runProcess()</text>
 	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="420">shutdownProcess()</text>
-	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="434">getConfigFileName()</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="434">getConfigFile()</text>
 	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="448">getProcess()</text>
 	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="17" y="462">usage()</text>
 </g>
@@ -285,16 +285,16 @@
 	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="246" y="231">io_service_</text>
 </g>
 <g>
-	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="736" y="285">context_</text>
-</g>
-<g>
-	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="572" y="183">cfg_mgr_</text>
-</g>
-<g>
 	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="382" y="63">process_</text>
 </g>
 <g>
 	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="246" y="156">io_service_</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="736" y="285">context_</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="572" y="183">cfg_mgr_</text>
 </g>
 <g>
 	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="788" y="294" width="3" height="47" />
