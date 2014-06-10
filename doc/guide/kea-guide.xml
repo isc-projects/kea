@@ -26,8 +26,7 @@
   <?xml-stylesheet href="bind10-guide.css" type="text/css"?>
 
   <bookinfo>
-    <title>Kea Guide</title>
-    <subtitle>Administrator Reference for Kea</subtitle>
+    <title>Kea Administrator Reference Manual</title>
 
     <copyright>
       <year>2010-2014</year><holder>Internet Systems Consortium, Inc.</holder>
@@ -40,7 +39,6 @@
         Consortium (ISC).
       </para>
 
-      <!-- TODO: The VERSION needs to be updated -->
       <para>
         This is the reference guide for Kea version &__VERSION__;.
         The most up-to-date version of this document (in PDF, HTML,
@@ -53,18 +51,12 @@
 
   </bookinfo>
 
-  <!-- todo: Preface is now empty, but leave it around now
-  <preface>
-    <title>Preface</title>
-  </preface>
--->
   <chapter id="intro">
     <title>Introduction</title>
     <para>
       Kea is the next generation of DHCP servers developed by ISC.
       It supports both DHCPv4 and DHCPv6 protocols along with their
-      extensions (e.g. prefix delegation). It also supports the dynamic
-      updates to DNS.
+      extensions, e.g. prefix delegation and dynamic updates to DNS.
     </para>
 
     <para>
@@ -87,7 +79,7 @@
       paragraphs. The term "BIND 10" in the context of this document means
       "BIND 10 libraries and applications which are necessary for Kea to run
       and configure". The term "Kea" means "the collection of binaries and libraries
-      which, as a whole, implement the DHCP protocols.
+      which, as a whole, implement the DHCP protocols".
       </simpara>
     </note>
 
@@ -96,20 +88,18 @@
     </para>
 
     <section>
-      <!-- todo: revisit (maybe extend) the list of supported platforms -->
       <title>Supported Platforms</title>
       <para>
-        Kea builds have been tested on (in no particular order)
+        Kea is officially supported on RedHat Enterprise Linux,
+	CentOS, Fedora and FreeBSD systems. It is also likely to work on many
+	other platforms: builds have been tested on (in no particular order)
         Debian GNU/Linux 6 and unstable, Ubuntu 9.10, NetBSD 5,
         Solaris 10 and 11, FreeBSD 7 and 8, CentOS Linux 5.3,
-        MacOS 10.6 and 10.7, and OpenBSD 5.1.
-
-        It has been tested on Sparc, i386, and amd64 hardware
-        platforms.
-
-        It is planned for Kea to build, install and run on
-        Windows and standard Unix-type platforms.
+        MacOS 10.6 and 10.7, and OpenBSD 5.1. Non supported systems
+	(especially non-Linux) are likely to have issues with directly
+	connected DHCPv4 clients.
       </para>
+      <para>There are currently no plans to port Kea to Windows platforms.</para>
     </section>
 
     <section id="required-software">
@@ -125,41 +115,56 @@
       </para>
 
       <para>
-        Kea was developed as a collection of applications within
-        BIND 10 framework and it still relies on the remaining parts
-        of this framework. In particular, the servers' configuration
-        and startup are still facilitated by the modules which originate
+        Kea was developed as a collection of applications within BIND
+        10 framework and it still relies on the remaining parts of
+        this framework. In particular, the servers' configuration and
+        startup are still facilitated by the modules which originate
         in BIND 10. These modules require at least Python 3.1 to run.
-        They also work with Python 3.2
-        (<ulink url="http://www.python.org/"/>)). The dependency
-        on Python will be removed once a replacing configuration
-        and startup mechanisms are developed for Kea. At this point
-        Kea will be written in pure C++.
+        They also work with Python 3.2, 3.3 or 3.4 (<ulink
+        url="http://www.python.org/"/>). The dependency on Python will
+        be removed once a replacing configuration and startup
+        mechanisms are developed and released as Kea 0.9. At this
+        point Kea will be written in pure C++.
       </para>
 
       <para>
         Kea uses the Botan crypto library for C++
         (<ulink url="http://botan.randombit.net/"/>).
         It requires at least Botan version 1.8.
+<!-- @todo 0.9/#2406: Add info about OpenSSL here -->
       </para>
 
       <para>
         Kea uses the log4cplus C++ logging library
         (<ulink url="http://log4cplus.sourceforge.net/"/>).
         It requires at least log4cplus version 1.0.3.
-<!-- TODO: It is recommended to use at least version .... -->
+      </para>
+
+      <para>
+	Kea can use MySQL headers and libraries to build MySQL database backend
+	that can be used to store leases. This is an optional dependency. When
+	it is missing, Kea will lack the ability to store leases in MySQL
+	database.
+      </para>
+
+      <para>
+	Kea can use PostgreSQL headers and libraries to build PostgreSQL
+	database backend that can be used to store leases. This is an optional
+	dependency. When it is missing, Kea will lack the ability to store
+	leases in PostgreSQL database.
       </para>
     </section>
 
     <section id="starting_stopping">
       <title>Starting and Stopping the Server</title>
+      <!-- @todo: Rewrite this section as part of #3422-->
       <para>
         Kea is modular.  Part of this modularity is
         accomplished using multiple cooperating processes which, together,
         provide the server functionality.
       </para>
 
-      <!-- todo: Rename processes here, once they are renamed in the source -->
+      <!-- @todo: Rename processes here, once they are renamed in the source -->
       <para>
         At first, running many different processes may seem confusing.
         However, these processes are started by running a single
@@ -261,6 +266,7 @@
 
     <section id="managing_once_running">
       <title>Managing BIND 10</title>
+      <!-- @todo: Rewrite this section as part of #3422 -->
 
       <para>
         Once BIND 10 is running, a few commands are used to interact
@@ -330,20 +336,20 @@ var/
     <title>Quick start</title>
 
     <para>
-        This quickly covers the standard steps for installing
-        and deploying Kea.
-        For further details, full customizations, and troubleshooting,
-        see the respective chapters in the Kea guide.
+        This quickly covers the standard steps for installing and deploying Kea.
+        For further details, full customizations, and troubleshooting, see the
+        respective chapters in the Kea guide.
     </para>
 
-    <section id="quick-start-dhcp6">
-      <title>Quick start guide for DHCPv6 service</title>
+    <section id="quick-start">
+      <title>Quick start guide for DHCPv4 and DHCPv6 services</title>
 
       <orderedlist>
 
         <listitem>
           <simpara>
-            Install required run-time and build dependencies.
+            Install required run-time and build dependencies. See <xref
+	    linkend="build-requirements"/> for details.
           </simpara>
         </listitem>
 
@@ -360,7 +366,7 @@ var/
           <para>Go into the source and run configure:
             <screen>$ <userinput>cd kea</userinput>
 $ <userinput>autoreconf --install</userinput>
-$ <userinput>./configure</userinput></screen>
+$ <userinput>./configure [your extra parameters]</userinput></screen>
           </para>
         </listitem>
 
@@ -378,39 +384,35 @@ $ <userinput>./configure</userinput></screen>
         </listitem>
 
         <listitem>
-          <para>Change directory to the install prefix (by default
-          <filename>/usr/local/</filename>):
-            <screen>$ <userinput>cd /usr/local/</userinput></screen>
+          <para>Edit your configuration file for DHCPv4. See doc/examples/kea4
+	  for set of examples.
+	  </para>
+	</listitem>
+
+        <listitem>
+          <para>Start Kea DHCPv4 server (as root):
+            <screen># <userinput>b10-dhcp4 -c /path/to/your/kea4/config/file.json</userinput></screen>
           </para>
         </listitem>
 
         <listitem>
-          <para>Create a user for yourself:
-            <screen>$ <userinput>sbin/b10-cmdctl-usermgr add root</userinput></screen>
-	  and enter a newly chosen password when prompted.
-          </para>
+         <para>Test it; for example, use the
+         <ulink url="http://www.isc.org/downloads/DHCP/">ISC DHCP client</ulink>
+         to send DHCPv4 queries to the server and verify that the client receives a
+         configuration from the server:
+            <screen>$ <userinput>dhclient -4 eth0</userinput></screen>
+         </para>
         </listitem>
 
         <listitem>
-          <para>Start the server (as root):
-            <screen>$ <userinput>sbin/bind10</userinput></screen>
-          </para>
-        </listitem>
+          <para>Edit your configuration file for DHCPv6. See doc/examples/kea6
+	  for set of examples.
+	  </para>
+	</listitem>
 
         <listitem>
-          <para>DHCP components are not started in the default
-	    configuration.  In another console, enable the DHCPv6
-	    service (by using the <command>bindctl</command> utility
-	    to configure the <command>b10-dhcp6</command> component to
-	    run): <screen>$ <userinput>bin/bindctl</userinput></screen>
-	    (Login with the username and password you used above to create a user.)
-            <screen>
-&gt; <userinput>config add Init/components b10-dhcp6</userinput>
-<!-- todo: Should the kind be needed or dispensable? -->
-&gt; <userinput>config set Init/components/b10-dhcp6/kind dispensable</userinput>
-&gt; <userinput>config commit</userinput>
-&gt; <userinput>quit</userinput>
-            </screen>
+          <para>Start Kea DHCPv6 server (as root):
+            <screen># <userinput>b10-dhcp6 -c /path/to/your/kea6/config/file.json</userinput></screen>
           </para>
         </listitem>
 
@@ -419,9 +421,11 @@ $ <userinput>./configure</userinput></screen>
          <ulink url="http://www.isc.org/downloads/DHCP/">ISC DHCP client</ulink>
          to send DHCPv6 queries to the server and verify that the client receives a
          configuration from the server:
-            <screen>$ <userinput>dhclient -6</userinput></screen>
+            <screen>$ <userinput>dhclient -6 eth0</userinput></screen>
          </para>
         </listitem>
+
+
       </orderedlist>
 
     </section>
@@ -435,17 +439,15 @@ $ <userinput>./configure</userinput></screen>
       <title>Packages</title>
 
       <para>
-        Some operating systems or software package vendors may
-        provide ready-to-use, pre-built software packages for Kea.
-        Installing a pre-built package means you do not need to
-        install build-only prerequisites and do not need to
-        <emphasis>make</emphasis> the software.
+        Some operating systems or software package vendors may provide
+        ready-to-use, pre-built software packages for Kea.  Installing a
+        pre-built package means you do not need to install build-only
+        prerequisites and do not need to <emphasis>make</emphasis> the software.
       </para>
 
       <para>
-        FreeBSD ports, NetBSD pkgsrc, and Debian
-        <emphasis>testing</emphasis> package collections provide
-        all the prerequisite packages.
+        FreeBSD ports, NetBSD pkgsrc, and Debian <emphasis>testing</emphasis>
+        package collections provide all the prerequisite packages.
       </para>
     </section>
 
@@ -463,6 +465,7 @@ $ <userinput>./configure</userinput></screen>
           </listitem>
           <listitem>
           <simpara>
+	    <!-- @todo: 0.9: update this -->
             <filename>etc/bind10/</filename> &mdash;
             configuration files.
           </simpara>
@@ -475,6 +478,7 @@ $ <userinput>./configure</userinput></screen>
           </listitem>
           <listitem>
             <simpara>
+	      <!-- @todo 0.9: update this -->
               <filename>libexec/bind10/</filename> &mdash;
               executables that a user wouldn't normally run directly and
               are not run independently.
@@ -490,12 +494,14 @@ $ <userinput>./configure</userinput></screen>
           </listitem>
           <listitem>
             <simpara>
+	      <!-- @todo 0.9: update this -->
               <filename>share/bind10/</filename> &mdash;
               configuration specifications.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
+	      <!-- @todo 0.9: update this -->
               <filename>share/doc/bind10/</filename> &mdash;
               this guide and other supplementary documentation.
             </simpara>
@@ -508,6 +514,7 @@ $ <userinput>./configure</userinput></screen>
           </listitem>
           <listitem>
             <simpara>
+	      <!-- @todo 0.9: update this -->
               <filename>var/bind10/</filename> &mdash;
               data source and configuration databases.
             </simpara>
@@ -520,10 +527,9 @@ $ <userinput>./configure</userinput></screen>
       <title>Building Requirements</title>
 
         <para>
-          In addition to the run-time requirements (listed in
-          <xref linkend="required-software"/>), building Kea
-          from source code requires various development include headers and
-          program development tools.
+          In addition to the run-time requirements (listed in <xref
+          linkend="required-software"/>), building Kea from source code requires
+          various development include headers and program development tools.
         </para>
 
         <note>
@@ -548,6 +554,7 @@ $ <userinput>./configure</userinput></screen>
           To build Kea, also install the Botan (at least version
           1.8) and the log4cplus (at least version 1.0.3)
           development include headers.
+	  <!-- @todo: Add OpenSSL note here once #2406 is merged -->
         </para>
 
 <!--
@@ -564,6 +571,7 @@ as a dependency earlier -->
           standard development headers, make, and pkg-config.
           Kea builds have been tested with GCC g++ 3.4.3, 4.1.2,
           4.1.3, 4.2.1, 4.3.2, and 4.4.1; Clang++ 2.8; and Sun C++ 5.10.
+	  <!-- @todo update this list -->
         </para>
 
         <para>
@@ -589,9 +597,10 @@ as a dependency earlier -->
 
         <title>Download Tar File</title>
         <para>
-          Kea 0.8 is available as a part of BIND10 1.2 release, which is
-          a final release of BIND10 from ISC. This release can be downloaded
-          from: <ulink url="ftp://ftp.isc.org/isc/bind10/"/>.
+          Kea 0.8 is available as a part of BIND10 1.2 release, which is a final
+          release of BIND10 from ISC. This release can be downloaded from:
+          <ulink url="ftp://ftp.isc.org/isc/bind10/"/>. Upcoming Kea 0.9 and all
+	  following releases will be shipped as a stand-alone tarball.
         </para>
       </section>
 
@@ -680,8 +689,9 @@ as a dependency earlier -->
           <varlistentry>
             <term>--with-pythonpath</term>
             <listitem>
-              <simpara>Define the path to Python 3.1 if it is not in the
-                standard execution path.
+              <simpara>Define the path to Python 3.x if it is not in the
+                standard execution path. Python 3.x is mandatory for Kea 0.8,
+		but is no longer required for upcoming Kea 0.9.
               </simpara>
             </listitem>
           </varlistentry>
@@ -725,8 +735,8 @@ as a dependency earlier -->
 
           <screen>$ <userinput>./configure \
       --with-boost-include=/usr/pkg/include \
-      --with-pythonpath=/usr/pkg/bin/python3.1 \
-      --prefix=/opt/bind10</userinput></screen>
+      --with-dhcp-pgsql=/usr/local/bin/pg_config \
+      --prefix=/opt/kea</userinput></screen>
         </para>
 
         <para>
@@ -782,17 +792,9 @@ as a dependency earlier -->
         </note>
       </section>
 
-  <!-- TODO: tests -->
+  <!-- @todo: tests -->
 
     </section>
-
-  <!--
-      <section id="install.troubleshooting">
-        <title>Troubleshooting</title>
-        <para>
-        </para>
-      </section>
-  -->
 
   </chapter>
 
