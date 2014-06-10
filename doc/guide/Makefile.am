@@ -5,13 +5,15 @@ DOCS = kea-guide.txt
 dist_doc_DATA = $(DOCS)
 dist_html_DATA = $(HTMLDOCS) kea-guide.css
 
-EXTRA_DIST = kea-guide.xml
+DOCBOOK = kea-guide.xml logging.xml
+
+EXTRA_DIST = $(DOCBOOK)
 DISTCLEANFILES = $(HTMLDOCS) $(DOCS) kea-messages.xml
 
 # This is not a "man" manual, but reuse this for now for docbook.
 if GENERATE_DOCS
 
-kea-guide.html: kea-guide.xml
+kea-guide.html: $(DOCBOOK)
 	@XSLTPROC@ --novalid --xinclude --nonet \
 		--path $(top_builddir)/doc \
 		-o $@ \
