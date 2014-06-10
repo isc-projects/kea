@@ -90,7 +90,7 @@ start_both_servers_test() {
     printf "Starting Kea: ${keactrl} start\n"
     ${keactrl} start
     ret=${?}
-    assert_eq 0 ${ret} "Expected keactrl to retrun 0, returned value was ${ret}"
+    assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d"
 
     # Wait up to 20s for the DHCPv6 server to configure.
     wait_for_message 20 "DHCP6_CONFIG_COMPLETE" 1
@@ -285,6 +285,7 @@ Expected wait_for_message return %d, returned %d."
 
 # This test checks that the DHCPv6 server can be started first, and then the
 # DHCPv4 server can be started while DHCPv6 server is already running.
+# Also check that both servers can be reconfigured.
 late_start_v4_server_test() {
     # Test name.
     TEST_NAME="keactrl.late_start_v4_server_test"
@@ -327,6 +328,17 @@ Expected wait_for_message return %d, returned %d."
     assert_eq 0 ${_GET_PIDS_NUM} \
         "Expected %d ${kea4_name} process running, found %d processes running"
 
+    # Trigger reconfiguration, make sure that the DHCPv6 server reconfigured.
+    printf "Reconfiguring the DHCPv6 server\n"
+    ${keactrl} commit
+    ret=${?}
+    assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d"
+
+    # There should be two completed reconfigurations so far.
+    wait_for_message 10 "DHCP6_CONFIG_COMPLETE" 2
+    assert_eq 1 ${_WAIT_FOR_MESSAGE} "Timeout waiting for ${kea6_name} to reconfigure. \
+Expected wait_for_message to return %d, returned %d."
+
     # Update keactrl config to enable v4 server.
     keactrl_config="kea_config_file=${CFG_FILE}\nkea4=yes\nkea6=yes\n"
     create_keactrl_config "${keactrl_config}"
@@ -335,7 +347,7 @@ Expected wait_for_message return %d, returned %d."
     printf "Starting Kea: ${keactrl} start\n"
     ${keactrl} start
     ret=${?}
-    assert_eq 0 ${ret} "Expected keactrl to retrun 0, returned value was ${ret}"
+    assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d"
 
     # Wait up to 20s for the DHCPv4 server to configure.
     wait_for_message 20 "DHCP4_CONFIG_COMPLETE" 1
@@ -352,6 +364,22 @@ Expected wait_for_message return %d, returned %d."
     get_pids ${kea4_name}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${kea4_name} process running, found %d processes running"
+
+    # Trigger reconfiguration, make sure that servers are reconfigured.
+    printf "Reconfiguring DHCPv6 and DHCPv4 servers\n"
+    ${keactrl} commit
+    ret=${?}
+    assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d"
+
+    # There should be three completed configurations of DHCPv6 server.
+    wait_for_message 10 "DHCP6_CONFIG_COMPLETE" 3
+    assert_eq 1 ${_WAIT_FOR_MESSAGE} "Timeout waiting for ${kea6_name} to reconfigure. \
+Expected wait_for_message to return %d, returned %d."
+
+    # There should be two completed configurations of DHCPv4 server.
+    wait_for_message 10 "DHCP4_CONFIG_COMPLETE" 2
+    assert_eq 1 ${_WAIT_FOR_MESSAGE} "Timeout waiting for ${kea4_name} to reconfigure. \
+Expected wait_for_message to return %d, returned %d."
 
     # Use keactrl stop to shutdown the servers.
     printf "Stopping Kea: ${keactrl} stop\n"
@@ -385,6 +413,7 @@ Expected wait_for_message return %d, returned %d."
 
 # This test checks that the DHCPv4 server can be started first, and then the
 # DHCPv6 server can be started while DHCPv4 server is already running.
+# Also check that both servers can be reconfigured.
 late_start_v6_server_test() {
     # Test name.
     TEST_NAME="keactrl.late_start_v6_server_test"
@@ -427,6 +456,17 @@ Expected wait_for_message return %d, returned %d."
     assert_eq 0 ${_GET_PIDS_NUM} \
         "Expected %d ${kea6_name} process running, found %d processes running"
 
+    # Trigger reconfiguration, make sure that the DHCPv4 server is reconfigured.
+    printf "Reconfiguring the DHCPv4 server\n"
+    ${keactrl} commit
+    ret=${?}
+    assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d"
+
+    # There should be two completed reconfigurations so far.
+    wait_for_message 10 "DHCP4_CONFIG_COMPLETE" 2
+    assert_eq 1 ${_WAIT_FOR_MESSAGE} "Timeout waiting for ${kea4_name} to reconfigure. \
+Expected wait_for_message to return %d, returned %d."
+
     # Update keactrl config to enable v6 server.
     keactrl_config="kea_config_file=${CFG_FILE}\nkea4=yes\nkea6=yes\n"
     create_keactrl_config "${keactrl_config}"
@@ -452,6 +492,22 @@ Expected wait_for_message return %d, returned %d."
     get_pids ${kea4_name}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${kea4_name} process running, found %d processes running"
+
+    # Trigger reconfiguration, make sure that servers are reconfigured.
+    printf "Reconfiguring DHCPv6 and DHCPv4 servers\n"
+    ${keactrl} commit
+    ret=${?}
+    assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d"
+
+    # There should be three completed configurations of DHCPv4 server.
+    wait_for_message 10 "DHCP4_CONFIG_COMPLETE" 3
+    assert_eq 1 ${_WAIT_FOR_MESSAGE} "Timeout waiting for ${kea4_name} to reconfigure. \
+Expected wait_for_message to return %d, returned %d."
+
+    # There should be two completed configurations of DHCPv6 server.
+    wait_for_message 10 "DHCP6_CONFIG_COMPLETE" 2
+    assert_eq 1 ${_WAIT_FOR_MESSAGE} "Timeout waiting for ${kea6_name} to reconfigure. \
+Expected wait_for_message to return %d, returned %d."
 
     # Use keactrl stop to shutdown the servers.
     printf "Stopping Kea: ${keactrl} stop\n"
@@ -488,5 +544,6 @@ start_v4_server_test
 start_v6_server_test
 late_start_v4_server_test
 late_start_v6_server_test
+
 
 clean_exit 0

@@ -1,7 +1,7 @@
 SUBDIRS = . tests
 
 sbin_SCRIPTS  = keactrl
-CLEAN_FILES = keactrl
+CLEANFILES = keactrl
 
 EXTRA_DIST = keactrl.in
 
