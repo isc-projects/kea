@@ -57,6 +57,7 @@ protected:
         }
         void operator()() {
             ++counter_;
+            std::cout << "inside counter cb: " << counter_ << std::endl;
             return;
         }
         int counter_;
@@ -136,6 +137,20 @@ protected:
         IntervalTimerTest* test_obj_;
         IntervalTimer& timer_;
         int count_;
+    };
+    class TimerCallBackAccumulator: public std::unary_function<void, void> {
+    public:
+        TimerCallBackAccumulator(IntervalTimerTest* test_obj, int &counter) :
+            test_obj_(test_obj), counter_(counter) {
+        }
+        void operator()() {
+            ++counter_;
+            return;
+        }
+    private:
+        IntervalTimerTest* test_obj_;
+        // Reference to integer accumulator
+        int& counter_;
     };
 protected:
     IOService io_service_;
@@ -284,4 +299,71 @@ TEST_F(IntervalTimerTest, overwriteIntervalTimer) {
     EXPECT_TRUE(timer_called_);
     // Expect interval is updated: return value of getInterval() is updated
     EXPECT_EQ(itimer.getInterval(), 100);
+}
+
+// This test verifies that timers operate correclty based on their mode.
+TEST_F(IntervalTimerTest, intervalModeTest) {
+    // Create a timer to control the duration of the test.
+    IntervalTimer test_timer(io_service_);
+    test_timer.setup(TimerCallBack(this), 550);
+
+    // Create an timer which automatically reschedules itself.  Use the
+    // accumulator callback to increment local counter for it.
+    int repeater_count = 0;
+    IntervalTimer repeater(io_service_);
+    repeater.setup(TimerCallBackAccumulator(this, repeater_count), 100);
+
+    // Create a one-shot timer. Use the accumulator callback to increment
+    // local counter variable for it.
+    int one_shot_count = 0;
+    IntervalTimer one_shot(io_service_);
+    one_shot.setup(TimerCallBackAccumulator(this, one_shot_count), 100,
+                   IntervalTimer::ONE_SHOT);
+
+    // Run until the test_timer expires.
+    io_service_.run();
+
+    // Verify the repeating timer repeated and the one-shot did not.
+    EXPECT_EQ(repeater_count, 5);
+    EXPECT_EQ(one_shot_count, 1);
+}
+
+// This test verifies that the same timer can be reused in either mode.
+TEST_F(IntervalTimerTest, timerReuseTest) {
+    // Create a timer to control the duration of the test.
+    IntervalTimer test_timer(io_service_);
+    test_timer.setup(TimerCallBack(this), 550);
+
+    // Create a one-shot timer. Use the accumulator callback to increment
+    // local counter variable for it.
+    int one_shot_count = 0;
+    IntervalTimer one_shot(io_service_);
+    TimerCallBackAccumulator callback(this, one_shot_count);
+    one_shot.setup(callback, 100, IntervalTimer::ONE_SHOT);
+
+    // Run until a single event handler executes.  This should be our
+    // one-shot expiring.
+    io_service_.run_one();
+
+    // Verify the timer expired once.
+    ASSERT_EQ(one_shot_count, 1);
+
+    // Setup the one-shot to go again.
+    one_shot.setup(callback, 100, IntervalTimer::ONE_SHOT);
+
+    // Run until a single event handler executes.  This should be our
+    // one-shot expiring.
+    io_service_.run_one();
+
+    // Verify the timer expired once.
+    ASSERT_EQ(one_shot_count, 2);
+
+    // Setup the timer to be repeating.
+    one_shot.setup(callback, 100, IntervalTimer::REPEATING);
+
+    // Run until the test_timer expires.
+    io_service_.run();
+
+    // Verify the timer repeated.
+    EXPECT_GE(one_shot_count, 4);
 }
