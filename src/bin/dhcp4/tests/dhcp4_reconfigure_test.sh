@@ -86,7 +86,7 @@ fi
 
 # Check if it is still running. It could have terminated (e.g. as a result
 # of configuration failure).
-get_pids
+get_pids ${BIN}
 if [ ${_GET_PIDS_NUM} -ne 1 ]; then
     printf "ERROR: expected one Kea process to be started. Found %d processes\
  started.\n" ${_GET_PIDS_NUM}
@@ -107,7 +107,7 @@ fi
 create_config "${CONFIG_INVALID}"
 
 # Try to reconfigure by sending SIGHUP
-send_signal 1
+send_signal 1 ${BIN}
 
 # The configuration should fail and the error message should be there.
 wait_for_message 10 "DHCP4_CONFIG_LOAD_FAIL" 1
@@ -126,7 +126,7 @@ elif [ ${_GET_RECONFIG_ERRORS} -ne 1 ]; then
 fi
 
 # Make sure the server is still operational.
-get_pids
+get_pids ${BIN}
 if [ ${_GET_PIDS_NUM} -ne 1 ]; then
     printf "ERROR: Kea process was killed when attempting reconfiguration.\n"
     clean_exit 1
@@ -136,7 +136,7 @@ fi
 create_config "${CONFIG}"
 
 # Reconfigure the server with SIGHUP.
-send_signal 1
+send_signal 1 ${BIN}
 
 # There should be two occurrences of the DHCP4_CONFIG_COMPLETE messages.
 # Wait for it up to 10s.
@@ -153,7 +153,7 @@ else
 fi
 
 # Make sure the server is still operational.
-get_pids
+get_pids ${BIN}
 if [ ${_GET_PIDS_NUM} -ne 1 ]; then
     printf "ERROR: Kea process was killed when attempting reconfiguration.\n"
     clean_exit 1

@@ -72,7 +72,7 @@ fi
 
 # Check if it is still running. It could have terminated (e.g. as a result
 # of configuration failure).
-get_pids
+get_pids ${BIN}
 if [ ${_GET_PIDS_NUM} -ne 1 ]; then
     printf "ERROR: expected one Kea process to be started. Found %d processes\
  started.\n" ${_GET_PIDS_NUM}
@@ -90,7 +90,7 @@ else
 fi
 
 # Send signal to Kea (SIGTERM, SIGINT etc.)
-send_signal ${SIG_NUM}
+send_signal ${SIG_NUM} ${BIN}
 
 # Wait up to 10s for the server's graceful shutdown. The graceful shut down
 # should be recorded in the log file with the appropriate message.
@@ -101,7 +101,7 @@ if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
 fi
 
 # Server should have shut down.
-get_pids
+get_pids ${BIN}
 if [ ${_GET_PIDS_NUM} -ne 0 ]; then
     printf "ERROR: Kea did not shut down after receiving signal.\n"\
  ${_GET_PIDS_NUM}
