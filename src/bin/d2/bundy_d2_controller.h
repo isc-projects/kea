@@ -139,6 +139,32 @@ public:
     static isc::data::ConstElementPtr
     dummyConfigHandler(isc::data::ConstElementPtr new_config);
 
+    /// @brief A callback for handling all incoming configuration updates.
+    ///
+    /// As a pointer to this method is used as a callback in ASIO for
+    /// ModuleCCSession, it has to be static.  It acts as a wrapper around
+    /// the virtual instance method, updateConfig.
+    ///
+    /// @param new_config textual representation of the new configuration
+    ///
+    /// @return status of the config update
+    static isc::data::ConstElementPtr
+    configHandler(isc::data::ConstElementPtr new_config);
+
+    /// @brief A callback for handling all incoming commands.
+    ///
+    /// As a pointer to this method is used as a callback in ASIO for
+    /// ModuleCCSession, it has to be static.  It acts as a wrapper around
+    /// the virtual instance method, executeCommand.
+    ///
+    /// @param command textual representation of the command
+    /// @param args parameters of the command. It can be NULL pointer if no
+    /// arguments exist for a particular command.
+    ///
+    /// @return status of the processed command
+    static isc::data::ConstElementPtr
+    commandHandler(const std::string& command, isc::data::ConstElementPtr args);
+
     /// @brief Instance method invoked by the configuration event handler and
     /// which processes the actual configuration update.  Provides behavioral
     /// path for both integrated and stand-alone modes. The current
