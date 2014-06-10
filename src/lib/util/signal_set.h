@@ -40,26 +40,48 @@ typedef boost::shared_ptr<SignalSet> SignalSetPtr;
 /// @brief Pointer to the signal handling function.
 typedef boost::function<void(int signum)> SignalHandler;
 
+/// @brief Pointer to a signal handling function which returns bool result.
+///
+/// The handler is expected to return true if the signal it was given has
+/// been processed (i.e. should not be recorded for deferred processing) or
+/// false in which case it will be recorded.
+typedef boost::function<bool(int signum)> BoolSignalHandler;
+
 /// @brief Represents a collection of signals handled in a customized way.
 ///
 /// Kea processes must handle selected signals in a specialized way. For
 /// example: SIGINT and SIGTERM must perform a graceful shut down of the
 /// server. The SIGHUP signal is used to trigger server's reconfiguration.
 ///
-/// This class allows specifying signals which should be handled in a
-/// specialized way as well as specifying a signal handler function.
-/// When a signal is received the signal handler function is called and
-/// the code of the received signal is recorded. This function doesn't
-/// do anything beyond recording the signal number to minimize the time
-/// spent on handling the signal and process interruption. The process
-/// can later check the signals received and call the handlers on its
-/// descretion by calling a @c isc::util::io::SignalSet::handleNext function.
+/// This class allows the caller to register one or more signals to catch
+/// and process.  Signals may be handled either immediately upon arrival and/or
+/// recorded and processed later.  To process signals immediately, the caller
+/// must register an "on-receipt" handler.  This handler is expected to return
+/// a true or false indicating whether or not the signal has been processed.
+/// Signal occurrences that are not processed by the on-receipt handler are
+/// remembered by SignalSet for deferred processing.  The caller can then query
+/// SignalSet at their discretion to determine if any signal occurrences are
+/// pending and process them.
+///
+/// SignalSet uses an internal handler to catch all registered signals. When
+/// a signal arrives the internal handler will first attempt to invoke the
+/// on-receipt handler.  If one has been registered it is passed the
+/// signal value as an argument and if it returns true upon completion, the
+/// internal handler will exit without further action.  If the on-receipt
+/// handler returned false or one is not registered, then internal handler
+/// will record the signal value for deferred processing.  Note that once a
+/// particular signal has been recorded, any further occurrences of that signal
+/// will be discarded until the original occurrence has been processed.  This
+/// guards against rapid-fire occurrences of the same signal.
 ///
 /// @note This class is not thread safe. It uses static variables and
 /// functions to track a global state of signal registration and received
 /// signals' queue.
 class SignalSet : public boost::noncopyable {
 public:
+    /// @brief Optional handler to execute at the time of signal receipt
+    static BoolSignalHandler onreceipt_handler_;
+    static const BoolSignalHandler EMPTY_BOOL_HANDLER;
 
     /// @brief Constructor installing one signal.
     ///
@@ -128,6 +150,38 @@ public:
     /// @param sig A code of the signal to be removed.
     void remove(const int sig);
 
+    /// @brief Registers a handler as the onreceipt signal handler
+    ///
+    /// Sets the given handler as the handler to invoke immediately
+    /// upon receipt of a a registered signal.
+    ///
+    /// @note Currently, the on-receipt handler is stored as a static
+    /// value and hence there may only be one such handler at a time
+    /// for a given process.
+    ///
+    /// @param handler the signal handler to register
+    static void setOnReceiptHandler(BoolSignalHandler handler);
+
+    /// @brief Unregeisters the onreceipt signal handler
+    static void clearOnReceiptHandler();
+
+    /// @brief Invokes the onreceipt handler if it exists
+    ///
+    /// This static method is used by @c isc::util::io::SignalSet class to
+    /// invoke the registered handler (if one) immediately upon receipt of
+    /// a registered signal.
+    ///
+    /// Prior to invoking the handler, it sets signal action for the given
+    /// signal to SIG_IGN which prevents any repeat signal occurences from
+    /// queuing while the handler is executing.  Upon completion of the handler,
+    /// the signal action is restored which reenables receipt and handling of
+    /// the signal.
+    ///
+    /// @param sig Signal number.
+    /// @return Boolean false if no on-receipt handler was registered,
+    /// otherwise it is the value returned by the on-receipt handler.
+    static bool invokeOnReceiptHandler(int sig);
+
 private:
 
     /// @brief Blocks signals in the set.
@@ -178,6 +232,7 @@ private:
 
     /// @brief Stores the set of signals registered in this signal set.
     std::set<int> local_signals_;
+
 };
 
 }

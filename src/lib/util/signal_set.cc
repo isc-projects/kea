@@ -48,28 +48,86 @@ std::list<int>* getSignalStates() {
 
 /// @brief Internal signal handler for @c isc::util::io::SignalSet class.
 ///
-/// This signal handler adds a signal number for which it is being
-/// invoked to the queue of received signals. It prevents adding duplicated
-/// signals. All duplicated signals are dropped. This prevents hammering
-/// a process to invoke handlers (e.g. DHCP server reconfiguration), when
-/// many the same signals are received one after another.
+/// This handler catches all registered signals. When a signal arrives it
+/// passes the signal to invokeOnReceiptHandler for "on-receipt" processing.
+/// If this processing returns true if exists without further action,
+/// otherwise it adds the signal number to the queue of received signals.
+/// It prevents adding duplicated signals. All duplicated signals are dropped.
+/// This prevents hammering a process to invoke handlers (e.g. DHCP server
+/// reconfiguration), when many of the same signals are received one after
+/// another.
 ///
 /// @param sig Signal number.
 void internalHandler(int sig) {
+    if (SignalSet::invokeOnReceiptHandler(sig)) {
+        // Signal has been handled by the on-receipt handler.
+        return;
+    }
+
+    // Signal is using post-receipt handling, see if we've
+    // already received it.
     std::list<int>* states = getSignalStates();
     for (std::list<int>::const_iterator it = states->begin();
-         it != states->end(); ++it) {
-        if (sig == *it) {
-            return;
+        it != states->end(); ++it) {
+            if (sig == *it) {
+                return;
         }
     }
+
+    // First occurrence, so save it.
     states->push_back(sig);
 }
 
-}
+}; // end anon namespace
 
 namespace isc {
 namespace util {
+
+const BoolSignalHandler SignalSet::EMPTY_BOOL_HANDLER = BoolSignalHandler();
+BoolSignalHandler SignalSet::onreceipt_handler_ = EMPTY_BOOL_HANDLER;
+
+bool
+SignalSet::invokeOnReceiptHandler(int sig) {
+    if (!SignalSet::onreceipt_handler_) {
+        return (false);
+    }
+
+    // First we set the signal to SIG_IGN.  This causes any repeat occurrences
+    // to be discarded, not deferred as they would be if blocked.   Note that
+    // we save the current sig action so we can restore it later.
+    struct sigaction sa;
+    struct sigaction prev_sa;
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = SIG_IGN;
+    if (sigaction(sig, &sa, &prev_sa) < 0) {
+        // Highly unlikely we can get here.
+        const char* errmsg = strerror(errno);
+        isc_throw(SignalSetError, "failed to set SIG_IGN for signal "
+                  << sig << ": " << errmsg);
+    }
+
+    // Call the registered handler.
+    bool signal_processed = false;
+    try {
+        signal_processed = SignalSet::onreceipt_handler_(sig);
+    } catch (const std::exception& ex) {
+        // Restore the handler.  We might fail to restore it, but we likely
+        // have bigger issues anyway.
+        sigaction(sig, &prev_sa, 0);
+        isc_throw(SignalSetError, "onreceipt_handler failed for signal "
+                  << sig << ": " << ex.what());
+    }
+
+    // Restore the sig action to reenable handling this signal.
+    if (sigaction(sig, &prev_sa, 0) < 0) {
+        // Highly unlikely we can get here.
+        const char* errmsg = strerror(errno);
+        isc_throw(SignalSetError, "failed to restore handler for signal "
+                  << sig << ": " << errmsg);
+    }
+
+    return (signal_processed);
+}
 
 SignalSet::SignalSet(const int sig0) {
     add(sig0);
@@ -187,6 +245,7 @@ SignalSet::insert(const int sig) {
 void
 SignalSet::maskSignals(const int mask) const {
     sigset_t new_set;
+    sigemptyset(&new_set);
     for (std::set<int>::const_iterator it = getRegisteredSignals()->begin();
          it != getRegisteredSignals()->end(); ++it) {
         sigaddset(&new_set, *it);
@@ -223,6 +282,16 @@ SignalSet::remove(const int sig) {
         isc_throw(SignalSetError, "failed to unregister signal " << sig
                   << ": this signal is not owned by the signal set");
     }
+}
+
+void
+SignalSet::setOnReceiptHandler(BoolSignalHandler handler) {
+    onreceipt_handler_ = handler;
+}
+
+void
+SignalSet::clearOnReceiptHandler() {
+    onreceipt_handler_ = EMPTY_BOOL_HANDLER;
 }
 
 } // end of isc::util
