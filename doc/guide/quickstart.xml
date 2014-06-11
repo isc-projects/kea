@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+<!ENTITY mdash  "&#x2014;" >
+]>
+
+  <chapter id="quickstart">
+    <title>Quick start</title>
+
+    <para>
+        This quickly covers the standard steps for installing and deploying Kea.
+        For further details, full customizations, and troubleshooting, see the
+        respective chapters in the Kea guide.
+    </para>
+
+    <section id="quick-start">
+      <title>Quick start guide for DHCPv4 and DHCPv6 services</title>
+
+      <orderedlist>
+
+        <listitem>
+          <simpara>
+            Install required run-time and build dependencies. See <xref
+	    linkend="build-requirements"/> for details.
+          </simpara>
+        </listitem>
+
+        <!-- We may need to replace it with the link to a downloadable tarball
+        once we have it. -->
+        <listitem>
+          <simpara>
+            Checkout the latest Kea revision from the Git repository:
+            <screen>$ <userinput>git clone git://git.kea.isc.org/kea</userinput> </screen>
+          </simpara>
+        </listitem>
+
+        <listitem>
+          <para>Go into the source and run configure:
+            <screen>$ <userinput>cd kea</userinput>
+$ <userinput>autoreconf --install</userinput>
+$ <userinput>./configure [your extra parameters]</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>Build it:
+            <screen>$ <userinput>make</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>Install it as root (by default to prefix
+          <filename>/usr/local/</filename>):
+            <screen>$ <userinput>make install</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>Edit your configuration file for DHCPv4. See doc/examples/kea4
+	  for a set of examples.
+	  </para>
+	</listitem>
+
+        <listitem>
+          <para>Start Kea DHCPv4 server (as root):
+            <screen># <userinput>b10-dhcp4 -c /path/to/your/kea4/config/file.json</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+         <para>Test it; for example, use the
+         <ulink url="http://www.isc.org/downloads/DHCP/">ISC DHCP client</ulink>
+         to send DHCPv4 queries to the server and verify that the client receives a
+         configuration from the server:
+            <screen>$ <userinput>dhclient -4 eth0</userinput></screen>
+         </para>
+        </listitem>
+
+        <listitem>
+          <para>Edit your configuration file for DHCPv6. See doc/examples/kea6
+	  for a set of examples.
+	  </para>
+	</listitem>
+
+        <listitem>
+          <para>Start Kea DHCPv6 server (as root):
+            <screen># <userinput>b10-dhcp6 -c /path/to/your/kea6/config/file.json</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+         <para>Test it; for example, use the
+         <ulink url="http://www.isc.org/downloads/DHCP/">ISC DHCP client</ulink>
+         to send DHCPv6 queries to the server and verify that the client receives a
+         configuration from the server:
+            <screen>$ <userinput>dhclient -6 eth0</userinput></screen>
+         </para>
+        </listitem>
+
+
+      </orderedlist>
+
+    </section>
+
+  </chapter>

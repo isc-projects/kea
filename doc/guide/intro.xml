@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+<!ENTITY mdash  "&#x2014;" >
+<!ENTITY % version SYSTEM "version.ent">
+%version;
+]>
+
+  <chapter id="intro">
+    <title>Introduction</title>
+    <para>
+      Kea is the next generation of DHCP servers developed by ISC.
+      It supports both DHCPv4 and DHCPv6 protocols along with their
+      extensions, e.g. prefix delegation and dynamic updates to DNS.
+    </para>
+
+    <para>
+      Kea has been initially developed as a part of the BIND 10 framework
+      (<ulink url="http://bind10.isc.org"/>). In early 2014, ISC
+      made the decision to discontinue active development of BIND 10 and
+      continue development of Kea as standalone DHCP servers. As a result,
+      the components and libraries related to the BIND10 framework and DNS
+      are going to be removed from the Kea source tree over time.
+      In order to remove the dependency on Python 3, the BIND 10 framework
+      will be replaced by the server startup and configuration mechanisms
+      written in C++.
+    </para>
+
+    <note>
+      <simpara>Kea has been implemented in BIND 10 framework and to certain extent
+      it still depends on various BIND 10 libraries. It also requires the BIND 10
+      framework to run, because BIND 10 configuration mechanisms are used to
+      configure Kea. As a result, this document still refers to BIND 10 in many
+      paragraphs. The term "BIND 10" in the context of this document means
+      "BIND 10 libraries and applications which are necessary for Kea to run
+      and configure". The term "Kea" means "the collection of binaries and libraries
+      which, as a whole, implement the DHCP protocols".
+      </simpara>
+    </note>
+
+    <para>
+      This guide covers Kea version &__VERSION__;.
+    </para>
+
+    <section>
+      <title>Supported Platforms</title>
+      <para>
+        Kea is officially supported on RedHat Enterprise Linux,
+	CentOS, Fedora and FreeBSD systems. It is also likely to work on many
+	other platforms: builds have been tested on (in no particular order)
+        Debian GNU/Linux 6 and unstable, Ubuntu 9.10, NetBSD 5,
+        Solaris 10 and 11, FreeBSD 7 and 8, CentOS Linux 5.3,
+        MacOS 10.6 and 10.7, and OpenBSD 5.1. Non supported systems
+	(especially non-Linux) are likely to have issues with directly
+	connected DHCPv4 clients.
+      </para>
+      <para>There are currently no plans to port Kea to Windows platforms.</para>
+    </section>
+
+    <section id="required-software">
+      <title>Required Software at Run-time</title>
+
+      <para>
+        Running Kea uses various extra software which may
+        not be provided in some operating systems' default
+        installations nor standard packages collections. You may
+        need to install this required software separately.
+        (For the build requirements, also see
+        <xref linkend="build-requirements"/>.)
+      </para>
+
+      <para>
+        Kea was developed as a collection of applications within BIND
+        10 framework and it still relies on the remaining parts of
+        this framework. In particular, the servers' configuration and
+        startup are still facilitated by the modules which originate
+        in BIND 10. These modules require at least Python 3.1 to run.
+        They also work with Python 3.2, 3.3 or 3.4 (<ulink
+        url="http://www.python.org/"/>). The dependency on Python will
+        be removed once a replacing configuration and startup
+        mechanisms are developed and released as Kea 0.9. At this
+        point Kea will be written in pure C++.
+      </para>
+
+      <para>
+        Kea uses the Botan crypto library for C++
+        (<ulink url="http://botan.randombit.net/"/>).
+        It requires at least Botan version 1.8.
+<!-- @todo 0.9/#2406: Add info about OpenSSL here -->
+      </para>
+
+      <para>
+        Kea uses the log4cplus C++ logging library
+        (<ulink url="http://log4cplus.sourceforge.net/"/>).
+        It requires at least log4cplus version 1.0.3.
+      </para>
+
+      <para>
+	Kea can use MySQL headers and libraries to build MySQL database backend
+	that can be used to store leases. This is an optional dependency. When
+	it is missing, Kea will lack the ability to store leases in MySQL
+	database.
+      </para>
+
+      <para>
+	Kea can use PostgreSQL headers and libraries to build PostgreSQL
+	database backend that can be used to store leases. This is an optional
+	dependency. When it is missing, Kea will lack the ability to store
+	leases in PostgreSQL database.
+      </para>
+    </section>
+
+    <section id="starting_stopping">
+      <title>Starting and Stopping the Server</title>
+      <!-- @todo: Rewrite this section as part of #3422-->
+      <para>
+        Kea is modular.  Part of this modularity is
+        accomplished using multiple cooperating processes which, together,
+        provide the server functionality.
+      </para>
+
+      <!-- @todo: Rename processes here, once they are renamed in the source -->
+      <para>
+        At first, running many different processes may seem confusing.
+        However, these processes are started by running a single
+	command, <command>bind10</command>.  This command starts
+	a master process, <command>b10-init</command>, which will
+	start other required processes and other processes when
+	configured.  The processes that may be started have names
+	starting with "b10-", including:
+      </para>
+
+      <para>
+
+        <itemizedlist>
+
+          <listitem>
+            <simpara>
+              <command>b10-cfgmgr</command> &mdash;
+              Configuration manager.
+              This process maintains all of the configuration for BIND 10.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
+              <command>b10-cmdctl</command> &mdash;
+              Command and control service.
+              This process allows external control of the BIND 10 system.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
+              <command>b10-dhcp4</command> &mdash;
+              DHCPv4 server process.
+              This process responds to DHCPv4 queries from clients.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
+              <command>b10-dhcp6</command> &mdash;
+              DHCPv6 server process.
+              This process responds to DHCPv6 queries from clients.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
+              <command>b10-dhcp-ddns</command> &mdash;
+              DHCP-DDNS process.
+              This process acts as an intermediary between the DHCP servers
+              and DNS server. It receives name update requests from the DHCP
+              servers and sends DNS Update messages to the DNS servers.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
+              <command>b10-msgq</command> &mdash;
+              Message bus daemon.
+              This process coordinates communication between all of the other
+              BIND 10 processes.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
+              <command>b10-sockcreator</command> &mdash;
+              Socket creator daemon.
+              This process creates sockets used by
+              network-listening BIND 10 processes.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
+              <command>b10-stats</command> &mdash;
+              Statistics collection daemon.
+              This process collects and reports statistics data.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
+              <command>b10-stats-httpd</command> &mdash;
+              HTTP server for statistics reporting.
+              This process reports statistics data in XML format over HTTP.
+            </simpara>
+          </listitem>
+
+        </itemizedlist>
+      </para>
+
+      <para>
+        These do not need to be manually started independently.
+      </para>
+
+    </section>
+
+    <section id="managing_once_running">
+      <title>Managing BIND 10</title>
+      <!-- @todo: Rewrite this section as part of #3422 -->
+
+      <para>
+        Once BIND 10 is running, a few commands are used to interact
+        directly with the system:
+        <itemizedlist>
+          <listitem>
+            <simpara>
+              <command>bindctl</command> &mdash;
+              Interactive administration interface.
+              This is a low-level command-line tool which allows
+              a developer or an experienced administrator to control
+              Kea.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <command>b10-cmdctl-usermgr</command> &mdash;
+              User access control.
+              This tool allows an administrator to authorize additional users
+              to manage Kea.
+            </simpara>
+          </listitem>
+  <!-- TODO usermgr -->
+        </itemizedlist>
+      </para>
+    </section>
+
+    <para>
+      The tools and modules are covered in full detail in this guide.
+<!-- TODO point to these -->
+      In addition, manual pages are also provided in the default installation.
+    </para>
+
+<!--
+bin/
+  bindctl*
+  host*
+lib/
+  libauth
+  libdns
+  libexceptions
+  python3.1/site-packages/isc/{cc,config}
+sbin/
+  bind10
+share/
+  share/bind10/
+    auth.spec
+    b10-cmdctl.pem
+    init.spec
+    passwd.csv
+  man/
+var/
+  bind10/b10-config.db
+-->
+
+    <para>
+      BIND 10 also provides libraries and programmer interfaces
+      for C++ and Python for the message bus and configuration backend,
+      and, of course, DHCP. These include detailed developer
+      documentation and code examples.
+<!-- TODO point to this -->
+    </para>
+
+  </chapter>
