@@ -71,13 +71,11 @@ config="{
 # This test checks that both DHCPv4 and DHCPv6 server can be started and
 # shut down.
 start_both_servers_test() {
-    # Test name.
-    TEST_NAME="keactrl.start_both_servers_test"
     # Create configuration file for keactrl. This configuration enables
     # both DHCPv4 and DHCPv6 server.
     keactrl_config="kea_config_file=${CFG_FILE}\nkea4=yes\nkea6=yes\n"
 
-    test_start
+    test_start "keactrl.start_both_servers_test"
 
     # Create configuration file for Kea and for keactrl.
     create_config "${config}"
@@ -150,13 +148,11 @@ Expected wait_for_message return %d, returned %d."
 # This test checks that only DHCPv4 server can be started and that the DHCPv6
 # server is not started.
 start_v4_server_test() {
-    # Test name.
-    TEST_NAME="keactrl.start_v4_server_test"
     # Create configuration file for keactrl. This configuration enables
     # DHCPv4 server but disables DHCPv6 server.
     keactrl_config="kea_config_file=${CFG_FILE}\nkea4=yes\nkea6=no\n"
 
-    test_start
+    test_start "keactrl.start_v4_server_test"
 
     # Create configuration file for Kea and for keactrl.
     create_config "${config}"
@@ -228,13 +224,11 @@ Expected wait_for_message return %d, returned %d."
 # This test checks that only DHCPv6 server can be started and that the DHCPv4
 # server is not started.
 start_v6_server_test() {
-    # Test name.
-    TEST_NAME="keactrl.start_v6_server_test"
     # Create configuration file for keactrl. This configuration enables
     # DHCPv6 server but disables DHCPv4 server.
     keactrl_config="kea_config_file=${CFG_FILE}\nkea4=no\nkea6=yes\n"
 
-    test_start
+    test_start "keactrl.start_v6_server_test"
 
     # Create configuration file for Kea and for keactrl.
     create_config "${config}"
@@ -307,13 +301,11 @@ Expected wait_for_message return %d, returned %d."
 # DHCPv4 server can be started while DHCPv6 server is already running.
 # Also check that both servers can be reconfigured.
 late_start_v4_server_test() {
-    # Test name.
-    TEST_NAME="keactrl.late_start_v4_server_test"
     # Create configuration file for keactrl. This configuration enables
     # DHCPv6 server but disables DHCPv4 server.
     keactrl_config="kea_config_file=${CFG_FILE}\nkea4=no\nkea6=yes\n"
 
-    test_start
+    test_start "keactrl.late_start_v4_server_test"
 
     # Create configuration file for Kea and for keactrl.
     create_config "${config}"
@@ -435,13 +427,11 @@ Expected wait_for_message return %d, returned %d."
 # DHCPv6 server can be started while DHCPv4 server is already running.
 # Also check that both servers can be reconfigured.
 late_start_v6_server_test() {
-    # Test name.
-    TEST_NAME="keactrl.late_start_v6_server_test"
     # Create configuration file for keactrl. This configuration enables
     # DHCPv4 server but disables DHCPv6 server.
     keactrl_config="kea_config_file=${CFG_FILE}\nkea4=yes\nkea6=no\n"
 
-    test_start
+    test_start "keactrl.late_start_v6_server_test"
 
     # Create configuration file for Kea and for keactrl.
     create_config "${config}"
