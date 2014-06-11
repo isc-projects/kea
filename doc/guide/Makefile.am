@@ -5,7 +5,7 @@ DOCS = kea-guide.txt
 dist_doc_DATA = $(DOCS)
 dist_html_DATA = $(HTMLDOCS) kea-guide.css
 
-DOCBOOK = kea-guide.xml logging.xml
+DOCBOOK = kea-guide.xml logging.xml config.xml install.xml
 
 EXTRA_DIST = $(DOCBOOK)
 DISTCLEANFILES = $(HTMLDOCS) $(DOCS) kea-messages.xml
