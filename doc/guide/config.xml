@@ -108,10 +108,23 @@
         DHCPv6, only subnet6 parameters will be mentioned. It is implied that
         remaining elements (global that holds Dhcp6, Logging and possibly
         DhcpDdns) are present, but are omitted for clarity. </para>
-      </section>
+    </section>
+
+    <section>
+      <title>Simplified notation</title>
+
+        <para>It is sometimes convenient to refer to specific element in the
+        configuration hierarchy. Each hierarchy level is separated by a slash.
+        If there is an array, specific instance within that array is referred by
+        a number in square brackets. For example, in the above configuration the
+        valid-lifetime in Dhcp6 component can be referred to as
+        Dhcp6/valid-lifetime, first interface for the DHCPv4 server as
+        Dhcp4/interfaces[0] and the pool in the first IPv6 defined in DHCPv6
+        configuration as Dhcp6/subnet6[0]/pool.</para>
       
       <!-- @todo Add a reference here after #3422 is done -->
     </section>
 
+  </section>
 
-  </chapter>
+</chapter>

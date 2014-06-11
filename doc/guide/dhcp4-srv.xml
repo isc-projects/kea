@@ -10,6 +10,8 @@
     <section id="dhcp4-start-stop">
       <title>Starting and Stopping the DHCPv4 Server</title>
 
+      <!-- @todo Rewrite this section once #3422 is done -->
+
       <para>
         <command>b10-dhcp4</command> is the Kea DHCPv4 server and is configured
         through the <command>bindctl</command> program.
@@ -59,73 +61,177 @@
     <section id="dhcp4-configuration">
       <title>Configuring the DHCPv4 Server</title>
       <para>
-        Once the server is started, it can be configured. To view the
-        current configuration, use the following command in <command>bindctl</command>:
-        <screen>
-&gt; <userinput>config show Dhcp4</userinput></screen>
-        When starting the DHCPv4 daemon for the first time, the default configuration
-        will be available. It will look similar to this:
+        This section explains how to configure DHCPv4 server that uses
+        Kea configuration backend. Kea configuration using any other
+        backends is outside of scope for this document. Before DHCPv4
+        is started, its configuration file has to be prepared. The
+        basic configuration looks as follows:
 <screen>
-&gt; <userinput>config show Dhcp4</userinput>
-Dhcp4/hooks-libraries	[]	list	(default)
-Dhcp4/interfaces/	list
-Dhcp4/renew-timer	1800	integer
-Dhcp4/rebind-timer	2000	integer	(default)
-Dhcp4/valid-lifetime	4000	integer	(default)
-Dhcp4/next-server	""	string	(default)
-Dhcp4/echo-client-id	true	boolean	(default)
-Dhcp4/option-def	[]	list	(default)
-Dhcp4/option-data	[]	list	(default)
-Dhcp4/lease-database/type	""	string	(default)
-Dhcp4/lease-database/name	""	string	(default)
-Dhcp4/lease-database/user	""	string	(default)
-Dhcp4/lease-database/host	""	string	(default)
-Dhcp4/lease-database/password	""	string	(default)
-Dhcp4/subnet4/	list
-Dhcp4/dhcp-ddns/enable-updates	true	boolean
-Dhcp4/dhcp-ddns/server-ip	"127.0.0.1"	string
-Dhcp4/dhcp-ddns/server-port	53001	integer
-Dhcp4/dhcp-ddns/sender-ip	""	string
-Dhcp4/dhcp-ddns/sender-port	0	integer
-Dhcp4/dhcp-ddns/max-queue-size	1024	integer
-Dhcp4/dhcp-ddns/ncr-protocol	"UDP"	string
-Dhcp4/dhcp-ddns/ncr-format	"JSON"	string
-Dhcp4/dhcp-ddns/override-no-update	false	boolean
-Dhcp4/dhcp-ddns/override-client-update	false	boolean
-Dhcp4/dhcp-ddns/replace-client-name	false	boolean
-Dhcp4/dhcp-ddns/generated-prefix	"myhost"	string
-Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
+ 1. # This is an example configuration file for the DHCPv4 server in Kea.
+ 2. # It is a basic scenario with one IPv4 subnet configured. The subnet
+ 3. # contains a single pool of dynamically allocated addresses.
+
+ 5. { "Dhcp4":
+
+ 7. {
+ 8. # Kea is told to listen on eth0 interface only.
+ 9.   "interfaces": [ "eth0" ],
+
+11. # We need to specify lease type. As of May 2014, three backends are supported:
+12. # memfile, mysql and pgsql. We'll just use memfile, because it doesn't require
+13. # any prior set up.
+14.  "lease-database": {
+15.    "type": "memfile"
+16.  },
+
+17. # Addresses will be assigned with valid lifetimes being 4000. Client
+18. # is told to start renewing after 1000 seconds. If the server does not respond
+19. # after 2000 seconds since the lease was granted, client is supposed
+20. # to start REBIND procedure (emergency renewal that allows switching
+21. # to a different server).
+22.   "valid-lifetime": 4000,
+
+24. # Renew and rebind timers are commented out. This implies that options
+25. # 58 and 59 will not be sent to the client. In this case it is up to
+26. # the client to pick the timer values according to RFC2131. Uncomment the
+27. # timers to send these options to the client.
+28. #  "renew-timer": 1000,
+29. #  "rebind-timer": 2000,
+
+31. # The following list defines subnets. We have only one subnet
+32. # here.
+33.  "subnet4": [
+34.  {    "pool": [ "192.0.2.1 - 192.0.2.200" ],
+35.       "subnet": "192.0.2.0/24"  } ]
+36. }
+
+38. }
+</screen>Note that line numbers are specified for easier reference only and
+are not part of the configuration. The examples in following sections do
+not have reference numbers.</para>
+
+<para>The following paragraphs provide brief overview of the parameters
+and their format. Following sections in this chapter go into much greater
+details for aforementioned parameters and also introduce new ones.</para>
+
+<para>The lines 1-3 are comments and do not impact the server
+operation in any way. The configuration starts in line 5 with the
+initial opening curly bracket. Each configuration consists of one or
+more objects. In this specific example, we have only one object called
+Dhcp4. This is simplified configuration, as usually there will be
+additional objects, like Logging or DhcpDns, but we omit them now for
+clarity. The Dhcp4 configuration starts in line 7 and finished in line
+36. Everything defined between those lines is considered Dhcp4
+configuration.</para>
+
+<para>In general case, the order in which those parameters appear
+doesn't matter. For example swapping line 9 and lines 14-16 does not
+change the configuration in any way. There are two caveats here,
+though. The first one is to remember that the configuration file must
+be a well formed JSON. That means that parameters for any given scope
+must be separate by a coma and there must not be a coma after the last
+parameter. When reordering configuration file, keep in mind that
+moving a parameter to or from the last position in a given scope may
+require moving the coma as well. The second caveat is that it is
+uncommon, but legal to repeat the same parameter multiple times. In
+that case the last occurrence of a given parameter is used while all
+previous instances are ignored. That is unliekly to cause any
+confusion, as there are no real life reasons to keep multiple copies
+of the same parameter in your configuration file.</para>
+
+<para>Line 9 contains the first parameter that specifies a list of
+network interfaces, over which the server should listen. Please note
+the notation. Lists are defined as square brackets, with elements
+separated by comas. Had we wanted to listen on two interfaces, the
+line could look like this:
+<screen>
+"interfaces": [ "eth0", "eth1" ],
 </screen>
-      </para>
+As "interfaces" is not the last parameter and there are others that
+follow, a trailing coma is required.</para>
 
-      <para>
-        To change one of the parameters, simply follow
-        the usual <command>bindctl</command> procedure. For example, to make the
-        leases longer, change their valid-lifetime parameter:
-        <screen>
-&gt; <userinput>config set Dhcp4/valid-lifetime 7200</userinput>
-&gt; <userinput>config commit</userinput></screen>
-        Please note that most Dhcp4 parameters are of global scope
-        and apply to all defined subnets, unless they are overridden on a
-        per-subnet basis.
-      </para>
-      <para>
-        The renew-timer and rebind-timer are optional. If they are not specified,
-        the DHCPv4 options 58 and 59 are not sent in the server's response to the
-        client.
-      </para>
+<para>Lines 14-16 define lease database. It informs the server where
+to store its leases information. This specific example tells the
+server to use memfile, which is the simplest (and fastest) database
+backend. It uses in-memory database and stores leases on disk using
+CSV file. This is a very simple configuration. Usually, lease database
+configuration is more extensive and contains additional parameters.
+Note that lease-database is defined as object or list and it opens up
+a new scope, using opening curly bracket. Its parameters (just one --
+called &quot;type&quot;) follow. Had there been more than one, they
+would be separated by comas. This scope is closed in line 16. As more
+parameters follow, trailing coma is present.</para>
 
-      <section>
-      <title>Default storage for leases</title>
-      <para>
-        The server is able to store lease data in different repositories. Larger deployments
-        may elect to store leases in a database.
-        <xref linkend="database-configuration4"/> describes one way to do it.
-        By default, the server will use a CSV file rather than a database to store
-        lease information. One of the advantages of using a file is that it eliminates
-        dependency on third party database software.
-      </para>
-      <para>
+<para>Line 22 has a simple definition of a valid lifetime. That value
+defines how long the addresses (leases) given out by the server are
+valid. If nothing changes, client that got the address is allowed to
+use it for 4000 seconds. Please note that integer numbers are specified
+as is, without any quotes around them.</para>
+
+<para>The next paragraph, metions parameters that are optional. In
+particular, renew-timer and rebind-timer are values that may or may
+not appear. If they are not present, the server will say nothing about
+renewal (T1) and rebing (T2) timers and it will be up to the client to
+choose appropriate timer values. <ulink
+url="http://tools.ietf.org/html/rfc2131">RFC 2131</ulink> says that in
+such cases client is supposed to use default values of 0.5 *
+valid-lifetime for renewal (T1) and 0.875 * valid-lifetime for rebind
+(T2). Administrator may want to decide on different values and specify
+those parameters explicitly.</para>
+
+<para>Lines 33 to 36 define a list of IPv4 subnets. This is the most
+important DHCPv4 configuration structure as this is the essense of the
+network topology. It defines all subnets that the server is expected
+to receive DHCP requests from. It is a list, so it start and ends with
+square brackets. In this example we have only one subnet
+defined. Subnet itself has several parameters, hence it is a
+structure, so it is opened and closed using curly brackets. Each
+subnet has to have at least two parameters: subnet (that defines the
+whole subnet) and pool (which is a list of dynamically allocated pools
+that are governed by the DHCP server. Subnet4 list is closed with
+closing square bracket at the end of line 35. As this is the last
+parameter in Dhcp4 context, there is no trailing coma.</para>
+
+<para>Had there been more than one subnet defined, additional subnet4
+objects would be specified and separated by comas. For example, to
+define 3 subnets, the following syntax should be used:
+<screen>
+  "subnet4": [
+  {    "pool": [ "192.0.2.1 - 192.0.2.200" ],
+       "subnet": "192.0.2.0/24"  },
+  {    "pool": [ "192.0.3.100 - 192.0.3.200" ],
+       "subnet": "192.0.3.0/24"  },
+  {    "pool": [ "192.0.4.1 - 192.0.4.254" ],
+       "subnet": "192.0.4.0/24"  } ]
+</screen>
+</para>
+
+<para>Line 36 closes Dhcp4 context. In a real life configuration file
+there likely would be additional components defined, like Logging or
+DhcpDdns, so line 36 would have a coma behind the closing curly
+bracket.</para>
+
+<para>The whole configuration ends in line 38, which closes the global
+configuration scope, opened in line 5.</para>
+
+<para>Kea 0.9 does not have configuration syntax validation
+implemented yet. Such a feature is planned for the near future. For
+the time being, it is convenient to use on-line JSON validators to
+check whether the syntax is correct. One example of such JSON
+validator is available at <ulink url="http://jsonviewer.stack.hu/"/>.
+</para>
+
+  <section>
+    <title>Default storage for leases</title>
+    <para>
+      The server is able to store lease data in different repositories. Larger deployments
+      may elect to store leases in a database.
+      <xref linkend="database-configuration4"/> describes one way to do it.
+      By default, the server will use a CSV file rather than a database to store
+      lease information. One of the advantages of using a file is that it eliminates
+      dependency on third party database software.
+    </para>
+    <para>
         The configuration of the file backend (Memfile)
         is controlled through the Dhcp4/lease-database parameters. When default
         parameters are used, the Memfile backend will write leases to a disk in the
@@ -153,16 +259,8 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       <title>Database Configuration</title>
       <para>
       All leases issued by the server are stored in the lease database.  Currently
-      there are 3 database backends available: MySQL, PostgreSQL and memfile.
-      <footnote>
-      <para>
-      The server comes with an in-memory database ("memfile") configured as the default
-      database. This is used for internal testing and is not supported.  In addition,
-      it does not store lease information on disk: lease information will be lost if the
-      server is restarted.
-      </para>
-      </footnote>, and so the server must be configured to
-      access the correct database with the appropriate credentials.
+      there are 3 database backends available: MySQL, PostgreSQL and memfile (which
+      is the default backend).
       </para>
         <note>
             <para>
@@ -176,32 +274,38 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       Database configuration is controlled through the Dhcp4/lease-database parameters.
       The type of the database must be set to "mysql", "postgresql" or "memfile":
 <screen>
-&gt; <userinput>config set Dhcp4/lease-database/type "mysql"</userinput>
+<userinput>"Dhcp4": { "lease-database": { "type": "memfile" } }</userinput>
 </screen>
       Next, the name of the database is to hold the leases must be set: this is the
       name used when the lease database was created (see <xref linkend="dhcp-mysql-database-create"/>
       or <xref linkend="dhcp-pgsql-database-create"/>).
 <screen>
-&gt; <userinput>config set Dhcp4/lease-database/name "<replaceable>database-name</replaceable>"</userinput>
+"Dhcp4": { "lease-database": { <userinput>"name": "<replaceable>database-name</replaceable>" </userinput>} }
 </screen>
       If the database is located on a different system to the DHCPv4 server, the
       database host name must also be specified (although note that this configuration
       may have a severe impact on server performance):
 <screen>
-&gt; <userinput>config set Dhcp4/lease-database/host "<replaceable>remote-host-name</replaceable>"</userinput>
+<userinput>"Dhcp4": { "lease-database": { "host": <replaceable>remote-host-name</replaceable>"</userinput>, ... }, ... }
 </screen>
       The usual state of affairs will be to have the database on the same machine as the
-      DHCPv4 server.  In this case, set the value to the empty string (this is the default):
+      DHCPv4 server.  In this case, set the value to the empty string:
 <screen>
-&gt; <userinput>config set Dhcp4/lease-database/host ""</userinput>
+"Dhcp4": {
+    "lease-database": {
+        <userinput>"host" : ""</userinput>,
+         ...
+    },
+    ...
+}
 </screen>
       </para>
       <para>
       Finally, the credentials of the account under which the server will access the database
       should be set:
 <screen>
-&gt; <userinput>config set Dhcp4/lease-database/user "<replaceable>user-name</replaceable>"</userinput>
-&gt; <userinput>config set Dhcp4/lease-database/password "<replaceable>password</replaceable>"</userinput>
+<userinput>"Dhcp4": { "lease-database": { "user": "<replaceable>user-name</replaceable>",</userinput>
+<userinput>                               "password" "<replaceable>password</replaceable>" } }</userinput>
 </screen>
       If there is no password to the account, set the password to the empty string "". (This is also the default.)
       </para>
@@ -1376,9 +1480,9 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
         set by the relay agent is used to select the subnet for the client.
       </para>
       <para>
-	It is also possible to specify a relay IPv4 address for a given subnet. It
-	can be used to match incoming packets into a subnet in uncommon configurations,
-	e.g. shared subnets. See <xref linkend="dhcp4-relay-override"/> for details.
+        It is also possible to specify a relay IPv4 address for a given subnet. It
+        can be used to match incoming packets into a subnet in uncommon configurations,
+        e.g. shared subnets. See <xref linkend="dhcp4-relay-override"/> for details.
       </para>
       <note>
         <para>The subnet selection mechanism described in this section is based
