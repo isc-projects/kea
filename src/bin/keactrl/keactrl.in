@@ -105,10 +105,11 @@ as another instance is already running."
 
 command=
 if [ $# -ne 1 ]; then
-    log_error "No command specified. Use: start, stop, commit."
+    log_error "No command specified. Use: start, stop, commit or status."
     exit 1
 
-elif [ "${1}" != "start" -a "${1}" != "stop" -a "${1}" != "commit" ]; then
+elif [ "${1}" != "start" -a "${1}" != "stop" -a\
+ "${1}" != "commit" -a "${1}" != "status" ]; then
     log_error "Illegal command: ${1}"
     exit 1
 
@@ -192,6 +193,27 @@ case ${command} in
     commit)
         send_signal 1 $(basename ${dhcpv4_srv})
         send_signal 1 $(basename ${dhcpv6_srv})
+
+        exit 0 ;;
+
+    status)
+        kea4_status="inactive"
+        check_running $(basename ${dhcpv4_srv})
+        if [ ${_running} -eq 1 ]; then
+            kea4_status="active"
+        fi
+        printf "DHCPv4 server: %s\n" ${kea4_status}
+
+        kea6_status="inactive"
+        check_running $(basename ${dhcpv6_srv})
+        if [ ${_running} -eq 1 ]; then
+            kea6_status="active"
+        fi
+        printf "DHCPv6 server: %s\n" ${kea6_status}
+
+        printf "Kea configuration file: %s\n" ${kea_config_file}
+
+        printf "keactrl configuration file: %s\n" ${keactrl_conf}
 
         exit 0 ;;
 
