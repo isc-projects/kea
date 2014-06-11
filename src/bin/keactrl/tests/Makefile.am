@@ -3,6 +3,8 @@ SUBDIRS = .
 SHTESTS = keactrl_tests.sh
 
 noinst_SCRIPTS = keactrl_tests.sh
+CLEANFILES = keactrl_tests.sh
+CLEANFILES = *.log *.json
 
 EXTRA_DIST = keactrl_tests.sh.in
 

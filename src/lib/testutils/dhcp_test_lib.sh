@@ -21,13 +21,39 @@
 # A list of Kea processes, mainly used by the cleanup functions.
 KEA_PROCS="b10-dhcp4 b10-dhcp6 b10-dhcp-ddns"
 
+# Assertion that checks if two numbers are equal.
+# If numbers are not equal, the mismatched values are presented and the
+# detailed error is printed. The detailed error must use the printf
+# formatting like this:
+#    "Expected that some value 1 %d is equal to some other value %d".
 assert_eq() {
-    val1=${1}
-    val2=${2}
-    detailed_err=${3}
+    val1=${1}         # Reference value
+    val2=${2}         # Tested value
+    detailed_err=${3} # Detailed error format string
+    # If nothing found, present an error an exit.
     if [ ${val1} -ne ${val2} ]; then
         printf "Assertion failure: ${val1} != ${val2}, for val1=${val1}, val2=${val2}\n"
         printf "${detailed_err}\n" ${val1} ${val2}
+        clean_exit 1
+    fi
+}
+
+# Assertion that checks if one string contains another string.
+# If assertion fails, both strings are displayed and the detailed
+# error is printed. The detailed error must use the printf formatting
+# like this:
+#    "Expected some string to contain this string: %s".
+assert_string_contains() {
+    pattern=${1}      # Substring or awk pattern
+    text=${2}         # Text to be searched for substring
+    detailed_err=${3} # Detailed error format string
+    # Search for a pattern
+    match=$( printf "%s" "${text}" | awk /"${pattern}"/ )
+    # If nothing found, present an error and exit.
+    if [ -z "${match}" ]; then
+        printf "Assertion failure: \n\"%s\"\n\ndoesn't contain pattern:\n
+\"%s\"\n\n" "${text}" "${pattern}"
+        printf "${detailed_err}\n" "\"${pattern}\""
         clean_exit 1
     fi
 }
@@ -36,6 +62,23 @@ assert_eq() {
 # It requires the ${TEST_NAME} variable to hold the test name.
 test_start() {
     printf "\nSTART TEST ${TEST_NAME}\n"
+}
+
+test_finish() {
+    local error_code=${1}
+    exit_code=${1}  # Exit code to be returned by the exit function.
+    if [ ${exit_code} -eq 0 ]; then
+        cleanup
+        printf "PASSED ${TEST_NAME}\n\n"
+    else
+        # Dump log file if exists for debugging purposes.
+        if [ -s ${LOG_FILE} ]; then
+            printf "Log file dump:\n"
+            cat ${LOG_FILE}
+        fi
+        cleanup
+        printf "FAILED ${TEST_NAME}\n\n"
+    fi
 }
 
 # Stores the configuration specified as a parameter in the configuration
@@ -123,18 +166,8 @@ cleanup() {
 # If a test fails, the Kea log is dumped.
 clean_exit() {
     exit_code=${1}  # Exit code to be returned by the exit function.
-    if [ ${exit_code} -eq 0 ]; then
-        cleanup
-        printf "PASSED ${TEST_NAME}\n\n"
-    else
-        # Dump log file if exists for debugging purposes.
-        if [ -s ${LOG_FILE} ]; then
-            printf "Log file dump:\n"
-            cat ${LOG_FILE}
-        fi
-        cleanup
-        printf "FAILED ${TEST_NAME}\n\n"
-    fi
+    # Print test result and perform a cleanup
+    test_finish ${exit_code}
     exit ${exit_code}
 }
 
