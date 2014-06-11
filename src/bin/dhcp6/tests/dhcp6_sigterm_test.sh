@@ -13,4 +13,4 @@
 # PERFORMANCE OF THIS SOFTWARE.
 
 # Run a test that sends SIGTERM to Kea and checks if it shuts down gracefully.
-$(dirname $0)/dhcp6_shutdown_test.sh "DHCPv6.sigterm" 15
+$(dirname $0)/dhcp6_shutdown_test.sh "dhcpv6_srv.sigterm" 15

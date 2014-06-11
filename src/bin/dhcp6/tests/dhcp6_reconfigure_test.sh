@@ -12,8 +12,6 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Test name
-TEST_NAME="DHCPv6.dynamicReconfiguration"
 # Path to the temporary configuration file.
 CFG_FILE="test_config.json"
 # Path to the Kea log file.
@@ -63,14 +61,14 @@ CONFIG_INVALID="{
 }"
 
 # Set the location of the executable.
-BIN="b10-dhcp6"
-BIN_PATH=".."
+bin="b10-dhcp6"
+bin_path=".."
 
 # Import common test library.
 . $(dirname $0)/../../../lib/testutils/dhcp_test_lib.sh
 
 # Log the start of the test and print test name.
-test_start
+test_start "dhcpv6_srv.dynamic_reconfiguration"
 # Remove dangling Kea instances and remove log files.
 cleanup
 # Create new configuration file.
@@ -78,7 +76,7 @@ create_config "${CONFIG}"
 # Instruct Kea to log to the specific file.
 set_logger
 # Start Kea.
-start_kea
+start_kea ${bin_path}/${bin}
 # Wait up to 20s for Kea to start.
 wait_for_kea 20
 if [ ${_WAIT_FOR_KEA} -eq 0 ]; then
@@ -88,7 +86,7 @@ fi
 
 # Check if it is still running. It could have terminated (e.g. as a result
 # of configuration failure).
-get_pids ${BIN}
+get_pids ${bin}
 if [ ${_GET_PIDS_NUM} -ne 1 ]; then
     printf "ERROR: expected one Kea process to be started. Found %d processes\
  started.\n" ${_GET_PIDS_NUM}
@@ -109,7 +107,7 @@ fi
 create_config "${CONFIG_INVALID}"
 
 # Try to reconfigure by sending SIGHUP
-send_signal 1 ${BIN}
+send_signal 1 ${bin}
 
 # The configuration should fail and the error message should be there.
 wait_for_message 10 "DHCP6_CONFIG_LOAD_FAIL" 1
@@ -128,7 +126,7 @@ elif [ ${_GET_RECONFIG_ERRORS} -ne 1 ]; then
 fi
 
 # Make sure the server is still operational.
-get_pids ${BIN}
+get_pids ${bin}
 if [ ${_GET_PIDS_NUM} -ne 1 ]; then
     printf "ERROR: Kea process was killed when attempting reconfiguration.\n"
     clean_exit 1
@@ -138,7 +136,7 @@ fi
 create_config "${CONFIG}"
 
 # Reconfigure the server with SIGHUP.
-send_signal 1 ${BIN}
+send_signal 1 ${bin}
 
 # There should be two occurrences of the DHCP6_CONFIG_COMPLETE messages.
 # Wait for it up to 10s.
@@ -155,7 +153,7 @@ else
 fi
 
 # Make sure the server is still operational.
-get_pids ${BIN}
+get_pids ${bin}
 if [ ${_GET_PIDS_NUM} -ne 1 ]; then
     printf "ERROR: Kea process was killed when attempting reconfiguration.\n"
     clean_exit 1
