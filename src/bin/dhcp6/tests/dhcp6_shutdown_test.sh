@@ -18,7 +18,7 @@ if [ $# -ne 2 ]; then
 fi
 
 # Test name
-TEST_NAME=$1
+test_name=${1}
 # Signal number to be used for this test.
 SIG_NUM=$2
 # Path to the temporary configuration file.
@@ -48,14 +48,14 @@ CONFIG="{
 }"
 
 # Set the location of the executable.
-BIN="b10-dhcp6"
-BIN_PATH=".."
+bin="b10-dhcp6"
+bin_path=".."
 
 # Import common test library.
 . $(dirname $0)/../../../lib/testutils/dhcp_test_lib.sh
 
 # Log the start of the test and print test name.
-test_start
+test_start ${test_name}
 # Remove dangling Kea instances and remove log files.
 cleanup
 # Create new configuration file.
@@ -63,7 +63,7 @@ create_config "${CONFIG}"
 # Instruct Kea to log to the specific file.
 set_logger
 # Start Kea.
-start_kea
+start_kea ${bin_path}/${bin}
 # Wait up to 20s for Kea to start.
 wait_for_kea 20
 if [ ${_WAIT_FOR_KEA} -eq 0 ]; then
@@ -73,7 +73,7 @@ fi
 
 # Check if it is still running. It could have terminated (e.g. as a result
 # of configuration failure).
-get_pids ${BIN}
+get_pids ${bin}
 if [ ${_GET_PIDS_NUM} -ne 1 ]; then
     printf "ERROR: expected one Kea process to be started. Found %d processes\
  started.\n" ${_GET_PIDS_NUM}
@@ -91,7 +91,7 @@ else
 fi
 
 # Send signal to Kea (SIGTERM, SIGINT etc.)
-send_signal ${SIG_NUM} ${BIN}
+send_signal ${SIG_NUM} ${bin}
 
 # Wait up to 10s for the server's graceful shutdown. The graceful shut down
 # should be recorded in the log file with the appropriate message.
@@ -102,7 +102,7 @@ if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
 fi
 
 # Server should have shut down.
-get_pids ${BIN}
+get_pids ${bin}
 if [ ${_GET_PIDS_NUM} -ne 0 ]; then
     printf "ERROR: Kea did not shut down after receiving signal.\n"\
  ${_GET_PIDS_NUM}
