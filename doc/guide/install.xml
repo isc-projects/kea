@@ -1,0 +1,588 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+<!ENTITY mdash  "&#x2014;" >
+]>
+
+  <chapter id="installation">
+    <title>Installation</title>
+
+    <section id="packages">
+      <title>Packages</title>
+
+      <para>
+        Some operating systems or software package vendors may provide
+        ready-to-use, pre-built software packages for Kea.  Installing a
+        pre-built package means you do not need to install build-only
+        prerequisites and do not need to <emphasis>make</emphasis> the software.
+      </para>
+
+      <para>
+        FreeBSD ports, NetBSD pkgsrc, and Debian <emphasis>testing</emphasis>
+        package collections provide all the prerequisite packages.
+      </para>
+    </section>
+
+    <section id="install-hierarchy">
+      <title>Install Hierarchy</title>
+      <para>
+        The following is the standard, common layout of the
+        complete Kea installation:
+        <itemizedlist>
+          <listitem>
+           <simpara>
+              <filename>bin/</filename> &mdash;
+              general tools and diagnostic clients.
+            </simpara>
+          </listitem>
+          <listitem>
+          <simpara>
+	    <!-- @todo: 0.9: update this -->
+            <filename>etc/bind10/</filename> &mdash;
+            configuration files.
+          </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <filename>lib/</filename> &mdash;
+              libraries and python modules.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+	      <!-- @todo 0.9: update this -->
+              <filename>libexec/bind10/</filename> &mdash;
+              executables that a user wouldn't normally run directly and
+              are not run independently.
+              These are the BIND 10 and Kea modules which are daemons started by
+              the <command>b10-init</command> master process.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <filename>sbin/</filename> &mdash;
+              commands used by the system administrator.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+	      <!-- @todo 0.9: update this -->
+              <filename>share/bind10/</filename> &mdash;
+              configuration specifications.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+	      <!-- @todo 0.9: update this -->
+              <filename>share/doc/bind10/</filename> &mdash;
+              this guide and other supplementary documentation.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <filename>share/man/</filename> &mdash;
+              manual pages (online documentation).
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+	      <!-- @todo 0.9: update this -->
+              <filename>var/bind10/</filename> &mdash;
+              data source and configuration databases.
+            </simpara>
+          </listitem>
+        </itemizedlist>
+      </para>
+    </section>
+
+    <section id="build-requirements">
+      <title>Building Requirements</title>
+
+        <para>
+          In addition to the run-time requirements (listed in <xref
+          linkend="required-software"/>), building Kea from source code requires
+          various development include headers and program development tools.
+        </para>
+
+        <note>
+          <simpara>
+            Some operating systems have split their distribution packages into
+            a run-time and a development package.  You will need to install
+            the development package versions, which include header files and
+            libraries, to build Kea from source code.
+          </simpara>
+        </note>
+
+        <para>
+          Building from source code requires the Boost
+          build-time headers
+          (<ulink url="http://www.boost.org/"/>).
+          At least Boost version 1.35 is required.
+  <!-- TODO: we don't check for this version -->
+  <!-- NOTE: jreed has tested with 1.34, 1.38, and 1.41. -->
+        </para>
+
+        <para>
+          To build Kea, also install the Botan (at least version
+          1.8) and the log4cplus (at least version 1.0.3)
+          development include headers.
+	  <!-- @todo: Add OpenSSL note here once #2406 is merged -->
+        </para>
+
+<!--
+TODO
+Debian and Ubuntu:
+ libgmp3-dev and libbz2-dev required for botan too
+-->
+
+<!-- NOTE: _sqlite3 is only needed at test time; it is already listed
+as a dependency earlier -->
+
+        <para>
+          Building Kea also requires a C++ compiler and
+          standard development headers, make, and pkg-config.
+          Kea builds have been tested with GCC g++ 3.4.3, 4.1.2,
+          4.1.3, 4.2.1, 4.3.2, and 4.4.1; Clang++ 2.8; and Sun C++ 5.10.
+	  <!-- @todo update this list -->
+        </para>
+
+        <para>
+          Visit the user-contributed wiki at <ulink
+          url="http://kea.isc.org/wiki/SystemSpecificNotes" />
+          for system-specific installation tips.
+        </para>
+
+    </section>
+
+    <section id="install">
+      <title>Installation from source</title>
+      <para>
+        Kea is open source software written in C++ (some components of the
+        BIND 10 framework are written in Python).
+        It is freely available in source code form from ISC as a
+        downloadable tar file or via Kea Git code revision control
+        service. (It may also be available in pre-compiled ready-to-use
+        packages from operating system vendors.)
+      </para>
+
+      <section>
+
+        <title>Download Tar File</title>
+        <para>
+          Kea 0.8 is available as a part of BIND10 1.2 release, which is a final
+          release of BIND10 from ISC. This release can be downloaded from:
+          <ulink url="ftp://ftp.isc.org/isc/bind10/"/>. Upcoming Kea 0.9 and all
+	  following releases will be shipped as a stand-alone tarball.
+        </para>
+      </section>
+
+      <section>
+        <title>Retrieve from Git</title>
+        <para>
+          Downloading this "bleeding edge" code is recommended only for
+          developers or advanced users.  Using development code in a production
+          environment is not recommended.
+        </para>
+
+        <note>
+          <para>
+            When using source code retrieved via Git, additional
+            software will be required:  automake (v1.11 or newer),
+            libtoolize, and autoconf (2.59 or newer).
+            These may need to be installed.
+          </para>
+        </note>
+
+        <para>
+          The latest development code (and temporary experiments
+          and un-reviewed code) is available via the Kea code revision
+          control system. This is powered by Git and all the Kea
+          development is public.
+          The leading development is done in the <quote>master</quote>
+          branch.
+        </para>
+        <para>
+          The code can be checked out from
+          <filename>git://git.kea.isc.org/kea</filename>;
+          for example:
+
+        <screen>$ <userinput>git clone git://git.kea.isc.org/kea</userinput></screen>
+        </para>
+
+        <para>
+          When checking out the code from
+          the code version control system, it doesn't include the
+          generated configure script, Makefile.in files, nor their
+          related build files.
+          They can be created by running <command>autoreconf</command>
+          with the <option>--install</option> switch.
+          This will run <command>autoconf</command>,
+          <command>aclocal</command>,
+          <command>libtoolize</command>,
+          <command>autoheader</command>,
+          <command>automake</command>,
+          and related commands.
+        </para>
+
+      </section>
+
+
+      <section id="configure">
+        <title>Configure before the build</title>
+        <para>
+          Kea uses the GNU Build System to discover build environment
+          details.
+          To generate the makefiles using the defaults, simply run:
+          <screen>$ <userinput>./configure</userinput></screen>
+        </para>
+        <para>
+          Run <command>./configure</command> with the <option>--help</option>
+          switch to view the different options. Some commonly-used options are:
+
+          <variablelist>
+
+          <varlistentry>
+            <term>--prefix</term>
+            <listitem>
+              <simpara>Define the installation location (the
+                default is <filename>/usr/local/</filename>).
+              </simpara>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>--with-boost-include</term>
+            <listitem>
+              <simpara>Define the path to find the Boost headers.
+              </simpara>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>--with-pythonpath</term>
+            <listitem>
+              <simpara>Define the path to Python 3.x if it is not in the
+                standard execution path. Python 3.x is mandatory for Kea 0.8,
+		but is no longer required for upcoming Kea 0.9.
+              </simpara>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>--with-gtest</term>
+            <listitem>
+              <simpara>Enable building the C++ Unit Tests using the
+                Google Tests framework. Optionally this can define the
+                path to the gtest header files and library.
+              </simpara>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>--without-werror</term>
+            <listitem>
+              <simpara>Disable the default use of the
+		<option>-Werror</option> compiler flag so that
+		compiler warnings aren't build failures.
+              </simpara>
+            </listitem>
+          </varlistentry>
+
+          </variablelist>
+          <note>
+            <para>
+              For additional instructions concerning the building and installation of
+              Kea for various databases, see <xref linkend="dhcp-install-configure"/>.
+              For additional instructions concerning configuration backends, see
+              <xref linkend="dhcp-config-backend" />.
+            </para>
+          </note>
+        </para>
+  <!-- TODO: lcov -->
+
+        <para>
+          For example, the following configures it to
+    find the Boost headers, find the
+    Python interpreter, and sets the installation location:
+
+          <screen>$ <userinput>./configure \
+      --with-boost-include=/usr/pkg/include \
+      --with-dhcp-pgsql=/usr/local/bin/pg_config \
+      --prefix=/opt/kea</userinput></screen>
+        </para>
+
+        <para>
+          If the configure fails, it may be due to missing or old
+          dependencies.
+        </para>
+
+
+      </section>
+
+      <section>
+        <title>Build</title>
+        <para>
+    After the configure step is complete, to build the executables
+    from the C++ code and prepare the Python scripts, run:
+
+          <screen>$ <userinput>make</userinput></screen>
+        </para>
+      </section>
+
+      <section>
+        <title>Install</title>
+        <para>
+          To install the Kea executables, support files,
+          and documentation, run:
+          <screen>$ <userinput>make install</userinput></screen>
+        </para>
+        <para>
+          Please don't use any form of parallel or job server options
+          (such as GNU make's <command>-j</command> option) when
+          performing this step. Doing so may cause errors.
+        </para>
+        <note>
+          <para>The install step may require superuser privileges.</para>
+        </note>
+        <para>
+	  If required, run <command>ldconfig</command> as root with
+	  <filename>/usr/local/lib</filename> (or with ${prefix}/lib if
+	  configured with --prefix) in
+	  <filename>/etc/ld.so.conf</filename> (or the relevant linker
+	  cache configuration file for your OS):
+	  <screen>$ <userinput>ldconfig</userinput></screen>
+        </para>
+        <note>
+          <para>
+	    If you do not run <command>ldconfig</command> where it is
+	    required, you may see errors like the following:
+            <screen>
+	      program: error while loading shared libraries: libkea-something.so.1:
+	      cannot open shared object file: No such file or directory
+	    </screen>
+	  </para>
+        </note>
+      </section>
+
+  <!-- @todo: tests -->
+
+    </section>
+
+    <section id="dhcp-config-backend">
+      <title>Selecting configuration backend</title>
+      <para>Kea 0.9 introduces configuration backends that are switchable during
+      compilation phase. There is a new parameter for configure script:
+      --with-kea-config. It currently supports two values: BIND10 and
+      JSON. This is currently only supported by DHCPv6 component.</para>
+
+      <variablelist>
+
+        <varlistentry>
+          <term>BIND10</term>
+          <listitem>
+            <simpara>BIND10 (which is the default value as of April 2014) means
+            that Kea6 is linked with the BIND10 configuration backend that
+            connects to the BIND10 framework and in general works exactly the
+            same as Kea 0.8 and earlier versions. The benefits of that backend
+            are uniform integration with BIND10 framework, easy on-line
+            reconfiguration using bindctl, available RESTful API. On the other
+            hand, it requires the whole heavy BIND10 framework that requires
+            Python3 to be present. That backend is likely to go away with the
+            release of Kea 0.9.</simpara>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>JSON</term>
+          <listitem>
+            <simpara>JSON is a new configuration backend that causes Kea to read
+            JSON configuration file from disk. It does not require any framework
+            and thus is considered more lightweight. It will allow dynamic
+            on-line reconfiguration, but will lack remote capabilities (i.e. no
+            RESTful API). This configuration backend is expected to be the
+            default for upcoming Kea 0.9.</simpara>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+
+    </section>
+
+    <section id="dhcp-install-configure">
+      <title>DHCP Database Installation and Configuration</title>
+      <para>
+        Kea stores its leases in a lease database.  The software has been written in
+        a way that makes it possible to choose which database product should be used to
+        store the lease information.  At present, Kea supports 3 database backends: MySQL,
+        PostgreSQL and Memfile. To limit external dependencies, both MySQL and PostgreSQL
+        support are disabled by default and only Memfile (which is implemented in pure C++)
+        is available. Support for a given database backend must be explicitly included when
+        Kea is built.  This section covers the building of Kea with MySQL and/or PostgreSQL
+        and the creation of the lease database.
+      </para>
+      <section>
+        <title>Building with MySQL support</title>
+        <para>
+          Install MySQL according to the instructions for your system.  The client development
+          libraries must be installed.
+        </para>
+        <para>
+          Build and install Kea as described in <xref linkend="installation"/>, with
+          the following modification: to enable the MySQL database code, at the
+          "configure" step (see <xref linkend="configure"/>), specify the location of the
+          MySQL configuration program "mysql_config" with the "--with-dhcp-mysql" switch,
+          i.e.
+          <screen><userinput>./configure [other-options] --with-dhcp-mysql</userinput></screen>
+          ...if MySQL was installed in the default location, or:
+          <screen><userinput>./configure [other-options] --with-dhcp-mysql=<replaceable>path-to-mysql_config</replaceable></userinput></screen>
+          ...if not.
+        </para>
+      </section>
+      <section id="dhcp-mysql-database-create">
+        <title>Create MySQL Database and Kea User</title>
+        <para>
+          The next task is to create both the lease database and the user under which the servers will
+          access it. A number of steps are required:
+        </para>
+        <para>
+          1. Log into MySQL as "root":
+          <screen>$ <userinput>mysql -u root -p</userinput>
+Enter password:<userinput/>
+   :<userinput/>
+mysql></screen>
+        </para>
+        <para>
+          2. Create the database:
+          <screen>mysql> <userinput>CREATE DATABASE <replaceable>database-name</replaceable>;</userinput></screen>
+          ... <replaceable>database-name</replaceable> is the name you have chosen for the database.
+        </para>
+         <para>
+          3. Create the database tables:
+          <screen>mysql> <userinput>CONNECT <replaceable>database-name</replaceable>;</userinput>
+mysql> <userinput>SOURCE <replaceable>path-to-bind10</replaceable>/share/bind10/dhcpdb_create.mysql</userinput></screen>
+        </para>
+         <para>
+          4. Create the user under which BIND 10 will access the database (and give it a password), then grant it access to the database tables:
+          <screen>mysql> <userinput>CREATE USER '<replaceable>user-name</replaceable>'@'localhost' IDENTIFIED BY '<replaceable>password</replaceable>';</userinput>
+mysql> <userinput>GRANT ALL ON <replaceable>database-name</replaceable>.* TO '<replaceable>user-name</replaceable>'@'localhost';</userinput></screen>
+        </para>
+        <para>
+          5. Exit MySQL:
+          <screen>mysql> <userinput>quit</userinput>
+Bye<userinput/>
+$</screen>
+       </para>
+     </section>
+
+
+      <section>
+        <title>Building with PostgreSQL support</title>
+        <para>
+          Install PostgreSQL according to the instructions for your system.  The client development
+          libraries must be installed. Client development libraries are often packaged as &quot;libpq&quot;.
+        </para>
+        <para>
+          Build and install Kea as described in <xref linkend="installation"/>, with
+          the following modification: to enable the PostgreSQL database code, at the
+          "configure" step (see <xref linkend="configure"/>), specify the location of the
+          PostgreSQL configuration program "pg_config" with the "--with-dhcp-pgsql" switch,
+          i.e.
+          <screen><userinput>./configure [other-options] --with-dhcp-pgsql</userinput></screen>
+          ...if PostgreSQL was installed in the default location, or:
+          <screen><userinput>./configure [other-options] --with-dhcp-pgsql=<replaceable>path-to-pg_config</replaceable></userinput></screen>
+          ...if not.
+        </para>
+      </section>
+      <section id="dhcp-pgsql-database-create">
+        <title>Create PostgreSQL Database and Kea User</title>
+        <para>
+          The next task is to create both the lease database and the user under which the servers will
+          access it. A number of steps are required:
+        </para>
+        <para>
+          1. Log into PostgreSQL as "root":
+          <screen>$ <userinput>sudo -u postgres psql postgres</userinput>
+Enter password:<userinput/>
+   :<userinput/>
+postgres=#</screen>
+        </para>
+        <para>
+          2. Create the database:
+<screen>
+postgres=#<userinput> CREATE DATABASE <replaceable>database-name</replaceable>;</userinput>
+CREATE DATABASE
+postgres=#
+</screen>
+          ... <replaceable>database-name</replaceable> is the name you have chosen for the database.
+        </para>
+         <para>
+          3. Create the user under which Kea will access the database (and give it a password), then grant it access to the database:
+<screen>postgres=#<userinput> CREATE USER <replaceable>user-name</replaceable> WITH PASSWORD '<replaceable>password</replaceable>';</userinput>
+CREATE ROLE
+postgres=#
+postgres=#<userinput> GRANT ALL PRIVILEGES ON DATABASE <replaceable>database-name</replaceable> TO <replaceable>user-name</replaceable>;</userinput>
+GRANT
+postgres=#
+</screen>
+        </para>
+         <para>
+          4. Exit PostgreSQL:
+          <screen>postgres=# <userinput>\q</userinput>
+Bye<userinput/>
+$</screen>
+       </para>
+       <para>
+        5. Create the database tables using the new user's credentials.
+        After entering the following command, you will be prompted for the new
+        user's password. When the command completes you will be returned to
+        the shell prompt. You should see output similar to following:
+<screen>$ <userinput>psql -d <replaceable>database-name</replaceable> -U <replaceable>user-name</replaceable> -f <replaceable>path-to-bind10</replaceable>/share/bind10/dhcpdb_create.pgsql</userinput>
+Password for user <replaceable>user-name</replaceable>:
+CREATE TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE TABLE
+CREATE INDEX
+CREATE TABLE
+START TRANSACTION
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+COMMIT
+CREATE TABLE
+START TRANSACTION
+INSERT 0 1
+COMMIT
+$
+</screen>
+  </para>
+  <para>
+  If instead you encounter an error such as shown below:
+  </para>
+<screen>
+psql: FATAL:  no pg_hba.conf entry for host "[local]", user "<replaceable>user-name</replaceable>", database "<replaceable>database-name</replaceable>", SSL off
+</screen>
+  <para>
+  This indicates that the PostgreSQL configuration needs to be modified.
+  Kea uses password authentication when connecting to the database and must
+  have the appropriate entries added to PostgreSQL's pg_hba.conf file.  This
+  file is normally located in the primary data directory for your PostgreSQL
+  server. The precise path may vary but the default location for PostgreSQL 9.3
+  on Centos 6.5 is:
+  <filename>/var/lib/pgsql/9.3/data/pg_hba.conf</filename>.
+  Assuming Kea is running on the same host as PostgreSQL, adding lines similar
+  to following should be sufficient to provide password-authenticated access to
+  Kea's database:
+  </para>
+<screen>
+local   <replaceable>database-name</replaceable>    <replaceable>user-name</replaceable>                                 password
+host    <replaceable>database-name</replaceable>    <replaceable>user-name</replaceable>          127.0.0.1/32           password
+host    <replaceable>database-name</replaceable>    <replaceable>user-name</replaceable>          ::1/128                password
+</screen>
+  <para>
+  Please consult your PostgreSQL user manual before making these changes as they
+  may expose your other databases that you run on the same system.
+  </para>
+      </section>
+   </section>
+
+  </chapter>
