@@ -172,6 +172,10 @@ case ${command} in
     start)
         args="-c ${kea_config_file}"
 
+        if [ ${kea_verbose} == "yes" ]; then
+            args="${args} -v"
+        fi
+
         if [ ${kea4} == "yes" ]; then
             start_server ${dhcpv4_srv} "${args}"
         fi
