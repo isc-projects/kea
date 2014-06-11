@@ -144,7 +144,7 @@ Expected wait_for_message return %d, returned %d."
     assert_eq 0 ${_GET_PIDS_NUM} \
         "Expected %d ${kea6_name} processes running, found %d processes running"
 
-    cleanup
+    test_finish 0
 }
 
 # This test checks that only DHCPv4 server can be started and that the DHCPv6
@@ -191,6 +191,16 @@ Expected wait_for_message return %d, returned %d."
     assert_eq 0 ${_GET_PIDS_NUM} \
         "Expected %d ${kea6_name} process running, found %d processes running"
 
+    # Make sure that the status command returns appropriate status.
+    printf "Getting status of Kea modules: %s\n" "${keactrl} status"
+    output=$( ${keactrl} status )
+    ret=${?}
+    assert_eq 0 ${ret} "Expected keactrl to return %d, returned %d"
+    assert_string_contains "DHCPv4 server: active" "${output}" \
+        "Expected keactrl status command return %s"
+    assert_string_contains "DHCPv6 server: inactive" "${output}" \
+        "Expected keactrl status command return %s"
+
     # Use keactrl stop to shutdown the servers.
     printf "Stopping Kea: ${keactrl} stop\n"
     ${keactrl} stop
@@ -212,7 +222,7 @@ Expected wait_for_message return %d, returned %d."
     assert_eq 0 ${_GET_PIDS_NUM} \
         "Expected %d ${kea6_name} processes running, found %d processes running"
 
-    cleanup
+    test_finish 0
 }
 
 # This test checks that only DHCPv6 server can be started and that the DHCPv4
@@ -237,7 +247,7 @@ start_v6_server_test() {
     printf "Starting Kea: ${keactrl} start\n"
     ${keactrl} start
     ret=${?}
-    assert_eq 0 ${ret} "Expected keactrl to retrun 0, returned value was ${ret}"
+    assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d"
 
     # Wait up to 20s for the DHCPv6 server to configure.
     wait_for_message 20 "DHCP6_CONFIG_COMPLETE" 1
@@ -258,6 +268,16 @@ Expected wait_for_message return %d, returned %d."
     get_pids ${kea4_name}
     assert_eq 0 ${_GET_PIDS_NUM} \
         "Expected %d ${kea4_name} process running, found %d processes running"
+
+    # Make sure that the status command returns appropriate status.
+    printf "Getting status of Kea modules: %s\n" "${keactrl} status"
+    output=$( ${keactrl} status )
+    ret=${?}
+    assert_eq 0 ${ret} "Expected keactrl to return %d, returned %d"
+    assert_string_contains "DHCPv4 server: inactive" "${output}" \
+        "Expected keactrl status command return %s"
+    assert_string_contains "DHCPv6 server: active" "${output}" \
+        "Expected keactrl status command return %s"
 
     # Use keactrl stop to shutdown the servers.
     printf "Stopping Kea: ${keactrl} stop\n"
@@ -280,7 +300,7 @@ Expected wait_for_message return %d, returned %d."
     assert_eq 0 ${_GET_PIDS_NUM} \
         "Expected %d ${kea6_name} processes running, found %d processes running"
 
-    cleanup
+    test_finish 0
 }
 
 # This test checks that the DHCPv6 server can be started first, and then the
@@ -408,7 +428,7 @@ Expected wait_for_message return %d, returned %d."
     assert_eq 0 ${_GET_PIDS_NUM} \
         "Expected %d ${kea6_name} processes running, found %d processes running"
 
-    cleanup
+    test_finish 0
 }
 
 # This test checks that the DHCPv4 server can be started first, and then the
@@ -536,7 +556,7 @@ Expected wait_for_message return %d, returned %d."
     assert_eq 0 ${_GET_PIDS_NUM} \
         "Expected %d ${kea6_name} processes running, found %d processes running"
 
-    cleanup
+    test_finish 0
 }
 
 start_both_servers_test
@@ -545,5 +565,3 @@ start_v6_server_test
 late_start_v4_server_test
 late_start_v6_server_test
 
-
-clean_exit 0
