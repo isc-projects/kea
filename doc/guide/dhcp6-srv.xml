@@ -1,0 +1,1545 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+<!ENTITY mdash  "&#x2014;" >
+]>
+
+  <chapter id="dhcp6">
+    <title>The DHCPv6 Server</title>
+
+    <section id="dhcp6-start-stop">
+      <title>Starting and Stopping the DHCPv6 Server</title>
+
+      <para>
+        <command>b10-dhcp6</command> is the Kea DHCPv6 server and is configured
+        through the <command>bindctl</command> program.
+      </para>
+      <para>
+        After starting <command>bind10</command> and starting <command>bindctl</command>, the first step
+        in configuring the server is to add <command>b10-dhcp6</command> to the list of running services.
+<screen>
+&gt; <userinput>config add Init/components b10-dhcp6</userinput>
+&gt; <userinput>config set Init/components/b10-dhcp6/kind dispensable</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      </para>
+      <para>
+         To remove <command>b10-dhcp6</command> from the set of running services,
+         the <command>b10-dhcp6</command> is removed from list of Init components:
+<screen>
+&gt; <userinput>config remove Init/components b10-dhcp6</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      </para>
+
+      <para>
+        Note that the server was only removed from the list, so BIND10 will not
+        restart it, but the server itself is still running. Hence it is usually
+        desired to stop it:
+<screen>
+&gt; <userinput>Dhcp6 shutdown</userinput>
+</screen>
+      </para>
+
+      <para>
+        During start-up the server will detect available network interfaces
+        and will attempt to open UDP sockets on all interfaces that
+        are up, running, are not loopback, are multicast-capable, and
+        have IPv6 address assigned. It will then listen to incoming traffic.
+      </para>
+
+
+    </section>
+
+    <section id="dhcp6-configuration">
+      <title>DHCPv6 Server Configuration</title>
+      <para>
+        Once the server has been started, it can be configured. To view the
+        current configuration, use the following command in <command>bindctl</command>:
+        <screen>&gt; <userinput>config show Dhcp6</userinput></screen>
+        When starting the Dhcp6 daemon for the first time, the default configuration
+        will be available. It will look similar to this:
+<screen>
+&gt; <userinput>config show Dhcp6</userinput>
+Dhcp6/hooks-libraries   []  list    (default)
+Dhcp6/interfaces/   list    (default)
+Dhcp6/renew-timer   1000    integer (default)
+Dhcp6/rebind-timer  2000    integer (default)
+Dhcp6/preferred-lifetime    3000    integer (default)
+Dhcp6/valid-lifetime    4000    integer (default)
+Dhcp6/option-def    []  list    (default)
+Dhcp6/option-data   []  list    (default)
+Dhcp6/lease-database/type   ""  string  (default)
+Dhcp6/lease-database/name   ""  string  (default)
+Dhcp6/lease-database/user   ""  string  (default)
+Dhcp6/lease-database/host   ""  string  (default)
+Dhcp6/lease-database/password   ""  string  (default)
+Dhcp6/subnet6/  list
+Dhcp6/dhcp-ddns/enable-updates  true    boolean
+Dhcp6/dhcp-ddns/server-ip   "127.0.0.1" string
+Dhcp6/dhcp-ddns/server-port 53001   integer
+Dhcp6/dhcp-ddns/sender-ip	""	string
+Dhcp6/dhcp-ddns/sender-port	0	integer
+Dhcp6/dhcp-ddns/max-queue-size	1024  integer
+Dhcp6/dhcp-ddns/ncr-protocol    "UDP"   string
+Dhcp6/dhcp-ddns/ncr-format  "JSON"  string
+Dhcp6/dhcp-ddns/always-include-fqdn false   boolean
+Dhcp6/dhcp-ddns/override-no-update  false   boolean
+Dhcp6/dhcp-ddns/override-client-update  false   boolean
+Dhcp6/dhcp-ddns/replace-client-name false   boolean
+Dhcp6/dhcp-ddns/generated-prefix    "myhost"    string
+Dhcp6/dhcp-ddns/qualifying-suffix   "example.com"   string
+</screen>
+      </para>
+      <para>
+        To change one of the parameters, simply follow
+        the usual <command>bindctl</command> procedure. For example, to make the
+        leases longer, change their valid-lifetime parameter:
+        <screen>
+&gt; <userinput>config set Dhcp6/valid-lifetime 7200</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        Most Dhcp6 parameters are of global scope
+        and apply to all defined subnets, unless they are overridden on a
+        per-subnet basis.
+      </para>
+      <note>
+        <para>
+          With this version of Kea, there are a number of known limitations
+          and problems in the DHCPv6 server. See <xref linkend="dhcp6-limit"/>.
+        </para>
+      </note>
+
+      <section>
+      <title>Default storage for leases</title>
+      <para>
+        The server is able to store lease data in different repositories. Larger deployments
+        may elect to store leases in a database.
+        <xref linkend="database-configuration6"/> describes one way to do it.
+        By default, the server will use a CSV file rather than a database to store
+        lease information. One of the advantages of using a file is that it eliminates
+        dependency on third party database software.
+      </para>
+      <para>
+        The configuration of the file backend (Memfile)
+        is controlled through the Dhcp6/lease-database parameters. When default
+        parameters are left, the Memfile backend will write leases to a disk in the
+        [bind10-install-dir]/var/bind10/kea-leases6.csv.
+      </para>
+      <para>
+        It is possible to alter the default location of the lease file. The following
+        configuration:
+<screen>
+&gt; <userinput>config set Dhcp4/lease-database/type "memfile"</userinput>
+&gt; <userinput>config set Dhcp4/lease-database/persist true</userinput>
+&gt; <userinput>config set Dhcp4/lease-database/leasefile "/tmp/kea-leases6.csv"</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+        will change the default location of the lease file to /tmp/kea-leases6.csv.
+      </para>
+      <para>
+        The "persist" parameter controls whether the leases are written to disk.
+        It is strongly recommended that this parameter is set to "true" at all times
+        during the normal operation of the server.
+      </para>
+      </section>
+
+      <section id="database-configuration6">
+      <title>Database Configuration</title>
+      <para>
+      All leases issued by the server are stored in the lease database. Currently
+      there are 3 database backends available: MySQL, PostgreSQL and memfile.
+      <footnote>
+      <para>
+      The server comes with an in-memory database ("memfile") configured as the default
+      database. This is used for internal testing and is not supported.  In addition,
+      it does not store lease information on disk: lease information will be lost if the
+      server is restarted.
+      </para>
+      </footnote>, and so the server must be configured to
+      access the correct database with the appropriate credentials.
+      </para>
+      <note>
+        <para>
+            Database access information must be configured for the DHCPv6 server, even if
+            it has already been configured for the DHCPv4 server.  The servers store their
+            information independently, so each server can use a separate
+            database or both servers can use the same database.
+          </para>
+        </note>
+      <para>
+      Database configuration is controlled through the Dhcp6/lease-database parameters.
+      The type of the database must be set to "mysql", "postgresql" or "memfile":
+<screen>
+&gt; <userinput>config set Dhcp6/lease-database/type "mysql"</userinput>
+</screen>
+      Next, the name of the database is to hold the leases must be set: this is the
+      name used when the lease database was created (see <xref linkend="dhcp-mysql-database-create"/>
+      or <xref linkend="dhcp-pgsql-database-create"/>).
+<screen>
+&gt; <userinput>config set Dhcp6/lease-database/name "<replaceable>database-name</replaceable>"</userinput>
+</screen>
+      If the database is located on a different system to the DHCPv6 server, the
+      database host name must also be specified (although note that this configuration
+      may have a severe impact on server performance):
+<screen>
+&gt; <userinput>config set Dhcp6/lease-database/host "<replaceable>remote-host-name</replaceable>"</userinput>
+</screen>
+      The usual state of affairs will be to have the database on the same machine as the
+      DHCPv6 server.  In this case, set the value to the empty string (this is the default):
+<screen>
+&gt; <userinput>config set Dhcp6/lease-database/host ""</userinput>
+</screen>
+      </para>
+      <para>
+      Finally, the credentials of the account under which the server will access the database
+      should be set:
+<screen>
+&gt; <userinput>config set Dhcp6/lease-database/user "<replaceable>user-name</replaceable>"</userinput>
+&gt; <userinput>config set Dhcp6/lease-database/password "<replaceable>password</replaceable>"</userinput>
+</screen>
+      If there is no password to the account, set the password to the empty string "". (This is also the default.)
+      </para>
+      <note>
+      <para>The password is echoed when entered and is stored in clear text in the configuration
+      database.  Improved password security will be added in a future version of Kea.</para>
+      </note>
+      </section>
+
+      <section id="dhcp6-interface-selection">
+      <title>Interface selection</title>
+      <para>
+        When DHCPv6 server starts up, by default it will listen to the DHCP
+        traffic and respond to it on all interfaces detected during startup.
+        However, in many cases it is desired to configure the server to listen and
+        respond on selected interfaces only. The sample commands in this section
+        show how to make interface selection using bindctl.
+      </para>
+      <para>
+        The default configuration can be presented with the following command:
+        <screen>
+&gt; <userinput>config show Dhcp6/interfaces</userinput>
+<userinput>Dhcp6/interfaces[0] "*" string</userinput></screen>
+        An asterisk sign plays a role of the wildcard and means "listen on all interfaces".
+      </para>
+      <para>
+        In order to override the default configuration, the existing entry can be replaced
+        with the actual interface name:
+        <screen>
+&gt; <userinput>config set Dhcp6/interfaces[0] eth1</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        Other interface names can be added on one-by-one basis:
+        <screen>
+&gt; <userinput>config add Dhcp6/interfaces eth2</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        Configuration will now contain two interfaces which can be presented as follows:
+        <screen>
+&gt; <userinput>config show Dhcp6/interfaces</userinput>
+<userinput>Dhcp6/interfaces[0]	"eth1"	string</userinput>
+<userinput>Dhcp6/interfaces[1]	"eth2"	string</userinput></screen>
+        When configuration gets committed, the server will start to listen on
+        eth1 and eth2 interfaces only.
+      </para>
+      <para>
+        It is possible to use wildcard interface name (asterisk) concurrently with explicit
+        interface names:
+        <screen>
+&gt; <userinput>config add Dhcp6/interfaces *</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        This will result in the following configuration:
+        <screen>
+&gt; <userinput>config show Dhcp6/interfaces</userinput>
+<userinput>Dhcp6/interfaces[0]	"eth1"	string</userinput>
+<userinput>Dhcp6/interfaces[1]	"eth2"	string</userinput>
+<userinput>Dhcp6/interfaces[2]	"*"	string</userinput></screen>
+        The presence of the wildcard name implies that server will listen on all interfaces.
+        In order to fall back to the previous configuration when server listens on eth1 and eth2:
+        <screen>
+&gt; <userinput>config remove Dhcp6/interfaces[2]</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+    </section>
+
+    <section id="ipv6-subnet-id">
+      <title>IPv6 Subnet Identifier</title>
+      <para>
+        Subnet identifier is a unique number associated with a particular subnet.
+        In principle, it is used to associate clients' leases with respective subnets.
+        When subnet identifier is not specified for a subnet being configured, it will
+        be automatically assigned by the configuration mechanism. The identifiers
+        are assigned from 1 and are monotonically increased for each subsequent
+        subnet: 1, 2, 3 ....
+      </para>
+      <para>
+       If there are multiple subnets configured with auto-generated identifiers and
+       one of them is removed, the subnet identifiers may be renumbered. For example:
+       if there are 4 subnets and 3rd is removed the last subnet will be assigned
+       identifier that the 3rd subnet had before removal. As a result, the leases
+       stored in the lease database for subnet 3 are now associated with the
+       subnet 4, which may have unexpected consequences. In the future it is planned
+       to implement the mechanism to preserve auto-generated subnet ids upon removal
+       of one of the subnets. Currently, the only remedy for this issue is to
+       manually specify the unique subnet identifier for each subnet.
+      </para>
+      <para>
+        The following configuration:
+        <screen>
+&gt; <userinput>config add Dhcp6/subnet6</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/subnet "2001:db8:1::/64"</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/id 1024</userinput>
+&gt; <userinput>config commit</userinput>
+        </screen>
+        will assign the arbitrary subnet identifier to the newly configured subnet.
+        This identifier will not change for this subnet until "id" parameter is
+        removed or set to 0. The value of 0 forces auto-generation of subnet
+        identifier.
+      </para>
+    </section>
+
+    <section id="dhcp6-unicast">
+      <title>Unicast traffic support</title>
+      <para>
+        When DHCPv6 server starts up, by default it listens to the DHCP traffic
+        sent to multicast address ff02::1:2 on each interface that it is
+        configured to listen on (see <xref linkend="dhcp6-interface-selection"/>).
+        In some cases it is useful to configure a server to handle incoming
+        traffic sent to the global unicast addresses as well. The most common
+        reason for that is to have relays send their traffic to the server
+        directly. To configure server to listen on specific unicast address, a
+        notation to specify interfaces has been extended. Interface name can be
+        optionally followed by a slash, followed by global unicast address that
+        server should listen on. That will be done in addition to normal
+        link-local binding + listening on ff02::1:2 address. The sample commands
+        listed below show how to listen on 2001:db8::1 (a global address)
+        configured on the eth1 interface.
+      </para>
+      <para>
+        <screen>
+&gt; <userinput>config set Dhcp6/interfaces[0] eth1/2001:db8::1</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        When configuration gets committed, the server will start to listen on
+        eth1 on link-local address, multicast group (ff02::1:2) and 2001:db8::1.
+      </para>
+      <para>
+        It is possible to mix interface names, wildcards and interface name/addresses
+        on the Dhcp6/interface list. It is not possible to specify more than one
+        unicast address on a given interface.
+      </para>
+      <para>
+        Care should be taken to specify proper unicast addresses. The server will
+        attempt to bind to those addresses specified, without any additional checks.
+        That approach is selected on purpose, so in the software can be used to
+        communicate over uncommon addresses if the administrator desires so.
+      </para>
+    </section>
+
+    <section id="dhcp6-address-config">
+      <title>Subnet and Address Pool</title>
+      <para>
+        The essential role of a DHCPv6 server is address assignment. For this,
+        the server has to be configured with at least one subnet and one pool of dynamic
+        addresses to be managed. For example, assume that the server
+        is connected to a network segment that uses the 2001:db8:1::/64
+        prefix. The Administrator of that network has decided that addresses from range
+        2001:db8:1::1 to 2001:db8:1::ffff are going to be managed by the Dhcp6
+        server. Such a configuration can be achieved in the following way:
+        <screen>
+&gt; <userinput>config add Dhcp6/subnet6</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/subnet "2001:db8:1::/64"</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/pool [ "2001:db8:1::0 - 2001:db8:1::ffff" ]</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        Note that subnet is defined as a simple string, but the pool parameter
+        is actually a list of pools: for this reason, the pool definition is
+        enclosed in square brackets, even though only one range of addresses
+        is specified.</para>
+        <para>It is possible to define more than one pool in a
+        subnet: continuing the previous example, further assume that
+        2001:db8:1:0:5::/80 should be also be managed by the server. It could be written as
+        2001:db8:1:0:5:: to 2001:db8:1::5:ffff:ffff:ffff, but typing so many 'f's
+        is cumbersome. It can be expressed more simply as 2001:db8:1:0:5::/80. Both
+        formats are supported by Dhcp6 and can be mixed in the pool list.
+        For example, one could define the following pools:
+        <screen>
+&gt; <userinput>config set Dhcp6/subnet6[0]/pool [ "2001:db8:1::1 - 2001:db8:1::ffff", "2001:db8:1:0:5::/80" ]</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        The number of pools is not limited, but for performance reasons it is recommended to
+        use as few as possible.
+      </para>
+      <para>
+         The server may be configured to serve more than one subnet. To add a second subnet,
+         use a command similar to the following:
+        <screen>
+&gt; <userinput>config add Dhcp6/subnet6</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[1]/subnet "2001:db8:beef::/48"</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[1]/pool [ "2001:db8:beef::/48" ]</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        Arrays are counted from 0. subnet[0] refers to the subnet defined in the
+        previous example.  The <command>config add Dhcp6/subnet6</command> command adds
+        another (second) subnet. It can be referred to as
+        <command>Dhcp6/subnet6[1]</command>. In this example, we allow server to
+        dynamically assign all addresses available in the whole subnet. Although
+        very wasteful, it is certainly a valid configuration to dedicate the
+        whole /48 subnet for that purpose.
+      </para>
+      <para>
+        When configuring a DHCPv6 server using prefix/length notation, please pay
+        attention to the boundary values. When specifying that the server should use
+        a given pool, it will be able to allocate also first (typically network
+        address) address from that pool. For example for pool 2001:db8::/64 the
+        2001:db8:: address may be assigned as well. If you want to avoid this,
+        please use the "min-max" notation.
+      </para>
+    </section>
+
+    <section>
+<!-- @todo: add real meat to the prefix delegation config this is just place holder stuff -->
+      <title>Subnet and Prefix Delegation Pools</title>
+      <para>
+        Subnets may also be configured to delegate address prefixes....
+        A subnet may have one or more prefix delegation pools.  Each pool has
+        a prefixed address, which is specified as a prefix and a prefix length,
+        as well as a delegated prefix length.  A sample configuration is shown
+        below:
+      <screen>
+&gt; <userinput>config add Dhcp6/subnet6</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/subnet "2001:db8:1::/64"</userinput>
+&gt; <userinput>config show Dhcp6/subnet6[0]</userinput>
+&gt; <userinput>config add Dhcp6/subnet6[0]/pd-pools</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/pd-pools[0]/prefix "2001:db8:1::"</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/pd-pools[0]/prefix-len 64</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/pd-pools[0]/delegated-len 96</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+    </section>
+
+    <section id="dhcp6-std-options">
+      <title>Standard DHCPv6 options</title>
+      <para>
+        One of the major features of DHCPv6 server is to provide configuration
+        options to clients. Although there are several options that require
+        special behavior, most options are sent by the server only if the client
+        explicitly requested them.  The following example shows how to
+        configure DNS servers, which is one of the most frequently used
+        options. Numbers in the first column are added for easier reference and
+        will not appear on screen. Options specified in this way are considered
+        global and apply to all configured subnets.
+
+        <screen>
+1. &gt; <userinput>config add Dhcp6/option-data</userinput>
+2. &gt; <userinput>config set Dhcp6/option-data[0]/name "dns-servers"</userinput>
+3. &gt; <userinput>config set Dhcp6/option-data[0]/code 23</userinput>
+4. &gt; <userinput>config set Dhcp6/option-data[0]/space "dhcp6"</userinput>
+5. &gt; <userinput>config set Dhcp6/option-data[0]/csv-format true</userinput>
+6. &gt; <userinput>config set Dhcp6/option-data[0]/data "2001:db8::cafe, 2001:db8::babe"</userinput>
+7. &gt; <userinput>config commit</userinput>
+</screen>
+      </para>
+    <para>
+      The first line creates new entry in option-data table. It
+      contains information on all global options that the server is
+      supposed to configure in all subnets. The second line specifies
+      option name. For a complete list of currently supported names,
+      see <xref linkend="dhcp6-std-options-list"/>.
+      The third line specifies option code, which must match one of the
+      values from that
+      list. Line 4 specifies option space, which must always
+      be set to "dhcp6" as these are standard DHCPv6 options. For
+      other name spaces, including custom option spaces, see <xref
+      linkend="dhcp6-option-spaces"/>. The fifth line specifies the format in
+      which the data will be entered: use of CSV (comma
+      separated values) is recommended. The sixth line gives the actual value to
+      be sent to clients. Data is specified as a normal text, with
+      values separated by commas if more than one value is
+      allowed.
+    </para>
+
+    <para>
+      Options can also be configured as hexadecimal values. If csv-format is
+      set to false, the option data must be specified as a string of hexadecimal
+      numbers. The
+      following commands configure the DNS-SERVERS option for all
+      subnets with the following addresses: 2001:db8:1::cafe and
+      2001:db8:1::babe.
+      <screen>
+&gt; <userinput>config add Dhcp6/option-data</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/name "dns-servers"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/code 23</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/space "dhcp6"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/csv-format false</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/data "2001 0DB8 0001 0000 0000 0000</userinput>
+        <userinput>0000 CAFE 2001 0DB8 0001 0000 0000 0000 0000 BABE"</userinput>
+&gt; <userinput>config commit</userinput>
+        </screen>
+       (The value for the setting of the "data" element is split across two
+        lines in this document for clarity: when entering the command, the
+        whole string should be entered on the same line.)
+      </para>
+
+    <para>
+      It is possible to override options on a per-subnet basis.  If
+      clients connected to most of your subnets are expected to get the
+      same values of a given option, you should use global options: you
+      can then override specific values for a small number of subnets.
+      On the other hand, if you use different values in each subnet,
+      it does not make sense to specify global option values
+      (Dhcp6/option-data), rather you should set only subnet-specific values
+      (Dhcp6/subnet[X]/option-data[Y]).
+     </para>
+     <para>
+      The following commands override the global
+      DNS servers option for a particular subnet, setting a single DNS
+      server with address 2001:db8:1::3.
+      <screen>
+&gt; <userinput>config add Dhcp6/subnet6[0]/option-data</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/option-data[0]/name "dns-servers"</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/option-data[0]/code 23</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/option-data[0]/space "dhcp6"</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/option-data[0]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/option-data[0]/data "2001:db8:1::3"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+    </para>
+
+    <note>
+      <para>
+        In future versions of BIND 10 DHCP, it will not be necessary to specify
+        option code, space and csv-format fields, as those fields will be set
+        automatically.
+      </para>
+    </note>
+
+
+    <para>
+      The currently supported standard DHCPv6 options are
+      listed in <xref linkend="dhcp6-std-options-list"/>.
+      The "Name" and "Code"
+      are the values that should be used as a name in the option-data
+      structures. "Type" designates the format of the data: the meanings of
+      the various types is given in <xref linkend="dhcp-types"/>.
+    </para>
+    <para>
+      Some options are designated as arrays, which means that more than one
+      value is allowed in such an option. For example the option dns-servers
+      allows the specification of more than one IPv6 address, so allowing
+      clients to obtain the the addresses of multiple DNS servers.
+    </para>
+
+<!-- @todo: describe record types -->
+
+      <para>
+        The <xref linkend="dhcp6-custom-options"/> describes the configuration
+        syntax to create custom option definitions (formats). It is generally not
+        allowed to create custom definitions for standard options, even if the
+        definition being created matches the actual option format defined in the
+        RFCs. There is an exception from this rule for standard options for which
+        Kea does not provide a definition yet. In order to use such options,
+        a server administrator must create a definition as described in
+        <xref linkend="dhcp6-custom-options"/> in the 'dhcp6' option space. This
+        definition should match the option format described in the relevant
+        RFC but configuration mechanism would allow any option format as it has
+        no means to validate it at the moment.
+      </para>
+
+
+    <para>
+      <table frame="all" id="dhcp6-std-options-list">
+        <title>List of standard DHCPv6 options</title>
+        <tgroup cols='4'>
+        <colspec colname='name'/>
+        <colspec colname='code'/>
+        <colspec colname='type'/>
+        <colspec colname='array'/>
+        <thead>
+          <row><entry>Name</entry><entry>Code</entry><entry>Type</entry><entry>Array?</entry></row>
+        </thead>
+        <tbody>
+<!-- Our engine uses those options on its own, admin must not configure them on his own
+<row><entry>clientid</entry><entry>1</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>serverid</entry><entry>2</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>ia-na</entry><entry>3</entry><entry>record</entry><entry>false</entry></row>
+<row><entry>ia-ta</entry><entry>4</entry><entry>uint32</entry><entry>false</entry></row>
+<row><entry>iaaddr</entry><entry>5</entry><entry>record</entry><entry>false</entry></row>
+<row><entry>oro</entry><entry>6</entry><entry>uint16</entry><entry>true</entry></row> -->
+<row><entry>preference</entry><entry>7</entry><entry>uint8</entry><entry>false</entry></row>
+
+<!-- Our engine uses those options on its own, admin must not configure them on his own
+<row><entry>elapsed-time</entry><entry>8</entry><entry>uint16</entry><entry>false</entry></row>
+<row><entry>relay-msg</entry><entry>9</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>auth</entry><entry>11</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>unicast</entry><entry>12</entry><entry>ipv6-address</entry><entry>false</entry></row>
+<row><entry>status-code</entry><entry>13</entry><entry>record</entry><entry>false</entry></row>
+<row><entry>rapid-commit</entry><entry>14</entry><entry>empty</entry><entry>false</entry></row>
+<row><entry>user-class</entry><entry>15</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>vendor-class</entry><entry>16</entry><entry>record</entry><entry>false</entry></row>
+<row><entry>vendor-opts</entry><entry>17</entry><entry>uint32</entry><entry>false</entry></row>
+<row><entry>interface-id</entry><entry>18</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>reconf-msg</entry><entry>19</entry><entry>uint8</entry><entry>false</entry></row>
+<row><entry>reconf-accept</entry><entry>20</entry><entry>empty</entry><entry>false</entry></row> -->
+<row><entry>sip-server-dns</entry><entry>21</entry><entry>fqdn</entry><entry>true</entry></row>
+<row><entry>sip-server-addr</entry><entry>22</entry><entry>ipv6-address</entry><entry>true</entry></row>
+<row><entry>dns-servers</entry><entry>23</entry><entry>ipv6-address</entry><entry>true</entry></row>
+<row><entry>domain-search</entry><entry>24</entry><entry>fqdn</entry><entry>true</entry></row>
+<!-- <row><entry>ia-pd</entry><entry>25</entry><entry>record</entry><entry>false</entry></row> -->
+<!-- <row><entry>iaprefix</entry><entry>26</entry><entry>record</entry><entry>false</entry></row> -->
+<row><entry>nis-servers</entry><entry>27</entry><entry>ipv6-address</entry><entry>true</entry></row>
+<row><entry>nisp-servers</entry><entry>28</entry><entry>ipv6-address</entry><entry>true</entry></row>
+<row><entry>nis-domain-name</entry><entry>29</entry><entry>fqdn</entry><entry>true</entry></row>
+<row><entry>nisp-domain-name</entry><entry>30</entry><entry>fqdn</entry><entry>true</entry></row>
+<row><entry>sntp-servers</entry><entry>31</entry><entry>ipv6-address</entry><entry>true</entry></row>
+<row><entry>information-refresh-time</entry><entry>32</entry><entry>uint32</entry><entry>false</entry></row>
+<row><entry>bcmcs-server-dns</entry><entry>33</entry><entry>fqdn</entry><entry>true</entry></row>
+<row><entry>bcmcs-server-addr</entry><entry>34</entry><entry>ipv6-address</entry><entry>true</entry></row>
+<row><entry>geoconf-civic</entry><entry>36</entry><entry>record</entry><entry>false</entry></row>
+<row><entry>remote-id</entry><entry>37</entry><entry>record</entry><entry>false</entry></row>
+<row><entry>subscriber-id</entry><entry>38</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>client-fqdn</entry><entry>39</entry><entry>record</entry><entry>false</entry></row>
+<row><entry>pana-agent</entry><entry>40</entry><entry>ipv6-address</entry><entry>true</entry></row>
+<row><entry>new-posix-timezone</entry><entry>41</entry><entry>string</entry><entry>false</entry></row>
+<row><entry>new-tzdb-timezone</entry><entry>42</entry><entry>string</entry><entry>false</entry></row>
+<row><entry>ero</entry><entry>43</entry><entry>uint16</entry><entry>true</entry></row>
+<row><entry>lq-query</entry><entry>44</entry><entry>record</entry><entry>false</entry></row>
+<row><entry>client-data</entry><entry>45</entry><entry>empty</entry><entry>false</entry></row>
+<row><entry>clt-time</entry><entry>46</entry><entry>uint32</entry><entry>false</entry></row>
+<row><entry>lq-relay-data</entry><entry>47</entry><entry>record</entry><entry>false</entry></row>
+<row><entry>lq-client-link</entry><entry>48</entry><entry>ipv6-address</entry><entry>true</entry></row>
+        </tbody>
+        </tgroup>
+      </table>
+    </para>
+    </section>
+
+    <section id="dhcp6-custom-options">
+      <title>Custom DHCPv6 options</title>
+      <para>It is also possible to define options other than the standard ones.
+      Assume that we want to define a new DHCPv6 option called "foo" which will have
+      code 100 and will convey a single unsigned 32 bit integer value. We can define
+      such an option by using the following commands:
+      <screen>
+&gt; <userinput>config add Dhcp6/option-def</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/name "foo"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/code 100</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/type "uint32"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/array false</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/record-types ""</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/space "dhcp6"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/encapsulate ""</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      The "false" value of the "array" parameter determines that the option
+      does NOT comprise an array of "uint32" values but rather a single value.
+      Two other parameters have been left blank: "record-types" and "encapsulate".
+      The former specifies the comma separated list of option data fields if the
+      option comprises a record of data fields. The "record-fields" value should
+      be non-empty if the "type" is set to "record". Otherwise it must be left
+      blank. The latter parameter specifies the name of the option space being
+      encapsulated by the particular option. If the particular option does not
+      encapsulate any option space it should be left blank.
+      Note that the above set of comments define the format of the new option and do not
+      set its values.
+      </para>
+      <para>Once the new option format is defined, its value is set
+      in the same way as for a standard option. For example the following
+      commands set a global value that applies to all subnets.
+        <screen>
+&gt; <userinput>config add Dhcp6/option-data</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/name "foo"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/code 100</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/space "dhcp6"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/data "12345"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+
+      <para>New options can take more complex forms than simple use of
+      primitives (uint8, string, ipv6-address etc): it is possible to
+      define an option comprising a number of existing primitives.
+      </para>
+      <para>
+      Assume we want to define a new option that will consist of an IPv6
+      address, followed by an unsigned 16 bit integer, followed by a
+      boolean value, followed by a text string. Such an option could
+      be defined in the following way:
+<screen>
+&gt; <userinput>config add Dhcp6/option-def</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/name "bar"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/code 101</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/space "dhcp6"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/type "record"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/array false</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/record-types "ipv6-address, uint16, boolean, string"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/encapsulate ""</userinput>
+</screen>
+      The "type" is set to "record" to indicate that the option contains
+      multiple values of different types.  These types are given as a comma-separated
+      list in the "record-types" field and should be those listed in <xref linkend="dhcp-types"/>.
+      </para>
+      <para>
+      The values of the option are set as follows:
+<screen>
+&gt; <userinput>config add Dhcp6/option-data</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/name "bar"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/space "dhcp6"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/code 101</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/data "2001:db8:1::10, 123, false, Hello World"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      "csv-format" is set "true" to indicate that the "data" field comprises a command-separated
+      list of values.  The values in the "data" must correspond to the types set in
+      the "record-types" field of the option definition.
+      </para>
+      <note>
+        <para>
+          It is recommended that boolean values are specified using "true" and "false"
+          strings. This helps to prevent errors when typing multiple comma separated
+          values, as it make it easier to identify the type of the value being typed,
+          and compare it with the order of data fields. Nevertheless, it is possible
+          to use integer values: "1" and "0", instead of "true" and "false"
+          accordingly. If other integer value is specified, the configuration is
+          rejected.
+        </para>
+      </note>
+    </section>
+
+    <section id="dhcp6-vendor-opts">
+      <title>DHCPv6 vendor specific options</title>
+      <para>
+      Currently there are three option spaces defined: dhcp4 (to be used
+      in DHCPv4 daemon) and dhcp6 (for the DHCPv6 daemon); there is also
+      vendor-opts-space, which is empty by default, but options can be
+      defined in it. Those options are called vendor-specific information
+      options. The following examples show how to define an option "foo"
+      with code 1 that consists of an IPv6 address, an unsigned 16 bit integer
+      and a string. The "foo" option is conveyed in a vendor specific
+      information option. This option comprises a single uint32 value
+      that is set to "12345". The sub-option "foo" follows the data
+      field holding this value.
+      <screen>
+&gt; <userinput>config add Dhcp6/option-def</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/name "foo"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/code 1</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/space "vendor-opts-space"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/type "record"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/array false</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/record-types "ipv6-address, uint16, string"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/encapsulates ""</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+     (Note that the option space is set to "vendor-opts-space".)
+     Once the option format is defined, the next step is to define actual values
+     for that option:
+     <screen>
+&gt; <userinput>config add Dhcp6/option-data</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/name "foo"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/space "vendor-opts-space"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/code 1</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/data "2001:db8:1::10, 123, Hello World"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+    We should also define values for the vendor-opts, that will convey our option foo.
+     <screen>
+&gt; <userinput>config add Dhcp6/option-data</userinput>
+&gt; <userinput>config set Dhcp6/option-data[1]/name "vendor-opts"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[1]/space "dhcp6"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[1]/code 17</userinput>
+&gt; <userinput>config set Dhcp6/option-data[1]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp6/option-data[1]/data "12345"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+    </section>
+
+    <section id="dhcp6-option-spaces">
+      <title>Nested DHCPv6 options (custom option spaces)</title>
+      <para>It is sometimes useful to define completely new option
+      spaces.  This is useful if the user wants his new option to
+      convey sub-options that use separate numbering scheme, for
+      example sub-options with codes 1 and 2. Those option codes
+      conflict with standard DHCPv6 options, so a separate option
+      space must be defined.
+      </para>
+      <para>Note that it is not required to create new option space when
+      defining sub-options for a standard option because it is by
+      default created if the standard option is meant to convey
+      any sub-options (see <xref linkend="dhcp6-vendor-opts"/>).
+      </para>
+      <para>
+      Assume that we want to have a DHCPv6 option called "container"
+      with code 102 that conveys two sub-options with codes 1 and 2.
+      First we need to define the new sub-options:
+<screen>
+&gt; <userinput>config add Dhcp6/option-def</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/name "subopt1"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/code 1</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/space "isc"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/type "ipv6-address"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/record-types ""</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/array false</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/encapsulate ""</userinput>
+&gt; <userinput>config commit</userinput>
+&gt; <userinput></userinput>
+&gt; <userinput>config add Dhcp6/option-def</userinput>
+&gt; <userinput>config set Dhcp6/option-def[1]/name "subopt2"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[1]/code 2</userinput>
+&gt; <userinput>config set Dhcp6/option-def[1]/space "isc"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[1]/type "string"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[1]/record-types ""</userinput>
+&gt; <userinput>config set Dhcp6/option-def[1]/array false</userinput>
+&gt; <userinput>config set Dhcp6/option-def[1]/encapsulate ""</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+    Note that we have defined the options to belong to a new option space
+    (in this case, "isc").
+    </para>
+    <para>
+The next step is to define a regular DHCPv6 option and specify that it
+should include options from the isc option space:
+<screen>
+&gt; <userinput>config add Dhcp6/option-def</userinput>
+&gt; <userinput>config set Dhcp6/option-def[2]/name "container"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[2]/code 102</userinput>
+&gt; <userinput>config set Dhcp6/option-def[2]/space "dhcp6"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[2]/type "empty"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[2]/array false</userinput>
+&gt; <userinput>config set Dhcp6/option-def[2]/record-types ""</userinput>
+&gt; <userinput>config set Dhcp6/option-def[2]/encapsulate "isc"</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+    The name of the option space in which the sub-options are defined
+    is set in the "encapsulate" field. The "type" field is set to "empty"
+    which imposes that this option does not carry any data other than
+    sub-options.
+    </para>
+    <para>
+    Finally, we can set values for the new options:
+<screen>
+&gt; <userinput>config add Dhcp6/option-data</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/name "subopt1"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/space "isc"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/code 1</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/data "2001:db8::abcd"</userinput>
+&gt; <userinput>config commit</userinput>
+&gt; <userinput></userinput>
+&gt; <userinput>config add Dhcp6/option-data</userinput>
+&gt; <userinput>config set Dhcp6/option-data[1]/name "subopt2"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[1]/space "isc"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[1]/code 2</userinput>
+&gt; <userinput>config set Dhcp6/option-data[1]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp6/option-data[1]/data "Hello world"</userinput>
+&gt; <userinput>config commit</userinput>
+&gt; <userinput></userinput>
+&gt; <userinput>config add Dhcp6/option-data</userinput>
+&gt; <userinput>config set Dhcp6/option-data[2]/name "container"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[2]/space "dhcp6"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[2]/code 102</userinput>
+&gt; <userinput>config set Dhcp6/option-data[2]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp6/option-data[2]/data ""</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+    Even though the "container" option does not carry any data except
+    sub-options, the "data" field must be explicitly set to an empty value.
+    This is required because in the current version of BIND 10 DHCP, the
+    default configuration values are not propagated to the configuration parsers:
+    if the "data" is not set the parser will assume that this
+    parameter is not specified and an error will be reported.
+    </para>
+    <para>Note that it is possible to create an option which carries some data
+    in addition to the sub-options defined in the encapsulated option space.  For example,
+    if the "container" option from the previous example was required to carry an uint16
+    value as well as the sub-options, the "type" value would have to be set to "uint16" in
+    the option definition. (Such an option would then have the following
+    data structure: DHCP header, uint16 value, sub-options.) The value specified
+    with the "data" parameter - which should be a valid integer enclosed in quotes,
+    e.g. "123" - would then be assigned to the uint16 field in the "container" option.
+    </para>
+    </section>
+
+      <section id="dhcp6-config-subnets">
+        <title>IPv6 Subnet Selection</title>
+          <para>
+          The DHCPv6 server may receive requests from local (connected to the
+          same subnet as the server) and remote (connecting via relays) clients.
+          As server may have many subnet configurations defined, it must select
+          appropriate subnet for a given request.
+          </para>
+          <para>
+          The server can not assume which of configured subnets are local. It is
+          possible in IPv4, where there is reasonable expectation that the
+          server will have a (global) IPv4 address configured on the interface,
+          and can use that information to detect whether a subnet is local or
+          not. That assumption is not true in IPv6, as the DHCPv6 must be able
+          to operate with having link-local addresses only. Therefore an optional
+          &quot;interface&quot; parameter is available within a subnet definition
+          to designate that a given subnet is local, i.e. reachable directly over
+          specified interface. For example the server that is intended to serve
+          a local subnet over eth0 may be configured as follows:
+<screen>
+&gt; <userinput>config add Dhcp6/subnet6</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[1]/subnet "2001:db8:beef::/48"</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[1]/pool [ "2001:db8:beef::/48" ]</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[1]/interface "eth0"</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+        </para>
+      </section>
+
+      <section id="dhcp6-relays">
+        <title>DHCPv6 Relays</title>
+        <para>
+          A DHCPv6 server with multiple subnets defined must select the
+          appropriate subnet when it receives a request from client.  For clients
+          connected via relays, two mechanisms are used:
+        </para>
+        <para>
+          The first uses the linkaddr field in the RELAY_FORW message. The name
+          of this field is somewhat misleading in that it does not contain a link-layer
+          address: instead, it holds an address (typically a global address) that is
+          used to identify a link. The DHCPv6 server checks if the address belongs
+          to a defined subnet and, if it does, that subnet is selected for the client's
+          request.
+        </para>
+        <para>
+          The second mechanism is based on interface-id options. While forwarding a client's
+          message, relays may insert an interface-id option into the message that
+          identifies the interface on the relay that received the message. (Some
+          relays allow configuration of that parameter, but it is sometimes
+          hardcoded and may range from the very simple (e.g. "vlan100") to the very cryptic:
+          one example seen on real hardware was "ISAM144|299|ipv6|nt:vp:1:110"). The
+          server can use this information to select the appropriate subnet.
+          The information is also returned to the relay which then knows the
+          interface to use to transmit the response to the client. In order for
+          this to work successfully, the relay interface IDs must be unique within
+          the network and the server configuration must match those values.
+        </para>
+        <para>
+          When configuring the DHCPv6 server, it should be noted that two
+          similarly-named parameters can be configured for a subnet:
+          <itemizedlist>
+            <listitem><simpara>
+              "interface" defines which local network interface can be used
+              to access a given subnet.
+            </simpara></listitem>
+            <listitem><simpara>
+              "interface-id" specifies the content of the interface-id option
+              used by relays to identify the interface on the relay to which
+              the response packet is sent.
+            </simpara></listitem>
+          </itemizedlist>
+          The two are mutually exclusive: a subnet cannot be both reachable locally
+          (direct traffic) and via relays (remote traffic). Specifying both is a
+          configuration error and the DHCPv6 server will refuse such a configuration.
+        </para>
+
+        <para>
+          To specify interface-id with value "vlan123", the following commands can
+          be used:
+          <screen>
+&gt; <userinput>config add Dhcp6/subnet6</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/subnet "2001:db8:beef::/48"</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/pool [ "2001:db8:beef::/48" ]</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/interface-id "vland123"</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+        </para>
+      </section>
+
+    <section id="dhcp6-client-classifier">
+      <title>Client Classification in DHCPv6</title>
+      <note>
+      <para>
+        DHCPv6 server has been extended to support limited client classification.
+        Although the current capability is modest, it is expected to be expanded
+        in the future. It is envisaged that the majority of client classification
+        extensions will be using hooks extensions.
+      </para>
+      </note>
+      <para>In certain cases it is useful to differentiate between different types
+      of clients and treat them differently. The process of doing classification
+      is conducted in two steps. The first step is to assess incoming packet and
+      assign it to zero or more classes. This classification is currently simple,
+      but is expected to grow in capability soon. Currently the server checks whether
+      incoming packet has vendor class option (16). If it has, content
+      of that option is prepended with &quot;VENDOR_CLASS_&quot; interpreted as a
+      class. For example, modern cable modems will send this option with value
+      &quot;docsis3.0&quot; and as a result the packet will belong to class
+      &quot;VENDOR_CLASS_docsis3.0&quot;.
+      </para>
+
+      <para>It is envisaged that the client classification will be used for changing
+      behavior of almost any part of the DHCP engine processing, including assigning
+      leases from different pools, assigning different option (or different values of
+      the same options) etc. For now, there is only one mechanism that is taking
+      advantage of client classification: subnet selection.</para>
+
+      <para>
+        Kea can be instructed to limit access to given subnets based on class information.
+        This is particularly useful for cases where two types of devices share the
+        same link and are expected to be served from two different subnets. The
+        primary use case for such a scenario are cable networks. There are two
+        classes of devices: cable modem itself, which should be handled a lease
+        from subnet A and all other devices behind modems that should get a lease
+        from subnet B. That segregation is essential to prevent overly curious
+        users from playing with their cable modems. For details on how to set up
+        class restrictions on subnets, see <xref linkend="dhcp6-subnet-class"/>.
+      </para>
+
+    </section>
+
+    <section id="dhcp6-subnet-class">
+      <title>Limiting access to IPv6 subnet to certain classes</title>
+      <para>
+        In certain cases it beneficial to restrict access to certains subnets
+        only to clients that belong to a given subnet. For details on client
+        classes, see <xref linkend="dhcp6-client-classifier"/>. This is an
+        extension of a previous example from <xref linkend="dhcp6-address-config"/>.
+
+        Let's assume that the server is connected to a network segment that uses
+        the 2001:db8:1::/64 prefix. The Administrator of that network has
+        decided that addresses from range 2001:db8:1::1 to 2001:db8:1::ffff are
+        going to be managed by the Dhcp6 server. Only clients belonging to the
+        eRouter1.0 client class are allowed to use that pool. Such a
+        configuration can be achieved in the following way:
+
+        <screen>
+&gt; <userinput>config add Dhcp6/subnet6</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/subnet "2001:db8:1::/64"</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/pool [ "2001:db8:1::0 - 2001:db8:1::ffff" ]</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/client-class "eRouter1.0"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+
+      <para>
+        Care should be taken with client classification as it is easy to prevent
+        clients that do not meet class criteria to be denied any service altogether.
+      </para>
+    </section>
+
+
+    <section id="dhcp6-ddns-config">
+      <title>Configuring DHCPv6 for DDNS</title>
+      <para>
+      As mentioned earlier, b10-dhcp6 can be configured to generate requests to
+      the DHCP-DDNS server (referred to here as the "D2" server) to update
+      DNS entries.  These requests are known as NameChangeRequests or NCRs.
+      Each NCR contains the following information:
+      <orderedlist>
+      <listitem><para>
+      Whether it is a request to add (update) or remove DNS entries
+      </para></listitem>
+      <listitem><para>
+      Whether the change requests forward DNS updates (AAAA records), reverse
+      DNS updates (PTR records), or both.
+      </para></listitem>
+      <listitem><para>
+      The FQDN, lease address, and DHCID
+      </para></listitem>
+      </orderedlist>
+      The parameters controlling the generation of NCRs for submission to D2
+      are contained in the "dhcp-ddns" section of b10-dhcp6
+      configuration. The default values for this section appears as follows:
+<screen>
+&gt; <userinput>config show Dhcp6/dhcp-ddns</userinput>
+Dhcp6/dhcp-ddns/enable-updates	true	boolean
+Dhcp6/dhcp-ddns/server-ip	"127.0.0.1"	string
+Dhcp6/dhcp-ddns/server-port	53001	integer
+Dhcp6/dhcp-ddns/sender-ip	""	string
+Dhcp6/dhcp-ddns/sender-port	0	integer
+Dhcp6/dhcp-ddns/max-queue-size	1024 integer
+Dhcp6/dhcp-ddns/ncr-protocol	"UDP"	string
+Dhcp6/dhcp-ddns/ncr-format	"JSON"	string
+Dhcp6/dhcp-ddns/override-no-update	false	boolean
+Dhcp6/dhcp-ddns/override-client-update	false	boolean
+Dhcp6/dhcp-ddns/replace-client-name	false	boolean
+Dhcp6/dhcp-ddns/generated-prefix	"myhost"	string
+Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
+</screen>
+      </para>
+      <para>
+      The "enable-updates" parameter determines whether or not b10-dhcp6 will
+      generate NCRs.  By default, this value is false hence DDNS updates are
+      disabled.  To enable DDNS updates set this value to true as follows:
+      </para>
+<screen>
+&gt; <userinput>config set Dhcp6/dhcp-ddns/enable-updates true</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      <section id="dhcpv6-d2-io-config">
+      <title>DHCP-DDNS Server Connectivity</title>
+      <para>
+      In order for NCRs to reach the D2 server, b10-dhcp6 must be able
+      to communicate with it.  b10-dhcp6 uses the following configuration
+      parameters to control how it communications with D2:
+      <orderedlist>
+      <listitem><para>
+      server-ip - IP address on which D2 listens for requests. The default is
+      the local loopback interface at address 127.0.0.1. You may specify
+      either an IPv4 or IPv6 address.
+      </para></listitem>
+      <listitem><para>
+      server-port - port on which D2 listens for requests.  The default value
+      is 53001.
+      </para></listitem>
+      <listitem><para>
+      sender-ip - IP address which b10-dhcp6 should use to send requests to D2.
+      The default value is blank which instructs b10-dhcp6 to select a suitable
+      address.
+      </para></listitem>
+      <listitem><para>
+      sender-port - port which b10-dhcp6 should use to send requests to D2. The
+      default value of 0 instructs b10-dhcp6 to select suitable port.
+      </para></listitem>
+      <listitem><para>
+      ncr-format - Socket protocol use when sending requests to D2.  Currently
+      only UDP is supported.  TCP may be available in an upcoming release.
+      </para></listitem>
+      <listitem><para>
+      ncr-protocol - Packet format to use when sending requests to D2.
+      Currently only JSON format is supported.  Other formats may be available
+      in future releases.
+      </para></listitem>
+      <listitem><para>
+      max-queue-size - maximum number of requests allowed to queue waiting to
+      be sent to D2. This value guards against requests accumulating
+      uncontrollably if they are being generated faster than they can be
+      delivered.  If the number of requests queued for transmission reaches
+      this value, DDNS updating will be turned off until the queue backlog has
+      been sufficiently reduced.  The intent is allow b10-dhcp6 to
+      continue lease operations.  The default value is 1024.
+      </para></listitem>
+      </orderedlist>
+      By default, D2 is assumed to running on the same machine as b10-dhcp6, and
+      all of the default values mentioned above should be sufficient.
+      If, however, D2 has been configured to listen on a different address or
+      port, these values must altered accordingly. For example, if D2 has been
+      configured to listen on 3001::5 port 900, the following commands
+      would be required:
+<screen>
+&gt; <userinput>config set Dhcp6/dhcp-ddns/server-ip "3001::5"</userinput>
+&gt; <userinput>config set Dhcp6/dhcp-ddns/server-port 900</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      </para>
+      </section>
+      <section id="dhcpv6-d2-rules-config">
+      <title>When does b10-dhcp6 generate DDNS request</title>
+      b10-dhcp6 follows the behavior prescribed for DHCP servers in RFC 4704.
+      It is important to keep in mind that b10-dhcp6 provides the initial decision
+      making of when and what to update and forwards that information to D2 in
+      the form of NCRs. Carrying out the actual DNS updates and dealing with
+      such things as conflict resolution are the purview of D2 (<xref linkend="dhcp-ddns-server"/>).
+      <para>
+      This section describes when b10-dhcp6 will generate NCRs and the
+      configuration parameters that can be used to influence this decision.
+      It assumes that the "enable-updates" parameter is true.
+      </para>
+      <note>
+        <para>
+        Currently the interface between b10-dhcp6 and D2 only supports requests
+        which update DNS entries for a single IP address.  If a lease grants
+        more than one address, b10-dhcp6 will create the DDNS update request for
+        only the first of these addresses.  Support for multiple address
+        mappings may be provided in a future release.
+        </para>
+      </note>
+      <para>
+      In general, b10-dhcp6 will generate DDNS update requests when:
+      <orderedlist>
+      <listitem><para>
+      A new lease is granted in response to a DHCP REQUEST
+      </para></listitem>
+      <listitem><para>
+      An existing lease is renewed but the FQDN associated with it has
+      changed.
+      </para></listitem>
+      <listitem><para>
+      An existing lease is released in response to a DHCP RELEASE
+      </para></listitem>
+      </orderedlist>
+      In the second case, lease renewal, two  DDNS requests will be issued: one
+      request to remove entries for the previous FQDN and a second request to
+      add entries for the new FQDN.  In the last case, a lease release, a
+      single DDNS request to remove its entries will be made.  The decision
+      making involved when granting a new lease is more involved and is
+      discussed next.
+      </para>
+      <para>
+      b10-dhcp6 will generate a DDNS update request only if the DHCP REQUEST
+      contains the FQDN option (code 39). By default b10-dhcp6 will
+      respect the FQDN N and S flags specified by the client as shown in the
+      following table:
+      </para>
+        <table id="dhcp6-fqdn-flag-table">
+          <title>Default FQDN Flag Behavior</title>
+          <tgroup cols='4' align='left'>
+          <colspec colname='cflags'/>
+          <colspec colname='meaning'/>
+          <colspec colname='response'/>
+          <colspec colname='sflags'/>
+          <thead>
+              <row>
+                <entry>Client Flags:N-S</entry>
+                <entry>Client Intent</entry>
+                <entry>Server Response</entry>
+                <entry>Server Flags:N-S-O</entry>
+              </row>
+          </thead>
+          <tbody>
+            <row>
+                <entry>0-0</entry>
+                <entry>
+                Client wants to do forward updates, server should do reverse updates
+                </entry>
+                <entry>Server generates reverse-only request</entry>
+                <entry>1-0-0</entry>
+            </row>
+            <row>
+                <entry>0-1</entry>
+                <entry>Server should do both forward and reverse updates</entry>
+                <entry>Server generates request to update both directions</entry>
+                <entry>0-1-0</entry>
+            </row>
+            <row>
+                <entry>1-0</entry>
+                <entry>Client wants no updates done</entry>
+                <entry>Server does not generate a request</entry>
+                <entry>1-0-0</entry>
+            </row>
+          </tbody>
+          </tgroup>
+        </table>
+      <para>
+      The first row in the table above represents "client delegation". Here
+      the DHCP client states that it intends to do the forward DNS updates and
+      the server should do the reverse updates.  By default, b10-dhcp6 will honor
+      the client's wishes and generate a DDNS request to D2 to update only
+      reverse DNS data.  The parameter, "override-client-update", can be used
+      to instruct the server to override client delegation requests.  When
+      this parameter is true, b10-dhcp6 will disregard requests for client
+      delegation and generate a DDNS request to update both forward and
+      reverse DNS data.  In this case, the N-S-O flags in the server's
+      response to the client will be 0-1-1 respectively.
+      </para>
+      <para>
+      (Note that the flag combination N=1, S=1 is prohibited according to
+      RFC 4702. If such a combination is received from the client, the packet
+      will be dropped by b10-dhcp6.)
+      </para>
+      <para>
+      To override client delegation, issue the following commands:
+      </para>
+<screen>
+&gt; <userinput>config set Dhcp6/dhcp-ddns/override-client-update true</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      <para>
+      The third row in the table above describes the case in which the client
+      requests that no DNS updates be done. The parameter, "override-no-update",
+      can be used to instruct the server to disregard the client's wishes. When
+      this parameter is true, b10-dhcp6 will generate DDNS update request to D2
+      even if the client requests no updates be done.  The N-S-O flags in the
+      server's response to the client will be 0-1-1.
+      </para>
+      <para>
+      To override client delegation, issue the following commands:
+      </para>
+<screen>
+&gt; <userinput>config set Dhcp6/dhcp-ddns/override-no-update true</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      </section>
+      <section id="dhcpv6-fqdn-name-generation">
+      <title>b10-dhcp6 name generation for DDNS update requests</title>
+      Each NameChangeRequest must of course include the fully qualified domain
+      name whose DNS entries are to be affected.  b10-dhcp6 can be configured to
+      supply a portion or all of that name based upon what it receives from
+      the client in the DHCP REQUEST.
+      <para>
+      The rules for determining the FQDN option are as follows:
+      <orderedlist>
+      <listitem><para>
+      If configured to do so ignore the REQUEST contents and generate a
+      FQDN using a configurable prefix and suffix.
+      </para></listitem>
+      <listitem><para>
+      Otherwise, using is the domain name value from the client FQDN option as
+      the candidate name:
+      <orderedlist>
+      <listitem><para>
+      If the candidate name is a fully qualified domain name then use it.
+      </para></listitem>
+      <listitem><para>
+      If the candidate name is a partial (i.e. unqualified) name then
+      add a configurable suffix to the name and use the result as the FQDN.
+      </para></listitem>
+      <listitem><para>
+      If the candidate name is a empty then generate a FQDN using a
+      configurable prefix and suffix.
+      </para></listitem>
+      </orderedlist>
+      </para></listitem>
+      </orderedlist>
+      To instruct b10-dhcp6 to always generate a FQDN, set the parameter
+      "replace-client-name" to true:
+      </para>
+<screen>
+&gt; <userinput>config set Dhcp6/dhcp-ddns/replace-client-name true</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      <para>
+      The prefix used when generating a FQDN is specified by the
+      "generated-prefix" parameter.  The default value is "myhost".  To alter
+      its value, simply set it to the desired string:
+      </para>
+<screen>
+&gt; <userinput>config set Dhcp6/dhcp-ddns/generated-prefix "another.host"</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      <para>
+      The suffix used when generating a FQDN or when qualifying a partial
+      name is specified by the "qualifying-suffix" parameter.  The default
+      value is "example.com".  To alter its value simply set it to the desired
+      string:
+      </para>
+<screen>
+&gt; <userinput>config set Dhcp6/dhcp-ddns/generated-prefix "our.net"</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      </section>
+      <para>
+      When qualifying a partial name, b10-dhcp6 will construct a name with the
+      format:
+      </para>
+      <para>
+        [candidate-name].[qualifying-suffix].
+      </para>
+      <para>
+      where candidate-name is the partial name supplied in the REQUEST.
+      For example, if FQDN domain name value was "some-computer" and assuming
+      the default value for qualifying-suffix, the generated FQDN would be:
+      </para>
+      <para>
+        some-computer.example.com.
+      </para>
+      <para>
+      When generating a the entire name, b10-dhcp6 will construct name of the
+      format:
+      </para>
+      <para>
+        [generated-prefix]-[address-text].[qualifying-suffix].
+      </para>
+      <para>
+      where address-text is simply the lease IP address converted to a
+      hyphenated string.  For example, if lease address is 3001:1::70E and
+      assuming default values for generated-prefix and qualifying-suffix, the
+      generated FQDN would be:
+      </para>
+      <para>
+        myhost-3001-1--70E.example.com.
+      </para>
+    </section>
+
+   </section>
+
+    <section id="dhcp6-serverid">
+      <title>Server Identifier in DHCPv6</title>
+      <para>The DHCPv6 protocol uses a "server identifier" (also known
+      as a DUID) for clients to be able to discriminate between several
+      servers present on the same link.  There are several types of
+      DUIDs defined, but <ulink url="http://tools.ietf.org/html/rfc3315">RFC 3315</ulink> instructs servers to use DUID-LLT if
+      possible. This format consists of a link-layer (MAC) address and a
+      timestamp. When started for the first time, the DHCPv6 server will
+      automatically generate such a DUID and store the chosen value to
+      a file.  That file is read by the server
+      and the contained value used whenever the server is subsequently started.
+      </para>
+      <para>
+        It is unlikely that this parameter should ever need to be changed.
+        However, if such a need arises, stop the server, edit the file and restart
+        the server. (The file is named b10-dhcp6-serverid and by default is
+        stored in the "var" subdirectory of the directory in which BIND 10 is installed.
+        This can be changed when BIND 10 is built by using "--localstatedir"
+        on the "configure" command line.)  The file is a text file that contains
+        double digit hexadecimal values
+        separated by colons. This format is similar to typical MAC address
+        format. Spaces are ignored. No extra characters are allowed in this
+        file.
+      </para>
+
+    </section>
+
+    <section id="dhcp6-relay-override">
+      <title>Using specific relay agent for a subnet</title>
+      <para>
+        The relay has to have an interface connected to the link on which
+        the clients are being configured. Typically the relay has a global IPv6
+        address configured on that interface that belongs to the subnet that
+        the server will assign addresses from. In such typical case, the
+        server is able to use IPv6 address inserted by the relay (in link-addr
+        field in RELAY-FORW message) to select appropriate subnet.
+      </para>
+      <para>
+        However, that is not always the case. The relay
+        address may not match the subnet in certain deployments. This
+        usually means that there is more than one subnet allocated for a given
+        link. Two most common examples where this is the case are long lasting
+        network renumbering (where both old and new address space is still being
+        used) and a cable network. In a cable network both cable modems and the
+        devices behind them are physically connected to the same link, yet
+        they use distinct addressing. In such case, the DHCPv6 server needs
+        additional information (like the value of interface-id option or IPv6
+        address inserted in the link-addr field in RELAY-FORW message) to
+        properly select an appropriate subnet.
+      </para>
+      <para>
+        The following example assumes that there is a subnet 2001:db8:1::/64
+        that is accessible via relay that uses 3000::1 as its IPv6 address.
+        The server will be able to select this subnet for any incoming packets
+        that came from a relay that has an address in 2001:db8:1::/64 subnet.
+        It will also select that subnet for a relay with address 3000::1.
+        <screen>
+&gt; <userinput>config add Dhcp6/subnet6</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/subnet "2001:db8:1::/64"</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/pool [ "2001:db8:1::2 - 2001:db8:1::ffff" ]</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/relay/ip-address "3000::1"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+
+    </section>
+
+      <section id="dhcp6-client-class-relay">
+        <title>Segregating IPv6 clients in a cable network</title>
+        <para>
+          In certain cases, it is useful to mix relay address information,
+          introduced in <xref linkend="dhcp6-relay-override"/> with client
+          classification, explained in <xref linkend="dhcp6-subnet-class"/>.
+          One specific example is cable network, where typically modems
+          get addresses from a different subnet than all devices connected
+          behind them.
+        </para>
+        <para>
+          Let's assume that there is one CMTS (Cable Modem Termination System)
+          with one CM MAC (a physical link that modems are connected to).
+          We want the modems to get addresses from the 3000::/64 subnet,
+          while everything connected behind modems should get addresses from
+          another subnet (2001:db8:1::/64). The CMTS that acts as a relay
+          an uses address 3000::1. The following configuration can serve
+          that configuration:
+        <screen>
+&gt; <userinput>config add Dhcp6/subnet6</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/subnet "3000::/64"</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/pool [ "3000::2 - 3000::ffff" ]</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/client-class "docsis3.0"</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/relay/ip-address "3000::1"</userinput>
+&gt; <userinput>config add Dhcp6/subnet6</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[1]/subnet "2001:db8:1::/64"</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[1]/pool [ "2001:db8:1::1 - 2001:db8:1::ffff" ]</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[1]/relay/ip-address "3000::1"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+      </section>
+
+
+    <section id="dhcp6-std">
+      <title>Supported Standards</title>
+      <para>The following standards and draft standards are currently
+      supported:</para>
+      <itemizedlist>
+          <listitem>
+            <simpara><ulink url="http://tools.ietf.org/html/rfc3315">RFC 3315</ulink>: Supported messages are SOLICIT,
+            ADVERTISE, REQUEST, RELEASE, RENEW, REBIND and REPLY.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><ulink url="http://tools.ietf.org/html/rfc3633">RFC 3633</ulink>: Supported options are IA_PD and
+            IA_PREFIX. Also supported is the status code NoPrefixAvail.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><ulink url="http://tools.ietf.org/html/rfc3646">RFC 3646</ulink>: Supported option is DNS_SERVERS.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><ulink url="http://tools.ietf.org/html/rfc4704">RFC 4704</ulink>: Supported option is CLIENT_FQDN.</simpara>
+          </listitem>
+      </itemizedlist>
+    </section>
+
+    <section id="dhcp6-limit">
+      <title>DHCPv6 Server Limitations</title>
+      <para> These are the current limitations and known problems
+      with the DHCPv6 server
+      software. Most of them are reflections of the early stage of
+      development and should be treated as <quote>not implemented
+      yet</quote>, rather than actual limitations.</para>
+      <itemizedlist>
+          <listitem> <!-- see tickets #3234, #3281 -->
+            <para>
+              On-line configuration has some limitations. Adding new subnets or
+              modifying existing ones work, as is removing the last subnet from
+              the list. However, removing non-last (e.g. removing subnet 1,2 or 3 if
+              there are 4 subnets configured) will cause issues. The problem is
+              caused by simplistic subnet-id assignment. The subnets are always
+              numbered, starting from 1. That subnet-id is then used in leases
+              that are stored in the lease database. Removing non-last subnet will
+              cause the configuration information to mismatch data in the lease
+              database. It is possible to manually update subnet-id fields in
+              MySQL or PostgreSQL database, but it is awkward and error prone
+              process. A better reconfiguration support is planned.
+            </para>
+          </listitem>
+
+        <listitem>
+          <para>
+            On startup, the DHCPv6 server does not get the full configuration from
+            BIND 10.  To remedy this, after starting BIND 10, modify any parameter
+            and commit the changes, e.g.
+            <screen>
+&gt; <userinput>config show Dhcp6/renew-timer</userinput>
+Dhcp6/renew-timer	1000	integer	(default)
+&gt; <userinput>config set Dhcp6/renew-timer 1001</userinput>
+&gt; <userinput>config commit</userinput></screen>
+          </para>
+        </listitem>
+        <listitem>
+          <simpara>Temporary addresses are not supported.</simpara>
+        </listitem>
+        <listitem>
+          <simpara>
+            The server will allocate, renew or rebind a maximum of one lease
+            for a particular IA option (IA_NA or IA_PD) sent by a client.
+            <ulink url="http://tools.ietf.org/html/rfc3315">RFC 3315</ulink> and
+            <ulink url="http://tools.ietf.org/html/rfc3633">RFC 3633</ulink> allow
+            for multiple addresses or prefixes to be allocated for a single IA.
+          </simpara>
+        </listitem>
+        <listitem>
+          <simpara>Temporary addresses are not supported.</simpara>
+        </listitem>
+        <listitem>
+          <simpara>
+            Confirmation (CONFIRM), duplication report (DECLINE),
+            stateless configuration (INFORMATION-REQUEST) and client
+            reconfiguration (RECONFIGURE) are not yet supported.
+          </simpara>
+        </listitem>
+          <listitem>
+            <simpara>
+              The server doesn't act upon expired leases. In particular,
+              when a lease expires, the server doesn't request removal of
+              the DNS records associated with it.
+            </simpara>
+          </listitem>
+      </itemizedlist>
+    </section>
+
+    <!--
+    <section id="dhcp6-srv-examples">
+      <title>Kea DHCPv6 server examples</title>
+
+      <para>
+        This section provides easy to use example. Each example can be read
+        separately. It is not intended to be read sequentially as there will
+        be many repetitions between examples. They are expected to serve as
+        easy to use copy-paste solutions to many common deployments.
+      </para>
+
+      @todo: add simple configuration for direct clients
+      @todo: add configuration for relayed clients
+      @todo: add client classification example
+
+    </section> -->
+
+  </chapter>

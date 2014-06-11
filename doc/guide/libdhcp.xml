@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+<!ENTITY mdash  "&#x2014;" >
+]>
+
+  <chapter id="libdhcp">
+    <title>libdhcp++ library</title>
+    <para>
+      libdhcp++ is a common library written in C++ that handles
+      many DHCP-related tasks, including:
+      <itemizedlist>
+        <listitem>
+          <simpara>DHCPv4 and DHCPv6 packets parsing, manipulation and assembly</simpara>
+        </listitem>
+        <listitem>
+          <simpara>Option parsing, manipulation and assembly</simpara>
+        </listitem>
+        <listitem>
+          <simpara>Network interface detection</simpara>
+        </listitem>
+        <listitem>
+          <simpara>Socket operations such as creation, data transmission and reception and socket closing.</simpara>
+        </listitem>
+      </itemizedlist>
+    </para>
+
+    <para>
+    While this library is currently used by Kea, it is designed to
+    be a portable, universal library, useful for any kind of DHCP-related software.
+    </para>
+
+<!-- TODO: point to doxygen docs -->
+
+    <section id="iface-detect">
+      <title>Interface detection and Socket handling</title>
+      <para>Both the DHCPv4 and DHCPv6 components share network
+      interface detection routines. Interface detection is
+      currently supported on Linux, all BSD family (FreeBSD, NetBSD,
+      OpenBSD), Mac OS X and Solaris 11 systems.</para>
+
+      <para>DHCPv4 requires special raw socket processing to send and receive
+      packets from hosts that do not have IPv4 address assigned yet. Support
+      for this operation is implemented on Linux only, so it is likely that
+      DHCPv4 component will not work in certain cases on systems other than
+      Linux.</para>
+    </section>
+
+<!--
+    <section id="packet-handling">
+      <title>DHCPv4/DHCPv6 packet handling</title>
+      <para>TODO: Describe packet handling here, with pointers to wiki</para>
+    </section>
+-->
+
+  </chapter>

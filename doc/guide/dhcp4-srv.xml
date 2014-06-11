@@ -1,0 +1,1554 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+<!ENTITY mdash  "&#x2014;" >
+]>
+
+  <chapter id="dhcp4">
+    <title>The DHCPv4 Server</title>
+
+    <section id="dhcp4-start-stop">
+      <title>Starting and Stopping the DHCPv4 Server</title>
+
+      <para>
+        <command>b10-dhcp4</command> is the Kea DHCPv4 server and is configured
+        through the <command>bindctl</command> program.
+      </para>
+      <para>
+        After starting <command>bind10</command> and entering bindctl, the first step
+        in configuring the server is to add it to the list of running services.
+<screen>
+&gt; <userinput>config add Init/components b10-dhcp4</userinput>
+&gt; <userinput>config set Init/components/b10-dhcp4/kind dispensable</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      </para>
+      <para>
+         To remove <command>b10-dhcp4</command> from the set of running services,
+         the <command>b10-dhcp4</command> is removed from list of Init components:
+<screen>
+&gt; <userinput>config remove Init/components b10-dhcp4</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      </para>
+      <para>
+        Note that the server was only removed from the list, so BIND10 will not
+        restart it, but the server itself is still running. Hence it is usually
+        desired to stop it:
+<screen>
+&gt; <userinput>Dhcp4 shutdown</userinput>
+</screen>
+      </para>
+
+      <para>
+        On start-up, the server will detect available network interfaces
+        and will attempt to open UDP sockets on all interfaces that
+        are up, running, are not loopback, and have IPv4 address
+        assigned.
+
+        The server will then listen to incoming traffic. Currently
+        supported client messages are DISCOVER and REQUEST. The server
+        will respond to them with OFFER and ACK, respectively.
+
+        Since the DHCPv4 server opens privileged ports, it requires root
+        access. Make sure you run this daemon as root.
+      </para>
+
+    </section>
+
+    <section id="dhcp4-configuration">
+      <title>Configuring the DHCPv4 Server</title>
+      <para>
+        Once the server is started, it can be configured. To view the
+        current configuration, use the following command in <command>bindctl</command>:
+        <screen>
+&gt; <userinput>config show Dhcp4</userinput></screen>
+        When starting the DHCPv4 daemon for the first time, the default configuration
+        will be available. It will look similar to this:
+<screen>
+&gt; <userinput>config show Dhcp4</userinput>
+Dhcp4/hooks-libraries	[]	list	(default)
+Dhcp4/interfaces/	list
+Dhcp4/renew-timer	1800	integer
+Dhcp4/rebind-timer	2000	integer	(default)
+Dhcp4/valid-lifetime	4000	integer	(default)
+Dhcp4/next-server	""	string	(default)
+Dhcp4/echo-client-id	true	boolean	(default)
+Dhcp4/option-def	[]	list	(default)
+Dhcp4/option-data	[]	list	(default)
+Dhcp4/lease-database/type	""	string	(default)
+Dhcp4/lease-database/name	""	string	(default)
+Dhcp4/lease-database/user	""	string	(default)
+Dhcp4/lease-database/host	""	string	(default)
+Dhcp4/lease-database/password	""	string	(default)
+Dhcp4/subnet4/	list
+Dhcp4/dhcp-ddns/enable-updates	true	boolean
+Dhcp4/dhcp-ddns/server-ip	"127.0.0.1"	string
+Dhcp4/dhcp-ddns/server-port	53001	integer
+Dhcp4/dhcp-ddns/sender-ip	""	string
+Dhcp4/dhcp-ddns/sender-port	0	integer
+Dhcp4/dhcp-ddns/max-queue-size	1024	integer
+Dhcp4/dhcp-ddns/ncr-protocol	"UDP"	string
+Dhcp4/dhcp-ddns/ncr-format	"JSON"	string
+Dhcp4/dhcp-ddns/override-no-update	false	boolean
+Dhcp4/dhcp-ddns/override-client-update	false	boolean
+Dhcp4/dhcp-ddns/replace-client-name	false	boolean
+Dhcp4/dhcp-ddns/generated-prefix	"myhost"	string
+Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
+</screen>
+      </para>
+
+      <para>
+        To change one of the parameters, simply follow
+        the usual <command>bindctl</command> procedure. For example, to make the
+        leases longer, change their valid-lifetime parameter:
+        <screen>
+&gt; <userinput>config set Dhcp4/valid-lifetime 7200</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        Please note that most Dhcp4 parameters are of global scope
+        and apply to all defined subnets, unless they are overridden on a
+        per-subnet basis.
+      </para>
+      <para>
+        The renew-timer and rebind-timer are optional. If they are not specified,
+        the DHCPv4 options 58 and 59 are not sent in the server's response to the
+        client.
+      </para>
+
+      <section>
+      <title>Default storage for leases</title>
+      <para>
+        The server is able to store lease data in different repositories. Larger deployments
+        may elect to store leases in a database.
+        <xref linkend="database-configuration4"/> describes one way to do it.
+        By default, the server will use a CSV file rather than a database to store
+        lease information. One of the advantages of using a file is that it eliminates
+        dependency on third party database software.
+      </para>
+      <para>
+        The configuration of the file backend (Memfile)
+        is controlled through the Dhcp4/lease-database parameters. When default
+        parameters are used, the Memfile backend will write leases to a disk in the
+        [bind10-install-dir]/var/bind10/kea-leases4.csv.
+      </para>
+      <para>
+        It is possible to alter the default location of the lease file. The following
+        configuration:
+<screen>
+&gt; <userinput>config set Dhcp4/lease-database/type "memfile"</userinput>
+&gt; <userinput>config set Dhcp4/lease-database/persist true</userinput>
+&gt; <userinput>config set Dhcp4/lease-database/name "/tmp/kea-leases4.csv"</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+        will change the default location of the lease file to /tmp/kea-leases4.csv.
+      </para>
+      <para>
+        The "persist" parameter controls whether the leases are written to disk.
+        It is strongly recommended that this parameter is set to "true" at all times
+        during the normal operation of the server
+      </para>
+      </section>
+
+      <section id="database-configuration4">
+      <title>Database Configuration</title>
+      <para>
+      All leases issued by the server are stored in the lease database.  Currently
+      there are 3 database backends available: MySQL, PostgreSQL and memfile.
+      <footnote>
+      <para>
+      The server comes with an in-memory database ("memfile") configured as the default
+      database. This is used for internal testing and is not supported.  In addition,
+      it does not store lease information on disk: lease information will be lost if the
+      server is restarted.
+      </para>
+      </footnote>, and so the server must be configured to
+      access the correct database with the appropriate credentials.
+      </para>
+        <note>
+            <para>
+            Database access information must be configured for the DHCPv4 server, even if
+            it has already been configured for the DHCPv6 server.  The servers store their
+            information independently, so each server can use a separate
+            database or both servers can use the same database.
+            </para>
+        </note>
+      <para>
+      Database configuration is controlled through the Dhcp4/lease-database parameters.
+      The type of the database must be set to "mysql", "postgresql" or "memfile":
+<screen>
+&gt; <userinput>config set Dhcp4/lease-database/type "mysql"</userinput>
+</screen>
+      Next, the name of the database is to hold the leases must be set: this is the
+      name used when the lease database was created (see <xref linkend="dhcp-mysql-database-create"/>
+      or <xref linkend="dhcp-pgsql-database-create"/>).
+<screen>
+&gt; <userinput>config set Dhcp4/lease-database/name "<replaceable>database-name</replaceable>"</userinput>
+</screen>
+      If the database is located on a different system to the DHCPv4 server, the
+      database host name must also be specified (although note that this configuration
+      may have a severe impact on server performance):
+<screen>
+&gt; <userinput>config set Dhcp4/lease-database/host "<replaceable>remote-host-name</replaceable>"</userinput>
+</screen>
+      The usual state of affairs will be to have the database on the same machine as the
+      DHCPv4 server.  In this case, set the value to the empty string (this is the default):
+<screen>
+&gt; <userinput>config set Dhcp4/lease-database/host ""</userinput>
+</screen>
+      </para>
+      <para>
+      Finally, the credentials of the account under which the server will access the database
+      should be set:
+<screen>
+&gt; <userinput>config set Dhcp4/lease-database/user "<replaceable>user-name</replaceable>"</userinput>
+&gt; <userinput>config set Dhcp4/lease-database/password "<replaceable>password</replaceable>"</userinput>
+</screen>
+      If there is no password to the account, set the password to the empty string "". (This is also the default.)
+      </para>
+      <note>
+      <para>The password is echoed when entered and is stored in clear text in the configuration
+      database.  Improved password security will be added in a future version of Kea.</para>
+      </note>
+      </section>
+
+      <section id="dhcp4-interface-selection">
+      <title>Interface selection</title>
+      <para>
+        When DHCPv4 server starts up, by default it will listen to the DHCP
+        traffic and respond to it on all interfaces detected during startup.
+        However, in many cases it is desired to configure the server to listen and
+        respond on selected interfaces only. The sample commands in this section
+        show how to make interface selection using bindctl.
+      </para>
+      <para>
+        The default configuration can be presented with the following command:
+        <screen>
+&gt; <userinput>config show Dhcp4/interfaces</userinput>
+<userinput>Dhcp4/interfaces[0] "*" string</userinput></screen>
+        An asterisk sign plays a role of the wildcard and means "listen on all interfaces".
+      </para>
+      <para>
+        In order to override the default configuration, the existing entry can be replaced
+        with the actual interface name:
+        <screen>
+&gt; <userinput>config set Dhcp4/interfaces[0] eth1</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        Other interface names can be added on one-by-one basis:
+        <screen>
+&gt; <userinput>config add Dhcp4/interfaces eth2</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        Configuration will now contain two interfaces which can be presented as follows:
+        <screen>
+&gt; <userinput>config show Dhcp4/interfaces</userinput>
+<userinput>Dhcp4/interfaces[0]	"eth1"	string</userinput>
+<userinput>Dhcp4/interfaces[1]	"eth2"	string</userinput></screen>
+        When configuration gets committed, the server will start to listen on
+        eth1 and eth2 interfaces only.
+      </para>
+      <para>
+        It is possible to use wildcard interface name (asterisk) concurrently with explicit
+        interface names:
+        <screen>
+&gt; <userinput>config add Dhcp4/interfaces *</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        This will result in the following configuration:
+        <screen>
+&gt; <userinput>config show Dhcp4/interfaces</userinput>
+<userinput>Dhcp4/interfaces[0]	"eth1"	string</userinput>
+<userinput>Dhcp4/interfaces[1]	"eth2"	string</userinput>
+<userinput>Dhcp4/interfaces[2]	"*"	string</userinput></screen>
+        The presence of the wildcard name implies that server will listen on all interfaces.
+        In order to fall back to the previous configuration when server listens on eth1 and eth2:
+        <screen>
+&gt; <userinput>config remove Dhcp4/interfaces[2]</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+      </section>
+
+      <section id="ipv4-subnet-id">
+      <title>IPv4 Subnet Identifier</title>
+      <para>
+        Subnet identifier is a unique number associated with a particular subnet.
+        In principle, it is used to associate clients' leases with respective subnets.
+        When subnet identifier is not specified for a subnet being configured, it will
+        be automatically assigned by the configuration mechanism. The identifiers
+        are assigned from 1 and are monotonically increased for each subsequent
+        subnet: 1, 2, 3 ....
+      </para>
+      <para>
+       If there are multiple subnets configured with auto-generated identifiers and
+       one of them is removed, the subnet identifiers may be renumbered. For example:
+       if there are 4 subnets and 3rd is removed the last subnet will be assigned
+       identifier that the 3rd subnet had before removal. As a result, the leases
+       stored in the lease database for subnet 3 are now associated with the
+       subnet 4, which may have unexpected consequences. In the future it is planned
+       to implement the mechanism to preserve auto-generated subnet ids upon removal
+       of one of the subnets. Currently, the only remedy for this issue is to
+       manually specify the unique subnet identifier for each subnet.
+      </para>
+      <para>
+        The following configuration:
+        <screen>
+&gt; <userinput>config add Dhcp4/subnet4</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/subnet "192.0.2.0/24"</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/id 1024</userinput>
+&gt; <userinput>config commit</userinput>
+        </screen>
+        will assign the arbitrary subnet identifier to the newly configured subnet.
+        This identifier will not change for this subnet until "id" parameter is
+        removed or set to 0. The value of 0 forces auto-generation of subnet
+        identifier.
+      </para>
+      </section>
+
+      <section id="dhcp4-address-config">
+      <title>Configuration of IPv4 Address Pools</title>
+      <para>
+        The essential role of DHCPv4 server is address assignment. The server
+        has to be configured with at least one subnet and one pool of dynamic
+        addresses to be managed. For example, assume that the server
+        is connected to a network segment that uses the 192.0.2.0/24
+        prefix. The Administrator of that network has decided that addresses from range
+        192.0.2.10 to 192.0.2.20 are going to be managed by the Dhcp4
+        server. Such a configuration can be achieved in the following way:
+        <screen>
+&gt; <userinput>config add Dhcp4/subnet4</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/subnet "192.0.2.0/24"</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/pool [ "192.0.2.10 - 192.0.2.20" ]</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        Note that subnet is defined as a simple string, but the pool parameter
+        is actually a list of pools: for this reason, the pool definition is
+        enclosed in square brackets, even though only one range of addresses
+        is specified.</para>
+        <para>It is possible to define more than one pool in a
+        subnet: continuing the previous example, further assume that
+        192.0.2.64/26 should be also be managed by the server. It could be written as
+        192.0.2.64 to 192.0.2.127. Alternatively, it can be expressed more simply as
+        192.0.2.64/26. Both formats are supported by Dhcp4 and can be mixed in the pool list.
+        For example, one could define the following pools:
+        <screen>
+&gt; <userinput>config set Dhcp4/subnet4[0]/pool [ "192.0.2.10-192.0.2.20", "192.0.2.64/26" ]</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        The number of pools is not limited, but for performance reasons it is recommended to
+        use as few as possible. Space and tabulations in pool definitions are ignored, so
+        spaces before and after hyphen are optional. They can be used to improve readability.
+      </para>
+      <para>
+         The server may be configured to serve more than one subnet. To add a second subnet,
+         use a command similar to the following:
+        <screen>
+&gt; <userinput>config add Dhcp4/subnet4</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[1]/subnet "192.0.3.0/24"</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[1]/pool [ "192.0.3.0/24" ]</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        Arrays are counted from 0. subnet[0] refers to the subnet defined in the
+        previous example.  The <command>config add Dhcp4/subnet4</command> command adds
+        another (second) subnet. It can be referred to as
+        <command>Dhcp4/subnet4[1]</command>. In this example, we allow server to
+        dynamically assign all addresses available in the whole subnet.
+      </para>
+      <para>
+        When configuring a DHCPv4 server using prefix/length notation, please pay
+        attention to the boundary values. When specifying that the server should use
+        a given pool, it will be able to allocate also first (typically network
+        address) and the last (typically broadcast address) address from that pool.
+        In the aforementioned example of pool 192.0.3.0/24, both 192.0.3.0 and
+        192.0.3.255 addresses may be assigned as well. This may be invalid in some
+        network configurations. If you want to avoid this, please use the "min-max" notation.
+      </para>
+      </section>
+
+    <section id="dhcp4-std-options">
+      <title>Standard DHCPv4 options</title>
+      <para>
+        One of the major features of DHCPv4 server is to provide configuration
+        options to clients. Although there are several options that require
+        special behavior, most options are sent by the server only if the client
+        explicitly requested them.  The following example shows how to
+        configure DNS servers, which is one of the most frequently used
+        options. Options specified in this way are considered global and apply
+        to all configured subnets.
+
+        <screen>
+&gt; <userinput>config add Dhcp4/option-data</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/name "domain-name-servers"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/code 6</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/space "dhcp4"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/data "192.0.3.1, 192.0.3.2"</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      </para>
+    <para>
+      The first line creates new entry in option-data table. It
+      contains information on all global options that the server is
+      supposed to configure in all subnets. The second line specifies
+      option name. For a complete list of currently supported names,
+      see <xref linkend="dhcp4-std-options-list"/> below.
+      The third line specifies option code, which must match one of the
+      values from that list. Line 4 specifies option space, which must always
+      be set to "dhcp4" as these are standard DHCPv4 options. For
+      other option spaces, including custom option spaces, see <xref
+      linkend="dhcp4-option-spaces"/>. The fifth line specifies the format in
+      which the data will be entered: use of CSV (comma
+      separated values) is recommended. The sixth line gives the actual value to
+      be sent to clients. Data is specified as a normal text, with
+      values separated by commas if more than one value is
+      allowed.
+    </para>
+
+    <para>
+      Options can also be configured as hexadecimal values. If csv-format is
+      set to false, option data must be specified as a hex string. The
+      following commands configure the domain-name-servers option for all
+      subnets with the following addresses: 192.0.3.1 and 192.0.3.2.
+      Note that csv-format is set to false.
+      <screen>
+&gt; <userinput>config add Dhcp4/option-data</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/name "domain-name-servers"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/code 6</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/space "dhcp4"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/csv-format false</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/data "C0 00 03 01 C0 00 03 02"</userinput>
+&gt; <userinput>config commit</userinput>
+        </screen>
+      </para>
+
+      <para>
+        It is possible to override options on a per-subnet basis.  If
+        clients connected to most of your subnets are expected to get the
+        same values of a given option, you should use global options: you
+        can then override specific values for a small number of subnets.
+        On the other hand, if you use different values in each subnet,
+        it does not make sense to specify global option values
+        (Dhcp4/option-data), rather you should set only subnet-specific values
+        (Dhcp4/subnet[X]/option-data[Y]).
+      </para>
+      <para>
+        The following commands override the global
+        DNS servers option for a particular subnet, setting a single DNS
+        server with address 192.0.2.3.
+        <screen>
+&gt; <userinput>config add Dhcp4/subnet4[0]/option-data</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/option-data[0]/name "domain-name-servers"</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/option-data[0]/code 6</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/option-data[0]/space "dhcp4"</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/option-data[0]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/option-data[0]/data "192.0.2.3"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+
+      <note>
+        <para>In a future version of Kea, it will not be necessary to specify
+        the option code, space and csv-format fields as they will be set
+        automatically.</para>
+      </note>
+
+      <para>
+        The currently supported standard DHCPv4 options are
+        listed in <xref linkend="dhcp4-std-options-list"/>
+        and <xref linkend="dhcp4-std-options-list-part2"/>.
+        The "Name" and "Code"
+        are the values that should be used as a name in the option-data
+        structures. "Type" designates the format of the data: the meanings of
+        the various types is given in <xref linkend="dhcp-types"/>.
+      </para>
+      <para>
+        Some options are designated as arrays, which means that more than one
+        value is allowed in such an option. For example the option time-servers
+        allows the specification of more than one IPv4 address, so allowing
+        clients to obtain the the addresses of multiple NTP servers.
+      </para>
+      <!-- @todo: describe record types -->
+
+      <para>
+        The <xref linkend="dhcp4-custom-options"/> describes the configuration
+        syntax to create custom option definitions (formats). It is generally not
+        allowed to create custom definitions for standard options, even if the
+        definition being created matches the actual option format defined in the
+        RFCs. There is an exception from this rule for standard options for which
+        Kea does not provide a definition yet. In order to use such options,
+        a server administrator must create a definition as described in
+        <xref linkend="dhcp4-custom-options"/> in the 'dhcp4' option space. This
+        definition should match the option format described in the relevant
+        RFC but configuration mechanism would allow any option format as it has
+        no means to validate it at the moment.
+      </para>
+
+      <para>
+        <table frame="all" id="dhcp4-std-options-list">
+          <title>List of standard DHCPv4 options</title>
+          <tgroup cols='4'>
+          <colspec colname='name'/>
+          <colspec colname='code'/>
+          <colspec colname='type'/>
+          <colspec colname='array'/>
+          <thead>
+            <row>
+              <entry>Name</entry>
+              <entry>Code</entry>
+              <entry>Type</entry>
+              <entry>Array?</entry>
+            </row>
+          </thead>
+          <tbody>
+<row><entry>subnet-mask</entry><entry>1</entry><entry>ipv4-address</entry><entry>false</entry></row>
+<row><entry>time-offset</entry><entry>2</entry><entry>int32</entry><entry>false</entry></row>
+<row><entry>routers</entry><entry>3</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>time-servers</entry><entry>4</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>name-servers</entry><entry>5</entry><entry>ipv4-address</entry><entry>false</entry></row>
+<row><entry>domain-name-servers</entry><entry>6</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>log-servers</entry><entry>7</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>cookie-servers</entry><entry>8</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>lpr-servers</entry><entry>9</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>impress-servers</entry><entry>10</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>resource-location-servers</entry><entry>11</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>host-name</entry><entry>12</entry><entry>string</entry><entry>false</entry></row>
+<row><entry>boot-size</entry><entry>13</entry><entry>uint16</entry><entry>false</entry></row>
+<row><entry>merit-dump</entry><entry>14</entry><entry>string</entry><entry>false</entry></row>
+<row><entry>domain-name</entry><entry>15</entry><entry>fqdn</entry><entry>false</entry></row>
+<row><entry>swap-server</entry><entry>16</entry><entry>ipv4-address</entry><entry>false</entry></row>
+<row><entry>root-path</entry><entry>17</entry><entry>string</entry><entry>false</entry></row>
+<row><entry>extensions-path</entry><entry>18</entry><entry>string</entry><entry>false</entry></row>
+<row><entry>ip-forwarding</entry><entry>19</entry><entry>boolean</entry><entry>false</entry></row>
+<row><entry>non-local-source-routing</entry><entry>20</entry><entry>boolean</entry><entry>false</entry></row>
+<row><entry>policy-filter</entry><entry>21</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>max-dgram-reassembly</entry><entry>22</entry><entry>uint16</entry><entry>false</entry></row>
+<row><entry>default-ip-ttl</entry><entry>23</entry><entry>uint8</entry><entry>false</entry></row>
+<row><entry>path-mtu-aging-timeout</entry><entry>24</entry><entry>uint32</entry><entry>false</entry></row>
+<row><entry>path-mtu-plateau-table</entry><entry>25</entry><entry>uint16</entry><entry>true</entry></row>
+<row><entry>interface-mtu</entry><entry>26</entry><entry>uint16</entry><entry>false</entry></row>
+<row><entry>all-subnets-local</entry><entry>27</entry><entry>boolean</entry><entry>false</entry></row>
+<row><entry>broadcast-address</entry><entry>28</entry><entry>ipv4-address</entry><entry>false</entry></row>
+<row><entry>perform-mask-discovery</entry><entry>29</entry><entry>boolean</entry><entry>false</entry></row>
+<row><entry>mask-supplier</entry><entry>30</entry><entry>boolean</entry><entry>false</entry></row>
+<row><entry>router-discovery</entry><entry>31</entry><entry>boolean</entry><entry>false</entry></row>
+<row><entry>router-solicitation-address</entry><entry>32</entry><entry>ipv4-address</entry><entry>false</entry></row>
+<row><entry>static-routes</entry><entry>33</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>trailer-encapsulation</entry><entry>34</entry><entry>boolean</entry><entry>false</entry></row>
+<row><entry>arp-cache-timeout</entry><entry>35</entry><entry>uint32</entry><entry>false</entry></row>
+<row><entry>ieee802-3-encapsulation</entry><entry>36</entry><entry>boolean</entry><entry>false</entry></row>
+<row><entry>default-tcp-ttl</entry><entry>37</entry><entry>uint8</entry><entry>false</entry></row>
+<row><entry>tcp-keepalive-internal</entry><entry>38</entry><entry>uint32</entry><entry>false</entry></row>
+<row><entry>tcp-keepalive-garbage</entry><entry>39</entry><entry>boolean</entry><entry>false</entry></row>
+
+          </tbody>
+          </tgroup>
+        </table>
+      </para>
+
+      <para>
+        <table frame="all" id="dhcp4-std-options-list-part2">
+          <title>List of standard DHCPv4 options (continued)</title>
+          <tgroup cols='4'>
+          <colspec colname='name'/>
+          <colspec colname='code'/>
+          <colspec colname='type'/>
+          <colspec colname='array'/>
+          <thead>
+            <row>
+              <entry>Name</entry>
+              <entry>Code</entry>
+              <entry>Type</entry>
+              <entry>Array?</entry>
+            </row>
+          </thead>
+          <tbody>
+
+<row><entry>nis-domain</entry><entry>40</entry><entry>string</entry><entry>false</entry></row>
+<row><entry>nis-servers</entry><entry>41</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>ntp-servers</entry><entry>42</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>vendor-encapsulated-options</entry><entry>43</entry><entry>empty</entry><entry>false</entry></row>
+<row><entry>netbios-name-servers</entry><entry>44</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>netbios-dd-server</entry><entry>45</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>netbios-node-type</entry><entry>46</entry><entry>uint8</entry><entry>false</entry></row>
+<row><entry>netbios-scope</entry><entry>47</entry><entry>string</entry><entry>false</entry></row>
+<row><entry>font-servers</entry><entry>48</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>x-display-manager</entry><entry>49</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>dhcp-requested-address</entry><entry>50</entry><entry>ipv4-address</entry><entry>false</entry></row>
+<!-- Lease time should not be configured by a user.
+<row><entry>dhcp-lease-time</entry><entry>51</entry><entry>uint32</entry><entry>false</entry></row>
+-->
+<row><entry>dhcp-option-overload</entry><entry>52</entry><entry>uint8</entry><entry>false</entry></row>
+<!-- Message Type, Server Identifier and Parameter Request List should not be configured by a user.
+<row><entry>dhcp-message-type</entry><entry>53</entry><entry>uint8</entry><entry>false</entry></row>
+<row><entry>dhcp-server-identifier</entry><entry>54</entry><entry>ipv4-address</entry><entry>false</entry></row>
+<row><entry>dhcp-parameter-request-list</entry><entry>55</entry><entry>uint8</entry><entry>true</entry></row>
+-->
+<row><entry>dhcp-message</entry><entry>56</entry><entry>string</entry><entry>false</entry></row>
+<row><entry>dhcp-max-message-size</entry><entry>57</entry><entry>uint16</entry><entry>false</entry></row>
+<!-- Renewal and rebinding time should not be configured by a user.
+<row><entry>dhcp-renewal-time</entry><entry>58</entry><entry>uint32</entry><entry>false</entry></row>
+<row><entry>dhcp-rebinding-time</entry><entry>59</entry><entry>uint32</entry><entry>false</entry></row>
+-->
+<row><entry>vendor-class-identifier</entry><entry>60</entry><entry>binary</entry><entry>false</entry></row>
+<!-- Client identifier should not be configured by a user.
+<row><entry>dhcp-client-identifier</entry><entry>61</entry><entry>binary</entry><entry>false</entry></row>
+-->
+<row><entry>nwip-domain-name</entry><entry>62</entry><entry>string</entry><entry>false</entry></row>
+<row><entry>nwip-suboptions</entry><entry>63</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>tftp-server-name</entry><entry>66</entry><entry>string</entry><entry>false</entry></row>
+<row><entry>boot-file-name</entry><entry>67</entry><entry>string</entry><entry>false</entry></row>
+<row><entry>user-class</entry><entry>77</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>fqdn</entry><entry>81</entry><entry>record</entry><entry>false</entry></row>
+<row><entry>dhcp-agent-options</entry><entry>82</entry><entry>empty</entry><entry>false</entry></row>
+<row><entry>authenticate</entry><entry>90</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>client-last-transaction-time</entry><entry>91</entry><entry>uint32</entry><entry>false</entry></row>
+<row><entry>associated-ip</entry><entry>92</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>subnet-selection</entry><entry>118</entry><entry>ipv4-address</entry><entry>false</entry></row>
+<row><entry>domain-search</entry><entry>119</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>vivco-suboptions</entry><entry>124</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>vivso-suboptions</entry><entry>125</entry><entry>binary</entry><entry>false</entry></row>
+          </tbody>
+          </tgroup>
+        </table>
+
+      </para>
+      <para>
+        <table frame="all" id="dhcp-types">
+          <title>List of standard DHCP option types</title>
+          <tgroup cols='2'>
+          <colspec colname='name'/>
+          <colspec colname='meaning'/>
+          <thead>
+            <row><entry>Name</entry><entry>Meaning</entry></row>
+          </thead>
+          <tbody>
+            <row><entry>binary</entry><entry>An arbitrary string of bytes, specified as a set of hexadecimal digits.</entry></row>
+            <row><entry>boolean</entry><entry>Boolean value with allowed values true or false</entry></row>
+            <row><entry>empty</entry><entry>No value, data is carried in suboptions</entry></row>
+            <row><entry>fqdn</entry><entry>Fully qualified domain name (e.g. www.example.com)</entry></row>
+            <row><entry>ipv4-address</entry><entry>IPv4 address in the usual dotted-decimal notation (e.g. 192.0.2.1)</entry></row>
+            <row><entry>ipv6-address</entry><entry>IPv6 address in the usual colon notation (e.g. 2001:db8::1)</entry></row>
+            <row><entry>record</entry><entry>Structured data that may comprise any types (except "record" and "empty")</entry></row>
+            <row><entry>string</entry><entry>Any text</entry></row>
+            <row><entry>uint8</entry><entry>8 bit unsigned integer with allowed values 0 to 255</entry></row>
+            <row><entry>uint16</entry><entry>16 bit unsinged integer with allowed values 0 to 65535</entry></row>
+            <row><entry>uint32</entry><entry>32 bit unsigned integer with allowed values 0 to 4294967295</entry></row>
+          </tbody>
+          </tgroup>
+       </table>
+      </para>
+    </section>
+
+    <section id="dhcp4-custom-options">
+      <title>Custom DHCPv4 options</title>
+      <para>It is also possible to define options other than the standard ones.
+      Assume that we want to define a new DHCPv4 option called "foo" which will have
+      code 222 and will convey a single unsigned 32 bit integer value. We can define
+      such an option by using the following commands:
+      <screen>
+&gt; <userinput>config add Dhcp4/option-def</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/name "foo"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/code 222</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/type "uint32"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/array false</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/record-types ""</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/space "dhcp4"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/encapsulate ""</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      The "false" value of the "array" parameter determines that the option
+      does NOT comprise an array of "uint32" values but rather a single value.
+      Two other parameters have been left blank: "record-types" and "encapsulate".
+      The former specifies the comma separated list of option data fields if the
+      option comprises a record of data fields. The "record-fields" value should
+      be non-empty if the "type" is set to "record". Otherwise it must be left
+      blank. The latter parameter specifies the name of the option space being
+      encapsulated by the particular option. If the particular option does not
+      encapsulate any option space it should be left blank.
+      Note that the above set of comments define the format of the new option and do not
+      set its values.
+      </para>
+      <note>
+        <para>
+          In the current release the default values are not propagated to the
+          parser when the new configuration is being set. Therefore, all
+          parameters must be specified at all times, even if their values are
+          left blank.
+        </para>
+      </note>
+
+      <para>Once the new option format is defined, its value is set
+      in the same way as for a standard option. For example the following
+      commands set a global value that applies to all subnets.
+        <screen>
+&gt; <userinput>config add Dhcp4/option-data</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/name "foo"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/code 222</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/space "dhcp4"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/data "12345"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+
+      <para>New options can take more complex forms than simple use of
+      primitives (uint8, string, ipv4-address etc): it is possible to
+      define an option comprising a number of existing primitives.
+      </para>
+      <para>Assume we want to define a new option that will consist of
+      an IPv4 address, followed by unsigned 16 bit integer, followed by
+      a boolean value, followed by a text string. Such an option could
+      be defined in the following way:
+<screen>
+&gt; <userinput>config add Dhcp4/option-def</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/name "bar"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/code 223</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/space "dhcp4"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/type "record"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/array false</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/record-types "ipv4-address, uint16, boolean, string"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/encapsulate ""</userinput>
+</screen>
+      The "type" is set to "record" to indicate that the option contains
+      multiple values of different types.  These types are given as a comma-separated
+      list in the "record-types" field and should be those listed in <xref linkend="dhcp-types"/>.
+      </para>
+      <para>
+      The values of the option are set as follows:
+<screen>
+&gt; <userinput>config add Dhcp4/option-data</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/name "bar"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/space "dhcp4"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/code 223</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/data "192.0.2.100, 123, true, Hello World"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      "csv-format" is set "true" to indicate that the "data" field comprises a command-separated
+      list of values.  The values in the "data" must correspond to the types set in
+      the "record-types" field of the option definition.
+     </para>
+     <note>
+       <para>
+         It is recommended that boolean values are specified using "true" and "false"
+         strings. This helps to prevent errors when typing multiple comma separated
+         values, as it make it easier to identify the type of the value being typed,
+         and compare it with the order of data fields. Nevertheless, it is possible
+         to use integer values: "1" and "0", instead of "true" and "false"
+         accordingly. If other integer value is specified, the configuration is
+         rejected.
+       </para>
+     </note>
+    </section>
+
+    <section id="dhcp4-vendor-opts">
+      <title>DHCPv4 vendor specific options</title>
+      <para>
+      Currently there are three option spaces defined: dhcp4 (to
+      be used in DHCPv4 daemon) and dhcp6 (for the DHCPv6 daemon); there
+      is also vendor-encapsulated-options-space, which is empty by default, but options
+      can be defined in it. Those options are called vendor-specific
+      information options. The following examples show how to define
+      an option "foo" with code 1 that consists of an IPv4 address, an
+      unsigned 16 bit integer and a string. The "foo" option is conveyed
+      in a vendor specific information option.
+      </para>
+      <para>
+      The first step is to define the format of the option:
+<screen>
+&gt; <userinput>config add Dhcp4/option-def</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/name "foo"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/code 1</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/space "vendor-encapsulated-options-space"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/type "record"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/array false</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/record-types "ipv4-address, uint16, string"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/encapsulates ""</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+     (Note that the option space is set to "vendor-encapsulated-options-space".)
+     Once the option format is defined, the next step is to define actual values
+     for that option:
+     <screen>
+&gt; <userinput>config add Dhcp4/option-data</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/name "foo"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/space "vendor-encapsulated-options-space"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/code 1</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/data "192.0.2.3, 123, Hello World"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+    We also set up a dummy value for vendor-opts, the option that conveys our sub-option "foo".
+    This is required else the option will not be included in messages sent to the client.
+     <screen>
+&gt; <userinput>config add Dhcp4/option-data</userinput>
+&gt; <userinput>config set Dhcp4/option-data[1]/name "vendor-encapsulated-options"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[1]/space "dhcp4"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[1]/code 43</userinput>
+&gt; <userinput>config set Dhcp4/option-data[1]/csv-format false</userinput>
+&gt; <userinput>config set Dhcp4/option-data[1]/data ""</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+
+      <note>
+        <para>
+          With this version of Kea, the "vendor-encapsulated-options" option
+          must be specified in the configuration although it has no configurable
+          parameters. If it is not specified, the server will assume that it is
+          not configured and will not send it to a client. In the future there
+          will be no need to include this option in the configuration.
+        </para>
+      </note>
+
+    </section>
+
+    <section id="dhcp4-option-spaces">
+
+      <title>Nested DHCPv4 options (custom option spaces)</title>
+      <para>It is sometimes useful to define completely new option
+      space. This is the case when user creates new option in the
+      standard option space ("dhcp4 or "dhcp6") and wants this option
+      to convey sub-options. Thanks to being in the separate space,
+      sub-option codes will have a separate numbering scheme and may
+      overlap with codes of standard options.
+      </para>
+      <para>Note that creation of a new option space when defining
+      sub-options for a standard option is not required, because it is
+      created by default if the standard option is meant to convey any
+      sub-options (see <xref linkend="dhcp4-vendor-opts"/>).
+      </para>
+      <para>
+      Assume that we want to have a DHCPv4 option called "container" with
+      code 222 that conveys two sub-options with codes 1 and 2.
+      First we need to define the new sub-options:
+<screen>
+&gt; <userinput>config add Dhcp4/option-def</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/name "subopt1"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/code 1</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/space "isc"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/type "ipv4-address"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/record-types ""</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/array false</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/encapsulate ""</userinput>
+&gt; <userinput>config commit</userinput>
+
+&gt; <userinput>config add Dhcp4/option-def</userinput>
+&gt; <userinput>config set Dhcp4/option-def[1]/name "subopt2"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[1]/code 2</userinput>
+&gt; <userinput>config set Dhcp4/option-def[1]/space "isc"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[1]/type "string"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[1]/record-types ""</userinput>
+&gt; <userinput>config set Dhcp4/option-def[1]/array false</userinput>
+&gt; <userinput>config set Dhcp4/option-def[1]/encapsulate ""</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+    Note that we have defined the options to belong to a new option space
+    (in this case, "isc").
+    </para>
+    <para>
+    The next step is to define a regular DHCPv4 option with our desired
+    code and specify that it should include options from the new option space:
+<screen>
+&gt; <userinput>add Dhcp4/option-def</userinput>
+&gt; <userinput>set Dhcp4/option-def[2]/name "container"</userinput>
+&gt; <userinput>set Dhcp4/option-def[2]/code 222</userinput>
+&gt; <userinput>set Dhcp4/option-def[2]/space "dhcp4"</userinput>
+&gt; <userinput>set Dhcp4/option-def[2]/type "empty"</userinput>
+&gt; <userinput>set Dhcp4/option-def[2]/array false</userinput>
+&gt; <userinput>set Dhcp4/option-def[2]/record-types ""</userinput>
+&gt; <userinput>set Dhcp4/option-def[2]/encapsulate "isc"</userinput>
+&gt; <userinput>commit</userinput>
+</screen>
+    The name of the option space in which the sub-options are defined
+    is set in the "encapsulate" field. The "type" field is set to "empty"
+    to indicate that this option does not carry any data other than
+    sub-options.
+    </para>
+    <para>
+    Finally, we can set values for the new options:
+<screen>
+&gt; <userinput>config add Dhcp4/option-data</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/name "subopt1"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/space "isc"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/code 1</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/data "192.0.2.3"</userinput>
+&gt; <userinput>config commit</userinput>
+<userinput></userinput>
+&gt; <userinput>config add Dhcp4/option-data</userinput>
+&gt; <userinput>config set Dhcp4/option-data[1]/name "subopt2"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[1]/space "isc"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[1]/code 2</userinput>
+&gt; <userinput>config set Dhcp4/option-data[1]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp4/option-data[1]/data "Hello world"</userinput>
+&gt; <userinput>config commit</userinput>
+<userinput></userinput>
+&gt; <userinput>config add Dhcp4/option-data</userinput>
+&gt; <userinput>config set Dhcp4/option-data[2]/name "container"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[2]/space "dhcp4"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[2]/code 222</userinput>
+&gt; <userinput>config set Dhcp4/option-data[2]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp4/option-data[2]/data ""</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+    Even though the "container" option does not carry any data except
+    sub-options, the "data" field must be explicitly set to an empty value.
+    This is required because in the current version of BIND 10 DHCP, the
+    default configuration values are not propagated to the configuration parsers:
+    if the "data" is not set the parser will assume that this
+    parameter is not specified and an error will be reported.
+    </para>
+    <para>Note that it is possible to create an option which carries some data
+    in addition to the sub-options defined in the encapsulated option space.  For example,
+    if the "container" option from the previous example was required to carry an uint16
+    value as well as the sub-options, the "type" value would have to be set to "uint16" in
+    the option definition. (Such an option would then have the following
+    data structure: DHCP header, uint16 value, sub-options.) The value specified
+    with the "data" parameter - which should be a valid integer enclosed in quotes,
+    e.g. "123" - would then be assigned to the uint16 field in the "container" option.
+    </para>
+    </section>
+
+    <section id="dhcp4-client-classifier">
+      <title>Client Classification in DHCPv4</title>
+      <note>
+      <para>
+        DHCPv4 server has been extended to support limited client classification.
+        Although the current capability is modest, it is expected to be expanded
+        in the future. It is envisaged that the majority of client classification
+        extensions will be using hooks extensions.
+      </para>
+      </note>
+      <para>In certain cases it is useful to differentiate between different
+      types of clients and treat them differently. The process of doing
+      classification is conducted in two steps. The first step is to assess
+      incoming packet and assign it to zero or more classes. This classification
+      is currently simple, but is expected to grow in capability soon. Currently
+      the server checks whether incoming packet has vendor class identifier
+      option (60). If it has, content of that option is prepended with
+      &quot;VENDOR_CLASS_&quot; then is interpreted as a class. For example,
+      modern cable modems will send this option with value &quot;docsis3.0&quot;
+      and as a result the packet will belong to class &quot;VENDOR_CLASS_docsis3.0&quot;.
+      </para>
+
+      <para>It is envisaged that the client classification will be used for changing
+      behavior of almost any part of the DHCP message processing, including assigning
+      leases from different pools, assigning different option (or different values of
+      the same options) etc. For now, there are only two mechanisms that are taking
+      advantage of client classification: specific processing for cable modems and
+      subnet selection.</para>
+
+      <para>
+        For clients that belong to the VENDOR_CLASS_docsis3.0 class, the siaddr
+        field is set to the value of next-server (if specified in a subnet). If
+        there is boot-file-name option specified, its value is also set in the
+        file field in the DHCPv4 packet. For eRouter1.0 class, the siaddr is
+        always set to 0.0.0.0. That capability is expected to be moved to
+        external hook library that will be dedicated to cable modems.
+      </para>
+
+      <para>
+        Kea can be instructed to limit access to given subnets based on class information.
+        This is particularly useful for cases where two types of devices share the
+        same link and are expected to be served from two different subnets. The
+        primary use case for such a scenario is cable networks. There are two
+        classes of devices: cable modem itself, which should be handled a lease
+        from subnet A and all other devices behind modems that should get a lease
+        from subnet B. That segregation is essential to prevent overly curious
+        users from playing with their cable modems. For details on how to set up
+        class restrictions on subnets, see <xref linkend="dhcp4-subnet-class"/>.
+      </para>
+
+    </section>
+
+    <section id="dhcp4-subnet-class">
+      <title>Limiting access to IPv4 subnet to certain classes</title>
+      <para>
+        In certain cases it beneficial to restrict access to certain subnets
+        only to clients that belong to a given subnet. For details on client
+        classes, see <xref linkend="dhcp4-client-classifier"/>. This is an
+        extension of a previous example from <xref linkend="dhcp4-address-config"/>.
+        Let's assume that the server is connected to a network segment that uses
+        the 192.0.2.0/24 prefix. The Administrator of that network has decided
+        that addresses from range 192.0.2.10 to 192.0.2.20 are going to be
+        managed by the Dhcp4 server. Only clients belonging to client class
+        VENDOR_CLASS_docsis3.0 are allowed to use this subnet. Such a
+        configuration can be achieved in the following way:
+        <screen>
+&gt; <userinput>config add Dhcp4/subnet4</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/subnet "192.0.2.0/24"</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/pool [ "192.0.2.10 - 192.0.2.20" ]</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/client-class "VENDOR_CLASS_docsis3.0"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+
+      <para>
+        Care should be taken with client classification as it is easy to prevent
+        clients that do not meet class criteria to be denied any service altogether.
+      </para>
+    </section>
+    <section id="dhcp4-ddns-config">
+      <title>Configuring DHCPv4 for DDNS</title>
+      <para>
+      As mentioned earlier, b10-dhcp4 can be configured to generate requests to the
+      DHCP-DDNS server to update DNS entries.  These requests are known as
+      NameChangeRequests or NCRs.  Each NCR contains the following information:
+      <orderedlist>
+      <listitem><para>
+      Whether it is a request to add (update) or remove DNS entries
+      </para></listitem>
+      <listitem><para>
+      Whether the change requests forward DNS updates (A records), reverse
+      DNS updates (PTR records), or both.
+      </para></listitem>
+      <listitem><para>
+      The FQDN, lease address, and DHCID
+      </para></listitem>
+      </orderedlist>
+      The parameters for controlling the generation of NCRs for submission to D2
+      are contained in the "dhcp-ddns" section of the b10-dhcp4 server
+      configuration. The default values for this section appears as follows:
+<screen>
+&gt; <userinput>config show Dhcp4/dhcp-ddns</userinput>
+Dhcp4/dhcp-ddns/enable-updates	true	boolean
+Dhcp4/dhcp-ddns/server-ip	"127.0.0.1"	string
+Dhcp4/dhcp-ddns/server-port	53001	integer
+Dhcp4/dhcp-ddns/sender-ip	""	string
+Dhcp4/dhcp-ddns/sender-port	0	integer
+Dhcp4/dhcp-ddns/max-queue-size	1024	integer
+Dhcp4/dhcp-ddns/ncr-protocol	"UDP"	string
+Dhcp4/dhcp-ddns/ncr-format	"JSON"	string
+Dhcp4/dhcp-ddns/override-no-update	false	boolean
+Dhcp4/dhcp-ddns/override-client-update	false	boolean
+Dhcp4/dhcp-ddns/replace-client-name	false	boolean
+Dhcp4/dhcp-ddns/generated-prefix	"myhost"	string
+Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
+</screen>
+      </para>
+      <para>
+      The "enable-updates" parameter determines whether or not b10-dhcp4 will
+      generate NCRs.  By default, this value is false hence DDNS updates are
+      disabled.  To enable DDNS updates set this value to true:
+      </para>
+<screen>
+&gt; <userinput>config set Dhcp4/dhcp-ddns/enable-updates true</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      <section id="dhcpv4-d2-io-config">
+      <title>DHCP-DDNS Server Connectivity</title>
+      <para>
+      In order for NCRs to reach the D2 server, b10-dhcp4 must be able
+      to communicate with it.  b10-dhcp4 uses the following configuration
+      parameters to control how it communications with D2:
+      <orderedlist>
+      <listitem><para>
+      server-ip - IP address on which D2 listens for requests. The default is
+      the local loopback interface at address 127.0.0.1. You may specify
+      either an IPv4 or IPv6 address.
+      </para></listitem>
+      <listitem><para>
+      server-port - port on which D2 listens for requests.  The default value
+      is 53001.
+      </para></listitem>
+      <listitem><para>
+      sender-ip - IP address which b10-dhcp4 should use to send requests to D2.
+      The default value is blank which instructs b10-dhcp4 to select a suitable
+      address.
+      </para></listitem>
+      <listitem><para>
+      sender-port - port which b10-dhcp4 should use to send requests to D2. The
+      default value of 0 instructs b10-dhcp4 to select suitable port.
+      </para></listitem>
+      <listitem><para>
+      ncr-format - Socket protocol use when sending requests to D2.  Currently
+      only UDP is supported.  TCP may be available in an upcoming release.
+      </para></listitem>
+      <listitem><para>
+      ncr-protocol - Packet format to use when sending requests to D2.
+      Currently only JSON format is supported.  Other formats may be available
+      in future releases.
+      </para></listitem>
+      <listitem><para>
+      max-queue-size - maximum number of requests allowed to queue waiting to
+      be sent to D2. This value guards against requests accumulating
+      uncontrollably if they are being generated faster than they can be
+      delivered.  If the number of requests queued for transmission reaches
+      this value, DDNS updating will be turned off until the queue backlog has
+      been sufficiently reduced.  The intent is allow the b10-dhcp4 server to
+      continue lease operations.  The default value is 1024.
+      </para></listitem>
+      </orderedlist>
+      By default, D2 is assumed to running on the same machine as b10-dhcp4, and
+      all of the default values mentioned above should be sufficient.
+      If, however, D2 has been configured to listen on a different address or
+      port, these values must altered accordingly. For example, if D2 has been
+      configured to listen on 198.162.1.10 port 900, the following commands
+      would be required:
+<screen>
+&gt; <userinput>config set Dhcp4/dhcp-ddns/server-ip "198.162.1.10"</userinput>
+&gt; <userinput>config set Dhcp4/dhcp-ddns/server-port 900</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      </para>
+      </section>
+      <section id="dhcpv4-d2-rules-config">
+      <title>When does the b10-dhcp4 server generate DDNS requests?</title>
+      b10-dhcp4 follows the behavior prescribed for DHCP servers in RFC 4702.
+      It is important to keep in mind that b10-dhcp4 provides the initial decision
+      making of when and what to update and forwards that information to D2 in
+      the form of NCRs. Carrying out the actual DNS updates and dealing with
+      such things as conflict resolution are the purview of D2 (<xref linkend="dhcp-ddns-server"/>).
+      <para>
+      This section describes when b10-dhcp4 will generate NCRs and the
+      configuration parameters that can be used to influence this decision.
+      It assumes that the "enable-updates" parameter is true.
+      </para>
+      <para>
+      In general, b10-dhcp4 will generate DDNS update requests when:
+      <orderedlist>
+      <listitem><para>
+      A new lease is granted in response to a DHCP REQUEST
+      </para></listitem>
+      <listitem><para>
+      An existing lease is renewed but the FQDN associated with it has
+      changed.
+      </para></listitem>
+      <listitem><para>
+      An existing lease is released in response to a DHCP RELEASE
+      </para></listitem>
+      </orderedlist>
+      In the second case, lease renewal, two  DDNS requests will be issued: one
+      request to remove entries for the previous FQDN and a second request to
+      add entries for the new FQDN.  In the last case, a lease release, a
+      single DDNS request to remove its entries will be made.  The decision
+      making involved when granting a new lease (the first case) is more
+      involved and is discussed next.
+      </para>
+      <para>
+      When a new lease is granted, b10-dhcp4 will generate a DDNS
+      update request if the DHCP REQUEST contains either the FQDN option
+      (code 81) or the Host Name option (code 12). If both are present,
+      the server will use the FQDN option. By default b10-dhcp4
+      will respect the FQDN N and S flags specified by the client as shown
+      in the following table:
+      </para>
+        <table id="fqdn-flag-table">
+          <title>Default FQDN Flag Behavior</title>
+          <tgroup cols='4' align='left'>
+          <colspec colname='cflags'/>
+          <colspec colname='meaning'/>
+          <colspec colname='response'/>
+          <colspec colname='sflags'/>
+          <thead>
+              <row>
+                <entry>Client Flags:N-S</entry>
+                <entry>Client Intent</entry>
+                <entry>Server Response</entry>
+                <entry>Server Flags:N-S-O</entry>
+              </row>
+          </thead>
+          <tbody>
+            <row>
+                <entry>0-0</entry>
+                <entry>
+                Client wants to do forward updates, server should do reverse updates
+                </entry>
+                <entry>Server generates reverse-only request</entry>
+                <entry>1-0-0</entry>
+            </row>
+            <row>
+                <entry>0-1</entry>
+                <entry>Server should do both forward and reverse updates</entry>
+                <entry>Server generates request to update both directions</entry>
+                <entry>0-1-0</entry>
+            </row>
+            <row>
+                <entry>1-0</entry>
+                <entry>Client wants no updates done</entry>
+                <entry>Server does not generate a request</entry>
+                <entry>1-0-0</entry>
+            </row>
+          </tbody>
+          </tgroup>
+        </table>
+      <para>
+      The first row in the table above represents "client delegation". Here
+      the DHCP client states that it intends to do the forward DNS updates and
+      the server should do the reverse updates.  By default, b10-dhcp4 will honor
+      the client's wishes and generate a DDNS request to D2 to update only
+      reverse DNS data.  The parameter, "override-client-update", can be used
+      to instruct the server to override client delegation requests.  When
+      this parameter is true, b10-dhcp4 will disregard requests for client
+      delegation and generate a DDNS request to update both forward and
+      reverse DNS data.  In this case, the N-S-O flags in the server's
+      response to the client will be 0-1-1 respectively.
+      </para>
+      <para>
+      (Note that the flag combination N=1, S=1 is prohibited according to
+      RFC 4702. If such a combination is received from the client, the packet
+      will be dropped by the b10-dhcp4.)
+      </para>
+      <para>
+      To override client delegation, issue the following commands:
+      </para>
+<screen>
+&gt; <userinput>config set Dhcp4/dhcp-ddns/override-client-update true</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      <para>
+      The third row in the table above describes the case in which the client
+      requests that no DNS updates be done. The parameter, "override-no-update",
+      can be used to instruct the server to disregard the client's wishes. When
+      this parameter is true, b10-dhcp4 will generate DDNS update request to D2
+      even if the client requests no updates be done.  The N-S-O flags in the
+      server's response to the client will be 0-1-1.
+      </para>
+      <para>
+      To override client delegation, issue the following commands:
+      </para>
+<screen>
+&gt; <userinput>config set Dhcp4/dhcp-ddns/override-no-update true</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      <para>
+      b10-dhcp4 will always generate DDNS update requests if the client request
+      only contains the Host Name option. In addition it will include an FQDN
+      option in the response to the client with the FQDN N-S-O flags set to
+      0-1-0 respectively. The domain name portion of the FQDN option will be
+      the name submitted to D2 in the DDNS update request.
+      </para>
+      </section>
+      <section id="dhcpv4-fqdn-name-generation">
+      <title>b10-dhcp4 name generation for DDNS update requests</title>
+      Each NameChangeRequest must of course include the fully qualified domain
+      name whose DNS entries are to be affected.  b10-dhcp4 can be configured to
+      supply a portion or all of that name based upon what it receives from
+      the client in the DHCP REQUEST.
+      <para>
+      The rules for determining the FQDN option are as follows:
+      <orderedlist>
+      <listitem><para>
+      If configured to do, so ignore the REQUEST contents and generate a
+      FQDN using a configurable prefix and suffix.
+      </para></listitem>
+      <listitem><para>
+      If the REQUEST contains the client FQDN option, the candidate
+      name is taken from there, otherwise it is taken from the Host Name option.
+      The candiate name may then be modified:
+      <orderedlist>
+      <listitem><para>
+      If the candidate name is a fully qualified domain name, use it.
+      </para></listitem>
+      <listitem><para>
+      If the candidate name is a partial (i.e. unqualified) name then
+      add a configurable suffix to the name and use the result as the FQDN.
+      </para></listitem>
+      <listitem><para>
+      If the candidate name is a empty, generate a FQDN using a
+      configurable prefix and suffix.
+      </para></listitem>
+      </orderedlist>
+      </para></listitem>
+      </orderedlist>
+      To instruct b10-dhcp4 to always generate the FQDN for a client, set the
+      parameter "replace-client-name" to true as follows:
+      </para>
+<screen>
+&gt; <userinput>config set Dhcp4/dhcp-ddns/replace-client-name true</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      <para>
+      The prefix used in the generation of a FQDN is specified by the
+      "generated-prefix" parameter.  The default value is "myhost".  To alter
+      its value simply set it to the desired string:
+      </para>
+<screen>
+&gt; <userinput>config set Dhcp4/dhcp-ddns/generated-prefix "another.host"</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      <para>
+      The suffix used when generating a FQDN or when qualifying a partial
+      name is specified by the "qualifying-suffix" parameter.  The default
+      value is "example.com".  To alter its value simply set it to the desired
+      string:
+      </para>
+<screen>
+&gt; <userinput>config set Dhcp4/dhcp-ddns/generated-prefix "our.net"</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      </section>
+      <para>
+      When generating a name, b10-dhcp4 will construct name of the format:
+      </para>
+      <para>
+        [generated-prefix]-[address-text].[qualifying-suffix].
+      </para>
+      <para>
+      where address-text is simply the lease IP address converted to a
+      hyphenated string.  For example, if lease address is 172.16.1.10 and
+      assuming default values for generated-prefix and qualifying-suffix, the
+      generated FQDN would be:
+      </para>
+      <para>
+        myhost-172-16-1-10.example.com.
+      </para>
+    </section>
+
+  </section> <!-- end of configuring b10-dhcp4 server section with many subsections -->
+
+    <section id="dhcp4-serverid">
+      <title>Server Identifier in DHCPv4</title>
+      <para>
+        The DHCPv4 protocol uses a "server identifier" for clients to be able
+        to discriminate between several servers present on the same link: this
+        value is an IPv4 address of the server. The server chooses the IPv4 address
+        of the interface on which the message from the client (or relay) has been
+        received. A single server instance will use multiple server identifiers
+        if it is receiving queries on multiple interfaces.
+      </para>
+      <para>
+        Currently there is no mechanism to override the default server identifiers
+        by an administrator. In the future, the configuration mechanism will be used
+        to specify the custom server identifier.
+      </para>
+    </section>
+
+
+    <section id="dhcp4-next-server">
+      <title>Next server (siaddr)</title>
+      <para>In some cases, clients want to obtain configuration from the TFTP server.
+      Although there is a dedicated option for it, some devices may use siaddr field
+      in the DHCPv4 packet for that purpose. That specific field can be configured
+      using next-server directive. It is possible to define it in global scope or
+      for a given subnet only. If both are defined, subnet value takes precedence.
+      The value in subnet can be set to 0.0.0.0, which means that next-server should
+      not be sent. It may also be set to empty string, which means the same as if
+      it was not defined at all - use global value.
+      </para>
+
+<screen>
+&gt; <userinput>config add Dhcp4/next-server</userinput>
+&gt; <userinput>config set Dhcp4/next-server "192.0.2.123"</userinput>
+&gt; <userinput>config commit</userinput>
+<userinput></userinput>
+&gt; <userinput>config add Dhcp4/subnet[0]/next-server</userinput>
+&gt; <userinput>config set Dhcp4/subnet[0]/next-server "192.0.2.234"</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+
+    </section>
+
+    <section id="dhcp4-echo-client-id">
+      <title>Echoing client-id (RFC6842)</title>
+      <para>Original DHCPv4 spec (RFC2131) states that the DHCPv4
+      server must not send back client-id options when responding to
+      clients. However, in some cases that confused clients that did
+      not have MAC address or client-id. See RFC6842 for details. That
+      behavior has changed with the publication of RFC6842 which
+      updated RFC2131. That update now states that the server must
+      send client-id if client sent it. That is the default behaviour
+      that Kea offers. However, in some cases older devices that do
+      not support RFC6842 may refuse to accept responses that include
+      client-id option. To enable backward compatibility, an optional
+      configuration parameter has been introduced. To configure it,
+      use the following commands:</para>
+
+<screen>
+&gt; <userinput>config add Dhcp4/echo-client-id</userinput>
+&gt; <userinput>config set Dhcp4/echo-client-id False</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+
+    </section>
+
+    <section id="dhcp4-subnet-selection">
+      <title>How DHCPv4 server selects subnet for a client</title>
+      <para>
+        The DHCPv4 server differentiates between the directly connected clients,
+        clients trying to renew leases and clients sending their messages through
+        relays. For the directly connected clients the server will check the
+        configuration of the interface on which the message has been received, and
+        if the server configuration doesn't match any configured subnet the
+        message is discarded.</para>
+        <para>Assuming that the server's interface is configured with the 192.0.2.3
+        IPv4 address, the server will only process messages received through
+        this interface from the directly connected client, if there is a subnet
+        configured, to which this IPv4 address belongs, e.g. 192.0.2.0/24.
+        The server will use this subnet to assign IPv4 address for the client.
+      </para>
+      <para>
+        The rule above does not apply when the client unicasts its message, i.e.
+        is trying to renew its lease. Such message is accepted through any
+        interface. The renewing client sets ciaddr to the currently used IPv4
+        address. The server uses this address to select the subnet for the client
+        (in particular, to extend the lease using this address).
+      </para>
+      <para>
+        If the message is relayed it is accepted through any interface. The giaddr
+        set by the relay agent is used to select the subnet for the client.
+      </para>
+      <para>
+	It is also possible to specify a relay IPv4 address for a given subnet. It
+	can be used to match incoming packets into a subnet in uncommon configurations,
+	e.g. shared subnets. See <xref linkend="dhcp4-relay-override"/> for details.
+      </para>
+      <note>
+        <para>The subnet selection mechanism described in this section is based
+        on the assumption that client classification is not used. The classification
+        mechanism alters the way in which subnet is selected for the client,
+        depending on the classes that the client belongs to.</para>
+      </note>
+    </section>
+
+    <section id="dhcp4-relay-override">
+      <title>Using specific relay agent for a subnet</title>
+      <para>
+        The relay has to have an interface connected to the link on which
+        the clients are being configured. Typically the relay has an IPv4
+        address configured on that interface that belongs to the subnet that
+        the server will assign addresses from. In such typical case, the
+        server is able to use IPv4 address inserted by the relay (in GIADDR
+        field of the DHCPv4 packet) to select appropriate subnet.
+      </para>
+      <para>
+        However, that is not always the case. In certain uncommon, but
+        valid deployments, the relay address may not match the subnet. This
+        usually means that there is more than one subnet allocated for a given
+        link. Two most common examples where this is the case are long lasting
+        network renumbering (where both old and new address space is still being
+        used) and a cable network. In a cable network both cable modems and the
+        devices behind them are physically connected to the same link, yet
+        they use distinct addressing. In such case, the DHCPv4 server needs
+        additional information (IPv4 address of the relay) to properly select
+        an appropriate subnet.
+      </para>
+      <para>
+        The following example assumes that there is a subnet 192.0.2.0/24
+        that is accessible via relay that uses 10.0.0.1 as its IPv4 address.
+        The server will be able to select this subnet for any incoming packets
+        that came from a relay that has an address in 192.0.2.0/24 subnet.
+        It will also select that subnet for a relay with address 10.0.0.1.
+        <screen>
+&gt; <userinput>config add Dhcp4/subnet4</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/subnet "192.0.2.0/24"</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/pool [ "192.0.2.10 - 192.0.2.20" ]</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/relay/ip-address "10.0.0.1"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+
+    </section>
+
+      <section id="dhcp4-srv-example-client-class-relay">
+        <title>Segregating IPv4 clients in a cable network</title>
+        <para>
+          In certain cases, it is useful to mix relay address information,
+          introduced in <xref linkend="dhcp4-relay-override"/> with client
+          classification, explained in <xref linkend="dhcp4-subnet-class"/>.
+          One specific example is cable network, where typically modems
+          get addresses from a different subnet than all devices connected
+          behind them.
+        </para>
+        <para>
+          Let's assume that there is one CMTS (Cable Modem Termination System)
+          with one CM MAC (a physical link that modems are connected to).
+          We want the modems to get addresses from the 10.1.1.0/24 subnet, while
+          everything connected behind modems should get addresses from another
+          subnet (192.0.2.0/24). The CMTS that acts as a relay an uses address
+          10.1.1.1. The following configuration can serve that configuration:
+        <screen>
+&gt; <userinput>config add Dhcp4/subnet4</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/subnet "10.1.1.0/24"</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/pool [ "10.1.1.2 - 10.1.1.20" ]</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/client-class "docsis3.0"</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/relay/ip-address "10.1.1.1"</userinput>
+&gt; <userinput>config add Dhcp4/subnet4</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[1]/subnet "192.0.2.0/24"</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[1]/pool [ "192.0.2.10 - 192.0.2.20" ]</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[1]/relay/ip-address "10.1.1.1"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+      </section>
+
+    <section id="dhcp4-std">
+      <title>Supported Standards</title>
+      <para>The following standards and draft standards are currently
+      supported:</para>
+      <itemizedlist>
+          <listitem>
+            <simpara><ulink url="http://tools.ietf.org/html/rfc2131">RFC 2131</ulink>: Supported messages are DISCOVER, OFFER,
+            REQUEST, RELEASE, ACK, and NAK.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><ulink url="http://tools.ietf.org/html/rfc2132">RFC 2132</ulink>:
+            Supported options are: PAD (0),
+            END(255), Message Type(53), DHCP Server Identifier (54),
+            Domain Name (15), DNS Servers (6), IP Address Lease Time
+            (51), Subnet mask (1), and Routers (3).</simpara>
+          </listitem>
+          <listitem>
+            <simpara><ulink url="http://tools.ietf.org/html/rfc3046">RFC 3046</ulink>:
+            Relay Agent Information option is supported.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><ulink url="http://tools.ietf.org/html/rfc3925">RFC 3925</ulink>:
+            Vendor-Identifying Vendor Class and Vendor-Identifying Vendor-Specific
+            Information option are supported.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><ulink url="http://tools.ietf.org/html/rfc6842">RFC 6842</ulink>:
+            Server by default sends back client-id option. That capability may be
+            disabled. See <xref linkend="dhcp4-echo-client-id"/> for details.
+            </simpara>
+          </listitem>
+      </itemizedlist>
+    </section>
+
+    <section id="dhcp4-limit">
+      <title>DHCPv4 Server Limitations</title>
+      <para>These are the current limitations of the DHCPv4 server
+      software. Most of them are reflections of the current stage of
+      development and should be treated as <quote>not implemented
+      yet</quote>, rather than actual limitations.</para>
+      <itemizedlist>
+          <listitem> <!-- see tickets #3234, #3281 -->
+            <simpara>
+              Removal of a subnet during server reconfiguration may cause renumbering
+              of auto-generated subnet identifiers, as described in section
+              <xref linkend="ipv4-subnet-id"/>.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              BOOTP (<ulink url="http://tools.ietf.org/html/rfc951">RFC 951</ulink>)
+              is not supported.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>Raw sockets operation is working on Linux
+            only. See <xref linkend="iface-detect"/> for details.</simpara>
+          </listitem>
+          <listitem>
+            <simpara>The DHCPv4 server does not  verify that
+            assigned address is unused. According to <ulink url="http://tools.ietf.org/html/rfc2131">RFC 2131</ulink>, the
+            allocating server should verify that address is not used by
+            sending ICMP echo request.</simpara>
+          </listitem>
+          <listitem>
+            <simpara>Address duplication report (DECLINE) is not supported yet.</simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              The server doesn't act upon expired leases. In particular,
+              when a lease expires, the server doesn't request the removal
+              of the DNS records associated with it.
+            </simpara>
+          </listitem>
+      </itemizedlist>
+    </section>
+
+    <!--
+    <section id="dhcp4-srv-examples">
+      <title>Kea DHCPv4 server examples</title>
+
+      <para>
+        This section provides easy to use example. Each example can be read
+        separately. It is not intended to be read sequentially as there will
+        be many repetitions between examples. They are expected to serve as
+        easy to use copy-paste solutions to many common deployments.
+      </para>
+
+      @todo: add simple configuration for direct clients
+      @todo: add configuration for relayed clients
+      @todo: add client classification example
+
+    </section> -->
+
+  </chapter>
