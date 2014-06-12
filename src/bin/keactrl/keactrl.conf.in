@@ -1,0 +1,18 @@
+# This is a configuration file for keactrl script which controls
+# the startup, shutdown, reconfiguration and gathering the status
+# of the Kea's processes.
+
+# prefix holds the location where the Kea is installed.
+prefix=@prefix@
+
+# Location of Kea configuration file.
+kea_config_file=@sysconfdir@/@PACKAGE@/kea.conf
+
+# Start DHCPv4 server?
+kea4=yes
+
+# Start DHCPv6 server?
+kea6=yes
+
+# Be verbose?
+kea_verbose=no
