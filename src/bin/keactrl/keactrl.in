@@ -103,6 +103,15 @@ as another instance is already running."
 
 ### Script starts here ###
 
+# Configure logger to log messages into the file.
+# Do not set destination if the B10_LOGGER_DESTINATION is set,
+# because a unit test could have set this to some other location.
+# @todo Rely on the Kea configuration file once #3427 is done.
+if [ -z ${B10_LOGGER_DESTINATION} ]; then
+    prefix=@prefix@
+    export B10_LOGGER_DESTINATION=@localstatedir@/@PACKAGE@/kea.log
+fi
+
 command=
 if [ $# -ne 1 ]; then
     log_error "No command specified. Use: start, stop, commit or status."
