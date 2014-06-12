@@ -133,10 +133,10 @@ if test -n "${KEACTRL_BUILD_DIR}"; then
 else
     prefix=@prefix@
     exec_prefix=@exec_prefix@
-    dhcpv4_srv=@libexecdir@/@PACKAGE@/dhcp4/b10-dhcp4
-    dhcpv6_srv=@libexecdir@/@PACKAGE@/dhcp6/b10-dhcp6
+    dhcpv4_srv=@libexecdir@/@PACKAGE@/b10-dhcp4
+    dhcpv6_srv=@libexecdir@/@PACKAGE@/b10-dhcp6
     dhcp_ddns=@libexecdir@/@PACKAGE@/b10-dhcp-ddns
-    keactrl_conf=@etcdir@/@PACKAGE@/keactrl.conf
+    keactrl_conf=@sysconfdir@/@PACKAGE@/keactrl.conf
 fi
 
 # KEACTRL_CONF environment variable may hold a location of the keactrl
@@ -148,7 +148,7 @@ fi
 
 # Check if the file exists. If it doesn't, it is a fatal error.
 if [ ! -f ${keactrl_conf} ]; then
-    log_error "keactrl configuration file doesn't exist."
+    log_error "keactrl configuration file doesn't exist in ${keactrl_conf}."
     exit 1
 fi
 
@@ -159,6 +159,9 @@ fi
 # keactrl configuration file. If not, it is a fatal error.
 if [ -z ${kea_config_file} ]; then
     log_error "Configuration file for Kea not specified."
+    exit 1
+elif [ ! -f ${kea_config_file} ]; then
+    log_error "Configuration file for Kea does not exist: ${kea_config_file}."
     exit 1
 fi
 
