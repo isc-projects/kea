@@ -112,7 +112,7 @@
 
     <section id="starting_stopping">
       <title>Starting and Stopping the Server</title>
-      <!-- @todo: Rewrite this section as part of #3422-->
+      <!-- @todo: Rewrite this section after #3422 is done -->
       <para>
         Kea is modular.  Part of this modularity is
         accomplished using multiple cooperating processes which, together,
@@ -221,7 +221,7 @@
 
     <section id="managing_once_running">
       <title>Managing BIND 10</title>
-      <!-- @todo: Rewrite this section as part of #3422 -->
+      <!-- @todo: Rewrite this section after #3422 is done -->
 
       <para>
         Once BIND 10 is running, a few commands are used to interact
