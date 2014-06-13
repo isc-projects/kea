@@ -556,35 +556,6 @@ IfaceMgr::openMulticastSocket(Iface& iface,
         return (false);
 
     }
-
-    // To receive multicast traffic, Linux requires binding socket to
-    // the multicast address.
-
-    /// @todo The DHCPv6 requires multicast so we may want to think
-    /// whether we want to open the socket on a multicast-incapable
-    /// interface or not. For now, we prefer to be liberal and allow
-    /// it for some odd use cases which may utilize non-multicast
-    /// interfaces. Perhaps a warning should be emitted if the
-    /// interface is not a multicast one.
-    if (iface.flag_multicast_) {
-        try {
-            openSocket(iface.getName(),
-                       IOAddress(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
-                       port);
-        } catch (const Exception& ex) {
-            // An attempt to open and bind a socket to multicast addres
-            // has failed. We have to close the socket we previously
-            // bound to link-local address - this is everything or
-            // nothing strategy.
-            iface.delSocket(sock);
-            IFACEMGR_ERROR(SocketConfigError, error_handler,
-                           "Failed to open multicast socket on"
-                           " interface " << iface.getName()
-                           << ", reason: " << ex.what());
-            return (false);
-        }
-    }
-    // Both sockets have opened successfully.
     return (true);
 }
 
