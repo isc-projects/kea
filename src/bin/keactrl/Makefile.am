@@ -5,9 +5,9 @@ SUBDIRS = . tests
 # If the default location needs to be changed the it may be achieved by
 # setting KEACTRL_CONF environment variable.
 sbin_SCRIPTS  = keactrl
-CONFIGFILES = keactrl.conf
+CONFIGFILES = keactrl.conf kea.conf
 
-DISTCLEANFILES = keactrl keactrl.conf
+DISTCLEANFILES = keactrl $(CONFIGFILES)
 EXTRA_DIST = keactrl.in keactrl.conf.in
 
 install-data-local:
