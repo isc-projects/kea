@@ -397,23 +397,25 @@ to temporary add asterisk and retain the list of interface names.
   <para>
     The server may be configured to serve more than one subnet:
 <screen>
-"subnet4": [
-    {
-        "subnet": "192.0.2.0/24",
-        "pool": [ "192.0.2.1 - 192.0.2.200" ],
-        ...
-    },
-    {
-        "subnet": "192.0.3.0/24",
-        "pool": [ "192.0.3.100 - 192.0.3.200" ],
-        ...
-    },
-    {
-        "subnet": "192.0.4.0/24",
-        "pool": [ "192.0.4.1 - 192.0.4.254" ],
-        ...
-    }
-]
+"Dhcp4": {
+    "subnet4": [
+        {
+            "subnet": "192.0.2.0/24",
+            "pool": [ "192.0.2.1 - 192.0.2.200" ],
+            ...
+        },
+        {
+            "subnet": "192.0.3.0/24",
+            "pool": [ "192.0.3.100 - 192.0.3.200" ],
+            ...
+        },
+        {
+            "subnet": "192.0.4.0/24",
+            "pool": [ "192.0.4.1 - 192.0.4.254" ],
+            ...
+        }
+    ]
+}
 </screen>
   </para>
   <para>
@@ -439,26 +441,29 @@ to temporary add asterisk and retain the list of interface names.
         to all configured subnets.
 
         <screen>
-&gt; <userinput>config add Dhcp4/option-data</userinput>
-&gt; <userinput>config set Dhcp4/option-data[0]/name "domain-name-servers"</userinput>
-&gt; <userinput>config set Dhcp4/option-data[0]/code 6</userinput>
-&gt; <userinput>config set Dhcp4/option-data[0]/space "dhcp4"</userinput>
-&gt; <userinput>config set Dhcp4/option-data[0]/csv-format true</userinput>
-&gt; <userinput>config set Dhcp4/option-data[0]/data "192.0.3.1, 192.0.3.2"</userinput>
-&gt; <userinput>config commit</userinput>
+"Dhcp4": {
+    "option-data": [
+        {
+           <userinput>"name": "domain-name-servers",
+           "code": 6,
+           "space": "dhcp4",
+           "csv-format": true,
+           "data": "192.0.2.1, 192.0.2.2"</userinput>
+        },
+        ...
+    ]
+}
 </screen>
       </para>
     <para>
-      The first line creates new entry in option-data table. It
-      contains information on all global options that the server is
-      supposed to configure in all subnets. The second line specifies
+      The name parameter specifies
       option name. For a complete list of currently supported names,
       see <xref linkend="dhcp4-std-options-list"/> below.
-      The third line specifies option code, which must match one of the
-      values from that list. Line 4 specifies option space, which must always
+      The "code" parameter specifies the option code, which must match one of the
+      values from that list. The next line specifies option space, which must always
       be set to "dhcp4" as these are standard DHCPv4 options. For
       other option spaces, including custom option spaces, see <xref
-      linkend="dhcp4-option-spaces"/>. The fifth line specifies the format in
+      linkend="dhcp4-option-spaces"/>. The next line specifies the format in
       which the data will be entered: use of CSV (comma
       separated values) is recommended. The sixth line gives the actual value to
       be sent to clients. Data is specified as a normal text, with
@@ -473,18 +478,23 @@ to temporary add asterisk and retain the list of interface names.
       subnets with the following addresses: 192.0.3.1 and 192.0.3.2.
       Note that csv-format is set to false.
       <screen>
-&gt; <userinput>config add Dhcp4/option-data</userinput>
-&gt; <userinput>config set Dhcp4/option-data[0]/name "domain-name-servers"</userinput>
-&gt; <userinput>config set Dhcp4/option-data[0]/code 6</userinput>
-&gt; <userinput>config set Dhcp4/option-data[0]/space "dhcp4"</userinput>
-&gt; <userinput>config set Dhcp4/option-data[0]/csv-format false</userinput>
-&gt; <userinput>config set Dhcp4/option-data[0]/data "C0 00 03 01 C0 00 03 02"</userinput>
-&gt; <userinput>config commit</userinput>
-        </screen>
+"Dhcp4": {
+    "option-data": [
+        {
+            <userinput>"name": "domain-name-servers",
+            "code": 6,
+            "space": "dhcp4",
+            "csv-format": false,
+            "data": "C0 00 03 01 C0 00 03 02"</userinput>
+        },
+        ...
+    ],
+    ...
+}</screen>
       </para>
 
       <para>
-        It is possible to override options on a per-subnet basis.  If
+        It is possible to specify or override options on a per-subnet basis.  If
         clients connected to most of your subnets are expected to get the
         same values of a given option, you should use global options: you
         can then override specific values for a small number of subnets.
@@ -497,17 +507,31 @@ to temporary add asterisk and retain the list of interface names.
         The following commands override the global
         DNS servers option for a particular subnet, setting a single DNS
         server with address 192.0.2.3.
-        <screen>
-&gt; <userinput>config add Dhcp4/subnet4[0]/option-data</userinput>
-&gt; <userinput>config set Dhcp4/subnet4[0]/option-data[0]/name "domain-name-servers"</userinput>
-&gt; <userinput>config set Dhcp4/subnet4[0]/option-data[0]/code 6</userinput>
-&gt; <userinput>config set Dhcp4/subnet4[0]/option-data[0]/space "dhcp4"</userinput>
-&gt; <userinput>config set Dhcp4/subnet4[0]/option-data[0]/csv-format true</userinput>
-&gt; <userinput>config set Dhcp4/subnet4[0]/option-data[0]/data "192.0.2.3"</userinput>
-&gt; <userinput>config commit</userinput></screen>
+<screen>
+"Dhcp4": {
+    "subnet4": [
+        {
+            <userinput>"option-data": [
+                {
+                    "name": "domain-name-servers",
+                    "code": 6,
+                    "space: "dhcp4",
+                    "csv-format": true,
+                    "data": "192.0.2.3"
+                },
+                ...
+            ]</userinput>,
+            ...
+        },
+        ...
+    ],
+    ...
+}
+</screen>
       </para>
 
       <note>
+        <!-- @todo Ticket #3467 created for this -->
         <para>In a future version of Kea, it will not be necessary to specify
         the option code, space and csv-format fields as they will be set
         automatically.</para>
@@ -702,20 +726,27 @@ to temporary add asterisk and retain the list of interface names.
 
     <section id="dhcp4-custom-options">
       <title>Custom DHCPv4 options</title>
-      <para>It is also possible to define options other than the standard ones.
-      Assume that we want to define a new DHCPv4 option called "foo" which will have
-      code 222 and will convey a single unsigned 32 bit integer value. We can define
-      such an option by using the following commands:
-      <screen>
-&gt; <userinput>config add Dhcp4/option-def</userinput>
-&gt; <userinput>config set Dhcp4/option-def[0]/name "foo"</userinput>
-&gt; <userinput>config set Dhcp4/option-def[0]/code 222</userinput>
-&gt; <userinput>config set Dhcp4/option-def[0]/type "uint32"</userinput>
-&gt; <userinput>config set Dhcp4/option-def[0]/array false</userinput>
-&gt; <userinput>config set Dhcp4/option-def[0]/record-types ""</userinput>
-&gt; <userinput>config set Dhcp4/option-def[0]/space "dhcp4"</userinput>
-&gt; <userinput>config set Dhcp4/option-def[0]/encapsulate ""</userinput>
-&gt; <userinput>config commit</userinput></screen>
+      <para>Kea supports custom (non-standard) DHCPv4 options. Assume
+      that we want to define a new DHCPv4 option called "foo" which
+      will have code 222 and will convey a single unsigned 32 bit
+      integer value. We can define such an option by using the
+      following commands:
+<screen>
+"Dhcp4": {
+    "option-def": [
+        {
+            <userinput>"name": "foo",
+            "code": 222,
+            "type": "uint32",
+            "array": false,
+            "record-types": "",
+            "space": "dhcp4",
+            "encapsulate": ""</userinput>
+        }, ...
+    ],
+    ...
+}
+</screen>
       The "false" value of the "array" parameter determines that the option
       does NOT comprise an array of "uint32" values but rather a single value.
       Two other parameters have been left blank: "record-types" and "encapsulate".
@@ -740,14 +771,20 @@ to temporary add asterisk and retain the list of interface names.
       <para>Once the new option format is defined, its value is set
       in the same way as for a standard option. For example the following
       commands set a global value that applies to all subnets.
-        <screen>
-&gt; <userinput>config add Dhcp4/option-data</userinput>
-&gt; <userinput>config set Dhcp4/option-data[0]/name "foo"</userinput>
-&gt; <userinput>config set Dhcp4/option-data[0]/code 222</userinput>
-&gt; <userinput>config set Dhcp4/option-data[0]/space "dhcp4"</userinput>
-&gt; <userinput>config set Dhcp4/option-data[0]/csv-format true</userinput>
-&gt; <userinput>config set Dhcp4/option-data[0]/data "12345"</userinput>
-&gt; <userinput>config commit</userinput></screen>
+<screen>
+"Dhcp4": {
+    "option-data": [
+        {
+            <userinput>name "foo",
+            "code": 222,
+            "space": "dhcp4",
+            "csv-format": true,
+            "data": "12345"</userinput>
+        }, ...
+    ],
+    ...
+}
+</screen>
       </para>
 
       <para>New options can take more complex forms than simple use of
@@ -759,14 +796,20 @@ to temporary add asterisk and retain the list of interface names.
       a boolean value, followed by a text string. Such an option could
       be defined in the following way:
 <screen>
-&gt; <userinput>config add Dhcp4/option-def</userinput>
-&gt; <userinput>config set Dhcp4/option-def[0]/name "bar"</userinput>
-&gt; <userinput>config set Dhcp4/option-def[0]/code 223</userinput>
-&gt; <userinput>config set Dhcp4/option-def[0]/space "dhcp4"</userinput>
-&gt; <userinput>config set Dhcp4/option-def[0]/type "record"</userinput>
-&gt; <userinput>config set Dhcp4/option-def[0]/array false</userinput>
-&gt; <userinput>config set Dhcp4/option-def[0]/record-types "ipv4-address, uint16, boolean, string"</userinput>
-&gt; <userinput>config set Dhcp4/option-def[0]/encapsulate ""</userinput>
+"Dhcp4": {
+    "option-def": [
+        {
+            <userinput>"name": "bar",
+            "code": 223,
+            "space": "dhcp4",
+            "type": "record",
+            "array": false,
+            "record-types": "ipv4-address, uint16, boolean, string",
+            "encapsulate": ""</userinput>
+        }, ...
+    ],
+    ...
+}
 </screen>
       The "type" is set to "record" to indicate that the option contains
       multiple values of different types.  These types are given as a comma-separated
