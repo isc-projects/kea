@@ -2,7 +2,7 @@ SUBDIRS = . tests
 
 # Install keactrl in sbin and the keactrl.conf required by the keactrl
 # in etc. keactrl will look for its configuration file in the etc folder.
-# If the default location needs to be changed the it may be achieved by
+# If the default location needs to be changed it may be achieved by
 # setting KEACTRL_CONF environment variable.
 sbin_SCRIPTS  = keactrl
 CONFIGFILES = keactrl.conf kea.conf
