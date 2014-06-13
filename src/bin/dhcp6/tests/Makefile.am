@@ -4,16 +4,13 @@ SHTESTS =
 # The test of dynamic reconfiguration based on signals will work only
 # if we are using file based configuration approach.
 if CONFIG_BACKEND_JSON
-SHTESTS += dhcp6_reconfigure_test.sh
-SHTESTS += dhcp6_sigterm_test.sh
-SHTESTS += dhcp6_sigint_test.sh
+SHTESTS += dhcp6_process_tests.sh
 endif
 
+noinst_SCRIPTS = dhcp6_process_tests.sh
+
 EXTRA_DIST = $(PYTESTS)
-EXTRA_DIST += dhcp6_reconfigure_test.sh
-EXTRA_DIST += dhcp6_sigterm_test.sh
-EXTRA_DIST += dhcp6_sigint_test.sh
-EXTRA_DIST += dhcp6_shutdown_test.sh
+EXTRA_DIST += dhcp6_process_tests.sh.in
 
 # Explicitly specify paths to dynamic libraries required by loadable python
 # modules. That is required on Mac OS systems. Otherwise we will get exception
