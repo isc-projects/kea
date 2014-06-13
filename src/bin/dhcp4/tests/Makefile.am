@@ -34,7 +34,7 @@ check-local:
 	for shtest in $(SHTESTS) ; do \
 	echo Running test: $$shtest ; \
 	export B10_LOCKFILE_DIR_FROM_BUILD=$(abs_top_builddir); \
-	$(abs_srcdir)/$$shtest || exit ; \
+	${SHELL} $(abs_srcdir)/$$shtest || exit ; \
 	done
 
 
@@ -51,6 +51,8 @@ AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 CLEANFILES = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
 CLEANFILES += $(builddir)/load_marker.txt $(builddir)/unload_marker.txt
 CLEANFILES += *.json *.log
+
+DISTCLEANFILES = dhcp4_process_tests.sh
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 if USE_CLANGPP
