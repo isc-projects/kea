@@ -42,7 +42,13 @@ PktFilterInet6::openSocket(const Iface& iface,
         addr6.sin6_scope_id = if_nametoindex(iface.getName().c_str());
     }
 
-    memcpy(&addr6.sin6_addr, &addr.toBytes()[0], sizeof(addr6.sin6_addr));
+    // In order to listen to the multicast traffic we need to bind socket
+    // to in6addr_any.
+    if (join_multicast && iface.flag_multicast_) {
+        memcpy(&addr6.sin6_addr, &in6addr_any, sizeof(addr6.sin6_addr));
+    } else {
+        memcpy(&addr6.sin6_addr, &addr.toBytes()[0], sizeof(addr6.sin6_addr));
+    }
 #ifdef HAVE_SA_LEN
     addr6.sin6_len = sizeof(addr6);
 #endif

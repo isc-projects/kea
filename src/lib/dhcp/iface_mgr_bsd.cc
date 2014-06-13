@@ -156,10 +156,9 @@ IfaceMgr::openMulticastSocket(Iface& iface,
                               const uint16_t port,
                               IfaceMgrErrorMsgCallback error_handler) {
     try {
-        // This should open a socket, bound it to link-local address
+        // This should open a socket, bind it to link-local address
         // and join multicast group.
-        openSocket(iface.getName(), addr, port,
-                   iface.flag_multicast_);
+        openSocket(iface.getName(), addr, port, iface.flag_multicast_);
 
     } catch (const Exception& ex) {
         IFACEMGR_ERROR(SocketConfigError, error_handler,
