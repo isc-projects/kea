@@ -475,3 +475,8 @@ server.
 % DHCP_DDNS_UPDATE_RESPONSE_RECEIVED for transaction key: %1  to server: %2 status: %3
 This is a debug message issued when DHCP_DDNS receives sends a DNS update
 response from a DNS server.
+
+% DHCP_DDNS_SIGNAL_ERROR The signal handler for signal %1,  threw an unexpected exception: %2
+This is an error message indicating that the application encountered an unexpected error after receiving a signal.  This is a programmatic error and should be
+reported.  While The application will likely continue to operating, it may be
+unable to respond correctly to signals.
