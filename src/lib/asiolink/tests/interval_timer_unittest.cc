@@ -57,7 +57,6 @@ protected:
         }
         void operator()() {
             ++counter_;
-            std::cout << "inside counter cb: " << counter_ << std::endl;
             return;
         }
         int counter_;
