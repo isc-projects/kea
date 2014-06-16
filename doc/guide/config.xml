@@ -107,7 +107,9 @@
         context. For example, when discussing IPv6 subnets configuration in
         DHCPv6, only subnet6 parameters will be mentioned. It is implied that
         remaining elements (global that holds Dhcp6, Logging and possibly
-        DhcpDdns) are present, but are omitted for clarity. </para>
+        DhcpDdns) are present, but are omitted for clarity. Usually, locations
+        where extra parameters may appear are denoted with ellipsis (triple
+        dot).</para>
     </section>
 
     <section>

@@ -818,13 +818,18 @@ to temporary add asterisk and retain the list of interface names.
       <para>
       The values of the option are set as follows:
 <screen>
-&gt; <userinput>config add Dhcp4/option-data</userinput>
-&gt; <userinput>config set Dhcp4/option-data[0]/name "bar"</userinput>
-&gt; <userinput>config set Dhcp4/option-data[0]/space "dhcp4"</userinput>
-&gt; <userinput>config set Dhcp4/option-data[0]/code 223</userinput>
-&gt; <userinput>config set Dhcp4/option-data[0]/csv-format true</userinput>
-&gt; <userinput>config set Dhcp4/option-data[0]/data "192.0.2.100, 123, true, Hello World"</userinput>
-&gt; <userinput>config commit</userinput></screen>
+"Dhcp4": {
+    "option-data": [
+        {
+            <userinput>"name": "bar",
+            "space": "dhcp4",
+            "code": 223,
+            "csv-format": true,
+            "data": "192.0.2.100, 123, true, Hello World"</userinput>
+        }
+    ],
+    ...
+}</screen>
       "csv-format" is set "true" to indicate that the "data" field comprises a command-separated
       list of values.  The values in the "data" must correspond to the types set in
       the "record-types" field of the option definition.
@@ -857,37 +862,51 @@ to temporary add asterisk and retain the list of interface names.
       <para>
       The first step is to define the format of the option:
 <screen>
-&gt; <userinput>config add Dhcp4/option-def</userinput>
-&gt; <userinput>config set Dhcp4/option-def[0]/name "foo"</userinput>
-&gt; <userinput>config set Dhcp4/option-def[0]/code 1</userinput>
-&gt; <userinput>config set Dhcp4/option-def[0]/space "vendor-encapsulated-options-space"</userinput>
-&gt; <userinput>config set Dhcp4/option-def[0]/type "record"</userinput>
-&gt; <userinput>config set Dhcp4/option-def[0]/array false</userinput>
-&gt; <userinput>config set Dhcp4/option-def[0]/record-types "ipv4-address, uint16, string"</userinput>
-&gt; <userinput>config set Dhcp4/option-def[0]/encapsulates ""</userinput>
-&gt; <userinput>config commit</userinput>
-</screen>
+"Dhcp4": {
+    "option-def": [
+        {
+            <userinput>"name": "foo",
+            "code": 1,
+            "space": "vendor-encapsulated-options-space",
+            "type": "record",
+            "array: false,
+            "record-types": "ipv4-address, uint16, string",
+            "encapsulates": ""</userinput>
+        }
+    ],
+    ...
+}</screen>
      (Note that the option space is set to "vendor-encapsulated-options-space".)
      Once the option format is defined, the next step is to define actual values
      for that option:
-     <screen>
-&gt; <userinput>config add Dhcp4/option-data</userinput>
-&gt; <userinput>config set Dhcp4/option-data[0]/name "foo"</userinput>
-&gt; <userinput>config set Dhcp4/option-data[0]/space "vendor-encapsulated-options-space"</userinput>
-&gt; <userinput>config set Dhcp4/option-data[0]/code 1</userinput>
-&gt; <userinput>config set Dhcp4/option-data[0]/csv-format true</userinput>
-&gt; <userinput>config set Dhcp4/option-data[0]/data "192.0.2.3, 123, Hello World"</userinput>
-&gt; <userinput>config commit</userinput></screen>
+<screen>
+"Dhcp4": {
+    "option-data": [
+        {
+            <userinput>"name": "foo"
+            "space": "vendor-encapsulated-options-space",
+            "code": 1,
+            "csv-format": true,
+            "data": "192.0.2.3, 123, Hello World"</userinput>
+        }
+    ],
+    ...
+}</screen>
     We also set up a dummy value for vendor-opts, the option that conveys our sub-option "foo".
     This is required else the option will not be included in messages sent to the client.
-     <screen>
-&gt; <userinput>config add Dhcp4/option-data</userinput>
-&gt; <userinput>config set Dhcp4/option-data[1]/name "vendor-encapsulated-options"</userinput>
-&gt; <userinput>config set Dhcp4/option-data[1]/space "dhcp4"</userinput>
-&gt; <userinput>config set Dhcp4/option-data[1]/code 43</userinput>
-&gt; <userinput>config set Dhcp4/option-data[1]/csv-format false</userinput>
-&gt; <userinput>config set Dhcp4/option-data[1]/data ""</userinput>
-&gt; <userinput>config commit</userinput></screen>
+<screen>
+"Dhcp4": {
+    "option-data": [
+        {
+            <userinput>"name": "vendor-encapsulated-options"
+            "space": "dhcp4",
+            "code": 43,
+            "csv-format": false,
+            "data: ""</userinput>
+        }
+    ],
+    ...
+}</screen>
       </para>
 
       <note>
@@ -922,26 +941,29 @@ to temporary add asterisk and retain the list of interface names.
       code 222 that conveys two sub-options with codes 1 and 2.
       First we need to define the new sub-options:
 <screen>
-&gt; <userinput>config add Dhcp4/option-def</userinput>
-&gt; <userinput>config set Dhcp4/option-def[0]/name "subopt1"</userinput>
-&gt; <userinput>config set Dhcp4/option-def[0]/code 1</userinput>
-&gt; <userinput>config set Dhcp4/option-def[0]/space "isc"</userinput>
-&gt; <userinput>config set Dhcp4/option-def[0]/type "ipv4-address"</userinput>
-&gt; <userinput>config set Dhcp4/option-def[0]/record-types ""</userinput>
-&gt; <userinput>config set Dhcp4/option-def[0]/array false</userinput>
-&gt; <userinput>config set Dhcp4/option-def[0]/encapsulate ""</userinput>
-&gt; <userinput>config commit</userinput>
-
-&gt; <userinput>config add Dhcp4/option-def</userinput>
-&gt; <userinput>config set Dhcp4/option-def[1]/name "subopt2"</userinput>
-&gt; <userinput>config set Dhcp4/option-def[1]/code 2</userinput>
-&gt; <userinput>config set Dhcp4/option-def[1]/space "isc"</userinput>
-&gt; <userinput>config set Dhcp4/option-def[1]/type "string"</userinput>
-&gt; <userinput>config set Dhcp4/option-def[1]/record-types ""</userinput>
-&gt; <userinput>config set Dhcp4/option-def[1]/array false</userinput>
-&gt; <userinput>config set Dhcp4/option-def[1]/encapsulate ""</userinput>
-&gt; <userinput>config commit</userinput>
-</screen>
+"Dhcp4": {
+    "option-def": [
+        {
+            <userinput>"name": "subopt1",
+            "code": 1,
+            "space": "isc",
+            "type": "ipv4-address".
+            "record-types": "",
+            "array": false,
+            "encapsulate ""
+        },
+        {
+            "name": "subopt2",
+            "code": 2,
+            "space": "isc",
+            "type": "string",
+            "record-types": "",
+            "array": false
+            "encapsulate": ""</userinput>
+        }
+    ],
+    ...
+}</screen>
     Note that we have defined the options to belong to a new option space
     (in this case, "isc").
     </para>
@@ -949,16 +971,21 @@ to temporary add asterisk and retain the list of interface names.
     The next step is to define a regular DHCPv4 option with our desired
     code and specify that it should include options from the new option space:
 <screen>
-&gt; <userinput>add Dhcp4/option-def</userinput>
-&gt; <userinput>set Dhcp4/option-def[2]/name "container"</userinput>
-&gt; <userinput>set Dhcp4/option-def[2]/code 222</userinput>
-&gt; <userinput>set Dhcp4/option-def[2]/space "dhcp4"</userinput>
-&gt; <userinput>set Dhcp4/option-def[2]/type "empty"</userinput>
-&gt; <userinput>set Dhcp4/option-def[2]/array false</userinput>
-&gt; <userinput>set Dhcp4/option-def[2]/record-types ""</userinput>
-&gt; <userinput>set Dhcp4/option-def[2]/encapsulate "isc"</userinput>
-&gt; <userinput>commit</userinput>
-</screen>
+"Dhcp4": {
+    "option-def": [
+        ...,
+        {
+            <userinput>"name": "container",
+            "code": 222,
+            "space": "dhcp4",
+            "type": "empty",
+            "array": false,
+            "record-types": "",
+            "encapsulate": "isc"</userinput>
+        }
+    ],
+    ...
+}</screen>
     The name of the option space in which the sub-options are defined
     is set in the "encapsulate" field. The "type" field is set to "empty"
     to indicate that this option does not carry any data other than
@@ -967,29 +994,32 @@ to temporary add asterisk and retain the list of interface names.
     <para>
     Finally, we can set values for the new options:
 <screen>
-&gt; <userinput>config add Dhcp4/option-data</userinput>
-&gt; <userinput>config set Dhcp4/option-data[0]/name "subopt1"</userinput>
-&gt; <userinput>config set Dhcp4/option-data[0]/space "isc"</userinput>
-&gt; <userinput>config set Dhcp4/option-data[0]/code 1</userinput>
-&gt; <userinput>config set Dhcp4/option-data[0]/csv-format true</userinput>
-&gt; <userinput>config set Dhcp4/option-data[0]/data "192.0.2.3"</userinput>
-&gt; <userinput>config commit</userinput>
-<userinput></userinput>
-&gt; <userinput>config add Dhcp4/option-data</userinput>
-&gt; <userinput>config set Dhcp4/option-data[1]/name "subopt2"</userinput>
-&gt; <userinput>config set Dhcp4/option-data[1]/space "isc"</userinput>
-&gt; <userinput>config set Dhcp4/option-data[1]/code 2</userinput>
-&gt; <userinput>config set Dhcp4/option-data[1]/csv-format true</userinput>
-&gt; <userinput>config set Dhcp4/option-data[1]/data "Hello world"</userinput>
-&gt; <userinput>config commit</userinput>
-<userinput></userinput>
-&gt; <userinput>config add Dhcp4/option-data</userinput>
-&gt; <userinput>config set Dhcp4/option-data[2]/name "container"</userinput>
-&gt; <userinput>config set Dhcp4/option-data[2]/space "dhcp4"</userinput>
-&gt; <userinput>config set Dhcp4/option-data[2]/code 222</userinput>
-&gt; <userinput>config set Dhcp4/option-data[2]/csv-format true</userinput>
-&gt; <userinput>config set Dhcp4/option-data[2]/data ""</userinput>
-&gt; <userinput>config commit</userinput>
+"Dhcp4": {
+    "option-data": [
+        {
+            <userinput>"name": "subopt1",
+            "space": "isc",
+            "code": 1,
+            "csv-format": true,
+            "data": "192.0.2.3"</userinput>
+        },
+        }
+            <userinput>"name": "subopt2",
+            "space": "isc",
+            "code": 2,
+            "csv-format": true,
+            "data": "Hello world"</userinput>
+        },
+        {
+            <userinput>"name": "container",
+            "space": "dhcp4",
+            "code": 222,
+            "csv-format": true,
+            "data": ""</userinput>
+        }
+    ],
+    ...
+}
 </screen>
     Even though the "container" option does not carry any data except
     sub-options, the "data" field must be explicitly set to an empty value.
@@ -1075,11 +1105,16 @@ to temporary add asterisk and retain the list of interface names.
         VENDOR_CLASS_docsis3.0 are allowed to use this subnet. Such a
         configuration can be achieved in the following way:
         <screen>
-&gt; <userinput>config add Dhcp4/subnet4</userinput>
-&gt; <userinput>config set Dhcp4/subnet4[0]/subnet "192.0.2.0/24"</userinput>
-&gt; <userinput>config set Dhcp4/subnet4[0]/pool [ "192.0.2.10 - 192.0.2.20" ]</userinput>
-&gt; <userinput>config set Dhcp4/subnet4[0]/client-class "VENDOR_CLASS_docsis3.0"</userinput>
-&gt; <userinput>config commit</userinput></screen>
+"Dhcp4": {
+    "subnet4": [
+        {
+            <userinput>subnet: "192.0.2.0/24",
+            "pool": [ "192.0.2.10 - 192.0.2.20" ],
+            "client-class": "VENDOR_CLASS_docsis3.0"</userinput>
+        }
+    ],
+    ...
+}</screen>
       </para>
 
       <para>
@@ -1107,24 +1142,29 @@ to temporary add asterisk and retain the list of interface names.
       </orderedlist>
       The parameters for controlling the generation of NCRs for submission to D2
       are contained in the "dhcp-ddns" section of the b10-dhcp4 server
-      configuration. The default values for this section appears as follows:
+      configuration. The default values for this section appear as follows:
 <screen>
-&gt; <userinput>config show Dhcp4/dhcp-ddns</userinput>
-Dhcp4/dhcp-ddns/enable-updates	true	boolean
-Dhcp4/dhcp-ddns/server-ip	"127.0.0.1"	string
-Dhcp4/dhcp-ddns/server-port	53001	integer
-Dhcp4/dhcp-ddns/sender-ip	""	string
-Dhcp4/dhcp-ddns/sender-port	0	integer
-Dhcp4/dhcp-ddns/max-queue-size	1024	integer
-Dhcp4/dhcp-ddns/ncr-protocol	"UDP"	string
-Dhcp4/dhcp-ddns/ncr-format	"JSON"	string
-Dhcp4/dhcp-ddns/override-no-update	false	boolean
-Dhcp4/dhcp-ddns/override-client-update	false	boolean
-Dhcp4/dhcp-ddns/replace-client-name	false	boolean
-Dhcp4/dhcp-ddns/generated-prefix	"myhost"	string
-Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
+"Dhcp4": {
+    "dhcp-ddns": {
+        <userinput>"enable-updates": true,
+        "server-ip": "127.0.0.1",
+        "server-port": 53001,
+        "sender-ip": "",
+        "sender-port: 0,
+        "max-queue-size": 1024,
+        "ncr-protocol": "UDP",
+        "ncr-format": "JSON",
+        "override-no-update": false,
+        "override-client-update": false,
+        "replace-client-name": false,
+        "generated-prefix": "myhost",
+        "qualifying-suffix": "example.com"</userinput>
+    },
+    ...
+}
 </screen>
       </para>
+      <!-- this paragraph no longer applies as we don't have default values
       <para>
       The "enable-updates" parameter determines whether or not b10-dhcp4 will
       generate NCRs.  By default, this value is false hence DDNS updates are
@@ -1133,7 +1173,7 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
 <screen>
 &gt; <userinput>config set Dhcp4/dhcp-ddns/enable-updates true</userinput>
 &gt; <userinput>config commit</userinput>
-</screen>
+</screen> -->
       <section id="dhcpv4-d2-io-config">
       <title>DHCP-DDNS Server Connectivity</title>
       <para>
@@ -1182,12 +1222,17 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       all of the default values mentioned above should be sufficient.
       If, however, D2 has been configured to listen on a different address or
       port, these values must altered accordingly. For example, if D2 has been
-      configured to listen on 198.162.1.10 port 900, the following commands
+      configured to listen on 192.168.1.10 port 900, the following commands
       would be required:
 <screen>
-&gt; <userinput>config set Dhcp4/dhcp-ddns/server-ip "198.162.1.10"</userinput>
-&gt; <userinput>config set Dhcp4/dhcp-ddns/server-port 900</userinput>
-&gt; <userinput>config commit</userinput>
+"Dhcp4": {
+    "dhcp-ddns: {
+        <userinput>"server-ip": "192.168.1.10",
+        "server-port": 900</userinput>,
+        ...
+    },
+    ...
+}
 </screen>
       </para>
       </section>
@@ -1289,11 +1334,17 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       will be dropped by the b10-dhcp4.)
       </para>
       <para>
-      To override client delegation, issue the following commands:
+      To override client delegation, set the following values in your configuration
+      file:
       </para>
 <screen>
-&gt; <userinput>config set Dhcp4/dhcp-ddns/override-client-update true</userinput>
-&gt; <userinput>config commit</userinput>
+"Dhcp4": {
+    "dhcp-ddns": {
+        <userinput>"override-client-update": true</userinput>,
+        ...
+    },
+    ...
+}
 </screen>
       <para>
       The third row in the table above describes the case in which the client
@@ -1307,8 +1358,13 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       To override client delegation, issue the following commands:
       </para>
 <screen>
-&gt; <userinput>config set Dhcp4/dhcp-ddns/override-no-update true</userinput>
-&gt; <userinput>config commit</userinput>
+"Dhcp4": {
+    "dhcp-ddns": {
+        <userinput>"override-no-update": true</userinput>,
+        ...
+    },
+    ...
+}
 </screen>
       <para>
       b10-dhcp4 will always generate DDNS update requests if the client request
@@ -1354,8 +1410,13 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       parameter "replace-client-name" to true as follows:
       </para>
 <screen>
-&gt; <userinput>config set Dhcp4/dhcp-ddns/replace-client-name true</userinput>
-&gt; <userinput>config commit</userinput>
+"Dhcp4": {
+    "dhcp-ddns": {
+        <userinput>"replace-client-name": true</userinput>,
+        ...
+    },
+    ...
+}
 </screen>
       <para>
       The prefix used in the generation of a FQDN is specified by the
@@ -1363,8 +1424,13 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       its value simply set it to the desired string:
       </para>
 <screen>
-&gt; <userinput>config set Dhcp4/dhcp-ddns/generated-prefix "another.host"</userinput>
-&gt; <userinput>config commit</userinput>
+"Dhcp4": {
+    "dhcp-ddns": {
+        <userinput>"generated-prefix": "another.host"</userinput>,
+        ...
+    },
+    ...
+}
 </screen>
       <para>
       The suffix used when generating a FQDN or when qualifying a partial
@@ -1373,8 +1439,13 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       string:
       </para>
 <screen>
-&gt; <userinput>config set Dhcp4/dhcp-ddns/generated-prefix "our.net"</userinput>
-&gt; <userinput>config commit</userinput>
+"Dhcp4": {
+    "dhcp-ddns": {
+        <userinput>"generated-prefix": "foo.example.org"</userinput>,
+        ...
+    },
+    ...
+}
 </screen>
       </section>
       <para>
@@ -1393,6 +1464,58 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
         myhost-172-16-1-10.example.com.
       </para>
     </section>
+
+    <section id="dhcp4-next-server">
+      <title>Next server (siaddr)</title>
+      <para>In some cases, clients want to obtain configuration from the TFTP server.
+      Although there is a dedicated option for it, some devices may use siaddr field
+      in the DHCPv4 packet for that purpose. That specific field can be configured
+      using next-server directive. It is possible to define it in global scope or
+      for a given subnet only. If both are defined, subnet value takes precedence.
+      The value in subnet can be set to 0.0.0.0, which means that next-server should
+      not be sent. It may also be set to empty string, which means the same as if
+      it was not defined at all - use global value.
+      </para>
+
+<screen>
+"Dhcp4": {
+    <userinput>"next-server": "192.0.2.123"</userinput>,
+    ...,
+    "subnet4": {
+        [
+            <userinput>"next-server": "192.0.2.234"</userinput>,
+            ...
+        ]
+    }
+}
+</screen>
+    </section>
+
+    <section id="dhcp4-echo-client-id">
+      <title>Echoing client-id (RFC6842)</title>
+      <para>Original DHCPv4 spec (RFC2131) states that the DHCPv4
+      server must not send back client-id options when responding to
+      clients. However, in some cases that confused clients that did
+      not have MAC address or client-id. See RFC6842 for details. That
+      behavior has changed with the publication of RFC6842 which
+      updated RFC2131. That update now states that the server must
+      send client-id if client sent it. That is the default behaviour
+      that Kea offers. However, in some cases older devices that do
+      not support RFC6842 may refuse to accept responses that include
+      client-id option. To enable backward compatibility, an optional
+      configuration parameter has been introduced. To configure it,
+      use the following commands:</para>
+
+<screen>
+"Dhcp4": {
+    <userinput>"echo-client-id": false</userinput>,
+    ...
+}
+</screen>
+    </section>
+
+
+  thomson
 
   </section> <!-- end of configuring b10-dhcp4 server section with many subsections -->
 
@@ -1413,56 +1536,8 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       </para>
     </section>
 
-
-    <section id="dhcp4-next-server">
-      <title>Next server (siaddr)</title>
-      <para>In some cases, clients want to obtain configuration from the TFTP server.
-      Although there is a dedicated option for it, some devices may use siaddr field
-      in the DHCPv4 packet for that purpose. That specific field can be configured
-      using next-server directive. It is possible to define it in global scope or
-      for a given subnet only. If both are defined, subnet value takes precedence.
-      The value in subnet can be set to 0.0.0.0, which means that next-server should
-      not be sent. It may also be set to empty string, which means the same as if
-      it was not defined at all - use global value.
-      </para>
-
-<screen>
-&gt; <userinput>config add Dhcp4/next-server</userinput>
-&gt; <userinput>config set Dhcp4/next-server "192.0.2.123"</userinput>
-&gt; <userinput>config commit</userinput>
-<userinput></userinput>
-&gt; <userinput>config add Dhcp4/subnet[0]/next-server</userinput>
-&gt; <userinput>config set Dhcp4/subnet[0]/next-server "192.0.2.234"</userinput>
-&gt; <userinput>config commit</userinput>
-</screen>
-
-    </section>
-
-    <section id="dhcp4-echo-client-id">
-      <title>Echoing client-id (RFC6842)</title>
-      <para>Original DHCPv4 spec (RFC2131) states that the DHCPv4
-      server must not send back client-id options when responding to
-      clients. However, in some cases that confused clients that did
-      not have MAC address or client-id. See RFC6842 for details. That
-      behavior has changed with the publication of RFC6842 which
-      updated RFC2131. That update now states that the server must
-      send client-id if client sent it. That is the default behaviour
-      that Kea offers. However, in some cases older devices that do
-      not support RFC6842 may refuse to accept responses that include
-      client-id option. To enable backward compatibility, an optional
-      configuration parameter has been introduced. To configure it,
-      use the following commands:</para>
-
-<screen>
-&gt; <userinput>config add Dhcp4/echo-client-id</userinput>
-&gt; <userinput>config set Dhcp4/echo-client-id False</userinput>
-&gt; <userinput>config commit</userinput>
-</screen>
-
-    </section>
-
     <section id="dhcp4-subnet-selection">
-      <title>How DHCPv4 server selects subnet for a client</title>
+      <title>How DHCPv4 server selects a subnet for the client</title>
       <para>
         The DHCPv4 server differentiates between the directly connected clients,
         clients trying to renew leases and clients sending their messages through
@@ -1498,7 +1573,6 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
         mechanism alters the way in which subnet is selected for the client,
         depending on the classes that the client belongs to.</para>
       </note>
-    </section>
 
     <section id="dhcp4-relay-override">
       <title>Using specific relay agent for a subnet</title>
@@ -1528,12 +1602,21 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
         The server will be able to select this subnet for any incoming packets
         that came from a relay that has an address in 192.0.2.0/24 subnet.
         It will also select that subnet for a relay with address 10.0.0.1.
-        <screen>
-&gt; <userinput>config add Dhcp4/subnet4</userinput>
-&gt; <userinput>config set Dhcp4/subnet4[0]/subnet "192.0.2.0/24"</userinput>
-&gt; <userinput>config set Dhcp4/subnet4[0]/pool [ "192.0.2.10 - 192.0.2.20" ]</userinput>
-&gt; <userinput>config set Dhcp4/subnet4[0]/relay/ip-address "10.0.0.1"</userinput>
-&gt; <userinput>config commit</userinput></screen>
+<screen>
+"Dhcp4": {
+    "subnet4: [
+        {
+            "subnet": "192.0.2.0/24",
+            "pool": [ "192.0.2.10 - 192.0.2.20" ],
+            <userinput>"relay": {
+                "ip-address": "10.0.0.1"
+            }</userinput>,
+            ...
+        }
+    ],
+    ...
+}
+</screen>
       </para>
 
     </section>
@@ -1555,19 +1638,33 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
           everything connected behind modems should get addresses from another
           subnet (192.0.2.0/24). The CMTS that acts as a relay an uses address
           10.1.1.1. The following configuration can serve that configuration:
-        <screen>
-&gt; <userinput>config add Dhcp4/subnet4</userinput>
-&gt; <userinput>config set Dhcp4/subnet4[0]/subnet "10.1.1.0/24"</userinput>
-&gt; <userinput>config set Dhcp4/subnet4[0]/pool [ "10.1.1.2 - 10.1.1.20" ]</userinput>
-&gt; <userinput>config set Dhcp4/subnet4[0]/client-class "docsis3.0"</userinput>
-&gt; <userinput>config set Dhcp4/subnet4[0]/relay/ip-address "10.1.1.1"</userinput>
-&gt; <userinput>config add Dhcp4/subnet4</userinput>
-&gt; <userinput>config set Dhcp4/subnet4[1]/subnet "192.0.2.0/24"</userinput>
-&gt; <userinput>config set Dhcp4/subnet4[1]/pool [ "192.0.2.10 - 192.0.2.20" ]</userinput>
-&gt; <userinput>config set Dhcp4/subnet4[1]/relay/ip-address "10.1.1.1"</userinput>
-&gt; <userinput>config commit</userinput></screen>
+<screen>
+"Dhcp4": {
+    "subnet4: [
+        {
+            "subnet": "10.1.1.0/24",
+            "pool":  [ "10.1.1.2 - 10.1.1.20" ],
+            <userinput>"client-class" "docsis3.0",
+            "relay": {
+                "ip-address": "10.1.1.1"
+            }</userinput>
+        },
+        {
+            "subnet": "192.0.2.0/24",
+            "pool": [ "192.0.2.10 - 192.0.2.20" ],
+            <userinput>"relay": {
+                "ip-address": "10.1.1.1"
+            }</userinput>
+        }
+    ],
+    ...
+}
+</screen>
       </para>
       </section>
+
+    </section>
+
 
     <section id="dhcp4-std">
       <title>Supported Standards</title>
@@ -1616,6 +1713,12 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
               of auto-generated subnet identifiers, as described in section
               <xref linkend="ipv4-subnet-id"/>.
             </simpara>
+          </listitem>
+          <listitem>
+            <simpara>Host reservation (statis addresses) is not supported yet.</simpara>
+          </listitem>
+          <listitem>
+            <simpara>Full featured client classification is not supported yet.</simpara>
           </listitem>
           <listitem>
             <simpara>
