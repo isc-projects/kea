@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -38,12 +38,15 @@ PktFilterInet6::openSocket(const Iface& iface,
     memset(&addr6, 0, sizeof(addr6));
     addr6.sin6_family = AF_INET6;
     addr6.sin6_port = htons(port);
-    if (addr.toText() != "::1") {
+    // sin6_scope_id must be set to interface index for link local addresses
+    // only. For other addresses it is left unspecified (0).
+    if ((addr.toText() != "::1") && addr.isV6LinkLocal()) {
         addr6.sin6_scope_id = if_nametoindex(iface.getName().c_str());
     }
 
     // In order to listen to the multicast traffic we need to bind socket
-    // to in6addr_any.
+    // to in6addr_any. If we bind to the link-local address the multicast
+    // packets will be filtered out.
     if (join_multicast && iface.flag_multicast_) {
         memcpy(&addr6.sin6_addr, &in6addr_any, sizeof(addr6.sin6_addr));
     } else {
@@ -66,13 +69,16 @@ PktFilterInet6::openSocket(const Iface& iface,
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
                    (char *)&flag, sizeof(flag)) < 0) {
         close(sock);
-        isc_throw(SocketConfigError, "Can't set SO_REUSEADDR option on dhcpv6 socket.");
+        isc_throw(SocketConfigError, "Can't set SO_REUSEADDR option on IPv6"
+                  " socket.");
     }
 
     if (bind(sock, (struct sockaddr *)&addr6, sizeof(addr6)) < 0) {
         close(sock);
-        isc_throw(SocketConfigError, "Failed to bind socket " << sock << " to " << addr.toText()
-                  << "/port=" << port);
+        std::cout << errno << std::endl;
+        isc_throw(SocketConfigError, "Failed to bind socket " << sock << " to "
+                  << addr.toText() << "/port=" << port
+                  << ": " << strerror(errno));
     }
 #ifdef IPV6_RECVPKTINFO
     // RFC3542 - a new way
