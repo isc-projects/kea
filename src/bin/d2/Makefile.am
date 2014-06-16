@@ -63,6 +63,7 @@ b10_dhcp_ddns_SOURCES += d2_update_message.cc d2_update_message.h
 b10_dhcp_ddns_SOURCES += d2_update_mgr.cc d2_update_mgr.h
 b10_dhcp_ddns_SOURCES += d2_zone.cc d2_zone.h
 b10_dhcp_ddns_SOURCES += dns_client.cc dns_client.h
+b10_dhcp_ddns_SOURCES += io_service_signal.cc io_service_signal.h
 b10_dhcp_ddns_SOURCES += labeled_value.cc labeled_value.h
 b10_dhcp_ddns_SOURCES += nc_add.cc nc_add.h
 b10_dhcp_ddns_SOURCES += nc_remove.cc nc_remove.h
