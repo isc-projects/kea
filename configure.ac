@@ -2,7 +2,12 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10, 20140313, kea-dev@isc.org)
+
+# For released versions, this is in x.y.z format.
+# For GIT versions, this is x.y.z-git, where x.y.z denotes the software
+# version that was used as a base + changes that were made later, but
+# are not released yet.
+AC_INIT(bind10, 0.8.0-git, kea-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 
 # serial-tests is not available in automake version before 1.13, so
