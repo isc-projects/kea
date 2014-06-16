@@ -1,3 +1,9 @@
+7XX.	[doc]		tomek
+	User's Guide renamed to Kea Administrator Reference Manual,
+	removed sections specific to BIND10/Bundy framework, rewritten
+	general and DHCPv4 specific examples.
+	(Trac #3418, git ABCD)
+
 790.	[func]		marcin
 	DHCPv4 server: Implemented dynamic reconfiguration of the server,
 	triggered when the SIGHUP signal is received by the server's
