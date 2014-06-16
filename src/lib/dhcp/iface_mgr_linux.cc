@@ -543,10 +543,8 @@ IfaceMgr::openMulticastSocket(Iface& iface,
     // link-local address. It may be required for us to close this
     // socket if an attempt to open and bind a socket to multicast
     // address fails.
-    int sock;
     try {
-        sock = openSocket(iface.getName(), addr, port,
-                          iface.flag_multicast_);
+        openSocket(iface.getName(), addr, port, iface.flag_multicast_);
 
     } catch (const Exception& ex) {
         IFACEMGR_ERROR(SocketConfigError, error_handler,
