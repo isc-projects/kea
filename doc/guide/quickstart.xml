@@ -49,8 +49,8 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
         </listitem>
 
         <listitem>
-          <para>Install it as root (by default to prefix
-          <filename>/usr/local/</filename>):
+          <para>Install it (by default the installation prefix is <filename>/usr/local/</filename>,
+          so you need root privileges for that step):
             <screen>$ <userinput>make install</userinput></screen>
           </para>
         </listitem>
