@@ -329,6 +329,10 @@ public:
     /// Note the controller singleton is destroyed. This is essential to ensure
     /// a clean start between tests.
     virtual ~DControllerTest() {
+        if (write_timer_) {
+            write_timer_->cancel();
+        }
+
         getController().reset();
         static_cast<void>(unlink(CFG_TEST_FILE));
     }
