@@ -32,15 +32,19 @@ namespace d2 {
 /// has been constructed to exercise DControllerBase.
 class DStubControllerTest : public DControllerTest {
 public:
-
     /// @brief Constructor.
     /// Note the constructor passes in the static DStubController instance
     /// method.
     DStubControllerTest() : DControllerTest (DStubController::instance) {
+        controller_ = boost::dynamic_pointer_cast<DStubController>
+                                                 (DControllerTest::
+                                                  getController());
     }
 
     virtual ~DStubControllerTest() {
     }
+    
+    DStubControllerPtr controller_;
 };
 
 /// @brief Basic Controller instantiation testing.
@@ -183,35 +187,15 @@ TEST_F(DStubControllerTest, launchProcessInitError) {
 /// launches with a valid, command line, with a valid configuration file
 ///  and no simulated errors.
 TEST_F(DStubControllerTest, launchNormalShutdown) {
-    // command line to run standalone
-    char* argv[] = { const_cast<char*>("progName"),
-                     const_cast<char*>("-c"),
-                     const_cast<char*>(DControllerTest::CFG_TEST_FILE),
-                     const_cast<char*>("-v") };
-    int argc = 4;
-
-    // Create a non-empty, config file.  writeFile will wrap the contents
-    // with the module name for us.
-    writeFile("{}");
-
-    // Use an asiolink IntervalTimer and callback to generate the
-    // shutdown invocation. (Note IntervalTimer setup is in milliseconds).
-    isc::asiolink::IntervalTimer timer(*getIOService());
-    timer.setup(genShutdownCallback, 2 * 1000);
-
-    // Record start time, and invoke launch().
-    ptime start = microsec_clock::universal_time();
-    EXPECT_NO_THROW(launch(argc, argv));
-
-    // Record stop time.
-    ptime stop = microsec_clock::universal_time();
+    // Write the valid, empty, config and then run launch() for 1000 ms
+    time_duration elapsed_time;
+    ASSERT_NO_THROW(runWithConfig("{}", 2000, elapsed_time));
 
     // Verify that duration of the run invocation is the same as the
     // timer duration.  This demonstrates that the shutdown was driven
     // by an io_service event and callback.
-    time_duration elapsed = stop - start;
-    EXPECT_TRUE(elapsed.total_milliseconds() >= 1900 &&
-                elapsed.total_milliseconds() <= 2200);
+    EXPECT_TRUE(elapsed_time.total_milliseconds() >= 1900 &&
+                elapsed_time.total_milliseconds() <= 2300);
 }
 
 /// @brief Tests launch with an nonexistant configuration file.
@@ -255,35 +239,20 @@ TEST_F(DStubControllerTest, missingConfigFileArgument) {
 /// the process event loop. It launches wih a valid, stand-alone command line
 /// and no simulated errors.  Launch should throw ProcessRunError.
 TEST_F(DStubControllerTest, launchRuntimeError) {
-    // command line to run standalone
-    char* argv[] = { const_cast<char*>("progName"),
-                     const_cast<char*>("-c"),
-                     const_cast<char*>(DControllerTest::CFG_TEST_FILE),
-                     const_cast<char*>("-v") };
-    int argc = 4;
-
-    // Create a non-empty, config file.  writeFile will wrap the contents
-    // with the module name for us.
-    writeFile("{}");
-
     // Use an asiolink IntervalTimer and callback to generate the
     // shutdown invocation. (Note IntervalTimer setup is in milliseconds).
     isc::asiolink::IntervalTimer timer(*getIOService());
-    timer.setup(genFatalErrorCallback, 2 * 1000);
+    timer.setup(genFatalErrorCallback, 2000);
 
-    // Record start time, and invoke launch().
-    ptime start = microsec_clock::universal_time();
-    EXPECT_THROW(launch(argc, argv), ProcessRunError);
-
-    // Record stop time.
-    ptime stop = microsec_clock::universal_time();
+    // Write the valid, empty, config and then run launch() for 1000 ms
+    time_duration elapsed_time;
+    EXPECT_THROW(runWithConfig("{}", 2000, elapsed_time), ProcessRunError);
 
     // Verify that duration of the run invocation is the same as the
     // timer duration.  This demonstrates that the shutdown was driven
     // by an io_service event and callback.
-    time_duration elapsed = stop - start;
-    EXPECT_TRUE(elapsed.total_milliseconds() >= 1900 &&
-                elapsed.total_milliseconds() <= 2200);
+    EXPECT_TRUE(elapsed_time.total_milliseconds() >= 1900 &&
+                elapsed_time.total_milliseconds() <= 2300);
 }
 
 /// @brief Configuration update event testing.
@@ -378,6 +347,121 @@ TEST_F(DStubControllerTest, executeCommandTests) {
     answer = executeCommand(DStubProcess::stub_proc_command_, arg_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(COMMAND_ERROR, rcode);
+}
+
+// Tests that registered signals are caught and handled.
+TEST_F(DStubControllerTest, ioSignals) {
+    // Tell test controller just to record the signals, don't call the
+    // base class signal handler.
+    controller_->recordSignalOnly(true);
+
+    // Setup to raise SIGHUP in 10 ms. 
+    TimedSignal sighup(*getIOService(), SIGHUP, 10);
+    TimedSignal sigint(*getIOService(), SIGINT, 10);
+    TimedSignal sigterm(*getIOService(), SIGTERM, 10);
+
+    // Write the valid, empty, config and then run launch() for 500 ms
+    time_duration elapsed_time;
+    runWithConfig("{}", 500, elapsed_time);
+
+    // Verify that we caught the signals as expected.
+    std::vector<int>& signals = controller_->getProcessedSignals();
+    ASSERT_EQ(3, signals.size());
+    EXPECT_EQ(SIGHUP, signals[0]);
+    EXPECT_EQ(SIGINT, signals[1]);
+    EXPECT_EQ(SIGTERM, signals[2]);
+}
+
+// Tests that the original configuration is retained after a SIGHUP triggered
+// reconfiguration fails due to invalid config content.
+TEST_F(DStubControllerTest, invalidConfigReload) {
+    // Schedule to rewrite the configuration file after launch. This way the
+    // file is updated after we have done the initial configuration.  The
+    // new content is invalid JSON which will cause the config parse to fail.
+    scheduleTimedWrite("{ \"string_test\": BOGUS JSON }", 100);
+
+    // Setup to raise SIGHUP in 200 ms. 
+    TimedSignal sighup(*getIOService(), SIGHUP, 200);
+
+    // Write the config and then run launch() for 500 ms
+    // After startup, which will load the initial configuration this enters 
+    // the process's runIO() loop. We will first rewrite the config file. 
+    // Next we process the SIGHUP signal which should cause us to reconfigure.
+    time_duration elapsed_time;
+    runWithConfig("{ \"string_test\": \"first value\" }", 500, elapsed_time);
+
+    // Context is still available post launch. Check to see that our 
+    // configuration value is still the original value.
+    std::string  actual_value = "";
+    ASSERT_NO_THROW(getContext()->getParam("string_test", actual_value));
+    EXPECT_EQ("first value", actual_value);
+
+    // Verify that we saw the signal.
+    std::vector<int>& signals = controller_->getProcessedSignals();
+    ASSERT_EQ(1, signals.size());
+    EXPECT_EQ(SIGHUP, signals[0]);
+}
+
+// Tests that the original configuration is replaced after a SIGHUP triggered
+// reconfiguration succeeds.
+TEST_F(DStubControllerTest, validConfigReload) {
+    // Schedule to rewrite the configuration file after launch. This way the
+    // file is updated after we have done the initial configuration.
+    scheduleTimedWrite("{ \"string_test\": \"second value\" }", 100);
+
+    // Setup to raise SIGHUP in 200 ms. 
+    TimedSignal sighup(*getIOService(), SIGHUP, 200);
+
+    // Write the config and then run launch() for 500 ms
+    time_duration elapsed_time;
+    runWithConfig("{ \"string_test\": \"first value\" }", 500, elapsed_time);
+
+    // Context is still available post launch. 
+    // Check to see that our configuration value is what we expect.
+    std::string  actual_value = "";
+    ASSERT_NO_THROW(getContext()->getParam("string_test", actual_value));
+    EXPECT_EQ("second value", actual_value);
+
+    // Verify that we saw the signal.
+    std::vector<int>& signals = controller_->getProcessedSignals();
+    ASSERT_EQ(1, signals.size());
+    EXPECT_EQ(SIGHUP, signals[0]);
+}
+
+// Tests that the SIGINT triggers a normal shutdown.
+TEST_F(DStubControllerTest, sigintShutdown) {
+    // Setup to raise SIGHUP in 1 ms. 
+    TimedSignal sighup(*getIOService(), SIGINT, 1);
+
+    // Write the config and then run launch() for 1000 ms
+    time_duration elapsed_time;
+    runWithConfig("{ \"string_test\": \"first value\" }", 1000, elapsed_time);
+
+    // Verify that we saw the signal.
+    std::vector<int>& signals = controller_->getProcessedSignals();
+    ASSERT_EQ(1, signals.size());
+    EXPECT_EQ(SIGINT, signals[0]);
+
+    // Duration should be significantly less than our max run time.
+    EXPECT_TRUE(elapsed_time.total_milliseconds() < 300);
+}
+
+// Tests that the SIGTERM triggers a normal shutdown.
+TEST_F(DStubControllerTest, sigtermShutdown) {
+    // Setup to raise SIGHUP in 1 ms. 
+    TimedSignal sighup(*getIOService(), SIGTERM, 1);
+
+    // Write the config and then run launch() for 1000 ms
+    time_duration elapsed_time;
+    runWithConfig("{ \"string_test\": \"first value\" }", 1000, elapsed_time);
+
+    // Verify that we saw the signal.
+    std::vector<int>& signals = controller_->getProcessedSignals();
+    ASSERT_EQ(1, signals.size());
+    EXPECT_EQ(SIGTERM, signals[0]);
+
+    // Duration should be significantly less than our max run time.
+    EXPECT_TRUE(elapsed_time.total_milliseconds() < 300);
 }
 
 }; // end of isc::d2 namespace
