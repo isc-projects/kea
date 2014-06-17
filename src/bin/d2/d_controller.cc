@@ -103,6 +103,12 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
                    "Application process event loop failed: " << ex.what());
     }
 
+    /// @todo Once Trac #3470 is addressed this will not be necessary.
+    /// SignalSet uses statics which do not free in predicatable order.
+    if (signal_set_) {
+        signal_set_->clear();
+    }
+
     // All done, so bail out.
     LOG_INFO(dctl_logger, DCTL_STOPPING).arg(app_name_);
 }
