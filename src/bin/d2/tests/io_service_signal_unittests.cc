@@ -148,8 +148,8 @@ TEST(IOSignal, construction) {
     // Verify constructor with valid arguments works.
     ASSERT_NO_THROW(signal.reset(new IOSignal(*io_service, SIGINT,
                                               dummyHandler)));
-    // Verify sequence_id is 2, we burned 1 with the failed constructor.
-    EXPECT_EQ(2, signal->getSequenceId());
+    // Verify sequence_id is set.
+    EXPECT_EQ(IOSignal::nextSequenceId()-1, signal->getSequenceId());
 
     // Verify SIGINT is correct.
     EXPECT_EQ(SIGINT, signal->getSignum());
