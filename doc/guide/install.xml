@@ -301,9 +301,9 @@ as a dependency earlier -->
   <!-- TODO: lcov -->
 
         <para>
-          For example, the following configures it to
-    find the Boost headers, find the
-    Python interpreter, and sets the installation location:
+          For example, the following configures it to find the Boost headers,
+          specifies that PostgreSQL support should be enabled, and sets the
+          installation location:
 
           <screen>$ <userinput>./configure \
       --with-boost-include=/usr/pkg/include \
