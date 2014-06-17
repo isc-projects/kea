@@ -694,9 +694,9 @@ Logging/loggers[0]/output_options[0]/maxver	8	integer	(modified)
             The message identification.  Every message in Kea
             has a unique identification, which can be used as an
             index into the <ulink
-            url="bind10-messages.html"><citetitle>Kea Messages
+            url="kea-messages.html"><citetitle>Kea Messages
             Manual</citetitle></ulink> (<ulink
-            url="http://kea.isc.org/docs/bind10-messages.html"
+            url="http://kea.isc.org/docs/kea-messages.html"
             />) from which more information can be obtained.
           </para></listitem>
           </varlistentry>
