@@ -17,7 +17,6 @@
 
 #include <d2/d2_asio.h>
 #include <exceptions/exceptions.h>
-//#include <util/signal_set.h>
 
 #include <map>
 

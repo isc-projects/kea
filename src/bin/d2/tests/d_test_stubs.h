@@ -23,6 +23,10 @@
 #include <d2/d_controller.h>
 #include <d2/d_cfg_mgr.h>
 
+#include <boost/date_time/posix_time/posix_time.hpp>
+
+using namespace boost::posix_time;
+
 #include <gtest/gtest.h>
 
 #include <fstream>
@@ -213,6 +217,23 @@ public:
     /// @brief Defines the executable name used to construct the controller
     static const char* stub_bin_name_;
 
+    /// @brief Gets the list of signals that have been caught and processed.
+    std::vector<int>& getProcessedSignals() {
+        return (processed_signals_);
+    }
+
+    /// @brief Controls whether signals are processed in full or merely
+    /// recorded.
+    ///
+    /// If true, signal handling will stop after recording the signal.
+    /// Otherwise the base class signal handler,
+    /// DControllerBase::processSignals will also be invoked. This switch is
+    /// useful for ensuring that IOSignals are delivered as expected without
+    /// incurring the full impact such as reconfiguring or shutting down.
+    void recordSignalOnly(bool value) {
+       record_signal_only_ = value;
+    }
+
 protected:
     /// @brief Handles additional command line options that are supported
     /// by DStubController.  This implementation supports an option "-x".
@@ -259,13 +280,24 @@ protected:
     /// @return returns a string containing the option letters.
     virtual const std::string getCustomOpts() const;
 
+    virtual void processSignal(int signum);
+
 private:
     /// @brief Constructor is private to protect singleton integrity.
     DStubController();
 
+    /// @brief Vector to record the signal values received.
+    std::vector<int> processed_signals_;
+
+    /// @brief Boolean for controlling if signals are merely recorded.
+    bool record_signal_only_;
+
 public:
     virtual ~DStubController();
 };
+
+/// @brief Defines a pointer to a DStubController.
+typedef boost::shared_ptr<DStubController> DStubControllerPtr;
 
 /// @brief Abstract Test fixture class that wraps a DControllerBase. This class
 /// is a friend class of DControllerBase which allows it access to class
@@ -285,7 +317,8 @@ public:
     ///
     /// @param instance_getter is a function pointer to the static instance
     /// method of the DControllerBase derivation under test.
-    DControllerTest(InstanceGetter instance_getter) {
+    DControllerTest(InstanceGetter instance_getter)
+         : write_timer_(), new_cfg_content_() {
         // Set the static fetcher member, then invoke it via getController.
         // This ensures the singleton is instantiated.
         instanceGetter_ = instance_getter;
@@ -447,20 +480,71 @@ public:
     /// @param content JSON text to be written to file
     /// @param module_name  content content to be written to file
     void writeFile(const std::string& content,
-                   const std::string& module_name = "") {
-        std::ofstream out(CFG_TEST_FILE, std::ios::trunc);
-        ASSERT_TRUE(out.is_open());
+                   const std::string& module_name = "");
 
-        out << "{ \"" << (!module_name.empty() ? module_name :
-                          getController()->getAppName())
-             << "\": " << std::endl;
+    /// @brief Method used as timer callback to invoke writeFile.
+    ///
+    /// Wraps a call to writeFile passing in new_cfg_content_.  This allows
+    /// the method to be bound as an IntervalTimer callback.
+    virtual void timedWriteCallback();
 
-        out << content;
-        out << " } " << std::endl;
-        out.close();
-    }
+    /// @brief Schedules the given content to overwrite the config file.
+    ///
+    /// Creates a one-shot IntervalTimer whose callback will overwrite the
+    /// configuration with the given content.  This allows the configuration
+    /// file to replaced write_time_ms after DControllerBase::launch() has
+    /// invoked runProcess().
+    ///
+    /// @param config JSON string containing the deisred content for the config
+    /// file.
+    /// @param write_time_ms time in milliseconds to delay before writing the
+    /// file.
+    void scheduleTimedWrite(const std::string& config, int write_time_ms);
 
-    /// Name of a config file used during tests
+    /// @brief Convenience method for invoking standard, valid launch
+    ///
+    /// This method sets up a timed run of the DController::launch.  It does
+    /// the following:
+    /// - It creates command line argument variables argc/argv
+    /// - Invokes writeFile to create the config file with the given content
+    /// - Schedules a shutdown time timer to call DController::executeShutdown
+    /// after the interval
+    /// - Records the start time
+    /// - Invokes DController::launch() with the command line arguments
+    /// - After launch returns, it calculates the elapsed time and returns it
+    ///
+    /// @param config configuration file content to write before calling launch
+    /// @param run_time_ms  maximum amount of time to allow runProcess() to
+    /// continue.
+    /// @param[out] elapsed_time the actual time in ms spent in launch().
+    void runWithConfig(const std::string& config, int run_time_ms,
+                       time_duration& elapsed_time);
+
+    /// @brief Fetches the controller's process
+    ///
+    /// @return A pointer to the process which may be null if it has not yet
+    /// been instantiated.
+    DProcessBasePtr getProcess();
+
+    /// @brief Fetches the process's configuration manager
+    ///
+    /// @return A pointer to the manager which may be null if it has not yet
+    /// been instantiated.
+    DCfgMgrBasePtr getCfgMgr();
+
+    /// @brief Fetches the configuration manager's context
+    ///
+    /// @return A pointer to the context which may be null if it has not yet
+    /// been instantiated.
+    DCfgContextBasePtr getContext();
+
+    /// @brief Timer used for delayed configuration file writing.
+    asiolink::IntervalTimerPtr write_timer_;
+
+    /// @brief String which contains the content delayed file writing will use.
+    std::string new_cfg_content_;
+
+    /// @brief Name of a config file used during tests
     static const char* CFG_TEST_FILE;
 };
 
