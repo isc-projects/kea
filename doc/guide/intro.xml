@@ -9,16 +9,16 @@
   <chapter id="intro">
     <title>Introduction</title>
     <para>
-      Kea is the next generation of DHCP servers developed by ISC.
+      Kea is the next generation of DHCP software developed by ISC.
       It supports both DHCPv4 and DHCPv6 protocols along with their
       extensions, e.g. prefix delegation and dynamic updates to DNS.
     </para>
 
     <para>
-      Kea has been initially developed as a part of the BIND 10 framework
+      Kea was initially developed as a part of the BIND 10 framework
       (<ulink url="http://bind10.isc.org"/>). In early 2014, ISC
       made the decision to discontinue active development of BIND 10 and
-      continue development of Kea as standalone DHCP servers. As a result,
+      continue development of Kea as standalone DHCP software. As a result,
       the components and libraries related to the BIND10 framework and DNS
       are going to be removed from the Kea source tree over time.
       In order to remove the dependency on Python 3, the BIND 10 framework
@@ -27,9 +27,9 @@
     </para>
 
     <note>
-      <simpara>Kea has been implemented in BIND 10 framework and to certain extent
-      it still depends on various BIND 10 libraries. It also requires the BIND 10
-      framework to run, because BIND 10 configuration mechanisms are used to
+      <simpara>Kea was implemented in the BIND 10 framework and to certain extent
+      still depends on various BIND 10 libraries. It also requires the BIND 10
+      framework to run, because the BIND 10 configuration mechanisms are used to
       configure Kea. As a result, this document still refers to BIND 10 in many
       paragraphs. The term "BIND 10" in the context of this document means
       "BIND 10 libraries and applications which are necessary for Kea to run
@@ -62,14 +62,16 @@
 
       <para>
         Running Kea uses various extra software which may
-        not be provided in some operating systems' default
-        installations nor standard packages collections. You may
+        not be provided in the default installation of some operating systems,
+        nor in the standard package collections. You may
         need to install this required software separately.
         (For the build requirements, also see
         <xref linkend="build-requirements"/>.)
       </para>
 
-      <para>
+      <itemizedlist>
+        <listitem>
+            <simpara>
         Kea was developed as a collection of applications within BIND
         10 framework and it still relies on the remaining parts of
         this framework. In particular, the servers' configuration and
@@ -77,37 +79,45 @@
         in BIND 10. These modules require at least Python 3.1 to run.
         They also work with Python 3.2, 3.3 or 3.4 (<ulink
         url="http://www.python.org/"/>). The dependency on Python will
-        be removed once a replacing configuration and startup
+        be removed once replacement configuration and startup
         mechanisms are developed and released as Kea 0.9. At this
         point Kea will be written in pure C++.
-      </para>
+            </simpara>
+        </listitem>
 
-      <para>
-        Kea uses the Botan crypto library for C++
+        <listitem>
+            <simpara>
+        Kea uses the Botan cryptographic library for C++
         (<ulink url="http://botan.randombit.net/"/>).
         It requires at least Botan version 1.8.
 <!-- @todo 0.9/#2406: Add info about OpenSSL here -->
-      </para>
+            </simpara>
+        </listitem>
 
-      <para>
+        <listitem>
+            <simpara>
         Kea uses the log4cplus C++ logging library
         (<ulink url="http://log4cplus.sourceforge.net/"/>).
         It requires at least log4cplus version 1.0.3.
-      </para>
+            </simpara>
+        </listitem>
 
-      <para>
-	Kea can use MySQL headers and libraries to build MySQL database backend
-	that can be used to store leases. This is an optional dependency. When
-	it is missing, Kea will lack the ability to store leases in MySQL
-	database.
-      </para>
+        <listitem>
+            <simpara>
+	In order to store lease information in a MySQL database, Kea requires MySQL
+    headers and libraries.  This is an optional dependency in that Kea can be
+    built without MySQL support.
+            </simpara>
+        </listitem>
 
-      <para>
-	Kea can use PostgreSQL headers and libraries to build PostgreSQL
-	database backend that can be used to store leases. This is an optional
-	dependency. When it is missing, Kea will lack the ability to store
-	leases in PostgreSQL database.
-      </para>
+        <listitem>
+            <simpara>
+	In order to store lease information in a PostgresSQL database, Kea requires PostgresSQL
+    headers and libraries.  This is an optional dependency in that Kea can be
+    built without PostgresSQL support.
+            </simpara>
+        </listitem>
+      </itemizedlist>
     </section>
 
     <section id="starting_stopping">
