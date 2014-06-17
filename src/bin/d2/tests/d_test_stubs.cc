@@ -261,13 +261,6 @@ DControllerTest::scheduleTimedWrite(const std::string& config,
 void
 DControllerTest::runWithConfig(const std::string& config, int run_time_ms,
                                time_duration& elapsed_time) {
-    // Set up valid command line arguments
-    char* argv[] = { const_cast<char*>("progName"),
-                     const_cast<char*>("-c"),
-                     const_cast<char*>(DControllerTest::CFG_TEST_FILE),
-                     const_cast<char*>("-v") };
-    int argc = 4;
-
     // Create the config file.
     writeFile(config);
 
@@ -279,7 +272,12 @@ DControllerTest::runWithConfig(const std::string& config, int run_time_ms,
     // We catch and rethrow to allow testing error scenarios.
     ptime start = microsec_clock::universal_time();
     try  {
-        launch(argc, argv);
+        // Set up valid command line arguments
+        char* argv[] = { const_cast<char*>("progName"),
+                         const_cast<char*>("-c"),
+                         const_cast<char*>(DControllerTest::CFG_TEST_FILE),
+                         const_cast<char*>("-v") };
+        launch(4, argv);
     } catch (...) {
         // calculate elasped time, then rethrow it
         elapsed_time = microsec_clock::universal_time() - start;
