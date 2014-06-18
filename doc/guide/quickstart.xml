@@ -35,7 +35,7 @@
         </listitem>
 
         <listitem>
-          <para>Go into the source and run configure:
+          <para>Go into the source directory and run the configure script:
             <screen>$ <userinput>cd kea</userinput>
 $ <userinput>autoreconf --install</userinput>
 $ <userinput>./configure [your extra parameters]</userinput></screen>
@@ -56,9 +56,13 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
         </listitem>
 
         <listitem>
-          <para>Edit your configuration file for DHCPv4. See doc/examples/kea4
-	  for a set of examples.
-	  </para>
+          <para>If you wish to run a DHCP server for IPv4, you need to set up and start
+          the b10-dhcp4 server:</para>
+          <orderedlist>
+          <listitem>
+          <para>Edit your configuration file for DHCPv4. <xref linkend="dhcp4-configuration"/>
+          describes the configuration choices available; example DHCPv4 configuration can be found in
+          doc/examples/kea4.</para>
 	</listitem>
 
         <listitem>
@@ -75,11 +79,17 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
             <screen>$ <userinput>dhclient -4 eth0</userinput></screen>
          </para>
         </listitem>
+        </orderedlist>
+        </listitem>
 
         <listitem>
-          <para>Edit your configuration file for DHCPv6. See doc/examples/kea6
-	  for a set of examples.
-	  </para>
+          <para>If you wish to run a DHCP server for IPv6, you need to set up and start
+          the b10-dhcp6 server:</para>
+          <orderedlist>
+        <listitem>
+          <para>Edit your configuration file for DHCPv6. <xref linkend="dhcp6-configuration"/>
+          describes the configuration ch, and some example DHCPv6 configuration can be found in
+          doc/examples/kea6.</para>
 	</listitem>
 
         <listitem>
@@ -96,8 +106,8 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
             <screen>$ <userinput>dhclient -6 eth0</userinput></screen>
          </para>
         </listitem>
-
-
+        </orderedlist>
+        </listitem>
       </orderedlist>
 
     </section>
