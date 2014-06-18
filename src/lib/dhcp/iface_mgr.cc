@@ -545,9 +545,9 @@ IfaceMgr::openSockets6(const uint16_t port,
                 continue;
             }
 
-            // Run OS-specific function to open a socket on link-local address
-            // and join multicast group (non-Linux OSes), or open two sockets and
-            // bind one to link-local, another one to multicast address.
+            // Run OS-specific function to open a socket capable of receiving
+            // packets sent to All_DHCP_Relay_Agents_and_Servers multicast
+            // address.
             if (openMulticastSocket(*iface, *addr, port, error_handler)) {
                 ++count;
             }
