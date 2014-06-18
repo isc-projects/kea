@@ -16,10 +16,10 @@
  @page dhcpv6Hooks The Hooks API for the DHCPv6 Server
 
  @section dhcpv6HooksIntroduction Introduction
- BIND10 features an API (the "Hooks" API) that allows user-written code to
- be integrated into BIND 10 and called at specific points in its processing.
+ Kea features an API (the "Hooks" API) that allows user-written code to
+ be integrated into Kea and called at specific points in its processing.
  An overview of the API and a tutorial for writing such code can be found in
- the @ref hooksdgDevelopersGuide.  Information for BIND 10 maintainers can be
+ the @ref hooksdgDevelopersGuide.  Information for Kea maintainers can be
  found in the @ref hooksComponentDeveloperGuide.
 
  This manual is more specialised and is aimed at developers of hook

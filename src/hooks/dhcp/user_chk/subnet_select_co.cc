@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-/// @file subnet_select.cc Defines the subnet4_select and subnet6_select callout functions.
+/// @file subnet_select_co.cc Defines the subnet4_select and subnet6_select callout functions.
 
 #include <hooks/hooks.h>
 #include <dhcp/pkt4.h>

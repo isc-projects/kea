@@ -16,11 +16,11 @@
 // and is used to prevent a clash with symbols in any other Doxygen file.
 
 /**
-@page logBind10Logging BIND 10 Logging
+@page logKeaLogging Kea Logging
 
 @section logBasicIdeas Basic Ideas
 
-The BIND 10 logging system is based on the log4J logging system
+The Kea logging system is based on the log4J logging system
 common in Java development, and includes the following ideas:
 
 - A set of severity levels.
@@ -28,7 +28,7 @@ common in Java development, and includes the following ideas:
 - Separation of message use from message text.
 
 @subsection logSeverity Message Severity
-Each message logged by BIND 10 has a severity associated with it, ranging
+Each message logged by Kea has a severity associated with it, ranging
 from FATAL - the most severe - to DEBUG - messages output as the code
 executes to facilitate debugging.  In order of decreasing severity,
 the levels are:
@@ -120,8 +120,8 @@ The loggers are hierarchical in that each logger is the child of another
 logger.  The top of the hierarchy is the root logger; this does not
 have a parent.  The reason for this hierarchy is that unless a logger
 explicitly assigns a value to an attribute (such as severity of messages
-it should log), it picks it up the value from the parent.  In BIND 10,
-each component (b10-auth, b10-resolver etc.)  has a root logger (named
+it should log), it picks it up the value from the parent.  In Kea,
+each component (b10-dhcp4, b10-dhcp-ddns etc.)  has a root logger (named
 after the program) and every other logger in the component is a child
 of that.  So in the example above, the error/syslog attributes could be
 associated with the b10-resolver logger while the logger associated with
@@ -129,8 +129,8 @@ the cache sets its own values for the debug/file attributes.
 
 More information about the logging hierarchy can be found in the section
 on Logging configuration in the <a
-href="http://bind10.isc.org/docs/bind10-guide.html#logging">BIND 10
-Guide</a>.
+href="http://kea.isc.org/docs/kea-guide.html#logging">Kea Administrator
+Reference Manual</a>.
 
 @subsection logSeparationUseText Separation of Messages Use from Message Text
 
@@ -148,20 +148,20 @@ associated with it (e.g. "unable to open %1 for input"), after which it
 substitutes any message parameters (in this example, the name of the file
 where the write operation failed) and logs the result to the destination.
 
-In BIND 10, a the default text for each message is linked into the
+In Kea, a the default text for each message is linked into the
 program.  Each program is able to read a locally-defined message file
 when it starts, updating the stored definitions with site-specific text.
 When the message is logged, the updated text is output. However, the
 message identifier is always included in the output so that the origin
 of the message can be identified even if the text has been changed.
 
-@note Local message files have not yet been implemented in BIND 10.
+@note Local message files have not yet been implemented in Kea.
 
 
 
-@section logDeveloperUse Using Logging in a BIND 10 Component
+@section logDeveloperUse Using Logging in a Kea Component
 
-The steps in using the logging system in a BIND 10 component (such as
+The steps in using the logging system in a Kea component (such as
 an executable or library) are:
 
 <ol>
@@ -171,9 +171,9 @@ file should have a file type of ".mes".</li>
 
 <li>Run it through the message compiler to produce the files for your
 module.  This step should be included in the build process.  The message
-compiler is a BIND10 program and is one of the first programs built and
+compiler is a Kea program and is one of the first programs built and
 linked in the build process. As a result, it should be available for
-compiling the message files of all BIND 10 components and libraries.
+compiling the message files of all Kea components and libraries.
 
 For C++ development, the message compiler produces two files in the
 default directory, having the same name as the input file but with file
@@ -195,7 +195,7 @@ The following sections describe these steps in more detail.
 @subsection logMessageFiles Create a Message File
 
 A message file contains message definitions.  Typically there
-will be one message file for each component that uses BIND 10 logging.
+will be one message file for each component that uses Kea logging.
 An example file could be:
 
 @code
@@ -268,8 +268,8 @@ blank lines are ignored.</li>
 </ul>
 
 Although there are few restriction on what can be in the message
-identifcation and text, there are a number of conventions used by BIND
-10, both in the contents of the message and in the usage.  All code
+identifcation and text, there are a number of conventions used by Kea,
+both in the contents of the message and in the usage.  All code
 should adhere to these:
 
 <ul>
@@ -318,16 +318,16 @@ has the inbuilt assumption of one line per message. Splitting a message
 across multiple lines makes it awkward to search the file for messages
 and associated information.</li>
 
-<li>The message identifier should be unique across the entire BIND 10
+<li>The message identifier should be unique across the entire Kea
 system.  (An error will be reported at system start-up if an identifier
 is repeated.)</li>
 
 <li>A particular message identifier should only be used at one place in
-the BIND 10 code. In this way, if the message indicates a problem, the
+the Kea code. In this way, if the message indicates a problem, the
 code in question can be quickly identified.</li>
 
 <li>The explanation of the message - the free-form text following the
-message identification - appears in the BIND 10 message manual.  It
+message identification - appears in the Kea message manual.  It
 should:
 
 <ul>
@@ -344,8 +344,8 @@ explanation should also include suggested remedial action.</li>
 
 @subsection logSourceFiles Produce Source Files
 The message file created in the previous step is then run through the
-message compiler to produce source files that are included in the BIND
-10 programs.
+message compiler to produce source files that are included in the Kea
+programs.
 
 @subsubsection logMessageCompiler Message Compiler
 The message compiler is a program built in the src/log/compiler directory.
@@ -434,7 +434,7 @@ in a similar way to C++ using the Python logging library.
 The source file for the messages is the ".mes" file, but the files used
 by the code (which, in the case of C++, must be compiled and linked)
 are the output of the message compiler.  (The compiler is produced very
-early on in the BIND 10 build sequence, so is available for use in the
+early on in the Kea build sequence, so is available for use in the
 building of subsequent components.)  To allow this, certain dependencies
 must be included in the Makefile.am for each component that uses logging.
 
@@ -673,7 +673,7 @@ environment variables are:
 
 <dl>
 <dt>B10_LOGGER_ROOT</dt>
-<dd>Sets the "root" for the unit test.  If not defined, the name "bind10"
+<dd>Sets the "root" for the unit test.  If not defined, the name "kea"
 is used.</dd>
 
 <dt>B10_LOGGER_SEVERITY</dt>
