@@ -15,7 +15,7 @@
 /**
  @page dhcp4 DHCPv4 Server Component
 
-BIND10 offers DHCPv4 server implementation. It is implemented as
+Kea offers DHCPv4 server implementation. It is implemented as
 b10-dhcp4 component.  Its primary code is located in
 isc::dhcp::Dhcpv4Srv class. It uses \ref libdhcp extensively,
 especially isc::dhcp::Pkt4, isc::dhcp::Option and
@@ -29,9 +29,12 @@ DHCPv4 server component does not support direct traffic (relayed
 only), as support for transmission to hosts without IPv4 address
 assigned is not implemented in IfaceMgr yet.
 
-@section dhcpv4Session BIND10 message queue integration
+@section dhcpv4Session Bundy message queue integration
 
-DHCPv4 server component is now integrated with BIND10 message queue.
+DHCPv4 server now has two configuration backends: JSON and Bundy. The
+following section applies only to the Bundy backend.
+
+DHCPv4 server component is now integrated with Bundy message queue.
 The integration is performed by establishSession() and disconnectSession()
 functions in isc::dhcp::ControlledDhcpv4Srv class. main() method defined
 in the src/bin/dhcp4/main.cc file instantiates isc::dhcp::ControlledDhcpv4Srv
@@ -194,7 +197,7 @@ limited.
  @section dhcpv4ConfigBackend Configuration backend for DHCPv4
 
 There are many theoretical ways in which server configuration can be stored. Kea 0.8 and
-earlier versions used BIND10 framework and its internal storage for DHCPv6 server configuration.
+earlier versions used BIND10/Bundy framework and its internal storage for DHCPv6 server configuration.
 The legacy ISC-DHCP implementation uses flat files. Configuration stored in JSON files is
 becoming more and more popular among various projects. There are unofficial patches for
 ISC-DHCP that keep parts of the configuration in LDAP. It was also suggested that in some
@@ -205,7 +208,7 @@ There is a new parameter for configure script: --with-kea-config. It currently s
 two values: BUNDY and JSON.
 
 BUNDY (which is the default value as of May 2014) means that Kea4 is linked with the
-Bundy (former BIND10) configuration backend that connects to the BIND10 framework and in general works
+Bundy (former BIND10) configuration backend that connects to the Bundy/BIND10 framework and in general works
 exactly the same as Kea 0.8 and earlier versions. The benefits of that backend are uniform
 integration with Bundy/BIND10 framework, easy on-line reconfiguration using bindctl, available
 RESTful API. On the other hand, it requires the whole heavy Bundy framework that requires

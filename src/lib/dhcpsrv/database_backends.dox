@@ -135,8 +135,9 @@
   %@endverbatim
 
   The unit tests are run automatically when "make check" is executed (providing
-  that BIND 10 has been build with the \--with-dhcp-mysql switch (see the installation
-  section in the <a href="http://bind10.isc.org/docs/bind10-guide.html">BIND 10 Guide</a>).
+  that Kea has been build with the \--with-dhcp-mysql switch (see the installation
+  section in the <a href="http://kea.isc.org/docs/kea-guide.html">Kea Administrator
+  Reference Manual</a>).
 
  @subsection dhcp-pgsql-unittest PostgreSQL Unit Tests
 
@@ -207,7 +208,8 @@ host    all             all             ::1/128                 password
   that runs tests. Use caution!
 
   The unit tests are run automatically when "make check" is executed (providing
-  that BIND 10 has been build with the \--with-dhcp-pgsql switch (see the installation
-  section in the <a href="http://bind10.isc.org/docs/bind10-guide.html">BIND10 Guide</a>).
+  that Kea has been build with the \--with-dhcp-pgsql switch (see the installation
+  section in the <a href="http://kea.isc.org/docs/kea-guide.html">Kea Administrator
+  Reference Manual</a>).
 
   */

@@ -43,7 +43,7 @@ Configuration Manager (\ref isc::dhcp::CfgMgr) stores configuration information
 necessary for DHCPv4 and DHCPv6 server operation. In particular, it stores
 subnets (\ref isc::dhcp::Subnet4 and \ref isc::dhcp::Subnet6) together with
 their pools (\ref isc::dhcp::Pool4 and \ref isc::dhcp::Pool6), options and
-other information specified by the used in BIND10 configuration.
+other information specified by the used in Kea configuration.
 
 @section allocengine Allocation Engine
 

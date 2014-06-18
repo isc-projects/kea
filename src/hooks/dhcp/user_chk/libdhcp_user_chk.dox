@@ -18,9 +18,10 @@
 @section libdhcp_user_chkIntro Libdhcp_user_chk: An Example Hooks Library
 ## Introduction
 libdhcp_user_chk is an example hooks library which customizes the DHCP query
-processing provided by BIND X DHCP server modules (b10-dhcp4 and b10-dhcp6).
+processing provided by Kea DHCP server modules (b10-dhcp4 and b10-dhcp6).
 Specifically it allows subnet selection and DHCP response option customization
-based upon a registry of DHCP clients.  Note that the words "client" and "user" are used interchangeably herein.  The intent of the custom behavior is three
+based upon a registry of DHCP clients.  Note that the words "client" and "user"
+are used interchangeably herein.  The intent of the custom behavior is three
 fold:
 
 1. To assign "new" or "unregistered" users to a restricted subnet, while "known"
@@ -29,7 +30,8 @@ or "registered" users are assigned to unrestricted subnets.
 2. To allow DHCP response options or vendor option values to be customized
 based upon user identity.
 
-3. To provide a real time record of the user registration activity which can be sampled by an external consumer.
+3. To provide a real time record of the user registration activity which can be
+sampled by an external consumer.
 
 ## User Registry Classes
 At the heart of the library is a class hierarchy centered around the class,
@@ -88,7 +90,7 @@ flow upon receipt of an inbound request is the same and is as follows:
 ## Using the library
 Two steps are required in order to use the library:
 -# The user registry file must be created and deployed
--# The BIND10 DHCP module(s) must be configured to load the library
+-# The Kea DHCP module(s) must be configured to load the library
 
 ### Creating the Registry File
 Currently, the library uses a hard coded pathname for the user registry defined
@@ -124,36 +126,46 @@ Upon start up the library will attempt to load this file.  If it does not exist
 the library will unload.
 
 ### Configuring the DHCP Modules
-it must be configured as a hook library for the
-desired DHCP server modules.  Note that the user_chk library is installed alongside the BIND10 libraries in "<install-dir>/lib" where <install-dir> is determined by the --prefix option of the configure script.  It defaults to "/usr/local". Assuming the default value then, configuring b10-dhcp4 to load the user_chk
-library could be done with the following BIND10 configuration commands:
+
+It must be configured as a hook library for the desired DHCP server modules.
+Note that the user_chk library is installed alongside the Kea libraries in
+"<install-dir>/lib" where <install-dir> is determined by the --prefix option of
+the configure script.  It defaults to "/usr/local". Assuming the default value
+then, configuring b10-dhcp4 to load the user_chk library could be done with the
+following Kea4 configuration:
 
 @code
-config add Dhcp4/hook_libraries
-config set Dhcp4/hook_libraries[0] "/usr/local/lib/libdhcp_user_chk.so"
-config commit
+"Dhcp4": {
+    "hook_libraries": [ "/usr/local/lib/libdhcp_user_chk.so" ],
+    ...
+}
 @endcode
 
 To configure it for b10-dhcp6, the commands are simply as shown below:
 
 @code
-config add Dhcp6/hook_libraries
-config set Dhcp6/hook_libraries[0] "/usr/local/lib/libdhcp_user_chk.so"
-config commit
+"Dhcp6": {
+    "hook_libraries": [ "/usr/local/lib/libdhcp_user_chk.so" ],
+    ...
+}
 @endcode
 
 ## User Check Outcome
 Once up and running, the library should begin adding entries to the outcome
-file.  Currently, the library uses a hard coded pathname for the user registry defined in load_unload.cc:
+file.  Currently, the library uses a hard coded pathname for the user registry
+defined in load_unload.cc:
 
+@code
     const char* user_chk_output_fname = "/tmp/user_chk_outcome.txt";
+@endcode
 
 If the file cannot be created (or opened), the library will unload.
 
 For each lease granted, the library will add the following information to the
 end of the file: the id type, the user id, the lease or prefix granted, and
 whether or not the user was found in the registry.  This information is written
-in the form of "name=value" with one value per line.  (See subnet_callout.cc for details.)
+in the form of "name=value" with one value per line.  (See subnet_callout.cc for
+details.)
 
 A sample outcome file is shown below:
 

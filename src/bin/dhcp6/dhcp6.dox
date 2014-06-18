@@ -15,7 +15,7 @@
 /**
  @page dhcp6 DHCPv6 Server Component
 
- BIND10 offers DHCPv6 server implementation. It is implemented as
+ Kea offers DHCPv6 server implementation. It is implemented as
  b10-dhcp6 component. Its primary code is located in
  isc::dhcp::Dhcpv6Srv class. It uses \ref libdhcp extensively,
  especially lib::dhcp::Pkt6, isc::dhcp::Option and
@@ -28,18 +28,19 @@
  DHCPv6 server component does not support relayed traffic yet, as
  support for relay decapsulation is not implemented yet.
 
- DHCPv6 server component does not use BIND10 logging yet.
+ @section dhcpv6Session Bundy message queue integration
 
- @section dhcpv6Session BIND10 message queue integration
+DHCPv4 server now has two configuration backends: JSON and Bundy. The
+following section applies only to the Bundy backend.
 
- DHCPv6 server component is now integrated with BIND10 message queue.
+ DHCPv6 server component is now integrated with Bundy/BIND10 message queue.
  It follows the same principle as DHCPv4. See \ref dhcpv4Session for
  details.
 
  @section dhcpv6ConfigParser Configuration Parser in DHCPv6
 
- b10-dhcp6 component uses BIND10 cfgmgr for commands and configuration. During
- initial configuration (See \ref
+ Bundy configuration in the Kea6 component uses Bundy cfgmgr for commands and
+ configuration. During initial configuration (See \ref
  isc::dhcp::ControlledDhcpv6Srv::establishSession()), the configuration handler
  callback is installed (see isc::dhcp::ControlledDhcpv6Srv::dhcp6ConfigHandler().
  It is called every time there is a new configuration. In particular, it is
@@ -108,7 +109,7 @@ The b10-dhcp-ddns process is responsible for the actual communication with the D
 server, i.e. to send DNS Update messages. The b10-dhcp6 module is responsible
 for generating so called @ref isc::dhcp_ddns::NameChangeRequest and sending it to the
 b10-dhcp-ddns module. The @ref isc::dhcp_ddns::NameChangeRequest object represents changes to the
-DNS bindings, related to acquisition, renewal or release of the lease. The bind10-dhcp6
+DNS bindings, related to acquisition, renewal or release of the lease. The b10-dhcp6
 module implements the simple FIFO queue of the NameChangeRequest objects. The module
 logic, which processes the incoming DHCPv6 Client FQDN Options puts these requests
 into the FIFO queue.
@@ -119,7 +120,7 @@ a code which will check if there are any outstanding requests in the queue and
 send them to the b10-dhcp-ddns module when server is idle waiting for DHCP messages.
 
 In the simplest case, when client gets one address from the server, a DHCPv6 server
-may generate 0, 1 or 2 NameChangeRequests during single message processing. 
+may generate 0, 1 or 2 NameChangeRequests during single message processing.
 Server generates no NameChangeRequests if it is not configured to update DNS
  or it rejects the DNS update for any other reason.
 
@@ -226,7 +227,7 @@ limited.
  @section dhcpv6ConfigBackend Configuration backend for DHCPv6
 
 There are many theoretical ways in which server configuration can be stored. Kea 0.8 and
-earlier versions used BIND10 framework and its internal storage for DHCPv6 server configuration.
+earlier versions used Bundy/BIND10 framework and its internal storage for DHCPv6 server configuration.
 The legacy ISC-DHCP implementation uses flat files. Configuration stored in JSON files is
 becoming more and more popular among various projects. There are unofficial patches for
 ISC-DHCP that keep parts of the configuration in LDAP. It was also suggested that in some
@@ -237,7 +238,7 @@ There is a new parameter for configure script: --with-kea-config. It currently s
 two values: BUNDY and JSON.
 
 BUNDY (which is the default value as of April 2014) means that Kea6 is linked with the
-Bundy (former BIND10) configuration backend that connects to the BIND10 framework and in general works
+Bundy (former BIND10) configuration backend that connects to the Bundy/BIND10 framework and in general works
 exactly the same as Kea 0.8 and earlier versions. The benefits of that backend are uniform
 integration with Bundy/BIND10 framework, easy on-line reconfiguration using bindctl, available
 RESTful API. On the other hand, it requires the whole heavy Bundy framework that requires

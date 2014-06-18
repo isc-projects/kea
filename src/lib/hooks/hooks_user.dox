@@ -21,16 +21,16 @@
 
  @section hooksdgIntroduction Introduction
 
-Although the BIND 10 framework and its associated DNS and DHCP programs
+Although the Kea framework and its DHCP programs
 provide comprehensive functionality, there will be times when it does
 not quite do what you require: the processing has to be extended in some
 way to solve your problem.
 
-Since the BIND 10 source code is freely available (BIND 10 being an
+Since the Kea source code is freely available (Kea being an
 open-source project), one option is to modify it to do what
 you want.  Whilst perfectly feasible, there are drawbacks:
 
-- Although well-documented, BIND 10 is a large program.  Just
+- Although well-documented, Kea is a large program.  Just
 understanding how it works will take a significant amount of time. In
 addition, despite the fact that its object-oriented design keeps the
 coupling between modules to a minimum, an inappropriate change to one
@@ -38,39 +38,39 @@ part of the program during the extension could cause another to
 behave oddly or to stop working altogether.
 
 - The change may need to be re-applied or re-written with every new
-version of BIND 10.  As new functionality is added or bugs are fixed,
+version of Kea.  As new functionality is added or bugs are fixed,
 the code or algorithms in the core software may change - and may change
 significantly.
 
-To overcome these problems, BIND 10 provides the "Hooks" interface -
+To overcome these problems, Kea provides the "Hooks" interface -
 a defined interface for third-party or user-written code. (For ease of
 reference in the rest of this document, all such code will be referred
 to as "user code".)  At specific points in its processing
-("hook points") BIND 10 will make a call to this code.  The call passes
+("hook points") Kea will make a call to this code.  The call passes
 data that the user code can examine and, if required, modify.
-BIND 10 uses the modified data in the remainder of its processing.
+Kea uses the modified data in the remainder of its processing.
 
-In order to minimise the interaction between BIND 10 and the user
-code, the latter is built independently of BIND 10 in the form of
-a shared library (or libraries).  These are made known to BIND 10
-through its configuration mechanism, and BIND 10 loads the library at
+In order to minimise the interaction between Kea and the user
+code, the latter is built independently of Kea in the form of
+a shared library (or libraries).  These are made known to Kea
+through its configuration mechanism, and Kea loads the library at
 run time. Libraries can be unloaded and reloaded as needed while BIND
 10 is running.
 
-Use of a defined API and the BIND 10 configuration mechanism means that
-as new versions of BIND 10 are released, there is no need to modify
+Use of a defined API and the Kea configuration mechanism means that
+as new versions of Kea are released, there is no need to modify
 the user code.  Unless there is a major change in an interface
 (which will be clearly documented), all that will be required is a rebuild
 of the libraries.
 
 @note Although the defined interface should not change, the internals
 of some of the classes and structures referenced by the user code may
-change between versions of BIND 10.  These changes have to be reflected
+change between versions of Kea.  These changes have to be reflected
 in the compiled version of the software, hence the need for a rebuild.
 
 @subsection hooksdgLanguages Languages
 
-The core of BIND 10 is written in C++.  While it is the intention to
+The core of Kea is written in C++.  While it is the intention to
 provide interfaces into user code written in other languages, the initial
 versions of the Hooks system requires that user code be written in C++.
 All examples in this guide are in that language.
@@ -91,16 +91,16 @@ to execute a user function.
 - Framework function - the functions that a user library needs to
 supply in order for the hooks framework to load and unload the library.
 
-- User code/user library - non-BIND 10 code that is compiled into a
-shared library and loaded by BIND 10 into its address space.
+- User code/user library - non-Kea code that is compiled into a
+shared library and loaded by Kea into its address space.
 
 
 @section hooksdgTutorial Tutorial
 
-To illustrate how to write code that integrates with BIND 10, we will
+To illustrate how to write code that integrates with Kea, we will
 use the following (rather contrived) example:
 
-The BIND 10 DHCPv4 server is used to allocate IPv4 addresses to clients
+The Kea DHCPv4 server is used to allocate IPv4 addresses to clients
 (as well as to pass them other information such as the address of DNS
 servers).  We will suppose that we need to classify clients requesting
 IPv4 addresses according to their hardware address, and want to log both
@@ -117,7 +117,7 @@ user hook code not to provide an optimal solution.
 Loading and initializing a library holding user code makes use
 of three (user-supplied) functions:
 
-- version - defines the version of BIND 10 code with which the user-library
+- version - defines the version of Kea code with which the user-library
 is built
 - load - called when the library is loaded by the server.
 - unload - called when the library is unloaded by the server.
@@ -128,18 +128,18 @@ are used.
 @subsubsection hooksdgVersionFunction The "version" Function
 
 "version" is used by the hooks framework to check that the libraries
-it is loading are compatible with the version of BIND 10 being run.
-Although the hooks system allows BIND 10 and user code to interface
+it is loading are compatible with the version of Kea being run.
+Although the hooks system allows Kea and user code to interface
 through a defined API, the relationship is somewhat tight in that the
-user code will depend on the internal structures of BIND 10.  If these
-change - as they can between BIND 10 releases - and BIND 10 is run with
-a version of user code built against an earlier version of BIND
-10, a program crash could result.
+user code will depend on the internal structures of Kea.  If these
+change - as they can between Kea releases - and Kea is run with
+a version of user code built against an earlier version of Kea, program
+crash could result.
 
 To guard against this, the "version" function must be provided in every
 library.  It returns a constant defined in header files of the version
-of BIND 10 against which it was built.  The hooks framework checks this
-for compatibility with the running version of BIND 10 before loading
+of Kea against which it was built.  The hooks framework checks this
+for compatibility with the running version of Kea before loading
 the library.
 
 In this tutorial, we'll put "version" in its own file, version.cc.  The
@@ -159,10 +159,10 @@ int version() {
 }
 @endcode
 
-The file "hooks/hooks.h" is specified relative to the BIND 10 libraries
+The file "hooks/hooks.h" is specified relative to the Kea libraries
 source directory - this is covered later in the section @ref hooksdgBuild.
-It defines the symbol BIND10_HOOKS_VERSION, which has a value that changes
-on every release of BIND 10: this is the value that needs to be returned
+It defines the symbol KEA_HOOKS_VERSION, which has a value that changes
+on every release of Kea: this is the value that needs to be returned
 to the hooks framework.
 
 A final point to note is that the definition of "version" is enclosed
@@ -183,7 +183,7 @@ places where any library-wide resources are allocated and deallocated.
 this is covered further in the section @ref hooksdgCalloutRegistration.
 
 The example does not make any use callouts with non-standard names.  However,
-as our design requires that the log file be open while BIND 10 is active
+as our design requires that the log file be open while Kea is active
 and the library loaded, we'll open the file in the "load" function and close
 it in "unload".
 
@@ -256,14 +256,14 @@ returning "true" if the file opened successfully.)
 - "unload" closes the log file if it is open and is a no-op otherwise. As
 with "load", a zero value must be returned on success and a non-zero value
 on an error.  The hooks framework will record a non-zero status return
-as an error in the current BIND 10 log but otherwise ignore it.
+as an error in the current Kea log but otherwise ignore it.
 - As before, the function definitions are enclosed in 'extern "C"' braces.
 
 @subsection hooksdgCallouts Callouts
 
 Having sorted out the framework, we now come to the functions that
 actually do something.  These functions are known as "callouts" because
-the BIND 10 code "calls out" to them.  Each BIND 10 server has a number of
+the Kea code "calls out" to them.  Each Kea server has a number of
 hooks to which callouts can be attached: server-specific documentation
 describes in detail the points in the server at which the hooks are
 present together with the data passed to callouts attached to them.
@@ -282,7 +282,7 @@ int callout(CalloutHandle& handle);
 @endcode
 
 (As before, the callout is declared with "C" linkage.)  Information is passed
-between BIND 10 and the callout through name/value pairs in the CalloutHandle
+between Kea and the callout through name/value pairs in the CalloutHandle
 object. The object is also used to pass information between callouts on a
 per-request basis. (Both of these concepts are explained below.)
 
@@ -292,7 +292,7 @@ effect on server processing; the only difference between a success
 and error code is that if the latter is returned, the server will
 log an error, specifying both the library and hook that generated it.
 Effectively the return status provides a quick way for a callout to log
-error information to the BIND 10 logging system.
+error information to the Kea logging system.
 
 @subsubsection hooksdgArguments Callout Arguments
 
@@ -420,7 +420,7 @@ later in the list are able to examine (and modify) the settings of earlier ones.
 
 @subsubsection hooksdgCalloutContext Per-Request Context
 
-Although many of the BIND 10 modules can be characterised as handling
+Although many of the Kea modules can be characterised as handling
 singles packet - e.g. the DHCPv4 server receives a DISCOVER packet,
 processes it and responds with an OFFER, this is not true in all cases.
 The principal exception is the recursive DNS resolver: this receives a
@@ -583,16 +583,16 @@ Building the code requires building a shareable library.  This requires
 the the code be compiled as positition-independent code (using the
 compiler's "-fpic" switch) and linked as a shared library (with the
 linker's "-shared" switch).  The build command also needs to point to
-the BIND 10 include directory and link in the appropriate libraries.
+the Kea include directory and link in the appropriate libraries.
 
-Assuming that BIND 10 has been installed in the default location, the
+Assuming that Kea has been installed in the default location, the
 command line needed to create the library using the Gnu C++ compiler on a
 Linux system is:
 
 @code
-g++ -I /usr/include/bind10 -L /usr/lib/bind10/lib -fpic -shared -o example.so \
+g++ -I /usr/include/kea -L /usr/lib/kea/lib -fpic -shared -o example.so \
     load_unload.cc pkt4_receive.cc pkt4_send.cc version.cc \
-    -lb10-dhcpsrv -lb10-dhcp++ -lb10-hooks -lb10-log -lb10-util -lb10-exceptions
+    -lkea-dhcpsrv -lkea-dhcp++ -lkea-hooks -lkea-log -lkea-util -lkea-exceptions
 @endcode
 
 Notes:
@@ -600,18 +600,19 @@ Notes:
 your operating system and compiler - consult the relevant documentation
 for details.
 - The values for the "-I" and "-L" switches depend on where you have
-installed BIND 10.
+installed Kea.
 - The list of libraries that need to be included in the command line
 depends on the functionality used by the hook code and the module to
 which they are attached (e.g. hook code for DNS will need to link against
 the libkea-dns++ library).  Depending on operating system, you may also need
-to explicitly list libraries on which the BIND 10 libraries depend.
+to explicitly list libraries on which the Kea libraries depend.
 
 @subsection hooksdgConfiguration Configuring the Hook Library
 
-The final step is to make the library known to BIND 10.  All BIND 10 modules to
+The final step is to make the library known to Kea.  All Kea modules to
 which hooks can be added contain the "hook_library" element, and user
-libraries are added to this. (The BIND 10 hooks system can handle multiple libraries - this is discussed below.).
+libraries are added to this. (The Kea hooks system can handle multiple libraries
+- this is discussed below.).
 
 To add the example library (assumed to be in /usr/local/lib) to the DHCPv4
 module, the following bindctl commands must be executed:
@@ -626,9 +627,9 @@ The DHCPv4 server will load the library and execute the callouts each time a
 request is received.
 
 @note The above assumes that the hooks library will be used with a version of
-BIND 10 that is dynamically-linked.  For information regarding running
-hooks libraries against a statically-linked BIND 10, see
-@ref hooksdgStaticallyLinkedBind10.
+Kea that is dynamically-linked.  For information regarding running
+hooks libraries against a statically-linked Kea, see
+@ref hooksdgStaticallyLinkedKea.
 
 @section hooksdgAdvancedTopics Advanced Topics
 
@@ -840,7 +841,7 @@ ones with non-standard names need to be registered manually.
 
 @subsubsection hooksdgMultipleCallouts Multiple Callouts on a Hook
 
-The BIND 10 hooks framework allows multiple callouts to be attached to 
+The Kea hooks framework allows multiple callouts to be attached to 
 a hook point.  Although it is likely to be rare for user code to need to
 do this, there may be instances where it make sense.
 
@@ -947,7 +948,7 @@ calls the hook's callouts, A and D will run (in that order).
 
 @subsection hooksdgMultipleLibraries Multiple User Libraries
 
-As alluded to in the section @ref hooksdgConfiguration, BIND 10 can load
+As alluded to in the section @ref hooksdgConfiguration, Kea can load
 multiple libraries.  The libraries are loaded in the order specified in
 the configuration, and the callouts attached to the hooks in the order
 presented by the libraries.
@@ -1012,13 +1013,13 @@ by setting a name.value pair in the hook's argument list.  "putopt"
 would be able to read this, but would not be able to return information
 back to "add_option".
 
-All argument names used by BIND 10 will be a combination of letters
+All argument names used by Kea will be a combination of letters
 (both upper- and lower-case), digits, hyphens and underscores: no
 other characters will be used.  As argument names are simple strings,
 it is suggested that if such a mechanism be used, the names of the data
 values passed between the libraries include a special character such as
 the dollar symbol or percent sign.  In this way there is no danger that
-a name will conflict with any existing or future BIND 10 argument names.
+a name will conflict with any existing or future Kea argument names.
 
 
 @subsection hooksdgRegisterMultipleLibraries Dynamic Callout Registration and Multiple Libraries
@@ -1037,17 +1038,17 @@ appear between "check" and "validate".  On the other hand, if it were
 "logpkt" that registered the new callout, "double_check" would appear
 after "validate".
 
-@subsection hooksdgStaticallyLinkedBind10 Running Against a Statically-Linked BIND 10
+@subsection hooksdgStaticallyLinkedKea Running Against a Statically-Linked Kea
 
-If BIND 10 is built with the --enable-static-link switch (set when
-running the "configure" script), no shared BIND 10 libraries are built;
-instead, archive libraries are created and BIND 10 is linked to them.
+If Kea is built with the --enable-static-link switch (set when
+running the "configure" script), no shared Kea libraries are built;
+instead, archive libraries are created and Kea is linked to them.
 If you create a hooks library also linked against these archive libraries,
 when the library is loaded you end up with two copies of the library code,
-one in BIND 10 and one in your library.
+one in Kea and one in your library.
 
 To run successfully, your library needs to perform run-time initialization
-of the BIND 10 code in your library (something performed by BIND 10
+of the Kea code in your library (something performed by Kea
 in the case of shared libraries).  To do this, call the function
 isc::hooks::hooksStaticLinkInit() as the first statement of the load()
 function. (If your library does not include a load() function, you need
