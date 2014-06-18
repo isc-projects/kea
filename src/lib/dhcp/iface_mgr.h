@@ -1020,11 +1020,10 @@ private:
 
     /// @brief Open an IPv6 socket with multicast support.
     ///
-    /// This function opens socket(s) to allow reception of the DHCPv6 sent
-    /// to multicast address. It opens an IPv6 socket, binds it to link-local
-    /// address and joins multicast group (on non-Linux systems) or opens two
-    /// IPv6 sockets and binds one of them to link-local address and another
-    /// one to multicast address (on Linux systems).
+    /// This function opens a socket capable of receiving messages sent to
+    /// the All_DHCP_Relay_Agents_and_Servers (ff02::1:2) multicast address.
+    /// The socket is bound to the in6addr_any address and the IPV6_JOIN_GROUP
+    /// option is set to point to the ff02::1:2 multicast address.
     ///
     /// @note This function is intended to be called internally by the
     /// @c IfaceMgr::openSockets6. It is not intended to be called from any
