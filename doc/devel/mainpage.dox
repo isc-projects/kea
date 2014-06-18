@@ -17,7 +17,7 @@
  *
  * Welcome to Kea Developer's Guide. This documentation is addressed
  * at existing and prospecting developers and programmers and provides
- * information needed to both extend and maintain BIND 10.
+ * information needed to both extend and maintain Kea.
  *
  * If you wish to write "hook" code - code that is loaded by Kea at
  * run-time and modifies its behavior you should read the section
@@ -31,7 +31,7 @@
  * If you are a user or system administrator, rather than software engineer,
  * you should read the
  * <a href="http://kea.isc.org/docs/bind10-guide.html">Kea
- * Guide (Administrator Reference for Kea)</a> instead.
+ * Administrator Reference Manual</a> instead.
  *
  * Regardless of your field of expertise, you are encouraged to visit the
  * <a href="http://kea.isc.org/">Kea webpage (http://kea.isc.org)</a>
@@ -98,7 +98,7 @@
  * - @subpage libdhcp_ddns
  *
  * @section miscellaneousTopics Miscellaneous Topics
- * - @subpage logBind10Logging
+ * - @subpage logKeaLogging
  *   - @subpage logBasicIdeas
  *   - @subpage logDeveloperUse
  *   - @subpage logNotes

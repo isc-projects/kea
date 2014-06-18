@@ -33,7 +33,7 @@ maintain their own backends.
 
 @section configBackendMotivation Motivation for Different Backends
 
-BIND10 (the project under which the first stages of Keas were developed)
+BIND10 (the project under which the first stages of Kea were developed)
 used to maintain an extensive framework that was responsible for the
 configuration of components.  After BIND10 was cancelled, two projects
 were created: <a href="http://kea.isc.org">Kea</a> (focused on DHCP)
@@ -51,7 +51,32 @@ developed and maintained by other organizations.
 
 @section configBackendAdding How to Add a New Configuration Backend
 
-@todo Will be covered in ticket #3400.
+The configuration backend concept was designed to make external (i.e. not
+maintained by ISC) configurations backends easy to maintain. In particular,
+the set of patches vs. separate files required strongly favors separate
+files. This is important if an external organization wants to develop its
+own configuration backend and then needs to apply it every ISC release
+of Kea.
+
+The following steps are needed to add new configuration backend (it is assumed
+that the modified component is DHCPv4. Similar approach applies to other
+components):
+
+-# Modify AC_ARG_WITH(kea-config,...) macro in configure.ac
+-# Add your own AM_CONDITIONAL(CONFIG_BACKEND_FOO, ...) macro in configure.ac
+-# Add your own conditional AC_DEFINE(CONFIG_BACKEND_FOO, ...) invocation
+   in configure.ac
+-# Modify sanity check in configure.ac to allow your configuration backend name.
+-# Modify src/bin/dhcp4/Makefile.am to include your own backend
+   implementation (e.g. foo_controller.cc).
+-# Write your own implementation of isc::dhcp::ControlledDhcpv4Srv::init(),
+   isc::dhcp::ControlledDhcpv4Srv::init() and isc::dhcp::ControlledDhcpv4Srv::cleanup().
+
+Optionally you can also:
+
+-# Modify src/bin/dhcp4/tests/Makefile.am to include foo_controller_unittest.cc if
+   selected backend is foo.
+-# Implement unit-tests for your backend in foo_controller_unittest.cc file.
 
 @section configBackendJSONDesign The JSON Configuration Backend
 
@@ -61,52 +86,58 @@ backend framework.
 -# A new parameter called --with-kea-config will be implemented in the
    configure script. It will allow the selection at compilation time of how the
    servers will be configured. For the next 2-3 months (until around June 2014),
-   there will be two values: JSON (read from file) and BIND10 (use the BIND10 framework).
+   there will be two values: JSON (read from file) and BUNDY (use the BUNDY/BIND10 framework).
    Once the file based configuration is implemented and the Kea team is ready to switch
    (i.e. enough confidence, Forge tests updated for new configuration
-   mechanism), the BIND10 backend will be removed from the Kea repository. Other projects
+   mechanism), the Bundy/BIND10 framework will be removed from the Kea repository. Other projects
    (e.g. Bundy) who want to maintain it, are advised to just revert the single
-   commit that will bring the BIND10 framework back to their repositories.<br/><br/>
+   commit that will bring the Bundy framework back to their repositories.
    This switchable backend concept is quite simple. There are just different
    implementations of ControlledXSrv class, so it is a matter of compiling/linking
    one file or another. Hence it is easy to remove the old backend (and for
    Bundy to keep it if they desire so). It is also easy for other
-   organizations to add and maintain their own backends (e.g. LDAP).<br/><br/>
--# Each backend must use the common code
-   for configuration and command processing callbacks. They all assume that
-   JSON formatted parameters are sent and they are expected to return well
-   formatted JSON responses. The exact format of configuration and commands is
-   module specific.<br/><br/>
--# After Kea 0.9 is released, a form of secure socket will be implemented through
-   which commands can be sent. Whatever the design, it
-   will allow the sending of configurations and commands in JSON format and
-   the receiving of responses.<br/><br/>
-   Once that is done, Kea will have the same capability the BIND10
-   framework to send additional parameters. One obvious use case will be
-   to send a new configuration file name as the parameter for "reload".<br/><br/>
--# A command handler needs to be added for reading the configuration from a file. Its main
-   responsibility is to load the configuration and process it. The JSON backend
-   must call that handler when starting up the server.<br/><br/>
--# Extend the existing JSON parser. The current JSON parser in
-   @ref isc::data::Element::fromJSON() needs to be extended to allow optional preprocessing.
-   For now that capability will simply remove whole-line comments staring with the hash
-   character, but it is expected
-   to grow over time (in-line comments and file inclusions are the obvious
-   envisaged additions).<br/><br/>
--# Implement a common base class for the Kea4, Kea6, and D2 servers. Some operations will be
-   common for all three components: logger initialization, handling and, at some future point,
-   control socket. This calls for a small base class that @ref isc::dhcp::Dhcpv4Srv "Dhcpv4Srv",
-   @ref isc::dhcp::Dhcpv6Srv "Dhcpv6Srv" and the @ref isc::d2::D2Controller "D2Controller" classes can use.
-   It is expected that the base class
-   (@ref isc::dhcp::Daemon) will be a small one but will grow over time as the code is unified.<br/><br/>
+   organizations to add and maintain their own backends (e.g. LDAP).
+
+-# Each backend must use the common code for configuration and command
+   processing callbacks. They all assume that JSON formatted parameters are sent
+   and they are expected to return well formatted JSON responses. The exact
+   format of configuration and commands is module specific.
+
+-# After Kea 0.9 is released, a form of secure socket will be implemented
+   through which commands can be sent. Whatever the design, it will allow the
+   sending of configurations and commands in JSON format and the receiving of
+   responses.  Once that is done, Kea will have the same capability the BIND10
+   framework to send additional parameters. One obvious use case will be to send
+   a new configuration file name as the parameter for "reload".
+
+-# A command handler needs to be added for reading the configuration from a
+   file. Its main responsibility is to load the configuration and process
+   it. The JSON backend must call that handler when starting up the server.
+
+-# Extend the existing JSON parser. The current JSON parser in @ref
+   isc::data::Element::fromJSON() needs to be extended to allow optional
+   preprocessing.  For now that capability will simply remove whole-line
+   comments staring with the hash character, but it is expected to grow over
+   time (in-line comments and file inclusions are the obvious envisaged
+   additions).
+
+-# Implement a common base class for the Kea4, Kea6, and D2 servers. Some
+   operations will be common for all three components: logger initialization,
+   handling and, at some future point, control socket. This calls for a small
+   base class that @ref isc::dhcp::Dhcpv4Srv "Dhcpv4Srv", @ref
+   isc::dhcp::Dhcpv6Srv "Dhcpv6Srv" and the @ref isc::d2::D2Controller
+   "D2Controller" classes can use.  It is expected that the base class (@ref
+   isc::dhcp::Daemon) will be a small one but will grow over time as the code is
+   unified.
+
 -# A way is needed to initialize stand-alone logging (i.e. each
-   Kea component will initialize it on its own).<br/><br/>
+   Kea component will initialize it on its own).
+
 -# The current format of the BIND10 configuration file, b10-config.db will be
    retained as the configuration file format.  This is slight change
    from the BIND10 days, as then a subset of the configuration was received by
-   the daemon processes.<br/><br/>
-   To take a specific example, the following is how b10-config.db
-   looks today:<br/><br/>
+   the daemon processes. To take a specific example, the following is how
+   b10-config.db looks today:
    @code
    {
      "Init": { ... }
@@ -133,12 +164,14 @@ backend framework.
    will receive all of it. The modification in the code to handle this
    is really minor: just iterate over the top level elements and pick the appropriate
    tree (or get the element by name). Also, that approach makes the logging
-   initialization code very easy to share among Kea4, Kea6 and D2.<br/><br/>
+   initialization code very easy to share among Kea4, Kea6 and D2.
+
 -# The .spec files used in BIND 10 by the control program to validate commands
    will be retained. They will be kept and maintained even though no use of
    them is planned. At some future time syntax validation may be implemented,
    although it is out of scope for Kea 0.9 (and probably
-   for 1.0 as it is pretty big task).<br/><br/>
+   for 1.0 as it is pretty big task).
+
 -# Addition of a shell script to start/stop Kea4,Kea6 and D2. There will be a script that will
    start, stop and reconfigure the daemons. Its only
    job will be to pass the configuration file to each daemon and remember its PID file, so
