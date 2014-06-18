@@ -106,8 +106,8 @@ public:
     ///
     /// 1. parse command line arguments
     /// 2. instantiate and initialize the application process
-    /// 3. initialize signal handling
-    /// 4. load the configuration file
+    /// 3. load the configuration file
+    /// 4. initialize signal handling
     /// 5. start and wait on the application process event loop
     /// 6. exit to the caller
     ///

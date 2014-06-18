@@ -76,8 +76,6 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
                    "Application Process initialization failed: " << ex.what());
     }
 
-    // Now that we have a proces, we can set up signal handling.
-    initSignalHandling();
 
     LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DCTL_STANDALONE).arg(app_name_);
 
@@ -95,18 +93,26 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
     // Everything is clear for launch, so start the application's
     // event loop.
     try {
+        // Now that we have a proces, we can set up signal handling.
+        initSignalHandling();
+
         runProcess();
+
+        /// @todo Once Trac #3470 is addressed this will not be necessary.
+        /// SignalSet uses statics which do not free in predicatable order.
+        if (signal_set_) {
+            signal_set_->clear();
+        }
     } catch (const std::exception& ex) {
         LOG_FATAL(dctl_logger, DCTL_PROCESS_FAILED)
                   .arg(app_name_).arg(ex.what());
+        /// @todo Once Trac #3470 is addressed this will not be necessary.
+        /// SignalSet uses statics which do not free in predicatable order.
+        if (signal_set_) {
+            signal_set_->clear();
+        }
         isc_throw (ProcessRunError,
                    "Application process event loop failed: " << ex.what());
-    }
-
-    /// @todo Once Trac #3470 is addressed this will not be necessary.
-    /// SignalSet uses statics which do not free in predicatable order.
-    if (signal_set_) {
-        signal_set_->clear();
     }
 
     // All done, so bail out.
