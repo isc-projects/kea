@@ -8,45 +8,45 @@
 
   <para>Depending on configuration backend chosen (see <xref
   linkend="dhcp-config-backend"/>), configuration mechanisms are different. The
-  following sections describe details of specific configuration backends. Note
+  following sections describe details of the differeent configuration backends. Note
   that only one configuration backend can be used and its selection is
-  determined during compilation time.</para>
+  made when the configure script is run.</para>
 
   <section id="bundy-backend">
-    <title>Bundy configuration backend</title>
-    <para>This legacy configuration backend allows Kea to use former BIND10
+    <title>BIND 10 configuration backend</title>
+    <para>This legacy configuration backend allows Kea to use the former BIND10
     framework. That framework and this Kea configuration backend is no longer
-    supported by ISC. It is currently developed as part of Bundy project (see
-    <ulink url="http://bundy-dns.de">Bundy homepage</ulink>). See Bundy project
+    supported by ISC. It is currently developed as part of the Bundy project (see
+    <ulink url="http://bundy-dns.de">Bundy homepage</ulink>). See the Bundy project
     documentation regarding configuration.</para>
   </section>
 
   <section id="json-backend">
     <title>JSON configuration backend</title>
     <para>JSON is the default configuration backend and the only one supported
-    as of 0.9 release. It assumes that the servers are started from command line
-    (either directly or using a script, see TODO for details). JSON backend uses
-    certain signals to influence certain behaviors. The configuration file is
+    as of the 0.9 release. It assumes that the servers are started from the command line
+    (either directly or using a script, see TODO for details). The JSON backend uses
+    certain signals to influence Kea. The configuration file is
     specified upon startup using -c parameter.</para>
 
     <section id="json-format">
       <title>JSON syntax</title>
       <para>Configuration files for DHCPv4, DHCPv6 and DDNS modules are defined
-      in extended JSON format. The basic JSON is defined in <ulink
+      in an extended JSON format. Basic JSON is defined in <ulink
       url="http://tools.ietf.org/html/rfc4627">RFC 4627</ulink>.  Kea components
-      use extended JSON, which extends basic format by allowing bash-style
-      comments in the file. Comment lines must have hash (#) in the first
-      column.</para>
+      use a slightly modified JSON, in that they allowing bash-style
+      comments in the file: lines with the hash (#) character in the first column
+      are comment lines and are ignored.</para>
 
-      <para>Configuration file consists of a single object (often colloquially
-      called a map) started with a curly bracket. It consists "Dhcp4", "Dhcp6",
+      <para>The configuration file consists of a single object (often colloquially
+      called a map) started with a curly bracket. It comprises the "Dhcp4", "Dhcp6",
       "DhcpDdns" and/or "Logging" objects. It is possible to define additional
-      elements, but they will be ignored. That principle was chosen to ease
-      configuration management. For example, it is possible to define Dhcp4,
-      Dhcp6 and Logging elements in one configuration file that can be used to
-      start both DHCPv4 and DHCPv6 components.  When starting, DHCPv4 component
-      will use Dhcp4 object to configure itself and Logging to configure logging
-      parameters, while ignoring Dhcp6 object.</para>
+      elements, but they will be ignored. (That principle was chosen to ease
+      configuration management.) For example, it is possible to define Dhcp4,
+      Dhcp6 and Logging elements in a single configuration file that can be used to
+      start both the DHCPv4 and DHCPv6 components.  When starting, the DHCPv4 component
+      will use Dhcp4 object to configure itself and the Logging object to configure logging
+      parameters; it will ignore the Dhcp6 object.</para>
 
       <para>For example, a very simple configuration for both DHCPv4 and DHCPv6
       could look like this:
@@ -84,7 +84,7 @@
 # DHCPv6 specific configuration ends here.
 
 # Logger parameters (that could be shared among several components) start here.
-# That section can be used by both DHCPv4 and DHCPv6 servers.
+# This section is used by both the DHCPv4 and DHCPv6 servers.
 "Logging": {
    "loggers": [{
         "name": "*",
@@ -102,26 +102,25 @@
         <para>More examples are available in the Kea source code in the
         <filename>doc/examples</filename> directory.</para>
 
-        <para>To avoid repetition of mostly similar structures, specific
-        examples will showcase only subset of parameters appropriate for a given
-        context. For example, when discussing IPv6 subnets configuration in
+        <para>To avoid repetition of mostly similar structures, examples in the
+        rest of this guide will showcase only the subset of parameters appropriate for a given
+        context. For example, when discussing the IPv6 subnets configuration in
         DHCPv6, only subnet6 parameters will be mentioned. It is implied that
-        remaining elements (global that holds Dhcp6, Logging and possibly
-        DhcpDdns) are present, but are omitted for clarity. Usually, locations
-        where extra parameters may appear are denoted with ellipsis (triple
-        dot).</para>
+        remaining elements (the global map that holds Dhcp6, Logging and possibly
+        DhcpDdns) are present, but they are omitted for clarity. Usually, locations
+        where extra parameters may appear are denoted with an ellipsis.</para>
     </section>
 
     <section>
-      <title>Simplified notation</title>
+      <title>Simplified Notation</title>
 
         <para>It is sometimes convenient to refer to specific element in the
         configuration hierarchy. Each hierarchy level is separated by a slash.
-        If there is an array, specific instance within that array is referred by
-        a number in square brackets. For example, in the above configuration the
+        If there is an array, a specific instance within that array is referred by
+        a number in square brackets (with numbering starting at zero). For example, in the above configuration the
         valid-lifetime in Dhcp6 component can be referred to as
-        Dhcp6/valid-lifetime, first interface for the DHCPv4 server as
-        Dhcp4/interfaces[0] and the pool in the first IPv6 defined in DHCPv6
+        Dhcp6/valid-lifetime, the first interface for the DHCPv4 server as
+        Dhcp4/interfaces[0] and the pool in the first subnet defined in the DHCPv6
         configuration as Dhcp6/subnet6[0]/pool.</para>
       
       <!-- @todo Add a reference here after #3422 is done -->
