@@ -37,7 +37,11 @@ public:
     /// @brief Opens a socket.
     ///
     /// This function open an IPv6 socket on an interface and binds it to a
-    /// specified UDP port and IP address.
+    /// specified UDP port and IP address. If the @c join_multicast parameter
+    /// is set to @c true, the function will attempt to join the socket to
+    /// the ff02::1:2 multicast group so as the multicast traffic can be
+    /// received. In this case the socket is bound to the in6addr_any
+    /// instead.
     ///
     /// @param iface Interface descriptor.
     /// @param addr Address on the interface to be used to send packets.
