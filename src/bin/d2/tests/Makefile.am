@@ -1,7 +1,20 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
 
 PYTESTS = d2_test.py
+SHTESTS =
+# The test of dynamic reconfiguration based on signals will work only
+# if we are using file based configuration approach.
+if CONFIG_BACKEND_JSON
+SHTESTS += d2_reconfigure_test.sh
+SHTESTS += d2_sigterm_test.sh
+SHTESTS += d2_sigint_test.sh
+endif
+
 EXTRA_DIST = $(PYTESTS)
+EXTRA_DIST += d2_reconfigure_test.sh
+EXTRA_DIST += d2_sigterm_test.sh
+EXTRA_DIST += d2_sigint_test.sh
+EXTRA_DIST += d2_shutdown_test.sh
 
 # Explicitly specify paths to dynamic libraries required by loadable python
 # modules. That is required on Mac OS systems. Otherwise we will get exception
@@ -19,6 +32,12 @@ check-local:
 	B10_LOCKFILE_DIR_FROM_BUILD=$(abs_top_builddir) \
 	$(LIBRARY_PATH_PLACEHOLDER) \
 		$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
+	done
+
+	for shtest in $(SHTESTS) ; do \
+	echo Running test: $$shtest ; \
+	export B10_LOCKFILE_DIR_FROM_BUILD=$(abs_top_builddir); \
+	$(abs_srcdir)/$$shtest || exit ; \
 	done
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
