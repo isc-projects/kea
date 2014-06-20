@@ -62,14 +62,14 @@ typedef boost::function<void(IOSignalId sequence_id)> IOSignalHandler;
 /// arrives, the process's OS signal handler simply calls @ref
 /// isc::d2::IOSignalQueue::pushSignal() with the appropriate values.
 ///
-/// @Note that an IOSignalQueue requires a non-null IOServicePtr to construct.
+/// @note that an IOSignalQueue requires a non-null IOServicePtr to construct.
 /// This ensures that the IOService cannot be destroyed before any pending
 /// signals can be canceled.  It also means that a queue can only be used to
 /// send signals to that IOService.  If you need to send signals to more than
 /// one service, each service must have its own queue.
 ///
 /// To dequeue the IOSignal inside the caller's IOSignalHandler, one simply
-/// invokes @ref isc::d2::IOSignalQueue:popSignal() passing it the sequence_id
+/// invokes @ref isc::d2::IOSignalQueue::popSignal() passing it the sequence_id
 /// parameter passed to the handler.  This method returns a pointer to
 /// instigating IOSignal from which the value of OS signal (i.e. SIGINT,
 /// SIGUSR1...) can be obtained.  Note that calling popSignal() removes the
@@ -151,7 +151,7 @@ public:
         /// @param handler pointer to the function to handle the IOSignal
         ///
         /// @throw IOSignalError if handler is null.
-        TimerCallback(IOSignalId sequence_id_, IOSignalHandler handler_);
+        TimerCallback(IOSignalId sequence_id, IOSignalHandler handler);
 
         /// @brief () Operator which serves as the timer's callback
         ///
