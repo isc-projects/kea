@@ -64,6 +64,10 @@ public:
     /// must first check that there is any message on the socket (using
     /// select function) prior to calling this function.
     ///
+    /// If the message is received through the socket bound to "any"
+    /// (in6addr_any) address this function will drop this message if it has
+    /// been sent to an address other than multicast or link-local.
+    ///
     /// @param socket_info A structure holding socket information.
     ///
     /// @return A pointer to received message.
