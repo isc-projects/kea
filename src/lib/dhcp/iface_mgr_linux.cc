@@ -543,8 +543,10 @@ IfaceMgr::openMulticastSocket(Iface& iface,
     // link-local address. It may be required for us to close this
     // socket if an attempt to open and bind a socket to multicast
     // address fails.
+    int sock;
     try {
-        openSocket(iface.getName(), addr, port, iface.flag_multicast_);
+        sock = openSocket(iface.getName(), addr, port,
+                          iface.flag_multicast_);
 
     } catch (const Exception& ex) {
         IFACEMGR_ERROR(SocketConfigError, error_handler,
@@ -554,7 +556,47 @@ IfaceMgr::openMulticastSocket(Iface& iface,
         return (false);
 
     }
+
+    // In order to receive multicast traffic another socket is opened
+    // and bound to the multicast address.
+
+    /// @todo The DHCPv6 requires multicast so we may want to think
+    /// whether we want to open the socket on a multicast-incapable
+    /// interface or not. For now, we prefer to be liberal and allow
+    /// it for some odd use cases which may utilize non-multicast
+    /// interfaces. Perhaps a warning should be emitted if the
+    /// interface is not a multicast one.
+    if (iface.flag_multicast_) {
+        try {
+            openSocket(iface.getName(),
+                       IOAddress(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
+                       port);
+        } catch (const Exception& ex) {
+            // An attempt to open and bind a socket to multicast addres
+            // has failed. We have to close the socket we previously
+            // bound to link-local address - this is everything or
+            // nothing strategy.
+            iface.delSocket(sock);
+            IFACEMGR_ERROR(SocketConfigError, error_handler,
+                           "Failed to open multicast socket on"
+                           " interface " << iface.getName()
+                           << ", reason: " << ex.what());
+            return (false);
+        }
+    }
+    // Both sockets have opened successfully.
     return (true);
+}
+
+int
+IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, uint16_t port,
+                      const bool join_multicast) {
+    // Assuming that packet filter is not NULL, because its modifier checks it.
+    SocketInfo info = packet_filter6_->openSocket(iface, addr, port,
+                                                  join_multicast);
+    iface.addSocket(info);
+
+    return (info.sockfd_);
 }
 
 } // end of isc::dhcp namespace

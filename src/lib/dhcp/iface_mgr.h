@@ -898,7 +898,10 @@ public:
     /// @brief Checks if there is a socket open and bound to an address.
     ///
     /// This function checks if one of the sockets opened by the IfaceMgr is
-    /// bound to the IP address specified as the method parameter.
+    /// bound to the IP address specified as the method parameter. If the
+    /// socket is bound to the port (and address is unspecified), the
+    /// method will check if the address passed in the argument is configured
+    /// on an interface.
     ///
     /// @param addr Address of the socket being searched.
     ///
