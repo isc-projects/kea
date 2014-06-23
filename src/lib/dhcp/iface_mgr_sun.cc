@@ -176,6 +176,16 @@ IfaceMgr::openMulticastSocket(Iface& iface,
     return (true);
 }
 
+int
+IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, uint16_t port,
+                      const bool join_multicast) {
+    IOAddress actual_address = join_multicast ? IOAddress("::") : addr;
+    SocketInfo info = packet_filter6_->openSocket(iface, actual_address, port,
+                                                  join_multicast);
+    iface.addSocket(info);
+    return (info.sockfd_);
+}
+
 } // end of isc::dhcp namespace
 } // end of dhcp namespace
 

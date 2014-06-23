@@ -38,18 +38,17 @@ PktFilterInet6::openSocket(const Iface& iface,
     memset(&addr6, 0, sizeof(addr6));
     addr6.sin6_family = AF_INET6;
     addr6.sin6_port = htons(port);
-    // sin6_scope_id must be set to interface index for link local addresses
-    // only. For other addresses it is left unspecified (0).
-    if ((addr.toText() != "::1") && addr.isV6LinkLocal()) {
+    // sin6_scope_id must be set to interface index for link-local addresses.
+    // For unspecified addresses we set the scope id to the interface index
+    // to handle the case when the IfaceMgr is opening a socket which will
+    // join the multicast group. Such socket is bound to in6addr_any.
+    if ((addr != IOAddress("::1")) &&
+        ((addr.isV6LinkLocal() || (addr == IOAddress("::"))))) {
         addr6.sin6_scope_id = if_nametoindex(iface.getName().c_str());
     }
 
-    // In order to listen to the multicast traffic we need to bind socket
-    // to in6addr_any. If we bind to the link-local address the multicast
-    // packets will be filtered out.
-    if (join_multicast && iface.flag_multicast_) {
-        memcpy(&addr6.sin6_addr, &in6addr_any, sizeof(addr6.sin6_addr));
-    } else {
+    // Copy the address if it has been specified.
+    if (addr != IOAddress("::")) {
         memcpy(&addr6.sin6_addr, &addr.toBytes()[0], sizeof(addr6.sin6_addr));
     }
 #ifdef HAVE_SA_LEN
