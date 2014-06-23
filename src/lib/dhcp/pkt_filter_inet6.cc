@@ -181,6 +181,17 @@ PktFilterInet6::receive(const SocketInfo& socket_info) {
         isc_throw(SocketReadError, "failed to receive data");
     }
 
+    // Filter out packets sent to global unicast address (not link local and
+    // not multicast) if the socket is set to listen multicast traffic and
+    // is bound to in6addr_any. The traffic sent to global unicast address is
+    // received via dedicated socket.
+    IOAddress local_addr = IOAddress::fromBytes(AF_INET6,
+                      reinterpret_cast<const uint8_t*>(&to_addr));
+    if ((socket_info.addr_ == IOAddress("::")) &&
+        !(local_addr.isV6Multicast() || local_addr.isV6LinkLocal())) {
+        return (Pkt6Ptr());
+    }
+
     // Let's create a packet.
     Pkt6Ptr pkt;
     try {
