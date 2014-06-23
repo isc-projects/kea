@@ -99,14 +99,16 @@ public:
     virtual SocketInfo openSocket(const Iface& iface,
                                   const isc::asiolink::IOAddress& addr,
                                   const uint16_t port,
-                                  const bool,
+                                  const bool join_multicast,
                                   const bool) {
         // Check if there is any other socket bound to the specified address
         // and port on this interface.
         const Iface::SocketCollection& sockets = iface.getSockets();
         for (Iface::SocketCollection::const_iterator socket = sockets.begin();
              socket != sockets.end(); ++socket) {
-            if ((socket->addr_ == addr) && (socket->port_ == port)) {
+            if (((socket->addr_ == addr) ||
+                 ((socket->addr_ == IOAddress("::")) && join_multicast)) &&
+                socket->port_ == port) {
                 isc_throw(SocketConfigError, "test socket bind error");
             }
         }
@@ -243,6 +245,16 @@ public:
              sock != sockets.end(); ++sock) {
             if (sock->addr_ == IOAddress(addr)) {
                 return (true);
+            } else if ((sock->addr_ == IOAddress("::")) &&
+                       (IOAddress(addr).isV6LinkLocal())) {
+                for (Iface::AddressCollection::const_iterator addr_it =
+                         iface->getAddresses().begin();
+                     addr_it != iface->getAddresses().end();
+                     ++addr_it) {
+                    if (*addr_it == IOAddress(addr)) {
+                        return (true);
+                    }
+                }
             }
         }
         return (false);
@@ -1906,10 +1918,10 @@ TEST_F(IfaceMgrTest, openSocket6ErrorHandler) {
     ASSERT_TRUE(filter);
     ASSERT_NO_THROW(ifacemgr.setPacketFilter(filter));
 
-    // Open socket on eth0.
+    // Open multicast socket on eth0.
     ASSERT_NO_THROW(ifacemgr.openSocket("eth0",
                                         IOAddress("fe80::3a60:77ff:fed5:cdef"),
-                                        DHCP6_SERVER_PORT));
+                                        DHCP6_SERVER_PORT, true));
 
     // Install an error handler before trying to open sockets. This handler
     // should be called when the IfaceMgr fails to open socket on eth0.

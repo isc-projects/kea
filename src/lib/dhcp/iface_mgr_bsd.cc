@@ -171,6 +171,20 @@ IfaceMgr::openMulticastSocket(Iface& iface,
     return (true);
 }
 
+int
+IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, uint16_t port,
+                      const bool join_multicast) {
+    // On BSD, we bind the socket to in6addr_any and join multicast group
+    // to receive multicast traffic. So, if the multicast is requested,
+    // replace the address specified by the caller with the "unspecified"
+    // address.
+    IOAddress actual_address = join_multicast ? IOAddress("::") : addr;
+    SocketInfo info = packet_filter6_->openSocket(iface, actual_address, port,
+                                                  join_multicast);
+    iface.addSocket(info);
+    return (info.sockfd_);
+}
+
 
 } // end of isc::dhcp namespace
 } // end of dhcp namespace
