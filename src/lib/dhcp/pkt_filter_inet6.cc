@@ -42,8 +42,9 @@ PktFilterInet6::openSocket(const Iface& iface,
     // For unspecified addresses we set the scope id to the interface index
     // to handle the case when the IfaceMgr is opening a socket which will
     // join the multicast group. Such socket is bound to in6addr_any.
-    if ((addr != IOAddress("::1")) &&
-        ((addr.isV6LinkLocal() || (addr == IOAddress("::"))))) {
+    if (addr.isV6Multicast() ||
+        (addr.isV6LinkLocal() && (addr != IOAddress("::1"))) ||
+        (addr == IOAddress("::"))) {
         addr6.sin6_scope_id = if_nametoindex(iface.getName().c_str());
     }
 
