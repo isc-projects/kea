@@ -1,3 +1,8 @@
+7XX.	[doc]		tomek
+	Developer's Guide updated with pointers updated from BIND10 to
+	Kea.
+	(Trac #3396, git tbd)
+
 791.	[func]		tmark
 	DHCP-DDNS: Now supports configure.ac parameter: --with-kea-config.
 	It allows selecting configuration backend and accepts one of two
