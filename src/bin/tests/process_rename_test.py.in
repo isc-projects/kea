@@ -47,7 +47,7 @@ class TestRename(unittest.TestCase):
 
         # Scripts named in this list are not expected to be renamed and
         # should be excluded from the scan.
-        EXCLUDED_SCRIPTS = ['isc-sysinfo', 'bind10']
+        EXCLUDED_SCRIPTS = ['isc-sysinfo', 'bind10', 'keactrl']
 
         # Regexp to find all the *_SCRIPTS = something lines (except for
         # noinst_SCRIPTS, which are scripts for tests), including line
