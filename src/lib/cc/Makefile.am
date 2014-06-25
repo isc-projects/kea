@@ -23,7 +23,7 @@ nodist_libkea_cc_la_SOURCES += proto_defs.h
 libkea_cc_la_LIBADD = $(top_builddir)/src/lib/log/libkea-log.la
 
 CLEANFILES = *.gcno *.gcda session_config.h cc_messages.cc cc_messages.h \
-	proto_defs.h s-messages
+	s-messages
 
 session_config.h: session_config.h.pre
 	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" session_config.h.pre >$@
@@ -36,6 +36,8 @@ s-messages: cc_messages.mes
 
 BUILT_SOURCES = session_config.h cc_messages.cc cc_messages.h proto_defs.h
 
+# This rule is here, but we added proto_defs.h to the git repo,
+# so the script is no longer needed.
 proto_defs.h: $(top_srcdir)/src/lib/util/python/const2hdr.py proto_defs.cc
 	$(PYTHON) $(top_srcdir)/src/lib/util/python/const2hdr.py $(srcdir)/proto_defs.cc $@
 

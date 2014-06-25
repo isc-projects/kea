@@ -1,16 +1,4 @@
 /auth_test.sqlite3.copied
-/badExampleQuery_fromWire.wire
 /does-not-exist.sqlite3
-/examplequery_fromWire.wire
-/iquery_fromWire.wire
-/iquery_response_fromWire.wire
-/iqueryresponse_fromWire.wire
-/multiquestion_fromWire.wire
-/nsec3query_fromWire.wire
-/nsec3query_nodnssec_fromWire.wire
-/queryBadEDNS_fromWire.wire
-/shortanswer_fromWire.wire
-/simplequery_fromWire.wire
-/simpleresponse_fromWire.wire
 /test1.zone.copied
 /test2.zone.copied
