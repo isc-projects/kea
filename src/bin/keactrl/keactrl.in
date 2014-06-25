@@ -35,6 +35,29 @@ log_info() {
     printf "INFO/keactrl: ${1}\n"
 }
 
+### Convenience functions ###
+
+# Checks if the value is in the list. An example usage of this function
+# is to determine whether the keactrl command belongs to the list of
+# supported commands.
+is_in_list() {
+    local member=${1}  # Value to be checked
+    local list=${2}    # Comma separated list of items
+    _inlist=0          # Return value: 0 if not in list, 1 otherwise.
+    if [ -z ${member} ]; then
+        log_error "missing ${class}"
+    fi
+    # Iterate over all items on the list and compare with the member.
+    # If they match, return, otherwise log error and exit.
+    for item in ${list}
+    do
+        if [ ${item} = ${member} ]; then
+            _inlist=1
+            return
+        fi
+    done
+}
+
 ### Functions managing Kea processes ###
 
 # Returns a list of existing PIDs and a number of PIDs for the process
@@ -101,6 +124,40 @@ as another instance is already running."
     fi
 }
 
+# Run the specified command if the server has been enabled.
+# In order for the command to run, the following conditions have to be met:
+# - server must be on the list of servers (e.g. specified from command line)
+#   or servers must contain all
+# - if check_file_cfg is non zero, the server must be enabled in the
+#   configuration file, so the variable named after server name should exist
+#   and be set to yes, e.g. ${dhcp4} should be equal to yes if server name
+#   is dhcp4
+run_conditional() {
+    local server=${1}         # Server name: dhcp4, dhcp6, dhcp_ddns
+    local command=${2}        # Command to execute
+    local check_file_cfg=${3} # Check if server enabled in the configuration file
+
+    # If keyword "all" is not on the list of servers we will have to check
+    # if our specific server is on the list. If, not return.
+    is_in_list "all" ${servers}
+    if [ ${_inlist} -eq 0 ]; then
+        is_in_list ${server} ${servers}
+        if [ ${_inlist} -eq 0 ]; then
+            return
+        fi
+    fi
+
+    # Get the configuration value of the keactrl which indicates whether
+    # the server should be enabled or not. Variables that hold these values
+    # are: ${dhcp4}, ${dhcp6}, ${dhcp_ddns}.
+    local file_config=$( eval printf "%s" \${$server} )
+    # Run the command if we ignore the configuration setting or if the
+    # setting is "yes".
+    if [ ${check_file_cfg} -eq 0 ] || [ "${file_config}" = "yes" ]; then
+        ${command}
+    fi
+}
+
 ### Script starts here ###
 
 # Configure logger to log messages into the file.
@@ -112,48 +169,50 @@ if [ -z ${B10_LOGGER_DESTINATION} ]; then
     export B10_LOGGER_DESTINATION=@localstatedir@/@PACKAGE@/kea.log
 fi
 
-command=
-if [ $# -ne 1 ]; then
-    log_error "No command specified. Use: start, stop, commit or status."
+command=${1}
+is_in_list "${command}" "start stop reload status"
+if [ ${_inlist} -eq 0 ]; then
+    log_error "invalid command: ${command}"
     exit 1
-
-elif [ "${1}" != "start" -a "${1}" != "stop" -a\
- "${1}" != "commit" -a "${1}" != "status" ]; then
-    log_error "Illegal command: ${1}"
-    exit 1
-
-else
-    command=${1}
 fi
 
-# Set locations of the Kea binaries. The location depends on whether we
-# are running unit tests or we're running the installed binaries.
-dhcpv4_srv=
-dhcpv6_srv=
-dhcp_ddns=
-keactrl_conf=
+# Get the location of the keactrl configuration file.
+prefix=@prefix@
+keactrl_conf=@sysconfdir@/@PACKAGE@/keactrl.conf
 
-# The environment variable is set when the script is ran from the
-# tests. If not set, the Kea installation directory is used.
-if test -n "${KEACTRL_BUILD_DIR}"; then
-    dhcpv4_srv=${KEACTRL_BUILD_DIR}/src/bin/dhcp4/b10-dhcp4
-    dhcpv6_srv=${KEACTRL_BUILD_DIR}/src/bin/dhcp6/b10-dhcp6
-    dhcp_ddns=${KEACTRL_BUILD_DIR}/src/bin/d2/b10-dhcp-ddns
-else
-    prefix=@prefix@
-    exec_prefix=@exec_prefix@
-    dhcpv4_srv=@libexecdir@/@PACKAGE@/b10-dhcp4
-    dhcpv6_srv=@libexecdir@/@PACKAGE@/b10-dhcp6
-    dhcp_ddns=@libexecdir@/@PACKAGE@/b10-dhcp-ddns
-    keactrl_conf=@sysconfdir@/@PACKAGE@/keactrl.conf
-fi
+servers="all"
 
-# KEACTRL_CONF environment variable may hold a location of the keactrl
-# configuration file. If this is the case, it overrides the default
-# location.
-if test -n "${KEACTRL_CONF}"; then
-    keactrl_conf=${KEACTRL_CONF}
-fi
+shift
+while [ ! -z "${1}" ]
+do
+    option=${1}
+    case ${option} in
+        # Override keactrl configuration file.
+        -c|--ctrl-config)
+            shift
+            keactrl_conf=${1}
+            ;;
+        # Get the specific servers for which the command will be
+        # executed.
+        -s|--server)
+            shift
+            servers=$( printf "%s" ${1} | tr "," "\n" )
+            # Validate that the specifief server names are correct.
+            for s in ${servers}
+            do
+                is_in_list "${s}" "all dhcp4 dhcp6 dhcp_ddns"
+                if [ ${_inlist} -eq 0 ]; then
+                    log_error "invalid server name: ${s}"
+                    exit 1
+                fi
+            done
+            ;;
+        *)
+            log_error "invalid option: ${option}"
+            exit 1
+    esac
+    shift
+done
 
 # Check if the file exists. If it doesn't, it is a fatal error.
 if [ ! -f ${keactrl_conf} ]; then
@@ -163,6 +222,24 @@ fi
 
 # Include the configuration file.
 . ${keactrl_conf}
+
+# Get location of the DHCPv4 server binary.
+if [ -z ${dhcp4_srv} ]; then
+    log_error "dhcp4_srv parameter not specified"
+    exit 1
+fi
+
+# Get location of the DHCPv6 server binary.
+if [ -z ${dhcp6_srv} ]; then
+    log_error "dhcp6_srv parameter not specified"
+    exit 1
+fi
+
+# Get location of the DHCP DDNS server binary.
+if [ -z ${dhcp_ddns} ]; then
+    log_error "dhcp_ddns parameter not specified"
+    exit 1
+fi
 
 # Check if the Kea configuration file location has been specified in the
 # keactrl configuration file. If not, it is a fatal error.
@@ -174,10 +251,10 @@ elif [ ! -f ${kea_config_file} ]; then
     exit 1
 fi
 
-# kea4 and kea6 (=yes) indicate if we should start DHCPv4 and DHCPv6 server
+# dhcp4 and dhcp6 (=yes) indicate if we should start DHCPv4 and DHCPv6 server
 # respectively.
-kea4=$( printf "%s" ${kea4} | tr [:upper:] [:lower:] )
-kea6=$( printf "%s" ${kea6} | tr [:upper:] [:lower:] )
+dhcp4=$( printf "%s" ${dhcp4} | tr [:upper:] [:lower:] )
+dhcp6=$( printf "%s" ${dhcp6} | tr [:upper:] [:lower:] )
 
 case ${command} in
     # Start the servers.
@@ -188,47 +265,44 @@ case ${command} in
             args="${args} -v"
         fi
 
-        if [ "${kea4}" = "yes" ]; then
-            start_server ${dhcpv4_srv} "${args}"
-        fi
-
-        if [ "${kea6}" = "yes" ]; then
-            start_server ${dhcpv6_srv} "${args}"
-        fi
+        # Run servers if they are on the list of servers from the command line
+        # and if they are enabled in the keactrl configuration file.
+        run_conditional "dhcp4" "start_server ${dhcp4_srv} \"${args}\"" 1
+        run_conditional "dhcp6" "start_server ${dhcp6_srv} \"${args}\"" 1
 
         exit 0 ;;
 
     # Stop running servers.
     stop)
-        send_signal 15 $(basename ${dhcpv4_srv})
-        send_signal 15 $(basename ${dhcpv6_srv})
+        # Stop all servers or servers specified from the command line.
+        run_conditional "dhcp4" "send_signal 15 $(basename ${dhcp4_srv})" 0
+        run_conditional "dhcp6" "send_signal 15 $(basename ${dhcp6_srv})" 0
 
         exit 0 ;;
 
     # Reconfigure the servers.
-    commit)
-        send_signal 1 $(basename ${dhcpv4_srv})
-        send_signal 1 $(basename ${dhcpv6_srv})
+    reload)
+        # Reconfigure all servers or servers specified from the command line.
+        run_conditional "dhcp4" "send_signal 1 $(basename ${dhcp4_srv})" 0
+        run_conditional "dhcp6" "send_signal 1 $(basename ${dhcp6_srv})" 0
 
         exit 0 ;;
 
     status)
         kea4_status="inactive"
-        check_running $(basename ${dhcpv4_srv})
+        check_running $(basename ${dhcp4_srv})
         if [ ${_running} -eq 1 ]; then
             kea4_status="active"
         fi
         printf "DHCPv4 server: %s\n" ${kea4_status}
 
         kea6_status="inactive"
-        check_running $(basename ${dhcpv6_srv})
+        check_running $(basename ${dhcp6_srv})
         if [ ${_running} -eq 1 ]; then
             kea6_status="active"
         fi
         printf "DHCPv6 server: %s\n" ${kea6_status}
-
         printf "Kea configuration file: %s\n" ${kea_config_file}
-
         printf "keactrl configuration file: %s\n" ${keactrl_conf}
 
         exit 0 ;;
