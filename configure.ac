@@ -294,7 +294,7 @@ AC_HELP_STRING([--with-pythonpath=PATH],
   [specify an absolute path to python executable when automatic version check (incorrectly) fails]),
   [python_path="$withval"], [python_path="auto"])
 if test "$python_path" = auto; then
-	AM_PATH_PYTHON([3.1])
+	AM_PATH_PYTHON([3.1],,[PYTHON=no])
 else
 	# Older versions of automake can't handle python3 well.  This is an
 	# in-house workaround for them.
@@ -1136,8 +1136,12 @@ AC_ARG_ENABLE(generate_docs, [AC_HELP_STRING([--enable-generate-docs],
   [regenerate documentation using Docbook [default=no]])],
   enable_generate_docs=$enableval, enable_generate_docs=no)
 
-# Check for xsltproc
 if test "x$enable_generate_docs" != xno ; then
+  if test $PYTHON -eq no; then
+    AC_MSG_ERROR("Python3 is required for enable-generate-docs")
+  fi
+
+# Check for xsltproc
   AC_PATH_PROG([XSLTPROC], [xsltproc])
   if test -z "$XSLTPROC"; then
     AC_MSG_ERROR("xsltproc not found; it is required for --enable-generate-docs")
@@ -1327,9 +1331,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
            chmod +x src/lib/log/tests/local_file_test.sh
            chmod +x src/lib/log/tests/logger_lock_test.sh
            chmod +x src/lib/log/tests/severity_test.sh
-           chmod +x src/lib/util/python/doxygen2pydoc.py
            chmod +x src/lib/util/python/gen_wiredata.py
-           chmod +x src/lib/util/python/mkpywrapper.py
 ])
 
 AC_OUTPUT
@@ -1356,6 +1358,10 @@ C++ Compiler:
   CXXFLAGS:        ${CXXFLAGS}
   LDFLAGS:         ${LDFLAGS}
   B10_CXXFLAGS:    ${B10_CXXFLAGS}
+END
+
+if test "$PYTHON" != "no" ; then
+cat >> config.report << END
 
 Python:
   PYTHON_VERSION:  ${PYTHON_VERSION}
@@ -1364,6 +1370,16 @@ Python:
   PYTHON_LDFLAGS:  ${PYTHON_LDFLAGS}
   PYTHON_LIB:      ${PYTHON_LIB}
 
+END
+else
+cat >> config.report << END
+
+Python: no
+
+END
+fi
+
+cat >> config.report << END
 Boost:
   BOOST_VERSION:   ${BOOST_VERSION}
   BOOST_INCLUDES:  ${BOOST_INCLUDES}
