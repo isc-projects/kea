@@ -108,6 +108,7 @@ public:
     IOSignal(asiolink::IOService& io_service, int signum,
               IOSignalHandler handler);
 
+    /// @brief Destructor
     ~IOSignal();
 
     /// @brief Static method for generating IOSignal sequence_ids.
@@ -203,7 +204,7 @@ public:
     /// @throw IOSignalError if io_service is NULL.
     IOSignalQueue (IOServicePtr& io_service);
 
-    /// Destructor.
+    /// @brief Destructor.
     ~IOSignalQueue();
 
     /// @brief Creates an IOSignal
