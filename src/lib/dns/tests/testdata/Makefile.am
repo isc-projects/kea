@@ -195,5 +195,9 @@ EXTRA_DIST += tsig_verify4.wire tsig_verify5.wire tsig_verify6.wire
 EXTRA_DIST += tsig_verify7.wire tsig_verify8.wire tsig_verify9.wire
 EXTRA_DIST += tsig_verify10.wire
 
-.spec.wire:
-	$(PYTHON) $(top_builddir)/src/lib/util/python/gen_wiredata.py -o $@ $<
+# We no longer use gen_wiredata.py during build process, so the
+# dependency is no longer needed. However, we'll keep this dependency
+# commented till the gen_wiredata.py script is removed.
+
+#.spec.wire:
+#	$(PYTHON) $(top_builddir)/src/lib/util/python/gen_wiredata.py -o $@ $<
