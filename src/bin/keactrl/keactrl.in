@@ -42,7 +42,7 @@ log_info() {
 # supported commands.
 is_in_list() {
     local member=${1}  # Value to be checked
-    local list=${2}    # Comma separated list of items
+    local list="${2}"  # Comma separated list of items
     _inlist=0          # Return value: 0 if not in list, 1 otherwise.
     if [ -z ${member} ]; then
         log_error "missing ${class}"
@@ -112,8 +112,8 @@ process is not running\n"
 # Start the Kea process. Do not start the process if there is an instance
 # already running.
 start_server() {
-    binary_path=${1}  # Full path to the binary.
-    binary_args=${2}  # Arguments.
+    binary_path=${1}   # Full path to the binary.
+    binary_args="${2}" # Arguments.
     # Extract the name of the binary from the path.
     local binary_name=$(basename ${binary_path})
     # Use the binary name to check if the process is already running.
