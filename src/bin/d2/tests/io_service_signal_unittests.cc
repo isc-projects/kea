@@ -139,6 +139,7 @@ void dummyHandler(IOSignalId) {
 TEST(IOSignal, construction) {
     IOServicePtr io_service(new asiolink::IOService());
     IOSignalPtr signal;
+    IOSignalPtr signal2;
 
     // Verify that handler cannot be empty.
     ASSERT_THROW(signal.reset(new IOSignal(*io_service, SIGINT,
@@ -153,6 +154,16 @@ TEST(IOSignal, construction) {
 
     // Verify SIGINT is correct.
     EXPECT_EQ(SIGINT, signal->getSignum());
+
+    // Make a second signal.
+    ASSERT_NO_THROW(signal2.reset(new IOSignal(*io_service, SIGUSR1,
+                                               dummyHandler)));
+
+    // Verify sequence_id is not the same as the previous one.
+    EXPECT_NE(signal2->getSequenceId(), signal->getSequenceId());
+
+    // Verify that the signal value is correct.
+    EXPECT_EQ(SIGUSR1, signal2->getSignum());
 }
 
 // Tests IOSignalQueue constructors and exercises queuing methods.
@@ -168,22 +179,52 @@ TEST(IOSignalQueue, constructionAndQueuing) {
     ASSERT_NO_THROW(queue.reset(new IOSignalQueue(io_service)));
 
     // Verify an empty handler is not allowed.
-    ASSERT_THROW(queue->pushSignal(SIGINT, IOSignalHandler()),
-                 IOSignalError);
+    ASSERT_THROW(queue->pushSignal(SIGINT, IOSignalHandler()), IOSignalError);
 
-    // Verify we can queue up a valid entry.
-    IOSignalId sequence_id = queue->pushSignal(SIGINT, dummyHandler);
+    // Verify that we can queue valid entries.
+    std::vector<IOSignalId> ids;
+    ASSERT_NO_THROW(ids.push_back(queue->pushSignal(SIGINT, dummyHandler)));
+    ASSERT_NO_THROW(ids.push_back(queue->pushSignal(SIGUSR1, dummyHandler)));
+    ASSERT_NO_THROW(ids.push_back(queue->pushSignal(SIGUSR2, dummyHandler)));
 
-    // Verify we can pop the entry.
-    IOSignalPtr signal = queue->popSignal(sequence_id);
+    // Now verify that we can pop each one and what we pop is correct.
+    // Verify popping it again, throws.  We'll do it in a non-sequential order.
+
+    // Check the middle one.
+    IOSignalPtr signal;
+    ASSERT_NO_THROW(signal = queue->popSignal(ids[1]));
     ASSERT_TRUE(signal);
+    EXPECT_EQ(ids[1], signal->getSequenceId());
+    EXPECT_EQ(SIGUSR1, signal->getSignum());
+    ASSERT_THROW(queue->popSignal(ids[1]), IOSignalError);
 
-    // Verify the one we popped is right.
-    EXPECT_EQ(sequence_id, signal->getSequenceId());
+    // Check the first one.
+    ASSERT_NO_THROW(signal = queue->popSignal(ids[0]));
+    ASSERT_TRUE(signal);
+    EXPECT_EQ(ids[0], signal->getSequenceId());
     EXPECT_EQ(SIGINT, signal->getSignum());
+    ASSERT_THROW(queue->popSignal(ids[0]), IOSignalError);
 
-    // Verify popping it again, throws.
-    ASSERT_THROW(queue->popSignal(sequence_id), IOSignalError);
+    // Check the last one.
+    ASSERT_NO_THROW(signal = queue->popSignal(ids[2]));
+    ASSERT_TRUE(signal);
+    EXPECT_EQ(ids[2], signal->getSequenceId());
+    EXPECT_EQ(SIGUSR2, signal->getSignum());
+    ASSERT_THROW(queue->popSignal(ids[2]), IOSignalError);
+
+    // Now we will test clearing the queue.  Queue three signals.
+    ids.clear();
+    for (int i = 0; i < 3; ++i) {
+        ASSERT_NO_THROW(ids.push_back(queue->pushSignal(SIGINT, dummyHandler)));
+    }
+
+    // Now clear the queue.
+    ASSERT_NO_THROW(queue->clear());
+
+    // We should not be able to dequeue any of them.
+    for (int i = 0; i < 3; ++i) {
+        ASSERT_THROW(queue->popSignal(ids[i]), IOSignalError);
+    }
 }
 
 // Test the basic mechanics of IOSignal by handling one signal occurrence.

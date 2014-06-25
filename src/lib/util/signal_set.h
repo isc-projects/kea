@@ -79,10 +79,6 @@ typedef boost::function<bool(int signum)> BoolSignalHandler;
 /// signals' queue.
 class SignalSet : public boost::noncopyable {
 public:
-    /// @brief Optional handler to execute at the time of signal receipt
-    static BoolSignalHandler onreceipt_handler_;
-    static const BoolSignalHandler EMPTY_BOOL_HANDLER;
-
     /// @brief Constructor installing one signal.
     ///
     /// @param sig0 First signal.
