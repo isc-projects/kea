@@ -58,6 +58,11 @@ is_in_list() {
     done
 }
 
+# Prints keactrl usage.
+usage() {
+    printf "%s" $( basename ${0} ) "[-c keactrl-config-file] [-s server[,server,..]]"
+}
+
 ### Functions managing Kea processes ###
 
 # Returns a list of existing PIDs and a number of PIDs for the process
@@ -209,6 +214,7 @@ do
             ;;
         *)
             log_error "invalid option: ${option}"
+            usage
             exit 1
     esac
     shift
