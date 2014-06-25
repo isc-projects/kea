@@ -293,7 +293,7 @@ protected:
     /// -# SIGHUP - instigates reloading the configuration file
     /// -# SIGINT - instigates a graceful shutdown
     /// -# SIGTERM - instigates a graceful shutdown
-    /// If if received any other signal, it will issue a debug statement and
+    /// If received any other signal, it will issue a debug statement and
     /// discard it.
     /// Derivations wishing to support additional signals could override this
     /// method with one that: processes the signal if it is one of additional

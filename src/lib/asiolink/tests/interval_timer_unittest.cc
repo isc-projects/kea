@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -300,7 +300,7 @@ TEST_F(IntervalTimerTest, overwriteIntervalTimer) {
     EXPECT_EQ(itimer.getInterval(), 100);
 }
 
-// This test verifies that timers operate correclty based on their mode.
+// This test verifies that timers operate correctly based on their mode.
 TEST_F(IntervalTimerTest, intervalModeTest) {
     // Create a timer to control the duration of the test.
     IntervalTimer test_timer(io_service_);
