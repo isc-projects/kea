@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -119,7 +119,7 @@ public:
     /// \throw isc::BadValue interval is less than or equal to 0
     /// \throw isc::Unexpected internal runtime error
     void setup(const Callback& cbfunc, const long interval,
-                    const Mode& = REPEATING);
+                    const Mode& mode = REPEATING);
 
     /// Cancel the timer.
     ///
