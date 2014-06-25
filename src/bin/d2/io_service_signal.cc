@@ -105,10 +105,10 @@ IOSignalQueue::popSignal(IOSignalId sequence_id) {
                    "signal not found for sequence_id: " << sequence_id);
     }
 
-    // Save the siganl so we can return it.
+    // Save the signal so we can return it.
     IOSignalPtr signal = ((*it).second);
 
-    // Delete it fromt the queue.
+    // Delete it from the queue.
     signals_.erase(it);
 
     // Return the signal.

@@ -135,7 +135,7 @@ its configuration from file and encountered an error.  This is likely due to
 invalid content in the configuration file.  The application should continue
 to operate under its current configuration.
 
-% DHCP_DDNS_CFG_FILE_RELOAD_SIGNAL_RECVD OS signal %1 received, reloading configurationfrom file: %2
+% DHCP_DDNS_CFG_FILE_RELOAD_SIGNAL_RECVD OS signal %1 received, reloading configuration from file: %2
 This is an informational message indicating the application has received a signal
 instructing it to reload its configuration from file.
 
@@ -466,8 +466,9 @@ to shut down by the controller.
 This is an informational message indicating the application has received a signal
 instructing it to shutdown.
 
-% DHCP_DDNS_SIGNAL_ERROR signal handler for signal %1,  threw an unexpected exception: %2
-This is an error message indicating that the application encountered an unexpected error after receiving a signal.  This is a programmatic error and should be
+% DHCP_DDNS_SIGNAL_ERROR signal handler for signal %1, threw an unexpected exception: %2
+This is an error message indicating that the application encountered an unexpected
+error after receiving a signal.  This is a programmatic error and should be
 reported.  While The application will likely continue to operating, it may be
 unable to respond correctly to signals.
 
