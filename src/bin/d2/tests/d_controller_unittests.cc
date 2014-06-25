@@ -43,7 +43,7 @@ public:
 
     virtual ~DStubControllerTest() {
     }
-    
+
     DStubControllerPtr controller_;
 };
 
@@ -355,7 +355,7 @@ TEST_F(DStubControllerTest, ioSignals) {
     // base class signal handler.
     controller_->recordSignalOnly(true);
 
-    // Setup to raise SIGHUP in 10 ms. 
+    // Setup to raise SIGHUP in 10 ms.
     TimedSignal sighup(*getIOService(), SIGHUP, 10);
     TimedSignal sigint(*getIOService(), SIGINT, 10);
     TimedSignal sigterm(*getIOService(), SIGTERM, 10);
@@ -380,17 +380,17 @@ TEST_F(DStubControllerTest, invalidConfigReload) {
     // new content is invalid JSON which will cause the config parse to fail.
     scheduleTimedWrite("{ \"string_test\": BOGUS JSON }", 100);
 
-    // Setup to raise SIGHUP in 200 ms. 
+    // Setup to raise SIGHUP in 200 ms.
     TimedSignal sighup(*getIOService(), SIGHUP, 200);
 
     // Write the config and then run launch() for 500 ms
-    // After startup, which will load the initial configuration this enters 
-    // the process's runIO() loop. We will first rewrite the config file. 
+    // After startup, which will load the initial configuration this enters
+    // the process's runIO() loop. We will first rewrite the config file.
     // Next we process the SIGHUP signal which should cause us to reconfigure.
     time_duration elapsed_time;
     runWithConfig("{ \"string_test\": \"first value\" }", 500, elapsed_time);
 
-    // Context is still available post launch. Check to see that our 
+    // Context is still available post launch. Check to see that our
     // configuration value is still the original value.
     std::string  actual_value = "";
     ASSERT_NO_THROW(getContext()->getParam("string_test", actual_value));
@@ -409,28 +409,30 @@ TEST_F(DStubControllerTest, validConfigReload) {
     // file is updated after we have done the initial configuration.
     scheduleTimedWrite("{ \"string_test\": \"second value\" }", 100);
 
-    // Setup to raise SIGHUP in 200 ms. 
+    // Setup to raise SIGHUP in 200 ms and another at 400 ms.
     TimedSignal sighup(*getIOService(), SIGHUP, 200);
+    TimedSignal sighup2(*getIOService(), SIGHUP, 400);
 
-    // Write the config and then run launch() for 500 ms
+    // Write the config and then run launch() for 800 ms
     time_duration elapsed_time;
-    runWithConfig("{ \"string_test\": \"first value\" }", 500, elapsed_time);
+    runWithConfig("{ \"string_test\": \"first value\" }", 800, elapsed_time);
 
-    // Context is still available post launch. 
+    // Context is still available post launch.
     // Check to see that our configuration value is what we expect.
     std::string  actual_value = "";
     ASSERT_NO_THROW(getContext()->getParam("string_test", actual_value));
     EXPECT_EQ("second value", actual_value);
 
-    // Verify that we saw the signal.
+    // Verify that we saw two occurrences of the signal.
     std::vector<int>& signals = controller_->getProcessedSignals();
-    ASSERT_EQ(1, signals.size());
+    ASSERT_EQ(2, signals.size());
     EXPECT_EQ(SIGHUP, signals[0]);
+    EXPECT_EQ(SIGHUP, signals[1]);
 }
 
 // Tests that the SIGINT triggers a normal shutdown.
 TEST_F(DStubControllerTest, sigintShutdown) {
-    // Setup to raise SIGHUP in 1 ms. 
+    // Setup to raise SIGHUP in 1 ms.
     TimedSignal sighup(*getIOService(), SIGINT, 1);
 
     // Write the config and then run launch() for 1000 ms
@@ -448,7 +450,7 @@ TEST_F(DStubControllerTest, sigintShutdown) {
 
 // Tests that the SIGTERM triggers a normal shutdown.
 TEST_F(DStubControllerTest, sigtermShutdown) {
-    // Setup to raise SIGHUP in 1 ms. 
+    // Setup to raise SIGHUP in 1 ms.
     TimedSignal sighup(*getIOService(), SIGTERM, 1);
 
     // Write the config and then run launch() for 1000 ms

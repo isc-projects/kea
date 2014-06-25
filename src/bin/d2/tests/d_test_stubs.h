@@ -230,6 +230,8 @@ public:
     /// DControllerBase::processSignals will also be invoked. This switch is
     /// useful for ensuring that IOSignals are delivered as expected without
     /// incurring the full impact such as reconfiguring or shutting down.
+    ///
+    /// @param value boolean which if true enables record-only behavior
     void recordSignalOnly(bool value) {
        record_signal_only_ = value;
     }
@@ -280,6 +282,14 @@ protected:
     /// @return returns a string containing the option letters.
     virtual const std::string getCustomOpts() const;
 
+    /// @brief Application-level "signal handler"
+    ///
+    /// Overrides the base class implementation such that this method
+    /// is invoked each time an IOSignal is processed.  It records the
+    /// signal received and unless we are in record-only behavior, it
+    /// in invokes the base class implementation.
+    ///
+    /// @param signum OS signal value received
     virtual void processSignal(int signum);
 
 private:

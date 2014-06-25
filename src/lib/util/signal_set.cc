@@ -78,17 +78,17 @@ void internalHandler(int sig) {
     states->push_back(sig);
 }
 
+/// @brief Optional handler to execute at the time of signal receipt
+BoolSignalHandler onreceipt_handler_ = BoolSignalHandler();
+
 }; // end anon namespace
 
 namespace isc {
 namespace util {
 
-const BoolSignalHandler SignalSet::EMPTY_BOOL_HANDLER = BoolSignalHandler();
-BoolSignalHandler SignalSet::onreceipt_handler_ = EMPTY_BOOL_HANDLER;
-
 bool
 SignalSet::invokeOnReceiptHandler(int sig) {
-    if (!SignalSet::onreceipt_handler_) {
+    if (!onreceipt_handler_) {
         return (false);
     }
 
@@ -109,7 +109,7 @@ SignalSet::invokeOnReceiptHandler(int sig) {
     // Call the registered handler.
     bool signal_processed = false;
     try {
-        signal_processed = SignalSet::onreceipt_handler_(sig);
+        signal_processed = onreceipt_handler_(sig);
     } catch (const std::exception& ex) {
         // Restore the handler.  We might fail to restore it, but we likely
         // have bigger issues anyway.
@@ -291,7 +291,7 @@ SignalSet::setOnReceiptHandler(BoolSignalHandler handler) {
 
 void
 SignalSet::clearOnReceiptHandler() {
-    onreceipt_handler_ = EMPTY_BOOL_HANDLER;
+    onreceipt_handler_ = BoolSignalHandler();
 }
 
 } // end of isc::util

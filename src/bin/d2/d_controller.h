@@ -405,6 +405,9 @@ protected:
     /// @return returns an Element that contains the results of shutdown
     /// command composed of an integer status value (0 means successful,
     /// non-zero means failure), and a string explanation of the outcome.
+    ///
+    /// @param args is a set of derivation-specific arguments (if any)
+    /// for the shutdown command.
     isc::data::ConstElementPtr shutdownProcess(isc::data::ConstElementPtr args);
 
     /// @brief Initializes signal handling
@@ -437,6 +440,8 @@ protected:
     /// obtained from the IOSignal.  This allows derivations to supply a
     /// custom signal processing method, while ensuring IOSignalQueue
     /// integrity.
+    ///
+    /// @param sequence_id id of the IOSignal instance "received"
     void ioSignalHandler(IOSignalId sequence_id);
 
     /// @brief Fetches the current process
