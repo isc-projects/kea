@@ -8,7 +8,9 @@ sbin_SCRIPTS  = keactrl
 CONFIGFILES = keactrl.conf kea.conf
 
 DISTCLEANFILES = keactrl $(CONFIGFILES)
-EXTRA_DIST = keactrl.in keactrl.conf.in
+EXTRA_DIST = keactrl.in keactrl.conf.in kea.conf.in
+
+if INSTALL_CONFIGURATIONS
 
 install-data-local:
 	$(mkinstalldirs) $(DESTDIR)/@sysconfdir@/@PACKAGE@
@@ -18,3 +20,4 @@ install-data-local:
 	  fi ;	\
 	done
 
+endif
