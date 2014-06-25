@@ -1137,7 +1137,7 @@ AC_ARG_ENABLE(generate_docs, [AC_HELP_STRING([--enable-generate-docs],
   enable_generate_docs=$enableval, enable_generate_docs=no)
 
 if test "x$enable_generate_docs" != xno ; then
-  if test $PYTHON -eq no; then
+  if test "$PYTHON" == "no" ; then
     AC_MSG_ERROR("Python3 is required for enable-generate-docs")
   fi
 
