@@ -16,6 +16,8 @@ libkea_testutils_la_LIBADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 endif
 
 # Include common libraries being used by shell-based tests.
-SHLIBS = dhcp_test_lib.sh
+SHLIBS = dhcp_test_lib.sh.in
 
 EXTRA_DIST = portconfig.h socket_request.h $(SHLIBS)
+
+CLEANFILES = dhcp_test_lib.sh

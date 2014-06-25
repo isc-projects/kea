@@ -4,16 +4,13 @@ SHTESTS =
 # The test of dynamic reconfiguration based on signals will work only
 # if we are using file based configuration approach.
 if CONFIG_BACKEND_JSON
-SHTESTS += dhcp6_reconfigure_test.sh
-SHTESTS += dhcp6_sigterm_test.sh
-SHTESTS += dhcp6_sigint_test.sh
+SHTESTS += dhcp6_process_tests.sh
 endif
 
+noinst_SCRIPTS = dhcp6_process_tests.sh
+
 EXTRA_DIST = $(PYTESTS)
-EXTRA_DIST += dhcp6_reconfigure_test.sh
-EXTRA_DIST += dhcp6_sigterm_test.sh
-EXTRA_DIST += dhcp6_sigint_test.sh
-EXTRA_DIST += dhcp6_shutdown_test.sh
+EXTRA_DIST += dhcp6_process_tests.sh.in
 
 # Explicitly specify paths to dynamic libraries required by loadable python
 # modules. That is required on Mac OS systems. Otherwise we will get exception
@@ -36,7 +33,7 @@ check-local:
 	for shtest in $(SHTESTS) ; do \
 	echo Running test: $$shtest ; \
 	export B10_LOCKFILE_DIR_FROM_BUILD=$(abs_top_builddir); \
-	$(abs_srcdir)/$$shtest || exit ; \
+	${SHELL} $(abs_builddir)/$$shtest || exit ; \
 	done
 
 
@@ -50,6 +47,8 @@ AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 CLEANFILES  = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
 CLEANFILES += $(builddir)/load_marker.txt $(builddir)/unload_marker.txt
 CLEANFILES += *.json *.log
+
+DISTCLEANFILES = dhcp6_process_tests.sh
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 if USE_CLANGPP
