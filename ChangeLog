@@ -1,3 +1,9 @@
+792.	[func]		marcin
+	Implemented keactrl script used to start, stop, reconfigure Kea
+	servers and get their status and configuration data. This script
+	is installed only if the JSON configuration backend is in use.
+	(Trac #3422, git e1d164c7a9a54a7aacea88c8c57cd2826e06012b)
+
 791.	[func]		tmark
 	DHCP-DDNS: Now supports configure.ac parameter: --with-kea-config.
 	It allows selecting configuration backend and accepts one of two
