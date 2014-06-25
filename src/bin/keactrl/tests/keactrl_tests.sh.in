@@ -68,12 +68,18 @@ config="{
     }
 }"
 
+# Fixed part of the keactrl configuration file.
+keactrl_fixed_config="dhcp4_srv=${KEACTRL_BUILD_DIR}/src/bin/dhcp4/b10-dhcp4\n\
+dhcp6_srv=${KEACTRL_BUILD_DIR}/src/bin/dhcp6/b10-dhcp6\n\
+dhcp_ddns=${KEACTRL_BUILD_DIR}/src/bin/d2/b10-dhcp-ddns\n"
+
 # This test checks that both DHCPv4 and DHCPv6 server can be started and
 # shut down.
 start_both_servers_no_verbose_test() {
     # Create configuration file for keactrl. This configuration enables
     # both DHCPv4 and DHCPv6 server.
-    keactrl_config="kea_config_file=${CFG_FILE}\nkea4=yes\nkea6=yes\nkea_verbose=no\n"
+    keactrl_config="kea_config_file=${CFG_FILE}\ndhcp4=yes\ndhcp6=yes\nkea_verbose=no\n\
+${keactrl_fixed_config}"
 
     test_start "keactrl.start_both_servers_no_verbose_test"
 
@@ -85,8 +91,11 @@ start_both_servers_no_verbose_test() {
     set_logger
 
     # Start servers using keactrl script.
-    printf "Starting Kea: ${keactrl} start\n"
-    ${keactrl} start
+    printf "Starting Kea: ${keactrl} start -c ${KEACTRL_CFG_FILE} -s all\n"
+    # Append the -s option to specify all servers. This is not necessary
+    # because all should be a default but let's see if it is accepted
+    # by the command line parser.
+    ${keactrl} start -c ${KEACTRL_CFG_FILE} -s all
     ret=${?}
     assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d"
 
@@ -126,8 +135,8 @@ Expected wait_for_message return %d, returned %d."
         "Expected %d ${kea6_name} process running, found %d processes running"
 
     # Use keactrl stop to shutdown the servers.
-    printf "Stopping Kea: ${keactrl} stop\n"
-    ${keactrl} stop
+    printf "Stopping Kea: ${keactrl} stop  -c ${KEACTRL_CFG_FILE}\n"
+    ${keactrl} stop -c ${KEACTRL_CFG_FILE}
     ret=${?}
     assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d."
 
@@ -160,7 +169,8 @@ Expected wait_for_message return %d, returned %d."
 start_both_servers_verbose_test() {
     # Create configuration file for keactrl. This configuration enables
     # both DHCPv4 and DHCPv6 server.
-    keactrl_config="kea_config_file=${CFG_FILE}\nkea4=yes\nkea6=yes\nkea_verbose=yes\n"
+    keactrl_config="kea_config_file=${CFG_FILE}\ndhcp4=yes\ndhcp6=yes\nkea_verbose=yes\n\
+${keactrl_fixed_config}"
 
     test_start "keactrl.start_both_servers_verbose_test"
 
@@ -172,8 +182,8 @@ start_both_servers_verbose_test() {
     set_logger
 
     # Start servers using keactrl script.
-    printf "Starting Kea: ${keactrl} start\n"
-    ${keactrl} start
+    printf "Starting Kea: ${keactrl} start -c ${KEACTRL_CFG_FILE}\n"
+    ${keactrl} start -c ${KEACTRL_CFG_FILE}
     ret=${?}
     assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d"
 
@@ -215,8 +225,8 @@ Expected wait_for_message return %d, returned %d."
         "Expected %d ${kea6_name} process running, found %d processes running"
 
     # Use keactrl stop to shutdown the servers.
-    printf "Stopping Kea: ${keactrl} stop\n"
-    ${keactrl} stop
+    printf "Stopping Kea: ${keactrl} stop -c ${KEACTRL_CFG_FILE}\n"
+    ${keactrl} stop -c ${KEACTRL_CFG_FILE}
     ret=${?}
     assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d."
 
@@ -251,7 +261,8 @@ Expected wait_for_message return %d, returned %d."
 start_v4_server_test() {
     # Create configuration file for keactrl. This configuration enables
     # DHCPv4 server but disables DHCPv6 server.
-    keactrl_config="kea_config_file=${CFG_FILE}\nkea4=yes\nkea6=no\nkea_verbose=no\n"
+    keactrl_config="kea_config_file=${CFG_FILE}\ndhcp4=yes\ndhcp6=no\nkea_verbose=no\n\
+${keactrl_fixed_config}"
 
     test_start "keactrl.start_v4_server_test"
 
@@ -263,8 +274,8 @@ start_v4_server_test() {
     set_logger
 
     # Start DHCPv4 server using keactrl script.
-    printf "Starting Kea: ${keactrl} start\n"
-    ${keactrl} start
+    printf "Starting Kea: ${keactrl} start -c ${KEACTRL_CFG_FILE}\n"
+    ${keactrl} start -c ${KEACTRL_CFG_FILE}
     ret=${?}
     assert_eq 0 ${ret} "Expected keactrl to retrun 0, returned value was ${ret}"
 
@@ -289,8 +300,9 @@ Expected wait_for_message return %d, returned %d."
         "Expected %d ${kea6_name} process running, found %d processes running"
 
     # Make sure that the status command returns appropriate status.
-    printf "Getting status of Kea modules: %s\n" "${keactrl} status"
-    output=$( ${keactrl} status )
+    printf "Getting status of Kea modules: %s\n" "${keactrl} status \
+-c ${KEACTRL_CFG_FILE}"
+    output=$( ${keactrl} status -c ${KEACTRL_CFG_FILE} )
     ret=${?}
     assert_eq 0 ${ret} "Expected keactrl to return %d, returned %d"
     assert_string_contains "DHCPv4 server: active" "${output}" \
@@ -299,8 +311,8 @@ Expected wait_for_message return %d, returned %d."
         "Expected keactrl status command return %s"
 
     # Use keactrl stop to shutdown the servers.
-    printf "Stopping Kea: ${keactrl} stop\n"
-    ${keactrl} stop
+    printf "Stopping Kea: ${keactrl} stop -c ${KEACTRL_CFG_FILE}\n"
+    ${keactrl} stop -c ${KEACTRL_CFG_FILE}
     ret=${?}
     assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d."
 
@@ -327,7 +339,8 @@ Expected wait_for_message return %d, returned %d."
 start_v6_server_test() {
     # Create configuration file for keactrl. This configuration enables
     # DHCPv6 server but disables DHCPv4 server.
-    keactrl_config="kea_config_file=${CFG_FILE}\nkea4=no\nkea6=yes\nkea_verbose=no\n"
+    keactrl_config="kea_config_file=${CFG_FILE}\ndhcp4=no\ndhcp6=yes\nkea_verbose=no\n\
+${keactrl_fixed_config}"
 
     test_start "keactrl.start_v6_server_test"
 
@@ -339,8 +352,8 @@ start_v6_server_test() {
     set_logger
 
     # Start DHCPv6 server using keactrl script.
-    printf "Starting Kea: ${keactrl} start\n"
-    ${keactrl} start
+    printf "Starting Kea: ${keactrl} start -c ${KEACTRL_CFG_FILE}\n"
+    ${keactrl} start -c ${KEACTRL_CFG_FILE}
     ret=${?}
     assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d"
 
@@ -365,8 +378,8 @@ Expected wait_for_message return %d, returned %d."
         "Expected %d ${kea4_name} process running, found %d processes running"
 
     # Make sure that the status command returns appropriate status.
-    printf "Getting status of Kea modules: %s\n" "${keactrl} status"
-    output=$( ${keactrl} status )
+    printf "Getting status of Kea modules: %s\n" "${keactrl} status -c ${KEACTRL_CFG_FILE}"
+    output=$( ${keactrl} status -c ${KEACTRL_CFG_FILE} )
     ret=${?}
     assert_eq 0 ${ret} "Expected keactrl to return %d, returned %d"
     assert_string_contains "DHCPv4 server: inactive" "${output}" \
@@ -375,8 +388,8 @@ Expected wait_for_message return %d, returned %d."
         "Expected keactrl status command return %s"
 
     # Use keactrl stop to shutdown the servers.
-    printf "Stopping Kea: ${keactrl} stop\n"
-    ${keactrl} stop
+    printf "Stopping Kea: ${keactrl} stop -c ${KEACTRL_CFG_FILE}\n"
+    ${keactrl} stop -c ${KEACTRL_CFG_FILE}
     ret=${?}
     assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d."
 
@@ -404,7 +417,8 @@ Expected wait_for_message return %d, returned %d."
 late_start_v4_server_test() {
     # Create configuration file for keactrl. This configuration enables
     # DHCPv6 server but disables DHCPv4 server.
-    keactrl_config="kea_config_file=${CFG_FILE}\nkea4=no\nkea6=yes\nkea_verbose=no\n"
+    keactrl_config="kea_config_file=${CFG_FILE}\ndhcp4=no\ndhcp6=yes\nkea_verbose=no\n\
+${keactrl_fixed_config}"
 
     test_start "keactrl.late_start_v4_server_test"
 
@@ -416,8 +430,8 @@ late_start_v4_server_test() {
     set_logger
 
     # Start DHCPv6 server using keactrl script.
-    printf "Starting Kea: ${keactrl} start\n"
-    ${keactrl} start
+    printf "Starting Kea: ${keactrl} start -c ${KEACTRL_CFG_FILE}\n"
+    ${keactrl} start -c ${KEACTRL_CFG_FILE}
     ret=${?}
     assert_eq 0 ${ret} "Expected keactrl to retrun 0, returned value was ${ret}"
 
@@ -442,8 +456,8 @@ Expected wait_for_message return %d, returned %d."
         "Expected %d ${kea4_name} process running, found %d processes running"
 
     # Trigger reconfiguration, make sure that the DHCPv6 server reconfigured.
-    printf "Reconfiguring the DHCPv6 server\n"
-    ${keactrl} commit
+    printf "Reconfiguring the DHCPv6 server: ${keactrl} reload -c ${KEACTRL_CFG_FILE}\n"
+    ${keactrl} reload -c ${KEACTRL_CFG_FILE}
     ret=${?}
     assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d"
 
@@ -453,12 +467,13 @@ Expected wait_for_message return %d, returned %d."
 Expected wait_for_message to return %d, returned %d."
 
     # Update keactrl config to enable v4 server.
-    keactrl_config="kea_config_file=${CFG_FILE}\nkea4=yes\nkea6=yes\nkea_verbose=yes\n"
+    keactrl_config="kea_config_file=${CFG_FILE}\ndhcp4=yes\ndhcp6=yes\nkea_verbose=yes\n\
+${keactrl_fixed_config}"
     create_keactrl_config "${keactrl_config}"
 
     # Start DHCPv4 server using keactrl script.
-    printf "Starting Kea: ${keactrl} start\n"
-    ${keactrl} start
+    printf "Starting Kea: ${keactrl} start -c ${KEACTRL_CFG_FILE}\n"
+    ${keactrl} start -c ${KEACTRL_CFG_FILE}
     ret=${?}
     assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d"
 
@@ -479,8 +494,9 @@ Expected wait_for_message return %d, returned %d."
         "Expected %d ${kea4_name} process running, found %d processes running"
 
     # Trigger reconfiguration, make sure that servers are reconfigured.
-    printf "Reconfiguring DHCPv6 and DHCPv4 servers\n"
-    ${keactrl} commit
+    printf "Reconfiguring DHCPv6 and DHCPv4 servers: ${keactrl} reload \
+-c ${KEACTRL_CFG_FILE}\n"
+    ${keactrl} reload -c ${KEACTRL_CFG_FILE}
     ret=${?}
     assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d"
 
@@ -495,8 +511,8 @@ Expected wait_for_message to return %d, returned %d."
 Expected wait_for_message to return %d, returned %d."
 
     # Use keactrl stop to shutdown the servers.
-    printf "Stopping Kea: ${keactrl} stop\n"
-    ${keactrl} stop
+    printf "Stopping Kea: ${keactrl} stop -c ${KEACTRL_CFG_FILE}\n"
+    ${keactrl} stop -c ${KEACTRL_CFG_FILE}
     ret=${?}
     assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d."
 
@@ -530,7 +546,8 @@ Expected wait_for_message return %d, returned %d."
 late_start_v6_server_test() {
     # Create configuration file for keactrl. This configuration enables
     # DHCPv4 server but disables DHCPv6 server.
-    keactrl_config="kea_config_file=${CFG_FILE}\nkea4=yes\nkea6=no\nkea_verbose=yes\n"
+    keactrl_config="kea_config_file=${CFG_FILE}\ndhcp4=yes\ndhcp6=no\nkea_verbose=yes\n\
+${keactrl_fixed_config}"
 
     test_start "keactrl.late_start_v6_server_test"
 
@@ -542,8 +559,8 @@ late_start_v6_server_test() {
     set_logger
 
     # Start DHCPv4 server using keactrl script.
-    printf "Starting Kea: ${keactrl} start\n"
-    ${keactrl} start
+    printf "Starting Kea: ${keactrl} start -c ${KEACTRL_CFG_FILE}\n"
+    ${keactrl} start -c ${KEACTRL_CFG_FILE}
     ret=${?}
     assert_eq 0 ${ret} "Expected keactrl to retrun 0, returned value was ${ret}"
 
@@ -568,8 +585,8 @@ Expected wait_for_message return %d, returned %d."
         "Expected %d ${kea6_name} process running, found %d processes running"
 
     # Trigger reconfiguration, make sure that the DHCPv4 server is reconfigured.
-    printf "Reconfiguring the DHCPv4 server\n"
-    ${keactrl} commit
+    printf "Reconfiguring the DHCPv4 server: ${keactrl} reload -c ${KEACTRL_CFG_FILE}\n"
+    ${keactrl} reload -c ${KEACTRL_CFG_FILE}
     ret=${?}
     assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d"
 
@@ -579,12 +596,13 @@ Expected wait_for_message return %d, returned %d."
 Expected wait_for_message to return %d, returned %d."
 
     # Update keactrl config to enable v6 server.
-    keactrl_config="kea_config_file=${CFG_FILE}\nkea4=yes\nkea6=yes\nkea_verbose=no\n"
+    keactrl_config="kea_config_file=${CFG_FILE}\ndhcp4=yes\ndhcp6=yes\nkea_verbose=no\n\
+${keactrl_fixed_config}"
     create_keactrl_config "${keactrl_config}"
 
     # Start DHCPv6 server using keactrl script.
-    printf "Starting Kea: ${keactrl} start\n"
-    ${keactrl} start
+    printf "Starting Kea: ${keactrl} start -c ${KEACTRL_CFG_FILE}\n"
+    ${keactrl} start -c ${KEACTRL_CFG_FILE}
     ret=${?}
     assert_eq 0 ${ret} "Expected keactrl to retrun 0, returned value was ${ret}"
 
@@ -605,8 +623,9 @@ Expected wait_for_message return %d, returned %d."
         "Expected %d ${kea4_name} process running, found %d processes running"
 
     # Trigger reconfiguration, make sure that servers are reconfigured.
-    printf "Reconfiguring DHCPv6 and DHCPv4 servers\n"
-    ${keactrl} commit
+    printf "Reconfiguring DHCPv6 and DHCPv4 servers: ${keactrl} reload \
+-c ${KEACTRL_CFG_FILE}\n"
+    ${keactrl} reload -c ${KEACTRL_CFG_FILE}
     ret=${?}
     assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d"
 
@@ -621,8 +640,8 @@ Expected wait_for_message to return %d, returned %d."
 Expected wait_for_message to return %d, returned %d."
 
     # Use keactrl stop to shutdown the servers.
-    printf "Stopping Kea: ${keactrl} stop\n"
-    ${keactrl} stop
+    printf "Stopping Kea: ${keactrl} stop -c ${KEACTRL_CFG_FILE}\n"
+    ${keactrl} stop -c ${KEACTRL_CFG_FILE}
     ret=${?}
     assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d."
 
@@ -650,10 +669,106 @@ Expected wait_for_message return %d, returned %d."
     test_finish 0
 }
 
+# This test checks that the servers can be shutdown selectively.
+stop_selected_server_test() {
+    # Create configuration file for keactrl. This configuration enables
+    # both DHCPv4 and DHCPv6 server.
+    keactrl_config="kea_config_file=${CFG_FILE}\ndhcp4=yes\ndhcp6=yes\nkea_verbose=no\n\
+${keactrl_fixed_config}"
+
+    test_start "keactrl.stop_selected_server_test"
+
+    # Create configuration file for Kea and for keactrl.
+    create_config "${config}"
+    create_keactrl_config "${keactrl_config}"
+
+    # Set logging to a file.
+    set_logger
+
+    # Start servers using keactrl script.
+    printf "Starting Kea: ${keactrl} start -c ${KEACTRL_CFG_FILE}\n"
+    ${keactrl} start -c ${KEACTRL_CFG_FILE}
+    ret=${?}
+    assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d"
+
+    # Wait up to 20s for the DHCPv6 server to configure.
+    wait_for_message 20 "DHCP6_CONFIG_COMPLETE" 1
+    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+        "Timeout waiting for ${kea6_name} to start. \
+Expected wait_for_message return %d, returned %d."
+
+    # Wait up to 20s for the DHCPv4 server to configure.
+    wait_for_message 20 "DHCP4_CONFIG_COMPLETE" 1
+    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+        "Timeout waiting for ${kea4_name} to start. \
+Expected wait_for_message return %d, returned %d."
+
+    # Make sure that debug messages are not logged (non-verbose mode).
+    get_log_messages "DHCP6_START_INFO"
+    assert_eq 0 ${_GET_LOG_MESSAGES} \
+        "Expected get_log_messages return %d, returned %d."
+
+    # Make sure that debug messages are not logged (non-verbose mode).
+    get_log_messages "DHCP4_START_INFO"
+    assert_eq 0 ${_GET_LOG_MESSAGES} \
+        "Expected get_log_messages return %d, returned %d."
+
+    # Server may shut down imediatelly after configuration has competed.
+    # Give it some time to shutdown.
+    sleep 3
+
+    # Make sure that both servers are running.
+    get_pids ${kea4_name}
+    assert_eq 1 ${_GET_PIDS_NUM} \
+        "Expected %d ${kea4_name} process running, found %d processes running"
+
+    get_pids ${kea6_name}
+    assert_eq 1 ${_GET_PIDS_NUM} \
+        "Expected %d ${kea6_name} process running, found %d processes running"
+
+    # Use keactrl stop to shutdown DHCPv4 server.
+    printf "Stopping DHCPv4 server: ${keactrl} stop -s dhcp4 -c ${KEACTRL_CFG_FILE}\n"
+    ${keactrl} stop -s dhcp4 -c ${KEACTRL_CFG_FILE}
+    ret=${?}
+    assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d."
+
+    # Wait up to 10s for the DHCPv4 server to stop.
+    wait_for_message 10 "DHCP4_SHUTDOWN" 1
+    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+        "Timeout waiting for ${kea4_name} to shutdown. \
+Expected wait_for_message return %d, returned %d."
+
+    # Make sure DHCPv6 server is still running
+    get_pids ${kea6_name}
+    assert_eq 1 ${_GET_PIDS_NUM} \
+        "Expected %d ${kea6_name} process running, found %d processes running"
+
+    # Use keactrl stop to shutdown DHCPv6 server.
+    printf "Stopping DHCPv6 server: ${keactrl} stop -s dhcp6 -c ${KEACTRL_CFG_FILE}\n"
+    ${keactrl} stop -s dhcp6 -c ${KEACTRL_CFG_FILE}
+    ret=${?}
+    assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d."
+
+    # Wait up to 10s for the DHCPv6 server to stop.
+    wait_for_message 10 "DHCP6_SHUTDOWN" 1
+    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+        "Timeout waiting for ${kea6_name} to shutdown. \
+Expected wait_for_message return %d, returned %d."
+
+    # Make sure that the DHCPv6 server is down.
+    get_pids ${kea6_name}
+    assert_eq 0 ${_GET_PIDS_NUM} \
+        "Expected %d ${kea6_name} processes running, found %d processes running"
+
+    test_finish 0
+}
+
+
 start_both_servers_no_verbose_test
 start_both_servers_verbose_test
 start_v4_server_test
 start_v6_server_test
 late_start_v4_server_test
 late_start_v6_server_test
+stop_selected_server_test
 

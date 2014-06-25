@@ -7,7 +7,7 @@
 
 # DHCPv4 configuration starts here.
 "Dhcp4":
-{ 
+{
 # Add names of interfaces to listen on.
   "interfaces": [ ],
 
@@ -21,15 +21,15 @@
 
 # Below an example of the simple subnet declaration. Uncomment to
 # enable it.
-  "subnet4": [ 
-#  {    "pool": [ "192.0.2.1 - 192.0.2.200" ],
-#       "subnet": "192.0.2.0/24"  }
+  "subnet4": [
+#  {    "subnet": "192.0.2.0/24",
+#       "pool": [ "192.0.2.1 - 192.0.2.200" ] }
   ]
 },
 
 # DHCPv6 configuration starts here.
 "Dhcp6":
-{ 
+{
 # Add names of interfaces to listen on.
   "interfaces": [ ],
 
@@ -45,15 +45,15 @@
   "rebind-timer": 2000,
 
 # The following list defines subnets. Uncomment to enable them.
-  "subnet6": [ 
-#  {    "pool": [ "2001:db8:1::/80" ],
-#       "subnet": "2001:db8:1::/64"  },
-#  {    "pool": [ "2001:db8:2::/80" ],
-#       "subnet": "2001:db8:2::/64"  }, 
-#  {    "pool": [ "2001:db8:3::/80" ],
-#       "subnet": "2001:db8:3::/64"  },
-#  {    "pool": [ "2001:db8:4::/80" ],
-#       "subnet": "2001:db8:4::/64"  }
+  "subnet6": [
+#  {    "subnet": "2001:db8:1::/64",
+#       "pool": [ "2001:db8:1::/80" ] },
+#  {    "subnet": "2001:db8:2::/64",
+#       "pool": [ "2001:db8:2::/80" ] },
+#  {    "subnet": "2001:db8:3::/64",
+#       "pool": [ "2001:db8:3::/80" ] },
+#  {    "subnet": "2001:db8:4::/64",
+#       "pool": [ "2001:db8:4::/80" ] }
    ]
 }
 
