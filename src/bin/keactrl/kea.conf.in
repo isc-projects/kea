@@ -1,0 +1,60 @@
+# This is a basic configuration for the Kea DHCPv4 and DHCPv6 servers.
+# Subnet declarations are commented out and no interfaces are listed.
+# Therefore, the servers will not listen or to any queries. The basic
+# configuration must be extended to specify interfaces on which the
+# servers should listen. Also, subnets and options must be declared.
+{
+
+# DHCPv4 configuration starts here.
+"Dhcp4":
+{
+# Add names of interfaces to listen on.
+  "interfaces": [ ],
+
+# Use Memfile lease database backend to store leases in a CSV file.
+  "lease-database": {
+    "type": "memfile"
+  },
+
+# Global (inherited by all subnets) lease lifetime is mandatory parameter.
+  "valid-lifetime": 4000,
+
+# Below an example of the simple subnet declaration. Uncomment to
+# enable it.
+  "subnet4": [
+#  {    "subnet": "192.0.2.0/24",
+#       "pool": [ "192.0.2.1 - 192.0.2.200" ] }
+  ]
+},
+
+# DHCPv6 configuration starts here.
+"Dhcp6":
+{
+# Add names of interfaces to listen on.
+  "interfaces": [ ],
+
+# Addresses will be assigned with preferred and valid lifetimes
+# being 3000 and 4000, respectively. Client is told to start
+# renewing after 1000 seconds. If the server does not repond
+# after 2000 seconds since the lease was granted, client is supposed
+# to start REBIND procedure (emergency renewal that allows switching
+# to a different server).
+  "preferred-lifetime": 3000,
+  "valid-lifetime": 4000,
+  "renew-timer": 1000,
+  "rebind-timer": 2000,
+
+# The following list defines subnets. Uncomment to enable them.
+  "subnet6": [
+#  {    "subnet": "2001:db8:1::/64",
+#       "pool": [ "2001:db8:1::/80" ] },
+#  {    "subnet": "2001:db8:2::/64",
+#       "pool": [ "2001:db8:2::/80" ] },
+#  {    "subnet": "2001:db8:3::/64",
+#       "pool": [ "2001:db8:3::/80" ] },
+#  {    "subnet": "2001:db8:4::/64",
+#       "pool": [ "2001:db8:4::/80" ] }
+   ]
+}
+
+}

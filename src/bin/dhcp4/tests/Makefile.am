@@ -5,16 +5,13 @@ SHTESTS =
 # The test of dynamic reconfiguration based on signals will work only
 # if we are using file based configuration approach.
 if CONFIG_BACKEND_JSON
-SHTESTS += dhcp4_reconfigure_test.sh
-SHTESTS += dhcp4_sigterm_test.sh
-SHTESTS += dhcp4_sigint_test.sh
+SHTESTS += dhcp4_process_tests.sh
 endif
 
+noinst_SCRIPTS = dhcp4_process_tests.sh
+
 EXTRA_DIST  = $(PYTESTS)
-EXTRA_DIST += dhcp4_reconfigure_test.sh
-EXTRA_DIST += dhcp4_sigterm_test.sh
-EXTRA_DIST += dhcp4_sigint_test.sh
-EXTRA_DIST += dhcp4_shutdown_test.sh
+EXTRA_DIST += dhcp4_process_tests.sh.in
 
 # Explicitly specify paths to dynamic libraries required by loadable python
 # modules. That is required on Mac OS systems. Otherwise we will get exception
@@ -37,7 +34,7 @@ check-local:
 	for shtest in $(SHTESTS) ; do \
 	echo Running test: $$shtest ; \
 	export B10_LOCKFILE_DIR_FROM_BUILD=$(abs_top_builddir); \
-	$(abs_srcdir)/$$shtest || exit ; \
+	${SHELL} $(abs_builddir)/$$shtest || exit ; \
 	done
 
 
@@ -54,6 +51,8 @@ AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 CLEANFILES = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
 CLEANFILES += $(builddir)/load_marker.txt $(builddir)/unload_marker.txt
 CLEANFILES += *.json *.log
+
+DISTCLEANFILES = dhcp4_process_tests.sh
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 if USE_CLANGPP

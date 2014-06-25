@@ -1446,16 +1446,24 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/d2/tests/test_data_files_config.h
                  src/bin/dhcp4/Makefile
                  src/bin/dhcp4/spec_config.h.pre
+                 src/bin/dhcp4/tests/dhcp4_process_tests.sh
                  src/bin/dhcp4/tests/Makefile
                  src/bin/dhcp4/tests/marker_file.h
                  src/bin/dhcp4/tests/test_data_files_config.h
                  src/bin/dhcp4/tests/test_libraries.h
                  src/bin/dhcp6/Makefile
                  src/bin/dhcp6/spec_config.h.pre
+                 src/bin/dhcp6/tests/dhcp6_process_tests.sh
                  src/bin/dhcp6/tests/Makefile
                  src/bin/dhcp6/tests/marker_file.h
                  src/bin/dhcp6/tests/test_data_files_config.h
                  src/bin/dhcp6/tests/test_libraries.h
+                 src/bin/keactrl/keactrl
+                 src/bin/keactrl/kea.conf
+                 src/bin/keactrl/keactrl.conf
+                 src/bin/keactrl/Makefile
+                 src/bin/keactrl/tests/keactrl_tests.sh
+                 src/bin/keactrl/tests/Makefile
                  src/bin/Makefile
                  src/bin/msgq/Makefile
                  src/bin/msgq/msgq.py
@@ -1559,6 +1567,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/python/isc/util/Makefile
                  src/lib/python/isc/util/tests/Makefile
                  src/lib/python/Makefile
+                 src/lib/testutils/dhcp_test_lib.sh
                  src/lib/testutils/Makefile
                  src/lib/testutils/testdata/Makefile
                  src/lib/util/io/Makefile
@@ -1587,6 +1596,10 @@ AC_CONFIG_FILES([compatcheck/Makefile
            chmod +x src/bin/bindctl/tests/bindctl_test
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/cmdctl/tests/cmdctl_test
+           chmod +x src/bin/dhcp4/tests/dhcp4_process_tests.sh
+           chmod +x src/bin/dhcp6/tests/dhcp6_process_tests.sh
+           chmod +x src/bin/keactrl/keactrl
+           chmod +x src/bin/keactrl/tests/keactrl_tests.sh
            chmod +x src/bin/msgq/run_msgq.sh
            chmod +x src/bin/sysinfo/run_sysinfo.sh
            chmod +x src/bin/usermgr/run_b10-cmdctl-usermgr.sh

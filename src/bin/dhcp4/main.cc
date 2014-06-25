@@ -115,7 +115,7 @@ main(int argc, char* argv[]) {
             // Initialize the server.
             server.init(config_file);
         } catch (const std::exception& ex) {
-            LOG_ERROR(dhcp4_logger, DHCP4_SESSION_FAIL).arg(ex.what());
+            LOG_ERROR(dhcp4_logger, DHCP4_INIT_FAIL).arg(ex.what());
 
             // We should not continue if were told to configure (either read
             // config file or establish Bundy control session).
