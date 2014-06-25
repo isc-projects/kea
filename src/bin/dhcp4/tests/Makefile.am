@@ -34,7 +34,7 @@ check-local:
 	for shtest in $(SHTESTS) ; do \
 	echo Running test: $$shtest ; \
 	export B10_LOCKFILE_DIR_FROM_BUILD=$(abs_top_builddir); \
-	${SHELL} $(abs_srcdir)/$$shtest || exit ; \
+	${SHELL} $(abs_builddir)/$$shtest || exit ; \
 	done
 
 
