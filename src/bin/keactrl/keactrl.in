@@ -60,7 +60,7 @@ is_in_list() {
 
 # Prints keactrl usage.
 usage() {
-    printf "%s" $( basename ${0} ) "[-c keactrl-config-file] [-s server[,server,..]]"
+    printf "usage is %s [-c keactrl-config-file] [-s server[,server,..]]\n" $( basename ${0} )
 }
 
 ### Functions managing Kea processes ###
@@ -175,6 +175,11 @@ if [ -z ${B10_LOGGER_DESTINATION} ]; then
 fi
 
 command=${1}
+if [ -z ${command} ]; then
+    log_error "missing command"
+    usage
+    exit 1
+fi
 is_in_list "${command}" "start stop reload status"
 if [ ${_inlist} -eq 0 ]; then
     log_error "invalid command: ${command}"
@@ -196,12 +201,22 @@ do
         -c|--ctrl-config)
             shift
             keactrl_conf=${1}
+            if [ -z ${keactrl_conf} ]; then
+                log_error "keactrl-config-file not specified"
+                usage
+                exit 1
+            fi
             ;;
         # Get the specific servers for which the command will be
         # executed.
         -s|--server)
             shift
             servers=$( printf "%s" ${1} | tr "," "\n" )
+            if [ -z ${servers} ]; then
+                log_error "servers not specified"
+                usage
+                exit 1
+            fi
             # Validate that the specifief server names are correct.
             for s in ${servers}
             do
