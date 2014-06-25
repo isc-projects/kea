@@ -1,3 +1,11 @@
+7XX.	[build]		tomek
+	Removed a lot of remaining BIND10 framework: bind10, bindctl,
+	cfgmgr, cmdctl, msgq, stats, sysinfo, tests, usermgr from src/bin
+	directory, also src/lib/python directory. There are still some
+	components that require Python3, but they are expected to be
+	removed in the near future.
+	(Trac #3413, git abcd)
+
 788.	[func]		tomek
 	DHCPv4 server: New parameter added to configure.ac: --with-kea-config.
 	It allows selecting configuration backend and accepts one of two
