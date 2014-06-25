@@ -139,14 +139,14 @@ as another instance is already running."
 #   is dhcp4
 run_conditional() {
     local server=${1}         # Server name: dhcp4, dhcp6, dhcp_ddns
-    local command=${2}        # Command to execute
+    local command="${2}"      # Command to execute
     local check_file_cfg=${3} # Check if server enabled in the configuration file
 
     # If keyword "all" is not on the list of servers we will have to check
     # if our specific server is on the list. If, not return.
-    is_in_list "all" ${servers}
+    is_in_list "all" "${servers}"
     if [ ${_inlist} -eq 0 ]; then
-        is_in_list ${server} ${servers}
+        is_in_list ${server} "${servers}"
         if [ ${_inlist} -eq 0 ]; then
             return
         fi
