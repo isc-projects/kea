@@ -472,6 +472,10 @@ TEST_F(D2CfgMgrTest, invalidEntry) {
     config = makeParamsConfigString ("127.0.0.1", 777, 333, "BOGUS", "JSON");
     runConfig(config, SHOULD_FAIL);
 
+    // Unsupported protocol
+    config = makeParamsConfigString ("127.0.0.1", 777, 333, "TCP", "JSON");
+    runConfig(config, SHOULD_FAIL);
+
     // Invalid format
     config = makeParamsConfigString ("127.0.0.1", 777, 333, "UDP", "BOGUS");
     runConfig(config, SHOULD_FAIL);
