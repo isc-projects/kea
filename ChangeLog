@@ -1,3 +1,10 @@
+793.	[func]		tmark
+	DHCP-DDNS: Implemented dynamic reconfiguration of the server,
+	triggered when the SIGHUP signal is received by the server's
+	process. Also, server performs a graceful shut down when SIGINT
+	or SIGTERM signal is received.
+	(Trac #3407, git f1a224df1e46098748ba60205be09ada4600515f)
+
 792.	[func]		marcin
 	Implemented keactrl script used to start, stop, reconfigure Kea
 	servers and get their status and configuration data. This script
