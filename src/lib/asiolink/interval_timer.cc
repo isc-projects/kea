@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2104 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -44,7 +44,9 @@ private:
 public:
     IntervalTimerImpl(IOService& io_service);
     ~IntervalTimerImpl();
-    void setup(const IntervalTimer::Callback& cbfunc, const long interval);
+    void setup(const IntervalTimer::Callback& cbfunc, const long interval,
+               const IntervalTimer::Mode& interval_mode
+               = IntervalTimer::REPEATING);
     void callback(const asio::error_code& error);
     void cancel() {
         timer_.cancel();
@@ -60,13 +62,18 @@ private:
     long interval_;
     // asio timer
     asio::deadline_timer timer_;
+
+    // Controls how the timer behaves after expiration.
+    IntervalTimer::Mode mode_;
+
     // interval_ will be set to this value in destructor in order to detect
     // use-after-free type of bugs.
     static const long INVALIDATED_INTERVAL = -1;
 };
 
 IntervalTimerImpl::IntervalTimerImpl(IOService& io_service) :
-    interval_(0), timer_(io_service.get_io_service())
+    interval_(0), timer_(io_service.get_io_service()),
+    mode_(IntervalTimer::REPEATING)
 {}
 
 IntervalTimerImpl::~IntervalTimerImpl() {
@@ -75,7 +82,8 @@ IntervalTimerImpl::~IntervalTimerImpl() {
 
 void
 IntervalTimerImpl::setup(const IntervalTimer::Callback& cbfunc,
-                         const long interval)
+                         const long interval,
+                         const IntervalTimer::Mode& mode)
 {
     // Interval should not be less than or equal to 0.
     if (interval <= 0) {
@@ -88,6 +96,8 @@ IntervalTimerImpl::setup(const IntervalTimer::Callback& cbfunc,
     }
     cbfunc_ = cbfunc;
     interval_ = interval;
+    mode_ = mode;
+
     // Set initial expire time.
     // At this point the timer is not running yet and will not expire.
     // After calling IOService::run(), the timer will expire.
@@ -118,8 +128,11 @@ IntervalTimerImpl::callback(const asio::error_code& ec) {
     if (interval_ == 0 || ec) {
         // timer has been canceled. Do nothing.
     } else {
-        // Set next expire time.
-        update();
+        // If we should repeat, set next expire time.
+        if (mode_ == IntervalTimer::REPEATING) {
+            update();
+        }
+
         // Invoke the call back function.
         cbfunc_();
     }
@@ -135,8 +148,9 @@ IntervalTimer::~IntervalTimer() {
 }
 
 void
-IntervalTimer::setup(const Callback& cbfunc, const long interval) {
-    return (impl_->setup(cbfunc, interval));
+IntervalTimer::setup(const Callback& cbfunc, const long interval,
+                     const IntervalTimer::Mode& mode) {
+    return (impl_->setup(cbfunc, interval, mode));
 }
 
 void

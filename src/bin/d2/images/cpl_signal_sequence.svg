@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Bouml (http://bouml.free.fr/) -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="848" height="803" version="1.1" xmlns="http://www.w3.org/2000/svg">
+<g>
+	<line stroke="black" stroke-dasharray="18,6"  stroke-opacity="1" x1="92" y1="45" x2="92" y2="803" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="139" y="8" width="3" height="18" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="45" y="23" width="97" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="41" y="4" width="98" height="19" />
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" text-decoration="underline" text-anchor="middle" x="90" y="20">:DControllerBase</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="384" y="74" width="3" height="18" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="296" y="89" width="91" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="292" y="70" width="92" height="19" />
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" text-decoration="underline" text-anchor="middle" x="338" y="86">:IOSignalQueue</text>
+</g>
+<g>
+	<line stroke="black" stroke-dasharray="18,6"  stroke-opacity="1" x1="340" y1="111" x2="340" y2="803" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="469" y="101" width="3" height="18" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="411" y="116" width="61" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="407" y="97" width="62" height="19" />
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" text-decoration="underline" text-anchor="middle" x="438" y="113">:SignalSet</text>
+</g>
+<g>
+	<line stroke="black" stroke-dasharray="18,6"  stroke-opacity="1" x1="440" y1="138" x2="440" y2="803" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="559" y="350" width="3" height="18" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="507" y="365" width="55" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="503" y="346" width="56" height="19" />
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" text-decoration="underline" text-anchor="middle" x="531" y="362">:IOSignal</text>
+</g>
+<g>
+	<line stroke="black" stroke-dasharray="18,6"  stroke-opacity="1" x1="533" y1="387" x2="533" y2="803" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="662" y="373" width="3" height="18" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="586" y="388" width="79" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="582" y="369" width="80" height="19" />
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" text-decoration="underline" text-anchor="middle" x="622" y="385">:IntervalTimer</text>
+</g>
+<g>
+	<line stroke="black" stroke-dasharray="18,6"  stroke-opacity="1" x1="624" y1="410" x2="624" y2="803" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="769" y="421" width="3" height="18" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="686" y="436" width="86" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="682" y="417" width="87" height="19" />
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" text-decoration="underline" text-anchor="middle" x="726" y="433">:TimerCallback</text>
+</g>
+<g>
+	<line stroke="black" stroke-dasharray="18,6"  stroke-opacity="1" x1="727" y1="458" x2="727" y2="803" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="832" y="8" width="3" height="18" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="773" y="23" width="62" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="769" y="4" width="63" height="19" />
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" text-decoration="underline" text-anchor="middle" x="801" y="20">:IOService</text>
+</g>
+<g>
+	<line stroke="black" stroke-dasharray="18,6"  stroke-opacity="1" x1="802" y1="45" x2="802" y2="803" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="262" y="8" width="3" height="18" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="176" y="23" width="89" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="172" y="4" width="90" height="19" />
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" text-decoration="underline" text-anchor="middle" x="217" y="20">:DProcessBase</text>
+</g>
+<g>
+	<line stroke="black" stroke-dasharray="18,6"  stroke-opacity="1" x1="219" y1="45" x2="219" y2="803" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="87" y="60" width="10" height="726" />
+</g>
+<g>
+	<polygon fill="#c0ffff" stroke="black" stroke-opacity="1" points="262,661 416,661 416,671 426,671 426,709 262,709 262,661" />
+	<line stroke="black" stroke-opacity="1" x1="416" y1="661" x2="426" y2="671" />
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="272" y="683">Details of configFromFile</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="272" y="695">omitted for clarity</text>
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="528" y="399" width="10" height="106" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="93" y="242" width="10" height="521" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="335" y="120" width="10" height="24" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="435" y="166" width="10" height="24" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="435" y="203" width="10" height="24" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="435" y="285" width="10" height="152" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="335" y="341" width="10" height="82" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="619" y="419" width="10" height="24" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="619" y="466" width="10" height="41" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="722" y="485" width="10" height="24" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="797" y="253" width="10" height="527" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="722" y="549" width="10" height="195" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="214" y="249" width="10" height="542" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="335" y="587" width="10" height="24" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="528" y="619" width="10" height="24" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="539" y1="471" x2="619" y2="471" />
+	<polygon fill="#000000" stroke="none" points="619,471 615,467 615,475" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="33" y1="66" x2="87" y2="66" />
+	<polygon fill="#000000" stroke="none" points="87,66 83,62 83,70" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="310" y1="290" x2="435" y2="290" />
+	<polygon fill="#000000" stroke="none" points="435,290 431,286 431,294" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="630" y1="492" x2="722" y2="492" />
+	<polygon fill="#000000" stroke="none" points="722,492 718,488 718,496" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="733" y1="554" x2="797" y2="554" />
+	<polygon fill="#000000" stroke="none" points="733,554 737,550 737,558" />
+</g>
+<g>
+	<polygon fill="#c0ffff" stroke="black" stroke-opacity="1" points="29,288 173,288 173,298 183,298 183,348 29,348 29,288" />
+	<line stroke="black" stroke-opacity="1" x1="173" y1="288" x2="183" y2="298" />
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="39" y="310">Sometime after</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="39" y="322">runProcess is called</text>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="39" y="334">SIGHUP is sent</text>
+</g>
+<ellipse fill="black" stroke="none" cx="28.5" cy="67.5" rx="4.5" ry="4.5" />
+<ellipse fill="black" stroke="none" cx="305.5" cy="291.5" rx="4.5" ry="4.5" />
+<g>
+	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="183" y1="306" x2="300" y2="291" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="93" y="98" width="10" height="122" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="99" y="562" width="10" height="195" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="441" y="313" width="10" height="116" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="220" y="722" width="10" height="24" />
+</g>
+<g>
+	<path fill="none" stroke="black" stroke-opacity="1" d="M 105 99 L 122 99 L 122 106 L 105 106" />
+	<polygon fill="#000000" stroke="none" points="105,106 109,110 109,102" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="104" y1="134" x2="335" y2="134" />
+	<polygon fill="#000000" stroke="none" points="335,134 331,130 331,138" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="104" y1="178" x2="435" y2="178" />
+	<polygon fill="#000000" stroke="none" points="435,178 431,174 431,182" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="104" y1="208" x2="435" y2="208" />
+	<polygon fill="#000000" stroke="none" points="435,208 431,204 431,212" />
+</g>
+<g>
+	<path fill="none" stroke="black" stroke-opacity="1" d="M 453 314 L 470 314 L 470 321 L 453 321" />
+	<polygon fill="#000000" stroke="none" points="453,321 457,325 457,317" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="346" y1="351" x2="441" y2="351" />
+	<polygon fill="#000000" stroke="none" points="346,351 350,347 350,355" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="110" y1="567" x2="722" y2="567" />
+	<polygon fill="#000000" stroke="none" points="110,567 114,563 114,571" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="110" y1="592" x2="335" y2="592" />
+	<polygon fill="#000000" stroke="none" points="335,592 331,588 331,596" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="110" y1="624" x2="528" y2="624" />
+	<polygon fill="#000000" stroke="none" points="528,624 524,620 524,628" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="105" y="652" width="10" height="100" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="346" y1="404" x2="528" y2="404" />
+	<polygon fill="#000000" stroke="none" points="528,404 524,400 524,408" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="539" y1="431" x2="619" y2="431" />
+	<polygon fill="#000000" stroke="none" points="619,431 615,427 615,435" />
+</g>
+<g>
+	<path fill="none" stroke="black" stroke-opacity="1" d="M 117 653 L 134 653 L 134 660 L 117 660" />
+	<polygon fill="#000000" stroke="none" points="117,660 121,664 121,656" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="111" y="686" width="10" height="61" />
+</g>
+<g>
+	<path fill="none" stroke="black" stroke-opacity="1" d="M 123 687 L 140 687 L 140 694 L 123 694" />
+	<polygon fill="#000000" stroke="none" points="123,694 127,698 127,690" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="122" y1="727" x2="220" y2="727" />
+	<polygon fill="#000000" stroke="none" points="220,727 216,723 216,731" />
+</g>
+<g>
+	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="261" y1="687" x2="141" y2="691" />
+</g>
+<g>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="38" y="61">launch()</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="106" y="91">initSignalHandling()</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="113" y="121">IOSignalQueue(io_service)</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="116" y="161">setOnReceiptHandler(DControllerBase::osSignalHandler)</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="140" y="202">SignalSet(SIGHUP,SIGINT,SIGTERM)</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="288" y="279">internalHandler(SIGHUP)</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="359" y="309">invokeOnReceiptHandler(SIGHUP)</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="314" y="340">pushSignal(SIGHUP, DControllerBase::ioSignalHandler)</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="353" y="399">IOSignal(io_service, SIGHUP, handler)</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="548" y="418">IntervalTimer(io_service)</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="431" y="459">setup(TimerCallBack(sequence_id, handler), 1, ONE_SHOT))</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="637" y="478">TimerCallback(sequence_id, handler)</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="737" y="547">operator ()()</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="722" y="256">run()</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="118" y="240">runProcess()</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="146" y="254">run()</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="128" y="562">ioSignalHandler(sequence_id)</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="191" y="587">popSignal()</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="448" y="615">getSignum()</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="117" y="647">processSignal(SIGHUP)</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="126" y="682">configFromFile()</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="12" fill="#000000" xml:space="preserve" x="142" y="722">configure()</text>
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="225" y1="260" x2="797" y2="260" />
+	<polygon fill="#000000" stroke="none" points="797,260 793,256 793,264" />
+</g>
+<g>
+	<path fill="none" stroke="black" stroke-opacity="1" d="M 105 243 L 122 243 L 122 250 L 105 250" />
+	<polygon fill="#000000" stroke="none" points="105,250 109,254 109,246" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="104" y1="259" x2="214" y2="259" />
+	<polygon fill="#000000" stroke="none" points="214,259 210,255 210,263" />
+</g>
+</svg>
