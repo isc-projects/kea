@@ -349,7 +349,8 @@ TSIGKeyInfoParser::build(isc::data::ConstElementPtr key_config) {
     // data to the parser's local storage.
     BOOST_FOREACH (config_pair, key_config->mapValue()) {
         isc::dhcp::ParserPtr parser(createConfigParser(config_pair.first,
-                                    config_pair.second->getPosition()));
+                                                       config_pair.second->
+                                                       getPosition()));
         parser->build(config_pair.second);
         parser->commit();
     }
@@ -387,8 +388,7 @@ TSIGKeyInfoParser::build(isc::data::ConstElementPtr key_config) {
     try {
         TSIGKeyInfo::stringToAlgorithmName(algorithm);
     } catch (const std::exception& ex) {
-        isc_throw(D2CfgError, "TSIG key invalid algorithm : "
-                  << algorithm << " : " << pos[1]);
+        isc_throw(D2CfgError, "TSIG key : " << ex.what() << " : " << pos[1]);
     }
 
     // Secret cannot be blank.
@@ -513,7 +513,8 @@ DnsServerInfoParser::build(isc::data::ConstElementPtr server_config) {
     // data to the parser's local storage.
     BOOST_FOREACH (config_pair, server_config->mapValue()) {
         isc::dhcp::ParserPtr parser(createConfigParser(config_pair.first,
-                                    config_pair.second->getPosition()));
+                                                       config_pair.second->
+                                                       getPosition()));
         parser->build(config_pair.second);
         parser->commit();
     }
@@ -682,7 +683,8 @@ DdnsDomainParser::build(isc::data::ConstElementPtr domain_config) {
     isc::dhcp::ConfigPair config_pair;
     BOOST_FOREACH(config_pair, domain_config->mapValue()) {
         isc::dhcp::ParserPtr parser(createConfigParser(config_pair.first,
-                                    config_pair.second->getPosition()));
+                                                       config_pair.second->
+                                                       getPosition()));
         parser->build(config_pair.second);
         parser->commit();
     }
@@ -838,7 +840,9 @@ DdnsDomainListMgrParser::build(isc::data::ConstElementPtr domain_config) {
     // data to the parser's local storage.
     isc::dhcp::ConfigPair config_pair;
     BOOST_FOREACH(config_pair, domain_config->mapValue()) {
-        isc::dhcp::ParserPtr parser(createConfigParser(config_pair.first));
+        isc::dhcp::ParserPtr parser(createConfigParser(config_pair.first,
+                                                       config_pair.second->
+                                                       getPosition()));
         parser->build(config_pair.second);
         parser->commit();
     }
@@ -848,7 +852,9 @@ DdnsDomainListMgrParser::build(isc::data::ConstElementPtr domain_config) {
 }
 
 isc::dhcp::ParserPtr
-DdnsDomainListMgrParser::createConfigParser(const std::string& config_id) {
+DdnsDomainListMgrParser::createConfigParser(const std::string& config_id,
+                                            const isc::data::Element::
+                                            Position& pos) {
     DhcpConfigParser* parser = NULL;
     if (config_id == "ddns_domains") {
        // Domain list parser is given our local domain storage. It will pass
@@ -857,7 +863,8 @@ DdnsDomainListMgrParser::createConfigParser(const std::string& config_id) {
        parser = new DdnsDomainListParser(config_id, local_domains_, keys_);
     } else {
        isc_throw(NotImplemented, "parser error: "
-                 "DdnsDomainListMgr parameter not supported: " << config_id);
+                 "DdnsDomainListMgr parameter not supported: " << config_id
+                 << " : " << pos);
     }
 
     // Return the new domain parser instance.
