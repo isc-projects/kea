@@ -439,4 +439,50 @@ TEST_F(DStubCfgMgrTest, rollBackTest) {
     EXPECT_TRUE(object);
 }
 
+// Tests that configuration element position is returned by getParam variants.
+TEST_F(DStubCfgMgrTest, paramPosition) {
+    // Create a configuration with one of each scalar types.  We end them
+    // with line feeds so we can test position value.
+    string config = "{ \"bool_test\": true , \n"
+                    "  \"uint32_test\": 77 , \n"
+                    "  \"string_test\": \"hmmm chewy\" }";
+    ASSERT_TRUE(fromJSON(config));
+
+    // Verify that the configuration parses without error.
+    answer_ = cfg_mgr_->parseConfig(config_set_);
+    ASSERT_TRUE(checkAnswer(0));
+    DStubContextPtr context = getStubContext();
+    ASSERT_TRUE(context);
+
+    // Verify that the boolean parameter was parsed correctly by retrieving
+    // its value from the context.
+    bool actual_bool = false;
+    isc::data::Element::Position pos;
+    EXPECT_NO_THROW(pos = context->getParam("bool_test", actual_bool));
+    EXPECT_EQ(true, actual_bool);
+    EXPECT_EQ(1, pos.line_);
+
+    // Verify that the uint32 parameter was parsed correctly by retrieving
+    // its value from the context.
+    uint32_t actual_uint32 = 0;
+    EXPECT_NO_THROW(pos = context->getParam("uint32_test", actual_uint32));
+    EXPECT_EQ(77, actual_uint32);
+    EXPECT_EQ(2, pos.line_);
+
+    // Verify that the string parameter was parsed correctly by retrieving
+    // its value from the context.
+    std::string actual_string = "";
+    EXPECT_NO_THROW(pos = context->getParam("string_test", actual_string));
+    EXPECT_EQ("hmmm chewy", actual_string);
+    EXPECT_EQ(3, pos.line_);
+
+    // Verify that an optional parameter that is not defined, returns the
+    // zero position.
+    pos = isc::data::Element::ZERO_POSITION();
+    EXPECT_NO_THROW(pos = context->getParam("bogus_value",
+                                            actual_string, true));
+    EXPECT_EQ(pos.file_, isc::data::Element::ZERO_POSITION().file_);
+}
+
+
 } // end of anonymous namespace
