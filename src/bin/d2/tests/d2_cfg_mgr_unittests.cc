@@ -32,6 +32,10 @@ std::string specfile(const std::string& name) {
     return (std::string(D2_SRC_DIR) + "/" + name);
 }
 
+std::string testDataFile(const std::string& name) {
+    return (std::string(D2_TEST_DATA_DIR) + "/" + name);
+}
+
 /// @brief Test fixture class for testing D2CfgMgr class.
 /// It maintains an member instance of D2CfgMgr and provides methods for
 /// converting JSON strings to configuration element sets, checking parse
@@ -1562,6 +1566,103 @@ TEST_F(D2CfgMgrTest, matchReverse) {
 
     // Verify that an attempt to match an invalid IP address throws.
     ASSERT_THROW(cfg_mgr_->matchReverse("", match), D2CfgError);
+}
+
+/// @brief Tests D2 config parsing against a wide range of config permutations.
+/// It iterates over all of the test configurations described in given file.
+/// The file content is JSON specialized to this test. The format of the file
+/// is:
+///
+/// @code
+/// # The file must open with a list. It's name is arbitrary.
+///
+/// { "test_list" :
+/// [
+///
+/// #    Test one starts here:
+///      {
+///
+/// #    Each test has:
+/// #      1. description - optional text description
+/// #      2. should_fail - bool indicator if parsing is expected to file
+/// #         (defaults to false)
+/// #       3. data - configuration text to parse
+/// #
+///      "description" : "<text describing test>",
+///      "should_fail" : <true|false> ,
+///      "data" :
+///          {
+/// #        configuration elements here
+///          "bool_val" : false,
+///          "some_map" :  {}
+/// #         :
+///          }
+///      }
+///
+/// #    Next test would start here
+///      ,
+///      {
+///      }
+///
+/// ]}
+///
+/// @endcode
+///
+/// (The file supports comments per Element::fromJSONFile())
+///
+TEST_F(D2CfgMgrTest, configPermutations) {
+    std::string test_file = testDataFile("d2_cfg_tests.json");
+    isc::data::ConstElementPtr tests;
+
+    // Read contents of the file and parse it as JSON. Note it must contain
+    // all valid JSON, we aren't testing JSON parsing.
+    try {
+        tests = isc::data::Element::fromJSONFile(test_file, true);
+    } catch (const std::exception& ex) {
+        FAIL() << "ERROR parsing file : " << test_file << " : " << ex.what();
+    }
+
+    // Read in each test For each test, read:
+    //  1. description - optional text description
+    //  2. should_fail - bool indicator if parsing is expected to file (defaults
+    //     to false
+    //  3. data - configuration text to parse
+    //
+    // Next attempt to parse the configuration by passing it into
+    // D2CfgMgr::parseConfig().  Then check the parsing outcome against the
+    // expected outcome as given by should_fail.
+    isc::data::ConstElementPtr test;
+    BOOST_FOREACH(test, tests->get("test_list")->listValue()) {
+
+        // Grab the description.
+        std::string description = "<no desc>";
+        isc::data::ConstElementPtr elem = test->get("description");
+        if (elem) {
+            elem->getValue(description);
+        }
+
+        // Grab the outcome flag, should_fail, defaults to false if it's
+        // not specified.
+        bool should_fail = false;
+        elem = test->get("should_fail");
+        if (elem)  {
+            elem->getValue(should_fail);
+        }
+
+        // Grab the test's configuration data.
+        isc::data::ConstElementPtr data = test->get("data");
+        ASSERT_TRUE(data) << "No data for test: "
+                          << " : " << test->getPosition();
+
+        // Verify that we can parse the configuration.
+        answer_ = cfg_mgr_->parseConfig(data);
+        if (checkAnswer(!should_fail)) {
+            ADD_FAILURE() << "Parsing should have "
+                          << (should_fail ? "failed" : "passed")
+                          << " for : " << description
+                          << " : "  << test->getPosition();
+        }
+    }
 }
 
 } // end of anonymous namespace
