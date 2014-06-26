@@ -30,7 +30,8 @@ DControllerBasePtr DControllerBase::controller_;
 DControllerBase::DControllerBase(const char* app_name, const char* bin_name)
     : app_name_(app_name), bin_name_(bin_name),
       verbose_(false), spec_file_name_(""),
-      io_service_(new isc::asiolink::IOService()){
+      io_service_(new isc::asiolink::IOService()),
+      signal_set_(), io_signal_queue_() {
 }
 
 void
@@ -75,6 +76,7 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
                    "Application Process initialization failed: " << ex.what());
     }
 
+
     LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DCTL_STANDALONE).arg(app_name_);
 
     // Step 3 is to load configuration from file.
@@ -91,10 +93,24 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
     // Everything is clear for launch, so start the application's
     // event loop.
     try {
+        // Now that we have a proces, we can set up signal handling.
+        initSignalHandling();
+
         runProcess();
+
+        /// @todo Once Trac #3470 is addressed this will not be necessary.
+        /// SignalSet uses statics which do not free in predicatable order.
+        if (signal_set_) {
+            signal_set_->clear();
+        }
     } catch (const std::exception& ex) {
         LOG_FATAL(dctl_logger, DCTL_PROCESS_FAILED)
                   .arg(app_name_).arg(ex.what());
+        /// @todo Once Trac #3470 is addressed this will not be necessary.
+        /// SignalSet uses statics which do not free in predicatable order.
+        if (signal_set_) {
+            signal_set_->clear();
+        }
         isc_throw (ProcessRunError,
                    "Application process event loop failed: " << ex.what());
     }
@@ -285,6 +301,79 @@ DControllerBase::shutdownProcess(isc::data::ConstElementPtr args) {
     // it should be pretty hard to cause this.
     LOG_WARN(dctl_logger, DCTL_NOT_RUNNING).arg(app_name_);
     return (isc::config::createAnswer(0, "Process has not been initialzed."));
+}
+
+void
+DControllerBase::initSignalHandling() {
+    /// @todo block everything we don't handle
+
+    // Create our signal queue.
+    io_signal_queue_.reset(new IOSignalQueue(io_service_));
+
+    // Install the on-receipt handler
+    util::SignalSet::setOnReceiptHandler(boost::bind(&DControllerBase::
+                                                     osSignalHandler,
+                                                     this, _1));
+    // Register for the signals we wish to handle.
+    signal_set_.reset(new util::SignalSet(SIGHUP,SIGINT,SIGTERM));
+}
+
+bool
+DControllerBase::osSignalHandler(int signum) {
+    // Create a IOSignal to propagate the signal to IOService.
+    io_signal_queue_->pushSignal(signum, boost::bind(&DControllerBase::
+                                                     ioSignalHandler,
+                                                     this, _1));
+    return (true);
+}
+
+void
+DControllerBase::ioSignalHandler(IOSignalId sequence_id) {
+    // Pop the signal instance off the queue.  This should make us
+    // the only one holding it, so when we leave it should be freed.
+    // (note that popSignal will throw if signal is not found, which
+    // in turn will caught, logged, and swallowed by IOSignal callback
+    // invocation code.)
+    IOSignalPtr io_signal = io_signal_queue_->popSignal(sequence_id);
+
+    // Now call virtual signal processing method.
+    processSignal(io_signal->getSignum());
+}
+
+void
+DControllerBase::processSignal(int signum) {
+    switch (signum) {
+        case SIGHUP:
+        {
+            LOG_INFO(dctl_logger, DHCP_DDNS_CFG_FILE_RELOAD_SIGNAL_RECVD)
+                     .arg(signum).arg(getConfigFile());
+            int rcode;
+            isc::data::ConstElementPtr comment = isc::config::
+                                                 parseAnswer(rcode,
+                                                             configFromFile());
+            if (rcode != 0) {
+                LOG_ERROR(dctl_logger, DHCP_DDNS_CFG_FILE_RELOAD_ERROR)
+                          .arg(comment->stringValue());
+            }
+
+            break;
+        }
+
+        case SIGINT:
+        case SIGTERM:
+        {
+            LOG_INFO(dctl_logger, DHCP_DDNS_SHUTDOWN_SIGNAL_RECVD)
+                     .arg(signum);
+            isc::data::ElementPtr arg_set;
+            executeCommand(SHUT_DOWN_COMMAND, arg_set);
+            break;
+        }
+
+        default:
+            LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT,
+                      DHCP_DDNS_UNSUPPORTED_SIGNAL).arg(signum);
+            break;
+    }
 }
 
 void
