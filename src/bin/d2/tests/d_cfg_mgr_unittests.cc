@@ -53,7 +53,8 @@ public:
 
     /// @brief Dummy implementation as this method is abstract.
     virtual isc::dhcp::ParserPtr
-    createConfigParser(const std::string& /* element_id */) {
+    createConfigParser(const std::string& /* element_id */,
+                       const isc::data::Element::Position& /* pos */) {
         return (isc::dhcp::ParserPtr());
     }
 };
@@ -125,17 +126,22 @@ TEST_F(DStubCfgMgrTest, basicParseTest) {
     answer_ = cfg_mgr_->parseConfig(config_set_);
     EXPECT_TRUE(checkAnswer(0));
 
+
+std::cout << __FILE__ << ":" <<  __LINE__ << std::endl;
     // Verify that an error building the element is caught and returns a
     // failed parse result.
     SimFailure::set(SimFailure::ftElementBuild);
     answer_ = cfg_mgr_->parseConfig(config_set_);
     EXPECT_TRUE(checkAnswer(1));
 
+std::cout << __FILE__ << ":" <<  __LINE__ << std::endl;
     // Verify that an error committing the element is caught and returns a
     // failed parse result.
     SimFailure::set(SimFailure::ftElementCommit);
     answer_ = cfg_mgr_->parseConfig(config_set_);
     EXPECT_TRUE(checkAnswer(1));
+
+std::cout << __FILE__ << ":" <<  __LINE__ << std::endl;
 
     // Verify that an unknown element error is caught and returns a failed
     // parse result.

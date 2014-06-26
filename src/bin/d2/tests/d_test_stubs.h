@@ -691,11 +691,15 @@ public:
     ///
     /// @param element_id is the string name of the element as it will appear
     /// in the configuration set.
+    /// @param pos position within the configuration text (or file) of element
+    /// to be parsed.  This is passed for error messaging.
     ///
     /// @return returns a ParserPtr to the parser instance.
     /// @throw throws DCfgMgrBaseError if SimFailure is ftElementUnknown.
     virtual isc::dhcp::ParserPtr
-    createConfigParser(const std::string& element_id);
+    createConfigParser(const std::string& element_id,
+                       const isc::data::Element::Position& pos
+                       = isc::data::Element::Position());
 
     /// @brief A list for remembering the element ids in the order they were
     /// parsed.

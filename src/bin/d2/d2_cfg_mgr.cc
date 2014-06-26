@@ -234,7 +234,8 @@ D2CfgMgr::buildParams(isc::data::ConstElementPtr params_config) {
 }
 
 isc::dhcp::ParserPtr
-D2CfgMgr::createConfigParser(const std::string& config_id) {
+D2CfgMgr::createConfigParser(const std::string& config_id,
+                             const isc::data::Element::Position& pos) {
     // Get D2 specific context.
     D2CfgContextPtr context = getD2CfgContext();
 
@@ -263,7 +264,7 @@ D2CfgMgr::createConfigParser(const std::string& config_id) {
     } else {
         isc_throw(NotImplemented,
                   "parser error: D2CfgMgr parameter not supported: "
-                  << config_id);
+                  << config_id << pos);
     }
 
     return (parser);
