@@ -52,9 +52,9 @@ assert_eq() {
 # like this:
 #    "Expected some string to contain this string: %s".
 assert_string_contains() {
-    pattern=${1}      # Substring or awk pattern
-    text=${2}         # Text to be searched for substring
-    detailed_err=${3} # Detailed error format string
+    pattern="${1}"      # Substring or awk pattern
+    text="${2}"         # Text to be searched for substring
+    detailed_err="${3}" # Detailed error format string
     # Search for a pattern
     match=$( printf "%s" "${text}" | awk /"${pattern}"/ )
     # If nothing found, present an error and exit.
@@ -96,7 +96,7 @@ test_finish() {
 # Stores the configuration specified as a parameter in the configuration
 # file which name has been set in the ${CFG_FILE} variable.
 create_config() {
-    local cfg=${1}  # Configuration string.
+    local cfg="${1}"  # Configuration string.
     if [ -z ${CFG_FILE} ]; then
         test_lib_error "create_config requires CFG_FILE variable be set"
         clean_exit 1
@@ -113,7 +113,7 @@ create_config() {
 # configuration file which name has been set in the ${KEACTRL_CFG_FILE}
 # variable.
 create_keactrl_config() {
-    local cfg=${1} # Configuration string.
+    local cfg="${1}" # Configuration string.
     if [ -z ${KEACTRL_CFG_FILE} ]; then
         test_lib_error "create_keactrl_config requires KEACTRL_CFG_FILE \
 variable be set"
@@ -158,7 +158,7 @@ get_pids() {
 # Return value:
 #   _GET_LOG_MESSAGES: number of log message occurrences.
 get_log_messages() {
-    local msg=${1}  # Message id, e.g. DHCP6_SHUTDOWN
+    local msg="${1}"  # Message id, e.g. DHCP6_SHUTDOWN
     if [ -z ${msg} ]; then
         test_lib_error "get_log_messages require message identifier"
         clean_exit 1
@@ -283,7 +283,7 @@ wait_for_kea() {
 #    _WAIT_FOR_MESSAGE: 0 if the message hasn't occured, 1 otherwise.
 wait_for_message() {
     local timeout=${1}     # Expected timeout value in seconds.
-    local message=${2}     # Expected message id.
+    local message="${2}"   # Expected message id.
     local occurrences=${3} # Number of expected occurrences.
 
     # Validate timeout
