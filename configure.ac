@@ -1443,6 +1443,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/d2/Makefile
                  src/bin/d2/spec_config.h.pre
                  src/bin/d2/tests/Makefile
+                 src/bin/d2/tests/d2_process_tests.sh
                  src/bin/d2/tests/test_data_files_config.h
                  src/bin/dhcp4/Makefile
                  src/bin/dhcp4/spec_config.h.pre
