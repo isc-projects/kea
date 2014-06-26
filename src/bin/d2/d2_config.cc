@@ -643,7 +643,8 @@ build(isc::data::ConstElementPtr server_list){
 
     // Domains must have at least one server.
     if (parsers_.size() == 0) {
-        isc_throw (D2CfgError, "Server List must contain at least one server");
+        isc_throw (D2CfgError, "Server List must contain at least one server"
+                   << " : " << server_list->getPosition());
     }
 }
 

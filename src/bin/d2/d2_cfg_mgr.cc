@@ -206,12 +206,21 @@ D2CfgMgr::buildParams(isc::data::ConstElementPtr params_config) {
     // We validate them here rather than just relying on D2Param constructor
     // so we can spit out config text position info with errors.
 
-    // Fetch and validate io_address.
+    // Fetch and validate ip_address.
     D2CfgContextPtr context = getD2CfgContext();
     isc::dhcp::StringStoragePtr strings = context->getStringStorage();
-    asiolink::IOAddress ip_address(strings->
-                                   getOptionalParam("ip_address",
-                                                    D2Params::DFT_IP_ADDRESS));
+    asiolink::IOAddress ip_address(D2Params::DFT_IP_ADDRESS);
+
+    std::string ip_address_str = strings->getOptionalParam("ip_address",
+                                                            D2Params::
+                                                            DFT_IP_ADDRESS);
+    try {
+        ip_address = asiolink::IOAddress(ip_address_str);
+    } catch (const std::exception& ex) {
+        isc_throw(D2CfgError, "IP address invalid : \""
+                  << ip_address_str << "\" : "
+                  << strings->getPosition("ip_address"));
+    }
 
     if ((ip_address.toText() == "0.0.0.0") || (ip_address.toText() == "::")) {
         isc_throw(D2CfgError, "IP address cannot be \"" << ip_address << "\" : "
