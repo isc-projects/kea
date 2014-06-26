@@ -80,7 +80,7 @@ config="{
 # Fixed part of the keactrl configuration file.
 keactrl_fixed_config="dhcp4_srv=${KEACTRL_BUILD_DIR}/src/bin/dhcp4/b10-dhcp4\n\
 dhcp6_srv=${KEACTRL_BUILD_DIR}/src/bin/dhcp6/b10-dhcp6\n\
-dhcp_ddns=${KEACTRL_BUILD_DIR}/src/bin/d2/b10-dhcp-ddns\n"
+dhcp_ddns_srv=${KEACTRL_BUILD_DIR}/src/bin/d2/b10-dhcp-ddns\n"
 
 # This test checks that DHCPv4, DHCPv6 and D2 server can be started and
 # shut down.
@@ -368,7 +368,7 @@ Expected wait_for_message return %d, returned %d."
         "Expected keactrl status command return %s"
     assert_string_contains "DHCPv6 server: inactive" "${output}" \
         "Expected keactrl status command return %s"
-    assert_string_contains "DHCP DDNS server: inactive" "${output}" \
+    assert_string_contains "DHCP DDNS: inactive" "${output}" \
         "Expected keactrl status command return %s"
 
     # Use keactrl stop to shutdown the servers.
@@ -457,7 +457,7 @@ Expected wait_for_message return %d, returned %d."
         "Expected keactrl status command return %s"
     assert_string_contains "DHCPv6 server: active" "${output}" \
         "Expected keactrl status command return %s"
-    assert_string_contains "DHCP DDNS server: inactive" "${output}" \
+    assert_string_contains "DHCP DDNS: inactive" "${output}" \
         "Expected keactrl status command return %s"
 
 
@@ -654,7 +654,7 @@ late_start_v6_server_test() {
     # Create configuration file for keactrl. This configuration enables
     # DHCPv4 server but disables DHCPv6 server.
     keactrl_config="kea_config_file=${CFG_FILE}\ndhcp4=yes\ndhcp6=no\n\
-dhcp_ddns=yes\nkea_verbose=yes\n${keactrl_fixed_config}"
+dhcp_ddns=no\nkea_verbose=yes\n${keactrl_fixed_config}"
 
     test_start "keactrl.late_start_v6_server_test"
 
@@ -815,7 +815,7 @@ stop_selected_server_test() {
     # Create configuration file for keactrl. This configuration enables
     # all servers.
     keactrl_config="kea_config_file=${CFG_FILE}\ndhcp4=yes\ndhcp6=yes\n\
-dhcp_ddns=no\nkea_verbose=no\n${keactrl_fixed_config}"
+dhcp_ddns=yes\nkea_verbose=no\n${keactrl_fixed_config}"
 
     test_start "keactrl.stop_selected_server_test"
 
@@ -920,7 +920,7 @@ Expected wait_for_message return %d, returned %d."
         "Expected %d ${kea6_name} processes running, found %d processes running"
 
     # Make sure D2 server is still running
-    get_pids ${kea6_name}
+    get_pids ${d2_name}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${d2_name} process running, found %d processes running"
 
