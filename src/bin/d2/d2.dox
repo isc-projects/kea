@@ -52,7 +52,7 @@ base are shown in the following class diagram:
 - isc::d2::DControllerBase - provides all of the services necessary to manage
 an application process class derived from isc::d2::DProcess. These services include:
     - Command line argument handling
-    - Process instantiation and initialization0
+    - Process instantiation and initialization
     - Support for stand-alone execution
     - Support for integrated operation as a BUNDY module (session management
       and event handling)
@@ -84,10 +84,6 @@ an application process class derived from isc::d2::DProcess. These services incl
 
     The file may contain an arbitrary number of other modules.
 
-    @todo DControllerBase will soon support dynamic reloading of the
-    configuration file upon receipt of the SIGHUP signal, and graceful
-    shutdown upon receipt of either SIGTERM or SIGINT.
-
     @todo Eventually, some sort of secure socket interface which supports remote
     control operations such as configuration changes or status reporting will
     likely be implemented.
@@ -117,6 +113,90 @@ through the CPL layer:
 @image html config_from_file_sequence.svg "CPL Configuration From File Sequence"
 
 The CPL classes will likely move into a common library.
+
+@subsection cplSignals CPL Signal Handling
+
+CPL supports interaction with the outside world via OS signals. The default
+implementation supports the following signal driven behavior:
+- SIGHUP receipt of this signal will cause a reloading of the configuration
+file.
+- SIGINT/SIGTERM receipt of either of these signals will initiate an
+orderly shutdown.
+
+CPL applications wait for for process asynchronous IO events through
+isc::asiolink::IOService::run() or its variants.  These calls are not
+interrupted upon signal receipt as is the select() function and while
+boost::asio provides a signal mechanism it requires linking in additional
+libraries.  Therefore, CPL provides its own signal handling mechanism to
+propagate an OS signal such as SIGHUP to an IOSerivce as a ready event with a
+callback.
+
+isc::d2::DControllerBase uses two mechanisms to carry out signal handling.  It
+uses isc::util::SignalSet to catch OS signals, and isc::d2:IOSignalQueue to
+propagate them to its isc::asiolink::IOService as instances of
+isc::d2::IOSignal.
+
+This CPL signaling class hierarchy is illustrated in the following diagram:
+
+@image html cpl_signal_classes.svg "CPL Signal Classes"
+
+The mechanics of isc::d2::IOSignal are straight forward. Upon construction it
+is given the target isc::asiolink::IOService, the value of the OS signal to
+send (e.g. SIGINT, SIGHUP...), and an isc::d2::IOSignalHandler.  This handler
+should contain the logic the caller would normally execute in its OS signal
+handler. Each isc::d2::IOSignal instance has a unique identifier called its
+sequence_id.
+
+Internally, IOSignal creates a 1 ms, one-shot timer, on the given
+IOService.  When the timer expires its event handler invokes the caller's
+IOSignalHandler passing it the sequence_id of the IOSignal.
+
+Sending IOSignals is done through an isc::d2::IOSignalQueue.  This class is
+used to create the signals, house them until they are delivered, and dequeue
+them so they can be been handled.  To generate an IOSignal when an OS signal
+arrives, the process's OS signal handler need only call
+isc::d2::IOSignalQueue::pushSignal() with the appropriate values.
+
+To dequeue the IOSignal inside the caller's IOSignalHandler, one simply
+invokes isc::d2::IOSignalQueue::popSignal() passing it the sequence_id
+parameter passed to the handler.  This method returns a pointer to
+instigating IOSignal from which the value of OS signal (i.e. SIGINT,
+SIGUSR1...) can be obtained.  Note that calling popSignal() removes the
+IOSignalPtr from the queue, which should reduce its reference count to
+zero upon exiting the handler (unless a deliberate copy of it is made).
+
+A typical isc::d2::IOSignalHandler might be structured as follows:
+@code
+
+    void processSignal(IOSignalId sequence_id) {
+    // Pop the signal instance off the queue.
+    IOSignalPtr signal = io_signal_queue_->popSignal(sequence_id);
+
+    int os_signal_value = signal->getSignum();
+    :
+    // logic based on the signal value
+    :
+    }
+
+@endcode
+
+IOSignal's handler invocation code will catch, log ,and then swallow any
+exceptions thrown by an IOSignalHandler.  This is done to protect the integrity
+IOService context.
+
+CPL integrates the use of the two mechanisms by registering the method,
+isc::d2::DControllerBase::osSignalHandler(), as the
+isc::util::SignalSet::onreceipt_handler_.  This configures SignalSet's internal
+handler to invoke the method each time a signal arrives.  When invoked, this
+method will call isc::d2::IOSignalQueue::pushSignal() to create an
+isc::d2::IOSignal, passing in the OS signal received and
+isc::d2::DControllerBase::ioSignalHandler() to use as the IOSignal's
+ready event handler
+
+The following sequence diagram depicts the initialization of signal handling
+during startup and the subsequent receipt of a SIGHUP:
+
+@image html cpl_signal_sequence.svg "CPL Signal Handling Sequence"
 
 @section d2ProcesDerivation D2's CPL Derivations
 
@@ -379,9 +459,5 @@ The following sequence chart depicts the typically sequence of events that occur
 when D2UpdateMgr creates and starts executing a transaction:
 
 @image html nc_trans_sequence.svg "Transaction Execution Sequence"
-
-
-
-
 
 */

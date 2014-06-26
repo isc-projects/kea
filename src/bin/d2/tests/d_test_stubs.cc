@@ -96,14 +96,14 @@ DStubProcess::shutdown(isc::data::ConstElementPtr /* args */) {
 }
 
 isc::data::ConstElementPtr
-DStubProcess::configure(isc::data::ConstElementPtr /*config_set*/) {
+DStubProcess::configure(isc::data::ConstElementPtr config_set) {
     if (SimFailure::shouldFailOn(SimFailure::ftProcessConfigure)) {
         // Simulates a process configure failure.
         return (isc::config::createAnswer(1,
                 "Simulated process configuration error."));
     }
 
-    return (isc::config::createAnswer(0, "Configuration accepted."));
+    return (getCfgMgr()->parseConfig(config_set));
 }
 
 isc::data::ConstElementPtr
@@ -154,7 +154,8 @@ DStubController::instance() {
 }
 
 DStubController::DStubController()
-    : DControllerBase(stub_app_name_, stub_bin_name_) {
+    : DControllerBase(stub_app_name_, stub_bin_name_),
+      processed_signals_(), record_signal_only_(false) {
 
     if (getenv("B10_FROM_BUILD")) {
         setSpecFileName(std::string(getenv("B10_FROM_BUILD")) +
@@ -213,7 +214,106 @@ const std::string DStubController::getCustomOpts() const {
     return (std::string(stub_option_x_));
 }
 
+void
+DStubController::processSignal(int signum){
+    processed_signals_.push_back(signum);
+    if (record_signal_only_) {
+        return;
+    }
+
+    DControllerBase::processSignal(signum);
+}
+
 DStubController::~DStubController() {
+}
+
+//************************** DControllerTest *************************
+
+void
+DControllerTest::writeFile(const std::string& content,
+                           const std::string& module_name) {
+    std::ofstream out(CFG_TEST_FILE, std::ios::trunc);
+    ASSERT_TRUE(out.is_open());
+
+    out << "{ \"" << (!module_name.empty() ? module_name
+                      : getController()->getAppName())
+        << "\": " << std::endl;
+
+    out << content;
+    out << " } " << std::endl;
+    out.close();
+}
+
+void
+DControllerTest::timedWriteCallback() {
+    writeFile(new_cfg_content_);
+}
+
+void
+DControllerTest::scheduleTimedWrite(const std::string& config,
+                                    int write_time_ms) {
+    new_cfg_content_ = config;
+    write_timer_.reset(new asiolink::IntervalTimer(*getIOService()));
+    write_timer_->setup(boost::bind(&DControllerTest::timedWriteCallback, this),
+                        write_time_ms, asiolink::IntervalTimer::ONE_SHOT);
+}
+
+void
+DControllerTest::runWithConfig(const std::string& config, int run_time_ms,
+                               time_duration& elapsed_time) {
+    // Create the config file.
+    writeFile(config);
+
+    // Shutdown (without error) after runtime.
+    isc::asiolink::IntervalTimer timer(*getIOService());
+    timer.setup(genShutdownCallback, run_time_ms);
+
+    // Record start time, and invoke launch().
+    // We catch and rethrow to allow testing error scenarios.
+    ptime start = microsec_clock::universal_time();
+    try  {
+        // Set up valid command line arguments
+        char* argv[] = { const_cast<char*>("progName"),
+                         const_cast<char*>("-c"),
+                         const_cast<char*>(DControllerTest::CFG_TEST_FILE),
+                         const_cast<char*>("-v") };
+        launch(4, argv);
+    } catch (...) {
+        // calculate elasped time, then rethrow it
+        elapsed_time = microsec_clock::universal_time() - start;
+        throw;
+    }
+
+    elapsed_time = microsec_clock::universal_time() - start;
+}
+
+DProcessBasePtr
+DControllerTest:: getProcess() {
+    DProcessBasePtr p;
+    if (getController()) {
+        p = getController()->getProcess();
+    }
+    return (p);
+}
+
+DCfgMgrBasePtr
+DControllerTest::getCfgMgr() {
+    DCfgMgrBasePtr p;
+    if (getProcess()) {
+        p = getProcess()->getCfgMgr();
+    }
+
+    return (p);
+}
+
+DCfgContextBasePtr
+DControllerTest::getContext() {
+    DCfgContextBasePtr p;
+    if (getCfgMgr()) {
+        p = getCfgMgr()->getContext();
+    }
+
+    return (p);
 }
 
 // Initialize controller wrapper's static instance getter member.
@@ -290,7 +390,7 @@ DStubCfgMgr::DStubCfgMgr()
 DStubCfgMgr::~DStubCfgMgr() {
 }
 
-DCfgContextBasePtr 
+DCfgContextBasePtr
 DStubCfgMgr::createNewContext() {
     return (DCfgContextBasePtr (new DStubContext()));
 }
@@ -300,7 +400,6 @@ DStubCfgMgr::createConfigParser(const std::string& element_id) {
     isc::dhcp::ParserPtr parser;
     DStubContextPtr context
         = boost::dynamic_pointer_cast<DStubContext>(getContext());
-
     if (element_id == "bool_test") {
         parser.reset(new isc::dhcp::
                          BooleanParser(element_id,

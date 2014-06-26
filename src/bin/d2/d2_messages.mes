@@ -32,14 +32,14 @@ new configuration. It is output during server startup, and when an updated
 configuration is committed by the administrator.  Additional information
 may be provided.
 
+% DCTL_CONFIG_FILE_LOAD_FAIL %1 configuration could not be loaded from file: %2
+This fatal error message indicates that the application attempted to load its
+initial configuration from file and has failed. The service will exit.
+
 % DCTL_CONFIG_LOAD_FAIL %1 configuration failed to load: %2
 This critical error message indicates that the initial application
 configuration has failed. The service will start, but will not
 process requests until the configuration has been corrected.
-
-% DCTL_CONFIG_FILE_LOAD_FAIL %1 configuration could not be loaded from file: %2
-This fatal error message indicates that the application attempted to load its
-initial configuration from file and has failed. The service will exit.
 
 % DCTL_CONFIG_START parsing new configuration: %1
 A debug message indicating that the application process has received an
@@ -128,6 +128,16 @@ mapping additions which were received and accepted by an appropriate DNS server.
 % DHCP_DDNS_AT_MAX_TRANSACTIONS application has %1 queued requests but has reached maximum number of %2 concurrent transactions
 This is a debug message that indicates that the application has DHCP_DDNS
 requests in the queue but is working as many concurrent requests as allowed.
+
+% DHCP_DDNS_CFG_FILE_RELOAD_ERROR configuration reload failed: %1, reverting to current configuration.
+This is an error message indicating that the application attempted to reload
+its configuration from file and encountered an error.  This is likely due to
+invalid content in the configuration file.  The application should continue
+to operate under its current configuration.
+
+% DHCP_DDNS_CFG_FILE_RELOAD_SIGNAL_RECVD OS signal %1 received, reloading configuration from file: %2
+This is an informational message indicating the application has received a signal
+instructing it to reload its configuration from file.
 
 % DHCP_DDNS_CLEARED_FOR_SHUTDOWN application has met shutdown criteria for shutdown type: %1
 This is an informational message issued when the application has been instructed
@@ -452,6 +462,16 @@ in event loop.
 This is informational message issued when the application has been instructed
 to shut down by the controller.
 
+% DHCP_DDNS_SHUTDOWN_SIGNAL_RECVD OS signal %1 received, starting shutdown
+This is an informational message indicating the application has received a signal
+instructing it to shutdown.
+
+% DHCP_DDNS_SIGNAL_ERROR signal handler for signal %1, threw an unexpected exception: %2
+This is an error message indicating that the application encountered an unexpected
+error after receiving a signal.  This is a programmatic error and should be
+reported.  While The application will likely continue to operating, it may be
+unable to respond correctly to signals.
+
 % DHCP_DDNS_STARTING_TRANSACTION Transaction Key: %1
 This is a debug message issued when DHCP-DDNS has begun a transaction for
 a given request.
@@ -467,6 +487,11 @@ This is error message issued when the application is able to construct an update
 message but the attempt to send it suffered a unexpected error. This is most
 likely a programmatic error, rather than a communications issue. Some or all
 of the DNS updates requested as part of this request did not succeed.
+
+% DHCP_DDNS_UNSUPPORTED_SIGNAL ignoring reception of unsupported signal: %1
+This is a debug message indicating that the application received an unsupported
+signal.  This a programmatic error indicating the application has registered to
+receive the signal, but for which no processing logic has been added.
 
 % DHCP_DDNS_UPDATE_REQUEST_SENT %1 for transaction key: %2 to server: %3
 This is a debug message issued when DHCP_DDNS sends a DNS request to a DNS

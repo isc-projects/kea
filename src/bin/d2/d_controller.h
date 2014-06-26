@@ -19,9 +19,11 @@
 #include <d2/d2_asio.h>
 #include <d2/d2_log.h>
 #include <d2/d_process.h>
+#include <d2/io_service_signal.h>
 #include <dhcpsrv/daemon.h>
 #include <exceptions/exceptions.h>
 #include <log/logger_support.h>
+#include <util/signal_set.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
@@ -78,8 +80,11 @@ typedef boost::shared_ptr<DControllerBase> DControllerBasePtr;
 /// creation.
 /// It provides the callback handlers for command and configuration events
 /// which could be triggered by an external source.  Such sources are intended
-/// to be registed with and monitored by the controller's IOService such that
+/// to be registered with and monitored by the controller's IOService such that
 /// the appropriate handler can be invoked.
+///
+/// DControllerBase provides dynamic configuration file reloading upon receipt
+/// of SIGHUP, and graceful shutdown upon receipt of either SIGINT or SIGTERM.
 ///
 /// NOTE: Derivations must supply their own static singleton instance method(s)
 /// for creating and fetching the instance. The base class declares the instance
@@ -102,8 +107,9 @@ public:
     /// 1. parse command line arguments
     /// 2. instantiate and initialize the application process
     /// 3. load the configuration file
-    /// 4. start and wait on the application process event loop
-    /// 5. exit to the caller
+    /// 4. initialize signal handling
+    /// 5. start and wait on the application process event loop
+    /// 6. exit to the caller
     ///
     /// It is intended to be called from main() and be given the command line
     /// arguments.
@@ -155,7 +161,7 @@ public:
     ///                   configuration data for this controller's application
     ///
     ///     module-config: a set of zero or more JSON elements which comprise
-    ///                    the application'ss configuration values
+    ///                    the application's configuration values
     /// @endcode
     ///
     /// The method extracts the set of configuration elements for the
@@ -279,6 +285,24 @@ protected:
         return ("");
     }
 
+    /// @brief Application-level signal processing method.
+    ///
+    /// This method is the last step in processing a OS signal occurrence.  It
+    /// is invoked when an IOSignal's internal timer callback is executed by
+    /// IOService.  It currently supports the following signals as follows:
+    /// -# SIGHUP - instigates reloading the configuration file
+    /// -# SIGINT - instigates a graceful shutdown
+    /// -# SIGTERM - instigates a graceful shutdown
+    /// If received any other signal, it will issue a debug statement and
+    /// discard it.
+    /// Derivations wishing to support additional signals could override this
+    /// method with one that: processes the signal if it is one of additional
+    /// signals, otherwise invoke this method (DControllerBase::processSignal())
+    /// with signal value.
+    /// @todo Provide a convenient way for derivations to register additional
+    /// signals.
+    virtual void processSignal(int signum);
+
     /// @brief Supplies whether or not verbose logging is enabled.
     ///
     /// @return returns true if verbose logging is enabled.
@@ -372,7 +396,7 @@ protected:
     /// to begin its shutdown process.
     ///
     /// Note, it is assumed that the process of shutting down is neither
-    /// instanteneous nor synchronous.  This method does not "block" waiting
+    /// instantaneous nor synchronous.  This method does not "block" waiting
     /// until the process has halted.  Rather it is used to convey the
     /// need to shutdown.  A successful return indicates that the shutdown
     /// has successfully commenced, but does not indicate that the process
@@ -381,11 +405,48 @@ protected:
     /// @return returns an Element that contains the results of shutdown
     /// command composed of an integer status value (0 means successful,
     /// non-zero means failure), and a string explanation of the outcome.
+    ///
+    /// @param args is a set of derivation-specific arguments (if any)
+    /// for the shutdown command.
     isc::data::ConstElementPtr shutdownProcess(isc::data::ConstElementPtr args);
+
+    /// @brief Initializes signal handling
+    ///
+    /// This method configures the controller to catch and handle signals.
+    /// It instantiates an IOSignalQueue, registers @c osSignalHandler() as
+    /// the SignalSet "on-receipt" handler, and lastly instantiates a SignalSet
+    /// which listens for SIGHUP, SIGINT, and SIGTERM.
+    void initSignalHandling();
+
+    /// @brief Handler for processing OS-level signals
+    ///
+    /// This method is installed as the SignalSet "on-receipt" handler. Upon
+    /// invocation, it uses the controller's IOSignalQueue to schedule an
+    /// IOSignal with for the given signal value.
+    ///
+    /// @param signum OS signal value (e.g. SIGINT, SIGUSR1 ...) to received
+    ///
+    /// @return SignalSet "on-receipt" handlers are required to return a
+    /// boolean indicating if the OS signal has been processed (true) or if it
+    /// should be saved for deferred processing (false).  Currently this
+    /// method processes all received signals, so it always returns true.
+    bool osSignalHandler(int signum);
+
+    /// @brief Handler for processing IOSignals
+    ///
+    /// This method is supplied as the callback when IOSignals are scheduled.
+    /// It fetches the IOSignal for the given sequence_id and then invokes
+    /// the virtual method, @c processSignal() passing it the signal value
+    /// obtained from the IOSignal.  This allows derivations to supply a
+    /// custom signal processing method, while ensuring IOSignalQueue
+    /// integrity.
+    ///
+    /// @param sequence_id id of the IOSignal instance "received"
+    void ioSignalHandler(IOSignalId sequence_id);
 
     /// @brief Fetches the current process
     ///
-    /// @return the a pointer to the current process instance.
+    /// @return a pointer to the current process instance.
     DProcessBasePtr getProcess() {
         return (process_);
     }
@@ -403,7 +464,7 @@ private:
     std::string app_name_;
 
     /// @brief Name of the service executable.
-    /// By convention this matches the executable nam. It is also used to
+    /// By convention this matches the executable name. It is also used to
     /// establish the logger name.
     std::string bin_name_;
 
@@ -421,6 +482,12 @@ private:
 
     /// @brief Shared pointer to an IOService object, used for ASIO operations.
     IOServicePtr io_service_;
+
+    /// @brief Set of registered signals to handle.
+    util::SignalSetPtr signal_set_;
+
+    /// @brief Queue for propagating caught signals to the IOService.
+    IOSignalQueuePtr io_signal_queue_;
 
     /// @brief Singleton instance value.
     static DControllerBasePtr controller_;

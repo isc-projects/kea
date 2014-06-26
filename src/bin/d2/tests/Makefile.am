@@ -1,7 +1,20 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
 
 PYTESTS = d2_test.py
+SHTESTS =
+# The test of dynamic reconfiguration based on signals will work only
+# if we are using file based configuration approach.
+if CONFIG_BACKEND_JSON
+SHTESTS += d2_reconfigure_test.sh
+SHTESTS += d2_sigterm_test.sh
+SHTESTS += d2_sigint_test.sh
+endif
+
 EXTRA_DIST = $(PYTESTS)
+EXTRA_DIST += d2_reconfigure_test.sh
+EXTRA_DIST += d2_sigterm_test.sh
+EXTRA_DIST += d2_sigint_test.sh
+EXTRA_DIST += d2_shutdown_test.sh
 
 # Explicitly specify paths to dynamic libraries required by loadable python
 # modules. That is required on Mac OS systems. Otherwise we will get exception
@@ -19,6 +32,12 @@ check-local:
 	B10_LOCKFILE_DIR_FROM_BUILD=$(abs_top_builddir) \
 	$(LIBRARY_PATH_PLACEHOLDER) \
 		$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
+	done
+
+	for shtest in $(SHTESTS) ; do \
+	echo Running test: $$shtest ; \
+	export B10_LOCKFILE_DIR_FROM_BUILD=$(abs_top_builddir); \
+	$(abs_srcdir)/$$shtest || exit ; \
 	done
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
@@ -64,6 +83,7 @@ d2_unittests_SOURCES += ../d2_update_message.cc ../d2_update_message.h
 d2_unittests_SOURCES += ../d2_update_mgr.cc ../d2_update_mgr.h
 d2_unittests_SOURCES += ../d2_zone.cc ../d2_zone.h
 d2_unittests_SOURCES += ../dns_client.cc ../dns_client.h
+d2_unittests_SOURCES += ../io_service_signal.cc ../io_service_signal.h
 d2_unittests_SOURCES += ../labeled_value.cc ../labeled_value.h
 d2_unittests_SOURCES += ../nc_add.cc ../nc_add.h
 d2_unittests_SOURCES += ../nc_remove.cc ../nc_remove.h
@@ -79,6 +99,7 @@ d2_unittests_SOURCES += d2_update_message_unittests.cc
 d2_unittests_SOURCES += d2_update_mgr_unittests.cc
 d2_unittests_SOURCES += d2_zone_unittests.cc
 d2_unittests_SOURCES += dns_client_unittests.cc
+d2_unittests_SOURCES += io_service_signal_unittests.cc
 d2_unittests_SOURCES += labeled_value_unittests.cc
 d2_unittests_SOURCES += nc_add_unittests.cc
 d2_unittests_SOURCES += nc_remove_unittests.cc
