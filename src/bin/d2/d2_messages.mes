@@ -32,7 +32,7 @@ new configuration. It is output during server startup, and when an updated
 configuration is committed by the administrator.  Additional information
 may be provided.
 
-% DCTL_CONFIG_FILE_LOAD_FAIL %1 configuration could not be loaded from file: %2
+% DCTL_CONFIG_FILE_LOAD_FAIL %1 : %2
 This fatal error message indicates that the application attempted to load its
 initial configuration from file and has failed. The service will exit.
 
@@ -72,22 +72,11 @@ application and will exit.
 A warning message is issued when an attempt is made to shut down the
 application when it is not running.
 
-% DCTL_ORDER_ERROR configuration contains more elements than the parsing order
-An error message which indicates that configuration being parsed includes
-element ids not specified the configuration manager's parse order list. This
-is a programmatic error.
-
-% DCTL_ORDER_NO_ELEMENT element: %1 is in the parsing order but is missing from the configuration
-An error message output during a configuration update.  The program is
-expecting an item but has not found it in the new configuration.  This may
-mean that the BIND 10 configuration database is corrupt.
-
-% DCTL_PARSER_FAIL configuration parsing failed for configuration element: %1, reason: %2
-On receipt of message containing details to a change of its configuration,
-the server failed to create a parser to decode the contents of the named
-configuration element, or the creation succeeded but the parsing actions
-and committal of changes failed.  The reason for the failure is given in
-the message.
+% DCTL_PARSER_FAIL %1
+On receipt of a new configuration, the server failed to create a parser to
+decode the contents of the named configuration element, or the creation
+succeeded but the parsing actions and committal of changes failed.
+The reason for the failure is given in the message.
 
 % DCTL_PROCESS_FAILED %1 application execution failed: %2
 The controller has encountered a fatal error while running the
