@@ -773,8 +773,31 @@ TEST_F(DnsServerInfoTest, invalidEntry) {
 /// 2. A DnsServerInfo entry is correctly made, when given ip address and port.
 /// 3. A DnsServerInfo entry is correctly made, when given only an ip address.
 TEST_F(DnsServerInfoTest, validEntry) {
-    // Valid entries for dynamic host
-    std::string config = "{ \"hostname\": \"pegasus.tmark\" }";
+    /// @todo When resolvable hostname is supported you'll need this test.
+    /// // Valid entries for dynamic host
+    /// std::string config = "{ \"hostname\": \"pegasus.tmark\" }";
+    /// ASSERT_TRUE(fromJSON(config));
+
+    /// // Verify that it builds and commits without throwing.
+    /// ASSERT_NO_THROW(parser_->build(config_set_));
+    /// ASSERT_NO_THROW(parser_->commit());
+
+    /// //Verify the correct number of servers are present
+    /// int count =  servers_->size();
+    /// EXPECT_EQ(1, count);
+
+    /// Verify the server exists and has the correct values.
+    /// DnsServerInfoPtr server = (*servers_)[0];
+    /// EXPECT_TRUE(checkServer(server, "pegasus.tmark",
+    ///                         DnsServerInfo::EMPTY_IP_STR,
+    ///                         DnsServerInfo::STANDARD_DNS_PORT));
+
+    /// // Start over for a new test.
+    /// reset();
+
+    // Valid entries for static ip
+    std::string config = " { \"ip_address\": \"127.0.0.1\" , "
+                         "  \"port\": 100 }";
     ASSERT_TRUE(fromJSON(config));
 
     // Verify that it builds and commits without throwing.
@@ -787,28 +810,6 @@ TEST_F(DnsServerInfoTest, validEntry) {
 
     // Verify the server exists and has the correct values.
     DnsServerInfoPtr server = (*servers_)[0];
-    EXPECT_TRUE(checkServer(server, "pegasus.tmark",
-                            DnsServerInfo::EMPTY_IP_STR,
-                            DnsServerInfo::STANDARD_DNS_PORT));
-
-    // Start over for a new test.
-    reset();
-
-    // Valid entries for static ip
-    config = " { \"ip_address\": \"127.0.0.1\" , "
-             "  \"port\": 100 }";
-    ASSERT_TRUE(fromJSON(config));
-
-    // Verify that it builds and commits without throwing.
-    ASSERT_NO_THROW(parser_->build(config_set_));
-    ASSERT_NO_THROW(parser_->commit());
-
-    // Verify the correct number of servers are present
-    count =  servers_->size();
-    EXPECT_EQ(1, count);
-
-    // Verify the server exists and has the correct values.
-    server = (*servers_)[0];
     EXPECT_TRUE(checkServer(server, "", "127.0.0.1", 100));
 
     // Start over for a new test.
@@ -836,9 +837,9 @@ TEST_F(DnsServerInfoTest, validEntry) {
 /// entries is detected.
 TEST_F(ConfigParseTest, invalidServerList) {
     // Construct a list of servers with an invalid server entry.
-    std::string config = "[ { \"hostname\": \"one.tmark\" }, "
-                        "{ \"hostname\": \"\" }, "
-                        "{ \"hostname\": \"three.tmark\" } ]";
+    std::string config = "[ { \"ip_address\": \"127.0.0.1\" }, "
+                        "{ \"ip_address\": \"\" }, "
+                        "{ \"ip_address\": \"127.0.0.2\" } ]";
     ASSERT_TRUE(fromJSON(config));
 
     // Create the server storage and list parser.
@@ -854,9 +855,9 @@ TEST_F(ConfigParseTest, invalidServerList) {
 /// a valid configuration.
 TEST_F(ConfigParseTest, validServerList) {
     // Create a valid list of servers.
-    std::string config = "[ { \"hostname\": \"one.tmark\" }, "
-                        "{ \"hostname\": \"two.tmark\" }, "
-                        "{ \"hostname\": \"three.tmark\" } ]";
+    std::string config = "[ { \"ip_address\": \"127.0.0.1\" }, "
+                        "{ \"ip_address\": \"127.0.0.2\" }, "
+                        "{ \"ip_address\": \"127.0.0.3\" } ]";
     ASSERT_TRUE(fromJSON(config));
 
     // Create the server storage and list parser.
@@ -874,17 +875,17 @@ TEST_F(ConfigParseTest, validServerList) {
 
     // Verify the first server exists and has the correct values.
     DnsServerInfoPtr server = (*servers)[0];
-    EXPECT_TRUE(checkServer(server, "one.tmark", DnsServerInfo::EMPTY_IP_STR,
+    EXPECT_TRUE(checkServer(server, "", "127.0.0.1",
                             DnsServerInfo::STANDARD_DNS_PORT));
 
     // Verify the second server exists and has the correct values.
     server = (*servers)[1];
-    EXPECT_TRUE(checkServer(server, "two.tmark", DnsServerInfo::EMPTY_IP_STR,
+    EXPECT_TRUE(checkServer(server, "", "127.0.0.2",
                             DnsServerInfo::STANDARD_DNS_PORT));
 
     // Verify the third server exists and has the correct values.
     server = (*servers)[2];
-    EXPECT_TRUE(checkServer(server, "three.tmark", DnsServerInfo::EMPTY_IP_STR,
+    EXPECT_TRUE(checkServer(server, "", "127.0.0.3",
                             DnsServerInfo::STANDARD_DNS_PORT));
 }
 
@@ -1204,17 +1205,17 @@ TEST_F(D2CfgMgrTest, fullConfig) {
                         "{ \"name\": \"tmark.org\" , "
                         "  \"key_name\": \"d2_key.tmark.org\" , "
                         "  \"dns_servers\" : [ "
-                        "  { \"hostname\": \"one.tmark\" } , "
-                        "  { \"hostname\": \"two.tmark\" } , "
-                        "  { \"hostname\": \"three.tmark\"} "
+                        "  { \"ip_address\": \"127.0.0.1\" } , "
+                        "  { \"ip_address\": \"127.0.0.2\" } , "
+                        "  { \"ip_address\": \"127.0.0.3\"} "
                         "  ] } "
                         ", "
                         "{ \"name\": \"billcat.net\" , "
                         "  \"key_name\": \"d2_key.billcat.net\" , "
                         "  \"dns_servers\" : [ "
-                        "  { \"hostname\": \"four.billcat\" } , "
-                        "  { \"hostname\": \"five.billcat\" } , "
-                        "  { \"hostname\": \"six.billcat\" } "
+                        "  { \"ip_address\": \"127.0.0.4\" } , "
+                        "  { \"ip_address\": \"127.0.0.5\" } , "
+                        "  { \"ip_address\": \"127.0.0.6\" } "
                         "  ] } "
                         "] },"
                         "\"reverse_ddns\" : {"
@@ -1222,17 +1223,17 @@ TEST_F(D2CfgMgrTest, fullConfig) {
                         "{ \"name\": \" 0.168.192.in.addr.arpa.\" , "
                         "  \"key_name\": \"d2_key.tmark.org\" , "
                         "  \"dns_servers\" : [ "
-                        "  { \"hostname\": \"one.rev\" } , "
-                        "  { \"hostname\": \"two.rev\" } , "
-                        "  { \"hostname\": \"three.rev\" } "
+                        "  { \"ip_address\": \"127.0.1.1\" } , "
+                        "  { \"ip_address\": \"127.0.2.1\" } , "
+                        "  { \"ip_address\": \"127.0.3.1\" } "
                         "  ] } "
                         ", "
                         "{ \"name\": \" 0.247.106.in.addr.arpa.\" , "
                         "  \"key_name\": \"d2_key.billcat.net\" , "
                         "  \"dns_servers\" : [ "
-                        "  { \"hostname\": \"four.rev\" }, "
-                        "  { \"hostname\": \"five.rev\" } , "
-                        "  { \"hostname\": \"six.rev\" } "
+                        "  { \"ip_address\": \"127.0.4.1\" }, "
+                        "  { \"ip_address\": \"127.0.5.1\" } , "
+                        "  { \"ip_address\": \"127.0.6.1\" } "
                         "  ] } "
                         "] } }";
 
@@ -1341,7 +1342,7 @@ TEST_F(D2CfgMgrTest, forwardMatch) {
                         ", "
                         "{ \"name\": \"*\" , "
                         "  \"dns_servers\" : [ "
-                        "  { \"hostname\": \"global.net\" } "
+                        "  { \"ip_address\": \"127.0.0.3\" } "
                         "  ] } "
                         "] }, "
                         "\"reverse_ddns\" : {} "
