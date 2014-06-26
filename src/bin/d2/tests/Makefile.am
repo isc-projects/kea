@@ -12,6 +12,7 @@ noinst_SCRIPTS = d2_process_tests.sh
 
 EXTRA_DIST  = $(PYTESTS)
 EXTRA_DIST += d2_process_tests.sh.in
+EXTRA_DIST += testdata/d2_cfg_tests.json
 
 # Explicitly specify paths to dynamic libraries required by loadable python
 # modules. That is required on Mac OS systems. Otherwise we will get exception
