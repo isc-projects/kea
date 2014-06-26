@@ -524,7 +524,7 @@ DnsServerInfoParser::build(isc::data::ConstElementPtr server_config) {
     std::vector<isc::data::Element::Position> pos;
 
     // Fetch the server configuration's parsed scalar values from parser's
-    // local storage.
+    // local storage.  They're all optional, so no try-catch here.
     pos.push_back(local_scalars_.getParam("hostname", hostname,
                                           DCfgContextBase::OPTIONAL));
     pos.push_back(local_scalars_.getParam("ip_address", ip_address,
@@ -681,7 +681,8 @@ DdnsDomainParser::build(isc::data::ConstElementPtr domain_config) {
     // data to the parser's local storage.
     isc::dhcp::ConfigPair config_pair;
     BOOST_FOREACH(config_pair, domain_config->mapValue()) {
-        isc::dhcp::ParserPtr parser(createConfigParser(config_pair.first));
+        isc::dhcp::ParserPtr parser(createConfigParser(config_pair.first,
+                                    config_pair.second->getPosition()));
         parser->build(config_pair.second);
         parser->commit();
     }
@@ -689,13 +690,23 @@ DdnsDomainParser::build(isc::data::ConstElementPtr domain_config) {
     // Now construct the domain.
     std::string name;
     std::string key_name;
+    std::vector<isc::data::Element::Position> pos;
 
-    // Domain name is not optional. The get will throw if its not there.
-    local_scalars_.getParam("name", name);
+    // Fetch the parsed scalar values from parser's local storage.
+    // Any required that are missing will throw.
+    try {
+        pos.push_back(local_scalars_.getParam("name", name));
+        pos.push_back(local_scalars_.getParam("key_name", key_name,
+                                              DCfgContextBase::OPTIONAL));
+    } catch (const std::exception& ex) {
+        isc_throw(D2CfgError, "DdnsDomain incomplete : " << ex.what()
+                  << " : " << domain_config->getPosition());
+    }
 
     // Blank domain names are not allowed.
     if (name.empty()) {
-        isc_throw(D2CfgError, "Domain name cannot be blank");
+        isc_throw(D2CfgError, "DndsDomain : name cannot be blank : "
+                   << pos[0]);
     }
 
     // Currently, the premise is that domain storage is always empty
@@ -703,13 +714,13 @@ DdnsDomainParser::build(isc::data::ConstElementPtr domain_config) {
     // Duplicates are not allowed and should be flagged as a configuration
     // error.
     if (domains_->find(name) != domains_->end()) {
-        isc_throw(D2CfgError, "Duplicate domain specified:" << name);
+        isc_throw(D2CfgError, "Duplicate domain specified:" << name
+                  << " : " << pos[0]);
     }
 
     // Key name is optional. If it is not blank, then find the key in the
     /// list of defined keys.
     TSIGKeyInfoPtr tsig_key_info;
-    local_scalars_.getParam("key_name", key_name, DCfgContextBase::OPTIONAL);
     if (!key_name.empty()) {
         if (keys_) {
             TSIGKeyInfoMap::iterator kit = keys_->find(key_name);
@@ -719,8 +730,9 @@ DdnsDomainParser::build(isc::data::ConstElementPtr domain_config) {
         }
 
         if (!tsig_key_info) {
-            isc_throw(D2CfgError, "DdnsDomain " << name <<
-                     " specifies an undefined key: " << key_name);
+            isc_throw(D2CfgError, "DdnsDomain : " << name
+                      << " specifies an undefined key: " << key_name
+                      << " : " << pos[1]);
         }
     }
 
@@ -732,7 +744,8 @@ DdnsDomainParser::build(isc::data::ConstElementPtr domain_config) {
 }
 
 isc::dhcp::ParserPtr
-DdnsDomainParser::createConfigParser(const std::string& config_id) {
+DdnsDomainParser::createConfigParser(const std::string& config_id,
+                                     const isc::data::Element::Position& pos) {
     DhcpConfigParser* parser = NULL;
     // Based on the configuration id of the element, create the appropriate
     // parser. Scalars are set to use the parser's local scalar storage.
@@ -748,7 +761,7 @@ DdnsDomainParser::createConfigParser(const std::string& config_id) {
     } else {
        isc_throw(NotImplemented,
                 "parser error: DdnsDomain parameter not supported: "
-                << config_id);
+                << config_id << " : " << pos);
     }
 
     // Return the new domain parser instance.

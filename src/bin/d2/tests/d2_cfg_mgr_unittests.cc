@@ -914,7 +914,7 @@ TEST_F(DdnsDomainTest, invalidDdnsDomainEntry) {
     ASSERT_TRUE(fromJSON(config));
 
     // Verify that the domain configuration builds fails.
-    EXPECT_THROW(parser_->build(config_set_), isc::dhcp::DhcpConfigError);
+    EXPECT_THROW(parser_->build(config_set_), D2CfgError);
 
     // Create a domain configuration with an empty server list.
     config = "{ \"name\": \"tmark.org\" , "

@@ -1005,10 +1005,16 @@ public:
     ///
     /// @param config_id is the "item_name" for a specific member element of
     /// the "ddns_domain" specification.
+    /// @param pos position within the configuration text (or file) of element
+    /// to be parsed.  This is passed for error messaging.
     ///
     /// @return returns a pointer to newly created parser.
-    virtual isc::dhcp::ParserPtr createConfigParser(const std::string&
-                                                    config_id);
+    ///
+    /// @throw D2CfgError if configuration contains an unknown parameter
+    virtual isc::dhcp::ParserPtr
+    createConfigParser(const std::string& config_id,
+                       const isc::data::Element::Position& pos =
+                       isc::data::Element::ZERO_POSITION());
 
     /// @brief Commits the configured DdnsDomain
     /// Currently this method is a NOP, as the domain instance is created and
