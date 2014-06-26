@@ -206,9 +206,10 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
                     objects_map.erase(it);
                 }
                 else {
-                    isc_throw(DCfgMgrBaseError, "Element:" << element_id <<
-                              " is listed in the parse order but is not "
-                              " present in the configuration");
+                    isc_throw(DCfgMgrBaseError,
+                               "Element required by parsing order is missing: "
+                               << element_id << " : "
+                               << config_set->getPosition());
                 }
             }
 
