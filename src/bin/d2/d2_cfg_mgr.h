@@ -245,7 +245,18 @@ protected:
     /// parameter's id and then invoking its build method passing in the
     /// parameter's configuration value.
     ///
+    /// It then fetches the parameters, validating their values and if
+    /// valid instantiates a D2Params instance.  Invalid values result in
+    /// a throw.
+    ///
     /// @param params_config set of scalar configuration elements to parse
+    ///
+    /// @throw D2CfgError if any of the following are true:
+    /// -# ip_address is 0.0.0.0 or ::
+    /// -# port is 0
+    /// -# dns_server_timeout is < 1
+    /// -# ncr_protocol is invalid, currently only NCR_UDP is supported
+    /// -# ncr_format is invalid, currently only FMT_JSON is supported
     virtual void buildParams(isc::data::ConstElementPtr params_config);
 
     /// @brief Given an element_id returns an instance of the appropriate
