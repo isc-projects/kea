@@ -851,6 +851,33 @@
 
 #-----
 ,{
+"description" : "D2.forward_ddns.dhcp_ddns.dns_servers.ip_address invalid address ",
+"should_fail" : true,
+"data" :
+    {
+    "forward_ddns" :
+    {
+        "ddns_domains" :
+        [
+            {
+            "name" : "four.example.com.",
+            "dns_servers" :
+                [
+                    {
+                    "ip_address" : "bogus"
+                    }
+                ]
+            }
+        ]
+    },
+    "reverse_ddns" : {},
+    "tsig_keys" : []
+    }
+}
+
+
+#-----
+,{
 "description" : "D2.forward_ddns.dhcp_ddns.dns_servers.port valid value ",
 "data" :
     {
@@ -1215,6 +1242,32 @@
     "tsig_keys" : []
     }
 }
+#-----
+,{
+"description" : "D2.reverse_ddns.dhcp_ddns.dns_servers.ip_address invalid value",
+"should_fail" : true,
+"data" :
+    {
+    "forward_ddns" : {},
+    "reverse_ddns" :
+    {
+        "ddns_domains" :
+        [
+            {
+            "name" : "2.0.192.in-addr.arpa.",
+            "dns_servers" :
+                [
+                    {
+                    "ip_address" : "bogus"
+                    }
+                ]
+            }
+        ]
+    },
+    "tsig_keys" : []
+    }
+}
+
 
 #-----
 ,{
