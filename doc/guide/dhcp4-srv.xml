@@ -1732,7 +1732,9 @@ temporarily override a list of interface names and listen on all interfaces.
       <para>These are the current limitations of the DHCPv4 server
       software. Most of them are reflections of the current stage of
       development and should be treated as <quote>not implemented
-      yet</quote>, rather than actual limitations.</para>
+      yet</quote>, rather than actual limitations. However, some of them
+      are implications of the design choices made. Those are clearly
+      marked as such.</para>
       <itemizedlist>
           <listitem> <!-- see tickets #3234, #3281 -->
             <simpara>
@@ -1750,7 +1752,7 @@ temporarily override a list of interface names and listen on all interfaces.
           <listitem>
             <simpara>
               BOOTP (<ulink url="http://tools.ietf.org/html/rfc951">RFC 951</ulink>)
-              is not supported.
+              is not supported. This is a design choice. BOOTP support is not planned.
             </simpara>
           </listitem>
           <listitem>
@@ -1770,7 +1772,8 @@ temporarily override a list of interface names and listen on all interfaces.
             <simpara>
               The server doesn't act upon expired leases. In particular,
               when a lease expires, the server doesn't request the removal
-              of the DNS records associated with it.
+              of the DNS records associated with it. Expired leases can be
+              recycled.
             </simpara>
           </listitem>
       </itemizedlist>
