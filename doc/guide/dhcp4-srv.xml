@@ -81,7 +81,9 @@
 
 # Next we specify the type of lease database
     "lease-database": {
-        "type": "memfile"
+        "type": "memfile",
+        "persist": true,
+        "name": "/var/kea/dhcp4.leases"
     },
 
 # Finally, we list the subnets from which we will be leasing addresses.
