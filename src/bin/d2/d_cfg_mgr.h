@@ -80,9 +80,14 @@ public:
     /// will not throw if the parameter is not found in the context. The
     /// contents of the output parameter, value, will not be altered.
     /// It defaults to false if not specified.
+    ///
+    /// @return The parameter's element's position information if found,
+    /// otherwise it returns isc::data::Element::ZERO_POSITION().
+    ///
     /// @throw throws DhcpConfigError if the context does not contain the
     /// parameter and optional is false.
-    void getParam(const std::string& name, bool& value, bool optional=false);
+    const data::Element::Position&
+    getParam(const std::string& name, bool& value, bool optional=false);
 
     /// @brief Fetches the value for a given uint32_t configuration parameter
     /// from the context.
@@ -93,9 +98,14 @@ public:
     /// @param optional if true, the parameter is optional and the method
     /// will not throw if the parameter is not found in the context. The
     /// contents of the output parameter, value, will not be altered.
+    ///
+    /// @return The parameter's element's position information if found,
+    /// otherwise it returns isc::data::Element::ZERO_POSITION().
+    ///
     /// @throw throws DhcpConfigError if the context does not contain the
     /// parameter and optional is false.
-    void getParam(const std::string& name, uint32_t& value,
+    const data::Element::Position&
+    getParam(const std::string& name, uint32_t& value,
                  bool optional=false);
 
     /// @brief Fetches the value for a given string configuration parameter
@@ -107,9 +117,14 @@ public:
     /// @param optional if true, the parameter is optional and the method
     /// will not throw if the parameter is not found in the context. The
     /// contents of the output parameter, value, will not be altered.
+    ///
+    /// @return The parameter's element's position information if found,
+    /// otherwise it returns isc::data::Element::ZERO_POSITION().
+    ///
     /// @throw throws DhcpConfigError if the context does not contain the
     /// parameter and optional is false.
-    void getParam(const std::string& name, std::string& value,
+    const data::Element::Position&
+    getParam(const std::string& name, std::string& value,
                   bool optional=false);
 
     /// @brief Fetches the Boolean Storage. Typically used for passing

@@ -356,36 +356,59 @@ TSIGKeyInfoParser::build(isc::data::ConstElementPtr key_config) {
     std::string name;
     std::string algorithm;
     std::string secret;
+    std::vector<isc::data::Element::Position> pos;
 
-    // Fetch the key configuration's parsed scalar values from parser's
-    // local storage.
-    local_scalars_.getParam("name", name);
-    local_scalars_.getParam("algorithm", algorithm);
-    local_scalars_.getParam("secret", secret);
+    // Fetch the key's parsed scalar values from parser's local storage.
+    // All are required, if any are missing we'll throw.
+    try {
+        pos.push_back(local_scalars_.getParam("name", name));
+        pos.push_back(local_scalars_.getParam("algorithm", algorithm));
+        pos.push_back(local_scalars_.getParam("secret", secret));
+    } catch (const std::exception& ex) {
+        isc_throw(D2CfgError, "TSIG Key incomplete : " << ex.what()
+                  << " : " << key_config->getPosition());
+    }
 
     // Name cannot be blank.
     if (name.empty()) {
-        isc_throw(D2CfgError, "TSIG Key Info must specify name");
-    }
-
-    // Algorithm cannot be blank.
-    if (algorithm.empty()) {
-        isc_throw(D2CfgError, "TSIG Key Info must specify algorithm");
-    }
-
-    // Secret cannot be blank.
-    if (secret.empty()) {
-        isc_throw(D2CfgError, "TSIG Key Info must specify secret");
+        isc_throw(D2CfgError, "TSIG key must specify name : " << pos[0]);
     }
 
     // Currently, the premise is that key storage is always empty prior to
     // parsing so we are always adding keys never replacing them. Duplicates
     // are not allowed and should be flagged as a configuration error.
     if (keys_->find(name) != keys_->end()) {
-        isc_throw(D2CfgError, "Duplicate TSIG key specified:" << name);
+        isc_throw(D2CfgError, "Duplicate TSIG key name specified : " << name
+                              << " : " << pos[0]);
     }
 
-    TSIGKeyInfoPtr key_info(new TSIGKeyInfo(name, algorithm, secret));
+    // Algorithm must be valid.
+    try {
+        TSIGKeyInfo::stringToAlgorithmName(algorithm);
+    } catch (const std::exception& ex) {
+        isc_throw(D2CfgError, "TSIG key invalid algorithm : "
+                  << algorithm << " : " << pos[1]);
+    }
+
+    // Secret cannot be blank.
+    // Cryptolink lib doesn't offer anyway to validate these. As long as it
+    // isn't blank we'll accept it.  If the content is bad, the call to in
+    // TSIGKeyInfo::remakeKey() made in the TSIGKeyInfo ctor will throw.
+    // We'll deal with that below.
+    if (secret.empty()) {
+        isc_throw(D2CfgError, "TSIG key must specify secret : " << pos[2]);
+    }
+
+    // Everything should be valid, so create the key instance.
+    // It is possible for the asiodns::dns::TSIGKey create to fail such as
+    // with an invalid secret content.
+    TSIGKeyInfoPtr key_info;
+    try {
+        key_info.reset(new TSIGKeyInfo(name, algorithm, secret));
+    } catch (const std::exception& ex) {
+        isc_throw(D2CfgError, ex.what() << " : " << key_config->getPosition());
+
+    }
 
     // Add the new TSIGKeyInfo to the key storage.
     (*keys_)[name]=key_info;
