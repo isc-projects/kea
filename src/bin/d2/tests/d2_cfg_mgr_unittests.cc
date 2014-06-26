@@ -83,6 +83,12 @@ public:
         return (config.str());
     }
 
+    /// @brief Enumeration to select between expected configuration outcomes
+    enum RunConfigMode {
+       SHOULD_PASS,
+       SHOULD_FAIL
+    };
+
     /// @brief Parses a configuration string and tests against a given outcome
     ///
     /// Convenience method which accepts JSON text and an expected pass or fail
@@ -93,15 +99,16 @@ public:
     /// the D2Params pointer with the newly parsed instance.
     ///
     /// @param config_str the JSON configuration text to parse
-    /// @param should_fail boolean indicator if the parsing should fail or not.
-    /// It defaults to false.
-    void runConfig(std::string config_str, bool should_fail=false) {
+    /// @param mode indicator if the parsing should fail or not.  It defaults
+    /// defaults to SHOULD_PASS.
+    ///
+    void runConfig(std::string config_str, RunConfigMode mode=SHOULD_PASS) {
         // We assume the config string is valid JSON.
         ASSERT_TRUE(fromJSON(config_str));
 
         // Parse the configuration and verify we got the expected outcome.
         answer_ = cfg_mgr_->parseConfig(config_set_);
-        ASSERT_TRUE(checkAnswer(should_fail));
+        ASSERT_TRUE(checkAnswer(mode == SHOULD_FAIL));
 
         // Verify that the D2 context can be retrieved and is not null.
         D2CfgContextPtr context;
@@ -397,6 +404,44 @@ TEST_F(D2CfgMgrTest, defaultValues) {
               d2_params_->getNcrFormat());
 }
 
+/// @brief Tests the unsupported scalar parameters and objects are detected.
+TEST_F(D2CfgMgrTest, unsupportedTopLevelItems) {
+    // Check that an unsupported top level parameter fails.
+    std::string config =
+            "{"
+            " \"ip_address\": \"127.0.0.1\", "
+            " \"port\": 777 , "
+            " \"dns_server_timeout\": 333 , "
+            " \"ncr_protocol\": \"UDP\" , "
+            " \"ncr_format\": \"JSON\", "
+            "\"tsig_keys\": [], "
+            "\"forward_ddns\" : {}, "
+            "\"reverse_ddns\" : {}, "
+            "\"bogus_param\" : true "
+            "}";
+
+    runConfig(config, SHOULD_FAIL);
+
+    // Check that unsupported top level objects fails.  For
+    // D2 these fail as they are not in the parse order.
+    config =
+            "{"
+            " \"ip_address\": \"127.0.0.1\", "
+            " \"port\": 777 , "
+            " \"dns_server_timeout\": 333 , "
+            " \"ncr_protocol\": \"UDP\" , "
+            " \"ncr_format\": \"JSON\", "
+            "\"tsig_keys\": [], "
+            "\"bogus_object_one\" : {}, "
+            "\"forward_ddns\" : {}, "
+            "\"reverse_ddns\" : {}, "
+            "\"bogus_object_two\" : {} "
+            "}";
+
+    runConfig(config, SHOULD_FAIL);
+}
+
+
 /// @brief Tests the enforcement of data validation when parsing D2Params.
 /// It verifies that:
 /// -# ip_address cannot be "0.0.0.0"
@@ -409,27 +454,27 @@ TEST_F(D2CfgMgrTest, invalidEntry) {
     // Cannot use IPv4 ANY address
     std::string config = makeParamsConfigString ("0.0.0.0", 777, 333,
                                            "UDP", "JSON");
-    runConfig(config, 1);
+    runConfig(config, SHOULD_FAIL);
 
     // Cannot use IPv6 ANY address
     config = makeParamsConfigString ("::", 777, 333, "UDP", "JSON");
-    runConfig(config, 1);
+    runConfig(config, SHOULD_FAIL);
 
     // Cannot use port  0
     config = makeParamsConfigString ("127.0.0.1", 0, 333, "UDP", "JSON");
-    runConfig(config, 1);
+    runConfig(config, SHOULD_FAIL);
 
     // Cannot use dns server timeout of 0
     config = makeParamsConfigString ("127.0.0.1", 777, 0, "UDP", "JSON");
-    runConfig(config, 1);
+    runConfig(config, SHOULD_FAIL);
 
     // Invalid protocol
     config = makeParamsConfigString ("127.0.0.1", 777, 333, "BOGUS", "JSON");
-    runConfig(config, 1);
+    runConfig(config, SHOULD_FAIL);
 
     // Invalid format
     config = makeParamsConfigString ("127.0.0.1", 777, 333, "UDP", "BOGUS");
-    runConfig(config, 1);
+    runConfig(config, SHOULD_FAIL);
 }
 
 /// @brief Tests the enforcement of data validation when parsing TSIGKeyInfos.
