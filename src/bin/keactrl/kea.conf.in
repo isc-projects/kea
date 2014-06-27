@@ -55,6 +55,16 @@
 #  {    "subnet": "2001:db8:4::/64",
 #       "pool": [ "2001:db8:4::/80" ] }
    ]
+},
+
+# DHCP DDNS configuration starts here.
+"DhcpDdns":
+{
+  "ip_address": "127.0.0.1",
+  "port": 53001,
+  "tsig_keys": [],
+  "forward_ddns" : {},
+  "reverse_ddns" : {}
 }
 
 }
