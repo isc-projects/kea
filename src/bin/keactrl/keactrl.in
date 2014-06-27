@@ -212,12 +212,12 @@ do
         -s|--server)
             shift
             servers=$( printf "%s" ${1} | tr "," "\n" )
-            if [ -z ${servers} ]; then
+            if [ -z "${servers}" ]; then
                 log_error "servers not specified"
                 usage
                 exit 1
             fi
-            # Validate that the specifief server names are correct.
+            # Validate that the specified server names are correct.
             for s in ${servers}
             do
                 is_in_list "${s}" "all dhcp4 dhcp6 dhcp_ddns"
