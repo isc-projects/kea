@@ -27,9 +27,10 @@ KEACTRL_CFG_FILE=@abs_top_builddir@/src/bin/keactrl/tests/keactrl_test.conf
 # Path to the Kea log file.
 LOG_FILE=@abs_top_builddir@/src/bin/keactrl/tests/test.log
 # Binaries' names
-kea4_name="b10-dhcp4"
-kea6_name="b10-dhcp6"
-d2_name="b10-dhcp-ddns"
+wildcard_name="b10-dhcp"
+kea4_name="${wildcard_name}4"
+kea6_name="${wildcard_name}6"
+d2_name="${wildcard_name}-ddns"
 # Kea configuration
 config="{
     \"Dhcp4\":
@@ -180,18 +181,10 @@ Expected wait_for_message return %d, returned %d."
         "Timeout waiting for ${d2_name} to shutdown. \
 Expected wait_for_message return %d, returned %d."
 
-    # Make sure that the servers are down.
-    get_pids ${kea4_name}
-    assert_eq 0 ${_GET_PIDS_NUM} \
-        "Expected %d ${kea4_name} processes running, found %d processes running"
-
-    get_pids ${kea6_name}
-    assert_eq 0 ${_GET_PIDS_NUM} \
-        "Expected %d ${kea6_name} processes running, found %d processes running"
-
-    get_pids ${d2_name}
-    assert_eq 0 ${_GET_PIDS_NUM} \
-        "Expected %d ${d2_name} processes running, found %d processes running"
+    # Make sure that all servers are down.
+    wait_for_server_down 5 ${wildcard_name}
+    assert_eq 1 ${_WAIT_FOR_SERVER_DOWN} \
+        "Expected wait_for_server_down return %d, returned %d"
 
     test_finish 0
 }
@@ -292,19 +285,10 @@ Expected wait_for_message return %d, returned %d."
         "Timeout waiting for ${d2_name} to shutdown. \
 Expected wait_for_message return %d, returned %d."
 
-
-    # Make sure that the servers are down.
-    get_pids ${kea4_name}
-    assert_eq 0 ${_GET_PIDS_NUM} \
-        "Expected %d ${kea4_name} processes running, found %d processes running"
-
-    get_pids ${kea6_name}
-    assert_eq 0 ${_GET_PIDS_NUM} \
-        "Expected %d ${kea6_name} processes running, found %d processes running"
-
-    get_pids ${d2_name}
-    assert_eq 0 ${_GET_PIDS_NUM} \
-        "Expected %d ${d2_name} processes running, found %d processes running"
+    # Make sure that all servers are down.
+    wait_for_server_down 5 ${wildcard_name}
+    assert_eq 1 ${_WAIT_FOR_SERVER_DOWN} \
+        "Expected wait_for_server_down return %d, returned %d"
 
     test_finish 0
 }
@@ -383,19 +367,10 @@ Expected wait_for_message return %d, returned %d."
         "Timeout waiting for ${kea4_name} to shutdown. \
 Expected wait_for_message return %d, returned %d."
 
-    # Make sure that the servers are down.
-    get_pids ${kea4_name}
-    assert_eq 0 ${_GET_PIDS_NUM} \
-        "Expected %d ${kea4_name} processes running, found %d processes running"
-
-    get_pids ${kea6_name}
-    assert_eq 0 ${_GET_PIDS_NUM} \
-        "Expected %d ${kea6_name} processes running, found %d processes running"
-
-    get_pids ${d2_name}
-    assert_eq 0 ${_GET_PIDS_NUM} \
-        "Expected %d ${d2_name} processes running, found %d processes running"
-
+    # Make sure that all servers are down.
+    wait_for_server_down 5 ${wildcard_name}
+    assert_eq 1 ${_WAIT_FOR_SERVER_DOWN} \
+        "Expected wait_for_server_down return %d, returned %d"
 
     test_finish 0
 }
@@ -473,18 +448,10 @@ Expected wait_for_message return %d, returned %d."
         "Timeout waiting for ${kea6_name} to shutdown. \
 Expected wait_for_message return %d, returned %d."
 
-    # Make sure that the servers are down.
-    get_pids ${kea4_name}
-    assert_eq 0 ${_GET_PIDS_NUM} \
-        "Expected %d ${kea4_name} processes running, found %d processes running"
-
-    get_pids ${kea6_name}
-    assert_eq 0 ${_GET_PIDS_NUM} \
-        "Expected %d ${kea6_name} processes running, found %d processes running"
-
-    get_pids ${d2_name}
-    assert_eq 0 ${_GET_PIDS_NUM} \
-        "Expected %d ${d2_name} processes running, found %d processes running"
+    # Make sure that all servers are down.
+    wait_for_server_down 5 ${wildcard_name}
+    assert_eq 1 ${_WAIT_FOR_SERVER_DOWN} \
+        "Expected wait_for_server_down return %d, returned %d"
 
     test_finish 0
 }
@@ -630,19 +597,10 @@ Expected wait_for_message return %d, returned %d."
         "Timeout waiting for ${d2_name} to shutdown. \
 Expected wait_for_message return %d, returned %d."
 
-
-    # Make sure that the servers are down.
-    get_pids ${kea4_name}
-    assert_eq 0 ${_GET_PIDS_NUM} \
-        "Expected %d ${kea4_name} processes running, found %d processes running"
-
-    get_pids ${kea6_name}
-    assert_eq 0 ${_GET_PIDS_NUM} \
-        "Expected %d ${kea6_name} processes running, found %d processes running"
-
-    get_pids ${d2_name}
-    assert_eq 0 ${_GET_PIDS_NUM} \
-        "Expected %d ${d2_name} processes running, found %d processes running"
+    # Make sure that all servers are down.
+    wait_for_server_down 5 ${wildcard_name}
+    assert_eq 1 ${_WAIT_FOR_SERVER_DOWN} \
+        "Expected wait_for_server_down return %d, returned %d"
 
     test_finish 0
 }
@@ -793,19 +751,10 @@ Expected wait_for_message return %d, returned %d."
         "Timeout waiting for ${d2_name} to shutdown. \
 Expected wait_for_message return %d, returned %d."
 
-
-    # Make sure that the servers are down.
-    get_pids ${kea4_name}
-    assert_eq 0 ${_GET_PIDS_NUM} \
-        "Expected %d ${kea4_name} processes running, found %d processes running"
-
-    get_pids ${kea6_name}
-    assert_eq 0 ${_GET_PIDS_NUM} \
-        "Expected %d ${kea6_name} processes running, found %d processes running"
-
-    get_pids ${d2_name}
-    assert_eq 0 ${_GET_PIDS_NUM} \
-        "Expected %d ${kea6_name} processes running, found %d processes running"
+    # Make sure that all servers are down.
+    wait_for_server_down 5 ${wildcard_name}
+    assert_eq 1 ${_WAIT_FOR_SERVER_DOWN} \
+        "Expected wait_for_server_down return %d, returned %d"
 
     test_finish 0
 }
@@ -892,6 +841,11 @@ Expected wait_for_message return %d, returned %d."
         "Timeout waiting for ${kea4_name} to shutdown. \
 Expected wait_for_message return %d, returned %d."
 
+    # Make sure that the DHCPv4 server is down.
+    wait_for_server_down 5 ${kea4_name}
+    assert_eq 1 ${_WAIT_FOR_SERVER_DOWN} \
+        "Expected wait_for_server_down return %d, returned %d"
+
     # Make sure DHCPv6 server is still running
     get_pids ${kea6_name}
     assert_eq 1 ${_GET_PIDS_NUM} \
@@ -915,9 +869,9 @@ Expected wait_for_message return %d, returned %d."
 Expected wait_for_message return %d, returned %d."
 
     # Make sure that the DHCPv6 server is down.
-    get_pids ${kea6_name}
-    assert_eq 0 ${_GET_PIDS_NUM} \
-        "Expected %d ${kea6_name} processes running, found %d processes running"
+    wait_for_server_down 5 ${kea6_name}
+    assert_eq 1 ${_WAIT_FOR_SERVER_DOWN} \
+        "Expected wait_for_server_down return %d, returned %d"
 
     # Make sure D2 server is still running
     get_pids ${d2_name}
@@ -925,7 +879,7 @@ Expected wait_for_message return %d, returned %d."
         "Expected %d ${d2_name} process running, found %d processes running"
 
     # Use keactrl stop to shutdown D2 server.
-    printf "Stopping DHCPv6 server: ${keactrl} stop -s dhcp_ddns -c ${KEACTRL_CFG_FILE}\n"
+    printf "Stopping DHCP DDNS server: ${keactrl} stop -s dhcp_ddns -c ${KEACTRL_CFG_FILE}\n"
     ${keactrl} stop -s dhcp_ddns -c ${KEACTRL_CFG_FILE}
     ret=${?}
     assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d."
@@ -937,9 +891,9 @@ Expected wait_for_message return %d, returned %d."
 Expected wait_for_message return %d, returned %d."
 
     # Make sure that the D2 server is down.
-    get_pids ${d2_name}
-    assert_eq 0 ${_GET_PIDS_NUM} \
-        "Expected %d ${kea6_name} processes running, found %d processes running"
+    wait_for_server_down 5 ${d2_name}
+    assert_eq 1 ${_WAIT_FOR_SERVER_DOWN} \
+        "Expected wait_for_server_down return %d, returned %d"
 
     test_finish 0
 }
