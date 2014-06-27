@@ -19,12 +19,25 @@ KEA_PROCS="b10-dhcp4 b10-dhcp6 b10-dhcp-ddns"
 
 # Prints error message.
 test_lib_error() {
-    printf "ERROR/test_lib: %s\n" "${1}"
+    local s=${1}            # Error message.
+    local no_new_line=${2}  # If specified, the message not terminated with
+                            # new line.
+    printf "ERROR/test_lib: %s" "${s}"
+    if [ -z ${no_new_line} ]; then
+        printf "%s" "\n"
+    fi
+
 }
 
 # Prints info message.
 test_lib_info() {
-    printf "INFO/test_lib: %s\n" "${1}"
+    local s=${1}            # Info message.
+    local no_new_line=${2}  # If specified, the message is not terminated with
+                            # new line.
+    printf "INFO/test_lib: %s" "${s}"
+    if [ -z ${no_new_line} ]; then
+        printf "%s" "\n"
+    fi
 }
 
 ### Assertions ###
@@ -259,6 +272,7 @@ wait_for_kea() {
     esac
     local loops=0 # Loops counter
     _WAIT_FOR_KEA=0
+    test_lib_info "wait_for_kea " "skip-new-line"
     while [ ! -s ${LOG_FILE} ] && [ ${loops} -le ${timeout} ]; do
         printf "."
         sleep 1
@@ -310,6 +324,7 @@ must be a number"
 
     local loops=0          # Number of loops performed so far.
     _WAIT_FOR_MESSAGE=0
+    test_lib_info "wait_for_message ${message}: " "skip-new-line"
     # Check if log file exists and if we reached timeout.
     while [ ${loops} -le ${timeout} ]; do
         printf "."
@@ -326,6 +341,36 @@ must be a number"
     done
     printf "\n"
     # Timeout.
+}
+
+# Waits for server to be down.
+# Return value:
+#    _WAIT_FOR_SERVER_DOWN: 1 if server is down, 0 if timeout occured and the
+#                             server is still running.
+wait_for_server_down() {
+    local timeout=${1}    # Timeout specified in seconds.
+    local proc_name=${2}  # Server process name.
+
+    case ${timeout} in
+        ''|*[!0-9]*)
+            test_lib_error "argument passed to wait_for_server_down must be a number"
+            clean_exit 1 ;;
+    esac
+    local loops=0 # Loops counter
+    _WAIT_FOR_SERVER_DOWN=0
+    test_lib_info "wait_for_server_down ${proc_name}: " "skip-new-line"
+    while [ ${loops} -le ${timeout} ]; do
+        printf "."
+        get_pids ${proc_name}
+        if [ ${_GET_PIDS_NUM} -eq 0 ]; then
+            printf "\n"
+            _WAIT_FOR_SERVER_DOWN=1
+            return
+        fi
+        sleep 1
+        loops=$( expr $loops + 1 )
+    done
+    printf "\n"
 }
 
 # Sends specified signal to the Kea process.

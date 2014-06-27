@@ -211,13 +211,10 @@ shutdown_test() {
         clean_exit 1
     fi
 
-    # Server should have shut down.
-    get_pids ${bin}
-    if [ ${_GET_PIDS_NUM} -ne 0 ]; then
-        printf "ERROR: D2 did not shut down after receiving signal.\n"\
- ${_GET_PIDS_NUM}
-        clean_exit 1
-    fi
+    # Make sure the server is down.
+    wait_for_server_down 5 ${bin}
+    assert_eq 1 ${_WAIT_FOR_SERVER_DOWN} \
+        "Expected wait_for_server_down return %d, returned %d"
 
     test_finish 0
 }
