@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,32 +19,31 @@
 namespace isc {
 namespace cryptolink {
 
-CryptoLink&
-CryptoLink::getCryptoLink() {
+// For OpenSSL, we use the CryptoLink class object in RAII style
+class CryptoLinkImpl {
+    // empty class
+};
+
+CryptoLink::~CryptoLink() {
+    delete impl_;
+}
+
+void
+CryptoLink::initialize() {
     CryptoLink& c = getCryptoLinkInternal();
     if (c.impl_ == NULL) {
-        c.initialize();
+        try {
+            c.impl_ = new CryptoLinkImpl();
+        } catch (const std::exception &ex) {
+            // Should never happen
+            isc_throw(InitializationError,
+                      "Error during OpenSSL initialization:" << ex.what());
+        } catch (...) {
+            // Should never happen
+            isc_throw(InitializationError,
+                      "Error during OpenSSL initialization");
+        }
     }
-    return (c);
-}
-
-CryptoLink&
-CryptoLink::getCryptoLinkInternal() {
-    static CryptoLink instance;
-    return (instance);
-}
-
-Hash*
-CryptoLink::createHash(const HashAlgorithm hash_algorithm)
-{
-    return (new Hash(hash_algorithm));
-}
-
-HMAC*
-CryptoLink::createHMAC(const void* secret, size_t secret_len,
-                       const HashAlgorithm hash_algorithm)
-{
-    return (new HMAC(secret, secret_len, hash_algorithm));
 }
 
 } // namespace cryptolink

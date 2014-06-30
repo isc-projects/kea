@@ -7,6 +7,7 @@ USE_LCOV=@USE_LCOV@
 LCOV=@LCOV@
 GENHTML=@GENHTML@
 DISTCHECK_GTEST_CONFIGURE_FLAG=@DISTCHECK_GTEST_CONFIGURE_FLAG@
+DISTCHECK_CRYPTO_CONFIGURE_FLAG=@DISTCHECK_CRYPTO_CONFIGURE_FLAG@
 
 DISTCLEANFILES = config.report
 
@@ -15,6 +16,9 @@ DISTCHECK_CONFIGURE_FLAGS = --disable-install-configurations
 
 # Use same --with-gtest flag if set
 DISTCHECK_CONFIGURE_FLAGS += $(DISTCHECK_GTEST_CONFIGURE_FLAG)
+
+# Keep the crypto backend config
+DISTCHECK_CONFIGURE_FLAGS += $(DISTCHECK_CRYPTO_CONFIGURE_FLAG)
 
 dist_doc_DATA = AUTHORS COPYING ChangeLog README
 
@@ -73,12 +77,17 @@ report-cpp-coverage:
 			c++/4.4\*/ext/\* \
 			c++/4.4\*/\*-\*/bits/\* \
 			boost/\* \
+if HAVE_BOTAN
 			botan/\* \
+endif
 			ext/asio/\* \
 			ext/coroutine/\* \
 			gtest/\* \
-			log4cplus/\* \
 			include/\* \
+			log4cplus/\* \
+if HAVE_OPENSSL
+			openssl/\* \
+endif
 			tests/\* \
 			unittests/\* \
 			\*_unittests.cc \

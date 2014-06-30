@@ -2,7 +2,7 @@ SUBDIRS = .
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/hooks/dhcp/user_chk -I$(top_srcdir)/src/hooks/dhcp/user_chk
-AM_CPPFLAGS += $(BOOST_INCLUDES) $(BOTAN_INCLUDES)
+AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_srcdir)/src/hooks/dhcp/user_chk/tests\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
@@ -71,7 +71,7 @@ libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.l
 libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
-libdhcp_user_chk_unittests_LDADD += ${BOTAN_LIBS} ${BOTAN_RPATH}
+libdhcp_user_chk_unittests_LDADD += ${CRYPTO_LIBS} ${CRYPTO_RPATH}
 libdhcp_user_chk_unittests_LDADD += $(GTEST_LDADD)
 endif
 noinst_PROGRAMS = $(TESTS)

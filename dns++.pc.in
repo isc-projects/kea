@@ -6,6 +6,6 @@ includedir=@includedir@
 Name: dns++
 Description: BIND 10 DNS library
 Version: @PACKAGE_VERSION@
-Requires: botan-1.8
+Requires: @CRYPTO_PACKAGE@
 Cflags: -I${includedir}/@PACKAGE_NAME@
 Libs: -L${libdir} -lb10-dns++ -lb10-cryptolink -lb10-util -lb10-exceptions -lm

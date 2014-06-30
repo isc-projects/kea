@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,19 +12,31 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <config.h>
+#include <cryptolink.h>
+#include <cryptolink/crypto_hash.h>
 
-#include <gtest/gtest.h>
+#include <boost/scoped_ptr.hpp>
 
-#include <util/encode/hex.h>
+#include <cstring>
 
-#include <cryptolink/cryptolink.h>
+namespace isc {
+namespace cryptolink {
 
-using namespace isc::cryptolink;
-
-// Tests whether getCryptoLink() returns a singleton instance
-TEST(CryptoLinkTest, Singleton) {
-    const CryptoLink& c1 = CryptoLink::getCryptoLink();
-    const CryptoLink& c2 = CryptoLink::getCryptoLink();
-    ASSERT_EQ(&c1, &c2);
+void
+digest(const void* data, const size_t data_len,
+       const HashAlgorithm hash_algorithm,
+       isc::util::OutputBuffer& result, size_t len)
+{
+    boost::scoped_ptr<Hash> hash(
+        CryptoLink::getCryptoLink().createHash(hash_algorithm));
+    hash->update(data, data_len);
+    hash->final(result, len);
 }
+
+void
+deleteHash(Hash* hash) {
+    delete hash;
+}
+
+} // namespace cryptolink
+} // namespace isc

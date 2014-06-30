@@ -18,9 +18,11 @@ if HAVE_GTEST
 TESTS += run_unittests
 run_unittests_SOURCES = run_unittests.cc
 run_unittests_SOURCES += crypto_unittests.cc
+run_unittests_SOURCES += hash_unittests.cc
+run_unittests_SOURCES += hmac_unittests.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
-run_unittests_LDFLAGS =  $(BOTAN_LDFLAGS) $(GTEST_LDFLAGS) $(AM_LDFLAGS)
-run_unittests_LDADD = $(GTEST_LDADD) $(BOTAN_LIBS)
+run_unittests_LDFLAGS =  $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS) $(AM_LDFLAGS)
+run_unittests_LDADD = $(GTEST_LDADD) $(CRYPTO_LIBS)
 run_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 run_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la

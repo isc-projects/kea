@@ -138,9 +138,13 @@
       </para>
 
       <para>
-        Kea uses the Botan crypto library for C++
-        (<ulink url="http://botan.randombit.net/"/>).
-        It requires at least Botan version 1.8.
+        Kea supports two crypto libraries: Botan and OpenSSL. Only one
+        of them is required during compilation. Kea uses the Botan crypto
+        library for C++ (<ulink url="http://botan.randombit.net/"/>).
+        It requires at least Botan version 1.8. As an alternative to Botan,
+        Kea can use the OpenSSL crypto library
+        (<ulink url="http://www.openssl.org/"/>).
+        It requires a version with SHA-2 support.
       </para>
 
       <para>
@@ -546,7 +550,7 @@ $ <userinput>./configure</userinput></screen>
 
         <para>
           To build Kea, also install the Botan (at least version
-          1.8) and the log4cplus (at least version 1.0.3)
+          1.8) or OpenSSL, and the log4cplus (at least version 1.0.3)
           development include headers.
         </para>
 
@@ -692,6 +696,17 @@ as a dependency earlier -->
               <simpara>Enable building the C++ Unit Tests using the
                 Google Tests framework. Optionally this can define the
                 path to the gtest header files and library.
+              </simpara>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>--with-openssl</term>
+            <listitem>
+              <simpara>Replace Botan by OpenSSL for the crypto library.
+                The default is to try to find a working Botan then
+                OpenSSL only if not found.
+<!-- missing -with-botan-config -->
               </simpara>
             </listitem>
           </varlistentry>
