@@ -263,8 +263,9 @@ TEST_F(IOSignalTest, singleSignalTest) {
 
 // Test verifies that signals can be delivered rapid-fire without falling over.
 TEST_F(IOSignalTest, hammer) {
-    // Set test fail safe.
-    setTestTime(5000);
+    // Set test fail safe.  We want to allow at least 100 ms per signal,
+    // plus a bit more so 6 seconds ought to be enough.
+    setTestTime(6000);
 
     // Register the onreceipt-handler with SignalSet, and register to receive
     // SIGINT.
@@ -273,8 +274,9 @@ TEST_F(IOSignalTest, hammer) {
                                     this, _1));
     ASSERT_NO_THROW(signal_set_.reset(new util::SignalSet(SIGINT)));
 
-    // Stop the test after 500 signals.
-    stop_at_count_ = 500;
+    // Stop the test after 50 signals. This allows 100ms+ per signal
+    // so even sluggish VMs should handle it.
+    stop_at_count_ = 50;
 
     // User a repeating TimedSignal so we should generate a signal every 1 ms
     // until we hit our stop count.
@@ -340,7 +342,7 @@ TEST_F(IOSignalTest, mixedSignals) {
     ASSERT_NO_THROW(signal_set_.reset(new util::SignalSet(SIGINT, SIGUSR1,
                                       SIGUSR2)));
 
-    // Stop the test after 21 signals.
+    // Stop the test after 21 signals.  Needs to be a multiple of 3.
     stop_at_count_ = 21;
 
     // User a repeating TimedSignal so we should generate a signal every 1 ms
@@ -359,17 +361,36 @@ TEST_F(IOSignalTest, mixedSignals) {
     // Verify we received the expected number of signals.
     ASSERT_EQ(stop_at_count_, processed_signals_.size());
 
-    // If the underlying implmemeation is orderly, the signals should have
-    // been processed in sets of three: SIGINT, SIGUSR, SIGUSR
-    // It is conceivable under some OS's that they might not occur in this
-    // order.
-    for (int i = 0; i < 21; i += 3) {
-        EXPECT_EQ(SIGINT, processed_signals_[i]);
-        EXPECT_EQ(SIGUSR1, processed_signals_[i+1]);
-        EXPECT_EQ(SIGUSR2, processed_signals_[i+2]);
+    // There is no gaurantee that the signals will always be delivered in the
+    // order they are raised, but all of them should get delievered.  Loop
+    // through and tally them up.
+    int sigint_cnt = 0;
+    int sigusr1_cnt = 0;
+    int sigusr2_cnt = 0;
+    for (int i = 0; i < stop_at_count_; ++i) {
+        switch (processed_signals_[i]) {
+        case SIGINT:
+            ++sigint_cnt;
+            break;
+        case SIGUSR1:
+            ++sigusr1_cnt;
+            break;
+        case SIGUSR2:
+            ++sigusr2_cnt;
+            break;
+        default:
+            FAIL() << "Invalid signal value: "
+                   << processed_signals_[i]
+                   << " at i:" << i;
+            break;
+        }
     }
-}
 
+    // See if our counts are correct.
+    EXPECT_EQ(sigint_cnt, (stop_at_count_/3));
+    EXPECT_EQ(sigusr1_cnt, (stop_at_count_/3));
+    EXPECT_EQ(sigusr2_cnt, (stop_at_count_/3));
+}
 
 }; // end of isc::d2 namespace
 }; // end of isc namespace
