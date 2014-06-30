@@ -1,7 +1,7 @@
 SUBDIRS = .
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
-AM_CPPFLAGS += $(BOOST_INCLUDES) $(BOTAN_INCLUDES)
+AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/lib/dhcp_ddns/tests\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
@@ -53,7 +53,7 @@ libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_dd
 libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
-libdhcp_ddns_unittests_LDADD += ${BOTAN_LIBS} ${BOTAN_RPATH}
+libdhcp_ddns_unittests_LDADD += ${CRYPTO_LIBS} ${CRYPTO_RPATH}
 libdhcp_ddns_unittests_LDADD += $(GTEST_LDADD)
 endif
 

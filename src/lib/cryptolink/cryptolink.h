@@ -44,6 +44,9 @@ enum HashAlgorithm {
 
 };
 
+// Forward declaration for createHash()
+class Hash;
+
 // Forward declaration for createHMAC()
 class HMAC;
 
@@ -157,6 +160,28 @@ public:
     /// \exception InitializationError if initialization fails
     ///
     static void initialize();
+
+    /// \brief Factory function for Hash objects
+    ///
+    /// CryptoLink objects cannot be constructed directly. This
+    /// function creates a new Hash object usable for signing or
+    /// verification.
+    ///
+    /// The caller is responsible for deleting the object, and it is
+    /// therefore highly recommended to place the return value of this
+    /// function in a scoped_ptr or shared_ptr.
+    ///
+    /// If you want to safely delete objects created with this method,
+    /// you can use the function deleteHash() as defined in
+    /// crypto_hash.h
+    ///
+    /// \exception UnsupportedAlgorithmException if the given algorithm
+    ///            is unknown or not supported by the underlying library
+    /// \exception LibraryError if there was any unexpected exception
+    ///                         in the underlying library
+    ///
+    /// \param hash_algorithm The hash algorithm
+    Hash* createHash(const HashAlgorithm hash_algorithm);
 
     /// \brief Factory function for HMAC objects
     ///

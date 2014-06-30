@@ -17,9 +17,9 @@
 #include <asiolink/io_address.h>
 #include <asiolink/io_error.h>
 #include <cryptolink/cryptolink.h>
+#include <cryptolink/crypto_hash.h>
 
 #include <boost/algorithm/string/predicate.hpp>
-#include <botan/sha2_32.h>
 
 #include <sstream>
 #include <limits>
@@ -164,17 +164,11 @@ D2Dhcid::createDigest(const uint8_t identifier_type,
 
     // Use the DUID and FQDN to compute the digest (see RFC4701, section 3).
 
-    // The getCryptoLink is a common function to initialize the Botan library.
-    cryptolink::CryptoLink::getCryptoLink();
-    // @todo The code below, which calculates the SHA-256 may need to be moved
-    // to the cryptolink library.
-    Botan::SecureVector<Botan::byte> secure;
+    isc::util::OutputBuffer hash(0);
     try {
-        Botan::SHA_256 sha;
         // We have checked already that the DUID and FQDN aren't empty
         // so it is safe to assume that the data buffer is not empty.
-        secure = sha.process(static_cast<const Botan::byte*>(&data[0]),
-                             data.size());
+        cryptolink::digest(&data[0], data.size(), cryptolink::SHA256, hash);
     } catch (const std::exception& ex) {
         isc_throw(isc::dhcp_ddns::DhcidRdataComputeError,
                   "error while generating DHCID from DUID: "
@@ -189,14 +183,14 @@ D2Dhcid::createDigest(const uint8_t identifier_type,
 
     // Let's allocate the space for the identifier-type (2 bytes) and
     // digest-type (1 byte). This is 3 bytes all together.
-    bytes_.resize(3);
+    bytes_.resize(3 + hash.getLength());
     // Leave first byte 0 and set the second byte. Those two bytes
     // form the identifier-type.
     bytes_[1] = identifier_type;
     // Third byte is always equal to 1, which specifies SHA-256 digest type.
     bytes_[2] = 1;
     // Now let's append the digest.
-    bytes_.insert(bytes_.end(), secure.begin(), secure.end());
+    std::memcpy(&bytes_[3], hash.getData(), hash.getLength());
 }
 
 std::ostream&
