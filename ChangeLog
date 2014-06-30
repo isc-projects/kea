@@ -3,7 +3,7 @@
 	by specifying --with-openssl[=PATH] on the "configure" command
 	line. Add hash support to the cryptolink API and use it in DHCP
 	DDNS, removing the Botan dependency.
-	(Trac #2406, git xxx)
+	(Trac #2406, git 4b4110dd68706b4171fc6d8a6f4f2a9cd820edac)
 
 793.	[func]		tmark
 	DHCP-DDNS: Implemented dynamic reconfiguration of the server,
