@@ -646,6 +646,13 @@ AC_DEFUN([ACX_CHECK_PROG_NONCACHE], [
     IFS="$IFS_SAVED"
 ])
 
+# Avoid checking Botan if OpenSSL is wanted
+AC_ARG_WITH([openssl],
+            [AS_HELP_STRING([--with-openssl[[=PATH]]], [Enables OpenSSL,
+            location can be specified optionally])],
+            [use_openssl="$withval"],
+            [use_openssl="auto"])
+
 # Botan helper test function
 # Tries to compile a botan program, given the output of the given
 # config tool
@@ -661,12 +668,12 @@ AC_DEFUN([ACX_TRY_BOTAN_TOOL], [
     AC_MSG_CHECKING([usability of ${TOOL} ${TOOL_ARG}])
     if test "$BOTAN_TOOL" != "" ; then
         if test -x ${BOTAN_TOOL}; then
-            BOTAN_LIBS=`$BOTAN_TOOL $TOOL_ARG --libs`
+            CRYPTO_LIBS=`$BOTAN_TOOL $TOOL_ARG --libs`
             LIBS_SAVED=${LIBS}
-            LIBS="$LIBS $BOTAN_LIBS"
-            BOTAN_INCLUDES=`$BOTAN_TOOL $TOOL_ARG --cflags`
+            LIBS="$LIBS $CRYPTO_LIBS"
+            CRYPTO_INCLUDES=`$BOTAN_TOOL $TOOL_ARG --cflags`
             CPPFLAGS_SAVED=${CPPFLAGS}
-            CPPFLAGS="$BOTAN_INCLUDES $CPPFLAGS"
+            CPPFLAGS="$CRYPTO_INCLUDES $CPPFLAGS"
             #AC_MSG_RESULT([found])
             AC_LINK_IFELSE(
                 [AC_LANG_PROGRAM([#include <botan/botan.h>
@@ -711,14 +718,18 @@ AC_DEFUN([ACX_TRY_BOTAN_TOOL], [
 # against botan should neither -config scripts nor pkgconfig data exist).
 #
 botan_config="yes"
+if test "${use_openssl}" != "auto" -a "${use_openssl}" != "no" ; then
+   botan_config="no"
+fi
 AC_ARG_WITH([botan-config],
   AC_HELP_STRING([--with-botan-config=PATH],
     [specify the path to the botan-config script]),
     [botan_config="$withval"])
 if test "${botan_config}" = "no" ; then
-    AC_MSG_ERROR([Need botan for libcryptolink])
-fi
-if test "${botan_config}" != "yes" ; then
+    if test "${use_openssl}" = "no" ; then
+       AC_MSG_ERROR([Need Botan or OpenSSL for libcryptolink])
+    fi
+elif test "${botan_config}" != "yes" ; then
     if test -x "${botan_config}" ; then
         if test -d "${botan_config}" ; then
             AC_MSG_ERROR([${botan_config} is a directory])
@@ -763,91 +774,101 @@ fi
 
 if test "x${BOTAN_CONFIG}" != "x"
 then
-    BOTAN_LIBS=`${BOTAN_CONFIG} --libs`
-    BOTAN_INCLUDES=`${BOTAN_CONFIG} --cflags`
+    CRYPTO_LIBS=`${BOTAN_CONFIG} --libs`
+    CRYPTO_INCLUDES=`${BOTAN_CONFIG} --cflags`
 
     # We expect botan-config --libs to contain -L<path_to_libbotan>, but
     # this is not always the case.  As a heuristics workaround we add
     # -L`botan-config --prefix/lib` in this case (if not present already).
-    # Same for BOTAN_INCLUDES (but using include instead of lib) below.
+    # Same for CRYPTO_INCLUDES (but using include instead of lib) below.
     if [ ${BOTAN_CONFIG} --prefix >/dev/null 2>&1 ] ; then
-        echo ${BOTAN_LIBS} | grep -- -L > /dev/null || \
-            BOTAN_LIBS="-L`${BOTAN_CONFIG} --prefix`/lib ${BOTAN_LIBS}"
-        echo ${BOTAN_INCLUDES} | grep -- -I > /dev/null || \
-            BOTAN_INCLUDES="-I`${BOTAN_CONFIG} --prefix`/include ${BOTAN_INCLUDES}"
+        echo ${CRYPTO_LIBS} | grep -- -L > /dev/null || \
+            CRYPTO_LIBS="-L`${BOTAN_CONFIG} --prefix`/lib ${CRYPTO_LIBS}"
+        echo ${CRYPTO_INCLUDES} | grep -- -I > /dev/null || \
+            CRYPTO_INCLUDES="-I`${BOTAN_CONFIG} --prefix`/include ${CRYPTO_INCLUDES}"
     fi
 fi
 
-dnl Determine the Botan version
-AC_MSG_CHECKING([Botan version])
-cat > conftest.cpp << EOF
+if test "x${CRYPTO_LIBS}" != "x"
+then
+   dnl Determine the Botan version
+   AC_MSG_CHECKING([Botan version])
+   cat > conftest.cpp << EOF
 #include <botan/version.h>
 AUTOCONF_BOTAN_VERSION=BOTAN_VERSION_MAJOR . BOTAN_VERSION_MINOR . BOTAN_VERSION_PATCH
 EOF
 
-BOTAN_VERSION=`$CPP $CPPFLAGS $BOTAN_INCLUDES conftest.cpp | grep '^AUTOCONF_BOTAN_VERSION=' | $SED -e 's/^AUTOCONF_BOTAN_VERSION=//' -e 's/[[ 	]]//g' -e 's/"//g' 2> /dev/null`
-if test -z "$BOTAN_VERSION"; then
-  BOTAN_VERSION="unknown"
-fi
-$RM -f conftest.cpp
-AC_MSG_RESULT([$BOTAN_VERSION])
+   CRYPTO_VERSION=`$CPP $CPPFLAGS $CRYPTO_INCLUDES conftest.cpp | grep '^AUTOCONF_BOTAN_VERSION=' | $SED -e 's/^AUTOCONF_BOTAN_VERSION=//' -e 's/[[ 	]]//g' -e 's/"//g' 2> /dev/null`
+   if test -z "$CRYPTO_VERSION"; then
+      CRYPTO_VERSION="unknown"
+   fi
+   $RM -f conftest.cpp
+   AC_MSG_RESULT([$CRYPTO_VERSION])
 
-# botan-config script (and the way we call pkg-config) returns -L and -l
-# as one string, but we need them in separate values
-BOTAN_LDFLAGS=
-BOTAN_NEWLIBS=
-for flag in ${BOTAN_LIBS}; do
-    BOTAN_LDFLAGS="${BOTAN_LDFLAGS} `echo $flag | ${SED} -ne '/^\(\-L\)/p'`"
-    BOTAN_LIBS="${BOTAN_LIBS} `echo $flag | ${SED} -ne '/^\(\-l\)/p'`"
-done
+   # botan-config script (and the way we call pkg-config) returns -L and -l
+   # as one string, but we need them in separate values
+   CRYPTO_LDFLAGS=
+   for flag in ${CRYPTO_LIBS}; do
+       CRYPTO_LDFLAGS="${CRYPTO_LDFLAGS} `echo $flag | ${SED} -ne '/^\(\-L\)/p'`"
+       CRYPTO_LIBS="${CRYPTO_LIBS} `echo $flag | ${SED} -ne '/^\(\-l\)/p'`"
+   done
 
-# See python_rpath for some info on why we do this
-if test "x$ISC_RPATH_FLAG" != "x"; then
-    BOTAN_RPATH=
-    for flag in ${BOTAN_LIBS}; do
-            BOTAN_RPATH="${BOTAN_RPATH} `echo $flag | ${SED} -ne "s/^\(\-L\)/${ISC_RPATH_FLAG}/p"`"
-    done
-AC_SUBST(BOTAN_RPATH)
+   # See crypto_rpath for some info on why we do this
+   if test "x$ISC_RPATH_FLAG" != "x"; then
+       CRYPTO_RPATH=
+       for flag in ${CRYPTO_LIBS}; do
+               CRYPTO_RPATH="${CRYPTO_RPATH} `echo $flag | ${SED} -ne "s/^\(\-L\)/${ISC_RPATH_FLAG}/p"`"
+       done
+   # According to the libtool manual, it should be sufficient if we
+   # specify the "-R libdir" in our wrapper library of botan (no other
+   # programs will need libbotan directly); "libdir" should be added to
+   # the program's binary image.  But we've seen in our build environments
+   # that (some versions of?) libtool doesn't propagate -R as documented,
+   # and it caused a linker error at run time.  To work around this, we
+   # also add the rpath to the global LDFLAGS.
+       LDFLAGS="$CRYPTO_RPATH $LDFLAGS"
+   fi
 
-# According to the libtool manual, it should be sufficient if we
-# specify the "-R libdir" in our wrapper library of botan (no other
-# programs will need libbotan directly); "libdir" should be added to
-# the program's binary image.  But we've seen in our build environments
-# that (some versions of?) libtool doesn't propagate -R as documented,
-# and it caused a linker error at run time.  To work around this, we
-# also add the rpath to the global LDFLAGS.
-    LDFLAGS="$BOTAN_RPATH $LDFLAGS"
-fi
+   # Even though chances are high we already performed a real compilation check
+   # in the search for the right (pkg)config data, we try again here, to
+   # be sure.
+   CPPFLAGS_SAVED=$CPPFLAGS
+   CPPFLAGS="$CRYPTO_INCLUDES $CPPFLAGS"
+   LIBS_SAVED="$LIBS"
+   LIBS="$LIBS $CRYPTO_LIBS"
 
-AC_SUBST(BOTAN_LDFLAGS)
-AC_SUBST(BOTAN_LIBS)
-AC_SUBST(BOTAN_INCLUDES)
-# Even though chances are high we already performed a real compilation check
-# in the search for the right (pkg)config data, we try again here, to
-# be sure.
-CPPFLAGS_SAVED=$CPPFLAGS
-CPPFLAGS="$BOTAN_INCLUDES $CPPFLAGS"
-LIBS_SAVED="$LIBS"
-LIBS="$LIBS $BOTAN_LIBS"
-
-# ac_header_preproc is an autoconf symbol (undocumented but stable) that
-# is set if the pre-processor phase passes. Thus by adding a custom
-# failure handler we can detect the difference between a header not existing
-# (or not even passing the pre-processor phase) and a header file resulting
-# in compilation failures.
-AC_CHECK_HEADERS([botan/botan.h],,[
+   # ac_header_preproc is an autoconf symbol (undocumented but stable) that
+   # is set if the pre-processor phase passes. Thus by adding a custom
+   # failure handler we can detect the difference between a header not existing
+   # (or not even passing the pre-processor phase) and a header file resulting
+   # in compilation failures.
+   AC_CHECK_HEADERS([botan/botan.h],,[
+        CRYPTO_INCLUDES=""
+        CRYPTO_LIBS=""
+        CRYPTO_LDFLAGS=""
+        CRYPTO_RPATH=""
 	if test "x$ac_header_preproc" = "xyes"; then
-		AC_MSG_ERROR([
+		AC_MSG_RESULT([
 botan/botan.h was found but is unusable. The most common cause of this problem
 is attempting to use an updated C++ compiler with older C++ libraries, such as
 the version of Botan that comes with your distribution. If you have updated
 your C++ compiler we highly recommend that you use support libraries such as
 Boost and Botan that were compiled with the same compiler version.])
 	else
-		AC_MSG_ERROR([Missing required header files.])
+		AC_MSG_RESULT([Missing required header files.])
 	fi]
-)
-AC_LINK_IFELSE(
+   )
+   CPPFLAGS=$CPPFLAGS_SAVED
+   LIBS=$LIBS_SAVED
+fi
+
+if test "x${CRYPTO_LIBS}" != "x"
+then
+   CPPFLAGS_SAVED=$CPPFLAGS
+   CPPFLAGS="$CRYPTO_INCLUDES $CPPFLAGS"
+   LIBS_SAVED="$LIBS"
+   LIBS="$LIBS $CRYPTO_LIBS"
+   AC_LINK_IFELSE(
         [AC_LANG_PROGRAM([#include <botan/botan.h>
                           #include <botan/hash.h>
                          ],
@@ -857,14 +878,116 @@ AC_LINK_IFELSE(
                          ])],
         [AC_MSG_RESULT([checking for Botan library... yes])],
         [AC_MSG_RESULT([checking for Botan library... no])
-         AC_MSG_ERROR([Needs Botan library 1.8 or higher. On some systems,
+         CRYPTO_INCLUDES=""
+         CRYPTO_LIBS=""
+         CRYPTO_LDFLAGS=""
+         CRYPTO_RPATH=""
+         AC_MSG_RESULT([Needs Botan library 1.8 or higher. On some systems,
          the botan package has a few missing dependencies (libbz2 and
-         libgmp), if libbotan has been installed and you see this error,
+         libgmp), if libbotan has been installed and you see this message,
          try upgrading to a higher version of botan or installing libbz2
          and libgmp.])]
-)
-CPPFLAGS=$CPPFLAGS_SAVED
-LIBS=$LIBS_SAVED
+   )
+   CPPFLAGS=$CPPFLAGS_SAVED
+   LIBS=$LIBS_SAVED
+fi
+
+if test "x${CRYPTO_LIBS}" != "x"
+then
+   CRYPTO_NAME="Botan"
+   DISABLED_CRYPTO="OpenSSL"
+   CRYPTO_PACKAGE="botan-1.8"
+   CRYPTO_CFLAGS=""
+   DISTCHECK_CRYPTO_CONFIGURE_FLAG="--with-botan=$botan_config"
+   AC_DEFINE_UNQUOTED([WITH_BOTAN], [], [Compile with Botan crypto])
+else
+   CRYPTO_NAME="OpenSSL"
+   DISABLED_CRYPTO="Botan"
+   CRYPTO_PACKAGE="openssl-1.0.0"
+   AC_DEFINE_UNQUOTED([WITH_OPENSSL], [], [Compile with OpenSSL crypto])
+   AC_MSG_CHECKING(for OpenSSL library)
+   # from bind9
+
+   if test "${use_openssl}" = "auto" ; then
+      use_openssl="yes"
+   fi
+   if test "${use_openssl}" = "yes" ; then
+      for d in /usr /usr/local /usr/local/ssl /usr/pkg /usr/sfw; do
+          if test -f $d/include/openssl/opensslv.h; then
+             use_openssl=$d; break
+          fi
+      done
+   fi
+   if test "${use_openssl}" = "yes" ; then
+      AC_MSG_ERROR([OpenSSL auto detection failed])
+   fi
+   if ! test -f "${use_openssl}"/include/openssl/opensslv.h ; then
+      AC_MSG_ERROR([OpenSSL not found at ${use_openssl}])
+   fi
+   AC_MSG_RESULT(yes)
+   if test "${use_openssl}" = "/usr" ; then
+      CRYPTO_INCLUDES=""
+      CRYPTO_LIBS="-lcrypto"
+      DISTCHECK_CRYPTO_CONFIGURE_FLAG="--with-openssl"
+      case "$host" in
+          *-apple-darwin*)
+              # Starting with OSX 10.7 (Lion) OpenSSL is deprecated
+              CRYPTO_CFLAGS="-Wno-deprecated-declarations"
+              ;;
+          *)
+              CRYPTO_CFLAGS=""
+              ;;
+      esac
+   else
+      CRYPTO_CFLAGS=""
+      CRYPTO_INCLUDES="-I${use_openssl}/include"
+      DISTCHECK_CRYPTO_CONFIGURE_FLAG="--with-openssl=${use_openssl}"
+      case $host in
+          *-solaris*)
+              CRYPTO_LIBS="-L${use_openssl}/lib -R${use_openssl}/lib -lcrypto"
+              ;;
+          *-hp-hpux*)
+              CRYPTO_LIBS="-L${use_openssl}/lib -Wl,+b: -lcrypto"
+              ;;
+          *-apple-darwin*)
+              if test -f "${use_openssl}/lib/libcrypto.dylib" ; then
+                 CRYPTO_LIBS="-L${use_openssl}/lib -lcrypto"
+              else
+                 CRYPTO_LIBS="${use_openssl}/lib/libcrypto.a"
+              fi
+              ;;
+          *)
+              CRYPTO_LIBS="-L${use_openssl}/lib -lcrypto"
+              ;;
+      esac
+    fi
+    dnl Determine the OpenSSL version
+    AC_MSG_CHECKING([OpenSSL version])
+    cat > conftest.cpp << EOF
+#include <openssl/opensslv.h>
+AUTOCONF_OPENSSL_VERSION=OPENSSL_VERSION_TEXT
+EOF
+
+    CRYPTO_VERSION=`$CPP $CPPFLAGS $CRYPTO_INCLUDES conftest.cpp | grep '^AUTOCONF_OPENSSL_VERSION=' | $SED -e 's/^AUTOCONF_OPENSSL_VERSION=//' -e 's/"//g' 2> /dev/null`
+    if test -z "$CRYPTO_VERSION" ; then
+       CRYPTO_VERSION="unknown"
+    fi
+    $RM -f conftest.cpp
+    AC_MSG_RESULT([$CRYPTO_VERSION])
+    #CRYPTO_LDFLAGS="-ldl"
+    CRYPTO_LDFLAGS=""
+    CRYPTO_RPATH=""
+fi
+
+AM_CONDITIONAL(HAVE_BOTAN, test "$CRYPTO_NAME" = "Botan")
+AM_CONDITIONAL(HAVE_OPENSSL, test "$CRYPTO_NAME" = "OpenSSL")
+AC_SUBST(CRYPTO_INCLUDES)
+AC_SUBST(CRYPTO_CFLAGS)
+AC_SUBST(CRYPTO_LIBS)
+AC_SUBST(CRYPTO_LDFLAGS)
+AC_SUBST(CRYPTO_PACKAGE)
+AC_SUBST(CRYPTO_RPATH)
+AC_SUBST(DISTCHECK_CRYPTO_CONFIGURE_FLAG)
 
 # Check for MySql.  The path to the mysql_config program is given with
 # the --with-mysql-config (default to /usr/bin/mysql-config).  By default,
@@ -1653,11 +1776,14 @@ Boost:
   BOOST_VERSION:   ${BOOST_VERSION}
   BOOST_INCLUDES:  ${BOOST_INCLUDES}
 
-Botan:
-  BOTAN_VERSION:   ${BOTAN_VERSION}
-  BOTAN_INCLUDES:  ${BOTAN_INCLUDES}
-  BOTAN_LDFLAGS:   ${BOTAN_LDFLAGS}
-  BOTAN_LIBS:      ${BOTAN_LIBS}
+${CRYPTO_NAME}:
+  CRYPTO_VERSION:  ${CRYPTO_VERSION}
+  CRYPTO_CFLAGS:   ${CRYPTO_CFLAGS}
+  CRYPTO_INCLUDES: ${CRYPTO_INCLUDES}
+  CRYPTO_LDFLAGS:  ${CRYPTO_LDFLAGS}
+  CRYPTO_LIBS:     ${CRYPTO_LIBS}
+
+${DISABLED_CRYPTO}: no
 
 Log4cplus:
   LOG4CPLUS_VERSION: ${LOG4CPLUS_VERSION}

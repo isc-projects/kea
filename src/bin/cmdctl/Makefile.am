@@ -52,9 +52,16 @@ b10-cmdctl: cmdctl.py $(PYTHON_LOGMSGPKG_DIR)/work/cmdctl_messages.py $(CERTFILE
 	$(SED) "s|@@PYTHONPATH@@|@pyexecdir@|" cmdctl.py >$@
 	chmod a+x $@
 
-b10_certgen_SOURCES = b10-certgen.cc
-b10_certgen_CXXFLAGS = $(BOTAN_INCLUDES)
-b10_certgen_LDFLAGS = $(BOTAN_LIBS)
+if HAVE_BOTAN
+b10_certgen_SOURCES = botan-certgen.cc
+EXTRA_DIST += openssl-certgen.cc
+endif
+if HAVE_OPENSSL
+b10_certgen_SOURCES = openssl-certgen.cc
+EXTRA_DIST += botan-certgen.cc
+endif
+b10_certgen_CXXFLAGS = $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
+b10_certgen_LDFLAGS = $(CRYPTO_LIBS)
 
 # Generate the initial certificates immediately
 cmdctl-keyfile.pem: b10-certgen

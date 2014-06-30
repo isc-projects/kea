@@ -1,3 +1,10 @@
+794.	[func]		fdupont
+	cryptolink: add OpenSSL crypto backend as an alternative to Botan
+	by specifying --with-openssl[=PATH] on the "configure" command
+	line. Add hash support to the cryptolink API and use it in DHCP
+	DDNS, removing the Botan dependency.
+	(Trac #2406, git xxx)
+
 793.	[func]		tmark
 	DHCP-DDNS: Implemented dynamic reconfiguration of the server,
 	triggered when the SIGHUP signal is received by the server's

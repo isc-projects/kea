@@ -12,19 +12,37 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <config.h>
-
-#include <gtest/gtest.h>
-
-#include <util/encode/hex.h>
-
 #include <cryptolink/cryptolink.h>
+#include <cryptolink/crypto_hash.h>
+#include <cryptolink/crypto_hmac.h>
 
-using namespace isc::cryptolink;
+#include <botan/botan.h>
 
-// Tests whether getCryptoLink() returns a singleton instance
-TEST(CryptoLinkTest, Singleton) {
-    const CryptoLink& c1 = CryptoLink::getCryptoLink();
-    const CryptoLink& c2 = CryptoLink::getCryptoLink();
-    ASSERT_EQ(&c1, &c2);
+namespace isc {
+namespace cryptolink {
+
+// For Botan, we use the CryptoLink class object in RAII style
+class CryptoLinkImpl {
+private:
+    Botan::LibraryInitializer botan_init_;
+};
+
+CryptoLink::~CryptoLink() {
+    delete impl_;
 }
+
+void
+CryptoLink::initialize() {
+    CryptoLink& c = getCryptoLinkInternal();
+    if (c.impl_ == NULL) {
+        try {
+            c.impl_ = new CryptoLinkImpl();
+        } catch (const Botan::Exception& ex) {
+            isc_throw(InitializationError, ex.what());
+        }
+    }
+}
+
+} // namespace cryptolink
+} // namespace isc
+

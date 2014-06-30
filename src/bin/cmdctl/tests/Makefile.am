@@ -1,6 +1,16 @@
 PYCOVERAGE_RUN=@PYCOVERAGE_RUN@
-PYTESTS = cmdctl_test.py b10-certgen_test.py
-EXTRA_DIST = $(PYTESTS)
+PYTESTS = cmdctl_test.py
+
+EXTRA_DIST =
+if HAVE_BOTAN
+PYTESTS += botan-certgen_test.py
+EXTRA_DIST += openssl-certgen_test.py
+endif
+if HAVE_OPENSSL
+EXTRA_DIST += botan-certgen_test.py
+PYTESTS += openssl-certgen_test.py
+endif
+EXTRA_DIST += $(PYTESTS)
 EXTRA_DIST += testdata/expired-certfile.pem
 EXTRA_DIST += testdata/mangled-certfile.pem
 EXTRA_DIST += testdata/noca-certfile.pem

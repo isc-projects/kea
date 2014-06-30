@@ -1,7 +1,7 @@
 SUBDIRS = . tests
 
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
-AM_CPPFLAGS += $(BOOST_INCLUDES) $(BOTAN_INCLUDES)
+AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS  = $(B10_CXXFLAGS)
 
 # Some versions of GCC warn about some versions of Boost regarding
@@ -41,7 +41,7 @@ nodist_libkea_dhcp_ddns_la_SOURCES = dhcp_ddns_messages.cc dhcp_ddns_messages.h
 libkea_dhcp_ddns_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_dhcp_ddns_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
 libkea_dhcp_ddns_la_LDFLAGS  = $(AM_LDFLAGS)
-libkea_dhcp_ddns_la_LDFLAGS += ${BOTAN_LDFLAGS}
+libkea_dhcp_ddns_la_LDFLAGS += ${CRYPTO_LDFLAGS}
 libkea_dhcp_ddns_la_LIBADD  =
 libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
@@ -51,7 +51,7 @@ libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
-libkea_dhcp_ddns_la_LIBADD += ${BOTAN_LIBS} ${BOTAN_RPATH}
+libkea_dhcp_ddns_la_LIBADD += ${CRYPTO_LIBS} ${CRYPTO_RPATH}
 
 if USE_CLANGPP
 # Disable unused parameter warning caused by some of the
