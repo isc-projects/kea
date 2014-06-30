@@ -1,3 +1,8 @@
+795.	[func]		marcin
+	Added support to keactrl to start, stop, reconfigure and gather
+	status of the DHCP-DDNS server.
+	(Trac #3465, git 6bc61470c9ccee001fe282d0f879bcddac0b8721)
+
 794.	[func]		fdupont
 	cryptolink: add OpenSSL crypto backend as an alternative to Botan
 	by specifying --with-openssl[=PATH] on the "configure" command
