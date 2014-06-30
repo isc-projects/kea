@@ -212,12 +212,12 @@ do
         -s|--server)
             shift
             servers=$( printf "%s" ${1} | tr "," "\n" )
-            if [ -z ${servers} ]; then
+            if [ -z "${servers}" ]; then
                 log_error "servers not specified"
                 usage
                 exit 1
             fi
-            # Validate that the specifief server names are correct.
+            # Validate that the specified server names are correct.
             for s in ${servers}
             do
                 is_in_list "${s}" "all dhcp4 dhcp6 dhcp_ddns"
@@ -276,6 +276,7 @@ fi
 # respectively.
 dhcp4=$( printf "%s" ${dhcp4} | tr [:upper:] [:lower:] )
 dhcp6=$( printf "%s" ${dhcp6} | tr [:upper:] [:lower:] )
+dhcp_ddns=$( printf "%s" ${dhcp_ddns} | tr [:upper:] [:lower:] )
 
 case ${command} in
     # Start the servers.
@@ -290,6 +291,7 @@ case ${command} in
         # and if they are enabled in the keactrl configuration file.
         run_conditional "dhcp4" "start_server ${dhcp4_srv} \"${args}\"" 1
         run_conditional "dhcp6" "start_server ${dhcp6_srv} \"${args}\"" 1
+        run_conditional "dhcp_ddns" "start_server ${dhcp_ddns_srv} \"${args}\"" 1
 
         exit 0 ;;
 
@@ -298,6 +300,7 @@ case ${command} in
         # Stop all servers or servers specified from the command line.
         run_conditional "dhcp4" "send_signal 15 $(basename ${dhcp4_srv})" 0
         run_conditional "dhcp6" "send_signal 15 $(basename ${dhcp6_srv})" 0
+        run_conditional "dhcp_ddns" "send_signal 15 $(basename ${dhcp_ddns_srv})" 0
 
         exit 0 ;;
 
@@ -306,6 +309,7 @@ case ${command} in
         # Reconfigure all servers or servers specified from the command line.
         run_conditional "dhcp4" "send_signal 1 $(basename ${dhcp4_srv})" 0
         run_conditional "dhcp6" "send_signal 1 $(basename ${dhcp6_srv})" 0
+        run_conditional "dhcp_ddns" "send_signal 1 $(basename ${dhcp_ddns_srv})" 0
 
         exit 0 ;;
 
@@ -323,6 +327,13 @@ case ${command} in
             kea6_status="active"
         fi
         printf "DHCPv6 server: %s\n" ${kea6_status}
+
+        d2_status="inactive"
+        check_running $(basename ${dhcp_ddns_srv})
+        if [ ${_running} -eq 1 ]; then
+            d2_status="active"
+        fi
+        printf "DHCP DDNS: %s\n" ${d2_status}
         printf "Kea configuration file: %s\n" ${kea_config_file}
         printf "keactrl configuration file: %s\n" ${keactrl_conf}
 
