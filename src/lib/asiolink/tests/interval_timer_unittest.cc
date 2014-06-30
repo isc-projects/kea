@@ -304,25 +304,32 @@ TEST_F(IntervalTimerTest, overwriteIntervalTimer) {
 TEST_F(IntervalTimerTest, intervalModeTest) {
     // Create a timer to control the duration of the test.
     IntervalTimer test_timer(io_service_);
-    test_timer.setup(TimerCallBack(this), 550);
+    test_timer.setup(TimerCallBack(this), 2000);
 
     // Create an timer which automatically reschedules itself.  Use the
     // accumulator callback to increment local counter for it.
     int repeater_count = 0;
     IntervalTimer repeater(io_service_);
-    repeater.setup(TimerCallBackAccumulator(this, repeater_count), 100);
+    repeater.setup(TimerCallBackAccumulator(this, repeater_count), 10);
 
     // Create a one-shot timer. Use the accumulator callback to increment
     // local counter variable for it.
     int one_shot_count = 0;
     IntervalTimer one_shot(io_service_);
-    one_shot.setup(TimerCallBackAccumulator(this, one_shot_count), 100,
+    one_shot.setup(TimerCallBackAccumulator(this, one_shot_count), 10,
                    IntervalTimer::ONE_SHOT);
 
-    // Run until the test_timer expires.
-    io_service_.run();
+    // As long as service runs at least one event handler, loop until
+    // we've hit our goals.  It won't return zero unless is out of
+    // work or the the service has been stopped by the test timer.
+    int cnt = 0;
+    while (((cnt = io_service_.get_io_service().run_one()) > 0)
+           && (repeater_count < 5));
 
-    // Verify the repeating timer repeated and the one-shot did not.
+    // If cnt is zero, then something went wrong.
+    EXPECT_TRUE(cnt > 0);
+
+    // The loop stopped make sure it was for the right reason.
     EXPECT_EQ(repeater_count, 5);
     EXPECT_EQ(one_shot_count, 1);
 }
@@ -331,14 +338,14 @@ TEST_F(IntervalTimerTest, intervalModeTest) {
 TEST_F(IntervalTimerTest, timerReuseTest) {
     // Create a timer to control the duration of the test.
     IntervalTimer test_timer(io_service_);
-    test_timer.setup(TimerCallBack(this), 550);
+    test_timer.setup(TimerCallBack(this), 2000);
 
     // Create a one-shot timer. Use the accumulator callback to increment
     // local counter variable for it.
     int one_shot_count = 0;
     IntervalTimer one_shot(io_service_);
     TimerCallBackAccumulator callback(this, one_shot_count);
-    one_shot.setup(callback, 100, IntervalTimer::ONE_SHOT);
+    one_shot.setup(callback, 10, IntervalTimer::ONE_SHOT);
 
     // Run until a single event handler executes.  This should be our
     // one-shot expiring.
@@ -348,7 +355,7 @@ TEST_F(IntervalTimerTest, timerReuseTest) {
     ASSERT_EQ(one_shot_count, 1);
 
     // Setup the one-shot to go again.
-    one_shot.setup(callback, 100, IntervalTimer::ONE_SHOT);
+    one_shot.setup(callback, 10, IntervalTimer::ONE_SHOT);
 
     // Run until a single event handler executes.  This should be our
     // one-shot expiring.
@@ -358,10 +365,17 @@ TEST_F(IntervalTimerTest, timerReuseTest) {
     ASSERT_EQ(one_shot_count, 2);
 
     // Setup the timer to be repeating.
-    one_shot.setup(callback, 100, IntervalTimer::REPEATING);
+    one_shot.setup(callback, 10, IntervalTimer::REPEATING);
 
-    // Run until the test_timer expires.
-    io_service_.run();
+    // As long as service runs at least one event handler, loop until
+    // we've hit our goals.  It won't return zero unless is out of
+    // work or the the service has been stopped by the test timer.
+    int cnt = 0;
+    while ((cnt = io_service_.get_io_service().run_one())
+            && (one_shot_count < 4));
+
+    // If cnt is zero, then something went wrong.
+    EXPECT_TRUE(cnt > 0);
 
     // Verify the timer repeated.
     EXPECT_GE(one_shot_count, 4);
