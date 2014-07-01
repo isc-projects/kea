@@ -1,0 +1,11 @@
+###
+### This data file was auto-generated from rdata_afsdb_toWire2.spec
+###
+
+# DNS Name: example.com.
+076578616d706c6503636f6d00
+
+# AFSDB RDATA
+
+# SUBTYPE=0 SERVER=root.example.com
+0000 04726f6f74076578616d706c6503636f6d00

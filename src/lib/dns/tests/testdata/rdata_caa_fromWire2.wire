@@ -1,0 +1,8 @@
+###
+### This data file was auto-generated from rdata_caa_fromWire2.spec
+###
+
+# CAA RDATA, RDLEN=21
+0015
+# FLAGS=0 TAG=ISSue VALUE=ca.example.net
+00 05 495353756563612e6578616d706c652e6e6574

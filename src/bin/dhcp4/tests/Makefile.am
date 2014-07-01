@@ -1,6 +1,3 @@
-PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
-
-PYTESTS = dhcp4_test.py
 SHTESTS =
 # The test of dynamic reconfiguration based on signals will work only
 # if we are using file based configuration approach.
@@ -10,33 +7,15 @@ endif
 
 noinst_SCRIPTS = dhcp4_process_tests.sh
 
-EXTRA_DIST  = $(PYTESTS)
-EXTRA_DIST += dhcp4_process_tests.sh.in
-
-# Explicitly specify paths to dynamic libraries required by loadable python
-# modules. That is required on Mac OS systems. Otherwise we will get exception
-# about python not being able to load liblog library.
-LIBRARY_PATH_PLACEHOLDER =
-if SET_ENV_LIBRARY_PATH
-LIBRARY_PATH_PLACEHOLDER += $(ENV_LIBRARY_PATH)=$(abs_top_builddir)/src/lib/cryptolink/.libs:$(abs_top_builddir)/src/lib/dns/.libs:$(abs_top_builddir)/src/lib/dns/python/.libs:$(abs_top_builddir)/src/lib/cc/.libs:$(abs_top_builddir)/src/lib/config/.libs:$(abs_top_builddir)/src/lib/log/.libs:$(abs_top_builddir)/src/lib/util/.libs:$(abs_top_builddir)/src/lib/util/threads/.libs:$(abs_top_builddir)/src/lib/exceptions/.libs:$(abs_top_builddir)/src/lib/util/io/.libs:$(abs_top_builddir)/src/lib/datasrc/.libs:$$$(ENV_LIBRARY_PATH)
-endif
+EXTRA_DIST  = dhcp4_process_tests.sh.in
 
 # test using command-line arguments, so use check-local target instead of TESTS
 check-local:
-	for pytest in $(PYTESTS) ; do \
-	echo Running test: $$pytest ; \
-	PYTHONPATH=$(COMMON_PYTHON_PATH):$(abs_top_srcdir)/src/bin:$(abs_top_builddir)/src/bin/bind10:$(abs_top_builddir)/src/lib/util/io/.libs \
-	B10_LOCKFILE_DIR_FROM_BUILD=$(abs_top_builddir) \
-	$(LIBRARY_PATH_PLACEHOLDER) \
-		$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
-	done
-
 	for shtest in $(SHTESTS) ; do \
 	echo Running test: $$shtest ; \
 	export B10_LOCKFILE_DIR_FROM_BUILD=$(abs_top_builddir); \
 	${SHELL} $(abs_builddir)/$$shtest || exit ; \
 	done
-
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/bin # for generated spec_config.h header

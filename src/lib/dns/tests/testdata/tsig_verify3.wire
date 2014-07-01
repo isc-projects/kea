@@ -1,0 +1,25 @@
+###
+### This data file was auto-generated from tsig_verify3.spec
+###
+
+# Header Section
+# ID=13328 QR=Response Opcode=QUERY(0) Rcode=NOERROR(0) AA
+3410 8400
+# QDCNT=0, ANCNT=1, NSCNT=0, ARCNT=1
+0000 0001 0000 0001
+
+# NS RR (QNAME=example.com. Class=IN(1) TTL=86400, RDLEN=5)
+076578616d706c6503636f6d00 0002 0001 00015180 0005
+# NS name=ns.ptr=12
+026e73c00c
+
+# TSIG RR (QNAME=www.example.com Class=ANY(255) TTL=0, RDLEN=58)
+03777777076578616d706c6503636f6d00 00fa 00ff 00000000 003a
+# Algorithm=hmac-md5 Time-Signed=1302915409 Fudge=300
+08686d61632d6d6435077369672d616c670372656703696e7400 00004da8e951 012c
+# MAC Size=16 MAC=(see hex)
+0010 102458f7f62ddd7d638d746034130968
+# Original-ID=13328 Error=0
+3410 0000
+# Other-Len=0 Other-Data=(see hex)
+0000

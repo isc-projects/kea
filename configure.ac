@@ -214,12 +214,6 @@ if test $enable_shared = no; then
 	AC_MSG_ERROR([BIND 10 requires shared libraries to be built])
 fi
 
-# allow configuring without setproctitle.
-AC_ARG_ENABLE(setproctitle-check,
-AC_HELP_STRING([--disable-setproctitle-check],
-  [do not check for python setproctitle module (used to give nice names to python processes)]),
-  setproctitle_check=$enableval, setproctitle_check=yes)
-
 # OS dependent configuration
 SET_ENV_LIBRARY_PATH=no
 ENV_LIBRARY_PATH=LD_LIBRARY_PATH
@@ -305,7 +299,7 @@ AC_HELP_STRING([--with-pythonpath=PATH],
   [specify an absolute path to python executable when automatic version check (incorrectly) fails]),
   [python_path="$withval"], [python_path="auto"])
 if test "$python_path" = auto; then
-	AM_PATH_PYTHON([3.1])
+	AM_PATH_PYTHON([3.1],,[PYTHON=no])
 else
 	# Older versions of automake can't handle python3 well.  This is an
 	# in-house workaround for them.
@@ -330,154 +324,6 @@ else
 	AC_SUBST(pyexecdir)
 	pkgpyexecdir='${pyexecdir}/'$PACKAGE
 	AC_SUBST(pkgpyexecdir)
-fi
-
-# We need to store the default pyexecdir in a separate variable so that
-# we can specify in Makefile.am the install directory of various BIND 10
-# python scripts and loadable modules; in Makefile.am we cannot replace
-# $(pyexecdir) using itself, e.g, this doesn't work:
-# pyexecdir = $(pyexecdir)/isc/some_module
-# The separate variable makes this setup possible as follows:
-# pyexecdir = $(PYTHON_SITEPKG_DIR)/isc/some_module
-PYTHON_SITEPKG_DIR=${pyexecdir}
-AC_SUBST(PYTHON_SITEPKG_DIR)
-
-# This will be commonly used in various Makefile.am's that need to generate
-# python log messages.
-PYTHON_LOGMSGPKG_DIR="\$(top_builddir)/src/lib/python/isc/log_messages"
-AC_SUBST(PYTHON_LOGMSGPKG_DIR)
-
-# This is python package paths commonly used in python tests.  See
-# README of log_messages for why it's included.
-# lib/dns/python/.libs is necessary because __init__.py of isc package
-# automatically imports isc.datasrc, which then requires the DNS loadable
-# module.  #2145 should eliminate the need for it.
-COMMON_PYTHON_PATH="\$(abs_top_builddir)/src/lib/python/isc/log_messages:\$(abs_top_builddir)/src/lib/python/isc/cc:\$(abs_top_srcdir)/src/lib/python:\$(abs_top_builddir)/src/lib/python:\$(abs_top_builddir)/src/lib/dns/python/.libs"
-AC_SUBST(COMMON_PYTHON_PATH)
-
-# Check for python development environments
-if test -x ${PYTHON}-config; then
-	PYTHON_INCLUDES=`${PYTHON}-config --includes`
-
-	# Add any '-L..." flags to PYTHON_LDFLAGS.  We first make a copy of
-	# python-config --ldflags, removing any spaces and tabs
-	# between "-L" and its argument (some instances of python-config
-	# insert a space, which would confuse the code below).
-	# Notes: if -L isn't contained at all we can simply skip this process,
-	# so we only go through the flag if it's contained; also, protecting
-	# the output with [] seems necessary for environment to avoid getting
-	# an empty output accidentally.
-	python_config_ldflags=[`${PYTHON}-config --ldflags | ${SED} -ne 's/\([ \t]*-L\)[ ]*\([^ \t]*[ \t]*\)/\1\2/gp'`]
-	for flag in $python_config_ldflags; do
-		flag=`echo $flag | ${SED} -ne 's/^\(\-L.*\)$/\1/p'`
-		if test "X${flag}" != X; then
-			PYTHON_LDFLAGS="$PYTHON_LDFLAGS ${flag}"
-		fi
-	done
-	# on some platforms, ${PYTHON}-config --ldflags doesn't provide a -L
-	# option while having the library under a non trivial directory.
-	# as a workaround we try the "lib" sub directory under the common
-	# prefix for this python.
-	if test -z "${PYTHON_LDFLAGS}"; then
-		PYTHON_LDFLAGS="-L`${PYTHON}-config --prefix`/lib"
-	fi
-else
-	if test "X$PYTHON_INCLUDES" = X -o "X$PYTHON_LDFLAGS" = X; then
-		AC_MSG_WARN([${PYTHON}-config does not exist or is not executable, so we could not detect python development environment.  Your system may require an additional package (e.g. "python3-dev").  Alternatively, if you are sure you have python headers and libraries, define PYTHON_INCLUDES and PYTHON_LDFLAGS and run this script.])
-	fi
-fi
-
-# Some OSes including NetBSD don't install libpython.so in a well known path.
-# To avoid requiring dynamic library path with our python wrapper loadable
-# modules, we embed the path to the modules when possible.  We do this even
-# when the path is known in the common operational environment (e.g. when
-# it's stored in a common "hint" file) for simplicity.
-if test "x$ISC_RPATH_FLAG" != "x"; then
-	python_rpath=
-	for flag in ${PYTHON_LDFLAGS}; do
-		python_rpath="${python_rpath} `echo $flag | ${SED} -ne "s/^\(\-L\)/${ISC_RPATH_FLAG}/p"`"
-	done
-	PYTHON_LDFLAGS="${PYTHON_LDFLAGS} ${python_rpath}"
-fi
-
-AC_SUBST(PYTHON_INCLUDES)
-AC_SUBST(PYTHON_LDFLAGS)
-
-CPPFLAGS_SAVED="$CPPFLAGS"
-CPPFLAGS="$CPPFLAGS ${PYTHON_INCLUDES}"
-AC_CHECK_HEADERS([Python.h],, AC_MSG_ERROR([Missing Python.h]))
-CPPFLAGS="$CPPFLAGS_SAVED"
-
-# Check for python library.  Needed for Python-wrapper libraries.
-LDFLAGS_SAVED="$LDFLAGS"
-LDFLAGS="$LDFLAGS $PYTHON_LDFLAGS"
-python_bin="python${PYTHON_VERSION}"
-AC_CHECK_LIB($python_bin, main, python_lib=$python_bin, python_lib=no)
-if test $python_lib != "no"; then
-	PYTHON_LIB="-l$python_lib"
-fi
-AC_SUBST(PYTHON_LIB)
-LDFLAGS=$LDFLAGS_SAVED
-
-# Python 3.2 changed the return type of internal hash function to
-# Py_hash_t and some platforms (such as Solaris) strictly check for long
-# vs Py_hash_t. So we detect and use the appropriate return type.
-# Remove this test (and associated changes in pydnspp_config.h.in) when
-# we require Python 3.2.
-have_py_hash_t=0
-CPPFLAGS_SAVED="$CPPFLAGS"
-CPPFLAGS=${PYTHON_INCLUDES}
-AC_MSG_CHECKING(for Py_hash_t)
-AC_TRY_COMPILE([#include <Python.h>
-                Py_hash_t h;],,
-    [AC_MSG_RESULT(yes)
-     have_py_hash_t=1],
-    [AC_MSG_RESULT(no)])
-CPPFLAGS="$CPPFLAGS_SAVED"
-HAVE_PY_HASH_T=$have_py_hash_t
-AC_SUBST(HAVE_PY_HASH_T)
-
-# Check for the setproctitle module
-if test "$setproctitle_check" = "yes" ; then
-    AC_MSG_CHECKING(for setproctitle module)
-    if "$PYTHON" -c 'import setproctitle' 2>/dev/null ; then
-        AC_MSG_RESULT(ok)
-    else
-        AC_MSG_RESULT(missing)
-        AC_MSG_WARN([Missing setproctitle python module.
-Use --disable-setproctitle-check to skip this check.
-In this case we will continue, but naming of python processes will not work.])
-    fi
-fi
-
-# (g++ only check)
-# Python 3.2 has an unused parameter in one of its headers. This
-# has been reported, but not fixed as of yet, so we check if we need
-# to set -Wno-unused-parameter.
-if test "X$GXX" = "Xyes" -a "$werror_ok" = 1; then
-	CPPFLAGS_SAVED="$CPPFLAGS"
-	CPPFLAGS=${PYTHON_INCLUDES}
-	CXXFLAGS_SAVED="$CXXFLAGS"
-	CXXFLAGS="$CXXFLAGS $B10_CXXFLAGS -Werror"
-	AC_MSG_CHECKING([whether we need -Wno-unused-parameter for python])
-	AC_TRY_COMPILE(
-		[#include <Python.h>],
-		[],
-		[AC_MSG_RESULT(no)],
-		[
-		CXXFLAGS="$CXXFLAGS -Wno-unused-parameter"
-		AC_TRY_COMPILE([#include <Python.h>],
-		[],
-		[AC_MSG_RESULT(yes)
-		 PYTHON_CXXFLAGS="${PYTHON_CXXFLAGS} -Wno-unused-parameter"
-		 AC_SUBST(PYTHON_CXXFLAGS)
-		],
-		[AC_MSG_ERROR([Can't compile against Python.h.  If you're using MacOS X and have installed Python with Homebrew, see http://kea.isc.org/wiki/SystemNotesMacOSX])]
-                )
-                ]
-	)
-	CXXFLAGS="$CXXFLAGS_SAVED"
-	CPPFLAGS="$CPPFLAGS_SAVED"
 fi
 
 # produce PIC unless we disable shared libraries. need this for python bindings.
@@ -551,29 +397,6 @@ AC_TRY_COMPILE([
         [AC_MSG_RESULT(yes)
         AC_DEFINE(HAVE_SA_LEN, 1, [Define to 1 if sockaddr has a sa_len member, and corresponding sin_len and sun_len])],
         AC_MSG_RESULT(no))
-
-AC_ARG_WITH(pycoverage,
-[  --with-pycoverage[=PROGRAM]         enable python code coverage using the specified coverage], pycoverage="$withval", pycoverage="no")
-if test "$pycoverage" = "no" ; then
-	# just run the tests normally with python
-	PYCOVERAGE_RUN="${PYTHON}"
-	USE_PYCOVERAGE="no"
-elif test "$pycoverage" = "yes" ; then
-	PYCOVERAGE="coverage"
-	PYCOVERAGE_RUN="${PYCOVERAGE} run --branch --append"
-	USE_PYCOVERAGE="yes"
-else
-	PYCOVERAGE="$pycoverage"
-	PYCOVERAGE_RUN="${PYCOVERAGE} run --branch --append"
-	USE_PYCOVERAGE="yes"
-fi
-AM_CONDITIONAL(ENABLE_PYTHON_COVERAGE, test x$USE_PYCOVERAGE != xno)
-AC_SUBST(PYCOVERAGE)
-AC_SUBST(PYCOVERAGE_RUN)
-AC_SUBST(USE_PYCOVERAGE)
-
-
-
 
 enable_gtest="no"
 GTEST_INCLUDES=
@@ -1370,13 +1193,6 @@ if test "x$HAVE_PKG_CONFIG" = "xno" ; then
   AC_MSG_ERROR(Please install pkg-config)
 fi
 
-AX_SQLITE3_FOR_BIND10
-if test "x$have_sqlite" = "xyes" ; then
-  enable_features="$enable_features SQLite3"
-
-  AX_PYTHON_SQLITE3
-fi
-
 #
 # ASIO: we extensively use it as the C++ event management module.
 #
@@ -1448,8 +1264,12 @@ AC_ARG_ENABLE(generate_docs, [AC_HELP_STRING([--enable-generate-docs],
   [regenerate documentation using Docbook [default=no]])],
   enable_generate_docs=$enableval, enable_generate_docs=no)
 
-# Check for xsltproc
 if test "x$enable_generate_docs" != xno ; then
+  if test "$PYTHON" == "no" ; then
+    AC_MSG_ERROR("Python3 is required for enable-generate-docs")
+  fi
+
+# Check for xsltproc
   AC_PATH_PROG([XSLTPROC], [xsltproc])
   if test -z "$XSLTPROC"; then
     AC_MSG_ERROR("xsltproc not found; it is required for --enable-generate-docs")
@@ -1543,31 +1363,6 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  ext/Makefile
                  m4macros/Makefile
                  Makefile
-                 src/bin/bind10/bind10
-                 src/bin/bind10/init.py
-                 src/bin/bind10/Makefile
-                 src/bin/bind10/run_bind10.sh
-                 src/bin/bind10/tests/init_test.py
-                 src/bin/bind10/tests/Makefile
-                 src/bin/bindctl/bindctl_main.py
-                 src/bin/bindctl/Makefile
-                 src/bin/bindctl/run_bindctl.sh
-                 src/bin/bindctl/tests/bindctl_test
-                 src/bin/bindctl/tests/Makefile
-                 src/bin/cfgmgr/b10-cfgmgr.py
-                 src/bin/cfgmgr/local_plugins/Makefile
-                 src/bin/cfgmgr/Makefile
-                 src/bin/cfgmgr/plugins/datasrc.spec.pre
-                 src/bin/cfgmgr/plugins/Makefile
-                 src/bin/cfgmgr/plugins/tests/Makefile
-                 src/bin/cfgmgr/tests/b10-cfgmgr_test.py
-                 src/bin/cfgmgr/tests/Makefile
-                 src/bin/cmdctl/cmdctl.py
-                 src/bin/cmdctl/cmdctl.spec.pre
-                 src/bin/cmdctl/Makefile
-                 src/bin/cmdctl/run_b10-cmdctl.sh
-                 src/bin/cmdctl/tests/cmdctl_test
-                 src/bin/cmdctl/tests/Makefile
                  src/bin/d2/Makefile
                  src/bin/d2/spec_config.h.pre
                  src/bin/d2/tests/Makefile
@@ -1594,26 +1389,8 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/keactrl/tests/keactrl_tests.sh
                  src/bin/keactrl/tests/Makefile
                  src/bin/Makefile
-                 src/bin/msgq/Makefile
-                 src/bin/msgq/msgq.py
-                 src/bin/msgq/run_msgq.sh
-                 src/bin/msgq/tests/Makefile
                  src/bin/sockcreator/Makefile
                  src/bin/sockcreator/tests/Makefile
-                 src/bin/stats/Makefile
-                 src/bin/stats/stats_httpd.py
-                 src/bin/stats/stats.py
-                 src/bin/stats/tests/Makefile
-                 src/bin/stats/tests/testdata/Makefile
-                 src/bin/sysinfo/Makefile
-                 src/bin/sysinfo/run_sysinfo.sh
-                 src/bin/sysinfo/sysinfo.py
-                 src/bin/tests/Makefile
-                 src/bin/tests/process_rename_test.py
-                 src/bin/usermgr/b10-cmdctl-usermgr.py
-                 src/bin/usermgr/Makefile
-                 src/bin/usermgr/run_b10-cmdctl-usermgr.sh
-                 src/bin/usermgr/tests/Makefile
                  src/hooks/dhcp/Makefile
                  src/hooks/dhcp/user_chk/Makefile
                  src/hooks/dhcp/user_chk/tests/Makefile
@@ -1643,9 +1420,6 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/dhcp/tests/Makefile
                  src/lib/dns/gen-rdatacode.py
                  src/lib/dns/Makefile
-                 src/lib/dns/python/Makefile
-                 src/lib/dns/python/pydnspp_config.h
-                 src/lib/dns/python/tests/Makefile
                  src/lib/dns/tests/Makefile
                  src/lib/dns/tests/testdata/Makefile
                  src/lib/exceptions/Makefile
@@ -1668,44 +1442,13 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/log/tests/severity_test.sh
                  src/lib/log/tests/tempdir.h
                  src/lib/Makefile
-                 src/lib/python/bind10_config.py
-                 src/lib/python/isc/bind10/Makefile
-                 src/lib/python/isc/bind10/tests/Makefile
-                 src/lib/python/isc/cc/cc_generated/Makefile
-                 src/lib/python/isc/cc/Makefile
-                 src/lib/python/isc/cc/tests/cc_test
-                 src/lib/python/isc/cc/tests/Makefile
-                 src/lib/python/isc/config/Makefile
-                 src/lib/python/isc/config/tests/config_test
-                 src/lib/python/isc/config/tests/Makefile
-                 src/lib/python/isc/dns/Makefile
-                 src/lib/python/isc/log/Makefile
-                 src/lib/python/isc/log_messages/Makefile
-                 src/lib/python/isc/log_messages/work/__init__.py
-                 src/lib/python/isc/log_messages/work/Makefile
-                 src/lib/python/isc/log/tests/log_console.py
-                 src/lib/python/isc/log/tests/Makefile
-                 src/lib/python/isc/Makefile
-                 src/lib/python/isc/net/Makefile
-                 src/lib/python/isc/net/tests/Makefile
-                 src/lib/python/isc/sysinfo/Makefile
-                 src/lib/python/isc/sysinfo/tests/Makefile
-                 src/lib/python/isc/testutils/Makefile
-                 src/lib/python/isc/util/cio/Makefile
-                 src/lib/python/isc/util/cio/tests/Makefile
-                 src/lib/python/isc/util/Makefile
-                 src/lib/python/isc/util/tests/Makefile
-                 src/lib/python/Makefile
                  src/lib/testutils/dhcp_test_lib.sh
                  src/lib/testutils/Makefile
                  src/lib/testutils/testdata/Makefile
                  src/lib/util/io/Makefile
                  src/lib/util/Makefile
-                 src/lib/util/python/doxygen2pydoc.py
                  src/lib/util/python/gen_wiredata.py
                  src/lib/util/python/Makefile
-                 src/lib/util/python/mkpywrapper.py
-                 src/lib/util/pyunittests/Makefile
                  src/lib/util/tests/Makefile
                  src/lib/util/threads/Makefile
                  src/lib/util/threads/tests/Makefile
@@ -1719,19 +1462,10 @@ AC_CONFIG_FILES([compatcheck/Makefile
 ])
 
  AC_CONFIG_COMMANDS([permissions], [
-           chmod +x src/bin/bind10/bind10
-           chmod +x src/bin/bind10/run_bind10.sh
-           chmod +x src/bin/bindctl/run_bindctl.sh
-           chmod +x src/bin/bindctl/tests/bindctl_test
-           chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
-           chmod +x src/bin/cmdctl/tests/cmdctl_test
            chmod +x src/bin/dhcp4/tests/dhcp4_process_tests.sh
            chmod +x src/bin/dhcp6/tests/dhcp6_process_tests.sh
            chmod +x src/bin/keactrl/keactrl
            chmod +x src/bin/keactrl/tests/keactrl_tests.sh
-           chmod +x src/bin/msgq/run_msgq.sh
-           chmod +x src/bin/sysinfo/run_sysinfo.sh
-           chmod +x src/bin/usermgr/run_b10-cmdctl-usermgr.sh
            chmod +x src/lib/dns/gen-rdatacode.py
            chmod +x src/lib/log/tests/console_test.sh
            chmod +x src/lib/log/tests/destination_test.sh
@@ -1739,10 +1473,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
            chmod +x src/lib/log/tests/local_file_test.sh
            chmod +x src/lib/log/tests/logger_lock_test.sh
            chmod +x src/lib/log/tests/severity_test.sh
-           chmod +x src/lib/python/isc/log/tests/log_console.py
-           chmod +x src/lib/util/python/doxygen2pydoc.py
            chmod +x src/lib/util/python/gen_wiredata.py
-           chmod +x src/lib/util/python/mkpywrapper.py
 ])
 
 AC_OUTPUT
@@ -1769,14 +1500,29 @@ C++ Compiler:
   CXXFLAGS:        ${CXXFLAGS}
   LDFLAGS:         ${LDFLAGS}
   B10_CXXFLAGS:    ${B10_CXXFLAGS}
+END
 
-Python:
+if test "$PYTHON" != "no" ; then
+cat >> config.report << END
+
+Python3:
   PYTHON_VERSION:  ${PYTHON_VERSION}
   PYTHON_INCLUDES: ${PYTHON_INCLUDES}
   PYTHON_CXXFLAGS: ${PYTHON_CXXFLAGS}
   PYTHON_LDFLAGS:  ${PYTHON_LDFLAGS}
   PYTHON_LIB:      ${PYTHON_LIB}
 
+END
+else
+cat >> config.report << END
+
+Python3:
+  not installed
+
+END
+fi
+
+cat >> config.report << END
 Boost:
   BOOST_VERSION:   ${BOOST_VERSION}
   BOOST_INCLUDES:  ${BOOST_INCLUDES}
@@ -1795,13 +1541,8 @@ Log4cplus:
   LOG4CPLUS_INCLUDES: ${LOG4CPLUS_INCLUDES}
   LOG4CPLUS_LIBS:  ${LOG4CPLUS_LIBS}
 
-SQLite:
-  SQLITE_VERSION:  ${SQLITE_VERSION}
-  SQLITE_CFLAGS:   ${SQLITE_CFLAGS}
-  SQLITE_LIBS:     ${SQLITE_LIBS}
-
 Kea config backend:
-  CONFIG_BACKEND: ${CONFIG_BACKEND}
+  CONFIG_BACKEND:  ${CONFIG_BACKEND}
 END
 
 # Avoid confusion on DNS/DHCP and only mention MySQL if it
@@ -1817,7 +1558,8 @@ END
 else
 cat >> config.report << END
 
-MySQL: no
+MySQL:
+  no
 END
 fi
 
@@ -1832,7 +1574,8 @@ END
 else
 cat >> config.report << END
 
-PostgreSQL: no
+PostgreSQL:
+  no
 END
 fi
 

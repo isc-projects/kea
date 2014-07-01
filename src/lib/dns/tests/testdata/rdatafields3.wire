@@ -1,0 +1,12 @@
+###
+### This data file was auto-generated from rdatafields3.spec
+###
+
+# TXT RDATA, RDLEN=39
+0027
+# String Len=12, String="first string"
+0c 666972737420737472696e67
+# String Len=13, String="second string"
+0d 7365636f6e6420737472696e67
+# String Len=11, String="last string"
+0b 6c61737420737472696e67
