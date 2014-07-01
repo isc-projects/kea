@@ -358,22 +358,22 @@ TSIGKeyInfoParser::build(isc::data::ConstElementPtr key_config) {
     std::string name;
     std::string algorithm;
     std::string secret;
-    std::vector<isc::data::Element::Position> pos;
+    std::map<std::string, isc::data::Element::Position> pos;
 
     // Fetch the key's parsed scalar values from parser's local storage.
     // All are required, if any are missing we'll throw.
     try {
-        pos.push_back(local_scalars_.getParam("name", name));
-        pos.push_back(local_scalars_.getParam("algorithm", algorithm));
-        pos.push_back(local_scalars_.getParam("secret", secret));
+        pos["name"] = local_scalars_.getParam("name", name);
+        pos["algorithm"] = local_scalars_.getParam("algorithm", algorithm);
+        pos["secret"] = local_scalars_.getParam("secret", secret);
     } catch (const std::exception& ex) {
         isc_throw(D2CfgError, "TSIG Key incomplete : " << ex.what()
-                  << " : " << key_config->getPosition());
+                  << " (" << key_config->getPosition() << ")");
     }
 
     // Name cannot be blank.
     if (name.empty()) {
-        isc_throw(D2CfgError, "TSIG key must specify name : " << pos[0]);
+        isc_throw(D2CfgError, "TSIG key must specify name (" << pos["name"] << ")");
     }
 
     // Currently, the premise is that key storage is always empty prior to
@@ -381,23 +381,23 @@ TSIGKeyInfoParser::build(isc::data::ConstElementPtr key_config) {
     // are not allowed and should be flagged as a configuration error.
     if (keys_->find(name) != keys_->end()) {
         isc_throw(D2CfgError, "Duplicate TSIG key name specified : " << name
-                              << " : " << pos[0]);
+                              << " (" << pos["name"] << ")");
     }
 
     // Algorithm must be valid.
     try {
         TSIGKeyInfo::stringToAlgorithmName(algorithm);
     } catch (const std::exception& ex) {
-        isc_throw(D2CfgError, "TSIG key : " << ex.what() << " : " << pos[1]);
+        isc_throw(D2CfgError, "TSIG key : " << ex.what() << " (" << pos["algorithm"] << ")");
     }
 
     // Secret cannot be blank.
-    // Cryptolink lib doesn't offer anyway to validate these. As long as it
+    // Cryptolink lib doesn't offer any way to validate these. As long as it
     // isn't blank we'll accept it.  If the content is bad, the call to in
     // TSIGKeyInfo::remakeKey() made in the TSIGKeyInfo ctor will throw.
     // We'll deal with that below.
     if (secret.empty()) {
-        isc_throw(D2CfgError, "TSIG key must specify secret : " << pos[2]);
+        isc_throw(D2CfgError, "TSIG key must specify secret (" << pos["secret"] << ")");
     }
 
     // Everything should be valid, so create the key instance.
@@ -407,7 +407,7 @@ TSIGKeyInfoParser::build(isc::data::ConstElementPtr key_config) {
     try {
         key_info.reset(new TSIGKeyInfo(name, algorithm, secret));
     } catch (const std::exception& ex) {
-        isc_throw(D2CfgError, ex.what() << " : " << key_config->getPosition());
+        isc_throw(D2CfgError, ex.what() << " (" << key_config->getPosition() << ")");
 
     }
 
@@ -429,7 +429,7 @@ TSIGKeyInfoParser::createConfigParser(const std::string& config_id,
     } else {
         isc_throw(NotImplemented,
                   "parser error: TSIGKeyInfo parameter not supported: "
-                  << config_id << " : " << pos);
+                  << config_id << " (" << pos << ")");
     }
 
     // Return the new parser instance.
@@ -522,28 +522,28 @@ DnsServerInfoParser::build(isc::data::ConstElementPtr server_config) {
     std::string hostname;
     std::string ip_address;
     uint32_t port = DnsServerInfo::STANDARD_DNS_PORT;
-    std::vector<isc::data::Element::Position> pos;
+    std::map<std::string, isc::data::Element::Position> pos;
 
     // Fetch the server configuration's parsed scalar values from parser's
     // local storage.  They're all optional, so no try-catch here.
-    pos.push_back(local_scalars_.getParam("hostname", hostname,
-                                          DCfgContextBase::OPTIONAL));
-    pos.push_back(local_scalars_.getParam("ip_address", ip_address,
-                                          DCfgContextBase::OPTIONAL));
-    pos.push_back(local_scalars_.getParam("port", port,
-                                           DCfgContextBase::OPTIONAL));
+    pos["hostname"] = local_scalars_.getParam("hostname", hostname,
+                                              DCfgContextBase::OPTIONAL);
+    pos["ip_address"] = local_scalars_.getParam("ip_address", ip_address,
+                                                DCfgContextBase::OPTIONAL);
+    pos["port"] =  local_scalars_.getParam("port", port,
+                                           DCfgContextBase::OPTIONAL);
 
     // The configuration must specify one or the other.
     if (hostname.empty() == ip_address.empty()) {
         isc_throw(D2CfgError, "Dns Server must specify one or the other"
                   " of hostname or IP address"
-                  << " : " << server_config->getPosition());
+                  << " (" << server_config->getPosition() << ")");
     }
 
     // Port cannot be zero.
     if (port == 0) {
         isc_throw(D2CfgError, "Dns Server : port cannot be 0"
-                  << " : " << pos[2]);
+                  << " (" << pos["port"] << ")");
     }
 
     DnsServerInfoPtr serverInfo;
@@ -563,7 +563,7 @@ DnsServerInfoParser::build(isc::data::ConstElementPtr server_config) {
         /// processing.
         /// Until then we'll throw unsupported.
         isc_throw(D2CfgError, "Dns Server : hostname is not yet supported"
-                  << " : " << pos[0]);
+                  << " (" << pos["hostname"] << ")");
     } else {
         try {
             // Create an IOAddress from the IP address string given and then
@@ -572,7 +572,7 @@ DnsServerInfoParser::build(isc::data::ConstElementPtr server_config) {
             serverInfo.reset(new DnsServerInfo(hostname, io_addr, port));
         } catch (const isc::asiolink::IOError& ex) {
             isc_throw(D2CfgError, "Dns Server : invalid IP address : "
-                      << ip_address << " : " << pos[1]);
+                      << ip_address << " (" << pos["ip_address"] << ")");
         }
     }
 
@@ -597,7 +597,7 @@ DnsServerInfoParser::createConfigParser(const std::string& config_id,
     } else {
         isc_throw(NotImplemented,
                   "parser error: DnsServerInfo parameter not supported: "
-                  << config_id << " : " << pos);
+                  << config_id << " (" << pos << ")");
     }
 
     // Return the new parser instance.
@@ -644,7 +644,7 @@ build(isc::data::ConstElementPtr server_list){
     // Domains must have at least one server.
     if (parsers_.size() == 0) {
         isc_throw (D2CfgError, "Server List must contain at least one server"
-                   << " : " << server_list->getPosition());
+                   << " (" << server_list->getPosition() << ")");
     }
 }
 
@@ -693,23 +693,24 @@ DdnsDomainParser::build(isc::data::ConstElementPtr domain_config) {
     // Now construct the domain.
     std::string name;
     std::string key_name;
-    std::vector<isc::data::Element::Position> pos;
+    std::map<std::string, isc::data::Element::Position> pos;
+
 
     // Fetch the parsed scalar values from parser's local storage.
     // Any required that are missing will throw.
     try {
-        pos.push_back(local_scalars_.getParam("name", name));
-        pos.push_back(local_scalars_.getParam("key_name", key_name,
-                                              DCfgContextBase::OPTIONAL));
+        pos["name"] = local_scalars_.getParam("name", name);
+        pos["key_name"] = local_scalars_.getParam("key_name", key_name,
+                                                  DCfgContextBase::OPTIONAL);
     } catch (const std::exception& ex) {
         isc_throw(D2CfgError, "DdnsDomain incomplete : " << ex.what()
-                  << " : " << domain_config->getPosition());
+                  << " (" << domain_config->getPosition() << ")");
     }
 
     // Blank domain names are not allowed.
     if (name.empty()) {
-        isc_throw(D2CfgError, "DndsDomain : name cannot be blank : "
-                   << pos[0]);
+        isc_throw(D2CfgError, "DndsDomain : name cannot be blank ("
+                   << pos["name"] << ")");
     }
 
     // Currently, the premise is that domain storage is always empty
@@ -718,7 +719,7 @@ DdnsDomainParser::build(isc::data::ConstElementPtr domain_config) {
     // error.
     if (domains_->find(name) != domains_->end()) {
         isc_throw(D2CfgError, "Duplicate domain specified:" << name
-                  << " : " << pos[0]);
+                  << " (" << pos["name"] << ")");
     }
 
     // Key name is optional. If it is not blank, then find the key in the
@@ -735,7 +736,7 @@ DdnsDomainParser::build(isc::data::ConstElementPtr domain_config) {
         if (!tsig_key_info) {
             isc_throw(D2CfgError, "DdnsDomain : " << name
                       << " specifies an undefined key: " << key_name
-                      << " : " << pos[1]);
+                      << " (" << pos["key_name"] << ")");
         }
     }
 
@@ -764,7 +765,7 @@ DdnsDomainParser::createConfigParser(const std::string& config_id,
     } else {
        isc_throw(NotImplemented,
                 "parser error: DdnsDomain parameter not supported: "
-                << config_id << " : " << pos);
+                << config_id << " (" << pos << ")");
     }
 
     // Return the new domain parser instance.
@@ -865,7 +866,7 @@ DdnsDomainListMgrParser::createConfigParser(const std::string& config_id,
     } else {
        isc_throw(NotImplemented, "parser error: "
                  "DdnsDomainListMgr parameter not supported: " << config_id
-                 << " : " << pos);
+                 << " (" << pos << ")");
     }
 
     // Return the new domain parser instance.

@@ -28,10 +28,22 @@ using namespace isc::d2;
 
 namespace {
 
+/// @brief Function to create full path to the spec file
+///
+/// The full path is dependent upon the value of D2_SRC_DIR which
+/// whose value is generated from test_data_files_config.h.in
+///
+/// @param name file name to which the path should be prepended
 std::string specfile(const std::string& name) {
     return (std::string(D2_SRC_DIR) + "/" + name);
 }
 
+/// @brief Function to create full path to test data file
+///
+/// The full path is dependent upon the value of D2_TEST_DATA_DIR which
+/// whose value is generated from test_data_files_config.h.in
+///
+/// @param name file name to which the path should be prepended
 std::string testDataFile(const std::string& name) {
     return (std::string(D2_TEST_DATA_DIR) + "/" + name);
 }
