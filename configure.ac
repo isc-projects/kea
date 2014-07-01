@@ -1363,7 +1363,7 @@ END
 if test "$PYTHON" != "no" ; then
 cat >> config.report << END
 
-Python:
+Python3:
   PYTHON_VERSION:  ${PYTHON_VERSION}
   PYTHON_INCLUDES: ${PYTHON_INCLUDES}
   PYTHON_CXXFLAGS: ${PYTHON_CXXFLAGS}
@@ -1374,7 +1374,8 @@ END
 else
 cat >> config.report << END
 
-Python: no
+Python3:
+  not installed
 
 END
 fi
@@ -1396,7 +1397,7 @@ Log4cplus:
   LOG4CPLUS_LIBS:  ${LOG4CPLUS_LIBS}
 
 Kea config backend:
-  CONFIG_BACKEND: ${CONFIG_BACKEND}
+  CONFIG_BACKEND:  ${CONFIG_BACKEND}
 END
 
 # Avoid confusion on DNS/DHCP and only mention MySQL if it
@@ -1412,7 +1413,8 @@ END
 else
 cat >> config.report << END
 
-MySQL: no
+MySQL:
+  no
 END
 fi
 
@@ -1427,7 +1429,8 @@ END
 else
 cat >> config.report << END
 
-PostgreSQL: no
+PostgreSQL:
+  no
 END
 fi
 
