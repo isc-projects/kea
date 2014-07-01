@@ -1,3 +1,11 @@
+797.	[build]		tomek
+	Removed a lot of remaining BIND10 framework: bind10, bindctl,
+	cfgmgr, cmdctl, msgq, stats, sysinfo, tests, usermgr from src/bin
+	directory, also src/lib/python directory. There are still some
+	components that require Python3, but they are expected to be
+	removed in the near future.
+	(Trac #3413, git 8f8886ba93e9dfc714494b843deb1b3e14e58d67)
+
 796.	[doc]		tomek
 	User's Guide renamed to Kea Administrator Reference Manual,
 	removed sections specific to BIND10/Bundy framework, rewritten

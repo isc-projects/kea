@@ -1,0 +1,12 @@
+###
+### This data file was auto-generated from name_toWire5.spec
+###
+
+# DNS Name: a.example.com
+0161076578616d706c6503636f6d00
+
+# DNS Name: b.eXample + compression pointer: 10
+0162076558616d706c65c00a
+
+# DNS Name: c + compression pointer: 17
+0163c011

@@ -1,0 +1,14 @@
+###
+### This data file was auto-generated from rdata_tsig_fromWire8.spec
+###
+
+# TSIG RDATA, RDLEN=41
+0029
+# Algorithm=hmac-sha256 Time-Signed=1286978795 Fudge=300
+0b686d61632d73686132353600 00004cb5bceb 012c
+# MAC Size=65535 MAC=(see hex)
+ffff 2264756d6d79206461746122
+# Original-ID=2845 Error=0
+0b1d 0000
+# Other-Len=0 Other-Data=(see hex)
+0000

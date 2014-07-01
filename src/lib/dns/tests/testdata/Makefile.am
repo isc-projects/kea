@@ -1,79 +1,4 @@
-CLEANFILES = *.wire
-
-BUILT_SOURCES = edns_toWire1.wire edns_toWire2.wire edns_toWire3.wire
-BUILT_SOURCES += edns_toWire4.wire
-BUILT_SOURCES += message_fromWire10.wire message_fromWire11.wire
-BUILT_SOURCES += message_fromWire12.wire message_fromWire13.wire
-BUILT_SOURCES += message_fromWire14.wire message_fromWire15.wire
-BUILT_SOURCES += message_fromWire16.wire message_fromWire17.wire
-BUILT_SOURCES += message_fromWire18.wire message_fromWire19.wire
-BUILT_SOURCES += message_fromWire20.wire message_fromWire21.wire
-BUILT_SOURCES += message_fromWire22.wire
-BUILT_SOURCES += message_toWire2.wire message_toWire3.wire
-BUILT_SOURCES += message_toWire4.wire message_toWire5.wire
-BUILT_SOURCES += message_toText1.wire message_toText2.wire
-BUILT_SOURCES += message_toText3.wire
-BUILT_SOURCES += name_toWire5.wire name_toWire6.wire
-BUILT_SOURCES += rdatafields1.wire rdatafields2.wire rdatafields3.wire
-BUILT_SOURCES += rdatafields4.wire rdatafields5.wire rdatafields6.wire
-BUILT_SOURCES += rdata_dnskey_fromWire.wire rdata_dnskey_empty_keydata_fromWire.wire
-BUILT_SOURCES += rdata_nsec_fromWire4.wire rdata_nsec_fromWire5.wire
-BUILT_SOURCES += rdata_nsec_fromWire6.wire rdata_nsec_fromWire7.wire
-BUILT_SOURCES += rdata_nsec_fromWire8.wire rdata_nsec_fromWire9.wire
-BUILT_SOURCES += rdata_nsec_fromWire10.wire
-# 11-15 are skipped to be consistent with NSEC3 test data
-BUILT_SOURCES += rdata_nsec_fromWire16.wire
-BUILT_SOURCES += rdata_nsec3_fromWire2.wire
-BUILT_SOURCES += rdata_nsec3_fromWire4.wire rdata_nsec3_fromWire5.wire
-BUILT_SOURCES += rdata_nsec3_fromWire6.wire rdata_nsec3_fromWire7.wire
-BUILT_SOURCES += rdata_nsec3_fromWire8.wire rdata_nsec3_fromWire9.wire
-BUILT_SOURCES += rdata_nsec3_fromWire10.wire rdata_nsec3_fromWire11.wire
-BUILT_SOURCES += rdata_nsec3_fromWire12.wire rdata_nsec3_fromWire13.wire
-BUILT_SOURCES += rdata_nsec3_fromWire14.wire rdata_nsec3_fromWire15.wire
-BUILT_SOURCES += rdata_nsec3_fromWire16.wire rdata_nsec3_fromWire17.wire
-BUILT_SOURCES += rdata_nsec3param_fromWire2.wire
-BUILT_SOURCES += rdata_nsec3param_fromWire11.wire
-BUILT_SOURCES += rdata_nsec3param_fromWire13.wire
-BUILT_SOURCES += rdata_rrsig_fromWire2.wire
-BUILT_SOURCES += rdata_minfo_fromWire1.wire rdata_minfo_fromWire2.wire
-BUILT_SOURCES += rdata_minfo_fromWire3.wire rdata_minfo_fromWire4.wire
-BUILT_SOURCES += rdata_minfo_fromWire5.wire rdata_minfo_fromWire6.wire
-BUILT_SOURCES += rdata_minfo_toWire1.wire rdata_minfo_toWire2.wire
-BUILT_SOURCES += rdata_minfo_toWireUncompressed1.wire
-BUILT_SOURCES += rdata_minfo_toWireUncompressed2.wire
-BUILT_SOURCES += rdata_rp_fromWire1.wire rdata_rp_fromWire2.wire
-BUILT_SOURCES += rdata_rp_fromWire3.wire rdata_rp_fromWire4.wire
-BUILT_SOURCES += rdata_rp_fromWire5.wire rdata_rp_fromWire6.wire
-BUILT_SOURCES += rdata_rp_toWire1.wire rdata_rp_toWire2.wire
-BUILT_SOURCES += rdata_sshfp_fromWire1.wire rdata_sshfp_fromWire2.wire
-BUILT_SOURCES += rdata_sshfp_fromWire3.wire rdata_sshfp_fromWire4.wire
-BUILT_SOURCES += rdata_sshfp_fromWire5.wire rdata_sshfp_fromWire6.wire
-BUILT_SOURCES += rdata_sshfp_fromWire7.wire rdata_sshfp_fromWire8.wire
-BUILT_SOURCES += rdata_afsdb_fromWire1.wire rdata_afsdb_fromWire2.wire
-BUILT_SOURCES += rdata_afsdb_fromWire3.wire rdata_afsdb_fromWire4.wire
-BUILT_SOURCES += rdata_afsdb_fromWire5.wire
-BUILT_SOURCES += rdata_afsdb_toWire1.wire rdata_afsdb_toWire2.wire
-BUILT_SOURCES += rdata_soa_toWireUncompressed.wire
-BUILT_SOURCES += rdata_txt_fromWire2.wire rdata_txt_fromWire3.wire
-BUILT_SOURCES += rdata_txt_fromWire4.wire rdata_txt_fromWire5.wire
-BUILT_SOURCES += rdata_tlsa_fromWire3.wire rdata_tlsa_fromWire4.wire
-BUILT_SOURCES += rdata_tlsa_fromWire5.wire rdata_tlsa_fromWire6.wire
-BUILT_SOURCES += rdata_tlsa_fromWire7.wire rdata_tlsa_fromWire8.wire
-BUILT_SOURCES += rdata_tsig_fromWire1.wire rdata_tsig_fromWire2.wire
-BUILT_SOURCES += rdata_tsig_fromWire3.wire rdata_tsig_fromWire4.wire
-BUILT_SOURCES += rdata_tsig_fromWire5.wire rdata_tsig_fromWire6.wire
-BUILT_SOURCES += rdata_tsig_fromWire7.wire rdata_tsig_fromWire8.wire
-BUILT_SOURCES += rdata_tsig_fromWire9.wire
-BUILT_SOURCES += rdata_tsig_toWire1.wire rdata_tsig_toWire2.wire
-BUILT_SOURCES += rdata_tsig_toWire3.wire rdata_tsig_toWire4.wire
-BUILT_SOURCES += rdata_tsig_toWire5.wire
-BUILT_SOURCES += rdata_caa_fromWire1.wire rdata_caa_fromWire2.wire
-BUILT_SOURCES += rdata_caa_fromWire3.wire rdata_caa_fromWire4.wire
-BUILT_SOURCES += tsigrecord_toWire1.wire tsigrecord_toWire2.wire
-BUILT_SOURCES += tsig_verify1.wire tsig_verify2.wire tsig_verify3.wire
-BUILT_SOURCES += tsig_verify4.wire tsig_verify5.wire tsig_verify6.wire
-BUILT_SOURCES += tsig_verify7.wire tsig_verify8.wire tsig_verify9.wire
-BUILT_SOURCES += tsig_verify10.wire
+CLEANFILES =
 
 # NOTE: keep this in sync with real file listing
 # so is included in tarball
@@ -193,5 +118,86 @@ EXTRA_DIST += broken.zone
 EXTRA_DIST += origincheck.txt
 EXTRA_DIST += omitcheck.txt
 
-.spec.wire:
-	$(PYTHON) $(top_builddir)/src/lib/util/python/gen_wiredata.py -o $@ $<
+# Generated .wire files
+EXTRA_DIST += edns_toWire1.wire edns_toWire2.wire
+EXTRA_DIST += edns_toWire3.wire edns_toWire4.wire
+EXTRA_DIST += message_fromWire10.wire
+EXTRA_DIST += message_fromWire11.wire message_fromWire12.wire
+EXTRA_DIST += message_fromWire13.wire message_fromWire14.wire
+EXTRA_DIST += message_fromWire15.wire message_fromWire16.wire
+EXTRA_DIST += message_fromWire17.wire message_fromWire18.wire
+EXTRA_DIST += message_fromWire19.wire message_fromWire20.wire
+EXTRA_DIST += message_fromWire21.wire message_fromWire22.wire
+EXTRA_DIST += message_toWire1 message_toWire2.wire message_toWire3.wire
+EXTRA_DIST += message_toWire4.wire message_toWire5.wire
+EXTRA_DIST += message_toText1.txt message_toText1.wire
+EXTRA_DIST += message_toText2.txt message_toText2.wire
+EXTRA_DIST += message_toText3.txt message_toText3.wire
+EXTRA_DIST += name_toWire5.wire name_toWire6.wire
+EXTRA_DIST += rdatafields1.wire rdatafields2.wire rdatafields3.wire
+EXTRA_DIST += rdatafields4.wire rdatafields5.wire rdatafields6.wire
+EXTRA_DIST += rdata_dnskey_fromWire.wire rdata_dnskey_empty_keydata_fromWire.wire
+EXTRA_DIST += rdata_nsec_fromWire4.wire rdata_nsec_fromWire5.wire
+EXTRA_DIST += rdata_nsec_fromWire6.wire rdata_nsec_fromWire7.wire
+EXTRA_DIST += rdata_nsec_fromWire8.wire rdata_nsec_fromWire9.wire
+EXTRA_DIST += rdata_nsec_fromWire10.wire
+EXTRA_DIST += rdata_nsec_fromWire16.wire
+EXTRA_DIST += rdata_nsec3param_fromWire2.wire
+EXTRA_DIST += rdata_nsec3param_fromWire11.wire
+EXTRA_DIST += rdata_nsec3param_fromWire13.wire
+EXTRA_DIST += rdata_nsec3_fromWire2.wire rdata_nsec3_fromWire3
+EXTRA_DIST += rdata_nsec3_fromWire4.wire rdata_nsec3_fromWire5.wire
+EXTRA_DIST += rdata_nsec3_fromWire6.wire rdata_nsec3_fromWire7.wire
+EXTRA_DIST += rdata_nsec3_fromWire8.wire rdata_nsec3_fromWire9.wire
+EXTRA_DIST += rdata_nsec3_fromWire10.wire rdata_nsec3_fromWire11.wire
+EXTRA_DIST += rdata_nsec3_fromWire12.wire rdata_nsec3_fromWire13.wire
+EXTRA_DIST += rdata_nsec3_fromWire14.wire rdata_nsec3_fromWire15.wire
+EXTRA_DIST += rdata_nsec3_fromWire16.wire rdata_nsec3_fromWire17.wire
+EXTRA_DIST += rdata_rrsig_fromWire2.wire
+EXTRA_DIST += rdata_rp_fromWire1.wire rdata_rp_fromWire2.wire
+EXTRA_DIST += rdata_rp_fromWire3.wire rdata_rp_fromWire4.wire
+EXTRA_DIST += rdata_rp_fromWire5.wire rdata_rp_fromWire6.wire
+EXTRA_DIST += rdata_rp_toWire1.wire rdata_rp_toWire2.wire
+EXTRA_DIST += rdata_sshfp_fromWire1.wire rdata_sshfp_fromWire2.wire
+EXTRA_DIST += rdata_sshfp_fromWire3.wire rdata_sshfp_fromWire4.wire
+EXTRA_DIST += rdata_sshfp_fromWire5.wire rdata_sshfp_fromWire6.wire
+EXTRA_DIST += rdata_sshfp_fromWire7.wire rdata_sshfp_fromWire8.wire
+EXTRA_DIST += rdata_afsdb_fromWire1.wire rdata_afsdb_fromWire2.wire
+EXTRA_DIST += rdata_afsdb_fromWire3.wire rdata_afsdb_fromWire4.wire
+EXTRA_DIST += rdata_afsdb_fromWire5.wire
+EXTRA_DIST += rdata_afsdb_toWire1.wire rdata_afsdb_toWire2.wire
+EXTRA_DIST += rdata_soa_fromWire rdata_soa_toWireUncompressed.wire
+EXTRA_DIST += rdata_minfo_fromWire1.wire rdata_minfo_fromWire2.wire
+EXTRA_DIST += rdata_minfo_fromWire3.wire rdata_minfo_fromWire4.wire
+EXTRA_DIST += rdata_minfo_fromWire5.wire rdata_minfo_fromWire6.wire
+EXTRA_DIST += rdata_minfo_toWire1.wire rdata_minfo_toWire2.wire
+EXTRA_DIST += rdata_minfo_toWireUncompressed1.wire
+EXTRA_DIST += rdata_minfo_toWireUncompressed2.wire
+EXTRA_DIST += rdata_txt_fromWire1 rdata_txt_fromWire2.wire
+EXTRA_DIST += rdata_txt_fromWire3.wire rdata_txt_fromWire4.wire
+EXTRA_DIST += rdata_txt_fromWire5.wire rdata_unknown_fromWire
+EXTRA_DIST += rdata_tlsa_fromWire3.wire rdata_tlsa_fromWire4.wire
+EXTRA_DIST += rdata_tlsa_fromWire5.wire rdata_tlsa_fromWire6.wire
+EXTRA_DIST += rdata_tlsa_fromWire7.wire rdata_tlsa_fromWire8.wire
+EXTRA_DIST += rdata_tsig_fromWire1.wire rdata_tsig_fromWire2.wire
+EXTRA_DIST += rdata_tsig_fromWire3.wire rdata_tsig_fromWire4.wire
+EXTRA_DIST += rdata_tsig_fromWire5.wire rdata_tsig_fromWire6.wire
+EXTRA_DIST += rdata_tsig_fromWire7.wire rdata_tsig_fromWire8.wire
+EXTRA_DIST += rdata_tsig_fromWire9.wire
+EXTRA_DIST += rdata_tsig_toWire1.wire rdata_tsig_toWire2.wire
+EXTRA_DIST += rdata_tsig_toWire3.wire rdata_tsig_toWire4.wire
+EXTRA_DIST += rdata_tsig_toWire5.wire
+EXTRA_DIST += rdata_caa_fromWire1.wire rdata_caa_fromWire2.wire
+EXTRA_DIST += rdata_caa_fromWire3.wire rdata_caa_fromWire4.wire
+EXTRA_DIST += tsigrecord_toWire1.wire tsigrecord_toWire2.wire
+EXTRA_DIST += tsig_verify1.wire tsig_verify2.wire tsig_verify3.wire
+EXTRA_DIST += tsig_verify4.wire tsig_verify5.wire tsig_verify6.wire
+EXTRA_DIST += tsig_verify7.wire tsig_verify8.wire tsig_verify9.wire
+EXTRA_DIST += tsig_verify10.wire
+
+# We no longer use gen_wiredata.py during build process, so the
+# dependency is no longer needed. However, we'll keep this dependency
+# commented till the gen_wiredata.py script is removed.
+
+#.spec.wire:
+#	$(PYTHON) $(top_builddir)/src/lib/util/python/gen_wiredata.py -o $@ $<

@@ -1,0 +1,30 @@
+###
+### This data file was auto-generated from message_toWire3.spec
+###
+
+# Header Section
+# ID=1741 QR=Query Opcode=QUERY(0) Rcode=NOERROR(0) RD
+06cd 0100
+# QDCNT=1, ANCNT=0, NSCNT=0, ARCNT=2
+0001 0000 0000 0002
+
+# Question Section
+# QNAME=www.example.com QTYPE=A(1) QCLASS=IN(1)
+03777777076578616d706c6503636f6d00 0001 0001
+
+# EDNS OPT RR
+# NAME=. TYPE=OPT(41) UDPSize=4096 ExtRcode=0 Version=0 DO=0
+00 0029 1000 0000 0000
+# RDLEN=0
+0000
+
+# TSIG RR (QNAME=www.example.com Class=ANY(255) TTL=0, RDLEN=58)
+03777777076578616d706c6503636f6d00 00fa 00ff 00000000 003a
+# Algorithm=hmac-md5 Time-Signed=1303776543 Fudge=300
+08686d61632d6d6435077369672d616c670372656703696e7400 00004db60d1f 012c
+# MAC Size=16 MAC=(see hex)
+0010 93444053881c83d7eb120e86f25b369e
+# Original-ID=1741 Error=0
+06cd 0000
+# Other-Len=0 Other-Data=(see hex)
+0000

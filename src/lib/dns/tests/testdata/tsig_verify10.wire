@@ -1,0 +1,24 @@
+###
+### This data file was auto-generated from tsig_verify10.spec
+###
+
+# Header Section
+# ID=11621 QR=Query Opcode=QUERY(0) Rcode=NOERROR(0) RD
+2d65 0100
+# QDCNT=1, ANCNT=0, NSCNT=0, ARCNT=1
+0001 0000 0000 0001
+
+# Question Section
+# QNAME=www.example.com QTYPE=A(1) QCLASS=IN(1)
+03777777076578616d706c6503636f6d00 0001 0001
+
+# TSIG RR (QNAME=www.example.com Class=ANY(255) TTL=0, RDLEN=43)
+03777777076578616d706c6503636f6d00 00fa 00ff 00000000 002b
+# Algorithm=hmac-md5 Time-Signed=1302890362 Fudge=300
+08686d61632d6d6435077369672d616c670372656703696e7400 00004da8877a 012c
+# MAC Size=1 MAC=(see hex)
+0001 22
+# Original-ID=11621 Error=0
+2d65 0000
+# Other-Len=0 Other-Data=(see hex)
+0000

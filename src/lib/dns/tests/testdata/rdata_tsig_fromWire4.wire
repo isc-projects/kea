@@ -1,0 +1,17 @@
+###
+### This data file was auto-generated from rdata_tsig_fromWire4.spec
+###
+
+# DNS Name: hmac-sha256
+0b686d61632d73686132353600
+
+# TSIG RDATA, RDLEN=50
+0032
+# Algorithm=ptr=0 Time-Signed=1286978795 Fudge=300
+c000 00004cb5bceb 012c
+# MAC Size=32 MAC=(see hex)
+0020 7878787878787878787878787878787878787878787878787878787878787878
+# Original-ID=2845 Error=0
+0b1d 0000
+# Other-Len=0 Other-Data=(see hex)
+0000
