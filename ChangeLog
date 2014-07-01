@@ -1,3 +1,8 @@
+7XX.	[build]		tomek
+	JSON configuration backend is now the default. BUNDY backend
+	is now deprecated after #3413 removed the BIND10/Bundy framework.
+	(Trac #3476, git abcd)
+
 797.	[build]		tomek
 	Removed a lot of remaining BIND10 framework: bind10, bindctl,
 	cfgmgr, cmdctl, msgq, stats, sysinfo, tests, usermgr from src/bin
