@@ -1,3 +1,9 @@
+796.	[doc]		tomek
+	User's Guide renamed to Kea Administrator Reference Manual,
+	removed sections specific to BIND10/Bundy framework, rewritten
+	general and DHCPv4 specific examples.
+	(Trac #3418, git 73e6019d83760f0500890240e2e187dcd5e1e14c)
+
 795.	[func]		marcin
 	Added support to keactrl to start, stop, reconfigure and gather
 	status of the DHCP-DDNS server.

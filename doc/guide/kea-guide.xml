@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+<!ENTITY mdash  "&#x2014;" >
+<!ENTITY % version SYSTEM "version.ent">
+%version;
+]>
+
+<!--
+ - Copyright (C) 2010-2014  Internet Systems Consortium, Inc. ("ISC")
+ -
+ - Permission to use, copy, modify, and/or distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
+-->
+
+<book>
+  <?xml-stylesheet href="bind10-guide.css" type="text/css"?>
+
+  <bookinfo>
+    <title>Kea Administrator Reference Manual</title>
+
+    <copyright>
+      <year>2010-2014</year><holder>Internet Systems Consortium, Inc.</holder>
+    </copyright>
+
+    <abstract>
+      <para>
+        Kea is an open source implementation of the Dynamic Host Configuration
+        Protocol (DHCP) servers, developed and maintained by Internet Systems
+        Consortium (ISC).
+      </para>
+
+      <para>
+        This is the reference guide for Kea version &__VERSION__;.
+        The most up-to-date version of this document (in PDF, HTML,
+        and plain text formats), along with other documents for
+        Kea, can be found at <ulink url="http://kea.isc.org/docs"/>.
+        </para> </abstract>
+
+      <releaseinfo>This is the reference guide for Kea version
+        &__VERSION__;.</releaseinfo>
+
+  </bookinfo>
+
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="intro.xml" />
+
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="quickstart.xml" />
+
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="install.xml" />
+
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="config.xml" />
+
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="dhcp4-srv.xml" />
+
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="dhcp6-srv.xml" />
+
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="ddns.xml" />
+
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="libdhcp.xml" />
+
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="logging.xml" />
+
+    <chapter id="acknowledgements">
+      <title>Acknowledgements</title>
+
+      <para>Support for the development of the DHCPv4, DHCPv6 and
+      DHCP-DDNS  components was provided by
+      <ulink url="http://www.comcast.com/">Comcast</ulink>.</para>
+
+      <para>Kea was initially implemented as a collection of applications
+      within the BIND 10 framework. Hence, Kea development would not be
+      possible without the generous support of BIND 10 project sponsors.</para>
+
+      <para><ulink url="http://jprs.co.jp/">JPRS</ulink> and
+      <ulink url="http://cira.ca/">CIRA</ulink> are Patron Level
+      sponsors.</para>
+
+      <para><ulink url="https://www.afnic.fr/">AFNIC</ulink>,
+      <ulink url="https://www.cnnic.net.cn/">CNNIC</ulink>,
+      <ulink url="https://www.nic.cz/">CZ.NIC</ulink>,
+      <ulink url="http://www.denic.de/">DENIC eG</ulink>,
+      <ulink url="https://www.google.com/">Google</ulink>,
+      <ulink url="https://www.ripe.net/">RIPE NCC</ulink>,
+      <ulink url="https://registro.br/">Registro.br</ulink>,
+      <ulink url="https://nzrs.net.nz/">.nz Registry Services</ulink>, and
+      <ulink url="https://www.tcinet.ru/">Technical Center of Internet</ulink>
+      are current sponsors.</para>
+
+      <para><ulink url="https://www.afilias.info/">Afilias</ulink>,
+      <ulink url="https://www.iis.se/">IIS.SE</ulink>,
+      <ulink url="http://www.nominet.org.uk/">Nominet</ulink>, and
+      <ulink url="https://www.sidn.nl/">SIDN</ulink> were founding
+      sponsors of the project.</para>
+
+<!-- DHCP sponsorship by Comcast -->
+
+    </chapter>
+
+
+<!-- TODO: Add bibliography section (mostly RFCs, probably) -->
+
+
+<!-- TODO: how to help: run unit tests, join lists, review trac tickets -->
+
+  <!-- <index>    <title>Index</title> </index> -->
+
+</book>
+
+<!--
+
+TODO:
+
+Overview
+
+Getting BIND 10 Installed
+  Basics
+  Dependencies
+  Optional
+  Advanced
+
+How Does Everything Work Together?
+
+Need Help?
+
+-->

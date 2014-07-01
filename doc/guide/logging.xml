@@ -1,0 +1,719 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+<!ENTITY mdash  "&#x2014;" >
+]>
+
+  <chapter id="logging">
+    <title>Logging</title>
+
+    <section>
+      <title>Logging configuration</title>
+
+      <para>
+
+        The logging system in Kea is configured through the
+        Logging module. All  modules will look at the
+        configuration in Logging to see what should be logged and
+        to where.
+
+<!-- TODO: what is context of Logging module for readers of this guide? -->
+
+      </para>
+
+      <section>
+        <title>Loggers</title>
+
+        <para>
+
+          Within Kea, a message is logged through a component
+          called a "logger". Different parts of log messages
+          through different loggers, and each logger can be configured
+          independently of one another.
+
+        </para>
+
+        <para>
+
+          In the Logging module, you can specify the configuration
+          for zero or more loggers; any that are not specified will
+          take appropriate default values.
+
+        </para>
+
+        <para>
+
+          The three most important elements of a logger configuration
+          are the <option>name</option> (the component that is
+          generating the messages), the <option>severity</option>
+          (what to log), and the <option>output_options</option>
+          (where to log).
+
+        </para>
+
+        <section>
+          <title>name (string)</title>
+
+          <para>
+          Each logger in the system has a name, the name being that
+          of the component using it to log messages. For instance,
+          if you want to configure logging for the Dhcp4 module,
+          you add an entry for a logger named <quote>Dhcp4</quote>. This
+          configuration will then be used by the loggers in the
+          Dhcp4 module, and all the libraries used by it.
+              </para>
+
+<!-- TODO: later we will have a way to know names of all modules
+
+Right now you can only see what their names are if they are running
+(a simple 'help' without anything else in bindctl for instance).
+
+ -->
+          <para>
+
+          If you want to specify logging for one specific library
+          within the module, you set the name to
+          <replaceable>module.library</replaceable>.  For example, the
+          logger used by the nameserver address store component
+          has the full name of <quote>Dhcp4.dhcpsrv</quote>. If
+          there is no entry in Logging for a particular library,
+          it will use the configuration given for the module.
+
+        </para>
+
+       <para>
+
+          To illustrate this, suppose you want the dhcpsrv library
+          to log messages of severity DEBUG, and the rest of the
+          Dhcp4 code to log messages of severity INFO. To achieve
+          this you specify two loggers, one with the name
+          <quote>Dhcp4</quote> and severity INFO, and one with
+          the name <quote>Dhcp4.dhcpsrv</quote> with severity
+          DEBUG. As there are no entries for other libraries,
+          they will use the configuration for the module
+          (<quote>Dhcp4</quote>), so giving the desired behavior.
+
+        </para>
+
+        <para>
+
+          One special case is that of a module name of <quote>*</quote>
+          (asterisks), which is interpreted as <emphasis>any</emphasis>
+          module. You can set global logging options by using this,
+          including setting the logging configuration for a library
+          that is used by multiple modules (e.g. <quote>*.config</quote>
+          specifies the configuration library code in whatever
+          module is using it).
+
+        </para>
+
+        <para>
+
+          If there are multiple logger specifications in the
+          configuration that might match a particular logger, the
+          specification with the more specific logger name takes
+          precedence. For example, if there are entries for
+          both <quote>*</quote> and <quote>Dhcp4</quote>, the
+          Dhcp4 module &mdash; and all libraries it uses &mdash;
+          will log messages according to the configuration in the
+          second entry (<quote>Dhcp4</quote>). All other modules
+          will use the configuration of the first entry
+          (<quote>*</quote>).
+
+        </para>
+
+        <para>
+
+          One final note about the naming. When specifying the
+          module name within a logger, use the name of the module
+          as specified in <command>bindctl</command>, e.g.
+          <quote>Dhcp4</quote> for the Dhcp4 module,
+          <quote>Dhcp6</quote> for the Dhcp6 module, etc. When
+          the message is logged, the message will include the name
+          of the logger generating the message, but with the module
+          name replaced by the name of the process implementing
+          the module (so for example, a message generated by the
+          <quote>Dhcp4</quote> logger will appear in the output
+          with a logger name of <quote>b10-dhcp4</quote>).
+
+        </para>
+
+        </section>
+
+        <section>
+          <title>severity (string)</title>
+
+        <para>
+
+          This specifies the category of messages logged.
+          Each message is logged with an associated severity which
+          may be one of the following (in descending order of
+          severity):
+        </para>
+
+        <itemizedlist>
+          <listitem>
+            <simpara> FATAL </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara> ERROR </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara> WARN </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara> INFO </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara> DEBUG </simpara>
+          </listitem>
+        </itemizedlist>
+
+        <para>
+
+          When the severity of a logger is set to one of these
+          values, it will only log messages of that severity, and
+          the severities above it. The severity may also be set to
+          NONE, in which case all messages from that logger are
+          inhibited.
+
+<!-- TODO: worded wrong? If I set to INFO, why would it show DEBUG which is literally below in that list? -->
+
+        </para>
+
+        </section>
+
+        <section>
+          <title>output_options (list)</title>
+
+        <para>
+
+          Each logger can have zero or more
+          <option>output_options</option>. These specify where log
+          messages are sent to. These are explained in detail below.
+
+        </para>
+
+        <para>
+
+          The other options for a logger are:
+
+        </para>
+
+        </section>
+
+        <section>
+          <title>debuglevel (integer)</title>
+
+        <para>
+
+          When a logger's severity is set to DEBUG, this value
+          specifies what debug messages should be printed. It ranges
+          from 0 (least verbose) to 99 (most verbose).
+        </para>
+
+
+<!-- TODO: complete this sentence:
+
+          The general classification of debug message types is
+
+TODO; there's a ticket to determine these levels, see #1074
+
+ -->
+
+        <para>
+
+          If severity for the logger is not DEBUG, this value is ignored.
+
+        </para>
+
+        </section>
+
+        <section>
+          <title>additive (true or false)</title>
+
+        <para>
+
+          If this is true, the <option>output_options</option> from
+          the parent will be used. For example, if there are two
+          loggers configured; <quote>Dhcp4</quote> and
+          <quote>Dhcp4.dhcpsrv</quote>, and <option>additive</option>
+          is true in the second, it will write the log messages
+          not only to the destinations specified for
+          <quote>Dhcp4.dhcpsrv</quote>, but also to the destinations
+          as specified in the <option>output_options</option> in
+          the logger named <quote>Dhcp4</quote>.
+
+      </para>
+
+      </section>
+
+      </section>
+
+      <section>
+        <title>Output Options</title>
+
+        <para>
+
+          The main settings for an output option are the
+          <option>destination</option> and a value called
+          <option>output</option>, the meaning of which depends on
+          the destination that is set.
+
+        </para>
+
+        <section>
+          <title>destination (string)</title>
+
+          <para>
+
+            The destination is the type of output. It can be one of:
+
+          </para>
+
+          <itemizedlist>
+
+            <listitem>
+              <simpara> console </simpara>
+          </listitem>
+
+            <listitem>
+              <simpara> file </simpara>
+          </listitem>
+
+            <listitem>
+              <simpara> syslog </simpara>
+            </listitem>
+
+          </itemizedlist>
+
+        </section>
+
+        <section>
+          <title>output (string)</title>
+
+        <para>
+
+          Depending on what is set as the output destination, this
+          value is interpreted as follows:
+
+        </para>
+
+        <variablelist>
+
+          <varlistentry>
+            <term><option>destination</option> is <quote>console</quote></term>
+            <listitem>
+              <para>
+                 The value of output must be one of <quote>stdout</quote>
+                 (messages printed to standard output) or
+                 <quote>stderr</quote> (messages printed to standard
+                 error).
+              </para>
+              <para>
+                Note: if output is set to <quote>stderr</quote> and a lot of
+                messages are produced in a short time (e.g. if the logging
+                level is set to DEBUG), you may occasionally see some messages
+                jumbled up together.  This is due to a combination of the way
+                that messages are written to the screen and the unbuffered
+                nature of the standard error stream.  If this occurs, it is
+                recommended that output be set to <quote>stdout</quote>.
+              </para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><option>destination</option> is <quote>file</quote></term>
+            <listitem>
+              <para>
+                The value of output is interpreted as a file name;
+                log messages will be appended to this file.
+              </para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><option>destination</option> is <quote>syslog</quote></term>
+            <listitem>
+              <para>
+                The value of output is interpreted as the
+                <command>syslog</command> facility (e.g.
+                <emphasis>local0</emphasis>) that should be used
+                for log messages.
+              </para>
+            </listitem>
+          </varlistentry>
+
+        </variablelist>
+
+        <para>
+
+          The other options for <option>output_options</option> are:
+
+        </para>
+
+        <section>
+          <title>flush (true of false)</title>
+
+          <para>
+            Flush buffers after each log message. Doing this will
+            reduce performance but will ensure that if the program
+            terminates abnormally, all messages up to the point of
+            termination are output.
+          </para>
+
+        </section>
+
+        <section>
+          <title>maxsize (integer)</title>
+
+          <para>
+            Only relevant when destination is file, this is maximum
+            file size of output files in bytes. When the maximum
+            size is reached, the file is renamed and a new file opened.
+            (For example, a ".1" is appended to the name &mdash;
+            if a ".1" file exists, it is renamed ".2",
+            etc.)
+          </para>
+
+          <para>
+            If this is 0, no maximum file size is used.
+          </para>
+
+          <note>
+            <simpara>
+	      Due to a limitation of the underlying logging library
+	      (log4cplus), rolling over the log files (from ".1" to
+	      ".2", etc) may show odd results: There can be
+	      multiple small files at the timing of roll over.  This
+	      can happen when multiple processes try to roll
+	      over the files simultaneously.
+	      Version 1.1.0 of log4cplus solved this problem, so if
+	      this or higher version of log4cplus is used to build
+	      Kea, it shouldn't happen.  Even for older versions
+	      it is normally expected to happen rarely unless the log
+	      messages are produced very frequently by multiple
+	      different processes.
+	    </simpara>
+	  </note>
+
+        </section>
+
+        <section>
+          <title>maxver (integer)</title>
+
+          <para>
+            Maximum number of old log files to keep around when
+            rolling the output file. Only relevant when
+            <option>destination</option> is <quote>file</quote>.
+          </para>
+
+        </section>
+
+      </section>
+
+      </section>
+
+      <section>
+        <title>Example session</title>
+
+        <para>
+
+          In this example we want to set the global logging to
+          write to the file <filename>/var/log/my_bind10.log</filename>,
+          at severity WARN. We want the authoritative server to
+          log at DEBUG with debuglevel 40, to a different file
+          (<filename>/tmp/debug_messages</filename>).
+
+        </para>
+
+        <para>
+
+          Start <command>bindctl</command>.
+
+        </para>
+
+        <para>
+
+           <screen>["login success "]
+&gt; <userinput>config show Logging</userinput>
+Logging/loggers	[]	list
+</screen>
+
+        </para>
+
+        <para>
+
+          By default, no specific loggers are configured, in which
+          case the severity defaults to INFO and the output is
+          written to stderr.
+
+        </para>
+
+        <para>
+
+          Let's first add a default logger:
+
+        </para>
+
+<!-- TODO: adding the empty loggers makes no sense -->
+        <para>
+
+          <screen>&gt; <userinput>config add Logging/loggers</userinput>
+&gt; <userinput>config show Logging</userinput>
+Logging/loggers/	list	(modified)
+</screen>
+
+        </para>
+
+        <para>
+
+          The loggers value line changed to indicate that it is no
+          longer an empty list:
+
+        </para>
+
+        <para>
+
+          <screen>&gt; <userinput>config show Logging/loggers</userinput>
+Logging/loggers[0]/name	""	string	(default)
+Logging/loggers[0]/severity	"INFO"	string	(default)
+Logging/loggers[0]/debuglevel	0	integer	(default)
+Logging/loggers[0]/additive	false	boolean	(default)
+Logging/loggers[0]/output_options	[]	list	(default)
+</screen>
+
+        </para>
+
+        <para>
+
+          The name is mandatory, so we must set it. We will also
+          change the severity as well. Let's start with the global
+          logger.
+
+        </para>
+
+        <para>
+
+          <screen>&gt; <userinput>config set Logging/loggers[0]/name *</userinput>
+&gt; <userinput>config set Logging/loggers[0]/severity WARN</userinput>
+&gt; <userinput>config show Logging/loggers</userinput>
+Logging/loggers[0]/name	"*"	string	(modified)
+Logging/loggers[0]/severity	"WARN"	string	(modified)
+Logging/loggers[0]/debuglevel	0	integer	(default)
+Logging/loggers[0]/additive	false	boolean	(default)
+Logging/loggers[0]/output_options	[]	list	(default)
+</screen>
+
+        </para>
+
+        <para>
+
+          Of course, we need to specify where we want the log
+          messages to go, so we add an entry for an output option.
+
+        </para>
+
+        <para>
+
+          <screen>&gt; <userinput> config add Logging/loggers[0]/output_options</userinput>
+&gt; <userinput> config show Logging/loggers[0]/output_options</userinput>
+Logging/loggers[0]/output_options[0]/destination	"console"	string	(default)
+Logging/loggers[0]/output_options[0]/output	"stdout"	string	(default)
+Logging/loggers[0]/output_options[0]/flush	false	boolean	(default)
+Logging/loggers[0]/output_options[0]/maxsize	0	integer	(default)
+Logging/loggers[0]/output_options[0]/maxver	0	integer	(default)
+</screen>
+
+
+        </para>
+
+        <para>
+
+          These aren't the values we are looking for.
+
+        </para>
+
+        <para>
+
+          <screen>&gt; <userinput> config set Logging/loggers[0]/output_options[0]/destination file</userinput>
+&gt; <userinput> config set Logging/loggers[0]/output_options[0]/output /var/log/kea.log</userinput>
+&gt; <userinput> config set Logging/loggers[0]/output_options[0]/maxsize 204800</userinput>
+&gt; <userinput> config set Logging/loggers[0]/output_options[0]/maxver 8</userinput>
+</screen>
+
+        </para>
+
+        <para>
+
+          Which would make the entire configuration for this logger
+          look like:
+
+        </para>
+
+        <para>
+
+          <screen>&gt; <userinput> config show all Logging/loggers</userinput>
+Logging/loggers[0]/name	"*"	string	(modified)
+Logging/loggers[0]/severity	"WARN"	string	(modified)
+Logging/loggers[0]/debuglevel	0	integer	(default)
+Logging/loggers[0]/additive	false	boolean	(default)
+Logging/loggers[0]/output_options[0]/destination	"file"	string	(modified)
+Logging/loggers[0]/output_options[0]/output	"/var/log/kea.log"	string	(modified)
+Logging/loggers[0]/output_options[0]/flush	false	boolean	(default)
+Logging/loggers[0]/output_options[0]/maxsize	204800	integer	(modified)
+Logging/loggers[0]/output_options[0]/maxver	8	integer	(modified)
+</screen>
+
+        </para>
+
+        <para>
+
+          That looks OK, so let's commit it before we add the
+          configuration for the authoritative server's logger.
+
+        </para>
+
+        <para>
+
+          <screen>&gt; <userinput> config commit</userinput></screen>
+
+        </para>
+
+        <para>
+
+          Now that we have set it, and checked each value along
+          the way, adding a second entry is quite similar.
+
+        </para>
+
+        <para>
+
+          <screen>&gt; <userinput> config add Logging/loggers</userinput>
+&gt; <userinput> config set Logging/loggers[1]/name Dhcp4</userinput>
+&gt; <userinput> config set Logging/loggers[1]/severity DEBUG</userinput>
+&gt; <userinput> config set Logging/loggers[1]/debuglevel 40</userinput>
+&gt; <userinput> config add Logging/loggers[1]/output_options</userinput>
+&gt; <userinput> config set Logging/loggers[1]/output_options[0]/destination file</userinput>
+&gt; <userinput> config set Logging/loggers[1]/output_options[0]/output /tmp/dhcp4_debug.log</userinput>
+&gt; <userinput> config commit</userinput>
+</screen>
+
+        </para>
+
+        <para>
+
+          And that's it. Once we have found whatever it was we
+          needed the debug messages for, we can simply remove the
+          second logger to let the DHCP server use the
+          same settings as the rest.
+
+        </para>
+
+        <para>
+
+          <screen>&gt; <userinput> config remove Logging/loggers[1]</userinput>
+&gt; <userinput> config commit</userinput>
+</screen>
+
+        </para>
+
+        <para>
+
+          And every module will now be using the values from the
+          logger named <quote>*</quote>.
+
+        </para>
+
+      </section>
+
+    </section>
+
+    <section>
+      <title>Logging Message Format</title>
+
+      <para>
+          Each message written  to the configured logging
+          destinations comprises a number of components that identify
+          the origin of the message and, if the message indicates
+          a problem, information about the problem that may be
+          useful in fixing it.
+      </para>
+
+      <para>
+          Consider the message below logged to a file:
+          <screen>2014-04-11 12:58:01.005 INFO  [b10-dhcp4.dhcpsrv/27456]
+    DHCPSRV_MEMFILE_DB opening memory file lease database: type=memfile universe=4</screen>
+      </para>
+
+      <para>
+        Note: the layout of messages written to the system logging
+        file (syslog) may be slightly different.  This message has
+        been split across two lines here for display reasons; in the
+        logging file, it will appear on one line.)
+      </para>
+
+      <para>
+        The log message comprises a number of components:
+
+          <variablelist>
+          <varlistentry>
+          <term>2014-04-11 12:58:01.005</term>
+<!-- TODO: timestamp repeated even if using syslog? -->
+          <listitem><para>
+              The date and time at which the message was generated.
+          </para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+          <term>INFO</term>
+          <listitem><para>
+              The severity of the message.
+          </para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+          <term>[b10-dhcp4.dhcpsrv/27456]</term>
+          <listitem><para>
+            The source of the message.  This comprises two components:
+            the BIND 10 process generating the message (in this
+            case, <command>b10-dhcp4</command>) and the module
+            within the program from which the message originated
+            (which is the name of the common library used by DHCP server
+            implementations).
+          </para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+          <term>DHCPSRV_MEMFILE_DB</term>
+          <listitem><para>
+            The message identification.  Every message in Kea
+            has a unique identification, which can be used as an
+            index into the <ulink
+            url="kea-messages.html"><citetitle>Kea Messages
+            Manual</citetitle></ulink> (<ulink
+            url="http://kea.isc.org/docs/kea-messages.html"
+            />) from which more information can be obtained.
+          </para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+          <term>opening memory file lease database: type=memfile universe=4</term>
+          <listitem><para>
+              A brief description.
+              Within this text, information relating to the condition
+              that caused the message to be logged will be included.
+              In this example, the information is logged that the in-memory
+              lease database backend will be used to store DHCP leases.
+          </para></listitem>
+          </varlistentry>
+          </variablelist>
+      </para>
+
+    </section>
+
+  </chapter>
