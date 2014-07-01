@@ -326,8 +326,8 @@ D2CfgMgr::createConfigParser(const std::string& config_id,
                                                context->getKeys()));
     } else {
         isc_throw(NotImplemented,
-                  "parser error: D2CfgMgr parameter not supported: "
-                  << config_id << pos);
+                  "parser error: D2CfgMgr parameter not supported : "
+                  " (" << config_id << pos << ")");
     }
 
     return (parser);

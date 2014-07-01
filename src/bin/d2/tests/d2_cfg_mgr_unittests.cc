@@ -18,6 +18,7 @@
 #include <d_test_stubs.h>
 #include <test_data_files_config.h>
 #include <util/encode/base64.h>
+#include <dhcpsrv/testutils/config_result_check.h>
 
 #include <boost/foreach.hpp>
 #include <gtest/gtest.h>
@@ -98,7 +99,6 @@ public:
 
         return (config.str());
     }
-
     /// @brief Enumeration to select between expected configuration outcomes
     enum RunConfigMode {
        SHOULD_PASS,
@@ -133,6 +133,50 @@ public:
         // Verify that the global scalars have the proper values.
         d2_params_ = context->getD2Params();
         ASSERT_TRUE(d2_params_);
+    }
+
+    /// @brief Check parse result against expected outcome and position info
+    ///
+    /// This method analyzes the given parsing result against an expected outcome
+    /// of SHOULD_PASS or SHOULD_FAIL.  If it is expected to fail, the comment
+    /// contained within the result is searched for Element::Position information
+    /// which should contain the given file name.  It does not attempt to verify
+    /// the numerical values for line number and col.
+    ///
+    /// @param answer Element set containing an integer result code and string
+    /// comment.
+    /// @param mode indicator if the parsing should fail or not.
+    /// @param file_name name of the file containing the configuration text
+    /// parsed. It defaults to "<string>" which is the value present if the
+    /// configuration text did not originate from a file. (i.e. one did not use
+    /// isc::data::Element::fromJSONFile() to read the JSON text).
+    void
+    checkAnswerWithError(isc::data::ConstElementPtr answer,
+                         RunConfigMode mode, std::string file_name="<string>") {
+        int rcode = 0;
+        isc::data::ConstElementPtr comment;
+        comment = isc::config::parseAnswer(rcode, answer);
+
+        if (mode == SHOULD_PASS) {
+            if (rcode == 0) {
+                return;
+            }
+
+            FAIL() << "Parsing was expected to pass but failed : " << rcode
+                   << " comment: " << *comment;
+        }
+
+        if (rcode == 0) {
+            FAIL() << "Parsing was expected to fail but passed : "
+                   << " comment: " << *comment;
+        }
+
+        // Parsing was expected to fail, test for position info.
+        if (isc::dhcp::test::errorContainsPosition(answer, file_name)) {
+            return;
+        }
+
+        FAIL() << "Parsing failed as expected but lacks position : " << *comment;
     }
 
     /// @brief Pointer the D2Params most recently parsed.
@@ -1666,14 +1710,12 @@ TEST_F(D2CfgMgrTest, configPermutations) {
         ASSERT_TRUE(data) << "No data for test: "
                           << " : " << test->getPosition();
 
-        // Verify that we can parse the configuration.
-        answer_ = cfg_mgr_->parseConfig(data);
-        if (checkAnswer(!should_fail)) {
-            ADD_FAILURE() << "Parsing should have "
-                          << (should_fail ? "failed" : "passed")
-                          << " for : " << description
-                          << " : "  << test->getPosition();
-        }
+        // Attempt to parse the configuration. We verify that we get the expected
+        // outcome, and if it was supposed to fail if the explanation contains
+        // position information.
+        checkAnswerWithError(cfg_mgr_->parseConfig(data),
+                             (should_fail ? SHOULD_FAIL : SHOULD_PASS),
+                             test_file);
     }
 }
 

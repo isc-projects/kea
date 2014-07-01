@@ -131,6 +131,7 @@ d2_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
