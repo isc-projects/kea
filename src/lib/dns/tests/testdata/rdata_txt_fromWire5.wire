@@ -1,0 +1,8 @@
+###
+### This data file was auto-generated from rdata_txt_fromWire5.spec
+###
+
+# TXT RDATA, RDLEN=10
+000a
+# String Len=255, String="too short"
+ff 746f6f2073686f7274

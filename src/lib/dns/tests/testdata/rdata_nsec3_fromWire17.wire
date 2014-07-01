@@ -1,0 +1,14 @@
+###
+### This data file was auto-generated from rdata_nsec3_fromWire17.spec
+###
+
+# NSEC3 RDATA, RDLEN=10
+000a
+# Hash Alg=SHA1(1), Opt-Out=0, Other Flags=0, Iterations=1
+01 00 0001
+# Salt Len=5, Salt='sssss'
+05 7373737373
+# Hash Len=20, Hash='hhhhhhhhhhhhhhhhhhhh'
+14 6868686868686868686868686868686868686868
+# Bitmap: Block=0, Length=6
+00 06 040000000003

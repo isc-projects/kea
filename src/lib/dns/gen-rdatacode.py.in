@@ -19,6 +19,11 @@ This is a supplemental script to (half) auto-generate DNS Rdata related
 classes and constants.
 """
 
+# This script should be used every time existing RR data changes or when new
+# RR types are added or existing are removed. Since DHCP uses only four
+# (A,AAAA,PTR,DHCID) RR types, its usage is expected to be an uncommon event.
+# The only envisaged use case is if/when we decide to trim down libdns++.
+
 import os
 from os.path import getmtime
 import re

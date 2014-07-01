@@ -1,0 +1,10 @@
+###
+### This data file was auto-generated from rdata_nsec3param_fromWire2.spec
+###
+
+# NSEC3PARAM RDATA, RDLEN=4
+0004
+# Hash Alg=SHA1(1), Opt-Out=0, Other Flags=0, Iterations=1
+01 00 0001
+# Salt Len=5, Salt='sssss'
+05 7373737373

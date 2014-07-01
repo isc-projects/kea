@@ -1,4 +1,4 @@
-SUBDIRS = . tests python
+SUBDIRS = . tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
@@ -7,7 +7,7 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 CLEANFILES = *.gcno *.gcda
-CLEANFILES += rrclass.h rrtype.h rrparamregistry.cc rdataclass.h rdataclass.cc s-rdatacode
+CLEANFILES += s-rdatacode
 # These two are created with rrtype/class.h, so not explicitly listed in
 # BUILT_SOURCES.
 CLEANFILES += python/rrtype_constants_inc.cc
@@ -156,8 +156,10 @@ libkea_dns___la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_dns___la_LIBADD = $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 libkea_dns___la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 
-nodist_libdns___include_HEADERS = rdataclass.h rrclass.h rrtype.h
-nodist_libkea_dns___la_SOURCES = rdataclass.cc rrparamregistry.cc
+# The following files used to be generated, but they are now part of the git tree:
+# rrclass.h rrtype.h rrparamregistry.cc rdataclass.h rdataclass.cc
+libkea_dns___la_SOURCES += rdataclass.h rrclass.h rrtype.h
+libkea_dns___la_SOURCES += rdataclass.cc rrparamregistry.cc
 
 rrclass.h: rrclass-placeholder.h
 rrtype.h: rrtype-placeholder.h
@@ -167,7 +169,12 @@ s-rdatacode: Makefile $(EXTRA_DIST)
 	$(PYTHON) ./gen-rdatacode.py
 	touch $@
 
-rrclass.h rrtype.h rrparamregistry.cc rdataclass.h rdataclass.cc: s-rdatacode
+# In ticket #3413 we removed the whole BIND10/Bundy framework. We also want
+# to not require Python3, hence instead of generating the code every time,
+# we added the generated files to our repo. It is still possible to regenerate
+# those files, but that step is no longer required for successful compilation.
+
+#rrclass.h rrtype.h rrparamregistry.cc rdataclass.h rdataclass.cc: s-rdatacode
 
 libdns___includedir = $(includedir)/$(PACKAGE_NAME)/dns
 libdns___include_HEADERS = \

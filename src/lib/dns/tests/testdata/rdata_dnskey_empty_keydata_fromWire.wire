@@ -1,0 +1,14 @@
+###
+### This data file was auto-generated from rdata_dnskey_empty_keydata_fromWire.spec
+###
+
+# DNSKEY RDATA, RDLEN=4
+0004
+# FLAGS=257
+0101
+# PROTOCOL=3
+03
+# ALGORITHM=5
+05
+# DIGEST=
+

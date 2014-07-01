@@ -1,4 +1,0 @@
-INFO  [test.output] MSG_ID Message with list [1, 2, 3, 4]
-WARN  [test.output] DIFFERENT Different message
-FATAL [test.output] MSG_ID Message with 2 1
-DEBUG [test.output] MSG_ID Message with 3 2

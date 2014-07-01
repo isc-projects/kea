@@ -868,27 +868,6 @@ TEST_F(CCSessionTest, delayedStart) {
                  FakeSession::DoubleRead);
 }
 
-TEST_F(CCSessionTest, loggingStart) {
-    // provide the logging module spec
-    ConstElementPtr log_spec = moduleSpecFromFile(LOG_SPEC_FILE).getFullSpec();
-    session.getMessages()->add(createAnswer(0, log_spec));
-    // just give an empty config
-    session.getMessages()->add(createAnswer(0, el("{}")));
-    ModuleCCSession mccs(ccspecfile("spec2.spec"), session, NULL, NULL,
-                         true, true);
-    EXPECT_TRUE(session.haveSubscription("Logging", "*"));
-}
-
-TEST_F(CCSessionTest, loggingStartBadSpec) {
-    // provide the logging module spec
-    session.getMessages()->add(createAnswer(0, el("{}")));
-    // just give an empty config
-    session.getMessages()->add(createAnswer(0, el("{}")));
-    EXPECT_THROW(new ModuleCCSession(ccspecfile("spec2.spec"), session,
-                 NULL, NULL), ModuleSpecError);
-    EXPECT_FALSE(session.haveSubscription("Logging", "*"));
-}
-
 // Similar to the above, but more implicitly by calling addRemoteConfig().
 // We should construct ModuleCCSession with start_immediately being false
 // if we need to call addRemoteConfig().
