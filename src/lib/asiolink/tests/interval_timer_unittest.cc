@@ -324,7 +324,9 @@ TEST_F(IntervalTimerTest, intervalModeTest) {
     // work or the the service has been stopped by the test timer.
     int cnt = 0;
     while (((cnt = io_service_.get_io_service().run_one()) > 0)
-           && (repeater_count < 5));
+           && (repeater_count < 5)) {
+        // deliberately empty
+    };
 
     // If cnt is zero, then something went wrong.
     EXPECT_TRUE(cnt > 0);
@@ -372,7 +374,9 @@ TEST_F(IntervalTimerTest, timerReuseTest) {
     // work or the the service has been stopped by the test timer.
     int cnt = 0;
     while ((cnt = io_service_.get_io_service().run_one())
-            && (one_shot_count < 4));
+            && (one_shot_count < 4)) {
+        // deliberately empty
+    };
 
     // If cnt is zero, then something went wrong.
     EXPECT_TRUE(cnt > 0);
