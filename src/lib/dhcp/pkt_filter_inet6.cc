@@ -74,11 +74,13 @@ PktFilterInet6::openSocket(const Iface& iface,
     }
 
     if (bind(sock, (struct sockaddr *)&addr6, sizeof(addr6)) < 0) {
+        // Get the error message immediately after the bind because the
+        // invocation to close() below would override the errno.
+        char* errmsg = strerror(errno);
         close(sock);
-        std::cout << errno << std::endl;
         isc_throw(SocketConfigError, "Failed to bind socket " << sock << " to "
                   << addr.toText() << "/port=" << port
-                  << ": " << strerror(errno));
+                  << ": " << errmsg);
     }
 #ifdef IPV6_RECVPKTINFO
     // RFC3542 - a new way
