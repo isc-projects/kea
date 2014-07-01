@@ -208,8 +208,8 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
                 else {
                     isc_throw(DCfgMgrBaseError,
                                "Element required by parsing order is missing: "
-                               << element_id << " : "
-                               << config_set->getPosition());
+                               << element_id << " ("
+                               << config_set->getPosition() << ")");
                 }
             }
 
@@ -221,13 +221,13 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
             // and parsing them either first or last but which would be correct?
             // Better to hold the engineer accountable.  So, if there are any
             // left in the objects_map then they were not in the parse order.
-            if (objects_map.size() > 0) {
+            if (!objects_map.empty()) {
                 std::ostringstream stream;
                 bool add_comma = false;
                 ConfigPair config_pair;
                 BOOST_FOREACH(config_pair, objects_map) {
                     stream << ( add_comma ? ", " : "") << config_pair.first
-                           << " at: " << config_pair.second->getPosition();
+                           << " (" << config_pair.second->getPosition() << ")";
                     add_comma = true;
                 }
 
@@ -251,7 +251,7 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
 
     } catch (const std::exception& ex) {
         LOG_ERROR(dctl_logger, DCTL_PARSER_FAIL).arg(ex.what());
-        answer = isc::config::createAnswer(1, + ex.what());
+        answer = isc::config::createAnswer(1, ex.what());
 
         // An error occurred, so make sure that we restore original context.
         context_ = original_context;
