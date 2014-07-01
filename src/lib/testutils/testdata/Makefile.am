@@ -1,8 +1,9 @@
 CLEANFILES = *.copied
 
-# The following files used to be auto-generated using gen_wiredata.py,
-# but #3413 removed python3 dependency and those files are now part
-# of the git repo.
+# The following files are generated from the corresponding .spec files using
+# gen-wiredata.py. Python is not a prerequisite for Kea, so it cannot be
+# assumed that they can be generated when Kea is built. For this reason, they
+# are part of the Kea repository and are distributed in the tarball.
 EXTRA_DIST  = badExampleQuery_fromWire.wire examplequery_fromWire.wire
 EXTRA_DIST += iqueryresponse_fromWire.wire multiquestion_fromWire.wire
 EXTRA_DIST += queryBadEDNS_fromWire.wire shortanswer_fromWire.wire
