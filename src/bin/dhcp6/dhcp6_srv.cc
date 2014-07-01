@@ -122,21 +122,12 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
 
     // Initialize objects required for DHCP server operation.
     try {
-        // Port 0 is used for testing purposes. It means that the server should
-        // not open any sockets at all. Some tests, e.g. configuration parser,
-        // require Dhcpv6Srv object, but they don't really need it to do
-        // anything. This speed up and simplifies the tests.
-        if (port > 0) {
-            if (IfaceMgr::instance().countIfaces() == 0) {
-                LOG_ERROR(dhcp6_logger, DHCP6_NO_INTERFACES);
-                return;
-            }
-            // Create error handler. This handler will be called every time
-            // the socket opening operation fails. We use this handler to
-            // log a warning.
-            isc::dhcp::IfaceMgrErrorMsgCallback error_handler =
-                boost::bind(&Dhcpv6Srv::ifaceMgrSocket6ErrorHandler, _1);
-            IfaceMgr::instance().openSockets6(port_, error_handler);
+        // Port 0 is used for testing purposes where in most cases we don't
+        // rely on the physical interfaces. Therefore, it should be possible
+        // to create an object even when there are no usable interfaces.
+        if ((port > 0) && (IfaceMgr::instance().countIfaces() == 0)) {
+            LOG_ERROR(dhcp6_logger, DHCP6_NO_INTERFACES);
+            return;
         }
 
         string duid_file = CfgMgr::instance().getDataDir() + "/" + string(SERVER_DUID_FILE);

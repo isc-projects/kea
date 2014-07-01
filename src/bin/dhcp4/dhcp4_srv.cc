@@ -90,10 +90,9 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const bool use_bcast,
 
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_OPEN_SOCKET).arg(port);
     try {
-        // Open sockets only if port is non-zero. Port 0 is used for testing
-        // purposes in two cases:
-        // - when non-socket related testing is performed
-        // - when the particular test supplies its own packet filtering class.
+        // Port 0 is used for testing purposes where we don't open broadcast
+        // capable sockets. So, set the packet filter handling direct traffic
+        // only if we are in non-test mode.
         if (port) {
             // First call to instance() will create IfaceMgr (it's a singleton)
             // it may throw something if things go wrong.
@@ -103,13 +102,6 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const bool use_bcast,
             // may be lacking on some OSes, so there is no guarantee that server
             // will be able to respond directly.
             IfaceMgr::instance().setMatchingPacketFilter(direct_response_desired);
-
-            // Create error handler. This handler will be called every time
-            // the socket opening operation fails. We use this handler to
-            // log a warning.
-            isc::dhcp::IfaceMgrErrorMsgCallback error_handler =
-                boost::bind(&Dhcpv4Srv::ifaceMgrSocket4ErrorHandler, _1);
-            IfaceMgr::instance().openSockets4(port_, use_bcast_, error_handler);
         }
 
         // Instantiate allocation engine

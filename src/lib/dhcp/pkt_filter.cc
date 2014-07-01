@@ -41,21 +41,27 @@ PktFilter::openFallbackSocket(const isc::asiolink::IOAddress& addr,
 
     if (bind(sock, reinterpret_cast<struct sockaddr*>(&addr4),
              sizeof(addr4)) < 0) {
+        // Get the error message immediately after the bind because the
+        // invocation to close() below would override the errno.
+        char* errmsg = strerror(errno);
         // Remember to close the socket if we failed to bind it.
         close(sock);
         isc_throw(SocketConfigError, "failed to bind fallback socket to"
                   " address " << addr << ", port " << port
-                  << ", reason: " << strerror(errno)
+                  << ", reason: " << errmsg
                   << " - is another DHCP server running?");
     }
 
     // Set socket to non-blocking mode. This is to prevent the read from the
     // fallback socket to block message processing on the primary socket.
     if (fcntl(sock, F_SETFL, O_NONBLOCK) != 0) {
+        // Get the error message immediately after the bind because the
+        // invocation to close() below would override the errno.
+        char* errmsg = strerror(errno);
         close(sock);
         isc_throw(SocketConfigError, "failed to set SO_NONBLOCK option on the"
                   " fallback socket, bound to " << addr << ", port "
-                  << port << ", reason: " << strerror(errno));
+                  << port << ", reason: " << errmsg);
     }
     // Successfully created and bound a fallback socket. Return a descriptor.
     return (sock);
