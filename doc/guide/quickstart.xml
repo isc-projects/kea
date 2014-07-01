@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+<!ENTITY mdash  "&#x2014;" >
+]>
+
+  <chapter id="quickstart">
+    <title>Quick start</title>
+
+    <para>
+        This quickly covers the standard steps for installing and deploying Kea.
+        For further details, full customizations, and troubleshooting, see the
+        respective chapters in the Kea guide.
+    </para>
+
+    <section id="quick-start">
+      <title>Quick start guide for DHCPv4 and DHCPv6 services</title>
+
+      <orderedlist>
+
+        <listitem>
+          <simpara>
+            Install required run-time and build dependencies. See <xref
+	    linkend="build-requirements"/> for details.
+          </simpara>
+        </listitem>
+
+        <!-- We may need to replace it with the link to a downloadable tarball
+        once we have it. -->
+        <listitem>
+          <simpara>
+            Checkout the latest Kea revision from the Git repository:
+            <screen>$ <userinput>git clone git://git.kea.isc.org/kea</userinput> </screen>
+          </simpara>
+        </listitem>
+
+        <listitem>
+          <para>Go into the source directory and run the configure script:
+            <screen>$ <userinput>cd kea</userinput>
+$ <userinput>autoreconf --install</userinput>
+$ <userinput>./configure [your extra parameters]</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>Build it:
+            <screen>$ <userinput>make</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>Install it (by default the installation prefix is <filename>/usr/local/</filename>,
+          so you need root privileges for that step):
+            <screen>$ <userinput>make install</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>If you wish to run a DHCP server for IPv4, you need to set up and start
+          the b10-dhcp4 server:</para>
+          <orderedlist>
+          <listitem>
+          <para>Edit your configuration file for DHCPv4. <xref linkend="dhcp4-configuration"/>
+          describes the configuration choices available; example DHCPv4 configuration can be found in
+          doc/examples/kea4.</para>
+	</listitem>
+
+        <listitem>
+          <para>Start Kea DHCPv4 server (as root):
+            <screen># <userinput>b10-dhcp4 -c /path/to/your/kea4/config/file.json</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+         <para>Test it; for example, use the
+         <ulink url="http://www.isc.org/downloads/DHCP/">ISC DHCP client</ulink>
+         to send DHCPv4 queries to the server and verify that the client receives a
+         configuration from the server:
+            <screen>$ <userinput>dhclient -4 eth0</userinput></screen>
+         </para>
+        </listitem>
+        </orderedlist>
+        </listitem>
+
+        <listitem>
+          <para>If you wish to run a DHCP server for IPv6, you need to set up and start
+          the b10-dhcp6 server:</para>
+          <orderedlist>
+        <listitem>
+          <para>Edit your configuration file for DHCPv6. <xref linkend="dhcp6-configuration"/>
+          describes the configuration ch, and some example DHCPv6 configuration can be found in
+          doc/examples/kea6.</para>
+	</listitem>
+
+        <listitem>
+          <para>Start Kea DHCPv6 server (as root):
+            <screen># <userinput>b10-dhcp6 -c /path/to/your/kea6/config/file.json</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+         <para>Test it; for example, use the
+         <ulink url="http://www.isc.org/downloads/DHCP/">ISC DHCP client</ulink>
+         to send DHCPv6 queries to the server and verify that the client receives a
+         configuration from the server:
+            <screen>$ <userinput>dhclient -6 eth0</userinput></screen>
+         </para>
+        </listitem>
+        </orderedlist>
+        </listitem>
+      </orderedlist>
+
+    </section>
+
+  </chapter>
