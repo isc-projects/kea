@@ -1,5 +1,5 @@
-/b10-dhcp6
-/b10-dhcp6.8
+/kea-dhcp6
+/kea-dhcp6.8
 /dhcp6_messages.cc
 /dhcp6_messages.h
 /spec_config.h
