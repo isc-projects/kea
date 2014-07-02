@@ -1916,7 +1916,7 @@ Dhcpv4Srv::d2ClientErrorHandler(const
                                 dhcp_ddns::NameChangeRequestPtr& ncr) {
     LOG_ERROR(dhcp4_logger, DHCP4_DDNS_REQUEST_SEND_FAILED).
               arg(result).arg((ncr ? ncr->toText() : " NULL "));
-    // We cannot communicate with b10-dhcp-ddns, suspend futher updates.
+    // We cannot communicate with kea-dhcp-ddns, suspend futher updates.
     /// @todo We may wish to revisit this, but for now we will simpy turn
     /// them off.
     CfgMgr::instance().getD2ClientMgr().suspendUpdates();

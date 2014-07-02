@@ -12,7 +12,7 @@ kea_config_file=@sysconfdir@/@PACKAGE@/kea.conf
 exec_prefix=@exec_prefix@
 dhcp4_srv=@libexecdir@/@PACKAGE@/kea-dhcp4
 dhcp6_srv=@libexecdir@/@PACKAGE@/kea-dhcp6
-dhcp_ddns_srv=@libexecdir@/@PACKAGE@/b10-dhcp-ddns
+dhcp_ddns_srv=@libexecdir@/@PACKAGE@/kea-dhcp-ddns
 
 # Start DHCPv4 server?
 dhcp4=yes

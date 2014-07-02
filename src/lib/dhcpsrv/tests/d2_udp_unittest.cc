@@ -72,8 +72,8 @@ public:
 
     /// @brief Updates the D2ClientMgr's configuration to DDNS enabled.
     ///
-    /// @param server_address IP address of b10-dhcp-ddns.
-    /// @param server_port IP port number of b10-dhcp-ddns.
+    /// @param server_address IP address of kea-dhcp-ddns.
+    /// @param server_port IP port number of kea-dhcp-ddns.
     /// @param protocol NCR protocol to use. (Currently only UDP is
     /// supported).
     void enableDdns(const std::string& server_address,

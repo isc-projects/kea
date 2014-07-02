@@ -150,39 +150,39 @@ the new parameters.
 
 % DHCPSRV_DHCP_DDNS_ERROR_EXCEPTION error handler for DHCP_DDNS IO generated an expected exception: %1
 This is an error message that occurs when an attempt to send a request to
-b10-dhcp-ddns fails there registered error handler threw an uncaught exception.
+kea-dhcp-ddns fails there registered error handler threw an uncaught exception.
 This is a programmatic error which should not occur. By convention, the error
 handler should not propagate exceptions. Please report this error.
 
 % DHCPSRV_DHCP_DDNS_HANDLER_NULL error handler for DHCP_DDNS IO is not set.
 This is an error message that occurs when an attempt to send a request to
-b10-dhcp-ddns fails and there is no registered error handler.  This is a
+kea-dhcp-ddns fails and there is no registered error handler.  This is a
 programmatic error which should never occur and should be reported.
 
 % DHCPSRV_DHCP_DDNS_NCR_REJECTED NameChangeRequest rejected by the sender: %1, ncr: %2
 This is an error message indicating that NameChangeSender used to deliver DDNS
-update requests to b10-dhcp-ddns rejected the request.  This most likely cause
+update requests to kea-dhcp-ddns rejected the request.  This most likely cause
 is the sender's queue has reached maximum capacity.  This would imply that
 requests are being generated faster than they can be delivered.
 
-% DHCPSRV_DHCP_DDNS_NCR_SENT NameChangeRequest sent to b10-dhcp-ddns: %1
+% DHCPSRV_DHCP_DDNS_NCR_SENT NameChangeRequest sent to kea-dhcp-ddns: %1
 A debug message issued when a NameChangeRequest has been successfully sent to
-b10-dhcp-ddns.
+kea-dhcp-ddns.
 
 % DHCPSRV_DHCP_DDNS_SENDER_STARTED NameChangeRequest sender has been started: %1
-A informational message issued when a communications with b10-dhcp-ddns has
+A informational message issued when a communications with kea-dhcp-ddns has
 been successfully started.
 
 % DHCPSRV_DHCP_DDNS_SENDER_STOPPED NameChangeRequest sender has been stopped.
-A informational message issued when a communications with b10-dhcp-ddns has
+A informational message issued when a communications with kea-dhcp-ddns has
 been stopped. This normally occurs during reconfiguration and as part of normal
-shutdown. It may occur if b10-dhcp-ddns communications breakdown.
+shutdown. It may occur if kea-dhcp-ddns communications breakdown.
 
 % DHCPSRV_DHCP_DDNS_SUSPEND_UPDATES DHCP_DDNS updates are being suspended.
 This is a warning message indicating the DHCP_DDNS updates have been turned
-off.  This should only occur if IO errors communicating with b10-dhcp-ddns
+off.  This should only occur if IO errors communicating with kea-dhcp-ddns
 have been experienced.  Any such errors should have preceding entries in the
-log with details.  No further attempts to communicate with b10-dhcp-ddns will
+log with details.  No further attempts to communicate with kea-dhcp-ddns will
 be made without intervention.
 
 % DHCPSRV_HOOK_LEASE4_RENEW_SKIP DHCPv4 lease was not renewed because a callout set the skip flag.

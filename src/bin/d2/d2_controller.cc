@@ -26,7 +26,7 @@ namespace d2 {
 const char* D2Controller::d2_app_name_ = "DhcpDdns";
 
 /// @brief Defines the executable name. This is passed into the base class
-const char* D2Controller::d2_bin_name_ = "b10-dhcp-ddns";
+const char* D2Controller::d2_bin_name_ = "kea-dhcp-ddns";
 
 DControllerBasePtr&
 D2Controller::instance() {

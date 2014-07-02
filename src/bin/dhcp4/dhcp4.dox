@@ -16,7 +16,7 @@
  @page dhcp4 DHCPv4 Server Component
 
 BIND10 offers DHCPv4 server implementation. It is implemented as
-b10-dhcp4 component.  Its primary code is located in
+kea-dhcp4 component.  Its primary code is located in
 isc::dhcp::Dhcpv4Srv class. It uses \ref libdhcp extensively,
 especially isc::dhcp::Pkt4, isc::dhcp::Option and
 isc::dhcp::IfaceMgr classes. Currently this code offers skeleton
@@ -99,19 +99,19 @@ client. In this case the server will return one of the DHCPv4 Client FQDN or
 Host Name %Option in its response with the name which was selected for the
 client to indicate that this name will be used to perform DNS update.
 
-The b10-dhcp-ddns process is responsible for the actual communication with the
-DNS, i.e. to send DNS update messages. The b10-dhcp4 module is responsible for
+The kea-dhcp-ddns process is responsible for the actual communication with the
+DNS, i.e. to send DNS update messages. The kea-dhcp4 module is responsible for
 generating @ref isc::dhcp_ddns::NameChangeRequest and sending it to
-the b10-dhcp-ddns module. The @ref isc::dhcp_ddns::NameChangeRequest object
+the kea-dhcp-ddns module. The @ref isc::dhcp_ddns::NameChangeRequest object
 represents changes to the DNS bindings, related to acquisition, renewal or
-release of the DHCP lease. The b10-dhcp4 module implements the simple FIFO queue
+release of the DHCP lease. The kea-dhcp4 module implements the simple FIFO queue
 of the NameChangeRequest objects. The module logic, which processes the incoming
 DHCPv4 Client FQDN and Host Name Options puts these requests into the FIFO queue.
 
 @todo Currently the FIFO queue is not processed after the NameChangeRequests are
 generated and added to it. In the future implementation steps it is planned to
 create a code which will check if there are any outstanding requests in the queue
-and send them to the b10-dhcp-ddns module when server is idle waiting for DHCP
+and send them to the kea-dhcp-ddns module when server is idle waiting for DHCP
 messages.
 
 When client gets an address from the server, a DHCPv4 server may generate 0, 1
@@ -121,10 +121,10 @@ update for any other reason.
 
 Server may generate 1 NameChangeRequest in a case when client acquired a new
 lease or it releases an existing lease. In the former case, the NameChangeRequest
-type is CHG_ADD, which indicates that the b10-dhcp-ddns module should add a new
+type is CHG_ADD, which indicates that the kea-dhcp-ddns module should add a new
 DNS binding for the client, and it is assumed that there is no DNS binding for
 this client already. In the latter case, the NameChangeRequest type is CHG_REMOVE
-to indicate to the b10-dhcp-ddns module that an existing DNS binding should be
+to indicate to the kea-dhcp-ddns module that an existing DNS binding should be
 removed from the DNS. The binding consists of the forward and reverse mapping.
 The server may only remove the mapping which it had added. Therefore, the lease
 database holds the information which updates (no update, reverse only update,
