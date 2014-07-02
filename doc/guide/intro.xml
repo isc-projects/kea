@@ -139,7 +139,7 @@
 	a master process, <command>b10-init</command>, which will
 	start other required processes and other processes when
 	configured.  The processes that may be started have names
-	starting with "b10-", including:
+	starting with "kea-", including:
       </para>
 
       <para>
@@ -199,7 +199,7 @@
 
           <listitem>
             <simpara>
-              <command>b10-sockcreator</command> &mdash;
+              <command>kea-sockcreator</command> &mdash;
               Socket creator daemon.
               This process creates sockets used by
               network-listening BIND 10 processes.
