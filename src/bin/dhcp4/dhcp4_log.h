@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -50,7 +50,7 @@ const int DBG_DHCP4_DETAIL = DBGLVL_TRACE_DETAIL;
 // This level is used to log the contents of packets received and sent.
 const int DBG_DHCP4_DETAIL_DATA = DBGLVL_TRACE_DETAIL_DATA;
 
-/// Define the logger for the "dhcp4" module part of b10-dhcp4.  We could define
+/// Define the logger for the "dhcp4" module part of kea-dhcp4.  We could define
 /// a logger in each file, but we would want to define a common name to avoid
 /// spelling mistakes, so it is just one small step from there to define a
 /// module-common logger.

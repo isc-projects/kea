@@ -77,7 +77,7 @@ change is committed by the administrator.
 A debug message indicating that the DHCPv4 server has received an
 updated configuration from the BIND 10 configuration system.
 
-% DHCP4_DDNS_REQUEST_SEND_FAILED failed sending a request to b10-dhcp-ddns, error: %1,  ncr: %2
+% DHCP4_DDNS_REQUEST_SEND_FAILED failed sending a request to kea-dhcp-ddns, error: %1,  ncr: %2
 This error message indicates that DHCP4 server attempted to send a DDNS
 update reqeust to the DHCP-DDNS server.  This is most likely a configuration or
 networking error.
@@ -177,7 +177,7 @@ failure.
 
 % DHCP4_NCR_CREATION_FAILED failed to generate name change requests for DNS: %1
 This message indicates that server was unable to generate NameChangeRequests
-which should be sent to the b10-dhcp_ddns module to create
+which should be sent to the kea-dhcp_ddns module to create
 new DNS records for the lease being acquired or to update existing records
 for the renewed lease. The reason for the failure is printed in the logged
 message.

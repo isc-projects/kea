@@ -27,7 +27,7 @@ KEACTRL_CFG_FILE=@abs_top_builddir@/src/bin/keactrl/tests/keactrl_test.conf
 # Path to the Kea log file.
 LOG_FILE=@abs_top_builddir@/src/bin/keactrl/tests/test.log
 # Binaries' names
-wildcard_name="b10-dhcp"
+wildcard_name="kea-dhcp"
 kea4_name="${wildcard_name}4"
 kea6_name="${wildcard_name}6"
 d2_name="${wildcard_name}-ddns"
