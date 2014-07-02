@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-/// Defines the logger used by the top-level component of b10-dhcp6.
+/// Defines the logger used by the top-level component of kea-dhcp6.
 
 #include <dhcp6/dhcp6_log.h>
 
