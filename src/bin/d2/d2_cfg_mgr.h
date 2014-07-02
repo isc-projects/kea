@@ -245,7 +245,18 @@ protected:
     /// parameter's id and then invoking its build method passing in the
     /// parameter's configuration value.
     ///
+    /// It then fetches the parameters, validating their values and if
+    /// valid instantiates a D2Params instance.  Invalid values result in
+    /// a throw.
+    ///
     /// @param params_config set of scalar configuration elements to parse
+    ///
+    /// @throw D2CfgError if any of the following are true:
+    /// -# ip_address is 0.0.0.0 or ::
+    /// -# port is 0
+    /// -# dns_server_timeout is < 1
+    /// -# ncr_protocol is invalid, currently only NCR_UDP is supported
+    /// -# ncr_format is invalid, currently only FMT_JSON is supported
     virtual void buildParams(isc::data::ConstElementPtr params_config);
 
     /// @brief Given an element_id returns an instance of the appropriate
@@ -264,11 +275,15 @@ protected:
     ///
     /// @param element_id is the string name of the element as it will appear
     /// in the configuration set.
+    /// @param pos position within the configuration text (or file) of element
+    /// to be parsed.  This is passed for error messaging.
     ///
     /// @return returns a ParserPtr to the parser instance.
     /// @throw throws DCfgMgrBaseError if an error occurs.
     virtual isc::dhcp::ParserPtr
-    createConfigParser(const std::string& element_id);
+    createConfigParser(const std::string& element_id,
+                       const isc::data::Element::Position& pos =
+                       isc::data::Element::Position());
 
     /// @brief Creates an new, blank D2CfgContext context
     ///

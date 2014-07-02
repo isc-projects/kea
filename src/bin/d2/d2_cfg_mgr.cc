@@ -202,31 +202,94 @@ D2CfgMgr::buildParams(isc::data::ConstElementPtr params_config) {
     // This populate the context scalar stores with all of the parameters.
     DCfgMgrBase::buildParams(params_config);
 
-    // Fetch the parameters from the context to create the D2Params.
+    // Fetch and validate the parameters from the context to create D2Params.
+    // We validate them here rather than just relying on D2Param constructor
+    // so we can spit out config text position info with errors.
+
+    // Fetch and validate ip_address.
     D2CfgContextPtr context = getD2CfgContext();
     isc::dhcp::StringStoragePtr strings = context->getStringStorage();
-    asiolink::IOAddress ip_address(strings->
-                                   getOptionalParam("ip_address",
-                                                    D2Params::DFT_IP_ADDRESS));
+    asiolink::IOAddress ip_address(D2Params::DFT_IP_ADDRESS);
 
+    std::string ip_address_str = strings->getOptionalParam("ip_address",
+                                                            D2Params::
+                                                            DFT_IP_ADDRESS);
+    try {
+        ip_address = asiolink::IOAddress(ip_address_str);
+    } catch (const std::exception& ex) {
+        isc_throw(D2CfgError, "IP address invalid : \""
+                  << ip_address_str << "\" ("
+                  << strings->getPosition("ip_address") << ")");
+    }
+
+    if ((ip_address.toText() == "0.0.0.0") || (ip_address.toText() == "::")) {
+        isc_throw(D2CfgError, "IP address cannot be \"" << ip_address << "\" ("
+                   << strings->getPosition("ip_address") << ")");
+    }
+
+    // Fetch and validate port.
     isc::dhcp::Uint32StoragePtr ints = context->getUint32Storage();
     uint32_t port = ints->getOptionalParam("port", D2Params::DFT_PORT);
 
+    if (port == 0) {
+        isc_throw(D2CfgError, "port cannot be 0 ("
+                  << ints->getPosition("port") << ")");
+    }
+
+    // Fetch and validate dns_server_timeout.
     uint32_t dns_server_timeout
         = ints->getOptionalParam("dns_server_timeout",
                                  D2Params::DFT_DNS_SERVER_TIMEOUT);
 
-    dhcp_ddns::NameChangeProtocol ncr_protocol
-        = dhcp_ddns::stringToNcrProtocol(strings->
-                                         getOptionalParam("ncr_protocol",
-                                                          D2Params::
-                                                          DFT_NCR_PROTOCOL));
-    dhcp_ddns::NameChangeFormat ncr_format
-        = dhcp_ddns::stringToNcrFormat(strings->
+    if (dns_server_timeout < 1) {
+        isc_throw(D2CfgError, "DNS server timeout must be larger than 0 ("
+                  << ints->getPosition("dns_server_timeout") << ")");
+    }
+
+    // Fetch and validate ncr_protocol.
+    dhcp_ddns::NameChangeProtocol ncr_protocol;
+    try {
+        ncr_protocol = dhcp_ddns::
+                       stringToNcrProtocol(strings->
+                                           getOptionalParam("ncr_protocol",
+                                                            D2Params::
+                                                            DFT_NCR_PROTOCOL));
+    } catch (const std::exception& ex) {
+        isc_throw(D2CfgError, "ncr_protocol : "
+                  << ex.what() << " ("
+                  << strings->getPosition("ncr_protocol") << ")");
+    }
+
+    if (ncr_protocol != dhcp_ddns::NCR_UDP) {
+        isc_throw(D2CfgError, "ncr_protocol : "
+                  << dhcp_ddns::ncrProtocolToString(ncr_protocol)
+                  << " is not yet supported ("
+                  << strings->getPosition("ncr_protocol") << ")");
+    }
+
+    // Fetch and validate ncr_format.
+    dhcp_ddns::NameChangeFormat ncr_format;
+    try {
+        ncr_format = dhcp_ddns::
+                     stringToNcrFormat(strings->
                                        getOptionalParam("ncr_format",
-                                                          D2Params::
-                                                          DFT_NCR_FORMAT));
-    // Attempt to create the new client config.
+                                                        D2Params::
+                                                        DFT_NCR_FORMAT));
+    } catch (const std::exception& ex) {
+        isc_throw(D2CfgError, "ncr_format : "
+                  << ex.what() << " ("
+                  << strings->getPosition("ncr_format") << ")");
+    }
+
+    if (ncr_format != dhcp_ddns::FMT_JSON) {
+        isc_throw(D2CfgError, "NCR Format:"
+                  << dhcp_ddns::ncrFormatToString(ncr_format)
+                  << " is not yet supported ("
+                  << strings->getPosition("ncr_format") << ")");
+    }
+
+    // Attempt to create the new client config. This ought to fly as
+    // we already validated everything.
     D2ParamsPtr params(new D2Params(ip_address, port, dns_server_timeout,
                                     ncr_protocol, ncr_format));
 
@@ -234,7 +297,8 @@ D2CfgMgr::buildParams(isc::data::ConstElementPtr params_config) {
 }
 
 isc::dhcp::ParserPtr
-D2CfgMgr::createConfigParser(const std::string& config_id) {
+D2CfgMgr::createConfigParser(const std::string& config_id,
+                             const isc::data::Element::Position& pos) {
     // Get D2 specific context.
     D2CfgContextPtr context = getD2CfgContext();
 
@@ -262,8 +326,8 @@ D2CfgMgr::createConfigParser(const std::string& config_id) {
                                                context->getKeys()));
     } else {
         isc_throw(NotImplemented,
-                  "parser error: D2CfgMgr parameter not supported: "
-                  << config_id);
+                  "parser error: D2CfgMgr parameter not supported : "
+                  " (" << config_id << pos << ")");
     }
 
     return (parser);

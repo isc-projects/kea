@@ -34,7 +34,7 @@ const char* valid_d2_config = "{ "
                         "{ \"name\": \"tmark.org.\" , "
                         "  \"key_name\": \"d2_key.tmark.org\" , "
                         "  \"dns_servers\" : [ "
-                        "  { \"hostname\": \"one.tmark\" } "
+                        "  { \"ip_address\": \"127.0.0.101\" } "
                         "] } ] }, "
                         "\"reverse_ddns\" : {"
                         "\"ddns_domains\": [ "
@@ -396,7 +396,8 @@ DStubCfgMgr::createNewContext() {
 }
 
 isc::dhcp::ParserPtr
-DStubCfgMgr::createConfigParser(const std::string& element_id) {
+DStubCfgMgr::createConfigParser(const std::string& element_id,
+                                const isc::data::Element::Position& pos) {
     isc::dhcp::ParserPtr parser;
     DStubContextPtr context
         = boost::dynamic_pointer_cast<DStubContext>(getContext());
@@ -416,7 +417,8 @@ DStubCfgMgr::createConfigParser(const std::string& element_id) {
         // to "succeed" without specifically supporting them.
         if (SimFailure::shouldFailOn(SimFailure::ftElementUnknown)) {
             isc_throw(DCfgMgrBaseError,
-                      "Configuration parameter not supported: " << element_id);
+                      "Configuration parameter not supported: " << element_id
+                      << pos);
         }
 
         // Going to assume anything else is an object element.
