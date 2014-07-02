@@ -197,7 +197,7 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
             // thrown.  Note, that elements tagged as "optional" from the user
             // perspective must still have default or empty entries in the
             // configuration set to be parsed.
-            std::map<std::string, ConstElementPtr>::const_iterator it;
+            std::map<std::string, ConstElementPtr>::iterator it;
             BOOST_FOREACH(element_id, parse_order_) {
                 it = objects_map.find(element_id);
                 if (it != objects_map.end()) {
