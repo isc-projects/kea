@@ -36,8 +36,10 @@ public:
 
     /// @brief Opens a socket.
     ///
-    /// This function open an IPv6 socket on an interface and binds it to a
-    /// specified UDP port and IP address.
+    /// This function opens an IPv6 socket on an interface and binds it to a
+    /// specified UDP port and IP address. The @c addr value may be set to
+    /// "::" in which case the address is unspecified and the socket is
+    /// bound to in6addr_any.
     ///
     /// @param iface Interface descriptor.
     /// @param addr Address on the interface to be used to send packets.
@@ -61,6 +63,10 @@ public:
     /// no message waiting on the specified socket. Therefore the @c IfaceMgr
     /// must first check that there is any message on the socket (using
     /// select function) prior to calling this function.
+    ///
+    /// If the message is received through the socket bound to "any"
+    /// (in6addr_any) address this function will drop this message if it has
+    /// been sent to an address other than multicast or link-local.
     ///
     /// @param socket_info A structure holding socket information.
     ///

@@ -344,9 +344,22 @@ IfaceMgr::hasOpenSocket(const IOAddress& addr) const {
         const Iface::SocketCollection& sockets = iface->getSockets();
         for (Iface::SocketCollection::const_iterator sock = sockets.begin();
              sock != sockets.end(); ++sock) {
-            // Check if the socket address matches the specified address.
+            // Check if the socket address matches the specified address or
+            // if address is unspecified (in6addr_any).
             if (sock->addr_ == addr) {
                 return (true);
+            } else if (sock->addr_ == IOAddress("::")) {
+                // Handle the case that the address is unspecified (any).
+                // In this case, we should check if the specified address
+                // belongs to any of the interfaces.
+                for (Iface::AddressCollection::const_iterator addr_it =
+                         iface->getAddresses().begin();
+                     addr_it != iface->getAddresses().end();
+                     ++addr_it) {
+                    if (addr == *addr_it) {
+                        return (true);
+                    }
+                }
             }
         }
     }
@@ -545,9 +558,9 @@ IfaceMgr::openSockets6(const uint16_t port,
                 continue;
             }
 
-            // Run OS-specific function to open a socket on link-local address
-            // and join multicast group (non-Linux OSes), or open two sockets and
-            // bind one to link-local, another one to multicast address.
+            // Run OS-specific function to open a socket capable of receiving
+            // packets sent to All_DHCP_Relay_Agents_and_Servers multicast
+            // address.
             if (openMulticastSocket(*iface, *addr, port, error_handler)) {
                 ++count;
             }
@@ -774,17 +787,6 @@ IfaceMgr::getLocalAddress(const IOAddress& remote_addr, const uint16_t port) {
 
     // Return address of local endpoint.
     return IOAddress(local_address);
-}
-
-int
-IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, uint16_t port,
-                      const bool join_multicast) {
-    // Assuming that packet filter is not NULL, because its modifier checks it.
-    SocketInfo info = packet_filter6_->openSocket(iface, addr, port,
-                                                  join_multicast);
-    iface.addSocket(info);
-
-    return (info.sockfd_);
 }
 
 int
