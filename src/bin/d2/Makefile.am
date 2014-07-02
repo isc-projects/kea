@@ -14,8 +14,6 @@ if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
 
-pkglibexecdir = $(libexecdir)/@PACKAGE@
-
 CLEANFILES  = *.gcno *.gcda spec_config.h d2_messages.h d2_messages.cc s-messages
 
 man_MANS = kea-dhcp-ddns.8
@@ -47,7 +45,7 @@ s-messages: d2_messages.mes
 
 BUILT_SOURCES = spec_config.h d2_messages.h d2_messages.cc
 
-pkglibexec_PROGRAMS = kea-dhcp-ddns
+sbin_PROGRAMS = kea-dhcp-ddns
 
 kea_dhcp_ddns_SOURCES  = main.cc
 kea_dhcp_ddns_SOURCES += d_process.h
