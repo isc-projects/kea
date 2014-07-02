@@ -10,8 +10,8 @@ kea_config_file=@sysconfdir@/@PACKAGE@/kea.conf
 
 # Location of Kea binaries.
 exec_prefix=@exec_prefix@
-dhcp4_srv=@libexecdir@/@PACKAGE@/b10-dhcp4
-dhcp6_srv=@libexecdir@/@PACKAGE@/b10-dhcp6
+dhcp4_srv=@libexecdir@/@PACKAGE@/kea-dhcp4
+dhcp6_srv=@libexecdir@/@PACKAGE@/kea-dhcp6
 dhcp_ddns_srv=@libexecdir@/@PACKAGE@/b10-dhcp-ddns
 
 # Start DHCPv4 server?

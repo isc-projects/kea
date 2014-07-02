@@ -42,7 +42,7 @@ CONFIG_INVALID="{
 }"
 
 # Set the location of the executable.
-bin="b10-dhcp-ddns"
+bin="kea-dhcp-ddns"
 bin_path=@abs_top_builddir@/src/bin/d2
 
 # Import common test library.
