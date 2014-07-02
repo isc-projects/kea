@@ -112,14 +112,14 @@ network operations. In particlar, it provides information about existing
 network interfaces See isc::dhcp::IfaceMgr::Iface class and
 isc::dhcp::IfaceMgr::detectIfaces() and isc::dhcp::IfaceMgr::getIface().
 
-Currently there is interface detection is implemented in Linux only. There
-are plans to implement such support for other OSes, but they remain low
-priority for now.
+Currently there is interface detection is implemented in Linux and BSD.
+There are plans to implement such support for other OSes, but they
+remain low priority for now.
 
 Generic parts of the code are isc::dhcp::IfaceMgr class in
 src/lib/dhcp/iface_mgr.cc file. OS-specific code is located in separate
-files, e.g. iface_mgr_linux.cc. Such separation should be maintained when
-additional code will be developed.
+files, e.g. iface_mgr_linux.cc, iface_mgr_bsd. Such separation should be
+maintained when additional code will be developed.
 
 For systems that interface detection is not supported on, there is a stub
 mechanism implemented. It assumes that interface name is read from a text
@@ -132,7 +132,7 @@ should bind to. In theory this mechanism also supports IPv4, but it was
 never tested. The code currently supports only a single interface defined
 that way.
 
-Another useful methods are dedicated to transmission
+Other useful methods are dedicated to transmission
 (isc::dhcp::IfaceMgr::send(), 2 overloads) and reception
 (isc::dhcp::IfaceMgr::receive4() and isc::dhcp::IfaceMgr::receive6()).
 Note that receive4() and receive6() methods may return NULL, e.g.
@@ -196,7 +196,7 @@ the \ref isc::dhcp::IfaceMgr logic.
 The \ref isc::dhcp::IfaceMgr::openSockets6 function examines configuration
 of detected interfaces for their availability to listen DHCPv6 traffic. For
 all running interfaces (except local loopback) it will try to open a socket
-and bind it to the link local or global unicast address. The socket will
+and bind it to the link-local or global unicast address. The socket will
 not be opened on the interface which is down or for which it was explicitly
 specified that it should not be used to listen to DHCPv6 messages. There is
 a substantial amount of logic in this function that has to be unit tested for

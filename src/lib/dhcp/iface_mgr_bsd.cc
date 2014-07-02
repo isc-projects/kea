@@ -156,10 +156,9 @@ IfaceMgr::openMulticastSocket(Iface& iface,
                               const uint16_t port,
                               IfaceMgrErrorMsgCallback error_handler) {
     try {
-        // This should open a socket, bound it to link-local address
+        // This should open a socket, bind it to link-local address
         // and join multicast group.
-        openSocket(iface.getName(), addr, port,
-                   iface.flag_multicast_);
+        openSocket(iface.getName(), addr, port, iface.flag_multicast_);
 
     } catch (const Exception& ex) {
         IFACEMGR_ERROR(SocketConfigError, error_handler,
@@ -170,6 +169,20 @@ IfaceMgr::openMulticastSocket(Iface& iface,
 
     }
     return (true);
+}
+
+int
+IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, uint16_t port,
+                      const bool join_multicast) {
+    // On BSD, we bind the socket to in6addr_any and join multicast group
+    // to receive multicast traffic. So, if the multicast is requested,
+    // replace the address specified by the caller with the "unspecified"
+    // address.
+    IOAddress actual_address = join_multicast ? IOAddress("::") : addr;
+    SocketInfo info = packet_filter6_->openSocket(iface, actual_address, port,
+                                                  join_multicast);
+    iface.addSocket(info);
+    return (info.sockfd_);
 }
 
 

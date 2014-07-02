@@ -125,10 +125,9 @@ public:
 
     /// @brief Joins IPv6 multicast group on a socket.
     ///
-    /// Socket must be created and bound to an address. Note that this
-    /// address is different than the multicast address. For example DHCPv6
-    /// server should bind its socket to link-local address (fe80::1234...)
-    /// and later join ff02::1:2 multicast group.
+    /// This function joins the socket to the specified multicast group.
+    /// The socket descriptor must point to a valid socket bound to the
+    /// in6addr_any prior to calling this function.
     ///
     /// @param sock A socket descriptor (socket must be bound).
     /// @param ifname An interface name (for link-scoped multicast groups).
