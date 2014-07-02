@@ -8,6 +8,13 @@
 # Kea is told to listen on eth0 interface only.
   "interfaces": [ "eth0" ],
 
+# We need to specify lease type. As of May 2014, three backends are supported:
+# memfile, mysql and pgsql. We'll just use memfile, because it doesn't require
+# any prior set up.
+  "lease-database": {
+    "type": "memfile"
+  },
+
 # Addresses will be assigned with preferred and valid lifetimes
 # being 3000 and 4000, respectively. Client is told to start
 # renewing after 1000 seconds. If the server does not repond

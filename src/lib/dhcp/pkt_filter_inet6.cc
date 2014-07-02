@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -38,11 +38,20 @@ PktFilterInet6::openSocket(const Iface& iface,
     memset(&addr6, 0, sizeof(addr6));
     addr6.sin6_family = AF_INET6;
     addr6.sin6_port = htons(port);
-    if (addr.toText() != "::1") {
+    // sin6_scope_id must be set to interface index for link-local addresses.
+    // For unspecified addresses we set the scope id to the interface index
+    // to handle the case when the IfaceMgr is opening a socket which will
+    // join the multicast group. Such socket is bound to in6addr_any.
+    if (addr.isV6Multicast() ||
+        (addr.isV6LinkLocal() && (addr != IOAddress("::1"))) ||
+        (addr == IOAddress("::"))) {
         addr6.sin6_scope_id = if_nametoindex(iface.getName().c_str());
     }
 
-    memcpy(&addr6.sin6_addr, &addr.toBytes()[0], sizeof(addr6.sin6_addr));
+    // Copy the address if it has been specified.
+    if (addr != IOAddress("::")) {
+        memcpy(&addr6.sin6_addr, &addr.toBytes()[0], sizeof(addr6.sin6_addr));
+    }
 #ifdef HAVE_SA_LEN
     addr6.sin6_len = sizeof(addr6);
 #endif
@@ -60,13 +69,18 @@ PktFilterInet6::openSocket(const Iface& iface,
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
                    (char *)&flag, sizeof(flag)) < 0) {
         close(sock);
-        isc_throw(SocketConfigError, "Can't set SO_REUSEADDR option on dhcpv6 socket.");
+        isc_throw(SocketConfigError, "Can't set SO_REUSEADDR option on IPv6"
+                  " socket.");
     }
 
     if (bind(sock, (struct sockaddr *)&addr6, sizeof(addr6)) < 0) {
+        // Get the error message immediately after the bind because the
+        // invocation to close() below would override the errno.
+        char* errmsg = strerror(errno);
         close(sock);
-        isc_throw(SocketConfigError, "Failed to bind socket " << sock << " to " << addr.toText()
-                  << "/port=" << port);
+        isc_throw(SocketConfigError, "Failed to bind socket " << sock << " to "
+                  << addr.toText() << "/port=" << port
+                  << ": " << errmsg);
     }
 #ifdef IPV6_RECVPKTINFO
     // RFC3542 - a new way
@@ -167,6 +181,17 @@ PktFilterInet6::receive(const SocketInfo& socket_info) {
         }
     } else {
         isc_throw(SocketReadError, "failed to receive data");
+    }
+
+    // Filter out packets sent to global unicast address (not link local and
+    // not multicast) if the socket is set to listen multicast traffic and
+    // is bound to in6addr_any. The traffic sent to global unicast address is
+    // received via dedicated socket.
+    IOAddress local_addr = IOAddress::fromBytes(AF_INET6,
+                      reinterpret_cast<const uint8_t*>(&to_addr));
+    if ((socket_info.addr_ == IOAddress("::")) &&
+        !(local_addr.isV6Multicast() || local_addr.isV6LinkLocal())) {
+        return (Pkt6Ptr());
     }
 
     // Let's create a packet.

@@ -557,8 +557,8 @@ IfaceMgr::openMulticastSocket(Iface& iface,
 
     }
 
-    // To receive multicast traffic, Linux requires binding socket to
-    // the multicast address.
+    // In order to receive multicast traffic another socket is opened
+    // and bound to the multicast address.
 
     /// @todo The DHCPv6 requires multicast so we may want to think
     /// whether we want to open the socket on a multicast-incapable
@@ -586,6 +586,17 @@ IfaceMgr::openMulticastSocket(Iface& iface,
     }
     // Both sockets have opened successfully.
     return (true);
+}
+
+int
+IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, uint16_t port,
+                      const bool join_multicast) {
+    // Assuming that packet filter is not NULL, because its modifier checks it.
+    SocketInfo info = packet_filter6_->openSocket(iface, addr, port,
+                                                  join_multicast);
+    iface.addSocket(info);
+
+    return (info.sockfd_);
 }
 
 } // end of isc::dhcp namespace
