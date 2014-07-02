@@ -1,3 +1,11 @@
+800.	[bug]		marcin
+	DHCPv6 server is now usable on FreeBSD, NetBSD and OpenBSD systems.
+        It can receive messages sent to ff02::1:2 multicast address. Also,
+        fixed the bug whereby the DHCPv6 server failed to bind the socket to
+	global unicast address on BSD systems due to invalid scope id
+	setting.
+	(Trac #3437, git f4c2fe2fc37a37f1510e138e1f6c4ccd757e1f06)
+
 799.	[func]		tmark
 	Configuration parsing for all Kea servers has been enhanced to include
 	the location of the error within the configuration file presented as
