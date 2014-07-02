@@ -15,8 +15,6 @@ if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
 
-pkglibexecdir = $(libexecdir)/@PACKAGE@
-
 CLEANFILES = spec_config.h dhcp6_messages.h dhcp6_messages.cc s-messages
 
 man_MANS = kea-dhcp6.8
@@ -49,7 +47,7 @@ s-messages: dhcp6_messages.mes
 
 BUILT_SOURCES = spec_config.h dhcp6_messages.h dhcp6_messages.cc
 
-pkglibexec_PROGRAMS = kea-dhcp6
+sbin_PROGRAMS = kea-dhcp6
 
 kea_dhcp6_SOURCES  = main.cc
 kea_dhcp6_SOURCES += dhcp6_log.cc dhcp6_log.h
