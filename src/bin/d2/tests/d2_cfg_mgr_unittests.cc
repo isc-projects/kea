@@ -18,6 +18,7 @@
 #include <d_test_stubs.h>
 #include <test_data_files_config.h>
 #include <util/encode/base64.h>
+#include <dhcpsrv/testutils/config_result_check.h>
 
 #include <boost/foreach.hpp>
 #include <gtest/gtest.h>
@@ -28,8 +29,24 @@ using namespace isc::d2;
 
 namespace {
 
+/// @brief Function to create full path to the spec file
+///
+/// The full path is dependent upon the value of D2_SRC_DIR which
+/// whose value is generated from test_data_files_config.h.in
+///
+/// @param name file name to which the path should be prepended
 std::string specfile(const std::string& name) {
     return (std::string(D2_SRC_DIR) + "/" + name);
+}
+
+/// @brief Function to create full path to test data file
+///
+/// The full path is dependent upon the value of D2_TEST_DATA_DIR which
+/// whose value is generated from test_data_files_config.h.in
+///
+/// @param name file name to which the path should be prepended
+std::string testDataFile(const std::string& name) {
+    return (std::string(D2_TEST_DATA_DIR) + "/" + name);
 }
 
 /// @brief Test fixture class for testing D2CfgMgr class.
@@ -82,6 +99,11 @@ public:
 
         return (config.str());
     }
+    /// @brief Enumeration to select between expected configuration outcomes
+    enum RunConfigMode {
+       SHOULD_PASS,
+       SHOULD_FAIL
+    };
 
     /// @brief Parses a configuration string and tests against a given outcome
     ///
@@ -93,15 +115,16 @@ public:
     /// the D2Params pointer with the newly parsed instance.
     ///
     /// @param config_str the JSON configuration text to parse
-    /// @param should_fail boolean indicator if the parsing should fail or not.
-    /// It defaults to false.
-    void runConfig(std::string config_str, bool should_fail=false) {
+    /// @param mode indicator if the parsing should fail or not.  It defaults
+    /// defaults to SHOULD_PASS.
+    ///
+    void runConfig(std::string config_str, RunConfigMode mode=SHOULD_PASS) {
         // We assume the config string is valid JSON.
         ASSERT_TRUE(fromJSON(config_str));
 
         // Parse the configuration and verify we got the expected outcome.
         answer_ = cfg_mgr_->parseConfig(config_set_);
-        ASSERT_TRUE(checkAnswer(should_fail));
+        ASSERT_TRUE(checkAnswer(mode == SHOULD_FAIL));
 
         // Verify that the D2 context can be retrieved and is not null.
         D2CfgContextPtr context;
@@ -110,6 +133,50 @@ public:
         // Verify that the global scalars have the proper values.
         d2_params_ = context->getD2Params();
         ASSERT_TRUE(d2_params_);
+    }
+
+    /// @brief Check parse result against expected outcome and position info
+    ///
+    /// This method analyzes the given parsing result against an expected outcome
+    /// of SHOULD_PASS or SHOULD_FAIL.  If it is expected to fail, the comment
+    /// contained within the result is searched for Element::Position information
+    /// which should contain the given file name.  It does not attempt to verify
+    /// the numerical values for line number and col.
+    ///
+    /// @param answer Element set containing an integer result code and string
+    /// comment.
+    /// @param mode indicator if the parsing should fail or not.
+    /// @param file_name name of the file containing the configuration text
+    /// parsed. It defaults to "<string>" which is the value present if the
+    /// configuration text did not originate from a file. (i.e. one did not use
+    /// isc::data::Element::fromJSONFile() to read the JSON text).
+    void
+    checkAnswerWithError(isc::data::ConstElementPtr answer,
+                         RunConfigMode mode, std::string file_name="<string>") {
+        int rcode = 0;
+        isc::data::ConstElementPtr comment;
+        comment = isc::config::parseAnswer(rcode, answer);
+
+        if (mode == SHOULD_PASS) {
+            if (rcode == 0) {
+                return;
+            }
+
+            FAIL() << "Parsing was expected to pass but failed : " << rcode
+                   << " comment: " << *comment;
+        }
+
+        if (rcode == 0) {
+            FAIL() << "Parsing was expected to fail but passed : "
+                   << " comment: " << *comment;
+        }
+
+        // Parsing was expected to fail, test for position info.
+        if (isc::dhcp::test::errorContainsPosition(answer, file_name)) {
+            return;
+        }
+
+        FAIL() << "Parsing failed as expected but lacks position : " << *comment;
     }
 
     /// @brief Pointer the D2Params most recently parsed.
@@ -397,6 +464,44 @@ TEST_F(D2CfgMgrTest, defaultValues) {
               d2_params_->getNcrFormat());
 }
 
+/// @brief Tests the unsupported scalar parameters and objects are detected.
+TEST_F(D2CfgMgrTest, unsupportedTopLevelItems) {
+    // Check that an unsupported top level parameter fails.
+    std::string config =
+            "{"
+            " \"ip_address\": \"127.0.0.1\", "
+            " \"port\": 777 , "
+            " \"dns_server_timeout\": 333 , "
+            " \"ncr_protocol\": \"UDP\" , "
+            " \"ncr_format\": \"JSON\", "
+            "\"tsig_keys\": [], "
+            "\"forward_ddns\" : {}, "
+            "\"reverse_ddns\" : {}, "
+            "\"bogus_param\" : true "
+            "}";
+
+    runConfig(config, SHOULD_FAIL);
+
+    // Check that unsupported top level objects fails.  For
+    // D2 these fail as they are not in the parse order.
+    config =
+            "{"
+            " \"ip_address\": \"127.0.0.1\", "
+            " \"port\": 777 , "
+            " \"dns_server_timeout\": 333 , "
+            " \"ncr_protocol\": \"UDP\" , "
+            " \"ncr_format\": \"JSON\", "
+            "\"tsig_keys\": [], "
+            "\"bogus_object_one\" : {}, "
+            "\"forward_ddns\" : {}, "
+            "\"reverse_ddns\" : {}, "
+            "\"bogus_object_two\" : {} "
+            "}";
+
+    runConfig(config, SHOULD_FAIL);
+}
+
+
 /// @brief Tests the enforcement of data validation when parsing D2Params.
 /// It verifies that:
 /// -# ip_address cannot be "0.0.0.0"
@@ -409,27 +514,31 @@ TEST_F(D2CfgMgrTest, invalidEntry) {
     // Cannot use IPv4 ANY address
     std::string config = makeParamsConfigString ("0.0.0.0", 777, 333,
                                            "UDP", "JSON");
-    runConfig(config, 1);
+    runConfig(config, SHOULD_FAIL);
 
     // Cannot use IPv6 ANY address
     config = makeParamsConfigString ("::", 777, 333, "UDP", "JSON");
-    runConfig(config, 1);
+    runConfig(config, SHOULD_FAIL);
 
     // Cannot use port  0
     config = makeParamsConfigString ("127.0.0.1", 0, 333, "UDP", "JSON");
-    runConfig(config, 1);
+    runConfig(config, SHOULD_FAIL);
 
     // Cannot use dns server timeout of 0
     config = makeParamsConfigString ("127.0.0.1", 777, 0, "UDP", "JSON");
-    runConfig(config, 1);
+    runConfig(config, SHOULD_FAIL);
 
     // Invalid protocol
     config = makeParamsConfigString ("127.0.0.1", 777, 333, "BOGUS", "JSON");
-    runConfig(config, 1);
+    runConfig(config, SHOULD_FAIL);
+
+    // Unsupported protocol
+    config = makeParamsConfigString ("127.0.0.1", 777, 333, "TCP", "JSON");
+    runConfig(config, SHOULD_FAIL);
 
     // Invalid format
     config = makeParamsConfigString ("127.0.0.1", 777, 333, "UDP", "BOGUS");
-    runConfig(config, 1);
+    runConfig(config, SHOULD_FAIL);
 }
 
 /// @brief Tests the enforcement of data validation when parsing TSIGKeyInfos.
@@ -724,8 +833,31 @@ TEST_F(DnsServerInfoTest, invalidEntry) {
 /// 2. A DnsServerInfo entry is correctly made, when given ip address and port.
 /// 3. A DnsServerInfo entry is correctly made, when given only an ip address.
 TEST_F(DnsServerInfoTest, validEntry) {
-    // Valid entries for dynamic host
-    std::string config = "{ \"hostname\": \"pegasus.tmark\" }";
+    /// @todo When resolvable hostname is supported you'll need this test.
+    /// // Valid entries for dynamic host
+    /// std::string config = "{ \"hostname\": \"pegasus.tmark\" }";
+    /// ASSERT_TRUE(fromJSON(config));
+
+    /// // Verify that it builds and commits without throwing.
+    /// ASSERT_NO_THROW(parser_->build(config_set_));
+    /// ASSERT_NO_THROW(parser_->commit());
+
+    /// //Verify the correct number of servers are present
+    /// int count =  servers_->size();
+    /// EXPECT_EQ(1, count);
+
+    /// Verify the server exists and has the correct values.
+    /// DnsServerInfoPtr server = (*servers_)[0];
+    /// EXPECT_TRUE(checkServer(server, "pegasus.tmark",
+    ///                         DnsServerInfo::EMPTY_IP_STR,
+    ///                         DnsServerInfo::STANDARD_DNS_PORT));
+
+    /// // Start over for a new test.
+    /// reset();
+
+    // Valid entries for static ip
+    std::string config = " { \"ip_address\": \"127.0.0.1\" , "
+                         "  \"port\": 100 }";
     ASSERT_TRUE(fromJSON(config));
 
     // Verify that it builds and commits without throwing.
@@ -738,28 +870,6 @@ TEST_F(DnsServerInfoTest, validEntry) {
 
     // Verify the server exists and has the correct values.
     DnsServerInfoPtr server = (*servers_)[0];
-    EXPECT_TRUE(checkServer(server, "pegasus.tmark",
-                            DnsServerInfo::EMPTY_IP_STR,
-                            DnsServerInfo::STANDARD_DNS_PORT));
-
-    // Start over for a new test.
-    reset();
-
-    // Valid entries for static ip
-    config = " { \"ip_address\": \"127.0.0.1\" , "
-             "  \"port\": 100 }";
-    ASSERT_TRUE(fromJSON(config));
-
-    // Verify that it builds and commits without throwing.
-    ASSERT_NO_THROW(parser_->build(config_set_));
-    ASSERT_NO_THROW(parser_->commit());
-
-    // Verify the correct number of servers are present
-    count =  servers_->size();
-    EXPECT_EQ(1, count);
-
-    // Verify the server exists and has the correct values.
-    server = (*servers_)[0];
     EXPECT_TRUE(checkServer(server, "", "127.0.0.1", 100));
 
     // Start over for a new test.
@@ -787,9 +897,9 @@ TEST_F(DnsServerInfoTest, validEntry) {
 /// entries is detected.
 TEST_F(ConfigParseTest, invalidServerList) {
     // Construct a list of servers with an invalid server entry.
-    std::string config = "[ { \"hostname\": \"one.tmark\" }, "
-                        "{ \"hostname\": \"\" }, "
-                        "{ \"hostname\": \"three.tmark\" } ]";
+    std::string config = "[ { \"ip_address\": \"127.0.0.1\" }, "
+                        "{ \"ip_address\": \"\" }, "
+                        "{ \"ip_address\": \"127.0.0.2\" } ]";
     ASSERT_TRUE(fromJSON(config));
 
     // Create the server storage and list parser.
@@ -805,9 +915,9 @@ TEST_F(ConfigParseTest, invalidServerList) {
 /// a valid configuration.
 TEST_F(ConfigParseTest, validServerList) {
     // Create a valid list of servers.
-    std::string config = "[ { \"hostname\": \"one.tmark\" }, "
-                        "{ \"hostname\": \"two.tmark\" }, "
-                        "{ \"hostname\": \"three.tmark\" } ]";
+    std::string config = "[ { \"ip_address\": \"127.0.0.1\" }, "
+                        "{ \"ip_address\": \"127.0.0.2\" }, "
+                        "{ \"ip_address\": \"127.0.0.3\" } ]";
     ASSERT_TRUE(fromJSON(config));
 
     // Create the server storage and list parser.
@@ -825,17 +935,17 @@ TEST_F(ConfigParseTest, validServerList) {
 
     // Verify the first server exists and has the correct values.
     DnsServerInfoPtr server = (*servers)[0];
-    EXPECT_TRUE(checkServer(server, "one.tmark", DnsServerInfo::EMPTY_IP_STR,
+    EXPECT_TRUE(checkServer(server, "", "127.0.0.1",
                             DnsServerInfo::STANDARD_DNS_PORT));
 
     // Verify the second server exists and has the correct values.
     server = (*servers)[1];
-    EXPECT_TRUE(checkServer(server, "two.tmark", DnsServerInfo::EMPTY_IP_STR,
+    EXPECT_TRUE(checkServer(server, "", "127.0.0.2",
                             DnsServerInfo::STANDARD_DNS_PORT));
 
     // Verify the third server exists and has the correct values.
     server = (*servers)[2];
-    EXPECT_TRUE(checkServer(server, "three.tmark", DnsServerInfo::EMPTY_IP_STR,
+    EXPECT_TRUE(checkServer(server, "", "127.0.0.3",
                             DnsServerInfo::STANDARD_DNS_PORT));
 }
 
@@ -864,7 +974,7 @@ TEST_F(DdnsDomainTest, invalidDdnsDomainEntry) {
     ASSERT_TRUE(fromJSON(config));
 
     // Verify that the domain configuration builds fails.
-    EXPECT_THROW(parser_->build(config_set_), isc::dhcp::DhcpConfigError);
+    EXPECT_THROW(parser_->build(config_set_), D2CfgError);
 
     // Create a domain configuration with an empty server list.
     config = "{ \"name\": \"tmark.org\" , "
@@ -1155,17 +1265,17 @@ TEST_F(D2CfgMgrTest, fullConfig) {
                         "{ \"name\": \"tmark.org\" , "
                         "  \"key_name\": \"d2_key.tmark.org\" , "
                         "  \"dns_servers\" : [ "
-                        "  { \"hostname\": \"one.tmark\" } , "
-                        "  { \"hostname\": \"two.tmark\" } , "
-                        "  { \"hostname\": \"three.tmark\"} "
+                        "  { \"ip_address\": \"127.0.0.1\" } , "
+                        "  { \"ip_address\": \"127.0.0.2\" } , "
+                        "  { \"ip_address\": \"127.0.0.3\"} "
                         "  ] } "
                         ", "
                         "{ \"name\": \"billcat.net\" , "
                         "  \"key_name\": \"d2_key.billcat.net\" , "
                         "  \"dns_servers\" : [ "
-                        "  { \"hostname\": \"four.billcat\" } , "
-                        "  { \"hostname\": \"five.billcat\" } , "
-                        "  { \"hostname\": \"six.billcat\" } "
+                        "  { \"ip_address\": \"127.0.0.4\" } , "
+                        "  { \"ip_address\": \"127.0.0.5\" } , "
+                        "  { \"ip_address\": \"127.0.0.6\" } "
                         "  ] } "
                         "] },"
                         "\"reverse_ddns\" : {"
@@ -1173,17 +1283,17 @@ TEST_F(D2CfgMgrTest, fullConfig) {
                         "{ \"name\": \" 0.168.192.in.addr.arpa.\" , "
                         "  \"key_name\": \"d2_key.tmark.org\" , "
                         "  \"dns_servers\" : [ "
-                        "  { \"hostname\": \"one.rev\" } , "
-                        "  { \"hostname\": \"two.rev\" } , "
-                        "  { \"hostname\": \"three.rev\" } "
+                        "  { \"ip_address\": \"127.0.1.1\" } , "
+                        "  { \"ip_address\": \"127.0.2.1\" } , "
+                        "  { \"ip_address\": \"127.0.3.1\" } "
                         "  ] } "
                         ", "
                         "{ \"name\": \" 0.247.106.in.addr.arpa.\" , "
                         "  \"key_name\": \"d2_key.billcat.net\" , "
                         "  \"dns_servers\" : [ "
-                        "  { \"hostname\": \"four.rev\" }, "
-                        "  { \"hostname\": \"five.rev\" } , "
-                        "  { \"hostname\": \"six.rev\" } "
+                        "  { \"ip_address\": \"127.0.4.1\" }, "
+                        "  { \"ip_address\": \"127.0.5.1\" } , "
+                        "  { \"ip_address\": \"127.0.6.1\" } "
                         "  ] } "
                         "] } }";
 
@@ -1292,7 +1402,7 @@ TEST_F(D2CfgMgrTest, forwardMatch) {
                         ", "
                         "{ \"name\": \"*\" , "
                         "  \"dns_servers\" : [ "
-                        "  { \"hostname\": \"global.net\" } "
+                        "  { \"ip_address\": \"127.0.0.3\" } "
                         "  ] } "
                         "] }, "
                         "\"reverse_ddns\" : {} "
@@ -1512,6 +1622,101 @@ TEST_F(D2CfgMgrTest, matchReverse) {
 
     // Verify that an attempt to match an invalid IP address throws.
     ASSERT_THROW(cfg_mgr_->matchReverse("", match), D2CfgError);
+}
+
+/// @brief Tests D2 config parsing against a wide range of config permutations.
+/// It iterates over all of the test configurations described in given file.
+/// The file content is JSON specialized to this test. The format of the file
+/// is:
+///
+/// @code
+/// # The file must open with a list. It's name is arbitrary.
+///
+/// { "test_list" :
+/// [
+///
+/// #    Test one starts here:
+///      {
+///
+/// #    Each test has:
+/// #      1. description - optional text description
+/// #      2. should_fail - bool indicator if parsing is expected to file
+/// #         (defaults to false)
+/// #       3. data - configuration text to parse
+/// #
+///      "description" : "<text describing test>",
+///      "should_fail" : <true|false> ,
+///      "data" :
+///          {
+/// #        configuration elements here
+///          "bool_val" : false,
+///          "some_map" :  {}
+/// #         :
+///          }
+///      }
+///
+/// #    Next test would start here
+///      ,
+///      {
+///      }
+///
+/// ]}
+///
+/// @endcode
+///
+/// (The file supports comments per Element::fromJSONFile())
+///
+TEST_F(D2CfgMgrTest, configPermutations) {
+    std::string test_file = testDataFile("d2_cfg_tests.json");
+    isc::data::ConstElementPtr tests;
+
+    // Read contents of the file and parse it as JSON. Note it must contain
+    // all valid JSON, we aren't testing JSON parsing.
+    try {
+        tests = isc::data::Element::fromJSONFile(test_file, true);
+    } catch (const std::exception& ex) {
+        FAIL() << "ERROR parsing file : " << test_file << " : " << ex.what();
+    }
+
+    // Read in each test For each test, read:
+    //  1. description - optional text description
+    //  2. should_fail - bool indicator if parsing is expected to file (defaults
+    //     to false
+    //  3. data - configuration text to parse
+    //
+    // Next attempt to parse the configuration by passing it into
+    // D2CfgMgr::parseConfig().  Then check the parsing outcome against the
+    // expected outcome as given by should_fail.
+    isc::data::ConstElementPtr test;
+    BOOST_FOREACH(test, tests->get("test_list")->listValue()) {
+
+        // Grab the description.
+        std::string description = "<no desc>";
+        isc::data::ConstElementPtr elem = test->get("description");
+        if (elem) {
+            elem->getValue(description);
+        }
+
+        // Grab the outcome flag, should_fail, defaults to false if it's
+        // not specified.
+        bool should_fail = false;
+        elem = test->get("should_fail");
+        if (elem)  {
+            elem->getValue(should_fail);
+        }
+
+        // Grab the test's configuration data.
+        isc::data::ConstElementPtr data = test->get("data");
+        ASSERT_TRUE(data) << "No data for test: "
+                          << " : " << test->getPosition();
+
+        // Attempt to parse the configuration. We verify that we get the expected
+        // outcome, and if it was supposed to fail if the explanation contains
+        // position information.
+        checkAnswerWithError(cfg_mgr_->parseConfig(data),
+                             (should_fail ? SHOULD_FAIL : SHOULD_PASS),
+                             test_file);
+    }
 }
 
 } // end of anonymous namespace
