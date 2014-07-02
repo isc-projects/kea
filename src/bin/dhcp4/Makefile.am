@@ -18,15 +18,15 @@ pkglibexecdir = $(libexecdir)/@PACKAGE@
 
 CLEANFILES  = *.gcno *.gcda spec_config.h dhcp4_messages.h dhcp4_messages.cc s-messages
 
-man_MANS = b10-dhcp4.8
+man_MANS = kea-dhcp4.8
 DISTCLEANFILES = $(man_MANS)
-EXTRA_DIST = $(man_MANS) b10-dhcp4.xml dhcp4.spec
+EXTRA_DIST = $(man_MANS) kea-dhcp4.xml dhcp4.spec
 
 if GENERATE_DOCS
-b10-dhcp4.8: b10-dhcp4.xml
+kea-dhcp4.8: kea-dhcp4.xml
 	@XSLTPROC@ --novalid --xinclude --nonet -o $@ \
         http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
-	$(srcdir)/b10-dhcp4.xml
+	$(srcdir)/kea-dhcp4.xml
 
 else
 
@@ -47,35 +47,35 @@ s-messages: dhcp4_messages.mes
 
 BUILT_SOURCES = spec_config.h dhcp4_messages.h dhcp4_messages.cc
 
-pkglibexec_PROGRAMS = b10-dhcp4
+pkglibexec_PROGRAMS = kea-dhcp4
 
-b10_dhcp4_SOURCES  = main.cc
-b10_dhcp4_SOURCES += ctrl_dhcp4_srv.cc ctrl_dhcp4_srv.h
-b10_dhcp4_SOURCES += json_config_parser.cc json_config_parser.h
-b10_dhcp4_SOURCES += dhcp4_log.cc dhcp4_log.h
-b10_dhcp4_SOURCES += dhcp4_srv.cc dhcp4_srv.h
+kea_dhcp4_SOURCES  = main.cc
+kea_dhcp4_SOURCES += ctrl_dhcp4_srv.cc ctrl_dhcp4_srv.h
+kea_dhcp4_SOURCES += json_config_parser.cc json_config_parser.h
+kea_dhcp4_SOURCES += dhcp4_log.cc dhcp4_log.h
+kea_dhcp4_SOURCES += dhcp4_srv.cc dhcp4_srv.h
 
 if CONFIG_BACKEND_BUNDY
-b10_dhcp4_SOURCES += bundy_controller.cc
+kea_dhcp4_SOURCES += bundy_controller.cc
 endif
 
 if CONFIG_BACKEND_JSON
-b10_dhcp4_SOURCES += kea_controller.cc
+kea_dhcp4_SOURCES += kea_controller.cc
 endif
 
-nodist_b10_dhcp4_SOURCES = dhcp4_messages.h dhcp4_messages.cc
+nodist_kea_dhcp4_SOURCES = dhcp4_messages.h dhcp4_messages.cc
 EXTRA_DIST += dhcp4_messages.mes
 
-b10_dhcp4_LDADD  = $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
-b10_dhcp4_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
-b10_dhcp4_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
-b10_dhcp4_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
-b10_dhcp4_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-b10_dhcp4_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
-b10_dhcp4_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
-b10_dhcp4_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
-b10_dhcp4_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
-b10_dhcp4_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+kea_dhcp4_LDADD  = $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+kea_dhcp4_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
+kea_dhcp4_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
+kea_dhcp4_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+kea_dhcp4_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+kea_dhcp4_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+kea_dhcp4_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
+kea_dhcp4_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+kea_dhcp4_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+kea_dhcp4_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 
-b10_dhcp4dir = $(pkgdatadir)
-b10_dhcp4_DATA = dhcp4.spec
+kea_dhcp4dir = $(pkgdatadir)
+kea_dhcp4_DATA = dhcp4.spec

@@ -59,7 +59,7 @@ CONFIG_INVALID="{
 }"
 
 # Set the location of the executable.
-bin="b10-dhcp4"
+bin="kea-dhcp4"
 bin_path=@abs_top_builddir@/src/bin/dhcp4
 
 # Import common test library.

@@ -79,9 +79,9 @@ config="{
 }"
 
 # Fixed part of the keactrl configuration file.
-keactrl_fixed_config="dhcp4_srv=${KEACTRL_BUILD_DIR}/src/bin/dhcp4/b10-dhcp4\n\
-dhcp6_srv=${KEACTRL_BUILD_DIR}/src/bin/dhcp6/b10-dhcp6\n\
-dhcp_ddns_srv=${KEACTRL_BUILD_DIR}/src/bin/d2/b10-dhcp-ddns\n"
+keactrl_fixed_config="dhcp4_srv=${KEACTRL_BUILD_DIR}/src/bin/dhcp4/kea-dhcp4\n\
+dhcp6_srv=${KEACTRL_BUILD_DIR}/src/bin/dhcp6/kea-dhcp6\n\
+dhcp_ddns_srv=${KEACTRL_BUILD_DIR}/src/bin/d2/kea-dhcp-ddns\n"
 
 # This test checks that DHCPv4, DHCPv6 and D2 server can be started and
 # shut down.

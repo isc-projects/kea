@@ -13,7 +13,7 @@
 # PERFORMANCE OF THIS SOFTWARE.
 
 # A list of Kea processes, mainly used by the cleanup functions.
-KEA_PROCS="b10-dhcp4 b10-dhcp6 b10-dhcp-ddns"
+KEA_PROCS="kea-dhcp4 kea-dhcp6 kea-dhcp-ddns"
 
 ### Logging functions ###
 
