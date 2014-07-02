@@ -14,8 +14,6 @@ if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
 
-pkglibexecdir = $(libexecdir)/@PACKAGE@
-
 CLEANFILES  = *.gcno *.gcda spec_config.h dhcp4_messages.h dhcp4_messages.cc s-messages
 
 man_MANS = kea-dhcp4.8
@@ -47,7 +45,7 @@ s-messages: dhcp4_messages.mes
 
 BUILT_SOURCES = spec_config.h dhcp4_messages.h dhcp4_messages.cc
 
-pkglibexec_PROGRAMS = kea-dhcp4
+sbin_PROGRAMS = kea-dhcp4
 
 kea_dhcp4_SOURCES  = main.cc
 kea_dhcp4_SOURCES += ctrl_dhcp4_srv.cc ctrl_dhcp4_srv.h
