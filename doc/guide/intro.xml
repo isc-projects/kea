@@ -164,7 +164,7 @@
 
           <listitem>
             <simpara>
-              <command>b10-dhcp4</command> &mdash;
+              <command>kea-dhcp4</command> &mdash;
               DHCPv4 server process.
               This process responds to DHCPv4 queries from clients.
             </simpara>
@@ -172,7 +172,7 @@
 
           <listitem>
             <simpara>
-              <command>b10-dhcp6</command> &mdash;
+              <command>kea-dhcp6</command> &mdash;
               DHCPv6 server process.
               This process responds to DHCPv6 queries from clients.
             </simpara>
@@ -180,7 +180,7 @@
 
           <listitem>
             <simpara>
-              <command>b10-dhcp-ddns</command> &mdash;
+              <command>kea-dhcp-ddns</command> &mdash;
               DHCP-DDNS process.
               This process acts as an intermediary between the DHCP servers
               and DNS server. It receives name update requests from the DHCP
