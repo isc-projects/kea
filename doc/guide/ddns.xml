@@ -7,9 +7,9 @@
   <chapter id="dhcp-ddns-server">
     <title>The DHCP-DDNS Server</title>
     <para>
-    The DHCP-DDNS Server (b10-dhcp-ddns, known informally as D2) conducts the client side of
+    The DHCP-DDNS Server (kea-dhcp-ddns, known informally as D2) conducts the client side of
     the DDNS protocol (defined in RFC 2136) on behalf of the DHCPv4 and DHCPv6
-    servers (b10-dhcp4 and b10-dhcp6 respectively). The DHCP servers construct
+    servers (kea-dhcp4 and kea-dhcp6 respectively). The DHCP servers construct
     DDNS update requests, known as NameChangeRequests (NCRs), based upon DHCP
     lease change events and then post these to D2. D2 attempts to match
     each such request to the appropriate DNS server(s) and carry out the
@@ -51,7 +51,7 @@
     <section id="dhcp-ddns-server-start-stop">
       <title>Starting and Stopping the DHCP-DDNS Server</title>
       <para>
-      <command>b10-dhcp-ddns</command> is the BIND 10 DHCP-DDNS server and,
+      <command>kea-dhcp-ddns</command> is the BIND 10 DHCP-DDNS server and,
       like other parts of BIND 10, is configured through the
       <command>bindctl</command> program.
       </para>
@@ -60,16 +60,16 @@
       configuring the server is to add it to the list of running BIND 10
       services.
 <screen>
-&gt; <userinput>config add Init/components b10-dhcp-ddns</userinput>
-&gt; <userinput>config set Init/components/b10-dhcp-ddns/kind dispensable</userinput>
+&gt; <userinput>config add Init/components kea-dhcp-ddns</userinput>
+&gt; <userinput>config set Init/components/kea-dhcp-ddns/kind dispensable</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
       </para>
       <para>
-      To remove <command>b10-dhcp-ddns</command> from the set of running services,
-      the <command>b10-dhcp-ddns</command> is removed from list of Init components:
+      To remove <command>kea-dhcp-ddns</command> from the set of running services,
+      the <command>kea-dhcp-ddns</command> is removed from list of Init components:
 <screen>
-&gt; <userinput>config remove Init/components b10-dhcp-ddns</userinput>
+&gt; <userinput>config remove Init/components kea-dhcp-ddns</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
       </para>
@@ -93,7 +93,7 @@
         current configuration, use the following command in <command>bindctl</command>:
         <screen>
 &gt; <userinput>config show DhcpDdns</userinput></screen>
-        When starting b10-dhcp-ddns module for the first time, the default
+        When starting kea-dhcp-ddns module for the first time, the default
         configuration will be available. It will look similar to this:
 <screen>
 &gt; <userinput>config show DhcpDdns</userinput>

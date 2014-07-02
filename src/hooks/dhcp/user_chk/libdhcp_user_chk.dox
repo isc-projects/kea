@@ -18,7 +18,7 @@
 @section libdhcp_user_chkIntro Libdhcp_user_chk: An Example Hooks Library
 ## Introduction
 libdhcp_user_chk is an example hooks library which customizes the DHCP query
-processing provided by BIND X DHCP server modules (b10-dhcp4 and b10-dhcp6).
+processing provided by Kea DHCP server modules (kea-dhcp4 and kea-dhcp6).
 Specifically it allows subnet selection and DHCP response option customization
 based upon a registry of DHCP clients.  Note that the words "client" and "user" are used interchangeably herein.  The intent of the custom behavior is three
 fold:
@@ -134,7 +134,7 @@ config set Dhcp4/hook_libraries[0] "/usr/local/lib/libdhcp_user_chk.so"
 config commit
 @endcode
 
-To configure it for b10-dhcp6, the commands are simply as shown below:
+To configure it for kea-dhcp6, the commands are simply as shown below:
 
 @code
 config add Dhcp6/hook_libraries

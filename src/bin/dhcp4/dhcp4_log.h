@@ -25,7 +25,7 @@ namespace dhcp {
 /// \brief DHCP4 Logging
 ///
 /// Defines the levels used to output debug messages in the non-library part of
-/// the b10-dhcp4 program.  Higher numbers equate to more verbose (and detailed)
+/// the kea-dhcp4 program.  Higher numbers equate to more verbose (and detailed)
 /// output.
 
 // Debug levels used to log information during startup and shutdown.
