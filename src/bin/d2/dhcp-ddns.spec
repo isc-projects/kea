@@ -205,7 +205,7 @@
     "commands": [
         {
             "command_name": "shutdown",
-            "command_description": "Shuts down b10-dhcp-ddns module server.",
+            "command_description": "Shuts down kea-dhcp-ddns module server.",
             "command_args": [
             {
                 "item_name": "type",

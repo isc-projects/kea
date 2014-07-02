@@ -16,7 +16,7 @@
  @page dhcp6 DHCPv6 Server Component
 
  BIND10 offers DHCPv6 server implementation. It is implemented as
- b10-dhcp6 component. Its primary code is located in
+ kea-dhcp6 component. Its primary code is located in
  isc::dhcp::Dhcpv6Srv class. It uses \ref libdhcp extensively,
  especially lib::dhcp::Pkt6, isc::dhcp::Option and
  isc::dhcp::IfaceMgr classes. Currently this code offers skeleton
@@ -38,7 +38,7 @@
 
  @section dhcpv6ConfigParser Configuration Parser in DHCPv6
 
- b10-dhcp6 component uses BIND10 cfgmgr for commands and configuration. During
+ kea-dhcp6 component uses BIND10 cfgmgr for commands and configuration. During
  initial configuration (See \ref
  isc::dhcp::ControlledDhcpv6Srv::establishSession()), the configuration handler
  callback is installed (see isc::dhcp::ControlledDhcpv6Srv::dhcp6ConfigHandler().
@@ -104,10 +104,10 @@ DNS update to the client and that the server performs the reverse update only. C
 version of the DHCPv6 server does not support delegation of the forward update
 to the client. The implementation of this feature is planned for the future releases.
 
-The b10-dhcp-ddns process is responsible for the actual communication with the DNS
-server, i.e. to send DNS Update messages. The b10-dhcp6 module is responsible
+The kea-dhcp-ddns process is responsible for the actual communication with the DNS
+server, i.e. to send DNS Update messages. The kea-dhcp6 module is responsible
 for generating so called @ref isc::dhcp_ddns::NameChangeRequest and sending it to the
-b10-dhcp-ddns module. The @ref isc::dhcp_ddns::NameChangeRequest object represents changes to the
+kea-dhcp-ddns module. The @ref isc::dhcp_ddns::NameChangeRequest object represents changes to the
 DNS bindings, related to acquisition, renewal or release of the lease. The bind10-dhcp6
 module implements the simple FIFO queue of the NameChangeRequest objects. The module
 logic, which processes the incoming DHCPv6 Client FQDN Options puts these requests
@@ -116,7 +116,7 @@ into the FIFO queue.
 @todo Currently the FIFO queue is not processed after the NameChangeRequests are
 generated and added to it. In the future implementation steps it is planned to create
 a code which will check if there are any outstanding requests in the queue and
-send them to the b10-dhcp-ddns module when server is idle waiting for DHCP messages.
+send them to the kea-dhcp-ddns module when server is idle waiting for DHCP messages.
 
 In the simplest case, when client gets one address from the server, a DHCPv6 server
 may generate 0, 1 or 2 NameChangeRequests during single message processing. 
@@ -125,10 +125,10 @@ Server generates no NameChangeRequests if it is not configured to update DNS
 
 Server may generate 1 NameChangeRequest in a situation when a client acquires a
 new lease or it releases an existing lease. In the former case, the NameChangeRequest
-type is CHG_ADD, which indicates that the b10-dhcp-ddns module should add a new DNS
+type is CHG_ADD, which indicates that the kea-dhcp-ddns module should add a new DNS
 binding for the client, and it is assumed that there is no DNS binding for this
 client already. In the latter case, the NameChangeRequest type is CHG_REMOVE to
-indicate to the b10-dhcp-ddns module that the existing DNS binding should be removed
+indicate to the kea-dhcp-ddns module that the existing DNS binding should be removed
 from the DNS. The binding consists of the forward and reverse mapping.
 A server may only remove the mapping which it had added. Therefore, the lease database
 holds an information which updates (no update, reverse only update, forward only update,

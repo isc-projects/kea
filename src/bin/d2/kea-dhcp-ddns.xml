@@ -30,7 +30,7 @@
   </refmeta>
 
   <refnamediv>
-    <refname>b10-dhcp-ddns</refname>
+    <refname>kea-dhcp-ddns</refname>
     <refpurpose>DHCP-DDNS process in Kea</refpurpose>
   </refnamediv>
 

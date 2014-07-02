@@ -105,7 +105,7 @@ that the DNS Update has been performed for it, but the FQDN held in the lease
 database has invalid format and can't be transformed to the canonical on-wire
 format.
 
-% DHCP6_DDNS_REQUEST_SEND_FAILED failed sending a request to b10-dhcp-ddns, error: %1,  ncr: %2
+% DHCP6_DDNS_REQUEST_SEND_FAILED failed sending a request to kea-dhcp-ddns, error: %1,  ncr: %2
 This error message indicates that IPv6 DHCP server failed to send a DDNS
 update reqeust to the DHCP-DDNS server. This is most likely a configuration or
 networking error.
