@@ -754,10 +754,17 @@ public:
     ///
     /// @param config_id is the "item_name" for a specific member element of
     /// the "tsig_key" specification.
+    /// @param pos position within the configuration text (or file) of element
+    /// to be parsed.  This is passed for error messaging.
     ///
     /// @return returns a pointer to newly created parser.
-    virtual isc::dhcp::ParserPtr createConfigParser(const std::string&
-                                                    config_id);
+    ///
+    /// @throw D2CfgError if configuration contains an unknown parameter
+    virtual isc::dhcp::ParserPtr
+    createConfigParser(const std::string& config_id,
+                       const isc::data::Element::Position& pos =
+                       isc::data::Element::ZERO_POSITION());
+
     /// @brief Commits the TSIGKeyInfo configuration
     /// Currently this method is a NOP, as the key instance is created and
     /// then added to a local list of keys in build().
@@ -857,8 +864,15 @@ public:
     /// Parses a configuration for the elements needed to instantiate a
     /// DnsServerInfo, validates those entries, creates a DnsServerInfo instance
     /// then attempts to add to a list of  servers.
+    /// @param pos position within the configuration text (or file) of element
+    /// to be parsed.  This is passed for error messaging.
     ///
     /// @param server_config is the "dns_server" configuration to parse
+    ///
+    /// @throw D2CfgError if:
+    /// -# hostname is not blank, hostname is not yet supported
+    /// -# ip_address is invalid
+    /// -# port is 0
     virtual void build(isc::data::ConstElementPtr server_config);
 
     /// @brief Creates a parser for the given "dns_server" member element id.
@@ -870,10 +884,16 @@ public:
     ///
     /// @param config_id is the "item_name" for a specific member element of
     /// the "dns_server" specification.
+    /// @param pos position within the configuration text (or file) of element
+    /// to be parsed.  This is passed for error messaging.
     ///
     /// @return returns a pointer to newly created parser.
-    virtual isc::dhcp::ParserPtr createConfigParser(const std::string&
-                                                    config_id);
+    ///
+    /// @throw D2CfgError if configuration contains an unknown parameter
+    virtual isc::dhcp::ParserPtr
+    createConfigParser(const std::string& config_id,
+                       const isc::data::Element::Position& =
+                       isc::data::Element::ZERO_POSITION());
 
     /// @brief Commits the configured DnsServerInfo
     /// Currently this method is a NOP, as the server instance is created and
@@ -985,10 +1005,16 @@ public:
     ///
     /// @param config_id is the "item_name" for a specific member element of
     /// the "ddns_domain" specification.
+    /// @param pos position within the configuration text (or file) of element
+    /// to be parsed.  This is passed for error messaging.
     ///
     /// @return returns a pointer to newly created parser.
-    virtual isc::dhcp::ParserPtr createConfigParser(const std::string&
-                                                    config_id);
+    ///
+    /// @throw D2CfgError if configuration contains an unknown parameter
+    virtual isc::dhcp::ParserPtr
+    createConfigParser(const std::string& config_id,
+                       const isc::data::Element::Position& pos =
+                       isc::data::Element::ZERO_POSITION());
 
     /// @brief Commits the configured DdnsDomain
     /// Currently this method is a NOP, as the domain instance is created and
@@ -1119,10 +1145,16 @@ public:
     ///
     /// @param config_id is the "item_name" for a specific member element of
     /// the manager specification.
+    /// @param pos position within the configuration text (or file) of element
+    /// to be parsed.  This is passed for error messaging.
     ///
     /// @return returns a pointer to newly created parser.
-    virtual isc::dhcp::ParserPtr createConfigParser(const std::string&
-                                                    config_id);
+    ///
+    /// @throw D2CfgError if configuration contains an unknown parameter
+    virtual isc::dhcp::ParserPtr
+    createConfigParser(const std::string& config_id,
+                       const isc::data::Element::Position& pos =
+                       isc::data::Element::ZERO_POSITION());
 
     /// @brief Commits the configured DdsnDomainListMgr
     /// Currently this method is a NOP, as the manager instance is created

@@ -52,43 +52,51 @@ DCfgContextBase::DCfgContextBase(const DCfgContextBase& rhs):
         string_values_(new StringStorage(*(rhs.string_values_))) {
 }
 
-void
+const data::Element::Position&
 DCfgContextBase::getParam(const std::string& name, bool& value, bool optional) {
     try {
         value = boolean_values_->getParam(name);
+        return (boolean_values_->getPosition(name));
     } catch (DhcpConfigError& ex) {
         // If the parameter is not optional, re-throw the exception.
         if (!optional) {
             throw;
         }
     }
+
+    return (data::Element::ZERO_POSITION());
 }
 
-
-void
+const data::Element::Position&
 DCfgContextBase::getParam(const std::string& name, uint32_t& value,
                           bool optional) {
     try {
         value = uint32_values_->getParam(name);
+        return (uint32_values_->getPosition(name));
     } catch (DhcpConfigError& ex) {
         // If the parameter is not optional, re-throw the exception.
         if (!optional) {
             throw;
         }
     }
+
+    return (data::Element::ZERO_POSITION());
 }
 
-void
+const data::Element::Position&
 DCfgContextBase::getParam(const std::string& name, std::string& value,
                           bool optional) {
     try {
         value = string_values_->getParam(name);
+        return (string_values_->getPosition(name));
     } catch (DhcpConfigError& ex) {
         // If the parameter is not optional, re-throw the exception.
         if (!optional) {
             throw;
         }
     }
+
+    return (data::Element::ZERO_POSITION());
 }
 
 DCfgContextBase::~DCfgContextBase() {
@@ -189,37 +197,43 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
             // thrown.  Note, that elements tagged as "optional" from the user
             // perspective must still have default or empty entries in the
             // configuration set to be parsed.
-            int parsed_count = 0;
             std::map<std::string, ConstElementPtr>::const_iterator it;
             BOOST_FOREACH(element_id, parse_order_) {
                 it = objects_map.find(element_id);
                 if (it != objects_map.end()) {
-                    ++parsed_count;
                     buildAndCommit(element_id, it->second);
+                    // We parsed it, take it out of the list.
+                    objects_map.erase(it);
                 }
                 else {
-                    LOG_ERROR(dctl_logger, DCTL_ORDER_NO_ELEMENT)
-                              .arg(element_id);
-                    isc_throw(DCfgMgrBaseError, "Element:" << element_id <<
-                              " is listed in the parse order but is not "
-                              " present in the configuration");
+                    isc_throw(DCfgMgrBaseError,
+                               "Element required by parsing order is missing: "
+                               << element_id << " ("
+                               << config_set->getPosition() << ")");
                 }
             }
 
             // NOTE: When using ordered parsing, the parse order list MUST
             // include every possible element id that the value_map may contain.
-            // Entries in the map that are not in the parse order, would not be
+            // Entries in the map that are not in the parse order, will not be
             // parsed. For now we will flag this as a programmatic error.  One
             // could attempt to adjust for this, by identifying such entries
             // and parsing them either first or last but which would be correct?
-            // Better to hold the engineer accountable.  So, if we parsed none
-            // or we parsed fewer than are in the map; then either the parse i
-            // order is incomplete OR the map has unsupported values.
-            if (!parsed_count ||
-                (parsed_count && ((parsed_count + 1) < objects_map.size()))) {
-                LOG_ERROR(dctl_logger, DCTL_ORDER_ERROR);
+            // Better to hold the engineer accountable.  So, if there are any
+            // left in the objects_map then they were not in the parse order.
+            if (!objects_map.empty()) {
+                std::ostringstream stream;
+                bool add_comma = false;
+                ConfigPair config_pair;
+                BOOST_FOREACH(config_pair, objects_map) {
+                    stream << ( add_comma ? ", " : "") << config_pair.first
+                           << " (" << config_pair.second->getPosition() << ")";
+                    add_comma = true;
+                }
+
                 isc_throw(DCfgMgrBaseError,
-                        "Configuration contains elements not in parse order");
+                        "Configuration contains elements not in parse order: "
+                        << stream.str());
             }
         } else {
             // Order doesn't matter so iterate over the value map directly.
@@ -235,10 +249,9 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
         LOG_INFO(dctl_logger, DCTL_CONFIG_COMPLETE).arg("");
         answer = isc::config::createAnswer(0, "Configuration committed.");
 
-    } catch (const isc::Exception& ex) {
-        LOG_ERROR(dctl_logger, DCTL_PARSER_FAIL).arg(element_id).arg(ex.what());
-        answer = isc::config::createAnswer(1,
-                     string("Configuration parsing failed: ") + ex.what());
+    } catch (const std::exception& ex) {
+        LOG_ERROR(dctl_logger, DCTL_PARSER_FAIL).arg(ex.what());
+        answer = isc::config::createAnswer(1, ex.what());
 
         // An error occurred, so make sure that we restore original context.
         context_ = original_context;
@@ -253,7 +266,8 @@ DCfgMgrBase::buildParams(isc::data::ConstElementPtr params_config) {
     // Loop through scalars parsing them and committing them to storage.
     BOOST_FOREACH(dhcp::ConfigPair param, params_config->mapValue()) {
         // Call derivation's method to create the proper parser.
-        dhcp::ParserPtr parser(createConfigParser(param.first));
+        dhcp::ParserPtr parser(createConfigParser(param.first,
+                                                  param.second->getPosition()));
         parser->build(param.second);
         parser->commit();
     }
@@ -263,28 +277,21 @@ void DCfgMgrBase::buildAndCommit(std::string& element_id,
                                  isc::data::ConstElementPtr value) {
     // Call derivation's implementation to create the appropriate parser
     // based on the element id.
-    ParserPtr parser = createConfigParser(element_id);
+    ParserPtr parser = createConfigParser(element_id, value->getPosition());
     if (!parser) {
         isc_throw(DCfgMgrBaseError, "Could not create parser");
     }
 
-    try {
-        // Invoke the parser's build method passing in the value. This will
-        // "convert" the Element form of value into the actual data item(s)
-        // and store them in parser's local storage.
-        parser->build(value);
+    // Invoke the parser's build method passing in the value. This will
+    // "convert" the Element form of value into the actual data item(s)
+    // and store them in parser's local storage.
+    parser->build(value);
 
-        // Invoke the parser's commit method. This "writes" the the data
-        // item(s) stored locally by the parser into the context.  (Note that
-        // parsers are free to do more than update the context, but that is an
-        // nothing something we are concerned with here.)
-        parser->commit();
-    } catch (const isc::Exception& ex) {
-        isc_throw(DCfgMgrBaseError,
-                  "Could not build and commit: " << ex.what());
-    } catch (...) {
-        isc_throw(DCfgMgrBaseError, "Non-ISC exception occurred");
-    }
+    // Invoke the parser's commit method. This "writes" the the data
+    // item(s) stored locally by the parser into the context.  (Note that
+    // parsers are free to do more than update the context, but that is an
+    // nothing something we are concerned with here.)
+    parser->commit();
 }
 
 }; // end of isc::dhcp namespace

@@ -15,3 +15,4 @@
 /// @brief Path to D2 source dir so tests against the dhcp-ddns.spec file
 /// can find it reliably.
 #define D2_SRC_DIR "@abs_top_srcdir@/src/bin/d2"
+#define D2_TEST_DATA_DIR "@abs_top_srcdir@/src/bin/d2/tests/testdata"
