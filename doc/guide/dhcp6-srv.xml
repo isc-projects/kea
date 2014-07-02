@@ -11,7 +11,7 @@
       <title>Starting and Stopping the DHCPv6 Server</title>
 
       <para>
-        <command>b10-dhcp6</command> is the Kea DHCPv6 server and is configured
+        <command>kea-dhcp6</command> is the Kea DHCPv6 server and is configured
         through the <command>bindctl</command> program.
       </para>
       <para>
