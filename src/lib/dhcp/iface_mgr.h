@@ -22,6 +22,7 @@
 #include <dhcp/pkt6.h>
 #include <dhcp/pkt_filter.h>
 #include <dhcp/pkt_filter6.h>
+#include <dhcp/option.h>
 
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
@@ -119,7 +120,6 @@ struct SocketInfo {
           sockfd_(sockfd), fallbackfd_(fallbackfd) { }
 
 };
-
 
 /// @brief Represents a single network interface
 ///
@@ -330,6 +330,40 @@ public:
         return unicasts_;
     }
 
+    /// @brief Returns the pointer to the buffer used for data reading.
+    ///
+    /// The returned pointer is only valid during the lifetime of the
+    /// object which returns it or until the buffer is resized.
+    /// This function is meant to be used with socket API to gather
+    /// data from the socket. In order to process the read data,
+    /// the @c getReadBuffer function should be used.
+    ///
+    /// @return Pointer to the first element of the read buffer or
+    /// NULL if the buffer is empty.
+    uint8_t* getReadBufferPtr();
+
+    /// @brief Returns reference to the buffer used for data reading.
+    ///
+    /// The returned reference is only valid during the lifetime of the
+    /// object which returns it or until the buffer is resized.
+    ///
+    /// @return Reference to the read buffer.
+    const OptionBuffer& getReadBuffer() const {
+        return (read_buffer_);
+    }
+
+    /// @brief Returns the current size of the socket read buffer.
+    size_t getReadBufferSize() const {
+        return (read_buffer_.size());
+    }
+
+    /// @brief Resizes the socket read buffer.
+    ///
+    /// @param new_size New size of the buffer.
+    void resizeReadBuffer(const size_t new_size) {
+        read_buffer_.resize(new_size);
+    }
+
 protected:
     /// Socket used to send data.
     SocketCollection sockets_;
@@ -388,6 +422,13 @@ public:
     /// Indicates that IPv6 sockets should (true) or should not (false)
     /// be opened on this interface.
     bool inactive6_;
+
+    /// @brief Buffer holding the data read from the socket.
+    ///
+    /// This buffer may be pre-allocated when the socket on the interface
+    /// is being opened. The functions which read the data from the socket
+    /// may use this buffer as a storage for the data being read.
+    OptionBuffer read_buffer_;
 };
 
 /// @brief This type describes the callback function invoked when error occurs

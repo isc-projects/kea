@@ -17,6 +17,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcp/option.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/pkt_filter.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
@@ -55,6 +56,39 @@ const uint16_t PORT2 = 10548;   // V4 socket
 // resolutions are used by these functions.  For such cases we set the
 // tolerance to 0.01s.
 const uint32_t TIMEOUT_TOLERANCE = 10000;
+
+/// This test verifies that the socket read buffer can be used to
+/// receive the data and that the data can be read from it.
+TEST(IfaceTest, readBuffer) {
+    // Create fake interface object.
+    Iface iface("em0", 0);
+    // The size of read buffer should initially be 0 and the returned
+    // pointer should be NULL.
+    ASSERT_EQ(0, iface.getReadBufferSize());
+    EXPECT_EQ(NULL, iface.getReadBufferPtr());
+
+    // Let's resize the buffer.
+    iface.resizeReadBuffer(256);
+    // Check that the buffer has expected size.
+    ASSERT_EQ(256, iface.getReadBufferSize());
+    // The returned pointer should now be non-NULL.
+    uint8_t* buf_ptr = iface.getReadBufferPtr();
+    ASSERT_FALSE(buf_ptr == NULL);
+
+    // Use the pointer to set some data.
+    for (int i = 0; i < iface.getReadBufferSize(); ++i) {
+        buf_ptr[i] = i;
+    }
+
+    // Validate the data.
+    const OptionBuffer& buf = iface.getReadBuffer();
+    ASSERT_EQ(256, buf.size());
+    for (int i = 0; i < buf.size(); ++i) {
+        // Use assert so as it fails on the first failure, no need
+        // to continue further checks.
+        ASSERT_EQ(i, buf[i]);
+    }
+}
 
 /// Mock object implementing PktFilter class.  It is used by
 /// IfaceMgrTest::setPacketFilter to verify that IfaceMgr::setPacketFilter
