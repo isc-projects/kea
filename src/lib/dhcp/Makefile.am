@@ -50,8 +50,14 @@ libkea_dhcp___la_SOURCES += pkt_filter6.h pkt_filter6.cc
 libkea_dhcp___la_SOURCES += pkt_filter_inet.cc pkt_filter_inet.h
 libkea_dhcp___la_SOURCES += pkt_filter_inet6.cc pkt_filter_inet6.h
 
+# Utilize Linux Packet Filtering on Linux.
 if OS_LINUX
 libkea_dhcp___la_SOURCES += pkt_filter_lpf.cc pkt_filter_lpf.h
+endif
+
+# Utilize Berkeley Packet Filtering on BSD.
+if OS_BSD
+libkea_dhcp___la_SOURCES += pkt_filter_bpf.cc pkt_filter_bpf.h
 endif
 
 libkea_dhcp___la_SOURCES += std_option_defs.h
