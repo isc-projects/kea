@@ -7,8 +7,22 @@ SUBDIRS = . tests
 sbin_SCRIPTS  = keactrl
 CONFIGFILES = keactrl.conf kea.conf
 
-DISTCLEANFILES = keactrl $(CONFIGFILES)
-EXTRA_DIST = keactrl.in keactrl.conf.in kea.conf.in
+man_MANS = keactrl.8
+DISTCLEANFILES = keactrl $(CONFIGFILES) $(man_MANS)
+EXTRA_DIST = keactrl.in keactrl.conf.in kea.conf.in $(man_MANS) keactrl.xml
+
+if GENERATE_DOCS
+
+keactrl.8: keactrl.xml
+	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(builddir)/keactrl.xml
+
+else
+
+$(man_MANS):
+	@echo Man generation disabled.  Creating dummy $@.  Configure with --enable-generate-docs to enable it.
+	@echo Man generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild Kea > $@
+
+endif
 
 if INSTALL_CONFIGURATIONS
 
