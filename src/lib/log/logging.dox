@@ -285,8 +285,8 @@ a problem in a write operation.</li>
 two or three words separated by underscores.  An excessive number
 of words or overly long message identification should be avoided;
 such information should be put in the text of the message.  For example,
-"RESOLVER_ERROR_FETCHING_NAME_FROM_UPSTREAM_SERVER" is excessively long,
-"RESOLVER_FETCH_ERROR" being better.</li>
+"RECEIVED_EMPTY_HOSTNAME_FROM_CLIENT" is excessively long,
+"EMPTY_HOSTNAME" being better.</li>
 
 <li>Similarly, the text of the message should be reasonably concise.  It should
 include enough information (possibly supplied at run-time in the form of

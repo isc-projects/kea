@@ -133,7 +133,7 @@ Although the hooks system allows Kea and user code to interface
 through a defined API, the relationship is somewhat tight in that the
 user code will depend on the internal structures of Kea.  If these
 change - as they can between Kea releases - and Kea is run with
-a version of user code built against an earlier version of Kea, program
+a version of user code built against an earlier version of Kea, a program
 crash could result.
 
 To guard against this, the "version" function must be provided in every
