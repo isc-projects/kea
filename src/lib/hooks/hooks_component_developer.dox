@@ -21,7 +21,7 @@ The hooks framework is a Kea system that simplifies the way that
 users can write code to modify the behavior of Kea.  Instead of
 altering the Kea source code, they write functions that are compiled
 and linked into a shared library.  The library is specified in the Kea
-configuration and during run time Kea dynamically loads the library
+configuration and at run time Kea dynamically loads the library
 into its address space.  At various points in the processing, the component
 "calls out" to functions in the library, passing to them the data is it
 currently working on.  They can examine and modify the data as required.
@@ -37,7 +37,7 @@ during its execution, see the document @ref hooksdgDevelopersGuide.
 
 In the remainder of this guide, the following terminology is used:
 
-- Component - a Kea process, e.g. a DHCPv4 or DHCPv6 server.
+- Component - a Kea process, e.g. the DHCPv4 or DHCPv6 server.
 
 - Hook/Hook Point - used interchageably, this is a point in the code at
 which a call to user-written functions is made. Each hook has a name and
