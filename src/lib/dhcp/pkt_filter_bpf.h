@@ -49,7 +49,7 @@ public:
     /// @param send_bcast Configure socket to send broadcast messages.
     ///
     /// @return A structure describing a primary and fallback socket.
-    virtual SocketInfo openSocket(const Iface& iface,
+    virtual SocketInfo openSocket(Iface& iface,
                                   const isc::asiolink::IOAddress& addr,
                                   const uint16_t port,
                                   const bool receive_bcast,
@@ -72,6 +72,27 @@ public:
     /// @return result of sending a packet. It is 0 if successful.
     virtual int send(const Iface& iface, uint16_t sockfd,
                      const Pkt4Ptr& pkt);
+
+private:
+
+    /// @brief Writes pseudo header containing an address family into a buffer.
+    ///
+    /// BPF utilizes the pseudo headers to pass the ancillary data between the
+    /// kernel and the application. For example, when the packet is to be sent
+    /// over the local loopback interface the pseudo header must be added before
+    /// the network layer header to indicate the address family. Other link
+    /// layer header (e.g. ethernet) is not used for local loopback interface.
+    ///
+    /// The header written by this method consists of 4 bytes and contains the
+    /// address family value in host byte order. See sys/socket.h for the
+    /// address family values. Typically it will be AF_INET.
+    ///
+    /// This function doesn't throw.
+    ///
+    /// @param address_family Address family (e.g. AF_INET).
+    /// @param [out] out_buf buffer where a header is written.
+    void writeAFPseudoHeader(const uint32_t address_family,
+                             util::OutputBuffer& out_buf);
 
 };
 
