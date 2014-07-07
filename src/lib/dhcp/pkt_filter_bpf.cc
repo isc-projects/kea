@@ -248,7 +248,7 @@ PktFilterBPF::openSocket(Iface& iface,
                   " kernel for the BPF device associated with the interface"
                   << iface.getName() << " is lower than the BPF header"
                   " length: this condition is impossible unless the"
-                  " operating system is really broken!")
+                  " operating system is really broken!");
     }
 
     // Set the filter program so as we only get packets we are interested in.
