@@ -55,9 +55,16 @@ Iface::Iface(const std::string& name, int ifindex)
     :name_(name), ifindex_(ifindex), mac_len_(0), hardware_type_(0),
      flag_loopback_(false), flag_up_(false), flag_running_(false),
      flag_multicast_(false), flag_broadcast_(false), flags_(0),
-     inactive4_(false), inactive6_(false), read_buffer_()
+     inactive4_(false), inactive6_(false), read_buffer_(NULL),
+     read_buffer_size_(0)
 {
     memset(mac_, 0, sizeof(mac_));
+}
+
+Iface::~Iface() {
+    if (read_buffer_ != NULL) {
+        free(read_buffer_);
+    }
 }
 
 void
@@ -167,12 +174,14 @@ bool Iface::delSocket(const uint16_t sockfd) {
     return (false); // socket not found
 }
 
-uint8_t*
-Iface::getReadBufferPtr() {
-    if (read_buffer_.empty()) {
-        return (NULL);
+void
+Iface::resizeReadBuffer(const size_t new_size) {
+    read_buffer_size_ = new_size;
+    read_buffer_ = static_cast<uint8_t*>(realloc(read_buffer_,
+                                                 read_buffer_size_));
+    if (read_buffer_ == NULL) {
+        read_buffer_size_ = 0;
     }
-    return (static_cast<uint8_t*>(&read_buffer_[0]));
 }
 
 IfaceMgr::IfaceMgr()

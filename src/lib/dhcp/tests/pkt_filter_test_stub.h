@@ -63,7 +63,7 @@ public:
     ///
     /// @return A SocketInfo structure with the socket descriptor set to 0. The
     /// fallback socket descriptor is set to a negative value.
-    virtual SocketInfo openSocket(const Iface& iface,
+    virtual SocketInfo openSocket(Iface& iface,
                                   const isc::asiolink::IOAddress& addr,
                                   const uint16_t port,
                                   const bool receive_bcast,
