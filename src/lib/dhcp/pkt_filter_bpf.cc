@@ -30,6 +30,10 @@ using namespace isc::dhcp;
 /// @brief Maximum number of attempts to open BPF device.
 const unsigned int MAX_BPF_OPEN_ATTEMPTS = 100;
 
+/// @brief Length of the header containing the address family for the packet
+/// received on local loopback interface.
+const unsigned int BPF_LOCAL_LOOPBACK_HEADER_LEN = 4;
+
 /// The following structure defines a Berkely Packet Filter program to perform
 /// packet filtering. The program operates on Ethernet packets.  To help with
 /// interpretation of the program, for the types of Ethernet packets we are
@@ -49,7 +53,7 @@ const unsigned int MAX_BPF_OPEN_ATTEMPTS = 100;
 /// @todo We may want to extend the filter to receive packets sent
 /// to the particular IP address assigned to the interface or
 /// broadcast address.
-struct bpf_insn dhcp_sock_filter [] = {
+struct bpf_insn ethernet_ip_udp_filter [] = {
     // Make sure this is an IP packet: check the half-word (two bytes)
     // at offset 12 in the packet (the Ethernet packet type).  If it
     // is, advance to the next instruction.  If not, advance 8
@@ -61,7 +65,8 @@ struct bpf_insn dhcp_sock_filter [] = {
     // Make sure it's a UDP packet.  The IP protocol is at offset
     // 9 in the IP header so, adding the Ethernet packet header size
     // of 14 bytes gives an absolute byte offset in the packet of 23.
-    BPF_STMT(BPF_LD + BPF_B + BPF_ABS, ETHERNET_HEADER_LEN + IP_PROTO_TYPE_OFFSET),
+    BPF_STMT(BPF_LD + BPF_B + BPF_ABS,
+             ETHERNET_HEADER_LEN + IP_PROTO_TYPE_OFFSET),
     BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, IPPROTO_UDP, 0, 6),
 
     // Make sure this isn't a fragment by checking that the fragment
@@ -97,6 +102,61 @@ struct bpf_insn dhcp_sock_filter [] = {
     BPF_STMT(BPF_RET + BPF_K, 0),
 };
 
+/// The following structure defines a BPF program to perform packet filtering
+/// on local loopback interface. The packets received on this interface do not
+/// contain the regular link-layer header, but rather a 4-byte long pseudo
+/// header containing the address family. The reminder of the packet contains
+/// IP header, UDP header and a DHCP message.
+struct bpf_insn loopback_ip_udp_filter [] = {
+    // Make sure this is an IP packet. The pseudo header comprises a 4-byte
+    // long value identifying the address family, which should be set to
+    // AF_INET.
+    BPF_STMT(BPF_LD + BPF_W + BPF_ABS, 0),
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, htonl(AF_INET), 0, 8),
+
+    // Make sure it's a UDP packet.  The IP protocol is at offset
+    // 9 in the IP header so, adding the pseudo header size 4 bytes
+    // gives an absolute byte offset in the packet of 13.
+    BPF_STMT(BPF_LD + BPF_B + BPF_ABS,
+             BPF_LOCAL_LOOPBACK_HEADER_LEN + IP_PROTO_TYPE_OFFSET),
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, IPPROTO_UDP, 0, 6),
+
+    // Make sure this isn't a fragment by checking that the fragment
+    // offset field in the IP header is zero.  This field is the
+    // least-significant 13 bits in the bytes at offsets 6 and 7 in
+    // the IP header, so the half-word at offset 10 (6 + size of
+    // pseudo header) is loaded and an appropriate mask applied.
+    BPF_STMT(BPF_LD + BPF_H + BPF_ABS,
+             BPF_LOCAL_LOOPBACK_HEADER_LEN + IP_FLAGS_OFFSET),
+    BPF_JUMP(BPF_JMP + BPF_JSET + BPF_K, 0x1fff, 4, 0),
+
+    // Get the IP header length.  This is achieved by the following
+    // (special) instruction that, given the offset of the start
+    // of the IP header (offset 4) loads the IP header length.
+    BPF_STMT(BPF_LDX + BPF_B + BPF_MSH, BPF_LOCAL_LOOPBACK_HEADER_LEN),
+
+    // Make sure it's to the right port.  The following instruction
+    // adds the previously extracted IP header length to the given
+    // offset to locate the correct byte.  The given offset of 6
+    // comprises the length of the pseudo header (4) plus the offset
+    // of the UDP destination port (2) within the UDP header.
+    BPF_STMT(BPF_LD + BPF_H + BPF_IND,
+             BPF_LOCAL_LOOPBACK_HEADER_LEN + UDP_DEST_PORT),
+    // The following instruction tests against the default DHCP server port,
+    // but the action port is actually set in PktFilterBPF::openSocket().
+    // N.B. The code in that method assumes that this instruction is at
+    // offset 8 in the program.  If this is changed, openSocket() must be
+    // updated.
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, DHCP4_SERVER_PORT, 0, 1),
+
+    // If we passed all the tests, ask for the whole packet.
+    BPF_STMT(BPF_RET + BPF_K, (u_int)-1),
+
+    // Otherwise, drop it.
+    BPF_STMT(BPF_RET + BPF_K, 0),
+};
+
+
 }
 
 using namespace isc::util;
@@ -105,7 +165,7 @@ namespace isc {
 namespace dhcp {
 
 SocketInfo
-PktFilterBPF::openSocket(const Iface& iface,
+PktFilterBPF::openSocket(Iface& iface,
                          const isc::asiolink::IOAddress& addr,
                          const uint16_t port, const bool,
                          const bool) {
@@ -183,13 +243,30 @@ PktFilterBPF::openSocket(const Iface& iface,
                   " buffer legth for reads from BPF device");
     }
 
-    // Configure the BPF program to receive packets on the specified port.
-    dhcp_sock_filter[8].k = port;
+    if (buf_len < sizeof(bpf_hdr)) {
+        isc_throw(SocketConfigError, "read buffer length returned by the"
+                  " kernel for the BPF device associated with the interface"
+                  << iface.getName() << " is lower than the BPF header"
+                  " length: this condition is impossible unless the"
+                  " operating system is really broken!")
+    }
 
     // Set the filter program so as we only get packets we are interested in.
     struct bpf_program prog;
-    prog.bf_insns = dhcp_sock_filter;
-    prog.bf_len = sizeof(dhcp_sock_filter) / sizeof(struct bpf_insn);
+    memset(&prog, 0, sizeof(bpf_program));
+    if (iface.flag_loopback_) {
+        prog.bf_insns = loopback_ip_udp_filter;
+        prog.bf_len = sizeof(loopback_ip_udp_filter) / sizeof(struct bpf_insn);
+
+    } else {
+        prog.bf_insns = ethernet_ip_udp_filter;
+        prog.bf_len = sizeof(ethernet_ip_udp_filter) / sizeof(struct bpf_insn);
+    }
+
+    // Configure the BPF program to receive packets on the specified port.
+    prog.bf_insns[8].k = port;
+
+    // Actually set the filter program for the device.
     if (ioctl(sock, BIOCSETF, &prog) < 0) {
         close(fallback);
         close(sock);
@@ -197,15 +274,33 @@ PktFilterBPF::openSocket(const Iface& iface,
                   " program");
     }
 
-    // Everything is ok, return the socket (BPF device descriptor) to
-    // the caller.
+    // Configure the BPF device to use the immediate mode. This ensures
+    // that the read function returns immediatelly, instead of waiting
+    // for the kernel to fill up the buffer, which would likely cause
+    // read hangs.
+    int flag = 1;
+    if (ioctl(sock, BIOCIMMEDIATE, &flag) < 0) {
+        close(fallback);
+        close(sock);
+        isc_throw(SocketConfigError, "Failed to set promiscious mode for"
+                  " BPF device");
+    }
+
+    // Everything is ok, allocate the read buffer and return the socket
+    // (BPF device descriptor) to the caller.
+    iface.resizeReadBuffer(buf_len);
     return (SocketInfo(addr, port, sock, fallback));
 }
 
 Pkt4Ptr
-PktFilterBPF::receive(const Iface&/* iface */, const SocketInfo& /*socket_info*/) {
-  return (Pkt4Ptr());
-  /*    uint8_t raw_buf[IfaceMgr::RCVBUFSIZE];
+PktFilterBPF::receive(const Iface& iface, const SocketInfo& socket_info) {
+    // When using BPF, the read buffer must be allocated for the interface.
+    // If it is not allocated, it is a programmatic error.
+    if (iface.getReadBufferSize() == 0) {
+        isc_throw(SocketConfigError, "socket read buffer not allocated"
+                  " for the interface: " << iface.getName());
+    }
+
     // First let's get some data from the fallback socket. The data will be
     // discarded but we don't want the socket buffer to bloat. We get the
     // packets from the socket in loop but most of the time the loop will
@@ -222,22 +317,36 @@ PktFilterBPF::receive(const Iface&/* iface */, const SocketInfo& /*socket_info*/
     // when the DHCP server is idle.
     int datalen;
     do {
-        datalen = recv(socket_info.fallbackfd_, raw_buf, sizeof(raw_buf), 0);
+        datalen = recv(socket_info.fallbackfd_, iface.getReadBufferPtr(),
+                       iface.getReadBufferSize(), 0);
     } while (datalen > 0);
 
     // Now that we finished getting data from the fallback socket, we
     // have to get the data from the raw socket too.
-    int data_len = read(socket_info.sockfd_, raw_buf, sizeof(raw_buf));
+    int data_len = read(socket_info.sockfd_, iface.getReadBufferPtr(),
+                        iface.getReadBufferSize());
     // If negative value is returned by read(), it indicates that an
     // error occured. If returned value is 0, no data was read from the
-    // socket. In both cases something has gone wrong, because we expect
+    // socket.b In both cases something has gone wrong, because we expect
     // that a chunk of data is there. We signal the lack of data by
     // returing an empty packet.
     if (data_len <= 0) {
         return Pkt4Ptr();
     }
 
-    InputBuffer buf(raw_buf, data_len);
+    struct bpf_hdr bpfh;
+    memcpy(static_cast<void*>(&bpfh),
+           static_cast<void*>(iface.getReadBufferPtr()),
+           sizeof(bpfh));
+    if (bpfh.bh_hdrlen >= data_len) {
+        isc_throw(SocketReadError, "packet received from the BPF device"
+                  << " attached to interface " << iface.getName()
+                  << " is truncated");
+    }
+
+    InputBuffer buf(iface.getReadBufferPtr() + bpfh.bh_hdrlen,
+                    data_len - bpfh.bh_hdrlen);
+
 
     // @todo: This is awkward way to solve the chicken and egg problem
     // whereby we don't know the offset where DHCP data start in the
@@ -253,8 +362,33 @@ PktFilterBPF::receive(const Iface&/* iface */, const SocketInfo& /*socket_info*/
     // in some more elegant way.
     Pkt4Ptr dummy_pkt = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 0));
 
-    // Decode ethernet, ip and udp headers.
-    decodeEthernetHeader(buf, dummy_pkt);
+    // On local loopback interface the ethernet header is not present.
+    // Instead, there is a 4-byte long pseudo header containing the
+    // address family in the host byte order.
+    if (iface.flag_loopback_) {
+        if (buf.getLength() < BPF_LOCAL_LOOPBACK_HEADER_LEN) {
+            isc_throw(SocketReadError, "packet received on local loopback"
+                      " interface " << iface.getName() << " doesn't contain"
+                      " the pseudo header with the address family type");
+        }
+        // Advance to the position of the IP header. We don't check the
+        // contents of the pseudo header because the BPF filter should have
+        // filtered out the packets with address family other than AF_INET.
+        buf.setPosition(BPF_LOCAL_LOOPBACK_HEADER_LEN);
+
+        // Since we don't decode the real link-layer header we need to
+        // supply the hardware address ourselves.
+        dummy_pkt->setLocalHWAddr(HWAddrPtr(new HWAddr()));
+        dummy_pkt->setRemoteHWAddr(HWAddrPtr(new HWAddr()));
+
+    } else {
+        // If we are on the interface other than local loopback, assume
+        // the ethernet header. For now we don't support any other data
+        // link layer.
+        decodeEthernetHeader(buf, dummy_pkt);
+    }
+
+    // Decode IP/UDP headers.
     decodeIpUdpHeader(buf, dummy_pkt);
 
     // Read the DHCP data.
@@ -275,15 +409,13 @@ PktFilterBPF::receive(const Iface&/* iface */, const SocketInfo& /*socket_info*/
     pkt->setLocalHWAddr(dummy_pkt->getLocalHWAddr());
     pkt->setRemoteHWAddr(dummy_pkt->getRemoteHWAddr());
 
-    return (pkt); */
+    return (pkt);
 }
 
 int
-PktFilterBPF::send(const Iface& /*iface*/, uint16_t /*sockfd*/, const Pkt4Ptr& /*pkt*/) {
+PktFilterBPF::send(const Iface& iface, uint16_t sockfd, const Pkt4Ptr& pkt) {
 
-  return 0;
-
-  /*    OutputBuffer buf(14);
+    OutputBuffer buf(14);
 
     // Some interfaces may have no HW address - e.g. loopback interface.
     // For these interfaces the HW address length is 0. If this is the case,
@@ -296,11 +428,18 @@ PktFilterBPF::send(const Iface& /*iface*/, uint16_t /*sockfd*/, const Pkt4Ptr& /
         pkt->setLocalHWAddr(hwaddr);
     }
 
+    /// Local loopback interface requires special treatment. It doesn't
+    /// use the ethernet header but rather a 4-bytes long pseudo header
+    /// holding an address family type (see bpf.c in OS sources).
+    if (iface.flag_loopback_) {
+        writeAFPseudoHeader(AF_INET, buf);
 
-    // Ethernet frame header.
-    // Note that we don't validate whether HW addresses in 'pkt'
-    // are valid because they are checked by the function called.
-    writeEthernetHeader(pkt, buf);
+    } else {
+        // Ethernet frame header.
+        // Note that we don't validate whether HW addresses in 'pkt'
+        // are valid because they are validated by the function called.
+        writeEthernetHeader(pkt, buf);
+    }
 
     // IP and UDP header
     writeIpUdpHeader(pkt, buf);
@@ -308,24 +447,28 @@ PktFilterBPF::send(const Iface& /*iface*/, uint16_t /*sockfd*/, const Pkt4Ptr& /
     // DHCPv4 message
     buf.writeData(pkt->getBuffer().getData(), pkt->getBuffer().getLength());
 
-    sockaddr_ll sa;
-    sa.sll_family = AF_PACKET;
-    sa.sll_ifindex = iface.getIndex();
-    sa.sll_protocol = htons(ETH_P_IP);
-    sa.sll_halen = 6;
-
-    int result = sendto(sockfd, buf.getData(), buf.getLength(), 0,
-                        reinterpret_cast<const struct sockaddr*>(&sa),
-                        sizeof(sockaddr_ll));
+    int result = write(sockfd, buf.getData(), buf.getLength());
     if (result < 0) {
+        std::cout << strerror(errno) << std::endl;
         isc_throw(SocketWriteError, "failed to send DHCPv4 packet, errno="
                   << errno << " (check errno.h)");
     }
 
     return (0);
-  */
 }
 
+void
+PktFilterBPF::writeAFPseudoHeader(const uint32_t address_family,
+                                  util::OutputBuffer& out_buf) {
+    // Copy address family to the temporary buffer and preserve the
+    // bytes order.
+    uint8_t af_buf[4];
+    memcpy(static_cast<void*>(af_buf),
+           static_cast<const void*>(&address_family),
+           sizeof(af_buf));
+    // Write the data into the buffer.
+    out_buf.writeData(af_buf, sizeof(af_buf));
+}
 
 } // end of isc::dhcp namespace
 } // end of isc namespace

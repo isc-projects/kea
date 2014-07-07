@@ -80,13 +80,13 @@ TEST(IfaceTest, readBuffer) {
         buf_ptr[i] = i;
     }
 
-    // Validate the data.
-    const OptionBuffer& buf = iface.getReadBuffer();
-    ASSERT_EQ(256, buf.size());
-    for (int i = 0; i < buf.size(); ++i) {
+    // Get the pointer again and validate the data.
+    buf_ptr = iface.getReadBufferPtr();
+    ASSERT_EQ(256, iface.getReadBufferSize());
+    for (int i = 0; i < iface.getReadBufferSize(); ++i) {
         // Use assert so as it fails on the first failure, no need
         // to continue further checks.
-        ASSERT_EQ(i, buf[i]);
+        ASSERT_EQ(i, buf_ptr[i]);
     }
 }
 
@@ -130,7 +130,7 @@ public:
     /// @param iface An interface on which the socket is to be opened.
     /// @param addr An address to which the socket is to be bound.
     /// @param port A port to which the socket is to be bound.
-    virtual SocketInfo openSocket(const Iface& iface,
+    virtual SocketInfo openSocket(Iface& iface,
                                   const isc::asiolink::IOAddress& addr,
                                   const uint16_t port,
                                   const bool join_multicast,

@@ -23,6 +23,7 @@
 
 #include <gtest/gtest.h>
 
+#include <net/bpf.h>
 #include <sys/socket.h>
 
 using namespace isc::asiolink;
@@ -34,7 +35,7 @@ namespace {
 /// Port number used by tests.
 const uint16_t PORT = 10067;
 /// Size of the buffer holding received packets.
-const size_t RECV_BUF_SIZE = 2048;
+const size_t RECV_BUF_SIZE = 4096;
 
 // Test fixture class inherits from the class common for all packet
 // filter tests.
@@ -68,6 +69,7 @@ TEST_F(PktFilterBPFTest, isDirectResponseSupported) {
 TEST_F(PktFilterBPFTest, DISABLED_openSocket) {
     // Create object representing loopback interface.
     Iface iface(ifname_, ifindex_);
+    iface.flag_loopback_ = true;
     // Set loopback address.
     IOAddress addr("127.0.0.1");
 
@@ -81,41 +83,29 @@ TEST_F(PktFilterBPFTest, DISABLED_openSocket) {
     ASSERT_GE(sock_info_.sockfd_, 0);
     // Check that the fallback socket has been opened too.
     ASSERT_GE(sock_info_.fallbackfd_, 0);
-
-    /*    // Verify that the socket belongs to AF_PACKET family.
-    sockaddr_ll sock_address;
-    socklen_t sock_address_len = sizeof(sock_address);
-    ASSERT_EQ(0, getsockname(sock_info_.sockfd_,
-                             reinterpret_cast<sockaddr*>(&sock_address),
-                             &sock_address_len));
-    EXPECT_EQ(AF_PACKET, sock_address.sll_family);
-
-    // Verify that the socket is bound to appropriate interface.
-    EXPECT_EQ(ifindex_, sock_address.sll_ifindex);
-
-    // Verify that the socket has SOCK_RAW type.
-    int sock_type;
-    socklen_t sock_type_len = sizeof(sock_type);
-    ASSERT_EQ(0, getsockopt(sock_info_.sockfd_, SOL_SOCKET, SO_TYPE,
-                            &sock_type, &sock_type_len));
-			    EXPECT_EQ(SOCK_RAW, sock_type); */
 }
 
-// This test verifies correctness of sending DHCP packet through the raw
-// socket, whereby all IP stack headers are hand-crafted.
+// This test verifies correctness of sending DHCP packet through the BPF
+// device attached to local loopback interface. Note that this is not exactly
+// the same as sending over the hardware interface (e.g. ethernet) because the
+// packet format is different on local loopback interface when using the
+// BPF. The key difference is that the pseudo header containing address
+// family is sent instead of link-layer header. Ideally we would run this
+// test over the real interface but since we don't know what interfaces
+// are present in the particular system we have to stick to local loopback
+// interface as this one is almost always present.
 TEST_F(PktFilterBPFTest, DISABLED_send) {
-  /*    // Packet will be sent over loopback interface.
+    // Packet will be sent over loopback interface.
     Iface iface(ifname_, ifindex_);
+    iface.flag_loopback_ = true;
     IOAddress addr("127.0.0.1");
 
     // Create an instance of the class which we are testing.
     PktFilterBPF pkt_filter;
-    // Open socket. We don't check that the socket has appropriate
-    // options and family set because we have checked that in the
-    // openSocket test already.
 
+    // Open BPF device.
     sock_info_ = pkt_filter.openSocket(iface, addr, PORT, false, false);
-
+    // Returned descriptor must not be negative. 0 is valid.
     ASSERT_GE(sock_info_.sockfd_, 0);
 
     // Send the packet over the socket.
@@ -133,17 +123,37 @@ TEST_F(PktFilterBPFTest, DISABLED_send) {
     // We should receive some data from loopback interface.
     ASSERT_GT(result, 0);
 
-    // Get the actual data.
+    /// Get the actual data.
     uint8_t rcv_buf[RECV_BUF_SIZE];
-    result = recv(sock_info_.sockfd_, rcv_buf, RECV_BUF_SIZE, 0);
+    result = read(sock_info_.sockfd_, rcv_buf, RECV_BUF_SIZE);
     ASSERT_GT(result, 0);
 
+    // Each packet is prepended with the BPF header structure. We have to
+    // parse this structure to locate the position of the address family
+    // pseudo header.
+    struct bpf_hdr bpfh;
+    memcpy(static_cast<void*>(&bpfh), static_cast<void*>(rcv_buf),
+           sizeof(bpf_hdr));
+    // bh_hdrlen contains the total length of the BPF header, including
+    // alignment. We will use this value to skip over the BPF header and
+    // parse the contents of the packet that we are interested in.
+    uint32_t bpfh_len = bpfh.bh_hdrlen;
+    // Address Family pseudo header contains the address family of the
+    // packet (used for local loopback interface instead of the link-layer
+    // header such as ethernet frame header).
+    uint32_t af = 0;
+    memcpy(static_cast<void*>(&af),
+           static_cast<void*>(rcv_buf + bpfh_len), 4);
+    // Check the value in the pseudo header. If this is incorrect, something
+    // is really broken, so let's exit.
+    ASSERT_EQ(AF_INET, af);
+
     Pkt4Ptr dummy_pkt = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 0));
+    // Create the input buffer from the reminder of the packet. This should
+    // only contain the IP/UDP headers and the DHCP message.
+    InputBuffer buf(rcv_buf + bpfh_len + 4, result - bpfh_len - 4);
+    ASSERT_GE(buf.getLength(), test_message_->len());
 
-    InputBuffer buf(rcv_buf, result);
-
-    // Decode ethernet, ip and udp headers.
-    decodeEthernetHeader(buf, dummy_pkt);
     decodeIpUdpHeader(buf, dummy_pkt);
 
     // Create the DHCPv4 packet from the received data.
@@ -156,7 +166,7 @@ TEST_F(PktFilterBPFTest, DISABLED_send) {
     ASSERT_NO_THROW(rcvd_pkt->unpack());
 
     // Check if the received message is correct.
-    testRcvdMessage(rcvd_pkt); */
+    testRcvdMessage(rcvd_pkt);
 }
 
 // This test verifies correctness of reception of the DHCP packet over
@@ -165,6 +175,7 @@ TEST_F(PktFilterBPFTest, DISABLED_receive) {
 
     // Packet will be received over loopback interface.
     Iface iface(ifname_, ifindex_);
+    iface.flag_loopback_ = true;
     IOAddress addr("127.0.0.1");
 
     // Create an instance of the class which we are testing.
@@ -179,7 +190,8 @@ TEST_F(PktFilterBPFTest, DISABLED_receive) {
     sendMessage();
 
     // Receive the packet using LPF packet filter.
-    Pkt4Ptr rcvd_pkt = pkt_filter.receive(iface, sock_info_);
+    Pkt4Ptr rcvd_pkt;
+    ASSERT_NO_THROW(rcvd_pkt = pkt_filter.receive(iface, sock_info_));
     // Check that the packet has been correctly received.
     ASSERT_TRUE(rcvd_pkt);
 
