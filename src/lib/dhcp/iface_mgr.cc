@@ -176,6 +176,11 @@ bool Iface::delSocket(const uint16_t sockfd) {
 
 void
 Iface::resizeReadBuffer(const size_t new_size) {
+    // Do nothing if the new size is equal to the current size.
+    if (new_size == read_buffer_size_) {
+        return;
+    }
+
     read_buffer_size_ = new_size;
     read_buffer_ = static_cast<uint8_t*>(realloc(read_buffer_,
                                                  read_buffer_size_));
