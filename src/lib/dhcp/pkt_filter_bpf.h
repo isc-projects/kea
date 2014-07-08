@@ -22,12 +22,45 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Packet handling class using Berkeley Packet Filtering
+/// @brief Packet handling class using Berkeley Packet Filtering (BPF)
 ///
-/// This class provides methods to send and recive DHCPv4 messages using raw
-/// sockets and Berkeley Packet Filtering. It is used by @c isc::dhcp::IfaceMgr
-/// to send DHCPv4 messages to the hosts which don't have an IPv4 address
-/// assigned yet.
+/// The BPF is supported on the BSD-like operating systems. It allows for access
+/// to low level layers of the inbound and outbound packets. This is specifially
+/// useful when the DHCP server is allocating new address to the client.
+///
+/// The response being sent to the client must include the HW address in the
+/// datalink layer. When the regular datagram socket is used the kernel will
+/// determine the HW address of the destination using ARP. In the case when
+/// the DHCP server is allocating the new address for the client the ARP can't
+/// be used because it requires the destination to have the IP address.
+///
+/// The DHCP server utilizes HW address sent by the client in the DHCP message
+/// and stores it in the datalink layer of the outbound packet. The BPF provides
+/// the means for crafting the whole packet (including datalink and network
+/// layers) and injecting the hardware address of the client.
+///
+/// The DHCP server receiving the messages sent from the directly connected
+/// clients to the broadcast address must be able to determine the interface
+/// on which the message arrives. The Linux kernel provides the SO_BINDTODEVICE
+/// socket option which allows for binding the socket to the particular
+/// interface. This option is not implemented on the BSD-like operating
+/// systems. This implies that there may be only one datagram socket listening
+/// to broadcast messages and this socket would receive the traffic on all
+/// interfaces. This effectively precludes the server from identifying the
+/// interface on which the packet arrived. The BPF resolves this problem.
+/// The BPF device (socket) can be attached to the selected interface using
+/// the ioctl function.
+///
+/// In nutshell, the BPF device is created by opening the file /dev/bpf%d
+/// where %d is a number. The BPF device is configured by issuing ioctl
+/// commands listed here: http://www.freebsd.org/cgi/man.cgi?bpf(4).
+/// The specific configuration used by Kea DHCP server is decribed in
+/// documentation of @c PktFilterBPF::openSocket.
+///
+/// Use of BPF requires Kea to encode and decode the datalink and network
+/// layer headers. Currently Kea supports encoding and decoding ethernet
+/// frames on physical interfaces and pseudo headers received on local
+/// loopback interface.
 class PktFilterBPF : public PktFilter {
 public:
 
@@ -42,7 +75,22 @@ public:
 
     /// @brief Open primary and fallback socket.
     ///
-    /// @param iface Interface descriptor.
+    /// This method opens the BPF device and applies the following
+    /// configuration to it:
+    /// - attach the device to the specified interface
+    /// - set filter program to receive DHCP messages encapsulated in UDP
+    /// packets
+    /// - set immediate mode which causes the read function to return
+    /// immediatelly and do not wait for the whole read buffer to be filled
+    /// by the kernel (to avoid hangs)
+    ///
+    /// It also obtains the following configuration from the kernel:
+    /// - major and minor version of the BPF (and checks if it is valid)
+    /// - length of the buffer to be used to receive the data from the socket
+    ///
+    /// @param iface Interface descriptor. Note that the function (re)allocates
+    /// the socket read buffer according to the buffer size returned by the
+    /// kernel.
     /// @param addr Address on the interface to be used to send packets.
     /// @param port Port number.
     /// @param receive_bcast Configure socket to receive broadcast messages

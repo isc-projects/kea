@@ -145,6 +145,11 @@ bool IfaceMgr::os_receive4(struct msghdr& /*m*/, Pkt4Ptr& /*pkt*/) {
 
 void
 IfaceMgr::setMatchingPacketFilter(const bool /* direct_response_desired */) {
+    // Ignore whether the direct response is desired or not. Even if the
+    // direct response is not desired we don't want to use PktFilterInet
+    // because the BSD doesn't support binding to the device and listening
+    // to broadcast traffic on individual interfaces. So, datagram socket
+    // supported by PktFilterInet is not really usable for DHCP.
     setPacketFilter(PktFilterPtr(new PktFilterBPF()));
 }
 

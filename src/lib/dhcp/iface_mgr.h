@@ -125,6 +125,16 @@ struct SocketInfo {
 /// Iface structure represents network interface with all useful
 /// information, like name, interface index, MAC address and
 /// list of assigned addresses
+///
+/// This class also holds the pointer to the socket read buffer.
+/// Functions reading from the socket may utilize this buffer to store the
+/// data being read from the socket. The advantage of using the
+/// pre-allocated buffer is that the buffer is allocated only once, rather
+/// than on every read. In addition, some OS specific code (e.g. BPF)
+/// may require use of fixed-size buffers. The size of such a buffer is
+/// returned by the OS kernel when the socket is opened. Hence, it is
+/// convenient to allocate the buffer when the socket is being opened and
+/// utilze it throughout the lifetime of the socket.
 class Iface {
 public:
 
@@ -352,7 +362,7 @@ public:
         return (read_buffer_size_);
     }
 
-    /// @brief Resizes the socket read buffer.
+    /// @brief Reallocates the socket read buffer.
     ///
     /// @param new_size New size of the buffer.
     void resizeReadBuffer(const size_t new_size);
@@ -416,11 +426,11 @@ public:
     /// be opened on this interface.
     bool inactive6_;
 
-    /// @brief Buffer holding the data read from the socket.
+private:
+
+    /// @brief Pointer to the buffer holding the data read from the socket.
     ///
-    /// This buffer may be pre-allocated when the socket on the interface
-    /// is being opened. The functions which read the data from the socket
-    /// may use this buffer as a storage for the data being read.
+    /// See @c Iface manager description for details.
     uint8_t* read_buffer_;
 
     /// @brief Allocated size of the read buffer.
