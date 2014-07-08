@@ -18,7 +18,7 @@
 
 #include <dhcp/iface_mgr.h>
 #include <dhcp/iface_mgr_error_handler.h>
-#include <dhcp/pkt_filter_inet.h>
+#include <dhcp/pkt_filter_bpf.h>
 #include <exceptions/exceptions.h>
 
 #include <sys/types.h>
@@ -145,9 +145,7 @@ bool IfaceMgr::os_receive4(struct msghdr& /*m*/, Pkt4Ptr& /*pkt*/) {
 
 void
 IfaceMgr::setMatchingPacketFilter(const bool /* direct_response_desired */) {
-    // @todo Currently we ignore the preference to use direct traffic
-    // because it hasn't been implemented for BSD systems.
-    setPacketFilter(PktFilterPtr(new PktFilterInet()));
+    setPacketFilter(PktFilterPtr(new PktFilterBPF()));
 }
 
 bool
