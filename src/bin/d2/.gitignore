@@ -1,5 +1,5 @@
-/b10-dhcp-ddns
-/b10-dhcp-ddns.8
+/kea-dhcp-ddns
+/kea-dhcp-ddns.8
 /d2_messages.cc
 /d2_messages.h
 /spec_config.h

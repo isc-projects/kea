@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -20,37 +20,37 @@
 <refentry>
 
   <refentryinfo>
-    <date>May 15, 2013</date>
+    <date>July 1, 2014</date>
   </refentryinfo>
 
   <refmeta>
-    <refentrytitle>b10-dhcp-ddns</refentrytitle>
+    <refentrytitle>kea-dhcp-ddns</refentrytitle>
     <manvolnum>8</manvolnum>
-    <refmiscinfo>BIND10</refmiscinfo>
+    <refmiscinfo>Kea</refmiscinfo>
   </refmeta>
 
   <refnamediv>
-    <refname>b10-dhcp-ddns</refname>
-    <refpurpose>DHCP-DDNS process in BIND 10 architecture</refpurpose>
+    <refname>kea-dhcp-ddns</refname>
+    <refpurpose>DHCP-DDNS process in Kea</refpurpose>
   </refnamediv>
 
   <docinfo>
     <copyright>
-      <year>2013</year>
+      <year>2014</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
 
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>b10-dhcp-ddns</command>
+      <command>kea-dhcp-ddns</command>
       <arg><option>-v</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>b10-dhcp-ddns</command>
+      <command>kea-dhcp-ddns</command>
       <arg><option>-s</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -59,9 +59,9 @@
   <refsect1>
     <title>DESCRIPTION</title>
     <para>
-      The <command>b10-dhcp-ddns</command> service processes requests to
+      The <command>kea-dhcp-ddns</command> service processes requests to
       to update DNS mapping based on DHCP lease change events. The service
-      may run either as a BIND10 module (integrated mode) or as a individual
+      may run either as a Kea module (integrated mode) or as a individual
       process (stand-alone mode) dependent upon command line arguments. The
       default is integrated mode.  Stand alone operation is strictly for
       development purposes and is not suited for production.
@@ -85,10 +85,10 @@
       </varlistentry>
 
       <varlistentry>
-        <term><option>-s</option></term>
+        <term><option>-c</option></term>
         <listitem><para>
-          Causes the process to run without attempting to connect to the
-          BIND10 message queue.  This is for development purposes.
+          Configuration file including the configuration for DHCP-DDNS server.
+          It may also contain configuration entries for other Kea services.
         </para></listitem>
       </varlistentry>
 
@@ -96,22 +96,15 @@
   </refsect1>
 
   <refsect1>
-    <title>SEE ALSO</title>
-    <para>
-      <citerefentry>
-        <refentrytitle>b10-dhcp-ddns</refentrytitle><manvolnum>8</manvolnum>
-      </citerefentry>,
-      <citerefentry>
-        <refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum>
-      </citerefentry>.
-    </para>
-  </refsect1>
-
-  <refsect1>
     <title>HISTORY</title>
     <para>
       The <command>b10-dhcp-ddns</command> process was first coded in
-      May 2013 by the ISC Kea/Dhcp team.
+      May 2013 by the ISC Kea/DHCP team.
+    </para>
+    <para>
+      Kea became a standalone server and the BIND10 framework was
+      removed. The DHCP-DDNS server binary was renamed to kea-dhcp-ddns
+      in July 2014.
     </para>
   </refsect1>
 </refentry><!--

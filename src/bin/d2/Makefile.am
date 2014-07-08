@@ -14,19 +14,17 @@ if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
 
-pkglibexecdir = $(libexecdir)/@PACKAGE@
-
 CLEANFILES  = *.gcno *.gcda spec_config.h d2_messages.h d2_messages.cc s-messages
 
-man_MANS = b10-dhcp-ddns.8
+man_MANS = kea-dhcp-ddns.8
 DISTCLEANFILES = $(man_MANS)
-EXTRA_DIST = $(man_MANS) b10-dhcp-ddns.xml dhcp-ddns.spec
+EXTRA_DIST = $(man_MANS) kea-dhcp-ddns.xml dhcp-ddns.spec
 
 if GENERATE_DOCS
-b10-dhcp-ddns.8: b10-dhcp-ddns.xml
+kea-dhcp-ddns.8: kea-dhcp-ddns.xml
 	@XSLTPROC@ --novalid --xinclude --nonet -o $@ \
         http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
-	$(srcdir)/b10-dhcp-ddns.xml
+	$(srcdir)/kea-dhcp-ddns.xml
 
 else
 
@@ -47,52 +45,52 @@ s-messages: d2_messages.mes
 
 BUILT_SOURCES = spec_config.h d2_messages.h d2_messages.cc
 
-pkglibexec_PROGRAMS = b10-dhcp-ddns
+sbin_PROGRAMS = kea-dhcp-ddns
 
-b10_dhcp_ddns_SOURCES  = main.cc
-b10_dhcp_ddns_SOURCES += d_process.h
-b10_dhcp_ddns_SOURCES += d_controller.cc d_controller.h
-b10_dhcp_ddns_SOURCES += d_cfg_mgr.cc d_cfg_mgr.h
-b10_dhcp_ddns_SOURCES += d2_asio.h
-b10_dhcp_ddns_SOURCES += d2_log.cc d2_log.h
-b10_dhcp_ddns_SOURCES += d2_process.cc d2_process.h
-b10_dhcp_ddns_SOURCES += d2_config.cc d2_config.h
-b10_dhcp_ddns_SOURCES += d2_cfg_mgr.cc d2_cfg_mgr.h
-b10_dhcp_ddns_SOURCES += d2_queue_mgr.cc d2_queue_mgr.h
-b10_dhcp_ddns_SOURCES += d2_update_message.cc d2_update_message.h
-b10_dhcp_ddns_SOURCES += d2_update_mgr.cc d2_update_mgr.h
-b10_dhcp_ddns_SOURCES += d2_zone.cc d2_zone.h
-b10_dhcp_ddns_SOURCES += dns_client.cc dns_client.h
-b10_dhcp_ddns_SOURCES += io_service_signal.cc io_service_signal.h
-b10_dhcp_ddns_SOURCES += labeled_value.cc labeled_value.h
-b10_dhcp_ddns_SOURCES += nc_add.cc nc_add.h
-b10_dhcp_ddns_SOURCES += nc_remove.cc nc_remove.h
-b10_dhcp_ddns_SOURCES += nc_trans.cc nc_trans.h
-b10_dhcp_ddns_SOURCES += state_model.cc state_model.h
+kea_dhcp_ddns_SOURCES  = main.cc
+kea_dhcp_ddns_SOURCES += d_process.h
+kea_dhcp_ddns_SOURCES += d_controller.cc d_controller.h
+kea_dhcp_ddns_SOURCES += d_cfg_mgr.cc d_cfg_mgr.h
+kea_dhcp_ddns_SOURCES += d2_asio.h
+kea_dhcp_ddns_SOURCES += d2_log.cc d2_log.h
+kea_dhcp_ddns_SOURCES += d2_process.cc d2_process.h
+kea_dhcp_ddns_SOURCES += d2_config.cc d2_config.h
+kea_dhcp_ddns_SOURCES += d2_cfg_mgr.cc d2_cfg_mgr.h
+kea_dhcp_ddns_SOURCES += d2_queue_mgr.cc d2_queue_mgr.h
+kea_dhcp_ddns_SOURCES += d2_update_message.cc d2_update_message.h
+kea_dhcp_ddns_SOURCES += d2_update_mgr.cc d2_update_mgr.h
+kea_dhcp_ddns_SOURCES += d2_zone.cc d2_zone.h
+kea_dhcp_ddns_SOURCES += dns_client.cc dns_client.h
+kea_dhcp_ddns_SOURCES += io_service_signal.cc io_service_signal.h
+kea_dhcp_ddns_SOURCES += labeled_value.cc labeled_value.h
+kea_dhcp_ddns_SOURCES += nc_add.cc nc_add.h
+kea_dhcp_ddns_SOURCES += nc_remove.cc nc_remove.h
+kea_dhcp_ddns_SOURCES += nc_trans.cc nc_trans.h
+kea_dhcp_ddns_SOURCES += state_model.cc state_model.h
 
 if CONFIG_BACKEND_BUNDY
-b10_dhcp_ddns_SOURCES += bundy_d2_controller.cc bundy_d2_controller.h
+kea_dhcp_ddns_SOURCES += bundy_d2_controller.cc bundy_d2_controller.h
 else
 if CONFIG_BACKEND_JSON
-b10_dhcp_ddns_SOURCES += d2_controller.cc d2_controller.h
+kea_dhcp_ddns_SOURCES += d2_controller.cc d2_controller.h
 endif
 endif
 
-nodist_b10_dhcp_ddns_SOURCES = d2_messages.h d2_messages.cc
+nodist_kea_dhcp_ddns_SOURCES = d2_messages.h d2_messages.cc
 EXTRA_DIST += d2_messages.mes
 
-b10_dhcp_ddns_LDADD = $(top_builddir)/src/lib/log/libkea-log.la
-b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
-b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/asiodns/libkea-asiodns.la
-b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
-b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
-b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
-b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
-b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
-b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
-b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
-b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+kea_dhcp_ddns_LDADD = $(top_builddir)/src/lib/log/libkea-log.la
+kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/asiodns/libkea-asiodns.la
+kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
+kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
+kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
+kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 
-b10_dhcp_ddnsdir = $(pkgdatadir)
-b10_dhcp_ddns_DATA = dhcp-ddns.spec
+kea_dhcp_ddnsdir = $(pkgdatadir)
+kea_dhcp_ddns_DATA = dhcp-ddns.spec

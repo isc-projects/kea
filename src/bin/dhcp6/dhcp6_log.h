@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -25,7 +25,7 @@ namespace dhcp {
 /// \brief DHCP6 Logging
 ///
 /// Defines the levels used to output debug messages in the non-library part of
-/// the b10-dhcp6 program.  Higher numbers equate to more verbose (and detailed)
+/// the kea-dhcp6 program.  Higher numbers equate to more verbose (and detailed)
 /// output.
 
 // Debug levels used to log information during startup and shutdown.
@@ -50,7 +50,7 @@ const int DBG_DHCP6_DETAIL = DBGLVL_TRACE_DETAIL;
 // This level is used to log the contents of packets received and sent.
 const int DBG_DHCP6_DETAIL_DATA = DBGLVL_TRACE_DETAIL_DATA;
 
-/// Define the logger for the "dhcp6" module part of b10-dhcp6.  We could define
+/// Define the logger for the "dhcp6" module part of kea-dhcp6.  We could define
 /// a logger in each file, but we would want to define a common name to avoid
 /// spelling mistakes, so it is just one small step from there to define a
 /// module-common logger.

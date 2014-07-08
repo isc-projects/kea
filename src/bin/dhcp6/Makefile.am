@@ -15,20 +15,18 @@ if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
 
-pkglibexecdir = $(libexecdir)/@PACKAGE@
-
 CLEANFILES = spec_config.h dhcp6_messages.h dhcp6_messages.cc s-messages
 
-man_MANS = b10-dhcp6.8
+man_MANS = kea-dhcp6.8
 DISTCLEANFILES = $(man_MANS)
-EXTRA_DIST = $(man_MANS) b10-dhcp6.xml dhcp6.spec
+EXTRA_DIST = $(man_MANS) kea-dhcp6.xml dhcp6.spec
 
 if GENERATE_DOCS
 
-b10-dhcp6.8: b10-dhcp6.xml
+kea-dhcp6.8: kea-dhcp6.xml
 	@XSLTPROC@ --novalid --xinclude --nonet -o $@ \
         http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
-        $(srcdir)/b10-dhcp6.xml
+        $(srcdir)/kea-dhcp6.xml
 
 else
 
@@ -49,35 +47,35 @@ s-messages: dhcp6_messages.mes
 
 BUILT_SOURCES = spec_config.h dhcp6_messages.h dhcp6_messages.cc
 
-pkglibexec_PROGRAMS = b10-dhcp6
+sbin_PROGRAMS = kea-dhcp6
 
-b10_dhcp6_SOURCES  = main.cc
-b10_dhcp6_SOURCES += dhcp6_log.cc dhcp6_log.h
-b10_dhcp6_SOURCES += dhcp6_srv.cc dhcp6_srv.h
-b10_dhcp6_SOURCES += ctrl_dhcp6_srv.cc ctrl_dhcp6_srv.h
-b10_dhcp6_SOURCES += json_config_parser.cc json_config_parser.h
+kea_dhcp6_SOURCES  = main.cc
+kea_dhcp6_SOURCES += dhcp6_log.cc dhcp6_log.h
+kea_dhcp6_SOURCES += dhcp6_srv.cc dhcp6_srv.h
+kea_dhcp6_SOURCES += ctrl_dhcp6_srv.cc ctrl_dhcp6_srv.h
+kea_dhcp6_SOURCES += json_config_parser.cc json_config_parser.h
 
 if CONFIG_BACKEND_BUNDY
-b10_dhcp6_SOURCES += bundy_controller.cc
+kea_dhcp6_SOURCES += bundy_controller.cc
 endif
 
 if CONFIG_BACKEND_JSON
-b10_dhcp6_SOURCES += kea_controller.cc
+kea_dhcp6_SOURCES += kea_controller.cc
 endif
 
-nodist_b10_dhcp6_SOURCES = dhcp6_messages.h dhcp6_messages.cc
+nodist_kea_dhcp6_SOURCES = dhcp6_messages.h dhcp6_messages.cc
 EXTRA_DIST += dhcp6_messages.mes
 
-b10_dhcp6_LDADD  = $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
-b10_dhcp6_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
-b10_dhcp6_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
-b10_dhcp6_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
-b10_dhcp6_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
-b10_dhcp6_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
-b10_dhcp6_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-b10_dhcp6_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
-b10_dhcp6_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
-b10_dhcp6_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+kea_dhcp6_LDADD  = $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+kea_dhcp6_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+kea_dhcp6_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+kea_dhcp6_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+kea_dhcp6_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
+kea_dhcp6_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+kea_dhcp6_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+kea_dhcp6_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
+kea_dhcp6_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
+kea_dhcp6_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 
-b10_dhcp6dir = $(pkgdatadir)
-b10_dhcp6_DATA = dhcp6.spec
+kea_dhcp6dir = $(pkgdatadir)
+kea_dhcp6_DATA = dhcp6.spec

@@ -17,7 +17,7 @@
 
 /// @file d2_client_mgr.h Defines the D2ClientMgr class.
 /// This file defines the class Kea uses to act as a client of the
-/// b10-dhcp-ddns module (aka D2).
+/// kea-dhcp-ddns module (aka D2).
 ///
 #include <asiolink/io_address.h>
 #include <dhcp_ddns/ncr_io.h>
@@ -35,7 +35,7 @@ namespace isc {
 namespace dhcp {
 
 /// @brief Defines the type for D2 IO error handler.
-/// This callback is invoked when a send to b10-dhcp-ddns completes with a
+/// This callback is invoked when a send to kea-dhcp-ddns completes with a
 /// failed status.  This provides the application layer (Kea) with a means to
 /// handle the error appropriately.
 ///
@@ -51,9 +51,9 @@ boost::function<void(const dhcp_ddns::NameChangeSender::Result result,
 /// @brief D2ClientMgr isolates Kea from the details of being a D2 client.
 ///
 /// Provides services for managing the current dhcp-ddns configuration and
-/// as well as communications with b10-dhcp-ddns.  Regarding configuration it
+/// as well as communications with kea-dhcp-ddns.  Regarding configuration it
 /// provides services to store, update, and access the current dhcp-ddns
-/// configuration.  As for b10-dhcp-ddns communications, D2ClientMgr creates
+/// configuration.  As for kea-dhcp-ddns communications, D2ClientMgr creates
 /// maintains a NameChangeSender appropriate to the current configuration and
 /// provides services to start, stop, and post NCRs to the sender.  Additionally
 /// there are methods to examine the queue of requests currently waiting for
@@ -247,7 +247,7 @@ public:
     template <class T>
     void adjustDomainName(const T& fqdn, T& fqdn_resp);
 
-    /// @brief Enables sending NameChangeRequests to b10-dhcp-ddns
+    /// @brief Enables sending NameChangeRequests to kea-dhcp-ddns
     ///
     /// Places the NameChangeSender into send mode. This instructs the
     /// sender to begin dequeuing and transmitting requests and to accept
@@ -270,7 +270,7 @@ public:
     void startSender(D2ClientErrorHandler error_handler,
                      isc::asiolink::IOService& io_service);
 
-    /// @brief Enables sending NameChangeRequests to b10-dhcp-ddns
+    /// @brief Enables sending NameChangeRequests to kea-dhcp-ddns
     ///
     /// Places the NameChangeSender into send mode. This instructs the
     /// sender to begin dequeuing and transmitting requests and to accept
@@ -293,7 +293,7 @@ public:
     /// messages for transmission, false otherwise.
     bool amSending() const;
 
-    /// @brief Disables sending NameChangeRequests to b10-dhcp-ddns
+    /// @brief Disables sending NameChangeRequests to kea-dhcp-ddns
     ///
     /// Takes the NameChangeSender out of send mode.  The sender will stop
     /// transmitting requests, though any queued requests remain queued.
@@ -303,10 +303,10 @@ public:
     /// may throw NCRSenderExceptions exceptions.
     void stopSender();
 
-    /// @brief Send the given NameChangeRequests to b10-dhcp-ddns
+    /// @brief Send the given NameChangeRequests to kea-dhcp-ddns
     ///
     /// Passes NameChangeRequests to the NCR sender for transmission to
-    /// b10-dhcp-ddns. If the sender rejects the message, the client's error
+    /// kea-dhcp-ddns. If the sender rejects the message, the client's error
     /// handler will be invoked.  The most likely cause for rejection is
     /// the senders' queue has reached maximum capacity.
     ///
