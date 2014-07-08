@@ -174,7 +174,7 @@ public:
 
     /// @brief Implements the error handler for DHCP_DDNS IO errors
     ///
-    /// Invoked when a NameChangeRequest send to b10-dhcp-ddns completes with
+    /// Invoked when a NameChangeRequest send to kea-dhcp-ddns completes with
     /// a failed status.  These are communications errors, not data related
     /// failures.
     ///
@@ -490,7 +490,7 @@ protected:
     /// This creates the @c isc::dhcp_ddns::NameChangeRequest; emits a
     /// the debug message which indicates whether the request being added is
     /// to remove DNS entry or add a new entry; and then sends the request
-    /// to the D2ClientMgr for transmission to b10-dhcp-ddns.
+    /// to the D2ClientMgr for transmission to kea-dhcp-ddns.
     ///
     /// @param chg_type A type of the NameChangeRequest (ADD or REMOVE).
     /// @param lease A lease for which the NameChangeRequest is created and

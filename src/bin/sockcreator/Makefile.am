@@ -12,25 +12,25 @@ pkglibexecdir = $(libexecdir)/@PACKAGE@
 
 CLEANFILES = *.gcno *.gcda
 
-man_MANS = b10-sockcreator.8
+man_MANS = kea-sockcreator.8
 DISTCLEANFILES = $(man_MANS)
-EXTRA_DIST = $(man_MANS) b10-sockcreator.xml
+EXTRA_DIST = $(man_MANS) kea-sockcreator.xml
 
 if GENERATE_DOCS
 
-b10-sockcreator.8: b10-sockcreator.xml
-	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-sockcreator.xml
+kea-sockcreator.8: kea-sockcreator.xml
+	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/kea-sockcreator.xml
 
 else
 
 $(man_MANS):
 	@echo Man generation disabled.  Creating dummy $@.  Configure with --enable-generate-docs to enable it.
-	@echo Man generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild BIND 10 > $@
+	@echo Man generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild Kea > $@
 
 endif
 
-pkglibexec_PROGRAMS = b10-sockcreator
+pkglibexec_PROGRAMS = kea-sockcreator
 
-b10_sockcreator_SOURCES = sockcreator.cc sockcreator.h main.cc
-b10_sockcreator_LDADD  = $(top_builddir)/src/lib/util/io/libkea-util-io.la
-b10_sockcreator_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+kea_sockcreator_SOURCES = sockcreator.cc sockcreator.h main.cc
+kea_sockcreator_LDADD  = $(top_builddir)/src/lib/util/io/libkea-util-io.la
+kea_sockcreator_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la

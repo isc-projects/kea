@@ -13,23 +13,23 @@
       <!-- @todo Rewrite this section once #3422 is done -->
 
       <para>
-        <command>b10-dhcp4</command> is the Kea DHCPv4 server and is configured
+        <command>kea-dhcp4</command> is the Kea DHCPv4 server and is configured
         through the <command>bindctl</command> program.
       </para>
       <para>
         After starting <command>bind10</command> and entering bindctl, the first step
         in configuring the server is to add it to the list of running services.
 <screen>
-&gt; <userinput>config add Init/components b10-dhcp4</userinput>
-&gt; <userinput>config set Init/components/b10-dhcp4/kind dispensable</userinput>
+&gt; <userinput>config add Init/components kea-dhcp4</userinput>
+&gt; <userinput>config set Init/components/kea-dhcp4/kind dispensable</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
       </para>
       <para>
-         To remove <command>b10-dhcp4</command> from the set of running services,
-         the <command>b10-dhcp4</command> is removed from list of Init components:
+         To remove <command>kea-dhcp4</command> from the set of running services,
+         the <command>kea-dhcp4</command> is removed from list of Init components:
 <screen>
-&gt; <userinput>config remove Init/components b10-dhcp4</userinput>
+&gt; <userinput>config remove Init/components kea-dhcp4</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
       </para>
@@ -1145,7 +1145,7 @@ temporarily override a list of interface names and listen on all interfaces.
     <section id="dhcp4-ddns-config">
       <title>Configuring DHCPv4 for DDNS</title>
       <para>
-      As mentioned earlier, b10-dhcp4 can be configured to generate requests to the
+      As mentioned earlier, kea-dhcp4 can be configured to generate requests to the
       DHCP-DDNS server to update DNS entries.  These requests are known as
       NameChangeRequests or NCRs.  Each NCR contains the following information:
       <orderedlist>
@@ -1162,7 +1162,7 @@ temporarily override a list of interface names and listen on all interfaces.
       </orderedlist>
       The parameters for controlling the generation of NCRs for submission to the
       DHCP-DDNS server
-      are contained in the <command>dhcp-ddns</command> section of the b10-dhcp4 server
+      are contained in the <command>dhcp-ddns</command> section of the kea-dhcp4 server
       configuration. The default values for this section are as follows:
 <screen>
 "Dhcp4": {
@@ -1187,7 +1187,7 @@ temporarily override a list of interface names and listen on all interfaces.
       </para>
       <!-- this paragraph no longer applies as we don't have default values
       <para>
-      The "enable-updates" parameter determines whether or not b10-dhcp4 will
+      The "enable-updates" parameter determines whether or not kea-dhcp4 will
       generate NCRs.  By default, this value is false hence DDNS updates are
       disabled.  To enable DDNS updates set this value to true:
       </para>
@@ -1198,8 +1198,8 @@ temporarily override a list of interface names and listen on all interfaces.
       <section id="dhcpv4-d2-io-config">
       <title>DHCP-DDNS Server Connectivity</title>
       <para>
-      In order for NCRs to reach the DHCP-DDNS server, b10-dhcp4 must be able
-      to communicate with it.  b10-dhcp4 uses the following configuration
+      In order for NCRs to reach the DHCP-DDNS server, kea-dhcp4 must be able
+      to communicate with it.  kea-dhcp4 uses the following configuration
       parameters to control how it communications with DHCP-DDNS:
       <orderedlist>
       <listitem><para>
@@ -1212,13 +1212,13 @@ temporarily override a list of interface names and listen on all interfaces.
       is 53001.
       </para></listitem>
       <listitem><para>
-      <command>sender-ip</command> - IP address which b10-dhcp4 should use to send requests to the DHCP-DDNS server.
-      The default value is blank which instructs b10-dhcp4 to select a suitable
+      <command>sender-ip</command> - IP address which kea-dhcp4 should use to send requests to the DHCP-DDNS server.
+      The default value is blank which instructs kea-dhcp4 to select a suitable
       address.
       </para></listitem>
       <listitem><para>
-      <command>sender-port</command> - port which b10-dhcp4 should use to send requests to the DHCP-DDNS server. The
-      default value of 0 instructs b10-dhcp4 to select suitable port.
+      <command>sender-port</command> - port which kea-dhcp4 should use to send requests to the DHCP-DDNS server. The
+      default value of 0 instructs kea-dhcp4 to select suitable port.
       </para></listitem>
       <listitem><para>
       <command>ncr-format</command> - Socket protocol use when sending requests to the DHCP-DDNS server.  Currently
@@ -1235,12 +1235,12 @@ temporarily override a list of interface names and listen on all interfaces.
       uncontrollably if they are being generated faster than they can be
       delivered.  If the number of requests queued for transmission reaches
       this value, DDNS updating will be turned off until the queue backlog has
-      been sufficiently reduced.  The intention is allow the b10-dhcp4 server to
+      been sufficiently reduced.  The intention is allow the kea-dhcp4 server to
       continue lease operations without running the risk that its memory usage
       grows without limit.  The default value is 1024.
       </para></listitem>
       </orderedlist>
-      By default, the DHCP-DDNS server is assumed to running on the same machine as b10-dhcp4, and
+      By default, the DHCP-DDNS server is assumed to running on the same machine as kea-dhcp4, and
       all of the default values mentioned above should be sufficient.
       If, however, the DHCP-DDNS server has been configured to listen on a different address or
       port, these values must altered accordingly. For example, if the DHCP-DDNS server has been
@@ -1259,19 +1259,19 @@ temporarily override a list of interface names and listen on all interfaces.
       </para>
       </section>
       <section id="dhcpv4-d2-rules-config">
-      <title>When Does the b10-dhcp4 Server Generate DDNS Requests?</title>
-      <para>b10-dhcp4 follows the behavior prescribed for DHCP servers in
+      <title>When Does the kea-dhcp4 Server Generate DDNS Requests?</title>
+      <para>kea-dhcp4 follows the behavior prescribed for DHCP servers in
       <ulink url="http://tools.ietf.org/html/rfc4702">RFC 4702</ulink>.
-      It is important to keep in mind that b10-dhcp4 provides the initial decision
+      It is important to keep in mind that kea-dhcp4 provides the initial decision
       making of when and what to update and forwards that information to the DHCP-DDNS server in
       the form of NCRs. Carrying out the actual DNS updates and dealing with
       such things as conflict resolution are within the purview of the DHCP-DDNS server itself (<xref linkend="dhcp-ddns-server"/>).
-      This section describes when b10-dhcp4 will generate NCRs and the
+      This section describes when kea-dhcp4 will generate NCRs and the
       configuration parameters that can be used to influence this decision.
       It assumes that the "enable-updates" parameter is true.
       </para>
       <para>
-      In general, b10-dhcp4 will generate DDNS update requests when:
+      In general, kea-dhcp4 will generate DDNS update requests when:
       <orderedlist>
       <listitem><para>
       A new lease is granted in response to a DHCP REQUEST
@@ -1292,10 +1292,10 @@ temporarily override a list of interface names and listen on all interfaces.
       involved and is discussed next.
       </para>
       <para>
-      When a new lease is granted, b10-dhcp4 will generate a DDNS
+      When a new lease is granted, kea-dhcp4 will generate a DDNS
       update request if the DHCP REQUEST contains either the FQDN option
       (code 81) or the Host Name option (code 12). If both are present,
-      the server will use the FQDN option. By default b10-dhcp4
+      the server will use the FQDN option. By default kea-dhcp4
       will respect the FQDN N and S flags specified by the client as shown
       in the following table:
       </para>
@@ -1341,11 +1341,11 @@ temporarily override a list of interface names and listen on all interfaces.
       <para>
       The first row in the table above represents "client delegation". Here
       the DHCP client states that it intends to do the forward DNS updates and
-      the server should do the reverse updates.  By default, b10-dhcp4 will honor
+      the server should do the reverse updates.  By default, kea-dhcp4 will honor
       the client's wishes and generate a DDNS request to the DHCP-DDNS server to update only
       reverse DNS data.  The parameter <command>override-client-update</command> can be used
       to instruct the server to override client delegation requests.  When
-      this parameter is true, b10-dhcp4 will disregard requests for client
+      this parameter is true, kea-dhcp4 will disregard requests for client
       delegation and generate a DDNS request to update both forward and
       reverse DNS data.  In this case, the N-S-O flags in the server's
       response to the client will be 0-1-1 respectively.
@@ -1353,7 +1353,7 @@ temporarily override a list of interface names and listen on all interfaces.
       <para>
       (Note that the flag combination N=1, S=1 is prohibited according to
       <ulink utl="http://tools.ietf.org/html/rfc4702">RFC 4702</ulink>. If such a combination is received from the client, the packet
-      will be dropped by b10-dhcp4.)
+      will be dropped by kea-dhcp4.)
       </para>
       <para>
       To override client delegation, set the following values in your configuration
@@ -1372,7 +1372,7 @@ temporarily override a list of interface names and listen on all interfaces.
       The third row in the table above describes the case in which the client
       requests that no DNS updates be done. The parameter, <command>override-no-update</command>,
       can be used to instruct the server to disregard the client's wishes. When
-      this parameter is true, b10-dhcp4 will generate DDNS update request to the DHCP-DDNS server
+      this parameter is true, kea-dhcp4 will generate DDNS update request to the DHCP-DDNS server
       even if the client requests that no updates be done.  The N-S-O flags in the
       server's response to the client will be 0-1-1.
       </para>
@@ -1389,7 +1389,7 @@ temporarily override a list of interface names and listen on all interfaces.
 }
 </screen>
       <para>
-      b10-dhcp4 will always generate DDNS update requests if the client request
+      kea-dhcp4 will always generate DDNS update requests if the client request
       only contains the Host Name option. In addition it will include an FQDN
       option in the response to the client with the FQDN N-S-O flags set to
       0-1-0 respectively. The domain name portion of the FQDN option will be
@@ -1397,9 +1397,9 @@ temporarily override a list of interface names and listen on all interfaces.
       </para>
       </section>
       <section id="dhcpv4-fqdn-name-generation">
-      <title>b10-dhcp4 name generation for DDNS update requests</title>
+      <title>kea-dhcp4 name generation for DDNS update requests</title>
       Each NameChangeRequest must of course include the fully qualified domain
-      name whose DNS entries are to be affected.  b10-dhcp4 can be configured to
+      name whose DNS entries are to be affected.  kea-dhcp4 can be configured to
       supply a portion or all of that name based upon what it receives from
       the client in the DHCP REQUEST.
       <para>
@@ -1428,7 +1428,7 @@ temporarily override a list of interface names and listen on all interfaces.
       </orderedlist>
       </para></listitem>
       </orderedlist>
-      To instruct b10-dhcp4 to always generate the FQDN for a client, set the
+      To instruct kea-dhcp4 to always generate the FQDN for a client, set the
       parameter <command>replace-client-name</command> to true as follows:
       </para>
 <screen>
@@ -1471,7 +1471,7 @@ temporarily override a list of interface names and listen on all interfaces.
 </screen>
       </section>
       <para>
-      When generating a name, b10-dhcp4 will construct name of the format:
+      When generating a name, kea-dhcp4 will construct name of the format:
       </para>
       <para>
         [generated-prefix]-[address-text].[qualifying-suffix].
@@ -1545,7 +1545,7 @@ temporarily override a list of interface names and listen on all interfaces.
 </screen>
     </section>
 
-  </section> <!-- end of configuring b10-dhcp4 server section with many subsections -->
+  </section> <!-- end of configuring kea-dhcp4 server section with many subsections -->
 
     <section id="dhcp4-serverid">
       <title>Server Identifier in DHCPv4</title>

@@ -37,7 +37,7 @@ using namespace std;
 /// Dhcpv6Srv and other classes, see \ref dhcpv6Session.
 
 namespace {
-const char* const DHCP6_NAME = "b10-dhcp6";
+const char* const DHCP6_NAME = "kea-dhcp6";
 
 const char* const DHCP6_LOGGER_NAME = "kea";
 

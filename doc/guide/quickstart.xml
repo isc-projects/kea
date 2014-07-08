@@ -57,7 +57,7 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
 
         <listitem>
           <para>If you wish to run a DHCP server for IPv4, you need to set up and start
-          the b10-dhcp4 server:</para>
+          the kea-dhcp4 server:</para>
           <orderedlist>
           <listitem>
           <para>Edit your configuration file for DHCPv4. <xref linkend="dhcp4-configuration"/>
@@ -67,7 +67,7 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
 
         <listitem>
           <para>Start Kea DHCPv4 server (as root):
-            <screen># <userinput>b10-dhcp4 -c /path/to/your/kea4/config/file.json</userinput></screen>
+            <screen># <userinput>kea-dhcp4 -c /path/to/your/kea4/config/file.json</userinput></screen>
           </para>
         </listitem>
 
@@ -84,7 +84,7 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
 
         <listitem>
           <para>If you wish to run a DHCP server for IPv6, you need to set up and start
-          the b10-dhcp6 server:</para>
+          the kea-dhcp6 server:</para>
           <orderedlist>
         <listitem>
           <para>Edit your configuration file for DHCPv6. <xref linkend="dhcp6-configuration"/>
@@ -94,7 +94,7 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
 
         <listitem>
           <para>Start Kea DHCPv6 server (as root):
-            <screen># <userinput>b10-dhcp6 -c /path/to/your/kea6/config/file.json</userinput></screen>
+            <screen># <userinput>kea-dhcp6 -c /path/to/your/kea6/config/file.json</userinput></screen>
           </para>
         </listitem>
 

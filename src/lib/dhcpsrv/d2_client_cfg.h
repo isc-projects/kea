@@ -17,7 +17,7 @@
 
 /// @file d2_client_cfg.h Defines the D2ClientConfig class.
 /// This file defines the classes Kea uses to manage configuration needed to
-/// act as a client of the b10-dhcp-ddns module (aka D2).
+/// act as a client of the kea-dhcp-ddns module (aka D2).
 ///
 #include <asiolink/io_address.h>
 #include <dhcp_ddns/ncr_io.h>
@@ -78,14 +78,14 @@ public:
     /// @brief Constructor
     ///
     /// @param enable_updates Enables DHCP-DDNS updates
-    /// @param server_ip IP address of the b10-dhcp-ddns server (IPv4 or IPv6)
-    /// @param server_port IP port of the b10-dhcp-ddns server
-    /// @param sender_ip IP address of the b10-dhcp-ddns server (IPv4 or IPv6)
-    /// @param sender_port IP port of the b10-dhcp-ddns server
+    /// @param server_ip IP address of the kea-dhcp-ddns server (IPv4 or IPv6)
+    /// @param server_port IP port of the kea-dhcp-ddns server
+    /// @param sender_ip IP address of the kea-dhcp-ddns server (IPv4 or IPv6)
+    /// @param sender_port IP port of the kea-dhcp-ddns server
     /// @param max_queue_size  maximum NCRs allowed in sender's queue
-    /// @param ncr_protocol Socket protocol to use with b10-dhcp-ddns
+    /// @param ncr_protocol Socket protocol to use with kea-dhcp-ddns
     /// Currently only UDP is supported.
-    /// @param ncr_format Format of the b10-dhcp-ddns requests.
+    /// @param ncr_format Format of the kea-dhcp-ddns requests.
     /// Currently only JSON format is supported.
     /// @param always_include_fqdn Enables always including the FQDN option in
     /// DHCP responses.
@@ -126,12 +126,12 @@ public:
         return(enable_updates_);
     }
 
-    /// @brief Return the IP address of b10-dhcp-ddns (IPv4 or IPv6).
+    /// @brief Return the IP address of kea-dhcp-ddns (IPv4 or IPv6).
     const isc::asiolink::IOAddress& getServerIp() const {
         return(server_ip_);
     }
 
-    /// @brief Return the IP port of b10-dhcp-ddns.
+    /// @brief Return the IP port of kea-dhcp-ddns.
     size_t getServerPort() const {
         return(server_port_);
     }
@@ -151,12 +151,12 @@ public:
         return(max_queue_size_);
     }
 
-    /// @brief Return the socket protocol to use with b10-dhcp-ddns.
+    /// @brief Return the socket protocol to use with kea-dhcp-ddns.
     const dhcp_ddns::NameChangeProtocol& getNcrProtocol() const {
          return(ncr_protocol_);
     }
 
-    /// @brief Return the b10-dhcp-ddns request format.
+    /// @brief Return the kea-dhcp-ddns request format.
     const dhcp_ddns::NameChangeFormat& getNcrFormat() const {
         return(ncr_format_);
     }
@@ -221,10 +221,10 @@ private:
     /// @brief Indicates whether or not DHCP DDNS updating is enabled.
     bool enable_updates_;
 
-    /// @brief IP address of the b10-dhcp-ddns server (IPv4 or IPv6).
+    /// @brief IP address of the kea-dhcp-ddns server (IPv4 or IPv6).
     isc::asiolink::IOAddress server_ip_;
 
-    /// @brief IP port of the b10-dhcp-ddns server.
+    /// @brief IP port of the kea-dhcp-ddns server.
     size_t server_port_;
 
     /// @brief IP address on which the client should send
@@ -236,11 +236,11 @@ private:
     /// @brief Maxium number of NCRs allowed to queue waiting to send
     size_t max_queue_size_;
 
-    /// @brief The socket protocol to use with b10-dhcp-ddns.
+    /// @brief The socket protocol to use with kea-dhcp-ddns.
     /// Currently only UDP is supported.
     dhcp_ddns::NameChangeProtocol ncr_protocol_;
 
-    /// @brief Format of the b10-dhcp-ddns requests.
+    /// @brief Format of the kea-dhcp-ddns requests.
     /// Currently only JSON format is supported.
     dhcp_ddns::NameChangeFormat ncr_format_;
 

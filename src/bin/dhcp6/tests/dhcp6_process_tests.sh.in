@@ -61,7 +61,7 @@ CONFIG_INVALID="{
 }"
 
 # Set the location of the executable.
-bin="b10-dhcp6"
+bin="kea-dhcp6"
 bin_path=@abs_top_builddir@/src/bin/dhcp6
 
 # Import common test library.
