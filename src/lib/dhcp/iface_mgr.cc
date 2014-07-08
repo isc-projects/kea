@@ -428,18 +428,6 @@ bool
 IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                        IfaceMgrErrorMsgCallback error_handler) {
     int count = 0;
-
-// This option is used to bind sockets to particular interfaces.
-// This is currently the only way to discover on which interface
-// the broadcast packet has been received. If this option is
-// not supported then only one interface should be confugured
-// to listen for broadcast traffic.
-#ifdef SO_BINDTODEVICE
-    const bool bind_to_device = true;
-#else
-    const bool bind_to_device = false;
-#endif
-
     int bcast_num = 0;
 
     for (IfaceCollection::iterator iface = ifaces_.begin();
@@ -467,17 +455,26 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
             // options on the socket so as it can receive and send broadcast
             // messages.
             if (iface->flag_broadcast_ && use_bcast) {
-                // If our OS supports binding socket to a device we can listen
-                // for broadcast messages on multiple interfaces. Otherwise we
-                // bind to INADDR_ANY address but we can do it only once. Thus,
-                // if one socket has been bound we can't do it any further.
-                if (!bind_to_device && bcast_num > 0) {
+                // The DHCP server must have means to determine which interface
+                // the broadcast packets are coming from. This is achieved by
+                // binding a socket to the device (interface) and specialized
+                // packet filters (e.g. BPF and LPF) implement this mechanism.
+                // If the PktFilterInet (generic one) is used, the socket is
+                // bound to INADDR_ANY which effectively binds the socket to
+                // all addresses on all interfaces. So, only one of those can
+                // be opened. Currently, the direct response support is
+                // provided by the PktFilterLPF and PktFilterBPF, so by checking
+                // the support for direct response we actually determine that
+                // one of those objects is in use. For all other objects we
+                // assume that binding to the device is not supported and we
+                // cease opening sockets and display the appropriate message.
+                if (!isDirectResponseSupported() && bcast_num > 0) {
                     IFACEMGR_ERROR(SocketConfigError, error_handler,
-                                   "SO_BINDTODEVICE socket option is"
-                                   " not supported on this OS;"
-                                   " therefore, DHCP server can only"
-                                   " listen broadcast traffic on a"
-                                   " single interface");
+                                   "Binding socket to an interface is not"
+                                   " supported on this OS; therefore only"
+                                   " one socket listening to broadcast traffic"
+                                   " can be opened. Sockets will not be opened"
+                                   " on remaining interfaces");
                     continue;
 
                 } else {
@@ -496,9 +493,7 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                     // Binding socket to an interface is not supported so we
                     // can't open any more broadcast sockets. Increase the
                     // number of open broadcast sockets.
-                    if (!bind_to_device) {
-                        ++bcast_num;
-                    }
+                    ++bcast_num;
                 }
 
             } else {
