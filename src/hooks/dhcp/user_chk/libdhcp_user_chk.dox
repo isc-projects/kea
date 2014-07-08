@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +18,7 @@
 @section libdhcp_user_chkIntro Libdhcp_user_chk: An Example Hooks Library
 ## Introduction
 libdhcp_user_chk is an example hooks library which customizes the DHCP query
-processing provided by BIND X DHCP server modules (b10-dhcp4 and b10-dhcp6).
+processing provided by Kea DHCP server modules (kea-dhcp4 and kea-dhcp6).
 Specifically it allows subnet selection and DHCP response option customization
 based upon a registry of DHCP clients.  Note that the words "client" and "user" are used interchangeably herein.  The intent of the custom behavior is three
 fold:
@@ -125,7 +125,7 @@ the library will unload.
 
 ### Configuring the DHCP Modules
 it must be configured as a hook library for the
-desired DHCP server modules.  Note that the user_chk library is installed alongside the BIND10 libraries in "<install-dir>/lib" where <install-dir> is determined by the --prefix option of the configure script.  It defaults to "/usr/local". Assuming the default value then, configuring b10-dhcp4 to load the user_chk
+desired DHCP server modules.  Note that the user_chk library is installed alongside the BIND10 libraries in "<install-dir>/lib" where <install-dir> is determined by the --prefix option of the configure script.  It defaults to "/usr/local". Assuming the default value then, configuring kea-dhcp4 to load the user_chk
 library could be done with the following BIND10 configuration commands:
 
 @code
@@ -134,7 +134,7 @@ config set Dhcp4/hook_libraries[0] "/usr/local/lib/libdhcp_user_chk.so"
 config commit
 @endcode
 
-To configure it for b10-dhcp6, the commands are simply as shown below:
+To configure it for kea-dhcp6, the commands are simply as shown below:
 
 @code
 config add Dhcp6/hook_libraries

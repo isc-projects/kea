@@ -11,23 +11,23 @@
       <title>Starting and Stopping the DHCPv6 Server</title>
 
       <para>
-        <command>b10-dhcp6</command> is the Kea DHCPv6 server and is configured
+        <command>kea-dhcp6</command> is the Kea DHCPv6 server and is configured
         through the <command>bindctl</command> program.
       </para>
       <para>
         After starting <command>bind10</command> and starting <command>bindctl</command>, the first step
-        in configuring the server is to add <command>b10-dhcp6</command> to the list of running services.
+        in configuring the server is to add <command>kea-dhcp6</command> to the list of running services.
 <screen>
-&gt; <userinput>config add Init/components b10-dhcp6</userinput>
-&gt; <userinput>config set Init/components/b10-dhcp6/kind dispensable</userinput>
+&gt; <userinput>config add Init/components kea-dhcp6</userinput>
+&gt; <userinput>config set Init/components/kea-dhcp6/kind dispensable</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
       </para>
       <para>
-         To remove <command>b10-dhcp6</command> from the set of running services,
-         the <command>b10-dhcp6</command> is removed from list of Init components:
+         To remove <command>kea-dhcp6</command> from the set of running services,
+         the <command>kea-dhcp6</command> is removed from list of Init components:
 <screen>
-&gt; <userinput>config remove Init/components b10-dhcp6</userinput>
+&gt; <userinput>config remove Init/components kea-dhcp6</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
       </para>
@@ -1014,7 +1014,7 @@ should include options from the isc option space:
     <section id="dhcp6-ddns-config">
       <title>Configuring DHCPv6 for DDNS</title>
       <para>
-      As mentioned earlier, b10-dhcp6 can be configured to generate requests to
+      As mentioned earlier, kea-dhcp6 can be configured to generate requests to
       the DHCP-DDNS server (referred to here as the "D2" server) to update
       DNS entries.  These requests are known as NameChangeRequests or NCRs.
       Each NCR contains the following information:
@@ -1031,7 +1031,7 @@ should include options from the isc option space:
       </para></listitem>
       </orderedlist>
       The parameters controlling the generation of NCRs for submission to D2
-      are contained in the "dhcp-ddns" section of b10-dhcp6
+      are contained in the "dhcp-ddns" section of kea-dhcp6
       configuration. The default values for this section appears as follows:
 <screen>
 &gt; <userinput>config show Dhcp6/dhcp-ddns</userinput>
@@ -1051,7 +1051,7 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
 </screen>
       </para>
       <para>
-      The "enable-updates" parameter determines whether or not b10-dhcp6 will
+      The "enable-updates" parameter determines whether or not kea-dhcp6 will
       generate NCRs.  By default, this value is false hence DDNS updates are
       disabled.  To enable DDNS updates set this value to true as follows:
       </para>
@@ -1062,8 +1062,8 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
       <section id="dhcpv6-d2-io-config">
       <title>DHCP-DDNS Server Connectivity</title>
       <para>
-      In order for NCRs to reach the D2 server, b10-dhcp6 must be able
-      to communicate with it.  b10-dhcp6 uses the following configuration
+      In order for NCRs to reach the D2 server, kea-dhcp6 must be able
+      to communicate with it.  kea-dhcp6 uses the following configuration
       parameters to control how it communications with D2:
       <orderedlist>
       <listitem><para>
@@ -1076,13 +1076,13 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
       is 53001.
       </para></listitem>
       <listitem><para>
-      sender-ip - IP address which b10-dhcp6 should use to send requests to D2.
-      The default value is blank which instructs b10-dhcp6 to select a suitable
+      sender-ip - IP address which kea-dhcp6 should use to send requests to D2.
+      The default value is blank which instructs kea-dhcp6 to select a suitable
       address.
       </para></listitem>
       <listitem><para>
-      sender-port - port which b10-dhcp6 should use to send requests to D2. The
-      default value of 0 instructs b10-dhcp6 to select suitable port.
+      sender-port - port which kea-dhcp6 should use to send requests to D2. The
+      default value of 0 instructs kea-dhcp6 to select suitable port.
       </para></listitem>
       <listitem><para>
       ncr-format - Socket protocol use when sending requests to D2.  Currently
@@ -1099,11 +1099,11 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
       uncontrollably if they are being generated faster than they can be
       delivered.  If the number of requests queued for transmission reaches
       this value, DDNS updating will be turned off until the queue backlog has
-      been sufficiently reduced.  The intent is allow b10-dhcp6 to
+      been sufficiently reduced.  The intent is allow kea-dhcp6 to
       continue lease operations.  The default value is 1024.
       </para></listitem>
       </orderedlist>
-      By default, D2 is assumed to running on the same machine as b10-dhcp6, and
+      By default, D2 is assumed to running on the same machine as kea-dhcp6, and
       all of the default values mentioned above should be sufficient.
       If, however, D2 has been configured to listen on a different address or
       port, these values must altered accordingly. For example, if D2 has been
@@ -1117,28 +1117,28 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
       </para>
       </section>
       <section id="dhcpv6-d2-rules-config">
-      <title>When does b10-dhcp6 generate DDNS request</title>
-      b10-dhcp6 follows the behavior prescribed for DHCP servers in RFC 4704.
-      It is important to keep in mind that b10-dhcp6 provides the initial decision
+      <title>When does kea-dhcp6 generate DDNS request</title>
+      kea-dhcp6 follows the behavior prescribed for DHCP servers in RFC 4704.
+      It is important to keep in mind that kea-dhcp6 provides the initial decision
       making of when and what to update and forwards that information to D2 in
       the form of NCRs. Carrying out the actual DNS updates and dealing with
       such things as conflict resolution are the purview of D2 (<xref linkend="dhcp-ddns-server"/>).
       <para>
-      This section describes when b10-dhcp6 will generate NCRs and the
+      This section describes when kea-dhcp6 will generate NCRs and the
       configuration parameters that can be used to influence this decision.
       It assumes that the "enable-updates" parameter is true.
       </para>
       <note>
         <para>
-        Currently the interface between b10-dhcp6 and D2 only supports requests
+        Currently the interface between kea-dhcp6 and D2 only supports requests
         which update DNS entries for a single IP address.  If a lease grants
-        more than one address, b10-dhcp6 will create the DDNS update request for
+        more than one address, kea-dhcp6 will create the DDNS update request for
         only the first of these addresses.  Support for multiple address
         mappings may be provided in a future release.
         </para>
       </note>
       <para>
-      In general, b10-dhcp6 will generate DDNS update requests when:
+      In general, kea-dhcp6 will generate DDNS update requests when:
       <orderedlist>
       <listitem><para>
       A new lease is granted in response to a DHCP REQUEST
@@ -1159,8 +1159,8 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
       discussed next.
       </para>
       <para>
-      b10-dhcp6 will generate a DDNS update request only if the DHCP REQUEST
-      contains the FQDN option (code 39). By default b10-dhcp6 will
+      kea-dhcp6 will generate a DDNS update request only if the DHCP REQUEST
+      contains the FQDN option (code 39). By default kea-dhcp6 will
       respect the FQDN N and S flags specified by the client as shown in the
       following table:
       </para>
@@ -1206,11 +1206,11 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
       <para>
       The first row in the table above represents "client delegation". Here
       the DHCP client states that it intends to do the forward DNS updates and
-      the server should do the reverse updates.  By default, b10-dhcp6 will honor
+      the server should do the reverse updates.  By default, kea-dhcp6 will honor
       the client's wishes and generate a DDNS request to D2 to update only
       reverse DNS data.  The parameter, "override-client-update", can be used
       to instruct the server to override client delegation requests.  When
-      this parameter is true, b10-dhcp6 will disregard requests for client
+      this parameter is true, kea-dhcp6 will disregard requests for client
       delegation and generate a DDNS request to update both forward and
       reverse DNS data.  In this case, the N-S-O flags in the server's
       response to the client will be 0-1-1 respectively.
@@ -1218,7 +1218,7 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
       <para>
       (Note that the flag combination N=1, S=1 is prohibited according to
       RFC 4702. If such a combination is received from the client, the packet
-      will be dropped by b10-dhcp6.)
+      will be dropped by kea-dhcp6.)
       </para>
       <para>
       To override client delegation, issue the following commands:
@@ -1231,7 +1231,7 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
       The third row in the table above describes the case in which the client
       requests that no DNS updates be done. The parameter, "override-no-update",
       can be used to instruct the server to disregard the client's wishes. When
-      this parameter is true, b10-dhcp6 will generate DDNS update request to D2
+      this parameter is true, kea-dhcp6 will generate DDNS update request to D2
       even if the client requests no updates be done.  The N-S-O flags in the
       server's response to the client will be 0-1-1.
       </para>
@@ -1244,9 +1244,9 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
 </screen>
       </section>
       <section id="dhcpv6-fqdn-name-generation">
-      <title>b10-dhcp6 name generation for DDNS update requests</title>
+      <title>kea-dhcp6 name generation for DDNS update requests</title>
       Each NameChangeRequest must of course include the fully qualified domain
-      name whose DNS entries are to be affected.  b10-dhcp6 can be configured to
+      name whose DNS entries are to be affected.  kea-dhcp6 can be configured to
       supply a portion or all of that name based upon what it receives from
       the client in the DHCP REQUEST.
       <para>
@@ -1274,7 +1274,7 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
       </orderedlist>
       </para></listitem>
       </orderedlist>
-      To instruct b10-dhcp6 to always generate a FQDN, set the parameter
+      To instruct kea-dhcp6 to always generate a FQDN, set the parameter
       "replace-client-name" to true:
       </para>
 <screen>
@@ -1302,7 +1302,7 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
 </screen>
       </section>
       <para>
-      When qualifying a partial name, b10-dhcp6 will construct a name with the
+      When qualifying a partial name, kea-dhcp6 will construct a name with the
       format:
       </para>
       <para>
@@ -1317,7 +1317,7 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
         some-computer.example.com.
       </para>
       <para>
-      When generating a the entire name, b10-dhcp6 will construct name of the
+      When generating a the entire name, kea-dhcp6 will construct name of the
       format:
       </para>
       <para>
@@ -1351,7 +1351,7 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
       <para>
         It is unlikely that this parameter should ever need to be changed.
         However, if such a need arises, stop the server, edit the file and restart
-        the server. (The file is named b10-dhcp6-serverid and by default is
+        the server. (The file is named kea-dhcp6-serverid and by default is
         stored in the "var" subdirectory of the directory in which BIND 10 is installed.
         This can be changed when BIND 10 is built by using "--localstatedir"
         on the "configure" command line.)  The file is a text file that contains

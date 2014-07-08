@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -20,39 +20,41 @@
 <refentry>
 
   <refentryinfo>
-    <date>October 27, 2011</date>
+    <date>July 1, 2014</date>
   </refentryinfo>
 
   <refmeta>
-    <refentrytitle>b10-dhcp6</refentrytitle>
+    <refentrytitle>kea-dhcp4</refentrytitle>
     <manvolnum>8</manvolnum>
-    <refmiscinfo>BIND10</refmiscinfo>
+    <refmiscinfo>Kea</refmiscinfo>
   </refmeta>
 
   <refnamediv>
-    <refname>b10-dhcp6</refname>
-    <refpurpose>DHCPv6 server in BIND 10 architecture</refpurpose>
+    <refname>kea-dhcp4</refname>
+    <refpurpose>DHCPv4 server in Kea</refpurpose>
   </refnamediv>
 
   <docinfo>
     <copyright>
-      <year>2011</year>
+      <year>2014</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
 
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>b10-dhcp6</command>
+      <command>kea-dhcp4</command>
       <arg><option>-v</option></arg>
+      <arg><option>-c<replaceable class="parameter">config-file</replaceable></option></arg>
+      <arg><option>-p<replaceable class="parameter">port-number</replaceable></option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
   <refsect1>
     <title>DESCRIPTION</title>
     <para>
-      The <command>b10-dhcp6</command> daemon will provide the
-       DHCPv6 server implementation when it becomes functional.
+      The <command>kea-dhcp4</command> daemon provides the
+       DHCPv4 server implementation.
     </para>
 
   </refsect1>
@@ -68,7 +70,22 @@
         <term><option>-v</option></term>
         <listitem><para>
           Enable verbose mode.
-<!-- TODO: what does this do? -->
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-c</option></term>
+        <listitem><para>
+          Configuration file including the configuration for DHCPv4 server.
+          It may also contain configuration entries for other Kea services.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-p</option></term>
+        <listitem><para>
+          Port number (1-65535) on which the server listens. This is useful
+          for testing purposes only.
         </para></listitem>
       </varlistentry>
 
@@ -76,22 +93,15 @@
   </refsect1>
 
   <refsect1>
-    <title>SEE ALSO</title>
-    <para>
-      <citerefentry>
-        <refentrytitle>b10-init</refentrytitle><manvolnum>8</manvolnum>
-      </citerefentry>,
-      <citerefentry>
-        <refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum>
-      </citerefentry>.
-    </para>
-  </refsect1>
-
-  <refsect1>
     <title>HISTORY</title>
     <para>
-      The <command>b10-dhcp6</command> daemon was first coded in
-      June 2011 by Tomek Mrugalski.
+      The <command>b10-dhcp4</command> daemon was first coded in
+      November 2011 by Tomek Mrugalski.
+    </para>
+    <para>
+      Kea became a standalone server and the BIND10 framework was
+      removed. The DHCPv4 server binary was renamed to kea-dhcp4
+      in July 2014.
     </para>
   </refsect1>
 </refentry><!--
