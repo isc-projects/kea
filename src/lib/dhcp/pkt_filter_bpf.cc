@@ -110,9 +110,10 @@ struct bpf_insn ethernet_ip_udp_filter [] = {
 struct bpf_insn loopback_ip_udp_filter [] = {
     // Make sure this is an IP packet. The pseudo header comprises a 4-byte
     // long value identifying the address family, which should be set to
-    // AF_INET.
+    // AF_INET. The default value used here (0xFFFFFFFF) must be overriden
+    // with htonl(AF_INET) from within the openSocket function.
     BPF_STMT(BPF_LD + BPF_W + BPF_ABS, 0),
-    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, htonl(AF_INET), 0, 8),
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 0xFFFFFFFF, 0, 8),
 
     // Make sure it's a UDP packet.  The IP protocol is at offset
     // 9 in the IP header so, adding the pseudo header size 4 bytes
@@ -257,6 +258,11 @@ PktFilterBPF::openSocket(Iface& iface,
     if (iface.flag_loopback_) {
         prog.bf_insns = loopback_ip_udp_filter;
         prog.bf_len = sizeof(loopback_ip_udp_filter) / sizeof(struct bpf_insn);
+        // The address family is AF_INET. It can't be hardcoded in the BPF program
+        // because we need to make the host to network order conversion using htonl
+        // and conversion can't be done within the BPF program structure as it
+        // doesn't work on some systems.
+        prog.bf_insns[1].k = htonl(AF_INET);
 
     } else {
         prog.bf_insns = ethernet_ip_udp_filter;
