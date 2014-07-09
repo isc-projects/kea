@@ -60,17 +60,18 @@ of Kea.
 
 The following steps are needed to add new configuration backend (it is assumed
 that the modified component is DHCPv4. Similar approach applies to other
-components):
+components: DHCPv6 or D2):
 
 -# Modify AC_ARG_WITH(kea-config,...) macro in configure.ac
 -# Add your own AM_CONDITIONAL(CONFIG_BACKEND_FOO, ...) macro in configure.ac
 -# Add your own conditional AC_DEFINE(CONFIG_BACKEND_FOO, ...) invocation
    in configure.ac
--# Modify sanity check in configure.ac to allow your configuration backend name.
+-# Modify the sanity check in configure.ac to allow your configuration backend name.
 -# Modify src/bin/dhcp4/Makefile.am to include your own backend
    implementation (e.g. foo_controller.cc).
 -# Write your own implementation of isc::dhcp::ControlledDhcpv4Srv::init(),
-   isc::dhcp::ControlledDhcpv4Srv::init() and isc::dhcp::ControlledDhcpv4Srv::cleanup().
+   isc::dhcp::ControlledDhcpv4Srv::init() and isc::dhcp::ControlledDhcpv4Srv::cleanup()
+   and put it in foo_controller.cc
 
 Optionally you can also:
 
@@ -83,20 +84,21 @@ Optionally you can also:
 The following are some considerations that shaped the design of the configuration
 backend framework.
 
--# A new parameter called --with-kea-config will be implemented in the
-   configure script. It will allow the selection at compilation time of how the
-   servers will be configured. For the next 2-3 months (until around June 2014),
-   there will be two values: JSON (read from file) and BUNDY (use the BUNDY/BIND10 framework).
-   Once the file based configuration is implemented and the Kea team is ready to switch
-   (i.e. enough confidence, Forge tests updated for new configuration
-   mechanism), the Bundy/BIND10 framework will be removed from the Kea repository. Other projects
-   (e.g. Bundy) who want to maintain it, are advised to just revert the single
-   commit that will bring the Bundy framework back to their repositories.
+-# A new parameter called --with-kea-config was implemented in the
+   configure script. It allows the selection at compilation time of how the
+   servers will be configured. Currently (June 2014),
+   there are two values: JSON (the default, read configuration from a JSON file)
+   and BUNDY (use the BUNDY/BIND10 framework).  The Bundy/BIND10 framework was removed
+   from the Kea repository. Other projects
+   (e.g. Bundy) who want to maintain Bundy framework, are advised to maintain
+   the framework in their repositories, import Kea modules and compile them
+   with Bundy backend.
    This switchable backend concept is quite simple. There are just different
-   implementations of ControlledXSrv class, so it is a matter of compiling/linking
+   implementations of ControlledXSrv class, each backend keeping its code
+   in a separate file. It is a matter of compiling/linking
    one file or another. Hence it is easy to remove the old backend (and for
-   Bundy to keep it if they desire so). It is also easy for other
-   organizations to add and maintain their own backends (e.g. LDAP).
+   external projects, like Bundy, to keep it if they desire so). It is also easy
+   for other organizations to add and maintain their own backends (e.g. LDAP).
 
 -# Each backend must use the common code for configuration and command
    processing callbacks. They all assume that JSON formatted parameters are sent
@@ -113,13 +115,15 @@ backend framework.
 -# A command handler needs to be added for reading the configuration from a
    file. Its main responsibility is to load the configuration and process
    it. The JSON backend must call that handler when starting up the server.
+   This is implemented in configure() function in kea_controller.cc files
+   in src/bin/dhcp4 and src/bin/dhcp6 directories.
 
 -# Extend the existing JSON parser. The current JSON parser in @ref
    isc::data::Element::fromJSON() needs to be extended to allow optional
-   preprocessing.  For now that capability will simply remove whole-line
+   preprocessing.  For now that capability simply removes  whole-line
    comments staring with the hash character, but it is expected to grow over
    time (in-line comments and file inclusions are the obvious envisaged
-   additions).
+   additions). This is implemented in @ref isc::data::Element::fromJSONFile.
 
 -# Implement a common base class for the Kea4, Kea6, and D2 servers. Some
    operations will be common for all three components: logger initialization,
@@ -128,16 +132,19 @@ backend framework.
    isc::dhcp::Dhcpv6Srv "Dhcpv6Srv" and the @ref isc::d2::D2Controller
    "D2Controller" classes can use.  It is expected that the base class (@ref
    isc::dhcp::Daemon) will be a small one but will grow over time as the code is
-   unified.
+   unified. This has been implemented in @ref isc::dhcp::Daemon.
 
 -# A way is needed to initialize stand-alone logging (i.e. each
    Kea component will initialize it on its own).
 
--# The current format of the BIND10 configuration file, b10-config.db will be
-   retained as the configuration file format.  This is slight change
-   from the BIND10 days, as then a subset of the configuration was received by
-   the daemon processes. To take a specific example, the following is how
-   b10-config.db looks today:
+-# The current format of the BIND10 configuration file (BIND 10 stored its
+   configuration in (installation directory)/var/bind10/b10-config.db) will be
+   retained as the configuration file format. Its actual naming is now arbitrary
+   and left up to the user (it is passed as a parameter to the -c command line
+   option). From the implementation perspective, this is slight change
+   from the BIND10 days, as back then a subset of the configuration was received by
+   the daemon processes. Nowadays the whole configuration is pased. To take a
+   specific example, the following is how b10-config.db looks today:
    @code
    {
      "Init": { ... }
@@ -186,4 +193,7 @@ backend framework.
       - this could also decide if D2 should still be running or not, and react accordingly (post 0.9)
    -# Stop the processes in an orderly fashion
    -# Perhaps return status of each process
+
+This script has been implemented in src/bin/keactl/keactl.
+
 */
