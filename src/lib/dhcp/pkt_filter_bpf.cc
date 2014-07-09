@@ -21,7 +21,7 @@
 #include <exceptions/exceptions.h>
 #include <algorithm>
 #include <net/bpf.h>
-#include <net/ethernet.h>
+#include <netinet/if_ether.h>
 
 namespace {
 
