@@ -1,6 +1,5 @@
 7XX.	[doc]		tomek
-	Developer's Guide updated with pointers updated from BIND10 to
-	Kea.
+	Developer's Guide updated to Change BIND 10 references to Kea.
 	(Trac #3396, git tbd)
 
 791.	[func]		tmark
