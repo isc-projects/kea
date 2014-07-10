@@ -30,7 +30,7 @@
 
   <refnamediv>
     <refname>keactrl</refname>
-    <refpurpose>Shell script for managing the Kea servers</refpurpose>
+    <refpurpose>Shell script for managing Kea</refpurpose>
   </refnamediv>
 
   <docinfo>
@@ -52,24 +52,21 @@
   <refsect1>
     <title>DESCRIPTION</title>
     <para>
-      <command>keactrl</command> is a shell script which controls the startup,
-      shutdown and reconfiguration of the Kea servers, i.e.
-      <command>kea-dhcp4</command>, <command>kea-dhcp6</command> and 
-      <command>kea-dhcp-ddns</command>. It also provides the means for
-      checking the current status of the servers and returns the information
-      whether the servers are active or inactive and also configuration data
-      being used.
+      keactrl is a shell script which controls the startup, shutdown
+      and reconfiguration of the Kea servers (<command>kea-dhcp4</command>,
+      <command>kea-dhcp6</command> and <command>kea-dhcp-ddns</command>). It
+      also provides the means for checking the current status of the servers
+      and determining the configuration files in use.
     </para>
   </refsect1>
 
   <refsect1>
     <title>CONFIGURATION FILE</title>
     <para>
-      <command>keactrl</command> starts servers in background and returns.
-      Depending on the needs of the server's Administrator it is possible
-      to select which of them are started and which are not. This is
-      specified in the <filename>keactrl.conf</filename> file which by default
-      is installed in [kea-install-dir]/etc/kea/.
+     Depending on requirements, not all of the available servers need
+     be run.  The keactrl configuration file sets which servers are
+     enabled and which are disabled.  By default the configuration
+     file is <filename>[kea-install-dir]/etc/kea/keactrl.conf</filename>.
     </para>
     <para>
       See the Kea Administrator's Guide for the documentation of the parameters
@@ -91,21 +88,21 @@
             <varlistentry>
               <term>start</term>
               <listitem>
-                <para>Start servers.</para>
+                <para>Start the servers.</para>
               </listitem>
             </varlistentry>
 
             <varlistentry>
               <term>stop</term>
               <listitem>
-                <para>Stop servers.</para>
+                <para>Stop the servers.</para>
               </listitem>
             </varlistentry>
 
             <varlistentry>
               <term>reload</term>
               <listitem>
-                <para>Reconfigure servers.</para>
+                <para>Instructs the servers to re-read the kea configuration file.</para>
               </listitem>
             </varlistentry>
 
@@ -126,8 +123,9 @@
         <term><option>-c|--ctrl-config <replaceable class="parameter">keactrl-config-file</replaceable></option></term>
         <listitem>
           <para>
-            Override the default location of the <command>keactrl</command>
-            configuration file.
+            Specify the <command>keactrl</command> configuration file. Without
+            this switch, the <command>keactrl</command> will attempt to use the
+            file <filename>[kea-install-dir]/etc/kea/keactrl.conf</filename>.
           </para>
         </listitem>
       </varlistentry>
@@ -136,8 +134,9 @@
         <term><option>-s|--server <replaceable class="parameter">server[,server,...]</replaceable></option></term>
         <listitem>
           <para>
-            Specify a comma separated list of servers to which the command
-            should be issued. The acceptable values are:
+            Specifies a subset of the enabled servers to which the command should be issued.
+            The list of servers should be separated by commas with no intervening spaces.
+            Acceptable values are:
           </para>
 
           <variablelist>
