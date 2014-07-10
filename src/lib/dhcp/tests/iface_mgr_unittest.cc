@@ -1290,12 +1290,12 @@ TEST_F(IfaceMgrTest, setPacketFilter6) {
 }
 
 
-#if defined OS_LINUX
+#if defined OS_LINUX || OS_BSD
 
-// This Linux specific test checks whether it is possible to use
-// IfaceMgr to figure out which Pakcket Filter object should be
-// used when direct responses to hosts, having no address assigned
-// are desired or not desired.
+// This test is only supported on Linux and BSD systems. It checks
+// if it is possible to use the IfaceMgr to select the packet filter
+// object which can be used to send direct responses to the host
+// which doesn't have an address yet.
 TEST_F(IfaceMgrTest, setMatchingPacketFilter) {
 
     // Create an instance of IfaceMgr.
@@ -1304,23 +1304,22 @@ TEST_F(IfaceMgrTest, setMatchingPacketFilter) {
 
     // Let IfaceMgr figure out which Packet Filter to use when
     // direct response capability is not desired. It should pick
-    // PktFilterInet.
+    // PktFilterInet on Linux.
     EXPECT_NO_THROW(iface_mgr->setMatchingPacketFilter(false));
     // The PktFilterInet is supposed to report lack of direct
     // response capability.
     EXPECT_FALSE(iface_mgr->isDirectResponseSupported());
 
     // There is working implementation of direct responses on Linux
-    // in PktFilterLPF. It uses Linux Packet Filtering as underlying
-    // mechanism. When direct responses are desired the object of
-    // this class should be set.
+    // and BSD (using PktFilterLPF and PktFilterBPF. When direct
+    // responses are desired the object of this class should be set.
     EXPECT_NO_THROW(iface_mgr->setMatchingPacketFilter(true));
     // This object should report that direct responses are supported.
     EXPECT_TRUE(iface_mgr->isDirectResponseSupported());
 }
 
 // This test checks that it is not possible to open two sockets: IP/UDP
-// and raw (LPF) socket and bind to the same address and port. The
+// and raw socket and bind to the same address and port. The
 // raw socket should be opened together with the fallback IP/UDP socket.
 // The fallback socket should fail to open when there is another IP/UDP
 // socket bound to the same address and port. Failing to open the fallback
@@ -1376,8 +1375,8 @@ TEST_F(IfaceMgrTest, checkPacketFilterLPFSocket) {
 // on systems other than Linux the function under test should always
 // set object of PktFilterInet type as current Packet Filter. This
 // object does not support direct responses. Once implementation is
-// added on non-Linux systems the OS specific version of the test
-// will be removed.
+// added on systems other than BSD and Linux the OS specific version
+// of the test will be removed.
 TEST_F(IfaceMgrTest, setMatchingPacketFilter) {
 
     // Create an instance of IfaceMgr.
