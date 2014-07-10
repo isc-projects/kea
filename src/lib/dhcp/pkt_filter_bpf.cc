@@ -329,29 +329,71 @@ PktFilterBPF::receive(const Iface& iface, const SocketInfo& socket_info) {
 
     // Now that we finished getting data from the fallback socket, we
     // have to get the data from the raw socket too.
-    int data_len = read(socket_info.sockfd_, iface.getReadBufferPtr(),
-                        iface.getReadBufferSize());
+    memset(iface.getReadBufferPtr(), 0, iface.getReadBufferSize());
+    datalen = read(socket_info.sockfd_, iface.getReadBufferPtr(),
+                   iface.getReadBufferSize());
     // If negative value is returned by read(), it indicates that an
     // error occured. If returned value is 0, no data was read from the
-    // socket.b In both cases something has gone wrong, because we expect
+    // socket. In both cases something has gone wrong, because we expect
     // that a chunk of data is there. We signal the lack of data by
     // returing an empty packet.
-    if (data_len <= 0) {
+    if (datalen <= 0) {
         return Pkt4Ptr();
     }
+    datalen = BPF_WORDALIGN(datalen);
 
+    // Holds BPF header.
     struct bpf_hdr bpfh;
-    memcpy(static_cast<void*>(&bpfh),
-           static_cast<void*>(iface.getReadBufferPtr()),
-           sizeof(bpfh));
-    if (bpfh.bh_hdrlen >= data_len) {
-        isc_throw(SocketReadError, "packet received from the BPF device"
-                  << " attached to interface " << iface.getName()
-                  << " is truncated");
+
+    /// @todo BPF may occasionally append more than one packet in a
+    /// single read. Our current libdhcp++ API is oriented towards receiving
+    /// one packet at the time so we just pick first usable packet here
+    /// and drop other packets. In the future the additional packets should
+    /// be queued and processed. For now, we just iterate over the packets
+    /// in the buffer and pick the first usable one.
+    int offset = 0;
+    while (offset < datalen) {
+        // Check if the BPF header fits in the reminder of the buffer.
+        // If it doesn't something is really wrong.
+        if (datalen - offset < sizeof(bpf_hdr)) {
+            isc_throw(SocketReadError, "packet received over the BPF device on"
+                      " interface " << iface.getName() << " has a truncated "
+                      " BPF header");
+        }
+
+        // Copy the BPF header.
+        memcpy(static_cast<void*>(&bpfh),
+               static_cast<void*>(iface.getReadBufferPtr()),
+               sizeof(bpfh));
+
+        // Check if the captured data fit into the reminder of the buffer.
+        // Again, something is really wrong here.
+        if (offset + bpfh.bh_hdrlen + bpfh.bh_caplen > datalen) {
+            isc_throw(SocketReadError, "packet received from the BPF device"
+                      << " attached to interface " << iface.getName()
+                      << " is truncated");
+        }
+
+        // Check if the whole packet has been captured.
+        if (bpfh.bh_caplen != bpfh.bh_datalen) {
+            // Not whole packet captured, proceed to next received packet.
+            offset = BPF_WORDALIGN(offset + bpfh.bh_hdrlen + bpfh.bh_caplen);
+            continue;
+        }
+
+        // All checks passed, let's use the packet at the offset found.
+        // Typically it will be at offset 0.
+        break;
+    };
+
+    // No parsable packet found, so return.
+    if (offset >= datalen) {
+        return (Pkt4Ptr());
     }
 
-    InputBuffer buf(iface.getReadBufferPtr() + bpfh.bh_hdrlen,
-                    data_len - bpfh.bh_hdrlen);
+    // Skip the BPF header and create the buffer holding a frame.
+    InputBuffer buf(iface.getReadBufferPtr() + offset + bpfh.bh_hdrlen,
+                    datalen - bpfh.bh_hdrlen - offset);
 
 
     // @todo: This is awkward way to solve the chicken and egg problem
