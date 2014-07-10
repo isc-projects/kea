@@ -238,19 +238,19 @@ case "$host" in
 
 	# In OS X 10.9 (and possibly any future versions?) pthread_cond_destroy
 	# doesn't work as documented, which makes some of unit tests fail.
-	# Testing a specific system and version is not a good practice, but
-	# identifying this behavior would be too heavy (running a program
-	# with multiple threads), so this is a compromise.  In general,
-	# it should be avoided to rely on 'osx_version' unless there's no
-	# viable alternative.
-	osx_version=`/usr/bin/sw_vers -productVersion`
-
-	if [ test $osx_version = "10.9" \
-        -o $osx_version = "10.9.1" \
-        -o $osx_version = "10.9.2" \
-        -o $osx_version = "10.9.3" ]; then
-	    bind10_undefined_pthread_behavior=yes
-    fi
+        AC_TRY_RUN([
+	#include <Availability.h>
+	int main(void)
+	{
+	#ifdef __MAC_OS_X_VERSION_MIN_REQUIRED
+	#if __MAC_OS_X_VERSION_MIN_REQUIRED < 1090
+	return 1;
+	#else
+	return 0;
+	#endif
+	#endif
+	return 1;
+	}],[bind10_undefined_pthread_behavior=yes],[],[])
 
 	# libtool doesn't work perfectly with Darwin: libtool embeds the
 	# final install path in dynamic libraries and our loadable python
