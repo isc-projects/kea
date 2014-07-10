@@ -2,7 +2,7 @@
 	Detect all OS X versions more recent than 10.9 (where
 	pthread_cond_destroy() doesn't work as documented,
 	which makes some of unit tests to fail).
-	(Trac #3473, git xxx)
+	(Trac #3473, git d620ef6659598bcc1f4c30241e845348770e264e)
 
 800.	[bug]		marcin
 	DHCPv6 server is now usable on FreeBSD, NetBSD and OpenBSD systems.
