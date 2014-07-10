@@ -1,0 +1,199 @@
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	       [<!ENTITY mdash "&#8212;">]>
+<!--
+ - Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+ -
+ - Permission to use, copy, modify, and/or distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
+-->
+
+<refentry>
+  <refentryinfo>
+    <date>July 3, 2014</date>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle>keactrl</refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo>Kea</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>keactrl</refname>
+    <refpurpose>Shell script for managing Kea</refpurpose>
+  </refnamediv>
+
+  <docinfo>
+    <copyright>
+      <year>2014</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
+    </copyright>
+  </docinfo>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>keactrl</command>
+      <arg>command</arg>
+      <arg><option>-c <replaceable class="parameter">keactrl-config-file</replaceable></option></arg>
+      <arg><option>-s <replaceable class="parameter">server[,server,...]</replaceable></option></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>DESCRIPTION</title>
+    <para>
+      keactrl is a shell script which controls the startup, shutdown
+      and reconfiguration of the Kea servers (<command>kea-dhcp4</command>,
+      <command>kea-dhcp6</command> and <command>kea-dhcp-ddns</command>). It
+      also provides the means for checking the current status of the servers
+      and determining the configuration files in use.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>CONFIGURATION FILE</title>
+    <para>
+     Depending on requirements, not all of the available servers need
+     be run.  The keactrl configuration file sets which servers are
+     enabled and which are disabled.  By default the configuration
+     file is <filename>[kea-install-dir]/etc/kea/keactrl.conf</filename>.
+    </para>
+    <para>
+      See the Kea Administrator's Guide for the documentation of the parameters
+      in the <command>keactrl</command> configuration file.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>OPTIONS</title>
+    <variablelist>
+      <varlistentry>
+        <term><option><replaceable class="parameter">command</replaceable></option></term>
+        <listitem>
+          <para>
+            Command to be issued to the servers. It can be one of the following:
+          </para>
+
+          <variablelist>
+            <varlistentry>
+              <term>start</term>
+              <listitem>
+                <para>Start the servers.</para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term>stop</term>
+              <listitem>
+                <para>Stop the servers.</para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term>reload</term>
+              <listitem>
+                <para>Instructs the servers to re-read the kea configuration file.</para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term>status</term>
+              <listitem>
+                <para>Print the status of the servers.</para>
+              </listitem>
+            </varlistentry>
+
+          </variablelist>
+
+
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-c|--ctrl-config <replaceable class="parameter">keactrl-config-file</replaceable></option></term>
+        <listitem>
+          <para>
+            Specify the <command>keactrl</command> configuration file. Without
+            this switch, the <command>keactrl</command> will attempt to use the
+            file <filename>[kea-install-dir]/etc/kea/keactrl.conf</filename>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-s|--server <replaceable class="parameter">server[,server,...]</replaceable></option></term>
+        <listitem>
+          <para>
+            Specifies a subset of the enabled servers to which the command should be issued.
+            The list of servers should be separated by commas with no intervening spaces.
+            Acceptable values are:
+          </para>
+
+          <variablelist>
+            <varlistentry>
+              <term>dhcp4</term>
+              <listitem>
+                <para>DHCPv4 server (<command>kea-dhcp4</command>).</para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term>dhcp6</term>
+              <listitem>
+                <para>DHCPv6 server (<command>kea-dhcp6</command>).</para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term>dhcp_ddns</term>
+              <listitem>
+                <para>DHCP DDNS server (<command>kea-dhcp-ddns</command>).</para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term>all</term>
+              <listitem>
+                <para>All servers (default).</para>
+              </listitem>
+            </varlistentry>
+
+          </variablelist>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry>
+        <refentrytitle>kea-dhcp4</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>
+
+      <citerefentry>
+        <refentrytitle>kea-dhcp6</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>
+
+      <citerefentry>
+        <refentrytitle>kea-dhcp-ddns</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>
+
+    </para>
+  </refsect1>
+
+</refentry>
