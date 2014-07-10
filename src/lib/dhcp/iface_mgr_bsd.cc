@@ -19,6 +19,7 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcp/iface_mgr_error_handler.h>
 #include <dhcp/pkt_filter_bpf.h>
+#include <dhcp/pkt_filter_inet.h>
 #include <exceptions/exceptions.h>
 
 #include <sys/types.h>
@@ -144,13 +145,21 @@ bool IfaceMgr::os_receive4(struct msghdr& /*m*/, Pkt4Ptr& /*pkt*/) {
 }
 
 void
-IfaceMgr::setMatchingPacketFilter(const bool /* direct_response_desired */) {
-    // Ignore whether the direct response is desired or not. Even if the
-    // direct response is not desired we don't want to use PktFilterInet
-    // because the BSD doesn't support binding to the device and listening
-    // to broadcast traffic on individual interfaces. So, datagram socket
-    // supported by PktFilterInet is not really usable for DHCP.
-    setPacketFilter(PktFilterPtr(new PktFilterBPF()));
+IfaceMgr::setMatchingPacketFilter(const bool direct_response_desired) {
+    // If direct response is desired we have to use BPF. If the direct
+    // response is not desired we use datagram socket supported by the
+    // PktFilterInet class. Note however that on BSD systems binding the
+    // datagram socket to the device is not supported and the server would
+    // have no means to determine on which interface the packet has been
+    // received. Hence, it is discouraged to use PktFilterInet for the
+    // server.
+    if (direct_response_desired) {
+        setPacketFilter(PktFilterPtr(new PktFilterBPF()));
+
+    } else {
+        setPacketFilter(PktFilterPtr(new PktFilterInet()));
+
+    }
 }
 
 bool
