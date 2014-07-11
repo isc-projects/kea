@@ -168,7 +168,7 @@ INFO/keactrl: Starting kea-dhcp-ddns -c /usr/local/etc/kea/kea.conf
 INFO/keactrl: Skip sending signal 15 to process kea-dhcp6: process is not running
 </screen>
       Note that the <command>stop</command> will attempt to stop all servers
-      regrdless of whether they are "enabled" in the <filename>keactrl.conf</filename>.
+      regardless of whether they are "enabled" in the <filename>keactrl.conf</filename>.
       If any of the servers is not running, an informational message
       is displayed as in the <command>stop</command> command output above.
       </para>

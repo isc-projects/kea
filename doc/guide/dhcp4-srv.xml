@@ -737,7 +737,7 @@ temporarily override a list of interface names and listen on all interfaces.
             <row><entry>record</entry><entry>Structured data that may comprise any types (except "record" and "empty")</entry></row>
             <row><entry>string</entry><entry>Any text</entry></row>
             <row><entry>uint8</entry><entry>8 bit unsigned integer with allowed values 0 to 255</entry></row>
-            <row><entry>uint16</entry><entry>16 bit unsinged integer with allowed values 0 to 65535</entry></row>
+            <row><entry>uint16</entry><entry>16 bit unsigned integer with allowed values 0 to 65535</entry></row>
             <row><entry>uint32</entry><entry>32 bit unsigned integer with allowed values 0 to 4294967295</entry></row>
           </tbody>
           </tgroup>
@@ -1412,7 +1412,7 @@ temporarily override a list of interface names and listen on all interfaces.
       <listitem><para>
       If the REQUEST contains the client FQDN option, the candidate
       name is taken from there, otherwise it is taken from the Host Name option.
-      The candiate name may then be modified:
+      The candidate name may then be modified:
       <orderedlist>
       <listitem><para>
       If the candidate name is a fully qualified domain name, use it.
