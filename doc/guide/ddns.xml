@@ -213,7 +213,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
         name in that domain's configuration entry.  When D2 matches a
         change request to a domain, it checks whether the domain has
         a TSIG key associated with it.  If so, D2 will use that key to
-        sign DNS update messages sent to and verify repsonses received
+        sign DNS update messages sent to and verify responses received
         from the domain's DNS server(s). For each TSIG key required by
         the DNS servers that D2 will be working with there must be a
         corresponding TSIG key in the TSIG Key list.</para>

@@ -8,7 +8,7 @@
 
   <para>Depending on configuration backend chosen (see <xref
   linkend="dhcp-config-backend"/>), configuration mechanisms are different. The
-  following sections describe details of the differeent configuration backends. Note
+  following sections describe details of the different configuration backends. Note
   that only one configuration backend can be used and its selection is
   made when the configure script is run.</para>
 

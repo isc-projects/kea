@@ -114,9 +114,9 @@
 
         <listitem>
             <simpara>
-	In order to store lease information in a PostgresSQL database, Kea requires PostgresSQL
+	In order to store lease information in a PostgreSQL database, Kea requires PostgreSQL
     headers and libraries.  This is an optional dependency in that Kea can be
-    built without PostgresSQL support.
+    built without PostgreSQL support.
             </simpara>
         </listitem>
       </itemizedlist>

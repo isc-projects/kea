@@ -984,7 +984,7 @@ should include options from the isc option space:
     <section id="dhcp6-subnet-class">
       <title>Limiting access to IPv6 subnet to certain classes</title>
       <para>
-        In certain cases it beneficial to restrict access to certains subnets
+        In certain cases it beneficial to restrict access to certain subnets
         only to clients that belong to a given subnet. For details on client
         classes, see <xref linkend="dhcp6-client-classifier"/>. This is an
         extension of a previous example from <xref linkend="dhcp6-address-config"/>.
