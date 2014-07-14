@@ -204,6 +204,7 @@ public:
     using Dhcpv4Srv::acceptMessageType;
     using Dhcpv4Srv::selectSubnet;
     using Dhcpv4Srv::VENDOR_CLASS_PREFIX;
+    using Dhcpv4Srv::shutdown_;
 };
 
 class Dhcpv4SrvTest : public ::testing::Test {

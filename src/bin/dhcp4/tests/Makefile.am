@@ -88,6 +88,7 @@ dhcp4_unittests_SOURCES += ctrl_dhcp4_srv_unittest.cc
 dhcp4_unittests_SOURCES += config_parser_unittest.cc
 dhcp4_unittests_SOURCES += fqdn_unittest.cc
 dhcp4_unittests_SOURCES += marker_file.cc
+dhcp4_unittests_SOURCES += dhcp4_client.cc dhcp4_client.h
 
 if CONFIG_BACKEND_BUNDY
 # For Bundy backend, we only need to run the usual tests. There are no
