@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-/// @file pkt_receive.cc Defines the pkt4_receive and pkt6_receive callout functions.
+/// @file pkt_receive_co.cc Defines the pkt4_receive and pkt6_receive callout functions.
 
 #include <hooks/hooks.h>
 #include <dhcp/pkt4.h>

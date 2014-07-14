@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-/// @file pkt_send.cc Defines the pkt4_send and pkt6_send callout functions.
+/// @file pkt_send_co.cc Defines the pkt4_send and pkt6_send callout functions.
 
 #include <asiolink/io_address.h>
 #include <hooks/hooks.h>
@@ -322,10 +322,10 @@ void add6Option(OptionPtr& vendor, uint8_t opt_code, std::string& opt_value) {
 /// Each user entry is written in an ini-like format, with one name-value pair
 /// per line as follows:
 ///
-/// id_type=<id type>
-/// client=<id str>
-/// subnet=<subnet str>
-/// registered=<is registered>"
+/// id_type=&lt;id type&gt;<br/>
+/// client=&lt;id str&gt;<br/>
+/// subnet=&lt;subnet str&gt;<br/>
+/// registered=&lt;is registered&gt;
 ///
 /// where:
 /// <id type> text label of the id type: "HW_ADDR" or "DUID"
