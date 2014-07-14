@@ -14,72 +14,79 @@
 
 /**
 
- @page contributorGuide BIND10 Contributor's Guide
+ @page contributorGuide Kea Contributor's Guide
 
-So you found a bug in BIND10 or plan to develop an extension and want to
+So you found a bug in Kea or plan to develop an extension and want to
 send a patch? Great! This page will explain how to contribute your
 changes smoothly.
 
 @section contributorGuideWritePatch Writing a patch
 
-Before you start working on a patch or a new feature, it is a good idea
-to discuss it first with BIND10 developers. You can post your questions
-to the \c bind10-dev mailing list
-(https://lists.isc.org/mailman/listinfo/bind10-dev) for general BIND10
-stuff, or to the \c bind10-dhcp mailing list
-(https://lists.isc.org/mailman/listinfo/bind10-dhcp) for DHCP specific
-topics. If you prefer to get faster feedback, most BIND10 developers
-hang out in the \c bind10 jabber room
-(xmpp:bind10@conference.jabber.isc.org). Those involved in DHCP also use
-the \c dhcp chatroom (xmpp:dhcp@conference.jabber.isc.org). Feel free to
-join these rooms and talk to us. It is possible that someone else is
-working on your specific issue or perhaps the solution you plan to
-implement is not the best one. Often having a 10 minute talk could save
-many hours of engineering work.
+Before you start working on a patch or a new feature, it is a good
+idea to discuss it first with Kea developers. You can post your
+questions to the \c kea-dev mailing list
+(https://lists.isc.org/mailman/listinfo/kea-dev) or kea-users
+(https://lists.isc.org/mailman/listinfo/kea-users). The kea-users list
+is intended for users who are not interested in the internal workings
+or development details of Kea: it is OK to ask for feedback regarding new
+design or the best proposed solution to a certain problem, but all
+the internal details should be discussed on kea-dev and not posted
+to kea-users.
 
-First step would be to get the source code from our Git repository. The
-procedure is very easy and is explained here:
-http://bind10.isc.org/wiki/GitGuidelines.  While it is possible to
-provide a patch against the latest stable release, it makes the review
-process much easier if it is for latest code from the Git \c master
-branch.
+If you prefer to get
+faster feedback, most Kea developers hang out in the \c dhcp
+jabber room (xmpp:dhcp@conference.jabber.isc.org). Feel free to join this
+room and talk to us. It is possible that someone else is working on your
+specific issue or perhaps the solution you plan to implement is not
+the best one. Often having a 10 minute talk could save many hours of
+engineering work.
 
-Ok, so you have written a patch? Great! Before you submit it, make sure
+The first step in writing the patch or new feature should be to get
+the source code from our Git repository. The procedure is very easy and
+is explained here: http://kea.isc.org/wiki/GitGuidelines.  While it is
+possible to provide a patch against the latest stable release, it makes
+the review process much easier if it is for latest code from the Git \c
+master branch.
+
+OK, so you have written a patch? Great! Before you submit it, make sure
 that your code compiles. This may seem obvious, but there's more to
-it. You have surely checked that it compiles on your system, but BIND10
+it. You have surely checked that it compiles on your system, but Kea
 is portable software. Besides Linux, it is compiled and used on
 relatively uncommon systems like OpenBSD and Solaris 11. Will your code
 compile and work there? What about endianess? It is likely that you used
 a regular x86 architecture machine to write your patch, but the software
 is expected to run on many other architectures. You may take a look at
-system specific build notes (http://bind10.isc.org/wiki/SystemSpecificNotes).
+system specific build notes (http://kea.isc.org/wiki/SystemSpecificNotes).
 For a complete list of systems we build on, you may take a look at the
-following build farm report: http://git.bind10.isc.org/~tester/builder/builder-new.html .
+following build farm report: http://git.kea.isc.org/~tester/builder/KEA-builder-new.html .
 
-Does your patch conform to BIND10 coding guidelines
-(http://bind10.isc.org/wiki/CodingGuidelines)? You still can submit a
-patch that does not adhere to it, but that will decrease its chances of
-being accepted. If the deviations are minor, the BIND10 engineer who
+Does your patch conform to Kea coding guidelines
+(http://kea.isc.org/wiki/CodingGuidelines)? You can submit a
+patch that does not adhere to them, but that will reduce its chances of
+being accepted. If the deviations are minor, the Kea engineer who
 does the review will likely fix the issues. However, if there are lots
 of issues, the reviewer may simply reject the patch and ask you to fix
 it before re-submitting.
 
 @section contributorGuideUnittests Running unit-tests
 
-One of the ground rules in BIND10 development is that every piece of
+One of the ground rules in Kea development is that every piece of
 code has to be tested. We now have an extensive set of unit-tests for
 almost every line of code. Even if you are fixing something small,
-like a single line fix, it is encouraged to write unit-tests for that
-change. That is even more true for new code. If you write a new
+like a single line fix, you are encouraged to write unit-tests for that
+change. That is even more true for new code: if you write a new
 function, method or a class, you definitely should write unit-tests
 for it.
 
-BIND10 uses the Google C++ Testing Framework (also called googletest or
+Kea uses the Google C++ Testing Framework (also called googletest or
 gtest) as a base for our C++ unit-tests. See
-http://code.google.com/p/googletest/ for details. For Python unit-tests,
-we use the its \c unittest library which is included in Python. You must
+http://code.google.com/p/googletest/ for details. We still have some Python
+unit-tests that we inherited from BIND10 days, but those tests are being
+removed, so please do not develop any new Python tests in Kea. (If you
+want to write DHCP tests in Python, we encourage you to take a look
+at ISC Forge: http://kea.isc.org/wiki/IscForge). You must
 have \c gtest installed or at least extracted in a directory before
-compiling BIND10 unit-tests. To enable unit-tests in BIND10, use:
+compiling Kea unit-tests. To enable unit-tests in Kea, use:
 
 @code
 ./configure --with-gtest=/path/to/your/gtest/dir
@@ -113,10 +120,11 @@ checks on logger parameters. Use \c --enable-debug to enable various
 additional consistency checks that reduce performance but help during
 development. If you happen to modify anything in the
 documentation, use \c --enable-generate-docs. If you are modifying DHCP
-code, you are likely to be interested in enabling the MySQL backend for
-DHCP. Note that if the backend is not enabled, MySQL specific unit-tests
-are skipped. From that perspective, it is useful to use
-\c --with-dhcp-mysql. For a complete list of all switches, use:
+code, you are likely to be interested in enabling a database backend for
+DHCP. Note that if the backend is not enabled, the database-specific unit-tests
+are skipped. To enable the MySQL backend, use the switch
+\c --with-dhcp-mysql; for PostgreSQL, use \c --with-dhcp-pgsql.
+A complete list of all switches can be obtained with the command:
 
 @code
  ./configure --help
@@ -124,23 +132,25 @@ are skipped. From that perspective, it is useful to use
 
 @section contributorGuideReview Going through a review
 
-Once all those are checked and working, feel free to create a ticket for
-your patch at http://bind10.isc.org/ or attach your patch to an existing
+Once everything is checked and working, feel free to create a ticket for
+your patch at http://kea.isc.org/ or attach your patch to an existing
 ticket if you have fixed it. It would be nice if you also join the
-\c bind10 or \c dhcp chatroom saying that you have submitted a
-patch. Alternatively, you may send a note to the \c bind10-dev or
-\c bind10-dhcp mailing lists.
+\c dhcp chatroom saying that you have submitted a patch. Alternatively,
+you may send a note to the \c kea-dev mailing list.
 
-Here's the tricky part. One of BIND10 developers will review your patch,
+Here's the tricky part. One of Kea developers will review your patch,
 but it may not happen immediately. Unfortunately, developers are usually
 working under a tight schedule, so any extra unplanned review work may
 take a while sometimes. Having said that, we value external
 contributions very much and will do whatever we can to review patches in
 a timely manner. Don't get discouraged if your patch is not accepted
 after first review. To keep the code quality high, we use the same
-review processes for internal code and for external patches. It may take
+review processes for external patches as we do for internal code. It may take
 some cycles of review/updated patch submissions before the code is
-finally accepted.
+finally accepted. The nature of the review process is that it emphasizes
+areas that need improvement. If you are not used to the review process,
+you may get the impression that the feedback is negative. It is not: even
+the Kea developers seldom see reviews that say "All OK please merge".
 
 Once the process is almost complete, the developer will likely ask you
 how you would like to be credited. The typical answers are by first and
@@ -152,13 +162,14 @@ critical for whatever reason, it may also be mentioned in release notes.
 @section contributorGuideExtra Extra steps
 
 If you are interested in knowing the results of more in-depth testing,
-you are welcome to visit the BIND10 build farm:
-http://git.bind10.isc.org/~tester/builder/builder-new.html.  This is a
+you are welcome to visit the Kea build farm:
+http://git.kea.isc.org/~tester/builder/KEA-builder-new.html.  This is a
 live result page with all tests being run on various systems.  Besides
-basic unit-tests, we also have reports from Valgrind (memory debugger),
+basic unit-tests, we also have reports from valgrind (memory debugger),
 cppcheck and clang-analyzer (static code analyzers), Lettuce system
 tests and more. Although it is not possible for non ISC employees to run
 tests on that farm, it is possible that your contributed patch will end
-up there sooner or later.
+up there sooner or later. We also have ISC Forge tests running, but currently
+the test results are not publicly available.
 
 */

@@ -1,3 +1,9 @@
+802.	[doc]		tomek, marcin
+	Developer's Guide updated to Change BIND 10 references to Kea.
+	Documentation for Keactl added.
+	(Trac #3396, git 271450edbc63e9022f877c9aa3d1dc290708f151)
+	(Trac #3466, git fa9570d19c73cbe7effc75589b7eb855c411f6a3)
+
 801.	[build]		fdupont
 	Detect all OS X versions more recent than 10.9 (where
 	pthread_cond_destroy() doesn't work as documented,
