@@ -13,32 +13,31 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 /**
-@page hooksComponentDeveloperGuide Guide to Hooks for the BIND 10 Component Developer
+@page hooksComponentDeveloperGuide Guide to Hooks for the Kea Component Developer
 
 @section hooksComponentIntroduction Introduction
 
-The hooks framework is a BIND 10 system that simplifies the way that
-users can write code to modify the behavior of BIND 10.  Instead of
-altering the BIND 10 source code, they write functions that are compiled
-and linked into a shared library.  The library is specified in the BIND 10
-configuration database and run time, BIND 10 dynamically loads the library
+The hooks framework is a Kea system that simplifies the way that
+users can write code to modify the behavior of Kea.  Instead of
+altering the Kea source code, they write functions that are compiled
+and linked into a shared library.  The library is specified in the Kea
+configuration and at run time Kea dynamically loads the library
 into its address space.  At various points in the processing, the component
 "calls out" to functions in the library, passing to them the data is it
 currently working on.  They can examine and modify the data as required.
 
-This guide is aimed at BIND 10 developers who want to write or modify a
-BIND 10 component to use hooks.  It shows how the component should be written
+This guide is aimed at Kea developers who want to write or modify a
+Kea component to use hooks.  It shows how the component should be written
 to load a shared library at run-time and how to call functions in it.
 
-For information about writing a hooks library containing functions called by BIND 10
+For information about writing a hooks library containing functions called by Kea
 during its execution, see the document @ref hooksdgDevelopersGuide.
 
 @subsection hooksComponentTerminology Terminology
 
 In the remainder of this guide, the following terminology is used:
 
-- Component - a BIND 10 process, e.g. the authoritative DNS server or the
-DHCPv4 server.
+- Component - a Kea process, e.g. the DHCPv4 or DHCPv6 server.
 
 - Hook/Hook Point - used interchageably, this is a point in the code at
 which a call to user-written functions is made. Each hook has a name and
@@ -49,17 +48,17 @@ attached to it.
 point. This is so-named because the component "calls out" to the library
 to execute a user-written function.
 
-- User code/user library - non-BIND 10 code that is compiled into a
-shared library and loaded by BIND 10 into its address space.  Multiple
+- User code/user library - non-Kea code that is compiled into a
+shared library and loaded by Kea into its address space.  Multiple
 user libraries can be loaded at the same time, each containing callouts for
 the same hooks.  The hooks framework calls these libraries one after the
 other. (See the document @ref hooksdgDevelopersGuide for more details.)
 
 @subsection hooksComponentLanguages Languages
 
-The core of BIND 10 is written in C++ with some parts in Python.  While it is
-the intention to provide the hooks framework for all languages, the initial
-version is for C++.  All examples in this guide are in that language.
+The core of Kea is written in C++ with some remaining legacy parts in Python.
+While it is the intention to provide the hooks framework for all languages,
+the initial version is for C++. All examples in this guide are in that language.
 
 @section hooksComponentBasicIdeas Basic Ideas
 
@@ -92,7 +91,7 @@ The following sections will describe these tasks in more detail.
 Before any other action takes place, the location of the hook points
 in the code need to be determined.  This of course depends on the
 component but as a general guideline, hook locations should be chosen
-where a callout is able to obtain useful information from BIND 10 and/or
+where a callout is able to obtain useful information from Kea and/or
 affect processing.  Typically this means at the start or end of a major
 step in the processing of a request, at a point where either useful
 information can be passed to a callout and/or the callout can affect
@@ -209,7 +208,7 @@ the system libraries (e.g. naming a hook "sqrt" could lead to the
 square-root function in the system's maths library being attached to the hook
 as a callout).
 
-- Although hook names can be in any case (including mixed case), the BIND 10
+- Although hook names can be in any case (including mixed case), the Kea
 convention is that they are lower-case.
 
 @section hooksComponentCallingCallouts Calling Callouts on a Hook
@@ -395,7 +394,7 @@ isc::hooks::HooksManager::createCalloutHandle() will be valid,
 isc::hooks::HooksManager::calloutsPresent() will return false for every
 index, and isc::hooks::HooksManager::callCallouts() will be a no-op.
 
-However, if user libraries are specified in the BIND 10 configuration,
+However, if user libraries are specified in the Kea configuration,
 the component should load them.  (Note the term "libraries": the hooks
 framework allows multiple user libraries to be loaded.) This should take
 place after the component's configuration has been read, and is achieved
@@ -436,7 +435,7 @@ space.  For example, it is common for a DHCP callout to add "options"
 to a packet: the memory allocated for those options will most likely
 lie in library address space.
 
-The problem really arises because of the extensive use by BIND 10 of boost
+The problem really arises because of the extensive use by Kea of boost
 smart pointers.  When the pointer is destroyed, the pointed-to memory is
 deallocated.  If the pointer points to address space that is unmapped because
 a library has been unloaded, the deletion causes a segmentation fault.

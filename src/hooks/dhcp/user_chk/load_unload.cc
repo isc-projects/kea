@@ -67,8 +67,6 @@ extern "C" {
 /// Instantiates the UserRegistry and opens the outcome file. Failure in
 /// either results in a failed return code.
 ///
-/// @param unused library handle parameter required by Hooks API.
-///
 /// @return Returns 0 upon success, non-zero upon failure.
 int load(LibraryHandle&) {
     // non-zero indicates an error.
