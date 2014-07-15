@@ -1700,7 +1700,7 @@ temporarily override a list of interface names and listen on all interfaces.
       <itemizedlist>
           <listitem>
             <simpara><ulink url="http://tools.ietf.org/html/rfc2131">RFC 2131</ulink>: Supported messages are DISCOVER, OFFER,
-            REQUEST, RELEASE, ACK, and NAK.</simpara>
+            REQUEST, RELEASE, INFORM, ACK, and NAK.</simpara>
           </listitem>
           <listitem>
             <simpara><ulink url="http://tools.ietf.org/html/rfc2132">RFC 2132</ulink>:
