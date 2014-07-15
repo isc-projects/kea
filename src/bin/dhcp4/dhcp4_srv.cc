@@ -1500,6 +1500,15 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) const {
         subnet = CfgMgr::instance().getSubnet4(question->getCiaddr(),
                                                question->classes_);
 
+    // Either renewing client or the client that sends DHCPINFORM
+    // must set the ciaddr. But apparently some clients don't do it,
+    // so if the client didn't include ciaddr we will use the source
+    // address.
+    } else if ((question->getLocalAddr() != bcast) &&
+               (question->getRemoteAddr() != notset)) {
+        subnet = CfgMgr::instance().getSubnet4(question->getRemoteAddr(),
+                                               question->classes_);
+
     // The message has been received from a directly connected client
     // and this client appears to have no address. The IPv4 address
     // assigned to the interface on which this message has been received,
@@ -1549,7 +1558,6 @@ Dhcpv4Srv::accept(const Pkt4Ptr& query) const {
     if (!acceptMessageType(query)) {
         return (false);
     }
-
     // Check if the message from directly connected client (if directly
     // connected) should be dropped or processed.
     if (!acceptDirectRequest(query)) {
