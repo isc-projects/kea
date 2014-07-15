@@ -15,11 +15,13 @@
 #include <config.h>
 #include <dhcpsrv/daemon.h>
 #include <exceptions/exceptions.h>
+#include <cc/data.h>
 #include <boost/bind.hpp>
+#include <logging.h>
 #include <errno.h>
 
 /// @brief provides default implementation for basic daemon operations
-/// 
+///
 /// This file provides stub implementations that are expected to be redefined
 /// in derived classes (e.g. ControlledDhcpv6Srv)
 namespace isc {
@@ -53,6 +55,41 @@ void Daemon::handleSignal() {
     }
 }
 
+void Daemon::configureLogger(isc::data::ConstElementPtr log_config,
+                             const ConfigurationPtr& storage) {
+
+    // This is utility class that translates JSON structures into formats
+    // understandable by log4cplus.
+    LogConfigParser parser(storage);
+
+    if (!log_config) {
+        // There was no logger configuration. Let's clear any config
+        // and revert to the default.
+
+        parser.defaultLogging(); // Set up default logging
+        return;
+    }
+
+    isc::data::ConstElementPtr loggers;
+    loggers = log_config->get("loggers");
+    if (!loggers) {
+        // There is Logging structure, but it doesn't have loggers
+        // array in it. Let's clear any old logging configuration
+        // we may have and revert to the default.
+
+        parser.defaultLogging(); // Set up default logging
+        return;
+    }
+
+    // Translate JSON structures into log4cplus formats
+    parser.parseConfiguration(loggers);
+
+    // Apply the configuration
+
+    /// @todo: Once configuration unrolling is implemented,
+    /// this call will be moved to a separate method.
+    parser.applyConfiguration();
+}
 
 };
 };
