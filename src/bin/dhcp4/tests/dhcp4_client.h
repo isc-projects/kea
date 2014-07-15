@@ -21,6 +21,7 @@
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
+#include <set>
 
 namespace isc {
 namespace dhcp {
@@ -50,7 +51,21 @@ public:
         /// @brief Holds the last sent message from the client to the server.
         Pkt4Ptr query_;
         /// @brief Holds the last sent message by the server to the client.
-        Pkt4Ptr response_;    };
+        Pkt4Ptr response_;
+    };
+
+    /// @brief Holds the configuration of the client received from the
+    /// DHCP server.
+    struct Configuration {
+        Option4AddrLst::AddressContainer routers_;
+        Option4AddrLst::AddressContainer dns_servers_;
+        Lease4 lease_;
+        asiolink::IOAddress serverid_;
+
+        Configuration();
+
+        void reset();
+    };
 
     /// @brief Creates a new client.
     Dhcp4Client();
@@ -60,15 +75,35 @@ public:
     /// @param srv An instance of the DHCPv4 server to be used.
     Dhcp4Client(boost::shared_ptr<NakedDhcpv4Srv>& srv);
 
+    /// @brief Creates a lease for the client using the specified address
+    /// and valid lifetime.
+    ///
+    /// This method creates the lease using the specified address and
+    /// valid lease lifetime. The client will use this lease in any
+    /// future communication with the DHCP server. One of the use cases
+    /// for this method is to pre-configure the client with the explicitly
+    /// given address before it sends the DHCPINFORM to the DHCP server.
+    /// The client will inject the leased address into the ciaddr field
+    /// of the DHCPINFORM message.
+    ///
+    /// @param addr Lease address.
+    /// @param valid_lft Valid lifetime.
+    void createLease(const asiolink::IOAddress& addr, const uint32_t valid_lft);
+
     /// @brief Sends DHCPINFORM message to the server and receives response.
     ///
     /// This function simulates sending the DHCPINFORM message to the server
     /// and receiving server's response (if any).
     ///
+    /// @param set_ciaddr Indicates if the ciaddr should be set for an
+    /// outgoing message and defaults to true. Note, that the RFC2131 mandates
+    /// setting the ciaddr for DHCPINFORM but the server may still want to
+    /// respond if the ciaddr is not set.
+    ///
     /// @throw This function doesn't thrown exceptions on its own, but it calls
     /// functions that are not exception safe, so it may emit an exception if
     /// an error occurs.
-    void doInform();
+    void doInform(const bool set_ciaddr = true);
 
     /// @brief Generates a hardware address used by the client.
     ///
@@ -104,6 +139,33 @@ public:
     /// @c Dhcp4Client::getHWAddress.
     void modifyHWAddr();
 
+    /// @brief Specify an option to be requested by a client.
+    ///
+    /// This function adds option code to the collection of option
+    /// codes to be requested by a client.
+    ///
+    /// @param option Option code to be requested. The value of 0 is
+    /// ignored and the function is no-op.
+    void requestOption(const uint8_t option);
+
+    /// @brief Specifies options to be requested by the client.
+    ///
+    /// This function configures the client to request options having
+    /// specified codes using Parameter Request List option. The default
+    /// value of 0 specify that the option is not requested.
+    ///
+    /// If there are options specified to be requested before the function
+    /// is called, the new option codes override previously specified ones.
+    /// In order to clear the list of requested options call
+    /// @c requestOptions(0).
+    ///
+    /// @param option1 First option to be requested.
+    /// @param option2 Second option to be requested (optional).
+    /// @param option3 Third option to be requested (optional).
+    void requestOptions(const uint8_t option1,
+                        const uint8_t option2 = 0,
+                        const uint8_t option3 = 0);
+
     /// @brief Sets destination address for the messages being sent by the
     /// client.
     ///
@@ -124,12 +186,21 @@ public:
     /// @param relay_addr Relay address
     void useRelay(const bool use = true,
                   const asiolink::IOAddress& relay_addr =
+                  asiolink::IOAddress("192.0.2.2"),
+                  const asiolink::IOAddress& sf_relay_addr =
                   asiolink::IOAddress("10.0.0.2")) {
         use_relay_ = use;
         relay_addr_ = relay_addr;
+        server_facing_relay_addr_ = sf_relay_addr;
     }
 
+    /// @brief Current client's configuration obtained from the server.
+    Configuration config_;
+
 private:
+
+    /// @brief Stores configuration received from the server.
+    void applyConfiguration();
 
     /// @brief Creates client's side DHCP message.
     ///
@@ -165,6 +236,12 @@ private:
 
     /// @brief Relay address to use.
     asiolink::IOAddress relay_addr_;
+
+    /// @brief Collection of options codes to be requested by the client.
+    std::set<uint8_t> requested_options_;
+
+    /// @brief Address of the relay interface connected to the server.
+    asiolink::IOAddress server_facing_relay_addr_;
 
     /// @brief Pointer to the server that the client is communicating with.
     boost::shared_ptr<NakedDhcpv4Srv> srv_;

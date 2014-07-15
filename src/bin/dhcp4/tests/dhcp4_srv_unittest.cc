@@ -480,20 +480,6 @@ TEST_F(Dhcpv4SrvTest, processDecline) {
     EXPECT_NO_THROW(srv.processDecline(pkt));
 }
 
-TEST_F(Dhcpv4SrvTest, processInform) {
-    NakedDhcpv4Srv srv;
-    Pkt4Ptr pkt(new Pkt4(DHCPINFORM, 1234));
-
-    // Should not throw
-    EXPECT_NO_THROW(srv.processInform(pkt));
-
-    // Should return something
-    EXPECT_TRUE(srv.processInform(pkt));
-
-    // @todo Implement more reasonable tests before starting
-    // work on processSomething() method.
-}
-
 TEST_F(Dhcpv4SrvTest, serverReceivedPacketName) {
     // Check all possible packet types
     for (int itype = 0; itype < 256; ++itype) {
@@ -3587,6 +3573,7 @@ TEST_F(Dhcpv4SrvTest, acceptDirectRequest) {
     // message is considered malformed and the accept() function should
     // return false.
     pkt->setGiaddr(IOAddress("192.0.10.1"));
+    pkt->setRemoteAddr(IOAddress("0.0.0.0"));
     pkt->setLocalAddr(IOAddress("192.0.2.3"));
     pkt->setIface("eth1");
     EXPECT_FALSE(srv.accept(pkt));
@@ -3621,6 +3608,20 @@ TEST_F(Dhcpv4SrvTest, acceptDirectRequest) {
     pkt->setLocalAddr(IOAddress("10.0.0.1"));
     EXPECT_TRUE(srv.accept(pkt));
 
+    // For the DHCPINFORM the ciaddr should be set or at least the source
+    // address.
+    pkt->setType(DHCPINFORM);
+    pkt->setRemoteAddr(IOAddress("10.0.0.101"));
+    EXPECT_TRUE(srv.accept(pkt));
+
+    // When neither ciaddr nor source addres is present, the packet should
+    // be dropped.
+    pkt->setRemoteAddr(IOAddress("0.0.0.0"));
+    EXPECT_FALSE(srv.accept(pkt));
+
+    // When ciaddr is set, the packet should be accepted.
+    pkt->setCiaddr(IOAddress("10.0.0.1"));
+    EXPECT_TRUE(srv.accept(pkt));
 }
 
 // This test checks that the server rejects a message with invalid type.

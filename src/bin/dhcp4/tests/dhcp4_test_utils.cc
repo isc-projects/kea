@@ -563,16 +563,22 @@ Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
 
 void
 Dhcpv4SrvTest::configure(const std::string& config) {
+    configure(config, srv_);
+}
+
+void
+Dhcpv4SrvTest::configure(const std::string& config, NakedDhcpv4Srv& srv) {
     ElementPtr json = Element::fromJSON(config);
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv_, json));
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
     ASSERT_TRUE(status);
     int rcode;
     ConstElementPtr comment = config::parseAnswer(rcode, status);
     ASSERT_EQ(0, rcode);
-}
+ }
+
 
 
 }; // end of isc::dhcp::test namespace
