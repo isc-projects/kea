@@ -47,6 +47,7 @@ void configure(const std::string& file_name) {
 
     isc::data::ConstElementPtr json;
     isc::data::ConstElementPtr dhcp6;
+    isc::data::ConstElementPtr logger;
     isc::data::ConstElementPtr result;
 
     // Basic sanity check: file name must not be empty.
@@ -65,6 +66,22 @@ void configure(const std::string& file_name) {
                 .arg("Config file " + file_name + " missing or empty.");
             isc_throw(isc::BadValue, "Unable to process JSON configuration file:"
                       + file_name);
+        }
+
+        // Let's configure logging before applying the configuration,
+        // so we can log things during configuration process.
+        logger = json->get("Logging");
+        if (logger) {
+            // Configure logger first, so it can be applied to DHCPv6
+            // configuration. If we don't have a logger, just pass
+            // empty configuration.
+            Daemon::configureLogger(logger, CfgMgr::instance().getConfiguration());
+        } else {
+            // There was no Logging element defined in the config file.
+            // Let's pass an empty pointer that will remove any current
+            // configuration.
+            Daemon::configureLogger(isc::data::ConstElementPtr(),
+                                    CfgMgr::instance().getConfiguration());
         }
 
         // Get Dhcp6 component from the config
