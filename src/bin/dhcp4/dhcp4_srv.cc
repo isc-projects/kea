@@ -1422,6 +1422,7 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
     copyDefaultFields(inform, ack);
     appendRequestedOptions(inform, ack);
     appendRequestedVendorOptions(inform, ack);
+    appendBasicOptions(inform, ack);
     adjustIfaceData(inform, ack);
 
     // There are cases for the DHCPINFORM that the server receives it via

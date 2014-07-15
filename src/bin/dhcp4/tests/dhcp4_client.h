@@ -59,6 +59,8 @@ public:
     struct Configuration {
         Option4AddrLst::AddressContainer routers_;
         Option4AddrLst::AddressContainer dns_servers_;
+        Option4AddrLst::AddressContainer log_servers_;
+        Option4AddrLst::AddressContainer quotes_servers_;
         Lease4 lease_;
         asiolink::IOAddress serverid_;
 
@@ -200,6 +202,17 @@ public:
 private:
 
     /// @brief Stores configuration received from the server.
+    ///
+    /// This methods stores the configuration obtained from the DHCP server
+    /// in the @c Configuration structure. This configuration includes:
+    /// - obtained lease
+    /// - server id of the server that provided the configuration
+    /// - lease
+    /// - selected options (used by unit tests):
+    ///   - DNS Servers
+    ///   - Routers
+    ///   - Log Servers
+    ///   - Quotes Servers
     void applyConfiguration();
 
     /// @brief Creates client's side DHCP message.

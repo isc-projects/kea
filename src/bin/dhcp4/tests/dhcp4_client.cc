@@ -25,7 +25,8 @@ namespace dhcp {
 namespace test {
 
 Dhcp4Client::Configuration::Configuration()
-    : routers_(), dns_servers_(), serverid_("0.0.0.0") {
+    : routers_(), dns_servers_(), log_servers_(), quotes_servers_(),
+      serverid_("0.0.0.0") {
     reset();
 }
 
@@ -33,6 +34,8 @@ void
 Dhcp4Client::Configuration::reset() {
     routers_.clear();
     dns_servers_.clear();
+    log_servers_.clear();
+    quotes_servers_.clear();
     serverid_ = asiolink::IOAddress("0.0.0.0");
 }
 
@@ -69,25 +72,38 @@ Dhcp4Client::applyConfiguration() {
 
     config_.reset();
 
+    // Routers
     Option4AddrLstPtr opt_routers = boost::dynamic_pointer_cast<
         Option4AddrLst>(resp->getOption(DHO_ROUTERS));
     if (opt_routers) {
         config_.routers_ = opt_routers->getAddresses();
     }
-
+    // DNS Servers
     Option4AddrLstPtr opt_dns_servers = boost::dynamic_pointer_cast<
         Option4AddrLst>(resp->getOption(DHO_DOMAIN_NAME_SERVERS));
     if (opt_dns_servers) {
         config_.dns_servers_ = opt_dns_servers->getAddresses();
     }
-
+    // Log Servers
+    Option4AddrLstPtr opt_log_servers = boost::dynamic_pointer_cast<
+        Option4AddrLst>(resp->getOption(DHO_LOG_SERVERS));
+    if (opt_log_servers) {
+        config_.log_servers_ = opt_routers->getAddresses();
+    }
+    // Quotes Servers
+    Option4AddrLstPtr opt_quotes_servers = boost::dynamic_pointer_cast<
+        Option4AddrLst>(resp->getOption(DHO_COOKIE_SERVERS));
+    if (opt_quotes_servers) {
+        config_.quotes_servers_ = opt_dns_servers->getAddresses();
+    }
+    // Server Identifier
     OptionCustomPtr opt_serverid = boost::dynamic_pointer_cast<
         OptionCustom>(resp->getOption(DHO_DHCP_SERVER_IDENTIFIER));
     if (opt_serverid) {
         config_.serverid_ = opt_serverid->readAddress();
     }
 
-    /// @todo Other possible configuration.
+    /// @todo Other possible configuration, e.g. lease.
 }
 
 void
