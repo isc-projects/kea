@@ -65,14 +65,14 @@ TEST(IfaceTest, readBuffer) {
     // The size of read buffer should initially be 0 and the returned
     // pointer should be NULL.
     ASSERT_EQ(0, iface.getReadBufferSize());
-    EXPECT_EQ(NULL, iface.getReadBufferPtr());
+    EXPECT_EQ(NULL, iface.getReadBuffer());
 
     // Let's resize the buffer.
     iface.resizeReadBuffer(256);
     // Check that the buffer has expected size.
     ASSERT_EQ(256, iface.getReadBufferSize());
     // The returned pointer should now be non-NULL.
-    uint8_t* buf_ptr = iface.getReadBufferPtr();
+    uint8_t* buf_ptr = iface.getReadBuffer();
     ASSERT_FALSE(buf_ptr == NULL);
 
     // Use the pointer to set some data.
@@ -81,7 +81,7 @@ TEST(IfaceTest, readBuffer) {
     }
 
     // Get the pointer again and validate the data.
-    buf_ptr = iface.getReadBufferPtr();
+    buf_ptr = iface.getReadBuffer();
     ASSERT_EQ(256, iface.getReadBufferSize());
     for (int i = 0; i < iface.getReadBufferSize(); ++i) {
         // Use assert so as it fails on the first failure, no need
@@ -1324,7 +1324,7 @@ TEST_F(IfaceMgrTest, setMatchingPacketFilter) {
 // The fallback socket should fail to open when there is another IP/UDP
 // socket bound to the same address and port. Failing to open the fallback
 // socket should preclude the raw socket from being open.
-TEST_F(IfaceMgrTest, checkPacketFilterLPFSocket) {
+TEST_F(IfaceMgrTest, checkPacketFilterRawSocket) {
     IOAddress loAddr("127.0.0.1");
     int socket1 = -1, socket2 = -1;
     // Create two instances of IfaceMgr.
@@ -1368,15 +1368,16 @@ TEST_F(IfaceMgrTest, checkPacketFilterLPFSocket) {
 
 #else
 
-// This non-Linux specific test checks whether it is possible to use
-// IfaceMgr to figure out which Pakcket Filter object should be
-// used when direct responses to hosts, having no address assigned
-// are desired or not desired. Since direct responses aren't supported
-// on systems other than Linux the function under test should always
-// set object of PktFilterInet type as current Packet Filter. This
-// object does not support direct responses. Once implementation is
-// added on systems other than BSD and Linux the OS specific version
-// of the test will be removed.
+// Note: This test will only run on non-Linux and non-BSD systems.
+// This test checks whether it is possible to use IfaceMgr to figure
+// out which Pakcket Filter object should be used when direct responses
+// to hosts, having no address assigned are desired or not desired.
+// Since direct responses aren't supported on systems other than Linux
+// and BSD the function under test should always set object of
+// PktFilterInet type as current Packet Filter. This object does not 
+//support direct responses. Once implementation is added on systems
+// other than BSD and Linux the OS specific version of the test will
+// be removed.
 TEST_F(IfaceMgrTest, setMatchingPacketFilter) {
 
     // Create an instance of IfaceMgr.

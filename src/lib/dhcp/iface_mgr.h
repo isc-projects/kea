@@ -353,7 +353,7 @@ public:
     ///
     /// @return Pointer to the first element of the read buffer or
     /// NULL if the buffer is empty.
-    uint8_t* getReadBufferPtr() const {
+    uint8_t* getReadBuffer() const {
         return (read_buffer_);
     }
 

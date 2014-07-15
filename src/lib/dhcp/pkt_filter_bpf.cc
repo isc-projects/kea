@@ -177,7 +177,7 @@ PktFilterBPF::openSocket(Iface& iface,
     // the BPF device below.
     int fallback = openFallbackSocket(addr, port);
 
-    // Fallback has opened so, let's open the BPF device that we will be
+    // Fallback has opened, so let's open the BPF device that we will be
     // using for receiving and sending packets. The BPF device is opened
     // by opening a file /dev/bpf%d where %d is a number. There may be
     // devices already open so we will try them one by one and open the
@@ -190,7 +190,7 @@ PktFilterBPF::openSocket(Iface& iface,
         s << "/dev/bpf" << bpf_dev;
         sock = open(s.str().c_str(), O_RDWR, 0);
         if (sock < 0) {
-            // If device busy, try another one.
+            // If device is busy, try another one.
             if (errno == EBUSY) {
                 continue;
             }
@@ -231,7 +231,11 @@ PktFilterBPF::openSocket(Iface& iface,
         (ver.bv_minor < BPF_MINOR_VERSION)) {
         close(fallback);
         close(sock);
-        isc_throw(SocketConfigError, "Invalid BPF version");
+        isc_throw(SocketConfigError, "Invalid BPF version: "
+                  << ver.bv_major << "." << ver.bv_minor
+                  << " Expected at least version:"
+                  << BPF_MAJOR_VERSION << "."
+                  << BPF_MINOR_VERSION);;
     }
 
     // Get the size of the read buffer for this device. We will need to
@@ -323,14 +327,11 @@ PktFilterBPF::receive(const Iface& iface, const SocketInfo& socket_info) {
     // when the DHCP server is idle.
     int datalen;
     do {
-        datalen = recv(socket_info.fallbackfd_, iface.getReadBufferPtr(),
+        datalen = recv(socket_info.fallbackfd_, iface.getReadBuffer(),
                        iface.getReadBufferSize(), 0);
     } while (datalen > 0);
 
-    // Now that we finished getting data from the fallback socket, we
-    // have to get the data from the raw socket too.
-    memset(iface.getReadBufferPtr(), 0, iface.getReadBufferSize());
-    datalen = read(socket_info.sockfd_, iface.getReadBufferPtr(),
+    datalen = read(socket_info.sockfd_, iface.getReadBuffer(),
                    iface.getReadBufferSize());
     // If negative value is returned by read(), it indicates that an
     // error occured. If returned value is 0, no data was read from the
@@ -363,11 +364,11 @@ PktFilterBPF::receive(const Iface& iface, const SocketInfo& socket_info) {
 
         // Copy the BPF header.
         memcpy(static_cast<void*>(&bpfh),
-               static_cast<void*>(iface.getReadBufferPtr()),
+               static_cast<void*>(iface.getReadBuffer()),
                sizeof(bpfh));
 
         // Check if the captured data fit into the reminder of the buffer.
-        // Again, something is really wrong here.
+        // Again, something is really wrong here if it doesn't fit.
         if (offset + bpfh.bh_hdrlen + bpfh.bh_caplen > datalen) {
             isc_throw(SocketReadError, "packet received from the BPF device"
                       << " attached to interface " << iface.getName()
@@ -392,7 +393,7 @@ PktFilterBPF::receive(const Iface& iface, const SocketInfo& socket_info) {
     }
 
     // Skip the BPF header and create the buffer holding a frame.
-    InputBuffer buf(iface.getReadBufferPtr() + offset + bpfh.bh_hdrlen,
+    InputBuffer buf(iface.getReadBuffer() + offset + bpfh.bh_hdrlen,
                     datalen - bpfh.bh_hdrlen - offset);
 
 
@@ -468,7 +469,7 @@ PktFilterBPF::send(const Iface& iface, uint16_t sockfd, const Pkt4Ptr& pkt) {
     // Some interfaces may have no HW address - e.g. loopback interface.
     // For these interfaces the HW address length is 0. If this is the case,
     // then we will rely on the functions which construct the IP/UDP headers
-    // to provide a default HW addres. Otherwise, create the HW address
+    // to provide a default HW address. Otherwise, create the HW address
     // object using the HW address of the interface.
     if (iface.getMacLen() > 0) {
         HWAddrPtr hwaddr(new HWAddr(iface.getMac(), iface.getMacLen(),
@@ -476,7 +477,7 @@ PktFilterBPF::send(const Iface& iface, uint16_t sockfd, const Pkt4Ptr& pkt) {
         pkt->setLocalHWAddr(hwaddr);
     }
 
-    /// Local loopback interface requires special treatment. It doesn't
+    /// Loopback interface requires special treatment. It doesn't
     /// use the ethernet header but rather a 4-bytes long pseudo header
     /// holding an address family type (see bpf.c in OS sources).
     if (iface.flag_loopback_) {
@@ -497,9 +498,8 @@ PktFilterBPF::send(const Iface& iface, uint16_t sockfd, const Pkt4Ptr& pkt) {
 
     int result = write(sockfd, buf.getData(), buf.getLength());
     if (result < 0) {
-        std::cout << strerror(errno) << std::endl;
-        isc_throw(SocketWriteError, "failed to send DHCPv4 packet, errno="
-                  << errno << " (check errno.h)");
+        isc_throw(SocketWriteError, "failed to send DHCPv4 packet: "
+                  << strerror(errno));
     }
 
     return (0);
