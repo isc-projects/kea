@@ -407,6 +407,12 @@ public:
     /// @param config String holding server configuration in JSON format.
     void configure(const std::string& config);
 
+    /// @brief Configure specified DHCP server using JSON string.
+    ///
+    /// @param config String holding server configuration in JSON format.
+    /// @param srv Instance of the server to be configured.
+    void configure(const std::string& config, NakedDhcpv4Srv& srv);
+
     /// @brief This function cleans up after the test.
     virtual void TearDown();
 
