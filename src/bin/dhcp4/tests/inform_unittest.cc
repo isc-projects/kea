@@ -36,12 +36,16 @@ namespace {
 ///   - 1 pool: 10.0.0.10-10.0.0.100
 ///   - Router option present: 10.0.0.200 and 10.0.0.201
 ///   - Domain Name Server option present: 10.0.0.202, 10.0.0.203.
+///   - Log Servers option present: 192.0.2.200 and 192.0.2.201
+///   - Quotes Servers option present: 192.0.2.202, 192.0.2.203.
 ///
 /// - Configuration 1:
 ///   - Use for testing relayed messages
 ///   - 1 subnet: 192.0.2.0/24
 ///   - Router option present: 192.0.2.200 and 192.0.2.201
 ///   - Domain Name Server option present: 192.0.2.202, 192.0.2.203.
+///   - Log Servers option present: 192.0.2.200 and 192.0.2.201
+///   - Quotes Servers option present: 192.0.2.202, 192.0.2.203.
 const char* INFORM_CONFIGS[] = {
 // Configuration 0
     "{ \"interfaces\": [ \"all\" ],"
@@ -62,7 +66,20 @@ const char* INFORM_CONFIGS[] = {
         "        \"data\": \"10.0.0.202,10.0.0.203\","
         "        \"csv-format\": true,"
         "        \"space\": \"dhcp4\""
-
+        "    },"
+        "    {"
+        "        \"name\": \"log-servers\","
+        "        \"code\": 7,"
+        "        \"data\": \"10.0.0.200,10.0.0.201\","
+        "        \"csv-format\": true,"
+        "        \"space\": \"dhcp4\""
+        "    },"
+        "    {"
+        "        \"name\": \"cookie-servers\","
+        "        \"code\": 8,"
+        "        \"data\": \"10.0.0.202,10.0.0.203\","
+        "        \"csv-format\": true,"
+        "        \"space\": \"dhcp4\""
         "    } ]"
         " } ]"
     "}",
@@ -85,7 +102,20 @@ const char* INFORM_CONFIGS[] = {
         "        \"data\": \"192.0.2.202,192.0.2.203\","
         "        \"csv-format\": true,"
         "        \"space\": \"dhcp4\""
-
+        "    },"
+        "    {"
+        "        \"name\": \"log-servers\","
+        "        \"code\": 7,"
+        "        \"data\": \"10.0.0.200,10.0.0.201\","
+        "        \"csv-format\": true,"
+        "        \"space\": \"dhcp4\""
+        "    },"
+        "    {"
+        "        \"name\": \"cookie-servers\","
+        "        \"code\": 8,"
+        "        \"data\": \"10.0.0.202,10.0.0.203\","
+        "        \"csv-format\": true,"
+        "        \"space\": \"dhcp4\""
         "    } ]"
         " } ]"
     "}"
@@ -116,7 +146,7 @@ TEST_F(InformTest, directClientBroadcast) {
     // Configure DHCP server.
     configure(INFORM_CONFIGS[0], *client.getServer());
     // Request some configuration when DHCPINFORM is sent.
-    client.requestOptions(DHO_DOMAIN_NAME_SERVERS, DHO_ROUTERS);
+    client.requestOptions(DHO_LOG_SERVERS, DHO_COOKIE_SERVERS);
     // Preconfigure the client with the IP address.
     client.createLease(IOAddress("10.0.0.56"), 600);
     // Send DHCPINFORM message to the server.
@@ -141,13 +171,21 @@ TEST_F(InformTest, directClientBroadcast) {
     ASSERT_EQ(2, client.config_.dns_servers_.size());
     EXPECT_EQ("10.0.0.202", client.config_.dns_servers_[0].toText());
     EXPECT_EQ("10.0.0.203", client.config_.dns_servers_[1].toText());
+    // Make sure that the Log Servers option has been received.
+    ASSERT_EQ(2, client.config_.quotes_servers_.size());
+    EXPECT_EQ("10.0.0.200", client.config_.routers_[0].toText());
+    EXPECT_EQ("10.0.0.201", client.config_.routers_[1].toText());
+    // Make sure that the Quotes Servers option has been received.
+    ASSERT_EQ(2, client.config_.log_servers_.size());
+    EXPECT_EQ("10.0.0.202", client.config_.dns_servers_[0].toText());
+    EXPECT_EQ("10.0.0.203", client.config_.dns_servers_[1].toText());
 
     // Check that we can send another DHCPINFORM message using
     // different ciaddr and we will get the configuration.
     client.createLease(IOAddress("10.0.0.12"), 600);
-    // This time do not request DNS Servers option and it should not
+    // This time do not request Quotes Servers option and it should not
     // be returned.
-    client.requestOptions(DHO_ROUTERS);
+    client.requestOptions(DHO_LOG_SERVERS);
     // Send DHCPINFORM.
     ASSERT_NO_THROW(client.doInform());
     ASSERT_TRUE(client.getContext().response_);
@@ -165,7 +203,11 @@ TEST_F(InformTest, directClientBroadcast) {
     EXPECT_EQ("10.0.0.200", client.config_.routers_[0].toText());
     EXPECT_EQ("10.0.0.201", client.config_.routers_[1].toText());
     // Make sure that the DNS Servers option has been received.
-    ASSERT_TRUE(client.config_.dns_servers_.empty());
+    ASSERT_EQ(2, client.config_.dns_servers_.size());
+    EXPECT_EQ("10.0.0.202", client.config_.dns_servers_[0].toText());
+    EXPECT_EQ("10.0.0.203", client.config_.dns_servers_[1].toText());
+    // Make sure that the Quotes Servers option hasn't been received.
+    ASSERT_TRUE(client.config_.quotes_servers_.empty());
 }
 
 // This test checks that the server drops DHCPINFORM message when the
@@ -175,7 +217,7 @@ TEST_F(InformTest, directClientBroadcastNoAddress) {
     // Configure DHCP server.
     configure(INFORM_CONFIGS[0], *client.getServer());
     // Request some configuration when DHCPINFORM is sent.
-    client.requestOptions(DHO_DOMAIN_NAME_SERVERS, DHO_ROUTERS);
+    client.requestOptions(DHO_LOG_SERVERS, DHO_COOKIE_SERVERS);
     // Send DHCPINFORM message to the server.
     ASSERT_NO_THROW(client.doInform());
     // Make sure that the server dropped the message.
@@ -189,8 +231,6 @@ TEST_F(InformTest, directClientUnicast) {
     Dhcp4Client client;
     // Configure DHCP server.
     configure(INFORM_CONFIGS[0], *client.getServer());
-    // Request some configuration when DHCPINFORM is sent.
-    client.requestOptions(DHO_DOMAIN_NAME_SERVERS, DHO_ROUTERS);
     // Preconfigure the client with the IP address.
     client.createLease(IOAddress("10.0.0.56"), 600);
     // Set remote address to unicast.
@@ -225,8 +265,6 @@ TEST_F(InformTest, directClientNoCiaddr) {
     Dhcp4Client client;
     // Configure DHCP server.
     configure(INFORM_CONFIGS[0], *client.getServer());
-    // Request some configuration when DHCPINFORM is sent.
-    client.requestOptions(DHO_DOMAIN_NAME_SERVERS, DHO_ROUTERS);
     // Preconfigure the client with the IP address.
     client.createLease(IOAddress("10.0.0.56"), 600);
     // Send DHCPINFORM message (with ciaddr not set) to the server.
@@ -261,7 +299,7 @@ TEST_F(InformTest, relayedClient) {
     // Message is relayed.
     client.useRelay();
     // Request some configuration when DHCPINFORM is sent.
-    client.requestOptions(DHO_DOMAIN_NAME_SERVERS, DHO_ROUTERS);
+    client.requestOptions(DHO_LOG_SERVERS, DHO_COOKIE_SERVERS);
     // Preconfigure the client with the IP address.
     client.createLease(IOAddress("192.0.2.56"), 600);
     // Send DHCPINFORM message to the server.
@@ -285,6 +323,14 @@ TEST_F(InformTest, relayedClient) {
     ASSERT_EQ(2, client.config_.dns_servers_.size());
     EXPECT_EQ("192.0.2.202", client.config_.dns_servers_[0].toText());
     EXPECT_EQ("192.0.2.203", client.config_.dns_servers_[1].toText());
+    // Make sure that the Log Servers option has been received.
+    ASSERT_EQ(2, client.config_.quotes_servers_.size());
+    EXPECT_EQ("192.0.2.200", client.config_.routers_[0].toText());
+    EXPECT_EQ("192.0.2.201", client.config_.routers_[1].toText());
+    // Make sure that the Quotes Servers option has been received.
+    ASSERT_EQ(2, client.config_.log_servers_.size());
+    EXPECT_EQ("192.0.2.202", client.config_.dns_servers_[0].toText());
+    EXPECT_EQ("192.0.2.203", client.config_.dns_servers_[1].toText());
 }
 
 // This test checks that the server can respond to the DHCPINFORM message
@@ -295,8 +341,6 @@ TEST_F(InformTest, relayedClientNoCiaddr) {
     configure(INFORM_CONFIGS[1], *client.getServer());
     // Message is relayed.
     client.useRelay();
-    // Request some configuration when DHCPINFORM is sent.
-    client.requestOptions(DHO_DOMAIN_NAME_SERVERS, DHO_ROUTERS);
     // Send DHCPINFORM message to the server.
     ASSERT_NO_THROW(client.doInform());
     // Make sure that the server responded.
