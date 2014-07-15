@@ -25,7 +25,7 @@ namespace dhcp {
 /// @brief Packet handling class using Berkeley Packet Filtering (BPF)
 ///
 /// The BPF is supported on the BSD-like operating systems. It allows for access
-/// to low level layers of the inbound and outbound packets. This is specifially
+/// to low level layers of the inbound and outbound packets. This is specifically
 /// useful when the DHCP server is allocating new address to the client.
 ///
 /// The response being sent to the client must include the HW address in the
