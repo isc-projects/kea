@@ -17,6 +17,8 @@
 
 #include <log/logger_level.h>
 #include <boost/shared_ptr.hpp>
+#include <vector>
+#include <stdint.h>
 
 namespace isc {
 namespace dhcp {
