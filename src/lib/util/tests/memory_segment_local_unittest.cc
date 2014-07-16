@@ -59,7 +59,12 @@ TEST(MemorySegmentLocal, TestLocal) {
 TEST(MemorySegmentLocal, TestTooMuchMemory) {
     auto_ptr<MemorySegment> segment(new MemorySegmentLocal());
 
-    EXPECT_THROW(segment->allocate(ULONG_MAX), bad_alloc);
+    // Although it should be perfectly fine to use the ULONG_MAX
+    // instead of LONG_MAX as the size_t value should be unsigned,
+    // Valgrind appears to be using the signed value and hence the
+    // maximum positive value is LONG_MAX for Valgrind. But, this
+    // should be sufficient to test the "too much memory" conditions.
+    EXPECT_THROW(segment->allocate(LONG_MAX), bad_alloc);
 }
 
 TEST(MemorySegmentLocal, TestBadDeallocate) {

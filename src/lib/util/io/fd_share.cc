@@ -111,7 +111,9 @@ recv_fd(const int sock) {
     // one returned previously, even if that one is not closed yet. So,
     // we just re-number every one we get, so they are unique.
     int new_fd(dup(fd));
-    int close_error(close(fd));
+    // Only call close() if the descriptor is valid. Otherwise return
+    // an error.
+    int close_error(fd >=0 ? close(fd) : -1);
     if (close_error == -1 || new_fd == -1) {
         // We need to return an error, because something failed. But in case
         // it was the previous close, we at least try to close the duped FD.
