@@ -1,10 +1,11 @@
 # This is an example configuration file for DHCPv6 server in Kea.
-# It's a basic scenario with four IPv6 subnets configured. In each
-# subnet, there's a smaller pool of dynamic addresses.
+# It's a basic scenario with four IPv6 subnets configured. It is
+# assumed that one subnet (2001:db8:1::/64 is available directly
+# over eth0 interface.
 
 { "Dhcp6":
 
-{
+{ 
 # Kea is told to listen on eth0 interface only.
   "interfaces": [ "eth0" ],
 
@@ -28,31 +29,31 @@
 
 # The following list defines subnets. Each subnet consists of at
 # least subnet and pool entries.
-  "subnet6": [
-  {    "pool": [ "2001:db8:1::/80" ],
-       "subnet": "2001:db8:1::/64"  },
-  {    "pool": [ "2001:db8:2::/80" ],
-       "subnet": "2001:db8:2::/64"  },
-  {    "pool": [ "2001:db8:3::/80" ],
-       "subnet": "2001:db8:3::/64"  },
-  {    "pool": [ "2001:db8:4::/80" ],
-       "subnet": "2001:db8:4::/64"  } ]
+  "subnet6": [ 
+    {
+      "pool": [ "2001:db8:1::/80" ],
+      "subnet": "2001:db8:1::/64",
+      "interface": "eth0"
+    }
+  ]
 },
 
-# The following configures logging. It assumes that warning messages
-# will be logged to stdout.
+# The following configures logging. Kea will log all debug messages
+# to /var/log/kea-debug.log file.
 "Logging": {
     "loggers": [
         {
             "name": "kea",
             "output_options": [
                 {
-                    "output": "stdout"
+                    "output": "/var/log/kea-debug.log"
                 }
-            ],
-            "severity": "WARN"
+            ], 
+            "debuglevel": 99,
+            "severity": "DEBUG"
         }
     ]
 }
 
 }
+

@@ -387,7 +387,7 @@ TODO; there's a ticket to determine these levels, see #1074
 "Logging": {
     "loggers": [
         {
-            "name": "*",
+            "name": "kea",
             "output_options": [
                 {
                     "output": "stdout"
