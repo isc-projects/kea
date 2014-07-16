@@ -43,7 +43,7 @@ public:
     /// Walks over specified logging configuration JSON structures and store
     /// parsed information in config_->logging_info_.
     ///
-    /// @param log_config JSON structures to be parsed
+    /// @param log_config JSON structures to be parsed (loggers list)
     void parseConfiguration(isc::data::ConstElementPtr log_config);
 
     /// @brief Applies stored configuration
