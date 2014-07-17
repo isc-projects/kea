@@ -30,13 +30,13 @@ namespace test {
 /// @brief DHCPv4 client used for unit testing.
 ///
 /// This class implements a DHCPv4 "client" which interoperates with the
-/// @c NakedDhcpv4Srv class. It calls @c NakedDhcpv4Srv::fakeRecive to
+/// @c NakedDhcpv4Srv class. It calls @c NakedDhcpv4Srv::fakeReceive to
 /// deliver client messages to the server for processing. The server places
 /// the response in the @c NakedDhcpv4Srv::fake_sent_ container. The client
 /// pops messages from this container which simulates reception of the
 /// response from the server.
 ///
-/// The client maintains the leases it acquired from the server
+/// The client maintains the leases it acquired from the server.
 ///
 /// The client exposes a set of functions which simulate different exchange
 /// types between the client and the server. It also provides the access to
@@ -109,10 +109,10 @@ public:
 
     /// @brief Generates a hardware address used by the client.
     ///
-    /// It assiges random values to the bytes of the harware address.
+    /// It assigns random values to the bytes of the hardware address.
     ///
     /// @param htype hardware address type. Currently the only type
-    /// supported is ethernet hardware address.
+    /// supported is Ethernet hardware address.
     ///
     /// @return Pointer to the generated hardware address.
     HWAddrPtr generateHWAddr(const uint8_t htype = HTYPE_ETHER) const;
@@ -241,7 +241,7 @@ private:
     /// @biref Current transaction id (altered on each send).
     uint32_t curr_transid_;
 
-    /// @brief Currently use destination address.
+    /// @brief Currently used destination address.
     asiolink::IOAddress dest_addr_;
 
     /// @brief Current hardware address of the client.
