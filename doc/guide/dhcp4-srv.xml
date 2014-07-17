@@ -1759,7 +1759,7 @@ temporarily override a list of interface names and listen on all interfaces.
             <simpara>On Linux and BSD system families the DHCP messages are sent
             and received over the raw sockets (using LPF and BPF) and all packet
             headers (including data link layer, IP and UDP headers) are created and
-            parsed by Kea, rather than the system kernel. Currently, Kea only can
+            parsed by Kea, rather than the system kernel. Currently, Kea can
             only parse the data link layer headers with a format adhering to
             IEEE 802.3 standard and assumes this data link layer header format
             for all interfaces. Hence, Kea will fail to work on interfaces
