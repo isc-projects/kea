@@ -41,9 +41,9 @@
 
       <para>DHCPv4 requires special raw socket processing to send and receive
       packets from hosts that do not have IPv4 address assigned yet. Support
-      for this operation is implemented on Linux only, so it is likely that
-      DHCPv4 component will not work in certain cases on systems other than
-      Linux.</para>
+      for this operation is implemented on Linux, FreeBSD, NetBSD and OpenBSD.
+      It is likely that DHCPv4 component will not work in certain cases on
+      other systems.</para>
     </section>
 
 <!--

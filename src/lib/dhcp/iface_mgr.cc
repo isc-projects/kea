@@ -55,9 +55,16 @@ Iface::Iface(const std::string& name, int ifindex)
     :name_(name), ifindex_(ifindex), mac_len_(0), hardware_type_(0),
      flag_loopback_(false), flag_up_(false), flag_running_(false),
      flag_multicast_(false), flag_broadcast_(false), flags_(0),
-     inactive4_(false), inactive6_(false)
+     inactive4_(false), inactive6_(false), read_buffer_(NULL),
+     read_buffer_size_(0)
 {
     memset(mac_, 0, sizeof(mac_));
+}
+
+Iface::~Iface() {
+    if (read_buffer_ != NULL) {
+        free(read_buffer_);
+    }
 }
 
 void
@@ -165,6 +172,21 @@ bool Iface::delSocket(const uint16_t sockfd) {
         ++sock;
     }
     return (false); // socket not found
+}
+
+void
+Iface::resizeReadBuffer(const size_t new_size) {
+    // Do nothing if the new size is equal to the current size.
+    if (new_size == read_buffer_size_) {
+        return;
+    }
+
+    read_buffer_size_ = new_size;
+    read_buffer_ = static_cast<uint8_t*>(realloc(read_buffer_,
+                                                 read_buffer_size_));
+    if (read_buffer_ == NULL) {
+        read_buffer_size_ = 0;
+    }
 }
 
 IfaceMgr::IfaceMgr()
@@ -411,18 +433,6 @@ bool
 IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                        IfaceMgrErrorMsgCallback error_handler) {
     int count = 0;
-
-// This option is used to bind sockets to particular interfaces.
-// This is currently the only way to discover on which interface
-// the broadcast packet has been received. If this option is
-// not supported then only one interface should be confugured
-// to listen for broadcast traffic.
-#ifdef SO_BINDTODEVICE
-    const bool bind_to_device = true;
-#else
-    const bool bind_to_device = false;
-#endif
-
     int bcast_num = 0;
 
     for (IfaceCollection::iterator iface = ifaces_.begin();
@@ -450,17 +460,26 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
             // options on the socket so as it can receive and send broadcast
             // messages.
             if (iface->flag_broadcast_ && use_bcast) {
-                // If our OS supports binding socket to a device we can listen
-                // for broadcast messages on multiple interfaces. Otherwise we
-                // bind to INADDR_ANY address but we can do it only once. Thus,
-                // if one socket has been bound we can't do it any further.
-                if (!bind_to_device && bcast_num > 0) {
+                // The DHCP server must have means to determine which interface
+                // the broadcast packets are coming from. This is achieved by
+                // binding a socket to the device (interface) and specialized
+                // packet filters (e.g. BPF and LPF) implement this mechanism.
+                // If the PktFilterInet (generic one) is used, the socket is
+                // bound to INADDR_ANY which effectively binds the socket to
+                // all addresses on all interfaces. So, only one of those can
+                // be opened. Currently, the direct response support is
+                // provided by the PktFilterLPF and PktFilterBPF, so by checking
+                // the support for direct response we actually determine that
+                // one of those objects is in use. For all other objects we
+                // assume that binding to the device is not supported and we
+                // cease opening sockets and display the appropriate message.
+                if (!isDirectResponseSupported() && bcast_num > 0) {
                     IFACEMGR_ERROR(SocketConfigError, error_handler,
-                                   "SO_BINDTODEVICE socket option is"
-                                   " not supported on this OS;"
-                                   " therefore, DHCP server can only"
-                                   " listen broadcast traffic on a"
-                                   " single interface");
+                                   "Binding socket to an interface is not"
+                                   " supported on this OS; therefore only"
+                                   " one socket listening to broadcast traffic"
+                                   " can be opened. Sockets will not be opened"
+                                   " on remaining interfaces");
                     continue;
 
                 } else {
@@ -479,9 +498,7 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                     // Binding socket to an interface is not supported so we
                     // can't open any more broadcast sockets. Increase the
                     // number of open broadcast sockets.
-                    if (!bind_to_device) {
-                        ++bcast_num;
-                    }
+                    ++bcast_num;
                 }
 
             } else {

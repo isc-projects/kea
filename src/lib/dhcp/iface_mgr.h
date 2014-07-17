@@ -120,12 +120,21 @@ struct SocketInfo {
 
 };
 
-
 /// @brief Represents a single network interface
 ///
 /// Iface structure represents network interface with all useful
 /// information, like name, interface index, MAC address and
 /// list of assigned addresses
+///
+/// This class also holds the pointer to the socket read buffer.
+/// Functions reading from the socket may utilize this buffer to store the
+/// data being read from the socket. The advantage of using the
+/// pre-allocated buffer is that the buffer is allocated only once, rather
+/// than on every read. In addition, some OS specific code (e.g. BPF)
+/// may require use of fixed-size buffers. The size of such a buffer is
+/// returned by the OS kernel when the socket is opened. Hence, it is
+/// convenient to allocate the buffer when the socket is being opened and
+/// utilze it throughout the lifetime of the socket.
 class Iface {
 public:
 
@@ -153,6 +162,11 @@ public:
     /// @param name name of the interface
     /// @param ifindex interface index (unique integer identifier)
     Iface(const std::string& name, int ifindex);
+
+    /// @brief Destructor.
+    ///
+    /// Deallocates the socket read buffer.
+    ~Iface();
 
     /// @brief Closes all open sockets on interface.
     void closeSockets();
@@ -330,6 +344,29 @@ public:
         return unicasts_;
     }
 
+    /// @brief Returns the pointer to the buffer used for data reading.
+    ///
+    /// The returned pointer is only valid during the lifetime of the
+    /// object which returns it or until the buffer is resized.
+    /// This function is meant to be used with socket API to gather
+    /// data from the socket.
+    ///
+    /// @return Pointer to the first element of the read buffer or
+    /// NULL if the buffer is empty.
+    uint8_t* getReadBuffer() const {
+        return (read_buffer_);
+    }
+
+    /// @brief Returns the current size of the socket read buffer.
+    size_t getReadBufferSize() const {
+        return (read_buffer_size_);
+    }
+
+    /// @brief Reallocates the socket read buffer.
+    ///
+    /// @param new_size New size of the buffer.
+    void resizeReadBuffer(const size_t new_size);
+
 protected:
     /// Socket used to send data.
     SocketCollection sockets_;
@@ -388,6 +425,16 @@ public:
     /// Indicates that IPv6 sockets should (true) or should not (false)
     /// be opened on this interface.
     bool inactive6_;
+
+private:
+
+    /// @brief Pointer to the buffer holding the data read from the socket.
+    ///
+    /// See @c Iface manager description for details.
+    uint8_t* read_buffer_;
+
+    /// @brief Allocated size of the read buffer.
+    size_t read_buffer_size_;
 };
 
 /// @brief This type describes the callback function invoked when error occurs

@@ -17,6 +17,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcp/option.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/pkt_filter.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
@@ -55,6 +56,39 @@ const uint16_t PORT2 = 10548;   // V4 socket
 // resolutions are used by these functions.  For such cases we set the
 // tolerance to 0.01s.
 const uint32_t TIMEOUT_TOLERANCE = 10000;
+
+/// This test verifies that the socket read buffer can be used to
+/// receive the data and that the data can be read from it.
+TEST(IfaceTest, readBuffer) {
+    // Create fake interface object.
+    Iface iface("em0", 0);
+    // The size of read buffer should initially be 0 and the returned
+    // pointer should be NULL.
+    ASSERT_EQ(0, iface.getReadBufferSize());
+    EXPECT_EQ(NULL, iface.getReadBuffer());
+
+    // Let's resize the buffer.
+    iface.resizeReadBuffer(256);
+    // Check that the buffer has expected size.
+    ASSERT_EQ(256, iface.getReadBufferSize());
+    // The returned pointer should now be non-NULL.
+    uint8_t* buf_ptr = iface.getReadBuffer();
+    ASSERT_FALSE(buf_ptr == NULL);
+
+    // Use the pointer to set some data.
+    for (int i = 0; i < iface.getReadBufferSize(); ++i) {
+        buf_ptr[i] = i;
+    }
+
+    // Get the pointer again and validate the data.
+    buf_ptr = iface.getReadBuffer();
+    ASSERT_EQ(256, iface.getReadBufferSize());
+    for (int i = 0; i < iface.getReadBufferSize(); ++i) {
+        // Use assert so as it fails on the first failure, no need
+        // to continue further checks.
+        ASSERT_EQ(i, buf_ptr[i]);
+    }
+}
 
 /// Mock object implementing PktFilter class.  It is used by
 /// IfaceMgrTest::setPacketFilter to verify that IfaceMgr::setPacketFilter
@@ -96,7 +130,7 @@ public:
     /// @param iface An interface on which the socket is to be opened.
     /// @param addr An address to which the socket is to be bound.
     /// @param port A port to which the socket is to be bound.
-    virtual SocketInfo openSocket(const Iface& iface,
+    virtual SocketInfo openSocket(Iface& iface,
                                   const isc::asiolink::IOAddress& addr,
                                   const uint16_t port,
                                   const bool join_multicast,
@@ -1256,12 +1290,12 @@ TEST_F(IfaceMgrTest, setPacketFilter6) {
 }
 
 
-#if defined OS_LINUX
+#if defined OS_LINUX || OS_BSD
 
-// This Linux specific test checks whether it is possible to use
-// IfaceMgr to figure out which Pakcket Filter object should be
-// used when direct responses to hosts, having no address assigned
-// are desired or not desired.
+// This test is only supported on Linux and BSD systems. It checks
+// if it is possible to use the IfaceMgr to select the packet filter
+// object which can be used to send direct responses to the host
+// which doesn't have an address yet.
 TEST_F(IfaceMgrTest, setMatchingPacketFilter) {
 
     // Create an instance of IfaceMgr.
@@ -1270,28 +1304,27 @@ TEST_F(IfaceMgrTest, setMatchingPacketFilter) {
 
     // Let IfaceMgr figure out which Packet Filter to use when
     // direct response capability is not desired. It should pick
-    // PktFilterInet.
+    // PktFilterInet on Linux.
     EXPECT_NO_THROW(iface_mgr->setMatchingPacketFilter(false));
     // The PktFilterInet is supposed to report lack of direct
     // response capability.
     EXPECT_FALSE(iface_mgr->isDirectResponseSupported());
 
     // There is working implementation of direct responses on Linux
-    // in PktFilterLPF. It uses Linux Packet Filtering as underlying
-    // mechanism. When direct responses are desired the object of
-    // this class should be set.
+    // and BSD (using PktFilterLPF and PktFilterBPF. When direct
+    // responses are desired the object of this class should be set.
     EXPECT_NO_THROW(iface_mgr->setMatchingPacketFilter(true));
     // This object should report that direct responses are supported.
     EXPECT_TRUE(iface_mgr->isDirectResponseSupported());
 }
 
 // This test checks that it is not possible to open two sockets: IP/UDP
-// and raw (LPF) socket and bind to the same address and port. The
+// and raw socket and bind to the same address and port. The
 // raw socket should be opened together with the fallback IP/UDP socket.
 // The fallback socket should fail to open when there is another IP/UDP
 // socket bound to the same address and port. Failing to open the fallback
 // socket should preclude the raw socket from being open.
-TEST_F(IfaceMgrTest, checkPacketFilterLPFSocket) {
+TEST_F(IfaceMgrTest, checkPacketFilterRawSocket) {
     IOAddress loAddr("127.0.0.1");
     int socket1 = -1, socket2 = -1;
     // Create two instances of IfaceMgr.
@@ -1335,15 +1368,16 @@ TEST_F(IfaceMgrTest, checkPacketFilterLPFSocket) {
 
 #else
 
-// This non-Linux specific test checks whether it is possible to use
-// IfaceMgr to figure out which Pakcket Filter object should be
-// used when direct responses to hosts, having no address assigned
-// are desired or not desired. Since direct responses aren't supported
-// on systems other than Linux the function under test should always
-// set object of PktFilterInet type as current Packet Filter. This
-// object does not support direct responses. Once implementation is
-// added on non-Linux systems the OS specific version of the test
-// will be removed.
+// Note: This test will only run on non-Linux and non-BSD systems.
+// This test checks whether it is possible to use IfaceMgr to figure
+// out which Pakcket Filter object should be used when direct responses
+// to hosts, having no address assigned are desired or not desired.
+// Since direct responses aren't supported on systems other than Linux
+// and BSD the function under test should always set object of
+// PktFilterInet type as current Packet Filter. This object does not 
+//support direct responses. Once implementation is added on systems
+// other than BSD and Linux the OS specific version of the test will
+// be removed.
 TEST_F(IfaceMgrTest, setMatchingPacketFilter) {
 
     // Create an instance of IfaceMgr.

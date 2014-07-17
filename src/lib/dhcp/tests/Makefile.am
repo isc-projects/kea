@@ -78,8 +78,14 @@ libdhcp___unittests_SOURCES += pkt_filter6_test_stub.cc pkt_filter_test_stub.h
 libdhcp___unittests_SOURCES += pkt_filter_test_utils.h pkt_filter_test_utils.cc
 libdhcp___unittests_SOURCES += pkt_filter6_test_utils.h pkt_filter6_test_utils.cc
 
+# Utilize Linux Packet Filtering on Linux.
 if OS_LINUX
 libdhcp___unittests_SOURCES += pkt_filter_lpf_unittest.cc
+endif
+
+# Utilize Berkeley Packet Filtering on BSD.
+if OS_BSD
+libdhcp___unittests_SOURCES += pkt_filter_bpf_unittest.cc
 endif
 
 libdhcp___unittests_SOURCES += protocol_util_unittest.cc
