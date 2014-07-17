@@ -159,31 +159,27 @@ address.
 Kea supports the use of raw sockets to create a complete Data-link/IP/UDP/DHCPv4
 stack. By creating each layer of the outgoing packet, the Kea logic has full
 control over the frame contents and it may bypass the use of ARP to inject the
-link layer address into the frame. The raw socket is bound to a specific interface,
-not to the IP address/UDP port. Therefore, the system kernel doesn't have
-means to verify that Kea is listening to the DHCP traffic on the specific address
-and port. This has two major implications:
+link layer address into the frame.
+
+The low level operations on raw sockets are implemented within the "packet
+filtering" classes derived from @c isc::dhcp::PktFilter. The implementation
+of these classes is specific to the operating system. On Linux the
+@c isc::dhcp::PktFilterLPF is used. On BSD systems the
+@c isc::dhcp::PktFilterBPF is used.
+
+The raw sockets are bound to a specific interface, not to the IP address/UDP port.
+Therefore, the system kernel doesn't have means to verify that Kea is listening
+to the DHCP traffic on the specific address and port. This has two major implications:
 - It is possible to run another DHCPv4 sever instance which will bind socket to the
 same address and port.
 - An attempt to send a unicast message to the DHCPv4 server will result in ICMP
 "Port Unreachable" message being sent by the kernel (which is unaware that the
 DHCPv4 service is actually running).
-In order to overcome these issues, the isc::dhcp::PktFilterLPF opens a
+
+In order to overcome these issues, the packet filtering classes open a
 regular IP/UDP socket which coexists with the raw socket. The socket is referred
 to as "fallback socket" in the Kea code. All packets received through this socket
 are discarded.
-
-In general, the use of datagram sockets is preferred over raw sockets.
-For convenience, the switchable Packet Filter objects are used to manage
-sockets for different purposes. These objects implement the socket opening
-operation and sending/receiving messages over this socket. For example:
-the isc::dhcp::PktFilterLPF object opens a raw socket.
-The isc::dhcp::PktFilterLPF::send and isc::dhcp::PktFilterLPF::receive
-methods encode/decode full data-link/IP/UDP/DHCPv4 stack. The
-isc::dhcp::PktFilterInet supports sending and receiving messages over
-the regular IP/UDP socket. The isc::dhcp::PktFilterInet should be used in all
-cases when an application using the libdhcp++ doesn't require sending
-DHCP messages to a device which doesn't have an address yet.
 
 @section libdhcpPktFilter6 Switchable Packet Filters for DHCPv6
 

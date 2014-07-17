@@ -28,7 +28,7 @@ PktFilterTestStub::isDirectResponseSupported() const {
 }
 
 SocketInfo
-PktFilterTestStub::openSocket(const Iface&,
+PktFilterTestStub::openSocket(Iface&,
            const isc::asiolink::IOAddress& addr,
            const uint16_t port, const bool, const bool) {
     return (SocketInfo(addr, port, 0));

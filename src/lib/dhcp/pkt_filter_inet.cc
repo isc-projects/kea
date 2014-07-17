@@ -31,7 +31,7 @@ PktFilterInet::PktFilterInet()
 }
 
 SocketInfo
-PktFilterInet::openSocket(const Iface& iface,
+PktFilterInet::openSocket(Iface& iface,
                           const isc::asiolink::IOAddress& addr,
                           const uint16_t port,
                           const bool receive_bcast,

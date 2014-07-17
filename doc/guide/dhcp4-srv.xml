@@ -1756,8 +1756,15 @@ temporarily override a list of interface names and listen on all interfaces.
             </simpara>
           </listitem>
           <listitem>
-            <simpara>Raw sockets operation is working on Linux
-            only. See <xref linkend="iface-detect"/> for details.</simpara>
+            <simpara>On Linux and BSD system families the DHCP messages are sent
+            and received over the raw sockets (using LPF and BPF) and all packet
+            headers (including data link layer, IP and UDP headers) are created and
+            parsed by Kea, rather than the system kernel. Currently, Kea can
+            only parse the data link layer headers with a format adhering to
+            IEEE 802.3 standard and assumes this data link layer header format
+            for all interfaces. Hence, Kea will fail to work on interfaces
+            which use different data link layer header formats (e.g. Infiniband).
+            </simpara>
           </listitem>
           <listitem>
             <simpara>The DHCPv4 server does not  verify that

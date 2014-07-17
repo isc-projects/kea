@@ -64,7 +64,7 @@ public:
     }
 
     /// Does nothing.
-    virtual SocketInfo openSocket(const Iface&,
+    virtual SocketInfo openSocket(Iface&,
                                   const isc::asiolink::IOAddress& addr,
                                   const uint16_t port, const bool, const bool) {
         return (SocketInfo(addr, port, 0));
