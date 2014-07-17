@@ -1,3 +1,11 @@
+803.	[func]		marcin
+	DHCPv4 server supports responding to directly connected clients on
+	FreeBSD, NetBSD and OpenBSD using Berkeley Packet Filtering. This
+	also resolves the problem reported in #3438 that the server doesn't
+	pick the correct interface to respond to the client and the client
+	never gets the response from the server.
+	(Trac #2893, git 9fba39d93b9ece950c4294230984d6315dfa11f6)
+
 802.	[doc]		tomek, marcin
 	Developer's Guide updated to Change BIND 10 references to Kea.
 	Documentation for Keactl added.
