@@ -149,9 +149,10 @@ TEST_F(InformTest, directClientBroadcast) {
     client.requestOptions(DHO_LOG_SERVERS, DHO_COOKIE_SERVERS);
     // Preconfigure the client with the IP address.
     client.createLease(IOAddress("10.0.0.56"), 600);
+
     // Send DHCPINFORM message to the server.
-    client.doInform();
-    //    ASSERT_NO_THROW(client.doInform());
+    ASSERT_NO_THROW(client.doInform());
+
     // Make sure that the server responded.
     ASSERT_TRUE(client.getContext().response_);
     Pkt4Ptr resp = client.getContext().response_;
@@ -163,6 +164,7 @@ TEST_F(InformTest, directClientBroadcast) {
     EXPECT_FALSE(resp->isRelayed());
     // Make sure that the server id is present.
     EXPECT_EQ("10.0.0.1", client.config_.serverid_.toText());
+
     // Make sure that the Routers option has been received.
     ASSERT_EQ(2, client.config_.routers_.size());
     EXPECT_EQ("10.0.0.200", client.config_.routers_[0].toText());
@@ -186,16 +188,20 @@ TEST_F(InformTest, directClientBroadcast) {
     // This time do not request Quotes Servers option and it should not
     // be returned.
     client.requestOptions(DHO_LOG_SERVERS);
+
     // Send DHCPINFORM.
     ASSERT_NO_THROW(client.doInform());
-    ASSERT_TRUE(client.getContext().response_);
+
+    // Make sure that the server responded.
     resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
     // Response should have been unicast to the ciaddr.
     EXPECT_EQ(IOAddress("10.0.0.12"), resp->getLocalAddr());
     // Response must not be relayed.
     EXPECT_FALSE(resp->isRelayed());
+
     // Make sure that the server id is present.
     EXPECT_EQ("10.0.0.1", client.config_.serverid_.toText());
     // Make sure that the Routers option has been received.
