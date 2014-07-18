@@ -57,15 +57,24 @@ public:
     /// @brief Holds the configuration of the client received from the
     /// DHCP server.
     struct Configuration {
+        /// @brief Holds IP addresses received in the Routers option.
         Option4AddrLst::AddressContainer routers_;
+        /// @brief Holds IP addresses received in the DNS Servers option.
         Option4AddrLst::AddressContainer dns_servers_;
+        /// @brief Holds IP addresses received in the Log Servers option.
         Option4AddrLst::AddressContainer log_servers_;
+        /// @brief Holds IP addresses received in the Quotes Servers option.
         Option4AddrLst::AddressContainer quotes_servers_;
+        /// @brief Holds a lease obtained by the client.
         Lease4 lease_;
+        /// @brief Holds server id of the server which responded to the client's
+        /// request.
         asiolink::IOAddress serverid_;
 
+        /// @brief Constructor.
         Configuration();
 
+        /// @brief Sets configuration values to defaults.
         void reset();
     };
 
@@ -95,7 +104,12 @@ public:
     /// @brief Sends DHCPINFORM message to the server and receives response.
     ///
     /// This function simulates sending the DHCPINFORM message to the server
-    /// and receiving server's response (if any).
+    /// and receiving server's response (if any). The server's response and the
+    /// message sent to the server is stored in the context structure and can
+    /// be accessed using @c getContext function.
+    ///
+    /// The configuration returned by the server is stored in the
+    /// @c config_ public member and can be accessed directly.
     ///
     /// @param set_ciaddr Indicates if the ciaddr should be set for an
     /// outgoing message and defaults to true. Note, that the RFC2131 mandates
@@ -186,6 +200,7 @@ public:
     /// @param use Parameter which 'true' value indicates that client should
     /// simulate sending messages via relay.
     /// @param relay_addr Relay address
+    /// @param sf_relay_addr Server facing relay address.
     void useRelay(const bool use = true,
                   const asiolink::IOAddress& relay_addr =
                   asiolink::IOAddress("192.0.2.2"),

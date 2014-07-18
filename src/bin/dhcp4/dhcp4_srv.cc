@@ -1164,6 +1164,13 @@ Dhcpv4Srv::adjustRemoteAddr(const Pkt4Ptr& question, const Pkt4Ptr& response) {
 
     // If received relayed message, server responds to the relay address.
     if (question->isRelayed()) {
+        // The client should set the ciaddr when sending the DHCPINFORM
+        // but in case he didn't, the relay may not be able to determine the
+        // address of the client, because yiaddr is not set when responding
+        // to Confirm and the only address available was the source address
+        // of the client. The source address is however not used here because
+        // the message is relayed. Therefore, we set the BROADCAST flag so
+        // as the relay can broadcast the packet.
         if ((question->getType() == DHCPINFORM) &&
             (question->getCiaddr() == zero_addr)) {
             response->setFlags(BOOTP_BROADCAST);
@@ -1418,6 +1425,9 @@ Dhcpv4Srv::processDecline(Pkt4Ptr& /* decline */) {
 
 Pkt4Ptr
 Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
+    // DHCPINFORM MUST not include server identifier.
+    sanityCheck(inform, FORBIDDEN);
+
     Pkt4Ptr ack = Pkt4Ptr(new Pkt4(DHCPACK, inform->getTransid()));
     copyDefaultFields(inform, ack);
     appendRequestedOptions(inform, ack);
