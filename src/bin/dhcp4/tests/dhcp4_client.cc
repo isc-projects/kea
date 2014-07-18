@@ -17,6 +17,7 @@
 #include <dhcp/option_int_array.h>
 #include <dhcpsrv/lease.h>
 #include <dhcp4/tests/dhcp4_client.h>
+#include <util/range_utilities.h>
 #include <boost/pointer_cast.hpp>
 #include <cstdlib>
 
@@ -165,11 +166,9 @@ Dhcp4Client::generateHWAddr(const uint8_t htype) const {
                   "The harware address type " << static_cast<int>(htype)
                   << " is currently not supported");
     }
-    std::vector<uint8_t> hwaddr;
+    std::vector<uint8_t> hwaddr(HWAddr::ETHERNET_HWADDR_LEN);
     // Generate ethernet hardware address by assigning random byte values.
-    for (int i = 0; i < HWAddr::ETHERNET_HWADDR_LEN; ++i) {
-        hwaddr.push_back(static_cast<uint8_t>(rand() % 255));
-    }
+    isc::util::fillRandom(hwaddr.begin(), hwaddr.end());
     return (HWAddrPtr(new HWAddr(hwaddr, htype)));
 }
 

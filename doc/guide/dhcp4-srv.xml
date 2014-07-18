@@ -1078,8 +1078,8 @@ temporarily override a list of interface names and listen on all interfaces.
         {
             "subnet": "192.0.2.0/24"
             "option-data": [ {"
-                "name": "routers",
-                "code": 3,
+                "name": "domain-name-servers",
+                "code": 6,
                 "data": "192.0.2.200,192.0.2.201",
                 "csv-format": true,
                 "space": "dhcp4"
@@ -1760,8 +1760,8 @@ temporarily override a list of interface names and listen on all interfaces.
       <para>The following standards and draft standards are currently supported:</para>
       <itemizedlist>
           <listitem>
-            <simpara><ulink url="http://tools.ietf.org/html/rfc2131">RFC 2131</ulink>: Supported messages are DISCOVER, OFFER,
-            REQUEST, RELEASE, INFORM, ACK, and NAK.</simpara>
+            <simpara><ulink url="http://tools.ietf.org/html/rfc2131">RFC 2131</ulink>: Supported messages are DISCOVER (1), OFFER (2),
+            REQUEST (3), RELEASE (7), INFORM (8), ACK (5), and NAK(6).</simpara>
           </listitem>
           <listitem>
             <simpara><ulink url="http://tools.ietf.org/html/rfc2132">RFC 2132</ulink>:
