@@ -1,4 +1,4 @@
-// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,8 +17,7 @@
 #include <cc/data.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp6/json_config_parser.h>
-#include <dhcp6/tests/dhcp6_test_utils.h>
-#include <dhcp6/tests/dhcp6_client.h>
+#include <dhcp6/tests/dhcp6_message_test.h>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -82,113 +81,18 @@ const char* CONFIRM_CONFIGS[] = {
 };
 
 /// @brief Test fixture class for testing Confirm..
-class ConfirmTest : public Dhcpv6SrvTest {
+class ConfirmTest : public isc::dhcp::test::Dhcpv6MessageTest {
 public:
 
     /// @brief Constructor.
     ///
     /// Sets up fake interfaces.
     ConfirmTest()
-        : Dhcpv6SrvTest(),
-          iface_mgr_test_config_(true) {
+        : Dhcpv6MessageTest() {
     }
-
-    /// @brief Increases last byte of the address.
-    ///
-    /// This function is helpful to find a different address that is within
-    /// the same subnet as the input address. It is achieved by increasing
-    /// the last byte of the input address by one.
-    ///
-    /// @param input_addr An input address.
-    ///
-    /// @return New address.
-    IOAddress bumpAddress(const IOAddress& input_addr);
-
-    /// @brief Increases specific byte in the address by one.
-    ///
-    /// This function is called by @c bumpAddress and @c bumpSubnet.
-    ///
-    /// @param input_addr An input address.
-    ///
-    /// @return New address.
-    IOAddress bumpByteInAddress(const IOAddress& input_addr,
-                                const size_t byte_num);
-
-    /// @brief Increases the first byte of the address.
-    ///
-    /// This function is helpful to find an address which belongs to the
-    /// different subnet than the input address. It is achived by increasing
-    /// the first byte of the input address.
-    ///
-    /// @param input_addr An input addres.
-    ///
-    /// @return New address.
-    IOAddress bumpSubnet(const IOAddress& input_addr);
-
-    /// @brief Make 4-way exchange to obtain a lease.
-    ///
-    /// @param config_index Index of the configuration held in @c CONFIRM_CONFIGS
-    /// to use to configure the server.
-    /// @param subnets_num Number of subnets being created with the specified
-    /// configuration.
-    /// @param client Object representing a test DHCPv6 client to use.
-    void requestLease(const int config_index, const int subnets_num,
-                      Dhcp6Client& client);
-
-    /// @brief Interface Manager's fake configuration control.
-    IfaceMgrTestConfig iface_mgr_test_config_;
 
 };
 
-void
-ConfirmTest::requestLease(const int config_index, const int subnets_num,
-                         Dhcp6Client& client) {
-    // Check that the index is in the configuration table.
-    ASSERT_LT(config_index, sizeof(CONFIRM_CONFIGS)/sizeof(CONFIRM_CONFIGS[0]));
-    // Configure the server.
-    configure(CONFIRM_CONFIGS[config_index], *client.getServer());
-    // Make sure we ended-up having expected number of subnets configured.
-    const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
-    ASSERT_EQ(subnets_num, subnets->size());
-    // Do the actual 4-way exchange.
-    ASSERT_NO_THROW(client.doSARR());
-    // Simulate aging of leases, by moving their cltt_ back by 1000s.
-    client.fastFwdTime(1000);
-    // Make sure that we have obtained a lease that belongs to one of the
-    // subnets.
-    ASSERT_EQ(1, client.getLeaseNum());
-    Lease6 lease_client = client.getLease(0);
-    ASSERT_TRUE(CfgMgr::instance().getSubnet6(lease_client.addr_,
-                                              ClientClasses()));
-    // Check that the client's lease matches the information on the server
-    // side.
-    Lease6Ptr lease_server = checkLease(lease_client);
-    ASSERT_TRUE(lease_server);
-    // And that status code was OK.
-    EXPECT_EQ(STATUS_Success, client.getStatusCode(0));
-}
-
-IOAddress
-ConfirmTest::bumpAddress(const IOAddress& input_addr) {
-    return (bumpByteInAddress(input_addr, V6ADDRESS_LEN - 1));
-}
-
-IOAddress
-ConfirmTest::bumpByteInAddress(const IOAddress& input_addr,
-                               const size_t byte_num) {
-    std::vector<uint8_t> input_addr_buffer = input_addr.toBytes();
-    if (input_addr_buffer.size() > byte_num) {
-        ++input_addr_buffer[byte_num];
-        return (IOAddress::fromBytes(AF_INET6, &input_addr_buffer[0]));
-    }
-    return (input_addr);
-}
-
-
-IOAddress
-ConfirmTest::bumpSubnet(const IOAddress& input_addr) {
-    return (bumpByteInAddress(input_addr, 0));
-}
 
 // Test that directly connected client's Confirm message is processed and Reply
 // message is sent back. In this test case, the client sends Confirm for two
@@ -199,7 +103,7 @@ TEST_F(ConfirmTest, directClientSameIAID) {
     // Configure client to request IA_NA.
     client.useNA();
     // Make 4-way exchange to get the lease.
-    ASSERT_NO_FATAL_FAILURE(requestLease(0, 2, client));
+    ASSERT_NO_FATAL_FAILURE(requestLease(CONFIRM_CONFIGS[0], 2, client));
     // Keep the client's lease for future reference.
     Lease6 lease_client1 = client.getLease(0);
     // Clone the lease and modify its address so as it is still in the range
@@ -241,7 +145,7 @@ TEST_F(ConfirmTest, directClientDifferentIAID) {
     // Configure client to request IA_NA.
     client.useNA();
     // Make 4-way exchange to get the lease.
-    ASSERT_NO_FATAL_FAILURE(requestLease(0, 2, client));
+    ASSERT_NO_FATAL_FAILURE(requestLease(CONFIRM_CONFIGS[0], 2, client));
     // Keep the client's lease for future reference.
     Lease6 lease_client1 = client.getLease(0);
     // Clone the lease and modify its address so as it is still in the range
@@ -288,7 +192,7 @@ TEST_F(ConfirmTest, relayedClient) {
     // Configure client to request IA_NA.
     client.useNA();
     // Make 4-way exchange to get the lease.
-    ASSERT_NO_FATAL_FAILURE(requestLease(1, 2, client));
+    ASSERT_NO_FATAL_FAILURE(requestLease(CONFIRM_CONFIGS[1], 2, client));
     // Keep the client's lease for future reference.
     Lease6 lease_client1 = client.getLease(0);
     // Clone the lease and modify its address so as it is still in the range
@@ -345,7 +249,7 @@ TEST_F(ConfirmTest, relayedUnicast) {
     // Configure client to request IA_NA.
     client.useNA();
     // Make 4-way exchange to get the lease.
-    ASSERT_NO_FATAL_FAILURE(requestLease(1, 2, client));
+    ASSERT_NO_FATAL_FAILURE(requestLease(CONFIRM_CONFIGS[1], 2, client));
     // Make sure we have got the lease.
     ASSERT_GT(client.getLeaseNum(), 0);
     client.setDestAddress(IOAddress("2001:db8:1::1"));
@@ -368,7 +272,7 @@ TEST_F(ConfirmTest, unicast) {
     // Configure client to request IA_NA.
     client.useNA();
     // Make 4-way exchange to get the lease.
-    ASSERT_NO_FATAL_FAILURE(requestLease(0, 2, client));
+    ASSERT_NO_FATAL_FAILURE(requestLease(CONFIRM_CONFIGS[0], 2, client));
     // Make sure the client has got the lease.
     ASSERT_GT(client.getLeaseNum(), 0);
     // Send Confirm message to the server to the unicast address.
