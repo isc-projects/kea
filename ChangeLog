@@ -1,3 +1,7 @@
+804.	[func]		marcin
+	DHCPv4 server supports DHCPINFORM messages from the clients.
+	(Trac #3390, git 77f8577b1dbb52bdc6deb8bed3eef6ce7abc33fd)
+
 803.	[func]		marcin
 	DHCPv4 server supports responding to directly connected clients on
 	FreeBSD, NetBSD and OpenBSD using Berkeley Packet Filtering. This
