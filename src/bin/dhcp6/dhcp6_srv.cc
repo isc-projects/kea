@@ -2323,7 +2323,8 @@ Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm) {
 
     // The server sends Reply message in response to Confirm.
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, confirm->getTransid()));
-    // Append necessary options. e.g. server id.
+    // Make sure that the necessary options are included.
+    copyDefaultOptions(confirm, reply);
     appendDefaultOptions(confirm, reply);
     // Number of addresses verified. If at the end it occurs that no addresses
     // were verified we will need to dicard the message.
