@@ -1058,6 +1058,67 @@ temporarily override a list of interface names and listen on all interfaces.
     </para>
     </section>
 
+    <section id="dhcp4-stateless-configuration">
+      <title>Stateless Configuration of DHCPv4 clients</title>
+      <para>The DHCPv4 server supports the stateless client configuration whereby the
+      client has an IP address configured (e.g. using manual configuration) and only
+      contacts the server to obtain other configuration parameters, e.g. DNS servers' addresses.
+      In order to obtain the stateless configuration parameters the client sends the
+      DHCPINFORM message to the server with the "ciaddr" set to the address that the
+      client is currently using. The server unicasts the DHCPACK message to the
+      client that includes the stateless configuration ("yiaddr" not set).
+      </para>
+
+      <para>The server will respond to the DHCPINFORM when the client is associated
+      with the particular subnet defined in the server's configuration. The example
+      subnet configuration will look like this:
+        <screen>
+"Dhcp4": {
+    "subnet4": [
+        {
+            "subnet": "192.0.2.0/24"
+            "option-data": [ {"
+                "name": "domain-name-servers",
+                "code": 6,
+                "data": "192.0.2.200,192.0.2.201",
+                "csv-format": true,
+                "space": "dhcp4"
+            } ]
+        }
+    ]
+}</screen>
+      </para>
+      <para>This subnet specifies the single option which will be included in
+      the DHCPACK message to the client in response to DHCPINFORM. Note that
+      the subnet definition does not require the address pool configuration
+      if it will be used solely for the stateless configuration.
+      </para>
+
+      <para>This server will associate the subnet with the client if one of
+      the following conditions is met:
+      <itemizedlist>
+          <listitem>
+            <simpara>The DHCPINFORM is relayed and the giaddr matches the
+            configured subnet.</simpara>
+          </listitem>
+          <listitem>
+            <simpara>The DHCPINFORM is unicast from the client and the ciaddr
+            matches the configured subnet.</simpara>
+          </listitem>
+          <listitem>
+            <simpara>The DHCPINFORM is unicast from the client, the ciaddr is
+            not set but the source address of the IP packet matches the
+            configured subnet.</simpara>
+          </listitem>
+          <listitem>
+            <simpara>The DHCPINFORM is not relayed and the IP address on the
+            interface on which the message is received matches the configured
+            subnet.</simpara>
+          </listitem>
+      </itemizedlist>
+      </para>
+    </section>
+
     <section id="dhcp4-client-classifier">
       <title>Client Classification in DHCPv4</title>
       <note>
@@ -1699,8 +1760,8 @@ temporarily override a list of interface names and listen on all interfaces.
       <para>The following standards and draft standards are currently supported:</para>
       <itemizedlist>
           <listitem>
-            <simpara><ulink url="http://tools.ietf.org/html/rfc2131">RFC 2131</ulink>: Supported messages are DISCOVER, OFFER,
-            REQUEST, RELEASE, ACK, and NAK.</simpara>
+            <simpara><ulink url="http://tools.ietf.org/html/rfc2131">RFC 2131</ulink>: Supported messages are DISCOVER (1), OFFER (2),
+            REQUEST (3), RELEASE (7), INFORM (8), ACK (5), and NAK(6).</simpara>
           </listitem>
           <listitem>
             <simpara><ulink url="http://tools.ietf.org/html/rfc2132">RFC 2132</ulink>:

@@ -299,7 +299,7 @@ Dhcpv4Srv::run() {
                 break;
 
             case DHCPINFORM:
-                processInform(query);
+                rsp = processInform(query);
                 break;
 
             default:
@@ -1133,8 +1133,48 @@ Dhcpv4Srv::adjustRemoteAddr(const Pkt4Ptr& question, const Pkt4Ptr& response) {
     static const IOAddress zero_addr("0.0.0.0");
     static const IOAddress bcast_addr("255.255.255.255");
 
+    // The DHCPINFORM is slightly different than other messages in a sense
+    // that the server should always unicast the response to the ciaddr.
+    // It appears however that some clients don't set the ciaddr. We still
+    // want to provision these clients and we do what we can't to send the
+    // packet to the address where client can receive it.
+    if (question->getType() == DHCPINFORM) {
+        // If client adheres to RFC2131 it will set the ciaddr and in this
+        // case we always unicast our response to this address.
+        if (question->getCiaddr() != zero_addr) {
+            response->setRemoteAddr(question->getCiaddr());
+
+        // If we received DHCPINFOM via relay and the ciaddr is not set we
+        // will try to send the response via relay. The caveat is that the
+        // relay will not have any idea where to forward the packet because
+        // the yiaddr is likely not set. So, the broadcast flag is set so
+        // as the response may be broadcast.
+        } else if (question->isRelayed()) {
+            response->setRemoteAddr(question->getGiaddr());
+            response->setFlags(response->getFlags() | BOOTP_BROADCAST);
+
+        // If there is no ciaddr and no giaddr the only thing we can do is
+        // to use the source address of the packet.
+        } else {
+            response->setRemoteAddr(question->getRemoteAddr());
+        }
+        // Remote addres is now set so return.
+        return;
+    }
+
     // If received relayed message, server responds to the relay address.
     if (question->isRelayed()) {
+        // The client should set the ciaddr when sending the DHCPINFORM
+        // but in case he didn't, the relay may not be able to determine the
+        // address of the client, because yiaddr is not set when responding
+        // to Confirm and the only address available was the source address
+        // of the client. The source address is however not used here because
+        // the message is relayed. Therefore, we set the BROADCAST flag so
+        // as the relay can broadcast the packet.
+        if ((question->getType() == DHCPINFORM) &&
+            (question->getCiaddr() == zero_addr)) {
+            response->setFlags(BOOTP_BROADCAST);
+        }
         response->setRemoteAddr(question->getGiaddr());
 
     // If giaddr is 0 but client set ciaddr, server should unicast the
@@ -1385,9 +1425,30 @@ Dhcpv4Srv::processDecline(Pkt4Ptr& /* decline */) {
 
 Pkt4Ptr
 Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
+    // DHCPINFORM MUST not include server identifier.
+    sanityCheck(inform, FORBIDDEN);
 
-    /// @todo Implement this for real. (also see ticket #3116)
-    return (inform);
+    Pkt4Ptr ack = Pkt4Ptr(new Pkt4(DHCPACK, inform->getTransid()));
+    copyDefaultFields(inform, ack);
+    appendRequestedOptions(inform, ack);
+    appendRequestedVendorOptions(inform, ack);
+    appendBasicOptions(inform, ack);
+    adjustIfaceData(inform, ack);
+
+    // There are cases for the DHCPINFORM that the server receives it via
+    // relay but will send the response to the client's unicast address
+    // carried in the ciaddr. In this case, the giaddr and hops field should
+    // be cleared (these fields were copied by the copyDefaultFields function).
+    // Also Relay Agent Options should be removed if present.
+    if (ack->getRemoteAddr() != inform->getGiaddr()) {
+        ack->setHops(0);
+        ack->setGiaddr(IOAddress("0.0.0.0"));
+        ack->delOption(DHO_DHCP_AGENT_OPTIONS);
+    }
+
+    // The DHCPACK must contain server id.
+    appendServerID(ack);
+    return (ack);
 }
 
 const char*
@@ -1449,6 +1510,15 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) const {
         subnet = CfgMgr::instance().getSubnet4(question->getCiaddr(),
                                                question->classes_);
 
+    // Either renewing client or the client that sends DHCPINFORM
+    // must set the ciaddr. But apparently some clients don't do it,
+    // so if the client didn't include ciaddr we will use the source
+    // address.
+    } else if ((question->getLocalAddr() != bcast) &&
+               (question->getRemoteAddr() != notset)) {
+        subnet = CfgMgr::instance().getSubnet4(question->getRemoteAddr(),
+                                               question->classes_);
+
     // The message has been received from a directly connected client
     // and this client appears to have no address. The IPv4 address
     // assigned to the interface on which this message has been received,
@@ -1493,6 +1563,11 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) const {
 
 bool
 Dhcpv4Srv::accept(const Pkt4Ptr& query) const {
+    // Check that the message type is accepted by the server. We rely on the
+    // function called to log a message if needed.
+    if (!acceptMessageType(query)) {
+        return (false);
+    }
     // Check if the message from directly connected client (if directly
     // connected) should be dropped or processed.
     if (!acceptDirectRequest(query)) {
@@ -1511,12 +1586,6 @@ Dhcpv4Srv::accept(const Pkt4Ptr& query) const {
         return (false);
     }
 
-    // Check that the message type is accepted by the server. We rely on the
-    // function called to log a message if needed.
-    if (!acceptMessageType(query)) {
-        return (false);
-    }
-
     return (true);
 }
 
@@ -1527,6 +1596,23 @@ Dhcpv4Srv::acceptDirectRequest(const Pkt4Ptr& pkt) const {
             return (true);
         }
     } catch (const Exception& ex) {
+        return (false);
+    }
+    // The source address must not be zero for the DHCPINFORM message from
+    // the directly connected client because the server will not know where
+    // to respond if the ciaddr was not present.
+    static const IOAddress zero_addr("0.0.0.0");
+    try {
+        if (pkt->getType() == DHCPINFORM) {
+            if ((pkt->getRemoteAddr() == zero_addr) &&
+                (pkt->getCiaddr() == zero_addr)) {
+                return (false);
+            }
+        }
+    } catch (...) {
+        // If we got here, it is probably because the message type hasn't
+        // been set. But, this should not really happen assuming that
+        // we validate the message type prior to calling this function.
         return (false);
     }
     static const IOAddress bcast("255.255.255.255");
