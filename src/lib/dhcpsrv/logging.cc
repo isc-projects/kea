@@ -34,7 +34,7 @@ LogConfigParser::LogConfigParser(const ConfigurationPtr& storage)
     }
 }
 
-void LogConfigParser::parseConfiguration(isc::data::ConstElementPtr loggers,
+void LogConfigParser::parseConfiguration(const isc::data::ConstElementPtr& loggers,
                                          bool verbose) {
     verbose_ = verbose;
 
