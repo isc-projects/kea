@@ -1442,7 +1442,7 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
       <itemizedlist>
           <listitem>
             <simpara><ulink url="http://tools.ietf.org/html/rfc3315">RFC 3315</ulink>: Supported messages are SOLICIT,
-            ADVERTISE, REQUEST, RELEASE, RENEW, REBIND and REPLY.</simpara>
+            ADVERTISE, REQUEST, RELEASE, RENEW, REBIND, CONFIRM and REPLY.</simpara>
           </listitem>
           <listitem>
             <simpara><ulink url="http://tools.ietf.org/html/rfc3633">RFC 3633</ulink>: Supported options are IA_PD and
@@ -1510,9 +1510,9 @@ Dhcp6/renew-timer	1000	integer	(default)
         </listitem>
         <listitem>
           <simpara>
-            Confirmation (CONFIRM), duplication report (DECLINE),
-            stateless configuration (INFORMATION-REQUEST) and client
-            reconfiguration (RECONFIGURE) are not yet supported.
+            Duplication report (DECLINE), stateless configuration
+            (INFORMATION-REQUEST) and client reconfiguration (RECONFIGURE) are
+            not yet supported.
           </simpara>
         </listitem>
           <listitem>
