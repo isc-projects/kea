@@ -61,7 +61,7 @@ public:
     ///
     /// @param log_config JSON structures to be parsed (loggers list)
     /// @param verbose specifies verbose mode (true forces DEBUG, debuglevel = 99)
-    void parseConfiguration(isc::data::ConstElementPtr log_config,
+    void parseConfiguration(const isc::data::ConstElementPtr& log_config,
                             bool verbose = false);
 
     /// @brief Applies stored configuration
