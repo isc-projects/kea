@@ -164,9 +164,9 @@ TEST_F(ConfirmTest, directClientDifferentIAID) {
     // indicate the success.
     ASSERT_TRUE(client.receivedStatusCode());
     ASSERT_EQ(STATUS_Success, client.getStatusCode());
-    // Make sure that the server id has been included.
+    // Make sure that the server id and client id have been included.
     EXPECT_TRUE(client.getContext().response_->getOption(D6O_SERVERID));
-
+    EXPECT_TRUE(client.getContext().response_->getOption(D6O_CLIENTID));
 
     ASSERT_EQ(2, client.getLeaseNum());
     lease_client2 = client.getLease(1);
@@ -178,8 +178,9 @@ TEST_F(ConfirmTest, directClientDifferentIAID) {
     ASSERT_NO_THROW(client.doConfirm());
     ASSERT_TRUE(client.receivedStatusCode());
     ASSERT_EQ(STATUS_NotOnLink, client.getStatusCode());
-    // Make sure that the server id has been included.
+    // Make sure that the server id have been included.
     EXPECT_TRUE(client.getContext().response_->getOption(D6O_SERVERID));
+    EXPECT_TRUE(client.getContext().response_->getOption(D6O_CLIENTID));
 }
 
 
@@ -220,8 +221,9 @@ TEST_F(ConfirmTest, relayedClient) {
     ASSERT_NO_THROW(client.doConfirm());
     ASSERT_TRUE(client.receivedStatusCode());
     ASSERT_EQ(STATUS_NotOnLink, client.getStatusCode());
-    // Make sure that the server id has been included.
+    // Make sure that the server id and client id have been included.
     EXPECT_TRUE(client.getContext().response_->getOption(D6O_SERVERID));
+    EXPECT_TRUE(client.getContext().response_->getOption(D6O_CLIENTID));
 }
 
 // Test that the Confirm message without any addresses is discarded.
@@ -261,8 +263,9 @@ TEST_F(ConfirmTest, relayedUnicast) {
     // indicate the success.
     ASSERT_TRUE(client.receivedStatusCode());
     ASSERT_EQ(STATUS_Success, client.getStatusCode());
-    // Make sure that the server id has been included.
+    // Make sure that the server id and client id have been included.
     EXPECT_TRUE(client.getContext().response_->getOption(D6O_SERVERID));
+    EXPECT_TRUE(client.getContext().response_->getOption(D6O_CLIENTID));
 }
 
 // This test checks that the Confirm message is discarded by the server if it
