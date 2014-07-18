@@ -298,7 +298,14 @@ PktFilterBPF::openSocket(Iface& iface,
 
     // Everything is ok, allocate the read buffer and return the socket
     // (BPF device descriptor) to the caller.
-    iface.resizeReadBuffer(buf_len);
+    try {
+        iface.resizeReadBuffer(buf_len);
+
+    } catch (...) {
+        close(fallback);
+        close(sock);
+        throw;
+    }
     return (SocketInfo(addr, port, sock, fallback));
 }
 

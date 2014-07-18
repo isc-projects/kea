@@ -239,8 +239,9 @@ protected:
     /// This function accepts the following messages:
     /// - all valid relayed messages,
     /// - all unicast messages,
-    /// - all broadcast messages received on the interface for which the
-    /// suitable subnet exists (is configured).
+    /// - all broadcast messages except DHCPINFORM received on the interface
+    /// for which the suitable subnet exists (is configured).
+    /// - all DHCPINFORM messages with source address or ciaddr set.
     ///
     /// @param query Message sent by a client.
     ///

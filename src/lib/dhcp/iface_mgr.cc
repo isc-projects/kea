@@ -185,7 +185,10 @@ Iface::resizeReadBuffer(const size_t new_size) {
     read_buffer_ = static_cast<uint8_t*>(realloc(read_buffer_,
                                                  read_buffer_size_));
     if (read_buffer_ == NULL) {
+        free(read_buffer_);
         read_buffer_size_ = 0;
+        isc_throw(SocketConfigError, "failed to resize the socket read"
+                  " buffer");
     }
 }
 
