@@ -34,6 +34,21 @@ CONFIG="{
             \"subnet\": \"10.0.0.0/8\",
             \"pool\": [ \"10.0.0.10-10.0.0.100\" ]
         } ]
+    },
+
+    \"Logging\":
+    {
+        \"loggers\": [
+        {
+            \"name\": \"kea\",
+            \"output_options\": [
+                {
+                    \"output\": \"$LOG_FILE\"
+                }
+            ],
+            \"severity\": \"INFO\"
+        }
+        ]
     }
 }"
 # Invalid configuration (negative valid-lifetime) to check that Kea
@@ -55,6 +70,21 @@ CONFIG_INVALID="{
             \"subnet\": \"10.0.0.0/8\",
             \"pool\": [ \"10.0.0.10-10.0.0.100\" ]
         } ]
+    },
+
+    \"Logging\":
+    {
+        \"loggers\": [
+        {
+            \"name\": \"kea\",
+            \"output_options\": [
+                {
+                    \"output\": \"$LOG_FILE\"
+                }
+            ],
+            \"severity\": \"INFO\"
+        }
+        ]
     }
 }"
 

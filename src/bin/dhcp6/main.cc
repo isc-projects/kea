@@ -111,6 +111,9 @@ main(int argc, char* argv[]) {
         // Create the server instance.
         ControlledDhcpv6Srv server(port_number);
 
+        // Remember verbose-mode
+        server.setVerbose(verbose_mode);
+
         try {
             // Initialize the server, i.e. establish control session
             // if BIND10 backend is used or read a configuration file
