@@ -221,9 +221,29 @@ protected:
     /// @param rebind message received from client
     Pkt6Ptr processRebind(const Pkt6Ptr& rebind);
 
-    /// @brief Stub function that will handle incoming CONFIRM messages.
+    /// @brief Processes incoming Confirm message and returns Reply.
     ///
-    /// @param confirm message received from client
+    /// This function processes Confirm message from the client according
+    /// to section 18.2.2. of RFC3315. It discards the Confirm message if
+    /// the message sent by the client contains no addresses, i.e. it has
+    /// no IA_NA options or all IA_NA options contain no IAAddr options.
+    ///
+    /// If the Confirm message contains addresses this function will perform
+    /// the following checks:
+    /// - check if there is appropriate subnet configured for the client
+    /// (e.g. subnet from which addresses are assigned for requests
+    /// received on the particular interface).
+    /// - check if all addresses sent in the Confirm message belong to the
+    /// selected subnet.
+    ///
+    /// If any of the checks above fails, the Reply message with the status
+    /// code NotOnLink is returned. Otherwise, the Reply message with the
+    /// status code Success is returned.
+    ///
+    /// @param confirm Confirm message sent by a client.
+    ///
+    /// @return Reply message from the server al NULL pointer if Confirm
+    /// message should be discarded by the server.
     Pkt6Ptr processConfirm(const Pkt6Ptr& confirm);
 
     /// @brief Stub function that will handle incoming RELEASE messages.
