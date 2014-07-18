@@ -89,6 +89,7 @@ dhcp6_unittests_SOURCES += sarr_unittest.cc
 dhcp6_unittests_SOURCES += ../json_config_parser.cc ../json_config_parser.h
 dhcp6_unittests_SOURCES += config_parser_unittest.cc
 dhcp6_unittests_SOURCES += confirm_unittest.cc
+dhcp6_unittests_SOURCES += dhcp6_message_test.cc dhcp6_message_test.h
 
 if CONFIG_BACKEND_BUNDY
 # For Bundy backend, we only need to run the usual tests. There are no
