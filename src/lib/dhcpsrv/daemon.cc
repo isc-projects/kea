@@ -31,7 +31,7 @@ namespace dhcp {
 std::string Daemon::config_file_ = "";
 
 Daemon::Daemon()
-    : signal_set_(), signal_handler_() {
+    : signal_set_(), signal_handler_(), verbose_(false) {
 }
 
 Daemon::~Daemon() {
@@ -55,8 +55,9 @@ void Daemon::handleSignal() {
     }
 }
 
-void Daemon::configureLogger(isc::data::ConstElementPtr log_config,
-                             const ConfigurationPtr& storage) {
+void Daemon::configureLogger(const isc::data::ConstElementPtr& log_config,
+                             const ConfigurationPtr& storage,
+                             bool verbose) {
 
     // This is utility class that translates JSON structures into formats
     // understandable by log4cplus.
@@ -66,7 +67,7 @@ void Daemon::configureLogger(isc::data::ConstElementPtr log_config,
         // There was no logger configuration. Let's clear any config
         // and revert to the default.
 
-        parser.defaultLogging(); // Set up default logging
+        parser.applyDefaultConfiguration(verbose); // Set up default logging
         return;
     }
 
@@ -77,12 +78,12 @@ void Daemon::configureLogger(isc::data::ConstElementPtr log_config,
         // array in it. Let's clear any old logging configuration
         // we may have and revert to the default.
 
-        parser.defaultLogging(); // Set up default logging
+        parser.applyDefaultConfiguration(verbose); // Set up default logging
         return;
     }
 
     // Translate JSON structures into log4cplus formats
-    parser.parseConfiguration(loggers);
+    parser.parseConfiguration(loggers, verbose);
 
     // Apply the configuration
 

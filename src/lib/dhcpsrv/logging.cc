@@ -18,6 +18,7 @@
 #include <boost/lexical_cast.hpp>
 #include <log/logger_specification.h>
 #include <log/logger_manager.h>
+#include <log/logger_name.h>
 
 using namespace isc::data;
 using namespace isc::log;
@@ -25,17 +26,17 @@ using namespace isc::log;
 namespace isc {
 namespace dhcp {
 
-static const char* DEFAULT_SYSLOG_NAME = "kea";
-
 LogConfigParser::LogConfigParser(const ConfigurationPtr& storage)
-    :config_(storage) {
+    :config_(storage), verbose_(false) {
     if (!storage) {
-        isc_throw(InvalidOperation, "LogConfigParser needs a pointer to the "
+        isc_throw(BadValue, "LogConfigParser needs a pointer to the "
                   "configuration, so parsed data can be stored there");
     }
 }
 
-void LogConfigParser::parseConfiguration(isc::data::ConstElementPtr loggers) {
+void LogConfigParser::parseConfiguration(isc::data::ConstElementPtr loggers,
+                                         bool verbose) {
+    verbose_ = verbose;
 
     // Iterate over all entries in "Logging/loggers" list
     BOOST_FOREACH(ConstElementPtr logger, loggers->listValue()) {
@@ -72,9 +73,9 @@ void LogConfigParser::parseConfigEntry(isc::data::ConstElementPtr entry) {
     try {
         info.severity_ = isc::log::getSeverity(severity_ptr->stringValue().c_str());
     } catch (const std::exception& ex) {
-        isc_throw(BadValue, "Unable to convert '" << severity_ptr->stringValue()
-                  << "' into allowed severity (" << severity_ptr->getPosition()
-                  << ")");
+        isc_throw(BadValue, "Unsupported severity value '"
+                  << severity_ptr->stringValue() << "' ("
+                  << severity_ptr->getPosition() << ")");
     }
 
     // Get debug logging level
@@ -91,10 +92,19 @@ void LogConfigParser::parseConfigEntry(isc::data::ConstElementPtr entry) {
                 isc_throw(BadValue, "");
             }
         } catch (...) {
-            isc_throw(BadValue, "Unable to convert '" << debuglevel_ptr->stringValue()
-                      << "' into allowed debuglevel range (0-99) ("
+            isc_throw(BadValue, "Unsupported debuglevel value '"
+                      << debuglevel_ptr->stringValue()
+                      << "', expected 0-99 ("
                       << debuglevel_ptr->getPosition() << ")");
         }
+    }
+
+    // We want to follow the normal path, so it could catch parsing errors even
+    // when verbose mode is enabled. If it is, just override whatever was parsed
+    // in the config file.
+    if (verbose_) {
+        info.severity_ = isc::log::DEBUG;
+        info.debuglevel_ = 99;
     }
 
     isc::data::ConstElementPtr output_options = entry->get("output_options");
@@ -138,8 +148,6 @@ void LogConfigParser::parseOutputOptions(std::vector<LoggingDestination>& destin
 
 void LogConfigParser::applyConfiguration() {
 
-    // Constants: not declared static as this is function is expected to be
-    // called once only
     static const std::string STDOUT = "stdout";
     static const std::string STDERR = "stderr";
     static const std::string SYSLOG = "syslog";
@@ -180,8 +188,8 @@ void LogConfigParser::applyConfiguration() {
                 // Must take account of the string actually being "syslog:"
                 if (dest->output_ == SYSLOG_COLON) {
                     // The expected syntax is syslog:facility. User skipped
-                    // the logging name, so we'll just use DEFAULT_SYSLOG_NAME.
-                    option.facility = DEFAULT_SYSLOG_NAME;
+                    // the logging name, so we'll just use the default ("kea")
+                    option.facility = isc::log::getDefaultRootLoggerName();
                     
                 } else {
                     // Everything else in the string is the facility name
@@ -203,8 +211,9 @@ void LogConfigParser::applyConfiguration() {
     }
 }
 
-void LogConfigParser::defaultLogging() {
-    LoggerSpecification spec("kea", isc::log::INFO, 0);
+void LogConfigParser::applyDefaultConfiguration(bool verbose) {
+    LoggerSpecification spec("kea", (verbose?isc::log::DEBUG : isc::log::INFO),
+                             (verbose?99:0));
 
     OutputOption option;
     option.destination = OutputOption::DEST_CONSOLE;

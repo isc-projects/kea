@@ -70,19 +70,11 @@ void configure(const std::string& file_name) {
 
         // Let's configure logging before applying the configuration,
         // so we can log things during configuration process.
-        logger = json->get("Logging");
-        if (logger) {
-            // Configure logger first, so it can be applied to DHCPv6
-            // configuration. If we don't have a logger, just pass
-            // empty configuration.
-            Daemon::configureLogger(logger, CfgMgr::instance().getConfiguration());
-        } else {
-            // There was no Logging element defined in the config file.
-            // Let's pass an empty pointer that will remove any current
-            // configuration.
-            Daemon::configureLogger(isc::data::ConstElementPtr(),
-                                    CfgMgr::instance().getConfiguration());
-        }
+        // If there's no logging element, we'll just pass NULL pointer,
+        // which will be handled by configureLogger().
+        Daemon::configureLogger(json->get("Logging"),
+                                CfgMgr::instance().getConfiguration(),
+                                ControlledDhcpv6Srv::getInstance()->getVerbose());
 
         // Get Dhcp6 component from the config
         dhcp6 = json->get("Dhcp6");

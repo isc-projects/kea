@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef DHCPSRV_CONFIG_H
-#define DHCPSRV_CONFIG_H
+#ifndef DHCPSRV_CONFIGURATION_H
+#define DHCPSRV_CONFIGURATION_H
 
 #include <log/logger_level.h>
 #include <boost/shared_ptr.hpp>
@@ -22,7 +22,6 @@
 
 namespace isc {
 namespace dhcp {
-
 
 /// @brief Defines single logging destination
 ///
@@ -93,4 +92,4 @@ typedef boost::shared_ptr<Configuration> ConfigurationPtr;
 } // namespace isc::dhcp
 } // namespace isc
 
-#endif
+#endif // DHCPSRV_CONFIGURATION_H
