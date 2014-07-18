@@ -29,7 +29,7 @@ using namespace isc::test;
 
 namespace {
 
-/// @brief Set of JSON configurations used throughout the Rebind tests.
+/// @brief Set of JSON configurations used throughout the Confirm tests.
 ///
 /// - Configuration 0:
 ///   - only addresses (no prefixes)
@@ -37,32 +37,10 @@ namespace {
 ///   - 1 subnet for eth0 and 1 subnet for eth1
 ///
 /// - Configuration 1:
-///   - similar to Configuration 0 but different subnets
-///   - pools configured: 2001:db8:3::/64 and 2001:db8:4::/64
-///
-/// - Configuration 2:
 ///   - similar to Configuration 0 and Configuration 1
 ///   - pools configured: 3000:1::/64 and 3000:2::/64
 ///   - this specific configuration is used by tests using relays
 ///
-/// - Configuration 3:
-///   - similar to Configuration 2 but with different subnets
-///   - pools configured: 3000:3::/64 and 3000:4::/64
-///   - this specific configuration is used by tests using relays
-///
-/// - Configuration 5:
-///   - only prefixes (no addresses)
-///   - 2 subnets: 2001:db8:1::/40 and 2001:db8:2::/40
-///   - 2 prefix pools: 2001:db8:1::/72 and 2001:db8:2::/72
-///   - 1 subnet for eth0 and 1 subnet for eth1
-///   - this specific configuration is used by tests which don't use relays
-///
-/// - Configuration 6:
-///   - similar to Configuration 5 but with different subnets
-///   - 2 subnets: 2001:db8:3::/40 and 2001:db8:4::/40
-///   - 2 prefix pools: 2001:db8:3::/72 and 2001:db8:4::/72
-///   - delegated length /80
-///   - this specific configuration is used by tests which don't use relays
 const char* CONFIRM_CONFIGS[] = {
 // Configuration 0
     "{ \"interfaces\": [ \"all\" ],"
@@ -89,25 +67,6 @@ const char* CONFIRM_CONFIGS[] = {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
-        "    \"pool\": [ \"2001:db8:3::/64\" ],"
-        "    \"subnet\": \"2001:db8:3::/48\", "
-        "    \"interface-id\": \"\","
-        "    \"interface\": \"eth1\""
-        " },"
-        " {"
-        "    \"pool\": [ \"2001:db8:4::/64\" ],"
-        "    \"subnet\": \"2001:db8:4::/48\", "
-        "    \"interface-id\": \"\","
-        "    \"interface\": \"eth0\""
-        " } ],"
-        "\"valid-lifetime\": 4000 }",
-
-// Configuration 2
-    "{ \"interfaces\": [ \"all\" ],"
-        "\"preferred-lifetime\": 3000,"
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"subnet6\": [ { "
         "    \"pool\": [ \"3000:1::/64\" ],"
         "    \"subnet\": \"3000:1::/48\", "
         "    \"interface-id\": \"\","
@@ -119,84 +78,10 @@ const char* CONFIRM_CONFIGS[] = {
         "    \"interface-id\": \"\","
         "    \"interface\": \"eth1\""
         " } ],"
-        "\"valid-lifetime\": 4000 }",
-
-// Configuration 3
-    "{ \"interfaces\": [ \"all\" ],"
-        "\"preferred-lifetime\": 3000,"
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"subnet6\": [ { "
-        "    \"pool\": [ \"3000:3::/64\" ],"
-        "    \"subnet\": \"3000:3::/48\", "
-        "    \"interface-id\": \"\","
-        "    \"interface\": \"eth1\""
-        " },"
-        " {"
-        "    \"pool\": [ \"3000:4::/64\" ],"
-        "    \"subnet\": \"3000:4::/48\", "
-        "    \"interface-id\": \"\","
-        "    \"interface\": \"eth0\""
-        " } ],"
-        "\"valid-lifetime\": 4000 }",
-
-// Configuration 4
-    "{ \"interfaces\": [ \"all\" ],"
-        "\"preferred-lifetime\": 3000,"
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"subnet6\": [ { "
-        "    \"pd-pools\": ["
-        "        { \"prefix\": \"2001:db8:1:01::\", "
-        "          \"prefix-len\": 72, "
-        "          \"delegated-len\": 80"
-        "        } ],"
-        "    \"subnet\": \"2001:db8:1::/40\", "
-        "    \"interface-id\": \"\","
-        "    \"interface\": \"eth0\""
-        " },"
-        " {"
-        "    \"pd-pools\": ["
-        "        { \"prefix\": \"2001:db8:2:01::\", "
-        "          \"prefix-len\": 72, "
-        "          \"delegated-len\": 80"
-        "        } ],"
-        "    \"subnet\": \"2001:db8:2::/40\", "
-        "    \"interface-id\": \"\","
-        "    \"interface\": \"eth1\""
-        " } ],"
-        "\"valid-lifetime\": 4000 }",
-
-// Configuration 5
-    "{ \"interfaces\": [ \"all\" ],"
-        "\"preferred-lifetime\": 3000,"
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"subnet6\": [ { "
-        "    \"pd-pools\": ["
-        "        { \"prefix\": \"2001:db8:3:01::\", "
-        "          \"prefix-len\": 72, "
-        "          \"delegated-len\": 80"
-        "        } ],"
-        "    \"subnet\": \"2001:db8:3::/40\", "
-        "    \"interface-id\": \"\","
-        "    \"interface\": \"eth1\""
-        " },"
-        " {"
-        "    \"pd-pools\": ["
-        "        { \"prefix\": \"2001:db8:4:01::\", "
-        "          \"prefix-len\": 72, "
-        "          \"delegated-len\": 80"
-        "        } ],"
-        "    \"subnet\": \"2001:db8:4::/40\", "
-        "    \"interface-id\": \"\","
-        "    \"interface\": \"eth0\""
-        " } ],"
-        "\"valid-lifetime\": 4000 }",
-
+        "\"valid-lifetime\": 4000 }"
 };
 
-/// @brief Test fixture class for testing Rebind.
+/// @brief Test fixture class for testing Confirm..
 class ConfirmTest : public Dhcpv6SrvTest {
 public:
 
@@ -403,7 +288,7 @@ TEST_F(ConfirmTest, relayedClient) {
     // Configure client to request IA_NA.
     client.useNA();
     // Make 4-way exchange to get the lease.
-    ASSERT_NO_FATAL_FAILURE(requestLease(2, 2, client));
+    ASSERT_NO_FATAL_FAILURE(requestLease(1, 2, client));
     // Keep the client's lease for future reference.
     Lease6 lease_client1 = client.getLease(0);
     // Clone the lease and modify its address so as it is still in the range
@@ -439,7 +324,7 @@ TEST_F(ConfirmTest, relayedClient) {
 TEST_F(ConfirmTest, relayedClientNoAddress) {
     Dhcp6Client client;
     // Configure the server.
-    configure(CONFIRM_CONFIGS[2], *client.getServer());
+    configure(CONFIRM_CONFIGS[1], *client.getServer());
     // Make sure we ended-up having expected number of subnets configured.
     const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
     ASSERT_EQ(2, subnets->size());
@@ -460,7 +345,7 @@ TEST_F(ConfirmTest, relayedUnicast) {
     // Configure client to request IA_NA.
     client.useNA();
     // Make 4-way exchange to get the lease.
-    ASSERT_NO_FATAL_FAILURE(requestLease(2, 2, client));
+    ASSERT_NO_FATAL_FAILURE(requestLease(1, 2, client));
     // Make sure we have got the lease.
     ASSERT_GT(client.getLeaseNum(), 0);
     client.setDestAddress(IOAddress("2001:db8:1::1"));
