@@ -21,6 +21,7 @@
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
+#include <set>
 
 namespace isc {
 namespace dhcp {
@@ -76,9 +77,30 @@ public:
     struct Configuration {
         std::vector<LeaseInfo> leases_;
 
+        /// @brief Status code received in the global option scope.
+        uint16_t status_code_;
+
+        /// @brief Indicates if the status code has been received in the
+        /// last transaction.
+        bool received_status_code_;
+
+        /// @brief Constructor.
+        Configuration() {
+            clear();
+        }
+
         /// @brief Clears configuration.
         void clear() {
             leases_.clear();
+            resetGlobalStatusCode();
+        }
+
+        /// @brief Clears global status code.
+        ///
+        /// This function should be called before the new message is received.
+        void resetGlobalStatusCode() {
+            status_code_ = 0;
+            received_status_code_ = false;
         }
     };
 
@@ -120,6 +142,16 @@ public:
     ///
     /// @param srv Object representing server under test.
     Dhcp6Client(boost::shared_ptr<isc::test::NakedDhcpv6Srv>& srv);
+
+    /// @brief Create lease for the client.
+    ///
+    /// This function creates new lease on the client side without contacting
+    /// the server. This may be useful for the negative tests in which the
+    /// client is supposed to send invalid addresses/prefixes to the server
+    /// and expect certain responses.
+    ///
+    /// @param lease A lease to be applied for the client.
+    void createLease(const Lease6& lease);
 
     /// @brief Performs a 4-way echange between the client and the server.
     ///
@@ -179,6 +211,12 @@ public:
     /// @todo Perform sanity checks on returned messages.
     void doRequest();
 
+    /// @brief Sends Confirm to the server and receives Reply.
+    ///
+    /// This function simulates sending the Confirm message to the server and
+    /// receiving server's response (if any).
+    void doConfirm();
+
     /// @brief Removes the stateful configuration obtained from the server.
     ///
     /// It removes all leases held by the client.
@@ -203,6 +241,9 @@ public:
         return (context_);
     }
 
+    /// @brief Returns the collection of IAIDs held by the client.
+    std::set<uint32_t> getIAIDs() const;
+
     /// @brief Returns lease at specified index.
     ///
     /// @warning This method doesn't check if the specified index is out of
@@ -213,6 +254,19 @@ public:
     /// @return A lease at the specified index.
     Lease6 getLease(const size_t at) const {
         return (config_.leases_[at].lease_);
+    }
+
+    /// @brief Returns collection of leases for specified IAID.
+    ///
+    /// @param iaid IAID for which the leases should be returned.
+    ///
+    /// @return Vector containing leases for the IAID.
+    std::vector<Lease6> getLeasesByIAID(const uint32_t iaid) const;
+
+    /// @brief Returns the value of the global status code for the last
+    /// transaction.
+    uint16_t getStatusCode() const {
+        return (config_.status_code_);
     }
 
     /// @brief Returns status code set by the server for the lease.
@@ -246,6 +300,14 @@ public:
     /// The DUID modification affects the value returned by the
     /// @c Dhcp6Client::getClientId
     void modifyDUID();
+
+    /// @brief Checks if the global status code was received in the response
+    /// from the server.
+    ///
+    /// @return true if the global status code option was received.
+    bool receivedStatusCode() const {
+        return (config_.received_status_code_);
+    }
 
     /// @brief Sets destination address for the messages being sent by the
     /// client.
