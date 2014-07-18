@@ -17,17 +17,33 @@
 
 #include <cc/data.h>
 #include <dhcpsrv/configuration.h>
-#include <dhcpsrv/cfgmgr.h>
-#include <stdint.h>
 #include <vector>
 
 namespace isc {
 namespace dhcp {
 
-/// @brief Interprets JSON structures and translates them to log4cplus
+/// @brief Configures log4cplus by translating Kea configuration structures
 ///
-/// This parser iterates over provided JSON structures and translates them
+/// This parser iterates over provided data elements and translates them
 /// into values applicable to log4cplus.
+///
+/// The data structures converted to JSON format have the following syntax:
+/// {
+///     "name": "kea",
+///     "output_options": [
+///         {
+///             "output": "/home/thomson/kea-inst/kea-warn.log",
+///             "maxver": 8,
+///             "maxsize": 204800
+///         }
+///     ],
+///     "severity": "WARN"
+/// }
+///
+/// This is only an example and actual values may be different.
+///
+/// The data structures don't have to originate from JSON. JSON is just a
+/// convenient presentation syntax.
 ///
 /// This class uses Configuration structure to store logging configuration.
 class LogConfigParser {
@@ -44,30 +60,23 @@ public:
     /// parsed information in config_->logging_info_.
     ///
     /// @param log_config JSON structures to be parsed (loggers list)
-    void parseConfiguration(isc::data::ConstElementPtr log_config);
+    /// @param verbose specifies verbose mode (true forces DEBUG, debuglevel = 99)
+    void parseConfiguration(isc::data::ConstElementPtr log_config,
+                            bool verbose = false);
 
     /// @brief Applies stored configuration
     void applyConfiguration();
 
     /// @brief Configures default logging
-    static void defaultLogging();
+    ///
+    /// This method is static,
+    ///
+    /// @param verbose specifies verbose mode (true forces DEBUG, debuglevel = 99)
+    void applyDefaultConfiguration(bool verbose = false);
 
-protected:
+private:
 
     /// @brief Parses one JSON structure in Logging/loggers" array
-    ///
-    /// The structure has the following syntax:
-    /// {
-    ///     "name": "*",
-    ///     "output_options": [
-    ///         {
-    ///             "output": "/home/thomson/kea-inst/kea-warn.log",
-    ///             "maxver": 8,
-    ///             "maxsize": 204800
-    ///         }
-    ///     ],
-    ///     "severity": "WARN"
-    /// }
     ///
     /// @param entry JSON structure to be parsed
     /// @brief parses one structure in Logging/loggers.
@@ -75,6 +84,15 @@ protected:
 
     /// @brief Parses output_options structure
     ///
+    /// An example data structure that holds output_options in JSON format
+    /// looks like this:
+    ///     "output_options": [
+    ///         {
+    ///             "output": "/var/log/kea-warn.log",
+    ///             "maxver": 8,
+    ///             "maxsize": 204800
+    ///         }
+    ///     ],
     /// @param destination parsed parameters will be stored here
     /// @param output_options element to be parsed
     void parseOutputOptions(std::vector<LoggingDestination>& destination,
@@ -84,9 +102,15 @@ protected:
     ///
     /// LogConfigParser class uses only config_->logging_info_ field.
     ConfigurationPtr config_;
+
+    /// @brief Verbose mode
+    ///
+    /// When verbose mode is enabled, logging severity is overridden to DEBUG,
+    /// and debuglevel is always 99.
+    bool verbose_;
 };
 
 } // namespace isc::dhcp
 } // namespace isc
 
-#endif // CFGMGR_H
+#endif // DHCPSRV_LOGGING_H

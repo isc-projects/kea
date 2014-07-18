@@ -25,9 +25,14 @@ using namespace isc::data;
 
 namespace {
 
-// Very simple test. Checks whether Daemon can be instantiated.
+// Very simple test. Checks whether Daemon can be instantiated and its
+// default parameters are sane
 TEST(DaemonTest, noop) {
     EXPECT_NO_THROW(Daemon x);
+
+    // Check that the verbose mode is not set by default.
+    Daemon y;
+    EXPECT_FALSE(y.getVerbose());
 }
 
 // Checks that configureLogger method is behaving properly.
@@ -55,7 +60,7 @@ TEST(DaemonTest, parsingConsoleOutput) {
 
     // Spawn a daemon and tell it to configure logger
     Daemon x;
-    EXPECT_NO_THROW(x.configureLogger(config, storage));
+    EXPECT_NO_THROW(x.configureLogger(config, storage, false));
 
     // The parsed configuration should be processed by the daemon and
     // stored in configuration storage.

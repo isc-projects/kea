@@ -75,3 +75,8 @@ TEST_F(LoggerNameTest, ExpandLoggerName) {
     EXPECT_EQ(FULL_NAME, expandLoggerName(NAME));
     EXPECT_EQ(FULL_NAME, expandLoggerName(FULL_NAME));
 }
+
+// Checks that the default logger name is returned properly.
+TEST_F(LoggerNameTest, default) {
+    EXPECT_EQ("kea", getDefaultRootLoggerName());
+}

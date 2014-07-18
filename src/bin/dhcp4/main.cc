@@ -111,6 +111,9 @@ main(int argc, char* argv[]) {
         // Create the server instance.
         ControlledDhcpv4Srv server(port_number);
 
+        // Remember verbose-mode
+        server.setVerbose(verbose_mode);
+
         try {
             // Initialize the server.
             server.init(config_file);

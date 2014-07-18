@@ -34,7 +34,7 @@ namespace log {
 /// environment variables.  These are:
 ///
 /// - B10_LOGGER_ROOT\n
-/// Name of the root logger.  If not given, the string "bind10" will be used.
+/// Name of the root logger.  If not given, the string "kea" will be used.
 ///
 /// - B10_LOGGER_SEVERITY\n
 /// Severity of messages that will be logged.  This must be one of the strings

@@ -128,8 +128,26 @@ public:
     ///
     /// @param log_config JSON structures that describe logging
     /// @param storage configuration will be stored here
-    static void configureLogger(isc::data::ConstElementPtr log_config,
-                                const isc::dhcp::ConfigurationPtr& storage);
+    /// @param verbose specifies if verbose mode should be enabled
+    static void configureLogger(const isc::data::ConstElementPtr& log_config,
+                                const isc::dhcp::ConfigurationPtr& storage,
+                                bool verbose);
+
+    /// @brief Sets or clears verbose mode
+    ///
+    /// Verbose mode (-v in command-line) triggers loggers to log everythin
+    /// (sets severity to DEBUG and debuglevel to 99). Values specified in the
+    /// config file are ignored.
+    void setVerbose(bool verbose) {
+        verbose_ = verbose;
+    }
+
+    /// @brief Returns if running in verbose mode
+    ///
+    /// @return verbose mode
+    bool getVerbose() {
+        return (verbose_);
+    }
 
 protected:
 
@@ -163,6 +181,9 @@ private:
 
     /// @brief Config file name or empty if config file not used.
     static std::string config_file_;
+
+    /// @brief Verbose mode
+    bool verbose_;
 };
 
 }; // end of isc::dhcp namespace

@@ -35,6 +35,21 @@ CONFIG="{
             \"subnet\": \"2001:db8:1::/64\",
             \"pool\": [ \"2001:db8:1::10-2001:db8:1::100\" ]
         } ]
+    },
+
+    \"Logging\":
+    {
+        \"loggers\": [
+        {
+            \"name\": \"kea\",
+            \"output_options\": [
+                {
+                    \"output\": \"$LOG_FILE\"
+                }
+            ],
+            \"severity\": \"INFO\"
+        }
+        ]
     }
 }"
 # Invalid configuration (negative preferred-lifetime) to check that Kea
@@ -57,6 +72,21 @@ CONFIG_INVALID="{
             \"subnet\": \"2001:db8:1::/64\",
             \"pool\": [ \"2001:db8:1::10-2001:db8:1::100\" ]
         } ]
+    },
+
+    \"Logging\":
+    {
+        \"loggers\": [
+        {
+            \"name\": \"kea\",
+            \"output_options\": [
+                {
+                    \"output\": \"$LOG_FILE\"
+                }
+            ],
+            \"severity\": \"INFO\"
+        }
+        ]
     }
 }"
 

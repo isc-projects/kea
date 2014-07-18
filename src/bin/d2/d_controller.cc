@@ -224,21 +224,9 @@ DControllerBase::configFromFile() {
         // Temporary storage for logging configuration
         isc::dhcp::ConfigurationPtr storage(new isc::dhcp::Configuration());
 
-        // Get 'Logging' element from the config
-        isc::data::ConstElementPtr logger = whole_config->get("Logging");
-        if (logger) {
-            // Configure logger first, so it can be applied to DHCPv6
-            // configuration. If we don't have a logger, just pass
-            // empty configuration.
-
-            Daemon::configureLogger(logger, storage);
-        } else {
-            // There was no Logging element defined in the config file.
-            // Let's pass an empty pointer that will remove any current
-            // configuration.
-            Daemon::configureLogger(isc::data::ConstElementPtr(),
-                                    storage);
-        }
+        // Get 'Logging' element from the config and use it to set up
+        // logging. If there's no such element, we'll just pass NULL.
+        Daemon::configureLogger(whole_config->get("Logging"), storage, verbose_);
 
         // Extract derivation-specific portion of the configuration.
         module_config = whole_config->get(getAppName());

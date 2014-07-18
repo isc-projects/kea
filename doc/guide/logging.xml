@@ -55,13 +55,14 @@
           <title>name (string)</title>
 
           <para>
-          Each logger in the system has a name, the name being that
-          of the component using it to log messages. For instance,
-          if you want to configure logging for the Dhcp4 module,
-          you add an entry for a logger named <quote>Dhcp4</quote>. This
-          configuration will then be used by the loggers in the
-          Dhcp4 module, and all the libraries used by it.
-              </para>
+            Each logger in the system has a name, the name being that
+            of the component using it to log messages. For instance,
+            if you want to configure logging for the Dhcp4 module,
+            you add an entry for a logger named <quote>Dhcp4</quote>. This
+            configuration will then be used by the loggers in the
+            Dhcp4 module, and all the libraries used by it (unless
+            a library defines its own logger).
+          </para>
 
 <!-- TODO: later we will have a way to know names of all modules
 
@@ -78,7 +79,6 @@ Right now you can only see what their names are if they are running
           has the full name of <quote>Dhcp4.dhcpsrv</quote>. If
           there is no entry in Logging for a particular library,
           it will use the configuration given for the module.
-
         </para>
 
        <para>
@@ -137,6 +137,24 @@ Right now you can only see what their names are if they are running
           with a logger name of <quote>kea-dhcp4</quote>).
 
         </para>
+
+        <para>
+          Currently defined loggers are:
+        </para>
+        <itemizedlist>
+          <listitem>
+            <simpara>kea.dhcp4</simpara>
+          </listitem>
+          <listitem>
+            <simpara>kea.dhcp6</simpara>
+          </listitem>
+          <listitem>
+            <simpara>kea-dhcp-ddns.dhcpddns</simpara>
+          </listitem>
+          <listitem>
+            <simpara>kea.dhcpsrv</simpara>
+          </listitem>
+        </itemizedlist>
 
         </section>
 
