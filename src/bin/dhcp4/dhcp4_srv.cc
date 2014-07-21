@@ -942,7 +942,15 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     }
     // client-id is not mandatory in DHCPv4
 
-    IOAddress hint = question->getYiaddr();
+    // Try to get the Requested IP Address option and use the address as a hint
+    // for the allocation engine. If the server doesn't already have a lease
+    // for this client it will try to allocate the one requested.
+    OptionCustomPtr opt_requested_address = boost::dynamic_pointer_cast<
+        OptionCustom>(question->getOption(DHO_DHCP_REQUESTED_ADDRESS));
+    IOAddress hint("0.0.0.0");
+    if (opt_requested_address) {
+        hint = opt_requested_address->readAddress();
+    }
 
     HWAddrPtr hwaddr = question->getHWAddr();
 
@@ -1078,7 +1086,7 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
 
     } else {
         // Allocation engine did not allocate a lease. The engine logged
-        // cause of that failure. The only thing left is to insert
+        // cause of that failure. The onlxy thing left is to insert
         // status code to pass the sad news to the client.
 
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, fake_allocation?
