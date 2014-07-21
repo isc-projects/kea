@@ -21,6 +21,8 @@
 #include <boost/pointer_cast.hpp>
 #include <cstdlib>
 
+using namespace isc::asiolink;
+
 namespace isc {
 namespace dhcp {
 namespace test {
@@ -38,9 +40,10 @@ Dhcp4Client::Configuration::reset() {
     log_servers_.clear();
     quotes_servers_.clear();
     serverid_ = asiolink::IOAddress("0.0.0.0");
+    lease_ = Lease4();
 }
 
-Dhcp4Client::Dhcp4Client() :
+Dhcp4Client::Dhcp4Client(const Dhcp4Client::State& state) :
     config_(),
     curr_transid_(0),
     dest_addr_("255.255.255.255"),
@@ -49,10 +52,12 @@ Dhcp4Client::Dhcp4Client() :
     requested_options_(),
     server_facing_relay_addr_("10.0.0.2"),
     srv_(boost::shared_ptr<NakedDhcpv4Srv>(new NakedDhcpv4Srv(0))),
+    state_(state),
     use_relay_(false) {
 }
 
-Dhcp4Client::Dhcp4Client(boost::shared_ptr<NakedDhcpv4Srv>& srv) :
+Dhcp4Client::Dhcp4Client(boost::shared_ptr<NakedDhcpv4Srv>& srv,
+                         const Dhcp4Client::State& state) :
     config_(),
     curr_transid_(0),
     dest_addr_("255.255.255.255"),
@@ -61,6 +66,7 @@ Dhcp4Client::Dhcp4Client(boost::shared_ptr<NakedDhcpv4Srv>& srv) :
     requested_options_(),
     server_facing_relay_addr_("10.0.0.2"),
     srv_(srv),
+    state_(state),
     use_relay_(false) {
 }
 
@@ -104,7 +110,12 @@ Dhcp4Client::applyConfiguration() {
         config_.serverid_ = opt_serverid->readAddress();
     }
 
-    /// @todo Other possible configuration, e.g. lease.
+    /// @todo Set the valid lifetime, t1, t2 etc.
+    config_.lease_ = Lease4(IOAddress(context_.response_->getYiaddr()),
+                            &context_.response_->getHWAddr()->hwaddr_[0],
+                            context_.response_->getHWAddr()->hwaddr_.size(),
+                            0, 0, 0, 0, 0, time(NULL), 0, false, false,
+                            "");
 }
 
 void
@@ -124,20 +135,36 @@ Dhcp4Client::createMsg(const uint8_t msg_type) {
 }
 
 void
+Dhcp4Client::doDiscover(const boost::shared_ptr<IOAddress>& requested_addr) {
+    context_.query_ = createMsg(DHCPDISCOVER);
+    // Request options if any.
+    includePRL();
+    if (requested_addr) {
+        Option4AddrLstPtr
+            opt_requested_addr(new Option4AddrLst(DHO_DHCP_REQUESTED_ADDRESS,
+                                                  IOAddress(*requested_addr)));
+        context_.query_->addOption(opt_requested_addr);
+    }
+    // Send the message to the server.
+    sendMsg(context_.query_);
+    // Expect response.
+    context_.response_ = receiveOneMsg();
+}
+
+void
+Dhcp4Client::doDORA(const boost::shared_ptr<IOAddress>& requested_addr) {
+    doDiscover(requested_addr);
+    if (context_.response_ && (context_.response_->getType() == DHCPOFFER)) {
+        doRequest(requested_addr);
+    }
+}
+
+
+void
 Dhcp4Client::doInform(const bool set_ciaddr) {
     context_.query_ = createMsg(DHCPINFORM);
     // Request options if any.
-    if (!requested_options_.empty()) {
-        // Include Parameter Request List if at least one option code
-        // has been specified to be requested.
-        OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
-                                  DHO_DHCP_PARAMETER_REQUEST_LIST));
-        for (std::set<uint8_t>::const_iterator opt = requested_options_.begin();
-             opt != requested_options_.end(); ++opt) {
-            prl->addValue(*opt);
-        }
-        context_.query_->addOption(prl);
-    }
+    includePRL();
     // The client sending a DHCPINFORM message has an IP address obtained
     // by some other means, e.g. static configuration. The lease which we
     // are using here is most likely set by the createLease method.
@@ -156,6 +183,72 @@ Dhcp4Client::doInform(const bool set_ciaddr) {
     // configuration.
     if (context_.response_->getType() == DHCPACK) {
         applyConfiguration();
+    }
+}
+
+void
+Dhcp4Client::doRequest(const boost::shared_ptr<IOAddress>& requested_addr) {
+    context_.query_ = createMsg(DHCPREQUEST);
+
+    // Set ciaddr.
+    if ((state_ == SELECTING) || (state_ == INIT_REBOOT)) {
+        context_.query_->setCiaddr(IOAddress("0.0.0.0"));
+    } else {
+        context_.query_->setCiaddr(IOAddress(config_.lease_.addr_));
+    }
+
+    // Requested IP address.
+    if ((state_ == SELECTING) || (state_ == INIT_REBOOT)) {
+        if (context_.response_ &&
+            (context_.response_->getType() == DHCPOFFER) &&
+            (context_.response_->getYiaddr() != IOAddress("0.0.0.0"))) {
+            Option4AddrLstPtr
+                opt_requested_addr(new Option4AddrLst(DHO_DHCP_REQUESTED_ADDRESS,
+                                                      IOAddress(context_.response_->getYiaddr())));
+            context_.query_->addOption(opt_requested_addr);
+        } else {
+            isc_throw(Dhcp4ClientError, "error sending the DHCPREQUEST because"
+                      " the received DHCPOFFER message was invalid");
+        }
+    }
+
+    // Server identifier.
+    if (state_ == SELECTING) {
+        if (context_.response_) {
+            OptionPtr opt_serverid =
+                context_.response_->getOption(DHO_DHCP_SERVER_IDENTIFIER);
+            if (!opt_serverid) {
+                isc_throw(Dhcp4ClientError, "missing server identifier in the"
+                          " server's response");
+            }
+            context_.query_->addOption(opt_serverid);
+        }
+    }
+
+    // Request options if any.
+    includePRL();
+    // Send the message to the server.
+    sendMsg(context_.query_);
+    // Expect response.
+    context_.response_ = receiveOneMsg();
+    // If the server has responded, store the configuration received.
+    if (context_.response_) {
+        applyConfiguration();
+    }
+}
+
+void
+Dhcp4Client::includePRL() {
+    if (!requested_options_.empty() && context_.query_) {
+        // Include Parameter Request List if at least one option code
+        // has been specified to be requested.
+        OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                  DHO_DHCP_PARAMETER_REQUEST_LIST));
+        for (std::set<uint8_t>::const_iterator opt = requested_options_.begin();
+             opt != requested_options_.end(); ++opt) {
+            prl->addValue(*opt);
+        }
+        context_.query_->addOption(prl);
     }
 }
 
