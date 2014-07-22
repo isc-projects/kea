@@ -71,6 +71,15 @@ Dhcp4Client::Dhcp4Client(boost::shared_ptr<NakedDhcpv4Srv>& srv,
 }
 
 void
+Dhcp4Client::addRequestedAddress(const asiolink::IOAddress& addr) {
+    if (context_.query_) {
+        Option4AddrLstPtr opt(new Option4AddrLst(DHO_DHCP_REQUESTED_ADDRESS,
+                                                 addr));
+        context_.query_->addOption(opt);
+    }
+}
+
+void
 Dhcp4Client::applyConfiguration() {
     Pkt4Ptr resp = context_.response_;
     if (!resp) {
@@ -140,10 +149,7 @@ Dhcp4Client::doDiscover(const boost::shared_ptr<IOAddress>& requested_addr) {
     // Request options if any.
     includePRL();
     if (requested_addr) {
-        Option4AddrLstPtr
-            opt_requested_addr(new Option4AddrLst(DHO_DHCP_REQUESTED_ADDRESS,
-                                                  IOAddress(*requested_addr)));
-        context_.query_->addOption(opt_requested_addr);
+        addRequestedAddress(*requested_addr);
     }
     // Send the message to the server.
     sendMsg(context_.query_);
@@ -155,10 +161,9 @@ void
 Dhcp4Client::doDORA(const boost::shared_ptr<IOAddress>& requested_addr) {
     doDiscover(requested_addr);
     if (context_.response_ && (context_.response_->getType() == DHCPOFFER)) {
-        doRequest(requested_addr);
+        doRequest();
     }
 }
-
 
 void
 Dhcp4Client::doInform(const bool set_ciaddr) {
@@ -187,7 +192,7 @@ Dhcp4Client::doInform(const bool set_ciaddr) {
 }
 
 void
-Dhcp4Client::doRequest(const boost::shared_ptr<IOAddress>& requested_addr) {
+Dhcp4Client::doRequest() {
     context_.query_ = createMsg(DHCPREQUEST);
 
     // Set ciaddr.
@@ -198,18 +203,17 @@ Dhcp4Client::doRequest(const boost::shared_ptr<IOAddress>& requested_addr) {
     }
 
     // Requested IP address.
-    if ((state_ == SELECTING) || (state_ == INIT_REBOOT)) {
+    if (state_ == SELECTING) {
         if (context_.response_ &&
             (context_.response_->getType() == DHCPOFFER) &&
             (context_.response_->getYiaddr() != IOAddress("0.0.0.0"))) {
-            Option4AddrLstPtr
-                opt_requested_addr(new Option4AddrLst(DHO_DHCP_REQUESTED_ADDRESS,
-                                                      IOAddress(context_.response_->getYiaddr())));
-            context_.query_->addOption(opt_requested_addr);
+            addRequestedAddress(context_.response_->getYiaddr());
         } else {
             isc_throw(Dhcp4ClientError, "error sending the DHCPREQUEST because"
                       " the received DHCPOFFER message was invalid");
         }
+    } else if (state_ == INIT_REBOOT) {
+        addRequestedAddress(config_.lease_.addr_);
     }
 
     // Server identifier.

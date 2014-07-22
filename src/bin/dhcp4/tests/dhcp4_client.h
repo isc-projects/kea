@@ -122,6 +122,13 @@ public:
 
     /// @brief Sends DHCPDISCOVER message to the server and receives response.
     ///
+    /// The message being sent to the server includes Parameter Request List
+    /// option if any options to be requested have been specified using the
+    /// @c requestOptions or @c requestOption methods.
+    ///
+    /// The configuration returned by the server in the DHCPOFFER message is
+    /// NOT stored in the client configuration: @c config_.
+    ///
     /// @param requested_addr A pointer to the IP Address to be sent in the
     /// Requested IP Address option or NULL if the option should not be
     /// included.
@@ -129,6 +136,9 @@ public:
                     requested_addr = boost::shared_ptr<asiolink::IOAddress>());
 
     /// @brief Perform 4-way exchange with a server.
+    ///
+    /// This method calls @c doDiscover and @c doRequest to perform the 4-way
+    /// exchange with the server.
     ///
     /// @param requested_addr A pointer to the address to be requested using the
     /// Requested IP Address option.
@@ -157,11 +167,29 @@ public:
 
     /// @brief Sends DHCPREQUEST Message to the server and receives a response.
     ///
-    /// @param requested_addr A pointer to the IP Address to be sent in the
-    /// Requested IP Address option or NULL if the option should not be
-    /// included.
-    void doRequest(const boost::shared_ptr<asiolink::IOAddress>&
-                   requested_addr = boost::shared_ptr<asiolink::IOAddress>());
+    /// This method simulates sending the DHCPREQUEST message to the server and
+    /// receiving a response. The DHCPREQUEST message can be used by the client
+    /// being in various states:
+    /// - SELECTING - client is trying to obtain a new lease and it has selected
+    /// the server using the DHCPDISCOVER.
+    /// - INIT-REBOOT - client cached an address it was previously using and is
+    /// now trying to verify if this addres is still valid.
+    /// - RENEW - client's renewal timer has passed and the client is trying to
+    /// extend the lifetime of the lease.
+    /// - REBIND - client's rebind timer has passed and the client is trying to
+    /// extend the lifetime of the lease from any server.
+    ///
+    /// Depending on the state that the client is in, different combinations of
+    /// - ciaddr
+    /// - Requested IP Address option
+    /// - server identifier
+    /// are used (as per RFC2131, section 4.3.2). Therefore, the unit tests
+    /// must setthe appropriate state of the client prior to calling this
+    /// method using the @c setState function.
+    ///
+    /// When the server returns the DHCPACK the configuration carried in the
+    /// DHCPACK message is applied and can be obtained from the @c config_.
+    void doRequest();
 
     /// @brief Generates a hardware address used by the client.
     ///
@@ -267,6 +295,12 @@ public:
     Configuration config_;
 
 private:
+
+    /// @brief Creates and addds Requested IP Address option to the client's
+    /// query.
+    ///
+    /// @param addr Address to be added in the Requested IP Address option.
+    void addRequestedAddress(const asiolink::IOAddress& addr);
 
     /// @brief Stores configuration received from the server.
     ///
