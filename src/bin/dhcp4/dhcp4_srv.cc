@@ -940,7 +940,13 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     if (opt) {
         client_id = ClientIdPtr(new ClientId(opt->getData()));
     }
+
     // client-id is not mandatory in DHCPv4
+
+    // Get the server identifier. It will be used to determine the state
+    // of the client.
+    OptionCustomPtr opt_serverid = boost::dynamic_pointer_cast<
+        OptionCustom>(question->getOption(DHO_DHCP_SERVER_IDENTIFIER));
 
     // Try to get the Requested IP Address option and use the address as a hint
     // for the allocation engine. If the server doesn't already have a lease
@@ -961,6 +967,25 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     // it should include this hint. That will help us during the actual lease
     // allocation.
     bool fake_allocation = (question->getType() == DHCPDISCOVER);
+
+    // If there is no server id and there is a Requested IP Address option
+    // the client is in the INIT-REBOOT state in which the server has to
+    // determine whether the client's notion of the address has to be verified.
+    if (!fake_allocation && !opt_serverid && opt_requested_address) {
+        Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(hint);
+        if (!lease) {
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL,
+                      DHCP4_INVALID_ADDRESS_INIT_REBOOT)
+                .arg(client_id ? client_id->toText():"(no client-id)")
+                .arg(hwaddr ? hwaddr->toText():"(no hwaddr info)")
+                .arg(hint.toText());
+
+            answer->setType(DHCPNAK);
+            answer->setYiaddr(IOAddress("0.0.0.0"));
+            return;
+        }
+    }
+
 
     CalloutHandlePtr callout_handle = getCalloutHandle(question);
 
@@ -1001,8 +1026,8 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     /// @todo pass the actual FQDN data.
     Lease4Ptr old_lease;
     Lease4Ptr lease = alloc_engine_->allocateLease4(subnet, client_id, hwaddr,
-                                                      hint, fqdn_fwd, fqdn_rev,
-                                                      hostname,
+                                                    hint, fqdn_fwd, fqdn_rev,
+                                                    hostname,
                                                     fake_allocation,
                                                     callout_handle,
                                                     old_lease);
