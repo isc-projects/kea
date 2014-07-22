@@ -123,6 +123,11 @@ const char* DORA_CONFIGS[] = {
 };
 
 /// @brief Test fixture class for testing 4-way (DORA) exchanges.
+///
+/// @todo Currently there is a limit number of test cases covered here.
+/// In the future it is planned that the tests from the
+/// dhcp4_srv_unittest.cc will be migrated here and will use the
+/// @c Dhcp4Client class.
 class DORATest : public Dhcpv4SrvTest {
 public:
 
@@ -165,6 +170,49 @@ TEST_F(DORATest, selectingDoNotRequestAddress) {
     ASSERT_NE(client.config_.lease_.addr_.toText(), "0.0.0.0");
 }
 
+/// This test verifies that multiple clients may use the DHCPv4 server
+/// and obtain unique leases.
+TEST_F(DORATest, selectingMultipleClients) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Configure DHCP server.
+    configure(DORA_CONFIGS[0], *client.getServer());
+
+    // Get the first lease.
+    ASSERT_NO_THROW(client.doDORA());
+
+    // Make sure that the server responded.
+    Pkt4Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Store the lease.
+    Lease4 lease1 = client.config_.lease_;
+
+    // Get the lease for a different client.
+    client.modifyHWAddr();
+    ASSERT_NO_THROW(client.doDORA());
+    // Make sure that the server responded.
+    resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Store the lease.
+    Lease4 lease2 = client.config_.lease_;
+
+    // Get the lease for a different client.
+    client.modifyHWAddr();
+    ASSERT_NO_THROW(client.doDORA());
+    // Make sure that the server responded.
+    resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Store the lease.
+    Lease4 lease3 = client.config_.lease_;
+
+    // Make sure that unique addresses have been assigned.
+    EXPECT_NE(lease1.addr_, lease2.addr_);
+    EXPECT_NE(lease2.addr_, lease3.addr_);
+    EXPECT_NE(lease1.addr_, lease3.addr_);
+}
+
 // This test verifies that the client in a SELECTING state can request
 // a specific address and that this address will be assigned when
 // available. It also tests that if the client requests an address which
@@ -197,7 +245,7 @@ TEST_F(DORATest, selectingRequestAddress) {
     resp = client.getContext().response_;
     // Make sure that the server responded.
     ASSERT_TRUE(resp);
-    // Make sure that the server has responded with DHCPACK.    
+    // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
     // Response must not be relayed.
     EXPECT_FALSE(resp->isRelayed());
@@ -277,8 +325,7 @@ TEST_F(DORATest, InitRebootRequest) {
     // to the INIT_REBOOT state so as the client can request the cached
     // lease using the DHCPREQUEST message.
     client.setState(Dhcp4Client::INIT_REBOOT);
-    ASSERT_NO_THROW(client.doRequest(boost::shared_ptr<
-                                     IOAddress>(new IOAddress("10.0.0.50"))));
+    ASSERT_NO_THROW(client.doRequest());
 
     // Make sure that the server responded.
     ASSERT_TRUE(client.getContext().response_);
@@ -295,8 +342,7 @@ TEST_F(DORATest, InitRebootRequest) {
     // Try to request a different address than the client has. The server
     // should respond with DHCPNAK.
     client.config_.lease_.addr_ = IOAddress("10.0.0.30");
-    ASSERT_NO_THROW(client.doRequest(boost::shared_ptr<
-                                     IOAddress>(new IOAddress("10.0.0.50"))));
+    ASSERT_NO_THROW(client.doRequest());
     // Make sure that the server responded.
     ASSERT_TRUE(client.getContext().response_);
     resp = client.getContext().response_;
