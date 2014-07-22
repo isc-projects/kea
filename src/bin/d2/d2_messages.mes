@@ -16,15 +16,15 @@ $NAMESPACE isc::d2
 
 % DCTL_CCSESSION_ENDING %1 ending control channel session
 This debug message is issued just before the controller attempts
-to disconnect from its session with the BIND10 control channel.
+to disconnect from its session with the Kea control channel.
 
 % DCTL_CCSESSION_STARTING %1 starting control channel session, specfile: %2
 This debug message is issued just before the controller attempts
-to establish a session with the BIND10 control channel.
+to establish a session with the Kea control channel.
 
 % DCTL_COMMAND_RECEIVED %1 received command: %2, arguments: %3
 A debug message listing the command (and possible arguments) received
-from the BIND10 control system by the controller.
+from the Kea control system by the controller.
 
 % DCTL_CONFIG_COMPLETE server has completed configuration: %1
 This is an informational message announcing the successful processing of a
@@ -52,13 +52,13 @@ events is called.  This only happens during initial startup.
 
 % DCTL_CONFIG_UPDATE %1 updated configuration received: %2
 A debug message indicating that the controller has received an
-updated configuration from the BIND10 configuration system.
+updated configuration from the Kea configuration system.
 
-% DCTL_DISCONNECT_FAIL %1 controller failed to end session with BIND10: %2
-This message indicates that while shutting down, the Dhcp-Ddns controller
-encountered an error terminating communication with the BIND10. The service
-will still exit.  While theoretically possible, this situation is rather
-unlikely.
+% DCTL_DISCONNECT_FAIL %1 controller failed to end session with Kea: %2
+This message indicates that while shutting down, the DHCP-DDNS controller
+encountered an error terminating communication with the Kea configuration
+system. The service will still exit.  While theoretically possible,
+this situation is rather unlikely.
 
 % DCTL_INIT_PROCESS %1 initializing the application
 This debug message is issued just before the controller attempts
@@ -87,13 +87,13 @@ included in the message.
 This debug message is issued just before the controller invokes
 the application run method.
 
-% DCTL_SESSION_FAIL %1 controller failed to establish BIND10 session: %1
+% DCTL_SESSION_FAIL %1 controller failed to establish Kea session: %1
 The controller has failed to establish communication with the rest of BIND
 10 and will exit.
 
 % DCTL_STANDALONE %1 skipping message queue, running standalone
 This is a debug message indicating that the controller is running in the
-application in standalone mode. This means it will not connected to the BIND10
+application in standalone mode. This means it will not connected to the Kea
 message queue. Standalone mode is only useful during program development,
 and should not be used in a production environment.
 
