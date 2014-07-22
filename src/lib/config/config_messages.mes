@@ -1,4 +1,4 @@
-# Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +18,7 @@ $NAMESPACE isc::config
 There was a problem with an incoming message on the command and control
 channel. The message does not appear to be a valid command, and is
 missing a required element or contains an unknown data format. This
-most likely means that another BIND10 module is sending a bad message.
+most likely means that another Kea module is sending a bad message.
 The message itself is ignored by this module.
 
 % CONFIG_CCSESSION_MSG_INTERNAL error handling CC session message: %1
@@ -82,7 +82,7 @@ will be updated with the information.
 % CONFIG_MOD_SPEC_FORMAT module specification error in %1: %2
 The given file does not appear to be a valid specification file: details
 are included in the message. Please verify that the filename is correct
-and that its contents are a valid BIND10 module specification.
+and that its contents are a valid Kea module specification.
 
 % CONFIG_MOD_SPEC_REJECT module specification rejected by cfgmgr: %1
 The specification file for this module was rejected by the configuration

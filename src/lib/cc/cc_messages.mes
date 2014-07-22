@@ -1,4 +1,4 @@
-# Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010, 2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -21,7 +21,7 @@ daemon asynchronously, but the ASIO library returned an error.
 % CC_CONN_ERROR error connecting to message queue (%1)
 It is impossible to reach the message queue daemon for the reason given. It
 is unlikely there'll be reason for whatever program this currently is to
-continue running, as the communication with the rest of BIND 10 is vital
+continue running, as the communication with the rest of Kea is vital
 for the components.
 
 % CC_DISCONNECT disconnecting from message queue daemon

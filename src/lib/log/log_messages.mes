@@ -1,4 +1,4 @@
-# Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -36,8 +36,8 @@ Logging has been configured so that output is written to the terminal
 Allowed values are "stdout" and "stderr".
 
 % LOG_DUPLICATE_MESSAGE_ID duplicate message ID (%1) in compiled code
-During start-up, BIND 10 detected that the given message identification
-had been defined multiple times in the BIND 10 code.  This indicates a
+During start-up, Kea detected that the given message identification
+had been defined multiple times in the Kea code.  This indicates a
 programming error; please submit a bug report.
 
 % LOG_DUPLICATE_NAMESPACE line %1: duplicate $NAMESPACE directive found
@@ -99,10 +99,10 @@ There may be several reasons why this message may appear:
 - The program outputting the message may not use that particular message
 (e.g. it originates in a module not used by the program).
 
-- The local file was written for an earlier version of the BIND 10 software
+- The local file was written for an earlier version of the Kea software
 and the later version no longer generates that message.
 
-Whatever the reason, there is no impact on the operation of BIND 10.
+Whatever the reason, there is no impact on the operation of Kea.
 
 % LOG_OPEN_OUTPUT_FAIL unable to open %1 for output: %2
 Originating within the logging code, the program was not able to open
@@ -115,7 +115,7 @@ This error is generated when the compiler finds a $PREFIX directive with
 more than one argument.
 
 Note: the $PREFIX directive is deprecated and will be removed in a future
-version of BIND 10.
+version of Kea.
 
 % LOG_PREFIX_INVALID_ARG line %1: $PREFIX directive has an invalid argument ('%2')
 Within a message file, the $PREFIX directive takes a single argument,
@@ -126,10 +126,10 @@ with a digit).  A $PREFIX directive was found with an argument (given
 in the message) that violates those restrictions.
 
 Note: the $PREFIX directive is deprecated and will be removed in a future
-version of BIND 10.
+version of Kea.
 
 % LOG_READING_LOCAL_FILE reading local message file %1
-This is an informational message output by BIND 10 when it starts to read
+This is an informational message output by Kea when it starts to read
 a local message file.  (A local message file may replace the text of
 one or more messages; the ID of the message will not be changed though.)
 

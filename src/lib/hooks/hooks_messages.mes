@@ -1,4 +1,4 @@
-# Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -55,23 +55,23 @@ This is a debug message, output when a library (whose index in the list
 of libraries (being) loaded is given) registers a callout.
 
 % HOOKS_CLOSE_ERROR failed to close hook library %1: %2
-BIND 10 has failed to close the named hook library for the stated reason.
+Kea has failed to close the named hook library for the stated reason.
 Although this is an error, this should not affect the running system
 other than as a loss of resources.  If this error persists, you should
-restart BIND 10.
+restart Kea.
 
 % HOOKS_HOOK_LIST_RESET the list of hooks has been reset
 This is a message indicating that the list of hooks has been reset.
-While this is usual when running the BIND 10 test suite, it should not be
-seen when running BIND 10 in a production environment.  If this appears,
+While this is usual when running the Kea test suite, it should not be
+seen when running Kea in a production environment.  If this appears,
 please report a bug through the usual channels.
 
 % HOOKS_INCORRECT_VERSION hook library %1 is at version %2, require version %3
-BIND 10 has detected that the named hook library has been built against
-a version of BIND 10 that is incompatible with the version of BIND 10
+Kea has detected that the named hook library has been built against
+a version of Kea that is incompatible with the version of Kea
 running on your system.  It has not loaded the library.
 
-This is most likely due to the installation of a new version of BIND 10
+This is most likely due to the installation of a new version of Kea
 without rebuilding the hook library.  A rebuild and re-install of the
 library should fix the problem in most cases.
 
@@ -133,14 +133,14 @@ It merely states that the library did not contain an "unload" function.
 
 % HOOKS_NO_VERSION no 'version' function found in hook library %1
 The shared library named in the message was found and successfully loaded,
-but BIND 10 did not find a function named "version" in it.  This function
-is required and should return the version of BIND 10 against which the
+but Kea did not find a function named "version" in it.  This function
+is required and should return the version of Kea against which the
 library was built.  The value is used to check that the library was built
-against a compatible version of BIND 10.  The library has not been loaded.
+against a compatible version of Kea.  The library has not been loaded.
 
 % HOOKS_OPEN_ERROR failed to open hook library %1: %2
-BIND 10 failed to open the specified hook library for the stated
-reason. The library has not been loaded.  BIND 10 will continue to
+Kea failed to open the specified hook library for the stated
+reason. The library has not been loaded.  Kea will continue to
 function, but without the services offered by the library.
 
 % HOOKS_STD_CALLOUT_REGISTERED hooks library %1 registered standard callout for hook %2 at address %3

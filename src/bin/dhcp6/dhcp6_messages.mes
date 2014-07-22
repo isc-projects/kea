@@ -21,11 +21,11 @@ Interface Manager starts up procedure of opening sockets.
 
 % DHCP6_CCSESSION_STARTED control channel session started on socket %1
 A debug message issued during startup after the IPv6 DHCP server has
-successfully established a session with the BIND 10 control channel.
+successfully established a session with the Kea control channel.
 
 % DHCP6_CCSESSION_STARTING starting control channel session, specfile: %1
 This debug message is issued just before the IPv6 DHCP server attempts
-to establish a session with the BIND 10 control channel.
+to establish a session with the Kea control channel.
 
 % DHCP6_CLASS_ASSIGNED client packet has been assigned to the following class(es): %1
 This debug message informs that incoming packet has been assigned to specified
@@ -38,7 +38,7 @@ address assignment.  The most likely cause is a problem with the client.
 
 % DHCP6_COMMAND_RECEIVED received command %1, arguments: %2
 A debug message listing the command (and possible arguments) received
-from the BIND 10 control system by the IPv6 DHCP server.
+from the Kea control system by the IPv6 DHCP server.
 
 % DHCP6_CONFIG_RECEIVED received configuration: %1
 A debug message listing the configuration received by the DHCPv6 server.
@@ -71,7 +71,7 @@ change is committed by the administrator.
 
 % DHCP6_CONFIG_UPDATE updated configuration received: %1
 A debug message indicating that the IPv6 DHCP server has received an
-updated configuration from the BIND 10 configuration system.
+updated configuration from the Kea configuration system.
 
 % DHCP6_DB_BACKEND_STARTED lease database started (type: %1, name: %2)
 This informational message is printed every time the IPv6 DHCP server
@@ -363,13 +363,13 @@ On receipt of message containing details to a change of its configuration,
 the IPv6 DHCP server failed to create a parser to decode the contents of
 the named configuration element, or the creation succeeded but the parsing
 actions and committal of changes failed.  The message has been output in
-response to a non-BIND 10 exception being raised.  Additional messages
+response to a non-Kea exception being raised.  Additional messages
 may give further information.
 
 The most likely cause of this is that the specification file for the
 server (which details the allowable contents of the configuration) is
-not correct for this version of BIND 10.  This may be the result of an
-interrupted installation of an update to BIND 10.
+not correct for this version of Kea.  This may be the result of an
+interrupted installation of an update to Kea.
 
 % DHCP6_PARSER_FAIL failed to create or run parser for configuration element %1: %2
 On receipt of message containing details to a change of its configuration,
@@ -512,7 +512,7 @@ The IPv6 DHCP server has encountered a fatal error and is terminating.
 The reason for the failure is included in the message.
 
 % DHCP6_INIT_FAIL failed to initialize Kea server: %1
-The server has failed to establish communication with the rest of BIND 10,
+The server has failed to establish communication with the rest of Kea,
 failed to read JSON configuration file or excountered any other critical
 issue that prevents it from starting up properly. Attached error message
 provides more details about the issue.
