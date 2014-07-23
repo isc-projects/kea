@@ -76,7 +76,7 @@ kea_config_file=${prefix}/etc/kea/kea.conf
 # Location of Kea binaries.
 exec_prefix=${prefix}
 dhcp4_srv=${exec_prefix}/sbin/kea/kea-dhcp4
-dhcp6_srv=${exec_prefix}/sin/kea/kea-dhcp6
+dhcp6_srv=${exec_prefix}/sbin/kea/kea-dhcp6
 dhcp_ddns_srv=${exec_prefix}/sbin/kea/kea-dhcp-ddns
 
 # Start DHCPv4 server?
