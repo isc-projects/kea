@@ -976,9 +976,9 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
         if (!lease) {
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL,
                       DHCP4_INVALID_ADDRESS_INIT_REBOOT)
+                .arg(hint.toText())
                 .arg(client_id ? client_id->toText():"(no client-id)")
-                .arg(hwaddr ? hwaddr->toText():"(no hwaddr info)")
-                .arg(hint.toText());
+                .arg(hwaddr ? hwaddr->toText():"(no hwaddr info)");
 
             answer->setType(DHCPNAK);
             answer->setYiaddr(IOAddress("0.0.0.0"));
@@ -1111,7 +1111,7 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
 
     } else {
         // Allocation engine did not allocate a lease. The engine logged
-        // cause of that failure. The onlxy thing left is to insert
+        // cause of that failure. The only thing left is to insert
         // status code to pass the sad news to the client.
 
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, fake_allocation?
