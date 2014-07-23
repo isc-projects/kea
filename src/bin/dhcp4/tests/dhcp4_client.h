@@ -173,7 +173,7 @@ public:
     /// - SELECTING - client is trying to obtain a new lease and it has selected
     /// the server using the DHCPDISCOVER.
     /// - INIT-REBOOT - client cached an address it was previously using and is
-    /// now trying to verify if this addres is still valid.
+    /// now trying to verify if this address is still valid.
     /// - RENEW - client's renewal timer has passed and the client is trying to
     /// extend the lifetime of the lease.
     /// - REBIND - client's rebind timer has passed and the client is trying to
@@ -296,7 +296,7 @@ public:
 
 private:
 
-    /// @brief Creates and addds Requested IP Address option to the client's
+    /// @brief Creates and adds Requested IP Address option to the client's
     /// query.
     ///
     /// @param addr Address to be added in the Requested IP Address option.
@@ -324,9 +324,10 @@ private:
 
     /// @brief Include PRL Option in the query message.
     ///
-    /// This function creates the instance of the PRL option and adds
-    /// option codes from the @c requested_options_ to it. It later adds
-    /// the PRL option to the @c context_.query_ message if it is non-NULL.
+    /// This function creates the instance of the PRL (Parameter Request List)
+    /// option and adds option codes from the @c requested_options_ to it.
+    /// It later adds the PRL option to the @c context_.query_ message
+    /// if it is non-NULL.
     void includePRL();
 
     /// @brief Simulates reception of the message from the server.

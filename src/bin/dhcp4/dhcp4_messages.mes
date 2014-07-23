@@ -147,7 +147,7 @@ point, the setting of the flag instructs the server not to choose a
 subnet, an action that severely limits further processing; the server
 will be only able to offer global options - no addresses will be assigned.
 
-% DHCP4_INVALID_ADDRESS_INIT_REBOOT client having client-id %1, hwaddr %2 and being in the INIT-REBOOT state requested invalid address %3
+% DHCP4_INVALID_ADDRESS_INIT_REBOOT invalid address %1 requested by INIT-REBOOT client (id: %2, hwaddr: %3)
 This debug message is issued when the client being in the INIT-REBOOT state
 requested an address which is not assigned to him. The server will respond
 to this client with DHCPNAK.
