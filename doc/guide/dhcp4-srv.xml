@@ -13,45 +13,49 @@
       <!-- @todo Rewrite this section once #3422 is done -->
 
       <para>
-        <command>kea-dhcp4</command> is the Kea DHCPv4 server and is configured
-        through the <command>bindctl</command> program.
+	It is recommended to control DHCPv4 server in Kea using <command>keactl</command>,
+	which is described in details in <xref linkend="keactrl"/>.
       </para>
+
       <para>
-        After starting <command>bind10</command> and entering bindctl, the first step
-        in configuring the server is to add it to the list of running services.
-<screen>
-&gt; <userinput>config add Init/components kea-dhcp4</userinput>
-&gt; <userinput>config set Init/components/kea-dhcp4/kind dispensable</userinput>
-&gt; <userinput>config commit</userinput>
-</screen>
+	However, it is also possible to run the server on its own, not using any
+	scripts. The server accepts the following command-line parameters:
       </para>
+
+      <itemizedlist>
+          <listitem>
+            <simpara>-c file - specifies the configuration file. This is the
+	    only mandatory parameter (it may be optional for configuration
+	    parameters other than Kea)</simpara>
+          </listitem>
+          <listitem>
+            <simpara>-v - specifies whether the server logging should be
+	    switched to verbose mode. In verbose mode, logging severity and
+	    debuglevel specified in a configuration file are ignored and
+	    severity debug and maximum debuglevel (99) is assumed. That flag is
+	    convenient, for temporarily switching the server into maximum
+	    verbosity, e.g. when debugging.</simpara>
+          </listitem>
+          <listitem>
+            <simpara>-p port - specifies UDP port the server will listen
+	    on. This is only useful during testing, as the DHCPv4 server
+	    listening on ports other than default DHCPv4 ports will not be able
+	    to handle regular DHCPv4 queries.</simpara>
+          </listitem>
+      </itemizedlist>
+
       <para>
-         To remove <command>kea-dhcp4</command> from the set of running services,
-         the <command>kea-dhcp4</command> is removed from list of Init components:
-<screen>
-&gt; <userinput>config remove Init/components kea-dhcp4</userinput>
-&gt; <userinput>config commit</userinput>
-</screen>
-      </para>
-      <para>
-        Note that the server was only removed from the list, so BIND10 will not
-        restart it, but the server itself is still running. Hence it is usually
-        desired to stop it:
-<screen>
-&gt; <userinput>Dhcp4 shutdown</userinput>
-</screen>
+	The server running in a console can be shut down by pressing ctrl-c. The
+	server will detect such a key combination and will initialize shutdown procedure.
       </para>
 
       <para>
         On start-up, the server will detect available network interfaces
         and will attempt to open UDP sockets on all interfaces that
-        are up, running, are not loopback, and have IPv4 address
-        assigned.
+        are mentioned in the configuration file.
+      </para>
 
-        The server will then listen to incoming traffic. Currently
-        supported client messages are DISCOVER and REQUEST. The server
-        will respond to them with OFFER and ACK, respectively.
-
+      <para>
         Since the DHCPv4 server opens privileged ports, it requires root
         access. Make sure you run this daemon as root.
       </para>
