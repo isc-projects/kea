@@ -243,7 +243,11 @@ Dhcp4Client::doRequest() {
 
 void
 Dhcp4Client::includePRL() {
-    if (!requested_options_.empty() && context_.query_) {
+    if (!context_.query_) {
+        isc_throw(Dhcp4ClientError, "pointer to the query must not be NULL"
+                  " when adding option codes to the PRL option");
+
+    } else if (!requested_options_.empty()) {
         // Include Parameter Request List if at least one option code
         // has been specified to be requested.
         OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
