@@ -1,3 +1,7 @@
+805.	[func]		stephen
+	Changed all occurrences of "BIND 10" in message files to "Kea".
+	(Trac #3416, git e88090b57a75424920d9b96efbf50e3554048828)
+
 804.	[func]		marcin
 	DHCPv4 server supports DHCPINFORM messages from the clients.
 	(Trac #3390, git 77f8577b1dbb52bdc6deb8bed3eef6ce7abc33fd)
