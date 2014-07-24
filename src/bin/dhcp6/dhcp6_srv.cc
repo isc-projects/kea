@@ -2351,7 +2351,6 @@ Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm) {
                 // in IA_NA, mark it verified and verify that it belongs to the
                 // subnet.
                 if (iaaddr) {
-                    verified = true;
                     // If at least one address is not in range, then return
                     // the NotOnLink status code.
                     if (subnet && !subnet->inRange(iaaddr->getAddress())) {
@@ -2362,9 +2361,10 @@ Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm) {
                                                           status_msg.str()));
                         return (reply);
                     }
+                    verified = true;
                 } else {
                     isc_throw(Unexpected, "failed to cast the IA Address option"
-                              " to the Option6IAAddrPtr. This is programmatic"
+                              " to the Option6IAAddrPtr. This is programming"
                               " error and should be reported");
                 }
             }
