@@ -1,3 +1,7 @@
+806.	[func]		marcin
+	DHCPv4 server processes Requested IP Address option (50).
+	(Trac #3320, git ad411a177a32bbe6a93f4baf813d985558c99e2f)
+
 805.	[func]		stephen
 	Changed all occurrences of "BIND 10" in message files to "Kea".
 	(Trac #3416, git e88090b57a75424920d9b96efbf50e3554048828)
