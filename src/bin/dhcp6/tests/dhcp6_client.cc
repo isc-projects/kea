@@ -178,7 +178,6 @@ Dhcp6Client::applyLease(const LeaseInfo& lease_info) {
     config_.leases_.push_back(lease_info);
 }
 
-
 void
 Dhcp6Client::copyIAs(const Pkt6Ptr& source, const Pkt6Ptr& dest) {
     typedef OptionCollection Opts;
@@ -208,18 +207,21 @@ Dhcp6Client::copyIAsFromLeases(const Pkt6Ptr& dest) const {
         opt->setT2(leases[0].t2_);
         for (std::vector<Lease6>::const_iterator lease = leases.begin();
              lease != leases.end(); ++lease) {
-            if (lease->type_ == Lease::TYPE_NA) {
-                opt->addOption(Option6IAAddrPtr(new Option6IAAddr(D6O_IAADDR,
+            if ((lease->preferred_lft_ != 0) && (lease->valid_lft_ != 0)) {
+                if (lease->type_ == Lease::TYPE_NA) {
+                    opt->addOption(Option6IAAddrPtr(new Option6IAAddr(
+                                                          D6O_IAADDR,
                                                           lease->addr_,
                                                           lease->preferred_lft_,
                                                           lease->valid_lft_)));
-            } else if (lease->type_ == Lease::TYPE_PD) {
-                opt->addOption(Option6IAAddrPtr(new Option6IAPrefix(D6O_IAPREFIX,
+                } else if (lease->type_ == Lease::TYPE_PD) {
+                    opt->addOption(Option6IAAddrPtr(new Option6IAPrefix(
+                                                          D6O_IAPREFIX,
                                                           lease->addr_,
                                                           lease->prefixlen_,
                                                           lease->preferred_lft_,
                                                           lease->valid_lft_)));
-
+                }
             }
         }
         dest->addOption(opt);
