@@ -297,7 +297,7 @@ TEST_F(ConfirmTest, relayedUnicast) {
     ASSERT_GT(client.getLeaseNum(), 0);
     client.setDestAddress(IOAddress("2001:db8:1::1"));
     // Send Confirm message to the server.
-    ASSERT_NO_THROW (client.doConfirm());
+    ASSERT_NO_THROW(client.doConfirm());
     // Client should have received a response.
     ASSERT_TRUE(client.getContext().response_);
     // Client should have received a status code option and this option should
