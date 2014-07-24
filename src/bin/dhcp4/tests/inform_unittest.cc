@@ -28,7 +28,7 @@ using namespace isc::dhcp::test;
 
 namespace {
 
-/// @brief Set of JSON configurations used throughout the Rebind tests.
+/// @brief Set of JSON configurations used throughout the Inform tests.
 ///
 /// - Configuration 0:
 ///   - Used for testing direct traffic

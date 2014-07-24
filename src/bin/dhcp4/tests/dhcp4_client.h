@@ -27,6 +27,13 @@ namespace isc {
 namespace dhcp {
 namespace test {
 
+/// @brief General error emitted by the DHCP4 test client.
+class Dhcp4ClientError : public isc::Exception {
+public:
+    Dhcp4ClientError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
 /// @brief DHCPv4 client used for unit testing.
 ///
 /// This class implements a DHCPv4 "client" which interoperates with the
@@ -44,6 +51,14 @@ namespace test {
 /// to verify from the unit test that the server's response is correct.
 class Dhcp4Client : public boost::noncopyable {
 public:
+
+    /// @brief States of the DHCP client.
+    enum State {
+        SELECTING,
+        INIT_REBOOT,
+        RENEWING,
+        REBINDING
+    };
 
     /// @brief Holds the DHCPv4 messages taking part in transaction between
     /// the client and the server.
@@ -79,12 +94,16 @@ public:
     };
 
     /// @brief Creates a new client.
-    Dhcp4Client();
+    ///
+    /// @param Initial client's state.
+    Dhcp4Client(const State& state = SELECTING);
 
     /// @brief Creates a new client that communicates with a specified server.
     ///
     /// @param srv An instance of the DHCPv4 server to be used.
-    Dhcp4Client(boost::shared_ptr<NakedDhcpv4Srv>& srv);
+    /// @param state Initial client's state.
+    Dhcp4Client(boost::shared_ptr<NakedDhcpv4Srv>& srv,
+                const State& state = SELECTING);
 
     /// @brief Creates a lease for the client using the specified address
     /// and valid lifetime.
@@ -100,6 +119,31 @@ public:
     /// @param addr Lease address.
     /// @param valid_lft Valid lifetime.
     void createLease(const asiolink::IOAddress& addr, const uint32_t valid_lft);
+
+    /// @brief Sends DHCPDISCOVER message to the server and receives response.
+    ///
+    /// The message being sent to the server includes Parameter Request List
+    /// option if any options to be requested have been specified using the
+    /// @c requestOptions or @c requestOption methods.
+    ///
+    /// The configuration returned by the server in the DHCPOFFER message is
+    /// NOT stored in the client configuration: @c config_.
+    ///
+    /// @param requested_addr A pointer to the IP Address to be sent in the
+    /// Requested IP Address option or NULL if the option should not be
+    /// included.
+    void doDiscover(const boost::shared_ptr<asiolink::IOAddress>&
+                    requested_addr = boost::shared_ptr<asiolink::IOAddress>());
+
+    /// @brief Perform 4-way exchange with a server.
+    ///
+    /// This method calls @c doDiscover and @c doRequest to perform the 4-way
+    /// exchange with the server.
+    ///
+    /// @param requested_addr A pointer to the address to be requested using the
+    /// Requested IP Address option.
+    void doDORA(const boost::shared_ptr<asiolink::IOAddress>&
+                requested_addr = boost::shared_ptr<asiolink::IOAddress>());
 
     /// @brief Sends DHCPINFORM message to the server and receives response.
     ///
@@ -120,6 +164,32 @@ public:
     /// functions that are not exception safe, so it may emit an exception if
     /// an error occurs.
     void doInform(const bool set_ciaddr = true);
+
+    /// @brief Sends DHCPREQUEST Message to the server and receives a response.
+    ///
+    /// This method simulates sending the DHCPREQUEST message to the server and
+    /// receiving a response. The DHCPREQUEST message can be used by the client
+    /// being in various states:
+    /// - SELECTING - client is trying to obtain a new lease and it has selected
+    /// the server using the DHCPDISCOVER.
+    /// - INIT-REBOOT - client cached an address it was previously using and is
+    /// now trying to verify if this address is still valid.
+    /// - RENEW - client's renewal timer has passed and the client is trying to
+    /// extend the lifetime of the lease.
+    /// - REBIND - client's rebind timer has passed and the client is trying to
+    /// extend the lifetime of the lease from any server.
+    ///
+    /// Depending on the state that the client is in, different combinations of
+    /// - ciaddr
+    /// - Requested IP Address option
+    /// - server identifier
+    /// are used (as per RFC2131, section 4.3.2). Therefore, the unit tests
+    /// must setthe appropriate state of the client prior to calling this
+    /// method using the @c setState function.
+    ///
+    /// When the server returns the DHCPACK the configuration carried in the
+    /// DHCPACK message is applied and can be obtained from the @c config_.
+    void doRequest();
 
     /// @brief Generates a hardware address used by the client.
     ///
@@ -195,6 +265,16 @@ public:
         dest_addr_ = dest_addr;
     }
 
+    /// @brief Sets client state.
+    ///
+    /// Depending on the current state the client's behavior is different
+    /// when sending Request messages as per RFC2131, section 4.3.2.
+    ///
+    /// @param state New client's state.
+    void setState(const State& state) {
+        state_ = state;
+    }
+
     /// @brief Simulate sending messages through a relay.
     ///
     /// @param use Parameter which 'true' value indicates that client should
@@ -216,6 +296,12 @@ public:
 
 private:
 
+    /// @brief Creates and adds Requested IP Address option to the client's
+    /// query.
+    ///
+    /// @param addr Address to be added in the Requested IP Address option.
+    void addRequestedAddress(const asiolink::IOAddress& addr);
+
     /// @brief Stores configuration received from the server.
     ///
     /// This methods stores the configuration obtained from the DHCP server
@@ -235,6 +321,14 @@ private:
     /// @param msg_type Type of the message to be created.
     /// @return An instance of the message created.
     Pkt4Ptr createMsg(const uint8_t msg_type);
+
+    /// @brief Include PRL Option in the query message.
+    ///
+    /// This function creates the instance of the PRL (Parameter Request List)
+    /// option and adds option codes from the @c requested_options_ to it.
+    /// It later adds the PRL option to the @c context_.query_ message
+    /// if it is non-NULL.
+    void includePRL();
 
     /// @brief Simulates reception of the message from the server.
     ///
@@ -273,6 +367,9 @@ private:
 
     /// @brief Pointer to the server that the client is communicating with.
     boost::shared_ptr<NakedDhcpv4Srv> srv_;
+
+    /// @brief Current state of the client.
+    State state_;
 
     /// @brief Enable relaying messages to the server.
     bool use_relay_;
