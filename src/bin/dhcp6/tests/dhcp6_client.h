@@ -412,8 +412,12 @@ private:
     ///
     /// This method iterates over existing leases that client acquired and
     /// places corresponding IA_NA or IA_PD options into a specified message.
-    /// This is useful to construct Renew or Rebind message from the existing
-    /// configuration that client has obtained using 4-way exchange.
+    /// This is useful to construct Renew, Rebind or Confirm message from the
+    /// existing configuration that client has obtained using 4-way exchange.
+    ///
+    /// If there are no leases no IA options will be added. If the lease exists
+    /// but any of the lifetime values is set to 0, the IA option will be added
+    /// but the IAAddr (or IAPrefix) option will not be added.
     ///
     /// @param dest Message to which the IA options will be added.
     void copyIAsFromLeases(const Pkt6Ptr& dest) const;
