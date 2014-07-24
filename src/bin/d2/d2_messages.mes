@@ -88,8 +88,8 @@ This debug message is issued just before the controller invokes
 the application run method.
 
 % DCTL_SESSION_FAIL %1 controller failed to establish Kea session: %1
-The controller has failed to establish communication with the rest of BIND
-10 and will exit.
+The controller has failed to establish communication with the rest of
+Kea and will exit.
 
 % DCTL_STANDALONE %1 skipping message queue, running standalone
 This is a debug message indicating that the controller is running in the
