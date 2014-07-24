@@ -2326,9 +2326,10 @@ Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm) {
     // Make sure that the necessary options are included.
     copyDefaultOptions(confirm, reply);
     appendDefaultOptions(confirm, reply);
-    // Number of addresses verified. If at the end it occurs that no addresses
-    // were verified we will need to dicard the message.
-    int verified = 0;
+    // Indicates if at least one address has been verified. If no addresses
+    // are verified it means that the client has sent no IA_NA options
+    // or no IAAddr options and that client's message has to be discarded.
+    bool verified = false;
     // Check if subnet can be selected for the message. If no subnet
     // has been selected, the client is not on link.
     SubnetPtr subnet = selectSubnet(confirm);
@@ -2342,28 +2343,29 @@ Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm) {
         for (OptionCollection::const_iterator opt = opts.begin();
              opt != opts.end(); ++opt) {
             // Ignore options other than IAAddr.
-            if (opt->second->getType() != D6O_IAADDR) {
-                continue;
-            }
-            // Check that the address is in range in the subnet selected.
-            Option6IAAddrPtr iaaddr = boost::dynamic_pointer_cast<
-                Option6IAAddr>(opt->second);
-            // If there is subnet selected and the address has been included
-            // in IA_NA, mark it verified and verify that it belongs to the
-            // subnet.
-            if (iaaddr && subnet) {
-                // There is an address so we increase the counter of
-                // addresses verified.
-                ++verified;
-                // If at least one address is not in range, then return
-                // the NotOnLink status code.
-                if (!subnet->inRange(iaaddr->getAddress())) {
-                    std::ostringstream status_msg;
+            if (opt->second->getType() == D6O_IAADDR) {
+                // Check that the address is in range in the subnet selected.
+                Option6IAAddrPtr iaaddr = boost::dynamic_pointer_cast<
+                    Option6IAAddr>(opt->second);
+                // If there is subnet selected and the address has been included
+                // in IA_NA, mark it verified and verify that it belongs to the
+                // subnet.
+                if (iaaddr) {
+                    verified = true;
+                    // If at least one address is not in range, then return
+                    // the NotOnLink status code.
+                    if (subnet && !subnet->inRange(iaaddr->getAddress())) {
+                        std::ostringstream status_msg;
                         status_msg << "Address " << iaaddr->getAddress()
                                    << " is not on link.";
                         reply->addOption(createStatusCode(STATUS_NotOnLink,
                                                           status_msg.str()));
                         return (reply);
+                    }
+                } else {
+                    isc_throw(Unexpected, "failed to cast the IA Address option"
+                              " to the Option6IAAddrPtr. This is programmatic"
+                              " error and should be reported");
                 }
             }
         }
@@ -2371,7 +2373,7 @@ Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm) {
 
     // It seems that the client hasn't included any addresses in which case
     // the Confirm must be discarded.
-    if (verified == 0) {
+    if (!verified) {
         return (Pkt6Ptr());
     }
 

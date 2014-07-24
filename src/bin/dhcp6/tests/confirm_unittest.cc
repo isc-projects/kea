@@ -32,11 +32,11 @@ namespace {
 ///
 /// - Configuration 0:
 ///   - only addresses (no prefixes)
-///   - 2 subnets with 2001:db8:1::/64 and 2001:db8:2::64
+///   - 2 subnets with 2001:db8:1::/64 and 2001:db8:2::/64
 ///   - 1 subnet for eth0 and 1 subnet for eth1
 ///
 /// - Configuration 1:
-///   - similar to Configuration 0 and Configuration 1
+///   - similar to Configuration 0
 ///   - pools configured: 3000:1::/64 and 3000:2::/64
 ///   - this specific configuration is used by tests using relays
 ///
@@ -97,7 +97,7 @@ public:
 // Test that directly connected client's Confirm message is processed and Reply
 // message is sent back. In this test case, the client sends Confirm for two
 // addresses that belong to the same IAID and are sent within the same IA_NA
-// option.
+// option (RFC3315, section 18.2.2).
 TEST_F(ConfirmTest, directClientSameIAID) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
@@ -139,7 +139,7 @@ TEST_F(ConfirmTest, directClientSameIAID) {
 // Test that directly connected client's Confirm message is processed and Reply
 // message is sent back. In this test case, the client sends Confirm for two
 // addresses that belong to different IAIDs and are sent within the different
-// IA_NA options.
+// IA_NA options (RFC3315, section 18.2.2).
 TEST_F(ConfirmTest, directClientDifferentIAID) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
@@ -185,7 +185,7 @@ TEST_F(ConfirmTest, directClientDifferentIAID) {
 
 
 // Test that relayed client's Confirm message is processed and Reply message
-// is sent back.
+// is sent back (RFC3315, section 18.2.2).
 TEST_F(ConfirmTest, relayedClient) {
     Dhcp6Client client;
     // Client to send relayed message.
@@ -226,7 +226,8 @@ TEST_F(ConfirmTest, relayedClient) {
     EXPECT_TRUE(client.getContext().response_->getOption(D6O_CLIENTID));
 }
 
-// Test that the Confirm message without any addresses is discarded.
+// Test that the Confirm message without any addresses is discarded
+// (RFC3315, section 18.2.2).
 TEST_F(ConfirmTest, relayedClientNoAddress) {
     Dhcp6Client client;
     // Configure the server.
@@ -242,8 +243,48 @@ TEST_F(ConfirmTest, relayedClientNoAddress) {
     EXPECT_FALSE(client.getContext().response_);
 }
 
+// This test checks that the server processes Confirm message correctly if
+// the subnet can't be selected for the client (RFC3315, section 18.2.2).
+TEST_F(ConfirmTest, relayedClientNoSubnet) {
+    Dhcp6Client client;
+    // Client to send relayed message.
+    client.useRelay();
+    // Configure client to request IA_NA.
+    client.useNA();
+    // Make 4-way exchange to get the lease.
+    ASSERT_NO_FATAL_FAILURE(requestLease(CONFIRM_CONFIGS[1], 2, client));
+    // Now that the client has a lease, let's remove any subnets to check
+    // how the server would respond to the Confirm.
+    ASSERT_NO_THROW(CfgMgr::instance().deleteSubnets6());
+    // Send Confirm message to the server.
+    ASSERT_NO_THROW(client.doConfirm());
+    // Client should have received a status code option and this option should
+    // indicate that the client is NotOnLink becuase subnet could not be
+    // selected.
+    ASSERT_TRUE(client.receivedStatusCode());
+    ASSERT_EQ(STATUS_NotOnLink, client.getStatusCode());
+
+    // Let's test another case that the client sends no addresses in the Confirm
+    // message. The subnet can't be selected for that client as in the previous
+    // case but this time the server must discard the client's message because
+    // it contains no addresses (is invalid).
+
+    // Set lifetimes to 0 so as the Confirm will ignore the specific address
+    // and send an empty IA_NA.
+    client.config_.leases_[0].lease_.preferred_lft_ = 0;
+    client.config_.leases_[0].lease_.valid_lft_ = 0;
+    ASSERT_NO_THROW(client.doConfirm());
+    EXPECT_FALSE(client.getContext().response_);
+
+    // Do similar test but this time remove the lease so as no IA_NA option
+    // is sent.
+    client.config_.clear();
+    ASSERT_NO_THROW(client.doConfirm());
+    EXPECT_FALSE(client.getContext().response_);
+}
+
 // This test checks that the relayed Confirm messsage is processed by the server
-// when sent to unicast address.
+// when sent to unicast address RFC3315, section 18.2.8).
 TEST_F(ConfirmTest, relayedUnicast) {
     Dhcp6Client client;
     // Client to send relayed message.
@@ -256,7 +297,7 @@ TEST_F(ConfirmTest, relayedUnicast) {
     ASSERT_GT(client.getLeaseNum(), 0);
     client.setDestAddress(IOAddress("2001:db8:1::1"));
     // Send Confirm message to the server.
-    ASSERT_NO_THROW(client.doConfirm());
+    ASSERT_NO_THROW (client.doConfirm());
     // Client should have received a response.
     ASSERT_TRUE(client.getContext().response_);
     // Client should have received a status code option and this option should

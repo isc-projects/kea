@@ -48,11 +48,14 @@ public:
     ///
     /// This function is called by @c bumpAddress and @c bumpSubnet.
     ///
-    /// @param input_addr An input address.
+    /// @warning This function is no-op if the byte index is out of range.
+    ///
+    /// @param input_addr An input address
+    /// @param byte_num An index of the byte which value should be increased..
     ///
     /// @return New address.
     asiolink::IOAddress bumpByteInAddress(const asiolink::IOAddress& input_addr,
-                                const size_t byte_num);
+                                          const size_t byte_num);
 
     /// @brief Increases the first byte of the address.
     ///
