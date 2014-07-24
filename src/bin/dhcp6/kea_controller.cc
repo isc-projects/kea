@@ -103,7 +103,7 @@ void configure(const std::string& file_name) {
     if (rcode != 0) {
         string reason = "";
         if (comment) {
-            reason = string(" (") + comment->stringValue() + string(")");
+            reason = comment->stringValue();
         }
         LOG_ERROR(dhcp6_logger, DHCP6_CONFIG_LOAD_FAIL).arg(reason);
         isc_throw(isc::BadValue, "Failed to apply configuration:" << reason);
