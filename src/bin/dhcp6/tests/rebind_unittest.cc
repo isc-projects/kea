@@ -17,8 +17,7 @@
 #include <cc/data.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp6/json_config_parser.h>
-#include <dhcp6/tests/dhcp6_test_utils.h>
-#include <dhcp6/tests/dhcp6_client.h>
+#include <dhcp6/tests/dhcp6_message_test.h>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -197,59 +196,16 @@ const char* REBIND_CONFIGS[] = {
 };
 
 /// @brief Test fixture class for testing Rebind.
-class RebindTest : public Dhcpv6SrvTest {
+class RebindTest : public Dhcpv6MessageTest {
 public:
 
     /// @brief Constructor.
     ///
     /// Sets up fake interfaces.
     RebindTest()
-        : Dhcpv6SrvTest(),
-          iface_mgr_test_config_(true) {
+        : Dhcpv6MessageTest() {
     }
-
-    /// @brief Make 4-way exchange to obtain a lease.
-    ///
-    /// @param config_index Index of the configuration held in @c REBIND_CONFIGS
-    /// to use to configure the server.
-    /// @param subnets_num Number of subnets being created with the specified
-    /// configuration.
-    /// @param client Object representing a test DHCPv6 client to use.
-    void requestLease(const int config_index, const int subnets_num,
-                      Dhcp6Client& client);
-
-    /// @brief Interface Manager's fake configuration control.
-    IfaceMgrTestConfig iface_mgr_test_config_;
-
 };
-
-void
-RebindTest::requestLease(const int config_index, const int subnets_num,
-                         Dhcp6Client& client) {
-    // Check that the index is in the configuration table.
-    ASSERT_LT(config_index, sizeof(REBIND_CONFIGS)/sizeof(REBIND_CONFIGS[0]));
-    // Configure the server.
-    configure(REBIND_CONFIGS[config_index], *client.getServer());
-    // Make sure we ended-up having expected number of subnets configured.
-    const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
-    ASSERT_EQ(subnets_num, subnets->size());
-    // Do the actual 4-way exchange.
-    ASSERT_NO_THROW(client.doSARR());
-    // Simulate aging of leases, by moving their cltt_ back by 1000s.
-    client.fastFwdTime(1000);
-    // Make sure that we have obtained a lease that belongs to one of the
-    // subnets.
-    ASSERT_EQ(1, client.getLeaseNum());
-    Lease6 lease_client = client.getLease(0);
-    ASSERT_TRUE(CfgMgr::instance().getSubnet6(lease_client.addr_,
-                                              ClientClasses()));
-    // Check that the client's lease matches the information on the server
-    // side.
-    Lease6Ptr lease_server = checkLease(lease_client);
-    ASSERT_TRUE(lease_server);
-    // And that status code was OK.
-    EXPECT_EQ(STATUS_Success, client.getStatusCode(0));
-}
 
 // Test that directly connected client's Rebind message is processed and Reply
 // message is sent back.
@@ -258,7 +214,7 @@ TEST_F(RebindTest, directClient) {
     // Configure client to request IA_NA.
     client.useNA();
     // Make 4-way exchange to get the lease.
-    ASSERT_NO_FATAL_FAILURE(requestLease(0, 2, client));
+    ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[0], 2, client));
     // Keep the client's lease for future reference.
     Lease6 lease_client = client.getLease(0);
     // Send Rebind message to the server.
@@ -285,7 +241,7 @@ TEST_F(RebindTest, directClientChangingSubnet) {
     // Configure client to request IA_NA.
     client.useNA();
     // Make 4-way exchange to get the lease.
-    ASSERT_NO_FATAL_FAILURE(requestLease(0, 2, client));
+    ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[0], 2, client));
     // Keep the client's lease for future reference.
     Lease6 lease_client = client.getLease(0);
     // Reconfigure the server so as the new subnet is served on the
@@ -319,7 +275,7 @@ TEST_F(RebindTest, directClientChangingIAID) {
     // Configure client to request IA_NA.
     client.useNA();
     // Make 4-way exchange to get the lease.
-    ASSERT_NO_FATAL_FAILURE(requestLease(0, 2, client));
+    ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[0], 2, client));
     // Keep the client's lease for future reference.
     Lease6 lease_client = client.getLease(0);
     // Modify the IAID of the lease record that client stores. By adding
@@ -346,7 +302,7 @@ TEST_F(RebindTest, directClientLostLease) {
     // Configure client to request IA_NA.
     client.useNA();
     // Make 4-way exchange to get the lease.
-    ASSERT_NO_FATAL_FAILURE(requestLease(0, 2, client));
+    ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[0], 2, client));
     // Keep the client's lease for future reference.
     Lease6 lease_client = client.getLease(0);
     // The lease has been acquired. Now, let's explicitly remove it from the
@@ -372,7 +328,7 @@ TEST_F(RebindTest, relayedClient) {
     client.useRelay();
     // Make 4-way exchange to get the lease. Pick the configuration #2 as it
     // specifies the subnet for the relay agent's link address.
-    ASSERT_NO_FATAL_FAILURE(requestLease(2, 2, client));
+    ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[2], 2, client));
     // Keep the client's lease for future reference.
     Lease6 lease_client = client.getLease(0);
     // Send Rebind message to the server.
@@ -404,7 +360,7 @@ TEST_F(RebindTest, relayedClientChangingSubnet) {
     // by the server to pick the suitable subnet.
     client.useRelay();
     // Make 4-way exchange to get the lease.
-    ASSERT_NO_FATAL_FAILURE(requestLease(2, 2, client));
+    ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[2], 2, client));
     // Keep the client's lease for future reference.
     Lease6 lease_client = client.getLease(0);
     // Reconfigure the server so as the new subnet is served on the
@@ -444,7 +400,7 @@ TEST_F(RebindTest, relayedClientChangingIAID) {
     // by the server to pick the suitable subnet.
     client.useRelay();
     // Make 4-way exchange to get the lease.
-    ASSERT_NO_FATAL_FAILURE(requestLease(2, 2, client));
+    ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[2], 2, client));
     // Keep the client's lease for future reference.
     Lease6 lease_client = client.getLease(0);
     // Modify the IAID of the lease record that client stores. By adding
@@ -475,7 +431,7 @@ TEST_F(RebindTest, relayedClientLostLease) {
     // by the server to pick the suitable subnet.
     client.useRelay();
     // Make 4-way exchange to get the lease.
-    ASSERT_NO_FATAL_FAILURE(requestLease(2, 2, client));
+    ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[2], 2, client));
     // Keep the client's lease for future reference.
     Lease6 lease_client = client.getLease(0);
     // The lease has been acquired. Now, let's explicitly remove it from the
@@ -495,7 +451,7 @@ TEST_F(RebindTest, relayedClientChangingAddress) {
     // Configure client to request IA_NA.
     client.useNA();
     // Make 4-way exchange to get the lease.
-    ASSERT_NO_FATAL_FAILURE(requestLease(2, 2, client));
+    ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[2], 2, client));
     // Keep the client's lease for future reference.
     Lease6 lease_client = client.getLease(0);
     // Modify the address of the lease record that client stores. The server
@@ -533,7 +489,7 @@ TEST_F(RebindTest, directClientPD) {
     // Configure client to request IA_PD.
     client.usePD();
     // Make 4-way exchange to get the lease.
-    ASSERT_NO_FATAL_FAILURE(requestLease(4, 2, client));
+    ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[4], 2, client));
     // Keep the client's lease for future reference.
     Lease6 lease_client = client.getLease(0);
     // Send Rebind message to the server.
@@ -561,7 +517,7 @@ TEST_F(RebindTest, directClientPDChangingSubnet) {
     // Configure client to request IA_PD.
     client.usePD();
     // Make 4-way exchange to get the lease.
-    ASSERT_NO_FATAL_FAILURE(requestLease(4, 2, client));
+    ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[4], 2, client));
     // Keep the client's lease for future reference.
     Lease6 lease_client = client.getLease(0);
     // Reconfigure the server so as the new subnet is served on the
@@ -598,7 +554,7 @@ TEST_F(RebindTest, directClientPDChangingIAID) {
     // Configure client to request IA_PD.
     client.usePD();
     // Make 4-way exchange to get the lease.
-    ASSERT_NO_FATAL_FAILURE(requestLease(4, 2, client));
+    ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[4], 2, client));
     // Keep the client's lease for future reference.
     Lease6 lease_client = client.getLease(0);
     // Modify the IAID of the lease record that client stores. By adding
@@ -628,7 +584,7 @@ TEST_F(RebindTest, directClientPDChangingPrefix) {
     // Configure client to request IA_PD.
     client.usePD();
     // Make 4-way exchange to get the lease.
-    ASSERT_NO_FATAL_FAILURE(requestLease(4, 2, client));
+    ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[4], 2, client));
     // Keep the client's lease for future reference.
     Lease6 lease_client = client.getLease(0);
     // Modify the Prefix of the lease record that client stores. The server
@@ -674,7 +630,7 @@ TEST_F(RebindTest, unicast) {
     // Configure client to request IA_NA.
     client.useNA();
     // Make 4-way exchange to get the lease.
-    ASSERT_NO_FATAL_FAILURE(requestLease(0, 2, client));
+    ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[0], 2, client));
     // Keep the client's lease for future reference.
     Lease6 lease_client = client.getLease(0);
     // Set the unicast destination address for the Rebind message.
@@ -708,7 +664,7 @@ TEST_F(RebindTest, relayedUnicast) {
     client.useRelay();
     // Make 4-way exchange to get the lease. Pick the configuration #2 as it
     // specifies the subnet for the relay agent's link address.
-    ASSERT_NO_FATAL_FAILURE(requestLease(2, 2, client));
+    ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[2], 2, client));
     // Keep the client's lease for future reference.
     Lease6 lease_client = client.getLease(0);
     // Set the unicast destination address.
