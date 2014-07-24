@@ -97,6 +97,12 @@ main(int argc, char* argv[]) {
         usage();
     }
 
+    // Configuration file is required.
+    if (config_file.empty()) {
+        cerr << "Configuration file not specified." << endl;
+        usage();
+    }
+
 
     int ret = EXIT_SUCCESS;
     try {
