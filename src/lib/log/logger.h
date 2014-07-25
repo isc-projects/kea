@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,8 @@
 #include <string>
 #include <cstring>
 
+#include <boost/static_assert.hpp>
+
 #include <exceptions/exceptions.h>
 #include <log/logger_level.h>
 #include <log/message_types.h>
@@ -27,6 +29,7 @@
 
 namespace isc {
 namespace log {
+
 namespace interprocess {
 // Forward declaration to hide implementation details from normal
 // applications.
@@ -91,17 +94,6 @@ class InterprocessSync;
 
 class LoggerImpl;   // Forward declaration of the implementation class
 
-/// \brief Logging Not Initialized
-///
-/// Exception thrown if an attempt is made to access a logging function
-/// if the logging system has not been initialized.
-class LoggingNotInitialized : public isc::Exception {
-public:
-    LoggingNotInitialized(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what)
-    {}
-};
-
 /// \brief Bad Interprocess Sync
 ///
 /// Exception thrown if a bad InterprocessSync object (such as NULL) is
@@ -109,6 +101,37 @@ public:
 class BadInterprocessSync : public isc::Exception {
 public:
     BadInterprocessSync(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what)
+    {}
+};
+
+/// \brief Logger Name Error
+///
+/// Exception thrown if a logger name is too short or too long.
+class LoggerNameError : public isc::Exception {
+public:
+    LoggerNameError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what)
+    {}
+};
+
+/// \brief Logger Name is Null
+///
+/// Exception thrown if a logger name is null
+class LoggerNameNull : public isc::Exception {
+public:
+    LoggerNameNull(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what)
+    {}
+};
+
+/// \brief Logging Not Initialized
+///
+/// Exception thrown if an attempt is made to access a logging function
+/// if the logging system has not been initialized.
+class LoggingNotInitialized : public isc::Exception {
+public:
+    LoggingNotInitialized(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what)
     {}
 };
@@ -139,23 +162,39 @@ public:
     /// child of the root logger.
     ///
     /// \note The name of the logger may be no longer than MAX_LOGGER_NAME_SIZE
-    /// else the program will halt with an assertion failure.  This restriction
-    /// allows loggers to be declared statically: the name is stored in a
-    /// fixed-size array to avoid the need to allocate heap storage during
-    /// program initialization (which causes problems on some operating
-    /// systems).
+    /// else the program will throw an exception.  This restriction allows
+    /// loggers to be declared statically: the name is stored in a fixed-size
+    /// array to avoid the need to allocate heap storage during program
+    /// initialization (which causes problems on some operating systems).
     ///
     /// \note Note also that there is no constructor taking a std::string. This
     /// minimises the possibility of initializing a static logger with a
     /// string, so leading to problems mentioned above.
     Logger(const char* name) : loggerptr_(NULL) {
-        assert(std::strlen(name) < sizeof(name_));
-        // Do the copy.  Note that the assertion above has checked that the
-        // contents of "name" and a trailing null will fit within the space
-        // allocated for name_, so we could use strcpy here and be safe.
-        // However, a bit of extra paranoia doesn't hurt.
-        std::strncpy(name_, name, sizeof(name_));
-        assert(name_[sizeof(name_) - 1] == '\0');
+
+        // Validate the name of the logger.
+        if (name == NULL) {
+            isc_throw(LoggerNameNull, "logger names may not be null");
+
+        } else {
+            // Name not null, is it too short or too long?
+            size_t namelen = std::strlen(name);
+            if ((namelen == 0) || (namelen > MAX_LOGGER_NAME_SIZE)) {
+                isc_throw(LoggerNameError, "'" << name << "' is not a valid "
+                          << "name for a logger: valid names must be between 1 "
+                          << "and " << MAX_LOGGER_NAME_SIZE << " characters in "
+                          << "length");
+            }
+        }
+
+        // The checks above and the assertion below ensure that the contents of
+        // "name" plus a trailing null will fit into the space allocated for
+        // "name_".
+        BOOST_STATIC_ASSERT(MAX_LOGGER_NAME_SIZE < sizeof(name_));
+
+        // Do the copy, ensuring a trailing NULL in all cases.
+        std::strncpy(name_, name, MAX_LOGGER_NAME_SIZE);
+        name_[MAX_LOGGER_NAME_SIZE] = '\0';
     }
 
     /// \brief Destructor
