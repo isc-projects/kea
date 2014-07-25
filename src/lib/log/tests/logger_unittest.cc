@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,7 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
 #include <gtest/gtest.h>
 
 #include <util/unittests/resource.h>
@@ -353,34 +354,43 @@ TEST_F(LoggerTest, IsDebugEnabledLevel) {
     EXPECT_TRUE(logger.isDebugEnabled(MAX_DEBUG_LEVEL));
 }
 
-// Check that if a logger name is too long, it triggers the appropriate
-// assertion.
+// Check that loggers with invalid names give an error.
+
 TEST_F(LoggerTest, LoggerNameLength) {
-    // The following statements should just declare a logger and nothing
-    // should happen.
-    string ok1(Logger::MAX_LOGGER_NAME_SIZE - 1, 'x');
-    Logger l1(ok1.c_str());
-    EXPECT_EQ(getRootLoggerName() + "." + ok1, l1.getName());
+    // Null name
+    EXPECT_THROW(Logger(NULL), LoggerNameNull);
 
-    string ok2(Logger::MAX_LOGGER_NAME_SIZE, 'x');
-    Logger l2(ok2.c_str());
-    EXPECT_EQ(getRootLoggerName() + "." + ok2, l2.getName());
+    // Declare space for the logger name.  The length of names checked
+    // will range from 0 through MAX_LOGGER_NAME_SIZE + 1: to allow for
+    // the trailing null, at least one more byte than the longest name size
+    // must be reserved.
+    char name[Logger::MAX_LOGGER_NAME_SIZE + 2];
 
-    // Note: Not all systems have EXPECT_DEATH.  As it is a macro we can just
-    // test for its presence and bypass the test if not available.
-#ifdef EXPECT_DEATH
-    // Too long a logger name should trigger an assertion failure.
-    // Note that we just check that it dies - we don't check what message is
-    // output.
-    if (!isc::util::unittests::runningOnValgrind()) {
-        EXPECT_DEATH({
-            isc::util::unittests::dontCreateCoreDumps();
+    // Zero-length name should throw an exception
+    name[0] = '\0';
+    EXPECT_THROW({
+            Logger dummy(name);
+            }, LoggerNameError);
 
-            string ok3(Logger::MAX_LOGGER_NAME_SIZE + 1, 'x');
-            Logger l3(ok3.c_str());
-        }, ".*");
+    // Work through all valid names.
+    for (size_t i = 0; i < Logger::MAX_LOGGER_NAME_SIZE; ++i) {
+
+        // Append a character to the name and check that a logger with that
+        // name can be created without throwing an exception.
+        name[i] = 'X';
+        name[i + 1] = '\0';
+        EXPECT_NO_THROW({
+                Logger dummy(name);
+                }) << "Size of logger name is " << (i + 1);
     }
-#endif
+
+    // ... and check that an overly long name throws an exception.
+    name[Logger::MAX_LOGGER_NAME_SIZE] = 'X';
+    name[Logger::MAX_LOGGER_NAME_SIZE + 1] = '\0';
+    EXPECT_THROW({
+            Logger dummy(name);
+            }, LoggerNameError);
+
 }
 
 TEST_F(LoggerTest, setInterprocessSync) {
