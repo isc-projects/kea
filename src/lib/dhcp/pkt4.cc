@@ -366,8 +366,8 @@ Pkt4::setSname(const uint8_t* sname, size_t snameLen /*= MAX_SNAME_LEN*/) {
         isc_throw(InvalidParameter, "Invalid sname specified");
     }
 
-    std::copy(&sname[0], &sname[snameLen], &sname_[0]);
-    std::fill(&sname_[snameLen], &sname_[MAX_SNAME_LEN], 0);
+    std::copy(sname, (sname + snameLen), sname_);
+    std::fill((sname_ + snameLen), (sname_ + MAX_SNAME_LEN), 0);
 
     // No need to store snameLen as any empty space is filled with 0s
 }
@@ -382,8 +382,8 @@ Pkt4::setFile(const uint8_t* file, size_t fileLen /*= MAX_FILE_LEN*/) {
         isc_throw(InvalidParameter, "Invalid file name specified");
     }
 
-    std::copy(&file[0], &file[fileLen], &file_[0]);
-    std::fill(&file_[fileLen], &file_[MAX_FILE_LEN], 0);
+    std::copy(file, (file + fileLen), file_);
+    std::fill((file_ + fileLen), (file_ + MAX_FILE_LEN), 0);
 
     // No need to store fileLen as any empty space is filled with 0s
 }
