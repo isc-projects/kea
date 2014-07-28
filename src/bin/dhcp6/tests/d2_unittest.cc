@@ -103,7 +103,7 @@ Dhcp6SrvD2Test::configureD2(bool enable_d2, const bool exp_result,
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
-        "    \"pool\": [ \"2001:db8:1::1 - 2001:db8:1::ffff\" ],"
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::ffff\" } ],"
         "    \"subnet\": \"2001:db8:1::/64\" } ],"
         " \"dhcp-ddns\" : {"
         "     \"enable-updates\" : " << (enable_d2 ? "true" : "false") <<  ", "
