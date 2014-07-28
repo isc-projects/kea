@@ -52,7 +52,7 @@ const char* INFORM_CONFIGS[] = {
         "\"valid-lifetime\": 600,"
         "\"subnet4\": [ { "
         "    \"subnet\": \"10.0.0.0/24\", "
-        "    \"pool\": [ \"10.0.0.10-10.0.0.100\" ],"
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
         "    \"option-data\": [ {"
         "        \"name\": \"routers\","
         "        \"code\": 3,"
