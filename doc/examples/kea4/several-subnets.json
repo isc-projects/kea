@@ -27,11 +27,11 @@
 # The following list defines subnets. Each subnet consists of at
 # least subnet and pool entries.
   "subnet4": [ 
-  {    "pool": [ "192.0.2.1 - 192.0.2.200" ],
+  {    "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
        "subnet": "192.0.2.0/24"  },
-  {    "pool": [ "192.0.3.100 - 192.0.3.200" ],
+  {    "pools": [ { "pool": "192.0.3.100 - 192.0.3.200" } ],
        "subnet": "192.0.3.0/24"  },
-  {    "pool": [ "192.0.4.1 - 192.0.4.254" ],
+  {    "pools": [ { "pool": "192.0.4.1 - 192.0.4.254" } ],
        "subnet": "192.0.4.0/24"  } ]
 }
 
