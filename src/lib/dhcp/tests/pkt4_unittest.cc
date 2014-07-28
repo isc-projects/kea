@@ -491,12 +491,12 @@ TEST_F(Pkt4Test, sname) {
 
     scoped_ptr<Pkt4> pkt;
     // Let's test each sname length, from 0 till 64
-    for (int snameLen = 0; snameLen < Pkt4::MAX_SNAME_LEN; snameLen++) {
-        for (int i = 0; i < Pkt4::MAX_SNAME_LEN; i++) {
-            sname[i] = 0;
+    for (int snameLen = 0; snameLen < Pkt4::MAX_SNAME_LEN; ++snameLen) {
+        for (int i = 0; i < snameLen; ++i) {
+            sname[i] = i + 1;
         }
-        for (int i = 0; i < snameLen; i++) {
-            sname[i] = i;
+        for (int i = snameLen; i < Pkt4::MAX_SNAME_LEN; ++i) {
+            sname[i] = 0;
         }
 
         // Type and transaction doesn't matter in this test
@@ -529,12 +529,12 @@ TEST_F(Pkt4Test, file) {
 
     scoped_ptr<Pkt4> pkt;
     // Let's test each file length, from 0 till 128.
-    for (int fileLen = 0; fileLen < Pkt4::MAX_FILE_LEN; fileLen++) {
-        for (int i = 0; i < Pkt4::MAX_FILE_LEN; i++) {
-            file[i] = 0;
+    for (int fileLen = 0; fileLen < Pkt4::MAX_FILE_LEN; ++fileLen) {
+        for (int i = 0; i < fileLen; ++i) {
+            file[i] = i + 1;
         }
-        for (int i = 0; i < fileLen; i++) {
-            file[i] = i;
+        for (int i = fileLen; i < Pkt4::MAX_FILE_LEN; ++i) {
+            file[i] = 0;
         }
 
         // Type and transaction doesn't matter in this test.
