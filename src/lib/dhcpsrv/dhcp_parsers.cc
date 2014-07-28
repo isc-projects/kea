@@ -992,6 +992,11 @@ PoolParser::build(ConstElementPtr pool_structure) {
 
     ConstElementPtr text_pool = pool_structure->get("pool");
 
+    if (!text_pool) {
+        isc_throw(DhcpConfigError, "Mandatory 'pool' entry missing in "
+                  "definition: (" << text_pool->getPosition() << ")");
+    }
+
     // That should be a single pool representation. It should contain
     // text is form prefix/len or first - last. Note that spaces
     // are allowed
