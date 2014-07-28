@@ -29,13 +29,13 @@
 # The following list defines subnets. Each subnet consists of at
 # least subnet and pool entries.
   "subnet6": [ 
-  {    "pool": [ "2001:db8:1::/80" ],
+  {    "pools": [ { "pool": "2001:db8:1::/80" } ],
        "subnet": "2001:db8:1::/64"  },
-  {    "pool": [ "2001:db8:2::/80" ],
+  {    "pools": [ { "pool": "2001:db8:2::/80" } ],
        "subnet": "2001:db8:2::/64"  }, 
-  {    "pool": [ "2001:db8:3::/80" ],
+  {    "pools": [ { "pool": "2001:db8:3::/80" } ],
        "subnet": "2001:db8:3::/64"  },
-  {    "pool": [ "2001:db8:4::/80" ],
+  {    "pools": [ { "pool": "2001:db8:4::/80" } ],
        "subnet": "2001:db8:4::/64"  } ]
 }
 

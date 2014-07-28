@@ -4,7 +4,7 @@
 
 { "Dhcp4":
 
-{ 
+{
 # Kea is told to listen on eth0 interface only.
   "interfaces": [ "eth0" ],
 
@@ -31,9 +31,12 @@
 
 # The following list defines subnets. We have only one subnet
 # here.
-  "subnet4": [ 
-  {    "pool": [ "192.0.2.1 - 192.0.2.200" ],
-       "subnet": "192.0.2.0/24"  } ]
+  "subnet4": [
+    {
+      "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
+      "subnet": "192.0.2.0/24"
+    }
+  ]
 }
 
 }
