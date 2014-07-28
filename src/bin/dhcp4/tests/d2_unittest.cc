@@ -99,7 +99,7 @@ Dhcp4SrvD2Test::configureD2(bool enable_d2, const bool exp_result,
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         " \"dhcp-ddns\" : {"
         "     \"enable-updates\" : " << (enable_d2 ? "true" : "false") <<  ", "
