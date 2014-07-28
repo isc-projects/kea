@@ -152,6 +152,18 @@ protected:
     }
 };
 
+class Pools4ListParser : public PoolsListParser {
+public:
+    Pools4ListParser(const std::string& dummy, PoolStoragePtr pools)
+        :PoolsListParser(dummy, pools) {
+    }
+
+protected:
+    virtual ParserPtr poolParserMaker(PoolStoragePtr storage) {
+        return (ParserPtr(new Pool4Parser("pool", storage)));
+    }
+};
+
 /// @brief This class parses a single IPv4 subnet.
 ///
 /// This is the IPv4 derivation of the SubnetConfigParser class and it parses
@@ -227,8 +239,8 @@ protected:
                    (config_id.compare("client-class") == 0) ||
                    (config_id.compare("next-server") == 0)) {
             parser = new StringParser(config_id, string_values_);
-        } else if (config_id.compare("pool") == 0) {
-            parser = new Pool4Parser(config_id, pools_);
+        } else if (config_id.compare("pools") == 0) {
+            parser = new Pools4ListParser(config_id, pools_);
         } else if (config_id.compare("relay") == 0) {
             parser = new RelayInfoParser(config_id, relay_info_, Option::V4);
         } else if (config_id.compare("option-data") == 0) {
