@@ -122,7 +122,7 @@ protected:
     }
 };
 
-/// @brief Parser for IPv4 pool definitions.
+/// @brief Parser for IPv6 pool definitions.
 ///
 /// This is the IPv6 derivation of the PoolParser class and handles pool
 /// definitions, i.e. a list of entries of one of two syntaxes: min-max and
@@ -170,6 +170,18 @@ protected:
     {
         return (PoolPtr(new Pool6(static_cast<isc::dhcp::Lease::Type>
                                   (ptype), min, max)));
+    }
+};
+
+class Pools6ListParser : public PoolsListParser {
+public:
+    Pools6ListParser(const std::string& dummy, PoolStoragePtr pools)
+        :PoolsListParser(dummy, pools) {
+    }
+
+protected:
+    virtual ParserPtr poolParserMaker(PoolStoragePtr storage) {
+        return (ParserPtr(new Pool6Parser("pool", storage)));
     }
 };
 
@@ -436,8 +448,8 @@ protected:
                    (config_id.compare("client-class") == 0) ||
                    (config_id.compare("interface-id") == 0)) {
             parser = new StringParser(config_id, string_values_);
-        } else if (config_id.compare("pool") == 0) {
-            parser = new Pool6Parser(config_id, pools_);
+        } else if (config_id.compare("pools") == 0) {
+            parser = new Pools6ListParser(config_id, pools_);
         } else if (config_id.compare("relay") == 0) {
             parser = new RelayInfoParser(config_id, relay_info_, Option::V6);
         } else if (config_id.compare("pd-pools") == 0) {
