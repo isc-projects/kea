@@ -943,6 +943,40 @@ RelayInfoParser::commit() {
     *storage_ = local_;
 }
 
+//****************************** PoolsListParser ********************************
+PoolsListParser::PoolsListParser(const std::string& dummy, PoolStoragePtr pools)
+    :pools_(pools), local_pools_(new PoolStorage()) {
+    if (!pools_) {
+        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
+                  << "storage may not be NULL");
+    }
+}
+
+void
+PoolsListParser::build(ConstElementPtr pools) {
+    BOOST_FOREACH(ConstElementPtr pool, pools->listValue()) {
+
+        // Iterate over every structure on the pools list and invoke
+        // a separate parser for it.
+        ParserPtr parser = poolParserMaker(local_pools_);
+
+        parser->build(pool);
+
+        // Before we can create a pool, we need to ask the pool parser
+        // to create it.
+        parser->commit();
+    }
+}
+
+void PoolsListParser::commit() {
+    if (pools_) {
+        // local_pools_ holds the values produced by the build function.
+        // At this point parsing should have completed successfuly so
+        // we can append new data to the supplied storage.
+        pools_->insert(pools_->end(), local_pools_->begin(), local_pools_->end());
+    }
+}
+
 //****************************** PoolParser ********************************
 PoolParser::PoolParser(const std::string&,  PoolStoragePtr pools)
         :pools_(pools) {
@@ -954,66 +988,67 @@ PoolParser::PoolParser(const std::string&,  PoolStoragePtr pools)
 }
 
 void
-PoolParser::build(ConstElementPtr pools_list) {
-    BOOST_FOREACH(ConstElementPtr text_pool, pools_list->listValue()) {
-        // That should be a single pool representation. It should contain
-        // text is form prefix/len or first - last. Note that spaces
-        // are allowed
-        string txt = text_pool->stringValue();
+PoolParser::build(ConstElementPtr pool_structure) {
 
-        // first let's remove any whitespaces
-        boost::erase_all(txt, " "); // space
-        boost::erase_all(txt, "\t"); // tabulation
+    ConstElementPtr text_pool = pool_structure->get("pool");
 
-        // Is this prefix/len notation?
-        size_t pos = txt.find("/");
-        if (pos != string::npos) {
-            isc::asiolink::IOAddress addr("::");
-            uint8_t len = 0;
-            try {
-                addr = isc::asiolink::IOAddress(txt.substr(0, pos));
+    // That should be a single pool representation. It should contain
+    // text is form prefix/len or first - last. Note that spaces
+    // are allowed
+    string txt = text_pool->stringValue();
 
-                // start with the first character after /
-                string prefix_len = txt.substr(pos + 1);
+    // first let's remove any whitespaces
+    boost::erase_all(txt, " "); // space
+    boost::erase_all(txt, "\t"); // tabulation
 
-                // It is lexical cast to int and then downcast to uint8_t.
-                // Direct cast to uint8_t (which is really an unsigned char)
-                // will result in interpreting the first digit as output
-                // value and throwing exception if length is written on two
-                // digits (because there are extra characters left over).
+    // Is this prefix/len notation?
+    size_t pos = txt.find("/");
+    if (pos != string::npos) {
+        isc::asiolink::IOAddress addr("::");
+        uint8_t len = 0;
+        try {
+            addr = isc::asiolink::IOAddress(txt.substr(0, pos));
 
-                // No checks for values over 128. Range correctness will
-                // be checked in Pool4 constructor.
-                len = boost::lexical_cast<int>(prefix_len);
-            } catch (...)  {
-                isc_throw(DhcpConfigError, "Failed to parse pool "
-                          "definition: " << text_pool->stringValue()
-                          << " (" << text_pool->getPosition() << ")");
-            }
+            // start with the first character after /
+            string prefix_len = txt.substr(pos + 1);
 
-            PoolPtr pool(poolMaker(addr, len));
-            local_pools_.push_back(pool);
-            continue;
+            // It is lexical cast to int and then downcast to uint8_t.
+            // Direct cast to uint8_t (which is really an unsigned char)
+            // will result in interpreting the first digit as output
+            // value and throwing exception if length is written on two
+            // digits (because there are extra characters left over).
+
+            // No checks for values over 128. Range correctness will
+            // be checked in Pool4 constructor.
+            len = boost::lexical_cast<int>(prefix_len);
+        } catch (...)  {
+            isc_throw(DhcpConfigError, "Failed to parse pool "
+                      "definition: " << text_pool->stringValue()
+                      << " (" << text_pool->getPosition() << ")");
         }
 
-        // Is this min-max notation?
-        pos = txt.find("-");
-        if (pos != string::npos) {
-            // using min-max notation
-            isc::asiolink::IOAddress min(txt.substr(0,pos));
-            isc::asiolink::IOAddress max(txt.substr(pos + 1));
+        PoolPtr pool(poolMaker(addr, len));
+        local_pools_.push_back(pool);
+        return;
+    }
 
-            PoolPtr pool(poolMaker(min, max));
-            local_pools_.push_back(pool);
-            continue;
-        }
+    // Is this min-max notation?
+    pos = txt.find("-");
+    if (pos != string::npos) {
+        // using min-max notation
+        isc::asiolink::IOAddress min(txt.substr(0,pos));
+        isc::asiolink::IOAddress max(txt.substr(pos + 1));
 
-        isc_throw(DhcpConfigError, "invalid pool definition: "
-                  << text_pool->stringValue() <<
-                  ". There are two acceptable formats <min address-max address>"
-                  " or <prefix/len> ("
-                  << text_pool->getPosition() << ")");
-        }
+        PoolPtr pool(poolMaker(min, max));
+        local_pools_.push_back(pool);
+        return;
+    }
+
+    isc_throw(DhcpConfigError, "invalid pool definition: "
+              << text_pool->stringValue() <<
+              ". There are two acceptable formats <min address-max address>"
+              " or <prefix/len> ("
+              << text_pool->getPosition() << ")");
 }
 
 void
