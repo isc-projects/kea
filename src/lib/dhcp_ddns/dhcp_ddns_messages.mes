@@ -58,10 +58,12 @@ that should be reported.  The application may or may not continue to operate
 correctly.
 
 % DHCP_DDNS_NCR_UDP_RECV_CANCELED UDP socket receive was canceled while listening for DNS Update requests: %1
-This is an informational  message indicating that the listening over a UDP socket for DNS update requests has been canceled.  This is a normal part of suspending listening operations.
+This is a debug  message indicating that the listening on a UDP socket
+for DNS update requests has been canceled.  This is a normal part of
+suspending listening operations.
 
 % DHCP_DDNS_NCR_UDP_RECV_ERROR UDP socket receive error while listening for DNS Update requests: %1
-This is an error message indicating that an IO error occurred while listening
+This is an error message indicating that an I/O error occurred while listening
 over a UDP socket for DNS update requests. This could indicate a network
 connectivity or system resource issue.
 
