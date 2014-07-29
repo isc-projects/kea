@@ -1102,6 +1102,63 @@ TEST_F(Dhcp4ParserTest, subnetLocal) {
     EXPECT_EQ(4, subnet->getValid());
 }
 
+// This test checks that multiple pools can be defined and handled properly.
+// The test defines 2 subnets, each with 2 pools.
+TEST_F(Dhcp4ParserTest, multiplePools) {
+
+    // Collection with two subnets, each with 2 pools.
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ "
+        "        { \"pool\": \"192.0.2.0/28\" },"
+        "        { \"pool\": \"192.0.2.200-192.0.2.255\" }"
+        "    ],"
+        "    \"subnet\": \"192.0.2.0/24\" "
+        " },"
+        " {"
+        "    \"pools\": [ "
+        "    { \"pool\": \"192.0.3.0/25\" },"
+        "    { \"pool\": \"192.0.3.128/25\" }"
+        "    ],"
+        "    \"subnet\": \"192.0.3.0/24\""
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+    ElementPtr json;
+    ASSERT_NO_THROW(json = Element::fromJSON(config));
+
+    ConstElementPtr status;
+    ASSERT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    checkResult(status, 0);
+
+    const Subnet4Collection* subnets = CfgMgr::instance().getSubnets4();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(2, subnets->size()); // We expect 2 subnets
+
+    // Check the first subnet
+    const PoolCollection& pools1 = subnets->at(0)->getPools(Lease::TYPE_V4);
+    ASSERT_EQ(2, pools1.size());
+    EXPECT_EQ("type=V4, 192.0.2.0-192.0.2.15",
+              pools1[0]->toText());
+    EXPECT_EQ("type=V4, 192.0.2.200-192.0.2.255",
+              pools1[1]->toText());
+    // There shouldn't be any TA or PD pools
+    EXPECT_THROW(subnets->at(0)->getPools(Lease::TYPE_TA), BadValue);
+    EXPECT_THROW(subnets->at(0)->getPools(Lease::TYPE_PD), BadValue);
+
+    // Check the second subnet
+    const PoolCollection& pools2 = subnets->at(1)->getPools(Lease::TYPE_V4);
+    ASSERT_EQ(2, pools2.size());
+    EXPECT_EQ("type=V4, 192.0.3.0-192.0.3.127",
+              pools2[0]->toText());
+    EXPECT_EQ("type=V4, 192.0.3.128-192.0.3.255",
+              pools2[1]->toText());
+    // There shouldn't be any TA or PD pools
+    EXPECT_THROW(subnets->at(0)->getPools(Lease::TYPE_TA).empty(), BadValue);
+    EXPECT_THROW(subnets->at(0)->getPools(Lease::TYPE_PD).empty(), BadValue);
+}
+
 // Test verifies that a subnet with pool values that do not belong to that
 // pool are rejected.
 TEST_F(Dhcp4ParserTest, poolOutOfSubnet) {

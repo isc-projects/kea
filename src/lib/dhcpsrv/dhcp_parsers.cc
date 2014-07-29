@@ -944,7 +944,7 @@ RelayInfoParser::commit() {
 }
 
 //****************************** PoolsListParser ********************************
-PoolsListParser::PoolsListParser(const std::string& dummy, PoolStoragePtr pools)
+PoolsListParser::PoolsListParser(const std::string&, PoolStoragePtr pools)
     :pools_(pools), local_pools_(new PoolStorage()) {
     if (!pools_) {
         isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
