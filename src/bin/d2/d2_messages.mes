@@ -97,14 +97,6 @@ application in standalone mode. This means it will not connected to the Kea
 message queue. Standalone mode is only useful during program development,
 and should not be used in a production environment.
 
-% DCTL_STARTING %1 controller starting, pid: %2
-This is an informational message issued when controller for the
-service first starts.
-
-% DCTL_STOPPING %1 controller is exiting
-This is an informational message issued when the controller is exiting
-following a shut down (normal or otherwise) of the service.
-
 % DHCP_DDNS_ADD_FAILED DHCP_DDNS Transaction outcome: %1
 This is an error message issued after DHCP_DDNS attempts to submit DNS mapping
 entry additions have failed.  The precise reason for the failure should be
@@ -129,19 +121,19 @@ This is an informational message indicating the application has received a signa
 instructing it to reload its configuration from file.
 
 % DHCP_DDNS_CLEARED_FOR_SHUTDOWN application has met shutdown criteria for shutdown type: %1
-This is an informational message issued when the application has been instructed
+This is a debug message issued when the application has been instructed
 to shutdown and has met the required criteria to exit.
 
 % DHCP_DDNS_COMMAND command directive received, command: %1 - args: %2
-This is a debug message issued when the Dhcp-Ddns application command method
+This is a debug message issued when the DHCP-DDNS application command method
 has been invoked.
 
 % DHCP_DDNS_CONFIGURE configuration update received: %1
-This is a debug message issued when the Dhcp-Ddns application configure method
+This is a debug message issued when the DHCP-DDNS application configure method
 has been invoked.
 
 % DHCP_DDNS_FAILED application experienced a fatal error: %1
-This is a debug message issued when the Dhcp-Ddns application encounters an
+This is a debug message issued when the DHCP-DDNS application encounters an
 unrecoverable error from within the event loop.
 
 % DHCP_DDNS_FORWARD_ADD_BAD_DNSCLIENT_STATUS DHCP_DDNS received an unknown DNSClient status: %1, while adding a forward address mapping for FQDN %2 to DNS server %3
@@ -290,8 +282,8 @@ configuration needs to be updated or the source of the FQDN itself should be
 investigated.
 
 % DHCP_DDNS_PROCESS_INIT application init invoked
-This is a debug message issued when the Dhcp-Ddns application enters
-its init method.
+This is a debug message issued when the DHCP-DDNS application enters
+its initialization method.
 
 % DHCP_DDNS_QUEUE_MGR_QUEUE_FULL application request queue has reached maximum number of entries %1
 This an error message indicating that DHCP-DDNS is receiving DNS update
@@ -339,7 +331,7 @@ such as an IP address or port, that are unavailable.  DHCP_DDNS will attempt to
 restart the queue manager if given a new configuration.
 
 % DHCP_DDNS_QUEUE_MGR_STOPPED application's queue manager has stopped listening for requests.
-This is an informational message indicating that DHCP_DDNS's Queue Manager has
+This is a debug message indicating that DHCP_DDNS's Queue Manager has
 stopped listening for NameChangeRequests.  This may be because of normal event
 such as reconfiguration or as a result of an error.  There should be log
 messages preceding this one to indicate why it has stopped.
@@ -440,19 +432,23 @@ DHCP_DDNS receives an update request containing a reverse DNS update.  The
 reverse update will not performed.
 
 % DHCP_DDNS_RUN_ENTER application has entered the event loop
-This is a debug message issued when the Dhcp-Ddns application enters
+This is a debug message issued when the DHCP-DDNS application enters
 its run method.
 
 % DHCP_DDNS_RUN_EXIT application is exiting the event loop
-This is a debug message issued when the Dhcp-Ddns exits the
-in event loop.
+This is a debug message issued when the DHCP-DDNS server exits its
+event lo
 
-% DHCP_DDNS_SHUTDOWN application received shutdown command with args: %1
-This is informational message issued when the application has been instructed
+% DHCP_DDNS_SHUTDOWN DHCP-DDNS has shut down
+This is an informational message indicating that the DHCP-DDNS service
+has shut down.
+
+% DHCP_DDNS_SHUTDOWN_COMMAND application received shutdown command with args: %1
+This is a debug message issued when the application has been instructed
 to shut down by the controller.
 
 % DHCP_DDNS_SHUTDOWN_SIGNAL_RECVD OS signal %1 received, starting shutdown
-This is an informational message indicating the application has received a signal
+This is a debug message indicating the application has received a signal
 instructing it to shutdown.
 
 % DHCP_DDNS_SIGNAL_ERROR signal handler for signal %1, threw an unexpected exception: %2
@@ -460,6 +456,10 @@ This is an error message indicating that the application encountered an unexpect
 error after receiving a signal.  This is a programmatic error and should be
 reported.  While The application will likely continue to operating, it may be
 unable to respond correctly to signals.
+
+% DHCP_DDNS_STARTING DHCP-DDNS starting, pid: %1
+This is an informational message issued when controller for the
+service first starts.
 
 % DHCP_DDNS_STARTING_TRANSACTION Transaction Key: %1
 This is a debug message issued when DHCP-DDNS has begun a transaction for
@@ -478,9 +478,10 @@ likely a programmatic error, rather than a communications issue. Some or all
 of the DNS updates requested as part of this request did not succeed.
 
 % DHCP_DDNS_UNSUPPORTED_SIGNAL ignoring reception of unsupported signal: %1
-This is a debug message indicating that the application received an unsupported
-signal.  This a programmatic error indicating the application has registered to
-receive the signal, but for which no processing logic has been added.
+This is a debug message indicating that the application received an
+unsupported signal.  This is a programming error indicating that the
+application has registered to receive the signal but no associated
+processing logic has been added.
 
 % DHCP_DDNS_UPDATE_REQUEST_SENT %1 for transaction key: %2 to server: %3
 This is a debug message issued when DHCP_DDNS sends a DNS request to a DNS
