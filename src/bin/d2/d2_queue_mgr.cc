@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -139,7 +139,7 @@ D2QueueMgr::startListening() {
                   << ex.what());
     }
 
-    LOG_INFO (dctl_logger, DHCP_DDNS_QUEUE_MGR_STARTED);
+    LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DHCP_DDNS_QUEUE_MGR_STARTED);
 }
 
 void
@@ -174,7 +174,7 @@ D2QueueMgr::stopListening(const State target_stop_state) {
 void
 D2QueueMgr::updateStopState() {
     mgr_state_ = target_stop_state_;
-    LOG_INFO (dctl_logger, DHCP_DDNS_QUEUE_MGR_STOPPED);
+    LOG_DEBUG(dctl_logger, DBGLVL_TRACE_BASIC, DHCP_DDNS_QUEUE_MGR_STOPPED);
 }
 
 
