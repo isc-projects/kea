@@ -112,8 +112,12 @@ SignalSet::invokeOnReceiptHandler(int sig) {
         signal_processed = onreceipt_handler_(sig);
     } catch (const std::exception& ex) {
         // Restore the handler.  We might fail to restore it, but we likely
-        // have bigger issues anyway.
-        sigaction(sig, &prev_sa, 0);
+        // have bigger issues anyway: for that reason, the return value is
+        // ignored.  To avoid complaints from static code checkers that notice
+        // that the return values from other calls to sigaction() have been
+        // used, the call to sigaction is explicitly cast to void to indicate
+        // that the return value is intentionally being ignored.
+        static_cast<void>(sigaction(sig, &prev_sa, 0));
         isc_throw(SignalSetError, "onreceipt_handler failed for signal "
                   << sig << ": " << ex.what());
     }
