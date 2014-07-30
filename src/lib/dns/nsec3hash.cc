@@ -149,15 +149,15 @@ NSEC3HashRFC5155::calculateForWiredata(const uint8_t* data,
     digest_.clear();
     iterateSHA1(name_buf, length,
                 salt_data_, salt_length_, digest_);
-    const uint8_t* d = static_cast<const uint8_t*>(digest_.getData());
-    size_t s = digest_.getLength();
+    const uint8_t* dgst_data = static_cast<const uint8_t*>(digest_.getData());
+    size_t dgst_len = digest_.getLength();
     for (unsigned int n = 0; n < iterations_; ++n) {
         digest_.clear();
-        iterateSHA1(d, s, salt_data_, salt_length_, digest_);
+        iterateSHA1(dgst_data, dgst_len, salt_data_, salt_length_, digest_);
     }
 
-    vdigest_.resize(s);
-    std::memcpy(&vdigest_[0], d, s);
+    vdigest_.resize(dgst_len);
+    std::memcpy(&vdigest_[0], dgst_data, dgst_len);
     return (encodeBase32Hex(vdigest_));
 }
 
