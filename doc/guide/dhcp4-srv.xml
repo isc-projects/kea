@@ -181,7 +181,7 @@ the list has several attributes associated with it, so is a structure
 and is opened and closed with braces. At minimum, a subnet definition
 has to have at least two parameters: <command>subnet</command> (that
 defines the whole subnet) and <command>pool</command> (which is a list of
-dynamically allocated pools that are governed by the DHCP server.</para>
+dynamically allocated pools that are governed by the DHCP server).</para>
 
 <para>The example contains a single subnet. Had more than one been defined,
 additional elements

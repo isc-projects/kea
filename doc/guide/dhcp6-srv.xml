@@ -11,253 +11,334 @@
       <title>Starting and Stopping the DHCPv6 Server</title>
 
       <para>
-        <command>kea-dhcp6</command> is the Kea DHCPv6 server and is configured
-        through the <command>bindctl</command> program.
-      </para>
-      <para>
-        After starting <command>bind10</command> and starting <command>bindctl</command>, the first step
-        in configuring the server is to add <command>kea-dhcp6</command> to the list of running services.
-<screen>
-&gt; <userinput>config add Init/components kea-dhcp6</userinput>
-&gt; <userinput>config set Init/components/kea-dhcp6/kind dispensable</userinput>
-&gt; <userinput>config commit</userinput>
-</screen>
-      </para>
-      <para>
-         To remove <command>kea-dhcp6</command> from the set of running services,
-         the <command>kea-dhcp6</command> is removed from list of Init components:
-<screen>
-&gt; <userinput>config remove Init/components kea-dhcp6</userinput>
-&gt; <userinput>config commit</userinput>
-</screen>
+	It is recommended to control DHCPv6 server in Kea using <command>keactl</command>,
+	which is described in details in <xref linkend="keactrl"/>.
       </para>
 
       <para>
-        Note that the server was only removed from the list, so BIND10 will not
-        restart it, but the server itself is still running. Hence it is usually
-        desired to stop it:
-<screen>
-&gt; <userinput>Dhcp6 shutdown</userinput>
-</screen>
+	However, it is also possible to run the server on its own, not using any
+	scripts. The server accepts the following command-line parameters:
+      </para>
+
+      <itemizedlist>
+          <listitem>
+            <simpara>-c file - specifies the configuration file. This is the
+	    only mandatory parameter (it may be optional for configuration
+	    parameters other than Kea)</simpara>
+          </listitem>
+          <listitem>
+            <simpara>-v - specifies whether the server logging should be
+	    switched to verbose mode. In verbose mode, logging severity and
+	    debuglevel specified in a configuration file are ignored and
+	    severity debug and maximum debuglevel (99) is assumed. That flag is
+	    convenient, for temporarily switching the server into maximum
+	    verbosity, e.g. when debugging.</simpara>
+          </listitem>
+          <listitem>
+            <simpara>-p port - specifies UDP port the server will listen
+	    on. This is only useful during testing, as the DHCPv4 server
+	    listening on ports other than default DHCPv6 ports will not be able
+	    to handle regular DHCPv6 queries.</simpara>
+          </listitem>
+      </itemizedlist>
+
+      <para>
+	The server running in a console can be shut down by pressing ctrl-c. The
+	server will detect such a key combination and will initialize shutdown procedure.
       </para>
 
       <para>
-        During start-up the server will detect available network interfaces
+        On start-up, the server will detect available network interfaces
         and will attempt to open UDP sockets on all interfaces that
-        are up, running, are not loopback, are multicast-capable, and
-        have IPv6 address assigned. It will then listen to incoming traffic.
+        are mentioned in the configuration file.
       </para>
 
+      <para>
+        Since the DHCPv6 server opens privileged ports, it requires root
+        access. Make sure you run this daemon as root.
+      </para>
 
     </section>
 
     <section id="dhcp6-configuration">
       <title>DHCPv6 Server Configuration</title>
-      <para>
-        Once the server has been started, it can be configured. To view the
-        current configuration, use the following command in <command>bindctl</command>:
-        <screen>&gt; <userinput>config show Dhcp6</userinput></screen>
-        When starting the Dhcp6 daemon for the first time, the default configuration
-        will be available. It will look similar to this:
-<screen>
-&gt; <userinput>config show Dhcp6</userinput>
-Dhcp6/hooks-libraries   []  list    (default)
-Dhcp6/interfaces/   list    (default)
-Dhcp6/renew-timer   1000    integer (default)
-Dhcp6/rebind-timer  2000    integer (default)
-Dhcp6/preferred-lifetime    3000    integer (default)
-Dhcp6/valid-lifetime    4000    integer (default)
-Dhcp6/option-def    []  list    (default)
-Dhcp6/option-data   []  list    (default)
-Dhcp6/lease-database/type   ""  string  (default)
-Dhcp6/lease-database/name   ""  string  (default)
-Dhcp6/lease-database/user   ""  string  (default)
-Dhcp6/lease-database/host   ""  string  (default)
-Dhcp6/lease-database/password   ""  string  (default)
-Dhcp6/subnet6/  list
-Dhcp6/dhcp-ddns/enable-updates  true    boolean
-Dhcp6/dhcp-ddns/server-ip   "127.0.0.1" string
-Dhcp6/dhcp-ddns/server-port 53001   integer
-Dhcp6/dhcp-ddns/sender-ip	""	string
-Dhcp6/dhcp-ddns/sender-port	0	integer
-Dhcp6/dhcp-ddns/max-queue-size	1024  integer
-Dhcp6/dhcp-ddns/ncr-protocol    "UDP"   string
-Dhcp6/dhcp-ddns/ncr-format  "JSON"  string
-Dhcp6/dhcp-ddns/always-include-fqdn false   boolean
-Dhcp6/dhcp-ddns/override-no-update  false   boolean
-Dhcp6/dhcp-ddns/override-client-update  false   boolean
-Dhcp6/dhcp-ddns/replace-client-name false   boolean
-Dhcp6/dhcp-ddns/generated-prefix    "myhost"    string
-Dhcp6/dhcp-ddns/qualifying-suffix   "example.com"   string
-</screen>
-      </para>
-      <para>
-        To change one of the parameters, simply follow
-        the usual <command>bindctl</command> procedure. For example, to make the
-        leases longer, change their valid-lifetime parameter:
-        <screen>
-&gt; <userinput>config set Dhcp6/valid-lifetime 7200</userinput>
-&gt; <userinput>config commit</userinput></screen>
-        Most Dhcp6 parameters are of global scope
-        and apply to all defined subnets, unless they are overridden on a
-        per-subnet basis.
-      </para>
-      <note>
-        <para>
-          With this version of Kea, there are a number of known limitations
-          and problems in the DHCPv6 server. See <xref linkend="dhcp6-limit"/>.
-        </para>
-      </note>
 
-      <section>
-      <title>Default storage for leases</title>
-      <para>
-        The server is able to store lease data in different repositories. Larger deployments
-        may elect to store leases in a database.
-        <xref linkend="database-configuration6"/> describes one way to do it.
-        By default, the server will use a CSV file rather than a database to store
-        lease information. One of the advantages of using a file is that it eliminates
-        dependency on third party database software.
-      </para>
-      <para>
-        The configuration of the file backend (Memfile)
-        is controlled through the Dhcp6/lease-database parameters. When default
-        parameters are left, the Memfile backend will write leases to a disk in the
-        [bind10-install-dir]/var/bind10/kea-leases6.csv.
-      </para>
-      <para>
-        It is possible to alter the default location of the lease file. The following
-        configuration:
-<screen>
-&gt; <userinput>config set Dhcp4/lease-database/type "memfile"</userinput>
-&gt; <userinput>config set Dhcp4/lease-database/persist true</userinput>
-&gt; <userinput>config set Dhcp4/lease-database/leasefile "/tmp/kea-leases6.csv"</userinput>
-&gt; <userinput>config commit</userinput>
-</screen>
-        will change the default location of the lease file to /tmp/kea-leases6.csv.
-      </para>
-      <para>
-        The "persist" parameter controls whether the leases are written to disk.
-        It is strongly recommended that this parameter is set to "true" at all times
-        during the normal operation of the server.
-      </para>
-      </section>
 
-      <section id="database-configuration6">
-      <title>Database Configuration</title>
+<section>
+  <title>Introduction</title>
       <para>
-      All leases issued by the server are stored in the lease database. Currently
-      there are 3 database backends available: MySQL, PostgreSQL and memfile.
-      <footnote>
-      <para>
-      The server comes with an in-memory database ("memfile") configured as the default
-      database. This is used for internal testing and is not supported.  In addition,
-      it does not store lease information on disk: lease information will be lost if the
-      server is restarted.
-      </para>
-      </footnote>, and so the server must be configured to
-      access the correct database with the appropriate credentials.
-      </para>
-      <note>
-        <para>
-            Database access information must be configured for the DHCPv6 server, even if
-            it has already been configured for the DHCPv4 server.  The servers store their
-            information independently, so each server can use a separate
-            database or both servers can use the same database.
+        This section explains how to configure the DHCPv6 server using the
+        Kea configuration backend. Kea configuration using any other
+        backends is outside of scope for this document. Before DHCPv6
+        is started, its configuration file has to be created. The
+        basic configuration looks as follows:
+<screen>
+{
+# DHCPv6 configuration starts in this line
+"Dhcp6": {
+
+# First we set up global values
+    "interfaces": [ "eth0" ],
+    "renew-timer": 1000,
+    "rebind-timer": 2000,
+    "preferred-lifetime": 3000,
+    "valid-lifetime": 4000,
+
+# Next we specify the type of lease database
+    "lease-database": {
+        "type": "memfile",
+        "persist": true,
+        "name": "/var/kea/dhcp6.leases"
+    },
+
+# Finally, we list the subnets from which we will be leasing addresses.
+    "subnet6": [
+        {
+            "subnet": "2001:db8:1::/64",
+            "pools": [
+                 {
+                     "pool": "2001:db8:1::1-2001:db8:1::ffff"
+                 }
+             ]
+        }
+    ]
+
+# DHCPv6 configuration ends with this line
+}
+
+} </screen>
+</para>
+
+<para>The following paragraphs provide a brief overview of the parameters in
+the above example and
+their format. Subsequent sections of this chapter go into much greater detail
+for these and other parameters.</para>
+
+<para>The lines starting with a hash (#) are comments and are ignored by
+the server; they do not impact its
+operation in any way.</para>
+
+<para>The configuration starts in the first line with the initial
+opening curly bracket (or brace). Each configuration consists of
+one or more objects. In this specific example, we have only one
+object called Dhcp6. This is a simplified configuration, as usually
+there will be additional objects, like <command>Logging</command> or
+<command>DhcpDns</command>, but we omit them now for clarity. The Dhcp6
+configuration starts with the the <command>"Dhcp6: {"</command> line
+and ends with the corresponding closing brace (in the above example,
+the brace after the last comment).  Everything defined between those
+lines is considered to be the Dhcp6 configuration.</para>
+
+<para>In general case, the order in which those parameters appear does not
+matter. There are two caveats here though. The first one is to remember that
+the configuration file must be a well formed JSON. That means that parameters
+for any given scope must be separate by a comma and there must not be a comma
+after the last parameter. When reordering configuration file, keep in mind that
+moving a parameter to or from the last position in a given scope may require
+moving the comma as well. The second caveat is that it is uncommon - although
+legal JSON - to
+repeat the same parameter multiple times. If that happens, the last occurrence of a
+given parameter in a given scope is used while all previous instances are
+ignored. This is unlikely to cause any confusion as there are no real life
+reasons to keep multiple copies of the same parameter in your configuration
+file.</para>
+
+<para>Moving onto the DHCPv6 configuration elements,
+the line defining <command>interfaces</command> parameter specifies a list
+of network interfaces on which the server should listen.
+Lists are opened and closed with square brackets, with elements
+separated by commas. Had we wanted to listen on two interfaces, the line could
+look like this:
+<screen>
+"interfaces": [ "eth0", "eth1" ],
+</screen>
+
+As "<command>interfaces</command>" is not the last parameter in the
+configuration, a trailing comma is required.i</para>
+<para>A number of other parameters follow. <command>valid-lifetime</command>
+defines how long the addresses (leases) given out by the server are valid. If
+nothing changes, client that got the address is allowed to use it for 4000
+seconds. (Note that integer numbers are specified as is, without any quotes
+around them.) The address will become deprecated in 3000 seconds (clients are
+allowed to keep old connections, but can't use this address for creating new
+connections). <command>renew-timer</command> and <command>
+rebind-timer</command> are values that define T1 and T2 timers that govern when
+the client will begin renewal and rebind procedures.</para>
+
+<para>The next couple lines define the lease database, the place where the server
+stores its lease information. This particular example tells the server to use
+<command>memfile</command>, which is the simplest (and fastest) database
+backend. It uses in-memory database and stores leases on disk in a CSV
+file. This is a very simple configuration. Usually, lease database configuration
+is more extensive and contains additional parameters.  Note that
+<command>lease-database</command>
+is an object and opens up a new scope, using an opening brace.
+Its parameters (just one in this example -- <command>type</command>)
+follow. Had there been more than one, they would be separated by commas. This
+scope is closed with a closing brace. As more parameters follow, a trailing
+comma is present.</para>
+
+<para>Finally, we need to define a list of IPv6 subnets. This is the
+most important DHCPv6 configuration structure as the server uses that
+information to process clients' requests. It defines all subnets that
+the server is expected to receive DHCP requests from. The subnets are
+specified with the <command>subnet6</command> parameter.  It is a list,
+so it starts and ends with square brackets.  Each subnet definition in
+the list has several attributes associated with it, so is a structure
+and is opened and closed with braces. At minimum, a subnet definition
+has to have at least two parameters: <command>subnet</command> (that
+defines the whole subnet) and <command>pool</command> (which is a list of
+dynamically allocated pools that are governed by the DHCP server).</para>
+
+<para>The example contains a single subnet. Had more than one been defined,
+additional elements
+in the <command>subnet6</command> parameter would be specified and
+separated by commas. For example, to define two subnets, the following
+syntax would be used:
+<screen>
+"subnet6": [
+    {
+        "pools": [
+        {
+            "pool": "2001:db8:1::/112"
+        }
+        ],
+        "subnet": "2001:db8:1::/64"
+    },
+    {
+        "pools": [ { "pool": "2001:db8:2::1-2001:db8:2::ff" } ],
+        "subnet": "192.0.3.0/24",
+        "interface": "eth0"
+    }
+]
+</screen>
+</para>
+
+<para>After all parameters are specified, we have two contexts open:
+global and Dhcp6, hence we need two closing curly brackets to close them.
+In a real life configuration file there likely would be additional
+components defined like Logging or DhcpDdns, so the closing brace would
+be followed by a comma and another object definition.</para>
+
+<para>Kea 0.9 does not have configuration syntax validation
+implemented yet. Such a feature is planned for the near future. For
+the time being, it is convenient to use on-line JSON validators and/or
+viewers to check whether the syntax is correct. One example of such a
+JSON validator is available at <ulink url="http://jsonviewer.stack.hu/"/>.
+</para>
+</section>
+
+<section>
+  <title>Lease Storage</title>
+  <para>All leases issued by the server are stored in the lease database.
+  Currently there are three database backends available:
+  memfile (which is the default backend), MySQL and PostgreSQL.</para>
+<section>
+  <title>Memfile - Basic Storage for Leases</title>
+
+  <para>The server is able to store lease data in different repositories. Larger
+  deployments may elect to store leases in a database. <xref
+  linkend="database-configuration4"/> describes this option. In typical
+  smaller deployments though, the server will use a CSV file rather than a database to
+  store lease information. As well as requiring less administration, an
+  advantage of using a file for storage is that it
+  eliminates a dependency on third-party database software.</para>
+
+  <para>The configuration of the file backend (Memfile) is controlled through
+  the Dhcp4/lease-database parameters. <!-- @todo: we don't have default
+  parameters. Let's comment this out When default parameters are used, the
+  Memfile backend will write leases to a disk in the
+  [kea-install-dir]/var/kea/kea-leases4.csv. -->
+  The following configuration:
+<screen>
+"Dhcp4": {
+    "lease-database": {
+        <userinput>"type": "memfile"</userinput>,
+        <userinput>"persist": true</userinput>,
+        <userinput>"name": "/tmp/kea-leases4.csv"</userinput>
+    }
+    ...
+}
+</screen>
+  ...sets the name of the lease file to /tmp/kea-leases4.csv.
+  </para>
+
+  <para>The "persist" parameter controls whether the leases are written to disk.
+  It is strongly recommended that this parameter is set to "true" at all times
+  during the normal operation of the server. (Not writing leases to disk will
+  mean that if a server is restarted (e.g. after a power failure), it will not
+  know what addresses have been assigned.  As a result, it may hand out addresses
+  to new clients that are already in use.)
           </para>
-        </note>
-      <para>
-      Database configuration is controlled through the Dhcp6/lease-database parameters.
-      The type of the database must be set to "mysql", "postgresql" or "memfile":
-<screen>
-&gt; <userinput>config set Dhcp6/lease-database/type "mysql"</userinput>
-</screen>
-      Next, the name of the database is to hold the leases must be set: this is the
-      name used when the lease database was created (see <xref linkend="dhcp-mysql-database-create"/>
-      or <xref linkend="dhcp-pgsql-database-create"/>).
-<screen>
-&gt; <userinput>config set Dhcp6/lease-database/name "<replaceable>database-name</replaceable>"</userinput>
-</screen>
-      If the database is located on a different system to the DHCPv6 server, the
-      database host name must also be specified (although note that this configuration
-      may have a severe impact on server performance):
-<screen>
-&gt; <userinput>config set Dhcp6/lease-database/host "<replaceable>remote-host-name</replaceable>"</userinput>
-</screen>
-      The usual state of affairs will be to have the database on the same machine as the
-      DHCPv6 server.  In this case, set the value to the empty string (this is the default):
-<screen>
-&gt; <userinput>config set Dhcp6/lease-database/host ""</userinput>
-</screen>
-      </para>
-      <para>
-      Finally, the credentials of the account under which the server will access the database
-      should be set:
-<screen>
-&gt; <userinput>config set Dhcp6/lease-database/user "<replaceable>user-name</replaceable>"</userinput>
-&gt; <userinput>config set Dhcp6/lease-database/password "<replaceable>password</replaceable>"</userinput>
-</screen>
-      If there is no password to the account, set the password to the empty string "". (This is also the default.)
-      </para>
-      <note>
-      <para>The password is echoed when entered and is stored in clear text in the configuration
-      database.  Improved password security will be added in a future version of Kea.</para>
-      </note>
-      </section>
+</section>
 
-      <section id="dhcp6-interface-selection">
-      <title>Interface selection</title>
-      <para>
-        When DHCPv6 server starts up, by default it will listen to the DHCP
-        traffic and respond to it on all interfaces detected during startup.
-        However, in many cases it is desired to configure the server to listen and
-        respond on selected interfaces only. The sample commands in this section
-        show how to make interface selection using bindctl.
-      </para>
-      <para>
-        The default configuration can be presented with the following command:
-        <screen>
-&gt; <userinput>config show Dhcp6/interfaces</userinput>
-<userinput>Dhcp6/interfaces[0] "*" string</userinput></screen>
-        An asterisk sign plays a role of the wildcard and means "listen on all interfaces".
-      </para>
-      <para>
-        In order to override the default configuration, the existing entry can be replaced
-        with the actual interface name:
-        <screen>
-&gt; <userinput>config set Dhcp6/interfaces[0] eth1</userinput>
-&gt; <userinput>config commit</userinput></screen>
-        Other interface names can be added on one-by-one basis:
-        <screen>
-&gt; <userinput>config add Dhcp6/interfaces eth2</userinput>
-&gt; <userinput>config commit</userinput></screen>
-        Configuration will now contain two interfaces which can be presented as follows:
-        <screen>
-&gt; <userinput>config show Dhcp6/interfaces</userinput>
-<userinput>Dhcp6/interfaces[0]	"eth1"	string</userinput>
-<userinput>Dhcp6/interfaces[1]	"eth2"	string</userinput></screen>
-        When configuration gets committed, the server will start to listen on
-        eth1 and eth2 interfaces only.
-      </para>
-      <para>
-        It is possible to use wildcard interface name (asterisk) concurrently with explicit
-        interface names:
-        <screen>
-&gt; <userinput>config add Dhcp6/interfaces *</userinput>
-&gt; <userinput>config commit</userinput></screen>
-        This will result in the following configuration:
-        <screen>
-&gt; <userinput>config show Dhcp6/interfaces</userinput>
-<userinput>Dhcp6/interfaces[0]	"eth1"	string</userinput>
-<userinput>Dhcp6/interfaces[1]	"eth2"	string</userinput>
-<userinput>Dhcp6/interfaces[2]	"*"	string</userinput></screen>
-        The presence of the wildcard name implies that server will listen on all interfaces.
-        In order to fall back to the previous configuration when server listens on eth1 and eth2:
-        <screen>
-&gt; <userinput>config remove Dhcp6/interfaces[2]</userinput>
-&gt; <userinput>config commit</userinput></screen>
-      </para>
-    </section>
+<section id="database-configuration6">
+  <title>Database Configuration</title>
+
+  <note>
+    <para>Database access information must be configured for the DHCPv6 server,
+    even if it has already been configured for the DHCPv4 server.  The servers
+    store their information independently, so each server can use a separate
+    database or both servers can use the same database.</para>
+  </note>
+
+  <para>Database configuration is controlled through the Dhcp6/lease-database
+  parameters. The type of the database must be set to "mysql" or "postgresql",
+  e.g.
+<screen>
+"Dhcp6": { "lease-database": { <userinput>"type": "mysql"</userinput>, ... }, ... }
+</screen>
+  Next, the name of the database is to hold the leases must be set: this is the
+  name used when the lease database was created (see <xref linkend="dhcp-mysql-database-create"/>
+  or <xref linkend="dhcp-pgsql-database-create"/>).
+<screen>
+"Dhcp6": { "lease-database": { <userinput>"name": "<replaceable>database-name</replaceable>" </userinput>, ... }, ... }
+</screen>
+  If the database is located on a different system than the DHCPv6 server, the
+  database host name must also be specified (although it should be noted that this
+  configuration may have a severe impact on server performance):
+<screen>
+"Dhcp6": { "lease-database": { <userinput>"host": <replaceable>remote-host-name</replaceable>"</userinput>, ... }, ... }
+</screen>
+  The usual state of affairs will be to have the database on the same machine as
+  the DHCPv6 server.  In this case, set the value to the empty string:
+<screen>
+"Dhcp6": { "lease-database": { <userinput>"host" : ""</userinput>, ... }, ... }
+</screen>
+  </para>
+  <para>Finally, the credentials of the account under which the server will
+  access the database should be set:
+<screen>
+"Dhcp6": { "lease-database": { <userinput>"user": "<replaceable>user-name</replaceable>"</userinput>,
+                               <userinput>"password" "<replaceable>password</replaceable>"</userinput>,
+                              ... },
+           ... }
+</screen>
+  If there is no password to the account, set the password to the empty string
+  "". (This is also the default.)</para>
+</section>
+</section>
+
+<section id="dhcp6-interface-selection">
+  <title>Interface selection</title>
+  <para>The DHCPv6 server has to be configured to listen on specific network
+  interfaces.  The simplest network interface configuration tells the server to
+  listen on all available interfaces:
+  <screen>
+"Dhcp6": { <userinput>"interfaces": ["*"]</userinput>, ... }</screen>
+  The asterisk plays the role of a wildcard and means "listen on all interfaces".
+  However, it is usually a good idea to explicitly specify interface names:
+  <screen>
+"Dhcp6": { <userinput>"interfaces": [ "eth1", "eth3" ]</userinput>, ... }</screen>
+  </para>
+  <para>It is possible to use wildcard interface name (asterisk) concurrently
+  with explicit interface names:
+  <screen>
+"Dhcp6": { <userinput>"interfaces": [ "eth1", "eth3", "*" ]</userinput>, ... }</screen>
+It is anticipated that this will form of usage only be used where it is desired to
+temporarily override a list of interface names and listen on all interfaces.
+  </para>
+</section>
 
     <section id="ipv6-subnet-id">
       <title>IPv6 Subnet Identifier</title>
@@ -280,19 +361,25 @@ Dhcp6/dhcp-ddns/qualifying-suffix   "example.com"   string
        of one of the subnets. Currently, the only remedy for this issue is to
        manually specify the unique subnet identifier for each subnet.
       </para>
+
       <para>
-        The following configuration:
-        <screen>
-&gt; <userinput>config add Dhcp6/subnet6</userinput>
-&gt; <userinput>config set Dhcp6/subnet6[0]/subnet "2001:db8:1::/64"</userinput>
-&gt; <userinput>config set Dhcp6/subnet6[0]/id 1024</userinput>
-&gt; <userinput>config commit</userinput>
-        </screen>
+	The following configuration:
+	<screen>
+"Dhcp6": {
+    "subnet6": [
+        "subnet": "2001:db8:1::/64",
+        <userinput>"id": 1024</userinput>,
+        ...
+    ]
+}
+</screen>
         will assign the arbitrary subnet identifier to the newly configured subnet.
-        This identifier will not change for this subnet until "id" parameter is
-        removed or set to 0. The value of 0 forces auto-generation of subnet
-        identifier.
+	This identifier will not change for this subnet unless the "id" parameter is
+	removed or set to 0. The value of 0 forces auto-generation of the subnet
+	identifier.
       </para>
+      <!-- @todo: describe whether database needs to be updated after changing
+      id -->
     </section>
 
     <section id="dhcp6-unicast">
