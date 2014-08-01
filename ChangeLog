@@ -1,3 +1,8 @@
+808.	[func]		stephen
+	Reduced number of startup and shutdown messages in the
+	DHCP-DDNS process by making some of them debug messages.
+	(Trac #3479, git bca0bae285de9ce904c0afd21af777dac2edb4e6)
+
 807.	[func]		marcin
 	DHCPv6 server responds to Confirm messages from clients.
 	(Trac #3269, git 4f43c309a994e30c07f5aa27057552fb195ec284)
