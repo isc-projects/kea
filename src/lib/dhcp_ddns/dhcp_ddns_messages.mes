@@ -57,7 +57,7 @@ UDP NCR sender ready status after completing a send.  This is programmatic error
 that should be reported.  The application may or may not continue to operate
 correctly.
 
-% DHCP_DDNS_NCR_UDP_RECV_CANCELED UDP socket receive was canceled while listening for DNS Update requests: %1
+% DHCP_DDNS_NCR_UDP_RECV_CANCELED UDP socket receive was canceled while listening for DNS Update requests
 This is a debug  message indicating that the listening on a UDP socket
 for DNS update requests has been canceled.  This is a normal part of
 suspending listening operations.
