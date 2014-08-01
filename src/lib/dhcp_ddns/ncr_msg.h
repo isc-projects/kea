@@ -315,47 +315,61 @@ public:
                   isc::util::OutputBuffer& buffer) const;
 
     /// @brief Static method for creating a NameChangeRequest from a
-    /// string containing a JSON rendition of a request.  The JSON content
-    /// expected is described below:
+    /// string containing a JSON rendition of a request.
     ///
-    /// A request must be enclosed within curly brackets "{..}" (Whitespace
-    /// is optional but used here for clarity).
+    /// The JSON expected is described below.  Note that a request must be
+    /// enclosed within curly brackets "{..}" and that whitespace is optional
+    /// (it is used in the following examples for clarity).
     ///
     /// @code
     ///     {
-    ///      "change_type" : <type>,
+    ///      "change_type" : <integer>,
     ///      "forward_change" : <boolean>,
     ///      "reverse_change" : <boolean>,
-    ///      "fqdn" : "<fqdn>" ,
-    ///      "ip_address" : "<ip>",
+    ///      "fqdn" : "<fqdn>",
+    ///      "ip_address" : "<address>",
     ///      "dhcid" : "<hex_string>",
     ///      "lease_expires_on" : "<yyyymmddHHMMSS>",
     ///      "lease_length" : <secs>
     ///     }
     /// @endcode
     ///
-    /// - type - integer 0 or 1: 0 to add/update DNS entries, 1 to remove DNS
-    ///   entries
-    /// - boolean - case insensitve "true" or "false"
-    /// - ip - IPv4 or IPv6 address: "192.168.0.1" or "2001:db8:1::2"
-    /// - fqdn - Fully qualified domain name such as "myhost.example.com.".
-    /// - (Note that a trailing dot will be appended if not supplied)
-    /// - hex_string - a string containing an even number of hexadecimal
-    ///   digits without delimiters such as "2C010203040A7F8E3D" (case
-    ///   insensitive)
-    /// - yyyymmddHHMMSS date and time:
+    /// - change_type - indicates whether this request is to add or update
+    ///   DNS entries or to remove them.  The value is an integer and is
+    ///   0 for add/update and 1 for remove.
+    /// - forward_change - indicates whether the the forward (name to
+    ///   address) DNS zone should be updated.  The value is a string
+    ///   representing a boolean.  It is "true" if the zone should be updated
+    ///   and "false" if not. (Unlike the keyword, the boolean value is
+    ///   case-insensitive.)
+    /// - reverse_change - indicates whether the the reverse (address to
+    ///   name) DNS zone should be updated.  The value is a string
+    ///   representing a boolean.  It is "true" if the zone should be updated
+    ///   and "false" if not. (Unlike the keyword, the boolean value is
+    ///   case-insensitive.)
+    /// - fqdn - fully qualified domain name such as "myhost.example.com.".
+    ///   (Note that a trailing dot will be appended if not supplied.)
+    /// - ip_address - the IPv4 or IPv6 address of the client.  The value
+    ///   is a string representing the IP address (e.g. "192.168.0.1" or
+    ///   "2001:db8:1::2").
+    /// - dhcid - identification of the DHCP client to whom the IP address has
+    ///   been leased.  The value is a string containing an even number of
+    ///   hexadecimal digits without delimiters such as "2C010203040A7F8E3D"
+    ///   (case insensitive).
+    /// - lease_expires_on - the date and time on which the lease expires.
+    ///   The value is a string of the form "yyyymmddHHMMSS" where:
     ///     - yyyy - four digit year
     ///     - mm - month of year (1-12),
     ///     - dd - day of the month (1-31),
     ///     - HH - hour of the day (0-23)
     ///     - MM - minutes of the hour (0-59)
     ///     - SS - seconds of the minute (0-59)
-    /// - secs - duration of the lease in seconds between 1 and 4294967295
-    /// (2^32 - 1), inclusive
+    /// - lease_length - the length of the lease in seconds.  This is an
+    ///   integer and may range between 1 and 4294967295 (2^32 - 1) inclusive.
     ///
-    ///  Examples:
+    /// Examples:
     ///
-    ///  Valid Remove with an IPv4 address, foward DNS only:
+    /// Removal of an IPv4 address from the forward DNS zone only:
     ///
     /// @code
     ///  {
@@ -370,7 +384,7 @@ public:
     ///  }
     /// @endcode
     ///
-    ///  Valid Add with an IPv6 address, both forward and reverse DNS:
+    /// Addition of an IPv6 address to both forward and reverse DNS zones:
     ///
     /// @code
     ///  {
