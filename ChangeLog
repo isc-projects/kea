@@ -1,3 +1,9 @@
+809.	[func]		stephen
+	sockcreator is no longer built or installed.  The code is being retained
+	in the repository for the moment, but may be deleted at some point in the
+	future.
+	(Trac #3480, git 2a55a469dde8fcc053b49e287c30d0906baa91b4)
+
 808.	[func]		stephen
 	Reduced number of startup and shutdown messages in the
 	DHCP-DDNS process by making some of them debug messages.
