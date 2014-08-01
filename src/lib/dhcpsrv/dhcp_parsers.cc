@@ -335,12 +335,12 @@ OptionDataParser::OptionDataParser(const std::string&, OptionStoragePtr options,
     options_(options), option_descriptor_(false),
     global_context_(global_context) {
     if (!options_) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
+        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
              << "options storage may not be NULL");
     }
 
     if (!global_context_) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
+        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
              << "context may may not be NULL");
     }
 }
@@ -612,17 +612,17 @@ OptionDataListParser::OptionDataListParser(const std::string&,
     global_context_(global_context),
     optionDataParserFactory_(optionDataParserFactory) {
     if (!options_) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
+        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
              << "options storage may not be NULL");
     }
 
     if (!options_) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
+        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
              << "context may not be NULL");
     }
 
     if (!optionDataParserFactory_) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
+        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
              << "option data parser factory may not be NULL");
     }
 }
@@ -665,7 +665,7 @@ OptionDefParser::OptionDefParser(const std::string&,
       uint32_values_(new Uint32Storage()),
       global_context_(global_context) {
     if (!storage_) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
+        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
              << "options storage may not be NULL");
     }
 }
@@ -823,7 +823,7 @@ OptionDefListParser::OptionDefListParser(const std::string&,
     : storage_(global_context->option_defs_),
       global_context_(global_context) {
     if (!storage_) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
+        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
              << "storage may not be NULL");
     }
 }
@@ -888,7 +888,7 @@ RelayInfoParser::RelayInfoParser(const std::string&,
                                   family == Option::V4 ? "0.0.0.0" : "::")),
      string_values_(new StringStorage()), family_(family) {
     if (!relay_info) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
+        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
                   << "relay-info storage may not be NULL");
     }
 
@@ -947,7 +947,7 @@ RelayInfoParser::commit() {
 PoolsListParser::PoolsListParser(const std::string&, PoolStoragePtr pools)
     :pools_(pools), local_pools_(new PoolStorage()) {
     if (!pools_) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
+        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
                   << "storage may not be NULL");
     }
 }
@@ -982,7 +982,7 @@ PoolParser::PoolParser(const std::string&,  PoolStoragePtr pools)
         :pools_(pools) {
 
     if (!pools_) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
+        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
                   << "storage may not be NULL");
     }
 }
@@ -1078,7 +1078,7 @@ SubnetConfigParser::SubnetConfigParser(const std::string&,
     // The first parameter should always be "subnet", but we don't check
     // against that here in case some wants to reuse this parser somewhere.
     if (!global_context_) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
+        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
                  << "context storage may not be NULL");
     }
 }
