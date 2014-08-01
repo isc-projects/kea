@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -781,7 +781,7 @@ TEST_F(CommandOptionsTest, Interface) {
     const dhcp::IfaceMgr::IfaceCollection& ifaces = iface_mgr.getIfaces();
     std::string iface_name;
     CommandOptions& opt = CommandOptions::instance();
-    // The local loopback interface should be available. 
+    // The local loopback interface should be available.
     // If no interface have been found for any reason we should
     // not fail this test.
     if (ifaces.size() > 0) {
