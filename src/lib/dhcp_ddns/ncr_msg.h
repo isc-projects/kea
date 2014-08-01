@@ -230,8 +230,9 @@ typedef std::map<std::string, isc::data::ConstElementPtr> ElementMap;
 /// request DNS updates.  Each message contains a single DNS change (either an
 /// add/update or a remove) for a single FQDN.  It provides marshalling services
 /// for moving instances to and from the wire.  Currently, the only format
-/// supported is JSON, however the class provides an interface such that other
-/// formats can be readily supported.
+/// supported is JSON detailed here isc::dhcp_ddns::NameChangeRequest::fromJSON
+/// The class provides an interface such that other formats can be readily
+/// supported.
 class NameChangeRequest {
 public:
     /// @brief Default Constructor.
@@ -295,13 +296,15 @@ public:
     /// @brief Instance method for marshalling the contents of the request
     /// into the given buffer in the given format.
     ///
-    /// When the format is:
+    /// Whe the format is:
     ///
     /// JSON: Upon completion, the buffer will contain a two byte unsigned
     /// integer which specifies the length of the JSON text; followed by the
     /// JSON text itself. The JSON text contains the names and values for all
     /// the request data needed to reassemble the request on the receiving
-    /// end. The JSON text in the buffer is NOT null-terminated.
+    /// end. The JSON text in the buffer is NOT null-terminated.  The format
+    /// is identical that described under
+    /// isc::dhcp_ddns::NameChangeRequest::fromJSON
     ///
     /// (NOTE currently only JSON is supported.)
     ///
@@ -312,7 +315,75 @@ public:
                   isc::util::OutputBuffer& buffer) const;
 
     /// @brief Static method for creating a NameChangeRequest from a
-    /// string containing a JSON rendition of a request.
+    /// string containing a JSON rendition of a request.  The JSON content
+    /// expected is described below:
+    ///
+    /// A request must be enclosed within curly brackets "{..}" (Whitespace
+    /// is optional but used here for clarity).
+    ///
+    /// @code
+    ///     {
+    ///      "change_type" : <type>,
+    ///      "forward_change" : <boolean>,
+    ///      "reverse_change" : <boolean>,
+    ///      "fqdn" : "<fqdn>" ,
+    ///      "ip_address" : "<ip>",
+    ///      "dhcid" : "<hex_string>",
+    ///      "lease_expires_on" : "<yyyymmddHHMMSS>",
+    ///      "lease_length" : <secs>
+    ///     }
+    /// @endcode
+    ///
+    /// - type - integer 0 or 1: 0 to add/update DNS entries, 1 to remove DNS
+    ///   entries
+    /// - boolean - case insensitve "true" or "false"
+    /// - ip - IPv4 or IPv6 address: "192.168.0.1" or "2001:db8:1::2"
+    /// - fqdn - Fully qualified domain name such as "myhost.example.com.".
+    /// - (Note that a trailing dot will be appended if not supplied)
+    /// - hex_string - a string containing an even number of hexadecimal
+    ///   digits without delimiters such as "2C010203040A7F8E3D" (case
+    ///   insensitive)
+    /// - yyyymmddHHMMSS date and time:
+    ///     - yyyy - four digit year
+    ///     - mm - month of year (1-12),
+    ///     - dd - day of the month (1-31),
+    ///     - HH - hour of the day (0-23)
+    ///     - MM - minutes of the hour (0-59)
+    ///     - SS - seconds of the minute (0-59)
+    /// - secs - duration of the lease in seconds between 1 and 4294967295
+    /// (2^32 - 1), inclusive
+    ///
+    ///  Examples:
+    ///
+    ///  Valid Remove with an IPv4 address, foward DNS only:
+    ///
+    /// @code
+    ///  {
+    ///     "change_type" : 1,
+    ///     "forward_change" : true,
+    ///     "reverse_change" : false,
+    ///     "fqdn" : "myhost.example.com.",
+    ///     "ip_address" : "192.168.2.1" ,
+    ///     "dhcid" : "010203040A7F8E3D" ,
+    ///     "lease_expires_on" : "20130121132405",
+    ///     "lease_length" : 1300
+    ///  }
+    /// @endcode
+    ///
+    ///  Valid Add with an IPv6 address, both forward and reverse DNS:
+    ///
+    /// @code
+    ///  {
+    ///     "change_type" : 0,
+    ///     "forward_change" : true,
+    ///     "reverse_change" : true,
+    ///     "fqdn" : "someother.example.com.",
+    ///     "ip_address" : "2001::db8:1::2",
+    ///     "dhcid" : "010203040A7F8E3D" , "
+    ///     "lease_expires_on" : "20130121132405",
+    ///     "lease_length" : 27400
+    ///   }
+    /// @endcode
     ///
     /// @param json is a string containing the JSON text
     ///
