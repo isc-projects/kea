@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -113,7 +113,7 @@ public:
     void writeAt(size_t dest_pos,
                  std::vector<uint8_t>::iterator first,
                  std::vector<uint8_t>::iterator last);
-    
+
     /// \brief Replace contents of buffer with value.
     ///
     /// Function replaces part of buffer with value.

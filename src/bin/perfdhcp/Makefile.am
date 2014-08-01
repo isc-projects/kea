@@ -17,7 +17,7 @@ if USE_STATIC_LINK
 AM_LDFLAGS += -static
 endif
 
-bin_PROGRAMS = perfdhcp
+sbin_PROGRAMS = perfdhcp
 perfdhcp_SOURCES = main.cc
 perfdhcp_SOURCES += command_options.cc command_options.h
 perfdhcp_SOURCES += localized_option.h
@@ -45,13 +45,13 @@ perfdhcp_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 # ... and the documentation
 EXTRA_DIST = perfdhcp_internals.dox
 
-man_MANS = perfdhcp.1
+man_MANS = perfdhcp.8
 DISTCLEANFILES = $(man_MANS)
 EXTRA_DIST += $(man_MANS) perfdhcp.xml
 
 if GENERATE_DOCS
 
-perfdhcp.1: perfdhcp.xml
+perfdhcp.8: perfdhcp.xml
 	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(builddir)/perfdhcp.xml
 
 else
