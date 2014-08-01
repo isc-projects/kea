@@ -790,7 +790,7 @@ public:
 typedef std::vector<PoolPtr> PoolStorage;
 typedef boost::shared_ptr<PoolStorage> PoolStoragePtr;
 
-/// @brief parser for a signle pool definition
+/// @brief parser for a single pool definition
 ///
 /// This abstract parser handles pool definitions, i.e. a list of entries of one
 /// of two syntaxes: min-max and prefix/len. Pool objects are created
@@ -814,7 +814,7 @@ public:
     /// This method parses the actual list of interfaces.
     /// No validation is done at this stage, everything is interpreted as
     /// interface name.
-    /// @param pool_structure a signle entry on a list of pools
+    /// @param pool_structure a single entry on a list of pools
     /// @throw isc::dhcp::DhcpConfigError when pool parsing fails
     virtual void build(isc::data::ConstElementPtr pool_structure);
 
@@ -866,7 +866,7 @@ public:
     /// @brief constructor.
     ///
     /// @param dummy first argument is ignored, all Parser constructors
-    /// accept string as first argument.
+    /// accept a string as the first argument.
     /// @param pools is the storage in which to store the parsed pool
     /// upon "commit".
     /// @throw isc::dhcp::DhcpConfigError if storage is null.
@@ -881,7 +881,7 @@ public:
     /// @throw isc::dhcp::DhcpConfigError when pool parsing fails
     virtual void build(isc::data::ConstElementPtr pools_list);
 
-    /// @brief Stores the parsed values in a storage provided
+    /// @brief Stores the parsed values in storage provided
     ///        by an upper level parser.
     virtual void commit();
 
@@ -899,8 +899,8 @@ protected:
     /// (an upper level parser).
     PoolStoragePtr pools_;
 
-    /// A temporary storage for pools configuration. It is a
-    /// storage where pools are stored by build function.
+    /// A temporary storage for pools configuration. It is the
+    /// storage where pools are stored by the build function.
     PoolStoragePtr local_pools_;
 };
 
