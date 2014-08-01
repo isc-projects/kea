@@ -64,8 +64,10 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
         Daemon::loggerInit(bin_name_.c_str(), verbose_);
     }
 
-    LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DCTL_STARTING)
-              .arg(app_name_).arg(getpid());
+    // Log the starting of the service.  Although this is the controller
+    // module, use a "DHCP_DDNS_" prefix to the module (to conform to the
+    // principle of least astonishment).
+    LOG_INFO(dctl_logger, DHCP_DDNS_STARTING).arg(getpid());
     try {
         // Step 2 is to create and initialize the application process object.
         initProcess();
@@ -115,8 +117,9 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
                    "Application process event loop failed: " << ex.what());
     }
 
-    // All done, so bail out.
-    LOG_INFO(dctl_logger, DCTL_STOPPING).arg(app_name_);
+    // All done, so bail out.  Log the event (using a DHCP_DDNS_ prefix
+    // for the same reason as used for DHCP_DDNS_STARTING).
+    LOG_INFO(dctl_logger, DHCP_DDNS_SHUTDOWN);
 }
 
 void
@@ -362,16 +365,15 @@ DControllerBase::processSignal(int signum) {
         case SIGINT:
         case SIGTERM:
         {
-            LOG_INFO(dctl_logger, DHCP_DDNS_SHUTDOWN_SIGNAL_RECVD)
-                     .arg(signum);
+            LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT,
+                      DHCP_DDNS_SHUTDOWN_SIGNAL_RECVD).arg(signum);
             isc::data::ElementPtr arg_set;
             executeCommand(SHUT_DOWN_COMMAND, arg_set);
             break;
         }
 
         default:
-            LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT,
-                      DHCP_DDNS_UNSUPPORTED_SIGNAL).arg(signum);
+            LOG_WARN(dctl_logger, DHCP_DDNS_UNSUPPORTED_SIGNAL).arg(signum);
             break;
     }
 }
