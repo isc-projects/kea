@@ -230,8 +230,9 @@ typedef std::map<std::string, isc::data::ConstElementPtr> ElementMap;
 /// request DNS updates.  Each message contains a single DNS change (either an
 /// add/update or a remove) for a single FQDN.  It provides marshalling services
 /// for moving instances to and from the wire.  Currently, the only format
-/// supported is JSON, however the class provides an interface such that other
-/// formats can be readily supported.
+/// supported is JSON detailed here isc::dhcp_ddns::NameChangeRequest::fromJSON
+/// The class provides an interface such that other formats can be readily
+/// supported.
 class NameChangeRequest {
 public:
     /// @brief Default Constructor.
@@ -295,13 +296,15 @@ public:
     /// @brief Instance method for marshalling the contents of the request
     /// into the given buffer in the given format.
     ///
-    /// When the format is:
+    /// Whe the format is:
     ///
     /// JSON: Upon completion, the buffer will contain a two byte unsigned
     /// integer which specifies the length of the JSON text; followed by the
     /// JSON text itself. The JSON text contains the names and values for all
     /// the request data needed to reassemble the request on the receiving
-    /// end. The JSON text in the buffer is NOT null-terminated.
+    /// end. The JSON text in the buffer is NOT null-terminated.  The format
+    /// is identical that described under
+    /// isc::dhcp_ddns::NameChangeRequest::fromJSON
     ///
     /// (NOTE currently only JSON is supported.)
     ///
@@ -313,6 +316,88 @@ public:
 
     /// @brief Static method for creating a NameChangeRequest from a
     /// string containing a JSON rendition of a request.
+    ///
+    /// The JSON expected is described below.  Note that a request must be
+    /// enclosed within curly brackets "{..}" and that whitespace is optional
+    /// (it is used in the following examples for clarity).
+    ///
+    /// @code
+    ///     {
+    ///      "change_type" : <integer>,
+    ///      "forward_change" : <boolean>,
+    ///      "reverse_change" : <boolean>,
+    ///      "fqdn" : "<fqdn>",
+    ///      "ip_address" : "<address>",
+    ///      "dhcid" : "<hex_string>",
+    ///      "lease_expires_on" : "<yyyymmddHHMMSS>",
+    ///      "lease_length" : <secs>
+    ///     }
+    /// @endcode
+    ///
+    /// - change_type - indicates whether this request is to add or update
+    ///   DNS entries or to remove them.  The value is an integer and is
+    ///   0 for add/update and 1 for remove.
+    /// - forward_change - indicates whether the the forward (name to
+    ///   address) DNS zone should be updated.  The value is a string
+    ///   representing a boolean.  It is "true" if the zone should be updated
+    ///   and "false" if not. (Unlike the keyword, the boolean value is
+    ///   case-insensitive.)
+    /// - reverse_change - indicates whether the the reverse (address to
+    ///   name) DNS zone should be updated.  The value is a string
+    ///   representing a boolean.  It is "true" if the zone should be updated
+    ///   and "false" if not. (Unlike the keyword, the boolean value is
+    ///   case-insensitive.)
+    /// - fqdn - fully qualified domain name such as "myhost.example.com.".
+    ///   (Note that a trailing dot will be appended if not supplied.)
+    /// - ip_address - the IPv4 or IPv6 address of the client.  The value
+    ///   is a string representing the IP address (e.g. "192.168.0.1" or
+    ///   "2001:db8:1::2").
+    /// - dhcid - identification of the DHCP client to whom the IP address has
+    ///   been leased.  The value is a string containing an even number of
+    ///   hexadecimal digits without delimiters such as "2C010203040A7F8E3D"
+    ///   (case insensitive).
+    /// - lease_expires_on - the date and time on which the lease expires.
+    ///   The value is a string of the form "yyyymmddHHMMSS" where:
+    ///     - yyyy - four digit year
+    ///     - mm - month of year (1-12),
+    ///     - dd - day of the month (1-31),
+    ///     - HH - hour of the day (0-23)
+    ///     - MM - minutes of the hour (0-59)
+    ///     - SS - seconds of the minute (0-59)
+    /// - lease_length - the length of the lease in seconds.  This is an
+    ///   integer and may range between 1 and 4294967295 (2^32 - 1) inclusive.
+    ///
+    /// Examples:
+    ///
+    /// Removal of an IPv4 address from the forward DNS zone only:
+    ///
+    /// @code
+    ///  {
+    ///     "change_type" : 1,
+    ///     "forward_change" : true,
+    ///     "reverse_change" : false,
+    ///     "fqdn" : "myhost.example.com.",
+    ///     "ip_address" : "192.168.2.1" ,
+    ///     "dhcid" : "010203040A7F8E3D" ,
+    ///     "lease_expires_on" : "20130121132405",
+    ///     "lease_length" : 1300
+    ///  }
+    /// @endcode
+    ///
+    /// Addition of an IPv6 address to both forward and reverse DNS zones:
+    ///
+    /// @code
+    ///  {
+    ///     "change_type" : 0,
+    ///     "forward_change" : true,
+    ///     "reverse_change" : true,
+    ///     "fqdn" : "someother.example.com.",
+    ///     "ip_address" : "2001::db8:1::2",
+    ///     "dhcid" : "010203040A7F8E3D" , "
+    ///     "lease_expires_on" : "20130121132405",
+    ///     "lease_length" : 27400
+    ///   }
+    /// @endcode
     ///
     /// @param json is a string containing the JSON text
     ///
