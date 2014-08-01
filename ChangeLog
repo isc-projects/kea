@@ -1,3 +1,8 @@
+810.	[func]		stephen
+	perfdhcp is now installed in sbin as it requires root privilege to run.
+	The perfdhcp source has been moved to the directory src/bin/perfdhcp.
+	(Trac #3481, git d101aed6156a993476fa1164f0b0ec8395f5886c)
+
 809.	[func]		stephen
 	sockcreator is no longer built or installed.  The code is being retained
 	in the repository for the moment, but may be deleted at some point in the
