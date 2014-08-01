@@ -153,7 +153,8 @@ D2Process::canShutdown() const {
         }
 
         if (all_clear) {
-            LOG_INFO(dctl_logger,DHCP_DDNS_CLEARED_FOR_SHUTDOWN)
+            LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT,
+                     DHCP_DDNS_CLEARED_FOR_SHUTDOWN)
                      .arg(getShutdownTypeStr(shutdown_type_));
         }
     }
@@ -163,8 +164,8 @@ D2Process::canShutdown() const {
 
 isc::data::ConstElementPtr
 D2Process::shutdown(isc::data::ConstElementPtr args) {
-    LOG_INFO(dctl_logger, DHCP_DDNS_SHUTDOWN).arg(args ? args->str()
-                                                  : "(no args)");
+    LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DHCP_DDNS_SHUTDOWN_COMMAND)
+              .arg(args ? args->str() : "(no arguments)");
 
     // Default shutdown type is normal.
     std::string type_str(getShutdownTypeStr(SD_NORMAL));
@@ -242,9 +243,10 @@ D2Process::checkQueueStatus() {
             // canceling active listening which may generate an IO event, so
             // instigate the stop and get out.
             try {
-                LOG_INFO(dctl_logger, DHCP_DDNS_QUEUE_MGR_STOPPING)
+                LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT,
+                          DHCP_DDNS_QUEUE_MGR_STOPPING)
                          .arg(reconf_queue_flag_ ? "reconfiguration"
-                                                   : "shutdown");
+                                                 : "shutdown");
                 queue_mgr_->stopListening();
             } catch (const isc::Exception& ex) {
                 // It is very unlikey that we would experience an error
@@ -301,7 +303,8 @@ D2Process::checkQueueStatus() {
         // we can do the reconfigure. In other words, we aren't RUNNING or
         // STOPPING.
         if (reconf_queue_flag_) {
-            LOG_INFO (dctl_logger, DHCP_DDNS_QUEUE_MGR_RECONFIGURING);
+            LOG_DEBUG(dctl_logger, DBGLVL_TRACE_BASIC,
+                      DHCP_DDNS_QUEUE_MGR_RECONFIGURING);
             reconfigureQueueMgr();
         }
         break;

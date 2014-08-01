@@ -172,7 +172,7 @@ NameChangeUDPListener::receiveCompletionHandler(const bool successful,
             // log it and go back to listening
             LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_INVALID_NCR).arg(ex.what());
 
-            // Queue up the next recieve.
+            // Queue up the next receive.
             // NOTE: We must call the base class, NEVER doReceive
             receiveNext();
             return;
@@ -180,8 +180,10 @@ NameChangeUDPListener::receiveCompletionHandler(const bool successful,
     } else {
         asio::error_code error_code = callback->getErrorCode();
         if (error_code.value() == asio::error::operation_aborted) {
-            LOG_INFO(dhcp_ddns_logger, DHCP_DDNS_NCR_UDP_RECV_CANCELED)
-                     .arg(error_code.message());
+            // A shutdown cancels all outstanding reads.  For this reason,
+            // it can be an expected event, so log it as a debug message.
+            LOG_DEBUG(dhcp_ddns_logger, DBGLVL_TRACE_BASIC,
+                      DHCP_DDNS_NCR_UDP_RECV_CANCELED);
             result = STOPPED;
         } else {
             LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_NCR_UDP_RECV_ERROR)
