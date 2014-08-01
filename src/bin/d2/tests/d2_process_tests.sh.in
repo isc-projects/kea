@@ -190,24 +190,10 @@ shutdown_test() {
     # Send signal to D2 (SIGTERM, SIGINT etc.)
     send_signal ${signum} ${bin}
 
-    # Wait up to 10s for the D2Controller to log shutdown received.
-    wait_for_message 10 "DHCP_DDNS_SHUTDOWN_SIGNAL_RECVD" 1
+    # Now wait for process to log that it is exiting.
+    wait_for_message 10 "DHCP_DDNS_SHUTDOWN" 1
     if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
-        printf "ERROR: D2Process did report the shutdown signal receipt.\n"
-        clean_exit 1
-    fi
-
-    # Wait up to 10s for the D2Process to log graceful shutdown.
-    wait_for_message 10 "DHCP_DDNS_CLEARED_FOR_SHUTDOWN" 1
-    if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
-        printf "ERROR: D2Process did not log orderly shutdown.\n"
-        clean_exit 1
-    fi
-
-    # Now wait for D2Controller to log that it is exiting.
-    wait_for_message 10 "DCTL_STOPPING" 1
-    if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
-        printf "ERROR: D2Controller did not log shutdown.\n"
+        printf "ERROR: DHCP-DDNS did not log shutdown.\n"
         clean_exit 1
     fi
 

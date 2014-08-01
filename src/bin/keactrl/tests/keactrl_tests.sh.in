@@ -136,7 +136,7 @@ Expected wait_for_message return %d, returned %d."
     assert_eq 0 ${_GET_LOG_MESSAGES} \
         "Expected get_log_messages return %d, returned %d."
 
-    get_log_messages "DCTL_STARTING"
+    get_log_messages "DCTL_STANDALONE"
     assert_eq 0 ${_GET_LOG_MESSAGES} \
         "Expected get_log_messages return %d, returned %d."
 
@@ -176,7 +176,7 @@ Expected wait_for_message return %d, returned %d."
 Expected wait_for_message return %d, returned %d."
 
     # Wait up to 10s for the D2 server to stop.
-    wait_for_message 10 "DCTL_STOPPING" 1
+    wait_for_message 10 "DHCP_DDNS_SHUTDOWN" 1
     assert_eq 1 ${_WAIT_FOR_MESSAGE} \
         "Timeout waiting for ${d2_name} to shutdown. \
 Expected wait_for_message return %d, returned %d."
@@ -240,9 +240,9 @@ Expected wait_for_message return %d, returned %d."
     assert_eq 1 ${_GET_LOG_MESSAGES} \
         "Expected get_log_messages for DHCP4_START_INFO return %d, returned %d."
 
-    get_log_messages "DCTL_STARTING" 1
+    get_log_messages "DCTL_STANDALONE" 1
     assert_eq 1 ${_GET_LOG_MESSAGES} \
-        "Expected get_log_messages for DCTL_STARTING return %d, returned %d."
+        "Expected get_log_messages for DCT_STANDALONE return %d, returned %d."
 
     # Server may shut down imediatelly after configuration has competed.
     # Give it some time to shutdown.
@@ -280,7 +280,7 @@ Expected wait_for_message return %d, returned %d."
 Expected wait_for_message return %d, returned %d."
 
     # Wait up to 10s for the D2 server to stop.
-    wait_for_message 10 "DCTL_STOPPING" 1
+    wait_for_message 10 "DHCP_DDNS_SHUTDOWN" 1
     assert_eq 1 ${_WAIT_FOR_MESSAGE} \
         "Timeout waiting for ${d2_name} to shutdown. \
 Expected wait_for_message return %d, returned %d."
@@ -592,7 +592,7 @@ Expected wait_for_message return %d, returned %d."
 Expected wait_for_message return %d, returned %d."
 
     # Wait up to 10s for the D2 server to stop.
-    wait_for_message 10 "DCTL_STOPPING" 1
+    wait_for_message 10 "DHCP_DDNS_SHUTDOWN" 1
     assert_eq 1 ${_WAIT_FOR_MESSAGE} \
         "Timeout waiting for ${d2_name} to shutdown. \
 Expected wait_for_message return %d, returned %d."
@@ -746,7 +746,7 @@ Expected wait_for_message return %d, returned %d."
 Expected wait_for_message return %d, returned %d."
 
     # Wait up to 10s for the d2 server to stop.
-    wait_for_message 10 "DCTL_STOPPING" 1
+    wait_for_message 10 "DHCP_DDNS_SHUTDOWN" 1
     assert_eq 1 ${_WAIT_FOR_MESSAGE} \
         "Timeout waiting for ${d2_name} to shutdown. \
 Expected wait_for_message return %d, returned %d."
@@ -808,9 +808,9 @@ Expected wait_for_message return %d, returned %d."
     assert_eq 0 ${_GET_LOG_MESSAGES} \
         "Expected get_log_messages return %d, returned %d."
 
-    get_log_messages "DCTL_STARTING"
+    get_log_messages "DCTL_STANDALONE"
     assert_eq 0 ${_GET_LOG_MESSAGES} \
-        "Expected get_log_messages return %d, returned %d."
+    "Expected get_log_messages return %d, returned %d."
 
     # Server may shut down imediatelly after configuration has competed.
     # Give it some time to shutdown.
@@ -885,7 +885,7 @@ Expected wait_for_message return %d, returned %d."
     assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d."
 
     # Wait up to 10s for the D2 server to stop.
-    wait_for_message 10 "DCTL_STOPPING" 1
+    wait_for_message 10 "DHCP_DDNS_SHUTDOWN" 1
     assert_eq 1 ${_WAIT_FOR_MESSAGE} \
         "Timeout waiting for ${d2_name} to shutdown. \
 Expected wait_for_message return %d, returned %d."
