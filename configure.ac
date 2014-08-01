@@ -1389,8 +1389,6 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/keactrl/tests/keactrl_tests.sh
                  src/bin/keactrl/tests/Makefile
                  src/bin/Makefile
-                 src/bin/sockcreator/Makefile
-                 src/bin/sockcreator/tests/Makefile
                  src/hooks/dhcp/Makefile
                  src/hooks/dhcp/user_chk/Makefile
                  src/hooks/dhcp/user_chk/tests/Makefile

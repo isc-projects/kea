@@ -1,3 +1,8 @@
+Aguust 2014: As of Kea 0.9, this code is not built.  It is currently uncertain
+whether it will be needed in a future version Kea, so it is being retained
+in the repository for now: it may be deleted in the future.
+
+
 The socket creator
 ==================
 
