@@ -89,13 +89,13 @@
  *   - @subpage leasemgr
  *   - @subpage cfgmgr
  *   - @subpage allocengine
+ * - @subpage libdhcp_ddns
  * - @subpage dhcpDatabaseBackends
  * - @subpage configBackend
  *   - @subpage configBackendMotivation
  *   - @subpage configBackendJSONDesign
  *   - @subpage configBackendAdding
  * - @subpage perfdhcpInternals
- * - @subpage libdhcp_ddns
  *
  * @section miscellaneousTopics Miscellaneous Topics
  * - @subpage logKeaLogging
