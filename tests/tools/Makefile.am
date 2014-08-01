@@ -1,1 +1,1 @@
-SUBDIRS = . perfdhcp
+SUBDIRS = .

@@ -1363,6 +1363,8 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  ext/Makefile
                  m4macros/Makefile
                  Makefile
+                 src/Makefile
+                 src/bin/Makefile
                  src/bin/d2/Makefile
                  src/bin/d2/spec_config.h.pre
                  src/bin/d2/tests/Makefile
@@ -1370,30 +1372,33 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/d2/tests/test_data_files_config.h
                  src/bin/dhcp4/Makefile
                  src/bin/dhcp4/spec_config.h.pre
-                 src/bin/dhcp4/tests/dhcp4_process_tests.sh
                  src/bin/dhcp4/tests/Makefile
+                 src/bin/dhcp4/tests/dhcp4_process_tests.sh
                  src/bin/dhcp4/tests/marker_file.h
                  src/bin/dhcp4/tests/test_data_files_config.h
                  src/bin/dhcp4/tests/test_libraries.h
                  src/bin/dhcp6/Makefile
                  src/bin/dhcp6/spec_config.h.pre
-                 src/bin/dhcp6/tests/dhcp6_process_tests.sh
                  src/bin/dhcp6/tests/Makefile
+                 src/bin/dhcp6/tests/dhcp6_process_tests.sh
                  src/bin/dhcp6/tests/marker_file.h
                  src/bin/dhcp6/tests/test_data_files_config.h
                  src/bin/dhcp6/tests/test_libraries.h
-                 src/bin/keactrl/keactrl
-                 src/bin/keactrl/kea.conf
-                 src/bin/keactrl/keactrl.conf
                  src/bin/keactrl/Makefile
-                 src/bin/keactrl/tests/keactrl_tests.sh
+                 src/bin/keactrl/kea.conf
+                 src/bin/keactrl/keactrl
+                 src/bin/keactrl/keactrl.conf
                  src/bin/keactrl/tests/Makefile
-                 src/bin/Makefile
+                 src/bin/keactrl/tests/keactrl_tests.sh
+                 src/bin/perfdhcp/Makefile
+                 src/bin/perfdhcp/tests/Makefile
+                 src/bin/perfdhcp/tests/testdata/Makefile
+                 src/hooks/Makefile
                  src/hooks/dhcp/Makefile
                  src/hooks/dhcp/user_chk/Makefile
                  src/hooks/dhcp/user_chk/tests/Makefile
                  src/hooks/dhcp/user_chk/tests/test_data_files_config.h
-                 src/hooks/Makefile
+                 src/lib/Makefile
                  src/lib/asiodns/Makefile
                  src/lib/asiodns/tests/Makefile
                  src/lib/asiolink/Makefile
@@ -1403,21 +1408,21 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/cc/tests/Makefile
                  src/lib/cc/tests/session_unittests_config.h
                  src/lib/config/Makefile
-                 src/lib/config/tests/data_def_unittests_config.h
                  src/lib/config/tests/Makefile
+                 src/lib/config/tests/data_def_unittests_config.h
                  src/lib/config/tests/testdata/Makefile
                  src/lib/cryptolink/Makefile
                  src/lib/cryptolink/tests/Makefile
+                 src/lib/dhcp/Makefile
+                 src/lib/dhcp/tests/Makefile
                  src/lib/dhcp_ddns/Makefile
                  src/lib/dhcp_ddns/tests/Makefile
-                 src/lib/dhcp/Makefile
                  src/lib/dhcpsrv/Makefile
-                 src/lib/dhcpsrv/testutils/Makefile
                  src/lib/dhcpsrv/tests/Makefile
                  src/lib/dhcpsrv/tests/test_libraries.h
-                 src/lib/dhcp/tests/Makefile
-                 src/lib/dns/gen-rdatacode.py
+                 src/lib/dhcpsrv/testutils/Makefile
                  src/lib/dns/Makefile
+                 src/lib/dns/gen-rdatacode.py
                  src/lib/dns/tests/Makefile
                  src/lib/dns/tests/testdata/Makefile
                  src/lib/exceptions/Makefile
@@ -1426,37 +1431,32 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/hooks/tests/Makefile
                  src/lib/hooks/tests/marker_file.h
                  src/lib/hooks/tests/test_libraries.h
+                 src/lib/log/Makefile
                  src/lib/log/compiler/Makefile
                  src/lib/log/interprocess/Makefile
                  src/lib/log/interprocess/tests/Makefile
-                 src/lib/log/Makefile
+                 src/lib/log/tests/Makefile
                  src/lib/log/tests/buffer_logger_test.sh
                  src/lib/log/tests/console_test.sh
                  src/lib/log/tests/destination_test.sh
                  src/lib/log/tests/init_logger_test.sh
                  src/lib/log/tests/local_file_test.sh
                  src/lib/log/tests/logger_lock_test.sh
-                 src/lib/log/tests/Makefile
                  src/lib/log/tests/severity_test.sh
                  src/lib/log/tests/tempdir.h
-                 src/lib/Makefile
-                 src/lib/testutils/dhcp_test_lib.sh
                  src/lib/testutils/Makefile
+                 src/lib/testutils/dhcp_test_lib.sh
                  src/lib/testutils/testdata/Makefile
-                 src/lib/util/io/Makefile
                  src/lib/util/Makefile
-                 src/lib/util/python/gen_wiredata.py
+                 src/lib/util/io/Makefile
                  src/lib/util/python/Makefile
+                 src/lib/util/python/gen_wiredata.py
                  src/lib/util/tests/Makefile
                  src/lib/util/threads/Makefile
                  src/lib/util/threads/tests/Makefile
                  src/lib/util/unittests/Makefile
-                 src/Makefile
                  tests/Makefile
                  tests/tools/Makefile
-                 tests/tools/perfdhcp/Makefile
-                 tests/tools/perfdhcp/tests/Makefile
-                 tests/tools/perfdhcp/tests/testdata/Makefile
 ])
 
  AC_CONFIG_COMMANDS([permissions], [
