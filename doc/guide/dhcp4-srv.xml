@@ -148,7 +148,7 @@ look like this:
 "interfaces": [ "eth0", "eth1" ],
 </screen>
 As "<command>interfaces</command>" is not the last parameter in the configuration,
-a trailing comma is required.i</para>
+a trailing comma is required.</para>
 <para>A number of other parameters
 follow. <command>valid-lifetime</command> defines how long the addresses (leases) given out by the
 server are valid. If nothing changes, client that got the address is allowed to
@@ -1463,10 +1463,10 @@ temporarily override a list of interface names and listen on all interfaces.
       </section>
       <section id="dhcpv4-fqdn-name-generation">
       <title>kea-dhcp4 name generation for DDNS update requests</title>
-      Each NameChangeRequest must of course include the fully qualified domain
+      <para>Each NameChangeRequest must of course include the fully qualified domain
       name whose DNS entries are to be affected.  kea-dhcp4 can be configured to
       supply a portion or all of that name based upon what it receives from
-      the client in the DHCP REQUEST.
+      the client in the DHCP REQUEST.</para>
       <para>
       The rules for determining the FQDN option are as follows:
       <orderedlist>
@@ -1520,10 +1520,9 @@ temporarily override a list of interface names and listen on all interfaces.
 }
 </screen>
       <para>
-      The suffix used when generating a FQDN or when qualifying a partial
-      name is specified by the <command>qualifying-suffix</command> parameter.  The default
-      value is "example.com".  To alter its value simply set it to the desired
-      string:
+      The suffix used when generating a FQDN or when qualifying a partial name
+      is specified by the <command>qualifying-suffix</command> parameter. There
+      is no default value. To set its value simply set it to the desired string:
       </para>
 <screen>
 "Dhcp4": {
