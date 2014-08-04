@@ -51,36 +51,17 @@
     <section id="dhcp-ddns-server-start-stop">
       <title>Starting and Stopping the DHCP-DDNS Server</title>
       <para>
-      <command>kea-dhcp-ddns</command> is the BIND 10 DHCP-DDNS server and,
-      like other parts of BIND 10, is configured through the
-      <command>bindctl</command> program.
+	It is recommended to control DHCPv4 server in Kea using <command>keactl</command>,
+	which is described in details in <xref linkend="keactrl"/>.
       </para>
+
       <para>
-      After starting BIND 10 and entering bindctl, the first step in
-      configuring the server is to add it to the list of running BIND 10
-      services.
-<screen>
-&gt; <userinput>config add Init/components kea-dhcp-ddns</userinput>
-&gt; <userinput>config set Init/components/kea-dhcp-ddns/kind dispensable</userinput>
-&gt; <userinput>config commit</userinput>
-</screen>
+      <command>kea-dhcp-ddns</command> is the Kea DHCP-DDNS server and,
+      like other parts of Kea, is a separate binary that can be run on
+      its own or through <command>keactl</command>. Due to the nature
+      of DDNS, it is run along with either DHCPv4 or DHCPv6 components
+      (or both).
       </para>
-      <para>
-      To remove <command>kea-dhcp-ddns</command> from the set of running services,
-      the <command>kea-dhcp-ddns</command> is removed from list of Init components:
-<screen>
-&gt; <userinput>config remove Init/components kea-dhcp-ddns</userinput>
-&gt; <userinput>config commit</userinput>
-</screen>
-      </para>
-      <para>
-      Note that the server was only removed from the list, so it will not be
-      automatically restarted, but the server itself is still running. Hence it
-      is usually desired to stop it:
-      </para>
-<screen>
-&gt; <userinput>DhcpDdns shutdown</userinput>
-</screen>
       <para>
       Upon start up the module will load its configuration and begin listening
       for NCRs based on that configuration.
@@ -89,27 +70,25 @@
     <section id="d2-configuration">
       <title>Configuring the DHCP-DDNS Server</title>
       <para>
-        Once the server is started, it can be configured. To view the
-        current configuration, use the following command in <command>bindctl</command>:
-        <screen>
-&gt; <userinput>config show DhcpDdns</userinput></screen>
-        When starting kea-dhcp-ddns module for the first time, the default
-        configuration will be available. It will look similar to this:
+        Before staring <command>kea-dhcp-ddns</command> module for the
+	first time, a configuration file needs to be created. The following default
+        configuration seems reasonable in most cases:
 <screen>
-&gt; <userinput>config show DhcpDdns</userinput>
-DhcpDdns/ip_address "127.0.0.1" string  (default)
-DhcpDdns/port   53001   integer (default)
-DhcpDdns/dns_server_timeout   100   integer (default)
-DhcpDdns/ncr_protocol	"UDP"	string (default)
-DhcpDdns/ncr_format	"JSON"	string (default)
-DhcpDdns/tsig_keys  []  list    (default)
-DhcpDdns/forward_ddns/ddns_domains  []  list    (default)
-DhcpDdns/reverse_ddns/ddns_domains  []  list    (default)
+<userinput>"DhcpDdns": {
+    "ip_address": "127.0.0.1",
+    "port": 53001,
+    "dns_server_timeout": 100,
+    "ncr_protocol": "UDP",
+    "ncr_format": "JSON",
+    "tsig_keys": [ ],
+    "forward_ddns": {
+        "ddns_domains": [ ]
+    },
+    "reverse_ddns": {
+        "ddns_domains": [ ]
+    }
+}</userinput>
 </screen>
-      <para>
-      (While displayed, the parameter "interface" is not implemented, and
-      will be removed in the near future.)
-      </para>
       </para>
       <para>
       The configuration can be divided as follows, each of which is described
@@ -175,10 +154,12 @@ DhcpDdns/reverse_ddns/ddns_domains  []  list    (default)
         illustrates how to change D2's global parameters so it will listen
         at 192.168.1.10 port 900:
 <screen>
-&gt; <userinput>config set DhcpDdns/ip_address "192.168.1.10"</userinput>
-&gt; <userinput>config set DhcpDdns/port 900</userinput>
-&gt; <userinput>config commit</userinput>
-</screen>
+"DhcpDdns": {
+    <userinput>"ip_address": "192.168.1.10",
+    "port": 900,</userinput>
+    ...
+    }
+}</screen>
         </para>
         <warning>
           <simpara>
@@ -289,42 +270,47 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 </screen>
         By default, the TSIG Key list is empty:
 <screen>
-<userinput>> config show DhcpDdns/tsig_keys</userinput>
-DhcpDdns/tsig_keys  []  list  (default)
+"DhcpDdns": {
+   <userinput>"tsig_keys": [ ]</userinput>,
+   ...
+}
 </screen>
-        We must first create a new key in the list:
+
+        We must extend the list with a new key:
 <screen>
-<userinput>> config add DhcpDdns/tsig_keys</userinput>
-</screen>
-        Displaying the new element, reveals:
-<screen>
-<userinput>> config show DhcpDdns/tsig_keys[0]</userinput>
-DhcpDdns/tsig_keys[0]/name  ""  string  (default)
-DhcpDdns/tsig_keys[0]/algorithm "HMAC-MD5"  string  (modified)
-DhcpDdns/tsig_keys[0]/secret  ""  string  (default)
-</screen>
-        Now set all three values to match BIND9's key:
-<screen>
-<userinput>> config set DhcpDdns/tsig_keys[0]/name "key.four.example.com"</userinput>
-<userinput>> config set DhcpDdns/tsig_keys[0]/algorithm "HMAC-SHA224"</userinput>
-<userinput>> config set DhcpDdns/tsig_keys[0]/secret "bZEG7Ow8OgAUPfLWV3aAUQ=="</userinput>
-<userinput>> config commit</userinput>
+"DhcpDdns": {
+    "tsig_keys": [
+    <userinput>    {
+            "name": "key.four.example.com",
+	    "algorithm": "HMAC-SHA224",
+	    "secret": "bZEG7Ow8OgAUPfLWV3aAUQ=="
+        }</userinput>
+    ],
+    ...
+}
 </screen>
         </para>
-        These steps would be repeated for each TSIG key needed.  Note that the same TSIG key
-        can be used with more than one domain.
-      </section> <!-- "d2-tsig-key-list-config" -->
+
+        <para>These steps would be repeated for each TSIG key needed.  Note that
+        the same TSIG key can be used with more than one domain.</para>
+      </section>
+        <!-- "d2-tsig-key-list-config" -->
 
       <section id="d2-forward-ddns-config">
         <title>Forward DDNS</title>
         <para>
         The Forward DDNS section is used to configure D2's forward update
         behavior. Currently it contains a single parameter, the catalog of
-        forward DDNS Domains:
+        forward DDNS Domains, which is a list of structures.
 <screen>
-<userinput>> config show DhcpDdns/forward_ddns/</userinput>
-DhcpDdns/forward_ddns/ddns_domains  [] list  (default)
+<userinput>"DhcpDdns": {
+    "forward_ddns": {
+        "ddns_domains": [ ]
+    },
+    ...
+}</userinput>
 </screen>
+
         By default, this list is empty, which will cause the server to ignore
         the forward update portions of requests.
         </para>
@@ -376,23 +362,23 @@ DhcpDdns/forward_ddns/ddns_domains  [] list  (default)
               </simpara>
             </listitem>
           </itemizedlist>
-        To create a new forward DDNS Domain, one must first add a new domain
-        element:
+        To create a new forward DDNS Domain, one must add a new domain
+        element and set its parameters:
 <screen>
-<userinput>> config add DhcpDdns/forward_ddns/ddns_domains</userinput>
+"DhcpDdns": {
+    "forward_ddns": {
+        "ddns_domains": [
+	    <userinput>{
+                "name": "other.example.com",
+                "key_name": "",
+                "dns_servers": [
+                ]
+            }</userinput>
+        ]
+    }
+}
 </screen>
-        Displaying the DDNS Domain reveals this:
-<screen>
-<userinput>> config show DhcpDdns/forward_ddns/ddns_domains[0]</userinput>
-DhcpDdns/forward_ddns/ddns_domains[0]/name  ""  string  (default)
-DhcpDdns/forward_ddns/ddns_domains[0]/key_name  ""  string  (default)
-DhcpDdns/forward_ddns/ddns_domains[0]/dns_servers   []  list    (default)
-</screen>
-        To set the domain's name to "other.example.com":
-<screen>
-<userinput>> config set DhcpDdns/forward_ddns/ddns_domains[1]/name "other.example.com"</userinput>
-<userinput>> config commit</userinput>
-</screen>
+	    
         It is permissible to add a domain without any servers. If that domain
         should be matched to a request, however, the request will fail.  In
         order to make the domain useful though, we must add at least one DNS
@@ -432,26 +418,32 @@ DhcpDdns/forward_ddns/ddns_domains[0]/dns_servers   []  list    (default)
               </simpara>
             </listitem>
           </itemizedlist>
-          To create a new forward DNS Server, one must first add a new server
-          element to the domain:
-<screen>
-<userinput>> config add DhcpDdns/forward_ddns/ddns_domains[0]/dns_servers</userinput>
-</screen>
-         Displaying the DNS Server element should appear as follows:
-<screen>
-<userinput>> config show DhcpDdns/forward_ddns/ddns_domains[0]/dns_servers[0]</userinput>
-DhcpDdns/forward_ddns/ddns_domains[0]/dns_servers[0]/hostname   ""  string  (default)
-DhcpDdns/forward_ddns/ddns_domains[0]/dns_servers[0]/ip_address ""  string  (default)
-DhcpDdns/forward_ddns/ddns_domains[0]/dns_servers[0]/port   53  integer(default)
-</screen>
-        As stated earlier, "hostname" is not yet supported so, the parameter
-        "ip_address" must be set to the address of the DNS server. If for
+          To create a new forward DNS Server, one must add a new server
+          element to the domain and fill its parameters.  If for
         example the service is running at "172.88.99.10", then set it as
         follows:
 <screen>
-<userinput>> config set DhcpDdns/forward_ddns/ddns_domains[0]/dns_servers[0]/ip_address "172.88.99.10"</userinput>
-<userinput>> config commit</userinput>
+"DhcpDdns": {
+    "forward_ddns": {
+        "ddns_domains": [
+	    {
+                "name": "other.example.com",
+                "key_name": "",
+                "dns_servers": [
+                    <userinput>{
+                        "hostname": "",
+			"ip_address": "172.88.99.10",
+			"port": 53
+                    }</userinput>
+                ]
+            }
+        ]
+    }
+}
 </screen>
+
+        As stated earlier, "hostname" is not yet supported so, the parameter
+        "ip_address" must be set to the address of the DNS server. 
           </para>
         </section> <!-- "add-forward-dns-servers" -->
 
@@ -465,10 +457,13 @@ DhcpDdns/forward_ddns/ddns_domains[0]/dns_servers[0]/port   53  integer(default)
         The Reverse DDNS section is used to configure D2's reverse update
         behavior, and the concepts are the same as for the forward DDNS
         section. Currently it contains a single parameter, the catalog of
-        reverse DDNS Domains:
+        reverse DDNS Domains, which is a list of structures.
 <screen>
-<userinput>> config show DhcpDdns/reverse_ddns/</userinput>
-DhcpDdns/reverse_ddns/ddns_domains  [] list  (default)
+"DhcpDdns": {
+    "reverse_ddns": {
+        "ddns_domains": [ ]
+    }
+}
 </screen>
         By default, this list is empty, which will cause the server to ignore
         the reverse update portions of requests.
@@ -527,24 +522,24 @@ DhcpDdns/reverse_ddns/ddns_domains  [] list  (default)
               </simpara>
             </listitem>
           </itemizedlist>
-        To create a new reverse DDNS Domain, one must first add a new domain
-        element:
+        To create a new reverse DDNS Domain, one must add a new domain element
+        and set its parameters. For example, to support subnet 2001:db8:1::,
+	the following configuration could be used:
 <screen>
-<userinput>> config add DhcpDdns/reverse_ddns/ddns_domains</userinput>
+"DhcpDdns": {
+    "reverse_ddns": {
+        "ddns_domains": [
+	    <userinput>{
+                "name": "1.0.0.0.8.B.D.0.1.0.0.2.ip6.arpa.",
+                "key_name": "",
+                "dns_servers": [
+                ]
+            }</userinput>
+        ]
+    }
+}
 </screen>
-        Displaying the DDNS Domain reveals this:
-<screen>
-<userinput>> config show DhcpDdns/reverse_ddns/ddns_domains[0]</userinput>
-DhcpDdns/reverse_ddns/ddns_domains[0]/name  ""  string  (default)
-DhcpDdns/reverse_ddns/ddns_domains[0]/key_name  ""  string  (default)
-DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers   []  list    (default)
-</screen>
-        For domain supporting the subnet 2001:db8:1::, we would set the
-        domain's name as follows:
-<screen>
-<userinput>> config set DhcpDdns/reverse_ddns/ddns_domains[1]/name "1.0.0.0.8.B.D.0.1.0.0.2.ip6.arpa."</userinput>
-<userinput>> config commit</userinput>
-</screen>
+
         It is permissible to add a domain without any servers. If that domain
         should be matched to a request, however, the request will fail.  In
         order to make the domain useful though, we must add at least one DNS
@@ -584,25 +579,31 @@ DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers   []  list    (default)
             </listitem>
           </itemizedlist>
           To create a new reverse DNS Server, one must first add a new server
-          element to the domain:
-<screen>
-<userinput>> config add DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers</userinput>
-</screen>
-         Displaying the DNS Server element should appear as follows:
-<screen>
-<userinput>> config show DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers[0]</userinput>
-DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers[0]/hostname   ""  string  (default)
-DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers[0]/ip_address ""  string  (default)
-DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers[0]/port   53  integer(default)
-</screen>
-        As stated earlier, "hostname" is not yet supported so, the parameter
-        "ip_address" must be set to the address of the DNS server. If for
+          element to the domain and fill its parameters.  If for
         example the service is running at "172.88.99.10", then set it as
         follows:
 <screen>
-<userinput>> config set DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers[0]/ip_address "172.88.99.10"</userinput>
-<userinput>> config commit</userinput>
+"DhcpDdns": {
+    "reverse_ddns": {
+        "ddns_domains": [
+	    {
+                "name": "1.0.0.0.8.B.D.0.1.0.0.2.ip6.arpa.",
+                "key_name": "",
+                "dns_servers": [
+                    <userinput>{
+                        "hostname": "",
+			"ip_address": "172.88.99.10",
+			"port": 53
+                    }</userinput>
+                ]
+            }
+        ]
+    }
+}
 </screen>
+
+        As stated earlier, "hostname" is not yet supported so, the parameter
+        "ip_address" must be set to the address of the DNS server.
           </para>
         </section> <!-- "add-reverse-dns-servers" -->
 
@@ -699,28 +700,38 @@ DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers[0]/port   53  integer(default)
         <para>
         The following series of commands in bindctl will create the Forward
         DDNS Domains.
-<screen>
-<userinput>
-> config add DhcpDdns/forward_ddns/ddns_domains
-> config set DhcpDdns/forward_ddns/ddns_domains[0]/name "four.example.com."
-> config add DhcpDdns/forward_ddns/ddns_domains[0]/dns_servers
-> config set DhcpDdns/forward_ddns/ddns_domains[0]/dns_servers[0]/ip_address "172.16.1.5"
-> config add DhcpDdns/forward_ddns/ddns_domains[0]/dns_servers
-> config set DhcpDdns/forward_ddns/ddns_domains[0]/dns_servers[1]/ip_address "172.16.2.5"
->
-> config add DhcpDdns/forward_ddns/ddns_domains
-> config set DhcpDdns/forward_ddns/ddns_domains[1]/name "six.example.com."
-> config add DhcpDdns/forward_ddns/ddns_domains[1]/dns_servers
-> config set DhcpDdns/forward_ddns/ddns_domains[1]/dns_servers[0]/ip_address "3001:1::50:"
->
-> config add DhcpDdns/forward_ddns/ddns_domains
-> config set DhcpDdns/forward_ddns/ddns_domains[2]/name "example.com."
-> config add DhcpDdns/forward_ddns/ddns_domains[2]/dns_servers
-> config set DhcpDdns/forward_ddns/ddns_domains[2]/dns_servers[0]/ip_address "172.16.2.5"
->
-> config commit
-</userinput>
+<screen><userinput>
+"DhcpDdns": {
+    "forward_ddns": {
+        "ddns_domains": [
+	    {
+                "name": "four.example.com.",
+                "key_name": "",
+                "dns_servers": [
+                    { "ip_address": "172.16.1.5" },
+                    { "ip_address": "172.16.2.5" }
+                ]
+            },
+	    {
+                "name": "six.example.com.",
+                "key_name": "",
+                "dns_servers": [
+                    { "ip_address": "2001:db8::1" }
+                ]
+            },
+	    {
+                "name": "example.com.",
+                "key_name": "",
+                "dns_servers": [
+                    { "ip_address": "172.16.2.5" }
+                ]
+            },
+	    
+        ]
+    }
+}</userinput>
 </screen>
+
         </para>
         <para>
         Similarly, we need to construct the three reverse DDNS Domains:
@@ -763,28 +774,38 @@ DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers[0]/port   53  integer(default)
         <para>
         The following series of commands in bindctl will create our Reverse
         DDNS Domains.
-<screen>
-<userinput>
-> config add DhcpDdns/reverse_ddns/ddns_domains
-> config set DhcpDdns/reverse_ddns/ddns_domains[0]/name "2.0.192.in-addr.arpa."
-> config add DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers
-> config set DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers[0]/ip_address "172.16.1.5"
-> config add DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers
-> config set DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers[1]/ip_address "172.16.2.5"
->
-> config add DhcpDdns/reverse_ddns/ddns_domains
-> config set DhcpDdns/reverse_ddns/ddns_domains[1]/name "1.0.0.0.8.d.b.0.1.0.0.2.ip6.arpa."
-> config add DhcpDdns/reverse_ddns/ddns_domains[1]/dns_servers
-> config set DhcpDdns/reverse_ddns/ddns_domains[1]/dns_servers[0]/ip_address "3001:1::50:"
->
-> config add DhcpDdns/reverse_ddns/ddns_domains
-> config set DhcpDdns/reverse_ddns/ddns_domains[2]/name "0.192.in-addr.arpa."
-> config add DhcpDdns/reverse_ddns/ddns_domains[2]/dns_servers
-> config set DhcpDdns/reverse_ddns/ddns_domains[2]/dns_servers[0]/ip_address "172.16.2.5"
->
-> config commit
-</userinput>
+
+<screen><userinput>
+"DhcpDdns": {
+    "reverse_ddns": {
+        "ddns_domains": [
+	    {
+                "name": "2.0.192.in-addr.arpa.",
+                "key_name": "",
+                "dns_servers": [
+                    { "ip_address": "172.16.1.5" },
+                    { "ip_address": "172.16.2.5" }
+                ]
+            }
+	    {
+                "name": "1.0.0.0.8.B.D.0.1.0.0.2.ip6.arpa.",
+                "key_name": "",
+                "dns_servers": [
+                    { "ip_address": "2001:db8::1" }
+                ]
+            }
+	    {
+                "name": "0.192.in-addr.arpa.",
+                "key_name": "",
+                "dns_servers": [
+                    { "ip_address": "172.16.2.5" }
+                ]
+            }
+        ]
+    }
+}</userinput>
 </screen>
+
         </para>
         </section> <!-- end of "d2-example" -->
     </section> <!-- end of section "d2-configuration" -->
