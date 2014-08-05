@@ -11,46 +11,49 @@
       <title>Starting and Stopping the DHCPv6 Server</title>
 
       <para>
-	It is recommended to control DHCPv6 server in Kea using <command>keactl</command>,
-	which is described in details in <xref linkend="keactrl"/>.
-      </para>
-
-      <para>
-	However, it is also possible to run the server on its own, not using any
-	scripts. The server accepts the following command-line parameters:
+      It is recommended that the Kea DHCPv4 server be started and stopped
+      using <command>keactl</command> (described in <xref linkend="keactrl"/>).
+      However, it is also possible to run the server directly: it accepts
+      the following command-line switches:
       </para>
 
       <itemizedlist>
           <listitem>
-            <simpara>-c file - specifies the configuration file. This is the
-	    only mandatory parameter (it may be optional for configuration
-	    parameters other than Kea)</simpara>
+            <simpara>
+            <command>-c <replaceable>file</replaceable></command> -
+            specifies the configuration file. This is the only mandatory
+            switch.</simpara>
           </listitem>
           <listitem>
-            <simpara>-v - specifies whether the server logging should be
-	    switched to verbose mode. In verbose mode, logging severity and
-	    debuglevel specified in a configuration file are ignored and
-	    severity debug and maximum debuglevel (99) is assumed. That flag is
-	    convenient, for temporarily switching the server into maximum
-	    verbosity, e.g. when debugging.</simpara>
+            <simpara>
+            <command>-v</command> - specifies whether the server
+            logging should be switched to verbose mode. In verbose mode,
+            the logging severity and debuglevel specified in a configuration
+            file are ignored and "debug" severity and the maximum debuglevel
+            (99) are assumed. The flag is convenient, for temporarily
+            switching the server into maximum verbosity, e.g. when
+            debugging.</simpara>
           </listitem>
           <listitem>
-            <simpara>-p port - specifies UDP port the server will listen
-	    on. This is only useful during testing, as the DHCPv4 server
-	    listening on ports other than default DHCPv6 ports will not be able
-	    to handle regular DHCPv6 queries.</simpara>
+            <simpara>
+            <command>-p <replaceable>port</replaceable></command> -
+            specifies UDP port the server will listen on. This is only
+            useful during testing, as the DHCPv6 server listening on
+            ports other than default DHCPv6 ports will not be able to
+            handle regular DHCPv6 queries.</simpara>
           </listitem>
       </itemizedlist>
 
       <para>
-	The server running in a console can be shut down by pressing ctrl-c. The
-	server will detect such a key combination and will initialize shutdown procedure.
+	    When running in a console, the server can be shut down by
+	    pressing ctrl-c. It detects the key combination and shuts
+	    down gracefully.
       </para>
 
       <para>
         On start-up, the server will detect available network interfaces
-        and will attempt to open UDP sockets on all interfaces that
-        are mentioned in the configuration file.
+        and will attempt to open UDP sockets on all interfaces
+        mentioned in the configuration file.
       </para>
 
       <para>
@@ -68,13 +71,13 @@
   <title>Introduction</title>
       <para>
         This section explains how to configure the DHCPv6 server using the
-        Kea configuration backend. Kea configuration using any other
-        backends is outside of scope for this document. Before DHCPv6
+        Kea configuration backend. (Kea configuration using any other
+        backends is outside of scope of this document.) Before DHCPv6
         is started, its configuration file has to be created. The
         basic configuration looks as follows:
 <screen>
 {
-# DHCPv6 configuration starts in this line
+# DHCPv6 configuration starts on the next line
 "Dhcp6": {
 
 # First we set up global values
@@ -87,7 +90,7 @@
 # Next we specify the type of lease database
     "lease-database": {
         "type": "memfile",
-        "persist": true,
+        "persist": "true",
         "name": "/var/kea/dhcp6.leases"
     },
 
@@ -102,8 +105,7 @@
              ]
         }
     ]
-
-# DHCPv6 configuration ends with this line
+# DHCPv6 configuration ends with the next line
 }
 
 } </screen>
@@ -124,7 +126,7 @@ one or more objects. In this specific example, we have only one
 object called Dhcp6. This is a simplified configuration, as usually
 there will be additional objects, like <command>Logging</command> or
 <command>DhcpDns</command>, but we omit them now for clarity. The Dhcp6
-configuration starts with the the <command>"Dhcp6: {"</command> line
+configuration starts with the <command>"Dhcp6": {</command> line
 and ends with the corresponding closing brace (in the above example,
 the brace after the last comment).  Everything defined between those
 lines is considered to be the Dhcp6 configuration.</para>
@@ -206,8 +208,8 @@ syntax would be used:
         "subnet": "2001:db8:1::/64"
     },
     {
-        "pools": [ { "pool": "2001:db8:2::1-2001:db8:2::ff" } ],
-        "subnet": "192.0.3.0/24",
+        "pools": [ { "pool": "2001:db8:2::1-2001:db8:2::ffff" } ],
+        "subnet": "2001:db8:2::/64",
         "interface": "eth0"
     }
 ]
@@ -219,8 +221,8 @@ In some cases in may be preferable to use more compact notation.
 
 <para>After all parameters are specified, we have two contexts open:
 global and Dhcp6, hence we need two closing curly brackets to close them.
-In a real life configuration file there likely would be additional
-components defined like Logging or DhcpDdns, so the closing brace would
+In a real life configuration file there most likely would be additional
+components defined such as Logging or DhcpDdns, so the closing brace would
 be followed by a comma and another object definition.</para>
 
 <para>Kea 0.9 does not have configuration syntax validation
@@ -241,29 +243,29 @@ JSON validator is available at <ulink url="http://jsonviewer.stack.hu/"/>.
 
   <para>The server is able to store lease data in different repositories. Larger
   deployments may elect to store leases in a database. <xref
-  linkend="database-configuration4"/> describes this option. In typical
+  linkend="database-configuration6"/> describes this option. In typical
   smaller deployments though, the server will use a CSV file rather than a database to
   store lease information. As well as requiring less administration, an
   advantage of using a file for storage is that it
   eliminates a dependency on third-party database software.</para>
 
   <para>The configuration of the file backend (Memfile) is controlled through
-  the Dhcp4/lease-database parameters. <!-- @todo: we don't have default
+  the Dhcp6/lease-database parameters. <!-- @todo: we don't have default
   parameters. Let's comment this out When default parameters are used, the
   Memfile backend will write leases to a disk in the
   [kea-install-dir]/var/kea/kea-leases4.csv. -->
   The following configuration:
 <screen>
-"Dhcp4": {
+"Dhcp6": {
     "lease-database": {
         <userinput>"type": "memfile"</userinput>,
-        <userinput>"persist": true</userinput>,
-        <userinput>"name": "/tmp/kea-leases4.csv"</userinput>
+        <userinput>"persist": "true"</userinput>,
+        <userinput>"name": "/tmp/kea-leases6.csv"</userinput>
     }
     ...
 }
 </screen>
-  ...sets the name of the lease file to /tmp/kea-leases4.csv.
+  ...sets the name of the lease file to /tmp/kea-leases6.csv.
   </para>
 
   <para>The "persist" parameter controls whether the leases are written to disk.
@@ -348,7 +350,7 @@ temporarily override a list of interface names and listen on all interfaces.
       <para>
         Subnet identifier is a unique number associated with a particular subnet.
         In principle, it is used to associate clients' leases with respective subnets.
-        When subnet identifier is not specified for a subnet being configured, it will
+        When the subnet identifier is not specified for a subnet being configured, it will
         be automatically assigned by the configuration mechanism. The identifiers
         are assigned from 1 and are monotonically increased for each subsequent
         subnet: 1, 2, 3 ....
@@ -442,7 +444,7 @@ temporarily override a list of interface names and listen on all interfaces.
            "subnet": "2001:db8:1::/64",
            "pools": [
                {
-                   pool: "2001:db8:1::1-2001:db8:1::ff"
+                   pool: "2001:db8:1::1-2001:db8:1::ffff"
                }
            ],
            ...
@@ -502,16 +504,16 @@ temporarily override a list of interface names and listen on all interfaces.
         In this example, we allow server to
         dynamically assign all addresses available in the whole subnet. Although
         rather wasteful, it is certainly a valid configuration to dedicate the
-        whole /64 subnet for that purpose. Note that Kea server does not preallocate
+        whole /64 subnet for that purpose. Note that the Kea server does not preallocate
         the leases, so there is no danger of using gigantic address pools.
       </para>
       <para>
         When configuring a DHCPv6 server using prefix/length notation, please pay
         attention to the boundary values. When specifying that the server should use
         a given pool, it will be able to allocate also first (typically network
-        address) address from that pool. For example for pool 2001:db8::/64 the
-        2001:db8:: address may be assigned as well. If you want to avoid this,
-        please use the "min-max" notation.
+        address) address from that pool. For example for pool 2001:db8:2::/64 the
+        2001:db8:2:: address may be assigned as well. If you want to avoid this,
+        use the "min-max" notation.
       </para>
     </section>
 
@@ -560,13 +562,13 @@ temporarily override a list of interface names and listen on all interfaces.
         global and apply to all configured subnets.
 
         <screen>
-"Dhcp4": {
+"Dhcp6": {
     "option-data": [
         {
            <userinput>"name": "dns-servers",
            "code": 23,
            "space": "dhcp6",
-           "csv-format": true,
+           "csv-format": "true",
            "data": "2001:db8::cafe, 2001:db8::babe"</userinput>
         },
         ...
@@ -600,13 +602,13 @@ temporarily override a list of interface names and listen on all interfaces.
       subnets with the following addresses: 2001:db8:1::cafe and
       2001:db8:1::babe.
         <screen>
-"Dhcp4": {
+"Dhcp6": {
     "option-data": [
         {
            <userinput>"name": "dns-servers",
            "code": 23,
            "space": "dhcp6",
-           "csv-format": false,
+           "csv-format": "false",
            "data": "2001 0DB8 0001 0000 0000 0000 0000 CAFE
                     2001 0DB8 0001 0000 0000 0000 0000 BABE"</userinput>
         },
@@ -618,8 +620,8 @@ temporarily override a list of interface names and listen on all interfaces.
        The value for the setting of the "data" element is split across two
        lines in this document for clarity: when entering the command, the
        whole string should be entered on the same line. Care should be taken
-       to use proper encoding when using hex format as Kea ability to validate
-       data correctness in hex format is limited.
+       to use proper encoding when using hexadecimal format as Kea's ability
+       to validate data correctness in hexadecimal is limited.
       </para>
 
     <para>
@@ -645,7 +647,7 @@ temporarily override a list of interface names and listen on all interfaces.
                     "name": "dns-servers",
                     "code": 23,
                     "space: "dhcp6",
-                    "csv-format": true,
+                    "csv-format": "true",
                     "data": "2001:db8:1::3"
                 },
                 ...
@@ -661,9 +663,10 @@ temporarily override a list of interface names and listen on all interfaces.
 
     <note>
       <para>
-        In future versions of Kea, it will not be necessary to specify option
-        code, space and csv-format fields, as those fields will be set
-        automatically.
+        In future versions of Kea, it will not be necessary to specify
+        the <command>code</command>, <command>space</command>
+        and <command>csv-format</command> fields, as they will
+        be set automatically.
       </para>
     </note>
 
@@ -680,7 +683,7 @@ temporarily override a list of interface names and listen on all interfaces.
       Some options are designated as arrays, which means that more than one
       value is allowed in such an option. For example the option dns-servers
       allows the specification of more than one IPv6 address, so allowing
-      clients to obtain the the addresses of multiple DNS servers.
+      clients to obtain the addresses of multiple DNS servers.
     </para>
 
 <!-- @todo: describe record types -->
@@ -705,9 +708,9 @@ temporarily override a list of interface names and listen on all interfaces.
         <title>List of standard DHCPv6 options</title>
         <tgroup cols='4'>
         <colspec colname='name'/>
-        <colspec colname='code'/>
-        <colspec colname='type'/>
-        <colspec colname='array'/>
+        <colspec colname='code' align='center'/>
+        <colspec colname='type' align='center'/>
+        <colspec colname='array' align='center'/>
         <thead>
           <row><entry>Name</entry><entry>Code</entry><entry>Type</entry><entry>Array?</entry></row>
         </thead>
@@ -780,7 +783,7 @@ temporarily override a list of interface names and listen on all interfaces.
             <userinput>"name": "foo",
             "code": 100,
             "type": "uint32",
-            "array": false,
+            "array": "false",
             "record-types": "",
             "space": "dhcp6",
             "encapsulate": ""</userinput>
@@ -811,7 +814,7 @@ temporarily override a list of interface names and listen on all interfaces.
             <userinput>name "foo",
             "code": 100,
             "space": "dhcp6",
-            "csv-format": true,
+            "csv-format": "true",
             "data": "12345"</userinput>
         }, ...
     ],
@@ -837,7 +840,7 @@ temporarily override a list of interface names and listen on all interfaces.
             "code": 101,
             "space": "dhcp6",
             "type": "record",
-            "array": false,
+            "array": "false",
             "record-types": "ipv4-address, uint16, boolean, string",
             "encapsulate": ""</userinput>
         }, ...
@@ -858,7 +861,7 @@ temporarily override a list of interface names and listen on all interfaces.
             <userinput>"name": "bar",
             "space": "dhcp6",
             "code": 101,
-            "csv-format": true,
+            "csv-format": "true",
             "data": "2001:db8:1::10, 123, false, Hello World"</userinput>
         }
     ],
@@ -902,7 +905,7 @@ temporarily override a list of interface names and listen on all interfaces.
             "code": 1,
             "space": "vendor-encapsulated-options-space",
             "type": "record",
-            "array: false,
+            "array": "false",
             "record-types": "ipv6-address, uint16, string",
             "encapsulates": ""</userinput>
         }
@@ -919,7 +922,7 @@ temporarily override a list of interface names and listen on all interfaces.
             <userinput>"name": "foo"
             "space": "vendor-encapsulated-options-space",
             "code": 1,
-            "csv-format": true,
+            "csv-format": "true",
             "data": "2001:db8:1::10, 123, Hello World"</userinput>
         },
         ...
@@ -936,8 +939,8 @@ temporarily override a list of interface names and listen on all interfaces.
             <userinput>"name": "vendor-encapsulated-options"
             "space": "dhcp6",
             "code": 17,
-            "csv-format": true,
-            "data: "12345"</userinput>
+            "csv-format": "true",
+            "data": "12345"</userinput>
         }
     ],
     ...
@@ -972,7 +975,7 @@ temporarily override a list of interface names and listen on all interfaces.
             "space": "isc",
             "type": "ipv6-address".
             "record-types": "",
-            "array": false,
+            "array": "false",
             "encapsulate ""
         },
         {
@@ -981,7 +984,7 @@ temporarily override a list of interface names and listen on all interfaces.
             "space": "isc",
             "type": "string",
             "record-types": "",
-            "array": false
+            "array": "false"
             "encapsulate": ""</userinput>
         }
     ],
@@ -994,7 +997,7 @@ temporarily override a list of interface names and listen on all interfaces.
 The next step is to define a regular DHCPv6 option and specify that it
 should include options from the isc option space:
 <screen>
-"Dhcp4": {
+"Dhcp6": {
     "option-def": [
         ...,
         {
@@ -1002,7 +1005,7 @@ should include options from the isc option space:
             "code": 102,
             "space": "dhcp6",
             "type": "empty",
-            "array": false,
+            "array": "false",
             "record-types": "",
             "encapsulate": "isc"</userinput>
         }
@@ -1024,21 +1027,21 @@ should include options from the isc option space:
             <userinput>"name": "subopt1",
             "space": "isc",
             "code": 1,
-            "csv-format": true,
+            "csv-format": "true",
             "data": "2001:db8::abcd"</userinput>
         },
         }
             <userinput>"name": "subopt2",
             "space": "isc",
             "code": 2,
-            "csv-format": true,
+            "csv-format": "true",
             "data": "Hello world"</userinput>
         },
         {
             <userinput>"name": "container",
             "space": "dhcp6",
             "code": 102,
-            "csv-format": true,
+            "csv-format": "true",
             "data": ""</userinput>
         }
     ],
@@ -1280,7 +1283,7 @@ should include options from the isc option space:
 <screen>
 "Dhcp6": {
     "dhcp-ddns": {
-        <userinput>"enable-updates": true,
+        <userinput>"enable-updates": "true",
         "server-ip": "127.0.0.1",
         "server-port": 53001,
         "sender-ip": "",
@@ -1288,9 +1291,9 @@ should include options from the isc option space:
         "max-queue-size": 1024,
         "ncr-protocol": "UDP",
         "ncr-format": "JSON",
-        "override-no-update": false,
-        "override-client-update": false,
-        "replace-client-name": false,
+        "override-no-update": "false",
+        "override-client-update": "false",
+        "replace-client-name": "false",
         "generated-prefix": "myhost",
         "qualifying-suffix": "example.com"</userinput>
     },
@@ -1299,11 +1302,6 @@ should include options from the isc option space:
 </screen>
       </para>
 
-      <para>
-      The "enable-updates" parameter determines whether or not kea-dhcp6 will
-      generate NCRs. If missing, this value is assumed false hence DDNS updates are
-      disabled.
-      </para>
 
       <section id="dhcpv6-d2-io-config">
       <title>DHCP-DDNS Server Connectivity</title>
@@ -1311,44 +1309,49 @@ should include options from the isc option space:
       In order for NCRs to reach the D2 server, kea-dhcp6 must be able
       to communicate with it.  kea-dhcp6 uses the following configuration
       parameters to control how it communications with D2:
-      <orderedlist>
-      <listitem><para>
-      server-ip - IP address on which D2 listens for requests. The default is
+      <itemizedlist>
+      <listitem><simpara>
+      <command>enable-updates</command> - determines whether or not kea-dhcp6 will
+      generate NCRs.  If missing, this value is assumed to be false hence DDNS updates
+      are disabled.  To enable DDNS updates set this value to true:
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>server-ip</command> - IP address on which D2 listens for requests. The default is
       the local loopback interface at address 127.0.0.1. You may specify
       either an IPv4 or IPv6 address.
-      </para></listitem>
-      <listitem><para>
-      server-port - port on which D2 listens for requests.  The default value
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>server-port</command> - port on which D2 listens for requests.  The default value
       is 53001.
-      </para></listitem>
-      <listitem><para>
-      sender-ip - IP address which kea-dhcp6 should use to send requests to D2.
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>sender-ip</command> - IP address which kea-dhcp6 should use to send requests to D2.
       The default value is blank which instructs kea-dhcp6 to select a suitable
       address.
-      </para></listitem>
-      <listitem><para>
-      sender-port - port which kea-dhcp6 should use to send requests to D2. The
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>sender-port</command> - port which kea-dhcp6 should use to send requests to D2. The
       default value of 0 instructs kea-dhcp6 to select suitable port.
-      </para></listitem>
-      <listitem><para>
-      ncr-format - Socket protocol use when sending requests to D2.  Currently
-      only UDP is supported.  TCP may be available in an upcoming release.
-      </para></listitem>
-      <listitem><para>
-      ncr-protocol - Packet format to use when sending requests to D2.
-      Currently only JSON format is supported.  Other formats may be available
-      in future releases.
-      </para></listitem>
-      <listitem><para>
-      max-queue-size - maximum number of requests allowed to queue waiting to
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>max-queue-size</command> - maximum number of requests allowed to queue waiting to
       be sent to D2. This value guards against requests accumulating
       uncontrollably if they are being generated faster than they can be
       delivered.  If the number of requests queued for transmission reaches
       this value, DDNS updating will be turned off until the queue backlog has
       been sufficiently reduced.  The intent is allow kea-dhcp6 to
       continue lease operations.  The default value is 1024.
-      </para></listitem>
-      </orderedlist>
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>ncr-format</command> - Socket protocol use when sending requests to D2.  Currently
+      only UDP is supported.  TCP may be available in an upcoming release.
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>ncr-protocol</command> - Packet format to use when sending requests to D2.
+      Currently only JSON format is supported.  Other formats may be available
+      in future releases.
+      </simpara></listitem>
+      </itemizedlist>
       By default, D2 is assumed to running on the same machine as kea-dhcp6, and
       all of the default values mentioned above should be sufficient.
       If, however, D2 has been configured to listen on a different address or
@@ -1371,13 +1374,13 @@ should include options from the isc option space:
       <title>When does kea-dhcp6 generate DDNS request</title>
 
 
-      <para>kea-dhcp6 follows the behavior prescribed for DHCP servers
-      in RFC 4704.  It is important to keep in mind that kea-dhcp6
-      provides the initial decision making of when and what to update
-      and forwards that information to D2 in the form of
-      NCRs. Carrying out the actual DNS updates and dealing with such
-      things as conflict resolution are the purview of D2 (<xref
-      linkend="dhcp-ddns-server"/>).</para>
+      <para>kea-dhcp6 follows the behavior prescribed for DHCP servers in
+      <ulink url="http://tools.ietf.org/html/rfc4704">RFC 4704</ulink>.
+      It is important to keep in mind that kea-dhcp6 provides the initial
+      decision making of when and what to update and forwards that
+      information to D2 in the form of NCRs. Carrying out the actual
+      DNS updates and dealing with such things as conflict resolution
+      are the purview of D2 (<xref linkend="dhcp-ddns-server"/>).</para>
 
       <para>
       This section describes when kea-dhcp6 will generate NCRs and the
@@ -1482,7 +1485,7 @@ should include options from the isc option space:
 <screen>
 "Dhcp6": {
     "dhcp-ddns": {
-        <userinput>"override-client-update": true</userinput>,
+        <userinput>"override-client-update": "true"</userinput>,
         ...
     },
     ...
@@ -1502,7 +1505,7 @@ should include options from the isc option space:
 <screen>
 "Dhcp6": {
     "dhcp-ddns": {
-        <userinput>"override-no-update": true</userinput>,
+        <userinput>"override-no-update": "true"</userinput>,
         ...
     },
     ...
@@ -1547,7 +1550,7 @@ should include options from the isc option space:
 <screen>
 "Dhcp6": {
     "dhcp-ddns": {
-        <userinput>"replace-client-name": true</userinput>,
+        <userinput>"replace-client-name": "true"</userinput>,
         ...
     },
     ...
@@ -1573,7 +1576,7 @@ should include options from the isc option space:
       is no default value. To set its value simply set it to the desired string:
       </para>
 <screen>
-"Dhcp4": {
+"Dhcp6": {
     "dhcp-ddns": {
         <userinput>"qualifying-suffix": "foo.example.org"</userinput>,
         ...
