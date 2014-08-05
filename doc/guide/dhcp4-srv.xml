@@ -13,46 +13,49 @@
       <!-- @todo Rewrite this section once #3422 is done -->
 
       <para>
-	It is recommended to control DHCPv4 server in Kea using <command>keactl</command>,
-	which is described in details in <xref linkend="keactrl"/>.
-      </para>
-
-      <para>
-	However, it is also possible to run the server on its own, not using any
-	scripts. The server accepts the following command-line parameters:
+      It is recommended that the Kea DHCPv4 server be started and stopped
+      using <command>keactl</command> (described in <xref linkend="keactrl"/>).
+      However, it is also possible to run the server directly: it accepts
+      the following command-line switches:
       </para>
 
       <itemizedlist>
           <listitem>
-            <simpara>-c file - specifies the configuration file. This is the
-	    only mandatory parameter (it may be optional for configuration
-	    parameters other than Kea)</simpara>
+            <simpara>
+            <command>-c <replaceable>file</replaceable></command> -
+            specifies the configuration file. This is the only mandatory
+            switch.</simpara>
           </listitem>
           <listitem>
-            <simpara>-v - specifies whether the server logging should be
-	    switched to verbose mode. In verbose mode, logging severity and
-	    debuglevel specified in a configuration file are ignored and
-	    severity debug and maximum debuglevel (99) is assumed. That flag is
-	    convenient, for temporarily switching the server into maximum
-	    verbosity, e.g. when debugging.</simpara>
+            <simpara>
+            <command>-v</command> - specifies whether the server
+            logging should be switched to verbose mode. In verbose mode,
+            the logging severity and debuglevel specified in a configuration
+            file are ignored and "debug" severity and the maximum debuglevel
+            (99) are assumed. The flag is convenient, for temporarily
+            switching the server into maximum verbosity, e.g. when
+            debugging.</simpara>
           </listitem>
           <listitem>
-            <simpara>-p port - specifies UDP port the server will listen
-	    on. This is only useful during testing, as the DHCPv4 server
-	    listening on ports other than default DHCPv4 ports will not be able
-	    to handle regular DHCPv4 queries.</simpara>
+            <simpara>
+            <command>-p <replaceable>port</replaceable></command> -
+            specifies UDP port the server will listen on. This is only
+            useful during testing, as the DHCPv4 server listening on
+            ports other than default DHCPv4 ports will not be able to
+            handle regular DHCPv4 queries.</simpara>
           </listitem>
       </itemizedlist>
 
       <para>
-	The server running in a console can be shut down by pressing ctrl-c. The
-	server will detect such a key combination and will initialize shutdown procedure.
+	    When running in a console, the server can be shut down by
+	    pressing ctrl-c. It detects the key combination and shuts
+	    down gracefully.
       </para>
 
       <para>
         On start-up, the server will detect available network interfaces
-        and will attempt to open UDP sockets on all interfaces that
-        are mentioned in the configuration file.
+        and will attempt to open UDP sockets on all interfaces
+        mentioned in the configuration file.
       </para>
 
       <para>
@@ -68,8 +71,8 @@
   <title>Introduction</title>
       <para>
         This section explains how to configure the DHCPv4 server using the
-        Kea configuration backend. Kea configuration using any other
-        backends is outside of scope for this document. Before DHCPv4
+        Kea configuration backend. (Kea configuration using any other
+        backends is outside of scope of this document.) Before DHCPv4
         is started, its configuration file has to be created. The
         basic configuration looks as follows:
 <screen>
@@ -86,7 +89,7 @@
 # Next we specify the type of lease database
     "lease-database": {
         "type": "memfile",
-        "persist": true,
+        "persist": "true",
         "name": "/var/kea/dhcp4.leases"
     },
 
@@ -119,7 +122,7 @@ one or more objects. In this specific example, we have only one
 object called Dhcp4. This is a simplified configuration, as usually
 there will be additional objects, like <command>Logging</command> or
 <command>DhcpDns</command>, but we omit them now for clarity. The Dhcp4
-configuration starts with the the <command>"Dhcp4: {"</command> line
+configuration starts with the <command>"Dhcp4": {</command> line
 and ends with the corresponding closing brace (in the above example,
 the brace after the last comment).  Everything defined between those
 lines is considered to be the Dhcp4 configuration.</para>
@@ -208,8 +211,8 @@ syntax would be used:
 
 <para>After all parameters are specified, we have two contexts open:
 global and Dhcp4, hence we need two closing curly brackets to close them.
-In a real life configuration file there likely would be additional
-components defined like Logging or DhcpDdns, so the closing brace would
+In a real life configuration file there most likely would be additional
+components defined such as Logging or DhcpDdns, so the closing brace would
 be followed by a comma and another object definition.</para>
 
 <para>Kea 0.9 does not have configuration syntax validation
@@ -247,7 +250,7 @@ url="http://jsonviewer.stack.hu/"/>.
 "Dhcp4": {
     "lease-database": {
         <userinput>"type": "memfile"</userinput>,
-        <userinput>"persist": true</userinput>,
+        <userinput>"persist": "true"</userinput>,
         <userinput>"name": "/tmp/kea-leases4.csv"</userinput>
     }
     ...
@@ -471,7 +474,7 @@ temporarily override a list of interface names and listen on all interfaces.
            <userinput>"name": "domain-name-servers",
            "code": 6,
            "space": "dhcp4",
-           "csv-format": true,
+           "csv-format": "true",
            "data": "192.0.2.1, 192.0.2.2"</userinput>
         },
         ...
@@ -509,7 +512,7 @@ temporarily override a list of interface names and listen on all interfaces.
             <userinput>"name": "domain-name-servers",
             "code": 6,
             "space": "dhcp4",
-            "csv-format": false,
+            "csv-format": "false",
             "data": "C0 00 03 01 C0 00 03 02"</userinput>
         },
         ...
@@ -541,7 +544,7 @@ temporarily override a list of interface names and listen on all interfaces.
                     "name": "domain-name-servers",
                     "code": 6,
                     "space: "dhcp4",
-                    "csv-format": true,
+                    "csv-format": "true",
                     "data": "192.0.2.3"
                 },
                 ...
@@ -555,12 +558,14 @@ temporarily override a list of interface names and listen on all interfaces.
 </screen>
       </para>
 
-      <note>
-        <!-- @todo Ticket #3467 created for this -->
-        <para>In a future version of Kea, it will not be necessary to specify
-        the option code, space and csv-format fields as they will be set
-        automatically.</para>
-      </note>
+    <note>
+      <para>
+        In future versions of Kea, it will not be necessary to specify
+        the <command>code</command>, <command>space</command>
+        and <command>csv-format</command> fields, as they will
+        be set automatically.
+      </para>
+    </note>
 
       <para>
         The currently supported standard DHCPv4 options are
@@ -575,7 +580,7 @@ temporarily override a list of interface names and listen on all interfaces.
         Some options are designated as arrays, which means that more than one
         value is allowed in such an option. For example the option time-servers
         allows the specification of more than one IPv4 address, so allowing
-        clients to obtain the the addresses of multiple NTP servers.
+        clients to obtain the addresses of multiple NTP servers.
       </para>
       <!-- @todo: describe record types -->
 
@@ -598,9 +603,9 @@ temporarily override a list of interface names and listen on all interfaces.
           <title>List of standard DHCPv4 options</title>
           <tgroup cols='4'>
           <colspec colname='name'/>
-          <colspec colname='code'/>
-          <colspec colname='type'/>
-          <colspec colname='array'/>
+          <colspec colname='code' align='center'/>
+          <colspec colname='type' align='center'/>
+          <colspec colname='array' align='center'/>
           <thead>
             <row>
               <entry>Name</entry>
@@ -763,7 +768,7 @@ temporarily override a list of interface names and listen on all interfaces.
             <userinput>"name": "foo",
             "code": 222,
             "type": "uint32",
-            "array": false,
+            "array": "false",
             "record-types": "",
             "space": "dhcp4",
             "encapsulate": ""</userinput>
@@ -803,7 +808,7 @@ temporarily override a list of interface names and listen on all interfaces.
             <userinput>name "foo",
             "code": 222,
             "space": "dhcp4",
-            "csv-format": true,
+            "csv-format": "true",
             "data": "12345"</userinput>
         }, ...
     ],
@@ -827,7 +832,7 @@ temporarily override a list of interface names and listen on all interfaces.
             "code": 223,
             "space": "dhcp4",
             "type": "record",
-            "array": false,
+            "array": "false",
             "record-types": "ipv4-address, uint16, boolean, string",
             "encapsulate": ""</userinput>
         }, ...
@@ -848,7 +853,7 @@ temporarily override a list of interface names and listen on all interfaces.
             <userinput>"name": "bar",
             "space": "dhcp4",
             "code": 223,
-            "csv-format": true,
+            "csv-format": "true",
             "data": "192.0.2.100, 123, true, Hello World"</userinput>
         }
     ],
@@ -892,7 +897,7 @@ temporarily override a list of interface names and listen on all interfaces.
             "code": 1,
             "space": "vendor-encapsulated-options-space",
             "type": "record",
-            "array: false,
+            "array": "false",
             "record-types": "ipv4-address, uint16, string",
             "encapsulates": ""</userinput>
         }
@@ -909,7 +914,7 @@ temporarily override a list of interface names and listen on all interfaces.
             <userinput>"name": "foo"
             "space": "vendor-encapsulated-options-space",
             "code": 1,
-            "csv-format": true,
+            "csv-format": "true",
             "data": "192.0.2.3, 123, Hello World"</userinput>
         }
     ],
@@ -924,8 +929,8 @@ temporarily override a list of interface names and listen on all interfaces.
             <userinput>"name": "vendor-encapsulated-options"
             "space": "dhcp4",
             "code": 43,
-            "csv-format": false,
-            "data: ""</userinput>
+            "csv-format": "false",
+            "data": ""</userinput>
         }
     ],
     ...
@@ -972,7 +977,7 @@ temporarily override a list of interface names and listen on all interfaces.
             "space": "isc",
             "type": "ipv4-address".
             "record-types": "",
-            "array": false,
+            "array": "false",
             "encapsulate ""
         },
         {
@@ -981,7 +986,7 @@ temporarily override a list of interface names and listen on all interfaces.
             "space": "isc",
             "type": "string",
             "record-types": "",
-            "array": false
+            "array": "false"
             "encapsulate": ""</userinput>
         }
     ],
@@ -1002,7 +1007,7 @@ temporarily override a list of interface names and listen on all interfaces.
             "code": 222,
             "space": "dhcp4",
             "type": "empty",
-            "array": false,
+            "array": "false",
             "record-types": "",
             "encapsulate": "isc"</userinput>
         }
@@ -1023,21 +1028,21 @@ temporarily override a list of interface names and listen on all interfaces.
             <userinput>"name": "subopt1",
             "space": "isc",
             "code": 1,
-            "csv-format": true,
+            "csv-format": "true",
             "data": "192.0.2.3"</userinput>
         },
         }
             <userinput>"name": "subopt2",
             "space": "isc",
             "code": 2,
-            "csv-format": true,
+            "csv-format": "true",
             "data": "Hello world"</userinput>
         },
         {
             <userinput>"name": "container",
             "space": "dhcp4",
             "code": 222,
-            "csv-format": true,
+            "csv-format": "true",
             "data": ""</userinput>
         }
     ],
@@ -1085,7 +1090,7 @@ temporarily override a list of interface names and listen on all interfaces.
                 "name": "domain-name-servers",
                 "code": 6,
                 "data": "192.0.2.200,192.0.2.201",
-                "csv-format": true,
+                "csv-format": "true",
                 "space": "dhcp4"
             } ]
         }
@@ -1232,7 +1237,7 @@ temporarily override a list of interface names and listen on all interfaces.
 <screen>
 "Dhcp4": {
     "dhcp-ddns": {
-        <userinput>"enable-updates": true,
+        <userinput>"enable-updates": "true",
         "server-ip": "127.0.0.1",
         "server-port": 53001,
         "sender-ip": "",
@@ -1240,9 +1245,9 @@ temporarily override a list of interface names and listen on all interfaces.
         "max-queue-size": 1024,
         "ncr-protocol": "UDP",
         "ncr-format": "JSON",
-        "override-no-update": false,
-        "override-client-update": false,
-        "replace-client-name": false,
+        "override-no-update": "false",
+        "override-client-update": "false",
+        "replace-client-name": "false",
         "generated-prefix": "myhost",
         "qualifying-suffix": "example.com"</userinput>
     },
@@ -1250,51 +1255,43 @@ temporarily override a list of interface names and listen on all interfaces.
 }
 </screen>
       </para>
-      <!-- this paragraph no longer applies as we don't have default values
-      <para>
-      The "enable-updates" parameter determines whether or not kea-dhcp4 will
-      generate NCRs.  By default, this value is false hence DDNS updates are
-      disabled.  To enable DDNS updates set this value to true:
-      </para>
-<screen>
-&gt; <userinput>config set Dhcp4/dhcp-ddns/enable-updates true</userinput>
-&gt; <userinput>config commit</userinput>
-</screen> -->
+
       <section id="dhcpv4-d2-io-config">
       <title>DHCP-DDNS Server Connectivity</title>
       <para>
       In order for NCRs to reach the DHCP-DDNS server, kea-dhcp4 must be able
       to communicate with it.  kea-dhcp4 uses the following configuration
       parameters to control how it communications with DHCP-DDNS:
-      <orderedlist>
-      <listitem><para>
+      <itemizedlist>
+      <listitem><simpara>
+      <command>enable-updates</command> - determines whether or not kea-dhcp4 will
+      generate NCRs.  By default, this value is false hence DDNS updates are
+      disabled.  To enable DDNS updates set this value to true:
+      </simpara></listitem>
+
+      <listitem><simpara>
       <command>server-ip</command> - IP address on which DHCP-DDNS listens for requests. The default is
       the local loopback interface at address 127.0.0.1. You may specify
       either an IPv4 or IPv6 address.
-      </para></listitem>
-      <listitem><para>
+      </simpara></listitem>
+
+      <listitem><simpara>
       <command>server-port</command> - port on which DHCP-DDNS listens for requests.  The default value
       is 53001.
-      </para></listitem>
-      <listitem><para>
+      </simpara></listitem>
+
+      <listitem><simpara>
       <command>sender-ip</command> - IP address which kea-dhcp4 should use to send requests to the DHCP-DDNS server.
       The default value is blank which instructs kea-dhcp4 to select a suitable
       address.
-      </para></listitem>
-      <listitem><para>
+      </simpara></listitem>
+
+      <listitem><simpara>
       <command>sender-port</command> - port which kea-dhcp4 should use to send requests to the DHCP-DDNS server. The
       default value of 0 instructs kea-dhcp4 to select suitable port.
-      </para></listitem>
-      <listitem><para>
-      <command>ncr-format</command> - Socket protocol use when sending requests to the DHCP-DDNS server.  Currently
-      only UDP is supported.  TCP may be available in an upcoming release.
-      </para></listitem>
-      <listitem><para>
-      <command>ncr-protocol</command> - Packet format to use when sending requests to the DHCP-DDNS server.
-      Currently only JSON format is supported.  Other formats may be available
-      in future releases.
-      </para></listitem>
-      <listitem><para>
+      </simpara></listitem>
+
+      <listitem><simpara>
       <command>max-queue-size</command> - maximum number of requests allowed to queue waiting to
       be sent to the DHCP-DDNS server. This value guards against requests accumulating
       uncontrollably if they are being generated faster than they can be
@@ -1303,8 +1300,20 @@ temporarily override a list of interface names and listen on all interfaces.
       been sufficiently reduced.  The intention is allow the kea-dhcp4 server to
       continue lease operations without running the risk that its memory usage
       grows without limit.  The default value is 1024.
-      </para></listitem>
-      </orderedlist>
+      </simpara></listitem>
+
+      <listitem><simpara>
+      <command>ncr-format</command> - socket protocol use when sending requests to the DHCP-DDNS server.  Currently
+      only UDP is supported.  TCP may be available in an upcoming release.
+      </simpara></listitem>
+
+      <listitem><simpara>
+      <command>ncr-protocol</command> - packet format to use when sending requests to the DHCP-DDNS server.
+      Currently only JSON format is supported.  Other formats may be available
+      in future releases.
+      </simpara></listitem>
+
+      </itemizedlist>
       By default, the DHCP-DDNS server is assumed to running on the same machine as kea-dhcp4, and
       all of the default values mentioned above should be sufficient.
       If, however, the DHCP-DDNS server has been configured to listen on a different address or
@@ -1427,7 +1436,7 @@ temporarily override a list of interface names and listen on all interfaces.
 <screen>
 "Dhcp4": {
     "dhcp-ddns": {
-        <userinput>"override-client-update": true</userinput>,
+        <userinput>"override-client-update": "true"</userinput>,
         ...
     },
     ...
@@ -1447,7 +1456,7 @@ temporarily override a list of interface names and listen on all interfaces.
 <screen>
 "Dhcp4": {
     "dhcp-ddns": {
-        <userinput>"override-no-update": true</userinput>,
+        <userinput>"override-no-update": "true"</userinput>,
         ...
     },
     ...
@@ -1499,7 +1508,7 @@ temporarily override a list of interface names and listen on all interfaces.
 <screen>
 "Dhcp4": {
     "dhcp-ddns": {
-        <userinput>"replace-client-name": true</userinput>,
+        <userinput>"replace-client-name": "true"</userinput>,
         ...
     },
     ...
@@ -1603,7 +1612,7 @@ temporarily override a list of interface names and listen on all interfaces.
 
 <screen>
 "Dhcp4": {
-    <userinput>"echo-client-id": false</userinput>,
+    <userinput>"echo-client-id": "false"</userinput>,
     ...
 }
 </screen>
