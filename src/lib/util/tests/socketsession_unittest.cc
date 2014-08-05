@@ -54,7 +54,7 @@ namespace {
 const char* const TEST_UNIX_FILE = TEST_DATA_TOPBUILDDIR "/test.unix";
 const char* const TEST_PORT = "53535";
 const char* const TEST_PORT2 = "53536"; // use this in case we need 2 ports
-const char TEST_DATA[] = "BIND10 test";
+const char TEST_DATA[] = "Kea test";
 
 // A simple helper structure to automatically close test sockets on return
 // or exception in a RAII manner.  non copyable to prevent duplicate close.

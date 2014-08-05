@@ -51,7 +51,7 @@ int& initDebugLevel() {
 }
 
 std::string& initRootName() {
-    static std::string root("bind10");
+    static std::string root("kea");
     return (root);
 }
 

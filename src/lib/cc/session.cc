@@ -309,10 +309,10 @@ public:
 void
 Session::establish(const char* socket_file) {
     if (socket_file == NULL) {
-        socket_file = getenv("BIND10_MSGQ_SOCKET_FILE");
+        socket_file = getenv("BUNDY_MSGQ_SOCKET_FILE");
     }
     if (socket_file == NULL) {
-        socket_file = BIND10_MSGQ_SOCKET_FILE;
+        socket_file = BUNDY_MSGQ_SOCKET_FILE;
     }
 
     impl_->establish(*socket_file);

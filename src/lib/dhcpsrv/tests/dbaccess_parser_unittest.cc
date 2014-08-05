@@ -248,7 +248,7 @@ TEST_F(DbAccessParserTest, emptyKeyword) {
 TEST_F(DbAccessParserTest, persistV4Memfile) {
     const char* config[] = {"type", "memfile",
                             "persist", "true",
-                            "name", "/opt/bind10/var/kea-leases4.csv",
+                            "name", "/opt/kea/var/kea-leases4.csv",
                             NULL};
 
     string json_config = toJson(config);
@@ -267,7 +267,7 @@ TEST_F(DbAccessParserTest, persistV4Memfile) {
 TEST_F(DbAccessParserTest, persistV6Memfile) {
     const char* config[] = {"type", "memfile",
                             "persist", "true",
-                            "name", "/opt/bind10/var/kea-leases6.csv",
+                            "name", "/opt/kea/var/kea-leases6.csv",
                             NULL};
 
     string json_config = toJson(config);
