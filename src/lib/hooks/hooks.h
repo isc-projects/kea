@@ -22,7 +22,7 @@
 namespace {
 
 // Version 1 of the hooks framework.
-const int BIND10_HOOKS_VERSION = 1;
+const int KEA_HOOKS_VERSION = 1;
 
 // Names of the framework functions.
 const char* const LOAD_FUNCTION_NAME = "load";

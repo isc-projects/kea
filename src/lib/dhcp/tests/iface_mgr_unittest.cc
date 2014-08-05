@@ -1198,7 +1198,7 @@ TEST_F(IfaceMgrTest, sendReceive4) {
 // @todo: This part of the test is currently disabled on all BSD systems as it was
 // the quick fix. We need a more elegant (config-based) solution to disable
 // this check on affected systems only. The ticket has been submited for this
-// work: http://bind10.isc.org/ticket/2971
+// work: http://kea.isc.org/ticket/2971
 #ifndef OS_BSD
     EXPECT_THROW(ifacemgr->receive4(10), SocketReadError);
 #endif

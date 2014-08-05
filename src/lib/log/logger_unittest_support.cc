@@ -150,9 +150,9 @@ resetUnitTestRootLogger() {
 void initLogger(isc::log::Severity severity, int dbglevel) {
 
     // Root logger name is defined by the environment variable B10_LOGGER_ROOT.
-    // If not present, the name is "bind10".
-    const char* DEFAULT_ROOT = "bind10";
-    const char* root = getenv("B10_LOGGER_ROOT");
+    // If not present, the name is "kea".
+    const char* DEFAULT_ROOT = "kea";
+    const char* root = getenv("KEA_LOGGER_ROOT");
     if (! root) {
         root = DEFAULT_ROOT;
     }
