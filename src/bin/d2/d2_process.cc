@@ -209,7 +209,7 @@ D2Process::configure(isc::data::ConstElementPtr config_set) {
     if (rcode) {
         // Non-zero means we got an invalid configuration, take no further
         // action. In integrated mode, this will send a failed response back
-        // to BIND10.
+        // to the configuration backend.
         reconf_queue_flag_ = false;
         return (answer);
     }

@@ -176,8 +176,8 @@ TEST_F(BundyD2ControllerTest, executeCommandTests) {
 
 /// @brief Tests launch with a session establishment failure.
 /// This test launches with a valid command line for integrated mode and no.
-/// Attempting to connect to BIND10 should fail, even if BIND10 is running
-/// UNLESS the test is run as root.  Launch should throw SessionStartError.
+/// Attempting to connect to Bundy should fail, even if Bundy is running
+/// UNLESS the test is run as root. Launch should throw SessionStartError.
 TEST_F(BundyD2ControllerTest, launchSessionFailure) {
     // Command line to run integrated
     char* argv[] = { (char*)"progName" };

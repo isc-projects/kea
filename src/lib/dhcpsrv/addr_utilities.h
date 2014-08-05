@@ -22,7 +22,7 @@ namespace dhcp {
 
 /// This code is based on similar code from the Dibbler project. I, Tomasz Mrugalski,
 /// as a sole creator of that code hereby release it under BSD license for the benefit
-/// of the BIND10 project.
+/// of the Kea project.
 
 /// @brief returns a first address in a given prefix
 ///

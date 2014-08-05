@@ -104,7 +104,7 @@ hook_nonstandard_three(CalloutHandle& handle) {
 
 int
 version() {
-    return (BIND10_HOOKS_VERSION);
+    return (KEA_HOOKS_VERSION);
 }
 
 int load(LibraryHandle& handle) {

@@ -177,6 +177,6 @@ TEST_F(CSVLeaseFile4Test, recreate) {
 /// lease type, invalid preferred lifetime vs valid lifetime etc. The Lease6
 /// should be extended with the function that validates lease attributes. Once
 /// this is implemented we should provide more tests for malformed leases
-/// in the CSV file. See http://bind10.isc.org/ticket/2405.
+/// in the CSV file. See http://kea.isc.org/ticket/2405.
 
 } // end of anonymous namespace

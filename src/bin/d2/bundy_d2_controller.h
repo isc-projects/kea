@@ -98,7 +98,7 @@ public:
     /// in their main function. Such logger uses environmental variables to
     /// control severity, verbosity etc. Reinitialization of logger by this
     /// function would replace unit tests specific logger configuration with
-    /// this suitable for D2 running as a bind10 module.
+    /// this suitable for D2 running as a Bundy module.
     ///
     /// @param argc  is the number of command line arguments supplied
     /// @param argv  is the array of string (char *) command line arguments

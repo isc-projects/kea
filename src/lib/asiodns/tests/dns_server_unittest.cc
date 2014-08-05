@@ -80,7 +80,7 @@ const int server_port = 5553;
 const char* const server_port_str = "5553";
 //message client send to udp server, which isn't dns package
 //just for simple testing
-const char* const query_message = "BIND10 is awesome";
+const char* const query_message = "Kea is awesome";
 
 // \brief provide capacity to derived class the ability
 // to stop DNSServer at certain point
@@ -649,7 +649,7 @@ TYPED_TEST(DNSServerTest, TCPNoTimeout) {
     this->tcp_client_->setSendDataDelay(1);
     this->testStopServerByStopper(*this->tcp_server_, this->tcp_client_,
                                   this->tcp_client_);
-    EXPECT_EQ("BIND10 is awesome", this->tcp_client_->getReceivedData());
+    EXPECT_EQ("Kea is awesome", this->tcp_client_->getReceivedData());
     EXPECT_TRUE(this->serverStopSucceed());
 }
 

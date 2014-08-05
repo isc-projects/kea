@@ -28,7 +28,7 @@ using namespace isc::dhcp;
 using namespace std;
 
 /// This file contains entry point (main() function) for standard DHCPv6 server
-/// component for BIND10 framework. It parses command-line arguments and
+/// component for Kea software suite. It parses command-line arguments and
 /// instantiates ControlledDhcpv6Srv class that is responsible for establishing
 /// connection with msgq (receiving commands and configuration) and also
 /// creating Dhcpv6 server object as well.
@@ -118,16 +118,16 @@ main(int argc, char* argv[]) {
         ControlledDhcpv6Srv server(port_number);
 
         try {
-            // Initialize the server, i.e. establish control session
-            // if BIND10 backend is used or read a configuration file
+            // Initialize the server, e.g. establish control session
+            // if Bundy backend is used or read a configuration file
             // if Kea backend is used.
             server.init(config_file);
 
         } catch (const std::exception& ex) {
             LOG_ERROR(dhcp6_logger, DHCP6_INIT_FAIL).arg(ex.what());
 
-            // We should not continue if were told to configure (either read
-            // config file or establish BIND10 control session).
+            // We should not continue, just flush whatever has been logged
+            // and exit.
             isc::log::LoggerManager log_manager;
             log_manager.process();
 
