@@ -227,16 +227,16 @@ void LoggerManagerImpl::initRootLogger(isc::log::Severity severity,
 
     // Set the level for the Kea root logger to the given severity and
     // debug level.
-    log4cplus::Logger b10root = log4cplus::Logger::getInstance(
+    log4cplus::Logger kea_root = log4cplus::Logger::getInstance(
                                                     getRootLoggerName());
-    b10root.setLogLevel(LoggerLevelImpl::convertFromBindLevel(
+    kea_root.setLogLevel(LoggerLevelImpl::convertFromBindLevel(
                                                     Level(severity, dbglevel)));
 
     if (buffer) {
-        createBufferAppender(b10root);
+        createBufferAppender(kea_root);
     } else {
         OutputOption opt;
-        createConsoleAppender(b10root, opt);
+        createConsoleAppender(kea_root, opt);
     }
 }
 
