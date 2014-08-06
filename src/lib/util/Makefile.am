@@ -32,7 +32,6 @@ libkea_util_la_SOURCES += memory_segment_mapped.h memory_segment_mapped.cc
 endif
 libkea_util_la_SOURCES += range_utilities.h
 libkea_util_la_SOURCES += signal_set.cc signal_set.h
-libkea_util_la_SOURCES += hash/sha1.h hash/sha1.cc
 libkea_util_la_SOURCES += encode/base16_from_binary.h
 libkea_util_la_SOURCES += encode/base32hex.h encode/base64.h
 libkea_util_la_SOURCES += encode/base32hex_from_binary.h
