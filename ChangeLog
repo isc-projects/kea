@@ -1,3 +1,10 @@
+8XX.	[doc]		tomek
+	DHCPv6 and DDNS sections in Kea Administrator Reference Manual
+	has been updated. Usage of keactl has been documented.
+	(Trac #3468, git abcd)
+	(Trac #3466, git fa9570d19c73cbe7effc75589b7eb855c411f6a3)
+
+
 804.	[func]		marcin
 	DHCPv4 server supports DHCPINFORM messages from the clients.
 	(Trac #3390, git 77f8577b1dbb52bdc6deb8bed3eef6ce7abc33fd)
