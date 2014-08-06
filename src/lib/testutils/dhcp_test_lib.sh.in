@@ -149,7 +149,7 @@ set_logger() {
         clean_exit 1
     fi
     printf "Kea log will be stored in %s.\n" ${LOG_FILE}
-    export B10_LOGGER_DESTINATION=${LOG_FILE}
+    export KEA_LOGGER_DESTINATION=${LOG_FILE}
 }
 
 # Returns the number of running process pids and the list of pids.
