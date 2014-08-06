@@ -1,3 +1,9 @@
+812.	[doc]		tomek
+	DHCPv6 and DDNS sections in Kea Administrator Reference Manual
+	has been updated. Usage of keactl has been documented.
+	(Trac #3468, git 3945fc6211bcadb9bece7147039a6b50ebcf936b)
+	(Trac #3466, git fa9570d19c73cbe7effc75589b7eb855c411f6a3)
+
 811.	[doc]		tmark
 	Added documentation of message protocol between DHCP servers and the
 	DHCP-DDNS process.
