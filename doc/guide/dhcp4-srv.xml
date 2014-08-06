@@ -89,7 +89,7 @@
 # Next we specify the type of lease database
     "lease-database": {
         "type": "memfile",
-        "persist": "true",
+        "persist": true,
         "name": "/var/kea/dhcp4.leases"
     },
 
@@ -250,7 +250,7 @@ url="http://jsonviewer.stack.hu/"/>.
 "Dhcp4": {
     "lease-database": {
         <userinput>"type": "memfile"</userinput>,
-        <userinput>"persist": "true"</userinput>,
+        <userinput>"persist": true</userinput>,
         <userinput>"name": "/tmp/kea-leases4.csv"</userinput>
     }
     ...
@@ -260,12 +260,12 @@ url="http://jsonviewer.stack.hu/"/>.
   </para>
 
   <para>The "persist" parameter controls whether the leases are written to disk.
-  It is strongly recommended that this parameter is set to "true" at all times
-  during the normal operation of the server. (Not writing leases to disk will
-  mean that if a server is restarted (e.g. after a power failure), it will not
-  know what addresses have been assigned.  As a result, it may hand out addresses
-  to new clients that are already in use.)
-          </para>
+  It is strongly recommended that this parameter is set to
+  <command>true</command> at all times during the normal operation of the
+  server. (Not writing leases to disk will mean that if a server is restarted
+  (e.g. after a power failure), it will not know what addresses have been
+  assigned.  As a result, it may hand out addresses to new clients that are
+  already in use.)</para>
 </section>
 
 <section id="database-configuration4">
@@ -474,7 +474,7 @@ temporarily override a list of interface names and listen on all interfaces.
            <userinput>"name": "domain-name-servers",
            "code": 6,
            "space": "dhcp4",
-           "csv-format": "true",
+           "csv-format": true,
            "data": "192.0.2.1, 192.0.2.2"</userinput>
         },
         ...
@@ -512,7 +512,7 @@ temporarily override a list of interface names and listen on all interfaces.
             <userinput>"name": "domain-name-servers",
             "code": 6,
             "space": "dhcp4",
-            "csv-format": "false",
+            "csv-format": false,
             "data": "C0 00 03 01 C0 00 03 02"</userinput>
         },
         ...
@@ -544,7 +544,7 @@ temporarily override a list of interface names and listen on all interfaces.
                     "name": "domain-name-servers",
                     "code": 6,
                     "space: "dhcp4",
-                    "csv-format": "true",
+                    "csv-format": true,
                     "data": "192.0.2.3"
                 },
                 ...
@@ -768,7 +768,7 @@ temporarily override a list of interface names and listen on all interfaces.
             <userinput>"name": "foo",
             "code": 222,
             "type": "uint32",
-            "array": "false",
+            "array": false,
             "record-types": "",
             "space": "dhcp4",
             "encapsulate": ""</userinput>
@@ -777,17 +777,18 @@ temporarily override a list of interface names and listen on all interfaces.
     ...
 }
 </screen>
-      The "false" value of the <command>array</command> parameter determines that the option
-      does NOT comprise an array of "uint32" values but rather a single value.
-      Two other parameters have been left blank: <command>record-types</command> and <command>encapsulate</command>.
-      The former specifies the comma separated list of option data fields if the
-      option comprises a record of data fields. This should
-      be non-empty if the <command>type</command> is set to "record". Otherwise it must be left
-      blank. The latter parameter specifies the name of the option space being
-      encapsulated by the particular option. If the particular option does not
-      encapsulate any option space it should be left blank.
-      Note that the above set of comments define the format of the new option and do not
-      set its values.
+      The <command>false</command> value of the <command>array</command>
+      parameter determines that the option does NOT comprise an array of
+      "uint32" values but rather a single value.  Two other parameters have been
+      left blank: <command>record-types</command> and
+      <command>encapsulate</command>.  The former specifies the comma separated
+      list of option data fields if the option comprises a record of data
+      fields. This should be non-empty if the <command>type</command> is set to
+      "record". Otherwise it must be left blank. The latter parameter specifies
+      the name of the option space being encapsulated by the particular
+      option. If the particular option does not encapsulate any option space it
+      should be left blank.  Note that the above set of comments define the
+      format of the new option and do not set its values.
       </para>
       <note>
         <para>
@@ -808,7 +809,7 @@ temporarily override a list of interface names and listen on all interfaces.
             <userinput>name "foo",
             "code": 222,
             "space": "dhcp4",
-            "csv-format": "true",
+            "csv-format": true,
             "data": "12345"</userinput>
         }, ...
     ],
@@ -832,7 +833,7 @@ temporarily override a list of interface names and listen on all interfaces.
             "code": 223,
             "space": "dhcp4",
             "type": "record",
-            "array": "false",
+            "array": false,
             "record-types": "ipv4-address, uint16, boolean, string",
             "encapsulate": ""</userinput>
         }, ...
@@ -853,25 +854,25 @@ temporarily override a list of interface names and listen on all interfaces.
             <userinput>"name": "bar",
             "space": "dhcp4",
             "code": 223,
-            "csv-format": "true",
+            "csv-format": true,
             "data": "192.0.2.100, 123, true, Hello World"</userinput>
         }
     ],
     ...
 }</screen>
-      <command>csv-format</command> is set "true" to indicate that the <command>data</command> field comprises a command-separated
-      list of values.  The values in the <command>data</command> must correspond to the types set in
-      the <command>record-types</command> field of the option definition.
+      <command>csv-format</command> is set <command>true</command> to indicate
+      that the <command>data</command> field comprises a command-separated list
+      of values.  The values in the <command>data</command> must correspond to
+      the types set in the <command>record-types</command> field of the option
+      definition.
      </para>
      <note>
-       <para>
-         It is recommended that boolean values are specified using "true" and "false"
-         strings. This helps to prevent errors when typing multiple comma separated
-         values, as it make it easier to identify the type of the value being typed,
-         and compare it with the order of data fields. Nevertheless, it is possible
-         to use integer values: "1" and "0", instead of "true" and "false".
-         If other integer value are used, the configuration is rejected.
-       </para>
+       <para>In general case, boolean values are specified as <command>true</command> or
+       <command>false</command>, without quotes. Some specific boolean parameters may
+       accept also <command>"true"</command>, <command>"false"</command>,
+       <command>0</command>, <command>1</command>, <command>"0"</command> and
+       <command>"1"</command>. Future Kea versions will accept all those values
+       for all boolean parameters.</para>
      </note>
     </section>
 
@@ -897,7 +898,7 @@ temporarily override a list of interface names and listen on all interfaces.
             "code": 1,
             "space": "vendor-encapsulated-options-space",
             "type": "record",
-            "array": "false",
+            "array": false,
             "record-types": "ipv4-address, uint16, string",
             "encapsulates": ""</userinput>
         }
@@ -914,7 +915,7 @@ temporarily override a list of interface names and listen on all interfaces.
             <userinput>"name": "foo"
             "space": "vendor-encapsulated-options-space",
             "code": 1,
-            "csv-format": "true",
+            "csv-format": true,
             "data": "192.0.2.3, 123, Hello World"</userinput>
         }
     ],
@@ -929,7 +930,7 @@ temporarily override a list of interface names and listen on all interfaces.
             <userinput>"name": "vendor-encapsulated-options"
             "space": "dhcp4",
             "code": 43,
-            "csv-format": "false",
+            "csv-format": false,
             "data": ""</userinput>
         }
     ],
@@ -977,7 +978,7 @@ temporarily override a list of interface names and listen on all interfaces.
             "space": "isc",
             "type": "ipv4-address".
             "record-types": "",
-            "array": "false",
+            "array": false,
             "encapsulate ""
         },
         {
@@ -986,7 +987,7 @@ temporarily override a list of interface names and listen on all interfaces.
             "space": "isc",
             "type": "string",
             "record-types": "",
-            "array": "false"
+            "array": false
             "encapsulate": ""</userinput>
         }
     ],
@@ -1007,7 +1008,7 @@ temporarily override a list of interface names and listen on all interfaces.
             "code": 222,
             "space": "dhcp4",
             "type": "empty",
-            "array": "false",
+            "array": false,
             "record-types": "",
             "encapsulate": "isc"</userinput>
         }
@@ -1028,21 +1029,21 @@ temporarily override a list of interface names and listen on all interfaces.
             <userinput>"name": "subopt1",
             "space": "isc",
             "code": 1,
-            "csv-format": "true",
+            "csv-format": true,
             "data": "192.0.2.3"</userinput>
         },
         }
             <userinput>"name": "subopt2",
             "space": "isc",
             "code": 2,
-            "csv-format": "true",
+            "csv-format": true,
             "data": "Hello world"</userinput>
         },
         {
             <userinput>"name": "container",
             "space": "dhcp4",
             "code": 222,
-            "csv-format": "true",
+            "csv-format": true,
             "data": ""</userinput>
         }
     ],
@@ -1090,7 +1091,7 @@ temporarily override a list of interface names and listen on all interfaces.
                 "name": "domain-name-servers",
                 "code": 6,
                 "data": "192.0.2.200,192.0.2.201",
-                "csv-format": "true",
+                "csv-format": true,
                 "space": "dhcp4"
             } ]
         }
@@ -1237,7 +1238,7 @@ temporarily override a list of interface names and listen on all interfaces.
 <screen>
 "Dhcp4": {
     "dhcp-ddns": {
-        <userinput>"enable-updates": "true",
+        <userinput>"enable-updates": true,
         "server-ip": "127.0.0.1",
         "server-port": 53001,
         "sender-ip": "",
@@ -1245,9 +1246,9 @@ temporarily override a list of interface names and listen on all interfaces.
         "max-queue-size": 1024,
         "ncr-protocol": "UDP",
         "ncr-format": "JSON",
-        "override-no-update": "false",
-        "override-client-update": "false",
-        "replace-client-name": "false",
+        "override-no-update": false,
+        "override-client-update": false,
+        "replace-client-name": false,
         "generated-prefix": "myhost",
         "qualifying-suffix": "example.com"</userinput>
     },
@@ -1436,7 +1437,7 @@ temporarily override a list of interface names and listen on all interfaces.
 <screen>
 "Dhcp4": {
     "dhcp-ddns": {
-        <userinput>"override-client-update": "true"</userinput>,
+        <userinput>"override-client-update": true</userinput>,
         ...
     },
     ...
@@ -1456,7 +1457,7 @@ temporarily override a list of interface names and listen on all interfaces.
 <screen>
 "Dhcp4": {
     "dhcp-ddns": {
-        <userinput>"override-no-update": "true"</userinput>,
+        <userinput>"override-no-update": true</userinput>,
         ...
     },
     ...
@@ -1508,7 +1509,7 @@ temporarily override a list of interface names and listen on all interfaces.
 <screen>
 "Dhcp4": {
     "dhcp-ddns": {
-        <userinput>"replace-client-name": "true"</userinput>,
+        <userinput>"replace-client-name": true</userinput>,
         ...
     },
     ...
@@ -1612,7 +1613,7 @@ temporarily override a list of interface names and listen on all interfaces.
 
 <screen>
 "Dhcp4": {
-    <userinput>"echo-client-id": "false"</userinput>,
+    <userinput>"echo-client-id": false</userinput>,
     ...
 }
 </screen>
