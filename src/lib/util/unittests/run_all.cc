@@ -45,7 +45,7 @@ run_all() {
     if (keatest_catch_exception != NULL) {
         if (strcmp(keatest_catch_exception, "1") == 0) {
             catch_exception = true;
-        } else if (strcmp(b10test_catch_exception, "0") == 0) {
+        } else if (strcmp(keatest_catch_exception, "0") == 0) {
             catch_exception = false;
         } else {
             std::cerr << "***ERROR: KEATEST_CATCH_EXCEPTION is '"
