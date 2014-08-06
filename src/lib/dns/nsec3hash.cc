@@ -21,12 +21,15 @@
 #include <vector>
 
 #include <boost/noncopyable.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
 #include <util/encode/base32hex.h>
-#include <util/hash/sha1.h>
+
+#include <cryptolink/cryptolink.h>
+#include <cryptolink/crypto_hash.h>
 
 #include <dns/name.h>
 #include <dns/labelsequence.h>
@@ -37,7 +40,7 @@
 using namespace std;
 using namespace isc::util;
 using namespace isc::util::encode;
-using namespace isc::util::hash;
+using namespace isc::cryptolink;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 
@@ -57,13 +60,15 @@ class NSEC3HashRFC5155 : boost::noncopyable, public NSEC3Hash {
 private:
     // This is the algorithm number for SHA1/NSEC3 as defined in RFC5155.
     static const uint8_t NSEC3_HASH_SHA1 = 1;
+    // For digest_ allocation
+    static const size_t DEFAULT_DIGEST_LENGTH = 32;
 
 public:
     NSEC3HashRFC5155(uint8_t algorithm, uint16_t iterations,
                      const uint8_t* salt_data, size_t salt_length) :
         algorithm_(algorithm), iterations_(iterations),
         salt_data_(NULL), salt_length_(salt_length),
-        digest_(SHA1_HASHSIZE), obuf_(Name::MAX_WIRE)
+        digest_(DEFAULT_DIGEST_LENGTH), obuf_(Name::MAX_WIRE)
     {
         if (algorithm_ != NSEC3_HASH_SHA1) {
             isc_throw(UnknownNSEC3HashAlgorithm, "Unknown NSEC3 algorithm: " <<
@@ -77,8 +82,6 @@ public:
             }
             std::memcpy(salt_data_, salt_data, salt_length);
         }
-
-        SHA1Reset(&sha1_ctx_);
     }
 
     virtual ~NSEC3HashRFC5155() {
@@ -104,20 +107,20 @@ private:
     // The following members are placeholder of work place and don't hold
     // any state over multiple calls so can be mutable without breaking
     // constness.
-    mutable SHA1Context sha1_ctx_;
-    mutable vector<uint8_t> digest_;
+    mutable OutputBuffer digest_;
+    mutable vector<uint8_t> vdigest_;
     mutable OutputBuffer obuf_;
 };
 
 inline void
-iterateSHA1(SHA1Context* ctx, const uint8_t* input, size_t inlength,
+iterateSHA1(const uint8_t* input, size_t inlength,
             const uint8_t* salt, size_t saltlen,
-            uint8_t output[SHA1_HASHSIZE])
+            OutputBuffer& output)
 {
-    SHA1Reset(ctx);
-    SHA1Input(ctx, input, inlength);
-    SHA1Input(ctx, salt, saltlen); // this works whether saltlen == or > 0
-    SHA1Result(ctx, output);
+    boost::scoped_ptr<Hash> hash(CryptoLink::getCryptoLink().createHash(SHA1));
+    hash->update(input, inlength);
+    hash->update(salt, saltlen); // this works whether saltlen == or > 0
+    hash->final(output);
 }
 
 string
@@ -143,17 +146,19 @@ NSEC3HashRFC5155::calculateForWiredata(const uint8_t* data,
 
     *p2 = *p1;
 
-    uint8_t* const digest = &digest_[0];
-    assert(digest_.size() == SHA1_HASHSIZE);
-
-    iterateSHA1(&sha1_ctx_, name_buf, length,
-                salt_data_, salt_length_, digest);
+    digest_.clear();
+    iterateSHA1(name_buf, length,
+                salt_data_, salt_length_, digest_);
+    const uint8_t* dgst_data = static_cast<const uint8_t*>(digest_.getData());
+    size_t dgst_len = digest_.getLength();
     for (unsigned int n = 0; n < iterations_; ++n) {
-        iterateSHA1(&sha1_ctx_, digest, SHA1_HASHSIZE,
-                    salt_data_, salt_length_, digest);
+        digest_.clear();
+        iterateSHA1(dgst_data, dgst_len, salt_data_, salt_length_, digest_);
     }
 
-    return (encodeBase32Hex(digest_));
+    vdigest_.resize(dgst_len);
+    std::memcpy(&vdigest_[0], dgst_data, dgst_len);
+    return (encodeBase32Hex(vdigest_));
 }
 
 string
