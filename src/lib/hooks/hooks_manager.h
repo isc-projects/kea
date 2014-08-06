@@ -35,7 +35,7 @@ class LibraryManagerCollection;
 /// @brief Hooks Manager
 ///
 /// This is the overall manager of the hooks framework and is the main class
-/// used by a BIND 10 module when handling hooks.  It is responsible for the
+/// used by a Kea module when handling hooks.  It is responsible for the
 /// loading and unloading of user libraries, and for calling the callouts on
 /// each hook point.
 ///

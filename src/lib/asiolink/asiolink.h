@@ -35,7 +35,7 @@
 /// The \c asiolink namespace is used to define a set of wrapper interfaces
 /// for the ASIO library.
 ///
-/// BIND 10 uses the non-Boost version of ASIO because it's header-only,
+/// Kea uses the non-Boost version of ASIO because it's header-only,
 /// i.e., does not require a separate library object to be linked, and thus
 /// lowers the bar for introduction.
 ///
@@ -49,7 +49,7 @@
 /// of including header files, ASIO may or may not work on some platforms.
 ///
 /// This wrapper interface is intended to centralize these
-/// problematic issues in a single sub module.  Other BIND 10 modules should
+/// problematic issues in a single sub module.  Other Kea modules should
 /// simply include \c asiolink.h and use the wrapper API instead of
 /// including ASIO header files and using ASIO-specific classes directly.
 ///

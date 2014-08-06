@@ -41,7 +41,7 @@ public:
 /// @brief Callout Manager
 ///
 /// This class manages the registration, deregistration and execution of the
-/// library callouts.  It is part of the hooks framework used by the BIND 10
+/// library callouts.  It is part of the hooks framework used by the Kea
 /// server, and is not for use by user-written code in a hooks library.
 ///
 /// In operation, the class needs to know two items of data:

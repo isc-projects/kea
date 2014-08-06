@@ -170,7 +170,7 @@ protected:
     ///
     /// With the library open, accesses the "version()" function and, if
     /// present, checks the returned value against the hooks version symbol
-    /// for the currently running BIND 10.  The "version()" function is
+    /// for the currently running Kea.  The "version()" function is
     /// mandatory and must be present (and return the correct value) for the
     /// library to load.
     ///
