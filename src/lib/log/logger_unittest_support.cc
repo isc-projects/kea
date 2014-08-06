@@ -170,7 +170,7 @@ void initLogger(isc::log::Severity severity, int dbglevel) {
     // the default severity, debug level and destination with those specified
     // in the environment variables.  (The two-step approach is used as the
     // setUnitTestRootLoggerCharacteristics() function is used in several
-    // places in the BIND 10 tests, and it avoid duplicating code.)
+    // places in the Kea tests, and it avoid duplicating code.)
     resetUnitTestRootLogger();
 } 
 

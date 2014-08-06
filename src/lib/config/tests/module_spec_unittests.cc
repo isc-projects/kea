@@ -58,7 +58,7 @@ TEST(ModuleSpec, ReadingSpecfiles) {
                    ": No such file or directory");
 
     dd = moduleSpecFromFile(specfile("spec2.spec"));
-    EXPECT_EQ("[ { \"command_args\": [ { \"item_default\": \"\", \"item_name\": \"message\", \"item_optional\": false, \"item_type\": \"string\" } ], \"command_description\": \"Print the given message to stdout\", \"command_name\": \"print_message\" }, { \"command_args\": [  ], \"command_description\": \"Shut down BIND 10\", \"command_name\": \"shutdown\" } ]", dd.getCommandsSpec()->str());
+    EXPECT_EQ("[ { \"command_args\": [ { \"item_default\": \"\", \"item_name\": \"message\", \"item_optional\": false, \"item_type\": \"string\" } ], \"command_description\": \"Print the given message to stdout\", \"command_name\": \"print_message\" }, { \"command_args\": [  ], \"command_description\": \"Shut down Kea\", \"command_name\": \"shutdown\" } ]", dd.getCommandsSpec()->str());
     EXPECT_EQ("[ { \"item_default\": \"1970-01-01T00:00:00Z\", \"item_description\": \"A dummy date time\", \"item_format\": \"date-time\", \"item_name\": \"dummy_time\", \"item_optional\": false, \"item_title\": \"Dummy Time\", \"item_type\": \"string\" } ]", dd.getStatisticsSpec()->str());
     EXPECT_EQ("Spec2", dd.getModuleName());
     EXPECT_EQ("", dd.getModuleDescription());

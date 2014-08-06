@@ -178,18 +178,22 @@ ConstElementPtr getValueOrDefault(ConstElementPtr config_part,
     }
 }
 
-// Prefix name with "b10-".
-//
-// In BIND 10, modules have names taken from the .spec file, which are typically
-// names starting with a capital letter (e.g. "Resolver", "Auth" etc.).  The
-// names of the associated binaries are derived from the module names, being
-// prefixed "b10-" and having the first letter of the module name lower-cased
-// (e.g. "b10-resolver", "b10-auth").  (It is a required convention that there
-// be this relationship between the names.)
+/// @brief Prefix name with "b10-".
+///
+/// In BIND 10, modules had names taken from the .spec file, which are typically
+/// names starting with a capital letter (e.g. "Resolver", "Auth" etc.).  The
+/// names of the associated binaries are derived from the module names, being
+/// prefixed "b10-" and having the first letter of the module name lower-cased
+/// (e.g. "b10-resolver", "b10-auth").  (It is a required convention that there
+/// be this relationship between the names.)
+///
+/// In Kea we're not using module names, but we do still keep some capability to
+/// run Kea servers in Bundy framework. For that reason the whole discussion here
+/// applies only to case when Kea is compiled with Bundy configuration backend.
 //
 // Within the binaries the root loggers are named after the binaries themselves.
 // (The reason for this is that the name of the logger is included in the
-// message logged, so making it clear which message comes from which BIND 10
+// message logged, so making it clear which message comes from which Kea
 // process.) As logging is configured using module names, the configuration code
 // has to match these with the corresponding logger names. This function
 // converts a module name to a root logger name by lowercasing the first letter

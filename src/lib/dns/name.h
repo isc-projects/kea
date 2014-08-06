@@ -606,7 +606,7 @@ public:
     /// member function that could be implemented using other member functions.
     /// We considered making it a non member function, but we could not come
     /// up with an intuitive function name to represent the specific service.
-    /// Some other BIND 10 developers argued, probably partly because of the
+    /// Some other developers argued, probably partly because of the
     /// counter intuitive function name, a different signature of \c split
     /// would be better to improve code readability.
     /// While that may be a matter of personal preference, we accepted the
