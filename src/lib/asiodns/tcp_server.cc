@@ -310,7 +310,7 @@ TCPServer::resume(const bool done) {
     done_ = done;
 
     // post() can throw due to memory allocation failure, but as like other
-    // cases of the entire BIND 10 implementation, we consider it fatal and
+    // cases of the entire Kea implementation, we consider it fatal and
     // let the exception be propagated.
     io_.post(*this);
 }

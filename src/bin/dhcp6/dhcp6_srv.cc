@@ -413,13 +413,12 @@ bool Dhcpv6Srv::run() {
 
         } catch (const isc::Exception& e) {
 
-            // Catch-all exception (at least for ones based on the isc
-            // Exception class, which covers more or less all that
-            // are explicitly raised in the BIND 10 code).  Just log
-            // the problem and ignore the packet. (The problem is logged
-            // as a debug message because debug is disabled by default -
-            // it prevents a DDOS attack based on the sending of problem
-            // packets.)
+            // Catch-all exception (at least for ones based on the isc Exception
+            // class, which covers more or less all that are explicitly raised
+            // in the Kea code).  Just log the problem and ignore the packet.
+            // (The problem is logged as a debug message because debug is
+            // disabled by default - it prevents a DDOS attack based on the
+            // sending of problem packets.)
             LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_PACKET_PROCESS_FAIL)
                 .arg(query->getName())
                 .arg(query->getRemoteAddr().toText())

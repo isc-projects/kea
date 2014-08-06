@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// host rewritten in C++ using BIND 10 DNS library
+// host rewritten in C++ using Kea DNS library
 
 #include <arpa/inet.h>
 #include <netdb.h>          // for getaddrinfo

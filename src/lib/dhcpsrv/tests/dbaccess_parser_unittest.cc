@@ -171,9 +171,9 @@ public:
 
 /// @brief Version of parser with protected methods public
 ///
-/// Some of the methods in DbAccessParser are not required to be public in
-/// BIND 10.  Instead of being declared "private", they are declared "protected"
-/// so that they can be accessed through a derived class in the unit tests.
+/// Some of the methods in DbAccessParser are not required to be public in Kea.
+/// Instead of being declared "private", they are declared "protected" so that
+/// they can be accessed through a derived class in the unit tests.
 class TestDbAccessParser : public DbAccessParser {
 public:
 

@@ -438,12 +438,13 @@ public:
     /// signatures for this RRset.  It can be argued that this is not a
     /// fundamental part of the RRset abstraction, since RFC 2181 defined an
     /// RRset as a group of records with the same label, class and type but
-    /// different data.  However, BIND 10 has to deal with DNSSEC and in
+    /// different data.  However, BIND 10 had to deal with DNSSEC and in
     /// practice, including the information at the AbstractRRset level makes
     /// implementation easier.  (If a class is ever needed that must be
     /// ignorant of the idea of an associated RRSIG RRset - e.g. a specialised
     /// RRSIG RRset class - these methods can just throw a "NotImplemented"
-    /// exception.)
+    /// exception.) DNSSEC is unlikely to be ever needed in Kea, but it does
+    /// not make sense to redesign the abstract RRSet class now.
     //@{
     /// \brief Return pointer to this RRset's RRSIG RRset
     ///

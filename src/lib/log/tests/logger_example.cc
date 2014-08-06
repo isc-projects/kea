@@ -131,7 +131,7 @@ int main(int argc, char** argv) {
     // is encountered, the previous one is added to the list.
     //
     // One complication is that there is deemed to be a default active when
-    // the parsing starts (console output for the BIND 10 root logger).  This
+    // the parsing starts (console output for the Kea root logger).  This
     // is included in the logging specifications UNLESS the first switch on
     // the command line is a "-l" flag starting a new logger.  To track this,
     // the "sw_found" flag is set when a switch is completely processed. The
