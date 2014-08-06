@@ -1,3 +1,10 @@
+8XX. [func]		tomek
+	Functions, methods and variables referring to BIND10 were renamed
+	to Kea. In particular, system variables (B10_LOGGER_ROOT,
+	B10_LOCKFILE_DIR_FROM_BUILD etc.) were renamed. B10_ prefix was
+	replaced with KEA_.
+	(Trac #3417, git tbd)
+
 811.	[doc]		tmark
 	Added documentation of message protocol between DHCP servers and the
 	DHCP-DDNS process.
