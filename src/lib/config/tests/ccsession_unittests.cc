@@ -1165,8 +1165,8 @@ void doRelatedLoggersTest(const char* input, const char* expected) {
 TEST(LogConfigTest, relatedLoggersTest) {
     // make sure logger configs for 'other' programs are ignored,
     // and that * is substituted correctly
-    // We'll use a root logger name of "b10-test".
-    isc::log::setRootLoggerName("b10-test");
+    // We'll use a root logger name of "kea-test".
+    isc::log::setRootLoggerName("kea-test");
 
     doRelatedLoggersTest("[{ \"name\": \"other_module\" }]",
                          "[]");
@@ -1178,30 +1178,30 @@ TEST(LogConfigTest, relatedLoggersTest) {
                          "[]");
     doRelatedLoggersTest("[ { \"name\": \"other_module\" },"
                          "  { \"name\": \"test\" }]",
-                         "[ { \"name\": \"b10-test\" } ]");
+                         "[ { \"name\": \"kea-test\" } ]");
     doRelatedLoggersTest("[ { \"name\": \"test\" }]",
-                         "[ { \"name\": \"b10-test\" } ]");
+                         "[ { \"name\": \"kea-test\" } ]");
     doRelatedLoggersTest("[ { \"name\": \"test.somelib\" }]",
-                         "[ { \"name\": \"b10-test.somelib\" } ]");
+                         "[ { \"name\": \"kea-test.somelib\" } ]");
     doRelatedLoggersTest("[ { \"name\": \"other_module.somelib\" },"
                          "  { \"name\": \"test.somelib\" }]",
-                         "[ { \"name\": \"b10-test.somelib\" } ]");
+                         "[ { \"name\": \"kea-test.somelib\" } ]");
     doRelatedLoggersTest("[ { \"name\": \"other_module.somelib\" },"
                          "  { \"name\": \"test\" },"
                          "  { \"name\": \"test.somelib\" }]",
-                         "[ { \"name\": \"b10-test\" },"
-                         "  { \"name\": \"b10-test.somelib\" } ]");
+                         "[ { \"name\": \"kea-test\" },"
+                         "  { \"name\": \"kea-test.somelib\" } ]");
     doRelatedLoggersTest("[ { \"name\": \"*\" }]",
-                         "[ { \"name\": \"b10-test\" } ]");
+                         "[ { \"name\": \"kea-test\" } ]");
     doRelatedLoggersTest("[ { \"name\": \"*.somelib\" }]",
-                         "[ { \"name\": \"b10-test.somelib\" } ]");
+                         "[ { \"name\": \"kea-test.somelib\" } ]");
     doRelatedLoggersTest("[ { \"name\": \"*\", \"severity\": \"DEBUG\" },"
                          "  { \"name\": \"test\", \"severity\": \"WARN\"}]",
-                         "[ { \"name\": \"b10-test\", \"severity\": \"WARN\"} ]");
+                         "[ { \"name\": \"kea-test\", \"severity\": \"WARN\"} ]");
     doRelatedLoggersTest("[ { \"name\": \"*\", \"severity\": \"DEBUG\" },"
                          "  { \"name\": \"some_module\", \"severity\": \"WARN\"}]",
-                         "[ { \"name\": \"b10-test\", \"severity\": \"DEBUG\"} ]");
-    doRelatedLoggersTest("[ { \"name\": \"b10-test\" }]",
+                         "[ { \"name\": \"kea-test\", \"severity\": \"DEBUG\"} ]");
+    doRelatedLoggersTest("[ { \"name\": \"kea-test\" }]",
                          "[]");
     // make sure 'bad' things like '*foo.x' or '*lib' are ignored
     // (cfgmgr should have already caught it in the logconfig plugin
@@ -1213,7 +1213,7 @@ TEST(LogConfigTest, relatedLoggersTest) {
     doRelatedLoggersTest("[ { \"name\": \"*foo\" },"
                          "  { \"name\": \"*foo.lib\" },"
                          "  { \"name\": \"test\" } ]",
-                         "[ { \"name\": \"b10-test\" } ]");
+                         "[ { \"name\": \"kea-test\" } ]");
 }
 
 }

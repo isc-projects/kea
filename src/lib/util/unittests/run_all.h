@@ -29,7 +29,7 @@ namespace unittests {
 ///
 /// A wrapper for the Google Test RUN_ALL_TESTS() macro, this calls the macro
 /// but wraps the call in a try...catch block if the environment variable
-/// B10TEST_CATCH_EXCEPTION is defined, and calls the macro directly if not.
+/// KEATEST_CATCH_EXCEPTION is defined, and calls the macro directly if not.
 ///
 /// The catch block catches exceptions of types isc::Exception and
 /// std::exception and prints some information about them to stderr. (In the

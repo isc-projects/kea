@@ -144,8 +144,8 @@ ControlledDhcpv6Srv::init(const std::string& config_file) {
     // configuration from cfgmgr (or indirectly from user via bindctl).
 
     string specfile;
-    if (getenv("B10_FROM_BUILD")) {
-        specfile = string(getenv("B10_FROM_BUILD")) +
+    if (getenv("KEA_FROM_BUILD")) {
+        specfile = string(getenv("KEA_FROM_BUILD")) +
             "/src/bin/dhcp6/dhcp6.spec";
     } else {
         specfile = string(DHCP6_SPECFILE_LOCATION);

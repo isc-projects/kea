@@ -30,13 +30,13 @@ namespace isc {
 namespace log {
 
 // Get the logging severity.  This is defined by the environment variable
-// B10_LOGGER_SEVERITY, and can be one of "DEBUG", "INFO", "WARN", "ERROR"
+// KEA_LOGGER_SEVERITY, and can be one of "DEBUG", "INFO", "WARN", "ERROR"
 // of "FATAL".  (Note that the string must be in upper case with no leading
 // of trailing blanks.)  If not present, the default severity passed to the
 // function is returned.
 isc::log::Severity
-b10LoggerSeverity(isc::log::Severity defseverity) {
-    const char* sev_char = getenv("B10_LOGGER_SEVERITY");
+keaLoggerSeverity(isc::log::Severity defseverity) {
+    const char* sev_char = getenv("KEA_LOGGER_SEVERITY");
     if (sev_char) {
         return (isc::log::getSeverity(sev_char));
     }
@@ -44,11 +44,11 @@ b10LoggerSeverity(isc::log::Severity defseverity) {
 }
 
 // Get the debug level.  This is defined by the environment variable
-// B10_LOGGER_DBGLEVEL.  If not defined, a default value passed to the function
+// KEA_LOGGER_DBGLEVEL.  If not defined, a default value passed to the function
 // is returned.
 int
-b10LoggerDbglevel(int defdbglevel) {
-    const char* dbg_char = getenv("B10_LOGGER_DBGLEVEL");
+keaLoggerDbglevel(int defdbglevel) {
+    const char* dbg_char = getenv("KEA_LOGGER_DBGLEVEL");
     if (dbg_char) {
         int level = 0;
         try {
@@ -67,7 +67,7 @@ b10LoggerDbglevel(int defdbglevel) {
         } catch (...) {
             // Error, but not fatal to the test
             std::cerr << "**ERROR** Unable to translate "
-                         "B10_LOGGER_DBGLEVEL - a value of 0 will be used\n";
+                         "KEA_LOGGER_DBGLEVEL - a value of 0 will be used\n";
         }
         return (level);
     }
@@ -77,7 +77,7 @@ b10LoggerDbglevel(int defdbglevel) {
 
 
 // Reset characteristics of the root logger to that set by the environment
-// variables B10_LOGGER_SEVERITY, B10_LOGGER_DBGLEVEL and B10_LOGGER_DESTINATION.
+// variables KEA_LOGGER_SEVERITY, KEA_LOGGER_DBGLEVEL and KEA_LOGGER_DESTINATION.
 
 void
 resetUnitTestRootLogger() {
@@ -96,13 +96,13 @@ resetUnitTestRootLogger() {
     // severity for unit tests is DEBUG, which generates a lot of output.
     // Routing the logging to /dev/null will suppress that, whilst still
     // ensuring that the code paths are tested.)
-    const char* destination = getenv("B10_LOGGER_DESTINATION");
+    const char* destination = getenv("KEA_LOGGER_DESTINATION");
     const string dest((destination == NULL) ? DEVNULL : destination);
 
     // Prepare the objects to define the logging specification
     LoggerSpecification spec(getRootLoggerName(), 
-                             b10LoggerSeverity(isc::log::DEBUG),
-                             b10LoggerDbglevel(isc::log::MAX_DEBUG_LEVEL));
+                             keaLoggerSeverity(isc::log::DEBUG),
+                             keaLoggerDbglevel(isc::log::MAX_DEBUG_LEVEL));
     OutputOption option;
 
     // Set up output option according to destination specification
@@ -123,7 +123,7 @@ resetUnitTestRootLogger() {
         option.destination = OutputOption::DEST_SYSLOG;
         // Must take account of the string actually being "syslog:"
         if (dest == SYSLOG_COLON) {
-            cerr << "**ERROR** value for B10_LOGGER_DESTINATION of " <<
+            cerr << "**ERROR** value for KEA_LOGGER_DESTINATION of " <<
                     SYSLOG_COLON << " is invalid, " << SYSLOG <<
                     " will be used instead\n";
             // Use default for logging facility
@@ -149,7 +149,7 @@ resetUnitTestRootLogger() {
 // Logger Run-Time Initialization via Environment Variables
 void initLogger(isc::log::Severity severity, int dbglevel) {
 
-    // Root logger name is defined by the environment variable B10_LOGGER_ROOT.
+    // Root logger name is defined by the environment variable KEA_LOGGER_ROOT.
     // If not present, the name is "kea".
     const char* DEFAULT_ROOT = "kea";
     const char* root = getenv("KEA_LOGGER_ROOT");
@@ -158,10 +158,10 @@ void initLogger(isc::log::Severity severity, int dbglevel) {
     }
 
     // Set the local message file
-    const char* localfile = getenv("B10_LOGGER_LOCALMSG");
+    const char* localfile = getenv("KEA_LOGGER_LOCALMSG");
 
     // Set a directory for creating lockfiles when running tests
-    setenv("B10_LOCKFILE_DIR_FROM_BUILD", TOP_BUILDDIR, 1);
+    setenv("KEA_LOCKFILE_DIR_FROM_BUILD", TOP_BUILDDIR, 1);
 
     // Initialize logging
     initLogger(root, isc::log::DEBUG, isc::log::MAX_DEBUG_LEVEL, localfile);

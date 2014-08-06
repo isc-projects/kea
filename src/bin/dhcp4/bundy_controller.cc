@@ -139,8 +139,8 @@ void ControlledDhcpv4Srv::init(const std::string& config_file) {
     Daemon::init(config_file);
 
     string specfile;
-    if (getenv("B10_FROM_BUILD")) {
-        specfile = string(getenv("B10_FROM_BUILD")) +
+    if (getenv("KEA_FROM_BUILD")) {
+        specfile = string(getenv("KEA_FROM_BUILD")) +
             "/src/bin/dhcp4/dhcp4.spec";
     } else {
         specfile = string(DHCP4_SPECFILE_LOCATION);

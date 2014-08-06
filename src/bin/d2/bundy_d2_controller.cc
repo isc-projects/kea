@@ -52,8 +52,8 @@ D2Controller::D2Controller()
     : DControllerBase(d2_app_name_, d2_bin_name_) {
     // set the spec file either from the environment or
     // use the production value.
-    if (getenv("B10_FROM_BUILD")) {
-        setSpecFileName(std::string(getenv("B10_FROM_BUILD")) +
+    if (getenv("KEA_FROM_BUILD")) {
+        setSpecFileName(std::string(getenv("KEA_FROM_BUILD")) +
             "/src/bin/d2/dhcp-ddns.spec");
     } else {
         setSpecFileName(D2_SPECFILE_LOCATION);
