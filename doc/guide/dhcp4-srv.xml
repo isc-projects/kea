@@ -13,45 +13,52 @@
       <!-- @todo Rewrite this section once #3422 is done -->
 
       <para>
-        <command>kea-dhcp4</command> is the Kea DHCPv4 server and is configured
-        through the <command>bindctl</command> program.
+      It is recommended that the Kea DHCPv4 server be started and stopped
+      using <command>keactl</command> (described in <xref linkend="keactrl"/>).
+      However, it is also possible to run the server directly: it accepts
+      the following command-line switches:
       </para>
+
+      <itemizedlist>
+          <listitem>
+            <simpara>
+            <command>-c <replaceable>file</replaceable></command> -
+            specifies the configuration file. This is the only mandatory
+            switch.</simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+            <command>-v</command> - specifies whether the server
+            logging should be switched to verbose mode. In verbose mode,
+            the logging severity and debuglevel specified in a configuration
+            file are ignored and "debug" severity and the maximum debuglevel
+            (99) are assumed. The flag is convenient, for temporarily
+            switching the server into maximum verbosity, e.g. when
+            debugging.</simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+            <command>-p <replaceable>port</replaceable></command> -
+            specifies UDP port the server will listen on. This is only
+            useful during testing, as the DHCPv4 server listening on
+            ports other than default DHCPv4 ports will not be able to
+            handle regular DHCPv4 queries.</simpara>
+          </listitem>
+      </itemizedlist>
+
       <para>
-        After starting <command>bind10</command> and entering bindctl, the first step
-        in configuring the server is to add it to the list of running services.
-<screen>
-&gt; <userinput>config add Init/components kea-dhcp4</userinput>
-&gt; <userinput>config set Init/components/kea-dhcp4/kind dispensable</userinput>
-&gt; <userinput>config commit</userinput>
-</screen>
-      </para>
-      <para>
-         To remove <command>kea-dhcp4</command> from the set of running services,
-         the <command>kea-dhcp4</command> is removed from list of Init components:
-<screen>
-&gt; <userinput>config remove Init/components kea-dhcp4</userinput>
-&gt; <userinput>config commit</userinput>
-</screen>
-      </para>
-      <para>
-        Note that the server was only removed from the list, so BIND10 will not
-        restart it, but the server itself is still running. Hence it is usually
-        desired to stop it:
-<screen>
-&gt; <userinput>Dhcp4 shutdown</userinput>
-</screen>
+	    When running in a console, the server can be shut down by
+	    pressing ctrl-c. It detects the key combination and shuts
+	    down gracefully.
       </para>
 
       <para>
         On start-up, the server will detect available network interfaces
-        and will attempt to open UDP sockets on all interfaces that
-        are up, running, are not loopback, and have IPv4 address
-        assigned.
+        and will attempt to open UDP sockets on all interfaces
+        mentioned in the configuration file.
+      </para>
 
-        The server will then listen to incoming traffic. Currently
-        supported client messages are DISCOVER and REQUEST. The server
-        will respond to them with OFFER and ACK, respectively.
-
+      <para>
         Since the DHCPv4 server opens privileged ports, it requires root
         access. Make sure you run this daemon as root.
       </para>
@@ -64,8 +71,8 @@
   <title>Introduction</title>
       <para>
         This section explains how to configure the DHCPv4 server using the
-        Kea configuration backend. Kea configuration using any other
-        backends is outside of scope for this document. Before DHCPv4
+        Kea configuration backend. (Kea configuration using any other
+        backends is outside of scope of this document.) Before DHCPv4
         is started, its configuration file has to be created. The
         basic configuration looks as follows:
 <screen>
@@ -115,7 +122,7 @@ one or more objects. In this specific example, we have only one
 object called Dhcp4. This is a simplified configuration, as usually
 there will be additional objects, like <command>Logging</command> or
 <command>DhcpDns</command>, but we omit them now for clarity. The Dhcp4
-configuration starts with the the <command>"Dhcp4: {"</command> line
+configuration starts with the <command>"Dhcp4": {</command> line
 and ends with the corresponding closing brace (in the above example,
 the brace after the last comment).  Everything defined between those
 lines is considered to be the Dhcp4 configuration.</para>
@@ -144,7 +151,7 @@ look like this:
 "interfaces": [ "eth0", "eth1" ],
 </screen>
 As "<command>interfaces</command>" is not the last parameter in the configuration,
-a trailing comma is required.i</para>
+a trailing comma is required.</para>
 <para>A number of other parameters
 follow. <command>valid-lifetime</command> defines how long the addresses (leases) given out by the
 server are valid. If nothing changes, client that got the address is allowed to
@@ -177,7 +184,7 @@ the list has several attributes associated with it, so is a structure
 and is opened and closed with braces. At minimum, a subnet definition
 has to have at least two parameters: <command>subnet</command> (that
 defines the whole subnet) and <command>pool</command> (which is a list of
-dynamically allocated pools that are governed by the DHCP server.</para>
+dynamically allocated pools that are governed by the DHCP server).</para>
 
 <para>The example contains a single subnet. Had more than one been defined,
 additional elements
@@ -204,8 +211,8 @@ syntax would be used:
 
 <para>After all parameters are specified, we have two contexts open:
 global and Dhcp4, hence we need two closing curly brackets to close them.
-In a real life configuration file there likely would be additional
-components defined like Logging or DhcpDdns, so the closing brace would
+In a real life configuration file there most likely would be additional
+components defined such as Logging or DhcpDdns, so the closing brace would
 be followed by a comma and another object definition.</para>
 
 <para>Kea 0.9 does not have configuration syntax validation
@@ -253,12 +260,12 @@ url="http://jsonviewer.stack.hu/"/>.
   </para>
 
   <para>The "persist" parameter controls whether the leases are written to disk.
-  It is strongly recommended that this parameter is set to "true" at all times
-  during the normal operation of the server. (Not writing leases to disk will
-  mean that if a server is restarted (e.g. after a power failure), it will not
-  know what addresses have been assigned.  As a result, it may hand out addresses
-  to new clients that are already in use.)
-          </para>
+  It is strongly recommended that this parameter is set to
+  <command>true</command> at all times during the normal operation of the
+  server. (Not writing leases to disk will mean that if a server is restarted
+  (e.g. after a power failure), it will not know what addresses have been
+  assigned.  As a result, it may hand out addresses to new clients that are
+  already in use.)</para>
 </section>
 
 <section id="database-configuration4">
@@ -551,12 +558,14 @@ temporarily override a list of interface names and listen on all interfaces.
 </screen>
       </para>
 
-      <note>
-        <!-- @todo Ticket #3467 created for this -->
-        <para>In a future version of Kea, it will not be necessary to specify
-        the option code, space and csv-format fields as they will be set
-        automatically.</para>
-      </note>
+    <note>
+      <para>
+        In future versions of Kea, it will not be necessary to specify
+        the <command>code</command>, <command>space</command>
+        and <command>csv-format</command> fields, as they will
+        be set automatically.
+      </para>
+    </note>
 
       <para>
         The currently supported standard DHCPv4 options are
@@ -571,7 +580,7 @@ temporarily override a list of interface names and listen on all interfaces.
         Some options are designated as arrays, which means that more than one
         value is allowed in such an option. For example the option time-servers
         allows the specification of more than one IPv4 address, so allowing
-        clients to obtain the the addresses of multiple NTP servers.
+        clients to obtain the addresses of multiple NTP servers.
       </para>
       <!-- @todo: describe record types -->
 
@@ -594,9 +603,9 @@ temporarily override a list of interface names and listen on all interfaces.
           <title>List of standard DHCPv4 options</title>
           <tgroup cols='4'>
           <colspec colname='name'/>
-          <colspec colname='code'/>
-          <colspec colname='type'/>
-          <colspec colname='array'/>
+          <colspec colname='code' align='center'/>
+          <colspec colname='type' align='center'/>
+          <colspec colname='array' align='center'/>
           <thead>
             <row>
               <entry>Name</entry>
@@ -768,17 +777,18 @@ temporarily override a list of interface names and listen on all interfaces.
     ...
 }
 </screen>
-      The "false" value of the <command>array</command> parameter determines that the option
-      does NOT comprise an array of "uint32" values but rather a single value.
-      Two other parameters have been left blank: <command>record-types</command> and <command>encapsulate</command>.
-      The former specifies the comma separated list of option data fields if the
-      option comprises a record of data fields. This should
-      be non-empty if the <command>type</command> is set to "record". Otherwise it must be left
-      blank. The latter parameter specifies the name of the option space being
-      encapsulated by the particular option. If the particular option does not
-      encapsulate any option space it should be left blank.
-      Note that the above set of comments define the format of the new option and do not
-      set its values.
+      The <command>false</command> value of the <command>array</command>
+      parameter determines that the option does NOT comprise an array of
+      "uint32" values but rather a single value.  Two other parameters have been
+      left blank: <command>record-types</command> and
+      <command>encapsulate</command>.  The former specifies the comma separated
+      list of option data fields if the option comprises a record of data
+      fields. This should be non-empty if the <command>type</command> is set to
+      "record". Otherwise it must be left blank. The latter parameter specifies
+      the name of the option space being encapsulated by the particular
+      option. If the particular option does not encapsulate any option space it
+      should be left blank.  Note that the above set of comments define the
+      format of the new option and do not set its values.
       </para>
       <note>
         <para>
@@ -850,19 +860,19 @@ temporarily override a list of interface names and listen on all interfaces.
     ],
     ...
 }</screen>
-      <command>csv-format</command> is set "true" to indicate that the <command>data</command> field comprises a command-separated
-      list of values.  The values in the <command>data</command> must correspond to the types set in
-      the <command>record-types</command> field of the option definition.
+      <command>csv-format</command> is set <command>true</command> to indicate
+      that the <command>data</command> field comprises a command-separated list
+      of values.  The values in the <command>data</command> must correspond to
+      the types set in the <command>record-types</command> field of the option
+      definition.
      </para>
      <note>
-       <para>
-         It is recommended that boolean values are specified using "true" and "false"
-         strings. This helps to prevent errors when typing multiple comma separated
-         values, as it make it easier to identify the type of the value being typed,
-         and compare it with the order of data fields. Nevertheless, it is possible
-         to use integer values: "1" and "0", instead of "true" and "false".
-         If other integer value are used, the configuration is rejected.
-       </para>
+       <para>In general case, boolean values are specified as <command>true</command> or
+       <command>false</command>, without quotes. Some specific boolean parameters may
+       accept also <command>"true"</command>, <command>"false"</command>,
+       <command>0</command>, <command>1</command>, <command>"0"</command> and
+       <command>"1"</command>. Future Kea versions will accept all those values
+       for all boolean parameters.</para>
      </note>
     </section>
 
@@ -888,7 +898,7 @@ temporarily override a list of interface names and listen on all interfaces.
             "code": 1,
             "space": "vendor-encapsulated-options-space",
             "type": "record",
-            "array: false,
+            "array": false,
             "record-types": "ipv4-address, uint16, string",
             "encapsulates": ""</userinput>
         }
@@ -921,7 +931,7 @@ temporarily override a list of interface names and listen on all interfaces.
             "space": "dhcp4",
             "code": 43,
             "csv-format": false,
-            "data: ""</userinput>
+            "data": ""</userinput>
         }
     ],
     ...
@@ -1246,51 +1256,43 @@ temporarily override a list of interface names and listen on all interfaces.
 }
 </screen>
       </para>
-      <!-- this paragraph no longer applies as we don't have default values
-      <para>
-      The "enable-updates" parameter determines whether or not kea-dhcp4 will
-      generate NCRs.  By default, this value is false hence DDNS updates are
-      disabled.  To enable DDNS updates set this value to true:
-      </para>
-<screen>
-&gt; <userinput>config set Dhcp4/dhcp-ddns/enable-updates true</userinput>
-&gt; <userinput>config commit</userinput>
-</screen> -->
+
       <section id="dhcpv4-d2-io-config">
       <title>DHCP-DDNS Server Connectivity</title>
       <para>
       In order for NCRs to reach the DHCP-DDNS server, kea-dhcp4 must be able
       to communicate with it.  kea-dhcp4 uses the following configuration
       parameters to control how it communications with DHCP-DDNS:
-      <orderedlist>
-      <listitem><para>
+      <itemizedlist>
+      <listitem><simpara>
+      <command>enable-updates</command> - determines whether or not kea-dhcp4 will
+      generate NCRs.  By default, this value is false hence DDNS updates are
+      disabled.  To enable DDNS updates set this value to true:
+      </simpara></listitem>
+
+      <listitem><simpara>
       <command>server-ip</command> - IP address on which DHCP-DDNS listens for requests. The default is
       the local loopback interface at address 127.0.0.1. You may specify
       either an IPv4 or IPv6 address.
-      </para></listitem>
-      <listitem><para>
+      </simpara></listitem>
+
+      <listitem><simpara>
       <command>server-port</command> - port on which DHCP-DDNS listens for requests.  The default value
       is 53001.
-      </para></listitem>
-      <listitem><para>
+      </simpara></listitem>
+
+      <listitem><simpara>
       <command>sender-ip</command> - IP address which kea-dhcp4 should use to send requests to the DHCP-DDNS server.
       The default value is blank which instructs kea-dhcp4 to select a suitable
       address.
-      </para></listitem>
-      <listitem><para>
+      </simpara></listitem>
+
+      <listitem><simpara>
       <command>sender-port</command> - port which kea-dhcp4 should use to send requests to the DHCP-DDNS server. The
       default value of 0 instructs kea-dhcp4 to select suitable port.
-      </para></listitem>
-      <listitem><para>
-      <command>ncr-format</command> - Socket protocol use when sending requests to the DHCP-DDNS server.  Currently
-      only UDP is supported.  TCP may be available in an upcoming release.
-      </para></listitem>
-      <listitem><para>
-      <command>ncr-protocol</command> - Packet format to use when sending requests to the DHCP-DDNS server.
-      Currently only JSON format is supported.  Other formats may be available
-      in future releases.
-      </para></listitem>
-      <listitem><para>
+      </simpara></listitem>
+
+      <listitem><simpara>
       <command>max-queue-size</command> - maximum number of requests allowed to queue waiting to
       be sent to the DHCP-DDNS server. This value guards against requests accumulating
       uncontrollably if they are being generated faster than they can be
@@ -1299,8 +1301,20 @@ temporarily override a list of interface names and listen on all interfaces.
       been sufficiently reduced.  The intention is allow the kea-dhcp4 server to
       continue lease operations without running the risk that its memory usage
       grows without limit.  The default value is 1024.
-      </para></listitem>
-      </orderedlist>
+      </simpara></listitem>
+
+      <listitem><simpara>
+      <command>ncr-format</command> - socket protocol use when sending requests to the DHCP-DDNS server.  Currently
+      only UDP is supported.  TCP may be available in an upcoming release.
+      </simpara></listitem>
+
+      <listitem><simpara>
+      <command>ncr-protocol</command> - packet format to use when sending requests to the DHCP-DDNS server.
+      Currently only JSON format is supported.  Other formats may be available
+      in future releases.
+      </simpara></listitem>
+
+      </itemizedlist>
       By default, the DHCP-DDNS server is assumed to running on the same machine as kea-dhcp4, and
       all of the default values mentioned above should be sufficient.
       If, however, the DHCP-DDNS server has been configured to listen on a different address or
@@ -1459,10 +1473,10 @@ temporarily override a list of interface names and listen on all interfaces.
       </section>
       <section id="dhcpv4-fqdn-name-generation">
       <title>kea-dhcp4 name generation for DDNS update requests</title>
-      Each NameChangeRequest must of course include the fully qualified domain
+      <para>Each NameChangeRequest must of course include the fully qualified domain
       name whose DNS entries are to be affected.  kea-dhcp4 can be configured to
       supply a portion or all of that name based upon what it receives from
-      the client in the DHCP REQUEST.
+      the client in the DHCP REQUEST.</para>
       <para>
       The rules for determining the FQDN option are as follows:
       <orderedlist>
@@ -1516,10 +1530,9 @@ temporarily override a list of interface names and listen on all interfaces.
 }
 </screen>
       <para>
-      The suffix used when generating a FQDN or when qualifying a partial
-      name is specified by the <command>qualifying-suffix</command> parameter.  The default
-      value is "example.com".  To alter its value simply set it to the desired
-      string:
+      The suffix used when generating a FQDN or when qualifying a partial name
+      is specified by the <command>qualifying-suffix</command> parameter. There
+      is no default value. To set its value simply set it to the desired string:
       </para>
 <screen>
 "Dhcp4": {
