@@ -417,8 +417,15 @@ public:
     /// \brief Clear buffer content.
     ///
     /// This method can be used to re-initialize and reuse the buffer without
-    /// constructing a new one.
+    /// constructing a new one. Note it must keep current content.
     void clear() { size_ = 0; }
+    /// \brief Wipe buffer content.
+    ///
+    /// This method is the destructive alternative to clear().
+    void wipe() {
+        memset(buffer_, 0, allocated_);
+        size_ = 0;
+    }
     /// \brief Write an unsigned 8-bit integer into the buffer.
     ///
     /// \param data The 8-bit integer to be written into the buffer.

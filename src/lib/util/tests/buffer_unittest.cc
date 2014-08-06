@@ -205,9 +205,23 @@ TEST_F(BufferTest, outputBufferReadat) {
 }
 
 TEST_F(BufferTest, outputBufferClear) {
+    const uint8_t* cp;
+
     obuffer.writeData(testdata, sizeof(testdata));
+    cp = static_cast<const uint8_t*>(obuffer.getData());
     obuffer.clear();
     EXPECT_EQ(0, obuffer.getLength());
+    EXPECT_EQ(*cp, 1);
+}
+
+TEST_F(BufferTest, outputBufferWipe) {
+    const uint8_t* cp;
+
+    obuffer.writeData(testdata, sizeof(testdata));
+    cp = static_cast<const uint8_t*>(obuffer.getData());
+    obuffer.wipe();
+    EXPECT_EQ(0, obuffer.getLength());
+    EXPECT_EQ(*cp, 0);
 }
 
 TEST_F(BufferTest, outputBufferCopy) {
