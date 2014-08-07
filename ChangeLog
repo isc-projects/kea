@@ -1,3 +1,10 @@
+813.	[func]		tomek
+	Functions, methods and variables referring to BIND10 were renamed
+	to Kea. In particular, system variables (B10_LOGGER_ROOT,
+	B10_LOCKFILE_DIR_FROM_BUILD etc.) were renamed. B10_ prefix was
+	replaced with KEA_.
+	(Trac #3417, git 1db8988de6af435fa388dc9c7f909c4a004a01d0)
+
 812.	[doc]		tomek
 	DHCPv6 and DDNS sections in Kea Administrator Reference Manual
 	has been updated. Usage of keactl has been documented.

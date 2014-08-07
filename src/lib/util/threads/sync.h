@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef B10_THREAD_SYNC_H
-#define B10_THREAD_SYNC_H
+#ifndef KEA_THREAD_SYNC_H
+#define KEA_THREAD_SYNC_H
 
 #include <exceptions/exceptions.h>
 
@@ -195,10 +195,11 @@ private:
 /// used to construct the \c locker.
 ///
 /// Right now there is no equivalent to pthread_cond_broadcast() or
-/// pthread_cond_timedwait() in this class, because this class is meant
+/// pthread_cond_timedwait() in this class, because this class was meant
 /// for internal development of BIND 10 and we don't need these at the
 /// moment.  If and when we need these interfaces they can be added at that
-/// point.
+/// point. Also, Kea likely to not use threading model, so the usefulness
+/// of this class is uncertain.
 ///
 /// \note This class is defined as a friend class of \c Mutex and directly
 /// refers to and modifies private internals of the \c Mutex class.  It breaks

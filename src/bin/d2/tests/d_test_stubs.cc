@@ -157,8 +157,8 @@ DStubController::DStubController()
     : DControllerBase(stub_app_name_, stub_bin_name_),
       processed_signals_(), record_signal_only_(false) {
 
-    if (getenv("B10_FROM_BUILD")) {
-        setSpecFileName(std::string(getenv("B10_FROM_BUILD")) +
+    if (getenv("KEA_FROM_BUILD")) {
+        setSpecFileName(std::string(getenv("KEA_FROM_BUILD")) +
             "/src/bin/d2/dhcp-ddns.spec");
     } else {
         setSpecFileName(D2_SPECFILE_LOCATION);

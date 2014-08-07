@@ -46,7 +46,7 @@ public:
 ///
 /// Applications normally use this class only in a limited situation: as an
 /// interface between legacy I/O operation (such as receiving data from a BSD
-/// socket) and the rest of the BIND10 DNS library.  One common usage of this
+/// socket) and the rest of the Kea DNS library.  One common usage of this
 /// class for an application would therefore be something like this:
 ///
 /// \code unsigned char buf[1024];
@@ -56,7 +56,7 @@ public:
 /// InputBuffer buffer(buf, cc);
 /// // pass the buffer to a DNS message object to parse the message \endcode
 ///
-/// Other BIND10 DNS classes will then use methods of this class to get access
+/// Other Kea DNS classes will then use methods of this class to get access
 /// to the data, but the application normally doesn't have to care about the
 /// details.
 ///

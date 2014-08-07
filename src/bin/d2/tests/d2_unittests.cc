@@ -21,7 +21,7 @@ main(int argc, char* argv[]) {
 
     ::testing::InitGoogleTest(&argc, argv);
 
-    // See the documentation of the B10_* environment variables in
+    // See the documentation of the KEA_* environment variables in
     // src/lib/log/README for info on how to tweak logging
     isc::log::initLogger();
 

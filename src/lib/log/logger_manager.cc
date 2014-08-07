@@ -51,7 +51,7 @@ int& initDebugLevel() {
 }
 
 std::string& initRootName() {
-    static std::string root("bind10");
+    static std::string root("kea");
     return (root);
 }
 
@@ -107,7 +107,7 @@ LoggerManager::init(const std::string& root, isc::log::Severity severity,
     initSeverity() = severity;
     initDebugLevel() = dbglevel;
 
-    // Create the BIND 10 root logger and set the default severity and
+    // Create the Kea root logger and set the default severity and
     // debug level.  This is the logger that has the name of the application.
     // All other loggers created in this application will be its children.
     setRootLoggerName(root);

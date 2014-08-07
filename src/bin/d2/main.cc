@@ -25,7 +25,7 @@ using namespace isc::d2;
 using namespace std;
 
 /// This file contains entry point (main() function) for standard DHCP-DDNS
-/// process, kea-dhcp-ddns, component for BIND10 framework.  It fetches
+/// process, kea-dhcp-ddns, component of Kea software suite.  It fetches
 /// the D2Controller singleton instance and invokes its launch method.
 /// The exit value of the program will be EXIT_SUCCESS if there were no
 /// errors, EXIT_FAILURE otherwise.

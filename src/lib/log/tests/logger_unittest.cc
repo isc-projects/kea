@@ -436,7 +436,7 @@ private:
     bool was_unlocked_;
 };
 
-// Checks that the logger logs exclusively and other BIND 10 components
+// Checks that the logger logs exclusively and other Kea components
 // are locked out.
 
 TEST_F(LoggerTest, Lock) {

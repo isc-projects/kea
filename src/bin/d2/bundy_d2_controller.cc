@@ -52,8 +52,8 @@ D2Controller::D2Controller()
     : DControllerBase(d2_app_name_, d2_bin_name_) {
     // set the spec file either from the environment or
     // use the production value.
-    if (getenv("B10_FROM_BUILD")) {
-        setSpecFileName(std::string(getenv("B10_FROM_BUILD")) +
+    if (getenv("KEA_FROM_BUILD")) {
+        setSpecFileName(std::string(getenv("KEA_FROM_BUILD")) +
             "/src/bin/d2/dhcp-ddns.spec");
     } else {
         setSpecFileName(D2_SPECFILE_LOCATION);
@@ -177,11 +177,11 @@ D2Controller::establishSession() {
     LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DCTL_CCSESSION_STARTING)
               .arg(getAppName()).arg(getSpecFileName());
 
-    // Create the BIND10 command control session with the our IOService.
+    // Create the Bundy command control session with the our IOService.
     cc_session_ = SessionPtr(new isc::cc::Session(
                              getIOService()->get_io_service()));
 
-    // Create the BIND10 config session with the stub configuration handler.
+    // Create the Bundy config session with the stub configuration handler.
     // This handler is internally invoked by the constructor and on success
     // the constructor updates the current session with the configuration that
     // had been committed in the previous session. If we do not install
@@ -219,12 +219,12 @@ void D2Controller::disconnectSession() {
     LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DCTL_CCSESSION_ENDING)
               .arg(getAppName());
 
-    // Destroy the BIND10 config session.
+    // Destroy the Bundy config session.
     if (config_session_) {
         config_session_.reset();
     }
 
-    // Destroy the BIND10 command and control session.
+    // Destroy the Bundy command and control session.
     if (cc_session_) {
         cc_session_->disconnect();
         cc_session_.reset();

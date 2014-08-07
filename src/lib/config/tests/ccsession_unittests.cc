@@ -350,7 +350,7 @@ TEST_F(CCSessionTest, session2) {
     ConstElementPtr msg;
     std::string group, to;
     msg = session.getFirstMessage(group, to);
-    EXPECT_EQ("{ \"command\": [ \"module_spec\", { \"commands\": [ { \"command_args\": [ { \"item_default\": \"\", \"item_name\": \"message\", \"item_optional\": false, \"item_type\": \"string\" } ], \"command_description\": \"Print the given message to stdout\", \"command_name\": \"print_message\" }, { \"command_args\": [  ], \"command_description\": \"Shut down BIND 10\", \"command_name\": \"shutdown\" } ], \"config_data\": [ { \"item_default\": 1, \"item_name\": \"item1\", \"item_optional\": false, \"item_type\": \"integer\" }, { \"item_default\": 1.1, \"item_name\": \"item2\", \"item_optional\": false, \"item_type\": \"real\" }, { \"item_default\": true, \"item_name\": \"item3\", \"item_optional\": false, \"item_type\": \"boolean\" }, { \"item_default\": \"test\", \"item_name\": \"item4\", \"item_optional\": false, \"item_type\": \"string\" }, { \"item_default\": [ \"a\", \"b\" ], \"item_name\": \"item5\", \"item_optional\": false, \"item_type\": \"list\", \"list_item_spec\": { \"item_default\": \"\", \"item_name\": \"list_element\", \"item_optional\": false, \"item_type\": \"string\" } }, { \"item_default\": {  }, \"item_name\": \"item6\", \"item_optional\": false, \"item_type\": \"map\", \"map_item_spec\": [ { \"item_default\": \"default\", \"item_name\": \"value1\", \"item_optional\": true, \"item_type\": \"string\" }, { \"item_name\": \"value2\", \"item_optional\": true, \"item_type\": \"integer\" } ] } ], \"module_name\": \"Spec2\", \"statistics\": [ { \"item_default\": \"1970-01-01T00:00:00Z\", \"item_description\": \"A dummy date time\", \"item_format\": \"date-time\", \"item_name\": \"dummy_time\", \"item_optional\": false, \"item_title\": \"Dummy Time\", \"item_type\": \"string\" } ] } ] }", msg->str());
+    EXPECT_EQ("{ \"command\": [ \"module_spec\", { \"commands\": [ { \"command_args\": [ { \"item_default\": \"\", \"item_name\": \"message\", \"item_optional\": false, \"item_type\": \"string\" } ], \"command_description\": \"Print the given message to stdout\", \"command_name\": \"print_message\" }, { \"command_args\": [  ], \"command_description\": \"Shut down Kea\", \"command_name\": \"shutdown\" } ], \"config_data\": [ { \"item_default\": 1, \"item_name\": \"item1\", \"item_optional\": false, \"item_type\": \"integer\" }, { \"item_default\": 1.1, \"item_name\": \"item2\", \"item_optional\": false, \"item_type\": \"real\" }, { \"item_default\": true, \"item_name\": \"item3\", \"item_optional\": false, \"item_type\": \"boolean\" }, { \"item_default\": \"test\", \"item_name\": \"item4\", \"item_optional\": false, \"item_type\": \"string\" }, { \"item_default\": [ \"a\", \"b\" ], \"item_name\": \"item5\", \"item_optional\": false, \"item_type\": \"list\", \"list_item_spec\": { \"item_default\": \"\", \"item_name\": \"list_element\", \"item_optional\": false, \"item_type\": \"string\" } }, { \"item_default\": {  }, \"item_name\": \"item6\", \"item_optional\": false, \"item_type\": \"map\", \"map_item_spec\": [ { \"item_default\": \"default\", \"item_name\": \"value1\", \"item_optional\": true, \"item_type\": \"string\" }, { \"item_name\": \"value2\", \"item_optional\": true, \"item_type\": \"integer\" } ] } ], \"module_name\": \"Spec2\", \"statistics\": [ { \"item_default\": \"1970-01-01T00:00:00Z\", \"item_description\": \"A dummy date time\", \"item_format\": \"date-time\", \"item_name\": \"dummy_time\", \"item_optional\": false, \"item_title\": \"Dummy Time\", \"item_type\": \"string\" } ] } ] }", msg->str());
     EXPECT_EQ("ConfigManager", group);
     EXPECT_EQ("*", to);
     EXPECT_EQ(0, session.getMsgQueue()->size());
@@ -458,7 +458,7 @@ TEST_F(CCSessionTest, session3) {
     ConstElementPtr msg;
     std::string group, to;
     msg = session.getFirstMessage(group, to);
-    EXPECT_EQ("{ \"command\": [ \"module_spec\", { \"commands\": [ { \"command_args\": [ { \"item_default\": \"\", \"item_name\": \"message\", \"item_optional\": false, \"item_type\": \"string\" } ], \"command_description\": \"Print the given message to stdout\", \"command_name\": \"print_message\" }, { \"command_args\": [  ], \"command_description\": \"Shut down BIND 10\", \"command_name\": \"shutdown\" } ], \"config_data\": [ { \"item_default\": 1, \"item_name\": \"item1\", \"item_optional\": false, \"item_type\": \"integer\" }, { \"item_default\": 1.1, \"item_name\": \"item2\", \"item_optional\": false, \"item_type\": \"real\" }, { \"item_default\": true, \"item_name\": \"item3\", \"item_optional\": false, \"item_type\": \"boolean\" }, { \"item_default\": \"test\", \"item_name\": \"item4\", \"item_optional\": false, \"item_type\": \"string\" }, { \"item_default\": [ \"a\", \"b\" ], \"item_name\": \"item5\", \"item_optional\": false, \"item_type\": \"list\", \"list_item_spec\": { \"item_default\": \"\", \"item_name\": \"list_element\", \"item_optional\": false, \"item_type\": \"string\" } }, { \"item_default\": {  }, \"item_name\": \"item6\", \"item_optional\": false, \"item_type\": \"map\", \"map_item_spec\": [ { \"item_default\": \"default\", \"item_name\": \"value1\", \"item_optional\": true, \"item_type\": \"string\" }, { \"item_name\": \"value2\", \"item_optional\": true, \"item_type\": \"integer\" } ] } ], \"module_name\": \"Spec2\", \"statistics\": [ { \"item_default\": \"1970-01-01T00:00:00Z\", \"item_description\": \"A dummy date time\", \"item_format\": \"date-time\", \"item_name\": \"dummy_time\", \"item_optional\": false, \"item_title\": \"Dummy Time\", \"item_type\": \"string\" } ] } ] }", msg->str());
+    EXPECT_EQ("{ \"command\": [ \"module_spec\", { \"commands\": [ { \"command_args\": [ { \"item_default\": \"\", \"item_name\": \"message\", \"item_optional\": false, \"item_type\": \"string\" } ], \"command_description\": \"Print the given message to stdout\", \"command_name\": \"print_message\" }, { \"command_args\": [  ], \"command_description\": \"Shut down Kea\", \"command_name\": \"shutdown\" } ], \"config_data\": [ { \"item_default\": 1, \"item_name\": \"item1\", \"item_optional\": false, \"item_type\": \"integer\" }, { \"item_default\": 1.1, \"item_name\": \"item2\", \"item_optional\": false, \"item_type\": \"real\" }, { \"item_default\": true, \"item_name\": \"item3\", \"item_optional\": false, \"item_type\": \"boolean\" }, { \"item_default\": \"test\", \"item_name\": \"item4\", \"item_optional\": false, \"item_type\": \"string\" }, { \"item_default\": [ \"a\", \"b\" ], \"item_name\": \"item5\", \"item_optional\": false, \"item_type\": \"list\", \"list_item_spec\": { \"item_default\": \"\", \"item_name\": \"list_element\", \"item_optional\": false, \"item_type\": \"string\" } }, { \"item_default\": {  }, \"item_name\": \"item6\", \"item_optional\": false, \"item_type\": \"map\", \"map_item_spec\": [ { \"item_default\": \"default\", \"item_name\": \"value1\", \"item_optional\": true, \"item_type\": \"string\" }, { \"item_name\": \"value2\", \"item_optional\": true, \"item_type\": \"integer\" } ] } ], \"module_name\": \"Spec2\", \"statistics\": [ { \"item_default\": \"1970-01-01T00:00:00Z\", \"item_description\": \"A dummy date time\", \"item_format\": \"date-time\", \"item_name\": \"dummy_time\", \"item_optional\": false, \"item_title\": \"Dummy Time\", \"item_type\": \"string\" } ] } ] }", msg->str());
     EXPECT_EQ("ConfigManager", group);
     EXPECT_EQ("*", to);
     EXPECT_EQ(1, session.getMsgQueue()->size());
@@ -1165,8 +1165,8 @@ void doRelatedLoggersTest(const char* input, const char* expected) {
 TEST(LogConfigTest, relatedLoggersTest) {
     // make sure logger configs for 'other' programs are ignored,
     // and that * is substituted correctly
-    // We'll use a root logger name of "b10-test".
-    isc::log::setRootLoggerName("b10-test");
+    // We'll use a root logger name of "kea-test".
+    isc::log::setRootLoggerName("kea-test");
 
     doRelatedLoggersTest("[{ \"name\": \"other_module\" }]",
                          "[]");
@@ -1178,30 +1178,30 @@ TEST(LogConfigTest, relatedLoggersTest) {
                          "[]");
     doRelatedLoggersTest("[ { \"name\": \"other_module\" },"
                          "  { \"name\": \"test\" }]",
-                         "[ { \"name\": \"b10-test\" } ]");
+                         "[ { \"name\": \"kea-test\" } ]");
     doRelatedLoggersTest("[ { \"name\": \"test\" }]",
-                         "[ { \"name\": \"b10-test\" } ]");
+                         "[ { \"name\": \"kea-test\" } ]");
     doRelatedLoggersTest("[ { \"name\": \"test.somelib\" }]",
-                         "[ { \"name\": \"b10-test.somelib\" } ]");
+                         "[ { \"name\": \"kea-test.somelib\" } ]");
     doRelatedLoggersTest("[ { \"name\": \"other_module.somelib\" },"
                          "  { \"name\": \"test.somelib\" }]",
-                         "[ { \"name\": \"b10-test.somelib\" } ]");
+                         "[ { \"name\": \"kea-test.somelib\" } ]");
     doRelatedLoggersTest("[ { \"name\": \"other_module.somelib\" },"
                          "  { \"name\": \"test\" },"
                          "  { \"name\": \"test.somelib\" }]",
-                         "[ { \"name\": \"b10-test\" },"
-                         "  { \"name\": \"b10-test.somelib\" } ]");
+                         "[ { \"name\": \"kea-test\" },"
+                         "  { \"name\": \"kea-test.somelib\" } ]");
     doRelatedLoggersTest("[ { \"name\": \"*\" }]",
-                         "[ { \"name\": \"b10-test\" } ]");
+                         "[ { \"name\": \"kea-test\" } ]");
     doRelatedLoggersTest("[ { \"name\": \"*.somelib\" }]",
-                         "[ { \"name\": \"b10-test.somelib\" } ]");
+                         "[ { \"name\": \"kea-test.somelib\" } ]");
     doRelatedLoggersTest("[ { \"name\": \"*\", \"severity\": \"DEBUG\" },"
                          "  { \"name\": \"test\", \"severity\": \"WARN\"}]",
-                         "[ { \"name\": \"b10-test\", \"severity\": \"WARN\"} ]");
+                         "[ { \"name\": \"kea-test\", \"severity\": \"WARN\"} ]");
     doRelatedLoggersTest("[ { \"name\": \"*\", \"severity\": \"DEBUG\" },"
                          "  { \"name\": \"some_module\", \"severity\": \"WARN\"}]",
-                         "[ { \"name\": \"b10-test\", \"severity\": \"DEBUG\"} ]");
-    doRelatedLoggersTest("[ { \"name\": \"b10-test\" }]",
+                         "[ { \"name\": \"kea-test\", \"severity\": \"DEBUG\"} ]");
+    doRelatedLoggersTest("[ { \"name\": \"kea-test\" }]",
                          "[]");
     // make sure 'bad' things like '*foo.x' or '*lib' are ignored
     // (cfgmgr should have already caught it in the logconfig plugin
@@ -1213,7 +1213,7 @@ TEST(LogConfigTest, relatedLoggersTest) {
     doRelatedLoggersTest("[ { \"name\": \"*foo\" },"
                          "  { \"name\": \"*foo.lib\" },"
                          "  { \"name\": \"test\" } ]",
-                         "[ { \"name\": \"b10-test\" } ]");
+                         "[ { \"name\": \"kea-test\" } ]");
 }
 
 }

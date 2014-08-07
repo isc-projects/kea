@@ -139,8 +139,8 @@ void ControlledDhcpv4Srv::init(const std::string& config_file) {
     Daemon::init(config_file);
 
     string specfile;
-    if (getenv("B10_FROM_BUILD")) {
-        specfile = string(getenv("B10_FROM_BUILD")) +
+    if (getenv("KEA_FROM_BUILD")) {
+        specfile = string(getenv("KEA_FROM_BUILD")) +
             "/src/bin/dhcp4/dhcp4.spec";
     } else {
         specfile = string(DHCP4_SPECFILE_LOCATION);
@@ -184,9 +184,9 @@ void ControlledDhcpv4Srv::init(const std::string& config_file) {
 
     }
 
-    /// Integrate the asynchronous I/O model of BIND 10 configuration
-    /// control with the "select" model of the DHCP server.  This is
-    /// fully explained in \ref dhcpv4Session.
+    /// Integrate the asynchronous I/O model of former BIND 10/Bundy
+    /// configuration control with the "select" model of the DHCP server.
+    /// This is fully explained in \ref dhcpv4Session.
     int ctrl_socket = cc_session_->getSocketDesc();
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_CCSESSION_STARTED)
               .arg(ctrl_socket);

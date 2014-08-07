@@ -33,70 +33,70 @@ passfail() {
     fi
 }
 
-echo "1. Checking that B10_LOGGER_SEVERITY/B10_LOGGER_DBGLEVEL work"
+echo "1. Checking that KEA_LOGGER_SEVERITY/KEA_LOGGER_DBGLEVEL work"
 
 echo -n  "   - severity=DEBUG, dbglevel=99: "
 cat > $tempfile << .
-DEBUG [bind10.log] LOG_BAD_DESTINATION unrecognized log destination: debug-0
-DEBUG [bind10.log] LOG_BAD_DESTINATION unrecognized log destination: debug-50
-DEBUG [bind10.log] LOG_BAD_DESTINATION unrecognized log destination: debug-99
-INFO  [bind10.log] LOG_BAD_SEVERITY unrecognized log severity: info
-WARN  [bind10.log] LOG_BAD_STREAM bad log console output stream: warn
-ERROR [bind10.log] LOG_DUPLICATE_MESSAGE_ID duplicate message ID (error) in compiled code
-FATAL [bind10.log] LOG_NO_MESSAGE_ID line fatal: message definition line found without a message ID
+DEBUG [kea.log] LOG_BAD_DESTINATION unrecognized log destination: debug-0
+DEBUG [kea.log] LOG_BAD_DESTINATION unrecognized log destination: debug-50
+DEBUG [kea.log] LOG_BAD_DESTINATION unrecognized log destination: debug-99
+INFO  [kea.log] LOG_BAD_SEVERITY unrecognized log severity: info
+WARN  [kea.log] LOG_BAD_STREAM bad log console output stream: warn
+ERROR [kea.log] LOG_DUPLICATE_MESSAGE_ID duplicate message ID (error) in compiled code
+FATAL [kea.log] LOG_NO_MESSAGE_ID line fatal: message definition line found without a message ID
 .
-B10_LOGGER_DESTINATION=stdout B10_LOGGER_SEVERITY=DEBUG B10_LOGGER_DBGLEVEL=99 ./init_logger_test | \
+KEA_LOGGER_DESTINATION=stdout KEA_LOGGER_SEVERITY=DEBUG KEA_LOGGER_DBGLEVEL=99 ./init_logger_test | \
     sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\]/[\1]/' | \
     cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
 echo -n  "   - severity=DEBUG, dbglevel=50: "
 cat > $tempfile << .
-DEBUG [bind10.log] LOG_BAD_DESTINATION unrecognized log destination: debug-0
-DEBUG [bind10.log] LOG_BAD_DESTINATION unrecognized log destination: debug-50
-INFO  [bind10.log] LOG_BAD_SEVERITY unrecognized log severity: info
-WARN  [bind10.log] LOG_BAD_STREAM bad log console output stream: warn
-ERROR [bind10.log] LOG_DUPLICATE_MESSAGE_ID duplicate message ID (error) in compiled code
-FATAL [bind10.log] LOG_NO_MESSAGE_ID line fatal: message definition line found without a message ID
+DEBUG [kea.log] LOG_BAD_DESTINATION unrecognized log destination: debug-0
+DEBUG [kea.log] LOG_BAD_DESTINATION unrecognized log destination: debug-50
+INFO  [kea.log] LOG_BAD_SEVERITY unrecognized log severity: info
+WARN  [kea.log] LOG_BAD_STREAM bad log console output stream: warn
+ERROR [kea.log] LOG_DUPLICATE_MESSAGE_ID duplicate message ID (error) in compiled code
+FATAL [kea.log] LOG_NO_MESSAGE_ID line fatal: message definition line found without a message ID
 .
-B10_LOGGER_DESTINATION=stdout B10_LOGGER_SEVERITY=DEBUG B10_LOGGER_DBGLEVEL=50 ./init_logger_test | \
+KEA_LOGGER_DESTINATION=stdout KEA_LOGGER_SEVERITY=DEBUG KEA_LOGGER_DBGLEVEL=50 ./init_logger_test | \
     sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\]/[\1]/' | \
     cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
 echo -n  "   - severity=WARN: "
 cat > $tempfile << .
-WARN  [bind10.log] LOG_BAD_STREAM bad log console output stream: warn
-ERROR [bind10.log] LOG_DUPLICATE_MESSAGE_ID duplicate message ID (error) in compiled code
-FATAL [bind10.log] LOG_NO_MESSAGE_ID line fatal: message definition line found without a message ID
+WARN  [kea.log] LOG_BAD_STREAM bad log console output stream: warn
+ERROR [kea.log] LOG_DUPLICATE_MESSAGE_ID duplicate message ID (error) in compiled code
+FATAL [kea.log] LOG_NO_MESSAGE_ID line fatal: message definition line found without a message ID
 .
-B10_LOGGER_DESTINATION=stdout B10_LOGGER_SEVERITY=WARN ./init_logger_test | \
+KEA_LOGGER_DESTINATION=stdout KEA_LOGGER_SEVERITY=WARN ./init_logger_test | \
     sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\]/[\1]/' | \
     cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
-echo "2. Checking that B10_LOGGER_DESTINATION works"
+echo "2. Checking that KEA_LOGGER_DESTINATION works"
 
 echo -n  "   - stdout: "
 cat > $tempfile << .
-FATAL [bind10.log] LOG_NO_MESSAGE_ID line fatal: message definition line found without a message ID
+FATAL [kea.log] LOG_NO_MESSAGE_ID line fatal: message definition line found without a message ID
 .
 rm -f $destfile_tmp $destfile
-B10_LOGGER_SEVERITY=FATAL B10_LOGGER_DESTINATION=stdout ./init_logger_test 1> $destfile_tmp
+KEA_LOGGER_SEVERITY=FATAL KEA_LOGGER_DESTINATION=stdout ./init_logger_test 1> $destfile_tmp
 sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\]/[\1]/' < $destfile_tmp > $destfile
 cut -d' ' -f3- $destfile | diff $tempfile -
 passfail $?
 
 echo -n  "   - stderr: "
 rm -f $destfile_tmp $destfile
-B10_LOGGER_SEVERITY=FATAL B10_LOGGER_DESTINATION=stderr ./init_logger_test 2> $destfile_tmp
+KEA_LOGGER_SEVERITY=FATAL KEA_LOGGER_DESTINATION=stderr ./init_logger_test 2> $destfile_tmp
 sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\]/[\1]/' < $destfile_tmp > $destfile
 cut -d' ' -f3- $destfile | diff $tempfile -
 passfail $?
 
 echo -n  "   - file: "
 rm -f $destfile_tmp $destfile
-B10_LOGGER_SEVERITY=FATAL B10_LOGGER_DESTINATION=$destfile_tmp ./init_logger_test
+KEA_LOGGER_SEVERITY=FATAL KEA_LOGGER_DESTINATION=$destfile_tmp ./init_logger_test
 sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\]/[\1]/' < $destfile_tmp > $destfile
 cut -d' ' -f3- $destfile | diff $tempfile -
 passfail $?

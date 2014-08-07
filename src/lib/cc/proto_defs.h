@@ -16,8 +16,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef BIND10_COMMON_DEFS_H
-#define BIND10_COMMON_DEFS_H
+#ifndef KEA_COMMON_DEFS_H
+#define KEA_COMMON_DEFS_H
 
 // \file proto_defs.h
 // \brief Common shared constants

@@ -29,7 +29,7 @@
 // log4cplus logger header file
 #include <log4cplus/logger.h>
 
-// BIND-10 logger files
+// Kea logger files
 #include <log/logger_level_impl.h>
 #include <log/message_types.h>
 #include <log/interprocess/interprocess_sync.h>
@@ -46,14 +46,14 @@ namespace log {
 /// This particular implementation is based on log4cplus (from sourceforge:
 /// http://log4cplus.sourceforge.net).  Particular items of note:
 ///
-/// a) BIND 10 loggers have names of the form "program.sublogger".  In other
+/// a) Kea loggers have names of the form "program.sublogger".  In other
 /// words, each of the loggers is a sub-logger of the main program logger.
 /// In log4cplus, there is a root logger (called "root" according to the
 /// documentation, but actually unnamed) and all loggers created are subloggers
 /// if it.
 ///
 /// In this implementation, the log4cplus root logger is unused.  Instead, the
-/// BIND 10 root logger is created as a child of the log4cplus root logger,
+/// Kea root logger is created as a child of the log4cplus root logger,
 /// and all other loggers used in the program are created as sub-loggers of
 /// that.  In this way, the logging system can just include the name of the
 /// logger in each message without the need to specially consider if the

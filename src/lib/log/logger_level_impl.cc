@@ -34,11 +34,11 @@ isc::log::Logger logger("log");
 namespace isc {
 namespace log {
 
-// Convert BIND 10 level to a log4cplus logging level.
+// Convert Kea level to a log4cplus logging level.
 log4cplus::LogLevel
 LoggerLevelImpl::convertFromBindLevel(const Level& level) {
 
-    // BIND 10 logging levels are small integers so we can do a table lookup
+    // Kea logging levels are small integers so we can do a table lookup
     static const log4cplus::LogLevel log4cplus_levels[] = {
         log4cplus::NOT_SET_LOG_LEVEL,
         log4cplus::DEBUG_LOG_LEVEL,
@@ -81,7 +81,7 @@ LoggerLevelImpl::convertFromBindLevel(const Level& level) {
     }
 }
 
-// Convert log4cplus logging level to BIND 10 debug level.  It is up to the
+// Convert log4cplus logging level to Kea debug level.  It is up to the
 // caller to validate that the debug level is valid.
 Level
 LoggerLevelImpl::convertToBindLevel(const log4cplus::LogLevel loglevel) {
