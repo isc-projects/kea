@@ -402,11 +402,11 @@ DControllerBase::~DControllerBase() {
 // Provide an implementation until we figure out a better way to do this.
 void
 dhcp::Daemon::loggerInit(const char* log_name, bool verbose) {
-    setenv("B10_LOCKFILE_DIR_FROM_BUILD", "/tmp", 1);
-    setenv("B10_LOGGER_ROOT", log_name, 0);
-    setenv("B10_LOGGER_SEVERITY", (verbose ? "DEBUG":"INFO"), 0);
-    setenv("B10_LOGGER_DBGLEVEL", "99", 0);
-    setenv("B10_LOGGER_DESTINATION",  "stdout", 0);
+    setenv("KEA_LOCKFILE_DIR_FROM_BUILD", "/tmp", 1);
+    setenv("KEA_LOGGER_ROOT", log_name, 0);
+    setenv("KEA_LOGGER_SEVERITY", (verbose ? "DEBUG":"INFO"), 0);
+    setenv("KEA_LOGGER_DBGLEVEL", "99", 0);
+    setenv("KEA_LOGGER_DESTINATION",  "stdout", 0);
     isc::log::initLogger();
 }
 

@@ -63,7 +63,7 @@ appendDigit(const char* name) {
 // Framework functions
 int
 version() {
-    return (BIND10_HOOKS_VERSION);
+    return (KEA_HOOKS_VERSION);
 }
 
 int

@@ -251,7 +251,7 @@ TEST_F(JSONFileBackendTest, configBroken) {
 ///
 /// @todo: Unfortunately, we have this test disabled, because all loaded
 /// configs use memfile, which attempts to create lease file in
-/// /usr/local/var/bind10/kea-leases4.csv. We have couple options here:
+/// /usr/local/var/kea/kea-leases4.csv. We have couple options here:
 /// a) disable persistence in example configs - a very bad thing to do
 ///    as users will forget to reenable it and then will be surprised when their
 ///    leases disappear

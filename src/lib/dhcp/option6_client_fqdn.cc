@@ -27,8 +27,8 @@ namespace dhcp {
 ///
 /// The purpose of the class is to separate the implementation details
 /// of the Option6ClientFqdn class from the interface. This implementation
-/// uses b10-libdns classes to process FQDNs. At some point it may be
-/// desired to split b10-libdhcp++ from b10-libdns. In such case the
+/// uses kea-libdns classes to process FQDNs. At some point it may be
+/// desired to split kea-libdhcp++ from kea-libdns. In such case the
 /// implementation of this class may be changed. The declaration of the
 /// Option6ClientFqdn class holds the pointer to implementation, so
 /// the transition to a different implementation would not affect the

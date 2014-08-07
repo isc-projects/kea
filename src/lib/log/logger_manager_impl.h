@@ -43,7 +43,7 @@ struct OutputOption;
 /// of those specifications.
 ///
 /// Note: the logging has been implemented using a "pimpl" idiom to conceal
-/// the underlying implementation (log4cplus) from the BIND 10 interface.
+/// the underlying implementation (log4cplus) from the Kea interface.
 /// This requires that there be an implementation class, even though in this
 /// case, all the implementation class methods can be declared static.
 
@@ -80,7 +80,7 @@ public:
     /// messages) is called before a message is logged, log4cplus will output
     /// a message to stderr noting that logging has not been initialized.
     ///
-    /// It is assumed here that the name of the BIND 10 root logger can be
+    /// It is assumed here that the name of the Kea root logger can be
     /// obtained from the global function getRootLoggerName().
     ///
     /// \param severity Severity to be associated with this logger
@@ -144,7 +144,7 @@ private:
 
     /// \brief Set default layout and severity for root logger
     ///
-    /// Initializes the root logger to BIND 10 defaults - console or buffered
+    /// Initializes the root logger to Kea defaults - console or buffered
     /// output and the passed severity/debug level.
     ///
     /// \param severity Severity of messages that the logger should output.

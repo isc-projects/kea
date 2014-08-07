@@ -33,11 +33,11 @@ echo -n  "Testing that logger acquires and releases locks correctly:"
 cat > $tempfile << .
 LOGGER_LOCK_TEST: MUTEXLOCK
 LOGGER_LOCK_TEST: LOCK
-INFO  [bind10.log] LOG_LOCK_TEST_MESSAGE this is a test message.
+INFO  [kea.log] LOG_LOCK_TEST_MESSAGE this is a test message.
 LOGGER_LOCK_TEST: UNLOCK
 .
 rm -f $destfile
-B10_LOGGER_SEVERITY=INFO B10_LOGGER_DESTINATION=stdout ./logger_lock_test | \
+KEA_LOGGER_SEVERITY=INFO KEA_LOGGER_DESTINATION=stdout ./logger_lock_test | \
     sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\]/[\1]/' > $destfile
 cut -d' ' -f3- $destfile | diff $tempfile -
 passfail $?

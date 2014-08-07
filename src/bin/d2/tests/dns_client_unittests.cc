@@ -320,7 +320,7 @@ public:
         /// instantly. However, it may lead to situations that the message sent
         /// in one test will not be dropped by the kernel by the time, the next
         /// test starts. This will lead to intermittent unit test errors as
-        /// described in the ticket http://bind10.isc.org/ticket/3265.
+        /// described in the ticket http://kea.isc.org/ticket/3265.
         /// Increasing the timeout to a non-zero value mitigates this problem.
         /// The proper way to solve this problem is to receive the packet
         /// on our own and drop it. Such a fix will need to be applied not only

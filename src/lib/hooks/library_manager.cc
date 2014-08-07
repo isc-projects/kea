@@ -111,7 +111,7 @@ LibraryManager::checkVersion() const {
     // Get the pointer to the "version" function.
     PointerConverter pc(dlsym(dl_handle_, VERSION_FUNCTION_NAME));
     if (pc.versionPtr() != NULL) {
-        int version = BIND10_HOOKS_VERSION - 1; // This is an invalid value
+        int version = KEA_HOOKS_VERSION - 1; // This is an invalid value
         try {
             version = (*pc.versionPtr())();
         } catch (...) {
@@ -119,7 +119,7 @@ LibraryManager::checkVersion() const {
             return (false);
         }
 
-        if (version == BIND10_HOOKS_VERSION) {
+        if (version == KEA_HOOKS_VERSION) {
             // All OK, version checks out
             LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS, HOOKS_LIBRARY_VERSION)
                       .arg(library_name_).arg(version);
@@ -127,7 +127,7 @@ LibraryManager::checkVersion() const {
 
         } else {
             LOG_ERROR(hooks_logger, HOOKS_INCORRECT_VERSION).arg(library_name_)
-                      .arg(version).arg(BIND10_HOOKS_VERSION);
+                      .arg(version).arg(KEA_HOOKS_VERSION);
         }
     } else {
         LOG_ERROR(hooks_logger, HOOKS_NO_VERSION).arg(library_name_);

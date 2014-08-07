@@ -167,7 +167,7 @@ public:
 /// output stream \c os.
 ///
 /// This method converts the address and port of the endpoint in the textual
-/// format that other BIND 10 modules would use in logging, i.e.,
+/// format that other Kea modules would use in logging, i.e.,
 /// - For IPv6 address: [&lt;address&gt;]:port (e.g., [2001:db8::5300]:53)
 /// - For IPv4 address: &lt;address&gt;:port (e.g., 192.0.2.53:5300)
 ///
