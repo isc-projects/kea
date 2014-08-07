@@ -28,7 +28,7 @@ using namespace isc::dhcp;
 using namespace std;
 
 /// This file contains entry point (main() function) for standard DHCPv6 server
-/// component for Kea software suite. It parses command-line arguments and
+/// component of Kea software suite. It parses command-line arguments and
 /// instantiates ControlledDhcpv6Srv class that is responsible for establishing
 /// connection with msgq (receiving commands and configuration) and also
 /// creating Dhcpv6 server object as well.

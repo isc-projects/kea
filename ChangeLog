@@ -1,4 +1,4 @@
-8XX. [func]		tomek
+8XX.	[func]		tomek
 	Functions, methods and variables referring to BIND10 were renamed
 	to Kea. In particular, system variables (B10_LOGGER_ROOT,
 	B10_LOCKFILE_DIR_FROM_BUILD etc.) were renamed. B10_ prefix was
