@@ -33,27 +33,27 @@ namespace log {
 /// Performs run-time initialization of the logger via the setting of
 /// environment variables.  These are:
 ///
-/// - B10_LOGGER_ROOT\n
-/// Name of the root logger.  If not given, the string "bind10" will be used.
+/// - KEA_LOGGER_ROOT\n
+/// Name of the root logger.  If not given, the string "kea" will be used.
 ///
-/// - B10_LOGGER_SEVERITY\n
+/// - KEA_LOGGER_SEVERITY\n
 /// Severity of messages that will be logged.  This must be one of the strings
 /// "DEBUG", "INFO", "WARN", "ERROR", "FATAL" or "NONE". (Must be upper case
 /// and must not contain leading or trailing spaces.)  If not specified (or if
 /// specified but incorrect), the default passed as argument to this function
 /// (currently DEBUG) will be used.
 ///
-/// - B10_LOGGER_DBGLEVEL\n
+/// - KEA_LOGGER_DBGLEVEL\n
 /// Ignored if the level is not DEBUG, this should be a number between 0 and
 /// 99 indicating the logging severity.  The default is 0.  If outside these
 /// limits or if not a number, The value passed to this function (default
 /// of MAX_DEBUG_LEVEL) is used.
 ///
-/// - B10_LOGGER_LOCALMSG\n
+/// - KEA_LOGGER_LOCALMSG\n
 /// If defined, the path specification of a file that contains message
 /// definitions replacing ones in the default dictionary.
 ///
-/// - B10_LOGGER_DESTINATION\n
+/// - KEA_LOGGER_DESTINATION\n
 /// If defined, the destination of the logging output.  This can be one of:
 ///   - \c stdout Send output to stdout.
 ///   - \c stderr Send output to stderr
@@ -70,29 +70,29 @@ namespace log {
 /// be overridden by the tester.  It is not intended for use in production
 /// code.
 ///
-/// TODO: Rename. This function overloads the initLogger() function that can
+/// @todo: Rename. This function overloads the initLogger() function that can
 ///       be used to initialize production programs.  This may lead to confusion.
 void initLogger(isc::log::Severity severity = isc::log::DEBUG,
                 int dbglevel = isc::log::MAX_DEBUG_LEVEL);
 
 
-/// \brief Obtains logging severity from B10_LOGGER_SEVERITY
+/// \brief Obtains logging severity from KEA_LOGGER_SEVERITY
 ///
 /// Support function called by the unit test logging initialization code.
-/// It returns the logging severity defined by B10_LOGGER_SEVERITY.  If
+/// It returns the logging severity defined by KEA_LOGGER_SEVERITY.  If
 /// not defined it returns the default passed to it.
 ///
-/// \param defseverity Default severity used if B10_LOGGER_SEVERITY is not
+/// \param defseverity Default severity used if KEA_LOGGER_SEVERITY is not
 //         defined.
 ///
 /// \return Severity to use for the logging.
-isc::log::Severity b10LoggerSeverity(isc::log::Severity defseverity);
+isc::log::Severity keaLoggerSeverity(isc::log::Severity defseverity);
 
 
-/// \brief Obtains logging debug level from B10_LOGGER_DBGLEVEL
+/// \brief Obtains logging debug level from KEA_LOGGER_DBGLEVEL
 ///
 /// Support function called by the unit test logging initialization code.
-/// It returns the logging debug level defined by B10_LOGGER_DBGLEVEL.  If
+/// It returns the logging debug level defined by KEA_LOGGER_DBGLEVEL.  If
 /// not defined, it returns the default passed to it.
 ///
 /// N.B. If there is an error, a message is written to stderr and a value
@@ -101,11 +101,11 @@ isc::log::Severity b10LoggerSeverity(isc::log::Severity defseverity);
 /// function is only used in unit test logging initialization, so incorrect
 /// selection of a level is not really an issue.)
 ///
-/// \param defdbglevel Default debug level to be used if B10_LOGGER_DBGLEVEL
+/// \param defdbglevel Default debug level to be used if KEA_LOGGER_DBGLEVEL
 ///        is not defined.
 ///
 /// \return Debug level to use.
-int b10LoggerDbglevel(int defdbglevel);
+int keaLoggerDbglevel(int defdbglevel);
 
 
 /// \brief Reset root logger characteristics
@@ -113,8 +113,8 @@ int b10LoggerDbglevel(int defdbglevel);
 /// This is a simplified interface into the resetting of the characteristics
 /// of the root logger.  It is aimed for use in unit tests and resets the
 /// characteristics of the root logger to use a severity, debug level and
-/// destination set by the environment variables B10_LOGGER_SEVERITY,
-/// B10_LOGGER_DBGLEVEL and B10_LOGGER_DESTINATION.
+/// destination set by the environment variables KEA_LOGGER_SEVERITY,
+/// KEA_LOGGER_DBGLEVEL and KEA_LOGGER_DESTINATION.
 void
 resetUnitTestRootLogger();
 

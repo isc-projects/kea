@@ -172,11 +172,11 @@ void ControlledDhcpv4Srv::cleanup() {
 /// @todo: Implement this properly (see #3427)
 void Daemon::loggerInit(const char*, bool verbose) {
 
-    setenv("B10_LOCKFILE_DIR_FROM_BUILD", "/tmp", 1);
-    setenv("B10_LOGGER_ROOT", "kea", 0);
-    setenv("B10_LOGGER_SEVERITY", (verbose ? "DEBUG":"INFO"), 0);
-    setenv("B10_LOGGER_DBGLEVEL", "99", 0);
-    setenv("B10_LOGGER_DESTINATION",  "stdout", 0);
+    setenv("KEA_LOCKFILE_DIR_FROM_BUILD", "/tmp", 1);
+    setenv("KEA_LOGGER_ROOT", "kea", 0);
+    setenv("KEA_LOGGER_SEVERITY", (verbose ? "DEBUG":"INFO"), 0);
+    setenv("KEA_LOGGER_DBGLEVEL", "99", 0);
+    setenv("KEA_LOGGER_DESTINATION",  "stdout", 0);
     isc::log::initLogger();
 }
 

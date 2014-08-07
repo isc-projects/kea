@@ -39,13 +39,13 @@ if test $WANT_EXPERIMENTAL_RESOLVER = yes; then
     cp -f @srcdir@/features/resolver_basic.feature.disabled @srcdir@/features/resolver_basic.feature
 fi
 
-B10_FROM_SOURCE=@abs_top_srcdir@
-export B10_FROM_SOURCE
+KEA_FROM_SOURCE=@abs_top_srcdir@
+export KEA_FROM_SOURCE
 # TODO: We need to do this feature based (ie. no general from_source)
 # But right now we need a second one because some spec files are
 # generated and hence end up under builddir
-B10_FROM_BUILD=@abs_top_builddir@
-export B10_FROM_BUILD
+KEA_FROM_BUILD=@abs_top_builddir@
+export KEA_FROM_BUILD
 
 BIND10_MSGQ_SOCKET_FILE=@abs_top_builddir@/msgq_socket
 export BIND10_MSGQ_SOCKET_FILE

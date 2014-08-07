@@ -27,7 +27,7 @@
 extern "C" {
 
 int version() {
-    return (BIND10_HOOKS_VERSION + 1);
+    return (KEA_HOOKS_VERSION + 1);
 }
 
 };

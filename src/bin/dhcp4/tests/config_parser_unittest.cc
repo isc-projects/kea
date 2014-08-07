@@ -63,8 +63,7 @@ std::string specfile(const std::string& name) {
 }
 
 /// @brief Tests that the spec file is valid.
-/// Verifies that the BIND10 DHCP-DDNS configuration specification file
-//  is valid.
+/// Verifies that the Kea DHCPv4 configuration specification file is valid.
 TEST(Dhcp4SpecTest, basicSpec) {
     (isc::config::moduleSpecFromFile(specfile("dhcp4.spec")));
     ASSERT_NO_THROW(isc::config::moduleSpecFromFile(specfile("dhcp4.spec")));

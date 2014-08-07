@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef B10_THREAD_H
-#define B10_THREAD_H
+#ifndef KEA_THREAD_H
+#define KEA_THREAD_H
 
 #include <exceptions/exceptions.h>
 

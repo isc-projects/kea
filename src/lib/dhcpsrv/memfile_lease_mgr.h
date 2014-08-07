@@ -66,8 +66,8 @@ namespace dhcp {
 /// parameter in the database access string. The [path] is the
 /// absolute path to the file (including file name). If this parameter
 /// is not specified, the default location in the installation
-/// directory is used: var/bind10/kea-leases4.csv and
-/// var/bind10/kea-leases6.csv.
+/// directory is used: var/kea/kea-leases4.csv and
+/// var/kea/kea-leases6.csv.
 class Memfile_LeaseMgr : public LeaseMgr {
 public:
 

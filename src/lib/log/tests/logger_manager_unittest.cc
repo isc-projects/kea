@@ -114,7 +114,7 @@ public:
     //
     // \return Temporary file name
     std::string createTempFilename() {
-        string filename = TEMP_DIR + "/bind10_logger_manager_test_XXXXXX";
+        string filename = TEMP_DIR + "/kea_logger_manager_test_XXXXXX";
 
         // Copy into writeable storage for the call to mkstemp
         boost::scoped_array<char> tname(new char[filename.size() + 1]);

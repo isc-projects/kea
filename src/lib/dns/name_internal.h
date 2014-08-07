@@ -23,7 +23,7 @@
 // library.
 //
 // Note: if it turns out that we need this shortcut for many other places
-// we may even want to make it expose to other BIND 10 modules, but for now
+// we may even want to make it expose to other Kea modules, but for now
 // we'll keep it semi-private (note also that except for very performance
 // sensitive applications the standard std::tolower() function should be just
 // sufficient).

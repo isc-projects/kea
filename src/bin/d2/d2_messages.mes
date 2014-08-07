@@ -54,9 +54,9 @@ events is called.  This only happens during initial startup.
 A debug message indicating that the controller has received an
 updated configuration from the Kea configuration system.
 
-% DCTL_DISCONNECT_FAIL %1 controller failed to end session with Kea: %2
+% DCTL_DISCONNECT_FAIL %1 controller failed to end session with Bundy: %2
 This message indicates that while shutting down, the DHCP-DDNS controller
-encountered an error terminating communication with the Kea configuration
+encountered an error terminating communication with the Bundy configuration
 system. The service will still exit.  While theoretically possible,
 this situation is rather unlikely.
 

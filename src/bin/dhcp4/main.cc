@@ -27,7 +27,7 @@ using namespace isc::dhcp;
 using namespace std;
 
 /// This file contains entry point (main() function) for standard DHCPv4 server
-/// component for BIND10 framework. It parses command-line arguments and
+/// component of Kea software suite. It parses command-line arguments and
 /// instantiates ControlledDhcpv4Srv class that is responsible for establishing
 /// connection with msgq (receiving commands and configuration) and also
 /// creating Dhcpv4 server object as well.

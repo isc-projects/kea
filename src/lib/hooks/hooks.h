@@ -22,7 +22,7 @@
 namespace {
 
 // Version 1 of the hooks framework.
-const int BIND10_HOOKS_VERSION = 1;
+const int KEA_HOOKS_VERSION = 1;
 
 // Names of the framework functions.
 const char* const LOAD_FUNCTION_NAME = "load";
@@ -39,9 +39,9 @@ typedef int (*unload_function_ptr)();
 namespace isc {
 namespace hooks {
 
-/// @brief User-Library Initialization for Statically-Linked BIND 10
+/// @brief User-Library Initialization for Statically-Linked Kea
 ///
-/// If BIND 10 is statically-linked, a user-created hooks library will not be
+/// If Kea is statically-linked, a user-created hooks library will not be
 /// able to access symbols in it.  In particular, it will not be able to access
 /// singleton objects.
 ///
@@ -49,20 +49,20 @@ namespace hooks {
 /// a singleton ServerHooks object, hooks framework objects store a reference
 /// to it when they are created.  When the user library needs to register a
 /// callout (which requires access to the ServerHooks information), it accesses
-/// the ServerHooks object through a pointer passed from the BIND 10 image.
+/// the ServerHooks object through a pointer passed from the Kea image.
 ///
 /// The logging framework is more problematical. Here the code is partly
-/// statically linked (the BIND 10 logging library) and partly shared (the
+/// statically linked (the Kea logging library) and partly shared (the
 /// log4cplus).  The state of the former is not accessible to the user library,
 /// but the state of the latter is.  So within the user library, we need to
-/// initialize the BIND 10 logging library but not initialize the log4cplus
+/// initialize the Kea logging library but not initialize the log4cplus
 /// code.  Some of the initialization is done when the library is loaded, but
 /// other parts are done at run-time.
 ///
 /// This function - to be called by the user library code in its load() function
-/// when running against a statically linked BIND 10 - initializes the BIND 10
+/// when running against a statically linked Kea - initializes the Kea
 /// logging library.  In particular, it loads the message dictionary with the
-/// text of the BIND 10 messages.
+/// text of the Kea messages.
 ///
 /// @note This means that the virtual address space is loaded with two copies
 /// of the message dictionary.  Depending on how the user libraries are linked,
