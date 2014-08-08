@@ -65,6 +65,25 @@
   "tsig_keys": [],
   "forward_ddns" : {},
   "reverse_ddns" : {}
+},
+
+# Logging configuration starts here. It tells Kea servers to store
+# all log messages (on severity INFO or more) in a file.
+# debuglevel variable is used on DEBUG level only.
+"Logging":
+{
+  "loggers": [
+    {
+      "name": "kea",
+      "output_options": [
+          {
+            "output": "@localstatedir@/log/kea.log"
+          }
+      ],
+      "severity": "INFO",
+      "debuglevel": 0
+    }
+  ]
 }
 
 }

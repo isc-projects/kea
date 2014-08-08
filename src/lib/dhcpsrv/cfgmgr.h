@@ -24,6 +24,7 @@
 #include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet.h>
+#include <dhcpsrv/configuration.h>
 #include <util/buffer.h>
 
 #include <boost/shared_ptr.hpp>
@@ -420,6 +421,12 @@ public:
     /// @return a reference to the DHCP-DDNS manager.
     D2ClientMgr& getD2ClientMgr();
 
+
+    /// @brief Returns the current configuration.
+    ///
+    /// @return a pointer to the current configuration.
+    ConfigurationPtr getConfiguration();
+
 protected:
 
     /// @brief Protected constructor.
@@ -516,6 +523,14 @@ private:
 
     /// @brief Manages the DHCP-DDNS client and its configuration.
     D2ClientMgr d2_client_mgr_;
+
+    /// @brief Configuration
+    ///
+    /// This is a structure that will hold all configuration.
+    /// @todo: migrate all other parameters to that structure.
+    /// @todo: maybe this should be a vector<Configuration>, so we could keep
+    ///        previous configurations and do a rollback if needed?
+    ConfigurationPtr configuration_;
 };
 
 } // namespace isc::dhcp

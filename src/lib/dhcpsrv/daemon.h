@@ -12,11 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#ifndef DAEMON_H
+#define DAEMON_H
+
 #include <config.h>
+#include <cc/data.h>
+#include <dhcpsrv/configuration.h>
 #include <util/signal_set.h>
 #include <boost/noncopyable.hpp>
 #include <string>
-
 
 namespace isc {
 namespace dhcp {
@@ -105,7 +109,7 @@ public:
         return (config_file_);
     }
 
-    /// Initializes logger
+    /// @brief Initializes logger
     ///
     /// This method initializes logger. Currently its implementation is specific
     /// to each configuration backend.
@@ -113,6 +117,39 @@ public:
     /// @param log_name name used in logger initialization
     /// @param verbose verbose mode (true usually enables DEBUG messages)
     static void loggerInit(const char* log_name, bool verbose);
+
+    /// @brief Configures logger
+    ///
+    /// Applies configuration stored in "Logging" structure in the
+    /// configuration file. This structure has a "loggers" array that
+    /// contains 0 or more entries, each configuring one logging source
+    /// (name, severity, debuglevel), each with zero or more outputs (file,
+    /// maxsize, maximum number of files).
+    ///
+    /// @param log_config JSON structures that describe logging
+    /// @param storage configuration will be stored here
+    /// @param verbose specifies if verbose mode should be enabled
+    static void configureLogger(const isc::data::ConstElementPtr& log_config,
+                                const isc::dhcp::ConfigurationPtr& storage,
+                                bool verbose);
+
+    /// @brief Sets or clears verbose mode
+    ///
+    /// Verbose mode (-v in command-line) triggers loggers to log everythin
+    /// (sets severity to DEBUG and debuglevel to 99). Values specified in the
+    /// config file are ignored.
+    ///
+    /// @param verbose specifies if verbose should be set or not
+    void setVerbose(bool verbose) {
+        verbose_ = verbose;
+    }
+
+    /// @brief Returns if running in verbose mode
+    ///
+    /// @return verbose mode
+    bool getVerbose() const {
+        return (verbose_);
+    }
 
 protected:
 
@@ -146,7 +183,12 @@ private:
 
     /// @brief Config file name or empty if config file not used.
     static std::string config_file_;
+
+    /// @brief Verbose mode
+    bool verbose_;
 };
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
+
+#endif

@@ -1455,6 +1455,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/util/threads/Makefile
                  src/lib/util/threads/tests/Makefile
                  src/lib/util/unittests/Makefile
+                 tools/path_replacer.sh
                  tests/Makefile
                  tests/tools/Makefile
 ])
@@ -1472,6 +1473,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
            chmod +x src/lib/log/tests/logger_lock_test.sh
            chmod +x src/lib/log/tests/severity_test.sh
            chmod +x src/lib/util/python/gen_wiredata.py
+           chmod +x tools/path_replacer.sh
 ])
 
 AC_OUTPUT
