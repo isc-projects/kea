@@ -32,9 +32,12 @@
 # The following list defines subnets. We have only one subnet
 # here. We tell Kea that it is directly available over local interface.
   "subnet4": [
-  {    "pool": [ "192.0.2.1 - 192.0.2.200" ],
+    {
+       "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
        "subnet": "192.0.2.0/24",
-       "interface": "eth0"  } ]
+       "interface": "eth0"
+    } 
+  ]
 },
 
 # The following configures logging. It assumes that messages with at least
