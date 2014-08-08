@@ -27,12 +27,12 @@ namespace {
 
 // Very simple test. Checks whether Daemon can be instantiated and its
 // default parameters are sane
-TEST(DaemonTest, noop) {
-    EXPECT_NO_THROW(Daemon x);
+TEST(DaemonTest, constructor) {
+    EXPECT_NO_THROW(Daemon instance1);
 
     // Check that the verbose mode is not set by default.
-    Daemon y;
-    EXPECT_FALSE(y.getVerbose());
+    Daemon instance2;
+    EXPECT_FALSE(instance2.getVerbose());
 }
 
 // Checks that configureLogger method is behaving properly.

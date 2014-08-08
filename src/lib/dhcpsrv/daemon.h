@@ -138,6 +138,8 @@ public:
     /// Verbose mode (-v in command-line) triggers loggers to log everythin
     /// (sets severity to DEBUG and debuglevel to 99). Values specified in the
     /// config file are ignored.
+    ///
+    /// @param verbose specifies if verbose should be set or not
     void setVerbose(bool verbose) {
         verbose_ = verbose;
     }
