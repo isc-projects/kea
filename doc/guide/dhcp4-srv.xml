@@ -97,7 +97,9 @@
     "subnet4": [
         {
             "subnet": "192.0.2.0/24",
-            "pool": [ "192.0.2.1 - 192.0.2.200" ]
+            "pools": [
+                { "pool": "192.0.2.1 - 192.0.2.200" }
+            ]
         }
     ]
 
@@ -183,7 +185,7 @@ so it starts and ends with square brackets.  Each subnet definition in
 the list has several attributes associated with it, so is a structure
 and is opened and closed with braces. At minimum, a subnet definition
 has to have at least two parameters: <command>subnet</command> (that
-defines the whole subnet) and <command>pool</command> (which is a list of
+defines the whole subnet) and <command>pools</command> (which is a list of
 dynamically allocated pools that are governed by the DHCP server).</para>
 
 <para>The example contains a single subnet. Had more than one been defined,
@@ -194,15 +196,15 @@ syntax would be used:
 <screen>
 "subnet4": [
     {
-        "pool": [ "192.0.2.1 - 192.0.2.200" ],
+        "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
         "subnet": "192.0.2.0/24"
     },
     {
-        "pool": [ "192.0.3.100 - 192.0.3.200" ],
+        "pools": [ { "pool": "192.0.3.100 - 192.0.3.200" } ],
         "subnet": "192.0.3.0/24"
     },
     {
-        "pool": [ "192.0.4.1 - 192.0.4.254" ],
+        "pool": [ { "pool": "192.0.4.1 - 192.0.4.254" } ],
         "subnet": "192.0.4.0/24"
     }
 ]
@@ -392,15 +394,25 @@ temporarily override a list of interface names and listen on all interfaces.
 "Dhcp4": {
     <userinput>"subnet4": [
         "subnet": "192.0.2.0/24",
-        "pool": [ "192.0.2.10 - 192.0.2.20" ]</userinput>,
+        "pools": [
+	    {
+	        "pool": "192.0.2.10 - 192.0.2.20"
+            }
+        ]</userinput>,
         ...
     ]
 }</screen>
 
-    Note that subnet is defined as a simple string, but the pool parameter is
+    Note that subnet is defined as a simple string, but the 'pools' parameter is
     actually a list of pools: for this reason, the pool definition is enclosed
     in square brackets, even though only one range of addresses is
     specified in this example.</para>
+
+    <para>Each <command>pool</command> is a structure that contains the parameters
+    th describe a single pool. Currently there is only one parameter,
+    <command>pool</command>, which gives the range of addresses
+    in the pool. Additional parameters will be added in future
+    releases of Kea.</para>
 
     <para>It is possible to define more than one pool in a subnet: continuing
     the previous example, further assume that 192.0.2.64/26 should be also be
@@ -411,7 +423,10 @@ temporarily override a list of interface names and listen on all interfaces.
 <screen>
 "Dhcp4": {
     "subnet4": [
-        <userinput>"pool": [ "192.0.2.10-192.0.2.20", "192.0.2.64/26" ]</userinput>,
+        <userinput>"pools": [
+            { "pool": "192.0.2.10-192.0.2.20" },
+            { "pool": "192.0.2.64/26" }
+        ]</userinput>,
         ...
     ],
     ...
@@ -428,17 +443,17 @@ temporarily override a list of interface names and listen on all interfaces.
     "subnet4": [
         {
             "subnet": "192.0.2.0/24",
-            "pool": [ "192.0.2.1 - 192.0.2.200" ],
+            "pools": [ { "pool": "192.0.2.1 - 192.0.2.200" } ],
             ...
         },
         {
             "subnet": "192.0.3.0/24",
-            "pool": [ "192.0.3.100 - 192.0.3.200" ],
+            "pools": [ { "pool": "192.0.3.100 - 192.0.3.200" } ],
             ...
         },
         {
             "subnet": "192.0.4.0/24",
-            "pool": [ "192.0.4.1 - 192.0.4.254" ],
+            "pools": [ { "pool": "192.0.4.1 - 192.0.4.254" } ],
             ...
         }
     ]
@@ -1198,7 +1213,7 @@ temporarily override a list of interface names and listen on all interfaces.
     "subnet4": [
         {
             <userinput>subnet: "192.0.2.0/24",
-            "pool": [ "192.0.2.10 - 192.0.2.20" ],
+            "pools": [ { "pool": "192.0.2.10 - 192.0.2.20" } ],
             "client-class": "VENDOR_CLASS_docsis3.0"</userinput>
         }
     ],
@@ -1709,7 +1724,7 @@ temporarily override a list of interface names and listen on all interfaces.
     "subnet4: [
         {
             "subnet": "192.0.2.0/24",
-            "pool": [ "192.0.2.10 - 192.0.2.20" ],
+            "pools": [ { "pool": "192.0.2.10 - 192.0.2.20" } ],
             <userinput>"relay": {
                 "ip-address": "10.0.0.1"
             }</userinput>,
@@ -1745,7 +1760,7 @@ temporarily override a list of interface names and listen on all interfaces.
     "subnet4: [
         {
             "subnet": "10.1.1.0/24",
-            "pool":  [ "10.1.1.2 - 10.1.1.20" ],
+            "pools":  [ { "pool": "10.1.1.2 - 10.1.1.20" } ],
             <userinput>"client-class" "docsis3.0",
             "relay": {
                 "ip-address": "10.1.1.1"
@@ -1753,7 +1768,7 @@ temporarily override a list of interface names and listen on all interfaces.
         },
         {
             "subnet": "192.0.2.0/24",
-            "pool": [ "192.0.2.10 - 192.0.2.20" ],
+            "pools": [ { "pool": "192.0.2.10 - 192.0.2.20" } ],
             <userinput>"relay": {
                 "ip-address": "10.1.1.1"
             }</userinput>

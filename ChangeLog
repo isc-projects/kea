@@ -1,3 +1,9 @@
+815.	[func]		tomek
+	Pool definitions in DHCPv4 and DHCPv6 are now lists of
+	structures. This makes adding new per-pool parameters easier in
+	the future.
+	(Trac #3464, git 4bd0c0eda9d86608f8802d28bd360239fe88e905)
+
 814.	[func,doc]	tomek
 	It is now possible to specify logging parameters in a
 	configuration file for DHCPv4, DHCPv6 and DHCP-DDNS components.

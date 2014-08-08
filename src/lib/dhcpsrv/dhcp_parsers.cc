@@ -335,12 +335,12 @@ OptionDataParser::OptionDataParser(const std::string&, OptionStoragePtr options,
     options_(options), option_descriptor_(false),
     global_context_(global_context) {
     if (!options_) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
+        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
              << "options storage may not be NULL");
     }
 
     if (!global_context_) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
+        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
              << "context may may not be NULL");
     }
 }
@@ -612,17 +612,17 @@ OptionDataListParser::OptionDataListParser(const std::string&,
     global_context_(global_context),
     optionDataParserFactory_(optionDataParserFactory) {
     if (!options_) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
+        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
              << "options storage may not be NULL");
     }
 
     if (!options_) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
+        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
              << "context may not be NULL");
     }
 
     if (!optionDataParserFactory_) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
+        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
              << "option data parser factory may not be NULL");
     }
 }
@@ -665,7 +665,7 @@ OptionDefParser::OptionDefParser(const std::string&,
       uint32_values_(new Uint32Storage()),
       global_context_(global_context) {
     if (!storage_) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
+        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
              << "options storage may not be NULL");
     }
 }
@@ -823,7 +823,7 @@ OptionDefListParser::OptionDefListParser(const std::string&,
     : storage_(global_context->option_defs_),
       global_context_(global_context) {
     if (!storage_) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
+        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
              << "storage may not be NULL");
     }
 }
@@ -888,7 +888,7 @@ RelayInfoParser::RelayInfoParser(const std::string&,
                                   family == Option::V4 ? "0.0.0.0" : "::")),
      string_values_(new StringStorage()), family_(family) {
     if (!relay_info) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
+        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
                   << "relay-info storage may not be NULL");
     }
 
@@ -943,77 +943,123 @@ RelayInfoParser::commit() {
     *storage_ = local_;
 }
 
-//****************************** PoolParser ********************************
-PoolParser::PoolParser(const std::string&,  PoolStoragePtr pools)
-        :pools_(pools) {
-
+//****************************** PoolsListParser ********************************
+PoolsListParser::PoolsListParser(const std::string&, PoolStoragePtr pools)
+    :pools_(pools), local_pools_(new PoolStorage()) {
     if (!pools_) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
+        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
                   << "storage may not be NULL");
     }
 }
 
 void
-PoolParser::build(ConstElementPtr pools_list) {
-    BOOST_FOREACH(ConstElementPtr text_pool, pools_list->listValue()) {
-        // That should be a single pool representation. It should contain
-        // text is form prefix/len or first - last. Note that spaces
-        // are allowed
-        string txt = text_pool->stringValue();
+PoolsListParser::build(ConstElementPtr pools) {
+    BOOST_FOREACH(ConstElementPtr pool, pools->listValue()) {
 
-        // first let's remove any whitespaces
-        boost::erase_all(txt, " "); // space
-        boost::erase_all(txt, "\t"); // tabulation
+        // Iterate over every structure on the pools list and invoke
+        // a separate parser for it.
+        ParserPtr parser = poolParserMaker(local_pools_);
 
-        // Is this prefix/len notation?
-        size_t pos = txt.find("/");
-        if (pos != string::npos) {
-            isc::asiolink::IOAddress addr("::");
-            uint8_t len = 0;
-            try {
-                addr = isc::asiolink::IOAddress(txt.substr(0, pos));
+        parser->build(pool);
 
-                // start with the first character after /
-                string prefix_len = txt.substr(pos + 1);
+        // Let's store the parser, but do not commit anything yet
+        parsers_.push_back(parser);
+    }
+}
 
-                // It is lexical cast to int and then downcast to uint8_t.
-                // Direct cast to uint8_t (which is really an unsigned char)
-                // will result in interpreting the first digit as output
-                // value and throwing exception if length is written on two
-                // digits (because there are extra characters left over).
+void PoolsListParser::commit() {
 
-                // No checks for values over 128. Range correctness will
-                // be checked in Pool4 constructor.
-                len = boost::lexical_cast<int>(prefix_len);
-            } catch (...)  {
-                isc_throw(DhcpConfigError, "Failed to parse pool "
-                          "definition: " << text_pool->stringValue()
-                          << " (" << text_pool->getPosition() << ")");
-            }
+    // Commit each parser first. It will store the pool structure
+    // in pools_.
+    BOOST_FOREACH(ParserPtr parser, parsers_) {
+        parser->commit();
+    }
 
-            PoolPtr pool(poolMaker(addr, len));
-            local_pools_.push_back(pool);
-            continue;
+    if (pools_) {
+        // local_pools_ holds the values produced by the build function.
+        // At this point parsing should have completed successfuly so
+        // we can append new data to the supplied storage.
+        pools_->insert(pools_->end(), local_pools_->begin(), local_pools_->end());
+    }
+}
+
+//****************************** PoolParser ********************************
+PoolParser::PoolParser(const std::string&,  PoolStoragePtr pools)
+        :pools_(pools) {
+
+    if (!pools_) {
+        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
+                  << "storage may not be NULL");
+    }
+}
+
+void
+PoolParser::build(ConstElementPtr pool_structure) {
+
+    ConstElementPtr text_pool = pool_structure->get("pool");
+
+    if (!text_pool) {
+        isc_throw(DhcpConfigError, "Mandatory 'pool' entry missing in "
+                  "definition: (" << text_pool->getPosition() << ")");
+    }
+
+    // That should be a single pool representation. It should contain
+    // text is form prefix/len or first - last. Note that spaces
+    // are allowed
+    string txt = text_pool->stringValue();
+
+    // first let's remove any whitespaces
+    boost::erase_all(txt, " "); // space
+    boost::erase_all(txt, "\t"); // tabulation
+
+    // Is this prefix/len notation?
+    size_t pos = txt.find("/");
+    if (pos != string::npos) {
+        isc::asiolink::IOAddress addr("::");
+        uint8_t len = 0;
+        try {
+            addr = isc::asiolink::IOAddress(txt.substr(0, pos));
+
+            // start with the first character after /
+            string prefix_len = txt.substr(pos + 1);
+
+            // It is lexical cast to int and then downcast to uint8_t.
+            // Direct cast to uint8_t (which is really an unsigned char)
+            // will result in interpreting the first digit as output
+            // value and throwing exception if length is written on two
+            // digits (because there are extra characters left over).
+
+            // No checks for values over 128. Range correctness will
+            // be checked in Pool4 constructor.
+            len = boost::lexical_cast<int>(prefix_len);
+        } catch (...)  {
+            isc_throw(DhcpConfigError, "Failed to parse pool "
+                      "definition: " << text_pool->stringValue()
+                      << " (" << text_pool->getPosition() << ")");
         }
 
-        // Is this min-max notation?
-        pos = txt.find("-");
-        if (pos != string::npos) {
-            // using min-max notation
-            isc::asiolink::IOAddress min(txt.substr(0,pos));
-            isc::asiolink::IOAddress max(txt.substr(pos + 1));
+        PoolPtr pool(poolMaker(addr, len));
+        local_pools_.push_back(pool);
+        return;
+    }
 
-            PoolPtr pool(poolMaker(min, max));
-            local_pools_.push_back(pool);
-            continue;
-        }
+    // Is this min-max notation?
+    pos = txt.find("-");
+    if (pos != string::npos) {
+        // using min-max notation
+        isc::asiolink::IOAddress min(txt.substr(0,pos));
+        isc::asiolink::IOAddress max(txt.substr(pos + 1));
 
-        isc_throw(DhcpConfigError, "invalid pool definition: "
-                  << text_pool->stringValue() <<
-                  ". There are two acceptable formats <min address-max address>"
-                  " or <prefix/len> ("
-                  << text_pool->getPosition() << ")");
-        }
+        PoolPtr pool(poolMaker(min, max));
+        local_pools_.push_back(pool);
+        return;
+    }
+
+    isc_throw(DhcpConfigError, "invalid pool definition: "
+              << text_pool->stringValue() <<
+              ". There are two acceptable formats <min address-max address>"
+              " or <prefix/len> ("
+              << text_pool->getPosition() << ")");
 }
 
 void
@@ -1038,7 +1084,7 @@ SubnetConfigParser::SubnetConfigParser(const std::string&,
     // The first parameter should always be "subnet", but we don't check
     // against that here in case some wants to reuse this parser somewhere.
     if (!global_context_) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
+        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
                  << "context storage may not be NULL");
     }
 }
