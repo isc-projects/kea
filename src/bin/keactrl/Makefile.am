@@ -11,6 +11,10 @@ man_MANS = keactrl.8
 DISTCLEANFILES = keactrl $(CONFIGFILES) $(man_MANS)
 EXTRA_DIST = keactrl.in keactrl.conf.in kea.conf.in $(man_MANS) keactrl.xml
 
+# kea.conf is not really a source used for building other targets, but we need
+# this file to be generated before make install is called.
+BUILT_SOURCES = kea.conf
+
 if GENERATE_DOCS
 
 keactrl.8: keactrl.xml
@@ -23,6 +27,9 @@ $(man_MANS):
 	@echo Man generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild Kea > $@
 
 endif
+
+kea.conf: kea.conf.in
+	$(top_srcdir)/tools/path_replacer.sh $< $@
 
 if INSTALL_CONFIGURATIONS
 

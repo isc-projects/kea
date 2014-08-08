@@ -17,6 +17,7 @@
 #include <dhcp4/json_config_parser.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <exceptions/exceptions.h>
 
 #include <string>
@@ -42,6 +43,7 @@ void configure(const std::string& file_name) {
 
     isc::data::ConstElementPtr json;
     isc::data::ConstElementPtr dhcp4;
+    isc::data::ConstElementPtr logger;
     isc::data::ConstElementPtr result;
 
     // Basic sanity check: file name must not be empty.
@@ -61,6 +63,15 @@ void configure(const std::string& file_name) {
             isc_throw(isc::BadValue, "Unable to process JSON configuration"
                       " file: " << file_name);
         }
+
+        // Let's configure logging before applying the configuration,
+        // so we can log things during configuration process.
+
+        // If there's no logging element, we'll just pass NULL pointer,
+        // which will be handled by configureLogger().
+        Daemon::configureLogger(json->get("Logging"),
+                                CfgMgr::instance().getConfiguration(),
+                                ControlledDhcpv4Srv::getInstance()->getVerbose());
 
         // Get Dhcp4 component from the config
         dhcp4 = json->get("Dhcp4");
@@ -170,10 +181,10 @@ void ControlledDhcpv4Srv::cleanup() {
 /// This is a logger initialization for JSON file backend.
 /// For now, it's just setting log messages to be printed on stdout.
 /// @todo: Implement this properly (see #3427)
-void Daemon::loggerInit(const char*, bool verbose) {
+void Daemon::loggerInit(const char* logger_name, bool verbose) {
 
     setenv("KEA_LOCKFILE_DIR_FROM_BUILD", "/tmp", 1);
-    setenv("KEA_LOGGER_ROOT", "kea", 0);
+    setenv("KEA_LOGGER_ROOT", logger_name, 0);
     setenv("KEA_LOGGER_SEVERITY", (verbose ? "DEBUG":"INFO"), 0);
     setenv("KEA_LOGGER_DBGLEVEL", "99", 0);
     setenv("KEA_LOGGER_DESTINATION",  "stdout", 0);

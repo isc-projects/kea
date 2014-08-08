@@ -39,7 +39,7 @@ namespace {
 
 const char* const DHCP4_NAME = "kea-dhcp4";
 
-const char* const DHCP4_LOGGER_NAME = "kea";
+const char* const DHCP4_LOGGER_NAME = "kea-dhcp4";
 
 void
 usage() {
@@ -107,7 +107,6 @@ main(int argc, char* argv[]) {
 
     try {
         // Initialize logging.  If verbose, we'll use maximum verbosity.
-        // If standalone is enabled, do not buffer initial log messages
         Daemon::loggerInit(DHCP4_LOGGER_NAME, verbose_mode);
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_START_INFO)
             .arg(getpid()).arg(port_number).arg(verbose_mode ? "yes" : "no");
@@ -117,19 +116,25 @@ main(int argc, char* argv[]) {
         // Create the server instance.
         ControlledDhcpv4Srv server(port_number);
 
+        // Remember verbose-mode
+        server.setVerbose(verbose_mode);
+
         try {
             // Initialize the server.
             server.init(config_file);
         } catch (const std::exception& ex) {
-            LOG_ERROR(dhcp4_logger, DHCP4_INIT_FAIL).arg(ex.what());
 
-            // We should not continue if were told to configure (either read
-            // config file or establish Bundy control session).
+            try {
+                // Let's log out what went wrong.
+                isc::log::LoggerManager log_manager;
+                log_manager.process();
+                LOG_ERROR(dhcp4_logger, DHCP4_INIT_FAIL).arg(ex.what());
+            } catch (...) {
+                // The exeption thrown during the initialization could originate
+                // from logger subsystem. Therefore LOG_ERROR() may fail as well.
+                cerr << "Failed to initialize server: " << ex.what() << endl;
+            }
 
-            isc::log::LoggerManager log_manager;
-            log_manager.process();
-
-            cerr << "Failed to initialize server: " << ex.what() << endl;
             return (EXIT_FAILURE);
         }
 
@@ -139,6 +144,14 @@ main(int argc, char* argv[]) {
         LOG_INFO(dhcp4_logger, DHCP4_SHUTDOWN);
 
     } catch (const std::exception& ex) {
+
+        // First, we print the error on stderr (that should always work)
+        cerr << DHCP4_NAME << ": Fatal error during start up: " << ex.what()
+             << endl;
+
+        // Let's also try to log it using logging system, but we're not
+        // sure if it's usable (the exception may have been thrown from
+        // the logger subsystem)
         LOG_FATAL(dhcp4_logger, DHCP4_SERVER_FAILED).arg(ex.what());
         ret = EXIT_FAILURE;
     }

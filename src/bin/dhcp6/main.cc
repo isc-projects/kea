@@ -39,7 +39,7 @@ using namespace std;
 namespace {
 const char* const DHCP6_NAME = "kea-dhcp6";
 
-const char* const DHCP6_LOGGER_NAME = "kea";
+const char* const DHCP6_LOGGER_NAME = "kea-dhcp6";
 
 void
 usage() {
@@ -117,6 +117,9 @@ main(int argc, char* argv[]) {
         // Create the server instance.
         ControlledDhcpv6Srv server(port_number);
 
+        // Remember verbose-mode
+        server.setVerbose(verbose_mode);
+
         try {
             // Initialize the server, e.g. establish control session
             // if Bundy backend is used or read a configuration file
@@ -124,14 +127,18 @@ main(int argc, char* argv[]) {
             server.init(config_file);
 
         } catch (const std::exception& ex) {
-            LOG_ERROR(dhcp6_logger, DHCP6_INIT_FAIL).arg(ex.what());
 
-            // We should not continue, just flush whatever has been logged
-            // and exit.
-            isc::log::LoggerManager log_manager;
-            log_manager.process();
+            try {
+                // Let's log out what went wrong.
+                isc::log::LoggerManager log_manager;
+                log_manager.process();
+                LOG_ERROR(dhcp6_logger, DHCP6_INIT_FAIL).arg(ex.what());
+            } catch (...) {
+                // The exeption thrown during the initialization could originate
+                // from logger subsystem. Therefore LOG_ERROR() may fail as well.
+                cerr << "Failed to initialize server: " << ex.what() << endl;
+            }
 
-            cerr << "Failed to initialize server: " << ex.what() << endl;
             return (EXIT_FAILURE);
         }
 
@@ -141,8 +148,15 @@ main(int argc, char* argv[]) {
         LOG_INFO(dhcp6_logger, DHCP6_SHUTDOWN);
 
     } catch (const std::exception& ex) {
+
+        // First, we print the error on stderr (that should always work)
+        cerr << DHCP6_NAME << "Fatal error during start up: " << ex.what()
+             << endl;
+
+        // Let's also try to log it using logging system, but we're not
+        // sure if it's usable (the exception may have been thrown from
+        // the logger subsystem)
         LOG_FATAL(dhcp6_logger, DHCP6_SERVER_FAILED).arg(ex.what());
-        cerr << "Fatal error during start up: " << ex.what() << endl;
         ret = EXIT_FAILURE;
     }
 

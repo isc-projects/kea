@@ -40,6 +40,12 @@ void setRootLoggerName(const std::string& name);
 /// \return Name of the root logger.
 const std::string& getRootLoggerName();
 
+
+/// @brief Returns the default ('kea') root logger name
+///
+/// @return The default name of root logger.
+const std::string& getDefaultRootLoggerName();
+
 /// \brief Expand logger name
 ///
 /// Given a logger name, returns the fully-expanded logger name.  If the name

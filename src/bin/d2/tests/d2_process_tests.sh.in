@@ -25,6 +25,20 @@ CONFIG="{
         \"tsig_keys\": [],
         \"forward_ddns\" : {},
         \"reverse_ddns\" : {}
+    },
+    \"Logging\":
+    {
+        \"loggers\": [
+        {
+            \"name\": \"kea-dhcp-ddns\",
+            \"output_options\": [
+                {
+                    \"output\": \"$LOG_FILE\"
+                }
+            ],
+            \"severity\": \"DEBUG\"
+        }
+        ]
     }
 }"
 
@@ -38,6 +52,20 @@ CONFIG_INVALID="{
         \"tsig_keys\": [],
         \"forward_ddns\" : {},
         \"reverse_ddns\" : {}
+    },
+    \"Logging\":
+    {
+        \"loggers\": [
+        {
+            \"name\": \"kea-dhcp-ddns\",
+            \"output_options\": [
+                {
+                    \"output\": \"$LOG_FILE\"
+                }
+            ],
+            \"severity\": \"INFO\"
+        }
+        ]
     }
 }"
 

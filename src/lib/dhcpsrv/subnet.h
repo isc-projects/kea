@@ -778,4 +778,4 @@ typedef std::vector<Subnet6Ptr> Subnet6Collection;
 } // end of isc::dhcp namespace
 } // end of isc namespace
 
-#endif // SUBNET_T
+#endif // SUBNET_H

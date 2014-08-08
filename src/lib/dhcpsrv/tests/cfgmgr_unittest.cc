@@ -289,6 +289,16 @@ public:
     isc::dhcp::ClientClasses classify_;
 };
 
+// Checks that there is a configuration structure available and that
+// it is empty by default.
+TEST_F(CfgMgrTest, configuration) {
+
+    ConfigurationPtr configuration = CfgMgr::instance().getConfiguration();
+    ASSERT_TRUE(configuration);
+
+    EXPECT_TRUE(configuration->logging_info_.empty());
+}
+
 // This test verifies that multiple option definitions can be added
 // under different option spaces.
 TEST_F(CfgMgrTest, getOptionDefs) {
