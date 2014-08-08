@@ -156,6 +156,8 @@ void LogConfigParser::applyConfiguration() {
     // Set locking directory to /tmp
     setenv("B10_LOCKFILE_DIR_FROM_BUILD", "/tmp", 1);
 
+    std::vector<LoggerSpecification> specs;
+
     // Now iterate through all specified loggers
     for (LoggingInfoStorage::const_iterator it = config_->logging_info_.begin();
          it != config_->logging_info_.end(); ++it) {
@@ -206,9 +208,11 @@ void LogConfigParser::applyConfiguration() {
             spec.addOutputOption(option);
         }
 
-        LoggerManager manager;
-        manager.process(spec);
+        specs.push_back(spec);
     }
+
+    LoggerManager manager;
+    manager.process(specs.begin(), specs.end());
 }
 
 void LogConfigParser::applyDefaultConfiguration(bool verbose) {
