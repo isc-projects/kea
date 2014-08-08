@@ -902,6 +902,9 @@ protected:
     /// A temporary storage for pools configuration. It is the
     /// storage where pools are stored by the build function.
     PoolStoragePtr local_pools_;
+
+    /// Collection of parsers;
+    ParserCollection parsers_;
 };
 
 /// @brief parser for additional relay information
