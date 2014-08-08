@@ -1,3 +1,8 @@
+8xx.	[func,doc]	tomek
+	It is now possible to specify logging parameters in a
+	configuration file for DHCPv4, DHCPv6 and DHCP-DDNS components.
+	(Trac #3427, git abcd)
+
 802.	[doc]		tomek, marcin
 	Developer's Guide updated to Change BIND 10 references to Kea.
 	Documentation for Keactl added.
