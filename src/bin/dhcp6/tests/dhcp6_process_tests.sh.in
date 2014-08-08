@@ -41,7 +41,7 @@ CONFIG="{
     {
         \"loggers\": [
         {
-            \"name\": \"kea\",
+            \"name\": \"kea-dhcp6\",
             \"output_options\": [
                 {
                     \"output\": \"$LOG_FILE\"
@@ -78,7 +78,7 @@ CONFIG_INVALID="{
     {
         \"loggers\": [
         {
-            \"name\": \"kea\",
+            \"name\": \"kea-dhcp6\",
             \"output_options\": [
                 {
                     \"output\": \"$LOG_FILE\"
