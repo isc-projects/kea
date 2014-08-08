@@ -401,8 +401,8 @@ temporarily override a list of interface names and listen on all interfaces.
     in square brackets, even though only one range of addresses is
     specified in this example.</para>
 
-    <para>Each <command>pool</command> is a structure that describes
-    the pool parameters. Currently there is only one parameter,
+    <para>Each <command>pool</command> is a structure that contains the parameters
+    th describe a single pool. Currently there is only one parameter,
     <command>pool</command>, which gives the range of addresses
     in the pool. Additional parameters will be added in future
     releases of Kea.</para>
