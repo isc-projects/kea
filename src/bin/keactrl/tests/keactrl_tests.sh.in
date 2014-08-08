@@ -81,7 +81,25 @@ config="{
     {
         \"loggers\": [
         {
-            \"name\": \"*\",
+            \"name\": \"kea-dhcp4\",
+            \"output_options\": [
+                {
+                    \"output\": \"$LOG_FILE\"
+                }
+            ],
+            \"severity\": \"INFO\"
+        },
+        {
+            \"name\": \"kea-dhcp6\",
+            \"output_options\": [
+                {
+                    \"output\": \"$LOG_FILE\"
+                }
+            ],
+            \"severity\": \"INFO\"
+        },
+        {
+            \"name\": \"kea-dhcp-ddns\",
             \"output_options\": [
                 {
                     \"output\": \"$LOG_FILE\"
