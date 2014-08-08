@@ -1,0 +1,18 @@
+#!/bin/sh
+
+#
+# This script replaces @prefix@ and @localstatedir@ variables with their
+# actual content. Usage:
+#
+# ./path_replacer.sh input-file.in output-file
+
+prefix=@prefix@
+sysconfdir=@sysconfdir@
+localstatedir=@localstatedir@
+
+echo "Replacing \@localstatedir\@ with ${localstatedir}"
+
+echo "Input file: $1"
+echo "Output file: $2"
+
+sed -e "s+\@localstatedir\@+${localstatedir}+g; s+\@prefix@+${prefix}+g; s+\@sysconfdir@+${sysconfdir}+g" $1 > $2
