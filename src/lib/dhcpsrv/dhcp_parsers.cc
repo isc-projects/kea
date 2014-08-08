@@ -962,13 +962,19 @@ PoolsListParser::build(ConstElementPtr pools) {
 
         parser->build(pool);
 
-        // Before we can create a pool, we need to ask the pool parser
-        // to create it.
-        parser->commit();
+        // Let's store the parser, but do not commit anything yet
+        parsers_.push_back(parser);
     }
 }
 
 void PoolsListParser::commit() {
+
+    // Commit each parser first. It will store the pool structure
+    // in pools_.
+    BOOST_FOREACH(ParserPtr parser, parsers_) {
+        parser->commit();
+    }
+
     if (pools_) {
         // local_pools_ holds the values produced by the build function.
         // At this point parsing should have completed successfuly so
