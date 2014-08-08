@@ -40,6 +40,11 @@ const std::string& getRootLoggerName() {
     return (getRootLoggerNameInternal());
 }
 
+const std::string& getDefaultRootLoggerName() {
+    static std::string root_name("kea");
+    return (root_name);
+}
+
 std::string expandLoggerName(const std::string& name) {
 
     // Are we the root logger, or does the logger name start with

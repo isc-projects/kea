@@ -59,6 +59,8 @@ libkea_dhcpsrv_la_SOURCES += key_from_key.h
 libkea_dhcpsrv_la_SOURCES += lease.cc lease.h
 libkea_dhcpsrv_la_SOURCES += lease_mgr.cc lease_mgr.h
 libkea_dhcpsrv_la_SOURCES += lease_mgr_factory.cc lease_mgr_factory.h
+libkea_dhcpsrv_la_SOURCES += logging.cc logging.h
+libkea_dhcpsrv_la_SOURCES += configuration.h
 libkea_dhcpsrv_la_SOURCES += memfile_lease_mgr.cc memfile_lease_mgr.h
 
 if HAVE_MYSQL

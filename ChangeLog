@@ -1,3 +1,8 @@
+814.	[func,doc]	tomek
+	It is now possible to specify logging parameters in a
+	configuration file for DHCPv4, DHCPv6 and DHCP-DDNS components.
+	(Trac #3427, git 23285903645c36fc35c6866a74c50c74089cd255)
+
 813.	[func]		tomek
 	Functions, methods and variables referring to BIND10 were renamed
 	to Kea. In particular, system variables (B10_LOGGER_ROOT,

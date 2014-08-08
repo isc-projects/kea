@@ -18,6 +18,7 @@
 #include <d2/d_controller.h>
 #include <exceptions/exceptions.h>
 #include <log/logger_support.h>
+#include <dhcpsrv/configuration.h>
 
 #include <sstream>
 
@@ -219,6 +220,16 @@ DControllerBase::configFromFile() {
         // Read contents of the file and parse it as JSON
         isc::data::ConstElementPtr whole_config =
             isc::data::Element::fromJSONFile(config_file, true);
+
+        // Let's configure logging before applying the configuration,
+        // so we can log things during configuration process.
+
+        // Temporary storage for logging configuration
+        isc::dhcp::ConfigurationPtr storage(new isc::dhcp::Configuration());
+
+        // Get 'Logging' element from the config and use it to set up
+        // logging. If there's no such element, we'll just pass NULL.
+        Daemon::configureLogger(whole_config->get("Logging"), storage, verbose_);
 
         // Extract derivation-specific portion of the configuration.
         module_config = whole_config->get(getAppName());

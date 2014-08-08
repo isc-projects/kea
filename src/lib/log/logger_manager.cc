@@ -51,7 +51,7 @@ int& initDebugLevel() {
 }
 
 std::string& initRootName() {
-    static std::string root("kea");
+    static std::string root(isc::log::getDefaultRootLoggerName());
     return (root);
 }
 

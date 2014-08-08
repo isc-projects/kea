@@ -154,7 +154,8 @@ void initLogger(isc::log::Severity severity, int dbglevel) {
     const char* DEFAULT_ROOT = "kea";
     const char* root = getenv("KEA_LOGGER_ROOT");
     if (! root) {
-        root = DEFAULT_ROOT;
+        // If not present, the name is "kea".
+        root = isc::log::getDefaultRootLoggerName().c_str();
     }
 
     // Set the local message file
