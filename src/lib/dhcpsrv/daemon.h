@@ -147,7 +147,7 @@ public:
     /// @brief Returns if running in verbose mode
     ///
     /// @return verbose mode
-    bool getVerbose() {
+    bool getVerbose() const {
         return (verbose_);
     }
 
