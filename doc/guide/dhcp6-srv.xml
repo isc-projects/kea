@@ -456,6 +456,13 @@ temporarily override a list of interface names and listen on all interfaces.
         is actually a list of pools: for this reason, the pool definition is
         enclosed in square brackets, even though only one range of addresses
         is specified.</para>
+
+        <para>Each <command>pool</command> is a structure that contains the
+        parameters th describe a single pool. Currently there is only one
+        parameter, <command>pool</command>, which gives the range of addresses
+        in the pool. Additional parameters will be added in future releases of
+        Kea.</para>
+
         <para>It is possible to define more than one pool in a
         subnet: continuing the previous example, further assume that
         2001:db8:1:0:5::/80 should be also be managed by the server. It could be written as

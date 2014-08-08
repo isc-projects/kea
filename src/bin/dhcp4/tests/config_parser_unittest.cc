@@ -184,7 +184,7 @@ public:
             "\"rebind-timer\": 2000, "
             "\"renew-timer\": 1000, "
             "\"subnet4\": [ { "
-            "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+            "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
             "    \"subnet\": \"192.0.2.0/24\", "
             "    \"option-data\": [ {";
         bool first = true;
@@ -519,7 +519,7 @@ TEST_F(Dhcp4ParserTest, unspecifiedRenewTimer) {
     string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000, "
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
@@ -553,7 +553,7 @@ TEST_F(Dhcp4ParserTest, unspecifiedRebindTimer) {
     string config = "{ \"interfaces\": [ \"*\" ],"
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
@@ -588,7 +588,7 @@ TEST_F(Dhcp4ParserTest, subnetGlobalDefaults) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
@@ -623,20 +623,20 @@ TEST_F(Dhcp4ParserTest, multipleSubnets) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\" "
         " },"
         " {"
-        "    \"pool\": [ \"192.0.3.101 - 192.0.3.150\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.3.101 - 192.0.3.150\" } ],"
         "    \"subnet\": \"192.0.3.0/24\", "
         "    \"id\": 0 "
         " },"
         " {"
-        "    \"pool\": [ \"192.0.4.101 - 192.0.4.150\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.4.101 - 192.0.4.150\" } ],"
         "    \"subnet\": \"192.0.4.0/24\" "
         " },"
         " {"
-        "    \"pool\": [ \"192.0.5.101 - 192.0.5.150\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.5.101 - 192.0.5.150\" } ],"
         "    \"subnet\": \"192.0.5.0/24\" "
         " } ],"
         "\"valid-lifetime\": 4000 }";
@@ -674,22 +674,22 @@ TEST_F(Dhcp4ParserTest, multipleSubnetsExplicitIDs) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\", "
         "    \"id\": 1024 "
         " },"
         " {"
-        "    \"pool\": [ \"192.0.3.101 - 192.0.3.150\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.3.101 - 192.0.3.150\" } ],"
         "    \"subnet\": \"192.0.3.0/24\", "
         "    \"id\": 100 "
         " },"
         " {"
-        "    \"pool\": [ \"192.0.4.101 - 192.0.4.150\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.4.101 - 192.0.4.150\" } ],"
         "    \"subnet\": \"192.0.4.0/24\", "
         "    \"id\": 1 "
         " },"
         " {"
-        "    \"pool\": [ \"192.0.5.101 - 192.0.5.150\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.5.101 - 192.0.5.150\" } ],"
         "    \"subnet\": \"192.0.5.0/24\", "
         "    \"id\": 34 "
         " } ],"
@@ -725,22 +725,22 @@ TEST_F(Dhcp4ParserTest, multipleSubnetsOverlapingIDs) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\", "
         "    \"id\": 1024 "
         " },"
         " {"
-        "    \"pool\": [ \"192.0.3.101 - 192.0.3.150\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.3.101 - 192.0.3.150\" } ],"
         "    \"subnet\": \"192.0.3.0/24\", "
         "    \"id\": 100 "
         " },"
         " {"
-        "    \"pool\": [ \"192.0.4.101 - 192.0.4.150\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.4.101 - 192.0.4.150\" } ],"
         "    \"subnet\": \"192.0.4.0/24\", "
         "    \"id\": 1024 "
         " },"
         " {"
-        "    \"pool\": [ \"192.0.5.101 - 192.0.5.150\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.5.101 - 192.0.5.150\" } ],"
         "    \"subnet\": \"192.0.5.0/24\", "
         "    \"id\": 34 "
         " } ],"
@@ -763,22 +763,22 @@ TEST_F(Dhcp4ParserTest, reconfigureRemoveSubnet) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\", "
         "    \"id\": 1 "
         " },"
         " {"
-        "    \"pool\": [ \"192.0.3.101 - 192.0.3.150\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.3.101 - 192.0.3.150\" } ],"
         "    \"subnet\": \"192.0.3.0/24\", "
         "    \"id\": 2 "
         " },"
         " {"
-        "    \"pool\": [ \"192.0.4.101 - 192.0.4.150\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.4.101 - 192.0.4.150\" } ],"
         "    \"subnet\": \"192.0.4.0/24\", "
         "    \"id\": 3 "
         " },"
         " {"
-        "    \"pool\": [ \"192.0.5.101 - 192.0.5.150\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.5.101 - 192.0.5.150\" } ],"
         "    \"subnet\": \"192.0.5.0/24\", "
         "    \"id\": 4 "
         " } ],"
@@ -789,17 +789,17 @@ TEST_F(Dhcp4ParserTest, reconfigureRemoveSubnet) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\", "
         "    \"id\": 1 "
         " },"
         " {"
-        "    \"pool\": [ \"192.0.3.101 - 192.0.3.150\" ],"
+        "    \"pools\": [ { \"pool\":  \"192.0.3.101 - 192.0.3.150\" } ],"
         "    \"subnet\": \"192.0.3.0/24\", "
         "    \"id\": 2 "
         " },"
         " {"
-        "    \"pool\": [ \"192.0.4.101 - 192.0.4.150\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.4.101 - 192.0.4.150\" } ],"
         "    \"subnet\": \"192.0.4.0/24\", "
         "    \"id\": 3 "
         " } ],"
@@ -810,17 +810,17 @@ TEST_F(Dhcp4ParserTest, reconfigureRemoveSubnet) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\", "
         "    \"id\": 1 "
         " },"
         " {"
-        "    \"pool\": [ \"192.0.4.101 - 192.0.4.150\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.4.101 - 192.0.4.150\" } ],"
         "    \"subnet\": \"192.0.4.0/24\", "
         "    \"id\": 3 "
         " },"
         " {"
-        "    \"pool\": [ \"192.0.5.101 - 192.0.5.150\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.5.101 - 192.0.5.150\" } ],"
         "    \"subnet\": \"192.0.5.0/24\", "
         "    \"id\": 4 "
         " } ],"
@@ -888,7 +888,7 @@ TEST_F(Dhcp4ParserTest, nextServerGlobal) {
         "\"renew-timer\": 1000, "
         "\"next-server\": \"1.2.3.4\", "
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
@@ -917,7 +917,7 @@ TEST_F(Dhcp4ParserTest, nextServerSubnet) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"next-server\": \"1.2.3.4\", "
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
@@ -948,7 +948,7 @@ TEST_F(Dhcp4ParserTest, nextServerNegative) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"rebind-timer\": 2000, "
         "    \"renew-timer\": 1000, "
         "    \"next-server\": \"a.b.c.d\", "
@@ -960,7 +960,7 @@ TEST_F(Dhcp4ParserTest, nextServerNegative) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"rebind-timer\": 2000, "
         "    \"renew-timer\": 1000, "
         "    \"next-server\": \"2001:db8::1\", "
@@ -972,7 +972,7 @@ TEST_F(Dhcp4ParserTest, nextServerNegative) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"rebind-timer\": 2000, "
         "    \"renew-timer\": 1000, "
         "    \"next-server\": \"\", "
@@ -1008,7 +1008,7 @@ TEST_F(Dhcp4ParserTest, nextServerOverride) {
         "\"renew-timer\": 1000, "
         "\"next-server\": \"192.0.0.1\", "
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"next-server\": \"1.2.3.4\", "
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
@@ -1038,7 +1038,7 @@ TEST_F(Dhcp4ParserTest, echoClientId) {
         "\"renew-timer\": 1000, "
         "\"echo-client-id\": false,"
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
@@ -1047,7 +1047,7 @@ TEST_F(Dhcp4ParserTest, echoClientId) {
         "\"renew-timer\": 1000, "
         "\"echo-client-id\": true,"
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"pools\": [ { \"pool\":  \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
@@ -1079,7 +1079,7 @@ TEST_F(Dhcp4ParserTest, subnetLocal) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"renew-timer\": 1, "
         "    \"rebind-timer\": 2, "
         "    \"valid-lifetime\": 4,"
@@ -1101,6 +1101,63 @@ TEST_F(Dhcp4ParserTest, subnetLocal) {
     EXPECT_EQ(4, subnet->getValid());
 }
 
+// This test checks that multiple pools can be defined and handled properly.
+// The test defines 2 subnets, each with 2 pools.
+TEST_F(Dhcp4ParserTest, multiplePools) {
+
+    // Collection with two subnets, each with 2 pools.
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ "
+        "        { \"pool\": \"192.0.2.0/28\" },"
+        "        { \"pool\": \"192.0.2.200-192.0.2.255\" }"
+        "    ],"
+        "    \"subnet\": \"192.0.2.0/24\" "
+        " },"
+        " {"
+        "    \"pools\": [ "
+        "    { \"pool\": \"192.0.3.0/25\" },"
+        "    { \"pool\": \"192.0.3.128/25\" }"
+        "    ],"
+        "    \"subnet\": \"192.0.3.0/24\""
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+    ElementPtr json;
+    ASSERT_NO_THROW(json = Element::fromJSON(config));
+
+    ConstElementPtr status;
+    ASSERT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    checkResult(status, 0);
+
+    const Subnet4Collection* subnets = CfgMgr::instance().getSubnets4();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(2, subnets->size()); // We expect 2 subnets
+
+    // Check the first subnet
+    const PoolCollection& pools1 = subnets->at(0)->getPools(Lease::TYPE_V4);
+    ASSERT_EQ(2, pools1.size());
+    EXPECT_EQ("type=V4, 192.0.2.0-192.0.2.15",
+              pools1[0]->toText());
+    EXPECT_EQ("type=V4, 192.0.2.200-192.0.2.255",
+              pools1[1]->toText());
+    // There shouldn't be any TA or PD pools
+    EXPECT_THROW(subnets->at(0)->getPools(Lease::TYPE_TA), BadValue);
+    EXPECT_THROW(subnets->at(0)->getPools(Lease::TYPE_PD), BadValue);
+
+    // Check the second subnet
+    const PoolCollection& pools2 = subnets->at(1)->getPools(Lease::TYPE_V4);
+    ASSERT_EQ(2, pools2.size());
+    EXPECT_EQ("type=V4, 192.0.3.0-192.0.3.127",
+              pools2[0]->toText());
+    EXPECT_EQ("type=V4, 192.0.3.128-192.0.3.255",
+              pools2[1]->toText());
+    // There shouldn't be any TA or PD pools
+    EXPECT_THROW(subnets->at(0)->getPools(Lease::TYPE_TA).empty(), BadValue);
+    EXPECT_THROW(subnets->at(0)->getPools(Lease::TYPE_PD).empty(), BadValue);
+}
+
 // Test verifies that a subnet with pool values that do not belong to that
 // pool are rejected.
 TEST_F(Dhcp4ParserTest, poolOutOfSubnet) {
@@ -1111,7 +1168,7 @@ TEST_F(Dhcp4ParserTest, poolOutOfSubnet) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.4.0/28\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.4.0/28\" } ],"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
@@ -1136,7 +1193,7 @@ TEST_F(Dhcp4ParserTest, poolPrefixLen) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.128/28\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.2.128/28\" } ],"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
@@ -1713,7 +1770,7 @@ TEST_F(Dhcp4ParserTest, optionDataDefaults) {
         "    \"csv-format\": False"
         " } ],"
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\""
         " } ],"
         "\"valid-lifetime\": 4000 }";
@@ -1795,7 +1852,7 @@ TEST_F(Dhcp4ParserTest, optionDataTwoSpaces) {
         "    \"encapsulate\": \"\""
         " } ],"
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\""
         " } ]"
         "}";
@@ -1949,7 +2006,7 @@ TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
         "    \"encapsulate\": \"\""
         " } ],"
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\""
         " } ]"
         "}";
@@ -2004,7 +2061,7 @@ TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
         "      \"csv-format\": False"
         " } ],"
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\", "
         "    \"option-data\": [ {"
         "          \"name\": \"dhcp-message\","
@@ -2151,7 +2208,7 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"pools\": [ { \"pool\":  \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\", "
         "    \"option-data\": [ {"
         "          \"name\": \"dhcp-message\","
@@ -2162,7 +2219,7 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
         "        } ]"
         " },"
         " {"
-        "    \"pool\": [ \"192.0.3.101 - 192.0.3.150\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.3.101 - 192.0.3.150\" } ],"
         "    \"subnet\": \"192.0.3.0/24\", "
         "    \"option-data\": [ {"
         "          \"name\": \"default-ip-ttl\","
@@ -2518,7 +2575,7 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
         "    \"encapsulate\": \"\""
         " } ],"
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\""
         " } ]"
         "}";
@@ -2601,7 +2658,7 @@ TEST_F(Dhcp4ParserTest, vendorOptionsHex) {
         "    \"csv-format\": False"
         " } ],"
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.1-192.0.2.10\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1-192.0.2.10\" } ],"
         "    \"subnet\": \"192.0.2.0/24\""
         " } ]"
         "}";
@@ -2662,7 +2719,7 @@ TEST_F(Dhcp4ParserTest, vendorOptionsCsv) {
         "    \"encapsulate\": \"\""
         " } ],"
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"pools\": [ { \"pool\":  \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\" "
         " } ]"
         "}";
@@ -2746,7 +2803,7 @@ buildHooksLibrariesConfig(const std::vector<std::string>& libraries) {
         "    \"encapsulate\": \"\""
         " } ],"
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\""
         " } ]"
         "}");
@@ -2914,7 +2971,7 @@ TEST_F(Dhcp4ParserTest, d2ClientConfig) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         " \"dhcp-ddns\" : {"
         "     \"enable-updates\" : true, "
@@ -2979,7 +3036,7 @@ TEST_F(Dhcp4ParserTest, invalidD2ClientConfig) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         " \"dhcp-ddns\" : {"
         "     \"enable-updates\" : true, "
@@ -3025,7 +3082,7 @@ TEST_F(Dhcp4ParserTest, subnetRelayInfo) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"renew-timer\": 1, "
         "    \"rebind-timer\": 2, "
         "    \"valid-lifetime\": 4,"
@@ -3056,22 +3113,22 @@ TEST_F(Dhcp4ParserTest, classifySubnets) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\", "
         "    \"client-class\": \"alpha\" "
         " },"
         " {"
-        "    \"pool\": [ \"192.0.3.101 - 192.0.3.150\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.3.101 - 192.0.3.150\" } ],"
         "    \"subnet\": \"192.0.3.0/24\", "
         "    \"client-class\": \"beta\" "
         " },"
         " {"
-        "    \"pool\": [ \"192.0.4.101 - 192.0.4.150\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.4.101 - 192.0.4.150\" } ],"
         "    \"subnet\": \"192.0.4.0/24\", "
         "    \"client-class\": \"gamma\" "
         " },"
         " {"
-        "    \"pool\": [ \"192.0.5.101 - 192.0.5.150\" ],"
+        "    \"pools\": [ { \"pool\": \"192.0.5.101 - 192.0.5.150\" } ],"
         "    \"subnet\": \"192.0.5.0/24\" "
         " } ],"
         "\"valid-lifetime\": 4000 }";
