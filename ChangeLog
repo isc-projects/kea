@@ -1,3 +1,9 @@
+8xx.	[func]		tomek
+	Pool definitions in DHCPv4 and DHCPv6 are now lists of
+	structures. This makes adding new per-pool parameters easier in
+	the future.
+	(Trac #3464, git tbd)
+
 804.	[func]		marcin
 	DHCPv4 server supports DHCPINFORM messages from the clients.
 	(Trac #3390, git 77f8577b1dbb52bdc6deb8bed3eef6ce7abc33fd)
