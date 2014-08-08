@@ -1383,7 +1383,6 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/dhcp6/tests/test_data_files_config.h
                  src/bin/dhcp6/tests/test_libraries.h
                  src/bin/keactrl/keactrl
-                 src/bin/keactrl/kea.conf
                  src/bin/keactrl/keactrl.conf
                  src/bin/keactrl/Makefile
                  src/bin/keactrl/tests/keactrl_tests.sh
@@ -1454,6 +1453,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/util/threads/tests/Makefile
                  src/lib/util/unittests/Makefile
                  src/Makefile
+                 tools/path_replacer.sh
                  tests/Makefile
                  tests/tools/Makefile
                  tests/tools/perfdhcp/Makefile
@@ -1474,6 +1474,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
            chmod +x src/lib/log/tests/logger_lock_test.sh
            chmod +x src/lib/log/tests/severity_test.sh
            chmod +x src/lib/util/python/gen_wiredata.py
+           chmod +x tools/path_replacer.sh
 ])
 
 AC_OUTPUT
