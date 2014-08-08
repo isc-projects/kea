@@ -24,6 +24,9 @@ $(man_MANS):
 
 endif
 
+kea.conf: kea.conf.in
+	$(top_srcdir)/tools/path_replacer.sh $< $@
+
 if INSTALL_CONFIGURATIONS
 
 install-data-local:
