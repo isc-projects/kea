@@ -42,7 +42,7 @@
 "Logging": {
     "loggers": [
         {
-            "name": "kea",
+            "name": "kea-dhcp4",
             "output_options": [
                 {
                     "output": "stdout"

@@ -39,7 +39,7 @@ using namespace std;
 namespace {
 const char* const DHCP6_NAME = "kea-dhcp6";
 
-const char* const DHCP6_LOGGER_NAME = "kea";
+const char* const DHCP6_LOGGER_NAME = "kea-dhcp6";
 
 void
 usage() {
@@ -121,14 +121,18 @@ main(int argc, char* argv[]) {
             server.init(config_file);
 
         } catch (const std::exception& ex) {
-            LOG_ERROR(dhcp6_logger, DHCP6_INIT_FAIL).arg(ex.what());
 
-            // We should not continue if were told to configure (either read
-            // config file or establish BIND10 control session).
-            isc::log::LoggerManager log_manager;
-            log_manager.process();
+            try {
+                // Let's log out what went wrong.
+                isc::log::LoggerManager log_manager;
+                log_manager.process();
+                LOG_ERROR(dhcp6_logger, DHCP6_INIT_FAIL).arg(ex.what());
+            } catch (...) {
+                // The exeption thrown during the initialization could originate
+                // from logger subsystem. Therefore LOG_ERROR() may fail as well.
+                cerr << "Failed to initialize server: " << ex.what() << endl;
+            }
 
-            cerr << "Failed to initialize server: " << ex.what() << endl;
             return (EXIT_FAILURE);
         }
 

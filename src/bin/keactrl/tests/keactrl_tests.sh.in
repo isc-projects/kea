@@ -75,6 +75,21 @@ config="{
         \"tsig_keys\": [],
         \"forward_ddns\" : {},
         \"reverse_ddns\" : {}
+    },
+
+    \"Logging\":
+    {
+        \"loggers\": [
+        {
+            \"name\": \"*\",
+            \"output_options\": [
+                {
+                    \"output\": \"$LOG_FILE\"
+                }
+            ],
+            \"severity\": \"INFO\"
+        }
+        ]
     }
 }"
 

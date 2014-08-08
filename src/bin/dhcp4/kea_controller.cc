@@ -181,10 +181,10 @@ void ControlledDhcpv4Srv::cleanup() {
 /// This is a logger initialization for JSON file backend.
 /// For now, it's just setting log messages to be printed on stdout.
 /// @todo: Implement this properly (see #3427)
-void Daemon::loggerInit(const char*, bool verbose) {
+void Daemon::loggerInit(const char* logger_name, bool verbose) {
 
     setenv("B10_LOCKFILE_DIR_FROM_BUILD", "/tmp", 1);
-    setenv("B10_LOGGER_ROOT", "kea", 0);
+    setenv("B10_LOGGER_ROOT", logger_name, 0);
     setenv("B10_LOGGER_SEVERITY", (verbose ? "DEBUG":"INFO"), 0);
     setenv("B10_LOGGER_DBGLEVEL", "99", 0);
     setenv("B10_LOGGER_DESTINATION",  "stdout", 0);
