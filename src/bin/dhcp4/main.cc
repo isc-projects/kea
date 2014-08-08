@@ -138,6 +138,14 @@ main(int argc, char* argv[]) {
         LOG_INFO(dhcp4_logger, DHCP4_SHUTDOWN);
 
     } catch (const std::exception& ex) {
+
+        // First, we print the error on stderr (that should always work)
+        cerr << DHCP4_NAME << ": Fatal error during start up: " << ex.what()
+             << endl;
+
+        // Let's also try to log it using logging system, but we're not
+        // sure if it's usable (the exception may have been thrown from
+        // the logger subsystem)
         LOG_FATAL(dhcp4_logger, DHCP4_SERVER_FAILED).arg(ex.what());
         ret = EXIT_FAILURE;
     }
