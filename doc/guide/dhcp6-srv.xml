@@ -1757,23 +1757,34 @@ should include options from the isc option space:
 
 
     <section id="dhcp6-std">
-      <title>Supported Standards</title>
-      <para>The following standards and draft standards are currently
+      <title>Supported DHCPv6 Standards</title>
+      <para>The following standards are currently
       supported:</para>
       <itemizedlist>
           <listitem>
-            <simpara><ulink url="http://tools.ietf.org/html/rfc3315">RFC 3315</ulink>: Supported messages are SOLICIT,
+            <simpara><emphasis>Dynamic Host Configuration Protocol for IPv6</emphasis>,
+            <ulink url="http://tools.ietf.org/html/rfc3315">RFC 3315</ulink>:
+            Supported messages are SOLICIT,
             ADVERTISE, REQUEST, RELEASE, RENEW, REBIND, CONFIRM and REPLY.</simpara>
           </listitem>
           <listitem>
-            <simpara><ulink url="http://tools.ietf.org/html/rfc3633">RFC 3633</ulink>: Supported options are IA_PD and
+            <simpara><emphasis>IPv6 Prefix Options for
+            Dynamic Host Configuration Protocol (DHCP) version 6</emphasis>,
+            <ulink url="http://tools.ietf.org/html/rfc3633">RFC 3633</ulink>:
+            Supported options are IA_PD and
             IA_PREFIX. Also supported is the status code NoPrefixAvail.</simpara>
           </listitem>
           <listitem>
-            <simpara><ulink url="http://tools.ietf.org/html/rfc3646">RFC 3646</ulink>: Supported option is DNS_SERVERS.</simpara>
+            <simpara><emphasis>DNS Configuration options for Dynamic Host
+            Configuration Protocol for IPv6 (DHCPv6)</emphasis>,
+            <ulink url="http://tools.ietf.org/html/rfc3646">RFC 3646</ulink>:
+            Supported option is DNS_SERVERS.</simpara>
           </listitem>
           <listitem>
-            <simpara><ulink url="http://tools.ietf.org/html/rfc4704">RFC 4704</ulink>: Supported option is CLIENT_FQDN.</simpara>
+            <simpara><emphasis>The Dynamic Host Configuration Protocol for IPv6 (DHCPv6) Client
+            Fully Qualified Domain Name (FQDN) Option</emphasis>,
+            <ulink url="http://tools.ietf.org/html/rfc4704">RFC 4704</ulink>:
+            Supported option is CLIENT_FQDN.</simpara>
           </listitem>
       </itemizedlist>
     </section>
