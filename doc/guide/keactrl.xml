@@ -214,23 +214,23 @@ keactrl configuration file: /usr/local/etc/kea/keactrl.conf
       <para>
         The optional <command>-s</command> switch allows
         the selection of the servers to which <command>keactrl</command>
-        command is issued.  For example,
+        command is issued.  For example, the following
+        instructs <command>keactrl</command> to stop the
+        <command>kea-dhcp4</command> and <command>kea-dhcp6</command> servers
+        and leave the <command>kea-dhcp-ddns</command> server running:
 <screen>
 <userinput>$ keactrl stop -s dhcp4,dhcp6</userinput>
 </screen>
-        ... instructs <command>keactrl</command> to stop the
-        <command>kea-dhcp4</command> and <command>kea-dhcp6</command> servers
-        and leave the <command>kea-dhcp-ddns</command> running.
       </para>
 
       <para>
-        Similarly,
+        Similarly, the following
+        will only start the <command>kea-dhcp4</command> and
+        <command>kea-dhcp-ddns</command> servers and not
+        <command>kea-dhcp6</command>.
 <screen>
 <userinput>$ keactrl start -s dhcp4,dhcp_ddns</userinput>
 </screen>
-        ... will only start the <command>kea-dhcp4</command> and
-        <command>kea-dhcp-ddns</command> servers and not
-        <command>kea-dhcp6</command>.
       </para>
       <para>
         Note that the behavior of the <command>-s</command> switch

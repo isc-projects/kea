@@ -448,14 +448,12 @@ Debian and Ubuntu:
         </para>
         <para>
           Build and install Kea as described in <xref linkend="installation"/>, with
-          the following modification: to enable the MySQL database code, at the
-          "configure" step (see <xref linkend="configure"/>), specify the location of the
-          MySQL configuration program "mysql_config" with the "--with-dhcp-mysql" switch,
-          i.e.
+          the following modification. To enable the MySQL database code, at the
+          "configure" step (see <xref linkend="configure"/>), do:
           <screen><userinput>./configure [other-options] --with-dhcp-mysql</userinput></screen>
-          ...if MySQL was installed in the default location, or:
+	  Or specify the location of the MySQL configuration program
+	  "mysql_config" if MySQL was not installed in the default location:
           <screen><userinput>./configure [other-options] --with-dhcp-mysql=<replaceable>path-to-mysql_config</replaceable></userinput></screen>
-          ...if not.
         </para>
       </section>
       <section id="dhcp-mysql-database-create">
@@ -474,7 +472,8 @@ mysql></screen>
         <para>
           2. Create the database:
           <screen>mysql> <userinput>CREATE DATABASE <replaceable>database-name</replaceable>;</userinput></screen>
-          ... <replaceable>database-name</replaceable> is the name you have chosen for the database.
+	  (<replaceable>database-name</replaceable> is the name you
+	  have chosen for the database.)
         </para>
          <para>
           3. Create the database tables by running the dhcpdb_create.mysql script supplied as part of Kea:
@@ -503,14 +502,13 @@ $</screen>
         </para>
         <para>
           Build and install Kea as described in <xref linkend="installation"/>, with
-          the following modification: to enable the PostgreSQL database code, at the
-          "configure" step (see <xref linkend="configure"/>), specify the location of the
-          PostgreSQL configuration program "pg_config" with the "--with-dhcp-pgsql" switch,
-          i.e.
+          the following modification. To enable the PostgreSQL database code, at the
+          "configure" step (see <xref linkend="configure"/>), do:
           <screen><userinput>./configure [other-options] --with-dhcp-pgsql</userinput></screen>
-          ...if PostgreSQL was installed in the default location, or:
+	  Or specify the location of the PostgreSQL configuration
+	  program "pg_config" if PostgreSQL was not installed in
+	  the default location:
           <screen><userinput>./configure [other-options] --with-dhcp-pgsql=<replaceable>path-to-pg_config</replaceable></userinput></screen>
-          ...if not.
         </para>
       </section>
       <section id="dhcp-pgsql-database-create">
@@ -533,7 +531,8 @@ postgres=#<userinput> CREATE DATABASE <replaceable>database-name</replaceable>;<
 CREATE DATABASE
 postgres=#
 </screen>
-          ... <replaceable>database-name</replaceable> is the name you have chosen for the database.
+	  (<replaceable>database-name</replaceable> is the name you
+	  have chosen for the database.)
         </para>
          <para>
           3. Create the user under which Kea will access the database (and give it a password), then grant it access to the database:
