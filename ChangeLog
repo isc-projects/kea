@@ -1,3 +1,7 @@
+8xx.	[func]		tomek
+	DHCPv4,DHCPv6 and DDNS components now report their versions.
+	(Trac #3508, git tbd)
+
 815.	[func]		tomek
 	Pool definitions in DHCPv4 and DHCPv6 are now lists of
 	structures. This makes adding new per-pool parameters easier in

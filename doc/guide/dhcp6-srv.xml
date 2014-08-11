@@ -42,6 +42,17 @@
             ports other than default DHCPv6 ports will not be able to
             handle regular DHCPv6 queries.</simpara>
           </listitem>
+          <listitem>
+            <simpara>
+              <command>-v</command> - prints out Kea version and exists.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <command>-V</command> - prints out Kea extended version with
+              additional parameters and exists.
+            </simpara>
+          </listitem>
       </itemizedlist>
 
       <para>
