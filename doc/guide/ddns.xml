@@ -58,8 +58,40 @@
       Kea, is a separate binary that can be run on its own or through
       <command>keactl</command> (see <xref linkend="keactrl"/>). In
       normal operation, controlling <command>kea-dhcp-ddns</command>
-      with <command>keactl</command> is recommended.
+      with <command>keactl</command> is recommended. However, it is also
+      possible to run the DHCP-DDNS server directly. It accepts the
+      following command-line switches:
       </para>
+
+      <itemizedlist>
+          <listitem>
+            <simpara>
+            <command>-c <replaceable>file</replaceable></command> -
+            specifies the configuration file. This is the only mandatory
+            switch.</simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+            <command>-d</command> - specifies whether the server
+            logging should be switched to debug/verbose mode. In verbose mode,
+            the logging severity and debuglevel specified in a configuration
+            file are ignored and "debug" severity and the maximum debuglevel
+            (99) are assumed. The flag is convenient, for temporarily
+            switching the server into maximum verbosity, e.g. when
+            debugging.</simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <command>-v</command> - prints out Kea version and exists.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <command>-V</command> - prints out Kea extended version with
+              additional parameters and exists.
+            </simpara>
+          </listitem>
+      </itemizedlist>
 
       <para>
       Upon start up the module will load its configuration and begin listening
