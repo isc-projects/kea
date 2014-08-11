@@ -469,7 +469,7 @@ file be created.</para>
         Note: the layout of messages written to the system logging
         file (syslog) may be slightly different.  This message has
         been split across two lines here for display reasons; in the
-        logging file, it will appear on one line.)
+        logging file, it will appear on one line.
       </para>
 
       <para>
