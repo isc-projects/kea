@@ -31,7 +31,7 @@
 # least subnet and pool entries.
   "subnet6": [ 
     {
-      "pool": [ "2001:db8:1::/80" ],
+      "pools": [ { "pool": "2001:db8:1::/80" } ],
       "subnet": "2001:db8:1::/64",
       "interface": "eth0"
     }

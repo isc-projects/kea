@@ -28,8 +28,8 @@
           </listitem>
           <listitem>
             <simpara>
-            <command>-v</command> - specifies whether the server
-            logging should be switched to verbose mode. In verbose mode,
+            <command>-d</command> - specifies whether the server
+            logging should be switched to debug/verbose mode. In verbose mode,
             the logging severity and debuglevel specified in a configuration
             file are ignored and "debug" severity and the maximum debuglevel
             (99) are assumed. The flag is convenient, for temporarily
@@ -43,6 +43,17 @@
             useful during testing, as the DHCPv4 server listening on
             ports other than default DHCPv4 ports will not be able to
             handle regular DHCPv4 queries.</simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <command>-v</command> - prints out Kea version and exits.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <command>-V</command> - prints out Kea extended version with
+              additional parameters and exits.
+            </simpara>
           </listitem>
       </itemizedlist>
 

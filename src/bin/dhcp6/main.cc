@@ -41,13 +41,21 @@ const char* const DHCP6_NAME = "kea-dhcp6";
 
 const char* const DHCP6_LOGGER_NAME = "kea-dhcp6";
 
+/// @brief Prints Kea Usage and exits
+///
+/// Note: This function never returns. It terminates the process.
 void
 usage() {
-    cerr << "Usage: " << DHCP6_NAME << " [-v] [-p port_number] [-c cfgfile]" << endl;
-    cerr << "  -v: verbose output" << endl;
+    cerr << "Kea DHCPv6 server, version " << VERSION << endl;
+    cerr << endl;
+    cerr << "Usage: " << DHCP6_NAME
+         << " [-c cfgfile] [-v] [-V] [-d] [-p port_number]" << endl;
+    cerr << "  -c file: specify configuration file" << endl;
+    cerr << "  -v: print version number and exit." << endl;
+    cerr << "  -V: print extended version and exit" << endl;
+    cerr << "  -d: debug mode with extra verbosity (former -v)" << endl;
     cerr << "  -p number: specify non-standard port number 1-65535 "
          << "(useful for testing only)" << endl;
-    cerr << "  -c file: specify configuration file" << endl;
     exit(EXIT_FAILURE);
 }
 } // end of anonymous namespace
@@ -62,11 +70,19 @@ main(int argc, char* argv[]) {
     // The standard config file
     std::string config_file("");
 
-    while ((ch = getopt(argc, argv, "vp:c:")) != -1) {
+    while ((ch = getopt(argc, argv, "dvVp:c:")) != -1) {
         switch (ch) {
-        case 'v':
+        case 'd':
             verbose_mode = true;
             break;
+
+        case 'v':
+            cout << Daemon::getVersion(false) << endl;
+            return (EXIT_SUCCESS);
+
+        case 'V':
+            cout << Daemon::getVersion(true) << endl;
+            return (EXIT_SUCCESS);
 
         case 'p': // port number
             try {
@@ -112,7 +128,7 @@ main(int argc, char* argv[]) {
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_START_INFO)
             .arg(getpid()).arg(port_number).arg(verbose_mode ? "yes" : "no");
 
-        LOG_INFO(dhcp6_logger, DHCP6_STARTING);
+        LOG_INFO(dhcp6_logger, DHCP6_STARTING).arg(VERSION);
 
         // Create the server instance.
         ControlledDhcpv6Srv server(port_number);
