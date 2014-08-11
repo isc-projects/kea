@@ -444,7 +444,7 @@ temporarily override a list of interface names and listen on all interfaces.
            "subnet": "2001:db8:1::/64",
            "pools": [
                {
-                   pool: "2001:db8:1::1-2001:db8:1::ffff"
+                   "pool": "2001:db8:1::1-2001:db8:1::ffff"
                }
            ],
            ...
@@ -476,8 +476,8 @@ temporarily override a list of interface names and listen on all interfaces.
     {
         "subnet": "2001:db8:1::/64",
         "pools": [
-            { pool: "2001:db8:1::1-2001:db8:1::ffff" },
-            { pool: "2001:db8:1:05::/80" }
+            { "pool": "2001:db8:1::1-2001:db8:1::ffff" },
+            { "pool": "2001:db8:1:05::/80" }
         ]</userinput>,
         ...
     }
@@ -495,13 +495,13 @@ temporarily override a list of interface names and listen on all interfaces.
     {
         "subnet": "2001:db8:1::/64",
         "pools": [
-            { pool: "2001:db8:1::1-2001:db8:1::ffff" }
+            { "pool": "2001:db8:1::1-2001:db8:1::ffff" }
         ]
     },
     {
         "subnet": "2001:db8:2::/64",
         "pools": [
-            { pool: "2001:db8:2::/64" }
+            { "pool": "2001:db8:2::/64" }
         ]
     },
 </userinput>
