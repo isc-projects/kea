@@ -430,8 +430,6 @@ void IfaceMgr::stubDetectIfaces() {
     addInterface(iface);
 }
 
-
-
 bool
 IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                        IfaceMgrErrorMsgCallback error_handler) {
@@ -442,11 +440,30 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
          iface != ifaces_.end();
          ++iface) {
 
-        if (iface->flag_loopback_ ||
-            !iface->flag_up_ ||
-            !iface->flag_running_ ||
-            iface->inactive4_) {
+        // If the interface is inactive, there is nothing to do. Simply
+        // proceed to the next detected interface.
+        if (iface->inactive4_) {
             continue;
+
+        } else {
+            // If the interface has been specified in the configuration that
+            // it should be used to listen the DHCP traffic we have to check
+            // that the interface configuration is valid and that the interface
+            // is not a loopback interface. In both cases, we want to report
+            // that the socket will not be opened.
+            if (iface->flag_loopback_) {
+                IFACEMGR_ERROR(SocketConfigError, error_handler,
+                               "must not open socket on the loopback"
+                               " interface " << iface->getName());
+                continue;
+
+            } else if (!iface->flag_up_ || !iface->flag_running_) {
+                IFACEMGR_ERROR(SocketConfigError, error_handler,
+                               "the interface " << iface->getName()
+                               << " is down or has no usable IPv4"
+                               " addresses configured");
+                continue;
+            }
         }
 
         Iface::AddressCollection addrs = iface->getAddresses();
@@ -533,11 +550,29 @@ IfaceMgr::openSockets6(const uint16_t port,
          iface != ifaces_.end();
          ++iface) {
 
-        if (iface->flag_loopback_ ||
-            !iface->flag_up_ ||
-            !iface->flag_running_ ||
-            iface->inactive6_) {
+        if (iface->inactive6_) {
             continue;
+
+        } else {
+            // If the interface has been specified in the configuration that
+            // it should be used to listen the DHCP traffic we have to check
+            // that the interface configuration is valid and that the interface
+            // is not a loopback interface. In both cases, we want to report
+            // that the socket will not be opened.
+            if (iface->flag_loopback_) {
+                IFACEMGR_ERROR(SocketConfigError, error_handler,
+                               "must not open socket on the loopback"
+                               " interface " << iface->getName());
+                continue;
+
+            } else if (!iface->flag_up_ || !iface->flag_running_) {
+                IFACEMGR_ERROR(SocketConfigError, error_handler,
+                               "the interface " << iface->getName()
+                               << " is down or has no usable IPv6"
+                               " addresses configured");
+                continue;
+            }
+
         }
 
         // Open unicast sockets if there are any unicast addresses defined
