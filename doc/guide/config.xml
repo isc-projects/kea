@@ -13,8 +13,8 @@
   made when the configure script is run.</para>
 
   <section id="bundy-backend">
-    <title>BIND 10 configuration backend</title>
-    <para>This legacy configuration backend allows Kea to use the former BIND10
+    <title>BUNDY configuration backend</title>
+    <para>This legacy configuration backend allows Kea to use the former BIND 10
     framework. That framework and this Kea configuration backend is no longer
     supported by ISC. It is currently developed as part of the Bundy project (see
     <ulink url="http://bundy-dns.de">Bundy homepage</ulink>). See the Bundy project
@@ -23,9 +23,9 @@
 
   <section id="json-backend">
     <title>JSON configuration backend</title>
-    <para>JSON is the default configuration backend and the only one supported
-    as of the 0.9 release. It assumes that the servers are started from the command line
-    (either directly or using a script, see TODO for details). The JSON backend uses
+    <para>JSON is the default configuration backend.
+    It assumes that the servers are started from the command line
+    (either directly or using a script). The JSON backend uses
     certain signals to influence Kea. The configuration file is
     specified upon startup using -c parameter.</para>
 
@@ -34,7 +34,7 @@
       <para>Configuration files for DHCPv4, DHCPv6 and DDNS modules are defined
       in an extended JSON format. Basic JSON is defined in <ulink
       url="http://tools.ietf.org/html/rfc4627">RFC 4627</ulink>.  Kea components
-      use a slightly modified JSON, in that they allowing bash-style
+      use a slightly modified JSON, in that they allow shell-style
       comments in the file: lines with the hash (#) character in the first column
       are comment lines and are ignored.</para>
 
@@ -99,8 +99,8 @@
 </screen>
 	</para>
 
-        <para>More examples are available in the Kea source code in the
-        <filename>doc/examples</filename> directory.</para>
+        <para>More examples are available in the installed
+        <filename>share/doc/kea/examples</filename> directory.</para>
 
         <para>To avoid repetition of mostly similar structures, examples in the
         rest of this guide will showcase only the subset of parameters appropriate for a given
