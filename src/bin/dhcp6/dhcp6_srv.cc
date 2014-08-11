@@ -2440,7 +2440,12 @@ Dhcpv6Srv::openActiveSockets(const uint16_t port) {
                       << " instance of the interface when DHCPv6 server was"
                       << " trying to reopen sockets after reconfiguration");
         }
-        if (CfgMgr::instance().isActiveIface(iface->getName())) {
+
+        // Ignore loopback interfaces.
+        if (iface_ptr->flag_loopback_) {
+            iface_ptr->inactive6_ = true;
+
+        } else  if (CfgMgr::instance().isActiveIface(iface->getName())) {
             iface_ptr->inactive6_ = false;
             LOG_INFO(dhcp6_logger, DHCP6_ACTIVATE_INTERFACE)
                 .arg(iface->getFullName());

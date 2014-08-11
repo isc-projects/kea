@@ -1806,7 +1806,11 @@ Dhcpv4Srv::openActiveSockets(const uint16_t port,
                       << " instance of the interface when DHCPv4 server was"
                       << " trying to reopen sockets after reconfiguration");
         }
-        if (CfgMgr::instance().isActiveIface(iface->getName())) {
+        // Ignore loopback interfaces.
+        if (iface_ptr->flag_loopback_) {
+            iface_ptr->inactive4_ = true;
+
+        } else if (CfgMgr::instance().isActiveIface(iface->getName())) {
             iface_ptr->inactive4_ = false;
             LOG_INFO(dhcp4_logger, DHCP4_ACTIVATE_INTERFACE)
                 .arg(iface->getFullName());

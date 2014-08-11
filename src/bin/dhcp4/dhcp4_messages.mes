@@ -207,7 +207,7 @@ received message is dropped.
 A debug message issued during startup, this indicates that the DHCPv4
 server is about to open sockets on the specified port.
 
-% DHCP4_OPEN_SOCKET_FAIL failed to create socket: %1
+% DHCP4_OPEN_SOCKET_FAIL failed to open socket: %1
 A warning message issued when IfaceMgr fails to open and bind a socket. The reason
 for the failure is appended as an argument of the log message.
 
