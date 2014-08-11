@@ -255,7 +255,7 @@ protected:
     }
 
     /// @brief Determines if the given option space name and code describe
-    /// a standard option for the DCHP4 server.
+    /// a standard option for the DHCP4 server.
     ///
     /// @param option_space is the name of the option space to consider
     /// @param code is the numeric option code to consider
