@@ -1,3 +1,8 @@
+817.	[bug]		marcin
+	DHCPv4 and DHCPv6 servers will log an error during an attempt to
+	open socket on the interface which is down or not configured.
+	(Trac #3487, git fadc776914aa858ce637aab1513ab3d87631f612)
+
 816.	[doc]		tomek
 	AUTHORS file rewritten.
 	(Trac #3469, git 6ef55abaa1ef79e09ad332c0da28dee7bfed70fe)
