@@ -46,13 +46,13 @@
           </listitem>
           <listitem>
             <simpara>
-              <command>-v</command> - prints out Kea version and exists.
+              <command>-v</command> - prints out Kea version and exits.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
               <command>-V</command> - prints out Kea extended version with
-              additional parameters and exists.
+              additional parameters and exits.
             </simpara>
           </listitem>
       </itemizedlist>

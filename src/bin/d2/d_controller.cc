@@ -125,20 +125,6 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
 }
 
 void
-DControllerBase::printVersion(bool extended) const {
-    std::cout << VERSION << std::endl;
-    if (extended) {
-        std::cout << EXTENDED_VERSION << std::endl;
-
-        // @todo print more details (is it Botan or OpenSSL build,
-        // with or without MySQL/Postgres? What compilation options were
-        // used? etc)
-    }
-
-    exit(EXIT_SUCCESS);
-}
-
-void
 DControllerBase::parseArgs(int argc, char* argv[])
 {
     // Iterate over the given command line options. If its a stock option
@@ -156,12 +142,14 @@ DControllerBase::parseArgs(int argc, char* argv[])
             break;
 
         case 'v':
-            printVersion(false); // print just Kea version and exit
-            break; // break not really needed, print_version never returns
+            // Print just Kea version and exit
+            std::cout << getVersion(false) << std::endl;
+            exit(EXIT_SUCCESS);
 
         case 'V':
-            printVersion(true); // print extended Kea version and exit
-            break; // break not really needed, print_version never returns
+            // Print extended Kea version and exit
+            std::cout << getVersion(true) << std::endl;
+            exit(EXIT_SUCCESS);
             
         case 'c':
             // config file name
@@ -448,3 +436,19 @@ dhcp::Daemon::loggerInit(const char* log_name, bool verbose) {
 }
 
 }; // namespace isc
+
+std::string
+isc::dhcp::Daemon::getVersion(bool extended) {
+    std::stringstream tmp;
+
+    tmp << VERSION;
+    if (extended) {
+        tmp << std::endl << EXTENDED_VERSION;
+
+        // @todo print more details (is it Botan or OpenSSL build,
+        // with or without MySQL/Postgres? What compilation options were
+        // used? etc)
+    }
+
+    return (tmp.str());
+}
