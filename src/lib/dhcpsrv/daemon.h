@@ -151,6 +151,17 @@ public:
         return (verbose_);
     }
 
+    /// @brief returns Kea version on stdout and exits.
+    ///
+    /// With extended == false, this method returns a simple string
+    /// containing version number. With extended == true, it returns
+    /// also additional information about sources. It is expected to
+    /// return extra information about dependencies and used DB backends.
+    ///
+    /// @param extended print additional information?
+    /// @return text string
+    static std::string getVersion(bool extended);
+
 protected:
 
     /// @brief Invokes handler for the next received signal.
