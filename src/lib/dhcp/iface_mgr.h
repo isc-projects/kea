@@ -715,7 +715,7 @@ public:
     /// @brief Opens IPv6 sockets on detected interfaces.
     ///
     /// This method opens sockets only on interfaces which have the
-    /// @c inactive6_ field set to false (is active). If the interface is active
+    /// @c inactive6_ field set to false (are active). If the interface is active
     /// but it is not running, it is down, or is a loopback interface,
     /// an error is reported.
     ///
@@ -760,7 +760,7 @@ public:
     /// @brief Opens IPv4 sockets on detected interfaces.
     ///
     /// This method opens sockets only on interfaces which have the
-    /// @c inactive4_ field set to false (is active). If the interface is active
+    /// @c inactive4_ field set to false (are active). If the interface is active
     /// but it is not running, it is down, or is a loopback interface,
     /// an error is reported.
     ///
