@@ -56,9 +56,9 @@
       and, due to the nature of DDNS, it is run alongside either the
       DHCPv4 or DHCPv6 components (or both).  Like other parts of
       Kea, is a separate binary that can be run on its own or through
-      <command>keactl</command> (see <xref linkend="keactrl"/>). In
+      <command>keactrl</command> (see <xref linkend="keactrl"/>). In
       normal operation, controlling <command>kea-dhcp-ddns</command>
-      with <command>keactl</command> is recommended.
+      with <command>keactrl</command> is recommended.
       </para>
 
       <para>
