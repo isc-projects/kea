@@ -351,9 +351,10 @@ core component within the DHCPv4 server (the Dhcpv4 server object)
 has failed.  As a result, the server will exit.  The reason for the
 failure is given within the message.
 
-% DHCP4_STARTING server starting
+% DHCP4_STARTING Kea DHCPv4 server version %1 starting
 This informational message indicates that the DHCPv4 server has
-processed any command-line switches and is starting.
+processed any command-line switches and is starting. The version
+is also printed.
 
 % DHCP4_START_INFO pid: %1, port: %2, verbose: %3
 This is a debug message issued during the DHCPv4 server startup.
