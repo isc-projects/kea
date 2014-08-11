@@ -540,9 +540,10 @@ standalone mode, not connected to the message queue.  Standalone mode
 is only useful during program development, and should not be used in a
 production environment.
 
-% DHCP6_STARTING server starting
+% DHCP6_STARTING Kea DHCPv6 server version %1 starting
 This informational message indicates that the IPv6 DHCP server has
-processed any command-line switches and is starting.
+processed any command-line switches and is starting. The version
+is also printed.
 
 % DHCP6_START_INFO pid: %1, port: %2, verbose: %3
 This is a debug message issued during the IPv6 DHCP server startup.
