@@ -558,7 +558,7 @@ temporarily override a list of interface names and listen on all interfaces.
                 {
                     "name": "domain-name-servers",
                     "code": 6,
-                    "space: "dhcp4",
+                    "space": "dhcp4",
                     "csv-format": true,
                     "data": "192.0.2.3"
                 },
@@ -1212,7 +1212,7 @@ temporarily override a list of interface names and listen on all interfaces.
 "Dhcp4": {
     "subnet4": [
         {
-            <userinput>subnet: "192.0.2.0/24",
+            <userinput>"subnet": "192.0.2.0/24",
             "pools": [ { "pool": "192.0.2.10 - 192.0.2.20" } ],
             "client-class": "VENDOR_CLASS_docsis3.0"</userinput>
         }
@@ -1257,7 +1257,7 @@ temporarily override a list of interface names and listen on all interfaces.
         "server-ip": "127.0.0.1",
         "server-port": 53001,
         "sender-ip": "",
-        "sender-port: 0,
+        "sender-port": 0,
         "max-queue-size": 1024,
         "ncr-protocol": "UDP",
         "ncr-format": "JSON",
@@ -1338,7 +1338,7 @@ temporarily override a list of interface names and listen on all interfaces.
       would be required:
 <screen>
 "Dhcp4": {
-    "dhcp-ddns: {
+    "dhcp-ddns": {
         <userinput>"server-ip": "192.168.1.10",
         "server-port": 900</userinput>,
         ...
@@ -1721,7 +1721,7 @@ temporarily override a list of interface names and listen on all interfaces.
         It will also select that subnet for a relay with address 10.0.0.1.
 <screen>
 "Dhcp4": {
-    "subnet4: [
+    "subnet4": [
         {
             "subnet": "192.0.2.0/24",
             "pools": [ { "pool": "192.0.2.10 - 192.0.2.20" } ],
@@ -1757,7 +1757,7 @@ temporarily override a list of interface names and listen on all interfaces.
           10.1.1.1. The following configuration can serve that configuration:
 <screen>
 "Dhcp4": {
-    "subnet4: [
+    "subnet4": [
         {
             "subnet": "10.1.1.0/24",
             "pools":  [ { "pool": "10.1.1.2 - 10.1.1.20" } ],
