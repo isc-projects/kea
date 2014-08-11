@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-
+#include <config.h>
 #include <d2/d2_log.h>
 #include <config/ccsession.h>
 #include <d2/d_controller.h>
@@ -21,6 +21,7 @@
 #include <dhcpsrv/configuration.h>
 
 #include <sstream>
+#include <unistd.h>
 
 namespace isc {
 namespace d2 {
@@ -68,7 +69,7 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
     // Log the starting of the service.  Although this is the controller
     // module, use a "DHCP_DDNS_" prefix to the module (to conform to the
     // principle of least astonishment).
-    LOG_INFO(dctl_logger, DHCP_DDNS_STARTING).arg(getpid());
+    LOG_INFO(dctl_logger, DHCP_DDNS_STARTING).arg(getpid()).arg(VERSION);
     try {
         // Step 2 is to create and initialize the application process object.
         initProcess();
@@ -124,6 +125,20 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
 }
 
 void
+DControllerBase::printVersion(bool extended) const {
+    std::cout << VERSION << std::endl;
+    if (extended) {
+        std::cout << EXTENDED_VERSION << std::endl;
+
+        // @todo print more details (is it Botan or OpenSSL build,
+        // with or without MySQL/Postgres? What compilation options were
+        // used? etc)
+    }
+
+    exit(EXIT_SUCCESS);
+}
+
+void
 DControllerBase::parseArgs(int argc, char* argv[])
 {
     // Iterate over the given command line options. If its a stock option
@@ -132,14 +147,22 @@ DControllerBase::parseArgs(int argc, char* argv[])
     int ch;
     opterr = 0;
     optind = 1;
-    std::string opts("vc:" + getCustomOpts());
+    std::string opts("dvVc:" + getCustomOpts());
     while ((ch = getopt(argc, argv, opts.c_str())) != -1) {
         switch (ch) {
-        case 'v':
+        case 'd':
             // Enables verbose logging.
             verbose_ = true;
             break;
 
+        case 'v':
+            printVersion(false); // print just Kea version and exit
+            break; // break not really needed, print_version never returns
+
+        case 'V':
+            printVersion(true); // print extended Kea version and exit
+            break; // break not really needed, print_version never returns
+            
         case 'c':
             // config file name
             if (optarg == NULL) {

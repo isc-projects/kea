@@ -457,6 +457,12 @@ protected:
     /// This is intended to be used for specific usage violation messages.
     void usage(const std::string& text);
 
+    /// @brief Prints version number to stdout and exit.
+    ///
+    /// Note: This method never returns, it terminates the process.
+    /// @param extended print additional information?
+    void printVersion(bool extended) const;
+
 private:
     /// @brief Name of the service under control.
     /// This name is used as the configuration module name and appears in log

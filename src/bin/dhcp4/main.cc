@@ -41,16 +41,42 @@ const char* const DHCP4_NAME = "kea-dhcp4";
 
 const char* const DHCP4_LOGGER_NAME = "kea-dhcp4";
 
+/// @brief Prints Kea Usage and exits
+///
+/// Note: This function never returns. It terminates the process.
 void
 usage() {
-    cerr << "Usage: " << DHCP4_NAME << " [-v] [-p number] [-c file]" << endl;
-    cerr << "  -v: verbose output" << endl;
+    cerr << "Kea DHCPv4 server, version " << VERSION << endl;
+    cerr << endl;
+    cerr << "Usage: " << DHCP4_NAME
+         << " [-v] [-V] [-d] [-p number] [-c file]" << endl;
+    cerr << "  -c file: specify configuration file" << endl;
+    cerr << "  -d: debug mode with extra verbosity (former -v)" << endl;
     cerr << "  -p number: specify non-standard port number 1-65535 "
          << "(useful for testing only)" << endl;
-    cerr << "  -c file: specify configuration file" << endl;
+    cerr << "  -v: print version number and exit" << endl;
+    cerr << "  -V: print extended version and exit" << endl;
     exit(EXIT_FAILURE);
 }
 } // end of anonymous namespace
+
+/// @brief Prints Kea version on stdout and exits.
+///
+/// Note: This function never returns. It terminates the process.
+/// @param extended print additional information?
+void
+printVersion(bool extended) {
+    cout << VERSION << endl;
+    if (extended) {
+        cout << EXTENDED_VERSION << endl;
+
+        // @todo print more details (is it Botan or OpenSSL build,
+        // with or without MySQL/Postgres? What compilation options were
+        // used? etc)
+    }
+
+    exit(EXIT_SUCCESS);
+}
 
 int
 main(int argc, char* argv[]) {
@@ -62,11 +88,19 @@ main(int argc, char* argv[]) {
     // The standard config file
     std::string config_file("");
 
-    while ((ch = getopt(argc, argv, "vp:c:")) != -1) {
+    while ((ch = getopt(argc, argv, "dvVp:c:")) != -1) {
         switch (ch) {
-        case 'v':
+        case 'd':
             verbose_mode = true;
             break;
+
+        case 'v':
+            printVersion(false); // print just Kea version and exit
+            break; // break not really needed, print_version never returns
+
+        case 'V':
+            printVersion(true); // print extended Kea version and exit
+            break; // break not really needed, print_version never returns
 
         case 'p':
             try {
@@ -111,7 +145,7 @@ main(int argc, char* argv[]) {
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_START_INFO)
             .arg(getpid()).arg(port_number).arg(verbose_mode ? "yes" : "no");
 
-        LOG_INFO(dhcp4_logger, DHCP4_STARTING);
+        LOG_INFO(dhcp4_logger, DHCP4_STARTING).arg(VERSION);
 
         // Create the server instance.
         ControlledDhcpv4Srv server(port_number);
