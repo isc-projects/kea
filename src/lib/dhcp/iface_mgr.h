@@ -714,6 +714,11 @@ public:
 
     /// @brief Opens IPv6 sockets on detected interfaces.
     ///
+    /// This method opens sockets only on interfaces which have the
+    /// @c inactive6_ field set to false (is active). If the interface is active
+    /// but it is not running, it is down, or is a loopback interface,
+    /// an error is reported.
+    ///
     /// On the systems with multiple interfaces, it is often desired that the
     /// failure to open a socket on a particular interface doesn't cause a
     /// fatal error and sockets should be opened on remaining interfaces.
@@ -754,14 +759,10 @@ public:
 
     /// @brief Opens IPv4 sockets on detected interfaces.
     ///
-    /// This function attempts to open sockets on all interfaces which have been
-    /// detected by @c IfaceMgr and meet the following conditions:
-    /// - interface is not a local loopback,
-    /// - interface is running (connected),
-    /// - interface is up,
-    /// - interface is active, e.g. selected from the configuration to be used
-    /// to listen DHCPv4 messages,
-    /// - interface has an IPv4 address assigned.
+    /// This method opens sockets only on interfaces which have the
+    /// @c inactive4_ field set to false (is active). If the interface is active
+    /// but it is not running, it is down, or is a loopback interface,
+    /// an error is reported.
     ///
     /// The type of the socket being open depends on the selected Packet Filter
     /// represented by a class derived from @c isc::dhcp::PktFilter abstract
