@@ -23,7 +23,16 @@ using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::data;
 
+std::string isc::dhcp::Daemon::getVersion(bool extended) {
+    if (extended) {
+        return (std::string("EXTENDED"));
+    } else {
+        return (std::string("BASIC"));
+    }
+}
+
 namespace {
+
 
 // Very simple test. Checks whether Daemon can be instantiated and its
 // default parameters are sane

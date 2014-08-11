@@ -60,24 +60,6 @@ usage() {
 }
 } // end of anonymous namespace
 
-/// @brief Prints Kea version on stdout and exits.
-///
-/// Note: This function never returns. It terminates the process.
-/// @param extended print additional information?
-void
-printVersion(bool extended) {
-    cout << VERSION << endl;
-    if (extended) {
-        cout << EXTENDED_VERSION << endl;
-
-        // @todo print more details (is it Botan or OpenSSL build,
-        // with or without MySQL/Postgres? What compilation options were
-        // used? etc)
-    }
-
-    exit(EXIT_SUCCESS);
-}
-
 int
 main(int argc, char* argv[]) {
     int ch;
@@ -95,12 +77,12 @@ main(int argc, char* argv[]) {
             break;
 
         case 'v':
-            printVersion(false); // print just Kea version and exit
-            break; // break not really needed, print_version never returns
+            cout << Daemon::getVersion(false) << endl;
+            return (EXIT_SUCCESS);
 
         case 'V':
-            printVersion(true); // print extended Kea version and exit
-            break; // break not really needed, print_version never returns
+            cout << Daemon::getVersion(true) << endl;
+            return (EXIT_SUCCESS);
 
         case 'p': // port number
             try {
