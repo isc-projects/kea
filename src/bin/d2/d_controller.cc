@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-
+#include <config.h>
 #include <d2/d2_log.h>
 #include <config/ccsession.h>
 #include <d2/d_controller.h>
@@ -21,6 +21,7 @@
 #include <dhcpsrv/configuration.h>
 
 #include <sstream>
+#include <unistd.h>
 
 namespace isc {
 namespace d2 {
@@ -68,7 +69,7 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
     // Log the starting of the service.  Although this is the controller
     // module, use a "DHCP_DDNS_" prefix to the module (to conform to the
     // principle of least astonishment).
-    LOG_INFO(dctl_logger, DHCP_DDNS_STARTING).arg(getpid());
+    LOG_INFO(dctl_logger, DHCP_DDNS_STARTING).arg(getpid()).arg(VERSION);
     try {
         // Step 2 is to create and initialize the application process object.
         initProcess();
@@ -132,14 +133,24 @@ DControllerBase::parseArgs(int argc, char* argv[])
     int ch;
     opterr = 0;
     optind = 1;
-    std::string opts("vc:" + getCustomOpts());
+    std::string opts("dvVc:" + getCustomOpts());
     while ((ch = getopt(argc, argv, opts.c_str())) != -1) {
         switch (ch) {
-        case 'v':
+        case 'd':
             // Enables verbose logging.
             verbose_ = true;
             break;
 
+        case 'v':
+            // Print just Kea version and exit
+            std::cout << getVersion(false) << std::endl;
+            exit(EXIT_SUCCESS);
+
+        case 'V':
+            // Print extended Kea version and exit
+            std::cout << getVersion(true) << std::endl;
+            exit(EXIT_SUCCESS);
+            
         case 'c':
             // config file name
             if (optarg == NULL) {
@@ -399,7 +410,10 @@ DControllerBase::usage(const std::string & text)
     std::cerr << "Usage: " << bin_name_ <<  std::endl
               << "  -c <config file name> : mandatory,"
               <<   " specifies name of configuration file " << std::endl
-              << "  -v: optional, verbose output " << std::endl;
+              << "  -d: optional, verbose output " << std::endl
+              << "  -v: print version number and exit" << std::endl
+              << "  -V: print extended version information and exit"
+              << std::endl;
 
     // add any derivation specific usage
     std::cerr << getUsageText() << std::endl;
@@ -422,3 +436,19 @@ dhcp::Daemon::loggerInit(const char* log_name, bool verbose) {
 }
 
 }; // namespace isc
+
+std::string
+isc::dhcp::Daemon::getVersion(bool extended) {
+    std::stringstream tmp;
+
+    tmp << VERSION;
+    if (extended) {
+        tmp << std::endl << EXTENDED_VERSION;
+
+        // @todo print more details (is it Botan or OpenSSL build,
+        // with or without MySQL/Postgres? What compilation options were
+        // used? etc)
+    }
+
+    return (tmp.str());
+}
