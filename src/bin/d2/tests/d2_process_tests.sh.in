@@ -16,6 +16,8 @@
 CFG_FILE=@abs_top_builddir@/src/bin/d2/tests/test_config.json
 # Path to the D2 log file.
 LOG_FILE=@abs_top_builddir@/src/bin/d2/tests/test.log
+# Expected version
+EXPECTED_VERSION="@PACKAGE_VERSION@"
 # D2 configuration to be stored in the configuration file.
 CONFIG="{
     \"DhcpDdns\":
@@ -236,3 +238,4 @@ shutdown_test() {
 dynamic_reconfiguration_test
 shutdown_test "dhcp-ddns.sigterm_test" 15
 shutdown_test "dhcp-ddns.sigint_test" 2
+version_test "dhcp-ddns.version"
