@@ -74,6 +74,12 @@ IfaceMgrTestConfig::createIface(const std::string &name, const int ifindex) {
     Iface iface(name, ifindex);
     if (name == "lo") {
         iface.flag_loopback_ = true;
+        // Don't open sockets on the loopback interface.
+        iface.inactive4_ = true;
+        iface.inactive6_ = true;
+    } else {
+        iface.inactive4_ = false;
+        iface.inactive6_ = false;
     }
     iface.flag_multicast_ = true;
     // On BSD systems, the SO_BINDTODEVICE option is not supported.
@@ -84,8 +90,6 @@ IfaceMgrTestConfig::createIface(const std::string &name, const int ifindex) {
     iface.flag_broadcast_ = false;
     iface.flag_up_ = true;
     iface.flag_running_ = true;
-    iface.inactive4_ = false;
-    iface.inactive6_ = false;
     return (iface);
 }
 

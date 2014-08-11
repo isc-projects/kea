@@ -246,6 +246,12 @@ public:
         Iface iface(name, ifindex);
         if (name == "lo") {
             iface.flag_loopback_ = true;
+            // Don't open sockets on loopback interface.
+            iface.inactive4_ = true;
+            iface.inactive6_ = true;
+        } else {
+            iface.inactive4_ = false;
+            iface.inactive6_ = false;
         }
         iface.flag_multicast_ = true;
         // On BSD systems, the SO_BINDTODEVICE option is not supported.
@@ -256,8 +262,6 @@ public:
         iface.flag_broadcast_ = false;
         iface.flag_up_ = true;
         iface.flag_running_ = true;
-        iface.inactive4_ = false;
-        iface.inactive6_ = false;
         return (iface);
     }
 
@@ -1465,8 +1469,18 @@ TEST_F(IfaceMgrTest, openSockets4IfaceDown) {
                          FlagRunning(false), FlagInactive4(false),
                          FlagInactive6(false));
     ASSERT_FALSE(IfaceMgr::instance().getIface("eth0")->flag_up_);
+
+    // Install an error handler before trying to open sockets. This handler
+    // should be called when the IfaceMgr fails to open socket on an interface
+    // on which the server is configured to listen.
+    isc::dhcp::IfaceMgrErrorMsgCallback error_handler =
+        boost::bind(&IfaceMgrTest::ifaceMgrErrorHandler, this, _1);
+
     ASSERT_NO_THROW(IfaceMgr::instance().openSockets4(DHCP4_SERVER_PORT, true,
-                                                      NULL));
+                                                      error_handler));
+    // Since the interface is down, an attempt to open a socket should result
+    // in error.
+    EXPECT_EQ(1, errors_count_);
 
     // There should be no socket on eth0 open, because interface was down.
     EXPECT_TRUE(IfaceMgr::instance().getIface("eth0")->getSockets().empty());
@@ -1844,10 +1858,20 @@ TEST_F(IfaceMgrTest, openSockets6IfaceDown) {
     // - is active for both v4 and v6
     ifacemgr.setIfaceFlags("eth0", false, false, false, false, false);
 
+    // Install an error handler before trying to open sockets. This handler
+    // should be called when the IfaceMgr fails to open socket on eth0.
+    isc::dhcp::IfaceMgrErrorMsgCallback error_handler =
+        boost::bind(&IfaceMgrTest::ifaceMgrErrorHandler, this, _1);
+
     // Simulate opening sockets using the dummy packet filter.
     bool success = false;
-    ASSERT_NO_THROW(success = ifacemgr.openSockets6(DHCP6_SERVER_PORT));
+    ASSERT_NO_THROW(success = ifacemgr.openSockets6(DHCP6_SERVER_PORT,
+                                                    error_handler));
     EXPECT_TRUE(success);
+
+    // Opening socket on the interface which is not configured, should
+    // result in error.
+    EXPECT_EQ(1, errors_count_);
 
     // Check that we have correct number of sockets on each interface.
     checkSocketsCount6(*ifacemgr.getIface("lo"), 0);

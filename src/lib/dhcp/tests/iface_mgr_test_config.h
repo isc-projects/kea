@@ -176,7 +176,8 @@ public:
     /// - loopback flag if interface name is "lo"
     /// - up always true
     /// - running always true
-    /// - inactive always to false
+    /// - inactive4 set to false for non-loopback interface
+    /// - inactive6 set to false for non-loopback interface
     /// - multicast always to true
     /// - broadcast always to false
     ///
