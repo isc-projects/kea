@@ -1,3 +1,23 @@
+
+ Kea authors and contributors
+------------------------------
+
+Primary developers:
+ - Tomek Mrugalski (lead developer: DHCPv4, DHCPv6 components, prefix
+                    delegation, memfile, database interface, core libdhcp++)
+ - Stephen Morris (Hooks, MySQL)
+ - Marcin Siodelski (DHCPv4, DHCPv6 components, options handling, perfdhcp)
+ - Thomas Markwalder (DDNS, user_chk)
+ - Jeremy Reed (documentation, build system, testing, release engineering)
+ - Wlodek Wencel (testing, release engineering)
+ - Francis Dupont (crypto)
+
+Primary area of work mentioned in parentheses. The list is in a roughly
+chronological order.
+
+Kea is using parts of the code of now defunct BIND 10 project. The following
+people contributed to BIND10 code:
+
 Chen Zhengzhang
 Dmitriy Volodin
 Evan Hunt
@@ -10,6 +30,7 @@ Xie Jiagui
 Jin Jian
 JINMEI Tatuya
 Kazunori Fujiwara
+Marcin Siodelski
 Michael Graff
 Michal Vaner
 Mukund Sivaraman
@@ -18,5 +39,25 @@ Paul Selkirk
 Shane Kerr
 Shen Tingting
 Stephen Morris
+Thomas Markwalder
+Tomek Mrugalski
 Yoshitaka Aharen
 Zhang Likun
+
+We have received the following contributions:
+
+ - David Carlier
+   2013-11: memfile fixes
+   2013-12: better error handling when port is in use
+   2013-12: interface detection for BSD systems
+   2014-04: PostgreSQL support
+
+Kea uses log4cplus (http://sourceforge.net/projects/log4cplus/) for logging,
+boost (http://www.boost.org/) library for almost everything, and can use Botan
+(http://botan.randombit.net/) or OpenSSL (https://www.openssl.org/) for
+cryptographic operations. It can also optionally use PostgreSQL
+(http://www.postgresql.org/) and/or MySQL (http://www.mysql.com/) as a database.
+
+Kea can use googletest for unit-tests (http://code.google.com/p/googletest/).
+
+Kea uses ISC Forge (http://kea.isc.org/wiki/IscForge) for conformance testing.
