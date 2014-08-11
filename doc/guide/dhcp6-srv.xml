@@ -653,7 +653,7 @@ temporarily override a list of interface names and listen on all interfaces.
                 {
                     "name": "dns-servers",
                     "code": 23,
-                    "space: "dhcp6",
+                    "space": "dhcp6",
                     "csv-format": true,
                     "data": "2001:db8:1::3"
                 },
@@ -1295,7 +1295,7 @@ should include options from the isc option space:
         "server-ip": "127.0.0.1",
         "server-port": 53001,
         "sender-ip": "",
-        "sender-port: 0,
+        "sender-port": 0,
         "max-queue-size": 1024,
         "ncr-protocol": "UDP",
         "ncr-format": "JSON",
@@ -1368,7 +1368,7 @@ should include options from the isc option space:
       would be required:
 <screen>
 "Dhcp6": {
-    "dhcp-ddns: {
+    "dhcp-ddns": {
         <userinput>"server-ip": "2001:db8::5",
         "server-port": 900</userinput>,
         ...
