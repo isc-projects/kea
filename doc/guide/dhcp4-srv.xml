@@ -361,7 +361,9 @@ temporarily override a list of interface names and listen on all interfaces.
     manually specify a unique identifier for each subnet.
   </para>
       <para>
-        The following configuration:
+	The following configuration will assign the arbitrary subnet
+	identifier to the newly configured subnet:
+
         <screen>
 "Dhcp4": {
     "subnet4": [
@@ -371,7 +373,6 @@ temporarily override a list of interface names and listen on all interfaces.
     ]
 }
 </screen>
-    will assign the arbitrary subnet identifier to the newly configured subnet.
     This identifier will not change for this subnet unless the "id" parameter is
     removed or set to 0. The value of 0 forces auto-generation of the subnet
     identifier.
