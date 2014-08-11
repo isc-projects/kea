@@ -8,7 +8,7 @@ Primary developers:
  - Stephen Morris (Hooks, MySQL)
  - Marcin Siodelski (DHCPv4, DHCPv6 components, options handling, perfdhcp)
  - Thomas Markwalder (DDNS, user_chk)
- - Jeremy Reed (documentation, build system, testing, release engineering)
+ - Jeremy C. Reed (documentation, build system, testing, release engineering)
  - Wlodek Wencel (testing, release engineering)
  - Francis Dupont (crypto)
 
@@ -16,11 +16,12 @@ Primary area of work mentioned in parentheses. The list is in a roughly
 chronological order.
 
 Kea is using parts of the code of now defunct BIND 10 project. The following
-people contributed to BIND10 code:
+people contributed to BIND 10 code:
 
 Chen Zhengzhang
 Dmitriy Volodin
 Evan Hunt
+Francis Dupont
 Haidong Wang
 Haikuo Zhang
 Han Feng
@@ -29,6 +30,7 @@ Jeremy C. Reed
 Xie Jiagui
 Jin Jian
 JINMEI Tatuya
+John DuBois
 Kazunori Fujiwara
 Marcin Siodelski
 Michael Graff
@@ -53,7 +55,7 @@ We have received the following contributions:
    2014-04: PostgreSQL support
 
 Kea uses log4cplus (http://sourceforge.net/projects/log4cplus/) for logging,
-boost (http://www.boost.org/) library for almost everything, and can use Botan
+Boost (http://www.boost.org/) library for almost everything, and can use Botan
 (http://botan.randombit.net/) or OpenSSL (https://www.openssl.org/) for
 cryptographic operations. It can also optionally use PostgreSQL
 (http://www.postgresql.org/) and/or MySQL (http://www.mysql.com/) as a database.
