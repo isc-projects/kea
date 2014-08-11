@@ -12,7 +12,7 @@
 
       <para>
       It is recommended that the Kea DHCPv4 server be started and stopped
-      using <command>keactl</command> (described in <xref linkend="keactrl"/>).
+      using <command>keactrl</command> (described in <xref linkend="keactrl"/>).
       However, it is also possible to run the server directly: it accepts
       the following command-line switches:
       </para>
