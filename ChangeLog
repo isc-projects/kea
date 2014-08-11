@@ -1,6 +1,6 @@
-8xx.	[doc]		tomek
+816.	[doc]		tomek
 	AUTHORS file rewritten.
-	(Trac #3469, git tbd)
+	(Trac #3469, git 6ef55abaa1ef79e09ad332c0da28dee7bfed70fe)
 
 815.	[func]		tomek
 	Pool definitions in DHCPv4 and DHCPv6 are now lists of
