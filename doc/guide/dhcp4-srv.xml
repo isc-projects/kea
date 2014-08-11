@@ -247,7 +247,9 @@ url="http://jsonviewer.stack.hu/"/>.
   parameters. Let's comment this out When default parameters are used, the
   Memfile backend will write leases to a disk in the
   [kea-install-dir]/var/kea/kea-leases4.csv. -->
-  The following configuration:
+  The following configuration sets the name of the lease file to
+  /tmp/kea-leases4.csv:
+
 <screen>
 "Dhcp4": {
     "lease-database": {
@@ -258,7 +260,6 @@ url="http://jsonviewer.stack.hu/"/>.
     ...
 }
 </screen>
-  ...sets the name of the lease file to /tmp/kea-leases4.csv.
   </para>
 
   <para>The "persist" parameter controls whether the leases are written to disk.
