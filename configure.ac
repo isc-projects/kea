@@ -31,7 +31,6 @@ AC_PROG_CXX
 
 # Check for exact Kea version.
 AC_MSG_CHECKING(whether this is a tarball or git source)
-echo "test -d ${srcdir}/.git"
 if test -d "${srcdir}/.git"; then
 	KEA_SRCID="git `(cd "${top_srcdir}";git rev-parse HEAD)`"
         AC_MSG_RESULT("git")
