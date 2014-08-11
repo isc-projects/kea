@@ -135,8 +135,8 @@ the configuration file must be a well formed JSON. That means that parameters
 for any given scope must be separate by a comma and there must not be a comma
 after the last parameter. When reordering configuration file, keep in mind that
 moving a parameter to or from the last position in a given scope may require
-moving the comma as well. The second caveat is that it is uncommon - although
-legal JSON - to
+moving the comma as well. The second caveat is that it is uncommon &mdash; although
+legal JSON &mdash; to
 repeat the same parameter multiple times. If that appears, the last occurrence of a
 given parameter in a given scope is used while all previous instances are
 ignored. This is unlikely to cause any confusion as there are no real life
@@ -1078,8 +1078,8 @@ temporarily override a list of interface names and listen on all interfaces.
     value as well as the sub-options, the "type" value would have to be set to "uint16" in
     the option definition. (Such an option would then have the following
     data structure: DHCP header, uint16 value, sub-options.) The value specified
-    with the "data" parameter - which should be a valid integer enclosed in quotes,
-    e.g. "123" - would then be assigned to the uint16 field in the "container" option.
+    with the "data" parameter &mdash; which should be a valid integer enclosed in quotes,
+    e.g. "123" &mdash; would then be assigned to the uint16 field in the "container" option.
     </para>
     </section>
 
@@ -1702,8 +1702,8 @@ temporarily override a list of interface names and listen on all interfaces.
         field of the DHCPv4 packet) to select the appropriate subnet.
       </para>
       <para>
-        However, that is not always the case. In certain uncommon - but
-        valid - deployments, the relay address may not match the subnet. This
+        However, that is not always the case. In certain uncommon &mdash;
+        valid &mdash; deployments, the relay address may not match the subnet. This
         usually means that there is more than one subnet allocated for a given
         link. The two most common examples where this is the case are long lasting
         network renumbering (where both old and new address space is still being
