@@ -1061,7 +1061,7 @@ should include options from the isc option space:
 
     Even though the "container" option does not carry any data except
     sub-options, the "data" field must be explicitly set to an empty value.
-    This is required because in the current version of BIND 10 DHCP, the default
+    This is required because in the current version of Kea, the default
     configuration values are not propagated to the configuration parsers: if the
     "data" is not set the parser will assume that this parameter is not
     specified and an error will be reported.
@@ -1646,8 +1646,8 @@ should include options from the isc option space:
         It is unlikely that this parameter should ever need to be changed.
         However, if such a need arises, stop the server, edit the file and restart
         the server. (The file is named kea-dhcp6-serverid and by default is
-        stored in the "var" subdirectory of the directory in which BIND 10 is installed.
-        This can be changed when BIND 10 is built by using "--localstatedir"
+        stored in the "var" subdirectory of the directory in which Kea is installed.
+        This can be changed when Kea is built by using "--localstatedir"
         on the "configure" command line.)  The file is a text file that contains
         double digit hexadecimal values
         separated by colons. This format is similar to typical MAC address
