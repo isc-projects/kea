@@ -30,52 +30,39 @@
         (all directories paths are relative to the installation directory):
         <itemizedlist>
           <listitem>
-           <simpara>
-              <filename>bin/</filename> &mdash;
-              general tools and diagnostic clients.
-            </simpara>
-          </listitem>
-          <listitem>
           <simpara>
-	    <!-- @todo: 0.9: update this -->
-            <filename>etc/bind10/</filename> &mdash;
+            <filename>etc/kea/</filename> &mdash;
             configuration files.
           </simpara>
           </listitem>
           <listitem>
             <simpara>
-              <filename>lib/</filename> &mdash;
-              libraries and python modules.
+              <filename>include/</filename> &mdash;
+              C++ development header files.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
-	      <!-- @todo 0.9: update this -->
-              <filename>libexec/bind10/</filename> &mdash;
-              executables that a user wouldn't normally run directly and
-              are not run independently.
-              These are the BIND 10 and Kea modules which are daemons started by
-              the <command>b10-init</command> master process.
+              <filename>lib/</filename> &mdash;
+              libraries.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
               <filename>sbin/</filename> &mdash;
-              commands used by the system administrator.
+              server software and commands used by the system administrator.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
-	      <!-- @todo 0.9: update this -->
-              <filename>share/bind10/</filename> &mdash;
-              configuration specifications.
+              <filename>share/kea/</filename> &mdash;
+              configuration specifications and examples.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
-	      <!-- @todo 0.9: update this -->
-              <filename>share/doc/bind10/</filename> &mdash;
-              this guide and other supplementary documentation.
+              <filename>share/doc/kea/</filename> &mdash;
+              this guide, other supplementary documentation, and examples.
             </simpara>
           </listitem>
           <listitem>
@@ -86,9 +73,8 @@
           </listitem>
           <listitem>
             <simpara>
-	      <!-- @todo 0.9: update this -->
-              <filename>var/bind10/</filename> &mdash;
-              data source and configuration databases.
+              <filename>var/kea/</filename> &mdash;
+              server identification, lease databases, and log files.
             </simpara>
           </listitem>
         </itemizedlist>
@@ -128,15 +114,13 @@
 
             <listitem>
         <para>
-          Botan (at least version
-          1.8).</para>
+          Botan (at least version 1.8) or OpenSSL.</para>
           </listitem>
 
           <listitem>
           <para>
             log4cplus (at least version 1.0.3)
           development include headers.
-	  <!-- @todo: Add OpenSSL note here once #2406 is merged -->
         </para>
         </listitem>
 
@@ -145,9 +129,6 @@ TODO
 Debian and Ubuntu:
  libgmp3-dev and libbz2-dev required for botan too
 -->
-
-<!-- NOTE: _sqlite3 is only needed at test time; it is already listed
-as a dependency earlier -->
 
         <listitem>
         <para>
@@ -162,7 +143,7 @@ as a dependency earlier -->
         <listitem>
         <para>
           The development tools "make" and "pkg-config".
-	  <!-- @todo update this list -->
+	  <!-- @todo update this list, pkg-config shouldn't be required -->
         </para>
         </listitem>
 
@@ -179,8 +160,7 @@ as a dependency earlier -->
     <section id="install">
       <title>Installation from Source</title>
       <para>
-        Kea is open source software written in C++ (some components of the
-        BIND 10 framework are written in Python).
+        Kea is open source software written in C++.
         It is freely available in source code form from ISC as a
         downloadable tar file or via Kea Git code revision control
         service. (It may also be available in pre-compiled ready-to-use
@@ -191,10 +171,8 @@ as a dependency earlier -->
 
         <title>Download Tar File</title>
         <para>
-          Kea 0.8 is available as a part of BIND10 1.2 release, which is a final
-          release of BIND10 from ISC. This release can be downloaded from:
-          <ulink url="ftp://ftp.isc.org/isc/bind10/"/>. The upcoming Kea 0.9 and all
-	  following releases will be shipped as a stand-alone tarball.
+          The Kea release tarballs may be downloaded from:
+          <ulink url="http://ftp.isc.org/isc/kea/"/> (using FTP or HTTP).
         </para>
       </section>
 
@@ -279,11 +257,10 @@ as a dependency earlier -->
           </varlistentry>
 
           <varlistentry>
-            <term>--with-pythonpath</term>
+            <term>--with-botan-config</term>
             <listitem>
-              <simpara>Define the path to Python 3.x if it is not in the
-                standard execution path. Python 3.x is mandatory for Kea 0.8,
-		but will not be required for the upcoming Kea 0.9.
+              <simpara>To specific the path to the botan-config
+                script to build with Botan for the crypto code.
               </simpara>
             </listitem>
           </varlistentry>
@@ -301,6 +278,15 @@ as a dependency earlier -->
           </varlistentry>
 
           <varlistentry>
+            <term>--with-log4cplus</term>
+            <listitem>
+              <simpara>Define the path to find the Log4cplus headers
+                and libraries.
+              </simpara>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
             <term>--with-openssl</term>
             <listitem>
               <simpara>Replace Botan by OpenSSL for the crypto library.
@@ -309,8 +295,6 @@ as a dependency earlier -->
               </simpara>
             </listitem>
           </varlistentry>
-
-<!-- missing -with-botan-config -->
 
           <varlistentry>
             <term>--without-werror</term>
@@ -409,34 +393,35 @@ as a dependency earlier -->
       switchable during compilation phase. The backend is chosen using
       the --with-kea-config switch when running the configure script. It
       currently supports two values: BIND10 and JSON. This is currently
-      only supported by DHCPv6 component.</para>
+      only supported by DHCPv6 component. JSON is the default.</para>
 
       <variablelist>
 
         <varlistentry>
-          <term>BIND10</term>
+          <term>BUNDY</term>
           <listitem>
-            <simpara>BIND10 (which is the default value as of April 2014) means
-            that Kea6 is linked with the BIND10 configuration backend that
-            connects to the BIND10 framework and in general works exactly the
-            same as Kea 0.8 and earlier versions. The benefits of that backend
-            are uniform integration with BIND10 framework, easy on-line
-            reconfiguration using bindctl, available RESTful API. On the other
-            hand, it requires the whole heavy BIND10 framework that requires
-            Python3 to be present. That backend is likely to go away with the
-            release of Kea 0.9.</simpara>
+            <simpara>BUNDY means
+            that Kea6 is linked with the Bundy configuration backend that
+            connects to the Bundy framework and in general works exactly the
+	    same as Kea 0.8 and earlier BIND10 versions. The benefits
+	    of that backend are uniform integration with the Bundy
+	    framework, easy on-line reconfiguration using bindctl,
+	    available RESTful API. On the other hand, it requires
+	    the whole heavy Bundy framework that requires Python3
+	    to be present. That backend is likely to go away with
+	    the release of Kea 1.0.</simpara>
           </listitem>
         </varlistentry>
 
         <varlistentry>
           <term>JSON</term>
           <listitem>
-            <simpara>JSON is a new configuration backend that causes Kea to read
-            JSON configuration file from disk. It does not require any framework
-            and thus is considered more lightweight. It will allow dynamic
-            on-line reconfiguration, but will lack remote capabilities (i.e. no
-            RESTful API). This configuration backend is expected to be the
-            default for upcoming Kea 0.9.</simpara>
+	    <simpara>JSON is a new default configuration backend
+	    that causes Kea to read JSON configuration file from
+	    disk. It does not require any framework and thus is
+	    considered more lightweight. It will allow dynamic
+	    on-line reconfiguration, but will lack remote capabilities
+	    (i.e. no RESTful API).</simpara>
           </listitem>
         </varlistentry>
       </variablelist>
@@ -451,7 +436,7 @@ as a dependency earlier -->
         store the lease information.  At present, Kea supports three database backends: MySQL,
         PostgreSQL and Memfile. To limit external dependencies, both MySQL and PostgreSQL
         support are disabled by default and only Memfile (which is implemented in pure C++)
-        is available. Support for a given database backend must be explicitly included when
+        is available. Support for the optional external database backend must be explicitly included when
         Kea is built.  This section covers the building of Kea with MySQL and/or PostgreSQL
         and the creation of the lease database.
       </para>
@@ -494,7 +479,7 @@ mysql></screen>
          <para>
           3. Create the database tables by running the dhcpdb_create.mysql script supplied as part of Kea:
           <screen>mysql> <userinput>CONNECT <replaceable>database-name</replaceable>;</userinput>
-mysql> <userinput>SOURCE <replaceable>path-to-bind10</replaceable>/share/bind10/dhcpdb_create.mysql</userinput></screen>
+mysql> <userinput>SOURCE <replaceable>path-to-kea</replaceable>/share/kea/dhcpdb_create.mysql</userinput></screen>
         </para>
          <para>
           4. Create the user under which Kea will access the database (and give it a password), then grant it access to the database tables:
@@ -571,7 +556,7 @@ $</screen>
         After entering the following command, you will be prompted for the new
         user's password. When the command completes you will be returned to
         the shell prompt. You should see output similar to following:
-<screen>$ <userinput>psql -d <replaceable>database-name</replaceable> -U <replaceable>user-name</replaceable> -f <replaceable>path-to-bind10</replaceable>/share/bind10/dhcpdb_create.pgsql</userinput>
+<screen>$ <userinput>psql -d <replaceable>database-name</replaceable> -U <replaceable>user-name</replaceable> -f <replaceable>path-to-kea</replaceable>/share/kea/dhcpdb_create.pgsql</userinput>
 Password for user <replaceable>user-name</replaceable>:
 CREATE TABLE
 CREATE INDEX
