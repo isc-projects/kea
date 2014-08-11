@@ -1785,31 +1785,38 @@ temporarily override a list of interface names and listen on all interfaces.
 
 
     <section id="dhcp4-std">
-      <title>Supported Standards</title>
-      <para>The following standards and draft standards are currently supported:</para>
+      <title>Supported DHCP Standards</title>
+      <para>The following standards are currently supported:</para>
       <itemizedlist>
           <listitem>
-            <simpara><ulink url="http://tools.ietf.org/html/rfc2131">RFC 2131</ulink>: Supported messages are DISCOVER (1), OFFER (2),
+            <simpara><emphasis>Dynamic Host Configuration Protocol</emphasis>,
+            <ulink url="http://tools.ietf.org/html/rfc2131">RFC 2131</ulink>:
+            Supported messages are DISCOVER (1), OFFER (2),
             REQUEST (3), RELEASE (7), INFORM (8), ACK (5), and NAK(6).</simpara>
           </listitem>
           <listitem>
-            <simpara><ulink url="http://tools.ietf.org/html/rfc2132">RFC 2132</ulink>:
+            <simpara><emphasis>DHCP Options and BOOTP Vendor Extensions</emphasis>,
+            <ulink url="http://tools.ietf.org/html/rfc2132">RFC 2132</ulink>:
             Supported options are: PAD (0),
             END(255), Message Type(53), DHCP Server Identifier (54),
             Domain Name (15), DNS Servers (6), IP Address Lease Time
             (51), Subnet mask (1), and Routers (3).</simpara>
           </listitem>
           <listitem>
-            <simpara><ulink url="http://tools.ietf.org/html/rfc3046">RFC 3046</ulink>:
+            <simpara><emphasis>DHCP Relay Agent Information Option</emphasis>,
+            <ulink url="http://tools.ietf.org/html/rfc3046">RFC 3046</ulink>:
             Relay Agent Information option is supported.</simpara>
           </listitem>
           <listitem>
-            <simpara><ulink url="http://tools.ietf.org/html/rfc3925">RFC 3925</ulink>:
+            <simpara><emphasis>Vendor-Identifying Vendor Options for
+            Dynamic Host Configuration Protocol version 4</emphasis>,
+            <ulink url="http://tools.ietf.org/html/rfc3925">RFC 3925</ulink>:
             Vendor-Identifying Vendor Class and Vendor-Identifying Vendor-Specific
-            Information option are supported.</simpara>
+            Information options are supported.</simpara>
           </listitem>
           <listitem>
-            <simpara><ulink url="http://tools.ietf.org/html/rfc6842">RFC 6842</ulink>:
+            <simpara><emphasis>Client Identifier Option in DHCP Server Replies</emphasis>,
+            <ulink url="http://tools.ietf.org/html/rfc6842">RFC 6842</ulink>:
             Server by default sends back client-id option. That capability may be
             disabled. See <xref linkend="dhcp4-echo-client-id"/> for details.
             </simpara>
