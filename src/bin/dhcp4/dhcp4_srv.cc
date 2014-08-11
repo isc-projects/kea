@@ -2036,5 +2036,21 @@ Dhcpv4Srv::d2ClientErrorHandler(const
     CfgMgr::instance().getD2ClientMgr().suspendUpdates();
 }
 
+std::string
+Daemon::getVersion(bool extended) {
+    std::stringstream tmp;
+
+    tmp << VERSION;
+    if (extended) {
+        tmp << endl << EXTENDED_VERSION;
+
+        // @todo print more details (is it Botan or OpenSSL build,
+        // with or without MySQL/Postgres? What compilation options were
+        // used? etc)
+    }
+
+    return (tmp.str());
+}
+
 }   // namespace dhcp
 }   // namespace isc

@@ -29,6 +29,19 @@ AC_CONFIG_MACRO_DIR([m4macros])
 # Checks for programs.
 AC_PROG_CXX
 
+# Check for exact Kea version.
+AC_MSG_CHECKING(whether this is a tarball or git source)
+if test -d "${srcdir}/.git"; then
+	KEA_SRCID="git `(cd "${top_srcdir}";git rev-parse HEAD)`"
+        AC_MSG_RESULT("git")
+else
+        KEA_SRCID="tarball"
+        AC_MSG_RESULT("tarball")
+fi
+# Export EXTENDED_VERSION to config.h
+# This will be either "tarball" or "git abcd".
+AC_DEFINE_UNQUOTED([EXTENDED_VERSION], ["${KEA_SRCID}"], [Extended Kea version])
+
 # Enable low-performing debugging facilities? This option optionally
 # enables some debugging aids that perform slowly and hence aren't built
 # by default.
@@ -1481,6 +1494,11 @@ AC_OUTPUT
 dnl Print the results
 dnl
 
+EXTENDED_VERSION=${PACKAGE_VERSION}
+if test "$KEA_SRCID" != ""; then
+   EXTENDED_VERSION="${EXTENDED_VERSION} ($KEA_SRCID)"
+fi
+
 cat > config.report << END
 
        Kea source configure results:
@@ -1489,6 +1507,7 @@ cat > config.report << END
 Package:
   Name:            ${PACKAGE_NAME}
   Version:         ${PACKAGE_VERSION}
+  Extended version:${EXTENDED_VERSION}
   OS Family:       ${OS_TYPE}
   Using GNU sed:   ${GNU_SED}
 
