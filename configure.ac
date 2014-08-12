@@ -1007,7 +1007,7 @@ LIBS=$LIBS_SAVED
 #
 # Configure Boost header path
 #
-AX_BOOST_FOR_BIND10
+AX_BOOST_FOR_KEA
 # Boost offset_ptr is required in one library and not optional right now, so
 # we unconditionally fail here if it doesn't work.
 if test "$BOOST_OFFSET_PTR_WOULDFAIL" = "yes" -a "$werror_ok" = 1; then
