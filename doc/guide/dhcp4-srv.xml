@@ -248,7 +248,7 @@ url="http://jsonviewer.stack.hu/"/>.
   Memfile backend will write leases to a disk in the
   [kea-install-dir]/var/kea/kea-leases4.csv. -->
   The following configuration sets the name of the lease file to
-  /tmp/kea-leases4.csv:
+  <filename>/tmp/kea-leases4.csv</filename>:
 
 <screen>
 "Dhcp4": {
