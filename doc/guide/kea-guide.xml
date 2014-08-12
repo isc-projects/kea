@@ -74,17 +74,21 @@
     <chapter id="acknowledgements">
       <title>Acknowledgements</title>
 
+      <para>Kea is primarily designed, developed, and maintained by
+      Internet Systems Consortium, Inc. It is an open source project
+      and contributions are welcomed.</para>
+
       <para>Support for the development of the DHCPv4, DHCPv6 and
       DHCP-DDNS  components was provided by
       <ulink url="http://www.comcast.com/">Comcast</ulink>.</para>
 
       <para>Kea was initially implemented as a collection of applications
       within the BIND 10 framework. Hence, Kea development would not be
-      possible without the generous support of BIND 10 project sponsors.</para>
+      possible without the generous support of past BIND 10 project sponsors.</para>
 
       <para><ulink url="http://jprs.co.jp/">JPRS</ulink> and
-      <ulink url="http://cira.ca/">CIRA</ulink> are Patron Level
-      sponsors.</para>
+      <ulink url="http://cira.ca/">CIRA</ulink> were Patron Level
+      BIND 10 sponsors.</para>
 
       <para><ulink url="https://www.afnic.fr/">AFNIC</ulink>,
       <ulink url="https://www.cnnic.net.cn/">CNNIC</ulink>,
@@ -95,15 +99,13 @@
       <ulink url="https://registro.br/">Registro.br</ulink>,
       <ulink url="https://nzrs.net.nz/">.nz Registry Services</ulink>, and
       <ulink url="https://www.tcinet.ru/">Technical Center of Internet</ulink>
-      are current sponsors.</para>
+      were past BIND 10 sponsors.</para>
 
       <para><ulink url="https://www.afilias.info/">Afilias</ulink>,
       <ulink url="https://www.iis.se/">IIS.SE</ulink>,
       <ulink url="http://www.nominet.org.uk/">Nominet</ulink>, and
       <ulink url="https://www.sidn.nl/">SIDN</ulink> were founding
-      sponsors of the project.</para>
-
-<!-- DHCP sponsorship by Comcast -->
+      sponsors of the BIND 10 project.</para>
 
     </chapter>
 
@@ -116,21 +118,3 @@
   <!-- <index>    <title>Index</title> </index> -->
 
 </book>
-
-<!--
-
-TODO:
-
-Overview
-
-Getting BIND 10 Installed
-  Basics
-  Dependencies
-  Optional
-  Advanced
-
-How Does Everything Work Together?
-
-Need Help?
-
--->
