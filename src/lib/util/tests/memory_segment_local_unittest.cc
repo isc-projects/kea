@@ -56,7 +56,8 @@ TEST(MemorySegmentLocal, TestLocal) {
     EXPECT_TRUE(segment->allMemoryDeallocated());
 }
 
-TEST(MemorySegmentLocal, TestTooMuchMemory) {
+/// @todo: disabled, see ticket #3510
+TEST(MemorySegmentLocal, DISABLED_TestTooMuchMemory) {
     auto_ptr<MemorySegment> segment(new MemorySegmentLocal());
 
     // Although it should be perfectly fine to use the ULONG_MAX
