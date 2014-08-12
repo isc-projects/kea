@@ -1,3 +1,11 @@
+819.	[build]		marcin
+	Renamed variables in the configure.ac so as their names do not
+	refer to BIND10 project. As a result of renaming the B10_CXXFLAGS
+	to KEA_CXXFLAGS in configure.ac all dependent Makefiles had to
+	be updated in the tree. The AX_BOOST_FOR_BIND10 macro has been
+	renamed to AX_BOOST_FOR_KEA.
+	(Trac #3507, git 6616b1c0ad0a78e11bca9395fafb8efdba8d8b9c)
+
 818.	[func]		tomek
 	DHCPv4, DHCPv6 and DDNS components now report their versions.
 	(Trac #3508, git 3f46c74ffa0ea1197e1fa62cb2f6580931be35f3)
