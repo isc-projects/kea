@@ -672,24 +672,24 @@ operation is affected by inadvertently-defined environment variables. The
 environment variables are:
 
 <dl>
-<dt>B10_LOGGER_ROOT</dt>
+<dt>KEA_LOGGER_ROOT</dt>
 <dd>Sets the "root" for the unit test.  If not defined, the name "kea"
 is used.</dd>
 
-<dt>B10_LOGGER_SEVERITY</dt>
+<dt>KEA_LOGGER_SEVERITY</dt>
 <dd>The severity to set for the root logger in the unit test.
 Valid values are "DEBUG", "INFO", "WARN", "ERROR", "FATAL" and "NONE".
 If not defined, "INFO" is used.</dd>
 
-<dt>B10_LOGGER_DBGLEVEL</dt>
-<dd>If B10_LOGGER_SEVERITY is set to "DEBUG", the debug level.  This can
+<dt>KEA_LOGGER_DBGLEVEL</dt>
+<dd>If KEA_LOGGER_SEVERITY is set to "DEBUG", the debug level.  This can
 be a number between 0 and 99, and defaults to 0.</dd>
 
-<dt>B10_LOGGER_LOCALMSG</dt>
+<dt>KEA_LOGGER_LOCALMSG</dt>
 <dd>If defined, points to a local message file.  The default is not to
 use a local message file.</dd>
 
-<dt>B10_LOGGER_DESTINATION</dt>
+<dt>KEA_LOGGER_DESTINATION</dt>
 <dd>The location to which log message are written.  This can be one of:
 <ul>
 <li><b>stdout</b> Message are written to stdout.</li>
