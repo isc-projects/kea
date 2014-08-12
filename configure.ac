@@ -106,9 +106,9 @@ fi
 AX_ISC_RPATH
 
 # Compiler dependent settings: define some mandatory CXXFLAGS here.
-# We also use a separate variable B10_CXXFLAGS.  This will (and should) be
+# We also use a separate variable KEA_CXXFLAGS.  This will (and should) be
 # used as the default value for each specific AM_CXXFLAGS:
-# AM_CXXFLAGS = $(B10_CXXFLAGS)
+# AM_CXXFLAGS = $(KEA_CXXFLAGS)
 # AM_CXXFLAGS += ... # add module specific flags
 # We need this so that we can disable some specific compiler warnings per
 # module basis; since AM_CXXFLAGS are placed before CXXFLAGS, and since
@@ -155,7 +155,7 @@ fi
 # on the source code.
 if test "$CLANGPP" = "yes"; then
 CXX_VERSION=`$CXX --version 2> /dev/null | head -1`
-B10_CXXFLAGS="$B10_CXXFLAGS -Qunused-arguments"
+KEA_CXXFLAGS="$KEA_CXXFLAGS -Qunused-arguments"
 fi
 
 KEA_CXX_TRY_FLAG([-Wno-missing-field-initializers],
@@ -165,12 +165,12 @@ AC_SUBST(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 # gcc specific settings:
 if test "X$GXX" = "Xyes"; then
 CXX_VERSION=`$CXX --version 2> /dev/null | head -1`
-B10_CXXFLAGS="$B10_CXXFLAGS -Wall -Wextra -Wnon-virtual-dtor -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
+KEA_CXXFLAGS="$KEA_CXXFLAGS -Wall -Wextra -Wnon-virtual-dtor -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
 case "$host" in
 *-solaris*)
 	MULTITHREADING_FLAG=-pthreads
 	# In Solaris, IN6ADDR_ANY_INIT and IN6ADDR_LOOPBACK_INIT need -Wno-missing-braces
-	B10_CXXFLAGS="$B10_CXXFLAGS -Wno-missing-braces"
+	KEA_CXXFLAGS="$KEA_CXXFLAGS -Wno-missing-braces"
 	;;
 *)
 	MULTITHREADING_FLAG=-pthread
@@ -195,7 +195,7 @@ werror_ok=0
 # translation unit.  For these versions we have to disable -Werror.
 if test $with_werror = 1; then
    CXXFLAGS_SAVED="$CXXFLAGS"
-   CXXFLAGS="$CXXFLAGS $B10_CXXFLAGS -Werror"
+   CXXFLAGS="$CXXFLAGS $KEA_CXXFLAGS -Werror"
    AC_MSG_CHECKING(for in-TU anonymous namespace breakage)
    # We use struct, not class, here, because some compilers complain about
    # "unused private members", causing a false positive.
@@ -203,7 +203,7 @@ if test $with_werror = 1; then
    namespace isc {struct Bar {Foo foo_;};} ],,
 	[AC_MSG_RESULT(no)
 	 werror_ok=1
-	 B10_CXXFLAGS="$B10_CXXFLAGS -Werror"],
+	 KEA_CXXFLAGS="$KEA_CXXFLAGS -Werror"],
 	[AC_MSG_RESULT(yes)])
    CXXFLAGS="$CXXFLAGS_SAVED"
 fi
@@ -341,10 +341,10 @@ fi
 
 # produce PIC unless we disable shared libraries. need this for python bindings.
 if test $enable_shared != "no" -a "X$GXX" = "Xyes"; then
-   B10_CXXFLAGS="$B10_CXXFLAGS -fPIC"
+   KEA_CXXFLAGS="$KEA_CXXFLAGS -fPIC"
 fi
 
-AC_SUBST(B10_CXXFLAGS)
+AC_SUBST(KEA_CXXFLAGS)
 
 # Checks for libraries.
 
@@ -1518,7 +1518,7 @@ C++ Compiler:
   CPPFLAGS:        ${CPPFLAGS}
   CXXFLAGS:        ${CXXFLAGS}
   LDFLAGS:         ${LDFLAGS}
-  B10_CXXFLAGS:    ${B10_CXXFLAGS}
+  KEA_CXXFLAGS:    ${KEA_CXXFLAGS}
 END
 
 if test "$PYTHON" != "no" ; then

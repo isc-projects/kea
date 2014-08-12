@@ -6,7 +6,7 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/asiolink -I$(top_builddir)/src/lib/asiolink
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/util -I$(top_builddir)/src/lib/util
 
-AM_CXXFLAGS = $(B10_CXXFLAGS)
+AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
 CLEANFILES = *.gcno *.gcda asiodns_messages.h asiodns_messages.cc s-messages
 
@@ -36,7 +36,7 @@ nodist_libkea_asiodns_la_SOURCES = asiodns_messages.cc asiodns_messages.h
 EXTRA_DIST = asiodns_messages.mes
 
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
-# B10_CXXFLAGS)
+# KEA_CXXFLAGS)
 libkea_asiodns_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_asiodns_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_asiodns_la_LIBADD  = $(top_builddir)/src/lib/asiolink/libkea-asiolink.la

@@ -37,7 +37,7 @@ EXTRA_DIST += logimpl_messages.mes
 EXTRA_DIST += log_messages.mes
 
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
-# B10_CXXFLAGS)
+# KEA_CXXFLAGS)
 libkea_log_la_CXXFLAGS = $(AM_CXXFLAGS)
 if USE_GXX
 libkea_log_la_CXXFLAGS += -Wno-unused-parameter
