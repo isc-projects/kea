@@ -88,7 +88,7 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
           <orderedlist>
         <listitem>
           <para>Edit your configuration file for DHCPv6. <xref linkend="dhcp6-configuration"/>
-          describes the configuration ch, and some example DHCPv6 configuration can be found in
+          describes the configuration choices, and some example DHCPv6 configuration can be found in
           doc/examples/kea6.</para>
 	</listitem>
 
