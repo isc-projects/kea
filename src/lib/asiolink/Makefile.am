@@ -3,7 +3,7 @@ SUBDIRS = . tests
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 
-AM_CXXFLAGS = $(B10_CXXFLAGS)
+AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
 CLEANFILES = *.gcno *.gcda
 
@@ -35,7 +35,7 @@ libkea_asiolink_la_SOURCES += udp_socket.h
 libkea_asiolink_la_SOURCES += local_socket.h local_socket.cc
 
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
-# B10_CXXFLAGS)
+# KEA_CXXFLAGS)
 libkea_asiolink_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_asiolink_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_asiolink_la_LIBADD = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
