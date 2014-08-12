@@ -18,25 +18,8 @@
       Kea was initially developed as a part of the BIND 10 framework
       (<ulink url="http://bind10.isc.org"/>). In early 2014, ISC
       made the decision to discontinue active development of BIND 10 and
-      continue development of Kea as standalone DHCP software. As a result,
-      the components and libraries related to the BIND10 framework and DNS
-      are going to be removed from the Kea source tree over time.
-      In order to remove the dependency on Python 3, the BIND 10 framework
-      will be replaced by the server startup and configuration mechanisms
-      written in C++.
+      continue development of Kea as standalone DHCP software.
     </para>
-
-    <note>
-      <simpara>Kea was implemented in the BIND 10 framework and to certain extent
-      still depends on various BIND 10 libraries. It also requires the BIND 10
-      framework to run, because the BIND 10 configuration mechanisms are used to
-      configure Kea. As a result, this document still refers to BIND 10 in many
-      paragraphs. The term "BIND 10" in the context of this document means
-      "BIND 10 libraries and applications which are necessary for Kea to run
-      and configure". The term "Kea" means "the collection of binaries and libraries
-      which, as a whole, implement the DHCP protocols".
-      </simpara>
-    </note>
 
     <para>
       This guide covers Kea version &__VERSION__;.
@@ -70,29 +53,15 @@
       </para>
 
       <itemizedlist>
-        <listitem>
-            <simpara>
-        Kea was developed as a collection of applications within BIND
-        10 framework and it still relies on the remaining parts of
-        this framework. In particular, the servers' configuration and
-        startup are still facilitated by the modules which originate
-        in BIND 10. These modules require at least Python 3.1 to run.
-        They also work with Python 3.2, 3.3 or 3.4 (<ulink
-        url="http://www.python.org/"/>). The dependency on Python will
-        be removed once replacement configuration and startup
-        mechanisms are developed and released as Kea 0.9. At this
-        point Kea will be written in pure C++.
-            </simpara>
-        </listitem>
 
         <listitem>
             <simpara>
         Kea supports two crypto libraries: Botan and OpenSSL. Only one of them
-        is required during compilation. Kea uses the Botan crypto library for
-        C++ (<ulink url="http://botan.randombit.net/"/>), version 1.8 or
-        later. As an alternative to Botan, Kea can use the OpenSSL crypto
-        library (<ulink url="http://www.openssl.org/"/>).  It requires a version
-        with SHA-2 support.
+        is required to be installed during compilation. Kea uses the Botan
+        crypto library for C++ (<ulink url="http://botan.randombit.net/"/>),
+        version 1.8 or later. As an alternative to Botan, Kea can use the
+        OpenSSL crypto library (<ulink url="http://www.openssl.org/"/>).
+        It requires a version with SHA-2 support.
             </simpara>
         </listitem>
 
@@ -122,24 +91,13 @@
       </itemizedlist>
     </section>
 
-    <section id="starting_stopping">
-      <title>Starting and Stopping the Server</title>
-      <!-- @todo: Rewrite this section after #3422 is done -->
+    <section id="kea_software">
+      <title>Kea Software</title>
       <para>
         Kea is modular.  Part of this modularity is
         accomplished using multiple cooperating processes which, together,
         provide the server functionality.
-      </para>
-
-      <!-- @todo: Rename processes here, once they are renamed in the source -->
-      <para>
-        At first, running many different processes may seem confusing.
-        However, these processes are started by running a single
-	command, <command>bind10</command>.  This command starts
-	a master process, <command>b10-init</command>, which will
-	start other required processes and other processes when
-	configured.  The processes that may be started have names
-	starting with "kea-", including:
+        The following software is included with Kea:
       </para>
 
       <para>
@@ -148,17 +106,9 @@
 
           <listitem>
             <simpara>
-              <command>b10-cfgmgr</command> &mdash;
-              Configuration manager.
-              This process maintains all of the configuration for BIND 10.
-            </simpara>
-          </listitem>
-
-          <listitem>
-            <simpara>
-              <command>b10-cmdctl</command> &mdash;
-              Command and control service.
-              This process allows external control of the BIND 10 system.
+              <command>keactrl</command> &mdash;
+              Tool to start, stop, reconfigure, and report status
+              for the Kea servers.
             </simpara>
           </listitem>
 
@@ -190,75 +140,15 @@
 
           <listitem>
             <simpara>
-              <command>b10-msgq</command> &mdash;
-              Message bus daemon.
-              This process coordinates communication between all of the other
-              BIND 10 processes.
-            </simpara>
-          </listitem>
-
-          <listitem>
-            <simpara>
-              <command>kea-sockcreator</command> &mdash;
-              Socket creator daemon.
-              This process creates sockets used by
-              network-listening BIND 10 processes.
-            </simpara>
-          </listitem>
-
-          <listitem>
-            <simpara>
-              <command>b10-stats</command> &mdash;
-              Statistics collection daemon.
-              This process collects and reports statistics data.
-            </simpara>
-          </listitem>
-
-          <listitem>
-            <simpara>
-              <command>b10-stats-httpd</command> &mdash;
-              HTTP server for statistics reporting.
-              This process reports statistics data in XML format over HTTP.
+              <command>perfdhcp</command> &mdash;
+              DHCP benchmarking tool which simulates multiple clients to
+              test both DHCPv4 and DHCPv6 servers performance.
             </simpara>
           </listitem>
 
         </itemizedlist>
       </para>
 
-      <para>
-        These do not need to be manually started independently.
-      </para>
-
-    </section>
-
-    <section id="managing_once_running">
-      <title>Managing BIND 10</title>
-      <!-- @todo: Rewrite this section after #3422 is done -->
-
-      <para>
-        Once BIND 10 is running, a few commands are used to interact
-        directly with the system:
-        <itemizedlist>
-          <listitem>
-            <simpara>
-              <command>bindctl</command> &mdash;
-              Interactive administration interface.
-              This is a low-level command-line tool which allows
-              a developer or an experienced administrator to control
-              Kea.
-            </simpara>
-          </listitem>
-          <listitem>
-            <simpara>
-              <command>b10-cmdctl-usermgr</command> &mdash;
-              User access control.
-              This tool allows an administrator to authorize additional users
-              to manage Kea.
-            </simpara>
-          </listitem>
-  <!-- TODO usermgr -->
-        </itemizedlist>
-      </para>
     </section>
 
     <para>
@@ -267,33 +157,10 @@
       In addition, manual pages are also provided in the default installation.
     </para>
 
-<!--
-bin/
-  bindctl*
-  host*
-lib/
-  libauth
-  libdns
-  libexceptions
-  python3.1/site-packages/isc/{cc,config}
-sbin/
-  bind10
-share/
-  share/bind10/
-    auth.spec
-    b10-cmdctl.pem
-    init.spec
-    passwd.csv
-  man/
-var/
-  bind10/b10-config.db
--->
-
     <para>
-      BIND 10 also provides libraries and programmer interfaces
-      for C++ and Python for the message bus and configuration backend,
-      and, of course, DHCP. These include detailed developer
-      documentation and code examples.
+      Kea also provides C++ libraries and programmer interfaces for
+      DHCP.  These include detailed developer documentation and
+      code examples.
 <!-- TODO point to this -->
     </para>
 

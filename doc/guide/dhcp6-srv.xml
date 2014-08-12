@@ -12,7 +12,7 @@
 
       <para>
       It is recommended that the Kea DHCPv4 server be started and stopped
-      using <command>keactl</command> (described in <xref linkend="keactrl"/>).
+      using <command>keactrl</command> (described in <xref linkend="keactrl"/>).
       However, it is also possible to run the server directly: it accepts
       the following command-line switches:
       </para>
@@ -148,8 +148,8 @@ the configuration file must be a well formed JSON. That means that parameters
 for any given scope must be separate by a comma and there must not be a comma
 after the last parameter. When reordering configuration file, keep in mind that
 moving a parameter to or from the last position in a given scope may require
-moving the comma as well. The second caveat is that it is uncommon - although
-legal JSON - to
+moving the comma as well. The second caveat is that it is uncommon &mdash; although
+legal JSON &mdash; to
 repeat the same parameter multiple times. If that happens, the last occurrence of a
 given parameter in a given scope is used while all previous instances are
 ignored. This is unlikely to cause any confusion as there are no real life
@@ -265,7 +265,9 @@ JSON validator is available at <ulink url="http://jsonviewer.stack.hu/"/>.
   parameters. Let's comment this out When default parameters are used, the
   Memfile backend will write leases to a disk in the
   [kea-install-dir]/var/kea/kea-leases4.csv. -->
-  The following configuration:
+  The following configuration sets the name of the lease file to
+  <filename>/tmp/kea-leases6.csv</filename>:
+
 <screen>
 "Dhcp6": {
     "lease-database": {
@@ -276,7 +278,6 @@ JSON validator is available at <ulink url="http://jsonviewer.stack.hu/"/>.
     ...
 }
 </screen>
-  ...sets the name of the lease file to /tmp/kea-leases6.csv.
   </para>
 
   <para>The "persist" parameter controls whether the leases are written to disk.
@@ -379,7 +380,9 @@ temporarily override a list of interface names and listen on all interfaces.
       </para>
 
       <para>
-	The following configuration:
+	The following configuration will assign the arbitrary subnet
+	identifier to the newly configured subnet:
+
 	<screen>
 "Dhcp6": {
     "subnet6": [
@@ -389,7 +392,6 @@ temporarily override a list of interface names and listen on all interfaces.
     ]
 }
 </screen>
-        will assign the arbitrary subnet identifier to the newly configured subnet.
 	This identifier will not change for this subnet unless the "id" parameter is
 	removed or set to 0. The value of 0 forces auto-generation of the subnet
 	identifier.
@@ -455,7 +457,7 @@ temporarily override a list of interface names and listen on all interfaces.
            "subnet": "2001:db8:1::/64",
            "pools": [
                {
-                   pool: "2001:db8:1::1-2001:db8:1::ffff"
+                   "pool": "2001:db8:1::1-2001:db8:1::ffff"
                }
            ],
            ...
@@ -487,8 +489,8 @@ temporarily override a list of interface names and listen on all interfaces.
     {
         "subnet": "2001:db8:1::/64",
         "pools": [
-            { pool: "2001:db8:1::1-2001:db8:1::ffff" },
-            { pool: "2001:db8:1:05::/80" }
+            { "pool": "2001:db8:1::1-2001:db8:1::ffff" },
+            { "pool": "2001:db8:1:05::/80" }
         ]</userinput>,
         ...
     }
@@ -506,13 +508,13 @@ temporarily override a list of interface names and listen on all interfaces.
     {
         "subnet": "2001:db8:1::/64",
         "pools": [
-            { pool: "2001:db8:1::1-2001:db8:1::ffff" }
+            { "pool": "2001:db8:1::1-2001:db8:1::ffff" }
         ]
     },
     {
         "subnet": "2001:db8:2::/64",
         "pools": [
-            { pool: "2001:db8:2::/64" }
+            { "pool": "2001:db8:2::/64" }
         ]
     },
 </userinput>
@@ -664,7 +666,7 @@ temporarily override a list of interface names and listen on all interfaces.
                 {
                     "name": "dns-servers",
                     "code": 23,
-                    "space: "dhcp6",
+                    "space": "dhcp6",
                     "csv-format": true,
                     "data": "2001:db8:1::3"
                 },
@@ -1070,7 +1072,7 @@ should include options from the isc option space:
 
     Even though the "container" option does not carry any data except
     sub-options, the "data" field must be explicitly set to an empty value.
-    This is required because in the current version of BIND 10 DHCP, the default
+    This is required because in the current version of Kea, the default
     configuration values are not propagated to the configuration parsers: if the
     "data" is not set the parser will assume that this parameter is not
     specified and an error will be reported.
@@ -1082,8 +1084,8 @@ should include options from the isc option space:
     required to carry an uint16 value as well as the sub-options, the "type"
     value would have to be set to "uint16" in the option definition. (Such an
     option would then have the following data structure: DHCP header, uint16
-    value, sub-options.) The value specified with the "data" parameter - which
-    should be a valid integer enclosed in quotes, e.g. "123" - would then be
+    value, sub-options.) The value specified with the "data" parameter &mdash; which
+    should be a valid integer enclosed in quotes, e.g. "123" &mdash; would then be
     assigned to the uint16 field in the "container" option.
     </para>
     </section>
@@ -1306,7 +1308,7 @@ should include options from the isc option space:
         "server-ip": "127.0.0.1",
         "server-port": 53001,
         "sender-ip": "",
-        "sender-port: 0,
+        "sender-port": 0,
         "max-queue-size": 1024,
         "ncr-protocol": "UDP",
         "ncr-format": "JSON",
@@ -1379,7 +1381,7 @@ should include options from the isc option space:
       would be required:
 <screen>
 "Dhcp6": {
-    "dhcp-ddns: {
+    "dhcp-ddns": {
         <userinput>"server-ip": "2001:db8::5",
         "server-port": 900</userinput>,
         ...
@@ -1655,8 +1657,8 @@ should include options from the isc option space:
         It is unlikely that this parameter should ever need to be changed.
         However, if such a need arises, stop the server, edit the file and restart
         the server. (The file is named kea-dhcp6-serverid and by default is
-        stored in the "var" subdirectory of the directory in which BIND 10 is installed.
-        This can be changed when BIND 10 is built by using "--localstatedir"
+        stored in the "var" subdirectory of the directory in which Kea is installed.
+        This can be changed when Kea is built by using "--localstatedir"
         on the "configure" command line.)  The file is a text file that contains
         double digit hexadecimal values
         separated by colons. This format is similar to typical MAC address
@@ -1767,23 +1769,34 @@ should include options from the isc option space:
 
 
     <section id="dhcp6-std">
-      <title>Supported Standards</title>
-      <para>The following standards and draft standards are currently
+      <title>Supported DHCPv6 Standards</title>
+      <para>The following standards are currently
       supported:</para>
       <itemizedlist>
           <listitem>
-            <simpara><ulink url="http://tools.ietf.org/html/rfc3315">RFC 3315</ulink>: Supported messages are SOLICIT,
+            <simpara><emphasis>Dynamic Host Configuration Protocol for IPv6</emphasis>,
+            <ulink url="http://tools.ietf.org/html/rfc3315">RFC 3315</ulink>:
+            Supported messages are SOLICIT,
             ADVERTISE, REQUEST, RELEASE, RENEW, REBIND, CONFIRM and REPLY.</simpara>
           </listitem>
           <listitem>
-            <simpara><ulink url="http://tools.ietf.org/html/rfc3633">RFC 3633</ulink>: Supported options are IA_PD and
+            <simpara><emphasis>IPv6 Prefix Options for
+            Dynamic Host Configuration Protocol (DHCP) version 6</emphasis>,
+            <ulink url="http://tools.ietf.org/html/rfc3633">RFC 3633</ulink>:
+            Supported options are IA_PD and
             IA_PREFIX. Also supported is the status code NoPrefixAvail.</simpara>
           </listitem>
           <listitem>
-            <simpara><ulink url="http://tools.ietf.org/html/rfc3646">RFC 3646</ulink>: Supported option is DNS_SERVERS.</simpara>
+            <simpara><emphasis>DNS Configuration options for Dynamic Host
+            Configuration Protocol for IPv6 (DHCPv6)</emphasis>,
+            <ulink url="http://tools.ietf.org/html/rfc3646">RFC 3646</ulink>:
+            Supported option is DNS_SERVERS.</simpara>
           </listitem>
           <listitem>
-            <simpara><ulink url="http://tools.ietf.org/html/rfc4704">RFC 4704</ulink>: Supported option is CLIENT_FQDN.</simpara>
+            <simpara><emphasis>The Dynamic Host Configuration Protocol for IPv6 (DHCPv6) Client
+            Fully Qualified Domain Name (FQDN) Option</emphasis>,
+            <ulink url="http://tools.ietf.org/html/rfc4704">RFC 4704</ulink>:
+            Supported option is CLIENT_FQDN.</simpara>
           </listitem>
       </itemizedlist>
     </section>

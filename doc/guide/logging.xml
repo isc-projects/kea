@@ -469,7 +469,7 @@ file be created.</para>
         Note: the layout of messages written to the system logging
         file (syslog) may be slightly different.  This message has
         been split across two lines here for display reasons; in the
-        logging file, it will appear on one line.)
+        logging file, it will appear on one line.
       </para>
 
       <para>
@@ -495,7 +495,7 @@ file be created.</para>
           <term>[kea-dhcp4.dhcpsrv/27456]</term>
           <listitem><para>
             The source of the message.  This comprises two components:
-            the BIND 10 process generating the message (in this
+            the Kea process generating the message (in this
             case, <command>kea-dhcp4</command>) and the module
             within the program from which the message originated
             (which is the name of the common library used by DHCP server

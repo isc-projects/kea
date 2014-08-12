@@ -56,9 +56,9 @@
       and, due to the nature of DDNS, it is run alongside either the
       DHCPv4 or DHCPv6 components (or both).  Like other parts of
       Kea, is a separate binary that can be run on its own or through
-      <command>keactl</command> (see <xref linkend="keactrl"/>). In
+      <command>keactrl</command> (see <xref linkend="keactrl"/>). In
       normal operation, controlling <command>kea-dhcp-ddns</command>
-      with <command>keactl</command> is recommended. However, it is also
+      with <command>keactrl</command> is recommended. However, it is also
       possible to run the DHCP-DDNS server directly. It accepts the
       following command-line switches:
       </para>
@@ -200,14 +200,15 @@
 	</para>
 	<warning>
 	  <simpara>
-	    When the DHCP-DDNS server is configured to listen at an address
-	    other than the loopback address (127.0.0.1 or ::1), it is possible
-	    for a malicious attacker to send bogus NameChangeRequests to it
-	    and change entries in the DNS. For this reason, addresses other
-	    than the IPv4 or IPv6 loopback addresses should only be used
-	    for testing purposes. A future version of Kea will implement
+	    It is possible for a malicious attacker to send bogus
+	    NameChangeRequests to the DHCP-DDNS server.  Addresses
+	    other than the IPv4 or IPv6 loopback addresses (127.0.0.1
+	    or ::1) should only be used for testing purposes, but
+	    note that local users may still communicate with the
+	    DHCP-DDNS server.  A future version of Kea will implement
 	    authentication to guard against such attacks.
 	  </simpara>
+<!-- see ticket #3514 -->
 	</warning>
 <note>
 <simpara>
