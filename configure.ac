@@ -92,7 +92,7 @@ AC_CHECK_DECL([__SUNPRO_CC], [SUNCXX="yes"], [SUNCXX="no"])
 AC_CHECK_DECL([__clang__], [CLANGPP="yes"], [CLANGPP="no"])
 AM_CONDITIONAL(USE_CLANGPP, test "X${CLANGPP}" = "Xyes")
 
-dnl Determine if weare using GNU sed
+dnl Determine if we are using GNU sed
 GNU_SED=no
 $SED --version 2> /dev/null | grep GNU > /dev/null 2>&1
 if test $? -eq 0; then
@@ -117,23 +117,23 @@ AX_ISC_RPATH
 # "override" the default.
 
 # This may be used to try linker flags.
-AC_DEFUN([BIND10_CXX_TRY_FLAG], [
+AC_DEFUN([KEA_CXX_TRY_FLAG], [
   AC_MSG_CHECKING([whether $CXX supports $1])
 
-  bind10_save_CXXFLAGS="$CXXFLAGS"
+  kea_save_CXXFLAGS="$CXXFLAGS"
   CXXFLAGS="$CXXFLAGS $1"
 
   AC_LINK_IFELSE([AC_LANG_SOURCE([int main(void){ return 0;}])],
-                 [bind10_cxx_flag=yes], [bind10_cxx_flag=no])
-  CXXFLAGS="$bind10_save_CXXFLAGS"
+                 [kea_cxx_flag=yes], [kea_cxx_flag=no])
+  CXXFLAGS="$kea_save_CXXFLAGS"
 
-  if test "x$bind10_cxx_flag" = "xyes"; then
+  if test "x$kea_cxx_flag" = "xyes"; then
     ifelse([$2], , :, [$2])
   else
     ifelse([$3], , :, [$3])
   fi
 
-  AC_MSG_RESULT([$bind10_cxx_flag])
+  AC_MSG_RESULT([$kea_cxx_flag])
 ])
 
 CXX_VERSION="unknown"
@@ -158,7 +158,7 @@ CXX_VERSION=`$CXX --version 2> /dev/null | head -1`
 B10_CXXFLAGS="$B10_CXXFLAGS -Qunused-arguments"
 fi
 
-BIND10_CXX_TRY_FLAG([-Wno-missing-field-initializers],
+KEA_CXX_TRY_FLAG([-Wno-missing-field-initializers],
 	[WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG="-Wno-missing-field-initializers"])
 AC_SUBST(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
@@ -224,13 +224,13 @@ if test $enable_static_link = yes -a $enable_static = no; then
 	AC_MSG_ERROR([--enable-static-link requires --enable-static])
 fi
 if test $enable_shared = no; then
-	AC_MSG_ERROR([BIND 10 requires shared libraries to be built])
+	AC_MSG_ERROR([Kea requires shared libraries to be built])
 fi
 
 # OS dependent configuration
 SET_ENV_LIBRARY_PATH=no
 ENV_LIBRARY_PATH=LD_LIBRARY_PATH
-bind10_undefined_pthread_behavior=no
+kea_undefined_pthread_behavior=no
 
 case "$host" in
 *-solaris*)
@@ -242,7 +242,7 @@ case "$host" in
 	# Destroying locked mutexes, condition variables being waited
 	# on, etc. are undefined behavior on Solaris, so we set it as
 	# such here.
-	bind10_undefined_pthread_behavior=yes
+	kea_undefined_pthread_behavior=yes
 	;;
 *-apple-darwin*)
 	# Starting with OSX 10.7 (Lion) we must choose which IPv6 API to use
@@ -263,7 +263,7 @@ case "$host" in
 	#endif
 	#endif
 	return 1;
-	}],[bind10_undefined_pthread_behavior=yes],[],[])
+	}],[kea_undefined_pthread_behavior=yes],[],[])
 
 	# libtool doesn't work perfectly with Darwin: libtool embeds the
 	# final install path in dynamic libraries and our loadable python
@@ -287,7 +287,7 @@ esac
 AM_CONDITIONAL(SET_ENV_LIBRARY_PATH, test $SET_ENV_LIBRARY_PATH = yes)
 AC_SUBST(SET_ENV_LIBRARY_PATH)
 AC_SUBST(ENV_LIBRARY_PATH)
-if [ test $bind10_undefined_pthread_behavior = "yes" ]; then
+if [ test $kea_undefined_pthread_behavior = "yes" ]; then
    AC_DEFINE([HAS_UNDEFINED_PTHREAD_BEHAVIOR], [1], [Does this platform have some undefined pthreads behavior?])
 fi
 
