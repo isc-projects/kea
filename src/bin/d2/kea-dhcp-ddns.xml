@@ -59,8 +59,8 @@
   <refsect1>
     <title>DESCRIPTION</title>
     <para>
-      The <command>kea-dhcp-ddns</command> service processes requests to
-      to update DNS mapping based on DHCP lease change events. The service
+      The <command>kea-dhcp-ddns</command> service process requests to
+      update DNS mapping based on DHCP lease change events. The service
       may run either as a Kea module (integrated mode) or as a individual
       process (stand-alone mode) dependent upon command line arguments. The
       default is integrated mode.  Stand alone operation is strictly for
