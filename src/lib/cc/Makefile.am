@@ -4,7 +4,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
 
-AM_CXXFLAGS = $(B10_CXXFLAGS)
+AM_CXXFLAGS = $(KEA_CXXFLAGS)
 if USE_GXX
 # ASIO header files used in session.cc will trigger the "unused-parameter"
 # warning.  Unfortunately there doesn't seem to be an easy way to selectively

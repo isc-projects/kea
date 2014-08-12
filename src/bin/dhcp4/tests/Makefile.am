@@ -33,7 +33,7 @@ CLEANFILES += *.json *.log
 
 DISTCLEANFILES = dhcp4_process_tests.sh
 
-AM_CXXFLAGS = $(B10_CXXFLAGS)
+AM_CXXFLAGS = $(KEA_CXXFLAGS)
 if USE_CLANGPP
 # Disable unused parameter warning caused by some Boost headers when compiling with clang
 AM_CXXFLAGS += -Wno-unused-parameter

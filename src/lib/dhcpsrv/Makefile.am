@@ -12,7 +12,7 @@ if HAVE_PGSQL
 AM_CPPFLAGS += $(PGSQL_CPPFLAGS)
 endif
 
-AM_CXXFLAGS = $(B10_CXXFLAGS)
+AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
 # Define rule to build logging source files from message file
 dhcpsrv_messages.h dhcpsrv_messages.cc: s-messages
