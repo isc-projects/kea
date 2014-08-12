@@ -7,7 +7,7 @@ AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_builddir)\"
 # used to bind a UNIX domain socket so we can minimize the risk of exceeding
 # the limit of file name path size.
 AM_CPPFLAGS += -DTEST_DATA_TOPBUILDDIR=\"$(abs_top_builddir)\"
-AM_CXXFLAGS = $(B10_CXXFLAGS)
+AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
 if USE_STATIC_LINK
 AM_LDFLAGS = -static
