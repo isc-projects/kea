@@ -4,7 +4,7 @@ AM_CPPFLAGS += -I$(top_builddir)/src/lib/util -I$(top_srcdir)/src/util
 AM_CPPFLAGS += -I$(top_builddir)/src/lib/cc
 AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(srcdir)/testdata\"
 
-AM_CXXFLAGS = $(B10_CXXFLAGS)
+AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
 if USE_STATIC_LINK
 AM_LDFLAGS = -static
@@ -48,7 +48,7 @@ run_unittests_LDADD += $(GTEST_LDADD)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
-# B10_CXXFLAGS)
+# KEA_CXXFLAGS)
 run_unittests_CXXFLAGS = $(AM_CXXFLAGS)
 if USE_GXX
 run_unittests_CXXFLAGS += -Wno-unused-parameter
