@@ -166,12 +166,14 @@ run_conditional() {
 ### Script starts here ###
 
 # Configure logger to log messages into the file.
-# Do not set destination if the B10_LOGGER_DESTINATION is set,
+# Do not set destination if the KEA_LOGGER_DESTINATION is set,
 # because a unit test could have set this to some other location.
-# @todo Rely on the Kea configuration file once #3427 is done.
-if [ -z ${B10_LOGGER_DESTINATION} ]; then
+# Note that when the configuration is applied this location may be
+# altered and only the handful of initial messages will be logged
+# to the default file.
+if [ -z ${KEA_LOGGER_DESTINATION} ]; then
     prefix=@prefix@
-    export B10_LOGGER_DESTINATION=@localstatedir@/@PACKAGE@/kea.log
+    export KEA_LOGGER_DESTINATION=@localstatedir@/@PACKAGE@/kea.log
 fi
 
 command=${1}
