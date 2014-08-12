@@ -17,7 +17,7 @@
 	the future.
 	(Trac #3464, git 4bd0c0eda9d86608f8802d28bd360239fe88e905)
 
-814.	[func,doc]	tomek
+814.	[func,doc]		tomek
 	It is now possible to specify logging parameters in a
 	configuration file for DHCPv4, DHCPv6 and DHCP-DDNS components.
 	(Trac #3427, git 23285903645c36fc35c6866a74c50c74089cd255)
@@ -41,14 +41,15 @@
 	(Trac #3505, git 6d9aed2f8fe181714e8260493c6cc06e13d0edd0)
 
 810.	[func]		stephen
-	perfdhcp is now installed in sbin as it requires root privilege to run.
-	The perfdhcp source has been moved to the directory src/bin/perfdhcp.
+	perfdhcp is now installed in sbin as it requires root privilege
+	to run. The perfdhcp source has been moved to the directory
+	src/bin/perfdhcp.
 	(Trac #3481, git d101aed6156a993476fa1164f0b0ec8395f5886c)
 
 809.	[func]		stephen
-	sockcreator is no longer built or installed.  The code is being retained
-	in the repository for the moment, but may be deleted at some point in the
-	future.
+	sockcreator is no longer built or installed.  The code is being
+	retained in the repository for the moment, but may be deleted at
+	some point in the future.
 	(Trac #3480, git 2a55a469dde8fcc053b49e287c30d0906baa91b4)
 
 808.	[func]		stephen
@@ -94,9 +95,9 @@
 
 800.	[bug]		marcin
 	DHCPv6 server is now usable on FreeBSD, NetBSD and OpenBSD systems.
-        It can receive messages sent to ff02::1:2 multicast address. Also,
-        fixed the bug whereby the DHCPv6 server failed to bind the socket to
-	global unicast address on BSD systems due to invalid scope id
+	It can receive messages sent to ff02::1:2 multicast address. Also,
+	fixed the bug whereby the DHCPv6 server failed to bind the socket
+	to global unicast address on BSD systems due to invalid scope id
 	setting.
 	(Trac #3437, git f4c2fe2fc37a37f1510e138e1f6c4ccd757e1f06)
 
@@ -203,10 +204,10 @@
 	(Trac #3246, git 50de7df4195195e981ae9c8c6f1b4100047d5bb5)
 
 784.	[func]		tmark
-	DHCP_DDNS's configuration was changed. The unused parameter, "interface"
-	was deleted.  Three new parameters, "ncr_protocol", "ncr_format", and
-	"dns_server_timeout" were added.  Please refer to Kea Guide for
-	details.
+	DHCP_DDNS's configuration was changed. The unused parameter,
+	"interface" was deleted.  Three new parameters, "ncr_protocol",
+	"ncr_format", and "dns_server_timeout" were added.  Please refer to
+	Kea Guide for details.
 	(Trac #3268,    git bd60252e679f19b062f61926647f661ab169f21c)
 
 783.	[func]*		tomek
