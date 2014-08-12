@@ -43,8 +43,8 @@ keactrl &lt;command&gt; [-c keactrl-config-file] [-s server[,server,..]]
         The optional <command>-s server[,server ...]</command> switch selects
         the servers to which the command is issued. If absent,
         the command is sent to all servers enabled in the keactrl
-        configuration file. (<command>--server</command> is a synonym for
-        <command>-s</command>.) If multiple servers are specified, they
+        configuration file (<command>--server</command> is a synonym for
+        <command>-s</command>). If multiple servers are specified, they
         should be separated by commas with no intervening spaces.
       </para>
     </section>

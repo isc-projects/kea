@@ -25,9 +25,9 @@
     <title>JSON configuration backend</title>
     <para>JSON is the default configuration backend.
     It assumes that the servers are started from the command line
-    (either directly or using a script). The JSON backend uses
-    certain signals to influence Kea. The configuration file is
-    specified upon startup using -c parameter.</para>
+    (either directly or using a script, e.g. <filename>keactrl</filename>).
+    The JSON backend uses certain signals to influence Kea. The
+    configuration file is specified upon startup using -c parameter.</para>
 
     <section id="json-format">
       <title>JSON syntax</title>
@@ -41,12 +41,12 @@
       <para>The configuration file consists of a single object (often colloquially
       called a map) started with a curly bracket. It comprises the "Dhcp4", "Dhcp6",
       "DhcpDdns" and/or "Logging" objects. It is possible to define additional
-      elements, but they will be ignored. (That principle was chosen to ease
-      configuration management.) For example, it is possible to define Dhcp4,
-      Dhcp6 and Logging elements in a single configuration file that can be used to
-      start both the DHCPv4 and DHCPv6 components.  When starting, the DHCPv4 component
-      will use Dhcp4 object to configure itself and the Logging object to configure logging
-      parameters; it will ignore the Dhcp6 object.</para>
+      elements, but they will be ignored. For example, it is possible to define
+      Dhcp4, Dhcp6 and Logging elements in a single configuration file that can
+      be used to start both the DHCPv4 and DHCPv6 components. When starting,
+      the DHCPv4 component will use Dhcp4 object to configure itself and the
+      Logging object to configure logging parameters; it will ignore the Dhcp6
+      object.</para>
 
       <para>For example, a very simple configuration for both DHCPv4 and DHCPv6
       could look like this:

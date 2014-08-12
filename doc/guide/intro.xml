@@ -57,11 +57,11 @@
         <listitem>
             <simpara>
         Kea supports two crypto libraries: Botan and OpenSSL. Only one of them
-        is required during compilation. Kea uses the Botan crypto library for
-        C++ (<ulink url="http://botan.randombit.net/"/>), version 1.8 or
-        later. As an alternative to Botan, Kea can use the OpenSSL crypto
-        library (<ulink url="http://www.openssl.org/"/>).  It requires a version
-        with SHA-2 support.
+        is required to be installed during compilation. Kea uses the Botan
+        crypto library for C++ (<ulink url="http://botan.randombit.net/"/>),
+        version 1.8 or later. As an alternative to Botan, Kea can use the
+        OpenSSL crypto library (<ulink url="http://www.openssl.org/"/>).
+        It requires a version with SHA-2 support.
             </simpara>
         </listitem>
 
