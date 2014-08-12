@@ -392,8 +392,8 @@ Debian and Ubuntu:
       <para>Kea 0.9 introduces configuration backends that are
       switchable during compilation phase. The backend is chosen using
       the --with-kea-config switch when running the configure script. It
-      currently supports two values: BIND10 and JSON. This is currently
-      only supported by DHCPv6 component. JSON is the default.</para>
+      currently supports two values: BUNDY and JSON. JSON is the default.
+      </para>
 
       <variablelist>
 
@@ -401,7 +401,7 @@ Debian and Ubuntu:
           <term>BUNDY</term>
           <listitem>
             <simpara>BUNDY means
-            that Kea6 is linked with the Bundy configuration backend that
+            that Kea is linked with the Bundy configuration backend that
             connects to the Bundy framework and in general works exactly the
 	    same as Kea 0.8 and earlier BIND10 versions. The benefits
 	    of that backend are uniform integration with the Bundy
@@ -435,7 +435,7 @@ Debian and Ubuntu:
         a way that makes it possible to choose which database product should be used to
         store the lease information.  At present, Kea supports three database backends: MySQL,
         PostgreSQL and Memfile. To limit external dependencies, both MySQL and PostgreSQL
-        support are disabled by default and only Memfile (which is implemented in pure C++)
+        support are disabled by default and only Memfile
         is available. Support for the optional external database backend must be explicitly included when
         Kea is built.  This section covers the building of Kea with MySQL and/or PostgreSQL
         and the creation of the lease database.

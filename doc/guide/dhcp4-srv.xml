@@ -161,7 +161,10 @@ use it for 4000 seconds. (Note that integer numbers are specified as is,
 without any quotes around them.) <command>renew-timer</command> and
 <command>rebind-timer</command> are values that
 define T1 and T2 timers that govern when the client will begin renewal and
-rebind procedures.</para>
+rebind procedures. Note that <command>renew-timer</command> and
+<command>rebind-timer</command> are optional. If they are not specified the
+client will select values for T1 and T2 timers according to the
+<ulink url="http://tools.ietf.org/html/rfc2131">RFC 2131</ulink>.</para>
 
 <para>The next couple lines define the lease database, the place where the server
 stores its lease information. This particular example tells the server to use
