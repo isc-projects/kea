@@ -1,4 +1,4 @@
-dnl @synopsis AX_BOOST_FOR_BIND10
+dnl @synopsis AX_BOOST_FOR_KEA
 dnl
 dnl Test for the Boost C++ header files intended to be used within BIND 10
 dnl
@@ -37,7 +37,7 @@ dnl                        causes segfaults in offset_ptr implementation when
 dnl                        compiled by GCC with optimisations enabled.
 dnl                        See ticket no. 3025 for details.
 
-AC_DEFUN([AX_BOOST_FOR_BIND10], [
+AC_DEFUN([AX_BOOST_FOR_KEA], [
 AC_LANG_SAVE
 AC_LANG([C++])
 
@@ -203,4 +203,4 @@ AC_MSG_RESULT([$BOOST_VERSION])
 
 CPPFLAGS="$CPPFLAGS_SAVED"
 AC_LANG_RESTORE
-])dnl AX_BOOST_FOR_BIND10
+])dnl AX_BOOST_FOR_KEA

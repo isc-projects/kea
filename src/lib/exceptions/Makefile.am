@@ -1,7 +1,7 @@
 SUBDIRS = . tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
-AM_CXXFLAGS=$(B10_CXXFLAGS)
+AM_CXXFLAGS=$(KEA_CXXFLAGS)
 
 lib_LTLIBRARIES = libkea-exceptions.la
 libkea_exceptions_la_SOURCES = exceptions.h exceptions.cc
