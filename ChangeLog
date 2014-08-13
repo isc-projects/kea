@@ -1,3 +1,5 @@
+Kea 0.9beta1 released on August 13, 2014
+
 819.	[build]		marcin
 	Renamed variables in the configure.ac so as their names do not
 	refer to BIND10 project. As a result of renaming the B10_CXXFLAGS
