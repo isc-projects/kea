@@ -938,8 +938,20 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
     if (result == 0) {
         // nothing received and timeout has been reached
         return (Pkt4Ptr()); // NULL
+
     } else if (result < 0) {
-        isc_throw(SocketReadError, strerror(errno));
+        // In most cases we would like to know whether select() returned
+        // an error because of a signal being received  or for some other
+        // reasaon. This is because DHCP servers use signals to trigger
+        // certain actions, like reconfiguration or graceful shutdown.
+        // By cacthing a dedicated exception the caller will know if the
+        // error returned by the function is due to the reception of the
+        // signal or for some other reason.
+        if (errno == EINTR) {
+            isc_throw(SignalInterruptOnSelect, strerror(errno));
+        } else {
+            isc_throw(SocketReadError, strerror(errno));
+        }
     }
 
     // Let's find out which socket has the data

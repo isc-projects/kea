@@ -49,6 +49,13 @@ public:
         isc::Exception(file, line, what) { };
 };
 
+/// @brief Exception thrown when a call to select is interrupted by a signal.
+class SignalInterruptOnSelect : public Exception {
+public:
+    SignalInterruptOnSelect(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
 /// @brief IfaceMgr exception thrown thrown when socket opening
 /// or configuration failed.
 class SocketConfigError : public Exception {
@@ -72,6 +79,7 @@ public:
     SocketWriteError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
+
 
 /// Holds information about socket.
 struct SocketInfo {
@@ -598,37 +606,41 @@ public:
     /// @return true if sending was successful
     bool send(const Pkt4Ptr& pkt);
 
-    /// @brief Tries to receive IPv6 packet over open IPv6 sockets.
+    /// @brief Tries to receive DHCPv6 message over open IPv6 sockets.
     ///
-    /// Attempts to receive a single IPv6 packet of any of the open IPv6 sockets.
-    /// If reception is successful and all information about its sender
-    /// are obtained, Pkt6 object is created and returned.
-    ///
-    /// TODO Start using select() and add timeout to be able
-    /// to not wait infinitely, but rather do something useful
-    /// (e.g. remove expired leases)
+    /// Attempts to receive a single DHCPv6 message over any of the open IPv6
+    /// sockets. If reception is successful and all information about its
+    /// sender is obtained, Pkt6 object is created and returned.
     ///
     /// @param timeout_sec specifies integral part of the timeout (in seconds)
     /// @param timeout_usec specifies fractional part of the timeout
     /// (in microseconds)
     ///
     /// @throw isc::BadValue if timeout_usec is greater than one million
-    /// @throw isc::dhcp::SocketReadError if error occured when receiving a packet.
+    /// @throw isc::dhcp::SocketReadError if error occured when receiving a
+    /// packet.
+    /// @throw isc::dhcp::SignalInterruptOnSelect when a call to select() is
+    /// interrupted by a signal.
+    ///
     /// @return Pkt6 object representing received packet (or NULL)
     Pkt6Ptr receive6(uint32_t timeout_sec, uint32_t timeout_usec = 0);
 
     /// @brief Tries to receive IPv4 packet over open IPv4 sockets.
     ///
-    /// Attempts to receive a single IPv4 packet of any of the open IPv4 sockets.
-    /// If reception is successful and all information about its sender
-    /// are obtained, Pkt4 object is created and returned.
+    /// Attempts to receive a single DHCPv4 message over any of the open
+    /// IPv4 sockets. If reception is successful and all information about
+    /// its sender is obtained, Pkt4 object is created and returned.
     ///
     /// @param timeout_sec specifies integral part of the timeout (in seconds)
     /// @param timeout_usec specifies fractional part of the timeout
     /// (in microseconds)
     ///
     /// @throw isc::BadValue if timeout_usec is greater than one million
-    /// @throw isc::dhcp::SocketReadError if error occured when receiving a packet.
+    /// @throw isc::dhcp::SocketReadError if error occured when receiving a
+    /// packet.
+    /// @throw isc::dhcp::SignalInterruptOnSelect when a call to select() is
+    /// interrupted by a signal.
+    ///
     /// @return Pkt4 object representing received packet (or NULL)
     Pkt4Ptr receive4(uint32_t timeout_sec, uint32_t timeout_usec = 0);
 
