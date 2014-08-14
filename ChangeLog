@@ -1,3 +1,7 @@
+8XX.	[func]		tomek
+	query_cmp tool removed from the source code.
+	(Trac #3509, git TBD)
+
 819.	[build]		marcin
 	Renamed variables in the configure.ac so as their names do not
 	refer to BIND10 project. As a result of renaming the B10_CXXFLAGS
