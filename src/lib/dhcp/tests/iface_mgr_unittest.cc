@@ -2642,46 +2642,48 @@ checkIfAddrs(const Iface & iface, struct ifaddrs *& ifptr) {
 }
 
 TEST_F(IfaceMgrTest, detectIfaces) {
-
-    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
-    IfaceMgr::IfaceCollection& detectedIfaces = ifacemgr->getIfacesLst();
+    NakedIfaceMgr ifacemgr;
 
     // We are using struct ifaddrs as it is the only good portable one
     // ifreq and ioctls are far from portabe. For BSD ifreq::ifa_flags field
     // is only a short which, nowadays, can be negative
-    struct ifaddrs * iflist = 0, * ifptr = 0;
+    struct ifaddrs *iflist = 0, *ifptr = 0;
+    ASSERT_EQ(0, getifaddrs(&iflist))
+        << "Unit test failed to detect interfaces.";
 
-    if(getifaddrs(& iflist) != 0) {
-        isc_throw(Unexpected, "Cannot detect interfaces");
-    }
-
+    // Go over all interfaces detected by the unit test and see if they
+    // match with the interfaces detected by IfaceMgr.
     for (ifptr = iflist; ifptr != 0; ifptr = ifptr->ifa_next) {
-        for (IfaceMgr::IfaceCollection::const_iterator i = detectedIfaces.begin();
-            i != detectedIfaces.end(); ++ i) {
-            if (!strncmp(ifptr->ifa_name, (*i).getName().c_str(),
-                         (*i).getName().size())) {
+        Iface* i = ifacemgr.getIface(std::string(ifptr->ifa_name));
 
-                // Typically unit-tests try to be silent. But interface detection
-                // is tricky enough to warrant additional prints.
-                std::cout << "Checking interface " << i->getName() << std::endl;
+        // If the given interface was also detected by the IfaceMgr,
+        // check that its properties are correct.
+        if (i != NULL) {
+            // Check if interface index is reported properly
+            EXPECT_TRUE(checkIfIndex(*i, ifptr))
+                << "Non-matching index of the detected interface "
+                << i->getName();
 
-                // Check if interface index is reported properly
-                EXPECT_TRUE(checkIfIndex(*i, ifptr));
+            // Check if flags are reported properly
+            EXPECT_TRUE(checkIfFlags(*i, ifptr))
+                << "Non-matching flags of the detected interface "
+                << i->getName();
 
-                // Check if flags are reported properly
-                EXPECT_TRUE(checkIfFlags(*i, ifptr));
+            // Check if addresses are reported properly
+            EXPECT_TRUE(checkIfAddrs(*i, ifptr))
+                << "Non-matching addresses on the detected interface "
+                << i->getName();
 
-                // Check if addresses are reported properly
-                EXPECT_TRUE(checkIfAddrs(*i, ifptr));
-
-            }
+        } else {
+            // The interface detected here seems to be missing in the
+            // IfaceMgr.
+            ADD_FAILURE() << "Interface " << ifptr->ifa_name
+                          << " not detected by the Interface Manager";
         }
     }
 
     freeifaddrs(iflist);
     iflist = 0;
-
-    delete ifacemgr;
 }
 
 volatile bool callback_ok;
