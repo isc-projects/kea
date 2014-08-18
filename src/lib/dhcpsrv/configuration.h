@@ -23,6 +23,8 @@
 namespace isc {
 namespace dhcp {
 
+class CfgMgr;
+
 /// @brief Defines single logging destination
 ///
 /// This structure is used to keep log4cplus configuration parameters.
@@ -33,7 +35,7 @@ struct LoggingDestination {
     /// Values accepted are: stdout, stderr, syslog, syslog:name.
     /// Any other destination will be considered a file name.
     std::string output_;
-    
+
     /// @brief Maximum number of log files in rotation
     int maxver_;
 
@@ -53,10 +55,10 @@ struct LoggingDestination {
 ///                    "maxver": 8,
 ///                    "maxsize": 204800
 ///                }
-///            ], 
+///            ],
 ///            "severity": "WARN",
 ///            "debuglevel": 99
-///        }, 
+///        },
 struct LoggingInfo {
 
     /// @brief logging name
@@ -82,8 +84,31 @@ typedef std::vector<isc::dhcp::LoggingInfo> LoggingInfoStorage;
 /// @todo Migrate all other configuration parameters from cfgmgr.h here
 struct Configuration {
 
+    static const uint16_t CFGSEL_NONE = 0x00000000;
+    static const uint16_t CFGSEL_SUBNET4 = 0x00000001;
+    static const uint16_t CFGSEL_SUBNET6 = 0x00000002;
+    static const uint16_t CFGSEL_ALL4 = 0x00000001;
+    static const uint16_t CFGSEL_ALL6 = 0x00000002;
+    static const uint16_t CFGSEL_ALL = 0x00000003;
+
     /// @brief logging specific information
     LoggingInfoStorage logging_info_;
+
+    /// @brief Returns summary of the configuration in the textual format.
+    ///
+    /// This method returns the brief text describing the current configuration.
+    /// It may be use for logging purposes, e.g. when the new configuration is
+    /// committed to notify a user about the changes in configuration.
+    ///
+    /// @todo Currently this method uses @c CfgMgr accessors to get the
+    /// configuration parameters. Once these parameters are migrated from the
+    /// @c CfgMgr this method will have to be modified accordingly.
+    ///
+    /// @param selection Is a bitfield which describes the parts of the
+    /// configuration to be returned.
+    ///
+    /// @return Summary of the configuration in the textual format.
+    std::string getConfigSummary(const uint32_t selection) const;
 };
 
 /// @brief pointer to the configuration
