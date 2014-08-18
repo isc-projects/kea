@@ -1,3 +1,7 @@
+8xx.	[build]		tomek
+	'host' program was removed from examples.
+	(Trac #3421, git tbd)
+
 820.	[bug]		marcin
 	Corrected the IfaceMgrTest.detectIfaces unit test which reported
 	false positives for specific network configurations.
