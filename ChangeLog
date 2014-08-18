@@ -1,3 +1,8 @@
+821.	[bug]		marcin
+	DHCP servers no longer log an error when Interface Manager fails to
+	receive a packet as a result of signal being received.
+	(Trac #3478, git d80c83aef8e103dd483234429d35aeb66149e0b9)
+
 820.	[bug]		marcin
 	Corrected the IfaceMgrTest.detectIfaces unit test which reported
 	false positives for specific network configurations.
