@@ -84,12 +84,14 @@ typedef std::vector<isc::dhcp::LoggingInfo> LoggingInfoStorage;
 /// @todo Migrate all other configuration parameters from cfgmgr.h here
 struct Configuration {
 
-    static const uint16_t CFGSEL_NONE = 0x00000000;
-    static const uint16_t CFGSEL_SUBNET4 = 0x00000001;
-    static const uint16_t CFGSEL_SUBNET6 = 0x00000002;
-    static const uint16_t CFGSEL_ALL4 = 0x00000001;
-    static const uint16_t CFGSEL_ALL6 = 0x00000002;
-    static const uint16_t CFGSEL_ALL = 0x00000003;
+    static const uint16_t CFGSEL_NONE = 0x0000;
+    static const uint16_t CFGSEL_SUBNET4 = 0x0001;
+    static const uint16_t CFGSEL_SUBNET6 = 0x0002;
+    static const uint16_t CFGSEL_SUBNET = 0x0003;
+    static const uint16_t CFGSEL_ALL4 = 0x0001;
+    static const uint16_t CFGSEL_ALL6 = 0x0002;
+    static const uint16_t CFGSEL_DDNS = 0x0004;
+    static const uint16_t CFGSEL_ALL = 0xFFFF;
 
     /// @brief logging specific information
     LoggingInfoStorage logging_info_;
