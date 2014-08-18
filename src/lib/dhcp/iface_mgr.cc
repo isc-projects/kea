@@ -944,7 +944,7 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
         // an error because of a signal being received  or for some other
         // reasaon. This is because DHCP servers use signals to trigger
         // certain actions, like reconfiguration or graceful shutdown.
-        // By cacthing a dedicated exception the caller will know if the
+        // By catching a dedicated exception the caller will know if the
         // error returned by the function is due to the reception of the
         // signal or for some other reason.
         if (errno == EINTR) {
@@ -1059,7 +1059,7 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         // an error because of a signal being received  or for some other
         // reasaon. This is because DHCP servers use signals to trigger
         // certain actions, like reconfiguration or graceful shutdown.
-        // By cacthing a dedicated exception the caller will know if the
+        // By catching a dedicated exception the caller will know if the
         // error returned by the function is due to the reception of the
         // signal or for some other reason.
         if (errno == EINTR) {
