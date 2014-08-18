@@ -196,6 +196,11 @@ D2CfgMgr::getD2Params() {
     return (getD2CfgContext()->getD2Params());
 }
 
+std::string
+D2CfgMgr::getConfigSummary(const uint16_t) {
+    return (getD2Params()->getConfigSummary());
+}
+
 void
 D2CfgMgr::buildParams(isc::data::ConstElementPtr params_config) {
     // Base class build creates parses and invokes build on each parser.
