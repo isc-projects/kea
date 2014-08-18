@@ -84,14 +84,21 @@ typedef std::vector<isc::dhcp::LoggingInfo> LoggingInfoStorage;
 /// @todo Migrate all other configuration parameters from cfgmgr.h here
 struct Configuration {
 
-    static const uint16_t CFGSEL_NONE = 0x0000;
-    static const uint16_t CFGSEL_SUBNET4 = 0x0001;
-    static const uint16_t CFGSEL_SUBNET6 = 0x0002;
-    static const uint16_t CFGSEL_SUBNET = 0x0003;
-    static const uint16_t CFGSEL_ALL4 = 0x0001;
-    static const uint16_t CFGSEL_ALL6 = 0x0002;
-    static const uint16_t CFGSEL_DDNS = 0x0004;
-    static const uint16_t CFGSEL_ALL = 0xFFFF;
+    /// @name Constants for selection of parameters returned by @c getConfigSummary
+    ///
+    //@{
+    static const uint16_t CFGSEL_NONE    = 0x0000; ///< Nothing selected
+    static const uint16_t CFGSEL_SUBNET4 = 0x0001; ///< Number of IPv4 subnets
+    static const uint16_t CFGSEL_SUBNET6 = 0x0002; ///< Number of IPv6 subnets
+    static const uint16_t CFGSEL_IFACE4  = 0x0004; ///< Number of enabled ifaces
+    static const uint16_t CFGSEL_IFACE6  = 0x0008; ///< Number of v6 ifaces
+    static const uint16_t CFGSEL_DDNS    = 0x0010; ///< DDNS enabled/disabled
+
+    static const uint16_t CFGSEL_SUBNET  = 0x0003; ///< Number of all subnets
+    static const uint16_t CFGSEL_ALL4    = 0x0015; ///< IPv4 related config
+    static const uint16_t CFGSEL_ALL6    = 0x001A; ///< IPv6 related config
+    static const uint16_t CFGSEL_ALL     = 0xFFFF; ///< Whole config
+    //@}
 
     /// @brief logging specific information
     LoggingInfoStorage logging_info_;
@@ -105,6 +112,10 @@ struct Configuration {
     /// @todo Currently this method uses @c CfgMgr accessors to get the
     /// configuration parameters. Once these parameters are migrated from the
     /// @c CfgMgr this method will have to be modified accordingly.
+    ///
+    /// @todo Implement reporting a summary of interfaces being used for
+    /// receiving and sending DHCP messages. This will be implemented with
+    /// ticket #3512.
     ///
     /// @param selection Is a bitfield which describes the parts of the
     /// configuration to be returned.
