@@ -238,6 +238,14 @@ public:
     /// @return reference to const D2ParamsPtr
     const D2ParamsPtr& getD2Params();
 
+    /// @brief Returns configuration summary in the textual format.
+    ///
+    /// @param selection Bitfield which describes the parts of the configuration
+    /// to be returned. This parameter is ignored for the D2.
+    ///
+    /// @return Summary of the configuration in the textual format.
+    virtual std::string getConfigSummary(const uint16_t selection);
+
 protected:
     /// @brief Performs the parsing of the given "params" element.
     ///

@@ -180,6 +180,13 @@ public:
     virtual isc::data::ConstElementPtr command(const std::string& command,
                                                isc::data::ConstElementPtr args);
 
+    /// @brief Returns configuration summary in the textual format.
+    ///
+    /// @return Always an empty string.
+    virtual std::string getConfigSummary(const uint16_t) {
+        return ("");
+    }
+
     // @brief Destructor
     virtual ~DStubProcess();
 };
@@ -700,6 +707,13 @@ public:
     createConfigParser(const std::string& element_id,
                        const isc::data::Element::Position& pos
                        = isc::data::Element::Position());
+
+    /// @brief Returns a summary of the configuration in the textual format.
+    ///
+    /// @return Always an empty string.
+    virtual std::string getConfigSummary(const uint16_t) {
+        return ("");
+    }
 
     /// @brief A list for remembering the element ids in the order they were
     /// parsed.
