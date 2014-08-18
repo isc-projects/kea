@@ -191,6 +191,13 @@ dynamic_reconfiguration_test() {
         clean_exit 1
     fi
 
+    # When the server receives a signal the call to select() function is
+    # interrupted. This should not be logged as an error.
+    get_log_messages "DHCP4_PACKET_RECEIVE_FAIL"
+    assert_eq 0 ${_GET_LOG_MESSAGES} \
+        "Expected get_log_messages DHCP4_PACKET_RECEIVE_FAIL return %d, \
+returned %d."
+
     # All ok. Shut down Kea and exit.
     test_finish 0
 }
@@ -251,6 +258,12 @@ shutdown_test() {
     wait_for_server_down 5 ${bin}
     assert_eq 1 ${_WAIT_FOR_SERVER_DOWN} \
         "Expected wait_for_server_down return %d, returned %d"
+
+    # When the server receives a signal the call to select() function is
+    # interrupted. This should not be logged as an error.
+    get_log_messages "DHCP4_PACKET_RECEIVE_FAIL"
+    assert_eq 0 ${_GET_LOG_MESSAGES} \
+        "Expected get_log_messages return %d, returned %d."
 
     test_finish 0
 }

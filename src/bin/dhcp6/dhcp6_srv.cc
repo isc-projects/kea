@@ -242,6 +242,13 @@ bool Dhcpv6Srv::run() {
 
         try {
             query = receivePacket(timeout);
+
+        } catch (const SignalInterruptOnSelect) {
+            // Packet reception interrupted because a signal has been received.
+            // This is not an error because we might have received a SIGTERM,
+            // SIGINT or SIGHUP which are handled by the server. For signals
+            // that are not handled by the server we rely on the default
+            // behavior of the system, but there is nothing we should log here.
         } catch (const std::exception& e) {
             LOG_ERROR(dhcp6_logger, DHCP6_PACKET_RECEIVE_FAIL).arg(e.what());
         }
