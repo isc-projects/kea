@@ -612,6 +612,9 @@ public:
     /// sockets. If reception is successful and all information about its
     /// sender is obtained, Pkt6 object is created and returned.
     ///
+    /// This method also checks if data arrived over registered external socket.
+    /// This data may be of a different protocol family than AF_INET6.
+    ///
     /// @param timeout_sec specifies integral part of the timeout (in seconds)
     /// @param timeout_usec specifies fractional part of the timeout
     /// (in microseconds)
@@ -630,6 +633,9 @@ public:
     /// Attempts to receive a single DHCPv4 message over any of the open
     /// IPv4 sockets. If reception is successful and all information about
     /// its sender is obtained, Pkt4 object is created and returned.
+    ///
+    /// This method also checks if data arrived over registered external socket.
+    /// This data may be of a different protocol family than AF_INET.
     ///
     /// @param timeout_sec specifies integral part of the timeout (in seconds)
     /// @param timeout_usec specifies fractional part of the timeout
