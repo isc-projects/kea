@@ -43,6 +43,11 @@ Configuration::getConfigSummary(const uint32_t selection) const {
         s << "; ";
     }
 
+    if ((selection & CFGSEL_DDNS) == CFGSEL_DDNS) {
+        bool ddns_enabled = CfgMgr::instance().ddnsEnabled();
+        s << "DDNS: " << (ddns_enabled ? "enabled" : "disabled") << "; ";
+    }
+
     if (s.tellp() == 0) {
         s << "no config details available";
     }
