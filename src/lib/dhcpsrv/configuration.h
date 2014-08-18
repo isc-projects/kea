@@ -106,7 +106,7 @@ struct Configuration {
     /// @brief Returns summary of the configuration in the textual format.
     ///
     /// This method returns the brief text describing the current configuration.
-    /// It may be use for logging purposes, e.g. when the new configuration is
+    /// It may be used for logging purposes, e.g. when the new configuration is
     /// committed to notify a user about the changes in configuration.
     ///
     /// @todo Currently this method uses @c CfgMgr accessors to get the
