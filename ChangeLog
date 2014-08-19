@@ -8,6 +8,8 @@
 	false positives for specific network configurations.
 	(Trac #3517, git 9affa1b2210f5cc9d7a99724e5d5c8979409cefd)
 
+Kea 0.9beta1 released on August 13, 2014
+
 819.	[build]		marcin
 	Renamed variables in the configure.ac so as their names do not
 	refer to BIND10 project. As a result of renaming the B10_CXXFLAGS
