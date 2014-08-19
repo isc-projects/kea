@@ -101,8 +101,7 @@ fi
 
 # Linker options
 
-# check -R, "-Wl,-R" or -rpath (we share the AX function defined in
-#  examples/m4)
+# check -R, "-Wl,-R" or -rpath
 AX_ISC_RPATH
 
 # Compiler dependent settings: define some mandatory CXXFLAGS here.
