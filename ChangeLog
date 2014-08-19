@@ -1,4 +1,4 @@
-8XX.	[func]		tomek
+8XX.	[build]		tomek
 	query_cmp tool removed from the source code.
 	(Trac #3509, git TBD)
 
