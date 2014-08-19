@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
+#include <dhcp/dhcp4.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/iface_cfg.h>
 #include <gtest/gtest.h>
@@ -35,15 +36,114 @@ public:
         iface_mgr_test_config_(true) {
     }
 
+    /// @brief Checks if socket of the specified family is opened on interface.
+    ///
+    /// @param iface_name Interface name.
+    /// @param family One of: AF_INET or AF_INET6
+    bool socketOpen(const std::string& iface_name, const int family) const;
+
     /// @brief Holds a fake configuration of the interfaces.
     IfaceMgrTestConfig iface_mgr_test_config_;
 
 };
 
-TEST_F(IfaceCfgTest, explicitNames) {
-    IfaceCfg cfg;
+bool
+IfaceCfgTest::socketOpen(const std::string& iface_name,
+                         const int family) const {
+    Iface* iface = IfaceMgr::instance().getIface(iface_name);
+    if (iface == NULL) {
+        ADD_FAILURE() << "No such interface '" << iface_name << "'";
+        return (false);
+    }
+
+    const Iface::SocketCollection& sockets = iface->getSockets();
+    for (Iface::SocketCollection::const_iterator sock = sockets.begin();
+         sock != sockets.end(); ++sock) {
+        if (sock->family_ == family) {
+            return (true);
+        }
+    }
+    return (false);
+}
+
+// This test checks that the interface names can be explicitly selected
+// by their names and IPv4 sockets are opened on these interfaces.
+TEST_F(IfaceCfgTest, explicitNamesV4) {
+    IfaceCfg cfg(IfaceCfg::V4);
+    // Specify valid interface names. There should be no error.
     ASSERT_NO_THROW(cfg.use("eth0"));
     ASSERT_NO_THROW(cfg.use("eth1"));
+
+    // Open sockets on specified interfaces.
+    cfg.openSockets(DHCP4_SERVER_PORT);
+
+    // Sockets should be now open on eth0 and eth1, but not on loopback.
+    EXPECT_TRUE(socketOpen("eth0", AF_INET));
+    EXPECT_TRUE(socketOpen("eth1", AF_INET));
+    EXPECT_FALSE(socketOpen("lo", AF_INET));
+
+    // No IPv6 sockets should be present because we wanted IPv4 sockets.
+    EXPECT_FALSE(socketOpen("eth0", AF_INET6));
+    EXPECT_FALSE(socketOpen("eth1", AF_INET6));
+    EXPECT_FALSE(socketOpen("lo", AF_INET6));
+
+    // Close all sockets and make sure they are really closed.
+    cfg.closeSockets();
+    ASSERT_FALSE(socketOpen("eth0", AF_INET));
+    ASSERT_FALSE(socketOpen("eth1", AF_INET));
+    ASSERT_FALSE(socketOpen("lo", AF_INET));
+
+    // Reset configuration and select only one interface this time.
+    cfg.reset();
+    ASSERT_NO_THROW(cfg.use("eth1"));
+    
+    cfg.openSockets(DHCP4_SERVER_PORT);
+
+    // Socket should be open on eth1 only.
+    EXPECT_FALSE(socketOpen("eth0", AF_INET));
+    EXPECT_TRUE(socketOpen("eth1", AF_INET));
+    EXPECT_FALSE(socketOpen("lo", AF_INET));
+    
+}
+
+// This test checks that the interface names can be explicitly selected
+// by their names and IPv6 sockets are opened on these interfaces.
+TEST_F(IfaceCfgTest, explicitNamesV6) {
+    IfaceCfg cfg(IfaceCfg::V6);
+    // Specify valid interface names. There should be no error.
+    ASSERT_NO_THROW(cfg.use("eth0"));
+    ASSERT_NO_THROW(cfg.use("eth1"));
+
+    // Open sockets on specified interfaces.
+    cfg.openSockets(DHCP6_SERVER_PORT);
+
+    // Sockets should be now open on eth0 and eth1, but not on loopback.
+    EXPECT_TRUE(socketOpen("eth0", AF_INET6));
+    EXPECT_TRUE(socketOpen("eth1", AF_INET6));
+    EXPECT_FALSE(socketOpen("lo", AF_INET6));
+
+    // No IPv4 sockets should be present because we wanted IPv4 sockets.
+    EXPECT_FALSE(socketOpen("eth0", AF_INET));
+    EXPECT_FALSE(socketOpen("eth1", AF_INET));
+    EXPECT_FALSE(socketOpen("lo", AF_INET));
+
+    // Close all sockets and make sure they are really closed.
+    cfg.closeSockets();
+    ASSERT_FALSE(socketOpen("eth0", AF_INET6));
+    ASSERT_FALSE(socketOpen("eth1", AF_INET6));
+    ASSERT_FALSE(socketOpen("lo", AF_INET6));
+
+    // Reset configuration and select only one interface this time.
+    cfg.reset();
+    ASSERT_NO_THROW(cfg.use("eth1"));
+    
+    cfg.openSockets(DHCP6_SERVER_PORT);
+
+    // Socket should be open on eth1 only.
+    EXPECT_FALSE(socketOpen("eth0", AF_INET6));
+    EXPECT_TRUE(socketOpen("eth1", AF_INET6));
+    EXPECT_FALSE(socketOpen("lo", AF_INET6));
+    
 }
 
 } // end of anonymous namespace
