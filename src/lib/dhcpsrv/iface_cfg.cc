@@ -13,8 +13,10 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <dhcp/iface_mgr.h>
+#include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/iface_cfg.h>
 #include <util/strutil.h>
+#include <boost/bind.hpp>
 
 namespace isc {
 namespace dhcp {
@@ -32,12 +34,22 @@ IfaceCfg::closeSockets() {
 }
 
 void
-IfaceCfg::openSockets(const uint16_t /* port */) {
+IfaceCfg::openSockets(const uint16_t port, const bool use_bcast) {
+    // If wildcard interface '*' was not specified, set all interfaces to
+    // inactive state. We will later enable them selectively using the
+    // interface names specified by the user. If wildcard interface was
+    // specified, mark all interfaces active.
+    setState(!wildcard_used_);
+    // If there is no wildcard interface specified, we will have to iterate
+    // over the names specified by the caller and enable them.
     if (!wildcard_used_) {
-        setState(true);
         for (IfaceSet::const_iterator iface_name = iface_set_.begin();
              iface_name != iface_set_.end(); ++iface_name) {
             Iface* iface = IfaceMgr::instance().getIface(*iface_name);
+            // This shouldn't really happen because we are checking the
+            // names of interfaces when they are being added (use()
+            // function). But, if someone has triggered detection of
+            // interfaces since then, some interfaces may have disappeared.
             if (iface == NULL) {
                 isc_throw(Unexpected,
                           "fail to open socket on interface '"
@@ -51,26 +63,52 @@ IfaceCfg::openSockets(const uint16_t /* port */) {
                 iface->inactive6_ = false;
             }
         }
-
-    } else {
-        setState(false);
     }
 
-    // @todo open sockets here.
+    // Set the callback which is called when the socket fails to open
+    // for some specific interface. This callback will simply log a
+    // warning message.
+    IfaceMgrErrorMsgCallback error_callback =
+        boost::bind(&IfaceCfg::socketOpenErrorHandler, this, _1);
+    bool sopen;
+    if (getFamily() == V4) {
+        sopen = IfaceMgr::instance().openSockets4(port, use_bcast,
+                                                  error_callback);
+    } else {
+        // use_bcast is ignored for V6.
+        sopen = IfaceMgr::instance().openSockets6(port, error_callback);
+    }
 
+    // If no socket were opened, log a warning because the server will
+    // not respond to any queries.
+    if (!sopen) {
+        LOG_WARN(dhcpsrv_logger, DHCPSRV_NO_SOCKETS_OPEN);
+    }
+}
+
+void
+IfaceCfg::reset() {
+    wildcard_used_ = false;
+    iface_set_.clear();
 }
 
 void
 IfaceCfg::setState(const bool inactive) {
-    const IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
-    for (IfaceCollection::iterator iface = ifaces.begin();
+    IfaceMgr::IfaceCollection ifaces = IfaceMgr::instance().getIfaces();
+    for (IfaceMgr::IfaceCollection::iterator iface = ifaces.begin();
          iface != ifaces.end(); ++iface) {
+        Iface* iface_ptr = IfaceMgr::instance().getIface(iface->getName());
         if (getFamily() == V4) {
-            (*iface)->inactive4_ = inactive;
+            iface_ptr->inactive4_ = inactive;
         } else {
-            (*iface)->inactive6_ = inactive;
+            iface_ptr->inactive6_ = inactive;
         }
     }
+}
+
+void
+IfaceCfg::socketOpenErrorHandler(const std::string& errmsg) {
+    LOG_WARN(dhcpsrv_logger, DHCPSRV_OPEN_SOCKET_FAIL).arg(errmsg);
 }
 
 void
@@ -82,9 +120,8 @@ IfaceCfg::use(const std::string& iface_name) {
     if (name.empty()) {
         isc_throw(InvalidIfaceName,
                   "empty interface name used in configuration");
-    }
 
-    if (name != ALL_IFACES_KEYWORD) {
+    } else if (name != ALL_IFACES_KEYWORD) {
         if (IfaceMgr::instance().getIface(name) == NULL) {
             isc_throw(NoSuchIface, "interface '" << name
                       << "' doesn't exist in the system");

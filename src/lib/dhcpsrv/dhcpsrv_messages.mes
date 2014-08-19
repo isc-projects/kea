@@ -393,11 +393,20 @@ lease from the MySQL database for the specified address.
 A debug message issued when the server is attempting to update IPv6
 lease from the MySQL database for the specified address.
 
+% DHCPSRV_NO_SOCKETS_OPEN no interface configured to listen to DHCP traffic
+This warning message is issued when current server configuration specifies
+no interfaces that server should listen on, or specified interfaces are not
+configured to receive the traffic.
+
 % DHCPSRV_NOTYPE_DB no 'type' keyword to determine database backend: %1
 This is an error message, logged when an attempt has been made to access
 a database backend, but where no 'type' keyword has been included in
 the access string.  The access string (less any passwords) is included
 in the message.
+
+% DHCPSRV_OPEN_SOCKET_FAIL failed to open socket: %1
+A warning message issued when IfaceMgr fails to open and bind a socket.
+The reason for the failure is appended as an argument of the log message.
 
 % DHCPSRV_PGSQL_ADD_ADDR4 adding IPv4 lease with address %1
 A debug message issued when the server is about to add an IPv4 lease
