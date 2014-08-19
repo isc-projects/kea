@@ -81,7 +81,7 @@ main(int argc, char* argv[]) {
             return (EXIT_SUCCESS);
 
         case 'V':
-            cout << Daemon::getVersion(false) << endl;
+            cout << Daemon::getVersion(true) << endl;
             return (EXIT_SUCCESS);
 
         case 'p':
