@@ -1,3 +1,7 @@
+822.	[build]		tomek
+	'host' program was removed from examples.
+	(Trac #3421, git aeea893fb1c52d20258929a62a59ae2e7bd12e3d)
+
 821.	[bug]		marcin
 	DHCP servers no longer log an error when Interface Manager fails to
 	receive a packet as a result of signal being received.
