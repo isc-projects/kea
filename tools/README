@@ -1,4 +1,4 @@
-The "tools" directory contains scripts for helping the BIND 10
+The "tools" directory contains scripts for helping the Kea
 developers with various tasks, eg. maintaining the source tree,
 running some tests. These are not intended to be built nor
 installed by the build system.
