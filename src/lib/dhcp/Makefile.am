@@ -68,6 +68,7 @@ libkea_dhcp___la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
 libkea_dhcp___la_LIBADD   = $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_dhcp___la_LIBADD  += $(top_builddir)/src/lib/dns/libkea-dns++.la
 libkea_dhcp___la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
+libkea_dhcp___la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_dhcp___la_LDFLAGS  = -no-undefined -version-info 2:0:0
 
 EXTRA_DIST  = README libdhcp++.dox
