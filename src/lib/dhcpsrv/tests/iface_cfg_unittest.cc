@@ -96,14 +96,14 @@ TEST_F(IfaceCfgTest, explicitNamesV4) {
     // Reset configuration and select only one interface this time.
     cfg.reset();
     ASSERT_NO_THROW(cfg.use("eth1"));
-    
+
     cfg.openSockets(DHCP4_SERVER_PORT);
 
     // Socket should be open on eth1 only.
     EXPECT_FALSE(socketOpen("eth0", AF_INET));
     EXPECT_TRUE(socketOpen("eth1", AF_INET));
     EXPECT_FALSE(socketOpen("lo", AF_INET));
-    
+
 }
 
 // This test checks that the interface names can be explicitly selected
@@ -136,14 +136,66 @@ TEST_F(IfaceCfgTest, explicitNamesV6) {
     // Reset configuration and select only one interface this time.
     cfg.reset();
     ASSERT_NO_THROW(cfg.use("eth1"));
-    
+
     cfg.openSockets(DHCP6_SERVER_PORT);
 
     // Socket should be open on eth1 only.
     EXPECT_FALSE(socketOpen("eth0", AF_INET6));
     EXPECT_TRUE(socketOpen("eth1", AF_INET6));
     EXPECT_FALSE(socketOpen("lo", AF_INET6));
-    
+
+}
+
+// This test checks that the wildcard interface name can be specified to
+// select all interfaces to open IPv4 sockets.
+TEST_F(IfaceCfgTest, wildcardV4) {
+    IfaceCfg cfg(IfaceCfg::V4);
+    ASSERT_NO_THROW(cfg.use(IfaceCfg::ALL_IFACES_KEYWORD));
+
+    cfg.openSockets(DHCP4_SERVER_PORT);
+
+    // Sockets should be now open on eth0 and eth1, but not on loopback.
+    EXPECT_TRUE(socketOpen("eth0", AF_INET));
+    EXPECT_TRUE(socketOpen("eth1", AF_INET));
+    EXPECT_FALSE(socketOpen("lo", AF_INET));
+
+    // No IPv6 sockets should be present because we wanted IPv4 sockets.
+    EXPECT_FALSE(socketOpen("eth0", AF_INET6));
+    EXPECT_FALSE(socketOpen("eth1", AF_INET6));
+    EXPECT_FALSE(socketOpen("lo", AF_INET6));
+}
+
+// This test checks that the wildcard interface name can be specified to
+// select all interfaces to open IPv6 sockets.
+TEST_F(IfaceCfgTest, wildcardV6) {
+    IfaceCfg cfg(IfaceCfg::V6);
+    ASSERT_NO_THROW(cfg.use(IfaceCfg::ALL_IFACES_KEYWORD));
+
+    cfg.openSockets(DHCP4_SERVER_PORT);
+
+    // Sockets should be now open on eth0 and eth1, but not on loopback.
+    EXPECT_TRUE(socketOpen("eth0", AF_INET6));
+    EXPECT_TRUE(socketOpen("eth1", AF_INET6));
+    EXPECT_FALSE(socketOpen("lo", AF_INET6));
+
+    // No IPv6 sockets should be present because we wanted IPv6 sockets.
+    EXPECT_FALSE(socketOpen("eth0", AF_INET));
+    EXPECT_FALSE(socketOpen("eth1", AF_INET));
+    EXPECT_FALSE(socketOpen("lo", AF_INET));
+}
+
+// Test that when invalid interface names are specified an exception is thrown.
+TEST_F(IfaceCfgTest, invalidValues) {
+    IfaceCfg cfg(IfaceCfg::V4);
+    EXPECT_THROW(cfg.use(""), InvalidIfaceName);
+    EXPECT_THROW(cfg.use(" "), InvalidIfaceName);
+    EXPECT_THROW(cfg.use("bogus"), NoSuchIface);
+
+    ASSERT_NO_THROW(cfg.use("eth0"));
+    EXPECT_THROW(cfg.use("eth0"), DuplicateIfaceName);
+
+    ASSERT_NO_THROW(cfg.use(IfaceCfg::ALL_IFACES_KEYWORD));
+    EXPECT_THROW(cfg.use(IfaceCfg::ALL_IFACES_KEYWORD), DuplicateIfaceName);
 }
 
 } // end of anonymous namespace
