@@ -42,7 +42,7 @@ namespace {
 ///
 const char* CONFIRM_CONFIGS[] = {
 // Configuration 0
-    "{ \"interfaces\": [ \"all\" ],"
+    "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -61,7 +61,7 @@ const char* CONFIRM_CONFIGS[] = {
         "\"valid-lifetime\": 4000 }",
 
 // Configuration 1
-    "{ \"interfaces\": [ \"all\" ],"
+    "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "

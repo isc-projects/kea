@@ -64,7 +64,7 @@ namespace {
 ///   - this specific configuration is used by tests which don't use relays
 const char* REBIND_CONFIGS[] = {
 // Configuration 0
-    "{ \"interfaces\": [ \"all\" ],"
+    "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -83,7 +83,7 @@ const char* REBIND_CONFIGS[] = {
         "\"valid-lifetime\": 4000 }",
 
 // Configuration 1
-    "{ \"interfaces\": [ \"all\" ],"
+    "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -102,7 +102,7 @@ const char* REBIND_CONFIGS[] = {
         "\"valid-lifetime\": 4000 }",
 
 // Configuration 2
-    "{ \"interfaces\": [ \"all\" ],"
+    "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -121,7 +121,7 @@ const char* REBIND_CONFIGS[] = {
         "\"valid-lifetime\": 4000 }",
 
 // Configuration 3
-    "{ \"interfaces\": [ \"all\" ],"
+    "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -140,7 +140,7 @@ const char* REBIND_CONFIGS[] = {
         "\"valid-lifetime\": 4000 }",
 
 // Configuration 4
-    "{ \"interfaces\": [ \"all\" ],"
+    "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -167,7 +167,7 @@ const char* REBIND_CONFIGS[] = {
         "\"valid-lifetime\": 4000 }",
 
 // Configuration 5
-    "{ \"interfaces\": [ \"all\" ],"
+    "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "

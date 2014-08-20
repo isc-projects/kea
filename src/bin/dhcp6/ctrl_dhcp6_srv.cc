@@ -14,6 +14,7 @@
 
 #include <config.h>
 #include <cc/data.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/dhcp6_log.h>
 #include <hooks/hooks_manager.h>
@@ -143,10 +144,13 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
     // safe and we really don't want to emit exceptions to the callback caller.
     // Instead, catch an exception and create appropriate answer.
     try {
-        srv->openActiveSockets(srv->getPort());
+        CfgMgr::instance().getConfiguration()->iface_cfg_
+            .openSockets(srv->getPort());
+
     } catch (const std::exception& ex) {
         std::ostringstream err;
-        err << "failed to open sockets after server reconfiguration: " << ex.what();
+        err << "failed to open sockets after server reconfiguration: "
+            << ex.what();
         answer = isc::config::createAnswer(1, err.str());
     }
 

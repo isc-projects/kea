@@ -15,6 +15,7 @@
 #ifndef DHCPSRV_CONFIGURATION_H
 #define DHCPSRV_CONFIGURATION_H
 
+#include <dhcpsrv/iface_cfg.h>
 #include <log/logger_level.h>
 #include <boost/shared_ptr.hpp>
 #include <vector>
@@ -84,6 +85,13 @@ struct Configuration {
 
     /// @brief logging specific information
     LoggingInfoStorage logging_info_;
+
+    /// @brief Interface configuration.
+    ///
+    /// Used to select interfaces on which the DHCP server will listen to
+    /// queries.
+    IfaceCfg iface_cfg_;
+
 };
 
 /// @brief pointer to the configuration

@@ -45,7 +45,7 @@ Dhcpv4SrvTest::Dhcpv4SrvTest()
     pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"), IOAddress("192.0.2.110")));
     subnet_->addPool(pool_);
 
-    CfgMgr::instance().deleteActiveIfaces();
+    CfgMgr::instance().getConfiguration()->iface_cfg_.reset();
     CfgMgr::instance().deleteSubnets4();
     CfgMgr::instance().addSubnet4(subnet_);
 
@@ -58,6 +58,7 @@ Dhcpv4SrvTest::Dhcpv4SrvTest()
 Dhcpv4SrvTest::~Dhcpv4SrvTest() {
 
     // Make sure that we revert to default value
+    CfgMgr::instance().getConfiguration()->iface_cfg_.reset();
     CfgMgr::instance().echoClientId(true);
 }
 

@@ -20,6 +20,7 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int.h>
+#include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/dhcp6_srv.h>
 #include <dhcpsrv/addr_utilities.h>
@@ -74,7 +75,8 @@ public:
         // deal with sockets here, just check if configuration handling
         // is sane.
 
-        const IfaceMgr::IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
+        const IfaceMgr::IfaceCollection& ifaces =
+            IfaceMgr::instance().getIfaces();
 
         // There must be some interface detected
         if (ifaces.empty()) {
@@ -341,7 +343,7 @@ public:
     /// test to make sure that contents of the database do not affect the
     /// results of subsequent tests.
     void resetConfiguration() {
-        string config = "{ \"interfaces\": [ \"all\" ],"
+        string config = "{ \"interfaces\": [ \"*\" ],"
             "\"hooks-libraries\": [ ],"
             "\"preferred-lifetime\": 3000,"
             "\"rebind-timer\": 2000, "
@@ -357,7 +359,9 @@ public:
         // properly test interface configuration we disable listening on
         // all interfaces before each test and later check that this setting
         // has been overriden by the configuration used in the test.
-        CfgMgr::instance().deleteActiveIfaces();
+        CfgMgr::instance().getConfiguration()->iface_cfg_.reset();
+        CfgMgr::instance().getConfiguration()->
+            iface_cfg_.setFamily(IfaceCfg::V6);
         // Create fresh context.
         globalContext()->copyContext(ParserContext(Option::V6));
     }
@@ -2892,7 +2896,7 @@ buildHooksLibrariesConfig(const std::vector<std::string>& libraries) {
 
     // Create the first part of the configuration string.
     string config =
-        "{ \"interfaces\": [ \"all\" ],"
+        "{ \"interfaces\": [ \"*\" ],"
             "\"hooks-libraries\": [";
 
     // Append the libraries (separated by commas if needed)
@@ -3030,15 +3034,15 @@ TEST_F(Dhcp6ParserTest, LibrariesSpecified) {
 // This test verifies that it is possible to select subset of interfaces on
 // which server should listen.
 TEST_F(Dhcp6ParserTest, selectedInterfaces) {
+    IfaceMgrTestConfig test_config(true);
 
     // Make sure there is no garbage interface configuration in the CfgMgr.
-    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth0"));
-    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth1"));
-    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth2"));
+    ASSERT_FALSE(test_config.socketOpen("eth0", AF_INET6));
+    ASSERT_FALSE(test_config.socketOpen("eth1", AF_INET6));
 
     ConstElementPtr status;
 
-    string config = "{ \"interfaces\": [ \"eth0\", \"eth1\" ],"
+    string config = "{ \"interfaces\": [ \"eth0\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -3053,20 +3057,20 @@ TEST_F(Dhcp6ParserTest, selectedInterfaces) {
     // as the pool does not belong to that subnet
     checkResult(status, 0);
 
+    CfgMgr::instance().getConfiguration()->iface_cfg_.openSockets(10000);
+
     // eth0 and eth1 were explicitly selected. eth2 was not.
-    EXPECT_TRUE(CfgMgr::instance().isActiveIface("eth0"));
-    EXPECT_TRUE(CfgMgr::instance().isActiveIface("eth1"));
-    EXPECT_FALSE(CfgMgr::instance().isActiveIface("eth2"));
+    EXPECT_TRUE(test_config.socketOpen("eth0", AF_INET6));
+    EXPECT_FALSE(test_config.socketOpen("eth1", AF_INET6));
 }
 
 // This test verifies that it is possible to configure the server to listen on
 // all interfaces.
 TEST_F(Dhcp6ParserTest, allInterfaces) {
+    IfaceMgrTestConfig test_config(true);
 
-    // Make sure there is no garbage interface configuration in the CfgMgr.
-    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth0"));
-    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth1"));
-    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth2"));
+    ASSERT_FALSE(test_config.socketOpen("eth0", AF_INET6));
+    ASSERT_FALSE(test_config.socketOpen("eth1", AF_INET6));
 
     ConstElementPtr status;
 
@@ -3084,15 +3088,13 @@ TEST_F(Dhcp6ParserTest, allInterfaces) {
     ElementPtr json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-
-    // returned value must be 1 (values error)
-    // as the pool does not belong to that subnet
     checkResult(status, 0);
 
+    CfgMgr::instance().getConfiguration()->iface_cfg_.openSockets(10000);
+
     // All interfaces should be now active.
-    EXPECT_TRUE(CfgMgr::instance().isActiveIface("eth0"));
-    EXPECT_TRUE(CfgMgr::instance().isActiveIface("eth1"));
-    EXPECT_TRUE(CfgMgr::instance().isActiveIface("eth2"));
+    EXPECT_TRUE(test_config.socketOpen("eth0", AF_INET6));
+    EXPECT_TRUE(test_config.socketOpen("eth1", AF_INET6));
 }
 
 
