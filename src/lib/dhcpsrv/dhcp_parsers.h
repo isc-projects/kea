@@ -422,9 +422,6 @@ private:
     typedef std::list<std::string> IfaceListStorage;
     IfaceListStorage interfaces_;
 
-    // Should server listen on all interfaces.
-    bool activate_all_;
-
     // Parsed parameter name
     std::string param_name_;
 };

@@ -91,7 +91,7 @@ IfaceCfg::openSockets(const uint16_t port, const bool use_bcast) {
     // for some specific interface. This callback will simply log a
     // warning message.
     IfaceMgrErrorMsgCallback error_callback =
-        boost::bind(&IfaceCfg::socketOpenErrorHandler, this, _1);
+        boost::bind(&IfaceCfg::socketOpenErrorHandler, _1);
     bool sopen;
     if (getFamily() == V4) {
         sopen = IfaceMgr::instance().openSockets4(port, use_bcast,
@@ -165,8 +165,7 @@ IfaceCfg::use(const std::string& iface_name) {
             }
 
             // All ok, add interface.
-            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-                      DHCPSRV_CFGMGR_ADD_IFACE)
+            LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_ADD_IFACE)
                 .arg(name);
             iface_set_.insert(name);
 
@@ -249,7 +248,7 @@ IfaceCfg::use(const std::string& iface_name) {
                       "because other unicast address has already been"
                       " specified for this interface");
         }
-        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_ADD_UNICAST)
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_ADD_UNICAST)
             .arg(addr.toText()).arg(name);
         unicast_map_.insert(std::pair<std::string, IOAddress>(name, addr));
     }
