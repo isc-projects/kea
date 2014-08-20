@@ -180,8 +180,7 @@ template <> void ValueParser<std::string>::build(ConstElementPtr value) {
 
 InterfaceListConfigParser::
 InterfaceListConfigParser(const std::string& param_name)
-    : activate_all_(false),
-      param_name_(param_name) {
+    : param_name_(param_name) {
     if (param_name_ != "interfaces") {
         isc_throw(BadValue, "Internal error. Interface configuration "
             "parser called for the wrong parameter: " << param_name);

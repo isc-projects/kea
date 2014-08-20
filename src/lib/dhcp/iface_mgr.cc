@@ -469,7 +469,11 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                                " interface " << iface->getName());
                 continue;
 
-            } else if (!iface->flag_up_ || !iface->flag_running_) {
+            }
+
+            IOAddress out_address("0.0.0.0");
+            if (!iface->flag_up_ || !iface->flag_running_ ||
+                !iface->getAddress4(out_address)) {
                 IFACEMGR_ERROR(SocketConfigError, error_handler,
                                "the interface " << iface->getName()
                                << " is down or has no usable IPv4"
