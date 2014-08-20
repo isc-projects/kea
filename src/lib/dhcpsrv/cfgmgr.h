@@ -334,54 +334,6 @@ public:
     /// @return data directory
     std::string getDataDir();
 
-    /// @brief Adds the name of the interface to the set of interfaces on which
-    /// server should listen.
-    ///
-    /// @param iface A name of the interface being added to the listening set.
-    void addActiveIface(const std::string& iface);
-
-    /// @brief Sets the flag which indicates that server is supposed to listen
-    /// on all available interfaces.
-    ///
-    /// This function does not close or open sockets. It simply marks that
-    /// server should start to listen on all interfaces the next time sockets
-    /// are reopened. Server should examine this flag when it gets reconfigured
-    /// and configuration changes the interfaces that server should listen on.
-    void activateAllIfaces();
-
-    /// @brief Clear the collection of the interfaces that server should listen
-    /// on.
-    ///
-    /// Apart from clearing the list of interfaces specified with
-    /// @c CfgMgr::addListeningInterface, it also disables listening on all
-    /// interfaces if it has been enabled using
-    /// @c CfgMgr::activateAllInterfaces.
-    /// Likewise @c CfgMgr::activateAllIfaces, this function does not close or
-    /// open sockets. It marks all interfaces inactive for DHCP traffic.
-    /// Server should examine this new setting when it attempts to
-    /// reopen sockets (as a result of reconfiguration).
-    void deleteActiveIfaces();
-
-    /// @brief Check if specified interface should be used to listen to DHCP
-    /// traffic.
-    ///
-    /// @param iface A name of the interface to be checked.
-    ///
-    /// @return true if the specified interface belongs to the set of the
-    /// interfaces on which server is configured to listen.
-    bool isActiveIface(const std::string& iface) const;
-
-    /// @brief returns unicast a given interface should listen on (or NULL)
-    ///
-    /// This method will return an address for a specified interface, if the
-    /// server is supposed to listen on unicast address. This address is
-    /// intended to be used immediately. This pointer is valid only until
-    /// the next configuration change.
-    ///
-    /// @return IOAddress pointer (or NULL if none)
-    const isc::asiolink::IOAddress*
-    getUnicast(const std::string& iface) const;
-
     /// @brief Sets whether server should send back client-id in DHCPv4
     ///
     /// This is a compatibility flag. The default (true) is compliant with
@@ -458,20 +410,6 @@ protected:
 
 private:
 
-    /// @brief Checks if the specified interface is listed as active.
-    ///
-    /// This function searches for the specified interface name on the list of
-    /// active interfaces: @c CfgMgr::active_ifaces_. It does not take into
-    /// account @c CfgMgr::all_ifaces_active_ flag. If this flag is set to true
-    /// but the specified interface does not belong to
-    /// @c CfgMgr::active_ifaces_, it will return false.
-    ///
-    /// @param iface interface name.
-    ///
-    /// @return true if specified interface belongs to
-    /// @c CfgMgr::active_ifaces_.
-    bool isIfaceListedActive(const std::string& iface) const;
-
     /// @brief Checks that the IPv4 subnet with the given id already exists.
     ///
     /// @param subnet Subnet for which this function will check if the other
@@ -501,22 +439,6 @@ private:
 
     /// @brief directory where data files (e.g. server-id) are stored
     std::string datadir_;
-
-    /// @name A collection of interface names on which server listens.
-    //@{
-    typedef std::list<std::string> ActiveIfacesCollection;
-    std::list<std::string> active_ifaces_;
-    //@}
-
-    /// @name a collection of unicast addresses and the interfaces names the
-    //        server is supposed to listen on
-    //@{
-    typedef std::map<std::string, isc::asiolink::IOAddress> UnicastIfacesCollection;
-    UnicastIfacesCollection unicast_addrs_;
-
-    /// A flag which indicates that server should listen on all available
-    /// interfaces.
-    bool all_ifaces_active_;
 
     /// Indicates whether v4 server should send back client-id
     bool echo_v4_client_id_;

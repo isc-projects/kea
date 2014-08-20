@@ -84,6 +84,9 @@ IfaceCfg::openSockets(const uint16_t port, const bool use_bcast) {
         }
     }
 
+    // Before opening any sockets, close existing ones.
+    closeSockets();
+
     // Set the callback which is called when the socket fails to open
     // for some specific interface. This callback will simply log a
     // warning message.
@@ -154,17 +157,26 @@ IfaceCfg::use(const std::string& iface_name) {
                           << "' doesn't exist in the system");
             }
 
-            std::pair<IfaceSet::iterator, bool> res = iface_set_.insert(name);
-            if (!res.second) {
+            // If interface has already been specified.
+            if (iface_set_.find(name) != iface_set_.end()) {
                 isc_throw(DuplicateIfaceName, "interface '" << name
                           << "' has already been specified");
+
             }
+
+            // All ok, add interface.
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+                      DHCPSRV_CFGMGR_ADD_IFACE)
+                .arg(name);
+            iface_set_.insert(name);
 
         } else if (wildcard_used_) {
             isc_throw(DuplicateIfaceName, "the wildcard interface '"
                       << ALL_IFACES_KEYWORD << "' can only be specified once");
 
         } else {
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+                      DHCPSRV_CFGMGR_ALL_IFACES_ACTIVE);
             wildcard_used_ = true;
 
         }
@@ -231,18 +243,15 @@ IfaceCfg::use(const std::string& iface_name) {
 
         // Insert address and the interface to the collection of unicast
         // addresses.
-        std::pair<UnicastMap::iterator, bool> res =
-            unicast_map_.insert(std::pair<std::string, IOAddress>(name, addr));
-
-        // If some other unicast address has been added for the interface
-        // return an error. The new address didn't override the existing one.
-        if (!res.second) {
+        if (unicast_map_.find(name) != unicast_map_.end()) {
             isc_throw(DuplicateIfaceName, "must not specify unicast address '"
                       << addr << "' for interface '" << name << "' "
                       "because other unicast address has already been"
                       " specified for this interface");
         }
-
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_ADD_UNICAST)
+            .arg(addr.toText()).arg(name);
+        unicast_map_.insert(std::pair<std::string, IOAddress>(name, addr));
     }
 
 }

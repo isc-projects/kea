@@ -25,6 +25,7 @@
 #include <dhcp/option_int.h>
 #include <dhcp/docsis3_option_defs.h>
 #include <dhcp/classify.h>
+#include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/testutils/config_result_check.h>
@@ -77,7 +78,6 @@ public:
         // deal with sockets here, just check if configuration handling
         // is sane.
         srv_.reset(new Dhcpv4Srv(0));
-        CfgMgr::instance().deleteActiveIfaces();
         // Create fresh context.
         globalContext()->copyContext(ParserContext(Option::V4));
     }
@@ -2895,6 +2895,8 @@ TEST_F(Dhcp4ParserTest, LibrariesSpecified) {
 // This test verifies that it is possible to select subset of interfaces
 // on which server should listen.
 TEST_F(Dhcp4ParserTest, selectedInterfaces) {
+    IfaceMgrTestConfig test_config(true);
+
     ConstElementPtr x;
     string config = "{ \"interfaces\": [ \"eth0\", \"eth1\" ],"
         "\"rebind-timer\": 2000, "
@@ -2907,24 +2909,26 @@ TEST_F(Dhcp4ParserTest, selectedInterfaces) {
 
     // Make sure the config manager is clean and there is no hanging
     // interface configuration.
-    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth0"));
-    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth1"));
-    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth2"));
+    EXPECT_FALSE(test_config.socketOpen("eth0", AF_INET));
+    EXPECT_FALSE(test_config.socketOpen("eth1", AF_INET));
 
     // Apply configuration.
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
+    CfgMgr::instance().getConfiguration()->iface_cfg_.openSockets(10000);
+
     // eth0 and eth1 were explicitly selected. eth2 was not.
-    EXPECT_TRUE(CfgMgr::instance().isActiveIface("eth0"));
-    EXPECT_TRUE(CfgMgr::instance().isActiveIface("eth1"));
-    EXPECT_FALSE(CfgMgr::instance().isActiveIface("eth2"));
+    EXPECT_TRUE(test_config.socketOpen("eth0", AF_INET));
+    EXPECT_TRUE(test_config.socketOpen("eth1", AF_INET));
 }
 
 // This test verifies that it is possible to configure the server in such a way
 // that it listens on all interfaces.
 TEST_F(Dhcp4ParserTest, allInterfaces) {
+    IfaceMgrTestConfig test_config(true);
+
     ConstElementPtr x;
     // This configuration specifies two interfaces on which server should listen
     // but it also includes asterisk. The asterisk switches server into the
@@ -2940,19 +2944,19 @@ TEST_F(Dhcp4ParserTest, allInterfaces) {
     ConstElementPtr status;
 
     // Make sure there is no old configuration.
-    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth0"));
-    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth1"));
-    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth2"));
+    ASSERT_FALSE(test_config.socketOpen("eth0", AF_INET));
+    ASSERT_FALSE(test_config.socketOpen("eth1", AF_INET));
 
     // Apply configuration.
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
+    CfgMgr::instance().getConfiguration()->iface_cfg_.openSockets(10000);
+
     // All interfaces should be now active.
-    EXPECT_TRUE(CfgMgr::instance().isActiveIface("eth0"));
-    EXPECT_TRUE(CfgMgr::instance().isActiveIface("eth1"));
-    EXPECT_TRUE(CfgMgr::instance().isActiveIface("eth2"));
+    ASSERT_TRUE(test_config.socketOpen("eth0", AF_INET));
+    ASSERT_TRUE(test_config.socketOpen("eth1", AF_INET));
 }
 
 // This test checks the ability of the server to parse a configuration

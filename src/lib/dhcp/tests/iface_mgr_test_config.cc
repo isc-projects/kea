@@ -141,6 +141,42 @@ IfaceMgrTestConfig::setIfaceFlags(const std::string& name,
     iface->inactive6_ = inactive6.flag_;
 }
 
+bool
+IfaceMgrTestConfig::socketOpen(const std::string& iface_name,
+                         const int family) const {
+    Iface* iface = IfaceMgr::instance().getIface(iface_name);
+    if (iface == NULL) {
+        isc_throw(Unexpected, "No such interface '" << iface_name << "'");
+    }
+
+    const Iface::SocketCollection& sockets = iface->getSockets();
+    for (Iface::SocketCollection::const_iterator sock = sockets.begin();
+         sock != sockets.end(); ++sock) {
+        if (sock->family_ == family) {
+            return (true);
+        }
+    }
+    return (false);
+}
+
+bool
+IfaceMgrTestConfig::unicastOpen(const std::string& iface_name) const {
+    Iface* iface = IfaceMgr::instance().getIface(iface_name);
+    if (iface == NULL) {
+        isc_throw(Unexpected, "No such interface '" << iface_name << "'");
+    }
+
+    const Iface::SocketCollection& sockets = iface->getSockets();
+    for (Iface::SocketCollection::const_iterator sock = sockets.begin();
+         sock != sockets.end(); ++sock) {
+        if ((!sock->addr_.isV6LinkLocal()) &&
+            (!sock->addr_.isV6Multicast())) {
+            return (true);
+        }
+    }
+    return (false);
+}
+
 }
 }
 }

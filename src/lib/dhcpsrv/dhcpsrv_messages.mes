@@ -54,9 +54,13 @@ consider reducing the lease lifetime.  In this way, addresses allocated
 to clients that are no longer active on the network will become available
 available sooner.
 
-% DHCPSRV_CFGMGR_ADD_IFACE adding listening interface %1
+% DHCPSRV_CFGMGR_ADD_IFACE listening on interface %1
 A debug message issued when new interface is being added to the collection of
 interfaces on which server listens to DHCP messages.
+
+% DHCPSRV_CFGMGR_ADD_UNICAST listening on unicast address %1 on interface %2
+A debug message issued when new configuring DHCP server to listen on unicast
+address on the specific interface.
 
 % DHCPSRV_CFGMGR_ADD_SUBNET4 adding subnet %1
 A debug message reported when the DHCP configuration manager is adding the
