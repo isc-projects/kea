@@ -406,7 +406,7 @@ public:
     /// @param value pointer to the content of parsed values
     virtual void build(isc::data::ConstElementPtr value);
 
-    /// @brief commits interfaces list configuration
+    /// @brief Does nothing.
     virtual void commit();
 
 private:

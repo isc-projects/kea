@@ -55,39 +55,11 @@ public:
 bool
 IfaceCfgTest::socketOpen(const std::string& iface_name,
                          const int family) const {
-    Iface* iface = IfaceMgr::instance().getIface(iface_name);
-    if (iface == NULL) {
-        ADD_FAILURE() << "No such interface '" << iface_name << "'";
-        return (false);
-    }
-
-    const Iface::SocketCollection& sockets = iface->getSockets();
-    for (Iface::SocketCollection::const_iterator sock = sockets.begin();
-         sock != sockets.end(); ++sock) {
-        if (sock->family_ == family) {
-            return (true);
-        }
-    }
-    return (false);
+    return (iface_mgr_test_config_.socketOpen(iface_name, family));
 }
-
 bool
 IfaceCfgTest::unicastOpen(const std::string& iface_name) const {
-    Iface* iface = IfaceMgr::instance().getIface(iface_name);
-    if (iface == NULL) {
-        ADD_FAILURE() << "No such interface '" << iface_name << "'";
-        return (false);
-    }
-
-    const Iface::SocketCollection& sockets = iface->getSockets();
-    for (Iface::SocketCollection::const_iterator sock = sockets.begin();
-         sock != sockets.end(); ++sock) {
-        if ((!sock->addr_.isV6LinkLocal()) &&
-            (!sock->addr_.isV6Multicast())) {
-            return (true);
-        }
-    }
-    return (false);
+    return (iface_mgr_test_config_.unicastOpen(iface_name));
 }
 
 // This test checks that the interface names can be explicitly selected

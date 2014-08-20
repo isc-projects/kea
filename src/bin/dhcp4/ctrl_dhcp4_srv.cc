@@ -18,6 +18,7 @@
 #include <dhcp4/dhcp4_log.h>
 #include <hooks/hooks_manager.h>
 #include <dhcp4/json_config_parser.h>
+#include <dhcpsrv/cfgmgr.h>
 
 using namespace isc::data;
 using namespace isc::hooks;
@@ -117,7 +118,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         err << "Server object not initialized, can't process config.";
         return (isc::config::createAnswer(1, err.str()));
     }
-    
+
     ConstElementPtr answer = configureDhcp4Server(*srv, config);
 
 
@@ -148,7 +149,9 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
     // safe and we really don't want to emit exceptions to whoever called this
     // method. Instead, catch an exception and create appropriate answer.
     try {
-        srv->openActiveSockets(srv->getPort(), getInstance()->useBroadcast());
+        CfgMgr::instance().getConfiguration()->iface_cfg_
+            .openSockets(srv->getPort(), getInstance()->useBroadcast());
+
     } catch (std::exception& ex) {
         err << "failed to open sockets after server reconfiguration: "
             << ex.what();

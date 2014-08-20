@@ -49,7 +49,7 @@ namespace {
 ///   - Quotes Servers option present: 192.0.2.202, 192.0.2.203.
 const char* DORA_CONFIGS[] = {
 // Configuration 0
-    "{ \"interfaces\": [ \"all\" ],"
+    "{ \"interfaces\": [ \"*\" ],"
         "\"valid-lifetime\": 600,"
         "\"subnet4\": [ { "
         "    \"subnet\": \"10.0.0.0/24\", "
@@ -86,7 +86,7 @@ const char* DORA_CONFIGS[] = {
     "}",
 
 // Configuration 1
-    "{ \"interfaces\": [ \"all\" ],"
+    "{ \"interfaces\": [ \"*\" ],"
         "\"valid-lifetime\": 600,"
         "\"subnet4\": [ { "
         "    \"subnet\": \"192.0.2.0/24\", "

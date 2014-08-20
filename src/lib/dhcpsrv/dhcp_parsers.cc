@@ -36,10 +36,6 @@ using namespace isc::hooks;
 namespace isc {
 namespace dhcp {
 
-namespace {
-const char* ALL_IFACES_KEYWORD = "*";
-}
-
 // *********************** ParserContext  *************************
 
 ParserContext::ParserContext(Option::Universe universe):
@@ -194,53 +190,23 @@ InterfaceListConfigParser(const std::string& param_name)
 
 void
 InterfaceListConfigParser::build(ConstElementPtr value) {
-    // First, we iterate over all specified entries and add it to the
-    // local container so as we can do some basic validation, e.g. eliminate
-    // duplicates.
+    ConfigurationPtr config = CfgMgr::instance().getConfiguration();
+    config->iface_cfg_.reset();
     BOOST_FOREACH(ConstElementPtr iface, value->listValue()) {
         std::string iface_name = iface->stringValue();
-        if (iface_name != ALL_IFACES_KEYWORD) {
-            // Let's eliminate duplicates. We could possibly allow duplicates,
-            // but if someone specified duplicated interface name it is likely
-            // that he mistyped the configuration. Failing here should draw his
-            // attention.
-            if (isIfaceAdded(iface_name)) {
-                isc_throw(isc::dhcp::DhcpConfigError, "duplicate interface"
-                          << " name '" << iface_name << "' specified in '"
-                          << param_name_ << "' configuration parameter "
-                          "(" << value->getPosition() << ")");
-            }
-            // @todo check that this interface exists in the system!
-            // The IfaceMgr exposes mechanisms to check this.
+        try {
+            config->iface_cfg_.use(iface_name);
 
-            // Add the interface name if ok.
-            interfaces_.push_back(iface_name);
-
-        } else {
-            activate_all_ = true;
-
+        } catch (const std::exception& ex) {
+            isc_throw(DhcpConfigError, "Failed to select interface: "
+                      << ex.what() << " (" << value->getPosition() << ")");
         }
     }
 }
 
 void
 InterfaceListConfigParser::commit() {
-    CfgMgr& cfg_mgr = CfgMgr::instance();
-    // Remove active interfaces and clear a flag which marks all interfaces
-    // active
-    cfg_mgr.deleteActiveIfaces();
-
-    if (activate_all_) {
-        // Activate all interfaces. There is not need to add their names
-        // explicitly.
-        cfg_mgr.activateAllIfaces();
-
-    } else {
-        // Explicitly add names of the interfaces which server should listen on.
-        BOOST_FOREACH(std::string iface, interfaces_) {
-            cfg_mgr.addActiveIface(iface);
-        }
-    }
+    // Do nothing. CfgMgr has been updated during build.
 }
 
 bool
