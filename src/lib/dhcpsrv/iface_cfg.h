@@ -169,7 +169,7 @@ private:
     /// parameter.
     ///
     /// @param errmsg Error message being logged by the function.
-    void socketOpenErrorHandler(const std::string& errmsg);
+    static void socketOpenErrorHandler(const std::string& errmsg);
 
     /// @brief Protocol family.
     Family family_;
