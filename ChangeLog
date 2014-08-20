@@ -1,3 +1,6 @@
+8xx.	[build]		jreed
+	The configure script no longer requires pkg-config.
+	(Trac #3511, git tbd)
 
 823.	[build]		tomek
 	query_cmp tool removed from the source code.
