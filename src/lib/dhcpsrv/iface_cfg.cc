@@ -18,6 +18,8 @@
 #include <util/strutil.h>
 #include <boost/bind.hpp>
 
+using namespace isc::asiolink;
+
 namespace isc {
 namespace dhcp {
 
@@ -40,6 +42,8 @@ IfaceCfg::openSockets(const uint16_t port, const bool use_bcast) {
     // interface names specified by the user. If wildcard interface was
     // specified, mark all interfaces active.
     setState(!wildcard_used_);
+    // Remove selection of unicast addresses from all interfaces.
+    IfaceMgr::instance().clearUnicasts();
     // If there is no wildcard interface specified, we will have to iterate
     // over the names specified by the caller and enable them.
     if (!wildcard_used_) {
@@ -62,6 +66,21 @@ IfaceCfg::openSockets(const uint16_t port, const bool use_bcast) {
             } else {
                 iface->inactive6_ = false;
             }
+        }
+    }
+
+    // Select unicast sockets. It works only for V6. Ignore for V4.
+    if (getFamily() == V6) {
+        for (UnicastMap::const_iterator unicast = unicast_map_.begin();
+             unicast != unicast_map_.end(); ++unicast) {
+            Iface* iface = IfaceMgr::instance().getIface(unicast->first);
+            if (iface == NULL) {
+                isc_throw(Unexpected,
+                          "fail to open unicast socket on interface '"
+                          << unicast->first << "' as this interface doesn't"
+                          " exist");
+            }
+            iface->addUnicast(unicast->second);
         }
     }
 
@@ -113,34 +132,119 @@ IfaceCfg::socketOpenErrorHandler(const std::string& errmsg) {
 
 void
 IfaceCfg::use(const std::string& iface_name) {
-    // In theory the configuration parser should strip extraneous spaces but
-    // since this is a common library it may be better to make sure that it
-    // is really the case.
-    std::string name = util::str::trim(iface_name);
-    if (name.empty()) {
-        isc_throw(InvalidIfaceName,
-                  "empty interface name used in configuration");
+    // The interface name specified may have two formats, e.g.:
+    // - eth0
+    // - eth0/2001:db8:1::1.
+    // The latter format is used to open unicast socket on the specified
+    // interface. Here we are detecting which format was used and we strip
+    // all extraneous spaces.
+    size_t pos = iface_name.find("/");
+    std::string name;
+    std::string addr_str;
+    // There is no unicast address so the whole string is an interface name.
+    if (pos == std::string::npos) {
+        name = util::str::trim(iface_name);
+        if (name.empty()) {
+            isc_throw(InvalidIfaceName,
+                      "empty interface name used in configuration");
 
-    } else if (name != ALL_IFACES_KEYWORD) {
-        if (IfaceMgr::instance().getIface(name) == NULL) {
-            isc_throw(NoSuchIface, "interface '" << name
-                      << "' doesn't exist in the system");
+        } if (name != ALL_IFACES_KEYWORD) {
+            if (IfaceMgr::instance().getIface(name) == NULL) {
+                isc_throw(NoSuchIface, "interface '" << name
+                          << "' doesn't exist in the system");
+            }
+
+            std::pair<IfaceSet::iterator, bool> res = iface_set_.insert(name);
+            if (!res.second) {
+                isc_throw(DuplicateIfaceName, "interface '" << name
+                          << "' has already been specified");
+            }
+
+        } else if (wildcard_used_) {
+            isc_throw(DuplicateIfaceName, "the wildcard interface '"
+                      << ALL_IFACES_KEYWORD << "' can only be specified once");
+
+        } else {
+            wildcard_used_ = true;
+
         }
 
-        std::pair<IfaceSet::iterator, bool> res = iface_set_.insert(name);
-        if (!res.second) {
-            isc_throw(DuplicateIfaceName, "interface '" << name
-                      << "' has already been specified");
-        }
-
-    } else if (wildcard_used_) {
-        isc_throw(DuplicateIfaceName, "the wildcard interface '"
-                  << ALL_IFACES_KEYWORD << "' can only be specified once");
+    } else if (getFamily() == V4) {
+        isc_throw(InvalidIfaceName, "unicast addresses in the format of: "
+                  "iface-name/unicast-addr_stress can only be specified for"
+                  " IPv6 addr_stress family");
 
     } else {
-        wildcard_used_ = true;
+        // The interface name includes the unicast addr_stress, so we split
+        // interface name and the unicast addr_stress to two variables.
+        name = util::str::trim(iface_name.substr(0, pos));
+        addr_str = util::str::trim(iface_name.substr(pos + 1));
+
+        // Interface name must not be empty.
+        if (name.empty()) {
+            isc_throw(InvalidIfaceName,
+                      "empty interface name specified in the"
+                      " interface configuration");
+
+        }
+        // Unicast addr_stress following the interface name must not be empty.
+        if (addr_str.empty()) {
+            isc_throw(InvalidIfaceName,
+                      "empty unicast addr_stress specified in the interface"
+                      << " configuration");
+
+        }
+
+        // Interface name must not be the wildcard name.
+        if (name == ALL_IFACES_KEYWORD) {
+            isc_throw(InvalidIfaceName,
+                      "wildcard interface name '" << ALL_IFACES_KEYWORD
+                      << "' must not be used in conjunction with a"
+                      " unicast addr_stress");
+
+        }
+
+        // Interface must exist.
+        Iface* iface = IfaceMgr::instance().getIface(name);
+        if (iface == NULL) {
+            isc_throw(NoSuchIface, "interface '" << name
+                      << "' doesn't exist in the system");
+
+        }
+
+        // Convert address string. This may throw an exception if the address
+        // is invalid.
+        IOAddress addr(addr_str);
+
+        // Check that the address is a valid unicast address.
+        if (!addr.isV6() || addr.isV6LinkLocal() || addr.isV6Multicast()) {
+            isc_throw(InvalidIfaceName, "address '" << addr << "' is not"
+                      " a valid IPv6 unicast address");
+        }
+
+        // Interface must have this address assigned.
+        if (!iface->hasAddress(addr)) {
+            isc_throw(NoSuchAddress,
+                      "interface '" << name << "' doesn't have address '"
+                      << addr << "' assigned");
+        }
+
+        // Insert address and the interface to the collection of unicast
+        // addresses.
+        std::pair<UnicastMap::iterator, bool> res =
+            unicast_map_.insert(std::pair<std::string, IOAddress>(name, addr));
+
+        // If some other unicast address has been added for the interface
+        // return an error. The new address didn't override the existing one.
+        if (!res.second) {
+            isc_throw(DuplicateIfaceName, "must not specify unicast address '"
+                      << addr << "' for interface '" << name << "' "
+                      "because other unicast address has already been"
+                      " specified for this interface");
+        }
 
     }
+
 }
 
 } // end of isc::dhcp namespace

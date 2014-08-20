@@ -42,6 +42,11 @@ public:
     /// @param family One of: AF_INET or AF_INET6
     bool socketOpen(const std::string& iface_name, const int family) const;
 
+    /// @brief Checks if unicast socket is opened on interface.
+    ///
+    /// @param iface_name Interface name.
+    bool unicastOpen(const std::string& iface_name) const;
+
     /// @brief Holds a fake configuration of the interfaces.
     IfaceMgrTestConfig iface_mgr_test_config_;
 
@@ -60,6 +65,25 @@ IfaceCfgTest::socketOpen(const std::string& iface_name,
     for (Iface::SocketCollection::const_iterator sock = sockets.begin();
          sock != sockets.end(); ++sock) {
         if (sock->family_ == family) {
+            return (true);
+        }
+    }
+    return (false);
+}
+
+bool
+IfaceCfgTest::unicastOpen(const std::string& iface_name) const {
+    Iface* iface = IfaceMgr::instance().getIface(iface_name);
+    if (iface == NULL) {
+        ADD_FAILURE() << "No such interface '" << iface_name << "'";
+        return (false);
+    }
+
+    const Iface::SocketCollection& sockets = iface->getSockets();
+    for (Iface::SocketCollection::const_iterator sock = sockets.begin();
+         sock != sockets.end(); ++sock) {
+        if ((!sock->addr_.isV6LinkLocal()) &&
+            (!sock->addr_.isV6Multicast())) {
             return (true);
         }
     }
@@ -184,18 +208,47 @@ TEST_F(IfaceCfgTest, wildcardV6) {
     EXPECT_FALSE(socketOpen("lo", AF_INET));
 }
 
+// Test that unicast address can be specified for the socket to be opened on
+// the interface on which the socket bound to link local address is also
+// opened.
+TEST_F(IfaceCfgTest, validUnicast) {
+    IfaceCfg cfg(IfaceCfg::V6);
+
+    // One socket will be opened on link-local address, one on unicast but
+    // on the same interface.
+    ASSERT_NO_THROW(cfg.use("eth0"));
+    ASSERT_NO_THROW(cfg.use("eth0/2001:db8:1::1"));
+
+    cfg.openSockets(DHCP6_SERVER_PORT);
+
+    EXPECT_TRUE(socketOpen("eth0", AF_INET6));
+    EXPECT_TRUE(unicastOpen("eth0"));
+}
+
 // Test that when invalid interface names are specified an exception is thrown.
 TEST_F(IfaceCfgTest, invalidValues) {
     IfaceCfg cfg(IfaceCfg::V4);
-    EXPECT_THROW(cfg.use(""), InvalidIfaceName);
-    EXPECT_THROW(cfg.use(" "), InvalidIfaceName);
-    EXPECT_THROW(cfg.use("bogus"), NoSuchIface);
+    ASSERT_THROW(cfg.use(""), InvalidIfaceName);
+    ASSERT_THROW(cfg.use(" "), InvalidIfaceName);
+    ASSERT_THROW(cfg.use("bogus"), NoSuchIface);
 
     ASSERT_NO_THROW(cfg.use("eth0"));
-    EXPECT_THROW(cfg.use("eth0"), DuplicateIfaceName);
+    ASSERT_THROW(cfg.use("eth0"), DuplicateIfaceName);
+
+    ASSERT_THROW(cfg.use("eth0/2001:db8:1::1"), InvalidIfaceName);
+
+    cfg.setFamily(IfaceCfg::V6);
+
+    ASSERT_THROW(cfg.use("eth0/"), InvalidIfaceName);
+    ASSERT_THROW(cfg.use("/2001:db8:1::1"), InvalidIfaceName);
+    ASSERT_THROW(cfg.use("*/2001:db8:1::1"), InvalidIfaceName);
+    ASSERT_THROW(cfg.use("bogus/2001:db8:1::1"), NoSuchIface);
+    ASSERT_THROW(cfg.use("eth0/fe80::3a60:77ff:fed5:cdef"), InvalidIfaceName);
+    ASSERT_THROW(cfg.use("eth0/fe80::3a60:77ff:fed5:cdef"), InvalidIfaceName);
+    ASSERT_THROW(cfg.use("eth0/2001:db8:1::2"), NoSuchAddress);
 
     ASSERT_NO_THROW(cfg.use(IfaceCfg::ALL_IFACES_KEYWORD));
-    EXPECT_THROW(cfg.use(IfaceCfg::ALL_IFACES_KEYWORD), DuplicateIfaceName);
+    ASSERT_THROW(cfg.use(IfaceCfg::ALL_IFACES_KEYWORD), DuplicateIfaceName);
 }
 
 } // end of anonymous namespace
