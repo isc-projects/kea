@@ -606,6 +606,19 @@ TEST_F(IfaceMgrTest, ifaceGetAddress) {
 
 }
 
+// This test checks if it is possible to check that the specific address is
+// assigned to the interface.
+TEST_F(IfaceMgrTest, ifaceHasAddress) {
+    IfaceMgrTestConfig config(true);
+
+    Iface* iface = IfaceMgr::instance().getIface("eth0");
+    ASSERT_FALSE(iface == NULL);
+    EXPECT_TRUE(iface->hasAddress(IOAddress("10.0.0.1")));
+    EXPECT_TRUE(iface->hasAddress(IOAddress("fe80::3a60:77ff:fed5:cdef")));
+    EXPECT_TRUE(iface->hasAddress(IOAddress("2001:db8:1::1")));
+    EXPECT_FALSE(iface->hasAddress(IOAddress("2001:db8:1::2")));
+}
+
 // TODO: Implement getPlainMac() test as soon as interface detection
 // is implemented.
 TEST_F(IfaceMgrTest, getIface) {

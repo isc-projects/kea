@@ -242,6 +242,18 @@ Iface::getAddress4(isc::asiolink::IOAddress& address) const {
     return (false);
 }
 
+bool
+Iface::hasAddress(const isc::asiolink::IOAddress& address) const {
+    const AddressCollection& addrs = getAddresses();
+    for (AddressCollection::const_iterator addr = addrs.begin();
+         addr != addrs.end(); ++addr) {
+        if (address == *addr) {
+            return (true);
+        }
+    }
+    return (false);
+}
+
 void IfaceMgr::closeSockets() {
     for (IfaceCollection::iterator iface = ifaces_.begin();
          iface != ifaces_.end(); ++iface) {
@@ -680,6 +692,14 @@ IfaceMgr::getIface(const std::string& ifname) {
 void
 IfaceMgr::clearIfaces() {
     ifaces_.clear();
+}
+
+void
+IfaceMgr::clearUnicasts() {
+    for (IfaceCollection::iterator iface=ifaces_.begin();
+         iface!=ifaces_.end(); ++iface) {
+        iface->clearUnicasts();
+    }
 }
 
 int IfaceMgr::openSocket(const std::string& ifname, const IOAddress& addr,
