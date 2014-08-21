@@ -60,7 +60,8 @@ is_in_list() {
 
 # Prints keactrl usage.
 usage() {
-    printf "usage is %s [-c keactrl-config-file] [-s server[,server,..]]\n" $( basename ${0} )
+    printf "usage is %s command [-c keactrl-config-file] [-s server[,server,..]]\n" $( basename ${0} )
+    printf "commands: start stop reload status\n" $( basename ${0} )
 }
 
 ### Functions managing Kea processes ###
