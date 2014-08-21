@@ -41,6 +41,10 @@ public:
     ConfigurationTest() {
         // Remove any subnets dangling from previous unit tests.
         clearSubnets();
+
+        // Disable DDNS.
+        enableDDNS(false);
+
         // Create IPv4 subnets.
         for (int i = 0; i < TEST_SUBNETS_NUM; ++i) {
             // Default triplet carried undefined value.
