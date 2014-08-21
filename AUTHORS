@@ -56,6 +56,7 @@ We have received the following contributions:
 
  - Jiri Popelka from Red Hat
    2014-08: config files examples permission fix
+   2014-08: configure.ac update: AC_PROG_LIBTOOL => LT_INIT
 
 Kea uses log4cplus (http://sourceforge.net/projects/log4cplus/) for logging,
 Boost (http://www.boost.org/) library for almost everything, and can use Botan
