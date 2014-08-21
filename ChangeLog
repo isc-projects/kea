@@ -1,4 +1,4 @@
-8XX.	[bug]		jiri, tomek
+826.	[bug]		jiri, tomek
 	Compilation fix for Red Hat running on armv7.
 	(Trac #3526, git eac5a80472dcb78b538c2ed34cc0534f801e5145)
 
