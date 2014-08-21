@@ -54,6 +54,9 @@ We have received the following contributions:
    2013-12: interface detection for BSD systems
    2014-04: PostgreSQL support
 
+ - Jiri Popelka from Red Hat
+   2014-08: config files examples permission fix
+
 Kea uses log4cplus (http://sourceforge.net/projects/log4cplus/) for logging,
 Boost (http://www.boost.org/) library for almost everything, and can use Botan
 (http://botan.randombit.net/) or OpenSSL (https://www.openssl.org/) for
