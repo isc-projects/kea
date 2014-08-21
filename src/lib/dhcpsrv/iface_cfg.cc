@@ -40,8 +40,9 @@ IfaceCfg::openSockets(const uint16_t port, const bool use_bcast) {
     // If wildcard interface '*' was not specified, set all interfaces to
     // inactive state. We will later enable them selectively using the
     // interface names specified by the user. If wildcard interface was
-    // specified, mark all interfaces active.
-    setState(!wildcard_used_);
+    // specified, mark all interfaces active. In all cases, mark loopback
+    // inactive.
+    setState(!wildcard_used_, true);
     // Remove selection of unicast addresses from all interfaces.
     IfaceMgr::instance().clearUnicasts();
     // If there is no wildcard interface specified, we will have to iterate
@@ -81,6 +82,7 @@ IfaceCfg::openSockets(const uint16_t port, const bool use_bcast) {
                           " exist");
             }
             iface->addUnicast(unicast->second);
+            iface->inactive6_ = false;
         }
     }
 
@@ -115,15 +117,17 @@ IfaceCfg::reset() {
 }
 
 void
-IfaceCfg::setState(const bool inactive) {
+IfaceCfg::setState(const bool inactive, const bool loopback_inactive) {
     IfaceMgr::IfaceCollection ifaces = IfaceMgr::instance().getIfaces();
     for (IfaceMgr::IfaceCollection::iterator iface = ifaces.begin();
          iface != ifaces.end(); ++iface) {
         Iface* iface_ptr = IfaceMgr::instance().getIface(iface->getName());
         if (getFamily() == V4) {
-            iface_ptr->inactive4_ = inactive;
+            iface_ptr->inactive4_ = iface_ptr->flag_loopback_ ?
+                loopback_inactive : inactive;
         } else {
-            iface_ptr->inactive6_ = inactive;
+            iface_ptr->inactive6_ = iface_ptr->flag_loopback_ ?
+                loopback_inactive : inactive;
         }
     }
 }
