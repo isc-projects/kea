@@ -244,7 +244,7 @@ public:
     /// to be returned. This parameter is ignored for the D2.
     ///
     /// @return Summary of the configuration in the textual format.
-    virtual std::string getConfigSummary(const uint16_t selection);
+    virtual std::string getConfigSummary(const uint32_t selection);
 
 protected:
     /// @brief Performs the parsing of the given "params" element.

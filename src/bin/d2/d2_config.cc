@@ -92,7 +92,8 @@ D2Params::validateContents() {
 std::string
 D2Params::getConfigSummary() const {
     std::ostringstream s;
-    s << "listening on " << getIpAddress() << ", port " << getPort();
+    s << "listening on " << getIpAddress() << ", port " << getPort()
+      << ", using " << ncrProtocolToString(ncr_protocol_);
     return (s.str());
 }
 

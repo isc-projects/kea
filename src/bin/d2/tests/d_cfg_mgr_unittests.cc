@@ -59,7 +59,7 @@ public:
     }
 
     /// @brief Returns summary of configuration in the textual format.
-    virtual std::string getConfigSummary(const uint16_t) {
+    virtual std::string getConfigSummary(const uint32_t) {
         return ("");
     }
 };
