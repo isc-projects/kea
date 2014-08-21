@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -246,7 +246,7 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
         }
 
         // Everything was fine. Configuration set processed successfully.
-        LOG_INFO(dctl_logger, DCTL_CONFIG_COMPLETE).arg("");
+        LOG_INFO(dctl_logger, DCTL_CONFIG_COMPLETE).arg(getConfigSummary(0));
         answer = isc::config::createAnswer(0, "Configuration committed.");
 
     } catch (const std::exception& ex) {
