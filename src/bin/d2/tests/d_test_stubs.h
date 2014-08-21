@@ -183,7 +183,7 @@ public:
     /// @brief Returns configuration summary in the textual format.
     ///
     /// @return Always an empty string.
-    virtual std::string getConfigSummary(const uint16_t) {
+    virtual std::string getConfigSummary(const uint32_t) {
         return ("");
     }
 
@@ -711,7 +711,7 @@ public:
     /// @brief Returns a summary of the configuration in the textual format.
     ///
     /// @return Always an empty string.
-    virtual std::string getConfigSummary(const uint16_t) {
+    virtual std::string getConfigSummary(const uint32_t) {
         return ("");
     }
 

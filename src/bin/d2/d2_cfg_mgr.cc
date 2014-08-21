@@ -197,7 +197,7 @@ D2CfgMgr::getD2Params() {
 }
 
 std::string
-D2CfgMgr::getConfigSummary(const uint16_t) {
+D2CfgMgr::getConfigSummary(const uint32_t) {
     return (getD2Params()->getConfigSummary());
 }
 

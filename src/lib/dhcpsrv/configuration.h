@@ -87,17 +87,26 @@ struct Configuration {
     /// @name Constants for selection of parameters returned by @c getConfigSummary
     ///
     //@{
-    static const uint16_t CFGSEL_NONE    = 0x0000; ///< Nothing selected
-    static const uint16_t CFGSEL_SUBNET4 = 0x0001; ///< Number of IPv4 subnets
-    static const uint16_t CFGSEL_SUBNET6 = 0x0002; ///< Number of IPv6 subnets
-    static const uint16_t CFGSEL_IFACE4  = 0x0004; ///< Number of enabled ifaces
-    static const uint16_t CFGSEL_IFACE6  = 0x0008; ///< Number of v6 ifaces
-    static const uint16_t CFGSEL_DDNS    = 0x0010; ///< DDNS enabled/disabled
-
-    static const uint16_t CFGSEL_SUBNET  = 0x0003; ///< Number of all subnets
-    static const uint16_t CFGSEL_ALL4    = 0x0015; ///< IPv4 related config
-    static const uint16_t CFGSEL_ALL6    = 0x001A; ///< IPv6 related config
-    static const uint16_t CFGSEL_ALL     = 0xFFFF; ///< Whole config
+    /// Nothing selected
+    static const uint32_t CFGSEL_NONE    = 0x00000000;
+    /// Number of IPv4 subnets
+    static const uint32_t CFGSEL_SUBNET4 = 0x00000001;
+    /// Number of IPv6 subnets
+    static const uint32_t CFGSEL_SUBNET6 = 0x00000002;
+    /// Number of enabled ifaces
+    static const uint32_t CFGSEL_IFACE4  = 0x00000004;
+    /// Number of v6 ifaces
+    static const uint32_t CFGSEL_IFACE6  = 0x00000008;
+    /// DDNS enabled/disabled
+    static const uint32_t CFGSEL_DDNS    = 0x00000010;
+    /// Number of all subnets
+    static const uint32_t CFGSEL_SUBNET  = 0x00000003;
+    /// IPv4 related config
+    static const uint32_t CFGSEL_ALL4    = 0x00000015;
+    /// IPv6 related config
+    static const uint32_t CFGSEL_ALL6    = 0x0000001A;
+    /// Whole config
+    static const uint32_t CFGSEL_ALL     = 0xFFFFFFFF;
     //@}
 
     /// @brief logging specific information
