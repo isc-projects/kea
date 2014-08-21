@@ -152,14 +152,17 @@ public:
 
 private:
 
-    /// @brief Selects or deselects all interfaces.
+    /// @brief Selects or deselects interfaces.
     ///
     /// This function selects all interfaces to receive DHCP traffic or
     /// deselects all interfaces so as none of them receives a DHCP traffic.
     ///
     /// @param inactive A boolean value which indicates if all interfaces
+    /// (except loopback) should be selected or deselected.
+    /// @param loopback_inactive A boolean value which indicates if loopback
+    /// interface should be selected or deselected.
     /// should be deselected/inactive (true) or selected/active (false).
-    void setState(const bool inactive);
+    void setState(const bool inactive, const bool loopback_inactive);
 
     /// @brief Error handler for executed when opening a socket fail.
     ///
