@@ -308,6 +308,18 @@ public:
         return (context_);
     }
 
+    /// @brief Returns configuration summary in the textual format.
+    ///
+    /// This method returns the brief text describing the current configuration.
+    /// It may be used for logging purposes, e.g. whn the new configuration is
+    /// committed to notify a user about the changes in configuration.
+    ///
+    /// @param selection Bitfield which describes the parts of the configuration
+    /// to be returned.
+    ///
+    /// @return Summary of the configuration in the textual format.
+    virtual std::string getConfigSummary(const uint32_t selection) = 0;
+
 protected:
     /// @brief Parses a set of scalar configuration elements into global
     /// parameters
