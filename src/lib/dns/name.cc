@@ -54,7 +54,7 @@ namespace {
 /// improve the performance of message rendering (which internally uses the
 /// array heavily) about 27%.  Since we want to achieve very good performance
 /// for message rendering in some cases, we'll keep using it.
-const char digitvalue[256] = {
+const signed char digitvalue[256] = {
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // 16
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // 32
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // 48

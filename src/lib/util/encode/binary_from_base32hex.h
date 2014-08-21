@@ -38,7 +38,7 @@ template<class CharType>
 struct to_5_bit {
     typedef CharType result_type;
     CharType operator()(CharType t) const{
-        const char lookup_table[] = {
+        const signed char lookup_table[] = {
             -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 00-0f
             -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 10-1f
             -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 20-2f
