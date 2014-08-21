@@ -1,3 +1,7 @@
+824.	[bug]		marcin
+	Kea deamons report configuration summary when the configuration is
+	applied successfully.
+	(Trac #3477, git f39d208024f720f72c931016cfa50a54e80f8c61)
 
 823.	[build]		tomek
 	query_cmp tool removed from the source code.
