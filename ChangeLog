@@ -1,3 +1,6 @@
+826.	[build]		jiri, tomek
+	Deprecated AC_PROG_LIBTOOL macro replaced by LT_INIT.
+	(Trac #3525, git 6c0aacf29fae1d0501ca69ff6324df8d4fc8c7ee)
 825.	[bug]		jiri, tomek
 	Example JSON configuration files permission fix.
 	(Trac #3524, git 822a39ba33870f70787a1f666aed772e06d04d79)
