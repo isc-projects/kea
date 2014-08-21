@@ -149,6 +149,7 @@ ConfigurationTest::clearSubnets() {
 
 void
 ConfigurationTest::enableDDNS(const bool enable) {
+    // D2 configuration should always be non-NULL.
     CfgMgr::instance().getD2ClientConfig()->enableUpdates(enable);
 }
 

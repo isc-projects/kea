@@ -318,7 +318,7 @@ public:
     /// to be returned.
     ///
     /// @return Summary of the configuration in the textual format.
-    virtual std::string getConfigSummary(const uint16_t selection) = 0;
+    virtual std::string getConfigSummary(const uint32_t selection) = 0;
 
 protected:
     /// @brief Parses a set of scalar configuration elements into global
