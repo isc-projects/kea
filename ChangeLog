@@ -1,3 +1,7 @@
+8XX.	[bug]		jiri, tomek
+	Compilation fix for Red Hat running on armv7.
+	(Trac #3526, git eac5a80472dcb78b538c2ed34cc0534f801e5145)
+
 825.	[bug]		jiri, tomek
 	Example JSON configuration files permission fix.
 	(Trac #3524, git 822a39ba33870f70787a1f666aed772e06d04d79)
