@@ -1,9 +1,0 @@
-!echo shouldshow
-# just add something so the test can verify it's reverted
-config add /Init/components b10-auth
-config set /Init/components/b10-auth/kind needed
-config set /Init/components/b10-auth/special auth
-bad command
-# this should not be reached
-!echo shouldnotshow
-config commit
