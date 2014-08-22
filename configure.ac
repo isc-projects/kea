@@ -1199,12 +1199,6 @@ AC_SUBST(GTEST_LDFLAGS)
 AC_SUBST(GTEST_LDADD)
 AC_SUBST(GTEST_SOURCE)
 
-dnl check for pkg-config itself
-AC_CHECK_PROG(HAVE_PKG_CONFIG, pkg-config, yes, no)
-if test "x$HAVE_PKG_CONFIG" = "xno" ; then
-  AC_MSG_ERROR(Please install pkg-config)
-fi
-
 #
 # ASIO: we extensively use it as the C++ event management module.
 #
