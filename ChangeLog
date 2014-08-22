@@ -1,3 +1,7 @@
+828.	[build]		jreed
+	The configure script no longer requires pkg-config.
+	(Trac #3511, git 99a5a2db8c011b358873d485ac48f7c78ac6374c)
+
 827.	[build]		jiri, tomek
 	Deprecated AC_PROG_LIBTOOL macro replaced by LT_INIT.
 	(Trac #3525, git 6c0aacf29fae1d0501ca69ff6324df8d4fc8c7ee)
