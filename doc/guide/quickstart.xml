@@ -14,7 +14,7 @@
     </para>
 
     <section id="quick-start">
-      <title>Quick start guide for DHCPv4 and DHCPv6 services</title>
+      <title>Quick start guide for DHCPv4 and DHCPv6 services.</title>
 
       <orderedlist>
 
@@ -41,7 +41,6 @@
         <listitem>
           <para>Go into the source directory and run the configure script:
             <screen>$ <userinput>cd kea-0.9-beta1</userinput>
-$ <userinput>autoreconf --install</userinput>
 $ <userinput>./configure [your extra parameters]</userinput></screen>
           </para>
         </listitem>
@@ -54,8 +53,8 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
 
         <listitem>
           <para>Install it (by default the installation prefix is <filename>/usr/local/</filename>,
-          so you need root privileges for that step):
-            <screen>$ <userinput>make install</userinput></screen>
+          so you likely need root privileges for that step):
+            <screen># <userinput>make install</userinput></screen>
           </para>
         </listitem>
 
@@ -63,7 +62,7 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
           <para>Edit configuration file which is by default installed in
           <filename>[kea-install-dir]/etc/kea/kea.conf</filename> and contains
           configuration for all Kea services. Configuration choices for DHCPv4
-          and DHCPv6 services are described in <xref linkend="dhcp4-configuration"/> and <xref linkend="dhcp6-configuration"/> respectively.</para>
+          and DHCPv6 services are described in <xref linkend="dhcp4-configuration"/> and <xref linkend="dhcp6-configuration"/>, respectively.</para>
         </listitem>
 
         <listitem>
@@ -105,7 +104,7 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
       </orderedlist>
 
       <para>The details of <command>keactrl</command> script usage can be found
-      in <xref linkend="keactrl"/></para>
+      in <xref linkend="keactrl"/>.</para>
     </section>
 
     <section id="quick-start-direct-run">
