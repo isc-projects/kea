@@ -1,3 +1,8 @@
+828.	[bug]		marcin
+	Corrected the IfaceMgrTest.detectIface unit test that failed on
+	Linux systems with virtual interfaces present.
+	(Trac #3527, git 7aa01a6965b6e9fc39ff005803cada7f58f2e628)
+
 827.	[build]		jiri, tomek
 	Deprecated AC_PROG_LIBTOOL macro replaced by LT_INIT.
 	(Trac #3525, git 6c0aacf29fae1d0501ca69ff6324df8d4fc8c7ee)
