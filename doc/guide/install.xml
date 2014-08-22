@@ -142,8 +142,7 @@ Debian and Ubuntu:
 
         <listitem>
         <para>
-          The development tools "make" and "pkg-config".
-	  <!-- @todo update this list, pkg-config shouldn't be required -->
+          The development tools "make".
         </para>
         </listitem>
 
