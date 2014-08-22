@@ -40,10 +40,6 @@ address assignment.  The most likely cause is a problem with the client.
 A debug message listing the command (and possible arguments) received
 from the Kea control system by the IPv6 DHCP server.
 
-% DHCP6_CONFIG_RECEIVED received configuration: %1
-A debug message listing the configuration received by the DHCPv6 server.
-The source of that configuration depends on used configuration backend.
-
 % DHCP6_CONFIG_COMPLETE DHCPv6 server has completed configuration: %1
 This is an informational message announcing the successful processing of a
 new configuration. it is output during server startup, and when an updated
@@ -63,6 +59,10 @@ been extended to include the specified subnet.
 This warning message is issued on an attempt to configure multiple options with the
 same option code for the particular subnet. Adding multiple options is uncommon
 for DHCPv6, but it is not prohibited.
+
+% DHCP6_CONFIG_RECEIVED received configuration: %1
+A debug message listing the configuration received by the DHCPv6 server.
+The source of that configuration depends on used configuration backend.
 
 % DHCP6_CONFIG_START DHCPv6 server is processing the following configuration: %1
 This is a debug message that is issued every time the server receives a
@@ -244,6 +244,12 @@ point, the setting of the flag instructs the server not to choose a
 subnet, an action that severely limits further processing; the server
 will be only able to offer global options - no addresses or prefixes
 will be assigned.
+
+% DHCP6_INIT_FAIL failed to initialize Kea server: %1
+The server has failed to establish communication with the rest of Kea,
+failed to read JSON configuration file or excountered any other critical
+issue that prevents it from starting up properly. Attached error message
+provides more details about the issue.
 
 % DHCP6_LEASE_ADVERT address lease %1 advertised (client duid=%2, iaid=%3)
 This debug message indicates that the server successfully advertised
@@ -510,12 +516,6 @@ to recover.
 % DHCP6_SERVER_FAILED server failed: %1
 The IPv6 DHCP server has encountered a fatal error and is terminating.
 The reason for the failure is included in the message.
-
-% DHCP6_INIT_FAIL failed to initialize Kea server: %1
-The server has failed to establish communication with the rest of Kea,
-failed to read JSON configuration file or excountered any other critical
-issue that prevents it from starting up properly. Attached error message
-provides more details about the issue.
 
 % DHCP6_SHUTDOWN server shutdown
 The IPv6 DHCP server has terminated normally.
