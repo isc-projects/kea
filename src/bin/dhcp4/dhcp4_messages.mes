@@ -44,10 +44,6 @@ name was malformed or due to internal server error.
 A debug message listing the command (and possible arguments) received
 from the Kea control system by the DHCPv4 server.
 
-% DHCP4_CONFIG_RECEIVED received configuration %1
-A debug message listing the configuration received by the DHCPv4 server.
-The source of that configuration depends on used configuration backend.
-
 % DHCP4_CONFIG_COMPLETE DHCPv4 server has completed configuration: %1
 This is an informational message announcing the successful processing of a
 new configuration. It is output during server startup, and when an updated
@@ -67,6 +63,10 @@ been extended to include the specified IPv4 subnet.
 This warning message is issued on an attempt to configure multiple options
 with the same option code for a particular subnet. Adding multiple options
 is uncommon for DHCPv4, but is not prohibited.
+
+% DHCP4_CONFIG_RECEIVED received configuration %1
+A debug message listing the configuration received by the DHCPv4 server.
+The source of that configuration depends on used configuration backend.
 
 % DHCP4_CONFIG_START DHCPv4 server is processing the following configuration: %1
 This is a debug message that is issued every time the server receives a
@@ -146,6 +146,11 @@ subnet4_select hook point sets the skip flag. For this particular hook
 point, the setting of the flag instructs the server not to choose a
 subnet, an action that severely limits further processing; the server
 will be only able to offer global options - no addresses will be assigned.
+
+% DHCP4_INIT_FAIL failed to initialize Kea server: %1
+The server has failed to initialize. This may be because the configuration
+was not successful, or it encountered any other critical error on startup.
+Attached error message provides more details about the issue.
 
 % DHCP4_INVALID_ADDRESS_INIT_REBOOT invalid address %1 requested by INIT-REBOOT client (id: %2, hwaddr: %3)
 This debug message is issued when the client being in the INIT-REBOOT state
@@ -331,11 +336,6 @@ A debug message listing the data returned to the client.
 % DHCP4_SERVER_FAILED server failed: %1
 The DHCPv4 server has encountered a fatal error and is terminating.
 The reason for the failure is included in the message.
-
-% DHCP4_INIT_FAIL failed to initialize Kea server: %1
-The server has failed to initialize. This may be because the configuration
-was not successful, or it encountered any other critical error on startup.
-Attached error message provides more details about the issue.
 
 % DHCP4_SHUTDOWN server shutdown
 The DHCPv4 server has terminated normally.
