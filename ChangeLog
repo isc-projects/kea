@@ -1,3 +1,9 @@
+829.    [build]         wlodek
+	Lettuce DNS tests removed with all related python code, 
+	most of them will be used in Forge project which can be found
+	https://github.com/isc-projects/forge
+	(Trac #3420, git e51bcbeedbc169050751c1b896726965243667be)
+
 828.	[bug]		marcin
 	Corrected the IfaceMgrTest.detectIface unit test that failed on
 	Linux systems with virtual interfaces present.
