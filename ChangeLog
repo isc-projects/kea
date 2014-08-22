@@ -1,6 +1,17 @@
-828.	[build]		jreed
+830.	[build]		jreed
 	The configure script no longer requires pkg-config.
 	(Trac #3511, git 99a5a2db8c011b358873d485ac48f7c78ac6374c)
+
+829.    [build]         wlodek
+	Lettuce DNS tests removed with all related python code,
+	most of them will be used in Forge project which can be found
+	http://kea.isc.org/wiki/IscForge
+	(Trac #3420, git e51bcbeedbc169050751c1b896726965243667be)
+
+828.	[bug]		marcin
+	Corrected the IfaceMgrTest.detectIface unit test that failed on
+	Linux systems with virtual interfaces present.
+	(Trac #3527, git 7aa01a6965b6e9fc39ff005803cada7f58f2e628)
 
 827.	[build]		jiri, tomek
 	Deprecated AC_PROG_LIBTOOL macro replaced by LT_INIT.
