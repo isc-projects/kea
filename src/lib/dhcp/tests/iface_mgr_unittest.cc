@@ -2362,7 +2362,20 @@ TEST_F(IfaceMgrTest, detectIfaces) {
     // Go over all interfaces detected by the unit test and see if they
     // match with the interfaces detected by IfaceMgr.
     for (ifptr = iflist; ifptr != 0; ifptr = ifptr->ifa_next) {
-        Iface* i = ifacemgr.getIface(std::string(ifptr->ifa_name));
+        // When more than one IPv4 address is assigned to the particular
+        // physical interface, virtual interfaces may be created for each
+        // additional IPv4 address. For example, when multiple addresses
+        // are assigned to the eth0 interface, additional virtual interfaces
+        // will be eth0:0, eth0:1 etc. This is the case on some Linux
+        // distributions. The getifaddrs will return virtual interfaces,
+        // with single address each, but the Netlink-based implementation
+        // (used by IfaceMgr) will rather hold a list of physical interfaces
+        // with multiple IPv4 addresses assigned. This means that the test
+        // can't use a name of the interface returned by getifaddrs to match
+        // with the interface name held by IfaceMgr. Instead, we use the
+        // index of the interface because the virtual interfaces have the
+        // same indexes as the physical interfaces.
+        Iface* i = ifacemgr.getIface(if_nametoindex(ifptr->ifa_name));
 
         // If the given interface was also detected by the IfaceMgr,
         // check that its properties are correct.
