@@ -1,4 +1,0 @@
-$ORIGIN example.org.
-example.org.    3600    IN      SOA     ns1.example.org. admin.example.org. 12341 3600 1800 2419200 7200
-$GENERATE 1-2   @               NS      ns$.example.org.
-$GENERATE 1-4 host$ A 192.0.2.$
