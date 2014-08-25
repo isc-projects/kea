@@ -22,6 +22,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
+#include <sstream>
 #include <string>
 
 namespace isc {
@@ -86,6 +87,14 @@ D2Params::validateContents() {
                   << dhcp_ddns::ncrProtocolToString(ncr_protocol_)
                   << " is not yet supported");
     }
+}
+
+std::string
+D2Params::getConfigSummary() const {
+    std::ostringstream s;
+    s << "listening on " << getIpAddress() << ", port " << getPort()
+      << ", using " << ncrProtocolToString(ncr_protocol_);
+    return (s.str());
 }
 
 bool

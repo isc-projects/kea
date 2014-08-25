@@ -23,6 +23,8 @@
 namespace isc {
 namespace dhcp {
 
+class CfgMgr;
+
 /// @brief Defines single logging destination
 ///
 /// This structure is used to keep log4cplus configuration parameters.
@@ -33,7 +35,7 @@ struct LoggingDestination {
     /// Values accepted are: stdout, stderr, syslog, syslog:name.
     /// Any other destination will be considered a file name.
     std::string output_;
-    
+
     /// @brief Maximum number of log files in rotation
     int maxver_;
 
@@ -53,10 +55,10 @@ struct LoggingDestination {
 ///                    "maxver": 8,
 ///                    "maxsize": 204800
 ///                }
-///            ], 
+///            ],
 ///            "severity": "WARN",
 ///            "debuglevel": 99
-///        }, 
+///        },
 struct LoggingInfo {
 
     /// @brief logging name
@@ -82,8 +84,53 @@ typedef std::vector<isc::dhcp::LoggingInfo> LoggingInfoStorage;
 /// @todo Migrate all other configuration parameters from cfgmgr.h here
 struct Configuration {
 
+    /// @name Constants for selection of parameters returned by @c getConfigSummary
+    ///
+    //@{
+    /// Nothing selected
+    static const uint32_t CFGSEL_NONE    = 0x00000000;
+    /// Number of IPv4 subnets
+    static const uint32_t CFGSEL_SUBNET4 = 0x00000001;
+    /// Number of IPv6 subnets
+    static const uint32_t CFGSEL_SUBNET6 = 0x00000002;
+    /// Number of enabled ifaces
+    static const uint32_t CFGSEL_IFACE4  = 0x00000004;
+    /// Number of v6 ifaces
+    static const uint32_t CFGSEL_IFACE6  = 0x00000008;
+    /// DDNS enabled/disabled
+    static const uint32_t CFGSEL_DDNS    = 0x00000010;
+    /// Number of all subnets
+    static const uint32_t CFGSEL_SUBNET  = 0x00000003;
+    /// IPv4 related config
+    static const uint32_t CFGSEL_ALL4    = 0x00000015;
+    /// IPv6 related config
+    static const uint32_t CFGSEL_ALL6    = 0x0000001A;
+    /// Whole config
+    static const uint32_t CFGSEL_ALL     = 0xFFFFFFFF;
+    //@}
+
     /// @brief logging specific information
     LoggingInfoStorage logging_info_;
+
+    /// @brief Returns summary of the configuration in the textual format.
+    ///
+    /// This method returns the brief text describing the current configuration.
+    /// It may be used for logging purposes, e.g. when the new configuration is
+    /// committed to notify a user about the changes in configuration.
+    ///
+    /// @todo Currently this method uses @c CfgMgr accessors to get the
+    /// configuration parameters. Once these parameters are migrated from the
+    /// @c CfgMgr this method will have to be modified accordingly.
+    ///
+    /// @todo Implement reporting a summary of interfaces being used for
+    /// receiving and sending DHCP messages. This will be implemented with
+    /// ticket #3512.
+    ///
+    /// @param selection Is a bitfield which describes the parts of the
+    /// configuration to be returned.
+    ///
+    /// @return Summary of the configuration in the textual format.
+    std::string getConfigSummary(const uint32_t selection) const;
 };
 
 /// @brief pointer to the configuration
