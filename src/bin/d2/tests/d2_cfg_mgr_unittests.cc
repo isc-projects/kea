@@ -376,6 +376,10 @@ TEST_F(D2CfgMgrTest, validParamsEntry) {
     // Verify that the global scalars have the proper values.
     EXPECT_EQ(isc::asiolink::IOAddress("3001::5"),
               d2_params_->getIpAddress());
+
+    // Verify the configuration summary.
+    EXPECT_EQ("listening on 3001::5, port 777",
+              d2_params_->getConfigSummary());
 }
 
 /// @brief Tests default values for D2Params.

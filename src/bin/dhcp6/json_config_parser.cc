@@ -698,9 +698,6 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
         return (answer);
     }
 
-    /// @todo: Append most essential info here (like "2 new subnets configured")
-    string config_details;
-
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND,
               DHCP6_CONFIG_START).arg(config_set->str());
 
@@ -858,7 +855,9 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
         return (answer);
     }
 
-    LOG_INFO(dhcp6_logger, DHCP6_CONFIG_COMPLETE).arg(config_details);
+    LOG_INFO(dhcp6_logger, DHCP6_CONFIG_COMPLETE)
+        .arg(CfgMgr::instance().getConfiguration()->
+             getConfigSummary(Configuration::CFGSEL_ALL6));
 
     // Everything was fine. Configuration is successful.
     answer = isc::config::createAnswer(0, "Configuration committed.");
