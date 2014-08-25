@@ -736,8 +736,8 @@ Element::fromJSONFile(const std::string& file_name,
     if (!infile.is_open())
     {
         const char* error = strerror(errno);
-        isc_throw(InvalidOperation, "Failed to read file '" << file_name
-                  << "', error:" << error);
+        isc_throw(InvalidOperation, "failed to read file '" << file_name
+                  << "': " << error);
     }
 
     return (fromJSON(infile, file_name, preproc));
