@@ -57,6 +57,11 @@ public:
                        const isc::data::Element::Position& /* pos */) {
         return (isc::dhcp::ParserPtr());
     }
+
+    /// @brief Returns summary of configuration in the textual format.
+    virtual std::string getConfigSummary(const uint32_t) {
+        return ("");
+    }
 };
 
 /// @brief Test fixture class for testing DCfgMgrBase class.

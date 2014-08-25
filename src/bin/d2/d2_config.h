@@ -211,6 +211,15 @@ public:
         return(ncr_format_);
     }
 
+    /// @brief Return summary of the configuration used by D2.
+    ///
+    /// The returned summary of the configuration is meant to be appended to
+    /// the log message informing about the successful completion of the
+    /// D2 configuration.
+    ///
+    /// @return Configuration summary in the textual format.
+    std::string getConfigSummary() const;
+
     /// @brief Compares two D2Paramss for equality
     bool operator == (const D2Params& other) const;
 

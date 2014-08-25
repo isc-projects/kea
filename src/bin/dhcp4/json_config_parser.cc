@@ -496,9 +496,6 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
         return (answer);
     }
 
-    /// @todo: Append most essential info here (like "2 new subnets configured")
-    string config_details;
-
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND,
               DHCP4_CONFIG_START).arg(config_set->str());
 
@@ -657,7 +654,9 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
         return (answer);
     }
 
-    LOG_INFO(dhcp4_logger, DHCP4_CONFIG_COMPLETE).arg(config_details);
+    LOG_INFO(dhcp4_logger, DHCP4_CONFIG_COMPLETE)
+        .arg(CfgMgr::instance().getConfiguration()->
+             getConfigSummary(Configuration::CFGSEL_ALL4));
 
     // Everything was fine. Configuration is successful.
     answer = isc::config::createAnswer(0, "Configuration committed.");
