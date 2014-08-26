@@ -190,11 +190,11 @@ InterfaceListConfigParser(const std::string& param_name)
 void
 InterfaceListConfigParser::build(ConstElementPtr value) {
     ConfigurationPtr config = CfgMgr::instance().getConfiguration();
-    config->iface_cfg_.reset();
+    config->cfg_iface_.reset();
     BOOST_FOREACH(ConstElementPtr iface, value->listValue()) {
         std::string iface_name = iface->stringValue();
         try {
-            config->iface_cfg_.use(iface_name);
+            config->cfg_iface_.use(iface_name);
 
         } catch (const std::exception& ex) {
             isc_throw(DhcpConfigError, "Failed to select interface: "

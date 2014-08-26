@@ -359,9 +359,9 @@ public:
         // properly test interface configuration we disable listening on
         // all interfaces before each test and later check that this setting
         // has been overriden by the configuration used in the test.
-        CfgMgr::instance().getConfiguration()->iface_cfg_.reset();
+        CfgMgr::instance().getConfiguration()->cfg_iface_.reset();
         CfgMgr::instance().getConfiguration()->
-            iface_cfg_.setFamily(IfaceCfg::V6);
+            cfg_iface_.setFamily(CfgIface::V6);
         // Create fresh context.
         globalContext()->copyContext(ParserContext(Option::V6));
     }
@@ -3057,7 +3057,7 @@ TEST_F(Dhcp6ParserTest, selectedInterfaces) {
     // as the pool does not belong to that subnet
     checkResult(status, 0);
 
-    CfgMgr::instance().getConfiguration()->iface_cfg_.openSockets(10000);
+    CfgMgr::instance().getConfiguration()->cfg_iface_.openSockets(10000);
 
     // eth0 and eth1 were explicitly selected. eth2 was not.
     EXPECT_TRUE(test_config.socketOpen("eth0", AF_INET6));
@@ -3090,7 +3090,7 @@ TEST_F(Dhcp6ParserTest, allInterfaces) {
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
     checkResult(status, 0);
 
-    CfgMgr::instance().getConfiguration()->iface_cfg_.openSockets(10000);
+    CfgMgr::instance().getConfiguration()->cfg_iface_.openSockets(10000);
 
     // All interfaces should be now active.
     EXPECT_TRUE(test_config.socketOpen("eth0", AF_INET6));

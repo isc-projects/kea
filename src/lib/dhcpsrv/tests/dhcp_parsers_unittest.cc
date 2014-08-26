@@ -59,8 +59,8 @@ public:
 
     /// @brief Resets selection of the interfaces from previous tests.
     void resetIfaceCfg() {
-        CfgMgr::instance().getConfiguration()->iface_cfg_.closeSockets();
-        CfgMgr::instance().getConfiguration()->iface_cfg_.reset();
+        CfgMgr::instance().getConfiguration()->cfg_iface_.closeSockets();
+        CfgMgr::instance().getConfiguration()->cfg_iface_.reset();
     }
 };
 
@@ -241,7 +241,7 @@ TEST_F(DhcpParserTest, interfaceListParserTest) {
     // eth2 was not added.
     ConfigurationPtr cfg = CfgMgr::instance().getConfiguration();
     ASSERT_TRUE(cfg);
-    ASSERT_NO_THROW(cfg->iface_cfg_.openSockets(10000));
+    ASSERT_NO_THROW(cfg->cfg_iface_.openSockets(10000));
 
     EXPECT_TRUE(test_config.socketOpen("eth0", AF_INET));
     EXPECT_FALSE(test_config.socketOpen("eth1", AF_INET));
@@ -253,11 +253,11 @@ TEST_F(DhcpParserTest, interfaceListParserTest) {
 
     // Reset parser and configuration.
     parser.reset(new InterfaceListConfigParser(name));
-    cfg->iface_cfg_.closeSockets();
-    cfg->iface_cfg_.reset();
+    cfg->cfg_iface_.closeSockets();
+    cfg->cfg_iface_.reset();
 
     parser->build(list_element);
-    ASSERT_NO_THROW(cfg->iface_cfg_.openSockets(10000));
+    ASSERT_NO_THROW(cfg->cfg_iface_.openSockets(10000));
 
     EXPECT_TRUE(test_config.socketOpen("eth0", AF_INET));
     EXPECT_TRUE(test_config.socketOpen("eth1", AF_INET));
