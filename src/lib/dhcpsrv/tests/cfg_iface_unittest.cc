@@ -146,7 +146,7 @@ TEST_F(CfgIfaceTest, explicitNamesV6) {
 // select all interfaces to open IPv4 sockets.
 TEST_F(CfgIfaceTest, wildcardV4) {
     CfgIface cfg(CfgIface::V4);
-    ASSERT_NO_THROW(cfg.use(CfgIface::ALL_IFACES_KEYWORD));
+    ASSERT_NO_THROW(cfg.use("*"));
 
     cfg.openSockets(DHCP4_SERVER_PORT);
 
@@ -165,7 +165,7 @@ TEST_F(CfgIfaceTest, wildcardV4) {
 // select all interfaces to open IPv6 sockets.
 TEST_F(CfgIfaceTest, wildcardV6) {
     CfgIface cfg(CfgIface::V6);
-    ASSERT_NO_THROW(cfg.use(CfgIface::ALL_IFACES_KEYWORD));
+    ASSERT_NO_THROW(cfg.use("*"));
 
     cfg.openSockets(DHCP4_SERVER_PORT);
 
@@ -219,8 +219,8 @@ TEST_F(CfgIfaceTest, invalidValues) {
     ASSERT_THROW(cfg.use("eth0/fe80::3a60:77ff:fed5:cdef"), InvalidIfaceName);
     ASSERT_THROW(cfg.use("eth0/2001:db8:1::2"), NoSuchAddress);
 
-    ASSERT_NO_THROW(cfg.use(CfgIface::ALL_IFACES_KEYWORD));
-    ASSERT_THROW(cfg.use(CfgIface::ALL_IFACES_KEYWORD), DuplicateIfaceName);
+    ASSERT_NO_THROW(cfg.use("*"));
+    ASSERT_THROW(cfg.use("*"), DuplicateIfaceName);
 }
 
 } // end of anonymous namespace

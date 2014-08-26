@@ -237,6 +237,13 @@ CfgIface::use(const std::string& iface_name) {
                       " a valid IPv6 unicast address");
         }
 
+        // There are valid cases where link local address can be specified to
+        // receive unicast traffic, e.g. sent by relay agent.
+        if (addr.isV6LinkLocal()) {
+            LOG_WARN(dhcpsrv_logger, DHCPSRV_CFGMGR_UNICAST_LINK_LOCAL)
+                .arg(addr.toText()).arg(name);
+        }
+
         // Interface must have this address assigned.
         if (!iface->hasAddress(addr)) {
             isc_throw(NoSuchAddress,

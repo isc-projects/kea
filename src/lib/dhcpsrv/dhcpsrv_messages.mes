@@ -145,6 +145,11 @@ This is a debug message reporting that the DHCP configuration manager has
 returned the specified IPv6 subnet, because detected relay agent address
 matches value specified for this subnet.
 
+% DHCPSRV_CFGMGR_UNICAST_LINK_LOCAL specified link local address %1 for unicast traffic on interface %2
+This warning message is logged when user specified a link-local address to
+receive unicast traffic. The warning message is issued because it is an
+uncommon use.
+
 % DHCPSRV_CLOSE_DB closing currently open %1 database
 This is a debug message, issued when the DHCP server closes the currently
 open lease database.  It is issued at program shutdown and whenever
