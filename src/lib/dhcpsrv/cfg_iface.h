@@ -63,8 +63,8 @@ public:
 /// instructs the server to listen on all available interfaces.
 ///
 /// Once interfaces have been specified the sockets (either IPv4 or IPv6)
-/// can be opened by calling @c IfaceCfg::openSockets function.
-class IfaceCfg {
+/// can be opened by calling @c CfgIface::openSockets function.
+class CfgIface {
 public:
     /// @brief Keyword used to enable all interfaces.
     ///
@@ -83,12 +83,12 @@ public:
     /// @brief Constructor.
     ///
     /// @param family Protocol family (default is V4).
-    IfaceCfg(Family family = V4);
+    CfgIface(Family family = V4);
 
     /// @brief Convenience function which closes all open sockets.
     void closeSockets();
 
-    /// @brief Returns protocol family used by the @c IfaceCfg.
+    /// @brief Returns protocol family used by the @c CfgIface.
     Family getFamily() const {
         return (family_);
     }
@@ -96,7 +96,7 @@ public:
     /// @brief Tries to open sockets on selected interfaces.
     ///
     /// This function opens sockets bound to link-local address as well as
-    /// sockets bound to unicast address. See @c IfaceCfg::use function
+    /// sockets bound to unicast address. See @c CfgIface::use function
     /// documentation for details how to specify interfaces and unicast
     /// addresses to bind the sockets to.
     ///
@@ -147,7 +147,7 @@ public:
     /// to the interface.
     /// @throw DuplicateIfaceName If the interface is already selected, i.e.
     /// @throw IOError when specified unicast address is invalid.
-    /// @c IfaceCfg::use has been already called for this interface.
+    /// @c CfgIface::use has been already called for this interface.
     void use(const std::string& iface_name);
 
 private:

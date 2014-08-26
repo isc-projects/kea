@@ -15,7 +15,7 @@
 #ifndef DHCPSRV_CONFIGURATION_H
 #define DHCPSRV_CONFIGURATION_H
 
-#include <dhcpsrv/iface_cfg.h>
+#include <dhcpsrv/cfg_iface.h>
 #include <log/logger_level.h>
 #include <boost/shared_ptr.hpp>
 #include <vector>
@@ -90,7 +90,7 @@ struct Configuration {
     ///
     /// Used to select interfaces on which the DHCP server will listen to
     /// queries.
-    IfaceCfg iface_cfg_;
+    CfgIface cfg_iface_;
 
 };
 

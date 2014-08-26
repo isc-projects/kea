@@ -154,7 +154,7 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
         // domain, so as the IPv6 sockets are opened rather than IPv4 sockets
         // which are the default.
         CfgMgr::instance().getConfiguration()
-            ->iface_cfg_.setFamily(IfaceCfg::V6);
+            ->cfg_iface_.setFamily(CfgIface::V6);
 
         /// @todo call loadLibraries() when handling configuration changes
 
