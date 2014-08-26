@@ -48,7 +48,7 @@ Configuration::getConfigSummary(const uint32_t selection) const {
         s << "DDNS: " << (ddns_enabled ? "enabled" : "disabled") << "; ";
     }
 
-    if (s.tellp() == 0) {
+    if (s.tellp() == static_cast<std::streampos>(0)) {
         s << "no config details available";
     }
 
