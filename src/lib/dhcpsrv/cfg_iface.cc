@@ -14,7 +14,7 @@
 
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
-#include <dhcpsrv/iface_cfg.h>
+#include <dhcpsrv/cfg_iface.h>
 #include <util/strutil.h>
 #include <boost/bind.hpp>
 
@@ -23,20 +23,20 @@ using namespace isc::asiolink;
 namespace isc {
 namespace dhcp {
 
-const char* IfaceCfg::ALL_IFACES_KEYWORD = "*";
+const char* CfgIface::ALL_IFACES_KEYWORD = "*";
 
-IfaceCfg::IfaceCfg(Family family)
+CfgIface::CfgIface(Family family)
     : family_(family),
       wildcard_used_(false) {
 }
 
 void
-IfaceCfg::closeSockets() {
+CfgIface::closeSockets() {
     IfaceMgr::instance().closeSockets();
 }
 
 void
-IfaceCfg::openSockets(const uint16_t port, const bool use_bcast) {
+CfgIface::openSockets(const uint16_t port, const bool use_bcast) {
     // If wildcard interface '*' was not specified, set all interfaces to
     // inactive state. We will later enable them selectively using the
     // interface names specified by the user. If wildcard interface was
@@ -93,7 +93,7 @@ IfaceCfg::openSockets(const uint16_t port, const bool use_bcast) {
     // for some specific interface. This callback will simply log a
     // warning message.
     IfaceMgrErrorMsgCallback error_callback =
-        boost::bind(&IfaceCfg::socketOpenErrorHandler, _1);
+        boost::bind(&CfgIface::socketOpenErrorHandler, _1);
     bool sopen;
     if (getFamily() == V4) {
         sopen = IfaceMgr::instance().openSockets4(port, use_bcast,
@@ -111,13 +111,13 @@ IfaceCfg::openSockets(const uint16_t port, const bool use_bcast) {
 }
 
 void
-IfaceCfg::reset() {
+CfgIface::reset() {
     wildcard_used_ = false;
     iface_set_.clear();
 }
 
 void
-IfaceCfg::setState(const bool inactive, const bool loopback_inactive) {
+CfgIface::setState(const bool inactive, const bool loopback_inactive) {
     IfaceMgr::IfaceCollection ifaces = IfaceMgr::instance().getIfaces();
     for (IfaceMgr::IfaceCollection::iterator iface = ifaces.begin();
          iface != ifaces.end(); ++iface) {
@@ -133,12 +133,12 @@ IfaceCfg::setState(const bool inactive, const bool loopback_inactive) {
 }
 
 void
-IfaceCfg::socketOpenErrorHandler(const std::string& errmsg) {
+CfgIface::socketOpenErrorHandler(const std::string& errmsg) {
     LOG_WARN(dhcpsrv_logger, DHCPSRV_OPEN_SOCKET_FAIL).arg(errmsg);
 }
 
 void
-IfaceCfg::use(const std::string& iface_name) {
+CfgIface::use(const std::string& iface_name) {
     // The interface name specified may have two formats, e.g.:
     // - eth0
     // - eth0/2001:db8:1::1.

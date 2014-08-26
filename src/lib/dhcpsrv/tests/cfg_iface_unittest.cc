@@ -15,7 +15,7 @@
 #include <config.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
-#include <dhcpsrv/iface_cfg.h>
+#include <dhcpsrv/cfg_iface.h>
 #include <gtest/gtest.h>
 
 using namespace isc;
@@ -24,15 +24,15 @@ using namespace isc::dhcp::test;
 
 namespace {
 
-/// @brief Test fixture class for testing the @c IfaceCfg class.
-class IfaceCfgTest : public ::testing::Test {
+/// @brief Test fixture class for testing the @c CfgIface class.
+class CfgIfaceTest : public ::testing::Test {
 public:
 
     /// @brief Constructor.
     ///
     /// By initializing the @c IfaceMgrTestConfig object it creates a set of
     /// fake interfaces: lo, eth0, eth1.
-    IfaceCfgTest() :
+    CfgIfaceTest() :
         iface_mgr_test_config_(true) {
     }
 
@@ -53,19 +53,19 @@ public:
 };
 
 bool
-IfaceCfgTest::socketOpen(const std::string& iface_name,
+CfgIfaceTest::socketOpen(const std::string& iface_name,
                          const int family) const {
     return (iface_mgr_test_config_.socketOpen(iface_name, family));
 }
 bool
-IfaceCfgTest::unicastOpen(const std::string& iface_name) const {
+CfgIfaceTest::unicastOpen(const std::string& iface_name) const {
     return (iface_mgr_test_config_.unicastOpen(iface_name));
 }
 
 // This test checks that the interface names can be explicitly selected
 // by their names and IPv4 sockets are opened on these interfaces.
-TEST_F(IfaceCfgTest, explicitNamesV4) {
-    IfaceCfg cfg(IfaceCfg::V4);
+TEST_F(CfgIfaceTest, explicitNamesV4) {
+    CfgIface cfg(CfgIface::V4);
     // Specify valid interface names. There should be no error.
     ASSERT_NO_THROW(cfg.use("eth0"));
     ASSERT_NO_THROW(cfg.use("eth1"));
@@ -104,8 +104,8 @@ TEST_F(IfaceCfgTest, explicitNamesV4) {
 
 // This test checks that the interface names can be explicitly selected
 // by their names and IPv6 sockets are opened on these interfaces.
-TEST_F(IfaceCfgTest, explicitNamesV6) {
-    IfaceCfg cfg(IfaceCfg::V6);
+TEST_F(CfgIfaceTest, explicitNamesV6) {
+    CfgIface cfg(CfgIface::V6);
     // Specify valid interface names. There should be no error.
     ASSERT_NO_THROW(cfg.use("eth0"));
     ASSERT_NO_THROW(cfg.use("eth1"));
@@ -144,9 +144,9 @@ TEST_F(IfaceCfgTest, explicitNamesV6) {
 
 // This test checks that the wildcard interface name can be specified to
 // select all interfaces to open IPv4 sockets.
-TEST_F(IfaceCfgTest, wildcardV4) {
-    IfaceCfg cfg(IfaceCfg::V4);
-    ASSERT_NO_THROW(cfg.use(IfaceCfg::ALL_IFACES_KEYWORD));
+TEST_F(CfgIfaceTest, wildcardV4) {
+    CfgIface cfg(CfgIface::V4);
+    ASSERT_NO_THROW(cfg.use(CfgIface::ALL_IFACES_KEYWORD));
 
     cfg.openSockets(DHCP4_SERVER_PORT);
 
@@ -163,9 +163,9 @@ TEST_F(IfaceCfgTest, wildcardV4) {
 
 // This test checks that the wildcard interface name can be specified to
 // select all interfaces to open IPv6 sockets.
-TEST_F(IfaceCfgTest, wildcardV6) {
-    IfaceCfg cfg(IfaceCfg::V6);
-    ASSERT_NO_THROW(cfg.use(IfaceCfg::ALL_IFACES_KEYWORD));
+TEST_F(CfgIfaceTest, wildcardV6) {
+    CfgIface cfg(CfgIface::V6);
+    ASSERT_NO_THROW(cfg.use(CfgIface::ALL_IFACES_KEYWORD));
 
     cfg.openSockets(DHCP4_SERVER_PORT);
 
@@ -183,8 +183,8 @@ TEST_F(IfaceCfgTest, wildcardV6) {
 // Test that unicast address can be specified for the socket to be opened on
 // the interface on which the socket bound to link local address is also
 // opened.
-TEST_F(IfaceCfgTest, validUnicast) {
-    IfaceCfg cfg(IfaceCfg::V6);
+TEST_F(CfgIfaceTest, validUnicast) {
+    CfgIface cfg(CfgIface::V6);
 
     // One socket will be opened on link-local address, one on unicast but
     // on the same interface.
@@ -198,8 +198,8 @@ TEST_F(IfaceCfgTest, validUnicast) {
 }
 
 // Test that when invalid interface names are specified an exception is thrown.
-TEST_F(IfaceCfgTest, invalidValues) {
-    IfaceCfg cfg(IfaceCfg::V4);
+TEST_F(CfgIfaceTest, invalidValues) {
+    CfgIface cfg(CfgIface::V4);
     ASSERT_THROW(cfg.use(""), InvalidIfaceName);
     ASSERT_THROW(cfg.use(" "), InvalidIfaceName);
     ASSERT_THROW(cfg.use("bogus"), NoSuchIface);
@@ -209,7 +209,7 @@ TEST_F(IfaceCfgTest, invalidValues) {
 
     ASSERT_THROW(cfg.use("eth0/2001:db8:1::1"), InvalidIfaceName);
 
-    cfg.setFamily(IfaceCfg::V6);
+    cfg.setFamily(CfgIface::V6);
 
     ASSERT_THROW(cfg.use("eth0/"), InvalidIfaceName);
     ASSERT_THROW(cfg.use("/2001:db8:1::1"), InvalidIfaceName);
@@ -219,8 +219,8 @@ TEST_F(IfaceCfgTest, invalidValues) {
     ASSERT_THROW(cfg.use("eth0/fe80::3a60:77ff:fed5:cdef"), InvalidIfaceName);
     ASSERT_THROW(cfg.use("eth0/2001:db8:1::2"), NoSuchAddress);
 
-    ASSERT_NO_THROW(cfg.use(IfaceCfg::ALL_IFACES_KEYWORD));
-    ASSERT_THROW(cfg.use(IfaceCfg::ALL_IFACES_KEYWORD), DuplicateIfaceName);
+    ASSERT_NO_THROW(cfg.use(CfgIface::ALL_IFACES_KEYWORD));
+    ASSERT_THROW(cfg.use(CfgIface::ALL_IFACES_KEYWORD), DuplicateIfaceName);
 }
 
 } // end of anonymous namespace
