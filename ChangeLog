@@ -1,3 +1,8 @@
+831.	[bug]		marcin
+	Kea deamons report configuration summary when the configuration is
+	completed successfully.
+	(Trac #3477, git af2f91d2583b37d69c86fbc4eed29489c6fb8a12)
+
 830.	[build]		jreed
 	The configure script no longer requires pkg-config.
 	(Trac #3511, git 99a5a2db8c011b358873d485ac48f7c78ac6374c)
