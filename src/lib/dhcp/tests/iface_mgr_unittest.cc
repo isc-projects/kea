@@ -614,6 +614,7 @@ TEST_F(IfaceMgrTest, ifaceHasAddress) {
     Iface* iface = IfaceMgr::instance().getIface("eth0");
     ASSERT_FALSE(iface == NULL);
     EXPECT_TRUE(iface->hasAddress(IOAddress("10.0.0.1")));
+    EXPECT_FALSE(iface->hasAddress(IOAddress("10.0.0.2")));
     EXPECT_TRUE(iface->hasAddress(IOAddress("fe80::3a60:77ff:fed5:cdef")));
     EXPECT_TRUE(iface->hasAddress(IOAddress("2001:db8:1::1")));
     EXPECT_FALSE(iface->hasAddress(IOAddress("2001:db8:1::2")));

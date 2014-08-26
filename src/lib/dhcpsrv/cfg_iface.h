@@ -176,17 +176,22 @@ private:
 
     /// @brief Protocol family.
     Family family_;
+
     /// @brief Represents a set of interface names.
     typedef std::set<std::string> IfaceSet;
+
     /// @brief A set of interface names specified by the user.
     IfaceSet iface_set_;
+
     /// @brief A map of interfaces and unicast addresses.
     typedef std::map<std::string, asiolink::IOAddress> UnicastMap;
+
     /// @brief A map which holds the pairs of interface names and unicast
     /// addresses for which the unicast sockets should be opened.
     ///
     /// This is only used for V6 family.
     UnicastMap unicast_map_;
+
     /// @brief A booolean value which indicates that the wildcard interface name
     /// has been specified (*).
     bool wildcard_used_;
