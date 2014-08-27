@@ -183,7 +183,10 @@ ControlledDhcpv6Srv::init(const std::string& config_file) {
 
         // Configuration may disable or enable interfaces so we have to
         // reopen sockets according to new configuration.
-        openActiveSockets(getPort());
+        // Configuration may disable or enable interfaces so we have to
+        // reopen sockets according to new configuration.
+        CfgMgr::instance().getConfiguration()->cfg_iface_
+            .openSockets(getPort(), useBroadcast());
 
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcp6_logger, DHCP6_CONFIG_LOAD_FAIL).arg(ex.what());

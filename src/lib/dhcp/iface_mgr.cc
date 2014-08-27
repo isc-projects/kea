@@ -242,6 +242,18 @@ Iface::getAddress4(isc::asiolink::IOAddress& address) const {
     return (false);
 }
 
+bool
+Iface::hasAddress(const isc::asiolink::IOAddress& address) const {
+    const AddressCollection& addrs = getAddresses();
+    for (AddressCollection::const_iterator addr = addrs.begin();
+         addr != addrs.end(); ++addr) {
+        if (address == *addr) {
+            return (true);
+        }
+    }
+    return (false);
+}
+
 void IfaceMgr::closeSockets() {
     for (IfaceCollection::iterator iface = ifaces_.begin();
          iface != ifaces_.end(); ++iface) {
@@ -457,7 +469,11 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                                " interface " << iface->getName());
                 continue;
 
-            } else if (!iface->flag_up_ || !iface->flag_running_) {
+            }
+
+            IOAddress out_address("0.0.0.0");
+            if (!iface->flag_up_ || !iface->flag_running_ ||
+                !iface->getAddress4(out_address)) {
                 IFACEMGR_ERROR(SocketConfigError, error_handler,
                                "the interface " << iface->getName()
                                << " is down or has no usable IPv4"
@@ -680,6 +696,14 @@ IfaceMgr::getIface(const std::string& ifname) {
 void
 IfaceMgr::clearIfaces() {
     ifaces_.clear();
+}
+
+void
+IfaceMgr::clearUnicasts() {
+    for (IfaceCollection::iterator iface=ifaces_.begin();
+         iface!=ifaces_.end(); ++iface) {
+        iface->clearUnicasts();
+    }
 }
 
 int IfaceMgr::openSocket(const std::string& ifname, const IOAddress& addr,

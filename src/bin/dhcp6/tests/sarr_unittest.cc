@@ -31,7 +31,7 @@ namespace {
 ///   - prefixes of length 64, delegated from the pool: 2001:db8:3::/48
 const char* CONFIGS[] = {
     // Configuration 0
-    "{ \"interfaces\": [ \"all\" ],"
+    "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "

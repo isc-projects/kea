@@ -798,16 +798,15 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
     } catch (const isc::Exception& ex) {
         LOG_ERROR(dhcp6_logger, DHCP6_PARSER_FAIL)
                   .arg(config_pair.first).arg(ex.what());
-        answer = isc::config::createAnswer(1,
-                     string("Configuration parsing failed: ") + ex.what());
+        answer = isc::config::createAnswer(1, ex.what());
         // An error occured, so make sure that we restore original data.
         rollback = true;
 
     } catch (...) {
         // for things like bad_cast in boost::lexical_cast
         LOG_ERROR(dhcp6_logger, DHCP6_PARSER_EXCEPTION).arg(config_pair.first);
-        answer = isc::config::createAnswer(1,
-                     string("Configuration parsing failed"));
+        answer = isc::config::createAnswer(1, "undefined configuration"
+                                           " processing error");
         // An error occured, so make sure that we restore original data.
         rollback = true;
     }
@@ -835,15 +834,14 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
         }
         catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_FAIL).arg(ex.what());
-            answer = isc::config::createAnswer(2,
-                         string("Configuration commit failed:") + ex.what());
+            answer = isc::config::createAnswer(2, ex.what());
             // An error occured, so make sure to restore the original data.
             rollback = true;
         } catch (...) {
             // for things like bad_cast in boost::lexical_cast
             LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_EXCEPTION);
-            answer = isc::config::createAnswer(2,
-                         string("Configuration commit failed"));
+            answer = isc::config::createAnswer(2, "undefined configuration"
+                                               " parsing error");
             // An error occured, so make sure to restore the original data.
             rollback = true;
         }
@@ -860,7 +858,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
              getConfigSummary(Configuration::CFGSEL_ALL6));
 
     // Everything was fine. Configuration is successful.
-    answer = isc::config::createAnswer(0, "Configuration committed.");
+    answer = isc::config::createAnswer(0, "Configuration successful.");
     return (answer);
 }
 
