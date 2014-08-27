@@ -265,7 +265,6 @@ public:
         CfgMgr::instance().deleteSubnets4();
         CfgMgr::instance().deleteSubnets6();
         CfgMgr::instance().deleteOptionDefs();
-        CfgMgr::instance().deleteActiveIfaces();
     }
 
     /// @brief generates interface-id option based on provided text
@@ -981,85 +980,6 @@ TEST_F(CfgMgrTest, optionSpace6) {
     );
 
     /// @todo decide if a duplicate vendor space is allowed.
-}
-
-// This test verifies that it is possible to specify interfaces that server
-// should listen on.
-TEST_F(CfgMgrTest, addActiveIface) {
-    CfgMgr& cfg_mgr = CfgMgr::instance();
-
-    EXPECT_NO_THROW(cfg_mgr.addActiveIface("eth0"));
-    EXPECT_NO_THROW(cfg_mgr.addActiveIface("eth1"));
-
-    EXPECT_TRUE(cfg_mgr.isActiveIface("eth0"));
-    EXPECT_TRUE(cfg_mgr.isActiveIface("eth1"));
-    EXPECT_FALSE(cfg_mgr.isActiveIface("eth2"));
-
-    EXPECT_NO_THROW(cfg_mgr.deleteActiveIfaces());
-
-    EXPECT_FALSE(cfg_mgr.isActiveIface("eth0"));
-    EXPECT_FALSE(cfg_mgr.isActiveIface("eth1"));
-    EXPECT_FALSE(cfg_mgr.isActiveIface("eth2"));
-}
-
-
-// This test verifies that it is possible to specify interfaces that server
-// should listen on.
-TEST_F(CfgMgrTest, addUnicastAddresses) {
-    CfgMgr& cfg_mgr = CfgMgr::instance();
-
-    EXPECT_NO_THROW(cfg_mgr.addActiveIface("eth1/2001:db8::1"));
-    EXPECT_NO_THROW(cfg_mgr.addActiveIface("eth2/2001:db8::2"));
-    EXPECT_NO_THROW(cfg_mgr.addActiveIface("eth3"));
-
-    EXPECT_TRUE(cfg_mgr.isActiveIface("eth1"));
-    EXPECT_TRUE(cfg_mgr.isActiveIface("eth2"));
-    EXPECT_TRUE(cfg_mgr.isActiveIface("eth3"));
-    EXPECT_FALSE(cfg_mgr.isActiveIface("eth4"));
-
-    ASSERT_TRUE(cfg_mgr.getUnicast("eth1"));
-    EXPECT_EQ("2001:db8::1", cfg_mgr.getUnicast("eth1")->toText());
-    EXPECT_EQ("2001:db8::2", cfg_mgr.getUnicast("eth2")->toText());
-    EXPECT_FALSE(cfg_mgr.getUnicast("eth3"));
-    EXPECT_FALSE(cfg_mgr.getUnicast("eth4"));
-
-    EXPECT_NO_THROW(cfg_mgr.deleteActiveIfaces());
-
-    EXPECT_FALSE(cfg_mgr.isActiveIface("eth1"));
-    EXPECT_FALSE(cfg_mgr.isActiveIface("eth2"));
-    EXPECT_FALSE(cfg_mgr.isActiveIface("eth3"));
-    EXPECT_FALSE(cfg_mgr.isActiveIface("eth4"));
-
-    ASSERT_FALSE(cfg_mgr.getUnicast("eth1"));
-    ASSERT_FALSE(cfg_mgr.getUnicast("eth2"));
-    EXPECT_FALSE(cfg_mgr.getUnicast("eth3"));
-    EXPECT_FALSE(cfg_mgr.getUnicast("eth4"));
-}
-
-
-// This test verifies that it is possible to set the flag which configures the
-// server to listen on all interfaces.
-TEST_F(CfgMgrTest, activateAllIfaces) {
-    CfgMgr& cfg_mgr = CfgMgr::instance();
-
-    cfg_mgr.addActiveIface("eth0");
-    cfg_mgr.addActiveIface("eth1");
-
-    ASSERT_TRUE(cfg_mgr.isActiveIface("eth0"));
-    ASSERT_TRUE(cfg_mgr.isActiveIface("eth1"));
-    ASSERT_FALSE(cfg_mgr.isActiveIface("eth2"));
-
-    cfg_mgr.activateAllIfaces();
-
-    EXPECT_TRUE(cfg_mgr.isActiveIface("eth0"));
-    EXPECT_TRUE(cfg_mgr.isActiveIface("eth1"));
-    EXPECT_TRUE(cfg_mgr.isActiveIface("eth2"));
-
-    cfg_mgr.deleteActiveIfaces();
-
-    EXPECT_FALSE(cfg_mgr.isActiveIface("eth0"));
-    EXPECT_FALSE(cfg_mgr.isActiveIface("eth1"));
-    EXPECT_FALSE(cfg_mgr.isActiveIface("eth2"));
 }
 
 // This test verifies that RFC6842 (echo client-id) compatibility may be

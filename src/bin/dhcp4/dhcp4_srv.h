@@ -128,11 +128,6 @@ public:
     ///
     /// @name Public accessors returning values required to (re)open sockets.
     ///
-    /// These accessors must be public because sockets are reopened from the
-    /// static configuration callback handler. This callback handler invokes
-    /// @c ControlledDhcpv4Srv::openActiveSockets which requires parameters
-    /// which has to be retrieved from the @c ControlledDhcpv4Srv object.
-    /// They are retrieved using these public functions
     //@{
     ///
     /// @brief Get UDP port on which server should listen.
@@ -153,17 +148,6 @@ public:
         return (use_bcast_);
     }
     //@}
-
-    /// @brief Open sockets which are marked as active in @c CfgMgr.
-    ///
-    /// This function reopens sockets according to the current settings in the
-    /// Configuration Manager. It holds the list of the interfaces which server
-    /// should listen on. This function will open sockets on these interfaces
-    /// only. This function is not exception safe.
-    ///
-    /// @param port UDP port on which server should listen.
-    /// @param use_bcast should broadcast flags be set on the sockets.
-    static void openActiveSockets(const uint16_t port, const bool use_bcast);
 
     /// @brief Starts DHCP_DDNS client IO if DDNS updates are enabled.
     ///

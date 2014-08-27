@@ -177,7 +177,8 @@ void ControlledDhcpv4Srv::init(const std::string& config_file) {
 
         // Configuration may disable or enable interfaces so we have to
         // reopen sockets according to new configuration.
-        openActiveSockets(getPort(), useBroadcast());
+        CfgMgr::instance().getConfiguration()->cfg_iface_
+            .openSockets(getPort(), useBroadcast());
 
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcp4_logger, DHCP4_CONFIG_LOAD_FAIL).arg(ex.what());
