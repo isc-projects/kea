@@ -100,26 +100,10 @@ public:
     /// Typically, server listens on UDP port 547. Other ports are only
     /// used for testing purposes.
     ///
-    /// This accessor must be public because sockets are reopened from the
-    /// static configuration callback handler. This callback handler invokes
-    /// @c ControlledDhcpv4Srv::openActiveSockets which requires port parameter
-    /// which has to be retrieved from the @c ControlledDhcpv4Srv object.
-    /// They are retrieved using this public function.
-    ///
     /// @return UDP port on which server should listen.
     uint16_t getPort() const {
         return (port_);
     }
-
-    /// @brief Open sockets which are marked as active in @c CfgMgr.
-    ///
-    /// This function reopens sockets according to the current settings in the
-    /// Configuration Manager. It holds the list of the interfaces which server
-    /// should listen on. This function will open sockets on these interfaces
-    /// only. This function is not exception safe.
-    ///
-    /// @param port UDP port on which server should listen.
-    static void openActiveSockets(const uint16_t port);
 
     /// @brief Starts DHCP_DDNS client IO if DDNS updates are enabled.
     ///

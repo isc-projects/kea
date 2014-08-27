@@ -75,7 +75,7 @@ Dhcp6SrvD2Test::buildTestNcr(uint32_t dhcid_id_num) {
 
 void
 Dhcp6SrvD2Test::reset() {
-    std::string config = "{ \"interfaces\": [ \"all\" ],"
+    std::string config = "{ \"interfaces\": [ \"*\" ],"
             "\"hooks-libraries\": [ ],"
             "\"preferred-lifetime\": 3000,"
             "\"rebind-timer\": 2000, "

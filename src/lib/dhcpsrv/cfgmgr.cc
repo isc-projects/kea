@@ -314,77 +314,6 @@ std::string CfgMgr::getDataDir() {
     return (datadir_);
 }
 
-void
-CfgMgr::addActiveIface(const std::string& iface) {
-
-    size_t pos = iface.find("/");
-    std::string iface_copy = iface;
-
-    if (pos != std::string::npos) {
-        std::string addr_string = iface.substr(pos + 1);
-        try {
-            IOAddress addr(addr_string);
-            iface_copy = iface.substr(0,pos);
-            unicast_addrs_.insert(make_pair(iface_copy, addr));
-        } catch (...) {
-            isc_throw(BadValue, "Can't convert '" << addr_string
-                      << "' into address in interface defition ('"
-                      << iface << "')");
-        }
-    }
-
-    if (isIfaceListedActive(iface_copy)) {
-        isc_throw(DuplicateListeningIface,
-                  "attempt to add duplicate interface '" << iface_copy << "'"
-                  " to the set of interfaces on which server listens");
-    }
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_ADD_IFACE)
-        .arg(iface_copy);
-    active_ifaces_.push_back(iface_copy);
-}
-
-void
-CfgMgr::activateAllIfaces() {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-              DHCPSRV_CFGMGR_ALL_IFACES_ACTIVE);
-    all_ifaces_active_ = true;
-}
-
-void
-CfgMgr::deleteActiveIfaces() {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-              DHCPSRV_CFGMGR_CLEAR_ACTIVE_IFACES);
-    active_ifaces_.clear();
-    all_ifaces_active_ = false;
-
-    unicast_addrs_.clear();
-}
-
-bool
-CfgMgr::isActiveIface(const std::string& iface) const {
-
-    // @todo Verify that the interface with the specified name is
-    // present in the system.
-
-    // If all interfaces are marked active, there is no need to check that
-    // the name of this interface has been explicitly listed.
-    if (all_ifaces_active_) {
-        return (true);
-    }
-    return (isIfaceListedActive(iface));
-}
-
-bool
-CfgMgr::isIfaceListedActive(const std::string& iface) const {
-    for (ActiveIfacesCollection::const_iterator it = active_ifaces_.begin();
-         it != active_ifaces_.end(); ++it) {
-        if (iface == *it) {
-            return (true);
-        }
-    }
-    return (false);
-}
-
 bool
 CfgMgr::isDuplicate(const Subnet4& subnet) const {
     for (Subnet4Collection::const_iterator subnet_it = subnets4_.begin();
@@ -407,15 +336,6 @@ CfgMgr::isDuplicate(const Subnet6& subnet) const {
     return (false);
 }
 
-
-const isc::asiolink::IOAddress*
-CfgMgr::getUnicast(const std::string& iface) const {
-    UnicastIfacesCollection::const_iterator addr = unicast_addrs_.find(iface);
-    if (addr == unicast_addrs_.end()) {
-        return (NULL);
-    }
-    return (&(*addr).second);
-}
 
 void
 CfgMgr::setD2ClientConfig(D2ClientConfigPtr& new_config) {
@@ -443,8 +363,7 @@ CfgMgr::getConfiguration() {
 }
 
 CfgMgr::CfgMgr()
-    : datadir_(DHCP_DATA_DIR),
-      all_ifaces_active_(false), echo_v4_client_id_(true),
+    : datadir_(DHCP_DATA_DIR), echo_v4_client_id_(true),
       d2_client_mgr_(), configuration_(new Configuration()) {
     // DHCP_DATA_DIR must be set set with -DDHCP_DATA_DIR="..." in Makefile.am
     // Note: the definition of DHCP_DATA_DIR needs to include quotation marks

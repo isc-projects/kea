@@ -18,6 +18,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int.h>
+#include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/dhcp_parsers.h>
@@ -47,9 +48,19 @@ namespace {
 class DhcpParserTest : public ::testing::Test {
 public:
     /// @brief Constructor
-    ///
     DhcpParserTest() {
-        CfgMgr::instance().deleteActiveIfaces();
+        resetIfaceCfg();
+    }
+
+    /// @brief Destructor.
+    virtual ~DhcpParserTest() {
+        resetIfaceCfg();
+    }
+
+    /// @brief Resets selection of the interfaces from previous tests.
+    void resetIfaceCfg() {
+        CfgMgr::instance().getConfiguration()->cfg_iface_.closeSockets();
+        CfgMgr::instance().getConfiguration()->cfg_iface_.reset();
     }
 };
 
@@ -210,6 +221,7 @@ TEST_F(DhcpParserTest, uint32ParserTest) {
 /// 4. Parses wildcard interface name and sets a CfgMgr flag which indicates
 /// that server will listen on all interfaces.
 TEST_F(DhcpParserTest, interfaceListParserTest) {
+    IfaceMgrTestConfig test_config(true);
 
     const std::string name = "interfaces";
 
@@ -220,11 +232,6 @@ TEST_F(DhcpParserTest, interfaceListParserTest) {
         parser(new InterfaceListConfigParser(name));
     ElementPtr list_element = Element::createList();
     list_element->add(Element::create("eth0"));
-    list_element->add(Element::create("eth1"));
-
-    // Make sure there are no interfaces added yet.
-    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth0"));
-    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth1"));
 
     // This should parse the configuration and add eth0 and eth1 to the list
     // of interfaces that server should listen on.
@@ -233,24 +240,29 @@ TEST_F(DhcpParserTest, interfaceListParserTest) {
 
     // Use CfgMgr instance to check if eth0 and eth1 was added, and that
     // eth2 was not added.
-    CfgMgr& cfg_mgr = CfgMgr::instance();
-    EXPECT_TRUE(cfg_mgr.isActiveIface("eth0"));
-    EXPECT_TRUE(cfg_mgr.isActiveIface("eth1"));
-    EXPECT_FALSE(cfg_mgr.isActiveIface("eth2"));
+    ConfigurationPtr cfg = CfgMgr::instance().getConfiguration();
+    ASSERT_TRUE(cfg);
+    ASSERT_NO_THROW(cfg->cfg_iface_.openSockets(10000));
+
+    EXPECT_TRUE(test_config.socketOpen("eth0", AF_INET));
+    EXPECT_FALSE(test_config.socketOpen("eth1", AF_INET));
 
     // Add keyword all to the configuration. This should activate all
     // interfaces, including eth2, even though it has not been explicitly
     // added.
     list_element->add(Element::create("*"));
 
-    // Reset parser's state.
+    // Reset parser and configuration.
     parser.reset(new InterfaceListConfigParser(name));
+    cfg->cfg_iface_.closeSockets();
+    cfg->cfg_iface_.reset();
+
     parser->build(list_element);
     parser->commit();
+    ASSERT_NO_THROW(cfg->cfg_iface_.openSockets(10000));
 
-    EXPECT_TRUE(cfg_mgr.isActiveIface("eth0"));
-    EXPECT_TRUE(cfg_mgr.isActiveIface("eth1"));
-    EXPECT_TRUE(cfg_mgr.isActiveIface("eth2"));
+    EXPECT_TRUE(test_config.socketOpen("eth0", AF_INET));
+    EXPECT_TRUE(test_config.socketOpen("eth1", AF_INET));
 }
 
 // Checks whether option space can be detected as vendor-id
