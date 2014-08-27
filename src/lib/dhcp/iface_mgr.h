@@ -279,6 +279,12 @@ public:
     /// for the interface (if true), or not (false).
     bool getAddress4(isc::asiolink::IOAddress& address) const;
 
+    /// @brief Check if the interface has the specified address assigned.
+    ///
+    /// @param address Address to be checked.
+    /// @return true if address is assigned to the intefrace, false otherwise.
+    bool hasAddress(const isc::asiolink::IOAddress& address) const;
+
     /// @brief Adds an address to an interface.
     ///
     /// This only adds an address to collection, it does not physically
@@ -548,6 +554,9 @@ public:
     /// it offers stub implementation. First interface name and link-local
     /// IPv6 address is read from interfaces.txt file.
     void detectIfaces();
+
+    /// @brief Clears unicast addresses on all interfaces.
+    void clearUnicasts();
 
     /// @brief Return most suitable socket for transmitting specified IPv6 packet.
     ///

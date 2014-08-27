@@ -150,6 +150,12 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
         // Instantiate allocation engine
         alloc_engine_.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100));
 
+        // We have to point out to the CfgMgr that the we are in the IPv6
+        // domain, so as the IPv6 sockets are opened rather than IPv4 sockets
+        // which are the default.
+        CfgMgr::instance().getConfiguration()
+            ->cfg_iface_.setFamily(CfgIface::V6);
+
         /// @todo call loadLibraries() when handling configuration changes
 
     } catch (const std::exception &e) {
@@ -2427,64 +2433,6 @@ Dhcpv6Srv::processInfRequest(const Pkt6Ptr& infRequest) {
     /// @todo: Implement this
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, infRequest->getTransid()));
     return reply;
-}
-
-void
-Dhcpv6Srv::openActiveSockets(const uint16_t port) {
-    IfaceMgr::instance().closeSockets();
-
-    // Get the reference to the collection of interfaces. This reference should be
-    // valid as long as the program is run because IfaceMgr is a singleton.
-    // Therefore we can safely iterate over instances of all interfaces and modify
-    // their flags. Here we modify flags which indicate wheter socket should be
-    // open for a particular interface or not.
-    const IfaceMgr::IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
-    for (IfaceMgr::IfaceCollection::const_iterator iface = ifaces.begin();
-         iface != ifaces.end(); ++iface) {
-        Iface* iface_ptr = IfaceMgr::instance().getIface(iface->getName());
-        if (iface_ptr == NULL) {
-            isc_throw(isc::Unexpected, "Interface Manager returned NULL"
-                      << " instance of the interface when DHCPv6 server was"
-                      << " trying to reopen sockets after reconfiguration");
-        }
-
-        // Ignore loopback interfaces.
-        if (iface_ptr->flag_loopback_) {
-            iface_ptr->inactive6_ = true;
-
-        } else  if (CfgMgr::instance().isActiveIface(iface->getName())) {
-            iface_ptr->inactive6_ = false;
-            LOG_INFO(dhcp6_logger, DHCP6_ACTIVATE_INTERFACE)
-                .arg(iface->getFullName());
-
-        } else {
-            // For deactivating interface, it should be sufficient to log it
-            // on the debug level because it is more useful to know what
-            // interface is activated which is logged on the info level.
-            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC,
-                      DHCP6_DEACTIVATE_INTERFACE).arg(iface->getName());
-            iface_ptr->inactive6_ = true;
-
-        }
-
-        iface_ptr->clearUnicasts();
-
-        const IOAddress* unicast = CfgMgr::instance().getUnicast(iface->getName());
-        if (unicast) {
-            LOG_INFO(dhcp6_logger, DHCP6_SOCKET_UNICAST).arg(unicast->toText())
-                .arg(iface->getName());
-            iface_ptr->addUnicast(*unicast);
-        }
-    }
-    // Let's reopen active sockets. openSockets6 will check internally whether
-    // sockets are marked active or inactive.
-    // @todo Optimization: we should not reopen all sockets but rather select
-    // those that have been affected by the new configuration.
-    isc::dhcp::IfaceMgrErrorMsgCallback error_handler =
-        boost::bind(&Dhcpv6Srv::ifaceMgrSocket6ErrorHandler, _1);
-    if (!IfaceMgr::instance().openSockets6(port, error_handler)) {
-        LOG_WARN(dhcp6_logger, DHCP6_NO_SOCKETS_OPEN);
-    }
 }
 
 size_t
