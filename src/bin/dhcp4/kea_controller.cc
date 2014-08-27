@@ -56,12 +56,8 @@ void configure(const std::string& file_name) {
 
         // Read contents of the file and parse it as JSON
         json = isc::data::Element::fromJSONFile(file_name, true);
-
         if (!json) {
-            LOG_ERROR(dhcp4_logger, DHCP4_CONFIG_LOAD_FAIL)
-                .arg("Config file " + file_name + " missing or empty.");
-            isc_throw(isc::BadValue, "Unable to process JSON configuration"
-                      " file: " << file_name);
+            isc_throw(isc::BadValue, "no configuration found");
         }
 
         // Let's configure logging before applying the configuration,
@@ -75,46 +71,37 @@ void configure(const std::string& file_name) {
 
         // Get Dhcp4 component from the config
         dhcp4 = json->get("Dhcp4");
-
         if (!dhcp4) {
-            LOG_ERROR(dhcp4_logger, DHCP4_CONFIG_LOAD_FAIL)
-                .arg("Config file " + file_name + " does not include 'Dhcp4'"
-                     " entry.");
-            isc_throw(isc::BadValue, "Unable to process JSON configuration"
-                      " file: " << file_name);
+            isc_throw(isc::BadValue, "no mandatory 'Dhcp4' entry in"
+                      " the configuration");
         }
 
         // Use parsed JSON structures to configure the server
         result = ControlledDhcpv4Srv::processCommand("config-reload", dhcp4);
+        if (!result) {
+            // Undetermined status of the configuration. This should never
+            // happen, but as the configureDhcp4Server returns a pointer, it is
+            // theoretically possible that it will return NULL.
+            isc_throw(isc::BadValue, "undefined result of "
+                      "processCommand(\"config-reload\", dhcp4)");
+        }
+
+        // Now check is the returned result is successful (rcode=0) or not
+        // (see @ref isc::config::parseAnswer).
+        int rcode;
+        isc::data::ConstElementPtr comment =
+            isc::config::parseAnswer(rcode, result);
+        if (rcode != 0) {
+            string reason = comment ? comment->stringValue() :
+                "no details available";
+            isc_throw(isc::BadValue, reason);
+        }
 
     }  catch (const std::exception& ex) {
-        LOG_ERROR(dhcp4_logger, DHCP4_CONFIG_LOAD_FAIL).arg(ex.what());
-        isc_throw(isc::BadValue, "Unable to process JSON configuration file: "
-                  << file_name);
-    }
-
-    if (!result) {
-        // Undetermined status of the configuration. This should never happen,
-        // but as the configureDhcp4Server returns a pointer, it is
-        // theoretically possible that it will return NULL.
         LOG_ERROR(dhcp4_logger, DHCP4_CONFIG_LOAD_FAIL)
-            .arg("Configuration failed: Undefined result of processCommand("
-                 "config-reload, " + file_name + ")");
-        isc_throw(isc::BadValue, "Configuration failed: Undefined result of "
-                  "processCommand('config-reload', " << file_name << ")");
-    }
-
-    // Now check is the returned result is successful (rcode=0) or not
-    isc::data::ConstElementPtr comment; /// see @ref isc::config::parseAnswer
-    int rcode;
-    comment = isc::config::parseAnswer(rcode, result);
-    if (rcode != 0) {
-        string reason = "";
-        if (comment) {
-            reason = comment->stringValue();
-        }
-        LOG_ERROR(dhcp4_logger, DHCP4_CONFIG_LOAD_FAIL).arg(reason);
-        isc_throw(isc::BadValue, "Failed to apply configuration: " << reason);
+            .arg(file_name).arg(ex.what());
+        isc_throw(isc::BadValue, "configuration error using file '"
+                  << file_name << "': " << ex.what());
     }
 }
 
