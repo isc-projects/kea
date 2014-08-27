@@ -109,6 +109,11 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
         </orderedlist>
         </listitem>
       </orderedlist>
+      <para>
+        For more system specific installation procedures, you may want to visit
+        <ulink url="http://kea.isc.org/wiki/SystemSpecificNotes">System specific notes</ulink>,
+        available on <ulink url="http://kea.isc.org/">Kea homepage</ulink>.
+      </para>
 
     </section>
 
