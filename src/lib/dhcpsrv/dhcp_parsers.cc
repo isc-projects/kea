@@ -189,12 +189,14 @@ InterfaceListConfigParser(const std::string& param_name)
 
 void
 InterfaceListConfigParser::build(ConstElementPtr value) {
+    // Copy the current interface configuration.
     ConfigurationPtr config = CfgMgr::instance().getConfiguration();
-    config->cfg_iface_.reset();
+    cfg_iface_ = config->cfg_iface_;
+    cfg_iface_.reset();
     BOOST_FOREACH(ConstElementPtr iface, value->listValue()) {
         std::string iface_name = iface->stringValue();
         try {
-            config->cfg_iface_.use(iface_name);
+            cfg_iface_.use(iface_name);
 
         } catch (const std::exception& ex) {
             isc_throw(DhcpConfigError, "Failed to select interface: "
@@ -205,7 +207,8 @@ InterfaceListConfigParser::build(ConstElementPtr value) {
 
 void
 InterfaceListConfigParser::commit() {
-    // Do nothing. CfgMgr has been updated during build.
+    // Use the new configuration created in a build time.
+    CfgMgr::instance().getConfiguration()->cfg_iface_ = cfg_iface_;
 }
 
 bool
