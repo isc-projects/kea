@@ -420,26 +420,6 @@ TEST_F(Dhcpv4SrvTest, basic) {
     ASSERT_NO_THROW(naked_srv.reset(new NakedDhcpv4Srv(0)));
 }
 
-// This test verifies that exception is not thrown when an error occurs during
-// opening sockets. This test forces an error by adding a fictious interface
-// to the IfaceMgr. An attempt to open socket on this interface must always
-// fail. The DHCPv4 installs the error handler function to prevent exceptions
-// being thrown from the openSockets4 function.
-// @todo The server tests for socket should be extended but currently the
-// ability to unit test the sockets code is somewhat limited.
-TEST_F(Dhcpv4SrvTest, openActiveSockets) {
-    ASSERT_NO_THROW(CfgMgr::instance().activateAllIfaces());
-
-    Iface iface("bogusiface", 255);
-    iface.flag_loopback_ = false;
-    iface.flag_up_ = true;
-    iface.flag_running_ = true;
-    iface.inactive4_ = false;
-    iface.addAddress(IOAddress("192.0.0.0"));
-    IfaceMgr::instance().addInterface(iface);
-    ASSERT_NO_THROW(Dhcpv4Srv::openActiveSockets(DHCP4_SERVER_PORT, false));
-}
-
 // Verifies that DISCOVER message can be processed correctly,
 // that the OFFER message generated in response is valid and
 // contains necessary options.
@@ -2970,7 +2950,7 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsORO) {
     NakedDhcpv4Srv srv(0);
 
     ConstElementPtr x;
-    string config = "{ \"interfaces\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "    \"option-data\": [ {"
@@ -3055,7 +3035,7 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsORO) {
 // src/lib/dhcp/docsis3_option_defs.h.
 TEST_F(Dhcpv4SrvTest, vendorOptionsDocsisDefinitions) {
     ConstElementPtr x;
-    string config_prefix = "{ \"interfaces\": [ \"all\" ],"
+    string config_prefix = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "    \"option-data\": [ {"

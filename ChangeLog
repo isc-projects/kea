@@ -1,7 +1,15 @@
-832.	[bug]		jiri
+833.	[bug]		jiri
 	Compilation fix for PostgreSQL on i686. Thanks to Jiri Popelka
 	from RedHat for providing a patch!
 	(Trac #3532, git 96a06654f2177444dcea3a0e9f6fa06947855497)
+
+832.	[func]		marcin
+	DHCP servers check if the interfaces specified in the configuration,
+	to be used to receive DHCP messsages, are present in the system.
+	If the interface doesn't exist, an error is reported. In addition,
+	the SO_REUSEPORT flag is set for IPv6 sockets as multiple multicast
+	sockets can be bound to the DHCPv6 server port.
+	(Trac #3512, git 5cbbab2d01c6e1bf6d563ba64d80bc6bc857f73d)
 
 831.	[bug]		marcin
 	Kea deamons report configuration summary when the configuration is

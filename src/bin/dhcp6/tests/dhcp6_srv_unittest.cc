@@ -289,7 +289,7 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
     IfaceMgrTestConfig test_config(true);
 
     ConstElementPtr x;
-    string config = "{ \"interfaces\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1557,7 +1557,7 @@ TEST_F(Dhcpv6SrvTest, vendorOptionsORO) {
 
     IfaceMgrTestConfig test_config(true);
 
-    string config = "{ \"interfaces\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1642,7 +1642,7 @@ TEST_F(Dhcpv6SrvTest, vendorOptionsORO) {
 // src/lib/dhcp/docsis3_option_defs.h.
 TEST_F(Dhcpv6SrvTest, vendorOptionsDocsisDefinitions) {
     ConstElementPtr x;
-    string config_prefix = "{ \"interfaces\": [ \"all\" ],"
+    string config_prefix = "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "

@@ -54,9 +54,13 @@ consider reducing the lease lifetime.  In this way, addresses allocated
 to clients that are no longer active on the network will become available
 available sooner.
 
-% DHCPSRV_CFGMGR_ADD_IFACE adding listening interface %1
-A debug message issued when new interface is being added to the collection of
+% DHCPSRV_CFGMGR_ADD_IFACE listening on interface %1
+An info message issued when new interface is being added to the collection of
 interfaces on which server listens to DHCP messages.
+
+% DHCPSRV_CFGMGR_ADD_UNICAST listening on unicast address %1, on interface %2
+A debug message issued when new configuring DHCP server to listen on unicast
+address on the specific interface.
 
 % DHCPSRV_CFGMGR_ADD_SUBNET4 adding subnet %1
 A debug message reported when the DHCP configuration manager is adding the
@@ -140,6 +144,11 @@ configured in server's interface-id option for that selected subnet6.
 This is a debug message reporting that the DHCP configuration manager has
 returned the specified IPv6 subnet, because detected relay agent address
 matches value specified for this subnet.
+
+% DHCPSRV_CFGMGR_UNICAST_LINK_LOCAL specified link local address %1 for unicast traffic on interface %2
+This warning message is logged when user specified a link-local address to
+receive unicast traffic. The warning message is issued because it is an
+uncommon use.
 
 % DHCPSRV_CLOSE_DB closing currently open %1 database
 This is a debug message, issued when the DHCP server closes the currently
@@ -393,11 +402,20 @@ lease from the MySQL database for the specified address.
 A debug message issued when the server is attempting to update IPv6
 lease from the MySQL database for the specified address.
 
+% DHCPSRV_NO_SOCKETS_OPEN no interface configured to listen to DHCP traffic
+This warning message is issued when current server configuration specifies
+no interfaces that server should listen on, or specified interfaces are not
+configured to receive the traffic.
+
 % DHCPSRV_NOTYPE_DB no 'type' keyword to determine database backend: %1
 This is an error message, logged when an attempt has been made to access
 a database backend, but where no 'type' keyword has been included in
 the access string.  The access string (less any passwords) is included
 in the message.
+
+% DHCPSRV_OPEN_SOCKET_FAIL failed to open socket: %1
+A warning message issued when IfaceMgr fails to open and bind a socket.
+The reason for the failure is appended as an argument of the log message.
 
 % DHCPSRV_PGSQL_ADD_ADDR4 adding IPv4 lease with address %1
 A debug message issued when the server is about to add an IPv4 lease

@@ -229,6 +229,18 @@ public:
                        const FlagInactive4& inactive4,
                        const FlagInactive6& inactive6);
 
+    /// @brief Checks if socket of the specified family is opened on interface.
+    ///
+    /// @param iface_name Interface name.
+    /// @param family One of: AF_INET or AF_INET6
+    bool socketOpen(const std::string& iface_name, const int family) const;
+
+    /// @brief Checks if unicast socket is opened on interface.
+    ///
+    /// @param iface_name Interface name.
+    bool unicastOpen(const std::string& iface_name) const;
+
+
 private:
     /// @brief Currently used packet filter for DHCPv4.
     PktFilterPtr packet_filter4_;

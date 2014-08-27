@@ -20,6 +20,7 @@
 #include <dhcp/option_definition.h>
 #include <dhcpsrv/d2_client_cfg.h>
 #include <dhcpsrv/dhcp_config_parser.h>
+#include <dhcpsrv/cfg_iface.h>
 #include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/subnet.h>
 #include <exceptions/exceptions.h>
@@ -406,7 +407,9 @@ public:
     /// @param value pointer to the content of parsed values
     virtual void build(isc::data::ConstElementPtr value);
 
-    /// @brief commits interfaces list configuration
+    /// @brief Assignes a parsed list of interfaces to the configuration.
+    ///
+    /// This is exception safe operation.
     virtual void commit();
 
 private:
@@ -422,11 +425,11 @@ private:
     typedef std::list<std::string> IfaceListStorage;
     IfaceListStorage interfaces_;
 
-    // Should server listen on all interfaces.
-    bool activate_all_;
-
     // Parsed parameter name
     std::string param_name_;
+
+    /// Holds the configuration created during
+    CfgIface cfg_iface_;
 };
 
 /// @brief Parser for hooks library list
