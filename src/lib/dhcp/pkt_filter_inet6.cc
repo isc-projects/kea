@@ -73,6 +73,19 @@ PktFilterInet6::openSocket(const Iface& iface,
                   " socket.");
     }
 
+#ifdef SO_REUSEPORT
+    // Set SO_REUSEPORT has to be set to open multiple sockets and bind to
+    // in6addr_any (binding to port). Binding to port is required on some
+    // operating systems, e.g. NetBSD and OpenBSD so as the socket can
+    // join the socket to multicast group.
+    if (setsockopt(sock, SOL_SOCKET, SO_REUSEPORT,
+                   (char *)&flag, sizeof(flag)) < 0) {
+        close(sock);
+        isc_throw(SocketConfigError, "Can't set SO_REUSEPORT option on IPv6"
+                  " socket.");
+    }
+#endif
+
     if (bind(sock, (struct sockaddr *)&addr6, sizeof(addr6)) < 0) {
         // Get the error message immediately after the bind because the
         // invocation to close() below would override the errno.
