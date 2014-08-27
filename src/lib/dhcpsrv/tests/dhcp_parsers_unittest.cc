@@ -236,6 +236,7 @@ TEST_F(DhcpParserTest, interfaceListParserTest) {
     // This should parse the configuration and add eth0 and eth1 to the list
     // of interfaces that server should listen on.
     parser->build(list_element);
+    parser->commit();
 
     // Use CfgMgr instance to check if eth0 and eth1 was added, and that
     // eth2 was not added.
@@ -257,6 +258,7 @@ TEST_F(DhcpParserTest, interfaceListParserTest) {
     cfg->cfg_iface_.reset();
 
     parser->build(list_element);
+    parser->commit();
     ASSERT_NO_THROW(cfg->cfg_iface_.openSockets(10000));
 
     EXPECT_TRUE(test_config.socketOpen("eth0", AF_INET));
