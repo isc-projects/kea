@@ -1,7 +1,7 @@
 832.	[bug]		jiri
 	Compilation fix for PostgreSQL on i686. Thanks to Jiri Popelka
 	from RedHat for providing a patch!
-	(Trac #3532, git tbd)
+	(Trac #3532, git 96a06654f2177444dcea3a0e9f6fa06947855497)
 
 831.	[bug]		marcin
 	Kea deamons report configuration summary when the configuration is
