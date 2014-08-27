@@ -703,10 +703,10 @@ private:
 
     /// @Brief Lease4 specific members used for binding and conversion.
     uint32_t        addr4_;
-    unsigned long   hwaddr_length_;
+    size_t          hwaddr_length_;
     std::vector<uint8_t> hwaddr_;
     uint8_t         hwaddr_buffer_[HWAddr::MAX_HWADDR_LEN];
-    unsigned long   client_id_length_;
+    size_t          client_id_length_;
     uint8_t         client_id_buffer_[ClientId::MAX_CLIENT_ID_LEN];
 };
 
@@ -907,7 +907,7 @@ private:
 
     /// @brief Lease6 specific members for binding and conversion.
     //@{
-    unsigned long   duid_length_;
+    size_t          duid_length_;
     vector<uint8_t> duid_;
     uint8_t         duid_buffer_[DUID::MAX_DUID_LEN];
     uint32_t        iaid_;
