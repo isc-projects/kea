@@ -866,13 +866,6 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	    are lost when the server shuts down.
 	  </simpara>
 	</listitem>
-	<listitem>
-	  <simpara>
-	    TSIG Authentication (<ulink
-	    url="http://tools.ietf.org/html/rfc2845">RFC 2845</ulink>)
-	    is not supported yet.
-	  </simpara>
-	</listitem>
       </itemizedlist>
     </section>
   </chapter> <!-- DHCP-DDNS Server -->
