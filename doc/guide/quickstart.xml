@@ -102,6 +102,11 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
           </para>
         </listitem>
       </orderedlist>
+      <para>
+        For more system specific installation procedures, you may want to visit
+        <ulink url="http://kea.isc.org/wiki/SystemSpecificNotes">System specific notes</ulink>,
+        available on <ulink url="http://kea.isc.org/">Kea homepage</ulink>.
+      </para>
 
       <para>The details of <command>keactrl</command> script usage can be found
       in <xref linkend="keactrl"/>.</para>
