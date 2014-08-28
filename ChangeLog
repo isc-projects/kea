@@ -1,3 +1,6 @@
+
+Kea 0.9 released on August 29, 2014
+
 833.	[bug]		jiri
 	Compilation fix for PostgreSQL on i686. Thanks to Jiri Popelka
 	from RedHat for providing a patch!
