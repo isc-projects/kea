@@ -24,13 +24,6 @@ dist_doc_DATA = AUTHORS COPYING ChangeLog README
 
 .PHONY: check-valgrind check-valgrind-suppress
 
-install-exec-hook:
-	-@tput smso  # Start standout mode
-	@echo "NOTE: BIND 10 does not automatically start DNS services when it is run"
-	@echo "      in its default configuration. Please see the Guide for information"
-	@echo "      on how to configure these services to be started automatically."
-	-@tput rmso  # End standout mode
-
 check-valgrind:
 if HAVE_VALGRIND
 	@VALGRIND_COMMAND="$(VALGRIND) -q --gen-suppressions=all --track-origins=yes --num-callers=48 --leak-check=full --fullpath-after=" \
