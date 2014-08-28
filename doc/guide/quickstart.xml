@@ -2,6 +2,8 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
 "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
 <!ENTITY mdash  "&#x2014;" >
+<!ENTITY % version SYSTEM "version.ent">
+%version;
 ]>
 
   <chapter id="quickstart">
@@ -34,13 +36,13 @@
         <listitem>
           <para>
             Extract the tarball. For example:
-            <screen>$ <userinput>tar xvf kea-0.9-beta1.tar.gz</userinput></screen>
+            <screen>$ <userinput>tar xvf kea-&__VERSION__;.tar.gz</userinput></screen>
           </para>
         </listitem>
 
         <listitem>
           <para>Go into the source directory and run the configure script:
-            <screen>$ <userinput>cd kea-0.9-beta1</userinput>
+            <screen>$ <userinput>cd kea-&__VERSION__;</userinput>
 $ <userinput>./configure [your extra parameters]</userinput></screen>
           </para>
         </listitem>
