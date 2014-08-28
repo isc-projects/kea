@@ -36,7 +36,7 @@
         <listitem>
           <para>
             Extract the tarball. For example:
-            <screen>$ <userinput>tar xvf kea-&__VERSION__;.tar.gz</userinput></screen>
+            <screen>$ <userinput>tar xvzf kea-&__VERSION__;.tar.gz</userinput></screen>
           </para>
         </listitem>
 
