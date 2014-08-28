@@ -855,7 +855,7 @@
         <para>
             <citerefentry><refentrytitle>kea-dhcp4</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>kea-dhcp6</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-            <citetitle>BIND 10 Guide</citetitle>,
+            <citetitle>Kea Administrator Guide</citetitle>,
             <citetitle>DHCP Performance Guide</citetitle>.
         </para>
     </refsect1>
