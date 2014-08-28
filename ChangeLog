@@ -18,7 +18,7 @@ Kea 0.9 released on August 29, 2014
 	The configure script no longer requires pkg-config.
 	(Trac #3511, git 99a5a2db8c011b358873d485ac48f7c78ac6374c)
 
-829.    [build]         wlodek
+829.	[build]		wlodek
 	Lettuce DNS tests removed with all related python code,
 	most of them will be used in Forge project which can be found
 	http://kea.isc.org/wiki/IscForge
