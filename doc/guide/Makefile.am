@@ -43,6 +43,6 @@ else
 
 $(HTMLDOCS) $(DOCS):
 	@echo Doc generation disabled.  Creating dummy $@.  Configure with --enable-generate-docs to enable it.
-	@echo Doc generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild BIND 10 > $@
+	@echo Doc generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild Kea > $@
 
 endif
