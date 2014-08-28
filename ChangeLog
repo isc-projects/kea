@@ -8,7 +8,7 @@ Kea 0.9 released on August 29, 2014
 
 832.	[func]		marcin
 	DHCP servers check if the interfaces specified in the configuration,
-	to be used to receive DHCP messsages, are present in the system.
+	to be used to receive DHCP messages, are present in the system.
 	If the interface doesn't exist, an error is reported. In addition,
 	the SO_REUSEPORT flag is set for IPv6 sockets as multiple multicast
 	sockets can be bound to the DHCPv6 server port.
