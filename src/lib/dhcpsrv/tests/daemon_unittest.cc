@@ -16,6 +16,7 @@
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/daemon.h>
 #include <dhcpsrv/logging.h>
+#include <log/logger_unittest_support.h>
 #include <cc/data.h>
 #include <gtest/gtest.h>
 
@@ -70,6 +71,11 @@ TEST(DaemonTest, parsingConsoleOutput) {
     // Spawn a daemon and tell it to configure logger
     Daemon x;
     EXPECT_NO_THROW(x.configureLogger(config, storage, false));
+
+    // configureLogger will modify the logging options of the log4cplus logger.
+    // We need to reset the logger settings so as the following tests are
+    // not affected by this modification.
+    isc::log::resetUnitTestRootLogger();
 
     // The parsed configuration should be processed by the daemon and
     // stored in configuration storage.
