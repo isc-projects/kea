@@ -262,9 +262,7 @@ class CfgMgrTest : public ::testing::Test {
 public:
     CfgMgrTest() {
         // make sure we start with a clean configuration
-        CfgMgr::instance().deleteSubnets4();
-        CfgMgr::instance().deleteSubnets6();
-        CfgMgr::instance().deleteOptionDefs();
+        clear();
     }
 
     /// @brief generates interface-id option based on provided text
@@ -279,9 +277,14 @@ public:
 
     ~CfgMgrTest() {
         // clean up after the test
+        clear();
+    }
+
+    void clear() {
         CfgMgr::instance().deleteSubnets4();
         CfgMgr::instance().deleteSubnets6();
         CfgMgr::instance().deleteOptionDefs();
+        CfgMgr::instance().clear();
     }
 
     /// used in client classification (or just empty container for other tests)
@@ -1116,6 +1119,76 @@ TEST_F(CfgMgrTest, subnet6Duplication) {
     EXPECT_NO_THROW(cfg_mgr.addSubnet6(subnet2));
     // Subnet 3 has the same ID as subnet 1. It shouldn't be able to add it.
     EXPECT_THROW(cfg_mgr.addSubnet6(subnet3), isc::dhcp::DuplicateSubnetID);
+}
+
+
+// This test verifies that the configuration staging and commit works
+// as expected.
+TEST_F(CfgMgrTest, staging) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    // Initially, the current configuration is a default one. We are going
+    // to get the current configuration a couple of times and make sure
+    // that always the same instance is returned.
+    ConstConfigurationPtr const_config;
+    for (int i = 0; i < 5; ++i) {
+        const_config = cfg_mgr.getCurrent();
+        ASSERT_TRUE(const_config) << "Returned NULL current configuration"
+            " for iteration " << i;
+        EXPECT_EQ(0, const_config->getSequence())
+            << "Returned invalid sequence number "
+            << const_config->getSequence() << " for iteration " << i;
+    }
+
+    // Try to get the new staging configuration. When getStaging() is called
+    // for the first time the new instance of the staging configuration is
+    // returned. This instance is returned for every call to getStaging()
+    // until commit is called.
+    ConfigurationPtr config;
+    for (int i = 0; i < 5; ++i) {
+        config = cfg_mgr.getStaging();
+        ASSERT_TRUE(config) << "Returned NULL staging configuration for"
+            " iteration " << i;
+        // The sequence id is 1 for staging because it is ahead of current
+        // configuration having sequence number 0.
+        EXPECT_EQ(1, config->getSequence()) << "Returned invalid sequence"
+            " number " << config->getSequence() << " for iteration " << i;
+    }
+
+    // This should change the staging configuration so as it becomes a current
+    // one.
+    CfgMgr::instance().commit();
+    const_config = cfg_mgr.getCurrent();
+    ASSERT_TRUE(const_config);
+    // Sequence id equal to 1 indicates that the current configuration points
+    // to the configuration that used to be a staging configuration previously.
+    EXPECT_EQ(1, const_config->getSequence());
+
+    // Create a new staging configuration. It should be assigned a new
+    // sequence id.
+    config = cfg_mgr.getStaging();
+    ASSERT_TRUE(config);
+    EXPECT_EQ(2, config->getSequence());
+
+    // Let's execute commit a couple of times. The first invocation to commit
+    // changes the configuration having sequence 2 to current configuration.
+    // Other commits are no-op.
+    for (int i = 0; i < 5; ++i) {
+        CfgMgr::instance().commit();
+    }
+
+    // The current configuration now have sequence number 2.
+    const_config = cfg_mgr.getCurrent();
+    ASSERT_TRUE(const_config);
+    EXPECT_EQ(2, const_config->getSequence());
+
+    // Clear configuration along with a history.
+    CfgMgr::instance().clear();
+
+    // After clearing configuration we should successfully get the
+    // new staging configuration.
+    const_config = cfg_mgr.getStaging();
+    ASSERT_TRUE(const_config);
+    EXPECT_EQ(1, const_config->getSequence());
 }
 
 

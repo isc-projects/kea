@@ -45,6 +45,11 @@ void configure(const std::string& file_name) {
     // This is a configuration backend implementation that reads the
     // configuration from a JSON file.
 
+    // We are starting the configuration process so we should remove any
+    // staging configuration that has been created during previous
+    // configuration attempts.
+    CfgMgr::instance().rollback();
+
     isc::data::ConstElementPtr json;
     isc::data::ConstElementPtr dhcp6;
     isc::data::ConstElementPtr logger;

@@ -150,12 +150,6 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
         // Instantiate allocation engine
         alloc_engine_.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100));
 
-        // We have to point out to the CfgMgr that the we are in the IPv6
-        // domain, so as the IPv6 sockets are opened rather than IPv4 sockets
-        // which are the default.
-        CfgMgr::instance().getConfiguration()
-            ->cfg_iface_.setFamily(CfgIface::V6);
-
         /// @todo call loadLibraries() when handling configuration changes
 
     } catch (const std::exception &e) {
