@@ -387,11 +387,6 @@ CfgMgr::rollback() {
     }
 }
 
-ConfigurationPtr
-CfgMgr::getConfiguration() {
-    return (configuration_);
-}
-
 ConstConfigurationPtr
 CfgMgr::getCurrent() {
     ensureCurrentAllocated();
