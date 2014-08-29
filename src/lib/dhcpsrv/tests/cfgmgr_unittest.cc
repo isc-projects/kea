@@ -295,11 +295,11 @@ public:
 // it is empty by default.
 TEST_F(CfgMgrTest, configuration) {
 
-    ConstConfigurationPtr configuration = CfgMgr::instance().getCurrent();
+    ConstConfigurationPtr configuration = CfgMgr::instance().getCurrentCfg();
     ASSERT_TRUE(configuration);
     EXPECT_TRUE(configuration->getLoggingInfo().empty());
 
-    configuration = CfgMgr::instance().getStaging();
+    configuration = CfgMgr::instance().getStagingCfg();
     ASSERT_TRUE(configuration);
     EXPECT_TRUE(configuration->getLoggingInfo().empty());
 }
@@ -1134,7 +1134,7 @@ TEST_F(CfgMgrTest, staging) {
     // that always the same instance is returned.
     ConstConfigurationPtr const_config;
     for (int i = 0; i < 5; ++i) {
-        const_config = cfg_mgr.getCurrent();
+        const_config = cfg_mgr.getCurrentCfg();
         ASSERT_TRUE(const_config) << "Returned NULL current configuration"
             " for iteration " << i;
         EXPECT_EQ(0, const_config->getSequence())
@@ -1142,13 +1142,13 @@ TEST_F(CfgMgrTest, staging) {
             << const_config->getSequence() << " for iteration " << i;
     }
 
-    // Try to get the new staging configuration. When getStaging() is called
+    // Try to get the new staging configuration. When getStagingCfg() is called
     // for the first time the new instance of the staging configuration is
-    // returned. This instance is returned for every call to getStaging()
+    // returned. This instance is returned for every call to getStagingCfg()
     // until commit is called.
     ConfigurationPtr config;
     for (int i = 0; i < 5; ++i) {
-        config = cfg_mgr.getStaging();
+        config = cfg_mgr.getStagingCfg();
         ASSERT_TRUE(config) << "Returned NULL staging configuration for"
             " iteration " << i;
         // The sequence id is 1 for staging because it is ahead of current
@@ -1160,7 +1160,7 @@ TEST_F(CfgMgrTest, staging) {
     // This should change the staging configuration so as it becomes a current
     // one.
     CfgMgr::instance().commit();
-    const_config = cfg_mgr.getCurrent();
+    const_config = cfg_mgr.getCurrentCfg();
     ASSERT_TRUE(const_config);
     // Sequence id equal to 1 indicates that the current configuration points
     // to the configuration that used to be a staging configuration previously.
@@ -1168,7 +1168,7 @@ TEST_F(CfgMgrTest, staging) {
 
     // Create a new staging configuration. It should be assigned a new
     // sequence id.
-    config = cfg_mgr.getStaging();
+    config = cfg_mgr.getStagingCfg();
     ASSERT_TRUE(config);
     EXPECT_EQ(2, config->getSequence());
 
@@ -1180,7 +1180,7 @@ TEST_F(CfgMgrTest, staging) {
     }
 
     // The current configuration now have sequence number 2.
-    const_config = cfg_mgr.getCurrent();
+    const_config = cfg_mgr.getCurrentCfg();
     ASSERT_TRUE(const_config);
     EXPECT_EQ(2, const_config->getSequence());
 
@@ -1189,7 +1189,7 @@ TEST_F(CfgMgrTest, staging) {
 
     // After clearing configuration we should successfully get the
     // new staging configuration.
-    const_config = cfg_mgr.getStaging();
+    const_config = cfg_mgr.getStagingCfg();
     ASSERT_TRUE(const_config);
     EXPECT_EQ(1, const_config->getSequence());
 }

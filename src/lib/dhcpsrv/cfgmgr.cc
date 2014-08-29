@@ -388,13 +388,13 @@ CfgMgr::rollback() {
 }
 
 ConstConfigurationPtr
-CfgMgr::getCurrent() {
+CfgMgr::getCurrentCfg() {
     ensureCurrentAllocated();
     return (configuration_);
 }
 
 ConfigurationPtr
-CfgMgr::getStaging() {
+CfgMgr::getStagingCfg() {
     ensureCurrentAllocated();
     if (configuration_->sequenceEquals(*configs_.back())) {
         uint32_t sequence = configuration_->getSequence();

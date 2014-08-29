@@ -409,7 +409,7 @@ public:
     /// This function should be called when there is a staging configuration
     /// (likely created in the previous configuration attempt) but the entirely
     /// new configuration should be created. It removes the existing staging
-    /// configuration and the next call to @c CfgMgr::getStaging will return a
+    /// configuration and the next call to @c CfgMgr::getStagingCfg will return a
     /// fresh (default) configuration.
     ///
     /// This function is exception safe.
@@ -422,7 +422,7 @@ public:
     /// and return it. Current configuration returned is read-only.
     ///
     /// @return Non-null const pointer to the current configuration.
-    ConstConfigurationPtr getCurrent();
+    ConstConfigurationPtr getCurrentCfg();
 
     /// @brief Returns a pointer to the staging configuration.
     ///
@@ -436,7 +436,7 @@ public:
     /// configuration parsers).
     ///
     /// @return non-null pointer to the staging configuration.
-    ConfigurationPtr getStaging();
+    ConfigurationPtr getStagingCfg();
 
     //@}
 

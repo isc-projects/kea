@@ -3055,7 +3055,7 @@ TEST_F(Dhcp6ParserTest, selectedInterfaces) {
     // as the pool does not belong to that subnet
     checkResult(status, 0);
 
-    CfgMgr::instance().getStaging()->
+    CfgMgr::instance().getStagingCfg()->
         getCfgIface().openSockets(CfgIface::V6, 10000);
 
     // eth0 and eth1 were explicitly selected. eth2 was not.
@@ -3089,7 +3089,7 @@ TEST_F(Dhcp6ParserTest, allInterfaces) {
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
     checkResult(status, 0);
 
-    CfgMgr::instance().getStaging()->
+    CfgMgr::instance().getStagingCfg()->
         getCfgIface().openSockets(CfgIface::V6, 10000);
 
     // All interfaces should be now active.
