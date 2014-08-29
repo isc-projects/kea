@@ -298,7 +298,7 @@ TEST_F(CfgMgrTest, configuration) {
     ConfigurationPtr configuration = CfgMgr::instance().getConfiguration();
     ASSERT_TRUE(configuration);
 
-    EXPECT_TRUE(configuration->logging_info_.empty());
+    EXPECT_TRUE(configuration->getLoggingInfo().empty());
 }
 
 // This test verifies that multiple option definitions can be added
