@@ -110,9 +110,6 @@ public:
     static const uint32_t CFGSEL_ALL     = 0xFFFFFFFF;
     //@}
 
-    /// @brief logging specific information
-    LoggingInfoStorage logging_info_;
-
     /// @brief Default constructor.
     ///
     /// This constructor sets configuration sequence number to 0.
@@ -160,6 +157,18 @@ public:
     /// @return true if sequence numbers are equal.
     bool sequenceEquals(const Configuration& other);
 
+    /// @brief Returns logging specific configuration.
+    const LoggingInfoStorage& getLoggingInfo() const {
+        return (logging_info_);
+    }
+
+    /// @brief Sets logging specific configuration.
+    ///
+    /// @param logging_info New logging configuration.
+    void addLoggingInfo(const LoggingInfo& logging_info) {
+        logging_info_.push_back(logging_info);
+    }
+
     /// @brief Returns object which represents selection of interfaces.
     ///
     /// This function returns a reference to the object which represents the
@@ -181,6 +190,9 @@ private:
 
     /// @brief Sequence number identifying the configuration.
     uint32_t sequence_;
+
+    /// @brief Logging specific information.
+    LoggingInfoStorage logging_info_;
 
     /// @brief Interface configuration.
     ///
