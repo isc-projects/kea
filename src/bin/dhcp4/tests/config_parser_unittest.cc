@@ -2917,7 +2917,7 @@ TEST_F(Dhcp4ParserTest, selectedInterfaces) {
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
-    CfgMgr::instance().getStaging()->
+    CfgMgr::instance().getStagingCfg()->
         getCfgIface().openSockets(CfgIface::V4, 10000);
 
     // eth0 and eth1 were explicitly selected. eth2 was not.
@@ -2953,7 +2953,7 @@ TEST_F(Dhcp4ParserTest, allInterfaces) {
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
-    CfgMgr::instance().getStaging()->
+    CfgMgr::instance().getStagingCfg()->
         getCfgIface().openSockets(CfgIface::V4, 10000);
 
     // All interfaces should be now active.
