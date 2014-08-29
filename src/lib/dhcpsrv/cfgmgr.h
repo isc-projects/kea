@@ -373,11 +373,20 @@ public:
     /// @return a reference to the DHCP-DDNS manager.
     D2ClientMgr& getD2ClientMgr();
 
+    void clear();
+
+    void commit();
+
+    void rollback();
 
     /// @brief Returns the current configuration.
     ///
     /// @return a pointer to the current configuration.
     ConfigurationPtr getConfiguration();
+
+    ConstConfigurationPtr getCurrent();
+
+    ConfigurationPtr getStaging();
 
 protected:
 
@@ -409,6 +418,8 @@ protected:
     Subnet4Collection subnets4_;
 
 private:
+
+    void ensureCurrentAllocated();
 
     /// @brief Checks that the IPv4 subnet with the given id already exists.
     ///
@@ -453,6 +464,16 @@ private:
     /// @todo: maybe this should be a vector<Configuration>, so we could keep
     ///        previous configurations and do a rollback if needed?
     ConfigurationPtr configuration_;
+
+    /// @name Configuration List.
+    ///
+    //@{
+    /// @brief Configuration list type.
+    typedef std::list<ConfigurationPtr> ConfigurationList;
+
+    /// @brief Container holding all previous and current configurations.
+    ConfigurationList configs_;
+    //@}
 };
 
 } // namespace isc::dhcp

@@ -149,8 +149,9 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
     // safe and we really don't want to emit exceptions to whoever called this
     // method. Instead, catch an exception and create appropriate answer.
     try {
-        CfgMgr::instance().getConfiguration()->cfg_iface_
-            .openSockets(srv->getPort(), getInstance()->useBroadcast());
+        CfgMgr::instance().getCurrent()->getCfgIface()
+            .openSockets(CfgIface::V4, srv->getPort(),
+                         getInstance()->useBroadcast());
 
     } catch (std::exception& ex) {
         err << "failed to open sockets after server reconfiguration: "

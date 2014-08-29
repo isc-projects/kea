@@ -19,6 +19,14 @@
 namespace isc {
 namespace dhcp {
 
+Configuration::Configuration()
+    : sequence_(0) {
+}
+
+Configuration::Configuration(uint32_t sequence)
+    : sequence_(sequence) {
+}
+
 std::string
 Configuration::getConfigSummary(const uint32_t selection) const {
     std::ostringstream s;
@@ -58,6 +66,11 @@ Configuration::getConfigSummary(const uint32_t selection) const {
         summary.erase(last_separator_pos);
     }
     return (summary);
+}
+
+bool
+Configuration::sequenceEquals(const Configuration& other) {
+    return (getSequence() == other.getSequence());
 }
 
 }

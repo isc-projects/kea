@@ -357,17 +357,63 @@ CfgMgr::getD2ClientMgr() {
     return (d2_client_mgr_);
 }
 
+void
+CfgMgr::ensureCurrentAllocated() {
+    if (!configuration_ || configs_.empty()) {
+        configuration_.reset(new Configuration());
+        configs_.push_back(configuration_);
+    }
+}
+
+void
+CfgMgr::clear() {
+    configs_.clear();
+    ensureCurrentAllocated();
+}
+
+void
+CfgMgr::commit() {
+    if (!configs_.empty() && configs_.back() != configuration_) {
+        configuration_ = configs_.back();
+    }
+}
+
+void
+CfgMgr::rollback() {
+    ensureCurrentAllocated();
+    if (!configuration_->sequenceEquals(*configs_.back())) {
+        configs_.pop_back();
+    }
+}
+
 ConfigurationPtr
 CfgMgr::getConfiguration() {
     return (configuration_);
 }
 
+ConstConfigurationPtr
+CfgMgr::getCurrent() {
+    ensureCurrentAllocated();
+    return (configuration_);
+}
+
+ConfigurationPtr
+CfgMgr::getStaging() {
+    ensureCurrentAllocated();
+    if (configuration_->sequenceEquals(*configs_.back())) {
+        uint32_t sequence = configuration_->getSequence();
+        configs_.push_back(ConfigurationPtr(new Configuration(++sequence)));
+    }
+    return (configs_.back());
+}
+
 CfgMgr::CfgMgr()
     : datadir_(DHCP_DATA_DIR), echo_v4_client_id_(true),
-      d2_client_mgr_(), configuration_(new Configuration()) {
+      d2_client_mgr_() {
     // DHCP_DATA_DIR must be set set with -DDHCP_DATA_DIR="..." in Makefile.am
     // Note: the definition of DHCP_DATA_DIR needs to include quotation marks
     // See AM_CPPFLAGS definition in Makefile.am
+    ensureCurrentAllocated();
 }
 
 CfgMgr::~CfgMgr() {
