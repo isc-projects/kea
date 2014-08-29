@@ -159,7 +159,7 @@ ConfigurationTest::enableDDNS(const bool enable) {
 
 // Check that by default there are no logging entries
 TEST_F(ConfigurationTest, basic) {
-    EXPECT_TRUE(conf_.logging_info_.empty());
+    EXPECT_TRUE(conf_.getLoggingInfo().empty());
 }
 
 // Check that Configuration can store logging information.
@@ -176,15 +176,15 @@ TEST_F(ConfigurationTest, loggingInfo) {
 
     log1.destinations_.push_back(dest);
 
-    conf_.logging_info_.push_back(log1);
+    conf_.addLoggingInfo(log1);
 
-    EXPECT_EQ("foo", conf_.logging_info_[0].name_);
-    EXPECT_EQ(isc::log::WARN, conf_.logging_info_[0].severity_);
-    EXPECT_EQ(77, conf_.logging_info_[0].debuglevel_);
+    EXPECT_EQ("foo", conf_.getLoggingInfo()[0].name_);
+    EXPECT_EQ(isc::log::WARN, conf_.getLoggingInfo()[0].severity_);
+    EXPECT_EQ(77, conf_.getLoggingInfo()[0].debuglevel_);
 
-    EXPECT_EQ("some-logfile.txt", conf_.logging_info_[0].destinations_[0].output_);
-    EXPECT_EQ(5, conf_.logging_info_[0].destinations_[0].maxver_);
-    EXPECT_EQ(2097152, conf_.logging_info_[0].destinations_[0].maxsize_);
+    EXPECT_EQ("some-logfile.txt", conf_.getLoggingInfo()[0].destinations_[0].output_);
+    EXPECT_EQ(5, conf_.getLoggingInfo()[0].destinations_[0].maxver_);
+    EXPECT_EQ(2097152, conf_.getLoggingInfo()[0].destinations_[0].maxsize_);
 }
 
 // Check that the configuration summary including information about the status

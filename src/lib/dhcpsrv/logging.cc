@@ -113,7 +113,7 @@ void LogConfigParser::parseConfigEntry(isc::data::ConstElementPtr entry) {
         parseOutputOptions(info.destinations_, output_options);
     }
     
-    config_->logging_info_.push_back(info);
+    config_->addLoggingInfo(info);
 }
 
 void LogConfigParser::parseOutputOptions(std::vector<LoggingDestination>& destination,
@@ -159,8 +159,9 @@ void LogConfigParser::applyConfiguration() {
     std::vector<LoggerSpecification> specs;
 
     // Now iterate through all specified loggers
-    for (LoggingInfoStorage::const_iterator it = config_->logging_info_.begin();
-         it != config_->logging_info_.end(); ++it) {
+    const LoggingInfoStorage& logging_info = config_->getLoggingInfo();
+    for (LoggingInfoStorage::const_iterator it = logging_info.begin();
+         it != logging_info.end(); ++it) {
 
         // Prepare the objects to define the logging specification
         LoggerSpecification spec(it->name_,
