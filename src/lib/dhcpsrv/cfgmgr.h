@@ -373,10 +373,46 @@ public:
     /// @return a reference to the DHCP-DDNS manager.
     D2ClientMgr& getD2ClientMgr();
 
+    /// @name Methods managing the collection of configurations.
+    ///
+    /// The following methods manage the process of preparing a configuration
+    /// without affecting a currently used configuration and then commiting
+    /// the configuration to replace current configuration atomically.
+    /// They also allow for keeping a history of previous configurations so
+    /// as the @c CfgMgr can revert to the historical configuration when
+    /// required.
+    ///
+    /// @todo Migrate all configuration parameters to use the model supported
+    /// by these functions.
+    ///
+    //@{
+
+    /// @brief Removes current, staging and all previous configurations.
+    ///
+    /// This function removes all configurations, including current and
+    /// staging configurations. It creates a new current configuration with
+    /// default settings.
+    ///
+    /// This function is exception safe.
     void clear();
 
+    /// @brief Commits the staging configuration.
+    ///
+    /// The staging configuration becomes current configuration when this
+    /// function is called.
+    ///
+    /// This function is exception safe.
     void commit();
 
+    /// @brief Removes staging configuration.
+    ///
+    /// This function should be called when there is a staging configuration
+    /// (likely created in the previous configuration attempt) but the entirely
+    /// new configuration should be created. It removes the existing staging
+    /// configuration and the next call to @c CfgMgr::getStaging will return a
+    /// fresh (default) configuration.
+    ///
+    /// This function is exception safe.
     void rollback();
 
     /// @brief Returns the current configuration.
@@ -384,9 +420,30 @@ public:
     /// @return a pointer to the current configuration.
     ConfigurationPtr getConfiguration();
 
+    /// @brief Returns a pointer to the current configuration.
+    ///
+    /// This function returns pointer to the current configuration. If the
+    /// current configuration is not set it will create a default configuration
+    /// and return it. Current configuration returned is read-only.
+    ///
+    /// @return Non-null const pointer to the current configuration.
     ConstConfigurationPtr getCurrent();
 
+    /// @brief Returns a pointer to the staging configuration.
+    ///
+    /// The staging configuration is used by the configuration parsers to
+    /// create new configuration. The staging configuration doesn't affect the
+    /// server's operation until it is committed. The staging configuration
+    /// is a non-const object which can be modified by the caller.
+    ///
+    /// Multiple consecutive calls to this function return the same object
+    /// which can be modified from various places of the code (e.g. various
+    /// configuration parsers).
+    ///
+    /// @return non-null pointer to the staging configuration.
     ConfigurationPtr getStaging();
+
+    //@}
 
 protected:
 
@@ -419,6 +476,11 @@ protected:
 
 private:
 
+    /// @brief Checks if current configuration is created and creates if needed.
+    ///
+    /// This private method is called to ensure that the current configuration
+    /// is created. If current configuration is not set, it creates the
+    /// default current configuration.
     void ensureCurrentAllocated();
 
     /// @brief Checks that the IPv4 subnet with the given id already exists.
