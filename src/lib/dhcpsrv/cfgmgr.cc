@@ -374,7 +374,7 @@ CfgMgr::clear() {
 void
 CfgMgr::commit() {
     ensureCurrentAllocated();
-    if (configs_.back()->sequenceEquals(*configuration_)) {
+    if (!configs_.back()->sequenceEquals(*configuration_)) {
         configuration_ = configs_.back();
     }
 }
