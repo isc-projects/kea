@@ -71,7 +71,7 @@ void configure(const std::string& file_name) {
         // If there's no logging element, we'll just pass NULL pointer,
         // which will be handled by configureLogger().
         Daemon::configureLogger(json->get("Logging"),
-                                CfgMgr::instance().getStaging(),
+                                CfgMgr::instance().getStagingCfg(),
                                 ControlledDhcpv4Srv::getInstance()->getVerbose());
 
         // Get Dhcp4 component from the config

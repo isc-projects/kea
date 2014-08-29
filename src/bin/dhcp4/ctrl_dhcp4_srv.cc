@@ -149,7 +149,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
     // safe and we really don't want to emit exceptions to whoever called this
     // method. Instead, catch an exception and create appropriate answer.
     try {
-        CfgMgr::instance().getCurrent()->getCfgIface()
+        CfgMgr::instance().getCurrentCfg()->getCfgIface()
             .openSockets(CfgIface::V4, srv->getPort(),
                          getInstance()->useBroadcast());
 

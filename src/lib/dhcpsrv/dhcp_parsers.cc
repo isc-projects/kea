@@ -202,7 +202,7 @@ InterfaceListConfigParser::build(ConstElementPtr value) {
                       << ex.what() << " (" << value->getPosition() << ")");
         }
     }
-    CfgMgr::instance().getStaging()->setCfgIface(cfg_iface);
+    CfgMgr::instance().getStagingCfg()->setCfgIface(cfg_iface);
 }
 
 void
