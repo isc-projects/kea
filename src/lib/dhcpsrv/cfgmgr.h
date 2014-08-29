@@ -415,11 +415,6 @@ public:
     /// This function is exception safe.
     void rollback();
 
-    /// @brief Returns the current configuration.
-    ///
-    /// @return a pointer to the current configuration.
-    ConfigurationPtr getConfiguration();
-
     /// @brief Returns a pointer to the current configuration.
     ///
     /// This function returns pointer to the current configuration. If the

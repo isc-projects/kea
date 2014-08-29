@@ -295,9 +295,12 @@ public:
 // it is empty by default.
 TEST_F(CfgMgrTest, configuration) {
 
-    ConfigurationPtr configuration = CfgMgr::instance().getConfiguration();
+    ConstConfigurationPtr configuration = CfgMgr::instance().getCurrent();
     ASSERT_TRUE(configuration);
+    EXPECT_TRUE(configuration->getLoggingInfo().empty());
 
+    configuration = CfgMgr::instance().getStaging();
+    ASSERT_TRUE(configuration);
     EXPECT_TRUE(configuration->getLoggingInfo().empty());
 }
 
