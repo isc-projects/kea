@@ -396,8 +396,10 @@ public:
     /// "interface" parameter only. All other types will throw exception.
     ///
     /// @param param_name name of the configuration parameter being parsed
+    /// @param global_context Global parser context.
     /// @throw BadValue if supplied parameter name is not "interface"
-    InterfaceListConfigParser(const std::string& param_name);
+    InterfaceListConfigParser(const std::string& param_name,
+                              ParserContextPtr global_context);
 
     /// @brief parses parameters value
     ///
@@ -407,29 +409,16 @@ public:
     /// @param value pointer to the content of parsed values
     virtual void build(isc::data::ConstElementPtr value);
 
-    /// @brief Assignes a parsed list of interfaces to the configuration.
-    ///
-    /// This is exception safe operation.
+    /// @brief Does nothing.
     virtual void commit();
 
 private:
-    /// @brief Check that specified interface exists in
-    /// @c InterfaceListConfigParser::interfaces_.
-    ///
-    /// @param iface A name of the interface.
-    ///
-    /// @return true if specified interface name was found.
-    bool isIfaceAdded(const std::string& iface) const;
-
-    /// contains list of network interfaces
-    typedef std::list<std::string> IfaceListStorage;
-    IfaceListStorage interfaces_;
 
     // Parsed parameter name
     std::string param_name_;
 
-    /// Holds the configuration created during
-    CfgIface cfg_iface_;
+    /// Global parser context.
+    ParserContextPtr global_context_;
 };
 
 /// @brief Parser for hooks library list

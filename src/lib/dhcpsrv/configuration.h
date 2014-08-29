@@ -83,8 +83,8 @@ typedef std::vector<isc::dhcp::LoggingInfo> LoggingInfoStorage;
 /// @brief Specifies current DHCP configuration
 ///
 /// @todo Migrate all other configuration parameters from cfgmgr.h here
-struct Configuration {
-
+class Configuration {
+public:
     /// @name Constants for selection of parameters returned by @c getConfigSummary
     ///
     //@{
@@ -113,11 +113,15 @@ struct Configuration {
     /// @brief logging specific information
     LoggingInfoStorage logging_info_;
 
-    /// @brief Interface configuration.
+    /// @brief Default constructor.
     ///
-    /// Used to select interfaces on which the DHCP server will listen to
-    /// queries.
-    CfgIface cfg_iface_;
+    /// This constructor sets configuration sequence number to 0.
+    Configuration();
+
+    /// @brief Constructor.
+    ///
+    /// Sets arbitrary configuration sequence number.
+    Configuration(uint32_t sequence);
 
     /// @brief Returns summary of the configuration in the textual format.
     ///
@@ -138,10 +142,63 @@ struct Configuration {
     ///
     /// @return Summary of the configuration in the textual format.
     std::string getConfigSummary(const uint32_t selection) const;
+
+    /// @brief Returns configuration sequence number.
+    uint32_t getSequence() const {
+        return (sequence_);
+    }
+
+    /// @brief Compares configuration sequence with other sequence.
+    ///
+    /// This method compares sequence numbers of two configurations for
+    /// equality. The sequence numbers are meant to be unique, so if
+    /// they are equal it means that they point to the same configuration.
+    ///
+    /// @param other Configuration which sequence number should be
+    /// compared with the sequence number of this configuration.
+    ///
+    /// @return true if sequence numbers are equal.
+    bool sequenceEquals(const Configuration& other);
+
+    /// @brief Returns object which represents selection of interfaces.
+    ///
+    /// This function returns a reference to the object which represents the
+    /// set of interfaces being used to receive DHCP traffic.
+    ///
+    /// @return Object representing selection of interfaces.
+    const CfgIface& getCfgIface() const {
+        return (cfg_iface_);
+    }
+
+    /// @brief Sets the object representing selection of interfaces.
+    ///
+    /// @param cfg_iface Object representing selection of interfaces.
+    void setCfgIface(const CfgIface& cfg_iface) {
+        cfg_iface_ = cfg_iface;
+    }
+
+private:
+
+    /// @brief Sequence number identifying the configuration.
+    uint32_t sequence_;
+
+    /// @brief Interface configuration.
+    ///
+    /// Used to select interfaces on which the DHCP server will listen to
+    /// queries.
+    CfgIface cfg_iface_;
+
 };
 
-/// @brief pointer to the configuration
+/// @name Pointers to the @c Configuration object.
+///
+//@{
+/// @brief Non-const pointer to the @ Configuration.
 typedef boost::shared_ptr<Configuration> ConfigurationPtr;
+
+/// @brief Const pointer to the @c Configuration.
+typedef boost::shared_ptr<const Configuration> ConstConfigurationPtr;
+//@}
 
 } // namespace isc::dhcp
 } // namespace isc

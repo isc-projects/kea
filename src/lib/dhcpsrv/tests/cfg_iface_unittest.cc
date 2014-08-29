@@ -65,13 +65,13 @@ CfgIfaceTest::unicastOpen(const std::string& iface_name) const {
 // This test checks that the interface names can be explicitly selected
 // by their names and IPv4 sockets are opened on these interfaces.
 TEST_F(CfgIfaceTest, explicitNamesV4) {
-    CfgIface cfg(CfgIface::V4);
+    CfgIface cfg;
     // Specify valid interface names. There should be no error.
-    ASSERT_NO_THROW(cfg.use("eth0"));
-    ASSERT_NO_THROW(cfg.use("eth1"));
+    ASSERT_NO_THROW(cfg.use(CfgIface::V4, "eth0"));
+    ASSERT_NO_THROW(cfg.use(CfgIface::V4, "eth1"));
 
     // Open sockets on specified interfaces.
-    cfg.openSockets(DHCP4_SERVER_PORT);
+    cfg.openSockets(CfgIface::V4, DHCP4_SERVER_PORT);
 
     // Sockets should be now open on eth0 and eth1, but not on loopback.
     EXPECT_TRUE(socketOpen("eth0", AF_INET));
@@ -91,9 +91,9 @@ TEST_F(CfgIfaceTest, explicitNamesV4) {
 
     // Reset configuration and select only one interface this time.
     cfg.reset();
-    ASSERT_NO_THROW(cfg.use("eth1"));
+    ASSERT_NO_THROW(cfg.use(CfgIface::V4, "eth1"));
 
-    cfg.openSockets(DHCP4_SERVER_PORT);
+    cfg.openSockets(CfgIface::V4, DHCP4_SERVER_PORT);
 
     // Socket should be open on eth1 only.
     EXPECT_FALSE(socketOpen("eth0", AF_INET));
@@ -105,13 +105,13 @@ TEST_F(CfgIfaceTest, explicitNamesV4) {
 // This test checks that the interface names can be explicitly selected
 // by their names and IPv6 sockets are opened on these interfaces.
 TEST_F(CfgIfaceTest, explicitNamesV6) {
-    CfgIface cfg(CfgIface::V6);
+    CfgIface cfg;
     // Specify valid interface names. There should be no error.
-    ASSERT_NO_THROW(cfg.use("eth0"));
-    ASSERT_NO_THROW(cfg.use("eth1"));
+    ASSERT_NO_THROW(cfg.use(CfgIface::V6, "eth0"));
+    ASSERT_NO_THROW(cfg.use(CfgIface::V6, "eth1"));
 
     // Open sockets on specified interfaces.
-    cfg.openSockets(DHCP6_SERVER_PORT);
+    cfg.openSockets(CfgIface::V6, DHCP6_SERVER_PORT);
 
     // Sockets should be now open on eth0 and eth1, but not on loopback.
     EXPECT_TRUE(socketOpen("eth0", AF_INET6));
@@ -131,9 +131,9 @@ TEST_F(CfgIfaceTest, explicitNamesV6) {
 
     // Reset configuration and select only one interface this time.
     cfg.reset();
-    ASSERT_NO_THROW(cfg.use("eth1"));
+    ASSERT_NO_THROW(cfg.use(CfgIface::V6, "eth1"));
 
-    cfg.openSockets(DHCP6_SERVER_PORT);
+    cfg.openSockets(CfgIface::V6, DHCP6_SERVER_PORT);
 
     // Socket should be open on eth1 only.
     EXPECT_FALSE(socketOpen("eth0", AF_INET6));
@@ -145,10 +145,10 @@ TEST_F(CfgIfaceTest, explicitNamesV6) {
 // This test checks that the wildcard interface name can be specified to
 // select all interfaces to open IPv4 sockets.
 TEST_F(CfgIfaceTest, wildcardV4) {
-    CfgIface cfg(CfgIface::V4);
-    ASSERT_NO_THROW(cfg.use("*"));
+    CfgIface cfg;
+    ASSERT_NO_THROW(cfg.use(CfgIface::V4, "*"));
 
-    cfg.openSockets(DHCP4_SERVER_PORT);
+    cfg.openSockets(CfgIface::V4, DHCP4_SERVER_PORT);
 
     // Sockets should be now open on eth0 and eth1, but not on loopback.
     EXPECT_TRUE(socketOpen("eth0", AF_INET));
@@ -164,10 +164,10 @@ TEST_F(CfgIfaceTest, wildcardV4) {
 // This test checks that the wildcard interface name can be specified to
 // select all interfaces to open IPv6 sockets.
 TEST_F(CfgIfaceTest, wildcardV6) {
-    CfgIface cfg(CfgIface::V6);
-    ASSERT_NO_THROW(cfg.use("*"));
+    CfgIface cfg;
+    ASSERT_NO_THROW(cfg.use(CfgIface::V6, "*"));
 
-    cfg.openSockets(DHCP4_SERVER_PORT);
+    cfg.openSockets(CfgIface::V6, DHCP6_SERVER_PORT);
 
     // Sockets should be now open on eth0 and eth1, but not on loopback.
     EXPECT_TRUE(socketOpen("eth0", AF_INET6));
@@ -184,14 +184,14 @@ TEST_F(CfgIfaceTest, wildcardV6) {
 // the interface on which the socket bound to link local address is also
 // opened.
 TEST_F(CfgIfaceTest, validUnicast) {
-    CfgIface cfg(CfgIface::V6);
+    CfgIface cfg;
 
     // One socket will be opened on link-local address, one on unicast but
     // on the same interface.
-    ASSERT_NO_THROW(cfg.use("eth0"));
-    ASSERT_NO_THROW(cfg.use("eth0/2001:db8:1::1"));
+    ASSERT_NO_THROW(cfg.use(CfgIface::V6, "eth0"));
+    ASSERT_NO_THROW(cfg.use(CfgIface::V6, "eth0/2001:db8:1::1"));
 
-    cfg.openSockets(DHCP6_SERVER_PORT);
+    cfg.openSockets(CfgIface::V6, DHCP6_SERVER_PORT);
 
     EXPECT_TRUE(socketOpen("eth0", AF_INET6));
     EXPECT_TRUE(unicastOpen("eth0"));
@@ -199,28 +199,28 @@ TEST_F(CfgIfaceTest, validUnicast) {
 
 // Test that when invalid interface names are specified an exception is thrown.
 TEST_F(CfgIfaceTest, invalidValues) {
-    CfgIface cfg(CfgIface::V4);
-    ASSERT_THROW(cfg.use(""), InvalidIfaceName);
-    ASSERT_THROW(cfg.use(" "), InvalidIfaceName);
-    ASSERT_THROW(cfg.use("bogus"), NoSuchIface);
+    CfgIface cfg;
+    ASSERT_THROW(cfg.use(CfgIface::V4, ""), InvalidIfaceName);
+    ASSERT_THROW(cfg.use(CfgIface::V4, " "), InvalidIfaceName);
+    ASSERT_THROW(cfg.use(CfgIface::V4, "bogus"), NoSuchIface);
 
-    ASSERT_NO_THROW(cfg.use("eth0"));
-    ASSERT_THROW(cfg.use("eth0"), DuplicateIfaceName);
+    ASSERT_NO_THROW(cfg.use(CfgIface::V4, "eth0"));
+    ASSERT_THROW(cfg.use(CfgIface::V4, "eth0"), DuplicateIfaceName);
 
-    ASSERT_THROW(cfg.use("eth0/2001:db8:1::1"), InvalidIfaceName);
+    ASSERT_THROW(cfg.use(CfgIface::V4, "eth0/2001:db8:1::1"), InvalidIfaceName);
 
-    cfg.setFamily(CfgIface::V6);
+    ASSERT_THROW(cfg.use(CfgIface::V6, "eth0/"), InvalidIfaceName);
+    ASSERT_THROW(cfg.use(CfgIface::V6, "/2001:db8:1::1"), InvalidIfaceName);
+    ASSERT_THROW(cfg.use(CfgIface::V6, "*/2001:db8:1::1"), InvalidIfaceName);
+    ASSERT_THROW(cfg.use(CfgIface::V6, "bogus/2001:db8:1::1"), NoSuchIface);
+    ASSERT_THROW(cfg.use(CfgIface::V6, "eth0/fe80::3a60:77ff:fed5:cdef"),
+                 InvalidIfaceName);
+    ASSERT_THROW(cfg.use(CfgIface::V6, "eth0/fe80::3a60:77ff:fed5:cdef"),
+                 InvalidIfaceName);
+    ASSERT_THROW(cfg.use(CfgIface::V6, "eth0/2001:db8:1::2"), NoSuchAddress);
 
-    ASSERT_THROW(cfg.use("eth0/"), InvalidIfaceName);
-    ASSERT_THROW(cfg.use("/2001:db8:1::1"), InvalidIfaceName);
-    ASSERT_THROW(cfg.use("*/2001:db8:1::1"), InvalidIfaceName);
-    ASSERT_THROW(cfg.use("bogus/2001:db8:1::1"), NoSuchIface);
-    ASSERT_THROW(cfg.use("eth0/fe80::3a60:77ff:fed5:cdef"), InvalidIfaceName);
-    ASSERT_THROW(cfg.use("eth0/fe80::3a60:77ff:fed5:cdef"), InvalidIfaceName);
-    ASSERT_THROW(cfg.use("eth0/2001:db8:1::2"), NoSuchAddress);
-
-    ASSERT_NO_THROW(cfg.use("*"));
-    ASSERT_THROW(cfg.use("*"), DuplicateIfaceName);
+    ASSERT_NO_THROW(cfg.use(CfgIface::V6, "*"));
+    ASSERT_THROW(cfg.use(CfgIface::V6, "*"), DuplicateIfaceName);
 }
 
 } // end of anonymous namespace
