@@ -260,6 +260,40 @@ TEST_F(ConfigurationTest, summarySubnets) {
               conf_.getConfigSummary(Configuration::CFGSEL_SUBNET));
 }
 
+// This test checks if entire configuration can be copied and that the sequence
+// number is not affected.
+TEST_F(ConfigurationTest, copy) {
+    // Create two configurations with different sequence numbers.
+    Configuration conf1(32);
+    Configuration conf2(64);
+
+    // Set logging information for conf1.
+    LoggingInfo info;
+    info.name_ = "foo";
+    info.severity_ = isc::log::DEBUG;
+    info.debuglevel_ = 64;
+    info.destinations_.push_back(LoggingDestination());
+
+    // Set interface configuration for conf1.
+    CfgIface cfg_iface;
+    cfg_iface.use(CfgIface::V4, "eth0");
+
+    conf1.addLoggingInfo(info);
+    conf1.setCfgIface(cfg_iface);
+
+    // Make sure both configurations are different.
+    ASSERT_TRUE(conf1 != conf2);
+
+    // Copy conf1 to conf2.
+    ASSERT_NO_THROW(conf1.copy(conf2));
+
+    // Now they should be equal.
+    EXPECT_TRUE(conf1 == conf2);
+
+    // But, their sequence numbers should be unequal.
+    EXPECT_FALSE(conf1.sequenceEquals(conf2));
+}
+
 // This test checks that two configurations can be compared for (in)equality.
 TEST_F(ConfigurationTest, equality) {
     Configuration conf1(32);
