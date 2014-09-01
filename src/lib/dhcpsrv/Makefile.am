@@ -45,6 +45,9 @@ libkea_dhcpsrv_la_SOURCES  =
 libkea_dhcpsrv_la_SOURCES += addr_utilities.cc addr_utilities.h
 libkea_dhcpsrv_la_SOURCES += alloc_engine.cc alloc_engine.h
 libkea_dhcpsrv_la_SOURCES += callout_handle_store.h
+libkea_dhcpsrv_la_SOURCES += cfg_iface.cc cfg_iface.h
+libkea_dhcpsrv_la_SOURCES += cfgmgr.cc cfgmgr.h
+libkea_dhcpsrv_la_SOURCES += configuration.h configuration.cc
 libkea_dhcpsrv_la_SOURCES += csv_lease_file4.cc csv_lease_file4.h
 libkea_dhcpsrv_la_SOURCES += csv_lease_file6.cc csv_lease_file6.h
 libkea_dhcpsrv_la_SOURCES += d2_client_cfg.cc d2_client_cfg.h
@@ -52,16 +55,14 @@ libkea_dhcpsrv_la_SOURCES += d2_client_mgr.cc d2_client_mgr.h
 libkea_dhcpsrv_la_SOURCES += daemon.cc daemon.h
 libkea_dhcpsrv_la_SOURCES += dbaccess_parser.cc dbaccess_parser.h
 libkea_dhcpsrv_la_SOURCES += dhcpsrv_log.cc dhcpsrv_log.h
-libkea_dhcpsrv_la_SOURCES += cfgmgr.cc cfgmgr.h
 libkea_dhcpsrv_la_SOURCES += dhcp_config_parser.h
 libkea_dhcpsrv_la_SOURCES += dhcp_parsers.cc dhcp_parsers.h
-libkea_dhcpsrv_la_SOURCES += cfg_iface.cc cfg_iface.h
 libkea_dhcpsrv_la_SOURCES += key_from_key.h
 libkea_dhcpsrv_la_SOURCES += lease.cc lease.h
 libkea_dhcpsrv_la_SOURCES += lease_mgr.cc lease_mgr.h
 libkea_dhcpsrv_la_SOURCES += lease_mgr_factory.cc lease_mgr_factory.h
 libkea_dhcpsrv_la_SOURCES += logging.cc logging.h
-libkea_dhcpsrv_la_SOURCES += configuration.h configuration.cc
+libkea_dhcpsrv_la_SOURCES += logging_info.cc logging_info.h
 libkea_dhcpsrv_la_SOURCES += memfile_lease_mgr.cc memfile_lease_mgr.h
 
 if HAVE_MYSQL

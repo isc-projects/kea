@@ -16,7 +16,7 @@
 #define DHCPSRV_CONFIGURATION_H
 
 #include <dhcpsrv/cfg_iface.h>
-#include <log/logger_level.h>
+#include <dhcpsrv/logging_info.h>
 #include <boost/shared_ptr.hpp>
 #include <vector>
 #include <stdint.h>
@@ -26,59 +26,6 @@ namespace dhcp {
 
 class CfgMgr;
 
-/// @brief Defines single logging destination
-///
-/// This structure is used to keep log4cplus configuration parameters.
-struct LoggingDestination {
-
-    /// @brief defines logging destination output
-    ///
-    /// Values accepted are: stdout, stderr, syslog, syslog:name.
-    /// Any other destination will be considered a file name.
-    std::string output_;
-
-    /// @brief Maximum number of log files in rotation
-    int maxver_;
-
-    /// @brief Maximum log file size
-    uint64_t maxsize_;
-};
-
-/// @brief structure that describes one logging entry
-///
-/// This is a structure that conveys one logger entry configuration.
-/// The structure in JSON form has the following syntax:
-///        {
-///            "name": "*",
-///            "output_options": [
-///                {
-///                    "output": "/path/to/the/logfile.log",
-///                    "maxver": 8,
-///                    "maxsize": 204800
-///                }
-///            ],
-///            "severity": "WARN",
-///            "debuglevel": 99
-///        },
-struct LoggingInfo {
-
-    /// @brief logging name
-    std::string name_;
-
-    /// @brief describes logging severity
-    isc::log::Severity severity_;
-
-    /// @brief debuglevel (used when severity_ == DEBUG)
-    ///
-    /// We use range 0(least verbose)..99(most verbose)
-    int debuglevel_;
-
-    /// @brief specific logging destinations
-    std::vector<LoggingDestination> destinations_;
-};
-
-/// @brief storage for logging information in log4cplus format
-typedef std::vector<isc::dhcp::LoggingInfo> LoggingInfoStorage;
 
 /// @brief Specifies current DHCP configuration
 ///
@@ -185,6 +132,58 @@ public:
     void setCfgIface(const CfgIface& cfg_iface) {
         cfg_iface_ = cfg_iface;
     }
+
+    /// @name Methods and operators used to compare configurations.
+    ///
+    //@{
+    ///
+    /// @brief Compares two objects for equality.
+    ///
+    /// It ignores the configuration sequence number when checking for
+    /// equality of objects.
+    ///
+    /// @param other An object to be compared with this object.
+    ///
+    /// @return true if two objects are equal, false otherwise.
+    bool equals(const Configuration& other) const;
+
+    /// @brief Compares two objects for inequality.
+    ///
+    /// It ignores the configuration sequence number when checking for
+    /// inequality of objects.
+    ///
+    /// @param other An object to be compared with this object.
+    ///
+    /// @return true if two objects are not equal, false otherwise.
+    bool nequals(const Configuration& other) const {
+        return (!equals(other));
+    }
+
+    /// @brief Equality operator.
+    ///
+    /// It ignores the configuration sequence number when checking for
+    /// equality of objects.
+    ///
+    /// @param other An object to be compared with this object.
+    ///
+    /// @return true if two objects are equal, false otherwise.
+    bool operator==(const Configuration& other) const {
+        return (equals(other));
+    }
+
+    /// @param other An object to be compared with this object.
+    ///
+    /// It ignores the configuration sequence number when checking for
+    /// inequality of objects.
+    ///
+    /// @param other An object to be compared with this object.
+    ///
+    /// @return true if two objects are not equal, false otherwise.
+    bool operator!=(const Configuration& other) const {
+        return (nequals(other));
+    }
+
+    //@}
 
 private:
 
