@@ -1391,7 +1391,6 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/dhcp6/tests/test_data_files_config.h
                  src/bin/dhcp6/tests/test_libraries.h
                  src/bin/keactrl/Makefile
-                 src/bin/keactrl/kea.conf
                  src/bin/keactrl/keactrl
                  src/bin/keactrl/keactrl.conf
                  src/bin/keactrl/tests/Makefile
