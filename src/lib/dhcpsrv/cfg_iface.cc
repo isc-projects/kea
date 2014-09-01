@@ -34,6 +34,13 @@ CfgIface::closeSockets() const {
     IfaceMgr::instance().closeSockets();
 }
 
+bool
+CfgIface::equals(const CfgIface& other) const {
+    return (iface_set_ == other.iface_set_ &&
+            unicast_map_ == other.unicast_map_ &&
+            wildcard_used_ == other.wildcard_used_);
+}
+
 void
 CfgIface::openSockets(const Family& family, const uint16_t port,
                       const bool use_bcast) const {

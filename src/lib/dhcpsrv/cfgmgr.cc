@@ -25,6 +25,8 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 
+const size_t CfgMgr::CONFIG_LIST_SIZE = 10;
+
 CfgMgr&
 CfgMgr::instance() {
     static CfgMgr cfg_mgr;
@@ -376,6 +378,13 @@ CfgMgr::commit() {
     ensureCurrentAllocated();
     if (!configs_.back()->sequenceEquals(*configuration_)) {
         configuration_ = configs_.back();
+        // Keep track of the maximum size of the configs history. Before adding
+        // new element, we have to remove the oldest one.
+        if (configs_.size() > CONFIG_LIST_SIZE) {
+            ConfigurationList::iterator it = configs_.begin();
+            std::advance(it, configs_.size() - CONFIG_LIST_SIZE);
+            configs_.erase(configs_.begin(), it);
+        }
     }
 }
 

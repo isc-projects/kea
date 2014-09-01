@@ -1125,7 +1125,7 @@ TEST_F(CfgMgrTest, subnet6Duplication) {
 }
 
 
-// This test verifies that the configuration staging and commit works
+// This test verifies that the configuration staging, commit and rollback works
 // as expected.
 TEST_F(CfgMgrTest, staging) {
     CfgMgr& cfg_mgr = CfgMgr::instance();
@@ -1159,7 +1159,7 @@ TEST_F(CfgMgrTest, staging) {
 
     // This should change the staging configuration so as it becomes a current
     // one.
-    CfgMgr::instance().commit();
+    cfg_mgr.commit();
     const_config = cfg_mgr.getCurrentCfg();
     ASSERT_TRUE(const_config);
     // Sequence id equal to 1 indicates that the current configuration points
@@ -1176,7 +1176,7 @@ TEST_F(CfgMgrTest, staging) {
     // changes the configuration having sequence 2 to current configuration.
     // Other commits are no-op.
     for (int i = 0; i < 5; ++i) {
-        CfgMgr::instance().commit();
+        cfg_mgr.commit();
     }
 
     // The current configuration now have sequence number 2.
@@ -1185,15 +1185,29 @@ TEST_F(CfgMgrTest, staging) {
     EXPECT_EQ(2, const_config->getSequence());
 
     // Clear configuration along with a history.
-    CfgMgr::instance().clear();
+    cfg_mgr.clear();
 
     // After clearing configuration we should successfully get the
     // new staging configuration.
-    const_config = cfg_mgr.getStagingCfg();
-    ASSERT_TRUE(const_config);
-    EXPECT_EQ(1, const_config->getSequence());
-}
+    config = cfg_mgr.getStagingCfg();
+    ASSERT_TRUE(config);
+    EXPECT_EQ(1, config->getSequence());
 
+    // Modify the staging configuration.
+    config->addLoggingInfo(LoggingInfo());
+    ASSERT_TRUE(config);
+    // The modified staging configuration should have one logger configured.
+    ASSERT_EQ(1, config->getLoggingInfo().size());
+
+    // Rollback should remove a staging configuration, including the logger.
+    ASSERT_NO_THROW(cfg_mgr.rollback());
+
+    // Make sure that the logger is not set. This is an indication that the
+    // rollback worked.
+    config = cfg_mgr.getStagingCfg();
+    ASSERT_TRUE(config);
+    EXPECT_EQ(0, config->getLoggingInfo().size());
+}
 
 /// @todo Add unit-tests for testing:
 /// - addActiveIface() with invalid interface name
