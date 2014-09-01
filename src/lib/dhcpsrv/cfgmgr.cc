@@ -396,6 +396,39 @@ CfgMgr::rollback() {
     }
 }
 
+void
+CfgMgr::revert(const size_t index) {
+    ensureCurrentAllocated();
+    if (index == 0) {
+        isc_throw(isc::OutOfRange, "invalid commit index 0 when reverting"
+                  " to an old configuration");
+    } else if (index > configs_.size() - 1) {
+        isc_throw(isc::OutOfRange, "unable to revert to commit index '"
+                  << index << "', only '" << configs_.size() - 1
+                  << "' previous commits available");
+    }
+
+    // Let's rollback an existing configuration to make sure that the last
+    // configuration on the list is the current one. Note that all remaining
+    // operations in this function should be exception free so there shouldn't
+    // be a problem that the revert operation fails and the staging
+    // configuration is destroyed by this rollback.
+    rollback();
+
+    // Get the iterator to the current configuration and then advance to the
+    // desired one.
+    ConfigurationList::const_reverse_iterator it = configs_.rbegin();
+    std::advance(it, index);
+
+    // Copy the desired configuration to the new staging configuration. The
+    // staging configuration is re-created here because we rolled back earlier
+    // in this function.
+    (*it)->copy(*getStagingCfg());
+
+    // Make the staging configuration a current one.
+    commit();
+}
+
 ConstConfigurationPtr
 CfgMgr::getCurrentCfg() {
     ensureCurrentAllocated();

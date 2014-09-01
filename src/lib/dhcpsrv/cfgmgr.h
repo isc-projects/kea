@@ -424,6 +424,23 @@ public:
     /// This function is exception safe.
     void rollback();
 
+    /// @brief Reverts to one of the previous configurations.
+    ///
+    /// This function reverts to selected previous configuration. The previous
+    /// configuration is entirely copied to a new @c Configuration instance. This
+    /// new instance has a unique sequence id (sequence id is not copied). The
+    /// previous configuration (being copied) is not modified by this operation.
+    ///
+    /// The configuration to be copied is identified by the index value which
+    /// is the distance between the current (most recent) and desired
+    /// configuration. If the index is out of range an exception is thrown.
+    ///
+    /// @warning Revert operation will rollback any changes to the staging
+    /// configuration (if it exists).
+    ///
+    /// @throw isc::OutOfRange if the specified index is out of range.
+    void revert(const size_t index);
+
     /// @brief Returns a pointer to the current configuration.
     ///
     /// This function returns pointer to the current configuration. If the
