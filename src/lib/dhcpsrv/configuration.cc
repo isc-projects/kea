@@ -73,5 +73,35 @@ Configuration::sequenceEquals(const Configuration& other) {
     return (getSequence() == other.getSequence());
 }
 
+bool
+Configuration::equals(const Configuration& other) const {
+    // If number of loggers is different, then configurations aren't equal.
+    if (logging_info_.size() != other.logging_info_.size()) {
+        return (false);
+    }
+    // Pass through all loggers and try to find the match for each of them
+    // with the loggers from the other configuration. The order doesn't
+    // matter so we can't simply compare the vectors.
+    for (LoggingInfoStorage::const_iterator this_it =
+             logging_info_.begin(); this_it != logging_info_.end();
+         ++this_it) {
+        bool match = false;
+        for (LoggingInfoStorage::const_iterator other_it =
+                 other.logging_info_.begin();
+             other_it != other.logging_info_.end(); ++other_it) {
+            if (this_it->equals(*other_it)) {
+                match = true;
+                break;
+            }
+        }
+        // No match found for the particular logger so return false.
+        if (!match) {
+            return (false);
+        }
+    }
+    // Logging information is equal between objects, so check other values.
+    return (cfg_iface_ == other.cfg_iface_);
+}
+
 }
 }

@@ -14,6 +14,7 @@
 
 #include <config.h>
 
+#include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/configuration.h>
 #include <dhcpsrv/subnet.h>
@@ -38,7 +39,8 @@ public:
     ///
     /// Creates IPv4 and IPv6 subnets for unit test. The number of subnets
     /// is @c TEST_SUBNETS_NUM for IPv4 and IPv6 each.
-    ConfigurationTest() {
+    ConfigurationTest()
+        : iface_mgr_test_config_(true) {
         // Remove any subnets dangling from previous unit tests.
         clearSubnets();
 
@@ -124,6 +126,8 @@ public:
     Subnet4Collection test_subnets4_;
     /// @brief A collection of IPv6 subnets used by unit tests.
     Subnet6Collection test_subnets6_;
+    /// @brief Fakes interface configuration.
+    isc::dhcp::test::IfaceMgrTestConfig iface_mgr_test_config_;
 
 };
 
@@ -254,6 +258,51 @@ TEST_F(ConfigurationTest, summarySubnets) {
     clearSubnets();
     EXPECT_EQ("no IPv4 subnets!; no IPv6 subnets!",
               conf_.getConfigSummary(Configuration::CFGSEL_SUBNET));
+}
+
+// This test checks that two configurations can be compared for (in)equality.
+TEST_F(ConfigurationTest, equality) {
+    Configuration conf1(32);
+    Configuration conf2(64);
+
+    // Initially, both objects should be equal, even though the configuration
+    // sequences are not matching.
+    EXPECT_TRUE(conf1 == conf2);
+    EXPECT_FALSE(conf1 != conf2);
+
+    // Differ by logging information.
+    LoggingInfo info1;
+    LoggingInfo info2;
+    info1.name_ = "foo";
+    info2.name_ = "bar";
+
+    conf1.addLoggingInfo(info1);
+    conf2.addLoggingInfo(info2);
+
+    EXPECT_FALSE(conf1 == conf2);
+    EXPECT_TRUE(conf1 != conf2);
+
+    conf1.addLoggingInfo(info2);
+    conf2.addLoggingInfo(info1);
+
+    EXPECT_TRUE(conf1 == conf2);
+    EXPECT_FALSE(conf1 != conf2);
+
+    // Differ by interface configuration.
+    CfgIface cfg_iface1;
+    CfgIface cfg_iface2;
+
+    cfg_iface1.use(CfgIface::V4, "eth0");
+    conf1.setCfgIface(cfg_iface1);
+
+    EXPECT_FALSE(conf1 == conf2);
+    EXPECT_TRUE(conf1 != conf2);
+
+    cfg_iface2.use(CfgIface::V4, "eth0");
+    conf2.setCfgIface(cfg_iface2);
+
+    EXPECT_TRUE(conf1 == conf2);
+    EXPECT_FALSE(conf1 != conf2);
 }
 
 } // end of anonymous namespace
