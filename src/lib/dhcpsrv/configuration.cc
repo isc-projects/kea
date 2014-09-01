@@ -73,6 +73,18 @@ Configuration::sequenceEquals(const Configuration& other) {
     return (getSequence() == other.getSequence());
 }
 
+void
+Configuration::copy(Configuration& new_config) const {
+    // We will entirely replace loggers in the new configuration.
+    new_config.logging_info_.clear();
+    for (LoggingInfoStorage::const_iterator it = logging_info_.begin();
+         it != logging_info_.end(); ++it) {
+        new_config.addLoggingInfo(*it);
+    }
+    // Replace interface configuration.
+    new_config.setCfgIface(cfg_iface_);
+}
+
 bool
 Configuration::equals(const Configuration& other) const {
     // If number of loggers is different, then configurations aren't equal.
