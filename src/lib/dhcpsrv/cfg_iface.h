@@ -86,6 +86,13 @@ public:
     /// @brief Convenience function which closes all open sockets.
     void closeSockets() const;
 
+    /// @brief Compares two @c CfgIface objects for equality.
+    ///
+    /// @param other An object to be compared with this object.
+    ///
+    /// @return true if objects are equal, false otherwise.
+    bool equals(const CfgIface& other) const;
+
     /// @brief Tries to open sockets on selected interfaces.
     ///
     /// This function opens sockets bound to link-local address as well as
@@ -139,6 +146,24 @@ public:
     /// @c CfgIface::use has been already called for this interface.
     void use(const Family& family, const std::string& iface_name);
 
+    /// @brief Equality operator.
+    ///
+    /// @param other Object to be compared with this object.
+    ///
+    /// @return true if objects are equal, false otherwise.
+    bool operator==(const CfgIface& other) const {
+        return (equals(other));
+    }
+
+    /// @brief Inequality operator.
+    ///
+    /// @param other Object to be compared with this object.
+    ///
+    /// @return true if objects are not equal, false otherwise.
+    bool operator!=(const CfgIface& other) const {
+        return (!equals(other));
+    }
+
 private:
 
     /// @brief Selects or deselects interfaces.
@@ -164,9 +189,6 @@ private:
     ///
     /// @param errmsg Error message being logged by the function.
     static void socketOpenErrorHandler(const std::string& errmsg);
-
-    /// @brief Protocol family.
-    Family family_;
 
     /// @brief Represents a set of interface names.
     typedef std::set<std::string> IfaceSet;

@@ -95,6 +95,11 @@ public:
 class CfgMgr : public boost::noncopyable {
 public:
 
+    /// @brief A number of configurations held by @c CfgMgr.
+    ///
+    /// @todo Make it configurable.
+    static const size_t CONFIG_LIST_SIZE;
+
     /// @brief returns a single instance of Configuration Manager
     ///
     /// CfgMgr is a singleton and this method is the only way of
@@ -385,6 +390,8 @@ public:
     /// @todo Migrate all configuration parameters to use the model supported
     /// by these functions.
     ///
+    /// @todo Make the size of the configurations history configurable.
+    ///
     //@{
 
     /// @brief Removes current, staging and all previous configurations.
@@ -399,7 +406,9 @@ public:
     /// @brief Commits the staging configuration.
     ///
     /// The staging configuration becomes current configuration when this
-    /// function is called.
+    /// function is called. It removes the oldest configurations held in the
+    /// history so as the size of the list of configuration does not excide
+    /// the @c CONFIG_LIST_SIZE.
     ///
     /// This function is exception safe.
     void commit();
