@@ -133,6 +133,16 @@ public:
         cfg_iface_ = cfg_iface;
     }
 
+    /// @brief Copies the currnet configuration to a new configuration.
+    ///
+    /// This method copies the parameters stored in the configuration to
+    /// an object passed as parameter. The configuration sequence is not
+    /// copied.
+    ///
+    /// @param [out] new_config An object to which the configuration will
+    /// be copied.
+    void copy(Configuration& new_config) const;
+
     /// @name Methods and operators used to compare configurations.
     ///
     //@{
