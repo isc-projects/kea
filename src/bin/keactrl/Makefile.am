@@ -8,8 +8,9 @@ sbin_SCRIPTS  = keactrl
 CONFIGFILES = keactrl.conf kea.conf
 
 man_MANS = keactrl.8
-DISTCLEANFILES = keactrl $(CONFIGFILES) $(man_MANS)
-EXTRA_DIST = keactrl.in keactrl.conf.in kea.conf.in $(man_MANS) keactrl.xml
+DISTCLEANFILES = keactrl keactrl.conf $(man_MANS)
+CLEANFILES = kea.conf
+EXTRA_DIST = keactrl.in keactrl.conf.in kea.conf.pre $(man_MANS) keactrl.xml
 
 # kea.conf is not really a source used for building other targets, but we need
 # this file to be generated before make install is called.
@@ -28,8 +29,8 @@ $(man_MANS):
 
 endif
 
-kea.conf: kea.conf.in
-	$(top_srcdir)/tools/path_replacer.sh $< $@
+kea.conf: kea.conf.pre
+	$(top_srcdir)/tools/path_replacer.sh $(builddir)/kea.conf.pre $@
 
 if INSTALL_CONFIGURATIONS
 
