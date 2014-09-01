@@ -218,9 +218,60 @@ TEST_F(CfgIfaceTest, invalidValues) {
     ASSERT_THROW(cfg.use(CfgIface::V6, "eth0/fe80::3a60:77ff:fed5:cdef"),
                  InvalidIfaceName);
     ASSERT_THROW(cfg.use(CfgIface::V6, "eth0/2001:db8:1::2"), NoSuchAddress);
-
     ASSERT_NO_THROW(cfg.use(CfgIface::V6, "*"));
     ASSERT_THROW(cfg.use(CfgIface::V6, "*"), DuplicateIfaceName);
+}
+
+// Test that the equality and inequality operators work fine for CfgIface.
+TEST_F(CfgIfaceTest, equality) {
+    CfgIface cfg1;
+    CfgIface cfg2;
+
+    // Initially objects must be equal.
+    EXPECT_TRUE(cfg1 == cfg2);
+    EXPECT_FALSE(cfg1 != cfg2);
+
+    // Differ by one interface.
+    cfg1.use(CfgIface::V4, "eth0");
+    EXPECT_FALSE(cfg1 == cfg2);
+    EXPECT_TRUE(cfg1 != cfg2);
+
+    // Now interfaces should be equal.
+    cfg2.use(CfgIface::V4, "eth0");
+    EXPECT_TRUE(cfg1 == cfg2);
+    EXPECT_FALSE(cfg1 != cfg2);
+
+    // Differ by unicast address.
+    cfg1.use(CfgIface::V6, "eth0/2001:db8:1::1");
+    EXPECT_FALSE(cfg1 == cfg2);
+    EXPECT_TRUE(cfg1 != cfg2);
+
+    // Differ by unicast address and one interface.
+    cfg2.use(CfgIface::V6, "eth1");
+    EXPECT_FALSE(cfg1 == cfg2);
+    EXPECT_TRUE(cfg1 != cfg2);
+
+    // Now, the unicast addresses are equal but still differ by one interface.
+    cfg2.use(CfgIface::V6, "eth0/2001:db8:1::1");
+    EXPECT_FALSE(cfg1 == cfg2);
+    EXPECT_TRUE(cfg1 != cfg2);
+
+    // They should be now back to equal.
+    cfg1.use(CfgIface::V6, "eth1");
+    EXPECT_TRUE(cfg1 == cfg2);
+    EXPECT_FALSE(cfg1 != cfg2);
+
+    // Even though the wildcard doesn't change anything because all interfaces
+    // are already in use, the fact that the wildcard is specified should
+    // cause them to be not equal.
+    cfg1.use(CfgIface::V6, "*");
+    EXPECT_FALSE(cfg1 == cfg2);
+    EXPECT_TRUE(cfg1 != cfg2);
+
+    // Finally, both are equal as they use wildacard.
+    cfg2.use(CfgIface::V4, "*");
+    EXPECT_TRUE(cfg1 == cfg2);
+    EXPECT_FALSE(cfg1 != cfg2);
 }
 
 } // end of anonymous namespace
