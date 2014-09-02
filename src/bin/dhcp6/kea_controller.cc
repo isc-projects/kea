@@ -106,7 +106,14 @@ void configure(const std::string& file_name) {
             isc_throw(isc::BadValue, reason);
         }
 
+        // Configuration successful.
+        CfgMgr::instance().commit();
+
     }  catch (const std::exception& ex) {
+        // If configuration failed at any stage, we drop the staging
+        // configuration and continue to use the previous one.
+        CfgMgr::instance().rollback();
+
         LOG_ERROR(dhcp6_logger, DHCP6_CONFIG_LOAD_FAIL)
             .arg(file_name).arg(ex.what());
         isc_throw(isc::BadValue, "configuration error using file '"
