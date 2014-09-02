@@ -648,7 +648,6 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
     // Rollback changes as the configuration parsing failed.
     if (rollback) {
         globalContext().reset(new ParserContext(original_context));
-        CfgMgr::instance().rollback();
         return (answer);
     }
 
