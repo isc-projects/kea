@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/logging_info.h>
 #include <gtest/gtest.h>
 
@@ -51,8 +52,43 @@ TEST(LoggingDestintaion, equals) {
     EXPECT_TRUE(dest1.equals(dest2));
 }
 
+/// @brief Test fixture class for testing @c LoggingInfo.
+class LoggingInfoTest : public ::testing::Test {
+public:
+
+    /// @brief Setup the test.
+    virtual void SetUp() {
+        CfgMgr::instance().setVerbose(false);
+    }
+
+    /// @brief Clear after the test.
+    virtual void TearDown() {
+        CfgMgr::instance().setVerbose(false);
+    }
+};
+
+// Checks if default logging configuration is correct.
+TEST_F(LoggingInfoTest, defaults) {
+    LoggingInfo info_non_verbose;
+    EXPECT_EQ("kea", info_non_verbose.name_);
+    EXPECT_EQ(isc::log::INFO, info_non_verbose.severity_);
+    EXPECT_EQ(0, info_non_verbose.debuglevel_);
+
+    ASSERT_EQ(1, info_non_verbose.destinations_.size());
+    EXPECT_EQ("stdout", info_non_verbose.destinations_[0].output_);
+
+    CfgMgr::instance().setVerbose(true);
+    LoggingInfo info_verbose;
+    EXPECT_EQ("kea", info_verbose.name_);
+    EXPECT_EQ(isc::log::DEBUG, info_verbose.severity_);
+    EXPECT_EQ(99, info_verbose.debuglevel_);
+
+    ASSERT_EQ(1, info_verbose.destinations_.size());
+    EXPECT_EQ("stdout", info_verbose.destinations_[0].output_);
+}
+
 // Checks if (in)equality operators work for LoggingInfo.
-TEST(LoggingInfo, equality) {
+TEST_F(LoggingInfoTest, equalityOperators) {
     LoggingInfo info1;
     LoggingInfo info2;
 
@@ -113,7 +149,7 @@ TEST(LoggingInfo, equality) {
     LoggingDestination dest3;
     dest3.output_ = "foobar";
 
-    info2.destinations_[1] = dest3;
+    info2.destinations_[2] = dest3;
 
     // The should now be unequal.
     EXPECT_FALSE(info1 == info2);

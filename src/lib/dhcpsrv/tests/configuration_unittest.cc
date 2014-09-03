@@ -169,6 +169,7 @@ TEST_F(ConfigurationTest, basic) {
 // Check that Configuration can store logging information.
 TEST_F(ConfigurationTest, loggingInfo) {
     LoggingInfo log1;
+    log1.clearDestinations();
     log1.name_ = "foo";
     log1.severity_ = isc::log::WARN;
     log1.debuglevel_ = 77;

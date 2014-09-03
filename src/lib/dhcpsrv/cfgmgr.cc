@@ -447,11 +447,10 @@ CfgMgr::getStagingCfg() {
 
 CfgMgr::CfgMgr()
     : datadir_(DHCP_DATA_DIR), echo_v4_client_id_(true),
-      d2_client_mgr_() {
+      d2_client_mgr_(), verbose_mode_(false) {
     // DHCP_DATA_DIR must be set set with -DDHCP_DATA_DIR="..." in Makefile.am
     // Note: the definition of DHCP_DATA_DIR needs to include quotation marks
     // See AM_CPPFLAGS definition in Makefile.am
-    ensureCurrentAllocated();
 }
 
 CfgMgr::~CfgMgr() {

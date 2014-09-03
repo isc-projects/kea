@@ -55,6 +55,8 @@ void LogConfigParser::parseConfigEntry(isc::data::ConstElementPtr entry) {
     }
 
     LoggingInfo info;
+    // Remove default destinations as we are going to replace them.
+    info.clearDestinations();
 
     // Get a name
     isc::data::ConstElementPtr name_ptr = entry->get("name");
@@ -121,6 +123,7 @@ void LogConfigParser::parseOutputOptions(std::vector<LoggingDestination>& destin
     if (!output_options) {
         isc_throw(BadValue, "Missing 'output_options' structure in 'loggers'");
     }
+
     BOOST_FOREACH(ConstElementPtr output_option, output_options->listValue()) {
 
         LoggingDestination dest;
