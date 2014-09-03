@@ -14,6 +14,7 @@
 
 #include <config.h>
 #include <exceptions/exceptions.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/daemon.h>
 #include <dhcpsrv/logging.h>
 #include <log/logger_unittest_support.h>
@@ -49,6 +50,7 @@ TEST(DaemonTest, constructor) {
 // More dedicated tests are availablef for LogConfigParser class.
 // See logger_unittest.cc
 TEST(DaemonTest, parsingConsoleOutput) {
+    CfgMgr::instance().setVerbose(false);
 
     // Storage - parsed configuration will be stored here
     ConfigurationPtr storage(new Configuration());
@@ -70,7 +72,7 @@ TEST(DaemonTest, parsingConsoleOutput) {
 
     // Spawn a daemon and tell it to configure logger
     Daemon x;
-    EXPECT_NO_THROW(x.configureLogger(config, storage, false));
+    EXPECT_NO_THROW(x.configureLogger(config, storage));
 
     // configureLogger will modify the logging options of the log4cplus logger.
     // We need to reset the logger settings so as the following tests are

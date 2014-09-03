@@ -143,6 +143,9 @@ public:
     /// be copied.
     void copy(Configuration& new_config) const;
 
+    /// @brief Apply logging configuration to log4cplus.
+    void applyLoggingCfg() const;
+
     /// @name Methods and operators used to compare configurations.
     ///
     //@{

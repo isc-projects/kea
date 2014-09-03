@@ -16,6 +16,7 @@
 #define DHCPSRV_LOGGING_INFO_H
 
 #include <log/logger_level.h>
+#include <log/logger_specification.h>
 #include <stdint.h>
 #include <vector>
 
@@ -85,8 +86,11 @@ struct LoggingInfo {
     std::vector<LoggingDestination> destinations_;
 
     /// @brief Default constructor.
-    LoggingInfo()
-        : name_("kea"), severity_(isc::log::INFO), debuglevel_(99) {
+    LoggingInfo();
+
+    /// @brief Removes logging destinations.
+    void clearDestinations() {
+        destinations_.clear();
     }
 
     /// @brief Compares two objects for equality.
@@ -113,6 +117,9 @@ struct LoggingInfo {
     bool operator!=(const LoggingInfo& other) const {
         return (!equals(other));
     }
+
+    /// @brief Converts logger configuration to a spec.
+    isc::log::LoggerSpecification toSpec() const;
 };
 
 /// @brief storage for logging information in log4cplus format

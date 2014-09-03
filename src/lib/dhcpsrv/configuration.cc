@@ -14,7 +14,12 @@
 
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/configuration.h>
+#include <log/logger_manager.h>
+#include <log/logger_specification.h>
+#include <list>
 #include <sstream>
+
+using namespace isc::log;
 
 namespace isc {
 namespace dhcp {
@@ -83,6 +88,20 @@ Configuration::copy(Configuration& new_config) const {
     }
     // Replace interface configuration.
     new_config.setCfgIface(cfg_iface_);
+}
+
+void
+Configuration::applyLoggingCfg() const {
+    /// @todo Remove the hardcoded location.
+    setenv("B10_LOCKFILE_DIR_FROM_BUILD", "/tmp", 1);
+
+    std::list<LoggerSpecification> specs;
+    for (LoggingInfoStorage::const_iterator it = logging_info_.begin();
+         it != logging_info_.end(); ++it) {
+        specs.push_back(it->toSpec());
+    }
+    LoggerManager manager;
+    manager.process(specs.begin(), specs.end());
 }
 
 bool

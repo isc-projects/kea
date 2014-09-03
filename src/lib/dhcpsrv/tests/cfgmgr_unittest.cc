@@ -281,6 +281,7 @@ public:
     }
 
     void clear() {
+        CfgMgr::instance().setVerbose(false);
         CfgMgr::instance().deleteSubnets4();
         CfgMgr::instance().deleteSubnets6();
         CfgMgr::instance().deleteOptionDefs();
@@ -1255,6 +1256,18 @@ TEST_F(CfgMgrTest, revert) {
     // of the current configuration will become 12.
     ASSERT_NO_THROW(cfg_mgr.revert(3));
     EXPECT_EQ(12, cfg_mgr.getCurrentCfg()->getLoggingInfo()[0].debuglevel_);
+}
+
+// This test verifies that the verbosity can be set and obtained from the
+// configuration manager.
+TEST_F(CfgMgrTest, verbosity) {
+    ASSERT_FALSE(CfgMgr::instance().isVerbose());
+
+    CfgMgr::instance().setVerbose(true);
+    ASSERT_TRUE(CfgMgr::instance().isVerbose());
+
+    CfgMgr::instance().setVerbose(false);
+    EXPECT_FALSE(CfgMgr::instance().isVerbose());
 }
 
 /// @todo Add unit-tests for testing:

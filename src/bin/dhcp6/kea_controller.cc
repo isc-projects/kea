@@ -74,8 +74,7 @@ void configure(const std::string& file_name) {
         // If there's no logging element, we'll just pass NULL pointer,
         // which will be handled by configureLogger().
         Daemon::configureLogger(json->get("Logging"),
-                                CfgMgr::instance().getStagingCfg(),
-                                ControlledDhcpv6Srv::getInstance()->getVerbose());
+                                CfgMgr::instance().getStagingCfg());
 
         // Get Dhcp6 component from the config
         dhcp6 = json->get("Dhcp6");
@@ -106,7 +105,12 @@ void configure(const std::string& file_name) {
             isc_throw(isc::BadValue, reason);
         }
 
-        // Configuration successful.
+        // If configuration was parsed successfully, apply the new logger
+        // configuration to log4cplus. It is done before commit in case
+        // something goes wrong.
+        CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
+
+        // Use new configuration.
         CfgMgr::instance().commit();
 
     }  catch (const std::exception& ex) {

@@ -65,14 +65,10 @@ void configure(const std::string& file_name) {
             isc_throw(isc::BadValue, "no configuration found");
         }
 
-        // Let's configure logging before applying the configuration,
-        // so we can log things during configuration process.
-
         // If there's no logging element, we'll just pass NULL pointer,
         // which will be handled by configureLogger().
         Daemon::configureLogger(json->get("Logging"),
-                                CfgMgr::instance().getStagingCfg(),
-                                ControlledDhcpv4Srv::getInstance()->getVerbose());
+                                CfgMgr::instance().getStagingCfg());
 
         // Get Dhcp4 component from the config
         dhcp4 = json->get("Dhcp4");
@@ -102,7 +98,12 @@ void configure(const std::string& file_name) {
             isc_throw(isc::BadValue, reason);
         }
 
-        // Configuration successful.
+        // If configuration was parsed successfully, apply the new logger
+        // configuration to log4cplus. It is done before commit in case
+        // something goes wrong.
+        CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
+
+        // Use new configuration.
         CfgMgr::instance().commit();
 
     }  catch (const std::exception& ex) {
