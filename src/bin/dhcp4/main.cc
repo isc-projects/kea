@@ -16,6 +16,7 @@
 
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <log/logger_support.h>
 #include <log/logger_manager.h>
 
@@ -122,6 +123,11 @@ main(int argc, char* argv[]) {
     int ret = EXIT_SUCCESS;
 
     try {
+        // It is important that we set a default logger name because this name
+        // will be used when the user doesn't provide the logging configuration
+        // in the Kea configuration file.
+        CfgMgr::instance().setDefaultLoggerName(DHCP4_LOGGER_NAME);
+
         // Initialize logging.  If verbose, we'll use maximum verbosity.
         Daemon::loggerInit(DHCP4_LOGGER_NAME, verbose_mode);
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_START_INFO)
