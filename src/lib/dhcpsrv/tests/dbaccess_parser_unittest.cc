@@ -19,6 +19,7 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <config/ccsession.h>
 #include <gtest/gtest.h>
+#include <log/logger_unittest_support.h>
 
 #include <map>
 #include <string>
@@ -47,6 +48,7 @@ public:
     /// (the last in particular).
     ~DbAccessParserTest() {
         LeaseMgrFactory::destroy();
+        isc::log::resetUnitTestRootLogger();
     }
 
     /// @brief Build JSON String

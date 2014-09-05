@@ -17,6 +17,7 @@
 #include <cc/data.h>
 #include <dhcpsrv/logging.h>
 #include <gtest/gtest.h>
+#include <log/logger_support.h>
 
 using namespace isc;
 using namespace isc::dhcp;
@@ -24,8 +25,29 @@ using namespace isc::data;
 
 namespace {
 
+/// @brief Logging Test Fixture Class
+///
+/// Trivial class that ensures that the logging is reset to its defaults after
+/// each test.  Strictly speaking this only resets the testing root logger (which
+/// has the name "kea") but as the only other logger mentioned here ("wombat")
+/// is not used elsewhere, that is sufficient.
+
+class LoggingTest : public ::testing::Test {
+    public:
+        /// @brief Constructor
+        LoggingTest() {}
+
+        /// @brief Destructor
+        ///
+        /// Reset root logger back to defaults.
+        ~LoggingTest() {
+            isc::log::resetUnitTestRootLogger();
+        }
+};
+
+
 // Checks that contructor is able to process specified storage properly
-TEST(LoggingTest, constructor) {
+TEST_F(LoggingTest, constructor) {
 
     ConfigurationPtr null_ptr;
     EXPECT_THROW(LogConfigParser parser(null_ptr), BadValue);
@@ -38,7 +60,7 @@ TEST(LoggingTest, constructor) {
 // Checks if the LogConfigParser class is able to transform JSON structures
 // into Configuration usable by log4cplus. This test checks for output
 // configured to stdout on debug level.
-TEST(LoggingTest, parsingConsoleOutput) {
+TEST_F(LoggingTest, parsingConsoleOutput) {
 
     const char* config_txt =
     "{ \"loggers\": ["
@@ -79,7 +101,7 @@ TEST(LoggingTest, parsingConsoleOutput) {
 // Checks if the LogConfigParser class is able to transform JSON structures
 // into Configuration usable by log4cplus. This test checks for output
 // configured to a file on INFO level.
-TEST(LoggingTest, parsingFile) {
+TEST_F(LoggingTest, parsingFile) {
 
     const char* config_txt =
     "{ \"loggers\": ["
@@ -119,7 +141,7 @@ TEST(LoggingTest, parsingFile) {
 // Checks if the LogConfigParser class is able to transform data structures
 // into Configuration usable by log4cplus. This test checks that more than
 // one logger can be configured.
-TEST(LoggingTest, multipleLoggers) {
+TEST_F(LoggingTest, multipleLoggers) {
 
     const char* config_txt =
     "{ \"loggers\": ["
@@ -174,7 +196,7 @@ TEST(LoggingTest, multipleLoggers) {
 // Checks if the LogConfigParser class is able to transform data structures
 // into Configuration usable by log4cplus. This test checks that more than
 // one logging destination can be configured.
-TEST(LoggingTest, multipleLoggingDestinations) {
+TEST_F(LoggingTest, multipleLoggingDestinations) {
 
     const char* config_txt =
     "{ \"loggers\": ["
