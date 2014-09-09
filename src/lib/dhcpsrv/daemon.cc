@@ -96,7 +96,7 @@ void Daemon::configureLogger(const isc::data::ConstElementPtr& log_config,
 
 void Daemon::loggerInit(const char*, bool verbose) {
 
-    setenv("KEA_LOCKFILE_DIR_FROM_BUILD", "/tmp", 0);
+    setenv("KEA_LOCKFILE_DIR", "/tmp", 0);
 
     // Initialize logger system
     isc::log::initLogger(isc::log::getDefaultRootLoggerName().c_str(),
