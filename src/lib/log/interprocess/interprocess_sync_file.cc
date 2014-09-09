@@ -17,6 +17,8 @@
 #include <string>
 #include <cerrno>
 #include <cstring>
+#include <sstream>
+#include <iostream>
 
 #include <stdlib.h>
 #include <string.h>
@@ -60,9 +62,17 @@ InterprocessSyncFile::do_lock(int cmd, short l_type) {
         umask(mode);
 
         if (fd_ == -1) {
-            isc_throw(InterprocessSyncFileError,
-                      "Unable to use interprocess sync lockfile ("
-                      << std::strerror(errno) << "): " << lockfile_path);
+            std::stringstream tmp;
+
+            // We failed to create a lockfile. This means that the logging
+            // system is unusable. We need to report the issue using plain
+            // print to stderr.
+            tmp << "Unable to use interprocess sync lockfile ("
+                << std::strerror(errno) << "): " << lockfile_path;
+            std::cerr << tmp.str() << std::endl;
+
+            // And then throw exception as usual.
+            isc_throw(InterprocessSyncFileError, tmp.str());
         }
     }
 
