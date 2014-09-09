@@ -162,7 +162,7 @@ void initLogger(isc::log::Severity severity, int dbglevel) {
     const char* localfile = getenv("KEA_LOGGER_LOCALMSG");
 
     // Set a directory for creating lockfiles when running tests
-    setenv("KEA_LOCKFILE_DIR_FROM_BUILD", TOP_BUILDDIR, 1);
+    setenv("KEA_LOCKFILE_DIR_FROM_BUILD", TOP_BUILDDIR, 0);
 
     // Initialize logging
     initLogger(root, isc::log::DEBUG, isc::log::MAX_DEBUG_LEVEL, localfile);
