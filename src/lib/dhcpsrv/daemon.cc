@@ -18,6 +18,8 @@
 #include <cc/data.h>
 #include <boost/bind.hpp>
 #include <logging.h>
+#include <log/logger_name.h>
+#include <log/logger_support.h>
 #include <errno.h>
 
 /// @brief provides default implementation for basic daemon operations
@@ -90,6 +92,19 @@ void Daemon::configureLogger(const isc::data::ConstElementPtr& log_config,
     /// @todo: Once configuration unrolling is implemented,
     /// this call will be moved to a separate method.
     parser.applyConfiguration();
+}
+
+void Daemon::loggerInit(const char*, bool verbose) {
+
+    setenv("KEA_LOCKFILE_DIR_FROM_BUILD", "/tmp", 0);
+
+    // Initialize logger system
+    isc::log::initLogger(isc::log::getDefaultRootLoggerName().c_str(),
+                         isc::log::DEBUG, isc::log::MAX_DEBUG_LEVEL,
+                         NULL);
+
+    // Apply default configuration (log INFO or DEBUG to stdout)
+    LogConfigParser::applyDefaultConfiguration(verbose);
 }
 
 };
