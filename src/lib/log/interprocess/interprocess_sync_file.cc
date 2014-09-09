@@ -46,19 +46,9 @@ InterprocessSyncFile::do_lock(int cmd, short l_type) {
     if (fd_ == -1) {
         std::string lockfile_path = LOCKFILE_DIR;
 
-        const char* const env = getenv("KEA_FROM_BUILD");
+        const char* const env = getenv("KEA_LOCKFILE_DIR");
         if (env != NULL) {
             lockfile_path = env;
-        }
-
-        const char* const env2 = getenv("KEA_FROM_BUILD_LOCALSTATEDIR");
-        if (env2 != NULL) {
-            lockfile_path = env2;
-        }
-
-        const char* const env3 = getenv("KEA_LOCKFILE_DIR_FROM_BUILD");
-        if (env3 != NULL) {
-            lockfile_path = env3;
         }
 
         lockfile_path += "/" + task_name_ + "_lockfile";
