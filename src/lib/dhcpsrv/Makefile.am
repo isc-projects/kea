@@ -76,6 +76,9 @@ libkea_dhcpsrv_la_SOURCES += subnet.cc subnet.h
 libkea_dhcpsrv_la_SOURCES += triplet.h
 libkea_dhcpsrv_la_SOURCES += utils.h
 
+#DHCP4o6
+libkea_dhcpsrv_la_SOURCES += dhcp4o6_ipc.h dhcp4o6_ipc.cc
+
 nodist_libkea_dhcpsrv_la_SOURCES = dhcpsrv_messages.h dhcpsrv_messages.cc
 
 libkea_dhcpsrv_la_CXXFLAGS = $(AM_CXXFLAGS)

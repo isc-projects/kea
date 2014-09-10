@@ -27,6 +27,7 @@
 #include <dhcpsrv/d2_client_mgr.h>
 #include <dhcpsrv/subnet.h>
 #include <hooks/callout_handle.h>
+#include <dhcpsrv/dhcp4o6_ipc.h> //4o6
 #include <dhcpsrv/daemon.h>
 
 #include <iostream>
@@ -129,6 +130,16 @@ public:
     virtual void d2ClientErrorHandler(const dhcp_ddns::
                                       NameChangeSender::Result result,
                                       dhcp_ddns::NameChangeRequestPtr& ncr);
+
+    /// @brief Enable DHCPv4 over DHCPv6 function
+    ///
+    /// Calling this method enables 4o6 function in dhcpv6 server
+    void enable4o6();
+    
+    /// @brief Disable DHCPv4 over DHCPv6 function
+    ///
+    /// Calling this method disables 4o6 function in dhcpv6 server
+    void disable4o6();
 
 protected:
 
@@ -244,7 +255,25 @@ protected:
     ///
     /// @param infRequest message received from client
     Pkt6Ptr processInfRequest(const Pkt6Ptr& infRequest);
+    
+    /// @brief Processing incoming DHCPv4-QUERY messages.
+    ///
+    /// Processes incoming DHCPv4-QUERY messages (DHCPv4 over DHCPv6) from clients.
+    /// Payload DHCPv4 message from clients will be sent to dhcp4_srv through ipc.
+    ///
+    /// @param query DHCPv4-QUERY message received from client
+    void processDHCPv4Query(const Pkt6Ptr& query);
 
+    /// @brief Processing DHCPv4 response from dhcpv4 server.
+    ///
+    /// Processes DHCPv4 response from dhcp4_srv (used by DHCPv4 over DHCPv6).
+    /// DHCPv4 response from dhcp4_srv will result a DHCPv4-RESPONSE packet and
+    /// send back to the client.
+    ///
+    /// @param query Raw DHCPv4 message and original DHCPv6 information
+    /// received from dhcp4_srv.
+    Pkt6Ptr processDHCPv4Response(const Pkt6Ptr& query);
+    
     /// @brief Creates status-code option.
     ///
     /// @param code status code value (see RFC3315)
@@ -669,6 +698,9 @@ private:
 
     /// UDP port number on which server listens.
     uint16_t port_;
+    
+    /// IPC used for communation with dhcp4_srv (for RFC7341).
+    DHCP4o6IPCPtr ipc_;
 
 protected:
 

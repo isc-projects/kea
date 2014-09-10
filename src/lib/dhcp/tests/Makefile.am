@@ -78,6 +78,9 @@ libdhcp___unittests_SOURCES += pkt_filter6_test_stub.cc pkt_filter_test_stub.h
 libdhcp___unittests_SOURCES += pkt_filter_test_utils.h pkt_filter_test_utils.cc
 libdhcp___unittests_SOURCES += pkt_filter6_test_utils.h pkt_filter6_test_utils.cc
 
+#4o6
+libdhcp___unittests_SOURCES += pkt4o6_unittest.cc
+
 # Utilize Linux Packet Filtering on Linux.
 if OS_LINUX
 libdhcp___unittests_SOURCES += pkt_filter_lpf_unittest.cc

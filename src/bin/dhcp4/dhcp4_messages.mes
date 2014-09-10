@@ -383,3 +383,13 @@ This debug message indicates that the message type carried in DHCPv4 option
 53 is valid but the message will not be processed by the server. This includes
 messages being normally sent by the server to the client, such as Offer, ACK,
 NAK etc.
+
+% DHCP4_IPC_CONSTRUCT_ERROR failed to create DHCP4o6IPC in DHCPv4 server
+This error message indicates that the construction of a
+DHCP4o6 IPC within the DHCPv4 server has failed.
+As a result, DHCPv4 over DHCPv6 function is disabled.
+The server will continue running its regular DHCPv4 function.
+
+% DHCP4_IPC_SEND_ERROR failed to send message through DHCP4o6IPC
+This error message indicates that the DHCP4o6IPC failed to send
+a packet through unix socket.

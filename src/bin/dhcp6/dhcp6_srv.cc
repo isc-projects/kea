@@ -45,6 +45,7 @@
 #include <util/encode/hex.h>
 #include <util/io_utilities.h>
 #include <util/range_utilities.h>
+#include <dhcp/pkt4o6.h> //used by DHCP4o6
 
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
@@ -157,7 +158,7 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
             ->cfg_iface_.setFamily(CfgIface::V6);
 
         /// @todo call loadLibraries() when handling configuration changes
-
+        
     } catch (const std::exception &e) {
         LOG_ERROR(dhcp6_logger, DHCP6_SRV_CONSTRUCT_ERROR).arg(e.what());
         return;
@@ -245,10 +246,18 @@ bool Dhcpv6Srv::run() {
         // client's message and server's response
         Pkt6Ptr query;
         Pkt6Ptr rsp;
+        
+        // 4o6
+        bool dhcp4o6Response = false;
+        if (!query && ipc_ && !ipc_->empty()) {
+            query = ipc_->pop()->getPkt6();
+            dhcp4o6Response = true;
+        }
 
         try {
-            query = receivePacket(timeout);
-
+            if (!query) {
+                query = receivePacket(timeout);
+            }
         } catch (const SignalInterruptOnSelect) {
             // Packet reception interrupted because a signal has been received.
             // This is not an error because we might have received a SIGTERM,
@@ -405,6 +414,13 @@ bool Dhcpv6Srv::run() {
 
             case DHCPV6_INFORMATION_REQUEST:
                 rsp = processInfRequest(query);
+                break;
+                
+            case DHCPV4_QUERY:
+                if (dhcp4o6Response)
+                    rsp = processDHCPv4Response(query);
+                else
+                    processDHCPv4Query(query);
                 break;
 
             default:
@@ -2433,6 +2449,59 @@ Dhcpv6Srv::processInfRequest(const Pkt6Ptr& infRequest) {
     /// @todo: Implement this
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, infRequest->getTransid()));
     return reply;
+}
+
+void
+Dhcpv6Srv::processDHCPv4Query(const Pkt6Ptr& query) {
+    try {
+        Pkt4o6Ptr pkt4o6(new Pkt4o6(query));
+        ipc_->sendPkt4o6(pkt4o6);
+    } catch (const Exception& ex) {
+        LOG_ERROR(dhcp6_logger, DHCP6_IPC_SEND_ERROR).arg(ex.what());
+    }
+}
+
+Pkt6Ptr
+Dhcpv6Srv::processDHCPv4Response(const Pkt6Ptr& query) {
+    Pkt6Ptr reply = Pkt6Ptr(new Pkt6(DHCPV4_RESPONSE, query->getTransid()));
+
+    appendRequestedOptions(query, reply);//TODO: should we remove this?
+        
+    OptionPtr option(new Option(Option::V6,
+                                OPTION_DHCPV4_MSG,
+                                ipc_->currentPkt4o6()->getDHCPv4MsgOption()));
+    reply->addOption(option);
+
+    //Add relay info
+    if (!query->relay_info_.empty()) {
+        reply->copyRelayInfo(query);
+    }
+    return reply;
+}
+
+
+void
+Dhcpv6Srv::enable4o6() {
+    /// init DHCP4o6 IPC
+    try {
+        ipc_ = DHCP4o6IPCPtr(new DHCP4o6IPC("DHCPv4_over_DHCPv6_v4tov6",
+                                            "DHCPv4_over_DHCPv6_v6tov4"));
+    } catch (const Exception &e) {
+        LOG_ERROR(dhcp6_logger, DHCP6_IPC_CONSTRUCT_ERROR).arg(e.what());
+        ipc_ = DHCP4o6IPCPtr();
+    }
+    if (!ipc_)
+        return;
+    IfaceMgr::instance().addExternalSocket(ipc_->getSocket(),
+                                boost::bind(&DHCP4o6IPC::recvPkt4o6, ipc_));
+}
+
+void
+Dhcpv6Srv::disable4o6() {
+    if (!ipc_)
+        return;
+    IfaceMgr::instance().deleteExternalSocket(ipc_->getSocket());
+    ipc_ = boost::shared_ptr<DHCP4o6IPC>();
 }
 
 size_t

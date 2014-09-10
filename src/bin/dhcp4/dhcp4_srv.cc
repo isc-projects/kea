@@ -155,9 +155,20 @@ Dhcpv4Srv::run() {
         Pkt4Ptr query;
         Pkt4Ptr rsp;
 
-        try {
-            query = receivePacket(timeout);
+        // 4o6
+        bool dhcp4o6Request = false;
+        if (!query && ipc_ && !ipc_->empty()) {
+            query = ipc_->pop()->getPkt4();
+            dhcp4o6Request = true;
 
+            //set Pkt4's localAddr according to U flag in Pkt6's transid field
+            ipc_->currentPkt4o6()->setPkt4LocalAddr();
+        }
+
+        try {
+            if (!query) {
+                query = receivePacket(timeout);
+            }
         } catch (const SignalInterruptOnSelect) {
             // Packet reception interrupted because a signal has been received.
             // This is not an error because we might have received a SIGTERM,
@@ -424,7 +435,16 @@ Dhcpv4Srv::run() {
                       DHCP4_RESPONSE_DATA)
                 .arg(static_cast<int>(rsp->getType())).arg(rsp->toText());
 
-            sendPacket(rsp);
+            if (ipc_ && dhcp4o6Request) {//4o6
+                try {
+                    Pkt4o6Ptr rsp4o6(new Pkt4o6(ipc_->currentPkt4o6(), rsp));
+                    ipc_->sendPkt4o6(rsp4o6);
+                } catch (const Exception& ex) {
+                    LOG_ERROR(dhcp4_logger, DHCP4_IPC_SEND_ERROR).arg(ex.what());
+                }
+            } else {
+                sendPacket(rsp);
+            }
         } catch (const std::exception& e) {
             LOG_ERROR(dhcp4_logger, DHCP4_PACKET_SEND_FAIL)
                 .arg(e.what());
@@ -1993,6 +2013,30 @@ Dhcpv4Srv::d2ClientErrorHandler(const
     /// @todo We may wish to revisit this, but for now we will simpy turn
     /// them off.
     CfgMgr::instance().getD2ClientMgr().suspendUpdates();
+}
+
+void
+Dhcpv4Srv::enable4o6() {
+    /// init DHCP4o6 IPC
+    try {
+        ipc_ = DHCP4o6IPCPtr(new DHCP4o6IPC("DHCPv4_over_DHCPv6_v6tov4",
+                                            "DHCPv4_over_DHCPv6_v4tov6"));
+    } catch (const Exception &e) {
+        LOG_ERROR(dhcp4_logger, DHCP4_IPC_CONSTRUCT_ERROR).arg(e.what());
+        ipc_ = DHCP4o6IPCPtr();
+    }
+    if (!ipc_)
+        return;
+    IfaceMgr::instance().addExternalSocket(ipc_->getSocket(),
+                                boost::bind(&DHCP4o6IPC::recvPkt4o6, ipc_));
+}
+
+void
+Dhcpv4Srv::disable4o6() {
+    if (!ipc_)
+        return;
+    IfaceMgr::instance().deleteExternalSocket(ipc_->getSocket());
+    ipc_ = boost::shared_ptr<DHCP4o6IPC>();
 }
 
 std::string

@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2006-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -81,6 +81,9 @@
 #define STATUS_NotConfigured     9
 #define STATUS_NotAllowed       10
 
+/* DHCPv4 Message Option, defined in RFC 7341 */
+#define OPTION_DHCPV4_MSG         87 
+
 /*
  * DHCPv6 message types, defined in section 5.3 of RFC 3315
  */
@@ -99,6 +102,13 @@
 #define DHCPV6_RELAY_REPL          13
 #define DHCPV6_LEASEQUERY          14
 #define DHCPV6_LEASEQUERY_REPLY    15
+
+/*
+ * DHCPv4-query and DHCPv4-response message types,
+ * defined in RFC 7341
+ */
+#define DHCPV4_QUERY              20
+#define DHCPV4_RESPONSE           21
 
 extern const char *dhcpv6_type_names[];
 extern const int dhcpv6_type_name_max;

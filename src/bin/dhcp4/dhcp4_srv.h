@@ -26,6 +26,7 @@
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/alloc_engine.h>
 #include <hooks/callout_handle.h>
+#include <dhcpsrv/dhcp4o6_ipc.h>
 #include <dhcpsrv/daemon.h>
 
 #include <boost/noncopyable.hpp>
@@ -173,6 +174,17 @@ public:
     virtual void d2ClientErrorHandler(const dhcp_ddns::
                                       NameChangeSender::Result result,
                                       dhcp_ddns::NameChangeRequestPtr& ncr);
+                                      
+    /// @brief Enable DHCPv4 over DHCPv6 function
+    ///
+    /// Calling this method enables 4o6 function in dhcpv4 server
+    void enable4o6();
+    
+    /// @brief Disable DHCPv4 over DHCPv6 function
+    ///
+    /// Calling this method disables 4o6 function in dhcpv4 server
+    void disable4o6();
+    
 protected:
 
     /// @name Functions filtering and sanity-checking received messages.
@@ -692,6 +704,9 @@ private:
     int hook_index_pkt4_receive_;
     int hook_index_subnet4_select_;
     int hook_index_pkt4_send_;
+    
+    /// IPC used for communation with dhcp4_srv (for RFC7341).
+    DHCP4o6IPCPtr ipc_;
 };
 
 }; // namespace isc::dhcp

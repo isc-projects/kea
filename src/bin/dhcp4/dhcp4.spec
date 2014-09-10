@@ -436,6 +436,12 @@
             },
         ]
       },
+      { "item_name": "4o6-enable",
+        "item_type": "boolean",
+        "item_optional": true,
+        "item_default": false,
+        "item_description": "Enable DHCPv4 over DHCPv6 function"
+      },
 
     ],
     "commands": [

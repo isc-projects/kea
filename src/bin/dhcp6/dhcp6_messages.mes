@@ -580,3 +580,13 @@ This warning message is printed when client attempts to release an prefix
 lease, but no such lease is known by the server. See the explanation
 of the status code DHCP6_UNKNOWN_RENEW_PD for possible reasons for
 such behavior.
+
+% DHCP6_IPC_CONSTRUCT_ERROR failed to create DHCP4o6IPC in DHCPv6 server
+This error message indicates that the construction of a
+DHCP4o6 IPC within the DHCPv6 server has failed.
+As a result, DHCPv4 over DHCPv6 function is disabled.
+The server will continue running its regular DHCPv6 function.
+
+% DHCP6_IPC_SEND_ERROR failed to send message through DHCP4o6IPC
+This error message indicates that the DHCP4o6IPC failed to send
+a packet through unix socket.

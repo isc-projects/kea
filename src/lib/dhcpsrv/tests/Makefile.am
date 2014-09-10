@@ -86,6 +86,9 @@ libdhcpsrv_unittests_SOURCES += test_get_callout_handle.cc test_get_callout_hand
 libdhcpsrv_unittests_SOURCES += triplet_unittest.cc
 libdhcpsrv_unittests_SOURCES += test_utils.cc test_utils.h
 
+#4o6
+libdhcpsrv_unittests_SOURCES += dhcp4o6_ipc_unittest.cc
+
 libdhcpsrv_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 if HAVE_MYSQL
 libdhcpsrv_unittests_CPPFLAGS += $(MYSQL_CPPFLAGS)

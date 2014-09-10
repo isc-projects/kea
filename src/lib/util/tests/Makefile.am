@@ -51,6 +51,8 @@ run_unittests_SOURCES += signal_set_unittest.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 
+#4o6
+run_unittests_SOURCES += ipc_unittest.cc
 run_unittests_LDADD = $(top_builddir)/src/lib/util/libkea-util.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/io/libkea-util-io.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la

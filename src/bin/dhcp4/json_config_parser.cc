@@ -23,6 +23,7 @@
 #include <dhcpsrv/option_space_container.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
+#include <dhcp4/dhcp4_srv.h>
 
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
@@ -461,7 +462,8 @@ namespace dhcp {
         parser = new DbAccessParser(config_id, *globalContext());
     } else if (config_id.compare("hooks-libraries") == 0) {
         parser = new HooksLibrariesParser(config_id);
-    } else if (config_id.compare("echo-client-id") == 0) {
+    } else if ((config_id.compare("echo-client-id") == 0) ||
+               (config_id.compare("4o6-enable") == 0)) {
         parser = new BooleanParser(config_id, globalContext()->boolean_values_);
     } else if (config_id.compare("dhcp-ddns") == 0) {
         parser = new D2ClientConfigParser(config_id);
@@ -489,7 +491,7 @@ void commitGlobalOptions() {
 }
 
 isc::data::ConstElementPtr
-configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
+configureDhcp4Server(Dhcpv4Srv& srv, isc::data::ConstElementPtr config_set) {
     if (!config_set) {
         ConstElementPtr answer = isc::config::createAnswer(1,
                                  string("Can't parse NULL config"));
@@ -571,6 +573,17 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                 // but we need it so as the subnet6 parser can access the
                 // parsed data.
                 parser->commit();
+                if (config_pair.first == "4o6-enable") {
+                    try {
+                        if (config_pair.second->boolValue()) {
+                            srv.enable4o6();
+                        } else {
+                            srv.disable4o6();
+                        }
+                    } catch (const isc::Exception& e) {
+                        //TODO: do someting
+                    }
+                }
             }
         }
 

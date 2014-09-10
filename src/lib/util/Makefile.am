@@ -41,6 +41,9 @@ libkea_util_la_SOURCES += encode/binary_from_base16.h
 libkea_util_la_SOURCES += random/qid_gen.h random/qid_gen.cc
 libkea_util_la_SOURCES += random/random_number_generator.h
 
+#4o6
+libkea_util_la_SOURCES += ipc.h
+
 libkea_util_la_LIBADD = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 CLEANFILES = *.gcno *.gcda
 

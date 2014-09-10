@@ -50,6 +50,9 @@ libkea_dhcp___la_SOURCES += pkt_filter6.h pkt_filter6.cc
 libkea_dhcp___la_SOURCES += pkt_filter_inet.cc pkt_filter_inet.h
 libkea_dhcp___la_SOURCES += pkt_filter_inet6.cc pkt_filter_inet6.h
 
+#DHCP4o6
+libkea_dhcp___la_SOURCES += pkt4o6.cc pkt4o6.h
+
 # Utilize Linux Packet Filtering on Linux.
 if OS_LINUX
 libkea_dhcp___la_SOURCES += pkt_filter_lpf.cc pkt_filter_lpf.h
