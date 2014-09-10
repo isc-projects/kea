@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 
-#include <util/ipc.h>
+#include <util/unix_socket.h>
 
 #include <gtest/gtest.h>
 
@@ -22,40 +22,40 @@ using namespace isc::util;
 
 namespace {
 
-/// @brief A test fixture class for BaseIPC.
-class IPCTest : public ::testing::Test {
+/// @brief A test fixture class for UnixSocket.
+class UnixSocketTest : public ::testing::Test {
 public:
     /// @brief Constructor.
     ///
-    /// It initializes 2 BaseIPC objects.
-    IPCTest() :
-        ipc1("test_ipc_2to1", "test_ipc_1to2"),
-        ipc2("test_ipc_1to2", "test_ipc_2to1")
+    /// It initializes 2 unix sockets.
+    UnixSocketTest() :
+        sock1_("test_ipc_2to1", "test_ipc_1to2"),
+        sock2_("test_ipc_1to2", "test_ipc_2to1")
     {
     }
 protected:
-    /// BaseIPC objects for testing.
-    BaseIPC ipc1, ipc2;
+    /// UnixSocket objects for testing.
+    UnixSocket sock1_, sock2_;
 };
 
-// Test BaseIPC constructor
-TEST_F(IPCTest, constructor) {
-	EXPECT_EQ(-1, ipc1.getSocket());
+// Test UnixSocket constructor
+TEST_F(UnixSocketTest, constructor) {
+	EXPECT_EQ(-1, sock1_.getSocket());
 }
 
 
 // Test openSocket function
-TEST_F(IPCTest, openSocket) {
+TEST_F(UnixSocketTest, openSocket) {
 	int fd;
 	EXPECT_NO_THROW(
-    	fd = ipc1.open();
+    	fd = sock1_.open();
     );
 	
-	EXPECT_EQ(fd, ipc1.getSocket());
+	EXPECT_EQ(fd, sock1_.getSocket());
 }
 
-// Test BaseIPC bidirectional data sending and receiving
-TEST_F(IPCTest, bidirectionalTransmission) {
+// Test bidirectional data sending and receiving.
+TEST_F(UnixSocketTest, bidirectionalTransmission) {
 	const int LEN1 = 100;
 	const int LEN2 = 200;
 	uint8_t data1[LEN2];
@@ -67,28 +67,28 @@ TEST_F(IPCTest, bidirectionalTransmission) {
 	    data2[i] = -i;
 	}
 	EXPECT_NO_THROW(
-    	ipc1.open();
+    	sock1_.open();
     );
 	EXPECT_NO_THROW(
-    	ipc2.open();
+    	sock2_.open();
     );
       
 	OutputBuffer sendbuf1(LEN1), sendbuf2(LEN2);
 	sendbuf1.writeData((void*)data1, LEN1);
 	sendbuf2.writeData((void*)data2, LEN2);
 	EXPECT_NO_THROW(
-	    ipc1.send(sendbuf1);
+	    sock1_.send(sendbuf1);
 	);
 	EXPECT_NO_THROW(
-    	ipc2.send(sendbuf2);
+    	sock2_.send(sendbuf2);
     );
 	
 	InputBuffer recvbuf1(0, 0), recvbuf2(0, 0);
 	EXPECT_NO_THROW(
-        recvbuf1 = ipc1.recv();
+        recvbuf1 = sock1_.recv();
     );
     EXPECT_NO_THROW(
-        recvbuf2 = ipc2.recv();
+        recvbuf2 = sock2_.recv();
     );
     
     size_t len1 = recvbuf1.getLength();
@@ -109,21 +109,21 @@ TEST_F(IPCTest, bidirectionalTransmission) {
 }
 
 // Test exceptions
-TEST_F(IPCTest, exceptions) {
+TEST_F(UnixSocketTest, exceptions) {
     EXPECT_THROW(
-        ipc1.recv(),
-        IPCRecvError
+        sock1_.recv(),
+        UnixSocketRecvError
     );
     EXPECT_THROW(
-        ipc1.send(OutputBuffer(10)),
-        IPCSendError
+        sock1_.send(OutputBuffer(10)),
+        UnixSocketSendError
     );
     EXPECT_NO_THROW(
-        ipc1.open();
-        ipc2.open();
+        sock1_.open();
+        sock2_.open();
     );
     EXPECT_NO_THROW(
-        ipc1.send(OutputBuffer(10))
+        sock1_.send(OutputBuffer(10))
     );
 }
 

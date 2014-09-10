@@ -16,7 +16,7 @@
 #define DHCP4O6_IPC_H
 
 #include <dhcp/pkt4o6.h>
-#include <util/ipc.h>
+#include <util/unix_socket.h>
 
 #include <queue>
 
@@ -24,19 +24,19 @@ namespace isc {
 namespace dhcp {
 
 /// @brief Exception thrown when DHCP4o6IPC::send() failed.
-class DHCP4o6IPCSendError : public isc::util::IPCSendError {
+class DHCP4o6IPCSendError : public isc::util::UnixSocketSendError {
 public:
     DHCP4o6IPCSendError(const char* file, size_t line, const char* what) :
-        isc::util::IPCSendError(file, line, what) { };
+        isc::util::UnixSocketSendError(file, line, what) { };
 };
 
 /// @brief IPC class to pass Pkt4o6 between DHCPv4 and DHCPv6 servers
-class DHCP4o6IPC : public isc::util::BaseIPC {
+class DHCP4o6IPC : public isc::util::UnixSocket {
 public:
     /// @brief Default constructor.
     ///
-    /// This function calls BaseIPC::open() to initiate socket directly
-    /// Method will throw if BaseIPC::open() method failed
+    /// This function calls UnixSocket::open() to initiate socket directly
+    /// Method will throw if UnixSocket::open() method failed
     ///
     /// @param local_filename Filename for receiving socket
     /// @param remote_filename Filename for sending socket
@@ -45,18 +45,18 @@ public:
     /// @brief Send a DHCPv4 ove DHCPv6 packet
     ///
     /// This function converts Pkt4o6 into binary data and sends it
-    /// through BaseIPC::send().
-    /// Method will throw if BaseIPC::send() failed
+    /// through UnixSocket::send().
+    /// Method will throw if UnixSocket::send() failed
     ///
     /// @param pkt4o6 Pointer to the packet to be sent
     void sendPkt4o6(const Pkt4o6Ptr& pkt4o6);
     
     /// @brief Receive a DHCPv4 ove DHCPv6 packet
     ///
-    /// This function calls BaseIPC::recv() to receive binary data
+    /// This function calls UnixSocket::recv() to receive binary data
     /// and converts it into Pkt4o6
     /// It pushes received Pkt4o6 into a queue and does not return immediately.
-    /// Method will throw if BaseIPC::recv() failed or Pkt4o6
+    /// Method will throw if UnixSocket::recv() failed or Pkt4o6
     /// construction failed
     void recvPkt4o6();
     

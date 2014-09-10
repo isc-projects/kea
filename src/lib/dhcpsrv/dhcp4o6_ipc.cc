@@ -19,7 +19,7 @@ namespace isc {
 namespace dhcp {
 
 DHCP4o6IPC::DHCP4o6IPC(const std::string& local_filename, const std::string& remote_filename) :
-    BaseIPC(local_filename, remote_filename) {
+    UnixSocket(local_filename, remote_filename) {
     open();
 }
 
@@ -42,7 +42,7 @@ DHCP4o6IPC::sendPkt4o6(const Pkt4o6Ptr& pkt4o6) {
     buf.writeData(&len, sizeof(size_t));
     buf.writeData(att.c_str(), len);
     
-    BaseIPC::send(buf);
+    UnixSocket::send(buf);
 }
 
 void
