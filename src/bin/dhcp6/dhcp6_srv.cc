@@ -2492,7 +2492,7 @@ Dhcpv6Srv::enable4o6() {
     }
     if (!ipc_)
         return;
-    IfaceMgr::instance().addExternalSocket(ipc_->getSocket(),
+    IfaceMgr::instance().addExternalSocket(ipc_->get(),
                                 boost::bind(&DHCP4o6IPC::recvPkt4o6, ipc_));
 }
 
@@ -2500,7 +2500,7 @@ void
 Dhcpv6Srv::disable4o6() {
     if (!ipc_)
         return;
-    IfaceMgr::instance().deleteExternalSocket(ipc_->getSocket());
+    IfaceMgr::instance().deleteExternalSocket(ipc_->get());
     ipc_ = boost::shared_ptr<DHCP4o6IPC>();
 }
 

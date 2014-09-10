@@ -13,95 +13,111 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <util/unix_socket.h>
+#include <unistd.h>
 
 namespace isc {
 namespace util {
 
-UnixSocket::UnixSocket(const std::string& local_filename, const std::string& remote_filename) :
+UnixSocket::UnixSocket(const std::string& local_filename,
+                       const std::string& remote_filename) :
         socketfd_(-1),
         remote_addr_len_(0),
         local_filename_(local_filename),
-        remote_filename_(remote_filename)
+        remote_filename_(remote_filename),
+        input_buffer_(RCVBUFSIZE)
 {
+    // Sanity check that the file names are not empty, nor equal.
+    if (local_filename_.empty() || remote_filename_.empty()) {
+        isc_throw(UnixSocketInvalidName, "unix socket file name must not"
+                  " be empty");
+
+    } else if (local_filename_ == remote_filename_) {
+        isc_throw(UnixSocketInvalidName, "local and remote file names for the"
+                  " unix socket are equal: '" << local_filename_ << "'");
+    }
 }
 
 UnixSocket::~UnixSocket() {
-    closeIPC();
-}
-
-int
-UnixSocket::open() {
-    //create socket
-    int fd = socket(AF_UNIX, SOCK_DGRAM, 0);
-    if (fd < 0) {
-        isc_throw(UnixSocketOpenError, "Failed to create a socket");
-    }
-    socketfd_ = fd;
-
-    bindSocket();
-    setRemoteFilename();
-    	
-    return socketfd_;
+    closeFd();
+    unlink(local_filename_.c_str());
 }
 
 void
-UnixSocket::closeIPC() {
-    if(socketfd_ >= 0)
+UnixSocket::open() {
+    // Cant't open socket twice.
+    if (isOpen()) {
+        isc_throw(UnixSocketOpenError, "unix socket '" << socketfd_
+                  << "' is already open");
+    }
+
+    // Create socket.
+    socketfd_ = socket(AF_UNIX, SOCK_DGRAM, 0);
+    if (socketfd_ < 0) {
+        isc_throw(UnixSocketOpenError, "Failed to create a socket");
+    }
+
+    // Convert the filename to the sockaddr structure.
+    struct sockaddr_un local_addr;
+    int local_addr_len = 0;
+    filenameToSockAddr(local_filename_, local_addr, local_addr_len);
+    filenameToSockAddr(remote_filename_, remote_addr_, remote_addr_len_);
+
+    // Remove existing socket file. If this is not done, the bind call
+    // may fail with "Address already in use" error.
+    unlink(local_filename_.c_str());
+    if (bind(socketfd_, reinterpret_cast<struct sockaddr *>(&local_addr),
+             local_addr_len) < 0) {
+        isc_throw(UnixSocketOpenError,
+                  "failed to bind unix socket to '" << local_filename_
+                  << "': " << strerror(errno));
+    }
+}
+
+void
+UnixSocket::closeFd() {
+    // Close it only if open.
+    if (socketfd_ >= 0)
         close(socketfd_);
     socketfd_ = -1;
 }
 
 int
 UnixSocket::send(const isc::util::OutputBuffer &buf) {
-    if (remote_addr_len_ == 0) {
-        isc_throw(UnixSocketSendError, "Remote address unset");
-    }
-    int count = sendto(socketfd_, buf.getData(), buf.getLength(), 0,
-                       (struct sockaddr*)&remote_addr_, remote_addr_len_);
-    if (count < 0) {
-        isc_throw(UnixSocketSendError, "UnixSocket failed on sendto: "
-                  << strerror(errno));
-    }
-    return count;
-}
-
-isc::util::InputBuffer
-UnixSocket::recv() {
-    uint8_t buf[RCVBUFSIZE];
-    int len = recvfrom(socketfd_, buf, RCVBUFSIZE, 0, NULL, NULL);
+    int len = sendto(socketfd_, buf.getData(), buf.getLength(), 0,
+                     reinterpret_cast<struct sockaddr*>(&remote_addr_),
+                     remote_addr_len_);
     if (len < 0) {
-        isc_throw(UnixSocketRecvError, "UnixSocket failed on recvfrom: "
+        isc_throw(UnixSocketSendError, "unix socket failed on sendto: "
                   << strerror(errno));
-    } 
-    isc::util::InputBuffer ibuf(buf, len);
-    return ibuf;
-}
-
-void
-UnixSocket::setRemoteFilename() {
-    memset(&remote_addr_, 0, sizeof(struct sockaddr_un));
-    remote_addr_.sun_family = AF_UNIX;
-    strcpy(&remote_addr_.sun_path[1], remote_filename_.c_str());
-    remote_addr_len_ = sizeof(sa_family_t) + remote_filename_.size() + 1;
-}
-
-void
-UnixSocket::bindSocket() {
-    struct sockaddr_un local_addr_;
-    int local_addr_len_;
-            
-    //init address
-    memset(&local_addr_, 0, sizeof(struct sockaddr_un));
-    local_addr_.sun_family = AF_UNIX;
-    strcpy(&local_addr_.sun_path[1], local_filename_.c_str());
-    local_addr_len_ = sizeof(sa_family_t) + local_filename_.size() + 1;
-
-    //bind to local_address
-    if (bind(socketfd_, (struct sockaddr *)&local_addr_, local_addr_len_) < 0) {
-        isc_throw(UnixSocketOpenError, "failed to bind to local address: " + local_filename_);
     }
+    return (len);
 }
 
+int
+UnixSocket::receive() {
+    int len = recvfrom(socketfd_, &input_buffer_[0], input_buffer_.size(),
+                       0, NULL, NULL);
+    if (len < 0) {
+        isc_throw(UnixSocketRecvError, "unix socket failed on recvfrom: "
+                  << strerror(errno));
+    }
+    return (len);
+}
+
+void
+UnixSocket::filenameToSockAddr(const std::string& filename,
+                               struct sockaddr_un& sockaddr,
+                               int& sockaddr_len) {
+    if (filename.empty()) {
+        isc_throw(UnixSocketInvalidName,
+                  "empty file name specified for unix socket");
+    }
+
+    memset(&sockaddr, 0, sizeof(struct sockaddr_un));
+    sockaddr.sun_family = AF_UNIX;
+    strncpy(sockaddr.sun_path, filename.c_str(), filename.size());
+    sockaddr_len = sizeof(sa_family_t) + filename.size();
+}
 
 }
 }

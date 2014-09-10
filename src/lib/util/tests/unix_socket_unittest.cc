@@ -19,113 +19,126 @@
 
 using namespace isc::util;
 
-
 namespace {
 
-/// @brief A test fixture class for UnixSocket.
+const char* TEST_FILE1 = "test_unix_socket_1";
+const char* TEST_FILE2 = "test_unix_socket_2";
+
+/// @brief A test fixture class for @c UnixSocket.
 class UnixSocketTest : public ::testing::Test {
 public:
     /// @brief Constructor.
     ///
     /// It initializes 2 unix sockets.
     UnixSocketTest() :
-        sock1_("test_ipc_2to1", "test_ipc_1to2"),
-        sock2_("test_ipc_1to2", "test_ipc_2to1")
+        sock1_(absolutePath(TEST_FILE1), absolutePath(TEST_FILE2)),
+        sock2_(absolutePath(TEST_FILE2), absolutePath(TEST_FILE1))
     {
     }
-protected:
+
+    /// @brief Prepends the absolute path to the file specified
+    /// as an argument.
+    ///
+    /// @param filename Name of the file.
+    /// @return Absolute path to the test file.
+    std::string absolutePath(const std::string& filename);
+
     /// UnixSocket objects for testing.
     UnixSocket sock1_, sock2_;
 };
 
-// Test UnixSocket constructor
-TEST_F(UnixSocketTest, constructor) {
-	EXPECT_EQ(-1, sock1_.getSocket());
+std::string
+UnixSocketTest::absolutePath(const std::string& filename) {
+    std::ostringstream s;
+    s << TEST_DATA_BUILDDIR << "/" << filename;
+    return (s.str());
 }
 
+// Test UnixSocket constructor
+TEST_F(UnixSocketTest, constructor) {
+    EXPECT_EQ(-1, sock1_.get());
+    EXPECT_EQ(-1, sock2_.get());
 
-// Test openSocket function
-TEST_F(UnixSocketTest, openSocket) {
-	int fd;
-	EXPECT_NO_THROW(
-    	fd = sock1_.open();
-    );
-	
-	EXPECT_EQ(fd, sock1_.getSocket());
+    // The local and remote sockets must not be bound to the same file.
+    EXPECT_THROW(UnixSocket(absolutePath(TEST_FILE1), absolutePath(TEST_FILE1)),
+                 UnixSocketInvalidName);
+    // The socket path must not be empty.
+    EXPECT_THROW(UnixSocket("", absolutePath(TEST_FILE1)),
+                 UnixSocketInvalidName);
+    EXPECT_THROW(UnixSocket(absolutePath(TEST_FILE1), ""),
+                 UnixSocketInvalidName);
+
+}
+
+// Test open() function which opens a unix socket.
+TEST_F(UnixSocketTest, open) {
+    ASSERT_NO_THROW(sock1_.open());
+    EXPECT_GE(sock1_.get(), 0);
+    // Second attempt open socket should fail.
+    ASSERT_THROW(sock1_.open(), UnixSocketOpenError);
+    // Close the opened socket and check then we can re-open.
+    sock1_.closeFd();
+    EXPECT_NO_THROW(sock1_.open());
 }
 
 // Test bidirectional data sending and receiving.
 TEST_F(UnixSocketTest, bidirectionalTransmission) {
-	const int LEN1 = 100;
-	const int LEN2 = 200;
-	uint8_t data1[LEN2];
-	uint8_t data2[LEN2];
-	uint8_t data3[LEN2];
-	uint8_t data4[LEN2];
-	for (int i = 0; i < LEN2; ++i) {
-	    data1[i] = i;
-	    data2[i] = -i;
-	}
-	EXPECT_NO_THROW(
-    	sock1_.open();
-    );
-	EXPECT_NO_THROW(
-    	sock2_.open();
-    );
-      
-	OutputBuffer sendbuf1(LEN1), sendbuf2(LEN2);
-	sendbuf1.writeData((void*)data1, LEN1);
-	sendbuf2.writeData((void*)data2, LEN2);
-	EXPECT_NO_THROW(
-	    sock1_.send(sendbuf1);
-	);
-	EXPECT_NO_THROW(
-    	sock2_.send(sendbuf2);
-    );
-	
-	InputBuffer recvbuf1(0, 0), recvbuf2(0, 0);
-	EXPECT_NO_THROW(
-        recvbuf1 = sock1_.recv();
-    );
-    EXPECT_NO_THROW(
-        recvbuf2 = sock2_.recv();
-    );
-    
-    size_t len1 = recvbuf1.getLength();
-    size_t len2 = recvbuf2.getLength();
-    recvbuf1.readData((void*)data3, len1);
-    recvbuf2.readData((void*)data4, len2);
-	
-	//check out length.
-	ASSERT_EQ(LEN2, len1);
-	ASSERT_EQ(LEN1, len2);
-	
-	for (int i = 0; i < len1; i++) {
-		EXPECT_EQ(data2[i], data3[i]);
-	}
-	for (int i = 0; i < len2; i++) {
-		EXPECT_EQ(data1[i], data4[i]);
-	}
+    const int LEN1 = 100;
+    const int LEN2 = 200;
+
+    // Prepare data to be sent over the unix sockets from both directions.
+    uint8_t data1[LEN2];
+    uint8_t data2[LEN2];
+    for (int i = 0; i < LEN2; ++i) {
+        data1[i] = i;
+        // Make sure that the data is different for the other side of the
+        // communication channel so as the socket doesn't receive its own
+        // data.
+        data2[i] = i % 2;
+    }
+    // Make sure that the sockets can be opened on both ends.
+    ASSERT_NO_THROW(sock1_.open());
+    ASSERT_NO_THROW(sock2_.open());
+
+    // Prepare send buffers. Differentiate their lengths so we can verify
+    // that the lengths of the received data are correct.
+    OutputBuffer sendbuf1(LEN1);
+    OutputBuffer sendbuf2(LEN2);
+    sendbuf1.writeData((void*)data1, LEN1);
+    sendbuf2.writeData((void*)data2, LEN2);
+    // Send data over the sockets in both directions.
+    ASSERT_NO_THROW(sock1_.send(sendbuf1));
+    ASSERT_NO_THROW(sock2_.send(sendbuf2));
+
+    // Receive the data from both directions.
+    int recvlen1, recvlen2;
+    ASSERT_NO_THROW(recvlen1 = sock1_.receive());
+    ASSERT_NO_THROW(recvlen2 = sock2_.receive());
+
+    // Sanity check the lengths.
+    ASSERT_EQ(recvlen1, LEN2);
+    ASSERT_EQ(recvlen2, LEN1);
+
+    // Make sure we can create InputBuffers from the received data.
+    InputBuffer recvbuf1(sock1_.getReceiveBuffer(), recvlen1);
+    InputBuffer recvbuf2(sock2_.getReceiveBuffer(), recvlen2);
+
+    // Verify that the received data is correct.
+    for (int i = 0; i < recvlen1; ++i) {
+        EXPECT_EQ(recvbuf1.readUint8(), data2[i]);
+    }
+    for (int i = 0; i < recvlen2; ++i) {
+        EXPECT_EQ(recvbuf2.readUint8(), data1[i]);
+    }
 }
 
-// Test exceptions
+// Test that send and receive throw for close sockets.
 TEST_F(UnixSocketTest, exceptions) {
-    EXPECT_THROW(
-        sock1_.recv(),
-        UnixSocketRecvError
-    );
-    EXPECT_THROW(
-        sock1_.send(OutputBuffer(10)),
-        UnixSocketSendError
-    );
-    EXPECT_NO_THROW(
-        sock1_.open();
-        sock2_.open();
-    );
-    EXPECT_NO_THROW(
-        sock1_.send(OutputBuffer(10))
-    );
+    EXPECT_THROW(sock1_.receive(), UnixSocketRecvError);
+    EXPECT_THROW(sock1_.send(OutputBuffer(10)), UnixSocketSendError);
+    ASSERT_NO_THROW(sock1_.open());
+    ASSERT_NO_THROW(sock2_.open());
+    EXPECT_NO_THROW(sock1_.send(OutputBuffer(10)));
 }
 
 }
-

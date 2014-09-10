@@ -47,7 +47,8 @@ DHCP4o6IPC::sendPkt4o6(const Pkt4o6Ptr& pkt4o6) {
 
 void
 DHCP4o6IPC::recvPkt4o6() {
-    isc::util::InputBuffer buf = recv();
+    int len = receive();
+    isc::util::InputBuffer buf(getReceiveBuffer(), len);
     size_t len4, len6, len_json;
     uint8_t buf4[RCVBUFSIZE];
     uint8_t buf6[RCVBUFSIZE];

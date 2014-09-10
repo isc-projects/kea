@@ -25,119 +25,161 @@
 namespace isc {
 namespace util {
 
-/// @brief Exception thrown when BaseIPC::open() failed.
+/// @brief Exception thrown when invalid file names have been specified for a
+/// unix socket.
+class UnixSocketInvalidName : public Exception {
+public:
+    UnixSocketInvalidName(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
+/// @brief Exception thrown when @c UnixSocket::open fails.
 class UnixSocketOpenError : public Exception {
 public:
     UnixSocketOpenError(const char* file, size_t line, const char* what) :
-    isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { };
 };
 
-/// @brief Exception thrown when UnixSocket::recv() failed.
+/// @brief Exception thrown when @c UnixSocket::recv fails.
 class UnixSocketRecvError : public Exception {
 public:
     UnixSocketRecvError(const char* file, size_t line, const char* what) :
-    isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { };
 };
 
-/// @brief Exception thrown when BaseIPC::send() failed.
+/// @brief Exception thrown when @c UnixSocket::send fails.
 class UnixSocketSendError : public Exception {
 public:
     UnixSocketSendError(const char* file, size_t line, const char* what) :
-    isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { };
 };
 
-/// @brief An Inter Process Communication(IPC) tool based on UNIX domain socket.
+/// @brief Unix socket.
 ///
-/// It is used by 2 processes for data communication. It provides methods for
-/// bi-directional binary data transfer.
+/// This class provides low level functions to operate on a unix socket. Other
+/// classes may use it or derive from it to provide specialized mechanisms for
+/// the Inter Process Communication (IPC).
 ///
-/// There should be 2 instances (a sender and a receiver) using this tool
-/// at the same time. The filename for the sockets must match (i.e. 
-/// the remote filename of the sender = the local filename of the receiver).
+/// This class requires that the two file names are specified: first file
+/// defines a local address that the socket is bound to, the second one
+/// specifies a remote address to which the data is sent. If this class is used
+/// for IPC, the remote address associated with this socket is a local address
+/// of the socket used by the other process. Conversely, when the local addres
+/// of this socket is a remote address for the socket used by the other process.
 ///
-/// It should be used as a base class and not directly used for future classes
-/// implementing inter process communication.
+/// Constructor of this class doesn't open a socket for communication. The
+/// socket is opened with the @c UnixSocket::open method. If the socket is
+/// opened a second call to @c UnixSocket::open will trigger an exception.
+///
+/// @note This class doesn't use abstract sockets, i.e. sockets not associated
+/// with the path on the disk, because abstract sockets are the Linux
+/// extension and are not portable.
 class UnixSocket {
 public:
 
-    /// @brief Packet reception buffer size
-    ///
-    /// Receive buffer size of UNIX socket
+    /// @brief Size of the pre-allocated buffer used to receive the data.
     static const uint32_t RCVBUFSIZE = 4096;
 
-    /// @brief BaseIPC constructor.
+    /// @brief Constructor
     ///
-    /// Creates BaseIPC object for UNIX socket communication using the given
-    /// filenames. It doesn't create the socket immediately.
+    /// Sets paths to the local and remote file names. The file names are
+    /// sanity checked by the constructor:
+    /// - they must not be empty
+    /// - they must not be equal.
     ///
-    /// @param local_filename Filename for receiving socket
-    /// @param remote_filename Filename for sending socket
-    UnixSocket(const std::string& local_filename, const std::string& remote_filename);
-    /// @brief BaseIPC destructor.
+    /// @param local_filename file name that the socket is bound to.
+    /// @param remote_filename file name identifying a remote socket.
     ///
-    /// It closes the socket explicitly.
+    /// @throw UnixSocketInvalidName if any of the file names is empty or if
+    /// file names are equal.
+    UnixSocket(const std::string& local_filename,
+               const std::string& remote_filename);
+
+    /// @brief Destructor.
+    ///
+    /// Closes open socket and removes socket file.
     virtual ~UnixSocket();
-    
-    
-    /// @brief Open UNIX socket
+
+    /// @brief Opens unix socket
     ///
-    /// Method will throw if socket creation fails.
+    /// This method opens a unix socket and binds it to the local file.
     ///
-    /// @return A int value of the socket descriptor.
-    int open();
+    /// @throw UnixSocketOpenError if the socket creation, binding fails.
+    /// @throw UnixSocketOpenError if socket is already open.
+    void open();
+
+    /// @brief Convenience function checking if the socket is open.
+    ///
+    /// @return true if the unix socket is already open, false otherwise.
+    bool isOpen() const {
+        return (socketfd_ >= 0);
+    }
 
     /// @brief Close opened socket.
-    void closeIPC();
+    void closeFd();
 
-    /// @brief Send data.
-    /// 
-    /// @param buf The data to be sent.
+    /// @brief Sends data over the unix socket.
     ///
-    /// Method will throw if open() has not been called or sendto() failed. 
-    /// open() MUST be called before calling this function.
+    /// @param buf Reference to a buffer holding data to be sent.
+    ///
+    /// @throw UnixSocketSendError if failed to send the data over the socket,
+    /// e.g. socket hasn't been opened or other error occurred.
     ///
     /// @return The number of bytes sent.
     int send(const isc::util::OutputBuffer &buf);
 
-    /// @brief Receive data.
+    /// @brief Receive data over the socket.
     ///
-    /// Method will throw if socket recvfrom() failed.
-    /// open() MUST be called before calling this function.
+    /// This method receives the data over the socket and stores it in the
+    /// pre-allocated buffer. The pointer to this buffer may be obtained
+    /// by calling @c UnixSocket::getReceiveBuffer.
     ///
-    /// @return The number of bytes received.
-    isc::util::InputBuffer recv();
+    /// @return Length of the received data.
+    int receive();
 
-    /// @brief Get socket fd.
-    /// 
-    /// @return The socket fd of the unix socket.
-    int getSocket() { return socketfd_; }
+    /// @brief Returns a const pointer to the buffer holding received data.
+    ///
+    /// This method always returns a valid pointer. The pointer holds the data
+    /// received during the last call to @c UnixSocket::receive.
+    const uint8_t* getReceiveBuffer() const {
+        return (&input_buffer_[0]);
+    }
 
-protected:
+    /// @brief Get socket descriptor.
+    ///
+    /// @return The socket descriptor.
+    int get() const {
+        return (socketfd_);
+    }
 
-    /// @brief Set remote filename
+private:
+
+    /// @brief Converts the file name to the @c sockaddr_un structure.
     ///
-    /// The remote filename is used for sending data. The filename is given
-    /// in the constructor.
-    void setRemoteFilename();
-    
-    /// @brief Bind the UNIX socket to the given filename
-    ///
-    /// The filename is given in the constructor.
-    ///
-    /// Method will throw if socket binding fails.
-    void bindSocket();
-    
-    /// UNIX socket value.
+    /// @param filename Path to the socket file.
+    /// @param [out] sockaddr Structure being initialized.
+    /// @param [out] sockaddr_len Length of the initialized structure.
+    void filenameToSockAddr(const std::string& filename,
+                            struct sockaddr_un& sockaddr,
+                            int& sockaddr_len);
+
+    /// @brief Unix socket descriptor.
     int socketfd_;
-    
-    /// Remote UNIX socket address 
+
+    /// @brief Remote unix socket address to which this socket is connected.
     struct sockaddr_un remote_addr_;
-    
-    /// Length of remote_addr_
+
+    /// @brief Length of @c remote_addr_ structure.
     int remote_addr_len_;
 
-    /// Filename for receiving and sending socket
-    std::string local_filename_, remote_filename_;
+    /// @brief File name for local socket.
+    std::string local_filename_;
+
+    /// @brief File name for the remote socket.
+    std::string remote_filename_;
+
+    /// @brief Buffer holding received data from the socket.
+    std::vector<uint8_t> input_buffer_;
 
 }; // UnixSocket class
 
