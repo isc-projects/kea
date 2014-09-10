@@ -13,10 +13,13 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
+
 #include <exceptions/exceptions.h>
+#include <cc/data.h>
 #include <dhcpsrv/daemon.h>
 #include <dhcpsrv/logging.h>
-#include <cc/data.h>
+#include <log/logger_unittest_support.h>
+
 #include <gtest/gtest.h>
 
 using namespace isc;
@@ -33,10 +36,27 @@ std::string isc::dhcp::Daemon::getVersion(bool extended) {
 
 namespace {
 
+/// @brief Daemon Test test fixture class
+class DaemonTest : public ::testing::Test {
+public:
+    /// @brief Constructor
+    DaemonTest() {
+    }
+
+    /// @brief Destructor
+    ///
+    /// As some of the tests have the side-effect of altering the logging
+    /// settings (when configureLogger is called), the logging is reset to
+    /// the default after each test completes.
+    ~DaemonTest() {
+        isc::log::resetUnitTestRootLogger();
+    }
+};
+
 
 // Very simple test. Checks whether Daemon can be instantiated and its
 // default parameters are sane
-TEST(DaemonTest, constructor) {
+TEST_F(DaemonTest, constructor) {
     EXPECT_NO_THROW(Daemon instance1);
 
     // Check that the verbose mode is not set by default.
@@ -47,7 +67,7 @@ TEST(DaemonTest, constructor) {
 // Checks that configureLogger method is behaving properly.
 // More dedicated tests are availablef for LogConfigParser class.
 // See logger_unittest.cc
-TEST(DaemonTest, parsingConsoleOutput) {
+TEST_F(DaemonTest, parsingConsoleOutput) {
 
     // Storage - parsed configuration will be stored here
     ConfigurationPtr storage(new Configuration());

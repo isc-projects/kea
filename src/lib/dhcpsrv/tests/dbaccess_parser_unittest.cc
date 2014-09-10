@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,12 +14,13 @@
 
 #include <config.h>
 
+#include <config/ccsession.h>
 #include <dhcpsrv/dbaccess_parser.h>
 #include <dhcpsrv/dhcp_parsers.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <config/ccsession.h>
-#include <gtest/gtest.h>
 #include <log/logger_unittest_support.h>
+
+#include <gtest/gtest.h>
 
 #include <map>
 #include <string>
@@ -46,6 +47,10 @@ public:
     ///
     /// Just make sure that the lease database is closed after every test
     /// (the last in particular).
+    ///
+    /// As some of the tests have the side-effect of altering the logging
+    /// settings (when the parser's "build" method is called), ensure that
+    /// the logging is reset to the default after each test completes.
     ~DbAccessParserTest() {
         LeaseMgrFactory::destroy();
         isc::log::resetUnitTestRootLogger();
