@@ -55,6 +55,12 @@ following section applies only to the Bundy backend.
  build, the configuration is then applied ("committed") and commit() method is
  called.
 
+ \note With the implementation of the Kea ticket #3534 we're moving away from
+ the concept of commit being called for individual parsers. When this ticket
+ and a couple of followup tickets are implemented, the commit will be a
+ single operation executed for the whole configuration received from many
+ parsers.
+
  All parsers are defined in src/bin/dhcp6/config_parser.cc file. Some of them
  are generic (e.g. Uint32Parser that is able to handle any
  unsigned 32 bit integer), but some are very specialized (e.g.

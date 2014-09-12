@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -39,11 +39,47 @@ only available backend is MySQL (see \ref isc::dhcp::MySqlLeaseMgr).
 
 @section cfgmgr Configuration Manager
 
-Configuration Manager (\ref isc::dhcp::CfgMgr) stores configuration information
-necessary for DHCPv4 and DHCPv6 server operation. In particular, it stores
-subnets (\ref isc::dhcp::Subnet4 and \ref isc::dhcp::Subnet6) together with
-their pools (\ref isc::dhcp::Pool4 and \ref isc::dhcp::Pool6), options and
-other information specified by the user in the Kea configuration.
+Configuration Manager (\ref isc::dhcp::CfgMgr) is a singleton object which
+holds configuration information necessary for the operation of Kea daemons.
+A complete collection of information for the daemon is stored in the
+\ref isc::dhcp::Configuration object. Internally, the Configuration Manager
+holds a list of \ref isc::dhcp::Configuration objects, from which one
+is marked as "current configuration".
+
+When the server starts up or is being reconfigured a new
+\ref isc::dhcp::Configuration object, referred to as "staging configuration",
+is created. The staging configuration is held at the tip of the list of
+configurations. The object can be accessed by calling the
+\ref isc::dhcp::CfgMgr::getStagingCfg. This object can be accessed
+from different stages of the configuration parsing and modified as needed.
+Modifications of to the staging configuration do not affect the current
+configuration. The staging configuration is unused until the
+\ref isc::dhcp::CfgMgr::commit function is called. This exception safe method
+marks the staging object as "current configuration". The const pointer to the
+current configuration can be accessed by calling a
+\ref isc::dhcp::CfgMgr::getCurrentCfg.
+
+The staging configuration can be discarded at any time before it is committed
+by calling the \ref isc::dhcp::CfgMgr::rollback. This removes the
+\ref isc::dhcp::Configuration object from the Configuration Manager. When
+the \ref isc::dhcp::CfgMgr::getStagingCfg is called again a fresh/default
+\ref isc::dhcp::Configuration object is returned.
+
+The Configuration Manager stores previous configurations, i.e. configurations
+which occurred prior to the most current configuration. This is currently
+unused (except for unit tests) by the deamons, but in the future this
+mechanism can be used to trigger a rollover of the server configuration
+to a last good configuration that the administrator prefers.
+
+The previous configurations are identified by the value which specifies a
+distance between the current configuration and the previous
+configuration. For example: the value of 1 identifies an immediate
+predecessor of the current configuration, the value of 2 identifies the
+one that occurred before it etc.
+
+@todo Currently, only a subset of configuration information is stored in
+the \ref isc::dhcp::Configuration object. Kea developers are actively working
+on migrating the other configuration parameters to it.
 
 @section allocengine Allocation Engine
 

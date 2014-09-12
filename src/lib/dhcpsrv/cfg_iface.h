@@ -64,6 +64,11 @@ public:
 ///
 /// Once interfaces have been specified the sockets (either IPv4 or IPv6)
 /// can be opened by calling @c CfgIface::openSockets function.
+///
+/// @warning This class makes use of the AF_INET and AF_INET6 family literals,
+/// but it doesn't verify that the address family value passed as @c uint16_t
+/// parameter is equal to one of them. It is a callers responsibility to
+/// guarantee that the address family value is correct.
 class CfgIface {
 public:
     /// @brief Keyword used to enable all interfaces.
@@ -71,14 +76,6 @@ public:
     /// This keyword can be used instead of the interface name to specify
     /// that DHCP server should listen on all interfaces.
     static const char* ALL_IFACES_KEYWORD;
-
-    /// @brief Protocol family: IPv4 or IPv6.
-    ///
-    /// Depending on the family specified, the IPv4 or IPv6 sockets are
-    /// opened.
-    enum Family {
-        V4, V6
-    };
 
     /// @brief Constructor.
     CfgIface();
@@ -100,12 +97,12 @@ public:
     /// documentation for details how to specify interfaces and unicast
     /// addresses to bind the sockets to.
     ///
-    /// @param family Address family (v4 or v6).
+    /// @param family Address family (AF_INET or AF_INET6).
     /// @param port Port number to be used to bind sockets to.
     /// @param use_bcast A boolean flag which indicates if the broadcast
     /// traffic should be received through the socket. This parameter is
     /// ignored for IPv6.
-    void openSockets(const Family& family, const uint16_t port,
+    void openSockets(const uint16_t family, const uint16_t port,
                      const bool use_bcast = true) const;
 
     /// @brief Puts the interface configuration into default state.
@@ -132,7 +129,7 @@ public:
     /// not allowed when specifying a unicast address. For example:
     /// */2001:db8:1::1 is not allowed.
     ///
-    /// @param family Address family (v4 or v6).
+    /// @param family Address family (AF_INET or AF_INET6).
     /// @param iface_name Explicit interface name, a wildcard name (*) of
     /// the interface(s) or the pair of iterface/unicast-address to be used
     /// to receive DHCP traffic.
@@ -144,7 +141,7 @@ public:
     /// @throw DuplicateIfaceName If the interface is already selected, i.e.
     /// @throw IOError when specified unicast address is invalid.
     /// @c CfgIface::use has been already called for this interface.
-    void use(const Family& family, const std::string& iface_name);
+    void use(const uint16_t family, const std::string& iface_name);
 
     /// @brief Equality operator.
     ///
@@ -171,13 +168,13 @@ private:
     /// This function selects all interfaces to receive DHCP traffic or
     /// deselects all interfaces so as none of them receives a DHCP traffic.
     ///
-    /// @param family Address family (v4 or v6).
+    /// @param family Address family (AF_INET or AF_INET6).
     /// @param inactive A boolean value which indicates if all interfaces
     /// (except loopback) should be selected or deselected.
     /// @param loopback_inactive A boolean value which indicates if loopback
     /// interface should be selected or deselected.
     /// should be deselected/inactive (true) or selected/active (false).
-    void setState(const Family& family, const bool inactive,
+    void setState(const uint16_t family, const bool inactive,
                   const bool loopback_inactive) const;
 
     /// @brief Error handler for executed when opening a socket fail.

@@ -42,7 +42,7 @@ CfgIface::equals(const CfgIface& other) const {
 }
 
 void
-CfgIface::openSockets(const Family& family, const uint16_t port,
+CfgIface::openSockets(const uint16_t family, const uint16_t port,
                       const bool use_bcast) const {
     // If wildcard interface '*' was not specified, set all interfaces to
     // inactive state. We will later enable them selectively using the
@@ -68,7 +68,7 @@ CfgIface::openSockets(const Family& family, const uint16_t port,
                           << *iface_name << "' as this interface doesn't"
                           " exist");
 
-            } else if (family == V4) {
+            } else if (family == AF_INET) {
                 iface->inactive4_ = false;
 
             } else {
@@ -78,7 +78,7 @@ CfgIface::openSockets(const Family& family, const uint16_t port,
     }
 
     // Select unicast sockets. It works only for V6. Ignore for V4.
-    if (family == V6) {
+    if (family == AF_INET6) {
         for (UnicastMap::const_iterator unicast = unicast_map_.begin();
              unicast != unicast_map_.end(); ++unicast) {
             Iface* iface = IfaceMgr::instance().getIface(unicast->first);
@@ -102,7 +102,7 @@ CfgIface::openSockets(const Family& family, const uint16_t port,
     IfaceMgrErrorMsgCallback error_callback =
         boost::bind(&CfgIface::socketOpenErrorHandler, _1);
     bool sopen;
-    if (family == V4) {
+    if (family == AF_INET) {
         sopen = IfaceMgr::instance().openSockets4(port, use_bcast,
                                                   error_callback);
     } else {
@@ -124,13 +124,13 @@ CfgIface::reset() {
 }
 
 void
-CfgIface::setState(const Family& family, const bool inactive,
+CfgIface::setState(const uint16_t family, const bool inactive,
                    const bool loopback_inactive) const {
     IfaceMgr::IfaceCollection ifaces = IfaceMgr::instance().getIfaces();
     for (IfaceMgr::IfaceCollection::iterator iface = ifaces.begin();
          iface != ifaces.end(); ++iface) {
         Iface* iface_ptr = IfaceMgr::instance().getIface(iface->getName());
-        if (family == V4) {
+        if (family == AF_INET) {
             iface_ptr->inactive4_ = iface_ptr->flag_loopback_ ?
                 loopback_inactive : inactive;
         } else {
@@ -146,7 +146,7 @@ CfgIface::socketOpenErrorHandler(const std::string& errmsg) {
 }
 
 void
-CfgIface::use(const Family& family, const std::string& iface_name) {
+CfgIface::use(const uint16_t family, const std::string& iface_name) {
     // The interface name specified may have two formats, e.g.:
     // - eth0
     // - eth0/2001:db8:1::1.
@@ -192,7 +192,7 @@ CfgIface::use(const Family& family, const std::string& iface_name) {
 
         }
 
-    } else if (family == V4) {
+    } else if (family == AF_INET) {
         isc_throw(InvalidIfaceName, "unicast addresses in the format of: "
                   "iface-name/unicast-addr_stress can only be specified for"
                   " IPv6 addr_stress family");
