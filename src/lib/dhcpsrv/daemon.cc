@@ -94,13 +94,10 @@ void Daemon::configureLogger(const isc::data::ConstElementPtr& log_config,
     parser.applyConfiguration();
 }
 
-void Daemon::loggerInit(const char*, bool verbose) {
-
-    setenv("KEA_LOCKFILE_DIR", "/tmp", 0);
+void Daemon::loggerInit(const char* name, bool verbose) {
 
     // Initialize logger system
-    isc::log::initLogger(isc::log::getDefaultRootLoggerName().c_str(),
-                         isc::log::DEBUG, isc::log::MAX_DEBUG_LEVEL,
+    isc::log::initLogger(name, isc::log::DEBUG, isc::log::MAX_DEBUG_LEVEL,
                          NULL);
 
     // Apply default configuration (log INFO or DEBUG to stdout)

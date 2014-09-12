@@ -30,7 +30,7 @@ class LoggerLevelImplTest : public ::testing::Test {
 protected:
     LoggerLevelImplTest() {
         // Ensure logging set to default for unit tests
-        resetUnitTestRootLogger();
+        setDefaultLoggingOutput();
     }
 
     ~LoggerLevelImplTest()
