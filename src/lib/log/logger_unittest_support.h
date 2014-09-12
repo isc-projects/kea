@@ -70,6 +70,10 @@ namespace log {
 /// be overridden by the tester.  It is not intended for use in production
 /// code.
 ///
+/// @note: Do NOT use this function in production code as it creates
+/// lockfile in the build dir. That's ok for tests, but not
+/// ok for production code.
+///
 /// @todo: Rename. This function overloads the initLogger() function that can
 ///       be used to initialize production programs.  This may lead to confusion.
 void initLogger(isc::log::Severity severity = isc::log::DEBUG,
@@ -106,17 +110,6 @@ isc::log::Severity keaLoggerSeverity(isc::log::Severity defseverity);
 ///
 /// \return Debug level to use.
 int keaLoggerDbglevel(int defdbglevel);
-
-
-/// \brief Reset root logger characteristics
-///
-/// This is a simplified interface into the resetting of the characteristics
-/// of the root logger.  It is aimed for use in unit tests and resets the
-/// characteristics of the root logger to use a severity, debug level and
-/// destination set by the environment variables KEA_LOGGER_SEVERITY,
-/// KEA_LOGGER_DBGLEVEL and KEA_LOGGER_DESTINATION.
-void
-resetUnitTestRootLogger();
 
 } // namespace log
 } // namespace isc

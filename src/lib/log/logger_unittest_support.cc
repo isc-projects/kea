@@ -80,7 +80,7 @@ keaLoggerDbglevel(int defdbglevel) {
 // variables KEA_LOGGER_SEVERITY, KEA_LOGGER_DBGLEVEL and KEA_LOGGER_DESTINATION.
 
 void
-resetUnitTestRootLogger() {
+setDefaultLoggingOutput(bool verbose) {
 
     using namespace isc::log;
 
@@ -101,7 +101,8 @@ resetUnitTestRootLogger() {
 
     // Prepare the objects to define the logging specification
     LoggerSpecification spec(getRootLoggerName(), 
-                             keaLoggerSeverity(isc::log::DEBUG),
+                             keaLoggerSeverity(verbose ? isc::log::DEBUG :
+                                               isc::log::INFO),
                              keaLoggerDbglevel(isc::log::MAX_DEBUG_LEVEL));
     OutputOption option;
 
@@ -145,7 +146,6 @@ resetUnitTestRootLogger() {
     manager.process(spec);
 }
 
-
 // Logger Run-Time Initialization via Environment Variables
 void initLogger(isc::log::Severity severity, int dbglevel) {
 
@@ -172,7 +172,7 @@ void initLogger(isc::log::Severity severity, int dbglevel) {
     // in the environment variables.  (The two-step approach is used as the
     // setUnitTestRootLoggerCharacteristics() function is used in several
     // places in the Kea tests, and it avoid duplicating code.)
-    resetUnitTestRootLogger();
+    isc::log::setDefaultLoggingOutput();
 } 
 
 } // namespace log

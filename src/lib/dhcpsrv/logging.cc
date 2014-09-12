@@ -17,6 +17,7 @@
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <log/logger_specification.h>
+#include <log/logger_support.h>
 #include <log/logger_manager.h>
 #include <log/logger_name.h>
 
@@ -216,17 +217,11 @@ void LogConfigParser::applyConfiguration() {
 }
 
 void LogConfigParser::applyDefaultConfiguration(bool verbose) {
-    LoggerSpecification spec("kea", (verbose?isc::log::DEBUG : isc::log::INFO),
+    LoggerSpecification spec(isc::log::getRootLoggerName(),
+                             (verbose?isc::log::DEBUG : isc::log::INFO),
                              (verbose?99:0));
 
-    OutputOption option;
-    option.destination = OutputOption::DEST_CONSOLE;
-    option.stream = OutputOption::STR_STDOUT;
-
-    spec.addOutputOption(option);
-
-    LoggerManager manager;
-    manager.process(spec);
+    setDefaultLoggingOutput(verbose);
 }
 
 } // namespace isc::dhcp
