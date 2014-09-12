@@ -244,7 +244,7 @@ TEST_F(DhcpParserTest, interfaceListParserTest) {
     // eth2 was not added.
     ConfigurationPtr cfg = CfgMgr::instance().getStagingCfg();
     ASSERT_TRUE(cfg);
-    ASSERT_NO_THROW(cfg->getCfgIface().openSockets(CfgIface::V4, 10000));
+    ASSERT_NO_THROW(cfg->getCfgIface().openSockets(AF_INET, 10000));
 
     EXPECT_TRUE(test_config.socketOpen("eth0", AF_INET));
     EXPECT_FALSE(test_config.socketOpen("eth1", AF_INET));
@@ -263,7 +263,7 @@ TEST_F(DhcpParserTest, interfaceListParserTest) {
     parser->commit();
 
     cfg = CfgMgr::instance().getStagingCfg();
-    ASSERT_NO_THROW(cfg->getCfgIface().openSockets(CfgIface::V4, 10000));
+    ASSERT_NO_THROW(cfg->getCfgIface().openSockets(AF_INET, 10000));
 
     EXPECT_TRUE(test_config.socketOpen("eth0", AF_INET));
     EXPECT_TRUE(test_config.socketOpen("eth1", AF_INET));

@@ -277,7 +277,7 @@ TEST_F(ConfigurationTest, copy) {
 
     // Set interface configuration for conf1.
     CfgIface cfg_iface;
-    cfg_iface.use(CfgIface::V4, "eth0");
+    cfg_iface.use(AF_INET, "eth0");
 
     conf1.addLoggingInfo(info);
     conf1.setCfgIface(cfg_iface);
@@ -327,13 +327,13 @@ TEST_F(ConfigurationTest, equality) {
     CfgIface cfg_iface1;
     CfgIface cfg_iface2;
 
-    cfg_iface1.use(CfgIface::V4, "eth0");
+    cfg_iface1.use(AF_INET, "eth0");
     conf1.setCfgIface(cfg_iface1);
 
     EXPECT_FALSE(conf1 == conf2);
     EXPECT_TRUE(conf1 != conf2);
 
-    cfg_iface2.use(CfgIface::V4, "eth0");
+    cfg_iface2.use(AF_INET, "eth0");
     conf2.setCfgIface(cfg_iface2);
 
     EXPECT_TRUE(conf1 == conf2);
