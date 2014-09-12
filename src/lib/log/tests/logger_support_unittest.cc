@@ -23,7 +23,7 @@ protected:
     LoggerSupportTest() {
         // Logger initialization is done in main().  As logging tests may
         // alter the default logging output, it is reset here.
-        resetUnitTestRootLogger();
+        setDefaultLoggingOutput();
     }
     ~LoggerSupportTest() {
     }
