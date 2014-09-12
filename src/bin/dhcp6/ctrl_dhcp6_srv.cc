@@ -147,7 +147,7 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
     // is no need to rollback configuration if socket fails to open on any
     // of the interfaces.
     CfgMgr::instance().getStagingCfg()->
-        getCfgIface().openSockets(CfgIface::V6, srv->getPort());
+        getCfgIface().openSockets(AF_INET6, srv->getPort());
 
     return (answer);
 }

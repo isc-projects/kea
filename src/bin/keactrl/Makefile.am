@@ -30,7 +30,7 @@ $(man_MANS):
 endif
 
 kea.conf: kea.conf.pre
-	$(top_srcdir)/tools/path_replacer.sh $(builddir)/kea.conf.pre $@
+	$(top_srcdir)/tools/path_replacer.sh $(top_srcdir)/src/bin/keactrl/kea.conf.pre $@
 
 if INSTALL_CONFIGURATIONS
 

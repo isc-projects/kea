@@ -195,7 +195,7 @@ InterfaceListConfigParser::build(ConstElementPtr value) {
         std::string iface_name = iface->stringValue();
         try {
             cfg_iface.use(global_context_->universe_ == Option::V4 ?
-                          CfgIface::V4 : CfgIface::V6, iface_name);
+                          AF_INET : AF_INET6, iface_name);
 
         } catch (const std::exception& ex) {
             isc_throw(DhcpConfigError, "Failed to select interface: "

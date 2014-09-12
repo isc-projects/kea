@@ -3056,7 +3056,7 @@ TEST_F(Dhcp6ParserTest, selectedInterfaces) {
     checkResult(status, 0);
 
     CfgMgr::instance().getStagingCfg()->
-        getCfgIface().openSockets(CfgIface::V6, 10000);
+        getCfgIface().openSockets(AF_INET6, 10000);
 
     // eth0 and eth1 were explicitly selected. eth2 was not.
     EXPECT_TRUE(test_config.socketOpen("eth0", AF_INET6));
@@ -3090,7 +3090,7 @@ TEST_F(Dhcp6ParserTest, allInterfaces) {
     checkResult(status, 0);
 
     CfgMgr::instance().getStagingCfg()->
-        getCfgIface().openSockets(CfgIface::V6, 10000);
+        getCfgIface().openSockets(AF_INET6, 10000);
 
     // All interfaces should be now active.
     EXPECT_TRUE(test_config.socketOpen("eth0", AF_INET6));

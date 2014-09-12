@@ -406,8 +406,8 @@ public:
     /// @brief Commits the staging configuration.
     ///
     /// The staging configuration becomes current configuration when this
-    /// function is called. It removes the oldest configurations held in the
-    /// history so as the size of the list of configuration does not excide
+    /// function is called. It removes the oldest configuration held in the
+    /// history so as the size of the list of configuration does not exceed
     /// the @c CONFIG_LIST_SIZE.
     ///
     /// This function is exception safe.
@@ -437,6 +437,10 @@ public:
     ///
     /// @warning Revert operation will rollback any changes to the staging
     /// configuration (if it exists).
+    ///
+    /// @param index A distance from the current configuration to the
+    /// past configuration to be reverted. The minimal value is 1 which points
+    /// to the nearest configuration.
     ///
     /// @throw isc::OutOfRange if the specified index is out of range.
     void revert(const size_t index);
@@ -530,7 +534,7 @@ protected:
 
 private:
 
-    /// @brief Checks if current configuration is created and creates if needed.
+    /// @brief Checks if current configuration is created and creates it if needed.
     ///
     /// This private method is called to ensure that the current configuration
     /// is created. If current configuration is not set, it creates the

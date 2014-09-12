@@ -1223,7 +1223,7 @@ TEST_F(CfgMgrTest, revert) {
         cfg_mgr.commit();
     }
 
-    // Now we have 5 configurations with:
+    // Now we have 6 configurations with:
     // - debuglevel = 99 (a default one)
     // - debuglevel = 10
     // - debuglevel = 11
@@ -1243,6 +1243,7 @@ TEST_F(CfgMgrTest, revert) {
     // And this configuration should be now the current one and the debuglevel
     // of this configuration is 10.
     EXPECT_EQ(10, cfg_mgr.getCurrentCfg()->getLoggingInfo()[0].debuglevel_);
+    EXPECT_NE(cfg_mgr.getCurrentCfg()->getSequence(), 1);
 
     // The new set of configuration is now as follows:
     // - debuglevel = 99
