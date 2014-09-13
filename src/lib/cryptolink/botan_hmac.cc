@@ -178,19 +178,14 @@ public:
         /// @todo Botan's verify_mac checks if len matches the output_length,
         /// which causes it to fail for truncated signatures, so we do
         /// the check ourselves
-        /// SEE BELOW FOR TEMPORARY CHANGE
         try {
             Botan::SecureVector<Botan::byte> our_mac = hmac_->final();
-            if (len < getOutputLength()) {
-                // Currently we don't support truncated signature in TSIG (see
-                // #920).  To avoid validating too short signature accidently,
-                // we enforce the standard signature size for the moment.
-                // Once we support truncation correctly, this if-clause should
-                // (and the capitalized comment above) be removed.
+	    size_t size = getOutputLength();
+	    if (len != 0 && len < size / 2) {
                 return (false);
             }
-            if (len == 0 || len > getOutputLength()) {
-                len = getOutputLength();
+            if (len == 0 || len > size) {
+                len = size;
             }
             return (Botan::same_mem(&our_mac[0],
                                     static_cast<const unsigned char*>(sig),
