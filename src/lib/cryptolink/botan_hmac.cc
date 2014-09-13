@@ -23,39 +23,9 @@
 #include <botan/hash.h>
 #include <botan/types.h>
 
+#include <cryptolink/botan_common.h>
+
 #include <cstring>
-
-namespace {
-
-/// @brief Decode the HashAlgorithm enum into a name usable by Botan
-///
-/// @param algorithm algorithm to be converted
-/// @return text representation of the algorithm name
-const char*
-getBotanHashAlgorithmName(isc::cryptolink::HashAlgorithm algorithm) {
-    switch (algorithm) {
-    case isc::cryptolink::MD5:
-        return ("MD5");
-    case isc::cryptolink::SHA1:
-        return ("SHA-1");
-    case isc::cryptolink::SHA256:
-        return ("SHA-256");
-    case isc::cryptolink::SHA224:
-        return ("SHA-224");
-    case isc::cryptolink::SHA384:
-        return ("SHA-384");
-    case isc::cryptolink::SHA512:
-        return ("SHA-512");
-    case isc::cryptolink::UNKNOWN_HASH:
-        return ("Unknown");
-    }
-    // compiler should have prevented us to reach this, since we have
-    // no default. But we need a return value anyway
-    return ("Unknown");
-}
-
-} // local namespace
-
 
 namespace isc {
 namespace cryptolink {
