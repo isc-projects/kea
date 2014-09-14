@@ -180,8 +180,8 @@ public:
         /// the check ourselves
         try {
             Botan::SecureVector<Botan::byte> our_mac = hmac_->final();
-	    size_t size = getOutputLength();
-	    if (len != 0 && len < size / 2) {
+            size_t size = getOutputLength();
+            if (len != 0 && len < size / 2) {
                 return (false);
             }
             if (len == 0 || len > size) {
