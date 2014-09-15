@@ -276,3 +276,4 @@ dynamic_reconfiguration_test
 shutdown_test "dhcpv6.sigterm_test" 15
 shutdown_test "dhcpv6.sigint_test" 2
 version_test "dhcpv6.version"
+logger_vars_test "dhcpv6.variables"
