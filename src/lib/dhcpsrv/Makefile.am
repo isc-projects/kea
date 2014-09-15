@@ -47,7 +47,6 @@ libkea_dhcpsrv_la_SOURCES += alloc_engine.cc alloc_engine.h
 libkea_dhcpsrv_la_SOURCES += callout_handle_store.h
 libkea_dhcpsrv_la_SOURCES += cfg_iface.cc cfg_iface.h
 libkea_dhcpsrv_la_SOURCES += cfgmgr.cc cfgmgr.h
-libkea_dhcpsrv_la_SOURCES += configuration.h configuration.cc
 libkea_dhcpsrv_la_SOURCES += csv_lease_file4.cc csv_lease_file4.h
 libkea_dhcpsrv_la_SOURCES += csv_lease_file6.cc csv_lease_file6.h
 libkea_dhcpsrv_la_SOURCES += d2_client_cfg.cc d2_client_cfg.h
@@ -73,6 +72,7 @@ libkea_dhcpsrv_la_SOURCES += pgsql_lease_mgr.cc pgsql_lease_mgr.h
 endif
 libkea_dhcpsrv_la_SOURCES += option_space_container.h
 libkea_dhcpsrv_la_SOURCES += pool.cc pool.h
+libkea_dhcpsrv_la_SOURCES += srv_config.cc srv_config.h
 libkea_dhcpsrv_la_SOURCES += subnet.cc subnet.h
 libkea_dhcpsrv_la_SOURCES += triplet.h
 libkea_dhcpsrv_la_SOURCES += utils.h

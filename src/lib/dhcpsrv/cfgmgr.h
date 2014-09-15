@@ -24,7 +24,7 @@
 #include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet.h>
-#include <dhcpsrv/configuration.h>
+#include <dhcpsrv/srv_config.h>
 #include <util/buffer.h>
 
 #include <boost/shared_ptr.hpp>
@@ -427,7 +427,7 @@ public:
     /// @brief Reverts to one of the previous configurations.
     ///
     /// This function reverts to selected previous configuration. The previous
-    /// configuration is entirely copied to a new @c Configuration instance. This
+    /// configuration is entirely copied to a new @c SrvConfig instance. This
     /// new instance has a unique sequence id (sequence id is not copied). The
     /// previous configuration (being copied) is not modified by this operation.
     ///
@@ -452,7 +452,7 @@ public:
     /// and return it. Current configuration returned is read-only.
     ///
     /// @return Non-null const pointer to the current configuration.
-    ConstConfigurationPtr getCurrentCfg();
+    ConstSrvConfigPtr getCurrentCfg();
 
     /// @brief Returns a pointer to the staging configuration.
     ///
@@ -466,7 +466,7 @@ public:
     /// configuration parsers).
     ///
     /// @return non-null pointer to the staging configuration.
-    ConfigurationPtr getStagingCfg();
+    SrvConfigPtr getStagingCfg();
 
     //@}
 
@@ -577,22 +577,22 @@ private:
     /// @brief Manages the DHCP-DDNS client and its configuration.
     D2ClientMgr d2_client_mgr_;
 
-    /// @brief Configuration
+    /// @brief Server configuration
     ///
     /// This is a structure that will hold all configuration.
     /// @todo: migrate all other parameters to that structure.
     /// @todo: maybe this should be a vector<Configuration>, so we could keep
     ///        previous configurations and do a rollback if needed?
-    ConfigurationPtr configuration_;
+    SrvConfigPtr configuration_;
 
     /// @name Configuration List.
     ///
     //@{
-    /// @brief Configuration list type.
-    typedef std::list<ConfigurationPtr> ConfigurationList;
+    /// @brief Server configuration list type.
+    typedef std::list<SrvConfigPtr> SrvConfigList;
 
     /// @brief Container holding all previous and current configurations.
-    ConfigurationList configs_;
+    SrvConfigList configs_;
     //@}
 
     /// @brief Indicates if a process has been ran in the verbose mode.
