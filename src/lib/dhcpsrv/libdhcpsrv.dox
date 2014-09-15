@@ -52,7 +52,7 @@ is created. The staging configuration is held at the tip of the list of
 configurations. The object can be accessed by calling the
 \ref isc::dhcp::CfgMgr::getStagingCfg. This object can be accessed
 from different stages of the configuration parsing and modified as needed.
-Modifications of to the staging configuration do not affect the current
+Modifications of the staging configuration do not affect the current
 configuration. The staging configuration is unused until the
 \ref isc::dhcp::CfgMgr::commit function is called. This exception safe method
 marks the staging object as "current configuration". The const pointer to the
