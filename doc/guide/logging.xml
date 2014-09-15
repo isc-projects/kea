@@ -531,4 +531,46 @@ file be created.</para>
 
     </section>
 
+    <section>
+      <title>Environment variables and initial logging</title>
+
+      <para>
+        Logging configuration is specified in the configuration file. However,
+        there are several early initialization routines that are conducted even
+        before configuration file is read and applied. They also apply if
+        the new configuration does not configure any logging.
+      </para>
+      <para>There are several environment variables that control logging
+      behavior in the early phase of the bring up. Once configuration that hold
+      logging configuration is parsed and applied they no longer apply.</para>
+
+          <variablelist>
+          <varlistentry>
+          <term>KEA_LOCKFILE_DIR</term>
+          <listitem><para>
+              Specifies a directory where logging system should create its
+              lock file. If not specified, it is ${prefix}/var/run/kea, where
+              prefix defaults to /usr/local. This variable must not end
+              with a slash. There is one special value: "none", which
+              instructs Kea to not create lock file at all. This may cause
+              issues if several processes log to the same file.
+          </para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+          <term>KEA_LOGGER_DESTINATION</term>
+          <listitem><para>
+              Specifies logging output. There are several special values.
+              "stdout" means standard output. "stderr" means standard error.
+              "syslog" means logging using syslog and a default name.
+              "syslog:foo" syntax is also permitted. It will log via syslog
+              using "foo" as a name. Any other value is treated as a name
+              of the output file. If not specified otherwise, Kea will log to
+              standard output.
+          </para></listitem>
+          </varlistentry>
+
+          </variablelist>
+    </section>
+
   </chapter>
