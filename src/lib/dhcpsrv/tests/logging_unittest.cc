@@ -27,10 +27,10 @@ namespace {
 // Checks that contructor is able to process specified storage properly
 TEST(LoggingTest, constructor) {
 
-    ConfigurationPtr null_ptr;
+    SrvConfigPtr null_ptr;
     EXPECT_THROW(LogConfigParser parser(null_ptr), BadValue);
 
-    ConfigurationPtr nonnull(new Configuration());
+    SrvConfigPtr nonnull(new SrvConfig());
 
     EXPECT_NO_THROW(LogConfigParser parser(nonnull));
 }
@@ -54,7 +54,7 @@ TEST(LoggingTest, parsingConsoleOutput) {
     "    }"
     "]}";
 
-    ConfigurationPtr storage(new Configuration());
+    SrvConfigPtr storage(new SrvConfig());
 
     LogConfigParser parser(storage);
 
@@ -94,7 +94,7 @@ TEST(LoggingTest, parsingFile) {
     "    }"
     "]}";
 
-    ConfigurationPtr storage(new Configuration());
+    SrvConfigPtr storage(new SrvConfig());
 
     LogConfigParser parser(storage);
 
@@ -144,7 +144,7 @@ TEST(LoggingTest, multipleLoggers) {
     "    }"
     "]}";
 
-    ConfigurationPtr storage(new Configuration());
+    SrvConfigPtr storage(new SrvConfig());
 
     LogConfigParser parser(storage);
 
@@ -192,7 +192,7 @@ TEST(LoggingTest, multipleLoggingDestinations) {
     "    }"
     "]}";
 
-    ConfigurationPtr storage(new Configuration());
+    SrvConfigPtr storage(new SrvConfig());
 
     LogConfigParser parser(storage);
 

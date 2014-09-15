@@ -362,7 +362,7 @@ CfgMgr::getD2ClientMgr() {
 void
 CfgMgr::ensureCurrentAllocated() {
     if (!configuration_ || configs_.empty()) {
-        configuration_.reset(new Configuration());
+        configuration_.reset(new SrvConfig());
         configs_.push_back(configuration_);
     }
 }
@@ -381,7 +381,7 @@ CfgMgr::commit() {
         // Keep track of the maximum size of the configs history. Before adding
         // new element, we have to remove the oldest one.
         if (configs_.size() > CONFIG_LIST_SIZE) {
-            ConfigurationList::iterator it = configs_.begin();
+            SrvConfigList::iterator it = configs_.begin();
             std::advance(it, configs_.size() - CONFIG_LIST_SIZE);
             configs_.erase(configs_.begin(), it);
         }
@@ -417,7 +417,7 @@ CfgMgr::revert(const size_t index) {
 
     // Get the iterator to the current configuration and then advance to the
     // desired one.
-    ConfigurationList::const_reverse_iterator it = configs_.rbegin();
+    SrvConfigList::const_reverse_iterator it = configs_.rbegin();
     std::advance(it, index);
 
     // Copy the desired configuration to the new staging configuration. The
@@ -429,18 +429,18 @@ CfgMgr::revert(const size_t index) {
     commit();
 }
 
-ConstConfigurationPtr
+ConstSrvConfigPtr
 CfgMgr::getCurrentCfg() {
     ensureCurrentAllocated();
     return (configuration_);
 }
 
-ConfigurationPtr
+SrvConfigPtr
 CfgMgr::getStagingCfg() {
     ensureCurrentAllocated();
     if (configuration_->sequenceEquals(*configs_.back())) {
         uint32_t sequence = configuration_->getSequence();
-        configs_.push_back(ConfigurationPtr(new Configuration(++sequence)));
+        configs_.push_back(SrvConfigPtr(new SrvConfig(++sequence)));
     }
     return (configs_.back());
 }

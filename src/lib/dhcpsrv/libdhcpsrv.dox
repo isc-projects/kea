@@ -42,12 +42,12 @@ only available backend is MySQL (see \ref isc::dhcp::MySqlLeaseMgr).
 Configuration Manager (\ref isc::dhcp::CfgMgr) is a singleton object which
 holds configuration information necessary for the operation of Kea daemons.
 A complete collection of information for the daemon is stored in the
-\ref isc::dhcp::Configuration object. Internally, the Configuration Manager
-holds a list of \ref isc::dhcp::Configuration objects, from which one
+\ref isc::dhcp::SrvConfig object. Internally, the Configuration Manager
+holds a list of \ref isc::dhcp::SrvConfig objects, from which one
 is marked as "current configuration".
 
 When the server starts up or is being reconfigured a new
-\ref isc::dhcp::Configuration object, referred to as "staging configuration",
+\ref isc::dhcp::SrvConfig object, referred to as "staging configuration",
 is created. The staging configuration is held at the tip of the list of
 configurations. The object can be accessed by calling the
 \ref isc::dhcp::CfgMgr::getStagingCfg. This object can be accessed
@@ -61,9 +61,9 @@ current configuration can be accessed by calling a
 
 The staging configuration can be discarded at any time before it is committed
 by calling the \ref isc::dhcp::CfgMgr::rollback. This removes the
-\ref isc::dhcp::Configuration object from the Configuration Manager. When
+\ref isc::dhcp::SrvConfig object from the Configuration Manager. When
 the \ref isc::dhcp::CfgMgr::getStagingCfg is called again a fresh/default
-\ref isc::dhcp::Configuration object is returned.
+\ref isc::dhcp::SrvConfig object is returned.
 
 The Configuration Manager stores previous configurations, i.e. configurations
 which occurred prior to the most current configuration. This is currently
@@ -78,7 +78,7 @@ predecessor of the current configuration, the value of 2 identifies the
 one that occurred before it etc.
 
 @todo Currently, only a subset of configuration information is stored in
-the \ref isc::dhcp::Configuration object. Kea developers are actively working
+the \ref isc::dhcp::SrvConfig object. Kea developers are actively working
 on migrating the other configuration parameters to it.
 
 @section allocengine Allocation Engine

@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/configuration.h>
+#include <dhcpsrv/srv_config.h>
 #include <log/logger_manager.h>
 #include <log/logger_specification.h>
 #include <list>
@@ -24,16 +24,16 @@ using namespace isc::log;
 namespace isc {
 namespace dhcp {
 
-Configuration::Configuration()
+SrvConfig::SrvConfig()
     : sequence_(0) {
 }
 
-Configuration::Configuration(uint32_t sequence)
+SrvConfig::SrvConfig(uint32_t sequence)
     : sequence_(sequence) {
 }
 
 std::string
-Configuration::getConfigSummary(const uint32_t selection) const {
+SrvConfig::getConfigSummary(const uint32_t selection) const {
     std::ostringstream s;
     size_t subnets_num;
     if ((selection & CFGSEL_SUBNET4) == CFGSEL_SUBNET4) {
@@ -74,12 +74,12 @@ Configuration::getConfigSummary(const uint32_t selection) const {
 }
 
 bool
-Configuration::sequenceEquals(const Configuration& other) {
+SrvConfig::sequenceEquals(const SrvConfig& other) {
     return (getSequence() == other.getSequence());
 }
 
 void
-Configuration::copy(Configuration& new_config) const {
+SrvConfig::copy(SrvConfig& new_config) const {
     // We will entirely replace loggers in the new configuration.
     new_config.logging_info_.clear();
     for (LoggingInfoStorage::const_iterator it = logging_info_.begin();
@@ -91,7 +91,7 @@ Configuration::copy(Configuration& new_config) const {
 }
 
 void
-Configuration::applyLoggingCfg() const {
+SrvConfig::applyLoggingCfg() const {
     /// @todo Remove the hardcoded location.
     setenv("KEA_LOCKFILE_DIR_FROM_BUILD", "/tmp", 1);
 
@@ -105,7 +105,7 @@ Configuration::applyLoggingCfg() const {
 }
 
 bool
-Configuration::equals(const Configuration& other) const {
+SrvConfig::equals(const SrvConfig& other) const {
     // If number of loggers is different, then configurations aren't equal.
     if (logging_info_.size() != other.logging_info_.size()) {
         return (false);

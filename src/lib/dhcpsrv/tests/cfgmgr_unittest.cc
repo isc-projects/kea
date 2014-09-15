@@ -296,7 +296,7 @@ public:
 // it is empty by default.
 TEST_F(CfgMgrTest, configuration) {
 
-    ConstConfigurationPtr configuration = CfgMgr::instance().getCurrentCfg();
+    ConstSrvConfigPtr configuration = CfgMgr::instance().getCurrentCfg();
     ASSERT_TRUE(configuration);
     EXPECT_TRUE(configuration->getLoggingInfo().empty());
 
@@ -1133,7 +1133,7 @@ TEST_F(CfgMgrTest, staging) {
     // Initially, the current configuration is a default one. We are going
     // to get the current configuration a couple of times and make sure
     // that always the same instance is returned.
-    ConstConfigurationPtr const_config;
+    ConstSrvConfigPtr const_config;
     for (int i = 0; i < 5; ++i) {
         const_config = cfg_mgr.getCurrentCfg();
         ASSERT_TRUE(const_config) << "Returned NULL current configuration"
@@ -1147,7 +1147,7 @@ TEST_F(CfgMgrTest, staging) {
     // for the first time the new instance of the staging configuration is
     // returned. This instance is returned for every call to getStagingCfg()
     // until commit is called.
-    ConfigurationPtr config;
+    SrvConfigPtr config;
     for (int i = 0; i < 5; ++i) {
         config = cfg_mgr.getStagingCfg();
         ASSERT_TRUE(config) << "Returned NULL staging configuration for"
@@ -1216,7 +1216,7 @@ TEST_F(CfgMgrTest, revert) {
     // Let's create 5 unique configurations: differing by a debug level in the
     // range of 10 to 14.
     for (int i = 0; i < 5; ++i) {
-        ConfigurationPtr config = cfg_mgr.getStagingCfg();
+        SrvConfigPtr config = cfg_mgr.getStagingCfg();
         LoggingInfo logging_info;
         logging_info.debuglevel_ = i + 10;
         config->addLoggingInfo(logging_info);

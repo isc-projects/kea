@@ -26,7 +26,7 @@ using namespace isc::log;
 namespace isc {
 namespace dhcp {
 
-LogConfigParser::LogConfigParser(const ConfigurationPtr& storage)
+LogConfigParser::LogConfigParser(const SrvConfigPtr& storage)
     :config_(storage), verbose_(false) {
     if (!storage) {
         isc_throw(BadValue, "LogConfigParser needs a pointer to the "
