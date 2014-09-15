@@ -251,7 +251,7 @@ DControllerBase::configFromFile() {
         // so we can log things during configuration process.
 
         // Temporary storage for logging configuration
-        isc::dhcp::ConfigurationPtr storage =
+        isc::dhcp::SrvConfigPtr storage =
             isc::dhcp::CfgMgr::instance().getStagingCfg();
 
         // Get 'Logging' element from the config and use it to set up

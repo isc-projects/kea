@@ -17,7 +17,7 @@
 
 #include <config.h>
 #include <cc/data.h>
-#include <dhcpsrv/configuration.h>
+#include <dhcpsrv/srv_config.h>
 #include <util/signal_set.h>
 #include <boost/noncopyable.hpp>
 #include <string>
@@ -129,7 +129,7 @@ public:
     /// @param log_config JSON structures that describe logging
     /// @param storage configuration will be stored here
     static void configureLogger(const isc::data::ConstElementPtr& log_config,
-                                const isc::dhcp::ConfigurationPtr& storage);
+                                const isc::dhcp::SrvConfigPtr& storage);
 
     /// @brief Sets or clears verbose mode
     ///

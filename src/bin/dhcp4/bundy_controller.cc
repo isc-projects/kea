@@ -177,7 +177,7 @@ void ControlledDhcpv4Srv::init(const std::string& config_file) {
 
         // Configuration may disable or enable interfaces so we have to
         // reopen sockets according to new configuration.
-        CfgMgr::instance().getConfiguration()->cfg_iface_
+        CfgMgr::instance().getCurrentCfg()->cfg_iface_
             .openSockets(getPort(), useBroadcast());
 
     } catch (const std::exception& ex) {

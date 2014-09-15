@@ -653,7 +653,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
 
     LOG_INFO(dhcp4_logger, DHCP4_CONFIG_COMPLETE)
         .arg(CfgMgr::instance().getCurrentCfg()->
-             getConfigSummary(Configuration::CFGSEL_ALL4));
+             getConfigSummary(SrvConfig::CFGSEL_ALL4));
 
     // Everything was fine. Configuration is successful.
     answer = isc::config::createAnswer(0, "Configuration successful.");

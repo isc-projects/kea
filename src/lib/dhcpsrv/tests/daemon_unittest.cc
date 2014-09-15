@@ -53,7 +53,7 @@ TEST(DaemonTest, parsingConsoleOutput) {
     CfgMgr::instance().setVerbose(false);
 
     // Storage - parsed configuration will be stored here
-    ConfigurationPtr storage(new Configuration());
+    SrvConfigPtr storage(new SrvConfig());
 
     const char* config_txt =
     "{ \"loggers\": ["

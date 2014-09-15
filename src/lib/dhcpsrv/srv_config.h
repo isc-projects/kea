@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef DHCPSRV_CONFIGURATION_H
-#define DHCPSRV_CONFIGURATION_H
+#ifndef DHCPSRV_CONFIG_H
+#define DHCPSRV_CONFIG_H
 
 #include <dhcpsrv/cfg_iface.h>
 #include <dhcpsrv/logging_info.h>
@@ -30,7 +30,7 @@ class CfgMgr;
 /// @brief Specifies current DHCP configuration
 ///
 /// @todo Migrate all other configuration parameters from cfgmgr.h here
-class Configuration {
+class SrvConfig {
 public:
     /// @name Constants for selection of parameters returned by @c getConfigSummary
     ///
@@ -60,12 +60,12 @@ public:
     /// @brief Default constructor.
     ///
     /// This constructor sets configuration sequence number to 0.
-    Configuration();
+    SrvConfig();
 
     /// @brief Constructor.
     ///
     /// Sets arbitrary configuration sequence number.
-    Configuration(uint32_t sequence);
+    SrvConfig(uint32_t sequence);
 
     /// @brief Returns summary of the configuration in the textual format.
     ///
@@ -102,7 +102,7 @@ public:
     /// compared with the sequence number of this configuration.
     ///
     /// @return true if sequence numbers are equal.
-    bool sequenceEquals(const Configuration& other);
+    bool sequenceEquals(const SrvConfig& other);
 
     /// @brief Returns logging specific configuration.
     const LoggingInfoStorage& getLoggingInfo() const {
@@ -141,7 +141,7 @@ public:
     ///
     /// @param [out] new_config An object to which the configuration will
     /// be copied.
-    void copy(Configuration& new_config) const;
+    void copy(SrvConfig& new_config) const;
 
     /// @brief Apply logging configuration to log4cplus.
     void applyLoggingCfg() const;
@@ -158,7 +158,7 @@ public:
     /// @param other An object to be compared with this object.
     ///
     /// @return true if two objects are equal, false otherwise.
-    bool equals(const Configuration& other) const;
+    bool equals(const SrvConfig& other) const;
 
     /// @brief Compares two objects for inequality.
     ///
@@ -168,7 +168,7 @@ public:
     /// @param other An object to be compared with this object.
     ///
     /// @return true if two objects are not equal, false otherwise.
-    bool nequals(const Configuration& other) const {
+    bool nequals(const SrvConfig& other) const {
         return (!equals(other));
     }
 
@@ -180,7 +180,7 @@ public:
     /// @param other An object to be compared with this object.
     ///
     /// @return true if two objects are equal, false otherwise.
-    bool operator==(const Configuration& other) const {
+    bool operator==(const SrvConfig& other) const {
         return (equals(other));
     }
 
@@ -192,7 +192,7 @@ public:
     /// @param other An object to be compared with this object.
     ///
     /// @return true if two objects are not equal, false otherwise.
-    bool operator!=(const Configuration& other) const {
+    bool operator!=(const SrvConfig& other) const {
         return (nequals(other));
     }
 
@@ -214,17 +214,17 @@ private:
 
 };
 
-/// @name Pointers to the @c Configuration object.
+/// @name Pointers to the @c SrvConfig object.
 ///
 //@{
-/// @brief Non-const pointer to the @ Configuration.
-typedef boost::shared_ptr<Configuration> ConfigurationPtr;
+/// @brief Non-const pointer to the @c SrvConfig.
+typedef boost::shared_ptr<SrvConfig> SrvConfigPtr;
 
-/// @brief Const pointer to the @c Configuration.
-typedef boost::shared_ptr<const Configuration> ConstConfigurationPtr;
+/// @brief Const pointer to the @c SrvConfig.
+typedef boost::shared_ptr<const SrvConfig> ConstSrvConfigPtr;
 //@}
 
 } // namespace isc::dhcp
 } // namespace isc
 
-#endif // DHCPSRV_CONFIGURATION_H
+#endif // DHCPSRV_CONFIG_H

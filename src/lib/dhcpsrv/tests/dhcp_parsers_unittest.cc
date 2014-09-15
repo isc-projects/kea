@@ -242,7 +242,7 @@ TEST_F(DhcpParserTest, interfaceListParserTest) {
 
     // Use CfgMgr instance to check if eth0 and eth1 was added, and that
     // eth2 was not added.
-    ConfigurationPtr cfg = CfgMgr::instance().getStagingCfg();
+    SrvConfigPtr cfg = CfgMgr::instance().getStagingCfg();
     ASSERT_TRUE(cfg);
     ASSERT_NO_THROW(cfg->getCfgIface().openSockets(AF_INET, 10000));
 

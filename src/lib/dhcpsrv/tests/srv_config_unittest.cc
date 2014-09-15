@@ -16,16 +16,16 @@
 
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/configuration.h>
+#include <dhcpsrv/srv_config.h>
 #include <dhcpsrv/subnet.h>
 #include <gtest/gtest.h>
 
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 
-// Those are the tests for Configuration storage. Right now they are minimal,
+// Those are the tests for SrvConfig storage. Right now they are minimal,
 // but the number is expected to grow significantly once we migrate more
-// parameters from CfgMgr storage to Configuration storage.
+// parameters from CfgMgr storage to SrvConfig storage.
 
 namespace {
 
@@ -33,13 +33,13 @@ namespace {
 const int TEST_SUBNETS_NUM = 3;
 
 /// @brief Test fixture class for testing configuration data storage.
-class ConfigurationTest : public ::testing::Test {
+class SrvConfigTest : public ::testing::Test {
 public:
     /// @brief Constructor.
     ///
     /// Creates IPv4 and IPv6 subnets for unit test. The number of subnets
     /// is @c TEST_SUBNETS_NUM for IPv4 and IPv6 each.
-    ConfigurationTest()
+    SrvConfigTest()
         : iface_mgr_test_config_(true) {
         // Remove any subnets dangling from previous unit tests.
         clearSubnets();
@@ -76,7 +76,7 @@ public:
     /// @brief Destructor.
     ///
     /// Removes any dangling configuration.
-    virtual ~ConfigurationTest() {
+    virtual ~SrvConfigTest() {
         clearSubnets();
     }
 
@@ -88,9 +88,9 @@ public:
     /// @c TEST_SUBNETS_NUM.
     ///
     /// @todo Until the subnets configuration is migrated from the @c CfgMgr to
-    /// the @c Configuration object, this function adds the subnet to the
+    /// the @c SrvConfig object, this function adds the subnet to the
     /// @c CfgMgr. Once, the subnet configuration is held in the
-    /// @c Configuration this function must be modified to store the subnets in
+    /// @c SrvConfig this function must be modified to store the subnets in
     /// the @c conf_ object.
     void addSubnet4(const unsigned int index);
 
@@ -102,16 +102,16 @@ public:
     /// @c TEST_SUBNETS_NUM.
     ///
     /// @todo Until the subnets configuration is migrated from the @c CfgMgr to
-    /// the @c Configuration object, this function adds the subnet to the
+    /// the @c SrvConfig object, this function adds the subnet to the
     /// @c CfgMgr. Once, the subnet configuration is held in the
-    /// @c Configuration this function must be modified to store the subnets in
+    /// @c SrvConfig this function must be modified to store the subnets in
     /// @c conf_ object.
     void addSubnet6(const unsigned int index);
 
     /// @brief Removes all subnets from the configuration.
     ///
     /// @todo Modify this function once the subnet configuration is migrated
-    /// from @c CfgMgr to @c Configuration.
+    /// from @c CfgMgr to @c SrvConfig.
     void clearSubnets();
 
     /// @brief Enable/disable DDNS.
@@ -121,7 +121,7 @@ public:
     void enableDDNS(const bool enable);
 
     /// @brief Stores configuration.
-    Configuration conf_;
+    SrvConfig conf_;
     /// @brief A collection of IPv4 subnets used by unit tests.
     Subnet4Collection test_subnets4_;
     /// @brief A collection of IPv6 subnets used by unit tests.
@@ -132,7 +132,7 @@ public:
 };
 
 void
-ConfigurationTest::addSubnet4(const unsigned int index) {
+SrvConfigTest::addSubnet4(const unsigned int index) {
     if (index >= TEST_SUBNETS_NUM) {
         FAIL() << "Subnet index " << index << "out of range (0.."
                << TEST_SUBNETS_NUM << "): " << "unable to add IPv4 subnet";
@@ -141,7 +141,7 @@ ConfigurationTest::addSubnet4(const unsigned int index) {
 }
 
 void
-ConfigurationTest::addSubnet6(const unsigned int index) {
+SrvConfigTest::addSubnet6(const unsigned int index) {
     if (index >= TEST_SUBNETS_NUM) {
         FAIL() << "Subnet index " << index << "out of range (0.."
                << TEST_SUBNETS_NUM << "): " << "unable to add IPv6 subnet";
@@ -150,24 +150,24 @@ ConfigurationTest::addSubnet6(const unsigned int index) {
 }
 
 void
-ConfigurationTest::clearSubnets() {
+SrvConfigTest::clearSubnets() {
     CfgMgr::instance().deleteSubnets4();
     CfgMgr::instance().deleteSubnets6();
 }
 
 void
-ConfigurationTest::enableDDNS(const bool enable) {
+SrvConfigTest::enableDDNS(const bool enable) {
     // D2 configuration should always be non-NULL.
     CfgMgr::instance().getD2ClientConfig()->enableUpdates(enable);
 }
 
 // Check that by default there are no logging entries
-TEST_F(ConfigurationTest, basic) {
+TEST_F(SrvConfigTest, basic) {
     EXPECT_TRUE(conf_.getLoggingInfo().empty());
 }
 
-// Check that Configuration can store logging information.
-TEST_F(ConfigurationTest, loggingInfo) {
+// Check that SrvConfig can store logging information.
+TEST_F(SrvConfigTest, loggingInfo) {
     LoggingInfo log1;
     log1.clearDestinations();
     log1.name_ = "foo";
@@ -194,79 +194,79 @@ TEST_F(ConfigurationTest, loggingInfo) {
 
 // Check that the configuration summary including information about the status
 // of DDNS is returned.
-TEST_F(ConfigurationTest, summaryDDNS) {
+TEST_F(SrvConfigTest, summaryDDNS) {
     EXPECT_EQ("DDNS: disabled",
-              conf_.getConfigSummary(Configuration::CFGSEL_DDNS));
+              conf_.getConfigSummary(SrvConfig::CFGSEL_DDNS));
 
     enableDDNS(true);
     EXPECT_EQ("DDNS: enabled",
-              conf_.getConfigSummary(Configuration::CFGSEL_DDNS));
+              conf_.getConfigSummary(SrvConfig::CFGSEL_DDNS));
 
     enableDDNS(false);
     EXPECT_EQ("no IPv4 subnets!; no IPv6 subnets!; DDNS: disabled",
-              conf_.getConfigSummary(Configuration::CFGSEL_ALL));
+              conf_.getConfigSummary(SrvConfig::CFGSEL_ALL));
 }
 
 // Check that the configuration summary including information about added
 // subnets is returned.
-TEST_F(ConfigurationTest, summarySubnets) {
+TEST_F(SrvConfigTest, summarySubnets) {
     EXPECT_EQ("no config details available",
-              conf_.getConfigSummary(Configuration::CFGSEL_NONE));
+              conf_.getConfigSummary(SrvConfig::CFGSEL_NONE));
 
     // Initially, there are no subnets added but it should be explicitly
     // reported when we query for information about the subnets.
     EXPECT_EQ("no IPv4 subnets!; no IPv6 subnets!",
-              conf_.getConfigSummary(Configuration::CFGSEL_SUBNET));
+              conf_.getConfigSummary(SrvConfig::CFGSEL_SUBNET));
 
     // If we just want information about IPv4 subnets, there should be no
     // mention of IPv6 subnets, even though there are none added.
     EXPECT_EQ("no IPv4 subnets!",
-              conf_.getConfigSummary(Configuration::CFGSEL_SUBNET4));
+              conf_.getConfigSummary(SrvConfig::CFGSEL_SUBNET4));
 
     // If we just want information about IPv6 subnets, there should be no
     // mention of IPv4 subnets, even though there are none added.
     EXPECT_EQ("no IPv6 subnets!",
-              conf_.getConfigSummary(Configuration::CFGSEL_SUBNET6));
+              conf_.getConfigSummary(SrvConfig::CFGSEL_SUBNET6));
 
     // Add IPv4 subnet and make sure it is reported.
     addSubnet4(0);
     EXPECT_EQ("added IPv4 subnets: 1",
-              conf_.getConfigSummary(Configuration::CFGSEL_SUBNET4));
+              conf_.getConfigSummary(SrvConfig::CFGSEL_SUBNET4));
     EXPECT_EQ("added IPv4 subnets: 1; no IPv6 subnets!",
-              conf_.getConfigSummary(Configuration::CFGSEL_SUBNET));
+              conf_.getConfigSummary(SrvConfig::CFGSEL_SUBNET));
 
     // Add IPv6 subnet and make sure it is reported.
     addSubnet6(0);
     EXPECT_EQ("added IPv6 subnets: 1",
-              conf_.getConfigSummary(Configuration::CFGSEL_SUBNET6));
+              conf_.getConfigSummary(SrvConfig::CFGSEL_SUBNET6));
     EXPECT_EQ("added IPv4 subnets: 1; added IPv6 subnets: 1",
-              conf_.getConfigSummary(Configuration::CFGSEL_SUBNET));
+              conf_.getConfigSummary(SrvConfig::CFGSEL_SUBNET));
 
     // Add one more subnet and make sure the bumped value is only
     // for IPv4, but not for IPv6.
     addSubnet4(1);
     EXPECT_EQ("added IPv4 subnets: 2; added IPv6 subnets: 1",
-              conf_.getConfigSummary(Configuration::CFGSEL_SUBNET));
+              conf_.getConfigSummary(SrvConfig::CFGSEL_SUBNET));
     EXPECT_EQ("added IPv4 subnets: 2",
-              conf_.getConfigSummary(Configuration::CFGSEL_SUBNET4));
+              conf_.getConfigSummary(SrvConfig::CFGSEL_SUBNET4));
 
     addSubnet6(1);
     EXPECT_EQ("added IPv4 subnets: 2; added IPv6 subnets: 2",
-              conf_.getConfigSummary(Configuration::CFGSEL_SUBNET));
+              conf_.getConfigSummary(SrvConfig::CFGSEL_SUBNET));
 
     // Remove all subnets and make sure that there are no reported subnets
     // back again.
     clearSubnets();
     EXPECT_EQ("no IPv4 subnets!; no IPv6 subnets!",
-              conf_.getConfigSummary(Configuration::CFGSEL_SUBNET));
+              conf_.getConfigSummary(SrvConfig::CFGSEL_SUBNET));
 }
 
 // This test checks if entire configuration can be copied and that the sequence
 // number is not affected.
-TEST_F(ConfigurationTest, copy) {
+TEST_F(SrvConfigTest, copy) {
     // Create two configurations with different sequence numbers.
-    Configuration conf1(32);
-    Configuration conf2(64);
+    SrvConfig conf1(32);
+    SrvConfig conf2(64);
 
     // Set logging information for conf1.
     LoggingInfo info;
@@ -296,9 +296,9 @@ TEST_F(ConfigurationTest, copy) {
 }
 
 // This test checks that two configurations can be compared for (in)equality.
-TEST_F(ConfigurationTest, equality) {
-    Configuration conf1(32);
-    Configuration conf2(64);
+TEST_F(SrvConfigTest, equality) {
+    SrvConfig conf1(32);
+    SrvConfig conf2(64);
 
     // Initially, both objects should be equal, even though the configuration
     // sequences are not matching.

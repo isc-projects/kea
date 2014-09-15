@@ -55,7 +55,6 @@ libdhcpsrv_unittests_SOURCES  = run_unittests.cc
 libdhcpsrv_unittests_SOURCES += addr_utilities_unittest.cc
 libdhcpsrv_unittests_SOURCES += alloc_engine_unittest.cc
 libdhcpsrv_unittests_SOURCES += callout_handle_store_unittest.cc
-libdhcpsrv_unittests_SOURCES += configuration_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfgmgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += csv_lease_file4_unittest.cc
 libdhcpsrv_unittests_SOURCES += csv_lease_file6_unittest.cc
@@ -82,6 +81,7 @@ endif
 libdhcpsrv_unittests_SOURCES += pool_unittest.cc
 libdhcpsrv_unittests_SOURCES += schema_mysql_copy.h
 libdhcpsrv_unittests_SOURCES += schema_pgsql_copy.h
+libdhcpsrv_unittests_SOURCES += srv_config_unittest.cc
 libdhcpsrv_unittests_SOURCES += subnet_unittest.cc
 libdhcpsrv_unittests_SOURCES += test_get_callout_handle.cc test_get_callout_handle.h
 libdhcpsrv_unittests_SOURCES += triplet_unittest.cc
