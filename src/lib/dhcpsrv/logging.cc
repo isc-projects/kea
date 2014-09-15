@@ -154,9 +154,6 @@ void LogConfigParser::applyConfiguration() {
     static const std::string SYSLOG = "syslog";
     static const std::string SYSLOG_COLON = "syslog:";
 
-    // Set locking directory to /tmp
-    setenv("B10_LOCKFILE_DIR_FROM_BUILD", "/tmp", 1);
-
     std::vector<LoggerSpecification> specs;
 
     // Now iterate through all specified loggers
@@ -171,7 +168,7 @@ void LogConfigParser::applyConfiguration() {
 
         for (std::vector<LoggingDestination>::const_iterator dest = it->destinations_.begin();
              dest != it->destinations_.end(); ++dest) {
-            
+
             // Set up output option according to destination specification
             if (dest->output_ == STDOUT) {
                 option.destination = OutputOption::DEST_CONSOLE;
