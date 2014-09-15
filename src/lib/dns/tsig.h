@@ -288,6 +288,11 @@ public:
     /// - \c BAD_SIG: The signature given in the TSIG doesn't match against
     ///               the locally computed digest or is the signature is
     ///               invalid in other way.
+    /// - \c BAD_MODE: Not yet implemented TKEY error
+    /// - \c BAD_NAME: Not yet implemented TKEY error
+    /// - \c BAD_ALG: Not yet implemented TKEY error
+    /// - \c BAD_TRUNC: The signature or truncated signature length is too
+    ///                 small.
     ///
     /// If this method is called by a DNS client waiting for a signed
     /// response and the result is not \c NOERROR, the context can be used

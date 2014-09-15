@@ -112,7 +112,7 @@ EXTRA_DIST += tsigrecord_toWire1.spec tsigrecord_toWire2.spec
 EXTRA_DIST += tsig_verify1.spec tsig_verify2.spec tsig_verify3.spec
 EXTRA_DIST += tsig_verify4.spec tsig_verify5.spec tsig_verify6.spec
 EXTRA_DIST += tsig_verify7.spec tsig_verify8.spec tsig_verify9.spec
-EXTRA_DIST += tsig_verify10.spec
+EXTRA_DIST += tsig_verify10.spec tsig_verify11.spec
 EXTRA_DIST += example.org
 EXTRA_DIST += broken.zone
 EXTRA_DIST += origincheck.txt
@@ -193,7 +193,7 @@ EXTRA_DIST += tsigrecord_toWire1.wire tsigrecord_toWire2.wire
 EXTRA_DIST += tsig_verify1.wire tsig_verify2.wire tsig_verify3.wire
 EXTRA_DIST += tsig_verify4.wire tsig_verify5.wire tsig_verify6.wire
 EXTRA_DIST += tsig_verify7.wire tsig_verify8.wire tsig_verify9.wire
-EXTRA_DIST += tsig_verify10.wire
+EXTRA_DIST += tsig_verify10.wire tsig_verify11.wire
 
 # We no longer use gen_wiredata.py during build process, so the
 # dependency is no longer needed. However, we'll keep this dependency

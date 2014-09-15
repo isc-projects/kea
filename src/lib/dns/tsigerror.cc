@@ -28,7 +28,11 @@ namespace {
 const char* const tsigerror_text[] = {
     "BADSIG",
     "BADKEY",
-    "BADTIME"
+    "BADTIME",
+    "BADMODE",
+    "BADNAME",
+    "BADALG",
+    "BADTRUNC"
 };
 }
 
@@ -42,7 +46,7 @@ std::string
 TSIGError::toText() const {
     if (code_ <= MAX_RCODE_FOR_TSIGERROR) {
         return (Rcode(code_).toText());
-    } else if (code_ <= BAD_TIME_CODE) {
+    } else if (code_ <= BAD_TRUNC_CODE) {
         return (tsigerror_text[code_ - (MAX_RCODE_FOR_TSIGERROR + 1)]);
     } else {
         return (boost::lexical_cast<std::string>(code_));
@@ -54,7 +58,7 @@ TSIGError::toRcode() const {
     if (code_ <= MAX_RCODE_FOR_TSIGERROR) {
         return (Rcode(code_));
     }
-    if (code_ > BAD_TIME_CODE) {
+    if (code_ > BAD_TRUNC_CODE) {
         return (Rcode::SERVFAIL());
     }
     return (Rcode::NOTAUTH());

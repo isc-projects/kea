@@ -951,8 +951,6 @@ TEST_F(TSIGTest, signAfterVerified) {
 
 TEST_F(TSIGTest, tooShortMAC) {
     // Too short MAC should be rejected.
-    // Note: when we implement RFC4635-based checks, the error code will
-    // (probably) be FORMERR.
 
     isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
     createMessageFromFile("tsig_verify10.wire");
@@ -960,7 +958,26 @@ TEST_F(TSIGTest, tooShortMAC) {
         SCOPED_TRACE("Verify test for request");
         commonVerifyChecks(*tsig_verify_ctx, message.getTSIGRecord(),
                            &received_data[0], received_data.size(),
-                           TSIGError::BAD_SIG(), TSIGContext::RECEIVED_REQUEST);
+                           TSIGError::FORMERR(), TSIGContext::RECEIVED_REQUEST);
+    }
+}
+
+TEST_F(TSIGTest, truncatedMAC) {
+    // Truncated MACs are not yet supported
+
+    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
+
+    secret.clear();
+    decodeBase64("jI/Pa4qRu96t76Pns5Z/Ndxbn3QCkwcxLOgt9vgvnJw5wqTRvNyk3FtD6yIMd1dWVlqZ+Y4fe6Uasc0ckctEmg==", secret);
+    TSIGContext sha_ctx(TSIGKey(test_name, TSIGKey::HMACSHA512_NAME(),
+				&secret[0], secret.size()));
+
+    createMessageFromFile("tsig_verify11.wire");
+    {
+        SCOPED_TRACE("Verify test for request");
+        commonVerifyChecks(sha_ctx, message.getTSIGRecord(),
+                           &received_data[0], received_data.size(),
+                           TSIGError::BAD_TRUNC(), TSIGContext::RECEIVED_REQUEST);
     }
 }
 

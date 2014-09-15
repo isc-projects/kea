@@ -490,9 +490,6 @@ TSIGContext::verify(const TSIGRecord* const record, const void* const data,
                                         digest_len));
     }
 
-    // TODO: signature length check based on RFC4635
-    // (Right now we enforce the standard signature length in libcryptolink)
-
     // Handling empty MAC.  While RFC2845 doesn't explicitly prohibit other
     // cases, it can only reasonably happen in a response with BADSIG or
     // BADKEY.  We reject other cases as if it were BADSIG to avoid unexpected
@@ -512,6 +509,23 @@ TSIGContext::verify(const TSIGRecord* const record, const void* const data,
     // previous MAC), digest it.
     if (impl_->state_ != INIT) {
         impl_->digestPreviousMAC(hmac);
+    }
+
+    // Signature length check based on RFC4635
+    if (tsig_rdata.getMACSize() > hmac->getOutputLength()) {
+        // signature length too big
+        return (impl_->postVerifyUpdate(TSIGError::FORMERR(), NULL, 0));
+    }
+    if ((tsig_rdata.getMACSize() < 10) ||
+        (tsig_rdata.getMACSize() < (hmac->getOutputLength() / 2))) {
+        // signature length below minimum
+        return (impl_->postVerifyUpdate(TSIGError::FORMERR(), NULL, 0));
+    }
+    // TODO: truncated signature length too small
+    // (Right now we don't support truncated HMAC)
+    if (tsig_rdata.getMACSize() < hmac->getOutputLength()) {
+        // signature length too small
+        return (impl_->postVerifyUpdate(TSIGError::BAD_TRUNC(), NULL, 0));
     }
 
     //

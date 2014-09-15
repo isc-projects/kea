@@ -138,6 +138,14 @@ TSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
         error = TSIGError::BAD_KEY_CODE;
     } else if (error_txt == "BADTIME") {
         error = TSIGError::BAD_TIME_CODE;
+    } else if (error_txt == "BADMODE") {
+        error = TSIGError::BAD_MODE_CODE;
+    } else if (error_txt == "BADNAME") {
+        error = TSIGError::BAD_NAME_CODE;
+    } else if (error_txt == "BADALG") {
+        error = TSIGError::BAD_ALG_CODE;
+    } else if (error_txt == "BADTRUNC") {
+        error = TSIGError::BAD_TRUNC_CODE;
     } else {
 	/// we cast to uint32_t and range-check, because casting directly to
 	/// uint16_t will convert negative numbers to large positive numbers

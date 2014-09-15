@@ -51,6 +51,10 @@ TEST(TSIGErrorTest, constants) {
     EXPECT_EQ(TSIGError::BAD_SIG_CODE, TSIGError(16).getCode());
     EXPECT_EQ(TSIGError::BAD_KEY_CODE, TSIGError(17).getCode());
     EXPECT_EQ(TSIGError::BAD_TIME_CODE, TSIGError(18).getCode());
+    EXPECT_EQ(TSIGError::BAD_MODE_CODE, TSIGError(19).getCode());
+    EXPECT_EQ(TSIGError::BAD_NAME_CODE, TSIGError(20).getCode());
+    EXPECT_EQ(TSIGError::BAD_ALG_CODE, TSIGError(21).getCode());
+    EXPECT_EQ(TSIGError::BAD_TRUNC_CODE, TSIGError(22).getCode());
 
     EXPECT_EQ(0, TSIGError::NOERROR().getCode());
     EXPECT_EQ(9, TSIGError::NOTAUTH().getCode());
@@ -58,6 +62,10 @@ TEST(TSIGErrorTest, constants) {
     EXPECT_EQ(TSIGError::BAD_SIG_CODE, TSIGError::BAD_SIG().getCode());
     EXPECT_EQ(TSIGError::BAD_KEY_CODE, TSIGError::BAD_KEY().getCode());
     EXPECT_EQ(TSIGError::BAD_TIME_CODE, TSIGError::BAD_TIME().getCode());
+    EXPECT_EQ(TSIGError::BAD_MODE_CODE, TSIGError::BAD_MODE().getCode());
+    EXPECT_EQ(TSIGError::BAD_NAME_CODE, TSIGError::BAD_NAME().getCode());
+    EXPECT_EQ(TSIGError::BAD_ALG_CODE, TSIGError::BAD_ALG().getCode());
+    EXPECT_EQ(TSIGError::BAD_TRUNC_CODE, TSIGError::BAD_TRUNC().getCode());
 }
 
 TEST(TSIGErrorTest, equal) {
@@ -87,9 +95,13 @@ TEST(TSIGErrorTest, toText) {
     EXPECT_EQ("BADSIG", TSIGError::BAD_SIG().toText());
     EXPECT_EQ("BADKEY", TSIGError::BAD_KEY().toText());
     EXPECT_EQ("BADTIME", TSIGError::BAD_TIME().toText());
+    EXPECT_EQ("BADMODE", TSIGError::BAD_MODE().toText());
+    EXPECT_EQ("BADNAME", TSIGError::BAD_NAME().toText());
+    EXPECT_EQ("BADALG", TSIGError::BAD_ALG().toText());
+    EXPECT_EQ("BADTRUNC", TSIGError::BAD_TRUNC().toText());
 
     // Unknown (or not yet supported) codes.  Simply converted as numeric.
-    EXPECT_EQ("19", TSIGError(19).toText());
+    EXPECT_EQ("23", TSIGError(23).toText());
     EXPECT_EQ("65535", TSIGError(65535).toText());
 }
 
@@ -101,9 +113,13 @@ TEST(TSIGErrorTest, toRcode) {
     EXPECT_EQ(Rcode::NOTAUTH(), TSIGError::BAD_SIG().toRcode());
     EXPECT_EQ(Rcode::NOTAUTH(), TSIGError::BAD_KEY().toRcode());
     EXPECT_EQ(Rcode::NOTAUTH(), TSIGError::BAD_TIME().toRcode());
+    EXPECT_EQ(Rcode::NOTAUTH(), TSIGError::BAD_MODE().toRcode());
+    EXPECT_EQ(Rcode::NOTAUTH(), TSIGError::BAD_NAME().toRcode());
+    EXPECT_EQ(Rcode::NOTAUTH(), TSIGError::BAD_ALG().toRcode());
+    EXPECT_EQ(Rcode::NOTAUTH(), TSIGError::BAD_TRUNC().toRcode());
 
     // Unknown (or not yet supported) codes are treated as SERVFAIL.
-    EXPECT_EQ(Rcode::SERVFAIL(), TSIGError(19).toRcode());
+    EXPECT_EQ(Rcode::SERVFAIL(), TSIGError(23).toRcode());
     EXPECT_EQ(Rcode::SERVFAIL(), TSIGError(65535).toRcode());
 }
 

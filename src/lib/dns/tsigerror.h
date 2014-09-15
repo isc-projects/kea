@@ -26,7 +26,7 @@ namespace dns {
 ///
 /// The \c TSIGError class objects represent standard errors related to
 /// TSIG protocol operations as defined in related specifications, mainly
-/// in RFC2845.
+/// in RFC2845, RFC2930 and RFC4635.
 class TSIGError {
 public:
     /// Constants for pre-defined TSIG error values.
@@ -38,9 +38,13 @@ public:
     /// header file.  To avoid conflict with it we add an underscore to our
     /// definitions.
     enum CodeValue {
-        BAD_SIG_CODE = 16, ///< 16: TSIG verification failure
-        BAD_KEY_CODE = 17, ///< 17: TSIG key is not recognized
-        BAD_TIME_CODE = 18 ///< 18: Current time and time signed are too different
+        BAD_SIG_CODE = 16,  ///< 16: TSIG verification failure
+        BAD_KEY_CODE = 17,  ///< 17: TSIG key is not recognized
+        BAD_TIME_CODE = 18, ///< 18: Current time and time signed are too different
+        BAD_MODE_CODE = 19, ///< 19: Bad TKEY mode
+        BAD_NAME_CODE = 20, ///< 20: Duplicate TKEY name
+        BAD_ALG_CODE = 21,  ///< 21: TKEY algorithm not supported
+        BAD_TRUNC_CODE = 22 ///< 22: Bad truncation
     };
 
     /// \name Constructors
@@ -195,6 +199,22 @@ public:
     /// (see \c TSIGError::BAD_TIME_CODE).
     static const TSIGError& BAD_TIME();
 
+    /// A constant TSIG error object for the BADMODE code
+    /// (see \c TSIGError::BAD_MODE_CODE).
+    static const TSIGError& BAD_MODE();
+
+    /// A constant TSIG error object for the BADNAME code
+    /// (see \c TSIGError::BAD_NAME_CODE).
+    static const TSIGError& BAD_NAME();
+
+    /// A constant TSIG error object for the BADALG code
+    /// (see \c TSIGError::BAD_ALG_CODE).
+    static const TSIGError& BAD_ALG();
+
+    /// A constant TSIG error object for the BADTRUNC code
+    /// (see \c TSIGError::BAD_TRUNC_CODE).
+    static const TSIGError& BAD_TRUNC();
+
 private:
     // This is internally used to specify the maximum possible RCODE value
     // that can be convertible to TSIGErrors.
@@ -314,6 +334,30 @@ TSIGError::BAD_KEY() {
 inline const TSIGError&
 TSIGError::BAD_TIME() {
     static TSIGError e(BAD_TIME_CODE);
+    return (e);
+}
+
+inline const TSIGError&
+TSIGError::BAD_MODE() {
+    static TSIGError e(BAD_MODE_CODE);
+    return (e);
+}
+
+inline const TSIGError&
+TSIGError::BAD_NAME() {
+    static TSIGError e(BAD_NAME_CODE);
+    return (e);
+}
+
+inline const TSIGError&
+TSIGError::BAD_ALG() {
+    static TSIGError e(BAD_ALG_CODE);
+    return (e);
+}
+
+inline const TSIGError&
+TSIGError::BAD_TRUNC() {
+    static TSIGError e(BAD_TRUNC_CODE);
     return (e);
 }
 
