@@ -4,6 +4,8 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS=$(KEA_CXXFLAGS)
 
+noinst_SCRIPTS = dhcp_test_lib.sh
+
 if HAVE_GTEST
 noinst_LTLIBRARIES = libkea-testutils.la
 
