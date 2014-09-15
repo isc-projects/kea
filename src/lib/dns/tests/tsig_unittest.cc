@@ -970,7 +970,7 @@ TEST_F(TSIGTest, truncatedMAC) {
     secret.clear();
     decodeBase64("jI/Pa4qRu96t76Pns5Z/Ndxbn3QCkwcxLOgt9vgvnJw5wqTRvNyk3FtD6yIMd1dWVlqZ+Y4fe6Uasc0ckctEmg==", secret);
     TSIGContext sha_ctx(TSIGKey(test_name, TSIGKey::HMACSHA512_NAME(),
-				&secret[0], secret.size()));
+                                &secret[0], secret.size()));
 
     createMessageFromFile("tsig_verify11.wire");
     {
