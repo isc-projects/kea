@@ -536,7 +536,7 @@ TEST_F(ParseConfigTest, basicOptionDefTest) {
 
     // Verify that the option definition can be retrieved.
     OptionDefinitionPtr def =
-        CfgMgr::instance().getStagingCfg()->getCfgOptionDef().get("isc", 100);
+        CfgMgr::instance().getStagingCfg()->getCfgOptionDef()->get("isc", 100);
     ASSERT_TRUE(def);
 
     // Verify that the option definition is correct.

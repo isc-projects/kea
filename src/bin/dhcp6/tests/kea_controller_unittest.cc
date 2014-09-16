@@ -18,6 +18,7 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <log/logger_unittest_support.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
@@ -52,6 +53,7 @@ public:
     }
 
     ~JSONFileBackendTest() {
+        isc::log::resetUnitTestRootLogger();
         static_cast<void>(unlink(TEST_FILE));
     };
 
