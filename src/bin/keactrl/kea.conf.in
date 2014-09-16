@@ -20,7 +20,10 @@
   "valid-lifetime": 4000,
 
 # Below an example of the simple subnet declaration. Uncomment to
-# enable it.
+# enable it. This is a list, denoted with [ ], of structure, denoted
+# with { }. Each structure describes a single subnet and may have
+# several parameters. One of those parameters is "pools" that is
+# also a list of structures.
   "subnet4": [
 #  {    "subnet": "192.0.2.0/24",
 #       "pools": [ { "pool": "192.0.2.1 - 192.0.2.200" } ] }
