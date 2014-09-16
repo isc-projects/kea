@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/dhcp6_log.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <log/logger_support.h>
 #include <log/logger_manager.h>
 #include <exceptions/exceptions.h>
@@ -122,6 +123,11 @@ main(int argc, char* argv[]) {
 
     int ret = EXIT_SUCCESS;
     try {
+        // It is important that we set a default logger name because this name
+        // will be used when the user doesn't provide the logging configuration
+        // in the Kea configuration file.
+        CfgMgr::instance().setDefaultLoggerName(DHCP6_LOGGER_NAME);
+
         // Initialize logging.  If verbose, we'll use maximum verbosity.
         Daemon::loggerInit(DHCP6_LOGGER_NAME, verbose_mode);
 

@@ -262,9 +262,7 @@ class CfgMgrTest : public ::testing::Test {
 public:
     CfgMgrTest() {
         // make sure we start with a clean configuration
-        CfgMgr::instance().deleteSubnets4();
-        CfgMgr::instance().deleteSubnets6();
-        CfgMgr::instance().deleteOptionDefs();
+        clear();
     }
 
     /// @brief generates interface-id option based on provided text
@@ -279,9 +277,15 @@ public:
 
     ~CfgMgrTest() {
         // clean up after the test
+        clear();
+    }
+
+    void clear() {
+        CfgMgr::instance().setVerbose(false);
         CfgMgr::instance().deleteSubnets4();
         CfgMgr::instance().deleteSubnets6();
         CfgMgr::instance().deleteOptionDefs();
+        CfgMgr::instance().clear();
     }
 
     /// used in client classification (or just empty container for other tests)
@@ -292,10 +296,13 @@ public:
 // it is empty by default.
 TEST_F(CfgMgrTest, configuration) {
 
-    ConfigurationPtr configuration = CfgMgr::instance().getConfiguration();
+    ConstSrvConfigPtr configuration = CfgMgr::instance().getCurrentCfg();
     ASSERT_TRUE(configuration);
+    EXPECT_TRUE(configuration->getLoggingInfo().empty());
 
-    EXPECT_TRUE(configuration->logging_info_.empty());
+    configuration = CfgMgr::instance().getStagingCfg();
+    ASSERT_TRUE(configuration);
+    EXPECT_TRUE(configuration->getLoggingInfo().empty());
 }
 
 // This test verifies that multiple option definitions can be added
@@ -1118,6 +1125,151 @@ TEST_F(CfgMgrTest, subnet6Duplication) {
     EXPECT_THROW(cfg_mgr.addSubnet6(subnet3), isc::dhcp::DuplicateSubnetID);
 }
 
+
+// This test verifies that the configuration staging, commit and rollback works
+// as expected.
+TEST_F(CfgMgrTest, staging) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    // Initially, the current configuration is a default one. We are going
+    // to get the current configuration a couple of times and make sure
+    // that always the same instance is returned.
+    ConstSrvConfigPtr const_config;
+    for (int i = 0; i < 5; ++i) {
+        const_config = cfg_mgr.getCurrentCfg();
+        ASSERT_TRUE(const_config) << "Returned NULL current configuration"
+            " for iteration " << i;
+        EXPECT_EQ(0, const_config->getSequence())
+            << "Returned invalid sequence number "
+            << const_config->getSequence() << " for iteration " << i;
+    }
+
+    // Try to get the new staging configuration. When getStagingCfg() is called
+    // for the first time the new instance of the staging configuration is
+    // returned. This instance is returned for every call to getStagingCfg()
+    // until commit is called.
+    SrvConfigPtr config;
+    for (int i = 0; i < 5; ++i) {
+        config = cfg_mgr.getStagingCfg();
+        ASSERT_TRUE(config) << "Returned NULL staging configuration for"
+            " iteration " << i;
+        // The sequence id is 1 for staging because it is ahead of current
+        // configuration having sequence number 0.
+        EXPECT_EQ(1, config->getSequence()) << "Returned invalid sequence"
+            " number " << config->getSequence() << " for iteration " << i;
+    }
+
+    // This should change the staging configuration so as it becomes a current
+    // one.
+    cfg_mgr.commit();
+    const_config = cfg_mgr.getCurrentCfg();
+    ASSERT_TRUE(const_config);
+    // Sequence id equal to 1 indicates that the current configuration points
+    // to the configuration that used to be a staging configuration previously.
+    EXPECT_EQ(1, const_config->getSequence());
+
+    // Create a new staging configuration. It should be assigned a new
+    // sequence id.
+    config = cfg_mgr.getStagingCfg();
+    ASSERT_TRUE(config);
+    EXPECT_EQ(2, config->getSequence());
+
+    // Let's execute commit a couple of times. The first invocation to commit
+    // changes the configuration having sequence 2 to current configuration.
+    // Other commits are no-op.
+    for (int i = 0; i < 5; ++i) {
+        cfg_mgr.commit();
+    }
+
+    // The current configuration now have sequence number 2.
+    const_config = cfg_mgr.getCurrentCfg();
+    ASSERT_TRUE(const_config);
+    EXPECT_EQ(2, const_config->getSequence());
+
+    // Clear configuration along with a history.
+    cfg_mgr.clear();
+
+    // After clearing configuration we should successfully get the
+    // new staging configuration.
+    config = cfg_mgr.getStagingCfg();
+    ASSERT_TRUE(config);
+    EXPECT_EQ(1, config->getSequence());
+
+    // Modify the staging configuration.
+    config->addLoggingInfo(LoggingInfo());
+    ASSERT_TRUE(config);
+    // The modified staging configuration should have one logger configured.
+    ASSERT_EQ(1, config->getLoggingInfo().size());
+
+    // Rollback should remove a staging configuration, including the logger.
+    ASSERT_NO_THROW(cfg_mgr.rollback());
+
+    // Make sure that the logger is not set. This is an indication that the
+    // rollback worked.
+    config = cfg_mgr.getStagingCfg();
+    ASSERT_TRUE(config);
+    EXPECT_EQ(0, config->getLoggingInfo().size());
+}
+
+// This test verifies that it is possible to revert to an old configuration.
+TEST_F(CfgMgrTest, revert) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    // Let's create 5 unique configurations: differing by a debug level in the
+    // range of 10 to 14.
+    for (int i = 0; i < 5; ++i) {
+        SrvConfigPtr config = cfg_mgr.getStagingCfg();
+        LoggingInfo logging_info;
+        logging_info.debuglevel_ = i + 10;
+        config->addLoggingInfo(logging_info);
+        cfg_mgr.commit();
+    }
+
+    // Now we have 6 configurations with:
+    // - debuglevel = 99 (a default one)
+    // - debuglevel = 10
+    // - debuglevel = 11
+    // - debuglevel = 12
+    // - debuglevel = 13
+    // - debuglevel = 14 (current)
+
+    // Hence, the maximum index of the configuration to revert is 5 (which
+    // points to the configuration with debuglevel = 99). For the index greater
+    // than 5 we should get an exception.
+    ASSERT_THROW(cfg_mgr.revert(6), isc::OutOfRange);
+    // Value of 0 also doesn't make sense.
+    ASSERT_THROW(cfg_mgr.revert(0), isc::OutOfRange);
+
+    // We should be able to revert to configuration with debuglevel = 10.
+    ASSERT_NO_THROW(cfg_mgr.revert(4));
+    // And this configuration should be now the current one and the debuglevel
+    // of this configuration is 10.
+    EXPECT_EQ(10, cfg_mgr.getCurrentCfg()->getLoggingInfo()[0].debuglevel_);
+    EXPECT_NE(cfg_mgr.getCurrentCfg()->getSequence(), 1);
+
+    // The new set of configuration is now as follows:
+    // - debuglevel = 99
+    // - debuglevel = 10
+    // - debuglevel = 11
+    // - debuglevel = 12
+    // - debuglevel = 13
+    // - debuglevel = 14
+    // - debuglevel = 10 (current)
+    // So, reverting to configuration having index 3 means that the debug level
+    // of the current configuration will become 12.
+    ASSERT_NO_THROW(cfg_mgr.revert(3));
+    EXPECT_EQ(12, cfg_mgr.getCurrentCfg()->getLoggingInfo()[0].debuglevel_);
+}
+
+// This test verifies that the verbosity can be set and obtained from the
+// configuration manager.
+TEST_F(CfgMgrTest, verbosity) {
+    ASSERT_FALSE(CfgMgr::instance().isVerbose());
+
+    CfgMgr::instance().setVerbose(true);
+    ASSERT_TRUE(CfgMgr::instance().isVerbose());
+
+    CfgMgr::instance().setVerbose(false);
+    EXPECT_FALSE(CfgMgr::instance().isVerbose());
+}
 
 /// @todo Add unit-tests for testing:
 /// - addActiveIface() with invalid interface name

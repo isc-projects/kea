@@ -662,7 +662,7 @@ namespace dhcp {
         parser = new Uint32Parser(config_id,
                                  globalContext()->uint32_values_);
     } else if (config_id.compare("interfaces") == 0) {
-        parser = new InterfaceListConfigParser(config_id);
+        parser = new InterfaceListConfigParser(config_id, globalContext());
     } else if (config_id.compare("subnet6") == 0) {
         parser = new Subnets6ListConfigParser(config_id);
     } else if (config_id.compare("option-data") == 0) {
@@ -821,9 +821,8 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
                 subnet_parser->commit();
             }
 
-            if (iface_parser) {
-                iface_parser->commit();
-            }
+            // No need to commit interface names as this is handled by the
+            // CfgMgr::commit() function.
 
             // This occurs last as if it succeeds, there is no easy way to
             // revert it.  As a result, the failure to commit a subsequent
@@ -854,8 +853,8 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
     }
 
     LOG_INFO(dhcp6_logger, DHCP6_CONFIG_COMPLETE)
-        .arg(CfgMgr::instance().getConfiguration()->
-             getConfigSummary(Configuration::CFGSEL_ALL6));
+        .arg(CfgMgr::instance().getCurrentCfg()->
+             getConfigSummary(SrvConfig::CFGSEL_ALL6));
 
     // Everything was fine. Configuration is successful.
     answer = isc::config::createAnswer(0, "Configuration successful.");
