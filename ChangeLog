@@ -1,3 +1,8 @@
+834.	[bug]		marcin
+	Corrected the definition of the example DHCPv4 and DHCPv6 address
+	pools in the default kea.conf file.
+	(Trac #3538, git 8712cc0df77368940d8d3d11811a9ac9504bce12)
+
 833.	[func]		marcin
 	Configuration Manager supports two stage configuration. In the
 	first stage a temporary configuration is created and in the
