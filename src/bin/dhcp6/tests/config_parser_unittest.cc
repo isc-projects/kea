@@ -302,6 +302,7 @@ public:
         try {
             ElementPtr json = Element::fromJSON(config);
             status = configureDhcp6Server(srv_, json);
+
         } catch (const std::exception& ex) {
             ADD_FAILURE() << "Unable to " << operation << ". "
                    << "The following configuration was used: " << std::endl
@@ -382,6 +383,7 @@ public:
         EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
         checkResult(x, 1);
         EXPECT_TRUE(errorContainsPosition(x, "<string>"));
+        CfgMgr::instance().clear();
     }
 
     /// @brief Test invalid option paramater value.
@@ -399,6 +401,7 @@ public:
         EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
         checkResult(x, 1);
         EXPECT_TRUE(errorContainsPosition(x, "<string>"));
+        CfgMgr::instance().clear();
     }
 
     /// @brief Test option against given code and data.
@@ -468,11 +471,13 @@ public:
                            const size_t expected_data_len) {
         std::string config = createConfigWithOption(params);
         ASSERT_TRUE(executeConfiguration(config, "parse option configuration"));
+
         // The subnet should now hold one option with the specified code.
         Subnet::OptionDescriptor desc =
             getOptionFromSubnet(IOAddress("2001:db8:1::5"), option_code);
         ASSERT_TRUE(desc.option);
         testOption(desc, option_code, expected_data, expected_data_len);
+        CfgMgr::instance().clear();
     }
 
     int rcode_;          ///< Return code (see @ref isc::config::parseAnswer)
@@ -1466,8 +1471,8 @@ TEST_F(Dhcp6ParserTest, optionDefIpv6Address) {
     ElementPtr json = Element::fromJSON(config);
 
     // Make sure that the particular option definition does not exist.
-    OptionDefinitionPtr def = CfgMgr::instance().getCurrentCfg()->
-        getCfgOptionDef().get("isc", 100);
+    OptionDefinitionPtr def = CfgMgr::instance().getStagingCfg()->
+        getCfgOptionDef()->get("isc", 100);
     ASSERT_FALSE(def);
 
     // Use the configuration string to create new option definition.
@@ -1476,7 +1481,7 @@ TEST_F(Dhcp6ParserTest, optionDefIpv6Address) {
     ASSERT_TRUE(status);
 
     // The option definition should now be available in the CfgMgr.
-    def = CfgMgr::instance().getCurrentCfg()->getCfgOptionDef().get("isc", 100);
+    def = CfgMgr::instance().getStagingCfg()->getCfgOptionDef()->get("isc", 100);
     ASSERT_TRUE(def);
 
     // Verify that the option definition data is valid.
@@ -1506,8 +1511,8 @@ TEST_F(Dhcp6ParserTest, optionDefRecord) {
     ElementPtr json = Element::fromJSON(config);
 
     // Make sure that the particular option definition does not exist.
-    OptionDefinitionPtr def = CfgMgr::instance().getCurrentCfg()->
-        getCfgOptionDef().get("isc", 100);
+    OptionDefinitionPtr def = CfgMgr::instance().getStagingCfg()->
+        getCfgOptionDef()->get("isc", 100);
     ASSERT_FALSE(def);
 
     // Use the configuration string to create new option definition.
@@ -1517,7 +1522,7 @@ TEST_F(Dhcp6ParserTest, optionDefRecord) {
     checkResult(status, 0);
 
     // The option definition should now be available in the CfgMgr.
-    def = CfgMgr::instance().getCurrentCfg()->getCfgOptionDef().get("isc", 100);
+    def = CfgMgr::instance().getStagingCfg()->getCfgOptionDef()->get("isc", 100);
     ASSERT_TRUE(def);
 
     // Check the option data.
@@ -1564,10 +1569,10 @@ TEST_F(Dhcp6ParserTest, optionDefMultiple) {
     ElementPtr json = Element::fromJSON(config);
 
     // Make sure that the option definitions do not exist yet.
-    ASSERT_FALSE(CfgMgr::instance().getCurrentCfg()->
-                 getCfgOptionDef().get("isc", 100));
-    ASSERT_FALSE(CfgMgr::instance().getCurrentCfg()->
-                 getCfgOptionDef().get("isc", 101));
+    ASSERT_FALSE(CfgMgr::instance().getStagingCfg()->
+                 getCfgOptionDef()->get("isc", 100));
+    ASSERT_FALSE(CfgMgr::instance().getStagingCfg()->
+                 getCfgOptionDef()->get("isc", 101));
 
     // Use the configuration string to create new option definitions.
     ConstElementPtr status;
@@ -1576,8 +1581,8 @@ TEST_F(Dhcp6ParserTest, optionDefMultiple) {
     checkResult(status, 0);
 
     // Check the first definition we have created.
-    OptionDefinitionPtr def1 = CfgMgr::instance().getCurrentCfg()->
-        getCfgOptionDef().get("isc", 100);
+    OptionDefinitionPtr def1 = CfgMgr::instance().getStagingCfg()->
+        getCfgOptionDef()->get("isc", 100);
     ASSERT_TRUE(def1);
 
     // Check the option data.
@@ -1587,8 +1592,8 @@ TEST_F(Dhcp6ParserTest, optionDefMultiple) {
     EXPECT_FALSE(def1->getArrayType());
 
     // Check the second option definition we have created.
-    OptionDefinitionPtr def2 = CfgMgr::instance().getCurrentCfg()->
-        getCfgOptionDef().get("isc", 101);
+    OptionDefinitionPtr def2 = CfgMgr::instance().getStagingCfg()->
+        getCfgOptionDef()->get("isc", 101);
     ASSERT_TRUE(def2);
 
     // Check the option data.
@@ -1628,8 +1633,8 @@ TEST_F(Dhcp6ParserTest, optionDefDuplicate) {
     ElementPtr json = Element::fromJSON(config);
 
     // Make sure that the option definition does not exist yet.
-    ASSERT_FALSE(CfgMgr::instance().getCurrentCfg()->
-                 getCfgOptionDef().get("isc", 100));
+    ASSERT_FALSE(CfgMgr::instance().getStagingCfg()->
+                 getCfgOptionDef()->get("isc", 100));
 
     // Use the configuration string to create new option definitions.
     ConstElementPtr status;
@@ -1659,8 +1664,8 @@ TEST_F(Dhcp6ParserTest, optionDefArray) {
     ElementPtr json = Element::fromJSON(config);
 
     // Make sure that the particular option definition does not exist.
-    OptionDefinitionPtr def = CfgMgr::instance().getCurrentCfg()->
-        getCfgOptionDef().get("isc", 100);
+    OptionDefinitionPtr def = CfgMgr::instance().getStagingCfg()->
+        getCfgOptionDef()->get("isc", 100);
     ASSERT_FALSE(def);
 
     // Use the configuration string to create new option definition.
@@ -1670,7 +1675,7 @@ TEST_F(Dhcp6ParserTest, optionDefArray) {
     checkResult(status, 0);
 
     // The option definition should now be available in the CfgMgr.
-    def = CfgMgr::instance().getCurrentCfg()->getCfgOptionDef().get("isc", 100);
+    def = CfgMgr::instance().getStagingCfg()->getCfgOptionDef()->get("isc", 100);
     ASSERT_TRUE(def);
 
     // Check the option data.
@@ -1700,8 +1705,8 @@ TEST_F(Dhcp6ParserTest, optionDefEncapsulate) {
     ElementPtr json = Element::fromJSON(config);
 
     // Make sure that the particular option definition does not exist.
-    OptionDefinitionPtr def = CfgMgr::instance().getCurrentCfg()->
-        getCfgOptionDef().get("isc", 100);
+    OptionDefinitionPtr def = CfgMgr::instance().getStagingCfg()->
+        getCfgOptionDef()->get("isc", 100);
     ASSERT_FALSE(def);
 
     // Use the configuration string to create new option definition.
@@ -1711,7 +1716,7 @@ TEST_F(Dhcp6ParserTest, optionDefEncapsulate) {
     checkResult(status, 0);
 
     // The option definition should now be available in the CfgMgr.
-    def = CfgMgr::instance().getCurrentCfg()->getCfgOptionDef().get("isc", 100);
+    def = CfgMgr::instance().getStagingCfg()->getCfgOptionDef()->get("isc", 100);
     ASSERT_TRUE(def);
 
     // Check the option data.
@@ -1909,8 +1914,8 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
         "}";
     ElementPtr json = Element::fromJSON(config);
 
-    OptionDefinitionPtr def = CfgMgr::instance().getCurrentCfg()->
-        getCfgOptionDef().get("dhcp6", 100);
+    OptionDefinitionPtr def = CfgMgr::instance().getStagingCfg()->
+        getCfgOptionDef()->get("dhcp6", 100);
     ASSERT_FALSE(def);
 
     // Use the configuration string to create new option definition.
@@ -1920,8 +1925,8 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
     checkResult(status, 0);
 
     // The option definition should now be available in the CfgMgr.
-    def = CfgMgr::instance().getCurrentCfg()->
-        getCfgOptionDef().get("dhcp6", 100);
+    def = CfgMgr::instance().getStagingCfg()->
+        getCfgOptionDef()->get("dhcp6", 100);
     ASSERT_TRUE(def);
 
     // Check the option data.
@@ -1977,8 +1982,8 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
     // Expecting success.
     checkResult(status, 0);
 
-    def = CfgMgr::instance().getCurrentCfg()->
-        getCfgOptionDef().get("dhcp6", 59);
+    def = CfgMgr::instance().getStagingCfg()->
+        getCfgOptionDef()->get("dhcp6", 59);
     ASSERT_TRUE(def);
 
     // Check the option data.
@@ -2202,6 +2207,8 @@ TEST_F(Dhcp6ParserTest, optionDataEncapsulate) {
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
+    CfgMgr::instance().clear();
+
     // Stage 2. Configure base option and a subnet. Please note that
     // the configuration from the stage 2 is repeated because BIND
     // configuration manager sends whole configuration for the lists
@@ -2394,6 +2401,8 @@ TEST_F(Dhcp6ParserTest, optionDataBoolean) {
     std::string config = createConfigWithOption(params);
     ASSERT_TRUE(executeConfiguration(config, "parse configuration with a"
                                      " boolean value"));
+
+    CfgMgr::instance().commit();
 
     // The subnet should now hold one option with the code 1000.
     Subnet::OptionDescriptor desc =
@@ -2785,6 +2794,8 @@ TEST_F(Dhcp6ParserTest, stdOptionDataEncapsulate) {
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
+    CfgMgr::instance().clear();
+
     // Once the definitions have been added we can configure the
     // standard option #17. This option comprises an enterprise
     // number and sub options. By convention (introduced in
@@ -3026,6 +3037,8 @@ TEST_F(Dhcp6ParserTest, LibrariesSpecified) {
     ASSERT_EQ(2, libraries.size());
     EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "12"));
     EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
+
+    CfgMgr::instance().commit();
 
     // Unload the libraries.  The load file should not have changed, but
     // the unload one should indicate the unload() functions have been run.

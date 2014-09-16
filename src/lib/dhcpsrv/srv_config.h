@@ -141,13 +141,25 @@ public:
         cfg_iface_ = cfg_iface;
     }
 
-    /// @brief Returns object which represents user-defined option definitions.
+    /// @brief Return pointer to non-const object representing user-defined
+    /// option definitions.
     ///
-    /// This function returns a reference to the object which represents the
+    /// This function returns a pointer to the object which represents the
     /// user defined option definitions grouped by option space name.
     ///
-    /// @return Reference to an object holding option definitions.
-    const CfgOptionDef& getCfgOptionDef() const {
+    /// @return Pointer to an object holding option definitions.
+    CfgOptionDefPtr getCfgOptionDef() {
+        return (cfg_option_def_);
+    }
+
+    /// @brief Returns pointer to the const object representing user-defined
+    /// option definitions.
+    ///
+    /// This function returns a pointer to the object which represents the
+    /// user defined option definitions grouped by option space name.
+    ///
+    /// @return Pointer to an object holding option definitions.
+    ConstCfgOptionDefPtr getCfgOptionDef() const {
         return (cfg_option_def_);
     }
 
@@ -155,7 +167,7 @@ public:
     ///
     /// @param cfg_option_def New object representing option definitions.
     void setCfgOptionDef(const CfgOptionDef& cfg_option_def) {
-        cfg_option_def_ = cfg_option_def;
+        *cfg_option_def_ = cfg_option_def;
     }
 
     //@}
@@ -239,11 +251,11 @@ private:
     /// queries.
     CfgIface cfg_iface_;
 
-    /// @brief Option definitions configuration.
+    /// @brief Pointer to option definitions configuration.
     ///
     /// This object holds the user-defined option definitions grouped
     /// by option space name.
-    CfgOptionDef cfg_option_def_;
+    CfgOptionDefPtr cfg_option_def_;
 
 };
 

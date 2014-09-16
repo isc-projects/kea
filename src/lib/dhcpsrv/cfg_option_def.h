@@ -121,6 +121,16 @@ private:
 
 };
 
+/// @name Pointers to the @c CfgOptionDef objects.
+//@{
+/// @brief Non-const pointer.
+typedef boost::shared_ptr<CfgOptionDef> CfgOptionDefPtr;
+
+/// @brief Const pointer.
+typedef boost::shared_ptr<const CfgOptionDef> ConstCfgOptionDefPtr;
+
+//@}
+
 }
 }
 

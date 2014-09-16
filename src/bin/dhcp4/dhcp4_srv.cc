@@ -1807,7 +1807,7 @@ Dhcpv4Srv::unpackOptions(const OptionBuffer& buf,
         option_defs = LibDHCP::getOptionDefs(Option::V4);
     } else if (!option_space.empty()) {
         OptionDefContainerPtr option_defs_ptr = CfgMgr::instance()
-            .getCurrentCfg()->getCfgOptionDef().getAll(option_space);
+            .getCurrentCfg()->getCfgOptionDef()->getAll(option_space);
         if (option_defs_ptr != NULL) {
             option_defs = *option_defs_ptr;
         }
