@@ -312,10 +312,12 @@ public:
     /// @brief Constructor
     ParseConfigTest() {
         reset_context();
+        CfgMgr::instance().clear();
     }
 
     ~ParseConfigTest() {
         reset_context();
+        CfgMgr::instance().clear();
     }
 
     /// @brief Parses a configuration.
@@ -447,33 +449,6 @@ public:
         return (rcode_);
     }
 
-    /// @brief Find an option definition for a given space and code within
-    /// the parser context.
-    /// @param space is the space name of the desired option.
-    /// @param code is the numeric "type" of the desired option.
-    /// @return returns an OptionDefinitionPtr which points to the found
-    /// definition or is empty.
-    /// ASSERT_ tests don't work inside functions that return values
-    OptionDefinitionPtr getOptionDef(std::string space, uint32_t code)
-    {
-        OptionDefinitionPtr def;
-        OptionDefContainerPtr defs =
-                            parser_context_->option_defs_->getItems(space);
-        // Should always be able to get definitions list even if it is empty.
-        EXPECT_TRUE(defs);
-        if (defs) {
-            // Attempt to find desired definiton.
-            const OptionDefContainerTypeIndex& idx = defs->get<1>();
-            const OptionDefContainerTypeRange& range = idx.equal_range(code);
-            int cnt = std::distance(range.first, range.second);
-            EXPECT_EQ(1, cnt);
-            if (cnt == 1) {
-                def = *(idx.begin());
-            }
-        }
-        return (def);
-    }
-
     /// @brief Find an option for a given space and code within the parser
     /// context.
     /// @param space is the space name of the desired option.
@@ -511,7 +486,6 @@ public:
         // Note set context universe to V6 as it has to be something.
         CfgMgr::instance().deleteSubnets4();
         CfgMgr::instance().deleteSubnets6();
-        CfgMgr::instance().deleteOptionDefs();
         parser_context_.reset(new ParserContext(Option::V6));
 
         // Ensure no hooks libraries are loaded.
@@ -561,7 +535,8 @@ TEST_F(ParseConfigTest, basicOptionDefTest) {
 
 
     // Verify that the option definition can be retrieved.
-    OptionDefinitionPtr def = getOptionDef("isc", 100);
+    OptionDefinitionPtr def =
+        CfgMgr::instance().getStagingCfg()->getCfgOptionDef().get("isc", 100);
     ASSERT_TRUE(def);
 
     // Verify that the option definition is correct.
@@ -1141,21 +1116,6 @@ public:
                      values->getPosition(name).file_));
     }
 
-    /// @brief Check that option definition storage in the context holds
-    /// one option definition of the specified type.
-    ///
-    /// @param ctx A pointer to a context.
-    /// @param opt_type Expected option type.
-    void checkOptionDefinitionType(const ParserContext& ctx,
-                                   const uint16_t opt_type) {
-        OptionDefContainerPtr opt_defs =
-            ctx.option_defs_->getItems("option-space");
-        ASSERT_TRUE(opt_defs);
-        OptionDefContainerTypeIndex& idx = opt_defs->get<1>();
-        OptionDefContainerTypeRange range = idx.equal_range(opt_type);
-        EXPECT_EQ(1, std::distance(range.first, range.second));
-    }
-
     /// @brief Check that option storage in the context holds one option
     /// of the specified type.
     ///
@@ -1182,7 +1142,6 @@ public:
         ctx.uint32_values_.reset();
         ctx.string_values_.reset();
         ctx.options_.reset();
-        ctx.option_defs_.reset();
         ctx.hooks_libraries_.reset();
 
         // Even if the fields of the context are NULL, it should get
@@ -1199,7 +1158,6 @@ public:
         EXPECT_FALSE(ctx_new->uint32_values_);
         EXPECT_FALSE(ctx_new->string_values_);
         EXPECT_FALSE(ctx_new->options_);
-        EXPECT_FALSE(ctx_new->option_defs_);
         EXPECT_FALSE(ctx_new->hooks_libraries_);
 
     }
@@ -1263,11 +1221,6 @@ public:
         std::string option_space = "option-space";
         ASSERT_TRUE(desc1.option);
         ctx.options_->addItem(desc1, option_space);
-
-        // Add new option definition, with option code 123.
-        OptionDefinitionPtr def1(new OptionDefinition("option-foo", 123,
-                                                      "string"));
-        ctx.option_defs_->addItem(def1, option_space);
 
         // Allocate container for hooks libraries and add one library name.
         ctx.hooks_libraries_.reset(new std::vector<std::string>());
@@ -1354,14 +1307,6 @@ public:
             SCOPED_TRACE("Check that the option values are equal in both"
                          " contexts");
             checkOptionType(*ctx_new, 10);
-        }
-
-        // New context has the same option definition.
-        ASSERT_TRUE(ctx_new->option_defs_);
-        {
-            SCOPED_TRACE("check that the option definition is equal in both"
-                         " contexts");
-            checkOptionDefinitionType(*ctx_new, 123);
         }
 
         // New context has the same hooks library.
@@ -1492,20 +1437,6 @@ public:
             ASSERT_TRUE(desc.option);
             ctx.options_->addItem(desc, "option-space");
             checkOptionType(*ctx_new, 10);
-        }
-
-        // Change the option definition. This should not affect the option
-        // definition in the new context.
-        {
-            SCOPED_TRACE("Check that option definition remains the same in"
-                         " the new context when the option definition in the"
-                         " original context is changed");
-            ctx.option_defs_->clearItems();
-            OptionDefinitionPtr def(new OptionDefinition("option-foo", 234,
-                                                         "string"));
-
-            ctx.option_defs_->addItem(def, option_space);
-            checkOptionDefinitionType(*ctx_new, 123);
         }
 
         // Change the list of libraries. this should not affect the list in the

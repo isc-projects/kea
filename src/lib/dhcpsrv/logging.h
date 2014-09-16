@@ -45,7 +45,7 @@ namespace dhcp {
 /// The data structures don't have to originate from JSON. JSON is just a
 /// convenient presentation syntax.
 ///
-/// This class uses Configuration structure to store logging configuration.
+/// This class uses @c SrvConfig object to store logging configuration.
 class LogConfigParser {
 public:
 

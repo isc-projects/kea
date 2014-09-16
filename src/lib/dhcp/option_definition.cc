@@ -92,6 +92,25 @@ OptionDefinition::OptionDefinition(const std::string& name,
       encapsulated_space_(encapsulated_space) {
 }
 
+OptionDefinition::OptionDefinition(const OptionDefinition& def)
+    : name_(def.getName()),
+      code_(def.getCode()),
+      type_(def.getType()),
+      array_type_(def.getArrayType()),
+      encapsulated_space_(def.getEncapsulatedSpace()),
+      record_fields_(def.getRecordFields()) {
+}
+
+bool
+OptionDefinition::equals(const OptionDefinition& other) const {
+    return (name_ == other.name_ &&
+            code_ == other.code_ &&
+            type_ == other.type_ &&
+            array_type_ == other.array_type_ &&
+            encapsulated_space_ == other.encapsulated_space_ &&
+            record_fields_ == other.record_fields_);
+}
+
 void
 OptionDefinition::addRecordField(const std::string& data_type_name) {
     OptionDataType data_type = OptionDataTypeUtil::getDataType(data_type_name);
