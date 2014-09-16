@@ -41,6 +41,11 @@ void configure(const std::string& file_name) {
     // This is a configuration backend implementation that reads the
     // configuration from a JSON file.
 
+    // We are starting the configuration process so we should remove any
+    // staging configuration that has been created during previous
+    // configuration attempts.
+    CfgMgr::instance().rollback();
+
     isc::data::ConstElementPtr json;
     isc::data::ConstElementPtr dhcp4;
     isc::data::ConstElementPtr logger;
@@ -60,14 +65,10 @@ void configure(const std::string& file_name) {
             isc_throw(isc::BadValue, "no configuration found");
         }
 
-        // Let's configure logging before applying the configuration,
-        // so we can log things during configuration process.
-
         // If there's no logging element, we'll just pass NULL pointer,
         // which will be handled by configureLogger().
         Daemon::configureLogger(json->get("Logging"),
-                                CfgMgr::instance().getConfiguration(),
-                                ControlledDhcpv4Srv::getInstance()->getVerbose());
+                                CfgMgr::instance().getStagingCfg());
 
         // Get Dhcp4 component from the config
         dhcp4 = json->get("Dhcp4");
@@ -97,7 +98,19 @@ void configure(const std::string& file_name) {
             isc_throw(isc::BadValue, reason);
         }
 
+        // If configuration was parsed successfully, apply the new logger
+        // configuration to log4cplus. It is done before commit in case
+        // something goes wrong.
+        CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
+
+        // Use new configuration.
+        CfgMgr::instance().commit();
+
     }  catch (const std::exception& ex) {
+        // If configuration failed at any stage, we drop the staging
+        // configuration and continue to use the previous one.
+        CfgMgr::instance().rollback();
+
         LOG_ERROR(dhcp4_logger, DHCP4_CONFIG_LOAD_FAIL)
             .arg(file_name).arg(ex.what());
         isc_throw(isc::BadValue, "configuration error using file '"

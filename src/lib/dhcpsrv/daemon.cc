@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/daemon.h>
 #include <exceptions/exceptions.h>
 #include <cc/data.h>
@@ -31,7 +32,7 @@ namespace dhcp {
 std::string Daemon::config_file_ = "";
 
 Daemon::Daemon()
-    : signal_set_(), signal_handler_(), verbose_(false) {
+    : signal_set_(), signal_handler_() {
 }
 
 Daemon::~Daemon() {
@@ -56,40 +57,25 @@ void Daemon::handleSignal() {
 }
 
 void Daemon::configureLogger(const isc::data::ConstElementPtr& log_config,
-                             const ConfigurationPtr& storage,
-                             bool verbose) {
+                             const SrvConfigPtr& storage) {
 
-    // This is utility class that translates JSON structures into formats
-    // understandable by log4cplus.
-    LogConfigParser parser(storage);
-
-    if (!log_config) {
-        // There was no logger configuration. Let's clear any config
-        // and revert to the default.
-
-        parser.applyDefaultConfiguration(verbose); // Set up default logging
-        return;
+    if (log_config) {
+        isc::data::ConstElementPtr loggers = log_config->get("loggers");
+        if (loggers) {
+            LogConfigParser parser(storage);
+            parser.parseConfiguration(loggers, CfgMgr::instance().isVerbose());
+        }
     }
+}
 
-    isc::data::ConstElementPtr loggers;
-    loggers = log_config->get("loggers");
-    if (!loggers) {
-        // There is Logging structure, but it doesn't have loggers
-        // array in it. Let's clear any old logging configuration
-        // we may have and revert to the default.
+void
+Daemon::setVerbose(bool verbose) {
+    CfgMgr::instance().setVerbose(verbose);
+}
 
-        parser.applyDefaultConfiguration(verbose); // Set up default logging
-        return;
-    }
-
-    // Translate JSON structures into log4cplus formats
-    parser.parseConfiguration(loggers, verbose);
-
-    // Apply the configuration
-
-    /// @todo: Once configuration unrolling is implemented,
-    /// this call will be moved to a separate method.
-    parser.applyConfiguration();
+bool
+Daemon::getVerbose() const {
+    return (CfgMgr::instance().isVerbose());
 }
 
 };

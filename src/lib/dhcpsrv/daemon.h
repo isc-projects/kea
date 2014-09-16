@@ -17,7 +17,7 @@
 
 #include <config.h>
 #include <cc/data.h>
-#include <dhcpsrv/configuration.h>
+#include <dhcpsrv/srv_config.h>
 #include <util/signal_set.h>
 #include <boost/noncopyable.hpp>
 #include <string>
@@ -128,10 +128,8 @@ public:
     ///
     /// @param log_config JSON structures that describe logging
     /// @param storage configuration will be stored here
-    /// @param verbose specifies if verbose mode should be enabled
     static void configureLogger(const isc::data::ConstElementPtr& log_config,
-                                const isc::dhcp::ConfigurationPtr& storage,
-                                bool verbose);
+                                const isc::dhcp::SrvConfigPtr& storage);
 
     /// @brief Sets or clears verbose mode
     ///
@@ -140,16 +138,12 @@ public:
     /// config file are ignored.
     ///
     /// @param verbose specifies if verbose should be set or not
-    void setVerbose(bool verbose) {
-        verbose_ = verbose;
-    }
+    void setVerbose(const bool verbose);
 
     /// @brief Returns if running in verbose mode
     ///
     /// @return verbose mode
-    bool getVerbose() const {
-        return (verbose_);
-    }
+    bool getVerbose() const;
 
     /// @brief returns Kea version on stdout and exits.
     ///
@@ -195,8 +189,6 @@ private:
     /// @brief Config file name or empty if config file not used.
     static std::string config_file_;
 
-    /// @brief Verbose mode
-    bool verbose_;
 };
 
 }; // end of isc::dhcp namespace

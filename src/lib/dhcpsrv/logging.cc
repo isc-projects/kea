@@ -26,7 +26,7 @@ using namespace isc::log;
 namespace isc {
 namespace dhcp {
 
-LogConfigParser::LogConfigParser(const ConfigurationPtr& storage)
+LogConfigParser::LogConfigParser(const SrvConfigPtr& storage)
     :config_(storage), verbose_(false) {
     if (!storage) {
         isc_throw(BadValue, "LogConfigParser needs a pointer to the "
@@ -55,6 +55,8 @@ void LogConfigParser::parseConfigEntry(isc::data::ConstElementPtr entry) {
     }
 
     LoggingInfo info;
+    // Remove default destinations as we are going to replace them.
+    info.clearDestinations();
 
     // Get a name
     isc::data::ConstElementPtr name_ptr = entry->get("name");
@@ -113,7 +115,7 @@ void LogConfigParser::parseConfigEntry(isc::data::ConstElementPtr entry) {
         parseOutputOptions(info.destinations_, output_options);
     }
     
-    config_->logging_info_.push_back(info);
+    config_->addLoggingInfo(info);
 }
 
 void LogConfigParser::parseOutputOptions(std::vector<LoggingDestination>& destination,
@@ -121,6 +123,7 @@ void LogConfigParser::parseOutputOptions(std::vector<LoggingDestination>& destin
     if (!output_options) {
         isc_throw(BadValue, "Missing 'output_options' structure in 'loggers'");
     }
+
     BOOST_FOREACH(ConstElementPtr output_option, output_options->listValue()) {
 
         LoggingDestination dest;
@@ -159,8 +162,9 @@ void LogConfigParser::applyConfiguration() {
     std::vector<LoggerSpecification> specs;
 
     // Now iterate through all specified loggers
-    for (LoggingInfoStorage::const_iterator it = config_->logging_info_.begin();
-         it != config_->logging_info_.end(); ++it) {
+    const LoggingInfoStorage& logging_info = config_->getLoggingInfo();
+    for (LoggingInfoStorage::const_iterator it = logging_info.begin();
+         it != logging_info.end(); ++it) {
 
         // Prepare the objects to define the logging specification
         LoggerSpecification spec(it->name_,
