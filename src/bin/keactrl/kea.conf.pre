@@ -20,10 +20,13 @@
   "valid-lifetime": 4000,
 
 # Below an example of the simple subnet declaration. Uncomment to
-# enable it.
+# enable it. This is a list, denoted with [ ], of structure, denoted
+# with { }. Each structure describes a single subnet and may have
+# several parameters. One of those parameters is "pools" that is
+# also a list of structures.
   "subnet4": [
 #  {    "subnet": "192.0.2.0/24",
-#       "pool": [ "192.0.2.1 - 192.0.2.200" ] }
+#       "pools": [ { "pool": "192.0.2.1 - 192.0.2.200" } ] }
   ]
 },
 
@@ -47,13 +50,13 @@
 # The following list defines subnets. Uncomment to enable them.
   "subnet6": [
 #  {    "subnet": "2001:db8:1::/64",
-#       "pool": [ "2001:db8:1::/80" ] },
+#       "pools": [ { "pool": "2001:db8:1::/80" } ] },
 #  {    "subnet": "2001:db8:2::/64",
-#       "pool": [ "2001:db8:2::/80" ] },
+#       "pools": [ { "pool": "2001:db8:2::/80" } ] },
 #  {    "subnet": "2001:db8:3::/64",
-#       "pool": [ "2001:db8:3::/80" ] },
+#       "pools": [ { "pool": "2001:db8:3::/80" } ] },
 #  {    "subnet": "2001:db8:4::/64",
-#       "pool": [ "2001:db8:4::/80" ] }
+#       "pools": [ { "pool": "2001:db8:4::/80" } ] }
    ]
 },
 
