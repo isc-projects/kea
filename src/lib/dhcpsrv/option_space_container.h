@@ -74,7 +74,7 @@ public:
     /// @todo This function is likely to be removed once
     /// we create a structore of OptionSpaces defined
     /// through the configuration manager.
-    std::list<Selector> getOptionSpaceNames() {
+    std::list<Selector> getOptionSpaceNames() const {
         std::list<Selector> names;
         for (typename OptionSpaceMap::const_iterator space =
                  option_space_map_.begin();

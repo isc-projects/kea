@@ -88,6 +88,8 @@ SrvConfig::copy(SrvConfig& new_config) const {
     }
     // Replace interface configuration.
     new_config.setCfgIface(cfg_iface_);
+    // Replace option definitions.
+    new_config.setCfgOptionDef(cfg_option_def_);
 }
 
 void
@@ -131,7 +133,8 @@ SrvConfig::equals(const SrvConfig& other) const {
         }
     }
     // Logging information is equal between objects, so check other values.
-    return (cfg_iface_ == other.cfg_iface_);
+    return ((cfg_iface_ == other.cfg_iface_) &&
+            (cfg_option_def_ == other.cfg_option_def_));
 }
 
 }
