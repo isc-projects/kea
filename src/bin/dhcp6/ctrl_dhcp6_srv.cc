@@ -140,19 +140,14 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
     }
 
     // Configuration may change active interfaces. Therefore, we have to reopen
-    // sockets according to new configuration. This operation is not exception
-    // safe and we really don't want to emit exceptions to the callback caller.
-    // Instead, catch an exception and create appropriate answer.
-    try {
-        CfgMgr::instance().getConfiguration()->cfg_iface_
-            .openSockets(srv->getPort());
-
-    } catch (const std::exception& ex) {
-        std::ostringstream err;
-        err << "failed to open sockets after server reconfiguration: "
-            << ex.what();
-        answer = isc::config::createAnswer(1, err.str());
-    }
+    // sockets according to new configuration. It is possible that this
+    // operation will fail for some interfaces but the openSockets function
+    // guards against exceptions and invokes a callback function to
+    // log warnings. Since we allow that this fails for some interfaces there
+    // is no need to rollback configuration if socket fails to open on any
+    // of the interfaces.
+    CfgMgr::instance().getStagingCfg()->
+        getCfgIface().openSockets(AF_INET6, srv->getPort());
 
     return (answer);
 }

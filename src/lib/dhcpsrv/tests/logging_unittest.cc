@@ -49,10 +49,10 @@ class LoggingTest : public ::testing::Test {
 // Checks that contructor is able to process specified storage properly
 TEST_F(LoggingTest, constructor) {
 
-    ConfigurationPtr null_ptr;
+    SrvConfigPtr null_ptr;
     EXPECT_THROW(LogConfigParser parser(null_ptr), BadValue);
 
-    ConfigurationPtr nonnull(new Configuration());
+    SrvConfigPtr nonnull(new SrvConfig());
 
     EXPECT_NO_THROW(LogConfigParser parser(nonnull));
 }
@@ -76,7 +76,7 @@ TEST_F(LoggingTest, parsingConsoleOutput) {
     "    }"
     "]}";
 
-    ConfigurationPtr storage(new Configuration());
+    SrvConfigPtr storage(new SrvConfig());
 
     LogConfigParser parser(storage);
 
@@ -88,14 +88,14 @@ TEST_F(LoggingTest, parsingConsoleOutput) {
 
     EXPECT_NO_THROW(parser.parseConfiguration(config));
 
-    ASSERT_EQ(1, storage->logging_info_.size());
+    ASSERT_EQ(1, storage->getLoggingInfo().size());
 
-    EXPECT_EQ("kea", storage->logging_info_[0].name_);
-    EXPECT_EQ(99, storage->logging_info_[0].debuglevel_);
-    EXPECT_EQ(isc::log::DEBUG, storage->logging_info_[0].severity_);
+    EXPECT_EQ("kea", storage->getLoggingInfo()[0].name_);
+    EXPECT_EQ(99, storage->getLoggingInfo()[0].debuglevel_);
+    EXPECT_EQ(isc::log::DEBUG, storage->getLoggingInfo()[0].severity_);
 
-    ASSERT_EQ(1, storage->logging_info_[0].destinations_.size());
-    EXPECT_EQ("stdout" , storage->logging_info_[0].destinations_[0].output_);
+    ASSERT_EQ(1, storage->getLoggingInfo()[0].destinations_.size());
+    EXPECT_EQ("stdout" , storage->getLoggingInfo()[0].destinations_[0].output_);
 }
 
 // Checks if the LogConfigParser class is able to transform JSON structures
@@ -116,7 +116,7 @@ TEST_F(LoggingTest, parsingFile) {
     "    }"
     "]}";
 
-    ConfigurationPtr storage(new Configuration());
+    SrvConfigPtr storage(new SrvConfig());
 
     LogConfigParser parser(storage);
 
@@ -128,14 +128,14 @@ TEST_F(LoggingTest, parsingFile) {
 
     EXPECT_NO_THROW(parser.parseConfiguration(config));
 
-    ASSERT_EQ(1, storage->logging_info_.size());
+    ASSERT_EQ(1, storage->getLoggingInfo().size());
 
-    EXPECT_EQ("kea", storage->logging_info_[0].name_);
-    EXPECT_EQ(0, storage->logging_info_[0].debuglevel_);
-    EXPECT_EQ(isc::log::INFO, storage->logging_info_[0].severity_);
+    EXPECT_EQ("kea", storage->getLoggingInfo()[0].name_);
+    EXPECT_EQ(0, storage->getLoggingInfo()[0].debuglevel_);
+    EXPECT_EQ(isc::log::INFO, storage->getLoggingInfo()[0].severity_);
 
-    ASSERT_EQ(1, storage->logging_info_[0].destinations_.size());
-    EXPECT_EQ("logfile.txt" , storage->logging_info_[0].destinations_[0].output_);
+    ASSERT_EQ(1, storage->getLoggingInfo()[0].destinations_.size());
+    EXPECT_EQ("logfile.txt" , storage->getLoggingInfo()[0].destinations_[0].output_);
 }
 
 // Checks if the LogConfigParser class is able to transform data structures
@@ -166,7 +166,7 @@ TEST_F(LoggingTest, multipleLoggers) {
     "    }"
     "]}";
 
-    ConfigurationPtr storage(new Configuration());
+    SrvConfigPtr storage(new SrvConfig());
 
     LogConfigParser parser(storage);
 
@@ -178,19 +178,19 @@ TEST_F(LoggingTest, multipleLoggers) {
 
     EXPECT_NO_THROW(parser.parseConfiguration(config));
 
-    ASSERT_EQ(2, storage->logging_info_.size());
+    ASSERT_EQ(2, storage->getLoggingInfo().size());
 
-    EXPECT_EQ("kea", storage->logging_info_[0].name_);
-    EXPECT_EQ(0, storage->logging_info_[0].debuglevel_);
-    EXPECT_EQ(isc::log::INFO, storage->logging_info_[0].severity_);
-    ASSERT_EQ(1, storage->logging_info_[0].destinations_.size());
-    EXPECT_EQ("logfile.txt" , storage->logging_info_[0].destinations_[0].output_);
+    EXPECT_EQ("kea", storage->getLoggingInfo()[0].name_);
+    EXPECT_EQ(0, storage->getLoggingInfo()[0].debuglevel_);
+    EXPECT_EQ(isc::log::INFO, storage->getLoggingInfo()[0].severity_);
+    ASSERT_EQ(1, storage->getLoggingInfo()[0].destinations_.size());
+    EXPECT_EQ("logfile.txt" , storage->getLoggingInfo()[0].destinations_[0].output_);
 
-    EXPECT_EQ("wombat", storage->logging_info_[1].name_);
-    EXPECT_EQ(99, storage->logging_info_[1].debuglevel_);
-    EXPECT_EQ(isc::log::DEBUG, storage->logging_info_[1].severity_);
-    ASSERT_EQ(1, storage->logging_info_[1].destinations_.size());
-    EXPECT_EQ("logfile2.txt" , storage->logging_info_[1].destinations_[0].output_);
+    EXPECT_EQ("wombat", storage->getLoggingInfo()[1].name_);
+    EXPECT_EQ(99, storage->getLoggingInfo()[1].debuglevel_);
+    EXPECT_EQ(isc::log::DEBUG, storage->getLoggingInfo()[1].severity_);
+    ASSERT_EQ(1, storage->getLoggingInfo()[1].destinations_.size());
+    EXPECT_EQ("logfile2.txt" , storage->getLoggingInfo()[1].destinations_[0].output_);
 }
 
 // Checks if the LogConfigParser class is able to transform data structures
@@ -214,7 +214,7 @@ TEST_F(LoggingTest, multipleLoggingDestinations) {
     "    }"
     "]}";
 
-    ConfigurationPtr storage(new Configuration());
+    SrvConfigPtr storage(new SrvConfig());
 
     LogConfigParser parser(storage);
 
@@ -226,14 +226,14 @@ TEST_F(LoggingTest, multipleLoggingDestinations) {
 
     EXPECT_NO_THROW(parser.parseConfiguration(config));
 
-    ASSERT_EQ(1, storage->logging_info_.size());
+    ASSERT_EQ(1, storage->getLoggingInfo().size());
 
-    EXPECT_EQ("kea", storage->logging_info_[0].name_);
-    EXPECT_EQ(0, storage->logging_info_[0].debuglevel_);
-    EXPECT_EQ(isc::log::INFO, storage->logging_info_[0].severity_);
-    ASSERT_EQ(2, storage->logging_info_[0].destinations_.size());
-    EXPECT_EQ("logfile.txt" , storage->logging_info_[0].destinations_[0].output_);
-    EXPECT_EQ("stdout" , storage->logging_info_[0].destinations_[1].output_);
+    EXPECT_EQ("kea", storage->getLoggingInfo()[0].name_);
+    EXPECT_EQ(0, storage->getLoggingInfo()[0].debuglevel_);
+    EXPECT_EQ(isc::log::INFO, storage->getLoggingInfo()[0].severity_);
+    ASSERT_EQ(2, storage->getLoggingInfo()[0].destinations_.size());
+    EXPECT_EQ("logfile.txt" , storage->getLoggingInfo()[0].destinations_[0].output_);
+    EXPECT_EQ("stdout" , storage->getLoggingInfo()[0].destinations_[1].output_);
 }
 
 /// @todo There is no easy way to test applyConfiguration() and defaultLogging().

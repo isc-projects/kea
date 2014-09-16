@@ -59,8 +59,7 @@ public:
 
     /// @brief Resets selection of the interfaces from previous tests.
     void resetIfaceCfg() {
-        CfgMgr::instance().getConfiguration()->cfg_iface_.closeSockets();
-        CfgMgr::instance().getConfiguration()->cfg_iface_.reset();
+        CfgMgr::instance().clear();
     }
 };
 
@@ -225,11 +224,14 @@ TEST_F(DhcpParserTest, interfaceListParserTest) {
 
     const std::string name = "interfaces";
 
+    ParserContextPtr parser_context(new ParserContext(Option::V4));
+
     // Verify that parser constructor fails if parameter name isn't "interface"
-    EXPECT_THROW(InterfaceListConfigParser("bogus_name"), isc::BadValue);
+    EXPECT_THROW(InterfaceListConfigParser("bogus_name", parser_context),
+                 isc::BadValue);
 
     boost::scoped_ptr<InterfaceListConfigParser>
-        parser(new InterfaceListConfigParser(name));
+        parser(new InterfaceListConfigParser(name, parser_context));
     ElementPtr list_element = Element::createList();
     list_element->add(Element::create("eth0"));
 
@@ -240,9 +242,9 @@ TEST_F(DhcpParserTest, interfaceListParserTest) {
 
     // Use CfgMgr instance to check if eth0 and eth1 was added, and that
     // eth2 was not added.
-    ConfigurationPtr cfg = CfgMgr::instance().getConfiguration();
+    SrvConfigPtr cfg = CfgMgr::instance().getStagingCfg();
     ASSERT_TRUE(cfg);
-    ASSERT_NO_THROW(cfg->cfg_iface_.openSockets(10000));
+    ASSERT_NO_THROW(cfg->getCfgIface().openSockets(AF_INET, 10000));
 
     EXPECT_TRUE(test_config.socketOpen("eth0", AF_INET));
     EXPECT_FALSE(test_config.socketOpen("eth1", AF_INET));
@@ -253,13 +255,15 @@ TEST_F(DhcpParserTest, interfaceListParserTest) {
     list_element->add(Element::create("*"));
 
     // Reset parser and configuration.
-    parser.reset(new InterfaceListConfigParser(name));
-    cfg->cfg_iface_.closeSockets();
-    cfg->cfg_iface_.reset();
+    parser.reset(new InterfaceListConfigParser(name, parser_context));
+    cfg->getCfgIface().closeSockets();
+    CfgMgr::instance().clear();
 
     parser->build(list_element);
     parser->commit();
-    ASSERT_NO_THROW(cfg->cfg_iface_.openSockets(10000));
+
+    cfg = CfgMgr::instance().getStagingCfg();
+    ASSERT_NO_THROW(cfg->getCfgIface().openSockets(AF_INET, 10000));
 
     EXPECT_TRUE(test_config.socketOpen("eth0", AF_INET));
     EXPECT_TRUE(test_config.socketOpen("eth1", AF_INET));

@@ -179,8 +179,9 @@ template <> void ValueParser<std::string>::build(ConstElementPtr value) {
 // ******************** InterfaceListConfigParser *************************
 
 InterfaceListConfigParser::
-InterfaceListConfigParser(const std::string& param_name)
-    : param_name_(param_name) {
+InterfaceListConfigParser(const std::string& param_name,
+                          ParserContextPtr global_context)
+    : param_name_(param_name), global_context_(global_context) {
     if (param_name_ != "interfaces") {
         isc_throw(BadValue, "Internal error. Interface configuration "
             "parser called for the wrong parameter: " << param_name);
@@ -189,38 +190,24 @@ InterfaceListConfigParser(const std::string& param_name)
 
 void
 InterfaceListConfigParser::build(ConstElementPtr value) {
-    // Copy the current interface configuration.
-    ConfigurationPtr config = CfgMgr::instance().getConfiguration();
-    cfg_iface_ = config->cfg_iface_;
-    cfg_iface_.reset();
+    CfgIface cfg_iface;
     BOOST_FOREACH(ConstElementPtr iface, value->listValue()) {
         std::string iface_name = iface->stringValue();
         try {
-            cfg_iface_.use(iface_name);
+            cfg_iface.use(global_context_->universe_ == Option::V4 ?
+                          AF_INET : AF_INET6, iface_name);
 
         } catch (const std::exception& ex) {
             isc_throw(DhcpConfigError, "Failed to select interface: "
                       << ex.what() << " (" << value->getPosition() << ")");
         }
     }
+    CfgMgr::instance().getStagingCfg()->setCfgIface(cfg_iface);
 }
 
 void
 InterfaceListConfigParser::commit() {
-    // Use the new configuration created in a build time.
-    CfgMgr::instance().getConfiguration()->cfg_iface_ = cfg_iface_;
-}
-
-bool
-InterfaceListConfigParser::isIfaceAdded(const std::string& iface) const {
-
-    for (IfaceListStorage::const_iterator it = interfaces_.begin();
-         it != interfaces_.end(); ++it) {
-        if (iface == *it) {
-            return (true);
-        }
-    }
-    return (false);
+    // Nothing to do.
 }
 
 // ******************** HooksLibrariesParser *************************

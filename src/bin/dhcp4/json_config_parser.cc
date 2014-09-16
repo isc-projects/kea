@@ -443,7 +443,7 @@ namespace dhcp {
         parser = new Uint32Parser(config_id,
                                  globalContext()->uint32_values_);
     } else if (config_id.compare("interfaces") == 0) {
-        parser = new InterfaceListConfigParser(config_id);
+        parser = new InterfaceListConfigParser(config_id, globalContext());
     } else if (config_id.compare("subnet4") == 0) {
         parser = new Subnets4ListConfigParser(config_id);
     } else if (config_id.compare("option-data") == 0) {
@@ -619,9 +619,8 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                 subnet_parser->commit();
             }
 
-            if (iface_parser) {
-                iface_parser->commit();
-            }
+            // No need to commit interface names as this is handled by the
+            // CfgMgr::commit() function.
 
             // Apply global options
             commitGlobalOptions();
@@ -653,8 +652,8 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
     }
 
     LOG_INFO(dhcp4_logger, DHCP4_CONFIG_COMPLETE)
-        .arg(CfgMgr::instance().getConfiguration()->
-             getConfigSummary(Configuration::CFGSEL_ALL4));
+        .arg(CfgMgr::instance().getCurrentCfg()->
+             getConfigSummary(SrvConfig::CFGSEL_ALL4));
 
     // Everything was fine. Configuration is successful.
     answer = isc::config::createAnswer(0, "Configuration successful.");
