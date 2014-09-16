@@ -443,7 +443,7 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
         // options. They are expected to be in the global storage
         // already.
         OptionDefContainerPtr defs =
-            CfgMgr::instance().getStagingCfg()->getCfgOptionDef().getAll(space);
+            CfgMgr::instance().getStagingCfg()->getCfgOptionDef()->getAll(space);
 
         // The getItems() should never return the NULL pointer. If there are
         // no option definitions for the particular option space a pointer
@@ -646,16 +646,15 @@ OptionDefParser::build(ConstElementPtr option_def) {
     // Create an instance of option definition.
     createOptionDef(option_def);
 
-    CfgOptionDef cfg = CfgMgr::instance().getStagingCfg()->getCfgOptionDef();
     try {
-        cfg.add(option_definition_, option_space_name_);
+        CfgMgr::instance().getStagingCfg()->getCfgOptionDef()->
+            add(option_definition_, option_space_name_);
 
     } catch (const std::exception& ex) {
-        // Append position
+        // Append position if there is a failure.
         isc_throw(DhcpConfigError, ex.what() << " ("
                   << option_def->getPosition() << ")");
     }
-    CfgMgr::instance().getStagingCfg()->setCfgOptionDef(cfg);
 }
 
 void
@@ -1044,7 +1043,7 @@ SubnetConfigParser::appendSubOptions(const std::string& option_space,
         }
     } else {
         OptionDefContainerPtr defs = CfgMgr::instance().getStagingCfg()
-            ->getCfgOptionDef().getAll(option_space);
+            ->getCfgOptionDef()->getAll(option_space);
 
         const OptionDefContainerTypeIndex& idx = defs->get<1>();
         const OptionDefContainerTypeRange& range =
