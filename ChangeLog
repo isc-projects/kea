@@ -1,3 +1,10 @@
+833.	[func]		marcin
+	Configuration Manager supports two stage configuration. In the
+	first stage a temporary configuration is created and in the
+	second stage this configuration is committed. If configuration
+	fails at the first stage, the temporary configuration is rolled
+	back and the server continues to use the old configuration.
+	(Trac #3534, git 4ecee3c0c97fe417b050317356f9093ba3771a15)
 
 Kea 0.9 released on August 29, 2014
 
