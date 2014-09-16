@@ -216,9 +216,6 @@ public:
     /// @brief Storage for options.
     OptionStoragePtr options_;
 
-    /// @brief Storage for option definitions.
-    OptionDefStoragePtr option_defs_;
-
     /// @brief Hooks libraries pointer.
     ///
     /// The hooks libraries information is a vector of strings, each containing
@@ -683,13 +680,9 @@ public:
     ///
     /// @param dummy first argument is ignored, all Parser constructors
     /// accept string as first argument.
-    /// @param storage is the definition storage in which to store the parsed
-    /// definition upon "commit".
     /// @param global_context is a pointer to the global context which
     /// stores global scope parameters, options, option defintions.
-    /// @throw isc::dhcp::DhcpConfigError if storage is null.
-    OptionDefParser(const std::string& dummy, OptionDefStoragePtr storage,
-                    ParserContextPtr global_context);
+    OptionDefParser(const std::string& dummy, ParserContextPtr global_context);
 
     /// @brief Parses an entry that describes single option definition.
     ///
@@ -713,10 +706,6 @@ private:
     OptionDefinitionPtr option_definition_;
     /// Name of the space the option definition belongs to.
     std::string option_space_name_;
-
-    /// Pointer to a storage where the option definition will be
-    /// added when \ref commit is called.
-    OptionDefStoragePtr storage_;
 
     /// Storage for boolean values.
     BooleanStoragePtr boolean_values_;
@@ -746,7 +735,6 @@ public:
     /// accept string as first argument.
     /// @param global_context is a pointer to the global context which
     /// stores global scope parameters, options, option defintions.
-    /// @throw isc::dhcp::DhcpConfigError if storage is null.
     OptionDefListParser(const std::string& dummy,
                         ParserContextPtr global_context);
 
@@ -766,9 +754,6 @@ public:
     /// Currently this function is no-op, because option definitions are
     /// added to the Configuration Manager in the @c build method.
     void commit();
-
-    /// @brief storage for option definitions.
-    OptionDefStoragePtr storage_;
 
     /// Parsing context which contains global values, options and option
     /// definitions.

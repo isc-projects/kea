@@ -1231,7 +1231,8 @@ TEST_F(Dhcp4ParserTest, optionDefIpv4Address) {
     ElementPtr json = Element::fromJSON(config);
 
     // Make sure that the particular option definition does not exist.
-    OptionDefinitionPtr def = CfgMgr::instance().getOptionDef("isc", 100);
+    OptionDefinitionPtr def = CfgMgr::instance().getCurrentCfg()
+        ->getCfgOptionDef().get("isc", 100);
     ASSERT_FALSE(def);
 
     // Use the configuration string to create new option definition.
@@ -1241,7 +1242,7 @@ TEST_F(Dhcp4ParserTest, optionDefIpv4Address) {
     checkResult(status, 0);
 
     // The option definition should now be available in the CfgMgr.
-    def = CfgMgr::instance().getOptionDef("isc", 100);
+    def = CfgMgr::instance().getCurrentCfg()->getCfgOptionDef().get("isc", 100);
     ASSERT_TRUE(def);
 
     // Verify that the option definition data is valid.
@@ -1272,7 +1273,8 @@ TEST_F(Dhcp4ParserTest, optionDefRecord) {
     ElementPtr json = Element::fromJSON(config);
 
     // Make sure that the particular option definition does not exist.
-    OptionDefinitionPtr def = CfgMgr::instance().getOptionDef("isc", 100);
+    OptionDefinitionPtr def = CfgMgr::instance().getCurrentCfg()->
+        getCfgOptionDef().get("isc", 100);
     ASSERT_FALSE(def);
 
     // Use the configuration string to create new option definition.
@@ -1282,7 +1284,7 @@ TEST_F(Dhcp4ParserTest, optionDefRecord) {
     checkResult(status, 0);
 
     // The option definition should now be available in the CfgMgr.
-    def = CfgMgr::instance().getOptionDef("isc", 100);
+    def = CfgMgr::instance().getCurrentCfg()->getCfgOptionDef().get("isc", 100);
     ASSERT_TRUE(def);
 
     // Check the option data.
@@ -1330,8 +1332,10 @@ TEST_F(Dhcp4ParserTest, optionDefMultiple) {
     ElementPtr json = Element::fromJSON(config);
 
     // Make sure that the option definitions do not exist yet.
-    ASSERT_FALSE(CfgMgr::instance().getOptionDef("isc", 100));
-    ASSERT_FALSE(CfgMgr::instance().getOptionDef("isc", 101));
+    ASSERT_FALSE(CfgMgr::instance().getCurrentCfg()->
+                 getCfgOptionDef().get("isc", 100));
+    ASSERT_FALSE(CfgMgr::instance().getCurrentCfg()->
+                 getCfgOptionDef().get("isc", 101));
 
     // Use the configuration string to create new option definitions.
     ConstElementPtr status;
@@ -1340,7 +1344,8 @@ TEST_F(Dhcp4ParserTest, optionDefMultiple) {
     checkResult(status, 0);
 
     // Check the first definition we have created.
-    OptionDefinitionPtr def1 = CfgMgr::instance().getOptionDef("isc", 100);
+    OptionDefinitionPtr def1 = CfgMgr::instance().getCurrentCfg()->
+        getCfgOptionDef().get("isc", 100);
     ASSERT_TRUE(def1);
 
     // Check the option data.
@@ -1351,7 +1356,8 @@ TEST_F(Dhcp4ParserTest, optionDefMultiple) {
     EXPECT_TRUE(def1->getEncapsulatedSpace().empty());
 
     // Check the second option definition we have created.
-    OptionDefinitionPtr def2 = CfgMgr::instance().getOptionDef("isc", 101);
+    OptionDefinitionPtr def2 = CfgMgr::instance().getCurrentCfg()->
+        getCfgOptionDef().get("isc", 101);
     ASSERT_TRUE(def2);
 
     // Check the option data.
@@ -1392,7 +1398,8 @@ TEST_F(Dhcp4ParserTest, optionDefDuplicate) {
     ElementPtr json = Element::fromJSON(config);
 
     // Make sure that the option definition does not exist yet.
-    ASSERT_FALSE(CfgMgr::instance().getOptionDef("isc", 100));
+    ASSERT_FALSE(CfgMgr::instance().getCurrentCfg()->
+                 getCfgOptionDef().get("isc", 100));
 
     // Use the configuration string to create new option definitions.
     ConstElementPtr status;
@@ -1422,7 +1429,8 @@ TEST_F(Dhcp4ParserTest, optionDefArray) {
     ElementPtr json = Element::fromJSON(config);
 
     // Make sure that the particular option definition does not exist.
-    OptionDefinitionPtr def = CfgMgr::instance().getOptionDef("isc", 100);
+    OptionDefinitionPtr def = CfgMgr::instance().getCurrentCfg()->
+        getCfgOptionDef().get("isc", 100);
     ASSERT_FALSE(def);
 
     // Use the configuration string to create new option definition.
@@ -1432,7 +1440,8 @@ TEST_F(Dhcp4ParserTest, optionDefArray) {
     checkResult(status, 0);
 
     // The option definition should now be available in the CfgMgr.
-    def = CfgMgr::instance().getOptionDef("isc", 100);
+    def = CfgMgr::instance().getCurrentCfg()->
+        getCfgOptionDef().get("isc", 100);
     ASSERT_TRUE(def);
 
     // Check the option data.
@@ -1463,7 +1472,8 @@ TEST_F(Dhcp4ParserTest, optionDefEncapsulate) {
     ElementPtr json = Element::fromJSON(config);
 
     // Make sure that the particular option definition does not exist.
-    OptionDefinitionPtr def = CfgMgr::instance().getOptionDef("isc", 100);
+    OptionDefinitionPtr def = CfgMgr::instance().getCurrentCfg()->
+        getCfgOptionDef().get("isc", 100);
     ASSERT_FALSE(def);
 
     // Use the configuration string to create new option definition.
@@ -1473,7 +1483,8 @@ TEST_F(Dhcp4ParserTest, optionDefEncapsulate) {
     checkResult(status, 0);
 
     // The option definition should now be available in the CfgMgr.
-    def = CfgMgr::instance().getOptionDef("isc", 100);
+    def = CfgMgr::instance().getCurrentCfg()->
+        getCfgOptionDef().get("isc", 100);
     ASSERT_TRUE(def);
 
     // Check the option data.
@@ -1670,7 +1681,8 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
         "}";
     ElementPtr json = Element::fromJSON(config);
 
-    OptionDefinitionPtr def = CfgMgr::instance().getOptionDef("dhcp4", 109);
+    OptionDefinitionPtr def = CfgMgr::instance().getCurrentCfg()->
+        getCfgOptionDef().get("dhcp4", 109);
     ASSERT_FALSE(def);
 
     // Use the configuration string to create new option definition.
@@ -1680,7 +1692,8 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
     checkResult(status, 0);
 
     // The option definition should now be available in the CfgMgr.
-    def = CfgMgr::instance().getOptionDef("dhcp4", 109);
+    def = CfgMgr::instance().getCurrentCfg()->
+        getCfgOptionDef().get("dhcp4", 109);
     ASSERT_TRUE(def);
 
     // Check the option data.
@@ -1736,7 +1749,8 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
     // Expecting success.
     checkResult(status, 0);
 
-    def = CfgMgr::instance().getOptionDef("dhcp4", 65);
+    def = CfgMgr::instance().getCurrentCfg()->
+        getCfgOptionDef().get("dhcp4", 65);
     ASSERT_TRUE(def);
 
     // Check the option data.

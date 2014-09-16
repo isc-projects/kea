@@ -61,72 +61,6 @@ CfgMgr::addOptionSpace6(const OptionSpacePtr& space) {
     spaces6_.insert(make_pair(space->getName(), space));
 }
 
-void
-CfgMgr::addOptionDef(const OptionDefinitionPtr& def,
-                     const std::string& option_space) {
-    // @todo we need better validation of the provided option space name here.
-    // This will be implemented when #2313 is merged.
-    if (option_space.empty()) {
-        isc_throw(BadValue, "option space name must not be empty");
-    } else if (!def) {
-        // Option definition must point to a valid object.
-        isc_throw(MalformedOptionDefinition, "option definition must not be NULL");
-
-    } else if (getOptionDef(option_space, def->getCode())) {
-        // Option definition must not be overriden.
-        isc_throw(DuplicateOptionDefinition, "option definition already added"
-                  << " to option space " << option_space);
-
-    // We must not override standard (assigned) option for which there is a
-    // definition in libdhcp++. The standard options belong to dhcp4 or dhcp6
-    // option space.
-    } else if ((option_space == "dhcp4" &&
-                LibDHCP::isStandardOption(Option::V4, def->getCode()) &&
-                LibDHCP::getOptionDef(Option::V4, def->getCode())) ||
-               (option_space == "dhcp6" &&
-                LibDHCP::isStandardOption(Option::V6, def->getCode()) &&
-                LibDHCP::getOptionDef(Option::V6, def->getCode()))) {
-        isc_throw(BadValue, "unable to override definition of option '"
-                  << def->getCode() << "' in standard option space '"
-                  << option_space << "'.");
-
-    }
-    // Actually add a new item.
-    option_def_spaces_.addItem(def, option_space);
-}
-
-OptionDefContainerPtr
-CfgMgr::getOptionDefs(const std::string& option_space) const {
-    // @todo Validate the option space once the #2313 is implemented.
-
-    return (option_def_spaces_.getItems(option_space));
-}
-
-OptionDefinitionPtr
-CfgMgr::getOptionDef(const std::string& option_space,
-                     const uint16_t option_code) const {
-    // @todo Validate the option space once the #2313 is implemented.
-
-    // Get a reference to option definitions for a particular option space.
-    OptionDefContainerPtr defs = getOptionDefs(option_space);
-    // If there are no matching option definitions then return the empty pointer.
-    if (!defs || defs->empty()) {
-        return (OptionDefinitionPtr());
-    }
-    // If there are some option definitions for a particular option space
-    // use an option code to get the one we want.
-    const OptionDefContainerTypeIndex& idx = defs->get<1>();
-    const OptionDefContainerTypeRange& range = idx.equal_range(option_code);
-    // If there is no definition that matches option code, return empty pointer.
-    if (std::distance(range.first, range.second) == 0) {
-        return (OptionDefinitionPtr());
-    }
-    // If there is more than one definition matching an option code, return
-    // the first one. This should not happen because we check for duplicates
-    // when addOptionDef is called.
-    return (*range.first);
-}
-
 Subnet6Ptr
 CfgMgr::getSubnet6(const std::string& iface,
                    const isc::dhcp::ClientClasses& classes) {
@@ -295,10 +229,6 @@ void CfgMgr::addSubnet4(const Subnet4Ptr& subnet) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_ADD_SUBNET4)
               .arg(subnet->toText());
     subnets4_.push_back(subnet);
-}
-
-void CfgMgr::deleteOptionDefs() {
-    option_def_spaces_.clearItems();
 }
 
 void CfgMgr::deleteSubnets4() {

@@ -183,6 +183,40 @@ public:
                               const std::string& type,
                               const char* encapsulated_space);
 
+    /// @brief Copy constructor.
+    ///
+    /// @param def Option definition to be used to create a new instance.
+    explicit OptionDefinition(const OptionDefinition& def);
+
+    /// @name Comparison functions and operators.
+    ///
+    //@{
+    /// @brief Check if option definition is equal to other.
+    ///
+    /// @param other Option definition to compare to.
+    ///
+    /// @return true if two option definitions are equal, false otherwise.
+    bool equals(const OptionDefinition& other) const;
+
+    /// @brief Equality operator.
+    ///
+    /// @param other Option definition to compare to.
+    ///
+    /// @return true if two option definitions are equal, false otherwise.
+    bool operator==(const OptionDefinition& other) const {
+        return (equals(other));
+    }
+
+    /// @brief Inequality operator.
+    ///
+    /// @param other Option definition to compare to.
+    ///
+    /// @return true if option definitions are not equal, false otherwise.
+    bool operator!=(const OptionDefinition& other) const {
+        return (!equals(other));
+    }
+    //@}
+
     /// @brief Constructor.
     ///
     /// This constructor sets the name of the option space that is
@@ -247,7 +281,9 @@ public:
     /// @brief Return list of record fields.
     ///
     /// @return list of record fields.
-    const RecordFieldsCollection& getRecordFields() const { return (record_fields_); }
+    const RecordFieldsCollection& getRecordFields() const {
+        return (record_fields_);
+    }
 
     /// @brief Return option data type.
     ///
