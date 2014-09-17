@@ -459,19 +459,19 @@ public:
     OptionPtr getOptionPtr(std::string space, uint32_t code)
     {
         OptionPtr option_ptr;
-        Subnet::OptionContainerPtr options =
+        OptionContainerPtr options =
                             parser_context_->options_->getItems(space);
         // Should always be able to get options list even if it is empty.
         EXPECT_TRUE(options);
         if (options) {
             // Attempt to find desired option.
-            const Subnet::OptionContainerTypeIndex& idx = options->get<1>();
-            const Subnet::OptionContainerTypeRange& range =
+            const OptionContainerTypeIndex& idx = options->get<1>();
+            const OptionContainerTypeRange& range =
                                                         idx.equal_range(code);
             int cnt = std::distance(range.first, range.second);
             EXPECT_EQ(1, cnt);
             if (cnt == 1) {
-                Subnet::OptionDescriptor desc = *(idx.begin());
+                OptionDescriptor desc = *(idx.begin());
                 option_ptr = desc.option;
                 EXPECT_TRUE(option_ptr);
             }
@@ -1122,11 +1122,11 @@ public:
     /// @param ctx A pointer to a context.
     /// @param opt_type Expected option type.
     void checkOptionType(const ParserContext& ctx, const uint16_t opt_type) {
-        Subnet::OptionContainerPtr options =
+        OptionContainerPtr options =
             ctx.options_->getItems("option-space");
         ASSERT_TRUE(options);
-        Subnet::OptionContainerTypeIndex& idx = options->get<1>();
-        Subnet::OptionContainerTypeRange range = idx.equal_range(opt_type);
+        OptionContainerTypeIndex& idx = options->get<1>();
+        OptionContainerTypeRange range = idx.equal_range(opt_type);
         ASSERT_EQ(1, std::distance(range.first, range.second));
     }
 
@@ -1217,7 +1217,7 @@ public:
         // Add new option, with option code 10, to the context.
         ASSERT_TRUE(ctx.options_);
         OptionPtr opt1(new Option(Option::V6, 10));
-        Subnet::OptionDescriptor desc1(opt1, false);
+        OptionDescriptor desc1(opt1, false);
         std::string option_space = "option-space";
         ASSERT_TRUE(desc1.option);
         ctx.options_->addItem(desc1, option_space);
@@ -1430,7 +1430,7 @@ public:
             SCOPED_TRACE("Check that option remains the same in the new context"
                          " when the option in the original context is changed");
             ctx.options_->clearItems();
-            Subnet::OptionDescriptor desc(OptionPtr(new Option(Option::V6,
+            OptionDescriptor desc(OptionPtr(new Option(Option::V6,
                                                                100)),
                                           false);
 

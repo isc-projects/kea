@@ -15,6 +15,7 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/dhcp_parsers.h>
 #include <hooks/hooks_manager.h>
 #include <util/encode/hex.h>
@@ -345,16 +346,16 @@ OptionDataParser::commit() {
     }
 
     uint16_t opt_type = option_descriptor_.option->getType();
-    Subnet::OptionContainerPtr options = options_->getItems(option_space_);
+    OptionContainerPtr options = options_->getItems(option_space_);
     // The getItems() should never return NULL pointer. If there are no
     // options configured for the particular option space a pointer
     // to an empty container should be returned.
     assert(options);
-    Subnet::OptionContainerTypeIndex& idx = options->get<1>();
+    OptionContainerTypeIndex& idx = options->get<1>();
     // Try to find options with the particular option code in the main
     // storage. If found, remove these options because they will be
     // replaced with new one.
-    Subnet::OptionContainerTypeRange range = idx.equal_range(opt_type);
+    OptionContainerTypeRange range = idx.equal_range(opt_type);
     if (std::distance(range.first, range.second) > 0) {
         idx.erase(range.first, range.second);
     }
@@ -540,7 +541,7 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
                                   code, data_tokens) :
                 def->optionFactory(global_context_->universe_,
                                    code, binary);
-            Subnet::OptionDescriptor desc(option, false);
+            OptionDescriptor desc(option, false);
             option_descriptor_.option = option;
             option_descriptor_.persistent = false;
         } catch (const isc::Exception& ex) {
@@ -1070,10 +1071,10 @@ SubnetConfigParser::appendSubOptions(const std::string& option_space,
     if (!encapsulated_space.empty()) {
         // Get the sub-options that belong to the encapsulated
         // option space.
-        const Subnet::OptionContainerPtr sub_opts =
+        const OptionContainerPtr sub_opts =
                 global_context_->options_->getItems(encapsulated_space);
         // Append sub-options to the option.
-        BOOST_FOREACH(Subnet::OptionDescriptor desc, *sub_opts) {
+        BOOST_FOREACH(OptionDescriptor desc, *sub_opts) {
             if (desc.option) {
                 option->addOption(desc.option);
             }
@@ -1152,7 +1153,7 @@ SubnetConfigParser::createSubnet() {
     std::list<std::string> space_names = options_->getOptionSpaceNames();
     BOOST_FOREACH(std::string option_space, space_names) {
         // Get all options within a particular option space.
-        BOOST_FOREACH(Subnet::OptionDescriptor desc,
+        BOOST_FOREACH(OptionDescriptor desc,
                       *options_->getItems(option_space)) {
             // The pointer should be non-NULL. The validation is expected
             // to be performed by the OptionDataParser before adding an
@@ -1161,7 +1162,7 @@ SubnetConfigParser::createSubnet() {
             // We want to check whether an option with the particular
             // option code has been already added. If so, we want
             // to issue a warning.
-            Subnet::OptionDescriptor existing_desc =
+            OptionDescriptor existing_desc =
                             subnet_->getOptionDescriptor("option_space",
                                                  desc.option->getType());
             if (existing_desc.option) {
@@ -1189,7 +1190,7 @@ SubnetConfigParser::createSubnet() {
     space_names = global_context_->options_->getOptionSpaceNames();
     BOOST_FOREACH(std::string option_space, space_names) {
         // Get all global options for the particular option space.
-        BOOST_FOREACH(Subnet::OptionDescriptor desc,
+        BOOST_FOREACH(OptionDescriptor desc,
                 *(global_context_->options_->getItems(option_space))) {
             // The pointer should be non-NULL. The validation is expected
             // to be performed by the OptionDataParser before adding an
@@ -1201,7 +1202,7 @@ SubnetConfigParser::createSubnet() {
             // subnet scope take precedence over globally configured
             // values we don't add option from the global storage
             // if there is one already.
-            Subnet::OptionDescriptor existing_desc =
+            OptionDescriptor existing_desc =
                     subnet_->getOptionDescriptor(option_space,
                                                 desc.option->getType());
             if (!existing_desc.option) {

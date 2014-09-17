@@ -104,12 +104,12 @@ Subnet::delOptions() {
     option_spaces_.clearItems();
 }
 
-Subnet::OptionContainerPtr
+OptionContainerPtr
 Subnet::getOptionDescriptors(const std::string& option_space) const {
     return (option_spaces_.getItems(option_space));
 }
 
-Subnet::OptionDescriptor
+OptionDescriptor
 Subnet::getOptionDescriptor(const std::string& option_space,
                             const uint16_t option_code) {
     OptionContainerPtr options = getOptionDescriptors(option_space);
@@ -133,12 +133,12 @@ void Subnet::addVendorOption(const OptionPtr& option, bool persistent,
     vendor_option_spaces_.addItem(OptionDescriptor(option, persistent), vendor_id);
 }
 
-Subnet::OptionContainerPtr
+OptionContainerPtr
 Subnet::getVendorOptionDescriptors(uint32_t vendor_id) const {
     return (vendor_option_spaces_.getItems(vendor_id));
 }
 
-Subnet::OptionDescriptor
+OptionDescriptor
 Subnet::getVendorOptionDescriptor(uint32_t vendor_id, uint16_t option_code) {
     OptionContainerPtr options = getVendorOptionDescriptors(vendor_id);
     if (!options || options->empty()) {
