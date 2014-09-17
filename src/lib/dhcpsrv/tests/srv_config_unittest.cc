@@ -279,14 +279,10 @@ TEST_F(SrvConfigTest, copy) {
     CfgIface cfg_iface;
     cfg_iface.use(AF_INET, "eth0");
 
-    CfgOptionDef cfg_option_def;
-    cfg_option_def.add(OptionDefinitionPtr(new OptionDefinition("option-foo", 5,
-                                                                "string")),
-                       "isc");
-
     conf1.addLoggingInfo(info);
     conf1.setCfgIface(cfg_iface);
-    conf1.setCfgOptionDef(cfg_option_def);
+    conf1.getCfgOptionDef()->add(OptionDefinitionPtr(new OptionDefinition("option-foo", 5,
+                                                                          "string")), "isc");
 
     // Make sure both configurations are different.
     ASSERT_TRUE(conf1 != conf2);
@@ -346,24 +342,16 @@ TEST_F(SrvConfigTest, equality) {
     EXPECT_FALSE(conf1 != conf2);
 
     // Differ by option definitions.
-    CfgOptionDef cfg_option_def1;
-    CfgOptionDef cfg_option_def2;
-
-    cfg_option_def1.add(OptionDefinitionPtr(new OptionDefinition("option-foo",
-                                                                 123,
-                                                                 "uint16_t")),
-                        "isc");
-    conf1.setCfgOptionDef(cfg_option_def1);
+    conf1.getCfgOptionDef()->
+        add(OptionDefinitionPtr(new OptionDefinition("option-foo", 123,
+                                                     "uint16_t")), "isc");
 
     EXPECT_FALSE(conf1 == conf2);
     EXPECT_TRUE(conf1 != conf2);
 
-    cfg_option_def2.add(OptionDefinitionPtr(new OptionDefinition("option-foo",
-                                                                 123,
-                                                                 "uint16_t")),
-                        "isc");
-    conf2.setCfgOptionDef(cfg_option_def2);
-
+    conf2.getCfgOptionDef()->
+        add(OptionDefinitionPtr(new OptionDefinition("option-foo", 123,
+                                                     "uint16_t")), "isc");
     EXPECT_TRUE(conf1 == conf2);
     EXPECT_FALSE(conf1 != conf2);
 }

@@ -1315,11 +1315,11 @@ TEST_F(Dhcpv4SrvTest, unpackOptions) {
 
     // Add option definitions to the Configuration Manager. Each goes under
     // different option space.
-    CfgOptionDef cfg_option_def;
-    ASSERT_NO_THROW(cfg_option_def.add(opt_def, "space-foobar"));
-    ASSERT_NO_THROW(cfg_option_def.add(opt_def2, "space-foo"));
-    ASSERT_NO_THROW(cfg_option_def.add(opt_def3, "space-bar"));
-    CfgMgr::instance().getStagingCfg()->setCfgOptionDef(cfg_option_def);
+    CfgOptionDefPtr cfg_option_def =
+        CfgMgr::instance().getStagingCfg()->getCfgOptionDef();
+    ASSERT_NO_THROW(cfg_option_def->add(opt_def, "space-foobar"));
+    ASSERT_NO_THROW(cfg_option_def->add(opt_def2, "space-foo"));
+    ASSERT_NO_THROW(cfg_option_def->add(opt_def3, "space-bar"));
     CfgMgr::instance().commit();
 
     // Create the buffer holding the structure of options.
