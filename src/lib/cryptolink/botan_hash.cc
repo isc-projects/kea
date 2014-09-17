@@ -22,9 +22,13 @@
 #include <botan/hash.h>
 #include <botan/types.h>
 
+#include <cryptolink/botan_common.h>
+
 #include <cstring>
 
-namespace {
+namespace isc {
+namespace cryptolink {
+
 /// @brief Decode the HashAlgorithm enum into a name usable by Botan
 ///
 /// @param algorithm algorithm to be converted
@@ -51,12 +55,6 @@ getBotanHashAlgorithmName(isc::cryptolink::HashAlgorithm algorithm) {
     // no default. But we need a return value anyway
     return ("Unknown");
 }
-
-} // local namespace
-
-
-namespace isc {
-namespace cryptolink {
 
 /// @brief Botan implementation of Hash. Each method is the counterpart
 /// of the Hash corresponding method.

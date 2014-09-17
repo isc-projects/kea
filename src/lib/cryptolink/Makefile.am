@@ -13,11 +13,13 @@ libkea_cryptolink_la_SOURCES += crypto_hash.h crypto_hash.cc
 libkea_cryptolink_la_SOURCES += crypto_hmac.h crypto_hmac.cc
 if HAVE_BOTAN
 libkea_cryptolink_la_SOURCES += botan_link.cc
+libkea_cryptolink_la_SOURCES += botan_common.h
 libkea_cryptolink_la_SOURCES += botan_hash.cc
 libkea_cryptolink_la_SOURCES += botan_hmac.cc
 endif
 if HAVE_OPENSSL
 libkea_cryptolink_la_SOURCES += openssl_link.cc
+libkea_cryptolink_la_SOURCES += openssl_common.h
 libkea_cryptolink_la_SOURCES += openssl_hash.cc
 libkea_cryptolink_la_SOURCES += openssl_hmac.cc
 endif
