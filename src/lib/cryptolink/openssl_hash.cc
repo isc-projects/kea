@@ -19,9 +19,12 @@
 
 #include <openssl/evp.h>
 
+#include <cryptolink/openssl_common.h>
+
 #include <cstring>
 
-namespace {
+namespace isc {
+namespace cryptolink {
 
 /// @brief Decode the HashAlgorithm enum into an EVP_MD pointer (or 0)
 ///
@@ -50,12 +53,6 @@ getOpenSSLHashAlgorithm(isc::cryptolink::HashAlgorithm algorithm) {
     // no default. But we need a return value anyway
     return (0);
 }
-
-} // local namespace
-
-
-namespace isc {
-namespace cryptolink {
 
 /// \brief OpenSSL implementation of Hash. Each method is the counterpart
 /// of the Hash corresponding method.
