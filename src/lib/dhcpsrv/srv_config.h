@@ -163,13 +163,6 @@ public:
         return (cfg_option_def_);
     }
 
-    /// @brief Sets the object representing user-defined option definitions.
-    ///
-    /// @param cfg_option_def New object representing option definitions.
-    void setCfgOptionDef(const CfgOptionDef& cfg_option_def) {
-        *cfg_option_def_ = cfg_option_def;
-    }
-
     //@}
 
     /// @brief Copies the currnet configuration to a new configuration.
