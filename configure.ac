@@ -817,6 +817,23 @@ EOF
     #CRYPTO_LDFLAGS="-ldl"
     CRYPTO_LDFLAGS=""
     CRYPTO_RPATH=""
+    dnl Check avaibility of SHA-2
+    AC_MSG_CHECKING([support of SHA-2])
+    LIBS_SAVED=${LIBS}
+    LIBS="$LIBS $CRYPTO_LIBS"
+    CPPFLAGS_SAVED=${CPPFLAGS}
+    CPPFLAGS="$CRYPTO_INCLUDES $CPPFLAGS"
+    AC_LINK_IFELSE(
+        [AC_LANG_PROGRAM([#include <openssl/evp.h>],
+                         [const EVP_MD* h224 = EVP_sha224();
+                          const EVP_MD* h256 = EVP_sha256();
+                          const EVP_MD* h384 = EVP_sha384();
+                          const EVP_MD* h512 = EVP_sha512();
+                          ])],
+        [AC_MSG_RESULT([yes])],
+        [AC_MSG_ERROR([missing EVP entry for SHA-2])])
+    LIBS=${LIBS_SAVED}
+    CPPFLAGS=${CPPFLAGS_SAVED}
 fi
 
 AM_CONDITIONAL(HAVE_BOTAN, test "$CRYPTO_NAME" = "Botan")
