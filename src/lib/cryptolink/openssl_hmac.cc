@@ -19,37 +19,11 @@
 
 #include <openssl/hmac.h>
 
+#include <cryptolink/openssl_common.h>
+
 #include <cstring>
 
 namespace {
-
-/// @brief Decode the HashAlgorithm enum into an EVP_MD pointer (or 0)
-///
-/// EVP_MD pointer is a OpenSSL's way of identifying hash algorithms
-/// @param algorithm algorithm to be converted
-/// @return pointer to EVP_MD which identifies the algorithm
-const EVP_MD*
-getOpenSSLHashAlgorithm(isc::cryptolink::HashAlgorithm algorithm) {
-    switch (algorithm) {
-    case isc::cryptolink::MD5:
-        return (EVP_md5());
-    case isc::cryptolink::SHA1:
-        return (EVP_sha1());
-    case isc::cryptolink::SHA256:
-        return (EVP_sha256());
-    case isc::cryptolink::SHA224:
-        return (EVP_sha224());
-    case isc::cryptolink::SHA384:
-        return (EVP_sha384());
-    case isc::cryptolink::SHA512:
-        return (EVP_sha512());
-    case isc::cryptolink::UNKNOWN_HASH:
-        return (0);
-    }
-    // compiler should have prevented us to reach this, since we have
-    // no default. But we need a return value anyway
-    return (0);
-}
 
 /// Secure Buffers which are wiped out when released.
 template<typename T>
