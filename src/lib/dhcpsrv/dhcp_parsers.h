@@ -21,6 +21,7 @@
 #include <dhcpsrv/d2_client_cfg.h>
 #include <dhcpsrv/dhcp_config_parser.h>
 #include <dhcpsrv/cfg_iface.h>
+#include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/subnet.h>
 #include <exceptions/exceptions.h>
@@ -42,8 +43,8 @@ typedef boost::shared_ptr<OptionDefStorage> OptionDefStoragePtr;
 
 /// Collection of containers holding option spaces. Each container within
 /// a particular option space holds so-called option descriptors.
-typedef OptionSpaceContainer<Subnet::OptionContainer,
-    Subnet::OptionDescriptor, std::string> OptionStorage;
+typedef OptionSpaceContainer<OptionContainer, OptionDescriptor,
+                             std::string> OptionStorage;
 /// @brief Shared pointer to option storage.
 typedef boost::shared_ptr<OptionStorage> OptionStoragePtr;
 
@@ -600,7 +601,7 @@ private:
     OptionStoragePtr options_;
 
     /// Option descriptor holds newly configured option.
-    Subnet::OptionDescriptor option_descriptor_;
+    OptionDescriptor option_descriptor_;
 
     /// Option space name where the option belongs to.
     std::string option_space_;
