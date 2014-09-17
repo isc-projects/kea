@@ -89,7 +89,7 @@ SrvConfig::copy(SrvConfig& new_config) const {
     // Replace interface configuration.
     new_config.setCfgIface(cfg_iface_);
     // Replace option definitions.
-    new_config.setCfgOptionDef(*cfg_option_def_);
+    cfg_option_def_->copy(*new_config.cfg_option_def_);
 }
 
 void
