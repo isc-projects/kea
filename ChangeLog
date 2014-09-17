@@ -2,7 +2,7 @@
 	The configure script checks if OpenSSL supports SHA-2, in order
 	to avoid very old (and likely subject to unfixed security bugs)
 	OpenSSL versions.
-	(Trac #3482, git xxx)
+	(Trac #3482, git c779a0ef23d2092cf896276dab1fbcb190380374)
 
 834.	[bug]		marcin
 	Corrected the definition of the example DHCPv4 and DHCPv6 address
