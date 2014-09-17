@@ -1,3 +1,9 @@
+835.	[build]		fdupont
+	The configure script checks if OpenSSL supports SHA-2, in order
+	to avoid very old (and likely subject to unfixed security bugs)
+	OpenSSL versions.
+	(Trac #3482, git xxx)
+
 834.	[bug]		marcin
 	Corrected the definition of the example DHCPv4 and DHCPv6 address
 	pools in the default kea.conf file.
