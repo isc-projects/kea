@@ -61,7 +61,7 @@
     "renew-timer": 1000,
     "rebind-timer": 2000,
     "subnet4": [{
-       "pool": "192.0.2.1-192.0.2.200",
+       "pools": [ { "pool": "192.0.2.1-192.0.2.200" } ],
        "subnet": "192.0.2.0/24"
     }],
     ...
@@ -76,7 +76,7 @@
     "renew-timer": 1000,
     "rebind-timer": 2000,
     "subnet6": [{
-       "pool": "2001:db8::/80",
+       "pools": [ { "pool": "2001:db8::/80" } ],
        "subnet": "2001:db8::/64"
     }],
     ...
