@@ -121,7 +121,7 @@ cppcheck:
 
 # These steps are necessary during installation
 install-exec-hook:
-	mkdir -p ${localstatedir}/run/${PACKAGE_NAME}
+	mkdir -p $(DESTDIR)${localstatedir}/run/${PACKAGE_NAME}
 
 ### include tool to generate documentation from log message specifications
 ### in the distributed tarball:
