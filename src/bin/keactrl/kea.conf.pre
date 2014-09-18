@@ -92,7 +92,7 @@
       ],
       "severity": "INFO",
       "debuglevel": 0
-    }
+    },
     {
       "name": "kea-dhcp-ddns",
       "output_options": [
