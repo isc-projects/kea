@@ -8,7 +8,7 @@
     <title>Logging</title>
 
     <section>
-      <title>Logging configuration</title>
+      <title>Logging Configuration</title>
 
       <para>
 
@@ -397,7 +397,7 @@ TODO; there's a ticket to determine these levels, see #1074
       </section>
 
       <section>
-        <title>Example Logger configurations</title>
+        <title>Example Logger Configurations</title>
 
         <para>
           In this example we want to set the global logging to
@@ -532,25 +532,32 @@ file be created.</para>
     </section>
 
     <section>
-      <title>Environment variables and initial logging</title>
+      <title>Logging During Kea Startup</title>
 
       <para>
-        Logging configuration is specified in the configuration file. However,
-        there are several early initialization routines that are conducted even
-        before configuration file is read and applied. They also apply if
-        the new configuration does not configure any logging.
+        The logging configuration is specified in the configuration file.
+        However, when Kea starts, the file is not read until some way into the
+        initialization process.  Prior to that, the logging settings are
+        set to default values, although it is possible to modify some
+        aspects of the settings by means of environment variables. Note
+        that in the absence of any logging configuration in the configuration
+        file, the settings of (possibly modified) default configuration will
+        persist while the program is running.
       </para>
-      <para>There are several environment variables that control logging
-      behavior in the early phase of the bring up. Once configuration that hold
-      logging configuration is parsed and applied they no longer apply.</para>
+      <para>
+        The following environment variables can be used to control the
+        behavio of logging during startup:
+      </para>
 
           <variablelist>
           <varlistentry>
           <term>KEA_LOCKFILE_DIR</term>
           <listitem><para>
               Specifies a directory where logging system should create its
-              lock file. If not specified, it is ${prefix}/var/run/kea, where
-              prefix defaults to /usr/local. This variable must not end
+              lock file. If not specified, it is
+              <replaceable>prefix</replaceable>/var/run/kea, where
+              <replaceable>prefix</replaceable> defaults to /usr/local.
+              This variable must not end
               with a slash. There is one special value: "none", which
               instructs Kea to not create lock file at all. This may cause
               issues if several processes log to the same file.
@@ -561,10 +568,33 @@ file be created.</para>
           <term>KEA_LOGGER_DESTINATION</term>
           <listitem><para>
               Specifies logging output. There are several special values.
-              "stdout" means standard output. "stderr" means standard error.
-              "syslog" means logging using syslog and a default name.
-              "syslog:foo" syntax is also permitted. It will log via syslog
-              using "foo" as a name. Any other value is treated as a name
+              <variablelist>
+                  <varlistentry>
+                      <term>stdout</term>
+                      <listitem><para>
+                          Log to standard output.
+                      </para></listitem>
+                  </varlistentry>
+                  <varlistentry>
+                      <term>stderr</term>
+                      <listitem><para>
+                          Log to standard error.
+                      </para></listitem>
+                  </varlistentry>
+                  <varlistentry>
+                      <term>syslog<optional>:<replaceable>fac</replaceable></optional></term>
+                      <listitem><para>
+                          Log via syslog. The optional
+                          <replaceable>fac</replaceable> (which is
+                          separated from the word "syslog" by a colon)
+                          specifies the
+                          facility to be used for the log messages. Unless
+                          specified, messages will be logged using the
+                          facility "local0".
+                      </para></listitem>
+                  </varlistentry>
+              </variablelist>
+              Any other value is treated as a name
               of the output file. If not specified otherwise, Kea will log to
               standard output.
           </para></listitem>
