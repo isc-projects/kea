@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -363,7 +363,9 @@ public:
     ///
     /// @param other the other option
     /// @return true if both options are equal
-    virtual bool equal(const OptionPtr& other) const;
+    bool equals(const OptionPtr& other) const;
+
+    virtual bool equals(const Option& other) const;
 
 protected:
 

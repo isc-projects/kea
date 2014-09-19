@@ -64,6 +64,18 @@ optionSpaceToVendorId(const std::string& option_space) {
 namespace isc {
 namespace dhcp {
 
+bool
+OptionDescriptor::equals(const OptionDescriptor& other) const {
+    return (persistent == other.persistent &&
+            option->equals(other.option));
+}
+
+bool
+CfgOption::equals(const CfgOption& other) const {
+    return (options_.equals(other.options_) &&
+            vendor_options_.equals(other.vendor_options_));
+}
+
 void
 CfgOption::add(const OptionPtr& option, const bool persistent,
                const std::string& option_space) {

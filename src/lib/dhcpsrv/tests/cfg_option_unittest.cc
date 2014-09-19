@@ -22,6 +22,58 @@ using namespace isc::dhcp;
 
 namespace {
 
+// This test verifies that the option configurations can be compared.
+TEST(CfgOptionTest, equals) {
+    CfgOption cfg1;
+    CfgOption cfg2;
+
+    // Initially the configurations should be equal.
+    ASSERT_TRUE(cfg1 == cfg2);
+    ASSERT_FALSE(cfg1 != cfg2);
+
+    // Add 9 options to two different option spaces. Each option have different
+    // option code and content.
+    for (uint16_t code = 1; code < 10; ++code) {
+        OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, code)));
+        ASSERT_NO_THROW(cfg1.add(option, false, "isc"));
+        ASSERT_NO_THROW(cfg1.add(option, true, "vendor-123"));
+    }
+
+    // Configurations should now be different.
+    ASSERT_FALSE(cfg1 == cfg2);
+    ASSERT_TRUE(cfg1 != cfg2);
+
+    // Add 8 options (excluding the option with code 1) to the same option
+    // spaces.
+    for (uint16_t code = 2; code < 10; ++code) {
+        OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, code)));
+        ASSERT_NO_THROW(cfg2.add(option, false, "isc"));
+        ASSERT_NO_THROW(cfg2.add(option, true, "vendor-123"));
+    }
+
+    // Configurations should still be unequal.
+    ASSERT_FALSE(cfg1 == cfg2);
+    ASSERT_TRUE(cfg1 != cfg2);
+
+    // Add missing option to the option space isc.
+    ASSERT_NO_THROW(cfg2.add(OptionPtr(new Option(Option::V6, 1,
+                                                  OptionBuffer(10, 0x01))),
+                             false, "isc"));
+    // Configurations should still be unequal because option with code 1
+    // is missing in the option space vendor-123.
+    ASSERT_FALSE(cfg1 == cfg2);
+    ASSERT_TRUE(cfg1 != cfg2);
+
+    // Add missing option.
+    ASSERT_NO_THROW(cfg2.add(OptionPtr(new Option(Option::V6, 1,
+                                                  OptionBuffer(10, 0x01))),
+                             true, "vendor-123"));
+    // Configurations should now be equal.
+    ASSERT_TRUE(cfg1 == cfg2);
+    ASSERT_FALSE(cfg1 != cfg2);
+
+}
+
 // This test verifies that multiple options can be added to the configuration
 // and that they can be retrieved using the option space name.
 TEST(CfgOptionTest, add) {
