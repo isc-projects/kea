@@ -547,8 +547,8 @@ TEST_F(OptionTest, setData) {
                             buf_.size()));
 }
 
-// This test verifies that options can be compared using equal() method.
-TEST_F(OptionTest, equal) {
+// This test verifies that options can be compared using equals() method.
+TEST_F(OptionTest, equals) {
 
     // Five options with varying lengths
     OptionPtr opt1(new Option(Option::V6, 258, buf_.begin(), buf_.begin() + 1));
@@ -561,13 +561,13 @@ TEST_F(OptionTest, equal) {
     // Another instance with the same type and content as opt2
     OptionPtr opt5(new Option(Option::V6, 258, buf_.begin(), buf_.begin() + 2));
 
-    EXPECT_TRUE(opt1->equal(opt1));
+    EXPECT_TRUE(opt1->equals(opt1));
 
-    EXPECT_FALSE(opt1->equal(opt2));
-    EXPECT_FALSE(opt1->equal(opt3));
-    EXPECT_FALSE(opt1->equal(opt4));
+    EXPECT_FALSE(opt1->equals(opt2));
+    EXPECT_FALSE(opt1->equals(opt3));
+    EXPECT_FALSE(opt1->equals(opt4));
 
-    EXPECT_TRUE(opt2->equal(opt5));
+    EXPECT_TRUE(opt2->equals(opt5));
 }
 
 // This test verifies that the name of the option space being encapsulated by

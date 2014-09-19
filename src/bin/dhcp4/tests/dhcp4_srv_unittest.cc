@@ -1163,7 +1163,7 @@ TEST_F(Dhcpv4SrvTest, relayAgentInfoEcho) {
     OptionPtr rai_response = offer->getOption(DHO_DHCP_AGENT_OPTIONS);
     ASSERT_TRUE(rai_response);
 
-    EXPECT_TRUE(rai_response->equal(rai_query));
+    EXPECT_TRUE(rai_response->equals(rai_query));
 }
 
 /// @todo move vendor options tests to a separate file.
@@ -2166,7 +2166,7 @@ TEST_F(HooksDhcpv4SrvTest, valueChange_pkt4_receive) {
 
     // ... and check if it is the modified value
     OptionPtr expected = createOption(DHO_DHCP_CLIENT_IDENTIFIER);
-    EXPECT_TRUE(clientid->equal(expected));
+    EXPECT_TRUE(clientid->equals(expected));
 }
 
 // Checks if callouts installed on pkt4_received is able to delete
@@ -2295,7 +2295,7 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendValueChange) {
 
     // ... and check if it is the modified value
     OptionPtr expected = createOption(DHO_DHCP_SERVER_IDENTIFIER);
-    EXPECT_TRUE(clientid->equal(expected));
+    EXPECT_TRUE(clientid->equals(expected));
 }
 
 // Checks if callouts installed on pkt4_send is able to delete
