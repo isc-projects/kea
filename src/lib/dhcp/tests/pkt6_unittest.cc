@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -732,33 +732,33 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     // closest to the client.
     opt = msg->getAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
     ASSERT_TRUE(opt);
-    EXPECT_TRUE(opt->equal(relay3_opt1));
+    EXPECT_TRUE(opt->equals(relay3_opt1));
 
     // We want to ge that one inserted by relay1 (first match, starting from
     // closest to the server.
     opt = msg->getAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
     ASSERT_TRUE(opt);
-    EXPECT_TRUE(opt->equal(relay1_opt1));
+    EXPECT_TRUE(opt->equals(relay1_opt1));
 
     // We just want option from the first relay (closest to the client)
     opt = msg->getAnyRelayOption(200, Pkt6::RELAY_GET_FIRST);
     ASSERT_TRUE(opt);
-    EXPECT_TRUE(opt->equal(relay3_opt1));
+    EXPECT_TRUE(opt->equals(relay3_opt1));
 
     // We just want option from the last relay (closest to the server)
     opt = msg->getAnyRelayOption(200, Pkt6::RELAY_GET_LAST);
     ASSERT_TRUE(opt);
-    EXPECT_TRUE(opt->equal(relay1_opt1));
+    EXPECT_TRUE(opt->equals(relay1_opt1));
 
     // Let's try to ask for something that is inserted by the middle relay
     // only.
     opt = msg->getAnyRelayOption(100, Pkt6::RELAY_SEARCH_FROM_SERVER);
     ASSERT_TRUE(opt);
-    EXPECT_TRUE(opt->equal(relay2_opt1));
+    EXPECT_TRUE(opt->equals(relay2_opt1));
 
     opt = msg->getAnyRelayOption(100, Pkt6::RELAY_SEARCH_FROM_CLIENT);
     ASSERT_TRUE(opt);
-    EXPECT_TRUE(opt->equal(relay2_opt1));
+    EXPECT_TRUE(opt->equals(relay2_opt1));
 
     opt = msg->getAnyRelayOption(100, Pkt6::RELAY_GET_FIRST);
     EXPECT_FALSE(opt);

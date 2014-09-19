@@ -274,9 +274,13 @@ void Option::setUint32(uint32_t value) {
     writeUint32(value, &data_[0], data_.size());
 }
 
-bool Option::equal(const OptionPtr& other) const {
-    return ( (getType() == other->getType()) &&
-             (getData() == other->getData()) );
+bool Option::equals(const OptionPtr& other) const {
+    return (equals(*other));
+}
+
+bool Option::equals(const Option& other) const {
+    return ( (getType() == other.getType()) &&
+             (getData() == other.getData()) );
 }
 
 Option::~Option() {

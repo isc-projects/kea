@@ -54,6 +54,31 @@ struct OptionDescriptor {
     /// @param persist if true option is always sent.
     OptionDescriptor(bool persist)
         : option(OptionPtr()), persistent(persist) {};
+
+    /// @brief Checks if the one descriptor is equal to another.
+    ///
+    /// @param other Other option descriptor to compare to.
+    ///
+    /// @return true if descriptors equal, false otherwise.
+    bool equals(const OptionDescriptor& other) const;
+
+    /// @brief Equality operator.
+    ///
+    /// @param other Other option descriptor to compare to.
+    ///
+    /// @return true if descriptors equal, false otherwise.
+    bool operator==(const OptionDescriptor& other) const {
+        return (equals(other));
+    }
+
+    /// @brief Inequality operator.
+    ///
+    /// @param other Other option descriptor to compare to.
+    ///
+    /// @return true if descriptors unequal, false otherwise.
+    bool operator!=(const OptionDescriptor& other) const {
+        return (!equals(other));
+    }
 };
 
 /// A pointer to option descriptor.
@@ -171,6 +196,36 @@ typedef OptionContainer::nth_index<2>::type OptionContainerPersistIndex;
 class CfgOption {
 public:
 
+    /// @name Methods and operators used for comparing objects.
+    ///
+    //@{
+    /// @brief Check if configuration is equal to other configuration.
+    ///
+    /// @param other An object holding configuration to compare to.
+    ///
+    /// @return true if configurations are equal, false otherwise.
+    bool equals(const CfgOption& other) const;
+
+    /// @brief Equality operator.
+    ///
+    /// @param other An object holding configuration to compare to.
+    ///
+    /// @return true if configurations are equal, false otherwise.
+    bool operator==(const CfgOption& other) const {
+        return (equals(other));
+    }
+
+    /// @brief Inequality operator.
+    ///
+    /// @param other An object holding configuration to compare to.
+    ///
+    /// @return true if configurations are unequal, false otherwise.
+    bool operator!=(const CfgOption& other) const {
+        return (!equals(other));
+    }
+
+    //@}
+
     /// @brief Adds instance of the option to the configuration.
     ///
     /// There are two types of options which may be passed to this method:
@@ -256,8 +311,6 @@ private:
                                  uint32_t> VendorOptionSpaceCollection;
     /// @brief Container holding options grouped by vendor id.
     VendorOptionSpaceCollection vendor_options_;
-
-
 
 };
 

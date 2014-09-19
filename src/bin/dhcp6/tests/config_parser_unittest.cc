@@ -1002,7 +1002,7 @@ TEST_F(Dhcp6ParserTest, subnetInterfaceId) {
     ifaceid.reset(new Option(Option::V6, D6O_INTERFACE_ID, tmp));
     subnet = CfgMgr::instance().getSubnet6(ifaceid, classify_);
     ASSERT_TRUE(subnet);
-    EXPECT_TRUE(ifaceid->equal(subnet->getInterfaceId()));
+    EXPECT_TRUE(ifaceid->equals(subnet->getInterfaceId()));
 }
 
 
