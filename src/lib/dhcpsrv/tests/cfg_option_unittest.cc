@@ -125,6 +125,80 @@ TEST(CfgOptionTest, add) {
     EXPECT_TRUE(options->empty());
 }
 
+// This test verifies that two option configurations can be merged.
+TEST(CfgOption, merge) {
+    CfgOption cfg_src;
+    CfgOption cfg_dst;
+
+    // Create collection of options in option space dhcp6, with option codes
+    // from the range of 100 to 109 and holding one byte of data equal to 0xFF.
+    for (uint16_t code = 100; code < 110; ++code) {
+        OptionPtr option(new Option(Option::V6, code, OptionBuffer(1, 0xFF)));
+        ASSERT_NO_THROW(cfg_src.add(option, false, "dhcp6"));
+    }
+
+    // Create collection of options in vendor space 123, with option codes
+    // from the range of 100 to 109 and holding one byte of data equal to 0xFF.
+    for (uint16_t code = 100; code < 110; code += 2) {
+        OptionPtr option(new Option(Option::V6, code, OptionBuffer(1, 0xFF)));
+        ASSERT_NO_THROW(cfg_src.add(option, false, "vendor-123"));
+    }
+
+    // Create destination configuration (configuration that we merge the
+    // other configuration to).
+
+    // Create collection of options having even option codes in the range of
+    // 100 to 108.
+    for (uint16_t code = 100; code < 110; code += 2) {
+        OptionPtr option(new Option(Option::V6, code, OptionBuffer(1, 0x01)));
+        ASSERT_NO_THROW(cfg_dst.add(option, false, "dhcp6"));
+    }
+
+    // Create collection of options having odd option codes in the range of
+    // 101 to 109.
+    for (uint16_t code = 101; code < 110; code += 2) {
+        OptionPtr option(new Option(Option::V6, code, OptionBuffer(1, 0x01)));
+        ASSERT_NO_THROW(cfg_dst.add(option, false, "vendor-123"));
+    }
+
+    // Merge source configuration to the destination configuration. The options
+    // in the destination should be preserved. The options from the source
+    // configuration should be added.
+    ASSERT_NO_THROW(cfg_src.merge(cfg_dst));
+
+    // Validate the options in the dhcp6 option space in the destination.
+    for (uint16_t code = 100; code < 110; ++code) {
+        OptionDescriptor desc = cfg_dst.get("dhcp6", code);
+        ASSERT_TRUE(desc.option);
+        ASSERT_EQ(1, desc.option->getData().size());
+        // The options with even option codes should hold one byte of data
+        // equal to 0x1. These are the ones that we have initially added to
+        // the destination configuration. The other options should hold the
+        // values of 0xFF which indicates that they have been merged from the
+        // source configuration.
+        if ((code % 2) == 0) {
+            EXPECT_EQ(0x01, desc.option->getData()[0]);
+        } else {
+            EXPECT_EQ(0xFF, desc.option->getData()[0]);
+        }
+    }
+
+    // Validate the options in the vendor space.
+    for (uint16_t code = 100; code < 110; ++code) {
+        OptionDescriptor desc = cfg_dst.get(123, code);
+        ASSERT_TRUE(desc.option);
+        ASSERT_EQ(1, desc.option->getData().size());
+        // This time, the options with even option codes should hold a byte
+        // of data equal to 0xFF. The other options should hold the byte of
+        // data equal to 0x01.
+        if ((code % 2) == 0) {
+            EXPECT_EQ(0xFF, desc.option->getData()[0]);
+        } else {
+            EXPECT_EQ(0x01, desc.option->getData()[0]);
+        }
+    }
+}
+
 // This test verifies that single option can be retrieved from the configuration
 // using option code and option space.
 TEST(CfgOption, get) {
