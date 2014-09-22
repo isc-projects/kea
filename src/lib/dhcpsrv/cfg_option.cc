@@ -96,6 +96,52 @@ CfgOption::add(const OptionPtr& option, const bool persistent,
     }
 }
 
+void
+CfgOption::merge(CfgOption& other) const {
+    // Merge non-vendor options.
+    mergeInternal(options_, other.options_);
+    mergeInternal(vendor_options_, other.vendor_options_);
+    // Merge verndor options.
+}
+
+template <typename Selector>
+void
+CfgOption::mergeInternal(const OptionSpaceContainer<OptionContainer,
+                         OptionDescriptor, Selector>& src_container,
+                         OptionSpaceContainer<OptionContainer,
+                         OptionDescriptor, Selector>& dest_container) const {
+    // Get all option spaces used in source container.
+    std::list<Selector> selectors = src_container.getOptionSpaceNames();
+
+    // For each space in the source container retrieve the actual options and
+    // match them with the options held in the destination container under
+    // the same space.
+    for (typename std::list<Selector>::const_iterator it = selectors.begin();
+         it != selectors.end(); ++it) {
+        // Get all options in the destination container for the particular
+        // option space.
+        OptionContainerPtr dest_all = dest_container.getItems(*it);
+        OptionContainerPtr src_all = src_container.getItems(*it);
+        // For each option under this option space check if there is a
+        // corresponding option in the destination container. If not,
+        // add one.
+        for (OptionContainer::const_iterator src_opt = src_all->begin();
+             src_opt != src_all->end(); ++src_opt) {
+            const OptionContainerTypeIndex& idx = dest_all->get<1>();
+            const OptionContainerTypeRange& range =
+                idx.equal_range(src_opt->option->getType());
+            // If there is no such option in the destination container,
+            // add one.
+            if (std::distance(range.first, range.second) == 0) {
+                dest_container.addItem(OptionDescriptor(src_opt->option,
+                                                        src_opt->persistent),
+                                       *it);
+            }
+        }
+    }
+}
+
+
 OptionContainerPtr
 CfgOption::getAll(const std::string& option_space) const {
     return (options_.getItems(option_space));
