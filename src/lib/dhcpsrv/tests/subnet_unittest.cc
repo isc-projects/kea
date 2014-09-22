@@ -245,17 +245,12 @@ TEST(Subnet4Test, addInvalidOption) {
 
     // Some dummy option code.
     uint16_t code = 100;
-    // Create option with invalid universe (V6 instead of V4).
-    // Attempt to add this option should result in exception.
-    OptionPtr option1(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-    EXPECT_THROW(subnet->addOption(option1, false, "dhcp4"),
-                 isc::BadValue);
 
     // Create NULL pointer option. Attempt to add NULL option
     // should result in exception.
     OptionPtr option2;
     ASSERT_FALSE(option2);
-    EXPECT_THROW(subnet->addOption(option2, false, "dhcp4"),
+    EXPECT_THROW(subnet->getCfgOption()->add(option2, false, "dhcp4"),
                  isc::BadValue);
 }
 
@@ -646,18 +641,18 @@ TEST(Subnet6Test, addOptions) {
     // Differentiate options by their codes (100-109)
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(subnet->addOption(option, false, "dhcp6"));
+        ASSERT_NO_THROW(subnet->getCfgOption()->add(option, false, "dhcp6"));
     }
 
     // Add 7 options to another option space. The option codes partially overlap
     // with option codes that we have added to dhcp6 option space.
     for (uint16_t code = 105; code < 112; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(subnet->addOption(option, false, "isc"));
+        ASSERT_NO_THROW(subnet->getCfgOption()->add(option, false, "isc"));
     }
 
     // Get options from the Subnet and check if all 10 are there.
-    OptionContainerPtr options = subnet->getOptionDescriptors("dhcp6");
+    OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp6");
     ASSERT_TRUE(options);
     ASSERT_EQ(10, options->size());
 
@@ -670,7 +665,7 @@ TEST(Subnet6Test, addOptions) {
         ++expected_code;
     }
 
-    options = subnet->getOptionDescriptors("isc");
+    options = subnet->getCfgOption()->getAll("isc");
     ASSERT_TRUE(options);
     ASSERT_EQ(7, options->size());
 
@@ -684,19 +679,7 @@ TEST(Subnet6Test, addOptions) {
     }
 
     // Try to get options from a non-existing option space.
-    options = subnet->getOptionDescriptors("abcd");
-    ASSERT_TRUE(options);
-    EXPECT_TRUE(options->empty());
-
-    // Delete options from all spaces.
-    subnet->delOptions();
-
-    // Make sure that all options have been removed.
-    options = subnet->getOptionDescriptors("dhcp6");
-    ASSERT_TRUE(options);
-    EXPECT_TRUE(options->empty());
-
-    options = subnet->getOptionDescriptors("isc");
+    options = subnet->getCfgOption()->getAll("abcd");
     ASSERT_TRUE(options);
     EXPECT_TRUE(options->empty());
 }
@@ -710,12 +693,12 @@ TEST(Subnet6Test, addNonUniqueOptions) {
         // In the inner loop we create options with unique codes (100-109).
         for (uint16_t code = 100; code < 110; ++code) {
             OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-            ASSERT_NO_THROW(subnet->addOption(option, false, "dhcp6"));
+            ASSERT_NO_THROW(subnet->getCfgOption()->add(option, false, "dhcp6"));
         }
     }
 
     // Sanity check that all options are there.
-    OptionContainerPtr options = subnet->getOptionDescriptors("dhcp6");
+    OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp6");
     ASSERT_EQ(20, options->size());
 
     // Use container index #1 to get the options by their codes.
@@ -744,29 +727,6 @@ TEST(Subnet6Test, addNonUniqueOptions) {
         idx.equal_range(non_existing_code);
     // Empty set is expected.
     EXPECT_EQ(0, distance(range.first, range.second));
-
-    subnet->delOptions();
-
-    options = subnet->getOptionDescriptors("dhcp6");
-    EXPECT_EQ(0, options->size());
-}
-
-TEST(Subnet6Test, addInvalidOption) {
-    // Create as subnet to add options to it.
-    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
-
-    // Some dummy option code.
-    uint16_t code = 100;
-    // Create option with invalid universe (V4 instead of V6).
-    // Attempt to add this option should result in exception.
-    OptionPtr option1(new Option(Option::V4, code, OptionBuffer(10, 0xFF)));
-    EXPECT_THROW(subnet->addOption(option1, false, "dhcp6"), isc::BadValue);
-
-    // Create NULL pointer option. Attempt to add NULL option
-    // should result in exception.
-    OptionPtr option2;
-    ASSERT_FALSE(option2);
-    EXPECT_THROW(subnet->addOption(option2, false, "dhcp6"), isc::BadValue);
 }
 
 TEST(Subnet6Test, addPersistentOption) {
@@ -785,11 +745,11 @@ TEST(Subnet6Test, addPersistentOption) {
         // and options with these codes will be flagged non-persistent.
         // Options with other codes will be flagged persistent.
         bool persistent = (code % 3) ? true : false;
-        ASSERT_NO_THROW(subnet->addOption(option, persistent, "dhcp6"));
+        ASSERT_NO_THROW(subnet->getCfgOption()->add(option, persistent, "dhcp6"));
     }
 
     // Get added options from the subnet.
-    OptionContainerPtr options = subnet->getOptionDescriptors("dhcp6");
+    OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp6");
 
     // options->get<2> returns reference to container index #2. This
     // index is used to access options by the 'persistent' flag.
@@ -808,20 +768,15 @@ TEST(Subnet6Test, addPersistentOption) {
         idx.equal_range(false);
     // 7 out of 10 options have been flagged persistent.
     ASSERT_EQ(3, distance(range_non_persistent.first, range_non_persistent.second));
-
-    subnet->delOptions();
-
-    options = subnet->getOptionDescriptors("dhcp6");
-    EXPECT_EQ(0, options->size());
 }
 
-TEST(Subnet6Test, getOptionDescriptor) {
+TEST(Subnet6Test, getOptions) {
     Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8::"), 56, 1, 2, 3, 4));
 
     // Add 10 options to a "dhcp6" option space in the subnet.
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(subnet->addOption(option, false, "dhcp6"));
+        ASSERT_NO_THROW(subnet->getCfgOption()->add(option, false, "dhcp6"));
     }
 
     // Check that we can get each added option descriptor using
@@ -829,11 +784,11 @@ TEST(Subnet6Test, getOptionDescriptor) {
     for (uint16_t code = 100; code < 110; ++code) {
         std::ostringstream stream;
         // First, try the invalid option space name.
-        OptionDescriptor desc = subnet->getOptionDescriptor("isc", code);
+        OptionDescriptor desc = subnet->getCfgOption()->get("isc", code);
         // Returned descriptor should contain NULL option ptr.
         EXPECT_FALSE(desc.option);
         // Now, try the valid option space.
-        desc = subnet->getOptionDescriptor("dhcp6", code);
+        desc = subnet->getCfgOption()->get("dhcp6", code);
         // Test that the option code matches the expected code.
         ASSERT_TRUE(desc.option);
         EXPECT_EQ(code, desc.option->getType());
@@ -841,11 +796,7 @@ TEST(Subnet6Test, getOptionDescriptor) {
 }
 
 
-TEST(Subnet6Test, addVendorOptions) {
-
-    uint32_t vendor_id1 = 12345678;
-    uint32_t vendor_id2 = 87654321;
-    uint32_t vendor_id_bogus = 1111111;
+TEST(Subnet6Test, addVendorOption) {
 
     // Create as subnet to add options to it.
     Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
@@ -853,18 +804,18 @@ TEST(Subnet6Test, addVendorOptions) {
     // Differentiate options by their codes (100-109)
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(subnet->addVendorOption(option, false, vendor_id1));
+        ASSERT_NO_THROW(subnet->getCfgOption()->add(option, false, "vendor-12345678"));
     }
 
     // Add 7 options to another option space. The option codes partially overlap
     // with option codes that we have added to dhcp6 option space.
     for (uint16_t code = 105; code < 112; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(subnet->addVendorOption(option, false, vendor_id2));
+        ASSERT_NO_THROW(subnet->getCfgOption()->add(option, false, "vendor-87654321"));
     }
 
     // Get options from the Subnet and check if all 10 are there.
-    OptionContainerPtr options = subnet->getVendorOptionDescriptors(vendor_id1);
+    OptionContainerPtr options = subnet->getCfgOption()->getAll(12345678);
     ASSERT_TRUE(options);
     ASSERT_EQ(10, options->size());
 
@@ -877,7 +828,7 @@ TEST(Subnet6Test, addVendorOptions) {
         ++expected_code;
     }
 
-    options = subnet->getVendorOptionDescriptors(vendor_id2);
+    options = subnet->getCfgOption()->getAll(87654321);
     ASSERT_TRUE(options);
     ASSERT_EQ(7, options->size());
 
@@ -891,19 +842,7 @@ TEST(Subnet6Test, addVendorOptions) {
     }
 
     // Try to get options from a non-existing option space.
-    options = subnet->getVendorOptionDescriptors(vendor_id_bogus);
-    ASSERT_TRUE(options);
-    EXPECT_TRUE(options->empty());
-
-    // Delete options from all spaces.
-    subnet->delVendorOptions();
-
-    // Make sure that all options have been removed.
-    options = subnet->getVendorOptionDescriptors(vendor_id1);
-    ASSERT_TRUE(options);
-    EXPECT_TRUE(options->empty());
-
-    options = subnet->getVendorOptionDescriptors(vendor_id2);
+    options = subnet->getCfgOption()->getAll(1111111);
     ASSERT_TRUE(options);
     EXPECT_TRUE(options->empty());
 }

@@ -16,6 +16,7 @@
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_definition.h>
+#include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcp4/json_config_parser.h>
 #include <dhcpsrv/dbaccess_parser.h>
@@ -97,7 +98,7 @@ protected:
         } else {
             // Check if this is a vendor-option. If it is, get vendor-specific
             // definition.
-            uint32_t vendor_id = SubnetConfigParser::optionSpaceToVendorId(option_space);
+            uint32_t vendor_id = CfgOption::optionSpaceToVendorId(option_space);
             if (vendor_id) {
                 def = LibDHCP::getVendorOptionDef(Option::V4, vendor_id, option_code);
             }
