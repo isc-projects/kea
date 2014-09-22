@@ -251,6 +251,16 @@ public:
     void add(const OptionPtr& option, const bool persistent,
              const std::string& option_space);
 
+    /// @brief Merges this configuration to another configuration.
+    ///
+    /// This method iterates over the configuration items held in this
+    /// configuration and copies them to the configuration specified
+    /// as a parameter. If an item exists in the destination it is not
+    /// copied.
+    ///
+    /// @param [out] other Configuration object to merge to.
+    void merge(CfgOption& other) const;
+
     /// @brief Returns all options for the specified option space.
     ///
     /// This method will not return vendor options, i.e. having option space
@@ -278,12 +288,13 @@ public:
     ///
     /// @param key Option space name or vendor identifier.
     /// @param option_code Code of the option to be returned.
-    /// @tparam T one of: @c std::string or @c uint32_t
+    /// @tparam Selector one of: @c std::string or @c uint32_t
     ///
     /// @return Descriptor of the option. If option hasn't been found, the
     /// descriptor holds NULL option.
-    template<typename T>
-    OptionDescriptor get(const T& key, const uint16_t option_code) const {
+    template<typename Selector>
+    OptionDescriptor get(const Selector& key,
+                         const uint16_t option_code) const {
         OptionContainerPtr options = getAll(key);
         if (!options || options->empty()) {
             return (OptionDescriptor(false));
@@ -299,6 +310,25 @@ public:
     }
 
 private:
+
+    /// @brief Merges data from two option containers.
+    ///
+    /// This method merges options from one option container to another
+    /// option container. This function is templated because containers
+    /// may use different type of selectors. For non-vendor options
+    /// the selector is of the @c std::string type, for vendor options
+    /// the selector is of the @c uint32_t type.
+    ///
+    /// @param src_container Reference to a container from which the data
+    /// will be merged.
+    /// @param [out] dest_container Reference to a container to which the
+    /// data will be merged.
+    /// @tparam Type of the selector: @c std::string or @c uint32_t.
+    template <typename Selector>
+    void mergeInternal(const OptionSpaceContainer<OptionContainer,
+                       OptionDescriptor, Selector>& src_container,
+                       OptionSpaceContainer<OptionContainer,
+                       OptionDescriptor, Selector>& dest_container) const;
 
     /// @brief Type of the container holding options grouped by option space.
     typedef OptionSpaceContainer<OptionContainer, OptionDescriptor,
