@@ -52,7 +52,7 @@ Dhcpv4SrvTest::Dhcpv4SrvTest()
     // Add Router option.
     Option4AddrLstPtr opt_routers(new Option4AddrLst(DHO_ROUTERS));
     opt_routers->setAddress(IOAddress("192.0.2.2"));
-    subnet_->addOption(opt_routers, false, "dhcp4");
+    subnet_->getCfgOption()->add(opt_routers, false, "dhcp4");
 }
 
 Dhcpv4SrvTest::~Dhcpv4SrvTest() {
@@ -86,24 +86,24 @@ void Dhcpv4SrvTest::configureRequestedOptions() {
         option_dns_servers(new Option4AddrLst(DHO_DOMAIN_NAME_SERVERS));
     option_dns_servers->addAddress(IOAddress("192.0.2.1"));
     option_dns_servers->addAddress(IOAddress("192.0.2.100"));
-    ASSERT_NO_THROW(subnet_->addOption(option_dns_servers, false, "dhcp4"));
+    ASSERT_NO_THROW(subnet_->getCfgOption()->add(option_dns_servers, false, "dhcp4"));
 
     // domain-name
     OptionDefinition def("domain-name", DHO_DOMAIN_NAME, OPT_FQDN_TYPE);
     OptionCustomPtr option_domain_name(new OptionCustom(def, Option::V4));
     option_domain_name->writeFqdn("example.com");
-    subnet_->addOption(option_domain_name, false, "dhcp4");
+    subnet_->getCfgOption()->add(option_domain_name, false, "dhcp4");
 
     // log-servers
     Option4AddrLstPtr option_log_servers(new Option4AddrLst(DHO_LOG_SERVERS));
     option_log_servers->addAddress(IOAddress("192.0.2.2"));
     option_log_servers->addAddress(IOAddress("192.0.2.10"));
-    ASSERT_NO_THROW(subnet_->addOption(option_log_servers, false, "dhcp4"));
+    ASSERT_NO_THROW(subnet_->getCfgOption()->add(option_log_servers, false, "dhcp4"));
 
     // cookie-servers
     Option4AddrLstPtr option_cookie_servers(new Option4AddrLst(DHO_COOKIE_SERVERS));
     option_cookie_servers->addAddress(IOAddress("192.0.2.1"));
-    ASSERT_NO_THROW(subnet_->addOption(option_cookie_servers, false, "dhcp4"));
+    ASSERT_NO_THROW(subnet_->getCfgOption()->add(option_cookie_servers, false, "dhcp4"));
 }
 
 void Dhcpv4SrvTest::messageCheck(const Pkt4Ptr& q, const Pkt4Ptr& a) {

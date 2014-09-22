@@ -317,6 +317,19 @@ public:
         return (*range.first);
     }
 
+    /// @brief Converts option space name to vendor id.
+    ///
+    /// If the option space name is specified in the following format:
+    /// "vendor-X" where X is an uint32_t number, it is assumed to be
+    /// a vendor space and the uint32_t number is returned by this function.
+    ///
+    /// @todo remove this function once when the conversion is dealt by the
+    /// appropriate functions returning options by option space names.
+    ///
+    /// @param option_space Option space name.
+    /// @return vendor id.
+    static uint32_t optionSpaceToVendorId(const std::string& option_space);
+
 private:
 
     /// @brief Merges data from two option containers.

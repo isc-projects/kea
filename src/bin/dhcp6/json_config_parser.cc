@@ -19,6 +19,7 @@
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dbaccess_parser.h>
 #include <dhcpsrv/dhcp_config_parser.h>
@@ -112,7 +113,7 @@ protected:
         } else {
             // Check if this is a vendor-option. If it is, get vendor-specific
             // definition.
-            uint32_t vendor_id = SubnetConfigParser::optionSpaceToVendorId(option_space);
+            uint32_t vendor_id = CfgOption::optionSpaceToVendorId(option_space);
             if (vendor_id) {
                 def = LibDHCP::getVendorOptionDef(Option::V6, vendor_id, option_code);
             }
