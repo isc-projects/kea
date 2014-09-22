@@ -261,6 +261,13 @@ public:
     /// @param [out] other Configuration object to merge to.
     void merge(CfgOption& other) const;
 
+    /// @brief Copies this configuration to another configuration.
+    ///
+    /// This method copies options configuration to another object.
+    ///
+    /// @param [out] other An object to copy the configuration to.
+    void copy(CfgOption& other) const;
+
     /// @brief Returns all options for the specified option space.
     ///
     /// This method will not return vendor options, i.e. having option space

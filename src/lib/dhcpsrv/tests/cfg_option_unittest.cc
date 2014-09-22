@@ -199,6 +199,46 @@ TEST(CfgOption, merge) {
     }
 }
 
+// This test verifies that the options configuration can be copied between
+// objects.
+TEST(CfgOptionTest, copy) {
+    CfgOption cfg_src;
+    // Add 10 options to the custom option space in the source configuration.
+    for (uint16_t code = 100; code < 110; ++code) {
+        OptionPtr option(new Option(Option::V6, code, OptionBuffer(1, 0x01)));
+        ASSERT_NO_THROW(cfg_src.add(option, false, "foo"));
+    }
+
+    CfgOption cfg_dst;
+    // Add 20 options to the custom option space in destination configuration.
+    for (uint16_t code = 100; code < 120; ++code) {
+        OptionPtr option(new Option(Option::V6, code, OptionBuffer(1, 0xFF)));
+        ASSERT_NO_THROW(cfg_dst.add(option, false, "isc"));
+    }
+
+    // Copy entire configuration to the destination. This should override any
+    // existing data.
+    ASSERT_NO_THROW(cfg_src.copy(cfg_dst));
+
+    // Validate options in the destination configuration.
+    for (uint16_t code = 100; code < 110; ++code) {
+        OptionDescriptor desc = cfg_dst.get("foo", code);
+        ASSERT_TRUE(desc.option);
+        ASSERT_EQ(1, desc.option->getData().size());
+        EXPECT_EQ(0x01, desc.option->getData()[0]);
+    }
+
+    // Any existing options should be removed.
+    OptionContainerPtr container = cfg_dst.getAll("isc");
+    ASSERT_TRUE(container);
+    EXPECT_TRUE(container->empty());
+
+    // The option space "foo" should contain exactly 10 options.
+    container = cfg_dst.getAll("foo");
+    ASSERT_TRUE(container);
+    EXPECT_EQ(10, container->size());
+}
+
 // This test verifies that single option can be retrieved from the configuration
 // using option code and option space.
 TEST(CfgOption, get) {

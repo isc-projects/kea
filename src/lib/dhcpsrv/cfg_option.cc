@@ -100,8 +100,16 @@ void
 CfgOption::merge(CfgOption& other) const {
     // Merge non-vendor options.
     mergeInternal(options_, other.options_);
+    // Merge vendor options.
     mergeInternal(vendor_options_, other.vendor_options_);
-    // Merge verndor options.
+}
+
+void
+CfgOption::copy(CfgOption& other) const {
+    // Create empty object and "merge" data to it.
+    CfgOption new_cfg;
+    merge(new_cfg);
+    other = new_cfg;
 }
 
 template <typename Selector>
