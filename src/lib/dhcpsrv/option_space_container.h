@@ -105,17 +105,20 @@ public:
 
             typename OptionSpaceMap::const_iterator other_it =
                 other.option_space_map_.find(it->first);
-            if (other_it == option_space_map_.end()) {
+            if (other_it == other.option_space_map_.end()) {
                 return (false);
             }
 
+            // If containers have different sizes it is an indication that
+            // they are unequal.
+            if (it->second->size() != other_it->second->size()) {
+                return (false);
+            }
+
+            // If they have the same sizes, we have to compare each element.
             for (typename ContainerType::const_iterator items_it =
                      it->second->begin();
                  items_it != it->second->end(); ++items_it) {
-
-                if (it->second->size() != other_it->second->size()) {
-                    return (false);
-                }
 
                 bool match_found = false;
                 for (typename ContainerType::const_iterator other_items_it =
