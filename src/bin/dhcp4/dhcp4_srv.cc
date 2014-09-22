@@ -599,8 +599,7 @@ Dhcpv4Srv::appendRequestedOptions(const Pkt4Ptr& question, Pkt4Ptr& msg) {
     for (std::vector<uint8_t>::const_iterator opt = requested_opts.begin();
          opt != requested_opts.end(); ++opt) {
         if (!msg->getOption(*opt)) {
-            OptionDescriptor desc =
-                subnet->getOptionDescriptor("dhcp4", *opt);
+            OptionDescriptor desc = subnet->getCfgOption()->get("dhcp4", *opt);
             if (desc.option && !msg->getOption(*opt)) {
                 msg->addOption(desc.option);
             }
@@ -650,8 +649,8 @@ Dhcpv4Srv::appendRequestedVendorOptions(const Pkt4Ptr& question, Pkt4Ptr& answer
     for (std::vector<uint8_t>::const_iterator code = requested_opts.begin();
          code != requested_opts.end(); ++code) {
         if  (!vendor_rsp->getOption(*code)) {
-            OptionDescriptor desc = subnet->getVendorOptionDescriptor(vendor_id,
-                                                                              *code);
+            OptionDescriptor desc = subnet->getCfgOption()->get(vendor_id,
+                                                                *code);
             if (desc.option) {
                 vendor_rsp->addOption(desc.option);
                 added = true;
@@ -689,8 +688,8 @@ Dhcpv4Srv::appendBasicOptions(const Pkt4Ptr& question, Pkt4Ptr& msg) {
         OptionPtr opt = msg->getOption(required_options[i]);
         if (!opt) {
             // Check whether option has been configured.
-            OptionDescriptor desc =
-                subnet->getOptionDescriptor("dhcp4", required_options[i]);
+            OptionDescriptor desc = subnet->getCfgOption()->
+                get("dhcp4", required_options[i]);
             if (desc.option) {
                 msg->addOption(desc.option);
             }
@@ -1949,8 +1948,8 @@ bool Dhcpv4Srv::classSpecificProcessing(const Pkt4Ptr& query, const Pkt4Ptr& rsp
 
         // Now try to set up file field in DHCPv4 packet. We will just copy
         // content of the boot-file option, which contains the same information.
-        OptionDescriptor desc =
-            subnet->getOptionDescriptor("dhcp4", DHO_BOOT_FILE_NAME);
+        OptionDescriptor desc = subnet->getCfgOption()->
+            get("dhcp4", DHO_BOOT_FILE_NAME);
 
         if (desc.option) {
             boost::shared_ptr<OptionString> boot =

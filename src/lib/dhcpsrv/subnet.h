@@ -72,33 +72,6 @@ public:
     /// @brief checks if specified address is in range
     bool inRange(const isc::asiolink::IOAddress& addr) const;
 
-    /// @brief Add new option instance to the collection.
-    ///
-    /// @param option option instance.
-    /// @param persistent if true, send an option regardless if client
-    /// requested it or not.
-    /// @param option_space name of the option space to add an option to.
-    ///
-    /// @throw isc::BadValue if invalid option provided.
-    void addOption(const OptionPtr& option, bool persistent,
-                   const std::string& option_space);
-
-
-    /// @brief Adds new vendor option instance to the collection.
-    ///
-    /// @param option option instance.
-    /// @param persistent if true, send an option regardless if client
-    /// requested it or not.
-    /// @param vendor_id enterprise id of the vendor space to add an option to.
-    void addVendorOption(const OptionPtr& option, bool persistent,
-                         uint32_t vendor_id);
-
-    /// @brief Delete all options configured for the subnet.
-    void delOptions();
-
-    /// @brief Deletes all vendor options configured for the subnet.
-    void delVendorOptions();
-
     /// @brief checks if the specified address is in pools
     ///
     /// Note the difference between inSubnet() and inPool(). For a given
@@ -129,42 +102,10 @@ public:
         return (t2_);
     }
 
-    /// @brief Return a collection of option descriptors.
-    ///
-    /// @param option_space name of the option space.
-    ///
-    /// @return pointer to collection of options configured for a subnet.
-    OptionContainerPtr
-    getOptionDescriptors(const std::string& option_space) const;
-
-    /// @brief Return a collection of vendor option descriptors.
-    ///
-    /// @param vendor_id enterprise id of the option space.
-    ///
-    /// @return pointer to collection of options configured for a subnet.
-    OptionContainerPtr
-    getVendorOptionDescriptors(uint32_t vendor_id) const;
-
-    /// @brief Return single option descriptor.
-    ///
-    /// @param option_space name of the option space.
-    /// @param option_code code of the option to be returned.
-    ///
-    /// @return option descriptor found for the specified option space
-    /// and option code.
-    OptionDescriptor
-    getOptionDescriptor(const std::string& option_space,
-                        const uint16_t option_code);
-
-    /// @brief Return single vendor option descriptor.
-    ///
-    /// @param vendor_id enterprise id of the option space.
-    /// @param option_code code of the option to be returned.
-    ///
-    /// @return option descriptor found for the specified option space
-    /// and option code.
-    OptionDescriptor
-    getVendorOptionDescriptor(uint32_t vendor_id, uint16_t option_code);
+    /// @brief Returns pointer to the option data configuration for this subnet.
+    CfgOptionPtr getCfgOption() {
+        return (cfg_option_);
+    }
 
     /// @brief returns the last address that was tried from this pool
     ///
@@ -408,11 +349,6 @@ protected:
     /// @throw BadValue if invalid value is used
     virtual void checkType(Lease::Type type) const = 0;
 
-    /// @brief Check if option is valid and can be added to a subnet.
-    ///
-    /// @param option option to be validated.
-    virtual void validateOption(const OptionPtr& option) const = 0;
-
     /// @brief subnet-id
     ///
     /// Subnet-id is a unique value that can be used to find or identify
@@ -489,19 +425,8 @@ protected:
 
 private:
 
-    /// A collection of option spaces grouping option descriptors.
-    typedef OptionSpaceContainer<OptionContainer,
-        OptionDescriptor, std::string> OptionSpaceCollection;
-
-    /// A collection of vendor space option descriptors.
-    typedef OptionSpaceContainer<OptionContainer,
-        OptionDescriptor, uint32_t> VendorOptionSpaceCollection;
-
-    /// Regular options are kept here
-    OptionSpaceCollection option_spaces_;
-
-    /// Vendor options are kept here
-    VendorOptionSpaceCollection vendor_option_spaces_;
+    /// @brief Pointer to the option data configuration for this subnet.
+    CfgOptionPtr cfg_option_;
 };
 
 /// @brief A generic pointer to either Subnet4 or Subnet6 object
@@ -543,13 +468,6 @@ public:
     isc::asiolink::IOAddress getSiaddr() const;
 
 protected:
-
-    /// @brief Check if option is valid and can be added to a subnet.
-    ///
-    /// @param option option to be validated.
-    ///
-    /// @throw isc::BadValue if provided option is invalid.
-    virtual void validateOption(const OptionPtr& option) const;
 
     /// @brief Returns default address for pool selection
     /// @return ANY IPv4 address
@@ -622,13 +540,6 @@ public:
     }
 
 protected:
-
-    /// @brief Check if option is valid and can be added to a subnet.
-    ///
-    /// @param option option to be validated.
-    ///
-    /// @throw isc::BadValue if provided option is invalid.
-    virtual void validateOption(const OptionPtr& option) const;
 
     /// @brief Returns default address for pool selection
     /// @return ANY IPv6 address

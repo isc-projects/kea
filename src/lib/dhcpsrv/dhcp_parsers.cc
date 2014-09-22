@@ -1163,23 +1163,15 @@ SubnetConfigParser::createSubnet() {
             // option code has been already added. If so, we want
             // to issue a warning.
             OptionDescriptor existing_desc =
-                            subnet_->getOptionDescriptor("option_space",
-                                                 desc.option->getType());
+                subnet_->getCfgOption()->get("option_space", desc.option->getType());
+
             if (existing_desc.option) {
                 duplicate_option_warning(desc.option->getType(), addr);
             }
             // Add sub-options (if any).
             appendSubOptions(option_space, desc.option);
 
-            // Check if the option space defines a vendor-option
-            uint32_t vendor_id = optionSpaceToVendorId(option_space);
-            if (vendor_id) {
-                // This is a vendor option
-                subnet_->addVendorOption(desc.option, false, vendor_id);
-            } else {
-                // This is a normal option
-                subnet_->addOption(desc.option, false, option_space);
-            }
+            subnet_->getCfgOption()->add(desc.option, false, option_space);
         }
     }
 
@@ -1202,63 +1194,16 @@ SubnetConfigParser::createSubnet() {
             // subnet scope take precedence over globally configured
             // values we don't add option from the global storage
             // if there is one already.
-            OptionDescriptor existing_desc =
-                    subnet_->getOptionDescriptor(option_space,
-                                                desc.option->getType());
+            OptionDescriptor existing_desc =  subnet_->getCfgOption()->
+                get(option_space, desc.option->getType());
             if (!existing_desc.option) {
                 // Add sub-options (if any).
                 appendSubOptions(option_space, desc.option);
 
-                uint32_t vendor_id = optionSpaceToVendorId(option_space);
-                if (vendor_id) {
-                    // This is a vendor option
-                    subnet_->addVendorOption(desc.option, false, vendor_id);
-                } else {
-                    // This is a normal option
-                    subnet_->addOption(desc.option, false, option_space);
-                }
+                subnet_->getCfgOption()->add(desc.option, false, option_space);
             }
         }
     }
-}
-
-uint32_t
-SubnetConfigParser::optionSpaceToVendorId(const std::string& option_space) {
-    if (option_space.size() < 8) {
-        // 8 is a minimal length of "vendor-X" format
-        return (0);
-    }
-    if (option_space.substr(0,7) != "vendor-") {
-        return (0);
-    }
-
-    // text after "vendor-", supposedly numbers only
-    string x = option_space.substr(7);
-
-    int64_t check;
-    try {
-        check = boost::lexical_cast<int64_t>(x);
-    } catch (const boost::bad_lexical_cast &) {
-        /// @todo: Should we throw here?
-        // isc_throw(BadValue, "Failed to parse vendor-X value (" << x
-        //           << ") as unsigned 32-bit integer.");
-        return (0);
-    }
-    if (check > std::numeric_limits<uint32_t>::max()) {
-        /// @todo: Should we throw here?
-        //isc_throw(BadValue, "Value " << x << "is too large"
-        //          << " for unsigned 32-bit integer.");
-        return (0);
-    }
-    if (check < 0) {
-        /// @todo: Should we throw here?
-        // isc_throw(BadValue, "Value " << x << "is negative."
-        //       << " Only 0 or larger are allowed for unsigned 32-bit integer.");
-        return (0);
-    }
-
-    // value is small enough to fit
-    return (static_cast<uint32_t>(check));
 }
 
 isc::dhcp::Triplet<uint32_t>
