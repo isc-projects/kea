@@ -23,6 +23,7 @@
 #include <boost/multi_index/sequenced_index.hpp>
 #include <boost/multi_index/mem_fun.hpp>
 #include <boost/multi_index/member.hpp>
+#include <boost/shared_ptr.hpp>
 #include <stdint.h>
 #include <string>
 
@@ -348,8 +349,17 @@ private:
                                  uint32_t> VendorOptionSpaceCollection;
     /// @brief Container holding options grouped by vendor id.
     VendorOptionSpaceCollection vendor_options_;
-
 };
+
+/// @name Pointers to the @c CfgOption objects.
+//@{
+/// @brief Non-const pointer.
+typedef boost::shared_ptr<CfgOption> CfgOptionPtr;
+
+/// @brief Const pointer.
+typedef boost::shared_ptr<const CfgOption> ConstCfgOptionPtr;
+
+//@}
 
 }
 }

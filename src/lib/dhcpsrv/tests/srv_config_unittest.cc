@@ -281,8 +281,14 @@ TEST_F(SrvConfigTest, copy) {
 
     conf1.addLoggingInfo(info);
     conf1.setCfgIface(cfg_iface);
-    conf1.getCfgOptionDef()->add(OptionDefinitionPtr(new OptionDefinition("option-foo", 5,
-                                                                          "string")), "isc");
+
+    // Add option definition.
+    OptionDefinitionPtr def(new OptionDefinition("option-foo", 5, "string"));
+    conf1.getCfgOptionDef()->add(def, "isc");
+
+    // Add an option.
+    OptionPtr option(new Option(Option::V6, 1000, OptionBuffer(10, 0xFF)));
+    conf1.getCfgOption()->add(option, true, "dhcp6");
 
     // Make sure both configurations are different.
     ASSERT_TRUE(conf1 != conf2);
@@ -352,6 +358,18 @@ TEST_F(SrvConfigTest, equality) {
     conf2.getCfgOptionDef()->
         add(OptionDefinitionPtr(new OptionDefinition("option-foo", 123,
                                                      "uint16_t")), "isc");
+    EXPECT_TRUE(conf1 == conf2);
+    EXPECT_FALSE(conf1 != conf2);
+
+    // Differ by option data.
+    OptionPtr option(new Option(Option::V6, 1000, OptionBuffer(1, 0xFF)));
+    conf1.getCfgOption()->add(option, false, "isc");
+
+    EXPECT_FALSE(conf1 == conf2);
+    EXPECT_TRUE(conf1 != conf2);
+
+    conf2.getCfgOption()->add(option, false, "isc");
+
     EXPECT_TRUE(conf1 == conf2);
     EXPECT_FALSE(conf1 != conf2);
 }

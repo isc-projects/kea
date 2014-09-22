@@ -25,11 +25,13 @@ namespace isc {
 namespace dhcp {
 
 SrvConfig::SrvConfig()
-    : sequence_(0), cfg_option_def_(new CfgOptionDef()) {
+    : sequence_(0), cfg_option_def_(new CfgOptionDef()),
+      cfg_option_(new CfgOption()) {
 }
 
-SrvConfig::SrvConfig(uint32_t sequence)
-    : sequence_(sequence), cfg_option_def_(new CfgOptionDef()) {
+SrvConfig::SrvConfig(const uint32_t sequence)
+    : sequence_(sequence), cfg_option_def_(new CfgOptionDef()),
+      cfg_option_(new CfgOption()) {
 }
 
 std::string
@@ -90,6 +92,7 @@ SrvConfig::copy(SrvConfig& new_config) const {
     new_config.setCfgIface(cfg_iface_);
     // Replace option definitions.
     cfg_option_def_->copyTo(*new_config.cfg_option_def_);
+    cfg_option_->copy(*new_config.cfg_option_);
 }
 
 void
@@ -132,7 +135,8 @@ SrvConfig::equals(const SrvConfig& other) const {
     }
     // Logging information is equal between objects, so check other values.
     return ((cfg_iface_ == other.cfg_iface_) &&
-            (*cfg_option_def_ == *other.cfg_option_def_));
+            (*cfg_option_def_ == *other.cfg_option_def_) &&
+            (*cfg_option_ == *other.cfg_option_));
 }
 
 }
