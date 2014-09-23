@@ -1,3 +1,8 @@
+837.	[bug,doc]	tomek
+	Logging configuration examples in kea.conf fixed. Also updated
+	Kea documentation for logging.
+	(Trac #3536, git 2cf3f6b9cb3d2ae6fc7b0940b55490f109ddd2f9)
+
 836.	[bug]		fdupont
 	Moved duplicated getXXXHashAlgorithm() function to new
 	xxx_common.h include files in the cryptolink library.
