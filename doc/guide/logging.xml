@@ -149,9 +149,15 @@
 
         <itemizedlist>
           <listitem>
+            <simpara><command>kea-dhcp4</command> - this is the root logger for
+            the DHCPv4 server. All components used by the DHCPv4 server inherit
+            the settings from this logger if there is no specialized logger
+            provided.</simpara>
+          </listitem>
+          <listitem>
             <simpara><command>kea-dhcp4.dhcp4</command> - this is the logger
-            used by DHCPv4 server code in cases, where there is no more
-            specialized logger.</simpara>
+            used solely by the DHCPv4 server deamon. This logger does not
+            specify logging settings for libraries used by the deamon.</simpara>
           </listitem>
           <listitem>
             <simpara><command>kea-dhcp4.dhcpsrv</command> - this logger is used
@@ -165,9 +171,15 @@
             libraries will be logged using this logger.</simpara>
           </listitem>
           <listitem>
-            <simpara><command>kea-dhcp6.dhcp6</command> - this logger is used
-            by DHCPv6 server code in cases, where there is no more specialzed
-            logger.</simpara>
+            <simpara><command>kea-dhcp6</command> - this is the root logger for
+            the DHCPv6 server. All components used by the DHCPv6 server inherit
+            the settings from this logger if there is no specialized logger
+            provided.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><command>kea-dhcp6.dhcp6</command> - this is the logger
+            used solely by the DHCPv6 server deamon. This logger does not
+            specify logging settings for libraries used by the daemon.</simpara>
           </listitem>
           <listitem>
             <simpara><command>kea-dhcp6.dhcpsrv</command> - this logger is used
@@ -181,9 +193,15 @@
             libraries will be logged using this logger.</simpara>
           </listitem>
           <listitem>
-            <simpara><command>kea-dhcp-ddns.dhcpddns</command> - this is the
-            default logger for kea-dhcp-ddns daemon. This logger is not used
-            in DHCPv4 or DHCPv6 servers.</simpara>
+            <simpara><command>kea-dhcp-ddns</command> - this is the root logger for
+            the kea-dhcp-ddns deamon. All components used by this deamon inherit
+            the settings from this logger if there is no specialized logger
+            provided.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><command>kea-dhcp-ddns.dhcpddns</command> - this is the logger
+            used solely by the kea-dhcp-ddns deamon. This logger does not
+            specify logging settings for libraries used by the deamon.</simpara>
           </listitem>
         </itemizedlist>
 
