@@ -119,6 +119,10 @@ cppcheck:
 		--template '{file}:{line}: check_fail: {message} ({severity},{id})' \
 		src
 
+# These steps are necessary during installation
+install-exec-hook:
+	mkdir -p $(DESTDIR)${localstatedir}/log/
+
 ### include tool to generate documentation from log message specifications
 ### in the distributed tarball:
 EXTRA_DIST = tools/system_messages.py
