@@ -14,7 +14,10 @@
 
 #include <config.h>
 #include <dhcp/option.h>
+#include <dhcp/option_int.h>
+#include <dhcp/option_space.h>
 #include <dhcpsrv/cfg_option.h>
+#include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
 
 using namespace isc;
@@ -237,6 +240,48 @@ TEST(CfgOptionTest, copy) {
     container = cfg_dst.getAll("foo");
     ASSERT_TRUE(container);
     EXPECT_EQ(10, container->size());
+}
+
+// This test verifies that encapsulated options are added as sub-options
+// to the top level options on request.
+TEST(CfgOptionTest, encapsulate) {
+    CfgOption cfg;
+    // Create top-level options. These options encapsulate "foo" option space.
+    for (uint16_t code = 1000; code < 1020; ++code) {
+        OptionUint16Ptr option = OptionUint16Ptr(new OptionUint16(Option::V6,
+                                                                  code, 1234));
+        option->setEncapsulatedSpace("foo");
+        ASSERT_NO_THROW(cfg.add(option, false, DHCP6_OPTION_SPACE));
+    }
+
+    // Create sub-options belonging to "foo" option space.
+    for (uint16_t code = 1; code < 20; ++code) {
+        OptionUint8Ptr option = OptionUint8Ptr(new OptionUint8(Option::V6, code,
+                                                               0x01));
+        ASSERT_NO_THROW(cfg.add(option, false, "foo"));
+    }
+
+    // Append options from "foo" space as sub-options.
+    ASSERT_NO_THROW(cfg.encapsulate());
+
+    // Verify that we have 20 top-level options.
+    OptionContainerPtr options = cfg.getAll(DHCP6_OPTION_SPACE);
+    ASSERT_EQ(20, options->size());
+
+    // Verify that each of them contains expected sub-options.
+    for (uint16_t code = 1000; code < 1020; ++code) {
+        OptionUint16Ptr option = boost::dynamic_pointer_cast<
+            OptionUint16>(cfg.get(DHCP6_OPTION_SPACE, code).option);
+        ASSERT_TRUE(option) << "option with code " << code << " not found";
+        EXPECT_EQ(1234, option->getValue());
+        for (uint16_t subcode = 1; subcode < 20; ++subcode) {
+            OptionUint8Ptr suboption = boost::dynamic_pointer_cast<
+                OptionUint8>(option->getOption(subcode));
+            ASSERT_TRUE(suboption) << "suboption with code " << subcode
+                                   << " not found";
+            EXPECT_EQ(0x01, suboption->getValue());
+        }
+    }
 }
 
 // This test verifies that single option can be retrieved from the configuration

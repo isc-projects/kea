@@ -214,9 +214,6 @@ public:
     /// @brief Storage for string parameters.
     StringStoragePtr string_values_;
 
-    /// @brief Storage for options.
-    OptionStoragePtr options_;
-
     /// @brief Hooks libraries pointer.
     ///
     /// The hooks libraries information is a vector of strings, each containing
@@ -514,20 +511,19 @@ public:
     ///
     /// @param dummy first argument is ignored, all Parser constructors
     /// accept string as first argument.
-    /// @param options is the option storage in which to store the parsed option
-    /// upon "commit".
-    /// @param global_context is a pointer to the global context which
-    /// stores global scope parameters, options, option defintions.
+    /// @param [out] cfg Pointer to the configuration object where parsed option
+    /// should be stored or NULL if this is a global option.
+    /// @param address_family Address family: @c AF_INET or @c AF_INET6.
     /// @throw isc::dhcp::DhcpConfigError if options or global_context are null.
-    OptionDataParser(const std::string& dummy, OptionStoragePtr options,
-                    ParserContextPtr global_context);
+    OptionDataParser(const std::string& dummy, const CfgOptionPtr& cfg,
+                     const uint16_t address_family);
 
     /// @brief Parses the single option data.
     ///
     /// This method parses the data of a single option from the configuration.
     /// The option data includes option name, option code and data being
     /// carried by this option. Eventually it creates the instance of the
-    /// option.
+    /// option and adds it to the Configuration Manager.
     ///
     /// @param option_data_entries collection of entries that define value
     /// for a particular option.
@@ -537,15 +533,7 @@ public:
     /// calling build.
     virtual void build(isc::data::ConstElementPtr option_data_entries);
 
-    /// @brief Commits option value.
-    ///
-    /// This function adds a new option to the storage or replaces an existing
-    /// option with the same code.
-    ///
-    /// @throw isc::InvalidOperation if failed to set pointer to storage or
-    /// failed
-    /// to call build() prior to commit. If that happens data in the storage
-    /// remain un-modified.
+    /// @brief Does nothing.
     virtual void commit();
 
     /// @brief virtual destructor to ensure orderly destruction of derivations.
@@ -555,9 +543,7 @@ protected:
     /// @brief Finds an option definition within the server's option space
     ///
     /// Given an option space and an option code, find the correpsonding
-    /// option defintion within the server's option defintion storage. This
-    /// method is pure virtual requiring derivations to manage which option
-    /// space(s) is valid for search.
+    /// option defintion within the server's option defintion storage.
     ///
     /// @param option_space name of the parameter option space
     /// @param option_code numeric value of the parameter to find
@@ -565,8 +551,9 @@ protected:
     /// empty OptionDefinitionPtr if not found.
     /// @throw DhcpConfigError if the option space requested is not valid
     /// for this server.
-    virtual OptionDefinitionPtr findServerSpaceOptionDefinition (
-            std::string& option_space, uint32_t option_code) = 0;
+    virtual OptionDefinitionPtr
+    findServerSpaceOptionDefinition(const std::string& option_space,
+                                    const uint32_t option_code) const;
 
 private:
 
@@ -596,19 +583,18 @@ private:
     /// Storage for uint32 values (e.g. option code).
     Uint32StoragePtr uint32_values_;
 
-    /// Pointer to options storage. This storage is provided by
-    /// the calling class and is shared by all OptionDataParser objects.
-    OptionStoragePtr options_;
-
     /// Option descriptor holds newly configured option.
     OptionDescriptor option_descriptor_;
 
     /// Option space name where the option belongs to.
     std::string option_space_;
 
-    /// Parsing context which contains global values, options and option
-    /// definitions.
-    ParserContextPtr global_context_;
+    /// @brief Configuration holding option being parsed or NULL if the option
+    /// is global.
+    CfgOptionPtr cfg_;
+
+    /// @brief Address family: @c AF_INET or @c AF_INET6.
+    uint16_t address_family_;
 };
 
 ///@brief Function pointer for OptionDataParser factory methods
@@ -626,15 +612,11 @@ public:
     /// @brief Constructor.
     ///
     /// @param dummy nominally would be param name, this is always ignored.
-    /// @param options parsed option storage for options in this list
-    /// @param global_context is a pointer to the global context which
-    /// stores global scope parameters, options, option defintions.
-    /// @param optionDataParserFactory factory method for creating individual
-    /// option parsers
-    /// @throw isc::dhcp::DhcpConfigError if options or global_context are null.
-    OptionDataListParser(const std::string& dummy, OptionStoragePtr options,
-                        ParserContextPtr global_context,
-                        OptionDataParserFactory *optionDataParserFactory);
+    /// @param [out] cfg Pointer to the configuration object where options
+    /// should be stored or NULL if this is global option scope.
+    /// @param address_family Address family: @c AF_INET or AF_INET6
+    OptionDataListParser(const std::string& dummy, const CfgOptionPtr& cfg,
+                         const uint16_t address_family);
 
     /// @brief Parses entries that define options' data for a subnet.
     ///
@@ -651,24 +633,16 @@ public:
     void commit();
 
 private:
-    /// Pointer to options instances storage.
-    OptionStoragePtr options_;
-
-    /// Intermediate option storage. This storage is used by
-    /// lower level parsers to add new options.  Values held
-    /// in this storage are assigned to main storage (options_)
-    /// if overall parsing was successful.
-    OptionStoragePtr local_options_;
 
     /// Collection of parsers;
     ParserCollection parsers_;
 
-    /// Parsing context which contains global values, options and option
-    /// definitions.
-    ParserContextPtr global_context_;
+    /// @brief Pointer to a configuration where options are stored.
+    CfgOptionPtr cfg_;
 
-    /// Factory to create server-specific option data parsers
-    OptionDataParserFactory *optionDataParserFactory_;
+    /// @brief Address family: @c AF_INET or @c AF_INET6
+    uint16_t address_family_;
+
 };
 
 
@@ -962,15 +936,6 @@ public:
     /// @brief Adds the created subnet to a server's configuration.
     virtual void commit() = 0;
 
-    /// @brief tries to convert option_space string to numeric vendor_id
-    ///
-    /// This will work if the option_space has format "vendor-X", where
-    /// X can be any value between 1 and MAX_UINT32.
-    /// This is used to detect whether a given option-space is a vendor
-    /// space or not. Returns 0 if the format is different.
-    /// @return numeric vendor-id (or 0 if the format does not match)
-    static uint32_t optionSpaceToVendorId(const std::string& option_space);
-
 protected:
     /// @brief creates parsers for entries in subnet definition
     ///
@@ -1040,12 +1005,6 @@ protected:
 
 private:
 
-    /// @brief Append sub-options to an option.
-    ///
-    /// @param option_space a name of the encapsulated option space.
-    /// @param option option instance to append sub-options to.
-    void appendSubOptions(const std::string& option_space, OptionPtr& option);
-
     /// @brief Create a new subnet using a data from child parsers.
     ///
     /// @throw isc::dhcp::DhcpConfigError if subnet configuration parsing
@@ -1063,9 +1022,6 @@ protected:
     /// Storage for pools belonging to this subnet.
     PoolStoragePtr pools_;
 
-    /// Storage for options belonging to this subnet.
-    OptionStoragePtr options_;
-
     /// Parsers are stored here.
     ParserCollection parsers_;
 
@@ -1078,6 +1034,9 @@ protected:
 
     /// Pointer to relay information
     isc::dhcp::Subnet::RelayInfoPtr relay_info_;
+
+    /// Pointer to the options configuration.
+    CfgOptionPtr options_;
 };
 
 /// @brief Parser for  D2ClientConfig
