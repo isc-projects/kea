@@ -61,15 +61,11 @@ void Daemon::configureLogger(const isc::data::ConstElementPtr& log_config,
                              const ConfigurationPtr& storage,
                              bool verbose) {
 
-    // This is utility class that translates JSON structures into formats
-    // understandable by log4cplus.
-    LogConfigParser parser(storage);
-
     if (!log_config) {
         // There was no logger configuration. Let's clear any config
         // and revert to the default.
 
-        parser.applyDefaultConfiguration(verbose); // Set up default logging
+        isc::log::setDefaultLoggingOutput(verbose); // Set up default logging
         return;
     }
 
@@ -80,9 +76,13 @@ void Daemon::configureLogger(const isc::data::ConstElementPtr& log_config,
         // array in it. Let's clear any old logging configuration
         // we may have and revert to the default.
 
-        parser.applyDefaultConfiguration(verbose); // Set up default logging
+        isc::log::setDefaultLoggingOutput(verbose); // Set up default logging
         return;
     }
+
+    // This is utility class that translates JSON structures into formats
+    // understandable by log4cplus.
+    LogConfigParser parser(storage);
 
     // Translate JSON structures into log4cplus formats
     parser.parseConfiguration(loggers, verbose);
@@ -101,7 +101,7 @@ void Daemon::loggerInit(const char* name, bool verbose) {
                          NULL);
 
     // Apply default configuration (log INFO or DEBUG to stdout)
-    LogConfigParser::applyDefaultConfiguration(verbose);
+    isc::log::setDefaultLoggingOutput(verbose);
 }
 
 };
