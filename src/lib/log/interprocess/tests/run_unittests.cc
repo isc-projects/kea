@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,9 @@
 #include <gtest/gtest.h>
 #include <util/unittests/run_all.h>
 #include <stdlib.h>
+
+// This file uses TEST_DATA_TOPBUILDDIR macro, which must point to a writeable
+// directory. It will be used for creating a logger lockfile.
 
 int
 main(int argc, char* argv[]) {
