@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012,2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,9 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+// This file requires LOCKFILE_DIR to be defined. It points to the default
+// directory where lockfile will be created.
 
 #include <log/interprocess/interprocess_sync_file.h>
 
@@ -57,8 +60,9 @@ InterprocessSyncFile::do_lock(int cmd, short l_type) {
 
         // Open the lockfile in the constructor so it doesn't do the access
         // checks every time a message is logged.
-        const mode_t mode = umask(0111);
-        fd_ = open(lockfile_path.c_str(), O_CREAT | O_RDWR, 0660);
+        const mode_t mode = umask(S_IXUSR | S_IXGRP | S_IXOTH); // 0111
+        fd_ = open(lockfile_path.c_str(), O_CREAT | O_RDWR,
+                   S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP); // 0660
         umask(mode);
 
         if (fd_ == -1) {

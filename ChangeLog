@@ -1,3 +1,8 @@
+8xx.	[bug]		tomek
+	Kea components now use the KEA_LOCKFILE_DIR environment variable
+	to specify the directory of the logging lockfile. Locking can be
+	disabled completely by setting the variable to 'none'.
+	(Trac #3591, git tbd)
 
 Kea 0.9 released on August 29, 2014
 
