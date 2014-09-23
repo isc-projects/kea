@@ -213,13 +213,5 @@ void LogConfigParser::applyConfiguration() {
     manager.process(specs.begin(), specs.end());
 }
 
-void LogConfigParser::applyDefaultConfiguration(bool verbose) {
-    LoggerSpecification spec(isc::log::getRootLoggerName(),
-                             (verbose?isc::log::DEBUG : isc::log::INFO),
-                             (verbose?99:0));
-
-    setDefaultLoggingOutput(verbose);
-}
-
 } // namespace isc::dhcp
 } // namespace isc
