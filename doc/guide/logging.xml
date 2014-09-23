@@ -27,7 +27,7 @@
         severity (some are more important than others) and source (some are
         produced by specific components, e.g. hooks). It is useful to understand
         which log messages are needed and which are not and configure your
-        logging appropriately. For example debug level messages can be safely
+        logging appropriately. For example, debug level messages can be safely
         ignored in a typical deployment. They are, however, very useful when
         debugging a problem.
       </para>
@@ -35,9 +35,9 @@
       <para>
         The logging system in Kea is configured through the
         <replaceable>Logging</replaceable> structure in your configuration
-        file. All daemons (e.g. a DHCPv4 and DHCPv6 servers) will look at the
+        file. All daemons (e.g. DHCPv4 and DHCPv6 servers) will use the
         configuration in the <replaceable>Logging</replaceable> structure to see
-        what should be logged and to where. This allows sharing identical
+        what should be logged and to where. This allows for sharing identical
         logging configuration between daemons.
       </para>
 
@@ -56,7 +56,7 @@
         <para>
           In the Logging structure in a configuration file you can
           specify the configuration for zero or more loggers. If there are
-          no specified loggers, the code will use default values which
+          no loggers specified, the code will use default values which
           cause Kea to log messages on at least INFO severity to standard
           output.
           <!-- @todo: add reference to section about controlling default
