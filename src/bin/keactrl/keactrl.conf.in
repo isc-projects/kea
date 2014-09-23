@@ -21,7 +21,7 @@ dhcp4=yes
 dhcp6=yes
 
 # Start DHCP DDNS server?
-dhcp_ddns=yes
+dhcp_ddns=no
 
 # Be verbose?
 kea_verbose=no
