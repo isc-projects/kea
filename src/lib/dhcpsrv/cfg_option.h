@@ -269,6 +269,14 @@ public:
     /// @param [out] other An object to copy the configuration to.
     void copy(CfgOption& other) const;
 
+    /// @brief Appends encapsulated options to top-level options.
+    ///
+    /// This method iterates over the top-level options (from "dhcp4"
+    /// and "dhcp6" option space) and checks which option spaces these
+    /// options encapsulate. For each encapsulated option space, the
+    /// options from this option space are appended to top-level options.
+    void encapsulate();
+
     /// @brief Returns all options for the specified option space.
     ///
     /// This method will not return vendor options, i.e. having option space
@@ -331,6 +339,12 @@ public:
     static uint32_t optionSpaceToVendorId(const std::string& option_space);
 
 private:
+
+    /// @brief Appends encapsulated options to the options in an option space.
+    ///
+    /// @param option_space Name of the option space containing optionn to
+    /// which encapsulated options are appended.
+    void encapsulateInternal(const std::string& option_space);
 
     /// @brief Merges data from two option containers.
     ///

@@ -269,31 +269,6 @@ TEST_F(DhcpParserTest, interfaceListParserTest) {
     EXPECT_TRUE(test_config.socketOpen("eth1", AF_INET));
 }
 
-/// @brief Test Implementation of abstract OptionDataParser class. Allows
-/// testing basic option parsing.
-class UtestOptionDataParser : public OptionDataParser {
-public:
-
-    UtestOptionDataParser(const std::string&,
-        OptionStoragePtr options, ParserContextPtr global_context)
-        :OptionDataParser("", options, global_context) {
-    }
-
-    static OptionDataParser* factory(const std::string& param_name,
-        OptionStoragePtr options, ParserContextPtr global_context) {
-        return (new UtestOptionDataParser(param_name, options, global_context));
-    }
-
-protected:
-    // Dummy out last two params since test derivation doesn't use them.
-    virtual OptionDefinitionPtr findServerSpaceOptionDefinition (
-                std::string&, uint32_t) {
-        OptionDefinitionPtr def;
-        // always return empty
-        return (def);
-    }
-};
-
 /// @brief Test Fixture class which provides basic structure for testing
 /// configuration parsing.  This is essentially the same structure provided
 /// by dhcp servers.
@@ -387,10 +362,8 @@ public:
     ParserPtr createConfigParser(const std::string& config_id) {
         ParserPtr parser;
         if (config_id.compare("option-data") == 0) {
-            parser.reset(new OptionDataListParser(config_id,
-                                              parser_context_->options_,
-                                              parser_context_,
-                                              UtestOptionDataParser::factory));
+            parser.reset(new OptionDataListParser(config_id, CfgOptionPtr(),
+                                                  AF_INET));
 
         } else if (config_id.compare("option-def") == 0) {
             parser.reset(new OptionDefListParser(config_id,
@@ -449,15 +422,14 @@ public:
     OptionPtr getOptionPtr(std::string space, uint32_t code)
     {
         OptionPtr option_ptr;
-        OptionContainerPtr options =
-                            parser_context_->options_->getItems(space);
+        OptionContainerPtr options = CfgMgr::instance().getStagingCfg()->
+            getCfgOption()->getAll(space);
         // Should always be able to get options list even if it is empty.
         EXPECT_TRUE(options);
         if (options) {
             // Attempt to find desired option.
             const OptionContainerTypeIndex& idx = options->get<1>();
-            const OptionContainerTypeRange& range =
-                                                        idx.equal_range(code);
+            const OptionContainerTypeRange& range = idx.equal_range(code);
             int cnt = std::distance(range.first, range.second);
             EXPECT_EQ(1, cnt);
             if (cnt == 1) {
@@ -1106,20 +1078,6 @@ public:
                      values->getPosition(name).file_));
     }
 
-    /// @brief Check that option storage in the context holds one option
-    /// of the specified type.
-    ///
-    /// @param ctx A pointer to a context.
-    /// @param opt_type Expected option type.
-    void checkOptionType(const ParserContext& ctx, const uint16_t opt_type) {
-        OptionContainerPtr options =
-            ctx.options_->getItems("option-space");
-        ASSERT_TRUE(options);
-        OptionContainerTypeIndex& idx = options->get<1>();
-        OptionContainerTypeRange range = idx.equal_range(opt_type);
-        ASSERT_EQ(1, std::distance(range.first, range.second));
-    }
-
     /// @brief Test copy constructor or assignment operator when values
     /// being copied are NULL.
     ///
@@ -1131,7 +1089,6 @@ public:
         ctx.boolean_values_.reset();
         ctx.uint32_values_.reset();
         ctx.string_values_.reset();
-        ctx.options_.reset();
         ctx.hooks_libraries_.reset();
 
         // Even if the fields of the context are NULL, it should get
@@ -1147,7 +1104,6 @@ public:
         EXPECT_FALSE(ctx_new->boolean_values_);
         EXPECT_FALSE(ctx_new->uint32_values_);
         EXPECT_FALSE(ctx_new->string_values_);
-        EXPECT_FALSE(ctx_new->options_);
         EXPECT_FALSE(ctx_new->hooks_libraries_);
 
     }
@@ -1203,14 +1159,6 @@ public:
         ctx.string_values_->setParam("pos2", "some string",
                                       Element::Position("kea.conf", 100, 200));
 
-
-        // Add new option, with option code 10, to the context.
-        ASSERT_TRUE(ctx.options_);
-        OptionPtr opt1(new Option(Option::V6, 10));
-        OptionDescriptor desc1(opt1, false);
-        std::string option_space = "option-space";
-        ASSERT_TRUE(desc1.option);
-        ctx.options_->addItem(desc1, option_space);
 
         // Allocate container for hooks libraries and add one library name.
         ctx.hooks_libraries_.reset(new std::vector<std::string>());
@@ -1289,14 +1237,6 @@ public:
                             ctx_new->string_values_);
             checkPositionEq("pos2", ctx.string_values_,
                             ctx_new->string_values_);
-        }
-
-        // New context has the same option.
-        ASSERT_TRUE(ctx_new->options_);
-        {
-            SCOPED_TRACE("Check that the option values are equal in both"
-                         " contexts");
-            checkOptionType(*ctx_new, 10);
         }
 
         // New context has the same hooks library.
@@ -1412,21 +1352,6 @@ public:
             checkPositionNeq("pos2", ctx.string_values_,
                              ctx_new->string_values_);
 
-        }
-
-        // Change the option. This should not affect the option instance in the
-        // new context.
-        {
-            SCOPED_TRACE("Check that option remains the same in the new context"
-                         " when the option in the original context is changed");
-            ctx.options_->clearItems();
-            OptionDescriptor desc(OptionPtr(new Option(Option::V6,
-                                                               100)),
-                                          false);
-
-            ASSERT_TRUE(desc.option);
-            ctx.options_->addItem(desc, "option-space");
-            checkOptionType(*ctx_new, 10);
         }
 
         // Change the list of libraries. this should not affect the list in the

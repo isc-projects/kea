@@ -43,7 +43,6 @@ ParserContext::ParserContext(Option::Universe universe):
     boolean_values_(new BooleanStorage()),
     uint32_values_(new Uint32Storage()),
     string_values_(new StringStorage()),
-    options_(new OptionStorage()),
     hooks_libraries_(),
     universe_(universe)
 {
@@ -53,7 +52,6 @@ ParserContext::ParserContext(const ParserContext& rhs):
     boolean_values_(),
     uint32_values_(),
     string_values_(),
-    options_(),
     hooks_libraries_(),
     universe_(rhs.universe_)
 {
@@ -77,7 +75,6 @@ ParserContext::copyContext(const ParserContext& ctx) {
     copyContextPointer(ctx.boolean_values_, boolean_values_);
     copyContextPointer(ctx.uint32_values_, uint32_values_);
     copyContextPointer(ctx.string_values_, string_values_);
-    copyContextPointer(ctx.options_, options_);
     copyContextPointer(ctx.hooks_libraries_, hooks_libraries_);
     // Copy universe.
     universe_ = ctx.universe_;
@@ -281,20 +278,16 @@ HooksLibrariesParser::getLibraries(std::vector<std::string>& libraries,
 }
 
 // **************************** OptionDataParser *************************
-OptionDataParser::OptionDataParser(const std::string&, OptionStoragePtr options,
-                                  ParserContextPtr global_context)
+OptionDataParser::OptionDataParser(const std::string&, const CfgOptionPtr& cfg,
+                                   const uint16_t address_family)
     : boolean_values_(new BooleanStorage()),
-    string_values_(new StringStorage()), uint32_values_(new Uint32Storage()),
-    options_(options), option_descriptor_(false),
-    global_context_(global_context) {
-    if (!options_) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
-             << "options storage may not be NULL");
-    }
-
-    if (!global_context_) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
-             << "context may may not be NULL");
+      string_values_(new StringStorage()), uint32_values_(new Uint32Storage()),
+      option_descriptor_(false), cfg_(cfg),
+      address_family_(address_family) {
+    // If configuration not specified, then it is a global configuration
+    // scope.
+    if (!cfg_) {
+        cfg_ = CfgMgr::instance().getStagingCfg()->getCfgOption();
     }
 }
 
@@ -333,39 +326,57 @@ OptionDataParser::build(ConstElementPtr option_data_entries) {
 
     // Try to create the option instance.
     createOption(option_data_entries);
-}
 
-void
-OptionDataParser::commit() {
     if (!option_descriptor_.option) {
-        // Before we can commit the new option should be configured. If it is
-        // not than somebody must have called commit() before build().
         isc_throw(isc::InvalidOperation,
             "parser logic error: no option has been configured and"
             " thus there is nothing to commit. Has build() been called?");
     }
 
-    uint16_t opt_type = option_descriptor_.option->getType();
-    OptionContainerPtr options = options_->getItems(option_space_);
-    // The getItems() should never return NULL pointer. If there are no
-    // options configured for the particular option space a pointer
-    // to an empty container should be returned.
-    assert(options);
-    OptionContainerTypeIndex& idx = options->get<1>();
-    // Try to find options with the particular option code in the main
-    // storage. If found, remove these options because they will be
-    // replaced with new one.
-    OptionContainerTypeRange range = idx.equal_range(opt_type);
-    if (std::distance(range.first, range.second) > 0) {
-        idx.erase(range.first, range.second);
-    }
-
-    // Append new option to the main storage.
-    options_->addItem(option_descriptor_, option_space_);
+    cfg_->add(option_descriptor_.option, option_descriptor_.persistent,
+              option_space_);
 }
 
 void
+OptionDataParser::commit() {
+    // Does nothing
+}
+
+OptionDefinitionPtr
+OptionDataParser::findServerSpaceOptionDefinition(const std::string& option_space,
+                                                  const uint32_t option_code) const {
+    const Option::Universe u = address_family_ == AF_INET ?
+        Option::V4 : Option::V6;
+
+    if ((option_space == DHCP4_OPTION_SPACE) && (u == Option::V6)) {
+        isc_throw(DhcpConfigError, "'" << DHCP4_OPTION_SPACE
+                  << "' option space name is reserved for DHCPv4 server");
+    } else if ((option_space == DHCP6_OPTION_SPACE) && (u == Option::V4)) {
+        isc_throw(DhcpConfigError, "'" << DHCP6_OPTION_SPACE
+                  << "' option space name is reserved for DHCPv6 server");
+    }
+
+    OptionDefinitionPtr def;
+    if (((option_space == DHCP4_OPTION_SPACE) || (option_space == DHCP6_OPTION_SPACE)) &&
+        LibDHCP::isStandardOption(u, option_code)) {
+        def = LibDHCP::getOptionDef(u, option_code);
+
+    } else {
+        // Check if this is a vendor-option. If it is, get vendor-specific
+        // definition.
+        uint32_t vendor_id = CfgOption::optionSpaceToVendorId(option_space);
+        if (vendor_id) {
+            def = LibDHCP::getVendorOptionDef(u, vendor_id, option_code);
+        }
+    }
+    return (def);
+}
+
+
+void
 OptionDataParser::createOption(ConstElementPtr option_data) {
+    const Option::Universe universe = address_family_ == AF_INET ?
+        Option::V4 : Option::V6;
     // Check if mandatory parameters are specified.
     uint32_t code;
     std::string name;
@@ -379,8 +390,8 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
                   ex.what() << "(" << option_data->getPosition() << ")");
     }
     // Check parameters having default values.
-    std::string space = string_values_->getOptionalParam("space",
-              global_context_->universe_ == Option::V4 ? "dhcp4" : "dhcp6");
+    std::string space = string_values_->getOptionalParam("space", universe == Option::V4 ?
+                                                         "dhcp4" : "dhcp6");
     bool csv_format = boolean_values_->getOptionalParam("csv-format", false);
 
     // Option code is held in the uint32_t storage but is supposed to
@@ -391,14 +402,14 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
         isc_throw(DhcpConfigError, "option code must not be zero "
                   "(" << uint32_values_->getPosition("code") << ")");
 
-    } else if (global_context_->universe_ == Option::V4 &&
+    } else if (universe == Option::V4 &&
                code > std::numeric_limits<uint8_t>::max()) {
         isc_throw(DhcpConfigError, "invalid option code '" << code
                 << "', it must not exceed '"
                   << static_cast<int>(std::numeric_limits<uint8_t>::max())
                   << "' (" << uint32_values_->getPosition("code") << ")");
 
-    } else if (global_context_->universe_ == Option::V6 &&
+    } else if (universe == Option::V6 &&
                code > std::numeric_limits<uint16_t>::max()) {
         isc_throw(DhcpConfigError, "invalid option code '" << code
                 << "', it must not exceed '"
@@ -443,18 +454,7 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
         // need to search for its definition among user-configured
         // options. They are expected to be in the global storage
         // already.
-        OptionDefContainerPtr defs =
-            CfgMgr::instance().getStagingCfg()->getCfgOptionDef()->getAll(space);
-
-        // The getItems() should never return the NULL pointer. If there are
-        // no option definitions for the particular option space a pointer
-        // to an empty container should be returned.
-        assert(defs);
-        const OptionDefContainerTypeIndex& idx = defs->get<1>();
-        OptionDefContainerTypeRange range = idx.equal_range(code);
-        if (std::distance(range.first, range.second) > 0) {
-            def = *range.first;
-        }
+        def = CfgMgr::instance().getStagingCfg()->getCfgOptionDef()->get(space, code);
 
         // It's ok if we don't have option format if the option is
         // specified as hex
@@ -510,8 +510,8 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
         // for all options.  Consequently an error will be issued if an option
         // definition does not exist for a particular option code. For now it is
         // ok to create generic option if definition does not exist.
-        OptionPtr option(new Option(global_context_->universe_,
-                        static_cast<uint16_t>(code), binary));
+        OptionPtr option(new Option(universe,
+                                    static_cast<uint16_t>(code), binary));
         // The created option is stored in option_descriptor_ class member
         // until the commit stage when it is inserted into the main storage.
         // If an option with the same code exists in main storage already the
@@ -537,13 +537,12 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
         // an instance of our option.
         try {
             OptionPtr option = csv_format ?
-                def->optionFactory(global_context_->universe_,
-                                  code, data_tokens) :
-                def->optionFactory(global_context_->universe_,
-                                   code, binary);
+                def->optionFactory(universe, code, data_tokens) :
+                def->optionFactory(universe, code, binary);
             OptionDescriptor desc(option, false);
             option_descriptor_.option = option;
             option_descriptor_.persistent = false;
+
         } catch (const isc::Exception& ex) {
             isc_throw(DhcpConfigError, "option data does not match"
                       << " option definition (space: " << space
@@ -559,39 +558,18 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
 
 // **************************** OptionDataListParser *************************
 OptionDataListParser::OptionDataListParser(const std::string&,
-    OptionStoragePtr options, ParserContextPtr global_context,
-    OptionDataParserFactory* optionDataParserFactory)
-    : options_(options), local_options_(new OptionStorage()),
-    global_context_(global_context),
-    optionDataParserFactory_(optionDataParserFactory) {
-    if (!options_) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
-             << "options storage may not be NULL");
-    }
-
-    if (!options_) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
-             << "context may not be NULL");
-    }
-
-    if (!optionDataParserFactory_) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
-             << "option data parser factory may not be NULL");
-    }
+                                           const CfgOptionPtr& cfg,
+                                           const uint16_t address_family)
+    : cfg_(cfg), address_family_(address_family) {
 }
 
 void
 OptionDataListParser::build(ConstElementPtr option_data_list) {
     BOOST_FOREACH(ConstElementPtr option_value, option_data_list->listValue()) {
         boost::shared_ptr<OptionDataParser>
-            parser((*optionDataParserFactory_)("option-data",
-                    local_options_, global_context_));
+            parser(new OptionDataParser("option-data", cfg_, address_family_));
 
-        // options_ member will hold instances of all options thus
-        // each OptionDataParser takes it as a storage.
-        // Build the instance of a single option.
         parser->build(option_value);
-        // Store a parser as it will be used to commit.
         parsers_.push_back(parser);
     }
 }
@@ -601,11 +579,6 @@ OptionDataListParser::commit() {
     BOOST_FOREACH(ParserPtr parser, parsers_) {
         parser->commit();
     }
-
-    // Parsing was successful and we have all configured
-    // options in local storage. We can now replace old values
-    // with new values.
-    std::swap(*local_options_, *options_);
 }
 
 // ******************************** OptionDefParser ****************************
@@ -977,15 +950,16 @@ SubnetConfigParser::SubnetConfigParser(const std::string&,
                                        ParserContextPtr global_context,
                                        const isc::asiolink::IOAddress& default_addr)
     : uint32_values_(new Uint32Storage()), string_values_(new StringStorage()),
-    pools_(new PoolStorage()), options_(new OptionStorage()),
-    global_context_(global_context),
-    relay_info_(new isc::dhcp::Subnet::RelayInfo(default_addr)) {
+      pools_(new PoolStorage()), global_context_(global_context),
+      relay_info_(new isc::dhcp::Subnet::RelayInfo(default_addr)),
+      options_(new CfgOption()) {
     // The first parameter should always be "subnet", but we don't check
     // against that here in case some wants to reuse this parser somewhere.
     if (!global_context_) {
         isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
                  << "context storage may not be NULL");
     }
+
 }
 
 void
@@ -1024,61 +998,6 @@ SubnetConfigParser::build(ConstElementPtr subnet) {
         isc_throw(DhcpConfigError,
                   "subnet configuration failed (" << subnet->getPosition()
                   << "): " << ex.what());
-    }
-}
-
-void
-SubnetConfigParser::appendSubOptions(const std::string& option_space,
-                                     OptionPtr& option) {
-    // Only non-NULL options are stored in option container.
-    // If this option pointer is NULL this is a serious error.
-    assert(option);
-
-    OptionDefinitionPtr def;
-    if (isServerStdOption(option_space, option->getType())) {
-        def = getServerStdOptionDefinition(option->getType());
-        // Definitions for some of the standard options hasn't been
-        // implemented so it is ok to leave here.
-        if (!def) {
-            return;
-        }
-    } else {
-        OptionDefContainerPtr defs = CfgMgr::instance().getStagingCfg()
-            ->getCfgOptionDef()->getAll(option_space);
-
-        const OptionDefContainerTypeIndex& idx = defs->get<1>();
-        const OptionDefContainerTypeRange& range =
-        idx.equal_range(option->getType());
-        // There is no definition so we have to leave.
-        if (std::distance(range.first, range.second) == 0) {
-            return;
-        }
-
-        def = *range.first;
-
-        // If the definition exists, it must be non-NULL.
-        // Otherwise it is a programming error.
-        assert(def);
-    }
-
-    // We need to get option definition for the particular option space
-    // and code. This definition holds the information whether our
-    // option encapsulates any option space.
-    // Get the encapsulated option space name.
-    std::string encapsulated_space = def->getEncapsulatedSpace();
-    // If option space name is empty it means that our option does not
-    // encapsulate any option space (does not include sub-options).
-    if (!encapsulated_space.empty()) {
-        // Get the sub-options that belong to the encapsulated
-        // option space.
-        const OptionContainerPtr sub_opts =
-                global_context_->options_->getItems(encapsulated_space);
-        // Append sub-options to the option.
-        BOOST_FOREACH(OptionDescriptor desc, *sub_opts) {
-            if (desc.option) {
-                option->addOption(desc.option);
-            }
-        }
     }
 }
 
@@ -1146,64 +1065,12 @@ SubnetConfigParser::createSubnet() {
         subnet_->setIface(iface);
     }
 
-    // We are going to move configured options to the Subnet object.
-    // Configured options reside in the container where options
-    // are grouped by space names. Thus we need to get all space names
-    // and iterate over all options that belong to them.
-    std::list<std::string> space_names = options_->getOptionSpaceNames();
-    BOOST_FOREACH(std::string option_space, space_names) {
-        // Get all options within a particular option space.
-        BOOST_FOREACH(OptionDescriptor desc,
-                      *options_->getItems(option_space)) {
-            // The pointer should be non-NULL. The validation is expected
-            // to be performed by the OptionDataParser before adding an
-            // option descriptor to the container.
-            assert(desc.option);
-            // We want to check whether an option with the particular
-            // option code has been already added. If so, we want
-            // to issue a warning.
-            OptionDescriptor existing_desc =
-                subnet_->getCfgOption()->get("option_space", desc.option->getType());
-
-            if (existing_desc.option) {
-                duplicate_option_warning(desc.option->getType(), addr);
-            }
-            // Add sub-options (if any).
-            appendSubOptions(option_space, desc.option);
-
-            subnet_->getCfgOption()->add(desc.option, false, option_space);
-        }
-    }
-
-    // Check all global options and add them to the subnet object if
-    // they have been configured in the global scope. If they have been
-    // configured in the subnet scope we don't add global option because
-    // the one configured in the subnet scope always takes precedence.
-    space_names = global_context_->options_->getOptionSpaceNames();
-    BOOST_FOREACH(std::string option_space, space_names) {
-        // Get all global options for the particular option space.
-        BOOST_FOREACH(OptionDescriptor desc,
-                *(global_context_->options_->getItems(option_space))) {
-            // The pointer should be non-NULL. The validation is expected
-            // to be performed by the OptionDataParser before adding an
-            // option descriptor to the container.
-            assert(desc.option);
-            // Check if the particular option has been already added.
-            // This would mean that it has been configured in the
-            // subnet scope. Since option values configured in the
-            // subnet scope take precedence over globally configured
-            // values we don't add option from the global storage
-            // if there is one already.
-            OptionDescriptor existing_desc =  subnet_->getCfgOption()->
-                get(option_space, desc.option->getType());
-            if (!existing_desc.option) {
-                // Add sub-options (if any).
-                appendSubOptions(option_space, desc.option);
-
-                subnet_->getCfgOption()->add(desc.option, false, option_space);
-            }
-        }
-    }
+    // Merge globally defined options to the subnet specific options.
+    CfgMgr::instance().getStagingCfg()->getCfgOption()->merge(*options_);
+    // Copy all options to the subnet configuration.
+    options_->copy(*subnet_->getCfgOption());
+    // Append suboptions to the top-level options.
+    subnet_->getCfgOption()->encapsulate();
 }
 
 isc::dhcp::Triplet<uint32_t>

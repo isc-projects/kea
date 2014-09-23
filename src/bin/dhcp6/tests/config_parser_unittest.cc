@@ -2741,7 +2741,11 @@ TEST_F(Dhcp6ParserTest, vendorOptionsCsv) {
 
 // The goal of this test is to verify that the standard option can
 // be configured to encapsulate multiple other options.
-TEST_F(Dhcp6ParserTest, stdOptionDataEncapsulate) {
+/// @todo This test is currently disabled because it relies on the option
+/// 17 which is treated differently than all other options. There are no
+/// other standard options used by Kea which would encapsulate other
+/// options and for which values could be configured here.
+TEST_F(Dhcp6ParserTest, DISABLED_stdOptionDataEncapsulate) {
 
     // The configuration is two stage process in this test.
     // In the first stahe we create definitions of suboptions

@@ -42,72 +42,6 @@ using namespace isc::asiolink;
 
 namespace {
 
-/// @brief Parser for DHCP4 option data value.
-///
-/// This parser parses configuration entries that specify value of
-/// a single option specific to DHCP4.  It provides the DHCP4-specific
-/// implementation of the abstract class OptionDataParser.
-class Dhcp4OptionDataParser : public OptionDataParser {
-public:
-    /// @brief Constructor.
-    ///
-    /// @param dummy first param, option names are always "Dhcp4/option-data[n]"
-    /// @param options is the option storage in which to store the parsed option
-    /// upon "commit".
-    /// @param global_context is a pointer to the global context which
-    /// stores global scope parameters, options, option defintions.
-    Dhcp4OptionDataParser(const std::string&,
-        OptionStoragePtr options, ParserContextPtr global_context)
-        :OptionDataParser("", options, global_context) {
-    }
-
-    /// @brief static factory method for instantiating Dhcp4OptionDataParsers
-    ///
-    /// @param param_name name of the parameter to be parsed.
-    /// @param options storage where the parameter value is to be stored.
-    /// @param global_context is a pointer to the global context which
-    /// stores global scope parameters, options, option defintions.
-    /// @return returns a pointer to a new OptionDataParser. Caller is
-    /// is responsible for deleting it when it is no longer needed.
-    static OptionDataParser* factory(const std::string& param_name,
-        OptionStoragePtr options, ParserContextPtr global_context) {
-        return (new Dhcp4OptionDataParser(param_name, options, global_context));
-    }
-
-protected:
-    /// @brief Finds an option definition within the server's option space
-    ///
-    /// Given an option space and an option code, find the correpsonding
-    /// option defintion within the server's option defintion storage.
-    ///
-    /// @param option_space name of the parameter option space
-    /// @param option_code numeric value of the parameter to find
-    /// @return OptionDefintionPtr of the option defintion or an
-    /// empty OptionDefinitionPtr if not found.
-    /// @throw DhcpConfigError if the option space requested is not valid
-    /// for this server.
-    virtual OptionDefinitionPtr findServerSpaceOptionDefinition (
-                std::string& option_space, uint32_t option_code) {
-        OptionDefinitionPtr def;
-        if (option_space == "dhcp4" &&
-            LibDHCP::isStandardOption(Option::V4, option_code)) {
-            def = LibDHCP::getOptionDef(Option::V4, option_code);
-        } else if (option_space == "dhcp6") {
-            isc_throw(DhcpConfigError, "'dhcp6' option space name is reserved"
-                     << " for DHCPv6 server");
-        } else {
-            // Check if this is a vendor-option. If it is, get vendor-specific
-            // definition.
-            uint32_t vendor_id = CfgOption::optionSpaceToVendorId(option_space);
-            if (vendor_id) {
-                def = LibDHCP::getVendorOptionDef(Option::V4, vendor_id, option_code);
-            }
-        }
-
-        return (def);
-    }
-};
-
 /// @brief Parser for IPv4 pool definitions.
 ///
 /// This is the IPv4 derivation of the PoolParser class and handles pool
@@ -245,9 +179,7 @@ protected:
         } else if (config_id.compare("relay") == 0) {
             parser = new RelayInfoParser(config_id, relay_info_, Option::V4);
         } else if (config_id.compare("option-data") == 0) {
-           parser = new OptionDataListParser(config_id, options_,
-                                             global_context_,
-                                             Dhcp4OptionDataParser::factory);
+            parser = new OptionDataListParser(config_id, options_, AF_INET);
         } else {
             isc_throw(NotImplemented, "unsupported parameter: " << config_id);
         }
@@ -448,10 +380,7 @@ namespace dhcp {
     } else if (config_id.compare("subnet4") == 0) {
         parser = new Subnets4ListConfigParser(config_id);
     } else if (config_id.compare("option-data") == 0) {
-        parser = new OptionDataListParser(config_id,
-                                          globalContext()->options_,
-                                          globalContext(),
-                                          Dhcp4OptionDataParser::factory);
+        parser = new OptionDataListParser(config_id, CfgOptionPtr(), AF_INET);
     } else if (config_id.compare("option-def") == 0) {
         parser  = new OptionDefListParser(config_id, globalContext());
     } else if ((config_id.compare("version") == 0) ||

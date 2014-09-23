@@ -69,6 +69,33 @@ CfgOption::copy(CfgOption& other) const {
     other = new_cfg;
 }
 
+void
+CfgOption::encapsulate() {
+    // Append sub-options to the top level "dhcp4" option space.
+    encapsulateInternal(DHCP4_OPTION_SPACE);
+    // Append sub-options to the top level "dhcp6" option space.
+    encapsulateInternal(DHCP6_OPTION_SPACE);
+}
+
+void
+CfgOption::encapsulateInternal(const std::string& option_space) {
+    OptionContainerPtr options = getAll(option_space);
+    for (OptionContainer::const_iterator opt = options->begin();
+         opt != options->end(); ++opt) {
+        const std::string& encap_space = opt->option->getEncapsulatedSpace();
+        if (!encap_space.empty()) {
+            OptionContainerPtr encap_options = getAll(encap_space);
+            for (OptionContainer::const_iterator encap_opt =
+                     encap_options->begin(); encap_opt != encap_options->end();
+                 ++encap_opt) {
+                if (!opt->option->getOption(encap_opt->option->getType())) {
+                    opt->option->addOption(encap_opt->option);
+                }
+            }
+        }
+    }
+}
+
 template <typename Selector>
 void
 CfgOption::mergeInternal(const OptionSpaceContainer<OptionContainer,
