@@ -69,8 +69,7 @@ void Daemon::configureLogger(const isc::data::ConstElementPtr& log_config,
         return;
     }
 
-    isc::data::ConstElementPtr loggers;
-    loggers = log_config->get("loggers");
+    isc::data::ConstElementPtr loggers = log_config->get("loggers");
     if (!loggers) {
         // There is Logging structure, but it doesn't have loggers
         // array in it. Let's clear any old logging configuration
