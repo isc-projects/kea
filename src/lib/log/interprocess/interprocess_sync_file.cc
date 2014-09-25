@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012,2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,11 +12,16 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+// This file requires LOCKFILE_DIR to be defined. It points to the default
+// directory where lockfile will be created.
+
 #include <log/interprocess/interprocess_sync_file.h>
 
 #include <string>
 #include <cerrno>
 #include <cstring>
+#include <sstream>
+#include <iostream>
 
 #include <stdlib.h>
 #include <string.h>
@@ -46,33 +51,32 @@ InterprocessSyncFile::do_lock(int cmd, short l_type) {
     if (fd_ == -1) {
         std::string lockfile_path = LOCKFILE_DIR;
 
-        const char* const env = getenv("KEA_FROM_BUILD");
+        const char* const env = getenv("KEA_LOCKFILE_DIR");
         if (env != NULL) {
             lockfile_path = env;
-        }
-
-        const char* const env2 = getenv("KEA_FROM_BUILD_LOCALSTATEDIR");
-        if (env2 != NULL) {
-            lockfile_path = env2;
-        }
-
-        const char* const env3 = getenv("KEA_LOCKFILE_DIR_FROM_BUILD");
-        if (env3 != NULL) {
-            lockfile_path = env3;
         }
 
         lockfile_path += "/" + task_name_ + "_lockfile";
 
         // Open the lockfile in the constructor so it doesn't do the access
         // checks every time a message is logged.
-        const mode_t mode = umask(0111);
-        fd_ = open(lockfile_path.c_str(), O_CREAT | O_RDWR, 0660);
+        const mode_t mode = umask(S_IXUSR | S_IXGRP | S_IXOTH); // 0111
+        fd_ = open(lockfile_path.c_str(), O_CREAT | O_RDWR,
+                   S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP); // 0660
         umask(mode);
 
         if (fd_ == -1) {
-            isc_throw(InterprocessSyncFileError,
-                      "Unable to use interprocess sync lockfile ("
-                      << std::strerror(errno) << "): " << lockfile_path);
+            std::stringstream tmp;
+
+            // We failed to create a lockfile. This means that the logging
+            // system is unusable. We need to report the issue using plain
+            // print to stderr.
+            tmp << "Unable to use interprocess sync lockfile ("
+                << std::strerror(errno) << "): " << lockfile_path;
+            std::cerr << tmp.str() << std::endl;
+
+            // And then throw exception as usual.
+            isc_throw(InterprocessSyncFileError, tmp.str());
         }
     }
 

@@ -67,13 +67,6 @@ public:
     /// @brief Applies stored configuration
     void applyConfiguration();
 
-    /// @brief Configures default logging
-    ///
-    /// This method is static,
-    ///
-    /// @param verbose specifies verbose mode (true forces DEBUG, debuglevel = 99)
-    void applyDefaultConfiguration(bool verbose = false);
-
 private:
 
     /// @brief Parses one JSON structure in Logging/loggers" array

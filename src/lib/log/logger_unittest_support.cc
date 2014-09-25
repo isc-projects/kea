@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011,2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -75,77 +75,6 @@ keaLoggerDbglevel(int defdbglevel) {
     return (defdbglevel);
 }
 
-
-// Reset characteristics of the root logger to that set by the environment
-// variables KEA_LOGGER_SEVERITY, KEA_LOGGER_DBGLEVEL and KEA_LOGGER_DESTINATION.
-
-void
-resetUnitTestRootLogger() {
-
-    using namespace isc::log;
-
-    // Constants: not declared static as this is function is expected to be
-    // called once only
-    const string DEVNULL = "/dev/null";
-    const string STDOUT = "stdout";
-    const string STDERR = "stderr";
-    const string SYSLOG = "syslog";
-    const string SYSLOG_COLON = "syslog:";
-
-    // Get the destination.  If not specified, assume /dev/null. (The default
-    // severity for unit tests is DEBUG, which generates a lot of output.
-    // Routing the logging to /dev/null will suppress that, whilst still
-    // ensuring that the code paths are tested.)
-    const char* destination = getenv("KEA_LOGGER_DESTINATION");
-    const string dest((destination == NULL) ? DEVNULL : destination);
-
-    // Prepare the objects to define the logging specification
-    LoggerSpecification spec(getRootLoggerName(), 
-                             keaLoggerSeverity(isc::log::DEBUG),
-                             keaLoggerDbglevel(isc::log::MAX_DEBUG_LEVEL));
-    OutputOption option;
-
-    // Set up output option according to destination specification
-    if (dest == STDOUT) {
-        option.destination = OutputOption::DEST_CONSOLE;
-        option.stream = OutputOption::STR_STDOUT;
-
-    } else if (dest == STDERR) {
-        option.destination = OutputOption::DEST_CONSOLE;
-        option.stream = OutputOption::STR_STDERR;
-
-    } else if (dest == SYSLOG) {
-        option.destination = OutputOption::DEST_SYSLOG;
-        // Use default specified in OutputOption constructor for the
-        // syslog destination
-
-    } else if (dest.find(SYSLOG_COLON) == 0) {
-        option.destination = OutputOption::DEST_SYSLOG;
-        // Must take account of the string actually being "syslog:"
-        if (dest == SYSLOG_COLON) {
-            cerr << "**ERROR** value for KEA_LOGGER_DESTINATION of " <<
-                    SYSLOG_COLON << " is invalid, " << SYSLOG <<
-                    " will be used instead\n";
-            // Use default for logging facility
-
-        } else {
-            // Everything else in the string is the facility name
-            option.facility = dest.substr(SYSLOG_COLON.size());
-        }
-
-    } else {
-        // Not a recognised destination, assume a file.
-        option.destination = OutputOption::DEST_FILE;
-        option.filename = dest;
-    }
-
-    // ... and set the destination
-    spec.addOutputOption(option);
-    LoggerManager manager;
-    manager.process(spec);
-}
-
-
 // Logger Run-Time Initialization via Environment Variables
 void initLogger(isc::log::Severity severity, int dbglevel) {
 
@@ -162,7 +91,7 @@ void initLogger(isc::log::Severity severity, int dbglevel) {
     const char* localfile = getenv("KEA_LOGGER_LOCALMSG");
 
     // Set a directory for creating lockfiles when running tests
-    setenv("KEA_LOCKFILE_DIR_FROM_BUILD", TOP_BUILDDIR, 1);
+    setenv("KEA_LOCKFILE_DIR", TOP_BUILDDIR, 0);
 
     // Initialize logging
     initLogger(root, isc::log::DEBUG, isc::log::MAX_DEBUG_LEVEL, localfile);
@@ -172,7 +101,7 @@ void initLogger(isc::log::Severity severity, int dbglevel) {
     // in the environment variables.  (The two-step approach is used as the
     // setUnitTestRootLoggerCharacteristics() function is used in several
     // places in the Kea tests, and it avoid duplicating code.)
-    resetUnitTestRootLogger();
+    isc::log::setDefaultLoggingOutput();
 } 
 
 } // namespace log

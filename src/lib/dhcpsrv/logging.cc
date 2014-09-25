@@ -17,6 +17,7 @@
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <log/logger_specification.h>
+#include <log/logger_support.h>
 #include <log/logger_manager.h>
 #include <log/logger_name.h>
 
@@ -156,9 +157,6 @@ void LogConfigParser::applyConfiguration() {
     static const std::string SYSLOG = "syslog";
     static const std::string SYSLOG_COLON = "syslog:";
 
-    // Set locking directory to /tmp
-    setenv("B10_LOCKFILE_DIR_FROM_BUILD", "/tmp", 1);
-
     std::vector<LoggerSpecification> specs;
 
     // Now iterate through all specified loggers
@@ -174,7 +172,7 @@ void LogConfigParser::applyConfiguration() {
 
         for (std::vector<LoggingDestination>::const_iterator dest = it->destinations_.begin();
              dest != it->destinations_.end(); ++dest) {
-            
+
             // Set up output option according to destination specification
             if (dest->output_ == STDOUT) {
                 option.destination = OutputOption::DEST_CONSOLE;
@@ -217,20 +215,6 @@ void LogConfigParser::applyConfiguration() {
 
     LoggerManager manager;
     manager.process(specs.begin(), specs.end());
-}
-
-void LogConfigParser::applyDefaultConfiguration(bool verbose) {
-    LoggerSpecification spec("kea", (verbose?isc::log::DEBUG : isc::log::INFO),
-                             (verbose?99:0));
-
-    OutputOption option;
-    option.destination = OutputOption::DEST_CONSOLE;
-    option.stream = OutputOption::STR_STDOUT;
-
-    spec.addOutputOption(option);
-
-    LoggerManager manager;
-    manager.process(spec);
 }
 
 } // namespace isc::dhcp

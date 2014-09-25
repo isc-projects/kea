@@ -421,3 +421,94 @@ version_test() {
         test_finish 1
     fi
 }
+
+# This test verifies that the server is using logger variable
+# KEA_LOCKFILE_DIR properly (it should be used to point out to the directory,
+# where lockfile should be created. Also, "none" value means to not create
+# the lockfile at all).
+logger_vars_test() {
+    test_name=${1}  # Test name
+
+    # Log the start of the test and print test name.
+    test_start ${test_name}
+    # Remove dangling Kea instances and remove log files.
+    cleanup
+
+    # Create bogus configuration file. We don't really want the server to start,
+    # just want it to log something and die. Empty config is an easy way to
+    # enforce that behavior.
+    create_config "{ }"
+    printf "Please ignore any config error messages.\n"
+
+    # Remember old KEA_LOCKFILE_DIR
+    KEA_LOCKFILE_DIR_OLD=${KEA_LOCKFILE_DIR}
+
+    # Set lockfile directory to current directory.
+    KEA_LOCKFILE_DIR=.
+
+    # Start Kea.
+    start_kea ${bin_path}/${bin}
+
+    # Wait for Kea to process the invalid configuration and die.
+    sleep 1
+
+    # Check if it is still running. It should have terminated.
+    get_pids ${bin}
+    if [ ${_GET_PIDS_NUM} -ne 0 ]; then
+        printf "ERROR: expected Kea process to not start. Found %d processes"
+        printf " running.\n" ${_GET_PIDS_NUM}
+
+        # Revert to the old KEA_LOCKFILE_DIR value
+        KEA_LOCKFILE_DIR=${KEA_LOCKFILE_DIR_OLD}
+        clean_exit 1
+    fi
+
+    if [ ! -f "./logger_lockfile" ]; then
+        printf "ERROR: Expect ${bin} to create logger_lockfile in the\n"
+        printf "current directory, but no such file exists.\n"
+
+        # Revert to the old KEA_LOCKFILE_DIR value
+        KEA_LOCKFILE_DIR=${KEA_LOCKFILE_DIR__OLD}
+        clean_exit 1
+    fi
+
+    # Remove the lock file
+    rm -f ./logger_lockfile
+
+    # Tell Kea to NOT create logfiles at all
+    KEA_LOCKFILE_DIR="none"
+
+    # Start Kea.
+    start_kea ${bin_path}/${bin}
+
+    # Wait for Kea to process the invalid configuration and die.
+    sleep 1
+
+    # Check if it is still running. It should have terminated.
+    get_pids ${bin}
+    if [ ${_GET_PIDS_NUM} -ne 0 ]; then
+        printf "ERROR: expected Kea process to not start. Found %d processes"
+        printf " running.\n" ${_GET_PIDS_NUM}
+
+        # Revert to the old KEA_LOCKFILE_DIR value
+        KEA_LOCKFILE_DIR=${KEA_LOCKFILE_DIR_OLD}
+
+        clean_exit 1
+    fi
+
+    if [ -f "./logger_lockfile" ]; then
+        printf "ERROR: Expect ${bin} to NOT create logger_lockfile in the\n"
+        printf "current directory, but the file exists."
+
+        # Revert to the old KEA_LOCKFILE_DIR value
+        KEA_LOCKFILE_DIR=${KEA_LOCKFILE_DIR_OLD}
+
+        clean_exit 1
+    fi
+
+    # Revert to the old KEA_LOCKFILE_DIR value
+    printf "Reverting KEA_LOCKFILE_DIR to ${KEA_LOCKFILE_DIR_OLD}\n"
+    KEA_LOCKFILE_DIR=${KEA_LOCKFILE_DIR_OLD}
+
+    test_finish 0
+}
