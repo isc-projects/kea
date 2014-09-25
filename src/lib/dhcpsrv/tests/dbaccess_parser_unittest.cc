@@ -18,7 +18,7 @@
 #include <dhcpsrv/dbaccess_parser.h>
 #include <dhcpsrv/dhcp_parsers.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <log/logger_unittest_support.h>
+#include <log/logger_support.h>
 
 #include <gtest/gtest.h>
 
@@ -53,7 +53,7 @@ public:
     /// the logging is reset to the default after each test completes.
     ~DbAccessParserTest() {
         LeaseMgrFactory::destroy();
-        isc::log::resetUnitTestRootLogger();
+        isc::log::setDefaultLoggingOutput();
     }
 
     /// @brief Build JSON String

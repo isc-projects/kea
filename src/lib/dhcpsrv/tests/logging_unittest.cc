@@ -41,7 +41,7 @@ class LoggingTest : public ::testing::Test {
         ///
         /// Reset root logger back to defaults.
         ~LoggingTest() {
-            isc::log::resetUnitTestRootLogger();
+            isc::log::setDefaultLoggingOutput();
         }
 };
 

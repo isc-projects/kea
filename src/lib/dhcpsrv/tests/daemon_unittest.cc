@@ -19,7 +19,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/daemon.h>
 #include <dhcpsrv/logging.h>
-#include <log/logger_unittest_support.h>
+#include <log/logger_support.h>
 
 #include <gtest/gtest.h>
 
@@ -50,7 +50,7 @@ public:
     /// settings (when configureLogger is called), the logging is reset to
     /// the default after each test completes.
     ~DaemonTest() {
-        isc::log::resetUnitTestRootLogger();
+        isc::log::setDefaultLoggingOutput();
     }
 };
 
