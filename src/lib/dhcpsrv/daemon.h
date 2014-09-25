@@ -111,8 +111,10 @@ public:
 
     /// @brief Initializes logger
     ///
-    /// This method initializes logger. Currently its implementation is specific
-    /// to each configuration backend.
+    /// This method initializes logging system. It also sets the default
+    /// output to stdout. This is used in early stages of the startup
+    /// phase before config file and parsed and proper logging details
+    /// are known.
     ///
     /// @param log_name name used in logger initialization
     /// @param verbose verbose mode (true usually enables DEBUG messages)

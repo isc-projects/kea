@@ -19,6 +19,8 @@
 #include <cc/data.h>
 #include <boost/bind.hpp>
 #include <logging.h>
+#include <log/logger_name.h>
+#include <log/logger_support.h>
 #include <errno.h>
 
 /// @brief provides default implementation for basic daemon operations
@@ -76,6 +78,16 @@ Daemon::setVerbose(bool verbose) {
 bool
 Daemon::getVerbose() const {
     return (CfgMgr::instance().isVerbose());
+}
+
+void Daemon::loggerInit(const char* name, bool verbose) {
+
+    // Initialize logger system
+    isc::log::initLogger(name, isc::log::DEBUG, isc::log::MAX_DEBUG_LEVEL,
+                         NULL);
+
+    // Apply default configuration (log INFO or DEBUG to stdout)
+    isc::log::setDefaultLoggingOutput(verbose);
 }
 
 };
