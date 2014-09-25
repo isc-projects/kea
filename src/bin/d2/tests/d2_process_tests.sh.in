@@ -239,3 +239,4 @@ dynamic_reconfiguration_test
 shutdown_test "dhcp-ddns.sigterm_test" 15
 shutdown_test "dhcp-ddns.sigint_test" 2
 version_test "dhcp-ddns.version"
+logger_vars_test "dhcp-ddns.variables"

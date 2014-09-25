@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011,2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -68,6 +68,17 @@ void initLogger(const std::string& root,
                 isc::log::Severity severity = isc::log::INFO,
                 int dbglevel = 0, const char* file = NULL,
                 bool buffer = false);
+
+/// \brief Reset root logger characteristics
+///
+/// This is a simplified interface into the resetting of the characteristics
+/// of the root logger.  It is aimed for use in unit tests and initial
+/// phase of bring up before logging configuration is parsed and applied.
+/// It uses KEA_LOGGER_DESTINATION environment variable to specify
+/// logging destination.
+/// @param verbose defines whether logging should be verbose or not
+void setDefaultLoggingOutput(bool verbose = true);
+
 
 } // namespace log
 } // namespace isc

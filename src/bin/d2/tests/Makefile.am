@@ -14,7 +14,7 @@ EXTRA_DIST += testdata/d2_cfg_tests.json
 check-local:
 	for shtest in $(SHTESTS) ; do \
 	echo Running test: $$shtest ; \
-	export B10_LOCKFILE_DIR_FROM_BUILD=$(abs_top_builddir); \
+	export KEA_LOCKFILE_DIR=$(abs_top_builddir); \
 	${SHELL} $(abs_builddir)/$$shtest || exit ; \
 	done
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011,2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,8 +18,10 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <cstring>
 #include <boost/lexical_cast.hpp>
 #include <boost/static_assert.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <log4cplus/configurator.h>
 #include <log4cplus/loggingmacros.h>
@@ -33,6 +35,7 @@
 #include <log/message_dictionary.h>
 #include <log/message_types.h>
 #include <log/interprocess/interprocess_sync_file.h>
+#include <log/interprocess/interprocess_sync_null.h>
 
 #include <util/strutil.h>
 
@@ -45,6 +48,20 @@ using namespace std;
 namespace isc {
 namespace log {
 
+/// @brief detects whether file locking is enabled or disabled
+///
+/// The lockfile is enabled by default. The only way to disable it is to
+/// set KEA_LOCKFILE_DIR variable to 'none'.
+/// @return true if lockfile is enabled, false otherwise
+bool lockfileEnabled() {
+    const char* const env = getenv("KEA_LOCKFILE_DIR");
+    if (env && boost::iequals(string(env), string("none"))) {
+        return (false);
+    }
+
+    return (true);
+}
+
 // Constructor.  The setting of logger_ must be done when the variable is
 // constructed (instead of being left to the body of the function); at least
 // one compiler requires that all member variables be constructed before the
@@ -52,9 +69,13 @@ namespace log {
 // default constructor.
 LoggerImpl::LoggerImpl(const string& name) :
     name_(expandLoggerName(name)),
-    logger_(log4cplus::Logger::getInstance(name_)),
-    sync_(new interprocess::InterprocessSyncFile("logger"))
+    logger_(log4cplus::Logger::getInstance(name_))
 {
+    if (lockfileEnabled()) {
+        sync_ = new interprocess::InterprocessSyncFile("logger");
+    } else {
+        sync_ = new interprocess::InterprocessSyncNull("logger");
+    }
 }
 
 // Destructor. (Here because of virtual declaration.)
