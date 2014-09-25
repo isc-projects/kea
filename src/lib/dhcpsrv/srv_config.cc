@@ -92,8 +92,6 @@ SrvConfig::copy(SrvConfig& new_config) const {
 
 void
 SrvConfig::applyLoggingCfg() const {
-    /// @todo Remove the hardcoded location.
-    setenv("KEA_LOCKFILE_DIR_FROM_BUILD", "/tmp", 1);
 
     std::list<LoggerSpecification> specs;
     for (LoggingInfoStorage::const_iterator it = logging_info_.begin();
