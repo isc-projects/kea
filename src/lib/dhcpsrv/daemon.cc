@@ -82,6 +82,8 @@ Daemon::getVerbose() const {
 
 void Daemon::loggerInit(const char* name, bool verbose) {
 
+    setenv("KEA_LOGGER_DESTINATION",  "stdout", 0);
+
     // Initialize logger system
     isc::log::initLogger(name, isc::log::DEBUG, isc::log::MAX_DEBUG_LEVEL,
                          NULL);
