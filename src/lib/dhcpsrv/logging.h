@@ -64,9 +64,6 @@ public:
     void parseConfiguration(const isc::data::ConstElementPtr& log_config,
                             bool verbose = false);
 
-    /// @brief Applies stored configuration
-    void applyConfiguration();
-
 private:
 
     /// @brief Parses one JSON structure in Logging/loggers" array
