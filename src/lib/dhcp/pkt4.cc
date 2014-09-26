@@ -33,17 +33,11 @@ namespace dhcp {
 const IOAddress DEFAULT_ADDRESS("0.0.0.0");
 
 Pkt4::Pkt4(uint8_t msg_type, uint32_t transid)
-     :buffer_out_(DHCPV4_PKT_HDR_LEN),
-      local_addr_(DEFAULT_ADDRESS),
-      remote_addr_(DEFAULT_ADDRESS),
-      iface_(""),
-      ifindex_(0),
-      local_port_(DHCP4_SERVER_PORT),
-      remote_port_(DHCP4_CLIENT_PORT),
+     :Pkt(transid, DEFAULT_ADDRESS, DEFAULT_ADDRESS, DHCP4_SERVER_PORT,
+          DHCP4_CLIENT_PORT),
       op_(DHCPTypeToBootpType(msg_type)),
       hwaddr_(new HWAddr()),
       hops_(0),
-      transid_(transid),
       secs_(0),
       flags_(0),
       ciaddr_(DEFAULT_ADDRESS),
@@ -51,6 +45,7 @@ Pkt4::Pkt4(uint8_t msg_type, uint32_t transid)
       siaddr_(DEFAULT_ADDRESS),
       giaddr_(DEFAULT_ADDRESS)
 {
+    // buffer_out_.resize(DHCPV4_PKT_HDR_LEN);
     memset(sname_, 0, MAX_SNAME_LEN);
     memset(file_, 0, MAX_FILE_LEN);
 
@@ -58,17 +53,11 @@ Pkt4::Pkt4(uint8_t msg_type, uint32_t transid)
 }
 
 Pkt4::Pkt4(const uint8_t* data, size_t len)
-     :buffer_out_(0), // not used, this is RX packet
-      local_addr_(DEFAULT_ADDRESS),
-      remote_addr_(DEFAULT_ADDRESS),
-      iface_(""),
-      ifindex_(0),
-      local_port_(DHCP4_SERVER_PORT),
-      remote_port_(DHCP4_CLIENT_PORT),
+     :Pkt(data, len, DEFAULT_ADDRESS, DEFAULT_ADDRESS, DHCP4_SERVER_PORT,
+          DHCP4_CLIENT_PORT),
       op_(BOOTREQUEST),
       hwaddr_(new HWAddr()),
       hops_(0),
-      transid_(0),
       secs_(0),
       flags_(0),
       ciaddr_(DEFAULT_ADDRESS),
@@ -76,6 +65,7 @@ Pkt4::Pkt4(const uint8_t* data, size_t len)
       siaddr_(DEFAULT_ADDRESS),
       giaddr_(DEFAULT_ADDRESS)
 {
+
     if (len < DHCPV4_PKT_HDR_LEN) {
         isc_throw(OutOfRange, "Truncated DHCPv4 packet (len=" << len
                   << ") received, at least " << DHCPV4_PKT_HDR_LEN
@@ -163,7 +153,7 @@ Pkt4::pack() {
     }
 }
 
-void
+bool
 Pkt4::unpack() {
 
     // input buffer (used during message reception)
@@ -232,6 +222,8 @@ Pkt4::unpack() {
     // @todo check will need to be called separately, so hooks can be called
     // after the packet is parsed, but before its content is verified
     check();
+
+    return (true);
 }
 
 void Pkt4::check() {
@@ -433,7 +425,7 @@ Pkt4::getHlen() const {
 }
 
 void
-Pkt4::addOption(boost::shared_ptr<Option> opt) {
+Pkt4::addOption(const OptionPtr& opt) {
     // Check for uniqueness (DHCPv4 options must be unique)
     if (getOption(opt->getType())) {
         isc_throw(BadValue, "Option " << opt->getType()
@@ -483,17 +475,6 @@ Pkt4::isRelayed() const {
               << static_cast<int>(getHops()) << ". Valid values"
               " are: (giaddr = 0 and hops = 0) or (giaddr != 0 and"
               "hops != 0)");
-}
-
-bool Pkt4::inClass(const isc::dhcp::ClientClass& client_class) {
-    return (classes_.find(client_class) != classes_.end());
-}
-
-void
-Pkt4::addClass(const isc::dhcp::ClientClass& client_class) {
-    if (classes_.find(client_class) == classes_.end()) {
-        classes_.insert(client_class);
-    }
 }
 
 } // end of namespace isc::dhcp

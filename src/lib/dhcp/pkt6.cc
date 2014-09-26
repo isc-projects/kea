@@ -27,41 +27,26 @@ using namespace isc::asiolink;
 namespace isc {
 namespace dhcp {
 
+const IOAddress DEFAULT_ADDRESS6("::");
+
 Pkt6::RelayInfo::RelayInfo()
-    :msg_type_(0), hop_count_(0), linkaddr_("::"), peeraddr_("::"), relay_msg_len_(0) {
+    :msg_type_(0), hop_count_(0), linkaddr_("::"), peeraddr_("::"),
+    relay_msg_len_(0) {
     // interface_id_, subscriber_id_, remote_id_ initialized to NULL
     // echo_options_ initialized to empty collection
 }
 
-Pkt6::Pkt6(const uint8_t* buf, uint32_t buf_len, DHCPv6Proto proto /* = UDP */) :
-    proto_(proto),
-    msg_type_(0),
-    transid_(rand()%0xffffff),
-    iface_(""),
-    ifindex_(-1),
-    local_addr_("::"),
-    remote_addr_("::"),
-    local_port_(0),
-    remote_port_(0),
-    buffer_out_(0) {
-    data_.resize(buf_len);
-    memcpy(&data_[0], buf, buf_len);
+Pkt6::Pkt6(const uint8_t* buf, uint32_t buf_len, DHCPv6Proto proto /* = UDP */)
+   :Pkt(buf, buf_len, DEFAULT_ADDRESS6, DEFAULT_ADDRESS6, 0, 0),
+    proto_(proto), msg_type_(0) {
 }
 
-Pkt6::Pkt6(uint8_t msg_type, uint32_t transid, DHCPv6Proto proto /*= UDP*/) :
-    proto_(proto),
-    msg_type_(msg_type),
-    transid_(transid),
-    iface_(""),
-    ifindex_(-1),
-    local_addr_("::"),
-    remote_addr_("::"),
-    local_port_(0),
-    remote_port_(0),
-    buffer_out_(0) {
+Pkt6::Pkt6(uint8_t msg_type, uint32_t transid, DHCPv6Proto proto /*= UDP*/)
+:Pkt(transid, DEFAULT_ADDRESS6, DEFAULT_ADDRESS6, 0, 0), proto_(proto),
+    msg_type_(msg_type) {
 }
 
-uint16_t Pkt6::len() {
+size_t Pkt6::len() {
     if (relay_info_.empty()) {
         return (directLen());
     } else {
@@ -488,21 +473,6 @@ Pkt6::getOptions(uint16_t opt_type) {
     return (found);
 }
 
-void
-Pkt6::addOption(const OptionPtr& opt) {
-    options_.insert(pair<int, boost::shared_ptr<Option> >(opt->getType(), opt));
-}
-
-bool
-Pkt6::delOption(uint16_t type) {
-    isc::dhcp::OptionCollection::iterator x = options_.find(type);
-    if (x!=options_.end()) {
-        options_.erase(x);
-        return (true); // delete successful
-    }
-    return (false); // can't find option to be deleted
-}
-
 void Pkt6::repack() {
     buffer_out_.writeData(&data_[0], data_.size());
 }
@@ -583,18 +553,6 @@ void Pkt6::copyRelayInfo(const Pkt6Ptr& question) {
         // Add this relay-forw info (client's message) to our relay-repl
         // message (server's response)
         relay_info_.push_back(info);
-    }
-}
-
-bool
-Pkt6::inClass(const std::string& client_class) {
-    return (classes_.find(client_class) != classes_.end());
-}
-
-void
-Pkt6::addClass(const std::string& client_class) {
-    if (classes_.find(client_class) == classes_.end()) {
-        classes_.insert(client_class);
     }
 }
 
