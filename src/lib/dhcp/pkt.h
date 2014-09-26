@@ -167,7 +167,40 @@ public:
     /// data format change etc.
     OptionBuffer data_;
 
-    virtual ~Pkt() { }
+    /// @brief Returns the first option of specified type.
+    ///
+    /// Returns the first option of specified type. Note that in DHCPv6 several
+    /// instances of the same option are allowed (and frequently used).
+    /// Also see \ref getOptions().
+    ///
+    /// @param type option type we are looking for
+    ///
+    /// @return pointer to found option (or NULL)
+    OptionPtr getOption(uint16_t type) const;
+
+    /// @brief Update packet timestamp.
+    ///
+    /// Updates packet timestamp. This method is invoked
+    /// by interface manager just before sending or
+    /// just after receiving it.
+    /// @throw isc::Unexpected if timestamp update failed
+    void updateTimestamp();
+
+    /// @brief Copies content of input buffer to output buffer.
+    ///
+    /// This is mostly a diagnostic function. It is being used for sending
+    /// received packet. Received packet is stored in bufferIn_, but
+    /// transmitted data is stored in buffer_out_. If we want to send packet
+    /// that we just received, a copy between those two buffers is necessary.
+    void repack();
+
+    /// @brief virtual desctructor
+    ///
+    /// There is nothing to clean up here, but since there are virtual methods,
+    /// we define virtual destructor to ensure that derived classes will have
+    /// a virtual one, too.
+    virtual ~Pkt() {
+    }
 
 protected:
 

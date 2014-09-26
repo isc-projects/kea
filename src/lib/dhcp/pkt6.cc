@@ -451,15 +451,6 @@ Pkt6::toText() {
     return tmp.str();
 }
 
-OptionPtr
-Pkt6::getOption(uint16_t opt_type) {
-    isc::dhcp::OptionCollection::const_iterator x = options_.find(opt_type);
-    if (x!=options_.end()) {
-        return (*x).second;
-    }
-    return OptionPtr(); // NULL
-}
-
 isc::dhcp::OptionCollection
 Pkt6::getOptions(uint16_t opt_type) {
     isc::dhcp::OptionCollection found;
@@ -471,15 +462,6 @@ Pkt6::getOptions(uint16_t opt_type) {
         }
     }
     return (found);
-}
-
-void Pkt6::repack() {
-    buffer_out_.writeData(&data_[0], data_.size());
-}
-
-void
-Pkt6::updateTimestamp() {
-    timestamp_ = boost::posix_time::microsec_clock::universal_time();
 }
 
 const char*

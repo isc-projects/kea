@@ -104,14 +104,6 @@ public:
     /// Method will throw exception if anomaly is found.
     void check();
 
-    /// @brief Copies content of input buffer to output buffer.
-    ///
-    /// This is mostly a diagnostic function. It is being used for sending
-    /// received packet. Received packet is stored in bufferIn_, but
-    /// transmitted data is stored in buffer_out_. If we want to send packet
-    /// that we just received, a copy between those two buffers is necessary.
-    void repack();
-
     /// @brief Returns text representation of the packet.
     ///
     /// This function is useful mainly for debugging.
@@ -303,18 +295,6 @@ public:
     virtual void
     addOption(const OptionPtr& opt);
 
-    /// @brief Returns an option of specified type.
-    ///
-    /// @return returns option of requested type (or NULL)
-    ///         if no such option is present
-    OptionPtr
-    getOption(uint8_t opt_type) const;
-
-    /// @brief Deletes specified option
-    /// @param type option type to be deleted
-    /// @return true if anything was deleted, false otherwise
-    bool delOption(uint8_t type);
-
     /// @brief Returns interface name.
     ///
     /// Returns interface name over which packet was received or is
@@ -489,14 +469,6 @@ public:
         callback_ = callback;
     }
 
-    /// @brief Update packet timestamp.
-    ///
-    /// Updates packet timestamp. This method is invoked
-    /// by interface manager just before sending or
-    /// just after receiving it.
-    /// @throw isc::Unexpected if timestamp update failed
-    void updateTimestamp();
-
     /// @brief That's the data of input buffer used in RX packet.
     ///
     /// @note Note that InputBuffer does not store the data itself, but just
@@ -592,13 +564,6 @@ protected:
     uint8_t file_[MAX_FILE_LEN];
 
     // end of real DHCPv4 fields
-
-    /// packet timestamp
-    boost::posix_time::ptime timestamp_;
-
-    /// A callback to be called to unpack options from the packet.
-    UnpackOptionsCallback callback_;
-
 }; // Pkt4 class
 
 typedef boost::shared_ptr<Pkt4> Pkt4Ptr;
