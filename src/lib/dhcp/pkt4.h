@@ -21,8 +21,8 @@
 #include <dhcp/option.h>
 #include <dhcp/hwaddr.h>
 #include <dhcp/classify.h>
+#include <dhcp/pkt.h>
 
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <iostream>
@@ -35,7 +35,7 @@ namespace isc {
 
 namespace dhcp {
 
-class Pkt4 {
+class Pkt4 : public Pkt {
 public:
 
     /// length of the CHADDR field in DHCPv4 message
@@ -88,7 +88,8 @@ public:
     /// be stored in options_ container.
     ///
     /// Method with throw exception if packet parsing fails.
-    void unpack();
+    /// @return true if unpack was successful
+    bool unpack();
 
     /// @brief performs sanity check on a packet.
     ///
@@ -216,16 +217,6 @@ public:
     void
     setGiaddr(const isc::asiolink::IOAddress& giaddr) { giaddr_ = giaddr; };
 
-    /// @brief Sets transaction-id value
-    ///
-    /// @param transid transaction-id to be set.
-    void setTransid(uint32_t transid) { transid_ = transid; }
-
-    /// @brief Returns value of transaction-id field.
-    ///
-    /// @return transaction-id
-    uint32_t getTransid() const { return (transid_); };
-
     /// @brief Returns DHCP message type (e.g. 1 = DHCPDISCOVER).
     ///
     /// @return message type
@@ -304,33 +295,19 @@ public:
     /// @return hardware address structure
     HWAddrPtr getHWAddr() const { return (hwaddr_); }
 
-    /// @brief Returns reference to output buffer.
-    ///
-    /// Returned buffer will contain reasonable data only for
-    /// output (TX) packet and after pack() was called. This buffer
-    /// is only valid till Pkt4 object is valid.
-    ///
-    /// RX packet or TX packet before pack() will return buffer with
-    /// zero length. This buffer is returned as non-const, so hooks
-    /// framework (and user's callouts) can modify them if needed
-    ///
-    /// @return reference to output buffer
-    isc::util::OutputBuffer&
-    getBuffer() { return (buffer_out_); };
-
     /// @brief Add an option.
     ///
     /// Throws BadValue if option with that type is already present.
     ///
     /// @param opt option to be added
-    void
-    addOption(boost::shared_ptr<Option> opt);
+    virtual void
+    addOption(const OptionPtr& opt);
 
     /// @brief Returns an option of specified type.
     ///
     /// @return returns option of requested type (or NULL)
     ///         if no such option is present
-    boost::shared_ptr<Option>
+    OptionPtr
     getOption(uint8_t opt_type) const;
 
     /// @brief Deletes specified option
@@ -520,20 +497,6 @@ public:
     /// @throw isc::Unexpected if timestamp update failed
     void updateTimestamp();
 
-    /// Output buffer (used during message transmission)
-    ///
-    /// @warning This public member is accessed by derived
-    /// classes directly. One of such derived classes is
-    /// @ref perfdhcp::PerfPkt4. The impact on derived clasess'
-    /// behavior must be taken into consideration before making
-    /// changes to this member such as access scope restriction or
-    /// data format change etc. This field is also public, because
-    /// it may be modified by callouts (which are written in C++ now,
-    /// but we expect to also have them in Python, so any accesibility
-    /// methods would overly complicate things here and degrade
-    /// performance).
-    isc::util::OutputBuffer buffer_out_;
-
     /// @brief That's the data of input buffer used in RX packet.
     ///
     /// @note Note that InputBuffer does not store the data itself, but just
@@ -552,36 +515,6 @@ public:
     /// performance).
     std::vector<uint8_t> data_;
 
-    /// @brief Checks whether a client belongs to a given class
-    ///
-    /// @param client_class name of the class
-    /// @return true if belongs
-    bool inClass(const isc::dhcp::ClientClass& client_class);
-
-    /// @brief Adds packet to a specified class
-    ///
-    /// A packet can be added to the same class repeatedly. Any additional
-    /// attempts to add to a class the packet already belongs to, will be
-    /// ignored silently.
-    ///
-    /// @note It is a matter of naming convention. Conceptually, the server
-    /// processes a stream of packets, with some packets belonging to given
-    /// classes. From that perspective, this method adds a packet to specifed
-    /// class. Implementation wise, it looks the opposite - the class name
-    /// is added to the packet. Perhaps the most appropriate name for this
-    /// method would be associateWithClass()? But that seems overly long,
-    /// so I decided to stick with addClass().
-    ///
-    /// @param client_class name of the class to be added
-    void addClass(const isc::dhcp::ClientClass& client_class);
-
-    /// @brief Classes this packet belongs to.
-    ///
-    /// This field is public, so the code outside of Pkt4 class can iterate over
-    /// existing classes. Having it public also solves the problem of returned
-    /// reference lifetime. It is preferred to use @ref inClass and @ref addClass
-    /// should be used to operate on this field.
-    ClientClasses classes_;
 
 private:
 
@@ -616,28 +549,6 @@ protected:
     // remote HW address (src if receiving packet, dst if sending packet)
     HWAddrPtr remote_hwaddr_;
 
-    /// local address (dst if receiving packet, src if sending packet)
-    isc::asiolink::IOAddress local_addr_;
-
-    /// remote address (src if receiving packet, dst if sending packet)
-    isc::asiolink::IOAddress remote_addr_;
-
-    /// name of the network interface the packet was received/to be sent over
-    std::string iface_;
-
-    /// @brief interface index
-    ///
-    /// Each network interface has assigned unique ifindex. It is functional
-    /// equivalent of name, but sometimes more useful, e.g. when using crazy
-    /// systems that allow spaces in interface names e.g. MS Windows)
-    uint32_t ifindex_;
-
-    /// local UDP port
-    uint16_t local_port_;
-
-    /// remote UDP port
-    uint16_t remote_port_;
-
     /// @brief message operation code
     ///
     /// Note: This is legacy BOOTP field. There's no need to manipulate it
@@ -655,9 +566,6 @@ protected:
 
     /// Number of relay agents traversed
     uint8_t hops_;
-
-    /// DHCPv4 transaction-id (32 bits, not 24 bits as in DHCPv6)
-    uint32_t transid_;
 
     /// elapsed (number of seconds since beginning of transmission)
     uint16_t secs_;
@@ -684,16 +592,6 @@ protected:
     uint8_t file_[MAX_FILE_LEN];
 
     // end of real DHCPv4 fields
-
-    /// collection of options present in this message
-    ///
-    /// @warning This protected member is accessed by derived
-    /// classes directly. One of such derived classes is
-    /// @ref perfdhcp::PerfPkt4. The impact on derived classes'
-    /// behavior must be taken into consideration before making
-    /// changes to this member such as access scope restriction or
-    /// data format change etc.
-    isc::dhcp::OptionCollection options_;
 
     /// packet timestamp
     boost::posix_time::ptime timestamp_;
