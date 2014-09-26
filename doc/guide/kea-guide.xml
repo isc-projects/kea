@@ -23,7 +23,7 @@
 -->
 
 <book>
-  <?xml-stylesheet href="bind10-guide.css" type="text/css"?>
+  <?xml-stylesheet href="kea-guide.css" type="text/css"?>
 
   <bookinfo>
     <title>Kea Administrator Reference Manual</title>
