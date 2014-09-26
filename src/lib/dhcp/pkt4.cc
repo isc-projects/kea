@@ -264,10 +264,6 @@ void Pkt4::setType(uint8_t dhcp_type) {
     }
 }
 
-void Pkt4::repack() {
-    buffer_out_.writeData(&data_[0], data_.size());
-}
-
 std::string
 Pkt4::toText() {
     stringstream tmp;
@@ -432,30 +428,6 @@ Pkt4::addOption(const OptionPtr& opt) {
                   << " already present in this message.");
     }
     options_.insert(pair<int, boost::shared_ptr<Option> >(opt->getType(), opt));
-}
-
-boost::shared_ptr<isc::dhcp::Option>
-Pkt4::getOption(uint8_t type) const {
-    OptionCollection::const_iterator x = options_.find(type);
-    if (x != options_.end()) {
-        return (*x).second;
-    }
-    return boost::shared_ptr<isc::dhcp::Option>(); // NULL
-}
-
-bool
-Pkt4::delOption(uint8_t type) {
-    isc::dhcp::OptionCollection::iterator x = options_.find(type);
-    if (x != options_.end()) {
-        options_.erase(x);
-        return (true); // delete successful
-    }
-    return (false); // can't find option to be deleted
-}
-
-void
-Pkt4::updateTimestamp() {
-    timestamp_ = boost::posix_time::microsec_clock::universal_time();
 }
 
 bool

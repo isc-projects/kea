@@ -169,18 +169,7 @@ public:
     /// Sets message type (e.g. 1 = SOLICIT)
     ///
     /// @param type message type to be set
-    void setType(uint8_t type) { msg_type_=type; };
-
-    /// @brief Returns the first option of specified type.
-    ///
-    /// Returns the first option of specified type. Note that in DHCPv6 several
-    /// instances of the same option are allowed (and frequently used).
-    /// Also see \ref getOptions().
-    ///
-    /// @param type option type we are looking for
-    ///
-    /// @return pointer to found option (or NULL)
-    OptionPtr getOption(uint16_t type);
+    virtual void setType(uint8_t type) { msg_type_=type; };
 
     /// @brief returns option inserted by relay
     ///
@@ -219,11 +208,6 @@ public:
     /// @param type option type we are looking for
     /// @return instance of option collection with requested options
     isc::dhcp::OptionCollection getOptions(uint16_t type);
-
-    /// @brief This method copies data from output buffer to input buffer
-    ///
-    /// This is useful only in testing
-    void repack();
 
     /// @brief Sets remote address.
     ///
@@ -310,14 +294,6 @@ public:
     ///
     /// @param relay structure with necessary relay information
     void addRelayInfo(const RelayInfo& relay);
-
-    /// @brief Update packet timestamp.
-    ///
-    /// Updates packet timestamp. This method is invoked
-    /// by interface manager just before sending or
-    /// just after receiving it.
-    /// @throw isc::Unexpected if timestamp update failed
-    void updateTimestamp();
 
     /// @brief Return textual type of packet.
     ///
