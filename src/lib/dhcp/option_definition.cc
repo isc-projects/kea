@@ -92,15 +92,6 @@ OptionDefinition::OptionDefinition(const std::string& name,
       encapsulated_space_(encapsulated_space) {
 }
 
-OptionDefinition::OptionDefinition(const OptionDefinition& def)
-    : name_(def.getName()),
-      code_(def.getCode()),
-      type_(def.getType()),
-      array_type_(def.getArrayType()),
-      encapsulated_space_(def.getEncapsulatedSpace()),
-      record_fields_(def.getRecordFields()) {
-}
-
 bool
 OptionDefinition::equals(const OptionDefinition& other) const {
     return (name_ == other.name_ &&
