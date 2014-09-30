@@ -54,7 +54,7 @@ CfgOption::add(const OptionPtr& option, const bool persistent,
 }
 
 void
-CfgOption::merge(CfgOption& other) const {
+CfgOption::mergeTo(CfgOption& other) const {
     // Merge non-vendor options.
     mergeInternal(options_, other.options_);
     // Merge vendor options.
@@ -62,11 +62,11 @@ CfgOption::merge(CfgOption& other) const {
 }
 
 void
-CfgOption::copy(CfgOption& other) const {
-    // Create empty object and "merge" data to it.
-    CfgOption new_cfg;
-    merge(new_cfg);
-    other = new_cfg;
+CfgOption::copyTo(CfgOption& other) const {
+    // Remove any existing data in the destination.
+    other.options_.clearItems();
+    other.vendor_options_.clearItems();
+    mergeTo(other);
 }
 
 void

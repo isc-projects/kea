@@ -1066,9 +1066,9 @@ SubnetConfigParser::createSubnet() {
     }
 
     // Merge globally defined options to the subnet specific options.
-    CfgMgr::instance().getStagingCfg()->getCfgOption()->merge(*options_);
+    CfgMgr::instance().getStagingCfg()->getCfgOption()->mergeTo(*options_);
     // Copy all options to the subnet configuration.
-    options_->copy(*subnet_->getCfgOption());
+    options_->copyTo(*subnet_->getCfgOption());
     // Append suboptions to the top-level options.
     subnet_->getCfgOption()->encapsulate();
 }
