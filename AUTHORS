@@ -60,6 +60,9 @@ We have received the following contributions:
    2014-08: configure.ac update: AC_PROG_LIBTOOL => LT_INIT
    2014-08: PostgreSQL compilation fix on i686
 
+ - Adam Osuchowski, Silesian University of Technology
+   2014-09: Examples corrected in Kea ARM
+
 Kea uses log4cplus (http://sourceforge.net/projects/log4cplus/) for logging,
 Boost (http://www.boost.org/) library for almost everything, and can use Botan
 (http://botan.randombit.net/) or OpenSSL (https://www.openssl.org/) for
