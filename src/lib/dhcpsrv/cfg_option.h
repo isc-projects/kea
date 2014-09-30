@@ -260,14 +260,14 @@ public:
     /// copied.
     ///
     /// @param [out] other Configuration object to merge to.
-    void merge(CfgOption& other) const;
+    void mergeTo(CfgOption& other) const;
 
     /// @brief Copies this configuration to another configuration.
     ///
     /// This method copies options configuration to another object.
     ///
     /// @param [out] other An object to copy the configuration to.
-    void copy(CfgOption& other) const;
+    void copyTo(CfgOption& other) const;
 
     /// @brief Appends encapsulated options to top-level options.
     ///
