@@ -1,11 +1,13 @@
 840.	[func]		nicolas
 	PktFilterInet::send method now sets source IPv4 address explicitly.
-	This enabled perfdhcp to control its source address on systems
-	that have more than one address assigned to a given interface.
+	This enabled perfdhcp to control its source address on systems that have
+	more than one address assigned to a given interface. Thanks to
+	Nicolas Chaigneau from Capgemini for providing this fix.
 	(Github #2, git 6ac36ed7a1d97bcf52ffb2aec7cbf116e58e5803)
 
 839.	[doc]		adam
-	DHCPv4 examples corrected in Kea ARM.
+	DHCPv4 examples corrected in Kea ARM. Thanks to Adam Osuchowski
+	from Silesian University of Technology for providing this fix.
 	(Github #1, git 15785c0e28190659b037cfcca19f0267ccd9049f)
 
 838.	[bug]		tomek
