@@ -86,5 +86,22 @@ Pkt::setHWAddrMember(const uint8_t htype, const uint8_t,
     hw_addr.reset(new HWAddr(mac_addr, htype));
 }
 
+HWAddrPtr
+Pkt::getMAC(MACSource from) {
+    HWAddrPtr mac;
+    if (from == MAC_SOURCE_RAW || from == MAC_SOURCE_ANY) {
+        mac = getRemoteHWAddr();
+        if (mac) {
+            return (mac);
+        }
+    }
+
+    /// @todo: add other MAC acquisition methods here
+
+
+    // Ok, none of the methods were suitable. Return NULL.
+    return (HWAddrPtr());
+}
+
 };
 };

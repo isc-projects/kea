@@ -34,6 +34,49 @@ namespace dhcp {
 /// This class is purely virtual. Please instantiate Pkt4, Pkt6 or any
 /// other derived classes.
 class Pkt {
+public:
+
+    /// @brief specified where did we get this MAC address from?
+    ///
+    /// The list covers all possible MAC sources. The uncommented ones
+    /// are currently supported. When you implement a new method, please
+    /// uncomment appropriate line here.
+    enum MACSource {
+
+        /// Not really a type, only used in getMAC() calls
+        MAC_SOURCE_ANY,
+
+        /// obtained first hand from raw socket (100% reliable)
+        MAC_SOURCE_RAW,
+
+        /// extracted from DUID-LL or DUID-LLT (not reliable as the client
+        /// can send fake DUID)
+        // MAC_SOURCE_DUID,
+
+        /// extracted from IPv6 link-local address. Client can use different
+        /// IID other than EUI-64, e.g. Windows supports RFC4941 and uses
+        /// random values instead of EUI-64.
+        // MAC_SOURCE_IPV6_LINK_LOCAL,
+
+        /// RFC6939 (a relay agent can insert client link layer address option)
+        /// Note that a skilled attacker can fake that by sending his request
+        /// relayed, so the legitimate relay will think it's a second relay.
+        // MAC_SOURCE_CLIENT_ADDR_RELAY_OPTION,
+
+        /// A relay can insert remote-id. In some deployments it contains a MAC
+        /// address.
+        // MAC_SOURCE_REMOTE_ID,
+
+        /// A relay can insert a subscriber-id option. In some deployments it
+        /// contains a MAC address.
+        // MAC_SOURCE_SUBSCRIBER_ID,
+
+        /// A CMTS (acting as DHCP relay agent) that supports DOCSIS standard
+        /// can insert DOCSIS options that contain client's MAC address.
+        /// Client in this context would be a cable modem.
+        // MAC_SOURCE_DOCSIS_OPTIONS
+    };
+
 protected:
 Pkt(uint32_t transid, const isc::asiolink::IOAddress& local_addr,
     const isc::asiolink::IOAddress& remote_addr, uint16_t local_port,
@@ -381,12 +424,21 @@ public:
     void setRemoteHWAddr(const uint8_t htype, const uint8_t hlen,
                          const std::vector<uint8_t>& mac_addr);
 
-    /// @brief Returns the remote HW address.
+    /// @brief Returns the remote HW address obtained from raw sockets.
     ///
     /// @return remote HW address.
     HWAddrPtr getRemoteHWAddr() const {
         return (remote_hwaddr_);
     }
+
+    /// @brief Returns MAC address.
+    ///
+    /// The difference between this method and getRemoteHWAddr() is that
+    /// getRemoteHWAddr() returns only what was obtained from raw sockets.
+    /// This method is more generic and can attempt to obtain MAC from
+    /// varied sources: raw sockets, client-id, link-local IPv6 address,
+    /// and various relay options.
+    HWAddrPtr getMAC(MACSource from);
 
     /// @brief virtual desctructor
     ///
