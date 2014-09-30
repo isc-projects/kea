@@ -21,9 +21,9 @@ namespace isc {
 namespace dhcp {
 
 void
-CfgOptionDef::copy(CfgOptionDef& new_config) const {
-    CfgOptionDef cfg;
-    std::list<std::string> names = option_definitions_.getOptionSpaceNames();
+CfgOptionDef::copyTo(CfgOptionDef& new_config) const {
+    const std::list<std::string>& names =
+        option_definitions_.getOptionSpaceNames();
     for (std::list<std::string>::const_iterator name = names.begin();
          name != names.end(); ++name) {
         OptionDefContainerPtr defs = getAll(*name);
@@ -31,18 +31,17 @@ CfgOptionDef::copy(CfgOptionDef& new_config) const {
              def != defs->end(); ++def) {
             OptionDefinitionPtr new_def =
                 OptionDefinitionPtr(new OptionDefinition(**def));
-            cfg.add(new_def, *name);
+            new_config.add(new_def, *name);
         }
     }
-    new_config = cfg;
 }
 
 bool
 CfgOptionDef::equals(const CfgOptionDef& other) const {
     // Get our option space names.
-    std::list<std::string> names = option_definitions_.getOptionSpaceNames();
+    const std::list<std::string>& names = option_definitions_.getOptionSpaceNames();
     // Get option space names held by the other object.
-    std::list<std::string>
+    const std::list<std::string>&
         other_names = other.option_definitions_.getOptionSpaceNames();
     // Compareg that sizes are the same. If they hold different number of
     // option space names the objects are not equal.
@@ -86,11 +85,13 @@ CfgOptionDef::add(const OptionDefinitionPtr& def,
 
     // Option definition being added must be a valid pointer.
     } else if (!def) {
-        isc_throw(MalformedOptionDefinition, "option definition must not be NULL");
+        isc_throw(MalformedOptionDefinition,
+                  "option definition must not be NULL");
     // Must not duplicate an option definition.
     } else if (get(option_space, def->getCode())) {
         isc_throw(DuplicateOptionDefinition, "option definition with code '"
-                  << def->getCode() << "' already exists");
+                  << def->getCode() << "' already exists in option"
+                  " space '" << option_space << "'");
 
     // Must not override standard option definition.
     } else if (((option_space == DHCP4_OPTION_SPACE) &&

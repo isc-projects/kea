@@ -183,10 +183,25 @@ public:
                               const std::string& type,
                               const char* encapsulated_space);
 
-    /// @brief Copy constructor.
+    /// @brief Constructor.
     ///
-    /// @param def Option definition to be used to create a new instance.
-    explicit OptionDefinition(const OptionDefinition& def);
+    /// This constructor sets the name of the option space that is
+    /// encapsulated by this option. The encapsulated option space
+    /// identifies sub-options that are carried within this option.
+    /// This constructor does not allow to set array indicator
+    /// because options comprising an array of data fields must
+    /// not be used with sub-options.
+    ///
+    /// @param name option name.
+    /// @param code option code.
+    /// @param type option data type.
+    /// @param encapsulated_space name of the option space being
+    /// encapsulated by this option.
+    explicit OptionDefinition(const std::string& name,
+                              const uint16_t code,
+                              const OptionDataType type,
+                              const char* encapsulated_space);
+
 
     /// @name Comparison functions and operators.
     ///
@@ -216,26 +231,6 @@ public:
         return (!equals(other));
     }
     //@}
-
-    /// @brief Constructor.
-    ///
-    /// This constructor sets the name of the option space that is
-    /// encapsulated by this option. The encapsulated option space
-    /// identifies sub-options that are carried within this option.
-    /// This constructor does not allow to set array indicator
-    /// because options comprising an array of data fields must
-    /// not be used with sub-options.
-    ///
-    /// @param name option name.
-    /// @param code option code.
-    /// @param type option data type.
-    /// @param encapsulated_space name of the option space being
-    /// encapsulated by this option.
-    explicit OptionDefinition(const std::string& name,
-                              const uint16_t code,
-                              const OptionDataType type,
-                              const char* encapsulated_space);
-
 
     /// @brief Adds data field to the record.
     ///
