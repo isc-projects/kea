@@ -226,9 +226,8 @@ PktFilterInet::send(const Iface&, uint16_t sockfd,
     // Setting the interface is a bit more involved.
     //
     // We have to create a "control message", and set that to
-    // define the IPv4 packet information. We could set the
-    // source address if we wanted, but we can safely let the
-    // kernel decide what that should be.
+    // define the IPv4 packet information. We set the source address
+    // to handle correctly interfaces with multiple addresses.
     m.msg_control = &control_buf_[0];
     m.msg_controllen = control_buf_len_;
     struct cmsghdr* cmsg = CMSG_FIRSTHDR(&m);
@@ -238,6 +237,7 @@ PktFilterInet::send(const Iface&, uint16_t sockfd,
     struct in_pktinfo* pktinfo =(struct in_pktinfo *)CMSG_DATA(cmsg);
     memset(pktinfo, 0, sizeof(struct in_pktinfo));
     pktinfo->ipi_ifindex = pkt->getIndex();
+	pktinfo->ipi_spec_dst.s_addr = htonl(pkt->getLocalAddr()); // set the source IP address
     m.msg_controllen = CMSG_SPACE(sizeof(struct in_pktinfo));
 #endif
 
