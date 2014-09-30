@@ -18,6 +18,7 @@
 #include <asiolink/io_address.h>
 #include <util/buffer.h>
 #include <dhcp/option.h>
+#include <dhcp/hwaddr.h>
 #include <dhcp/classify.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -66,8 +67,38 @@ Pkt(uint32_t transid, const isc::asiolink::IOAddress& local_addr,
 
 public:
 
+    /// @brief Prepares on-wire format of DHCP (either v4 or v6) packet.
+    ///
+    /// Prepares on-wire format of message and all its options.
+    /// Options must be stored in options_ field.
+    /// Output buffer will be stored in buffer_out_.
+    /// The buffer_out_ is cleared before writting to the buffer.
+    ///
+    /// @note This is a pure virtual method. Actual implementations are in
+    /// Pkt4 and Pkt6 class.
+    ///
+    /// @throw InvalidOperation if packing fails
     virtual void pack() = 0;
-    //virtual bool unpack() = 0;
+
+    /// @brief Parses on-wire form of DHCP (either v4 or v6) packet.
+    ///
+    /// Parses received packet, stored in on-wire format in bufferIn_.
+    ///
+    /// Will create a collection of option objects that will
+    /// be stored in options_ container.
+    ///
+    /// @note This is a pure virtual method. Actual implementations are in
+    /// Pkt4 and Pkt6 class.
+    ///
+    /// Method with throw exception if packet parsing fails.
+    ///
+    /// @todo Pkt4 throws exceptions when unpacking fails, while Pkt6
+    ///       catches exceptions and returns false. We need to unify that
+    ///       behavior one day (most likely using exceptions and turning
+    ///       return type to void).
+    ///
+    /// @return true if unpack was successful
+    virtual bool unpack() = 0;
 
     /// @brief Returns reference to output buffer.
     ///
@@ -97,6 +128,14 @@ public:
     /// @return true if option was deleted, false if no such option existed
     bool delOption(uint16_t type);
 
+    /// @brief Returns text representation of the packet.
+    ///
+    /// This function is useful mainly for debugging.
+    ///
+    /// @note This is pure virtual method. Actual implementations are in
+    ///       Pkt4 and Pkt6 classes.
+    ///
+    /// @return string with text representation
     virtual std::string toText() = 0;
 
     /// Returns packet type
@@ -108,10 +147,16 @@ public:
 
     /// Returns message type (e.g. 1 = SOLICIT)
     ///
+    /// This is a pure virtual method. DHCPv4 stores type in option 53 and
+    /// DHCPv6 stores it in the header.
+    ///
     /// @return message type
     virtual uint8_t getType() const = 0;
 
     /// Sets message type (e.g. 1 = SOLICIT)
+    ///
+    /// This is a pure virtual method. DHCPv4 stores type in option 53 and
+    /// DHCPv6 stores it in the header.
     ///
     /// @param type message type to be set
     virtual void setType(uint8_t type) = 0;
@@ -186,6 +231,16 @@ public:
     /// @throw isc::Unexpected if timestamp update failed
     void updateTimestamp();
 
+    /// @brief Returns packet timestamp.
+    ///
+    /// Returns packet timestamp value updated when
+    /// packet is received or send.
+    ///
+    /// @return packet timestamp.
+    const boost::posix_time::ptime& getTimestamp() const {
+        return timestamp_;
+    }
+
     /// @brief Copies content of input buffer to output buffer.
     ///
     /// This is mostly a diagnostic function. It is being used for sending
@@ -193,6 +248,145 @@ public:
     /// transmitted data is stored in buffer_out_. If we want to send packet
     /// that we just received, a copy between those two buffers is necessary.
     void repack();
+
+    /// collection of options present in this message
+    ///
+    /// @warning This public member is accessed by derived
+    /// classes directly. One of such derived classes is
+    /// @ref perfdhcp::PerfPkt6. The impact on derived clasess'
+    /// behavior must be taken into consideration before making
+    /// changes to this member such as access scope restriction or
+    /// data format change etc.
+    isc::dhcp::OptionCollection options_;
+
+    /// @brief Set callback function to be used to parse options.
+    ///
+    /// @param callback An instance of the callback function or NULL to
+    /// uninstall callback.
+    void setCallback(UnpackOptionsCallback callback) {
+        callback_ = callback;
+    }
+
+    /// @brief Sets remote IP address.
+    ///
+    /// @param remote specifies remote address
+    void setRemoteAddr(const isc::asiolink::IOAddress& remote) {
+        remote_addr_ = remote;
+    }
+
+    /// @brief Returns remote IP address
+    ///
+    /// @return remote address
+    const isc::asiolink::IOAddress& getRemoteAddr() const {
+        return (remote_addr_);
+    }
+
+    /// @brief Sets local IP address.
+    ///
+    /// @param local specifies local address
+    void setLocalAddr(const isc::asiolink::IOAddress& local) {
+        local_addr_ = local;
+    }
+
+    /// @brief Returns local IP address.
+    ///
+    /// @return local address
+    const isc::asiolink::IOAddress& getLocalAddr() const {
+        return (local_addr_);
+    }
+
+    /// @brief Sets local port.
+    ///
+    /// @param local specifies local port
+    void setLocalPort(uint16_t local) {
+        local_port_ = local;
+    }
+
+    /// @brief Returns local port.
+    ///
+    /// @return local port
+    uint16_t getLocalPort() const {
+        return (local_port_);
+    }
+
+    /// @brief Sets remote port.
+    ///
+    /// @param remote specifies remote port
+    void setRemotePort(uint16_t remote) {
+        remote_port_ = remote;
+    }
+
+    /// @brief Returns remote port.
+    ///
+    /// @return remote port
+    uint16_t getRemotePort() const {
+        return (remote_port_);
+    }
+
+    /// @brief Sets interface index.
+    ///
+    /// @param ifindex specifies interface index.
+    void setIndex(uint32_t ifindex) {
+        ifindex_ = ifindex;
+    };
+
+    /// @brief Returns interface index.
+    ///
+    /// @return interface index
+    uint32_t getIndex() const {
+        return (ifindex_);
+    };
+
+    /// @brief Returns interface name.
+    ///
+    /// Returns interface name over which packet was received or is
+    /// going to be transmitted.
+    ///
+    /// @return interface name
+    std::string getIface() const { return iface_; };
+
+    /// @brief Sets interface name.
+    ///
+    /// Sets interface name over which packet was received or is
+    /// going to be transmitted.
+    ///
+    /// @return interface name
+    void setIface(const std::string& iface ) { iface_ = iface; };
+
+    /// @brief Sets remote HW address.
+    ///
+    /// Sets hardware address from an existing HWAddr structure.
+    /// The remote address is a destination address for outgoing
+    /// packet and source address for incoming packet. When this
+    /// is an outgoing packet, this address will be used to
+    /// construct the link layer header.
+    ///
+    /// @param addr structure representing HW address.
+    ///
+    /// @throw BadValue if addr is null
+    void setRemoteHWAddr(const HWAddrPtr& addr);
+
+    /// @brief Sets remote HW address.
+    ///
+    /// Sets the destination HW address for the outgoing packet
+    /// or source HW address for the incoming packet. When this
+    /// is an outgoing packet this address will be used to construct
+    /// the link layer header.
+    ///
+    /// @note mac_addr must be a buffer of at least hlen bytes.
+    ///
+    /// @param htype hardware type (will be sent in htype field)
+    /// @param hlen hardware length (will be sent in hlen field)
+    /// @param mac_addr pointer to hardware address
+    void setRemoteHWAddr(const uint8_t htype, const uint8_t hlen,
+                         const std::vector<uint8_t>& mac_addr);
+
+    /// @brief Returns the remote HW address.
+    ///
+    /// @return remote HW address.
+    HWAddrPtr getRemoteHWAddr() const {
+        return (remote_hwaddr_);
+    }
 
     /// @brief virtual desctructor
     ///
@@ -229,16 +423,6 @@ protected:
     /// remote TCP or UDP port
     uint16_t remote_port_;
 
-    /// collection of options present in this message
-    ///
-    /// @warning This public member is accessed by derived
-    /// classes directly. One of such derived classes is
-    /// @ref perfdhcp::PerfPkt6. The impact on derived clasess'
-    /// behavior must be taken into consideration before making
-    /// changes to this member such as access scope restriction or
-    /// data format change etc.
-    isc::dhcp::OptionCollection options_;
-
     /// Output buffer (used during message transmission)
     ///
     /// @warning This protected member is accessed by derived
@@ -263,8 +447,28 @@ protected:
     /// packet timestamp
     boost::posix_time::ptime timestamp_;
 
+    // remote HW address (src if receiving packet, dst if sending packet)
+    HWAddrPtr remote_hwaddr_;
+
     /// A callback to be called to unpack options from the packet.
     UnpackOptionsCallback callback_;
+
+private:
+
+    /// @brief Generic method that validates and sets HW address.
+    ///
+    /// This is a generic method used by all modifiers of this class
+    /// which set class members representing HW address.
+    ///
+    /// @param htype hardware type.
+    /// @param hlen hardware length.
+    /// @param mac_addr pointer to actual hardware address.
+    /// @param [out] hw_addr pointer to a class member to be modified.
+    ///
+    /// @trow isc::OutOfRange if invalid HW address specified.
+    virtual void setHWAddrMember(const uint8_t htype, const uint8_t hlen,
+                                 const std::vector<uint8_t>& mac_addr,
+                                 HWAddrPtr& hw_addr);
 };
 
 }; // namespace isc::dhcp

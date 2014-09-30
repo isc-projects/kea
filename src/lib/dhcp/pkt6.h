@@ -209,84 +209,6 @@ public:
     /// @return instance of option collection with requested options
     isc::dhcp::OptionCollection getOptions(uint16_t type);
 
-    /// @brief Sets remote address.
-    ///
-    /// @param remote specifies remote address
-    void setRemoteAddr(const isc::asiolink::IOAddress& remote) { remote_addr_ = remote; }
-
-    /// @brief Returns remote address
-    ///
-    /// @return remote address
-    const isc::asiolink::IOAddress& getRemoteAddr() const {
-        return (remote_addr_);
-    }
-
-    /// @brief Sets local address.
-    ///
-    /// @param local specifies local address
-    void setLocalAddr(const isc::asiolink::IOAddress& local) { local_addr_ = local; }
-
-    /// @brief Returns local address.
-    ///
-    /// @return local address
-    const isc::asiolink::IOAddress& getLocalAddr() const {
-        return (local_addr_);
-    }
-
-    /// @brief Sets local port.
-    ///
-    /// @param local specifies local port
-    void setLocalPort(uint16_t local) { local_port_ = local; }
-
-    /// @brief Returns local port.
-    ///
-    /// @return local port
-    uint16_t getLocalPort() const { return (local_port_); }
-
-    /// @brief Sets remote port.
-    ///
-    /// @param remote specifies remote port
-    void setRemotePort(uint16_t remote) { remote_port_ = remote; }
-
-    /// @brief Returns remote port.
-    ///
-    /// @return remote port
-    uint16_t getRemotePort() const { return (remote_port_); }
-
-    /// @brief Sets interface index.
-    ///
-    /// @param ifindex specifies interface index.
-    void setIndex(uint32_t ifindex) { ifindex_ = ifindex; };
-
-    /// @brief Returns interface index.
-    ///
-    /// @return interface index
-    uint32_t getIndex() const { return (ifindex_); };
-
-    /// @brief Returns interface name.
-    ///
-    /// Returns interface name over which packet was received or is
-    /// going to be transmitted.
-    ///
-    /// @return interface name
-    std::string getIface() const { return iface_; };
-
-    /// @brief Returns packet timestamp.
-    ///
-    /// Returns packet timestamp value updated when
-    /// packet is received or sent.
-    ///
-    /// @return packet timestamp.
-    const boost::posix_time::ptime& getTimestamp() const { return timestamp_; }
-
-    /// @brief Sets interface name.
-    ///
-    /// Sets interface name over which packet was received or is
-    /// going to be transmitted.
-    ///
-    /// @return interface name
-    void setIface(const std::string& iface ) { iface_ = iface; };
-
     /// @brief add information about one traversed relay
     ///
     /// This adds information about one traversed relay, i.e.
@@ -322,14 +244,6 @@ public:
     ///         Note that this string is statically allocated and MUST NOT
     ///         be freed by the caller.
     const char* getName() const;
-
-    /// @brief Set callback function to be used to parse options.
-    ///
-    /// @param callback An instance of the callback function or NULL to
-    /// uninstall callback.
-    void setCallback(UnpackOptionsCallback callback) {
-        callback_ = callback;
-    }
 
     /// @brief copies relay information from client's packet to server's response
     ///
