@@ -127,11 +127,22 @@ TEST_F(OptionDefinitionTest, copyConstructor) {
     EXPECT_EQ(27, opt_def_copy.getCode());
     EXPECT_TRUE(opt_def_copy.getArrayType());
     EXPECT_TRUE(opt_def_copy.getEncapsulatedSpace().empty());
+    ASSERT_EQ(OPT_RECORD_TYPE, opt_def_copy.getType());
     const OptionDefinition::RecordFieldsCollection fields =
         opt_def_copy.getRecordFields();
     ASSERT_EQ(2, fields.size());
     EXPECT_EQ(OPT_UINT16_TYPE, fields[0]);
     EXPECT_EQ(OPT_STRING_TYPE, fields[1]);
+
+    // Let's make another test to check if encapsulated option space is
+    // copied properly.
+    OptionDefinition opt_def2("option-bar", 30, "uint32", "isc");
+    OptionDefinition opt_def_copy2(opt_def2);
+    EXPECT_EQ("option-bar", opt_def_copy2.getName());
+    EXPECT_EQ(30, opt_def_copy2.getCode());
+    EXPECT_FALSE(opt_def_copy2.getArrayType());
+    EXPECT_EQ(OPT_UINT32_TYPE, opt_def_copy2.getType());
+    EXPECT_EQ("isc", opt_def_copy2.getEncapsulatedSpace());
 }
 
 // This test checks that two option definitions may be compared fot equality.
@@ -143,6 +154,8 @@ TEST_F(OptionDefinitionTest, equality) {
                  != OptionDefinition("option-foo", 5, "uint16", false));
 
     // Differ by name.
+    EXPECT_FALSE(OptionDefinition("option-foo", 5, "uint16", false)
+                 == OptionDefinition("option-foobar", 5, "uint16", false));
     EXPECT_FALSE(OptionDefinition("option-bar", 5, "uint16", false)
                 == OptionDefinition("option-foo", 5, "uint16", false));
     EXPECT_TRUE(OptionDefinition("option-bar", 5, "uint16", false)
