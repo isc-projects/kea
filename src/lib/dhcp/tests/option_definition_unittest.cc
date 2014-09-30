@@ -47,6 +47,7 @@ class OptionDefinitionTest : public ::testing::Test {
 public:
     // @brief Constructor.
     OptionDefinitionTest() { }
+
 };
 
 // The purpose of this test is to verify that OptionDefinition
@@ -113,6 +114,99 @@ TEST_F(OptionDefinitionTest, constructor) {
                                   OPT_UNKNOWN_TYPE + 10,
                                   OPT_STRING_TYPE);
     );
+}
+
+// This test checks that the copy constructor works properly.
+TEST_F(OptionDefinitionTest, copyConstructor) {
+    OptionDefinition opt_def("option-foo", 27, "record", true);
+    ASSERT_NO_THROW(opt_def.addRecordField("uint16"));
+    ASSERT_NO_THROW(opt_def.addRecordField("string"));
+
+    OptionDefinition opt_def_copy(opt_def);
+    EXPECT_EQ("option-foo", opt_def_copy.getName());
+    EXPECT_EQ(27, opt_def_copy.getCode());
+    EXPECT_TRUE(opt_def_copy.getArrayType());
+    EXPECT_TRUE(opt_def_copy.getEncapsulatedSpace().empty());
+    ASSERT_EQ(OPT_RECORD_TYPE, opt_def_copy.getType());
+    const OptionDefinition::RecordFieldsCollection fields =
+        opt_def_copy.getRecordFields();
+    ASSERT_EQ(2, fields.size());
+    EXPECT_EQ(OPT_UINT16_TYPE, fields[0]);
+    EXPECT_EQ(OPT_STRING_TYPE, fields[1]);
+
+    // Let's make another test to check if encapsulated option space is
+    // copied properly.
+    OptionDefinition opt_def2("option-bar", 30, "uint32", "isc");
+    OptionDefinition opt_def_copy2(opt_def2);
+    EXPECT_EQ("option-bar", opt_def_copy2.getName());
+    EXPECT_EQ(30, opt_def_copy2.getCode());
+    EXPECT_FALSE(opt_def_copy2.getArrayType());
+    EXPECT_EQ(OPT_UINT32_TYPE, opt_def_copy2.getType());
+    EXPECT_EQ("isc", opt_def_copy2.getEncapsulatedSpace());
+}
+
+// This test checks that two option definitions may be compared fot equality.
+TEST_F(OptionDefinitionTest, equality) {
+    // Equal definitions.
+    EXPECT_TRUE(OptionDefinition("option-foo", 5, "uint16", false)
+                == OptionDefinition("option-foo", 5, "uint16", false));
+    EXPECT_FALSE(OptionDefinition("option-foo", 5, "uint16", false)
+                 != OptionDefinition("option-foo", 5, "uint16", false));
+
+    // Differ by name.
+    EXPECT_FALSE(OptionDefinition("option-foo", 5, "uint16", false)
+                 == OptionDefinition("option-foobar", 5, "uint16", false));
+    EXPECT_FALSE(OptionDefinition("option-bar", 5, "uint16", false)
+                == OptionDefinition("option-foo", 5, "uint16", false));
+    EXPECT_TRUE(OptionDefinition("option-bar", 5, "uint16", false)
+                 != OptionDefinition("option-foo", 5, "uint16", false));
+
+    // Differ by option code.
+    EXPECT_FALSE(OptionDefinition("option-foo", 5, "uint16", false)
+                == OptionDefinition("option-foo", 6, "uint16", false));
+    EXPECT_TRUE(OptionDefinition("option-foo", 5, "uint16", false)
+                 != OptionDefinition("option-foo", 6, "uint16", false));
+
+    // Differ by type of the data.
+    EXPECT_FALSE(OptionDefinition("option-foo", 5, "uint16", false)
+                == OptionDefinition("option-foo", 5, "uint32", false));
+    EXPECT_TRUE(OptionDefinition("option-foo", 5, "uint16", false)
+                 != OptionDefinition("option-foo", 5, "uint32", false));
+
+    // Differ by array-type property.
+    EXPECT_FALSE(OptionDefinition("option-foo", 5, "uint16", false)
+                == OptionDefinition("option-foo", 5, "uint16", true));
+    EXPECT_TRUE(OptionDefinition("option-foo", 5, "uint16", false)
+                 != OptionDefinition("option-foo", 5, "uint16", true));
+
+    // Differ by record fields.
+    OptionDefinition def1("option-foo", 5, "record");
+    OptionDefinition def2("option-foo", 5, "record");
+
+    // There are no record fields specified yet, so initially they have
+    // to be equal.
+    ASSERT_TRUE(def1 == def2);
+    ASSERT_FALSE(def1 != def2);
+
+    // Add some record fields.
+    ASSERT_NO_THROW(def1.addRecordField("uint16"));
+    ASSERT_NO_THROW(def2.addRecordField("uint16"));
+
+    // Definitions should still remain equal.
+    ASSERT_TRUE(def1 == def2);
+    ASSERT_FALSE(def1 != def2);
+
+    // Add additional record field to one of the definitions but not the
+    // other. They should now be unequal.
+    ASSERT_NO_THROW(def1.addRecordField("string"));
+    ASSERT_FALSE(def1 == def2);
+    ASSERT_TRUE(def1 != def2);
+
+    // Add the same record field to the other definition. They should now
+    // be equal again.
+    ASSERT_NO_THROW(def2.addRecordField("string"));
+    EXPECT_TRUE(def1 == def2);
+    EXPECT_FALSE(def1 != def2);
 }
 
 // The purpose of this test is to verify that various data fields

@@ -281,6 +281,8 @@ TEST_F(SrvConfigTest, copy) {
 
     conf1.addLoggingInfo(info);
     conf1.setCfgIface(cfg_iface);
+    conf1.getCfgOptionDef()->add(OptionDefinitionPtr(new OptionDefinition("option-foo", 5,
+                                                                          "string")), "isc");
 
     // Make sure both configurations are different.
     ASSERT_TRUE(conf1 != conf2);
@@ -336,6 +338,20 @@ TEST_F(SrvConfigTest, equality) {
     cfg_iface2.use(AF_INET, "eth0");
     conf2.setCfgIface(cfg_iface2);
 
+    EXPECT_TRUE(conf1 == conf2);
+    EXPECT_FALSE(conf1 != conf2);
+
+    // Differ by option definitions.
+    conf1.getCfgOptionDef()->
+        add(OptionDefinitionPtr(new OptionDefinition("option-foo", 123,
+                                                     "uint16_t")), "isc");
+
+    EXPECT_FALSE(conf1 == conf2);
+    EXPECT_TRUE(conf1 != conf2);
+
+    conf2.getCfgOptionDef()->
+        add(OptionDefinitionPtr(new OptionDefinition("option-foo", 123,
+                                                     "uint16_t")), "isc");
     EXPECT_TRUE(conf1 == conf2);
     EXPECT_FALSE(conf1 != conf2);
 }
