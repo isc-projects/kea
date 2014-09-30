@@ -18,6 +18,7 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <log/logger_support.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
@@ -57,6 +58,7 @@ public:
     }
 
     ~JSONFileBackendTest() {
+        isc::log::setDefaultLoggingOutput();
         static_cast<void>(unlink(TEST_FILE));
     };
 

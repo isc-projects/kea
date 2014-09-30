@@ -16,6 +16,7 @@
 #define DHCPSRV_CONFIG_H
 
 #include <dhcpsrv/cfg_iface.h>
+#include <dhcpsrv/cfg_option_def.h>
 #include <dhcpsrv/logging_info.h>
 #include <boost/shared_ptr.hpp>
 #include <vector>
@@ -104,6 +105,13 @@ public:
     /// @return true if sequence numbers are equal.
     bool sequenceEquals(const SrvConfig& other);
 
+    /// @name Modifiers and accesors for the configuration objects.
+    ///
+    /// @warning References to the objects returned by accessors are only
+    /// valid during the lifetime of the @c SrvConfig object which
+    /// returned them.
+    ///
+    //@{
     /// @brief Returns logging specific configuration.
     const LoggingInfoStorage& getLoggingInfo() const {
         return (logging_info_);
@@ -132,6 +140,30 @@ public:
     void setCfgIface(const CfgIface& cfg_iface) {
         cfg_iface_ = cfg_iface;
     }
+
+    /// @brief Return pointer to non-const object representing user-defined
+    /// option definitions.
+    ///
+    /// This function returns a pointer to the object which represents the
+    /// user defined option definitions grouped by option space name.
+    ///
+    /// @return Pointer to an object holding option definitions.
+    CfgOptionDefPtr getCfgOptionDef() {
+        return (cfg_option_def_);
+    }
+
+    /// @brief Returns pointer to the const object representing user-defined
+    /// option definitions.
+    ///
+    /// This function returns a pointer to the object which represents the
+    /// user defined option definitions grouped by option space name.
+    ///
+    /// @return Pointer to an object holding option definitions.
+    ConstCfgOptionDefPtr getCfgOptionDef() const {
+        return (cfg_option_def_);
+    }
+
+    //@}
 
     /// @brief Copies the currnet configuration to a new configuration.
     ///
@@ -211,6 +243,12 @@ private:
     /// Used to select interfaces on which the DHCP server will listen to
     /// queries.
     CfgIface cfg_iface_;
+
+    /// @brief Pointer to option definitions configuration.
+    ///
+    /// This object holds the user-defined option definitions grouped
+    /// by option space name.
+    CfgOptionDefPtr cfg_option_def_;
 
 };
 
