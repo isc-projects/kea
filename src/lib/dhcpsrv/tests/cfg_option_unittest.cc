@@ -167,7 +167,7 @@ TEST(CfgOption, merge) {
     // Merge source configuration to the destination configuration. The options
     // in the destination should be preserved. The options from the source
     // configuration should be added.
-    ASSERT_NO_THROW(cfg_src.merge(cfg_dst));
+    ASSERT_NO_THROW(cfg_src.mergeTo(cfg_dst));
 
     // Validate the options in the dhcp6 option space in the destination.
     for (uint16_t code = 100; code < 110; ++code) {
@@ -221,7 +221,7 @@ TEST(CfgOptionTest, copy) {
 
     // Copy entire configuration to the destination. This should override any
     // existing data.
-    ASSERT_NO_THROW(cfg_src.copy(cfg_dst));
+    ASSERT_NO_THROW(cfg_src.copyTo(cfg_dst));
 
     // Validate options in the destination configuration.
     for (uint16_t code = 100; code < 110; ++code) {
