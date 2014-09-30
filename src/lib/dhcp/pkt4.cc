@@ -330,21 +330,6 @@ Pkt4::setLocalHWAddr(const HWAddrPtr& addr) {
 }
 
 void
-Pkt4::setRemoteHWAddr(const uint8_t htype, const uint8_t hlen,
-                      const std::vector<uint8_t>& mac_addr) {
-    setHWAddrMember(htype, hlen, mac_addr, remote_hwaddr_);
-}
-
-void
-Pkt4::setRemoteHWAddr(const HWAddrPtr& addr) {
-    if (!addr) {
-        isc_throw(BadValue, "Setting remote HW address to NULL is"
-                  << " forbidden.");
-    }
-    remote_hwaddr_ = addr;
-}
-
-void
 Pkt4::setSname(const uint8_t* sname, size_t snameLen /*= MAX_SNAME_LEN*/) {
     if (snameLen > MAX_SNAME_LEN) {
         isc_throw(OutOfRange, "sname field (len=" << snameLen
