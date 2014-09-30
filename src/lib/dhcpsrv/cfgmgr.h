@@ -17,11 +17,9 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/option.h>
-#include <dhcp/option_definition.h>
 #include <dhcp/option_space.h>
 #include <dhcp/classify.h>
 #include <dhcpsrv/d2_client_mgr.h>
-#include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/srv_config.h>
@@ -105,41 +103,6 @@ public:
     /// CfgMgr is a singleton and this method is the only way of
     /// accessing it.
     static CfgMgr& instance();
-
-    /// @brief Add new option definition.
-    ///
-    /// @param def option definition to be added.
-    /// @param option_space name of the option space to add definition to.
-    ///
-    /// @throw isc::dhcp::DuplicateOptionDefinition when the particular
-    /// option definition already exists.
-    /// @throw isc::dhcp::MalformedOptionDefinition when the pointer to
-    /// an option definition is NULL.
-    /// @throw isc::BadValue when the option space name is empty or
-    /// when trying to override the standard option (in dhcp4 or dhcp6
-    /// option space).
-    void addOptionDef(const OptionDefinitionPtr& def,
-                      const std::string& option_space);
-
-    /// @brief Return option definitions for particular option space.
-    ///
-    /// @param option_space option space.
-    ///
-    /// @return pointer to the collection of option definitions for
-    /// the particular option space. The option collection is empty
-    /// if no option exists for the option space specified.
-    OptionDefContainerPtr
-    getOptionDefs(const std::string& option_space) const;
-
-    /// @brief Return option definition for a particular option space and code.
-    ///
-    /// @param option_space option space.
-    /// @param option_code option code.
-    ///
-    /// @return an option definition or NULL pointer if option definition
-    /// has not been found.
-    OptionDefinitionPtr getOptionDef(const std::string& option_space,
-                                     const uint16_t option_code) const;
 
     /// @brief Adds new DHCPv4 option space to the collection.
     ///
@@ -234,9 +197,6 @@ public:
     ///
     /// @param subnet new subnet to be added.
     void addSubnet6(const Subnet6Ptr& subnet);
-
-    /// @brief Delete all option definitions.
-    void deleteOptionDefs();
 
     /// @todo: Add subnet6 removal routines. Currently it is not possible
     /// to remove subnets. The only case where subnet6 removal would be
@@ -555,13 +515,6 @@ private:
     /// @return true if the duplicate subnet exists.
     bool isDuplicate(const Subnet6& subnet) const;
 
-    /// @brief A collection of option definitions.
-    ///
-    /// A collection of option definitions that can be accessed
-    /// using option space name they belong to.
-    OptionSpaceContainer<OptionDefContainer,
-        OptionDefinitionPtr, std::string> option_def_spaces_;
-
     /// @brief Container for defined DHCPv6 option spaces.
     OptionSpaceCollection spaces6_;
 
@@ -581,8 +534,6 @@ private:
     ///
     /// This is a structure that will hold all configuration.
     /// @todo: migrate all other parameters to that structure.
-    /// @todo: maybe this should be a vector<Configuration>, so we could keep
-    ///        previous configurations and do a rollback if needed?
     SrvConfigPtr configuration_;
 
     /// @name Configuration List.

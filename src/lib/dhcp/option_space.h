@@ -21,6 +21,9 @@
 #include <stdint.h>
 #include <string>
 
+#define DHCP4_OPTION_SPACE "dhcp4"
+#define DHCP6_OPTION_SPACE "dhcp6"
+
 namespace isc {
 namespace dhcp {
 

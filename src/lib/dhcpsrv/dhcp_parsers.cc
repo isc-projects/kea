@@ -43,7 +43,6 @@ ParserContext::ParserContext(Option::Universe universe):
     uint32_values_(new Uint32Storage()),
     string_values_(new StringStorage()),
     options_(new OptionStorage()),
-    option_defs_(new OptionDefStorage()),
     hooks_libraries_(),
     universe_(universe)
 {
@@ -54,7 +53,6 @@ ParserContext::ParserContext(const ParserContext& rhs):
     uint32_values_(),
     string_values_(),
     options_(),
-    option_defs_(),
     hooks_libraries_(),
     universe_(rhs.universe_)
 {
@@ -79,7 +77,6 @@ ParserContext::copyContext(const ParserContext& ctx) {
     copyContextPointer(ctx.uint32_values_, uint32_values_);
     copyContextPointer(ctx.string_values_, string_values_);
     copyContextPointer(ctx.options_, options_);
-    copyContextPointer(ctx.option_defs_, option_defs_);
     copyContextPointer(ctx.hooks_libraries_, hooks_libraries_);
     // Copy universe.
     universe_ = ctx.universe_;
@@ -446,7 +443,7 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
         // options. They are expected to be in the global storage
         // already.
         OptionDefContainerPtr defs =
-            global_context_->option_defs_->getItems(space);
+            CfgMgr::instance().getStagingCfg()->getCfgOptionDef()->getAll(space);
 
         // The getItems() should never return the NULL pointer. If there are
         // no option definitions for the particular option space a pointer
@@ -612,17 +609,11 @@ OptionDataListParser::commit() {
 
 // ******************************** OptionDefParser ****************************
 OptionDefParser::OptionDefParser(const std::string&,
-                                 OptionDefStoragePtr storage,
                                  ParserContextPtr global_context)
-    : storage_(storage),
-      boolean_values_(new BooleanStorage()),
+    : boolean_values_(new BooleanStorage()),
       string_values_(new StringStorage()),
       uint32_values_(new Uint32Storage()),
       global_context_(global_context) {
-    if (!storage_) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
-             << "options storage may not be NULL");
-    }
 }
 
 void
@@ -655,31 +646,20 @@ OptionDefParser::build(ConstElementPtr option_def) {
     // Create an instance of option definition.
     createOptionDef(option_def);
 
-    // Get all items we collected so far for the particular option space.
-    OptionDefContainerPtr defs = storage_->getItems(option_space_name_);
+    try {
+        CfgMgr::instance().getStagingCfg()->getCfgOptionDef()->
+            add(option_definition_, option_space_name_);
 
-    // Check if there are any items with option code the same as the
-    // one specified for the definition we are now creating.
-    const OptionDefContainerTypeIndex& idx = defs->get<1>();
-    const OptionDefContainerTypeRange& range =
-            idx.equal_range(option_definition_->getCode());
-
-    // If there are any items with this option code already we need
-    // to issue an error because we don't allow duplicates for
-    // option definitions within an option space.
-    if (std::distance(range.first, range.second) > 0) {
-        isc_throw(DhcpConfigError, "duplicated option definition for"
-                  << " code '" << option_definition_->getCode() << "' ("
+    } catch (const std::exception& ex) {
+        // Append position if there is a failure.
+        isc_throw(DhcpConfigError, ex.what() << " ("
                   << option_def->getPosition() << ")");
     }
 }
 
 void
 OptionDefParser::commit() {
-    if (storage_ && option_definition_ &&
-        OptionSpace::validateName(option_space_name_)) {
-            storage_->addItem(option_definition_, option_space_name_);
-    }
+    // Do nothing.
 }
 
 void
@@ -775,20 +755,11 @@ OptionDefParser::createOptionDef(ConstElementPtr option_def_element) {
 // ******************************** OptionDefListParser ************************
 OptionDefListParser::OptionDefListParser(const std::string&,
                                          ParserContextPtr global_context)
-    : storage_(global_context->option_defs_),
-      global_context_(global_context) {
-    if (!storage_) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
-             << "storage may not be NULL");
-    }
+    : global_context_(global_context) {
 }
 
 void
 OptionDefListParser::build(ConstElementPtr option_def_list) {
-    // Clear existing items in the storage.
-    // We are going to replace all of them.
-    storage_->clearItems();
-
     if (!option_def_list) {
         isc_throw(DhcpConfigError, "parser error: a pointer to a list of"
                   << " option definitions is NULL ("
@@ -797,36 +768,8 @@ OptionDefListParser::build(ConstElementPtr option_def_list) {
 
     BOOST_FOREACH(ConstElementPtr option_def, option_def_list->listValue()) {
         boost::shared_ptr<OptionDefParser>
-            parser(new OptionDefParser("single-option-def", storage_,
-                                       global_context_));
+            parser(new OptionDefParser("single-option-def", global_context_));
         parser->build(option_def);
-        parser->commit();
-    }
-
-    CfgMgr& cfg_mgr = CfgMgr::instance();
-    cfg_mgr.deleteOptionDefs();
-
-    // We need to move option definitions from the temporary
-    // storage to the storage.
-    std::list<std::string> space_names = storage_->getOptionSpaceNames();
-
-    BOOST_FOREACH(std::string space_name, space_names) {
-        BOOST_FOREACH(OptionDefinitionPtr def,
-                    *(storage_->getItems(space_name))) {
-            // All option definitions should be initialized to non-NULL
-            // values. The validation is expected to be made by the
-            // OptionDefParser when creating an option definition.
-            assert(def);
-            // The Config Manager may thrown an exception if the duplicated
-            // definition is being added. Catch the exceptions here to and
-            // append the position in the config.
-            try {
-                cfg_mgr.addOptionDef(def, space_name);
-            } catch (const std::exception& ex) {
-                isc_throw(DhcpConfigError, ex.what() << " ("
-                          << option_def_list->getPosition() << ")");
-            }
-        }
     }
 }
 
@@ -1099,8 +1042,8 @@ SubnetConfigParser::appendSubOptions(const std::string& option_space,
             return;
         }
     } else {
-        const OptionDefContainerPtr defs =
-                global_context_->option_defs_->getItems(option_space);
+        OptionDefContainerPtr defs = CfgMgr::instance().getStagingCfg()
+            ->getCfgOptionDef()->getAll(option_space);
 
         const OptionDefContainerTypeIndex& idx = defs->get<1>();
         const OptionDefContainerTypeRange& range =

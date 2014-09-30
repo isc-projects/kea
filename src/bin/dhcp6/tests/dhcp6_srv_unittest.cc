@@ -1713,10 +1713,12 @@ TEST_F(Dhcpv6SrvTest, unpackOptions) {
 
     // Add option definitions to the Configuration Manager. Each goes under
     // different option space.
-    CfgMgr& cfgmgr = CfgMgr::instance();
-    ASSERT_NO_THROW(cfgmgr.addOptionDef(opt_def, "space-foobar"));
-    ASSERT_NO_THROW(cfgmgr.addOptionDef(opt_def2, "space-foo"));
-    ASSERT_NO_THROW(cfgmgr.addOptionDef(opt_def3, "space-bar"));
+    CfgOptionDefPtr cfg_option_def =
+        CfgMgr::instance().getStagingCfg()->getCfgOptionDef();
+    ASSERT_NO_THROW(cfg_option_def->add(opt_def, "space-foobar"));
+    ASSERT_NO_THROW(cfg_option_def->add(opt_def2, "space-foo"));
+    ASSERT_NO_THROW(cfg_option_def->add(opt_def3, "space-bar"));
+    CfgMgr::instance().commit();
 
     // Create the buffer holding the structure of options.
     const char raw_data[] = {
