@@ -22,6 +22,7 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/pkt6.h>
+#include <dhcp/hwaddr.h>
 #include <dhcp/docsis3_option_defs.h>
 #include <util/range_utilities.h>
 
@@ -808,6 +809,32 @@ TEST_F(Pkt6Test, clientClasses) {
 
     // Check that the packet belongs to 'foo'
     EXPECT_TRUE(pkt.inClass("foo"));
+}
+
+// Tests whether MAC can be obtained and that MAC sources are not
+// confused.
+TEST_F(Pkt6Test, getMAC) {
+    Pkt6 pkt(DHCPV6_ADVERTISE, 1234);
+
+    // DHCPv6 packet by default doens't have MAC address specified.
+    EXPECT_FALSE(pkt.getMAC(Pkt::MAC_SOURCE_ANY));
+    EXPECT_FALSE(pkt.getMAC(Pkt::MAC_SOURCE_RAW));
+
+    // Let's invent a MAC
+    const uint8_t hw[] = { 2, 4, 6, 8, 10, 12 }; // MAC
+    const uint8_t hw_type = 123; // hardware type
+    HWAddrPtr dummy_hwaddr(new HWAddr(hw, sizeof(hw), hw_type));
+
+    // Now let's pretend that we obtained it from raw sockets
+    pkt.setRemoteHWAddr(dummy_hwaddr);
+
+    // Now we should be able to get something
+    ASSERT_TRUE(pkt.getMAC(Pkt::MAC_SOURCE_ANY));
+    ASSERT_TRUE(pkt.getMAC(Pkt::MAC_SOURCE_RAW));
+
+    // Check that the returned MAC is indeed the expected one
+    ASSERT_TRUE(*dummy_hwaddr == *pkt.getMAC(Pkt::MAC_SOURCE_ANY));
+    ASSERT_TRUE(*dummy_hwaddr == *pkt.getMAC(Pkt::MAC_SOURCE_RAW));
 }
 
 }
