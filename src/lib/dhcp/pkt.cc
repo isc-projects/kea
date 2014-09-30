@@ -63,5 +63,28 @@ void Pkt::repack() {
     buffer_out_.writeData(&data_[0], data_.size());
 }
 
+void
+Pkt::setRemoteHWAddr(const uint8_t htype, const uint8_t hlen,
+                      const std::vector<uint8_t>& mac_addr) {
+    setHWAddrMember(htype, hlen, mac_addr, remote_hwaddr_);
+}
+
+void
+Pkt::setRemoteHWAddr(const HWAddrPtr& addr) {
+    if (!addr) {
+        isc_throw(BadValue, "Setting remote HW address to NULL is"
+                  << " forbidden.");
+    }
+    remote_hwaddr_ = addr;
+}
+
+void
+Pkt::setHWAddrMember(const uint8_t htype, const uint8_t,
+                      const std::vector<uint8_t>& mac_addr,
+                      HWAddrPtr& hw_addr) {
+
+    hw_addr.reset(new HWAddr(mac_addr, htype));
+}
+
 };
 };

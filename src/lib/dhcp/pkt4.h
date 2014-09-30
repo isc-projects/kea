@@ -19,7 +19,6 @@
 #include <dhcp/option.h>
 #include <util/buffer.h>
 #include <dhcp/option.h>
-#include <dhcp/hwaddr.h>
 #include <dhcp/classify.h>
 #include <dhcp/pkt.h>
 
@@ -77,8 +76,7 @@ public:
     /// The buffer_out_ is cleared before writting to the buffer.
     ///
     /// @throw InvalidOperation if packing fails
-    void
-    pack();
+    virtual void pack();
 
     /// @brief Parses on-wire form of DHCPv4 packet.
     ///
@@ -89,7 +87,7 @@ public:
     ///
     /// Method with throw exception if packet parsing fails.
     /// @return true if unpack was successful
-    bool unpack();
+    virtual bool unpack();
 
     /// @brief performs sanity check on a packet.
     ///
@@ -295,75 +293,6 @@ public:
     virtual void
     addOption(const OptionPtr& opt);
 
-    /// @brief Returns interface name.
-    ///
-    /// Returns interface name over which packet was received or is
-    /// going to be transmitted.
-    ///
-    /// @return interface name
-    std::string getIface() const { return iface_; };
-
-    /// @brief Returns packet timestamp.
-    ///
-    /// Returns packet timestamp value updated when
-    /// packet is received or send.
-    ///
-    /// @return packet timestamp.
-    const boost::posix_time::ptime& getTimestamp() const { return timestamp_; }
-
-    /// @brief Sets interface name.
-    ///
-    /// Sets interface name over which packet was received or is
-    /// going to be transmitted.
-    ///
-    /// @return interface name
-    void setIface(const std::string& iface ) { iface_ = iface; };
-
-    /// @brief Sets interface index.
-    ///
-    /// @param ifindex specifies interface index.
-    void setIndex(uint32_t ifindex) { ifindex_ = ifindex; };
-
-    /// @brief Returns interface index.
-    ///
-    /// @return interface index
-    uint32_t getIndex() const { return (ifindex_); };
-
-    /// @brief Sets remote HW address.
-    ///
-    /// Sets the destination HW address for the outgoing packet
-    /// or source HW address for the incoming packet. When this
-    /// is an outgoing packet this address will be used to construct
-    /// the link layer header.
-    ///
-    /// @note mac_addr must be a buffer of at least hlen bytes.
-    ///
-    /// @param htype hardware type (will be sent in htype field)
-    /// @param hlen hardware length (will be sent in hlen field)
-    /// @param mac_addr pointer to hardware address
-    void setRemoteHWAddr(const uint8_t htype, const uint8_t hlen,
-                         const std::vector<uint8_t>& mac_addr);
-
-    /// @brief Sets remote HW address.
-    ///
-    /// Sets hardware address from an existing HWAddr structure.
-    /// The remote address is a destination address for outgoing
-    /// packet and source address for incoming packet. When this
-    /// is an outgoing packet, this address will be used to
-    /// construct the link layer header.
-    ///
-    /// @param addr structure representing HW address.
-    ///
-    /// @throw BadValue if addr is null
-    void setRemoteHWAddr(const HWAddrPtr& addr);
-
-    /// @brief Returns the remote HW address.
-    ///
-    /// @return remote HW address.
-    HWAddrPtr getRemoteHWAddr() const {
-        return (remote_hwaddr_);
-    }
-
     /// @brief Sets local HW address.
     ///
     /// Sets the source HW address for the outgoing packet or
@@ -395,54 +324,6 @@ public:
         return (local_hwaddr_);
     }
 
-    /// @brief Sets remote address.
-    ///
-    /// @param remote specifies remote address
-    void setRemoteAddr(const isc::asiolink::IOAddress& remote) {
-        remote_addr_ = remote;
-    }
-
-    /// @brief Returns remote address
-    ///
-    /// @return remote address
-    const isc::asiolink::IOAddress& getRemoteAddr() const {
-        return (remote_addr_);
-    }
-
-    /// @brief Sets local address.
-    ///
-    /// @param local specifies local address
-    void setLocalAddr(const isc::asiolink::IOAddress& local) {
-        local_addr_ = local;
-    }
-
-    /// @brief Returns local address.
-    ///
-    /// @return local address
-    const isc::asiolink::IOAddress& getLocalAddr() const {
-        return (local_addr_);
-    }
-
-    /// @brief Sets local port.
-    ///
-    /// @param local specifies local port
-    void setLocalPort(uint16_t local) { local_port_ = local; }
-
-    /// @brief Returns local port.
-    ///
-    /// @return local port
-    uint16_t getLocalPort() const { return (local_port_); }
-
-    /// @brief Sets remote port.
-    ///
-    /// @param remote specifies remote port
-    void setRemotePort(uint16_t remote) { remote_port_ = remote; }
-
-    /// @brief Returns remote port.
-    ///
-    /// @return remote port
-    uint16_t getRemotePort() const { return (remote_port_); }
-
     /// @brief Checks if a DHCPv4 message has been relayed.
     ///
     /// This function returns a boolean value which indicates whether a DHCPv4
@@ -460,14 +341,6 @@ public:
     /// @throw isc::BadValue if invalid combination of Giaddr and Hops values is
     /// found.
     bool isRelayed() const;
-
-    /// @brief Set callback function to be used to parse options.
-    ///
-    /// @param callback An instance of the callback function or NULL to
-    /// uninstall callback.
-    void setCallback(UnpackOptionsCallback callback) {
-        callback_ = callback;
-    }
 
     /// @brief That's the data of input buffer used in RX packet.
     ///
@@ -487,7 +360,6 @@ public:
     /// performance).
     std::vector<uint8_t> data_;
 
-
 private:
 
     /// @brief Generic method that validates and sets HW address.
@@ -501,9 +373,9 @@ private:
     /// @param [out] hw_addr pointer to a class member to be modified.
     ///
     /// @trow isc::OutOfRange if invalid HW address specified.
-    void setHWAddrMember(const uint8_t htype, const uint8_t hlen,
-                         const std::vector<uint8_t>& mac_addr,
-                         HWAddrPtr& hw_addr);
+    virtual void setHWAddrMember(const uint8_t htype, const uint8_t hlen,
+                                 const std::vector<uint8_t>& mac_addr,
+                                 HWAddrPtr& hw_addr);
 
 protected:
 
@@ -517,9 +389,6 @@ protected:
 
     /// local HW address (dst if receiving packet, src if sending packet)
     HWAddrPtr local_hwaddr_;
-
-    // remote HW address (src if receiving packet, dst if sending packet)
-    HWAddrPtr remote_hwaddr_;
 
     /// @brief message operation code
     ///
