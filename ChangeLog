@@ -1,3 +1,7 @@
+839.	[doc]		adam
+	DHCPv4 examples corrected in Kea ARM.
+	(Github #1, git 15785c0e28190659b037cfcca19f0267ccd9049f)
+
 838.	[bug]		tomek
 	Kea components now use the KEA_LOCKFILE_DIR environment variable
 	to specify the directory of the logging lockfile. Locking can be
