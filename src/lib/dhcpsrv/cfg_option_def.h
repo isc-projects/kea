@@ -43,11 +43,6 @@ public:
     /// to an object passed as parameter. There are no shared objects or
     /// pointers between the original object and a copy.
     ///
-    /// @warning This function doesn't perform a cleanup of the @c new_config
-    /// before copying the new configuration into it. It is caller's
-    /// responsibility to make sure that this object doesn't contain any
-    /// garbage data.
-    ///
     /// @param [out] new_config An object to which the configuration will be
     /// copied.
     void copyTo(CfgOptionDef& new_config) const;
