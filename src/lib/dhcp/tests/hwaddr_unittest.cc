@@ -163,4 +163,16 @@ TEST(HWAddrTest, fromText) {
 
 }
 
+// Checks that 16 bits values can be stored in HWaddr
+TEST(HWAddrTest, 16bits) {
+
+    uint8_t data[] = {0, 1, 2, 3, 4, 5};
+    uint16_t htype = 257;
+    HWAddrPtr hw(new HWAddr(data, sizeof(data), htype));
+
+    EXPECT_EQ("hwtype=257 00:01:02:03:04:05", hw->toText());
+
+
+}
+
 } // end of anonymous namespace

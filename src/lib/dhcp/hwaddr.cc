@@ -31,14 +31,14 @@ HWAddr::HWAddr()
     :htype_(HTYPE_ETHER) {
 }
 
-HWAddr::HWAddr(const uint8_t* hwaddr, size_t len, uint8_t htype)
+HWAddr::HWAddr(const uint8_t* hwaddr, size_t len, uint16_t htype)
     :hwaddr_(hwaddr, hwaddr + len), htype_(htype) {
     if (len > MAX_HWADDR_LEN) {
         isc_throw(InvalidParameter, "hwaddr length exceeds MAX_HWADDR_LEN");
     }
 }
 
-HWAddr::HWAddr(const std::vector<uint8_t>& hwaddr, uint8_t htype)
+HWAddr::HWAddr(const std::vector<uint8_t>& hwaddr, uint16_t htype)
     :hwaddr_(hwaddr), htype_(htype) {
     if (hwaddr.size() > MAX_HWADDR_LEN) {
         isc_throw(InvalidParameter,
@@ -49,7 +49,7 @@ HWAddr::HWAddr(const std::vector<uint8_t>& hwaddr, uint8_t htype)
 std::string HWAddr::toText(bool include_htype) const {
     std::stringstream tmp;
     if (include_htype) {
-        tmp << "hwtype=" << static_cast<int>(htype_) << " ";
+        tmp << "hwtype=" << static_cast<unsigned int>(htype_) << " ";
     }
     tmp << std::hex;
     bool delim = false;
@@ -65,7 +65,7 @@ std::string HWAddr::toText(bool include_htype) const {
 }
 
 HWAddr
-HWAddr::fromText(const std::string& text, const uint8_t htype) {
+HWAddr::fromText(const std::string& text, const uint16_t htype) {
     /// @todo optimize stream operations here.
     std::vector<std::string> split_text;
     boost::split(split_text, text, boost::is_any_of(":"),
