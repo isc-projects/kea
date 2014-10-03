@@ -113,6 +113,10 @@ OptionPtr Pkt6::getAnyRelayOption(uint16_t opt_type, RelaySearchOrder order) {
     return (OptionPtr());
 }
 
+void
+Pkt6::addOption(const OptionPtr& opt) {
+    options_.insert(std::pair<int, OptionPtr>(opt->getType(), opt));
+}
 
 OptionPtr Pkt6::getRelayOption(uint16_t opt_type, uint8_t relay_level) {
     if (relay_level >= relay_info_.size()) {

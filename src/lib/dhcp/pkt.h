@@ -27,16 +27,19 @@ namespace isc {
 
 namespace dhcp {
 
-/// @brief Base class for DHCPv4 (Pkt4) and DHCPv6 (Pkt6) classes
+/// @brief Base class for classes representing DHCP messages.
 ///
-/// This is a base class that holds all common information (e.g. source and
-/// destination ports) and operations (e.g. add, get, delete options).
-/// This class is purely virtual. Please instantiate Pkt4, Pkt6 or any
-/// other derived classes.
+/// This is a base class that holds common information (e.g. source
+/// and destination ports) and operations (e.g. add, get, delete options)
+/// for derived classes representing both DHCPv4 and DHCPv6 messages.
+/// The @c Pkt4 and @c Pkt6 classes derive from it.
+///
+/// @note This is abstract class. Please instantiate derived classes
+/// such as @c Pkt4 or @c Pkt6.
 class Pkt {
 public:
 
-    /// @defgroup Specifies where a given MAC address was obtained
+    /// @defgroup mac_sources Specifies where a given MAC address was obtained.
     ///
     /// @brief The list covers all possible MAC sources.
     ///
@@ -45,32 +48,33 @@ public:
     ///
     /// @{
 
-    /// Not really a type, only used in getMAC() calls
+    /// Not really a type, only used in getMAC() calls.
     static const uint32_t MAC_SOURCE_ANY = 0xffff;
 
-    /// obtained first hand from raw socket (100% reliable)
+    /// Obtained first hand from raw socket (100% reliable).
     static const uint32_t MAC_SOURCE_RAW = 0x0001;
 
-    /// extracted from DUID-LL or DUID-LLT (not reliable as the client
-    /// can send fake DUID)
+    /// Extracted from DUID-LL or DUID-LLT (not 100% reliable as the client
+    /// can send fake DUID).
     static const uint32_t MAC_SOURCE_DUID = 0x0002;
 
-    /// extracted from IPv6 link-local address. Client can use different
-    /// IID other than EUI-64, e.g. Windows supports RFC4941 and uses
-    /// random values instead of EUI-64.
+    /// Extracted from IPv6 link-local address. Not 100% reliable, as the
+    /// client can use different IID other than EUI-64, e.g. Windows supports
+    /// RFC4941 and uses random values instead of EUI-64.
     static const uint32_t MAC_SOURCE_IPV6_LINK_LOCAL = 0x0004;
 
-    /// RFC6939 (a relay agent can insert client link layer address option)
-    /// Note that a skilled attacker can fake that by sending his request
-    /// relayed, so the legitimate relay will think it's a second relay.
+    /// Get it from RFC6939 option. (A relay agent can insert client link layer
+    /// address option). Note that a skilled attacker can fake that by sending
+    /// his request relayed, so the legitimate relay will think it's a second
+    /// relay.
     static const uint32_t MAC_SOURCE_CLIENT_ADDR_RELAY_OPTION = 0x0008;
 
     /// A relay can insert remote-id. In some deployments it contains a MAC
-    /// address.
+    /// address (RFC4649).
     static const uint32_t MAC_SOURCE_REMOTE_ID = 0x0010;
 
     /// A relay can insert a subscriber-id option. In some deployments it
-    /// contains a MAC address.
+    /// contains a MAC address (RFC4580).
     static const uint32_t MAC_SOURCE_SUBSCRIBER_ID = 0x0020;
 
     /// A CMTS (acting as DHCP relay agent) that supports DOCSIS standard
@@ -80,64 +84,73 @@ public:
 
     /// @}
 
-
 protected:
-Pkt(uint32_t transid, const isc::asiolink::IOAddress& local_addr,
-    const isc::asiolink::IOAddress& remote_addr, uint16_t local_port,
-    uint16_t remote_port)
-        :transid_(transid),
-        iface_(""),
-        ifindex_(-1),
-        local_addr_(local_addr),
-        remote_addr_(remote_addr),
-        local_port_(local_port),
-        remote_port_(remote_port),
-        buffer_out_(0)
-        {
-        }
 
-    Pkt(const uint8_t* buf, uint32_t len, const isc::asiolink::IOAddress& local_addr,
+    /// @brief Constructor.
+    ///
+    /// This constructor is typically used for transmitted messages as it
+    /// creates an empty (no options) packet. The constructor is protected,
+    /// so only derived classes can call it. Pkt class cannot be instantiated
+    /// anyway, because it is an abstract class.
+    ///
+    /// @param transid transaction-id
+    /// @param local_addr local IPv4 or IPv6 address
+    /// @param remote_addr remote IPv4 or IPv6 address
+    /// @param local_port local UDP (one day also TCP) port
+    /// @param remote_port remote UDP (one day also TCP) port
+    Pkt(uint32_t transid, const isc::asiolink::IOAddress& local_addr,
         const isc::asiolink::IOAddress& remote_addr, uint16_t local_port,
-        uint16_t remote_port)
-       :transid_(0),
-        iface_(""),
-        ifindex_(-1),
-        local_addr_(local_addr),
-        remote_addr_(remote_addr),
-        local_port_(local_port),
-        remote_port_(remote_port),
-        buffer_out_(0)
-    {
-        data_.resize(len);
-        memcpy(&data_[0], buf, len);
-    }
+        uint16_t remote_port);
+
+    /// @brief Constructor.
+    ///
+    /// This constructor is typically used for received messages as it takes
+    /// a buffer that's going to be parsed as one of arguments. The constructor
+    /// is protected, so only derived classes can call it. Pkt class cannot be
+    /// instantiated anyway, because it is an abstract class.
+    ///
+    /// @param buf pointer to a buffer that contains on-wire data
+    /// @param len length of the pointer specified in buf
+    /// @param local_addr local IPv4 or IPv6 address
+    /// @param remote_addr remote IPv4 or IPv6 address
+    /// @param local_port local UDP (one day also TCP) port
+    /// @param remote_port remote UDP (one day also TCP) port
+    Pkt(const uint8_t* buf, uint32_t len,
+        const isc::asiolink::IOAddress& local_addr,
+        const isc::asiolink::IOAddress& remote_addr, uint16_t local_port,
+        uint16_t remote_port);
 
 public:
 
     /// @brief Prepares on-wire format of DHCP (either v4 or v6) packet.
     ///
     /// Prepares on-wire format of message and all its options.
-    /// Options must be stored in options_ field.
-    /// Output buffer will be stored in buffer_out_.
-    /// The buffer_out_ is cleared before writting to the buffer.
+    /// A caller must ensure that options are stored in options_ field
+    /// prior to calling this method.
     ///
-    /// @note This is a pure virtual method. Actual implementations are in
-    /// Pkt4 and Pkt6 class.
+    /// Output buffer will be stored in buffer_out_.
+    /// The buffer_out_ should be cleared before writting to the buffer
+    /// in the derived classes.
+    ///
+    /// @note This is a pure virtual method and must be implemented in
+    /// the derived classes. The @c Pkt4 and @c Pkt6 class have respective
+    /// implementations of this method.
     ///
     /// @throw InvalidOperation if packing fails
     virtual void pack() = 0;
 
     /// @brief Parses on-wire form of DHCP (either v4 or v6) packet.
     ///
-    /// Parses received packet, stored in on-wire format in bufferIn_.
+    /// Parses received packet, stored in on-wire format in data_.
     ///
     /// Will create a collection of option objects that will
     /// be stored in options_ container.
     ///
-    /// @note This is a pure virtual method. Actual implementations are in
-    /// Pkt4 and Pkt6 class.
+    /// @note This is a pure virtual method and must be implemented in
+    /// the derived classes. The @c Pkt4 and @c Pkt6 class have respective
+    /// implementations of this method.
     ///
-    /// Method with throw exception if packet parsing fails.
+    /// Method will throw exception if packet parsing fails.
     ///
     /// @todo Pkt4 throws exceptions when unpacking fails, while Pkt6
     ///       catches exceptions and returns false. We need to unify that
@@ -160,15 +173,19 @@ public:
     /// @return reference to output buffer
     isc::util::OutputBuffer& getBuffer() { return (buffer_out_); };
 
-    /// Adds an option to this packet.
+    /// @brief Adds an option to this packet.
     ///
-    /// Sadly, we need to have 2 versions of that method. One that
-    /// accepts duplicates (DHCPv6) and one that does not (DHCPv4)
+    /// @note This is a pure virtual method and must be implemented in
+    /// the derived classes. The @c Pkt4 and @c Pkt6 class have respective
+    /// implementations of this method.
+    ///
+    /// We can't have a unified method, as DHCPv6 allows option duplicates,
+    /// while DHCPv4 doesn't.
     ///
     /// @param opt option to be added.
-    virtual void addOption(const OptionPtr& opt);
+    virtual void addOption(const OptionPtr& opt) = 0;
 
-    /// Attempts to delete first suboption of requested type
+    /// @brief Attempts to delete first suboption of requested type.
     ///
     /// @param type Type of option to be deleted.
     ///
@@ -179,20 +196,26 @@ public:
     ///
     /// This function is useful mainly for debugging.
     ///
-    /// @note This is pure virtual method. Actual implementations are in
-    ///       Pkt4 and Pkt6 classes.
+    /// @note This is a pure virtual method and must be implemented in
+    /// the derived classes. The @c Pkt4 and @c Pkt6 class have respective
+    /// implementations of this method.
     ///
     /// @return string with text representation
     virtual std::string toText() = 0;
 
-    /// Returns packet type
+    /// @brief Returns packet size in binary format.
     ///
-    /// For DHCPv6, this is a straightforward operation (read packet field), but
-    /// for DHCPv4 it requires finding appropriate option (that may or may not
-    /// be present).
+    /// Returns size of the packet in on-wire format or size needed to store
+    /// it in on-wire format.
+    ///
+    /// @note This is a pure virtual method and must be implemented in
+    /// the derived classes. The @c Pkt4 and @c Pkt6 class have respective
+    /// implementations of this method.
+    ///
+    /// @return packet size in bytes
     virtual size_t len() = 0;
 
-    /// Returns message type (e.g. 1 = SOLICIT)
+    /// @brief Returns message type (e.g. 1 = SOLICIT).
     ///
     /// This is a pure virtual method. DHCPv4 stores type in option 53 and
     /// DHCPv6 stores it in the header.
@@ -200,7 +223,7 @@ public:
     /// @return message type
     virtual uint8_t getType() const = 0;
 
-    /// Sets message type (e.g. 1 = SOLICIT)
+    /// @brief Sets message type (e.g. 1 = SOLICIT).
     ///
     /// This is a pure virtual method. DHCPv4 stores type in option 53 and
     /// DHCPv6 stores it in the header.
@@ -208,23 +231,15 @@ public:
     /// @param type message type to be set
     virtual void setType(uint8_t type) = 0;
 
-    /// @brief Sets transaction-id value
+    /// @brief Sets transaction-id value.
     ///
     /// @param transid transaction-id to be set.
     void setTransid(uint32_t transid) { transid_ = transid; }
 
-    /// Returns value of transaction-id field
+    /// @brief Returns value of transaction-id field.
     ///
     /// @return transaction-id
     uint32_t getTransid() const { return (transid_); };
-
-    /// @brief Classes this packet belongs to.
-    ///
-    /// This field is public, so the code outside of Pkt4 or Pkt6 class can
-    /// iterate over existing classes. Having it public also solves the problem
-    /// of returned reference lifetime. It is preferred to use @ref inClass and
-    /// @ref addClass should be used to operate on this field.
-    ClientClasses classes_;
 
     /// @brief Checks whether a client belongs to a given class
     ///
@@ -291,20 +306,10 @@ public:
     /// @brief Copies content of input buffer to output buffer.
     ///
     /// This is mostly a diagnostic function. It is being used for sending
-    /// received packet. Received packet is stored in bufferIn_, but
+    /// received packet. Received packet is stored in data_, but
     /// transmitted data is stored in buffer_out_. If we want to send packet
     /// that we just received, a copy between those two buffers is necessary.
     void repack();
-
-    /// collection of options present in this message
-    ///
-    /// @warning This public member is accessed by derived
-    /// classes directly. One of such derived classes is
-    /// @ref perfdhcp::PerfPkt6. The impact on derived clasess'
-    /// behavior must be taken into consideration before making
-    /// changes to this member such as access scope restriction or
-    /// data format change etc.
-    isc::dhcp::OptionCollection options_;
 
     /// @brief Set callback function to be used to parse options.
     ///
@@ -449,19 +454,42 @@ public:
     /// varied sources: raw sockets, client-id, link-local IPv6 address,
     /// and various relay options.
     ///
+    /// @note Technically the proper term for this information is a link layer
+    /// address, but it is frequently referred to MAC or hardware address.
+    /// Since we're calling the feature "MAC addresses in DHCPv6", we decided
+    /// to keep the name of getMAC().
+    ///
     /// hw_addr_src takes a combination of bit values specified in
     /// MAC_SOURCE_* constants.
     ///
     /// @param hw_addr_src a bitmask that specifies hardware address source
     HWAddrPtr getMAC(uint32_t hw_addr_src);
 
-    /// @brief virtual desctructor
+    /// @brief Virtual desctructor.
     ///
     /// There is nothing to clean up here, but since there are virtual methods,
     /// we define virtual destructor to ensure that derived classes will have
     /// a virtual one, too.
     virtual ~Pkt() {
     }
+
+    /// @brief Classes this packet belongs to.
+    ///
+    /// This field is public, so the code outside of Pkt4 or Pkt6 class can
+    /// iterate over existing classes. Having it public also solves the problem
+    /// of returned reference lifetime. It is preferred to use @ref inClass and
+    /// @ref addClass should be used to operate on this field.
+    ClientClasses classes_;
+
+    /// @brief Collection of options present in this message.
+    ///
+    /// @warning This public member is accessed by derived
+    /// classes directly. One of such derived classes is
+    /// @ref perfdhcp::PerfPkt6. The impact on derived clasess'
+    /// behavior must be taken into consideration before making
+    /// changes to this member such as access scope restriction or
+    /// data format change etc.
+    isc::dhcp::OptionCollection options_;
 
 protected:
 

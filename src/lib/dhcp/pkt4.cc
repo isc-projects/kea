@@ -45,7 +45,6 @@ Pkt4::Pkt4(uint8_t msg_type, uint32_t transid)
       siaddr_(DEFAULT_ADDRESS),
       giaddr_(DEFAULT_ADDRESS)
 {
-    // buffer_out_.resize(DHCPV4_PKT_HDR_LEN);
     memset(sname_, 0, MAX_SNAME_LEN);
     memset(file_, 0, MAX_FILE_LEN);
 
@@ -134,7 +133,6 @@ Pkt4::pack() {
         // write (len) bytes of padding
         vector<uint8_t> zeros(hw_len, 0);
         buffer_out_.writeData(&zeros[0], hw_len);
-        // buffer_out_.writeData(chaddr_, MAX_CHADDR_LEN);
 
         buffer_out_.writeData(sname_, MAX_SNAME_LEN);
         buffer_out_.writeData(file_, MAX_FILE_LEN);
