@@ -36,46 +36,50 @@ namespace dhcp {
 class Pkt {
 public:
 
-    /// @brief specified where did we get this MAC address from?
+    /// @defgroup Specifies where a given MAC address was obtained
     ///
-    /// The list covers all possible MAC sources. The uncommented ones
-    /// are currently supported. When you implement a new method, please
-    /// uncomment appropriate line here.
-    enum MACSource {
+    /// @brief The list covers all possible MAC sources.
+    ///
+    /// @note The uncommented ones are currently supported. When you implement
+    /// a new method, please uncomment appropriate line here.
+    ///
+    /// @{
 
-        /// Not really a type, only used in getMAC() calls
-        MAC_SOURCE_ANY,
+    /// Not really a type, only used in getMAC() calls
+    static const uint32_t MAC_SOURCE_ANY = 0xffff;
 
-        /// obtained first hand from raw socket (100% reliable)
-        MAC_SOURCE_RAW,
+    /// obtained first hand from raw socket (100% reliable)
+    static const uint32_t MAC_SOURCE_RAW = 0x0001;
 
-        /// extracted from DUID-LL or DUID-LLT (not reliable as the client
-        /// can send fake DUID)
-        // MAC_SOURCE_DUID,
+    /// extracted from DUID-LL or DUID-LLT (not reliable as the client
+    /// can send fake DUID)
+    static const uint32_t MAC_SOURCE_DUID = 0x0002;
 
-        /// extracted from IPv6 link-local address. Client can use different
-        /// IID other than EUI-64, e.g. Windows supports RFC4941 and uses
-        /// random values instead of EUI-64.
-        // MAC_SOURCE_IPV6_LINK_LOCAL,
+    /// extracted from IPv6 link-local address. Client can use different
+    /// IID other than EUI-64, e.g. Windows supports RFC4941 and uses
+    /// random values instead of EUI-64.
+    static const uint32_t MAC_SOURCE_IPV6_LINK_LOCAL = 0x0004;
 
-        /// RFC6939 (a relay agent can insert client link layer address option)
-        /// Note that a skilled attacker can fake that by sending his request
-        /// relayed, so the legitimate relay will think it's a second relay.
-        // MAC_SOURCE_CLIENT_ADDR_RELAY_OPTION,
+    /// RFC6939 (a relay agent can insert client link layer address option)
+    /// Note that a skilled attacker can fake that by sending his request
+    /// relayed, so the legitimate relay will think it's a second relay.
+    static const uint32_t MAC_SOURCE_CLIENT_ADDR_RELAY_OPTION = 0x0008;
 
-        /// A relay can insert remote-id. In some deployments it contains a MAC
-        /// address.
-        // MAC_SOURCE_REMOTE_ID,
+    /// A relay can insert remote-id. In some deployments it contains a MAC
+    /// address.
+    static const uint32_t MAC_SOURCE_REMOTE_ID = 0x0010;
 
-        /// A relay can insert a subscriber-id option. In some deployments it
-        /// contains a MAC address.
-        // MAC_SOURCE_SUBSCRIBER_ID,
+    /// A relay can insert a subscriber-id option. In some deployments it
+    /// contains a MAC address.
+    static const uint32_t MAC_SOURCE_SUBSCRIBER_ID = 0x0020;
 
-        /// A CMTS (acting as DHCP relay agent) that supports DOCSIS standard
-        /// can insert DOCSIS options that contain client's MAC address.
-        /// Client in this context would be a cable modem.
-        // MAC_SOURCE_DOCSIS_OPTIONS
-    };
+    /// A CMTS (acting as DHCP relay agent) that supports DOCSIS standard
+    /// can insert DOCSIS options that contain client's MAC address.
+    /// Client in this context would be a cable modem.
+    static const uint32_t MAC_SOURCE_DOCSIS_OPTIONS = 0x0040;
+
+    /// @}
+
 
 protected:
 Pkt(uint32_t transid, const isc::asiolink::IOAddress& local_addr,
@@ -418,6 +422,12 @@ public:
     ///
     /// @note mac_addr must be a buffer of at least hlen bytes.
     ///
+    /// In a typical case, hlen field would be redundant, as it could
+    /// be extracted from mac_addr.size(). However, the difference is
+    /// when running on exotic hardware, like Infiniband, that had
+    /// MAC addresses 20 bytes long. In that case, hlen is set to zero
+    /// in DHCPv4.
+    ///
     /// @param htype hardware type (will be sent in htype field)
     /// @param hlen hardware length (will be sent in hlen field)
     /// @param mac_addr pointer to hardware address
@@ -438,7 +448,12 @@ public:
     /// This method is more generic and can attempt to obtain MAC from
     /// varied sources: raw sockets, client-id, link-local IPv6 address,
     /// and various relay options.
-    HWAddrPtr getMAC(MACSource from);
+    ///
+    /// hw_addr_src takes a combination of bit values specified in
+    /// MAC_SOURCE_* constants.
+    ///
+    /// @param hw_addr_src a bitmask that specifies hardware address source
+    HWAddrPtr getMAC(uint32_t hw_addr_src);
 
     /// @brief virtual desctructor
     ///
