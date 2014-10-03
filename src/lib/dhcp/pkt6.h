@@ -132,15 +132,23 @@ public:
     /// @return true if parsing was successful
     virtual bool unpack();
 
+    /// @brief Adds an option.
+    ///
+    /// @param opt option to be added
+    virtual void
+    addOption(const OptionPtr& opt);
+
     /// @brief Returns protocol of this packet (UDP or TCP).
     ///
     /// @return protocol type
     DHCPv6Proto getProto();
 
-    /// Sets protocol of this packet.
+    /// @brief Sets protocol of this packet.
     ///
     /// @param proto protocol (UDP or TCP)
-    void setProto(DHCPv6Proto proto = UDP) { proto_ = proto; }
+    void setProto(DHCPv6Proto proto = UDP) {
+        proto_ = proto;
+    }
 
     /// @brief Returns text representation of the packet.
     ///
@@ -161,12 +169,12 @@ public:
     /// @return number of bytes required to assemble this packet
     virtual size_t len();
 
-    /// Returns message type (e.g. 1 = SOLICIT)
+    /// @brief Returns message type (e.g. 1 = SOLICIT).
     ///
     /// @return message type
     virtual uint8_t getType() const { return (msg_type_); }
 
-    /// Sets message type (e.g. 1 = SOLICIT)
+    /// @brief Sets message type (e.g. 1 = SOLICIT).
     ///
     /// @param type message type to be set
     virtual void setType(uint8_t type) { msg_type_=type; };
@@ -264,14 +272,14 @@ public:
     std::vector<RelayInfo> relay_info_;
 
 protected:
-    /// Builds on wire packet for TCP transmission.
+    /// @brief Builds on wire packet for TCP transmission.
     ///
-    /// TODO This function is not implemented yet.
+    /// @todo This function is not implemented yet.
     ///
     /// @throw NotImplemented, IPv6 over TCP is not yet supported.
     void packTCP();
 
-    /// Builds on wire packet for UDP transmission.
+    /// @brief Builds on wire packet for UDP transmission.
     ///
     /// @throw InvalidOperation if packing fails
     void packUDP();
@@ -283,7 +291,7 @@ protected:
     /// Will create a collection of option objects that will
     /// be stored in options_ container.
     ///
-    /// TODO This function is not implemented yet.
+    /// @todo This function is not implemented yet.
     ///
     /// @return true, if build was successful
     bool unpackTCP();
@@ -298,7 +306,7 @@ protected:
     /// @return true, if build was successful
     bool unpackUDP();
 
-    /// @brief unpacks direct (non-relayed) message
+    /// @brief Unpacks direct (non-relayed) message.
     ///
     /// This method unpacks specified buffer range as a direct
     /// (e.g. solicit or request) message. This method is called from
@@ -310,7 +318,7 @@ protected:
     bool unpackMsg(OptionBuffer::const_iterator begin,
                    OptionBuffer::const_iterator end);
 
-    /// @brief unpacks relayed message (RELAY-FORW or RELAY-REPL)
+    /// @brief Unpacks relayed message (RELAY-FORW or RELAY-REPL).
     ///
     /// This method is called from unpackUDP() when received message
     /// is detected to be relay-message. It goes iteratively over
@@ -319,18 +327,18 @@ protected:
     /// @return true if parsing was successful
     bool unpackRelayMsg();
 
-    /// @brief calculates overhead introduced in specified relay
+    /// @brief Calculates overhead introduced in specified relay.
     ///
     /// It is used when calculating message size and packing message
     /// @param relay RelayInfo structure that holds information about relay
     /// @return number of bytes needed to store relay information
     uint16_t getRelayOverhead(const RelayInfo& relay) const;
 
-    /// @brief calculates overhead for all relays defined for this message
+    /// @brief Calculates overhead for all relays defined for this message.
     /// @return number of bytes needed to store all relay information
     uint16_t calculateRelaySizes();
 
-    /// @brief calculates size of the message as if it was not relayed at all
+    /// @brief Calculates size of the message as if it was not relayed at all.
     ///
     /// This is equal to len() if the message was not relayed.
     /// @return number of bytes required to store the message
