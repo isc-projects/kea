@@ -20,7 +20,7 @@ namespace dhcp {
 
 void
 Pkt::addOption(const OptionPtr& opt) {
-    options_.insert(std::pair<int, boost::shared_ptr<Option> >(opt->getType(), opt));
+    options_.insert(std::pair<int, OptionPtr>(opt->getType(), opt));
 }
 
 OptionPtr
@@ -29,7 +29,7 @@ Pkt::getOption(uint16_t type) const {
     if (x != options_.end()) {
         return (*x).second;
     }
-    return boost::shared_ptr<isc::dhcp::Option>(); // NULL
+    return (OptionPtr()); // NULL
 }
 
 bool
@@ -60,7 +60,9 @@ Pkt::updateTimestamp() {
 }
 
 void Pkt::repack() {
-    buffer_out_.writeData(&data_[0], data_.size());
+    if (!data_.empty()) {
+        buffer_out_.writeData(&data_[0], data_.size());
+    }
 }
 
 void
@@ -87,17 +89,20 @@ Pkt::setHWAddrMember(const uint8_t htype, const uint8_t,
 }
 
 HWAddrPtr
-Pkt::getMAC(MACSource from) {
+Pkt::getMAC(uint32_t hw_addr_src) {
     HWAddrPtr mac;
-    if (from == MAC_SOURCE_RAW || from == MAC_SOURCE_ANY) {
+    if (hw_addr_src & MAC_SOURCE_RAW) {
         mac = getRemoteHWAddr();
         if (mac) {
             return (mac);
+        } else if (hw_addr_src == MAC_SOURCE_RAW) {
+            // If we're interested only in RAW sockets, no bother trying
+            // other options.
+            return (HWAddrPtr());
         }
     }
 
     /// @todo: add other MAC acquisition methods here
-
 
     // Ok, none of the methods were suitable. Return NULL.
     return (HWAddrPtr());
