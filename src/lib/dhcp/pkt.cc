@@ -18,9 +18,34 @@
 namespace isc {
 namespace dhcp {
 
-void
-Pkt::addOption(const OptionPtr& opt) {
-    options_.insert(std::pair<int, OptionPtr>(opt->getType(), opt));
+Pkt::Pkt(uint32_t transid, const isc::asiolink::IOAddress& local_addr,
+         const isc::asiolink::IOAddress& remote_addr, uint16_t local_port,
+         uint16_t remote_port)
+    :transid_(transid),
+     iface_(""),
+     ifindex_(-1),
+     local_addr_(local_addr),
+     remote_addr_(remote_addr),
+     local_port_(local_port),
+     remote_port_(remote_port),
+     buffer_out_(0)
+{
+}
+
+Pkt::Pkt(const uint8_t* buf, uint32_t len, const isc::asiolink::IOAddress& local_addr,
+         const isc::asiolink::IOAddress& remote_addr, uint16_t local_port,
+         uint16_t remote_port)
+    :transid_(0),
+     iface_(""),
+     ifindex_(-1),
+     local_addr_(local_addr),
+     remote_addr_(remote_addr),
+     local_port_(local_port),
+     remote_port_(remote_port),
+     buffer_out_(0)
+{
+    data_.resize(len);
+    memcpy(&data_[0], buf, len);
 }
 
 OptionPtr
@@ -96,8 +121,8 @@ Pkt::getMAC(uint32_t hw_addr_src) {
         if (mac) {
             return (mac);
         } else if (hw_addr_src == MAC_SOURCE_RAW) {
-            // If we're interested only in RAW sockets, no bother trying
-            // other options.
+            // If we're interested only in RAW sockets as source of that info,
+            // there's no point in trying other options.
             return (HWAddrPtr());
         }
     }

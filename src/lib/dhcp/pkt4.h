@@ -287,7 +287,7 @@ public:
 
     /// @brief Add an option.
     ///
-    /// Throws BadValue if option with that type is already present.
+    /// @throw BadValue if option with that type is already present.
     ///
     /// @param opt option to be added
     virtual void
