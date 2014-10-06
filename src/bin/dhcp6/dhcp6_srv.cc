@@ -311,9 +311,11 @@ bool Dhcpv6Srv::run() {
         // Unpack the packet information unless the buffer6_receive callouts
         // indicated they did it
         if (!skip_unpack) {
-            if (!query->unpack()) {
+            try {
+                query->unpack();
+            } catch (const std::exception &e) {
                 LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
-                          DHCP6_PACKET_PARSE_FAIL);
+                          DHCP6_PACKET_PARSE_FAIL).arg(e.what());
                 continue;
             }
         }

@@ -279,7 +279,7 @@ Pkt6* capture2() {
 TEST_F(Pkt6Test, unpack_solicit1) {
     scoped_ptr<Pkt6> sol(capture1());
 
-    ASSERT_EQ(true, sol->unpack());
+    ASSERT_NO_THROW(sol->unpack());
 
     // Check for length
     EXPECT_EQ(98, sol->len() );
@@ -305,7 +305,7 @@ TEST_F(Pkt6Test, packUnpack) {
     Pkt6Ptr clone = packAndClone();
 
     // Now recreate options list
-    EXPECT_TRUE(clone->unpack());
+    ASSERT_NO_THROW(clone->unpack());
 
     // transid, message-type should be the same as before
     EXPECT_EQ(0x020304, clone->getTransid());
@@ -315,6 +315,65 @@ TEST_F(Pkt6Test, packUnpack) {
     EXPECT_TRUE(clone->getOption(2));
     EXPECT_TRUE(clone->getOption(100));
     EXPECT_FALSE(clone->getOption(4));
+}
+
+// Checks if the code is able to handle malformed packet
+TEST_F(Pkt6Test, unpackMalformed) {
+    // Get a packet. We're really interested in its on-wire representation only.
+    scoped_ptr<Pkt6> donor(capture1());
+
+    // That's our original content. It should be sane.
+    OptionBuffer orig = donor->data_;
+
+    Pkt6Ptr success(new Pkt6(&orig[0], orig.size()));
+    EXPECT_NO_THROW(success->unpack());
+
+    // Insert trailing garbage.
+    OptionBuffer malform1 = orig;
+    malform1.push_back(123);
+
+    // Let's check a truncated packet. Moderately sane DHCPv6 packet should at
+    // least have four bytes header. Zero bytes is definitely not a valid one.
+    OptionBuffer empty(1); // Let's allocate one byte, so we won't be
+                           // dereferencing and empty buffer.
+
+    Pkt6Ptr empty_pkt(new Pkt6(&empty[0], 0));
+    EXPECT_THROW(empty_pkt->unpack(), isc::BadValue);
+
+    // Neither is 3 bytes long.
+    OptionBuffer shorty;
+    shorty.push_back(DHCPV6_SOLICIT);
+    shorty.push_back(1);
+    shorty.push_back(2);
+    Pkt6Ptr too_short_pkt(new Pkt6(&shorty[0], shorty.size()));
+    EXPECT_THROW(too_short_pkt->unpack(), isc::BadValue);
+
+    // The code should complain about remaining bytes that can't
+    // be parsed.
+    Pkt6Ptr trailing_garbage(new Pkt6(&malform1[0], malform1.size()));
+    EXPECT_NO_THROW(trailing_garbage->unpack());
+
+    // A strict approach would assume the code will reject the whole packet,
+    // but we decided to follow Jon Postel's law.
+
+    // Add an option that is truncated
+    OptionBuffer malform2 = orig;
+    malform2.push_back(0);
+    malform2.push_back(123); // 0, 123 - option code = 123
+    malform2.push_back(0);
+    malform2.push_back(1);   // 0, 1 - option length = 1
+    // Option content would go here, but it's missing
+
+    Pkt6Ptr trunc_option(new Pkt6(&malform2[0], malform2.size()));
+
+    // The unpack() operation should succeed...
+    EXPECT_NO_THROW(trunc_option->unpack());
+
+    // ... but there should be no option 123 as it was malformed.
+    EXPECT_FALSE(trunc_option->getOption(123));
+
+    // A strict approach would assume the code will reject the whole packet,
+    // but we decided to follow Jon Postel's law.
 }
 
 // This test verifies that it is possible to specify custom implementation of
@@ -334,7 +393,7 @@ TEST_F(Pkt6Test, packUnpackWithCallback) {
     ASSERT_FALSE(cb.executed_);
 
     // Now recreate options list
-    EXPECT_TRUE(clone->unpack());
+    ASSERT_NO_THROW(clone->unpack());
 
     // An object which holds a callback should now have a flag set which
     // indicates that callback has been called.
@@ -354,7 +413,7 @@ TEST_F(Pkt6Test, packUnpackWithCallback) {
     // By setting the callback to NULL we effectively uninstall the callback.
     clone->setCallback(NULL);
     // Do another unpack.
-    EXPECT_TRUE(clone->unpack());
+    ASSERT_NO_THROW(clone->unpack());
     // Callback should not be executed.
     EXPECT_FALSE(cb.executed_);
 }
@@ -644,7 +703,7 @@ TEST_F(Pkt6Test, relayPack) {
                                     parent->getBuffer().getLength()));
 
     // Now recreate options list
-    EXPECT_TRUE( clone->unpack() );
+    EXPECT_NO_THROW( clone->unpack() );
 
     // transid, message-type should be the same as before
     EXPECT_EQ(parent->getTransid(), parent->getTransid());

@@ -253,7 +253,7 @@ Pkt6::packTCP() {
               "not implemented yet.");
 }
 
-bool
+void
 Pkt6::unpack() {
     switch (proto_) {
     case UDP:
@@ -263,15 +263,13 @@ Pkt6::unpack() {
     default:
         isc_throw(BadValue, "Invalid protocol specified (non-TCP, non-UDP)");
     }
-    return (false); // never happens
 }
 
-bool
+void
 Pkt6::unpackUDP() {
     if (data_.size() < 4) {
-        // @todo: throw exception here informing that packet is truncated
-        // once we turn this function to void.
-        return (false);
+        isc_throw(BadValue, "Received truncated UDP DHCPv6 packet of size "
+                  << data_.size() << ", DHCPv6 header alone has 4 bytes.");
     }
     msg_type_ = data_[0];
     switch (msg_type_) {
@@ -295,12 +293,14 @@ Pkt6::unpackUDP() {
     }
 }
 
-bool
+void
 Pkt6::unpackMsg(OptionBuffer::const_iterator begin,
                 OptionBuffer::const_iterator end) {
-    if (std::distance(begin, end) < 4) {
+    size_t size = std::distance(begin, end);
+    if (size < 4) {
         // truncated message (less than 4 bytes)
-        return (false);
+        isc_throw(BadValue, "Received truncated UDP DHCPv6 packet of size "
+                  << data_.size() << ", DHCPv6 header alone has 4 bytes.");
     }
 
     msg_type_ = *begin++;
@@ -309,27 +309,33 @@ Pkt6::unpackMsg(OptionBuffer::const_iterator begin,
         ((*begin++) << 8) + (*begin++);
     transid_ = transid_ & 0xffffff;
 
-    try {
-        OptionBuffer opt_buffer(begin, end);
+    size -= sizeof(uint32_t); // We just parsed 4 bytes header
 
-        // If custom option parsing function has been set, use this function
-        // to parse options. Otherwise, use standard function from libdhcp.
-        if (callback_.empty()) {
-            LibDHCP::unpackOptions6(opt_buffer, "dhcp6", options_);
-        } else {
-            // The last two arguments hold the DHCPv6 Relay message offset and
-            // length. Setting them to NULL because we are dealing with the
-            // not-relayed message.
-            callback_(opt_buffer, "dhcp6", options_, NULL, NULL);
+    OptionBuffer opt_buffer(begin, end);
+
+    // If custom option parsing function has been set, use this function
+    // to parse options. Otherwise, use standard function from libdhcp.
+    if (callback_.empty()) {
+        size_t offset = LibDHCP::unpackOptions6(opt_buffer, "dhcp6", options_);
+        if (offset != size) {
+            // Something is wrong here. We either parsed past input buffer
+            // (impossible, our code is bug-free ;) or we haven't parsed
+            // everything (received trailing garbage or truncated option)
+
+            /// Invoking Jon Postel's law here: be conservative in what you send,
+            /// and be liberal in what you accept.
+            //isc_throw(BadValue, "Received DHCPv6 buffer of size " << size
+            //          << ", were able to parse " << offset << " bytes.");
         }
-    } catch (const Exception& e) {
-        // @todo: throw exception here once we turn this function to void.
-        return (false);
+    } else {
+        // The last two arguments hold the DHCPv6 Relay message offset and
+        // length. Setting them to NULL because we are dealing with the
+        // not-relayed message.
+        callback_(opt_buffer, "dhcp6", options_, NULL, NULL);
     }
-    return (true);
 }
 
-bool
+void
 Pkt6::unpackRelayMsg() {
 
     // we use offset + bufsize, because we want to avoid creating unnecessary
@@ -355,67 +361,60 @@ Pkt6::unpackRelayMsg() {
         offset += isc::asiolink::V6ADDRESS_LEN;
         bufsize -= DHCPV6_RELAY_HDR_LEN; // 34 bytes (1+1+16+16)
 
-        try {
-            // parse the rest as options
-            OptionBuffer opt_buffer(&data_[offset], &data_[offset+bufsize]);
+        // parse the rest as options
+        OptionBuffer opt_buffer(&data_[offset], &data_[offset+bufsize]);
 
-            // If custom option parsing function has been set, use this function
-            // to parse options. Otherwise, use standard function from libdhcp.
-            if (callback_.empty()) {
-                LibDHCP::unpackOptions6(opt_buffer, "dhcp6", relay.options_,
-                                        &relay_msg_offset, &relay_msg_len);
-            } else {
-                callback_(opt_buffer, "dhcp6", relay.options_,
-                          &relay_msg_offset, &relay_msg_len);
-            }
-
-            /// @todo: check that each option appears at most once
-            //relay.interface_id_ = options->getOption(D6O_INTERFACE_ID);
-            //relay.subscriber_id_ = options->getOption(D6O_SUBSCRIBER_ID);
-            //relay.remote_id_ = options->getOption(D6O_REMOTE_ID);
-
-            if (relay_msg_offset == 0 || relay_msg_len == 0) {
-                isc_throw(BadValue, "Mandatory relay-msg option missing");
-            }
-
-            // store relay information parsed so far
-            addRelayInfo(relay);
-
-            /// @todo: implement ERO here
-
-            if (relay_msg_len >= bufsize) {
-                // length of the relay_msg option extends beyond end of the message
-                isc_throw(Unexpected, "Relay-msg option is truncated.");
-                return false;
-            }
-            uint8_t inner_type = data_[offset + relay_msg_offset];
-            offset += relay_msg_offset; // offset is relative
-            bufsize = relay_msg_len;    // length is absolute
-
-            if ( (inner_type != DHCPV6_RELAY_FORW) &&
-                 (inner_type != DHCPV6_RELAY_REPL)) {
-                // Ok, the inner message is not encapsulated, let's decode it
-                // directly
-                return (unpackMsg(data_.begin() + offset, data_.begin() + offset
-                                  + relay_msg_len));
-            }
-
-            // Oh well, there's inner relay-forw or relay-repl inside. Let's
-            // unpack it as well. The next loop iteration will take care
-            // of that.
-        } catch (const Exception& e) {
-            /// @todo: throw exception here once we turn this function to void.
-            return (false);
+        // If custom option parsing function has been set, use this function
+        // to parse options. Otherwise, use standard function from libdhcp.
+        if (callback_.empty()) {
+            LibDHCP::unpackOptions6(opt_buffer, "dhcp6", relay.options_,
+                                    &relay_msg_offset, &relay_msg_len);
+        } else {
+            callback_(opt_buffer, "dhcp6", relay.options_,
+                      &relay_msg_offset, &relay_msg_len);
         }
+
+        /// @todo: check that each option appears at most once
+        //relay.interface_id_ = options->getOption(D6O_INTERFACE_ID);
+        //relay.subscriber_id_ = options->getOption(D6O_SUBSCRIBER_ID);
+        //relay.remote_id_ = options->getOption(D6O_REMOTE_ID);
+
+        if (relay_msg_offset == 0 || relay_msg_len == 0) {
+            isc_throw(BadValue, "Mandatory relay-msg option missing");
+        }
+
+        // store relay information parsed so far
+        addRelayInfo(relay);
+
+        /// @todo: implement ERO here
+
+        if (relay_msg_len >= bufsize) {
+            // length of the relay_msg option extends beyond end of the message
+            isc_throw(Unexpected, "Relay-msg option is truncated.");
+        }
+        uint8_t inner_type = data_[offset + relay_msg_offset];
+        offset += relay_msg_offset; // offset is relative
+        bufsize = relay_msg_len;    // length is absolute
+
+        if ( (inner_type != DHCPV6_RELAY_FORW) &&
+             (inner_type != DHCPV6_RELAY_REPL)) {
+            // Ok, the inner message is not encapsulated, let's decode it
+            // directly
+            return (unpackMsg(data_.begin() + offset, data_.begin() + offset
+                              + relay_msg_len));
+        }
+
+        // Oh well, there's inner relay-forw or relay-repl inside. Let's
+        // unpack it as well. The next loop iteration will take care
+        // of that.
     }
 
     if ( (offset == data_.size()) && (bufsize == 0) ) {
         // message has been parsed completely
-        return (true);
+        return;
     }
 
     /// @todo: log here that there are additional unparsed bytes
-    return (true);
 }
 
 void
@@ -428,7 +427,7 @@ Pkt6::addRelayInfo(const RelayInfo& relay) {
     relay_info_.push_back(relay);
 }
 
-bool
+void
 Pkt6::unpackTCP() {
     isc_throw(Unexpected, "DHCPv6 over TCP (bulk leasequery and failover) "
               "not implemented yet.");

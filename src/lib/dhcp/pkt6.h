@@ -142,8 +142,8 @@ public:
     /// This method calls appropriate dispatch function (unpackUDP or
     /// unpackTCP).
     ///
-    /// @return true if parsing was successful
-    virtual bool unpack();
+    /// @throw tbd
+    virtual void unpack();
 
     /// @brief Returns protocol of this packet (UDP or TCP).
     ///
@@ -300,8 +300,8 @@ protected:
     ///
     /// @todo This function is not implemented yet.
     ///
-    /// @return true, if build was successful
-    bool unpackTCP();
+    /// @throw tbd
+    void unpackTCP();
 
     /// @brief Parses on-wire form of UDP DHCPv6 packet.
     ///
@@ -310,8 +310,8 @@ protected:
     /// Will create a collection of option objects that will
     /// be stored in options_ container.
     ///
-    /// @return true, if build was successful
-    bool unpackUDP();
+    /// @throw tbd
+    void unpackUDP();
 
     /// @brief Unpacks direct (non-relayed) message.
     ///
@@ -321,8 +321,8 @@ protected:
     ///
     /// @param begin start of the buffer
     /// @param end end of the buffer
-    /// @return true if parsing was successful and there are no leftover bytes
-    bool unpackMsg(OptionBuffer::const_iterator begin,
+    /// @throw tbd
+    void unpackMsg(OptionBuffer::const_iterator begin,
                    OptionBuffer::const_iterator end);
 
     /// @brief Unpacks relayed message (RELAY-FORW or RELAY-REPL).
@@ -331,8 +331,8 @@ protected:
     /// is detected to be relay-message. It goes iteratively over
     /// all relays (if there are multiple encapsulation levels).
     ///
-    /// @return true if parsing was successful
-    bool unpackRelayMsg();
+    /// @throw tbd
+    void unpackRelayMsg();
 
     /// @brief Calculates overhead introduced in specified relay.
     ///

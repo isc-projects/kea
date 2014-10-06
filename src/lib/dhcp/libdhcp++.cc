@@ -239,7 +239,8 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
 
         if (offset + opt_len > length) {
             // @todo: consider throwing exception here.
-            return (offset);
+            // Let's pretend we never parsed those 4 bytes
+            return (offset - 4);
         }
 
         if (opt_type == D6O_RELAY_MSG && relay_msg_offset && relay_msg_len) {
