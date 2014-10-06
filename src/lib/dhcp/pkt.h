@@ -152,13 +152,8 @@ public:
     ///
     /// Method will throw exception if packet parsing fails.
     ///
-    /// @todo Pkt4 throws exceptions when unpacking fails, while Pkt6
-    ///       catches exceptions and returns false. We need to unify that
-    ///       behavior one day (most likely using exceptions and turning
-    ///       return type to void).
-    ///
-    /// @return true if unpack was successful
-    virtual bool unpack() = 0;
+    /// @throw tbd
+    virtual void unpack() = 0;
 
     /// @brief Returns reference to output buffer.
     ///

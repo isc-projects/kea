@@ -93,8 +93,7 @@ public:
     /// be stored in options_ container.
     ///
     /// Method with throw exception if packet parsing fails.
-    /// @return true if unpack was successful
-    virtual bool unpack();
+    virtual void unpack();
 
     /// @brief performs sanity check on a packet.
     ///
