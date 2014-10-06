@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,10 +24,11 @@
 using namespace std;
 using namespace isc::asiolink;
 
+/// @brief Default address used in Pkt6 constructor
+const IOAddress DEFAULT_ADDRESS6("::");
+
 namespace isc {
 namespace dhcp {
-
-const IOAddress DEFAULT_ADDRESS6("::");
 
 Pkt6::RelayInfo::RelayInfo()
     :msg_type_(0), hop_count_(0), linkaddr_("::"), peeraddr_("::"),
@@ -111,11 +112,6 @@ OptionPtr Pkt6::getAnyRelayOption(uint16_t opt_type, RelaySearchOrder order) {
     // We iterated over specified relays and haven't found what we were
     // looking for
     return (OptionPtr());
-}
-
-void
-Pkt6::addOption(const OptionPtr& opt) {
-    options_.insert(std::pair<int, OptionPtr>(opt->getType(), opt));
 }
 
 OptionPtr Pkt6::getRelayOption(uint16_t opt_type, uint8_t relay_level) {
