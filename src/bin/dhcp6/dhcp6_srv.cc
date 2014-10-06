@@ -2470,7 +2470,12 @@ Dhcpv6Srv::unpackOptions(const OptionBuffer& buf,
 
         if (offset + opt_len > length) {
             // @todo: consider throwing exception here.
-            return (offset);
+
+            // We peeked at the option header of the next option, but discovered
+            // that it would end up beyond buffer end, so the option is
+            // truncated. Hence we can't parse it. Therefore we revert
+            // by by those four bytes (as if we never parsed them).
+            return (offset - 4);
         }
 
         if (opt_type == D6O_RELAY_MSG && relay_msg_offset && relay_msg_len) {
