@@ -116,10 +116,10 @@ Pkt::setRemoteHWAddr(const HWAddrPtr& hw_addr) {
 
 void
 Pkt::setHWAddrMember(const uint8_t htype, const uint8_t,
-                      const std::vector<uint8_t>& mac_addr,
-                      HWAddrPtr& hw_addr) {
+                      const std::vector<uint8_t>& hw_addr,
+                      HWAddrPtr& storage) {
 
-    hw_addr.reset(new HWAddr(mac_addr, htype));
+    storage.reset(new HWAddr(hw_addr, htype));
 }
 
 HWAddrPtr

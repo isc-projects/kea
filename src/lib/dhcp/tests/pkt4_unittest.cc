@@ -856,7 +856,7 @@ TEST_F(Pkt4Test, clientClasses) {
 TEST_F(Pkt4Test, getMAC) {
     Pkt4 pkt(DHCPOFFER, 1234);
 
-    // DHCPv6 packet by default doens't have MAC address specified.
+    // DHCPv4 packet by default doens't have MAC address specified.
     EXPECT_FALSE(pkt.getMAC(Pkt::MAC_SOURCE_ANY));
     EXPECT_FALSE(pkt.getMAC(Pkt::MAC_SOURCE_RAW));
 

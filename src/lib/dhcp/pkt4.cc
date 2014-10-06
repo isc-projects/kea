@@ -210,16 +210,33 @@ Pkt4::unpack() {
 
     // Use readVector because a function which parses option requires
     // a vector as an input.
+    size_t offset;
     buffer_in.readVector(opts_buffer, opts_len);
     if (callback_.empty()) {
-        LibDHCP::unpackOptions4(opts_buffer, "dhcp4", options_);
+        offset = LibDHCP::unpackOptions4(opts_buffer, "dhcp4", options_);
     } else {
         // The last two arguments are set to NULL because they are
         // specific to DHCPv6 options parsing. They are unused for
         // DHCPv4 case. In DHCPv6 case they hold are the relay message
         // offset and length.
-        callback_(opts_buffer, "dhcp4", options_, NULL, NULL);
+        offset = callback_(opts_buffer, "dhcp4", options_, NULL, NULL);
     }
+
+    // If offset is not equal to the size, then something is wrong here. We
+    // either parsed past input buffer (bug in our code) or we haven't parsed
+    // everything (received trailing garbage or truncated option).
+    //
+    // Invoking Jon Postel's law here: be conservative in what you send, and be
+    // liberal in what you accept. There's no easy way to log something from
+    // libdhcp++ library, so we just choose to be silent about remaining
+    // bytes. We also need to quell compiler warning about unused offset
+    // variable.
+    //
+    // if (offset != size) {
+    //        isc_throw(BadValue, "Received DHCPv6 buffer of size " << size
+    //                  << ", were able to parse " << offset << " bytes.");
+    // }
+    (void)offset;
 
     // @todo check will need to be called separately, so hooks can be called
     // after the packet is parsed, but before its content is verified

@@ -354,7 +354,8 @@ TEST_F(Pkt6Test, unpackMalformed) {
     EXPECT_NO_THROW(trailing_garbage->unpack());
 
     // A strict approach would assume the code will reject the whole packet,
-    // but we decided to follow Jon Postel's law.
+    // but we decided to follow Jon Postel's law and be silent about
+    // received malformed or truncated options.
 
     // Add an option that is truncated
     OptionBuffer malform2 = orig;
@@ -371,9 +372,6 @@ TEST_F(Pkt6Test, unpackMalformed) {
 
     // ... but there should be no option 123 as it was malformed.
     EXPECT_FALSE(trunc_option->getOption(123));
-
-    // A strict approach would assume the code will reject the whole packet,
-    // but we decided to follow Jon Postel's law.
 }
 
 // This test verifies that it is possible to specify custom implementation of

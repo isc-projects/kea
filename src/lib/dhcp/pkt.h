@@ -56,31 +56,31 @@ public:
 
     /// Extracted from DUID-LL or DUID-LLT (not 100% reliable as the client
     /// can send fake DUID).
-    static const uint32_t MAC_SOURCE_DUID = 0x0002;
+    //static const uint32_t MAC_SOURCE_DUID = 0x0002;
 
     /// Extracted from IPv6 link-local address. Not 100% reliable, as the
     /// client can use different IID other than EUI-64, e.g. Windows supports
     /// RFC4941 and uses random values instead of EUI-64.
-    static const uint32_t MAC_SOURCE_IPV6_LINK_LOCAL = 0x0004;
+    //static const uint32_t MAC_SOURCE_IPV6_LINK_LOCAL = 0x0004;
 
     /// Get it from RFC6939 option. (A relay agent can insert client link layer
     /// address option). Note that a skilled attacker can fake that by sending
     /// his request relayed, so the legitimate relay will think it's a second
     /// relay.
-    static const uint32_t MAC_SOURCE_CLIENT_ADDR_RELAY_OPTION = 0x0008;
+    //static const uint32_t MAC_SOURCE_CLIENT_ADDR_RELAY_OPTION = 0x0008;
 
     /// A relay can insert remote-id. In some deployments it contains a MAC
     /// address (RFC4649).
-    static const uint32_t MAC_SOURCE_REMOTE_ID = 0x0010;
+    //static const uint32_t MAC_SOURCE_REMOTE_ID = 0x0010;
 
     /// A relay can insert a subscriber-id option. In some deployments it
     /// contains a MAC address (RFC4580).
-    static const uint32_t MAC_SOURCE_SUBSCRIBER_ID = 0x0020;
+    //static const uint32_t MAC_SOURCE_SUBSCRIBER_ID = 0x0020;
 
     /// A CMTS (acting as DHCP relay agent) that supports DOCSIS standard
     /// can insert DOCSIS options that contain client's MAC address.
     /// Client in this context would be a cable modem.
-    static const uint32_t MAC_SOURCE_DOCSIS_OPTIONS = 0x0040;
+    //static const uint32_t MAC_SOURCE_DOCSIS_OPTIONS = 0x0040;
 
     /// @}
 
@@ -572,13 +572,13 @@ private:
     ///
     /// @param htype hardware type.
     /// @param hlen hardware length.
-    /// @param mac_addr pointer to actual hardware address.
-    /// @param [out] hw_addr pointer to a class member to be modified.
+    /// @param hw_addr pointer to actual hardware address.
+    /// @param [out] storage pointer to a class member to be modified.
     ///
     /// @trow isc::OutOfRange if invalid HW address specified.
     virtual void setHWAddrMember(const uint8_t htype, const uint8_t hlen,
-                                 const std::vector<uint8_t>& mac_addr,
-                                 HWAddrPtr& hw_addr);
+                                 const std::vector<uint8_t>& hw_addr,
+                                 HWAddrPtr& storage);
 };
 
 }; // namespace isc::dhcp

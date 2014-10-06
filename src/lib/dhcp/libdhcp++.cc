@@ -239,7 +239,11 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
 
         if (offset + opt_len > length) {
             // @todo: consider throwing exception here.
-            // Let's pretend we never parsed those 4 bytes
+
+            // We peeked at the option header of the next option, but discovered
+            // that it would end up beyond buffer end, so the option is
+            // truncated. Hence we can't parse it. Therefore we revert
+            // back by those four bytes (as if we never parsed them).
             return (offset - 4);
         }
 
@@ -352,9 +356,16 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
 
         uint8_t opt_len =  buf[offset++];
         if (offset + opt_len > buf.size()) {
-            isc_throw(OutOfRange, "Option parse failed. Tried to parse "
-                      << offset + opt_len << " bytes from " << buf.size()
-                      << "-byte long buffer.");
+
+            // We peeked at the option header of the next option, but discovered
+            // that it would end up beyond buffer end, so the option is
+            // truncated. Hence we can't parse it. Therefore we revert
+            // back by two bytes (as if we never parsed them).
+            return (offset - 2);
+
+            // isc_throw(OutOfRange, "Option parse failed. Tried to parse "
+            //          << offset + opt_len << " bytes from " << buf.size()
+            //          << "-byte long buffer.");
         }
 
         // Get all definitions with the particular option code. Note that option code
