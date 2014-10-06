@@ -163,29 +163,30 @@ public:
     /// @brief Returns reference to output buffer.
     ///
     /// Returned buffer will contain reasonable data only for
-    /// output (TX) packet and after pack() was called. This buffer
-    /// is only valid till Pkt{4,6} object is valid.
+    /// output (TX) packet and after pack() was called.
     ///
     /// RX packet or TX packet before pack() will return buffer with
     /// zero length. This buffer is returned as non-const, so hooks
     /// framework (and user's callouts) can modify them if needed
+    ///
+    /// @note This buffer is only valid till object that returned it exists.
     ///
     /// @return reference to output buffer
     isc::util::OutputBuffer& getBuffer() { return (buffer_out_); };
 
     /// @brief Adds an option to this packet.
     ///
-    /// @note This is a pure virtual method and must be implemented in
-    /// the derived classes. The @c Pkt4 and @c Pkt6 class have respective
-    /// implementations of this method.
-    ///
-    /// We can't have a unified method, as DHCPv6 allows option duplicates,
-    /// while DHCPv4 doesn't.
+    /// Derived classes may provide more specialized implementations.
+    /// In particular @c Pkt4 provides one that checks if option is
+    /// unique.
     ///
     /// @param opt option to be added.
-    virtual void addOption(const OptionPtr& opt) = 0;
+    virtual void addOption(const OptionPtr& opt);
 
     /// @brief Attempts to delete first suboption of requested type.
+    ///
+    /// If there are several options of the same type present, only
+    /// the first option will be deleted.
     ///
     /// @param type Type of option to be deleted.
     ///
@@ -217,16 +218,18 @@ public:
 
     /// @brief Returns message type (e.g. 1 = SOLICIT).
     ///
-    /// This is a pure virtual method. DHCPv4 stores type in option 53 and
-    /// DHCPv6 stores it in the header.
+    /// @note This is a pure virtual method and must be implemented in
+    /// the derived classes. The @c Pkt4 and @c Pkt6 class have respective
+    /// implementations of this method.
     ///
     /// @return message type
     virtual uint8_t getType() const = 0;
 
     /// @brief Sets message type (e.g. 1 = SOLICIT).
     ///
-    /// This is a pure virtual method. DHCPv4 stores type in option 53 and
-    /// DHCPv6 stores it in the header.
+    /// @note This is a pure virtual method and must be implemented in
+    /// the derived classes. The @c Pkt4 and @c Pkt6 class have respective
+    /// implementations of this method.
     ///
     /// @param type message type to be set
     virtual void setType(uint8_t type) = 0;
@@ -241,13 +244,13 @@ public:
     /// @return transaction-id
     uint32_t getTransid() const { return (transid_); };
 
-    /// @brief Checks whether a client belongs to a given class
+    /// @brief Checks whether a client belongs to a given class.
     ///
     /// @param client_class name of the class
     /// @return true if belongs
     bool inClass(const isc::dhcp::ClientClass& client_class);
 
-    /// @brief Adds packet to a specified class
+    /// @brief Adds packet to a specified class.
     ///
     /// A packet can be added to the same class repeatedly. Any additional
     /// attempts to add to a class the packet already belongs to, will be
@@ -264,7 +267,7 @@ public:
     /// @param client_class name of the class to be added
     void addClass(const isc::dhcp::ClientClass& client_class);
 
-    /// unparsed data (in received packets)
+    /// @brief Unparsed data (in received packets).
     ///
     /// @warning This public member is accessed by derived
     /// classes directly. One of such derived classes is
@@ -278,7 +281,9 @@ public:
     ///
     /// Returns the first option of specified type. Note that in DHCPv6 several
     /// instances of the same option are allowed (and frequently used).
-    /// Also see \ref getOptions().
+    /// Also see \ref Pkt6::getOptions().
+    ///
+    /// The options will be only returned after unpack() is called.
     ///
     /// @param type option type we are looking for
     ///
@@ -326,7 +331,7 @@ public:
         remote_addr_ = remote;
     }
 
-    /// @brief Returns remote IP address
+    /// @brief Returns remote IP address.
     ///
     /// @return remote address
     const isc::asiolink::IOAddress& getRemoteAddr() const {
@@ -347,21 +352,30 @@ public:
         return (local_addr_);
     }
 
-    /// @brief Sets local port.
+    /// @brief Sets local UDP (and soon TCP) port.
+    ///
+    /// This sets a local port, i.e. destination port for recently received
+    /// packet or a source port for to be transmitted packet.
     ///
     /// @param local specifies local port
     void setLocalPort(uint16_t local) {
         local_port_ = local;
     }
 
-    /// @brief Returns local port.
+    /// @brief Returns local UDP (and soon TCP) port.
+    ///
+    /// This sets a local port, i.e. destination port for recently received
+    /// packet or a source port for to be transmitted packet.
     ///
     /// @return local port
     uint16_t getLocalPort() const {
         return (local_port_);
     }
 
-    /// @brief Sets remote port.
+    /// @brief Sets remote UDP (and soon TCP) port.
+    ///
+    /// This sets a remote port, i.e. source port for recently received
+    /// packet or a destination port for to be transmitted packet.
     ///
     /// @param remote specifies remote port
     void setRemotePort(uint16_t remote) {
@@ -395,7 +409,7 @@ public:
     /// going to be transmitted.
     ///
     /// @return interface name
-    std::string getIface() const { return iface_; };
+    std::string getIface() const { return (iface_); };
 
     /// @brief Sets interface name.
     ///
@@ -405,22 +419,22 @@ public:
     /// @return interface name
     void setIface(const std::string& iface ) { iface_ = iface; };
 
-    /// @brief Sets remote HW address.
+    /// @brief Sets remote hardware address.
     ///
-    /// Sets hardware address from an existing HWAddr structure.
+    /// Sets hardware address (MAC) from an existing HWAddr structure.
     /// The remote address is a destination address for outgoing
     /// packet and source address for incoming packet. When this
     /// is an outgoing packet, this address will be used to
     /// construct the link layer header.
     ///
-    /// @param addr structure representing HW address.
+    /// @param hw_addr structure representing HW address.
     ///
     /// @throw BadValue if addr is null
-    void setRemoteHWAddr(const HWAddrPtr& addr);
+    void setRemoteHWAddr(const HWAddrPtr& hw_addr);
 
-    /// @brief Sets remote HW address.
+    /// @brief Sets remote hardware address.
     ///
-    /// Sets the destination HW address for the outgoing packet
+    /// Sets the destination hardware (MAC) address for the outgoing packet
     /// or source HW address for the incoming packet. When this
     /// is an outgoing packet this address will be used to construct
     /// the link layer header.
@@ -435,9 +449,9 @@ public:
     ///
     /// @param htype hardware type (will be sent in htype field)
     /// @param hlen hardware length (will be sent in hlen field)
-    /// @param mac_addr pointer to hardware address
+    /// @param hw_addr pointer to hardware address
     void setRemoteHWAddr(const uint8_t htype, const uint8_t hlen,
-                         const std::vector<uint8_t>& mac_addr);
+                         const std::vector<uint8_t>& hw_addr);
 
     /// @brief Returns the remote HW address obtained from raw sockets.
     ///
@@ -493,23 +507,29 @@ public:
 
 protected:
 
-    /// transaction-id (32 bits for v4, 24 bits for v6)
+    /// Transaction-id (32 bits for v4, 24 bits for v6)
     uint32_t transid_;
 
-    /// name of the network interface the packet was received/to be sent over
+    /// Name of the network interface the packet was received/to be sent over.
     std::string iface_;
-    /// @brief interface index
+
+    /// @brief Interface index.
     ///
-    /// interface index (each network interface has assigned unique ifindex
-    /// it is functional equivalent of name, but sometimes more useful, e.g.
-    /// when using crazy systems that allow spaces in interface names
-    /// e.g. windows
+    /// Each network interface has assigned an unique ifindex.
+    /// It is a functional equivalent of a name, but sometimes more useful, e.g.
+    /// when using odd systems that allow spaces in interface names.
     int ifindex_;
 
-    /// local address (dst if receiving packet, src if sending packet)
+    /// @brief Local IP (v4 or v6) address.
+    ///
+    /// Specifies local IPv4 or IPv6 address. It is a destination address for
+    /// received packet, and a source address if it is packet being transmitted.
     isc::asiolink::IOAddress local_addr_;
 
-    /// remote address (src if receiving packet, dst if sending packet)
+    /// @brief Remote IP address.
+    ///
+    /// Specifies local IPv4 or IPv6 address. It is source address for received
+    /// packet and a destination address for packet being transmitted.
     isc::asiolink::IOAddress remote_addr_;
 
     /// local TDP or UDP port

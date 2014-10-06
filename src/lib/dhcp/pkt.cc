@@ -48,6 +48,11 @@ Pkt::Pkt(const uint8_t* buf, uint32_t len, const isc::asiolink::IOAddress& local
     memcpy(&data_[0], buf, len);
 }
 
+void
+Pkt::addOption(const OptionPtr& opt) {
+    options_.insert(std::pair<int, OptionPtr>(opt->getType(), opt));
+}
+
 OptionPtr
 Pkt::getOption(uint16_t type) const {
     OptionCollection::const_iterator x = options_.find(type);
@@ -59,12 +64,14 @@ Pkt::getOption(uint16_t type) const {
 
 bool
 Pkt::delOption(uint16_t type) {
+
     isc::dhcp::OptionCollection::iterator x = options_.find(type);
     if (x!=options_.end()) {
         options_.erase(x);
         return (true); // delete successful
+    } else {
+        return (false); // can't find option to be deleted
     }
-    return (false); // can't find option to be deleted
 }
 
 bool
@@ -92,17 +99,17 @@ void Pkt::repack() {
 
 void
 Pkt::setRemoteHWAddr(const uint8_t htype, const uint8_t hlen,
-                      const std::vector<uint8_t>& mac_addr) {
-    setHWAddrMember(htype, hlen, mac_addr, remote_hwaddr_);
+                      const std::vector<uint8_t>& hw_addr) {
+    setHWAddrMember(htype, hlen, hw_addr, remote_hwaddr_);
 }
 
 void
-Pkt::setRemoteHWAddr(const HWAddrPtr& addr) {
-    if (!addr) {
+Pkt::setRemoteHWAddr(const HWAddrPtr& hw_addr) {
+    if (!hw_addr) {
         isc_throw(BadValue, "Setting remote HW address to NULL is"
                   << " forbidden.");
     }
-    remote_hwaddr_ = addr;
+    remote_hwaddr_ = hw_addr;
 }
 
 void

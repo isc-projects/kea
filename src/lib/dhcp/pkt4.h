@@ -34,6 +34,13 @@ namespace isc {
 
 namespace dhcp {
 
+/// @brief Represents DHCPv4 packet
+///
+/// This class represents a single DHCPv4 packet. It handles both incoming
+/// and transmitted packets, parsing incoming options, options handling
+/// (add, get, remove), on-wire assembly, sanity checks and other operations.
+/// This specific class has several DHCPv4-specific methods, but it uses a lot
+/// of common operations from its base @c Pkt class that is shared with Pkt6.
 class Pkt4 : public Pkt {
 public:
 
@@ -155,7 +162,6 @@ public:
     /// @return flags field
     uint16_t getFlags() const { return (flags_); };
 
-
     /// @brief Returns ciaddr field.
     ///
     /// @return ciaddr field
@@ -181,7 +187,6 @@ public:
     void
     setSiaddr(const isc::asiolink::IOAddress& siaddr) { siaddr_ = siaddr; };
 
-
     /// @brief Returns yiaddr field.
     ///
     /// @return yiaddr field
@@ -193,7 +198,6 @@ public:
     /// @param yiaddr value to be set
     void
     setYiaddr(const isc::asiolink::IOAddress& yiaddr) { yiaddr_ = yiaddr; };
-
 
     /// @brief Returns giaddr field.
     ///
@@ -435,6 +439,7 @@ protected:
     // end of real DHCPv4 fields
 }; // Pkt4 class
 
+/// @brief A pointer to Pkt4 object.
 typedef boost::shared_ptr<Pkt4> Pkt4Ptr;
 
 } // isc::dhcp namespace

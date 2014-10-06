@@ -33,8 +33,21 @@ namespace isc {
 namespace dhcp {
 
 class Pkt6;
+
+/// @brief A pointer to Pkt6 packet
 typedef boost::shared_ptr<Pkt6> Pkt6Ptr;
 
+/// @brief Represents a DHCPv6 packet
+///
+/// This class represents a single DHCPv6 packet. It handles both incoming
+/// and transmitted packets, parsing incoming options, options handling
+/// (add, get, remove), on-wire assembly, sanity checks and other operations.
+/// This specific class has several DHCPv6-specific methods, but it uses a lot
+/// of common operations from its base @c Pkt class that is shared with Pkt4.
+///
+/// This class also handles relayed packets. For example, a RELAY-FORW message
+/// with a SOLICIT inside will be represented as SOLICIT and the RELAY-FORW
+/// layers will be stored in relay_info_ vector.
 class Pkt6 : public Pkt {
 public:
     /// specifies non-relayed DHCPv6 packet header length (over UDP)
@@ -131,12 +144,6 @@ public:
     ///
     /// @return true if parsing was successful
     virtual bool unpack();
-
-    /// @brief Adds an option.
-    ///
-    /// @param opt option to be added
-    virtual void
-    addOption(const OptionPtr& opt);
 
     /// @brief Returns protocol of this packet (UDP or TCP).
     ///
