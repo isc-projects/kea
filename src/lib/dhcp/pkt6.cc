@@ -31,10 +31,8 @@ namespace isc {
 namespace dhcp {
 
 Pkt6::RelayInfo::RelayInfo()
-    :msg_type_(0), hop_count_(0), linkaddr_("::"), peeraddr_("::"),
-    relay_msg_len_(0) {
-    // interface_id_, subscriber_id_, remote_id_ initialized to NULL
-    // echo_options_ initialized to empty collection
+    :msg_type_(0), hop_count_(0), linkaddr_(DEFAULT_ADDRESS6),
+    peeraddr_(DEFAULT_ADDRESS6), relay_msg_len_(0) {
 }
 
 Pkt6::Pkt6(const uint8_t* buf, uint32_t buf_len, DHCPv6Proto proto /* = UDP */)
@@ -315,24 +313,31 @@ Pkt6::unpackMsg(OptionBuffer::const_iterator begin,
 
     // If custom option parsing function has been set, use this function
     // to parse options. Otherwise, use standard function from libdhcp.
+    size_t offset;
     if (callback_.empty()) {
-        size_t offset = LibDHCP::unpackOptions6(opt_buffer, "dhcp6", options_);
-        if (offset != size) {
-            // Something is wrong here. We either parsed past input buffer
-            // (impossible, our code is bug-free ;) or we haven't parsed
-            // everything (received trailing garbage or truncated option)
-
-            /// Invoking Jon Postel's law here: be conservative in what you send,
-            /// and be liberal in what you accept.
-            //isc_throw(BadValue, "Received DHCPv6 buffer of size " << size
-            //          << ", were able to parse " << offset << " bytes.");
-        }
+        offset = LibDHCP::unpackOptions6(opt_buffer, "dhcp6", options_);
     } else {
         // The last two arguments hold the DHCPv6 Relay message offset and
         // length. Setting them to NULL because we are dealing with the
         // not-relayed message.
-        callback_(opt_buffer, "dhcp6", options_, NULL, NULL);
+        offset = callback_(opt_buffer, "dhcp6", options_, NULL, NULL);
     }
+
+    // If offset is not equal to the size, then something is wrong here. We
+    // either parsed past input buffer (bug in our code) or we haven't parsed
+    // everything (received trailing garbage or truncated option).
+    //
+    // Invoking Jon Postel's law here: be conservative in what you send, and be
+    // liberal in what you accept. There's no easy way to log something from
+    // libdhcp++ library, so we just choose to be silent about remaining
+    // bytes. We also need to quell compiler warning about unused offset
+    // variable.
+    //
+    // if (offset != size) {
+    //        isc_throw(BadValue, "Received DHCPv6 buffer of size " << size
+    //                  << ", were able to parse " << offset << " bytes.");
+    // }
+    (void)offset;
 }
 
 void
@@ -386,7 +391,7 @@ Pkt6::unpackRelayMsg() {
         // store relay information parsed so far
         addRelayInfo(relay);
 
-        /// @todo: implement ERO here
+        /// @todo: implement ERO (Echo Request Option, RFC 4994) here
 
         if (relay_msg_len >= bufsize) {
             // length of the relay_msg option extends beyond end of the message
