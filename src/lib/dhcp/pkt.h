@@ -518,7 +518,7 @@ protected:
     /// @brief Local IP (v4 or v6) address.
     ///
     /// Specifies local IPv4 or IPv6 address. It is a destination address for
-    /// received packet, and a source address if it is packet being transmitted.
+    /// received packet, and a source address if it packet is being transmitted.
     isc::asiolink::IOAddress local_addr_;
 
     /// @brief Remote IP address.
