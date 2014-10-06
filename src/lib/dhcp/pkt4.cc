@@ -155,7 +155,7 @@ Pkt4::pack() {
     }
 }
 
-bool
+void
 Pkt4::unpack() {
 
     // input buffer (used during message reception)
@@ -224,8 +224,6 @@ Pkt4::unpack() {
     // @todo check will need to be called separately, so hooks can be called
     // after the packet is parsed, but before its content is verified
     check();
-
-    return (true);
 }
 
 void Pkt4::check() {

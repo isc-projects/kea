@@ -45,7 +45,9 @@ Pkt::Pkt(const uint8_t* buf, uint32_t len, const isc::asiolink::IOAddress& local
      buffer_out_(0)
 {
     data_.resize(len);
-    memcpy(&data_[0], buf, len);
+    if (len) {
+        memcpy(&data_[0], buf, len);
+    }
 }
 
 void
