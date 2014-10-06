@@ -27,10 +27,14 @@ using namespace std;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
 
+namespace {
+
+/// @brief Default address used in Pkt4 constructor
+const IOAddress DEFAULT_ADDRESS("0.0.0.0");
+}
+
 namespace isc {
 namespace dhcp {
-
-const IOAddress DEFAULT_ADDRESS("0.0.0.0");
 
 Pkt4::Pkt4(uint8_t msg_type, uint32_t transid)
      :Pkt(transid, DEFAULT_ADDRESS, DEFAULT_ADDRESS, DHCP4_SERVER_PORT,
@@ -410,7 +414,8 @@ Pkt4::addOption(const OptionPtr& opt) {
         isc_throw(BadValue, "Option " << opt->getType()
                   << " already present in this message.");
     }
-    options_.insert(pair<int, boost::shared_ptr<Option> >(opt->getType(), opt));
+
+    Pkt::addOption(opt);
 }
 
 bool
