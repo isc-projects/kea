@@ -433,7 +433,12 @@ size_t LibDHCP::unpackVendorOptions6(const uint32_t vendor_id,
 
         if (offset + opt_len > length) {
             // @todo: consider throwing exception here.
-            return (offset);
+
+            // We peeked at the option header of the next option, but discovered
+            // that it would end up beyond buffer end, so the option is
+            // truncated. Hence we can't parse it. Therefore we revert
+            // back by those four bytes (as if we never parsed them).
+            return (offset - 4);
         }
 
         OptionPtr opt;
@@ -509,8 +514,13 @@ size_t LibDHCP::unpackVendorOptions4(const uint32_t vendor_id, const OptionBuffe
         uint8_t data_len = buf[offset++];
 
         if (offset + data_len > buf.size()) {
-            // Truncated data-option
-            return (offset);
+            // The option is truncated.
+
+            // We peeked at the data_len, but discovered that it would end up
+            // beyond buffer end, so the data block is truncated. Hence we can't
+            // parse it. Therefore we revert back by one byte (as if we never
+            // parsed it).
+            return (offset - 1);
         }
 
         uint8_t offset_end = offset + data_len;
@@ -531,7 +541,7 @@ size_t LibDHCP::unpackVendorOptions4(const uint32_t vendor_id, const OptionBuffe
             if (offset + 1 >= buf.size()) {
                 // opt_type must be cast to integer so as it is not treated as
                 // unsigned char value (a number is presented in error message).
-                isc_throw(OutOfRange, "Attempt to parse truncated option "
+                isc_throw(OutOfRange, "Attempt to parse truncated vendor option "
                           << static_cast<int>(opt_type));
             }
 
@@ -551,7 +561,7 @@ size_t LibDHCP::unpackVendorOptions4(const uint32_t vendor_id, const OptionBuffe
                 // to get one option definition with the particular code. If more are
                 // returned we report an error.
                 const OptionDefContainerTypeRange& range = idx->equal_range(opt_type);
-            // Get the number of returned option definitions for the option code.
+                // Get the number of returned option definitions for the option code.
                 size_t num_defs = distance(range.first, range.second);
 
                 if (num_defs > 1) {
