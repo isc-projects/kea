@@ -34,6 +34,73 @@ public:
         isc::Exception(file, line, what) { };
 };
 
+/// @brief Simple class representing an optional value.
+///
+/// This class encapsulates a value of any type. An additional flag held
+/// by this class indicates if the value is specified, i.e. should be used
+/// by the @c Dhcp4Client class. This is used in cases when the caller
+/// needs to override some values used by the client. For example, the
+/// client sets ciaddr according to the RFC2131, depending on the client's
+/// state and using available lease information. However, a test may need
+/// to override the value being used by the client to test some negative
+/// scenarios (e.g. invalid ciaddr). To do this, the test needs to set
+/// the optional value to the desired value and mark it specified. If the
+/// @c Dhcp4Client finds that the value is specified, it will use this
+/// value in the outgoing message. Otherwise, it will disregard the
+/// value and use the defaults.
+///
+/// @tparam Type of the encapsulated value.
+template<typename T>
+class OptionalValue {
+public:
+
+    /// @brief Constructor
+    ///
+    /// Creates optional value. The value defaults to "unspecified".
+    OptionalValue(const T& value)
+        : value_(value),
+          specified_(false) {
+    }
+
+    /// @brief Retrieves the actual value.
+    T get() const {
+        return (value_);
+    }
+
+    /// @brief Sets the actual value.
+    ///
+    /// @param value New value.
+    void set(const T& value) {
+        value_ = value;
+    }
+
+    /// @brief Sets the new value and marks it specified.
+    ///
+    /// @param value New actual value.
+    void specify(const T& value) {
+        set(value);
+        specify(true);
+    }
+
+    /// @brief Sets the value to "specified".
+    ///
+    /// It does not alter the actual value. It only marks it "specified".
+    void specify(const bool specified) {
+        specified_ = specified;
+    }
+
+    /// @brief Checks if the value is specified or unspecified.
+    ///
+    /// @return true if the value is specified, false otherwise.
+    bool isSpecified() const {
+        return (specified_);
+    }
+
+private:
+    T value_;         ///< Encapsulated value.
+    bool specified_;  ///< Flag which indicates if the value is specified.
+};
+
 /// @brief DHCPv4 client used for unit testing.
 ///
 /// This class implements a DHCPv4 "client" which interoperates with the
@@ -294,6 +361,13 @@ public:
     /// @brief Current client's configuration obtained from the server.
     Configuration config_;
 
+    /// @brief Specific ciaddr to be used in client's messages.
+    ///
+    /// If this value is "unspecified" the default values will be used
+    /// by the client. If this value is specified, it will override ciaddr
+    /// in the client's messages.
+    OptionalValue<asiolink::IOAddress> ciaddr_;
+
 private:
 
     /// @brief Creates and adds Requested IP Address option to the client's
@@ -373,6 +447,7 @@ private:
 
     /// @brief Enable relaying messages to the server.
     bool use_relay_;
+
 };
 
 } // end of namespace isc::dhcp::test
