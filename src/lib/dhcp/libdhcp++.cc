@@ -260,8 +260,9 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
         if (opt_type == D6O_VENDOR_OPTS) {
             if (offset + 4 > length) {
                 // Truncated vendor-option. There is expected at least 4 bytes
-                // long enterprise-id field
-                return (offset);
+                // long enterprise-id field. Let's roll back option code + option
+                // length (4 bytes) and return.
+                return (offset - 4);
             }
 
             // Parse this as vendor option
