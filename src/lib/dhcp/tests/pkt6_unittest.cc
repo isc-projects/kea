@@ -21,6 +21,7 @@
 #include <dhcp/option6_ia.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/iface_mgr.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/hwaddr.h>
 #include <dhcp/docsis3_option_defs.h>
@@ -877,6 +878,18 @@ TEST_F(Pkt6Test, getMAC) {
     EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_ANY));
     EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_RAW));
 
+    // We haven't specified source IPv6 address, so this method should fail, too
+    EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL));
+
+    // Let's check if setting IPv6 address improves the situation.
+    IOAddress linklocal_eui64("fe80::204:06ff:fe08:0a0c");
+    pkt.setRemoteAddr(linklocal_eui64);
+    EXPECT_TRUE(pkt.getMAC(Pkt::HWADDR_SOURCE_ANY));
+    EXPECT_TRUE(pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL));
+    EXPECT_TRUE(pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL |
+                           Pkt::HWADDR_SOURCE_RAW));
+    pkt.setRemoteAddr(IOAddress("::"));
+
     // Let's invent a MAC
     const uint8_t hw[] = { 2, 4, 6, 8, 10, 12 }; // MAC
     const uint8_t hw_type = 123; // hardware type
@@ -888,10 +901,44 @@ TEST_F(Pkt6Test, getMAC) {
     // Now we should be able to get something
     ASSERT_TRUE(pkt.getMAC(Pkt::HWADDR_SOURCE_ANY));
     ASSERT_TRUE(pkt.getMAC(Pkt::HWADDR_SOURCE_RAW));
+    EXPECT_TRUE(pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL |
+                           Pkt::HWADDR_SOURCE_RAW));
 
     // Check that the returned MAC is indeed the expected one
     ASSERT_TRUE(*dummy_hwaddr == *pkt.getMAC(Pkt::HWADDR_SOURCE_ANY));
     ASSERT_TRUE(*dummy_hwaddr == *pkt.getMAC(Pkt::HWADDR_SOURCE_RAW));
+}
+
+// Test checks whether getMACFromIPv6LinkLocal() returns the hardware (MAC)
+// address properly.
+TEST_F(Pkt6Test, getMACFromIPv6LinkLocal) {
+    Pkt6 pkt(DHCPV6_ADVERTISE, 1234);
+
+    // Let's get the first interface
+    Iface* iface = IfaceMgr::instance().getIface(1);
+    ASSERT_TRUE(iface);
+
+    // and set source interface data properly. getMACFromIPv6LinkLocal attempts
+    // to use source interface to obtain hardware type
+    pkt.setIface(iface->getName());
+    pkt.setIndex(iface->getIndex());
+
+    IOAddress global("2001:db8::204:06ff:fe08:0a:0c");
+    IOAddress linklocal_eui64("fe80::204:06ff:fe08:0a0c");
+    IOAddress linklocal_noneui64("fe80::0204:0608:0a0c:0e10");
+
+    // If received from a global address, this method should fail
+    pkt.setRemoteAddr(global);
+    EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL));
+
+    // If received from link-local that is EUI-64 based, it should succeed
+    pkt.setRemoteAddr(linklocal_eui64);
+    HWAddrPtr found = pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL);
+    ASSERT_TRUE(found);
+
+    stringstream tmp;
+    tmp << "hwtype=" << (int)iface->getHWType() << " 02:04:06:08:0a:0c";
+    EXPECT_EQ(tmp.str(), found->toText(true));
 }
 
 }
