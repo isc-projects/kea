@@ -123,6 +123,7 @@ public:
     /// of to be used to parse options in the packets.
     /// @param options Reference to option container. Options will be
     ///        put here.
+    /// @return offset to the first byte after the last successfully parsed option
     static size_t unpackOptions4(const OptionBuffer& buf,
                                  const std::string& option_space,
                                  isc::dhcp::OptionCollection& options);
@@ -147,7 +148,7 @@ public:
     ///        offset to beginning of relay_msg option will be stored in it.
     /// @param relay_msg_len reference to a size_t structure. If specified,
     ///        length of the relay_msg option will be stored in it.
-    /// @return offset to the first byte after last parsed option
+    /// @return offset to the first byte after the last successfully parsed option
     static size_t unpackOptions6(const OptionBuffer& buf,
                                  const std::string& option_space,
                                  isc::dhcp::OptionCollection& options,
@@ -192,6 +193,7 @@ public:
     /// @param buf Buffer to be parsed.
     /// @param options Reference to option container. Options will be
     ///        put here.
+    /// @return offset to the first byte after the last successfully parsed option
     static size_t unpackVendorOptions6(const uint32_t vendor_id,
                                        const OptionBuffer& buf,
                                        isc::dhcp::OptionCollection& options);
@@ -206,6 +208,7 @@ public:
     /// @param buf Buffer to be parsed.
     /// @param options Reference to option container. Options will be
     ///        put here.
+    /// @return offset to the first byte after the last successfully parsed option
     static size_t unpackVendorOptions4(const uint32_t vendor_id, const OptionBuffer& buf,
                                        isc::dhcp::OptionCollection& options);
 
