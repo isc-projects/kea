@@ -14,6 +14,8 @@
 
 #include <utility>
 #include <dhcp/pkt.h>
+#include <dhcp/iface_mgr.h>
+#include <vector>
 
 namespace isc {
 namespace dhcp {
@@ -125,6 +127,8 @@ Pkt::setHWAddrMember(const uint8_t htype, const uint8_t,
 HWAddrPtr
 Pkt::getMAC(uint32_t hw_addr_src) {
     HWAddrPtr mac;
+
+    // Method 1: from raw sockets.
     if (hw_addr_src & HWADDR_SOURCE_RAW) {
         mac = getRemoteHWAddr();
         if (mac) {
@@ -136,11 +140,70 @@ Pkt::getMAC(uint32_t hw_addr_src) {
         }
     }
 
+    // Method 2: Extracted from DUID-LLT or DUID-LL
+
+    // Method 3: Extracted from source IPv6 link-local address
+    if (hw_addr_src & MAC_SOURCE_IPV6_LINK_LOCAL) {
+        mac = getMACFromSrcLinkLocalAddr();
+        if (mac) {
+            return (mac);
+        } else if (hw_addr_src ==  MAC_SOURCE_IPV6_LINK_LOCAL) {
+            // If we're interested only in link-local addr as source of that
+            // info, there's no point in trying other options.
+            return (HWAddrPtr());
+        }
+    }
+
+    // Method 4: From client link-layer address option inserted by a relay
+
+    // Method 5: From remote-id option inserted by a relay
+
+    // Method 6: From subscriber-id option inserted by a releay
+
+    // Method 7: From docsis options
+
     /// @todo: add other MAC acquisition methods here
 
     // Ok, none of the methods were suitable. Return NULL.
     return (HWAddrPtr());
 }
+
+HWAddrPtr
+Pkt::getMACFromSrcLinkLocalAddr() {
+    if (!remote_addr_.isV6LinkLocal()) {
+        return (HWAddrPtr());
+    }
+
+    std::vector<uint8_t> bin = remote_addr_.toBytes();
+
+    // Double check that it's of appropriate size
+    if ((bin.size() != isc::asiolink::V6ADDRESS_LEN) ||
+
+        // Check that it's link-local (starts with fe80).
+        (bin[0] != 0xfe) || (bin[1] != 0x80) ||
+
+        // And that the IID is of EUI-64 type.
+        (bin[11] != 0xff) || (bin[12] != 0xfe)) {
+        return (HWAddrPtr());
+    }
+
+    // Remove 8 most significant bytes
+    bin.erase(bin.begin(), bin.begin() + 8);
+
+    // Ok, we're down to EUI-64 only now: XX:XX:XX:ff:fe:XX:XX:XX
+    bin.erase(bin.begin() + 3, bin.begin() + 5);
+
+    // Let's get the interface this packet was received on. We need it to get
+    // hardware type
+    Iface* iface = IfaceMgr::instance().getIface(iface_);
+    uint16_t hwtype = 0; // not specified
+    if (iface) {
+        hwtype = iface->getHWType();
+    }
+
+    return (HWAddrPtr(new HWAddr(bin, hwtype)));
+}
+
 
 };
 };
