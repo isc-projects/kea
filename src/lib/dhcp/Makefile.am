@@ -43,6 +43,7 @@ libkea_dhcp___la_SOURCES += option_definition.cc option_definition.h
 libkea_dhcp___la_SOURCES += option_space.cc option_space.h
 libkea_dhcp___la_SOURCES += option_string.cc option_string.h
 libkea_dhcp___la_SOURCES += protocol_util.cc protocol_util.h
+libkea_dhcp___la_SOURCES += pkt.cc pkt.h
 libkea_dhcp___la_SOURCES += pkt6.cc pkt6.h
 libkea_dhcp___la_SOURCES += pkt4.cc pkt4.h
 libkea_dhcp___la_SOURCES += pkt_filter.h pkt_filter.cc
