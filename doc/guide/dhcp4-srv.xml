@@ -683,7 +683,7 @@ temporarily override a list of interface names and listen on all interfaces.
 <row><entry>arp-cache-timeout</entry><entry>35</entry><entry>uint32</entry><entry>false</entry></row>
 <row><entry>ieee802-3-encapsulation</entry><entry>36</entry><entry>boolean</entry><entry>false</entry></row>
 <row><entry>default-tcp-ttl</entry><entry>37</entry><entry>uint8</entry><entry>false</entry></row>
-<row><entry>tcp-keepalive-internal</entry><entry>38</entry><entry>uint32</entry><entry>false</entry></row>
+<row><entry>tcp-keepalive-interval</entry><entry>38</entry><entry>uint32</entry><entry>false</entry></row>
 <row><entry>tcp-keepalive-garbage</entry><entry>39</entry><entry>boolean</entry><entry>false</entry></row>
 
           </tbody>
