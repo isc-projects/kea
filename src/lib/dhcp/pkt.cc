@@ -125,11 +125,11 @@ Pkt::setHWAddrMember(const uint8_t htype, const uint8_t,
 HWAddrPtr
 Pkt::getMAC(uint32_t hw_addr_src) {
     HWAddrPtr mac;
-    if (hw_addr_src & MAC_SOURCE_RAW) {
+    if (hw_addr_src & HWADDR_SOURCE_RAW) {
         mac = getRemoteHWAddr();
         if (mac) {
             return (mac);
-        } else if (hw_addr_src == MAC_SOURCE_RAW) {
+        } else if (hw_addr_src == HWADDR_SOURCE_RAW) {
             // If we're interested only in RAW sockets as source of that info,
             // there's no point in trying other options.
             return (HWAddrPtr());
