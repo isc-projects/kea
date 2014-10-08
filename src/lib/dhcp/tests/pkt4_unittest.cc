@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -849,6 +849,32 @@ TEST_F(Pkt4Test, clientClasses) {
 
     // Check that the packet belongs to 'foo'
     EXPECT_TRUE(pkt.inClass("foo"));
+}
+
+// Tests whether MAC can be obtained and that MAC sources are not
+// confused.
+TEST_F(Pkt4Test, getMAC) {
+    Pkt4 pkt(DHCPOFFER, 1234);
+
+    // DHCPv4 packet by default doens't have MAC address specified.
+    EXPECT_FALSE(pkt.getMAC(Pkt::MAC_SOURCE_ANY));
+    EXPECT_FALSE(pkt.getMAC(Pkt::MAC_SOURCE_RAW));
+
+    // Let's invent a MAC
+    const uint8_t hw[] = { 2, 4, 6, 8, 10, 12 }; // MAC
+    const uint8_t hw_type = 123; // hardware type
+    HWAddrPtr dummy_hwaddr(new HWAddr(hw, sizeof(hw), hw_type));
+
+    // Now let's pretend that we obtained it from raw sockets
+    pkt.setRemoteHWAddr(dummy_hwaddr);
+
+    // Now we should be able to get something
+    ASSERT_TRUE(pkt.getMAC(Pkt::MAC_SOURCE_ANY));
+    ASSERT_TRUE(pkt.getMAC(Pkt::MAC_SOURCE_RAW));
+
+    // Check that the returned MAC is indeed the expected one
+    ASSERT_TRUE(*dummy_hwaddr == *pkt.getMAC(Pkt::MAC_SOURCE_ANY));
+    ASSERT_TRUE(*dummy_hwaddr == *pkt.getMAC(Pkt::MAC_SOURCE_RAW));
 }
 
 } // end of anonymous namespace

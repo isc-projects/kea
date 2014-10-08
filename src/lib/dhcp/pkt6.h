@@ -17,7 +17,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/option.h>
-#include <dhcp/classify.h>
+#include <dhcp/pkt.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/shared_array.hpp>
@@ -33,9 +33,22 @@ namespace isc {
 namespace dhcp {
 
 class Pkt6;
+
+/// @brief A pointer to Pkt6 packet
 typedef boost::shared_ptr<Pkt6> Pkt6Ptr;
 
-class Pkt6 {
+/// @brief Represents a DHCPv6 packet
+///
+/// This class represents a single DHCPv6 packet. It handles both incoming
+/// and transmitted packets, parsing incoming options, options handling
+/// (add, get, remove), on-wire assembly, sanity checks and other operations.
+/// This specific class has several DHCPv6-specific methods, but it uses a lot
+/// of common operations from its base @c Pkt class that is shared with Pkt4.
+///
+/// This class also handles relayed packets. For example, a RELAY-FORW message
+/// with a SOLICIT inside will be represented as SOLICIT and the RELAY-FORW
+/// layers will be stored in relay_info_ vector.
+class Pkt6 : public Pkt {
 public:
     /// specifies non-relayed DHCPv6 packet header length (over UDP)
     const static size_t DHCPV6_PKT_HDR_LEN = 4;
@@ -122,44 +135,34 @@ public:
     /// @throw BadValue if packet protocol is invalid, InvalidOperation
     /// if packing fails, or NotImplemented if protocol is TCP (IPv6 over TCP is
     /// not yet supported).
-    void pack();
+    virtual void pack();
 
     /// @brief Dispatch method that handles binary packet parsing.
     ///
     /// This method calls appropriate dispatch function (unpackUDP or
     /// unpackTCP).
     ///
-    /// @return true if parsing was successful
-    bool unpack();
-
-    /// @brief Returns reference to output buffer.
-    ///
-    /// Returned buffer will contain reasonable data only for
-    /// output (TX) packet and after pack() was called. This buffer
-    /// is only valid till Pkt6 object is valid.
-    ///
-    /// RX packet or TX packet before pack() will return buffer with
-    /// zero length
-    ///
-    /// @return reference to output buffer
-    const isc::util::OutputBuffer& getBuffer() const { return (buffer_out_); };
+    /// @throw tbd
+    virtual void unpack();
 
     /// @brief Returns protocol of this packet (UDP or TCP).
     ///
     /// @return protocol type
     DHCPv6Proto getProto();
 
-    /// Sets protocol of this packet.
+    /// @brief Sets protocol of this packet.
     ///
     /// @param proto protocol (UDP or TCP)
-    void setProto(DHCPv6Proto proto = UDP) { proto_ = proto; }
+    void setProto(DHCPv6Proto proto = UDP) {
+        proto_ = proto;
+    }
 
     /// @brief Returns text representation of the packet.
     ///
     /// This function is useful mainly for debugging.
     ///
     /// @return string with text representation
-    std::string toText();
+    virtual std::string toText();
 
     /// @brief Returns length of the packet.
     ///
@@ -171,43 +174,17 @@ public:
     /// before they are unpacked.
     ///
     /// @return number of bytes required to assemble this packet
-    uint16_t len();
+    virtual size_t len();
 
-    /// Returns message type (e.g. 1 = SOLICIT)
+    /// @brief Returns message type (e.g. 1 = SOLICIT).
     ///
     /// @return message type
-    uint8_t getType() const { return (msg_type_); }
+    virtual uint8_t getType() const { return (msg_type_); }
 
-    /// Sets message type (e.g. 1 = SOLICIT)
+    /// @brief Sets message type (e.g. 1 = SOLICIT).
     ///
     /// @param type message type to be set
-    void setType(uint8_t type) { msg_type_=type; };
-
-    /// @brief Sets transaction-id value
-    ///
-    /// @param transid transaction-id to be set.
-    void setTransid(uint32_t transid) { transid_ = transid; }
-
-    /// Returns value of transaction-id field
-    ///
-    /// @return transaction-id
-    uint32_t getTransid() const { return (transid_); };
-
-    /// Adds an option to this packet.
-    ///
-    /// @param opt option to be added.
-    void addOption(const OptionPtr& opt);
-
-    /// @brief Returns the first option of specified type.
-    ///
-    /// Returns the first option of specified type. Note that in DHCPv6 several
-    /// instances of the same option are allowed (and frequently used).
-    /// Also see \ref getOptions().
-    ///
-    /// @param type option type we are looking for
-    ///
-    /// @return pointer to found option (or NULL)
-    OptionPtr getOption(uint16_t type);
+    virtual void setType(uint8_t type) { msg_type_=type; };
 
     /// @brief returns option inserted by relay
     ///
@@ -247,96 +224,6 @@ public:
     /// @return instance of option collection with requested options
     isc::dhcp::OptionCollection getOptions(uint16_t type);
 
-    /// Attempts to delete first suboption of requested type
-    ///
-    /// @param type Type of option to be deleted.
-    ///
-    /// @return true if option was deleted, false if no such option existed
-    bool delOption(uint16_t type);
-
-    /// @brief This method copies data from output buffer to input buffer
-    ///
-    /// This is useful only in testing
-    void repack();
-
-    /// @brief Sets remote address.
-    ///
-    /// @param remote specifies remote address
-    void setRemoteAddr(const isc::asiolink::IOAddress& remote) { remote_addr_ = remote; }
-
-    /// @brief Returns remote address
-    ///
-    /// @return remote address
-    const isc::asiolink::IOAddress& getRemoteAddr() const {
-        return (remote_addr_);
-    }
-
-    /// @brief Sets local address.
-    ///
-    /// @param local specifies local address
-    void setLocalAddr(const isc::asiolink::IOAddress& local) { local_addr_ = local; }
-
-    /// @brief Returns local address.
-    ///
-    /// @return local address
-    const isc::asiolink::IOAddress& getLocalAddr() const {
-        return (local_addr_);
-    }
-
-    /// @brief Sets local port.
-    ///
-    /// @param local specifies local port
-    void setLocalPort(uint16_t local) { local_port_ = local; }
-
-    /// @brief Returns local port.
-    ///
-    /// @return local port
-    uint16_t getLocalPort() const { return (local_port_); }
-
-    /// @brief Sets remote port.
-    ///
-    /// @param remote specifies remote port
-    void setRemotePort(uint16_t remote) { remote_port_ = remote; }
-
-    /// @brief Returns remote port.
-    ///
-    /// @return remote port
-    uint16_t getRemotePort() const { return (remote_port_); }
-
-    /// @brief Sets interface index.
-    ///
-    /// @param ifindex specifies interface index.
-    void setIndex(uint32_t ifindex) { ifindex_ = ifindex; };
-
-    /// @brief Returns interface index.
-    ///
-    /// @return interface index
-    uint32_t getIndex() const { return (ifindex_); };
-
-    /// @brief Returns interface name.
-    ///
-    /// Returns interface name over which packet was received or is
-    /// going to be transmitted.
-    ///
-    /// @return interface name
-    std::string getIface() const { return iface_; };
-
-    /// @brief Returns packet timestamp.
-    ///
-    /// Returns packet timestamp value updated when
-    /// packet is received or sent.
-    ///
-    /// @return packet timestamp.
-    const boost::posix_time::ptime& getTimestamp() const { return timestamp_; }
-
-    /// @brief Sets interface name.
-    ///
-    /// Sets interface name over which packet was received or is
-    /// going to be transmitted.
-    ///
-    /// @return interface name
-    void setIface(const std::string& iface ) { iface_ = iface; };
-
     /// @brief add information about one traversed relay
     ///
     /// This adds information about one traversed relay, i.e.
@@ -344,24 +231,6 @@ public:
     ///
     /// @param relay structure with necessary relay information
     void addRelayInfo(const RelayInfo& relay);
-
-    /// collection of options present in this message
-    ///
-    /// @warning This public member is accessed by derived
-    /// classes directly. One of such derived classes is
-    /// @ref perfdhcp::PerfPkt6. The impact on derived clasess'
-    /// behavior must be taken into consideration before making
-    /// changes to this member such as access scope restriction or
-    /// data format change etc.
-    isc::dhcp::OptionCollection options_;
-
-    /// @brief Update packet timestamp.
-    ///
-    /// Updates packet timestamp. This method is invoked
-    /// by interface manager just before sending or
-    /// just after receiving it.
-    /// @throw isc::Unexpected if timestamp update failed
-    void updateTimestamp();
 
     /// @brief Return textual type of packet.
     ///
@@ -391,14 +260,6 @@ public:
     ///         be freed by the caller.
     const char* getName() const;
 
-    /// @brief Set callback function to be used to parse options.
-    ///
-    /// @param callback An instance of the callback function or NULL to
-    /// uninstall callback.
-    void setCallback(UnpackOptionsCallback callback) {
-        callback_ = callback;
-    }
-
     /// @brief copies relay information from client's packet to server's response
     ///
     /// This information is not simply copied over. Some parameter are
@@ -417,55 +278,15 @@ public:
     /// (or least bad) solution.
     std::vector<RelayInfo> relay_info_;
 
-
-    /// unparsed data (in received packets)
-    ///
-    /// @warning This public member is accessed by derived
-    /// classes directly. One of such derived classes is
-    /// @ref perfdhcp::PerfPkt6. The impact on derived clasess'
-    /// behavior must be taken into consideration before making
-    /// changes to this member such as access scope restriction or
-    /// data format change etc.
-    OptionBuffer data_;
-
-    /// @brief Checks whether a client belongs to a given class
-    ///
-    /// @param client_class name of the class
-    /// @return true if belongs
-    bool inClass(const std::string& client_class);
-
-    /// @brief Adds packet to a specified class
-    ///
-    /// A packet can be added to the same class repeatedly. Any additional
-    /// attempts to add to a class the packet already belongs to, will be
-    /// ignored silently.
-    ///
-    /// @note It is a matter of naming convention. Conceptually, the server
-    /// processes a stream of packets, with some packets belonging to given
-    /// classes. From that perspective, this method adds a packet to specifed
-    /// class. Implementation wise, it looks the opposite - the class name
-    /// is added to the packet. Perhaps the most appropriate name for this
-    /// method would be associateWithClass()? But that seems overly long,
-    /// so I decided to stick with addClass().
-    ///
-    /// @param client_class name of the class to be added
-    void addClass(const std::string& client_class);
-
-    /// @brief Classes this packet belongs to.
-    ///
-    /// This field is public, so code can iterate over existing classes.
-    /// Having it public also solves the problem of returned reference lifetime.
-    ClientClasses classes_;
-
 protected:
-    /// Builds on wire packet for TCP transmission.
+    /// @brief Builds on wire packet for TCP transmission.
     ///
-    /// TODO This function is not implemented yet.
+    /// @todo This function is not implemented yet.
     ///
     /// @throw NotImplemented, IPv6 over TCP is not yet supported.
     void packTCP();
 
-    /// Builds on wire packet for UDP transmission.
+    /// @brief Builds on wire packet for UDP transmission.
     ///
     /// @throw InvalidOperation if packing fails
     void packUDP();
@@ -477,10 +298,10 @@ protected:
     /// Will create a collection of option objects that will
     /// be stored in options_ container.
     ///
-    /// TODO This function is not implemented yet.
+    /// @todo This function is not implemented yet.
     ///
-    /// @return true, if build was successful
-    bool unpackTCP();
+    /// @throw tbd
+    void unpackTCP();
 
     /// @brief Parses on-wire form of UDP DHCPv6 packet.
     ///
@@ -489,10 +310,10 @@ protected:
     /// Will create a collection of option objects that will
     /// be stored in options_ container.
     ///
-    /// @return true, if build was successful
-    bool unpackUDP();
+    /// @throw tbd
+    void unpackUDP();
 
-    /// @brief unpacks direct (non-relayed) message
+    /// @brief Unpacks direct (non-relayed) message.
     ///
     /// This method unpacks specified buffer range as a direct
     /// (e.g. solicit or request) message. This method is called from
@@ -500,31 +321,31 @@ protected:
     ///
     /// @param begin start of the buffer
     /// @param end end of the buffer
-    /// @return true if parsing was successful and there are no leftover bytes
-    bool unpackMsg(OptionBuffer::const_iterator begin,
+    /// @throw tbd
+    void unpackMsg(OptionBuffer::const_iterator begin,
                    OptionBuffer::const_iterator end);
 
-    /// @brief unpacks relayed message (RELAY-FORW or RELAY-REPL)
+    /// @brief Unpacks relayed message (RELAY-FORW or RELAY-REPL).
     ///
     /// This method is called from unpackUDP() when received message
     /// is detected to be relay-message. It goes iteratively over
     /// all relays (if there are multiple encapsulation levels).
     ///
-    /// @return true if parsing was successful
-    bool unpackRelayMsg();
+    /// @throw tbd
+    void unpackRelayMsg();
 
-    /// @brief calculates overhead introduced in specified relay
+    /// @brief Calculates overhead introduced in specified relay.
     ///
     /// It is used when calculating message size and packing message
     /// @param relay RelayInfo structure that holds information about relay
     /// @return number of bytes needed to store relay information
     uint16_t getRelayOverhead(const RelayInfo& relay) const;
 
-    /// @brief calculates overhead for all relays defined for this message
+    /// @brief Calculates overhead for all relays defined for this message.
     /// @return number of bytes needed to store all relay information
     uint16_t calculateRelaySizes();
 
-    /// @brief calculates size of the message as if it was not relayed at all
+    /// @brief Calculates size of the message as if it was not relayed at all.
     ///
     /// This is equal to len() if the message was not relayed.
     /// @return number of bytes required to store the message
@@ -535,48 +356,6 @@ protected:
 
     /// DHCPv6 message type
     uint8_t msg_type_;
-
-    /// DHCPv6 transaction-id
-    uint32_t transid_;
-
-    /// name of the network interface the packet was received/to be sent over
-    std::string iface_;
-
-    /// @brief interface index
-    ///
-    /// interface index (each network interface has assigned unique ifindex
-    /// it is functional equivalent of name, but sometimes more useful, e.g.
-    /// when using crazy systems that allow spaces in interface names
-    /// e.g. windows
-    int ifindex_;
-
-    /// local address (dst if receiving packet, src if sending packet)
-    isc::asiolink::IOAddress local_addr_;
-
-    /// remote address (src if receiving packet, dst if sending packet)
-    isc::asiolink::IOAddress remote_addr_;
-
-    /// local TDP or UDP port
-    uint16_t local_port_;
-
-    /// remote TCP or UDP port
-    uint16_t remote_port_;
-
-    /// Output buffer (used during message transmission)
-    ///
-    /// @warning This protected member is accessed by derived
-    /// classes directly. One of such derived classes is
-    /// @ref perfdhcp::PerfPkt6. The impact on derived clasess'
-    /// behavior must be taken into consideration before making
-    /// changes to this member such as access scope restriction or
-    /// data format change etc.
-    isc::util::OutputBuffer buffer_out_;
-
-    /// packet timestamp
-    boost::posix_time::ptime timestamp_;
-
-    /// A callback to be called to unpack options from the packet.
-    UnpackOptionsCallback callback_;
 
 }; // Pkt6 class
 
