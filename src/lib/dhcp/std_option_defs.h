@@ -130,7 +130,7 @@ const OptionDefParams OPTION_DEF_PARAMS4[] = {
     { "ieee802-3-encapsulation", DHO_IEEE802_3_ENCAPSULATION,
       OPT_BOOLEAN_TYPE, false, NO_RECORD_DEF, "" },
     { "default-tcp-ttl", DHO_DEFAULT_TCP_TTL, OPT_UINT8_TYPE, false, NO_RECORD_DEF, "" },
-    { "tcp-keepalive-internal", DHO_TCP_KEEPALIVE_INTERVAL,
+    { "tcp-keepalive-interval", DHO_TCP_KEEPALIVE_INTERVAL,
       OPT_UINT32_TYPE, false, NO_RECORD_DEF, "" },
     { "tcp-keepalive-garbage", DHO_TCP_KEEPALIVE_GARBAGE,
       OPT_BOOLEAN_TYPE, false, NO_RECORD_DEF, "" },
