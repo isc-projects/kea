@@ -874,8 +874,8 @@ TEST_F(Pkt6Test, getMAC) {
     Pkt6 pkt(DHCPV6_ADVERTISE, 1234);
 
     // DHCPv6 packet by default doens't have MAC address specified.
-    EXPECT_FALSE(pkt.getMAC(Pkt::MAC_SOURCE_ANY));
-    EXPECT_FALSE(pkt.getMAC(Pkt::MAC_SOURCE_RAW));
+    EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_ANY));
+    EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_RAW));
 
     // Let's invent a MAC
     const uint8_t hw[] = { 2, 4, 6, 8, 10, 12 }; // MAC
@@ -886,12 +886,12 @@ TEST_F(Pkt6Test, getMAC) {
     pkt.setRemoteHWAddr(dummy_hwaddr);
 
     // Now we should be able to get something
-    ASSERT_TRUE(pkt.getMAC(Pkt::MAC_SOURCE_ANY));
-    ASSERT_TRUE(pkt.getMAC(Pkt::MAC_SOURCE_RAW));
+    ASSERT_TRUE(pkt.getMAC(Pkt::HWADDR_SOURCE_ANY));
+    ASSERT_TRUE(pkt.getMAC(Pkt::HWADDR_SOURCE_RAW));
 
     // Check that the returned MAC is indeed the expected one
-    ASSERT_TRUE(*dummy_hwaddr == *pkt.getMAC(Pkt::MAC_SOURCE_ANY));
-    ASSERT_TRUE(*dummy_hwaddr == *pkt.getMAC(Pkt::MAC_SOURCE_RAW));
+    ASSERT_TRUE(*dummy_hwaddr == *pkt.getMAC(Pkt::HWADDR_SOURCE_ANY));
+    ASSERT_TRUE(*dummy_hwaddr == *pkt.getMAC(Pkt::HWADDR_SOURCE_RAW));
 }
 
 }
