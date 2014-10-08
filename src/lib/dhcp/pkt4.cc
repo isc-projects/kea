@@ -27,23 +27,21 @@ using namespace std;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
 
+namespace {
+
+/// @brief Default address used in Pkt4 constructor
+const IOAddress DEFAULT_ADDRESS("0.0.0.0");
+}
+
 namespace isc {
 namespace dhcp {
 
-const IOAddress DEFAULT_ADDRESS("0.0.0.0");
-
 Pkt4::Pkt4(uint8_t msg_type, uint32_t transid)
-     :buffer_out_(DHCPV4_PKT_HDR_LEN),
-      local_addr_(DEFAULT_ADDRESS),
-      remote_addr_(DEFAULT_ADDRESS),
-      iface_(""),
-      ifindex_(0),
-      local_port_(DHCP4_SERVER_PORT),
-      remote_port_(DHCP4_CLIENT_PORT),
+     :Pkt(transid, DEFAULT_ADDRESS, DEFAULT_ADDRESS, DHCP4_SERVER_PORT,
+          DHCP4_CLIENT_PORT),
       op_(DHCPTypeToBootpType(msg_type)),
       hwaddr_(new HWAddr()),
       hops_(0),
-      transid_(transid),
       secs_(0),
       flags_(0),
       ciaddr_(DEFAULT_ADDRESS),
@@ -58,17 +56,11 @@ Pkt4::Pkt4(uint8_t msg_type, uint32_t transid)
 }
 
 Pkt4::Pkt4(const uint8_t* data, size_t len)
-     :buffer_out_(0), // not used, this is RX packet
-      local_addr_(DEFAULT_ADDRESS),
-      remote_addr_(DEFAULT_ADDRESS),
-      iface_(""),
-      ifindex_(0),
-      local_port_(DHCP4_SERVER_PORT),
-      remote_port_(DHCP4_CLIENT_PORT),
+     :Pkt(data, len, DEFAULT_ADDRESS, DEFAULT_ADDRESS, DHCP4_SERVER_PORT,
+          DHCP4_CLIENT_PORT),
       op_(BOOTREQUEST),
       hwaddr_(new HWAddr()),
       hops_(0),
-      transid_(0),
       secs_(0),
       flags_(0),
       ciaddr_(DEFAULT_ADDRESS),
@@ -76,6 +68,7 @@ Pkt4::Pkt4(const uint8_t* data, size_t len)
       siaddr_(DEFAULT_ADDRESS),
       giaddr_(DEFAULT_ADDRESS)
 {
+
     if (len < DHCPV4_PKT_HDR_LEN) {
         isc_throw(OutOfRange, "Truncated DHCPv4 packet (len=" << len
                   << ") received, at least " << DHCPV4_PKT_HDR_LEN
@@ -144,7 +137,6 @@ Pkt4::pack() {
         // write (len) bytes of padding
         vector<uint8_t> zeros(hw_len, 0);
         buffer_out_.writeData(&zeros[0], hw_len);
-        // buffer_out_.writeData(chaddr_, MAX_CHADDR_LEN);
 
         buffer_out_.writeData(sname_, MAX_SNAME_LEN);
         buffer_out_.writeData(file_, MAX_FILE_LEN);
@@ -218,16 +210,33 @@ Pkt4::unpack() {
 
     // Use readVector because a function which parses option requires
     // a vector as an input.
+    size_t offset;
     buffer_in.readVector(opts_buffer, opts_len);
     if (callback_.empty()) {
-        LibDHCP::unpackOptions4(opts_buffer, "dhcp4", options_);
+        offset = LibDHCP::unpackOptions4(opts_buffer, "dhcp4", options_);
     } else {
         // The last two arguments are set to NULL because they are
         // specific to DHCPv6 options parsing. They are unused for
         // DHCPv4 case. In DHCPv6 case they hold are the relay message
         // offset and length.
-        callback_(opts_buffer, "dhcp4", options_, NULL, NULL);
+        offset = callback_(opts_buffer, "dhcp4", options_, NULL, NULL);
     }
+
+    // If offset is not equal to the size, then something is wrong here. We
+    // either parsed past input buffer (bug in our code) or we haven't parsed
+    // everything (received trailing garbage or truncated option).
+    //
+    // Invoking Jon Postel's law here: be conservative in what you send, and be
+    // liberal in what you accept. There's no easy way to log something from
+    // libdhcp++ library, so we just choose to be silent about remaining
+    // bytes. We also need to quell compiler warning about unused offset
+    // variable.
+    //
+    // if (offset != size) {
+    //        isc_throw(BadValue, "Received DHCPv6 buffer of size " << size
+    //                  << ", were able to parse " << offset << " bytes.");
+    // }
+    (void)offset;
 
     // @todo check will need to be called separately, so hooks can be called
     // after the packet is parsed, but before its content is verified
@@ -270,10 +279,6 @@ void Pkt4::setType(uint8_t dhcp_type) {
         opt = OptionPtr(new Option(Option::V4, DHO_DHCP_MESSAGE_TYPE, tmp));
         addOption(opt);
     }
-}
-
-void Pkt4::repack() {
-    buffer_out_.writeData(&data_[0], data_.size());
 }
 
 std::string
@@ -339,21 +344,6 @@ Pkt4::setLocalHWAddr(const HWAddrPtr& addr) {
                   << " forbidden.");
     }
     local_hwaddr_ = addr;
-}
-
-void
-Pkt4::setRemoteHWAddr(const uint8_t htype, const uint8_t hlen,
-                      const std::vector<uint8_t>& mac_addr) {
-    setHWAddrMember(htype, hlen, mac_addr, remote_hwaddr_);
-}
-
-void
-Pkt4::setRemoteHWAddr(const HWAddrPtr& addr) {
-    if (!addr) {
-        isc_throw(BadValue, "Setting remote HW address to NULL is"
-                  << " forbidden.");
-    }
-    remote_hwaddr_ = addr;
 }
 
 void
@@ -433,37 +423,14 @@ Pkt4::getHlen() const {
 }
 
 void
-Pkt4::addOption(boost::shared_ptr<Option> opt) {
+Pkt4::addOption(const OptionPtr& opt) {
     // Check for uniqueness (DHCPv4 options must be unique)
     if (getOption(opt->getType())) {
         isc_throw(BadValue, "Option " << opt->getType()
                   << " already present in this message.");
     }
-    options_.insert(pair<int, boost::shared_ptr<Option> >(opt->getType(), opt));
-}
 
-boost::shared_ptr<isc::dhcp::Option>
-Pkt4::getOption(uint8_t type) const {
-    OptionCollection::const_iterator x = options_.find(type);
-    if (x != options_.end()) {
-        return (*x).second;
-    }
-    return boost::shared_ptr<isc::dhcp::Option>(); // NULL
-}
-
-bool
-Pkt4::delOption(uint8_t type) {
-    isc::dhcp::OptionCollection::iterator x = options_.find(type);
-    if (x != options_.end()) {
-        options_.erase(x);
-        return (true); // delete successful
-    }
-    return (false); // can't find option to be deleted
-}
-
-void
-Pkt4::updateTimestamp() {
-    timestamp_ = boost::posix_time::microsec_clock::universal_time();
+    Pkt::addOption(opt);
 }
 
 bool
@@ -483,17 +450,6 @@ Pkt4::isRelayed() const {
               << static_cast<int>(getHops()) << ". Valid values"
               " are: (giaddr = 0 and hops = 0) or (giaddr != 0 and"
               "hops != 0)");
-}
-
-bool Pkt4::inClass(const isc::dhcp::ClientClass& client_class) {
-    return (classes_.find(client_class) != classes_.end());
-}
-
-void
-Pkt4::addClass(const isc::dhcp::ClientClass& client_class) {
-    if (classes_.find(client_class) == classes_.end()) {
-        classes_.insert(client_class);
-    }
 }
 
 } // end of namespace isc::dhcp

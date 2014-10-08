@@ -1167,6 +1167,9 @@ TestControl::receivePackets(const TestControlSocket& socket) {
                 if ((received > 1) && testDiags('i')) {
                     stats_mgr4_->incrementCounter("multircvd");
                 }
+
+                /// @todo: Add packet exception handling here. Right now any
+                /// malformed packet will cause perfdhcp to abort.
                 pkt4->unpack();
                 processReceivedPacket4(socket, pkt4);
             }
@@ -1185,9 +1188,11 @@ TestControl::receivePackets(const TestControlSocket& socket) {
                 if ((received > 1) && testDiags('i')) {
                     stats_mgr6_->incrementCounter("multircvd");
                 }
-                if (pkt6->unpack()) {
-                    processReceivedPacket6(socket, pkt6);
-                }
+
+                /// @todo: Add packet exception handling here. Right now any
+                /// malformed packet will cause perfdhcp to abort.
+                pkt6->unpack();
+                processReceivedPacket6(socket, pkt6);
             }
         }
     }

@@ -319,8 +319,11 @@ for the failure is appended as an argument of the log message.
 A debug message noting that server has received message with server identifier
 option that not matching server identifier that server is using.
 
-% DHCP6_PACKET_PARSE_FAIL failed to parse incoming packet
-The IPv6 DHCP server has received a packet that it is unable to interpret.
+% DHCP6_PACKET_PARSE_FAIL failed to parse incoming packet: %1
+The DHCPv6 server has received a packet that it is unable to interpret.
+There may be many causes: truncated header, truncated or malformed option,
+trailing padding that contains garbage etc. More information is specified
+as a parameter.
 
 % DHCP6_PACKET_PROCESS_FAIL processing of %1 message received from %2 failed: %3
 This is a general catch-all message indicating that the processing of the

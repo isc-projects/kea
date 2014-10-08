@@ -41,18 +41,22 @@ public:
     /// @param hwaddr pointer to hardware address
     /// @param len length of the address pointed by hwaddr
     /// @param htype hardware type
-    HWAddr(const uint8_t* hwaddr, size_t len, uint8_t htype);
+    HWAddr(const uint8_t* hwaddr, size_t len, uint16_t htype);
 
     /// @brief constructor, based on C++ vector<uint8_t>
     /// @param hwaddr const reference to hardware address
     /// @param htype hardware type
-    HWAddr(const std::vector<uint8_t>& hwaddr, uint8_t htype);
+    HWAddr(const std::vector<uint8_t>& hwaddr, uint16_t htype);
 
     // Vector that keeps the actual hardware address
     std::vector<uint8_t> hwaddr_;
 
-    // Hardware type
-    uint8_t htype_;
+    /// Hardware type
+    ///
+    /// @note It used to be uint8_t as used in DHCPv4. However, since we're
+    /// expanding MAC addresses support to DHCPv6 that uses hw_type as
+    /// 16 bits, we need to be able to store that wider format.
+    uint16_t htype_;
 
     /// @brief Returns textual representation of a hardware address
     /// (e.g. 00:01:02:03:04:05)
@@ -83,7 +87,7 @@ public:
     ///
     /// @return Instance of the HW address created from text.
     static HWAddr fromText(const std::string& text,
-                           const uint8_t htype = HTYPE_ETHER);
+                           const uint16_t htype = HTYPE_ETHER);
 
     /// @brief Compares two hardware addresses for equality
     bool operator==(const HWAddr& other) const;

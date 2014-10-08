@@ -19,10 +19,9 @@
 #include <dhcp/option.h>
 #include <util/buffer.h>
 #include <dhcp/option.h>
-#include <dhcp/hwaddr.h>
 #include <dhcp/classify.h>
+#include <dhcp/pkt.h>
 
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <iostream>
@@ -35,7 +34,14 @@ namespace isc {
 
 namespace dhcp {
 
-class Pkt4 {
+/// @brief Represents DHCPv4 packet
+///
+/// This class represents a single DHCPv4 packet. It handles both incoming
+/// and transmitted packets, parsing incoming options, options handling
+/// (add, get, remove), on-wire assembly, sanity checks and other operations.
+/// This specific class has several DHCPv4-specific methods, but it uses a lot
+/// of common operations from its base @c Pkt class that is shared with Pkt6.
+class Pkt4 : public Pkt {
 public:
 
     /// length of the CHADDR field in DHCPv4 message
@@ -77,8 +83,7 @@ public:
     /// The buffer_out_ is cleared before writting to the buffer.
     ///
     /// @throw InvalidOperation if packing fails
-    void
-    pack();
+    virtual void pack();
 
     /// @brief Parses on-wire form of DHCPv4 packet.
     ///
@@ -88,7 +93,7 @@ public:
     /// be stored in options_ container.
     ///
     /// Method with throw exception if packet parsing fails.
-    void unpack();
+    virtual void unpack();
 
     /// @brief performs sanity check on a packet.
     ///
@@ -102,14 +107,6 @@ public:
     ///
     /// Method will throw exception if anomaly is found.
     void check();
-
-    /// @brief Copies content of input buffer to output buffer.
-    ///
-    /// This is mostly a diagnostic function. It is being used for sending
-    /// received packet. Received packet is stored in bufferIn_, but
-    /// transmitted data is stored in buffer_out_. If we want to send packet
-    /// that we just received, a copy between those two buffers is necessary.
-    void repack();
 
     /// @brief Returns text representation of the packet.
     ///
@@ -164,7 +161,6 @@ public:
     /// @return flags field
     uint16_t getFlags() const { return (flags_); };
 
-
     /// @brief Returns ciaddr field.
     ///
     /// @return ciaddr field
@@ -190,7 +186,6 @@ public:
     void
     setSiaddr(const isc::asiolink::IOAddress& siaddr) { siaddr_ = siaddr; };
 
-
     /// @brief Returns yiaddr field.
     ///
     /// @return yiaddr field
@@ -203,7 +198,6 @@ public:
     void
     setYiaddr(const isc::asiolink::IOAddress& yiaddr) { yiaddr_ = yiaddr; };
 
-
     /// @brief Returns giaddr field.
     ///
     /// @return giaddr field
@@ -215,16 +209,6 @@ public:
     /// @param giaddr value to be set
     void
     setGiaddr(const isc::asiolink::IOAddress& giaddr) { giaddr_ = giaddr; };
-
-    /// @brief Sets transaction-id value
-    ///
-    /// @param transid transaction-id to be set.
-    void setTransid(uint32_t transid) { transid_ = transid; }
-
-    /// @brief Returns value of transaction-id field.
-    ///
-    /// @return transaction-id
-    uint32_t getTransid() const { return (transid_); };
 
     /// @brief Returns DHCP message type (e.g. 1 = DHCPDISCOVER).
     ///
@@ -304,108 +288,13 @@ public:
     /// @return hardware address structure
     HWAddrPtr getHWAddr() const { return (hwaddr_); }
 
-    /// @brief Returns reference to output buffer.
-    ///
-    /// Returned buffer will contain reasonable data only for
-    /// output (TX) packet and after pack() was called. This buffer
-    /// is only valid till Pkt4 object is valid.
-    ///
-    /// RX packet or TX packet before pack() will return buffer with
-    /// zero length. This buffer is returned as non-const, so hooks
-    /// framework (and user's callouts) can modify them if needed
-    ///
-    /// @return reference to output buffer
-    isc::util::OutputBuffer&
-    getBuffer() { return (buffer_out_); };
-
     /// @brief Add an option.
     ///
-    /// Throws BadValue if option with that type is already present.
+    /// @throw BadValue if option with that type is already present.
     ///
     /// @param opt option to be added
-    void
-    addOption(boost::shared_ptr<Option> opt);
-
-    /// @brief Returns an option of specified type.
-    ///
-    /// @return returns option of requested type (or NULL)
-    ///         if no such option is present
-    boost::shared_ptr<Option>
-    getOption(uint8_t opt_type) const;
-
-    /// @brief Deletes specified option
-    /// @param type option type to be deleted
-    /// @return true if anything was deleted, false otherwise
-    bool delOption(uint8_t type);
-
-    /// @brief Returns interface name.
-    ///
-    /// Returns interface name over which packet was received or is
-    /// going to be transmitted.
-    ///
-    /// @return interface name
-    std::string getIface() const { return iface_; };
-
-    /// @brief Returns packet timestamp.
-    ///
-    /// Returns packet timestamp value updated when
-    /// packet is received or send.
-    ///
-    /// @return packet timestamp.
-    const boost::posix_time::ptime& getTimestamp() const { return timestamp_; }
-
-    /// @brief Sets interface name.
-    ///
-    /// Sets interface name over which packet was received or is
-    /// going to be transmitted.
-    ///
-    /// @return interface name
-    void setIface(const std::string& iface ) { iface_ = iface; };
-
-    /// @brief Sets interface index.
-    ///
-    /// @param ifindex specifies interface index.
-    void setIndex(uint32_t ifindex) { ifindex_ = ifindex; };
-
-    /// @brief Returns interface index.
-    ///
-    /// @return interface index
-    uint32_t getIndex() const { return (ifindex_); };
-
-    /// @brief Sets remote HW address.
-    ///
-    /// Sets the destination HW address for the outgoing packet
-    /// or source HW address for the incoming packet. When this
-    /// is an outgoing packet this address will be used to construct
-    /// the link layer header.
-    ///
-    /// @note mac_addr must be a buffer of at least hlen bytes.
-    ///
-    /// @param htype hardware type (will be sent in htype field)
-    /// @param hlen hardware length (will be sent in hlen field)
-    /// @param mac_addr pointer to hardware address
-    void setRemoteHWAddr(const uint8_t htype, const uint8_t hlen,
-                         const std::vector<uint8_t>& mac_addr);
-
-    /// @brief Sets remote HW address.
-    ///
-    /// Sets hardware address from an existing HWAddr structure.
-    /// The remote address is a destination address for outgoing
-    /// packet and source address for incoming packet. When this
-    /// is an outgoing packet, this address will be used to
-    /// construct the link layer header.
-    ///
-    /// @param addr structure representing HW address.
-    ///
-    /// @throw BadValue if addr is null
-    void setRemoteHWAddr(const HWAddrPtr& addr);
-
-    /// @brief Returns the remote HW address.
-    ///
-    /// @return remote HW address.
-    HWAddrPtr getRemoteHWAddr() const {
-        return (remote_hwaddr_);
-    }
+    virtual void
+    addOption(const OptionPtr& opt);
 
     /// @brief Sets local HW address.
     ///
@@ -438,54 +327,6 @@ public:
         return (local_hwaddr_);
     }
 
-    /// @brief Sets remote address.
-    ///
-    /// @param remote specifies remote address
-    void setRemoteAddr(const isc::asiolink::IOAddress& remote) {
-        remote_addr_ = remote;
-    }
-
-    /// @brief Returns remote address
-    ///
-    /// @return remote address
-    const isc::asiolink::IOAddress& getRemoteAddr() const {
-        return (remote_addr_);
-    }
-
-    /// @brief Sets local address.
-    ///
-    /// @param local specifies local address
-    void setLocalAddr(const isc::asiolink::IOAddress& local) {
-        local_addr_ = local;
-    }
-
-    /// @brief Returns local address.
-    ///
-    /// @return local address
-    const isc::asiolink::IOAddress& getLocalAddr() const {
-        return (local_addr_);
-    }
-
-    /// @brief Sets local port.
-    ///
-    /// @param local specifies local port
-    void setLocalPort(uint16_t local) { local_port_ = local; }
-
-    /// @brief Returns local port.
-    ///
-    /// @return local port
-    uint16_t getLocalPort() const { return (local_port_); }
-
-    /// @brief Sets remote port.
-    ///
-    /// @param remote specifies remote port
-    void setRemotePort(uint16_t remote) { remote_port_ = remote; }
-
-    /// @brief Returns remote port.
-    ///
-    /// @return remote port
-    uint16_t getRemotePort() const { return (remote_port_); }
-
     /// @brief Checks if a DHCPv4 message has been relayed.
     ///
     /// This function returns a boolean value which indicates whether a DHCPv4
@@ -503,36 +344,6 @@ public:
     /// @throw isc::BadValue if invalid combination of Giaddr and Hops values is
     /// found.
     bool isRelayed() const;
-
-    /// @brief Set callback function to be used to parse options.
-    ///
-    /// @param callback An instance of the callback function or NULL to
-    /// uninstall callback.
-    void setCallback(UnpackOptionsCallback callback) {
-        callback_ = callback;
-    }
-
-    /// @brief Update packet timestamp.
-    ///
-    /// Updates packet timestamp. This method is invoked
-    /// by interface manager just before sending or
-    /// just after receiving it.
-    /// @throw isc::Unexpected if timestamp update failed
-    void updateTimestamp();
-
-    /// Output buffer (used during message transmission)
-    ///
-    /// @warning This public member is accessed by derived
-    /// classes directly. One of such derived classes is
-    /// @ref perfdhcp::PerfPkt4. The impact on derived clasess'
-    /// behavior must be taken into consideration before making
-    /// changes to this member such as access scope restriction or
-    /// data format change etc. This field is also public, because
-    /// it may be modified by callouts (which are written in C++ now,
-    /// but we expect to also have them in Python, so any accesibility
-    /// methods would overly complicate things here and degrade
-    /// performance).
-    isc::util::OutputBuffer buffer_out_;
 
     /// @brief That's the data of input buffer used in RX packet.
     ///
@@ -552,37 +363,6 @@ public:
     /// performance).
     std::vector<uint8_t> data_;
 
-    /// @brief Checks whether a client belongs to a given class
-    ///
-    /// @param client_class name of the class
-    /// @return true if belongs
-    bool inClass(const isc::dhcp::ClientClass& client_class);
-
-    /// @brief Adds packet to a specified class
-    ///
-    /// A packet can be added to the same class repeatedly. Any additional
-    /// attempts to add to a class the packet already belongs to, will be
-    /// ignored silently.
-    ///
-    /// @note It is a matter of naming convention. Conceptually, the server
-    /// processes a stream of packets, with some packets belonging to given
-    /// classes. From that perspective, this method adds a packet to specifed
-    /// class. Implementation wise, it looks the opposite - the class name
-    /// is added to the packet. Perhaps the most appropriate name for this
-    /// method would be associateWithClass()? But that seems overly long,
-    /// so I decided to stick with addClass().
-    ///
-    /// @param client_class name of the class to be added
-    void addClass(const isc::dhcp::ClientClass& client_class);
-
-    /// @brief Classes this packet belongs to.
-    ///
-    /// This field is public, so the code outside of Pkt4 class can iterate over
-    /// existing classes. Having it public also solves the problem of returned
-    /// reference lifetime. It is preferred to use @ref inClass and @ref addClass
-    /// should be used to operate on this field.
-    ClientClasses classes_;
-
 private:
 
     /// @brief Generic method that validates and sets HW address.
@@ -596,9 +376,9 @@ private:
     /// @param [out] hw_addr pointer to a class member to be modified.
     ///
     /// @trow isc::OutOfRange if invalid HW address specified.
-    void setHWAddrMember(const uint8_t htype, const uint8_t hlen,
-                         const std::vector<uint8_t>& mac_addr,
-                         HWAddrPtr& hw_addr);
+    virtual void setHWAddrMember(const uint8_t htype, const uint8_t hlen,
+                                 const std::vector<uint8_t>& mac_addr,
+                                 HWAddrPtr& hw_addr);
 
 protected:
 
@@ -612,31 +392,6 @@ protected:
 
     /// local HW address (dst if receiving packet, src if sending packet)
     HWAddrPtr local_hwaddr_;
-
-    // remote HW address (src if receiving packet, dst if sending packet)
-    HWAddrPtr remote_hwaddr_;
-
-    /// local address (dst if receiving packet, src if sending packet)
-    isc::asiolink::IOAddress local_addr_;
-
-    /// remote address (src if receiving packet, dst if sending packet)
-    isc::asiolink::IOAddress remote_addr_;
-
-    /// name of the network interface the packet was received/to be sent over
-    std::string iface_;
-
-    /// @brief interface index
-    ///
-    /// Each network interface has assigned unique ifindex. It is functional
-    /// equivalent of name, but sometimes more useful, e.g. when using crazy
-    /// systems that allow spaces in interface names e.g. MS Windows)
-    uint32_t ifindex_;
-
-    /// local UDP port
-    uint16_t local_port_;
-
-    /// remote UDP port
-    uint16_t remote_port_;
 
     /// @brief message operation code
     ///
@@ -655,9 +410,6 @@ protected:
 
     /// Number of relay agents traversed
     uint8_t hops_;
-
-    /// DHCPv4 transaction-id (32 bits, not 24 bits as in DHCPv6)
-    uint32_t transid_;
 
     /// elapsed (number of seconds since beginning of transmission)
     uint16_t secs_;
@@ -684,25 +436,9 @@ protected:
     uint8_t file_[MAX_FILE_LEN];
 
     // end of real DHCPv4 fields
-
-    /// collection of options present in this message
-    ///
-    /// @warning This protected member is accessed by derived
-    /// classes directly. One of such derived classes is
-    /// @ref perfdhcp::PerfPkt4. The impact on derived classes'
-    /// behavior must be taken into consideration before making
-    /// changes to this member such as access scope restriction or
-    /// data format change etc.
-    isc::dhcp::OptionCollection options_;
-
-    /// packet timestamp
-    boost::posix_time::ptime timestamp_;
-
-    /// A callback to be called to unpack options from the packet.
-    UnpackOptionsCallback callback_;
-
 }; // Pkt4 class
 
+/// @brief A pointer to Pkt4 object.
 typedef boost::shared_ptr<Pkt4> Pkt4Ptr;
 
 } // isc::dhcp namespace
