@@ -1,3 +1,9 @@
+841.	[func]		tomek
+	Pkt4 and Pkt6 class have a common base now. A lot code duplication
+	removed. Added getMAC() method that will be used to extract MAC
+	in DHCPv6.
+	(Trac #3546, git 6e68af7dfe15e4d461bf068f545d2bdaaa8fcfb0)
+
 840.	[func]		nicolas
 	PktFilterInet::send method now sets source IPv4 address explicitly.
 	This enabled perfdhcp to control its source address on systems that have
