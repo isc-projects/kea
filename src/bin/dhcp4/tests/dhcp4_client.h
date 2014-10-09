@@ -85,6 +85,7 @@ public:
     /// @brief Sets the value to "specified".
     ///
     /// It does not alter the actual value. It only marks it "specified".
+    /// @param specified boolean that determined if a value is specified or not
     void specify(const bool specified) {
         specified_ = specified;
     }
