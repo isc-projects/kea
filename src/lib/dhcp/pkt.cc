@@ -143,11 +143,11 @@ Pkt::getMAC(uint32_t hw_addr_src) {
     // Method 2: Extracted from DUID-LLT or DUID-LL
 
     // Method 3: Extracted from source IPv6 link-local address
-    if (hw_addr_src & MAC_SOURCE_IPV6_LINK_LOCAL) {
+    if (hw_addr_src & HWADDR_SOURCE_IPV6_LINK_LOCAL) {
         mac = getMACFromSrcLinkLocalAddr();
         if (mac) {
             return (mac);
-        } else if (hw_addr_src ==  MAC_SOURCE_IPV6_LINK_LOCAL) {
+        } else if (hw_addr_src ==  HWADDR_SOURCE_IPV6_LINK_LOCAL) {
             // If we're interested only in link-local addr as source of that
             // info, there's no point in trying other options.
             return (HWAddrPtr());
@@ -169,12 +169,13 @@ Pkt::getMAC(uint32_t hw_addr_src) {
 }
 
 HWAddrPtr
-Pkt::getMACFromSrcLinkLocalAddr() {
-    if (!remote_addr_.isV6LinkLocal()) {
+Pkt::getMACfromIPv6(const isc::asiolink::IOAddress& addr) {
+
+    if (!addr.isV6LinkLocal()) {
         return (HWAddrPtr());
     }
 
-    std::vector<uint8_t> bin = remote_addr_.toBytes();
+    std::vector<uint8_t> bin = addr.toBytes();
 
     // Double check that it's of appropriate size
     if ((bin.size() != isc::asiolink::V6ADDRESS_LEN) ||

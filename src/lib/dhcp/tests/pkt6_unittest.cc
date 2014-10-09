@@ -910,8 +910,8 @@ TEST_F(Pkt6Test, getMAC) {
 }
 
 // Test checks whether getMACFromIPv6LinkLocal() returns the hardware (MAC)
-// address properly.
-TEST_F(Pkt6Test, getMACFromIPv6LinkLocal) {
+// address properly (for direct message).
+TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_direct) {
     Pkt6 pkt(DHCPV6_ADVERTISE, 1234);
 
     // Let's get the first interface
@@ -938,6 +938,103 @@ TEST_F(Pkt6Test, getMACFromIPv6LinkLocal) {
 
     stringstream tmp;
     tmp << "hwtype=" << (int)iface->getHWType() << " 02:04:06:08:0a:0c";
+    EXPECT_EQ(tmp.str(), found->toText(true));
+}
+
+// Test checks whether getMACFromIPv6LinkLocal() returns the hardware (MAC)
+// address properly (for relayed message).
+TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_singleRelay) {
+
+    // Let's create a Solicit first...
+    Pkt6 pkt(DHCPV6_SOLICIT, 1234);
+
+    // ... and pretend it was relayed by a single relay.
+    Pkt6::RelayInfo info;
+    pkt.addRelayInfo(info);
+    ASSERT_EQ(1, pkt.relay_info_.size());
+
+    // Let's get the first interface
+    Iface* iface = IfaceMgr::instance().getIface(1);
+    ASSERT_TRUE(iface);
+
+    // and set source interface data properly. getMACFromIPv6LinkLocal attempts
+    // to use source interface to obtain hardware type
+    pkt.setIface(iface->getName());
+    pkt.setIndex(iface->getIndex());
+
+    IOAddress global("2001:db8::204:06ff:fe08:0a:0c"); // global address
+    IOAddress linklocal_noneui64("fe80::0204:0608:0a0c:0e10"); // no fffe
+    IOAddress linklocal_eui64("fe80::204:06ff:fe08:0a0c"); // valid EUI-64
+
+    // If received from a global address, this method should fail
+    pkt.relay_info_[0].peeraddr_ = global;
+    EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL));
+
+    // If received from a link-local that does not use EUI-64, it shoul fail
+    pkt.relay_info_[0].peeraddr_ = linklocal_noneui64;
+    EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL));
+
+    // If received from link-local that is EUI-64 based, it should succeed
+    pkt.relay_info_[0].peeraddr_ = linklocal_eui64;
+    HWAddrPtr found = pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL);
+    ASSERT_TRUE(found);
+
+    stringstream tmp;
+    tmp << "hwtype=" << (int)iface->getHWType() << " 02:04:06:08:0a:0c";
+    EXPECT_EQ(tmp.str(), found->toText(true));
+}
+
+// Test checks whether getMACFromIPv6LinkLocal() returns the hardware (MAC)
+// address properly (for a message relayed multiple times).
+TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_multiRelay) {
+
+    // Let's create a Solicit first...
+    Pkt6 pkt(DHCPV6_SOLICIT, 1234);
+
+    // ... and pretend it was relayed via 3 relays. Keep in mind that the relays
+    // are stored in relay_info_ in the encapsulation order rather than in
+    // traverse order. The following simulates:
+    // client --- relay1 --- relay2 --- relay3 --- server
+    IOAddress linklocal1("fe80::ff:fe00:1"); // valid EUI-64
+    IOAddress linklocal2("fe80::ff:fe00:2"); // valid EUI-64
+    IOAddress linklocal3("fe80::ff:fe00:3"); // valid EUI-64
+
+    // Let's add info about relay3. This was the last relay, so it added the
+    // outermost encapsulation layer, so it was parsed first during reception.
+    // Its peer-addr field contains an address of relay2, so it's useless for
+    // this method.
+    Pkt6::RelayInfo info;
+    info.peeraddr_ = linklocal3;
+    pkt.addRelayInfo(info);
+
+    // Now add info about relay2. Its peer-addr contains an address of the
+    // previous relay (relay1). Still useless for us.
+    info.peeraddr_ = linklocal2;
+    pkt.addRelayInfo(info);
+
+    // Finally add the first relay. This is the relay that received the packet
+    // from the client directly, so its peer-addr field contains an address of
+    // the client. The method should get that address and build MAC from it.
+    info.peeraddr_ = linklocal1;
+    pkt.addRelayInfo(info);
+    ASSERT_EQ(3, pkt.relay_info_.size());
+
+    // Let's get the first interface
+    Iface* iface = IfaceMgr::instance().getIface(1);
+    ASSERT_TRUE(iface);
+
+    // and set source interface data properly. getMACFromIPv6LinkLocal attempts
+    // to use source interface to obtain hardware type
+    pkt.setIface(iface->getName());
+    pkt.setIndex(iface->getIndex());
+
+    // The method should return MAC based on the first relay that was closest
+    HWAddrPtr found = pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL);
+    ASSERT_TRUE(found);
+
+    // Let's check the info now.
+    stringstream tmp;
+    tmp << "hwtype=" << iface->getHWType() << " 00:00:00:00:00:01";
     EXPECT_EQ(tmp.str(), found->toText(true));
 }
 
