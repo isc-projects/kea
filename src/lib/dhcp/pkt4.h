@@ -390,6 +390,18 @@ protected:
     uint8_t
     DHCPTypeToBootpType(uint8_t dhcpType);
 
+    /// @brief No-op
+    ///
+    /// This method returns hardware address generated from the IPv6 link-local
+    /// address. As there is no IPv4-equivalent, it always returns NULL.
+    /// We need this stub implementation here, to keep all the get hardware
+    /// address logic in the base class.
+    ///
+    /// @return always NULL
+    virtual HWAddrPtr getMACFromSrcLinkLocalAddr() {
+        return (HWAddrPtr());
+    }
+
     /// local HW address (dst if receiving packet, src if sending packet)
     HWAddrPtr local_hwaddr_;
 
