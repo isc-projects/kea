@@ -18,6 +18,18 @@
 namespace isc {
 namespace dhcp {
 
+bool
+IPv6Resrv::operator==(const IPv6Resrv& other) const {
+    return (prefix_ == other.prefix_ &&
+            prefix_len_ == other.prefix_len_);
+}
+
+bool
+IPv6Resrv::operator!=(const IPv6Resrv& other) const {
+    return (prefix_ != other.prefix_ ||
+            prefix_len_ != other.prefix_len_);
+}
+
 Host::Host(const uint8_t* identifier, const size_t identifier_len,
            const IdentifierType& identifier_type,
            const SubnetID ipv4_subnet_id, const SubnetID ipv6_subnet_id,
@@ -27,7 +39,8 @@ Host::Host(const uint8_t* identifier, const size_t identifier_len,
       ipv6_subnet_id_(ipv6_subnet_id), ipv4_reservation_(ipv4_reservation),
       hostname_(hostname), dhcp4_client_classes_(), dhcp6_client_classes_() {
 
-    decodeIdentifier(identifier, identifier_len, identifier_type);
+    // Initialize HWAddr or DUID
+    setIdentifier(identifier, identifier_len, identifier_type);
 }
 
 Host::Host(const std::string& identifier, const std::string& identifier_name,
@@ -38,12 +51,13 @@ Host::Host(const std::string& identifier, const std::string& identifier_name,
       ipv6_subnet_id_(ipv6_subnet_id), ipv4_reservation_(ipv4_reservation),
       hostname_(hostname), dhcp4_client_classes_(), dhcp6_client_classes_() {
 
-    decodeIdentifier(identifier, identifier_name);
+    // Initialize HWAddr or DUID
+    setIdentifier(identifier, identifier_name);
 }
 
 void
-Host::decodeIdentifier(const uint8_t* identifier, const size_t len,
-                       const IdentifierType& type) {
+Host::setIdentifier(const uint8_t* identifier, const size_t len,
+                    const IdentifierType& type) {
     switch (type) {
     case IDENT_HWADDR:
         hw_address_ = HWAddrPtr(new HWAddr(identifier, len, HTYPE_ETHER));
@@ -61,7 +75,7 @@ Host::decodeIdentifier(const uint8_t* identifier, const size_t len,
 }
 
 void
-Host::decodeIdentifier(const std::string& identifier, const std::string& name) {
+Host::setIdentifier(const std::string& identifier, const std::string& name) {
     if (name == "hw-address") {
         hw_address_ = HWAddrPtr(new HWAddr(HWAddr::fromText(identifier)));
         duid_.reset();
@@ -72,6 +86,17 @@ Host::decodeIdentifier(const std::string& identifier, const std::string& name) {
         isc_throw(isc::BadValue, "invalid client identifier type '"
                   << name << "' when creating host instance");
     }
+}
+
+void
+Host::addReservation(const IPv6Resrv& reservation) {
+    ipv6_reservations_.insert(IPv6ResrvTuple(reservation.getType(),
+                                             reservation));
+}
+
+IPv6ResrvRange
+Host::getIPv6Reservations(const IPv6Resrv::Type& type) const {
+    return (ipv6_reservations_.equal_range(type));
 }
 
 

@@ -30,20 +30,20 @@ namespace dhcp {
 
 DUID::DUID(const std::vector<uint8_t>& duid) {
     if (duid.size() > MAX_DUID_LEN) {
-        isc_throw(OutOfRange, "DUID too large");
+        isc_throw(isc::BadValue, "DUID too large");
     }
     if (duid.empty()) {
-        isc_throw(OutOfRange, "Empty DUIDs are not allowed");
+        isc_throw(isc::BadValue, "Empty DUIDs are not allowed");
     }
     duid_ = duid;
 }
 
 DUID::DUID(const uint8_t* data, size_t len) {
     if (len > MAX_DUID_LEN) {
-        isc_throw(OutOfRange, "DUID too large");
+        isc_throw(isc::BadValue, "DUID too large");
     }
     if (len == 0) {
-        isc_throw(OutOfRange, "Empty DUIDs/Client-ids not allowed");
+        isc_throw(isc::BadValue, "Empty DUIDs/Client-ids not allowed");
     }
 
     duid_ = std::vector<uint8_t>(data, data + len);
@@ -58,19 +58,24 @@ DUID::decode(const std::string& text) {
 
     std::ostringstream s;
     for (size_t i = 0; i < split_text.size(); ++i) {
-        // If there are multiple tokens and the current one is empty, it
-        // means that two consecutive colons were specified. This is not
-        // allowed for client identifier.
-        if ((split_text.size() > 1) && split_text[i].empty()) {
-            isc_throw(isc::BadValue, "invalid identifier '" << text << "': "
-                      << " tokens must be separated with a single colon");
-
-        } else if (split_text[i].size() == 1) {
-            s << "0";
-
-        } else if (split_text[i].size() > 2) {
-            isc_throw(isc::BadValue, "invalid identifier '" << text << "'");
+        if (split_text.size() > 1) {
+            // If there are multiple tokens and the current one is empty, it
+            // means that two consecutive colons were specified. This is not
+            // allowed for client identifier.
+            if (split_text[i].empty()) {
+                isc_throw(isc::BadValue, "invalid identifier '"
+                          << text << "': " << " tokens must be"
+                          " separated with a single colon");
+            } else if (split_text[i].size() > 2) {
+                isc_throw(isc::BadValue, "invalid identifier '"
+                          << text << "'");
+            }
         }
+
+        if (split_text[i].size() % 2) {
+                s << "0";
+        }
+
         s << split_text[i];
     }
 
@@ -133,7 +138,7 @@ bool DUID::operator!=(const DUID& other) const {
 ClientId::ClientId(const std::vector<uint8_t>& clientid)
     : DUID(clientid) {
     if (clientid.size() < MIN_CLIENT_ID_LEN) {
-        isc_throw(OutOfRange, "client-id is too short (" << clientid.size()
+        isc_throw(isc::BadValue, "client-id is too short (" << clientid.size()
                   << "), at least 2 is required");
     }
 }
@@ -142,7 +147,7 @@ ClientId::ClientId(const std::vector<uint8_t>& clientid)
 ClientId::ClientId(const uint8_t *clientid, size_t len)
     : DUID(clientid, len) {
     if (len < MIN_CLIENT_ID_LEN) {
-        isc_throw(OutOfRange, "client-id is too short (" << len
+        isc_throw(isc::BadValue, "client-id is too short (" << len
                   << "), at least 2 is required");
     }
 }
