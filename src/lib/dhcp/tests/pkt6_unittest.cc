@@ -970,7 +970,7 @@ TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_singleRelay) {
     pkt.relay_info_[0].peeraddr_ = global;
     EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL));
 
-    // If received from a link-local that does not use EUI-64, it shoul fail
+    // If received from a link-local that does not use EUI-64, it should fail
     pkt.relay_info_[0].peeraddr_ = linklocal_noneui64;
     EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL));
 
