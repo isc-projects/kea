@@ -268,7 +268,7 @@ public:
     /// @param question client's packet
     void copyRelayInfo(const Pkt6Ptr& question);
 
-    /// @biref Relay information.
+    /// @brief Relay information.
     ///
     /// This is a public field. Otherwise we hit one of the two problems:
     /// we return reference to an internal field (and that reference could
