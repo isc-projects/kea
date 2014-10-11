@@ -503,14 +503,16 @@ public:
 
 protected:
 
-    /// @brief Attempts to obtain MAC address from source link-local IPv6 address
+    /// @brief Attempts to obtain MAC address from source link-local
+    /// IPv6 address
     ///
-    /// This method is called from getMAC(HWADDR_SOURCE_IPV6_LINK_LOCAL) and should
-    /// not be called directly. It is not 100% reliable. The source IPv6 address
-    /// does not necessarily have to be link-local (may be global or ULA) and
-    /// even if it's link-local, it doesn't necessarily be based on EUI-64. For
-    /// example, Windows supports RFC4941, which randomized IID part of the
-    /// link-local address. If this method fails, it will return NULL.
+    /// This method is called from getMAC(HWADDR_SOURCE_IPV6_LINK_LOCAL)
+    /// and should not be called directly. It is not 100% reliable.
+    /// The source IPv6 address does not necessarily have to be link-local
+    /// (may be global or ULA) and even if it's link-local, it doesn't
+    /// necessarily be based on EUI-64. For example, Windows supports
+    /// RFC4941, which randomized IID part of the link-local address.
+    /// If this method fails, it will return NULL.
     ///
     /// For direct message, it attempts to use remote_addr_ field. For relayed
     /// message, it uses peer-addr of the first relay.
