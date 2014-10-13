@@ -1,3 +1,8 @@
+842.	[func]		marcin
+	DHCPv4 server logs when the packet sent by the client contains
+	invalid combination of giaddr/hops before discarding the packet.
+	(Trac #3537, git 760c652b54dcdfdfbd1a0014da43d3c31e848f02)
+
 841.	[func]		tomek
 	Pkt4 and Pkt6 class have a common base now. A lot code duplication
 	removed. Added getMAC() method that will be used to extract MAC
