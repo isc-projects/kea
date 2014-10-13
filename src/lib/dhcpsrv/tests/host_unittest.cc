@@ -341,5 +341,25 @@ TEST(HostTest, addReservations) {
                                   prefixes));
 }
 
+// This test checks that various modifiers may be used to replace the current
+// values of the Host class.
+TEST(HostTest, setValues) {
+    boost::scoped_ptr<Host> host;
+    ASSERT_NO_THROW(host.reset(new Host("01:02:03:04:05:06", "hw-address",
+                                        SubnetID(1), SubnetID(2),
+                                        IOAddress("192.0.2.3"))));
+
+    ASSERT_EQ(1, host->getIPv4SubnetID());
+    ASSERT_EQ(2, host->getIPv6SubnetID());
+    ASSERT_EQ("192.0.2.3", host->getIPv4Reservation().toText());
+
+    host->setIPv4SubnetID(SubnetID(123));
+    host->setIPv6SubnetID(SubnetID(234));
+    host->setIPv4Reservation(IOAddress("10.0.0.1"));
+
+    EXPECT_EQ(123, host->getIPv4SubnetID());
+    EXPECT_EQ(234, host->getIPv6SubnetID());
+    EXPECT_EQ("10.0.0.1", host->getIPv4Reservation().toText());
+}
 
 } // end of anonymous namespace

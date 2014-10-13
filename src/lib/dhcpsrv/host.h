@@ -113,7 +113,7 @@ typedef std::pair<IPv6ResrvIterator, IPv6ResrvIterator> IPv6ResrvRange;
 
 /// @brief Represents a device with IPv4 and/or IPv6 reservations.
 ///
-/// This class represents a device in the network which can be identified
+/// This class represents a network device which can be identified
 /// by the unique property, such as MAC address on the interface or
 /// client identifier (DUID), and for which some resources are statically
 /// assigned:
@@ -260,6 +260,20 @@ public:
         return (duid_);
     }
 
+    /// @brief Sets new IPv4 subnet identifier.
+    ///
+    /// @param ipv4_subnet_id New subnet identifier.
+    void setIPv4SubnetID(const SubnetID ipv4_subnet_id) {
+        ipv4_subnet_id_ = ipv4_subnet_id;
+    }
+
+    /// @brief Sets new IPv6 subnet identifier.
+    ///
+    /// @param ipv6_subnet_id New subnet identifier.
+    void setIPv6SubnetID(const SubnetID ipv6_subnet_id) {
+        ipv6_subnet_id_ = ipv6_subnet_id;
+    }
+
     /// @brief Returns subnet identifier for IPv4 reservation.
     SubnetID getIPv4SubnetID() const {
         return (ipv4_subnet_id_);
@@ -268,6 +282,15 @@ public:
     /// @brief Returns subnet identifier for IPv6 reservations.
     SubnetID getIPv6SubnetID() const {
         return (ipv6_subnet_id_);
+    }
+
+    /// @brief Sets new IPv4 reservation.
+    ///
+    /// The new reservation removes a previous reservation.
+    ///
+    /// @param address Address to be reserved for the client.
+    void setIPv4Reservation(const asiolink::IOAddress& address) {
+        ipv4_reservation_ = address;
     }
 
     /// @brief Returns reserved IPv4 address.
@@ -289,6 +312,13 @@ public:
     /// @return A range of iterators pointing to the reservations of
     /// the specified type.
     IPv6ResrvRange getIPv6Reservations(const IPv6Resrv::Type& type) const;
+
+    /// @brief Sets new hostname.
+    ///
+    /// @param hostname New hostname.
+    void setHostname(const std::string& hostname) {
+        hostname_ = hostname;
+    }
 
     /// @brief Returns reserved hostname.
     const std::string& getHostname() const {
