@@ -243,9 +243,6 @@ TEST(Subnet4Test, addInvalidOption) {
     // Create the V4 subnet.
     Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 8, 1, 2, 3));
 
-    // Some dummy option code.
-    uint16_t code = 100;
-
     // Create NULL pointer option. Attempt to add NULL option
     // should result in exception.
     OptionPtr option2;
