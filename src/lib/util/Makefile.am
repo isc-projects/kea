@@ -30,6 +30,7 @@ libkea_util_la_SOURCES += memory_segment_local.h memory_segment_local.cc
 if USE_SHARED_MEMORY
 libkea_util_la_SOURCES += memory_segment_mapped.h memory_segment_mapped.cc
 endif
+libkea_util_la_SOURCES += optional_value.h
 libkea_util_la_SOURCES += range_utilities.h
 libkea_util_la_SOURCES += signal_set.cc signal_set.h
 libkea_util_la_SOURCES += encode/base16_from_binary.h
