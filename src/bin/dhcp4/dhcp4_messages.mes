@@ -158,6 +158,13 @@ This debug message is issued when the client being in the INIT-REBOOT state
 requested an address which is not assigned to him. The server will respond
 to this client with DHCPNAK.
 
+% DHCP4_INVALID_RELAY_INFO malformed packet received from client-id %1, hwaddr %2: %3
+This message is logged when the client sends invalid combination of
+values in the giaddr and hops fields. If the packet is relayed it should
+contain non-zero values in both fields. If the packet is sent from the
+directly connected client, both values should be set to zero. All other
+combinations are invalid and trigger packet drop.
+
 % DHCP4_LEASE_ADVERT lease %1 advertised (client client-id %2, hwaddr %3)
 This debug message indicates that the server successfully advertised
 a lease. It is up to the client to choose one server out of othe advertised
