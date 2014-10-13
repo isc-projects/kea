@@ -504,7 +504,6 @@ void
 Dhcpv4Srv::copyDefaultFields(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     answer->setIface(question->getIface());
     answer->setIndex(question->getIndex());
-    answer->setCiaddr(question->getCiaddr());
 
     answer->setSiaddr(IOAddress("0.0.0.0")); // explicitly set this to 0
     // ciaddr is always 0, except for the Renew/Rebind state when it may
