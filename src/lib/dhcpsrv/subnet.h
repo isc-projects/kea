@@ -107,6 +107,12 @@ public:
         return (cfg_option_);
     }
 
+    /// @brief Returns const pointer to the option data configuration for this
+    /// subnet.
+    ConstCfgOptionPtr getCfgOption() const {
+        return (cfg_option_);
+    }
+
     /// @brief returns the last address that was tried from this pool
     ///
     /// This method returns the last address that was attempted to be allocated
