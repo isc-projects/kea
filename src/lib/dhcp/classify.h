@@ -53,6 +53,17 @@ namespace dhcp {
     /// documentation. See  http://www.cplusplus.com/reference/set/set/.
     class ClientClasses : public std::set<ClientClass> {
     public:
+
+        /// @brief Default constructor.
+        ClientClasses() : std::set<ClientClass>() {
+        }
+
+        /// @brief Constructor from comma separated values.
+        ///
+        /// @param class_names A string containing a client classes separated
+        /// with commas. The class names are trimmed before insertion to the set.
+        ClientClasses(const std::string& class_names);
+
         /// @brief returns if class x belongs to the defined classes
         ///
         /// @param x client class to be checked
