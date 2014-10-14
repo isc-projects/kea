@@ -281,6 +281,7 @@ public:
     ///
     /// This method will not return vendor options, i.e. having option space
     /// name in the format of "vendor-X" where X is 32-bit unsiged integer.
+    /// See @c getAll(uint32_t) for vendor options.
     ///
     /// @param option_space Name of the option space.
     ///
@@ -330,6 +331,8 @@ public:
     /// If the option space name is specified in the following format:
     /// "vendor-X" where X is an uint32_t number, it is assumed to be
     /// a vendor space and the uint32_t number is returned by this function.
+    /// If the option space name is invalid this method will return 0 which
+    /// is not valid vendor-id.
     ///
     /// @todo remove this function once when the conversion is dealt by the
     /// appropriate functions returning options by option space names.
@@ -342,7 +345,14 @@ private:
 
     /// @brief Appends encapsulated options to the options in an option space.
     ///
-    /// @param option_space Name of the option space containing optionn to
+    /// This method appends sub-options to the options belonging to the
+    /// particular option space. For example: if the option space "foo"
+    /// is specified, this function will go over all options belonging to
+    /// "foo" and will check which option spaces they encapsulate. For each
+    /// such option it will retrieve options for these option spaces and append
+    /// as sub-options to options belonging to "foo".
+    ///
+    /// @param option_space Name of the option space containing option to
     /// which encapsulated options are appended.
     void encapsulateInternal(const std::string& option_space);
 
