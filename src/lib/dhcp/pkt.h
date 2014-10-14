@@ -536,7 +536,7 @@ protected:
     /// @param addr IPv6 address to be converted
     /// @return hardware address (or NULL)
     HWAddrPtr
-    getMACfromIPv6(const isc::asiolink::IOAddress& addr);
+    getMACFromIPv6(const isc::asiolink::IOAddress& addr);
 
     /// Transaction-id (32 bits for v4, 24 bits for v6)
     uint32_t transid_;
