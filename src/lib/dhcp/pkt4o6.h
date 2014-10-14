@@ -163,6 +163,18 @@ public:
     /// @return interface name
     void setPkt6Iface(const std::string& iface ) { pkt6_iface_ = iface; };
    
+    /// @brief Returns a string of DHCPv6 ORO
+    ///
+    /// @return a string of DHCPv6 ORO
+    std::string&
+    getORO() { return (oro_data_); }
+    
+    /// @brief Set buffer of DHCPv6 ORO
+    ///
+    /// @param oro_data a string of DHCPv6 ORO data
+    void
+    setORO(const std::string& oro_data) { oro_data_ = oro_data; }
+        
 protected:
 
     /// @brief DHCP4o6 flags field, the same as transaction-id in DHCPv6
@@ -185,6 +197,9 @@ protected:
     
     /// @brief a json-format string containing ancillary data used by DHCP4o6
     std::string buffer_ancillary_;
+    
+    /// @brief a string containing DHCPv6 ORO data
+    std::string oro_data_;
 };// pkt4o6 class
 
 } // isc::dhcp namespace

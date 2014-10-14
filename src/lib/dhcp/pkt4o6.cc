@@ -41,6 +41,12 @@ Pkt4o6Ptr Pkt4o6::fromPkt6(const Pkt6Ptr& pkt6) {
         pkt4o6->setPkt6LocalAddr(pkt6->getLocalAddr());
         pkt4o6->setPkt6Index(pkt6->getIndex());
         pkt4o6->setPkt6Iface(pkt6->getIface());
+
+        OptionPtr oro = pkt6->getOption(D6O_ORO);
+        if (oro) {
+            const OptionBuffer& d = oro->getData();
+            pkt4o6->setORO(std::string((char*)d.data(), d.size()));
+        }
     } else {
         isc_throw(Pkt4o6ConstructError,
                  "The DHCPv6 message doesn't contain a DHCPv4 Message Option");
@@ -56,7 +62,13 @@ Pkt6Ptr Pkt4o6::toPkt6() {
     pkt6->setIndex(getPkt6Index());
     pkt6->setIface(getPkt6Iface());
     
-//    appendRequestedOptions(query, reply);//TODO: should we remove this?
+    std::string oro = getORO();
+    
+    OptionPtr option_oro(new Option(Option::V6, D6O_ORO,
+                                    OptionBuffer((uint8_t*)oro.c_str(),
+                                        (uint8_t*)oro.c_str() + oro.size())));
+    pkt6->addOption(option_oro);
+    
         
     OptionPtr option(new Option(Option::V6,
                                 OPTION_DHCPV4_MSG,
@@ -79,12 +91,14 @@ void Pkt4o6::pack() {
 
     pt.put("RemoteAddr", getPkt6RemoteAddr().toText());
     pt.put("LocalAddr", getPkt6LocalAddr().toText());
-//    pt.put("RemotePort", pkt6_->getRemotePort());
-//    pt.put("LocalPort", pkt6_->getLocalPort());
+//    pt.put("RemotePort", getPkt6RemotePort());
+//    pt.put("LocalPort", getPkt6LocalPort());
     pt.put("Index", getPkt6Index());
     pt.put("Iface", getPkt6Iface());
-    
     pt.put("Flags", getFlags());
+//    if (getORO().size() > 0)
+//        pt.put("ORO", getORO());
+    
     std::stringstream sout;
     write_json(sout, pt);
 
@@ -108,6 +122,10 @@ void Pkt4o6::unpack() {
         setPkt6Iface(pt.get<std::string>("Iface"));
         setFlags(pt.get<uint32_t>("Flags"));
         setIface(getPkt6Iface());//Use Pkt6's Iface to find a subnet
+        
+        try {
+            setORO(pt.get<std::string>("ORO"));
+        } catch (const std::exception& ex) {}
     } catch (const std::exception& ex) {
         //TODO: logging
     }
