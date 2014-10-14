@@ -158,7 +158,7 @@ Pkt::getMAC(uint32_t hw_addr_src) {
 
     // Method 5: From remote-id option inserted by a relay
 
-    // Method 6: From subscriber-id option inserted by a releay
+    // Method 6: From subscriber-id option inserted by a relay
 
     // Method 7: From docsis options
 
