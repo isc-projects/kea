@@ -268,7 +268,7 @@ public:
     /// @param question client's packet
     void copyRelayInfo(const Pkt6Ptr& question);
 
-    /// @biref Relay information.
+    /// @brief Relay information.
     ///
     /// This is a public field. Otherwise we hit one of the two problems:
     /// we return reference to an internal field (and that reference could
@@ -278,7 +278,7 @@ public:
     /// (or least bad) solution.
     ///
     /// This vector is arranged in the order packet is encapsulated, i.e.
-    /// relay[0] was the outermort encapsulation (relay closest to the server),
+    /// relay[0] was the outermost encapsulation (relay closest to the server),
     /// relay[last] was the innermost encapsulation (relay closest to the
     /// client).
     std::vector<RelayInfo> relay_info_;
