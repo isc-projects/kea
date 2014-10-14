@@ -178,6 +178,10 @@ public:
     /// this address is set to 0, there is no reservation.
     /// @param hostname Hostname to be allocated to both DHCPv4 and DHCPv6
     /// clients. This is empty string if hostname is not allocated.
+    /// @param dhcp4_client_classes A string holding DHCPv4 client class names
+    /// separated by commas. The names get trimmed by this constructor.
+    /// @param dhcp6_client_classes A string holding DHCPv6 client class names
+    /// separated by commas. The names get trimmed by this constructor.
     ///
     /// @throw BadValue if the provided values are invalid. In particular,
     /// if the identifier is invalid.
@@ -185,7 +189,9 @@ public:
          const IdentifierType& identifier_type,
          const SubnetID ipv4_subnet_id, const SubnetID ipv6_subnet_id,
          const asiolink::IOAddress& ipv4_reservation,
-         const std::string& hostname = "");
+         const std::string& hostname = "",
+         const std::string& dhcp4_client_classes = "",
+         const std::string& dhcp6_client_classes = "");
 
     /// @brief Constructor.
     ///
@@ -206,13 +212,19 @@ public:
     /// this address is set to 0, there is no reservation.
     /// @param hostname Hostname to be allocated to both DHCPv4 and DHCPv6
     /// clients. This is empty string if hostname is not allocated.
+    /// @param dhcp4_client_classes A string holding DHCPv4 client class names
+    /// separated by commas. The names get trimmed by this constructor.
+    /// @param dhcp6_client_classes A string holding DHCPv6 client class names
+    /// separated by commas. The names get trimmed by this constructor.
     ///
     /// @throw BadValue if the provided values are invalid. In particular,
     /// if the identifier is invalid.
     Host(const std::string& identifier, const std::string& identifier_name,
          const SubnetID ipv4_subnet_id, const SubnetID ipv6_subnet_id,
          const asiolink::IOAddress& ipv4_reservation,
-         const std::string& hostname = "");
+         const std::string& hostname = "",
+         const std::string& dhcp4_client_classes = "",
+         const std::string& dhcp6_client_classes = "");
 
     /// @brief Replaces currently used identifier with a new identifier.
     ///
@@ -325,9 +337,23 @@ public:
         return (hostname_);
     }
 
+    /// @brief Adds new client class for DHCPv4.
+    ///
+    /// @param class_name Class name.
+    void addClientClass4(const std::string& class_name) {
+        addClientClassInternal(dhcp4_client_classes_, class_name);
+    }
+
     /// @brief Returns classes which DHCPv4 client is associated with.
     const ClientClasses& getClientClasses4() const {
         return (dhcp4_client_classes_);
+    }
+
+    /// @brief Adds new client class for DHCPv6.
+    ///
+    /// @param class_name Class name.
+    void addClientClass6(const std::string& class_name) {
+        addClientClassInternal(dhcp6_client_classes_, class_name);
     }
 
     /// @brief Returns classes which DHCPv6 client is associated with.
@@ -336,6 +362,19 @@ public:
     }
 
 private:
+
+    /// @brief Adds new client class for DHCPv4 or DHCPv6.
+    ///
+    /// This method is called internally by the @c addClientClass4 and
+    /// @c addClientClass6 functions. It adds the class of the specified name
+    /// to the supplied class set. The class names are trimmed before they are
+    /// added. Empty class names are ignored.
+    ///
+    /// @param [out] classes Set of classes to which the new class should be
+    /// inserted.
+    /// @param class_name Class name.
+    void addClientClassInternal(ClientClasses& classes,
+                                const std::string& class_name);
 
     /// @brief Pointer to the hardware address associated with the reservations
     /// for the host.
