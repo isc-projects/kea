@@ -146,12 +146,6 @@ TEST(HostTest, createFromDUIDString) {
                  isc::BadValue);
 
     // Empty DUID is also not allowed.
-    try {
-        Host("", "duid", SubnetID(1), SubnetID(2),
-             IOAddress("192.0.2.3"), "somehost.example.org");
-    } catch (const std::exception& ex) {
-        std::cout << ex.what() << std::endl;
-    }
     EXPECT_THROW(Host("", "duid", SubnetID(1), SubnetID(2),
                       IOAddress("192.0.2.3"), "somehost.example.org"),
                  isc::BadValue);
@@ -360,6 +354,74 @@ TEST(HostTest, setValues) {
     EXPECT_EQ(123, host->getIPv4SubnetID());
     EXPECT_EQ(234, host->getIPv6SubnetID());
     EXPECT_EQ("10.0.0.1", host->getIPv4Reservation().toText());
+}
+
+// Test that Host constructors initialize client classes from string.
+TEST(HostTest, clientClassesFromConstructor) {
+    boost::scoped_ptr<Host> host;
+    // Prepare the hardware address in binary format.
+    const uint8_t hwaddr_data[] = {
+        0xaa, 0xab, 0xca, 0xda, 0xbb, 0xee
+    };
+
+    // Try the "from binary" constructor.
+    ASSERT_NO_THROW(host.reset(new Host(hwaddr_data,
+                                        sizeof(hwaddr_data),
+                                        Host::IDENT_HWADDR,
+                                        SubnetID(1), SubnetID(2),
+                                        IOAddress("192.0.2.3"),
+                                        "somehost.example.org",
+                                        "alpha, , beta",
+                                        "gamma")));
+
+    EXPECT_TRUE(host->getClientClasses4().contains("alpha"));
+    EXPECT_TRUE(host->getClientClasses4().contains("beta"));
+    EXPECT_FALSE(host->getClientClasses4().contains("gamma"));
+    EXPECT_TRUE(host->getClientClasses6().contains("gamma"));
+    EXPECT_FALSE(host->getClientClasses6().contains("alpha"));
+    EXPECT_FALSE(host->getClientClasses6().contains("beta"));
+
+    // Try the "from string" constructor.
+    ASSERT_NO_THROW(host.reset(new Host("01:02:03:04:05:06", "hw-address",
+                                        SubnetID(1), SubnetID(2),
+                                        IOAddress("192.0.2.3"),
+                                        "somehost.example.org",
+                                        "alpha, beta, gamma",
+                                        "beta, gamma")));
+
+    EXPECT_TRUE(host->getClientClasses4().contains("alpha"));
+    EXPECT_TRUE(host->getClientClasses4().contains("beta"));
+    EXPECT_TRUE(host->getClientClasses4().contains("gamma"));
+    EXPECT_FALSE(host->getClientClasses6().contains("alpha"));
+    EXPECT_TRUE(host->getClientClasses6().contains("beta"));
+    EXPECT_TRUE(host->getClientClasses6().contains("gamma"));
+}
+
+// Test that new client classes can be added for the Host.
+TEST(HostTest, addClientClasses) {
+    boost::scoped_ptr<Host> host;
+    ASSERT_NO_THROW(host.reset(new Host("01:02:03:04:05:06", "hw-address",
+                                        SubnetID(1), SubnetID(2),
+                                        IOAddress("192.0.2.3"))));
+
+    EXPECT_FALSE(host->getClientClasses4().contains("foo"));
+    EXPECT_FALSE(host->getClientClasses6().contains("foo"));
+    EXPECT_FALSE(host->getClientClasses4().contains("bar"));
+    EXPECT_FALSE(host->getClientClasses6().contains("bar"));
+
+    host->addClientClass4("foo");
+    host->addClientClass6("bar");
+    EXPECT_TRUE(host->getClientClasses4().contains("foo"));
+    EXPECT_FALSE(host->getClientClasses6().contains("foo"));
+    EXPECT_FALSE(host->getClientClasses4().contains("bar"));
+    EXPECT_TRUE(host->getClientClasses6().contains("bar"));
+
+    host->addClientClass4("bar");
+    host->addClientClass6("foo");
+    EXPECT_TRUE(host->getClientClasses4().contains("foo"));
+    EXPECT_TRUE(host->getClientClasses6().contains("foo"));
+    EXPECT_TRUE(host->getClientClasses4().contains("bar"));
+    EXPECT_TRUE(host->getClientClasses6().contains("bar"));
 }
 
 } // end of anonymous namespace
