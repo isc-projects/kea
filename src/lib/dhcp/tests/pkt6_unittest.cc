@@ -923,9 +923,12 @@ TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_direct) {
     pkt.setIface(iface->getName());
     pkt.setIndex(iface->getIndex());
 
+    // Note that u and g bits (the least significant ones of the most significant
+    // byte) have special meaning and must not be set in MAC. u bit is always set
+    // in EUI-64. g is always cleared.
     IOAddress global("2001:db8::204:06ff:fe08:0a:0c");
-    IOAddress linklocal_eui64("fe80::204:06ff:fe08:0a0c");
-    IOAddress linklocal_noneui64("fe80::0204:0608:0a0c:0e10");
+    IOAddress linklocal_eui64("fe80::f204:06ff:fe08:0a0c");
+    IOAddress linklocal_noneui64("fe80::f204:0608:0a0c:0e10");
 
     // If received from a global address, this method should fail
     pkt.setRemoteAddr(global);
@@ -937,7 +940,7 @@ TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_direct) {
     ASSERT_TRUE(found);
 
     stringstream tmp;
-    tmp << "hwtype=" << (int)iface->getHWType() << " 02:04:06:08:0a:0c";
+    tmp << "hwtype=" << (int)iface->getHWType() << " f0:04:06:08:0a:0c";
     EXPECT_EQ(tmp.str(), found->toText(true));
 }
 
@@ -963,8 +966,8 @@ TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_singleRelay) {
     pkt.setIndex(iface->getIndex());
 
     IOAddress global("2001:db8::204:06ff:fe08:0a:0c"); // global address
-    IOAddress linklocal_noneui64("fe80::0204:0608:0a0c:0e10"); // no fffe
-    IOAddress linklocal_eui64("fe80::204:06ff:fe08:0a0c"); // valid EUI-64
+    IOAddress linklocal_noneui64("fe80::f204:0608:0a0c:0e10"); // no fffe
+    IOAddress linklocal_eui64("fe80::f204:06ff:fe08:0a0c"); // valid EUI-64
 
     // If received from a global address, this method should fail
     pkt.relay_info_[0].peeraddr_ = global;
@@ -980,7 +983,7 @@ TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_singleRelay) {
     ASSERT_TRUE(found);
 
     stringstream tmp;
-    tmp << "hwtype=" << (int)iface->getHWType() << " 02:04:06:08:0a:0c";
+    tmp << "hwtype=" << (int)iface->getHWType() << " f0:04:06:08:0a:0c";
     EXPECT_EQ(tmp.str(), found->toText(true));
 }
 
@@ -995,9 +998,9 @@ TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_multiRelay) {
     // are stored in relay_info_ in the encapsulation order rather than in
     // traverse order. The following simulates:
     // client --- relay1 --- relay2 --- relay3 --- server
-    IOAddress linklocal1("fe80::ff:fe00:1"); // valid EUI-64
-    IOAddress linklocal2("fe80::ff:fe00:2"); // valid EUI-64
-    IOAddress linklocal3("fe80::ff:fe00:3"); // valid EUI-64
+    IOAddress linklocal1("fe80::200:ff:fe00:1"); // valid EUI-64
+    IOAddress linklocal2("fe80::200:ff:fe00:2"); // valid EUI-64
+    IOAddress linklocal3("fe80::200:ff:fe00:3"); // valid EUI-64
 
     // Let's add info about relay3. This was the last relay, so it added the
     // outermost encapsulation layer, so it was parsed first during reception.

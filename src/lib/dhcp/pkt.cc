@@ -169,7 +169,7 @@ Pkt::getMAC(uint32_t hw_addr_src) {
 }
 
 HWAddrPtr
-Pkt::getMACfromIPv6(const isc::asiolink::IOAddress& addr) {
+Pkt::getMACFromIPv6(const isc::asiolink::IOAddress& addr) {
 
     if (!addr.isV6LinkLocal()) {
         return (HWAddrPtr());
@@ -183,6 +183,10 @@ Pkt::getMACfromIPv6(const isc::asiolink::IOAddress& addr) {
         // Check that it's link-local (starts with fe80).
         (bin[0] != 0xfe) || (bin[1] != 0x80) ||
 
+        // Check that u bit is set and g is clear. See Section 2.5.1 of RFC2373
+        // for details.
+        ( (bin[0] & 3) != 2) ||
+
         // And that the IID is of EUI-64 type.
         (bin[11] != 0xff) || (bin[12] != 0xfe)) {
         return (HWAddrPtr());
@@ -193,6 +197,10 @@ Pkt::getMACfromIPv6(const isc::asiolink::IOAddress& addr) {
 
     // Ok, we're down to EUI-64 only now: XX:XX:XX:ff:fe:XX:XX:XX
     bin.erase(bin.begin() + 3, bin.begin() + 5);
+
+    // MAC-48 to EUI-64 involves inverting u bit (see explanation in Section
+    // 2.5.1 of RFC2373). We need to revert that.
+    bin[0] = bin[0] ^ 2;
 
     // Let's get the interface this packet was received on. We need it to get
     // hardware type
