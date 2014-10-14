@@ -68,6 +68,9 @@ public:
     /// @param data pointer to received data
     /// @param len size of buffer to be allocated for this packet.
     Pkt4(const uint8_t* data, size_t len);
+    
+    /// @brief Destructor. 
+    virtual ~Pkt4() {}
 
     /// @brief Prepares on-wire format of DHCPv4 packet.
     ///
@@ -77,7 +80,7 @@ public:
     /// The buffer_out_ is cleared before writting to the buffer.
     ///
     /// @throw InvalidOperation if packing fails
-    void
+    virtual void
     pack();
 
     /// @brief Parses on-wire form of DHCPv4 packet.
@@ -88,7 +91,7 @@ public:
     /// be stored in options_ container.
     ///
     /// Method with throw exception if packet parsing fails.
-    void unpack();
+    virtual void unpack();
 
     /// @brief performs sanity check on a packet.
     ///

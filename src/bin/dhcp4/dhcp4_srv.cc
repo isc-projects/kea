@@ -157,12 +157,12 @@ Dhcpv4Srv::run() {
 
         // 4o6
         bool dhcp4o6Request = false;
+        Pkt4o6Ptr query4o6;
         if (!query && ipc_ && !ipc_->empty()) {
-            query = ipc_->pop()->getPkt4();
+            query4o6 = ipc_->pop();
             dhcp4o6Request = true;
-
-            //set Pkt4's localAddr according to U flag in Pkt6's transid field
-            ipc_->currentPkt4o6()->setPkt4LocalAddr();
+            query4o6->unpack();
+            query = query4o6;
         }
 
         try {
@@ -437,8 +437,7 @@ Dhcpv4Srv::run() {
 
             if (ipc_ && dhcp4o6Request) {//4o6
                 try {
-                    Pkt4o6Ptr rsp4o6(new Pkt4o6(ipc_->currentPkt4o6(), rsp));
-                    ipc_->sendPkt4o6(rsp4o6);
+                    ipc_->sendPkt4o6(rsp, query4o6);
                 } catch (const Exception& ex) {
                     LOG_ERROR(dhcp4_logger, DHCP4_IPC_SEND_ERROR).arg(ex.what());
                 }
