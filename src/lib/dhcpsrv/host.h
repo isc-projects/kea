@@ -148,6 +148,15 @@ typedef std::pair<IPv6ResrvIterator, IPv6ResrvIterator> IPv6ResrvRange;
 /// information about the DHCPv4 reservations are also available for the
 /// DHCPv6 server and vice versa. Also, this approach allows for reserving
 /// common resources such as host name for DHCPv4 and DHCPv6 clients.
+///
+/// @todo This class offers basic functionality for storing host information.
+/// It will need to be extended to allow for the following operations:
+/// - store DHCPv4 and DHCPv6 options for the host,
+/// - remove and replace IPv6 reservations
+/// - remove and replace client classes
+/// - disable IPv4 reservation without a need to set it to the 0.0.0.0 address
+/// Note that the last three operations are mainly required for managing
+/// host reservations which will be implemented later.
 class Host {
 public:
 
