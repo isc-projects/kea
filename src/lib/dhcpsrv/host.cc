@@ -19,6 +19,15 @@
 namespace isc {
 namespace dhcp {
 
+IPv6Resrv::IPv6Resrv(const asiolink::IOAddress& prefix,
+                     const uint8_t prefix_len)
+    : prefix_(prefix), prefix_len_(prefix_len) {
+    if (!prefix.isV6() || prefix.isV6Multicast()) {
+        isc_throw(isc::BadValue, "invalid prefix '" << prefix
+                  << " for new IPv6 reservation");
+    }
+}
+
 bool
 IPv6Resrv::operator==(const IPv6Resrv& other) const {
     return (prefix_ == other.prefix_ &&

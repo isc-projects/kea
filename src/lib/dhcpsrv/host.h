@@ -56,10 +56,11 @@ public:
     ///
     /// @param prefix Address or prefix to be reserved.
     /// @param prefix_len Prefix length.
+    ///
+    /// @throw isc::BadValue if address is not IPv6 address or is a
+    /// multicast address.
     IPv6Resrv(const asiolink::IOAddress& prefix,
-              const uint8_t prefix_len = 128)
-        : prefix_(prefix), prefix_len_(prefix_len) {
-    }
+              const uint8_t prefix_len = 128);
 
     /// @brief Returns prefix for the reservation.
     const asiolink::IOAddress& getPrefix() const {
