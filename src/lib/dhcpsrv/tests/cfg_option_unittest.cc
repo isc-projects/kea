@@ -19,6 +19,8 @@
 #include <dhcpsrv/cfg_option.h>
 #include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
+#include <limits>
+#include <sstream>
 
 using namespace isc;
 using namespace isc::dhcp;
@@ -246,11 +248,19 @@ TEST(CfgOptionTest, copy) {
 // to the top level options on request.
 TEST(CfgOptionTest, encapsulate) {
     CfgOption cfg;
-    // Create top-level options. These options encapsulate "foo" option space.
+    // Create top-level options encapsulating "foo" option space.
     for (uint16_t code = 1000; code < 1020; ++code) {
         OptionUint16Ptr option = OptionUint16Ptr(new OptionUint16(Option::V6,
                                                                   code, 1234));
         option->setEncapsulatedSpace("foo");
+        ASSERT_NO_THROW(cfg.add(option, false, DHCP6_OPTION_SPACE));
+    }
+
+    // Create top level options encapsulating "bar" option space.
+    for (uint16_t code = 1020; code < 1040; ++code) {
+        OptionUint16Ptr option = OptionUint16Ptr(new OptionUint16(Option::V6,
+                                                                  code, 2345));
+        option->setEncapsulatedSpace("bar");
         ASSERT_NO_THROW(cfg.add(option, false, DHCP6_OPTION_SPACE));
     }
 
@@ -261,25 +271,36 @@ TEST(CfgOptionTest, encapsulate) {
         ASSERT_NO_THROW(cfg.add(option, false, "foo"));
     }
 
-    // Append options from "foo" space as sub-options.
+    // Create sub-options belonging to "bar" option space.
+    for (uint16_t code = 100;  code < 130; ++code) {
+        OptionUint8Ptr option = OptionUint8Ptr(new OptionUint8(Option::V6,
+                                                               code, 0x02));
+        ASSERT_NO_THROW(cfg.add(option, false, "bar"));
+    }
+
+    // Append options from "foo" and "bar" space as sub-options.
     ASSERT_NO_THROW(cfg.encapsulate());
 
-    // Verify that we have 20 top-level options.
+    // Verify that we have 40 top-level options.
     OptionContainerPtr options = cfg.getAll(DHCP6_OPTION_SPACE);
-    ASSERT_EQ(20, options->size());
+    ASSERT_EQ(40, options->size());
 
-    // Verify that each of them contains expected sub-options.
-    for (uint16_t code = 1000; code < 1020; ++code) {
+    for (uint16_t code = 1000; code < 1040; ++code) {
         OptionUint16Ptr option = boost::dynamic_pointer_cast<
             OptionUint16>(cfg.get(DHCP6_OPTION_SPACE, code).option);
         ASSERT_TRUE(option) << "option with code " << code << " not found";
-        EXPECT_EQ(1234, option->getValue());
-        for (uint16_t subcode = 1; subcode < 20; ++subcode) {
-            OptionUint8Ptr suboption = boost::dynamic_pointer_cast<
-                OptionUint8>(option->getOption(subcode));
-            ASSERT_TRUE(suboption) << "suboption with code " << subcode
-                                   << " not found";
-            EXPECT_EQ(0x01, suboption->getValue());
+        const OptionCollection& suboptions = option->getOptions();
+        for (OptionCollection::const_iterator suboption =
+                 suboptions.begin(); suboption != suboptions.end();
+             ++suboption) {
+            OptionUint8Ptr opt = boost::dynamic_pointer_cast<
+                OptionUint8>(suboption->second);
+            ASSERT_TRUE(opt);
+            if (code < 1020) {
+                EXPECT_EQ(0x01, opt->getValue());
+            } else {
+                EXPECT_EQ(0x02, opt->getValue());
+            }
         }
     }
 }
@@ -410,11 +431,16 @@ TEST(CfgOptionTest, addVendorOptions) {
         ASSERT_NO_THROW(cfg.add(option, false, "vendor-12345678"));
     }
 
+    // Second option space uses corner case value for vendor id = max uint8.
+    uint32_t vendor_id = std::numeric_limits<uint32_t>::max();
+    std::ostringstream option_space;
+    option_space << "vendor-" << vendor_id;
+
     // Add 7 options to another option space. The option codes partially overlap
     // with option codes that we have added to dhcp6 option space.
     for (uint16_t code = 105; code < 112; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(cfg.add(option, false, "vendor-87654321"));
+        ASSERT_NO_THROW(cfg.add(option, false, option_space.str()));
     }
 
     // Get options from the Subnet and check if all 10 are there.
@@ -431,7 +457,7 @@ TEST(CfgOptionTest, addVendorOptions) {
         ++expected_code;
     }
 
-    options = cfg.getAll(87654321);
+    options = cfg.getAll(vendor_id);
     ASSERT_TRUE(options);
     ASSERT_EQ(7, options->size());
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -547,8 +547,9 @@ TEST_F(OptionTest, setData) {
                             buf_.size()));
 }
 
-// This test verifies that options can be compared using equals() method.
-TEST_F(OptionTest, equals) {
+// This test verifies that options can be compared using equals(OptionPtr)
+// method.
+TEST_F(OptionTest, equalsWithPointers) {
 
     // Five options with varying lengths
     OptionPtr opt1(new Option(Option::V6, 258, buf_.begin(), buf_.begin() + 1));
@@ -568,6 +569,29 @@ TEST_F(OptionTest, equals) {
     EXPECT_FALSE(opt1->equals(opt4));
 
     EXPECT_TRUE(opt2->equals(opt5));
+}
+
+// This test verifies that options can be compared using equals(Option) method.
+TEST_F(OptionTest, equals) {
+
+    // Five options with varying lengths
+    Option opt1(Option::V6, 258, buf_.begin(), buf_.begin() + 1);
+    Option opt2(Option::V6, 258, buf_.begin(), buf_.begin() + 2);
+    Option opt3(Option::V6, 258, buf_.begin(), buf_.begin() + 3);
+
+    // The same content as opt2, but different type
+    Option opt4(Option::V6, 1, buf_.begin(), buf_.begin() + 2);
+
+    // Another instance with the same type and content as opt2
+    Option opt5(Option::V6, 258, buf_.begin(), buf_.begin() + 2);
+
+    EXPECT_TRUE(opt1.equals(opt1));
+
+    EXPECT_FALSE(opt1.equals(opt2));
+    EXPECT_FALSE(opt1.equals(opt3));
+    EXPECT_FALSE(opt1.equals(opt4));
+
+    EXPECT_TRUE(opt2.equals(opt5));
 }
 
 // This test verifies that the name of the option space being encapsulated by

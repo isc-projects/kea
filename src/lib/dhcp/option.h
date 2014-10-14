@@ -352,7 +352,17 @@ public:
     /// just to force that every option has virtual dtor
     virtual ~Option();
 
-    /// @brief Checks if two options are equal
+    /// @brief Checks if options are equal.
+    ///
+    /// This method calls a virtual @c equals function to compare objects.
+    /// This method is not meant to be overriden in the derived classes.
+    /// Instead, the other @c equals function must be overriden.
+    ///
+    /// @param other Pointer to the option to compare this option to.
+    /// @return true if both options are equal, false otherwise.
+    bool equals(const OptionPtr& other) const;
+
+    /// @brief Checks if two options are equal.
     ///
     /// Equality verifies option type and option content. Care should
     /// be taken when using this method. Implementation for derived
@@ -361,10 +371,9 @@ public:
     /// will detect differences between base Option and derived
     /// objects.
     ///
-    /// @param other the other option
-    /// @return true if both options are equal
-    bool equals(const OptionPtr& other) const;
-
+    /// @param other Instance of the option to compare to.
+    ///
+    /// @return true if options are equal, false otherwise.
     virtual bool equals(const Option& other) const;
 
 protected:
