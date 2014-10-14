@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <dhcpsrv/host.h>
+#include <util/strutil.h>
 #include <exceptions/exceptions.h>
 
 namespace isc {
@@ -34,10 +35,13 @@ Host::Host(const uint8_t* identifier, const size_t identifier_len,
            const IdentifierType& identifier_type,
            const SubnetID ipv4_subnet_id, const SubnetID ipv6_subnet_id,
            const asiolink::IOAddress& ipv4_reservation,
-           const std::string& hostname)
+           const std::string& hostname,
+           const std::string& dhcp4_client_classes,
+           const std::string& dhcp6_client_classes)
     : hw_address_(), duid_(), ipv4_subnet_id_(ipv4_subnet_id),
       ipv6_subnet_id_(ipv6_subnet_id), ipv4_reservation_(ipv4_reservation),
-      hostname_(hostname), dhcp4_client_classes_(), dhcp6_client_classes_() {
+       hostname_(hostname), dhcp4_client_classes_(dhcp4_client_classes),
+       dhcp6_client_classes_(dhcp6_client_classes) {
 
     // Initialize HWAddr or DUID
     setIdentifier(identifier, identifier_len, identifier_type);
@@ -46,10 +50,13 @@ Host::Host(const uint8_t* identifier, const size_t identifier_len,
 Host::Host(const std::string& identifier, const std::string& identifier_name,
            const SubnetID ipv4_subnet_id, const SubnetID ipv6_subnet_id,
            const asiolink::IOAddress& ipv4_reservation,
-           const std::string& hostname)
+           const std::string& hostname,
+           const std::string& dhcp4_client_classes,
+           const std::string& dhcp6_client_classes)
     : hw_address_(), duid_(), ipv4_subnet_id_(ipv4_subnet_id),
       ipv6_subnet_id_(ipv6_subnet_id), ipv4_reservation_(ipv4_reservation),
-      hostname_(hostname), dhcp4_client_classes_(), dhcp6_client_classes_() {
+      hostname_(hostname), dhcp4_client_classes_(dhcp4_client_classes),
+      dhcp6_client_classes_(dhcp6_client_classes) {
 
     // Initialize HWAddr or DUID
     setIdentifier(identifier, identifier_name);
@@ -99,6 +106,14 @@ Host::getIPv6Reservations(const IPv6Resrv::Type& type) const {
     return (ipv6_reservations_.equal_range(type));
 }
 
+void
+Host::addClientClassInternal(ClientClasses& classes,
+                             const std::string& class_name) {
+    std::string trimmed = util::str::trim(class_name);
+    if (!class_name.empty()) {
+        classes.insert(ClientClass(class_name));
+    }
+}
 
 } // end of namespace isc::dhcp
 } // end of namespace isc
