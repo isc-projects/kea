@@ -88,6 +88,7 @@
  * - @subpage libdhcpsrv
  *   - @subpage leasemgr
  *   - @subpage cfgmgr
+ *   - @subpage optionsConfig
  *   - @subpage allocengine
  * - @subpage libdhcp_ddns
  * - @subpage dhcpDatabaseBackends
