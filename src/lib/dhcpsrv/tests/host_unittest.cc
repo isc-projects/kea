@@ -42,6 +42,11 @@ TEST(IPv6ResrvTest, constructorPrefix) {
     EXPECT_EQ(IPv6Resrv::TYPE_PD, resrv.getType());
 }
 
+TEST(IPv6ResrvTest, constructorInvalidPrefix) {
+    EXPECT_THROW(IPv6Resrv(IOAddress("10.0.0.1"), 128), isc::BadValue);
+    EXPECT_THROW(IPv6Resrv(IOAddress("ff02:1::2"), 128), isc::BadValue);
+}
+
 // This test verifies that it is possible to modify prefix and its
 // length in an existing reservation.
 TEST(IPv6ResrvTest, setPrefix) {
