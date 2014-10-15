@@ -504,9 +504,11 @@ void
 Dhcpv4Srv::copyDefaultFields(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     answer->setIface(question->getIface());
     answer->setIndex(question->getIndex());
-    answer->setCiaddr(question->getCiaddr());
 
     answer->setSiaddr(IOAddress("0.0.0.0")); // explicitly set this to 0
+    // ciaddr is always 0, except for the Renew/Rebind state when it may
+    // be set to the ciaddr sent by the client.
+    answer->setCiaddr(IOAddress("0.0.0.0"));
     answer->setHops(question->getHops());
 
     // copy MAC address
@@ -1049,6 +1051,18 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
             .arg(hwaddr?hwaddr->toText():"(no hwaddr info)");
 
         answer->setYiaddr(lease->addr_);
+
+        /// @todo The server should check what ciaddr the client has supplied
+        /// in ciaddr. Currently the ciaddr is ignored except for the subnet
+        /// selection. If the client supplied an invalid address, the server
+        /// will also return an invalid address here.
+        if (!fake_allocation) {
+            // If this is a renewing client it will set a ciaddr which the
+            // server may include in the response. If this is a new allocation
+            // the client will set ciaddr to 0 and this will also be propagated
+            // to the server's answer.
+            answer->setCiaddr(question->getCiaddr());
+        }
 
         // If there has been Client FQDN or Hostname option sent, but the
         // hostname is empty, it means that server is responsible for

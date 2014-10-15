@@ -302,7 +302,7 @@ TEST_F(DORATest, selectingRequestNonMatchingAddress) {
 // Test that the client in the INIT-REBOOT state can request the IP
 // address it has and the address is returned. Also, check that if
 // if the client requests in valid address the server sends a DHCPNAK.
-TEST_F(DORATest, InitRebootRequest) {
+TEST_F(DORATest, initRebootRequest) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(DORA_CONFIGS[0], *client.getServer());
@@ -347,6 +347,59 @@ TEST_F(DORATest, InitRebootRequest) {
     ASSERT_TRUE(client.getContext().response_);
     resp = client.getContext().response_;
     EXPECT_EQ(DHCPNAK, static_cast<int>(resp->getType()));
+}
+
+// Check that the ciaddr returned by the server is correct for DHCPOFFER and
+// DHCPNAK according to RFC2131, section 4.3.1.
+TEST_F(DORATest, ciaddr) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Configure DHCP server.
+    configure(DORA_CONFIGS[0], *client.getServer());
+    // Force ciaddr of Discover message to be non-zero.
+    client.ciaddr_.specify(IOAddress("10.0.0.50"));
+    // Obtain a lease from the server using the 4-way exchange.
+    ASSERT_NO_THROW(client.doDiscover(boost::shared_ptr<
+                                      IOAddress>(new IOAddress("10.0.0.50"))));
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPOFFER.
+    ASSERT_EQ(DHCPOFFER, static_cast<int>(resp->getType()));
+    // Make sure ciaddr is not set for DHCPOFFER.
+    EXPECT_EQ("0.0.0.0", resp->getCiaddr().toText());
+
+    // Obtain a lease from the server using the 4-way exchange.
+    ASSERT_NO_THROW(client.doRequest());
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+    // Let's transition the client to Renewing state.
+    client.setState(Dhcp4Client::RENEWING);
+
+    // Set the unicast destination address to indicate that it is a renewal.
+    client.setDestAddress(IOAddress("10.0.0.1"));
+    ASSERT_NO_THROW(client.doRequest());
+    // The client is sending invalid ciaddr so the server should send a NAK.
+    resp = client.getContext().response_;
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // For DHCPACK the ciaddr may be 0 or may be set to the ciaddr value
+    // from the client's message. Kea sets it to the latter.
+    EXPECT_EQ("10.0.0.50", resp->getCiaddr().toText());
+
+    // Replace the address held by the client. The client will request
+    // the assignment of this address but the server has a different
+    // address for this client.
+    client.ciaddr_.specify(IOAddress("192.168.0.30"));
+    ASSERT_NO_THROW(client.doRequest());
+    // The client is sending invalid ciaddr so the server should send a NAK.
+    resp = client.getContext().response_;
+    ASSERT_EQ(DHCPNAK, static_cast<int>(resp->getType()));
+    // For DHCPNAK the ciaddr is always 0 (should not be copied) from the
+    // client's message.
+    EXPECT_EQ("0.0.0.0", resp->getCiaddr().toText());
 }
 
 } // end of anonymous namespace

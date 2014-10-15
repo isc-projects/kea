@@ -40,6 +40,7 @@ run_unittests_SOURCES += memory_segment_mapped_unittest.cc
 endif
 run_unittests_SOURCES += memory_segment_common_unittest.h
 run_unittests_SOURCES += memory_segment_common_unittest.cc
+run_unittests_SOURCES += optional_value_unittest.cc
 run_unittests_SOURCES += qid_gen_unittest.cc
 run_unittests_SOURCES += random_number_generator_unittest.cc
 run_unittests_SOURCES += socketsession_unittest.cc
