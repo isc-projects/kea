@@ -19,6 +19,7 @@
 #include <dhcp/hwaddr.h>
 #include <dhcp/pkt4.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
+#include <util/optional_value.h>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <set>
@@ -294,6 +295,13 @@ public:
     /// @brief Current client's configuration obtained from the server.
     Configuration config_;
 
+    /// @brief Specific ciaddr to be used in client's messages.
+    ///
+    /// If this value is "unspecified" the default values will be used
+    /// by the client. If this value is specified, it will override ciaddr
+    /// in the client's messages.
+    isc::util::OptionalValue<asiolink::IOAddress> ciaddr_;
+
 private:
 
     /// @brief Creates and adds Requested IP Address option to the client's
@@ -373,6 +381,7 @@ private:
 
     /// @brief Enable relaying messages to the server.
     bool use_relay_;
+
 };
 
 } // end of namespace isc::dhcp::test
