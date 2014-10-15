@@ -1,3 +1,8 @@
+843.	[bug]		marcin
+	DHCPv4 server sets ciaddr to 0 in DHCPOFFER and DHCPNAK messages to
+	adhere to section 4.3.1 of RFC2131.
+	(Trac #3367, git 9f05a29caa960df2b09b7a8c23100da8b40e73d0)
+
 842.	[func]		marcin
 	DHCPv4 server logs when the packet sent by the client contains
 	invalid combination of giaddr/hops before discarding the packet.
