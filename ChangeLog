@@ -1,3 +1,7 @@
+844.	[bug]		tmark, marcin
+	Fixed multiple issues in the DHCP-DDNS unit tests.
+	(Trac #3615, git fec824d36121b12e98dd407a0bdf1bc71c8de18d)
+
 843.	[bug]		marcin
 	DHCPv4 server sets ciaddr to 0 in DHCPOFFER and DHCPNAK messages to
 	adhere to section 4.3.1 of RFC2131.
