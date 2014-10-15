@@ -41,9 +41,6 @@ public:
                                                   getController());
     }
 
-    virtual ~DStubControllerTest() {
-    }
-
     DStubControllerPtr controller_;
 };
 

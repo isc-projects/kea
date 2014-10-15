@@ -49,10 +49,6 @@ public:
     D2ControllerTest() : DControllerTest(D2Controller::instance) {
     }
 
-    /// @brief Destructor
-    ~D2ControllerTest() {
-    }
-
     /// @brief Fetches the D2Controller's D2Process
     ///
     /// @return A pointer to the process which may be null if it has not yet
