@@ -23,6 +23,8 @@
 #include <d2/d_controller.h>
 #include <d2/d_cfg_mgr.h>
 
+#include <log/logger_support.h>
+
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 using namespace boost::posix_time;
@@ -346,6 +348,11 @@ public:
     /// Note the controller singleton is destroyed. This is essential to ensure
     /// a clean start between tests.
     virtual ~DControllerTest() {
+        // Some unit tests update the logging configuration which has a side
+        // effect that all subsequent tests print the output to stdout. This
+        // is to ensure that the logging settings are back to default.
+        isc::log::setDefaultLoggingOutput();
+
         if (write_timer_) {
             write_timer_->cancel();
         }

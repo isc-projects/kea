@@ -49,10 +49,6 @@ public:
     D2ControllerTest() : DControllerTest(D2Controller::instance) {
     }
 
-    /// @brief Destructor
-    ~D2ControllerTest() {
-    }
-
     /// @brief Fetches the D2Controller's D2Process
     ///
     /// @return A pointer to the process which may be null if it has not yet
@@ -122,7 +118,7 @@ TEST_F(D2ControllerTest, commandLineArgs) {
     char* argv[] = { const_cast<char*>("progName"),
                      const_cast<char*>("-c"),
                      const_cast<char*>(DControllerTest::CFG_TEST_FILE),
-                     const_cast<char*>("-v") };
+                     const_cast<char*>("-d") };
     int argc = 4;
 
     // Verify that verbose flag is false initially.
