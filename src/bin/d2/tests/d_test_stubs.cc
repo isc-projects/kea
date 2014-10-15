@@ -276,7 +276,7 @@ DControllerTest::runWithConfig(const std::string& config, int run_time_ms,
         char* argv[] = { const_cast<char*>("progName"),
                          const_cast<char*>("-c"),
                          const_cast<char*>(DControllerTest::CFG_TEST_FILE),
-                         const_cast<char*>("-v") };
+                         const_cast<char*>("-d") };
         launch(4, argv);
     } catch (...) {
         // calculate elasped time, then rethrow it
