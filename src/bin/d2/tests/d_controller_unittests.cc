@@ -354,8 +354,8 @@ TEST_F(DStubControllerTest, ioSignals) {
 
     // Setup to raise SIGHUP in 10 ms.
     TimedSignal sighup(*getIOService(), SIGHUP, 10);
-    TimedSignal sigint(*getIOService(), SIGINT, 10);
-    TimedSignal sigterm(*getIOService(), SIGTERM, 10);
+    TimedSignal sigint(*getIOService(), SIGINT, 100);
+    TimedSignal sigterm(*getIOService(), SIGTERM, 200);
 
     // Write the valid, empty, config and then run launch() for 500 ms
     time_duration elapsed_time;
