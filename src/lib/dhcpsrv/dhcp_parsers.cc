@@ -327,13 +327,13 @@ OptionDataParser::build(ConstElementPtr option_data_entries) {
     // Try to create the option instance.
     createOption(option_data_entries);
 
-    if (!option_descriptor_.option) {
+    if (!option_descriptor_.option_) {
         isc_throw(isc::InvalidOperation,
             "parser logic error: no option has been configured and"
             " thus there is nothing to commit. Has build() been called?");
     }
 
-    cfg_->add(option_descriptor_.option, option_descriptor_.persistent,
+    cfg_->add(option_descriptor_.option_, option_descriptor_.persistent_,
               option_space_);
 }
 
@@ -516,8 +516,8 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
         // until the commit stage when it is inserted into the main storage.
         // If an option with the same code exists in main storage already the
         // old option is replaced.
-        option_descriptor_.option = option;
-        option_descriptor_.persistent = false;
+        option_descriptor_.option_ = option;
+        option_descriptor_.persistent_ = false;
     } else {
 
         // Option name should match the definition. The option name
@@ -540,8 +540,8 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
                 def->optionFactory(universe, code, data_tokens) :
                 def->optionFactory(universe, code, binary);
             OptionDescriptor desc(option, false);
-            option_descriptor_.option = option;
-            option_descriptor_.persistent = false;
+            option_descriptor_.option_ = option;
+            option_descriptor_.persistent_ = false;
 
         } catch (const isc::Exception& ex) {
             isc_throw(DhcpConfigError, "option data does not match"

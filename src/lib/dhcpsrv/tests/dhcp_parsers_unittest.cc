@@ -434,7 +434,7 @@ public:
             EXPECT_EQ(1, cnt);
             if (cnt == 1) {
                 OptionDescriptor desc = *(idx.begin());
-                option_ptr = desc.option;
+                option_ptr = desc.option_;
                 EXPECT_TRUE(option_ptr);
             }
         }

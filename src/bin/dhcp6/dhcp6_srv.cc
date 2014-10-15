@@ -732,8 +732,8 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
     const std::vector<uint16_t>& requested_opts = option_oro->getValues();
     BOOST_FOREACH(uint16_t opt, requested_opts) {
         OptionDescriptor desc = subnet->getCfgOption()->get("dhcp6", opt);
-        if (desc.option) {
-            answer->addOption(desc.option);
+        if (desc.option_) {
+            answer->addOption(desc.option_);
         }
     }
 }
@@ -778,8 +778,8 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question, Pkt6Ptr& answer
     const std::vector<uint16_t>& requested_opts = oro->getValues();
     BOOST_FOREACH(uint16_t opt, requested_opts) {
         OptionDescriptor desc = subnet->getCfgOption()->get(vendor_id, opt);
-        if (desc.option) {
-            vendor_rsp->addOption(desc.option);
+        if (desc.option_) {
+            vendor_rsp->addOption(desc.option_);
             added = true;
         }
     }

@@ -418,30 +418,30 @@ public:
                     size_t expected_data_len,
                     bool extra_data = false) {
         // Check if option descriptor contains valid option pointer.
-        ASSERT_TRUE(option_desc.option);
+        ASSERT_TRUE(option_desc.option_);
         // Verify option type.
-        EXPECT_EQ(expected_code, option_desc.option->getType());
+        EXPECT_EQ(expected_code, option_desc.option_->getType());
         // We may have many different option types being created. Some of them
         // have dedicated classes derived from Option class. In such case if
         // we want to verify the option contents against expected_data we have
         // to prepare raw buffer with the contents of the option. The easiest
         // way is to call pack() which will prepare on-wire data.
-        util::OutputBuffer buf(option_desc.option->getData().size());
-        option_desc.option->pack(buf);
+        util::OutputBuffer buf(option_desc.option_->getData().size());
+        option_desc.option_->pack(buf);
         if (extra_data) {
             // The length of the buffer must be at least equal to size of the
             // reference data but it can sometimes be greater than that. This is
             // because some options carry suboptions that increase the overall
             // length.
-            ASSERT_GE(buf.getLength() - option_desc.option->getHeaderLen(),
+            ASSERT_GE(buf.getLength() - option_desc.option_->getHeaderLen(),
                       expected_data_len);
         } else {
-            ASSERT_EQ(buf.getLength() - option_desc.option->getHeaderLen(),
+            ASSERT_EQ(buf.getLength() - option_desc.option_->getHeaderLen(),
                       expected_data_len);
         }
         // Verify that the data is correct. Do not verify suboptions and a header.
         const uint8_t* data = static_cast<const uint8_t*>(buf.getData());
-        EXPECT_EQ(0, memcmp(expected_data, data + option_desc.option->getHeaderLen(),
+        EXPECT_EQ(0, memcmp(expected_data, data + option_desc.option_->getHeaderLen(),
                             expected_data_len));
     }
 
@@ -475,7 +475,7 @@ public:
         // The subnet should now hold one option with the specified code.
         OptionDescriptor desc =
             getOptionFromSubnet(IOAddress("2001:db8:1::5"), option_code);
-        ASSERT_TRUE(desc.option);
+        ASSERT_TRUE(desc.option_);
         testOption(desc, option_code, expected_data, expected_data_len);
         CfgMgr::instance().clear();
     }
@@ -2127,16 +2127,16 @@ TEST_F(Dhcp6ParserTest, optionDataTwoSpaces) {
     ASSERT_TRUE(subnet);
     // Try to get the option from the space dhcp6.
     OptionDescriptor desc1 = subnet->getCfgOption()->get("dhcp6", 38);
-    ASSERT_TRUE(desc1.option);
-    EXPECT_EQ(38, desc1.option->getType());
+    ASSERT_TRUE(desc1.option_);
+    EXPECT_EQ(38, desc1.option_->getType());
     // Try to get the option from the space isc.
     OptionDescriptor desc2 = subnet->getCfgOption()->get("isc", 38);
-    ASSERT_TRUE(desc2.option);
-    EXPECT_EQ(38, desc1.option->getType());
+    ASSERT_TRUE(desc2.option_);
+    EXPECT_EQ(38, desc1.option_->getType());
     // Try to get the non-existing option from the non-existing
     // option space and  expect that option is not returned.
     OptionDescriptor desc3 = subnet->getCfgOption()->get("non-existing", 38);
-    ASSERT_FALSE(desc3.option);
+    ASSERT_FALSE(desc3.option_);
 }
 
 // The goal of this test is to verify that it is possible to
@@ -2289,17 +2289,17 @@ TEST_F(Dhcp6ParserTest, optionDataEncapsulate) {
 
     // Get the option.
     OptionDescriptor desc = subnet->getCfgOption()->get("dhcp6", 100);
-    EXPECT_TRUE(desc.option);
-    EXPECT_EQ(100, desc.option->getType());
+    EXPECT_TRUE(desc.option_);
+    EXPECT_EQ(100, desc.option_->getType());
 
     // This opton should comprise two sub-options.
     // Onf of them is 'foo' with code 110.
-    OptionPtr option_foo = desc.option->getOption(110);
+    OptionPtr option_foo = desc.option_->getOption(110);
     ASSERT_TRUE(option_foo);
     EXPECT_EQ(110, option_foo->getType());
 
     // ...another one 'foo2' with code 111.
-    OptionPtr option_foo2 = desc.option->getOption(111);
+    OptionPtr option_foo2 = desc.option_->getOption(111);
     ASSERT_TRUE(option_foo2);
     EXPECT_EQ(111, option_foo2->getType());
 }
@@ -2407,7 +2407,7 @@ TEST_F(Dhcp6ParserTest, optionDataBoolean) {
     // The subnet should now hold one option with the code 1000.
     OptionDescriptor desc =
         getOptionFromSubnet(IOAddress("2001:db8:1::5"), 1000);
-    ASSERT_TRUE(desc.option);
+    ASSERT_TRUE(desc.option_);
 
     // This option should be set to "true", represented as 0x1 in the option
     // buffer.
@@ -2600,7 +2600,7 @@ TEST_F(Dhcp6ParserTest, stdOptionData) {
     ASSERT_EQ(1, std::distance(range.first, range.second));
     // The actual pointer to the option is held in the option field
     // in the structure returned.
-    OptionPtr option = range.first->option;
+    OptionPtr option = range.first->option_;
     ASSERT_TRUE(option);
     // Option object returned for here is expected to be Option6IA
     // which is derived from Option. This class is dedicated to
@@ -2665,17 +2665,17 @@ TEST_F(Dhcp6ParserTest, vendorOptionsHex) {
 
     // Try to get the option from the vendor space 4491
     OptionDescriptor desc1 = subnet->getCfgOption()->get(4491, 100);
-    ASSERT_TRUE(desc1.option);
-    EXPECT_EQ(100, desc1.option->getType());
+    ASSERT_TRUE(desc1.option_);
+    EXPECT_EQ(100, desc1.option_->getType());
     // Try to get the option from the vendor space 1234
     OptionDescriptor desc2 = subnet->getCfgOption()->get(1234, 100);
-    ASSERT_TRUE(desc2.option);
-    EXPECT_EQ(100, desc1.option->getType());
+    ASSERT_TRUE(desc2.option_);
+    EXPECT_EQ(100, desc1.option_->getType());
 
     // Try to get the non-existing option from the non-existing
     // option space and  expect that option is not returned.
     OptionDescriptor desc3 = subnet->getCfgOption()->get(5678, 38);
-    ASSERT_FALSE(desc3.option);
+    ASSERT_FALSE(desc3.option_);
 }
 
 // This test checks if vendor options can be specified in the config file,
@@ -2727,13 +2727,13 @@ TEST_F(Dhcp6ParserTest, vendorOptionsCsv) {
 
     // Try to get the option from the vendor space 4491
     OptionDescriptor desc1 = subnet->getCfgOption()->get(4491, 100);
-    ASSERT_TRUE(desc1.option);
-    EXPECT_EQ(100, desc1.option->getType());
+    ASSERT_TRUE(desc1.option_);
+    EXPECT_EQ(100, desc1.option_->getType());
 
     // Try to get the non-existing option from the non-existing
     // option space and  expect that option is not returned.
     OptionDescriptor desc2 = subnet->getCfgOption()->get(5678, 100);
-    ASSERT_FALSE(desc2.option);
+    ASSERT_FALSE(desc2.option_);
 }
 
 /// @todo add tests similar to vendorOptionsCsv and vendorOptionsHex, but for
@@ -2875,11 +2875,11 @@ TEST_F(Dhcp6ParserTest, DISABLED_stdOptionDataEncapsulate) {
 
     // Get the option.
     OptionDescriptor desc = subnet->getCfgOption()->get("dhcp6", D6O_VENDOR_OPTS);
-    EXPECT_TRUE(desc.option);
-    EXPECT_EQ(D6O_VENDOR_OPTS, desc.option->getType());
+    EXPECT_TRUE(desc.option_);
+    EXPECT_EQ(D6O_VENDOR_OPTS, desc.option_->getType());
 
     // Option with the code 110 should be added as a sub-option.
-    OptionPtr option_foo = desc.option->getOption(110);
+    OptionPtr option_foo = desc.option_->getOption(110);
     ASSERT_TRUE(option_foo);
     EXPECT_EQ(110, option_foo->getType());
     // This option comprises a single uint32_t value thus it is
@@ -2892,7 +2892,7 @@ TEST_F(Dhcp6ParserTest, DISABLED_stdOptionDataEncapsulate) {
     EXPECT_EQ(1234, option_foo_uint32->getValue());
 
     // Option with the code 111 should be added as a sub-option.
-    OptionPtr option_foo2 = desc.option->getOption(111);
+    OptionPtr option_foo2 = desc.option_->getOption(111);
     ASSERT_TRUE(option_foo2);
     EXPECT_EQ(111, option_foo2->getType());
     // This option comprises the IPV4 address. Such option is
@@ -2904,7 +2904,7 @@ TEST_F(Dhcp6ParserTest, DISABLED_stdOptionDataEncapsulate) {
     EXPECT_EQ("192.168.2.1", option_foo2_v4->readAddress().toText());
 
     // Option with the code 112 should not be added.
-    EXPECT_FALSE(desc.option->getOption(112));
+    EXPECT_FALSE(desc.option_->getOption(112));
 }
 
 // Tests of the hooks libraries configuration.  All tests have the pre-
