@@ -23,8 +23,8 @@ namespace dhcp {
 
 bool
 OptionDescriptor::equals(const OptionDescriptor& other) const {
-    return (persistent == other.persistent &&
-            option->equals(other.option));
+    return (persistent_ == other.persistent_ &&
+            option_->equals(other.option_));
 }
 
 bool
@@ -82,14 +82,14 @@ CfgOption::encapsulateInternal(const std::string& option_space) {
     OptionContainerPtr options = getAll(option_space);
     for (OptionContainer::const_iterator opt = options->begin();
          opt != options->end(); ++opt) {
-        const std::string& encap_space = opt->option->getEncapsulatedSpace();
+        const std::string& encap_space = opt->option_->getEncapsulatedSpace();
         if (!encap_space.empty()) {
             OptionContainerPtr encap_options = getAll(encap_space);
             for (OptionContainer::const_iterator encap_opt =
                      encap_options->begin(); encap_opt != encap_options->end();
                  ++encap_opt) {
-                if (!opt->option->getOption(encap_opt->option->getType())) {
-                    opt->option->addOption(encap_opt->option);
+                if (!opt->option_->getOption(encap_opt->option_->getType())) {
+                    opt->option_->addOption(encap_opt->option_);
                 }
             }
         }
@@ -121,12 +121,12 @@ CfgOption::mergeInternal(const OptionSpaceContainer<OptionContainer,
              src_opt != src_all->end(); ++src_opt) {
             const OptionContainerTypeIndex& idx = dest_all->get<1>();
             const OptionContainerTypeRange& range =
-                idx.equal_range(src_opt->option->getType());
+                idx.equal_range(src_opt->option_->getType());
             // If there is no such option in the destination container,
             // add one.
             if (std::distance(range.first, range.second) == 0) {
-                dest_container.addItem(OptionDescriptor(src_opt->option,
-                                                        src_opt->persistent),
+                dest_container.addItem(OptionDescriptor(src_opt->option_,
+                                                        src_opt->persistent_),
                                        *it);
             }
         }

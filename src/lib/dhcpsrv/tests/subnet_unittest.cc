@@ -657,8 +657,8 @@ TEST(Subnet6Test, addOptions) {
     uint16_t expected_code = 100;
     for (OptionContainer::const_iterator option_desc = options->begin();
          option_desc != options->end(); ++option_desc) {
-        ASSERT_TRUE(option_desc->option);
-        EXPECT_EQ(expected_code, option_desc->option->getType());
+        ASSERT_TRUE(option_desc->option_);
+        EXPECT_EQ(expected_code, option_desc->option_->getType());
         ++expected_code;
     }
 
@@ -670,8 +670,8 @@ TEST(Subnet6Test, addOptions) {
     expected_code = 105;
     for (OptionContainer::const_iterator option_desc = options->begin();
          option_desc != options->end(); ++option_desc) {
-        ASSERT_TRUE(option_desc->option);
-        EXPECT_EQ(expected_code, option_desc->option->getType());
+        ASSERT_TRUE(option_desc->option_);
+        EXPECT_EQ(expected_code, option_desc->option_->getType());
         ++expected_code;
     }
 
@@ -712,8 +712,8 @@ TEST(Subnet6Test, addNonUniqueOptions) {
         // Check that returned options actually have the expected option code.
         for (OptionContainerTypeIndex::const_iterator option_desc = range.first;
              option_desc != range.second; ++option_desc) {
-            ASSERT_TRUE(option_desc->option);
-            EXPECT_EQ(code, option_desc->option->getType());
+            ASSERT_TRUE(option_desc->option_);
+            EXPECT_EQ(code, option_desc->option_->getType());
         }
     }
 
@@ -783,12 +783,12 @@ TEST(Subnet6Test, getOptions) {
         // First, try the invalid option space name.
         OptionDescriptor desc = subnet->getCfgOption()->get("isc", code);
         // Returned descriptor should contain NULL option ptr.
-        EXPECT_FALSE(desc.option);
+        EXPECT_FALSE(desc.option_);
         // Now, try the valid option space.
         desc = subnet->getCfgOption()->get("dhcp6", code);
         // Test that the option code matches the expected code.
-        ASSERT_TRUE(desc.option);
-        EXPECT_EQ(code, desc.option->getType());
+        ASSERT_TRUE(desc.option_);
+        EXPECT_EQ(code, desc.option_->getType());
     }
 }
 
@@ -820,8 +820,8 @@ TEST(Subnet6Test, addVendorOption) {
     uint16_t expected_code = 100;
     for (OptionContainer::const_iterator option_desc = options->begin();
          option_desc != options->end(); ++option_desc) {
-        ASSERT_TRUE(option_desc->option);
-        EXPECT_EQ(expected_code, option_desc->option->getType());
+        ASSERT_TRUE(option_desc->option_);
+        EXPECT_EQ(expected_code, option_desc->option_->getType());
         ++expected_code;
     }
 
@@ -833,8 +833,8 @@ TEST(Subnet6Test, addVendorOption) {
     expected_code = 105;
     for (OptionContainer::const_iterator option_desc = options->begin();
          option_desc != options->end(); ++option_desc) {
-        ASSERT_TRUE(option_desc->option);
-        EXPECT_EQ(expected_code, option_desc->option->getType());
+        ASSERT_TRUE(option_desc->option_);
+        EXPECT_EQ(expected_code, option_desc->option_->getType());
         ++expected_code;
     }
 
