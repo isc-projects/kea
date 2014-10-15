@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -87,6 +87,56 @@ public:
     /// @brief Remove all items from the container.
     void clearItems() {
         option_space_map_.clear();
+    }
+
+    /// @brief Check if two containers are equal.
+    ///
+    /// This method checks if option space container contains exactly
+    /// the same selectors and that there are exactly the same items
+    /// added for each selector. The order of items doesn't matter.
+    ///
+    /// @param other Other container to compare to.
+    ///
+    /// @return true if containers are equal, false otherwise.
+    bool equals(const OptionSpaceContainer& other) const {
+        for (typename OptionSpaceMap::const_iterator it =
+                 option_space_map_.begin(); it != option_space_map_.end();
+             ++it) {
+
+            typename OptionSpaceMap::const_iterator other_it =
+                other.option_space_map_.find(it->first);
+            if (other_it == other.option_space_map_.end()) {
+                return (false);
+            }
+
+            // If containers have different sizes it is an indication that
+            // they are unequal.
+            if (it->second->size() != other_it->second->size()) {
+                return (false);
+            }
+
+            // If they have the same sizes, we have to compare each element.
+            for (typename ContainerType::const_iterator items_it =
+                     it->second->begin();
+                 items_it != it->second->end(); ++items_it) {
+
+                bool match_found = false;
+                for (typename ContainerType::const_iterator other_items_it =
+                         other_it->second->begin();
+                     other_items_it != other_it->second->end();
+                     ++other_items_it) {
+                    if (items_it->equals(*other_items_it)) {
+                        match_found = true;
+                        break;
+                    }
+                }
+
+                if (!match_found) {
+                    return (false);
+                }
+            }
+        }
+        return (true);
     }
 
 private:

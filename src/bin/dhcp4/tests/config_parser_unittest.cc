@@ -231,7 +231,7 @@ public:
     /// @return Descriptor of the option. If the descriptor holds a
     /// NULL option pointer, it means that there was no such option
     /// in the subnet.
-    Subnet::OptionDescriptor
+    OptionDescriptor
     getOptionFromSubnet(const IOAddress& subnet_address,
                         const uint16_t option_code,
                         const uint16_t expected_options_count = 1) {
@@ -243,8 +243,8 @@ public:
                           << subnet_address.toText()
                           << "does not exist in Config Manager";
         }
-        Subnet::OptionContainerPtr options =
-            subnet->getOptionDescriptors("dhcp4");
+        OptionContainerPtr options =
+            subnet->getCfgOption()->getAll("dhcp4");
         if (expected_options_count != options->size()) {
             ADD_FAILURE() << "The number of options in the subnet '"
                           << subnet_address.toText() << "' is different "
@@ -253,13 +253,13 @@ public:
         }
 
         // Get the search index. Index #1 is to search using option code.
-        const Subnet::OptionContainerTypeIndex& idx = options->get<1>();
+        const OptionContainerTypeIndex& idx = options->get<1>();
 
         // Get the options for specified index. Expecting one option to be
         // returned but in theory we may have multiple options with the same
         // code so we get the range.
-        std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
-                  Subnet::OptionContainerTypeIndex::const_iterator> range =
+        std::pair<OptionContainerTypeIndex::const_iterator,
+                  OptionContainerTypeIndex::const_iterator> range =
             idx.equal_range(option_code);
         if (std::distance(range.first, range.second) > 1) {
             ADD_FAILURE() << "There is more than one option having the"
@@ -267,7 +267,7 @@ public:
                           << subnet_address.toText() << "'. Expected "
                 " at most one option";
         } else if (std::distance(range.first, range.second) == 0) {
-            return (Subnet::OptionDescriptor(OptionPtr(), false));
+            return (OptionDescriptor(OptionPtr(), false));
         }
 
         return (*range.first);
@@ -319,35 +319,35 @@ public:
     /// @param expected_data_len length of the reference data.
     /// @param extra_data if true extra data is allowed in an option
     /// after tested data.
-    void testOption(const Subnet::OptionDescriptor& option_desc,
+    void testOption(const OptionDescriptor& option_desc,
                     uint16_t expected_code, const uint8_t* expected_data,
                     size_t expected_data_len,
                     bool extra_data = false) {
         // Check if option descriptor contains valid option pointer.
-        ASSERT_TRUE(option_desc.option);
+        ASSERT_TRUE(option_desc.option_);
         // Verify option type.
-        EXPECT_EQ(expected_code, option_desc.option->getType());
+        EXPECT_EQ(expected_code, option_desc.option_->getType());
         // We may have many different option types being created. Some of them
         // have dedicated classes derived from Option class. In such case if
         // we want to verify the option contents against expected_data we have
         // to prepare raw buffer with the contents of the option. The easiest
         // way is to call pack() which will prepare on-wire data.
-        util::OutputBuffer buf(option_desc.option->getData().size());
-        option_desc.option->pack(buf);
+        util::OutputBuffer buf(option_desc.option_->getData().size());
+        option_desc.option_->pack(buf);
         if (extra_data) {
             // The length of the buffer must be at least equal to size of the
             // reference data but it can sometimes be greater than that. This is
             // because some options carry suboptions that increase the overall
             // length.
-            ASSERT_GE(buf.getLength() - option_desc.option->getHeaderLen(),
+            ASSERT_GE(buf.getLength() - option_desc.option_->getHeaderLen(),
                       expected_data_len);
         } else {
-            ASSERT_EQ(buf.getLength() - option_desc.option->getHeaderLen(),
+            ASSERT_EQ(buf.getLength() - option_desc.option_->getHeaderLen(),
                       expected_data_len);
         }
         // Verify that the data is correct. Do not verify suboptions and a header.
         const uint8_t* data = static_cast<const uint8_t*>(buf.getData());
-        EXPECT_EQ(0, memcmp(expected_data, data + option_desc.option->getHeaderLen(),
+        EXPECT_EQ(0, memcmp(expected_data, data + option_desc.option_->getHeaderLen(),
                             expected_data_len));
     }
 
@@ -378,9 +378,9 @@ public:
         std::string config = createConfigWithOption(params);
         ASSERT_TRUE(executeConfiguration(config, "parse option configuration"));
         // The subnet should now hold one option with the specified option code.
-        Subnet::OptionDescriptor desc =
+        OptionDescriptor desc =
             getOptionFromSubnet(IOAddress("192.0.2.24"), option_code);
-        ASSERT_TRUE(desc.option);
+        ASSERT_TRUE(desc.option_);
         testOption(desc, option_code, expected_data, expected_data_len);
     }
 
@@ -1797,17 +1797,17 @@ TEST_F(Dhcp4ParserTest, optionDataDefaults) {
     Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"),
                                                       classify_);
     ASSERT_TRUE(subnet);
-    Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp4");
+    OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp4");
     ASSERT_EQ(2, options->size());
 
     // Get the search index. Index #1 is to search using option code.
-    const Subnet::OptionContainerTypeIndex& idx = options->get<1>();
+    const OptionContainerTypeIndex& idx = options->get<1>();
 
     // Get the options for specified index. Expecting one option to be
     // returned but in theory we may have multiple options with the same
     // code so we get the range.
-    std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
-              Subnet::OptionContainerTypeIndex::const_iterator> range =
+    std::pair<OptionContainerTypeIndex::const_iterator,
+              OptionContainerTypeIndex::const_iterator> range =
         idx.equal_range(56);
     // Expect single option with the code equal to 56.
     ASSERT_EQ(1, std::distance(range.first, range.second));
@@ -1884,17 +1884,17 @@ TEST_F(Dhcp4ParserTest, optionDataTwoSpaces) {
                                                       classify_);
     ASSERT_TRUE(subnet);
     // Try to get the option from the space dhcp4.
-    Subnet::OptionDescriptor desc1 = subnet->getOptionDescriptor("dhcp4", 56);
-    ASSERT_TRUE(desc1.option);
-    EXPECT_EQ(56, desc1.option->getType());
+    OptionDescriptor desc1 = subnet->getCfgOption()->get("dhcp4", 56);
+    ASSERT_TRUE(desc1.option_);
+    EXPECT_EQ(56, desc1.option_->getType());
     // Try to get the option from the space isc.
-    Subnet::OptionDescriptor desc2 = subnet->getOptionDescriptor("isc", 56);
-    ASSERT_TRUE(desc2.option);
-    EXPECT_EQ(56, desc1.option->getType());
+    OptionDescriptor desc2 = subnet->getCfgOption()->get("isc", 56);
+    ASSERT_TRUE(desc2.option_);
+    EXPECT_EQ(56, desc1.option_->getType());
     // Try to get the non-existing option from the non-existing
     // option space and  expect that option is not returned.
-    Subnet::OptionDescriptor desc3 = subnet->getOptionDescriptor("non-existing", 56);
-    ASSERT_FALSE(desc3.option);
+    OptionDescriptor desc3 = subnet->getCfgOption()->get("non-existing", 56);
+    ASSERT_FALSE(desc3.option_);
 }
 
 // The goal of this test is to verify that it is possible to
@@ -2039,23 +2039,23 @@ TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
     ASSERT_TRUE(subnet);
 
     // We should have one option available.
-    Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp4");
+    OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp4");
     ASSERT_TRUE(options);
     ASSERT_EQ(1, options->size());
 
     // Get the option.
-    Subnet::OptionDescriptor desc = subnet->getOptionDescriptor("dhcp4", 222);
-    EXPECT_TRUE(desc.option);
-    EXPECT_EQ(222, desc.option->getType());
+    OptionDescriptor desc = subnet->getCfgOption()->get("dhcp4", 222);
+    EXPECT_TRUE(desc.option_);
+    EXPECT_EQ(222, desc.option_->getType());
 
     // This opton should comprise two sub-options.
     // One of them is 'foo' with code 1.
-    OptionPtr option_foo = desc.option->getOption(1);
+    OptionPtr option_foo = desc.option_->getOption(1);
     ASSERT_TRUE(option_foo);
     EXPECT_EQ(1, option_foo->getType());
 
     // ...another one 'foo2' with code 2.
-    OptionPtr option_foo2 = desc.option->getOption(2);
+    OptionPtr option_foo2 = desc.option_->getOption(2);
     ASSERT_TRUE(option_foo2);
     EXPECT_EQ(2, option_foo2->getType());
 }
@@ -2104,17 +2104,17 @@ TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
     Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.24"),
                                                       classify_);
     ASSERT_TRUE(subnet);
-    Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp4");
+    OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp4");
     ASSERT_EQ(2, options->size());
 
     // Get the search index. Index #1 is to search using option code.
-    const Subnet::OptionContainerTypeIndex& idx = options->get<1>();
+    const OptionContainerTypeIndex& idx = options->get<1>();
 
     // Get the options for specified index. Expecting one option to be
     // returned but in theory we may have multiple options with the same
     // code so we get the range.
-    std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
-              Subnet::OptionContainerTypeIndex::const_iterator> range =
+    std::pair<OptionContainerTypeIndex::const_iterator,
+              OptionContainerTypeIndex::const_iterator> range =
         idx.equal_range(56);
     // Expect single option with the code equal to 100.
     ASSERT_EQ(1, std::distance(range.first, range.second));
@@ -2150,9 +2150,9 @@ TEST_F(Dhcp4ParserTest, optionDataBoolean) {
                                      " boolean value"));
 
     // The subnet should now hold one option with the code 19.
-    Subnet::OptionDescriptor desc = getOptionFromSubnet(IOAddress("192.0.2.24"),
+    OptionDescriptor desc = getOptionFromSubnet(IOAddress("192.0.2.24"),
                                                         19);
-    ASSERT_TRUE(desc.option);
+    ASSERT_TRUE(desc.option_);
 
     // This option should be set to "true", represented as 0x1 in the option
     // buffer.
@@ -2255,17 +2255,17 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
     Subnet4Ptr subnet1 = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.100"),
                                                        classify_);
     ASSERT_TRUE(subnet1);
-    Subnet::OptionContainerPtr options1 = subnet1->getOptionDescriptors("dhcp4");
+    OptionContainerPtr options1 = subnet1->getCfgOption()->getAll("dhcp4");
     ASSERT_EQ(1, options1->size());
 
     // Get the search index. Index #1 is to search using option code.
-    const Subnet::OptionContainerTypeIndex& idx1 = options1->get<1>();
+    const OptionContainerTypeIndex& idx1 = options1->get<1>();
 
     // Get the options for specified index. Expecting one option to be
     // returned but in theory we may have multiple options with the same
     // code so we get the range.
-    std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
-              Subnet::OptionContainerTypeIndex::const_iterator> range1 =
+    std::pair<OptionContainerTypeIndex::const_iterator,
+              OptionContainerTypeIndex::const_iterator> range1 =
         idx1.equal_range(56);
     // Expect single option with the code equal to 56.
     ASSERT_EQ(1, std::distance(range1.first, range1.second));
@@ -2280,12 +2280,12 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
     Subnet4Ptr subnet2 = CfgMgr::instance().getSubnet4(IOAddress("192.0.3.102"),
                                                        classify_);
     ASSERT_TRUE(subnet2);
-    Subnet::OptionContainerPtr options2 = subnet2->getOptionDescriptors("dhcp4");
+    OptionContainerPtr options2 = subnet2->getCfgOption()->getAll("dhcp4");
     ASSERT_EQ(1, options2->size());
 
-    const Subnet::OptionContainerTypeIndex& idx2 = options2->get<1>();
-    std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
-              Subnet::OptionContainerTypeIndex::const_iterator> range2 =
+    const OptionContainerTypeIndex& idx2 = options2->get<1>();
+    std::pair<OptionContainerTypeIndex::const_iterator,
+              OptionContainerTypeIndex::const_iterator> range2 =
         idx2.equal_range(23);
     ASSERT_EQ(1, std::distance(range2.first, range2.second));
 
@@ -2358,17 +2358,17 @@ TEST_F(Dhcp4ParserTest, optionDataLowerCase) {
     Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"),
                                                       classify_);
     ASSERT_TRUE(subnet);
-    Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp4");
+    OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp4");
     ASSERT_EQ(1, options->size());
 
     // Get the search index. Index #1 is to search using option code.
-    const Subnet::OptionContainerTypeIndex& idx = options->get<1>();
+    const OptionContainerTypeIndex& idx = options->get<1>();
 
     // Get the options for specified index. Expecting one option to be
     // returned but in theory we may have multiple options with the same
     // code so we get the range.
-    std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
-              Subnet::OptionContainerTypeIndex::const_iterator> range =
+    std::pair<OptionContainerTypeIndex::const_iterator,
+              OptionContainerTypeIndex::const_iterator> range =
         idx.equal_range(56);
     // Expect single option with the code equal to 100.
     ASSERT_EQ(1, std::distance(range.first, range.second));
@@ -2401,25 +2401,25 @@ TEST_F(Dhcp4ParserTest, stdOptionData) {
     Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"),
                                                       classify_);
     ASSERT_TRUE(subnet);
-    Subnet::OptionContainerPtr options =
-        subnet->getOptionDescriptors("dhcp4");
+    OptionContainerPtr options =
+        subnet->getCfgOption()->getAll("dhcp4");
     ASSERT_TRUE(options);
     ASSERT_EQ(1, options->size());
 
     // Get the search index. Index #1 is to search using option code.
-    const Subnet::OptionContainerTypeIndex& idx = options->get<1>();
+    const OptionContainerTypeIndex& idx = options->get<1>();
 
     // Get the options for specified index. Expecting one option to be
     // returned but in theory we may have multiple options with the same
     // code so we get the range.
-    std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
-              Subnet::OptionContainerTypeIndex::const_iterator> range =
+    std::pair<OptionContainerTypeIndex::const_iterator,
+              OptionContainerTypeIndex::const_iterator> range =
         idx.equal_range(DHO_NIS_SERVERS);
     // Expect single option with the code equal to NIS_SERVERS option code.
     ASSERT_EQ(1, std::distance(range.first, range.second));
     // The actual pointer to the option is held in the option field
     // in the structure returned.
-    OptionPtr option = range.first->option;
+    OptionPtr option = range.first->option_;
     ASSERT_TRUE(option);
     // Option object returned for here is expected to be Option6IA
     // which is derived from Option. This class is dedicated to
@@ -2611,18 +2611,18 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
     ASSERT_TRUE(subnet);
 
     // We should have one option available.
-    Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp4");
+    OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp4");
     ASSERT_TRUE(options);
     ASSERT_EQ(1, options->size());
 
     // Get the option.
-    Subnet::OptionDescriptor desc =
-        subnet->getOptionDescriptor("dhcp4", DHO_VENDOR_ENCAPSULATED_OPTIONS);
-    EXPECT_TRUE(desc.option);
-    EXPECT_EQ(DHO_VENDOR_ENCAPSULATED_OPTIONS, desc.option->getType());
+    OptionDescriptor desc =
+        subnet->getCfgOption()->get("dhcp4", DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    EXPECT_TRUE(desc.option_);
+    EXPECT_EQ(DHO_VENDOR_ENCAPSULATED_OPTIONS, desc.option_->getType());
 
     // Option with the code 1 should be added as a sub-option.
-    OptionPtr option_foo = desc.option->getOption(1);
+    OptionPtr option_foo = desc.option_->getOption(1);
     ASSERT_TRUE(option_foo);
     EXPECT_EQ(1, option_foo->getType());
     // This option comprises a single uint32_t value thus it is
@@ -2635,7 +2635,7 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
     EXPECT_EQ(1234, option_foo_uint32->getValue());
 
     // Option with the code 2 should be added as a sub-option.
-    OptionPtr option_foo2 = desc.option->getOption(2);
+    OptionPtr option_foo2 = desc.option_->getOption(2);
     ASSERT_TRUE(option_foo2);
     EXPECT_EQ(2, option_foo2->getType());
     // This option comprises the IPV4 address. Such option is
@@ -2647,7 +2647,7 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
     EXPECT_EQ("192.168.2.1", option_foo2_v4->readAddress().toText());
 
     // Option with the code 3 should not be added.
-    EXPECT_FALSE(desc.option->getOption(3));
+    EXPECT_FALSE(desc.option_->getOption(3));
 }
 
 // This test checks if vendor options can be specified in the config file
@@ -2695,18 +2695,18 @@ TEST_F(Dhcp4ParserTest, vendorOptionsHex) {
     ASSERT_TRUE(subnet);
 
     // Try to get the option from the vendor space 4491
-    Subnet::OptionDescriptor desc1 = subnet->getVendorOptionDescriptor(VENDOR_ID_CABLE_LABS, 100);
-    ASSERT_TRUE(desc1.option);
-    EXPECT_EQ(100, desc1.option->getType());
+    OptionDescriptor desc1 = subnet->getCfgOption()->get(VENDOR_ID_CABLE_LABS, 100);
+    ASSERT_TRUE(desc1.option_);
+    EXPECT_EQ(100, desc1.option_->getType());
     // Try to get the option from the vendor space 1234
-    Subnet::OptionDescriptor desc2 = subnet->getVendorOptionDescriptor(1234, 100);
-    ASSERT_TRUE(desc2.option);
-    EXPECT_EQ(100, desc1.option->getType());
+    OptionDescriptor desc2 = subnet->getCfgOption()->get(1234, 100);
+    ASSERT_TRUE(desc2.option_);
+    EXPECT_EQ(100, desc1.option_->getType());
 
     // Try to get the non-existing option from the non-existing
     // option space and  expect that option is not returned.
-    Subnet::OptionDescriptor desc3 = subnet->getVendorOptionDescriptor(5678, 100);
-    ASSERT_FALSE(desc3.option);
+    OptionDescriptor desc3 = subnet->getCfgOption()->get(5678, 100);
+    ASSERT_FALSE(desc3.option_);
 }
 
 // This test checks if vendor options can be specified in the config file,
@@ -2756,14 +2756,14 @@ TEST_F(Dhcp4ParserTest, vendorOptionsCsv) {
     ASSERT_TRUE(subnet);
 
     // Try to get the option from the vendor space 4491
-    Subnet::OptionDescriptor desc1 = subnet->getVendorOptionDescriptor(VENDOR_ID_CABLE_LABS, 100);
-    ASSERT_TRUE(desc1.option);
-    EXPECT_EQ(100, desc1.option->getType());
+    OptionDescriptor desc1 = subnet->getCfgOption()->get(VENDOR_ID_CABLE_LABS, 100);
+    ASSERT_TRUE(desc1.option_);
+    EXPECT_EQ(100, desc1.option_->getType());
 
     // Try to get the non-existing option from the non-existing
     // option space and  expect that option is not returned.
-    Subnet::OptionDescriptor desc2 = subnet->getVendorOptionDescriptor(5678, 100);
-    ASSERT_FALSE(desc2.option);
+    OptionDescriptor desc2 = subnet->getCfgOption()->get(5678, 100);
+    ASSERT_FALSE(desc2.option_);
 }
 
 

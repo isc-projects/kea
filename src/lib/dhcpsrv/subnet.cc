@@ -37,7 +37,9 @@ Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
      t1_(t1), t2_(t2), valid_(valid_lifetime),
      last_allocated_ia_(lastAddrInPrefix(prefix, len)),
      last_allocated_ta_(lastAddrInPrefix(prefix, len)),
-     last_allocated_pd_(lastAddrInPrefix(prefix, len)), relay_(relay)
+     last_allocated_pd_(lastAddrInPrefix(prefix, len)), relay_(relay),
+     cfg_option_(new CfgOption())
+
       {
     if ((prefix.isV6() && len > 128) ||
         (prefix.isV4() && len > 32)) {
@@ -56,20 +58,6 @@ Subnet::inRange(const isc::asiolink::IOAddress& addr) const {
     IOAddress last = lastAddrInPrefix(prefix_, prefix_len_);
 
     return ((first <= addr) && (addr <= last));
-}
-
-void
-Subnet::addOption(const OptionPtr& option, bool persistent,
-                  const std::string& option_space) {
-    // Check that the option space name is valid.
-    if (!OptionSpace::validateName(option_space)) {
-        isc_throw(isc::BadValue, "invalid option space name: '"
-                  << option_space << "'");
-    }
-    validateOption(option);
-
-    // Actually add new option descriptor.
-    option_spaces_.addItem(OptionDescriptor(option, persistent), option_space);
 }
 
 void
@@ -97,64 +85,6 @@ Subnet::clientSupported(const isc::dhcp::ClientClasses& classes) const {
 void
 Subnet::allowClientClass(const isc::dhcp::ClientClass& class_name) {
     white_list_.insert(class_name);
-}
-
-void
-Subnet::delOptions() {
-    option_spaces_.clearItems();
-}
-
-Subnet::OptionContainerPtr
-Subnet::getOptionDescriptors(const std::string& option_space) const {
-    return (option_spaces_.getItems(option_space));
-}
-
-Subnet::OptionDescriptor
-Subnet::getOptionDescriptor(const std::string& option_space,
-                            const uint16_t option_code) {
-    OptionContainerPtr options = getOptionDescriptors(option_space);
-    if (!options || options->empty()) {
-        return (OptionDescriptor(false));
-    }
-    const OptionContainerTypeIndex& idx = options->get<1>();
-    const OptionContainerTypeRange& range = idx.equal_range(option_code);
-    if (std::distance(range.first, range.second) == 0) {
-        return (OptionDescriptor(false));
-    }
-
-    return (*range.first);
-}
-
-void Subnet::addVendorOption(const OptionPtr& option, bool persistent,
-                             uint32_t vendor_id){
-
-    validateOption(option);
-
-    vendor_option_spaces_.addItem(OptionDescriptor(option, persistent), vendor_id);
-}
-
-Subnet::OptionContainerPtr
-Subnet::getVendorOptionDescriptors(uint32_t vendor_id) const {
-    return (vendor_option_spaces_.getItems(vendor_id));
-}
-
-Subnet::OptionDescriptor
-Subnet::getVendorOptionDescriptor(uint32_t vendor_id, uint16_t option_code) {
-    OptionContainerPtr options = getVendorOptionDescriptors(vendor_id);
-    if (!options || options->empty()) {
-        return (OptionDescriptor(false));
-    }
-    const OptionContainerTypeIndex& idx = options->get<1>();
-    const OptionContainerTypeRange& range = idx.equal_range(option_code);
-    if (std::distance(range.first, range.second) == 0) {
-        return (OptionDescriptor(false));
-    }
-
-    return (*range.first);
-}
-
-void Subnet::delVendorOptions() {
-    vendor_option_spaces_.clearItems();
 }
 
 isc::asiolink::IOAddress Subnet::getLastAllocated(Lease::Type type) const {
@@ -330,17 +260,6 @@ Subnet::getIface() const {
     return (iface_);
 }
 
-void
-Subnet4::validateOption(const OptionPtr& option) const {
-    if (!option) {
-        isc_throw(isc::BadValue,
-                  "option configured for subnet must not be NULL");
-    } else if (option->getUniverse() != Option::V4) {
-        isc_throw(isc::BadValue,
-                  "expected V4 option to be added to the subnet");
-    }
-}
-
 bool
 Subnet::inPool(Lease::Type type, const isc::asiolink::IOAddress& addr) const {
 
@@ -381,17 +300,6 @@ void Subnet6::checkType(Lease::Type type) const {
         isc_throw(BadValue, "Invalid Pool type: " << Lease::typeToText(type)
                   << "(" << static_cast<int>(type)
                   << "), must be TYPE_NA, TYPE_TA or TYPE_PD for Subnet6");
-    }
-}
-
-void
-Subnet6::validateOption(const OptionPtr& option) const {
-    if (!option) {
-        isc_throw(isc::BadValue,
-                  "option configured for subnet must not be NULL");
-    } else if (option->getUniverse() != Option::V6) {
-        isc_throw(isc::BadValue,
-                  "expected V6 option to be added to the subnet");
     }
 }
 
