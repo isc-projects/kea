@@ -87,7 +87,7 @@ TEST_F(DStubControllerTest, commandLineArgs) {
     char* argv[] = { const_cast<char*>("progName"),
                      const_cast<char*>("-c"),
                      const_cast<char*>("cfgName"),
-                     const_cast<char*>("-v") };
+                     const_cast<char*>("-d") };
     int argc = 4;
     EXPECT_NO_THROW(parseArgs(argc, argv));
 
@@ -174,7 +174,7 @@ TEST_F(DStubControllerTest, launchProcessInitError) {
     char* argv[] = { const_cast<char*>("progName"),
                      const_cast<char*>("-c"),
                      const_cast<char*>(DControllerTest::CFG_TEST_FILE),
-                     const_cast<char*>("-v") };
+                     const_cast<char*>("-d") };
     int argc = 4;
 
     // Launch the controller in stand alone mode.
@@ -204,7 +204,7 @@ TEST_F(DStubControllerTest, nonexistantConfigFile) {
     char* argv[] = { const_cast<char*>("progName"),
                      const_cast<char*>("-c"),
                      const_cast<char*>("bogus-file"),
-                     const_cast<char*>("-v") };
+                     const_cast<char*>("-d") };
     int argc = 4;
 
     // Record start time, and invoke launch().
@@ -216,7 +216,7 @@ TEST_F(DStubControllerTest, missingConfigFileName) {
     // command line to run standalone
     char* argv[] = { const_cast<char*>("progName"),
                      const_cast<char*>("-c"),
-                     const_cast<char*>("-v") };
+                     const_cast<char*>("-d") };
     int argc = 3;
 
     // Record start time, and invoke launch().
@@ -227,7 +227,7 @@ TEST_F(DStubControllerTest, missingConfigFileName) {
 TEST_F(DStubControllerTest, missingConfigFileArgument) {
     // command line to run standalone
     char* argv[] = { const_cast<char*>("progName"),
-                     const_cast<char*>("-v") };
+                     const_cast<char*>("-d") };
     int argc = 2;
 
     // Record start time, and invoke launch().
