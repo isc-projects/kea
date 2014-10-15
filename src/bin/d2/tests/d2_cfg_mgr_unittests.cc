@@ -378,7 +378,7 @@ TEST_F(D2CfgMgrTest, validParamsEntry) {
               d2_params_->getIpAddress());
 
     // Verify the configuration summary.
-    EXPECT_EQ("listening on 3001::5, port 777",
+    EXPECT_EQ("listening on 3001::5, port 777, using UDP",
               d2_params_->getConfigSummary());
 }
 
