@@ -122,7 +122,7 @@ TEST_F(D2ControllerTest, commandLineArgs) {
     char* argv[] = { const_cast<char*>("progName"),
                      const_cast<char*>("-c"),
                      const_cast<char*>(DControllerTest::CFG_TEST_FILE),
-                     const_cast<char*>("-v") };
+                     const_cast<char*>("-d") };
     int argc = 4;
 
     // Verify that verbose flag is false initially.
