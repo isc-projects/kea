@@ -48,9 +48,6 @@ public:
     BundyD2ControllerTest() : DControllerTest(D2Controller::instance) {
     }
 
-    /// @brief Destructor
-    ~BundyD2ControllerTest() {
-    }
 };
 
 /// @brief Basic Controller instantiation testing.
