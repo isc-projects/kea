@@ -16,6 +16,7 @@
 #define DHCPSRV_CONFIG_H
 
 #include <dhcpsrv/cfg_iface.h>
+#include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfg_option_def.h>
 #include <dhcpsrv/logging_info.h>
 #include <boost/shared_ptr.hpp>
@@ -66,7 +67,7 @@ public:
     /// @brief Constructor.
     ///
     /// Sets arbitrary configuration sequence number.
-    SrvConfig(uint32_t sequence);
+    SrvConfig(const uint32_t sequence);
 
     /// @brief Returns summary of the configuration in the textual format.
     ///
@@ -163,6 +164,26 @@ public:
         return (cfg_option_def_);
     }
 
+    /// @brief Returns pointer to the non-const object holding options.
+    ///
+    /// This method returns a pointer to the object which holds instances
+    /// of the options to be returned to the clients belonging to any subnet.
+    ///
+    /// @return Pointer to the object holding options.
+    CfgOptionPtr getCfgOption() {
+        return (cfg_option_);
+    }
+
+    /// @brief Returns pointer to the const object holding options.
+    ///
+    /// This method returns a pointer to the object which holds instances
+    /// of the options to be returned to the clients belonging to any subnet.
+    ///
+    /// @return Pointer to the object holding options.
+    const ConstCfgOptionPtr getCfgOption() const {
+        return (cfg_option_);
+    }
+
     //@}
 
     /// @brief Copies the currnet configuration to a new configuration.
@@ -249,6 +270,12 @@ private:
     /// This object holds the user-defined option definitions grouped
     /// by option space name.
     CfgOptionDefPtr cfg_option_def_;
+
+    /// @brief Pointer to options (data) configuration.
+    ///
+    /// This object holds the instances of the options to be sent to clients
+    /// connected to any subnet.
+    CfgOptionPtr cfg_option_;
 
 };
 

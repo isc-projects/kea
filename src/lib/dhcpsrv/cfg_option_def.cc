@@ -22,6 +22,8 @@ namespace dhcp {
 
 void
 CfgOptionDef::copyTo(CfgOptionDef& new_config) const {
+    // Remove any existing option definitions from the destination.
+    new_config.option_definitions_.clearItems();
     const std::list<std::string>& names =
         option_definitions_.getOptionSpaceNames();
     for (std::list<std::string>::const_iterator name = names.begin();

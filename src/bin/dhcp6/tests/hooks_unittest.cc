@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -701,7 +701,7 @@ TEST_F(HooksDhcpv6SrvTest, valueChange_pkt6_receive) {
 
     // ... and check if it is the modified value
     OptionPtr expected = createOption(D6O_CLIENTID);
-    EXPECT_TRUE(clientid->equal(expected));
+    EXPECT_TRUE(clientid->equals(expected));
 }
 
 // Checks if callouts installed on pkt6_received is able to delete
@@ -822,7 +822,7 @@ TEST_F(HooksDhcpv6SrvTest, valueChange_pkt6_send) {
 
     // ... and check if it is the modified value
     OptionPtr expected = createOption(D6O_SERVERID);
-    EXPECT_TRUE(clientid->equal(expected));
+    EXPECT_TRUE(clientid->equals(expected));
 }
 
 // Checks if callouts installed on pkt6_send is able to delete
