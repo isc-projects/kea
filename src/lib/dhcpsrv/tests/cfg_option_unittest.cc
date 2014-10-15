@@ -106,8 +106,8 @@ TEST(CfgOptionTest, add) {
     uint16_t expected_code = 100;
     for (OptionContainer::const_iterator option_desc = options->begin();
          option_desc != options->end(); ++option_desc) {
-        ASSERT_TRUE(option_desc->option);
-        EXPECT_EQ(expected_code, option_desc->option->getType());
+        ASSERT_TRUE(option_desc->option_);
+        EXPECT_EQ(expected_code, option_desc->option_->getType());
         ++expected_code;
     }
 
@@ -119,8 +119,8 @@ TEST(CfgOptionTest, add) {
     expected_code = 105;
     for (OptionContainer::const_iterator option_desc = options->begin();
          option_desc != options->end(); ++option_desc) {
-        ASSERT_TRUE(option_desc->option);
-        EXPECT_EQ(expected_code, option_desc->option->getType());
+        ASSERT_TRUE(option_desc->option_);
+        EXPECT_EQ(expected_code, option_desc->option_->getType());
         ++expected_code;
     }
 
@@ -174,32 +174,32 @@ TEST(CfgOption, merge) {
     // Validate the options in the dhcp6 option space in the destination.
     for (uint16_t code = 100; code < 110; ++code) {
         OptionDescriptor desc = cfg_dst.get("dhcp6", code);
-        ASSERT_TRUE(desc.option);
-        ASSERT_EQ(1, desc.option->getData().size());
+        ASSERT_TRUE(desc.option_);
+        ASSERT_EQ(1, desc.option_->getData().size());
         // The options with even option codes should hold one byte of data
         // equal to 0x1. These are the ones that we have initially added to
         // the destination configuration. The other options should hold the
         // values of 0xFF which indicates that they have been merged from the
         // source configuration.
         if ((code % 2) == 0) {
-            EXPECT_EQ(0x01, desc.option->getData()[0]);
+            EXPECT_EQ(0x01, desc.option_->getData()[0]);
         } else {
-            EXPECT_EQ(0xFF, desc.option->getData()[0]);
+            EXPECT_EQ(0xFF, desc.option_->getData()[0]);
         }
     }
 
     // Validate the options in the vendor space.
     for (uint16_t code = 100; code < 110; ++code) {
         OptionDescriptor desc = cfg_dst.get(123, code);
-        ASSERT_TRUE(desc.option);
-        ASSERT_EQ(1, desc.option->getData().size());
+        ASSERT_TRUE(desc.option_);
+        ASSERT_EQ(1, desc.option_->getData().size());
         // This time, the options with even option codes should hold a byte
         // of data equal to 0xFF. The other options should hold the byte of
         // data equal to 0x01.
         if ((code % 2) == 0) {
-            EXPECT_EQ(0xFF, desc.option->getData()[0]);
+            EXPECT_EQ(0xFF, desc.option_->getData()[0]);
         } else {
-            EXPECT_EQ(0x01, desc.option->getData()[0]);
+            EXPECT_EQ(0x01, desc.option_->getData()[0]);
         }
     }
 }
@@ -228,9 +228,9 @@ TEST(CfgOptionTest, copy) {
     // Validate options in the destination configuration.
     for (uint16_t code = 100; code < 110; ++code) {
         OptionDescriptor desc = cfg_dst.get("foo", code);
-        ASSERT_TRUE(desc.option);
-        ASSERT_EQ(1, desc.option->getData().size());
-        EXPECT_EQ(0x01, desc.option->getData()[0]);
+        ASSERT_TRUE(desc.option_);
+        ASSERT_EQ(1, desc.option_->getData().size());
+        EXPECT_EQ(0x01, desc.option_->getData()[0]);
     }
 
     // Any existing options should be removed.
@@ -287,7 +287,7 @@ TEST(CfgOptionTest, encapsulate) {
 
     for (uint16_t code = 1000; code < 1040; ++code) {
         OptionUint16Ptr option = boost::dynamic_pointer_cast<
-            OptionUint16>(cfg.get(DHCP6_OPTION_SPACE, code).option);
+            OptionUint16>(cfg.get(DHCP6_OPTION_SPACE, code).option_);
         ASSERT_TRUE(option) << "option with code " << code << " not found";
         const OptionCollection& suboptions = option->getOptions();
         for (OptionCollection::const_iterator suboption =
@@ -323,12 +323,12 @@ TEST(CfgOption, get) {
         // First, try the invalid option space name.
         OptionDescriptor desc = cfg.get("isc", code);
         // Returned descriptor should contain NULL option ptr.
-        EXPECT_FALSE(desc.option);
+        EXPECT_FALSE(desc.option_);
         // Now, try the valid option space.
         desc = cfg.get("dhcp6", code);
         // Test that the option code matches the expected code.
-        ASSERT_TRUE(desc.option);
-        EXPECT_EQ(code, desc.option->getType());
+        ASSERT_TRUE(desc.option_);
+        EXPECT_EQ(code, desc.option_->getType());
     }
 }
 
@@ -364,8 +364,8 @@ TEST(CfgOptionTest, addNonUniqueOptions) {
         // Check that returned options actually have the expected option code.
         for (OptionContainerTypeIndex::const_iterator option_desc = range.first;
              option_desc != range.second; ++option_desc) {
-            ASSERT_TRUE(option_desc->option);
-            EXPECT_EQ(code, option_desc->option->getType());
+            ASSERT_TRUE(option_desc->option_);
+            EXPECT_EQ(code, option_desc->option_->getType());
         }
     }
 
@@ -452,8 +452,8 @@ TEST(CfgOptionTest, addVendorOptions) {
     uint16_t expected_code = 100;
     for (OptionContainer::const_iterator option_desc = options->begin();
          option_desc != options->end(); ++option_desc) {
-        ASSERT_TRUE(option_desc->option);
-        EXPECT_EQ(expected_code, option_desc->option->getType());
+        ASSERT_TRUE(option_desc->option_);
+        EXPECT_EQ(expected_code, option_desc->option_->getType());
         ++expected_code;
     }
 
@@ -465,8 +465,8 @@ TEST(CfgOptionTest, addVendorOptions) {
     expected_code = 105;
     for (OptionContainer::const_iterator option_desc = options->begin();
          option_desc != options->end(); ++option_desc) {
-        ASSERT_TRUE(option_desc->option);
-        EXPECT_EQ(expected_code, option_desc->option->getType());
+        ASSERT_TRUE(option_desc->option_);
+        EXPECT_EQ(expected_code, option_desc->option_->getType());
         ++expected_code;
     }
 

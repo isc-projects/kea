@@ -38,23 +38,23 @@ namespace dhcp {
 /// (persistent = true).
 struct OptionDescriptor {
     /// Option instance.
-    OptionPtr option;
+    OptionPtr option_;
     /// Persistent flag, if true option is always sent to the client,
     /// if false option is sent to the client on request.
-    bool persistent;
+    bool persistent_;
 
     /// @brief Constructor.
     ///
     /// @param opt option
     /// @param persist if true option is always sent.
     OptionDescriptor(const OptionPtr& opt, bool persist)
-        : option(opt), persistent(persist) {};
+        : option_(opt), persistent_(persist) {};
 
     /// @brief Constructor
     ///
     /// @param persist if true option is always sent.
     OptionDescriptor(bool persist)
-        : option(OptionPtr()), persistent(persist) {};
+        : option_(OptionPtr()), persistent_(persist) {};
 
     /// @brief Checks if the one descriptor is equal to another.
     ///
@@ -140,7 +140,7 @@ typedef boost::multi_index_container<
                 boost::multi_index::member<
                     OptionDescriptor,
                     OptionPtr,
-                    &OptionDescriptor::option
+                    &OptionDescriptor::option_
                  >
             >
         >,
@@ -150,7 +150,7 @@ typedef boost::multi_index_container<
             boost::multi_index::member<
                 OptionDescriptor,
                 bool,
-                &OptionDescriptor::persistent
+                &OptionDescriptor::persistent_
             >
         >
     >
