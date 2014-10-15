@@ -84,7 +84,7 @@ on migrating the other configuration parameters to it.
 @section optionsConfig Options Configuration Information
 
 The \ref isc::dhcp::CfgOption object holds a collection of options being
-sent to the client. Since, each subnet comes with a distnict set of
+sent to the client. Since each subnet comes with a distnict set of
 options, every \ref isc::dhcp::Subnet object holds its own copy of the
 \ref isc::dhcp::CfgOption object with specific options.
 
@@ -101,9 +101,7 @@ the \ref isc::dhcp::CfgOption instances for all subnets. This is
 causing some overhead during the reconfiguration of the server but on
 the other hand it avoids the lookup of options in two places (among
 subnet specific options and global options) during each packet
-processing. Note that the merge of global options to the subnet
-specific options doesn't affect the set of global options but only
-adds copies of global options to the subnet specific options.
+processing.
 
 One of the benefits of keeping a separate set of global options is
 that there may be cases when the server administrator doesn't specify
