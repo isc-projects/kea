@@ -141,7 +141,7 @@ Subnet6Ptr CfgMgr::getSubnet6(OptionPtr iface_id_option,
         }
 
         if ( (*subnet)->getInterfaceId() &&
-             ((*subnet)->getInterfaceId()->equal(iface_id_option))) {
+             ((*subnet)->getInterfaceId()->equals(iface_id_option))) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
                       DHCPSRV_CFGMGR_SUBNET6_IFACE_ID)
                 .arg((*subnet)->toText());

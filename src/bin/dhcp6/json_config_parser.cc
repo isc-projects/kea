@@ -19,6 +19,7 @@
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dbaccess_parser.h>
 #include <dhcpsrv/dhcp_config_parser.h>
@@ -54,73 +55,6 @@ namespace {
 typedef boost::shared_ptr<BooleanParser> BooleanParserPtr;
 typedef boost::shared_ptr<StringParser> StringParserPtr;
 typedef boost::shared_ptr<Uint32Parser> Uint32ParserPtr;
-
-/// @brief Parser for DHCP6 option data value.
-///
-/// This parser parses configuration entries that specify value of
-/// a single option specific to DHCP6.  It provides the DHCP6-specific
-/// implementation of the abstract class OptionDataParser.
-class Dhcp6OptionDataParser : public OptionDataParser {
-public:
-    /// @brief Constructor.
-    ///
-    /// @param dummy first param, option names are always "Dhcp6/option-data[n]"
-    /// @param options is the option storage in which to store the parsed option
-    /// upon "commit".
-    /// @param global_context is a pointer to the global context which
-    /// stores global scope parameters, options, option defintions.
-    Dhcp6OptionDataParser(const std::string&, OptionStoragePtr options,
-                         ParserContextPtr global_context)
-        :OptionDataParser("", options, global_context) {
-    }
-
-    /// @brief static factory method for instantiating Dhcp4OptionDataParsers
-    ///
-    /// @param param_name name of the parameter to be parsed.
-    /// @param options storage where the parameter value is to be stored.
-    /// @param global_context is a pointer to the global context which
-    /// stores global scope parameters, options, option defintions.
-    /// @return returns a pointer to a new OptionDataParser. Caller is
-    /// is responsible for deleting it when it is no longer needed.
-    static OptionDataParser* factory(const std::string& param_name,
-    OptionStoragePtr options, ParserContextPtr global_context) {
-        return (new Dhcp6OptionDataParser(param_name, options, global_context));
-    }
-
-
-protected:
-    /// @brief Finds an option definition within the server's option space
-    ///
-    /// Given an option space and an option code, find the correpsonding
-    /// option defintion within the server's option defintion storage.
-    ///
-    /// @param option_space name of the parameter option space
-    /// @param option_code numeric value of the parameter to find
-    /// @return OptionDefintionPtr of the option defintion or an
-    /// empty OptionDefinitionPtr if not found.
-    /// @throw DhcpConfigError if the option space requested is not valid
-    /// for this server.
-    virtual OptionDefinitionPtr findServerSpaceOptionDefinition (
-                            std::string& option_space, uint32_t option_code) {
-        OptionDefinitionPtr def;
-        if (option_space == "dhcp6" &&
-            LibDHCP::isStandardOption(Option::V6, option_code)) {
-            def = LibDHCP::getOptionDef(Option::V6, option_code);
-        } else if (option_space == "dhcp4") {
-            isc_throw(DhcpConfigError, "'dhcp4' option space name is reserved"
-                     << " for DHCPv4 server");
-        } else {
-            // Check if this is a vendor-option. If it is, get vendor-specific
-            // definition.
-            uint32_t vendor_id = SubnetConfigParser::optionSpaceToVendorId(option_space);
-            if (vendor_id) {
-                def = LibDHCP::getVendorOptionDef(Option::V6, vendor_id, option_code);
-            }
-        }
-
-        return (def);
-    }
-};
 
 /// @brief Parser for IPv6 pool definitions.
 ///
@@ -455,9 +389,7 @@ protected:
         } else if (config_id.compare("pd-pools") == 0) {
             parser = new PdPoolListParser(config_id, pools_);
         } else if (config_id.compare("option-data") == 0) {
-           parser = new OptionDataListParser(config_id, options_,
-                                             global_context_,
-                                             Dhcp6OptionDataParser::factory);
+            parser = new OptionDataListParser(config_id, options_, AF_INET6);
         } else {
             isc_throw(NotImplemented, "unsupported parameter: " << config_id);
         }
@@ -666,10 +598,7 @@ namespace dhcp {
     } else if (config_id.compare("subnet6") == 0) {
         parser = new Subnets6ListConfigParser(config_id);
     } else if (config_id.compare("option-data") == 0) {
-        parser = new OptionDataListParser(config_id,
-                                          globalContext()->options_,
-                                          globalContext(),
-                                          Dhcp6OptionDataParser::factory);
+        parser = new OptionDataListParser(config_id, CfgOptionPtr(), AF_INET6);
     } else if (config_id.compare("option-def") == 0) {
         parser  = new OptionDefListParser(config_id, globalContext());
     } else if (config_id.compare("version") == 0) {

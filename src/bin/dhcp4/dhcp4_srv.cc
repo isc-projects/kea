@@ -601,10 +601,9 @@ Dhcpv4Srv::appendRequestedOptions(const Pkt4Ptr& question, Pkt4Ptr& msg) {
     for (std::vector<uint8_t>::const_iterator opt = requested_opts.begin();
          opt != requested_opts.end(); ++opt) {
         if (!msg->getOption(*opt)) {
-            Subnet::OptionDescriptor desc =
-                subnet->getOptionDescriptor("dhcp4", *opt);
-            if (desc.option && !msg->getOption(*opt)) {
-                msg->addOption(desc.option);
+            OptionDescriptor desc = subnet->getCfgOption()->get("dhcp4", *opt);
+            if (desc.option_ && !msg->getOption(*opt)) {
+                msg->addOption(desc.option_);
             }
         }
     }
@@ -652,10 +651,10 @@ Dhcpv4Srv::appendRequestedVendorOptions(const Pkt4Ptr& question, Pkt4Ptr& answer
     for (std::vector<uint8_t>::const_iterator code = requested_opts.begin();
          code != requested_opts.end(); ++code) {
         if  (!vendor_rsp->getOption(*code)) {
-            Subnet::OptionDescriptor desc = subnet->getVendorOptionDescriptor(vendor_id,
-                                                                              *code);
-            if (desc.option) {
-                vendor_rsp->addOption(desc.option);
+            OptionDescriptor desc = subnet->getCfgOption()->get(vendor_id,
+                                                                *code);
+            if (desc.option_) {
+                vendor_rsp->addOption(desc.option_);
                 added = true;
             }
         }
@@ -691,10 +690,10 @@ Dhcpv4Srv::appendBasicOptions(const Pkt4Ptr& question, Pkt4Ptr& msg) {
         OptionPtr opt = msg->getOption(required_options[i]);
         if (!opt) {
             // Check whether option has been configured.
-            Subnet::OptionDescriptor desc =
-                subnet->getOptionDescriptor("dhcp4", required_options[i]);
-            if (desc.option) {
-                msg->addOption(desc.option);
+            OptionDescriptor desc = subnet->getCfgOption()->
+                get("dhcp4", required_options[i]);
+            if (desc.option_) {
+                msg->addOption(desc.option_);
             }
         }
     }
@@ -1981,12 +1980,12 @@ bool Dhcpv4Srv::classSpecificProcessing(const Pkt4Ptr& query, const Pkt4Ptr& rsp
 
         // Now try to set up file field in DHCPv4 packet. We will just copy
         // content of the boot-file option, which contains the same information.
-        Subnet::OptionDescriptor desc =
-            subnet->getOptionDescriptor("dhcp4", DHO_BOOT_FILE_NAME);
+        OptionDescriptor desc = subnet->getCfgOption()->
+            get("dhcp4", DHO_BOOT_FILE_NAME);
 
-        if (desc.option) {
+        if (desc.option_) {
             boost::shared_ptr<OptionString> boot =
-                boost::dynamic_pointer_cast<OptionString>(desc.option);
+                boost::dynamic_pointer_cast<OptionString>(desc.option_);
             if (boot) {
                 std::string filename = boot->getValue();
                 rsp->setFile((const uint8_t*)filename.c_str(), filename.size());
