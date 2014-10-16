@@ -91,6 +91,28 @@ public:
         return (specified_);
     }
 
+    /// @brief Specifies a new value value and marks it "specified".
+    ///
+    /// @param value New actual value.
+    void operator=(const T& value) {
+        specify(value);
+    }
+
+    /// @brief Equality operator.
+    ///
+    /// @param value Actual value to compare to.
+    bool operator==(const T& value) {
+        return (value_ == value);
+    }
+
+    /// @brief Inequality operator.
+    ///
+    /// @param value Actual value to compare to.
+    bool operator!=(const T& value) {
+        return (value_ != value);
+    }
+
+
 private:
     T value_;         ///< Encapsulated value.
     bool specified_;  ///< Flag which indicates if the value is specified.
