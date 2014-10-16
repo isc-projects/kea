@@ -30,12 +30,12 @@ namespace dhcp {
 
 /// @brief IPv6 reservation for a host.
 ///
-/// This class represents a reservation of a single IPv6 address or
-/// prefix for the host (in @c Host object). The type of reservation
-/// indicates whether an address on prefix is reserved. The class
-/// holds the information about the prefix length for the prefix
-/// reservations. The prefix length for the address reservation is
-/// set to 128.
+/// This class represents a reservation for a host of a single IPv6
+/// address or prefix (in @c Host object).
+///
+/// The class holds the address and prefix length, a value of 128
+/// for the latter implying that the reservation is for a single
+/// IPv6 address.
 class IPv6Resrv {
 public:
 
@@ -115,7 +115,7 @@ typedef std::pair<IPv6ResrvIterator, IPv6ResrvIterator> IPv6ResrvRange;
 /// @brief Represents a device with IPv4 and/or IPv6 reservations.
 ///
 /// This class represents a network device which can be identified
-/// by the unique property, such as MAC address on the interface or
+/// by a unique property, such as MAC address on the interface or
 /// client identifier (DUID), and for which some resources are statically
 /// assigned:
 /// - IPv4 address which the device obtains when it contacts a DHCPv4 server
@@ -128,7 +128,7 @@ typedef std::pair<IPv6ResrvIterator, IPv6ResrvIterator> IPv6ResrvRange;
 /// - client classes which the client is associated with
 /// - DHCP options specifically configured for the device
 ///
-/// Note, that the "host" in this context has a different meaning than the
+/// Note, that "host" in this context has a different meaning from
 /// host construed as device attached to a network with (possibly) multiple
 /// interfaces. For the MAC address based reservations, each interface on a
 /// network device maps to a single @c Host object as each @c Host object
@@ -143,9 +143,9 @@ typedef std::pair<IPv6ResrvIterator, IPv6ResrvIterator> IPv6ResrvRange;
 ///
 /// The @c Host object combines reservations for both IPv4 and IPv6 resources
 /// to allow for correlation of the information about the dual stack devices
-/// using DHCPv4 and DHCPv6 respectively. For example: both DHCPv4 and DHCPv6
-/// server may use the same database for storing host reservations, so the
-/// information about the DHCPv4 reservations are also available for the
+/// using DHCPv4 and DHCPv6 respectively. For example: both the DHCPv4 and
+/// DHCPv6 servers may use the same database for storing host reservations, so
+/// the information about the DHCPv4 reservations are available for the
 /// DHCPv6 server and vice versa. Also, this approach allows for reserving
 /// common resources such as host name for DHCPv4 and DHCPv6 clients.
 ///
@@ -171,8 +171,8 @@ public:
 
     /// @brief Constructor.
     ///
-    /// Creates @c Host object using an identifier in a binary format. This
-    /// is most useful in cases when the identifier is obtained from the
+    /// Creates a @c Host object using an identifier in a binary format. This
+    /// is most useful in cases where the identifier is obtained from the
     /// database. The constructor will create an instance of the @c HWAddr
     /// or @c DUID object depending on the identifier type.
     ///
@@ -211,8 +211,8 @@ public:
     /// - MAC address is specified as: "01:02:03:04:05:06"
     /// - DUID is specified as: "010203040506abcd"
     ///
-    /// @param identifier Identifier in the textual format. The expected format
-    /// for hardware address and DUID has been shown above.
+    /// @param identifier Identifier in the textual format. The expected formats
+    /// for the hardware address and DUID have been shown above.
     /// @param identifier_name One of "hw-address" or "duid"
     /// @param ipv4_subnet_id Identifier of the IPv4 subnet to which the host
     /// is connected.
@@ -242,7 +242,7 @@ public:
     /// @c duid_ respectively). The other (not initialized member) is
     /// deallocated.
     ///
-    /// This method is called by @c Host constructor.
+    /// This method is called by the @c Host constructor.
     ///
     /// @param identifier Pointer to the new identifier in the textual format.
     /// @param len Length of the identifier that the @c identifier points to.
@@ -258,7 +258,7 @@ public:
     /// @c duid_ respectively). The other (not initialized member) is
     /// deallocated.
     ///
-    /// This method is called by @c Host constructor.
+    /// This method is called by the @c Host constructor.
     ///
     /// @param identifier Pointer to the new identifier in the textual format.
     /// @param name One of "hw-address" or "duid".
@@ -274,7 +274,7 @@ public:
         return (hw_address_);
     }
 
-    /// @brief Retruns DUID for which the reservations are made.
+    /// @brief Returns DUID for which the reservations are made.
     ///
     /// @return Pointer to the @c DUID structure or null if the reservation
     /// is not associated with a DUID.
