@@ -484,7 +484,7 @@ protected:
     /// a match is found.
     Subnet6Collection subnets6_;
 
-    /// @brief a container for IPv4 subnets.
+    /// @brief A container for IPv4 subnets.
     ///
     /// That is a simple vector of pointers. It does not make much sense to
     /// optimize access time (e.g. using a map), because typical search

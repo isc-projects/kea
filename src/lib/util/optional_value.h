@@ -101,17 +101,30 @@ public:
     /// @brief Equality operator.
     ///
     /// @param value Actual value to compare to.
-    bool operator==(const T& value) {
-        return (value_ == value);
+    ///
+    /// @return true if the value is specified and equals the argument.
+    bool operator==(const T& value) const {
+        return (specified_ && (value_ == value));
     }
 
     /// @brief Inequality operator.
     ///
     /// @param value Actual value to compare to.
-    bool operator!=(const T& value) {
-        return (value_ != value);
+    ///
+    /// @return true if the value is unspecified or unequal.
+    bool operator!=(const T& value) const {
+        return (!specified_ || (value_ != value));
     }
 
+    /// @brief Type cast operator.
+    ///
+    /// This operator converts the optional value to the actual value being
+    /// encapsulated.
+    ///
+    /// @return Encapsulated value.
+    operator T() const {
+        return (value_);
+    }
 
 private:
     T value_;         ///< Encapsulated value.
