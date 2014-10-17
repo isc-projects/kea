@@ -93,8 +93,9 @@ public:
                           const std::string& hostname,
                           const bool fqdn_fwd,
                           const bool fqdn_rev) {
-        const uint8_t hwaddr[] = { 0, 1, 2, 3, 4, 5, 6 };
-        Lease4Ptr lease(new Lease4(addr, hwaddr, sizeof(hwaddr),
+        const uint8_t hwaddr_data[] = { 0, 1, 2, 3, 4, 5, 6 };
+        HWAddrPtr hwaddr(new HWAddr(hwaddr_data, sizeof(hwaddr_data), HTYPE_ETHER));
+        Lease4Ptr lease(new Lease4(addr, hwaddr,
                                    &generateClientId()->getData()[0],
                                    generateClientId()->getData().size(),
                                    100, 50, 75, time(NULL), subnet_->getID()));

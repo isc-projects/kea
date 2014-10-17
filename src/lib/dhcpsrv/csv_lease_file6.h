@@ -160,6 +160,12 @@ private:
     ///
     /// @param row CSV file holding lease values.
     std::string readHostname(const util::CSVRow& row);
+
+    /// @brief Reads HW address from the CSV file row.
+    ///
+    /// @param row CSV file holding lease values.
+    /// @return pointer to the HWAddr structure that was read
+    HWAddrPtr readHWAddr(const util::CSVRow& row);
     //@}
 
 };

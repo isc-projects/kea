@@ -343,6 +343,7 @@ protected:
     ///        collection of new leases, being returned. For newly allocated
     ///        leases (not renewed) the NULL pointers are stored in this
     ///        collection as old leases.
+    /// @param hwaddr Hardware address (optional, may be null for Lease6)
     ///
     /// @return Allocated IPv6 leases (may be empty if allocation failed)
     Lease6Collection
@@ -352,7 +353,7 @@ protected:
                     const bool fwd_dns_update, const bool rev_dns_update,
                     const std::string& hostname, bool fake_allocation,
                     const isc::hooks::CalloutHandlePtr& callout_handle,
-                    Lease6Collection& old_leases);
+                    Lease6Collection& old_leases, const HWAddrPtr& hwaddr);
 
     /// @brief returns allocator for a given pool type
     /// @param type type of pool (V4, IA, TA or PD)
@@ -416,6 +417,7 @@ private:
     ///        responsibility for the reverse DNS Update for this lease
     ///        (if true).
     /// @param hostname A fully qualified domain-name of the client.
+    /// @param hwaddr Hardware address (optional, may be null for Lease6)
     /// @param callout_handle a callout handle (used in hooks). A lease callouts
     ///        will be executed if this parameter is passed (and there are callouts
     ///        registered)
@@ -427,7 +429,7 @@ private:
                            const uint32_t iaid, const isc::asiolink::IOAddress& addr,
                            const uint8_t prefix_len, const Lease::Type type,
                            const bool fwd_dns_update, const bool rev_dns_update,
-                           const std::string& hostname,
+                           const std::string& hostname, const HWAddrPtr& hwaddr,
                            const isc::hooks::CalloutHandlePtr& callout_handle,
                            bool fake_allocation = false);
 

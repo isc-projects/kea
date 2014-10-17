@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/csv_lease_file6.h>
 
 using namespace isc::asiolink;
@@ -41,6 +42,10 @@ CSVLeaseFile6::append(const Lease6& lease) const {
     row.writeAt(getColumnIndex("fqdn_fwd"), lease.fqdn_fwd_);
     row.writeAt(getColumnIndex("fqdn_rev"), lease.fqdn_rev_);
     row.writeAt(getColumnIndex("hostname"), lease.hostname_);
+    if (lease.hwaddr_) {
+        // We may not have hardware information
+        row.writeAt(getColumnIndex("hwaddr"), lease.hwaddr_);
+    }
     CSVFile::append(row);
 }
 
@@ -64,6 +69,7 @@ CSVLeaseFile6::next(Lease6Ptr& lease) {
                                readIAID(row), readPreferred(row),
                                readValid(row), 0, 0, // t1, t2 = 0
                                readSubnetID(row),
+                               readHWAddr(row),
                                readPrefixLen(row)));
         lease->cltt_ = readCltt(row);
         lease->fqdn_fwd_ = readFqdnFwd(row);
@@ -94,6 +100,7 @@ CSVLeaseFile6::initColumns() {
     addColumn("fqdn_fwd");
     addColumn("fqdn_rev");
     addColumn("hostname");
+    addColumn("hwaddr");
 }
 
 Lease::Type
@@ -170,6 +177,36 @@ std::string
 CSVLeaseFile6::readHostname(const CSVRow& row) {
     std::string hostname = row.readAt(getColumnIndex("hostname"));
     return (hostname);
+}
+
+HWAddrPtr
+CSVLeaseFile6::readHWAddr(const CSVRow& row) {
+
+    try {
+        const HWAddr& hwaddr = HWAddr::fromText(row.readAt(getColumnIndex("hwaddr")));
+        if (hwaddr.hwaddr_.empty()) {
+            return (HWAddrPtr());
+        }
+
+        /// @todo: HWAddr returns an object, not a pointer. Without HWAddr
+        /// refactoring, at least one copy is unavoidable.
+
+        // Let's return a pointer to new freshly created copy.
+        return (HWAddrPtr(new HWAddr(hwaddr)));
+
+    } catch (const CSVFileError&) {
+        // That's ok, we may be reading old CSV file that didn't store hwaddr
+        return (HWAddrPtr());
+    } catch (const BadValue& ex) {
+        // That's worse. There was something in the file, but its conversion
+        // to HWAddr failed. Let's log it on warning and carry on.
+        LOG_WARN(dhcpsrv_logger, DHCPSRV_MEMFILE_READ_HWADDR_FAIL)
+            .arg(ex.what());
+
+        return (HWAddrPtr());
+    }
+
+
 }
 
 } // end of namespace isc::dhcp

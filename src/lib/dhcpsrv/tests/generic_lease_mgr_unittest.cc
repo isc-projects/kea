@@ -86,7 +86,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
 
     // Set other parameters.  For historical reasons, address 0 is not used.
     if (address == straddress4_[0]) {
-        lease->hwaddr_ = vector<uint8_t>(6, 0x08);
+        lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, 0x08), HTYPE_ETHER));
         lease->client_id_ = ClientIdPtr(new ClientId(vector<uint8_t>(8, 0x42)));
         lease->valid_lft_ = 8677;
         lease->cltt_ = 168256;
@@ -96,7 +96,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         lease->hostname_ = "myhost.example.com.";
 
         } else if (address == straddress4_[1]) {
-        lease->hwaddr_ = vector<uint8_t>(6, 0x19);
+        lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, 0x19), HTYPE_ETHER));
         lease->client_id_ = ClientIdPtr(
             new ClientId(vector<uint8_t>(8, 0x53)));
         lease->valid_lft_ = 3677;
@@ -107,7 +107,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         lease->hostname_ = "myhost.example.com.";
 
     } else if (address == straddress4_[2]) {
-        lease->hwaddr_ = vector<uint8_t>(6, 0x2a);
+        lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, 0x2a), HTYPE_ETHER));
         lease->client_id_ = ClientIdPtr(new ClientId(vector<uint8_t>(8, 0x64)));
         lease->valid_lft_ = 5412;
         lease->cltt_ = 234567;
@@ -117,7 +117,8 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         lease->hostname_ = "";
 
     } else if (address == straddress4_[3]) {
-        lease->hwaddr_ = vector<uint8_t>(6, 0x19);      // Same as lease 1
+        // Hardware address same as lease 1.
+        lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, 0x19), HTYPE_ETHER));
         lease->client_id_ = ClientIdPtr(
             new ClientId(vector<uint8_t>(8, 0x75)));
 
@@ -133,7 +134,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         lease->hostname_ = "otherhost.example.com.";
 
     } else if (address == straddress4_[4]) {
-        lease->hwaddr_ = vector<uint8_t>(6, 0x4c);
+        lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, 0x4c), HTYPE_ETHER));
         // Same ClientId as straddr4_[1]
         lease->client_id_ = ClientIdPtr(
             new ClientId(vector<uint8_t>(8, 0x53)));    // Same as lease 1
@@ -145,7 +146,8 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         lease->hostname_ = "otherhost.example.com.";
 
     } else if (address == straddress4_[5]) {
-        lease->hwaddr_ = vector<uint8_t>(6, 0x19);      // Same as lease 1
+        // Same as lease 1
+        lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, 0x19), HTYPE_ETHER));
         // Same ClientId and IAID as straddress4_1
         lease->client_id_ = ClientIdPtr(
             new ClientId(vector<uint8_t>(8, 0x53)));    // Same as lease 1
@@ -156,7 +158,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         lease->fqdn_fwd_ = false;
         lease->hostname_ = "otherhost.example.com.";
     } else if (address == straddress4_[6]) {
-        lease->hwaddr_ = vector<uint8_t>(6, 0x6e);
+        lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, 0x6e), HTYPE_ETHER));
         // Same ClientId as straddress4_1
         lease->client_id_ = ClientIdPtr(
             new ClientId(vector<uint8_t>(8, 0x53)));    // Same as lease 1
@@ -168,7 +170,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         lease->hostname_ = "myhost.example.com.";
 
     } else if (address == straddress4_[7]) {
-        lease->hwaddr_ = vector<uint8_t>();             // Empty
+        lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(), HTYPE_ETHER)); // Empty
         lease->client_id_ = ClientIdPtr();              // Empty
         lease->valid_lft_ = 7975;
         lease->cltt_ = 213876;
@@ -467,7 +469,7 @@ GenericLeaseMgrTest::testLease4NullClientId() {
     EXPECT_FALSE(lmptr_->addLease(leases[1]));
 
     // Check that we can get the lease by HWAddr
-    HWAddr tmp(leases[2]->hwaddr_, HTYPE_ETHER);
+    HWAddr tmp(*leases[2]->hwaddr_);
     Lease4Collection returned = lmptr_->getLease4(tmp);
     ASSERT_EQ(1, returned.size());
     detailCompareLease(leases[2], *returned.begin());
@@ -504,7 +506,7 @@ void
 GenericLeaseMgrTest::testGetLease4HWAddr1() {
     // Let's initialize two different leases 4 and just add the first ...
     Lease4Ptr leaseA = initializeLease4(straddress4_[5]);
-    HWAddr hwaddrA(leaseA->hwaddr_, HTYPE_ETHER);
+    HWAddr hwaddrA(*leaseA->hwaddr_);
     HWAddr hwaddrB(vector<uint8_t>(6, 0x80), HTYPE_ETHER);
 
     EXPECT_TRUE(lmptr_->addLease(leaseA));
@@ -528,7 +530,7 @@ GenericLeaseMgrTest::testGetLease4HWAddr2() {
 
     // Get the leases matching the hardware address of lease 1
     /// @todo: Simply use HWAddr directly once 2589 is implemented
-    HWAddr tmp(leases[1]->hwaddr_, HTYPE_ETHER);
+    HWAddr tmp(*leases[1]->hwaddr_);
     Lease4Collection returned = lmptr_->getLease4(tmp);
 
     // Should be three leases, matching leases[1], [3] and [5].
@@ -546,15 +548,13 @@ GenericLeaseMgrTest::testGetLease4HWAddr2() {
     EXPECT_EQ(straddress4_[5], addresses[2]);
 
     // Repeat test with just one expected match
-    /// @todo: Simply use HWAddr directly once 2589 is implemented
-    returned = lmptr_->getLease4(HWAddr(leases[2]->hwaddr_, HTYPE_ETHER));
+    returned = lmptr_->getLease4(*leases[2]->hwaddr_);
     ASSERT_EQ(1, returned.size());
     detailCompareLease(leases[2], *returned.begin());
 
     // Check that an empty vector is valid
-    EXPECT_TRUE(leases[7]->hwaddr_.empty());
-    /// @todo: Simply use HWAddr directly once 2589 is implemented
-    returned = lmptr_->getLease4(HWAddr(leases[7]->hwaddr_, HTYPE_ETHER));
+    EXPECT_TRUE(leases[7]->hwaddr_->hwaddr_.empty());
+    returned = lmptr_->getLease4(*leases[7]->hwaddr_);
     ASSERT_EQ(1, returned.size());
     detailCompareLease(leases[7], *returned.begin());
 
@@ -573,9 +573,9 @@ GenericLeaseMgrTest::testGetLease4ClientIdHWAddrSubnetId() {
     // a lease may coexist with other leases with non NULL client id.
     leaseC->client_id_.reset();
 
-    HWAddr hwaddrA(leaseA->hwaddr_, HTYPE_ETHER);
-    HWAddr hwaddrB(leaseB->hwaddr_, HTYPE_ETHER);
-    HWAddr hwaddrC(leaseC->hwaddr_, HTYPE_ETHER);
+    HWAddr hwaddrA(*leaseA->hwaddr_);
+    HWAddr hwaddrB(*leaseB->hwaddr_);
+    HWAddr hwaddrC(*leaseC->hwaddr_);
     EXPECT_TRUE(lmptr_->addLease(leaseA));
     EXPECT_TRUE(lmptr_->addLease(leaseB));
     EXPECT_TRUE(lmptr_->addLease(leaseC));
@@ -926,11 +926,11 @@ GenericLeaseMgrTest::testGetLease4HWAddrSize() {
 
     // Now add leases with increasing hardware address size.
     for (uint8_t i = 0; i <= HWAddr::MAX_HWADDR_LEN; ++i) {
-        leases[1]->hwaddr_.resize(i, i);
+        leases[1]->hwaddr_->hwaddr_.resize(i, i);
         EXPECT_TRUE(lmptr_->addLease(leases[1]));
         /// @todo: Simply use HWAddr directly once 2589 is implemented
         Lease4Collection returned =
-            lmptr_->getLease4(HWAddr(leases[1]->hwaddr_, HTYPE_ETHER));
+            lmptr_->getLease4(*leases[1]->hwaddr_);
 
         ASSERT_EQ(1, returned.size());
         detailCompareLease(leases[1], *returned.begin());
@@ -939,8 +939,7 @@ GenericLeaseMgrTest::testGetLease4HWAddrSize() {
 
     // Database should not let us add one that is too big
     // (The 42 is a random value put in each byte of the address.)
-    /// @todo: 2589 will make this test impossible
-    leases[1]->hwaddr_.resize(HWAddr::MAX_HWADDR_LEN + 100, 42);
+    leases[1]->hwaddr_->hwaddr_.resize(HWAddr::MAX_HWADDR_LEN + 100, 42);
     EXPECT_THROW(lmptr_->addLease(leases[1]), isc::dhcp::DbOperationError);
 }
 
@@ -955,8 +954,8 @@ GenericLeaseMgrTest::testGetLease4HWAddrSubnetId() {
     // Get the leases matching the hardware address of lease 1 and
     // subnet ID of lease 1.  Result should be a single lease - lease 1.
     /// @todo: Simply use HWAddr directly once 2589 is implemented
-    Lease4Ptr returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_,
-        HTYPE_ETHER), leases[1]->subnet_id_);
+    Lease4Ptr returned = lmptr_->getLease4(*leases[1]->hwaddr_,
+                                           leases[1]->subnet_id_);
 
     ASSERT_TRUE(returned);
     detailCompareLease(leases[1], returned);
@@ -964,8 +963,7 @@ GenericLeaseMgrTest::testGetLease4HWAddrSubnetId() {
     // Try for a match to the hardware address of lease 1 and the wrong
     // subnet ID.
     /// @todo: Simply use HWAddr directly once 2589 is implemented
-    returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_, HTYPE_ETHER),
-                                 leases[1]->subnet_id_ + 1);
+    returned = lmptr_->getLease4(*leases[1]->hwaddr_, leases[1]->subnet_id_ + 1);
     EXPECT_FALSE(returned);
 
     // Try for a match to the subnet ID of lease 1 (and lease 4) but
@@ -992,9 +990,8 @@ GenericLeaseMgrTest::testGetLease4HWAddrSubnetId() {
     leases[1]->addr_ = leases[2]->addr_;
     EXPECT_TRUE(lmptr_->addLease(leases[1]));
     /// @todo: Simply use HWAddr directly once 2589 is implemented
-    EXPECT_THROW(returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_,
-                                                    HTYPE_ETHER),
-                                             leases[1]->subnet_id_),
+    EXPECT_THROW(returned = lmptr_->getLease4(*leases[1]->hwaddr_,
+                                              leases[1]->subnet_id_),
                  isc::dhcp::MultipleRecords);
 
 
@@ -1008,11 +1005,10 @@ GenericLeaseMgrTest::testGetLease4HWAddrSubnetIdSize() {
     // Now add leases with increasing hardware address size and check
     // that they can be retrieved.
     for (uint8_t i = 0; i <= HWAddr::MAX_HWADDR_LEN; ++i) {
-        leases[1]->hwaddr_.resize(i, i);
+        leases[1]->hwaddr_->hwaddr_.resize(i, i);
         EXPECT_TRUE(lmptr_->addLease(leases[1]));
         /// @todo: Simply use HWAddr directly once 2589 is implemented
-        Lease4Ptr returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_,
-                                                      HTYPE_ETHER),
+        Lease4Ptr returned = lmptr_->getLease4(*leases[1]->hwaddr_,
                                                leases[1]->subnet_id_);
         ASSERT_TRUE(returned);
         detailCompareLease(leases[1], returned);
@@ -1021,7 +1017,7 @@ GenericLeaseMgrTest::testGetLease4HWAddrSubnetIdSize() {
 
     // Database should not let us add one that is too big
     // (The 42 is a random value put in each byte of the address.)
-    leases[1]->hwaddr_.resize(HWAddr::MAX_HWADDR_LEN + 100, 42);
+    leases[1]->hwaddr_->hwaddr_.resize(HWAddr::MAX_HWADDR_LEN + 100, 42);
     EXPECT_THROW(lmptr_->addLease(leases[1]), isc::dhcp::DbOperationError);
 }
 
@@ -1058,7 +1054,7 @@ GenericLeaseMgrTest::testGetLease4ClientId2() {
 
     // Check that client-id is NULL
     EXPECT_FALSE(leases[7]->client_id_);
-    HWAddr tmp(leases[7]->hwaddr_, HTYPE_ETHER);
+    HWAddr tmp(*leases[7]->hwaddr_);
     returned = lmptr_->getLease4(tmp);
     ASSERT_EQ(1, returned.size());
     detailCompareLease(leases[7], *returned.begin());
