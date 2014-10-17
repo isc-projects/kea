@@ -20,6 +20,7 @@
 #include <boost/algorithm/string/constants.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <iomanip>
+#include <cctype>
 #include <sstream>
 #include <vector>
 
@@ -58,6 +59,17 @@ DUID::decode(const std::string& text) {
 
     std::ostringstream s;
     for (size_t i = 0; i < split_text.size(); ++i) {
+        // Check that only hexadecimal digits are used.
+        size_t ch_index = 0;
+        while (ch_index < split_text[i].length()) {
+            if (!isxdigit(split_text[i][ch_index])) {
+                isc_throw(isc::BadValue, "invalid value '"
+                          << split_text[i][ch_index] << "' in"
+                          << " DUID '" << text << "'");
+            }
+            ++ch_index;
+        }
+
         if (split_text.size() > 1) {
             // If there are multiple tokens and the current one is empty, it
             // means that two consecutive colons were specified. This is not

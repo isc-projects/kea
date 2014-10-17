@@ -57,8 +57,8 @@ public:
     /// @param prefix Address or prefix to be reserved.
     /// @param prefix_len Prefix length.
     ///
-    /// @throw isc::BadValue if address is not IPv6 address or is a
-    /// multicast address.
+    /// @throw isc::BadValue if prefix is not IPv6 prefix, is a
+    /// multicast address or the prefix length is greater than 128.
     IPv6Resrv(const asiolink::IOAddress& prefix,
               const uint8_t prefix_len = 128);
 
@@ -85,10 +85,10 @@ public:
     ///
     /// @param prefix New prefix.
     /// @param prefix_len New prefix length.
-    void set(const asiolink::IOAddress& prefix, const uint8_t prefix_len) {
-        prefix_ = prefix;
-        prefix_len_ = prefix_len;
-    }
+    ///
+    /// @throw isc::BadValue if prefix is not IPv6 prefix, is a
+    /// multicast address or the prefix length is greater than 128.
+    void set(const asiolink::IOAddress& prefix, const uint8_t prefix_len);
 
     /// @brief Equality operator.
     ///

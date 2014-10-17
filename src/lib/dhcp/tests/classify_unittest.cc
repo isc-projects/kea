@@ -55,7 +55,7 @@ TEST(ClassifyTest, ClientClasses) {
 TEST(ClassifyTest, ClientClassesFromString) {
     {
         ClientClasses classes("alpha, beta, gamma");
-
+        EXPECT_EQ(3, classes.size());
         EXPECT_FALSE(classes.contains(""));
         EXPECT_TRUE(classes.contains("alpha"));
         EXPECT_TRUE(classes.contains("beta"));
@@ -64,8 +64,24 @@ TEST(ClassifyTest, ClientClassesFromString) {
 
     {
         ClientClasses classes("alpha, , beta ,");
+        EXPECT_EQ(2, classes.size());
         EXPECT_TRUE(classes.contains("alpha"));
         EXPECT_FALSE(classes.contains(""));
         EXPECT_TRUE(classes.contains("beta"));
+    }
+
+    {
+        ClientClasses classes("");
+        EXPECT_TRUE(classes.empty());
+    }
+
+    {
+        ClientClasses classes("    ");
+        EXPECT_TRUE(classes.empty());
+    }
+
+    {
+        ClientClasses classes(", ,, ,");
+        EXPECT_TRUE(classes.empty());
     }
 }
