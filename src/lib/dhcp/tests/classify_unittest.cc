@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -36,8 +36,7 @@ TEST(ClassifyTest, ClientClasses) {
     EXPECT_FALSE(classes.contains(""));
     EXPECT_FALSE(classes.contains("alpha"));
     EXPECT_FALSE(classes.contains("beta"));
-    EXPECT_FALSE(classes.contains("gamma"));
-
+    EXPECT_FALSE(classes.contains("gamma")); 
     classes.insert("beta");
     EXPECT_FALSE(classes.contains(""));
     EXPECT_FALSE(classes.contains("alpha"));
@@ -49,4 +48,40 @@ TEST(ClassifyTest, ClientClasses) {
     EXPECT_TRUE (classes.contains("alpha"));
     EXPECT_TRUE (classes.contains("beta"));
     EXPECT_TRUE (classes.contains("gamma"));
+}
+
+// Check if ClientClasses object can be created from the string of comma
+// separated values.
+TEST(ClassifyTest, ClientClassesFromString) {
+    {
+        ClientClasses classes("alpha, beta, gamma");
+        EXPECT_EQ(3, classes.size());
+        EXPECT_FALSE(classes.contains(""));
+        EXPECT_TRUE(classes.contains("alpha"));
+        EXPECT_TRUE(classes.contains("beta"));
+        EXPECT_TRUE(classes.contains("gamma"));
+    }
+
+    {
+        ClientClasses classes("alpha, , beta ,");
+        EXPECT_EQ(2, classes.size());
+        EXPECT_TRUE(classes.contains("alpha"));
+        EXPECT_FALSE(classes.contains(""));
+        EXPECT_TRUE(classes.contains("beta"));
+    }
+
+    {
+        ClientClasses classes("");
+        EXPECT_TRUE(classes.empty());
+    }
+
+    {
+        ClientClasses classes("    ");
+        EXPECT_TRUE(classes.empty());
+    }
+
+    {
+        ClientClasses classes(", ,, ,");
+        EXPECT_TRUE(classes.empty());
+    }
 }

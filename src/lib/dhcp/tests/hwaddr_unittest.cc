@@ -60,10 +60,10 @@ TEST(HWAddrTest, constructor) {
 
     // Check that over the limit data length throws exception 
     EXPECT_THROW(HWAddr(&big_data_vector[0], big_data_vector.size(), HTYPE_ETHER), 
-        InvalidParameter);
+        BadValue);
 
     // Check that over the limit vector throws exception
-    EXPECT_THROW(HWAddr(big_data_vector, HTYPE_ETHER), InvalidParameter);
+    EXPECT_THROW(HWAddr(big_data_vector, HTYPE_ETHER), BadValue);
 }
 
 // This test checks if the comparison operators are sane.

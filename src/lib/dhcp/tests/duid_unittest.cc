@@ -84,24 +84,24 @@ TEST(DuidTest, size) {
 
     EXPECT_THROW(
         scoped_ptr<DUID> toolarge1(new DUID(data, MAX_DUID_LEN + 1)),
-        OutOfRange);
+        BadValue);
 
     // that's one too much
     data2.push_back(128);
 
     EXPECT_THROW(
         scoped_ptr<DUID> toolarge2(new DUID(data2)),
-        OutOfRange);
+        BadValue);
 
     // empty duids are not allowed
     vector<uint8_t> empty;
     EXPECT_THROW(
         scoped_ptr<DUID> emptyDuid(new DUID(empty)),
-        OutOfRange);
+        BadValue);
 
     EXPECT_THROW(
         scoped_ptr<DUID> emptyDuid2(new DUID(data, 0)),
-        OutOfRange);
+        BadValue);
 }
 
 // This test verifies if the implementation supports all defined
@@ -222,33 +222,33 @@ TEST(ClientIdTest, size) {
 
     EXPECT_THROW(
         scoped_ptr<ClientId> toolarge1(new ClientId(data, MAX_CLIENT_ID_LEN + 1)),
-        OutOfRange);
+        BadValue);
 
     // that's one too much
     data2.push_back(128);
 
     EXPECT_THROW(
         scoped_ptr<ClientId> toolarge2(new ClientId(data2)),
-        OutOfRange);
+        BadValue);
 
     // empty client-ids are not allowed
     vector<uint8_t> empty;
     EXPECT_THROW(
         scoped_ptr<ClientId> empty_client_id1(new ClientId(empty)),
-        OutOfRange);
+        BadValue);
 
     EXPECT_THROW(
         scoped_ptr<ClientId> empty_client_id2(new ClientId(data, 0)),
-        OutOfRange);
+        BadValue);
 
     // client-id must be at least 2 bytes long
     vector<uint8_t> shorty(1,17); // just a single byte with value 17
     EXPECT_THROW(
         scoped_ptr<ClientId> too_short_client_id1(new ClientId(shorty)),
-        OutOfRange);
+        BadValue);
     EXPECT_THROW(
         scoped_ptr<ClientId> too_short_client_id1(new ClientId(data, 1)),
-        OutOfRange);
+        BadValue);
 }
 
 // This test checks if the comparison operators are sane.
@@ -299,6 +299,11 @@ TEST(ClientIdTest, fromText) {
         cid = ClientId::fromText("00:a:bb:D:ee:EF:ab")
     );
     EXPECT_EQ("00:0a:bb:0d:ee:ef:ab", cid->toText());
+    // ClientId without any colons is allowed.
+    ASSERT_NO_THROW(
+        cid = ClientId::fromText("0010abcdee");
+    );
+    EXPECT_EQ("00:10:ab:cd:ee", cid->toText());
     // Repeated colon sign in the ClientId is not allowed.
     EXPECT_THROW(
         ClientId::fromText("00::bb:D:ee:EF:ab"),
@@ -308,6 +313,23 @@ TEST(ClientIdTest, fromText) {
     // ClientId with excessive number of digits for one of the bytes.
     EXPECT_THROW(
         ClientId::fromText("00:01:021:03:04:05:06"),
+        isc::BadValue
+    );
+    // ClientId  with two spaces between the colons should not be allowed.
+    EXPECT_THROW(
+        ClientId::fromText("00:01:  :03:04:05:06"),
+        isc::BadValue
+    );
+
+    // ClientId  with one space between the colons should not be allowed.
+    EXPECT_THROW(
+        ClientId::fromText("00:01: :03:04:05:06"),
+        isc::BadValue
+    );
+
+    // ClientId  with three spaces between the colons should not be allowed.
+    EXPECT_THROW(
+        ClientId::fromText("00:01:   :03:04:05:06"),
         isc::BadValue
     );
 }
