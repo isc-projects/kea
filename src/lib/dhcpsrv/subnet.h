@@ -493,12 +493,16 @@ protected:
     isc::asiolink::IOAddress siaddr_;
 };
 
-/// @brief A pointer to a Subnet4 object
+/// @brief A pointer to a @c Subnet4 object
 typedef boost::shared_ptr<Subnet4> Subnet4Ptr;
 
-/// @brief A collection of Subnet6 objects
+/// @brief A collection of @c Subnet4 objects
+///
+/// That is a simple vector of pointers. It does not make much sense to
+/// optimize access time (e.g. using a map), because typical search
+/// pattern will use calling inRange() method on each subnet until
+/// a match is found.
 typedef std::vector<Subnet4Ptr> Subnet4Collection;
-
 
 /// @brief A configuration holder for IPv6 subnet.
 ///
