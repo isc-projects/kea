@@ -23,10 +23,10 @@ namespace dhcp {
 Lease::Lease(const isc::asiolink::IOAddress& addr, uint32_t t1, uint32_t t2,
              uint32_t valid_lft, SubnetID subnet_id, time_t cltt,
              const bool fqdn_fwd, const bool fqdn_rev,
-             const std::string& hostname)
+             const std::string& hostname, const HWAddrPtr& hwaddr)
     :addr_(addr), t1_(t1), t2_(t2), valid_lft_(valid_lft), cltt_(cltt),
      subnet_id_(subnet_id), fixed_(false), hostname_(hostname),
-     fqdn_fwd_(fqdn_fwd), fqdn_rev_(fqdn_rev) {
+     fqdn_fwd_(fqdn_fwd), fqdn_rev_(fqdn_rev), hwaddr_(hwaddr) {
 }
 
 std::string
@@ -66,8 +66,8 @@ Lease::hasIdenticalFqdn(const Lease& other) const {
 Lease4::Lease4(const Lease4& other)
     : Lease(other.addr_, other.t1_, other.t2_, other.valid_lft_,
             other.subnet_id_, other.cltt_, other.fqdn_fwd_,
-            other.fqdn_rev_, other.hostname_), ext_(other.ext_),
-      hwaddr_(other.hwaddr_) {
+            other.fqdn_rev_, other.hostname_, other.hwaddr_),
+            ext_(other.ext_) {
 
     fixed_ = other.fixed_;
     comments_ = other.comments_;
@@ -91,6 +91,17 @@ Lease4::getClientIdVector() const {
     return (client_id_->getClientId());
 }
 
+const std::vector<uint8_t>&
+Lease4::getRawHWAddr() const {
+    if (!hwaddr_) {
+        // something is wrong, very wrong. Hardware address must always
+        // be present for all IPv4 leases.
+        isc_throw(BadValue, "Lease4 for address " << addr_.toText()
+                  << " is missing a hardware address");
+    }
+    return (hwaddr_->hwaddr_);
+}
+
 bool
 Lease4::matches(const Lease4& other) const {
     if ((client_id_ && !other.client_id_) ||
@@ -105,9 +116,13 @@ Lease4::matches(const Lease4& other) const {
         return false;
     }
 
+    // Note that hwaddr_ is now a poiner to the HWAddr structure.
+    // We can't simply compare smart pointers, we need to compare the
+    // actual objects they point to. It is ok to not check whether they
+    // are non-NULL, as every Lease4 must have hardware address.
     return (addr_ == other.addr_ &&
             ext_ == other.ext_ &&
-            hwaddr_ == other.hwaddr_);
+            *hwaddr_ == *other.hwaddr_);
 
 }
 
@@ -139,12 +154,13 @@ Lease4::operator=(const Lease4& other) {
 
 Lease6::Lease6(Type type, const isc::asiolink::IOAddress& addr,
                DuidPtr duid, uint32_t iaid, uint32_t preferred, uint32_t valid,
-               uint32_t t1, uint32_t t2, SubnetID subnet_id, uint8_t prefixlen)
-    : Lease(addr, t1, t2, valid, subnet_id, 0/*cltt*/, false, false, ""),
+               uint32_t t1, uint32_t t2, SubnetID subnet_id,
+               const HWAddrPtr& hwaddr, uint8_t prefixlen)
+    : Lease(addr, t1, t2, valid, subnet_id, 0/*cltt*/, false, false, "", hwaddr),
       type_(type), prefixlen_(prefixlen), iaid_(iaid), duid_(duid),
       preferred_lft_(preferred) {
     if (!duid) {
-        isc_throw(InvalidOperation, "DUID must be specified for a lease");
+        isc_throw(InvalidOperation, "DUID is mandatory for an IPv6 lease");
     }
 
     cltt_ = time(NULL);
@@ -154,22 +170,23 @@ Lease6::Lease6(Type type, const isc::asiolink::IOAddress& addr,
                DuidPtr duid, uint32_t iaid, uint32_t preferred, uint32_t valid,
                uint32_t t1, uint32_t t2, SubnetID subnet_id,
                const bool fqdn_fwd, const bool fqdn_rev,
-               const std::string& hostname, uint8_t prefixlen)
+               const std::string& hostname, const HWAddrPtr& hwaddr,
+               uint8_t prefixlen)
     : Lease(addr, t1, t2, valid, subnet_id, 0/*cltt*/,
-            fqdn_fwd, fqdn_rev, hostname),
+            fqdn_fwd, fqdn_rev, hostname, hwaddr),
       type_(type), prefixlen_(prefixlen), iaid_(iaid), duid_(duid),
       preferred_lft_(preferred) {
     if (!duid) {
-        isc_throw(InvalidOperation, "DUID must be specified for a lease");
+        isc_throw(InvalidOperation, "DUID is mandatory for an IPv6 lease");
     }
 
     cltt_ = time(NULL);
 }
 
 Lease6::Lease6()
-    : Lease(isc::asiolink::IOAddress("::"), 0, 0, 0, 0, 0, false, false, ""),
-      type_(TYPE_NA), prefixlen_(0), iaid_(0), duid_(DuidPtr()),
-      preferred_lft_(0) {
+    : Lease(isc::asiolink::IOAddress("::"), 0, 0, 0, 0, 0, false, false, "",
+            HWAddrPtr()), type_(TYPE_NA), prefixlen_(0), iaid_(0),
+            duid_(DuidPtr()), preferred_lft_(0) {
 }
 
 const std::vector<uint8_t>&
