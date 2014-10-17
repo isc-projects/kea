@@ -1,3 +1,8 @@
+845.	[func]		marcin
+	Implemented Host class for storing information about IPv4 and IPv6
+	reservations for the host.
+	(Trac #3560, git fb5e1883b01ce6388d1b7a92c61061b493c36713)
+
 844.	[bug]		tmark, marcin
 	Fixed multiple issues in the DHCP-DDNS unit tests.
 	(Trac #3615, git fec824d36121b12e98dd407a0bdf1bc71c8de18d)
