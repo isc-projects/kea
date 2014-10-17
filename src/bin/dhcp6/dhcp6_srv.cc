@@ -1268,6 +1268,11 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
         hostname = fqdn->getDomainName();
     }
 
+    // Attempt to get MAC address using any of available mechanisms.
+    // It's ok if there response is NULL. Hardware address is optional in Lease6
+    /// @todo: Make this configurable after trac 3554 is done.
+    HWAddrPtr hwaddr = query->getMAC(Pkt::HWADDR_SOURCE_ANY);
+
     // Use allocation engine to pick a lease for this client. Allocation engine
     // will try to honour the hint, but it is just a hint - some other address
     // may be used instead. If fake_allocation is set to false, the lease will
@@ -1280,7 +1285,8 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
                                                              hostname,
                                                              fake_allocation,
                                                              callout_handle,
-                                                             old_leases);
+                                                             old_leases,
+                                                             hwaddr);
     /// @todo: Handle more than one lease
     Lease6Ptr lease;
     if (!leases.empty()) {
@@ -1383,6 +1389,11 @@ Dhcpv6Srv::assignIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
         hint = hint_opt->getAddress();
     }
 
+    // Attempt to get MAC address using any of available mechanisms.
+    // It's ok if there response is NULL. Hardware address is optional in Lease6
+    /// @todo: Make this configurable after trac 3554 is done.
+    HWAddrPtr hwaddr = query->getMAC(Pkt::HWADDR_SOURCE_ANY);
+
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_PROCESS_IA_PD_REQUEST)
         .arg(duid ? duid->toText() : "(no-duid)").arg(ia->getIAID())
         .arg(hint_opt ? hint.toText() : "(no hint)");
@@ -1409,7 +1420,7 @@ Dhcpv6Srv::assignIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
                                                              string(),
                                                              fake_allocation,
                                                              callout_handle,
-                                                             old_leases);
+                                                             old_leases, hwaddr);
 
     if (!leases.empty()) {
 

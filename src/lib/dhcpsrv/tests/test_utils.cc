@@ -31,7 +31,10 @@ detailCompareLease(const Lease4Ptr& first, const Lease4Ptr& second) {
     // call the operator uint32_t() function, which causes an exception to be
     // thrown for IPv6 addresses.
     EXPECT_EQ(first->addr_, second->addr_);
-    EXPECT_TRUE(first->hwaddr_ == second->hwaddr_);
+
+    // We need to compare the actual HWAddr objects, not pointers
+    EXPECT_TRUE(*first->hwaddr_ == *second->hwaddr_);
+
     if (first->client_id_ && second->client_id_) {
         EXPECT_TRUE(*first->client_id_ == *second->client_id_);
     } else {

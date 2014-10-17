@@ -123,8 +123,7 @@ Dhcp4Client::applyConfiguration() {
 
     /// @todo Set the valid lifetime, t1, t2 etc.
     config_.lease_ = Lease4(IOAddress(context_.response_->getYiaddr()),
-                            &context_.response_->getHWAddr()->hwaddr_[0],
-                            context_.response_->getHWAddr()->hwaddr_.size(),
+                            context_.response_->getHWAddr(),
                             0, 0, 0, 0, 0, time(NULL), 0, false, false,
                             "");
 }
@@ -132,8 +131,7 @@ Dhcp4Client::applyConfiguration() {
 void
 Dhcp4Client::createLease(const asiolink::IOAddress& addr,
                          const uint32_t valid_lft) {
-    Lease4 lease(addr, &hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
-                 0, 0, valid_lft, valid_lft / 2, valid_lft,
+    Lease4 lease(addr, hwaddr_, 0, 0, valid_lft, valid_lft / 2, valid_lft,
                  time(NULL), false, false, "");
     config_.lease_ = lease;
 }

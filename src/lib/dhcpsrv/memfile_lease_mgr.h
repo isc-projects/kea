@@ -434,9 +434,11 @@ protected:
                 boost::multi_index::composite_key<
                     Lease4,
                     // The hardware address is held in the hwaddr_ member of the
-                    // Lease4 object.
-                    boost::multi_index::member<Lease4, std::vector<uint8_t>,
-                                               &Lease4::hwaddr_>,
+                    // Lease4 object, which is a HWAddr object. Boost does not
+                    // provide a key extractor for getting a member of a member,
+                    // so we need a simple method for that.
+                    boost::multi_index::const_mem_fun<Lease4, const std::vector<uint8_t>&,
+                                               &Lease4::getRawHWAddr>,
                     // The subnet id is held in the subnet_id_ member of Lease4
                     // class. Note that the subnet_id_ is defined in the base
                     // class (Lease) so we have to point to this class rather
@@ -470,10 +472,12 @@ protected:
                     // calling getClientIdVector const function.
                     boost::multi_index::const_mem_fun<Lease4, const std::vector<uint8_t>&,
                                                       &Lease4::getClientIdVector>,
-                    // The hardware address is held in the hwaddr_ member of the
-                    // Lease4 object.
-                    boost::multi_index::member<Lease4, std::vector<uint8_t>,
-                                               &Lease4::hwaddr_>,
+                    // The hardware address is held in the hwaddr_ object. We can
+                    // access the raw data using lease->hwaddr_->hwaddr_, but Boost
+                    // doesn't seem to provide a way to use member of a member for this,
+                    // so we need a simple key extractor method (getRawHWAddr).
+                    boost::multi_index::const_mem_fun<Lease4, const std::vector<uint8_t>&,
+                                            &Lease4::getRawHWAddr>,
                     // The subnet id is accessed through the subnet_id_ member.
                     boost::multi_index::member<Lease, SubnetID, &Lease::subnet_id_>
                 >
