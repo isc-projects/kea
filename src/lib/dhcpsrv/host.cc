@@ -21,11 +21,25 @@ namespace dhcp {
 
 IPv6Resrv::IPv6Resrv(const asiolink::IOAddress& prefix,
                      const uint8_t prefix_len)
-    : prefix_(prefix), prefix_len_(prefix_len) {
+    : prefix_(asiolink::IOAddress("::")), prefix_len_(128) {
+    // Validate and set the actual values.
+    set(prefix, prefix_len);
+}
+
+void
+IPv6Resrv::set(const asiolink::IOAddress& prefix, const uint8_t prefix_len) {
     if (!prefix.isV6() || prefix.isV6Multicast()) {
         isc_throw(isc::BadValue, "invalid prefix '" << prefix
                   << " for new IPv6 reservation");
+
+    } else if (prefix_len > 128) {
+        isc_throw(isc::BadValue, "invalid prefix length '"
+                  << static_cast<int>(prefix_len)
+                  << "' for new IPv6 reservation");
     }
+
+    prefix_ = prefix;
+    prefix_len_ = prefix_len;
 }
 
 bool
@@ -36,8 +50,7 @@ IPv6Resrv::operator==(const IPv6Resrv& other) const {
 
 bool
 IPv6Resrv::operator!=(const IPv6Resrv& other) const {
-    return (prefix_ != other.prefix_ ||
-            prefix_len_ != other.prefix_len_);
+    return (!operator==(other));
 }
 
 Host::Host(const uint8_t* identifier, const size_t identifier_len,

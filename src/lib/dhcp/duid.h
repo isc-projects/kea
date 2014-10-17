@@ -98,8 +98,8 @@ class DUID {
     /// representing bytes of DUID must be separated by colons. Usually the
     /// single byte is represented by two hexadecimal digits. However, this
     /// function allows one digit per byte. In this case, a zero is prepended
-    /// before the conversion. For example, a DUID 0:1:2::4:5 equals to
-    /// 00:01:02:00:04:05.
+    /// before the conversion. For example, a DUID 0:1:2:3:4:5 equals to
+    /// 00:01:02:03:04:05.
     ///
     /// @param text DUID in the hexadecimal format with digits representing
     /// individual bytes separated by colons.

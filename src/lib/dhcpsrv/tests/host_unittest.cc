@@ -42,9 +42,19 @@ TEST(IPv6ResrvTest, constructorPrefix) {
     EXPECT_EQ(IPv6Resrv::TYPE_PD, resrv.getType());
 }
 
+// This test verifies that invalid prefix is rejected.
 TEST(IPv6ResrvTest, constructorInvalidPrefix) {
+    // IPv4 address is invalid for IPv6 reservation.
     EXPECT_THROW(IPv6Resrv(IOAddress("10.0.0.1"), 128), isc::BadValue);
+    // Multicast address is invalid for IPv6 reservation.
     EXPECT_THROW(IPv6Resrv(IOAddress("ff02:1::2"), 128), isc::BadValue);
+}
+
+// This test verifies that invalid prefix length is rejected.
+TEST(IPv6ResrvTest, constructiorInvalidPrefixLength) {
+    ASSERT_NO_THROW(IPv6Resrv(IOAddress("2001:db8:1::"), 128));
+    EXPECT_THROW(IPv6Resrv(IOAddress("2001:db8:1::"), 129), isc::BadValue);
+    EXPECT_THROW(IPv6Resrv(IOAddress("2001:db8:1::"), 244), isc::BadValue);
 }
 
 // This test verifies that it is possible to modify prefix and its
@@ -61,6 +71,13 @@ TEST(IPv6ResrvTest, setPrefix) {
     EXPECT_EQ("2001:db8::", resrv.getPrefix().toText());
     EXPECT_EQ(48, resrv.getPrefixLen());
     EXPECT_EQ(IPv6Resrv::TYPE_PD, resrv.getType());
+
+    // IPv4 address is invalid for IPv6 reservation.
+    EXPECT_THROW(resrv.set(IOAddress("10.0.0.1"), 128), isc::BadValue);
+    // IPv6 multicast address is invalid for IPv6 reservation.
+    EXPECT_THROW(resrv.set(IOAddress("ff02::1:2"), 128), isc::BadValue);
+    // Prefix length greater than 128 is invalid.
+    EXPECT_THROW(resrv.set(IOAddress("2001:db8:1::"), 129), isc::BadValue);
 }
 
 // This test checks that the equality operators work fine.
@@ -346,19 +363,23 @@ TEST(HostTest, setValues) {
     boost::scoped_ptr<Host> host;
     ASSERT_NO_THROW(host.reset(new Host("01:02:03:04:05:06", "hw-address",
                                         SubnetID(1), SubnetID(2),
-                                        IOAddress("192.0.2.3"))));
+                                        IOAddress("192.0.2.3"),
+                                        "some-host.example.org")));
 
     ASSERT_EQ(1, host->getIPv4SubnetID());
     ASSERT_EQ(2, host->getIPv6SubnetID());
     ASSERT_EQ("192.0.2.3", host->getIPv4Reservation().toText());
+    ASSERT_EQ("some-host.example.org", host->getHostname());
 
     host->setIPv4SubnetID(SubnetID(123));
     host->setIPv6SubnetID(SubnetID(234));
     host->setIPv4Reservation(IOAddress("10.0.0.1"));
+    host->setHostname("other-host.example.org");
 
     EXPECT_EQ(123, host->getIPv4SubnetID());
     EXPECT_EQ(234, host->getIPv6SubnetID());
     EXPECT_EQ("10.0.0.1", host->getIPv4Reservation().toText());
+    EXPECT_EQ("other-host.example.org", host->getHostname());
 }
 
 // Test that Host constructors initialize client classes from string.

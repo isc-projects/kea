@@ -315,6 +315,23 @@ TEST(ClientIdTest, fromText) {
         ClientId::fromText("00:01:021:03:04:05:06"),
         isc::BadValue
     );
+    // ClientId  with two spaces between the colons should not be allowed.
+    EXPECT_THROW(
+        ClientId::fromText("00:01:  :03:04:05:06"),
+        isc::BadValue
+    );
+
+    // ClientId  with one space between the colons should not be allowed.
+    EXPECT_THROW(
+        ClientId::fromText("00:01: :03:04:05:06"),
+        isc::BadValue
+    );
+
+    // ClientId  with three spaces between the colons should not be allowed.
+    EXPECT_THROW(
+        ClientId::fromText("00:01:   :03:04:05:06"),
+        isc::BadValue
+    );
 }
 
 
