@@ -310,7 +310,7 @@ Debian and Ubuntu:
             <para>
               For additional instructions concerning the building and installation of
               Kea for various databases, see <xref linkend="dhcp-install-configure"/>.
-              For additional instructions concerning configuration backends, see
+              For additional instructions concerning the configuration backends, see
               <xref linkend="dhcp-config-backend" />.
             </para>
           </note>
@@ -389,7 +389,7 @@ Debian and Ubuntu:
     <section id="dhcp-config-backend">
       <title>Selecting the Configuration Backend</title>
       <para>Kea 0.9 introduces configuration backends that are
-      switchable during compilation phase. The backend is chosen using
+      switchable during the compilation phase. The backend is chosen using
       the --with-kea-config switch when running the configure script. It
       currently supports two values: BUNDY and JSON. JSON is the default.
       </para>
@@ -415,8 +415,8 @@ Debian and Ubuntu:
         <varlistentry>
           <term>JSON</term>
           <listitem>
-	    <simpara>JSON is a new default configuration backend
-	    that causes Kea to read JSON configuration file from
+	    <simpara>JSON is the new default configuration backend
+	    that causes Kea to read JSON configuration files from
 	    disk. It does not require any framework and thus is
 	    considered more lightweight. It will allow dynamic
 	    on-line reconfiguration, but will lack remote capabilities

@@ -61,7 +61,7 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
         </listitem>
 
         <listitem>
-          <para>Edit configuration file which is by default installed in
+          <para>Edit the configuration file which by default is installed in
           <filename>[kea-install-dir]/etc/kea/kea.conf</filename> and contains
           configuration for all Kea services. Configuration choices for DHCPv4
           and DHCPv6 services are described in <xref linkend="dhcp4-configuration"/> and <xref linkend="dhcp6-configuration"/>, respectively.</para>

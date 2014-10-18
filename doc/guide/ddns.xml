@@ -11,12 +11,12 @@
     the DDNS protocol (defined in RFC 2136) on behalf of the DHCPv4 and DHCPv6
     servers (kea-dhcp4 and kea-dhcp6 respectively). The DHCP servers construct
     DDNS update requests, known as NameChangeRequests (NCRs), based upon DHCP
-    lease change events and then post these to D2. D2 attempts to match
+    lease change events and then posts these to D2. D2 attempts to match
     each such request to the appropriate DNS server(s) and carry out the
     necessary conversation with those servers to update the DNS data.
     </para>
     <para>
-    In order to match a request to appropriate DNS servers, D2 must have a
+    In order to match a request to the appropriate DNS servers, D2 must have a
     catalog of servers from which to select. In fact, D2 has two such catalogs,
     one for forward DNS and one for reverse DNS; these catalogs are referred
     to as DDNS Domain Lists.  Each list consists of one or more named DDNS
@@ -55,7 +55,7 @@
       <command>kea-dhcp-ddns</command> is the Kea DHCP-DDNS server
       and, due to the nature of DDNS, it is run alongside either the
       DHCPv4 or DHCPv6 components (or both).  Like other parts of
-      Kea, is a separate binary that can be run on its own or through
+      Kea, it is a separate binary that can be run on its own or through
       <command>keactrl</command> (see <xref linkend="keactrl"/>). In
       normal operation, controlling <command>kea-dhcp-ddns</command>
       with <command>keactrl</command> is recommended. However, it is also
@@ -74,7 +74,7 @@
             <simpara>
             <command>-d</command> - specifies whether the server
             logging should be switched to debug/verbose mode. In verbose mode,
-            the logging severity and debuglevel specified in a configuration
+            the logging severity and debuglevel specified in the configuration
             file are ignored and "debug" severity and the maximum debuglevel
             (99) are assumed. The flag is convenient, for temporarily
             switching the server into maximum verbosity, e.g. when
@@ -319,7 +319,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 "DhcpDdns": {
     "tsig_keys": [
     <userinput>    {
-	    "name": "key.four.example.com",
+	    "name": "key.four.example.com.",
 	    "algorithm": "HMAC-SHA224",
 	    "secret": "bZEG7Ow8OgAUPfLWV3aAUQ=="
 	}</userinput>
@@ -365,7 +365,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	  by zone and a DDNS Domain only defines a single zone.
 	  </para>
 	  <para>
-	  The section describes how to add Forward DDNS Domains. Repeat these
+	  This section describes how to add Forward DDNS Domains. Repeat these
 	  steps for each Forward DDNS Domain desired.  Each Forward DDNS Domain
 	  has the following parameters:
 	  <itemizedlist>
@@ -407,7 +407,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
     "forward_ddns": {
 	"ddns_domains": [
 	    <userinput>{
-		"name": "other.example.com",
+		"name": "other.example.com.",
 		"key_name": "",
 		"dns_servers": [
 		]
@@ -426,7 +426,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	<section id="add-forward-dns-servers">
 	  <title>Adding Forward DNS Servers</title>
 	  <para>
-	  The section describes how to add DNS servers to a Forward DDNS Domain.
+	  This section describes how to add DNS servers to a Forward DDNS Domain.
 	  Repeat them for as many servers as desired for a each domain.
 	  </para>
 	  <para>
@@ -457,7 +457,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	    </listitem>
 	  </itemizedlist>
 	  To create a new forward DNS Server, one must add a new server
-	  element to the domain and fill its parameters.  If for
+	  element to the domain and fill in its parameters.  If for
 	example the service is running at "172.88.99.10", then set it as
 	follows:
 <screen>
@@ -465,7 +465,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
     "forward_ddns": {
 	"ddns_domains": [
 	    {
-		"name": "other.example.com",
+		"name": "other.example.com.",
 		"key_name": "",
 		"dns_servers": [
 		    <userinput>{
@@ -524,7 +524,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	  single zone.
 	  </para>
 	  <para>
-	  The section describes how to add Reverse DDNS Domains. Repeat these
+	  This section describes how to add Reverse DDNS Domains. Repeat these
 	  steps for each Reverse DDNS Domain desired.  Each Reverse DDNS Domain
 	  has the following parameters:
 	  <itemizedlist>
@@ -592,8 +592,8 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	<section id="add-reverse-dns-servers">
 	  <title>Adding Reverse DNS Servers</title>
 	  <para>
-	  The section describes how to add DNS servers to a Reverse DDNS Domain.
-	  Repeat them for as many servers as desired for a each domain.
+	  This section describes how to add DNS servers to a Reverse DDNS Domain.
+	  Repeat them for as many servers as desired for each domain.
 	  </para>
 	  <para>
 	  Reverse DNS Server entries represents a actual DNS servers which
@@ -622,7 +622,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	    </listitem>
 	  </itemizedlist>
 	  To create a new reverse DNS Server, one must first add a new server
-	  element to the domain and fill its parameters.  If for
+	  element to the domain and fill in its parameters.  If for
 	example the service is running at "172.88.99.10", then set it as
 	follows:
 <screen>
