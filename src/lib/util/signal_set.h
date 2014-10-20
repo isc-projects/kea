@@ -20,6 +20,7 @@
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <set>
+#include <list>
 #include <signal.h>
 
 namespace isc {
@@ -32,6 +33,18 @@ public:
     SignalSetError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
+
+
+/// @brief Defines a set of integer signal identifiers: SIGHUP, SIGTERM...
+typedef std::set<int> SigIntSet;
+/// @gbrief Pointer to a set of signal identifiers
+typedef boost::shared_ptr<SigIntSet> SigIntSetPtr;
+
+/// @brief Defines a list of integer signal identifiers: SIGHUP, SIGTERM...
+typedef std::list<int> SigIntList;
+/// @gbrief Pointer to a list of signal identifiers
+typedef boost::shared_ptr<SigIntList> SigIntListPtr;
+
 
 /// @brief Forward declaration to the @c isc::util::io::SignalSet.
 class SignalSet;
@@ -229,6 +242,15 @@ private:
     /// @brief Stores the set of signals registered in this signal set.
     std::set<int> local_signals_;
 
+    /// @brief Shared pointer to static set of registered signals
+    /// Set during construction to ensure static set does not lose scope
+    /// before we do.
+    SigIntSetPtr registered_signals_;
+
+    /// @brief Shared pointer to static list of pending signals
+    /// Set during construction to ensure static list does not lose scope
+    /// before we do.
+    SigIntListPtr signal_states_;
 };
 
 }
