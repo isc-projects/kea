@@ -19,6 +19,7 @@
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/subnet.h>
 #include <util/optional_value.h>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace dhcp {
@@ -142,6 +143,16 @@ private:
     Subnet4Collection subnets_;
 
 };
+
+/// @name Pointer to the @c CfgSubnets4 objects.
+//@{
+/// @brief Non-const pointer.
+typedef boost::shared_ptr<CfgSubnets4> CfgSubnets4Ptr;
+
+/// @brief Const pointer.
+typedef boost::shared_ptr<const CfgSubnets4> ConstCfgSubnets4Ptr;
+
+//@}
 
 }
 }
