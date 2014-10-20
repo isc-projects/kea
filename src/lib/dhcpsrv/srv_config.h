@@ -18,6 +18,7 @@
 #include <dhcpsrv/cfg_iface.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfg_option_def.h>
+#include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/logging_info.h>
 #include <boost/shared_ptr.hpp>
 #include <vector>
@@ -184,6 +185,22 @@ public:
         return (cfg_option_);
     }
 
+    /// @brief Returns pointer to non-const object holding subnets configuration
+    /// for DHCPv4.
+    ///
+    /// @return Pointer to the object holding subnets configuration for DHCPv4.
+    CfgSubnets4Ptr getCfgSubnets4() {
+        return (cfg_subnets4_);
+    }
+
+    /// @brief Returns pointer to const object holding subnets configuration for
+    /// DHCPv4.
+    ///
+    /// @return Pointer to the object holding subnets configuration for DHCPv4.
+    ConstCfgSubnets4Ptr getCfgSubnets4() const {
+        return (cfg_subnets4_);
+    }
+
     //@}
 
     /// @brief Copies the currnet configuration to a new configuration.
@@ -276,6 +293,9 @@ private:
     /// This object holds the instances of the options to be sent to clients
     /// connected to any subnet.
     CfgOptionPtr cfg_option_;
+
+    /// @brief Pointer to subnets configuration for IPv4.
+    CfgSubnets4Ptr cfg_subnets4_;
 
 };
 
