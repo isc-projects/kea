@@ -109,22 +109,10 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
     try {
         // Now that we have a proces, we can set up signal handling.
         initSignalHandling();
-
         runProcess();
-
-        /// @todo Once Trac #3470 is addressed this will not be necessary.
-        /// SignalSet uses statics which do not free in predicatable order.
-        if (signal_set_) {
-            signal_set_->clear();
-        }
     } catch (const std::exception& ex) {
         LOG_FATAL(dctl_logger, DCTL_PROCESS_FAILED)
                   .arg(app_name_).arg(ex.what());
-        /// @todo Once Trac #3470 is addressed this will not be necessary.
-        /// SignalSet uses statics which do not free in predicatable order.
-        if (signal_set_) {
-            signal_set_->clear();
-        }
         isc_throw (ProcessRunError,
                    "Application process event loop failed: " << ex.what());
     }

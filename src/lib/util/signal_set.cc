@@ -25,25 +25,29 @@ namespace {
 /// @brief Returns a pointer to the global set of registered signals.
 ///
 /// Multiple instances of @c SignalSet may use this pointer to access
-/// and update the set.
+/// and update the set. Note we use a smart pointer so callers can ensure
+/// the static object doesn't go out of scope before they are done with it
+/// during process exit.
 ///
 /// @return Pointer to the global set of registered signals. This pointer
 /// is always initialized and points to a valid object.
-std::set<int>* getRegisteredSignals() {
-    static std::set<int> registered_signals;
-    return (&registered_signals);
+SigIntSetPtr getRegisteredSignals() {
+    static SigIntSetPtr registered_signals(new SigIntSet());
+    return (registered_signals);
 }
 
 /// @brief Returns a pointer to static collection of signals received.
 ///
 /// Multiple instances of @c SignalSet may use this pointer to access
-/// and update the queue of signals received.
+/// and update the queue of signals received.  Note we use a smart pointer
+/// so callers can ensure the static object doesn't go out of scope before
+/// they are done with it during process exit.
 ///
 /// @return Static collection of signals received. This pointer is always
 /// initialized and points to a valid object.
-std::list<int>* getSignalStates() {
-    static std::list<int> states;
-    return (&states);
+SigIntListPtr getSignalStates() {
+    static SigIntListPtr signal_states(new SigIntList());
+    return (signal_states);
 }
 
 /// @brief Internal signal handler for @c isc::util::io::SignalSet class.
@@ -66,7 +70,7 @@ void internalHandler(int sig) {
 
     // Signal is using post-receipt handling, see if we've
     // already received it.
-    std::list<int>* states = getSignalStates();
+    SigIntListPtr states = getSignalStates();
     for (std::list<int>::const_iterator it = states->begin();
         it != states->end(); ++it) {
             if (sig == *it) {
@@ -134,15 +138,22 @@ SignalSet::invokeOnReceiptHandler(int sig) {
 }
 
 SignalSet::SignalSet(const int sig0) {
+    // Copy static pointers to ensure they don't lose scope before we do.
+    registered_signals_ = getRegisteredSignals();
+    signal_states_ = getSignalStates();
     add(sig0);
 }
 
 SignalSet::SignalSet(const int sig0, const int sig1) {
+    registered_signals_ = getRegisteredSignals();
+    signal_states_ = getSignalStates();
     add(sig0);
     add(sig1);
 }
 
 SignalSet::SignalSet(const int sig0, const int sig1, const int sig2) {
+    registered_signals_ = getRegisteredSignals();
+    signal_states_ = getSignalStates();
     add(sig0);
     add(sig1);
     add(sig2);
@@ -188,9 +199,8 @@ SignalSet::clear() {
 
 int
 SignalSet::getNext() const {
-    std::list<int>* states = getSignalStates();
-    for (std::list<int>::iterator it = states->begin();
-         it != states->end(); ++it) {
+    for (std::list<int>::iterator it = signal_states_->begin();
+         it != signal_states_->end(); ++it) {
         if (local_signals_.find(*it) != local_signals_.end()) {
             return (*it);
         }
@@ -206,9 +216,9 @@ SignalSet::erase(const int sig) {
                   " signal set");
     }
     // Remove globally registered signal.
-    getRegisteredSignals()->erase(sig);
+    registered_signals_->erase(sig);
     // Remove unhandled signals from the queue.
-    for (std::list<int>::iterator it = getSignalStates()->begin();
+    for (std::list<int>::iterator it = signal_states_->begin();
          it != getSignalStates()->end(); ++it) {
         if (*it == sig) {
             it = getSignalStates()->erase(it);
@@ -236,13 +246,12 @@ SignalSet::handleNext(SignalHandler signal_handler) {
 
 void
 SignalSet::insert(const int sig) {
-    std::set<int>* global_signals = getRegisteredSignals();
-    if ((global_signals->find(sig) != global_signals->end()) ||
+    if ((registered_signals_->find(sig) != registered_signals_->end()) ||
         (local_signals_.find(sig) != local_signals_.end())) {
         isc_throw(SignalSetError, "attempt to register a duplicate signal "
                   << sig);
     }
-    global_signals->insert(sig);
+    registered_signals_->insert(sig);
     local_signals_.insert(sig);
 }
 
@@ -250,8 +259,8 @@ void
 SignalSet::maskSignals(const int mask) const {
     sigset_t new_set;
     sigemptyset(&new_set);
-    for (std::set<int>::const_iterator it = getRegisteredSignals()->begin();
-         it != getRegisteredSignals()->end(); ++it) {
+    for (std::set<int>::const_iterator it = registered_signals_->begin();
+         it != registered_signals_->end(); ++it) {
         sigaddset(&new_set, *it);
     }
     sigprocmask(mask, &new_set, 0);
@@ -259,11 +268,10 @@ SignalSet::maskSignals(const int mask) const {
 
 void
 SignalSet::popNext() {
-    std::list<int>* states = getSignalStates();
-    for (std::list<int>::iterator it = states->begin();
-         it != states->end(); ++it) {
+    for (std::list<int>::iterator it = signal_states_->begin();
+         it != signal_states_->end(); ++it) {
         if (local_signals_.find(*it) != local_signals_.end()) {
-            states->erase(it);
+            signal_states_->erase(it);
             return;
         }
     }
