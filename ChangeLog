@@ -1,7 +1,7 @@
 847.	[build]		fdupont
-	Removed unused configuration option --with-shared-memory
+	Removed no longer used configuration option --with-shared-memory
 	and associated files and variables.
-	(Trac #3614, git ...)
+	(Trac #3614, git adee8c93f7c7c1303390dd63dbeae74a48a34845)
 
 846.	[bug]		fdupont
 	Fixed subdir-objects warnings from recent versions of autotools,
