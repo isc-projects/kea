@@ -444,7 +444,7 @@ protected:
     /// @return true if the column is valid; false otherwise.
     virtual bool validate(const CSVRow& row);
 
-private:
+protected:
 
     /// @brief This function validates the header of the CSV file.
     ///
@@ -452,12 +452,16 @@ private:
     /// compare that they exactly match (including order) the header read
     /// from the file.
     ///
-    /// This function is called internally by @CSVFile::open.
+    /// This function is called internally by @CSVFile::open. Derived classes
+    /// may add extra validation steps.
+    ///
+    /// @todo There should be a support for optional columns (see ticket #3626).
     ///
     /// @param header A row holding a header.
     /// @return true if header matches the columns; false otherwise.
-    bool validateHeader(const CSVRow& header);
+    virtual bool validateHeader(const CSVRow& header);
 
+private:
     /// @brief Sanity check if stream is open.
     ///
     /// Checks if the file stream is open so as IO operations can be performed
