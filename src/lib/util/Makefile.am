@@ -1,3 +1,5 @@
+AUTOMAKE_OPTIONS = subdir-objects
+
 SUBDIRS = . io unittests tests python threads
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
