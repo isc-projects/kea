@@ -257,6 +257,11 @@ public:
     /// @brief Verifies that a null DUID is not allowed.
     void testNullDuid();
 
+    /// @brief Verifies that the backend reports expected version numbers.
+    /// @param major Expected major version to be reported.
+    /// @param minor Expected minor version to be reported.
+    void testVersion(int major, int minor);
+
     /// @brief String forms of IPv4 addresses
     std::vector<std::string>  straddress4_;
 

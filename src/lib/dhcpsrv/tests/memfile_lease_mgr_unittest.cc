@@ -465,4 +465,20 @@ TEST_F(MemfileLeaseMgrTest, testUpgrade0_9_0_to_0_9_1) {
     EXPECT_FALSE(stored3->hwaddr_);
 }
 
+// Check that memfile reports version correctly.
+TEST_F(MemfileLeaseMgrTest, versionCheck) {
+
+    // Check that V4 backend reports versions correctly.
+    startBackend(V4);
+    testVersion(Memfile_LeaseMgr::MAJOR_VERSION,
+                Memfile_LeaseMgr::MINOR_VERSION);
+    LeaseMgrFactory::destroy();
+
+    // Check that V6 backends reports them ok, too.
+    startBackend(V6);
+    testVersion(Memfile_LeaseMgr::MAJOR_VERSION,
+                Memfile_LeaseMgr::MINOR_VERSION);
+    LeaseMgrFactory::destroy();
+}
+
 }; // end of anonymous namespace
