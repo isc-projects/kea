@@ -1,3 +1,8 @@
+847.	[build]		fdupont
+	Removed unused configuration option --with-shared-memory
+	and associated files and variables.
+	(Trac #3614, git ...)
+
 846.	[bug]		fdupont
 	Fixed subdir-objects warnings from recent versions of autotools,
 	e.g., on Apple OSX.

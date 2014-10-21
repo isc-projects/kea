@@ -35,9 +35,6 @@ run_unittests_SOURCES += hex_unittest.cc
 run_unittests_SOURCES += io_utilities_unittest.cc
 run_unittests_SOURCES += lru_list_unittest.cc
 run_unittests_SOURCES += memory_segment_local_unittest.cc
-if USE_SHARED_MEMORY
-run_unittests_SOURCES += memory_segment_mapped_unittest.cc
-endif
 run_unittests_SOURCES += memory_segment_common_unittest.h
 run_unittests_SOURCES += memory_segment_common_unittest.cc
 run_unittests_SOURCES += optional_value_unittest.cc

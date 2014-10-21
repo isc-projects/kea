@@ -23,19 +23,8 @@ dnl   BOOST_OFFSET_PTR_WOULDFAIL set to "yes" if offset_ptr would cause build
 dnl                              error; otherwise set to "no"
 dnl   BOOST_NUMERIC_CAST_WOULDFAIL set to "yes" if numeric_cast would cause
 dnl                                build error; otherwise set to "no"
-dnl   BOOST_MAPPED_FILE_WOULDFAIL set to "yes" if managed_mapped_file would
-dnl                               cause build failure; otherwise set to "no"
-dnl   BOOST_MAPPED_FILE_CXXFLAG set to the compiler flag that would need to
-dnl                             compile managed_mapped_file (can be empty).
-dnl                             It is of no use if "WOULDFAIL" is yes.
 dnl   BOOST_STATIC_ASSERT_WOULDFAIL set to "yes" if BOOST_STATIC_ASSERT would
 dnl                                 cause build error; otherwise set to "no"
-
-dnl   BOOST_OFFSET_PTR_OLD set to "yes" if the version of boost is older than
-dnl                        1.48. Older versions of boost have a bug which
-dnl                        causes segfaults in offset_ptr implementation when
-dnl                        compiled by GCC with optimisations enabled.
-dnl                        See ticket no. 3025 for details.
 
 AC_DEFUN([AX_BOOST_FOR_KEA], [
 AC_LANG_SAVE
@@ -119,56 +108,9 @@ if test "X$GXX" = "Xyes"; then
     BOOST_NUMERIC_CAST_WOULDFAIL=yes])
 
    CXXFLAGS="$CXXFLAGS_SAVED"
-
-   AC_MSG_CHECKING([Boost rbtree is old])
-   AC_TRY_COMPILE([
-   #include <boost/version.hpp>
-   #if BOOST_VERSION < 104800
-   #error Too old
-   #endif
-   ],,[AC_MSG_RESULT(no)
-       BOOST_OFFSET_PTR_OLD=no
-   ],[AC_MSG_RESULT(yes)
-      BOOST_OFFSET_PTR_OLD=yes])
 else
    # This doesn't matter for non-g++
    BOOST_NUMERIC_CAST_WOULDFAIL=no
-   BOOST_OFFSET_PTR_OLD=no
-fi
-
-# Boost interprocess::managed_mapped_file is highly system dependent and
-# can cause many portability issues.  We are going to check if it could
-# compile at all, possibly with being lenient about compiler warnings.
-BOOST_MAPPED_FILE_WOULDFAIL=yes
-BOOST_MAPPED_FILE_CXXFLAG=
-CXXFLAGS_SAVED="$CXXFLAGS"
-try_flags="no"
-if test "X$GXX" = "Xyes"; then
-  CXXFLAGS="$CXXFLAGS $CLANG_CXXFLAGS -Wall -Wextra -Werror"
-  try_flags="$try_flags -Wno-error"
-fi
-
-AC_MSG_CHECKING([Boost managed_mapped_file compiles])
-CXXFLAGS_SAVED2="$CXXFLAGS"
-for flag in $try_flags; do
-  if test "$flag" != no; then
-    BOOST_MAPPED_FILE_CXXFLAG="$flag"
-  fi
-  CXXFLAGS="$CXXFLAGS $CLANG_CXXFLAGS $BOOST_MAPPED_FILE_CXXFLAG"
-  AC_TRY_COMPILE([
-  #include <boost/interprocess/managed_mapped_file.hpp>
-  ],[
-  return (boost::interprocess::managed_mapped_file().all_memory_deallocated());
-  ],[AC_MSG_RESULT([yes, with $flag flag])
-     BOOST_MAPPED_FILE_WOULDFAIL=no
-     break
-  ],[])
-
-  CXXFLAGS="$CXXFLAGS_SAVED2"
-done
-
-if test $BOOST_MAPPED_FILE_WOULDFAIL = yes; then
-  AC_MSG_RESULT(no)
 fi
 
 # BOOST_STATIC_ASSERT in versions below Boost 1.54.0 is known to result
