@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -82,7 +82,20 @@ struct TSIGContext::TSIGContextImpl {
             } catch (const isc::Exception&) {
                 return;
             }
-            digest_len_ = hmac_->getOutputLength();
+            size_t digestbits = key_.getDigestbits();
+            size_t default_digest_len = hmac_->getOutputLength();
+            if (digestbits > 0) {
+                digest_len_ = (digestbits + 7) / 8;
+                // sanity (cf. RFC 4635)
+                if ((digest_len_ < 10) ||
+                    (digest_len_ < (default_digest_len / 2)) ||
+                    (digest_len_ > default_digest_len)) {
+                    // should emit a warning?
+                    digest_len_ = default_digest_len;
+                }
+            } else {
+                digest_len_ = default_digest_len;
+            }
         }
     }
 
@@ -402,7 +415,7 @@ TSIGContext::sign(const uint16_t qid, const void* const data,
                                impl_->state_ == SENT_RESPONSE);
 
     // Get the final digest, update internal state, then finish.
-    vector<uint8_t> digest = hmac->sign();
+    vector<uint8_t> digest = hmac->sign(impl_->digest_len_);
     assert(digest.size() <= 0xffff); // cryptolink API should have ensured it.
     ConstTSIGRecordPtr tsig(new TSIGRecord(
                                 impl_->key_.getKeyName(),
@@ -490,9 +503,6 @@ TSIGContext::verify(const TSIGRecord* const record, const void* const data,
                                         digest_len));
     }
 
-    // TODO: signature length check based on RFC4635
-    // (Right now we enforce the standard signature length in libcryptolink)
-
     // Handling empty MAC.  While RFC2845 doesn't explicitly prohibit other
     // cases, it can only reasonably happen in a response with BADSIG or
     // BADKEY.  We reject other cases as if it were BADSIG to avoid unexpected
@@ -512,6 +522,21 @@ TSIGContext::verify(const TSIGRecord* const record, const void* const data,
     // previous MAC), digest it.
     if (impl_->state_ != INIT) {
         impl_->digestPreviousMAC(hmac);
+    }
+
+    // Signature length check based on RFC 4635 3.1
+    if (tsig_rdata.getMACSize() > hmac->getOutputLength()) {
+        // signature length too big
+        return (impl_->postVerifyUpdate(TSIGError::FORMERR(), NULL, 0));
+    }
+    if ((tsig_rdata.getMACSize() < 10) ||
+        (tsig_rdata.getMACSize() < (hmac->getOutputLength() / 2))) {
+        // signature length below minimum
+        return (impl_->postVerifyUpdate(TSIGError::FORMERR(), NULL, 0));
+    }
+    if (tsig_rdata.getMACSize() < impl_->digest_len_) {
+        // (truncated) signature length too small
+        return (impl_->postVerifyUpdate(TSIGError::BAD_TRUNC(), NULL, 0));
     }
 
     //

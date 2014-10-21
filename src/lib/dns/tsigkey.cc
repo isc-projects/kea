@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,6 +24,8 @@
 #include <dns/name.h>
 #include <util/encode/base64.h>
 #include <dns/tsigkey.h>
+
+#include <boost/lexical_cast.hpp>
 
 using namespace std;
 using namespace isc::cryptolink;
@@ -63,9 +65,11 @@ struct
 TSIGKey::TSIGKeyImpl {
     TSIGKeyImpl(const Name& key_name, const Name& algorithm_name,
                 isc::cryptolink::HashAlgorithm algorithm,
+                size_t digestbits,
                 const void* secret, size_t secret_len) :
+
         key_name_(key_name), algorithm_name_(algorithm_name),
-        algorithm_(algorithm),
+        algorithm_(algorithm), digestbits_(digestbits),
         secret_(static_cast<const uint8_t*>(secret),
                 static_cast<const uint8_t*>(secret) + secret_len)
     {
@@ -79,11 +83,13 @@ TSIGKey::TSIGKeyImpl {
     Name key_name_;
     Name algorithm_name_;
     const isc::cryptolink::HashAlgorithm algorithm_;
+    size_t digestbits_;
     const vector<uint8_t> secret_;
 };
 
 TSIGKey::TSIGKey(const Name& key_name, const Name& algorithm_name,
-                 const void* secret, size_t secret_len) : impl_(NULL)
+                 const void* secret, size_t secret_len,
+                 size_t digestbits /*= 0*/) : impl_(NULL)
 {
     const HashAlgorithm algorithm = convertAlgorithmName(algorithm_name);
     if ((secret != NULL && secret_len == 0) ||
@@ -97,8 +103,8 @@ TSIGKey::TSIGKey(const Name& key_name, const Name& algorithm_name,
                   "TSIGKey with unknown algorithm has non empty secret: " <<
                   key_name << ":" << algorithm_name);
     }
-    impl_ = new TSIGKeyImpl(key_name, algorithm_name, algorithm, secret,
-                            secret_len);
+    impl_ = new TSIGKeyImpl(key_name, algorithm_name, algorithm,
+                            digestbits, secret, secret_len);
 }
 
 TSIGKey::TSIGKey(const std::string& str) : impl_(NULL) {
@@ -119,7 +125,15 @@ TSIGKey::TSIGKey(const std::string& str) : impl_(NULL) {
 
         string algo_str;
         if (!iss.eof()) {
-            getline(iss, algo_str);
+            getline(iss, algo_str, ':');
+        }
+        if (iss.fail() || iss.bad()) {
+            isc_throw(InvalidParameter, "Invalid TSIG key string: " << str);
+        }
+
+        string dgstbt_str;
+        if (!iss.eof()) {
+            getline(iss, dgstbt_str);
         }
         if (iss.fail() || iss.bad()) {
             isc_throw(InvalidParameter, "Invalid TSIG key string: " << str);
@@ -128,6 +142,15 @@ TSIGKey::TSIGKey(const std::string& str) : impl_(NULL) {
         const Name algo_name(algo_str.empty() ? "hmac-md5.sig-alg.reg.int" :
                              algo_str);
         const HashAlgorithm algorithm = convertAlgorithmName(algo_name);
+        size_t digestbits = 0;
+        try {
+            if (!dgstbt_str.empty()) {
+                digestbits = boost::lexical_cast<size_t>(dgstbt_str);
+            }
+        } catch (const boost::bad_lexical_cast&) {
+            isc_throw(InvalidParameter,
+                      "TSIG key with non-numeric digestbits: " << dgstbt_str);
+        }
 
         vector<uint8_t> secret;
         isc::util::encode::decodeBase64(secret_str, secret);
@@ -139,6 +162,7 @@ TSIGKey::TSIGKey(const std::string& str) : impl_(NULL) {
         }
 
         impl_ = new TSIGKeyImpl(Name(keyname_str), algo_name, algorithm,
+                                digestbits,
                                 secret.empty() ? NULL : &secret[0],
                                 secret.size());
     } catch (const isc::Exception& e) {
@@ -184,6 +208,11 @@ TSIGKey::getAlgorithm() const {
     return (impl_->algorithm_);
 }
 
+size_t
+TSIGKey::getDigestbits() const {
+    return (impl_->digestbits_);
+}
+
 const void*
 TSIGKey::getSecret() const {
     return ((impl_->secret_.size() > 0) ? &impl_->secret_[0] : NULL);
@@ -196,13 +225,20 @@ TSIGKey::getSecretLength() const {
 
 std::string
 TSIGKey::toText() const {
+    size_t digestbits = getDigestbits();
     const vector<uint8_t> secret_v(static_cast<const uint8_t*>(getSecret()),
                                    static_cast<const uint8_t*>(getSecret()) +
                                    getSecretLength());
     std::string secret_str = isc::util::encode::encodeBase64(secret_v);
 
-    return (getKeyName().toText() + ":" + secret_str + ":" +
-            getAlgorithmName().toText());
+    if (digestbits) {
+        std::string dgstbt_str = boost::lexical_cast<std::string>(static_cast<int>(digestbits));
+        return (getKeyName().toText() + ":" + secret_str + ":" +
+                getAlgorithmName().toText() + ":" + dgstbt_str);
+    } else {
+        return (getKeyName().toText() + ":" + secret_str + ":" +
+                getAlgorithmName().toText());
+    }
 }
 
 const

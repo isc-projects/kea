@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -105,6 +105,12 @@ TEST_F(TSIGKeyTest, construct) {
                       secret.c_str(),
                       secret.size()).getKeyName().toText());
 
+    // Check digestbits
+    EXPECT_EQ(key.getDigestbits(), 0);
+    TSIGKey key_trunc(key_name, TSIGKey::HMACMD5_NAME(),
+                      secret.c_str(), secret.size(), 120);
+    EXPECT_EQ(key_trunc.getDigestbits(), 120);
+
     // Invalid combinations of secret and secret_len:
     EXPECT_THROW(TSIGKey(key_name, TSIGKey::HMACSHA1_NAME(), secret.c_str(), 0),
                  isc::InvalidParameter);
@@ -116,13 +122,14 @@ void
 compareTSIGKeys(const TSIGKey& expect, const TSIGKey& actual) {
     EXPECT_EQ(expect.getKeyName(), actual.getKeyName());
     EXPECT_EQ(expect.getAlgorithmName(), actual.getAlgorithmName());
+    EXPECT_EQ(expect.getDigestbits(), actual.getDigestbits());
     matchWireData(expect.getSecret(), expect.getSecretLength(),
                   actual.getSecret(), actual.getSecretLength());
 }
 
 TEST_F(TSIGKeyTest, copyConstruct) {
     const TSIGKey original(key_name, TSIGKey::HMACSHA256_NAME(),
-                           secret.c_str(), secret.size());
+                           secret.c_str(), secret.size(), 128);
     const TSIGKey copy(original);
     compareTSIGKeys(original, copy);
 
@@ -135,7 +142,7 @@ TEST_F(TSIGKeyTest, copyConstruct) {
 
 TEST_F(TSIGKeyTest, assignment) {
     const TSIGKey original(key_name, TSIGKey::HMACSHA256_NAME(),
-                           secret.c_str(), secret.size());
+                           secret.c_str(), secret.size(), 200);
     TSIGKey copy = original;
     compareTSIGKeys(original, copy);
 
@@ -306,9 +313,10 @@ TEST(TSIGStringTest, TSIGKeyFromToString) {
     TSIGKey k1 = TSIGKey("test.example:MSG6Ng==:hmac-md5.sig-alg.reg.int");
     TSIGKey k2 = TSIGKey("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.");
     TSIGKey k3 = TSIGKey("test.example:MSG6Ng==");
-    TSIGKey k4 = TSIGKey(Name("test.example."), Name("hmac-sha1."), NULL, 0);
+    TSIGKey k4 = TSIGKey("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.:120");
+    TSIGKey k5 = TSIGKey(Name("test.example."), Name("hmac-sha1."), NULL, 0);
     // "Unknown" key with empty secret is okay
-    TSIGKey k5 = TSIGKey("test.example.::unknown");
+    TSIGKey k6 = TSIGKey("test.example.::unknown");
 
     EXPECT_EQ("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.",
               k1.toText());
@@ -316,9 +324,12 @@ TEST(TSIGStringTest, TSIGKeyFromToString) {
               k2.toText());
     EXPECT_EQ("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.",
               k3.toText());
-    EXPECT_EQ("test.example.::hmac-sha1.", k4.toText());
-    EXPECT_EQ(Name("test.example."), k5.getKeyName());
-    EXPECT_EQ(Name("unknown"), k5.getAlgorithmName());
+    EXPECT_EQ("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.:120",
+              k4.toText());
+    EXPECT_EQ(120, k4.getDigestbits());
+    EXPECT_EQ("test.example.::hmac-sha1.", k5.toText());
+    EXPECT_EQ(Name("test.example."), k6.getKeyName());
+    EXPECT_EQ(Name("unknown"), k6.getAlgorithmName());
 
     EXPECT_THROW(TSIGKey(""), isc::InvalidParameter);
     EXPECT_THROW(TSIGKey(":"), isc::InvalidParameter);
@@ -329,6 +340,10 @@ TEST(TSIGStringTest, TSIGKeyFromToString) {
     EXPECT_THROW(TSIGKey("test.example.:"), isc::InvalidParameter);
     EXPECT_THROW(TSIGKey("test.example.:MSG6Ng==:"), isc::InvalidParameter);
     EXPECT_THROW(TSIGKey("test.example.:MSG6Ng==:unknown"), isc::InvalidParameter);
+    EXPECT_THROW(TSIGKey("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.:"),
+                 isc::InvalidParameter);
+    EXPECT_THROW(TSIGKey("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.:xxx"),
+                 isc::InvalidParameter);
 }
 
 

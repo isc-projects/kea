@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -274,10 +274,8 @@ TEST(HMACTest, HMAC_MD5_RFC2202_SIGN) {
                                        0x4c };
     doHMACTest("Test With Truncation", secret5, 16, MD5,
                hmac_expected5, 16);
-#ifndef WITH_BOTAN
     doHMACTest("Test With Truncation", secret5, 16, MD5,
                hmac_expected5, 12);
-#endif
 
     const uint8_t hmac_expected6[] = { 0x6b, 0x1a, 0xb7, 0xfe, 0x4b,
                                        0xd7, 0xbf, 0x8f, 0x0b, 0x62,
@@ -306,10 +304,8 @@ TEST(HMACTest, HMAC_MD5_RFC2202_SIGN_TRUNCATED) {
                                        0x4c };
     doHMACTest("Test With Truncation", secret5, 16, MD5,
                hmac_expected5, 16);
-#ifndef WITH_BOTAN
     doHMACTest("Test With Truncation", secret5, 16, MD5,
                hmac_expected5, 12);
-#endif
 }
 
 //
@@ -363,10 +359,8 @@ TEST(HMACTest, HMAC_SHA1_RFC2202_SIGN) {
                                        0x32, 0x4a, 0x9a, 0x5a, 0x04 };
     doHMACTest("Test With Truncation", secret5, 20, SHA1,
                hmac_expected5, 20);
-#ifndef WITH_BOTAN
     doHMACTest("Test With Truncation", secret5, 20, SHA1,
                hmac_expected5, 12);
-#endif
 
     const uint8_t hmac_expected6[] = { 0xaa, 0x4a, 0xe5, 0xe1, 0x52,
                                        0x72, 0xd0, 0x0e, 0x95, 0x70,
@@ -396,10 +390,8 @@ TEST(HMACTest, HMAC_SHA1_RFC2202_SIGN_TRUNCATED) {
                                        0x32, 0x4a, 0x9a, 0x5a, 0x04 };
     doHMACTest("Test With Truncation", secret5, 20, SHA1,
                hmac_expected5, 20);
-#ifndef WITH_BOTAN
     doHMACTest("Test With Truncation", secret5, 20, SHA1,
                hmac_expected5, 12);
-#endif
 }
 
 //
@@ -560,11 +552,7 @@ TEST(HMACTest, HMAC_SHA512_RFC4231_SIGN) {
     doRFC4231Tests(SHA512, hmac_expected_list);
 }
 
-#ifndef WITH_BOTAN
 TEST(HMACTest, HMAC_SHA256_RFC2202_SIGN_TRUNCATED) {
-#else
-TEST(HMACTest, DISABLED_HMAC_SHA256_RFC2202_SIGN_TRUNCATED) {
-#endif
     const uint8_t secret5[] = { 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c,
                                 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c,
                                 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c,

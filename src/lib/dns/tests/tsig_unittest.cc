@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -951,8 +951,6 @@ TEST_F(TSIGTest, signAfterVerified) {
 
 TEST_F(TSIGTest, tooShortMAC) {
     // Too short MAC should be rejected.
-    // Note: when we implement RFC4635-based checks, the error code will
-    // (probably) be FORMERR.
 
     isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
     createMessageFromFile("tsig_verify10.wire");
@@ -960,7 +958,35 @@ TEST_F(TSIGTest, tooShortMAC) {
         SCOPED_TRACE("Verify test for request");
         commonVerifyChecks(*tsig_verify_ctx, message.getTSIGRecord(),
                            &received_data[0], received_data.size(),
-                           TSIGError::BAD_SIG(), TSIGContext::RECEIVED_REQUEST);
+                           TSIGError::FORMERR(), TSIGContext::RECEIVED_REQUEST);
+    }
+}
+
+TEST_F(TSIGTest, truncatedMAC) {
+    // Check truncated MAC support with HMAC-SHA512-256
+    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
+
+    secret.clear();
+    decodeBase64("jI/Pa4qRu96t76Pns5Z/Ndxbn3QCkwcxLOgt9vgvnJw5wqTRvNyk3FtD6yIMd1dWVlqZ+Y4fe6Uasc0ckctEmg==", secret);
+    TSIGContext sha_ctx(TSIGKey(test_name, TSIGKey::HMACSHA512_NAME(),
+                                &secret[0], secret.size(), 256));
+
+    createMessageFromFile("tsig_verify11.wire");
+    {
+        SCOPED_TRACE("Verify test for request");
+        commonVerifyChecks(sha_ctx, message.getTSIGRecord(),
+                           &received_data[0], received_data.size(),
+                           TSIGError::NOERROR(), TSIGContext::RECEIVED_REQUEST);
+    }
+
+    // Try with HMAC-SHA512-264 (should fail)
+    TSIGContext bad_sha_ctx(TSIGKey(test_name, TSIGKey::HMACSHA512_NAME(),
+                                    &secret[0], secret.size(), 264));
+    {
+        SCOPED_TRACE("Verify test for request");
+        commonVerifyChecks(bad_sha_ctx, message.getTSIGRecord(),
+                           &received_data[0], received_data.size(),
+                           TSIGError::BAD_TRUNC(), TSIGContext::RECEIVED_REQUEST);
     }
 }
 
@@ -972,6 +998,12 @@ TEST_F(TSIGTest, getTSIGLength) {
 
     // hmac-md5.sig-alg.reg.int.: n2=26, x=16
     EXPECT_EQ(85, tsig_ctx->getTSIGLength());
+
+    // hmac-md5-80: n2=26, x=10
+    tsig_ctx.reset(new TestTSIGContext(TSIGKey(test_name,
+                                               TSIGKey::HMACMD5_NAME(),
+                                               &dummy_data[0], 10, 80)));
+    EXPECT_EQ(79, tsig_ctx->getTSIGLength());
 
     // hmac-sha1: n2=11, x=20
     tsig_ctx.reset(new TestTSIGContext(TSIGKey(test_name,
@@ -1002,6 +1034,12 @@ TEST_F(TSIGTest, getTSIGLength) {
                                                TSIGKey::HMACSHA512_NAME(),
                                                &dummy_data[0], 64)));
     EXPECT_EQ(120, tsig_ctx->getTSIGLength());
+
+    // hmac-sha512-256: n2=13, x=32
+    tsig_ctx.reset(new TestTSIGContext(TSIGKey(test_name,
+                                               TSIGKey::HMACSHA512_NAME(),
+                                               &dummy_data[0], 32, 256)));
+    EXPECT_EQ(88, tsig_ctx->getTSIGLength());
 
     // bad key case: n1=len(badkey.example.com)=20, n2=26, x=0
     tsig_ctx.reset(new TestTSIGContext(badkey_name, TSIGKey::HMACMD5_NAME(),

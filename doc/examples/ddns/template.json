@@ -92,6 +92,9 @@
 #            Valid values for algorithm are:    HMAC-MD5, HMAC-SHA1,
 #                                               HMAC-SHA224, HMAC-SHA256,
 #                                               HMAC-SHA384, HMAC-SHA512
+#           "digest_bits" : 256,
+#           Minimum truncated length in bits.
+#           Default 0 (means truncation is forbidden).
             "secret" : "<shared secret value>"
         }
 #       ,

@@ -249,11 +249,13 @@ bool checkServer(DnsServerInfoPtr server, const char* hostname,
 /// @return returns true if there is a match across the board, otherwise it
 /// returns false.
 bool checkKey(TSIGKeyInfoPtr key, const std::string& name,
-                 const std::string& algorithm, const std::string& secret) {
+	      const std::string& algorithm, const std::string& secret,
+              uint32_t digestbits = 0) {
     // Return value, assume its a match.
     return (((key) &&
         (key->getName() == name) &&
         (key->getAlgorithm() == algorithm)  &&
+        (key->getDigestbits() == digestbits) &&
         (key->getSecret() ==  secret)  &&
         (key->getTSIGKey())));
 }
@@ -618,6 +620,7 @@ TEST_F(TSIGKeyInfoTest, validEntry) {
     std::string config = "{"
                          " \"name\": \"d2_key_one\" , "
                          " \"algorithm\": \"HMAC-MD5\" , "
+                         " \"digest_bits\": 120 , "
                          " \"secret\": \"dGhpcyBrZXkgd2lsbCBtYXRjaA==\" "
                          "}";
     ASSERT_TRUE(fromJSON(config));
@@ -638,7 +641,7 @@ TEST_F(TSIGKeyInfoTest, validEntry) {
 
     // Verify the key contents.
     EXPECT_TRUE(checkKey(key, "d2_key_one", "HMAC-MD5",
-                         "dGhpcyBrZXkgd2lsbCBtYXRjaA=="));
+                         "dGhpcyBrZXkgd2lsbCBtYXRjaA==", 120));
 }
 
 /// @brief Verifies that attempting to parse an invalid list of TSIGKeyInfo
@@ -649,11 +652,13 @@ TEST_F(TSIGKeyInfoTest, invalidTSIGKeyList) {
 
                          " { \"name\": \"key1\" , "
                          "   \"algorithm\": \"HMAC-MD5\" ,"
+                         " \"digest_bits\": 120 , "
                          "   \"secret\": \"GWG/Xfbju4O2iXGqkSu4PQ==\" "
                          " },"
                          // this entry has an invalid algorithm
                          " { \"name\": \"key2\" , "
                          "   \"algorithm\": \"\" ,"
+                         " \"digest_bits\": 120 , "
                          "   \"secret\": \"GWG/Xfbju4O2iXGqkSu4PQ==\" "
                          " },"
                          " { \"name\": \"key3\" , "
@@ -680,10 +685,12 @@ TEST_F(TSIGKeyInfoTest, duplicateTSIGKey) {
 
                          " { \"name\": \"key1\" , "
                          "   \"algorithm\": \"HMAC-MD5\" ,"
+                         " \"digest_bits\": 120 , "
                          "   \"secret\": \"GWG/Xfbju4O2iXGqkSu4PQ==\" "
                          " },"
                          " { \"name\": \"key2\" , "
                          "   \"algorithm\": \"HMAC-MD5\" ,"
+                         " \"digest_bits\": 120 , "
                          "   \"secret\": \"GWG/Xfbju4O2iXGqkSu4PQ==\" "
                          " },"
                          " { \"name\": \"key1\" , "
@@ -710,26 +717,32 @@ TEST_F(TSIGKeyInfoTest, validTSIGKeyList) {
 
                          " { \"name\": \"key1\" , "
                          "   \"algorithm\": \"HMAC-MD5\" ,"
+                         " \"digest_bits\": 80 , "
                          "  \"secret\": \"dGhpcyBrZXkgd2lsbCBtYXRjaA==\" "
                          " },"
                          " { \"name\": \"key2\" , "
                          "   \"algorithm\": \"HMAC-SHA1\" ,"
+                         " \"digest_bits\": 80 , "
                          "  \"secret\": \"dGhpcyBrZXkgd2lsbCBtYXRjaA==\" "
                          " },"
                          " { \"name\": \"key3\" , "
                          "   \"algorithm\": \"HMAC-SHA256\" ,"
+                         " \"digest_bits\": 128 , "
                          "  \"secret\": \"dGhpcyBrZXkgd2lsbCBtYXRjaA==\" "
                          " },"
                          " { \"name\": \"key4\" , "
                          "   \"algorithm\": \"HMAC-SHA224\" ,"
+                         " \"digest_bits\": 112 , "
                          "  \"secret\": \"dGhpcyBrZXkgd2lsbCBtYXRjaA==\" "
                          " },"
                          " { \"name\": \"key5\" , "
                          "   \"algorithm\": \"HMAC-SHA384\" ,"
+                         " \"digest_bits\": 192 , "
                          "  \"secret\": \"dGhpcyBrZXkgd2lsbCBtYXRjaA==\" "
                          " },"
                          " { \"name\": \"key6\" , "
                          "   \"algorithm\": \"HMAC-SHA512\" ,"
+                         " \"digest_bits\": 256 , "
                          "   \"secret\": \"dGhpcyBrZXkgd2lsbCBtYXRjaA==\" "
                          " }"
                          " ]";
@@ -754,7 +767,8 @@ TEST_F(TSIGKeyInfoTest, validTSIGKeyList) {
     TSIGKeyInfoPtr& key = gotit->second;
 
     // Verify the key contents.
-    EXPECT_TRUE(checkKey(key, "key1", TSIGKeyInfo::HMAC_MD5_STR, ref_secret));
+    EXPECT_TRUE(checkKey(key, "key1", TSIGKeyInfo::HMAC_MD5_STR,
+                         ref_secret, 80));
 
     // Find the 2nd key and retrieve it.
     gotit = keys_->find("key2");
@@ -762,7 +776,8 @@ TEST_F(TSIGKeyInfoTest, validTSIGKeyList) {
     key = gotit->second;
 
     // Verify the key contents.
-    EXPECT_TRUE(checkKey(key, "key2", TSIGKeyInfo::HMAC_SHA1_STR, ref_secret));
+    EXPECT_TRUE(checkKey(key, "key2", TSIGKeyInfo::HMAC_SHA1_STR,
+                         ref_secret, 80));
 
     // Find the 3rd key and retrieve it.
     gotit = keys_->find("key3");
@@ -771,7 +786,7 @@ TEST_F(TSIGKeyInfoTest, validTSIGKeyList) {
 
     // Verify the key contents.
     EXPECT_TRUE(checkKey(key, "key3", TSIGKeyInfo::HMAC_SHA256_STR,
-                         ref_secret));
+                         ref_secret, 128));
 
     // Find the 4th key and retrieve it.
     gotit = keys_->find("key4");
@@ -780,7 +795,7 @@ TEST_F(TSIGKeyInfoTest, validTSIGKeyList) {
 
     // Verify the key contents.
     EXPECT_TRUE(checkKey(key, "key4", TSIGKeyInfo::HMAC_SHA224_STR,
-                         ref_secret));
+                         ref_secret, 112));
 
     // Find the 5th key and retrieve it.
     gotit = keys_->find("key5");
@@ -789,7 +804,7 @@ TEST_F(TSIGKeyInfoTest, validTSIGKeyList) {
 
     // Verify the key contents.
     EXPECT_TRUE(checkKey(key, "key5", TSIGKeyInfo::HMAC_SHA384_STR,
-                         ref_secret));
+                         ref_secret, 192));
 
     // Find the 6th key and retrieve it.
     gotit = keys_->find("key6");
@@ -798,7 +813,7 @@ TEST_F(TSIGKeyInfoTest, validTSIGKeyList) {
 
     // Verify the key contents.
     EXPECT_TRUE(checkKey(key, "key6", TSIGKeyInfo::HMAC_SHA512_STR,
-                         ref_secret));
+                         ref_secret, 256));
 }
 
 /// @brief Tests the enforcement of data validation when parsing DnsServerInfos.
@@ -1261,6 +1276,7 @@ TEST_F(D2CfgMgrTest, fullConfig) {
                         "{"
                         "  \"name\": \"d2_key.billcat.net\" , "
                         "  \"algorithm\": \"hmac-md5\" , "
+                        " \"digest_bits\": 120 , "
                         "   \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\" "
                         "}"
                         "],"
