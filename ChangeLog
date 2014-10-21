@@ -1,7 +1,7 @@
 846.	[bug]		fdupont
 	Fixed subdir-objects warnings from recent versions of autotools,
 	e.g., on Apple OSX.
-	(Trac #3162, git ...)
+	(Trac #3162, git e25c7477f3c35cdaa0f038732f697224bfd44847)
 
 845.	[func]		marcin
 	Implemented Host class for storing information about IPv4 and IPv6
