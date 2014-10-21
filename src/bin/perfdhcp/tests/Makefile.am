@@ -1,3 +1,5 @@
+AUTOMAKE_OPTIONS = subdir-objects
+
 SUBDIRS = . testdata
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
@@ -31,12 +33,12 @@ run_unittests_SOURCES += rate_control_unittest.cc
 run_unittests_SOURCES += stats_mgr_unittest.cc
 run_unittests_SOURCES += test_control_unittest.cc
 run_unittests_SOURCES += command_options_helper.h
-run_unittests_SOURCES += $(top_builddir)/src/bin/perfdhcp/command_options.cc
-run_unittests_SOURCES += $(top_builddir)/src/bin/perfdhcp/pkt_transform.cc
-run_unittests_SOURCES += $(top_builddir)/src/bin/perfdhcp/perf_pkt6.cc
-run_unittests_SOURCES += $(top_builddir)/src/bin/perfdhcp/perf_pkt4.cc
-run_unittests_SOURCES += $(top_builddir)/src/bin/perfdhcp/rate_control.cc
-run_unittests_SOURCES += $(top_builddir)/src/bin/perfdhcp/test_control.cc
+run_unittests_SOURCES += ../command_options.cc
+run_unittests_SOURCES += ../pkt_transform.cc
+run_unittests_SOURCES += ../perf_pkt6.cc
+run_unittests_SOURCES += ../perf_pkt4.cc
+run_unittests_SOURCES += ../rate_control.cc
+run_unittests_SOURCES += ../test_control.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
