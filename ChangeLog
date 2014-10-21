@@ -1,6 +1,6 @@
 848.	[func]		fdupont
 	Added truncated HMAC support to TSIG, as per RFC 4635.
-	(Trac #3593, git ...)
+	(Trac #3593, git ae3a9cd1a0d2dc07b7092368149381d69bc2c61a)
 
 847.	[build]		fdupont
 	Removed no longer used configuration option --with-shared-memory
