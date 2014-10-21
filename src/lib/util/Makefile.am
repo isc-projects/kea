@@ -7,18 +7,6 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/lib/util -I$(top_builddir)/src/lib/util
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/exceptions -I$(top_builddir)/src/lib/exceptions
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
-# If we use the shared-memory support, corresponding Boost library may
-# cause build failures especially if it's strict about warnings.  We've
-# detected it in ./configure and set BOOST_MAPPED_FILE_CXXFLAG to be more
-# lenient as necessary (specifically, when set it'd usually suppress -Werror).
-# This is a module wide setting, and has a possible bad side effect of hiding
-# issues in other files, but making it per-file seems to be too costly.
-# So we begin with the wider setting. If the side effect turns out to be too
-# harmful, we'll consider other measure, e.g, moving the related files into
-# a subdirectory.
-if USE_SHARED_MEMORY
-AM_CXXFLAGS += $(BOOST_MAPPED_FILE_CXXFLAG)
-endif
 
 lib_LTLIBRARIES = libkea-util.la
 libkea_util_la_SOURCES  = csv_file.h csv_file.cc
@@ -29,9 +17,6 @@ libkea_util_la_SOURCES += buffer.h io_utilities.h
 libkea_util_la_SOURCES += time_utilities.h time_utilities.cc
 libkea_util_la_SOURCES += memory_segment.h
 libkea_util_la_SOURCES += memory_segment_local.h memory_segment_local.cc
-if USE_SHARED_MEMORY
-libkea_util_la_SOURCES += memory_segment_mapped.h memory_segment_mapped.cc
-endif
 libkea_util_la_SOURCES += optional_value.h
 libkea_util_la_SOURCES += range_utilities.h
 libkea_util_la_SOURCES += signal_set.cc signal_set.h
