@@ -106,6 +106,12 @@
             "algorithm": "HMAC-SHA1",
             "secret": "hRrp29wzUv3uzSNRLlY68w=="
         }
+        {
+            "name": "d2.sha512.key",
+            "algorithm": "HMAC-SHA512",
+            "digest_bits": 256,
+            "secret": "/4wklkm04jeH4anx2MKGJLcya+ZLHldL5d6mK+4q6UXQP7KJ9mS2QG29hh0SJR4LA0ikxNJTUMvir42gLx6fGQ=="
+        }
     ]
 }
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -30,6 +30,7 @@ class Name;
 /// A TSIG key consists of the following attributes:
 /// - Key name
 /// - Hash algorithm
+/// - Digest bits
 /// - Shared secret
 ///
 /// <b>Implementation Notes</b>
@@ -97,6 +98,12 @@ public:
     /// is 0 if and only if the former is \c NULL;
     /// otherwise an exception of type \c InvalidParameter will be thrown.
     ///
+    /// \c digestbits is the truncated length in bits or 0 which means no
+    /// truncation and is the default. Constraints for non-zero value
+    /// are in RFC 4635 section 3.1: minimum 80 or the half of the
+    /// full (i.e., not truncated) length, integral number of octets
+    /// (i.e., multiple of 8), and maximum the full length.
+    ///
     /// This constructor internally involves resource allocation, and if
     /// it fails, a corresponding standard exception will be thrown.
     ///
@@ -108,16 +115,18 @@ public:
     /// used for this key, or \c NULL if the secret is empty.
     /// \param secret_len The size of the binary %data (\c secret) in bytes.
     TSIGKey(const Name& key_name, const Name& algorithm_name,
-            const void* secret, size_t secret_len);
+            const void* secret, size_t secret_len, size_t digestbits = 0);
 
     /// \brief Constructor from an input string
     ///
     /// The string must be of the form:
-    /// name:secret[:algorithm]
+    /// name:secret[:algorithm][:digestbits]
     /// Where "name" is a domain name for the key, "secret" is a
     /// base64 representation of the key secret, and the optional
     /// "algorithm" is an algorithm identifier as specified in RFC 4635.
     /// The default algorithm is hmac-md5.sig-alg.reg.int.
+    /// "digestbits" is the minimum truncated length in bits.
+    /// The default digestbits value is 0 and means truncation is forbidden.
     ///
     /// The same restriction about the algorithm name (and secret) as that
     /// for the other constructor applies.
@@ -168,6 +177,9 @@ public:
     /// Return the hash algorithm name in the form of cryptolink::HashAlgorithm
     isc::cryptolink::HashAlgorithm getAlgorithm() const;
 
+    /// Return the minimum truncated length.
+    size_t getDigestbits() const;
+
     /// Return the length of the TSIG secret in bytes.
     size_t getSecretLength() const;
 
@@ -187,10 +199,11 @@ public:
     /// \brief Converts the TSIGKey to a string value
     ///
     /// The resulting string will be of the form
-    /// name:secret:algorithm
+    /// name:secret:algorithm[:digestbits]
     /// Where "name" is a domain name for the key, "secret" is a
     /// base64 representation of the key secret, and "algorithm" is
     /// an algorithm identifier as specified in RFC 4635.
+    /// When not zero, digestbits is appended.
     ///
     /// \return The string representation of the given TSIGKey.
     std::string toText() const;

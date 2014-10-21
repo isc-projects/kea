@@ -20,6 +20,7 @@
 
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <sstream>
@@ -143,8 +144,9 @@ const char* TSIGKeyInfo::HMAC_SHA384_STR = "HMAC-SHA384";
 const char* TSIGKeyInfo::HMAC_SHA512_STR = "HMAC-SHA512";
 
 TSIGKeyInfo::TSIGKeyInfo(const std::string& name, const std::string& algorithm,
-                         const std::string& secret)
-    :name_(name), algorithm_(algorithm), secret_(secret), tsig_key_() {
+                         const std::string& secret, uint32_t digestbits)
+    :name_(name), algorithm_(algorithm), secret_(secret),
+     digestbits_(digestbits), tsig_key_() {
     remakeKey();
 }
 
@@ -180,6 +182,9 @@ TSIGKeyInfo::remakeKey() {
         stream << dns::Name(name_).toText() << ":"
                << secret_ << ":"
                << stringToAlgorithmName(algorithm_);
+        if (digestbits_ > 0) {
+            stream << ":" << digestbits_;
+        }
 
         tsig_key_.reset(new dns::TSIGKey(stream.str()));
     } catch (const std::exception& ex) {
@@ -366,14 +371,17 @@ TSIGKeyInfoParser::build(isc::data::ConstElementPtr key_config) {
 
     std::string name;
     std::string algorithm;
+    uint32_t digestbits = 0;
     std::string secret;
     std::map<std::string, isc::data::Element::Position> pos;
 
     // Fetch the key's parsed scalar values from parser's local storage.
-    // All are required, if any are missing we'll throw.
+    // Only digestbits is optional and doesn't throw when missing
     try {
         pos["name"] = local_scalars_.getParam("name", name);
         pos["algorithm"] = local_scalars_.getParam("algorithm", algorithm);
+        pos["digest_bits"] = local_scalars_.getParam("digest_bits", digestbits,
+                                                     DCfgContextBase::OPTIONAL);
         pos["secret"] = local_scalars_.getParam("secret", secret);
     } catch (const std::exception& ex) {
         isc_throw(D2CfgError, "TSIG Key incomplete : " << ex.what()
@@ -400,6 +408,44 @@ TSIGKeyInfoParser::build(isc::data::ConstElementPtr key_config) {
         isc_throw(D2CfgError, "TSIG key : " << ex.what() << " (" << pos["algorithm"] << ")");
     }
 
+    // Not zero Digestbits must be an integral number of octets, greater
+    // than 80 and the half of the full length
+    if (digestbits > 0) {
+      if ((digestbits % 8) != 0) {
+          isc_throw(D2CfgError, "Invalid TSIG key digest_bits specified : " <<
+                                digestbits << " (" << pos["digest_bits"] << ")");
+      }
+      if (digestbits < 80) {
+          isc_throw(D2CfgError, "TSIG key digest_bits too small : " <<
+                                digestbits << " (" << pos["digest_bits"] << ")");
+      }
+      if (boost::iequals(algorithm, TSIGKeyInfo::HMAC_SHA224_STR)) {
+          if (digestbits < 112) {
+              isc_throw(D2CfgError, "TSIG key digest_bits too small : " <<
+                                    digestbits << " (" << pos["digest_bits"]
+                                    << ")");
+          }
+      } else if (boost::iequals(algorithm, TSIGKeyInfo::HMAC_SHA256_STR)) {
+          if (digestbits < 128) {
+              isc_throw(D2CfgError, "TSIG key digest_bits too small : " <<
+                                    digestbits << " (" << pos["digest_bits"]
+                                    << ")");
+          }
+      } else if (boost::iequals(algorithm, TSIGKeyInfo::HMAC_SHA384_STR)) {
+          if (digestbits < 192) {
+              isc_throw(D2CfgError, "TSIG key digest_bits too small : " <<
+                                    digestbits << " (" << pos["digest_bits"]
+                                    << ")");
+          }
+      } else if (boost::iequals(algorithm, TSIGKeyInfo::HMAC_SHA512_STR)) {
+          if (digestbits < 256) {
+              isc_throw(D2CfgError, "TSIG key digest_bits too small : " <<
+                                    digestbits << " (" << pos["digest_bits"]
+                                    << ")");
+          }
+      }
+    }
+
     // Secret cannot be blank.
     // Cryptolink lib doesn't offer any way to validate these. As long as it
     // isn't blank we'll accept it.  If the content is bad, the call to in
@@ -414,7 +460,7 @@ TSIGKeyInfoParser::build(isc::data::ConstElementPtr key_config) {
     // with an invalid secret content.
     TSIGKeyInfoPtr key_info;
     try {
-        key_info.reset(new TSIGKeyInfo(name, algorithm, secret));
+        key_info.reset(new TSIGKeyInfo(name, algorithm, secret, digestbits));
     } catch (const std::exception& ex) {
         isc_throw(D2CfgError, ex.what() << " (" << key_config->getPosition() << ")");
 
@@ -435,6 +481,9 @@ TSIGKeyInfoParser::createConfigParser(const std::string& config_id,
         (config_id == "secret")) {
         parser = new isc::dhcp::StringParser(config_id,
                                              local_scalars_.getStringStorage());
+    } else if (config_id == "digest_bits") {
+        parser = new isc::dhcp::Uint32Parser(config_id,
+                                             local_scalars_.getUint32Storage());
     } else {
         isc_throw(NotImplemented,
                   "parser error: TSIGKeyInfo parameter not supported: "
