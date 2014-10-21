@@ -1041,31 +1041,6 @@ if test "$BOOST_NUMERIC_CAST_WOULDFAIL" = "yes" -a X"$werror_ok" = X1 -a $CLANGP
     AC_MSG_ERROR([Failed to compile a required header file.  If you are using FreeBSD and Boost installed via ports, retry with specifying --without-werror.  See the ChangeLog entry for Trac no. 1991 for more details.])
 fi
 
-use_shared_memory=yes
-AC_ARG_WITH(shared-memory,
-    AC_HELP_STRING([--with-shared-memory],
-    [Build with Boost shared memory support; for large scale authoritative DNS servers]),
-    [use_shared_memory=$withval])
-if test X$use_shared_memory = Xyes -a "$BOOST_MAPPED_FILE_WOULDFAIL" = "yes" -a "$want_dns" = "yes"; then
-    AC_MSG_ERROR([Boost shared memory does not compile on this system.  If you don't need it (most normal users won't) build without it by rerunning this script with --without-shared-memory; using a different compiler or a different version of Boost may also help.])
-fi
-AM_CONDITIONAL([USE_SHARED_MEMORY], [test x$use_shared_memory = xyes])
-if test "x$use_shared_memory" = "xyes"; then
-    AC_DEFINE(USE_SHARED_MEMORY, 1, [Define to 1 if shared memory support is enabled])
-fi
-AC_SUBST(BOOST_MAPPED_FILE_CXXFLAG)
-
-if test "$BOOST_OFFSET_PTR_OLD" = "yes" -a "$use_shared_memory" = "yes" -a "$want_dns" = "yes"; then
-    AC_MSG_ERROR([You're trying to compile against boost older than 1.48 with
-shared memory. Older versions of boost have a bug which causes segfaults in
-offset_ptr implementation when compiled by GCC with optimisations enabled.
-See ticket no. 3025 for details.
-
-Either update boost to newer version or use --without-shared-memory.
-Note that most users likely don't need shared memory support.
-])
-fi
-
 # Add some default CPP flags needed for Boost, identified by the AX macro.
 CPPFLAGS="$CPPFLAGS $CPPFLAGS_BOOST_THREADCONF"
 
