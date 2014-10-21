@@ -289,15 +289,8 @@ CSVFile::open() {
             // Check the header against the columns specified for the CSV file.
             if (!validateHeader(header)) {
 
-                // One possible validation failure is that we're reading Kea 0.9
-                // lease file that didn't have hwaddr column. Let's add it and
-                // try to revalidate.
-                header.append("hwaddr");
-
-                if (!validateHeader(header)) {
-                    isc_throw(CSVFileError, "invalid header '" << header
-                              << "' in CSV file '" << filename_ << "'");
-                }
+                isc_throw(CSVFileError, "invalid header '" << header
+                          << "' in CSV file '" << filename_ << "'");
             }
 
             // Everything is good, so if we haven't added any columns yet,
