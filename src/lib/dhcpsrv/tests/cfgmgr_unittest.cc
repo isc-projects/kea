@@ -282,7 +282,6 @@ public:
 
     void clear() {
         CfgMgr::instance().setVerbose(false);
-        CfgMgr::instance().deleteSubnets4();
         CfgMgr::instance().deleteSubnets6();
         CfgMgr::instance().clear();
     }
@@ -302,133 +301,6 @@ TEST_F(CfgMgrTest, configuration) {
     configuration = CfgMgr::instance().getStagingCfg();
     ASSERT_TRUE(configuration);
     EXPECT_TRUE(configuration->getLoggingInfo().empty());
-}
-
-// This test verifies if the configuration manager is able to hold and return
-// valid subnets.
-TEST_F(CfgMgrTest, subnet4) {
-    CfgMgr& cfg_mgr = CfgMgr::instance();
-
-    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3));
-    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3));
-    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3));
-
-    // There shouldn't be any subnet configured at this stage
-    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("192.0.2.0"), classify_));
-
-    cfg_mgr.addSubnet4(subnet1);
-
-    // Now we have only one subnet, any request will be served from it
-    EXPECT_EQ(subnet1, cfg_mgr.getSubnet4(IOAddress("192.0.2.63"),
-                  classify_));
-
-    // Now we add more subnets and check that both old and new subnets
-    // are accessible.
-    cfg_mgr.addSubnet4(subnet2);
-    cfg_mgr.addSubnet4(subnet3);
-
-    EXPECT_EQ(subnet3, cfg_mgr.getSubnet4(IOAddress("192.0.2.191"), classify_));
-    EXPECT_EQ(subnet1, cfg_mgr.getSubnet4(IOAddress("192.0.2.15"), classify_));
-    EXPECT_EQ(subnet2, cfg_mgr.getSubnet4(IOAddress("192.0.2.85"), classify_));
-
-    // Try to find an address that does not belong to any subnet
-    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("192.0.2.192"), classify_));
-
-    // Check that deletion of the subnets works.
-    cfg_mgr.deleteSubnets4();
-    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("192.0.2.191"), classify_));
-    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("192.0.2.15"), classify_));
-    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("192.0.2.85"), classify_));
-}
-
-// This test verifies if the configuration manager is able to hold subnets with
-// their classifier information and return proper subnets, based on those
-// classes.
-TEST_F(CfgMgrTest, classifySubnet4) {
-    CfgMgr& cfg_mgr = CfgMgr::instance();
-
-    // Let's configure 3 subnets
-    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3));
-    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3));
-    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3));
-
-    cfg_mgr.addSubnet4(subnet1);
-    cfg_mgr.addSubnet4(subnet2);
-    cfg_mgr.addSubnet4(subnet3);
-
-    // Let's sanity check that we can use that configuration.
-    EXPECT_EQ(subnet1, cfg_mgr.getSubnet4(IOAddress("192.0.2.5"), classify_));
-    EXPECT_EQ(subnet2, cfg_mgr.getSubnet4(IOAddress("192.0.2.70"), classify_));
-    EXPECT_EQ(subnet3, cfg_mgr.getSubnet4(IOAddress("192.0.2.130"), classify_));
-
-    // Client now belongs to bar class.
-    classify_.insert("bar");
-
-    // There are no class restrictions defined, so everything should work
-    // as before
-    EXPECT_EQ(subnet1, cfg_mgr.getSubnet4(IOAddress("192.0.2.5"), classify_));
-    EXPECT_EQ(subnet2, cfg_mgr.getSubnet4(IOAddress("192.0.2.70"), classify_));
-    EXPECT_EQ(subnet3, cfg_mgr.getSubnet4(IOAddress("192.0.2.130"), classify_));
-
-    // Now let's add client class restrictions.
-    subnet1->allowClientClass("foo"); // Serve here only clients from foo class
-    subnet2->allowClientClass("bar"); // Serve here only clients from bar class
-    subnet3->allowClientClass("baz"); // Serve here only clients from baz class
-
-    // The same check as above should result in client being served only in
-    // bar class, i.e. subnet2
-    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("192.0.2.5"), classify_));
-    EXPECT_EQ(subnet2, cfg_mgr.getSubnet4(IOAddress("192.0.2.70"), classify_));
-    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("192.0.2.130"), classify_));
-
-    // Now let's check that client with wrong class is not supported
-    classify_.clear();
-    classify_.insert("some_other_class");
-    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("192.0.2.5"), classify_));
-    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("192.0.2.70"), classify_));
-    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("192.0.2.130"), classify_));
-
-    // Finally, let's check that client without any classes is not supported
-    classify_.clear();
-    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("192.0.2.5"), classify_));
-    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("192.0.2.70"), classify_));
-    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("192.0.2.130"), classify_));
-}
-
-// This test verifies if the configuration manager is able to hold v4 subnets
-// with their relay address information and return proper subnets, based on
-// those addresses.
-TEST_F(CfgMgrTest, subnet4RelayOverride) {
-    CfgMgr& cfg_mgr = CfgMgr::instance();
-
-    // Let's configure 3 subnets
-    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3));
-    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3));
-    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3));
-
-    cfg_mgr.addSubnet4(subnet1);
-    cfg_mgr.addSubnet4(subnet2);
-    cfg_mgr.addSubnet4(subnet3);
-
-    // Check that without relay-info specified, subnets are not selected
-    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("10.0.0.1"), classify_, true));
-    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("10.0.0.2"), classify_, true));
-    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("10.0.0.3"), classify_, true));
-
-    // Now specify relay info
-    subnet1->setRelayInfo(IOAddress("10.0.0.1"));
-    subnet2->setRelayInfo(IOAddress("10.0.0.2"));
-    subnet3->setRelayInfo(IOAddress("10.0.0.3"));
-
-    // And try again. This time relay-info is there and should match.
-    EXPECT_EQ(subnet1, cfg_mgr.getSubnet4(IOAddress("10.0.0.1"), classify_, true));
-    EXPECT_EQ(subnet2, cfg_mgr.getSubnet4(IOAddress("10.0.0.2"), classify_, true));
-    EXPECT_EQ(subnet3, cfg_mgr.getSubnet4(IOAddress("10.0.0.3"), classify_, true));
-
-    // Finally, check that the relay works only if hint provided is relay address
-    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("10.0.0.1"), classify_, false));
-    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("10.0.0.2"), classify_, false));
-    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("10.0.0.3"), classify_, false));
 }
 
 // This test verifies if the configuration manager is able to hold v6 subnets
@@ -856,63 +728,6 @@ TEST_F(CfgMgrTest, d2ClientConfig) {
     // and not the original configuration.
     EXPECT_EQ(*new_cfg, *updated_config);
     EXPECT_NE(*original_config, *updated_config);
-}
-
-// This test verfies that CfgMgr correctly determines that the address of the
-// interface belongs to existing IPv4 subnet.
-TEST_F(CfgMgrTest, getSubnet4ForInterface) {
-    IfaceMgrTestConfig config(true);
-
-    // Initially, there are no subnets configured, so none of the IPv4
-    // addresses assigned to eth0 and eth1 can match with any subnet.
-    EXPECT_FALSE(CfgMgr::instance().getSubnet4("eth0", classify_));
-    EXPECT_FALSE(CfgMgr::instance().getSubnet4("eth1", classify_));
-
-    // Configure first subnet which address on eth0 corresponds to.
-    Subnet4Ptr subnet1(new Subnet4(IOAddress("10.0.0.1"), 24, 1, 2, 3));
-    CfgMgr::instance().addSubnet4(subnet1);
-
-    // The address on eth0 should match the existing subnet.
-    Subnet4Ptr subnet1_ret;
-    subnet1_ret = CfgMgr::instance().getSubnet4("eth0", classify_);
-    ASSERT_TRUE(subnet1_ret);
-    EXPECT_EQ(subnet1->get().first, subnet1_ret->get().first);
-    // There should still be no match for eth1.
-    EXPECT_FALSE(CfgMgr::instance().getSubnet4("eth1", classify_));
-
-    // Configure a second subnet.
-    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.1"), 24, 1, 2, 3));
-    CfgMgr::instance().addSubnet4(subnet2);
-
-    // There should be match between eth0 and subnet1 and between eth1 and
-    // subnet 2.
-    subnet1_ret = CfgMgr::instance().getSubnet4("eth0", classify_);
-    ASSERT_TRUE(subnet1_ret);
-    EXPECT_EQ(subnet1->get().first, subnet1_ret->get().first);
-    Subnet4Ptr subnet2_ret = CfgMgr::instance().getSubnet4("eth1", classify_);
-    ASSERT_TRUE(subnet2_ret);
-    EXPECT_EQ(subnet2->get().first, subnet2_ret->get().first);
-
-    // This function throws an exception if the name of the interface is wrong.
-    EXPECT_THROW(CfgMgr::instance().getSubnet4("bogus-interface", classify_),
-                 isc::BadValue);
-
-}
-
-// Checks that detection of duplicated subnet IDs works as expected. It should
-// not be possible to add two IPv4 subnets holding the same ID to the config
-// manager.
-TEST_F(CfgMgrTest, subnet4Duplication) {
-    CfgMgr& cfg_mgr = CfgMgr::instance();
-
-    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3, 123));
-    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3, 124));
-    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3, 123));
-
-    ASSERT_NO_THROW(cfg_mgr.addSubnet4(subnet1));
-    EXPECT_NO_THROW(cfg_mgr.addSubnet4(subnet2));
-    // Subnet 3 has the same ID as subnet 1. It shouldn't be able to add it.
-    EXPECT_THROW(cfg_mgr.addSubnet4(subnet3), isc::dhcp::DuplicateSubnetID);
 }
 
 // Checks that detection of duplicated subnet IDs works as expected. It should

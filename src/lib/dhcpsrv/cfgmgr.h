@@ -215,16 +215,6 @@ public:
     /// completely new?
     void deleteSubnets6();
 
-    /// @brief Returns pointer to the collection of all IPv4 subnets.
-    ///
-    /// This is used in a hook (subnet4_select), where the hook is able
-    /// to choose a different subnet. Server code has to offer a list
-    /// of possible choices (i.e. all subnets).
-    /// @return a pointer to const Subnet4 collection
-    const Subnet4Collection* getSubnets4() const {
-        return (&subnets4_);
-    }
-
     /// @brief returns const reference to all subnets6
     ///
     /// This is used in a hook (subnet6_select), where the hook is able
@@ -234,63 +224,6 @@ public:
     const Subnet6Collection* getSubnets6() {
         return (&subnets6_);
     }
-
-    /// @brief get IPv4 subnet by address
-    ///
-    /// Finds a matching subnet, based on an address. This can be used
-    /// in two cases: when trying to find an appropriate lease based on
-    /// a) relay link address (that must be the address that is on link)
-    /// b) our global address on the interface the message was received on
-    ///    (for directly connected clients)
-    ///
-    /// If there are any classes specified in a subnet, that subnet
-    /// will be selected only if the client belongs to appropriate class.
-    ///
-    /// If relay is true then relay info overrides (i.e. value the sysadmin
-    /// can configure in Dhcp4/subnet4[X]/relay/ip-address) can be used.
-    /// That is true only for relays. Those overrides must not be used
-    /// for client address or for client hints. They are for giaddr only.
-    ///
-    /// @param hint an address that belongs to a searched subnet
-    /// @param classes classes the client belongs to
-    /// @param relay true if address specified in hint is a relay
-    ///
-    /// @return a subnet object
-    Subnet4Ptr getSubnet4(const isc::asiolink::IOAddress& hint,
-                          const isc::dhcp::ClientClasses& classes,
-                          bool relay = false) const;
-
-    /// @brief Returns a subnet for the specified local interface.
-    ///
-    /// This function checks that the IP address assigned to the specified
-    /// interface belongs to any IPv4 subnet configured, and returns this
-    /// subnet.
-    ///
-    /// @todo Implement classes support here.
-    ///
-    /// @param iface Short name of the interface which is being checked.
-    /// @param classes classes the client belongs to
-    ///
-    /// @return Pointer to the subnet matching interface specified or NULL
-    /// pointer if IPv4 address on the interface doesn't match any subnet.
-    Subnet4Ptr getSubnet4(const std::string& iface,
-                          const isc::dhcp::ClientClasses& classes) const;
-
-    /// @brief adds a subnet4
-    void addSubnet4(const Subnet4Ptr& subnet);
-
-    /// @brief removes all IPv4 subnets
-    ///
-    /// This method removes all existing IPv4 subnets. It is used during
-    /// reconfiguration - old configuration is wiped and new definitions
-    /// are used to recreate subnets.
-    ///
-    /// @todo Implement more intelligent approach. Note that comparison
-    /// between old and new configuration is tricky. For example: is
-    /// 192.0.2.0/23 and 192.0.2.0/24 the same subnet or is it something
-    /// completely new?
-    void deleteSubnets4();
-
 
     /// @brief returns path do the data directory
     ///
@@ -484,14 +417,6 @@ protected:
     /// a match is found.
     Subnet6Collection subnets6_;
 
-    /// @brief A container for IPv4 subnets.
-    ///
-    /// That is a simple vector of pointers. It does not make much sense to
-    /// optimize access time (e.g. using a map), because typical search
-    /// pattern will use calling inRange() method on each subnet until
-    /// a match is found.
-    Subnet4Collection subnets4_;
-
 private:
 
     /// @brief Checks if current configuration is created and creates it if needed.
@@ -500,13 +425,6 @@ private:
     /// is created. If current configuration is not set, it creates the
     /// default current configuration.
     void ensureCurrentAllocated();
-
-    /// @brief Checks that the IPv4 subnet with the given id already exists.
-    ///
-    /// @param subnet Subnet for which this function will check if the other
-    /// subnet with equal id already exists.
-    /// @return true if the duplicate subnet exists.
-    bool isDuplicate(const Subnet4& subnet) const;
 
     /// @brief Checks that the IPv6 subnet with the given id already exists.
     ///

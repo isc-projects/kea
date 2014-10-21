@@ -553,8 +553,9 @@ TEST_F(Dhcpv4SrvTest, DiscoverNoTimers) {
     pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"),
                                IOAddress("192.0.2.110")));
     subnet_->addPool(pool_);
-    CfgMgr::instance().deleteSubnets4();
-    CfgMgr::instance().addSubnet4(subnet_);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    CfgMgr::instance().commit();
 
     // Pass it to the server and get an offer
     Pkt4Ptr offer = srv->processDiscover(dis);
@@ -741,8 +742,9 @@ TEST_F(Dhcpv4SrvTest, RequestNoTimers) {
     pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"),
                                IOAddress("192.0.2.110")));
     subnet_->addPool(pool_);
-    CfgMgr::instance().deleteSubnets4();
-    CfgMgr::instance().addSubnet4(subnet_);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    CfgMgr::instance().commit();
 
     // Pass it to the server and get an ACK.
     Pkt4Ptr ack = srv->processRequest(req);
@@ -1207,6 +1209,8 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsDocsis) {
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
 
+    CfgMgr::instance().commit();
+
     // Let's create a relayed DISCOVER. This particular relayed DISCOVER has
     // added option 82 (relay agent info) with 3 suboptions. The server
     // is supposed to echo it back in its response.
@@ -1448,6 +1452,8 @@ TEST_F(Dhcpv4SrvTest, nextServerOverride) {
 
     EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
 
+    CfgMgr::instance().commit();
+
     // check if returned status is OK
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
@@ -1491,6 +1497,8 @@ TEST_F(Dhcpv4SrvTest, nextServerGlobal) {
     ElementPtr json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+
+    CfgMgr::instance().commit();
 
     // check if returned status is OK
     ASSERT_TRUE(status);
@@ -2513,7 +2521,8 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectSimple) {
     // Check that pkt4 argument passing was successful and returned proper value
     EXPECT_TRUE(callback_pkt4_.get() == sol.get());
 
-    const Subnet4Collection* exp_subnets = CfgMgr::instance().getSubnets4();
+    const Subnet4Collection* exp_subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
 
     // The server is supposed to pick the first subnet, because of matching
     // interface. Check that the value is reported properly.
@@ -2562,6 +2571,8 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectChange) {
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
 
+    CfgMgr::instance().commit();
+
     // Prepare discover packet. Server should select first subnet for it
     Pkt4Ptr sol = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
     sol->setRemoteAddr(IOAddress("192.0.2.1"));
@@ -2580,7 +2591,8 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectChange) {
     EXPECT_NE("0.0.0.0", addr.toText());
 
     // Get all subnets and use second subnet for verification
-    const Subnet4Collection* subnets = CfgMgr::instance().getSubnets4();
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
     ASSERT_EQ(2, subnets->size());
 
     // Advertised address must belong to the second pool (in subnet's range,
@@ -2979,6 +2991,8 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsORO) {
     comment_ = isc::config::parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
 
+    CfgMgr::instance().commit();
+
     boost::shared_ptr<Pkt4> dis(new Pkt4(DHCPDISCOVER, 1234));
     // Set the giaddr and hops to non-zero address as if it was relayed.
     dis->setGiaddr(IOAddress("192.0.2.1"));
@@ -3195,7 +3209,8 @@ TEST_F(Dhcpv4SrvTest, relayOverride) {
     ASSERT_NO_THROW(configure(config));
 
     // Let's get the subnet configuration objects
-    const Subnet4Collection* subnets = CfgMgr::instance().getSubnets4();
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
     ASSERT_EQ(2, subnets->size());
 
     // Let's get them for easy reference
@@ -3270,7 +3285,8 @@ TEST_F(Dhcpv4SrvTest, relayOverrideAndClientClass) {
     // Use this config to set up the server
     ASSERT_NO_THROW(configure(config));
 
-    const Subnet4Collection* subnets = CfgMgr::instance().getSubnets4();
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
     ASSERT_EQ(2, subnets->size());
 
     // Let's get them for easy reference

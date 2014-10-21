@@ -48,23 +48,20 @@ public:
     /// @brief Subnet selector used in @c CfgSubnets4::getSubnet4.
     ///
     /// This structure holds various parameters extracted from a packet sent
-    /// by a DHCP client used to select the subnet for the client. Note that
-    /// data members are optional which means that they may be left unspecified
-    /// by the caller, if the caller doesn't have access to the relevant
-    /// information.
+    /// by a DHCP client used to select the subnet for the client.
     struct Selector {
         /// @brief ciaddr from the client's message.
-        util::OptionalValue<asiolink::IOAddress> ciaddr_;
+        asiolink::IOAddress ciaddr_;
         /// @brief giaddr from the client's message.
-        util::OptionalValue<asiolink::IOAddress> giaddr_;
+        asiolink::IOAddress giaddr_;
         /// @brief Address on which the message was received.
-        util::OptionalValue<asiolink::IOAddress> local_address_;
+        asiolink::IOAddress local_address_;
         /// @brief Source address of the message.
-        util::OptionalValue<asiolink::IOAddress> remote_address_;
+        asiolink::IOAddress remote_address_;
         /// @brief Classes that the client belongs to.
-        util::OptionalValue<ClientClasses> client_classes_;
+        ClientClasses client_classes_;
         /// @brief Name of the interface on which the message was received.
-        util::OptionalValue<std::string> iface_name_;
+        std::string iface_name_;
 
         /// @brief Default constructor.
         ///
@@ -128,6 +125,20 @@ public:
     /// @throw isc::BadValue if the values in the subnet selector are invalid
     /// or they are insufficient to select a subnet.
     Subnet4Ptr get(const Selector& selector) const;
+
+    /// @brief Returns pointer to a subnet if provided address is in its range.
+    ///
+    /// This method returns a pointer to the subnet if the address passed in
+    /// parameter is in range with this subnet. This is mainly used for unit
+    /// testing. This method is also called by the @c get(Selector).
+    ///
+    /// @param address Address for which the subnet is searched.
+    /// @param client_classes Optional parameter specifying the classes that
+    /// the client belongs to.
+    ///
+    /// @return Pointer to the selected subnet or NULL if no subnet found.
+    Subnet4Ptr get(const asiolink::IOAddress& address,
+                   const ClientClasses& client_classes = ClientClasses()) const;
 
 private:
 

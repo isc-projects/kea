@@ -17,6 +17,7 @@
 #include <dhcp/classify.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcp4/json_config_parser.h>
@@ -225,8 +226,8 @@ TEST_F(DirectClientTest,  twoSubnets) {
     // Client should get an Offer (not a NAK).
     ASSERT_EQ(DHCPOFFER, response->getType());
     // Check that the offered address belongs to the suitable subnet.
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(response->getYiaddr(),
-                                                      classify_);
+    Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets4()->get(response->getYiaddr());
     ASSERT_TRUE(subnet);
     EXPECT_EQ("10.0.0.0", subnet->get().first.toText());
 
@@ -237,7 +238,8 @@ TEST_F(DirectClientTest,  twoSubnets) {
     // Client should get an Ack (not a NAK).
     ASSERT_EQ(DHCPACK, response->getType());
     // Check that the offered address belongs to the suitable subnet.
-    subnet = CfgMgr::instance().getSubnet4(response->getYiaddr(), classify_);
+    subnet = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets4()->get(response->getYiaddr());
     ASSERT_TRUE(subnet);
     EXPECT_EQ("192.0.2.0", subnet->get().first.toText());
 
@@ -283,8 +285,8 @@ TEST_F(DirectClientTest, oneSubnet) {
     // an Offer message.
     ASSERT_EQ(DHCPOFFER, response->getType());
     // Check that the offered address belongs to the suitable subnet.
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(response->getYiaddr(),
-                                                      classify_);
+    Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets4()->get(response->getYiaddr());
     ASSERT_TRUE(subnet);
     EXPECT_EQ("10.0.0.0", subnet->get().first.toText());
 
@@ -302,8 +304,8 @@ TEST_F(DirectClientTest, renew) {
     ASSERT_NO_FATAL_FAILURE(configureSubnet("10.0.0.0"));
     // Make sure that the subnet has been really added. Also, the subnet
     // will be needed to create a lease for a client.
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("10.0.0.10"),
-                                                      classify_);
+    Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets4()->get(IOAddress("10.0.0.10"));
     // Create a lease for a client that we will later renewed. By explicitly
     // creating a lease we will get to know the lease parameters, such as
     // leased address etc.
@@ -339,7 +341,8 @@ TEST_F(DirectClientTest, renew) {
 
     ASSERT_EQ(DHCPACK, response->getType());
     // Check that the offered address belongs to the suitable subnet.
-    subnet = CfgMgr::instance().getSubnet4(response->getYiaddr(), classify_);
+    subnet = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets4()->get(response->getYiaddr());
     ASSERT_TRUE(subnet);
     EXPECT_EQ("10.0.0.0", subnet->get().first.toText());
 
@@ -360,8 +363,8 @@ TEST_F(DirectClientTest, rebind) {
     ASSERT_NO_FATAL_FAILURE(configureSubnet("10.0.0.0"));
     // Make sure that the subnet has been really added. Also, the subnet
     // will be needed to create a lease for a client.
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("10.0.0.10"),
-                                                      classify_);
+    Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets4()->get(IOAddress("10.0.0.10"));
     // Create a lease, which will be later renewed. By explicitly creating a
     // lease we will know the lease parameters, such as leased address etc.
     const uint8_t hwaddr[] = { 1, 2, 3, 4, 5, 6 };
@@ -373,9 +376,9 @@ TEST_F(DirectClientTest, rebind) {
     LeaseMgrFactory::instance().addLease(lease);
 
     // Broadcast Request through an interface for which there is no subnet
-    // configured. This messag should be discarded by the server.
+    // configured. This message should be discarded by the server.
     Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
-    req->setCiaddr(IOAddress("10.0.0.10"));
+     req->setCiaddr(IOAddress("10.0.0.10"));
     req = createClientMessage(req, "eth1");
     req->setRemoteAddr(req->getCiaddr());
 
@@ -404,7 +407,8 @@ TEST_F(DirectClientTest, rebind) {
     // (transmitted over eth0).
     EXPECT_EQ(5678, response->getTransid());
     // Check that the offered address belongs to the suitable subnet.
-    subnet = CfgMgr::instance().getSubnet4(response->getYiaddr(), classify_);
+    subnet = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets4()->get(response->getYiaddr());
     ASSERT_TRUE(subnet);
     EXPECT_EQ("10.0.0.0", subnet->get().first.toText());
 
