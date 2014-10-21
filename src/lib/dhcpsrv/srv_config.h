@@ -209,6 +209,14 @@ public:
     /// an object passed as parameter. The configuration sequence is not
     /// copied.
     ///
+    /// @warning Some of the configuration objects are not copied at
+    /// this point, e.g. subnets. This is because they contain quite complex
+    /// data structures and they make use of pointers, so in many cases
+    /// the default copy constructors can't be used. Implementing this
+    /// requires quite a lot of time so this is left as is for now.
+    /// The lack of ability to copy the entire configuration makes
+    /// revert function of the @c CfgMgr unsuable.
+    ///
     /// @param [out] new_config An object to which the configuration will
     /// be copied.
     void copy(SrvConfig& new_config) const;
