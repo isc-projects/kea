@@ -331,6 +331,11 @@ public:
     /// @warning Revert operation will rollback any changes to the staging
     /// configuration (if it exists).
     ///
+    /// @warning This function requires that the entire previous configuration
+    /// is copied to the new configuration object. This is not working for
+    /// some of the complex configuration objects, e.g. subnets. Hence, the
+    /// "revert" operation is not really usable at this point.
+    ///
     /// @param index A distance from the current configuration to the
     /// past configuration to be reverted. The minimal value is 1 which points
     /// to the nearest configuration.
