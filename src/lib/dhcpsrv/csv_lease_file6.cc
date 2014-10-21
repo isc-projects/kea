@@ -205,7 +205,22 @@ CSVLeaseFile6::readHWAddr(const CSVRow& row) {
 
         return (HWAddrPtr());
     }
+}
 
+bool
+CSVLeaseFile6::validateHeader(const isc::util::CSVRow& header) {
+
+    if (!CSVFile::validateHeader(header)) {
+
+        // One possible validation failure is that we're reading Kea 0.9
+        // lease file that didn't have hwaddr column. Let's add it and
+        // try to revalidate.
+        isc::util::CSVRow copy = header;
+        copy.append("hwaddr");
+        return CSVFile::validateHeader(copy);
+    } else {
+        return (true);
+    }
 
 }
 

@@ -77,6 +77,18 @@ public:
     /// ticket http://kea.isc.org/ticket/2405 is implemented.
     bool next(Lease6Ptr& lease);
 
+protected:
+    /// @brief This function validates the header of the Lease6 CSV file.
+    ///
+    /// It works similar to @c CSVFile::validateHeader, but if the validation
+    /// fails, it attempts to add hwaddr column and retry validation.
+    /// That's useful when attmepting to read CSV file generated in 0.9
+    /// (did not have hwaddr field) in 0.9.1 or later code.
+    ///
+    /// @param header A row holding a header.
+    /// @return true if header matches the columns; false otherwise.
+    virtual bool validateHeader(const isc::util::CSVRow& header);
+
 private:
 
     /// @brief Initializes columns of the CSV file holding leases.
