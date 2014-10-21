@@ -874,6 +874,48 @@ GenericLeaseMgrTest::testMaxDate6() {
     detailCompareLease(leases[1], l_returned);
 }
 
+// Checks whether a MAC address can be stored and retrieved together with
+// a lease.
+void
+GenericLeaseMgrTest::testLease6MAC() {
+    // Get the leases to be used for the test.
+    vector<Lease6Ptr> leases = createLeases6();
+
+    HWAddrPtr hwaddr1(new HWAddr(vector<uint8_t>(6, 11), HTYPE_ETHER));
+    HWAddrPtr hwaddr2(new HWAddr(vector<uint8_t>(6, 22), HTYPE_ETHER));
+
+    leases[1]->hwaddr_ = hwaddr1;     // Add hardware address to leases 1 and 2
+    leases[2]->hwaddr_ = hwaddr2;
+    leases[3]->hwaddr_ = HWAddrPtr(); // No hardware address for the third one
+
+    // Start the tests.  Add three leases to the database, read them back and
+    // check they are what we think they are.
+    EXPECT_TRUE(lmptr_->addLease(leases[1]));
+    EXPECT_TRUE(lmptr_->addLease(leases[2]));
+    EXPECT_TRUE(lmptr_->addLease(leases[3]));
+    lmptr_->commit();
+
+    // Reopen the database to ensure that they actually got stored.
+    reopen(V6);
+
+    // First lease should have a hardware address in it
+    Lease6Ptr stored1 = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
+    ASSERT_TRUE(stored1);
+    ASSERT_TRUE(stored1->hwaddr_);
+    EXPECT_TRUE(*hwaddr1 == *stored1->hwaddr_);
+
+    // Second lease should have a hardware address in it
+    Lease6Ptr stored2 = lmptr_->getLease6(leasetype6_[2], ioaddress6_[2]);
+    ASSERT_TRUE(stored2);
+    ASSERT_TRUE(stored2->hwaddr_);
+    EXPECT_TRUE(*hwaddr2 == *stored2->hwaddr_);
+
+    // Third lease should NOT have any hardware address.
+    Lease6Ptr stored3 = lmptr_->getLease6(leasetype6_[3], ioaddress6_[3]);
+    ASSERT_TRUE(stored3);
+    EXPECT_FALSE(stored3->hwaddr_);
+}
+
 void
 GenericLeaseMgrTest::testLease4InvalidHostname() {
     // Get the leases to be used for the test.

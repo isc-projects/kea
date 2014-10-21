@@ -44,7 +44,7 @@ CSVLeaseFile6::append(const Lease6& lease) const {
     row.writeAt(getColumnIndex("hostname"), lease.hostname_);
     if (lease.hwaddr_) {
         // We may not have hardware information
-        row.writeAt(getColumnIndex("hwaddr"), lease.hwaddr_);
+        row.writeAt(getColumnIndex("hwaddr"), lease.hwaddr_->toText(false));
     }
     CSVFile::append(row);
 }
