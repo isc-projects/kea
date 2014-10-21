@@ -71,6 +71,23 @@ namespace dhcp {
 class Memfile_LeaseMgr : public LeaseMgr {
 public:
 
+    /// @defgroup versions Specified memfile backend version.
+    ///
+    /// @brief Defines major version of the memfile backend.
+    ///
+    /// Version history:
+    /// 1.0 - initial version (released in Kea 0.9)
+    /// 2.0 - hwaddr column added (to be released in Kea 0.9.1)
+    ///
+    /// @{
+    static const int MAJOR_VERSION = 2;
+
+    /// Defines minor version of the memfile backend.
+    static const int MINOR_VERSION = 0;
+
+    /// @}
+
+
     /// @brief Specifies universe (V4, V6)
     ///
     /// This enumeration is used by various functions in Memfile Lease Manager,
@@ -274,12 +291,8 @@ public:
     ///
     /// @return Version number as a pair of unsigned integers.  "first" is the
     ///         major version number, "second" the minor number.
-    ///
-    /// Numbering history:
-    /// 1.0 - initial version (released as 0.9)
-    /// 2.0 - hwaddr (hardware address/MAC) column added
     virtual std::pair<uint32_t, uint32_t> getVersion() const {
-        return (std::make_pair(2, 0));
+        return (std::make_pair(MAJOR_VERSION, MINOR_VERSION));
     }
 
     /// @brief Commit Transactions
