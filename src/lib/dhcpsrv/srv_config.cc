@@ -39,7 +39,7 @@ SrvConfig::getConfigSummary(const uint32_t selection) const {
     std::ostringstream s;
     size_t subnets_num;
     if ((selection & CFGSEL_SUBNET4) == CFGSEL_SUBNET4) {
-        subnets_num = CfgMgr::instance().getSubnets4()->size();
+        subnets_num = getCfgSubnets4()->getAll()->size();
         if (subnets_num > 0) {
             s << "added IPv4 subnets: " << subnets_num;
         } else {

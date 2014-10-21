@@ -164,78 +164,6 @@ void CfgMgr::addSubnet6(const Subnet6Ptr& subnet) {
     subnets6_.push_back(subnet);
 }
 
-Subnet4Ptr
-CfgMgr::getSubnet4(const isc::asiolink::IOAddress& hint,
-                   const isc::dhcp::ClientClasses& classes,
-                   bool relay) const {
-    // Iterate over existing subnets to find a suitable one for the
-    // given address.
-    for (Subnet4Collection::const_iterator subnet = subnets4_.begin();
-         subnet != subnets4_.end(); ++subnet) {
-
-        // If client is rejected because of not meeting client class criteria...
-        if (!(*subnet)->clientSupported(classes)) {
-            continue;
-        }
-
-        // If the hint is a relay address, and there is relay info specified
-        // for this subnet and those two match, then use this subnet.
-        if (relay && ((*subnet)->getRelayInfo().addr_ == hint) ) {
-            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-                      DHCPSRV_CFGMGR_SUBNET4_RELAY)
-                .arg((*subnet)->toText()).arg(hint.toText());
-            return (*subnet);
-        }
-
-        // Let's check if the client belongs to the given subnet
-        if ((*subnet)->inRange(hint)) {
-            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-                      DHCPSRV_CFGMGR_SUBNET4)
-                      .arg((*subnet)->toText()).arg(hint.toText());
-            return (*subnet);
-        }
-    }
-
-    // sorry, we don't support that subnet
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_NO_SUBNET4)
-              .arg(hint.toText());
-    return (Subnet4Ptr());
-}
-
-Subnet4Ptr
-CfgMgr::getSubnet4(const std::string& iface_name,
-                   const isc::dhcp::ClientClasses& classes) const {
-    Iface* iface = IfaceMgr::instance().getIface(iface_name);
-    // This should never happen in the real life. Hence we throw an exception.
-    if (iface == NULL) {
-        isc_throw(isc::BadValue, "interface " << iface_name <<
-                  " doesn't exist and therefore it is impossible"
-                  " to find a suitable subnet for its IPv4 address");
-    }
-    IOAddress addr("0.0.0.0");
-    // If IPv4 address assigned to the interface exists, find a suitable
-    // subnet for it, else return NULL pointer to indicate that no subnet
-    // could be found.
-    return (iface->getAddress4(addr) ? getSubnet4(addr, classes) : Subnet4Ptr());
-}
-
-void CfgMgr::addSubnet4(const Subnet4Ptr& subnet) {
-    /// @todo: Check that this new subnet does not cross boundaries of any
-    /// other already defined subnet.
-    if (isDuplicate(*subnet)) {
-        isc_throw(isc::dhcp::DuplicateSubnetID, "ID of the new IPv4 subnet '"
-                  << subnet->getID() << "' is already in use");
-    }
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_ADD_SUBNET4)
-              .arg(subnet->toText());
-    subnets4_.push_back(subnet);
-}
-
-void CfgMgr::deleteSubnets4() {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_DELETE_SUBNET4);
-    subnets4_.clear();
-}
-
 void CfgMgr::deleteSubnets6() {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_DELETE_SUBNET6);
     subnets6_.clear();
@@ -244,17 +172,6 @@ void CfgMgr::deleteSubnets6() {
 
 std::string CfgMgr::getDataDir() {
     return (datadir_);
-}
-
-bool
-CfgMgr::isDuplicate(const Subnet4& subnet) const {
-    for (Subnet4Collection::const_iterator subnet_it = subnets4_.begin();
-         subnet_it != subnets4_.end(); ++subnet_it) {
-        if ((*subnet_it)->getID() == subnet.getID()) {
-            return (true);
-        }
-    }
-    return (false);
 }
 
 bool

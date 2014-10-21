@@ -26,6 +26,12 @@ const IOAddress& ZERO_ADDRESS() {
     return (address);
 }
 
+/// @brief Returns @c IOAddress object holding broadcast address.
+const IOAddress& BCAST_ADDRESS() {
+    static IOAddress address("255.255.255.255");
+    return (address);
+}
+
 } // end of anonymous namespace
 
 namespace isc {
@@ -57,7 +63,7 @@ CfgSubnets4::get(const Selector& selector) const {
     // address will not match with any of the relay addresses accross all
     // subnets, but we need to verify that for all subnets before we can try
     // to use the giaddr to match with the subnet prefix.
-    if (selector.giaddr_.isSpecified() && selector.giaddr_ != ZERO_ADDRESS()) {
+    if (selector.giaddr_ != ZERO_ADDRESS()) {
         for (Subnet4Collection::const_iterator subnet = subnets_.begin();
              subnet != subnets_.end(); ++subnet) {
             // Eliminate those subnets that do not meet client class criteria.
@@ -79,36 +85,31 @@ CfgSubnets4::get(const Selector& selector) const {
 
     IOAddress address = ZERO_ADDRESS();
     // If there is a giaddr, use it for subnet selection.
-    if (selector.giaddr_.isSpecified() &&
-        (selector.giaddr_ != ZERO_ADDRESS())) {
+    if (selector.giaddr_ != ZERO_ADDRESS()) {
         address = selector.giaddr_;
 
     // If it is a Renew or Rebind, use the ciaddr.
-    } else if (selector.ciaddr_.isSpecified() &&
-               selector.ciaddr_ != ZERO_ADDRESS()) {
+    } else if ((selector.ciaddr_ != ZERO_ADDRESS()) &&
+               (selector.local_address_ != BCAST_ADDRESS())) {
         address = selector.ciaddr_;
 
     // If ciaddr is not specified, use the source address.
-    } else if (selector.remote_address_.isSpecified() &&
-               selector.remote_address_ != ZERO_ADDRESS()) {
+    } else if ((selector.remote_address_ != ZERO_ADDRESS()) &&
+               (selector.local_address_ != BCAST_ADDRESS())) {
         address = selector.remote_address_;
 
     // If local interface name is known, use the local address on this
     // interface.
-    } else if (selector.iface_name_.isSpecified()) {
+    } else if (!selector.iface_name_.empty()) {
         Iface* iface = IfaceMgr::instance().getIface(selector.iface_name_);
         // This should never happen in the real life. Hence we throw an
         // exception.
         if (iface == NULL) {
-            isc_throw(isc::BadValue, "interface " << selector.iface_name_.get()
+            isc_throw(isc::BadValue, "interface " << selector.iface_name_
                       << " doesn't exist and therefore it is impossible"
                       " to find a suitable subnet for its IPv4 address");
         }
         iface->getAddress4(address);
-
-    } else {
-        isc_throw(isc::BadValue, "subnet selector structure does not contain"
-                  " sufficient information");
     }
 
     // Unable to find a suitable address to use for subnet selection.
@@ -117,11 +118,18 @@ CfgSubnets4::get(const Selector& selector) const {
     }
 
     // We have identified an address in the client's packet that can be
-    // used for subnet selection. Match this packet with the subnets.
+    // used for subnet selection. Match this packet with the subnets. 
+    return (get(address, selector.client_classes_));
+}
+
+Subnet4Ptr
+CfgSubnets4::get(const IOAddress& address,
+                 const ClientClasses& client_classes) const {
     for (Subnet4Collection::const_iterator subnet = subnets_.begin();
          subnet != subnets_.end(); ++subnet) {
+
         // Eliminate those subnets that do not meet client class criteria.
-        if (!(*subnet)->clientSupported(selector.client_classes_)) {
+        if (!(*subnet)->clientSupported(client_classes)) {
             continue;
         }
 
