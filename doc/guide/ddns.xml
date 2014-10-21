@@ -285,6 +285,17 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	  </listitem>
 	  <listitem>
 	    <simpara>
+	      <command>digest_bits</command> -
+	      is used to specify the minimum truncated length in bits.
+	      The default value 0 means truncation is forbidden, not 0
+	      values must be an integral number of octets, be greater
+	      than 80 and the half of the full length. Note in BIND9
+	      this parameter is appended after a dash to the algorithm
+	      name.
+	    </simpara>
+	  </listitem>
+	  <listitem>
+	    <simpara>
 	      <command>secret</command> -
 	      is used to specify the shared secret key code for this key.  This value is
 	      case sensitive and must exactly match the value specified on the DNS server(s).

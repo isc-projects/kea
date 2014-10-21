@@ -479,6 +479,195 @@
     }
 }
 
+#----- D2.tsig_keys, digest_bits tests
+,{
+"description" : "D2.tsig_keys, all valid algorthms",
+"data" :
+    {
+    "forward_ddns" : {},
+    "reverse_ddns" : {},
+    "tsig_keys" :
+        [
+            {
+            "name" : "d2.md5.key",
+            "algorithm" : "HMAC-MD5",
+            "digest_bits" : 80,
+            "secret" : "LSWXnfkKZjdPJI5QxlpnfQ=="
+            },
+            {
+            "name" : "d2.sha1.key",
+            "algorithm" : "HMAC-SHA1",
+            "digest_bits" : 80,
+            "secret" : "hRrp29wzUv3uzSNRLlY68w=="
+            },
+            {
+            "name" : "d2.sha224.key",
+            "algorithm" : "HMAC-SHA224",
+            "digest_bits" : 112,
+            "secret" : "bZEG7Ow8OgAUPfLWV3aAUQ=="
+            },
+            {
+            "name" : "d2.sha256.key",
+            "algorithm" : "hmac-sha256",
+            "digest_bits" : 128,
+            "secret" : "bjF4hYhTfQ5MX0siagelsw=="
+            },
+            {
+            "name" : "d2.sha384.key",
+            "algorithm" : "hmac-sha384",
+            "digest_bits" : 192,
+            "secret" : "Gwk53fvy3CmbupoI9TgigA=="
+            },
+            {
+            "name" : "d2.sha512.key",
+            "algorithm" : "hmac-sha512",
+            "digest_bits" : 256,
+            "secret" : "wP+5FqMnKXCxBWljU/BZAA=="
+            }
+        ]
+    }
+}
+
+#-----
+,{
+"description" : "D2.tsig_keys, invalid digest_bits",
+"should_fail" : true,
+"data" :
+    {
+    "forward_ddns" : {},
+    "reverse_ddns" : {},
+    "tsig_keys" :
+        [
+            {
+            "name" : "d2.md5.key",
+            "algorithm" : "HMAC-MD5",
+            "digest_bits" : 84,
+            "secret" : "LSWXnfkKZjdPJI5QxlpnfQ=="
+            },
+        ]
+    }
+}
+
+#-----
+,{
+"description" : "D2.tsig_keys, too small truncated HMAC-MD5",
+"should_fail" : true,
+"data" :
+    {
+    "forward_ddns" : {},
+    "reverse_ddns" : {},
+    "tsig_keys" :
+        [
+            {
+            "name" : "d2.md5.key",
+            "algorithm" : "HMAC-MD5",
+            "digest_bits" : 72,
+            "secret" : "LSWXnfkKZjdPJI5QxlpnfQ=="
+            },
+        ]
+    }
+}
+
+#-----
+,{
+"description" : "D2.tsig_keys, too small truncated HMAC-SHA1",
+"should_fail" : true,
+"data" :
+    {
+    "forward_ddns" : {},
+    "reverse_ddns" : {},
+    "tsig_keys" :
+        [
+            {
+            "name" : "d2.sha1.key",
+            "algorithm" : "HMAC-SHA1",
+            "digest_bits" : 72,
+            "secret" : "hRrp29wzUv3uzSNRLlY68w=="
+            },
+        ]
+    }
+}
+
+#-----
+,{
+"description" : "D2.tsig_keys, too small truncated HMAC-SHA224",
+"should_fail" : true,
+"data" :
+    {
+    "forward_ddns" : {},
+    "reverse_ddns" : {},
+    "tsig_keys" :
+        [
+            {
+            "name" : "d2.sha224.key",
+            "algorithm" : "HMAC-SHA224",
+            "digest_bits" : 104,
+            "secret" : "bZEG7Ow8OgAUPfLWV3aAUQ=="
+            },
+        ]
+    }
+}
+
+#-----
+,{
+"description" : "D2.tsig_keys, too small truncated HMAC-SHA256",
+"should_fail" : true,
+"data" :
+    {
+    "forward_ddns" : {},
+    "reverse_ddns" : {},
+    "tsig_keys" :
+        [
+            {
+            "name" : "d2.sha256.key",
+            "algorithm" : "hmac-sha256",
+            "digest_bits" : 120,
+            "secret" : "bjF4hYhTfQ5MX0siagelsw=="
+            },
+        ]
+    }
+}
+
+#-----
+,{
+"description" : "D2.tsig_keys, too small truncated HMAC-SHA384",
+"should_fail" : true,
+"data" :
+    {
+    "forward_ddns" : {},
+    "reverse_ddns" : {},
+    "tsig_keys" :
+        [
+            {
+            "name" : "d2.sha384.key",
+            "algorithm" : "hmac-sha384",
+            "digest_bits" : 184,
+            "secret" : "Gwk53fvy3CmbupoI9TgigA=="
+            },
+        ]
+    }
+}
+
+#-----
+,{
+"description" : "D2.tsig_keys, too small truncated HMAC-SHA512",
+"should_fail" : true,
+"data" :
+    {
+    "forward_ddns" : {},
+    "reverse_ddns" : {},
+    "tsig_keys" :
+        [
+            {
+            "name" : "d2.sha512.key",
+            "algorithm" : "hmac-sha512",
+            "digest_bits" : 248,
+            "secret" : "wP+5FqMnKXCxBWljU/BZAA=="
+            }
+        ]
+    }
+}
+
 #----- D2.tsig_keys, secret tests
 ,{
 "description" : "D2.tsig_keys, missing secret",

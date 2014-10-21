@@ -41,7 +41,8 @@ namespace d2 {
 /// forward domains and one list for reverse domains.
 ///
 /// The key list consists of one or more TSIG keys, each entry described by
-/// a name, the algorithm method name, and its secret key component.
+/// a name, the algorithm method name, optionally the minimum truncated
+/// length, and its secret key component.
 ///
 /// @todo  NOTE that TSIG configuration parsing is functional, the use of
 /// TSIG Keys during the actual DNS update transactions is not.  This will be
@@ -317,33 +318,41 @@ public:
     ///   Activate: 20140515143700
     /// @endcode
     /// where the value the "Key:" entry is the secret component of the key.)
+    /// @param digestbits the minimum truncated length in bits
     ///
     /// @throw D2CfgError if values supplied are invalid:
     /// name cannot be blank, algorithm must be a supported value,
     /// secret must be a non-blank, base64 encoded string.
     TSIGKeyInfo(const std::string& name, const std::string& algorithm,
-                const std::string& secret);
+                const std::string& secret, uint32_t digestbits = 0);
 
     /// @brief Destructor
     virtual ~TSIGKeyInfo();
 
     /// @brief Getter which returns the key's name.
     ///
-    /// @return returns the name as as std::string.
+    /// @return returns the name as a std::string.
     const std::string getName() const {
         return (name_);
     }
 
     /// @brief Getter which returns the key's algorithm string ID
     ///
-    /// @return returns the algorithm as as std::string.
+    /// @return returns the algorithm as a std::string.
     const std::string getAlgorithm() const {
         return (algorithm_);
     }
 
+    /// @brief Getter which returns the key's minimum truncated length
+    ///
+    /// @return returns the minimum truncated length or 0 as an uint32_t
+    uint32_t getDigestbits() const {
+        return (digestbits_);
+    }
+
     /// @brief Getter which returns the key's secret.
     ///
-    /// @return returns the secret as as std::string.
+    /// @return returns the secret as a std::string.
     const std::string getSecret() const {
         return (secret_);
     }
@@ -376,7 +385,7 @@ private:
     /// @brief Creates the actual TSIG key instance member
     ///
     /// Replaces this tsig_key member with a key newly created using the key
-    /// name, algorithm id, and secret.
+    /// name, algorithm id, digest bits, and secret.
     /// This method is currently only called by the constructor, however it
     /// could be called post-construction should keys ever support expiration.
     ///
@@ -394,6 +403,10 @@ private:
 
     /// @brief The base64 encoded string secret value component of this key.
     std::string secret_;
+
+    /// @brief The minimum truncated length in bits
+    /// (0 means no truncation is allowed and is the default)
+    uint32_t digestbits_;
 
     /// @brief The actual TSIG key.
     dns::TSIGKeyPtr tsig_key_;
@@ -759,7 +772,8 @@ public:
     /// The key elements currently supported are(see dhcp-ddns.spec):
     ///   1. name
     ///   2. algorithm
-    ///   3. secret
+    ///   3. digestbits
+    ///   4. secret
     ///
     /// @param config_id is the "item_name" for a specific member element of
     /// the "tsig_key" specification.

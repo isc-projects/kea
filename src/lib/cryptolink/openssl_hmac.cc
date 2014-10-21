@@ -201,7 +201,7 @@ public:
     /// See @ref isc::cryptolink::HMAC::verify() for details.
     bool verify(const void* sig, size_t len) {
         size_t size = getOutputLength();
-        if (len != 0 && len < size / 2) {
+        if (len != 0 && (len < 10 || len < size / 2)) {
             return (false);
         }
         SecBuf<unsigned char> digest(size);

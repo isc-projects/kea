@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -288,6 +288,11 @@ public:
     /// - \c BAD_SIG: The signature given in the TSIG doesn't match against
     ///               the locally computed digest or is the signature is
     ///               invalid in other way.
+    /// - \c BAD_MODE: Not yet implemented TKEY error
+    /// - \c BAD_NAME: Not yet implemented TKEY error
+    /// - \c BAD_ALG: Not yet implemented TKEY error
+    /// - \c BAD_TRUNC: The signature or truncated signature length is too
+    ///                 small.
     ///
     /// If this method is called by a DNS client waiting for a signed
     /// response and the result is not \c NOERROR, the context can be used

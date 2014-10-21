@@ -59,6 +59,12 @@
                 "item_default": ""
             },
             {
+                "item_name": "digest_bits",
+                "item_type": "integer",
+                "item_optional": true,
+                "item_default": 0
+            },
+            {
                 "item_name": "secret",
                 "item_type": "string",
                 "item_optional": false,
