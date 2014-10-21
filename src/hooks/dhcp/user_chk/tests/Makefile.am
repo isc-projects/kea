@@ -1,3 +1,5 @@
+AUTOMAKE_OPTIONS = subdir-objects
+
 SUBDIRS = .
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib

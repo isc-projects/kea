@@ -1,3 +1,5 @@
+AUTOMAKE_OPTIONS = subdir-objects
+
 SHTESTS =
 # The test of dynamic reconfiguration based on signals will work only
 # if we are using file based configuration approach.
