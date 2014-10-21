@@ -1602,6 +1602,12 @@ GenericLeaseMgrTest::testNullDuid() {
     ASSERT_THROW(lmptr_->addLease(leases[1]), DbOperationError);
 }
 
+void
+GenericLeaseMgrTest::testVersion(int major, int minor) {
+    EXPECT_EQ(major, lmptr_->getVersion().first);
+    EXPECT_EQ(minor, lmptr_->getVersion().second);
+}
+
 
 }; // namespace test
 }; // namespace dhcp
