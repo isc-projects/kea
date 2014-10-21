@@ -274,8 +274,12 @@ public:
     ///
     /// @return Version number as a pair of unsigned integers.  "first" is the
     ///         major version number, "second" the minor number.
+    ///
+    /// Numbering history:
+    /// 1.0 - initial version (released as 0.9)
+    /// 2.0 - hwaddr (hardware address/MAC) column added
     virtual std::pair<uint32_t, uint32_t> getVersion() const {
-        return (std::make_pair(1, 0));
+        return (std::make_pair(2, 0));
     }
 
     /// @brief Commit Transactions

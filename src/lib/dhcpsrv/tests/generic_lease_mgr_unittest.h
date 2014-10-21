@@ -183,9 +183,11 @@ public:
     /// IPv6 address) works.
     void testBasicLease6();
 
-    /// @brief checks that invalid dates are safely handled.
+    /// @brief Checks that invalid dates are safely handled.
     void testMaxDate6();
 
+    /// @brief Checks that Lease6 can be stored with and without a hardware address.
+    void testLease6MAC();
 
     /// @brief Test that IPv6 lease can be added, retrieved and deleted.
     ///

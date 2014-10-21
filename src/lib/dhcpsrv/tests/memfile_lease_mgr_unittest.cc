@@ -26,6 +26,7 @@
 #include <gtest/gtest.h>
 
 #include <iostream>
+#include <fstream>
 #include <sstream>
 
 using namespace std;
@@ -419,6 +420,49 @@ TEST_F(MemfileLeaseMgrTest, DISABLED_nullDuid) {
 
     leases[1]->duid_.reset();
     ASSERT_THROW(lmptr_->addLease(leases[1]), DbOperationError);
+}
+
+/// @brief Tests whether memfile can store and retrieve hardware addresses
+TEST_F(MemfileLeaseMgrTest, testLease6Mac) {
+    startBackend(V6);
+    testLease6MAC();
+}
+
+/// @brief Tests whether memfile is able to work with old CSV file (without mac)
+///
+/// Ticket #3555 introduced MAC address support in Lease6. Instead of developing
+/// an upgrade script, the code is written in a way that allows reading old CSV
+/// (i.e. format that was used in Kea 0.9), hence no upgrade is necessary.
+TEST_F(MemfileLeaseMgrTest, testUpgrade0_9_0_to_0_9_1) {
+
+    // Let's write a CSV file without hwaddr column. Sorry about the long
+    // lines, but nobody was around to whine about 80 columns limit when CSV
+    // format was invented :).
+    string csv_nohwaddr =
+        "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname\n"
+        "2001:db8::1,42:42:42:42:42:42:42:42,3677,127133,73,3600,1,42,0,0,1,myhost.example.com.\n"
+        "2001:db8::2,3a:3a:3a:3a:3a:3a:3a:3a,5412,239979,73,1800,2,89,7,0,0,myhost.example.com.\n"
+        "2001:db8::3,1f:20:21:22:23:24:25:26,7000,241567,37,7200,0,4294967294,28,1,0,myhost.example.com.\n";
+
+    ofstream csv(getLeaseFilePath("leasefile6_0.csv").c_str(), ios::out | ios::trunc);
+    ASSERT_TRUE(csv.is_open());
+    csv << csv_nohwaddr;
+    csv.close();
+
+    startBackend(V6);
+
+    // None of the leases should have any hardware addresses assigned.
+    Lease6Ptr stored1 = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
+    ASSERT_TRUE(stored1);
+    EXPECT_FALSE(stored1->hwaddr_);
+
+    Lease6Ptr stored2 = lmptr_->getLease6(leasetype6_[2], ioaddress6_[2]);
+    ASSERT_TRUE(stored2);
+    EXPECT_FALSE(stored2->hwaddr_);
+
+    Lease6Ptr stored3 = lmptr_->getLease6(leasetype6_[3], ioaddress6_[3]);
+    ASSERT_TRUE(stored3);
+    EXPECT_FALSE(stored3->hwaddr_);
 }
 
 }; // end of anonymous namespace
