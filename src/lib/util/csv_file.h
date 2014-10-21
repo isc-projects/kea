@@ -178,6 +178,20 @@ public:
         writeAt(at, value.c_str());
     }
 
+    /// @brief Appends the value as a new column.
+    ///
+    /// @param value Value to be written.
+    /// @tparam T Type of the value being written.
+    template<typename T>
+    void append(const T value) {
+        try {
+            values_.push_back(boost::lexical_cast<std::string>(value));
+        } catch (const boost::bad_lexical_cast& ex) {
+            isc_throw(CSVFileError, "unable to stringify the value to be "
+                      "appended to the CSV file row.");
+        }
+    }
+
     /// @brief Replaces the value at specified index.
     ///
     /// This function is used to set values to be rendered using
