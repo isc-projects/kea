@@ -358,9 +358,9 @@ public:
         // hwaddr: varbinary(128)
         // For speed, we avoid copying the data into temporary storage and
         // instead extract it from the lease structure directly.
-        hwaddr_length_ = lease_->hwaddr_.size();
+        hwaddr_length_ = lease_->hwaddr_->hwaddr_.size();
         bind_[1].buffer_type = MYSQL_TYPE_BLOB;
-        bind_[1].buffer = reinterpret_cast<char*>(&(lease_->hwaddr_[0]));
+        bind_[1].buffer = reinterpret_cast<char*>(&(lease_->hwaddr_->hwaddr_[0]));
         bind_[1].buffer_length = hwaddr_length_;
         bind_[1].length = &hwaddr_length_;
         // bind_[1].is_null = &MLM_FALSE; // commented out for performance
@@ -573,8 +573,11 @@ public:
         std::string hostname(hostname_buffer_,
                              hostname_buffer_ + hostname_length_);
 
+        // Recreate the hardware address.
+        HWAddrPtr hwaddr(new HWAddr(hwaddr_buffer_, hwaddr_length_, HTYPE_ETHER));
+
         // note that T1 and T2 are not stored
-        return (Lease4Ptr(new Lease4(addr4_, hwaddr_buffer_, hwaddr_length_,
+        return (Lease4Ptr(new Lease4(addr4_, hwaddr,
                                      client_id_buffer_, client_id_length_,
                                      valid_lifetime_, 0, 0, cltt, subnet_id_,
                                      fqdn_fwd_, fqdn_rev_, hostname)));
@@ -998,12 +1001,15 @@ public:
         std::string hostname(hostname_buffer_,
                              hostname_buffer_ + hostname_length_);
 
+        /// @todo: HWAddr is not yet stored, see ticket #3556.
+        HWAddrPtr hwaddr;
+
         // Create the lease and set the cltt (after converting from the
         // expire time retrieved from the database).
         Lease6Ptr result(new Lease6(type, addr, duid_ptr, iaid_,
                                     pref_lifetime_, valid_lifetime_, 0, 0,
                                     subnet_id_, fqdn_fwd_, fqdn_rev_,
-                                    hostname, prefixlen_));
+                                    hostname, hwaddr, prefixlen_));
         time_t cltt = 0;
         MySqlLeaseMgr::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
         result->cltt_ = cltt;
