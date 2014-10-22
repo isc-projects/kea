@@ -1,3 +1,9 @@
+8xx.	[bug]		tomek
+	DHCPv6 component now processes incoming vendor-class options
+	properly (packets are classified as VENDOR_CLASS_[content of the
+	vendor-class option]).
+	(Trac #3486, git tbd)
+
 848.	[func]		fdupont
 	Added truncated HMAC support to TSIG, as per RFC 4635.
 	(Trac #3593, git ae3a9cd1a0d2dc07b7092368149381d69bc2c61a)

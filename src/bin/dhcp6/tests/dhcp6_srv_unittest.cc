@@ -25,6 +25,7 @@
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
+#include <dhcp/option_vendor_class.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp/dhcp6.h>
@@ -1848,6 +1849,37 @@ TEST_F(Dhcpv6SrvTest, clientClassify2) {
     // This time it should work
     EXPECT_TRUE(srv_.selectSubnet(sol));
 }
+
+// Tests whether a packet with custom vendor-class (not erouter or docsis)
+// is classified properly.
+TEST_F(Dhcpv6SrvTest, clientClassification3) {
+    NakedDhcpv6Srv srv(0);
+
+    // Let's create a SOLICIT.
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("2001:db8:1::3"));
+    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Now let's add a vendor-class with id=1234 and content "foo"
+    OptionVendorClassPtr vendor_class(new OptionVendorClass(Option::V6, 1234));
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
+    tuple = "foo";
+    vendor_class->addTuple(tuple);
+    sol->addOption(vendor_class);
+
+    // Now the server classifies the packet.
+    srv.classifyPacket(sol);
+
+    // The packet should now belong to VENDOR_CLASS_foo.
+    EXPECT_TRUE(sol->inClass(srv.VENDOR_CLASS_PREFIX + "foo"));
+
+    // It should not belong to "foo"
+    EXPECT_FALSE(sol->inClass("foo"));
+
+}
+
 
 // This test checks that the server will handle a Solicit with the Vendor Class
 // having a length of 4 (enterprise-id only).
