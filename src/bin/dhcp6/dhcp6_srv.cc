@@ -2555,8 +2555,7 @@ void Dhcpv6Srv::classifyPacket(const Pkt6Ptr& pkt) {
         classes << VENDOR_CLASS_PREFIX << DOCSIS3_CLASS_EROUTER;
 
     } else {
-        classes << vclass->getTuple(0).getText();
-
+        classes << VENDOR_CLASS_PREFIX << vclass->getTuple(0).getText();
     }
 
     // If there is no class identified, leave.
