@@ -84,6 +84,27 @@ Host::Host(const std::string& identifier, const std::string& identifier_name,
     setIdentifier(identifier, identifier_name);
 }
 
+const std::vector<uint8_t>&
+Host::getIdentifier() const {
+    if (hw_address_) {
+        return (hw_address_->hwaddr_);
+
+    } else if (duid_) {
+        return (duid_->getDuid());
+
+    }
+    static std::vector<uint8_t> empty_vector;
+    return (empty_vector);
+}
+
+Host::IdentifierType
+Host::getIdentifierType() const {
+    if (hw_address_) {
+        return (IDENT_HWADDR);
+    }
+    return (IDENT_DUID);
+}
+
 void
 Host::setIdentifier(const uint8_t* identifier, const size_t len,
                     const IdentifierType& type) {
