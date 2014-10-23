@@ -20,6 +20,7 @@
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/subnet_id.h>
+#include <boost/shared_ptr.hpp>
 #include <list>
 #include <map>
 #include <string>
@@ -282,6 +283,10 @@ public:
         return (duid_);
     }
 
+    const std::vector<uint8_t>& getIdentifier() const;
+
+    IdentifierType getIdentifierType() const;
+
     /// @brief Sets new IPv4 subnet identifier.
     ///
     /// @param ipv4_subnet_id New subnet identifier.
@@ -407,6 +412,18 @@ private:
     /// @brief Collection of classes associated with a DHCPv6 client.
     ClientClasses dhcp6_client_classes_;
 };
+
+/// @brief Pointer to the @c Host object.
+typedef boost::shared_ptr<Host> HostPtr;
+
+/// @brief Const pointer to the @c Host object.
+typedef boost::shared_ptr<const Host> ConstHostPtr;
+
+/// @brief Collection of the const Host objects.
+typedef std::vector<ConstHostPtr> ConstHostCollection;
+
+/// @brief Collection of the @c Host objects.
+typedef std::vector<HostPtr> HostCollection;
 
 }
 }
