@@ -316,9 +316,9 @@ public:
     /// The new reservation removes a previous reservation.
     ///
     /// @param address Address to be reserved for the client.
-    void setIPv4Reservation(const asiolink::IOAddress& address) {
-        ipv4_reservation_ = address;
-    }
+    ///
+    /// @throw isc::BadValue if the provided address is not an IPv4 address.
+    void setIPv4Reservation(const asiolink::IOAddress& address);
 
     /// @brief Returns reserved IPv4 address.
     ///

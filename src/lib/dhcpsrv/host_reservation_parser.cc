@@ -101,7 +101,8 @@ HostReservationParser4::build(isc::data::ConstElementPtr reservation_data) {
     BOOST_FOREACH(ConfigPair element, reservation_data->mapValue()) {
         try {
             if (element.first == "ip-address") {
-                host_->setIPv4Reservation(IOAddress(element.second->stringValue()));
+                host_->setIPv4Reservation(IOAddress(element.second->
+                                                    stringValue()));
             }
         }
         catch (const std::exception& ex) {

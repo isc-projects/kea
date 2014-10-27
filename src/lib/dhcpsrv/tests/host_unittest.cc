@@ -380,6 +380,10 @@ TEST(HostTest, setValues) {
     EXPECT_EQ(234, host->getIPv6SubnetID());
     EXPECT_EQ("10.0.0.1", host->getIPv4Reservation().toText());
     EXPECT_EQ("other-host.example.org", host->getHostname());
+
+    // An IPv6 address can't be used for IPv4 reservations.
+    EXPECT_THROW(host->setIPv4Reservation(IOAddress("2001:db8:1::1")),
+                 isc::BadValue);
 }
 
 // Test that Host constructors initialize client classes from string.

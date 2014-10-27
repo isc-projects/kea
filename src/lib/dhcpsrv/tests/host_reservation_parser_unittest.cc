@@ -62,6 +62,9 @@ protected:
         return (false);
     }
 
+    void
+    expectFailure(const HostReservationParser& parser,
+                  const std::string& config) const;
 
     /// @brief HW Address object used by tests.
     HWAddrPtr hwaddr_;
@@ -136,6 +139,43 @@ TEST_F(HostReservationParserTest, dhcp4DUID) {
     EXPECT_EQ(0, hosts[0]->getIPv6SubnetID());
     EXPECT_EQ("192.0.2.112", hosts[0]->getIPv4Reservation().toText());
     EXPECT_TRUE(hosts[0]->getHostname().empty());
+}
+
+// This test verifies that the configuration parser for host reservations
+// throws an exception when IPv6 address is specified for IPv4 address
+// reservation.
+TEST_F(HostReservationParserTest, dhcp4IPv6Address) {
+    std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
+        "\"ip-address\": \"2001:db8:1::1\" }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser4 parser(SubnetID(10));
+    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+}
+
+// This test verifies that the configuration parser for host reservations
+// throws an exception when no HW address nor DUID is specified.
+TEST_F(HostReservationParserTest, noIdentifier) {
+    std::string config = "{ \"ip-address\": \"192.0.2.112\","
+        "\"hostname\": \"\" }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser4 parser(SubnetID(10));
+    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+}
+
+// This test verifies that the configuration parser for host reservations
+// throws an exception when invalid IP address is specified.
+TEST_F(HostReservationParserTest, malformedAddress) {
+    std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
+        "\"ip-address\": \"192.0.2.bogus\" }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser4 parser(SubnetID(10));
+    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
 }
 
 // This test verfies that the parser can parse the IPv6 reservation entry for
@@ -216,6 +256,19 @@ TEST_F(HostReservationParserTest, dhcp6DUID) {
 
     IPv6ResrvRange prefixes = hosts[0]->getIPv6Reservations(IPv6Resrv::TYPE_PD);
     ASSERT_EQ(0, std::distance(prefixes.first, prefixes.second));
+}
+
+// This test verifies that the configuration parser throws an exception
+// when IPv4 address is specified for IPv6 reservation.
+TEST_F(HostReservationParserTest, dhcp6IPv4Address) {
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "\"ip-addresses\": [ \"192.0.2.3\", \"2001:db8:1::200\" ],"
+        "\"prefixes\": [ ] }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser6 parser(SubnetID(12));
+    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
 }
 
 
