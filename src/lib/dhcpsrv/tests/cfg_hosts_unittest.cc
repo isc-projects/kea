@@ -241,15 +241,21 @@ TEST_F(CfgHostsTest, get6) {
     // Add hosts.
     for (int i = 0; i < 25; ++i) {
         // Add host identified by HW address.
-        cfg.add(HostPtr(new Host(hwaddrs_[i]->toText(false),
-                                 "hw-address",
-                                 SubnetID(10), SubnetID(1 + i % 2),
-                                 increase(IOAddress("2001:db8:1::1"), i))));
+        HostPtr host = HostPtr(new Host(hwaddrs_[i]->toText(false),
+                                        "hw-address",
+                                        SubnetID(10), SubnetID(1 + i % 2),
+                                        IOAddress("0.0.0.0")));
+        host->addReservation(IPv6Resrv(increase(IOAddress("2001:db8:1::1"),
+                                                i)));
+        cfg.add(host);
 
         // Add host identified by DUID.
-        cfg.add(HostPtr(new Host(duids_[i]->toText(), "duid",
-                                 SubnetID(10), SubnetID(1 + i % 2),
-                                 increase(IOAddress("2001:db8:2::1"), i))));
+        host = HostPtr(new Host(duids_[i]->toText(), "duid",
+                                SubnetID(10), SubnetID(1 + i % 2),
+                                IOAddress("0.0.0.0")));
+        host->addReservation(IPv6Resrv(increase(IOAddress("2001:db8:2::1"),
+                                                i)));
+        cfg.add(host);
     }
 
     for (int i = 0; i < 25; ++i) {
@@ -260,8 +266,11 @@ TEST_F(CfgHostsTest, get6) {
                                 hwaddrs_[i]);
         ASSERT_TRUE(host);
         EXPECT_EQ(1 + i % 2, host->getIPv6SubnetID());
+        IPv6ResrvRange reservations =
+            host->getIPv6Reservations(IPv6Resrv::TYPE_NA);
+        ASSERT_EQ(1, std::distance(reservations.first, reservations.second));
         EXPECT_EQ(increase(IOAddress("2001:db8:1::1"), i),
-                  host->getIPv4Reservation());
+                  reservations.first->second.getPrefix());
 
         // Retrieve host by DUID. The HW address is non-null but there is no
         // reservation made for the HW address so the reservation is returned
@@ -269,8 +278,10 @@ TEST_F(CfgHostsTest, get6) {
         host = cfg.get6(SubnetID(1 + i % 2), duids_[i], hwaddrs_[i + 25]);
         ASSERT_TRUE(host);
         EXPECT_EQ(1 + i % 2, host->getIPv6SubnetID());
+        reservations = host->getIPv6Reservations(IPv6Resrv::TYPE_NA);
+        ASSERT_EQ(1, std::distance(reservations.first, reservations.second));
         EXPECT_EQ(increase(IOAddress("2001:db8:2::1"), i),
-                  host->getIPv4Reservation());
+                  reservations.first->second.getPrefix());
     }
 
     // Also check that when the get6 finds multiple Host objects that fulfil

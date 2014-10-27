@@ -30,7 +30,7 @@ void
 IPv6Resrv::set(const asiolink::IOAddress& prefix, const uint8_t prefix_len) {
     if (!prefix.isV6() || prefix.isV6Multicast()) {
         isc_throw(isc::BadValue, "invalid prefix '" << prefix
-                  << " for new IPv6 reservation");
+                  << "' for new IPv6 reservation");
 
     } else if (prefix_len > 128) {
         isc_throw(isc::BadValue, "invalid prefix length '"
@@ -61,12 +61,16 @@ Host::Host(const uint8_t* identifier, const size_t identifier_len,
            const std::string& dhcp4_client_classes,
            const std::string& dhcp6_client_classes)
     : hw_address_(), duid_(), ipv4_subnet_id_(ipv4_subnet_id),
-      ipv6_subnet_id_(ipv6_subnet_id), ipv4_reservation_(ipv4_reservation),
+      ipv6_subnet_id_(ipv6_subnet_id),
+      ipv4_reservation_(asiolink::IOAddress("0.0.0.0")),
        hostname_(hostname), dhcp4_client_classes_(dhcp4_client_classes),
        dhcp6_client_classes_(dhcp6_client_classes) {
 
     // Initialize HWAddr or DUID
     setIdentifier(identifier, identifier_len, identifier_type);
+
+    // Validate and set IPv4 address reservation.
+    setIPv4Reservation(ipv4_reservation);
 }
 
 Host::Host(const std::string& identifier, const std::string& identifier_name,
@@ -76,12 +80,16 @@ Host::Host(const std::string& identifier, const std::string& identifier_name,
            const std::string& dhcp4_client_classes,
            const std::string& dhcp6_client_classes)
     : hw_address_(), duid_(), ipv4_subnet_id_(ipv4_subnet_id),
-      ipv6_subnet_id_(ipv6_subnet_id), ipv4_reservation_(ipv4_reservation),
+      ipv6_subnet_id_(ipv6_subnet_id),
+      ipv4_reservation_(asiolink::IOAddress("0.0.0.0")),
       hostname_(hostname), dhcp4_client_classes_(dhcp4_client_classes),
       dhcp6_client_classes_(dhcp6_client_classes) {
 
     // Initialize HWAddr or DUID
     setIdentifier(identifier, identifier_name);
+
+    // Validate and set IPv4 address reservation.
+    setIPv4Reservation(ipv4_reservation);
 }
 
 const std::vector<uint8_t>&
@@ -137,6 +145,16 @@ Host::setIdentifier(const std::string& identifier, const std::string& name) {
                   << name << "' when creating host instance");
     }
 }
+
+void
+Host::setIPv4Reservation(const asiolink::IOAddress& address) {
+    if (!address.isV4()) {
+        isc_throw(isc::BadValue, "address '" << address << "' is not a valid"
+                  " IPv4 address");
+    }
+    ipv4_reservation_ = address;
+}
+
 
 void
 Host::addReservation(const IPv6Resrv& reservation) {
