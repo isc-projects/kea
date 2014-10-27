@@ -313,7 +313,7 @@ testing but should not be enabled in normal circumstances. Non-persistence
 mode is enabled when 'persist4=no persist6=no' parameters are specified
 in the database access string.
 
-% DHCPSRV_MEMFILE_READ_HWADDR_FAIL failed to read hardware address from disk: %1
+% DHCPSRV_MEMFILE_READ_HWADDR_FAIL failed to read hardware address from lease file: %1
 A warning message issued when read attempt of the hardware address stored in
 a disk file failed. The parameter should provide the exact nature of the failure.
 The database read will continue, but that particular lease will no longer
