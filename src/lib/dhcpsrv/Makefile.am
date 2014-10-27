@@ -62,6 +62,7 @@ libkea_dhcpsrv_la_SOURCES += dhcp_config_parser.h
 libkea_dhcpsrv_la_SOURCES += dhcp_parsers.cc dhcp_parsers.h
 libkea_dhcpsrv_la_SOURCES += host.cc host.h
 libkea_dhcpsrv_la_SOURCES += host_container.h
+libkea_dhcpsrv_la_SOURCES += host_reservation_parser.cc host_reservation_parser.h
 libkea_dhcpsrv_la_SOURCES += key_from_key.h
 libkea_dhcpsrv_la_SOURCES += lease.cc lease.h
 libkea_dhcpsrv_la_SOURCES += lease_mgr.cc lease_mgr.h
