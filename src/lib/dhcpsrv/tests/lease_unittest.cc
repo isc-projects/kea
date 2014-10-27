@@ -575,6 +575,34 @@ TEST(Lease6, matches) {
     lease1.duid_ = duid;
     EXPECT_FALSE(lease1.matches(lease2));
     lease1.duid_ = lease2.duid_;
+
+    // Hardware address checks
+    EXPECT_TRUE(lease1.matches(lease2)); // Neither lease have hardware address.
+
+    // Let's add a hardware lease to the first one.
+    HWAddrPtr hwaddr(new HWAddr(HWADDR, sizeof(HWADDR), HTYPE_ETHER));
+    lease1.hwaddr_ = hwaddr;
+
+    // Only the first one has a hardware address, so not equal.
+    EXPECT_FALSE(lease1.matches(lease2));
+
+    // Only the second one has it, so still not equal.
+    lease1.hwaddr_.reset();
+    lease2.hwaddr_ = hwaddr;
+    EXPECT_FALSE(lease1.matches(lease2));
+
+    // Ok, now both have it - they should be equal.
+    lease1.hwaddr_ = hwaddr;
+    EXPECT_TRUE(lease1.matches(lease2));
+
+    // Let's create a second instance that have the same values.
+    HWAddrPtr hwaddr2(new HWAddr(HWADDR, sizeof(HWADDR), HTYPE_ETHER));
+    lease2.hwaddr_ = hwaddr2;
+    EXPECT_TRUE(lease1.matches(lease2));
+
+    // Let's modify the second address and check that they won't be equal anymore.
+    hwaddr2->hwaddr_[0]++;
+    EXPECT_FALSE(lease1.matches(lease2));
 }
 
 /// @brief Lease6 Equality Test
