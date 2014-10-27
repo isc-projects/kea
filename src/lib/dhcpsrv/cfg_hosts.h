@@ -22,6 +22,7 @@
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/host_container.h>
 #include <dhcpsrv/subnet_id.h>
+#include <boost/shared_ptr.hpp>
 #include <vector>
 
 namespace isc {
@@ -234,6 +235,16 @@ private:
     HostContainer hosts_;
 
 };
+
+/// @name Pointers to the @c CfgHosts objects.
+//@{
+/// @brief Non-const pointer.
+typedef boost::shared_ptr<CfgHosts> CfgHostsPtr;
+
+/// @brief Const pointer.
+typedef boost::shared_ptr<const CfgHosts> ConstCfgHostsPtr;
+
+//@}
 
 }
 }
