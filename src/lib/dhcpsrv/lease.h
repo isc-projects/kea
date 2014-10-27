@@ -156,6 +156,15 @@ struct Lease {
     /// lease is equal to the FQDN data of our lease (true) or not (false).
     bool hasIdenticalFqdn(const Lease& other) const;
 
+    /// @brief Returns raw (as vector) hardware address
+    ///
+    /// This method is needed in multi-index container as key extractor.
+    /// The const reference is only valid as long as the object that returned it.
+    /// In the unlikely case when Lease4 does not have a hardware address,
+    /// the function will return an empty vector.
+    ///
+    /// @return const reference to the hardware address
+    const std::vector<uint8_t>& getHWAddrVector() const;
 };
 
 /// @brief Structure that holds a lease for IPv4 address
@@ -229,14 +238,6 @@ struct Lease4 : public Lease {
     /// @return A reference to a vector holding client identifier,
     /// or an empty vector if client identifier is NULL.
     const std::vector<uint8_t>& getClientIdVector() const;
-
-    /// @brief Returns raw (as vector) hardware address
-    ///
-    /// This method is needed in multi-index container as key extractor.
-    /// The const reference is only valid as long as the object that returned it.
-    ///
-    /// @return const reference to the hardware address
-    const std::vector<uint8_t>& getRawHWAddr() const;
 
     /// @brief Check if two objects encapsulate the lease for the same
     /// client.

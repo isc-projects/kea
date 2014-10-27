@@ -72,6 +72,11 @@ Lease4::Lease4(const Lease4& other)
     fixed_ = other.fixed_;
     comments_ = other.comments_;
 
+    // Copy the hardware address if it is defined.
+    if (other.hwaddr_) {
+        hwaddr_.reset(new HWAddr(*other.hwaddr_));
+    }
+
     if (other.client_id_) {
         client_id_.reset(new ClientId(other.client_id_->getClientId()));
 
@@ -92,12 +97,10 @@ Lease4::getClientIdVector() const {
 }
 
 const std::vector<uint8_t>&
-Lease4::getRawHWAddr() const {
+Lease::getHWAddrVector() const {
     if (!hwaddr_) {
-        // something is wrong, very wrong. Hardware address must always
-        // be present for all IPv4 leases.
-        isc_throw(BadValue, "Lease4 for address " << addr_.toText()
-                  << " is missing a hardware address");
+        static std::vector<uint8_t> empty_vec;
+        return (empty_vec);
     }
     return (hwaddr_->hwaddr_);
 }
@@ -118,12 +121,20 @@ Lease4::matches(const Lease4& other) const {
 
     // Note that hwaddr_ is now a poiner to the HWAddr structure.
     // We can't simply compare smart pointers, we need to compare the
-    // actual objects they point to. It is ok to not check whether they
-    // are non-NULL, as every Lease4 must have hardware address.
+    // actual objects they point to. If one of the leases had a hardware address
+    // and the other doesn't, they clearly don't match.
+    if ( (!hwaddr_ && other.hwaddr_) ||
+         (hwaddr_ && !other.hwaddr_) ) {
+        return (false);
+    }
+
+    // The lease is equal if addresses and extensions match and there is
+    // either the same hardware address on both or neither have hardware address
+    // specified.
     return (addr_ == other.addr_ &&
             ext_ == other.ext_ &&
-            *hwaddr_ == *other.hwaddr_);
-
+            (!hwaddr_ ||
+             *hwaddr_ == *other.hwaddr_) );
 }
 
 Lease4&
@@ -141,7 +152,11 @@ Lease4::operator=(const Lease4& other) {
         fqdn_rev_ = other.fqdn_rev_;
         comments_ = other.comments_;
         ext_ = other.ext_;
-        hwaddr_ = other.hwaddr_;
+
+        // Copy the hardware address if it is defined.
+        if (other.hwaddr_) {
+            hwaddr_.reset(new HWAddr(*other.hwaddr_));
+        }
 
         if (other.client_id_) {
             client_id_.reset(new ClientId(other.client_id_->getClientId()));
@@ -211,6 +226,7 @@ Lease6::toText() const {
            << "Pref life:     " << preferred_lft_ << "\n"
            << "Valid life:    " << valid_lft_ << "\n"
            << "Cltt:          " << cltt_ << "\n"
+           << "Hardware addr: " << (hwaddr_?hwaddr_->toText(false):"(none)")
            << "Subnet ID:     " << subnet_id_ << "\n";
 
     return (stream.str());
@@ -225,6 +241,7 @@ Lease4::toText() const {
            << "T1:            " << t1_ << "\n"
            << "T2:            " << t2_ << "\n"
            << "Cltt:          " << cltt_ << "\n"
+           << "Hardware addr: " << (hwaddr_?hwaddr_->toText(false):"(none)")
            << "Subnet ID:     " << subnet_id_ << "\n";
 
     return (stream.str());
