@@ -106,6 +106,7 @@ private:
     /// - fqdn_fwd
     /// - fqdn_rev
     /// - hostname
+    /// - hwaddr
     void initColumns();
 
     ///

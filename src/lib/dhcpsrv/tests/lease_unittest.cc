@@ -141,6 +141,13 @@ TEST_F(Lease4Test, copyConstructor) {
     EXPECT_TRUE(lease == copied_lease);
     // Client IDs are equal, but they should be in two distinct pointers.
     EXPECT_FALSE(lease.client_id_ == copied_lease.client_id_);
+
+    // Hardware addresses are equal, but they should point to two objects,
+    // each holding the same data. The content should be equal...
+    EXPECT_TRUE(*lease.hwaddr_ == *copied_lease.hwaddr_);
+
+    // ... but it should point to different objects.
+    EXPECT_FALSE(lease.hwaddr_ == copied_lease.hwaddr_);
 }
 
 // This test verfies that the assignment operator copies all Lease4 fields
@@ -172,6 +179,13 @@ TEST_F(Lease4Test, operatorAssign) {
     EXPECT_TRUE(lease == copied_lease);
     // Client IDs are equal, but they should be in two distinct pointers.
     EXPECT_FALSE(lease.client_id_ == copied_lease.client_id_);
+
+    // Hardware addresses are equal, but they should point to two objects,
+    // each holding the same data. The content should be equal...
+    EXPECT_TRUE(*lease.hwaddr_ == *copied_lease.hwaddr_);
+
+    // ... but it should point to different objects.
+    EXPECT_FALSE(lease.hwaddr_ == copied_lease.hwaddr_);
 }
 
 // This test verifies that the matches() returns true if two leases differ

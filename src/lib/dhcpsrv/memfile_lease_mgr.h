@@ -454,8 +454,8 @@ protected:
                     // Lease4 object, which is a HWAddr object. Boost does not
                     // provide a key extractor for getting a member of a member,
                     // so we need a simple method for that.
-                    boost::multi_index::const_mem_fun<Lease4, const std::vector<uint8_t>&,
-                                               &Lease4::getRawHWAddr>,
+                    boost::multi_index::const_mem_fun<Lease, const std::vector<uint8_t>&,
+                                               &Lease::getHWAddrVector>,
                     // The subnet id is held in the subnet_id_ member of Lease4
                     // class. Note that the subnet_id_ is defined in the base
                     // class (Lease) so we have to point to this class rather
@@ -493,8 +493,8 @@ protected:
                     // access the raw data using lease->hwaddr_->hwaddr_, but Boost
                     // doesn't seem to provide a way to use member of a member for this,
                     // so we need a simple key extractor method (getRawHWAddr).
-                    boost::multi_index::const_mem_fun<Lease4, const std::vector<uint8_t>&,
-                                            &Lease4::getRawHWAddr>,
+                    boost::multi_index::const_mem_fun<Lease, const std::vector<uint8_t>&,
+                                            &Lease::getHWAddrVector>,
                     // The subnet id is accessed through the subnet_id_ member.
                     boost::multi_index::member<Lease, SubnetID, &Lease::subnet_id_>
                 >
