@@ -277,6 +277,18 @@ Lease4::operator==(const Lease4& other) const {
 
 bool
 Lease6::matches(const Lease6& other) const {
+
+    // One lease has a hardware address, the other doesn't.
+    if ( (!hwaddr_ && other.hwaddr_) ||
+         (hwaddr_ && !other.hwaddr_) ) {
+        return (false);
+    }
+
+    // Both leases have hardware address, but they are not equal.
+    if (hwaddr_ && (*hwaddr_ != *other.hwaddr_)) {
+        return (false);
+    }
+
     return (addr_ == other.addr_ &&
             type_ == other.type_ &&
             prefixlen_ == other.prefixlen_ &&
