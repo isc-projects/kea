@@ -809,4 +809,7 @@ TEST(Lease6, hasIdenticalFqdn) {
                                                      false, false)));
 }
 
+/// @todo: Add tests for Lease4::toText()
+/// @todo: Add tests for Lease6::toText()
+
 }; // end of anonymous namespace
