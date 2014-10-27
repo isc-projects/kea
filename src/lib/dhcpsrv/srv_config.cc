@@ -26,12 +26,12 @@ namespace dhcp {
 
 SrvConfig::SrvConfig()
     : sequence_(0), cfg_option_def_(new CfgOptionDef()),
-      cfg_option_(new CfgOption()) {
+      cfg_option_(new CfgOption()), cfg_hosts_(new CfgHosts()) {
 }
 
 SrvConfig::SrvConfig(const uint32_t sequence)
     : sequence_(sequence), cfg_option_def_(new CfgOptionDef()),
-      cfg_option_(new CfgOption()) {
+      cfg_option_(new CfgOption()), cfg_hosts_(new CfgHosts()) {
 }
 
 std::string
