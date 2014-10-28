@@ -1,3 +1,8 @@
+851.	[bug]		tmark
+	Corrected a segmentation fault that was occurring under OS-X during D2 module
+	shutdown.
+	(Trac #3470, git f7822568abd04c12faa3cde34fadaac238a373d3)
+
 850.	[build]		fdupont
 	Moved optional gtest sources to ext/gtest.
 	(Trac #3162, git 055512758f5c79f29eb375126d496483c9a6d0a1)
