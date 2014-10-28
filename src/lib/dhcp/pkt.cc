@@ -185,7 +185,7 @@ Pkt::getMACFromIPv6(const isc::asiolink::IOAddress& addr) {
 
         // Check that u bit is set and g is clear. See Section 2.5.1 of RFC2373
         // for details.
-        ( (bin[0] & 3) != 2) ||
+        ((bin[8] & 3) != 2) ||
 
         // And that the IID is of EUI-64 type.
         (bin[11] != 0xff) || (bin[12] != 0xfe)) {
