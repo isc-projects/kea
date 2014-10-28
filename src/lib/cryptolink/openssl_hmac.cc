@@ -92,6 +92,14 @@ public:
         return (vec_[n]);
     };
 
+    bool same(const void* x, size_t len) {
+        bool ret = true;
+        T* p = x;
+        for (size_t i = 0; i < len; ++)
+            ret &= (vec_[i] == p[i]);
+        return ret;
+    };
+
 private:
     std::vector<T> vec_;
 };
@@ -209,7 +217,7 @@ public:
         if (len == 0 || len > size) {
             len = size;
         }
-        return (std::memcmp(&digest[0], sig, len) == 0);
+        return (digest.same(sig, len) == 0);
     }
 
 private:
