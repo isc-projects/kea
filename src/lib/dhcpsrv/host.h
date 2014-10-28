@@ -91,6 +91,9 @@ public:
     /// multicast address or the prefix length is greater than 128.
     void set(const asiolink::IOAddress& prefix, const uint8_t prefix_len);
 
+    /// @brief Returns information about the reservation in the textual format.
+    std::string toText() const;
+
     /// @brief Equality operator.
     ///
     /// @param other Reservation to compare to.
@@ -339,6 +342,14 @@ public:
     /// @return A range of iterators pointing to the reservations of
     /// the specified type.
     IPv6ResrvRange getIPv6Reservations(const IPv6Resrv::Type& type) const;
+
+    /// @brief Checks if specified IPv6 reservation exists for the host.
+    ///
+    /// @param reservation A reservation to be checked for the host.
+    ///
+    /// @return true if the reservation already exists for the host, false
+    /// otherwise.
+    bool hasReservation(const IPv6Resrv& reservation) const;
 
     /// @brief Sets new hostname.
     ///

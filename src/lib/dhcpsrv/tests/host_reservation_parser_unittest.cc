@@ -271,5 +271,78 @@ TEST_F(HostReservationParserTest, dhcp6IPv4Address) {
     EXPECT_THROW(parser.build(config_element), DhcpConfigError);
 }
 
+// This test verifies that the configuration parser throws an exception
+// when empty address has been specified.
+TEST_F(HostReservationParserTest, dhcp6NullAddress) {
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "\"ip-addresses\": [ \"\" ],"
+        "\"prefixes\": [ ] }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser6 parser(SubnetID(12));
+    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+}
+
+// This test verifies that the configuration parser throws an exception
+// when invalid prefix length is specified.
+TEST_F(HostReservationParserTest, dhcp6InvalidPrefixLength) {
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "\"prefixes\": [ \"2001:db8:1::/abc\" ] }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser6 parser(SubnetID(12));
+    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+}
+
+// This test verifies that the configuration parser throws an exception
+// when empty prefix is specified.
+TEST_F(HostReservationParserTest, dhcp6NullPrefix) {
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "\"prefixes\": [ \"/64\" ] }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser6 parser(SubnetID(12));
+    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+}
+
+// This test verifies that the configuration parser throws an exception
+// when only slash is specified for the prefix..
+TEST_F(HostReservationParserTest, dhcp6NullPrefix2) {
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "\"prefixes\": [ \"/\" ] }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser6 parser(SubnetID(12));
+    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+}
+
+// This test verifies that the configuration parser throws an exception
+// when the same address is reserved twice.
+TEST_F(HostReservationParserTest, dhcp6DuplicatedAddress) {
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "\"ip-addresses\": [ \"2001:db8:1::1\", \"2001:db8:1::1\" ] }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser6 parser(SubnetID(12));
+    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+}
+
+// This test verifies that the configuration parser throws an exception
+// when the same prefix is reserved twice.
+TEST_F(HostReservationParserTest, dhcp6DuplicatedPrefix) {
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "\"prefixes\": [ \"2001:db8:0101::/64\", \"2001:db8:0101::/64\" ] }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser6 parser(SubnetID(12));
+    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+}
+
 
 } // end of anonymous namespace
