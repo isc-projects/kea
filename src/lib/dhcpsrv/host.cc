@@ -15,6 +15,7 @@
 #include <dhcpsrv/host.h>
 #include <util/strutil.h>
 #include <exceptions/exceptions.h>
+#include <sstream>
 
 namespace isc {
 namespace dhcp {
@@ -40,6 +41,17 @@ IPv6Resrv::set(const asiolink::IOAddress& prefix, const uint8_t prefix_len) {
 
     prefix_ = prefix;
     prefix_len_ = prefix_len;
+}
+
+std::string
+IPv6Resrv::toText() const {
+    std::ostringstream s;
+    s << prefix_;
+    // For PD, append prefix length.
+    if (getType() == TYPE_PD) {
+        s << "/" << static_cast<int>(prefix_len_);
+    }
+    return (s.str());
 }
 
 bool
@@ -158,6 +170,12 @@ Host::setIPv4Reservation(const asiolink::IOAddress& address) {
 
 void
 Host::addReservation(const IPv6Resrv& reservation) {
+    // Check if it is not duplicating existing reservation.
+    if (hasReservation(reservation)) {
+        isc_throw(isc::InvalidOperation, "failed on attempt to add a duplicated"
+                  " host reservation for " << reservation.toText());
+    }
+    // Add it.
     ipv6_reservations_.insert(IPv6ResrvTuple(reservation.getType(),
                                              reservation));
 }
@@ -165,6 +183,22 @@ Host::addReservation(const IPv6Resrv& reservation) {
 IPv6ResrvRange
 Host::getIPv6Reservations(const IPv6Resrv::Type& type) const {
     return (ipv6_reservations_.equal_range(type));
+}
+
+bool
+Host::hasReservation(const IPv6Resrv& reservation) const {
+    IPv6ResrvRange reservations = getIPv6Reservations(reservation.getType());
+    if (std::distance(reservations.first, reservations.second) > 0) {
+        for (IPv6ResrvIterator it = reservations.first;
+             it != reservations.second; ++it) {
+            if (it->second == reservation) {
+                return (true);
+            }
+        }
+    }
+
+    // No matching reservations found.
+    return (false);
 }
 
 void
