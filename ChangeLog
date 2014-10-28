@@ -1,3 +1,7 @@
+850.	[build]		fdupont
+	Moved optional gtest sources to ext/gtest.
+	(Trac #3162, git xxx)
+
 849.	[bug]		tomek
 	DHCPv6 component now processes incoming vendor-class options
 	properly (packets are classified as VENDOR_CLASS_[content of the
@@ -44,10 +48,11 @@
 	(Trac #3546, git 6e68af7dfe15e4d461bf068f545d2bdaaa8fcfb0)
 
 840.	[func]		nicolas
-	PktFilterInet::send method now sets source IPv4 address explicitly.
-	This enabled perfdhcp to control its source address on systems that have
-	more than one address assigned to a given interface. Thanks to
-	Nicolas Chaigneau from Capgemini for providing this fix.
+	PktFilterInet::send method now sets source IPv4 address
+	explicitly.  This enabled perfdhcp to control its source address
+	on systems that have more than one address assigned to a given
+	interface. Thanks to Nicolas Chaigneau from Capgemini for
+	providing this fix.
 	(Github #2, git 6ac36ed7a1d97bcf52ffb2aec7cbf116e58e5803)
 
 839.	[doc]		adam

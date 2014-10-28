@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS = -I m4macros ${ACLOCAL_FLAGS}
 # ^^^^^^^^ This has to be the first line and cannot come later in this
 # Makefile.am due to some bork in some versions of autotools.
 
-SUBDIRS = compatcheck doc . src tests m4macros ext
+SUBDIRS = compatcheck doc . ext src tests m4macros
 USE_LCOV=@USE_LCOV@
 LCOV=@LCOV@
 GENHTML=@GENHTML@
@@ -447,9 +447,3 @@ CLEANFILES = $(abs_top_builddir)/logger_lockfile
 # config.h may be included by headers supplied for building user-written
 # hooks libraries, so we need to include it in the distribution.
 pkginclude_HEADERS = config.h
-
-if HAVE_GTEST_SOURCE
-noinst_LIBRARIES = libgtest.a
-libgtest_a_CXXFLAGS = $(GTEST_INCLUDES) $(AM_CXXFLAGS)
-nodist_libgtest_a_SOURCES = $(GTEST_SOURCE)/src/gtest-all.cc
-endif

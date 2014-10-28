@@ -171,6 +171,9 @@ case "$host" in
 	# In Solaris, IN6ADDR_ANY_INIT and IN6ADDR_LOOPBACK_INIT need -Wno-missing-braces
 	KEA_CXXFLAGS="$KEA_CXXFLAGS -Wno-missing-braces"
 	;;
+*-apple-darwin*)
+	MULTITHREADING_FLAG=
+	;;
 *)
 	MULTITHREADING_FLAG=-pthread
 	;;
@@ -415,9 +418,8 @@ GTEST_INCLUDES=
 
 AC_ARG_WITH([gtest-source],
             [AS_HELP_STRING([--with-gtest-source=PATH],
-                            [location of the Googletest source, defaults to /usr/src/gtest])],
-            [enable_gtest="yes" ; GTEST_SOURCE="$withval"],
-            [GTEST_SOURCE="/usr/src/gtest"])
+                            [location of the Googletest source])],
+            [enable_gtest="yes" ; GTEST_SOURCE="$withval"])
 
 AC_ARG_WITH([gtest],
 	    [AS_HELP_STRING([--with-gtest=PATH],
@@ -1088,7 +1090,7 @@ if test "x$enable_gtest" = "xyes" ; then
                [AC_MSG_ERROR([no gtest source at $GTEST_SOURCE])])
           fi
           have_gtest_source=yes
-          GTEST_LDFLAGS="\$(top_builddir)/libgtest.a"
+          GTEST_LDFLAGS="\$(top_builddir)/ext/gtest/libgtest.a"
           DISTCHECK_GTEST_CONFIGURE_FLAG="--with-gtest-source=$GTEST_SOURCE"
           GTEST_INCLUDES="-I$GTEST_SOURCE -I$GTEST_SOURCE/include"
           # See $GTEST_SOURCE/include/gtest/internal/gtest-port.h
@@ -1358,6 +1360,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  doc/version.ent
                  ext/asio/asio/Makefile
                  ext/asio/Makefile
+		 ext/gtest/Makefile
                  ext/Makefile
                  m4macros/Makefile
                  Makefile
