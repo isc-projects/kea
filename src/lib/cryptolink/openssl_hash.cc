@@ -32,7 +32,7 @@ namespace cryptolink {
 /// @param algorithm algorithm to be converted
 /// @return pointer to EVP_MD which identifies the algorithm
 const EVP_MD*
-getOpenSSLHashAlgorithm(isc::cryptolink::HashAlgorithm algorithm) {
+getOpenSSLHashAlgorithm(HashAlgorithm algorithm) {
     switch (algorithm) {
     case isc::cryptolink::MD5:
         return (EVP_md5());

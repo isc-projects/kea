@@ -34,7 +34,7 @@ namespace cryptolink {
 /// @param algorithm algorithm to be converted
 /// @return text representation of the algorithm name
 const char*
-getBotanHashAlgorithmName(isc::cryptolink::HashAlgorithm algorithm) {
+getBotanHashAlgorithmName(HashAlgorithm algorithm) {
     switch (algorithm) {
     case isc::cryptolink::MD5:
         return ("MD5");
