@@ -1,4 +1,7 @@
 SUBDIRS = . asio
+if HAVE_GTEST_SOURCE
+SUBDIRS += gtest
+endif
 
 # As we are copying ASIO headers to the installation directory, copy across
 # the licence file as well.
