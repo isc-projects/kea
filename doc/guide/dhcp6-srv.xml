@@ -170,7 +170,7 @@ As "<command>interfaces</command>" is not the last parameter in the
 configuration, a trailing comma is required.</para>
 <para>A number of other parameters follow. <command>valid-lifetime</command>
 defines for how long the addresses (leases) given out by the server are valid. If
-nothing changes, the client that got an address is allowed to use it for 4000
+nothing changes, a client that got an address is allowed to use it for 4000
 seconds. (Note that integer numbers are specified as is, without any quotes
 around them.) The address will become deprecated in 3000 seconds (clients are
 allowed to keep old connections, but can't use this address for creating new
@@ -525,7 +525,7 @@ temporarily override a list of interface names and listen on all interfaces.
         dynamically assign all addresses available in the whole subnet. Although
         rather wasteful, it is certainly a valid configuration to dedicate the
         whole /64 subnet for that purpose. Note that the Kea server does not preallocate
-        the leases, so there is no danger when using gigantic address pools.
+        the leases, so there is no danger in using gigantic address pools.
       </para>
       <para>
         When configuring a DHCPv6 server using prefix/length notation, please pay
@@ -603,9 +603,9 @@ temporarily override a list of interface names and listen on all interfaces.
       the option-data table.  This table contains
       information on all global options that the server is supposed to configure
       in all subnets.  The <command>name</command> line specifies the option name.
-      For a complete list
+      (For a complete list
       of currently supported names, see <xref
-      linkend="dhcp6-std-options-list"/>.  The next line specifies the option code,
+      linkend="dhcp6-std-options-list"/>.)  The next line specifies the option code,
       which must match one of the values from that list. The line beginning with
       <command>space</command> specifies the option space, which must always be set
       to "dhcp6" as these are standard DHCPv6 options.  For other name spaces,
@@ -618,7 +618,7 @@ temporarily override a list of interface names and listen on all interfaces.
     </para>
 
     <para>
-      Options can also be configured as hexadecimal values.  If csv-format is
+      Options can also be configured as hexadecimal values.  If "csv-format" is
       set to false, the option data must be specified as a string of hexadecimal
       numbers.  The
       following commands configure the DNS-SERVERS option for all
@@ -1376,7 +1376,7 @@ should include options from the isc option space:
       in future releases.
       </simpara></listitem>
       </itemizedlist>
-      By default, D2 is assumed to running on the same machine as kea-dhcp6, and
+      By default, kea-dhcp-ddns is assumed to running on the same machine as kea-dhcp6, and
       all of the default values mentioned above should be sufficient.
       If, however, D2 has been configured to listen on a different address or
       port, these values must altered accordingly. For example, if D2 has been
@@ -1519,9 +1519,9 @@ should include options from the isc option space:
       The third row in the table above describes the case in which the client
       requests that no DNS updates be done. The parameter, "override-no-update",
       can be used to instruct the server to disregard the client's wishes. When
-      this parameter is true, kea-dhcp6 will generate DDNS update requests to D2
-      even if the client requests no updates be done.  The N-S-O flags in the
-      server's response to the client will be 0-1-1.
+      this parameter is true, kea-dhcp6 will generate DDNS update requests to 
+      kea-dhcp-ddns even if the client requests no updates be done.  The N-S-O 
+      flags in the server's response to the client will be 0-1-1.
       </para>
       <para>
       To override client delegation, issue the following commands:
@@ -1634,7 +1634,8 @@ should include options from the isc option space:
       <para>
       where address-text is simply the lease IP address converted to a
       hyphenated string.  For example, if lease address is 3001:1::70E and
-      assuming default values for generated-prefix and qualifying-suffix, the
+      default values are used for 
+      <command>generated-prefix</command> and <command>qualifying-suffix</command>, the
       generated FQDN would be:
       </para>
       <para>
@@ -1678,7 +1679,7 @@ should include options from the isc option space:
         the clients are being configured. Typically the relay has a global IPv6
         address configured on the interface that belongs to the subnet from which
         the server will assign addresses. In the typical case, the
-        server is able to use the IPv6 address inserted by the relay (in link-addr
+        server is able to use the IPv6 address inserted by the relay (in the link-addr
         field in RELAY-FORW message) to select the appropriate subnet.
       </para>
       <para>

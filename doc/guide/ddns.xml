@@ -11,7 +11,7 @@
     the DDNS protocol (defined in RFC 2136) on behalf of the DHCPv4 and DHCPv6
     servers (kea-dhcp4 and kea-dhcp6 respectively). The DHCP servers construct
     DDNS update requests, known as NameChangeRequests (NCRs), based upon DHCP
-    lease change events and then posts these to D2. D2 attempts to match
+    lease change events and then post these to D2. D2 attempts to match
     each such request to the appropriate DNS server(s) and carry out the
     necessary conversation with those servers to update the DNS data.
     </para>

@@ -167,7 +167,7 @@ As "<command>interfaces</command>" is not the last parameter in the configuratio
 a trailing comma is required.</para>
 <para>A number of other parameters
 follow. <command>valid-lifetime</command> defines for how long the addresses (leases) given out by the
-server are valid. If nothing changes, the client that got an address is allowed to
+server are valid. If nothing changes, a client that got an address is allowed to
 use it for 4000 seconds. (Note that integer numbers are specified as is,
 without any quotes around them.) <command>renew-timer</command> and
 <command>rebind-timer</command> are values that
@@ -1345,7 +1345,7 @@ temporarily override a list of interface names and listen on all interfaces.
       </simpara></listitem>
 
       </itemizedlist>
-      By default, D2 is assumed to be running on the same machine as kea-dhcp4, and
+      By default, kea-dhcp-ddns is assumed to be running on the same machine as kea-dhcp4, and
       all of the default values mentioned above should be sufficient.
       If, however, D2 has been configured to listen on a different address or
       port, these values must be altered accordingly. For example, if D2 has been
@@ -1477,7 +1477,7 @@ temporarily override a list of interface names and listen on all interfaces.
       The third row in the table above describes the case in which the client
       requests that no DNS updates be done. The parameter, <command>override-no-update</command>,
       can be used to instruct the server to disregard the client's wishes. When
-      this parameter is true, kea-dhcp4 will generate a DDNS update request to D2
+      this parameter is true, kea-dhcp4 will generate a DDNS update request to kea-dhcp-ddns
       even if the client requests that no updates be done.  The N-S-O flags in the
       server's response to the client will be 0-1-1.
       </para>
@@ -1583,7 +1583,8 @@ temporarily override a list of interface names and listen on all interfaces.
       <para>
       where address-text is simply the lease IP address converted to a
       hyphenated string.  For example, if the lease address is 172.16.1.10 and
-      assuming default values for <command>generated-prefix</command> and <command>qualifying-suffix</command>, the
+      default values are used for
+      <command>generated-prefix</command> and <command>qualifying-suffix</command>, the
       generated FQDN would be:
       </para>
       <para>
