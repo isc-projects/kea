@@ -1,6 +1,6 @@
 850.	[build]		fdupont
 	Moved optional gtest sources to ext/gtest.
-	(Trac #3162, git xxx)
+	(Trac #3162, git 055512758f5c79f29eb375126d496483c9a6d0a1)
 
 849.	[bug]		tomek
 	DHCPv6 component now processes incoming vendor-class options
