@@ -125,6 +125,9 @@ public:
     ///            and smaller than the output length of the algorithm,
     ///            only len bytes will be checked
     /// \return true if the signature is correct, false otherwise
+    ///
+    /// \note verify() does not destroy its context so it can be
+    /// called multiple times with different signatures.
     bool verify(const void* sig, size_t len);
 
 private:
