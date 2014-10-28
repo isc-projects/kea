@@ -219,11 +219,12 @@ SignalSet::erase(const int sig) {
     registered_signals_->erase(sig);
     // Remove unhandled signals from the queue.
     for (std::list<int>::iterator it = signal_states_->begin();
-         it != getSignalStates()->end(); ++it) {
+         it != signal_states_->end(); ++it) {
         if (*it == sig) {
-            it = getSignalStates()->erase(it);
+            it = signal_states_->erase(it);
         }
     }
+
     // Remove locally registered signal.
     local_signals_.erase(sig);
 }
