@@ -42,6 +42,15 @@ TEST(IPv6ResrvTest, constructorPrefix) {
     EXPECT_EQ(IPv6Resrv::TYPE_PD, resrv.getType());
 }
 
+// This test verifies that the toText() function prints correctly.
+TEST(IPv6ResrvTest, toText) {
+    IPv6Resrv resrv_prefix(IOAddress("2001:db8:1::"), 64);
+    EXPECT_EQ("2001:db8:1::/64", resrv_prefix.toText());
+
+    IPv6Resrv resrv_address(IOAddress("2001:db8:111::23"));
+    EXPECT_EQ("2001:db8:111::23", resrv_address.toText());
+}
+
 // This test verifies that invalid prefix is rejected.
 TEST(IPv6ResrvTest, constructorInvalidPrefix) {
     // IPv4 address is invalid for IPv6 reservation.
@@ -338,6 +347,14 @@ TEST(HostTest, addReservations) {
         host->addReservation(IPv6Resrv(IOAddress("2001:db8:1:2::"), 64));
         host->addReservation(IPv6Resrv(IOAddress("2001:db8:1::1")));
     );
+
+    // Check that reservations exist.
+    EXPECT_TRUE(host->hasReservation(IPv6Resrv(IOAddress("2001:db8:1::cafe"))));
+    EXPECT_TRUE(host->hasReservation(IPv6Resrv(IOAddress("2001:db8:1:1::"),
+                                               64)));
+    EXPECT_TRUE(host->hasReservation(IPv6Resrv(IOAddress("2001:db8:1:2::"),
+                                               64)));
+    EXPECT_TRUE(host->hasReservation(IPv6Resrv(IOAddress("2001:db8:1::1"))));
 
     // Get only NA reservations.
     IPv6ResrvRange addresses = host->getIPv6Reservations(IPv6Resrv::TYPE_NA);
