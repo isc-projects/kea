@@ -24,14 +24,6 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Exception thrown upon attempt to add subnet with an ID that belongs
-/// to the subnet that already exists.
-class DuplicateSubnet4ID : public Exception {
-public:
-    DuplicateSubnet4ID(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
-};
-
 /// @brief Holds subnets configured for the DHCPv4 server.
 ///
 /// This class holds a collection of subnets configured for the DHCPv4 server.
@@ -73,7 +65,7 @@ public:
     ///
     /// @param subnet Pointer to the subnet being added.
     ///
-    /// @throw isc::DuplicateSubnet4ID If the subnet id for the new subnet
+    /// @throw isc::DuplicateSubnetID If the subnet id for the new subnet
     /// duplicates id of an existing subnet.
     void add(const Subnet4Ptr& subnet);
 
@@ -94,14 +86,14 @@ public:
     /// parameters extracted from the client's message using the following
     /// logic.
     ///
-    /// If the giaddr value is found it means that the client's message was
-    /// relayed. The subnet configuration allows for setting the relay address
-    /// for each subnet to indicate that the subnet must be assigned when the
-    /// packet was transmitted over the particular relay. This method first
-    /// tries to match the giaddr with the relay addresses specified for
-    /// all subnets. If the relay address for the subnet is equal to the address
-    /// of the relay through which the message was transmitted, the particular
-    /// subnet is returned.
+    /// If the giaddr value is set in the selector it means that the client's
+    /// message was relayed. The subnet configuration allows for setting the
+    /// relay address for each subnet to indicate that the subnet must be
+    /// assigned when the packet was transmitted over the particular relay.
+    /// This method first tries to match the giaddr with the relay addresses
+    /// specified for all subnets. If the relay address for the subnet is equal
+    /// to the address of the relay through which the message was transmitted,
+    /// the particular subnet is returned.
     ///
     /// If the giaddr is not matched with any of the relay addresses in any
     /// subnet or the message was not relayed, the method will need to try to
@@ -124,7 +116,7 @@ public:
     /// @return Pointer to the selected subnet or NULL if no subnet found.
     /// @throw isc::BadValue if the values in the subnet selector are invalid
     /// or they are insufficient to select a subnet.
-    Subnet4Ptr get(const Selector& selector) const;
+    Subnet4Ptr selectSubnet(const Selector& selector) const;
 
     /// @brief Returns pointer to a subnet if provided address is in its range.
     ///
@@ -137,8 +129,9 @@ public:
     /// the client belongs to.
     ///
     /// @return Pointer to the selected subnet or NULL if no subnet found.
-    Subnet4Ptr get(const asiolink::IOAddress& address,
-                   const ClientClasses& client_classes = ClientClasses()) const;
+    Subnet4Ptr selectSubnet(const asiolink::IOAddress& address,
+                            const ClientClasses& client_classes
+                            = ClientClasses()) const;
 
 private:
 

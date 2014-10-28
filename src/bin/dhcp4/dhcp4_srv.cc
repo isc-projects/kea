@@ -1550,7 +1550,7 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) const {
     selector.iface_name_ = question->getIface();
 
     CfgMgr& cfgmgr = CfgMgr::instance();
-    subnet = cfgmgr.getCurrentCfg()->getCfgSubnets4()->get(selector);
+    subnet = cfgmgr.getCurrentCfg()->getCfgSubnets4()->selectSubnet(selector);
 
     // Let's execute all callouts registered for subnet4_select
     if (HooksManager::calloutsPresent(hook_index_subnet4_select_)) {

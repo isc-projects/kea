@@ -15,22 +15,17 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/dhcpsrv_log.h>
+#include <dhcpsrv/subnet_id.h>
 
 using namespace isc::asiolink;
 
 namespace {
 
-/// @brief Returns @c IOAddress object set to "0.0.0.0".
-const IOAddress& ZERO_ADDRESS() {
-    static IOAddress address("0.0.0.0");
-    return (address);
-}
+/// @brief Holds IPv4 address set to "0.0.0.0".
+const IOAddress ZERO_ADDRESS("0.0.0.0");
 
-/// @brief Returns @c IOAddress object holding broadcast address.
-const IOAddress& BCAST_ADDRESS() {
-    static IOAddress address("255.255.255.255");
-    return (address);
-}
+/// @brief Holds IPv4 broadcast address.
+const IOAddress BCAST_ADDRESS("255.255.255.255");
 
 } // end of anonymous namespace
 
@@ -38,8 +33,8 @@ namespace isc {
 namespace dhcp {
 
 CfgSubnets4::Selector::Selector()
-    : ciaddr_(ZERO_ADDRESS()), giaddr_(ZERO_ADDRESS()),
-      local_address_(ZERO_ADDRESS()), remote_address_(ZERO_ADDRESS()),
+    : ciaddr_(ZERO_ADDRESS), giaddr_(ZERO_ADDRESS),
+      local_address_(ZERO_ADDRESS), remote_address_(ZERO_ADDRESS),
       client_classes_(ClientClasses()), iface_name_(std::string()) {
 }
 
@@ -48,7 +43,7 @@ CfgSubnets4::add(const Subnet4Ptr& subnet) {
     /// @todo: Check that this new subnet does not cross boundaries of any
     /// other already defined subnet.
     if (isDuplicate(*subnet)) {
-        isc_throw(isc::dhcp::DuplicateSubnet4ID, "ID of the new IPv4 subnet '"
+        isc_throw(isc::dhcp::DuplicateSubnetID, "ID of the new IPv4 subnet '"
                   << subnet->getID() << "' is already in use");
     }
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_ADD_SUBNET4)
@@ -57,22 +52,23 @@ CfgSubnets4::add(const Subnet4Ptr& subnet) {
 }
 
 Subnet4Ptr
-CfgSubnets4::get(const Selector& selector) const {
+CfgSubnets4::selectSubnet(const Selector& selector) const {
     // If relayed message has been received, try to match the giaddr with the
     // relay address specified for a subnet. It is also possible that the relay
     // address will not match with any of the relay addresses accross all
     // subnets, but we need to verify that for all subnets before we can try
     // to use the giaddr to match with the subnet prefix.
-    if (selector.giaddr_ != ZERO_ADDRESS()) {
+    if (selector.giaddr_ != ZERO_ADDRESS) {
         for (Subnet4Collection::const_iterator subnet = subnets_.begin();
              subnet != subnets_.end(); ++subnet) {
-            // Eliminate those subnets that do not meet client class criteria.
-            if (!(*subnet)->clientSupported(selector.client_classes_)) {
+
+            // Check if the giaddr is equal to the one defined for the subnet.
+            if (selector.giaddr_ != (*subnet)->getRelayInfo().addr_) {
                 continue;
             }
 
-            // Check if the giaddr is equal to the one defined for the subnet.
-            if (selector.giaddr_ == (*subnet)->getRelayInfo().addr_) {
+            // Eliminate those subnets that do not meet client class criteria.
+            if ((*subnet)->clientSupported(selector.client_classes_)) {
                 return (*subnet);
             }
         }
@@ -83,19 +79,19 @@ CfgSubnets4::get(const Selector& selector) const {
     // what address from the client's packet to use to match with the
     // subnets' prefixes.
 
-    IOAddress address = ZERO_ADDRESS();
+    IOAddress address = ZERO_ADDRESS;
     // If there is a giaddr, use it for subnet selection.
-    if (selector.giaddr_ != ZERO_ADDRESS()) {
+    if (selector.giaddr_ != ZERO_ADDRESS) {
         address = selector.giaddr_;
 
     // If it is a Renew or Rebind, use the ciaddr.
-    } else if ((selector.ciaddr_ != ZERO_ADDRESS()) &&
-               (selector.local_address_ != BCAST_ADDRESS())) {
+    } else if ((selector.ciaddr_ != ZERO_ADDRESS) &&
+               (selector.local_address_ != BCAST_ADDRESS)) {
         address = selector.ciaddr_;
 
     // If ciaddr is not specified, use the source address.
-    } else if ((selector.remote_address_ != ZERO_ADDRESS()) &&
-               (selector.local_address_ != BCAST_ADDRESS())) {
+    } else if ((selector.remote_address_ != ZERO_ADDRESS) &&
+               (selector.local_address_ != BCAST_ADDRESS)) {
         address = selector.remote_address_;
 
     // If local interface name is known, use the local address on this
@@ -113,28 +109,28 @@ CfgSubnets4::get(const Selector& selector) const {
     }
 
     // Unable to find a suitable address to use for subnet selection.
-    if (address == ZERO_ADDRESS()) {
+    if (address == ZERO_ADDRESS) {
         return (Subnet4Ptr());
     }
 
     // We have identified an address in the client's packet that can be
     // used for subnet selection. Match this packet with the subnets. 
-    return (get(address, selector.client_classes_));
+    return (selectSubnet(address, selector.client_classes_));
 }
 
 Subnet4Ptr
-CfgSubnets4::get(const IOAddress& address,
+CfgSubnets4::selectSubnet(const IOAddress& address,
                  const ClientClasses& client_classes) const {
     for (Subnet4Collection::const_iterator subnet = subnets_.begin();
          subnet != subnets_.end(); ++subnet) {
 
-        // Eliminate those subnets that do not meet client class criteria.
-        if (!(*subnet)->clientSupported(client_classes)) {
+        // Address is in range for the subnet prefix, so return it.
+        if (!(*subnet)->inRange(address)) {
             continue;
         }
 
-        // Address is in range for the subnet prefix, so return it.
-        if ((*subnet)->inRange(address)) {
+        // Eliminate those subnets that do not meet client class criteria.
+        if ((*subnet)->clientSupported(client_classes)) {
             return (*subnet);
         }
     }
