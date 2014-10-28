@@ -227,7 +227,7 @@ TEST_F(DirectClientTest,  twoSubnets) {
     ASSERT_EQ(DHCPOFFER, response->getType());
     // Check that the offered address belongs to the suitable subnet.
     Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
-        getCfgSubnets4()->get(response->getYiaddr());
+        getCfgSubnets4()->selectSubnet(response->getYiaddr());
     ASSERT_TRUE(subnet);
     EXPECT_EQ("10.0.0.0", subnet->get().first.toText());
 
@@ -239,7 +239,7 @@ TEST_F(DirectClientTest,  twoSubnets) {
     ASSERT_EQ(DHCPACK, response->getType());
     // Check that the offered address belongs to the suitable subnet.
     subnet = CfgMgr::instance().getCurrentCfg()->
-        getCfgSubnets4()->get(response->getYiaddr());
+        getCfgSubnets4()->selectSubnet(response->getYiaddr());
     ASSERT_TRUE(subnet);
     EXPECT_EQ("192.0.2.0", subnet->get().first.toText());
 
@@ -286,7 +286,7 @@ TEST_F(DirectClientTest, oneSubnet) {
     ASSERT_EQ(DHCPOFFER, response->getType());
     // Check that the offered address belongs to the suitable subnet.
     Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
-        getCfgSubnets4()->get(response->getYiaddr());
+        getCfgSubnets4()->selectSubnet(response->getYiaddr());
     ASSERT_TRUE(subnet);
     EXPECT_EQ("10.0.0.0", subnet->get().first.toText());
 
@@ -305,7 +305,7 @@ TEST_F(DirectClientTest, renew) {
     // Make sure that the subnet has been really added. Also, the subnet
     // will be needed to create a lease for a client.
     Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
-        getCfgSubnets4()->get(IOAddress("10.0.0.10"));
+        getCfgSubnets4()->selectSubnet(IOAddress("10.0.0.10"));
     // Create a lease for a client that we will later renewed. By explicitly
     // creating a lease we will get to know the lease parameters, such as
     // leased address etc.
@@ -342,7 +342,7 @@ TEST_F(DirectClientTest, renew) {
     ASSERT_EQ(DHCPACK, response->getType());
     // Check that the offered address belongs to the suitable subnet.
     subnet = CfgMgr::instance().getCurrentCfg()->
-        getCfgSubnets4()->get(response->getYiaddr());
+        getCfgSubnets4()->selectSubnet(response->getYiaddr());
     ASSERT_TRUE(subnet);
     EXPECT_EQ("10.0.0.0", subnet->get().first.toText());
 
@@ -364,7 +364,7 @@ TEST_F(DirectClientTest, rebind) {
     // Make sure that the subnet has been really added. Also, the subnet
     // will be needed to create a lease for a client.
     Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
-        getCfgSubnets4()->get(IOAddress("10.0.0.10"));
+        getCfgSubnets4()->selectSubnet(IOAddress("10.0.0.10"));
     // Create a lease, which will be later renewed. By explicitly creating a
     // lease we will know the lease parameters, such as leased address etc.
     const uint8_t hwaddr[] = { 1, 2, 3, 4, 5, 6 };
@@ -408,7 +408,7 @@ TEST_F(DirectClientTest, rebind) {
     EXPECT_EQ(5678, response->getTransid());
     // Check that the offered address belongs to the suitable subnet.
     subnet = CfgMgr::instance().getCurrentCfg()->
-        getCfgSubnets4()->get(response->getYiaddr());
+        getCfgSubnets4()->selectSubnet(response->getYiaddr());
     ASSERT_TRUE(subnet);
     EXPECT_EQ("10.0.0.0", subnet->get().first.toText());
 
