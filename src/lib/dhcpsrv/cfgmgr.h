@@ -46,14 +46,6 @@ public:
         isc::Exception(file, line, what) { };
 };
 
-/// @brief Exception thrown upon attempt to add subnet with an ID that belongs
-/// to the subnet that already exists.
-class DuplicateSubnetID : public Exception {
-public:
-    DuplicateSubnetID(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
-};
-
 /// @brief Configuration Manager
 ///
 /// This singleton class holds the whole configuration for DHCPv4 and DHCPv6

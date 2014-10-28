@@ -17,6 +17,7 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
+#include <dhcpsrv/subnet_id.h>
 #include <string>
 
 using namespace isc::asiolink;

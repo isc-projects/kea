@@ -15,6 +15,9 @@
 #ifndef SUBNET_ID_H
 #define SUBNET_ID_H
 
+#include <exceptions/exceptions.h>
+#include <stdint.h>
+
 namespace isc {
 namespace dhcp {
 
@@ -25,6 +28,14 @@ namespace dhcp {
 /// a simple unsiged integer. In the future it may be extended to more complex
 /// type.
 typedef uint32_t SubnetID;
+
+/// @brief Exception thrown upon attempt to add subnet with an ID that belongs
+/// to the subnet that already exists.
+class DuplicateSubnetID : public Exception {
+public:
+    DuplicateSubnetID(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
 
 }
 }

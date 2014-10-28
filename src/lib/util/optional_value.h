@@ -113,7 +113,7 @@ public:
     ///
     /// @return true if the value is unspecified or unequal.
     bool operator!=(const T& value) const {
-        return (!specified_ || (value_ != value));
+        return (!operator==(value));
     }
 
     /// @brief Type cast operator.
