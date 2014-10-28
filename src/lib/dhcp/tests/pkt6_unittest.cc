@@ -87,8 +87,8 @@ public:
         // callback has been actually called.
         executed_ = true;
         // Use default implementation of the unpack algorithm to parse options.
-        return (LibDHCP::unpackOptions6(buf, option_space, options, relay_msg_offset,
-                                        relay_msg_len));
+        return (LibDHCP::unpackOptions6(buf, option_space, options,
+                                        relay_msg_offset, relay_msg_len));
     }
 
     /// A flag which indicates if callback function has been called.
@@ -100,7 +100,8 @@ public:
     Pkt6Test() {
     }
 
-    /// @brief generates an option with given code (and length) and random content
+    /// @brief generates an option with given code (and length) and
+    /// random content
     ///
     /// @param code option code
     /// @param len data length (data will be randomized)
@@ -253,13 +254,13 @@ Pkt6* capture2() {
 
     // string exported from Wireshark
     string hex_string =
-        "0c01200108880db800010000000000000000fe80000000000000020021fffe5c18a900"
-        "09007d0c0000000000000000000000000000000000fe80000000000000020021fffe5c"
-        "18a9001200154953414d3134342065746820312f312f30352f30310025000400000de9"
-        "00090036016b4fe20001000e0001000118b033410000215c18a90003000c00000001ff"
-        "ffffffffffffff00080002000000060006001700f200f30012001c4953414d3134347c"
-        "3239397c697076367c6e743a76703a313a313130002500120000197f0001000118b033"
-        "410000215c18a9";
+        "0c01200108880db800010000000000000000fe80000000000000020021fffe5c"
+        "18a90009007d0c0000000000000000000000000000000000fe80000000000000"
+        "020021fffe5c18a9001200154953414d3134342065746820312f312f30352f30"
+        "310025000400000de900090036016b4fe20001000e0001000118b03341000021"
+        "5c18a90003000c00000001ffffffffffffffff00080002000000060006001700"
+        "f200f30012001c4953414d3134347c3239397c697076367c6e743a76703a313a"
+        "313130002500120000197f0001000118b033410000215c18a9";
 
     std::vector<uint8_t> bin;
 
@@ -320,7 +321,8 @@ TEST_F(Pkt6Test, packUnpack) {
 
 // Checks if the code is able to handle malformed packet
 TEST_F(Pkt6Test, unpackMalformed) {
-    // Get a packet. We're really interested in its on-wire representation only.
+    // Get a packet. We're really interested in its on-wire
+    // representation only.
     scoped_ptr<Pkt6> donor(capture1());
 
     // That's our original content. It should be sane.
@@ -587,8 +589,9 @@ TEST_F(Pkt6Test, relayUnpack) {
     uint32_t vendor_id = custom->readInteger<uint32_t>(0);
     EXPECT_EQ(6527, vendor_id); // 6527 = Panthera Networks
 
-    uint8_t expected_remote_id[] = { 0x00, 0x01, 0x00, 0x01, 0x18, 0xb0, 0x33, 0x41, 0x00,
-                                     0x00, 0x21, 0x5c, 0x18, 0xa9 };
+    uint8_t expected_remote_id[] = { 0x00, 0x01, 0x00, 0x01, 0x18, 0xb0,
+                                     0x33, 0x41, 0x00, 0x00, 0x21, 0x5c,
+                                     0x18, 0xa9 };
     OptionBuffer remote_id = custom->readBinary(1);
     ASSERT_EQ(sizeof(expected_remote_id), remote_id.size());
     ASSERT_EQ(0, memcmp(expected_remote_id, &remote_id[0], remote_id.size()));
@@ -624,8 +627,9 @@ TEST_F(Pkt6Test, relayUnpack) {
 
     ASSERT_TRUE(opt = msg->getOption(D6O_CLIENTID));
     EXPECT_EQ(18, opt->len()); // 14 bytes of data + 4 bytes of header
-    uint8_t expected_client_id[] = { 0x00, 0x01, 0x00, 0x01, 0x18, 0xb0, 0x33, 0x41, 0x00,
-                                     0x00, 0x21, 0x5c, 0x18, 0xa9 };
+    uint8_t expected_client_id[] = { 0x00, 0x01, 0x00, 0x01, 0x18, 0xb0,
+                                     0x33, 0x41, 0x00, 0x00, 0x21, 0x5c,
+                                     0x18, 0xa9 };
     data = opt->getData();
     ASSERT_EQ(data.size(), sizeof(expected_client_id));
     ASSERT_EQ(0, memcmp(&data[0], expected_client_id, data.size()));
@@ -690,7 +694,8 @@ TEST_F(Pkt6Test, relayPack) {
 
     EXPECT_NO_THROW(parent->pack());
 
-    EXPECT_EQ(Pkt6::DHCPV6_PKT_HDR_LEN + 3 * Option::OPTION6_HDR_LEN // ADVERTISE
+    EXPECT_EQ(Pkt6::DHCPV6_PKT_HDR_LEN
+              + 3 * Option::OPTION6_HDR_LEN // ADVERTISE
               + Pkt6::DHCPV6_RELAY_HDR_LEN // Relay header
               + Option::OPTION6_HDR_LEN // Relay-msg
               + optRelay1->len(),
@@ -728,7 +733,8 @@ TEST_F(Pkt6Test, relayPack) {
     EXPECT_EQ(opt->len(), optRelay1->len());
     OptionBuffer data = opt->getData();
     ASSERT_EQ(data.size(), sizeof(relay_opt_data));
-    EXPECT_EQ(0, memcmp(relay_opt_data, relay_opt_data, sizeof(relay_opt_data)));
+    EXPECT_EQ(0,
+              memcmp(relay_opt_data, relay_opt_data, sizeof(relay_opt_data)));
 }
 
 
@@ -757,7 +763,8 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     OptionPtr relay2_opt1(new Option(Option::V6, 100));
     OptionPtr relay2_opt2(new Option(Option::V6, 101));
     OptionPtr relay2_opt3(new Option(Option::V6, 102));
-    OptionPtr relay2_opt4(new Option(Option::V6, 200)); // the same code as relay1_opt3
+    OptionPtr relay2_opt4(new Option(Option::V6, 200));
+    // the same code as relay1_opt3
     relay2.options_.insert(make_pair(100, relay2_opt1));
     relay2.options_.insert(make_pair(101, relay2_opt2));
     relay2.options_.insert(make_pair(102, relay2_opt3));
@@ -776,7 +783,8 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     // First check that the getAnyRelayOption does not confuse client options
     // and relay options
     // 300 is a client option, present in the message itself.
-    OptionPtr opt = msg->getAnyRelayOption(300, Pkt6::RELAY_SEARCH_FROM_CLIENT);
+    OptionPtr opt =
+        msg->getAnyRelayOption(300, Pkt6::RELAY_SEARCH_FROM_CLIENT);
     EXPECT_FALSE(opt);
     opt = msg->getAnyRelayOption(300, Pkt6::RELAY_SEARCH_FROM_SERVER);
     EXPECT_FALSE(opt);
@@ -878,7 +886,8 @@ TEST_F(Pkt6Test, getMAC) {
     EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_ANY));
     EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_RAW));
 
-    // We haven't specified source IPv6 address, so this method should fail, too
+    // We haven't specified source IPv6 address, so this method should
+    // fail, too
     EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL));
 
     // Let's check if setting IPv6 address improves the situation.
@@ -923,9 +932,9 @@ TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_direct) {
     pkt.setIface(iface->getName());
     pkt.setIndex(iface->getIndex());
 
-    // Note that u and g bits (the least significant ones of the most significant
-    // byte) have special meaning and must not be set in MAC. u bit is always set
-    // in EUI-64. g is always cleared.
+    // Note that u and g bits (the least significant ones of the most
+    // significant byte) have special meaning and must not be set in MAC.
+    // u bit is always set in EUI-64. g is always cleared.
     IOAddress global("2001:db8::204:06ff:fe08:0a:0c");
     IOAddress linklocal_eui64("fe80::f204:06ff:fe08:0a0c");
     IOAddress linklocal_noneui64("fe80::f204:0608:0a0c:0e10");
@@ -994,9 +1003,9 @@ TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_multiRelay) {
     // Let's create a Solicit first...
     Pkt6 pkt(DHCPV6_SOLICIT, 1234);
 
-    // ... and pretend it was relayed via 3 relays. Keep in mind that the relays
-    // are stored in relay_info_ in the encapsulation order rather than in
-    // traverse order. The following simulates:
+    // ... and pretend it was relayed via 3 relays. Keep in mind that
+    // the relays are stored in relay_info_ in the encapsulation order
+    // rather than in traverse order. The following simulates:
     // client --- relay1 --- relay2 --- relay3 --- server
     IOAddress linklocal1("fe80::200:ff:fe00:1"); // valid EUI-64
     IOAddress linklocal2("fe80::200:ff:fe00:2"); // valid EUI-64
