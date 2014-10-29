@@ -198,7 +198,7 @@ during startup and the subsequent receipt of a SIGHUP:
 
 @image html cpl_signal_sequence.svg "CPL Signal Handling Sequence"
 
-@section d2ProcesDerivation D2's CPL Derivations
+@section d2ProcessDerivation D2's CPL Derivations
 
 D2's core application classes are DDNS-specific derivations of the CPL as show
 in the diagram below:
