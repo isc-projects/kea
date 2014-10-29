@@ -51,6 +51,16 @@ public:
     /// @param pkt4o6 Pointer to the packet to be sent
     void sendPkt4o6(const Pkt4o6Ptr& pkt4o6);
     
+    /// @brief Send a DHCPv4 ove DHCPv6 packet
+    ///
+    /// This function converts Pkt4o6 into binary data and sends it
+    /// through UnixSocket::send().
+    /// Method will throw if UnixSocket::send() failed
+    ///
+    /// @param pkt4 Pointer to the packet that contains DHCPv4 data
+    /// @param pkt4o6 Pointer to the packet that contains DHCP4o6 ancillary data
+    void sendPkt4o6(const Pkt4Ptr& pkt4, const Pkt4o6Ptr& pkt4o6);
+    
     /// @brief Receive a DHCPv4 ove DHCPv6 packet
     ///
     /// This function calls UnixSocket::recv() to receive binary data
@@ -73,9 +83,6 @@ public:
     /// @return A pointer to the retrived Pkt4o6, or a null pointer if the
     /// queue is empty.
     Pkt4o6Ptr pop();
-    
-    /// @brief Get the instance of current processing Pkt4o6
-    Pkt4o6Ptr currentPkt4o6() { return current_; }
 
 protected:
     

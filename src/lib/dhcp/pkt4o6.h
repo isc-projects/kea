@@ -42,79 +42,164 @@ typedef boost::shared_ptr<Pkt4o6> Pkt4o6Ptr;
 /// It represents DHCPv4o6 packet by including a Pkt4ptr and a Pkt6ptr 
 /// member variables. Generally the Pkt4ptr points to its DHCPv4 message
 /// content, and Pkt6ptr gives DHCPv6 information.
-class Pkt4o6{
+class Pkt4o6 : public Pkt4 {
 public:
-    /// @brief Constructor, used in DHCP4o6IPC to construct Pkt4o6 from
-    /// raw data.
+    /// @brief Constructor, used in message reception.
     ///
-    /// It is used when a DHCP4o6IPC receives raw data from the other server.
-    /// It constructs internal Pkt4 and Pkt6 seperately using the given raw data.
+    /// Creates new 4o6 message. Call Pkt4's constructor.
     ///
-    /// @param data4 raw data of Pkt4
-    /// @param len4 raw data length of Pkt4
-    /// @param data6 raw data of Pkt6
-    /// @param len6 raw data length of Pkt6
-    Pkt4o6(const uint8_t* data4, size_t len4,
-           const uint8_t* data6, size_t len6);
-           
-    /// @brief Constructor, used in DHCPv6 server to construct Pkt4o6 from Pkt6.
-    ///
-    /// It is used when a DHCPv6 server receives a DHCPv4-query message, and 
-    /// converts it into a DHCP4o6 message.
-    /// It constructs internal Pkt4 using the pkt6's DHCPv4 Message Option
-    /// 
-    /// @throw Pkt4o6ConstructError if given mssage is not DHCPV4_QUERY or 
-    /// DHCPV4_RESPONSE, or if OPTION_DHCPV4_MSG not found
-    ///
-    /// @param pkt6 A DHCPv6 DHCPV4_QUERY message.
-    Pkt4o6(const Pkt6Ptr& pkt6);               
+    /// @param data pointer to received data
+    /// @param len size of buffer to be allocated for this packet.
+    Pkt4o6(const uint8_t* data, size_t len)
+        : Pkt4(data, len),
+          pkt6_local_addr_("::"),
+          pkt6_remote_addr_("::") {}
 
-    /// @brief Constructor, used in DHCPv4 server to construct Pkt4o6 from
-    /// Pkt4 response and Pkt4o6 query.
+    /// @brief Construct Pkt4o6 from Pkt6
     ///
-    /// It is used when a DHCPv4 server successfully produces a DHCPv4 reply
-    /// for a DHCP4o6 query. It converts the DHCPv4 reply into a DHCP4o6 message.
+    /// Creates a new 4o6 message from DHCPv4-query message
     ///
-    /// @param pkt4o6 a DHCPv4 over DHCPv6 message
-    /// @param pkt4 a DHCPv4 response message
-    Pkt4o6(const Pkt4o6Ptr& pkt4o6, const Pkt4Ptr& pkt4);
+    /// @param pkt6 pointer to a DHCPv4-query message
+    static Pkt4o6Ptr fromPkt6(const Pkt6Ptr& pkt6);
+    
+    /// @brief Construct Pkt6 from Pkt4o6
+    ///
+    /// Creates a new DHCPv6 DHCPv4-query message from this 4o6 message
+    ///
+    /// @return pkt6 pointer to a new DHCPv4-query message
+    Pkt6Ptr toPkt6();
+    
+    /// @brief Sets flags field in DHCPv4-query message
+    ///
+    /// @param flags flags field in DHCPv4-query message
+    void setFlags(uint32_t flags) { flags_ = flags; }
 
-    /// @brief Get Pkt6 format of this DHCPv4 over DHCPv6 packet
+    /// @brief Returns flags field in DHCPv4-query message
     ///
-    /// @return A pointer to the Pkt6 object.
-    Pkt6Ptr getPkt6() const { return (pkt6_); }
+    /// @return flags field in DHCPv4-query message    
+    uint32_t getFlags() { return flags_; }
     
-    /// @brief Get Pkt4 content of this DHCPv4 over DHCPv6 packet
-    /// @return A pointer to the Pkt4 object.
-    Pkt4Ptr getPkt4() const { return (pkt4_); }
-    
-    /// @brief Json format of nessary information
+    /// @brief Prepares on-wire format of DHCPv4o6 packet.
     ///
-    /// There are some nessary information that needs to be passed between
-    /// DHCPv4 and DHCPv6 servers, such as IPv6 addresses, ports, iface, etc.
-    /// The raw data of the DHCPv6 packet does not contain these information,
-    /// so we transmit them using json format string
+    /// Prepares on-wire format of DHCPv4 message by calling Pkt4::pack(),
+    /// and prepares DHCP4o6 ancillary data to json-format string for transport.
     ///
-    /// @return A json format string containing all necessary information
-    std::string getJsonAttribute();
+    /// Method with throw exception if Pkt4::pack() throws
+    virtual void pack();
     
-    /// @brief Set Packet attributes according to a json format string
-    void setJsonAttribute(std::string json);
+    /// @brief Parses on-wire form of DHCPv4o6 packet.
+    ///
+    /// Parses DHCPv4 packet by calling Pkt4::unpack(), and parses ancillary
+    /// data of DHCP4o6 from json-format string
+    ///
+    /// Method with throw exception if Pkt4::unpack() throws
+    virtual void unpack();
+    
+    /// @brief Returns a string buffer of DHCP4o6 ancillary data
+    ///
+    /// @return a string of DHCP4o6 ancillary data
+    std::string&
+    getBufferAncillary() { return (buffer_ancillary_); }
+    
+    /// @brief Set string buffer of DHCP4o6 ancillary data
+    ///
+    /// @param buffer_ancillary a string of json-format DHCP4o6 ancillary data
+    void
+    setBufferAncillary(const std::string& buffer_ancillary)
+        { buffer_ancillary_ = buffer_ancillary; }
     
     /// @brief Get a DHCPv4MsgOption that contains pkt4_
     ///
     /// @return A DHCPv4MsgOption
     OptionBuffer getDHCPv4MsgOption();
     
-    /// @brief Set local address in pkt4_ according to U flag in pkt6_
+    /// @brief Sets remote address.
+    ///
+    /// @param remote specifies remote address
+    void setPkt6RemoteAddr(const isc::asiolink::IOAddress& remote) { pkt6_remote_addr_ = remote; }
+
+    /// @brief Returns remote address
+    ///
+    /// @return remote address
+    const isc::asiolink::IOAddress& getPkt6RemoteAddr() const {
+        return (pkt6_remote_addr_);
+    }
+    
+    /// @brief Sets local address.
+    ///
+    /// @param local specifies local address
+    void setPkt6LocalAddr(const isc::asiolink::IOAddress& local) { pkt6_local_addr_ = local; }
+
+    /// @brief Returns local address.
+    ///
+    /// @return local address
+    const isc::asiolink::IOAddress& getPkt6LocalAddr() const {
+        return (pkt6_local_addr_);
+    }
+    
+    /// @brief Sets interface index.
+    ///
+    /// @param ifindex specifies interface index.
+    void setPkt6Index(uint32_t ifindex) { pkt6_ifindex_ = ifindex; };
+
+    /// @brief Returns interface index.
+    ///
+    /// @return interface index
+    uint32_t getPkt6Index() const { return (pkt6_ifindex_); };
+
+    /// @brief Returns interface name.
+    ///
+    /// Returns interface name over which packet was received or is
+    /// going to be transmitted.
+    ///
+    /// @return interface name
+    std::string getPkt6Iface() const { return pkt6_iface_; };
+
+    /// @brief Sets interface name.
+    ///
+    /// Sets interface name over which packet was received or is
+    /// going to be transmitted.
+    ///
+    /// @return interface name
+    void setPkt6Iface(const std::string& iface ) { pkt6_iface_ = iface; };
+   
+    /// @brief Returns a string of DHCPv6 ORO
+    ///
+    /// @return a string of DHCPv6 ORO
+    std::string&
+    getORO() { return (oro_data_); }
+    
+    /// @brief Set buffer of DHCPv6 ORO
+    ///
+    /// @param oro_data a string of DHCPv6 ORO data
+    void
+    setORO(const std::string& oro_data) { oro_data_ = oro_data; }
+        
+protected:
+
+    /// @brief DHCP4o6 flags field, the same as transaction-id in DHCPv6
+    uint32_t flags_;
+    
+    /// @brief local address in Pkt6
+    isc::asiolink::IOAddress pkt6_local_addr_;
+
+    /// @brief remote address in Pkt6
+    isc::asiolink::IOAddress pkt6_remote_addr_;
+    
+    /// @brief name of the network interface the DHCP6 packet was received/to be sent over
+    std::string pkt6_iface_;
+
+    /// @brief interface index of Pkt6
+    int pkt6_ifindex_;
+    
+    /// @brief Set local address in pkt4 according to U flag in pkt6_
     void setPkt4LocalAddr();
     
-protected:
-    /// @brief A poiner to a DHCPv4 packet
-    Pkt4Ptr pkt4_;
+    /// @brief a json-format string containing ancillary data used by DHCP4o6
+    std::string buffer_ancillary_;
     
-    /// @brief A pointer to a DHCPv6 packet
-    Pkt6Ptr pkt6_;    
+    /// @brief a string containing DHCPv6 ORO data
+    std::string oro_data_;
 };// pkt4o6 class
 
 } // isc::dhcp namespace

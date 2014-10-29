@@ -250,7 +250,7 @@ bool Dhcpv6Srv::run() {
         // 4o6
         bool dhcp4o6Response = false;
         if (!query && ipc_ && !ipc_->empty()) {
-            query = ipc_->pop()->getPkt6();
+            query = ipc_->pop()->toPkt6();
             dhcp4o6Response = true;
         }
 
@@ -296,6 +296,11 @@ bool Dhcpv6Srv::run() {
                                        _3, _4, _5));
 
         bool skip_unpack = false;
+
+        // Skip unpack when it's a DHCP4o6 response from DHCPv4 server
+        if (dhcp4o6Response) {
+            skip_unpack = true;
+        }
 
         // The packet has just been received so contains the uninterpreted wire
         // data; execute callouts registered for buffer6_receive.
@@ -382,7 +387,7 @@ bool Dhcpv6Srv::run() {
         classifyPacket(query);
 
         try {
-                NameChangeRequestPtr ncr;
+            NameChangeRequestPtr ncr;
             switch (query->getType()) {
             case DHCPV6_SOLICIT:
                 rsp = processSolicit(query);
@@ -2454,7 +2459,8 @@ Dhcpv6Srv::processInfRequest(const Pkt6Ptr& infRequest) {
 void
 Dhcpv6Srv::processDHCPv4Query(const Pkt6Ptr& query) {
     try {
-        Pkt4o6Ptr pkt4o6(new Pkt4o6(query));
+        Pkt4o6Ptr pkt4o6 = Pkt4o6::fromPkt6(query);
+        pkt4o6->pack();
         ipc_->sendPkt4o6(pkt4o6);
     } catch (const Exception& ex) {
         LOG_ERROR(dhcp6_logger, DHCP6_IPC_SEND_ERROR).arg(ex.what());
@@ -2463,14 +2469,12 @@ Dhcpv6Srv::processDHCPv4Query(const Pkt6Ptr& query) {
 
 Pkt6Ptr
 Dhcpv6Srv::processDHCPv4Response(const Pkt6Ptr& query) {
-    Pkt6Ptr reply = Pkt6Ptr(new Pkt6(DHCPV4_RESPONSE, query->getTransid()));
+    Pkt6Ptr reply = Pkt6Ptr(new Pkt6(DHCPV4_RESPONSE, 0));
 
     appendRequestedOptions(query, reply);//TODO: should we remove this?
-        
-    OptionPtr option(new Option(Option::V6,
-                                OPTION_DHCPV4_MSG,
-                                ipc_->currentPkt4o6()->getDHCPv4MsgOption()));
-    reply->addOption(option);
+
+    OptionPtr opt = query->getOption(OPTION_DHCPV4_MSG);        
+    reply->addOption(opt);
 
     //Add relay info
     if (!query->relay_info_.empty()) {
