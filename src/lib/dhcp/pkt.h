@@ -62,7 +62,7 @@ public:
     /// Extracted from IPv6 link-local address. Not 100% reliable, as the
     /// client can use different IID other than EUI-64, e.g. Windows supports
     /// RFC4941 and uses random values instead of EUI-64.
-    //static const uint32_t HWADDR_SOURCE_IPV6_LINK_LOCAL = 0x0004;
+    static const uint32_t HWADDR_SOURCE_IPV6_LINK_LOCAL = 0x0004;
 
     /// Get it from RFC6939 option. (A relay agent can insert client link layer
     /// address option). Note that a skilled attacker can fake that by sending
@@ -502,6 +502,43 @@ public:
     isc::dhcp::OptionCollection options_;
 
 protected:
+
+    /// @brief Attempts to obtain MAC address from source link-local
+    /// IPv6 address
+    ///
+    /// This method is called from getMAC(HWADDR_SOURCE_IPV6_LINK_LOCAL)
+    /// and should not be called directly. It is not 100% reliable.
+    /// The source IPv6 address does not necessarily have to be link-local
+    /// (may be global or ULA) and even if it's link-local, it doesn't
+    /// necessarily be based on EUI-64. For example, Windows supports
+    /// RFC4941, which randomized IID part of the link-local address.
+    /// If this method fails, it will return NULL.
+    ///
+    /// For direct message, it attempts to use remote_addr_ field. For relayed
+    /// message, it uses peer-addr of the first relay.
+    ///
+    /// @note This is a pure virtual method and must be implemented in
+    /// the derived classes. The @c Pkt6 class have respective implementation.
+    /// This method is not applicable to DHCPv4.
+    ///
+    /// @return hardware address (or NULL)
+    virtual HWAddrPtr getMACFromSrcLinkLocalAddr() = 0;
+
+    /// @brief Attempts to convert IPv6 address into MAC.
+    ///
+    /// Utility method that attempts to convert link-local IPv6 address to the
+    /// MAC address. That works only for link-local IPv6 addresses that are
+    /// based on EUI-64.
+    ///
+    /// @note This method uses hardware type of the interface the packet was
+    /// received on. If you have multiple access technologies in your network
+    /// (e.g. client connected to WiFi that relayed the traffic to the server
+    /// over Ethernet), hardware type may be invalid.
+    ///
+    /// @param addr IPv6 address to be converted
+    /// @return hardware address (or NULL)
+    HWAddrPtr
+    getMACFromIPv6(const isc::asiolink::IOAddress& addr);
 
     /// Transaction-id (32 bits for v4, 24 bits for v6)
     uint32_t transid_;
