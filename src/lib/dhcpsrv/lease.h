@@ -59,10 +59,12 @@ struct Lease {
     /// @param fqdn_fwd If true, forward DNS update is performed for a lease.
     /// @param fqdn_rev If true, reverse DNS update is performed for a lease.
     /// @param hostname FQDN of the client which gets the lease.
+    /// @param hwaddr Hardware/MAC address
     Lease(const isc::asiolink::IOAddress& addr, uint32_t t1, uint32_t t2,
           uint32_t valid_lft, SubnetID subnet_id, time_t cltt,
           const bool fqdn_fwd, const bool fqdn_rev,
-          const std::string& hostname);
+          const std::string& hostname,
+          const HWAddrPtr& hwaddr);
 
     /// @brief Destructor
     virtual ~Lease() {}
@@ -126,6 +128,11 @@ struct Lease {
     /// Set true if the DNS PTR record for this lease has been updated.
     bool fqdn_rev_;
 
+    /// @brief Client's MAC/hardware address
+    ///
+    /// This information may not be available in certain cases.
+    HWAddrPtr hwaddr_;
+
     /// @brief Lease comments
     ///
     /// Currently not used. It may be used for keeping comments made by the
@@ -149,6 +156,15 @@ struct Lease {
     /// lease is equal to the FQDN data of our lease (true) or not (false).
     bool hasIdenticalFqdn(const Lease& other) const;
 
+    /// @brief Returns raw (as vector) hardware address
+    ///
+    /// This method is needed in multi-index container as key extractor.
+    /// The const reference is only valid as long as the object that returned it.
+    /// In the unlikely case when Lease4 does not have a hardware address,
+    /// the function will return an empty vector.
+    ///
+    /// @return const reference to the hardware address
+    const std::vector<uint8_t>& getHWAddrVector() const;
 };
 
 /// @brief Structure that holds a lease for IPv4 address
@@ -169,9 +185,6 @@ struct Lease4 : public Lease {
     /// should be 0.
     uint32_t ext_;
 
-    /// @brief Hardware address
-    std::vector<uint8_t> hwaddr_;
-
     /// @brief Client identifier
     ///
     /// @todo Should this be a pointer to a client ID or the ID itself?
@@ -181,8 +194,7 @@ struct Lease4 : public Lease {
     /// @brief Constructor
     ///
     /// @param addr IPv4 address.
-    /// @param hwaddr Hardware address buffer
-    /// @param hwaddr_len Length of hardware address buffer
+    /// @param hwaddr A pointer to HWAddr structure
     /// @param clientid Client identification buffer
     /// @param clientid_len Length of client identification buffer
     /// @param valid_lft Lifetime of the lease
@@ -193,14 +205,13 @@ struct Lease4 : public Lease {
     /// @param fqdn_fwd If true, forward DNS update is performed for a lease.
     /// @param fqdn_rev If true, reverse DNS update is performed for a lease.
     /// @param hostname FQDN of the client which gets the lease.
-    Lease4(const isc::asiolink::IOAddress& addr, const uint8_t* hwaddr, size_t hwaddr_len,
+    Lease4(const isc::asiolink::IOAddress& addr, const HWAddrPtr& hwaddr,
            const uint8_t* clientid, size_t clientid_len, uint32_t valid_lft,
            uint32_t t1, uint32_t t2, time_t cltt, uint32_t subnet_id,
            const bool fqdn_fwd = false, const bool fqdn_rev = false,
            const std::string& hostname = "")
         : Lease(addr, t1, t2, valid_lft, subnet_id, cltt, fqdn_fwd, fqdn_rev,
-                hostname),
-        ext_(0), hwaddr_(hwaddr, hwaddr + hwaddr_len) {
+                hostname, hwaddr), ext_(0) {
         if (clientid_len) {
             client_id_.reset(new ClientId(clientid, clientid_len));
         }
@@ -209,7 +220,7 @@ struct Lease4 : public Lease {
     /// @brief Default constructor
     ///
     /// Initialize fields that don't have a default constructor.
-    Lease4() : Lease(0, 0, 0, 0, 0, 0, false, false, "") {
+    Lease4() : Lease(0, 0, 0, 0, 0, 0, false, false, "", HWAddrPtr()) {
     }
 
     /// @brief Copy constructor
@@ -319,10 +330,12 @@ struct Lease6 : public Lease {
     /// @param t1 A value of the T1 timer.
     /// @param t2 A value of the T2 timer.
     /// @param subnet_id A Subnet identifier.
-    /// @param prefixlen An address prefix length.
+    /// @param hwaddr hardware/MAC address (optional)
+    /// @param prefixlen An address prefix length (optional, defaults to 128)
     Lease6(Type type, const isc::asiolink::IOAddress& addr, DuidPtr duid,
            uint32_t iaid, uint32_t preferred, uint32_t valid, uint32_t t1,
-           uint32_t t2, SubnetID subnet_id, uint8_t prefixlen = 128);
+           uint32_t t2, SubnetID subnet_id, const HWAddrPtr& hwaddr = HWAddrPtr(),
+           uint8_t prefixlen = 128);
 
     /// @brief Constructor, including FQDN data.
     ///
@@ -338,12 +351,13 @@ struct Lease6 : public Lease {
     /// @param fqdn_fwd If true, forward DNS update is performed for a lease.
     /// @param fqdn_rev If true, reverse DNS update is performed for a lease.
     /// @param hostname FQDN of the client which gets the lease.
+    /// @param hwaddr hardware address (MAC), may be NULL
     /// @param prefixlen An address prefix length.
     Lease6(Type type, const isc::asiolink::IOAddress& addr, DuidPtr duid,
            uint32_t iaid, uint32_t preferred, uint32_t valid, uint32_t t1,
            uint32_t t2, SubnetID subnet_id, const bool fqdn_fwd,
            const bool fqdn_rev, const std::string& hostname,
-           uint8_t prefixlen = 0);
+           const HWAddrPtr& hwaddr = HWAddrPtr(), uint8_t prefixlen = 0);
 
     /// @brief Constructor
     ///

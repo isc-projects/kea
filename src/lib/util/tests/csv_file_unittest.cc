@@ -90,6 +90,25 @@ TEST(CSVRow, writeAt) {
     EXPECT_THROW(row.writeAt(3, "foo"), CSVFileError);
 }
 
+// Checks whether writeAt() and append() can be mixed together.
+TEST(CSVRow, append) {
+    CSVRow row(3);
+
+    EXPECT_EQ(3, row.getValuesCount());
+
+    row.writeAt(0, "alpha");
+    ASSERT_NO_THROW(row.append("delta"));
+    EXPECT_EQ(4, row.getValuesCount());
+    row.writeAt(1, "beta");
+    row.writeAt(2, "gamma");
+    ASSERT_NO_THROW(row.append("epsilon"));
+    EXPECT_EQ(5, row.getValuesCount());
+
+    std::string text;
+    ASSERT_NO_THROW(text = row.render());
+    EXPECT_EQ("alpha,beta,gamma,delta,epsilon", text);
+}
+
 /// @brief Test fixture class for testing operations on CSV file.
 ///
 /// It implements basic operations on files, such as reading writing

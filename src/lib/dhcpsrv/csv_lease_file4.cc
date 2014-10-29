@@ -29,8 +29,10 @@ void
 CSVLeaseFile4::append(const Lease4& lease) const {
     CSVRow row(getColumnCount());
     row.writeAt(getColumnIndex("address"), lease.addr_.toText());
-    HWAddr hwaddr(lease.hwaddr_, HTYPE_ETHER);
-    row.writeAt(getColumnIndex("hwaddr"), hwaddr.toText(false));
+    if (!lease.hwaddr_) {
+        isc_throw(BadValue, "Lease4 must have hardware address specified.");
+    }
+    row.writeAt(getColumnIndex("hwaddr"), lease.hwaddr_->toText(false));
     // Client id may be unset (NULL).
     if (lease.client_id_) {
         row.writeAt(getColumnIndex("client_id"), lease.client_id_->toText());
@@ -74,7 +76,7 @@ CSVLeaseFile4::next(Lease4Ptr& lease) {
         // that.
         HWAddr hwaddr = readHWAddr(row);
         lease.reset(new Lease4(readAddress(row),
-                               &hwaddr.hwaddr_[0], hwaddr.hwaddr_.size(),
+                               HWAddrPtr(new HWAddr(hwaddr)),
                                client_id_vec.empty() ? NULL : &client_id_vec[0],
                                client_id_len,
                                readValid(row),

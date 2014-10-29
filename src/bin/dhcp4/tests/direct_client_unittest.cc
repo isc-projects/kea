@@ -307,8 +307,9 @@ TEST_F(DirectClientTest, renew) {
     // Create a lease for a client that we will later renewed. By explicitly
     // creating a lease we will get to know the lease parameters, such as
     // leased address etc.
-    const uint8_t hwaddr[] = { 1, 2, 3, 4, 5, 6 };
-    Lease4Ptr lease(new Lease4(IOAddress("10.0.0.10"), hwaddr, sizeof(hwaddr),
+    const uint8_t hwaddr_data[] = { 1, 2, 3, 4, 5, 6 };
+    HWAddrPtr hwaddr(new HWAddr(hwaddr_data, sizeof(hwaddr_data), HTYPE_ETHER));
+    Lease4Ptr lease(new Lease4(IOAddress("10.0.0.10"), hwaddr,
                                &generateClientId()->getData()[0],
                                generateClientId()->getData().size(),
                                100, 50, 75, time(NULL),
@@ -364,8 +365,9 @@ TEST_F(DirectClientTest, rebind) {
                                                       classify_);
     // Create a lease, which will be later renewed. By explicitly creating a
     // lease we will know the lease parameters, such as leased address etc.
-    const uint8_t hwaddr[] = { 1, 2, 3, 4, 5, 6 };
-    Lease4Ptr lease(new Lease4(IOAddress("10.0.0.10"), hwaddr, sizeof(hwaddr),
+    const uint8_t hwaddr_data[] = { 1, 2, 3, 4, 5, 6 };
+    HWAddrPtr hwaddr(new HWAddr(hwaddr_data, sizeof(hwaddr_data), HTYPE_ETHER));
+    Lease4Ptr lease(new Lease4(IOAddress("10.0.0.10"), hwaddr,
                                &generateClientId()->getData()[0],
                                generateClientId()->getData().size(),
                                100, 50, 75, time(NULL),
