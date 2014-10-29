@@ -183,9 +183,11 @@ public:
     /// IPv6 address) works.
     void testBasicLease6();
 
-    /// @brief checks that invalid dates are safely handled.
+    /// @brief Checks that invalid dates are safely handled.
     void testMaxDate6();
 
+    /// @brief Checks that Lease6 can be stored with and without a hardware address.
+    void testLease6MAC();
 
     /// @brief Test that IPv6 lease can be added, retrieved and deleted.
     ///
@@ -254,6 +256,11 @@ public:
 
     /// @brief Verifies that a null DUID is not allowed.
     void testNullDuid();
+
+    /// @brief Verifies that the backend reports expected version numbers.
+    /// @param major Expected major version to be reported.
+    /// @param minor Expected minor version to be reported.
+    void testVersion(int major, int minor);
 
     /// @brief String forms of IPv4 addresses
     std::vector<std::string>  straddress4_;

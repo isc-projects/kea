@@ -18,6 +18,7 @@
 #include <dhcpsrv/lease.h>
 #include <gtest/gtest.h>
 #include <vector>
+#include <sstream>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -52,14 +53,26 @@ Lease4 createLease4(const std::string& hostname, const bool fqdn_fwd,
     return (lease);
 }
 
+/// @brief Fixture class used in Lease4 testing.
+class Lease4Test : public ::testing::Test {
+public:
+
+    /// Default constructor
+    ///
+    /// Currently it only initializes hardware address.
+    Lease4Test() {
+        hwaddr_.reset(new HWAddr(HWADDR, sizeof(HWADDR), HTYPE_ETHER));
+    }
+
+    /// Hardware address, used by tests.
+    HWAddrPtr hwaddr_;
+};
+
 /// Lease4 is also defined in lease_mgr.h, so is tested in this file as well.
 // This test checks if the Lease4 structure can be instantiated correctly
-TEST(Lease4, constructor) {
+TEST_F(Lease4Test, constructor) {
 
     // Random values for the tests
-    const uint8_t HWADDR[] = {0x08, 0x00, 0x2b, 0x02, 0x3f, 0x4e};
-    std::vector<uint8_t> hwaddr(HWADDR, HWADDR + sizeof(HWADDR));
-
     const uint8_t CLIENTID[] = {0x17, 0x34, 0xe2, 0xff, 0x09, 0x92, 0x54};
     std::vector<uint8_t> clientid_vec(CLIENTID, CLIENTID + sizeof(CLIENTID));
     ClientId clientid(clientid_vec);
@@ -80,14 +93,14 @@ TEST(Lease4, constructor) {
     for (int i = 0; i < sizeof(ADDRESS) / sizeof(ADDRESS[0]); ++i) {
 
         // Create the lease
-        Lease4 lease(ADDRESS[i], HWADDR, sizeof(HWADDR),
+        Lease4 lease(ADDRESS[i], hwaddr_,
                      CLIENTID, sizeof(CLIENTID), VALID_LIFETIME, 0, 0,
                      current_time, SUBNET_ID, true, true,
                      "hostname.example.com.");
 
         EXPECT_EQ(ADDRESS[i], static_cast<uint32_t>(lease.addr_));
         EXPECT_EQ(0, lease.ext_);
-        EXPECT_TRUE(hwaddr == lease.hwaddr_);
+        EXPECT_TRUE(hwaddr_ == lease.hwaddr_);
         EXPECT_TRUE(clientid == *lease.client_id_);
         EXPECT_EQ(0, lease.t1_);
         EXPECT_EQ(0, lease.t2_);
@@ -103,11 +116,7 @@ TEST(Lease4, constructor) {
 }
 
 // This test verfies that copy constructor copies Lease4 fields correctly.
-TEST(Lease4, copyConstructor) {
-
-    // Random values for the tests
-    const uint8_t HWADDR[] = {0x08, 0x00, 0x2b, 0x02, 0x3f, 0x4e};
-    std::vector<uint8_t> hwaddr(HWADDR, HWADDR + sizeof(HWADDR));
+TEST_F(Lease4Test, copyConstructor) {
 
     const uint8_t CLIENTID[] = {0x17, 0x34, 0xe2, 0xff, 0x09, 0x92, 0x54};
     std::vector<uint8_t> clientid_vec(CLIENTID, CLIENTID + sizeof(CLIENTID));
@@ -121,7 +130,7 @@ TEST(Lease4, copyConstructor) {
     const uint32_t VALID_LIFETIME = 500;
 
     // Create the lease
-    Lease4 lease(0xffffffff, HWADDR, sizeof(HWADDR),
+    Lease4 lease(0xffffffff, hwaddr_,
                  CLIENTID, sizeof(CLIENTID), VALID_LIFETIME, 0, 0, current_time,
                  SUBNET_ID);
 
@@ -133,16 +142,25 @@ TEST(Lease4, copyConstructor) {
     EXPECT_TRUE(lease == copied_lease);
     // Client IDs are equal, but they should be in two distinct pointers.
     EXPECT_FALSE(lease.client_id_ == copied_lease.client_id_);
+
+    // Hardware addresses are equal, but they should point to two objects,
+    // each holding the same data. The content should be equal...
+    EXPECT_TRUE(*lease.hwaddr_ == *copied_lease.hwaddr_);
+
+    // ... but it should point to different objects.
+    EXPECT_FALSE(lease.hwaddr_ == copied_lease.hwaddr_);
+
+    // Now let's check that the hwaddr pointer is copied even if it's NULL:
+    lease.hwaddr_.reset();
+    Lease4 copied_lease2(lease);
+    EXPECT_TRUE(lease == copied_lease2);
 }
 
 // This test verfies that the assignment operator copies all Lease4 fields
 // correctly.
-TEST(Lease4, operatorAssign) {
+TEST_F(Lease4Test, operatorAssign) {
 
     // Random values for the tests
-    const uint8_t HWADDR[] = {0x08, 0x00, 0x2b, 0x02, 0x3f, 0x4e};
-    std::vector<uint8_t> hwaddr(HWADDR, HWADDR + sizeof(HWADDR));
-
     const uint8_t CLIENTID[] = {0x17, 0x34, 0xe2, 0xff, 0x09, 0x92, 0x54};
     std::vector<uint8_t> clientid_vec(CLIENTID, CLIENTID + sizeof(CLIENTID));
     ClientId clientid(clientid_vec);
@@ -155,7 +173,7 @@ TEST(Lease4, operatorAssign) {
     const uint32_t VALID_LIFETIME = 500;
 
     // Create the lease
-    Lease4 lease(0xffffffff, HWADDR, sizeof(HWADDR),
+    Lease4 lease(0xffffffff, hwaddr_,
                  CLIENTID, sizeof(CLIENTID), VALID_LIFETIME, 0, 0, current_time,
                  SUBNET_ID);
 
@@ -167,21 +185,39 @@ TEST(Lease4, operatorAssign) {
     EXPECT_TRUE(lease == copied_lease);
     // Client IDs are equal, but they should be in two distinct pointers.
     EXPECT_FALSE(lease.client_id_ == copied_lease.client_id_);
+
+    // Hardware addresses are equal, but they should point to two objects,
+    // each holding the same data. The content should be equal...
+    EXPECT_TRUE(*lease.hwaddr_ == *copied_lease.hwaddr_);
+
+    // ... but it should point to different objects.
+    EXPECT_FALSE(lease.hwaddr_ == copied_lease.hwaddr_);
+
+    // Now let's check that the hwaddr pointer is copied even if it's NULL:
+    lease.hwaddr_.reset();
+    copied_lease = lease;
+    EXPECT_TRUE(lease == copied_lease);
 }
 
 // This test verifies that the matches() returns true if two leases differ
 // by values other than address, HW address, Client ID and ext_.
-TEST(Lease4, matches) {
+TEST_F(Lease4Test, matches) {
     // Create two leases which share the same address, HW address, client id
     // and ext_ value.
     const time_t current_time = time(NULL);
-    Lease4 lease1(IOAddress("192.0.2.3"), HWADDR, sizeof(HWADDR), CLIENTID,
+    Lease4 lease1(IOAddress("192.0.2.3"), hwaddr_, CLIENTID,
                   sizeof(CLIENTID), VALID_LIFETIME, current_time, 0, 0,
                   SUBNET_ID);
     lease1.hostname_ = "lease1.example.com.";
     lease1.fqdn_fwd_ = true;
     lease1.fqdn_rev_ = true;
-    Lease4 lease2(IOAddress("192.0.2.3"), HWADDR, sizeof(HWADDR), CLIENTID,
+
+    // We need to make an explicit copy. Otherwise the second lease will just
+    // store a pointer and we'll have two leases pointing to a single HWAddr.
+    // That would make modifications to only one impossible.
+    HWAddrPtr hwcopy(new HWAddr(*hwaddr_));
+
+    Lease4 lease2(IOAddress("192.0.2.3"), hwcopy, CLIENTID,
                   sizeof(CLIENTID), VALID_LIFETIME + 10, current_time - 10,
                   100, 200, SUBNET_ID);
     lease2.hostname_ = "lease2.example.com.";
@@ -198,7 +234,7 @@ TEST(Lease4, matches) {
     lease1.addr_ = lease2.addr_;
 
     // Change HW address, leases should not match.
-    lease1.hwaddr_[1] += 1;
+    lease1.hwaddr_->hwaddr_[1] += 1;
     EXPECT_FALSE(lease1.matches(lease2));
     lease1.hwaddr_ = lease2.hwaddr_;
 
@@ -220,7 +256,7 @@ TEST(Lease4, matches) {
 /// Checks that the operator==() correctly compares two leases for equality.
 /// As operator!=() is also defined for this class, every check on operator==()
 /// is followed by the reverse check on operator!=().
-TEST(Lease4, operatorEquals) {
+TEST_F(Lease4Test, operatorEquals) {
 
     // Random values for the tests
     const uint32_t ADDRESS = 0x01020304;
@@ -234,10 +270,16 @@ TEST(Lease4, operatorEquals) {
     const uint32_t VALID_LIFETIME = 500;
 
     // Check when the leases are equal.
-    Lease4 lease1(ADDRESS, HWADDR, sizeof(HWADDR),
+    Lease4 lease1(ADDRESS, hwaddr_,
                   CLIENTID, sizeof(CLIENTID), VALID_LIFETIME, current_time, 0,
                   0, SUBNET_ID);
-    Lease4 lease2(ADDRESS, HWADDR, sizeof(HWADDR),
+
+    // We need to make an explicit copy. Otherwise the second lease will just
+    // store a pointer and we'll have two leases pointing to a single HWAddr.
+    // That would make modifications to only one impossible.
+    HWAddrPtr hwcopy(new HWAddr(*hwaddr_));
+
+    Lease4 lease2(ADDRESS, hwcopy,
                   CLIENTID, sizeof(CLIENTID), VALID_LIFETIME, current_time, 0, 0,
                   SUBNET_ID);
     EXPECT_TRUE(lease1 == lease2);
@@ -259,7 +301,7 @@ TEST(Lease4, operatorEquals) {
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
     EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
-    ++lease1.hwaddr_[0];
+    ++lease1.hwaddr_->hwaddr_[0];
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.hwaddr_ = lease2.hwaddr_;
@@ -381,6 +423,37 @@ TEST(Lease4, hasIdenticalFqdn) {
                                                      false, false)));
     EXPECT_FALSE(lease.hasIdenticalFqdn(createLease4("other.example.com.",
                                                      false, false)));
+}
+
+// Verify that toText() method reports Lease4 structure properly.
+TEST_F(Lease4Test, toText) {
+
+    const time_t current_time = 12345678;
+    Lease4 lease(IOAddress("192.0.2.3"), hwaddr_, CLIENTID, sizeof(CLIENTID),
+                 3600, 123, 456, current_time, 789);
+    
+    std::stringstream expected;
+    expected << "Address:       192.0.2.3\n"
+             << "Valid life:    3600\n"
+             << "T1:            123\n"
+             << "T2:            456\n"
+             << "Cltt:          12345678\n"
+             << "Hardware addr: " << hwaddr_->toText(false) << "\n"
+             << "Subnet ID:     789\n";
+
+    EXPECT_EQ(expected.str(), lease.toText());
+
+    // Now let's try with a lease without hardware address.
+    lease.hwaddr_.reset();
+    expected.str("");
+    expected << "Address:       192.0.2.3\n"
+             << "Valid life:    3600\n"
+             << "T1:            123\n"
+             << "T2:            456\n"
+             << "Cltt:          12345678\n"
+             << "Hardware addr: (none)\n"
+             << "Subnet ID:     789\n";
+    EXPECT_EQ(expected.str(), lease.toText());
 }
 
 /// @brief Creates an instance of the lease with certain FQDN data.
@@ -544,6 +617,34 @@ TEST(Lease6, matches) {
     lease1.duid_ = duid;
     EXPECT_FALSE(lease1.matches(lease2));
     lease1.duid_ = lease2.duid_;
+
+    // Hardware address checks
+    EXPECT_TRUE(lease1.matches(lease2)); // Neither lease have hardware address.
+
+    // Let's add a hardware lease to the first one.
+    HWAddrPtr hwaddr(new HWAddr(HWADDR, sizeof(HWADDR), HTYPE_ETHER));
+    lease1.hwaddr_ = hwaddr;
+
+    // Only the first one has a hardware address, so not equal.
+    EXPECT_FALSE(lease1.matches(lease2));
+
+    // Only the second one has it, so still not equal.
+    lease1.hwaddr_.reset();
+    lease2.hwaddr_ = hwaddr;
+    EXPECT_FALSE(lease1.matches(lease2));
+
+    // Ok, now both have it - they should be equal.
+    lease1.hwaddr_ = hwaddr;
+    EXPECT_TRUE(lease1.matches(lease2));
+
+    // Let's create a second instance that have the same values.
+    HWAddrPtr hwaddr2(new HWAddr(HWADDR, sizeof(HWADDR), HTYPE_ETHER));
+    lease2.hwaddr_ = hwaddr2;
+    EXPECT_TRUE(lease1.matches(lease2));
+
+    // Let's modify the second address and check that they won't be equal anymore.
+    hwaddr2->hwaddr_[0]++;
+    EXPECT_FALSE(lease1.matches(lease2));
 }
 
 /// @brief Lease6 Equality Test
@@ -748,6 +849,46 @@ TEST(Lease6, hasIdenticalFqdn) {
                                                      false, false)));
     EXPECT_FALSE(lease.hasIdenticalFqdn(createLease6("other.example.com.",
                                                      false, false)));
+}
+
+// Verify that toText() method reports Lease4 structure properly.
+TEST(Lease6, toText) {
+
+    HWAddrPtr hwaddr(new HWAddr(HWADDR, sizeof(HWADDR), HTYPE_ETHER));
+
+    uint8_t llt[] = {0, 1, 2, 3, 4, 5, 6, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf};
+    DuidPtr duid(new DUID(llt, sizeof(llt)));
+    
+    Lease6 lease(Lease::TYPE_NA, IOAddress("2001:db8::1"), duid, 123456,
+                 400, 800, 100, 200, 5678, hwaddr, 128);
+    lease.cltt_ = 12345678;
+    
+    std::stringstream expected;
+    expected << "Type:          IA_NA(" << static_cast<int>(Lease::TYPE_NA) << ")\n"
+             << "Address:       2001:db8::1\n"
+             << "Prefix length: 128\n"
+             << "IAID:          123456\n"
+             << "Pref life:     400\n"
+             << "Valid life:    800\n"
+             << "Cltt:          12345678\n"
+             << "Hardware addr: " << hwaddr->toText(false) << "\n"
+             << "Subnet ID:     5678\n";
+
+    EXPECT_EQ(expected.str(), lease.toText());
+
+    // Now let's try with a lease without hardware address.
+    lease.hwaddr_.reset();
+    expected.str("");
+    expected << "Type:          IA_NA(" << static_cast<int>(Lease::TYPE_NA) << ")\n"
+             << "Address:       2001:db8::1\n"
+             << "Prefix length: 128\n"
+             << "IAID:          123456\n"
+             << "Pref life:     400\n"
+             << "Valid life:    800\n"
+             << "Cltt:          12345678\n"
+             << "Hardware addr: (none)\n"
+             << "Subnet ID:     5678\n";
+    EXPECT_EQ(expected.str(), lease.toText());
 }
 
 }; // end of anonymous namespace

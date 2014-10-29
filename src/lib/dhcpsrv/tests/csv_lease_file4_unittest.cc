@@ -63,10 +63,18 @@ public:
     /// @brief Object providing access to lease file IO.
     LeaseFileIO io_;
 
+    /// @brief hardware address 0 (corresponds to HWADDR0 const)
+    HWAddrPtr hwaddr0_;
+
+    /// @brief hardware address 1 (corresponds to HWADDR1 const)
+    HWAddrPtr hwaddr1_;
+
 };
 
 CSVLeaseFile4Test::CSVLeaseFile4Test()
     : filename_(absolutePath("leases4.csv")), io_(filename_) {
+    hwaddr0_.reset(new HWAddr(HWADDR0, sizeof(HWADDR0), HTYPE_ETHER));
+    hwaddr1_.reset(new HWAddr(HWADDR1, sizeof(HWADDR1), HTYPE_ETHER));
 }
 
 std::string
@@ -103,7 +111,7 @@ TEST_F(CSVLeaseFile4Test, parse) {
 
     // Verify that the lease attributes are correct.
     EXPECT_EQ("192.0.2.1", lease->addr_.toText());
-    HWAddr hwaddr1(lease->hwaddr_, HTYPE_ETHER);
+    HWAddr hwaddr1(*lease->hwaddr_);
     EXPECT_EQ("06:07:08:09:0a:bc", hwaddr1.toText(false));
     EXPECT_FALSE(lease->client_id_);
     EXPECT_EQ(200, lease->valid_lft_);
@@ -122,7 +130,7 @@ TEST_F(CSVLeaseFile4Test, parse) {
     ASSERT_TRUE(lease);
     // Verify that the third lease is correct.
     EXPECT_EQ("192.0.3.15", lease->addr_.toText());
-    HWAddr hwaddr3(lease->hwaddr_, HTYPE_ETHER);
+    HWAddr hwaddr3(*lease->hwaddr_);
     EXPECT_EQ("dd:de:ba:0d:1b:2e:3e:4f", hwaddr3.toText(false));
     ASSERT_TRUE(lease->client_id_);
     EXPECT_EQ("0a:00:01:04", lease->client_id_->toText());
@@ -151,14 +159,14 @@ TEST_F(CSVLeaseFile4Test, recreate) {
     ASSERT_TRUE(io_.exists());
     // Create first lease, with NULL client id.
     Lease4Ptr lease(new Lease4(IOAddress("192.0.3.2"),
-                               HWADDR0, sizeof(HWADDR0),
+                               hwaddr0_,
                                NULL, 0,
                                200, 50, 80, 0, 8, true, true,
                                "host.example.com"));
     ASSERT_NO_THROW(lf->append(*lease));
     // Create second lease, with non-NULL client id.
     lease.reset(new Lease4(IOAddress("192.0.3.10"),
-                           HWADDR1, sizeof(HWADDR1),
+                           hwaddr1_,
                            CLIENTID0, sizeof(CLIENTID0),
                            100, 60, 90, 0, 7));
     ASSERT_NO_THROW(lf->append(*lease));

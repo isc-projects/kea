@@ -117,6 +117,7 @@ Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply) {
                                                iaprefix->getPreferred(),
                                                iaprefix->getValid(),
                                                ia->getT1(), ia->getT2(), 0,
+                                               HWAddrPtr(),
                                                iaprefix->getLength());
                     lease_info.lease_.cltt_ = time(NULL);
                 }

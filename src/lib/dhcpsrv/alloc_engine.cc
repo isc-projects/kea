@@ -299,7 +299,7 @@ AllocEngine::allocateLeases6(const Subnet6Ptr& subnet, const DuidPtr& duid,
                              const bool rev_dns_update,
                              const std::string& hostname, bool fake_allocation,
                              const isc::hooks::CalloutHandlePtr& callout_handle,
-                             Lease6Collection& old_leases) {
+                             Lease6Collection& old_leases, const HWAddrPtr& hwaddr) {
 
     try {
         AllocatorPtr allocator = getAllocator(type);
@@ -349,7 +349,7 @@ AllocEngine::allocateLeases6(const Subnet6Ptr& subnet, const DuidPtr& duid,
                 lease = createLease6(subnet, duid, iaid, hint,
                                      pool->getLength(), type,
                                      fwd_dns_update, rev_dns_update,
-                                     hostname, callout_handle, fake_allocation);
+                                     hostname, hwaddr, callout_handle, fake_allocation);
 
                 // It can happen that the lease allocation failed (we could
                 // have lost the race condition. That means that the hint is
@@ -429,7 +429,7 @@ AllocEngine::allocateLeases6(const Subnet6Ptr& subnet, const DuidPtr& duid,
 
                 Lease6Ptr lease = createLease6(subnet, duid, iaid, candidate,
                                                prefix_len, type, fwd_dns_update,
-                                               rev_dns_update, hostname,
+                                               rev_dns_update, hostname, hwaddr,
                                                callout_handle, fake_allocation);
                 if (lease) {
                     // We are allocating a new lease (not renewing). So, the
@@ -664,7 +664,7 @@ Lease4Ptr AllocEngine::renewLease4(const SubnetPtr& subnet,
     Lease4 old_values = *lease;
 
     lease->subnet_id_ = subnet->getID();
-    lease->hwaddr_ = hwaddr->hwaddr_;
+    lease->hwaddr_ = hwaddr;
     lease->client_id_ = clientid;
     lease->cltt_ = time(NULL);
     lease->t1_ = subnet->getT1();
@@ -819,7 +819,7 @@ Lease4Ptr AllocEngine::reuseExpiredLease(Lease4Ptr& expired,
 
     // address, lease type and prefixlen (0) stay the same
     expired->client_id_ = clientid;
-    expired->hwaddr_ = hwaddr->hwaddr_;
+    expired->hwaddr_ = hwaddr;
     expired->valid_lft_ = subnet->getValid();
     expired->t1_ = subnet->getT1();
     expired->t2_ = subnet->getT2();
@@ -893,6 +893,7 @@ Lease6Ptr AllocEngine::createLease6(const Subnet6Ptr& subnet,
                                     const bool fwd_dns_update,
                                     const bool rev_dns_update,
                                     const std::string& hostname,
+                                    const HWAddrPtr& hwaddr,
                                     const isc::hooks::CalloutHandlePtr& callout_handle,
                                     bool fake_allocation /*= false */ ) {
 
@@ -903,7 +904,7 @@ Lease6Ptr AllocEngine::createLease6(const Subnet6Ptr& subnet,
     Lease6Ptr lease(new Lease6(type, addr, duid, iaid,
                                subnet->getPreferred(), subnet->getValid(),
                                subnet->getT1(), subnet->getT2(), subnet->getID(),
-                               prefix_len));
+                               hwaddr, prefix_len));
 
     lease->fqdn_fwd_ = fwd_dns_update;
     lease->fqdn_rev_ = rev_dns_update;
@@ -990,10 +991,9 @@ Lease4Ptr AllocEngine::createLease4(const SubnetPtr& subnet,
         local_copy = clientid->getDuid();
     }
 
-    Lease4Ptr lease(new Lease4(addr, &hwaddr->hwaddr_[0], hwaddr->hwaddr_.size(),
-                               &local_copy[0], local_copy.size(), subnet->getValid(),
-                               subnet->getT1(), subnet->getT2(), now,
-                               subnet->getID()));
+    Lease4Ptr lease(new Lease4(addr, hwaddr, &local_copy[0], local_copy.size(),
+                               subnet->getValid(), subnet->getT1(), subnet->getT2(),
+                               now, subnet->getID()));
 
     // Set FQDN specific lease parameters.
     lease->fqdn_fwd_ = fwd_dns_update;
