@@ -1,3 +1,8 @@
+852.	[func]		tomek
+	Pkt6 class is now able to generate client's MAC from source IPv6
+	link-local address if EUI-64 identifier was used.
+	(Trac #3549, git d92e76860e6931477b3e60e5be8978302973f88f)
+
 851.	[bug]		tmark
 	Corrected a segmentation fault that was occurring under OS-X during D2 module
 	shutdown.
