@@ -489,8 +489,7 @@ Dhcpv4Srv::computeDhcid(const Lease4Ptr& lease) {
             return (D2Dhcid(lease->client_id_->getClientId(), fqdn_wire));
 
         } else {
-            HWAddrPtr hwaddr(new HWAddr(lease->hwaddr_, HTYPE_ETHER));
-            return (D2Dhcid(hwaddr, fqdn_wire));
+            return (D2Dhcid(lease->hwaddr_, fqdn_wire));
         }
     } catch (const Exception& ex) {
         isc_throw(DhcidComputeError, "unable to compute DHCID: "
@@ -1390,8 +1389,10 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
         }
 
         // Does the hardware address match? We don't want one client releasing
-        // second client's leases.
-        if (lease->hwaddr_ != release->getHWAddr()->hwaddr_) {
+        // second client's leases. Note that we're comparing the hardware
+        // addresses only, not hardware types or sources of the hardware
+        // addresses. Thus we don't use HWAddr::equals().
+        if (lease->hwaddr_->hwaddr_ != release->getHWAddr()->hwaddr_) {
             /// @todo: Print hwaddr from lease as part of ticket #2589
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_WRONG_HWADDR)
                 .arg(release->getCiaddr().toText())

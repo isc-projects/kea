@@ -246,7 +246,7 @@ public:
         Lease6Ptr lease;
         EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(subnet_,
                         duid_, iaid_, hint, type, false, false,
-                        "", fake, CalloutHandlePtr(), old_leases_)));
+                        "", fake, CalloutHandlePtr(), old_leases_, HWAddrPtr())));
 
         // Check that we got a lease
         EXPECT_TRUE(lease);
@@ -310,7 +310,7 @@ public:
         Lease6Ptr lease;
         EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(subnet_,
                         duid_, iaid_, requested, type, false, false, "", false,
-                        CalloutHandlePtr(), old_leases_)));
+                        CalloutHandlePtr(), old_leases_, HWAddrPtr())));
 
         // Check that we got a lease
         ASSERT_TRUE(lease);
@@ -354,7 +354,8 @@ public:
         Lease6Ptr lease;
         EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(subnet_,
                         duid_, iaid_, hint, type, false,
-                        false, "", false, CalloutHandlePtr(), old_leases_)));
+                        false, "", false, CalloutHandlePtr(), old_leases_,
+                        HWAddrPtr())));
 
         // Check that we got a lease
         ASSERT_TRUE(lease);
@@ -449,7 +450,7 @@ public:
         if (lease->client_id_ && clientid_) {
             EXPECT_TRUE(*lease->client_id_ == *clientid_);
         }
-        EXPECT_TRUE(lease->hwaddr_ == hwaddr_->hwaddr_);
+        EXPECT_TRUE(*lease->hwaddr_ == *hwaddr_);
         /// @todo: check cltt
      }
 
@@ -563,13 +564,15 @@ TEST_F(AllocEngine6Test, allocateAddress6Nulls) {
     Lease6Ptr lease;
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(
                     Subnet6Ptr(), duid_, iaid_, IOAddress("::"), Lease::TYPE_NA,
-                    false, false, "", false, CalloutHandlePtr(), old_leases_)));
+                    false, false, "", false, CalloutHandlePtr(), old_leases_,
+                    HWAddrPtr())));
     ASSERT_FALSE(lease);
 
     // Allocations without DUID are not allowed either
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(subnet_,
                     DuidPtr(), iaid_, IOAddress("::"), Lease::TYPE_NA, false,
-                    false, "", false, CalloutHandlePtr(), old_leases_)));
+                    false, "", false, CalloutHandlePtr(), old_leases_,
+                    HWAddrPtr())));
     ASSERT_FALSE(lease);
 }
 
@@ -818,7 +821,7 @@ TEST_F(AllocEngine6Test, smallPool6) {
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(subnet_,
                     duid_, iaid_, IOAddress("::"), Lease::TYPE_NA, fqdn_fwd_,
                     fqdn_rev_, hostname_, false, CalloutHandlePtr(),
-                    old_leases_)));
+                    old_leases_, HWAddrPtr())));
 
     // Check that we got that single lease
     ASSERT_TRUE(lease);
@@ -863,7 +866,8 @@ TEST_F(AllocEngine6Test, outOfAddresses6) {
     DuidPtr other_duid = DuidPtr(new DUID(vector<uint8_t>(12, 0xff)));
     const uint32_t other_iaid = 3568;
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, other_duid, other_iaid,
-                               501, 502, 503, 504, subnet_->getID(), 0));
+                               501, 502, 503, 504, subnet_->getID(),
+                               HWAddrPtr(), 0));
     lease->cltt_ = time(NULL) - 10; // Allocated 10 seconds ago
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
@@ -872,7 +876,7 @@ TEST_F(AllocEngine6Test, outOfAddresses6) {
     Lease6Ptr lease2;
     EXPECT_NO_THROW(lease2 = expectOneLease(engine->allocateLeases6(subnet_,
                     duid_, iaid_, IOAddress("::"), Lease::TYPE_NA, false, false,
-                    "", false, CalloutHandlePtr(), old_leases_)));
+                    "", false, CalloutHandlePtr(), old_leases_, HWAddrPtr())));
     EXPECT_FALSE(lease2);
 
 }
@@ -895,7 +899,8 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
     DuidPtr other_duid = DuidPtr(new DUID(vector<uint8_t>(12, 0xff)));
     const uint32_t other_iaid = 3568;
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, other_duid, other_iaid,
-                               501, 502, 503, 504, subnet_->getID(), 0));
+                               501, 502, 503, 504, subnet_->getID(),
+                               HWAddrPtr(), 0));
     lease->cltt_ = time(NULL) - 500; // Allocated 500 seconds ago
     lease->valid_lft_ = 495; // Lease was valid for 495 seconds
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
@@ -907,7 +912,7 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(subnet_,
                     duid_, iaid_, IOAddress("::"), Lease::TYPE_NA, fqdn_fwd_,
                     fqdn_rev_, hostname_, true, CalloutHandlePtr(),
-                    old_leases_)));
+                    old_leases_, HWAddrPtr())));
     // Check that we got that single lease
     ASSERT_TRUE(lease);
     EXPECT_EQ(addr, lease->addr_);
@@ -918,7 +923,7 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
     // CASE 2: Asking specifically for this address
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(subnet_,
                     duid_, iaid_, addr, Lease::TYPE_NA, false, false, "",
-                    true, CalloutHandlePtr(), old_leases_)));
+                    true, CalloutHandlePtr(), old_leases_, HWAddrPtr())));
 
     // Check that we got that single lease
     ASSERT_TRUE(lease);
@@ -946,7 +951,8 @@ TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
     const uint32_t other_iaid = 3568;
     const SubnetID other_subnetid = 999;
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, other_duid, other_iaid,
-                               501, 502, 503, 504, other_subnetid, 0));
+                               501, 502, 503, 504, other_subnetid, HWAddrPtr(),
+                               0));
     lease->cltt_ = time(NULL) - 500; // Allocated 500 seconds ago
     lease->valid_lft_ = 495; // Lease was valid for 495 seconds
     lease->fqdn_fwd_ = true;
@@ -957,7 +963,7 @@ TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
     // A client comes along, asking specifically for this address
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(subnet_,
                     duid_, iaid_, addr, Lease::TYPE_NA, false, false, "",
-                    false, CalloutHandlePtr(), old_leases_)));
+                    false, CalloutHandlePtr(), old_leases_, HWAddrPtr())));
 
     // Check that he got that single lease
     ASSERT_TRUE(lease);
@@ -1114,10 +1120,11 @@ TEST_F(AllocEngine4Test, allocWithUsedHint4) {
     ASSERT_TRUE(engine);
 
     // Let's create a lease and put it in the LeaseMgr
-    uint8_t hwaddr2[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
     uint8_t clientid2[] = { 8, 7, 6, 5, 4, 3, 2, 1 };
     time_t now = time(NULL);
-    Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2, sizeof(hwaddr2),
+    Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2,
                               clientid2, sizeof(clientid2), 1, 2, 3, now, subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
 
@@ -1371,10 +1378,11 @@ TEST_F(AllocEngine4Test, outOfAddresses4) {
     cfg_mgr.addSubnet4(subnet_);
 
     // Just a different hw/client-id for the second client
-    uint8_t hwaddr2[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
     uint8_t clientid2[] = { 8, 7, 6, 5, 4, 3, 2, 1 };
     time_t now = time(NULL);
-    Lease4Ptr lease(new Lease4(addr, hwaddr2, sizeof(hwaddr2), clientid2,
+    Lease4Ptr lease(new Lease4(addr, hwaddr2, clientid2,
                                sizeof(clientid2), 501, 502, 503, now,
                                subnet_->getID()));
     lease->cltt_ = time(NULL) - 10; // Allocated 10 seconds ago
@@ -1410,11 +1418,11 @@ TEST_F(AllocEngine4Test, discoverReuseExpiredLease4) {
     cfg_mgr.addSubnet4(subnet_);
 
     // Just a different hw/client-id for the second client
-    uint8_t hwaddr2[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
     uint8_t clientid2[] = { 8, 7, 6, 5, 4, 3, 2, 1 };
     time_t now = time(NULL) - 500; // Allocated 500 seconds ago
-    Lease4Ptr lease(new Lease4(addr, clientid2, sizeof(clientid2),
-                               hwaddr2, sizeof(hwaddr2),
+    Lease4Ptr lease(new Lease4(addr, hwaddr2, clientid2, sizeof(clientid2),
                                495, 100, 200, now, subnet_->getID()));
     // Copy the lease, so as it can be compared with the old lease returned
     // by the allocation engine.
@@ -1470,10 +1478,11 @@ TEST_F(AllocEngine4Test, requestReuseExpiredLease4) {
     IOAddress addr("192.0.2.105");
 
     // Just a different hw/client-id for the second client
-    uint8_t hwaddr2[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
     uint8_t clientid2[] = { 8, 7, 6, 5, 4, 3, 2, 1 };
     time_t now = time(NULL) - 500; // Allocated 500 seconds ago
-    Lease4Ptr lease(new Lease4(addr, clientid2, sizeof(clientid2), hwaddr2,
+    Lease4Ptr lease(new Lease4(addr, hwaddr2, clientid2, sizeof(clientid2),
                                sizeof(hwaddr2), 495, 100, 200, now,
                                subnet_->getID()));
     // Make a copy of the lease, so as we can comapre that with the old lease
@@ -1528,10 +1537,11 @@ TEST_F(AllocEngine4Test, renewLease4) {
     const time_t old_timestamp = time(NULL) - 45; // Allocated 45 seconds ago
 
     // Just a different hw/client-id for the second client
-    const uint8_t hwaddr2[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    const uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
     const uint8_t clientid2[] = { 8, 7, 6, 5, 4, 3, 2, 1 };
-    Lease4Ptr lease(new Lease4(addr, clientid2, sizeof(clientid2), hwaddr2,
-                               sizeof(hwaddr2), old_lifetime, old_t1, old_t2,
+    Lease4Ptr lease(new Lease4(addr, hwaddr2, clientid2, sizeof(clientid2),
+                               old_lifetime, old_t1, old_t2,
                                old_timestamp, subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
@@ -1685,7 +1695,7 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
     Lease6Ptr lease;
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(subnet_,
                     duid_, iaid_, IOAddress("::"), Lease::TYPE_NA, false, false,
-                    "", false, callout_handle, old_leases_)));
+                    "", false, callout_handle, old_leases_, HWAddrPtr())));
     // Check that we got a lease
     ASSERT_TRUE(lease);
 
@@ -1756,7 +1766,7 @@ TEST_F(HookAllocEngine6Test, change_lease6_select) {
     Lease6Ptr lease;
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(subnet_,
                     duid_, iaid_, IOAddress("::"), Lease::TYPE_NA, false, false,
-                    "", false, callout_handle, old_leases_)));
+                    "", false, callout_handle, old_leases_, HWAddrPtr())));
     // Check that we got a lease
     ASSERT_TRUE(lease);
 

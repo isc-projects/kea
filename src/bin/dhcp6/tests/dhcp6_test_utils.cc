@@ -213,7 +213,7 @@ Dhcpv6SrvTest::testRenewBasic(Lease::Type type, const std::string& existing_addr
     // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
     // value on purpose. They should be updated during RENEW.
     Lease6Ptr lease(new Lease6(type, existing, duid_, iaid, 501, 502, 503, 504,
-                               subnet_->getID(), prefix_len));
+                               subnet_->getID(), HWAddrPtr(), prefix_len));
     lease->cltt_ = 1234;
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
@@ -358,7 +358,7 @@ Dhcpv6SrvTest::testRenewReject(Lease::Type type, const IOAddress& addr) {
     // value on purpose. They should be updated during RENEW.
     Lease6Ptr lease(new Lease6(type, addr, duid_, valid_iaid,
                                501, 502, 503, 504, subnet_->getID(),
-                               prefix_len));
+                               HWAddrPtr(), prefix_len));
     lease->cltt_ = 123; // Let's use it as an indicator that the lease
                         // was NOT updated.
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
@@ -430,7 +430,7 @@ Dhcpv6SrvTest::testReleaseBasic(Lease::Type type, const IOAddress& existing,
     // Let's prepopulate the database
     Lease6Ptr lease(new Lease6(type, existing, duid_, iaid,
                                501, 502, 503, 504, subnet_->getID(),
-                               prefix_len));
+                               HWAddrPtr(), prefix_len));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
     // Check that the lease is really in the database
@@ -536,7 +536,7 @@ Dhcpv6SrvTest::testReleaseReject(Lease::Type type, const IOAddress& addr) {
     SCOPED_TRACE("CASE 2: Lease is known and belongs to this client, but to a different IAID");
 
     Lease6Ptr lease(new Lease6(type, addr, duid_, valid_iaid, 501, 502, 503,
-                               504, subnet_->getID(), prefix_len));
+                               504, subnet_->getID(), HWAddrPtr(), prefix_len));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
     // Let's create a different RELEASE, with a bogus iaid

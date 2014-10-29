@@ -77,7 +77,7 @@ public:
         generateClientId();
         lease_.reset(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"),
                                 duid_, 1234, 501, 502, 503,
-                                504, 1, 0));
+                                504, 1, HWAddrPtr(), 0));
         // Config DDNS to be enabled, all controls off
         enableD2();
     }

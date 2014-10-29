@@ -816,8 +816,9 @@ TEST_F(Dhcpv4SrvTest, RenewBasic) {
     ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
 
     // let's create a lease and put it in the LeaseMgr
-    uint8_t hwaddr2[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
-    Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2, sizeof(hwaddr2),
+    uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
+    Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2,
                               &client_id_->getDuid()[0], client_id_->getDuid().size(),
                               temp_valid, temp_t1, temp_t2, temp_timestamp,
                               subnet_->getID()));
@@ -983,9 +984,9 @@ TEST_F(Dhcpv4SrvTest, ReleaseBasic) {
     ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
 
     // Let's create a lease and put it in the LeaseMgr
-    uint8_t mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
-    HWAddrPtr hw(new HWAddr(mac_addr, sizeof(mac_addr), HTYPE_ETHER));
-    Lease4Ptr used(new Lease4(addr, mac_addr, sizeof(mac_addr),
+    uint8_t hwaddr_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    HWAddrPtr hwaddr(new HWAddr(hwaddr_data, sizeof(hwaddr_data), HTYPE_ETHER));
+    Lease4Ptr used(new Lease4(addr, hwaddr,
                               &client_id_->getDuid()[0], client_id_->getDuid().size(),
                               temp_valid, temp_t1, temp_t2, temp_timestamp,
                               subnet_->getID()));
@@ -1002,7 +1003,7 @@ TEST_F(Dhcpv4SrvTest, ReleaseBasic) {
     rel->setCiaddr(addr);
     rel->addOption(clientid);
     rel->addOption(srv->getServerID());
-    rel->setHWAddr(hw);
+    rel->setHWAddr(hwaddr);
     rel->setIface("eth0");
 
     // Pass it to the server and hope for a REPLY
@@ -1014,11 +1015,11 @@ TEST_F(Dhcpv4SrvTest, ReleaseBasic) {
     EXPECT_FALSE(l);
 
     // Try to get the lease by hardware address
-    Lease4Collection leases = LeaseMgrFactory::instance().getLease4(hw->hwaddr_);
+    Lease4Collection leases = LeaseMgrFactory::instance().getLease4(*hwaddr);
     EXPECT_EQ(leases.size(), 0);
 
     // Try to get it by hw/subnet_id combination
-    l = LeaseMgrFactory::instance().getLease4(hw->hwaddr_, subnet_->getID());
+    l = LeaseMgrFactory::instance().getLease4(*hwaddr, subnet_->getID());
     EXPECT_FALSE(l);
 
     // Try by client-id
@@ -1083,7 +1084,7 @@ TEST_F(Dhcpv4SrvTest, ReleaseReject) {
     // Let's create a lease and put it in the LeaseMgr
     uint8_t mac_addr[] = { 0, 0x1, 0x2, 0x3, 0x4, 0x5};
     HWAddrPtr hw(new HWAddr(mac_addr, sizeof(mac_addr), HTYPE_ETHER));
-    Lease4Ptr used(new Lease4(addr, mac_addr, sizeof(mac_addr),
+    Lease4Ptr used(new Lease4(addr, hw,
                               &client_id_->getDuid()[0], client_id_->getDuid().size(),
                               valid, t1, t2, timestamp, subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
@@ -2613,8 +2614,9 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSimple) {
     ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
 
     // let's create a lease and put it in the LeaseMgr
-    uint8_t hwaddr2[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
-    Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2, sizeof(hwaddr2),
+    uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
+    Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2,
                               &client_id_->getDuid()[0], client_id_->getDuid().size(),
                               temp_valid, temp_t1, temp_t2, temp_timestamp,
                               subnet_->getID()));
@@ -2700,8 +2702,9 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSkip) {
     ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
 
     // let's create a lease and put it in the LeaseMgr
-    uint8_t hwaddr2[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
-    Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2, sizeof(hwaddr2),
+    uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
+    Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2,
                               &client_id_->getDuid()[0], client_id_->getDuid().size(),
                               temp_valid, temp_t1, temp_t2, temp_timestamp,
                               subnet_->getID()));
@@ -2769,7 +2772,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimple) {
     // Let's create a lease and put it in the LeaseMgr
     uint8_t mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
     HWAddrPtr hw(new HWAddr(mac_addr, sizeof(mac_addr), HTYPE_ETHER));
-    Lease4Ptr used(new Lease4(addr, mac_addr, sizeof(mac_addr),
+    Lease4Ptr used(new Lease4(addr, hw,
                               &client_id_->getDuid()[0], client_id_->getDuid().size(),
                               temp_valid, temp_t1, temp_t2, temp_timestamp,
                               subnet_->getID()));
@@ -2856,7 +2859,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
     // Let's create a lease and put it in the LeaseMgr
     uint8_t mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
     HWAddrPtr hw(new HWAddr(mac_addr, sizeof(mac_addr), HTYPE_ETHER));
-    Lease4Ptr used(new Lease4(addr, mac_addr, sizeof(mac_addr),
+    Lease4Ptr used(new Lease4(addr, hw,
                               &client_id_->getDuid()[0], client_id_->getDuid().size(),
                               temp_valid, temp_t1, temp_t2, temp_timestamp,
                               subnet_->getID()));

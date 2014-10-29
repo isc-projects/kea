@@ -288,6 +288,7 @@ CSVFile::open() {
 
             // Check the header against the columns specified for the CSV file.
             if (!validateHeader(header)) {
+
                 isc_throw(CSVFileError, "invalid header '" << header
                           << "' in CSV file '" << filename_ << "'");
             }

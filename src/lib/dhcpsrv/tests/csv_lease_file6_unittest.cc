@@ -86,14 +86,14 @@ void
 CSVLeaseFile6Test::writeSampleFile() const {
     io_.writeFile("address,duid,valid_lifetime,expire,subnet_id,"
                   "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
-                  "fqdn_rev,hostname\n"
+                  "fqdn_rev,hostname,hwaddr\n"
                   "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
                   "200,200,8,100,0,7,0,1,1,host.example.com\n"
                   "2001:db8:1::1,,200,200,8,100,0,7,0,1,1,host.example.com\n"
                   "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,300,300,6,150,"
                   "0,8,0,0,0,\n"
                   "3000:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,0,200,8,0,2,"
-                  "16,64,0,0,\n");
+                  "16,64,0,0,,\n");
 }
 
 // This test checks the capability to read and parse leases from the file.
@@ -192,25 +192,25 @@ TEST_F(CSVLeaseFile6Test, recreate) {
     lease.reset(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:2::10"),
                            makeDUID(DUID1, sizeof(DUID1)),
                            8, 150, 300, 40, 70, 6, false, false,
-                           "", 128));
+                           "", HWAddrPtr(), 128));
     lease->cltt_ = 0;
     ASSERT_NO_THROW(lf->append(*lease));
 
     lease.reset(new Lease6(Lease::TYPE_PD, IOAddress("3000:1:1::"),
                            makeDUID(DUID0, sizeof(DUID0)),
                            7, 150, 300, 40, 70, 10, false, false,
-                           "", 64));
+                           "", HWAddrPtr(), 64));
     lease->cltt_ = 0;
     ASSERT_NO_THROW(lf->append(*lease));
 
     EXPECT_EQ("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
-              "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname\n"
+              "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
               "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-              "200,200,8,100,0,7,0,1,1,host.example.com\n"
+              "200,200,8,100,0,7,0,1,1,host.example.com,\n"
               "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05"
-              ",300,300,6,150,0,8,128,0,0,\n"
+              ",300,300,6,150,0,8,128,0,0,,\n"
               "3000:1:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-              "300,300,10,150,2,7,64,0,0,\n",
+              "300,300,10,150,2,7,64,0,0,,\n",
               io_.readFile());
 }
 

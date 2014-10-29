@@ -129,7 +129,7 @@ Memfile_LeaseMgr::getLease4(const HWAddr& hwaddr) const {
         lease != idx.end(); ++lease) {
 
         // Every Lease4 has a hardware address, so we can compare it
-        if ((*lease)->hwaddr_ == hwaddr.hwaddr_) {
+        if ( (*(*lease)->hwaddr_) == hwaddr) {
             collection.push_back((*lease));
         }
     }

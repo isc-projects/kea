@@ -607,17 +607,17 @@ public:
                         (static_cast<uint32_t>(lease->addr_));
             bind_array.add(addr_str_);
 
-            if (!lease->hwaddr_.empty()) {
+            if (lease->hwaddr_ && !lease->hwaddr_->hwaddr_.empty()) {
                 // PostgreSql does not provide MAX on variable length types
                 // so we have to enforce it ourselves.
-                if (lease->hwaddr_.size() > HWAddr::MAX_HWADDR_LEN) {
+                if (lease->hwaddr_->hwaddr_.size() > HWAddr::MAX_HWADDR_LEN) {
                         isc_throw(DbOperationError, "Hardware address length : "
-                                  << lease_->hwaddr_.size()
+                                  << lease_->hwaddr_->hwaddr_.size()
                                   << " exceeds maximum allowed of: "
                                   << HWAddr::MAX_HWADDR_LEN);
                 }
 
-                bind_array.add(lease->hwaddr_);
+                bind_array.add(lease->hwaddr_->hwaddr_);
             } else {
                 bind_array.add("");
             }
@@ -683,7 +683,10 @@ public:
 
             hostname_ = getRawColumnValue(r, row, HOSTNAME_COL);
 
-            return (Lease4Ptr(new Lease4(addr4_, hwaddr_buffer_, hwaddr_length_,
+            HWAddrPtr hwaddr(new HWAddr(hwaddr_buffer_, hwaddr_length_,
+                                        HTYPE_ETHER));
+
+            return (Lease4Ptr(new Lease4(addr4_, hwaddr,
                                          client_id_buffer_, client_id_length_,
                                          valid_lifetime_, 0, 0, cltt_,
                                          subnet_id_, fqdn_fwd_, fqdn_rev_,
@@ -865,10 +868,13 @@ public:
 
             hostname_ = getRawColumnValue(r, row, HOSTNAME_COL);
 
+            /// @todo: implement this in #3557.
+            HWAddrPtr hwaddr;
+
             Lease6Ptr result(new Lease6(lease_type_, addr, duid_ptr, iaid_,
                                         pref_lifetime_, valid_lifetime_, 0, 0,
                                         subnet_id_, fqdn_fwd_, fqdn_rev_,
-                                        hostname_, prefix_len_));
+                                        hostname_, hwaddr, prefix_len_));
             result->cltt_ = cltt_;
             return (result);
         } catch (const std::exception& ex) {
