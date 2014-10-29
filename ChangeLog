@@ -1,3 +1,10 @@
+853.	[func]		tomek
+	Lease6 now is able to store MAC/hardware address information. Memfile
+	memfile backend has been updated to store/retrieve that additional
+	piece of information. Server now tries to use available methods to
+	obtain MAC/hardware address from incoming packet.
+	(Trac #3555, git ab76a9e7a9d39cb3cf533729473b63a2d2401ac7)
+
 852.	[func]		tomek
 	Pkt6 class is now able to generate client's MAC from source IPv6
 	link-local address if EUI-64 identifier was used.
