@@ -25,7 +25,7 @@ namespace dhcp {
 ///
 /// Each subnet for which the DHCP service has been configured is identifed
 /// by the unique value called subnet id. Right now it is represented as
-/// a simple unsiged integer. In the future it may be extended to more complex
+/// a simple unsigned integer. In the future it may be extended to more complex
 /// type.
 typedef uint32_t SubnetID;
 
