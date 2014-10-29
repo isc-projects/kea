@@ -118,7 +118,8 @@ TEST_F(JSONFileBackendTest, jsonFile) {
     EXPECT_NO_THROW(srv->init(TEST_FILE));
 
     // Now check if the configuration has been applied correctly.
-    const Subnet4Collection* subnets = CfgMgr::instance().getSubnets4();
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
     ASSERT_TRUE(subnets);
     ASSERT_EQ(3, subnets->size()); // We expect 3 subnets.
 
@@ -187,7 +188,8 @@ TEST_F(JSONFileBackendTest, comments) {
     EXPECT_NO_THROW(srv->init(TEST_FILE));
 
     // Now check if the configuration has been applied correctly.
-    const Subnet4Collection* subnets = CfgMgr::instance().getSubnets4();
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
     ASSERT_TRUE(subnets);
     ASSERT_EQ(1, subnets->size());
 

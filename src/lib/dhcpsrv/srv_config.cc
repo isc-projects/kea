@@ -26,12 +26,12 @@ namespace dhcp {
 
 SrvConfig::SrvConfig()
     : sequence_(0), cfg_option_def_(new CfgOptionDef()),
-      cfg_option_(new CfgOption()) {
+      cfg_option_(new CfgOption()), cfg_subnets4_(new CfgSubnets4()) {
 }
 
 SrvConfig::SrvConfig(const uint32_t sequence)
     : sequence_(sequence), cfg_option_def_(new CfgOptionDef()),
-      cfg_option_(new CfgOption()) {
+      cfg_option_(new CfgOption()), cfg_subnets4_(new CfgSubnets4()) {
 }
 
 std::string
@@ -39,7 +39,7 @@ SrvConfig::getConfigSummary(const uint32_t selection) const {
     std::ostringstream s;
     size_t subnets_num;
     if ((selection & CFGSEL_SUBNET4) == CFGSEL_SUBNET4) {
-        subnets_num = CfgMgr::instance().getSubnets4()->size();
+        subnets_num = getCfgSubnets4()->getAll()->size();
         if (subnets_num > 0) {
             s << "added IPv4 subnets: " << subnets_num;
         } else {

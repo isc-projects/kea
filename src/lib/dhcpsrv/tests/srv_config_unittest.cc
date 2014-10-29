@@ -137,7 +137,7 @@ SrvConfigTest::addSubnet4(const unsigned int index) {
         FAIL() << "Subnet index " << index << "out of range (0.."
                << TEST_SUBNETS_NUM << "): " << "unable to add IPv4 subnet";
     }
-    CfgMgr::instance().addSubnet4(test_subnets4_[index]);
+    conf_.getCfgSubnets4()->add(test_subnets4_[index]);
 }
 
 void
@@ -151,7 +151,6 @@ SrvConfigTest::addSubnet6(const unsigned int index) {
 
 void
 SrvConfigTest::clearSubnets() {
-    CfgMgr::instance().deleteSubnets4();
     CfgMgr::instance().deleteSubnets6();
 }
 
@@ -254,11 +253,6 @@ TEST_F(SrvConfigTest, summarySubnets) {
     EXPECT_EQ("added IPv4 subnets: 2; added IPv6 subnets: 2",
               conf_.getConfigSummary(SrvConfig::CFGSEL_SUBNET));
 
-    // Remove all subnets and make sure that there are no reported subnets
-    // back again.
-    clearSubnets();
-    EXPECT_EQ("no IPv4 subnets!; no IPv6 subnets!",
-              conf_.getConfigSummary(SrvConfig::CFGSEL_SUBNET));
 }
 
 // This test checks if entire configuration can be copied and that the sequence
