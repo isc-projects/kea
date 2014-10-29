@@ -16,9 +16,7 @@
 #define CFG_SUBNETS4_H
 
 #include <asiolink/io_address.h>
-#include <exceptions/exceptions.h>
 #include <dhcpsrv/subnet.h>
-#include <util/optional_value.h>
 #include <boost/shared_ptr.hpp>
 
 namespace isc {
@@ -32,12 +30,12 @@ namespace dhcp {
 /// assigned to the appropriate members of the @c CfgSubnets4::Selector
 /// structure.
 ///
-/// See @c CfgSubnets4::get documentation for more details on how the subnet
-/// is selected for the client.
+/// See @c CfgSubnets4::selectSubnet documentation for more details on how the
+/// subnet is selected for the client.
 class CfgSubnets4 {
 public:
 
-    /// @brief Subnet selector used in @c CfgSubnets4::getSubnet4.
+    /// @brief Subnet selector used in @c CfgSubnets4::selectSubnet.
     ///
     /// This structure holds various parameters extracted from a packet sent
     /// by a DHCP client used to select the subnet for the client.
@@ -122,7 +120,7 @@ public:
     ///
     /// This method returns a pointer to the subnet if the address passed in
     /// parameter is in range with this subnet. This is mainly used for unit
-    /// testing. This method is also called by the @c get(Selector).
+    /// testing. This method is also called by the @c selectSubnet(Selector).
     ///
     /// @param address Address for which the subnet is searched.
     /// @param client_classes Optional parameter specifying the classes that
