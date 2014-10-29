@@ -29,6 +29,7 @@
 #include <dhcpsrv/addr_utilities.h>
 #include <dhcpsrv/callout_handle_store.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/subnet.h>
@@ -1540,47 +1541,17 @@ Subnet4Ptr
 Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) const {
 
     Subnet4Ptr subnet;
-    static const IOAddress notset("0.0.0.0");
-    static const IOAddress bcast("255.255.255.255");
 
-    // If a message is relayed, use the relay (giaddr) address to select subnet
-    // for the client. Note that this may result in exception if the value
-    // of hops does not correspond with the Giaddr. Such message is considered
-    // to be malformed anyway and the message will be dropped by the higher
-    // level functions.
-    if (question->isRelayed()) {
-        subnet = CfgMgr::instance().getSubnet4(question->getGiaddr(),
-                                               question->classes_,
-                                               true);
+    CfgSubnets4::Selector selector;
+    selector.ciaddr_ = question->getCiaddr();
+    selector.giaddr_ = question->getGiaddr();
+    selector.local_address_ = question->getLocalAddr();
+    selector.remote_address_ = question->getRemoteAddr();
+    selector.client_classes_ = question->classes_;
+    selector.iface_name_ = question->getIface();
 
-    // The message is not relayed so it is sent directly by a client. But
-    // the client may be renewing its lease and in such case it unicasts
-    // its message to the server. Note that the unicast Request bypasses
-    // relays and the client may be in a different network, so we can't
-    // use IP address on the local interface to get the subnet. Instead,
-    // we rely on the client's address to get the subnet.
-    } else if ((question->getLocalAddr() != bcast) &&
-               (question->getCiaddr() != notset)) {
-        subnet = CfgMgr::instance().getSubnet4(question->getCiaddr(),
-                                               question->classes_);
-
-    // Either renewing client or the client that sends DHCPINFORM
-    // must set the ciaddr. But apparently some clients don't do it,
-    // so if the client didn't include ciaddr we will use the source
-    // address.
-    } else if ((question->getLocalAddr() != bcast) &&
-               (question->getRemoteAddr() != notset)) {
-        subnet = CfgMgr::instance().getSubnet4(question->getRemoteAddr(),
-                                               question->classes_);
-
-    // The message has been received from a directly connected client
-    // and this client appears to have no address. The IPv4 address
-    // assigned to the interface on which this message has been received,
-    // will be used to determine the subnet suitable for the client.
-    } else {
-        subnet = CfgMgr::instance().getSubnet4(question->getIface(),
-                                               question->classes_);
-    }
+    CfgMgr& cfgmgr = CfgMgr::instance();
+    subnet = cfgmgr.getCurrentCfg()->getCfgSubnets4()->selectSubnet(selector);
 
     // Let's execute all callouts registered for subnet4_select
     if (HooksManager::calloutsPresent(hook_index_subnet4_select_)) {
@@ -1593,7 +1564,8 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) const {
         callout_handle->setArgument("query4", question);
         callout_handle->setArgument("subnet4", subnet);
         callout_handle->setArgument("subnet4collection",
-                                    CfgMgr::instance().getSubnets4());
+                                    cfgmgr.getCurrentCfg()->
+                                    getCfgSubnets4()->getAll());
 
         // Call user (and server-side) callouts
         HooksManager::callCallouts(hook_index_subnet4_select_,

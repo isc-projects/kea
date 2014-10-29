@@ -80,4 +80,65 @@ TEST(OptionalValueTest, specifyValue) {
     ASSERT_TRUE(value.isSpecified());
 }
 
+// This test checks if the assignment operator assignining an actual
+// value to the optional value works as expected.
+TEST(OptionalValueTest, assignValue) {
+    OptionalValue<int> value(10);
+    ASSERT_EQ(10, value.get());
+    ASSERT_FALSE(value.isSpecified());
+
+    // Set the new value and mark it "specified".
+    value = 111;
+    ASSERT_EQ(111, value.get());
+    ASSERT_TRUE(value.isSpecified());
+
+    // Specify another value. The value should be still "specified".
+    value = 1000;
+    ASSERT_EQ(1000, value.get());
+    ASSERT_TRUE(value.isSpecified());
+}
+
+// This test checks if the equality and inequality operators work
+// correctly for the optional value.
+TEST(OptionalValueTest, equalityOperators) {
+    OptionalValue<int> value(10);
+    ASSERT_EQ(10, value.get());
+    ASSERT_FALSE(value.isSpecified());
+
+    EXPECT_FALSE(value == 10);
+    EXPECT_TRUE(value != 10);
+    EXPECT_FALSE(value == 123);
+    EXPECT_TRUE(value != 123);
+
+    value.specify(true);
+
+    EXPECT_TRUE(value == 10);
+    EXPECT_FALSE(value != 10);
+    EXPECT_FALSE(value == 123);
+    EXPECT_TRUE(value != 123);
+
+    value = 123;
+    EXPECT_TRUE(value == 123);
+    EXPECT_FALSE(value != 123);
+    EXPECT_FALSE(value == 10);
+    EXPECT_TRUE(value != 10);
+
+    value.specify(false);
+
+    EXPECT_FALSE(value == 123);
+    EXPECT_TRUE(value != 123);
+    EXPECT_FALSE(value == 10);
+    EXPECT_TRUE(value != 10);
+}
+
+// This test checks if the type case operator returns correct value.
+TEST(OptionalValueTest, typeCastOperator) {
+    OptionalValue<int> value(-10, true);
+    ASSERT_EQ(-10, value.get());
+    ASSERT_TRUE(value.isSpecified());
+
+    int actual = value;
+    EXPECT_EQ(-10, actual);
+}
+
 } // end of anonymous namespace

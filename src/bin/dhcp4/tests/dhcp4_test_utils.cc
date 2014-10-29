@@ -45,14 +45,14 @@ Dhcpv4SrvTest::Dhcpv4SrvTest()
     pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"), IOAddress("192.0.2.110")));
     subnet_->addPool(pool_);
 
-    CfgMgr::instance().clear();
-    CfgMgr::instance().deleteSubnets4();
-    CfgMgr::instance().addSubnet4(subnet_);
-
     // Add Router option.
     Option4AddrLstPtr opt_routers(new Option4AddrLst(DHO_ROUTERS));
     opt_routers->setAddress(IOAddress("192.0.2.2"));
     subnet_->getCfgOption()->add(opt_routers, false, "dhcp4");
+
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    CfgMgr::instance().commit();
 }
 
 Dhcpv4SrvTest::~Dhcpv4SrvTest() {
@@ -389,7 +389,7 @@ Dhcpv4SrvTest::createPacketFromBuffer(const Pkt4Ptr& src_pkt,
 
 void Dhcpv4SrvTest::TearDown() {
 
-    CfgMgr::instance().deleteSubnets4();
+    CfgMgr::instance().clear();
 
     // Close all open sockets.
     IfaceMgr::instance().closeSockets();
@@ -578,6 +578,8 @@ Dhcpv4SrvTest::configure(const std::string& config, NakedDhcpv4Srv& srv) {
     int rcode;
     ConstElementPtr comment = config::parseAnswer(rcode, status);
     ASSERT_EQ(0, rcode);
+
+    CfgMgr::instance().commit();
  }
 
 

@@ -423,7 +423,8 @@ public:
         pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"),
                                    IOAddress("192.0.2.109")));
         subnet_->addPool(pool_);
-        cfg_mgr.addSubnet4(subnet_);
+        cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
+        cfg_mgr.commit();
 
         factory_.create("type=memfile universe=4 persist=false");
     }
@@ -1326,13 +1327,15 @@ TEST_F(AllocEngine4Test, smallPool4) {
 
     IOAddress addr("192.0.2.17");
     CfgMgr& cfg_mgr = CfgMgr::instance();
-    cfg_mgr.deleteSubnets4(); // Get rid of the default test configuration
+
+    // Get rid of the default subnet configuration.
+    cfg_mgr.clear();
 
     // Create configuration similar to other tests, but with a single address pool
     subnet_ = Subnet4Ptr(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3));
     pool_ = Pool4Ptr(new Pool4(addr, addr)); // just a single address
     subnet_->addPool(pool_);
-    cfg_mgr.addSubnet4(subnet_);
+    cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
 
     Lease4Ptr lease = engine->allocateLease4(subnet_, clientid_, hwaddr_,
                                                IOAddress("0.0.0.0"),
@@ -1369,13 +1372,14 @@ TEST_F(AllocEngine4Test, outOfAddresses4) {
 
     IOAddress addr("192.0.2.17");
     CfgMgr& cfg_mgr = CfgMgr::instance();
-    cfg_mgr.deleteSubnets4(); // Get rid of the default test configuration
+    // Get rid of the default test configuration.
+    cfg_mgr.clear();
 
     // Create configuration similar to other tests, but with a single address pool
     subnet_ = Subnet4Ptr(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3));
     pool_ = Pool4Ptr(new Pool4(addr, addr)); // just a single address
     subnet_->addPool(pool_);
-    cfg_mgr.addSubnet4(subnet_);
+    cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
 
     // Just a different hw/client-id for the second client
     uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
@@ -1409,13 +1413,14 @@ TEST_F(AllocEngine4Test, discoverReuseExpiredLease4) {
 
     IOAddress addr("192.0.2.15");
     CfgMgr& cfg_mgr = CfgMgr::instance();
-    cfg_mgr.deleteSubnets4(); // Get rid of the default test configuration
+    // Get rid of the default test configuration.
+    cfg_mgr.clear();
 
     // Create configuration similar to other tests, but with a single address pool
     subnet_ = Subnet4Ptr(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3));
     pool_ = Pool4Ptr(new Pool4(addr, addr)); // just a single address
     subnet_->addPool(pool_);
-    cfg_mgr.addSubnet4(subnet_);
+    cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
 
     // Just a different hw/client-id for the second client
     uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
