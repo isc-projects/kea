@@ -156,7 +156,7 @@ Once the process is almost complete, the developer will likely ask you
 how you would like to be credited. The typical answers are by first and
 last name, by nickname, by company name or anonymously. Typically we
 will add a note to the \c ChangeLog and also set you as the author of
-the commit applying the patch. If the contributted feature is big or
+the commit applying the patch. If the contributed feature is big or
 critical for whatever reason, it may also be mentioned in release notes.
 
 @section contributorGuideExtra Extra steps
