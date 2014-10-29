@@ -127,6 +127,8 @@ Dhcp4SrvD2Test::configure(const std::string& config, bool exp_result) {
     ElementPtr json = Element::fromJSON(config);
     ConstElementPtr status;
 
+    CfgMgr::instance().clear();
+
     // Configure the server and make sure the config is accepted
     EXPECT_NO_THROW(status = configureDhcp4Server(srv_, json));
     ASSERT_TRUE(status);

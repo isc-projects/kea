@@ -18,6 +18,7 @@
 #include <dhcpsrv/cfg_iface.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfg_option_def.h>
+#include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/logging_info.h>
 #include <boost/shared_ptr.hpp>
 #include <vector>
@@ -184,6 +185,22 @@ public:
         return (cfg_option_);
     }
 
+    /// @brief Returns pointer to non-const object holding subnets configuration
+    /// for DHCPv4.
+    ///
+    /// @return Pointer to the object holding subnets configuration for DHCPv4.
+    CfgSubnets4Ptr getCfgSubnets4() {
+        return (cfg_subnets4_);
+    }
+
+    /// @brief Returns pointer to const object holding subnets configuration for
+    /// DHCPv4.
+    ///
+    /// @return Pointer to the object holding subnets configuration for DHCPv4.
+    ConstCfgSubnets4Ptr getCfgSubnets4() const {
+        return (cfg_subnets4_);
+    }
+
     //@}
 
     /// @brief Copies the currnet configuration to a new configuration.
@@ -191,6 +208,14 @@ public:
     /// This method copies the parameters stored in the configuration to
     /// an object passed as parameter. The configuration sequence is not
     /// copied.
+    ///
+    /// @warning Some of the configuration objects are not copied at
+    /// this point, e.g. subnets. This is because they contain quite complex
+    /// data structures and they make use of pointers, so in many cases
+    /// the default copy constructors can't be used. Implementing this
+    /// requires quite a lot of time so this is left as is for now.
+    /// The lack of ability to copy the entire configuration makes
+    /// revert function of the @c CfgMgr unsuable.
     ///
     /// @param [out] new_config An object to which the configuration will
     /// be copied.
@@ -276,6 +301,9 @@ private:
     /// This object holds the instances of the options to be sent to clients
     /// connected to any subnet.
     CfgOptionPtr cfg_option_;
+
+    /// @brief Pointer to subnets configuration for IPv4.
+    CfgSubnets4Ptr cfg_subnets4_;
 
 };
 

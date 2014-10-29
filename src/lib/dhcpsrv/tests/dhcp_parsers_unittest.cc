@@ -446,7 +446,7 @@ public:
     /// during a given test if needed.
     void reset_context(){
         // Note set context universe to V6 as it has to be something.
-        CfgMgr::instance().deleteSubnets4();
+        CfgMgr::instance().clear();
         CfgMgr::instance().deleteSubnets6();
         parser_context_.reset(new ParserContext(Option::V6));
 

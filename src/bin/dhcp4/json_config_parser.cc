@@ -138,7 +138,7 @@ public:
             // subnet id is invalid (duplicate). Thus, we catch exceptions
             // here to append a position in the configuration string.
             try {
-                isc::dhcp::CfgMgr::instance().addSubnet4(sub4ptr);
+                CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(sub4ptr);
             } catch (const std::exception& ex) {
                 isc_throw(DhcpConfigError, ex.what() << " ("
                           << subnet->getPosition() << ")");
@@ -317,28 +317,16 @@ public:
     ///
     /// @param subnets_list pointer to a list of IPv4 subnets
     void build(ConstElementPtr subnets_list) {
-        // @todo: Implement more subtle reconfiguration than toss
-        // the old one and replace with the new one.
-
-        // remove old subnets
-        CfgMgr::instance().deleteSubnets4();
-
         BOOST_FOREACH(ConstElementPtr subnet, subnets_list->listValue()) {
             ParserPtr parser(new Subnet4ConfigParser("subnet"));
             parser->build(subnet);
-            subnets_.push_back(parser);
         }
     }
 
     /// @brief commits subnets definitions.
     ///
-    /// Iterates over all Subnet4 parsers. Each parser contains definitions of
-    /// a single subnet and its parameters and commits each subnet separately.
+    /// Does nothing.
     void commit() {
-        BOOST_FOREACH(ParserPtr subnet, subnets_) {
-            subnet->commit();
-        }
-
     }
 
     /// @brief Returns Subnet4ListConfigParser object
@@ -347,10 +335,6 @@ public:
     static DhcpConfigParser* factory(const std::string& param_name) {
         return (new Subnets4ListConfigParser(param_name));
     }
-
-    /// @brief collection of subnet parsers.
-    ParserCollection subnets_;
-
 };
 
 } // anonymous namespace
@@ -545,10 +529,6 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
     // This operation should be exception safe but let's make sure.
     if (!rollback) {
         try {
-            if (subnet_parser) {
-                subnet_parser->commit();
-            }
-
             // No need to commit interface names as this is handled by the
             // CfgMgr::commit() function.
 
@@ -582,7 +562,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
     }
 
     LOG_INFO(dhcp4_logger, DHCP4_CONFIG_COMPLETE)
-        .arg(CfgMgr::instance().getCurrentCfg()->
+        .arg(CfgMgr::instance().getStagingCfg()->
              getConfigSummary(SrvConfig::CFGSEL_ALL4));
 
     // Everything was fine. Configuration is successful.
