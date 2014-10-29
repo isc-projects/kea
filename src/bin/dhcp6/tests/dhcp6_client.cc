@@ -61,6 +61,10 @@ Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply) {
     // Get all options in the reply message and pick IA_NA, IA_PD and
     // Status code.
     Opts opts = reply->options_;
+
+    // Let's try to get a MAC
+    HWAddrPtr hwaddr = reply->getMAC(Pkt::HWADDR_SOURCE_ANY);
+
     // Set the global status code to default: success and not received.
     config_.resetGlobalStatusCode();
     for (Opts::const_iterator opt = opts.begin(); opt != opts.end(); ++opt) {
@@ -88,12 +92,14 @@ Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply) {
                         lease_info.lease_.iaid_ = ia->getIAID();
                         break;
                     }
+
                     lease_info.lease_ = Lease6(Lease::TYPE_NA,
                                                iaaddr->getAddress(),
                                                duid_, ia->getIAID(),
                                                iaaddr->getPreferred(),
                                                iaaddr->getValid(),
-                                               ia->getT1(), ia->getT2(), 0);
+                                               ia->getT1(), ia->getT2(), 0,
+                                               hwaddr);
                     lease_info.lease_.cltt_ = time(NULL);
                 }
                 break;
@@ -117,7 +123,7 @@ Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply) {
                                                iaprefix->getPreferred(),
                                                iaprefix->getValid(),
                                                ia->getT1(), ia->getT2(), 0,
-                                               HWAddrPtr(),
+                                               hwaddr,
                                                iaprefix->getLength());
                     lease_info.lease_.cltt_ = time(NULL);
                 }
