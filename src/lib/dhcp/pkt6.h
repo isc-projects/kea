@@ -268,17 +268,33 @@ public:
     /// @param question client's packet
     void copyRelayInfo(const Pkt6Ptr& question);
 
-    /// relay information
+    /// @brief Relay information.
     ///
-    /// this is a public field. Otherwise we hit one of the two problems:
+    /// This is a public field. Otherwise we hit one of the two problems:
     /// we return reference to an internal field (and that reference could
     /// be potentially used past Pkt6 object lifetime causing badness) or
     /// we return a copy (which is inefficient and also causes any updates
     /// to be impossible). Therefore public field is considered the best
     /// (or least bad) solution.
+    ///
+    /// This vector is arranged in the order packet is encapsulated, i.e.
+    /// relay[0] was the outermost encapsulation (relay closest to the server),
+    /// relay[last] was the innermost encapsulation (relay closest to the
+    /// client).
     std::vector<RelayInfo> relay_info_;
 
 protected:
+
+    /// @brief Attempts to generate MAC/Hardware address from IPv6 link-local
+    ///        address.
+    ///
+    /// This method uses source IPv6 address for direct messages and the
+    /// peeraddr or the first relay that saw that packet. It may fail if the
+    /// address is not link-local or does not use EUI-64 identifier.
+    ///
+    /// @return Hardware address (or NULL)
+    virtual HWAddrPtr getMACFromSrcLinkLocalAddr();
+
     /// @brief Builds on wire packet for TCP transmission.
     ///
     /// @todo This function is not implemented yet.

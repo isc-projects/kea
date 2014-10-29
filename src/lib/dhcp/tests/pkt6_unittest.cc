@@ -21,6 +21,7 @@
 #include <dhcp/option6_ia.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/iface_mgr.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/hwaddr.h>
 #include <dhcp/docsis3_option_defs.h>
@@ -86,8 +87,8 @@ public:
         // callback has been actually called.
         executed_ = true;
         // Use default implementation of the unpack algorithm to parse options.
-        return (LibDHCP::unpackOptions6(buf, option_space, options, relay_msg_offset,
-                                        relay_msg_len));
+        return (LibDHCP::unpackOptions6(buf, option_space, options,
+                                        relay_msg_offset, relay_msg_len));
     }
 
     /// A flag which indicates if callback function has been called.
@@ -99,7 +100,8 @@ public:
     Pkt6Test() {
     }
 
-    /// @brief generates an option with given code (and length) and random content
+    /// @brief generates an option with given code (and length) and
+    /// random content
     ///
     /// @param code option code
     /// @param len data length (data will be randomized)
@@ -252,13 +254,13 @@ Pkt6* capture2() {
 
     // string exported from Wireshark
     string hex_string =
-        "0c01200108880db800010000000000000000fe80000000000000020021fffe5c18a900"
-        "09007d0c0000000000000000000000000000000000fe80000000000000020021fffe5c"
-        "18a9001200154953414d3134342065746820312f312f30352f30310025000400000de9"
-        "00090036016b4fe20001000e0001000118b033410000215c18a90003000c00000001ff"
-        "ffffffffffffff00080002000000060006001700f200f30012001c4953414d3134347c"
-        "3239397c697076367c6e743a76703a313a313130002500120000197f0001000118b033"
-        "410000215c18a9";
+        "0c01200108880db800010000000000000000fe80000000000000020021fffe5c"
+        "18a90009007d0c0000000000000000000000000000000000fe80000000000000"
+        "020021fffe5c18a9001200154953414d3134342065746820312f312f30352f30"
+        "310025000400000de900090036016b4fe20001000e0001000118b03341000021"
+        "5c18a90003000c00000001ffffffffffffffff00080002000000060006001700"
+        "f200f30012001c4953414d3134347c3239397c697076367c6e743a76703a313a"
+        "313130002500120000197f0001000118b033410000215c18a9";
 
     std::vector<uint8_t> bin;
 
@@ -319,7 +321,8 @@ TEST_F(Pkt6Test, packUnpack) {
 
 // Checks if the code is able to handle malformed packet
 TEST_F(Pkt6Test, unpackMalformed) {
-    // Get a packet. We're really interested in its on-wire representation only.
+    // Get a packet. We're really interested in its on-wire
+    // representation only.
     scoped_ptr<Pkt6> donor(capture1());
 
     // That's our original content. It should be sane.
@@ -586,8 +589,9 @@ TEST_F(Pkt6Test, relayUnpack) {
     uint32_t vendor_id = custom->readInteger<uint32_t>(0);
     EXPECT_EQ(6527, vendor_id); // 6527 = Panthera Networks
 
-    uint8_t expected_remote_id[] = { 0x00, 0x01, 0x00, 0x01, 0x18, 0xb0, 0x33, 0x41, 0x00,
-                                     0x00, 0x21, 0x5c, 0x18, 0xa9 };
+    uint8_t expected_remote_id[] = { 0x00, 0x01, 0x00, 0x01, 0x18, 0xb0,
+                                     0x33, 0x41, 0x00, 0x00, 0x21, 0x5c,
+                                     0x18, 0xa9 };
     OptionBuffer remote_id = custom->readBinary(1);
     ASSERT_EQ(sizeof(expected_remote_id), remote_id.size());
     ASSERT_EQ(0, memcmp(expected_remote_id, &remote_id[0], remote_id.size()));
@@ -623,8 +627,9 @@ TEST_F(Pkt6Test, relayUnpack) {
 
     ASSERT_TRUE(opt = msg->getOption(D6O_CLIENTID));
     EXPECT_EQ(18, opt->len()); // 14 bytes of data + 4 bytes of header
-    uint8_t expected_client_id[] = { 0x00, 0x01, 0x00, 0x01, 0x18, 0xb0, 0x33, 0x41, 0x00,
-                                     0x00, 0x21, 0x5c, 0x18, 0xa9 };
+    uint8_t expected_client_id[] = { 0x00, 0x01, 0x00, 0x01, 0x18, 0xb0,
+                                     0x33, 0x41, 0x00, 0x00, 0x21, 0x5c,
+                                     0x18, 0xa9 };
     data = opt->getData();
     ASSERT_EQ(data.size(), sizeof(expected_client_id));
     ASSERT_EQ(0, memcmp(&data[0], expected_client_id, data.size()));
@@ -689,7 +694,8 @@ TEST_F(Pkt6Test, relayPack) {
 
     EXPECT_NO_THROW(parent->pack());
 
-    EXPECT_EQ(Pkt6::DHCPV6_PKT_HDR_LEN + 3 * Option::OPTION6_HDR_LEN // ADVERTISE
+    EXPECT_EQ(Pkt6::DHCPV6_PKT_HDR_LEN
+              + 3 * Option::OPTION6_HDR_LEN // ADVERTISE
               + Pkt6::DHCPV6_RELAY_HDR_LEN // Relay header
               + Option::OPTION6_HDR_LEN // Relay-msg
               + optRelay1->len(),
@@ -727,7 +733,8 @@ TEST_F(Pkt6Test, relayPack) {
     EXPECT_EQ(opt->len(), optRelay1->len());
     OptionBuffer data = opt->getData();
     ASSERT_EQ(data.size(), sizeof(relay_opt_data));
-    EXPECT_EQ(0, memcmp(relay_opt_data, relay_opt_data, sizeof(relay_opt_data)));
+    EXPECT_EQ(0,
+              memcmp(relay_opt_data, relay_opt_data, sizeof(relay_opt_data)));
 }
 
 
@@ -756,7 +763,8 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     OptionPtr relay2_opt1(new Option(Option::V6, 100));
     OptionPtr relay2_opt2(new Option(Option::V6, 101));
     OptionPtr relay2_opt3(new Option(Option::V6, 102));
-    OptionPtr relay2_opt4(new Option(Option::V6, 200)); // the same code as relay1_opt3
+    OptionPtr relay2_opt4(new Option(Option::V6, 200));
+    // the same code as relay1_opt3
     relay2.options_.insert(make_pair(100, relay2_opt1));
     relay2.options_.insert(make_pair(101, relay2_opt2));
     relay2.options_.insert(make_pair(102, relay2_opt3));
@@ -775,7 +783,8 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     // First check that the getAnyRelayOption does not confuse client options
     // and relay options
     // 300 is a client option, present in the message itself.
-    OptionPtr opt = msg->getAnyRelayOption(300, Pkt6::RELAY_SEARCH_FROM_CLIENT);
+    OptionPtr opt =
+        msg->getAnyRelayOption(300, Pkt6::RELAY_SEARCH_FROM_CLIENT);
     EXPECT_FALSE(opt);
     opt = msg->getAnyRelayOption(300, Pkt6::RELAY_SEARCH_FROM_SERVER);
     EXPECT_FALSE(opt);
@@ -877,6 +886,19 @@ TEST_F(Pkt6Test, getMAC) {
     EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_ANY));
     EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_RAW));
 
+    // We haven't specified source IPv6 address, so this method should
+    // fail, too
+    EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL));
+
+    // Let's check if setting IPv6 address improves the situation.
+    IOAddress linklocal_eui64("fe80::204:06ff:fe08:0a0c");
+    pkt.setRemoteAddr(linklocal_eui64);
+    EXPECT_TRUE(pkt.getMAC(Pkt::HWADDR_SOURCE_ANY));
+    EXPECT_TRUE(pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL));
+    EXPECT_TRUE(pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL |
+                           Pkt::HWADDR_SOURCE_RAW));
+    pkt.setRemoteAddr(IOAddress("::"));
+
     // Let's invent a MAC
     const uint8_t hw[] = { 2, 4, 6, 8, 10, 12 }; // MAC
     const uint8_t hw_type = 123; // hardware type
@@ -888,10 +910,144 @@ TEST_F(Pkt6Test, getMAC) {
     // Now we should be able to get something
     ASSERT_TRUE(pkt.getMAC(Pkt::HWADDR_SOURCE_ANY));
     ASSERT_TRUE(pkt.getMAC(Pkt::HWADDR_SOURCE_RAW));
+    EXPECT_TRUE(pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL |
+                           Pkt::HWADDR_SOURCE_RAW));
 
     // Check that the returned MAC is indeed the expected one
     ASSERT_TRUE(*dummy_hwaddr == *pkt.getMAC(Pkt::HWADDR_SOURCE_ANY));
     ASSERT_TRUE(*dummy_hwaddr == *pkt.getMAC(Pkt::HWADDR_SOURCE_RAW));
+}
+
+// Test checks whether getMACFromIPv6LinkLocal() returns the hardware (MAC)
+// address properly (for direct message).
+TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_direct) {
+    Pkt6 pkt(DHCPV6_ADVERTISE, 1234);
+
+    // Let's get the first interface
+    Iface* iface = IfaceMgr::instance().getIface(1);
+    ASSERT_TRUE(iface);
+
+    // and set source interface data properly. getMACFromIPv6LinkLocal attempts
+    // to use source interface to obtain hardware type
+    pkt.setIface(iface->getName());
+    pkt.setIndex(iface->getIndex());
+
+    // Note that u and g bits (the least significant ones of the most
+    // significant byte) have special meaning and must not be set in MAC.
+    // u bit is always set in EUI-64. g is always cleared.
+    IOAddress global("2001:db8::204:06ff:fe08:0a:0c");
+    IOAddress linklocal_eui64("fe80::f204:06ff:fe08:0a0c");
+    IOAddress linklocal_noneui64("fe80::f204:0608:0a0c:0e10");
+
+    // If received from a global address, this method should fail
+    pkt.setRemoteAddr(global);
+    EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL));
+
+    // If received from link-local that is EUI-64 based, it should succeed
+    pkt.setRemoteAddr(linklocal_eui64);
+    HWAddrPtr found = pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL);
+    ASSERT_TRUE(found);
+
+    stringstream tmp;
+    tmp << "hwtype=" << (int)iface->getHWType() << " f0:04:06:08:0a:0c";
+    EXPECT_EQ(tmp.str(), found->toText(true));
+}
+
+// Test checks whether getMACFromIPv6LinkLocal() returns the hardware (MAC)
+// address properly (for relayed message).
+TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_singleRelay) {
+
+    // Let's create a Solicit first...
+    Pkt6 pkt(DHCPV6_SOLICIT, 1234);
+
+    // ... and pretend it was relayed by a single relay.
+    Pkt6::RelayInfo info;
+    pkt.addRelayInfo(info);
+    ASSERT_EQ(1, pkt.relay_info_.size());
+
+    // Let's get the first interface
+    Iface* iface = IfaceMgr::instance().getIface(1);
+    ASSERT_TRUE(iface);
+
+    // and set source interface data properly. getMACFromIPv6LinkLocal attempts
+    // to use source interface to obtain hardware type
+    pkt.setIface(iface->getName());
+    pkt.setIndex(iface->getIndex());
+
+    IOAddress global("2001:db8::204:06ff:fe08:0a:0c"); // global address
+    IOAddress linklocal_noneui64("fe80::f204:0608:0a0c:0e10"); // no fffe
+    IOAddress linklocal_eui64("fe80::f204:06ff:fe08:0a0c"); // valid EUI-64
+
+    // If received from a global address, this method should fail
+    pkt.relay_info_[0].peeraddr_ = global;
+    EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL));
+
+    // If received from a link-local that does not use EUI-64, it should fail
+    pkt.relay_info_[0].peeraddr_ = linklocal_noneui64;
+    EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL));
+
+    // If received from link-local that is EUI-64 based, it should succeed
+    pkt.relay_info_[0].peeraddr_ = linklocal_eui64;
+    HWAddrPtr found = pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL);
+    ASSERT_TRUE(found);
+
+    stringstream tmp;
+    tmp << "hwtype=" << (int)iface->getHWType() << " f0:04:06:08:0a:0c";
+    EXPECT_EQ(tmp.str(), found->toText(true));
+}
+
+// Test checks whether getMACFromIPv6LinkLocal() returns the hardware (MAC)
+// address properly (for a message relayed multiple times).
+TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_multiRelay) {
+
+    // Let's create a Solicit first...
+    Pkt6 pkt(DHCPV6_SOLICIT, 1234);
+
+    // ... and pretend it was relayed via 3 relays. Keep in mind that
+    // the relays are stored in relay_info_ in the encapsulation order
+    // rather than in traverse order. The following simulates:
+    // client --- relay1 --- relay2 --- relay3 --- server
+    IOAddress linklocal1("fe80::200:ff:fe00:1"); // valid EUI-64
+    IOAddress linklocal2("fe80::200:ff:fe00:2"); // valid EUI-64
+    IOAddress linklocal3("fe80::200:ff:fe00:3"); // valid EUI-64
+
+    // Let's add info about relay3. This was the last relay, so it added the
+    // outermost encapsulation layer, so it was parsed first during reception.
+    // Its peer-addr field contains an address of relay2, so it's useless for
+    // this method.
+    Pkt6::RelayInfo info;
+    info.peeraddr_ = linklocal3;
+    pkt.addRelayInfo(info);
+
+    // Now add info about relay2. Its peer-addr contains an address of the
+    // previous relay (relay1). Still useless for us.
+    info.peeraddr_ = linklocal2;
+    pkt.addRelayInfo(info);
+
+    // Finally add the first relay. This is the relay that received the packet
+    // from the client directly, so its peer-addr field contains an address of
+    // the client. The method should get that address and build MAC from it.
+    info.peeraddr_ = linklocal1;
+    pkt.addRelayInfo(info);
+    ASSERT_EQ(3, pkt.relay_info_.size());
+
+    // Let's get the first interface
+    Iface* iface = IfaceMgr::instance().getIface(1);
+    ASSERT_TRUE(iface);
+
+    // and set source interface data properly. getMACFromIPv6LinkLocal attempts
+    // to use source interface to obtain hardware type
+    pkt.setIface(iface->getName());
+    pkt.setIndex(iface->getIndex());
+
+    // The method should return MAC based on the first relay that was closest
+    HWAddrPtr found = pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL);
+    ASSERT_TRUE(found);
+
+    // Let's check the info now.
+    stringstream tmp;
+    tmp << "hwtype=" << iface->getHWType() << " 00:00:00:00:00:01";
+    EXPECT_EQ(tmp.str(), found->toText(true));
 }
 
 }
