@@ -18,6 +18,7 @@
 #include <dhcpsrv/lease.h>
 #include <gtest/gtest.h>
 #include <vector>
+#include <sstream>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -148,6 +149,11 @@ TEST_F(Lease4Test, copyConstructor) {
 
     // ... but it should point to different objects.
     EXPECT_FALSE(lease.hwaddr_ == copied_lease.hwaddr_);
+
+    // Now let's check that the hwaddr pointer is copied even if it's NULL:
+    lease.hwaddr_.reset();
+    Lease4 copied_lease2(lease);
+    EXPECT_TRUE(lease == copied_lease2);
 }
 
 // This test verfies that the assignment operator copies all Lease4 fields
@@ -186,6 +192,11 @@ TEST_F(Lease4Test, operatorAssign) {
 
     // ... but it should point to different objects.
     EXPECT_FALSE(lease.hwaddr_ == copied_lease.hwaddr_);
+
+    // Now let's check that the hwaddr pointer is copied even if it's NULL:
+    lease.hwaddr_.reset();
+    copied_lease = lease;
+    EXPECT_TRUE(lease == copied_lease);
 }
 
 // This test verifies that the matches() returns true if two leases differ
@@ -412,6 +423,37 @@ TEST(Lease4, hasIdenticalFqdn) {
                                                      false, false)));
     EXPECT_FALSE(lease.hasIdenticalFqdn(createLease4("other.example.com.",
                                                      false, false)));
+}
+
+// Verify that toText() method reports Lease4 structure properly.
+TEST_F(Lease4Test, toText) {
+
+    const time_t current_time = 12345678;
+    Lease4 lease(IOAddress("192.0.2.3"), hwaddr_, CLIENTID, sizeof(CLIENTID),
+                 3600, 123, 456, current_time, 789);
+    
+    std::stringstream expected;
+    expected << "Address:       192.0.2.3\n"
+             << "Valid life:    3600\n"
+             << "T1:            123\n"
+             << "T2:            456\n"
+             << "Cltt:          12345678\n"
+             << "Hardware addr: " << hwaddr_->toText(false) << "\n"
+             << "Subnet ID:     789\n";
+
+    EXPECT_EQ(expected.str(), lease.toText());
+
+    // Now let's try with a lease without hardware address.
+    lease.hwaddr_.reset();
+    expected.str("");
+    expected << "Address:       192.0.2.3\n"
+             << "Valid life:    3600\n"
+             << "T1:            123\n"
+             << "T2:            456\n"
+             << "Cltt:          12345678\n"
+             << "Hardware addr: (none)\n"
+             << "Subnet ID:     789\n";
+    EXPECT_EQ(expected.str(), lease.toText());
 }
 
 /// @brief Creates an instance of the lease with certain FQDN data.
@@ -809,7 +851,44 @@ TEST(Lease6, hasIdenticalFqdn) {
                                                      false, false)));
 }
 
-/// @todo: Add tests for Lease4::toText()
-/// @todo: Add tests for Lease6::toText()
+// Verify that toText() method reports Lease4 structure properly.
+TEST(Lease6, toText) {
+
+    HWAddrPtr hwaddr(new HWAddr(HWADDR, sizeof(HWADDR), HTYPE_ETHER));
+
+    uint8_t llt[] = {0, 1, 2, 3, 4, 5, 6, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf};
+    DuidPtr duid(new DUID(llt, sizeof(llt)));
+    
+    Lease6 lease(Lease::TYPE_NA, IOAddress("2001:db8::1"), duid, 123456,
+                 400, 800, 100, 200, 5678, hwaddr, 128);
+    lease.cltt_ = 12345678;
+    
+    std::stringstream expected;
+    expected << "Type:          IA_NA(" << static_cast<int>(Lease::TYPE_NA) << ")\n"
+             << "Address:       2001:db8::1\n"
+             << "Prefix length: 128\n"
+             << "IAID:          123456\n"
+             << "Pref life:     400\n"
+             << "Valid life:    800\n"
+             << "Cltt:          12345678\n"
+             << "Hardware addr: " << hwaddr->toText(false) << "\n"
+             << "Subnet ID:     5678\n";
+
+    EXPECT_EQ(expected.str(), lease.toText());
+
+    // Now let's try with a lease without hardware address.
+    lease.hwaddr_.reset();
+    expected.str("");
+    expected << "Type:          IA_NA(" << static_cast<int>(Lease::TYPE_NA) << ")\n"
+             << "Address:       2001:db8::1\n"
+             << "Prefix length: 128\n"
+             << "IAID:          123456\n"
+             << "Pref life:     400\n"
+             << "Valid life:    800\n"
+             << "Cltt:          12345678\n"
+             << "Hardware addr: (none)\n"
+             << "Subnet ID:     5678\n";
+    EXPECT_EQ(expected.str(), lease.toText());
+}
 
 }; // end of anonymous namespace

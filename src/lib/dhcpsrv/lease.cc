@@ -75,6 +75,8 @@ Lease4::Lease4(const Lease4& other)
     // Copy the hardware address if it is defined.
     if (other.hwaddr_) {
         hwaddr_.reset(new HWAddr(*other.hwaddr_));
+    } else {
+        hwaddr_.reset();
     }
 
     if (other.client_id_) {
@@ -156,6 +158,8 @@ Lease4::operator=(const Lease4& other) {
         // Copy the hardware address if it is defined.
         if (other.hwaddr_) {
             hwaddr_.reset(new HWAddr(*other.hwaddr_));
+        } else {
+            hwaddr_.reset();
         }
 
         if (other.client_id_) {
@@ -218,15 +222,16 @@ std::string
 Lease6::toText() const {
     ostringstream stream;
 
+    /// @todo: print out DUID
     stream << "Type:          " << typeToText(type_) << "("
-           << static_cast<int>(type_) << ") ";
+           << static_cast<int>(type_) << ")\n";
     stream << "Address:       " << addr_ << "\n"
            << "Prefix length: " << static_cast<int>(prefixlen_) << "\n"
            << "IAID:          " << iaid_ << "\n"
            << "Pref life:     " << preferred_lft_ << "\n"
            << "Valid life:    " << valid_lft_ << "\n"
            << "Cltt:          " << cltt_ << "\n"
-           << "Hardware addr: " << (hwaddr_?hwaddr_->toText(false):"(none)")
+           << "Hardware addr: " << (hwaddr_?hwaddr_->toText(false):"(none)") << "\n"
            << "Subnet ID:     " << subnet_id_ << "\n";
 
     return (stream.str());
@@ -236,12 +241,13 @@ std::string
 Lease4::toText() const {
     ostringstream stream;
 
+    /// @todo: print out client-id (if present)
     stream << "Address:       " << addr_ << "\n"
            << "Valid life:    " << valid_lft_ << "\n"
            << "T1:            " << t1_ << "\n"
            << "T2:            " << t2_ << "\n"
            << "Cltt:          " << cltt_ << "\n"
-           << "Hardware addr: " << (hwaddr_?hwaddr_->toText(false):"(none)")
+           << "Hardware addr: " << (hwaddr_?hwaddr_->toText(false):"(none)") << "\n"
            << "Subnet ID:     " << subnet_id_ << "\n";
 
     return (stream.str());
