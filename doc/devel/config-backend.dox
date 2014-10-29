@@ -121,7 +121,7 @@ The following are some details of the JSON backend framework.
    and left up to the user (it is passed as a parameter to the -c command line
    option). From the implementation perspective, this is slight change
    from the BIND10 days, as back then a subset of the configuration was received by
-   the daemon processes. Nowadays the whole configuration is pased. To take a
+   the daemon processes. Nowadays the whole configuration is passed. To take a
    specific example, the following is how b10-config.db looks today:
    @code
    {
