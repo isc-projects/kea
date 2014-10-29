@@ -542,5 +542,17 @@ void Pkt6::copyRelayInfo(const Pkt6Ptr& question) {
     }
 }
 
+HWAddrPtr
+Pkt6::getMACFromSrcLinkLocalAddr() {
+    if (relay_info_.empty()) {
+        // This is a direct message, use source address
+        return (getMACFromIPv6(remote_addr_));
+    }
+
+    // This is a relayed message, get the peer-addr from the first relay-forw
+    return (getMACFromIPv6(relay_info_[relay_info_.size() - 1].peeraddr_));
+}
+
+
 } // end of isc::dhcp namespace
 } // end of isc namespace
