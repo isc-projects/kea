@@ -83,10 +83,6 @@ of active interfaces. This doesn't prevent the server from listening to
 the DHCP traffic through open sockets, but will rather be used by Interface
 Manager to select active interfaces when sockets are re-opened.
 
-% DHCPSRV_CFGMGR_DELETE_SUBNET6 deleting all IPv6 subnets
-A debug message noting that the DHCP configuration manager has deleted all IPv6
-subnets in its database.
-
 % DHCPSRV_CFGMGR_NO_SUBNET4 no suitable subnet is defined for address hint %1
 This debug message is output when the DHCP configuration manager has received
 a request for an IPv4 subnet for the specified address, but no such
