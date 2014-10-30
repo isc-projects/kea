@@ -49,6 +49,7 @@ libkea_dhcpsrv_la_SOURCES += cfg_iface.cc cfg_iface.h
 libkea_dhcpsrv_la_SOURCES += cfg_option.cc cfg_option.h
 libkea_dhcpsrv_la_SOURCES += cfg_option_def.cc cfg_option_def.h
 libkea_dhcpsrv_la_SOURCES += cfg_subnets4.cc cfg_subnets4.h
+libkea_dhcpsrv_la_SOURCES += cfg_subnets6.cc cfg_subnets6.h
 libkea_dhcpsrv_la_SOURCES += cfgmgr.cc cfgmgr.h
 libkea_dhcpsrv_la_SOURCES += csv_lease_file4.cc csv_lease_file4.h
 libkea_dhcpsrv_la_SOURCES += csv_lease_file6.cc csv_lease_file6.h
@@ -79,6 +80,7 @@ libkea_dhcpsrv_la_SOURCES += pool.cc pool.h
 libkea_dhcpsrv_la_SOURCES += srv_config.cc srv_config.h
 libkea_dhcpsrv_la_SOURCES += subnet.cc subnet.h
 libkea_dhcpsrv_la_SOURCES += subnet_id.h
+libkea_dhcpsrv_la_SOURCES += subnet_selector.h
 libkea_dhcpsrv_la_SOURCES += triplet.h
 libkea_dhcpsrv_la_SOURCES += utils.h
 
