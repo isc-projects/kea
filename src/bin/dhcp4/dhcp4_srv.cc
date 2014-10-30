@@ -33,6 +33,7 @@
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/subnet.h>
+#include <dhcpsrv/subnet_selector.h>
 #include <dhcpsrv/utils.h>
 #include <dhcpsrv/utils.h>
 #include <hooks/callout_handle.h>
@@ -1542,7 +1543,7 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) const {
 
     Subnet4Ptr subnet;
 
-    CfgSubnets4::Selector selector;
+    SubnetSelector selector;
     selector.ciaddr_ = question->getCiaddr();
     selector.giaddr_ = question->getGiaddr();
     selector.local_address_ = question->getLocalAddr();

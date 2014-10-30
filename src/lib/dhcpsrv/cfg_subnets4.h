@@ -17,6 +17,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcpsrv/subnet.h>
+#include <dhcpsrv/subnet_selector.h>
 #include <boost/shared_ptr.hpp>
 
 namespace isc {
@@ -34,30 +35,6 @@ namespace dhcp {
 /// subnet is selected for the client.
 class CfgSubnets4 {
 public:
-
-    /// @brief Subnet selector used in @c CfgSubnets4::selectSubnet.
-    ///
-    /// This structure holds various parameters extracted from a packet sent
-    /// by a DHCP client used to select the subnet for the client.
-    struct Selector {
-        /// @brief ciaddr from the client's message.
-        asiolink::IOAddress ciaddr_;
-        /// @brief giaddr from the client's message.
-        asiolink::IOAddress giaddr_;
-        /// @brief Address on which the message was received.
-        asiolink::IOAddress local_address_;
-        /// @brief Source address of the message.
-        asiolink::IOAddress remote_address_;
-        /// @brief Classes that the client belongs to.
-        ClientClasses client_classes_;
-        /// @brief Name of the interface on which the message was received.
-        std::string iface_name_;
-
-        /// @brief Default constructor.
-        ///
-        ///  Sets the default values for the @c Selector.
-        Selector();
-    };
 
     /// @brief Adds new subnet to the configuration.
     ///
@@ -114,13 +91,14 @@ public:
     /// @return Pointer to the selected subnet or NULL if no subnet found.
     /// @throw isc::BadValue if the values in the subnet selector are invalid
     /// or they are insufficient to select a subnet.
-    Subnet4Ptr selectSubnet(const Selector& selector) const;
+    Subnet4Ptr selectSubnet(const SubnetSelector& selector) const;
 
     /// @brief Returns pointer to a subnet if provided address is in its range.
     ///
     /// This method returns a pointer to the subnet if the address passed in
     /// parameter is in range with this subnet. This is mainly used for unit
-    /// testing. This method is also called by the @c selectSubnet(Selector).
+    /// testing. This method is also called by the
+    /// @c selectSubnet(SubnetSelector).
     ///
     /// @param address Address for which the subnet is searched.
     /// @param client_classes Optional parameter specifying the classes that
