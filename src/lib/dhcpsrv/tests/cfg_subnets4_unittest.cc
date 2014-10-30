@@ -18,6 +18,7 @@
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_id.h>
+#include <dhcpsrv/subnet_selector.h>
 #include <gtest/gtest.h>
 
 using namespace isc;
@@ -38,7 +39,7 @@ TEST(CfgSubnets4Test, getSubnetByCiaddr) {
     Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3));
 
     // Make sure that initially the subnets don't exist.
-    CfgSubnets4::Selector selector;
+    SubnetSelector selector;
     selector.ciaddr_ = IOAddress("192.0.2.0");
     // Set some unicast local address to simulate a Renew.
     selector.local_address_ = IOAddress("10.0.0.100");
@@ -83,7 +84,7 @@ TEST(CfgSubnets4Test, getSubnetByClasses) {
     cfg.add(subnet2);
     cfg.add(subnet3);
 
-    CfgSubnets4::Selector selector;
+    SubnetSelector selector;
 
     selector.local_address_ = IOAddress("10.0.0.10");
 
@@ -157,7 +158,7 @@ TEST(CfgSubnetsTest, getSubnetByRelayAddress) {
     cfg.add(subnet2);
     cfg.add(subnet3);
 
-    CfgSubnets4::Selector selector;
+    SubnetSelector selector;
 
     // Check that without relay-info specified, subnets are not selected
     selector.giaddr_ = IOAddress("10.0.0.1");
@@ -192,7 +193,7 @@ TEST(CfgSubnetsTest, getSubnetNoCiaddr) {
     Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3));
 
     // Make sure that initially the subnets don't exist.
-    CfgSubnets4::Selector selector;
+    SubnetSelector selector;
     selector.remote_address_ = IOAddress("192.0.2.0");
     // Set some unicast local address to simulate a Renew.
     selector.local_address_ = IOAddress("10.0.0.100");
@@ -231,7 +232,7 @@ TEST(CfgSubnetsTest, getSubnetInterface) {
     IfaceMgrTestConfig config(true);
 
     CfgSubnets4 cfg;
-    CfgSubnets4::Selector selector;
+    SubnetSelector selector;
 
     // Initially, there are no subnets configured, so none of the IPv4
     // addresses assigned to eth0 and eth1 can match with any subnet.
