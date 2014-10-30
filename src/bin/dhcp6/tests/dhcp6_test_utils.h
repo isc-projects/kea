@@ -348,7 +348,7 @@ public:
     ///
     /// Removes existing configuration.
     ~Dhcpv6SrvTest() {
-        isc::dhcp::CfgMgr::instance().deleteSubnets6();
+        isc::dhcp::CfgMgr::instance().clear();
     };
 
     /// @brief Runs DHCPv6 configuration from the JSON string.

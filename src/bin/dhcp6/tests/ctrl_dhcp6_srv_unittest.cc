@@ -182,7 +182,7 @@ TEST_F(CtrlDhcpv6SrvTest, configReload) {
     ElementPtr config = Element::fromJSON(config_txt);
 
     // Make sure there are no subnets configured.
-    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().clear();
 
     // Now send the command
     int rcode = -1;
@@ -192,11 +192,12 @@ TEST_F(CtrlDhcpv6SrvTest, configReload) {
     EXPECT_EQ(0, rcode); // Expect success
 
     // Check that the config was indeed applied.
-    const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
+    const Subnet6Collection* subnets =
+        CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->getAll();
     EXPECT_EQ(3, subnets->size());
 
     // Clean up after the test.
-    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().clear();
 }
 
 } // End of anonymous namespace
