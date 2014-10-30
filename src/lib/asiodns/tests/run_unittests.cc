@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,14 +16,12 @@
 #include <util/unittests/run_all.h>
 
 #include <log/logger_support.h>
-#include <dns/tests/unittest_util.h>
 
 int
 main(int argc, char* argv[])
 {
     ::testing::InitGoogleTest(&argc, argv);         // Initialize Google test
     isc::log::initLogger();                         // Initialize logging
-    isc::UnitTestUtil::addDataPath(TEST_DATA_DIR);  // Add location of test data
 
     return (isc::util::unittests::run_all());
 }
