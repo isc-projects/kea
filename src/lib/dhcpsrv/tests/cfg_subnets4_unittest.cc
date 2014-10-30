@@ -30,7 +30,7 @@ namespace {
 
 // This test verifies that it is possible to retrieve a subnet using an
 // IP address.
-TEST(CfgSubnets4Test, getSubnetByCiaddr) {
+TEST(CfgSubnets4Test, selectSubnetByCiaddr) {
     CfgSubnets4 cfg;
 
     // Create 3 subnets.
@@ -71,7 +71,7 @@ TEST(CfgSubnets4Test, getSubnetByCiaddr) {
 
 // This test verifies that when the classification information is specified for
 // subnets, the proper subnets are returned by the subnet configuration.
-TEST(CfgSubnets4Test, getSubnetByClasses) {
+TEST(CfgSubnets4Test, selectSubnetByClasses) {
     CfgSubnets4 cfg;
 
     // Create 3 subnets.
@@ -145,7 +145,7 @@ TEST(CfgSubnets4Test, getSubnetByClasses) {
 
 // This test verifies that the relay information can be used to retrieve the
 // subnet.
-TEST(CfgSubnetsTest, getSubnetByRelayAddress) {
+TEST(CfgSubnetsTest, selectSubnetByRelayAddress) {
     CfgSubnets4 cfg;
 
     // Create 3 subnets.
@@ -184,7 +184,7 @@ TEST(CfgSubnetsTest, getSubnetByRelayAddress) {
 
 // This test verifies that the subnet can be selected for the client
 // using a source address if the client hasn't set the ciaddr.
-TEST(CfgSubnetsTest, getSubnetNoCiaddr) {
+TEST(CfgSubnetsTest, selectSubnetNoCiaddr) {
     CfgSubnets4 cfg;
 
     // Create 3 subnets.
@@ -224,7 +224,7 @@ TEST(CfgSubnetsTest, getSubnetNoCiaddr) {
 
 // This test verifies that the subnet can be selected using an address
 // set on the local interface.
-TEST(CfgSubnetsTest, getSubnetInterface) {
+TEST(CfgSubnetsTest, selectSubnetInterface) {
     // The IfaceMgrTestConfig object initializes fake interfaces:
     // eth0, eth1 and lo on the configuration manager. The CfgSubnets4
     // object uses addresses assigned to these fake interfaces to
