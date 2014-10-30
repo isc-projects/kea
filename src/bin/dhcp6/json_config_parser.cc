@@ -344,7 +344,7 @@ public:
             // subnet id is invalid (duplicate). Thus, we catch exceptions
             // here to append a position in the configuration string.
             try {
-                isc::dhcp::CfgMgr::instance().addSubnet6(sub6ptr);
+                CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(sub6ptr);
             } catch (const std::exception& ex) {
                 isc_throw(DhcpConfigError, ex.what() << " ("
                           << subnet->getPosition() << ")");
@@ -534,12 +534,6 @@ public:
     ///
     /// @param subnets_list pointer to a list of IPv6 subnets
     void build(ConstElementPtr subnets_list) {
-        // @todo: Implement more subtle reconfiguration than toss
-        // the old one and replace with the new one.
-
-        // remove old subnets
-        isc::dhcp::CfgMgr::instance().deleteSubnets6();
-
         BOOST_FOREACH(ConstElementPtr subnet, subnets_list->listValue()) {
             ParserPtr parser(new Subnet6ConfigParser("subnet"));
             parser->build(subnet);

@@ -49,7 +49,7 @@ CfgSubnets6::selectSubnet(const SubnetSelector& selector) const {
         }
 
         // If interface name didn't match, try the client's address.
-        if (!subnet && selector.remote_address_.isSpecified()) {
+        if (!subnet && selector.remote_address_ != IOAddress("::")) {
             subnet = selectSubnet(selector.remote_address_,
                                   selector.client_classes_);
         }

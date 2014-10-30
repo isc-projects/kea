@@ -36,8 +36,9 @@ Dhcpv6SrvTest::Dhcpv6SrvTest()
                               64));
     subnet_->addPool(pool_);
 
-    isc::dhcp::CfgMgr::instance().deleteSubnets6();
-    isc::dhcp::CfgMgr::instance().addSubnet6(subnet_);
+    isc::dhcp::CfgMgr::instance().clear();
+    isc::dhcp::CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet_);
+    isc::dhcp::CfgMgr::instance().commit();
 
     // configure PD pool
     pd_pool_ = isc::dhcp::Pool6Ptr
@@ -604,6 +605,8 @@ Dhcpv6SrvTest::configure(const std::string& config, NakedDhcpv6Srv& srv) {
     int rcode;
     ConstElementPtr comment = config::parseAnswer(rcode, status);
     ASSERT_EQ(0, rcode);
+
+    CfgMgr::instance().commit();
 }
 
 // Generate IA_NA option with specified parameters
