@@ -18,7 +18,6 @@
 #include <asiolink/io_address.h>
 #include <dhcp/classify.h>
 #include <dhcp/option.h>
-#include <util/optional_value.h>
 #include <string>
 
 namespace isc {
@@ -47,9 +46,9 @@ struct SubnetSelector {
     //@}
 
     /// @brief Address on which the message was received.
-    util::OptionalValue<asiolink::IOAddress> local_address_;
+    asiolink::IOAddress local_address_;
     /// @brief Source address of the message.
-    util::OptionalValue<asiolink::IOAddress> remote_address_;
+    asiolink::IOAddress remote_address_;
     /// @brief Classes that the client belongs to.
     ClientClasses client_classes_;
     /// @brief Name of the interface on which the message was received.
@@ -63,8 +62,8 @@ struct SubnetSelector {
           giaddr_(asiolink::IOAddress("0.0.0.0")),
           interface_id_(),
           first_relay_linkaddr_(asiolink::IOAddress("::")),
-          local_address_(asiolink::IOAddress("0.0.0.0"), false),
-          remote_address_(asiolink::IOAddress("0.0.0.0"), false),
+          local_address_(asiolink::IOAddress("0.0.0.0")),
+          remote_address_(asiolink::IOAddress("0.0.0.0")),
           client_classes_(), iface_name_(std::string()) {
     }
 };

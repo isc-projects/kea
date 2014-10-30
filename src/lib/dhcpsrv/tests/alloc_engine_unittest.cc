@@ -91,6 +91,8 @@ public:
     /// in many tests, initializes cfg_mgr configuration and creates
     /// lease database.
     AllocEngine6Test() {
+        CfgMgr::instance().clear();
+
         duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x42)));
         iaid_ = 42;
 
@@ -115,7 +117,6 @@ public:
     void initSubnet(const IOAddress& subnet, const IOAddress& pool_start,
                     const IOAddress& pool_end) {
         CfgMgr& cfg_mgr = CfgMgr::instance();
-        cfg_mgr.deleteSubnets6();
 
         subnet_ = Subnet6Ptr(new Subnet6(subnet, 56, 1, 2, 3, 4));
         pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, pool_start, pool_end));
@@ -125,7 +126,8 @@ public:
         pd_pool_ = Pool6Ptr(new Pool6(Lease::TYPE_PD, subnet, 56, 64));
         subnet_->addPool(pd_pool_);
 
-        cfg_mgr.addSubnet6(subnet_);
+        cfg_mgr.getStagingCfg()->getCfgSubnets6()->add(subnet_);
+        cfg_mgr.commit();
 
     }
 
@@ -855,13 +857,13 @@ TEST_F(AllocEngine6Test, outOfAddresses6) {
 
     IOAddress addr("2001:db8:1::ad");
     CfgMgr& cfg_mgr = CfgMgr::instance();
-    cfg_mgr.deleteSubnets6(); // Get rid of the default test configuration
+    cfg_mgr.clear(); // Get rid of the default test configuration
 
     // Create configuration similar to other tests, but with a single address pool
     subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
     pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, addr, addr)); // just a single address
     subnet_->addPool(pool_);
-    cfg_mgr.addSubnet6(subnet_);
+    cfg_mgr.getStagingCfg()->getCfgSubnets6()->add(subnet_);
 
     // Just a different duid
     DuidPtr other_duid = DuidPtr(new DUID(vector<uint8_t>(12, 0xff)));
@@ -939,13 +941,14 @@ TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
 
     IOAddress addr("2001:db8:1::ad");
     CfgMgr& cfg_mgr = CfgMgr::instance();
-    cfg_mgr.deleteSubnets6(); // Get rid of the default test configuration
+    cfg_mgr.clear(); // Get rid of the default test configuration
 
     // Create configuration similar to other tests, but with a single address pool
     subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
     pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, addr, addr)); // just a single address
     subnet_->addPool(pool_);
-    cfg_mgr.addSubnet6(subnet_);
+    cfg_mgr.getStagingCfg()->getCfgSubnets6()->add(subnet_);
+    cfg_mgr.commit();
 
     // Let's create an expired lease
     DuidPtr other_duid = DuidPtr(new DUID(vector<uint8_t>(12, 0xff)));
