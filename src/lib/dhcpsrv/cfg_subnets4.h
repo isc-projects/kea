@@ -84,6 +84,14 @@ public:
     ///
     /// If the address matches with a subnet, the subnet is returned.
     ///
+    /// @todo This method requires performance improvement! It currently
+    /// iterates over all existing subnets (possibly a couple of times)
+    /// to find the one which fulfils the search criteria. The subnet storage
+    /// is implemented as a simple STL vector which precludes fast searches
+    /// using specific keys. Hence, full scan is required. To improve the
+    /// search performance a different container type is required, e.g.
+    /// multi-index container, or something of a similar functionality.
+    ///
     /// @param selector Const reference to the selector structure which holds
     /// various information extracted from the client's packet which are used
     /// to find appropriate subnet.
@@ -99,6 +107,14 @@ public:
     /// parameter is in range with this subnet. This is mainly used for unit
     /// testing. This method is also called by the
     /// @c selectSubnet(SubnetSelector).
+    ///
+    /// @todo This method requires performance improvement! It currently
+    /// iterates over all existing subnets to find the one which fulfils
+    /// the search criteria. The subnet storage is implemented as a simple
+    /// STL vector which precludes fast searches using specific keys.
+    /// Hence, full scan is required. To improve the search performance a
+    /// different container type is required, e.g. multi-index container,
+    /// or something of a similar functionality.
     ///
     /// @param address Address for which the subnet is searched.
     /// @param client_classes Optional parameter specifying the classes that
