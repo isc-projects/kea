@@ -32,12 +32,6 @@ const IOAddress BCAST_ADDRESS("255.255.255.255");
 namespace isc {
 namespace dhcp {
 
-CfgSubnets4::Selector::Selector()
-    : ciaddr_(ZERO_ADDRESS), giaddr_(ZERO_ADDRESS),
-      local_address_(ZERO_ADDRESS), remote_address_(ZERO_ADDRESS),
-      client_classes_(ClientClasses()), iface_name_(std::string()) {
-}
-
 void
 CfgSubnets4::add(const Subnet4Ptr& subnet) {
     /// @todo: Check that this new subnet does not cross boundaries of any
@@ -52,7 +46,7 @@ CfgSubnets4::add(const Subnet4Ptr& subnet) {
 }
 
 Subnet4Ptr
-CfgSubnets4::selectSubnet(const Selector& selector) const {
+CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
     // If relayed message has been received, try to match the giaddr with the
     // relay address specified for a subnet. It is also possible that the relay
     // address will not match with any of the relay addresses accross all

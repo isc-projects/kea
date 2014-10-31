@@ -53,7 +53,8 @@ Dhcpv6MessageTest::requestLease(const std::string& config,
     // Configure the server.
     configure(config, *client.getServer());
     // Make sure we ended-up having expected number of subnets configured.
-    const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
+    const Subnet6Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
     ASSERT_EQ(subnets_num, subnets->size());
     // Do the actual 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
@@ -63,8 +64,8 @@ Dhcpv6MessageTest::requestLease(const std::string& config,
     // subnets.
     ASSERT_EQ(1, client.getLeaseNum());
     Lease6 lease_client = client.getLease(0);
-    ASSERT_TRUE(CfgMgr::instance().getSubnet6(lease_client.addr_,
-                                              ClientClasses()));
+    ASSERT_TRUE(CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->
+                selectSubnet(lease_client.addr_, ClientClasses()));
     // Check that the client's lease matches the information on the server
     // side.
     Lease6Ptr lease_server = checkLease(lease_client);
