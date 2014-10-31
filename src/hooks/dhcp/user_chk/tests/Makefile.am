@@ -35,19 +35,6 @@ if HAVE_GTEST
 TESTS += libdhcp_user_chk_unittests
 
 libdhcp_user_chk_unittests_SOURCES  = 
-libdhcp_user_chk_unittests_SOURCES += ../load_unload.cc
-libdhcp_user_chk_unittests_SOURCES += ../pkt_receive_co.cc
-libdhcp_user_chk_unittests_SOURCES += ../pkt_send_co.cc
-libdhcp_user_chk_unittests_SOURCES += ../subnet_select_co.cc
-libdhcp_user_chk_unittests_SOURCES += ../version.cc
-libdhcp_user_chk_unittests_SOURCES += ../user.cc ../user.h
-libdhcp_user_chk_unittests_SOURCES += ../user_chk.h
-# Until logging in dynamically loaded libraries is fixed, exclude these.
-#libdhcp_user_chk_unittests_SOURCES += ../user_chk_log.cc ../user_chk_log.h
-#libdhcp_user_chk_unittests_SOURCES += ../user_chk_messages.cc ../user_chk_messages.h
-libdhcp_user_chk_unittests_SOURCES += ../user_data_source.h
-libdhcp_user_chk_unittests_SOURCES += ../user_file.cc ../user_file.h
-libdhcp_user_chk_unittests_SOURCES += ../user_registry.cc ../user_registry.h
 libdhcp_user_chk_unittests_SOURCES += run_unittests.cc
 libdhcp_user_chk_unittests_SOURCES += userid_unittests.cc
 libdhcp_user_chk_unittests_SOURCES += user_unittests.cc
@@ -73,6 +60,7 @@ libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.l
 libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/hooks/dhcp/user_chk/libdhcp_user_chk.la
 libdhcp_user_chk_unittests_LDADD += ${CRYPTO_LIBS} ${CRYPTO_RPATH}
 libdhcp_user_chk_unittests_LDADD += $(GTEST_LDADD)
 endif
