@@ -34,7 +34,7 @@ namespace cryptolink {
 /// @param algorithm algorithm to be converted
 /// @return text representation of the algorithm name
 const char*
-getBotanHashAlgorithmName(HashAlgorithm algorithm) {
+btn::getHashAlgorithmName(HashAlgorithm algorithm) {
     switch (algorithm) {
     case isc::cryptolink::MD5:
         return ("MD5");
@@ -67,8 +67,7 @@ public:
     explicit HashImpl(const HashAlgorithm hash_algorithm) {
         Botan::HashFunction* hash;
         try {
-            hash = Botan::get_hash(
-                getBotanHashAlgorithmName(hash_algorithm));
+            hash = Botan::get_hash(btn::getHashAlgorithmName(hash_algorithm));
         } catch (const Botan::Algorithm_Not_Found&) {
             isc_throw(isc::cryptolink::UnsupportedAlgorithm,
                       "Unknown hash algorithm: " <<
