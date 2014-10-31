@@ -1182,8 +1182,9 @@ TEST_F(Dhcpv6SrvTest, selectSubnetAddr) {
 
     // CASE 1: We have only one subnet defined and we received local traffic.
     // The only available subnet used to be picked, but not anymore
-    CfgMgr::instance().deleteSubnets6();
-    CfgMgr::instance().addSubnet6(subnet1); // just a single subnet
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet1); // just a single subnet
+    CfgMgr::instance().commit();
 
     Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     pkt->setRemoteAddr(IOAddress("fe80::abcd"));
@@ -1196,38 +1197,42 @@ TEST_F(Dhcpv6SrvTest, selectSubnetAddr) {
     // We should NOT select it.
 
     // Identical steps as in case 1, but repeated for clarity
-    CfgMgr::instance().deleteSubnets6();
-    CfgMgr::instance().addSubnet6(subnet1); // just a single subnet
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet1); // just a single subnet
+    CfgMgr::instance().commit();
     pkt->setRemoteAddr(IOAddress("2001:db8:abcd::2345"));
     Subnet6Ptr selected = srv.selectSubnet(pkt);
     EXPECT_FALSE(selected);
 
     // CASE 3: We have three subnets defined and we received local traffic.
     // Nothing should be selected.
-    CfgMgr::instance().deleteSubnets6();
-    CfgMgr::instance().addSubnet6(subnet1);
-    CfgMgr::instance().addSubnet6(subnet2);
-    CfgMgr::instance().addSubnet6(subnet3);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet1);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet2);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet3);
+    CfgMgr::instance().commit();
     pkt->setRemoteAddr(IOAddress("fe80::abcd"));
     selected = srv.selectSubnet(pkt);
     EXPECT_FALSE(selected);
 
     // CASE 4: We have three subnets defined and we received relayed traffic
     // that came out of subnet 2. We should select subnet2 then
-    CfgMgr::instance().deleteSubnets6();
-    CfgMgr::instance().addSubnet6(subnet1);
-    CfgMgr::instance().addSubnet6(subnet2);
-    CfgMgr::instance().addSubnet6(subnet3);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet1);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet2);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet3);
+    CfgMgr::instance().commit();
     pkt->setRemoteAddr(IOAddress("2001:db8:2::baca"));
     selected = srv.selectSubnet(pkt);
     EXPECT_EQ(selected, subnet2);
 
     // CASE 5: We have three subnets defined and we received relayed traffic
     // that came out of undefined subnet. We should select nothing
-    CfgMgr::instance().deleteSubnets6();
-    CfgMgr::instance().addSubnet6(subnet1);
-    CfgMgr::instance().addSubnet6(subnet2);
-    CfgMgr::instance().addSubnet6(subnet3);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet1);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet2);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet3);
+    CfgMgr::instance().commit();
     pkt->setRemoteAddr(IOAddress("2001:db8:4::baca"));
     EXPECT_FALSE(srv.selectSubnet(pkt));
 }
@@ -1246,8 +1251,9 @@ TEST_F(Dhcpv6SrvTest, selectSubnetIface) {
 
     // CASE 1: We have only one subnet defined and it is available via eth0.
     // Packet came from eth0. The only available subnet should be selected
-    CfgMgr::instance().deleteSubnets6();
-    CfgMgr::instance().addSubnet6(subnet1); // just a single subnet
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet1); // just a single subnet
+    CfgMgr::instance().commit();
 
     Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     pkt->setIface("eth0");
@@ -1257,8 +1263,9 @@ TEST_F(Dhcpv6SrvTest, selectSubnetIface) {
 
     // CASE 2: We have only one subnet defined and it is available via eth0.
     // Packet came from eth1. We should not select it
-    CfgMgr::instance().deleteSubnets6();
-    CfgMgr::instance().addSubnet6(subnet1); // just a single subnet
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet1); // just a single subnet
+    CfgMgr::instance().commit();
 
     pkt->setIface("eth1");
 
@@ -1268,10 +1275,11 @@ TEST_F(Dhcpv6SrvTest, selectSubnetIface) {
     // CASE 3: We have only 3 subnets defined, one over eth0, one remote and
     // one over wifi1.
     // Packet came from eth1. We should not select it
-    CfgMgr::instance().deleteSubnets6();
-    CfgMgr::instance().addSubnet6(subnet1);
-    CfgMgr::instance().addSubnet6(subnet2);
-    CfgMgr::instance().addSubnet6(subnet3);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet1);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet2);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet3);
+    CfgMgr::instance().commit();
 
     pkt->setIface("eth0");
     EXPECT_EQ(subnet1, srv.selectSubnet(pkt));
@@ -1298,8 +1306,9 @@ TEST_F(Dhcpv6SrvTest, selectSubnetRelayLinkaddr) {
 
     // CASE 1: We have only one subnet defined and we received relayed traffic.
     // The only available subnet should NOT be selected.
-    CfgMgr::instance().deleteSubnets6();
-    CfgMgr::instance().addSubnet6(subnet1); // just a single subnet
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet1); // just a single subnet
+    CfgMgr::instance().commit();
 
     Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     pkt->relay_info_.push_back(relay);
@@ -1309,19 +1318,21 @@ TEST_F(Dhcpv6SrvTest, selectSubnetRelayLinkaddr) {
 
     // CASE 2: We have three subnets defined and we received relayed traffic.
     // Nothing should be selected.
-    CfgMgr::instance().deleteSubnets6();
-    CfgMgr::instance().addSubnet6(subnet1);
-    CfgMgr::instance().addSubnet6(subnet2);
-    CfgMgr::instance().addSubnet6(subnet3);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet1);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet2);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet3);
+    CfgMgr::instance().commit();
     selected = srv.selectSubnet(pkt);
     EXPECT_EQ(selected, subnet2);
 
     // CASE 3: We have three subnets defined and we received relayed traffic
     // that came out of subnet 2. We should select subnet2 then
-    CfgMgr::instance().deleteSubnets6();
-    CfgMgr::instance().addSubnet6(subnet1);
-    CfgMgr::instance().addSubnet6(subnet2);
-    CfgMgr::instance().addSubnet6(subnet3);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet1);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet2);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet3);
+    CfgMgr::instance().commit();
 
     // Source of the packet should have no meaning. Selection is based
     // on linkaddr field in the relay
@@ -1331,10 +1342,11 @@ TEST_F(Dhcpv6SrvTest, selectSubnetRelayLinkaddr) {
 
     // CASE 4: We have three subnets defined and we received relayed traffic
     // that came out of undefined subnet. We should select nothing
-    CfgMgr::instance().deleteSubnets6();
-    CfgMgr::instance().addSubnet6(subnet1);
-    CfgMgr::instance().addSubnet6(subnet2);
-    CfgMgr::instance().addSubnet6(subnet3);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet1);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet2);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet3);
+    CfgMgr::instance().commit();
     pkt->relay_info_.clear();
     relay.linkaddr_ = IOAddress("2001:db8:4::1234");
     pkt->relay_info_.push_back(relay);
@@ -1357,8 +1369,9 @@ TEST_F(Dhcpv6SrvTest, selectSubnetRelayInterfaceId) {
 
     // CASE 1: We have only one subnet defined and it is for interface-id "relay1"
     // Packet came with interface-id "relay2". We should not select subnet1
-    CfgMgr::instance().deleteSubnets6();
-    CfgMgr::instance().addSubnet6(subnet1); // just a single subnet
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet1); // just a single subnet
+    CfgMgr::instance().commit();
 
     Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     Pkt6::RelayInfo relay;
@@ -1374,18 +1387,20 @@ TEST_F(Dhcpv6SrvTest, selectSubnetRelayInterfaceId) {
 
     // CASE 2: We have only one subnet defined and it is for interface-id "relay2"
     // Packet came with interface-id "relay2". We should select it
-    CfgMgr::instance().deleteSubnets6();
-    CfgMgr::instance().addSubnet6(subnet2); // just a single subnet
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet2); // just a single subnet
+    CfgMgr::instance().commit();
     selected = srv.selectSubnet(pkt);
     EXPECT_EQ(selected, subnet2);
 
     // CASE 3: We have only 3 subnets defined: one remote for interface-id "relay1",
     // one remote for interface-id "relay2" and third local
     // packet comes with interface-id "relay2". We should select subnet2
-    CfgMgr::instance().deleteSubnets6();
-    CfgMgr::instance().addSubnet6(subnet1);
-    CfgMgr::instance().addSubnet6(subnet2);
-    CfgMgr::instance().addSubnet6(subnet3);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet1);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet2);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet3);
+    CfgMgr::instance().commit();
 
     EXPECT_EQ(subnet2, srv.selectSubnet(pkt));
 }
@@ -1938,7 +1953,8 @@ TEST_F(Dhcpv6SrvTest, relayOverride) {
     ASSERT_NO_THROW(configure(config));
 
     // Let's get the subnet configuration objects
-    const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
+    const Subnet6Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
     ASSERT_EQ(2, subnets->size());
 
     // Let's get them for easy reference
@@ -2014,7 +2030,8 @@ TEST_F(Dhcpv6SrvTest, relayOverrideAndClientClass) {
     ASSERT_NO_THROW(configure(config));
 
     // Let's get the subnet configuration objects
-    const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
+    const Subnet6Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
     ASSERT_EQ(2, subnets->size());
 
     // Let's get them for easy reference
