@@ -446,8 +446,10 @@ Option4ClientFqdn::packDomainName(isc::util::OutputBuffer& buf) const {
         }
 
     } else {
-        std::string domain_name = impl_->domain_name_->toText();
-        buf.writeData(&domain_name[0], domain_name.size());
+        std::string domain_name = getDomainName();
+        if (!domain_name.empty()) {
+            buf.writeData(&domain_name[0], domain_name.size());
+        }
 
     }
 }
@@ -512,11 +514,24 @@ Option4ClientFqdn::toText(int indent) {
 uint16_t
 Option4ClientFqdn::len() {
     uint16_t domain_name_length = 0;
-    // If domain name is partial, the NULL terminating character
-    // is not included and the option length have to be adjusted.
+    // Try to calculate the length of the domain name only if there is
+    // any domain name specified.
     if (impl_->domain_name_) {
-        domain_name_length = impl_->domain_name_type_ == FULL ?
-            impl_->domain_name_->getLength() : impl_->domain_name_->getLength() - 1;
+        // If the E flag is specified, the domain name is encoded in the
+        // canonical format. The length of the domain name depends on
+        // whether it is a partial or fully qualified names. For the
+        // former the length is 1 octet lesser because it lacks terminating
+        // zero.
+        if (getFlag(FLAG_E)) {
+            domain_name_length = impl_->domain_name_type_ == FULL ?
+                impl_->domain_name_->getLength() :
+                impl_->domain_name_->getLength() - 1;
+
+        // ASCII encoded domain name. Its length is just a length of the
+        // string holding the name.
+        } else {
+            domain_name_length = getDomainName().length();
+        }
     }
 
     return (getHeaderLen() + FIXED_FIELDS_LEN + domain_name_length);
