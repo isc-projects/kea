@@ -38,6 +38,7 @@
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/subnet.h>
+#include <dhcpsrv/subnet_selector.h>
 #include <dhcpsrv/utils.h>
 #include <exceptions/exceptions.h>
 #include <hooks/callout_handle.h>
@@ -868,42 +869,24 @@ Dhcpv6Srv::sanityCheck(const Pkt6Ptr& pkt, RequirementLevel clientid,
 
 Subnet6Ptr
 Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
+    // Initialize subnet selector with the values used to select the subnet.
+    SubnetSelector selector;
+    selector.iface_name_ = question->getIface();
+    selector.remote_address_ = question->getRemoteAddr();
+    selector.first_relay_linkaddr_ = IOAddress("::");
+    selector.client_classes_ = question->classes_;
 
-    Subnet6Ptr subnet;
-
-    if (question->relay_info_.empty()) {
-        // This is a direct (non-relayed) message
-
-        // Try to find a subnet if received packet from a directly connected client
-        subnet = CfgMgr::instance().getSubnet6(question->getIface(),
-                                               question->classes_);
-        if (!subnet) {
-            // If no subnet was found, try to find it based on remote address
-            subnet = CfgMgr::instance().getSubnet6(question->getRemoteAddr(),
-                                                   question->classes_);
-        }
-    } else {
-
-        // This is a relayed message
-        OptionPtr interface_id = question->getAnyRelayOption(D6O_INTERFACE_ID,
-                                                             Pkt6::RELAY_GET_FIRST);
-        if (interface_id) {
-            subnet = CfgMgr::instance().getSubnet6(interface_id,
-                                                   question->classes_);
-        }
-
-        if (!subnet) {
-            // If no interface-id was specified (or not configured on server),
-            // let's try address matching
-            IOAddress link_addr = question->relay_info_.back().linkaddr_;
-
-            // if relay filled in link_addr field, then let's use it
-            if (link_addr != IOAddress("::")) {
-                subnet = CfgMgr::instance().getSubnet6(link_addr,
-                                                       question->classes_, true);
-            }
-        }
+    // Initialize fields specific to relayed messages.
+    if (!question->relay_info_.empty()) {
+        selector.first_relay_linkaddr_ = question->relay_info_.back().linkaddr_;
+        selector.interface_id_ =
+            question->getAnyRelayOption(D6O_INTERFACE_ID,
+                                        Pkt6::RELAY_GET_FIRST);
     }
+
+    Subnet6Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets6()->selectSubnet(selector);
+
 
     // Let's execute all callouts registered for subnet6_receive
     if (HooksManager::calloutsPresent(Hooks.hook_index_subnet6_select_)) {
@@ -919,7 +902,9 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
         // We pass pointer to const collection for performance reasons.
         // Otherwise we would get a non-trivial performance penalty each
         // time subnet6_select is called.
-        callout_handle->setArgument("subnet6collection", CfgMgr::instance().getSubnets6());
+        callout_handle->setArgument("subnet6collection",
+                                    CfgMgr::instance().getCurrentCfg()->
+                                    getCfgSubnets6()->getAll());
 
         // Call user (and server-side) callouts
         HooksManager::callCallouts(Hooks.hook_index_subnet6_select_, *callout_handle);

@@ -76,7 +76,8 @@ TEST_F(SARRTest, directClientPrefixHint) {
     client.usePD();
     configure(CONFIGS[0], *client.getServer());
     // Make sure we ended-up having expected number of subnets configured.
-    const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
+    const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets6()->getAll();
     ASSERT_EQ(1, subnets->size());
     // Append IAPREFIX option to the client's message.
     ASSERT_NO_THROW(client.useHint(100, 200, 64, "2001:db8:3:33::33"));
