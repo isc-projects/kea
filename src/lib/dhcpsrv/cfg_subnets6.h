@@ -79,6 +79,14 @@ public:
     /// associated with any subnet. If not, it is checked if the link address
     /// is in range with any of the subnets.
     ///
+    /// @todo This method requires performance improvement! It currently
+    /// iterates over all existing subnets (possibly a couple of times)
+    /// to find the one which fulfils the search criteria. The subnet storage
+    /// is implemented as a simple STL vector which precludes fast searches
+    /// using specific keys. Hence, full scan is required. To improve the
+    /// search performance a different container type is required, e.g.
+    /// multi-index container, or something of a similar functionality.
+    ///
     /// @param selector Const reference to the selector structure which holds
     /// various information extracted from the client's packet which are used
     /// to find appropriate subnet.
@@ -98,6 +106,19 @@ public:
     /// If the address is not a relay agent link address (@c is_relay_address
     /// is set to false), the method will simply check if the address is in
     /// range with any of the subnets.
+    ///
+    /// @note This method is mainly to be used in unit tests, which often
+    /// require sanity-checking if the subnet exists for the particular
+    /// address. For other purposes the @c selectSubnet(SubnetSelector) should
+    /// rather be used instead.
+    ///
+    /// @todo This method requires performance improvement! It currently
+    /// iterates over all existing subnets (possibly a couple of times)
+    /// to find the one which fulfils the search criteria. The subnet storage
+    /// is implemented as a simple STL vector which precludes fast searches
+    /// using specific keys. Hence, full scan is required. To improve the
+    /// search performance a different container type is required, e.g.
+    /// multi-index container, or something of a similar functionality.
     ///
     /// @param address Address for which the subnet is searched.
     /// @param client_classes Optional parameter specifying the classes that
@@ -119,6 +140,14 @@ private:
     /// If any of the subnets is explicitly associated with the interface
     /// name, the subnet is returned.
     ///
+    /// @todo This method requires performance improvement! It currently
+    /// iterates over all existing subnets to find the one which fulfils
+    /// the search criteria. The subnet storage is implemented as a
+    /// simple STL vector which precludes fast searches using specific
+    /// keys. Hence, full scan is required. To improve the search
+    /// performance a different container type is required, e.g.
+    /// multi-index container, or something of a similar functionality.
+    ///
     /// @param iface_name Interface name.
     /// @param client_classes Optional parameter specifying the classes that
     /// the client belongs to.
@@ -131,9 +160,17 @@ private:
     /// @brief Selects a subnet using Interface ID option.
     ///
     /// This method searches for the subnet using the Interface ID option
-    /// inserted by the relay agent to the message from a client. If any 
+    /// inserted by the relay agent to the message from a client. If any
     /// of the subnets is explicitly associated with that interface id, the
     /// subnet is returned.
+    ///
+    /// @todo This method requires performance improvement! It currently
+    /// iterates over all existing subnets to find the one which fulfils
+    /// the search criteria. The subnet storage is implemented as a
+    /// simple STL vector which precludes fast searches using specific
+    /// keys. Hence, full scan is required. To improve the search
+    /// performance a different container type is required, e.g.
+    /// multi-index container, or something of a similar functionality.
     ///
     /// @param interface_id An instance of the Interface ID option received
     /// from the client.
