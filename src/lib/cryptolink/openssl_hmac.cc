@@ -89,7 +89,7 @@ public:
         size_t size = getOutputLength();
         ossl::SecBuf<unsigned char> digest(size);
         HMAC_Final(md_.get(), &digest[0], NULL);
-        if (len == 0 || len > size) {
+        if (len > size) {
             len = size;
         }
         result.writeData(&digest[0], len);
@@ -115,7 +115,7 @@ public:
         size_t size = getOutputLength();
         ossl::SecBuf<unsigned char> digest(size);
         HMAC_Final(md_.get(), &digest[0], NULL);
-        if (len != 0 && len < size) {
+        if (len < size) {
             digest.resize(len);
         }
         return (std::vector<uint8_t>(digest.begin(), digest.end()));
@@ -126,12 +126,12 @@ public:
     /// See @ref isc::cryptolink::HMAC::verify() for details.
     bool verify(const void* sig, size_t len) {
         size_t size = getOutputLength();
-        if (len != 0 && (len < 10 || len < size / 2)) {
+        if (len < 10 || len < size / 2) {
             return (false);
         }
         ossl::SecBuf<unsigned char> digest(size);
         HMAC_Final(md_.get(), &digest[0], NULL);
-        if (len == 0 || len > size) {
+        if (len > size) {
             len = size;
         }
         return (digest.same(sig, len));

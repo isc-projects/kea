@@ -84,9 +84,9 @@ public:
     /// \param result The OutputBuffer to append the result to
     /// \param len The number of bytes from the result to copy. If this
     ///        value is smaller than the algorithms output size, the
-    ///        result will be truncated. If this value is larger, or 0
-    ///        (the default), it will be ignored
-    void sign(isc::util::OutputBuffer& result, size_t len = 0);
+    ///        result will be truncated. If this value is larger,
+    ///        only output size bytes will be copied
+    void sign(isc::util::OutputBuffer& result, size_t len);
 
     /// \brief Calculate the final signature
     ///
@@ -110,10 +110,10 @@ public:
     ///
     /// \param len The number of bytes from the result to copy. If this
     ///        value is smaller than the algorithms output size, the
-    ///        result will be truncated. If this value is larger, or 0
-    ///        (the default), it will be ignored
+    ///        result will be truncated. If this value is larger,
+    ///        only output size bytes will be copied
     /// \return a vector containing the signature
-    std::vector<uint8_t> sign(size_t len = 0);
+    std::vector<uint8_t> sign(size_t len);
 
     /// \brief Verify an existing signature
     ///
@@ -121,8 +121,8 @@ public:
     ///                         in the underlying library
     ///
     /// \param sig The signature to verify
-    /// \param len The length of the signature. If this is non-zero,
-    ///            and smaller than the output length of the algorithm,
+    /// \param len The length of the signature. If this is smaller
+    ///            than the output length of the algorithm,
     ///            only len bytes will be checked
     /// \return true if the signature is correct, false otherwise
     ///

@@ -120,7 +120,7 @@ iterateSHA1(const uint8_t* input, size_t inlength,
     boost::scoped_ptr<Hash> hash(CryptoLink::getCryptoLink().createHash(SHA1));
     hash->update(input, inlength);
     hash->update(salt, saltlen); // this works whether saltlen == or > 0
-    hash->final(output);
+    hash->final(output, hash->getOutputLength());
 }
 
 string
