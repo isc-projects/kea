@@ -551,6 +551,25 @@ TEST_F(ParseConfigTest, basicOptionDataTest) {
     EXPECT_EQ(val, opt_ptr->toText());
 }
 
+TEST_F(ParseConfigTest, defaultCSVFormat) {
+    std::string config =
+        "{ \"option-data\": [ {"
+        "    \"name\": \"swap-server\","
+        "    \"space\": \"dhcp4\","
+        "    \"code\": 16,"
+        "    \"data\": \"192.0.2.0\""
+        " } ]"
+        "}";
+
+    int rcode = 0;
+    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    ASSERT_TRUE(rcode == 0);
+
+    OptionPtr opt_ptr = getOptionPtr("dhcp4", 16);
+    OptionCustomPtr addr_opt = boost::dynamic_pointer_cast<
+        OptionCustom>(opt_ptr);
+}
+
 };  // Anonymous namespace
 
 /// These tests check basic operation of the HooksLibrariesParser.
