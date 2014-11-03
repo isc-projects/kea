@@ -25,6 +25,7 @@
 #include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/subnet.h>
 #include <exceptions/exceptions.h>
+#include <util/optional_value.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -573,6 +574,16 @@ private:
     /// @throw DhcpConfigError if parameters provided in the configuration
     /// are invalid.
     void createOption(isc::data::ConstElementPtr option_data);
+
+    util::OptionalValue<uint32_t> extractCode() const;
+
+    util::OptionalValue<std::string> extractName() const;
+
+    util::OptionalValue<bool> extractCSVFormat() const;
+
+    std::string extractData() const;
+
+    std::string extractSpace() const;
 
     /// Storage for boolean values.
     BooleanStoragePtr boolean_values_;
