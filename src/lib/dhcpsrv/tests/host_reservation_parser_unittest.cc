@@ -206,17 +206,21 @@ TEST_F(HostReservationParserTest, dhcp6HWaddr) {
         getIPv6Reservations(IPv6Resrv::TYPE_NA);
     ASSERT_EQ(2, std::distance(addresses.first, addresses.second));
 
-    EXPECT_TRUE(reservationExists(IPv6Resrv(IOAddress("2001:db8:1::1")),
+    EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                            IOAddress("2001:db8:1::1")),
                                   addresses));
-    EXPECT_TRUE(reservationExists(IPv6Resrv(IOAddress("2001:db8:1::2")),
+    EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                            IOAddress("2001:db8:1::2")),
                                   addresses));
 
     IPv6ResrvRange prefixes = hosts[0]->getIPv6Reservations(IPv6Resrv::TYPE_PD);
     ASSERT_EQ(2, std::distance(prefixes.first, prefixes.second));
-    EXPECT_TRUE(reservationExists(IPv6Resrv(IOAddress("2001:db8:2000:0101::"),
+    EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_PD,
+                                            IOAddress("2001:db8:2000:0101::"),
                                             64),
                                   prefixes));
-    EXPECT_TRUE(reservationExists(IPv6Resrv(IOAddress("2001:db8:2000:0102::"),
+    EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_PD,
+                                            IOAddress("2001:db8:2000:0102::"),
                                             64),
                                   prefixes));
 
@@ -249,9 +253,11 @@ TEST_F(HostReservationParserTest, dhcp6DUID) {
         getIPv6Reservations(IPv6Resrv::TYPE_NA);
     ASSERT_EQ(2, std::distance(addresses.first, addresses.second));
 
-    EXPECT_TRUE(reservationExists(IPv6Resrv(IOAddress("2001:db8:1::100")),
+    EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                            IOAddress("2001:db8:1::100")),
                                   addresses));
-    EXPECT_TRUE(reservationExists(IPv6Resrv(IOAddress("2001:db8:1::200")),
+    EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                            IOAddress("2001:db8:1::200")),
                                   addresses));
 
     IPv6ResrvRange prefixes = hosts[0]->getIPv6Reservations(IPv6Resrv::TYPE_PD);

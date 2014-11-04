@@ -69,6 +69,9 @@ typedef boost::multi_index_container<
 > HostContainer;
 
 /// @brief First index type in the @c HostContainer.
+///
+/// This index allows for searching for @c Host objects using an
+/// identifier + identifier type tuple.
 typedef HostContainer::nth_index<0>::type HostContainerIndex0;
 
 /// @brief Results range returned using the @c HostContainerIndex0.

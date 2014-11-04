@@ -160,12 +160,17 @@ CfgHosts::getHostInternal(const SubnetID& subnet_id, const bool subnet6,
 
 void
 CfgHosts::add(const HostPtr& host) {
-    /// @todo This may need to be sanity-checked. For example, a duplicate
+    // Sanity check that the host is non-null.
+    if (!host) {
+        isc_throw(BadValue, "specified host object must not be NULL when it"
+                  " is added to the configuration");
+    }
+    /// @todo This may need further sanity checks. For example, a duplicate
     /// should be rejected.
     HWAddrPtr hwaddr = host->getHWAddress();
     DuidPtr duid = host->getDuid();
     // Check for duplicates for the specified IPv4 subnet.
-    if (get4(host->getIPv4SubnetID(), host->getHWAddress(), host->getDuid())) {
+    if (get4(host->getIPv4SubnetID(), hwaddr, duid)) {
         isc_throw(DuplicateHost, "failed to add new host using the HW"
                   " address '" << (hwaddr ? hwaddr->toText(false) : "(null)")
                   << " and DUID '" << (duid ? duid->toText() : "(null)")
@@ -173,8 +178,7 @@ CfgHosts::add(const HostPtr& host) {
                   << "' as this host has already been added");
 
     // Checek for duplicates for the specified IPv6 subnet.
-    } else if (get6(host->getIPv6SubnetID(), host->getDuid(),
-                    host->getHWAddress())) {
+    } else if (get6(host->getIPv6SubnetID(), duid, hwaddr)) {
         isc_throw(DuplicateHost, "failed to add new host using the HW"
                   " address '" << (hwaddr ? hwaddr->toText(false) : "(null)")
                   << " and DUID '" << (duid ? duid->toText() : "(null)")
