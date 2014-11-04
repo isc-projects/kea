@@ -388,11 +388,7 @@ OptionDataParser::extractName(ConstElementPtr parent) const {
         return (OptionalValue<std::string>(name));
     }
 
-    if (name.empty()) {
-        isc_throw(DhcpConfigError, "option name is empty ("
-                  << string_values_->getPosition("name", parent) << ")");
-
-    } else if (name.find(" ") != std::string::npos) {
+    if (name.find(" ") != std::string::npos) {
         isc_throw(DhcpConfigError, "invalid option name '" << name
                   << "', space character is not allowed ("
                   << string_values_->getPosition("name", parent) << ")");
@@ -465,18 +461,17 @@ OptionDataParser::extractSpace() const {
     return (space);
 }
 
-
+template<typename SearchKey>
 OptionDefinitionPtr
 OptionDataParser::findOptionDefinition(const std::string& option_space,
-                                       const uint32_t option_code) const {
+                                       const SearchKey& search_key) const {
     const Option::Universe u = address_family_ == AF_INET ?
         Option::V4 : Option::V6;
     OptionDefinitionPtr def;
 
-    if (((option_space == DHCP4_OPTION_SPACE) ||
-         (option_space == DHCP6_OPTION_SPACE)) &&
-        LibDHCP::isStandardOption(u, option_code)) {
-        def = LibDHCP::getOptionDef(u, option_code);
+    if ((option_space == DHCP4_OPTION_SPACE) ||
+        (option_space == DHCP6_OPTION_SPACE)) {
+        def = LibDHCP::getOptionDef(u, search_key);
 
     }
 
@@ -485,14 +480,14 @@ OptionDataParser::findOptionDefinition(const std::string& option_space,
         // definition.
         uint32_t vendor_id = CfgOption::optionSpaceToVendorId(option_space);
         if (vendor_id) {
-            def = LibDHCP::getVendorOptionDef(u, vendor_id, option_code);
+            def = LibDHCP::getVendorOptionDef(u, vendor_id, search_key);
         }
     }
 
     if (!def) {
         // Check if this is an option specified by a user.
         def = CfgMgr::instance().getStagingCfg()->getCfgOptionDef()
-            ->get(option_space, option_code);
+            ->get(option_space, search_key);
     }
 
     return (def);
@@ -509,18 +504,40 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
     std::string data_param = extractData();
     std::string space_param = extractSpace();
 
-    // Try to find a corresponding option definition.
-    OptionDefinitionPtr def = findOptionDefinition(space_param, code_param);
+    // Require that option code or option name is specified.
+    if (!code_param.isSpecified() && !name_param.isSpecified()) {
+        isc_throw(DhcpConfigError, "option data configuration requires one of"
+                  " 'code' or 'name' parameters to be specified"
+                  << " (" << option_data->getPosition() << ")");
+    }
+
+    // Try to find a corresponding option definition using option code or
+    // option name.
+    OptionDefinitionPtr def = code_param.isSpecified() ?
+        findOptionDefinition(space_param, code_param) :
+        findOptionDefinition(space_param, name_param);
 
     // If there is no definition, the user must not explicitly enable the
     // use of csv-format.
-    if (!def && csv_format_param.isSpecified() && csv_format_param) {
+    if (!def) {
+        // If explicitly requested that the CSV format is to be used,
+        // the option definition is a must.
+        if (csv_format_param.isSpecified() && csv_format_param) {
             isc_throw(DhcpConfigError, "definition for the option '"
                       << space_param << "." << name_param
                       << "' having code '" << code_param
                       << "' does not exist ("
                       << string_values_->getPosition("name", option_data)
                       << ")");
+
+        // If there is no option definition and the option code is not specified
+        // we have no means to find the option code.
+        } else if (name_param.isSpecified() && !code_param.isSpecified()) {
+            isc_throw(DhcpConfigError, "definition for the option '"
+                      << space_param << "." << name_param
+                      << " does not exist ("
+                      << string_values_->getPosition("name", option_data));
+        }
     }
 
     // Transform string of hexadecimal digits into binary format.
@@ -574,12 +591,8 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
 
     } else {
 
-        // Option name should match the definition. The option name
-        // may seem to be redundant but in the future we may want
-        // to reference options and definitions using their names
-        // and/or option codes so keeping the option name in the
-        // definition of option value makes sense.
-        if (def->getName() != name_param.get()) {
+        // Option name is specified it should match the name in the definition.
+        if (name_param.isSpecified() && (def->getName() != name_param.get())) {
             isc_throw(DhcpConfigError, "specified option name '"
                       << name_param << "' does not match the "
                       << "option definition: '" << space_param
@@ -593,8 +606,8 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
         try {
             OptionPtr option =
                 !csv_format_param.isSpecified() || csv_format_param ?
-                def->optionFactory(universe, code_param, data_tokens) :
-                def->optionFactory(universe, code_param, binary);
+                def->optionFactory(universe, def->getCode(), data_tokens) :
+                def->optionFactory(universe, def->getCode(), binary);
             OptionDescriptor desc(option, false);
             option_descriptor_.option_ = option;
             option_descriptor_.persistent_ = false;
@@ -602,7 +615,7 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
         } catch (const isc::Exception& ex) {
             isc_throw(DhcpConfigError, "option data does not match"
                       << " option definition (space: " << space_param
-                      << ", code: " << code_param << "): "
+                      << ", code: " << def->getCode() << "): "
                       << ex.what() << " ("
                       << string_values_->getPosition("data", option_data)
                       << ")");

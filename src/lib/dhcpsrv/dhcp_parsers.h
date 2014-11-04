@@ -544,8 +544,7 @@ public:
 
     /// @brief virtual destructor to ensure orderly destruction of derivations.
     virtual ~OptionDataParser(){};
-
-protected:
+private:
 
     /// @brief Finds an option definition within an option space
     ///
@@ -553,16 +552,18 @@ protected:
     /// option defintion within the option defintion storage.
     ///
     /// @param option_space name of the parameter option space
-    /// @param option_code numeric value of the parameter to find
+    /// @param search_key an option code or name to be used to lookup the
+    /// option definition.
+    /// @tparam A numeric type for searching using an option code or the
+    /// string for searching using the option name.
+    ///
     /// @return OptionDefintionPtr of the option defintion or an
     /// empty OptionDefinitionPtr if not found.
     /// @throw DhcpConfigError if the option space requested is not valid
     /// for this server.
-    virtual OptionDefinitionPtr
-    findOptionDefinition(const std::string& option_space,
-                         const uint32_t option_code) const;
-
-private:
+    template<typename SearchKey>
+    OptionDefinitionPtr findOptionDefinition(const std::string& option_space,
+                                             const SearchKey& search_key) const;
 
     /// @brief Create option instance.
     ///
