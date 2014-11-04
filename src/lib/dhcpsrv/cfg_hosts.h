@@ -80,7 +80,7 @@ public:
     ///
     /// @param address IPv4 address for which the @c Host object is searched.
     ///
-	/// @throw isc::NotImplemented.
+    /// @throw isc::NotImplemented.
     virtual ConstHostCollection
     getAll4(const asiolink::IOAddress& address) const;
 
@@ -91,11 +91,12 @@ public:
     ///
     /// @param address IPv4 address for which the @c Host object is searched.
     ///
-	/// @throw isc::NotImplemented
+    /// @throw isc::NotImplemented
     virtual HostCollection
     getAll4(const asiolink::IOAddress& address);
 
-    /// @brief Returns a host connected to the IPv4 subnet.
+    /// @brief Returns a host connected to the IPv4 subnet and matching
+    /// specified identifiers.
     ///
     /// @param subnet_id Subnet identifier.
     /// @param hwaddr HW address of the client or NULL if no HW address
@@ -109,7 +110,8 @@ public:
     get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
          const DuidPtr& duid = DuidPtr()) const;
 
-    /// @brief Returns a host connected to the IPv4 subnet.
+    /// @brief Returns a host connected to the IPv4 subnet and matching
+    /// specified identifiers.
     ///
     /// @param subnet_id Subnet identifier.
     /// @param hwaddr HW address of the client or NULL if no HW address
@@ -123,7 +125,8 @@ public:
     get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
          const DuidPtr& duid = DuidPtr());
 
-    /// @brief Returns a host connected to the IPv6 subnet.
+    /// @brief Returns a host connected to the IPv6 subnet and matching
+    /// the specified identifiers.
     ///
     /// @param subnet_id Subnet identifier.
     /// @param hwaddr HW address of the client or NULL if no HW address
@@ -137,7 +140,8 @@ public:
     get6(const SubnetID& subnet_id, const DuidPtr& duid,
          const HWAddrPtr& hwaddr = HWAddrPtr()) const;
 
-    /// @brief Returns a host connected to the IPv6 subnet.
+    /// @brief Returns a host connected to the IPv6 subnet and matching the
+    /// specified identifiers.
     ///
     /// @param subnet_id Subnet identifier.
     /// @param hwaddr HW address of the client or NULL if no HW address
@@ -156,7 +160,7 @@ public:
     /// @param prefix IPv6 prefix for which the @c Host object is searched.
     /// @param prefix_len IPv6 prefix length.
     ///
-    /// @throw isc::NotImplemented.
+    /// @throw isc::NotImplemented
     virtual ConstHostPtr
     get6(const asiolink::IOAddress& prefix, const uint8_t prefix_len) const;
 
@@ -165,7 +169,7 @@ public:
     /// @param prefix IPv6 prefix for which the @c Host object is searched.
     /// @param prefix_len IPv6 prefix length.
     ///
-    /// @throw isc::NotImplemented.
+    /// @throw isc::NotImplemented
     virtual HostPtr
     get6(const asiolink::IOAddress& prefix, const uint8_t prefix_len);
 

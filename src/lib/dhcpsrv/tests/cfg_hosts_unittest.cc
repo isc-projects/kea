@@ -245,7 +245,8 @@ TEST_F(CfgHostsTest, get6) {
                                         "hw-address",
                                         SubnetID(10), SubnetID(1 + i % 2),
                                         IOAddress("0.0.0.0")));
-        host->addReservation(IPv6Resrv(increase(IOAddress("2001:db8:1::1"),
+        host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                       increase(IOAddress("2001:db8:1::1"),
                                                 i)));
         cfg.add(host);
 
@@ -253,7 +254,8 @@ TEST_F(CfgHostsTest, get6) {
         host = HostPtr(new Host(duids_[i]->toText(), "duid",
                                 SubnetID(10), SubnetID(1 + i % 2),
                                 IOAddress("0.0.0.0")));
-        host->addReservation(IPv6Resrv(increase(IOAddress("2001:db8:2::1"),
+        host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                       increase(IOAddress("2001:db8:2::1"),
                                                 i)));
         cfg.add(host);
     }
