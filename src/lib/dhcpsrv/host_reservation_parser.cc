@@ -132,6 +132,7 @@ HostReservationParser6::build(isc::data::ConstElementPtr reservation_data) {
                 try {
                     // For the IPv6 address the prefix length is 128 and the
                     // value specified in the list is a reserved address.
+                    IPv6Resrv::Type resrv_type = IPv6Resrv::TYPE_NA;
                     std::string prefix = prefix_element->stringValue();
                     uint8_t prefix_len = 128;
 
@@ -172,10 +173,14 @@ HostReservationParser6::build(isc::data::ConstElementPtr reservation_data) {
                         // Remove the  slash character and the prefix length
                         // from the parsed value.
                         prefix.erase(len_pos);
+
+                        // Finally, set the reservation type.
+                        resrv_type = IPv6Resrv::TYPE_PD;
                     }
 
                     // Create a reservation for an address or prefix.
-                    host_->addReservation(IPv6Resrv(IOAddress(prefix),
+                    host_->addReservation(IPv6Resrv(resrv_type,
+                                                    IOAddress(prefix),
                                                     prefix_len));
 
                 } catch (const std::exception& ex) {

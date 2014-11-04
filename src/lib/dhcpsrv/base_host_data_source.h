@@ -62,6 +62,12 @@ public:
     /// DUID and HW address belong to the same client, until the client sends
     /// a DHCP message.
     ///
+    /// Specifying both hardware address and DUID is allowed for this method
+    /// and results in returning all objects that are associated with hardware
+    /// address OR duid. For example: if one host is associated with the
+    /// specified hardware address and another host is associated with the
+    /// specified DUID, two hosts will be returned.
+    ///
     /// @param hwaddr HW address of the client or NULL if no HW address
     /// available.
     /// @param duid client id or NULL if not available, e.g. DHCPv4 client case.
@@ -71,6 +77,12 @@ public:
     getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid = DuidPtr()) const = 0;
 
     /// @brief Non-const version of the @c getAll const method.
+    ///
+    /// Specifying both hardware address and DUID is allowed for this method
+    /// and results in returning all objects that are associated with hardware
+    /// address OR duid. For example: if one host is associated with the
+    /// specified hardware address and another host is associated with the
+    /// specified DUID, two hosts will be returned.
     ///
     /// @param hwaddr HW address of the client or NULL if no HW address
     /// available.
