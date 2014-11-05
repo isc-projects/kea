@@ -22,7 +22,7 @@
 
 
 # Get the location of the kea-admin scripts
-SCRIPTS_DIR_DEFAULT=@datarootdir@/@PACKAGE@/upgrade-scripts
+SCRIPTS_DIR_DEFAULT=@datarootdir@/@PACKAGE@/scripts
 scripts_dir=${SCRIPTS_DIR_DEFAULT}
 
 # These are the default parameters. They will likely not work in any
@@ -107,8 +107,36 @@ memfile_init() {
 }
 
 mysql_init() {
-    log_error "NOT IMPLEMENTED"
-    exit 1
+    printf "Checking if there is a database initialized already. Please ignore errors.\n"
+
+    # Let's try to count the number of tables. Anything above 0 means that there
+    # is some database in place. If there is anything, we abort. Note that
+    # mysql may spit out connection or access errors to stderr, we ignore those.
+    # We should not hide them as they may give hints to user what is wrong with
+    # his setup.
+    #
+    mysql_execute "SHOW TABLES;"
+    COUNT=`echo $_RESULT | wc -w`
+    if [ $COUNT -gt 0 ]; then
+        # Let't start with a new line. mysql could have printed something out.
+        printf "\n"
+        log_error "Expected empty database $db_name, but there are $COUNT tables: $_RESULT. Aborting."
+        exit 1
+    fi
+
+    printf "Initializing database."
+    mysql -B --user=$db_user --password=$db_password $db_name < $scripts_dir/mysql/dhcpdb_create.mysql
+    ERRCODE=$?
+
+    printf "mysql returned status code $ERRCODE\n"
+
+    if [ "$ERRCODE" -eq 0 ]; then
+        printf "Version reported after initialization: "
+        mysql_version_print
+        printf "\n"
+    fi
+
+    exit $ERRCODE
 }
 
 pgsql_init() {
@@ -269,7 +297,8 @@ case ${command} in
                 memfile_version
                 ;;
             mysql)
-                mysql_version
+                mysql_version_print
+                printf "\n"
                 ;;
             pgsql)
                 pgsql_version
