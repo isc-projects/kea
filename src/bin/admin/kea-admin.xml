@@ -100,6 +100,16 @@
       </varlistentry>
 
       <varlistentry>
+        <term><option><replaceable class="parameter">backend</replaceable></option></term>
+        <listitem>
+          <para>
+            Specifies backend type. Currently allowed backends are: memfile, mysql and
+            pgsql.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term><option>-u|--user <replaceable class="parameter">username</replaceable></option></term>
         <listitem>
           <para>
