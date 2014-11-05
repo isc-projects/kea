@@ -553,6 +553,12 @@ temporarily override a list of interface names and listen on all interfaces.
       </para>
 
       <para>
+        Most of the parameters in the "option-data" structure are optional and
+        can be omitted in some circumstances as discussed in the
+        <xref linkend="dhcp4-option-data-defaults"/>.
+      </para>
+
+      <para>
         It is possible to specify or override options on a per-subnet basis.  If
         clients connected to most of your subnets are expected to get the
         same values of a given option, you should use global options: you
@@ -588,15 +594,6 @@ temporarily override a list of interface names and listen on all interfaces.
 }
 </screen>
       </para>
-
-    <note>
-      <para>
-        In future versions of Kea, it will not be necessary to specify
-        the <command>code</command>, <command>space</command>
-        and <command>csv-format</command> fields, as they will
-        be set automatically.
-      </para>
-    </note>
 
       <para>
         The currently supported standard DHCPv4 options are
@@ -1097,6 +1094,76 @@ temporarily override a list of interface names and listen on all interfaces.
     with the "data" parameter &mdash; which should be a valid integer enclosed in quotes,
     e.g. "123" &mdash; would then be assigned to the uint16 field in the "container" option.
     </para>
+    </section>
+
+    <section id="dhcp4-option-data-defaults">
+      <title>Unspecified parameters for option configuration</title>
+      <para>In many cases it is not required to specify all parameters for
+      an option configuration and use the default values. However, it is
+      important to understand the implications of not specifing some of them
+      as it may result in configuration errors. The list below explains
+      the behavior of the server when a particular parameter is not explicitly
+      specified:
+
+      <itemizedlist>
+        <listitem>
+          <simpara><command>name</command> - the server requires an option name or
+          option code to identify an option. If this parameter is unspecified, the
+          option code must be specified.
+          </simpara>
+        </listitem>
+
+        <listitem>
+          <simpara><command>code</command> - the server requires an option name or
+          option code to identify an option. This parameter may be left unspecified if
+          the <command>name</command> parameter is specified. However, this also
+          requires that the particular option has its definition (it is either a
+          standard option or an administrator created a definition for the option
+          using an 'option-def' structure), as the option definition associates an
+          option with a particular name. It is possible to configure an option
+          for which there is no definition (unspecified option format).
+          Configuration of such options requires the use of option code.
+          </simpara>
+        </listitem>
+
+        <listitem>
+          <simpara><command>space</command> - if the option space is unspecified it
+          will default to 'dhcp4' which is an option space holding DHCPv4 standard
+          options.
+          </simpara>
+        </listitem>
+
+        <listitem>
+          <simpara><command>data</command> - if the option data is unspecified it
+          defaults to an empty value. The empty value is mostly used for the
+          options which have no payload (boolean options), but it is legal to specify
+          empty values for some options which carry variable length data and which
+          spec allows for the length of 0. For such options, the data parameter
+          may be omitted in the configuration.</simpara>
+        </listitem>
+
+        <listitem>
+          <simpara><command>csv-format</command> - if this value is not specified
+          and the definition for the particular option exists, the server will assume
+          that the option data is specified as a list of comma separated values to be
+          assigned to individual fields of the DHCP option. If the definition
+          does not exist for this option, the server will assume that the data
+          parameter contains the option payload in the binary format (represented
+          as a string of hexadecimal digits). Note that not specifying this
+          parameter doesn't imply that it defaults to a fixed value, but
+          the configuration data interpretation also depends on the presence
+          of the option definition. An administrator must be aware if the
+          definition for the particular option exists when this parameter
+          is not specified. It is generally recommended to not specify this
+          parameter only for the options for which the definition exists, e.g.
+          standard options. Setting <command>csv-format</command> to an explicit
+          value will cause the server to strictly check the format of the option
+          data specified.
+          </simpara>
+        </listitem>
+      </itemizedlist>
+      </para>
+
     </section>
 
     <section id="dhcp4-stateless-configuration">
