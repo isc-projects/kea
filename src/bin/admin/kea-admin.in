@@ -31,6 +31,8 @@ db_user="keatest"
 db_password="keatest"
 db_name="keatest"
 
+. ./admin-utils.sh
+
 usage() {
     printf "kea-admin @PACKAGE_VERSION@\n"
     printf "\n"
@@ -97,53 +99,45 @@ is_in_list() {
     done
 }
 
-mysql_execute() {
-    RESULT=`mysql -N -B --user=$db_user --password=$db_password -e "${1}" $db_name | sed "s/\t/./g"`
-    printf ${RESULT}
-}
 
 ### Functions that implement database initialization commands
-init_memfile() {
+memfile_init() {
     log_error "NOT IMPLEMENTED"
     exit 1
 }
 
-init_mysql() {
+mysql_init() {
     log_error "NOT IMPLEMENTED"
     exit 1
 }
 
-init_pgsql() {
+pgsql_init() {
     log_error "NOT IMPLEMENTED"
     exit 1
 }
 
 ### Functions that implement database version checking commands
-version_memfile() {
+memfile_version() {
     log_error "NOT IMPLEMENTED"
     exit 1
 }
 
-version_mysql() {
-    MYSQL_VERSION=$(mysql_execute "SELECT version,minor FROM schema_version")
-    echo $MYSQL_VERSION
-}
-
-version_pgsql() {
+pgsql_version() {
     log_error "NOT IMPLEMENTED"
     exit 1
 }
 
 ### Functions used for upgrade
-upgrade_memfile() {
+memfile_upgrade() {
     log_error "NOT IMPLEMENTED"
     exit 1
 }
 
-upgrade_mysql() {
+mysql_upgrade() {
 
     printf "Version reported before upgrade: "
-    version_mysql
+    mysql_version_print
+    printf "\n"
 
     # Check if the scripts directory exists at all.
     if [ ! -d ${scripts_dir}/mysql ]; then
@@ -152,23 +146,24 @@ upgrade_mysql() {
     fi
 
     # Check if there are any files in it
-    num_files=`ls -1 ${scripts_dir}/mysql | wc -l &> /dev/null`
+    num_files=`ls -1 ${scripts_dir}/mysql/upgrade*.sh | wc -l &> /dev/null`
     if [ $num_files -eq 0 ]; then
-        log_error "No scripts in ${scripts_dir}/mysql or the directory is not readable"
+        log_error "No scripts in ${scripts_dir}/mysql or the directory is not readable or does not have any upgrade* scripts."
         exit 1
     fi
 
-    for script in ${scripts_dir}/mysql/*
+    for script in ${scripts_dir}/mysql/upgrade*.sh
     do
         echo "Processing $script file..."
         sh ${script} --user=${db_user} --password=${db_password} ${db_name}
     done
 
     printf "Version reported after upgrade: "
-    version_mysql
+    mysql_version_print
+    printf "\n"
 }
 
-upgrade_pgsql() {
+pgsql_upgrade() {
     log_error "NOT IMPLEMENTED"
 }
 
@@ -258,39 +253,39 @@ case ${command} in
     init)
         case ${backend} in
             memfile)
-                init_memfile
+                memfile_init
                 ;;
             mysql)
-                init_mysql
+                mysql_init
                 ;;
             pgsql)
-                init_pgsql
+                pgsql_init
                 ;;
             esac
         ;;
     version)
         case ${backend} in
             memfile)
-                version_memfile
+                memfile_version
                 ;;
             mysql)
-                version_mysql
+                mysql_version
                 ;;
             pgsql)
-                version_pgsql
+                pgsql_version
                 ;;
             esac
         ;;
     upgrade)
         case ${backend} in
             memfile)
-                upgrade_memfile
+                memfile_upgrade
                 ;;
             mysql)
-                upgrade_mysql
+                mysql_upgrade
                 ;;
             pgsql)
-                upgrade_pgsql
+                pgsql_upgrade
                 ;;
             esac
         ;;
