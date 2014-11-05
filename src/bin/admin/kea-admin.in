@@ -40,7 +40,7 @@ else
     . @abs_top_builddir@/src/bin/admin/admin-utils.sh
 fi
 
-
+# Prints out usage version.
 usage() {
     printf "kea-admin @PACKAGE_VERSION@\n"
     printf "\n"
@@ -70,16 +70,19 @@ usage() {
 ### Logging functions ###
 
 # Logs message at the error level.
+# Takes one parameter that is printed as is.
 log_error() {
     printf "ERROR/kea-admin: ${1}\n"
 }
 
 # Logs message at the warning level.
+# Takes one parameter that is printed as is.
 log_warning() {
     printf "WARNING/kea-admin: ${1}\n"
 }
 
 # Logs message at the info level.
+# Takes one parameter that is printed as is.
 log_info() {
     printf "INFO/kea-admin: ${1}\n"
 }
@@ -109,11 +112,17 @@ is_in_list() {
 
 
 ### Functions that implement database initialization commands
+
 memfile_init() {
+    # @todo Implement this as part of #3601
     log_error "NOT IMPLEMENTED"
     exit 1
 }
 
+# Initializes a new, empty MySQL database.
+# It essentially calls scripts/mysql/dhcpdb_create.mysql script, with
+# some extra sanity checks. It will refuse to use it if there are any
+# existing tables. It's better safe than sorry.
 mysql_init() {
     printf "Checking if there is a database initialized already. Please ignore errors.\n"
 
@@ -154,6 +163,7 @@ pgsql_init() {
 
 ### Functions that implement database version checking commands
 memfile_version() {
+    # @todo Implement this as part of #3601
     log_error "NOT IMPLEMENTED"
     exit 1
 }
@@ -165,10 +175,17 @@ pgsql_version() {
 
 ### Functions used for upgrade
 memfile_upgrade() {
+    # @todo Implement this as part of #3601
     log_error "NOT IMPLEMENTED"
     exit 1
 }
 
+# Upgrades existing MySQL database installation. The idea is that
+# it will go over all upgrade scripts from (prefix)/share/kea/scripts/mysql
+# and run them one by one. They will be named properly, so they will
+# be run in order.
+#
+# This function prints version before and after upgrade.
 mysql_upgrade() {
 
     printf "Version reported before upgrade: "
@@ -206,6 +223,7 @@ pgsql_upgrade() {
 
 ### Script starts here ###
 
+# First, find what the command is
 command=${1}
 if [ -z ${command} ]; then
     log_error "missing command"
@@ -219,6 +237,7 @@ if [ ${_inlist} -eq 0 ]; then
 fi
 shift
 
+# Second, check what's the backend
 backend=${1}
 if [ -z ${backend} ]; then
     log_error "missing backend"
