@@ -1393,6 +1393,14 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/perfdhcp/Makefile
                  src/bin/perfdhcp/tests/Makefile
                  src/bin/perfdhcp/tests/testdata/Makefile
+                 src/bin/admin/Makefile
+                 src/bin/admin/kea-admin
+                 src/bin/admin/scripts/Makefile
+                 src/bin/admin/tests/Makefile
+                 src/bin/admin/tests/memfile_tests.sh
+                 src/bin/admin/tests/mysql_tests.sh
+                 src/bin/admin/scripts/mysql/Makefile
+                 src/bin/admin/scripts/pgsql/Makefile
                  src/hooks/Makefile
                  src/hooks/dhcp/Makefile
                  src/hooks/dhcp/user_chk/Makefile

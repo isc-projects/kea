@@ -113,9 +113,9 @@ endif
 # The message file should be in the distribution
 EXTRA_DIST = dhcpsrv_messages.mes
 
-# Distribute MySQL schema creation script and backend documentation
-EXTRA_DIST += dhcpdb_create.mysql dhcpdb_create.pgsql database_backends.dox libdhcpsrv.dox
-dist_pkgdata_DATA = dhcpdb_create.mysql dhcpdb_create.pgsql
+# Distribute backend documentation
+# Database schema creation script moved to src/bin/admin
+EXTRA_DIST += database_backends.dox libdhcpsrv.dox
 
 install-data-local:
 	$(mkinstalldirs) $(DESTDIR)$(dhcp_data_dir)
