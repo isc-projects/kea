@@ -1099,7 +1099,7 @@ temporarily override a list of interface names and listen on all interfaces.
     <section id="dhcp4-option-data-defaults">
       <title>Unspecified parameters for option configuration</title>
       <para>In many cases it is not required to specify all parameters for
-      an option configuration and use the default values. However, it is
+      an option configuration and the default values may be used. However, it is
       important to understand the implications of not specifing some of them
       as it may result in configuration errors. The list below explains
       the behavior of the server when a particular parameter is not explicitly
