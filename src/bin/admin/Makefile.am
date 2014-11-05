@@ -19,3 +19,7 @@ $(man_MANS):
 	@echo Man generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild Kea > $@
 
 endif
+
+install-exec-hook:
+	mkdir -p $(DESTDIR)${datarootdir}/${PACKAGE_NAME}/scripts
+	install admin-utils.sh $(DESTDIR)${datarootdir}/${PACKAGE_NAME}/scripts

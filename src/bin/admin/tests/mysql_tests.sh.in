@@ -21,25 +21,62 @@
 # directory. If not, include it from the sources.
 prefix=@prefix@
 
-if [ -e @datarootdir@/admin-utils.sh ]; then
-    echo "INCLUDING FROM DESTDIR"
-    . @datarootdir@/admin-utils.sh
+if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
+    . @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
 else
-    echo "INCLUDING FROM BUILDDIR"
     . @abs_top_builddir@/src/bin/admin/admin-utils.sh
 fi
 
+db_user="keatest"
+db_pass="keatest"
+db_name="keatest"
+
+# Set location of the kea-admin.
+keactrl=@abs_top_builddir@/src/bin/admin/kea-admin
+
+# Wipe all tables from the DB:
+mysql_wipe() {
+    printf "Wiping whole database %s\n" $db_name
+    mysql -u$db_user -p$db_pass $db_name &>/dev/null <<EOF
+SET @tables = NULL;
+SELECT GROUP_CONCAT(table_schema, '.', table_name) INTO @tables
+  FROM information_schema.tables
+  WHERE table_schema = 'keatest';
+
+SET @tables = CONCAT('DROP TABLE ', @tables);
+PREPARE stmt FROM @tables;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+EOF
+}
+
 mysql_init_test() {
     test_start "mysql.init"
-    
-    # @todo: Implement this
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # Ok, now let's create a version 1.7
+    mysql -u$db_user -p$db_pass $db_name &>/dev/null <<EOF
+CREATE TABLE schema_version (
+    version INT PRIMARY KEY NOT NULL,
+    minor INT
+    );
+INSERT INTO schema_version VALUES (1, 7);
+EOF
+
+    version=$(${keactrl} version mysql -u $db_user -p $db_pass -n $db_name)
+
+    printf "Reported version: %s, expected 1.7\n" $version
+
+    assert_str_eq "1.7" ${version} "Expected kea-admin to return %s, returned value was %s"
 
     test_finish 0
 }
 
 mysql_version_test() {
     test_start "mysql.version"
-    
+
     # @todo: Implement this
 
     test_finish 0
@@ -47,7 +84,7 @@ mysql_version_test() {
 
 mysql_upgrade_test() {
     test_start "mysql.upgrade"
-    
+
     # @todo: Implement this
 
     test_finish 0
