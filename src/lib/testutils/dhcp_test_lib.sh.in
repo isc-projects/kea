@@ -113,8 +113,9 @@ test_finish() {
         cleanup
         printf "PASSED ${TEST_NAME}\n\n"
     else
-        # Dump log file if exists for debugging purposes.
-        if [ -s ${LOG_FILE} ]; then
+        # Dump log file for debugging purposes if specified and exists.
+        # Otherwise the code below would simply call cat.
+        if [ -n "${LOG_FILE}" -a -s "${LOG_FILE}" ]; then
             printf "Log file dump:\n"
             cat ${LOG_FILE}
         fi
@@ -226,6 +227,12 @@ get_reconfigs() {
 # in the ${LOG_FILE}, ${CFG_FILE} and ${KEACTRL_CFG_FILE} variables
 # recpectively, prior to calling this function.
 cleanup() {
+
+    # If there is no KEA_PROCS set, just return
+    if [ -z "${KEA_PROCS}" ]; then
+        return
+    fi
+
     # KEA_PROCS holds the name of all Kea processes. Shut down each
     # of them if running.
     for proc_name in ${KEA_PROCS}
@@ -238,6 +245,7 @@ cleanup() {
             kill -9 ${pid}
         done
     done
+
     # Remove temporary files.
     rm -rf ${LOG_FILE}
     rm -rf ${CFG_FILE}
