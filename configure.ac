@@ -1473,6 +1473,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
            chmod +x src/bin/dhcp6/tests/dhcp6_process_tests.sh
            chmod +x src/bin/keactrl/keactrl
            chmod +x src/bin/keactrl/tests/keactrl_tests.sh
+           chmod +x src/bin/admin/kea-admin
            chmod +x src/lib/dns/gen-rdatacode.py
            chmod +x src/lib/log/tests/console_test.sh
            chmod +x src/lib/log/tests/destination_test.sh

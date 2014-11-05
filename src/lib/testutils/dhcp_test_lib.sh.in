@@ -59,6 +59,23 @@ assert_eq() {
     fi
 }
 
+# Assertion that checks if two strings are equal.
+# If numbers are not equal, the mismatched values are presented and the
+# detailed error is printed. The detailed error must use the printf
+# formatting like this:
+#    "Expected that some value 1 %d is equal to some other value %d".
+assert_str_eq() {
+    val1=${1}         # Reference value
+    val2=${2}         # Tested value
+    detailed_err=${3} # Detailed error format string
+    # If nothing found, present an error an exit.
+    if [ "${val1}" != "${val2}" ]; then
+        printf "Assertion failure: ${val1} != ${val2}, for val1=${val1}, val2=${val2}\n"
+        printf "${detailed_err}\n" ${val1} ${val2}
+        clean_exit 1
+    fi
+}
+
 # Assertion that checks if one string contains another string.
 # If assertion fails, both strings are displayed and the detailed
 # error is printed. The detailed error must use the printf formatting
