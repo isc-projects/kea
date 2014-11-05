@@ -1090,7 +1090,7 @@ should include options from the isc option space:
     <section id="dhcp6-option-data-defaults">
       <title>Unspecified parameters for option configuration</title>
       <para>In many cases it is not required to specify all parameters for
-      an option configuration and use the default values. However, it is
+      an option configuration and the default values can be used. However, it is
       important to understand the implications of not specifing some of them
       as it may result in configuration errors. The list below explains
       the behavior of the server when a particular parameter is not explicitly
