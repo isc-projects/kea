@@ -32,7 +32,14 @@ db_user="keatest"
 db_password="keatest"
 db_name="keatest"
 
-. ./admin-utils.sh
+# Include utilities. Use installed version if available and
+# use build version if it isn't.
+if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
+    . @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
+else
+    . @abs_top_builddir@/src/bin/admin/admin-utils.sh
+fi
+
 
 usage() {
     printf "kea-admin @PACKAGE_VERSION@\n"
