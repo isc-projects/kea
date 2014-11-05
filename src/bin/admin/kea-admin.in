@@ -132,7 +132,7 @@ mysql_init() {
         exit 1
     fi
 
-    printf "Initializing database."
+    printf "Initializing database using script %s\n" $scripts_dir/mysql/dhcpdb_create.mysql
     mysql -B --user=$db_user --password=$db_password $db_name < $scripts_dir/mysql/dhcpdb_create.mysql
     ERRCODE=$?
 
