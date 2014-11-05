@@ -13,7 +13,7 @@ fi
 
 mysql "$@" <<EOF
 ALTER TABLE lease6
-    ADD COLUMN hwaddr varbinary(2),
+    ADD COLUMN hwaddr varbinary(20),
     ADD COLUMN hwtype smallint unsigned,
     ADD COLUMN hwaddr_source int unsigned;
 
