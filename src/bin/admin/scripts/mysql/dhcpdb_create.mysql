@@ -13,7 +13,7 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# This is the BIND 10 DHCP schema specification for MySQL.
+# This is the Kea schema specification for MySQL.
 #
 # The schema is reasonably portable (with the exception of the engine
 # specification, which is MySQL-specific).  Minor changes might be needed for
@@ -27,7 +27,17 @@
 # prompt, issue the command:
 #
 # source dhcpdb_create.mysql
+#
+# This script is also called from kea-admin, see kea-admin init mysql
+#
+# Over time, Kea database schema will evolve. Each version is marked with
+# major.minor version. This file is organized sequentially, i.e. database
+# is initialized to 1.0, then upgraded to 2.0 etc. This may be somewhat
+# sub-optimal, but it ensues consistency with upgrade scripts. (It is much
+# easier to maintain init and upgrade scripts if they look the same).
+# Since initialization is done only once, it's perfromance is not an issue.
 
+# This line starts database initialization to 1.0.
 
 # Holds the IPv4 leases.
 CREATE TABLE lease4 (
@@ -106,6 +116,53 @@ START TRANSACTION;
 INSERT INTO schema_version VALUES (1, 0);
 COMMIT;
 
+# This line concludes database initalization to version 1.0.
+
+# This line starts database upgrade to version 2.0.
+ALTER TABLE lease6
+    ADD COLUMN hwaddr varbinary(20), # Hardware/MAC address, typically only 6
+                                     # bytes is used, but some hardware (e.g.
+                                     # Infiniband) use up to 20.
+    ADD COLUMN hwtype smallint unsigned, # hardware type (16 bits)
+    ADD COLUMN hwaddr_source int unsigned; # Hardware source. See description
+                                     # of lease6_hwaddr_source below.
+
+# Kea keeps track of the hardware/MAC address source, i.e. how the address
+# was obtained. Depending on the technique and your network topology, it may
+# be more or less trustworthy. This table is a convenience for
+# users of the database - if they want to view the lease table and use the
+# type names, they can join this table with the lease6 table. For details,
+# see constants defined in src/lib/dhcp/dhcp/pkt.h for detailed explanation.
+CREATE TABLE lease6_hwaddr_source (
+    hwaddr_source INT PRIMARY KEY NOT NULL,
+    name VARCHAR(40)
+);
+
+# Hardware address obtained from raw sockets
+INSERT INTO lease6_hwaddr_source VALUES (1, "HWADDR_SOURCE_RAW");
+
+# Hardware address converted from IPv6 link-local address with EUI-64
+INSERT INTO lease6_hwaddr_source VALUES (2, "HWADDR_SOURCE_IPV6_LINK_LOCAL");
+
+# Hardware address extracted from client-id (duid)
+INSERT INTO lease6_hwaddr_source VALUES (4, "HWADDR_SOURCE_DUID");
+
+# Hardware address extracted from client address relay option (RFC6939)
+INSERT INTO lease6_hwaddr_source VALUES (8, "HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION");
+
+# Hardware address extracted from remote-id option (RFC4649)
+INSERT INTO lease6_hwaddr_source VALUES (16, "HWADDR_SOURCE_REMOTE_ID");
+
+# Hardware address extracted from subscriber-id option (RFC4580)
+INSERT INTO lease6_hwaddr_source VALUES (32, "HWADDR_SOURCE_SUBSCRIBER_ID");
+
+# Hardware address extracted from docsis options
+INSERT INTO lease6_hwaddr_source VALUES (64, "HWADDR_SOURCE_DOCSIS");
+
+UPDATE schema_version SET version="2", minor="0";
+
+# This line concludes database upgrade to version 2.0.
+
 # Notes:
 #
 # Indexes
@@ -133,7 +190,7 @@ COMMIT;
 #
 # Portability
 # ===========
-# The "ENGINE = INNODB" on some tables is not portablea to another database
+# The "ENGINE = INNODB" on some tables is not portable to another database
 # and will need to be removed.
 #
 # Some columns contain binary data so are stored as VARBINARY instead of
