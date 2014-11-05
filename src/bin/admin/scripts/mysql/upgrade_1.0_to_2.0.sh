@@ -1,3 +1,16 @@
+#!/bin/sh
+
+# Import common library.
+. /home/thomson/devel/kea/src/bin/admin/admin-utils.sh
+
+mysql_version "$@"
+VERSION=$_RESULT
+
+if [ "$VERSION" != "1.0" ]; then
+    printf "This script upgrades 1.0 to 2.0. Reported version is $VERSION. Skipping upgrade.\n"
+    exit 0
+fi
+
 mysql "$@" <<EOF
 ALTER TABLE lease6
     ADD COLUMN hwaddr varbinary(2),
@@ -20,3 +33,7 @@ INSERT INTO lease6_hwaddr_source VALUES (64, "HWADDR_SOURCE_DOCSIS");
 
 UPDATE schema_version SET version="2", minor="0";
 EOF
+
+RESULT=$?
+
+exit $?
