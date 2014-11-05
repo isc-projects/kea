@@ -776,6 +776,66 @@ TEST_F(ParseConfigTest, optionDataMinimal) {
     EXPECT_EQ( "2001:db8:1::20", opt->getAddresses()[0].toText());
 }
 
+// This test verifies that the option data configuration with a minimal
+// set of parameters works as expected when option definition is
+// created in the configruation file.
+TEST_F(ParseConfigTest, optionDataMinimalWithOptionDef) {
+    // Configuration string.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo-name\","
+        "      \"code\": 2345,"
+        "      \"type\": \"ipv6-address\","
+        "      \"array\": True,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"dhcp6\","
+        "      \"encapsulate\": \"\""
+        "  } ],"
+        "  \"option-data\": [ {"
+        "    \"name\": \"foo-name\","
+        "    \"data\": \"2001:db8:1::10, 2001:db8:1::123\""
+        " } ]"
+        "}";
+
+    int rcode = 0;
+    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    EXPECT_EQ(0, rcode);
+    Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
+        Option6AddrLst>(getOptionPtr("dhcp6", 2345));
+    ASSERT_TRUE(opt);
+    ASSERT_EQ(2, opt->getAddresses().size());
+    EXPECT_EQ("2001:db8:1::10", opt->getAddresses()[0].toText());
+    EXPECT_EQ("2001:db8:1::123", opt->getAddresses()[1].toText());
+
+    CfgMgr::instance().clear();
+    // Do the same test but now use an option code.
+    config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo-name\","
+        "      \"code\": 2345,"
+        "      \"type\": \"ipv6-address\","
+        "      \"array\": True,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"dhcp6\","
+        "      \"encapsulate\": \"\""
+        "  } ],"
+        "  \"option-data\": [ {"
+        "    \"code\": 2345,"
+        "    \"data\": \"2001:db8:1::10, 2001:db8:1::123\""
+        " } ]"
+        "}";
+
+    rcode = 0;
+    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    EXPECT_EQ(0, rcode);
+    opt = boost::dynamic_pointer_cast<Option6AddrLst>(getOptionPtr("dhcp6",
+                                                                   2345));
+    ASSERT_TRUE(opt);
+    ASSERT_EQ(2, opt->getAddresses().size());
+    EXPECT_EQ("2001:db8:1::10", opt->getAddresses()[0].toText());
+    EXPECT_EQ("2001:db8:1::123", opt->getAddresses()[1].toText());
+
+}
 
 };  // Anonymous namespace
 
