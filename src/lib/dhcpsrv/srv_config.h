@@ -15,6 +15,7 @@
 #ifndef DHCPSRV_CONFIG_H
 #define DHCPSRV_CONFIG_H
 
+#include <dhcpsrv/cfg_hosts.h>
 #include <dhcpsrv/cfg_iface.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfg_option_def.h>
@@ -218,6 +219,22 @@ public:
         return (cfg_subnets6_);
     }
 
+    /// @brief Returns pointer to the non-const objects representing host
+    /// reservations for different IPv4 and IPv6 subnets.
+    ///
+    /// @return Pointer to the non-const object holding host reservations.
+    CfgHostsPtr getCfgHosts() {
+        return (cfg_hosts_);
+    }
+
+    /// @brief Returns pointer to the const objects representing host
+    /// reservations for different IPv4 and IPv6 subnets.
+    ///
+    /// @return Pointer to the const object holding host reservations.
+    ConstCfgHostsPtr getCfgHosts() const {
+        return (cfg_hosts_);
+    }
+
     //@}
 
     /// @brief Copies the currnet configuration to a new configuration.
@@ -324,6 +341,12 @@ private:
 
     /// @brief Pointer to subnets configuration for IPv4.
     CfgSubnets6Ptr cfg_subnets6_;
+
+    /// @brief Pointer to the configuration for hosts reservation.
+    ///
+    /// This object holds a list of @c Host objects representing host
+    /// reservations for different IPv4 and IPv6 subnets.
+    CfgHostsPtr cfg_hosts_;
 
 };
 
