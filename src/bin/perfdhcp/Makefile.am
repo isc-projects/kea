@@ -17,27 +17,34 @@ if USE_STATIC_LINK
 AM_LDFLAGS += -static
 endif
 
-sbin_PROGRAMS = perfdhcp
-perfdhcp_SOURCES = main.cc
-perfdhcp_SOURCES += command_options.cc command_options.h
-perfdhcp_SOURCES += localized_option.h
-perfdhcp_SOURCES += perf_pkt6.cc perf_pkt6.h
-perfdhcp_SOURCES += perf_pkt4.cc perf_pkt4.h
-perfdhcp_SOURCES += packet_storage.h
-perfdhcp_SOURCES += pkt_transform.cc pkt_transform.h
-perfdhcp_SOURCES += rate_control.cc rate_control.h
-perfdhcp_SOURCES += stats_mgr.h
-perfdhcp_SOURCES += test_control.cc test_control.h
-libkea_perfdhcp___la_CXXFLAGS = $(AM_CXXFLAGS)
+# convenience archive
 
-perfdhcp_CXXFLAGS = $(AM_CXXFLAGS)
+noinst_LTLIBRARIES = libperfdhcp.la
+
+libperfdhcp_la_SOURCES  =
+libperfdhcp_la_SOURCES += command_options.cc command_options.h
+libperfdhcp_la_SOURCES += localized_option.h
+libperfdhcp_la_SOURCES += perf_pkt6.cc perf_pkt6.h
+libperfdhcp_la_SOURCES += perf_pkt4.cc perf_pkt4.h
+libperfdhcp_la_SOURCES += packet_storage.h
+libperfdhcp_la_SOURCES += pkt_transform.cc pkt_transform.h
+libperfdhcp_la_SOURCES += rate_control.cc rate_control.h
+libperfdhcp_la_SOURCES += stats_mgr.h
+libperfdhcp_la_SOURCES += test_control.cc test_control.h
+
+libperfdhcp_la_CXXFLAGS = $(AM_CXXFLAGS)
 if USE_CLANGPP
 # Disable unused parameter warning caused by some of the
 # Boost headers when compiling with clang.
-perfdhcp_CXXFLAGS += -Wno-unused-parameter
+libperfdhcp_la_CXXFLAGS += -Wno-unused-parameter
 endif
 
-perfdhcp_LDADD = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+sbin_PROGRAMS = perfdhcp
+perfdhcp_SOURCES = main.cc
+libkea_perfdhcp___la_CXXFLAGS = $(AM_CXXFLAGS)
+
+perfdhcp_LDADD = libperfdhcp.la
+perfdhcp_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 perfdhcp_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 perfdhcp_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 

@@ -1,5 +1,3 @@
-AUTOMAKE_OPTIONS = subdir-objects
-
 SHTESTS =
 # The test of dynamic reconfiguration based on signals will work only
 # if we are using file based configuration approach.
@@ -76,10 +74,7 @@ libco2_la_LDFLAGS = -avoid-version -export-dynamic -module -rpath /nowhere
 
 TESTS += dhcp4_unittests
 
-dhcp4_unittests_SOURCES = ../dhcp4_srv.h ../dhcp4_srv.cc ../ctrl_dhcp4_srv.cc
-dhcp4_unittests_SOURCES += ../dhcp4_log.h ../dhcp4_log.cc
-dhcp4_unittests_SOURCES += ../json_config_parser.cc ../json_config_parser.h
-dhcp4_unittests_SOURCES += d2_unittest.h d2_unittest.cc
+dhcp4_unittests_SOURCES  = d2_unittest.h d2_unittest.cc
 dhcp4_unittests_SOURCES += dhcp4_test_utils.h
 dhcp4_unittests_SOURCES += dhcp4_unittests.cc
 dhcp4_unittests_SOURCES += dhcp4_srv_unittest.cc
@@ -97,21 +92,19 @@ dhcp4_unittests_SOURCES += dora_unittest.cc
 if CONFIG_BACKEND_BUNDY
 # For Bundy backend, we only need to run the usual tests. There are no
 # Bundy-specific tests yet.
-dhcp4_unittests_SOURCES += ../bundy_controller.cc
 dhcp4_unittests_SOURCES += bundy_controller_unittest.cc
 endif
 
 if CONFIG_BACKEND_JSON
-dhcp4_unittests_SOURCES += ../kea_controller.cc
 dhcp4_unittests_SOURCES += kea_controller_unittest.cc
 endif
 
-nodist_dhcp4_unittests_SOURCES = ../dhcp4_messages.h ../dhcp4_messages.cc
-nodist_dhcp4_unittests_SOURCES += marker_file.h test_libraries.h
+nodist_dhcp4_unittests_SOURCES = marker_file.h test_libraries.h
 
 dhcp4_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 dhcp4_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 dhcp4_unittests_LDADD = $(GTEST_LDADD)
+dhcp4_unittests_LDADD += $(top_builddir)/src/bin/dhcp4/libdhcp4.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la

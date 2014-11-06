@@ -45,41 +45,48 @@ s-messages: d2_messages.mes
 
 BUILT_SOURCES = spec_config.h d2_messages.h d2_messages.cc
 
+# convenience archive
+
+noinst_LTLIBRARIES = libd2.la
+
+libd2_la_SOURCES  =
+libd2_la_SOURCES += d_process.h
+libd2_la_SOURCES += d_controller.cc d_controller.h
+libd2_la_SOURCES += d_cfg_mgr.cc d_cfg_mgr.h
+libd2_la_SOURCES += d2_asio.h
+libd2_la_SOURCES += d2_log.cc d2_log.h
+libd2_la_SOURCES += d2_process.cc d2_process.h
+libd2_la_SOURCES += d2_config.cc d2_config.h
+libd2_la_SOURCES += d2_cfg_mgr.cc d2_cfg_mgr.h
+libd2_la_SOURCES += d2_queue_mgr.cc d2_queue_mgr.h
+libd2_la_SOURCES += d2_update_message.cc d2_update_message.h
+libd2_la_SOURCES += d2_update_mgr.cc d2_update_mgr.h
+libd2_la_SOURCES += d2_zone.cc d2_zone.h
+libd2_la_SOURCES += dns_client.cc dns_client.h
+libd2_la_SOURCES += io_service_signal.cc io_service_signal.h
+libd2_la_SOURCES += labeled_value.cc labeled_value.h
+libd2_la_SOURCES += nc_add.cc nc_add.h
+libd2_la_SOURCES += nc_remove.cc nc_remove.h
+libd2_la_SOURCES += nc_trans.cc nc_trans.h
+libd2_la_SOURCES += state_model.cc state_model.h
+
+if CONFIG_BACKEND_BUNDY
+libd2_la_SOURCES += bundy_d2_controller.cc bundy_d2_controller.h
+else
+if CONFIG_BACKEND_JSON
+libd2_la_SOURCES += d2_controller.cc d2_controller.h
+endif
+endif
+
+nodist_libd2_la_SOURCES = d2_messages.h d2_messages.cc
+EXTRA_DIST += d2_messages.mes
+
 sbin_PROGRAMS = kea-dhcp-ddns
 
 kea_dhcp_ddns_SOURCES  = main.cc
-kea_dhcp_ddns_SOURCES += d_process.h
-kea_dhcp_ddns_SOURCES += d_controller.cc d_controller.h
-kea_dhcp_ddns_SOURCES += d_cfg_mgr.cc d_cfg_mgr.h
-kea_dhcp_ddns_SOURCES += d2_asio.h
-kea_dhcp_ddns_SOURCES += d2_log.cc d2_log.h
-kea_dhcp_ddns_SOURCES += d2_process.cc d2_process.h
-kea_dhcp_ddns_SOURCES += d2_config.cc d2_config.h
-kea_dhcp_ddns_SOURCES += d2_cfg_mgr.cc d2_cfg_mgr.h
-kea_dhcp_ddns_SOURCES += d2_queue_mgr.cc d2_queue_mgr.h
-kea_dhcp_ddns_SOURCES += d2_update_message.cc d2_update_message.h
-kea_dhcp_ddns_SOURCES += d2_update_mgr.cc d2_update_mgr.h
-kea_dhcp_ddns_SOURCES += d2_zone.cc d2_zone.h
-kea_dhcp_ddns_SOURCES += dns_client.cc dns_client.h
-kea_dhcp_ddns_SOURCES += io_service_signal.cc io_service_signal.h
-kea_dhcp_ddns_SOURCES += labeled_value.cc labeled_value.h
-kea_dhcp_ddns_SOURCES += nc_add.cc nc_add.h
-kea_dhcp_ddns_SOURCES += nc_remove.cc nc_remove.h
-kea_dhcp_ddns_SOURCES += nc_trans.cc nc_trans.h
-kea_dhcp_ddns_SOURCES += state_model.cc state_model.h
 
-if CONFIG_BACKEND_BUNDY
-kea_dhcp_ddns_SOURCES += bundy_d2_controller.cc bundy_d2_controller.h
-else
-if CONFIG_BACKEND_JSON
-kea_dhcp_ddns_SOURCES += d2_controller.cc d2_controller.h
-endif
-endif
-
-nodist_kea_dhcp_ddns_SOURCES = d2_messages.h d2_messages.cc
-EXTRA_DIST += d2_messages.mes
-
-kea_dhcp_ddns_LDADD = $(top_builddir)/src/lib/log/libkea-log.la
+kea_dhcp_ddns_LDADD  = libd2.la
+kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/asiodns/libkea-asiodns.la
