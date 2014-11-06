@@ -1,5 +1,3 @@
-AUTOMAKE_OPTIONS = subdir-objects
-
 SHTESTS =
 # The test of dynamic reconfiguration based on signals will work only
 # if we are using file based configuration approach.
@@ -80,15 +78,11 @@ dhcp6_unittests_SOURCES += hooks_unittest.cc
 dhcp6_unittests_SOURCES += dhcp6_test_utils.cc dhcp6_test_utils.h
 dhcp6_unittests_SOURCES += d2_unittest.cc d2_unittest.h
 dhcp6_unittests_SOURCES += marker_file.cc
-dhcp6_unittests_SOURCES += ../dhcp6_srv.h ../dhcp6_srv.cc
-dhcp6_unittests_SOURCES += ../dhcp6_log.h ../dhcp6_log.cc
-dhcp6_unittests_SOURCES += ../ctrl_dhcp6_srv.h ../ctrl_dhcp6_srv.cc
 dhcp6_unittests_SOURCES += ctrl_dhcp6_srv_unittest.cc
 dhcp6_unittests_SOURCES += wireshark.cc
 dhcp6_unittests_SOURCES += dhcp6_client.cc dhcp6_client.h
 dhcp6_unittests_SOURCES += rebind_unittest.cc
 dhcp6_unittests_SOURCES += sarr_unittest.cc
-dhcp6_unittests_SOURCES += ../json_config_parser.cc ../json_config_parser.h
 dhcp6_unittests_SOURCES += config_parser_unittest.cc
 dhcp6_unittests_SOURCES += confirm_unittest.cc
 dhcp6_unittests_SOURCES += dhcp6_message_test.cc dhcp6_message_test.h
@@ -96,21 +90,19 @@ dhcp6_unittests_SOURCES += dhcp6_message_test.cc dhcp6_message_test.h
 if CONFIG_BACKEND_BUNDY
 # For Bundy backend, we only need to run the usual tests. There are no
 # Bundy-specific tests yet.
-dhcp6_unittests_SOURCES += ../bundy_controller.cc
 dhcp6_unittests_SOURCES += bundy_controller_unittest.cc
 endif
 
 if CONFIG_BACKEND_JSON
-dhcp6_unittests_SOURCES += ../kea_controller.cc
 dhcp6_unittests_SOURCES += kea_controller_unittest.cc
 endif
 
-nodist_dhcp6_unittests_SOURCES  = ../dhcp6_messages.h ../dhcp6_messages.cc
-nodist_dhcp6_unittests_SOURCES += marker_file.h test_libraries.h
+nodist_dhcp6_unittests_SOURCES  = marker_file.h test_libraries.h
 
 dhcp6_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 dhcp6_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 dhcp6_unittests_LDADD = $(GTEST_LDADD)
+dhcp6_unittests_LDADD += $(top_builddir)/src/bin/dhcp6/libdhcp6.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp/tests/libdhcptest.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
