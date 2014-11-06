@@ -60,7 +60,8 @@ libkea_hooks_include_HEADERS = \
     callout_handle.h \
     callout_manager.h \
     library_handle.h \
-    hooks.h
+    hooks.h \
+    server_hooks.h
 
 if USE_CLANGPP
 # Disable unused parameter warning caused by some of the
