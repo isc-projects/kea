@@ -77,7 +77,7 @@ private:
 
 // Define the current database schema values
 
-const uint32_t CURRENT_VERSION_VERSION = 1;
+const uint32_t CURRENT_VERSION_VERSION = 2;
 const uint32_t CURRENT_VERSION_MINOR = 0;
 
 
