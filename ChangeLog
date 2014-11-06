@@ -1,3 +1,15 @@
+855.	[build]		fdupont
+	Use convenience archives for objects used in a makefile and
+	its parent makefile: before sources were compiled twice using
+	the broken subdir-objects option of automake, now objects
+	are put into a convenience static library (so an archive).
+	(Trac #3631, git xxx)
+
+854.	[bug]		marcin
+	Corrected a regression on "make distcheck" which appeared after
+	implementation of #3162 (partial fix).
+	(Trac #3629, git 9bb6b76a24e4356b30e59631e76e32c3096fb515)
+
 853.	[func]		tomek
 	Lease6 now is able to store MAC/hardware address information. Memfile
 	memfile backend has been updated to store/retrieve that additional
@@ -11,8 +23,8 @@
 	(Trac #3549, git d92e76860e6931477b3e60e5be8978302973f88f)
 
 851.	[bug]		tmark
-	Corrected a segmentation fault that was occurring under OS-X during D2 module
-	shutdown.
+	Corrected a segmentation fault that was occurring under OS-X
+	during D2 module shutdown.
 	(Trac #3470, git f7822568abd04c12faa3cde34fadaac238a373d3)
 
 850.	[build]		fdupont

@@ -1,5 +1,3 @@
-AUTOMAKE_OPTIONS = subdir-objects
-
 SUBDIRS = .
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
@@ -53,14 +51,14 @@ if USE_CLANGPP
 libdhcp_user_chk_unittests_CXXFLAGS += -Wno-unused-parameter
 endif
 
-libdhcp_user_chk_unittests_LDADD = $(top_builddir)/src/lib/log/libkea-log.la
+libdhcp_user_chk_unittests_LDADD = $(top_builddir)/src/hooks/dhcp/user_chk/libduc.la
+libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
-libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/hooks/dhcp/user_chk/libdhcp_user_chk.la
 libdhcp_user_chk_unittests_LDADD += ${CRYPTO_LIBS} ${CRYPTO_RPATH}
 libdhcp_user_chk_unittests_LDADD += $(GTEST_LDADD)
 endif

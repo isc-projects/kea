@@ -31,41 +31,46 @@ EXTRA_DIST = libdhcp_user_chk.dox
 #CLEANFILES = *.gcno *.gcda user_chk_messages.h user_chk_messages.cc s-messages
 CLEANFILES = *.gcno *.gcda
 
-noinst_LTLIBRARIES = libdhcp_user_chk.la
+# convenience archive
+
+noinst_LTLIBRARIES = libduc.la
+
+libduc_la_SOURCES  =
+libduc_la_SOURCES += load_unload.cc
+libduc_la_SOURCES += pkt_receive_co.cc
+libduc_la_SOURCES += pkt_send_co.cc
+libduc_la_SOURCES += subnet_select_co.cc
+libduc_la_SOURCES += user.cc user.h
+libduc_la_SOURCES += user_chk.h
+# Until logging in dynamically loaded libraries is fixed, exclude these.
+#libduc_la_SOURCES += user_chk_log.cc user_chk_log.h
+libduc_la_SOURCES += user_data_source.h
+libduc_la_SOURCES += user_file.cc user_file.h
+libduc_la_SOURCES += user_registry.cc user_registry.h
+libduc_la_SOURCES += version.cc
+
+# Until logging in dynamically loaded libraries is fixed, exclude these.
+#nodist_libduc_la_SOURCES = user_chk_messages.cc user_chk_messages.h
+
+libduc_la_CXXFLAGS = $(AM_CXXFLAGS)
+libduc_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+if USE_CLANGPP
+# Disable unused parameter warning caused by some of the
+# Boost headers when compiling with clang.
+libduc_la_CXXFLAGS += -Wno-unused-parameter
+endif
+
+noinst_LTLIBRARIES += libdhcp_user_chk.la
+
 libdhcp_user_chk_la_SOURCES  =
-libdhcp_user_chk_la_SOURCES += load_unload.cc
-libdhcp_user_chk_la_SOURCES += pkt_receive_co.cc
-libdhcp_user_chk_la_SOURCES += pkt_send_co.cc
-libdhcp_user_chk_la_SOURCES += subnet_select_co.cc
-libdhcp_user_chk_la_SOURCES += user.cc user.h
-libdhcp_user_chk_la_SOURCES += user_chk.h
-# Until logging in dynamically loaded libraries is fixed, exclude these.
-#libdhcp_user_chk_la_SOURCES += user_chk_log.cc user_chk_log.h
-libdhcp_user_chk_la_SOURCES += user_data_source.h
-libdhcp_user_chk_la_SOURCES += user_file.cc user_file.h
-libdhcp_user_chk_la_SOURCES += user_registry.cc user_registry.h
-libdhcp_user_chk_la_SOURCES += version.cc
-
-# Until logging in dynamically loaded libraries is fixed, exclude these.
-#nodist_libdhcp_user_chk_la_SOURCES = user_chk_messages.cc user_chk_messages.h
-
-libdhcp_user_chk_la_CXXFLAGS = $(AM_CXXFLAGS)
-libdhcp_user_chk_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
 libdhcp_user_chk_la_LDFLAGS  = $(AM_LDFLAGS)
 libdhcp_user_chk_la_LDFLAGS  += -avoid-version -export-dynamic -module
 # -rpath /nowhere is a hack to trigger libtool to not create a
 # convenience archive, resulting in shared modules
 libdhcp_user_chk_la_LDFLAGS  += -rpath /nowhere
-libdhcp_user_chk_la_LIBADD  =
+libdhcp_user_chk_la_LIBADD  = libduc.la
 libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
 libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
 libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/util/threads/libkea-threads.la
-
-
-if USE_CLANGPP
-# Disable unused parameter warning caused by some of the
-# Boost headers when compiling with clang.
-libdhcp_user_chk_la_CXXFLAGS += -Wno-unused-parameter
-endif

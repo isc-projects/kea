@@ -29,8 +29,15 @@ $(man_MANS):
 
 endif
 
+# convenience archive
+
+noinst_LTLIBRARIES = libsockcreator.la
+
+libsockcreator_la_SOURCES = sockcreator.cc sockcreator.h
+
 pkglibexec_PROGRAMS = kea-sockcreator
 
-kea_sockcreator_SOURCES = sockcreator.cc sockcreator.h main.cc
-kea_sockcreator_LDADD  = $(top_builddir)/src/lib/util/io/libkea-util-io.la
+kea_sockcreator_SOURCES = main.cc
+kea_sockcreator_LDADD  = libsockcreator.la
+kea_sockcreator_LDADD += $(top_builddir)/src/lib/util/io/libkea-util-io.la
 kea_sockcreator_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la

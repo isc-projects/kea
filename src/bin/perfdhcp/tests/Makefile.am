@@ -1,5 +1,3 @@
-AUTOMAKE_OPTIONS = subdir-objects
-
 SUBDIRS = . testdata
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
@@ -33,12 +31,6 @@ run_unittests_SOURCES += rate_control_unittest.cc
 run_unittests_SOURCES += stats_mgr_unittest.cc
 run_unittests_SOURCES += test_control_unittest.cc
 run_unittests_SOURCES += command_options_helper.h
-run_unittests_SOURCES += ../command_options.cc
-run_unittests_SOURCES += ../pkt_transform.cc
-run_unittests_SOURCES += ../perf_pkt6.cc
-run_unittests_SOURCES += ../perf_pkt4.cc
-run_unittests_SOURCES += ../rate_control.cc
-run_unittests_SOURCES += ../test_control.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
@@ -49,7 +41,8 @@ if USE_CLANGPP
 run_unittests_CXXFLAGS = -Wno-unused-parameter
 endif
 
-run_unittests_LDADD  = $(top_builddir)/src/lib/util/libkea-util.la
+run_unittests_LDADD  = $(top_builddir)/src/bin/perfdhcp/libperfdhcp.la
+run_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 run_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
