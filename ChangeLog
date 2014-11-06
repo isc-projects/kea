@@ -3,7 +3,7 @@
 	its parent makefile: before sources were compiled twice using
 	the broken subdir-objects option of automake, now objects
 	are put into a convenience static library (so an archive).
-	(Trac #3631, git xxx)
+	(Trac #3631, git d7954b4234114d8fa41aa51f671d4faa1724b748)
 
 854.	[bug]		marcin
 	Corrected a regression on "make distcheck" which appeared after
