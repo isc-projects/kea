@@ -20,6 +20,7 @@
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/subnet_id.h>
+#include <boost/shared_ptr.hpp>
 #include <list>
 #include <map>
 #include <string>
@@ -54,12 +55,14 @@ public:
     /// of 128 is used. This value indicates that the reservation is made
     /// for an IPv6 address.
     ///
+    /// @param type Reservation type: NA or PD.
     /// @param prefix Address or prefix to be reserved.
     /// @param prefix_len Prefix length.
     ///
     /// @throw isc::BadValue if prefix is not IPv6 prefix, is a
     /// multicast address or the prefix length is greater than 128.
-    IPv6Resrv(const asiolink::IOAddress& prefix,
+    IPv6Resrv(const Type& type,
+              const asiolink::IOAddress& prefix,
               const uint8_t prefix_len = 128);
 
     /// @brief Returns prefix for the reservation.
@@ -78,17 +81,22 @@ public:
     ///
     /// @return NA for prefix length equal to 128, PD otherwise.
     Type getType() const {
-        return (prefix_len_ == 128 ? TYPE_NA : TYPE_PD);
+        return (type_);
     }
 
     /// @brief Sets a new prefix and prefix length.
     ///
+    /// @param type Reservation type: NA or PD.
     /// @param prefix New prefix.
     /// @param prefix_len New prefix length.
     ///
     /// @throw isc::BadValue if prefix is not IPv6 prefix, is a
     /// multicast address or the prefix length is greater than 128.
-    void set(const asiolink::IOAddress& prefix, const uint8_t prefix_len);
+    void set(const Type& type, const asiolink::IOAddress& prefix,
+             const uint8_t prefix_len);
+
+    /// @brief Returns information about the reservation in the textual format.
+    std::string toText() const;
 
     /// @brief Equality operator.
     ///
@@ -101,6 +109,8 @@ public:
     bool operator!=(const IPv6Resrv& other) const;
 
 private:
+
+    Type type_;                  ///< Reservation type.
     asiolink::IOAddress prefix_; ///< Prefix
     uint8_t prefix_len_;         ///< Prefix length.
 
@@ -133,7 +143,10 @@ typedef std::pair<IPv6ResrvIterator, IPv6ResrvIterator> IPv6ResrvRange;
 /// interfaces. For the MAC address based reservations, each interface on a
 /// network device maps to a single @c Host object as each @c Host object
 /// contains at most one MAC address. So, it is possible that a single
-/// device is associated with multiple distinct @c Host objects.
+/// device is associated with multiple distinct @c Host objects if the
+/// device has multiple interfaces. Under normal circumstances, a non-mobile
+/// dual stack device using one interface should be represented by a single
+/// @c Host object.
 ///
 /// A DHCPv6 DUID is common for all interfaces on a device. Therefore, for
 /// DUID based reservations a @c Host object may represent a network device with
@@ -282,6 +295,10 @@ public:
         return (duid_);
     }
 
+    const std::vector<uint8_t>& getIdentifier() const;
+
+    IdentifierType getIdentifierType() const;
+
     /// @brief Sets new IPv4 subnet identifier.
     ///
     /// @param ipv4_subnet_id New subnet identifier.
@@ -311,9 +328,9 @@ public:
     /// The new reservation removes a previous reservation.
     ///
     /// @param address Address to be reserved for the client.
-    void setIPv4Reservation(const asiolink::IOAddress& address) {
-        ipv4_reservation_ = address;
-    }
+    ///
+    /// @throw isc::BadValue if the provided address is not an IPv4 address.
+    void setIPv4Reservation(const asiolink::IOAddress& address);
 
     /// @brief Returns reserved IPv4 address.
     ///
@@ -334,6 +351,14 @@ public:
     /// @return A range of iterators pointing to the reservations of
     /// the specified type.
     IPv6ResrvRange getIPv6Reservations(const IPv6Resrv::Type& type) const;
+
+    /// @brief Checks if specified IPv6 reservation exists for the host.
+    ///
+    /// @param reservation A reservation to be checked for the host.
+    ///
+    /// @return true if the reservation already exists for the host, false
+    /// otherwise.
+    bool hasReservation(const IPv6Resrv& reservation) const;
 
     /// @brief Sets new hostname.
     ///
@@ -407,6 +432,18 @@ private:
     /// @brief Collection of classes associated with a DHCPv6 client.
     ClientClasses dhcp6_client_classes_;
 };
+
+/// @brief Pointer to the @c Host object.
+typedef boost::shared_ptr<Host> HostPtr;
+
+/// @brief Const pointer to the @c Host object.
+typedef boost::shared_ptr<const Host> ConstHostPtr;
+
+/// @brief Collection of the const Host objects.
+typedef std::vector<ConstHostPtr> ConstHostCollection;
+
+/// @brief Collection of the @c Host objects.
+typedef std::vector<HostPtr> HostCollection;
 
 }
 }
