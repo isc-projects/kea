@@ -52,6 +52,10 @@ public:
     /// Not really a type, only used in getMAC() calls.
     static const uint32_t HWADDR_SOURCE_ANY = 0xffff;
 
+    /// Used when actual origin is not known, e.g. when reading from a
+    /// lease database that didn't store that information.
+    static const uint32_t HWADDR_SOURCE_UNKNOWN = 0x0000;
+
     /// Obtained first hand from raw socket (100% reliable).
     static const uint32_t HWADDR_SOURCE_RAW = 0x0001;
 

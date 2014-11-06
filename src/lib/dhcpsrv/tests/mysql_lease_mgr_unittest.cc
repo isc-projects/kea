@@ -135,7 +135,8 @@ void createSchema() {
 
     // Execute creation statements.
     for (int i = 0; create_statement[i] != NULL; ++i) {
-        (void) mysql_query(mysql, create_statement[i]);
+        ASSERT_EQ(0, mysql_query(mysql, create_statement[i]))
+            << "Failed on statement " << i << ": " << create_statement[i];
     }
 }
 
@@ -520,6 +521,16 @@ TEST_F(MySqlLeaseMgrTest, testRecreateLease6) {
 /// Test is disabled as MySqlLeaseMgr does not currently defend against a null DUID.
 TEST_F(MySqlLeaseMgrTest, DISABLED_nullDuid) {
     testNullDuid();
+}
+
+/// @brief Tests whether memfile can store and retrieve hardware addresses
+TEST_F(MySqlLeaseMgrTest, testLease6Mac) {
+    testLease6MAC();
+}
+
+/// @brief Tests whether memfile can store and retrieve hardware addresses
+TEST_F(MySqlLeaseMgrTest, testLease6HWTypeAndSource) {
+    testLease6HWTypeAndSource();
 }
 
 }; // Of anonymous namespace

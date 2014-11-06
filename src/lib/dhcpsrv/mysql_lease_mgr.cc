@@ -161,21 +161,24 @@ TaggedStatement tagged_statements[] = {
                     "SELECT address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "
                         "lease_type, iaid, prefix_len, "
-                        "fqdn_fwd, fqdn_rev, hostname "
+                        "fqdn_fwd, fqdn_rev, hostname, "
+                        "hwaddr, hwtype, hwaddr_source "
                             "FROM lease6 "
                             "WHERE address = ? AND lease_type = ?"},
     {MySqlLeaseMgr::GET_LEASE6_DUID_IAID,
                     "SELECT address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "
                         "lease_type, iaid, prefix_len, "
-                        "fqdn_fwd, fqdn_rev, hostname "
+                        "fqdn_fwd, fqdn_rev, hostname, "
+                        "hwaddr, hwtype, hwaddr_source "
                             "FROM lease6 "
                             "WHERE duid = ? AND iaid = ? AND lease_type = ?"},
     {MySqlLeaseMgr::GET_LEASE6_DUID_IAID_SUBID,
                     "SELECT address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "
                         "lease_type, iaid, prefix_len, "
-                        "fqdn_fwd, fqdn_rev, hostname "
+                        "fqdn_fwd, fqdn_rev, hostname, "
+                        "hwaddr, hwtype, hwaddr_source "
                             "FROM lease6 "
                             "WHERE duid = ? AND iaid = ? AND subnet_id = ? "
                             "AND lease_type = ?"},
@@ -190,8 +193,9 @@ TaggedStatement tagged_statements[] = {
                     "INSERT INTO lease6(address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "
                         "lease_type, iaid, prefix_len, "
-                        "fqdn_fwd, fqdn_rev, hostname) "
-                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"},
+                        "fqdn_fwd, fqdn_rev, hostname, "
+                        "hwaddr, hwtype, hwaddr_source) "
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"},
     {MySqlLeaseMgr::UPDATE_LEASE4,
                     "UPDATE lease4 SET address = ?, hwaddr = ?, "
                         "client_id = ?, valid_lifetime = ?, expire = ?, "
@@ -203,7 +207,7 @@ TaggedStatement tagged_statements[] = {
                         "valid_lifetime = ?, expire = ?, subnet_id = ?, "
                         "pref_lifetime = ?, lease_type = ?, iaid = ?, "
                         "prefix_len = ?, fqdn_fwd = ?, fqdn_rev = ?, "
-                        "hostname = ? "
+                        "hostname = ?, hwaddr = ?, hwtype = ?, hwaddr_source = ? "
                             "WHERE address = ?"},
     // End of list sentinel
     {MySqlLeaseMgr::NUM_STATEMENTS, NULL}
@@ -302,6 +306,7 @@ public:
     /// The initialization of the variables here is only to satisfy cppcheck -
     /// all variables are initialized/set in the methods before they are used.
     MySqlLease4Exchange() : addr4_(0), hwaddr_length_(0), client_id_length_(0),
+                            client_id_null_(MLM_FALSE),
                             fqdn_fwd_(false), fqdn_rev_(false), hostname_length_(0) {
         memset(hwaddr_buffer_, 0, sizeof(hwaddr_buffer_));
         memset(client_id_buffer_, 0, sizeof(client_id_buffer_));
@@ -648,7 +653,7 @@ private:
 
 class MySqlLease6Exchange : public MySqlLeaseExchange {
     /// @brief Set number of database columns for this lease structure
-    static const size_t LEASE_COLUMNS = 12;
+    static const size_t LEASE_COLUMNS = 15;
 
 public:
     /// @brief Constructor
@@ -657,10 +662,12 @@ public:
     /// all variables are initialized/set in the methods before they are used.
     MySqlLease6Exchange() : addr6_length_(0), duid_length_(0),
                             fqdn_fwd_(false), fqdn_rev_(false),
-                            hostname_length_(0) {
+                            hostname_length_(0), hwaddr_length_(0),
+                            hwaddr_null_(MLM_FALSE), hwtype_(0), hwaddr_source_(0) {
         memset(addr6_buffer_, 0, sizeof(addr6_buffer_));
         memset(duid_buffer_, 0, sizeof(duid_buffer_));
         memset(hostname_buffer_, 0, sizeof(hostname_buffer_));
+        memset(hwaddr_buffer_, 0, sizeof(hwaddr_buffer_));
         std::fill(&error_[0], &error_[LEASE_COLUMNS], MLM_FALSE);
 
         // Set the column names (for error messages)
@@ -676,7 +683,10 @@ public:
         columns_[9]  = "fqdn_fwd";
         columns_[10] = "fqdn_rev";
         columns_[11] = "hostname";
-        BOOST_STATIC_ASSERT(8 < LEASE_COLUMNS);
+        columns_[12] = "hwaddr";
+        columns_[13] = "hwtype";
+        columns_[14] = "hwaddr_source";
+        BOOST_STATIC_ASSERT(14 < LEASE_COLUMNS);
     }
 
     /// @brief Create MYSQL_BIND objects for Lease6 Pointer
@@ -820,11 +830,73 @@ public:
         // bind_[11].is_null = &MLM_FALSE; // commented out for performance
                                            // reasons, see memset() above
 
+        // hwaddr: varbinary(20) - hardware/MAC address
+        HWAddrPtr hwaddr = lease_->hwaddr_;
+        if (hwaddr) {
+            hwaddr_ = hwaddr->hwaddr_;
+            hwaddr_length_ = hwaddr->hwaddr_.size();
+
+            bind_[12].buffer_type = MYSQL_TYPE_BLOB;
+            bind_[12].buffer = reinterpret_cast<char*>(&(hwaddr_[0]));
+            bind_[12].buffer_length = hwaddr_length_;
+            bind_[12].length = &hwaddr_length_;
+        } else {
+            bind_[12].buffer_type = MYSQL_TYPE_NULL;
+
+            // According to http://dev.mysql.com/doc/refman/5.5/en/
+            // c-api-prepared-statement-data-structures.html, the other
+            // fields doesn't matter if type is set to MYSQL_TYPE_NULL,
+            // but let's set them to some sane values in case earlier versions
+            // didn't have that assumption.
+            hwaddr_null_ = MLM_TRUE;
+            bind_[12].buffer = NULL;
+            bind_[12].is_null = &hwaddr_null_;
+        }
+
+        // hwtype
+        if (hwaddr) {
+            hwtype_ = lease->hwaddr_->htype_;
+            bind_[13].buffer_type = MYSQL_TYPE_SHORT;
+            bind_[13].buffer = reinterpret_cast<char*>(&hwtype_);
+            bind_[13].is_unsigned = MLM_TRUE;
+        } else {
+            hwtype_ = 0;
+            bind_[13].buffer_type = MYSQL_TYPE_NULL;
+            // According to http://dev.mysql.com/doc/refman/5.5/en/
+            // c-api-prepared-statement-data-structures.html, the other
+            // fields doesn't matter if type is set to MYSQL_TYPE_NULL,
+            // but let's set them to some sane values in case earlier versions
+            // didn't have that assumption.
+            hwaddr_null_ = MLM_TRUE;
+            bind_[13].buffer = NULL;
+            bind_[13].is_null = &hwaddr_null_;
+        }
+
+        /// Hardware source
+        if (hwaddr) {
+            hwaddr_source_ = lease->hwaddr_->source_;
+            bind_[14].buffer_type = MYSQL_TYPE_LONG;
+            bind_[14].buffer = reinterpret_cast<char*>(&hwaddr_source_);
+            bind_[14].is_unsigned = MLM_TRUE;
+        } else {
+            hwaddr_source_ = 0;
+
+            bind_[14].buffer_type = MYSQL_TYPE_NULL;
+            // According to http://dev.mysql.com/doc/refman/5.5/en/
+            // c-api-prepared-statement-data-structures.html, the other
+            // fields doesn't matter if type is set to MYSQL_TYPE_NULL,
+            // but let's set them to some sane values in case earlier versions
+            // didn't have that assumption.
+            hwaddr_null_ = MLM_TRUE;
+            bind_[14].buffer = NULL;
+            bind_[14].is_null = &hwaddr_null_;
+        }
+
         // Add the error flags
         setErrorIndicators(bind_, error_, LEASE_COLUMNS);
 
         // .. and check that we have the numbers correct at compile time.
-        BOOST_STATIC_ASSERT(11 < LEASE_COLUMNS);
+        BOOST_STATIC_ASSERT(14 < LEASE_COLUMNS);
 
         // Add the data to the vector.  Note the end element is one after the
         // end of the array.
@@ -941,11 +1013,31 @@ public:
         // bind_[11].is_null = &MLM_FALSE; // commented out for performance
                                            // reasons, see memset() above
 
+        // hardware address
+        // hwaddr: varbinary(20)
+        hwaddr_null_ = MLM_FALSE;
+        hwaddr_length_ = sizeof(hwaddr_buffer_);
+        bind_[12].buffer_type = MYSQL_TYPE_BLOB;
+        bind_[12].buffer = reinterpret_cast<char*>(hwaddr_buffer_);
+        bind_[12].buffer_length = hwaddr_length_;
+        bind_[12].length = &hwaddr_length_;
+        bind_[12].is_null = &hwaddr_null_;
+
+        // hardware type: unsigned short int (16 bits)
+        bind_[13].buffer_type = MYSQL_TYPE_SHORT;
+        bind_[13].buffer = reinterpret_cast<char*>(&hwtype_);
+        bind_[13].is_unsigned = MLM_TRUE;
+
+        // hardware source: unsigned int (32 bits)
+        bind_[14].buffer_type = MYSQL_TYPE_LONG;
+        bind_[14].buffer = reinterpret_cast<char*>(&hwaddr_source_);
+        bind_[14].is_unsigned = MLM_TRUE;
+
         // Add the error flags
         setErrorIndicators(bind_, error_, LEASE_COLUMNS);
 
         // .. and check that we have the numbers correct at compile time.
-        BOOST_STATIC_ASSERT(11 < LEASE_COLUMNS);
+        BOOST_STATIC_ASSERT(14 < LEASE_COLUMNS);
 
         // Add the data to the vector.  Note the end element is one after the
         // end of the array.
@@ -1001,8 +1093,12 @@ public:
         std::string hostname(hostname_buffer_,
                              hostname_buffer_ + hostname_length_);
 
-        /// @todo: HWAddr is not yet stored, see ticket #3556.
+        /// Set hardware address if it was set
         HWAddrPtr hwaddr;
+        if (hwaddr_null_ == MLM_FALSE) {
+            hwaddr.reset(new HWAddr(hwaddr_buffer_, hwaddr_length_, hwtype_));
+            hwaddr->source_ = hwaddr_source_;
+        }
 
         // Create the lease and set the cltt (after converting from the
         // expire time retrieved from the database).
@@ -1060,7 +1156,13 @@ private:
     char            hostname_buffer_[HOSTNAME_MAX_LEN];
                                         ///< Client hostname
     unsigned long   hostname_length_;   ///< Client hostname length
-
+    uint8_t         hwaddr_buffer_[HWAddr::MAX_HWADDR_LEN];
+                                        ///< Buffer for Hardware address
+    std::vector<uint8_t> hwaddr_;       ///< Hardware address (optional)
+    unsigned long   hwaddr_length_;     ///< Aux. variable denoting hwaddr_ size()
+    my_bool         hwaddr_null_;       ///< Used when HWAddr is null
+    uint16_t        hwtype_;            ///< Hardware type
+    uint32_t        hwaddr_source_;     ///< Source of the hardware address
 };
 
 

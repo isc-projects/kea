@@ -916,6 +916,54 @@ GenericLeaseMgrTest::testLease6MAC() {
     EXPECT_FALSE(stored3->hwaddr_);
 }
 
+// Checks whether a hardware address type can be stored and retrieved.
+void
+GenericLeaseMgrTest::testLease6HWTypeAndSource() {
+    // Get the leases to be used for the test.
+    vector<Lease6Ptr> leases = createLeases6();
+
+    HWAddrPtr hwaddr1(new HWAddr(vector<uint8_t>(6, 11), 123));
+    HWAddrPtr hwaddr2(new HWAddr(vector<uint8_t>(6, 22), 456));
+
+    // Those should use defines from Pkt::HWADDR_SOURCE_*, but let's
+    // test an uncommon value (and 0 which means unknown).
+    hwaddr1->source_ = 123456u;
+    hwaddr2->source_ = 0;
+
+    leases[1]->hwaddr_ = hwaddr1;     // Add hardware address to leases 1 and 2
+    leases[2]->hwaddr_ = hwaddr2;
+    leases[3]->hwaddr_ = HWAddrPtr(); // No hardware address for the third one
+
+    // Start the tests.  Add three leases to the database, read them back and
+    // check they are what we think they are.
+    EXPECT_TRUE(lmptr_->addLease(leases[1]));
+    EXPECT_TRUE(lmptr_->addLease(leases[2]));
+    EXPECT_TRUE(lmptr_->addLease(leases[3]));
+    lmptr_->commit();
+
+    // Reopen the database to ensure that they actually got stored.
+    reopen(V6);
+
+    // First lease should have a hardware address in it
+    Lease6Ptr stored1 = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
+    ASSERT_TRUE(stored1);
+    ASSERT_TRUE(stored1->hwaddr_);
+    EXPECT_EQ(123, stored1->hwaddr_->htype_);
+    EXPECT_EQ(123456, stored1->hwaddr_->source_);
+
+    // Second lease should have a hardware address in it
+    Lease6Ptr stored2 = lmptr_->getLease6(leasetype6_[2], ioaddress6_[2]);
+    ASSERT_TRUE(stored2);
+    ASSERT_TRUE(stored2->hwaddr_);
+    EXPECT_EQ(456, stored2->hwaddr_->htype_);
+    EXPECT_EQ(0, stored2->hwaddr_->source_);
+
+    // Third lease should NOT have any hardware address.
+    Lease6Ptr stored3 = lmptr_->getLease6(leasetype6_[3], ioaddress6_[3]);
+    ASSERT_TRUE(stored3);
+    EXPECT_FALSE(stored3->hwaddr_);
+}
+
 void
 GenericLeaseMgrTest::testLease4InvalidHostname() {
     // Get the leases to be used for the test.
