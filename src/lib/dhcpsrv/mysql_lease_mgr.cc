@@ -735,6 +735,10 @@ public:
                                           // reasons, see memset() above
 
         // duid: varchar(128)
+        if (!lease_->duid_) {
+            isc_throw(DbOperationError, "lease6 for address " << addr6_
+                      << " is missing mandatory client-id.");
+        }
         duid_ = lease_->duid_->getDuid();
         duid_length_ = duid_.size();
 
