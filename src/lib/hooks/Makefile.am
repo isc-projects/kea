@@ -53,12 +53,15 @@ libkea_hooks_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.l
 
 # Specify the headers for copying into the installation directory tree. User-
 # written libraries only need the definitions from the headers for the
-# CalloutHandle and LibraryHandle objects.
+# CalloutHandle and LibraryHandle objects. CalloutManager may be required by
+# users testing statically linked KEA binaries.
 libkea_hooks_includedir = $(pkgincludedir)/hooks
 libkea_hooks_include_HEADERS = \
     callout_handle.h \
+    callout_manager.h \
     library_handle.h \
-    hooks.h
+    hooks.h \
+    server_hooks.h
 
 if USE_CLANGPP
 # Disable unused parameter warning caused by some of the
