@@ -66,6 +66,10 @@ We have received the following contributions:
  - Nicolas Chaigneau, Capgemini
    2014-09: Fix for interfaces with multiple addresses in perfdhcp
 
+ - Marcin Wyszynki, Facebook
+   2014-11: Export CalloutManager headers for testing statically linked
+            libraries.
+
 Kea uses log4cplus (http://sourceforge.net/projects/log4cplus/) for logging,
 Boost (http://www.boost.org/) library for almost everything, and can use Botan
 (http://botan.randombit.net/) or OpenSSL (https://www.openssl.org/) for
