@@ -1,3 +1,8 @@
+856.	[build]		marcinw
+	callout_manager.h and server_hooks.h headers are now exported,
+	so statically linked libraries can be tested.
+	(Github #4, git 00b5f3fa0369c13021bf4fb78c6450e524e4e411)
+
 855.	[build]		fdupont
 	Use convenience archives for objects used in a makefile and
 	its parent makefile: before sources were compiled twice using
