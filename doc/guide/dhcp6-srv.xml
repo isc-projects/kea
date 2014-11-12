@@ -26,9 +26,9 @@
           </listitem>
           <listitem>
             <simpara>
-            <command>-v</command> - specifies whether the server
+            <command>-d</command> - specifies whether the server
             logging should be switched to verbose mode. In verbose mode,
-            the logging severity and debuglevel specified in a configuration
+            the logging severity and debuglevel specified in the configuration
             file are ignored and "debug" severity and the maximum debuglevel
             (99) are assumed. The flag is convenient, for temporarily
             switching the server into maximum verbosity, e.g. when
@@ -37,8 +37,8 @@
           <listitem>
             <simpara>
             <command>-p <replaceable>port</replaceable></command> -
-            specifies UDP port the server will listen on. This is only
-            useful during testing, as the DHCPv6 server listening on
+            specifies UDP port on which the server will listen. This is only
+            useful during testing, as a DHCPv6 server listening on
             ports other than default DHCPv6 ports will not be able to
             handle regular DHCPv6 queries.</simpara>
           </listitem>
@@ -142,11 +142,11 @@ and ends with the corresponding closing brace (in the above example,
 the brace after the last comment).  Everything defined between those
 lines is considered to be the Dhcp6 configuration.</para>
 
-<para>In general case, the order in which those parameters appear does not
+<para>In the general case, the order in which those parameters appear does not
 matter. There are two caveats here though. The first one is to remember that
-the configuration file must be a well formed JSON. That means that parameters
-for any given scope must be separate by a comma and there must not be a comma
-after the last parameter. When reordering configuration file, keep in mind that
+the configuration file must be well formed JSON. That means that parameters
+for any given scope must be separated by a comma and there must not be a comma
+after the last parameter. When reordering a configuration file, keep in mind that
 moving a parameter to or from the last position in a given scope may require
 moving the comma as well. The second caveat is that it is uncommon &mdash; although
 legal JSON &mdash; to
@@ -169,19 +169,19 @@ look like this:
 As "<command>interfaces</command>" is not the last parameter in the
 configuration, a trailing comma is required.</para>
 <para>A number of other parameters follow. <command>valid-lifetime</command>
-defines how long the addresses (leases) given out by the server are valid. If
-nothing changes, client that got the address is allowed to use it for 4000
+defines for how long the addresses (leases) given out by the server are valid. If
+nothing changes, a client that got an address is allowed to use it for 4000
 seconds. (Note that integer numbers are specified as is, without any quotes
 around them.) The address will become deprecated in 3000 seconds (clients are
 allowed to keep old connections, but can't use this address for creating new
 connections). <command>renew-timer</command> and <command>
 rebind-timer</command> are values that define T1 and T2 timers that govern when
-the client will begin renewal and rebind procedures.</para>
+the client will begin the renewal and rebind procedures.</para>
 
-<para>The next couple lines define the lease database, the place where the server
+<para>The next couple of lines define the lease database, the place where the server
 stores its lease information. This particular example tells the server to use
 <command>memfile</command>, which is the simplest (and fastest) database
-backend. It uses in-memory database and stores leases on disk in a CSV
+backend. It uses an in-memory database and stores leases on disk in a CSV
 file. This is a very simple configuration. Usually, lease database configuration
 is more extensive and contains additional parameters.  Note that
 <command>lease-database</command>
@@ -193,11 +193,11 @@ comma is present.</para>
 
 <para>Finally, we need to define a list of IPv6 subnets. This is the
 most important DHCPv6 configuration structure as the server uses that
-information to process clients' requests. It defines all subnets that
-the server is expected to receive DHCP requests from. The subnets are
+information to process clients' requests. It defines all subnets from
+which the server is expected to receive DHCP requests. The subnets are
 specified with the <command>subnet6</command> parameter.  It is a list,
 so it starts and ends with square brackets.  Each subnet definition in
-the list has several attributes associated with it, so is a structure
+the list has several attributes associated with it, so it is a structure
 and is opened and closed with braces. At minimum, a subnet definition
 has to have at least two parameters: <command>subnet</command> (that
 defines the whole subnet) and <command>pool</command> (which is a list of
@@ -327,7 +327,7 @@ JSON validator is available at <ulink url="http://jsonviewer.stack.hu/"/>.
   access the database should be set:
 <screen>
 "Dhcp6": { "lease-database": { <userinput>"user": "<replaceable>user-name</replaceable>"</userinput>,
-                               <userinput>"password" "<replaceable>password</replaceable>"</userinput>,
+                               <userinput>"password": "<replaceable>password</replaceable>"</userinput>,
                               ... },
            ... }
 </screen>
@@ -360,7 +360,7 @@ temporarily override a list of interface names and listen on all interfaces.
     <section id="ipv6-subnet-id">
       <title>IPv6 Subnet Identifier</title>
       <para>
-        Subnet identifier is a unique number associated with a particular subnet.
+        The subnet identifier is a unique number associated with a particular subnet.
         In principle, it is used to associate clients' leases with respective subnets.
         When the subnet identifier is not specified for a subnet being configured, it will
         be automatically assigned by the configuration mechanism. The identifiers
@@ -370,17 +370,17 @@ temporarily override a list of interface names and listen on all interfaces.
       <para>
        If there are multiple subnets configured with auto-generated identifiers and
        one of them is removed, the subnet identifiers may be renumbered. For example:
-       if there are 4 subnets and 3rd is removed the last subnet will be assigned
-       identifier that the 3rd subnet had before removal. As a result, the leases
-       stored in the lease database for subnet 3 are now associated with the
+       if there are four subnets and the third is removed the last subnet will be assigned
+       the identifier that the third subnet had before removal. As a result, the leases
+       stored in the lease database for subnet 3 are now associated with
        subnet 4, which may have unexpected consequences. In the future it is planned
-       to implement the mechanism to preserve auto-generated subnet ids upon removal
+       to implement a mechanism to preserve auto-generated subnet ids upon removal
        of one of the subnets. Currently, the only remedy for this issue is to
-       manually specify the unique subnet identifier for each subnet.
+       manually specify a unique subnet identifier for each subnet.
       </para>
 
       <para>
-	The following configuration will assign the arbitrary subnet
+	The following configuration will assign the specified subnet
 	identifier to the newly configured subnet:
 
 	<screen>
@@ -403,16 +403,16 @@ temporarily override a list of interface names and listen on all interfaces.
     <section id="dhcp6-unicast">
       <title>Unicast traffic support</title>
       <para>
-        When DHCPv6 server starts up, by default it listens to the DHCP traffic
+        When the DHCPv6 server starts, by default it listens to the DHCP traffic
         sent to multicast address ff02::1:2 on each interface that it is
         configured to listen on (see <xref linkend="dhcp6-interface-selection"/>).
         In some cases it is useful to configure a server to handle incoming
         traffic sent to the global unicast addresses as well. The most common
         reason for that is to have relays send their traffic to the server
-        directly. To configure server to listen on specific unicast address, a
-        notation to specify interfaces has been extended. Interface name can be
-        optionally followed by a slash, followed by global unicast address that
-        server should listen on. That will be done in addition to normal
+        directly. To configure the server to listen on a specific unicast address, the
+        notation to specify interfaces has been extended.  An interface name can be
+        optionally followed by a slash, followed by the global unicast address on which
+        the server should listen. This will be done in addition to normal
         link-local binding + listening on ff02::1:2 address. The sample commands
         listed below show how to listen on 2001:db8::1 (a global address)
         configured on the eth1 interface.
@@ -424,7 +424,7 @@ temporarily override a list of interface names and listen on all interfaces.
     ...
 }</screen>
 
-        When configuration gets committed, the server will start to listen on
+        When this configuration gets committed, the server will start to listen on
         eth1 on link-local address, multicast group (ff02::1:2) and 2001:db8::1.
       </para>
       <para>
@@ -435,8 +435,8 @@ temporarily override a list of interface names and listen on all interfaces.
       <para>
         Care should be taken to specify proper unicast addresses. The server will
         attempt to bind to those addresses specified, without any additional checks.
-        That approach is selected on purpose, so in the software can be used to
-        communicate over uncommon addresses if the administrator desires so.
+        This approach is selected on purpose, so the software can be used to
+        communicate over uncommon addresses if the administrator so desires.
       </para>
     </section>
 
@@ -471,14 +471,14 @@ temporarily override a list of interface names and listen on all interfaces.
         is specified.</para>
 
         <para>Each <command>pool</command> is a structure that contains the
-        parameters th describe a single pool. Currently there is only one
+        parameters that describe a single pool. Currently there is only one
         parameter, <command>pool</command>, which gives the range of addresses
         in the pool. Additional parameters will be added in future releases of
         Kea.</para>
 
         <para>It is possible to define more than one pool in a
         subnet: continuing the previous example, further assume that
-        2001:db8:1:0:5::/80 should be also be managed by the server. It could be written as
+        2001:db8:1:0:5::/80 should also be managed by the server. It could be written as
         2001:db8:1:0:5:: to 2001:db8:1::5:ffff:ffff:ffff, but typing so many 'f's
         is cumbersome. It can be expressed more simply as 2001:db8:1:0:5::/80. Both
         formats are supported by Dhcp6 and can be mixed in the pool list.
@@ -521,16 +521,16 @@ temporarily override a list of interface names and listen on all interfaces.
         ...
     ]
 }</screen>
-        In this example, we allow server to
+        In this example, we allow the server to
         dynamically assign all addresses available in the whole subnet. Although
         rather wasteful, it is certainly a valid configuration to dedicate the
         whole /64 subnet for that purpose. Note that the Kea server does not preallocate
-        the leases, so there is no danger of using gigantic address pools.
+        the leases, so there is no danger in using gigantic address pools.
       </para>
       <para>
         When configuring a DHCPv6 server using prefix/length notation, please pay
-        attention to the boundary values. When specifying that the server should use
-        a given pool, it will be able to allocate also first (typically network
+        attention to the boundary values. When specifying that the server can use
+        a given pool, it will also be able to allocate the first (typically network
         address) address from that pool. For example for pool 2001:db8:2::/64 the
         2001:db8:2:: address may be assigned as well. If you want to avoid this,
         use the "min-max" notation.
@@ -546,8 +546,9 @@ temporarily override a list of interface names and listen on all interfaces.
         A subnet may have one or more prefix delegation pools.  Each pool has
         a prefixed address, which is specified as a prefix and a prefix length,
         as well as a delegated prefix length. <command>delegated-len</command>
-	must not be shorter (numerically greater) than
-	<command>prefix-len</command>. If both <command>delegated-len</command>
+	must not be shorter (that is it must be numerically greater or equal)
+	than <command>prefix-len</command>.
+	If both <command>delegated-len</command>
 	and <command>prefix-len</command> are equal, the server will be able to
 	delegate only one prefix. A sample configuration is shown below:
       <screen>
@@ -572,13 +573,13 @@ temporarily override a list of interface names and listen on all interfaces.
     <section id="dhcp6-std-options">
       <title>Standard DHCPv6 options</title>
       <para>
-        One of the major features of DHCPv6 server is to provide configuration
-        options to clients. Although there are several options that require
+        One of the major features of a DHCPv6 server is to provide configuration
+        options to clients.  Although there are several options that require
         special behavior, most options are sent by the server only if the client
-        explicitly requested them.  The following example shows how to
+        explicitly requests them.  The following example shows how to
         configure DNS servers, which is one of the most frequently used
-        options. Numbers in the first column are added for easier reference and
-        will not appear on screen. Options specified in this way are considered
+        options.  Numbers in the first column are added for easier reference and
+        will not appear on screen.  Options specified in this way are considered
         global and apply to all configured subnets.
 
         <screen>
@@ -598,26 +599,28 @@ temporarily override a list of interface names and listen on all interfaces.
       </para>
 
     <para>
-      The first line creates new entry in option-data table. It contains
+      The <command>option-data></command> line creates a new entry in
+      the option-data table.  This table contains
       information on all global options that the server is supposed to configure
-      in all subnets. The second line specifies option name. For a complete list
+      in all subnets.  The <command>name</command> line specifies the option name.
+      (For a complete list
       of currently supported names, see <xref
-      linkend="dhcp6-std-options-list"/>.  The third line specifies option code,
-      which must match one of the values from that list. Line beginning with
-      <command>space</command> specifies option space, which must always be set
-      to "dhcp6" as these are standard DHCPv6 options. For other name spaces,
+      linkend="dhcp6-std-options-list"/>.)  The next line specifies the option code,
+      which must match one of the values from that list. The line beginning with
+      <command>space</command> specifies the option space, which must always be set
+      to "dhcp6" as these are standard DHCPv6 options.  For other name spaces,
       including custom option spaces, see <xref
-      linkend="dhcp6-option-spaces"/>. The fifth line specifies the format in
+      linkend="dhcp6-option-spaces"/>. The next line specifies the format in
       which the data will be entered: use of CSV (comma separated values) is
-      recommended. The sixth line gives the actual value to be sent to
-      clients. Data is specified as a normal text, with values separated by
+      recommended. The <command>data</command> line gives the actual value to be sent to
+      clients.  Data is specified as normal text, with values separated by
       commas if more than one value is allowed.
     </para>
 
     <para>
-      Options can also be configured as hexadecimal values. If csv-format is
+      Options can also be configured as hexadecimal values.  If "csv-format" is
       set to false, the option data must be specified as a string of hexadecimal
-      numbers. The
+      numbers.  The
       following commands configure the DNS-SERVERS option for all
       subnets with the following addresses: 2001:db8:1::cafe and
       2001:db8:1::babe.
@@ -639,7 +642,7 @@ temporarily override a list of interface names and listen on all interfaces.
 
        The value for the setting of the "data" element is split across two
        lines in this document for clarity: when entering the command, the
-       whole string should be entered on the same line. Care should be taken
+       whole string should be entered on the same line.  Care should be taken
        to use proper encoding when using hexadecimal format as Kea's ability
        to validate data correctness in hexadecimal is limited.
       </para>
@@ -702,7 +705,7 @@ temporarily override a list of interface names and listen on all interfaces.
     <para>
       Some options are designated as arrays, which means that more than one
       value is allowed in such an option. For example the option dns-servers
-      allows the specification of more than one IPv6 address, so allowing
+      allows the specification of more than one IPv6 address, allowing
       clients to obtain the addresses of multiple DNS servers.
     </para>
 
@@ -718,8 +721,8 @@ temporarily override a list of interface names and listen on all interfaces.
         a server administrator must create a definition as described in
         <xref linkend="dhcp6-custom-options"/> in the 'dhcp6' option space. This
         definition should match the option format described in the relevant
-        RFC but configuration mechanism would allow any option format as it has
-        no means to validate it at the moment.
+        RFC but the configuration mechanism would allow any option format as it has
+        no means to validate the format at the moment.
       </para>
 
 
@@ -831,7 +834,7 @@ temporarily override a list of interface names and listen on all interfaces.
 "Dhcp6": {
     "option-data": [
         {
-            <userinput>name "foo",
+            <userinput>"name": "foo",
             "code": 100,
             "space": "dhcp6",
             "csv-format": true,
@@ -895,7 +898,7 @@ temporarily override a list of interface names and listen on all interfaces.
       </para>
 
       <note>
-       <para>In general case, boolean values are specified as <command>true</command> or
+       <para>In the general case, boolean values are specified as <command>true</command> or
        <command>false</command>, without quotes. Some specific boolean parameters may
        accept also <command>"true"</command>, <command>"false"</command>,
        <command>0</command>, <command>1</command>, <command>"0"</command> and
@@ -973,14 +976,14 @@ temporarily override a list of interface names and listen on all interfaces.
       <title>Nested DHCPv6 options (custom option spaces)</title>
       <para>It is sometimes useful to define completely new option
       spaces.  This is useful if the user wants his new option to
-      convey sub-options that use separate numbering scheme, for
+      convey sub-options that use a separate numbering scheme, for
       example sub-options with codes 1 and 2. Those option codes
       conflict with standard DHCPv6 options, so a separate option
       space must be defined.
       </para>
-      <para>Note that it is not required to create new option space when
-      defining sub-options for a standard option because it is by
-      default created if the standard option is meant to convey
+      <para>Note that it is not required to create a new option space when
+      defining sub-options for a standard option because it is
+      created by default if the standard option is meant to convey
       any sub-options (see <xref linkend="dhcp6-vendor-opts"/>).
       </para>
       <para>
@@ -1036,8 +1039,8 @@ should include options from the isc option space:
 
     The name of the option space in which the sub-options are defined is set in
     the <command>encapsulate</command> field. The <command>type</command> field
-    is set to <command>empty</command> which imposes that this option does not
-    carry any data other than sub-options.
+    is set to <command>empty</command> which limits this option to only carrying
+    data in sub-options.
     </para>
     <para>
     Finally, we can set values for the new options:
@@ -1095,19 +1098,19 @@ should include options from the isc option space:
       <para>
         The DHCPv6 server may receive requests from local (connected to the
         same subnet as the server) and remote (connecting via relays) clients.
-        As server may have many subnet configurations defined, it must select
-        appropriate subnet for a given request.
+        As the server may have many subnet configurations defined, it must select
+        an appropriate subnet for a given request.
       </para>
       <para>
-        The server can not assume which of configured subnets are local. It is
-        possible in IPv4, where there is reasonable expectation that the
+        The server can not assume which of the configured subnets are local. In IPv4
+        it is possible as there is a reasonable expectation that the
         server will have a (global) IPv4 address configured on the interface,
         and can use that information to detect whether a subnet is local or
-        not. That assumption is not true in IPv6, as the DHCPv6 must be able
-        to operate with having link-local addresses only. Therefore an optional
+        not. That assumption is not true in IPv6, the DHCPv6 server must be able
+        to operate while only having link-local addresses. Therefore an optional
         &quot;interface&quot; parameter is available within a subnet definition
         to designate that a given subnet is local, i.e. reachable directly over
-        specified interface. For example the server that is intended to serve
+        the specified interface. For example the server that is intended to serve
         a local subnet over eth0 may be configured as follows:
 	<screen>
 "Dhcp6": {
@@ -1132,7 +1135,7 @@ should include options from the isc option space:
         <title>DHCPv6 Relays</title>
         <para>
           A DHCPv6 server with multiple subnets defined must select the
-          appropriate subnet when it receives a request from client.  For clients
+          appropriate subnet when it receives a request from a client.  For clients
           connected via relays, two mechanisms are used:
         </para>
         <para>
@@ -1209,11 +1212,11 @@ should include options from the isc option space:
       </note>
       <para>In certain cases it is useful to differentiate between different types
       of clients and treat them differently. The process of doing classification
-      is conducted in two steps. The first step is to assess incoming packet and
+      is conducted in two steps. The first step is to assess an incoming packet and
       assign it to zero or more classes. This classification is currently simple,
       but is expected to grow in capability soon. Currently the server checks whether
-      incoming packet has vendor class option (16). If it has, content
-      of that option is prepended with &quot;VENDOR_CLASS_&quot; interpreted as a
+      the incoming packet includes vendor class option (16). If it has, the content
+      of that option is prepended with &quot;VENDOR_CLASS_&quot; then it is interpreted as a
       class. For example, modern cable modems will send this option with value
       &quot;docsis3.0&quot; and as a result the packet will belong to class
       &quot;VENDOR_CLASS_docsis3.0&quot;.
@@ -1230,7 +1233,7 @@ should include options from the isc option space:
         This is particularly useful for cases where two types of devices share the
         same link and are expected to be served from two different subnets. The
         primary use case for such a scenario are cable networks. There are two
-        classes of devices: cable modem itself, which should be handled a lease
+        classes of devices: the cable modem itself, which should be handed a lease
         from subnet A and all other devices behind modems that should get a lease
         from subnet B. That segregation is essential to prevent overly curious
         users from playing with their cable modems. For details on how to set up
@@ -1243,7 +1246,7 @@ should include options from the isc option space:
       <title>Limiting access to IPv6 subnet to certain classes</title>
       <para>
         In certain cases it beneficial to restrict access to certain subnets
-        only to clients that belong to a given subnet. For details on client
+        only to clients that belong to a given class. For details on client
         classes, see <xref linkend="dhcp6-client-classifier"/>. This is an
         extension of a previous example from <xref linkend="dhcp6-address-config"/>.
 
@@ -1273,7 +1276,7 @@ should include options from the isc option space:
       </para>
 
       <para>
-        Care should be taken with client classification as it is easy to prevent
+        Care should be taken with client classification as it is easy for
         clients that do not meet class criteria to be denied any service altogether.
       </para>
     </section>
@@ -1283,7 +1286,7 @@ should include options from the isc option space:
       <title>Configuring DHCPv6 for DDNS</title>
       <para>
       As mentioned earlier, kea-dhcp6 can be configured to generate requests to
-      the DHCP-DDNS server (referred to here as the "D2" server) to update
+      the DHCP-DDNS server (referred to here as "D2") to update
       DNS entries.  These requests are known as NameChangeRequests or NCRs.
       Each NCR contains the following information:
       <orderedlist>
@@ -1352,7 +1355,7 @@ should include options from the isc option space:
       </simpara></listitem>
       <listitem><simpara>
       <command>sender-port</command> - port which kea-dhcp6 should use to send requests to D2. The
-      default value of 0 instructs kea-dhcp6 to select suitable port.
+      default value of 0 instructs kea-dhcp6 to select a suitable port.
       </simpara></listitem>
       <listitem><simpara>
       <command>max-queue-size</command> - maximum number of requests allowed to queue waiting to
@@ -1360,7 +1363,7 @@ should include options from the isc option space:
       uncontrollably if they are being generated faster than they can be
       delivered.  If the number of requests queued for transmission reaches
       this value, DDNS updating will be turned off until the queue backlog has
-      been sufficiently reduced.  The intent is allow kea-dhcp6 to
+      been sufficiently reduced.  The intent is to allow kea-dhcp6 to
       continue lease operations.  The default value is 1024.
       </simpara></listitem>
       <listitem><simpara>
@@ -1373,7 +1376,7 @@ should include options from the isc option space:
       in future releases.
       </simpara></listitem>
       </itemizedlist>
-      By default, D2 is assumed to running on the same machine as kea-dhcp6, and
+      By default, kea-dhcp-ddns is assumed to running on the same machine as kea-dhcp6, and
       all of the default values mentioned above should be sufficient.
       If, however, D2 has been configured to listen on a different address or
       port, these values must altered accordingly. For example, if D2 has been
@@ -1516,9 +1519,9 @@ should include options from the isc option space:
       The third row in the table above describes the case in which the client
       requests that no DNS updates be done. The parameter, "override-no-update",
       can be used to instruct the server to disregard the client's wishes. When
-      this parameter is true, kea-dhcp6 will generate DDNS update request to D2
-      even if the client requests no updates be done.  The N-S-O flags in the
-      server's response to the client will be 0-1-1.
+      this parameter is true, kea-dhcp6 will generate DDNS update requests to 
+      kea-dhcp-ddns even if the client requests no updates be done.  The N-S-O 
+      flags in the server's response to the client will be 0-1-1.
       </para>
       <para>
       To override client delegation, issue the following commands:
@@ -1548,7 +1551,7 @@ should include options from the isc option space:
       FQDN using a configurable prefix and suffix.
       </para></listitem>
       <listitem><para>
-      Otherwise, using is the domain name value from the client FQDN option as
+      Otherwise, using the domain name value from the client FQDN option as
       the candidate name:
       <orderedlist>
       <listitem><para>
@@ -1622,7 +1625,7 @@ should include options from the isc option space:
         some-computer.example.com.
       </para>
       <para>
-      When generating a the entire name, kea-dhcp6 will construct name of the
+      When generating the entire name, kea-dhcp6 will construct name of the
       format:
       </para>
       <para>
@@ -1631,7 +1634,8 @@ should include options from the isc option space:
       <para>
       where address-text is simply the lease IP address converted to a
       hyphenated string.  For example, if lease address is 3001:1::70E and
-      assuming default values for generated-prefix and qualifying-suffix, the
+      default values are used for 
+      <command>generated-prefix</command> and <command>qualifying-suffix</command>, the
       generated FQDN would be:
       </para>
       <para>
@@ -1673,16 +1677,16 @@ should include options from the isc option space:
       <para>
         The relay has to have an interface connected to the link on which
         the clients are being configured. Typically the relay has a global IPv6
-        address configured on that interface that belongs to the subnet that
-        the server will assign addresses from. In such typical case, the
-        server is able to use IPv6 address inserted by the relay (in link-addr
-        field in RELAY-FORW message) to select appropriate subnet.
+        address configured on the interface that belongs to the subnet from which
+        the server will assign addresses. In the typical case, the
+        server is able to use the IPv6 address inserted by the relay (in the link-addr
+        field in RELAY-FORW message) to select the appropriate subnet.
       </para>
       <para>
         However, that is not always the case. The relay
         address may not match the subnet in certain deployments. This
         usually means that there is more than one subnet allocated for a given
-        link. Two most common examples where this is the case are long lasting
+        link. The two most common examples where this is the case are long lasting
         network renumbering (where both old and new address space is still being
         used) and a cable network. In a cable network both cable modems and the
         devices behind them are physically connected to the same link, yet
@@ -1724,7 +1728,7 @@ should include options from the isc option space:
           In certain cases, it is useful to mix relay address information,
           introduced in <xref linkend="dhcp6-relay-override"/> with client
           classification, explained in <xref linkend="dhcp6-subnet-class"/>.
-          One specific example is cable network, where typically modems
+          One specific example is a cable network, where typically modems
           get addresses from a different subnet than all devices connected
           behind them.
         </para>

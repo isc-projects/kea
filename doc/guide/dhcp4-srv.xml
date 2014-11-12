@@ -30,7 +30,7 @@
             <simpara>
             <command>-d</command> - specifies whether the server
             logging should be switched to debug/verbose mode. In verbose mode,
-            the logging severity and debuglevel specified in a configuration
+            the logging severity and debuglevel specified in the configuration
             file are ignored and "debug" severity and the maximum debuglevel
             (99) are assumed. The flag is convenient, for temporarily
             switching the server into maximum verbosity, e.g. when
@@ -85,7 +85,7 @@
         Kea configuration backend. (Kea configuration using any other
         backends is outside of scope of this document.) Before DHCPv4
         is started, its configuration file has to be created. The
-        basic configuration looks as follows:
+        basic configuration is as follows:
 <screen>
 {
 # DHCPv4 configuration starts in this line
@@ -140,15 +140,15 @@ and ends with the corresponding closing brace (in the above example,
 the brace after the last comment).  Everything defined between those
 lines is considered to be the Dhcp4 configuration.</para>
 
-<para>In general case, the order in which those parameters appear does not
+<para>In the general case, the order in which those parameters appear does not
 matter. There are two caveats here though. The first one is to remember that
-the configuration file must be a well formed JSON. That means that parameters
-for any given scope must be separate by a comma and there must not be a comma
-after the last parameter. When reordering configuration file, keep in mind that
-moving a parameter to or from the last position in a given scope may require
-moving the comma as well. The second caveat is that it is uncommon &mdash; although
+the configuration file must be well formed JSON. That means that the parameters
+for any given scope must be separated by a comma and there must not be a comma
+after the last parameter. When reordering a configuration file, keep in mind that
+moving a parameter to or from the last position in a given scope may also require
+moving the comma. The second caveat is that it is uncommon &mdash; although
 legal JSON &mdash; to
-repeat the same parameter multiple times. If that appears, the last occurrence of a
+repeat the same parameter multiple times. If that happens, the last occurrence of a
 given parameter in a given scope is used while all previous instances are
 ignored. This is unlikely to cause any confusion as there are no real life
 reasons to keep multiple copies of the same parameter in your configuration
@@ -166,21 +166,21 @@ look like this:
 As "<command>interfaces</command>" is not the last parameter in the configuration,
 a trailing comma is required.</para>
 <para>A number of other parameters
-follow. <command>valid-lifetime</command> defines how long the addresses (leases) given out by the
-server are valid. If nothing changes, client that got the address is allowed to
+follow. <command>valid-lifetime</command> defines for how long the addresses (leases) given out by the
+server are valid. If nothing changes, a client that got an address is allowed to
 use it for 4000 seconds. (Note that integer numbers are specified as is,
 without any quotes around them.) <command>renew-timer</command> and
 <command>rebind-timer</command> are values that
-define T1 and T2 timers that govern when the client will begin renewal and
+define T1 and T2 timers that govern when the client will begin the renewal and
 rebind procedures. Note that <command>renew-timer</command> and
 <command>rebind-timer</command> are optional. If they are not specified the
 client will select values for T1 and T2 timers according to the
 <ulink url="http://tools.ietf.org/html/rfc2131">RFC 2131</ulink>.</para>
 
-<para>The next couple lines define the lease database, the place where the server
+<para>The next couple of lines define the lease database, the place where the server
 stores its lease information. This particular example tells the server to use
 <command>memfile</command>, which is the simplest (and fastest) database
-backend. It uses in-memory database and stores leases on disk in a CSV
+backend. It uses an in-memory database and stores leases on disk in a CSV
 file. This is a very simple configuration. Usually, lease database configuration
 is more extensive and contains additional parameters.  Note that
 <command>lease-database</command>
@@ -192,12 +192,12 @@ comma is present.</para>
 
 <para>Finally, we need to define a list of IPv4 subnets. This is the
 most important DHCPv4 configuration structure as the server uses that
-information to process clients' requests. It defines all subnets that
-the server is expected to receive DHCP requests from. The subnets are
+information to process clients' requests. It defines all subnets from
+which the server is expected to receive DHCP requests. The subnets are
 specified with the <command>subnet4</command> parameter.  It is a list,
 so it starts and ends with square brackets.  Each subnet definition in
-the list has several attributes associated with it, so is a structure
-and is opened and closed with braces. At minimum, a subnet definition
+the list has several attributes associated with it, so it is a structure
+and is opened and closed with braces. At a minimum, a subnet definition
 has to have at least two parameters: <command>subnet</command> (that
 defines the whole subnet) and <command>pools</command> (which is a list of
 dynamically allocated pools that are governed by the DHCP server).</para>
@@ -301,7 +301,7 @@ url="http://jsonviewer.stack.hu/"/>.
 <screen>
 "Dhcp4": { "lease-database": { <userinput>"type": "mysql"</userinput>, ... }, ... }
 </screen>
-  Next, the name of the database is to hold the leases must be set: this is the
+  Next, the name of the database to hold the leases must be set: this is the
   name used when the lease database was created (see <xref linkend="dhcp-mysql-database-create"/>
   or <xref linkend="dhcp-pgsql-database-create"/>).
 <screen>
@@ -323,7 +323,7 @@ url="http://jsonviewer.stack.hu/"/>.
   access the database should be set:
 <screen>
 "Dhcp4": { "lease-database": { <userinput>"user": "<replaceable>user-name</replaceable>"</userinput>,
-                               <userinput>"password" "<replaceable>password</replaceable>"</userinput>,
+                               <userinput>"password": "<replaceable>password</replaceable>"</userinput>,
                               ... },
            ... }
 </screen>
@@ -357,7 +357,7 @@ temporarily override a list of interface names and listen on all interfaces.
   <title>IPv4 Subnet Identifier</title>
   <para>
     The subnet identifier is a unique number associated with a particular subnet.
-    In principle, it is used to associate clients' leases with respective subnets.
+    In principle, it is used to associate clients' leases with their respective subnets.
     When a subnet identifier is not specified for a subnet being configured, it will
     be automatically assigned by the configuration mechanism. The identifiers
     are assigned from 1 and are monotonically increased for each subsequent
@@ -366,17 +366,17 @@ temporarily override a list of interface names and listen on all interfaces.
   <para>
     If there are multiple subnets configured with auto-generated identifiers and
     one of them is removed, the subnet identifiers may be renumbered. For example:
-    if there are four subnets and third is removed the last subnet will be assigned
-    identifier that the third subnet had before removal. As a result, the leases
+    if there are four subnets and the third is removed the last subnet will be assigned
+    the identifier that the third subnet had before removal. As a result, the leases
     stored in the lease database for subnet 3 are now associated with
     subnet 4, something that may have unexpected consequences. It is planned
-    to implement the mechanism to preserve auto-generated subnet ids in a
+    to implement a mechanism to preserve auto-generated subnet ids in a
     future version of Kea.  However, the only remedy for this issue
     at present is to
     manually specify a unique identifier for each subnet.
   </para>
       <para>
-	The following configuration will assign the arbitrary subnet
+	The following configuration will assign the specified subnet
 	identifier to the newly configured subnet:
 
         <screen>
@@ -425,7 +425,7 @@ temporarily override a list of interface names and listen on all interfaces.
     specified in this example.</para>
 
     <para>Each <command>pool</command> is a structure that contains the parameters
-    th describe a single pool. Currently there is only one parameter,
+    that describe a single pool. Currently there is only one parameter,
     <command>pool</command>, which gives the range of addresses
     in the pool. Additional parameters will be added in future
     releases of Kea.</para>
@@ -450,7 +450,7 @@ temporarily override a list of interface names and listen on all interfaces.
 </screen>
     The number of pools is not limited, but for performance reasons it is recommended to
     use as few as possible. White space in pool definitions is ignored, so
-    spaces before and after hyphen are optional. They can be used to improve readability.
+    spaces before and after the hyphen are optional. They can be used to improve readability.
   </para>
   <para>
     The server may be configured to serve more than one subnet:
@@ -478,8 +478,8 @@ temporarily override a list of interface names and listen on all interfaces.
   </para>
   <para>
     When configuring a DHCPv4 server using prefix/length notation, please pay
-    attention to the boundary values. When specifying that the server should use
-    a given pool, it will be able to allocate also first (typically network
+    attention to the boundary values. When specifying that the server can use
+    a given pool, it will also be able to allocate the first (typically network
     address) and the last (typically broadcast address) address from that pool.
     In the aforementioned example of pool 192.0.3.0/24, both 192.0.3.0 and
     192.0.3.255 addresses may be assigned as well. This may be invalid in some
@@ -491,9 +491,9 @@ temporarily override a list of interface names and listen on all interfaces.
       <title>Standard DHCPv4 options</title>
       <para>
         One of the major features of the DHCPv4 server is to provide configuration
-        options to clients. Although there are several options that require
+        options to clients.  Although there are several options that require
         special behavior, most options are sent by the server only if the client
-        explicitly requested them.  The following example shows how to
+        explicitly requests them.  The following example shows how to
         configure the addresses of DNS servers, which is one of the most frequently used
         options. Options specified in this way are considered global and apply
         to all configured subnets.
@@ -518,13 +518,13 @@ temporarily override a list of interface names and listen on all interfaces.
       option name. For a complete list of currently supported names,
       see <xref linkend="dhcp4-std-options-list"/> below.
       The <command>code</command> parameter specifies the option code, which must match one of the
-      values from that list. The next line specifies option space, which must always
+      values from that list. The next line specifies the option space, which must always
       be set to "dhcp4" as these are standard DHCPv4 options. For
       other option spaces, including custom option spaces, see <xref
       linkend="dhcp4-option-spaces"/>. The next line specifies the format in
       which the data will be entered: use of CSV (comma
       separated values) is recommended. The sixth line gives the actual value to
-      be sent to clients. Data is specified as a normal text, with
+      be sent to clients. Data is specified as normal text, with
       values separated by commas if more than one value is
       allowed.
     </para>
@@ -625,8 +625,8 @@ temporarily override a list of interface names and listen on all interfaces.
         a server administrator must create a definition as described in
         <xref linkend="dhcp4-custom-options"/> in the 'dhcp4' option space. This
         definition should match the option format described in the relevant
-        RFC but configuration mechanism would allow any option format as it has
-        no means to validate it at the moment.
+        RFC but the configuration mechanism will allow any option format as it has
+        no means to validate the format at the moment.
       </para>
 
       <para>
@@ -837,7 +837,7 @@ temporarily override a list of interface names and listen on all interfaces.
 "Dhcp4": {
     "option-data": [
         {
-            <userinput>name "foo",
+            <userinput>"name": "foo",
             "code": 222,
             "space": "dhcp4",
             "csv-format": true,
@@ -853,7 +853,7 @@ temporarily override a list of interface names and listen on all interfaces.
       primitives (uint8, string, ipv4-address etc): it is possible to
       define an option comprising a number of existing primitives.
       Assume we want to define a new option that will consist of
-      an IPv4 address, followed by unsigned 16 bit integer, followed by
+      an IPv4 address, followed by an unsigned 16 bit integer, followed by
       a boolean value, followed by a text string. Such an option could
       be defined in the following way:
 <screen>
@@ -891,14 +891,14 @@ temporarily override a list of interface names and listen on all interfaces.
     ],
     ...
 }</screen>
-      <command>csv-format</command> is set <command>true</command> to indicate
+      <command>csv-format</command> is set to <command>true</command> to indicate
       that the <command>data</command> field comprises a command-separated list
       of values.  The values in the <command>data</command> must correspond to
       the types set in the <command>record-types</command> field of the option
       definition.
      </para>
      <note>
-       <para>In general case, boolean values are specified as <command>true</command> or
+       <para>In the general case, boolean values are specified as <command>true</command> or
        <command>false</command>, without quotes. Some specific boolean parameters may
        accept also <command>"true"</command>, <command>"false"</command>,
        <command>0</command>, <command>1</command>, <command>"0"</command> and
@@ -1172,19 +1172,19 @@ temporarily override a list of interface names and listen on all interfaces.
       </note>
       <para>In certain cases it is useful to differentiate between different
       types of clients and treat them differently. The process of doing
-      classification is conducted in two steps. The first step is to assess
+      classification is conducted in two steps. The first step is to assess an
       incoming packet and assign it to zero or more classes. This classification
       is currently simple, but is expected to grow in capability soon. Currently
-      the server checks whether incoming packet has vendor class identifier
-      option (60). If it has, content of that option is prepended with
-      &quot;VENDOR_CLASS_&quot; then is interpreted as a class. For example,
+      the server checks whether an incoming packet includes the vendor class identifier
+      option (60). If it does, the content of that option is prepended with
+      &quot;VENDOR_CLASS_&quot; then it is interpreted as a class. For example,
       modern cable modems will send this option with value &quot;docsis3.0&quot;
       and as a result the packet will belong to class &quot;VENDOR_CLASS_docsis3.0&quot;.
       </para>
 
       <para>It is envisaged that the client classification will be used for changing the
       behavior of almost any part of the DHCP message processing, including assigning
-      leases from different pools, assigning different option (or different values of
+      leases from different pools, assigning different options (or different values of
       the same options) etc. For now, there are only two mechanisms that are taking
       advantage of client classification: specific processing for cable modems and
       subnet selection.</para>
@@ -1192,10 +1192,10 @@ temporarily override a list of interface names and listen on all interfaces.
       <para>
         For clients that belong to the VENDOR_CLASS_docsis3.0 class, the siaddr
         field is set to the value of next-server (if specified in a subnet). If
-        there is boot-file-name option specified, its value is also set in the
+        there is a boot-file-name option specified, its value is also set in the
         file field in the DHCPv4 packet. For eRouter1.0 class, the siaddr is
         always set to 0.0.0.0. That capability is expected to be moved to
-        external hook library that will be dedicated to cable modems.
+        an external hook library that will be dedicated to cable modems.
       </para>
 
       <para>
@@ -1203,7 +1203,7 @@ temporarily override a list of interface names and listen on all interfaces.
         This is particularly useful for cases where two types of devices share the
         same link and are expected to be served from two different subnets. The
         primary use case for such a scenario is cable networks. There are two
-        classes of devices: the cable modem itself, which should be handled a lease
+        classes of devices: the cable modem itself, which should be handed a lease
         from subnet A and all other devices behind the modem that should get a lease
         from subnet B. That segregation is essential to prevent overly curious
         users from playing with their cable modems. For details on how to set up
@@ -1238,7 +1238,7 @@ temporarily override a list of interface names and listen on all interfaces.
       </para>
 
       <para>
-        Care should be taken with client classification as it is easy to prevent
+        Care should be taken with client classification as it is easy for
         clients that do not meet class criteria to be denied any service altogether.
       </para>
     </section>
@@ -1248,7 +1248,7 @@ temporarily override a list of interface names and listen on all interfaces.
       <title>Configuring DHCPv4 for DDNS</title>
       <para>
       As mentioned earlier, kea-dhcp4 can be configured to generate requests to the
-      DHCP-DDNS server to update DNS entries.  These requests are known as
+      DHCP-DDNS server (referred to here as "D2" ) to update DNS entries.  These requests are known as
       NameChangeRequests or NCRs.  Each NCR contains the following information:
       <orderedlist>
       <listitem><para>
@@ -1262,8 +1262,7 @@ temporarily override a list of interface names and listen on all interfaces.
       The FQDN, lease address, and DHCID
       </para></listitem>
       </orderedlist>
-      The parameters for controlling the generation of NCRs for submission to the
-      DHCP-DDNS server
+      The parameters for controlling the generation of NCRs for submission to D2
       are contained in the <command>dhcp-ddns</command> section of the kea-dhcp4 server
       configuration. The default values for this section are as follows:
 <screen>
@@ -1291,9 +1290,9 @@ temporarily override a list of interface names and listen on all interfaces.
       <section id="dhcpv4-d2-io-config">
       <title>DHCP-DDNS Server Connectivity</title>
       <para>
-      In order for NCRs to reach the DHCP-DDNS server, kea-dhcp4 must be able
+      In order for NCRs to reach the D2 server, kea-dhcp4 must be able
       to communicate with it.  kea-dhcp4 uses the following configuration
-      parameters to control how it communications with DHCP-DDNS:
+      parameters to control how it communications with D2:
       <itemizedlist>
       <listitem><simpara>
       <command>enable-updates</command> - determines whether or not kea-dhcp4 will
@@ -1302,54 +1301,54 @@ temporarily override a list of interface names and listen on all interfaces.
       </simpara></listitem>
 
       <listitem><simpara>
-      <command>server-ip</command> - IP address on which DHCP-DDNS listens for requests. The default is
+      <command>server-ip</command> - IP address on which D2 listens for requests. The default is
       the local loopback interface at address 127.0.0.1. You may specify
       either an IPv4 or IPv6 address.
       </simpara></listitem>
 
       <listitem><simpara>
-      <command>server-port</command> - port on which DHCP-DDNS listens for requests.  The default value
+      <command>server-port</command> - port on which D2 listens for requests.  The default value
       is 53001.
       </simpara></listitem>
 
       <listitem><simpara>
-      <command>sender-ip</command> - IP address which kea-dhcp4 should use to send requests to the DHCP-DDNS server.
+      <command>sender-ip</command> - IP address which kea-dhcp4 should use to send requests to D2.
       The default value is blank which instructs kea-dhcp4 to select a suitable
       address.
       </simpara></listitem>
 
       <listitem><simpara>
-      <command>sender-port</command> - port which kea-dhcp4 should use to send requests to the DHCP-DDNS server. The
-      default value of 0 instructs kea-dhcp4 to select suitable port.
+      <command>sender-port</command> - port which kea-dhcp4 should use to send requests to D2. The
+      default value of 0 instructs kea-dhcp4 to select a suitable port.
       </simpara></listitem>
 
       <listitem><simpara>
       <command>max-queue-size</command> - maximum number of requests allowed to queue waiting to
-      be sent to the DHCP-DDNS server. This value guards against requests accumulating
+      be sent to D2. This value guards against requests accumulating
       uncontrollably if they are being generated faster than they can be
       delivered.  If the number of requests queued for transmission reaches
       this value, DDNS updating will be turned off until the queue backlog has
-      been sufficiently reduced.  The intention is allow the kea-dhcp4 server to
+      been sufficiently reduced.  The intention is to allow the kea-dhcp4 server to
       continue lease operations without running the risk that its memory usage
       grows without limit.  The default value is 1024.
       </simpara></listitem>
 
       <listitem><simpara>
-      <command>ncr-format</command> - socket protocol use when sending requests to the DHCP-DDNS server.  Currently
+      <command>ncr-format</command> - socket protocol use when sending requests to D2.  Currently
       only UDP is supported.  TCP may be available in an upcoming release.
       </simpara></listitem>
 
       <listitem><simpara>
-      <command>ncr-protocol</command> - packet format to use when sending requests to the DHCP-DDNS server.
+      <command>ncr-protocol</command> - packet format to use when sending requests to D2.
       Currently only JSON format is supported.  Other formats may be available
       in future releases.
       </simpara></listitem>
 
       </itemizedlist>
-      By default, the DHCP-DDNS server is assumed to running on the same machine as kea-dhcp4, and
+      By default, kea-dhcp-ddns is assumed to be running on the same machine as kea-dhcp4, and
       all of the default values mentioned above should be sufficient.
-      If, however, the DHCP-DDNS server has been configured to listen on a different address or
-      port, these values must altered accordingly. For example, if the DHCP-DDNS server has been
+      If, however, D2 has been configured to listen on a different address or
+      port, these values must be altered accordingly. For example, if D2 has been
       configured to listen on 192.168.1.10 port 900, the following configuration
       would be required:
 <screen>
@@ -1369,9 +1368,9 @@ temporarily override a list of interface names and listen on all interfaces.
       <para>kea-dhcp4 follows the behavior prescribed for DHCP servers in
       <ulink url="http://tools.ietf.org/html/rfc4702">RFC 4702</ulink>.
       It is important to keep in mind that kea-dhcp4 provides the initial decision
-      making of when and what to update and forwards that information to the DHCP-DDNS server in
+      making of when and what to update and forwards that information to D2 in
       the form of NCRs. Carrying out the actual DNS updates and dealing with
-      such things as conflict resolution are within the purview of the DHCP-DDNS server itself (<xref linkend="dhcp-ddns-server"/>).
+      such things as conflict resolution are within the purview of D2 itself (<xref linkend="dhcp-ddns-server"/>).
       This section describes when kea-dhcp4 will generate NCRs and the
       configuration parameters that can be used to influence this decision.
       It assumes that the "enable-updates" parameter is true.
@@ -1478,7 +1477,7 @@ temporarily override a list of interface names and listen on all interfaces.
       The third row in the table above describes the case in which the client
       requests that no DNS updates be done. The parameter, <command>override-no-update</command>,
       can be used to instruct the server to disregard the client's wishes. When
-      this parameter is true, kea-dhcp4 will generate DDNS update request to the DHCP-DDNS server
+      this parameter is true, kea-dhcp4 will generate a DDNS update request to kea-dhcp-ddns
       even if the client requests that no updates be done.  The N-S-O flags in the
       server's response to the client will be 0-1-1.
       </para>
@@ -1583,8 +1582,9 @@ temporarily override a list of interface names and listen on all interfaces.
       </para>
       <para>
       where address-text is simply the lease IP address converted to a
-      hyphenated string.  For example, if lease address is 172.16.1.10 and
-      assuming default values for <command>generated-prefix</command> and <command>qualifying-suffix</command>, the
+      hyphenated string.  For example, if the lease address is 172.16.1.10 and
+      default values are used for
+      <command>generated-prefix</command> and <command>qualifying-suffix</command>, the
       generated FQDN would be:
       </para>
       <para>
@@ -1595,12 +1595,12 @@ temporarily override a list of interface names and listen on all interfaces.
     <section id="dhcp4-next-server">
       <title>Next Server (siaddr)</title>
       <para>In some cases, clients want to obtain configuration from the TFTP server.
-      Although there is a dedicated option for it, some devices may use siaddr field
+      Although there is a dedicated option for it, some devices may use the siaddr field
       in the DHCPv4 packet for that purpose. That specific field can be configured
-      using <command>next-server</command> directive. It is possible to define it in global scope or
-      for a given subnet only. If both are defined, subnet value takes precedence.
+      using <command>next-server</command> directive. It is possible to define it in the global scope or
+      for a given subnet only. If both are defined, the subnet value takes precedence.
       The value in subnet can be set to 0.0.0.0, which means that <command>next-server</command> should
-      not be sent. It may also be set to empty string, which means the same as if
+      not be sent. It may also be set to an empty string, which means the same as if
       it was not defined at all, i.e. use the global value.
       </para>
 
@@ -1633,11 +1633,11 @@ temporarily override a list of interface names and listen on all interfaces.
       which updated
       <ulink url="http://tools.ietf.org/html/rfc2131">RFC 2131</ulink>.
       That update now states that the server must
-      send client-id if client sent it. That is the default behaviour
+      send client-id if the client sent it. That is the default behaviour
       that Kea offers. However, in some cases older devices that do
       not support
       <ulink url="http://tools.ietf.org/html/rfc6842">RFC 6842</ulink>.
-      may refuse to accept responses that include
+      may refuse to accept responses that include the
       client-id option. To enable backward compatibility, an optional
       configuration parameter has been introduced. To configure it,
       use the following configuration statement:</para>
@@ -1675,7 +1675,7 @@ temporarily override a list of interface names and listen on all interfaces.
         The DHCPv4 server differentiates between the directly connected clients,
         clients trying to renew leases and clients sending their messages through
         relays. For the directly connected clients the server will check the
-        configuration of the interface on which the message has been received, and
+        configuration for the interface on which the message has been received, and
         if the server configuration doesn't match any configured subnet the
         message is discarded.</para>
         <para>Assuming that the server's interface is configured with the
@@ -1686,7 +1686,7 @@ temporarily override a list of interface names and listen on all interfaces.
       </para>
       <para>
         The rule above does not apply when the client unicasts its message, i.e.
-        is trying to renew its lease. Such message is accepted through any
+        is trying to renew its lease. Such a message is accepted through any
         interface. The renewing client sets ciaddr to the currently used IPv4
         address. The server uses this address to select the subnet for the client
         (in particular, to extend the lease using this address).
@@ -1703,8 +1703,8 @@ temporarily override a list of interface names and listen on all interfaces.
       <note>
         <para>The subnet selection mechanism described in this section is based
         on the assumption that client classification is not used. The classification
-        mechanism alters the way in which subnet is selected for the client,
-        depending on the classes that the client belongs to.</para>
+        mechanism alters the way in which a subnet is selected for the client,
+        depending on the classes to which the client belongs.</para>
       </note>
 
     <section id="dhcp4-relay-override">
@@ -1712,9 +1712,9 @@ temporarily override a list of interface names and listen on all interfaces.
       <para>
         The relay has to have an interface connected to the link on which
         the clients are being configured. Typically the relay has an IPv4
-        address configured on that interface that belongs to the subnet that
-        the server will assign addresses from. In such typical case, the
-        server is able to use IPv4 address inserted by the relay (in the giaddr
+        address configured on that interface that belongs to the subnet from which
+        the server will assign addresses. In the typical case, the
+        server is able to use the IPv4 address inserted by the relay (in the giaddr
         field of the DHCPv4 packet) to select the appropriate subnet.
       </para>
       <para>
@@ -1725,13 +1725,13 @@ temporarily override a list of interface names and listen on all interfaces.
         network renumbering (where both old and new address space is still being
         used) and a cable network. In a cable network both cable modems and the
         devices behind them are physically connected to the same link, yet
-        they use distinct addressing. In such case, the DHCPv4 server needs
+        they use distinct addressing. In such a case, the DHCPv4 server needs
         additional information (the IPv4 address of the relay) to properly select
         an appropriate subnet.
       </para>
       <para>
         The following example assumes that there is a subnet 192.0.2.0/24
-        that is accessible via relay that uses 10.0.0.1 as its IPv4 address.
+        that is accessible via a relay that uses 10.0.0.1 as its IPv4 address.
         The server will be able to select this subnet for any incoming packets
         that came from a relay that has an address in 192.0.2.0/24 subnet.
         It will also select that subnet for a relay with address 10.0.0.1.
