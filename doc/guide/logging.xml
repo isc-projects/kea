@@ -264,7 +264,7 @@
 
           Each logger can have zero or more
           <option>output_options</option>. These specify where log
-          messages are sent to. These are explained in detail below.
+          messages are sent. These are explained in detail below.
 
         </para>
 
@@ -583,7 +583,7 @@ file be created.</para>
           <varlistentry>
           <term>KEA_LOCKFILE_DIR</term>
           <listitem><para>
-              Specifies a directory where logging system should create its
+              Specifies a directory where the logging system should create its
               lock file. If not specified, it is
               <replaceable>prefix</replaceable>/var/run/kea, where
               <replaceable>prefix</replaceable> defaults to /usr/local.
