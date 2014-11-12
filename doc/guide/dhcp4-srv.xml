@@ -1457,7 +1457,7 @@ temporarily override a list of interface names and listen on all interfaces.
       </para>
       <para>
       (Note that the flag combination N=1, S=1 is prohibited according to
-      <ulink utl="http://tools.ietf.org/html/rfc4702">RFC 4702</ulink>. If such a combination is received from the client, the packet
+      <ulink url="http://tools.ietf.org/html/rfc4702">RFC 4702</ulink>. If such a combination is received from the client, the packet
       will be dropped by kea-dhcp4.)
       </para>
       <para>
