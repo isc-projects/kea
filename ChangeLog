@@ -1,7 +1,7 @@
 857.	[func]		fdupont
 	Improve the cryptolink code, for instance use a constant
 	time comparison.
-	(Trac #3602, git ...)
+	(Trac #3602, git 0c1f433da650330b40fe1a67bae4716c9184f636)
 
 856.	[build]		marcinw
 	callout_manager.h and server_hooks.h headers are now exported,
