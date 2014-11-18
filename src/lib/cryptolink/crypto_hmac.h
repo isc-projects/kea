@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -125,6 +125,9 @@ public:
     ///            and smaller than the output length of the algorithm,
     ///            only len bytes will be checked
     /// \return true if the signature is correct, false otherwise
+    ///
+    /// \note verify() does not destroy its context so it can be
+    /// called multiple times with different signatures.
     bool verify(const void* sig, size_t len);
 
 private:
