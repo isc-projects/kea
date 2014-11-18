@@ -184,15 +184,32 @@ D2ClientMgr::generateFqdn(const asiolink::IOAddress& address) const {
 std::string
 D2ClientMgr::qualifyName(const std::string& partial_name) const {
     std::ostringstream gen_name;
-    gen_name << partial_name << "." << d2_client_config_->getQualifyingSuffix();
+    gen_name << partial_name;
 
+/*
+afidalgo alzrck@gmail.com - trac #3636
+append suffix only if not empty
+*/
+    if(!d2_client_config_->getQualifyingSuffix().empty())
+    {
+    gen_name << partial_name << "." << d2_client_config_->getQualifyingSuffix();
+    }
+
+/*
+afidalgo alzrck@gmail.com - trac #3636
+appending a trailing dot when it's not a fqdn breaks some clients (cablemodems and mta's at least)
+tested and worked ok with
+
+1. setting the hostname (opt12) from pkt4_receive hook
+2. setting same option from option-data on a subnet
+*/
     // Tack on a trailing dot in case suffix doesn't have one.
-    std::string str = gen_name.str();
+    /*std::string str = gen_name.str();
     size_t len = str.length();
     if ((len > 0) && (str[len - 1] != '.')) {
         gen_name << ".";
     }
-
+*/
     return (gen_name.str());
 }
 
