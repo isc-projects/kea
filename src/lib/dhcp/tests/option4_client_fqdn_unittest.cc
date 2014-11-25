@@ -955,6 +955,18 @@ TEST(Option4ClientFqdnTest, len) {
     );
     ASSERT_TRUE(option);
     EXPECT_EQ(12, option->len());
+
+    // Another test for partial domain name but this time the domain name
+    // contains two labels.
+    ASSERT_NO_THROW(
+        option.reset(new Option4ClientFqdn(Option4ClientFqdn::FLAG_E,
+                                           Option4ClientFqdn::RCODE_CLIENT(),
+                                           "myhost.example",
+                                           Option4ClientFqdn::PARTIAL))
+    );
+    ASSERT_TRUE(option);
+    EXPECT_EQ(20, option->len());
+
 }
 
 // This test verifies that the correct length of the option in on-wire
@@ -974,6 +986,17 @@ TEST(Option4ClientFqdnTest, lenAscii) {
     // of the string plus terminating dot.
     EXPECT_EQ(24, option->len());
 
+    // Let's change the domain name and see if the length is different.
+    ASSERT_NO_THROW(
+        option.reset(new Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
+                                           "example.com"))
+    );
+    ASSERT_TRUE(option);
+
+    EXPECT_EQ(17, option->len());
+
+    // Let's test the length of the option when the partial domain name is
+    // specified.
     ASSERT_NO_THROW(
         option.reset(new Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
                                            "myhost",
@@ -984,6 +1007,18 @@ TEST(Option4ClientFqdnTest, lenAscii) {
     // For partial names, there is no terminating dot, so the length of the
     // domain name is equal to the length of the "myhost".
     EXPECT_EQ(11, option->len());
+
+    // Another check for partial domain name but this time the domain name
+    // contains two labels.
+    ASSERT_NO_THROW(
+        option.reset(new Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
+                                           "myhost.example",
+                                           Option4ClientFqdn::PARTIAL))
+    );
+    ASSERT_TRUE(option);
+
+    EXPECT_EQ(19, option->len());
+
 
     // A special case is an empty domain name for which the returned length
     // should be a sum of the header length, RCODE1, RCODE2 and flag fields
