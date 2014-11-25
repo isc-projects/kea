@@ -791,6 +791,14 @@ TEST(Option6ClientFqdnTest, len) {
     // length of the string representation of the domain name + 1).
     EXPECT_EQ(25, option->len());
 
+    // Use different domain name to check if the length also changes
+    // as expected.
+    ASSERT_NO_THROW(
+        option.reset(new Option6ClientFqdn(0, "example.com"))
+    );
+    ASSERT_TRUE(option);
+    EXPECT_EQ(18, option->len());
+
     // Let's check that the size will change when domain name of a different
     // size is used.
     ASSERT_NO_THROW(
@@ -805,6 +813,16 @@ TEST(Option6ClientFqdnTest, len) {
     );
     ASSERT_TRUE(option);
     EXPECT_EQ(12, option->len());
+
+    // Another test for partial domain name but this time using
+    // two labels.
+    ASSERT_NO_THROW(
+        option.reset(new Option6ClientFqdn(0, "myhost.example",
+                                           Option6ClientFqdn::PARTIAL))
+    );
+    ASSERT_TRUE(option);
+    EXPECT_EQ(20, option->len());
+
 }
 
 } // anonymous namespace
