@@ -20,7 +20,7 @@
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/host.h>
-#include <dhcpsrv/host_reservation_parser.h>
+#include <dhcpsrv/parsers/host_reservation_parser.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <gtest/gtest.h>
 #include <iterator>

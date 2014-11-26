@@ -21,7 +21,7 @@
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/subnet.h>
-#include <dhcpsrv/dhcp_parsers.h>
+#include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/tests/test_libraries.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <exceptions/exceptions.h>

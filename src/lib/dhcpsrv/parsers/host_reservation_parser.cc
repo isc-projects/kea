@@ -14,7 +14,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/host_reservation_parser.h>
+#include <dhcpsrv/parsers/host_reservation_parser.h>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <string>

@@ -19,11 +19,11 @@
 #include <cc/data.h>
 #include <dhcp/option_definition.h>
 #include <dhcpsrv/d2_client_cfg.h>
-#include <dhcpsrv/dhcp_config_parser.h>
 #include <dhcpsrv/cfg_iface.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/subnet.h>
+#include <dhcpsrv/parsers/dhcp_config_parser.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/shared_ptr.hpp>
