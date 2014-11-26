@@ -21,12 +21,12 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/dbaccess_parser.h>
-#include <dhcpsrv/dhcp_config_parser.h>
-#include <dhcpsrv/dhcp_parsers.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/triplet.h>
+#include <dhcpsrv/parsers/dbaccess_parser.h>
+#include <dhcpsrv/parsers/dhcp_config_parser.h>
+#include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <log/logger_support.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>

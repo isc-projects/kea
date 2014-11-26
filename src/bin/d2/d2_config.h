@@ -18,7 +18,7 @@
 #include <cc/data.h>
 #include <d2/d2_asio.h>
 #include <d2/d_cfg_mgr.h>
-#include <dhcpsrv/dhcp_parsers.h>
+#include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dns/tsig.h>
 #include <exceptions/exceptions.h>
 

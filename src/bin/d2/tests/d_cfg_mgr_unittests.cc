@@ -14,7 +14,7 @@
 
 #include <config/ccsession.h>
 #include <config/module_spec.h>
-#include <dhcpsrv/dhcp_parsers.h>
+#include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <d2/d_cfg_mgr.h>
 #include <d_test_stubs.h>
 
