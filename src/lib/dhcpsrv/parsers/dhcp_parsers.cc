@@ -16,7 +16,7 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_option.h>
-#include <dhcpsrv/dhcp_parsers.h>
+#include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <hooks/hooks_manager.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>

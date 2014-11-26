@@ -19,8 +19,8 @@
 /// DHCPv4 and DHCPv6. They should be merged. See ticket #2355.
 
 #include <cc/data.h>
+#include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <exceptions/exceptions.h>
-#include <dhcpsrv/dhcp_parsers.h>
 
 #include <string>
 
