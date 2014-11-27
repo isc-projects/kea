@@ -23,10 +23,13 @@ AM_CXXFLAGS = $(KEA_CXXFLAGS)
 # Whenever new file is added to the parsers folder, it must be
 # added here.
 EXTRA_DIST =
-EXTRA_DIST += dbaccess_parser.cc dbaccess_parser.h
-EXTRA_DIST += dhcp_parsers.cc dhcp_parsers.h
-EXTRA_DIST += host_reservation_parser.cc host_reservation_parser.h
-EXTRA_DIST += host_reservations_list_parser.h
+EXTRA_DIST += parsers/dbaccess_parser.cc
+EXTRA_DIST += parsers/dbaccess_parser.h
+EXTRA_DIST += parsers/dhcp_parsers.cc
+EXTRA_DIST += parsers/dhcp_parsers.h
+EXTRA_DIST += parsers/host_reservation_parser.cc
+EXTRA_DIST += parsers/host_reservation_parser.h
+EXTRA_DIST += parsers/host_reservations_list_parser.h
 
 # Define rule to build logging source files from message file
 dhcpsrv_messages.h dhcpsrv_messages.cc: s-messages
