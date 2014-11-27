@@ -965,12 +965,18 @@ SubnetConfigParser::SubnetConfigParser(const std::string&,
 void
 SubnetConfigParser::build(ConstElementPtr subnet) {
     BOOST_FOREACH(ConfigPair param, subnet->mapValue()) {
+        // Host reservations must be parsed after subnet specific parameters.
+        if (param.first == "reservations") {
+            continue;
+        }
+
         ParserPtr parser;
         // When unsupported parameter is specified, the function called
         // below will thrown an exception. We have to catch this exception
         // to append the line number where the parameter is.
         try {
             parser.reset(createSubnetConfigParser(param.first));
+
         } catch (const std::exception& ex) {
             isc_throw(DhcpConfigError, ex.what() << " ("
                       << param.second->getPosition() << ")");

@@ -27,6 +27,8 @@
 #include <dhcpsrv/parsers/dbaccess_parser.h>
 #include <dhcpsrv/parsers/dhcp_config_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
+#include <dhcpsrv/parsers/host_reservation_parser.h>
+#include <dhcpsrv/parsers/host_reservations_list_parser.h>
 #include <log/logger_support.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
@@ -350,6 +352,13 @@ public:
                           << subnet->getPosition() << ")");
             }
 
+            // Parse Host Reservations for this subnet if any.
+            ConstElementPtr reservations = subnet->get("reservations");
+            if (reservations) {
+                ParserPtr parser(new HostReservationsListParser<
+                                 HostReservationParser6>(subnet_->getID()));
+                parser->build(reservations);
+            }
         }
     }
 

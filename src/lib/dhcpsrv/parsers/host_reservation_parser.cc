@@ -61,7 +61,7 @@ HostReservationParser::build(isc::data::ConstElementPtr reservation_data) {
     try {
         // hw-address or duid is a must.
         if (identifier_name.empty()) {
-            isc_throw(DhcpConfigError, "'hw-address' or 'duid' is a requirement"
+            isc_throw(DhcpConfigError, "'hw-address' or 'duid' is a required"
                       " parameter for host reservation");
         }
 
