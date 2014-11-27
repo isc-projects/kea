@@ -28,6 +28,7 @@
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/cfg_hosts.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <hooks/hooks_manager.h>
@@ -3235,6 +3236,152 @@ TEST_F(Dhcp4ParserTest, classifySubnets) {
     EXPECT_FALSE(subnets->at(1)->clientSupported(classes));
     EXPECT_FALSE(subnets->at(2)->clientSupported(classes));
     EXPECT_TRUE (subnets->at(3)->clientSupported(classes));
+}
+
+// This test verifies that the host reservations can be specified for
+// respective IPv4 subnets.
+TEST_F(Dhcp4ParserTest, reservations) {
+    ConstElementPtr x;
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"id\": 123,"
+        "    \"reservations\": ["
+        "    ]"
+        " },"
+        " {"
+        "    \"reservations\": ["
+        "      {"
+        "        \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "        \"ip-address\": \"192.0.3.112\","
+        "        \"hostname\": \"\""
+        "      },"
+        "      {"
+        "        \"hw-address\": \"01:02:03:04:05:06\","
+        "        \"ip-address\": \"192.0.3.120\","
+        "        \"hostname\": \"\""
+        "      }"
+        "    ],"
+        "    \"pools\": [ { \"pool\": \"192.0.3.101 - 192.0.3.150\" } ],"
+        "    \"subnet\": \"192.0.3.0/24\", "
+        "    \"id\": 234"
+        " },"
+        " {"
+        "    \"pools\": [ { \"pool\": \"192.0.4.101 - 192.0.4.150\" } ],"
+        "    \"subnet\": \"192.0.4.0/24\","
+        "    \"id\": 542,"
+        "    \"reservations\": ["
+        "      {"
+        "        \"duid\": \"0A:09:08:07:06:05:04:03:02:01\","
+        "        \"ip-address\": \"192.0.4.101\","
+        "        \"hostname\": \"\""
+        "      },"
+        "      {"
+        "        \"hw-address\": \"06:05:04:03:02:01\","
+        "        \"ip-address\": \"192.0.4.102\","
+        "        \"hostname\": \"\""
+        "      }"
+        "    ]"
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+    checkResult(x, 0);
+
+    // Make sure all subnets have been successfully configured. There is no
+    // need to sanity check the subnet properties because it should have
+    // been already tested by other tests.
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->getAll();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(3, subnets->size());
+
+    // Hosts configuration must be available.
+    CfgHostsPtr hosts_cfg = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    ASSERT_TRUE(hosts_cfg);
+
+    // Let's create an object holding hardware address of the host having
+    // a reservation in the subnet having id of 234. For simlicity the
+    // address is a collection of numbers from 1 to 6.
+    std::vector<uint8_t> hwaddr_vec;
+    for (int i = 1; i < 7; ++i) {
+        hwaddr_vec.push_back(static_cast<uint8_t>(i));
+    }
+    HWAddrPtr hwaddr(new HWAddr(hwaddr_vec, HTYPE_ETHER));
+    // Retrieve the reservation and sanity check the address reserved.
+    ConstHostPtr host = hosts_cfg->get4(234, hwaddr);
+    ASSERT_TRUE(host);
+    EXPECT_EQ("192.0.3.120", host->getIPv4Reservation().toText());
+    // This reservation should be solely assigned to the subnet 234,
+    // and not to other two.
+    EXPECT_FALSE(hosts_cfg->get4(123, hwaddr));
+    EXPECT_FALSE(hosts_cfg->get4(542, hwaddr));
+
+    // Do the same test for the DUID based reservation.
+    std::vector<uint8_t> duid_vec;
+    for (int i = 1; i < 0xb; ++i) {
+        duid_vec.push_back(static_cast<uint8_t>(i));
+    }
+    DuidPtr duid(new DUID(duid_vec));
+    host = hosts_cfg->get4(234, HWAddrPtr(), duid);
+    ASSERT_TRUE(host);
+    EXPECT_EQ("192.0.3.112", host->getIPv4Reservation().toText());
+    EXPECT_FALSE(hosts_cfg->get4(123, HWAddrPtr(), duid));
+    EXPECT_FALSE(hosts_cfg->get4(542, HWAddrPtr(), duid));
+
+    // The HW address used for one of the reservations in the subnet 542
+    // consists of numbers from 6 to 1. So, let's just reverse the order
+    // of the address from the previous test.
+    hwaddr->hwaddr_.assign(hwaddr_vec.rbegin(), hwaddr_vec.rend());
+    host = hosts_cfg->get4(542, hwaddr);
+    EXPECT_TRUE(host);
+    EXPECT_EQ("192.0.4.102", host->getIPv4Reservation().toText());
+    // This reservation must not belong to other subnets.
+    EXPECT_FALSE(hosts_cfg->get4(123, hwaddr));
+    EXPECT_FALSE(hosts_cfg->get4(234, hwaddr));
+
+    // Repeat the test for the DUID based reservation in this subnet.
+    duid.reset(new DUID(std::vector<uint8_t>(duid_vec.rbegin(),
+                                             duid_vec.rend())));
+    host = hosts_cfg->get4(542, HWAddrPtr(), duid);
+    ASSERT_TRUE(host);
+    EXPECT_EQ("192.0.4.101", host->getIPv4Reservation().toText());
+    EXPECT_FALSE(hosts_cfg->get4(123, HWAddrPtr(), duid));
+    EXPECT_FALSE(hosts_cfg->get4(234, HWAddrPtr(), duid));
+
+}
+
+// This test verfies that the bogus host reservation would trigger a
+// server configuration error. In this case the "hw-address" parameter in the
+// reservation is misspelled.
+TEST_F(Dhcp4ParserTest, reservationBogus) {
+    ConstElementPtr x;
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.4.101 - 192.0.4.150\" } ],"
+        "    \"subnet\": \"192.0.4.0/24\","
+        "    \"id\": 542,"
+        "    \"reservations\": ["
+        "      {"
+        "        \"hw-addre\": \"06:05:04:03:02:01\","
+        "        \"ip-address\": \"192.0.4.102\","
+        "        \"hostname\": \"\""
+        "      }"
+        "    ]"
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+    checkResult(x, 1);
 }
 
 }
