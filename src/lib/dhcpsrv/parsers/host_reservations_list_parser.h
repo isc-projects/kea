@@ -15,6 +15,7 @@
 #ifndef HOST_RESERVATIONS_LIST_PARSER_H
 #define HOST_RESERVATIONS_LIST_PARSER_H
 
+#include <cc/data.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/parsers/dhcp_config_parser.h>
 #include <boost/foreach.hpp>
@@ -23,6 +24,11 @@ namespace isc {
 namespace dhcp {
 
 /// @brief Parser for a list of host reservations for a subnet.
+///
+/// @tparam HostReservationParserType Host reservation parser to be used to
+/// parse individual reservations: @c HostReservationParser4 or
+/// @c HostReservationParser6.
+template<typename HostReservationParserType>
 class HostReservationsListParser : public DhcpConfigParser {
 public:
 
@@ -41,9 +47,8 @@ public:
     ///
     /// @throw DhcpConfigError If the configuration if any of the reservations
     /// is invalid.
-    template<typename HostReservationParserType>
     virtual void build(isc::data::ConstElementPtr hr_list) {
-        BOOST_FOREACH(ConstElementPtr reservation, hr_list->listValue()) {
+        BOOST_FOREACH(data::ConstElementPtr reservation, hr_list->listValue()) {
             ParserPtr parser(new HostReservationParserType(subnet_id_));
             parser->build(reservation);
         }
