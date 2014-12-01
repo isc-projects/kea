@@ -44,6 +44,9 @@ HostMgr::getHostMgrPtr() {
 void
 HostMgr::create(const std::string&) {
     getHostMgrPtr().reset(new HostMgr());
+
+    /// @todo Initialize alternate_source here, using the parameter.
+    /// For example: alternate_source.reset(new MysqlHostDataSource(access)).
 }
 
 HostMgr&
@@ -57,29 +60,51 @@ HostMgr::instance() {
 
 ConstHostCollection
 HostMgr::getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid) const {
-    return (getCfgHosts()->getAll(hwaddr, duid));
+    ConstHostCollection hosts = getCfgHosts()->getAll(hwaddr, duid);
+    if (alternate_source) {
+        ConstHostCollection hosts_plus = alternate_source->getAll(hwaddr, duid);
+        hosts.insert(hosts.end(), hosts_plus.begin(), hosts_plus.end());
+    }
+    return (hosts);
 }
 
 ConstHostCollection
 HostMgr::getAll4(const IOAddress& address) const {
+    ConstHostCollection hosts = getCfgHosts()->getAll4(address);
+    if (alternate_source) {
+        ConstHostCollection hosts_plus = alternate_source->getAll4(address);
+        hosts.insert(hosts.end(), hosts_plus.begin(), hosts_plus.end());
+    }
     return (getCfgHosts()->getAll4(address));
 }
 
 ConstHostPtr
 HostMgr::get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
               const DuidPtr& duid) const {
-    return (getCfgHosts()->get4(subnet_id, hwaddr, duid));
+    ConstHostPtr host = getCfgHosts()->get4(subnet_id, hwaddr, duid);
+    if (!host && alternate_source) {
+        host = alternate_source->get4(subnet_id, hwaddr, duid);
+    }
+    return (host);
 }
 
 ConstHostPtr
 HostMgr::get6(const SubnetID& subnet_id, const DuidPtr& duid,
                const HWAddrPtr& hwaddr) const {
-    return (getCfgHosts()->get6(subnet_id, duid, hwaddr));
+    ConstHostPtr host = getCfgHosts()->get6(subnet_id, duid, hwaddr);
+    if (!host && alternate_source) {
+        host = alternate_source->get6(subnet_id, duid, hwaddr);
+    }
+    return (host);
 }
 
 ConstHostPtr
 HostMgr::get6(const IOAddress& prefix, const uint8_t prefix_len) const {
-    return (getCfgHosts()->get6(prefix, prefix_len));
+    ConstHostPtr host = getCfgHosts()->get6(prefix, prefix_len);
+    if (!host && alternate_source) {
+        host = alternate_source->get6(prefix, prefix_len);
+    }
+    return (host);
 }
 
 void
