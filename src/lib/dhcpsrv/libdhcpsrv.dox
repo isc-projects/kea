@@ -81,6 +81,39 @@ one that occurred before it etc.
 the \ref isc::dhcp::SrvConfig object. Kea developers are actively working
 on migrating the other configuration parameters to it.
 
+@section hostmgr Host Manager
+
+Host Manager implemented by the \ref isc::dhcp::HostMgr is a singleton object
+which provides means to retrieve resources statically assigned to the DHCP
+clients, such as IP addresses, prefixes or hostnames. The statically assigned
+resources are called reservations (or host reservations) and they are
+represented in the code by the \ref isc::dhcp::Host class.
+
+The reservations can be specified in the configuration file or in some
+other storage (typically in a database). A dedicated object, called
+host data source, is needed to retrieve the host reservations from the
+database. This object must implement the \ref isc::dhcp::BaseHostDataSource
+interface and its implementation is specific to the type of storage
+holding the reservations. For example, the host data source managing
+host reservations in the MySQL database is required to establish
+connection to the MySQL databse and issue specific queries. Once
+implemented, the \ref isc::dhcp::HostMgr::create method must be updated
+to create an instance of this datasource. Note, that this instance is
+created as "alternate host data source" as opposed to the primary data
+source which returns host reservations specified in the configuration file.
+The primary data source is implemented internally in the
+\ref isc::dhcp::HostMgr and uses the configuration data structures held by
+the \ref isc::dhcp::CfgMgr to retrieve the reservations. In general, the
+\ref isc::dhcp::HostMgr first searches for the reservations using the
+primary data source and falls back to the use of alternate data source
+when nothing has been found. For those methods which are meant to return
+multiple reservations (e.g. find all reservations for the particular
+client), the \ref isc::dhcp::HostMgr will use both primary and alternate
+data source (if present) and concatenate results.
+
+For more information about the \ref isc::dhcp::HostMgr please refer to its
+documentation.
+
 @section optionsConfig Options Configuration Information
 
 The \ref isc::dhcp::CfgOption object holds a collection of options being
