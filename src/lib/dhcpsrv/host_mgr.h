@@ -15,6 +15,7 @@
 #ifndef HOST_MGR_H
 #define HOST_MGR_H
 
+#include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
 namespace isc {
@@ -54,7 +55,7 @@ namespace dhcp {
 /// reservations specified in the configuration file) can't be disabled.
 ///
 /// @todo Implement alternate host data sources: MySQL, PostgreSQL, etc.
-class HostMgr : public BaseHostDataSource {
+class HostMgr : public boost::noncopyable, BaseHostDataSource {
 public:
 
     /// @brief Creates new instance of the @c HostMgr.
@@ -158,14 +159,23 @@ public:
     /// This method will throw an exception if no alternate data source is
     /// in use.
     ///
-    /// @param Pointer to the new @c Host object being added.
+    /// @param host Pointer to the new @c Host object being added.
     virtual void add(const HostPtr& host);
 
 private:
 
+    /// @brief Private default constructor.
+    HostMgr() { }
+
+    /// @brief Pointer to an alternate host data source.
+    ///
+    /// If this pointer is NULL, the source is not in use.
+    boost::scoped_ptr<BaseHostDataSource> alternate_source;
+
     /// @brief Returns a pointer to the currently used instance of the
     /// @c HostMgr.
     static boost::scoped_ptr<HostMgr>& getHostMgrPtr();
+
 };
 }
 }
