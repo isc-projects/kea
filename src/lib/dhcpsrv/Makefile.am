@@ -64,6 +64,7 @@ libkea_dhcpsrv_la_SOURCES += dhcp_config_parser.h
 libkea_dhcpsrv_la_SOURCES += dhcp_parsers.cc dhcp_parsers.h
 libkea_dhcpsrv_la_SOURCES += host.cc host.h
 libkea_dhcpsrv_la_SOURCES += host_container.h
+libkea_dhcpsrv_la_SOURCES += host_mgr.cc host_mgr.h
 libkea_dhcpsrv_la_SOURCES += host_reservation_parser.cc host_reservation_parser.h
 libkea_dhcpsrv_la_SOURCES += key_from_key.h
 libkea_dhcpsrv_la_SOURCES += lease.cc lease.h
@@ -87,6 +88,7 @@ libkea_dhcpsrv_la_SOURCES += subnet_id.h
 libkea_dhcpsrv_la_SOURCES += subnet_selector.h
 libkea_dhcpsrv_la_SOURCES += triplet.h
 libkea_dhcpsrv_la_SOURCES += utils.h
+libkea_dhcpsrv_la_SOURCES += writable_host_data_source.h
 
 nodist_libkea_dhcpsrv_la_SOURCES = dhcpsrv_messages.h dhcpsrv_messages.cc
 
