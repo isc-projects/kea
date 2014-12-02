@@ -36,6 +36,11 @@
 # Add names of interfaces to listen on.
   "interfaces": [ ],
 
+# Use Memfile lease database backend to store leases in a CSV file.
+  "lease-database": {
+    "type": "memfile"
+  },
+
 # Addresses will be assigned with preferred and valid lifetimes
 # being 3000 and 4000, respectively. Client is told to start
 # renewing after 1000 seconds. If the server does not repond
