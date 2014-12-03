@@ -1,3 +1,8 @@
+858.	[bug]		marcin
+	Added missing "lease-database" entry to the default DHCPv6
+	server configuration, in kea.conf.
+	(Trac #3630, git 0f7ff732ea2add45a24e040eae8a0dda27532a31)
+
 857.	[func]		fdupont
 	Improve the cryptolink code, for instance use a constant
 	time comparison.
