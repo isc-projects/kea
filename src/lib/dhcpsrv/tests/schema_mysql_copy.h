@@ -43,6 +43,8 @@ const char* destroy_statement[] = {
 // Creation of the new tables.
 
 const char* create_statement[] = {
+
+    // Schema initialization to 1.0 starts here.
     "START TRANSACTION",
     "CREATE TABLE lease4 ("
         "address INT UNSIGNED PRIMARY KEY NOT NULL,"
@@ -94,26 +96,34 @@ const char* create_statement[] = {
     "INSERT INTO schema_version VALUES (1, 0)",
     "COMMIT",
 
+    // Schema initialization to 1.0 ends here.
+
+    // Schema upgrade to 2.0 starts here.
     "ALTER TABLE lease6 "
     "ADD COLUMN hwaddr varbinary(20),"
     "ADD COLUMN hwtype smallint unsigned,"
     "ADD COLUMN hwaddr_source int unsigned;",
 
-    "CREATE TABLE lease6_hwaddr_source ("
+    // Production schema has lease6_hwaddr_source table. It is not used by
+    // kea code and is simply useful for formulating more human readable
+    // queries. Hence no need to create it in tests. The actual SQL
+    // code remains here commented out to keep a trace that the omission
+    // is intentional.
+
+    /* "CREATE TABLE lease6_hwaddr_source ("
     "hwaddr_source INT PRIMARY KEY NOT NULL,"
     "name VARCHAR(40) )",
 
-    // We should probably comment those statements. They are not used by the
-    // tests and they slow execution down by 11 seconds on my beefy desktop.
     "INSERT INTO lease6_hwaddr_source VALUES (1, \"HWADDR_SOURCE_RAW\");",
     "INSERT INTO lease6_hwaddr_source VALUES (2, \"HWADDR_SOURCE_IPV6_LINK_LOCAL\");",
     "INSERT INTO lease6_hwaddr_source VALUES (4, \"HWADDR_SOURCE_DUID\");",
     "INSERT INTO lease6_hwaddr_source VALUES (8, \"HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION\");",
     "INSERT INTO lease6_hwaddr_source VALUES (16, \"HWADDR_SOURCE_REMOTE_ID\");",
     "INSERT INTO lease6_hwaddr_source VALUES (32, \"HWADDR_SOURCE_SUBSCRIBER_ID\");",
-    "INSERT INTO lease6_hwaddr_source VALUES (64, \"HWADDR_SOURCE_DOCSIS\");",
+    "INSERT INTO lease6_hwaddr_source VALUES (64, \"HWADDR_SOURCE_DOCSIS\");", */
 
     "UPDATE schema_version SET version=\"2\", minor=\"0\";",
+    // Schema upgrade to 2.0 ends here.
 
     NULL
 };
