@@ -18,6 +18,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
+#include <dhcpsrv/host.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <hooks/callout_handle.h>
@@ -214,6 +215,72 @@ protected:
         ALLOC_RANDOM     // random - an address is randomly selected
     } AllocType;
 
+    /// @brief Context information for the DHCPv4 lease allocation.
+    ///
+    /// This structure holds a set of information provided by the DHCPv4
+    /// server to the allocation engine. In particular, it holds the
+    /// client identifying information, such as HW address or client
+    /// identifier. It also holds the information about the subnet that
+    /// the client is connected to.
+    ///
+    /// This structure is also used to pass  some information from
+    /// the allocation engine back to the server, i.e. the old lease
+    /// which the client had before the allocation.
+    ///
+    /// This structure is meant to be extended in the future, if more
+    /// information should be passed to the allocation engine. Note
+    /// that the big advantage of using the context structure to pass
+    /// information to the allocation engine methods is that adding
+    /// new information doesn't modify the API of the allocation engine.
+    struct Context4 {
+        /// @brief Subnet selected for the client by the server.
+        SubnetPtr subnet_;
+
+        /// @brief Client identifier from the DHCP message.
+        ClientIdPtr clientid_;
+
+        /// @brief HW address from the DHCP message.
+        HWAddrPtr hwaddr_;
+
+        /// @brief An address that the client desires.
+        ///
+        /// If this address is set to 0 it indicates that this address
+        /// is unspecified.
+        asiolink::IOAddress hint_;
+
+        /// @brief Perform forward DNS update.
+        bool fwd_dns_update_;
+
+        /// @brief Perform reverse DNS update.
+        bool rev_dns_update_;
+
+        /// @brief Hostname.
+        std::string hostname_;
+
+        /// @brief Callout handle associated with the client's message.
+        hooks::CalloutHandlePtr callout_handle_;
+
+        /// @brief Indicates if this is a real or fake allocation.
+        ///
+        /// The real allocation is when the allocation engine is supposed
+        /// to make an update in a lease database: create new lease, or
+        /// update existing lease.
+        bool fake_allocation_;
+
+        /// @brief A pointer to an old lease that the client had before update.
+        Lease4Ptr old_lease_;
+
+        /// @brief A pointer to the object identifying host reservations.
+        ConstHostPtr host_;
+
+        /// @brief Default constructor.
+        Context4()
+            : subnet_(), clientid_(), hwaddr_(), hint_("0.0.0.0"),
+              fwd_dns_update_(false), rev_dns_update_(false),
+              hostname_(""), callout_handle_(), fake_allocation_(false),
+              old_lease_(), host_() {
+        }
+    };
 
     /// @brief Default constructor.
     ///
@@ -283,38 +350,20 @@ protected:
                    const isc::hooks::CalloutHandlePtr& callout_handle,
                    Lease4Ptr& old_lease);
 
-    /// @brief Renews a IPv4 lease
+    /// @brief Renews an DHCPv4 lease.
     ///
-    /// Since both request and renew are implemented in DHCPv4 as the sending of
-    /// a REQUEST packet, it is difficult to easily distinguish between those
-    /// cases. Therefore renew for DHCPv4 is done in the allocation engine.
-    /// This method is also used when client crashed/rebooted and tries
-    /// to get a new lease. It thinks that it gets a new lease, but in fact
-    /// we are only renewing the still valid lease for that client.
+    /// This method updates the lease with the information from the provided
+    /// context and invokes the lease4_renew callout.
     ///
-    /// @param subnet A subnet the client is attached to
-    /// @param clientid Client identifier
-    /// @param hwaddr Client's hardware address
-    /// @param fwd_dns_update Indicates whether forward DNS update will be
-    ///        performed for the client (true) or not (false).
-    /// @param rev_dns_update Indicates whether reverse DNS update will be
-    ///        performed for the client (true) or not (false).
-    /// @param hostname A string carrying hostname to be used for DNS updates.
-    /// @param lease A lease to be renewed
-    /// @param callout_handle a callout handle (used in hooks). A lease callouts
-    ///        will be executed if this parameter is passed.
-    /// @param fake_allocation Is this real i.e. REQUEST (false) or just picking
-    ///        an address for DISCOVER that is not really allocated (true)
+    /// The address of the lease being renewed is NOT updated.
+    ///
+    /// @param ctx Message processing context. It holds various information
+    /// extracted from the client's message and required to allocate a lease.
+    ///
+    /// @return Returns renewed lease. Note that the lease is only updated when
+    /// it is an actual allocation (not processing DHCPDISCOVER message).
     Lease4Ptr
-    renewLease4(const SubnetPtr& subnet,
-                const ClientIdPtr& clientid,
-                const HWAddrPtr& hwaddr,
-                const bool fwd_dns_update,
-                const bool rev_dns_update,
-                const std::string& hostname,
-                const Lease4Ptr& lease,
-                const isc::hooks::CalloutHandlePtr& callout_handle,
-                bool fake_allocation /* = false */);
+    renewLease4(const Lease4Ptr& lease, const Context4& ctx);
 
     /// @brief Allocates an IPv6 lease
     ///
@@ -396,6 +445,25 @@ private:
                            const isc::hooks::CalloutHandlePtr& callout_handle,
                            bool fake_allocation = false);
 
+    /// @brief Updates the specified lease with the information from a context.
+    ///
+    /// The context, specified as an argument to this method, holds various
+    /// information gathered from the client's message and passed to the
+    /// allocation engine. The allocation engine uses this information to make
+    /// lease allocation decisions. Some public methods of the allocation engine
+    /// requires updating the lease information with the data gathered from the
+    /// context, e.g. @c AllocEngine::reuseExpiredLease requires updating the
+    /// expired lease with a fresh information from the context to create a
+    /// lease to be held for the client.
+    ///
+    /// Note that this doesn't update the lease address.
+    ///
+    /// @param [out] lease A pointer to the lease to be updated.
+    /// @param ctx A context containing information from the server about the
+    /// client and its message.
+    void updateLease4Information(const Lease4Ptr& lease,
+                                 const Context4& ctx) const;
+
     /// @brief creates a lease and inserts it in LeaseMgr if necessary
     ///
     /// Creates a lease based on specified parameters and tries to insert it
@@ -433,36 +501,57 @@ private:
                            const isc::hooks::CalloutHandlePtr& callout_handle,
                            bool fake_allocation = false);
 
-    /// @brief Reuses expired IPv4 lease
+    /// @brief Reuses expired DHCPv4 lease.
     ///
-    /// Updates existing expired lease with new information. Lease database
-    /// is updated if this is real (i.e. REQUEST, fake_allocation = false), not
-    /// dummy allocation request (i.e. DISCOVER, fake_allocation = true).
+    /// Makes new allocation using an expired lease. The lease is updated with
+    /// the information from the provided context. Typically, an expired lease
+    /// lease which belonged to one client may be assigned to another client
+    /// which asked for the specific address.
     ///
-    /// @param expired Old, expired lease
-    /// @param subnet Subnet the lease is allocated from
-    /// @param clientid Client identifier
-    /// @param hwaddr Client's hardware address
-    /// @param fwd_dns_update Indicates whether forward DNS update will be
-    ///        performed for the client (true) or not (false).
-    /// @param rev_dns_update Indicates whether reverse DNS update will be
-    ///        performed for the client (true) or not (false).
-    /// @param hostname A string carrying hostname to be used for DNS updates.
-    /// @param callout_handle A callout handle (used in hooks). A lease callouts
-    ///        will be executed if this parameter is passed.
-    /// @param fake_allocation Is this real i.e. REQUEST (false) or just picking
-    ///        an address for DISCOVER that is not really allocated (true)
-    /// @return refreshed lease
-    /// @throw BadValue if trying to recycle lease that is still valid
-    Lease4Ptr reuseExpiredLease(Lease4Ptr& expired,
-                                const SubnetPtr& subnet,
-                                const ClientIdPtr& clientid,
-                                const HWAddrPtr& hwaddr,
-                                const bool fwd_dns_update,
-                                const bool rev_dns_update,
-                                const std::string& hostname,
-                                const isc::hooks::CalloutHandlePtr& callout_handle,
-                                bool fake_allocation = false);
+    /// @param expired An old, expired lease.
+    /// @param ctx Message processing context. It holds various information
+    /// extracted from the client's message and required to allocate a lease.
+    ///
+    /// @return Updated lease instance.
+    /// @throw BadValue if trying to reuse a lease which is still valid or
+    /// when the provided parameters are invalid.
+    Lease4Ptr reuseExpiredLease(Lease4Ptr& expired, const Context4& ctx);
+
+    /// @brief Updates the existing, non expired lease with a information from
+    /// the context.
+    ///
+    /// This method is invoked when the client requests allocation of the
+    /// (reserved) lease but there is a lease for this client with a different
+    /// address in the database already. In this case the existing lease must
+    /// be updated in the database with a new information. In particular,
+    /// with a new address.
+    ///
+    /// This method invokes the lease4_release and lease4_select callouts.
+    ///
+    /// @param lease A pointer to the lease to be updated.
+    /// @param ctx A context to be used to update the lease.
+    ///
+    /// @return Pointer to the updated lease.
+    /// @throw BadValue if the provided parameters are invalid.
+    Lease4Ptr replaceClientLease(Lease4Ptr& lease, const Context4& ctx);
+
+    /// @brief Replace or renew client's lease.
+    ///
+    /// This method is ivoked by the @c AllocEngine::allocateLease4 when it
+    /// finds that the lease for the particular client already exists in the
+    /// database. If the existing lease has the same IP address as the one
+    /// that the client should be allocated the existing lease is renewed.
+    /// If the client should be allocated a different address, e.g. there
+    /// is a static reservation for the client, the existing lease is replaced
+    /// with a new one. This method handles both cases.
+    ///
+    /// @param lease Existing lease.
+    /// @param ctx Context holding parameters to be used for the lease
+    /// allocation.
+    ///
+    /// @return Updated lease, or NULL if allocation was unsucessful.
+    /// @throw BadValue if specified parameters are invalid.
+    Lease4Ptr reallocateClientLease(Lease4Ptr& lease, Context4& ctx);
 
     /// @brief Reuses expired IPv6 lease
     ///
