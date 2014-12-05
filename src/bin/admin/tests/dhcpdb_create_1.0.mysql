@@ -13,7 +13,9 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# This is the BIND 10 DHCP schema specification for MySQL.
+# This is the Kea schema 1.0 specification for MySQL.
+# Note: this is outdated version on purpose and it used to test upgrade
+# process. Do not update this file to 2.0 or any later.
 #
 # The schema is reasonably portable (with the exception of the engine
 # specification, which is MySQL-specific).  Minor changes might be needed for
