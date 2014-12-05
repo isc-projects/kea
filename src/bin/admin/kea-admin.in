@@ -17,8 +17,9 @@
 # This is kea-admin script that conducts administrative tasks on the Kea
 # installation. Currently supported operations are:
 #
-# - database version check
-# - database version upgrade
+# - lease database init
+# - lease database version check
+# - lease database version upgrade
 
 
 # Get the location of the kea-admin scripts
@@ -51,10 +52,10 @@ usage() {
     printf "\n"
     printf "COMMAND: Currently supported operations are:\n"
     printf "\n"
-    printf " - init: Initalizes new database. Useful for first time installation.\n"
-    printf " - version: Checks version of the existing database scheme. Useful\n"
-    printf " -          for checking DB version when preparing for an upgrade.\n"
-    printf " - upgrade: Upgrades your database scheme\n"
+    printf " - lease-init: Initalizes new lease database. Useful for first time installation.\n"
+    printf " - lease-version: Checks version of the existing lease database scheme. Useful\n"
+    printf " -                for checking lease DB version when preparing for an upgrade.\n"
+    printf " - lease-upgrade: Upgrades your lease database scheme\n"
     printf "\n"
     printf "BACKEND - one of the supported backends: memfile|mysql|pgsql\n"
     printf "\n"
@@ -148,7 +149,7 @@ mysql_init() {
     printf "mysql returned status code $ERRCODE\n"
 
     if [ "$ERRCODE" -eq 0 ]; then
-        printf "Version reported after initialization: "
+        printf "Lease DB version reported after initialization: "
         mysql_version_print
         printf "\n"
     fi
@@ -188,7 +189,7 @@ memfile_upgrade() {
 # This function prints version before and after upgrade.
 mysql_upgrade() {
 
-    printf "Version reported before upgrade: "
+    printf "Lease DB version reported before upgrade: "
     mysql_version_print
     printf "\n"
 
@@ -199,7 +200,7 @@ mysql_upgrade() {
     fi
 
     # Check if there are any files in it
-    num_files=`ls -1 ${scripts_dir}/mysql/upgrade*.sh | wc -l &> /dev/null`
+    num_files=$(find ${scripts_dir}/mysql/upgrade*.sh -type f | wc -l)
     if [ $num_files -eq 0 ]; then
         log_error "No scripts in ${scripts_dir}/mysql or the directory is not readable or does not have any upgrade* scripts."
         exit 1
@@ -211,7 +212,7 @@ mysql_upgrade() {
         sh ${script} --user=${db_user} --password=${db_password} ${db_name}
     done
 
-    printf "Version reported after upgrade: "
+    printf "Lease DB version reported after upgrade: "
     mysql_version_print
     printf "\n"
 }
@@ -230,7 +231,7 @@ if [ -z ${command} ]; then
     usage
     exit 1
 fi
-is_in_list "${command}" "init version upgrade"
+is_in_list "${command}" "lease-init lease-version lease-upgrade"
 if [ ${_inlist} -eq 0 ]; then
     log_error "invalid command: ${command}"
     exit 1
@@ -305,7 +306,7 @@ done
 
 case ${command} in
     # Initialize the database
-    init)
+    lease-init)
         case ${backend} in
             memfile)
                 memfile_init
@@ -318,7 +319,7 @@ case ${command} in
                 ;;
             esac
         ;;
-    version)
+    lease-version)
         case ${backend} in
             memfile)
                 memfile_version
@@ -332,7 +333,7 @@ case ${command} in
                 ;;
             esac
         ;;
-    upgrade)
+    lease-upgrade)
         case ${backend} in
             memfile)
                 memfile_upgrade
