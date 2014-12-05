@@ -30,7 +30,7 @@
 
   <refnamediv>
     <refname>kea-admin</refname>
-    <refpurpose>Shell script for managing Kea database</refpurpose>
+    <refpurpose>Shell script for managing Kea databases</refpurpose>
   </refnamediv>
 
   <docinfo>
@@ -42,7 +42,7 @@
 
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>keactrl</command>
+      <command>kea-admin</command>
       <arg>command</arg>
       <arg>backend</arg>
       <arg><option>-u <replaceable class="parameter">database username</replaceable></option></arg>
@@ -73,25 +73,28 @@
 
           <variablelist>
             <varlistentry>
-              <term>init</term>
+              <term>lease-init</term>
               <listitem>
-                <para>Initializes a new database. Useful during first Kea installation.</para>
+                <para>Initializes a new lease database. Useful during first Kea
+                installation. The database is initialized to the latest version
+                supported by the version of the software.</para>
               </listitem>
             </varlistentry>
 
             <varlistentry>
-              <term>version</term>
+              <term>lease-version</term>
               <listitem>
-                <para>Reports database version. This is not necessarily equal to Kea version as
-                each backend has its own versionining scheme.</para>
+                <para>Reports lease database version. This is not necessarily
+                equal to Kea version as each backend has its own versioning
+                scheme.</para>
               </listitem>
             </varlistentry>
 
             <varlistentry>
-              <term>upgrade</term>
+              <term>lease-upgrade</term>
               <listitem>
-                <para>Conducts database upgrade. This is useful when migrating between old and new
-                Kea versions.</para>
+                <para>Conducts lease database upgrade. This is useful when
+                migrating between old and new Kea versions.</para>
               </listitem>
             </varlistentry>
           </variablelist>
