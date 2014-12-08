@@ -75,7 +75,7 @@ HostMgr::getAll4(const IOAddress& address) const {
         ConstHostCollection hosts_plus = alternate_source->getAll4(address);
         hosts.insert(hosts.end(), hosts_plus.begin(), hosts_plus.end());
     }
-    return (getCfgHosts()->getAll4(address));
+    return (hosts);
 }
 
 ConstHostPtr
