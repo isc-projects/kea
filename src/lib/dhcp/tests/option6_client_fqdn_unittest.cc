@@ -191,17 +191,16 @@ TEST(Option6ClientFqdnTest, constructFromWireTooLongLabel) {
 // is over 255.
 TEST(Option6ClientFqdnTest, constructFromWireTooLongDomainName) {
     OptionBuffer in_buf(Option6ClientFqdn::FLAG_S);
+    // Construct the FQDN from 26 labels, each having a size of 10.
     for (int i = 0; i < 26;  ++i) {
+        // Append the length of each label.
         in_buf.push_back(10);
+        // Append the actual label.
         in_buf.insert(in_buf.end(), 10, 109);
     }
+    // Terminate FQDN with a dot.
     in_buf.push_back(0);
 
-    try {
-        Option6ClientFqdn(in_buf.begin(), in_buf.end());
-    } catch (const Exception& ex) {
-        std::cout << ex.what() << std::endl;
-    }
     EXPECT_THROW(Option6ClientFqdn(in_buf.begin(), in_buf.end()),
                  InvalidOption6FqdnDomainName);
 }
