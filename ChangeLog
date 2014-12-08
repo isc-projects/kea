@@ -1,3 +1,8 @@
+860.	[bug]		marcin
+	Fixed calculation of the Client FQDN option length for the ASCII
+	domain name encoding.
+	(Trac #3624, git 5a120d9bf85e27ea5b2674d35af0f2774e4cd2a7)
+
 859.	[func]		marcin
 	Implemented Host Manager, which can retrieve host reservations
 	specified in the server's configuration. Future tickets will
