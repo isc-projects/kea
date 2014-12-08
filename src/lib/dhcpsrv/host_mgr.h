@@ -47,7 +47,7 @@ namespace dhcp {
 /// For example, for the SQL database the user's credentials, database address,
 /// and database name are required. The @c HostMgr passes these parameters
 /// to an appropriate datasource which is responsible for opening a connection
-/// and maintaing it.
+/// and maintaining it.
 ///
 /// It is possible to switch to a different alternate data source or disable
 /// the use of the alternate datasource, e.g. as a result of server's
@@ -67,8 +67,9 @@ public:
     /// @param access Host data source access parameters for the alternate
     /// host data source. It holds "keyword=value" pairs, separated by spaces.
     /// The supported values are specific to the alternate data source in use.
-    /// However, the "type" parameter is common and it specifies which data
-    /// source is to be used.
+    /// However, the "type" parameter will be common and it will specify which
+    /// data source is to be used. Currently, no parameters are supported
+    /// and the parameter is ignored.
     static void create(const std::string& access = "");
 
     /// @brief Returns a sole instance of the @c HostMgr.
@@ -77,19 +78,22 @@ public:
     /// to be used to gather/manage host reservations. It returns an instance
     /// of the @c HostMgr created by the @c create method. If such instance
     /// doesn't exist yet, it is created using the @c create method with the
-    /// default c
+    /// default value of the data access string, which configures the host
+    /// manager to not use the alternate host data source.
     static HostMgr& instance();
 
     /// @brief Returns all hosts for the specified HW address or DUID.
     ///
     /// This method returns all @c Host objects representing reservations for
-    /// the specified HW address or DUID as documented in the
+    /// the specified HW address or/and DUID as documented in the
     /// @c BaseHostDataSource::getAll.
     ///
     /// It retrieves reservations from both primary and alternate host data
-    /// source as a single collection of @c Host objects. Note that this
-    /// collection may contain duplicates. It is the caller's responsibility
-    /// to check for duplicates.
+    /// source as a single collection of @c Host objects, i.e. if matching
+    /// reservations are in both sources, all of them are returned.
+    ///
+    /// Note that returned collection may contain duplicates. It is the
+    /// caller's responsibility to check for duplicates.
     ///
     /// @param hwaddr HW address of the client or NULL if no HW address
     /// available.
@@ -103,6 +107,9 @@ public:
     ///
     /// This method may return multiple @c Host objects if they are connected to
     /// different subnets.
+    ///
+    /// If matching reservations are both in the primary and the alternate
+    /// data source, all of them are returned.
     ///
     /// @param address IPv4 address for which the @c Host object is searched.
     ///

@@ -150,7 +150,7 @@ that handles allocation of new leases. It takes parameters that the client
 provided (client-id, DUID, subnet, a hint if the user provided one, etc.) and
 then attempts to allocate a lease.
 
-There is no single best soluction to the address assignment problem. Server
+There is no single best solution to the address assignment problem. Server
 is expected to pick an address from its available pools is currently not used.
 There are many possible algorithms that can do that, each with its own advantages
 and drawbacks. This allocation engine must provide robust operation is radically
