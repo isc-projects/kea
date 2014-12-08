@@ -1,3 +1,10 @@
+859.	[func]		marcin
+	Implemented Host Manager, which can retrieve host reservations
+	specified in the server's configuration. Future tickets will
+	extend Host Manager to retrieve reservations from other sources,
+	e.g. SQL databases.
+	(Trac #3561, git faac5e9746dbf82eb04ffef95658e4b4c7d64a4a)
+
 858.	[bug]		marcin
 	Added missing "lease-database" entry to the default DHCPv6
 	server configuration, in kea.conf.
