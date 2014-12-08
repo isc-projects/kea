@@ -28,14 +28,14 @@ mysql_execute() {
     if [ $# -gt 1 ]; then
         QUERY=$1
         shift
-        _RESULT=`echo $QUERY | mysql -N -B $@ | sed "s/\t/./g"`
+        _RESULT=`echo $QUERY | mysql -N -B $@`
     else
-        _RESULT=$(mysql -N -B --user=$db_user --password=$db_password -e "${1}" $db_name | sed "s/\t/./g")
+        _RESULT=$(mysql -N -B --user=$db_user --password=$db_password -e "${1}" $db_name)
     fi
 }
 
 mysql_version() {
-    mysql_execute "SELECT version,minor FROM schema_version" "$@"
+    mysql_execute "SELECT CONCAT(version,\".\",minor) FROM schema_version" "$@"
 }
 
 mysql_version_print() {

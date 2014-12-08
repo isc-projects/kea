@@ -138,7 +138,7 @@ mysql_init() {
     if [ $COUNT -gt 0 ]; then
         # Let't start with a new line. mysql could have printed something out.
         printf "\n"
-        log_error "Expected empty database $db_name, but there are $COUNT tables: $_RESULT. Aborting."
+        log_error "Expected empty database $db_name, but there are $COUNT tables: \n$_RESULT. Aborting."
         exit 1
     fi
 
