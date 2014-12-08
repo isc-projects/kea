@@ -165,12 +165,17 @@ CfgHosts::add(const HostPtr& host) {
         isc_throw(BadValue, "specified host object must not be NULL when it"
                   " is added to the configuration");
     }
-    /// @todo This may need further sanity checks. For example, a duplicate
-    /// should be rejected.
+    // At least one subnet ID must be non-zero
+    if (host->getIPv4SubnetID() == 0 && host->getIPv6SubnetID() == 0) {
+        isc_throw(BadValue, "must not use both IPv4 and IPv6 subnet ids of"
+                  " 0 when adding new host reservation");
+    }
+    /// @todo This may need further sanity checks.
     HWAddrPtr hwaddr = host->getHWAddress();
     DuidPtr duid = host->getDuid();
     // Check for duplicates for the specified IPv4 subnet.
-    if (get4(host->getIPv4SubnetID(), hwaddr, duid)) {
+    if ((host->getIPv4SubnetID() > 0) &&
+        get4(host->getIPv4SubnetID(), hwaddr, duid)) {
         isc_throw(DuplicateHost, "failed to add new host using the HW"
                   " address '" << (hwaddr ? hwaddr->toText(false) : "(null)")
                   << " and DUID '" << (duid ? duid->toText() : "(null)")
@@ -178,7 +183,8 @@ CfgHosts::add(const HostPtr& host) {
                   << "' as this host has already been added");
 
     // Checek for duplicates for the specified IPv6 subnet.
-    } else if (get6(host->getIPv6SubnetID(), duid, hwaddr)) {
+    } else if (host->getIPv6SubnetID() &&
+               get6(host->getIPv6SubnetID(), duid, hwaddr)) {
         isc_throw(DuplicateHost, "failed to add new host using the HW"
                   " address '" << (hwaddr ? hwaddr->toText(false) : "(null)")
                   << " and DUID '" << (duid ? duid->toText() : "(null)")

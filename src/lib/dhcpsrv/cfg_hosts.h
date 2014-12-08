@@ -18,10 +18,10 @@
 #include <asiolink/io_address.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
-#include <dhcpsrv/base_host_data_source.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/host_container.h>
 #include <dhcpsrv/subnet_id.h>
+#include <dhcpsrv/writable_host_data_source.h>
 #include <boost/shared_ptr.hpp>
 #include <vector>
 
@@ -42,7 +42,7 @@ namespace dhcp {
 /// when the new configuration is applied for the server. The reservations
 /// are retrieved by the @c HostMgr class when the server is allocating or
 /// renewing an address or prefix for the particular client.
-class CfgHosts : public BaseHostDataSource {
+class CfgHosts : public WritableHostDataSource {
 public:
 
     /// @brief Return all hosts for the specified HW address or DUID.

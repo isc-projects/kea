@@ -68,6 +68,7 @@ libdhcpsrv_unittests_SOURCES += d2_client_unittest.cc
 libdhcpsrv_unittests_SOURCES += d2_udp_unittest.cc
 libdhcpsrv_unittests_SOURCES += daemon_unittest.cc
 libdhcpsrv_unittests_SOURCES += dbaccess_parser_unittest.cc
+libdhcpsrv_unittests_SOURCES += host_mgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += host_unittest.cc
 libdhcpsrv_unittests_SOURCES += host_reservation_parser_unittest.cc
 libdhcpsrv_unittests_SOURCES += lease_file_io.cc lease_file_io.h
