@@ -47,26 +47,33 @@ s-messages: dhcp6_messages.mes
 
 BUILT_SOURCES = spec_config.h dhcp6_messages.h dhcp6_messages.cc
 
-sbin_PROGRAMS = kea-dhcp6
+# convenience archive
 
-kea_dhcp6_SOURCES  = main.cc
-kea_dhcp6_SOURCES += dhcp6_log.cc dhcp6_log.h
-kea_dhcp6_SOURCES += dhcp6_srv.cc dhcp6_srv.h
-kea_dhcp6_SOURCES += ctrl_dhcp6_srv.cc ctrl_dhcp6_srv.h
-kea_dhcp6_SOURCES += json_config_parser.cc json_config_parser.h
+noinst_LTLIBRARIES = libdhcp6.la
+
+libdhcp6_la_SOURCES  =
+libdhcp6_la_SOURCES += dhcp6_log.cc dhcp6_log.h
+libdhcp6_la_SOURCES += dhcp6_srv.cc dhcp6_srv.h
+libdhcp6_la_SOURCES += ctrl_dhcp6_srv.cc ctrl_dhcp6_srv.h
+libdhcp6_la_SOURCES += json_config_parser.cc json_config_parser.h
 
 if CONFIG_BACKEND_BUNDY
-kea_dhcp6_SOURCES += bundy_controller.cc
+libdhcp6_la_SOURCES += bundy_controller.cc
 endif
 
 if CONFIG_BACKEND_JSON
-kea_dhcp6_SOURCES += kea_controller.cc
+libdhcp6_la_SOURCES += kea_controller.cc
 endif
 
-nodist_kea_dhcp6_SOURCES = dhcp6_messages.h dhcp6_messages.cc
+nodist_libdhcp6_la_SOURCES = dhcp6_messages.h dhcp6_messages.cc
 EXTRA_DIST += dhcp6_messages.mes
 
-kea_dhcp6_LDADD  = $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+sbin_PROGRAMS = kea-dhcp6
+
+kea_dhcp6_SOURCES  = main.cc
+
+kea_dhcp6_LDADD  = libdhcp6.la
+kea_dhcp6_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la

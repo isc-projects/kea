@@ -974,13 +974,14 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestReuseExpiredLease) {
     // We are going to configure a subnet with a pool that consists of
     // exactly one address. This address will be handed out to the
     // client, will get expired and then be reused.
-    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().clear();
     subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1:1::"), 56, 1, 2,
                                      3, 4));
     subnet_->setIface("eth0");
     pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, addr, addr));
     subnet_->addPool(pool_);
-    CfgMgr::instance().addSubnet6(subnet_);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet_);
+    CfgMgr::instance().commit();
 
     // Allocate a lease.
     testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",

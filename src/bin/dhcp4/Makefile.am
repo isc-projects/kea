@@ -45,26 +45,33 @@ s-messages: dhcp4_messages.mes
 
 BUILT_SOURCES = spec_config.h dhcp4_messages.h dhcp4_messages.cc
 
-sbin_PROGRAMS = kea-dhcp4
+# convenience archive
 
-kea_dhcp4_SOURCES  = main.cc
-kea_dhcp4_SOURCES += ctrl_dhcp4_srv.cc ctrl_dhcp4_srv.h
-kea_dhcp4_SOURCES += json_config_parser.cc json_config_parser.h
-kea_dhcp4_SOURCES += dhcp4_log.cc dhcp4_log.h
-kea_dhcp4_SOURCES += dhcp4_srv.cc dhcp4_srv.h
+noinst_LTLIBRARIES = libdhcp4.la
+
+libdhcp4_la_SOURCES  =
+libdhcp4_la_SOURCES += ctrl_dhcp4_srv.cc ctrl_dhcp4_srv.h
+libdhcp4_la_SOURCES += json_config_parser.cc json_config_parser.h
+libdhcp4_la_SOURCES += dhcp4_log.cc dhcp4_log.h
+libdhcp4_la_SOURCES += dhcp4_srv.cc dhcp4_srv.h
 
 if CONFIG_BACKEND_BUNDY
-kea_dhcp4_SOURCES += bundy_controller.cc
+libdhcp4_la_SOURCES += bundy_controller.cc
 endif
 
 if CONFIG_BACKEND_JSON
-kea_dhcp4_SOURCES += kea_controller.cc
+libdhcp4_la_SOURCES += kea_controller.cc
 endif
 
-nodist_kea_dhcp4_SOURCES = dhcp4_messages.h dhcp4_messages.cc
+nodist_libdhcp4_la_SOURCES = dhcp4_messages.h dhcp4_messages.cc
 EXTRA_DIST += dhcp4_messages.mes
 
-kea_dhcp4_LDADD  = $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+sbin_PROGRAMS = kea-dhcp4
+
+kea_dhcp4_SOURCES  = main.cc
+
+kea_dhcp4_LDADD  = libdhcp4.la
+kea_dhcp4_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la

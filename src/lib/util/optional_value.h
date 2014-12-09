@@ -15,8 +15,28 @@
 #ifndef OPTIONAL_VALUE_H
 #define OPTIONAL_VALUE_H
 
+#include <ostream>
+
 namespace isc {
 namespace util {
+
+/// @brief Indicate if an @c OptionalValue is is specified or not.
+///
+/// This is a simple wrapper class which holds a boolean value to indicate
+/// if the @c OptionalValue is specified or not. By using this class in the
+/// @c OptionalValue class constructor we avoid the ambiguity when the
+/// @c OptionalValue encapsulates a bool type.
+struct OptionalValueState {
+
+    /// @brief Constructor.
+    ///
+    /// @param specified A boolean value to be assigned.
+    OptionalValueState(const bool specified)
+        : specified_(specified) {
+    }
+    /// @brief A bool value encapsulated by this structure.
+    bool specified_;
+};
 
 /// @brief Simple class representing an optional value.
 ///
@@ -43,16 +63,24 @@ template<typename T>
 class OptionalValue {
 public:
 
+    /// @brief Default constructor.
+    ///
+    /// Note that the type @c T must have a default constructor to use this
+    /// constructor.
+    OptionalValue()
+        : value_(T()), specified_(false) {
+    }
+
     /// @brief Constructor
     ///
     /// Creates optional value. The value defaults to "unspecified".
     ///
     /// @param value Default explicit value.
-    /// @param specified Boolean value which determines if the value is
-    /// initially specified or not (default is false).
-    OptionalValue(const T& value, const bool specified = false)
-        : value_(value),
-          specified_(specified) {
+    /// @param specified Value which determines if the value is initially
+    // specified or not (default is false).
+    explicit OptionalValue(const T& value, const OptionalValueState& state =
+                           OptionalValueState(false))
+        : value_(value), specified_(state.specified_) {
     }
 
     /// @brief Retrieves the actual value.
@@ -73,6 +101,10 @@ public:
     void specify(const T& value) {
         set(value);
         specify(true);
+    }
+
+    void specify(const OptionalValueState& state) {
+        specified_ = state.specified_;
     }
 
     /// @brief Sets the value to "specified" or "unspecified".
@@ -130,6 +162,25 @@ private:
     T value_;         ///< Encapsulated value.
     bool specified_;  ///< Flag which indicates if the value is specified.
 };
+
+/// @brief Inserts an optional value to a stream.
+///
+/// This function overloads the global operator<< to behave as in
+/// @c ostream::operator<< but applied to @c OptionalValue objects.
+///
+/// @param os A @c std::ostream object to which the value is inserted.
+/// @param optional_value An @c OptionalValue object to be inserted into
+/// a stream.
+/// @tparam Type of the value encapsulated by the @c OptionalValue object.
+///
+/// @return A reference to the stream after insertion.
+template<typename T>
+std::ostream&
+operator<<(std::ostream& os, const OptionalValue<T>& optional_value) {
+    os << optional_value.get();
+    return (os);
+}
+
 
 } // end of namespace isc::util
 } // end of namespace isc
