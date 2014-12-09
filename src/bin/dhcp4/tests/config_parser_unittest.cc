@@ -3245,7 +3245,8 @@ TEST_F(Dhcp4ParserTest, reservations) {
     string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
-        "\"subnet4\": [ { "
+        "\"subnet4\": [ "
+        " { "
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\", "
         "    \"id\": 123,"
@@ -3357,14 +3358,15 @@ TEST_F(Dhcp4ParserTest, reservations) {
 }
 
 // This test verfies that the bogus host reservation would trigger a
-// server configuration error. In this case the "hw-address" parameter in the
-// reservation is misspelled.
+// server configuration error.
 TEST_F(Dhcp4ParserTest, reservationBogus) {
+    // Case 1: misspelled hw-address parameter.
     ConstElementPtr x;
     string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
-        "\"subnet4\": [ { "
+        "\"subnet4\": [ "
+        " { "
         "    \"pools\": [ { \"pool\": \"192.0.4.101 - 192.0.4.150\" } ],"
         "    \"subnet\": \"192.0.4.0/24\","
         "    \"id\": 542,"
@@ -3380,8 +3382,65 @@ TEST_F(Dhcp4ParserTest, reservationBogus) {
 
     ElementPtr json = Element::fromJSON(config);
 
+    CfgMgr::instance().clear();
+
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
     checkResult(x, 1);
+
+    // Case 2: DUID and HW Address both specified.
+    config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ "
+        " { "
+        "    \"pools\": [ { \"pool\": \"192.0.4.101 - 192.0.4.150\" } ],"
+        "    \"subnet\": \"192.0.4.0/24\","
+        "    \"id\": 542,"
+        "    \"reservations\": ["
+        "      {"
+        "        \"duid\": \"01:02:03:04:05:06\","
+        "        \"hw-address\": \"06:05:04:03:02:01\","
+        "        \"ip-address\": \"192.0.4.102\","
+        "        \"hostname\": \"\""
+        "      }"
+        "    ]"
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    json = Element::fromJSON(config);
+
+    // Remove existing configuration, if any.
+    CfgMgr::instance().clear();
+
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+    checkResult(x, 1);
+
+    // Case 3: Neither ip address nor hostname specified.
+    config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ "
+        " { "
+        "    \"pools\": [ { \"pool\": \"192.0.4.101 - 192.0.4.150\" } ],"
+        "    \"subnet\": \"192.0.4.0/24\","
+        "    \"id\": 542,"
+        "    \"reservations\": ["
+        "      {"
+        "        \"hw-address\": \"06:05:04:03:02:01\""
+        "      }"
+        "    ]"
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    json = Element::fromJSON(config);
+
+    // Remove existing configuration, if any.
+    CfgMgr::instance().clear();
+
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+    checkResult(x, 1);
+
+
 }
 
 }

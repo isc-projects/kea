@@ -339,13 +339,13 @@
                       {
                         "item_name": "hw-address",
                         "item_type": "string",
-                        "item_optional": false,
+                        "item_optional": true,
                         "item_default": ""
                       },
                       {
                         "item_name": "duid",
                         "item_type": "string",
-                        "item_optional": false,
+                        "item_optional": true,
                         "item_default": ""
                       },
                       {
