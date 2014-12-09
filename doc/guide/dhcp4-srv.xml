@@ -1097,7 +1097,7 @@ temporarily override a list of interface names and listen on all interfaces.
     </section>
 
     <section id="dhcp4-option-data-defaults">
-      <title>Unspecified parameters for option configuration</title>
+      <title>Unspecified parameters for DHCPv4 option configuration</title>
       <para>In many cases it is not required to specify all parameters for
       an option configuration and the default values may be used. However, it is
       important to understand the implications of not specifing some of them

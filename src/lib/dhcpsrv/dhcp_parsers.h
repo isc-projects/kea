@@ -596,7 +596,7 @@ private:
     /// @brief Retrieves parsed option name as an optional value.
     ///
     /// @param parent A data element holding full option data configuration.
-    /// It is used here to log a position if the element holding a code
+    /// It is used here to log a position if the element holding a name
     /// is not specified and its position is therefore unavailable.
     ///
     /// @return Option name, possibly unspecified.
