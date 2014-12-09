@@ -195,6 +195,11 @@ Host::getIPv6Reservations(const IPv6Resrv::Type& type) const {
 }
 
 bool
+Host::hasIPv6Reservation() const {
+    return (!ipv6_reservations_.empty());
+}
+
+bool
 Host::hasReservation(const IPv6Resrv& reservation) const {
     IPv6ResrvRange reservations = getIPv6Reservations(reservation.getType());
     if (std::distance(reservations.first, reservations.second) > 0) {
