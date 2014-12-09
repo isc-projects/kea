@@ -25,6 +25,7 @@
 #include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/subnet.h>
 #include <exceptions/exceptions.h>
+#include <util/optional_value.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -109,15 +110,20 @@ public:
     /// element holding a particular value is located.
     ///
     /// @param name is the name of the parameter which position is desired.
+    /// @param parent Pointer to a data element which position should be
+    /// returned when position of the specified parameter is not found.
     ///
     /// @return Position of the data element or the position holding empty
     /// file name and two zeros if the position hasn't been specified for the
     /// particular value.
-    const data::Element::Position& getPosition(const std::string& name) const {
+    const data::Element::Position&
+    getPosition(const std::string& name, const data::ConstElementPtr parent =
+                data::ConstElementPtr()) const {
         typename std::map<std::string, data::Element::Position>::const_iterator
             pos = positions_.find(name);
         if (pos == positions_.end()) {
-            return (data::Element::ZERO_POSITION());
+            return (parent ? parent->getPosition() :
+                    data::Element::ZERO_POSITION());
         }
 
         return (pos->second);
@@ -538,24 +544,26 @@ public:
 
     /// @brief virtual destructor to ensure orderly destruction of derivations.
     virtual ~OptionDataParser(){};
+private:
 
-protected:
-    /// @brief Finds an option definition within the server's option space
+    /// @brief Finds an option definition within an option space
     ///
     /// Given an option space and an option code, find the correpsonding
-    /// option defintion within the server's option defintion storage.
+    /// option defintion within the option defintion storage.
     ///
     /// @param option_space name of the parameter option space
-    /// @param option_code numeric value of the parameter to find
+    /// @param search_key an option code or name to be used to lookup the
+    /// option definition.
+    /// @tparam A numeric type for searching using an option code or the
+    /// string for searching using the option name.
+    ///
     /// @return OptionDefintionPtr of the option defintion or an
     /// empty OptionDefinitionPtr if not found.
     /// @throw DhcpConfigError if the option space requested is not valid
     /// for this server.
-    virtual OptionDefinitionPtr
-    findServerSpaceOptionDefinition(const std::string& option_space,
-                                    const uint32_t option_code) const;
-
-private:
+    template<typename SearchKey>
+    OptionDefinitionPtr findOptionDefinition(const std::string& option_space,
+                                             const SearchKey& search_key) const;
 
     /// @brief Create option instance.
     ///
@@ -573,6 +581,48 @@ private:
     /// @throw DhcpConfigError if parameters provided in the configuration
     /// are invalid.
     void createOption(isc::data::ConstElementPtr option_data);
+
+    /// @brief Retrieves parsed option code as an optional value.
+    ///
+    /// @param parent A data element holding full option data configuration.
+    /// It is used here to log a position if the element holding a code
+    /// is not specified and its position is therefore unavailable.
+    ///
+    /// @return Option code, possibly unspecified.
+    /// @throw DhcpConfigError if option code is invalid.
+    util::OptionalValue<uint32_t>
+    extractCode(data::ConstElementPtr parent) const;
+
+    /// @brief Retrieves parsed option name as an optional value.
+    ///
+    /// @param parent A data element holding full option data configuration.
+    /// It is used here to log a position if the element holding a name
+    /// is not specified and its position is therefore unavailable.
+    ///
+    /// @return Option name, possibly unspecified.
+    /// @throw DhcpConfigError if option name is invalid.
+    util::OptionalValue<std::string>
+    extractName(data::ConstElementPtr parent) const;
+
+    /// @brief Retrieves csv-format parameter as an optional value.
+    ///
+    /// @return Value of the csv-format parameter, possibly unspecified.
+    util::OptionalValue<bool> extractCSVFormat() const;
+
+    /// @brief Retrieves option data as a string.
+    ///
+    /// @return Option data as a string. It will return empty string if
+    /// option data is unspecified.
+    std::string extractData() const;
+
+    /// @brief Retrieves option space name.
+    ///
+    /// If option space name is not specified in the configuration the
+    /// 'dhcp4' or 'dhcp6' option space name is returned, depending on
+    /// the universe specified in the parser context.
+    ///
+    /// @return Option space name.
+    std::string extractSpace() const;
 
     /// Storage for boolean values.
     BooleanStoragePtr boolean_values_;

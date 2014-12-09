@@ -18,6 +18,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int.h>
+#include <dhcp/option6_addrlst.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/subnet.h>
@@ -361,9 +362,11 @@ public:
     /// @throw throws NotImplemented if element name isn't supported.
     ParserPtr createConfigParser(const std::string& config_id) {
         ParserPtr parser;
+        int family = parser_context_->universe_ == Option::V4 ?
+            AF_INET : AF_INET6;
         if (config_id.compare("option-data") == 0) {
             parser.reset(new OptionDataListParser(config_id, CfgOptionPtr(),
-                                                  AF_INET));
+                                                  family));
 
         } else if (config_id.compare("option-def") == 0) {
             parser.reset(new OptionDefListParser(config_id,
@@ -549,6 +552,289 @@ TEST_F(ParseConfigTest, basicOptionDataTest) {
                       " #0 192.0.2.0 ( ipv4-address ) \n";
 
     EXPECT_EQ(val, opt_ptr->toText());
+}
+
+// This test checks behavior of the configuration parser for option data
+// for different values of csv-format parameter and when there is an option
+// definition present.
+TEST_F(ParseConfigTest, optionDataCSVFormatWithOptionDef) {
+    std::string config =
+        "{ \"option-data\": [ {"
+        "    \"name\": \"swap-server\","
+        "    \"space\": \"dhcp4\","
+        "    \"code\": 16,"
+        "    \"data\": \"192.0.2.0\""
+        " } ]"
+        "}";
+
+    // The default universe is V6. We need to change it to use dhcp4 option
+    // space.
+    parser_context_->universe_ = Option::V4;
+    int rcode = 0;
+    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    ASSERT_EQ(0, rcode);
+
+    // Verify that the option data is correct.
+    OptionCustomPtr addr_opt = boost::dynamic_pointer_cast<
+        OptionCustom>(getOptionPtr("dhcp4", 16));
+    ASSERT_TRUE(addr_opt);
+    EXPECT_EQ("192.0.2.0", addr_opt->readAddress().toText());
+
+    // Explicitly enable csv-format.
+    CfgMgr::instance().clear();
+    config =
+        "{ \"option-data\": [ {"
+        "    \"name\": \"swap-server\","
+        "    \"space\": \"dhcp4\","
+        "    \"code\": 16,"
+        "    \"csv-format\": True,"
+        "    \"data\": \"192.0.2.0\""
+        " } ]"
+        "}";
+    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    ASSERT_EQ(0, rcode);
+
+    // Verify that the option data is correct.
+    addr_opt = boost::dynamic_pointer_cast<
+        OptionCustom>(getOptionPtr("dhcp4", 16));
+    ASSERT_TRUE(addr_opt);
+    EXPECT_EQ("192.0.2.0", addr_opt->readAddress().toText());
+
+    // Explicitly disable csv-format and use hex instead.
+    CfgMgr::instance().clear();
+    config =
+        "{ \"option-data\": [ {"
+        "    \"name\": \"swap-server\","
+        "    \"space\": \"dhcp4\","
+        "    \"code\": 16,"
+        "    \"csv-format\": False,"
+        "    \"data\": \"C0000200\""
+        " } ]"
+        "}";
+    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    ASSERT_EQ(0, rcode);
+
+    // Verify that the option data is correct.
+    addr_opt = boost::dynamic_pointer_cast<
+        OptionCustom>(getOptionPtr("dhcp4", 16));
+    ASSERT_TRUE(addr_opt);
+    EXPECT_EQ("192.0.2.0", addr_opt->readAddress().toText());
+}
+
+// This test checks behavior of the configuration parser for option data
+// for different values of csv-format parameter and when there is no
+// option definition.
+TEST_F(ParseConfigTest, optionDataCSVFormatNoOptionDef) {
+    // This option doesn't have any definition. It is ok to use such
+    // an option but the data should be specified in hex, not as CSV.
+    // Note that the parser will by default use the CSV format for the
+    // data but only in case there is a suitable option definition.
+    std::string config =
+        "{ \"option-data\": [ {"
+        "    \"name\": \"foo-name\","
+        "    \"space\": \"dhcp6\","
+        "    \"code\": 25000,"
+        "    \"data\": \"1, 2, 5\""
+        " } ]"
+        "}";
+    int rcode = 0;
+    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    EXPECT_NE(0, rcode);
+
+    CfgMgr::instance().clear();
+    // The data specified here will work both for CSV format and hex format.
+    // What we want to test here is that when the csv-format is enforced, the
+    // parser will fail because of lack of an option definition.
+    config =
+        "{ \"option-data\": [ {"
+        "    \"name\": \"foo-name\","
+        "    \"space\": \"dhcp6\","
+        "    \"code\": 25000,"
+        "    \"csv-format\": True,"
+        "    \"data\": \"0\""
+        " } ]"
+        "}";
+    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    EXPECT_NE(0, rcode);
+
+    CfgMgr::instance().clear();
+    // The same test case as above, but for the data specified in hex should
+    // be successful.
+    config =
+        "{ \"option-data\": [ {"
+        "    \"name\": \"foo-name\","
+        "    \"space\": \"dhcp6\","
+        "    \"code\": 25000,"
+        "    \"csv-format\": False,"
+        "    \"data\": \"0\""
+        " } ]"
+        "}";
+    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    ASSERT_EQ(0, rcode);
+    OptionPtr opt = getOptionPtr("dhcp6", 25000);
+    ASSERT_TRUE(opt);
+    ASSERT_EQ(1, opt->getData().size());
+    EXPECT_EQ(0, opt->getData()[0]);
+
+    CfgMgr::instance().clear();
+    // When csv-format is not specified, the parser will check if the definition
+    // exists or not. Since there is no definition, the parser will accept the
+    // data in hex.
+    config =
+        "{ \"option-data\": [ {"
+        "    \"name\": \"foo-name\","
+        "    \"space\": \"dhcp6\","
+        "    \"code\": 25000,"
+        "    \"data\": \"123456\""
+        " } ]"
+        "}";
+    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    EXPECT_EQ(0, rcode);
+    opt = getOptionPtr("dhcp6", 25000);
+    ASSERT_TRUE(opt);
+    ASSERT_EQ(3, opt->getData().size());
+    EXPECT_EQ(0x12, opt->getData()[0]);
+    EXPECT_EQ(0x34, opt->getData()[1]);
+    EXPECT_EQ(0x56, opt->getData()[2]);
+}
+
+// This test verifies that the option name is not mandatory, if the option
+// code has been specified.
+TEST_F(ParseConfigTest, optionDataNoName) {
+    std::string config =
+        "{ \"option-data\": [ {"
+        "    \"space\": \"dhcp6\","
+        "    \"code\": 23,"
+        "    \"csv-format\": True,"
+        "    \"data\": \"2001:db8:1::1\""
+        " } ]"
+        "}";
+    int rcode = 0;
+    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    EXPECT_EQ(0, rcode);
+    Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
+        Option6AddrLst>(getOptionPtr("dhcp6", 23));
+    ASSERT_TRUE(opt);
+    ASSERT_EQ(1, opt->getAddresses().size());
+    EXPECT_EQ( "2001:db8:1::1", opt->getAddresses()[0].toText());
+}
+
+// This test verifies that the option code is not mandatory, if the option
+// name has been specified.
+TEST_F(ParseConfigTest, optionDataNoCode) {
+    std::string config =
+        "{ \"option-data\": [ {"
+        "    \"space\": \"dhcp6\","
+        "    \"name\": \"dns-servers\","
+        "    \"csv-format\": True,"
+        "    \"data\": \"2001:db8:1::1\""
+        " } ]"
+        "}";
+    int rcode = 0;
+    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    EXPECT_EQ(0, rcode);
+    Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
+        Option6AddrLst>(getOptionPtr("dhcp6", 23));
+    ASSERT_TRUE(opt);
+    ASSERT_EQ(1, opt->getAddresses().size());
+    EXPECT_EQ( "2001:db8:1::1", opt->getAddresses()[0].toText());
+}
+
+// This test verifies that the option data configuration with a minimal
+// set of parameters works as expected.
+TEST_F(ParseConfigTest, optionDataMinimal) {
+    std::string config =
+        "{ \"option-data\": [ {"
+        "    \"name\": \"dns-servers\","
+        "    \"data\": \"2001:db8:1::10\""
+        " } ]"
+        "}";
+    int rcode = 0;
+    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    EXPECT_EQ(0, rcode);
+    Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
+        Option6AddrLst>(getOptionPtr("dhcp6", 23));
+    ASSERT_TRUE(opt);
+    ASSERT_EQ(1, opt->getAddresses().size());
+    EXPECT_EQ( "2001:db8:1::10", opt->getAddresses()[0].toText());
+
+    CfgMgr::instance().clear();
+    // This time using an option code.
+    config =
+        "{ \"option-data\": [ {"
+        "    \"code\": 23,"
+        "    \"data\": \"2001:db8:1::20\""
+        " } ]"
+        "}";
+    rcode = 0;
+    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    EXPECT_EQ(0, rcode);
+    opt = boost::dynamic_pointer_cast<Option6AddrLst>(getOptionPtr("dhcp6",
+                                                                   23));
+    ASSERT_TRUE(opt);
+    ASSERT_EQ(1, opt->getAddresses().size());
+    EXPECT_EQ( "2001:db8:1::20", opt->getAddresses()[0].toText());
+}
+
+// This test verifies that the option data configuration with a minimal
+// set of parameters works as expected when option definition is
+// created in the configruation file.
+TEST_F(ParseConfigTest, optionDataMinimalWithOptionDef) {
+    // Configuration string.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo-name\","
+        "      \"code\": 2345,"
+        "      \"type\": \"ipv6-address\","
+        "      \"array\": True,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"dhcp6\","
+        "      \"encapsulate\": \"\""
+        "  } ],"
+        "  \"option-data\": [ {"
+        "    \"name\": \"foo-name\","
+        "    \"data\": \"2001:db8:1::10, 2001:db8:1::123\""
+        " } ]"
+        "}";
+
+    int rcode = 0;
+    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    EXPECT_EQ(0, rcode);
+    Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
+        Option6AddrLst>(getOptionPtr("dhcp6", 2345));
+    ASSERT_TRUE(opt);
+    ASSERT_EQ(2, opt->getAddresses().size());
+    EXPECT_EQ("2001:db8:1::10", opt->getAddresses()[0].toText());
+    EXPECT_EQ("2001:db8:1::123", opt->getAddresses()[1].toText());
+
+    CfgMgr::instance().clear();
+    // Do the same test but now use an option code.
+    config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo-name\","
+        "      \"code\": 2345,"
+        "      \"type\": \"ipv6-address\","
+        "      \"array\": True,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"dhcp6\","
+        "      \"encapsulate\": \"\""
+        "  } ],"
+        "  \"option-data\": [ {"
+        "    \"code\": 2345,"
+        "    \"data\": \"2001:db8:1::10, 2001:db8:1::123\""
+        " } ]"
+        "}";
+
+    rcode = 0;
+    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    EXPECT_EQ(0, rcode);
+    opt = boost::dynamic_pointer_cast<Option6AddrLst>(getOptionPtr("dhcp6",
+                                                                   2345));
+    ASSERT_TRUE(opt);
+    ASSERT_EQ(2, opt->getAddresses().size());
+    EXPECT_EQ("2001:db8:1::10", opt->getAddresses()[0].toText());
+    EXPECT_EQ("2001:db8:1::123", opt->getAddresses()[1].toText());
+
 }
 
 };  // Anonymous namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,7 @@
 #include <util/buffer.h>
 
 #include <iostream>
+#include <string>
 
 namespace isc {
 namespace dhcp {
@@ -55,6 +56,16 @@ public:
     static OptionDefinitionPtr getOptionDef(const Option::Universe u,
                                             const uint16_t code);
 
+    /// @brief Return the definition of option having a specified name.
+    ///
+    /// @param u universe (v4 or V6)
+    /// @param name Option name.
+    ///
+    /// @return Pointer to the option definition or NULL pointer if option
+    /// definition has not been found.
+    static OptionDefinitionPtr getOptionDef(const Option::Universe u,
+                                            const std::string& name);
+
     /// @brief Returns vendor option definition for a given vendor-id and code
     ///
     /// @param u universe (V4 or V6)
@@ -65,6 +76,19 @@ public:
     static OptionDefinitionPtr getVendorOptionDef(const Option::Universe u,
                                                   const uint32_t vendor_id,
                                                   const uint16_t code);
+
+    /// @brief Returns vendor option definition for a given vendor-id and
+    /// option name.
+    ///
+    /// @param u Universe (V4 or V6)
+    /// @param vendor_id Enterprise-id for a given vendor
+    /// @param name Option name.
+    ///
+    /// @return A pointer to an option definition or NULL pointer if
+    /// no option definition found.
+    static OptionDefinitionPtr getVendorOptionDef(const Option::Universe u,
+                                                  const uint32_t vendor_id,
+                                                  const std::string& name);
 
     /// @brief Check if the specified option is a standard option.
     ///

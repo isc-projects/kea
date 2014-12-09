@@ -4,8 +4,10 @@ EXTRA_DIST = version.ent.in differences.txt Doxyfile Doxyfile-xml
 
 nobase_dist_doc_DATA  = examples/kea4/single-subnet.json
 nobase_dist_doc_DATA += examples/kea4/several-subnets.json
+nobase_dist_doc_DATA += examples/kea4/multiple-options.json
 nobase_dist_doc_DATA += examples/kea6/simple.json
 nobase_dist_doc_DATA += examples/kea6/several-subnets.json
+nobase_dist_doc_DATA += examples/kea6/multiple-options.json
 nobase_dist_doc_DATA += examples/ddns/sample1.json
 nobase_dist_doc_DATA += examples/ddns/template.json
 
