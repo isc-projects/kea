@@ -5,7 +5,7 @@ sbin_SCRIPTS  = kea-admin
 
 man_MANS = kea-admin.8
 DISTCLEANFILES = $(man_MANS)
-EXTRA_DIST = $(man_MANS) admin-utils.sh
+EXTRA_DIST = $(man_MANS) kea-admin.xml admin-utils.sh
 
 if GENERATE_DOCS
 
@@ -20,6 +20,5 @@ $(man_MANS):
 
 endif
 
-install-exec-hook:
-	mkdir -p $(DESTDIR)${datarootdir}/${PACKAGE_NAME}/scripts
-	install admin-utils.sh $(DESTDIR)${datarootdir}/${PACKAGE_NAME}/scripts
+adminscriptsdir = ${datarootdir}/${PACKAGE_NAME}/scripts
+adminscripts_DATA = admin-utils.sh
