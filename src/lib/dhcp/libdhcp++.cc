@@ -130,6 +130,41 @@ LibDHCP::getOptionDef(const Option::Universe u, const uint16_t code) {
 }
 
 OptionDefinitionPtr
+LibDHCP::getOptionDef(const Option::Universe u, const std::string& name) {
+    const OptionDefContainer& defs = getOptionDefs(u);
+    const OptionDefContainerNameIndex& idx = defs.get<2>();
+    const OptionDefContainerNameRange& range = idx.equal_range(name);
+    if (range.first != range.second) {
+        return (*range.first);
+    }
+    return (OptionDefinitionPtr());
+
+}
+
+
+OptionDefinitionPtr
+LibDHCP::getVendorOptionDef(const Option::Universe u, const uint32_t vendor_id,
+                            const std::string& name) {
+    const OptionDefContainer* defs = NULL;
+    if (u == Option::V4) {
+        defs = getVendorOption4Defs(vendor_id);
+    } else if (u == Option::V6) {
+        defs = getVendorOption6Defs(vendor_id);
+    }
+
+    if (!defs) {
+        return (OptionDefinitionPtr());
+    }
+
+    const OptionDefContainerNameIndex& idx = defs->get<2>();
+    const OptionDefContainerNameRange& range = idx.equal_range(name);
+    if (range.first != range.second) {
+        return (*range.first);
+    }
+    return (OptionDefinitionPtr());
+}
+
+OptionDefinitionPtr
 LibDHCP::getVendorOptionDef(const Option::Universe u, const uint32_t vendor_id,
                             const uint16_t code) {
     const OptionDefContainer* defs = NULL;

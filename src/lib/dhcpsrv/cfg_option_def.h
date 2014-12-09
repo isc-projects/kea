@@ -110,6 +110,16 @@ public:
     OptionDefinitionPtr get(const std::string& option_space,
                             const uint16_t option_code) const;
 
+    /// @brief Return option definition for the particular option space and name.
+    ///
+    /// @param option_space pption space.
+    /// @param option_name option name.
+    ///
+    /// @return An option definition or NULL pointer if option definition
+    /// has not been found.
+    OptionDefinitionPtr get(const std::string& option_space,
+                            const std::string& option_name) const;
+
 private:
 
     /// @brief A collection of option definitions.
