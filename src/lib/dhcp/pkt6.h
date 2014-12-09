@@ -295,6 +295,16 @@ protected:
     /// @return Hardware address (or NULL)
     virtual HWAddrPtr getMACFromSrcLinkLocalAddr();
 
+    /// @brief Extract MAC/Hardware address from client link-layer address
+    //         option inserted by a relay agent (RFC6939).
+    ///
+    /// This method extracts the client's hardware address from the
+    //  client-linklayer-addr option inserted by the relay agent closest to
+    //  the client.
+    ///
+    /// @return Hardware address (or NULL)
+    virtual HWAddrPtr getMACFromIPv6RelayOpt();
+
     /// @brief Builds on wire packet for TCP transmission.
     ///
     /// @todo This function is not implemented yet.
