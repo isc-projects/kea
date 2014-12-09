@@ -529,8 +529,8 @@ protected:
     ///
     /// This method is called from getMAC(HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION)
     /// and should not be called directly. It will extract the client's
-    //  MAC/Hardware address from option client_linklayer_addr (RFC6939)
-    //  inserted by the relay agent closest to the client.
+    /// MAC/Hardware address from option client_linklayer_addr (RFC6939)
+    /// inserted by the relay agent closest to the client.
     /// If this method fails, it will return NULL.
     ///
     /// @note This is a pure virtual method and must be implemented in

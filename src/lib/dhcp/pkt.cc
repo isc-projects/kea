@@ -156,10 +156,10 @@ Pkt::getMAC(uint32_t hw_addr_src) {
 
     // Method 4: From client link-layer address option inserted by a relay
     if (hw_addr_src & HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION) {
-		mac = getMACFromIPv6RelayOpt();
-		if (mac) {
-			return (mac);
-		} else if (hw_addr_src ==  HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION) {
+        mac = getMACFromIPv6RelayOpt();
+        if (mac) {
+            return (mac);
+        } else if (hw_addr_src ==  HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION) {
             // If we're interested only in RFC6939 link layer address as source
             // of that info, there's no point in trying other options.
             return (HWAddrPtr());
