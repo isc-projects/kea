@@ -130,6 +130,9 @@ EOF
 }
 
 mysql_lease_upgrade_test() {
+
+    # @todo: need to test whether non-empty database is updated correctly and the data survives the upgrade
+
     test_start "mysql.lease-upgrade"
 
     # Let's wipe the whole database
