@@ -966,6 +966,9 @@ void
 SubnetConfigParser::build(ConstElementPtr subnet) {
     BOOST_FOREACH(ConfigPair param, subnet->mapValue()) {
         // Host reservations must be parsed after subnet specific parameters.
+        // Note that the reservation parsing will be invoked by the build()
+        // in the derived classes, i.e. Subnet4ConfigParser and
+        // Subnet6ConfigParser.
         if (param.first == "reservations") {
             continue;
         }

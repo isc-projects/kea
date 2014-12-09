@@ -3407,7 +3407,8 @@ TEST_F(Dhcp6ParserTest, reservations) {
     string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
-        "\"subnet6\": [ { "
+        "\"subnet6\": [ "
+        " { "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/80\" } ],"
         "    \"subnet\": \"2001:db8:1::/64\", "
         "    \"id\": 123,"
@@ -3447,7 +3448,8 @@ TEST_F(Dhcp6ParserTest, reservations) {
         "        \"hostname\": \"\""
         "      }"
         "    ]"
-        " } ],"
+        " } "
+        "], "
         "\"preferred-lifetime\": 3000,"
         "\"valid-lifetime\": 4000 }";
 
@@ -3537,14 +3539,15 @@ TEST_F(Dhcp6ParserTest, reservations) {
 }
 
 // This test verfies that the bogus host reservation would trigger a
-// server configuration error. In this case the "duid" parameter in the
-// reservation is misspelled.
+// server configuration error.
 TEST_F(Dhcp6ParserTest, reservationBogus) {
+    // Case 1: misspelled "duid" parameter.
     ConstElementPtr x;
     string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
-        "\"subnet6\": [ { "
+        "\"subnet6\": [ "
+        " { "
         "    \"pools\": [ ],"
         "    \"subnet\": \"2001:db8:3::/64\", "
         "    \"id\": 542,"
@@ -3555,7 +3558,8 @@ TEST_F(Dhcp6ParserTest, reservationBogus) {
         "        \"hostname\": \"\""
         "      }"
         "    ]"
-        " } ],"
+        " } "
+        "], "
         "\"preferred-lifetime\": 3000,"
         "\"valid-lifetime\": 4000 }";
 
@@ -3563,6 +3567,64 @@ TEST_F(Dhcp6ParserTest, reservationBogus) {
 
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     checkResult(x, 1);
+
+    // Case 2: DUID and HW Address both specified.
+    config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ "
+        " { "
+        "    \"pools\": [ ],"
+        "    \"subnet\": \"2001:db8:3::/64\", "
+        "    \"id\": 542,"
+        "    \"reservations\": ["
+        "      {"
+        "        \"hw-address\": \"01:02:03:04:05:06\","
+        "        \"duid\": \"0A:09:08:07:06:05:04:03:02:01\","
+        "        \"prefixes\": [ \"2001:db8:3:2::/96\" ],"
+        "        \"hostname\": \"\""
+        "      }"
+        "    ]"
+        " } "
+        "], "
+        "\"preferred-lifetime\": 3000,"
+        "\"valid-lifetime\": 4000 }";
+
+    json = Element::fromJSON(config);
+
+    // Remove existing configuration, if any.
+    CfgMgr::instance().clear();
+
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    checkResult(x, 1);
+
+    // Case 3: Neither ip address nor hostname specified.
+    config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ "
+        " { "
+        "    \"pools\": [ ],"
+        "    \"subnet\": \"2001:db8:3::/64\", "
+        "    \"id\": 542,"
+        "    \"reservations\": ["
+        "      {"
+        "        \"duid\": \"0A:09:08:07:06:05:04:03:02:01\""
+        "      }"
+        "    ]"
+        " } "
+        "], "
+        "\"preferred-lifetime\": 3000,"
+        "\"valid-lifetime\": 4000 }";
+
+    json = Element::fromJSON(config);
+
+    // Remove existing configuration, if any.
+    CfgMgr::instance().clear();
+
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    checkResult(x, 1);
+
 }
 
 };

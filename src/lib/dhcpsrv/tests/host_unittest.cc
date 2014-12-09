@@ -353,6 +353,8 @@ TEST(HostTest, addReservations) {
                                         SubnetID(1), SubnetID(2),
                                         IOAddress("192.0.2.3"))));
 
+    EXPECT_FALSE(host->hasIPv6Reservation());
+
     // Add 4 reservations: 2 for NAs, 2 for PDs.
     ASSERT_NO_THROW(
         host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
@@ -364,6 +366,8 @@ TEST(HostTest, addReservations) {
         host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
                                        IOAddress("2001:db8:1::1")));
     );
+
+    EXPECT_TRUE(host->hasIPv6Reservation());
 
     // Check that reservations exist.
     EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,

@@ -343,53 +343,59 @@ TEST_F(CfgHostsTest, duplicatesSubnet4DUID) {
 }
 
 // This test verifies that it is not possible to add the same Host to the
-// same IPv4 subnet twice.
+// same IPv6 subnet twice.
 TEST_F(CfgHostsTest, duplicatesSubnet6HWAddr) {
     CfgHosts cfg;
     // Add a host.
     ASSERT_NO_THROW(cfg.add(HostPtr(new Host(hwaddrs_[0]->toText(false),
                                              "hw-address",
                                              SubnetID(10), SubnetID(1),
-                                             IOAddress("0.0.0.0")))));
+                                             IOAddress("0.0.0.0"),
+                                             "foo.example.com"))));
 
     // Try to add the host with the same HW address to the same subnet. The fact
     // that the IP address is different here shouldn't really matter.
     EXPECT_THROW(cfg.add(HostPtr(new Host(hwaddrs_[0]->toText(false),
                                           "hw-address",
                                           SubnetID(11), SubnetID(1),
-                                          IOAddress("0.0.0.0")))),
+                                          IOAddress("0.0.0.0"),
+                                          "foo.example.com"))),
                  isc::dhcp::DuplicateHost);
 
     // Now try to add it to a different subnet. It should go through.
     EXPECT_NO_THROW(cfg.add(HostPtr(new Host(hwaddrs_[0]->toText(false),
                                              "hw-address",
                                              SubnetID(11), SubnetID(2),
-                                             IOAddress("0.0.0.0")))));
+                                             IOAddress("0.0.0.0"),
+                                             "foo.example.com"))));
 }
 
 // This test verifies that it is not possible to add the same Host to the
-// same IPv4 subnet twice.
+// same IPv6 subnet twice.
 TEST_F(CfgHostsTest, duplicatesSubnet6DUID) {
     CfgHosts cfg;
     // Add a host.
     ASSERT_NO_THROW(cfg.add(HostPtr(new Host(duids_[0]->toText(),
                                              "duid",
                                              SubnetID(10), SubnetID(1),
-                                             IOAddress("0.0.0.0")))));
+                                             IOAddress("0.0.0.0"),
+                                             "foo.example.com"))));
 
     // Try to add the host with the same DUID to the same subnet. The fact
     // that the IP address is different here shouldn't really matter.
     EXPECT_THROW(cfg.add(HostPtr(new Host(duids_[0]->toText(),
                                           "duid",
                                           SubnetID(11), SubnetID(1),
-                                          IOAddress("0.0.0.0")))),
+                                          IOAddress("0.0.0.0"),
+                                          "foo.example.com"))),
                  isc::dhcp::DuplicateHost);
 
     // Now try to add it to a different subnet. It should go through.
     EXPECT_NO_THROW(cfg.add(HostPtr(new Host(duids_[0]->toText(),
                                              "duid",
                                              SubnetID(11), SubnetID(2),
-                                             IOAddress("0.0.0.0")))));
+                                             IOAddress("0.0.0.0"),
+                                             "foo.example.com"))));
 }
 
 
