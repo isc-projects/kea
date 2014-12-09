@@ -717,6 +717,17 @@ typedef boost::multi_index_container<
                 uint16_t,
                 &OptionDefinition::getCode
             >
+        >,
+        // Start definition of index #2
+        boost::multi_index::hashed_non_unique<
+            // Use option name as the index key. This value is
+            // returned by the @c OptionDefinition::getName
+            // method.
+            boost::multi_index::const_mem_fun<
+                OptionDefinition,
+                std::string,
+                &OptionDefinition::getName
+            >
         >
     >
 > OptionDefContainer;
@@ -735,6 +746,15 @@ typedef OptionDefContainer::nth_index<1>::type OptionDefContainerTypeIndex;
 ///  represents the end.
 typedef std::pair<OptionDefContainerTypeIndex::const_iterator,
                   OptionDefContainerTypeIndex::const_iterator> OptionDefContainerTypeRange;
+
+/// Type of the index #2 - option name.
+typedef OptionDefContainer::nth_index<2>::type OptionDefContainerNameIndex;
+/// Pair of iterators to represent the range of options definitions
+/// having the same option name. The first element in this pair
+/// represents the beginning of the range, the second element
+/// represents the end.
+typedef std::pair<OptionDefContainerNameIndex::const_iterator,
+                  OptionDefContainerNameIndex::const_iterator> OptionDefContainerNameRange;
 
 
 } // namespace isc::dhcp

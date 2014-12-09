@@ -138,7 +138,27 @@ CfgOptionDef::get(const std::string& option_space,
     return (OptionDefinitionPtr());
 }
 
-
+OptionDefinitionPtr
+CfgOptionDef::get(const std::string& option_space,
+                  const std::string& option_name) const {
+    // Get the pointer to collection of the option definitions that belong
+    // to the particular option space.
+    OptionDefContainerPtr defs = getAll(option_space);
+    // If there are any option definitions for this option space, get the
+    // one that has the specified option name.
+    if (defs && !defs->empty()) {
+        const OptionDefContainerNameIndex& idx = defs->get<2>();
+        const OptionDefContainerNameRange& range = idx.equal_range(option_name);
+        // If there is more than one definition matching the option name,
+        // return the first one. In fact, it shouldn't happen that we have
+        // more than one because we check for duplicates when we add them.
+        if (std::distance(range.first, range.second) > 0) {
+            return (*range.first);
+        }
+    }
+    // Nothing found. Return NULL pointer.
+    return (OptionDefinitionPtr());
+}
 
 } // end of namespace isc::dhcp
 } // end of namespace isc

@@ -694,7 +694,7 @@ TEST(Option4ClientFqdnTest, packASCII) {
 
     // Prepare reference data.
     const uint8_t ref_data[] = {
-        81, 23,                               // header
+        81, 22,                               // header
         Option4ClientFqdn::FLAG_S,            // flags
         0,                                    // RCODE1
         0,                                    // RCODE2
@@ -955,6 +955,81 @@ TEST(Option4ClientFqdnTest, len) {
     );
     ASSERT_TRUE(option);
     EXPECT_EQ(12, option->len());
-    }
+
+    // Another test for partial domain name but this time the domain name
+    // contains two labels.
+    ASSERT_NO_THROW(
+        option.reset(new Option4ClientFqdn(Option4ClientFqdn::FLAG_E,
+                                           Option4ClientFqdn::RCODE_CLIENT(),
+                                           "myhost.example",
+                                           Option4ClientFqdn::PARTIAL))
+    );
+    ASSERT_TRUE(option);
+    EXPECT_EQ(20, option->len());
+
+}
+
+// This test verifies that the correct length of the option in on-wire
+// format is returned when ASCII encoding for FQDN is in use.
+TEST(Option4ClientFqdnTest, lenAscii) {
+    // Create option instance. Check that constructor doesn't throw.
+    boost::scoped_ptr<Option4ClientFqdn> option;
+    ASSERT_NO_THROW(
+        option.reset(new Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
+                                           "myhost.example.com"))
+    );
+    ASSERT_TRUE(option);
+
+    // This option comprises a header (2 octets), flag field (1 octet),
+    // RCODE1 and RCODE2 (2 octets) and the domain name in the ASCII format.
+    // The length of the domain name in the ASCII format is 19 - length
+    // of the string plus terminating dot.
+    EXPECT_EQ(24, option->len());
+
+    // Let's change the domain name and see if the length is different.
+    ASSERT_NO_THROW(
+        option.reset(new Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
+                                           "example.com"))
+    );
+    ASSERT_TRUE(option);
+
+    EXPECT_EQ(17, option->len());
+
+    // Let's test the length of the option when the partial domain name is
+    // specified.
+    ASSERT_NO_THROW(
+        option.reset(new Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
+                                           "myhost",
+                                           Option4ClientFqdn::PARTIAL))
+    );
+    ASSERT_TRUE(option);
+
+    // For partial names, there is no terminating dot, so the length of the
+    // domain name is equal to the length of the "myhost".
+    EXPECT_EQ(11, option->len());
+
+    // Another check for partial domain name but this time the domain name
+    // contains two labels.
+    ASSERT_NO_THROW(
+        option.reset(new Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
+                                           "myhost.example",
+                                           Option4ClientFqdn::PARTIAL))
+    );
+    ASSERT_TRUE(option);
+
+    EXPECT_EQ(19, option->len());
+
+
+    // A special case is an empty domain name for which the returned length
+    // should be a sum of the header length, RCODE1, RCODE2 and flag fields
+    // length.
+    ASSERT_NO_THROW(
+        option.reset(new Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
+                                           "", Option4ClientFqdn::PARTIAL))
+    );
+    ASSERT_TRUE(option);
+
+    EXPECT_EQ(5, option->len());
+}
 
 } // anonymous namespace

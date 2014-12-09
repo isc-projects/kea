@@ -223,8 +223,8 @@ TEST_F(RebindTest, directClient) {
     // subnets.
     ASSERT_EQ(1, client.getLeaseNum());
     Lease6 lease_client2 = client.getLease(0);
-    ASSERT_TRUE(CfgMgr::instance().getSubnet6(lease_client2.addr_,
-                                              ClientClasses()));
+    ASSERT_TRUE(CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->
+                selectSubnet(lease_client2.addr_, ClientClasses()));
     // The client's lease should have been extended. The client will
     // update the cltt to current time when the lease gets extended.
     ASSERT_GE(lease_client2.cltt_ - lease_client.cltt_, 1000);
@@ -337,8 +337,8 @@ TEST_F(RebindTest, relayedClient) {
     // subnets.
     ASSERT_EQ(1, client.getLeaseNum());
     Lease6 lease_client2 = client.getLease(0);
-    ASSERT_TRUE(CfgMgr::instance().getSubnet6(lease_client2.addr_,
-                                              ClientClasses()));
+    ASSERT_TRUE(CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->
+                selectSubnet(lease_client2.addr_, ClientClasses()));
     // The client's lease should have been extended. The client will
     // update the cltt to current time when the lease gets extended.
     ASSERT_GE(lease_client2.cltt_ - lease_client.cltt_, 1000);
@@ -498,8 +498,8 @@ TEST_F(RebindTest, directClientPD) {
     // subnets.
     ASSERT_EQ(1, client.getLeaseNum());
     Lease6 lease_client2 = client.getLease(0);
-    ASSERT_TRUE(CfgMgr::instance().getSubnet6(lease_client2.addr_,
-                                              ClientClasses()));
+    ASSERT_TRUE(CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->
+                selectSubnet(lease_client2.addr_, ClientClasses()));
     // The client's lease should have been extended. The client will
     // update the cltt to current time when the lease gets extended.
     ASSERT_GE(lease_client2.cltt_ - lease_client.cltt_, 1000);
@@ -675,8 +675,8 @@ TEST_F(RebindTest, relayedUnicast) {
     // subnets.
     ASSERT_EQ(1, client.getLeaseNum());
     Lease6 lease_client2 = client.getLease(0);
-    ASSERT_TRUE(CfgMgr::instance().getSubnet6(lease_client2.addr_,
-                                              ClientClasses()));
+    ASSERT_TRUE(CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->
+                selectSubnet(lease_client2.addr_, ClientClasses()));
     // The client's lease should have been extended. The client will
     // update the cltt to current time when the lease gets extended.
     ASSERT_GE(lease_client2.cltt_ - lease_client.cltt_, 1000);

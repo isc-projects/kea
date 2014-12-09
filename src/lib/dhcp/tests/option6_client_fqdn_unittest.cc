@@ -191,17 +191,16 @@ TEST(Option6ClientFqdnTest, constructFromWireTooLongLabel) {
 // is over 255.
 TEST(Option6ClientFqdnTest, constructFromWireTooLongDomainName) {
     OptionBuffer in_buf(Option6ClientFqdn::FLAG_S);
+    // Construct the FQDN from 26 labels, each having a size of 10.
     for (int i = 0; i < 26;  ++i) {
+        // Append the length of each label.
         in_buf.push_back(10);
+        // Append the actual label.
         in_buf.insert(in_buf.end(), 10, 109);
     }
+    // Terminate FQDN with a dot.
     in_buf.push_back(0);
 
-    try {
-        Option6ClientFqdn(in_buf.begin(), in_buf.end());
-    } catch (const Exception& ex) {
-        std::cout << ex.what() << std::endl;
-    }
     EXPECT_THROW(Option6ClientFqdn(in_buf.begin(), in_buf.end()),
                  InvalidOption6FqdnDomainName);
 }
@@ -791,6 +790,14 @@ TEST(Option6ClientFqdnTest, len) {
     // length of the string representation of the domain name + 1).
     EXPECT_EQ(25, option->len());
 
+    // Use different domain name to check if the length also changes
+    // as expected.
+    ASSERT_NO_THROW(
+        option.reset(new Option6ClientFqdn(0, "example.com"))
+    );
+    ASSERT_TRUE(option);
+    EXPECT_EQ(18, option->len());
+
     // Let's check that the size will change when domain name of a different
     // size is used.
     ASSERT_NO_THROW(
@@ -805,6 +812,16 @@ TEST(Option6ClientFqdnTest, len) {
     );
     ASSERT_TRUE(option);
     EXPECT_EQ(12, option->len());
+
+    // Another test for partial domain name but this time using
+    // two labels.
+    ASSERT_NO_THROW(
+        option.reset(new Option6ClientFqdn(0, "myhost.example",
+                                           Option6ClientFqdn::PARTIAL))
+    );
+    ASSERT_TRUE(option);
+    EXPECT_EQ(20, option->len());
+
 }
 
 } // anonymous namespace

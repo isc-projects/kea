@@ -922,6 +922,8 @@ TEST_F(HooksDhcpv6SrvTest, subnet6_select) {
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
 
+    CfgMgr::instance().commit();
+
     // Prepare solicit packet. Server should select first subnet for it
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
@@ -942,7 +944,8 @@ TEST_F(HooksDhcpv6SrvTest, subnet6_select) {
     // Check that pkt6 argument passing was successful and returned proper value
     EXPECT_TRUE(callback_pkt6_.get() == sol.get());
 
-    const Subnet6Collection* exp_subnets = CfgMgr::instance().getSubnets6();
+    const Subnet6Collection* exp_subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
 
     // The server is supposed to pick the first subnet, because of matching
     // interface. Check that the value is reported properly.
@@ -990,6 +993,8 @@ TEST_F(HooksDhcpv6SrvTest, subnet_select_change) {
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
 
+    CfgMgr::instance().commit();
+
     // Prepare solicit packet. Server should select first subnet for it
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
@@ -1016,7 +1021,8 @@ TEST_F(HooksDhcpv6SrvTest, subnet_select_change) {
     ASSERT_TRUE(addr_opt);
 
     // Get all subnets and use second subnet for verification
-    const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
+    const Subnet6Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
     ASSERT_EQ(2, subnets->size());
 
     // Advertised address must belong to the second pool (in subnet's range,

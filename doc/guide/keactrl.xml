@@ -107,7 +107,7 @@ kea_verbose=no
       <para>
         By default, Kea servers managed by <command>keactrl</command> are
         located in <filename>[kea-install-dir]/sbin</filename>. This
-        should work for most of the installations. If the default
+        should work for most installations. If the default
         location needs to be altered for any reason, the paths
         specified with the <parameter>dhcp4_srv</parameter>,
         <parameter>dhcp6_srv</parameter> and <parameter>dhcp_ddns_srv</parameter>

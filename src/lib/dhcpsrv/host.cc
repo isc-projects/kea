@@ -15,36 +15,57 @@
 #include <dhcpsrv/host.h>
 #include <util/strutil.h>
 #include <exceptions/exceptions.h>
+#include <sstream>
 
 namespace isc {
 namespace dhcp {
 
-IPv6Resrv::IPv6Resrv(const asiolink::IOAddress& prefix,
+IPv6Resrv::IPv6Resrv(const Type& type,
+                     const asiolink::IOAddress& prefix,
                      const uint8_t prefix_len)
-    : prefix_(asiolink::IOAddress("::")), prefix_len_(128) {
+    : type_(type), prefix_(asiolink::IOAddress("::")), prefix_len_(128) {
     // Validate and set the actual values.
-    set(prefix, prefix_len);
+    set(type, prefix, prefix_len);
 }
 
 void
-IPv6Resrv::set(const asiolink::IOAddress& prefix, const uint8_t prefix_len) {
+IPv6Resrv::set(const Type& type, const asiolink::IOAddress& prefix,
+               const uint8_t prefix_len) {
     if (!prefix.isV6() || prefix.isV6Multicast()) {
         isc_throw(isc::BadValue, "invalid prefix '" << prefix
-                  << " for new IPv6 reservation");
+                  << "' for new IPv6 reservation");
 
     } else if (prefix_len > 128) {
         isc_throw(isc::BadValue, "invalid prefix length '"
                   << static_cast<int>(prefix_len)
                   << "' for new IPv6 reservation");
+
+    } else if ((type == TYPE_NA) && (prefix_len != 128)) {
+        isc_throw(isc::BadValue, "invalid prefix length '"
+                  << static_cast<int>(prefix_len)
+                  << "' for reserved IPv6 address, expected 128");
     }
 
+    type_ = type;
     prefix_ = prefix;
     prefix_len_ = prefix_len;
 }
 
+std::string
+IPv6Resrv::toText() const {
+    std::ostringstream s;
+    s << prefix_;
+    // For PD, append prefix length.
+    if (getType() == TYPE_PD) {
+        s << "/" << static_cast<int>(prefix_len_);
+    }
+    return (s.str());
+}
+
 bool
 IPv6Resrv::operator==(const IPv6Resrv& other) const {
-    return (prefix_ == other.prefix_ &&
+    return (type_ == other.type_ &&
+            prefix_ == other.prefix_ &&
             prefix_len_ == other.prefix_len_);
 }
 
@@ -61,12 +82,16 @@ Host::Host(const uint8_t* identifier, const size_t identifier_len,
            const std::string& dhcp4_client_classes,
            const std::string& dhcp6_client_classes)
     : hw_address_(), duid_(), ipv4_subnet_id_(ipv4_subnet_id),
-      ipv6_subnet_id_(ipv6_subnet_id), ipv4_reservation_(ipv4_reservation),
+      ipv6_subnet_id_(ipv6_subnet_id),
+      ipv4_reservation_(asiolink::IOAddress("0.0.0.0")),
        hostname_(hostname), dhcp4_client_classes_(dhcp4_client_classes),
        dhcp6_client_classes_(dhcp6_client_classes) {
 
     // Initialize HWAddr or DUID
     setIdentifier(identifier, identifier_len, identifier_type);
+
+    // Validate and set IPv4 address reservation.
+    setIPv4Reservation(ipv4_reservation);
 }
 
 Host::Host(const std::string& identifier, const std::string& identifier_name,
@@ -76,12 +101,37 @@ Host::Host(const std::string& identifier, const std::string& identifier_name,
            const std::string& dhcp4_client_classes,
            const std::string& dhcp6_client_classes)
     : hw_address_(), duid_(), ipv4_subnet_id_(ipv4_subnet_id),
-      ipv6_subnet_id_(ipv6_subnet_id), ipv4_reservation_(ipv4_reservation),
+      ipv6_subnet_id_(ipv6_subnet_id),
+      ipv4_reservation_(asiolink::IOAddress("0.0.0.0")),
       hostname_(hostname), dhcp4_client_classes_(dhcp4_client_classes),
       dhcp6_client_classes_(dhcp6_client_classes) {
 
     // Initialize HWAddr or DUID
     setIdentifier(identifier, identifier_name);
+
+    // Validate and set IPv4 address reservation.
+    setIPv4Reservation(ipv4_reservation);
+}
+
+const std::vector<uint8_t>&
+Host::getIdentifier() const {
+    if (hw_address_) {
+        return (hw_address_->hwaddr_);
+
+    } else if (duid_) {
+        return (duid_->getDuid());
+
+    }
+    static std::vector<uint8_t> empty_vector;
+    return (empty_vector);
+}
+
+Host::IdentifierType
+Host::getIdentifierType() const {
+    if (hw_address_) {
+        return (IDENT_HWADDR);
+    }
+    return (IDENT_DUID);
 }
 
 void
@@ -118,7 +168,23 @@ Host::setIdentifier(const std::string& identifier, const std::string& name) {
 }
 
 void
+Host::setIPv4Reservation(const asiolink::IOAddress& address) {
+    if (!address.isV4()) {
+        isc_throw(isc::BadValue, "address '" << address << "' is not a valid"
+                  " IPv4 address");
+    }
+    ipv4_reservation_ = address;
+}
+
+
+void
 Host::addReservation(const IPv6Resrv& reservation) {
+    // Check if it is not duplicating existing reservation.
+    if (hasReservation(reservation)) {
+        isc_throw(isc::InvalidOperation, "failed on attempt to add a duplicated"
+                  " host reservation for " << reservation.toText());
+    }
+    // Add it.
     ipv6_reservations_.insert(IPv6ResrvTuple(reservation.getType(),
                                              reservation));
 }
@@ -126,6 +192,22 @@ Host::addReservation(const IPv6Resrv& reservation) {
 IPv6ResrvRange
 Host::getIPv6Reservations(const IPv6Resrv::Type& type) const {
     return (ipv6_reservations_.equal_range(type));
+}
+
+bool
+Host::hasReservation(const IPv6Resrv& reservation) const {
+    IPv6ResrvRange reservations = getIPv6Reservations(reservation.getType());
+    if (std::distance(reservations.first, reservations.second) > 0) {
+        for (IPv6ResrvIterator it = reservations.first;
+             it != reservations.second; ++it) {
+            if (it->second == reservation) {
+                return (true);
+            }
+        }
+    }
+
+    // No matching reservations found.
+    return (false);
 }
 
 void

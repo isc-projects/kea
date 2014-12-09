@@ -23,81 +23,6 @@
 
 #include <cstring>
 
-namespace {
-
-/// Secure Buffers which are wiped out when released.
-template<typename T>
-struct SecBuf {
-public:
-    typedef typename std::vector<T>::iterator iterator;
-
-    typedef typename std::vector<T>::const_iterator const_iterator;
-
-    explicit SecBuf() : vec_(std::vector<T>()) {}
-
-    explicit SecBuf(size_t n, const T& value = T()) :
-        vec_(std::vector<T>(n, value))
-    {}
-
-    SecBuf(iterator first, iterator last) :
-        vec_(std::vector<T>(first, last))
-    {}
-
-    SecBuf(const_iterator first, const_iterator last) :
-        vec_(std::vector<T>(first, last))
-    {}
-
-    SecBuf(const std::vector<T>& x) : vec_(x) {}
-
-    ~SecBuf() {
-        std::memset(&vec_[0], 0, vec_.capacity() * sizeof(T));
-    };
-
-    iterator begin() {
-        return (vec_.begin());
-    };
-
-    const_iterator begin() const {
-        return (vec_.begin());
-    };
-
-    iterator end() {
-        return (vec_.end());
-    };
-
-    const_iterator end() const {
-        return (vec_.end());
-    };
-
-    size_t size() const {
-        return (vec_.size());
-    };
-
-    void resize(size_t sz) {
-        vec_.resize(sz);
-    };
-
-    SecBuf& operator=(const SecBuf& x) {
-        if (&x != *this) {
-            vec_ = x.vec_;
-        }
-        return (*this);
-    };
-
-    T& operator[](size_t n) {
-        return (vec_[n]);
-    };
-
-    const T& operator[](size_t n) const {
-        return (vec_[n]);
-    };
-
-private:
-    std::vector<T> vec_;
-};
-
-} // local namespace
-
 namespace isc {
 namespace cryptolink {
 
@@ -114,7 +39,7 @@ public:
     /// @param hash_algorithm The hash algorithm
     explicit HMACImpl(const void* secret, size_t secret_len,
                       const HashAlgorithm hash_algorithm) {
-        const EVP_MD* algo = getOpenSSLHashAlgorithm(hash_algorithm);
+        const EVP_MD* algo = ossl::getHashAlgorithm(hash_algorithm);
         if (algo == 0) {
             isc_throw(UnsupportedAlgorithm,
                       "Unknown hash algorithm: " <<
@@ -162,7 +87,7 @@ public:
     /// See @ref isc::cryptolink::HMAC::sign() for details.
     void sign(isc::util::OutputBuffer& result, size_t len) {
         size_t size = getOutputLength();
-        SecBuf<unsigned char> digest(size);
+        ossl::SecBuf<unsigned char> digest(size);
         HMAC_Final(md_.get(), &digest[0], NULL);
         if (len == 0 || len > size) {
             len = size;
@@ -175,7 +100,7 @@ public:
     /// See @ref isc::cryptolink::HMAC::sign() for details.
     void sign(void* result, size_t len) {
         size_t size = getOutputLength();
-        SecBuf<unsigned char> digest(size);
+        ossl::SecBuf<unsigned char> digest(size);
         HMAC_Final(md_.get(), &digest[0], NULL);
         if (len > size) {
             len = size;
@@ -188,7 +113,7 @@ public:
     /// See @ref isc::cryptolink::HMAC::sign() for details.
     std::vector<uint8_t> sign(size_t len) {
         size_t size = getOutputLength();
-        SecBuf<unsigned char> digest(size);
+        ossl::SecBuf<unsigned char> digest(size);
         HMAC_Final(md_.get(), &digest[0], NULL);
         if (len != 0 && len < size) {
             digest.resize(len);
@@ -204,12 +129,12 @@ public:
         if (len != 0 && (len < 10 || len < size / 2)) {
             return (false);
         }
-        SecBuf<unsigned char> digest(size);
+        ossl::SecBuf<unsigned char> digest(size);
         HMAC_Final(md_.get(), &digest[0], NULL);
         if (len == 0 || len > size) {
             len = size;
         }
-        return (std::memcmp(&digest[0], sig, len) == 0);
+        return (digest.same(sig, len));
     }
 
 private:

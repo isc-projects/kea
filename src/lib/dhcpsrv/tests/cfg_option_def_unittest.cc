@@ -122,7 +122,7 @@ TEST(CfgOptionDefTest, getAll) {
 }
 
 // This test verifies that single option definition is correctly
-// returned with getOptionDef function.
+// returned with get function.
 TEST(CfgOptionDefTest, get) {
     CfgOptionDef cfg;
     // Create a set of option definitions with codes between 100 and 109.
@@ -160,6 +160,12 @@ TEST(CfgOptionDefTest, get) {
         option_name << "option-" << code;
         EXPECT_EQ(option_name.str(), def->getName());
         EXPECT_EQ(code, def->getCode());
+
+        // Try to get the same option definition using an option name as
+        // a key.
+        def = cfg.get("isc", option_name.str());
+        ASSERT_TRUE(def);
+        EXPECT_EQ(code, def->getCode());
     }
 
     // Check that the option codes are valid.
@@ -172,7 +178,12 @@ TEST(CfgOptionDefTest, get) {
         std::ostringstream option_name;
         option_name << "option-other-" << code;
         EXPECT_EQ(option_name.str(), def->getName());
+        EXPECT_EQ(code, def->getCode());
 
+        // Try to get the same option definition using an option name as
+        // a key.
+        def = cfg.get("abcde", option_name.str());
+        ASSERT_TRUE(def);
         EXPECT_EQ(code, def->getCode());
     }
 

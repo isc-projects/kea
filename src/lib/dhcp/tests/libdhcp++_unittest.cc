@@ -16,6 +16,7 @@
 
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
+#include <dhcp/docsis3_option_defs.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option4_client_fqdn.h>
@@ -1139,6 +1140,69 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
 
     LibDhcpTest::testStdOptionDefs6(D6O_LQ_CLIENT_LINK, begin, end,
                                     typeid(Option6AddrLst));
+}
+
+// This test checks if the DHCPv6 option definition can be searched by
+// an option name.
+TEST_F(LibDhcpTest, getOptionDefByName6) {
+    // Get all definitions.
+    const OptionDefContainer& defs = LibDHCP::getOptionDefs(Option::V6);
+    // For each definition try to find it using option name.
+    for (OptionDefContainer::const_iterator def = defs.begin();
+         def != defs.end(); ++def) {
+        OptionDefinitionPtr def_by_name =
+            LibDHCP::getOptionDef(Option::V6, (*def)->getName());
+        ASSERT_TRUE(def_by_name);
+        ASSERT_TRUE(**def == *def_by_name);
+    }
+}
+
+
+// This test checks if the DHCPv4 option definition can be searched by
+// an option name.
+TEST_F(LibDhcpTest, getOptionDefByName4) {
+    // Get all definitions.
+    const OptionDefContainer& defs = LibDHCP::getOptionDefs(Option::V4);
+    // For each definition try to find it using option name.
+    for (OptionDefContainer::const_iterator def = defs.begin();
+         def != defs.end(); ++def) {
+        OptionDefinitionPtr def_by_name =
+            LibDHCP::getOptionDef(Option::V4, (*def)->getName());
+        ASSERT_TRUE(def_by_name);
+        ASSERT_TRUE(**def == *def_by_name);
+    }
+}
+
+// This test checks if the definition of the DHCPv6 vendor option can
+// be searched by option name.
+TEST_F(LibDhcpTest, getVendorOptionDefByName6) {
+    const OptionDefContainer* defs =
+        LibDHCP::getVendorOption6Defs(VENDOR_ID_CABLE_LABS);
+    ASSERT_TRUE(defs != NULL);
+    for (OptionDefContainer::const_iterator def = defs->begin();
+         def != defs->end(); ++def) {
+        OptionDefinitionPtr def_by_name =
+            LibDHCP::getVendorOptionDef(Option::V6, VENDOR_ID_CABLE_LABS,
+                                        (*def)->getName());
+        ASSERT_TRUE(def_by_name);
+        ASSERT_TRUE(**def == *def_by_name);
+    }
+}
+
+// This test checks if the definition of the DHCPv4 vendor option can
+// be searched by option name.
+TEST_F(LibDhcpTest, getVendorOptionDefByName4) {
+    const OptionDefContainer* defs =
+        LibDHCP::getVendorOption4Defs(VENDOR_ID_CABLE_LABS);
+    ASSERT_TRUE(defs != NULL);
+    for (OptionDefContainer::const_iterator def = defs->begin();
+         def != defs->end(); ++def) {
+        OptionDefinitionPtr def_by_name =
+            LibDHCP::getVendorOptionDef(Option::V4, VENDOR_ID_CABLE_LABS,
+                                        (*def)->getName());
+        ASSERT_TRUE(def_by_name);
+        ASSERT_TRUE(**def == *def_by_name);
+    }
 }
 
 // tests whether v6 vendor-class option can be parsed properly.
