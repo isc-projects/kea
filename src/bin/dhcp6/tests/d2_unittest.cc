@@ -128,6 +128,7 @@ Dhcp6SrvD2Test::configureD2(bool enable_d2, const bool exp_result,
 
 void
 Dhcp6SrvD2Test::configure(const std::string& config, bool exp_result) {
+    CfgMgr::instance().clear();
     ElementPtr json = Element::fromJSON(config);
     ConstElementPtr status;
 

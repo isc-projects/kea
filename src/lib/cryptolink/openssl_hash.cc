@@ -32,7 +32,7 @@ namespace cryptolink {
 /// @param algorithm algorithm to be converted
 /// @return pointer to EVP_MD which identifies the algorithm
 const EVP_MD*
-getOpenSSLHashAlgorithm(isc::cryptolink::HashAlgorithm algorithm) {
+ossl::getHashAlgorithm(HashAlgorithm algorithm) {
     switch (algorithm) {
     case isc::cryptolink::MD5:
         return (EVP_md5());
@@ -63,7 +63,7 @@ public:
     ///
     /// @param hash_algorithm The hash algorithm
     explicit HashImpl(const HashAlgorithm hash_algorithm) {
-        const EVP_MD* algo = getOpenSSLHashAlgorithm(hash_algorithm);
+        const EVP_MD* algo = ossl::getHashAlgorithm(hash_algorithm);
         if (algo == 0) {
             isc_throw(isc::cryptolink::UnsupportedAlgorithm,
                       "Unknown hash algorithm: " <<

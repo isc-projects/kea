@@ -27,7 +27,7 @@ namespace {
 // This test verifies that it is possible to create IPv6 address
 // reservation.
 TEST(IPv6ResrvTest, constructorAddress) {
-    IPv6Resrv resrv(IOAddress("2001:db8:1::cafe"));
+    IPv6Resrv resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::cafe"));
     EXPECT_EQ("2001:db8:1::cafe", resrv.getPrefix().toText());
     EXPECT_EQ(128, resrv.getPrefixLen());
     EXPECT_EQ(IPv6Resrv::TYPE_NA, resrv.getType());
@@ -36,74 +36,96 @@ TEST(IPv6ResrvTest, constructorAddress) {
 // This test verifies that it is possible to create IPv6 prefix
 // reservation.
 TEST(IPv6ResrvTest, constructorPrefix) {
-    IPv6Resrv resrv(IOAddress("2001:db8:1::"), 64);
+    IPv6Resrv resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8:1::"), 64);
     EXPECT_EQ("2001:db8:1::", resrv.getPrefix().toText());
     EXPECT_EQ(64, resrv.getPrefixLen());
     EXPECT_EQ(IPv6Resrv::TYPE_PD, resrv.getType());
 }
 
+// This test verifies that the toText() function prints correctly.
+TEST(IPv6ResrvTest, toText) {
+    IPv6Resrv resrv_prefix(IPv6Resrv::TYPE_PD, IOAddress("2001:db8:1::"), 64);
+    EXPECT_EQ("2001:db8:1::/64", resrv_prefix.toText());
+
+    IPv6Resrv resrv_address(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:111::23"));
+    EXPECT_EQ("2001:db8:111::23", resrv_address.toText());
+}
+
 // This test verifies that invalid prefix is rejected.
 TEST(IPv6ResrvTest, constructorInvalidPrefix) {
     // IPv4 address is invalid for IPv6 reservation.
-    EXPECT_THROW(IPv6Resrv(IOAddress("10.0.0.1"), 128), isc::BadValue);
+    EXPECT_THROW(IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("10.0.0.1"), 128),
+                 isc::BadValue);
     // Multicast address is invalid for IPv6 reservation.
-    EXPECT_THROW(IPv6Resrv(IOAddress("ff02:1::2"), 128), isc::BadValue);
+    EXPECT_THROW(IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("ff02:1::2"), 128),
+                 isc::BadValue);
 }
 
 // This test verifies that invalid prefix length is rejected.
 TEST(IPv6ResrvTest, constructiorInvalidPrefixLength) {
-    ASSERT_NO_THROW(IPv6Resrv(IOAddress("2001:db8:1::"), 128));
-    EXPECT_THROW(IPv6Resrv(IOAddress("2001:db8:1::"), 129), isc::BadValue);
-    EXPECT_THROW(IPv6Resrv(IOAddress("2001:db8:1::"), 244), isc::BadValue);
+    ASSERT_NO_THROW(IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8:1::"),
+                              128));
+    EXPECT_THROW(IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8:1::"), 129),
+                 isc::BadValue);
+    EXPECT_THROW(IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8:1::"), 244),
+                 isc::BadValue);
+    EXPECT_THROW(IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::"), 64),
+                 isc::BadValue);
 }
 
 // This test verifies that it is possible to modify prefix and its
 // length in an existing reservation.
 TEST(IPv6ResrvTest, setPrefix) {
     // Create a reservation using an address and prefix length 128.
-    IPv6Resrv resrv(IOAddress("2001:db8:1::1"));
+    IPv6Resrv resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::1"));
     ASSERT_EQ("2001:db8:1::1", resrv.getPrefix().toText());
     ASSERT_EQ(128, resrv.getPrefixLen());
     ASSERT_EQ(IPv6Resrv::TYPE_NA, resrv.getType());
 
     // Modify the reservation to use a prefix having a length of 48.
-    ASSERT_NO_THROW(resrv.set(IOAddress("2001:db8::"), 48));
+    ASSERT_NO_THROW(resrv.set(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::"), 48));
     EXPECT_EQ("2001:db8::", resrv.getPrefix().toText());
     EXPECT_EQ(48, resrv.getPrefixLen());
     EXPECT_EQ(IPv6Resrv::TYPE_PD, resrv.getType());
 
     // IPv4 address is invalid for IPv6 reservation.
-    EXPECT_THROW(resrv.set(IOAddress("10.0.0.1"), 128), isc::BadValue);
+    EXPECT_THROW(resrv.set(IPv6Resrv::TYPE_NA, IOAddress("10.0.0.1"), 128),
+                 isc::BadValue);
     // IPv6 multicast address is invalid for IPv6 reservation.
-    EXPECT_THROW(resrv.set(IOAddress("ff02::1:2"), 128), isc::BadValue);
+    EXPECT_THROW(resrv.set(IPv6Resrv::TYPE_NA, IOAddress("ff02::1:2"), 128),
+                 isc::BadValue);
     // Prefix length greater than 128 is invalid.
-    EXPECT_THROW(resrv.set(IOAddress("2001:db8:1::"), 129), isc::BadValue);
+    EXPECT_THROW(resrv.set(IPv6Resrv::TYPE_PD, IOAddress("2001:db8:1::"), 129),
+                 isc::BadValue);
 }
 
 // This test checks that the equality operators work fine.
 TEST(IPv6ResrvTest, equal) {
-    EXPECT_TRUE(IPv6Resrv(IOAddress("2001:db8::"), 64) ==
-                IPv6Resrv(IOAddress("2001:db8::"), 64));
+    EXPECT_TRUE(IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::"), 64) ==
+                IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::"), 64));
 
-    EXPECT_FALSE(IPv6Resrv(IOAddress("2001:db8::"), 64) !=
-                IPv6Resrv(IOAddress("2001:db8::"), 64));
+    EXPECT_FALSE(IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::"), 64) !=
+                 IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::"), 64));
 
+    EXPECT_TRUE(IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::1")) ==
+                IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::1")));
+    EXPECT_FALSE(IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::1")) !=
+                 IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::1")));
 
-    EXPECT_TRUE(IPv6Resrv(IOAddress("2001:db8::1")) ==
-                IPv6Resrv(IOAddress("2001:db8::1")));
-    EXPECT_FALSE(IPv6Resrv(IOAddress("2001:db8::1")) !=
-                 IPv6Resrv(IOAddress("2001:db8::1")));
+    EXPECT_FALSE(IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::1")) ==
+                 IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::2")));
+    EXPECT_TRUE(IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::1")) !=
+                 IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::2")));
 
+    EXPECT_FALSE(IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::"), 64) ==
+                 IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::"), 48));
+    EXPECT_TRUE(IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::"), 64) !=
+                IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::"), 48));
 
-    EXPECT_FALSE(IPv6Resrv(IOAddress("2001:db8::1")) ==
-                 IPv6Resrv(IOAddress("2001:db8::2")));
-    EXPECT_TRUE(IPv6Resrv(IOAddress("2001:db8::1")) !=
-                 IPv6Resrv(IOAddress("2001:db8::2")));
-
-    EXPECT_FALSE(IPv6Resrv(IOAddress("2001:db8::"), 64) ==
-                 IPv6Resrv(IOAddress("2001:db8::"), 48));
-    EXPECT_TRUE(IPv6Resrv(IOAddress("2001:db8::"), 64) !=
-                 IPv6Resrv(IOAddress("2001:db8::"), 48));
+    EXPECT_FALSE(IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::1"), 128) ==
+                 IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::1"), 128));
+    EXPECT_TRUE(IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::1"), 128) !=
+                IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::1"), 128));
 
 }
 
@@ -333,27 +355,47 @@ TEST(HostTest, addReservations) {
 
     // Add 4 reservations: 2 for NAs, 2 for PDs.
     ASSERT_NO_THROW(
-        host->addReservation(IPv6Resrv(IOAddress("2001:db8:1::cafe")));
-        host->addReservation(IPv6Resrv(IOAddress("2001:db8:1:1::"), 64));
-        host->addReservation(IPv6Resrv(IOAddress("2001:db8:1:2::"), 64));
-        host->addReservation(IPv6Resrv(IOAddress("2001:db8:1::1")));
+        host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                       IOAddress("2001:db8:1::cafe")));
+        host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
+                                       IOAddress("2001:db8:1:1::"), 64));
+        host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
+                                       IOAddress("2001:db8:1:2::"), 64));
+        host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                       IOAddress("2001:db8:1::1")));
     );
+
+    // Check that reservations exist.
+    EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                               IOAddress("2001:db8:1::cafe"))));
+    EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
+                                               IOAddress("2001:db8:1:1::"),
+                                               64)));
+    EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
+                                               IOAddress("2001:db8:1:2::"),
+                                               64)));
+    EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                               IOAddress("2001:db8:1::1"))));
 
     // Get only NA reservations.
     IPv6ResrvRange addresses = host->getIPv6Reservations(IPv6Resrv::TYPE_NA);
     ASSERT_EQ(2, std::distance(addresses.first, addresses.second));
-    EXPECT_TRUE(reservationExists(IPv6Resrv(IOAddress("2001:db8:1::cafe")),
+    EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                            IOAddress("2001:db8:1::cafe")),
                                   addresses));
-    EXPECT_TRUE(reservationExists(IPv6Resrv(IOAddress("2001:db8:1::1")),
+    EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                            IOAddress("2001:db8:1::1")),
                                   addresses));
 
 
     // Get only PD reservations.
     IPv6ResrvRange prefixes = host->getIPv6Reservations(IPv6Resrv::TYPE_PD);
     ASSERT_EQ(2, std::distance(prefixes.first, prefixes.second));
-    EXPECT_TRUE(reservationExists(IPv6Resrv(IOAddress("2001:db8:1:1::"), 64),
+    EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_PD,
+                                            IOAddress("2001:db8:1:1::"), 64),
                                   prefixes));
-    EXPECT_TRUE(reservationExists(IPv6Resrv(IOAddress("2001:db8:1:2::"), 64),
+    EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_PD,
+                                            IOAddress("2001:db8:1:2::"), 64),
                                   prefixes));
 }
 
@@ -380,6 +422,10 @@ TEST(HostTest, setValues) {
     EXPECT_EQ(234, host->getIPv6SubnetID());
     EXPECT_EQ("10.0.0.1", host->getIPv4Reservation().toText());
     EXPECT_EQ("other-host.example.org", host->getHostname());
+
+    // An IPv6 address can't be used for IPv4 reservations.
+    EXPECT_THROW(host->setIPv4Reservation(IOAddress("2001:db8:1::1")),
+                 isc::BadValue);
 }
 
 // Test that Host constructors initialize client classes from string.

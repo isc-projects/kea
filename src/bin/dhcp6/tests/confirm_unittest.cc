@@ -233,7 +233,8 @@ TEST_F(ConfirmTest, relayedClientNoAddress) {
     // Configure the server.
     configure(CONFIRM_CONFIGS[1], *client.getServer());
     // Make sure we ended-up having expected number of subnets configured.
-    const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
+    const Subnet6Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
     ASSERT_EQ(2, subnets->size());
     // Client to send relayed message.
     client.useRelay();
@@ -255,7 +256,7 @@ TEST_F(ConfirmTest, relayedClientNoSubnet) {
     ASSERT_NO_FATAL_FAILURE(requestLease(CONFIRM_CONFIGS[1], 2, client));
     // Now that the client has a lease, let's remove any subnets to check
     // how the server would respond to the Confirm.
-    ASSERT_NO_THROW(CfgMgr::instance().deleteSubnets6());
+    ASSERT_NO_THROW(CfgMgr::instance().clear());
     // Send Confirm message to the server.
     ASSERT_NO_THROW(client.doConfirm());
     // Client should have received a status code option and this option should

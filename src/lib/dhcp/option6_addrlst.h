@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012, 2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/option.h>
-
+#include <boost/shared_ptr.hpp>
 #include <vector>
 
 namespace isc {
@@ -93,6 +93,9 @@ public:
 protected:
     AddressContainer addrs_;
 };
+
+/// @brief Pointer to the @c Option6AddrLst object.
+typedef boost::shared_ptr<Option6AddrLst> Option6AddrLstPtr;
 
 } // isc::dhcp namespace
 } // isc namespace

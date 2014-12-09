@@ -41,8 +41,6 @@ public:
     /// is @c TEST_SUBNETS_NUM for IPv4 and IPv6 each.
     SrvConfigTest()
         : iface_mgr_test_config_(true) {
-        // Remove any subnets dangling from previous unit tests.
-        clearSubnets();
 
         // Disable DDNS.
         enableDDNS(false);
@@ -74,10 +72,7 @@ public:
     }
 
     /// @brief Destructor.
-    ///
-    /// Removes any dangling configuration.
     virtual ~SrvConfigTest() {
-        clearSubnets();
     }
 
     /// @brief Convenience function which adds IPv4 subnet to the configuration.
@@ -107,12 +102,6 @@ public:
     /// @c SrvConfig this function must be modified to store the subnets in
     /// @c conf_ object.
     void addSubnet6(const unsigned int index);
-
-    /// @brief Removes all subnets from the configuration.
-    ///
-    /// @todo Modify this function once the subnet configuration is migrated
-    /// from @c CfgMgr to @c SrvConfig.
-    void clearSubnets();
 
     /// @brief Enable/disable DDNS.
     ///
@@ -146,12 +135,7 @@ SrvConfigTest::addSubnet6(const unsigned int index) {
         FAIL() << "Subnet index " << index << "out of range (0.."
                << TEST_SUBNETS_NUM << "): " << "unable to add IPv6 subnet";
     }
-    CfgMgr::instance().addSubnet6(test_subnets6_[index]);
-}
-
-void
-SrvConfigTest::clearSubnets() {
-    CfgMgr::instance().deleteSubnets6();
+    conf_.getCfgSubnets6()->add(test_subnets6_[index]);
 }
 
 void

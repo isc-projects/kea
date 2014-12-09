@@ -1,3 +1,47 @@
+861.	[func]		marcin
+	The configuration parameters for a DHCPv4 and DHCPv6 options are now
+	optional.
+	(Trac #3467, git 7bf8cef161e6dd00a7f2b2fe8ec04e1958d6db3f)
+
+860.	[bug]		marcin
+	Fixed calculation of the Client FQDN option length for the ASCII
+	domain name encoding.
+	(Trac #3624, git 5a120d9bf85e27ea5b2674d35af0f2774e4cd2a7)
+
+859.	[func]		marcin
+	Implemented Host Manager, which can retrieve host reservations
+	specified in the server's configuration. Future tickets will
+	extend Host Manager to retrieve reservations from other sources,
+	e.g. SQL databases.
+	(Trac #3561, git faac5e9746dbf82eb04ffef95658e4b4c7d64a4a)
+
+858.	[bug]		marcin
+	Added missing "lease-database" entry to the default DHCPv6
+	server configuration, in kea.conf.
+	(Trac #3630, git 0f7ff732ea2add45a24e040eae8a0dda27532a31)
+
+857.	[func]		fdupont
+	Improve the cryptolink code, for instance use a constant
+	time comparison.
+	(Trac #3602, git 0c1f433da650330b40fe1a67bae4716c9184f636)
+
+856.	[build]		marcinw
+	callout_manager.h and server_hooks.h headers are now exported,
+	so statically linked libraries can be tested.
+	(Github #4, git 00b5f3fa0369c13021bf4fb78c6450e524e4e411)
+
+855.	[build]		fdupont
+	Use convenience archives for objects used in a makefile and
+	its parent makefile: before sources were compiled twice using
+	the broken subdir-objects option of automake, now objects
+	are put into a convenience static library (so an archive).
+	(Trac #3631, git d7954b4234114d8fa41aa51f671d4faa1724b748)
+
+854.	[bug]		marcin
+	Corrected a regression on "make distcheck" which appeared after
+	implementation of #3162 (partial fix).
+	(Trac #3629, git 9bb6b76a24e4356b30e59631e76e32c3096fb515)
+
 853.	[func]		tomek
 	Lease6 now is able to store MAC/hardware address information. Memfile
 	memfile backend has been updated to store/retrieve that additional
@@ -11,8 +55,8 @@
 	(Trac #3549, git d92e76860e6931477b3e60e5be8978302973f88f)
 
 851.	[bug]		tmark
-	Corrected a segmentation fault that was occurring under OS-X during D2 module
-	shutdown.
+	Corrected a segmentation fault that was occurring under OS-X
+	during D2 module shutdown.
 	(Trac #3470, git f7822568abd04c12faa3cde34fadaac238a373d3)
 
 850.	[build]		fdupont

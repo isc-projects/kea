@@ -33,6 +33,7 @@ using namespace std;
 using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::hooks;
+using namespace isc::util;
 
 namespace isc {
 namespace dhcp {
@@ -342,128 +343,203 @@ OptionDataParser::commit() {
     // Does nothing
 }
 
-OptionDefinitionPtr
-OptionDataParser::findServerSpaceOptionDefinition(const std::string& option_space,
-                                                  const uint32_t option_code) const {
-    const Option::Universe u = address_family_ == AF_INET ?
-        Option::V4 : Option::V6;
+OptionalValue<uint32_t>
+OptionDataParser::extractCode(ConstElementPtr parent) const {
+    uint32_t code;
+    try {
+        code = uint32_values_->getParam("code");
 
-    if ((option_space == DHCP4_OPTION_SPACE) && (u == Option::V6)) {
-        isc_throw(DhcpConfigError, "'" << DHCP4_OPTION_SPACE
-                  << "' option space name is reserved for DHCPv4 server");
-    } else if ((option_space == DHCP6_OPTION_SPACE) && (u == Option::V4)) {
-        isc_throw(DhcpConfigError, "'" << DHCP6_OPTION_SPACE
-                  << "' option space name is reserved for DHCPv6 server");
+    } catch (const exception& ex) {
+        // The code parameter was not found. Return an unspecified
+        // value.
+        return (OptionalValue<uint32_t>());
     }
 
-    OptionDefinitionPtr def;
-    if (((option_space == DHCP4_OPTION_SPACE) || (option_space == DHCP6_OPTION_SPACE)) &&
-        LibDHCP::isStandardOption(u, option_code)) {
-        def = LibDHCP::getOptionDef(u, option_code);
+    if (code == 0) {
+        isc_throw(DhcpConfigError, "option code must not be zero "
+                  "(" << uint32_values_->getPosition("code", parent) << ")");
 
-    } else {
+    } else if (address_family_ == AF_INET &&
+               code > std::numeric_limits<uint8_t>::max()) {
+        isc_throw(DhcpConfigError, "invalid option code '" << code
+                << "', it must not be greater than '"
+                  << static_cast<int>(std::numeric_limits<uint8_t>::max())
+                  << "' (" << uint32_values_->getPosition("code", parent)
+                  << ")");
+
+    } else if (address_family_ == AF_INET6 &&
+               code > std::numeric_limits<uint16_t>::max()) {
+        isc_throw(DhcpConfigError, "invalid option code '" << code
+                << "', it must not exceed '"
+                  << std::numeric_limits<uint16_t>::max()
+                  << "' (" << uint32_values_->getPosition("code", parent)
+                  << ")");
+
+    }
+
+    return (OptionalValue<uint32_t>(code, OptionalValueState(true)));
+}
+
+OptionalValue<std::string>
+OptionDataParser::extractName(ConstElementPtr parent) const {
+    std::string name;
+    try {
+        name = string_values_->getParam("name");
+
+    } catch (...) {
+        return (OptionalValue<std::string>());
+    }
+
+    if (name.find(" ") != std::string::npos) {
+        isc_throw(DhcpConfigError, "invalid option name '" << name
+                  << "', space character is not allowed ("
+                  << string_values_->getPosition("name", parent) << ")");
+    }
+
+    return (OptionalValue<std::string>(name, OptionalValueState(true)));
+}
+
+std::string
+OptionDataParser::extractData() const {
+    std::string data;
+    try {
+        data = string_values_->getParam("data");
+
+    } catch (...) {
+        // The "data" parameter was not found. Return an empty value.
+        return (data);
+    }
+
+    return (data);
+}
+
+OptionalValue<bool>
+OptionDataParser::extractCSVFormat() const {
+    bool csv_format = true;
+    try {
+        csv_format = boolean_values_->getParam("csv-format");
+
+    } catch (...) {
+        return (OptionalValue<bool>(csv_format));
+    }
+
+    return (OptionalValue<bool>(csv_format, OptionalValueState(true)));
+}
+
+std::string
+OptionDataParser::extractSpace() const {
+    std::string space = address_family_ == AF_INET ? "dhcp4" : "dhcp6";
+    try {
+        space = string_values_->getParam("space");
+
+    } catch (...) {
+        return (space);
+    }
+
+    try {
+        if (!OptionSpace::validateName(space)) {
+            isc_throw(DhcpConfigError, "invalid option space name '"
+                      << space << "'");
+        }
+
+        if ((space == DHCP4_OPTION_SPACE) && (address_family_ == AF_INET6)) {
+            isc_throw(DhcpConfigError, "'" << DHCP4_OPTION_SPACE
+                      << "' option space name is reserved for DHCPv4 server");
+
+        } else if ((space == DHCP6_OPTION_SPACE) &&
+                   (address_family_ == AF_INET)) {
+            isc_throw(DhcpConfigError, "'" << DHCP6_OPTION_SPACE
+                      << "' option space name is reserved for DHCPv6 server");
+        }
+
+    } catch (std::exception& ex) {
+        // Append position of the option space parameter. Note, that in the case
+        // when 'space' was not specified a default value will be used and we
+        // should never get here. Therefore, it is ok to call getPosition for
+        // the space parameter here as this parameter will always be specified.
+        isc_throw(DhcpConfigError, ex.what() << " ("
+                  << string_values_->getPosition("space") << ")");
+    }
+
+    return (space);
+}
+
+template<typename SearchKey>
+OptionDefinitionPtr
+OptionDataParser::findOptionDefinition(const std::string& option_space,
+                                       const SearchKey& search_key) const {
+    const Option::Universe u = address_family_ == AF_INET ?
+        Option::V4 : Option::V6;
+    OptionDefinitionPtr def;
+
+    if ((option_space == DHCP4_OPTION_SPACE) ||
+        (option_space == DHCP6_OPTION_SPACE)) {
+        def = LibDHCP::getOptionDef(u, search_key);
+
+    }
+
+    if (!def) {
         // Check if this is a vendor-option. If it is, get vendor-specific
         // definition.
         uint32_t vendor_id = CfgOption::optionSpaceToVendorId(option_space);
         if (vendor_id) {
-            def = LibDHCP::getVendorOptionDef(u, vendor_id, option_code);
+            def = LibDHCP::getVendorOptionDef(u, vendor_id, search_key);
         }
     }
+
+    if (!def) {
+        // Check if this is an option specified by a user.
+        def = CfgMgr::instance().getStagingCfg()->getCfgOptionDef()
+            ->get(option_space, search_key);
+    }
+
     return (def);
 }
-
 
 void
 OptionDataParser::createOption(ConstElementPtr option_data) {
     const Option::Universe universe = address_family_ == AF_INET ?
         Option::V4 : Option::V6;
-    // Check if mandatory parameters are specified.
-    uint32_t code;
-    std::string name;
-    std::string data;
-    try {
-        code = uint32_values_->getParam("code");
-        name = string_values_->getParam("name");
-        data = string_values_->getParam("data");
-    } catch (const std::exception& ex) {
-        isc_throw(DhcpConfigError,
-                  ex.what() << "(" << option_data->getPosition() << ")");
-    }
-    // Check parameters having default values.
-    std::string space = string_values_->getOptionalParam("space", universe == Option::V4 ?
-                                                         "dhcp4" : "dhcp6");
-    bool csv_format = boolean_values_->getOptionalParam("csv-format", false);
 
-    // Option code is held in the uint32_t storage but is supposed to
-    // be uint16_t value. We need to check that value in the configuration
-    // does not exceed range of uint8_t for DHCPv4, uint16_t for DHCPv6 and
-    // is not zero.
-    if (code == 0) {
-        isc_throw(DhcpConfigError, "option code must not be zero "
-                  "(" << uint32_values_->getPosition("code") << ")");
+    OptionalValue<uint32_t> code_param =  extractCode(option_data);
+    OptionalValue<std::string> name_param = extractName(option_data);
+    OptionalValue<bool> csv_format_param = extractCSVFormat();
+    std::string data_param = extractData();
+    std::string space_param = extractSpace();
 
-    } else if (universe == Option::V4 &&
-               code > std::numeric_limits<uint8_t>::max()) {
-        isc_throw(DhcpConfigError, "invalid option code '" << code
-                << "', it must not exceed '"
-                  << static_cast<int>(std::numeric_limits<uint8_t>::max())
-                  << "' (" << uint32_values_->getPosition("code") << ")");
-
-    } else if (universe == Option::V6 &&
-               code > std::numeric_limits<uint16_t>::max()) {
-        isc_throw(DhcpConfigError, "invalid option code '" << code
-                << "', it must not exceed '"
-                  << std::numeric_limits<uint16_t>::max()
-                  << "' (" << uint32_values_->getPosition("code") << ")");
-
+    // Require that option code or option name is specified.
+    if (!code_param.isSpecified() && !name_param.isSpecified()) {
+        isc_throw(DhcpConfigError, "option data configuration requires one of"
+                  " 'code' or 'name' parameters to be specified"
+                  << " (" << option_data->getPosition() << ")");
     }
 
-    // Check that the option name is non-empty and does not contain spaces
-    if (name.empty()) {
-        isc_throw(DhcpConfigError, "name of the option with code '"
-                  << code << "' is empty ("
-                  << string_values_->getPosition("name") << ")");
-    } else if (name.find(" ") != std::string::npos) {
-        isc_throw(DhcpConfigError, "invalid option name '" << name
-                  << "', space character is not allowed ("
-                  << string_values_->getPosition("name") << ")");
-    }
+    // Try to find a corresponding option definition using option code or
+    // option name.
+    OptionDefinitionPtr def = code_param.isSpecified() ?
+        findOptionDefinition(space_param, code_param) :
+        findOptionDefinition(space_param, name_param);
 
-    if (!OptionSpace::validateName(space)) {
-        isc_throw(DhcpConfigError, "invalid option space name '"
-                << space << "' specified for option '"
-                << name << "', code '" << code
-                  << "' (" << string_values_->getPosition("space") << ")");
-    }
-
-    // Find the Option Definition for the option by its option code.
-    // findOptionDefinition will throw if not found, no need to test.
-    // Find the definition for the option by its code. This function
-    // may throw so we catch exceptions to log the culprit line of the
-    // configuration.
-    OptionDefinitionPtr def;
-    try {
-        def = findServerSpaceOptionDefinition(space, code);
-
-    } catch (const std::exception& ex) {
-        isc_throw(DhcpConfigError, ex.what()
-                  << " (" << string_values_->getPosition("space") << ")");
-    }
+    // If there is no definition, the user must not explicitly enable the
+    // use of csv-format.
     if (!def) {
-        // If we are not dealing with a standard option then we
-        // need to search for its definition among user-configured
-        // options. They are expected to be in the global storage
-        // already.
-        def = CfgMgr::instance().getStagingCfg()->getCfgOptionDef()->get(space, code);
-
-        // It's ok if we don't have option format if the option is
-        // specified as hex
-        if (!def && csv_format) {
+        // If explicitly requested that the CSV format is to be used,
+        // the option definition is a must.
+        if (csv_format_param.isSpecified() && csv_format_param) {
             isc_throw(DhcpConfigError, "definition for the option '"
-                      << space << "." << name
-                      << "' having code '" << code
+                      << space_param << "." << name_param
+                      << "' having code '" << code_param
                       << "' does not exist ("
-                      << string_values_->getPosition("name") << ")");
+                      << string_values_->getPosition("name", option_data)
+                      << ")");
+
+        // If there is no option definition and the option code is not specified
+        // we have no means to find the option code.
+        } else if (name_param.isSpecified() && !code_param.isSpecified()) {
+            isc_throw(DhcpConfigError, "definition for the option '"
+                      << space_param << "." << name_param
+                      << " does not exist ("
+                      << string_values_->getPosition("name", option_data));
         }
     }
 
@@ -471,12 +547,15 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
     std::vector<uint8_t> binary;
     std::vector<std::string> data_tokens;
 
-    if (csv_format) {
+    // If the definition is available and csv-format hasn't been explicitly
+    // disabled, we will parse the data as comma separated values.
+    if (def && (!csv_format_param.isSpecified() || csv_format_param)) {
         // If the option data is specified as a string of comma
         // separated values then we need to split this string into
         // individual values - each value will be used to initialize
         // one data field of an option.
-        data_tokens = isc::util::str::tokens(data, ",");
+        data_tokens = isc::util::str::tokens(data_param, ",");
+
     } else {
         // Otherwise, the option data is specified as a string of
         // hexadecimal digits that we have to turn into binary format.
@@ -484,76 +563,70 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
             // The decodeHex function expects that the string contains an
             // even number of digits. If we don't meet this requirement,
             // we have to insert a leading 0.
-            if (!data.empty() && data.length() % 2) {
-                data = data.insert(0, "0");
+            if (!data_param.empty() && data_param.length() % 2) {
+                data_param = data_param.insert(0, "0");
             }
-            util::encode::decodeHex(data, binary);
+            util::encode::decodeHex(data_param, binary);
         } catch (...) {
             isc_throw(DhcpConfigError, "option data is not a valid"
-                      << " string of hexadecimal digits: " << data
-                      << " (" << string_values_->getPosition("data") << ")");
+                      << " string of hexadecimal digits: " << data_param
+                      << " ("
+                      << string_values_->getPosition("data", option_data)
+                      << ")");
         }
     }
 
     OptionPtr option;
     if (!def) {
-        if (csv_format) {
-            isc_throw(DhcpConfigError, "the CSV option data format can be"
-                      " used to specify values for an option that has a"
-                      " definition. The option with code " << code
-                      << " does not have a definition ("
-                      << boolean_values_->getPosition("csv-format") << ")");
-        }
-
         // @todo We have a limited set of option definitions initalized at
         // the moment.  In the future we want to initialize option definitions
         // for all options.  Consequently an error will be issued if an option
         // definition does not exist for a particular option code. For now it is
         // ok to create generic option if definition does not exist.
-        OptionPtr option(new Option(universe,
-                                    static_cast<uint16_t>(code), binary));
+        OptionPtr option(new Option(universe, static_cast<uint16_t>(code_param),
+                                    binary));
         // The created option is stored in option_descriptor_ class member
         // until the commit stage when it is inserted into the main storage.
         // If an option with the same code exists in main storage already the
         // old option is replaced.
         option_descriptor_.option_ = option;
         option_descriptor_.persistent_ = false;
+
     } else {
 
-        // Option name should match the definition. The option name
-        // may seem to be redundant but in the future we may want
-        // to reference options and definitions using their names
-        // and/or option codes so keeping the option name in the
-        // definition of option value makes sense.
-        if (def->getName() != name) {
+        // Option name is specified it should match the name in the definition.
+        if (name_param.isSpecified() && (def->getName() != name_param.get())) {
             isc_throw(DhcpConfigError, "specified option name '"
-                      << name << "' does not match the "
-                      << "option definition: '" << space
+                      << name_param << "' does not match the "
+                      << "option definition: '" << space_param
                       << "." << def->getName() << "' ("
-                      << string_values_->getPosition("name") << ")");
+                      << string_values_->getPosition("name", option_data)
+                      << ")");
         }
 
         // Option definition has been found so let's use it to create
         // an instance of our option.
         try {
-            OptionPtr option = csv_format ?
-                def->optionFactory(universe, code, data_tokens) :
-                def->optionFactory(universe, code, binary);
+            OptionPtr option =
+                !csv_format_param.isSpecified() || csv_format_param ?
+                def->optionFactory(universe, def->getCode(), data_tokens) :
+                def->optionFactory(universe, def->getCode(), binary);
             OptionDescriptor desc(option, false);
             option_descriptor_.option_ = option;
             option_descriptor_.persistent_ = false;
 
         } catch (const isc::Exception& ex) {
             isc_throw(DhcpConfigError, "option data does not match"
-                      << " option definition (space: " << space
-                      << ", code: " << code << "): "
+                      << " option definition (space: " << space_param
+                      << ", code: " << def->getCode() << "): "
                       << ex.what() << " ("
-                      << string_values_->getPosition("data") << ")");
+                      << string_values_->getPosition("data", option_data)
+                      << ")");
         }
     }
 
     // All went good, so we can set the option space name.
-    option_space_ = space;
+    option_space_ = space_param;
 }
 
 // **************************** OptionDataListParser *************************

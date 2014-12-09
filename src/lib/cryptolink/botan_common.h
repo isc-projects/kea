@@ -14,13 +14,15 @@
 
 namespace isc {
 namespace cryptolink {
+namespace btn {
 
 /// @brief Decode the HashAlgorithm enum into a name usable by Botan
 ///
 /// @param algorithm algorithm to be converted
 /// @return static text representation of the algorithm name
 const char*
-getBotanHashAlgorithmName(isc::cryptolink::HashAlgorithm algorithm);
+getHashAlgorithmName(isc::cryptolink::HashAlgorithm algorithm);
 
+} // namespace btn
 } // namespace cryptolink
 } // namespace isc
