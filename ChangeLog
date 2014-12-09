@@ -1,3 +1,8 @@
+861.	[func]		marcin
+	The configuration parameters for a DHCPv4 and DHCPv6 options are now
+	optional.
+	(Trac #3467, git 7bf8cef161e6dd00a7f2b2fe8ec04e1958d6db3f)
+
 860.	[bug]		marcin
 	Fixed calculation of the Client FQDN option length for the ASCII
 	domain name encoding.
