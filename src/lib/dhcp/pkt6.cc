@@ -553,6 +553,23 @@ Pkt6::getMACFromSrcLinkLocalAddr() {
     return (getMACFromIPv6(relay_info_[relay_info_.size() - 1].peeraddr_));
 }
 
+HWAddrPtr
+Pkt6::getMACFromIPv6RelayOpt() {
+    if (relay_info_.empty()) {
+    	// This is a direct message
+        return (HWAddrPtr());
+    }
+    // RFC6969 Section 6: Look for the client_linklayer_addr option on the
+    // relay agent closest to the client
+    OptionPtr opt = getAnyRelayOption(D6O_CLIENT_LINKLAYER_ADDR, RELAY_GET_FIRST);
+    if (opt) {
+    	return (HWAddrPtr(new HWAddr(&(opt->getData())[2], (opt->len()-opt->getHeaderLen()-2),
+    			                      opt->getUint16())));
+    }
+    else {
+    	return (HWAddrPtr());
+    }
+}
 
 } // end of isc::dhcp namespace
 } // end of isc namespace

@@ -402,6 +402,18 @@ protected:
         return (HWAddrPtr());
     }
 
+    /// @brief No-op
+    ///
+    /// This method returns hardware address extracted from an IPv6 relay agent.
+    /// option. As there is no IPv4-equivalent, it always returns NULL.
+    /// We need this stub implementation here, to keep all the get hardware
+    /// address logic in the base class.
+    ///
+    /// @return always NULL
+    virtual HWAddrPtr getMACFromIPv6RelayOpt() {
+        return (HWAddrPtr());
+    }
+
     /// local HW address (dst if receiving packet, src if sending packet)
     HWAddrPtr local_hwaddr_;
 
