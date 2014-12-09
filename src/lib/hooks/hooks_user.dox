@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -412,7 +412,7 @@ usage is intuitive:
         handle.setSkip(true);
     }
     return;
-    
+
 @endcode
 
 Like arguments, the "skip" flag is passed to all callouts on a hook.  Callouts
@@ -607,21 +607,25 @@ which they are attached (e.g. hook code for DNS will need to link against
 the libkea-dns++ library).  Depending on operating system, you may also need
 to explicitly list libraries on which the Kea libraries depend.
 
-@subsection hooksdgConfiguration Configuring the Hook Library
+@subsection hooksdgConfiguration Configuring the Hooks Library
 
-The final step is to make the library known to Kea.  All Kea modules to
-which hooks can be added contain the "hook_library" element, and user
-libraries are added to this. (The Kea hooks system can handle multiple libraries
-- this is discussed below.).
+The final step is to make the library known to Kea.  The configuration
+keywords of all Kea modules to which hooks can be added contain the
+"hooks-libraries" element and user libraries are added to this. (The Kea
+hooks system can handle multiple libraries - this is discussed below.)
 
-To add the example library (assumed to be in /usr/local/lib) to the DHCPv4
-module, the following bindctl commands must be executed:
+To add the example library (assumed to be in /usr/local/lib) to the
+DHCPv4 module, it must be listed in the "hooks-libraries" element of the
+"Dhcp4" part of the configuration file:
 
 @code
-> config add Dhcp4/hook_libraries
-> config set Dhcp4/hook_libraries[0] "/usr/local/lib/example.so"
-> config commit
+"Dhcp4": {
+       :
+    "hooks-libraries": [ "/usr/local/lib/example.so" ]
+       :
+}
 @endcode
+(Note that "hooks" is plural.)
 
 The DHCPv4 server will load the library and execute the callouts each time a
 request is received.
@@ -841,7 +845,7 @@ ones with non-standard names need to be registered manually.
 
 @subsubsection hooksdgMultipleCallouts Multiple Callouts on a Hook
 
-The Kea hooks framework allows multiple callouts to be attached to 
+The Kea hooks framework allows multiple callouts to be attached to
 a hook point.  Although it is likely to be rare for user code to need to
 do this, there may be instances where it make sense.
 
@@ -1002,6 +1006,17 @@ This structure means that library authors can use per-request context
 without worrying about the presence of other libraries.  Other libraries
 may be present, but will not affect the context values set by a library's
 callouts.
+
+Configuring multiple libraries just requires listing the libraries
+as separate elements of the hooks-libraries configuration element, e.g.
+
+@code
+"Dhcp4": {
+       :
+    "hooks-libraries": [ "/usr/lib/library1.so", "/opt/library2.so" ]
+       :
+}
+@endcode
 
 @subsection hooksdgInterLibraryData Passing Data Between Libraries
 
