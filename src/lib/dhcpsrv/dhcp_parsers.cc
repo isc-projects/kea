@@ -350,7 +350,9 @@ OptionDataParser::extractCode(ConstElementPtr parent) const {
         code = uint32_values_->getParam("code");
 
     } catch (const exception& ex) {
-        return (OptionalValue<uint32_t>(code));
+        // The code parameter was not found. Return an unspecified
+        // value.
+        return (OptionalValue<uint32_t>());
     }
 
     if (code == 0) {
@@ -385,7 +387,7 @@ OptionDataParser::extractName(ConstElementPtr parent) const {
         name = string_values_->getParam("name");
 
     } catch (...) {
-        return (OptionalValue<std::string>(name));
+        return (OptionalValue<std::string>());
     }
 
     if (name.find(" ") != std::string::npos) {
@@ -404,6 +406,7 @@ OptionDataParser::extractData() const {
         data = string_values_->getParam("data");
 
     } catch (...) {
+        // The "data" parameter was not found. Return an empty value.
         return (data);
     }
 

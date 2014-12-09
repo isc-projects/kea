@@ -1088,7 +1088,7 @@ should include options from the isc option space:
     </section>
 
     <section id="dhcp6-option-data-defaults">
-      <title>Unspecified parameters for option configuration</title>
+      <title>Unspecified parameters for DHCPv6 option configuration</title>
       <para>In many cases it is not required to specify all parameters for
       an option configuration and the default values can be used. However, it is
       important to understand the implications of not specifing some of them

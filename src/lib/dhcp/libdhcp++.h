@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -61,7 +61,7 @@ public:
     /// @param u universe (v4 or V6)
     /// @param name Option name.
     ///
-    /// @return Pointer the option definition or NULL pointer it option
+    /// @return Pointer to the option definition or NULL pointer if option
     /// definition has not been found.
     static OptionDefinitionPtr getOptionDef(const Option::Universe u,
                                             const std::string& name);
