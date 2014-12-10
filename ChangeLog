@@ -1,3 +1,8 @@
+6XX.	[func]		dgutier
+	Support for client link-layer address option (RFC6939) has
+	been added.
+	(Trac #3551, git abcd)
+
 860.	[bug]		marcin
 	Fixed calculation of the Client FQDN option length for the ASCII
 	domain name encoding.
