@@ -28,18 +28,18 @@ namespace isc {
 namespace dhcp {
 
 HWAddr::HWAddr()
-    :htype_(HTYPE_ETHER) {
+    :htype_(HTYPE_ETHER), source_(0) {
 }
 
 HWAddr::HWAddr(const uint8_t* hwaddr, size_t len, uint16_t htype)
-    :hwaddr_(hwaddr, hwaddr + len), htype_(htype) {
+    :hwaddr_(hwaddr, hwaddr + len), htype_(htype), source_(0) {
     if (len > MAX_HWADDR_LEN) {
         isc_throw(isc::BadValue, "hwaddr length exceeds MAX_HWADDR_LEN");
     }
 }
 
 HWAddr::HWAddr(const std::vector<uint8_t>& hwaddr, uint16_t htype)
-    :hwaddr_(hwaddr), htype_(htype) {
+    :hwaddr_(hwaddr), htype_(htype), source_(0) {
     if (hwaddr.size() > MAX_HWADDR_LEN) {
         isc_throw(isc::BadValue,
             "address vector size exceeds MAX_HWADDR_LEN");
