@@ -1393,6 +1393,15 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/perfdhcp/Makefile
                  src/bin/perfdhcp/tests/Makefile
                  src/bin/perfdhcp/tests/testdata/Makefile
+                 src/bin/admin/Makefile
+                 src/bin/admin/kea-admin
+                 src/bin/admin/scripts/Makefile
+                 src/bin/admin/tests/Makefile
+                 src/bin/admin/tests/memfile_tests.sh
+                 src/bin/admin/tests/mysql_tests.sh
+                 src/bin/admin/scripts/mysql/Makefile
+                 src/bin/admin/scripts/mysql/upgrade_1.0_to_2.0.sh
+                 src/bin/admin/scripts/pgsql/Makefile
                  src/hooks/Makefile
                  src/hooks/dhcp/Makefile
                  src/hooks/dhcp/user_chk/Makefile
@@ -1465,6 +1474,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
            chmod +x src/bin/dhcp6/tests/dhcp6_process_tests.sh
            chmod +x src/bin/keactrl/keactrl
            chmod +x src/bin/keactrl/tests/keactrl_tests.sh
+           chmod +x src/bin/admin/kea-admin
            chmod +x src/lib/dns/gen-rdatacode.py
            chmod +x src/lib/log/tests/console_test.sh
            chmod +x src/lib/log/tests/destination_test.sh

@@ -1,0 +1,186 @@
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	       [<!ENTITY mdash "&#8212;">]>
+<!--
+ - Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+ -
+ - Permission to use, copy, modify, and/or distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
+-->
+
+<refentry>
+  <refentryinfo>
+    <date>Nov 5, 2014</date>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle>kea-admin</refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo>Kea</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>kea-admin</refname>
+    <refpurpose>Shell script for managing Kea databases</refpurpose>
+  </refnamediv>
+
+  <docinfo>
+    <copyright>
+      <year>2014</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
+    </copyright>
+  </docinfo>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>kea-admin</command>
+      <arg>command</arg>
+      <arg>backend</arg>
+      <arg><option>-u <replaceable class="parameter">database username</replaceable></option></arg>
+      <arg><option>-p <replaceable class="parameter">database password</replaceable></option></arg>
+      <arg><option>-n <replaceable class="parameter">database name</replaceable></option></arg>
+      <arg><option>-d <replaceable class="parameter">scripts directory</replaceable></option></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>DESCRIPTION</title>
+    <para>
+      kea-admin is a shell script which offers database maintenance. In particular,
+      it features database initialization, database version checking and 
+      database schema upgrade.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>OPTIONS</title>
+    <variablelist>
+      <varlistentry>
+        <term><option><replaceable class="parameter">command</replaceable></option></term>
+        <listitem>
+          <para>
+            Command to be issued to the servers. It can be one of the following:
+          </para>
+
+          <variablelist>
+            <varlistentry>
+              <term>lease-init</term>
+              <listitem>
+                <para>Initializes a new lease database. Useful during first Kea
+                installation. The database is initialized to the latest version
+                supported by the version of the software.</para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term>lease-version</term>
+              <listitem>
+                <para>Reports lease database version. This is not necessarily
+                equal to Kea version as each backend has its own versioning
+                scheme.</para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term>lease-upgrade</term>
+              <listitem>
+                <para>Conducts lease database upgrade. This is useful when
+                migrating between old and new Kea versions.</para>
+              </listitem>
+            </varlistentry>
+          </variablelist>
+
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option><replaceable class="parameter">backend</replaceable></option></term>
+        <listitem>
+          <para>
+            Specifies backend type. Currently allowed backends are: memfile, mysql and
+            pgsql.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-u|--user <replaceable class="parameter">username</replaceable></option></term>
+        <listitem>
+          <para>
+            Specify the username when connecting to a database. If not specified,
+            the default value of keatest is used.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-p|--password <replaceable class="parameter">password</replaceable></option></term>
+        <listitem>
+          <para>
+            Specifies the password when connecting to a database. If not specified,
+            the default value of keatest is used.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-n|--name <replaceable class="parameter">database-name</replaceable></option></term>
+        <listitem>
+          <para>
+            Specifies the database name to connect to. If not specified,
+            the default value of keatest is used.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-d|--directory <replaceable class="parameter">script-directory</replaceable></option></term>
+        <listitem>
+          <para>
+            Used for override scripts directory. That script is used during upgrades,
+            database initialization and possibly other operations. If not specified,
+            the default value of (prefix)/share/kea/scripts/ is used.
+          </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </refsect1>
+
+  <refsect1>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry>
+        <refentrytitle>keactrl</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>
+
+      <citerefentry>
+        <refentrytitle>kea-dhcp4</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>
+
+      <citerefentry>
+        <refentrytitle>kea-dhcp6</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>
+
+      <citerefentry>
+        <refentrytitle>kea-dhcp-ddns</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>
+
+    </para>
+  </refsect1>
+
+</refentry>

@@ -1,0 +1,351 @@
+#!/bin/sh
+
+# Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+# This is kea-admin script that conducts administrative tasks on the Kea
+# installation. Currently supported operations are:
+#
+# - lease database init
+# - lease database version check
+# - lease database version upgrade
+
+
+# Get the location of the kea-admin scripts
+prefix=@prefix@
+SCRIPTS_DIR_DEFAULT=@datarootdir@/@PACKAGE@/scripts
+scripts_dir=${SCRIPTS_DIR_DEFAULT}
+
+# These are the default parameters. They will likely not work in any
+# specific deployment.
+db_user="keatest"
+db_password="keatest"
+db_name="keatest"
+
+# Include utilities. Use installed version if available and
+# use build version if it isn't.
+if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
+    . @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
+else
+    . @abs_top_builddir@/src/bin/admin/admin-utils.sh
+fi
+
+# Prints out usage version.
+usage() {
+    printf "kea-admin @PACKAGE_VERSION@\n"
+    printf "\n"
+    printf "This is a kea-admin script that conducts administrative tasks on\n"
+    printf "the Kea installation.\n"
+    printf "\n"
+    printf "Usage: $0 COMMAND BACKEND [parameters]\n"
+    printf "\n"
+    printf "COMMAND: Currently supported operations are:\n"
+    printf "\n"
+    printf " - lease-init: Initalizes new lease database. Useful for first time installation.\n"
+    printf " - lease-version: Checks version of the existing lease database scheme. Useful\n"
+    printf " -                for checking lease DB version when preparing for an upgrade.\n"
+    printf " - lease-upgrade: Upgrades your lease database scheme\n"
+    printf "\n"
+    printf "BACKEND - one of the supported backends: memfile|mysql|pgsql\n"
+    printf "\n"
+    printf "PARAMETERS: Parameters are optional in general, but may be required\n"
+    printf "            for specific operation.\n"
+    printf " -u or --user name - specifies username when connecting to a database\n"
+    printf " -p or --password pass - specifies a password when connecting to a database\n"
+    printf " -n or --name database - specifies a database name to connect to\n"
+    printf " -d or --directory - path to upgrade scripts (default: ${SCRIPTS_DIR_DEFAULT})\n"
+}
+
+
+### Logging functions ###
+
+# Logs message at the error level.
+# Takes one parameter that is printed as is.
+log_error() {
+    printf "ERROR/kea-admin: ${1}\n"
+}
+
+# Logs message at the warning level.
+# Takes one parameter that is printed as is.
+log_warning() {
+    printf "WARNING/kea-admin: ${1}\n"
+}
+
+# Logs message at the info level.
+# Takes one parameter that is printed as is.
+log_info() {
+    printf "INFO/kea-admin: ${1}\n"
+}
+
+### Convenience functions ###
+
+# Checks if the value is in the list. An example usage of this function
+# is to determine whether the kea-admin command belongs to the list of
+# supported commands.
+is_in_list() {
+    local member=${1}  # Value to be checked
+    local list="${2}"  # Comma separated list of items
+    _inlist=0          # Return value: 0 if not in list, 1 otherwise.
+    if [ -z ${member} ]; then
+        log_error "missing ${class}"
+    fi
+    # Iterate over all items on the list and compare with the member.
+    # If they match, return, otherwise log error and exit.
+    for item in ${list}
+    do
+        if [ ${item} = ${member} ]; then
+            _inlist=1
+            return
+        fi
+    done
+}
+
+
+### Functions that implement database initialization commands
+
+memfile_init() {
+    # @todo Implement this as part of #3601
+    log_error "NOT IMPLEMENTED"
+    exit 1
+}
+
+# Initializes a new, empty MySQL database.
+# It essentially calls scripts/mysql/dhcpdb_create.mysql script, with
+# some extra sanity checks. It will refuse to use it if there are any
+# existing tables. It's better safe than sorry.
+mysql_init() {
+    printf "Checking if there is a database initialized already. Please ignore errors.\n"
+
+    # Let's try to count the number of tables. Anything above 0 means that there
+    # is some database in place. If there is anything, we abort. Note that
+    # mysql may spit out connection or access errors to stderr, we ignore those.
+    # We should not hide them as they may give hints to user what is wrong with
+    # his setup.
+    #
+    mysql_execute "SHOW TABLES;"
+    COUNT=`echo $_RESULT | wc -w`
+    if [ $COUNT -gt 0 ]; then
+        # Let't start with a new line. mysql could have printed something out.
+        printf "\n"
+        log_error "Expected empty database $db_name, but there are $COUNT tables: \n$_RESULT. Aborting."
+        exit 1
+    fi
+
+    printf "Initializing database using script %s\n" $scripts_dir/mysql/dhcpdb_create.mysql
+    mysql -B --user=$db_user --password=$db_password $db_name < $scripts_dir/mysql/dhcpdb_create.mysql
+    ERRCODE=$?
+
+    printf "mysql returned status code $ERRCODE\n"
+
+    if [ "$ERRCODE" -eq 0 ]; then
+        printf "Lease DB version reported after initialization: "
+        mysql_version_print
+        printf "\n"
+    fi
+
+    exit $ERRCODE
+}
+
+pgsql_init() {
+    log_error "NOT IMPLEMENTED"
+    exit 1
+}
+
+### Functions that implement database version checking commands
+memfile_version() {
+    # @todo Implement this as part of #3601
+    log_error "NOT IMPLEMENTED"
+    exit 1
+}
+
+pgsql_version() {
+    log_error "NOT IMPLEMENTED"
+    exit 1
+}
+
+### Functions used for upgrade
+memfile_upgrade() {
+    # @todo Implement this as part of #3601
+    log_error "NOT IMPLEMENTED"
+    exit 1
+}
+
+# Upgrades existing MySQL database installation. The idea is that
+# it will go over all upgrade scripts from (prefix)/share/kea/scripts/mysql
+# and run them one by one. They will be named properly, so they will
+# be run in order.
+#
+# This function prints version before and after upgrade.
+mysql_upgrade() {
+
+    printf "Lease DB version reported before upgrade: "
+    mysql_version_print
+    printf "\n"
+
+    # Check if the scripts directory exists at all.
+    if [ ! -d ${scripts_dir}/mysql ]; then
+        log_error "Invalid scripts directory: ${scripts_dir}/mysql"
+        exit 1
+    fi
+
+    # Check if there are any files in it
+    num_files=$(find ${scripts_dir}/mysql/upgrade*.sh -type f | wc -l)
+    if [ $num_files -eq 0 ]; then
+        log_error "No scripts in ${scripts_dir}/mysql or the directory is not readable or does not have any upgrade* scripts."
+        exit 1
+    fi
+
+    for script in ${scripts_dir}/mysql/upgrade*.sh
+    do
+        echo "Processing $script file..."
+        sh ${script} --user=${db_user} --password=${db_password} ${db_name}
+    done
+
+    printf "Lease DB version reported after upgrade: "
+    mysql_version_print
+    printf "\n"
+}
+
+pgsql_upgrade() {
+    log_error "NOT IMPLEMENTED"
+}
+
+
+### Script starts here ###
+
+# First, find what the command is
+command=${1}
+if [ -z ${command} ]; then
+    log_error "missing command"
+    usage
+    exit 1
+fi
+is_in_list "${command}" "lease-init lease-version lease-upgrade"
+if [ ${_inlist} -eq 0 ]; then
+    log_error "invalid command: ${command}"
+    exit 1
+fi
+shift
+
+# Second, check what's the backend
+backend=${1}
+if [ -z ${backend} ]; then
+    log_error "missing backend"
+    usage
+    exit 1
+fi
+is_in_list "${backend}" "memfile mysql pgsql"
+if [ ${_inlist} -eq 0 ]; then
+    log_error "invalid backend: ${backend}"
+    exit 1
+fi
+shift
+
+# Ok, let's process parameters (if there are any)
+while [ ! -z "${1}" ]
+do
+    option=${1}
+    case ${option} in
+        # Specify database user
+        -u|--user)
+            shift
+            db_user=${1}
+            if [ -z ${db_user} ]; then
+                log_error "-u or --user requires a parameter"
+                usage
+                exit 1
+            fi
+            ;;
+        # Specify database password
+        -p|--password)
+            shift
+            db_pass=${1}
+            if [ -z ${db_pass} ]; then
+                log_error "-p or --password requires a parameter"
+                usage
+                exit 1
+            fi
+            ;;
+        # Specify database name
+        -n|--name)
+            shift
+            db_name=${1}
+            if [ -z ${db_name} ]; then
+                log_error "-n or --name requires a parameter"
+                usage
+                exit 1
+            fi
+            ;;
+        -d|--directory)
+            shift
+            scripts_dir=${1}
+            if [ -z ${scripts_dir} ]; then
+                log_error "-d or --directory requires a parameter"
+                usage
+                exit 1
+            fi
+            ;;
+        *)
+            log_error "invalid option: ${option}"
+            usage
+            exit 1
+    esac
+    shift
+done
+
+case ${command} in
+    # Initialize the database
+    lease-init)
+        case ${backend} in
+            memfile)
+                memfile_init
+                ;;
+            mysql)
+                mysql_init
+                ;;
+            pgsql)
+                pgsql_init
+                ;;
+            esac
+        ;;
+    lease-version)
+        case ${backend} in
+            memfile)
+                memfile_version
+                ;;
+            mysql)
+                mysql_version_print
+                printf "\n"
+                ;;
+            pgsql)
+                pgsql_version
+                ;;
+            esac
+        ;;
+    lease-upgrade)
+        case ${backend} in
+            memfile)
+                memfile_upgrade
+                ;;
+            mysql)
+                mysql_upgrade
+                ;;
+            pgsql)
+                pgsql_upgrade
+                ;;
+            esac
+        ;;
+esac
+
+exit 0
