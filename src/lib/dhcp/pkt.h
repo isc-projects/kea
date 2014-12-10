@@ -68,7 +68,7 @@ public:
     /// address option). Note that a skilled attacker can fake that by sending
     /// his request relayed, so the legitimate relay will think it's a second
     /// relay.
-    //static const uint32_t HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION = 0x0008;
+    static const uint32_t HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION = 0x0008;
 
     /// A relay can insert remote-id. In some deployments it contains a MAC
     /// address (RFC4649).
@@ -523,6 +523,22 @@ protected:
     ///
     /// @return hardware address (or NULL)
     virtual HWAddrPtr getMACFromSrcLinkLocalAddr() = 0;
+
+    /// @brief Attempts to obtain MAC address from relay option
+    /// client-linklayer-addr
+    ///
+    /// This method is called from getMAC(HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION)
+    /// and should not be called directly. It will extract the client's
+    /// MAC/Hardware address from option client_linklayer_addr (RFC6939)
+    /// inserted by the relay agent closest to the client.
+    /// If this method fails, it will return NULL.
+    ///
+    /// @note This is a pure virtual method and must be implemented in
+    /// the derived classes. The @c Pkt6 class have respective implementation.
+    /// This method is not applicable to DHCPv4.
+    ///
+    /// @return hardware address (or NULL)
+    virtual HWAddrPtr getMACFromIPv6RelayOpt() = 0;
 
     /// @brief Attempts to convert IPv6 address into MAC.
     ///
