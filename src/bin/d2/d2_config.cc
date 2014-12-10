@@ -14,7 +14,7 @@
 
 #include <d2/d2_log.h>
 #include <d2/d2_cfg_mgr.h>
-#include <dhcpsrv/dhcp_parsers.h>
+#include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <exceptions/exceptions.h>
 #include <asiolink/io_error.h>
 

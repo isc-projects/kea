@@ -13,9 +13,9 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <dhcp/option.h>
-#include <dhcpsrv/dbaccess_parser.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/parsers/dbaccess_parser.h>
 
 #include <boost/foreach.hpp>
 

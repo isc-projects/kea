@@ -18,8 +18,8 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/dhcp_parsers.h>
 #include <dhcpsrv/subnet_id.h>
+#include <dhcpsrv/parsers/dhcp_parsers.h>
 
 #include <gtest/gtest.h>
 

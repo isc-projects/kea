@@ -15,9 +15,8 @@
 #include <config.h>
 
 #include <config/ccsession.h>
-#include <dhcpsrv/dbaccess_parser.h>
-#include <dhcpsrv/dhcp_parsers.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/parsers/dbaccess_parser.h>
 #include <log/logger_support.h>
 
 #include <gtest/gtest.h>
