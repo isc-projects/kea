@@ -1802,6 +1802,13 @@ should include options from the isc option space:
             <ulink url="http://tools.ietf.org/html/rfc4704">RFC 4704</ulink>:
             Supported option is CLIENT_FQDN.</simpara>
           </listitem>
+	  <listitem>
+	    <simpara><emphasis>Client Link-Layer Address Option in
+	    DHCPv6</emphasis>,
+	    <ulink url="http://tools.ietf.org/html/rfc6939">RFC
+	    6939</ulink>: Supported option is client link-layer
+	    address option.</simpara>
+	  </listitem>
       </itemizedlist>
     </section>
 
