@@ -35,7 +35,7 @@ const char* destroy_statement[] = {
     "DROP TABLE lease4",
     "DROP TABLE lease6",
     "DROP TABLE lease6_types",
-    "DROP TABLE lease6_hwaddr_source",
+    "DROP TABLE lease_hwaddr_source",
     "DROP TABLE schema_version",
     NULL
 };
@@ -104,23 +104,23 @@ const char* create_statement[] = {
     "ADD COLUMN hwtype smallint unsigned,"
     "ADD COLUMN hwaddr_source int unsigned;",
 
-    // Production schema has lease6_hwaddr_source table. It is not used by
+    // Production schema has lease_hwaddr_source table. It is not used by
     // kea code and is simply useful for formulating more human readable
     // queries. Hence no need to create it in tests. The actual SQL
     // code remains here commented out to keep a trace that the omission
     // is intentional.
 
-    /* "CREATE TABLE lease6_hwaddr_source ("
+    /* "CREATE TABLE lease_hwaddr_source ("
     "hwaddr_source INT PRIMARY KEY NOT NULL,"
     "name VARCHAR(40) )",
 
-    "INSERT INTO lease6_hwaddr_source VALUES (1, \"HWADDR_SOURCE_RAW\");",
-    "INSERT INTO lease6_hwaddr_source VALUES (2, \"HWADDR_SOURCE_IPV6_LINK_LOCAL\");",
-    "INSERT INTO lease6_hwaddr_source VALUES (4, \"HWADDR_SOURCE_DUID\");",
-    "INSERT INTO lease6_hwaddr_source VALUES (8, \"HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION\");",
-    "INSERT INTO lease6_hwaddr_source VALUES (16, \"HWADDR_SOURCE_REMOTE_ID\");",
-    "INSERT INTO lease6_hwaddr_source VALUES (32, \"HWADDR_SOURCE_SUBSCRIBER_ID\");",
-    "INSERT INTO lease6_hwaddr_source VALUES (64, \"HWADDR_SOURCE_DOCSIS\");", */
+    "INSERT INTO lease_hwaddr_source VALUES (1, \"HWADDR_SOURCE_RAW\");",
+    "INSERT INTO lease_hwaddr_source VALUES (2, \"HWADDR_SOURCE_IPV6_LINK_LOCAL\");",
+    "INSERT INTO lease_hwaddr_source VALUES (4, \"HWADDR_SOURCE_DUID\");",
+    "INSERT INTO lease_hwaddr_source VALUES (8, \"HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION\");",
+    "INSERT INTO lease_hwaddr_source VALUES (16, \"HWADDR_SOURCE_REMOTE_ID\");",
+    "INSERT INTO lease_hwaddr_source VALUES (32, \"HWADDR_SOURCE_SUBSCRIBER_ID\");",
+    "INSERT INTO lease_hwaddr_source VALUES (64, \"HWADDR_SOURCE_DOCSIS\");", */
 
     "UPDATE schema_version SET version=\"2\", minor=\"0\";",
     // Schema upgrade to 2.0 ends here.
