@@ -16,7 +16,7 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_option.h>
-#include <dhcpsrv/dhcp_parsers.h>
+#include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <hooks/hooks_manager.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
@@ -1038,12 +1038,21 @@ SubnetConfigParser::SubnetConfigParser(const std::string&,
 void
 SubnetConfigParser::build(ConstElementPtr subnet) {
     BOOST_FOREACH(ConfigPair param, subnet->mapValue()) {
+        // Host reservations must be parsed after subnet specific parameters.
+        // Note that the reservation parsing will be invoked by the build()
+        // in the derived classes, i.e. Subnet4ConfigParser and
+        // Subnet6ConfigParser.
+        if (param.first == "reservations") {
+            continue;
+        }
+
         ParserPtr parser;
         // When unsupported parameter is specified, the function called
         // below will thrown an exception. We have to catch this exception
         // to append the line number where the parameter is.
         try {
             parser.reset(createSubnetConfigParser(param.first));
+
         } catch (const std::exception& ex) {
             isc_throw(DhcpConfigError, ex.what() << " ("
                       << param.second->getPosition() << ")");

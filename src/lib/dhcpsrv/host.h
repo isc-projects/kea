@@ -352,6 +352,11 @@ public:
     /// the specified type.
     IPv6ResrvRange getIPv6Reservations(const IPv6Resrv::Type& type) const;
 
+    /// @brief Checks if there is at least one IPv6 reservation for this host.
+    ///
+    /// @return true if there is a reservation for the host, false otherwise.
+    bool hasIPv6Reservation() const;
+
     /// @brief Checks if specified IPv6 reservation exists for the host.
     ///
     /// @param reservation A reservation to be checked for the host.

@@ -1,3 +1,5 @@
+AUTOMAKE_OPTIONS = subdir-objects
+
 SUBDIRS = . testutils tests
 
 dhcp_data_dir = @localstatedir@/@PACKAGE@
@@ -13,6 +15,21 @@ AM_CPPFLAGS += $(PGSQL_CPPFLAGS)
 endif
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
+
+# The files in the subfolder must be explicitly specified here so
+# as they are copied to the distribution. The other option would
+# be to specify a whole 'parsers' folder here but that would also
+# copy all other files, e.g. gitignore, .git etc.
+# Whenever new file is added to the parsers folder, it must be
+# added here.
+EXTRA_DIST =
+EXTRA_DIST += parsers/dbaccess_parser.cc
+EXTRA_DIST += parsers/dbaccess_parser.h
+EXTRA_DIST += parsers/dhcp_parsers.cc
+EXTRA_DIST += parsers/dhcp_parsers.h
+EXTRA_DIST += parsers/host_reservation_parser.cc
+EXTRA_DIST += parsers/host_reservation_parser.h
+EXTRA_DIST += parsers/host_reservations_list_parser.h
 
 # Define rule to build logging source files from message file
 dhcpsrv_messages.h dhcpsrv_messages.cc: s-messages
@@ -58,14 +75,10 @@ libkea_dhcpsrv_la_SOURCES += csv_lease_file6.cc csv_lease_file6.h
 libkea_dhcpsrv_la_SOURCES += d2_client_cfg.cc d2_client_cfg.h
 libkea_dhcpsrv_la_SOURCES += d2_client_mgr.cc d2_client_mgr.h
 libkea_dhcpsrv_la_SOURCES += daemon.cc daemon.h
-libkea_dhcpsrv_la_SOURCES += dbaccess_parser.cc dbaccess_parser.h
 libkea_dhcpsrv_la_SOURCES += dhcpsrv_log.cc dhcpsrv_log.h
-libkea_dhcpsrv_la_SOURCES += dhcp_config_parser.h
-libkea_dhcpsrv_la_SOURCES += dhcp_parsers.cc dhcp_parsers.h
 libkea_dhcpsrv_la_SOURCES += host.cc host.h
 libkea_dhcpsrv_la_SOURCES += host_container.h
 libkea_dhcpsrv_la_SOURCES += host_mgr.cc host_mgr.h
-libkea_dhcpsrv_la_SOURCES += host_reservation_parser.cc host_reservation_parser.h
 libkea_dhcpsrv_la_SOURCES += key_from_key.h
 libkea_dhcpsrv_la_SOURCES += lease.cc lease.h
 libkea_dhcpsrv_la_SOURCES += lease_mgr.cc lease_mgr.h
@@ -89,6 +102,17 @@ libkea_dhcpsrv_la_SOURCES += subnet_selector.h
 libkea_dhcpsrv_la_SOURCES += triplet.h
 libkea_dhcpsrv_la_SOURCES += utils.h
 libkea_dhcpsrv_la_SOURCES += writable_host_data_source.h
+
+# Configuration parsers
+libkea_dhcpsrv_la_SOURCES += parsers/dhcp_config_parser.h
+libkea_dhcpsrv_la_SOURCES += parsers/dbaccess_parser.cc
+libkea_dhcpsrv_la_SOURCES += parsers/dbaccess_parser.h
+libkea_dhcpsrv_la_SOURCES += parsers/dhcp_parsers.cc
+libkea_dhcpsrv_la_SOURCES += parsers/dhcp_parsers.h
+libkea_dhcpsrv_la_SOURCES += parsers/host_reservation_parser.cc
+libkea_dhcpsrv_la_SOURCES += parsers/host_reservation_parser.h
+libkea_dhcpsrv_la_SOURCES += parsers/host_reservations_list_parser.h
+
 
 nodist_libkea_dhcpsrv_la_SOURCES = dhcpsrv_messages.h dhcpsrv_messages.cc
 
@@ -119,7 +143,7 @@ libkea_dhcpsrv_la_CXXFLAGS += -Wno-unused-parameter
 endif
 
 # The message file should be in the distribution
-EXTRA_DIST = dhcpsrv_messages.mes
+EXTRA_DIST += dhcpsrv_messages.mes
 
 # Distribute backend documentation
 # Database schema creation script moved to src/bin/admin

@@ -14,7 +14,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/host_reservation_parser.h>
+#include <dhcpsrv/parsers/host_reservation_parser.h>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <string>
@@ -61,7 +61,7 @@ HostReservationParser::build(isc::data::ConstElementPtr reservation_data) {
     try {
         // hw-address or duid is a must.
         if (identifier_name.empty()) {
-            isc_throw(DhcpConfigError, "'hw-address' or 'duid' is a requirement"
+            isc_throw(DhcpConfigError, "'hw-address' or 'duid' is a required"
                       " parameter for host reservation");
         }
 

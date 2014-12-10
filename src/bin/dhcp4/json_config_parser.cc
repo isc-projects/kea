@@ -19,9 +19,11 @@
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcp4/json_config_parser.h>
-#include <dhcpsrv/dbaccess_parser.h>
-#include <dhcpsrv/dhcp_parsers.h>
 #include <dhcpsrv/option_space_container.h>
+#include <dhcpsrv/parsers/dbaccess_parser.h>
+#include <dhcpsrv/parsers/dhcp_parsers.h>
+#include <dhcpsrv/parsers/host_reservation_parser.h>
+#include <dhcpsrv/parsers/host_reservations_list_parser.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 
@@ -143,6 +145,14 @@ public:
                 isc_throw(DhcpConfigError, ex.what() << " ("
                           << subnet->getPosition() << ")");
             }
+        }
+
+        // Parse Host Reservations for this subnet if any.
+        ConstElementPtr reservations = subnet->get("reservations");
+        if (reservations) {
+            ParserPtr parser(new HostReservationsListParser<
+                             HostReservationParser4>(subnet_->getID()));
+            parser->build(reservations);
         }
     }
 
