@@ -1,3 +1,10 @@
+863.	[func]		tomek
+	A new tool called kea-admin added. It allows database maintenance.
+	Initalization of a new database, version check and upgrade between
+	version is now supported. Currently the only backend supported is
+	mysql, but support for memfile and pgsql is planned.
+	(Trac #3599, git cf22f8d212f2435957f89b51722f8e26e14635f2)
+
 862.	[func]		dgutier, tomek
 	Support for client link-layer address option (RFC6939) has
 	been added.
