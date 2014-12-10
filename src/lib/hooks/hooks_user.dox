@@ -387,9 +387,9 @@ allocates an address to the client.  A callout may decide to allocate
 special addresses for certain clients, in which case it needs to tell
 the server not to allocate an address in this case.
 - Drop the packet and continue with the next request. A possible scenario
-is a DNS server where a callout inspects the source address of an incoming
-packet and compares it against a black list; if the address is on it,
-the callout notifies the server to drop the packet.
+is a server where a callout inspects the hardware address of the client
+sending the packet and compares it against a black list; if the address
+is on it, the callout notifies the server to drop the packet.
 
 To handle these common cases, the CalloutHandle has a "skip" flag.
 This is set by a callout when it wishes the server to skip normal
@@ -420,26 +420,25 @@ later in the list are able to examine (and modify) the settings of earlier ones.
 
 @subsubsection hooksdgCalloutContext Per-Request Context
 
-Although many of the Kea modules can be characterised as handling
-singles packet - e.g. the DHCPv4 server receives a DISCOVER packet,
-processes it and responds with an OFFER, this is not true in all cases.
-The principal exception is the recursive DNS resolver: this receives a
-packet from a client but that packet may itself generate multiple packets
-being sent to upstream servers. To avoid possible confusion the rest of
-this section uses the term "request" to indicate a request by a client
-for some information or action.
+Although the Kea modules can be characterised as handling a single
+packet at a time - e.g. the DHCPv4 server receives a DISCOVER packet,
+processes it and responds with an OFFER, this may not always be true.
+Future developments may have the server processing multiple packets
+simultaneously, or to suspend processing on a packet and resume it at
+a later time after other packets have been processed.
 
 As well as argument information, the CalloutHandle object can be used by
-callouts to attach information to a request being handled by the server.
+callouts to attach information to a packet being handled by the server.
 This information (known as "context") is not used by the server: its purpose
 is to allow callouts to pass information between one another on a
-per-request basis.
+per-packet basis.
 
-Context only exists only for the duration of the request: when a request
-is completed, the context is destroyed.  A new request starts with no
-context information.  Context is particularly useful in servers that may
-be processing multiple requests simultaneously: callouts can effectively
-attach data to a request that follows the request around the system.
+Context associated with a packet only exists only for the duration of the
+processing of that packet: when processing is completed, the context is
+destroyed.  A new packet starts with a new (empty) context.  Context is
+particularly useful in servers that may be processing multiple packets
+simultaneously: callouts can effectively attach data to a packet that
+follows the packet around the system.
 
 Context information is held as name/value pairs in the same way
 as arguments, being accessed by the pair of methods setContext and
@@ -603,9 +602,8 @@ for details.
 installed Kea.
 - The list of libraries that need to be included in the command line
 depends on the functionality used by the hook code and the module to
-which they are attached (e.g. hook code for DNS will need to link against
-the libkea-dns++ library).  Depending on operating system, you may also need
-to explicitly list libraries on which the Kea libraries depend.
+which they are attached. Depending on operating system, you may also need
+to explicitly list libraries on which the Kea libraries you link against depend.
 
 @subsection hooksdgConfiguration Configuring the Hooks Library
 
