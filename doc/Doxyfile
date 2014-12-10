@@ -648,6 +648,7 @@ WARN_LOGFILE           =
 INPUT                  = ../src/bin/d2 \
                          ../src/bin/dhcp4 \
                          ../src/bin/dhcp6 \
+                         ../src/bin/perfdhcp \
                          ../src/bin/sockcreator \
                          ../src/hooks/dhcp/user_chk \
                          ../src/lib/asiolink \
@@ -666,7 +667,6 @@ INPUT                  = ../src/bin/d2 \
                          ../src/lib/util \
                          ../src/lib/util/io \
                          ../src/lib/util/threads \
-                         ../tests/tools/perfdhcp \
                          devel
 
 # This tag can be used to specify the character encoding of the source files
