@@ -1,0 +1,46 @@
+#!/bin/sh
+
+# Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+# Include common test library.
+. @abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh
+
+memfile_init_test() {
+    test_start "memfile.init"
+    
+    # @todo: Implement this (ticket #3601)
+
+    test_finish 0
+}
+
+memfile_version_test() {
+    test_start "memfile.version"
+    
+    # @todo: Implement this (ticket #3601)
+
+    test_finish 0
+}
+
+memfile_upgrade_test() {
+    test_start "memfile.upgrade"
+    
+    # @todo: Implement this (ticket #3601)
+
+    test_finish 0
+}
+
+memfile_init_test
+memfile_version_test
+memfile_upgrade_test
