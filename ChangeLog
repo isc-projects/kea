@@ -1,3 +1,10 @@
+865.	[func]		marcin
+	Host reservations can be specified in the DHCPv4 and DHCPv6
+	servers configuration. The reservations are loaded, but they
+	are currently unused.
+	(Trac #3562, git 1ba5ec3b7831ef8126be17b9542d9b89a419e7dd)
+	(Trac #3628, git 00b49298ec5e5e5c722e5938547c86c954fc76e1)
+
 864.	[func]		tomek
 	MySQL backend is now able to store information about hardware
 	addresses and associated information in DHCPv6.
