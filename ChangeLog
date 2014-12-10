@@ -1,3 +1,8 @@
+862.	[func]		dgutier, tomek
+	Support for client link-layer address option (RFC6939) has
+	been added.
+	(Trac #3551, git dabdf965d92085f86d5e96c8dadce0f0a8f7c8e3)
+
 861.	[func]		marcin
 	The configuration parameters for a DHCPv4 and DHCPv6 options are now
 	optional.

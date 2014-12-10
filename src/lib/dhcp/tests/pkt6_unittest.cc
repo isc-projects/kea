@@ -1050,4 +1050,84 @@ TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_multiRelay) {
     EXPECT_EQ(tmp.str(), found->toText(true));
 }
 
+// Test checks whether getMACFromIPv6RelayOpt() returns the hardware (MAC)
+// address properly from a single relayed message.
+TEST_F(Pkt6Test, getMACFromIPv6RelayOpt_singleRelay) {
+
+    // Let's create a Solicit first...
+    Pkt6 pkt(DHCPV6_SOLICIT, 1234);
+
+    // Packets that are not relayed should fail
+    EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION));
+
+    // Now pretend it was relayed by a single relay.
+    Pkt6::RelayInfo info;
+
+    // generate options with code 79 and client link layer address
+    const uint8_t opt_data[] = {
+        0x00, 0x01,  // Ethertype
+        0x0a, 0x1b, 0x0b, 0x01, 0xca, 0xfe // MAC
+    };
+    OptionPtr relay_opt(new Option(Option::V6, 79,
+    		            OptionBuffer(opt_data, opt_data + sizeof(opt_data))));
+    info.options_.insert(make_pair(relay_opt->getType(), relay_opt));
+
+    pkt.addRelayInfo(info);
+    ASSERT_EQ(1, pkt.relay_info_.size());
+
+    HWAddrPtr found = pkt.getMAC(Pkt::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION);
+    ASSERT_TRUE(found);
+
+    stringstream tmp;
+    tmp << "hwtype=1 0a:1b:0b:01:ca:fe";
+    EXPECT_EQ(tmp.str(), found->toText(true));
+}
+
+// Test checks whether getMACFromIPv6RelayOpt() returns the hardware (MAC)
+// address properly from a message relayed by multiple servers.
+TEST_F(Pkt6Test, getMACFromIPv6RelayOpt_multipleRelay) {
+
+    // Let's create a Solicit first...
+    Pkt6 pkt(DHCPV6_SOLICIT, 1234);
+
+    // Now pretend it was relayed two times. The relay closest to the server
+    // adds link-layer-address information against the RFC, the process fails.
+    Pkt6::RelayInfo info1;
+    uint8_t opt_data[] = {
+        0x00, 0x01,  // Ethertype
+        0x1a, 0x30, 0x0b, 0xfa, 0xc0, 0xfe // MAC
+    };
+    OptionPtr relay_opt1(new Option(Option::V6, D6O_CLIENT_LINKLAYER_ADDR,
+    		            OptionBuffer(opt_data, opt_data + sizeof(opt_data))));
+
+    info1.options_.insert(make_pair(relay_opt1->getType(), relay_opt1));
+    pkt.addRelayInfo(info1);
+
+    // Second relay, closest to the client has not implemented RFC6939
+    Pkt6::RelayInfo info2;
+    pkt.addRelayInfo(info2);
+    ASSERT_EQ(2, pkt.relay_info_.size());
+
+    EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION));
+
+    // Let's envolve the packet with a third relay (now the closest to the client)
+    // that inserts the correct client_linklayer_addr option.
+    Pkt6::RelayInfo info3;
+
+    // We reuse the option and modify the MAC to be sure we get the right address
+    opt_data[2] = 0xfa;
+    OptionPtr relay_opt3(new Option(Option::V6, D6O_CLIENT_LINKLAYER_ADDR,
+    		            OptionBuffer(opt_data, opt_data + sizeof(opt_data))));
+    info3.options_.insert(make_pair(relay_opt3->getType(), relay_opt3));
+    pkt.addRelayInfo(info3);
+    ASSERT_EQ(3, pkt.relay_info_.size());
+
+    // Now extract the MAC address from the relayed option
+    HWAddrPtr found = pkt.getMAC(Pkt::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION);
+    ASSERT_TRUE(found);
+
+    stringstream tmp;
+    tmp << "hwtype=1 fa:30:0b:fa:c0:fe";
+    EXPECT_EQ(tmp.str(), found->toText(true));
+}
 }

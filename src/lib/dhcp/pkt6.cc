@@ -16,6 +16,7 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
 #include <dhcp/pkt6.h>
+#include <util/io_utilities.h>
 #include <exceptions/exceptions.h>
 
 #include <iostream>
@@ -553,6 +554,31 @@ Pkt6::getMACFromSrcLinkLocalAddr() {
     return (getMACFromIPv6(relay_info_[relay_info_.size() - 1].peeraddr_));
 }
 
+HWAddrPtr
+Pkt6::getMACFromIPv6RelayOpt() {
+    if (relay_info_.empty()) {
+        // This is a direct message
+        return (HWAddrPtr());
+    }
+    // RFC6969 Section 6: Look for the client_linklayer_addr option on the
+    // relay agent closest to the client
+    OptionPtr opt = getAnyRelayOption(D6O_CLIENT_LINKLAYER_ADDR, RELAY_GET_FIRST);
+    if (opt) {
+        const OptionBuffer data = opt->getData();
+        if (data.size() < 3) {
+            // This client link address option is trucnated. It's supposed to be
+            // 2 bytes of link-layer type followed by link-layer address.
+            return (HWAddrPtr());
+        }
+
+        // +2, -2 means to skip the initial 2 bytes which are hwaddress type
+        return (HWAddrPtr(new HWAddr(&data[0] + 2, data.size() - 2,
+                                     opt->getUint16())));
+    }
+    else {
+        return (HWAddrPtr());
+    }
+}
 
 } // end of isc::dhcp namespace
 } // end of isc namespace
