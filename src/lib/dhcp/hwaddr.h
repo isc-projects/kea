@@ -58,6 +58,14 @@ public:
     /// 16 bits, we need to be able to store that wider format.
     uint16_t htype_;
 
+    /// @brief Hardware address source
+    ///
+    /// This variable specifies how the hardware address was obtained.
+    /// @todo This is a stub implementation. Proper implementation will move
+    /// constants from Pkt::HWADDR_SOURCE_* here. Currently always initialized
+    /// to zero.
+    uint32_t source_;
+
     /// @brief Returns textual representation of a hardware address
     /// (e.g. 00:01:02:03:04:05)
     ///

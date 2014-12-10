@@ -189,6 +189,9 @@ public:
     /// @brief Checks that Lease6 can be stored with and without a hardware address.
     void testLease6MAC();
 
+    /// @brief Checks that Lease6 stores hardware type and hardware source.
+    void testLease6HWTypeAndSource();
+
     /// @brief Test that IPv6 lease can be added, retrieved and deleted.
     ///
     /// This method checks basic IPv6 lease operations. There's check_t1_t2
