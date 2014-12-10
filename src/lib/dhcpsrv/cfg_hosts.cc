@@ -14,6 +14,7 @@
 
 #include <dhcpsrv/cfg_hosts.h>
 #include <exceptions/exceptions.h>
+#include <ostream>
 
 using namespace isc::asiolink;
 
@@ -173,6 +174,23 @@ CfgHosts::add(const HostPtr& host) {
     /// @todo This may need further sanity checks.
     HWAddrPtr hwaddr = host->getHWAddress();
     DuidPtr duid = host->getDuid();
+
+    // There should be at least one resource reserved: hostname, IPv4
+    // address, IPv6 address or prefix.
+    if (host->getHostname().empty() &&
+        (host->getIPv4Reservation() == IOAddress("0.0.0.0")) &&
+        (!host->hasIPv6Reservation())) {
+        std::ostringstream s;
+        if (hwaddr) {
+            s << "for DUID: " << hwaddr->toText();
+        } else if (duid) {
+            s << "for HW address: " << duid->toText();
+        }
+        isc_throw(BadValue, "specified reservation " << s
+                  << " must include at least one resource, i.e. "
+                  "hostname, IPv4 address or IPv6 address/prefix");
+    }
+
     // Check for duplicates for the specified IPv4 subnet.
     if ((host->getIPv4SubnetID() > 0) &&
         get4(host->getIPv4SubnetID(), hwaddr, duid)) {
@@ -182,7 +200,7 @@ CfgHosts::add(const HostPtr& host) {
                   << "' to the IPv4 subnet id '" << host->getIPv4SubnetID()
                   << "' as this host has already been added");
 
-    // Checek for duplicates for the specified IPv6 subnet.
+    // Check for duplicates for the specified IPv6 subnet.
     } else if (host->getIPv6SubnetID() &&
                get6(host->getIPv6SubnetID(), duid, hwaddr)) {
         isc_throw(DuplicateHost, "failed to add new host using the HW"
@@ -191,6 +209,8 @@ CfgHosts::add(const HostPtr& host) {
                   << "' to the IPv6 subnet id '" << host->getIPv6SubnetID()
                   << "' as this host has already been added");
     }
+
+    /// @todo This may need further sanity checks.
 
     // This is a new instance - add it.
     hosts_.insert(host);

@@ -16,8 +16,8 @@
 #define HOST_RESERVATION_PARSER_H
 
 #include <cc/data.h>
-#include <dhcpsrv/dhcp_config_parser.h>
 #include <dhcpsrv/host.h>
+#include <dhcpsrv/parsers/dhcp_config_parser.h>
 
 namespace isc {
 namespace dhcp {

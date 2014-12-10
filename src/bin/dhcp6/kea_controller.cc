@@ -15,8 +15,8 @@
 #include <config.h>
 
 #include <asiolink/asiolink.h>
-#include <dhcpsrv/dhcp_config_parser.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/parsers/dhcp_config_parser.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/dhcp6_log.h>

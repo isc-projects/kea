@@ -25,6 +25,7 @@
 #include <dhcp6/dhcp6_srv.h>
 #include <dhcpsrv/addr_utilities.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/cfg_hosts.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_selector.h>
 #include <dhcpsrv/testutils/config_result_check.h>
@@ -3382,6 +3383,248 @@ TEST_F(Dhcp6ParserTest, invalidD2ClientConfig) {
 
     // Verify that the convenience method agrees.
     ASSERT_FALSE(CfgMgr::instance().ddnsEnabled());
+}
+
+/// @brief Checks if the reservation is in the range of reservations.
+///
+/// @param resrv Reservation to be searched for.
+/// @param range Range of reservations returned by the @c Host object
+/// in which the reservation will be searched.
+bool reservationExists(const IPv6Resrv& resrv, const IPv6ResrvRange& range) {
+    for (IPv6ResrvIterator it = range.first; it != range.second;
+         ++it) {
+        if (resrv == it->second) {
+            return (true);
+        }
+    }
+    return (false);
+}
+
+// This test verifies that the host reservations can be specified for
+// respective IPv6 subnets.
+TEST_F(Dhcp6ParserTest, reservations) {
+    ConstElementPtr x;
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ "
+        " { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/80\" } ],"
+        "    \"subnet\": \"2001:db8:1::/64\", "
+        "    \"id\": 123,"
+        "    \"reservations\": ["
+        "    ]"
+        " },"
+        " {"
+        "    \"reservations\": ["
+        "      {"
+        "        \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "        \"ip-addresses\": [ \"2001:db8:2::1234\" ],"
+        "        \"hostname\": \"\""
+        "      },"
+        "      {"
+        "        \"hw-address\": \"01:02:03:04:05:06\","
+        "        \"ip-addresses\": [ \"2001:db8:2::abcd\" ],"
+        "        \"hostname\": \"\""
+        "      }"
+        "    ],"
+        "    \"pools\": [ ],"
+        "    \"subnet\": \"2001:db8:2::/64\", "
+        "    \"id\": 234"
+        " },"
+        " {"
+        "    \"pools\": [ ],"
+        "    \"subnet\": \"2001:db8:3::/64\", "
+        "    \"id\": 542,"
+        "    \"reservations\": ["
+        "      {"
+        "        \"duid\": \"0A:09:08:07:06:05:04:03:02:01\","
+        "        \"prefixes\": [ \"2001:db8:3:2::/96\" ],"
+        "        \"hostname\": \"\""
+        "      },"
+        "      {"
+        "        \"hw-address\": \"06:05:04:03:02:01\","
+        "        \"prefixes\": [ \"2001:db8:3:1::/96\" ],"
+        "        \"hostname\": \"\""
+        "      }"
+        "    ]"
+        " } "
+        "], "
+        "\"preferred-lifetime\": 3000,"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    checkResult(x, 0);
+
+    // Make sure all subnets have been successfully configured. There is no
+    // need to sanity check the subnet properties because it should have
+    // been already tested by other tests.
+    const Subnet6Collection* subnets =
+        CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->getAll();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(3, subnets->size());
+
+    // Hosts configuration must be available.
+    CfgHostsPtr hosts_cfg = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    ASSERT_TRUE(hosts_cfg);
+
+    // Let's create an object holding hardware address of the host having
+    // a reservation in the subnet having id of 234. For simlicity the
+    // address is a collection of numbers from 1 to 6.
+    std::vector<uint8_t> hwaddr_vec;
+    for (int i = 1; i < 7; ++i) {
+        hwaddr_vec.push_back(static_cast<uint8_t>(i));
+    }
+    HWAddrPtr hwaddr(new HWAddr(hwaddr_vec, HTYPE_ETHER));
+    // Retrieve the reservation and sanity check the address reserved.
+    ConstHostPtr host = hosts_cfg->get6(234, DuidPtr(), hwaddr);
+    ASSERT_TRUE(host);
+    IPv6ResrvRange resrv = host->getIPv6Reservations(IPv6Resrv::TYPE_NA);
+    ASSERT_EQ(1, std::distance(resrv.first, resrv.second));
+    EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                            IOAddress("2001:db8:2::abcd")),
+                                  resrv));
+    // This reservation should be solely assigned to the subnet 234,
+    // and not to other two.
+    EXPECT_FALSE(hosts_cfg->get6(123, DuidPtr(), hwaddr));
+    EXPECT_FALSE(hosts_cfg->get6(542, DuidPtr(), hwaddr));
+
+    // Do the same test for the DUID based reservation.
+    std::vector<uint8_t> duid_vec;
+    for (int i = 1; i < 0xb; ++i) {
+        duid_vec.push_back(static_cast<uint8_t>(i));
+    }
+    DuidPtr duid(new DUID(duid_vec));
+    host = hosts_cfg->get6(234, duid);
+    ASSERT_TRUE(host);
+    resrv = host->getIPv6Reservations(IPv6Resrv::TYPE_NA);
+    ASSERT_EQ(1, std::distance(resrv.first, resrv.second));
+    EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                            IOAddress("2001:db8:2::1234")),
+                                  resrv));
+    EXPECT_FALSE(hosts_cfg->get6(123, duid));
+    EXPECT_FALSE(hosts_cfg->get6(542, duid));
+
+    // The HW address used for one of the reservations in the subnet 542
+    // consists of numbers from 6 to 1. So, let's just reverse the order
+    // of the address from the previous test.
+    hwaddr->hwaddr_.assign(hwaddr_vec.rbegin(), hwaddr_vec.rend());
+    host = hosts_cfg->get6(542, DuidPtr(), hwaddr);
+    EXPECT_TRUE(host);
+    resrv = host->getIPv6Reservations(IPv6Resrv::TYPE_PD);
+    ASSERT_EQ(1, std::distance(resrv.first, resrv.second));
+    EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_PD,
+                                            IOAddress("2001:db8:3:1::"),
+                                            96), resrv));
+
+    // This reservation must not belong to other subnets.
+    EXPECT_FALSE(hosts_cfg->get6(123, DuidPtr(), hwaddr));
+    EXPECT_FALSE(hosts_cfg->get6(234, DuidPtr(), hwaddr));
+
+    // Repeat the test for the DUID based reservation in this subnet.
+    duid.reset(new DUID(std::vector<uint8_t>(duid_vec.rbegin(),
+                                             duid_vec.rend())));
+    host = hosts_cfg->get6(542, duid);
+    ASSERT_TRUE(host);
+    resrv = host->getIPv6Reservations(IPv6Resrv::TYPE_PD);
+    ASSERT_EQ(1, std::distance(resrv.first, resrv.second));
+    EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_PD,
+                                            IOAddress("2001:db8:3:2::"),
+                                            96), resrv));
+
+    EXPECT_FALSE(hosts_cfg->get6(123, duid));
+    EXPECT_FALSE(hosts_cfg->get6(234, duid));
+}
+
+// This test verfies that the bogus host reservation would trigger a
+// server configuration error.
+TEST_F(Dhcp6ParserTest, reservationBogus) {
+    // Case 1: misspelled "duid" parameter.
+    ConstElementPtr x;
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ "
+        " { "
+        "    \"pools\": [ ],"
+        "    \"subnet\": \"2001:db8:3::/64\", "
+        "    \"id\": 542,"
+        "    \"reservations\": ["
+        "      {"
+        "        \"dui\": \"0A:09:08:07:06:05:04:03:02:01\","
+        "        \"prefixes\": [ \"2001:db8:3:2::/96\" ],"
+        "        \"hostname\": \"\""
+        "      }"
+        "    ]"
+        " } "
+        "], "
+        "\"preferred-lifetime\": 3000,"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    checkResult(x, 1);
+
+    // Case 2: DUID and HW Address both specified.
+    config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ "
+        " { "
+        "    \"pools\": [ ],"
+        "    \"subnet\": \"2001:db8:3::/64\", "
+        "    \"id\": 542,"
+        "    \"reservations\": ["
+        "      {"
+        "        \"hw-address\": \"01:02:03:04:05:06\","
+        "        \"duid\": \"0A:09:08:07:06:05:04:03:02:01\","
+        "        \"prefixes\": [ \"2001:db8:3:2::/96\" ],"
+        "        \"hostname\": \"\""
+        "      }"
+        "    ]"
+        " } "
+        "], "
+        "\"preferred-lifetime\": 3000,"
+        "\"valid-lifetime\": 4000 }";
+
+    json = Element::fromJSON(config);
+
+    // Remove existing configuration, if any.
+    CfgMgr::instance().clear();
+
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    checkResult(x, 1);
+
+    // Case 3: Neither ip address nor hostname specified.
+    config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ "
+        " { "
+        "    \"pools\": [ ],"
+        "    \"subnet\": \"2001:db8:3::/64\", "
+        "    \"id\": 542,"
+        "    \"reservations\": ["
+        "      {"
+        "        \"duid\": \"0A:09:08:07:06:05:04:03:02:01\""
+        "      }"
+        "    ]"
+        " } "
+        "], "
+        "\"preferred-lifetime\": 3000,"
+        "\"valid-lifetime\": 4000 }";
+
+    json = Element::fromJSON(config);
+
+    // Remove existing configuration, if any.
+    CfgMgr::instance().clear();
+
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    checkResult(x, 1);
+
 }
 
 };

@@ -20,7 +20,7 @@
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/host.h>
-#include <dhcpsrv/host_reservation_parser.h>
+#include <dhcpsrv/parsers/host_reservation_parser.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <gtest/gtest.h>
 #include <iterator>
@@ -141,6 +141,30 @@ TEST_F(HostReservationParserTest, dhcp4DUID) {
     EXPECT_TRUE(hosts[0]->getHostname().empty());
 }
 
+// This test verifies that the parser can parse the reservation entry
+// when IPv4 address is specified, but hostname is not.
+TEST_F(HostReservationParserTest, dhcp4NoHostname) {
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "\"ip-address\": \"192.0.2.10\" }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser4 parser(SubnetID(10));
+    ASSERT_NO_THROW(parser.build(config_element));
+
+    CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    HostCollection hosts;
+    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(HWAddrPtr(), duid_));
+
+    ASSERT_EQ(1, hosts.size());
+
+    EXPECT_EQ(10, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ(0, hosts[0]->getIPv6SubnetID());
+    EXPECT_EQ("192.0.2.10", hosts[0]->getIPv4Reservation().toText());
+    EXPECT_TRUE(hosts[0]->getHostname().empty());
+}
+
+
 // This test verifies that the configuration parser for host reservations
 // throws an exception when IPv6 address is specified for IPv4 address
 // reservation.
@@ -158,6 +182,53 @@ TEST_F(HostReservationParserTest, dhcp4IPv6Address) {
 // throws an exception when no HW address nor DUID is specified.
 TEST_F(HostReservationParserTest, noIdentifier) {
     std::string config = "{ \"ip-address\": \"192.0.2.112\","
+        "\"hostname\": \"\" }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser4 parser(SubnetID(10));
+    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+}
+
+// This test verifies  that the configuration parser for host reservations
+// throws an exception when neither ip address nor hostname is specified.
+TEST_F(HostReservationParserTest, noResource) {
+    std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\" }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser4 parser(SubnetID(10));
+    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+}
+
+// This test verifies that the parser can parse the reservation entry
+// when IP address is not specified, but hostname is specified.
+TEST_F(HostReservationParserTest, noIPAddress) {
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "\"hostname\": \"foo.example.com\" }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser4 parser(SubnetID(10));
+    ASSERT_NO_THROW(parser.build(config_element));
+
+    CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    HostCollection hosts;
+    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(HWAddrPtr(), duid_));
+
+    ASSERT_EQ(1, hosts.size());
+
+    EXPECT_EQ(10, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ(0, hosts[0]->getIPv6SubnetID());
+    EXPECT_EQ("0.0.0.0", hosts[0]->getIPv4Reservation().toText());
+    EXPECT_EQ("foo.example.com", hosts[0]->getHostname());
+}
+
+// This test verifies  that the configuration parser for host reservations
+// throws an exception when hostname is empty, and IP address is not
+// specified.
+TEST_F(HostReservationParserTest, emptyHostname) {
+    std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
         "\"hostname\": \"\" }";
 
     ElementPtr config_element = Element::fromJSON(config);
@@ -263,6 +334,44 @@ TEST_F(HostReservationParserTest, dhcp6DUID) {
     IPv6ResrvRange prefixes = hosts[0]->getIPv6Reservations(IPv6Resrv::TYPE_PD);
     ASSERT_EQ(0, std::distance(prefixes.first, prefixes.second));
 }
+
+// This test verfies that the parser can parse the IPv6 reservation entry
+// which lacks hostname parameter.
+TEST_F(HostReservationParserTest, dhcp6NoHostname) {
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "\"ip-addresses\": [ \"2001:db8:1::100\", \"2001:db8:1::200\" ],"
+        "\"prefixes\": [ ] }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser6 parser(SubnetID(12));
+    ASSERT_NO_THROW(parser.build(config_element));
+
+    CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    HostCollection hosts;
+    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(HWAddrPtr(), duid_));
+
+    ASSERT_EQ(1, hosts.size());
+
+    EXPECT_EQ(0, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ(12, hosts[0]->getIPv6SubnetID());
+    EXPECT_TRUE(hosts[0]->getHostname().empty());
+
+    IPv6ResrvRange addresses = hosts[0]->
+        getIPv6Reservations(IPv6Resrv::TYPE_NA);
+    ASSERT_EQ(2, std::distance(addresses.first, addresses.second));
+
+    EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                            IOAddress("2001:db8:1::100")),
+                                  addresses));
+    EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                            IOAddress("2001:db8:1::200")),
+                                  addresses));
+
+    IPv6ResrvRange prefixes = hosts[0]->getIPv6Reservations(IPv6Resrv::TYPE_PD);
+    ASSERT_EQ(0, std::distance(prefixes.first, prefixes.second));
+}
+
 
 // This test verifies that the configuration parser throws an exception
 // when IPv4 address is specified for IPv6 reservation.

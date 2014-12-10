@@ -16,7 +16,7 @@
 #include <d2/d2_log.h>
 #include <dhcp/libdhcp++.h>
 #include <d2/d_cfg_mgr.h>
-#include <dhcpsrv/dhcp_parsers.h>
+#include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 

@@ -13,8 +13,8 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <cc/data.h>
+#include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <exceptions/exceptions.h>
-#include <dhcpsrv/dhcp_parsers.h>
 
 #include <stdint.h>
 #include <string>
