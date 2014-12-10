@@ -1,3 +1,8 @@
+864.	[func]		tomek
+	MySQL backend is now able to store information about hardware
+	addresses and associated information in DHCPv6.
+	(Trac #3556, git 08a29d8d2374bc3c6b3799d5dd97f586ee869392)
+
 863.	[func]		tomek
 	A new tool called kea-admin added. It allows database maintenance.
 	Initalization of a new database, version check and upgrade between
