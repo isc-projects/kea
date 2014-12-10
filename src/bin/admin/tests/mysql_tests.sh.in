@@ -1,0 +1,184 @@
+#!/bin/sh
+
+# Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+# Include common test library.
+. @abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh
+
+# If the code is installed, include admin-utils.sh from the destination
+# directory. If not, include it from the sources.
+prefix=@prefix@
+
+if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
+    . @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
+else
+    . @abs_top_builddir@/src/bin/admin/admin-utils.sh
+fi
+
+db_user="keatest"
+db_pass="keatest"
+db_name="keatest"
+
+# Set location of the kea-admin.
+keaadmin=@abs_top_builddir@/src/bin/admin/kea-admin
+
+# Wipe all tables from the DB:
+mysql_wipe() {
+    printf "Wiping whole database %s\n" $db_name
+    mysql -u$db_user -p$db_pass $db_name >/dev/null 2>&1 <<EOF
+SET @tables = NULL;
+SELECT GROUP_CONCAT(table_schema, '.', table_name) INTO @tables
+  FROM information_schema.tables
+  WHERE table_schema = 'keatest';
+
+SET @tables = CONCAT('DROP TABLE ', @tables);
+PREPARE stmt FROM @tables;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+EOF
+}
+
+mysql_lease_init_test() {
+    test_start "mysql.lease-init"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # Ok, now let's initalize the database
+    ${keaadmin} lease-init mysql -u $db_user -p $db_pass -n $db_name -d @abs_top_srcdir@/src/bin/admin/scripts
+    ERRCODE=$?
+
+    assert_eq 0 $ERRCODE "kea-admin lease-init mysql returned non-zero status code %d, expected %d"
+
+    # Ok, now let's check if the tables are indeed there.
+    # First table: schema_version. Should have 2 columns: version and minor.
+    mysql -u$db_user -p$db_pass $db_name >/dev/null 2>&1 <<EOF
+    SELECT version, minor FROM schema_version;
+EOF
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "schema_version table is missing or broken. (returned status code %d, expected %d)"
+
+    # Second table: lease4
+    mysql -u$db_user -p$db_pass $db_name >/dev/null 2>&1 <<EOF
+    SELECT address, hwaddr, client_id, valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname FROM lease4;
+EOF
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "lease4 table is missing or broken. (returned status code %d, expected %d)"
+
+    # Third table: lease6
+    mysql -u$db_user -p$db_pass $db_name >/dev/null 2>&1 <<EOF
+    SELECT address, duid, valid_lifetime, expire, subnet_id, pref_lifetime, lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, hwaddr, hwtype, hwaddr_source FROM lease6;
+EOF
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "lease6 table is missing or broken. (returned status code %d, expected %d)"
+
+    # Fourth table: lease6_types
+    mysql -u$db_user -p$db_pass $db_name >/dev/null 2>&1 <<EOF
+    SELECT lease_type, name FROM lease6_types;
+EOF
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "lease6_types table is missing or broken. (returned status code %d, expected %d)"
+
+    # Fifth table: lease_hwaddr_source
+    mysql -u$db_user -p$db_pass $db_name >/dev/null 2>&1 <<EOF
+    SELECT hwaddr_source, name FROM lease_hwaddr_source;
+EOF
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "lease_hwaddr_source table is missing or broken. (returned status code %d, expected %d)"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    test_finish 0
+}
+
+mysql_lease_version_test() {
+    test_start "mysql.lease-version"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # Ok, now let's create a version 1.7
+    mysql -u$db_user -p$db_pass $db_name >/dev/null 2>&1 <<EOF
+CREATE TABLE schema_version (
+    version INT PRIMARY KEY NOT NULL,
+    minor INT
+    );
+INSERT INTO schema_version VALUES (1, 7);
+EOF
+
+    version=$(${keaadmin} lease-version mysql -u $db_user -p $db_pass -n $db_name)
+
+    assert_str_eq "1.7" ${version} "Expected kea-admin to return %s, returned value was %s"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    test_finish 0
+}
+
+mysql_lease_upgrade_test() {
+
+    # @todo: need to test whether non-empty database is updated correctly and the data survives the upgrade
+
+    test_start "mysql.lease-upgrade"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # Initialize database to scheme 1.0.
+    mysql -u$db_user -p$db_pass $db_name < @abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql
+
+    # Sanity check - verify that it reports version 1.0.
+    version=$(${keaadmin} lease-version mysql -u $db_user -p $db_pass -n $db_name -d @abs_top_srcdir@/src/bin/admin/scripts)
+
+    assert_str_eq "1.0" ${version} "Expected kea-admin to return %s, returned value was %s"
+
+    # Ok, we have a 1.0 database. Let's upgrade it to 2.0
+    ${keaadmin} lease-upgrade mysql -u $db_user -p $db_pass -n $db_name -d @abs_top_srcdir@/src/bin/admin/scripts
+    ERRCODE=$?
+
+    assert_eq 0 $ERRCODE "kea-admin lease-upgrade mysql returned non-zero status code %d, expected %d"
+
+    # Let's check that the new tables are indeed there.
+
+    # Third table: lease6
+    mysql -u$db_user -p$db_pass $db_name >/dev/null 2>&1 <<EOF
+    SELECT hwaddr, hwtype, hwaddr_source FROM lease6;
+EOF
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "lease6 table not upgraded to 2.0 (returned status code %d, expected %d)"
+
+    # Fifth table: lease_hwaddr_source
+    mysql -u$db_user -p$db_pass $db_name >/dev/null 2>&1 <<EOF
+    SELECT hwaddr_source, name FROM lease_hwaddr_source;
+EOF
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "lease_hwaddr_source table is missing or broken. (returned status code %d, expected %d)"
+
+    # Verify that it reports version 2.0.
+    version=$(${keaadmin} lease-version mysql -u $db_user -p $db_pass -n $db_name)
+
+    assert_str_eq "2.0" ${version} "Expected kea-admin to return %s, returned value was %s"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    test_finish 0
+}
+
+mysql_lease_init_test
+mysql_lease_version_test
+mysql_lease_upgrade_test
