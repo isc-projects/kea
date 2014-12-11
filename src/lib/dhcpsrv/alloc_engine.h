@@ -246,7 +246,7 @@ protected:
         ///
         /// If this address is set to 0 it indicates that this address
         /// is unspecified.
-        asiolink::IOAddress hint_;
+        asiolink::IOAddress requested_address_;
 
         /// @brief Perform forward DNS update.
         bool fwd_dns_update_;
@@ -283,7 +283,7 @@ protected:
 
         /// @brief Default constructor.
         Context4()
-            : subnet_(), clientid_(), hwaddr_(), hint_("0.0.0.0"),
+            : subnet_(), clientid_(), hwaddr_(), requested_address_("0.0.0.0"),
               fwd_dns_update_(false), rev_dns_update_(false),
               hostname_(""), callout_handle_(), fake_allocation_(false),
               old_lease_(), host_(), interrupt_processing_(false) {
