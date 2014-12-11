@@ -18,6 +18,7 @@
 #include <dhcp/pkt6.h>
 #include <util/io_utilities.h>
 #include <exceptions/exceptions.h>
+#include <dhcp/duid.h>
 
 #include <iostream>
 #include <sstream>
@@ -437,6 +438,36 @@ void
 Pkt6::unpackTCP() {
     isc_throw(Unexpected, "DHCPv6 over TCP (bulk leasequery and failover) "
               "not implemented yet.");
+}
+
+HWAddrPtr
+Pkt6::getMACFromDUID() {
+	OptionPtr opt_duid = getOption(D6O_CLIENTID);
+	uint8_t hlen = opt_duid->getData().size();
+	vector<uint8_t> hw_addr(hlen, 0);
+	std::vector<unsigned char> duid_data = opt_duid->getData();
+
+
+	uint16_t hwtype = 0;
+	std::memcpy(&hwtype, &duid_data[2], 2);		// TODO nie jestem tego pewien
+
+
+	// checking if DUID is LLT or LL type
+	if ((duid_data[0] == 0x00) && (duid_data[1]== 0x01)){
+		hlen -= 8;
+		std::memcpy(&hw_addr, &duid_data[8], hlen);
+
+	}
+	else if ((duid_data[0] == 0x00) && (duid_data[1]== 0x03)){
+			hlen -= 4;
+			std::memcpy(&hw_addr, &duid_data[4], hlen);
+	}
+	// if none of them return NULL
+	else return HWAddrPtr();
+
+	hw_addr.resize(hlen);
+	hwaddr_= HWAddrPtr(new HWAddr(hw_addr, hwtype));
+	return (hwaddr_);
 }
 
 
