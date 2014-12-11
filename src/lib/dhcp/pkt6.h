@@ -305,6 +305,10 @@ protected:
     /// @return Hardware address (or NULL)
     virtual HWAddrPtr getMACFromIPv6RelayOpt();
 
+    virtual HWAddrPtr getMACFromDUID();
+
+    HWAddrPtr hwaddr_;
+
     /// @brief Builds on wire packet for TCP transmission.
     ///
     /// @todo This function is not implemented yet.
