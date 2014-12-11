@@ -414,6 +414,10 @@ protected:
         return (HWAddrPtr());
     }
 
+    virtual HWAddrPtr getMACFromDUID(){
+    	return (HWAddrPtr());
+    }
+
     /// local HW address (dst if receiving packet, src if sending packet)
     HWAddrPtr local_hwaddr_;
 
