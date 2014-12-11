@@ -307,7 +307,7 @@ public:
     /// @param rsp response packet to be validated
     /// @param expected_message_type expected message type
     /// @param expected_transid expected transaction-id
-    void checkResponse(const Pkt4Ptr& rsp, uint8_t expected_message_type,
+    void checkResponse(const Pkt4Ptr& rsp, int expected_message_type,
                        uint32_t expected_transid);
 
     /// @brief Checks if the lease sent to client is present in the database

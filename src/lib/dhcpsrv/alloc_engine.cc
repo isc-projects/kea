@@ -1027,8 +1027,17 @@ AllocEngine::reallocateClientLease(Lease4Ptr& lease,
     // Save the old lease, before renewal.
     ctx.old_lease_.reset(new Lease4(*lease));
 
+    /// The client's address will need to be modified in case if:
+    /// - There is a reservation for the client (likely new one) and
+    ///   the currently used address is different.
+    /// - Client requested some IP address and the requested address
+    ///   is different than the currently used one. Note that if this
+    ///   is a DHCPDISCOVER the requested IP address is ignored when
+    ///   it doesn't match the one in use.
     if ((ctx.host_ && (ctx.host_->getIPv4Reservation() != lease->addr_)) ||
-        (lease->addr_ != ctx.requested_address_)) {
+        (!ctx.fake_allocation_ &&
+         (ctx.requested_address_ != IOAddress("0.0.0.0")) &&
+         (lease->addr_ != ctx.requested_address_))) {
         lease = replaceClientLease(lease, ctx);
         return (lease);
 
