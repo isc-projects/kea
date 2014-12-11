@@ -141,7 +141,19 @@ Pkt::getMAC(uint32_t hw_addr_src) {
         }
     }
 
-    // Method 2: Extracted from DUID-LLT or DUID-LL
+    // Method 2: From client link-layer address option inserted by a relay
+    if (hw_addr_src & HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION) {
+        mac = getMACFromIPv6RelayOpt();
+        if (mac) {
+            return (mac);
+        } else if (hw_addr_src ==  HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION) {
+            // If we're interested only in RFC6939 link layer address as source
+            // of that info, there's no point in trying other options.
+            return (HWAddrPtr());
+        }
+    }
+
+    // Method 3: Extracted from DUID-LLT or DUID-LL
     if(hw_addr_src & HWADDR_SOURCE_DUID) {
         mac = getMACFromDUID();
         if (mac) {
@@ -153,26 +165,14 @@ Pkt::getMAC(uint32_t hw_addr_src) {
         }
     }
 
-    // Method 3: Extracted from source IPv6 link-local address
-    if (hw_addr_src & HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL) {
+    // Method 4: Extracted from source IPv6 link-local address
+    if (hw_addr_src & HWaddr::HWADDR_SOURCE_IPV6_LINK_LOCAL) {
         mac = getMACFromSrcLinkLocalAddr();
         if (mac) {
             return (mac);
         } else if (hw_addr_src ==  HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL) {
             // If we're interested only in link-local addr as source of that
             // info, there's no point in trying other options.
-            return (HWAddrPtr());
-        }
-    }
-
-    // Method 4: From client link-layer address option inserted by a relay
-    if (hw_addr_src & HWAddr::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION) {
-        mac = getMACFromIPv6RelayOpt();
-        if (mac) {
-            return (mac);
-        } else if (hw_addr_src ==  HWAddr::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION) {
-            // If we're interested only in RFC6939 link layer address as source
-            // of that info, there's no point in trying other options.
             return (HWAddrPtr());
         }
     }
