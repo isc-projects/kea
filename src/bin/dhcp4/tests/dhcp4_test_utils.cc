@@ -283,10 +283,11 @@ void Dhcpv4SrvTest::checkAddressParams(const Pkt4Ptr& rsp,
     }
 }
 
-void Dhcpv4SrvTest::checkResponse(const Pkt4Ptr& rsp, uint8_t expected_message_type,
+void Dhcpv4SrvTest::checkResponse(const Pkt4Ptr& rsp, int expected_message_type,
                                   uint32_t expected_transid) {
     ASSERT_TRUE(rsp);
-    EXPECT_EQ(expected_message_type, rsp->getType());
+    EXPECT_EQ(expected_message_type,
+              static_cast<int>(rsp->getType()));
     EXPECT_EQ(expected_transid, rsp->getTransid());
 }
 
