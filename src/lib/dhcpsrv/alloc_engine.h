@@ -273,12 +273,20 @@ protected:
         /// @brief A pointer to the object identifying host reservations.
         ConstHostPtr host_;
 
+        /// @brief Signals that the allocation should be interrupted.
+        ///
+        /// This flag is set by the downstream methods called by the
+        /// @c AllocEngine::allocateLease4. This flag is set to true to
+        /// indicate that an attempt to allocate a lease should be
+        /// interrupted.
+        bool interrupt_processing_;
+
         /// @brief Default constructor.
         Context4()
             : subnet_(), clientid_(), hwaddr_(), hint_("0.0.0.0"),
               fwd_dns_update_(false), rev_dns_update_(false),
               hostname_(""), callout_handle_(), fake_allocation_(false),
-              old_lease_(), host_() {
+              old_lease_(), host_(), interrupt_processing_(false) {
         }
     };
 
@@ -363,7 +371,7 @@ protected:
     /// @return Returns renewed lease. Note that the lease is only updated when
     /// it is an actual allocation (not processing DHCPDISCOVER message).
     Lease4Ptr
-    renewLease4(const Lease4Ptr& lease, const Context4& ctx);
+    renewLease4(const Lease4Ptr& lease, Context4& ctx);
 
     /// @brief Allocates an IPv6 lease
     ///
@@ -462,7 +470,7 @@ private:
     /// @param ctx A context containing information from the server about the
     /// client and its message.
     void updateLease4Information(const Lease4Ptr& lease,
-                                 const Context4& ctx) const;
+                                 Context4& ctx) const;
 
     /// @brief creates a lease and inserts it in LeaseMgr if necessary
     ///
@@ -515,7 +523,7 @@ private:
     /// @return Updated lease instance.
     /// @throw BadValue if trying to reuse a lease which is still valid or
     /// when the provided parameters are invalid.
-    Lease4Ptr reuseExpiredLease(Lease4Ptr& expired, const Context4& ctx);
+    Lease4Ptr reuseExpiredLease(Lease4Ptr& expired, Context4& ctx);
 
     /// @brief Updates the existing, non expired lease with a information from
     /// the context.
@@ -533,7 +541,7 @@ private:
     ///
     /// @return Pointer to the updated lease.
     /// @throw BadValue if the provided parameters are invalid.
-    Lease4Ptr replaceClientLease(Lease4Ptr& lease, const Context4& ctx);
+    Lease4Ptr replaceClientLease(Lease4Ptr& lease, Context4& ctx);
 
     /// @brief Replace or renew client's lease.
     ///

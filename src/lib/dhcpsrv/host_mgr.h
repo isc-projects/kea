@@ -139,6 +139,20 @@ public:
     get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
          const DuidPtr& duid = DuidPtr()) const;
 
+    /// @brief Returns a host connected to the IPv4 subnet and having
+    /// a reservation for a specified IPv4 address.
+    ///
+    /// This method returns a single reservation for the particular host
+    /// (identified by the HW address or DUID) as documented in the
+    /// @c BaseHostDataSource::get4.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param address reserved IPv4 address.
+    ///
+    /// @return Const @c Host object using a specified IPv4 address.
+    virtual ConstHostPtr
+    get4(const SubnetID& subnet_id, const asiolink::IOAddress& address) const;
+
     /// @brief Returns a host connected to the IPv6 subnet.
     ///
     /// This method returns a host connected to the IPv6 subnet and identified
