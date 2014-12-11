@@ -144,9 +144,13 @@ Pkt::getMAC(uint32_t hw_addr_src) {
     // Method 2: Extracted from DUID-LLT or DUID-LL
     if(hw_addr_src & HWADDR_SOURCE_DUID) {
         mac = getMACFromDUID();
-        if (mac){
+        if (mac) {
             return (mac);
-        } else return (HWAddrPtr());
+        } else if (hw_addr_src == HWADDR_SOURCE_DUID) {
+            // If the only source allowed is DUID then we can skip the other
+            // methods.
+            return (HWAddrPtr());
+        }
     }
 
     // Method 3: Extracted from source IPv6 link-local address

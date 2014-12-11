@@ -547,6 +547,19 @@ protected:
     /// @return hardware address (or NULL)
     virtual HWAddrPtr getMACFromIPv6RelayOpt() = 0;
 
+
+    /// @brief Attempts to obtain MAC address from DUID-LL or DUID-LLT
+    ///
+    /// This method is called from getMAC(HWADDR_SOURCE_DUID) and should not be
+    /// called directly. It will attempt to extract MAC address information
+    /// from DUID if its type is LLT or LL. If this method fails, it will
+    /// return NULL.
+    ///
+    /// @note This is a pure virtual method and must be implemented in
+    /// the derived classes. The @c Pkt6 class have respective implementation.
+    /// This method is not applicable to DHCPv4.
+    ///
+    /// @return hardware address (or NULL)
     virtual HWAddrPtr getMACFromDUID() = 0;
 
     /// @brief Attempts to convert IPv6 address into MAC.
@@ -564,8 +577,6 @@ protected:
     /// @return hardware address (or NULL)
     HWAddrPtr
     getMACFromIPv6(const isc::asiolink::IOAddress& addr);
-
-
 
     /// Transaction-id (32 bits for v4, 24 bits for v6)
     uint32_t transid_;
