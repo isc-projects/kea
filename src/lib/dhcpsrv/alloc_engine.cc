@@ -515,7 +515,7 @@ AllocEngine::allocateLease4(const SubnetPtr& subnet, const ClientIdPtr& clientid
         ctx.subnet_ = subnet;
         ctx.clientid_ = clientid;
         ctx.hwaddr_ = hwaddr;
-        ctx.hint_ = hint;
+        ctx.requested_address_ = hint;
         ctx.fwd_dns_update_ = fwd_dns_update;
         ctx.rev_dns_update_ = rev_dns_update;
         ctx.hostname_ = hostname;
@@ -530,8 +530,8 @@ AllocEngine::allocateLease4(const SubnetPtr& subnet, const ClientIdPtr& clientid
             // In some cases the client doesn't supply any address, e.g. when
             // it sends a DHCPDISCOVER. In such cases, we use the reserved
             // address as a hint.
-            if (ctx.hint_ == IOAddress("0.0.0.0")) {
-                ctx.hint_ = ctx.host_->getIPv4Reservation();
+            if (ctx.requested_address_ == IOAddress("0.0.0.0")) {
+                ctx.requested_address_ = ctx.host_->getIPv4Reservation();
 
             // If the client supplied an address we have to check if this
             // address is reserved for this client. If not, we will send
@@ -542,7 +542,7 @@ AllocEngine::allocateLease4(const SubnetPtr& subnet, const ClientIdPtr& clientid
             // other than desired by the client. So, we don't return an
             // empty lease.
             } else if (!ctx.fake_allocation_ &&
-                       (ctx.hint_ != ctx.host_->getIPv4Reservation())) {
+                       (ctx.requested_address_ != ctx.host_->getIPv4Reservation())) {
                 return (Lease4Ptr());
             }
         }
@@ -587,7 +587,7 @@ AllocEngine::allocateLease4(const SubnetPtr& subnet, const ClientIdPtr& clientid
         // proceed with a new allocation. We will try to allocate a
         // reserved address or an address from a dynamic pool if there is
         // no reservation.
-        if (ctx.host_ || subnet->inPool(Lease::TYPE_V4, ctx.hint_)) {
+        if (ctx.host_ || subnet->inPool(Lease::TYPE_V4, ctx.requested_address_)) {
             // If a client is requesting specific IP address, but the
             // reservation was made for a different address the server returns
             // NAK to the client. By returning NULL lease here we indicate to
@@ -596,15 +596,15 @@ AllocEngine::allocateLease4(const SubnetPtr& subnet, const ClientIdPtr& clientid
             // fake allocation (DHCPDISCOVER) because in this case the address
             // supplied by the client is only a hint.
             if (!ctx.fake_allocation_ && ctx.host_ &&
-                (ctx.hint_ != IOAddress("0.0.0.0")) &&
-                (ctx.host_->getIPv4Reservation() != ctx.hint_)) {
+                (ctx.requested_address_ != IOAddress("0.0.0.0")) &&
+                (ctx.host_->getIPv4Reservation() != ctx.requested_address_)) {
                 return (Lease4Ptr());
             }
 
             // The reserved address always takes precedence over an address
             // supplied by the client (renewed address or requested).
             const IOAddress& candidate = ctx.host_ ?
-                ctx.host_->getIPv4Reservation() : ctx.hint_;
+                ctx.host_->getIPv4Reservation() : ctx.requested_address_;
 
             // Once we picked an address we want to allocate, we have to check
             // if this address is available.
@@ -668,7 +668,8 @@ AllocEngine::allocateLease4(const SubnetPtr& subnet, const ClientIdPtr& clientid
 
         unsigned int i = attempts_;
         do {
-            IOAddress candidate = allocator->pickAddress(subnet, clientid, ctx.hint_);
+            IOAddress candidate = allocator->pickAddress(subnet, clientid,
+                                                         ctx.requested_address_);
 
             // Check if this address is reserved. There is no need to check for
             // whom it is reserved, because if it has been reserved for us we would
@@ -960,7 +961,7 @@ AllocEngine::replaceClientLease(Lease4Ptr& lease, Context4& ctx) {
         isc_throw(BadValue, "null subnet specified for replaceClientLease");
     }
 
-    if (ctx.hint_ == IOAddress("0.0.0.0")) {
+    if (ctx.requested_address_ == IOAddress("0.0.0.0")) {
         isc_throw(BadValue, "zero address specified for the"
                   " replaceClientLease");
     }
@@ -968,12 +969,12 @@ AllocEngine::replaceClientLease(Lease4Ptr& lease, Context4& ctx) {
     IOAddress prev_address = lease->addr_;
     if (!ctx.host_) {
         ConstHostPtr host = HostMgr::instance().get4(ctx.subnet_->getID(),
-                                                     ctx.hint_);
+                                                     ctx.requested_address_);
         if (host && ctx.hwaddr_ && (*host->getHWAddress() != *ctx.hwaddr_)) {
             ctx.interrupt_processing_ = true;
             return (Lease4Ptr());
         }
-        lease->addr_ = ctx.hint_;
+        lease->addr_ = ctx.requested_address_;
 
     } else {
         lease->addr_ = ctx.host_->getIPv4Reservation();
@@ -1027,7 +1028,7 @@ AllocEngine::reallocateClientLease(Lease4Ptr& lease,
     ctx.old_lease_.reset(new Lease4(*lease));
 
     if ((ctx.host_ && (ctx.host_->getIPv4Reservation() != lease->addr_)) ||
-        (lease->addr_ != ctx.hint_)) {
+        (lease->addr_ != ctx.requested_address_)) {
         lease = replaceClientLease(lease, ctx);
         return (lease);
 
