@@ -19,6 +19,7 @@
 #include <dhcpsrv/cfg_hosts.h>
 #include <dhcpsrv/host.h>
 #include <gtest/gtest.h>
+#include <set>
 
 using namespace isc;
 using namespace isc::dhcp;
@@ -186,6 +187,35 @@ TEST_F(CfgHostsTest, getAllRepeatingHosts) {
         EXPECT_TRUE(cfg.getAll(hwaddrs_[i]).empty());
         EXPECT_TRUE(cfg.getAll(HWAddrPtr(), duids_[i]).empty());
     }
+}
+
+// This test checks that all reservations for the specified IPv4 address can
+// be retrieved.
+TEST_F(CfgHostsTest, getAll4ByAddress) {
+    CfgHosts cfg;
+    // Add hosts.
+    for (int i = 0; i < 25; ++i) {
+        // Add host identified by the HW address.
+        cfg.add(HostPtr(new Host(hwaddrs_[i]->toText(false),
+                                 "hw-address",
+                                 SubnetID(1 + i), SubnetID(0),
+                                 IOAddress("192.0.2.5"))));
+        // Add host identified by the DUID.
+        cfg.add(HostPtr(new Host(duids_[i]->toText(),
+                                 "duid",
+                                 SubnetID(1 + i), SubnetID(0),
+                                 IOAddress("192.0.2.10"))));
+    }
+
+    HostCollection hosts = cfg.getAll4(IOAddress("192.0.2.10"));
+    std::set<uint32_t> subnet_ids;
+    for (HostCollection::const_iterator host = hosts.begin(); host != hosts.end();
+         ++host) {
+        subnet_ids.insert((*host)->getIPv4SubnetID());
+    }
+    ASSERT_EQ(25, subnet_ids.size());
+    EXPECT_EQ(1, *subnet_ids.begin());
+    EXPECT_EQ(25, *subnet_ids.rbegin());
 }
 
 // This test checks that the reservations can be retrieved for the particular
