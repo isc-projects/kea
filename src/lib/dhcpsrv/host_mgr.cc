@@ -89,6 +89,17 @@ HostMgr::get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
 }
 
 ConstHostPtr
+HostMgr::get4(const SubnetID& subnet_id,
+              const asiolink::IOAddress& address) const {
+    ConstHostPtr host = getCfgHosts()->get4(subnet_id, address);
+    if (!host && alternate_source) {
+        host = alternate_source->get4(subnet_id, address);
+    }
+    return (host);
+}
+
+
+ConstHostPtr
 HostMgr::get6(const SubnetID& subnet_id, const DuidPtr& duid,
                const HWAddrPtr& hwaddr) const {
     ConstHostPtr host = getCfgHosts()->get6(subnet_id, duid, hwaddr);
