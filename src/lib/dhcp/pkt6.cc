@@ -442,34 +442,49 @@ Pkt6::unpackTCP() {
 
 HWAddrPtr
 Pkt6::getMACFromDUID() {
-	OptionPtr opt_duid = getOption(D6O_CLIENTID);
-	uint8_t hlen = opt_duid->getData().size();
-	vector<uint8_t> hw_addr(hlen, 0);
-	std::vector<unsigned char> duid_data = opt_duid->getData();
+    OptionPtr opt_duid = getOption(D6O_CLIENTID);
+    if (!opt_duid) {
+        return (HWAddrPtr());
+    }
 
+    uint8_t hlen = opt_duid->getData().size();
+    vector<uint8_t> hw_addr(hlen, 0);
+    std::vector<unsigned char> duid_data = opt_duid->getData();
 
-	uint16_t hwtype = 0;
-	std::memcpy(&hwtype, &duid_data[2], 2);		// TODO nie jestem tego pewien
+    // Read the first two bytes. That duid type.
+    uint16_t duid_type = util::readUint16(&duid_data[0], duid_data.size());
 
+    switch (duid_type) {
+    case DUID::DUID_LL:
+    {
+        // 2 bytes of duid type, 2 bytes of hardware type and at least
+        // 1 byte of actual identification
+        if (duid_data.size() < 5) {
+            // This duid is truncated. We can't extract anything from it.
+            return (HWAddrPtr());
+        }
 
-	// checking if DUID is LLT or LL type
-	if ((duid_data[0] == 0x00) && (duid_data[1]== 0x01)){
-		hlen -= 8;
-		std::memcpy(&hw_addr, &duid_data[8], hlen);
+        uint16_t hwtype = util::readUint16(&duid_data[2], duid_data.size() - 2);
+        return (HWAddrPtr(new HWAddr(&duid_data[4], duid_data.size() - 4,
+                                     hwtype)));
+    }
+    case DUID::DUID_LLT:
+    {
+        // 2 bytes of duid type, 2 bytes of hardware, 4 bytes for timestamp,
+        // and at least 1 byte of actual identification
+        if (duid_data.size() < 9) {
+            // This duid is truncated. We can't extract anything from it.
+            return (HWAddrPtr());
+        }
 
-	}
-	else if ((duid_data[0] == 0x00) && (duid_data[1]== 0x03)){
-			hlen -= 4;
-			std::memcpy(&hw_addr, &duid_data[4], hlen);
-	}
-	// if none of them return NULL
-	else return HWAddrPtr();
-
-	hw_addr.resize(hlen);
-	hwaddr_= HWAddrPtr(new HWAddr(hw_addr, hwtype));
-	return (hwaddr_);
+        uint16_t hwtype = util::readUint16(&duid_data[2], duid_data.size() - 2);
+        return (HWAddrPtr(new HWAddr(&duid_data[8], duid_data.size() - 8,
+                                     hwtype)));
+    }
+    default:
+        return (HWAddrPtr());
+    }
 }
-
 
 std::string
 Pkt6::toText() {
