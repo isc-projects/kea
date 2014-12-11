@@ -1167,14 +1167,14 @@ TEST_F(Pkt6Test, getMACFromDUID) {
     pkt.addOption(clientid1);
     HWAddrPtr mac = pkt.getMAC(Pkt::HWADDR_SOURCE_DUID);
     ASSERT_TRUE(mac);
-    EXPECT_EQ("htype=7 0a:0b:0c:0d:0e:0f:10", mac->toText(true));
+    EXPECT_EQ("hwtype=7 0a:0b:0c:0d:0e:0f:10", mac->toText(true));
 
     // Let's test DUID-LL. This should work.
     ASSERT_TRUE(pkt.delOption(D6O_CLIENTID));
     pkt.addOption(clientid2);
     mac = pkt.getMAC(Pkt::HWADDR_SOURCE_DUID);
     ASSERT_TRUE(mac);
-    EXPECT_EQ("htype=11 0a:0b:0c:0d:0e", mac->toText(true));
+    EXPECT_EQ("hwtype=11 0a:0b:0c:0d:0e", mac->toText(true));
 
     // Finally, let's try DUID-EN. This should fail, as EN type does not
     // contain any MAC address information.
