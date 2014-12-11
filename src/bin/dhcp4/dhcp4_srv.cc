@@ -957,14 +957,17 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     OptionCustomPtr opt_serverid = boost::dynamic_pointer_cast<
         OptionCustom>(question->getOption(DHO_DHCP_SERVER_IDENTIFIER));
 
-    // Try to get the Requested IP Address option and use the address as a hint
-    // for the allocation engine. If the server doesn't already have a lease
-    // for this client it will try to allocate the one requested.
+    // Check if the client has sent a requested IP address option or
+    // ciaddr.
     OptionCustomPtr opt_requested_address = boost::dynamic_pointer_cast<
         OptionCustom>(question->getOption(DHO_DHCP_REQUESTED_ADDRESS));
     IOAddress hint("0.0.0.0");
     if (opt_requested_address) {
         hint = opt_requested_address->readAddress();
+
+    } else if (question->getCiaddr() != IOAddress("0.0.0.0")) {
+        hint = question->getCiaddr();
+
     }
 
     HWAddrPtr hwaddr = question->getHWAddr();
