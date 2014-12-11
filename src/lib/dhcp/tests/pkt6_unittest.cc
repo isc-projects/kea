@@ -1069,7 +1069,7 @@ TEST_F(Pkt6Test, getMACFromIPv6RelayOpt_singleRelay) {
         0x0a, 0x1b, 0x0b, 0x01, 0xca, 0xfe // MAC
     };
     OptionPtr relay_opt(new Option(Option::V6, 79,
-    		            OptionBuffer(opt_data, opt_data + sizeof(opt_data))));
+                            OptionBuffer(opt_data, opt_data + sizeof(opt_data))));
     info.options_.insert(make_pair(relay_opt->getType(), relay_opt));
 
     pkt.addRelayInfo(info);
@@ -1098,7 +1098,7 @@ TEST_F(Pkt6Test, getMACFromIPv6RelayOpt_multipleRelay) {
         0x1a, 0x30, 0x0b, 0xfa, 0xc0, 0xfe // MAC
     };
     OptionPtr relay_opt1(new Option(Option::V6, D6O_CLIENT_LINKLAYER_ADDR,
-    		            OptionBuffer(opt_data, opt_data + sizeof(opt_data))));
+                            OptionBuffer(opt_data, opt_data + sizeof(opt_data))));
 
     info1.options_.insert(make_pair(relay_opt1->getType(), relay_opt1));
     pkt.addRelayInfo(info1);
@@ -1117,7 +1117,7 @@ TEST_F(Pkt6Test, getMACFromIPv6RelayOpt_multipleRelay) {
     // We reuse the option and modify the MAC to be sure we get the right address
     opt_data[2] = 0xfa;
     OptionPtr relay_opt3(new Option(Option::V6, D6O_CLIENT_LINKLAYER_ADDR,
-    		            OptionBuffer(opt_data, opt_data + sizeof(opt_data))));
+                            OptionBuffer(opt_data, opt_data + sizeof(opt_data))));
     info3.options_.insert(make_pair(relay_opt3->getType(), relay_opt3));
     pkt.addRelayInfo(info3);
     ASSERT_EQ(3, pkt.relay_info_.size());
@@ -1129,6 +1129,58 @@ TEST_F(Pkt6Test, getMACFromIPv6RelayOpt_multipleRelay) {
     stringstream tmp;
     tmp << "hwtype=1 fa:30:0b:fa:c0:fe";
     EXPECT_EQ(tmp.str(), found->toText(true));
+}
+
+TEST_F(Pkt6Test, getMACFromDUID) {
+    Pkt6 pkt(DHCPV6_ADVERTISE, 1234);
+
+    // Although MACs are typically 6 bytes long, let's make this test a bit
+    // more challenging and use odd MAC lengths.
+
+    uint8_t duid_llt[] = { 0, 1, // type (DUID-LLT)
+                           0, 7, // hwtype (7 - just a randomly picked value)
+                           1, 2, 3, 4, // timestamp
+                           0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x10 // MAC address (7 bytes)
+    };
+
+    uint8_t duid_ll[] = { 0, 3, // type (DUID-LL)
+                        0, 11, // hwtype (11 - just a randomly picked value)
+                        0xa, 0xb, 0xc, 0xd, 0xe // MAC address (5 bytes)
+    };
+
+    uint8_t duid_en[] = { 0, 2, // type (DUID-EN)
+                        1, 2, 3, 4, // enterprise-id
+                        0xa, 0xb, 0xc // opaque data
+    };
+
+    OptionPtr clientid1(new Option(Option::V6, D6O_CLIENTID, OptionBuffer(
+                                       duid_llt, duid_llt + sizeof(duid_llt))));
+    OptionPtr clientid2(new Option(Option::V6, D6O_CLIENTID, OptionBuffer(
+                                       duid_ll, duid_ll + sizeof(duid_ll))));
+    OptionPtr clientid3(new Option(Option::V6, D6O_CLIENTID, OptionBuffer(
+                                       duid_en, duid_en + sizeof(duid_en))));
+
+    // Packet does not have any client-id, this call should fail
+    EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_DUID));
+
+    // Let's test DUID-LLT. This should work.
+    pkt.addOption(clientid1);
+    HWAddrPtr mac = pkt.getMAC(Pkt::HWADDR_SOURCE_DUID);
+    ASSERT_TRUE(mac);
+    EXPECT_EQ("htype=7 0a:0b:0c:0d:0e:0f:10", mac->toText(true));
+
+    // Let's test DUID-LL. This should work.
+    ASSERT_TRUE(pkt.delOption(D6O_CLIENTID));
+    pkt.addOption(clientid2);
+    mac = pkt.getMAC(Pkt::HWADDR_SOURCE_DUID);
+    ASSERT_TRUE(mac);
+    EXPECT_EQ("htype=11 0a:0b:0c:0d:0e", mac->toText(true));
+
+    // Finally, let's try DUID-EN. This should fail, as EN type does not
+    // contain any MAC address information.
+    ASSERT_TRUE(pkt.delOption(D6O_CLIENTID));
+    pkt.addOption(clientid3);
+    EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_DUID));
 }
 
 }
