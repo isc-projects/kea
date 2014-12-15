@@ -17,6 +17,10 @@
 #include <cc/data.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/host.h>
+#include <dhcpsrv/host_mgr.h>
+#include <dhcpsrv/subnet_id.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp4/tests/dhcp4_client.h>
 #include <boost/shared_ptr.hpp>
@@ -53,6 +57,7 @@ const char* DORA_CONFIGS[] = {
         "\"valid-lifetime\": 600,"
         "\"subnet4\": [ { "
         "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
         "    \"option-data\": [ {"
         "        \"name\": \"routers\","
@@ -400,6 +405,208 @@ TEST_F(DORATest, ciaddr) {
     // For DHCPNAK the ciaddr is always 0 (should not be copied) from the
     // client's message.
     EXPECT_EQ("0.0.0.0", resp->getCiaddr().toText());
+}
+
+// This test checks the following scenario:
+// - Client A performs 4-way exchange and obrains a lease from the dynamic pool.
+// - Reservation is created for the client A using an address out of the dynamic
+//   pool.
+// - Client A renews the lease.
+// - Server responds with DHCPNAK to indicate that the client should stop using
+//   an address for which it has a lease. Server doesn't want to renew an
+//   address for which the client doesn't have a reservation, while it has
+//   a reservation for a different address.
+// - Client A receives a DHCPNAK and returns to the DHCP server discovery.
+// - Client A performs a 4-way exchange with a server and the server allocates
+//   a reserved address to the Client A.
+// - Client A renews the allocated address and the server returns a DHCPACK.
+// - Reservation for the Client A is removed.
+// - Client A renews the (previously reserved) lease and the server returns
+//   DHCPNAK because the address in use is neither reserved nor belongs to
+//   the dynamic pool.
+// - Client A returns to the DHCP server discovery.
+// - Client A uses 4-way exchange to obtain a lease from the dynamic pool.
+// - The new address that the Client A is using is reserved for Client B.
+//   Client A still holds this address.
+// - Client B uses 4-way exchange to obtain a new lease.
+// - The server determines that the Client B has a reservation for the
+//   address which is in use by Client A. The server drops the client's
+//   DHCPDISCOVER message.
+// - Client A renews the lease.
+// - The server determines that the address that Client A is using is reserved
+//   for Client B. The server returns DHCPNAK to the Client A.
+// - Client B uses 4-way echange to obtain the reserved lease but the lease
+//   for the Client A hasn't been removed yet. Client B's DHCPDISCOVER
+//   message is dropped again.
+// - Client A uses 4-way exchange to allocate a new lease.
+// - The server allocates a new lease from the dynamic pool but it avoids
+//   allocating the address reserved for the Client B.
+// - Client B uses 4-way exchange to obtain a new lease.
+// - The server finally allocates a reserved address to the Client B.
+TEST_F(DORATest, reservations) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Configure DHCP server.
+    configure(DORA_CONFIGS[0], *client.getServer());
+    // Client A performs 4-way exchange and obrains a lease from the
+    // dynamic pool.
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
+                                  IOAddress>(new IOAddress("10.0.0.50"))));
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Response must not be relayed.
+    EXPECT_FALSE(resp->isRelayed());
+    // Make sure that the server id is present.
+    EXPECT_EQ("10.0.0.1", client.config_.serverid_.toText());
+    // Make sure that the client has got the lease with the requested address.
+    ASSERT_EQ("10.0.0.50", client.config_.lease_.addr_.toText());
+
+    configure(DORA_CONFIGS[0], false);
+    // Reservation is created for the client A using an address out of the
+    // dynamic pool.
+    HostPtr host(new Host(&client.getHWAddress()->hwaddr_[0],
+                          client.getHWAddress()->hwaddr_.size(),
+                          Host::IDENT_HWADDR, SubnetID(1),
+                          SubnetID(0), IOAddress("10.0.0.9")));
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    // Let's transition the client to Renewing state.
+    client.setState(Dhcp4Client::RENEWING);
+
+    // Set the unicast destination address to indicate that it is a renewal.
+    client.setDestAddress(IOAddress("10.0.0.1"));
+    ASSERT_NO_THROW(client.doRequest());
+
+    // Client should get the DHCPNAK from the server because the client has
+    // a reservation for a different address that it is trying to renew.
+    resp = client.getContext().response_;
+    ASSERT_EQ(DHCPNAK, static_cast<int>(resp->getType()));
+
+    // A conforming client would go back to the server discovery.
+    client.setState(Dhcp4Client::SELECTING);
+    // Obtain a lease from the server using the 4-way exchange.
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
+                                  IOAddress>(new IOAddress("0.0.0.0"))));
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK with a reserved
+    // address
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    ASSERT_EQ("10.0.0.9", client.config_.lease_.addr_.toText());
+
+    // Client A renews the allocated address.
+    client.setState(Dhcp4Client::RENEWING);
+    // Set the unicast destination address to indicate that it is a renewal.
+    client.setDestAddress(IOAddress("10.0.0.1"));
+    ASSERT_NO_THROW(client.doRequest());
+    // Make sure the server responded and renewed the client's address.
+    resp = client.getContext().response_;
+    ASSERT_EQ("10.0.0.9", client.config_.lease_.addr_.toText());
+
+    // By reconfiguring the server, we remove the existing reservations.
+    configure(DORA_CONFIGS[0]);
+
+    // Try to renew the existing lease again.
+    ASSERT_NO_THROW(client.doRequest());
+    // The reservation has been removed, so the server should respond with
+    // a DHCPNAK because the address that the client is using doesn't belong
+    // to a dynamic pool.
+    resp = client.getContext().response_;
+    ASSERT_EQ(DHCPNAK, static_cast<int>(resp->getType()));
+
+    // A conforming client would go back to the server discovery.
+    client.setState(Dhcp4Client::SELECTING);
+    // Obtain a lease from the server using the 4-way exchange.
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
+                                  IOAddress>(new IOAddress("0.0.0.0"))));
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Obtain the subnet to which the returned address belongs.
+    Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->
+        selectSubnet(client.config_.lease_.addr_);
+    ASSERT_TRUE(subnet);
+    // Make sure that the address has been allocated from the dynamic pool.
+    ASSERT_TRUE(subnet->inPool(Lease::TYPE_V4, client.config_.lease_.addr_));
+
+    // Remember the address allocated in the dynamic pool.
+    IOAddress in_pool_addr = client.config_.lease_.addr_;
+
+    // Create Client B.
+    Dhcp4Client clientB(client.getServer());
+    clientB.modifyHWAddr();
+
+    // Create reservation for the Client B, for the address that the
+    // Client A is using.
+    configure(DORA_CONFIGS[0], false);
+    host.reset(new Host(&clientB.getHWAddress()->hwaddr_[0],
+                        clientB.getHWAddress()->hwaddr_.size(),
+                        Host::IDENT_HWADDR, SubnetID(1),
+                        SubnetID(0), in_pool_addr));
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    // Client B performs a DHCPDISCOVER.
+    clientB.setState(Dhcp4Client::SELECTING);
+    // The server determines that the address reserved for Client B is
+    // in use by Client A so it drops the message from the Client B.
+    ASSERT_NO_THROW(clientB.doDiscover(boost::shared_ptr<
+                                       IOAddress>(new IOAddress("0.0.0.0"))));
+    ASSERT_FALSE(clientB.getContext().response_);
+
+    // Client A renews the lease.
+    client.setState(Dhcp4Client::RENEWING);
+    // Set the unicast destination address to indicate that it is a renewal.
+    client.setDestAddress(IOAddress(in_pool_addr));
+    ASSERT_NO_THROW(client.doRequest());
+    // Client A should get a DHCPNAK because it is using an address reserved
+    // for Client B.
+    resp = client.getContext().response_;
+    ASSERT_EQ(DHCPNAK, static_cast<int>(resp->getType()));
+
+    // Client B performs 4-way exchange but still doesn't get an address
+    // because Client A hasn't obtained a new lease, so it is still using
+    // an address reserved for Client B.
+    clientB.setState(Dhcp4Client::SELECTING);
+    // Obtain a lease from the server using the 4-way exchange.
+    ASSERT_NO_THROW(clientB.doDiscover(boost::shared_ptr<
+                                       IOAddress>(new IOAddress("0.0.0.0"))));
+    // Make sure that the server responded.
+    ASSERT_FALSE(clientB.getContext().response_);
+
+    // Client A performs 4-way exchange.
+    client.setState(Dhcp4Client::SELECTING);
+    // Obtain a lease from the server using the 4-way exchange.
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
+                                  IOAddress>(new IOAddress("0.0.0.0"))));
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    resp = client.getContext().response_;
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // The server should have assigned a different address than the one
+    // reserved for the Client B.
+    ASSERT_NE(client.config_.lease_.addr_.toText(), in_pool_addr.toText());
+    subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->
+        selectSubnet(client.config_.lease_.addr_);
+    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet->inPool(Lease::TYPE_V4, client.config_.lease_.addr_));
+
+    // Client B performs 4-way exchange and obtains a lease for the
+    // reserved address.
+    clientB.setState(Dhcp4Client::SELECTING);
+    ASSERT_NO_THROW(clientB.doDORA(boost::shared_ptr<
+                                  IOAddress>(new IOAddress("0.0.0.0"))));
+    // Make sure that the server responded.
+    ASSERT_TRUE(clientB.getContext().response_);
+    resp = clientB.getContext().response_;
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    ASSERT_EQ(in_pool_addr, clientB.config_.lease_.addr_);
 }
 
 } // end of anonymous namespace
