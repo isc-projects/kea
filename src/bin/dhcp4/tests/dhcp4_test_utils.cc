@@ -545,31 +545,33 @@ Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
 
     if (msg_type == DHCPDISCOVER) {
         ASSERT_NO_THROW(rsp = srv->processDiscover(received));
-        // Should return non-NULL packet.
-        ASSERT_TRUE(rsp);
+        // Should return NULL packet.
+        ASSERT_FALSE(rsp);
+
     } else {
         ASSERT_NO_THROW(rsp = srv->processRequest(received));
         // Should return non-NULL packet.
         ASSERT_TRUE(rsp);
+        // We should get the NAK packet with yiaddr set to 0.
+        EXPECT_EQ(DHCPNAK, rsp->getType());
+        ASSERT_EQ("0.0.0.0", rsp->getYiaddr().toText());
+
+        // Make sure that none of the requested options is returned in NAK.
+        // Also options such as Routers or Subnet Mask should not be there,
+        // because lease hasn't been acquired.
+        EXPECT_TRUE(noRequestedOptions(rsp));
+        EXPECT_TRUE(noBasicOptions(rsp));
     }
-    // We should get the NAK packet with yiaddr set to 0.
-    EXPECT_EQ(DHCPNAK, rsp->getType());
-    ASSERT_EQ("0.0.0.0", rsp->getYiaddr().toText());
-
-    // Make sure that none of the requested options is returned in NAK.
-    // Also options such as Routers or Subnet Mask should not be there,
-    // because lease hasn't been acquired.
-    EXPECT_TRUE(noRequestedOptions(rsp));
-    EXPECT_TRUE(noBasicOptions(rsp));
 }
 
 void
-Dhcpv4SrvTest::configure(const std::string& config) {
-    configure(config, srv_);
+Dhcpv4SrvTest::configure(const std::string& config, const bool commit) {
+    configure(config, srv_, commit);
 }
 
 void
-Dhcpv4SrvTest::configure(const std::string& config, NakedDhcpv4Srv& srv) {
+Dhcpv4SrvTest::configure(const std::string& config, NakedDhcpv4Srv& srv,
+                         const bool commit) {
     ElementPtr json = Element::fromJSON(config);
     ConstElementPtr status;
 
@@ -580,7 +582,9 @@ Dhcpv4SrvTest::configure(const std::string& config, NakedDhcpv4Srv& srv) {
     ConstElementPtr comment = config::parseAnswer(rcode, status);
     ASSERT_EQ(0, rcode);
 
-    CfgMgr::instance().commit();
+    if (commit) {
+        CfgMgr::instance().commit();
+    }
  }
 
 

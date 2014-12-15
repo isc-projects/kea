@@ -103,7 +103,7 @@ public:
     ///
     /// @param srv An instance of the DHCPv4 server to be used.
     /// @param state Initial client's state.
-    Dhcp4Client(boost::shared_ptr<NakedDhcpv4Srv>& srv,
+    Dhcp4Client(boost::shared_ptr<NakedDhcpv4Srv> srv,
                 const State& state = SELECTING);
 
     /// @brief Creates a lease for the client using the specified address
@@ -203,7 +203,9 @@ public:
     HWAddrPtr generateHWAddr(const uint8_t htype = HTYPE_ETHER) const;
 
     /// @brief Returns HW address used by the client.
-    HWAddrPtr getHWAddress() const;
+    HWAddrPtr getHWAddress() const {
+        return (hwaddr_);
+    }
 
     /// @brief Returns current context.
     const Context& getContext() const {

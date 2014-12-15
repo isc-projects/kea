@@ -405,13 +405,18 @@ public:
     /// @brief Runs DHCPv4 configuration from the JSON string.
     ///
     /// @param config String holding server configuration in JSON format.
-    void configure(const std::string& config);
+    /// @param commit A boolean flag indicating if the new configuration
+    /// should be committed (if true), or not (if false).
+    void configure(const std::string& config, const bool commit = true);
 
     /// @brief Configure specified DHCP server using JSON string.
     ///
     /// @param config String holding server configuration in JSON format.
     /// @param srv Instance of the server to be configured.
-    void configure(const std::string& config, NakedDhcpv4Srv& srv);
+    /// @param commit A boolean flag indicating if the new configuration
+    /// should be committed (if true), or not (if false).
+    void configure(const std::string& config, NakedDhcpv4Srv& srv,
+                   const bool commit = true);
 
     /// @brief This function cleans up after the test.
     virtual void TearDown();
