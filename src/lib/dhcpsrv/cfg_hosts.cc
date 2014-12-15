@@ -50,13 +50,13 @@ void
 CfgHosts::getAllInternal(const std::vector<uint8_t>& identifier,
                          const Host::IdentifierType& identifier_type,
                          Storage& storage) const {
-    // Search for the Host using the identifier and identifier type as a
-    // composite key.
+    // Use the identifier and identifier type as a composite key.
     const HostContainerIndex0& idx = hosts_.get<0>();
-    std::pair<HostContainerIndex0::iterator, HostContainerIndex0::iterator> r =
-        idx.equal_range(boost::make_tuple(identifier, identifier_type));
+    boost::tuple<const std::vector<uint8_t>, const Host::IdentifierType> t =
+        boost::make_tuple(identifier, identifier_type);
+
     // Append each Host object to the storage.
-    for (HostContainerIndex0::iterator host = r.first; host != r.second;
+    for (HostContainerIndex0::iterator host = idx.lower_bound(t); host != idx.upper_bound(t);
          ++host) {
         storage.push_back(*host);
     }

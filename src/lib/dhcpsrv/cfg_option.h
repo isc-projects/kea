@@ -303,6 +303,10 @@ public:
     /// name, or an uint32_t value, in which case it specifies a vendor
     /// identifier.
     ///
+    /// @note If there are multiple options with the same key, only one will
+    /// be returned.  No indication will be given of the presence of others,
+    /// and the instance returned is not determinable.
+    ///
     /// @param key Option space name or vendor identifier.
     /// @param option_code Code of the option to be returned.
     /// @tparam Selector one of: @c std::string or @c uint32_t
@@ -312,18 +316,21 @@ public:
     template<typename Selector>
     OptionDescriptor get(const Selector& key,
                          const uint16_t option_code) const {
+
+        // Check for presence of options.
         OptionContainerPtr options = getAll(key);
         if (!options || options->empty()) {
             return (OptionDescriptor(false));
         }
 
+        // Some options present, locate the one we are interested in.
         const OptionContainerTypeIndex& idx = options->get<1>();
-        const OptionContainerTypeRange& range = idx.equal_range(option_code);
-        if (std::distance(range.first, range.second) == 0) {
+        OptionContainerTypeIndex::const_iterator od_itr = idx.find(option_code);
+        if (od_itr == idx.end()) {
             return (OptionDescriptor(false));
         }
 
-        return (*range.first);
+        return (*od_itr);
     }
 
     /// @brief Converts option space name to vendor id.
