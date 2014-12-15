@@ -1312,6 +1312,11 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
         // include in the response. If client did not request
         // them we append them for him.
         appendBasicOptions(discover, offer);
+
+    } else {
+        // If the server can't offer an address, it drops the packet.
+        return (Pkt4Ptr());
+
     }
 
     // Set the src/dest IP address, port and interface for the outgoing

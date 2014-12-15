@@ -733,10 +733,19 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
     if (!ctx.host_) {
         ConstHostPtr host = HostMgr::instance().get4(ctx.subnet_->getID(),
                                                      lease->addr_);
-        if (host && ctx.hwaddr_ && (*host->getHWAddress() != *ctx.hwaddr_)) {
+/*        if ((host && ctx.hwaddr_ && (*host->getHWAddress() != *ctx.hwaddr_)) ||
+            ((ctx.requested_address_ != IOAddress("0.0.0.0")) &&
+             !ctx.subnet_->inPool(Lease::TYPE_V4, requested_address_))) {
+            ctx.interrupt_processing_ = !ctx.fake_allocation_;
+            return (Lease4Ptr());
+        } */
+
+        if ((host && ctx.hwaddr_ && (*host->getHWAddress() != *ctx.hwaddr_)) ||
+            (!ctx.subnet_->inPool(Lease::TYPE_V4, lease->addr_))) {
             ctx.interrupt_processing_ = !ctx.fake_allocation_;
             return (Lease4Ptr());
         }
+
     }
 
     // Let's keep the old data. This is essential if we are using memfile
@@ -967,6 +976,10 @@ AllocEngine::replaceClientLease(Lease4Ptr& lease, Context4& ctx) {
     }
 
     IOAddress prev_address = lease->addr_;
+    if (!ctx.fake_allocation_) {
+        LeaseMgrFactory::instance().deleteLease(prev_address);
+    }
+
     if (!ctx.host_) {
         ConstHostPtr host = HostMgr::instance().get4(ctx.subnet_->getID(),
                                                      ctx.requested_address_);
@@ -978,9 +991,7 @@ AllocEngine::replaceClientLease(Lease4Ptr& lease, Context4& ctx) {
 
     } else {
         lease->addr_ = ctx.host_->getIPv4Reservation();
-
     }
-
 
     updateLease4Information(lease, ctx);
 
@@ -1014,7 +1025,6 @@ AllocEngine::replaceClientLease(Lease4Ptr& lease, Context4& ctx) {
     }
 
     if (!ctx.fake_allocation_) {
-        LeaseMgrFactory::instance().deleteLease(prev_address);
         LeaseMgrFactory::instance().addLease(lease);
     }
 

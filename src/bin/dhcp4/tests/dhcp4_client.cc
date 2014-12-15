@@ -57,7 +57,7 @@ Dhcp4Client::Dhcp4Client(const Dhcp4Client::State& state) :
     use_relay_(false) {
 }
 
-Dhcp4Client::Dhcp4Client(boost::shared_ptr<NakedDhcpv4Srv>& srv,
+Dhcp4Client::Dhcp4Client(boost::shared_ptr<NakedDhcpv4Srv> srv,
                          const Dhcp4Client::State& state) :
     config_(),
     ciaddr_(IOAddress("0.0.0.0")),
