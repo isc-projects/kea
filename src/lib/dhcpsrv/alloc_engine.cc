@@ -494,23 +494,28 @@ AllocEngine::allocateLease4(const SubnetPtr& subnet, const ClientIdPtr& clientid
 
     try {
 
+        // Set allocator.
         AllocatorPtr allocator = getAllocator(Lease::TYPE_V4);
 
-        // Allocator is always created in AllocEngine constructor and there is
-        // currently no other way to set it, so that check is not really necessary.
-        if (!allocator) {
-            isc_throw(InvalidOperation, "No allocator selected");
-        }
-
         if (!subnet) {
-            isc_throw(InvalidOperation, "Can't allocate IPv4 address without subnet");
+            isc_throw(BadValue, "Can't allocate IPv4 address without subnet");
         }
 
         if (!hwaddr) {
-            isc_throw(InvalidOperation, "HWAddr must be defined");
+            isc_throw(BadValue, "HWAddr must be defined");
         }
 
-        // Build the processing context.
+        /// @todo The context for lease allocation should really be created
+        /// by the DHCPv4 server and passed to this function. The reason for
+        /// this is that the server should retrieve the Host object for the
+        /// client because the Host object contains the data not only useful
+        /// for the address allocation but also hostname and DHCP options
+        /// for the client. The Host object should be passed in the context.
+        /// Making this change would require a change to the allocateLease4
+        /// API which would in turn require lots of changes in unit tests.
+        /// The ticket introducing a context and host reservation in the
+        /// allocation engine is complex enough by itself to warrant that
+        /// the API change is done with a separate ticket.
         Context4 ctx;
         ctx.subnet_ = subnet;
         ctx.clientid_ = clientid;
@@ -650,22 +655,23 @@ AllocEngine::allocateLease4(const SubnetPtr& subnet, const ClientIdPtr& clientid
             }
         }
 
-        // Hint is in the pool but is not available. Search the pool until first of
-        // the following occurs:
+        // No address was requested, requested address was not in pool or the
+        // allocation was not successful so far. Let's try to find a diffferent
+        // address for the client.  Search the pool until first of the following
+        // occurs:
         // - we find a free address
         // - we find an address for which the lease has expired
         // - we exhaust the number of tries
         //
-        // @todo: Current code does not handle pool exhaustion well. It will be
-        // improved. Current problems:
-        // 1. with attempts set to too large value (e.g. 1000) and a small pool (e.g.
-        // 10 addresses), we will iterate over it 100 times before giving up
-        // 2. attempts 0 mean unlimited (this is really UINT_MAX, not infinite)
-        // 3. the whole concept of infinite attempts is just asking for infinite loop
-        // We may consider some form or reference counting (this pool has X addresses
-        // left), but this has one major problem. We exactly control allocation
-        // moment, but we currently do not control expiration time at all
-
+        /// @todo: Current code does not handle pool exhaustion well. It will be
+        /// improved. Current problems:
+        /// 1. with attempts set to too large value (e.g. 1000) and a small pool (e.g.
+        /// 10 addresses), we will iterate over it 100 times before giving up
+        /// 2. attempts 0 mean unlimited (this is really UINT_MAX, not infinite)
+        /// 3. the whole concept of infinite attempts is just asking for infinite loop
+        /// We may consider some form or reference counting (this pool has X addresses
+        /// left), but this has one major problem. We exactly control allocation
+        /// moment, but we currently do not control expiration time at all
         unsigned int i = attempts_;
         do {
             IOAddress candidate = allocator->pickAddress(subnet, clientid,
@@ -733,13 +739,9 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
     if (!ctx.host_) {
         ConstHostPtr host = HostMgr::instance().get4(ctx.subnet_->getID(),
                                                      lease->addr_);
-/*        if ((host && ctx.hwaddr_ && (*host->getHWAddress() != *ctx.hwaddr_)) ||
-            ((ctx.requested_address_ != IOAddress("0.0.0.0")) &&
-             !ctx.subnet_->inPool(Lease::TYPE_V4, requested_address_))) {
-            ctx.interrupt_processing_ = !ctx.fake_allocation_;
-            return (Lease4Ptr());
-        } */
-
+        // Do not renew the lease if:
+        // - If address is reserved for someone else or ...
+        // - renewed address doesn't belong to a pool.
         if ((host && ctx.hwaddr_ && (*host->getHWAddress() != *ctx.hwaddr_)) ||
             (!ctx.subnet_->inPool(Lease::TYPE_V4, lease->addr_))) {
             ctx.interrupt_processing_ = !ctx.fake_allocation_;
@@ -975,20 +977,19 @@ AllocEngine::replaceClientLease(Lease4Ptr& lease, Context4& ctx) {
                   " replaceClientLease");
     }
 
+    // Remember the previous address for this lease.
     IOAddress prev_address = lease->addr_;
-    if (!ctx.fake_allocation_) {
-        LeaseMgrFactory::instance().deleteLease(prev_address);
-    }
 
     if (!ctx.host_) {
         ConstHostPtr host = HostMgr::instance().get4(ctx.subnet_->getID(),
                                                      ctx.requested_address_);
+        // If there is a reservation for the new address and the reservation
+        // is made for another client, do not use this address.
         if (host && ctx.hwaddr_ && (*host->getHWAddress() != *ctx.hwaddr_)) {
             ctx.interrupt_processing_ = true;
             return (Lease4Ptr());
         }
         lease->addr_ = ctx.requested_address_;
-
     } else {
         lease->addr_ = ctx.host_->getIPv4Reservation();
     }
@@ -1024,7 +1025,15 @@ AllocEngine::replaceClientLease(Lease4Ptr& lease, Context4& ctx) {
         ctx.callout_handle_->getArgument("lease4", lease);
     }
 
-    if (!ctx.fake_allocation_) {
+    /// @todo There should be a callout for a deletion of an old lease.
+    /// The lease4_release callout is in appropriate, because by definition
+    /// it is invoked when DHCPRELEASE packet is received.
+
+    if (!ctx.fake_allocation_ && !skip) {
+        // We can't use LeaseMgr::updateLease because it identifies the
+        // lease by an IP address. Instead, we have to delete an old
+        // lease and add a new one.
+        LeaseMgrFactory::instance().deleteLease(prev_address);
         LeaseMgrFactory::instance().addLease(lease);
     }
 

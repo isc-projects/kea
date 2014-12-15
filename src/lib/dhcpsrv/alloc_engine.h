@@ -305,18 +305,66 @@ protected:
 
     /// @brief Returns IPv4 lease.
     ///
-    /// This method finds the appropriate lease for the client using the
-    /// following algorithm:
-    /// - If lease exists for the combination of the HW address, client id and
-    /// subnet, try to renew a lease and return it.
-    /// - If lease exists for the combination of the client id and subnet, try
-    /// to renew the lease and return it.
-    /// - If client supplied an address hint and this address is available,
-    /// allocate the new lease with this address.
-    /// - If client supplied an address hint and the lease for this address
-    /// exists in the database, return this lease if it is expired.
-    /// - Pick new address from the pool and try to allocate it for the client,
-    /// if expired lease exists for the picked address, try to reuse this lease.
+    /// This method finds a lease for a client using the following algorithm:
+    /// - If a lease exists for the combination of the HW address or client id
+    ///   and a subnet, try to use this lease for the client. If the client
+    ///   has a reservation for an address for which the lease was created or
+    ///   the client desires to renew the lease for this address (ciaddr or
+    ///   requested IP address option), the server renews the lease for the
+    ///   client. If the client desires a different address or the client has
+    ///   a (potentially new) reservation for a different address, the existing
+    ///   lease is replaced with a new lease.
+    /// - If the client has no lease in the lease database the server will try
+    ///   to allocate a new lease. If the client has a reservation for the
+    ///   particular address or if it has specified a desired address the
+    ///   server will check if the particular address is not allocated to
+    ///   other client. If the address is available, the server will allocate
+    ///   this address for the client.
+    /// - If the desired address is unavailable the server checks if the
+    ///   lease for this address has expired. If the lease is expired, the
+    ///   server will allocate this lease to the client. The relevant
+    ///   information will be updated, e.g. new client HW address, host name
+    ///   etc.
+    /// - If the desired address is in use by other client, the server will try
+    ///   to allocate a different address. The server picks addresses from
+    ///   a dynamic pool and checks if the address is available and that
+    ///   it is not reserved for another client. If it is in use by another
+    ///   client or if it is reserved for another client, this address is not
+    ///   allocated. The server picks next address and repeats this check.
+    ///   Note that the server ceases allocation after configured number
+    ///   of unsuccessful attempts.
+    ///
+    /// The lease allocation process is slightly different for the
+    /// DHCPDISCOVER and DHCPREQUEST messages. In the former case, the client
+    /// may specify the requested IP address option with a desired address and
+    /// the server treats this address as hint. This means that the server may
+    /// allocate a different address on its discretion and send it to the
+    /// client in the DHCPOFFER. If the client accepts this offer it specifies
+    /// this address in the requested IP address option in the DHCPREQUEST.
+    /// At this point, the allocation engine will use the request IP address
+    /// as a hard requirement and if this address can't be allocated for
+    /// any reason, the allocation engine returns NULL lease. As a result,
+    /// the DHCP server sends a DHCPNAK to the client and the client
+    /// falls back to the DHCP server discovery.
+    ///
+    /// The only exception from this rule is when the client doesn't specify
+    /// a requested IP address option (invalid behavior) in which case the
+    /// allocation engine will try to allocate any address.
+    ///
+    /// If there is an address reservation specified for the particular client
+    /// the reserved address always takes precedence over addresses from the
+    /// dynamic pool or even an address currently allocated for this client.
+    ///
+    /// It is possible that the address reserved for the particular client
+    /// is in use by other client, e.g. as a result of pools reconfigruation.
+    /// In this case, when the client requests allocation of the reserved
+    /// address and the server determines that it is leased to someone else,
+    /// the allocation engine doesn't allocate a lease for the client having
+    /// a reservation. When the client having a lease returns to renew, the
+    /// allocation engine doesn't extend the lease for it and returns a NULL
+    /// pointer. The client falls back to the 4-way exchange and a different
+    /// lease is allocated. At this point, the reserved address is freed and
+    /// can be allocated to the client which holds this reservation.
     ///
     /// When a server should do DNS updates, it is required that allocation
     /// returns the information how the lease was obtained by the allocation
@@ -330,6 +378,8 @@ protected:
     /// that new lease was allocated for the client. If non-NULL value is
     /// returned, it is an indication that allocation engine reused/renewed an
     /// existing lease.
+    ///
+    /// @todo Replace parameters with a single parameter of a @c Context4 type.
     ///
     /// @param subnet subnet the allocation should come from
     /// @param clientid Client identifier
@@ -348,7 +398,7 @@ protected:
     ///        lease. The NULL pointer indicates that lease didn't exist prior
     ///        to calling this function (e.g. new lease has been allocated).
     ///
-    /// @return Allocated IPv4 lease (or NULL if allocation failed)
+    /// @return Allocated IPv4 lease (or NULL if allocation failed).
     Lease4Ptr
     allocateLease4(const SubnetPtr& subnet, const ClientIdPtr& clientid,
                    const HWAddrPtr& hwaddr,
@@ -365,6 +415,7 @@ protected:
     ///
     /// The address of the lease being renewed is NOT updated.
     ///
+    /// @param lease A lease to be renewed.
     /// @param ctx Message processing context. It holds various information
     /// extracted from the client's message and required to allocate a lease.
     ///
