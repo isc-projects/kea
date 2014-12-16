@@ -1253,10 +1253,18 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
         hostname = fqdn->getDomainName();
     }
 
-    // Attempt to get MAC address using any of available mechanisms.
-    // It's ok if there response is NULL. Hardware address is optional in Lease6
-    /// @todo: Make this configurable after trac 3554 is done.
-    HWAddrPtr hwaddr = query->getMAC(Pkt::HWADDR_SOURCE_ANY);
+    // Attempt to get MAC address using configured mechanisms.
+    // It's ok if there response is NULL. Hardware address is optional in Lease6.
+    std::vector<uint32_t> mac_sources = CfgMgr::instance().getCurrentCfg()->
+        getMACSources();
+    HWAddrPtr hwaddr;
+    for (std::vector<uint32_t>::const_iterator it = mac_sources.begin();
+         it != mac_sources.end(); ++it) {
+        hwaddr = query->getMAC(*it);
+        if (hwaddr) {
+            break;
+        }
+    }
 
     // Use allocation engine to pick a lease for this client. Allocation engine
     // will try to honour the hint, but it is just a hint - some other address

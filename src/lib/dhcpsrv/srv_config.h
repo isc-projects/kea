@@ -235,6 +235,28 @@ public:
         return (cfg_hosts_);
     }
 
+    /// @brief Adds additional MAC/hardware address aquisition.
+    ///
+    /// @param source MAC source (see constants in Pkt::HWADDR_SOURCE_*)
+    ///
+    /// Specified source is being added to the mac_sources_ array.
+    void addMACSource(uint32_t source) {
+        mac_sources_.push_back(source);
+    }
+
+    /// @brief Provides access to the configure MAC/Hardware address sources.
+    ///
+    /// @note The const reference returned is only valid as long as the
+    /// object that returned it.
+    const std::vector<uint32_t>& getMACSources() const {
+        return mac_sources_;
+    }
+
+    /// @brief Removes any configured MAC/Hardware address sources.
+    void clearMACSources() {
+        mac_sources_.clear();
+    }
+
     //@}
 
     /// @brief Copies the currnet configuration to a new configuration.
@@ -310,6 +332,7 @@ public:
 
     //@}
 
+
 private:
 
     /// @brief Sequence number identifying the configuration.
@@ -348,6 +371,8 @@ private:
     /// reservations for different IPv4 and IPv6 subnets.
     CfgHostsPtr cfg_hosts_;
 
+    /// @brief A list of configured MAC sources.
+    std::vector<uint32_t> mac_sources_;
 };
 
 /// @name Pointers to the @c SrvConfig object.
