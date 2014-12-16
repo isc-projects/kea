@@ -1,11 +1,12 @@
 # This is an example configuration file for DHCPv6 server in Kea.
-# It's a basic scenario with one IPv6 subnet configured. It is
-# assumed that one subnet (2001:db8:1::/64 is available directly
+# It attempts to showcase some of the more advanced features.
+# Topology wise, it's a basic scenario with one IPv6 subnet configured.
+# It is assumed that one subnet (2001:db8:1::/64) is available directly
 # over eth0 interface.
 
 { "Dhcp6":
 
-{ 
+{
 # Kea is told to listen on eth0 interface only.
   "interfaces": [ "eth0" ],
 
@@ -15,6 +16,19 @@
   "lease-database": {
     "type": "memfile"
   },
+
+# Kea 0.9.1 introduced MAC/hardware addresses support in DHCPv6. There is
+# no single reliable method of getting MAC address information in DHCPv6.
+# Kea supports several methods. Depending on your network set up, some
+# methods may be more preferable than others, hence the configuration
+# parameter. 'mac-sources' is a list of methods. Allowed parameters are:
+# any, raw, duid, ipv6-link-local, client-link-addr-option, rfc6939 (which
+# is an alias for client-link-addr-option), remote-id, rfc4649 (which is an
+# alias for remote-id, subscriber-id, rfc4580 (which is an alias for
+# subscriber-id) and docsis.
+#
+# If mac-sources are not specified, a default value of 'any' is used.
+  "mac-sources": [ "client-link-addr-option", "duid", "ipv6-link-local" ],
 
 # Addresses will be assigned with preferred and valid lifetimes
 # being 3000 and 4000, respectively. Client is told to start
@@ -29,7 +43,7 @@
 
 # The following list defines subnets. Each subnet consists of at
 # least subnet and pool entries.
-  "subnet6": [ 
+  "subnet6": [
     {
       "pools": [ { "pool": "2001:db8:1::/80" } ],
       "subnet": "2001:db8:1::/64",
@@ -48,7 +62,7 @@
                 {
                     "output": "/var/log/kea-debug.log"
                 }
-            ], 
+            ],
             "debuglevel": 99,
             "severity": "DEBUG"
         }
@@ -56,4 +70,3 @@
 }
 
 }
-
