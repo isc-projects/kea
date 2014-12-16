@@ -99,7 +99,7 @@ public:
     ///
     /// @throw BadValue if specified string is unknown
     /// @return bitmask version of a given method
-    static uint16_t MACSourceFromText(const std::string& name);
+    static uint32_t MACSourceFromText(const std::string& name);
 
 protected:
 

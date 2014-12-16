@@ -233,7 +233,7 @@ Pkt::getMACFromIPv6(const isc::asiolink::IOAddress& addr) {
     return (HWAddrPtr(new HWAddr(bin, hwtype)));
 }
 
-uint16_t Pkt::MACSourceFromText(const std::string& name) {
+uint32_t Pkt::MACSourceFromText(const std::string& name) {
 
     struct {
         const char * name;
@@ -253,7 +253,7 @@ uint16_t Pkt::MACSourceFromText(const std::string& name) {
     };
 
     for (int i=0; i < sizeof(sources)/sizeof(sources[0]); ++i) {
-        if (name.compare(sources[i].name)) {
+        if (name.compare(sources[i].name) == 0) {
             return (sources[i].type);
         }
     }
