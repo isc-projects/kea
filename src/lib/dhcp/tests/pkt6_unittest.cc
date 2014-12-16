@@ -1130,4 +1130,34 @@ TEST_F(Pkt6Test, getMACFromIPv6RelayOpt_multipleRelay) {
     tmp << "hwtype=1 fa:30:0b:fa:c0:fe";
     EXPECT_EQ(tmp.str(), found->toText(true));
 }
+
+// Checks whether Pkt::MACSourceFromText is working correctly.
+// Technically, this is a Pkt, not Pkt6 test, but since there is no separate
+// unit-tests for Pkt and it is abstract, so it would be tricky to test it
+// directly. Hence test is being run in Pkt6.
+TEST_F(Pkt6Test, MACSourceFromText) {
+    EXPECT_THROW(Pkt::MACSourceFromText("unknown"), BadValue);
+
+    EXPECT_EQ(Pkt::HWADDR_SOURCE_ANY, Pkt::MACSourceFromText("any"));
+    EXPECT_EQ(Pkt::HWADDR_SOURCE_RAW, Pkt::MACSourceFromText("raw"));
+    EXPECT_EQ(Pkt::HWADDR_SOURCE_DUID, Pkt::MACSourceFromText("duid"));
+    EXPECT_EQ(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL,
+              Pkt::MACSourceFromText("ipv6-link-local"));
+    EXPECT_EQ(Pkt::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION,
+              Pkt::MACSourceFromText("client-link-addr-option"));
+    EXPECT_EQ(Pkt::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION,
+              Pkt::MACSourceFromText("rfc6939"));
+    EXPECT_EQ(Pkt::HWADDR_SOURCE_REMOTE_ID,
+              Pkt::MACSourceFromText("remote-id"));
+    EXPECT_EQ(Pkt::HWADDR_SOURCE_REMOTE_ID,
+              Pkt::MACSourceFromText("rfc4649"));
+    EXPECT_EQ(Pkt::HWADDR_SOURCE_SUBSCRIBER_ID,
+              Pkt::MACSourceFromText("subscriber-id"));
+    EXPECT_EQ(Pkt::HWADDR_SOURCE_SUBSCRIBER_ID,
+              Pkt::MACSourceFromText("rfc4580"));
+    EXPECT_EQ(Pkt::HWADDR_SOURCE_DOCSIS,
+              Pkt::MACSourceFromText("docsis"));
+
+}
+
 }
