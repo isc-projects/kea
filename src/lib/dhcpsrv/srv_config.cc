@@ -16,6 +16,7 @@
 #include <dhcpsrv/srv_config.h>
 #include <log/logger_manager.h>
 #include <log/logger_specification.h>
+#include <dhcp/pkt.h> // Needed for HWADDR_SOURCE_*
 #include <list>
 #include <sstream>
 
@@ -28,12 +29,18 @@ SrvConfig::SrvConfig()
     : sequence_(0), cfg_option_def_(new CfgOptionDef()),
       cfg_option_(new CfgOption()), cfg_subnets4_(new CfgSubnets4()),
       cfg_subnets6_(new CfgSubnets6()), cfg_hosts_(new CfgHosts()) {
+
+    // By default, use any hardware source that is available.
+    mac_sources_.push_back(Pkt::HWADDR_SOURCE_ANY);
 }
 
 SrvConfig::SrvConfig(const uint32_t sequence)
     : sequence_(sequence), cfg_option_def_(new CfgOptionDef()),
       cfg_option_(new CfgOption()), cfg_subnets4_(new CfgSubnets4()),
       cfg_subnets6_(new CfgSubnets6()), cfg_hosts_(new CfgHosts()) {
+
+    // By default, use any hardware source that is available.
+    mac_sources_.push_back(Pkt::HWADDR_SOURCE_ANY);
 }
 
 std::string

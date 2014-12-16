@@ -422,6 +422,21 @@
                 } ]
             }
       },
+
+      { "item_name": "mac-sources",
+        "item_type": "list",
+        "item_optional": true,
+        "item_default": [ "any" ],
+        "item_description": "Lists MAC/hardware address acquisition sources",
+        "list_item_spec":
+        {
+          "item_name": "source",
+          "item_type": "string",
+          "item_optional": true,
+          "item_default": "any"
+        }
+      } ,
+
       { "item_name": "dhcp-ddns",
         "item_type": "map",
         "item_optional": false,
