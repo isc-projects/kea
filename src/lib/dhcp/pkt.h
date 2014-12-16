@@ -44,50 +44,62 @@ public:
     ///
     /// @brief The list covers all possible MAC/hw address sources.
     ///
-    /// @note The uncommented ones are currently supported. When you implement
-    /// a new method, please uncomment appropriate line here.
-    ///
     /// @{
 
     /// Not really a type, only used in getMAC() calls.
-    static const uint32_t HWADDR_SOURCE_ANY = 0xffff;
+    static const uint32_t HWADDR_SOURCE_ANY;
 
     /// Used when actual origin is not known, e.g. when reading from a
     /// lease database that didn't store that information.
-    static const uint32_t HWADDR_SOURCE_UNKNOWN = 0x0000;
+    static const uint32_t HWADDR_SOURCE_UNKNOWN;
 
     /// Obtained first hand from raw socket (100% reliable).
-    static const uint32_t HWADDR_SOURCE_RAW = 0x0001;
+    static const uint32_t HWADDR_SOURCE_RAW;
 
     /// Extracted from DUID-LL or DUID-LLT (not 100% reliable as the client
     /// can send fake DUID).
-    //static const uint32_t HWADDR_SOURCE_DUID = 0x0002;
+    static const uint32_t HWADDR_SOURCE_DUID;
 
     /// Extracted from IPv6 link-local address. Not 100% reliable, as the
     /// client can use different IID other than EUI-64, e.g. Windows supports
     /// RFC4941 and uses random values instead of EUI-64.
-    static const uint32_t HWADDR_SOURCE_IPV6_LINK_LOCAL = 0x0004;
+    static const uint32_t HWADDR_SOURCE_IPV6_LINK_LOCAL;
 
     /// Get it from RFC6939 option. (A relay agent can insert client link layer
     /// address option). Note that a skilled attacker can fake that by sending
     /// his request relayed, so the legitimate relay will think it's a second
     /// relay.
-    static const uint32_t HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION = 0x0008;
+    static const uint32_t HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION;
 
     /// A relay can insert remote-id. In some deployments it contains a MAC
     /// address (RFC4649).
-    //static const uint32_t HWADDR_SOURCE_REMOTE_ID = 0x0010;
+    static const uint32_t HWADDR_SOURCE_REMOTE_ID;
 
     /// A relay can insert a subscriber-id option. In some deployments it
     /// contains a MAC address (RFC4580).
-    //static const uint32_t HWADDR_SOURCE_SUBSCRIBER_ID = 0x0020;
+    static const uint32_t HWADDR_SOURCE_SUBSCRIBER_ID;
 
     /// A CMTS (acting as DHCP relay agent) that supports DOCSIS standard
     /// can insert DOCSIS options that contain client's MAC address.
     /// Client in this context would be a cable modem.
-    //static const uint32_t HWADDR_SOURCE_DOCSIS_OPTIONS = 0x0040;
+    static const uint32_t HWADDR_SOURCE_DOCSIS;
 
     /// @}
+
+    /// @brief Attempts to convert known hardware address sources to uint32_t
+    ///
+    /// Supported strings are: any => 0xffffffff
+    ///                        raw => 0x00000001
+    ///                        duid => 0x00000002
+    ///                        ipv6-link-local 0x00000004
+    ///                        client-link-addr-option, rfc6939 => 0x00000008
+    ///                        remote-id, rfc4649 => 0x00000010
+    ///                        subscriber-id, rfc4580 => 0x00000020
+    ///                        docsis => 0x00000040
+    ///
+    /// @throw BadValue if specified string is unknown
+    /// @return bitmask version of a given method
+    static uint16_t MACSourceFromText(const std::string& name);
 
 protected:
 

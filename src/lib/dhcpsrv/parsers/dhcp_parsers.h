@@ -382,12 +382,10 @@ private:
 
 /// @brief parser for interface list definition
 ///
-/// This parser handles Dhcp4/interface entry.
+/// This parser handles Dhcp4/interfaces and Dhcp6/interfaces entries.
 /// It contains a list of network interfaces that the server listens on.
 /// In particular, it can contain an entry called "all" or "any" that
 /// designates all interfaces.
-///
-/// It is useful for parsing Dhcp4/interface parameter.
 class InterfaceListConfigParser : public DhcpConfigParser {
 public:
 
@@ -421,6 +419,48 @@ private:
     /// Global parser context.
     ParserContextPtr global_context_;
 };
+
+
+/// @brief parser for MAC/hardware aquisition sources
+///
+/// This parser handles Dhcp6/mac-sources entry.
+/// It contains a list of MAC/hardware aquisition source, i.e. methods how
+/// MAC address can possibly by obtained in DHCPv6. For a currently supported
+/// methods, see @ref isc::dhcp::Pkt::getMAC.
+class MACSourcesListConfigParser : public DhcpConfigParser {
+public:
+
+    /// @brief constructor
+    ///
+    /// As this is a dedicated parser, it must be used to parse
+    /// "mac-sources" parameter only. All other types will throw exception.
+    ///
+    /// @param param_name name of the configuration parameter being parsed
+    /// @param global_context Global parser context.
+    /// @throw BadValue if supplied parameter name is not "mac-sources"
+    MACSourcesListConfigParser(const std::string& param_name,
+                               ParserContextPtr global_context);
+
+    /// @brief parses parameters value
+    ///
+    /// Parses configuration entry (list of sources) and adds each element
+    /// to the sources list.
+    ///
+    /// @param value pointer to the content of parsed values
+    virtual void build(isc::data::ConstElementPtr value);
+
+    /// @brief Does nothing.
+    virtual void commit();
+
+private:
+
+    // Parsed parameter name
+    std::string param_name_;
+
+    /// Global parser context.
+    ParserContextPtr global_context_;
+};
+
 
 /// @brief Parser for hooks library list
 ///
@@ -1172,4 +1212,3 @@ typedef boost::shared_ptr<Uint32Parser> Uint32ParserPtr;
 }; // end of isc namespace
 
 #endif // DHCP_PARSERS_H
-
