@@ -3627,4 +3627,29 @@ TEST_F(Dhcp6ParserTest, reservationBogus) {
 
 }
 
+/// The goal of this test is to verify that configuration can include
+/// MAC/Hardware sources.
+TEST_F(Dhcp6ParserTest, macSources) {
+
+    ConstElementPtr status;
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_,
+                    Element::fromJSON("{ \"interfaces\": [ \"*\" ],"
+                                      "\"mac-sources\": [ \"rfc6939\", \"rfc4649\", \"rfc4580\" ],"
+                                      "\"preferred-lifetime\": 3000,"
+                                      "\"rebind-timer\": 2000, "
+                                      "\"renew-timer\": 1000, "
+                                      "\"subnet6\": [  ], "
+                                      "\"valid-lifetime\": 4000 }")));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+
+    vector<uint32_t> mac_sources = CfgMgr::instance().getStagingCfg()->getMACSources();
+    ASSERT_EQ(3, mac_sources.size());
+    EXPECT_EQ(Pkt::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION, mac_sources[0]);
+    EXPECT_EQ(Pkt::HWADDR_SOURCE_REMOTE_ID, mac_sources[1]);
+    EXPECT_EQ(Pkt::HWADDR_SOURCE_SUBSCRIBER_ID, mac_sources[2]);
+}
+
 };
