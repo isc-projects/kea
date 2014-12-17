@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+<!ENTITY mdash  "&#x2014;" >
+]>
+
+  <chapter id="hooks-libraries">
+    <title>Hooks Libraries</title>
+    <section id="hooks-libraries-introduction">
+      <title>Introduction</title>
+      <para>
+      Although Kea offers a lot of flexibility, there may be cases where
+      its behavior needs customisation.  To accommodate this possibility,
+      Kea includes the idea of "Hooks".  This feature lets Kea load one
+      or more dynamically-linked libraries (known as "hooks libraries")
+      and, at various points in its processing ("hook points"), call
+      functions in them.  Those functions perform whatever custom
+      processing is required.
+      </para>
+      <para>
+      Hooks libraries are attached to individual Kea processes, not to
+      Kea as a whole.  This means (for example) that it is possible
+      to associate one set of libraries with the DHCP4 server and a
+      different set to the DHCP6 server.
+      </para>
+      <para>
+      Another point to note is that it is possible for a process to
+      load multiple libraries.  When processing reaches a hook point,
+      Kea calls the hooks library functions attached to it.  If multiple
+      libraries have attached a function to a given hook point, Kea calls
+      all of them, in the order in which the libraries are specified in
+      the configuration file. The order may be important: consult the
+      documentation of the libraries to see if this is the case.
+      </para>
+      <para>
+      The next section describes how to configure hooks libraries. If you
+      are interested in writing your own hooks library, information can be
+      found in the <ulink url="http://git.kea.isc.org/~tester/kea/doxygen">Kea
+      Developer's Guide</ulink>.
+      </para>
+    </section> <!-- end Introduction -->
+    <section>
+      <title>Configuring Hooks Libraries</title>
+      <para>
+      The hooks libraries for a given process are configured using the
+      <command>hooks-libraries</command> keyword in the
+      configuration for that process. (Note that
+      the word "hooks" is plural).  The value of the keyword
+      is an array of strings, each string corresponding to a hooks library.
+      For example, to set up two hooks libraries for the DHCPv4 server, the
+      configuration would be:
+<screen>
+<userinput>"Dhcp4": {
+    :
+    "hooks-libraries": [
+       "/opt/charging.so",
+       "/opt/local/notification.so"
+    ]
+    :
+}</userinput>
+</screen>
+      </para>
+      <note><para>
+      At present, the libraries are specified as a simple list.  A future
+      version of Kea will support the capability of specifying a set of
+      parameters for each library. When that is added, it is likely
+      that the syntax for specifying hooks libraries will change.
+      </para></note>
+      <para>
+      Notes:
+        <itemizedlist mark='bullet'>
+          <listitem><para>
+          The full path to each library should be given.
+          </para></listitem>
+          <listitem><para>
+          As noted above, order may be important - consult the documentation for
+          each library.
+          </para></listitem>
+          <listitem><para>
+          An empty list has the same effect as omitting the
+          <command>hooks-libraries</command> configuration element all together.
+          </para></listitem>
+        </itemizedlist>
+      </para>
+      <para>
+      At the present time, only the kea-dhcp4 and kea-dhcp6 processes support
+      hooks libraries.
+      </para>
+    </section>
+   </chapter> <!-- hooks-libraries -->

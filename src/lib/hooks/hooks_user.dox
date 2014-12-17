@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -54,8 +54,8 @@ In order to minimise the interaction between Kea and the user
 code, the latter is built independently of Kea in the form of
 a shared library (or libraries).  These are made known to Kea
 through its configuration mechanism, and Kea loads the library at
-run time. Libraries can be unloaded and reloaded as needed while BIND
-10 is running.
+run time. Libraries can be unloaded and reloaded as needed while Kea
+is running.
 
 Use of a defined API and the Kea configuration mechanism means that
 as new versions of Kea are released, there is no need to modify
@@ -153,7 +153,7 @@ contents are:
 extern "C" {
 
 int version() {
-    return (BIND10_HOOKS_VERSION);
+    return (KEA_HOOKS_VERSION);
 }
 
 }
@@ -387,9 +387,9 @@ allocates an address to the client.  A callout may decide to allocate
 special addresses for certain clients, in which case it needs to tell
 the server not to allocate an address in this case.
 - Drop the packet and continue with the next request. A possible scenario
-is a DNS server where a callout inspects the source address of an incoming
-packet and compares it against a black list; if the address is on it,
-the callout notifies the server to drop the packet.
+is a server where a callout inspects the hardware address of the client
+sending the packet and compares it against a black list; if the address
+is on it, the callout notifies the server to drop the packet.
 
 To handle these common cases, the CalloutHandle has a "skip" flag.
 This is set by a callout when it wishes the server to skip normal
@@ -412,7 +412,7 @@ usage is intuitive:
         handle.setSkip(true);
     }
     return;
-    
+
 @endcode
 
 Like arguments, the "skip" flag is passed to all callouts on a hook.  Callouts
@@ -420,26 +420,25 @@ later in the list are able to examine (and modify) the settings of earlier ones.
 
 @subsubsection hooksdgCalloutContext Per-Request Context
 
-Although many of the Kea modules can be characterised as handling
-singles packet - e.g. the DHCPv4 server receives a DISCOVER packet,
-processes it and responds with an OFFER, this is not true in all cases.
-The principal exception is the recursive DNS resolver: this receives a
-packet from a client but that packet may itself generate multiple packets
-being sent to upstream servers. To avoid possible confusion the rest of
-this section uses the term "request" to indicate a request by a client
-for some information or action.
+Although the Kea modules can be characterised as handling a single
+packet at a time - e.g. the DHCPv4 server receives a DHCPDISCOVER packet,
+processes it and responds with an DHCPOFFER, this may not always be true.
+Future developments may have the server processing multiple packets
+simultaneously, or to suspend processing on a packet and resume it at
+a later time after other packets have been processed.
 
 As well as argument information, the CalloutHandle object can be used by
-callouts to attach information to a request being handled by the server.
+callouts to attach information to a packet being handled by the server.
 This information (known as "context") is not used by the server: its purpose
 is to allow callouts to pass information between one another on a
-per-request basis.
+per-packet basis.
 
-Context only exists only for the duration of the request: when a request
-is completed, the context is destroyed.  A new request starts with no
-context information.  Context is particularly useful in servers that may
-be processing multiple requests simultaneously: callouts can effectively
-attach data to a request that follows the request around the system.
+Context associated with a packet only exists only for the duration of the
+processing of that packet: when processing is completed, the context is
+destroyed.  A new packet starts with a new (empty) context.  Context is
+particularly useful in servers that may be processing multiple packets
+simultaneously: callouts can effectively attach data to a packet that
+follows the packet around the system.
 
 Context information is held as name/value pairs in the same way
 as arguments, being accessed by the pair of methods setContext and
@@ -603,25 +602,28 @@ for details.
 installed Kea.
 - The list of libraries that need to be included in the command line
 depends on the functionality used by the hook code and the module to
-which they are attached (e.g. hook code for DNS will need to link against
-the libkea-dns++ library).  Depending on operating system, you may also need
-to explicitly list libraries on which the Kea libraries depend.
+which they are attached. Depending on operating system, you may also need
+to explicitly list libraries on which the Kea libraries you link against depend.
 
-@subsection hooksdgConfiguration Configuring the Hook Library
+@subsection hooksdgConfiguration Configuring the Hooks Library
 
-The final step is to make the library known to Kea.  All Kea modules to
-which hooks can be added contain the "hook_library" element, and user
-libraries are added to this. (The Kea hooks system can handle multiple libraries
-- this is discussed below.).
+The final step is to make the library known to Kea.  The configuration
+keywords of all Kea modules to which hooks can be added contain the
+"hooks-libraries" element and user libraries are added to this. (The Kea
+hooks system can handle multiple libraries - this is discussed below.)
 
-To add the example library (assumed to be in /usr/local/lib) to the DHCPv4
-module, the following bindctl commands must be executed:
+To add the example library (assumed to be in /usr/local/lib) to the
+DHCPv4 module, it must be listed in the "hooks-libraries" element of the
+"Dhcp4" part of the configuration file:
 
 @code
-> config add Dhcp4/hook_libraries
-> config set Dhcp4/hook_libraries[0] "/usr/local/lib/example.so"
-> config commit
+"Dhcp4": {
+       :
+    "hooks-libraries": [ "/usr/local/lib/example.so" ]
+       :
+}
 @endcode
+(Note that "hooks" is plural.)
 
 The DHCPv4 server will load the library and execute the callouts each time a
 request is received.
@@ -841,7 +843,7 @@ ones with non-standard names need to be registered manually.
 
 @subsubsection hooksdgMultipleCallouts Multiple Callouts on a Hook
 
-The Kea hooks framework allows multiple callouts to be attached to 
+The Kea hooks framework allows multiple callouts to be attached to
 a hook point.  Although it is likely to be rare for user code to need to
 do this, there may be instances where it make sense.
 
@@ -1002,6 +1004,17 @@ This structure means that library authors can use per-request context
 without worrying about the presence of other libraries.  Other libraries
 may be present, but will not affect the context values set by a library's
 callouts.
+
+Configuring multiple libraries just requires listing the libraries
+as separate elements of the hooks-libraries configuration element, e.g.
+
+@code
+"Dhcp4": {
+       :
+    "hooks-libraries": [ "/usr/lib/library1.so", "/opt/library2.so" ]
+       :
+}
+@endcode
 
 @subsection hooksdgInterLibraryData Passing Data Between Libraries
 
