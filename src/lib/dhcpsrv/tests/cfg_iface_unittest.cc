@@ -140,14 +140,36 @@ TEST_F(CfgIfaceTest, explicitNamesAndAddressesV4) {
     ASSERT_FALSE(socketOpen("eth1", "192.0.2.3"));
     ASSERT_FALSE(socketOpen("eth1", "192.0.2.5"));
 
+    // Reset configuration.
+    cfg.reset();
+
     // Now check that the socket can be bound to a different address on
     // eth1.
     ASSERT_NO_THROW(cfg.use(AF_INET, "eth1/192.0.2.5"));
     ASSERT_THROW(cfg.use(AF_INET, "eth1/192.0.2.3"), DuplicateIfaceName);
 
+    // Open sockets according to the new configuration.
+    cfg.openSockets(AF_INET, DHCP4_SERVER_PORT);
+
     EXPECT_FALSE(socketOpen("eth0", "10.0.0.1"));
     EXPECT_FALSE(socketOpen("eth1", "192.0.2.3"));
     EXPECT_TRUE(socketOpen("eth1", "192.0.2.5"));
+}
+
+// This test checks that the invalid interface name and/or IPv4 address
+// results in error.
+TEST_F(CfgIfaceTest, explicitNamesAndAddressesInvalidV4) {
+    CfgIface cfg;
+    // An address not assigned to the interface.
+    EXPECT_THROW(cfg.use(AF_INET, "eth0/10.0.0.2"), NoSuchAddress);
+    // IPv6 address.
+    EXPECT_THROW(cfg.use(AF_INET, "eth0/2001:db8:1::1"), InvalidIfaceName);
+    // Wildcard interface name with an address.
+    EXPECT_THROW(cfg.use(AF_INET, "*/10.0.0.1"), InvalidIfaceName);
+
+    // Duplicated interface.
+    ASSERT_NO_THROW(cfg.use(AF_INET, "eth1"));
+    EXPECT_THROW(cfg.use(AF_INET, "eth1/192.0.2.3"), DuplicateIfaceName);
 }
 
 // This test checks that the interface names can be explicitly selected

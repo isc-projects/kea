@@ -135,6 +135,7 @@ void
 CfgIface::reset() {
     wildcard_used_ = false;
     iface_set_.clear();
+    address_map_.clear();
 }
 
 void
