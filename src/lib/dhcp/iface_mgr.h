@@ -22,6 +22,7 @@
 #include <dhcp/pkt6.h>
 #include <dhcp/pkt_filter.h>
 #include <dhcp/pkt_filter6.h>
+#include <util/optional_value.h>
 
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
@@ -150,7 +151,8 @@ public:
     static const unsigned int MAX_MAC_LEN = 20;
 
     /// Type that defines list of addresses
-    typedef std::vector<isc::asiolink::IOAddress> AddressCollection;
+    typedef
+    std::list<util::OptionalValue<asiolink::IOAddress> > AddressCollection;
 
     /// @brief Type that holds a list of socket information.
     ///
@@ -291,9 +293,30 @@ public:
     /// configure address on actual network interface.
     ///
     /// @param addr address to be added
-    void addAddress(const isc::asiolink::IOAddress& addr) {
-        addrs_.push_back(addr);
-    }
+    void addAddress(const isc::asiolink::IOAddress& addr);
+
+    /// @brief Activates or deactivates address for the interface.
+    ///
+    /// This method marks a specified address on the interface active or
+    /// inactive. If the address is marked inactive, the
+    /// @c IfaceMgr::openSockets4 method will NOT open socket for this address.
+    ///
+    /// @param address An address which should be activated, deactivated.
+    /// @param active A boolean flag which indicates that the specified address
+    /// should be active (if true) or inactive (if false).
+    ///
+    /// @throw BadValue if specified address doesn't exist for the interface.
+    void setActive(const isc::asiolink::IOAddress& address, const bool active);
+
+    /// @brief Activates or deactivates all addresses for the interface.
+    ///
+    /// This method marks all addresses on the interface active or inactive.
+    /// If the address is marked inactive, the @c IfaceMgr::openSockets4
+    /// method will NOT open socket for this address.
+    ///
+    /// @param active A boolean flag which indicates that the addresses
+    /// should be active (if true) or inactive (if false).
+    void setActive(const bool active);
 
     /// @brief Deletes an address from an interface.
     ///
