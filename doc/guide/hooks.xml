@@ -25,13 +25,12 @@
       </para>
       <para>
       Another point to note is that it is possible for a process to
-      load multiple libraries.  At every hook point, Kea calls all
-      hooks library functions attached it.  If multiple libraries have
-      attached a function to a given hook point, Kea calls all of them.
-      The order in which the functions are called is the order in which
-      the libraries are specified in the configuration file. This may
-      be important: consult the documentation of the libraries to see
-      if this is the case.
+      load multiple libraries.  When processing reaches a hook point,
+      Kea calls the hooks library functions attached to it.  If multiple
+      libraries have attached a function to a given hook point, Kea calls
+      all of them, in the order in which the libraries are specified in
+      the configuration file. The order may be important: consult the
+      documentation of the libraries to see if this is the case.
       </para>
       <para>
       The next section describes how to configure hooks libraries. If you

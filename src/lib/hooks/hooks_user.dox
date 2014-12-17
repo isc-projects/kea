@@ -54,8 +54,8 @@ In order to minimise the interaction between Kea and the user
 code, the latter is built independently of Kea in the form of
 a shared library (or libraries).  These are made known to Kea
 through its configuration mechanism, and Kea loads the library at
-run time. Libraries can be unloaded and reloaded as needed while BIND
-10 is running.
+run time. Libraries can be unloaded and reloaded as needed while Kea
+is running.
 
 Use of a defined API and the Kea configuration mechanism means that
 as new versions of Kea are released, there is no need to modify
@@ -153,7 +153,7 @@ contents are:
 extern "C" {
 
 int version() {
-    return (BIND10_HOOKS_VERSION);
+    return (KEA_HOOKS_VERSION);
 }
 
 }
@@ -421,8 +421,8 @@ later in the list are able to examine (and modify) the settings of earlier ones.
 @subsubsection hooksdgCalloutContext Per-Request Context
 
 Although the Kea modules can be characterised as handling a single
-packet at a time - e.g. the DHCPv4 server receives a DISCOVER packet,
-processes it and responds with an OFFER, this may not always be true.
+packet at a time - e.g. the DHCPv4 server receives a DHCPDISCOVER packet,
+processes it and responds with an DHCPOFFER, this may not always be true.
 Future developments may have the server processing multiple packets
 simultaneously, or to suspend processing on a packet and resume it at
 a later time after other packets have been processed.
