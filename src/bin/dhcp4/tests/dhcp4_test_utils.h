@@ -335,21 +335,6 @@ public:
     /// @param expected_clientid expected value of client-id
     void checkClientId(const Pkt4Ptr& rsp, const OptionPtr& expected_clientid);
 
-    /// @brief sets default fields in a captured packet
-    ///
-    /// Sets UDP ports, addresses and interface.
-    ///
-    /// @param pkt packet to have default fields set
-    void captureSetDefaultFields(const Pkt4Ptr& pkt);
-
-    /// @brief returns captured DISCOVER that went through a relay
-    ///
-    /// See method code for a detailed explanation. This is a discover from
-    /// docsis3.0 device (Cable Modem)
-    ///
-    /// @return relayed DISCOVER
-    Pkt4Ptr captureRelayedDiscover();
-
     /// @brief Create packet from output buffer of another packet.
     ///
     /// This function creates a packet using an output buffer from another
@@ -373,21 +358,8 @@ public:
     /// @return assertion result indicating if a function completed with
     /// success or failure.
     static ::testing::AssertionResult
-    createPacketFromBuffer(const Pkt4Ptr& src_pkt,
-                           Pkt4Ptr& dst_pkt);
-
-    /// @brief returns captured DISCOVER that went through a relay
-    ///
-    /// See method code for a detailed explanation. This is a discover from
-    /// eRouter1.0 device (CPE device integrated with cable modem)
-    ///
-    /// @return relayed DISCOVER
-    Pkt4Ptr captureRelayedDiscover2();
-
-    /// @brief generates a DHCPv4 packet based on provided hex string
-    ///
-    /// @return created packet
-    Pkt4Ptr packetFromCapture(const std::string& hex_string);
+    createPacketFromBuffer(const isc::dhcp::Pkt4Ptr& src_pkt,
+                           isc::dhcp::Pkt4Ptr& dst_pkt);
 
     /// @brief Tests if Discover or Request message is processed correctly
     ///
