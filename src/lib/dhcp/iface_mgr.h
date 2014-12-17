@@ -258,7 +258,15 @@ public:
     /// @return hardware type
     uint16_t getHWType() const { return hardware_type_; }
 
-    /// @brief Returns all interfaces available on an interface.
+    /// @brief Returns all addresses available on an interface.
+    ///
+    /// The returned addresses are encapsulated in the @c util::OptionalValue
+    /// class to be able to selectively flag some of the addresses as active
+    /// (when optional value is specified) or inactive (when optional value
+    /// is specified). If the address is marked as active, the
+    /// @c IfaceMgr::openSockets4 method will open socket and bind to this
+    /// address. Otherwise, it will not bind any socket to this address.
+    /// This is useful when an interface has multiple IPv4 addresses assigned.
     ///
     /// Care should be taken to not use this collection after Iface object
     /// ceases to exist. That is easy in most cases as Iface objects are
