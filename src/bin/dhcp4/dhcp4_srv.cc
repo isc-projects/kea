@@ -817,7 +817,7 @@ Dhcpv4Srv::processHostnameOption(const OptionStringPtr& opt_hostname,
         // If there are two labels, it means that the client has specified
         // the unqualified name. We have to concatenate the unqalified name
         // with the domain name.
-        opt_hostname_resp->setValue(d2_mgr.qualifyName(hostname));
+        opt_hostname_resp->setValue(d2_mgr.qualifyName(hostname,false));
     }
 
     answer->addOption(opt_hostname_resp);
@@ -1068,10 +1068,13 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
         // hostname is empty, it means that server is responsible for
         // generating the entire hostname for the client. The example of the
         // client's name, generated from the IP address is: host-192-0-2-3.
-        if ((fqdn || opt_hostname) && lease->hostname_.empty()) {
-            lease->hostname_ = CfgMgr::instance()
-                               .getD2ClientMgr().generateFqdn(lease->addr_);
-
+	if ((fqdn || opt_hostname) && lease->hostname_.empty()) {
+		if(fqdn) {
+			lease->hostname_ = CfgMgr::instance().getD2ClientMgr().generateFqdn(lease->addr_,true);
+		}
+		if(opt_hostname) {
+			lease->hostname_ = CfgMgr::instance().getD2ClientMgr().generateFqdn(lease->addr_,false);
+		}
             // The operations below are rather safe, but we want to catch
             // any potential exceptions (e.g. invalid lease database backend
             // implementation) and log an error.

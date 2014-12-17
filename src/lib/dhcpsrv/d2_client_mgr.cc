@@ -171,30 +171,42 @@ D2ClientMgr::analyzeFqdn(const bool client_s, const bool client_n,
 }
 
 std::string
-D2ClientMgr::generateFqdn(const asiolink::IOAddress& address) const {
+D2ClientMgr::generateFqdn(const asiolink::IOAddress& address, bool appendDot) const {
     std::string hostname = address.toText();
     std::replace(hostname.begin(), hostname.end(),
                  (address.isV4() ? '.' : ':'), '-');
 
     std::ostringstream gen_name;
     gen_name << d2_client_config_->getGeneratedPrefix() << "-" << hostname;
-    return (qualifyName(gen_name.str()));
+    return (qualifyName(gen_name.str(),appendDot));
 }
 
+
 std::string
-D2ClientMgr::qualifyName(const std::string& partial_name) const {
+D2ClientMgr::qualifyName(const std::string& partial_name, bool appendDot) const {
     std::ostringstream gen_name;
+
     gen_name << partial_name << "." << d2_client_config_->getQualifyingSuffix();
 
-    // Tack on a trailing dot in case suffix doesn't have one.
     std::string str = gen_name.str();
     size_t len = str.length();
-    if ((len > 0) && (str[len - 1] != '.')) {
-        gen_name << ".";
+    //unless it's forced, will append trailing dot
+    if(appendDot) {
+	    // Tack on a trailing dot in case suffix doesn't have one.
+	    if ((len > 0) && (str[len - 1] != '.')) {
+		    gen_name << ".";
+	    }
+    } else {
+	    //if a call with appendDot is false, remove the dot if exists
+	    if ((len > 0) && (str[len - 1] == '.')) {
+		    gen_name.str(str.substr(0,len-1));
+	    }
     }
 
     return (gen_name.str());
 }
+
+
 
 void
 D2ClientMgr::startSender(D2ClientErrorHandler error_handler) {
