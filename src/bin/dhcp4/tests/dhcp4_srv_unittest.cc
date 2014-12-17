@@ -18,6 +18,7 @@
 #include <asiolink/io_address.h>
 #include <config/ccsession.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
+#include <dhcp/tests/pkt_captures.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/option.h>
@@ -56,6 +57,7 @@ using namespace isc::data;
 using namespace isc::asiolink;
 using namespace isc::hooks;
 using namespace isc::dhcp::test;
+using namespace isc::test;
 
 namespace {
 
@@ -1159,7 +1161,7 @@ TEST_F(Dhcpv4SrvTest, relayAgentInfoEcho) {
     // added option 82 (relay agent info) with 3 suboptions. The server
     // is supposed to echo it back in its response.
     Pkt4Ptr dis;
-    ASSERT_NO_THROW(dis = captureRelayedDiscover());
+    ASSERT_NO_THROW(dis = PktCaptures::captureRelayedDiscover());
 
     // Simulate that we have received that traffic
     srv.fakeReceive(dis);
@@ -1235,7 +1237,7 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsDocsis) {
     // added option 82 (relay agent info) with 3 suboptions. The server
     // is supposed to echo it back in its response.
     Pkt4Ptr dis;
-    ASSERT_NO_THROW(dis = captureRelayedDiscover());
+    ASSERT_NO_THROW(dis = PktCaptures::captureRelayedDiscover());
 
     // Simulate that we have received that traffic
     srv.fakeReceive(dis);
@@ -2935,7 +2937,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
 TEST_F(Dhcpv4SrvTest, docsisVendorOptionsParse) {
 
     // Let's get a traffic capture from DOCSIS3.0 modem
-    Pkt4Ptr dis = captureRelayedDiscover();
+    Pkt4Ptr dis = PktCaptures::captureRelayedDiscover();
     ASSERT_NO_THROW(dis->unpack());
 
     // Check if the packet contain
@@ -2959,7 +2961,7 @@ TEST_F(Dhcpv4SrvTest, docsisVendorOptionsParse) {
 TEST_F(Dhcpv4SrvTest, docsisVendorORO) {
 
     // Let's get a traffic capture from DOCSIS3.0 modem
-    Pkt4Ptr dis = captureRelayedDiscover();
+    Pkt4Ptr dis = PktCaptures::captureRelayedDiscover();
     EXPECT_NO_THROW(dis->unpack());
 
     // Check if the packet contains vendor specific information option
@@ -3127,7 +3129,7 @@ TEST_F(Dhcpv4SrvTest, clientClassification) {
     // Let's create a relayed DISCOVER. This particular relayed DISCOVER has
     // vendor-class set to docsis3.0
     Pkt4Ptr dis1;
-    ASSERT_NO_THROW(dis1 = captureRelayedDiscover());
+    ASSERT_NO_THROW(dis1 = PktCaptures::captureRelayedDiscover());
     ASSERT_NO_THROW(dis1->unpack());
 
     srv.classifyPacket(dis1);
@@ -3138,7 +3140,7 @@ TEST_F(Dhcpv4SrvTest, clientClassification) {
     // Let's create a relayed DISCOVER. This particular relayed DISCOVER has
     // vendor-class set to eRouter1.0
     Pkt4Ptr dis2;
-    ASSERT_NO_THROW(dis2 = captureRelayedDiscover2());
+    ASSERT_NO_THROW(dis2 = PktCaptures::captureRelayedDiscover2());
     ASSERT_NO_THROW(dis2->unpack());
 
     srv.classifyPacket(dis2);
