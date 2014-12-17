@@ -40,6 +40,8 @@
 #include <hooks/server_hooks.h>
 
 #include <dhcp6/tests/dhcp6_test_utils.h>
+#include <dhcp/tests/pkt_captures.h>
+#include <config/ccsession.h>
 #include <boost/pointer_cast.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
@@ -50,7 +52,7 @@
 
 using namespace isc;
 using namespace isc::data;
-using namespace isc::config;
+//using namespace isc::config;
 using namespace isc::test;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
@@ -1443,7 +1445,7 @@ TEST_F(Dhcpv6SrvTest, portsDirectTraffic) {
     NakedDhcpv6Srv srv(0);
 
     // Let's create a simple SOLICIT
-    Pkt6Ptr sol = captureSimpleSolicit();
+    Pkt6Ptr sol = PktCaptures::captureSimpleSolicit();
 
     // Simulate that we have received that traffic
     srv.fakeReceive(sol);
@@ -1468,7 +1470,7 @@ TEST_F(Dhcpv6SrvTest, portsRelayedTraffic) {
     NakedDhcpv6Srv srv(0);
 
     // Let's create a simple SOLICIT
-    Pkt6Ptr sol = captureRelayedSolicit();
+    Pkt6Ptr sol = PktCaptures::captureRelayedSolicit();
 
     // Simulate that we have received that traffic
     srv.fakeReceive(sol);
@@ -1495,7 +1497,7 @@ TEST_F(Dhcpv6SrvTest, docsisTraffic) {
     NakedDhcpv6Srv srv(0);
 
     // Let's get a traffic capture from DOCSIS3.0 modem
-    Pkt6Ptr sol = captureDocsisRelayedSolicit();
+    Pkt6Ptr sol = PktCaptures::captureDocsisRelayedSolicit();
 
     // Simulate that we have received that traffic
     srv.fakeReceive(sol);
@@ -1515,7 +1517,7 @@ TEST_F(Dhcpv6SrvTest, docsisTraffic) {
 TEST_F(Dhcpv6SrvTest, docsisVendorOptionsParse) {
 
     // Let's get a traffic capture from DOCSIS3.0 modem
-    Pkt6Ptr sol = captureDocsisRelayedSolicit();
+    Pkt6Ptr sol = PktCaptures::captureDocsisRelayedSolicit();
     EXPECT_NO_THROW(sol->unpack());
 
     // Check if the packet contain
@@ -1550,7 +1552,7 @@ TEST_F(Dhcpv6SrvTest, docsisVendorORO) {
     NakedDhcpv6Srv srv(0);
 
     // Let's get a traffic capture from DOCSIS3.0 modem
-    Pkt6Ptr sol = captureDocsisRelayedSolicit();
+    Pkt6Ptr sol = PktCaptures::captureDocsisRelayedSolicit();
     ASSERT_NO_THROW(sol->unpack());
 
     // Check if the packet contains vendor options option
@@ -1698,13 +1700,13 @@ TEST_F(Dhcpv6SrvTest, vendorOptionsDocsisDefinitions) {
     // This should fail (missing option definition)
     EXPECT_NO_THROW(x = configureDhcp6Server(srv, json_bogus));
     ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
+    comment_ = isc::config::parseAnswer(rcode_, x);
     ASSERT_EQ(1, rcode_);
 
     // This should work (option definition present)
     EXPECT_NO_THROW(x = configureDhcp6Server(srv, json_valid));
     ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
+    comment_ = isc::config::parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
 }
 
@@ -1789,7 +1791,7 @@ TEST_F(Dhcpv6SrvTest, clientClassification) {
     // Let's create a relayed SOLICIT. This particular relayed SOLICIT has
     // vendor-class set to docsis3.0
     Pkt6Ptr sol1;
-    ASSERT_NO_THROW(sol1 = captureDocsisRelayedSolicit());
+    ASSERT_NO_THROW(sol1 = PktCaptures::captureDocsisRelayedSolicit());
     ASSERT_NO_THROW(sol1->unpack());
 
     srv.classifyPacket(sol1);
@@ -1801,7 +1803,7 @@ TEST_F(Dhcpv6SrvTest, clientClassification) {
     // Let's get a relayed SOLICIT. This particular relayed SOLICIT has
     // vendor-class set to eRouter1.0
     Pkt6Ptr sol2;
-    ASSERT_NO_THROW(sol2 = captureeRouterRelayedSolicit());
+    ASSERT_NO_THROW(sol2 = PktCaptures::captureeRouterRelayedSolicit());
     ASSERT_NO_THROW(sol2->unpack());
 
     srv.classifyPacket(sol2);
@@ -1902,7 +1904,7 @@ TEST_F(Dhcpv6SrvTest, cableLabsShortVendorClass) {
     NakedDhcpv6Srv srv(0);
 
     // Create a simple Solicit with the 4-byte long vendor class option.
-    Pkt6Ptr sol = captureCableLabsShortVendorClass();
+    Pkt6Ptr sol = PktCaptures::captureCableLabsShortVendorClass();
 
     // Simulate that we have received that traffic
     srv.fakeReceive(sol);

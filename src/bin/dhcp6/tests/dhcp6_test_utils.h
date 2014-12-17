@@ -33,7 +33,6 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcp6/dhcp6_srv.h>
 #include <hooks/hooks_manager.h>
-#include <config/ccsession.h>
 
 #include <list>
 
@@ -520,22 +519,6 @@ public:
     void
     testReleaseReject(isc::dhcp::Lease::Type type,
                       const isc::asiolink::IOAddress& addr);
-
-    // see wireshark.cc for descriptions
-    // The descriptions are too large and too closely related to the
-    // code, so it is kept in .cc rather than traditionally in .h
-    isc::dhcp::Pkt6Ptr captureSimpleSolicit();
-    isc::dhcp::Pkt6Ptr captureRelayedSolicit();
-    isc::dhcp::Pkt6Ptr captureDocsisRelayedSolicit();
-    isc::dhcp::Pkt6Ptr captureeRouterRelayedSolicit();
-    isc::dhcp::Pkt6Ptr captureCableLabsShortVendorClass();
-
-    /// @brief Auxiliary method that sets Pkt6 fields
-    ///
-    /// Used to reconstruct captured packets. Sets UDP ports, interface names,
-    /// and other fields to some believable values.
-    /// @param pkt packet that will have its fields set
-    void captureSetDefaultFields(const isc::dhcp::Pkt6Ptr& pkt);
 
     /// A subnet used in most tests
     isc::dhcp::Subnet6Ptr subnet_;

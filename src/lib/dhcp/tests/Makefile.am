@@ -37,6 +37,7 @@ noinst_LTLIBRARIES = libdhcptest.la
 libdhcptest_la_SOURCES  = iface_mgr_test_config.cc iface_mgr_test_config.h
 libdhcptest_la_SOURCES  += pkt_filter_test_stub.cc pkt_filter_test_stub.h
 libdhcptest_la_SOURCES  += pkt_filter6_test_stub.cc pkt_filter6_test_stub.h
+libdhcptest_la_SOURCES  += wireshark/pkt_captures6.cc wireshark/pkt_captures.h
 libdhcptest_la_CXXFLAGS  = $(AM_CXXFLAGS)
 libdhcptest_la_CPPFLAGS  = $(AM_CPPFLAGS)
 libdhcptest_la_LDFLAGS   = $(AM_LDFLAGS)
