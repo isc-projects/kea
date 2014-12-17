@@ -257,7 +257,7 @@ Iface::hasAddress(const isc::asiolink::IOAddress& address) const {
 
 void
 Iface::addAddress(const isc::asiolink::IOAddress& addr) {
-    addrs_.push_back(OptionalValue<IOAddress>(addr, OptionalValueState(false)));
+    addrs_.push_back(OptionalValue<IOAddress>(addr, OptionalValueState(true)));
 }
 
 void
@@ -514,8 +514,8 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
              addr != addrs.end();
              ++addr) {
 
-            // Skip all but V4 addresses.
-            if (!addr->get().isV4()) {
+            // Skip non-IPv4 addresses and thos that weren't selected..
+            if (!addr->get().isV4() || !addr->isSpecified()) {
                 continue;
             }
 

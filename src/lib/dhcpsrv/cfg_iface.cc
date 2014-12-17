@@ -70,9 +70,19 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
 
             } else if (family == AF_INET) {
                 iface->inactive4_ = false;
-                ExplicitAddressMap::const_iterator addr = address_map_.find(iface->getName());
+                ExplicitAddressMap::const_iterator addr =
+                    address_map_.find(iface->getName());
+                // If user has specified an address to listen on, let's activate
+                // only this address.
                 if (addr != address_map_.end()) {
                     iface->setActive(addr->second, true);
+
+                // Otherwise, activate first one.
+                } else {
+                    IOAddress address("0.0.0.0");
+                    if (iface->getAddress4(address)) {
+                        iface->setActive(address, true);
+                    }
                 }
 
             } else {
