@@ -28,6 +28,8 @@
 #include <hooks/server_hooks.h>
 
 #include <dhcp6/tests/dhcp6_test_utils.h>
+#include <dhcp/tests/pkt_captures.h>
+#include <config/ccsession.h>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 #include <unistd.h>
@@ -37,7 +39,7 @@
 
 using namespace isc;
 using namespace isc::data;
-using namespace isc::config;
+//using namespace isc::config;
 using namespace isc::test;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
@@ -524,7 +526,7 @@ TEST_F(HooksDhcpv6SrvTest, simple_buffer6_receive) {
                         "buffer6_receive", buffer6_receive_callout));
 
     // Let's create a simple SOLICIT
-    Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
+    Pkt6Ptr sol = Pkt6Ptr(PktCaptures::captureSimpleSolicit());
 
     // Simulate that we have received that traffic
     srv_->fakeReceive(sol);
@@ -557,7 +559,7 @@ TEST_F(HooksDhcpv6SrvTest, valueChange_buffer6_receive) {
                         "buffer6_receive", buffer6_receive_change_clientid));
 
     // Let's create a simple SOLICIT
-    Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
+    Pkt6Ptr sol = Pkt6Ptr(PktCaptures::captureSimpleSolicit());
 
     // Simulate that we have received that traffic
     srv_->fakeReceive(sol);
@@ -594,7 +596,7 @@ TEST_F(HooksDhcpv6SrvTest, deleteClientId_buffer6_receive) {
                         "buffer6_receive", buffer6_receive_delete_clientid));
 
     // Let's create a simple SOLICIT
-    Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
+    Pkt6Ptr sol = Pkt6Ptr(PktCaptures::captureSimpleSolicit());
 
     // Simulate that we have received that traffic
     srv_->fakeReceive(sol);
@@ -618,7 +620,7 @@ TEST_F(HooksDhcpv6SrvTest, skip_buffer6_receive) {
                         "buffer6_receive", buffer6_receive_skip));
 
     // Let's create a simple SOLICIT
-    Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
+    Pkt6Ptr sol = Pkt6Ptr(PktCaptures::captureSimpleSolicit());
 
     // Simulate that we have received that traffic
     srv_->fakeReceive(sol);
@@ -645,7 +647,7 @@ TEST_F(HooksDhcpv6SrvTest, simple_pkt6_receive) {
                         "pkt6_receive", pkt6_receive_callout));
 
     // Let's create a simple SOLICIT
-    Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
+    Pkt6Ptr sol = Pkt6Ptr(PktCaptures::captureSimpleSolicit());
 
     // Simulate that we have received that traffic
     srv_->fakeReceive(sol);
@@ -678,7 +680,7 @@ TEST_F(HooksDhcpv6SrvTest, valueChange_pkt6_receive) {
                         "pkt6_receive", pkt6_receive_change_clientid));
 
     // Let's create a simple SOLICIT
-    Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
+    Pkt6Ptr sol = Pkt6Ptr(PktCaptures::captureSimpleSolicit());
 
     // Simulate that we have received that traffic
     srv_->fakeReceive(sol);
@@ -714,7 +716,7 @@ TEST_F(HooksDhcpv6SrvTest, deleteClientId_pkt6_receive) {
                         "pkt6_receive", pkt6_receive_delete_clientid));
 
     // Let's create a simple SOLICIT
-    Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
+    Pkt6Ptr sol = Pkt6Ptr(PktCaptures::captureSimpleSolicit());
 
     // Simulate that we have received that traffic
     srv_->fakeReceive(sol);
@@ -738,7 +740,7 @@ TEST_F(HooksDhcpv6SrvTest, skip_pkt6_receive) {
                         "pkt6_receive", pkt6_receive_skip));
 
     // Let's create a simple SOLICIT
-    Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
+    Pkt6Ptr sol = Pkt6Ptr(PktCaptures::captureSimpleSolicit());
 
     // Simulate that we have received that traffic
     srv_->fakeReceive(sol);
@@ -763,7 +765,7 @@ TEST_F(HooksDhcpv6SrvTest, simple_pkt6_send) {
                         "pkt6_send", pkt6_send_callout));
 
     // Let's create a simple SOLICIT
-    Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
+    Pkt6Ptr sol = Pkt6Ptr(PktCaptures::captureSimpleSolicit());
 
     // Simulate that we have received that traffic
     srv_->fakeReceive(sol);
@@ -799,7 +801,7 @@ TEST_F(HooksDhcpv6SrvTest, valueChange_pkt6_send) {
                         "pkt6_send", pkt6_send_change_serverid));
 
     // Let's create a simple SOLICIT
-    Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
+    Pkt6Ptr sol = Pkt6Ptr(PktCaptures::captureSimpleSolicit());
 
     // Simulate that we have received that traffic
     srv_->fakeReceive(sol);
@@ -836,7 +838,7 @@ TEST_F(HooksDhcpv6SrvTest, deleteServerId_pkt6_send) {
                         "pkt6_send", pkt6_send_delete_serverid));
 
     // Let's create a simple SOLICIT
-    Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
+    Pkt6Ptr sol = Pkt6Ptr(PktCaptures::captureSimpleSolicit());
 
     // Simulate that we have received that traffic
     srv_->fakeReceive(sol);
@@ -867,7 +869,7 @@ TEST_F(HooksDhcpv6SrvTest, skip_pkt6_send) {
                         "pkt6_send", pkt6_send_skip));
 
     // Let's create a simple REQUEST
-    Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
+    Pkt6Ptr sol = Pkt6Ptr(PktCaptures::captureSimpleSolicit());
 
     // Simulate that we have received that traffic
     srv_->fakeReceive(sol);
@@ -919,7 +921,7 @@ TEST_F(HooksDhcpv6SrvTest, subnet6_select) {
     // Configure the server and make sure the config is accepted
     EXPECT_NO_THROW(status = configureDhcp6Server(*srv_, json));
     ASSERT_TRUE(status);
-    comment_ = parseAnswer(rcode_, status);
+    comment_ = isc::config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
 
     CfgMgr::instance().commit();
@@ -990,7 +992,7 @@ TEST_F(HooksDhcpv6SrvTest, subnet_select_change) {
     // Configure the server and make sure the config is accepted
     EXPECT_NO_THROW(status = configureDhcp6Server(*srv_, json));
     ASSERT_TRUE(status);
-    comment_ = parseAnswer(rcode_, status);
+    comment_ = isc::config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
 
     CfgMgr::instance().commit();
