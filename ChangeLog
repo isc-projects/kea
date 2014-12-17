@@ -1,3 +1,8 @@
+866.	[doc]		stephen
+	Corrected documentation concering the way to configure hooks
+	libraries.
+	(Trac #3635, git 42d1c98a2e66ab7fc3e372365edad1f5709df885)
+
 865.	[func]		marcin
 	Host reservations can be specified in the DHCPv4 and DHCPv6
 	servers configuration. The reservations are loaded, but they
