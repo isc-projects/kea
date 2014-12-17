@@ -107,6 +107,7 @@ IfaceMgrTestConfig::createIfaces() {
     // eth1
     addIface("eth1", 2);
     addAddress("eth1", IOAddress("192.0.2.3"));
+    addAddress("eth1", IOAddress("192.0.2.5"));
     addAddress("eth1", IOAddress("fe80::3a60:77ff:fed5:abcd"));
 
 }
@@ -143,7 +144,7 @@ IfaceMgrTestConfig::setIfaceFlags(const std::string& name,
 
 bool
 IfaceMgrTestConfig::socketOpen(const std::string& iface_name,
-                         const int family) const {
+                               const int family) const {
     Iface* iface = IfaceMgr::instance().getIface(iface_name);
     if (iface == NULL) {
         isc_throw(Unexpected, "No such interface '" << iface_name << "'");
@@ -153,6 +154,25 @@ IfaceMgrTestConfig::socketOpen(const std::string& iface_name,
     for (Iface::SocketCollection::const_iterator sock = sockets.begin();
          sock != sockets.end(); ++sock) {
         if (sock->family_ == family) {
+            return (true);
+        }
+    }
+    return (false);
+}
+
+bool
+IfaceMgrTestConfig::socketOpen(const std::string& iface_name,
+                               const std::string& address) const {
+    Iface* iface = IfaceMgr::instance().getIface(iface_name);
+    if (iface == NULL) {
+        isc_throw(Unexpected, "No such interface '" << iface_name << "'");
+    }
+
+    const Iface::SocketCollection& sockets = iface->getSockets();
+    for (Iface::SocketCollection::const_iterator sock = sockets.begin();
+         sock != sockets.end(); ++sock) {
+        if ((sock->family_ == AF_INET) &&
+            (sock->addr_ == IOAddress(address))) {
             return (true);
         }
     }

@@ -142,6 +142,10 @@ This warning message is logged when user specified a link-local address to
 receive unicast traffic. The warning message is issued because it is an
 uncommon use.
 
+% DHCPSRV_CFGMGR_USE_ADDRESS listening on address %1, on interface %2
+A message issued when server is configured to listen on the explicitly specified
+IP address on the given interface.
+
 % DHCPSRV_CLOSE_DB closing currently open %1 database
 This is a debug message, issued when the DHCP server closes the currently
 open lease database.  It is issued at program shutdown and whenever

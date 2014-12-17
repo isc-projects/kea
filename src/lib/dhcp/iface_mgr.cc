@@ -40,6 +40,7 @@
 
 using namespace std;
 using namespace isc::asiolink;
+using namespace isc::util;
 using namespace isc::util::io::internal;
 
 namespace isc {
@@ -149,7 +150,7 @@ void Iface::setMac(const uint8_t* mac, size_t len) {
 bool Iface::delAddress(const isc::asiolink::IOAddress& addr) {
     for (AddressCollection::iterator a = addrs_.begin();
          a!=addrs_.end(); ++a) {
-        if (*a==addr) {
+        if (a->get() == addr) {
             addrs_.erase(a);
             return (true);
         }
@@ -216,12 +217,12 @@ IfaceMgr::IfaceMgr()
 void Iface::addUnicast(const isc::asiolink::IOAddress& addr) {
     for (Iface::AddressCollection::const_iterator i = unicasts_.begin();
          i != unicasts_.end(); ++i) {
-        if (*i == addr) {
+        if (i->get() == addr) {
             isc_throw(BadValue, "Address " << addr
                       << " already defined on the " << name_ << " interface.");
         }
     }
-    unicasts_.push_back(addr);
+    unicasts_.push_back(OptionalValue<IOAddress>(addr, true));
 }
 
 bool
@@ -233,8 +234,8 @@ Iface::getAddress4(isc::asiolink::IOAddress& address) const {
          addr != addrs.end(); ++addr) {
         // If address is IPv4, we assign it to the function argument
         // and return true.
-        if (addr->isV4()) {
-            address = *addr;
+        if (addr->get().isV4()) {
+            address = addr->get();
             return (true);
         }
     }
@@ -247,11 +248,37 @@ Iface::hasAddress(const isc::asiolink::IOAddress& address) const {
     const AddressCollection& addrs = getAddresses();
     for (AddressCollection::const_iterator addr = addrs.begin();
          addr != addrs.end(); ++addr) {
-        if (address == *addr) {
+        if (address == addr->get()) {
             return (true);
         }
     }
     return (false);
+}
+
+void
+Iface::addAddress(const isc::asiolink::IOAddress& addr) {
+    addrs_.push_back(OptionalValue<IOAddress>(addr, OptionalValueState(false)));
+}
+
+void
+Iface::setActive(const IOAddress& address, const bool active) {
+    for (AddressCollection::iterator addr_it = addrs_.begin();
+         addr_it != addrs_.end(); ++addr_it) {
+        if (address == addr_it->get()) {
+            addr_it->specify(active);
+            return;
+        }
+    }
+    isc_throw(BadValue, "specified address " << address << " was not"
+              " found on the interface " << getName());
+}
+
+void
+Iface::setActive(const bool active) {
+    for (AddressCollection::iterator addr_it = addrs_.begin();
+         addr_it != addrs_.end(); ++addr_it) {
+        addr_it->specify(active);
+    }
 }
 
 void IfaceMgr::closeSockets() {
@@ -393,7 +420,7 @@ IfaceMgr::hasOpenSocket(const IOAddress& addr) const {
                          iface->getAddresses().begin();
                      addr_it != iface->getAddresses().end();
                      ++addr_it) {
-                    if (addr == *addr_it) {
+                    if (addr == addr_it->get()) {
                         return (true);
                     }
                 }
@@ -488,7 +515,7 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
              ++addr) {
 
             // Skip all but V4 addresses.
-            if (!addr->isV4()) {
+            if (!addr->get().isV4()) {
                 continue;
             }
 
@@ -616,7 +643,7 @@ IfaceMgr::openSockets6(const uint16_t port,
              ++addr) {
 
             // Skip all but V6 addresses.
-            if (!addr->isV6()) {
+            if (!addr->get().isV6()) {
                 continue;
             }
 
@@ -625,7 +652,7 @@ IfaceMgr::openSockets6(const uint16_t port,
             // with interface with 2 global addresses, we would bind 3 sockets
             // (one for link-local and two for global). That would result in
             // getting each message 3 times.
-            if (!addr->isV6LinkLocal()){
+            if (!addr->get().isV6LinkLocal()){
                 continue;
             }
 
@@ -663,7 +690,7 @@ IfaceMgr::printIfaces(std::ostream& out /*= std::cout*/) {
 
         for (Iface::AddressCollection::const_iterator addr = addrs.begin();
              addr != addrs.end(); ++addr) {
-            out << "  " << addr->toText();
+            out << "  " << addr->get().toText();
         }
         out << endl;
     }
@@ -743,7 +770,7 @@ int IfaceMgr::openSocketFromIface(const std::string& ifname,
         Iface::AddressCollection addrs = iface->getAddresses();
         Iface::AddressCollection::iterator addr_it = addrs.begin();
         while (addr_it != addrs.end()) {
-            if (addr_it->getFamily() == family) {
+            if (addr_it->get().getFamily() == family) {
                 // We have interface and address so let's open socket.
                 // This may cause isc::Unexpected exception.
                 return (openSocket(iface->getName(), *addr_it, port, false));
@@ -787,7 +814,7 @@ int IfaceMgr::openSocketFromAddress(const IOAddress& addr,
             // on detected interfaces. If it does, we have
             // address and interface detected so we can open
             // socket.
-            if (*addr_it == addr) {
+            if (addr_it->get() == addr) {
                 // Open socket using local interface, address and port.
                 // This may cause isc::Unexpected exception.
                 return (openSocket(iface->getName(), *addr_it, port, false));
