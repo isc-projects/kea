@@ -416,12 +416,34 @@ protected:
 
     /// @brief No-op
     ///
+    /// This is a DHCPv4 version of the function that attempts to extract
+    /// MAC address from the options inserted by a cable modem. It is currently
+    /// not implemented for v4.
+    ///
+    /// @return always NULL
+    virtual HWAddrPtr getMACFromDocsisModem() {
+        return (HWAddrPtr());
+    }
+
+    /// @brief No-op
+    ///
     /// This method returns hardware address extracted from DUID.
     /// Currently it is a no-op, even though there's RFC that defines how to
     /// use DUID in DHCPv4 (see RFC4361). We may implement it one day.
     ///
     /// @return always NULL
     virtual HWAddrPtr getMACFromDUID(){
+        return (HWAddrPtr());
+    }
+
+    /// @brief No-op
+    ///
+    /// This is a DHCPv4 version of the function that attempts to extract
+    /// MAC address from the options inserted by a CMTS. It is currently
+    /// not implemented for v4.
+    ///
+    /// @return always NULL
+    virtual HWAddrPtr getMACFromDocsisCMTS() {
         return (HWAddrPtr());
     }
 

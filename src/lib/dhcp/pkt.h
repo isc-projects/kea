@@ -523,6 +523,32 @@ protected:
     HWAddrPtr
     getMACFromIPv6(const isc::asiolink::IOAddress& addr);
 
+    /// @brief Attempts to extract MAC/Hardware address from DOCSIS options
+    ///        inserted by the modem itself.
+    ///
+    /// This is a generic mechanism for extracting hardware address from the
+    /// DOCSIS options.
+    ///
+    /// @note This is a pure virtual method and must be implemented in
+    /// the derived classes. The @c Pkt6 class have respective implementation.
+    /// This method is currently not implemented in DHCPv4.
+    ///
+    /// @return hardware address (if necessary DOCSIS suboptions are present)
+    virtual HWAddrPtr getMACFromDocsisModem() = 0;
+
+    /// @brief Attempts to extract MAC/Hardware address from DOCSIS options
+    ///        inserted by the CMTS (the relay agent)
+    ///
+    /// This is a generic mechanism for extracting hardware address from the
+    /// DOCSIS options.
+    ///
+    /// @note This is a pure virtual method and must be implemented in
+    /// the derived classes. The @c Pkt6 class have respective implementation.
+    /// This method is currently not implemented in DHCPv4.
+    ///
+    /// @return hardware address (if necessary DOCSIS suboptions are present)
+    virtual HWAddrPtr getMACFromDocsisCMTS() = 0;
+
     /// Transaction-id (32 bits for v4, 24 bits for v6)
     uint32_t transid_;
 

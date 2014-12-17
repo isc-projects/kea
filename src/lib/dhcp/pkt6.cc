@@ -15,7 +15,10 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
+#include <dhcp/option_int.h>
+#include <dhcp/option_vendor_class.h>
 #include <dhcp/pkt6.h>
+#include <dhcp/docsis3_option_defs.h>
 #include <util/io_utilities.h>
 #include <exceptions/exceptions.h>
 #include <dhcp/duid.h>
@@ -620,8 +623,62 @@ Pkt6::getMACFromIPv6RelayOpt() {
         // +2, -2 means to skip the initial 2 bytes which are hwaddress type
         return (HWAddrPtr(new HWAddr(&data[0] + 2, data.size() - 2,
                                      opt->getUint16())));
+    } else {
+        return (HWAddrPtr());
     }
-    else {
+}
+
+HWAddrPtr
+Pkt6::getMACFromDocsisModem() {
+    OptionUint32Ptr vendor = boost::dynamic_pointer_cast<
+        OptionUint32>(getOption(D6O_VENDOR_OPTS));
+
+    // Check if this is indeed DOCSIS3 environment
+    if (!vendor || vendor->getValue() != VENDOR_ID_CABLE_LABS) {
+        return (HWAddrPtr());
+    }
+
+    // If it is, try to get device-id option
+    OptionPtr device_id = vendor->getOption(DOCSIS3_V6_DEVICE_ID);
+    if (!device_id) {
+        return (HWAddrPtr());
+    }
+
+    OptionBuffer buf = device_id->getData();
+    if (buf.size() > 1) {
+        return (HWAddrPtr(new HWAddr(device_id->getData(), HTYPE_DOCSIS)));
+    } else {
+        return (HWAddrPtr());
+    }
+}
+
+HWAddrPtr
+Pkt6::getMACFromDocsisCMTS() {
+    if (relay_info_.empty()) {
+        // This message didn't pass through a CMTS, so there won't be any
+        // CMTS-specific options in it.
+        return (HWAddrPtr());
+    }
+
+    OptionUint32Ptr vendor = boost::dynamic_pointer_cast<
+        OptionUint32>(getAnyRelayOption(D6O_VENDOR_OPTS,
+                                        RELAY_SEARCH_FROM_CLIENT));
+
+    // Check if this is indeed DOCSIS3 environment
+    if (!vendor || vendor->getValue() != VENDOR_ID_CABLE_LABS) {
+        return (HWAddrPtr());
+    }
+
+    // If it is, try to get cable modem mac
+    OptionPtr cm_mac = vendor->getOption(DOCSIS3_V6_CMTS_CM_MAC);
+    if (!cm_mac) {
+        return (HWAddrPtr());
+    }
+
+    OptionBuffer buf = cm_mac->getData();
+    if (buf.size() > 1) {
+        return (HWAddrPtr(new HWAddr(cm_mac->getData(), HTYPE_DOCSIS)));
+    } else {
         return (HWAddrPtr());
     }
 }
