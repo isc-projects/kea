@@ -280,9 +280,9 @@ CfgIface::use(const uint16_t family, const std::string& iface_name) {
         // Insert address and the interface to the collection of unicast
         // addresses.
         if (address_map_.find(name) != address_map_.end()) {
-            isc_throw(DuplicateIfaceName, "must not specify unicast address '"
+            isc_throw(DuplicateIfaceName, "must not select address '"
                       << addr << "' for interface '" << name << "' "
-                      "because other unicast address has already been"
+                      "because another address has already been"
                       " specified for this interface");
         }
 
