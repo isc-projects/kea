@@ -3002,6 +3002,42 @@ TEST_F(Dhcp4ParserTest, allInterfaces) {
     ASSERT_TRUE(test_config.socketOpen("eth1", AF_INET));
 }
 
+// This test verifies that it is possible to select subset of interfaces
+// and addresses.
+TEST_F(Dhcp4ParserTest, selectedInterfacesAndAddresses) {
+    IfaceMgrTestConfig test_config(true);
+
+    ConstElementPtr x;
+    string config = "{ \"interfaces\": [ \"eth0/10.0.0.1\", \"eth1/192.0.2.3\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    ConstElementPtr status;
+
+    // Make sure the config manager is clean and there is no hanging
+    // interface configuration.
+    ASSERT_FALSE(test_config.socketOpen("eth0", "10.0.0.1"));
+    ASSERT_FALSE(test_config.socketOpen("eth1", "192.0.2.3"));
+    ASSERT_FALSE(test_config.socketOpen("eth1", "192.0.2.5"));
+
+    // Apply configuration.
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    CfgMgr::instance().getStagingCfg()->
+        getCfgIface().openSockets(AF_INET, 10000);
+
+    // eth0 and eth1 were explicitly selected. eth2 was not.
+    EXPECT_TRUE(test_config.socketOpen("eth0", "10.0.0.1"));
+    EXPECT_TRUE(test_config.socketOpen("eth1", "192.0.2.3"));
+    EXPECT_FALSE(test_config.socketOpen("eth1", "192.0.2.5"));
+}
+
+
 // This test checks the ability of the server to parse a configuration
 // containing a full, valid dhcp-ddns (D2ClientConfig) entry.
 TEST_F(Dhcp4ParserTest, d2ClientConfig) {
