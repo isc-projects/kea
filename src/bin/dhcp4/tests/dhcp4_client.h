@@ -268,6 +268,11 @@ public:
         dest_addr_ = dest_addr;
     }
 
+    /// @brief Sets the explicit hardware address for the client.
+    ///
+    /// @param hwaddr_str String representation of the HW address.
+    void setHWAddress(const std::string& hwaddr_str);
+
     /// @brief Sets client state.
     ///
     /// Depending on the current state the client's behavior is different
