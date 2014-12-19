@@ -487,8 +487,8 @@ public:
     Pool4Ptr pool_;             ///< Pool belonging to subnet_
     LeaseMgrFactory factory_;   ///< Pointer to LeaseMgr factory
     Lease4Ptr old_lease_;       ///< Holds previous instance of the lease.
-    AllocEngine::Context4 ctx_; ///< Context information passed to various
-                                ///< allocation engine functions.
+    AllocEngine::ClientContext4 ctx_; ///< Context information passed to various
+                                     ///< allocation engine functions.
 };
 
 // This test checks if the v6 Allocation Engine can be instantiated, parses
@@ -1682,7 +1682,8 @@ TEST_F(AllocEngine4Test,reservedAddressNoHintFakeAllocation) {
 // - Client has a reservation.
 // - Client sends DHCPREQUEST with a requested IP address
 // - Server returns DHCPNAK when requested IP address is different than
-// the reserved address.
+//   the reserved address. Note that the allocation engine returns NULL
+//   to indicate to the server that it should send DHCPNAK.
 // - Server allocates a reserved address to the client when the client requests
 // this address using requested IP address option.
 TEST_F(AllocEngine4Test, reservedAddressHint) {
@@ -1699,9 +1700,13 @@ TEST_F(AllocEngine4Test, reservedAddressHint) {
                                             false, false, "",
                                             false, CalloutHandlePtr(),
                                             old_lease_);
+    // The client requested a different address than reserved, so
+    // the allocation engine should return NULL lease. When the server
+    // receives a NULL lease for the client, it will send a DHCPNAK.
     ASSERT_FALSE(lease);
     ASSERT_FALSE(old_lease_);
 
+    // Now, request a correct address. The client should obtain it.
     lease = engine.allocateLease4(subnet_, clientid_, hwaddr_,
                                   IOAddress("192.0.2.123"),
                                   false, false, "",

@@ -51,6 +51,12 @@ namespace {
 ///   - Domain Name Server option present: 192.0.2.202, 192.0.2.203.
 ///   - Log Servers option present: 192.0.2.200 and 192.0.2.201
 ///   - Quotes Servers option present: 192.0.2.202, 192.0.2.203.
+///
+/// - Configuration 2:
+///   - Use for testing simple scenarios with host reservations
+///   - 1 subnet: 10.0.0.0/24
+///   - One reservation for the client using MAC address:
+///     aa:bb:cc:dd:ee:ff, reserved address 10.0.0.7
 const char* DORA_CONFIGS[] = {
 // Configuration 0
     "{ \"interfaces\": [ \"*\" ],"
@@ -124,6 +130,21 @@ const char* DORA_CONFIGS[] = {
         "        \"space\": \"dhcp4\""
         "    } ]"
         " } ]"
+    "}",
+
+// Configuration 2
+    "{ \"interfaces\": [ \"*\" ],"
+        "\"valid-lifetime\": 600,"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+        "    \"reservations\": [ "
+        "       {"
+        "         \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
+        "         \"ip-address\": \"10.0.0.7\""
+        "       }"
+        "    ]"
+        "} ]"
     "}"
 };
 
@@ -407,43 +428,87 @@ TEST_F(DORATest, ciaddr) {
     EXPECT_EQ("0.0.0.0", resp->getCiaddr().toText());
 }
 
+// This is a simple test for the host reservation. It creates a reservation
+// for an address for a single client, identified by the HW address. The
+// test verifies that the client using this HW address will obtain a
+// lease for the reserved address. It also checks that the client using
+// a different HW address will obtain an address from the dynamic pool.
+TEST_F(DORATest, reservation) {
+    // Client A is a one which will have a reservation.
+    Dhcp4Client clientA(Dhcp4Client::SELECTING);
+    // Set explicit HW address so as it matches the reservation in the
+    // configuration used below.
+    clientA.setHWAddress("aa:bb:cc:dd:ee:ff");
+    // Configure DHCP server.
+    configure(DORA_CONFIGS[2], *clientA.getServer());
+    // Client A performs 4-way exchange and should obtain a reserved
+    // address.
+    ASSERT_NO_THROW(clientA.doDORA(boost::shared_ptr<
+                                  IOAddress>(new IOAddress("0.0.0.0"))));
+    // Make sure that the server responded.
+    ASSERT_TRUE(clientA.getContext().response_);
+    Pkt4Ptr resp = clientA.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Make sure that the client has got the lease for the reserved address.
+    ASSERT_EQ("10.0.0.7", clientA.config_.lease_.addr_.toText());
+
+    // Client B uses the same server as Client A.
+    Dhcp4Client clientB(clientA.getServer(), Dhcp4Client::SELECTING);
+    // Client B has no reservation so it should get the lease from
+    // the dynamic pool.
+    ASSERT_NO_THROW(clientB.doDORA(boost::shared_ptr<
+                                  IOAddress>(new IOAddress("0.0.0.0"))));
+    // Make sure that the server responded.
+    ASSERT_TRUE(clientB.getContext().response_);
+    resp = clientB.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Obtain the subnet to which the returned address belongs.
+    Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->
+        selectSubnet(clientB.config_.lease_.addr_);
+    ASSERT_TRUE(subnet);
+    // Make sure that the address has been allocated from the dynamic pool.
+    ASSERT_TRUE(subnet->inPool(Lease::TYPE_V4, clientB.config_.lease_.addr_));
+}
+
 // This test checks the following scenario:
-// - Client A performs 4-way exchange and obrains a lease from the dynamic pool.
-// - Reservation is created for the client A using an address out of the dynamic
-//   pool.
-// - Client A renews the lease.
-// - Server responds with DHCPNAK to indicate that the client should stop using
-//   an address for which it has a lease. Server doesn't want to renew an
-//   address for which the client doesn't have a reservation, while it has
-//   a reservation for a different address.
-// - Client A receives a DHCPNAK and returns to the DHCP server discovery.
-// - Client A performs a 4-way exchange with a server and the server allocates
+// 1. Client A performs 4-way exchange and obrains a lease from the dynamic pool.
+// 2. Reservation is created for the client A using an address out of the dynamic
+//    pool.
+// 3. Client A renews the lease.
+// 4. Server responds with DHCPNAK to indicate that the client should stop using
+//    an address for which it has a lease. Server doesn't want to renew an
+//    address for which the client doesn't have a reservation, while it has
+//    a reservation for a different address.
+// 5. Client A receives a DHCPNAK and returns to the DHCP server discovery.
+// 6. Client A performs a 4-way exchange with a server and the server allocates
 //   a reserved address to the Client A.
-// - Client A renews the allocated address and the server returns a DHCPACK.
-// - Reservation for the Client A is removed.
-// - Client A renews the (previously reserved) lease and the server returns
-//   DHCPNAK because the address in use is neither reserved nor belongs to
-//   the dynamic pool.
-// - Client A returns to the DHCP server discovery.
-// - Client A uses 4-way exchange to obtain a lease from the dynamic pool.
-// - The new address that the Client A is using is reserved for Client B.
-//   Client A still holds this address.
-// - Client B uses 4-way exchange to obtain a new lease.
-// - The server determines that the Client B has a reservation for the
-//   address which is in use by Client A. The server drops the client's
-//   DHCPDISCOVER message.
-// - Client A renews the lease.
-// - The server determines that the address that Client A is using is reserved
-//   for Client B. The server returns DHCPNAK to the Client A.
-// - Client B uses 4-way echange to obtain the reserved lease but the lease
-//   for the Client A hasn't been removed yet. Client B's DHCPDISCOVER
-//   message is dropped again.
-// - Client A uses 4-way exchange to allocate a new lease.
-// - The server allocates a new lease from the dynamic pool but it avoids
-//   allocating the address reserved for the Client B.
-// - Client B uses 4-way exchange to obtain a new lease.
-// - The server finally allocates a reserved address to the Client B.
-TEST_F(DORATest, reservations) {
+// 7. Client A renews the allocated address and the server returns a DHCPACK.
+// 8. Reservation for the Client A is removed.
+// 9. Client A renews the (previously reserved) lease and the server returns
+//    DHCPNAK because the address in use is neither reserved nor belongs to
+//    the dynamic pool.
+// 10. Client A returns to the DHCP server discovery.
+// 11. Client A uses 4-way exchange to obtain a lease from the dynamic pool.
+// 12. The new address that the Client A is using is reserved for Client B.
+//     Client A still holds this address.
+// 13. Client B uses 4-way exchange to obtain a new lease.
+// 14. The server determines that the Client B has a reservation for the
+//     address which is in use by Client A. The server drops the client's
+//     DHCPDISCOVER message.
+// 15. Client A renews the lease.
+// 16. The server determines that the address that Client A is using is reserved
+//     for Client B. The server returns DHCPNAK to the Client A.
+// 17. Client B uses 4-way echange to obtain the reserved lease but the lease
+//     for the Client A hasn't been removed yet. Client B's DHCPDISCOVER
+//     message is dropped again.
+// 18. Client A uses 4-way exchange to allocate a new lease.
+// 19. The server allocates a new lease from the dynamic pool but it avoids
+//     allocating the address reserved for the Client B.
+// 20. Client B uses 4-way exchange to obtain a new lease.
+// 21. The server finally allocates a reserved address to the Client B.
+TEST_F(DORATest, reservationsWithConflicts) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(DORA_CONFIGS[0], *client.getServer());
@@ -456,10 +521,6 @@ TEST_F(DORATest, reservations) {
     Pkt4Ptr resp = client.getContext().response_;
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
-    // Response must not be relayed.
-    EXPECT_FALSE(resp->isRelayed());
-    // Make sure that the server id is present.
-    EXPECT_EQ("10.0.0.1", client.config_.serverid_.toText());
     // Make sure that the client has got the lease with the requested address.
     ASSERT_EQ("10.0.0.50", client.config_.lease_.addr_.toText());
 
