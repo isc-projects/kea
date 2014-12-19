@@ -996,6 +996,7 @@ AllocEngine::replaceClientLease(Lease4Ptr& lease, Context4& ctx) {
 
     updateLease4Information(lease, ctx);
 
+    bool skip = false;
     // Execute callouts registered for lease4_select.
     if (ctx.callout_handle_ && HooksManager::getHooksManager()
         .calloutsPresent(hook_index_lease4_select_)) {
@@ -1023,6 +1024,15 @@ AllocEngine::replaceClientLease(Lease4Ptr& lease, Context4& ctx) {
 
         // Let's use whatever callout returned.
         ctx.callout_handle_->getArgument("lease4", lease);
+
+        // Callouts decided to skip the next processing step. The next
+        // processing step would to actually renew the lease, so skip at this
+        // stage means "keep the old lease as it is".
+        if (ctx.callout_handle_->getSkip()) {
+            skip = true;
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS,
+                      DHCPSRV_HOOK_LEASE4_SELECT_SKIP);
+        }
     }
 
     /// @todo There should be a callout for a deletion of an old lease.
