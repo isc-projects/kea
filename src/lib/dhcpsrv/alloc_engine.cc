@@ -516,7 +516,7 @@ AllocEngine::allocateLease4(const SubnetPtr& subnet, const ClientIdPtr& clientid
         /// The ticket introducing a context and host reservation in the
         /// allocation engine is complex enough by itself to warrant that
         /// the API change is done with a separate ticket.
-        Context4 ctx;
+        ClientContext4 ctx;
         ctx.subnet_ = subnet;
         ctx.clientid_ = clientid;
         ctx.hwaddr_ = hwaddr;
@@ -656,7 +656,7 @@ AllocEngine::allocateLease4(const SubnetPtr& subnet, const ClientIdPtr& clientid
         }
 
         // No address was requested, requested address was not in pool or the
-        // allocation was not successful so far. Let's try to find a diffferent
+        // allocation was not successful so far. Let's try to find a different
         // address for the client.  Search the pool until first of the following
         // occurs:
         // - we find a free address
@@ -726,7 +726,7 @@ AllocEngine::allocateLease4(const SubnetPtr& subnet, const ClientIdPtr& clientid
 
 Lease4Ptr
 AllocEngine::renewLease4(const Lease4Ptr& lease,
-                         AllocEngine::Context4& ctx) {
+                         AllocEngine::ClientContext4& ctx) {
     if (!lease) {
         isc_throw(BadValue, "null lease specified for renewLease4");
     }
@@ -893,7 +893,7 @@ Lease6Ptr AllocEngine::reuseExpiredLease(Lease6Ptr& expired,
 
 Lease4Ptr
 AllocEngine::reuseExpiredLease(Lease4Ptr& expired,
-                               AllocEngine::Context4& ctx) {
+                               AllocEngine::ClientContext4& ctx) {
     if (!expired) {
         isc_throw(BadValue, "null lease specified for reuseExpiredLease");
     }
@@ -962,7 +962,7 @@ AllocEngine::reuseExpiredLease(Lease4Ptr& expired,
 }
 
 Lease4Ptr
-AllocEngine::replaceClientLease(Lease4Ptr& lease, Context4& ctx) {
+AllocEngine::replaceClientLease(Lease4Ptr& lease, ClientContext4& ctx) {
 
     if (!lease) {
         isc_throw(BadValue, "null lease specified for replaceClientLease");
@@ -1052,7 +1052,7 @@ AllocEngine::replaceClientLease(Lease4Ptr& lease, Context4& ctx) {
 
 Lease4Ptr
 AllocEngine::reallocateClientLease(Lease4Ptr& lease,
-                                   AllocEngine::Context4& ctx) {
+                                   AllocEngine::ClientContext4& ctx) {
     // Save the old lease, before renewal.
     ctx.old_lease_.reset(new Lease4(*lease));
 
@@ -1263,7 +1263,7 @@ Lease4Ptr AllocEngine::createLease4(const SubnetPtr& subnet,
 
 void
 AllocEngine::updateLease4Information(const Lease4Ptr& lease,
-                                     AllocEngine::Context4& ctx) const {
+                                     AllocEngine::ClientContext4& ctx) const {
     // This should not happen in theory.
     if (!lease) {
         isc_throw(BadValue, "null lease specified for updateLease4Information");

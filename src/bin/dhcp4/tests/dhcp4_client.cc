@@ -349,6 +349,11 @@ Dhcp4Client::sendMsg(const Pkt4Ptr& msg) {
     srv_->run();
 }
 
+void
+Dhcp4Client::setHWAddress(const std::string& hwaddr_str) {
+    hwaddr_.reset(new HWAddr(HWAddr::fromText(hwaddr_str)));
+}
+
 } // end of namespace isc::dhcp::test
 } // end of namespace isc::dhcp
 } // end of namespace isc

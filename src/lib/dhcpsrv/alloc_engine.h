@@ -232,7 +232,7 @@ protected:
     /// that the big advantage of using the context structure to pass
     /// information to the allocation engine methods is that adding
     /// new information doesn't modify the API of the allocation engine.
-    struct Context4 {
+    struct ClientContext4 {
         /// @brief Subnet selected for the client by the server.
         SubnetPtr subnet_;
 
@@ -255,6 +255,9 @@ protected:
         bool rev_dns_update_;
 
         /// @brief Hostname.
+        ///
+        /// The server retrieves the hostname from the Client FQDN option,
+        /// Hostname option or the host reservation record for the client.
         std::string hostname_;
 
         /// @brief Callout handle associated with the client's message.
@@ -279,10 +282,18 @@ protected:
         /// @c AllocEngine::allocateLease4. This flag is set to true to
         /// indicate that an attempt to allocate a lease should be
         /// interrupted.
+        ///
+        /// One possible use case is when the allocation engine tries
+        /// to renew the client's lease and the leased address appears
+        /// to be reserved for someone else. In such case, the allocation
+        /// engine should signal to the server that the address that the
+        /// client should stop using this address. The
+        /// @c AllocEngine::renewLease4 sets this flag so as the
+        /// upstream methods return the NULL lease pointer to the server.
         bool interrupt_processing_;
 
         /// @brief Default constructor.
-        Context4()
+        ClientContext4()
             : subnet_(), clientid_(), hwaddr_(), requested_address_("0.0.0.0"),
               fwd_dns_update_(false), rev_dns_update_(false),
               hostname_(""), callout_handle_(), fake_allocation_(false),
@@ -311,9 +322,9 @@ protected:
     ///   has a reservation for an address for which the lease was created or
     ///   the client desires to renew the lease for this address (ciaddr or
     ///   requested IP address option), the server renews the lease for the
-    ///   client. If the client desires a different address or the client has
-    ///   a (potentially new) reservation for a different address, the existing
-    ///   lease is replaced with a new lease.
+    ///   client. If the client desires a different address or the server has
+    ///   a (potentially new) reservation for a different address for this
+    ///   client, the existing lease is replaced with a new lease.
     /// - If the client has no lease in the lease database the server will try
     ///   to allocate a new lease. If the client has a reservation for the
     ///   particular address or if it has specified a desired address the
@@ -379,7 +390,8 @@ protected:
     /// returned, it is an indication that allocation engine reused/renewed an
     /// existing lease.
     ///
-    /// @todo Replace parameters with a single parameter of a @c Context4 type.
+    /// @todo Replace parameters with a single parameter of a
+    /// @c ClientContext4 type.
     ///
     /// @param subnet subnet the allocation should come from
     /// @param clientid Client identifier
@@ -422,7 +434,7 @@ protected:
     /// @return Returns renewed lease. Note that the lease is only updated when
     /// it is an actual allocation (not processing DHCPDISCOVER message).
     Lease4Ptr
-    renewLease4(const Lease4Ptr& lease, Context4& ctx);
+    renewLease4(const Lease4Ptr& lease, ClientContext4& ctx);
 
     /// @brief Allocates an IPv6 lease
     ///
@@ -521,7 +533,7 @@ private:
     /// @param ctx A context containing information from the server about the
     /// client and its message.
     void updateLease4Information(const Lease4Ptr& lease,
-                                 Context4& ctx) const;
+                                 ClientContext4& ctx) const;
 
     /// @brief creates a lease and inserts it in LeaseMgr if necessary
     ///
@@ -574,7 +586,7 @@ private:
     /// @return Updated lease instance.
     /// @throw BadValue if trying to reuse a lease which is still valid or
     /// when the provided parameters are invalid.
-    Lease4Ptr reuseExpiredLease(Lease4Ptr& expired, Context4& ctx);
+    Lease4Ptr reuseExpiredLease(Lease4Ptr& expired, ClientContext4& ctx);
 
     /// @brief Updates the existing, non expired lease with a information from
     /// the context.
@@ -592,7 +604,7 @@ private:
     ///
     /// @return Pointer to the updated lease.
     /// @throw BadValue if the provided parameters are invalid.
-    Lease4Ptr replaceClientLease(Lease4Ptr& lease, Context4& ctx);
+    Lease4Ptr replaceClientLease(Lease4Ptr& lease, ClientContext4& ctx);
 
     /// @brief Replace or renew client's lease.
     ///
@@ -610,7 +622,7 @@ private:
     ///
     /// @return Updated lease, or NULL if allocation was unsucessful.
     /// @throw BadValue if specified parameters are invalid.
-    Lease4Ptr reallocateClientLease(Lease4Ptr& lease, Context4& ctx);
+    Lease4Ptr reallocateClientLease(Lease4Ptr& lease, ClientContext4& ctx);
 
     /// @brief Reuses expired IPv6 lease
     ///
