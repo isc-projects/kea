@@ -514,7 +514,7 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
              addr != addrs.end();
              ++addr) {
 
-            // Skip non-IPv4 addresses and thos that weren't selected..
+            // Skip non-IPv4 addresses and those that weren't selected..
             if (!addr->get().isV4() || !addr->isSpecified()) {
                 continue;
             }

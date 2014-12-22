@@ -79,7 +79,7 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
 
                 // Otherwise, activate first one.
                 } else {
-                    IOAddress address("0.0.0.0");
+                    IOAddress address(0);
                     if (iface->getAddress4(address)) {
                         iface->setActive(address, true);
                     }
@@ -251,7 +251,7 @@ CfgIface::use(const uint16_t family, const std::string& iface_name) {
         // Validate V6 address.
         if (family == AF_INET6) {
             // Check that the address is a valid unicast address.
-            if (!addr.isV6() || addr.isV6LinkLocal() || addr.isV6Multicast()) {
+            if (!addr.isV6() || addr.isV6Multicast()) {
                 isc_throw(InvalidIfaceName, "address '" << addr << "' is not"
                           " a valid IPv6 unicast address");
             }
@@ -287,7 +287,7 @@ CfgIface::use(const uint16_t family, const std::string& iface_name) {
         }
 
         if (family == AF_INET6) {
-            LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_ADD_UNICAST)
+            LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_USE_UNICAST)
                 .arg(addr.toText()).arg(name);
 
         } else {

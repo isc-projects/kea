@@ -58,9 +58,6 @@ available sooner.
 An info message issued when new interface is being added to the collection of
 interfaces on which server listens to DHCP messages.
 
-% DHCPSRV_CFGMGR_ADD_UNICAST listening on unicast address %1, on interface %2
-A debug message issued when new configuring DHCP server to listen on unicast
-address on the specific interface.
 
 % DHCPSRV_CFGMGR_ADD_SUBNET4 adding subnet %1
 A debug message reported when the DHCP configuration manager is adding the
@@ -143,8 +140,12 @@ receive unicast traffic. The warning message is issued because it is an
 uncommon use.
 
 % DHCPSRV_CFGMGR_USE_ADDRESS listening on address %1, on interface %2
-A message issued when server is configured to listen on the explicitly specified
+A message issued when the server is configured to listen on the explicitly specified
 IP address on the given interface.
+
+% DHCPSRV_CFGMGR_USE_UNICAST listening on unicast address %1, on interface %2
+An info message issued when new configuring DHCP server to listen on unicast
+address on the specific interface.
 
 % DHCPSRV_CLOSE_DB closing currently open %1 database
 This is a debug message, issued when the DHCP server closes the currently

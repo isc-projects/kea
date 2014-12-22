@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef IFACE_CFG_H
-#define IFACE_CFG_H
+#ifndef CFG_IFACE_H
+#define CFG_IFACE_H
 
 #include <asiolink/io_address.h>
 #include <map>
@@ -209,4 +209,4 @@ private:
 }
 }
 
-#endif // IFACE_CFG_H
+#endif // CFG_IFACE_H
