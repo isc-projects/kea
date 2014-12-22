@@ -241,7 +241,7 @@ public:
     /// @param iface_name Interface name.
     /// @param address Address to which the socket is bound.
     bool socketOpen(const std::string& iface_name,
-                    const std::string & address) const;
+                    const std::string& address) const;
 
     /// @brief Checks if unicast socket is opened on interface.
     ///

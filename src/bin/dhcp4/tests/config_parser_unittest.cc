@@ -3031,9 +3031,12 @@ TEST_F(Dhcp4ParserTest, selectedInterfacesAndAddresses) {
     CfgMgr::instance().getStagingCfg()->
         getCfgIface().openSockets(AF_INET, 10000);
 
-    // eth0 and eth1 were explicitly selected. eth2 was not.
+    // An address on eth0 was selected
     EXPECT_TRUE(test_config.socketOpen("eth0", "10.0.0.1"));
+    // The 192.0.2.3 address on eth1 was selected.
     EXPECT_TRUE(test_config.socketOpen("eth1", "192.0.2.3"));
+    // The 192.0.2.5 was not selected, thus the socket should not
+    // be bound to this address.
     EXPECT_FALSE(test_config.socketOpen("eth1", "192.0.2.5"));
 }
 

@@ -283,10 +283,6 @@ TEST_F(CfgIfaceTest, invalidValues) {
     ASSERT_THROW(cfg.use(AF_INET6, "/2001:db8:1::1"), InvalidIfaceName);
     ASSERT_THROW(cfg.use(AF_INET6, "*/2001:db8:1::1"), InvalidIfaceName);
     ASSERT_THROW(cfg.use(AF_INET6, "bogus/2001:db8:1::1"), NoSuchIface);
-    ASSERT_THROW(cfg.use(AF_INET6, "eth0/fe80::3a60:77ff:fed5:cdef"),
-                 InvalidIfaceName);
-    ASSERT_THROW(cfg.use(AF_INET6, "eth0/fe80::3a60:77ff:fed5:cdef"),
-                 InvalidIfaceName);
     ASSERT_THROW(cfg.use(AF_INET6, "eth0/2001:db8:1::2"), NoSuchAddress);
     ASSERT_NO_THROW(cfg.use(AF_INET6, "*"));
     ASSERT_THROW(cfg.use(AF_INET6, "*"), DuplicateIfaceName);
