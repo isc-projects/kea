@@ -64,6 +64,14 @@ typedef boost::multi_index_container<
                     &Host::getIdentifierType
                 >
             >
+        >,
+
+        // Second index is used to search for the host using reserved IPv4
+        // address.
+        boost::multi_index::ordered_non_unique<
+            // Index using values returned by the @c Host::getIPv4Resrvation.
+            boost::multi_index::const_mem_fun<Host, const asiolink::IOAddress&,
+                                               &Host::getIPv4Reservation>
         >
     >
 > HostContainer;
@@ -77,6 +85,16 @@ typedef HostContainer::nth_index<0>::type HostContainerIndex0;
 /// @brief Results range returned using the @c HostContainerIndex0.
 typedef std::pair<HostContainerIndex0::iterator,
                   HostContainerIndex0::iterator> HostContainerIndex0Range;
+
+/// @brief Second index type in the @c HostContainer.
+///
+/// This index allows for searching for @c Host objects using a
+/// reserved IPv4 address.
+typedef HostContainer::nth_index<1>::type HostContainerIndex1;
+
+/// @brief Results range returned using the @c HostContainerIndex1.
+typedef std::pair<HostContainerIndex1::iterator,
+                  HostContainerIndex1::iterator> HostContainerIndex1Range;
 
 }
 }
