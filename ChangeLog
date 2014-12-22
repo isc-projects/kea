@@ -1,3 +1,10 @@
+868.    [func]          marcin
+        DHCPv4 server configuration allows for selection of the
+        address on the interface that server should listen on.
+        This is specifically useful in the environments with
+        multiple IPv4 addresses assigned to one interface.
+        (Trac #3539, git ff71887c605eedc3914bacfd2e551da7bddcc0d6)
+
 867.	[func]		marcin
 	libdhcpsrv: Allocation Engine uses statically assigned
 	addresses when it allocates or renews leases for the
