@@ -1,0 +1,72 @@
+# This is an example configuration file for the DHCPv4 server in Kea.
+# It contains one subnet in which there are two static address reservations
+# for the clients identified by the MAC addresses.
+{ "Dhcp4":
+
+{
+# Kea is told to listen on eth0 interface only.
+  "interfaces": [ "eth0" ],
+
+# We need to specify lease type. As of May 2014, three backends are supported:
+# memfile, mysql and pgsql. We'll just use memfile, because it doesn't require
+# any prior set up.
+  "lease-database": {
+    "type": "memfile"
+  },
+
+# Addresses will be assigned with valid lifetimes being 4000. Client
+# is told to start renewing after 1000 seconds. If the server does not respond
+# after 2000 seconds since the lease was granted, client is supposed
+# to start REBIND procedure (emergency renewal that allows switching
+# to a different server).
+  "valid-lifetime": 4000,
+
+# Renew and rebind timers are commented out. This implies that options
+# 58 and 59 will not be sent to the client. In this case it is up to
+# the client to pick the timer values according to RFC2131. Uncomment the
+# timers to send these options to the client.
+#  "renew-timer": 1000,
+#  "rebind-timer": 2000,
+
+# Define a subnet with two reservations for the 192.0.2.202 and
+# 192.0.2.100 address. Note that the latter is a reservation for the
+# address which is within the range of the pool of the dynamically
+# allocated address. The server will exclude this address from this
+# pool and only assign it to the client which has a reservation for
+# it.
+  "subnet4": [
+    {
+       "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
+       "subnet": "192.0.2.0/24",
+       "interface": "eth0",
+       "reservations": [
+         {
+             "hw-address": "1a:1b:1c:1d:1e:1f",
+             "ip-address": "192.0.2.202"
+         },
+         {
+             "hw-address": "0a:0b:0c:0d:0e:0f",
+             "ip-address": "192.0.2.100"
+         }
+       ]
+    } 
+  ]
+},
+
+# The following configures logging. It assumes that messages with at least
+# informational level (info, warn, error) will will be logged to stdout.
+"Logging": {
+    "loggers": [
+        {
+            "name": "kea-dhcp4",
+            "output_options": [
+                {
+                    "output": "stdout"
+                }
+            ],
+            "severity": "INFO"
+        }
+    ]
+}
+
+}
