@@ -348,8 +348,18 @@ url="http://jsonviewer.stack.hu/"/>.
   with explicit interface names:
   <screen>
 "Dhcp4": { <userinput>"interfaces": [ "eth1", "eth3", "*" ]</userinput>, ... }</screen>
-It is anticipated that this will form of usage only be used where it is desired to
+It is anticipated that this form of usage will only be used when it is desired to
 temporarily override a list of interface names and listen on all interfaces.
+  </para>
+  <para>Some deployments of the DHCP servers require that the servers listen
+  on the interfaces with multiple IPv4 addresses configured. In some cases,
+  multiple instances of the DHCP servers are running concurrently and each
+  instance should be bound to a different address on the particular interface.
+  In these situations, the address to use can be selected by
+  appending an IPv4 address to the interface name in the following manner:
+<screen>
+"Dhcp4": { <userinput>"interfaces": [ "eth1/10.0.0.1", "eth3/192.0.2.3" ]</userinput>, ... }</screen>
+  Note that only one address can be specified on each interface.
   </para>
 </section>
 

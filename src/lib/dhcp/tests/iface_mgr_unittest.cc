@@ -289,7 +289,7 @@ public:
                          iface->getAddresses().begin();
                      addr_it != iface->getAddresses().end();
                      ++addr_it) {
-                    if (*addr_it == IOAddress(addr)) {
+                    if (addr_it->get() == IOAddress(addr)) {
                         return (true);
                     }
                 }
@@ -1501,7 +1501,7 @@ TEST_F(IfaceMgrTest, openSockets4IfaceDown) {
 
     // Expecting that the socket is open on eth1 because it was up, running
     // and active.
-    EXPECT_EQ(1, IfaceMgr::instance().getIface("eth1")->getSockets().size());
+    EXPECT_EQ(2, IfaceMgr::instance().getIface("eth1")->getSockets().size());
     // Never open socket on loopback interface.
     EXPECT_TRUE(IfaceMgr::instance().getIface("lo")->getSockets().empty());
 
@@ -2072,7 +2072,7 @@ TEST_F(IfaceMgrTest, iface) {
 
     addrs = iface->getAddresses();
     ASSERT_EQ(1, addrs.size());
-    EXPECT_EQ("192.0.2.6", addrs.at(0).toText());
+    EXPECT_EQ("192.0.2.6", addrs.begin()->get().toText());
 
     // No such address, should return false.
     EXPECT_FALSE(iface->delAddress(IOAddress("192.0.8.9")));
@@ -2332,7 +2332,7 @@ checkIfAddrs(const Iface & iface, struct ifaddrs *& ifptr) {
             for (Iface::AddressCollection::const_iterator a =
                      iface.getAddresses().begin();
                  a != iface.getAddresses().end(); ++ a) {
-                if(a->isV4() && (*a) == addrv4) {
+                if(a->get().isV4() && (a->get()) == addrv4) {
                     return (true);
                 }
             }
@@ -2349,7 +2349,7 @@ checkIfAddrs(const Iface & iface, struct ifaddrs *& ifptr) {
             for(Iface::AddressCollection::const_iterator a =
                     iface.getAddresses().begin();
                 a != iface.getAddresses().end(); ++ a) {
-                if(a->isV6() && (*a) == addrv6) {
+                if (a->get().isV6() && (a->get() == addrv6)) {
                     return (true);
                 }
             }

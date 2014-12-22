@@ -37,7 +37,7 @@ CfgIface::closeSockets() const {
 bool
 CfgIface::equals(const CfgIface& other) const {
     return (iface_set_ == other.iface_set_ &&
-            unicast_map_ == other.unicast_map_ &&
+            address_map_ == other.address_map_ &&
             wildcard_used_ == other.wildcard_used_);
 }
 
@@ -70,6 +70,20 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
 
             } else if (family == AF_INET) {
                 iface->inactive4_ = false;
+                ExplicitAddressMap::const_iterator addr =
+                    address_map_.find(iface->getName());
+                // If user has specified an address to listen on, let's activate
+                // only this address.
+                if (addr != address_map_.end()) {
+                    iface->setActive(addr->second, true);
+
+                // Otherwise, activate first one.
+                } else {
+                    IOAddress address(0);
+                    if (iface->getAddress4(address)) {
+                        iface->setActive(address, true);
+                    }
+                }
 
             } else {
                 iface->inactive6_ = false;
@@ -79,8 +93,8 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
 
     // Select unicast sockets. It works only for V6. Ignore for V4.
     if (family == AF_INET6) {
-        for (UnicastMap::const_iterator unicast = unicast_map_.begin();
-             unicast != unicast_map_.end(); ++unicast) {
+        for (ExplicitAddressMap::const_iterator unicast = address_map_.begin();
+             unicast != address_map_.end(); ++unicast) {
             Iface* iface = IfaceMgr::instance().getIface(unicast->first);
             if (iface == NULL) {
                 isc_throw(Unexpected,
@@ -121,6 +135,7 @@ void
 CfgIface::reset() {
     wildcard_used_ = false;
     iface_set_.clear();
+    address_map_.clear();
 }
 
 void
@@ -130,13 +145,23 @@ CfgIface::setState(const uint16_t family, const bool inactive,
     for (IfaceMgr::IfaceCollection::iterator iface = ifaces.begin();
          iface != ifaces.end(); ++iface) {
         Iface* iface_ptr = IfaceMgr::instance().getIface(iface->getName());
+        bool iface_inactive = iface_ptr->flag_loopback_ ?
+            loopback_inactive : inactive;
         if (family == AF_INET) {
-            iface_ptr->inactive4_ = iface_ptr->flag_loopback_ ?
-                loopback_inactive : inactive;
+            iface_ptr->inactive4_ = iface_inactive;
         } else {
-            iface_ptr->inactive6_ = iface_ptr->flag_loopback_ ?
-                loopback_inactive : inactive;
+            iface_ptr->inactive6_ = iface_inactive;
         }
+
+        // Activate/deactivate all addresses.
+        const Iface::AddressCollection addresses = iface_ptr->getAddresses();
+        for (Iface::AddressCollection::const_iterator addr_it =
+                 addresses.begin(); addr_it != addresses.end(); ++addr_it) {
+            if (addr_it->get().getFamily() == family) {
+                iface_ptr->setActive(addr_it->get(), !iface_inactive);
+            }
+        }
+
     }
 }
 
@@ -169,18 +194,6 @@ CfgIface::use(const uint16_t family, const std::string& iface_name) {
                           << "' doesn't exist in the system");
             }
 
-            // If interface has already been specified.
-            if (iface_set_.find(name) != iface_set_.end()) {
-                isc_throw(DuplicateIfaceName, "interface '" << name
-                          << "' has already been specified");
-
-            }
-
-            // All ok, add interface.
-            LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_ADD_IFACE)
-                .arg(name);
-            iface_set_.insert(name);
-
         } else if (wildcard_used_) {
             isc_throw(DuplicateIfaceName, "the wildcard interface '"
                       << ALL_IFACES_KEYWORD << "' can only be specified once");
@@ -192,14 +205,10 @@ CfgIface::use(const uint16_t family, const std::string& iface_name) {
 
         }
 
-    } else if (family == AF_INET) {
-        isc_throw(InvalidIfaceName, "unicast addresses in the format of: "
-                  "iface-name/unicast-addr_stress can only be specified for"
-                  " IPv6 addr_stress family");
-
     } else {
-        // The interface name includes the unicast addr_stress, so we split
-        // interface name and the unicast addr_stress to two variables.
+        // The interface name includes the address on which the socket should
+        // be opened, we we need to split interface name and the address to
+        // two variables.
         name = util::str::trim(iface_name.substr(0, pos));
         addr_str = util::str::trim(iface_name.substr(pos + 1));
 
@@ -210,10 +219,10 @@ CfgIface::use(const uint16_t family, const std::string& iface_name) {
                       " interface configuration");
 
         }
-        // Unicast addr_stress following the interface name must not be empty.
+        // An address following the interface name must not be empty.
         if (addr_str.empty()) {
             isc_throw(InvalidIfaceName,
-                      "empty unicast addr_stress specified in the interface"
+                      "empty address specified in the interface"
                       << " configuration");
 
         }
@@ -222,8 +231,8 @@ CfgIface::use(const uint16_t family, const std::string& iface_name) {
         if (name == ALL_IFACES_KEYWORD) {
             isc_throw(InvalidIfaceName,
                       "wildcard interface name '" << ALL_IFACES_KEYWORD
-                      << "' must not be used in conjunction with a"
-                      " unicast addr_stress");
+                      << "' must not be used in conjunction with an"
+                      " address");
 
         }
 
@@ -239,17 +248,26 @@ CfgIface::use(const uint16_t family, const std::string& iface_name) {
         // is invalid.
         IOAddress addr(addr_str);
 
-        // Check that the address is a valid unicast address.
-        if (!addr.isV6() || addr.isV6LinkLocal() || addr.isV6Multicast()) {
-            isc_throw(InvalidIfaceName, "address '" << addr << "' is not"
-                      " a valid IPv6 unicast address");
-        }
+        // Validate V6 address.
+        if (family == AF_INET6) {
+            // Check that the address is a valid unicast address.
+            if (!addr.isV6() || addr.isV6Multicast()) {
+                isc_throw(InvalidIfaceName, "address '" << addr << "' is not"
+                          " a valid IPv6 unicast address");
+            }
 
-        // There are valid cases where link local address can be specified to
-        // receive unicast traffic, e.g. sent by relay agent.
-        if (addr.isV6LinkLocal()) {
-            LOG_WARN(dhcpsrv_logger, DHCPSRV_CFGMGR_UNICAST_LINK_LOCAL)
-                .arg(addr.toText()).arg(name);
+            // There are valid cases where link local address can be specified to
+            // receive unicast traffic, e.g. sent by relay agent.
+            if (addr.isV6LinkLocal()) {
+                LOG_WARN(dhcpsrv_logger, DHCPSRV_CFGMGR_UNICAST_LINK_LOCAL)
+                    .arg(addr.toText()).arg(name);
+            }
+
+        } else {
+            if (!addr.isV4()) {
+                isc_throw(InvalidIfaceName, "address '" << addr << "' is not"
+                          " a valid IPv4 address");
+            }
         }
 
         // Interface must have this address assigned.
@@ -261,17 +279,41 @@ CfgIface::use(const uint16_t family, const std::string& iface_name) {
 
         // Insert address and the interface to the collection of unicast
         // addresses.
-        if (unicast_map_.find(name) != unicast_map_.end()) {
-            isc_throw(DuplicateIfaceName, "must not specify unicast address '"
+        if (address_map_.find(name) != address_map_.end()) {
+            isc_throw(DuplicateIfaceName, "must not select address '"
                       << addr << "' for interface '" << name << "' "
-                      "because other unicast address has already been"
+                      "because another address has already been"
                       " specified for this interface");
         }
-        LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_ADD_UNICAST)
-            .arg(addr.toText()).arg(name);
-        unicast_map_.insert(std::pair<std::string, IOAddress>(name, addr));
+
+        if (family == AF_INET6) {
+            LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_USE_UNICAST)
+                .arg(addr.toText()).arg(name);
+
+        } else {
+            LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_USE_ADDRESS)
+                .arg(addr.toText()).arg(name);
+        }
+        address_map_.insert(std::pair<std::string, IOAddress>(name, addr));
     }
 
+    // If interface name was explicitly specified and we're not parsing
+    // a unicast IPv6 address, add the interface to the interface set.
+    if ((name != ALL_IFACES_KEYWORD) &&
+        ((family == AF_INET) || ((family == AF_INET6) && addr_str.empty()))) {
+        // If interface has already been specified.
+        if (iface_set_.find(name) != iface_set_.end()) {
+            isc_throw(DuplicateIfaceName, "interface '" << name
+                      << "' has already been specified");
+        }
+
+        // Log that we're listening on the specific interface and that the
+        // address is not explicitly specified.
+        if (addr_str.empty()) {
+            LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_ADD_IFACE).arg(name);
+        }
+        iface_set_.insert(name);
+    }
 }
 
 } // end of isc::dhcp namespace
