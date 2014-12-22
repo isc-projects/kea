@@ -1,3 +1,9 @@
+867.	[func]		marcin
+	libdhcpsrv: Allocation Engine uses statically assigned
+	addresses when it allocates or renews leases for the
+	DHCPv4 clients.
+	(Trac #3564, git 7b192fe314c12e38622742b3b338e997934f862f)
+
 866.	[doc]		stephen
 	Corrected documentation concering the way to configure hooks
 	libraries.
