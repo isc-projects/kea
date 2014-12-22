@@ -29,7 +29,11 @@
 #  "rebind-timer": 2000,
 
 # Define a subnet with two reservations for the 192.0.2.202 and
-# 192.0.2.203 address.
+# 192.0.2.100 address. Note that the latter is a reservation for the
+# address which is within the range of the pool of the dynamically
+# allocated address. The server will exclude this address from this
+# pool and only assign it to the client which has a reservation for
+# it.
   "subnet4": [
     {
        "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
@@ -42,7 +46,7 @@
          },
          {
              "hw-address": "0a:0b:0c:0d:0e:0f",
-             "ip-address": "192.0.2.203"
+             "ip-address": "192.0.2.100"
          }
        ]
     } 
