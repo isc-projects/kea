@@ -355,12 +355,11 @@ temporarily override a list of interface names and listen on all interfaces.
   on the interfaces with multiple IPv4 addresses configured. In some cases,
   multiple instances of the DHCP servers are running concurrently and each
   instance should be bound to a different address on the particular interface.
-  The administrator must be able to select this address for each instance.
-  This can be achieved by appending an IPv4 address to the interface
-  name using the following notation:
+  In these situations, the address to use can be selected by
+  appending an IPv4 address to the interface name in the following manner:
 <screen>
 "Dhcp4": { <userinput>"interfaces": [ "eth1/10.0.0.1", "eth3/192.0.2.3" ]</userinput>, ... }</screen>
-  Note that it is not allowed to specify more than one address for an interface.
+  Note that only one address can be specified on each interface.
   </para>
 </section>
 
