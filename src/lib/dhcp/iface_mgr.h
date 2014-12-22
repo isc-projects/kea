@@ -22,6 +22,7 @@
 #include <dhcp/pkt6.h>
 #include <dhcp/pkt_filter.h>
 #include <dhcp/pkt_filter6.h>
+#include <util/optional_value.h>
 
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
@@ -150,7 +151,8 @@ public:
     static const unsigned int MAX_MAC_LEN = 20;
 
     /// Type that defines list of addresses
-    typedef std::vector<isc::asiolink::IOAddress> AddressCollection;
+    typedef
+    std::list<util::OptionalValue<asiolink::IOAddress> > AddressCollection;
 
     /// @brief Type that holds a list of socket information.
     ///
@@ -256,7 +258,15 @@ public:
     /// @return hardware type
     uint16_t getHWType() const { return hardware_type_; }
 
-    /// @brief Returns all interfaces available on an interface.
+    /// @brief Returns all addresses available on an interface.
+    ///
+    /// The returned addresses are encapsulated in the @c util::OptionalValue
+    /// class to be able to selectively flag some of the addresses as active
+    /// (when optional value is specified) or inactive (when optional value
+    /// is specified). If the address is marked as active, the
+    /// @c IfaceMgr::openSockets4 method will open socket and bind to this
+    /// address. Otherwise, it will not bind any socket to this address.
+    /// This is useful when an interface has multiple IPv4 addresses assigned.
     ///
     /// Care should be taken to not use this collection after Iface object
     /// ceases to exist. That is easy in most cases as Iface objects are
@@ -291,9 +301,30 @@ public:
     /// configure address on actual network interface.
     ///
     /// @param addr address to be added
-    void addAddress(const isc::asiolink::IOAddress& addr) {
-        addrs_.push_back(addr);
-    }
+    void addAddress(const isc::asiolink::IOAddress& addr);
+
+    /// @brief Activates or deactivates address for the interface.
+    ///
+    /// This method marks a specified address on the interface active or
+    /// inactive. If the address is marked inactive, the
+    /// @c IfaceMgr::openSockets4 method will NOT open socket for this address.
+    ///
+    /// @param address An address which should be activated, deactivated.
+    /// @param active A boolean flag which indicates that the specified address
+    /// should be active (if true) or inactive (if false).
+    ///
+    /// @throw BadValue if specified address doesn't exist for the interface.
+    void setActive(const isc::asiolink::IOAddress& address, const bool active);
+
+    /// @brief Activates or deactivates all addresses for the interface.
+    ///
+    /// This method marks all addresses on the interface active or inactive.
+    /// If the address is marked inactive, the @c IfaceMgr::openSockets4
+    /// method will NOT open socket for this address.
+    ///
+    /// @param active A boolean flag which indicates that the addresses
+    /// should be active (if true) or inactive (if false).
+    void setActive(const bool active);
 
     /// @brief Deletes an address from an interface.
     ///

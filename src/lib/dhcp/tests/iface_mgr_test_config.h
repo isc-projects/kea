@@ -235,6 +235,14 @@ public:
     /// @param family One of: AF_INET or AF_INET6
     bool socketOpen(const std::string& iface_name, const int family) const;
 
+    /// @brief Checks is socket is opened on the interface and bound to a
+    /// specified address.
+    ///
+    /// @param iface_name Interface name.
+    /// @param address Address to which the socket is bound.
+    bool socketOpen(const std::string& iface_name,
+                    const std::string& address) const;
+
     /// @brief Checks if unicast socket is opened on interface.
     ///
     /// @param iface_name Interface name.
