@@ -42,6 +42,14 @@ public:
     /// @param family One of: AF_INET or AF_INET6
     bool socketOpen(const std::string& iface_name, const int family) const;
 
+    /// @brief Checks if socket is opened on the specified interface and bound
+    /// to a specific IPv4 address.
+    ///
+    /// @param iface_name Interface name.
+    /// @param address Address that the socket should be bound to.
+    bool socketOpen(const std::string& iface_name,
+                    const std::string& address) const;
+
     /// @brief Checks if unicast socket is opened on interface.
     ///
     /// @param iface_name Interface name.
@@ -57,6 +65,15 @@ CfgIfaceTest::socketOpen(const std::string& iface_name,
                          const int family) const {
     return (iface_mgr_test_config_.socketOpen(iface_name, family));
 }
+
+bool
+CfgIfaceTest::socketOpen(const std::string& iface_name,
+                         const std::string& address) const {
+    return (iface_mgr_test_config_.socketOpen(iface_name, address));
+}
+
+
+
 bool
 CfgIfaceTest::unicastOpen(const std::string& iface_name) const {
     return (iface_mgr_test_config_.unicastOpen(iface_name));
@@ -99,7 +116,60 @@ TEST_F(CfgIfaceTest, explicitNamesV4) {
     EXPECT_FALSE(socketOpen("eth0", AF_INET));
     EXPECT_TRUE(socketOpen("eth1", AF_INET));
     EXPECT_FALSE(socketOpen("lo", AF_INET));
+}
 
+// This test checks that it is possible to specify an interface and address
+// on this interface to which the socket should be bound. The sockets should
+// not be opened on other addresses on this interface.
+TEST_F(CfgIfaceTest, explicitNamesAndAddressesV4) {
+    CfgIface cfg;
+    ASSERT_NO_THROW(cfg.use(AF_INET, "eth0/10.0.0.1"));
+    ASSERT_NO_THROW(cfg.use(AF_INET, "eth1/192.0.2.3"));
+    ASSERT_THROW(cfg.use(AF_INET, "eth1/192.0.2.5"), DuplicateIfaceName);
+
+    // Open sockets on specified interfaces and addresses.
+    cfg.openSockets(AF_INET, DHCP4_SERVER_PORT);
+
+    EXPECT_TRUE(socketOpen("eth0", "10.0.0.1"));
+    EXPECT_TRUE(socketOpen("eth1", "192.0.2.3"));
+    EXPECT_FALSE(socketOpen("eth1", "192.0.2.5"));
+
+    // Close all sockets and make sure they are really closed.
+    cfg.closeSockets();
+    ASSERT_FALSE(socketOpen("eth0", "10.0.0.1"));
+    ASSERT_FALSE(socketOpen("eth1", "192.0.2.3"));
+    ASSERT_FALSE(socketOpen("eth1", "192.0.2.5"));
+
+    // Reset configuration.
+    cfg.reset();
+
+    // Now check that the socket can be bound to a different address on
+    // eth1.
+    ASSERT_NO_THROW(cfg.use(AF_INET, "eth1/192.0.2.5"));
+    ASSERT_THROW(cfg.use(AF_INET, "eth1/192.0.2.3"), DuplicateIfaceName);
+
+    // Open sockets according to the new configuration.
+    cfg.openSockets(AF_INET, DHCP4_SERVER_PORT);
+
+    EXPECT_FALSE(socketOpen("eth0", "10.0.0.1"));
+    EXPECT_FALSE(socketOpen("eth1", "192.0.2.3"));
+    EXPECT_TRUE(socketOpen("eth1", "192.0.2.5"));
+}
+
+// This test checks that the invalid interface name and/or IPv4 address
+// results in error.
+TEST_F(CfgIfaceTest, explicitNamesAndAddressesInvalidV4) {
+    CfgIface cfg;
+    // An address not assigned to the interface.
+    EXPECT_THROW(cfg.use(AF_INET, "eth0/10.0.0.2"), NoSuchAddress);
+    // IPv6 address.
+    EXPECT_THROW(cfg.use(AF_INET, "eth0/2001:db8:1::1"), InvalidIfaceName);
+    // Wildcard interface name with an address.
+    EXPECT_THROW(cfg.use(AF_INET, "*/10.0.0.1"), InvalidIfaceName);
+
+    // Duplicated interface.
+    ASSERT_NO_THROW(cfg.use(AF_INET, "eth1"));
+    EXPECT_THROW(cfg.use(AF_INET, "eth1/192.0.2.3"), DuplicateIfaceName);
 }
 
 // This test checks that the interface names can be explicitly selected
@@ -118,7 +188,7 @@ TEST_F(CfgIfaceTest, explicitNamesV6) {
     EXPECT_TRUE(socketOpen("eth1", AF_INET6));
     EXPECT_FALSE(socketOpen("lo", AF_INET6));
 
-    // No IPv4 sockets should be present because we wanted IPv4 sockets.
+    // No IPv4 sockets should be present because we wanted IPv6 sockets.
     EXPECT_FALSE(socketOpen("eth0", AF_INET));
     EXPECT_FALSE(socketOpen("eth1", AF_INET));
     EXPECT_FALSE(socketOpen("lo", AF_INET));
@@ -213,10 +283,6 @@ TEST_F(CfgIfaceTest, invalidValues) {
     ASSERT_THROW(cfg.use(AF_INET6, "/2001:db8:1::1"), InvalidIfaceName);
     ASSERT_THROW(cfg.use(AF_INET6, "*/2001:db8:1::1"), InvalidIfaceName);
     ASSERT_THROW(cfg.use(AF_INET6, "bogus/2001:db8:1::1"), NoSuchIface);
-    ASSERT_THROW(cfg.use(AF_INET6, "eth0/fe80::3a60:77ff:fed5:cdef"),
-                 InvalidIfaceName);
-    ASSERT_THROW(cfg.use(AF_INET6, "eth0/fe80::3a60:77ff:fed5:cdef"),
-                 InvalidIfaceName);
     ASSERT_THROW(cfg.use(AF_INET6, "eth0/2001:db8:1::2"), NoSuchAddress);
     ASSERT_NO_THROW(cfg.use(AF_INET6, "*"));
     ASSERT_THROW(cfg.use(AF_INET6, "*"), DuplicateIfaceName);

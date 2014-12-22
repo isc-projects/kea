@@ -20,7 +20,7 @@ reason for the failure being contained in the message.  The server will
 return a message to the client refusing a lease.
 
 % DHCPSRV_ADDRESS4_ALLOC_FAIL failed to allocate an IPv4 address after %1 attempt(s)
-THE DHCP allocation engine gave up trying to allocate an IPv4 address
+The DHCP allocation engine gave up trying to allocate an IPv4 address
 after the specified number of attempts.  This probably means that the
 address pool from which the allocation is being attempted is either
 empty, or very nearly empty.  As a result, the client will have been
@@ -55,12 +55,8 @@ to clients that are no longer active on the network will become available
 available sooner.
 
 % DHCPSRV_CFGMGR_ADD_IFACE listening on interface %1
-An info message issued when new interface is being added to the collection of
-interfaces on which server listens to DHCP messages.
-
-% DHCPSRV_CFGMGR_ADD_UNICAST listening on unicast address %1, on interface %2
-A debug message issued when new configuring DHCP server to listen on unicast
-address on the specific interface.
+An info message issued when a new interface is being added to the collection of
+interfaces on which the server listens to DHCP messages.
 
 % DHCPSRV_CFGMGR_ADD_SUBNET4 adding subnet %1
 A debug message reported when the DHCP configuration manager is adding the
@@ -71,7 +67,7 @@ A debug message reported when the DHCP configuration manager is adding the
 specified IPv6 subnet to its database.
 
 % DHCPSRV_CFGMGR_ALL_IFACES_ACTIVE enabling listening on all interfaces
-A debug message issued when server is being configured to listen on all
+A debug message issued when the server is being configured to listen on all
 interfaces.
 
 % DHCPSRV_CFGMGR_CFG_DHCP_DDNS Setting DHCP-DDNS configuration to: %1
@@ -129,7 +125,7 @@ was specified as being directly reachable over given interface. (see
 This is a debug message reporting that the DHCP configuration manager
 has returned the specified IPv6 subnet for a received packet. This particular
 subnet was selected, because value of interface-id option matched what was
-configured in server's interface-id option for that selected subnet6.
+configured in the server's interface-id option for that selected subnet6.
 (see 'interface-id' parameter in the subnet6 definition).
 
 % DHCPSRV_CFGMGR_SUBNET6_RELAY selected subnet %1, because of matching relay addr %2
@@ -141,6 +137,14 @@ matches value specified for this subnet.
 This warning message is logged when user specified a link-local address to
 receive unicast traffic. The warning message is issued because it is an
 uncommon use.
+
+% DHCPSRV_CFGMGR_USE_ADDRESS listening on address %1, on interface %2
+A message issued when the server is configured to listen on the explicitly specified
+IP address on the given interface.
+
+% DHCPSRV_CFGMGR_USE_UNICAST listening on unicast address %1, on interface %2
+An info message issued when configuring the DHCP server to listen on the unicast
+address on the specific interface.
 
 % DHCPSRV_CLOSE_DB closing currently open %1 database
 This is a debug message, issued when the DHCP server closes the currently
@@ -281,12 +285,12 @@ A debug message issued when the server is about to obtain schema version
 information from the memory file database.
 
 % DHCPSRV_MEMFILE_LEASES_RELOAD4 reloading leases from %1
-An info message issued when server is about to start reading DHCPv4 leases
+An info message issued when the server is about to start reading DHCPv4 leases
 from the lease file. All leases currently held in the memory will be
 replaced by those read from the file.
 
 % DHCPSRV_MEMFILE_LEASES_RELOAD6 reloading leases from %1
-An info message issued when server is about to start reading DHCPv6 leases
+An info message issued when the server is about to start reading DHCPv6 leases
 from the lease file. All leases currently held in the memory will be
 replaced by those read from the file.
 
@@ -401,8 +405,8 @@ A debug message issued when the server is attempting to update IPv6
 lease from the MySQL database for the specified address.
 
 % DHCPSRV_NO_SOCKETS_OPEN no interface configured to listen to DHCP traffic
-This warning message is issued when current server configuration specifies
-no interfaces that server should listen on, or specified interfaces are not
+This warning message is issued when the current server configuration specifies
+no interfaces that the server should listen on, or when the specified interfaces are not
 configured to receive the traffic.
 
 % DHCPSRV_NOTYPE_DB no 'type' keyword to determine database backend: %1

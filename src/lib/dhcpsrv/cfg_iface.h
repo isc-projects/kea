@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef IFACE_CFG_H
-#define IFACE_CFG_H
+#ifndef CFG_IFACE_H
+#define CFG_IFACE_H
 
 #include <asiolink/io_address.h>
 #include <map>
@@ -193,14 +193,13 @@ private:
     /// @brief A set of interface names specified by the user.
     IfaceSet iface_set_;
 
-    /// @brief A map of interfaces and unicast addresses.
-    typedef std::map<std::string, asiolink::IOAddress> UnicastMap;
+    /// @brief A map of interfaces and addresses to which the server
+    /// should bind sockets.
+    typedef std::map<std::string, asiolink::IOAddress> ExplicitAddressMap;
 
-    /// @brief A map which holds the pairs of interface names and unicast
-    /// addresses for which the unicast sockets should be opened.
-    ///
-    /// This is only used for V6 family.
-    UnicastMap unicast_map_;
+    /// @brief A map which holds the pairs of interface names and addresses
+    /// for which the sockets should be opened.
+    ExplicitAddressMap address_map_;
 
     /// @brief A booolean value which indicates that the wildcard interface name
     /// has been specified (*).
@@ -210,4 +209,4 @@ private:
 }
 }
 
-#endif // IFACE_CFG_H
+#endif // CFG_IFACE_H
