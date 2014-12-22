@@ -1136,6 +1136,25 @@ TEST_F(Dhcpv4SrvTest, relayAgentInfoEcho) {
 
     NakedDhcpv4Srv srv(0);
 
+    // Use of the captured DHCPDISCOVER packet requires that
+    // subnet 10.254.226.0/24 is in use, because this packet
+    // contains the giaddr which belongs to this subnet and
+    // this giaddr is used to select the subnet
+    std::string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"10.254.226.0/25\" } ],"
+        "    \"subnet\": \"10.254.226.0/24\", "
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"valid-lifetime\": 4000,"
+        "    \"interface\": \"eth0\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    configure(config);
+
     // Let's create a relayed DISCOVER. This particular relayed DISCOVER has
     // added option 82 (relay agent info) with 3 suboptions. The server
     // is supposed to echo it back in its response.
@@ -1610,7 +1629,7 @@ public:
             192, 0, 2, 1,           // ciaddr
             1, 2, 3, 4,             // yiaddr
             192, 0, 2, 255,         // siaddr
-            255, 255, 255, 255,     // giaddr
+            192, 0, 2, 50,          // giaddr
         };
 
         // Initialize the vector with the header fields defined above.
@@ -2040,7 +2059,6 @@ TEST_F(HooksDhcpv4SrvTest, Buffer4ReceiveSimple) {
 TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveValueChange) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
 
     // Install callback that modifies MAC addr of incoming packet
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(

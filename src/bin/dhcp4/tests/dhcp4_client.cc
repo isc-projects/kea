@@ -57,7 +57,7 @@ Dhcp4Client::Dhcp4Client(const Dhcp4Client::State& state) :
     use_relay_(false) {
 }
 
-Dhcp4Client::Dhcp4Client(boost::shared_ptr<NakedDhcpv4Srv>& srv,
+Dhcp4Client::Dhcp4Client(boost::shared_ptr<NakedDhcpv4Srv> srv,
                          const Dhcp4Client::State& state) :
     config_(),
     ciaddr_(IOAddress("0.0.0.0")),
@@ -347,6 +347,11 @@ Dhcp4Client::sendMsg(const Pkt4Ptr& msg) {
     msg_copy->setIface("eth0");
     srv_->fakeReceive(msg_copy);
     srv_->run();
+}
+
+void
+Dhcp4Client::setHWAddress(const std::string& hwaddr_str) {
+    hwaddr_.reset(new HWAddr(HWAddr::fromText(hwaddr_str)));
 }
 
 } // end of namespace isc::dhcp::test

@@ -219,4 +219,39 @@ increaseAddress(addr) call is equivalent to increasePrefix(addr, 128)
 kept, because increaseAddress() is faster and this is a routine that may be
 called many hundred thousands times per second.
 
+@subsection allocEngineDHCPv4HostReservation Host Reservation support
+
+The Allocation Engine supports allocation of statically assigned addresses
+to the DHCPv4 clients, a.k.a. Host Reservation.
+
+When the server receives a DHCPDISCOVER or DHCPREQUEST from the client it
+calls \ref isc::dhcp::AllocEngine::allocateLease4 to obtain the suitable lease
+for the client. If the Allocation Engine determines that the particular client
+has a reservation it will try to allocate a reserved address for it. If the
+client requested allocation or renewal of a different address, the Allocation
+Engine will respond with a NULL lease to indicate that the address
+desired by the client could not be assigned. The DHCP server should send
+a DHCPNAK to the client and the client should fall back to the DHCP
+server discovery. When the client sends DHCPDISCOVER, the Allocation
+Engine offers the reserved address and the client should request the
+offered address in subsequent DHCPREQUEST messages.
+
+There are cases when the Allocation Engine is unable to assign the
+reserved address for the client. This includes the situations when
+the address had been previously reserved for another client or the
+address had been assigned out of the dynamic address pool. Such address
+may still remain in use of the client which obtained it first and the
+Allocation Engine must not assign it to the client for which it is
+reserved until the client using this address releases or the server
+assigns a different address for it.
+
+In order to resolve this conflict the Allocation Engine will refuse to
+renew the lease for the client using the addres not reserved for it.
+This client should fall back to the 4-way exchange and the Allocation
+Engine will assign a different address. As a result, the reserved
+address will be freed for the use of the client for which the reservation
+was made. The client will be offered/allocated a reserved address
+the next time it retries sending a DHCPDISCOVER/DHCPREQUEST message to
+the server.
+
 */

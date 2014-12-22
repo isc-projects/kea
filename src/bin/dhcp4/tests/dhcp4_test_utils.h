@@ -307,7 +307,7 @@ public:
     /// @param rsp response packet to be validated
     /// @param expected_message_type expected message type
     /// @param expected_transid expected transaction-id
-    void checkResponse(const Pkt4Ptr& rsp, uint8_t expected_message_type,
+    void checkResponse(const Pkt4Ptr& rsp, int expected_message_type,
                        uint32_t expected_transid);
 
     /// @brief Checks if the lease sent to client is present in the database
@@ -405,13 +405,18 @@ public:
     /// @brief Runs DHCPv4 configuration from the JSON string.
     ///
     /// @param config String holding server configuration in JSON format.
-    void configure(const std::string& config);
+    /// @param commit A boolean flag indicating if the new configuration
+    /// should be committed (if true), or not (if false).
+    void configure(const std::string& config, const bool commit = true);
 
     /// @brief Configure specified DHCP server using JSON string.
     ///
     /// @param config String holding server configuration in JSON format.
     /// @param srv Instance of the server to be configured.
-    void configure(const std::string& config, NakedDhcpv4Srv& srv);
+    /// @param commit A boolean flag indicating if the new configuration
+    /// should be committed (if true), or not (if false).
+    void configure(const std::string& config, NakedDhcpv4Srv& srv,
+                   const bool commit = true);
 
     /// @brief This function cleans up after the test.
     virtual void TearDown();

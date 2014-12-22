@@ -80,7 +80,7 @@ public:
     ///
     /// @param address IPv4 address for which the @c Host object is searched.
     ///
-    /// @throw isc::NotImplemented.
+    /// @return Collection of const @c Host objects.
     virtual ConstHostCollection
     getAll4(const asiolink::IOAddress& address) const;
 
@@ -91,7 +91,7 @@ public:
     ///
     /// @param address IPv4 address for which the @c Host object is searched.
     ///
-    /// @throw isc::NotImplemented
+    /// @return Collection of const @c Host objects.
     virtual HostCollection
     getAll4(const asiolink::IOAddress& address);
 
@@ -124,6 +124,16 @@ public:
     virtual HostPtr
     get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
          const DuidPtr& duid = DuidPtr());
+
+    /// @brief Returns a host connected to the IPv4 subnet and having
+    /// a reservation for a specified IPv4 address.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param address reserved IPv4 address.
+    ///
+    /// @return Const @c Host object using a specified IPv4 address.
+    virtual ConstHostPtr
+    get4(const SubnetID& subnet_id, const asiolink::IOAddress& address) const;
 
     /// @brief Returns a host connected to the IPv6 subnet and matching
     /// the specified identifiers.
@@ -215,6 +225,21 @@ private:
     template<typename Storage>
     void getAllInternal(const HWAddrPtr& hwaddr, const DuidPtr& duid,
                         Storage& storage) const;
+
+    /// @brief Returns @c Host objects for the specified IPv4 address.
+    ///
+    /// This private method is called by the @c CfgHosts::getAll4 methods
+    /// to retrieve the @c Host for which the specified IPv4 address is
+    /// reserved. The retrieved objects are appended to the @c storage
+    /// container.
+    ///
+    /// @param address IPv4 address.
+    /// @param [out] storage Container to which the retrieved objects are
+    /// appended.
+    /// @tparam One of the @c ConstHostCollection or @c HostCollection.
+    template<typename Storage>
+    void getAllInternal4(const asiolink::IOAddress& address,
+                         Storage& storage) const;
 
     /// @brief Returns @c Host object connected to a subnet.
     ///

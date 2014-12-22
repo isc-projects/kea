@@ -36,13 +36,17 @@ CfgHosts::getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid) {
 }
 
 ConstHostCollection
-CfgHosts::getAll4(const IOAddress&) const {
-    isc_throw(isc::NotImplemented, "getAll4(address) const is not implemented");
+CfgHosts::getAll4(const IOAddress& address) const {
+    ConstHostCollection collection;
+    getAllInternal4<ConstHostCollection>(address, collection);
+    return (collection);
 }
 
 HostCollection
-CfgHosts::getAll4(const IOAddress&) {
-    isc_throw(isc::NotImplemented, "getAll4(address) is not implemented");
+CfgHosts::getAll4(const IOAddress& address) {
+    HostCollection collection;
+    getAllInternal4<HostCollection>(address, collection);
+    return (collection);
 }
 
 template<typename Storage>
@@ -76,6 +80,25 @@ CfgHosts::getAllInternal(const HWAddrPtr& hwaddr, const DuidPtr& duid,
     }
 }
 
+template<typename Storage>
+void
+CfgHosts::getAllInternal4(const IOAddress& address, Storage& storage) const {
+    // Must not specify address other than IPv4.
+    if (!address.isV4()) {
+        isc_throw(BadHostAddress, "must specify an IPv4 address when searching"
+                  " for a host, specified address was " << address);
+    }
+    // Search for the Host using the reserved IPv4 address as a key.
+    const HostContainerIndex1& idx = hosts_.get<1>();
+    HostContainerIndex1Range r = idx.equal_range(address);
+    // Append each Host object to the storage.
+    for (HostContainerIndex1::iterator host = r.first; host != r.second;
+         ++host) {
+        storage.push_back(*host);
+    }
+}
+
+
 ConstHostPtr
 CfgHosts::get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
                const DuidPtr& duid) const {
@@ -89,6 +112,19 @@ CfgHosts::get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
     // The false value indicates that it is an IPv4 subnet.
     return (getHostInternal(subnet_id, false, hwaddr, duid));
 }
+
+ConstHostPtr
+CfgHosts::get4(const SubnetID& subnet_id, const IOAddress& address) const {
+    ConstHostCollection hosts = getAll4(address);
+    for (ConstHostCollection::const_iterator host = hosts.begin();
+         host != hosts.end(); ++host) {
+        if ((*host)->getIPv4SubnetID() == subnet_id) {
+            return (*host);
+        }
+    }
+    return (ConstHostPtr());
+}
+
 
 ConstHostPtr
 CfgHosts::get6(const SubnetID& subnet_id, const DuidPtr& duid,
