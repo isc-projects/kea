@@ -27,6 +27,16 @@
 namespace isc {
 namespace dhcp {
 
+const uint32_t HWAddr::HWADDR_SOURCE_ANY = 0xffffffff;
+const uint32_t HWAddr::HWADDR_SOURCE_UNKNOWN = 0x00000000;
+const uint32_t HWAddr::HWADDR_SOURCE_RAW = 0x00000001;
+const uint32_t HWAddr::HWADDR_SOURCE_DUID = 0x00000002;
+const uint32_t HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL = 0x00000004;
+const uint32_t HWAddr::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION = 0x00000008;
+const uint32_t HWAddr::HWADDR_SOURCE_REMOTE_ID = 0x00000010;
+const uint32_t HWAddr::HWADDR_SOURCE_SUBSCRIBER_ID = 0x00000020;
+const uint32_t HWAddr::HWADDR_SOURCE_DOCSIS = 0x00000040;
+
 HWAddr::HWAddr()
     :htype_(HTYPE_ETHER), source_(0) {
 }
