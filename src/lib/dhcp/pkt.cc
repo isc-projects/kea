@@ -15,6 +15,7 @@
 #include <utility>
 #include <dhcp/pkt.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcp/hwaddr.h>
 #include <vector>
 
 namespace isc {
@@ -129,11 +130,11 @@ Pkt::getMAC(uint32_t hw_addr_src) {
     HWAddrPtr mac;
 
     // Method 1: from raw sockets.
-    if (hw_addr_src & HWADDR_SOURCE_RAW) {
+    if (hw_addr_src & HWAddr::HWADDR_SOURCE_RAW) {
         mac = getRemoteHWAddr();
         if (mac) {
             return (mac);
-        } else if (hw_addr_src == HWADDR_SOURCE_RAW) {
+        } else if (hw_addr_src == HWAddr::HWADDR_SOURCE_RAW) {
             // If we're interested only in RAW sockets as source of that info,
             // there's no point in trying other options.
             return (HWAddrPtr());
@@ -143,11 +144,11 @@ Pkt::getMAC(uint32_t hw_addr_src) {
     // Method 2: Extracted from DUID-LLT or DUID-LL
 
     // Method 3: Extracted from source IPv6 link-local address
-    if (hw_addr_src & HWADDR_SOURCE_IPV6_LINK_LOCAL) {
+    if (hw_addr_src & HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL) {
         mac = getMACFromSrcLinkLocalAddr();
         if (mac) {
             return (mac);
-        } else if (hw_addr_src ==  HWADDR_SOURCE_IPV6_LINK_LOCAL) {
+        } else if (hw_addr_src ==  HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL) {
             // If we're interested only in link-local addr as source of that
             // info, there's no point in trying other options.
             return (HWAddrPtr());
@@ -155,11 +156,11 @@ Pkt::getMAC(uint32_t hw_addr_src) {
     }
 
     // Method 4: From client link-layer address option inserted by a relay
-    if (hw_addr_src & HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION) {
+    if (hw_addr_src & HWAddr::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION) {
         mac = getMACFromIPv6RelayOpt();
         if (mac) {
             return (mac);
-        } else if (hw_addr_src ==  HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION) {
+        } else if (hw_addr_src ==  HWAddr::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION) {
             // If we're interested only in RFC6939 link layer address as source
             // of that info, there's no point in trying other options.
             return (HWAddrPtr());
@@ -222,7 +223,6 @@ Pkt::getMACFromIPv6(const isc::asiolink::IOAddress& addr) {
 
     return (HWAddrPtr(new HWAddr(bin, hwtype)));
 }
-
 
 };
 };

@@ -22,6 +22,7 @@
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/subnet.h>
+#include <dhcpsrv/cfg_mac_source.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/tests/test_libraries.h>
 #include <dhcpsrv/testutils/config_result_check.h>
@@ -212,7 +213,7 @@ TEST_F(DhcpParserTest, uint32ParserTest) {
     EXPECT_EQ(test_value, actual_value);
 }
 
-/// @brief Check InterfaceListParser  basic functionality
+/// @brief Check InterfaceListConfigParser  basic functionality
 ///
 /// Verifies that the parser:
 /// 1. Does not allow empty for storage.
@@ -268,6 +269,49 @@ TEST_F(DhcpParserTest, interfaceListParserTest) {
 
     EXPECT_TRUE(test_config.socketOpen("eth0", AF_INET));
     EXPECT_TRUE(test_config.socketOpen("eth1", AF_INET));
+}
+
+
+/// @brief Check MACSourcesListConfigParser  basic functionality
+///
+/// Verifies that the parser:
+/// 1. Does not allow empty for storage.
+/// 2. Does not allow name other than "mac-sources"
+/// 3. Parses list of mac sources and adds them to CfgMgr
+TEST_F(DhcpParserTest, MacSourcesListConfigParserTest) {
+
+    const std::string valid_name = "mac-sources";
+    const std::string bogus_name = "bogus-name";
+
+    ParserContextPtr parser_context(new ParserContext(Option::V6));
+
+    // Verify that parser constructor fails if parameter name isn't "mac-sources"
+    EXPECT_THROW(MACSourcesListConfigParser(bogus_name, parser_context),
+                 isc::BadValue);
+
+    // That's an equivalent of the following snippet:
+    // "mac-sources: [ \"duid\", \"ipv6\" ]";
+    ElementPtr config = Element::createList();
+    config->add(Element::create("duid"));
+    config->add(Element::create("ipv6-link-local"));
+
+    boost::scoped_ptr<MACSourcesListConfigParser>
+        parser(new MACSourcesListConfigParser(valid_name, parser_context));
+
+    // This should parse the configuration and add eth0 and eth1 to the list
+    // of interfaces that server should listen on.
+    EXPECT_NO_THROW(parser->build(config));
+    EXPECT_NO_THROW(parser->commit());
+
+    // Use CfgMgr instance to check if eth0 and eth1 was added, and that
+    // eth2 was not added.
+    SrvConfigPtr cfg = CfgMgr::instance().getStagingCfg();
+    ASSERT_TRUE(cfg);
+    CfgMACSources configured_sources =  cfg->getMACSources().get();
+
+    ASSERT_EQ(2, configured_sources.size());
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_DUID, configured_sources[0]);
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL, configured_sources[1]);
 }
 
 /// @brief Test Fixture class which provides basic structure for testing
