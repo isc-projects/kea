@@ -32,7 +32,7 @@
     {
       "pools": [ { "pool": "2001:db8:1::/80" } ],
       "subnet": "2001:db8:1::/64",
-      "interface": "eth0",
+      "interface": "ethX",
       "option-data": [
         {
             "name": "dns-servers",
