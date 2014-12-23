@@ -12,6 +12,9 @@ DOCBOOK += libdhcp.xml
 EXTRA_DIST = $(DOCBOOK)
 DISTCLEANFILES = $(HTMLDOCS) $(DOCS) kea-messages.xml
 
+kea-messages.xml:
+	$(PYTHON) $(top_srcdir)/tools/system_messages.py -o $@ $(top_srcdir)
+
 # This is not a "man" manual, but reuse this for now for docbook.
 if GENERATE_DOCS
 
@@ -36,13 +39,33 @@ kea-messages.html: kea-messages.xml
 		http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl \
 		kea-messages.xml
 
-kea-messages.xml:
-	$(PYTHON) $(top_srcdir)/tools/system_messages.py -o $@ $(top_srcdir)
-
 else
 
 $(HTMLDOCS) $(DOCS):
 	@echo Doc generation disabled.  Creating dummy $@.  Configure with --enable-generate-docs to enable it.
 	@echo Doc generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild Kea > $@
+
+endif 
+
+if HAVE_DBLATEX
+
+CLEANFILES = kea-guide.pdf kea-messages.pdf
+
+DBLATEX_FLAGS = --xslt-opts=--path --xslt-opts=$(abs_top_builddir)/doc \
+	-P doc.collab.show=0 -P latex.output.revhistory=0 \
+	--param=term.breakline=1
+
+pdf: kea-guide.pdf kea-messages.pdf
+
+kea-guide.pdf: $(DOCBOOK)
+	@DBLATEX@ $(DBLATEX_FLAGS) kea-guide.xml
+
+kea-messages.pdf: kea-messages.xml
+	@DBLATEX@ $(DBLATEX_FLAGS) kea-messages.xml
+
+else
+
+pdf kea-guide.pdf kea-messages.pdf:
+	@echo Install dblatex tool and rerun ./configure to be able to generate documentation in PDF format.
 
 endif
