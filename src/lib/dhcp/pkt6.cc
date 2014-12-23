@@ -15,8 +15,8 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
-#include <dhcp/option_int.h>
 #include <dhcp/option_vendor_class.h>
+#include <dhcp/option_vendor.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/docsis3_option_defs.h>
 #include <util/io_utilities.h>
@@ -630,11 +630,11 @@ Pkt6::getMACFromIPv6RelayOpt() {
 
 HWAddrPtr
 Pkt6::getMACFromDocsisModem() {
-    OptionUint32Ptr vendor = boost::dynamic_pointer_cast<
-        OptionUint32>(getOption(D6O_VENDOR_OPTS));
+    OptionVendorPtr vendor = boost::dynamic_pointer_cast<
+        OptionVendor>(getOption(D6O_VENDOR_OPTS));
 
     // Check if this is indeed DOCSIS3 environment
-    if (!vendor || vendor->getValue() != VENDOR_ID_CABLE_LABS) {
+    if (!vendor || vendor->getVendorId() != VENDOR_ID_CABLE_LABS) {
         return (HWAddrPtr());
     }
 
@@ -660,12 +660,12 @@ Pkt6::getMACFromDocsisCMTS() {
         return (HWAddrPtr());
     }
 
-    OptionUint32Ptr vendor = boost::dynamic_pointer_cast<
-        OptionUint32>(getAnyRelayOption(D6O_VENDOR_OPTS,
+    OptionVendorPtr vendor = boost::dynamic_pointer_cast<
+        OptionVendor>(getAnyRelayOption(D6O_VENDOR_OPTS,
                                         RELAY_SEARCH_FROM_CLIENT));
 
     // Check if this is indeed DOCSIS3 environment
-    if (!vendor || vendor->getValue() != VENDOR_ID_CABLE_LABS) {
+    if (!vendor || vendor->getVendorId() != VENDOR_ID_CABLE_LABS) {
         return (HWAddrPtr());
     }
 
