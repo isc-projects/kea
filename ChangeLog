@@ -1,3 +1,9 @@
+869.	[func]		tomek
+	'mac-sources' configuration parameter added. The DHCPv6 server
+	can now be configured to use various MAC/Hardware address
+	sources.
+	(Trac #3554, git 2e7c32e7c19372f0c97968ef7c8256509d80fdfc)
+
 868.    [func]          marcin
         DHCPv4 server configuration allows for selection of the
         address on the interface that server should listen on.
