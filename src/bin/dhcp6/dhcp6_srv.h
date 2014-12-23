@@ -597,6 +597,15 @@ protected:
     void classifyPacket(const Pkt6Ptr& pkt);
 
 
+    /// @brief Attempts to get a MAC/hardware address using configred sources
+    ///
+    /// Tries to extract MAC/hardware address information from the packet
+    /// using MAC sources configured in 'mac-sources' directive.
+    ///
+    /// @param pkt will try to exact MAC address from this packet
+    /// @return HWaddr pointer (or NULL if configured methods fail)
+    HWAddrPtr getMAC(const Pkt6Ptr& pkt);
+
     /// @brief this is a prefix added to the contend of vendor-class option
     ///
     /// If incoming packet has a vendor class option, its content is
