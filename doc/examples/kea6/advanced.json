@@ -2,7 +2,7 @@
 # It attempts to showcase some of the more advanced features.
 # Topology wise, it's a basic scenario with one IPv6 subnet configured.
 # It is assumed that one subnet (2001:db8:1::/64) is available directly
-# over eth0 interface.
+# over ethX interface.
 #
 # The following features are currently showcased here:
 # 1. Configuration of MAC/hardware address sources in DHCPv6
@@ -54,7 +54,7 @@
     {
       "pools": [ { "pool": "2001:db8:1::/80" } ],
       "subnet": "2001:db8:1::/64",
-      "interface": "eth0"
+      "interface": "ethX"
     }
   ]
 },

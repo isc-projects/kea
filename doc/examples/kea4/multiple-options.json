@@ -36,7 +36,7 @@
     {
        "pools": [ { "pool":  "192.0.2.10 - 192.0.2.200" } ],
        "subnet": "192.0.2.0/24",
-       "interface": "eth0",
+       "interface": "ethX",
        "option-data": [
          {
              "name": "domain-name-servers",
