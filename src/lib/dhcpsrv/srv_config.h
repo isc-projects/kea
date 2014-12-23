@@ -21,6 +21,7 @@
 #include <dhcpsrv/cfg_option_def.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/cfg_subnets6.h>
+#include <dhcpsrv/cfg_mac_source.h>
 #include <dhcpsrv/logging_info.h>
 #include <boost/shared_ptr.hpp>
 #include <vector>
@@ -237,6 +238,22 @@ public:
 
     //@}
 
+    /// @brief Returns non-const reference to an array that stores
+    ///        MAC/hardware address sources.
+    ///
+    /// @return non-const reference to MAC/hardware address sources
+    CfgMACSource& getMACSources() {
+        return (cfg_mac_source_);
+    }
+
+    /// @brief Returns const reference to an array that stores
+    ///        MAC/hardware address sources.
+    ///
+    /// @return const reference to MAC/hardware address sources
+    const CfgMACSource& getMACSources() const {
+        return (cfg_mac_source_);
+    }
+
     /// @brief Copies the currnet configuration to a new configuration.
     ///
     /// This method copies the parameters stored in the configuration to
@@ -310,6 +327,7 @@ public:
 
     //@}
 
+
 private:
 
     /// @brief Sequence number identifying the configuration.
@@ -348,6 +366,8 @@ private:
     /// reservations for different IPv4 and IPv6 subnets.
     CfgHostsPtr cfg_hosts_;
 
+    /// @brief A list of configured MAC sources.
+    CfgMACSource cfg_mac_source_;
 };
 
 /// @name Pointers to the @c SrvConfig object.

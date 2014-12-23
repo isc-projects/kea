@@ -1184,6 +1184,21 @@ Dhcpv6Srv::createRemovalNameChangeRequest(const Lease6Ptr& lease) {
     CfgMgr::instance().getD2ClientMgr().sendRequest(ncr);
 }
 
+HWAddrPtr
+Dhcpv6Srv::getMAC(const Pkt6Ptr& pkt) {
+    CfgMACSources mac_sources = CfgMgr::instance().getCurrentCfg()->
+        getMACSources().get();
+    HWAddrPtr hwaddr;
+    for (CfgMACSources::const_iterator it = mac_sources.begin();
+         it != mac_sources.end(); ++it) {
+        hwaddr = pkt->getMAC(*it);
+        if (hwaddr) {
+            return (hwaddr);
+        }
+    }
+    return (hwaddr);
+}
+
 OptionPtr
 Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
                        const Pkt6Ptr& query, const Pkt6Ptr& answer,
@@ -1253,10 +1268,9 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
         hostname = fqdn->getDomainName();
     }
 
-    // Attempt to get MAC address using any of available mechanisms.
-    // It's ok if there response is NULL. Hardware address is optional in Lease6
-    /// @todo: Make this configurable after trac 3554 is done.
-    HWAddrPtr hwaddr = query->getMAC(Pkt::HWADDR_SOURCE_ANY);
+    // Attempt to get MAC address using configured mechanisms.
+    // It's ok if there response is NULL. Hardware address is optional in Lease6.
+    HWAddrPtr hwaddr = getMAC(query);
 
     // Use allocation engine to pick a lease for this client. Allocation engine
     // will try to honour the hint, but it is just a hint - some other address
@@ -1376,8 +1390,7 @@ Dhcpv6Srv::assignIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
 
     // Attempt to get MAC address using any of available mechanisms.
     // It's ok if there response is NULL. Hardware address is optional in Lease6
-    /// @todo: Make this configurable after trac 3554 is done.
-    HWAddrPtr hwaddr = query->getMAC(Pkt::HWADDR_SOURCE_ANY);
+    HWAddrPtr hwaddr = getMAC(query);
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_PROCESS_IA_PD_REQUEST)
         .arg(duid ? duid->toText() : "(no-duid)").arg(ia->getIAID())
@@ -1568,6 +1581,9 @@ Dhcpv6Srv::extendIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
         lease->hostname_ = hostname;
         lease->fqdn_fwd_ = do_fwd;
         lease->fqdn_rev_ = do_rev;
+
+        /// @todo: check if hardware address has changed since last update.
+        /// And modify lease->hwaddr_ if it did.
 
         ia_rsp->setT1(subnet->getT1());
         ia_rsp->setT2(subnet->getT2());

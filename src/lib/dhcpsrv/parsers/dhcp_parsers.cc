@@ -17,6 +17,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
+#include <dhcpsrv/cfg_mac_source.h>
 #include <hooks/hooks_manager.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
@@ -187,6 +188,7 @@ InterfaceListConfigParser(const std::string& param_name,
 void
 InterfaceListConfigParser::build(ConstElementPtr value) {
     CfgIface cfg_iface;
+
     BOOST_FOREACH(ConstElementPtr iface, value->listValue()) {
         std::string iface_name = iface->stringValue();
         try {
@@ -203,6 +205,45 @@ InterfaceListConfigParser::build(ConstElementPtr value) {
 
 void
 InterfaceListConfigParser::commit() {
+    // Nothing to do.
+}
+
+// ******************** MACSourcesListConfigParser *************************
+
+MACSourcesListConfigParser::
+MACSourcesListConfigParser(const std::string& param_name,
+                           ParserContextPtr global_context)
+    : param_name_(param_name), global_context_(global_context) {
+    if (param_name_ != "mac-sources") {
+        isc_throw(BadValue, "Internal error. MAC sources configuration "
+            "parser called for the wrong parameter: " << param_name);
+    }
+}
+
+void
+MACSourcesListConfigParser::build(ConstElementPtr value) {
+    CfgIface cfg_iface;
+    uint32_t source = 0;
+
+    // By default, there's only one source defined: ANY.
+    // If user specified anything, we need to get rid of that default.
+    CfgMgr::instance().getStagingCfg()->getMACSources().clear();
+
+    BOOST_FOREACH(ConstElementPtr source_elem, value->listValue()) {
+        std::string source_str = source_elem->stringValue();
+        try {
+            source = CfgMACSource::MACSourceFromText(source_str);
+            CfgMgr::instance().getStagingCfg()->getMACSources().add(source);
+        } catch (const std::exception& ex) {
+            isc_throw(DhcpConfigError, "Failed to convert '"
+                      << source_str << "' to any recognized MAC source:"
+                      << ex.what() << " (" << value->getPosition() << ")");
+        }
+    }
+}
+
+void
+MACSourcesListConfigParser::commit() {
     // Nothing to do.
 }
 

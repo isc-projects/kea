@@ -613,6 +613,9 @@ namespace dhcp {
         parser = new HooksLibrariesParser(config_id);
     } else if (config_id.compare("dhcp-ddns") == 0) {
         parser = new D2ClientConfigParser(config_id);
+    } else if (config_id.compare("mac-sources") == 0) {
+        parser = new MACSourcesListConfigParser(config_id,
+                                                globalContext());
     } else {
         isc_throw(DhcpConfigError,
                 "unsupported global configuration parameter: "

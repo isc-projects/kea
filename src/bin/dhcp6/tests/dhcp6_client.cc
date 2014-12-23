@@ -63,7 +63,7 @@ Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply) {
     Opts opts = reply->options_;
 
     // Let's try to get a MAC
-    HWAddrPtr hwaddr = reply->getMAC(Pkt::HWADDR_SOURCE_ANY);
+    HWAddrPtr hwaddr = reply->getMAC(HWAddr::HWADDR_SOURCE_ANY);
 
     // Set the global status code to default: success and not received.
     config_.resetGlobalStatusCode();
