@@ -15,20 +15,11 @@
 #include <utility>
 #include <dhcp/pkt.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcp/hwaddr.h>
 #include <vector>
 
 namespace isc {
 namespace dhcp {
-
-const uint32_t Pkt::HWADDR_SOURCE_ANY = 0xffffffff;
-const uint32_t Pkt::HWADDR_SOURCE_UNKNOWN = 0x00000000;
-const uint32_t Pkt::HWADDR_SOURCE_RAW = 0x00000001;
-const uint32_t Pkt::HWADDR_SOURCE_DUID = 0x00000002;
-const uint32_t Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL = 0x00000004;
-const uint32_t Pkt::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION = 0x00000008;
-const uint32_t Pkt::HWADDR_SOURCE_REMOTE_ID = 0x00000010;
-const uint32_t Pkt::HWADDR_SOURCE_SUBSCRIBER_ID = 0x00000020;
-const uint32_t Pkt::HWADDR_SOURCE_DOCSIS = 0x00000040;
 
 Pkt::Pkt(uint32_t transid, const isc::asiolink::IOAddress& local_addr,
          const isc::asiolink::IOAddress& remote_addr, uint16_t local_port,
@@ -139,11 +130,11 @@ Pkt::getMAC(uint32_t hw_addr_src) {
     HWAddrPtr mac;
 
     // Method 1: from raw sockets.
-    if (hw_addr_src & HWADDR_SOURCE_RAW) {
+    if (hw_addr_src & HWAddr::HWADDR_SOURCE_RAW) {
         mac = getRemoteHWAddr();
         if (mac) {
             return (mac);
-        } else if (hw_addr_src == HWADDR_SOURCE_RAW) {
+        } else if (hw_addr_src == HWAddr::HWADDR_SOURCE_RAW) {
             // If we're interested only in RAW sockets as source of that info,
             // there's no point in trying other options.
             return (HWAddrPtr());
@@ -153,11 +144,11 @@ Pkt::getMAC(uint32_t hw_addr_src) {
     // Method 2: Extracted from DUID-LLT or DUID-LL
 
     // Method 3: Extracted from source IPv6 link-local address
-    if (hw_addr_src & HWADDR_SOURCE_IPV6_LINK_LOCAL) {
+    if (hw_addr_src & HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL) {
         mac = getMACFromSrcLinkLocalAddr();
         if (mac) {
             return (mac);
-        } else if (hw_addr_src ==  HWADDR_SOURCE_IPV6_LINK_LOCAL) {
+        } else if (hw_addr_src ==  HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL) {
             // If we're interested only in link-local addr as source of that
             // info, there's no point in trying other options.
             return (HWAddrPtr());
@@ -165,11 +156,11 @@ Pkt::getMAC(uint32_t hw_addr_src) {
     }
 
     // Method 4: From client link-layer address option inserted by a relay
-    if (hw_addr_src & HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION) {
+    if (hw_addr_src & HWAddr::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION) {
         mac = getMACFromIPv6RelayOpt();
         if (mac) {
             return (mac);
-        } else if (hw_addr_src ==  HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION) {
+        } else if (hw_addr_src ==  HWAddr::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION) {
             // If we're interested only in RFC6939 link layer address as source
             // of that info, there's no point in trying other options.
             return (HWAddrPtr());
@@ -232,35 +223,6 @@ Pkt::getMACFromIPv6(const isc::asiolink::IOAddress& addr) {
 
     return (HWAddrPtr(new HWAddr(bin, hwtype)));
 }
-
-uint32_t Pkt::MACSourceFromText(const std::string& name) {
-
-    struct {
-        const char * name;
-        uint32_t type;
-    } sources[] = {
-        { "any", Pkt::HWADDR_SOURCE_ANY },
-        { "raw", Pkt::HWADDR_SOURCE_RAW },
-        { "duid", Pkt::HWADDR_SOURCE_DUID },
-        { "ipv6-link-local", Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL },
-        { "client-link-addr-option", Pkt::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION },
-        { "rfc6939", Pkt::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION },
-        { "remote-id", Pkt::HWADDR_SOURCE_REMOTE_ID },
-        { "rfc4649", Pkt::HWADDR_SOURCE_REMOTE_ID },
-        { "subscriber-id", Pkt::HWADDR_SOURCE_SUBSCRIBER_ID },
-        { "rfc4580", Pkt::HWADDR_SOURCE_SUBSCRIBER_ID },
-        { "docsis", Pkt::HWADDR_SOURCE_DOCSIS }
-    };
-
-    for (int i=0; i < sizeof(sources)/sizeof(sources[0]); ++i) {
-        if (name.compare(sources[i].name) == 0) {
-            return (sources[i].type);
-        }
-    }
-
-    isc_throw(BadValue, "Can't convert '" << name << "' to any known MAC source.");
-}
-
 
 };
 };

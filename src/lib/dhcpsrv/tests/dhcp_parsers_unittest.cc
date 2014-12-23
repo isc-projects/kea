@@ -22,6 +22,7 @@
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/subnet.h>
+#include <dhcpsrv/cfg_mac_source.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/tests/test_libraries.h>
 #include <dhcpsrv/testutils/config_result_check.h>
@@ -306,11 +307,11 @@ TEST_F(DhcpParserTest, MacSourcesListConfigParserTest) {
     // eth2 was not added.
     SrvConfigPtr cfg = CfgMgr::instance().getStagingCfg();
     ASSERT_TRUE(cfg);
-    vector<uint32_t> configured_sources =  cfg->getMACSources();
+    CfgMACSources configured_sources =  cfg->getMACSources().get();
 
     ASSERT_EQ(2, configured_sources.size());
-    EXPECT_EQ(Pkt::HWADDR_SOURCE_DUID, configured_sources[0]);
-    EXPECT_EQ(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL, configured_sources[1]);
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_DUID, configured_sources[0]);
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL, configured_sources[1]);
 }
 
 /// @brief Test Fixture class which provides basic structure for testing

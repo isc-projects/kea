@@ -17,6 +17,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
+#include <dhcpsrv/cfg_mac_source.h>
 #include <hooks/hooks_manager.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
@@ -226,13 +227,13 @@ MACSourcesListConfigParser::build(ConstElementPtr value) {
 
     // By default, there's only one source defined: ANY.
     // If user specified anything, we need to get rid of that default.
-    CfgMgr::instance().getStagingCfg()->clearMACSources();
+    CfgMgr::instance().getStagingCfg()->getMACSources().clear();
 
     BOOST_FOREACH(ConstElementPtr source_elem, value->listValue()) {
         std::string source_str = source_elem->stringValue();
         try {
-            source = Pkt::MACSourceFromText(source_str);
-            CfgMgr::instance().getStagingCfg()->addMACSource(source);
+            source = CfgMACSource::MACSourceFromText(source_str);
+            CfgMgr::instance().getStagingCfg()->getMACSources().add(source);
         } catch (const std::exception& ex) {
             isc_throw(DhcpConfigError, "Failed to convert '"
                       << source_str << "' to any recognized MAC source:"

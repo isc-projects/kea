@@ -21,6 +21,7 @@
 #include <dhcpsrv/cfg_option_def.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/cfg_subnets6.h>
+#include <dhcpsrv/cfg_mac_source.h>
 #include <dhcpsrv/logging_info.h>
 #include <boost/shared_ptr.hpp>
 #include <vector>
@@ -235,29 +236,23 @@ public:
         return (cfg_hosts_);
     }
 
-    /// @brief Adds additional MAC/hardware address aquisition.
-    ///
-    /// @param source MAC source (see constants in Pkt::HWADDR_SOURCE_*)
-    ///
-    /// Specified source is being added to the mac_sources_ array.
-    void addMACSource(uint32_t source) {
-        mac_sources_.push_back(source);
-    }
-
-    /// @brief Provides access to the configure MAC/Hardware address sources.
-    ///
-    /// @note The const reference returned is only valid as long as the
-    /// object that returned it.
-    const std::vector<uint32_t>& getMACSources() const {
-        return mac_sources_;
-    }
-
-    /// @brief Removes any configured MAC/Hardware address sources.
-    void clearMACSources() {
-        mac_sources_.clear();
-    }
-
     //@}
+
+    /// @brief Returns non-const reference to an array that stores
+    ///        MAC/hardware address sources.
+    ///
+    /// @return non-const reference to MAC/hardware address sources
+    CfgMACSource& getMACSources() {
+        return (cfg_mac_source_);
+    }
+
+    /// @brief Returns const reference to an array that stores
+    ///        MAC/hardware address sources.
+    ///
+    /// @return const reference to MAC/hardware address sources
+    const CfgMACSource& getMACSources() const {
+        return (cfg_mac_source_);
+    }
 
     /// @brief Copies the currnet configuration to a new configuration.
     ///
@@ -372,7 +367,7 @@ private:
     CfgHostsPtr cfg_hosts_;
 
     /// @brief A list of configured MAC sources.
-    std::vector<uint32_t> mac_sources_;
+    CfgMACSource cfg_mac_source_;
 };
 
 /// @name Pointers to the @c SrvConfig object.

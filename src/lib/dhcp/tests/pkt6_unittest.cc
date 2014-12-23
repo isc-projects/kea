@@ -883,20 +883,20 @@ TEST_F(Pkt6Test, getMAC) {
     Pkt6 pkt(DHCPV6_ADVERTISE, 1234);
 
     // DHCPv6 packet by default doens't have MAC address specified.
-    EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_ANY));
-    EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_RAW));
+    EXPECT_FALSE(pkt.getMAC(HWAddr::HWADDR_SOURCE_ANY));
+    EXPECT_FALSE(pkt.getMAC(HWAddr::HWADDR_SOURCE_RAW));
 
     // We haven't specified source IPv6 address, so this method should
     // fail, too
-    EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL));
+    EXPECT_FALSE(pkt.getMAC(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL));
 
     // Let's check if setting IPv6 address improves the situation.
     IOAddress linklocal_eui64("fe80::204:06ff:fe08:0a0c");
     pkt.setRemoteAddr(linklocal_eui64);
-    EXPECT_TRUE(pkt.getMAC(Pkt::HWADDR_SOURCE_ANY));
-    EXPECT_TRUE(pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL));
-    EXPECT_TRUE(pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL |
-                           Pkt::HWADDR_SOURCE_RAW));
+    EXPECT_TRUE(pkt.getMAC(HWAddr::HWADDR_SOURCE_ANY));
+    EXPECT_TRUE(pkt.getMAC(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL));
+    EXPECT_TRUE(pkt.getMAC(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL |
+                           HWAddr::HWADDR_SOURCE_RAW));
     pkt.setRemoteAddr(IOAddress("::"));
 
     // Let's invent a MAC
@@ -908,14 +908,14 @@ TEST_F(Pkt6Test, getMAC) {
     pkt.setRemoteHWAddr(dummy_hwaddr);
 
     // Now we should be able to get something
-    ASSERT_TRUE(pkt.getMAC(Pkt::HWADDR_SOURCE_ANY));
-    ASSERT_TRUE(pkt.getMAC(Pkt::HWADDR_SOURCE_RAW));
-    EXPECT_TRUE(pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL |
-                           Pkt::HWADDR_SOURCE_RAW));
+    ASSERT_TRUE(pkt.getMAC(HWAddr::HWADDR_SOURCE_ANY));
+    ASSERT_TRUE(pkt.getMAC(HWAddr::HWADDR_SOURCE_RAW));
+    EXPECT_TRUE(pkt.getMAC(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL |
+                           HWAddr::HWADDR_SOURCE_RAW));
 
     // Check that the returned MAC is indeed the expected one
-    ASSERT_TRUE(*dummy_hwaddr == *pkt.getMAC(Pkt::HWADDR_SOURCE_ANY));
-    ASSERT_TRUE(*dummy_hwaddr == *pkt.getMAC(Pkt::HWADDR_SOURCE_RAW));
+    ASSERT_TRUE(*dummy_hwaddr == *pkt.getMAC(HWAddr::HWADDR_SOURCE_ANY));
+    ASSERT_TRUE(*dummy_hwaddr == *pkt.getMAC(HWAddr::HWADDR_SOURCE_RAW));
 }
 
 // Test checks whether getMACFromIPv6LinkLocal() returns the hardware (MAC)
@@ -941,11 +941,11 @@ TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_direct) {
 
     // If received from a global address, this method should fail
     pkt.setRemoteAddr(global);
-    EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL));
+    EXPECT_FALSE(pkt.getMAC(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL));
 
     // If received from link-local that is EUI-64 based, it should succeed
     pkt.setRemoteAddr(linklocal_eui64);
-    HWAddrPtr found = pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL);
+    HWAddrPtr found = pkt.getMAC(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL);
     ASSERT_TRUE(found);
 
     stringstream tmp;
@@ -980,15 +980,15 @@ TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_singleRelay) {
 
     // If received from a global address, this method should fail
     pkt.relay_info_[0].peeraddr_ = global;
-    EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL));
+    EXPECT_FALSE(pkt.getMAC(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL));
 
     // If received from a link-local that does not use EUI-64, it should fail
     pkt.relay_info_[0].peeraddr_ = linklocal_noneui64;
-    EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL));
+    EXPECT_FALSE(pkt.getMAC(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL));
 
     // If received from link-local that is EUI-64 based, it should succeed
     pkt.relay_info_[0].peeraddr_ = linklocal_eui64;
-    HWAddrPtr found = pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL);
+    HWAddrPtr found = pkt.getMAC(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL);
     ASSERT_TRUE(found);
 
     stringstream tmp;
@@ -1041,7 +1041,7 @@ TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_multiRelay) {
     pkt.setIndex(iface->getIndex());
 
     // The method should return MAC based on the first relay that was closest
-    HWAddrPtr found = pkt.getMAC(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL);
+    HWAddrPtr found = pkt.getMAC(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL);
     ASSERT_TRUE(found);
 
     // Let's check the info now.
@@ -1058,7 +1058,7 @@ TEST_F(Pkt6Test, getMACFromIPv6RelayOpt_singleRelay) {
     Pkt6 pkt(DHCPV6_SOLICIT, 1234);
 
     // Packets that are not relayed should fail
-    EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION));
+    EXPECT_FALSE(pkt.getMAC(HWAddr::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION));
 
     // Now pretend it was relayed by a single relay.
     Pkt6::RelayInfo info;
@@ -1075,7 +1075,7 @@ TEST_F(Pkt6Test, getMACFromIPv6RelayOpt_singleRelay) {
     pkt.addRelayInfo(info);
     ASSERT_EQ(1, pkt.relay_info_.size());
 
-    HWAddrPtr found = pkt.getMAC(Pkt::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION);
+    HWAddrPtr found = pkt.getMAC(HWAddr::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION);
     ASSERT_TRUE(found);
 
     stringstream tmp;
@@ -1108,7 +1108,7 @@ TEST_F(Pkt6Test, getMACFromIPv6RelayOpt_multipleRelay) {
     pkt.addRelayInfo(info2);
     ASSERT_EQ(2, pkt.relay_info_.size());
 
-    EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION));
+    EXPECT_FALSE(pkt.getMAC(HWAddr::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION));
 
     // Let's envolve the packet with a third relay (now the closest to the client)
     // that inserts the correct client_linklayer_addr option.
@@ -1123,41 +1123,12 @@ TEST_F(Pkt6Test, getMACFromIPv6RelayOpt_multipleRelay) {
     ASSERT_EQ(3, pkt.relay_info_.size());
 
     // Now extract the MAC address from the relayed option
-    HWAddrPtr found = pkt.getMAC(Pkt::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION);
+    HWAddrPtr found = pkt.getMAC(HWAddr::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION);
     ASSERT_TRUE(found);
 
     stringstream tmp;
     tmp << "hwtype=1 fa:30:0b:fa:c0:fe";
     EXPECT_EQ(tmp.str(), found->toText(true));
-}
-
-// Checks whether Pkt::MACSourceFromText is working correctly.
-// Technically, this is a Pkt, not Pkt6 test, but since there is no separate
-// unit-tests for Pkt and it is abstract, so it would be tricky to test it
-// directly. Hence test is being run in Pkt6.
-TEST_F(Pkt6Test, MACSourceFromText) {
-    EXPECT_THROW(Pkt::MACSourceFromText("unknown"), BadValue);
-
-    EXPECT_EQ(Pkt::HWADDR_SOURCE_ANY, Pkt::MACSourceFromText("any"));
-    EXPECT_EQ(Pkt::HWADDR_SOURCE_RAW, Pkt::MACSourceFromText("raw"));
-    EXPECT_EQ(Pkt::HWADDR_SOURCE_DUID, Pkt::MACSourceFromText("duid"));
-    EXPECT_EQ(Pkt::HWADDR_SOURCE_IPV6_LINK_LOCAL,
-              Pkt::MACSourceFromText("ipv6-link-local"));
-    EXPECT_EQ(Pkt::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION,
-              Pkt::MACSourceFromText("client-link-addr-option"));
-    EXPECT_EQ(Pkt::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION,
-              Pkt::MACSourceFromText("rfc6939"));
-    EXPECT_EQ(Pkt::HWADDR_SOURCE_REMOTE_ID,
-              Pkt::MACSourceFromText("remote-id"));
-    EXPECT_EQ(Pkt::HWADDR_SOURCE_REMOTE_ID,
-              Pkt::MACSourceFromText("rfc4649"));
-    EXPECT_EQ(Pkt::HWADDR_SOURCE_SUBSCRIBER_ID,
-              Pkt::MACSourceFromText("subscriber-id"));
-    EXPECT_EQ(Pkt::HWADDR_SOURCE_SUBSCRIBER_ID,
-              Pkt::MACSourceFromText("rfc4580"));
-    EXPECT_EQ(Pkt::HWADDR_SOURCE_DOCSIS,
-              Pkt::MACSourceFromText("docsis"));
-
 }
 
 }

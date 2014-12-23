@@ -57,6 +57,7 @@ libdhcpsrv_unittests_SOURCES += alloc_engine_unittest.cc
 libdhcpsrv_unittests_SOURCES += callout_handle_store_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_hosts_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_iface_unittest.cc
+libdhcpsrv_unittests_SOURCES += cfg_mac_source_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_option_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_option_def_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_subnets4_unittest.cc

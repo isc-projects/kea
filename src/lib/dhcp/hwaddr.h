@@ -34,6 +34,53 @@ public:
     /// @brief Maximum size of a hardware address.
     static const size_t MAX_HWADDR_LEN = 20;
 
+    /// @defgroup hw_sources Specifies where a given MAC/hardware address was
+    ///                      obtained.
+    ///
+    /// @brief The list covers all possible MAC/hw address sources.
+    ///
+    /// @{
+
+    /// Not really a type, only used in getMAC() calls.
+    static const uint32_t HWADDR_SOURCE_ANY;
+
+    /// Used when actual origin is not known, e.g. when reading from a
+    /// lease database that didn't store that information.
+    static const uint32_t HWADDR_SOURCE_UNKNOWN;
+
+    /// Obtained first hand from raw socket (100% reliable).
+    static const uint32_t HWADDR_SOURCE_RAW;
+
+    /// Extracted from DUID-LL or DUID-LLT (not 100% reliable as the client
+    /// can send fake DUID).
+    static const uint32_t HWADDR_SOURCE_DUID;
+
+    /// Extracted from IPv6 link-local address. Not 100% reliable, as the
+    /// client can use different IID other than EUI-64, e.g. Windows supports
+    /// RFC4941 and uses random values instead of EUI-64.
+    static const uint32_t HWADDR_SOURCE_IPV6_LINK_LOCAL;
+
+    /// Get it from RFC6939 option. (A relay agent can insert client link layer
+    /// address option). Note that a skilled attacker can fake that by sending
+    /// his request relayed, so the legitimate relay will think it's a second
+    /// relay.
+    static const uint32_t HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION;
+
+    /// A relay can insert remote-id. In some deployments it contains a MAC
+    /// address (RFC4649).
+    static const uint32_t HWADDR_SOURCE_REMOTE_ID;
+
+    /// A relay can insert a subscriber-id option. In some deployments it
+    /// contains a MAC address (RFC4580).
+    static const uint32_t HWADDR_SOURCE_SUBSCRIBER_ID;
+
+    /// A CMTS (acting as DHCP relay agent) that supports DOCSIS standard
+    /// can insert DOCSIS options that contain client's MAC address.
+    /// Client in this context would be a cable modem.
+    static const uint32_t HWADDR_SOURCE_DOCSIS;
+
+    /// @}
+
     /// @brief default constructor
     HWAddr();
 
