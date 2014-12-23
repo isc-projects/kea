@@ -4,8 +4,8 @@
 { "Dhcp6":
 
 {
-# Kea is told to listen on eth0 interface only.
-  "interfaces": [ "eth0" ],
+# Kea is told to listen on eth9 interface only.
+  "interfaces": [ "eth9" ],
 
 # We need to specify lease type. As of May 2014, three backends are supported:
 # memfile, mysql and pgsql. We'll just use memfile, because it doesn't require
