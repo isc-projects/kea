@@ -3,12 +3,15 @@
 # Topology wise, it's a basic scenario with one IPv6 subnet configured.
 # It is assumed that one subnet (2001:db8:1::/64) is available directly
 # over eth0 interface.
+#
+# The following features are currently showcased here:
+# 1. Configuration of MAC/hardware address sources in DHCPv6
 
 { "Dhcp6":
 
 {
-# Kea is told to listen on eth0 interface only.
-  "interfaces": [ "eth0" ],
+# Kea is told to listen on eth9 interface only.
+  "interfaces": [ "eth9" ],
 
 # We need to specify lease type. As of May 2014, three backends are supported:
 # memfile, mysql and pgsql. We'll just use memfile, because it doesn't require
@@ -26,6 +29,10 @@
 # is an alias for client-link-addr-option), remote-id, rfc4649 (which is an
 # alias for remote-id, subscriber-id, rfc4580 (which is an alias for
 # subscriber-id) and docsis.
+#
+# Note that the order matters. Methods are attempted one by one in the order
+# specified until hardware address is obtained. If you don't care which method
+# is used, using 'any' is marginally faster than enumerating them all.
 #
 # If mac-sources are not specified, a default value of 'any' is used.
   "mac-sources": [ "client-link-addr-option", "duid", "ipv6-link-local" ],
