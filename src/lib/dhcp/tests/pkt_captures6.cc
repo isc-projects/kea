@@ -117,6 +117,7 @@ Pkt6Ptr isc::test::PktCaptures::captureDocsisRelayedSolicit() {
     //      - IA_NA (iaid=7f000788, t2=0, t2=0)
     //        - IAAddress (::, pref=0,valid=0)
     //      - rapid-commit
+    //      - elapsed
     //      - ORO
     //      - Reconfigure-accept
     //      - Vendor-Class ("docsis3.0")
