@@ -37,14 +37,16 @@ class CfgMACSource {
 
     /// @brief Attempts to convert known hardware address sources to uint32_t
     ///
-    /// Supported strings are: <br/>any => 0xffffffff<br/>
-    ///                        raw => 0x00000001<br/>
-    ///                        duid => 0x00000002<br/>
-    ///                        ipv6-link-local 0x00000004<br/>
-    ///                        client-link-addr-option, rfc6939 => 0x00000008<br/>
-    ///                        remote-id, rfc4649 => 0x00000010<br/>
-    ///                        subscriber-id, rfc4580 => 0x00000020<br/>
-    ///                        docsis => 0x00000040<br/>
+    /// Supported strings are: \li any => 0xffffffff
+    ///                        \li raw => 0x00000001
+    ///                        \li duid => 0x00000002
+    ///                        \li ipv6-link-local 0x00000004
+    ///                        \li client-link-addr-option, rfc6939 => 0x00000008
+    ///                        \li remote-id, rfc4649 => 0x00000010
+    ///                        \li subscriber-id, rfc4580 => 0x00000020
+    ///                        \li docsis => 0x00000040
+    ///
+    /// For specific constants, see @ref isc::dhcp::HWAddr class.
     ///
     /// @throw BadValue if specified string is unknown
     /// @return bitmask version of a given method
