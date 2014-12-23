@@ -15,6 +15,7 @@
 #ifndef CFG_MAC_SOURCE_H
 #define CFG_MAC_SOURCE_H
 
+#include <stdint.h>
 #include <vector>
 
 namespace isc {
