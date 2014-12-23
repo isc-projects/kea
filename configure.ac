@@ -1293,6 +1293,9 @@ if test "x$enable_generate_docs" != xno ; then
   fi
 fi
 
+# Don't fail here if not found, used to generate PDF documentation.
+AC_PATH_PROG([DBLATEX], [dblatex])
+AM_CONDITIONAL(HAVE_DBLATEX, test "x$DBLATEX" != "x")
 
 AM_CONDITIONAL(GENERATE_DOCS, test x$enable_generate_docs != xno)
 
