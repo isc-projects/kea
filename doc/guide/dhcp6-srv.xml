@@ -1838,6 +1838,117 @@ should include options from the isc option space:
       </para>
       </section>
 
+    <section id="mac-in-dhcpv6">
+      <title>MAC/Hardware addresses in DHCPv6</title>
+      <para>MAC/hardware addesses are available in DHCPv4 messages
+      from the clients and administrators
+      frequently use that information to perform certain tasks, like per host
+      configuration, address reserveration for specific MAC addresses and other.
+      Unfortunately, DHCPv6 protocol does not provide any completely reliable way
+      to retrieve that information. To mitigate that issue a number of mechanisms
+      have been implemented in Kea that attempt to gather that information. Each
+      of those mechanisms works in certain cases, but may fail in other cases.
+      Whether the mechanism works or not in the particular deployment is
+      somewhat dependent on the network topology and the technologies used.</para>
+
+      <para>Kea allows for configuration which of the supported methods should be
+      used and in which order. This configuration may be considered a fine tuning
+      of the DHCP deployment. In a typical deployment the default
+      value of <command>"any"</command> is sufficient and there is no
+      need to select specific methods. Changing the value of this parameter
+      is the most useful in cases when an administrator wants to disable
+      certain method, e.g. if the administrator trusts the network infrastructure
+      more than the information provided by the clients themselves, the
+      administrator may prefer information provided by the relays over that
+      provided by the clients. The format of this parameter is as follows:
+        <screen>
+"Dhcp6": {
+    <userinput>"mac-sources": [ "method1", "method2", "method3", ... ]</userinput>,
+
+    "subnet6": [ ... ],
+
+    ...
+}
+</screen>
+
+    When not specified, a special value of <emphasis>any</emphasis> is used, which
+    instructs the server to attempt to use all the methods in sequence and use
+    value returned by the first one that succeeds.</para>
+
+    <para>Supported methods are:
+    <itemizedlist>
+      <listitem>
+        <simpara><command>any</command> - not an actual method, just a keyword that
+        instructs Kea to try all other methods and use the first one that succeeds.
+        This is the default operation if no <command>mac-sources</command> are defined.
+        </simpara>
+      </listitem>
+      <listitem>
+        <simpara><command>raw</command> In principle, a DHCPv6 server could use raw
+        sockets to receive incoming traffic and extract MAC/hardware address
+        information. This is currently not implemented and this value has no effect.
+        </simpara>
+      </listitem>
+      <listitem>
+        <simpara><command>duid</command> - DHCPv6 uses DUID identifiers instead of
+        MAC addresses. There are currently four DUID types defined, with two of them
+        (DUID-LLT, which is the default one and DUID-LL) convey MAC address information.
+        Although RFC3315 forbids it, it is possible to parse those DUIDs and extract
+        necessary information from them. This method is not completely reliable, as
+        clients may use other DUID types, namely DUID-EN or DUID-UUID.
+        </simpara>
+      </listitem>
+      <listitem>
+        <simpara><command>ipv6-link-local</command> - Another possible aquisition
+        method comes from the source IPv6 address. In typical usage, clients are
+        sending their packets from IPv6 link-local addresses. There's a good chance
+        that those addresses are based on EUI-64, which contains MAC address. This
+        method is not completely reliable, as clients may use other link-local address
+        types. In particular, privacy extensions, defined in RFC4941, do not use
+        MAC addresses.
+        </simpara>
+      </listitem>
+      <listitem>
+        <simpara><command>client-link-addr-option</command> - One extension defined
+        to alleviate missing MAC issues is client link-layer address option, defined
+        in <ulink url="http://tools.ietf.org/html/rfc6939">RFC 6939</ulink>. This is
+        an option that is inserted by a relay and contains information about client's
+        MAC address. This method requires a relay agent that supports the option and
+        is configured to insert it. This method is useless for directly connected
+        clients. This parameter can also be specified as <command>rfc6939</command>,
+        which is an alias for <command>client-link-addr-option</command>.
+        </simpara>
+      </listitem>
+      <listitem>
+        <simpara><command>remote-id</command> <ulink
+        url="http://tools.ietf.org/html/rfc4649">RFC 4649</ulink>
+        defines remote-id option that is inserted by a relay agent. Depending
+        on the relay agent configuration, the inserted option may convey client's
+        MAC address information. This parameter can also be specified as
+        <command>rfc4649</command>, which is an alias for <command>remote-id</command>.
+        </simpara>
+      </listitem>
+      <listitem>
+        <simpara><command>subscriber-id</command> - Another option
+        that is somewhat similar to the previous one is subscriber-id,
+        defined in <ulink url="http://tools.ietf.org/html/rfc4580">RFC
+        4580</ulink>. It is, too, inserted by a relay agent that is
+        configured to insert it. This parameter can also be specified
+        as <command>rfc4580</command>, which is an alias for
+        <command>subscriber-id</command>. This method is currently not
+        implemented.
+        </simpara>
+      </listitem>
+      <listitem>
+        <simpara><command>docsis</command> - Yet another possible source of MAC
+        address information are DOCSIS options inserted by a CMTS that acts
+        as a DHCPv6 relay agent in cable networks. This method is
+        currently not implemented.
+        </simpara>
+      </listitem>
+    </itemizedlist>
+    </para>
+    </section>
 
     <section id="dhcp6-std">
       <title>Supported DHCPv6 Standards</title>

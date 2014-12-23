@@ -16,6 +16,7 @@
 #include <dhcpsrv/srv_config.h>
 #include <log/logger_manager.h>
 #include <log/logger_specification.h>
+#include <dhcp/pkt.h> // Needed for HWADDR_SOURCE_*
 #include <list>
 #include <sstream>
 

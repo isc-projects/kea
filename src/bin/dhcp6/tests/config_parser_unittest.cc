@@ -3627,4 +3627,79 @@ TEST_F(Dhcp6ParserTest, reservationBogus) {
 
 }
 
+/// The goal of this test is to verify that configuration can include
+/// MAC/Hardware sources. This test also checks if the aliases are
+/// handled properly (rfc6939 = client-addr-relay, rfc4649 = remote-id,
+/// rfc4580 = subscriber-id).
+TEST_F(Dhcp6ParserTest, macSources) {
+
+    ConstElementPtr status;
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_,
+        Element::fromJSON("{ \"interfaces\": [ \"*\" ],"
+                          "\"mac-sources\": [ \"rfc6939\", \"rfc4649\", \"rfc4580\","
+                          "\"client-link-addr-option\", \"remote-id\", \"subscriber-id\"],"
+                          "\"preferred-lifetime\": 3000,"
+                          "\"rebind-timer\": 2000, "
+                          "\"renew-timer\": 1000, "
+                          "\"subnet6\": [  ], "
+                          "\"valid-lifetime\": 4000 }")));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+
+    CfgMACSources mac_sources = CfgMgr::instance().getStagingCfg()->getMACSources().get();
+    ASSERT_EQ(6, mac_sources.size());
+    // Let's check the aliases. They should be recognized to their base methods.
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION, mac_sources[0]);
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_REMOTE_ID, mac_sources[1]);
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_SUBSCRIBER_ID, mac_sources[2]);
+
+    // Let's check if the actual methods are recognized properly.
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION, mac_sources[3]);
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_REMOTE_ID, mac_sources[4]);
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_SUBSCRIBER_ID, mac_sources[5]);
+}
+
+/// The goal of this test is to verify that MAC sources configuration can be
+/// empty.
+TEST_F(Dhcp6ParserTest, macSourcesEmpty) {
+
+    ConstElementPtr status;
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_,
+                    Element::fromJSON("{ \"interfaces\": [ \"*\" ],"
+                                      "\"mac-sources\": [ ],"
+                                      "\"preferred-lifetime\": 3000,"
+                                      "\"rebind-timer\": 2000, "
+                                      "\"renew-timer\": 1000, "
+                                      "\"subnet6\": [  ], "
+                                      "\"valid-lifetime\": 4000 }")));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+
+    CfgMACSources mac_sources = CfgMgr::instance().getStagingCfg()->getMACSources().get();
+    EXPECT_EQ(0, mac_sources.size());
+}
+
+/// The goal of this test is to verify that MAC sources configuration can
+/// only use valid parameters.
+TEST_F(Dhcp6ParserTest, macSourcesBogus) {
+
+    ConstElementPtr status;
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_,
+                    Element::fromJSON("{ \"interfaces\": [ \"*\" ],"
+                                      "\"mac-sources\": [ \"from-wire\" ],"
+                                      "\"preferred-lifetime\": 3000,"
+                                      "\"rebind-timer\": 2000, "
+                                      "\"renew-timer\": 1000, "
+                                      "\"subnet6\": [  ], "
+                                      "\"valid-lifetime\": 4000 }")));
+
+    // returned value should be 1 (failure)
+    checkResult(status, 1);
+}
+
 };
