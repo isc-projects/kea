@@ -1840,11 +1840,12 @@ should include options from the isc option space:
 
     <section id="mac-in-dhcpv6">
       <title>MAC/Hardware addresses in DHCPv6</title>
-      <para>MAC or hardware addesses are available in DHCPv4 and administrators
+      <para>MAC/hardware addesses are available in DHCPv4 messages
+      from the client and administrators
       frequently use that information to perform certain tasks, like per host
       configuration, address reserveration for specific MAC addresses and other.
       Unfortunately, DHCPv6 protocol does not provide any completely reliable way
-      to access that information. To mitigate that issue a number of mechanisms
+      to retrieve that information. To mitigate that issue a number of mechanisms
       has been implemented in Kea that attempts to gather that information. Each
       of those mechanisms works in certain cases, but may fail in others. There
       is no single best mechanism as they are somewhat dependent on the network
@@ -1852,10 +1853,17 @@ should include options from the isc option space:
 
       <para>Kea allows configuration which of the supported methods should be
       used and in which order. This configuration may be considered a fine tuning
-      of the DHCP deployment. The format of this parameter is as follows:
+      of the DHCP deployment. In a typical deployment the default
+      value of <command>"any"</command> is reasonable and there's no
+      need to change it. This paramter is the most useful in cases
+      when an administrator wants to disable certain method, e.g. if you
+      trust the network infrastructure more than the information
+      provided by the clients clients themselves, you may prefer
+      information provided by the relays over that provided by the
+      clients. The format of this parameter is as follows:
         <screen>
 "Dhcp6": {
-    <userinput>"mac-sources: [ "method1", "method2", "method3", ... ]</userinput>,
+    <userinput>"mac-sources": [ "method1", "method2", "method3", ... ]</userinput>,
 
     "subnet6": [ ... ],
 
