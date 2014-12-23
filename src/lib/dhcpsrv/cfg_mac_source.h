@@ -58,6 +58,7 @@ class CfgMACSource {
     /// @param source MAC source (see constants in Pkt::HWADDR_SOURCE_*)
     ///
     /// Specified source is being added to the mac_sources_ array.
+    /// @todo implement add(string) version of this method.
     void add(uint32_t source) {
         mac_sources_.push_back(source);
     }
