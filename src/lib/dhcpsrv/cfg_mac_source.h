@@ -17,6 +17,7 @@
 
 #include <stdint.h>
 #include <vector>
+#include <string>
 
 namespace isc {
 namespace dhcp {
