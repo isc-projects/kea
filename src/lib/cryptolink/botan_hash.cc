@@ -115,7 +115,7 @@ public:
         try {
             Botan::SecureVector<Botan::byte> b_result(hash_->final());
 
-            if (len == 0 || len > b_result.size()) {
+            if (len > b_result.size()) {
                 len = b_result.size();
             }
             result.writeData(b_result.begin(), len);
@@ -146,7 +146,7 @@ public:
     std::vector<uint8_t> final(size_t len) {
         try {
             Botan::SecureVector<Botan::byte> b_result(hash_->final());
-            if (len == 0 || len > b_result.size()) {
+            if (len > b_result.size()) {
                 return (std::vector<uint8_t>(b_result.begin(), b_result.end()));
             } else {
                 return (std::vector<uint8_t>(b_result.begin(), &b_result[len]));

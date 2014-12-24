@@ -130,7 +130,7 @@ namespace {
         // note: this is not exception-safe, and can leak, but
         // if there is an unexpected exception in the code below we
         // have more important things to fix.
-	boost::scoped_array<uint8_t> result(new uint8_t[hash_len]);
+        boost::scoped_array<uint8_t> result(new uint8_t[hash_len]);
 
         hash_digest->final(result.get(), hash_len);
         checkData(result.get(), expected_hash, hash_len);
@@ -562,37 +562,31 @@ namespace {
 TEST(HashTest, HashLength) {
     std::vector<uint8_t> result;
 
-    EXPECT_EQ(16, digestVectorLength(MD5, 0));
     EXPECT_EQ(8, digestVectorLength(MD5, 8));
     EXPECT_EQ(16, digestVectorLength(MD5, 16));
     EXPECT_EQ(16, digestVectorLength(MD5, 40));
     EXPECT_EQ(16, digestVectorLength(MD5, 2000));
 
-    EXPECT_EQ(20, digestBufferLength(SHA1, 0));
     EXPECT_EQ(8, digestBufferLength(SHA1, 8));
     EXPECT_EQ(20, digestBufferLength(SHA1, 20));
     EXPECT_EQ(20, digestBufferLength(SHA1, 40));
     EXPECT_EQ(20, digestBufferLength(SHA1, 2000));
 
-    EXPECT_EQ(32, digestBufferLength(SHA256, 0));
     EXPECT_EQ(8, digestBufferLength(SHA256, 8));
     EXPECT_EQ(32, digestBufferLength(SHA256, 32));
     EXPECT_EQ(32, digestBufferLength(SHA256, 40));
     EXPECT_EQ(32, digestBufferLength(SHA256, 3200));
 
-    EXPECT_EQ(16, digestBufferLength(MD5, 0));
     EXPECT_EQ(8, digestBufferLength(MD5, 8));
     EXPECT_EQ(16, digestBufferLength(MD5, 16));
     EXPECT_EQ(16, digestBufferLength(MD5, 40));
     EXPECT_EQ(16, digestBufferLength(MD5, 2000));
 
-    EXPECT_EQ(20, digestBufferLength(SHA1, 0));
     EXPECT_EQ(8, digestBufferLength(SHA1, 8));
     EXPECT_EQ(20, digestBufferLength(SHA1, 20));
     EXPECT_EQ(20, digestBufferLength(SHA1, 40));
     EXPECT_EQ(20, digestBufferLength(SHA1, 2000));
 
-    EXPECT_EQ(32, digestBufferLength(SHA256, 0));
     EXPECT_EQ(8, digestBufferLength(SHA256, 8));
     EXPECT_EQ(32, digestBufferLength(SHA256, 32));
     EXPECT_EQ(32, digestBufferLength(SHA256, 40));
