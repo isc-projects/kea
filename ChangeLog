@@ -1,7 +1,7 @@
 870.	[func]		fdupont
 	Cleanup the cryptolink API (e.g., removing spurious 'magic'
 	zero length parameters).
-	(Trac #3606, git ...)
+	(Trac #3606, git 55d2df9d78321b3844217055e376ae44ac962d8f)
 
 869.	[func]		tomek
 	'mac-sources' configuration parameter added. The DHCPv6 server
