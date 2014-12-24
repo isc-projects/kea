@@ -1,3 +1,8 @@
+870.	[func]		fdupont
+	Cleanup the cryptolink API (e.g., removing spurious 'magic'
+	zero length parameters).
+	(Trac #3606, git ...)
+
 869.	[func]		tomek
 	'mac-sources' configuration parameter added. The DHCPv6 server
 	can now be configured to use various MAC/Hardware address

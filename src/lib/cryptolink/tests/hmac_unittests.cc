@@ -602,37 +602,31 @@ namespace {
 TEST(HMACTest, HMACSigLengthArgument) {
     std::vector<uint8_t> sig;
 
-    EXPECT_EQ(16, sigVectorLength(MD5, 0));
     EXPECT_EQ(8, sigVectorLength(MD5, 8));
     EXPECT_EQ(16, sigVectorLength(MD5, 16));
     EXPECT_EQ(16, sigVectorLength(MD5, 40));
     EXPECT_EQ(16, sigVectorLength(MD5, 2000));
 
-    EXPECT_EQ(20, sigBufferLength(SHA1, 0));
     EXPECT_EQ(8, sigBufferLength(SHA1, 8));
     EXPECT_EQ(20, sigBufferLength(SHA1, 20));
     EXPECT_EQ(20, sigBufferLength(SHA1, 40));
     EXPECT_EQ(20, sigBufferLength(SHA1, 2000));
 
-    EXPECT_EQ(32, sigBufferLength(SHA256, 0));
     EXPECT_EQ(8, sigBufferLength(SHA256, 8));
     EXPECT_EQ(32, sigBufferLength(SHA256, 32));
     EXPECT_EQ(32, sigBufferLength(SHA256, 40));
     EXPECT_EQ(32, sigBufferLength(SHA256, 3200));
 
-    EXPECT_EQ(16, sigBufferLength(MD5, 0));
     EXPECT_EQ(8, sigBufferLength(MD5, 8));
     EXPECT_EQ(16, sigBufferLength(MD5, 16));
     EXPECT_EQ(16, sigBufferLength(MD5, 40));
     EXPECT_EQ(16, sigBufferLength(MD5, 2000));
 
-    EXPECT_EQ(20, sigBufferLength(SHA1, 0));
     EXPECT_EQ(8, sigBufferLength(SHA1, 8));
     EXPECT_EQ(20, sigBufferLength(SHA1, 20));
     EXPECT_EQ(20, sigBufferLength(SHA1, 40));
     EXPECT_EQ(20, sigBufferLength(SHA1, 2000));
 
-    EXPECT_EQ(32, sigBufferLength(SHA256, 0));
     EXPECT_EQ(8, sigBufferLength(SHA256, 8));
     EXPECT_EQ(32, sigBufferLength(SHA256, 32));
     EXPECT_EQ(32, sigBufferLength(SHA256, 40));
