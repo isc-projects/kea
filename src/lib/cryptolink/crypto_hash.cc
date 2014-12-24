@@ -30,6 +30,9 @@ digest(const void* data, const size_t data_len,
     boost::scoped_ptr<Hash> hash(
         CryptoLink::getCryptoLink().createHash(hash_algorithm));
     hash->update(data, data_len);
+    if (len == 0) {
+        len = hash->getOutputLength();
+    }
     hash->final(result, len);
 }
 
