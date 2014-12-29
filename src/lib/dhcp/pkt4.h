@@ -422,7 +422,7 @@ protected:
     ///
     /// @return always NULL
     virtual HWAddrPtr getMACFromDUID(){
-    	return (HWAddrPtr());
+        return (HWAddrPtr());
     }
 
     /// local HW address (dst if receiving packet, src if sending packet)
