@@ -1,6 +1,6 @@
-8xx.	[func]		kalmus, tomek
+871.	[func]		kalmus, tomek
 	DHCPv6 is now able to extract MAC from DUID-LLT and DUID-LL.
-	(Trac #3548, git tbd)
+	(Trac #3548, git f6d9630e2762a0f256a2b7825d74d2bce8fe4c60)
 
 870.	[func]		fdupont
 	Cleanup the cryptolink API (e.g., removing spurious 'magic'
