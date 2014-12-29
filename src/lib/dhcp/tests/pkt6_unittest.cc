@@ -1161,18 +1161,18 @@ TEST_F(Pkt6Test, getMACFromDUID) {
                                        duid_en, duid_en + sizeof(duid_en))));
 
     // Packet does not have any client-id, this call should fail
-    EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_DUID));
+    EXPECT_FALSE(pkt.getMAC(HWAddr::HWADDR_SOURCE_DUID));
 
     // Let's test DUID-LLT. This should work.
     pkt.addOption(clientid1);
-    HWAddrPtr mac = pkt.getMAC(Pkt::HWADDR_SOURCE_DUID);
+    HWAddrPtr mac = pkt.getMAC(HWAddr::HWADDR_SOURCE_DUID);
     ASSERT_TRUE(mac);
     EXPECT_EQ("hwtype=7 0a:0b:0c:0d:0e:0f:10", mac->toText(true));
 
     // Let's test DUID-LL. This should work.
     ASSERT_TRUE(pkt.delOption(D6O_CLIENTID));
     pkt.addOption(clientid2);
-    mac = pkt.getMAC(Pkt::HWADDR_SOURCE_DUID);
+    mac = pkt.getMAC(HWAddr::HWADDR_SOURCE_DUID);
     ASSERT_TRUE(mac);
     EXPECT_EQ("hwtype=11 0a:0b:0c:0d:0e", mac->toText(true));
 
@@ -1180,7 +1180,7 @@ TEST_F(Pkt6Test, getMACFromDUID) {
     // contain any MAC address information.
     ASSERT_TRUE(pkt.delOption(D6O_CLIENTID));
     pkt.addOption(clientid3);
-    EXPECT_FALSE(pkt.getMAC(Pkt::HWADDR_SOURCE_DUID));
+    EXPECT_FALSE(pkt.getMAC(HWAddr::HWADDR_SOURCE_DUID));
 }
 
 }

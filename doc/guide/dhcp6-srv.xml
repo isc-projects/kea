@@ -1884,9 +1884,10 @@ should include options from the isc option space:
         </simpara>
       </listitem>
       <listitem>
-        <simpara><command>raw</command> In principle, a DHCPv6 server could use raw
+        <simpara><command>raw</command> - In principle, a DHCPv6 server could use raw
         sockets to receive incoming traffic and extract MAC/hardware address
-        information. This is currently not implemented and this value has no effect.
+        information. This is currently not implemented for DHCPv6 and this value has
+        no effect.
         </simpara>
       </listitem>
       <listitem>
