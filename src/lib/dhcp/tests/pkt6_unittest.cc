@@ -1197,7 +1197,7 @@ TEST_F(Pkt6Test, getMAC_DOCSIS_Modem) {
 
     // The method should return MAC based on the vendor-specific info,
     // suboption 36, which is inserted by the modem itself.
-    HWAddrPtr found = pkt->getMAC(Pkt::HWADDR_SOURCE_DOCSIS_MODEM);
+    HWAddrPtr found = pkt->getMAC(HWAddr::HWADDR_SOURCE_DOCSIS_MODEM);
     ASSERT_TRUE(found);
 
     // Let's check the info.
@@ -1210,7 +1210,7 @@ TEST_F(Pkt6Test, getMAC_DOCSIS_Modem) {
     ASSERT_TRUE(vendor->delOption(DOCSIS3_V6_DEVICE_ID));
 
     // Ok, there's no more suboption 36. Now getMAC() should fail.
-    EXPECT_FALSE(pkt->getMAC(Pkt::HWADDR_SOURCE_DOCSIS_MODEM));
+    EXPECT_FALSE(pkt->getMAC(HWAddr::HWADDR_SOURCE_DOCSIS_MODEM));
 }
 
 // Test checks whether getMAC(DOCSIS_CMTS) is working properly.
@@ -1225,7 +1225,7 @@ TEST_F(Pkt6Test, getMAC_DOCSIS_CMTS) {
 
     // The method should return MAC based on the vendor-specific info,
     // suboption 36, which is inserted by the modem itself.
-    HWAddrPtr found = pkt->getMAC(Pkt::HWADDR_SOURCE_DOCSIS_CMTS);
+    HWAddrPtr found = pkt->getMAC(HWAddr::HWADDR_SOURCE_DOCSIS_CMTS);
     ASSERT_TRUE(found);
 
     // Let's check the info.
@@ -1239,7 +1239,7 @@ TEST_F(Pkt6Test, getMAC_DOCSIS_CMTS) {
     ASSERT_TRUE(vendor);
     EXPECT_TRUE(vendor->delOption(DOCSIS3_V6_CMTS_CM_MAC));
 
-    EXPECT_FALSE(pkt->getMAC(Pkt::HWADDR_SOURCE_DOCSIS_CMTS));
+    EXPECT_FALSE(pkt->getMAC(HWAddr::HWADDR_SOURCE_DOCSIS_CMTS));
 }
 
 }
