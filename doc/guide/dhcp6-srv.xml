@@ -1921,7 +1921,7 @@ should include options from the isc option space:
         </simpara>
       </listitem>
       <listitem>
-        <simpara><command>remote-id</command> <ulink
+        <simpara><command>remote-id</command> - <ulink
         url="http://tools.ietf.org/html/rfc4649">RFC 4649</ulink>
         defines remote-id option that is inserted by a relay agent. Depending
         on the relay agent configuration, the inserted option may convey client's
@@ -1941,10 +1941,20 @@ should include options from the isc option space:
         </simpara>
       </listitem>
       <listitem>
-        <simpara><command>docsis</command> - Yet another possible source of MAC
+        <simpara><command>docsis-cmts</command> - Yet another possible source of MAC
         address information are DOCSIS options inserted by a CMTS that acts
-        as a DHCPv6 relay agent in cable networks. This method is
-        currently not implemented.
+        as a DHCPv6 relay agent in cable networks. This method attempts to extract
+        MAC address information from suboption 1026 (cm mac) from vendor specific option
+        with vendor-id=4491. This vendor option extracted from relay-forward message,
+        not the original client's message.
+        </simpara>
+      </listitem>
+      <listitem>
+        <simpara><command>docsis-modem</command> - Yet another possible source of MAC
+        address information are DOCSIS options inserted by the cable modem itself.
+        This method attempts to extract MAC address information from suboption 36 (device id)
+        from vendor specific option with vendor-id=4491. This vendor option extracted from
+        the original client's message, not from any relay options.
         </simpara>
       </listitem>
     </itemizedlist>
