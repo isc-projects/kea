@@ -1,3 +1,8 @@
+871.    [func]          wlodek
+	Check for required header file errcode.h for PostgreSQL
+	backend added to configure process.
+	(Trac #3663, git d666dd9263ba1aaf88bec5b8e5ae3f0cb8e5c1db)
+
 871.	[func]		kalmus, tomek
 	DHCPv6 is now able to extract MAC from DUID-LLT and DUID-LL.
 	(Trac #3548, git f6d9630e2762a0f256a2b7825d74d2bce8fe4c60)
