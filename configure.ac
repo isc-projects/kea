@@ -949,6 +949,9 @@ if test "$PG_CONFIG" != "" ; then
              AC_MSG_ERROR([Needs PostgreSQL library])]
     )
 
+    AC_CHECK_HEADERS([utils/errcodes.h],,
+    AC_MSG_ERROR([Missing required header file (errcodes.h) from PostgreSQL server-development package]))
+
     CPPFLAGS=$CPPFLAGS_SAVED
     LIBS=$LIBS_SAVED
 
