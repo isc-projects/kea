@@ -1,4 +1,9 @@
-87222222222222222222222.    [func]          wlodek
+873.    [bug]           wlodek
+	Removed references to non-existing pgsql_test.sh script
+	from Makefile.
+	(Trac #3662, git ab69f38dd82cf3c3736588e03c1dc568de3ae6d6)
+
+872.    [func]          wlodek
 	Check for required header file errcode.h for PostgreSQL
 	backend added to configure process.
 	(Trac #3663, git d666dd9263ba1aaf88bec5b8e5ae3f0cb8e5c1db)
