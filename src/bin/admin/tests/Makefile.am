@@ -6,10 +6,6 @@ if HAVE_MYSQL
 SHTESTS += mysql_tests.sh
 endif
 
-if HAVE_PGSQL
-SHTESTS += pgsql_tests.sh
-endif
-
 noinst_SCRIPTS = $(SHTESTS)
 
 CLEANFILES = *.log
