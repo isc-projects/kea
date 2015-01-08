@@ -270,8 +270,8 @@ do
         # Specify database password
         -p|--password)
             shift
-            db_pass=${1}
-            if [ -z ${db_pass} ]; then
+            db_password=${1}
+            if [ -z ${db_password} ]; then
                 log_error "-p or --password requires a parameter"
                 usage
                 exit 1
