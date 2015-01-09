@@ -17,8 +17,8 @@
 #include <dhcpsrv/lease_file_loader.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
 #include <exceptions/exceptions.h>
-
 #include <iostream>
+#include <sstream>
 
 namespace {
 
@@ -479,8 +479,22 @@ void Memfile_LeaseMgr::
 loadLeasesFromFiles(const std::string& filename,
                     boost::shared_ptr<LeaseFileType>& lease_file,
                     StorageType& storage) {
-    lease_file.reset(new LeaseFileType(filename));
-    lease_file->open();
     storage.clear();
-    LeaseFileLoader::load<LeaseObjectType>(*lease_file, storage, MAX_LEASE_ERRORS);
+
+    for (int i = 2; i >= 0; --i) {
+        // Initialize the name of the lease file to parse. For the
+        // first two loops we're going to append .2 and .1 to the
+        // lease file name.
+        std::ostringstream s;
+        s << filename;
+        if (i > 0) {
+            s << "." << i;
+        }
+        lease_file.reset(new LeaseFileType(s.str()));
+        // If the file doesn't exist it will be created as an empty
+        // file (with no leases).
+        lease_file->open();
+        LeaseFileLoader::load<LeaseObjectType>(*lease_file, storage,
+                                               MAX_LEASE_ERRORS);
+    }
 }
