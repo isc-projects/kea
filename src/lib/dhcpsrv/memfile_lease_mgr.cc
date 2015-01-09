@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -36,20 +36,14 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const ParameterMap& parameters)
     if (universe == "4") {
         std::string file4 = initLeaseFilePath(V4);
         if (!file4.empty()) {
-            lease_file4_.reset(new CSVLeaseFile4(file4));
-            lease_file4_->open();
-            storage4_.clear();
-            LeaseFileLoader::load<Lease4>(*lease_file4_, storage4_,
-                                          MAX_LEASE_ERRORS);
+            loadLeasesFromFiles<Lease4, CSVLeaseFile4>(file4, lease_file4_,
+                                                       storage4_);
         }
     } else {
         std::string file6 = initLeaseFilePath(V6);
         if (!file6.empty()) {
-            lease_file6_.reset(new CSVLeaseFile6(file6));
-            lease_file6_->open();
-            storage6_.clear();
-            LeaseFileLoader::load<Lease6>(*lease_file6_, storage6_,
-                                          MAX_LEASE_ERRORS);
+            loadLeasesFromFiles<Lease6, CSVLeaseFile6>(file6, lease_file6_,
+                                                       storage6_);
         }
     }
 
@@ -480,3 +474,13 @@ Memfile_LeaseMgr::initLeaseFilePath(Universe u) {
     return (lease_file);
 }
 
+template<typename LeaseObjectType, typename LeaseFileType, typename StorageType>
+void Memfile_LeaseMgr::
+loadLeasesFromFiles(const std::string& filename,
+                    boost::shared_ptr<LeaseFileType>& lease_file,
+                    StorageType& storage) {
+    lease_file.reset(new LeaseFileType(filename));
+    lease_file->open();
+    storage.clear();
+    LeaseFileLoader::load<LeaseObjectType>(*lease_file, storage, MAX_LEASE_ERRORS);
+}
