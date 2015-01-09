@@ -284,23 +284,13 @@ subnet ID and hardware address.
 A debug message issued when the server is about to obtain schema version
 information from the memory file database.
 
-% DHCPSRV_MEMFILE_LEASES_RELOAD4 reloading leases from %1
-An info message issued when the server is about to start reading DHCPv4 leases
+% DHCPSRV_MEMFILE_LEASE_FILE_LOAD loading leases from file %1
+An info message issued when the server is about to start reading DHCP leases
 from the lease file. All leases currently held in the memory will be
 replaced by those read from the file.
 
-% DHCPSRV_MEMFILE_LEASES_RELOAD6 reloading leases from %1
-An info message issued when the server is about to start reading DHCPv6 leases
-from the lease file. All leases currently held in the memory will be
-replaced by those read from the file.
-
-% DHCPSRV_MEMFILE_LEASE_LOAD4 loading lease %1
-A debug message issued when DHCPv4 lease is being loaded from the file to
-memory.
-
-% DHCPSRV_MEMFILE_LEASE_LOAD6 loading lease %1
-A debug message issued when DHCPv6 lease is being loaded from the file to
-memory.
+% DHCPSRV_MEMFILE_LEASE_LOAD loading lease %1
+A debug message issued when DHCP lease is being loaded from the file to memory.
 
 % DHCPSRV_MEMFILE_NO_STORAGE running in non-persistent mode, leases will be lost after restart
 A warning message issued when writes of leases to disk have been disabled

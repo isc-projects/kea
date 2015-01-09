@@ -18,13 +18,8 @@
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/csv_lease_file4.h>
 #include <dhcpsrv/csv_lease_file6.h>
+#include <dhcpsrv/inmemory_lease_storage.h>
 #include <dhcpsrv/lease_mgr.h>
-
-#include <boost/multi_index/indexed_by.hpp>
-#include <boost/multi_index/member.hpp>
-#include <boost/multi_index/ordered_index.hpp>
-#include <boost/multi_index_container.hpp>
-#include <boost/multi_index/composite_key.hpp>
 
 namespace isc {
 namespace dhcp {
@@ -335,50 +330,6 @@ public:
 
 protected:
 
-    /// @brief Load all DHCPv4 leases from the file.
-    ///
-    /// This method loads all DHCPv4 leases from a file to memory. It removes
-    /// existing leases before reading a file.
-    ///
-    /// @throw isc::DbOperationError If failed to read a lease from the lease
-    /// file.
-    void load4();
-
-    /// @brief Loads a single DHCPv4 lease from the file.
-    ///
-    /// This method reads a single lease record from the lease file. If the
-    /// corresponding record doesn't exist in the in-memory container, the
-    /// lease is added to the container (except for a lease which valid lifetime
-    /// is 0). If the corresponding lease exists, the lease being read updates
-    /// the existing lease. If the lease being read from the lease file has
-    /// valid lifetime of 0 and the corresponding lease exists in the in-memory
-    /// database, the existing lease is removed.
-    ///
-    /// @param lease Pointer to the lease read from the lease file.
-    void loadLease4(Lease4Ptr& lease);
-
-    /// @brief Load all DHCPv6 leases from the file.
-    ///
-    /// This method loads all DHCPv6 leases from a file to memory. It removes
-    /// existing leases before reading a file.
-    ///
-    /// @throw isc::DbOperationError If failed to read a lease from the lease
-    /// file.
-    void load6();
-
-    /// @brief Loads a single DHCPv6 lease from the file.
-    ///
-    /// This method reads a single lease record from the lease file. If the
-    /// corresponding record doesn't exist in the in-memory container, the
-    /// lease is added to the container (except for a lease which valid lifetime
-    /// is 0). If the corresponding lease exists, the lease being read updates
-    /// the existing lease. If the lease being read from the lease file has
-    /// valid lifetime of 0 and the corresponding lease exists in the in-memory
-    /// database, the existing lease is removed.
-    ///
-    /// @param lease Pointer to the lease read from the lease file.
-    void loadLease6(Lease6Ptr& lease);
-
     /// @brief Initialize the location of the lease file.
     ///
     /// This method uses the parameters passed as a map to the constructor to
@@ -395,112 +346,6 @@ protected:
     /// lease_file4_ or lease_file6_, depending on the universe specified as an
     /// argument to this function.
     std::string initLeaseFilePath(Universe u);
-
-    // This is a multi-index container, which holds elements that can
-    // be accessed using different search indexes.
-    typedef boost::multi_index_container<
-        // It holds pointers to Lease6 objects.
-        Lease6Ptr,
-        boost::multi_index::indexed_by<
-            // Specification of the first index starts here.
-            // This index sorts leases by IPv6 addresses represented as
-            // IOAddress objects.
-            boost::multi_index::ordered_unique<
-                boost::multi_index::member<Lease, isc::asiolink::IOAddress, &Lease::addr_>
-            >,
-
-            // Specification of the second index starts here.
-            boost::multi_index::ordered_non_unique<
-                // This is a composite index that will be used to search for
-                // the lease using three attributes: DUID, IAID and lease type.
-                boost::multi_index::composite_key<
-                    Lease6,
-                    // The DUID can be retrieved from the Lease6 object using
-                    // a getDuidVector const function.
-                    boost::multi_index::const_mem_fun<Lease6, const std::vector<uint8_t>&,
-                                                      &Lease6::getDuidVector>,
-                    // The two other ingredients of this index are IAID and
-                    // lease type.
-                    boost::multi_index::member<Lease6, uint32_t, &Lease6::iaid_>,
-                    boost::multi_index::member<Lease6, Lease::Type, &Lease6::type_>
-                >
-            >
-        >
-     > Lease6Storage; // Specify the type name of this container.
-
-    // This is a multi-index container, which holds elements that can
-    // be accessed using different search indexes.
-    typedef boost::multi_index_container<
-        // It holds pointers to Lease4 objects.
-        Lease4Ptr,
-        // Specification of search indexes starts here.
-        boost::multi_index::indexed_by<
-            // Specification of the first index starts here.
-            // This index sorts leases by IPv4 addresses represented as
-            // IOAddress objects.
-            boost::multi_index::ordered_unique<
-                // The IPv4 address are held in addr_ members that belong to
-                // Lease class.
-                boost::multi_index::member<Lease, isc::asiolink::IOAddress, &Lease::addr_>
-            >,
-
-            // Specification of the second index starts here.
-            boost::multi_index::ordered_unique<
-                // This is a composite index that combines two attributes of the
-                // Lease4 object: hardware address and subnet id.
-                boost::multi_index::composite_key<
-                    Lease4,
-                    // The hardware address is held in the hwaddr_ member of the
-                    // Lease4 object, which is a HWAddr object. Boost does not
-                    // provide a key extractor for getting a member of a member,
-                    // so we need a simple method for that.
-                    boost::multi_index::const_mem_fun<Lease, const std::vector<uint8_t>&,
-                                               &Lease::getHWAddrVector>,
-                    // The subnet id is held in the subnet_id_ member of Lease4
-                    // class. Note that the subnet_id_ is defined in the base
-                    // class (Lease) so we have to point to this class rather
-                    // than derived class: Lease4.
-                    boost::multi_index::member<Lease, SubnetID, &Lease::subnet_id_>
-                >
-            >,
-
-            // Specification of the third index starts here.
-            boost::multi_index::ordered_non_unique<
-                // This is a composite index that uses two values to search for a
-                // lease: client id and subnet id.
-                boost::multi_index::composite_key<
-                    Lease4,
-                    // The client id can be retrieved from the Lease4 object by
-                    // calling getClientIdVector const function.
-                    boost::multi_index::const_mem_fun<Lease4, const std::vector<uint8_t>&,
-                                                      &Lease4::getClientIdVector>,
-                    // The subnet id is accessed through the subnet_id_ member.
-                    boost::multi_index::member<Lease, uint32_t, &Lease::subnet_id_>
-                >
-            >,
-
-            // Specification of the fourth index starts here.
-            boost::multi_index::ordered_non_unique<
-                // This is a composite index that uses two values to search for a
-                // lease: client id and subnet id.
-                boost::multi_index::composite_key<
-                    Lease4,
-                    // The client id can be retrieved from the Lease4 object by
-                    // calling getClientIdVector const function.
-                    boost::multi_index::const_mem_fun<Lease4, const std::vector<uint8_t>&,
-                                                      &Lease4::getClientIdVector>,
-                    // The hardware address is held in the hwaddr_ object. We can
-                    // access the raw data using lease->hwaddr_->hwaddr_, but Boost
-                    // doesn't seem to provide a way to use member of a member for this,
-                    // so we need a simple key extractor method (getRawHWAddr).
-                    boost::multi_index::const_mem_fun<Lease, const std::vector<uint8_t>&,
-                                            &Lease::getHWAddrVector>,
-                    // The subnet id is accessed through the subnet_id_ member.
-                    boost::multi_index::member<Lease, SubnetID, &Lease::subnet_id_>
-                >
-            >
-        >
-    > Lease4Storage; // Specify the type name for this container.
 
     /// @brief stores IPv4 leases
     Lease4Storage storage4_;
