@@ -21,6 +21,8 @@
 #include <dhcpsrv/inmemory_lease_storage.h>
 #include <dhcpsrv/lease_mgr.h>
 
+#include <boost/shared_ptr.hpp>
+
 namespace isc {
 namespace dhcp {
 
@@ -328,7 +330,7 @@ public:
     /// server shut down.
     bool persistLeases(Universe u) const;
 
-protected:
+private:
 
     /// @brief Initialize the location of the lease file.
     ///
@@ -347,6 +349,42 @@ protected:
     /// argument to this function.
     std::string initLeaseFilePath(Universe u);
 
+    /// @brief Load leases from the persistent storage.
+    ///
+    /// This method loads DHCPv4 or DHCPv6 leases from lease files in the
+    /// following order:
+    /// - leases from the <filename>.2
+    /// - leases from the <filename>.1
+    /// - leases from the <filename>
+    ///
+    /// If any of the files doesn't exist the method proceeds to reading
+    /// leases from the subsequent file. If the <filename> doesn't exist
+    /// it is created.
+    ///
+    /// When the method successfully reads leases from the files, it leaves
+    /// the file <filename> open and its internal pointer is set to the
+    /// end of file. The server will append lease entries to this file as
+    /// a result of processing new messages from the clients.
+    ///
+    /// The <filename>.2 and <filename>.1 are the products of the lease
+    /// file cleanups (LFC). See: http://kea.isc.org/wiki/LFCDesign for
+    /// details.
+    ///
+    /// @param filename Name of the lease file.
+    /// @param lease_file An object representing a lease file to which
+    /// the server will store lease updates.
+    /// @param storage A storage for leases read from the lease file.
+    /// @tparam LeaseObjectType @c Lease4 or @c Lease6.
+    /// @tparam LeaseFileType @c CSVLeaseFile4 or @c CSVLeaseFile6.
+    /// @tparam StorageType @c Lease4Storage or @c Lease6Storage.
+    ///
+    /// @throw CSVFileError when parsing any of the lease files fails.
+    template<typename LeaseObjectType, typename LeaseFileType,
+             typename StorageType>
+    void loadLeasesFromFiles(const std::string& filename,
+                             boost::shared_ptr<LeaseFileType>& lease_file,
+                             StorageType& storage);
+
     /// @brief stores IPv4 leases
     Lease4Storage storage4_;
 
@@ -364,4 +402,4 @@ protected:
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
 
-#endif // MEMFILE_LEASE_MGR
+#endif // MEMFILE_LEASE_MGR_H
