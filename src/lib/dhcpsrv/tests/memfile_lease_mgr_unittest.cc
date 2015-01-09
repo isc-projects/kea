@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -479,6 +479,50 @@ TEST_F(MemfileLeaseMgrTest, versionCheck) {
     testVersion(Memfile_LeaseMgr::MAJOR_VERSION,
                 Memfile_LeaseMgr::MINOR_VERSION);
     LeaseMgrFactory::destroy();
+}
+
+// This test checks that the backend reads lease data from multiple files.
+TEST_F(MemfileLeaseMgrTest, loadMultipleLeaseFiles) {
+    LeaseFileIO io2("leasefile4_0.csv.2");
+    io2.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
+                  "fqdn_fwd,fqdn_rev,hostname\n"
+                  "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,\n"
+                  "192.0.2.11,bb:bb:bb:bb:bb:bb,,200,200,8,1,1,,\n");
+
+    LeaseFileIO io1("leasefile4_0.csv.1");
+    io1.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
+                  "fqdn_fwd,fqdn_rev,hostname\n"
+                  "192.0.2.1,01:01:01:01:01:01,,200,200,8,1,1,,\n"
+                  "192.0.2.11,bb:bb:bb:bb:bb:bb,,200,400,8,1,1,,\n"
+                  "192.0.2.12,cc:cc:cc:cc:cc:cc,,200,200,8,1,1,,\n");
+
+    LeaseFileIO io("leasefile4_0.csv");
+    io.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
+                 "fqdn_fwd,fqdn_rev,hostname\n"
+                 "192.0.2.10,0a:0a:0a:0a:0a:0a,,200,200,8,1,1,,\n"
+                 "192.0.2.12,cc:cc:cc:cc:cc:cc,,200,400,8,1,1,,\n");
+
+    startBackend(V4);
+
+    Lease4Ptr lease = lmptr_->getLease4(IOAddress("192.0.2.1"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(0, lease->cltt_);
+
+    lease = lmptr_->getLease4(IOAddress("192.0.2.2"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(0, lease->cltt_);
+
+    lease = lmptr_->getLease4(IOAddress("192.0.2.10"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(0, lease->cltt_);
+
+    lease = lmptr_->getLease4(IOAddress("192.0.2.11"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(200, lease->cltt_);
+
+    lease = lmptr_->getLease4(IOAddress("192.0.2.12"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(200, lease->cltt_);
 }
 
 }; // end of anonymous namespace
