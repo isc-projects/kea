@@ -491,10 +491,16 @@ loadLeasesFromFiles(const std::string& filename,
             s << "." << i;
         }
         lease_file.reset(new LeaseFileType(s.str()));
-        // If the file doesn't exist it will be created as an empty
-        // file (with no leases).
-        lease_file->open();
-        LeaseFileLoader::load<LeaseObjectType>(*lease_file, storage,
-                                               MAX_LEASE_ERRORS);
+        // Don't open the file if it doesn't exist and it is not the
+        // primary lease file - not ending with .1 or .2. Those files
+        // are optional and we don't want to create them if they don't
+        // exist.
+        if (i == 0 || lease_file->exists()) {
+            // If the file doesn't exist it will be created as an empty
+            // file (with no leases).
+            lease_file->open();
+            LeaseFileLoader::load<LeaseObjectType>(*lease_file, storage,
+                                                   MAX_LEASE_ERRORS);
+        }
     }
 }
