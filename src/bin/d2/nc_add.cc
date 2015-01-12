@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -35,7 +35,7 @@ const int NameAddTransaction::FQDN_IN_USE_EVT;
 const int NameAddTransaction::FQDN_NOT_IN_USE_EVT;
 
 NameAddTransaction::
-NameAddTransaction(IOServicePtr& io_service,
+NameAddTransaction(asiolink::IOServicePtr& io_service,
                    dhcp_ddns::NameChangeRequestPtr& ncr,
                    DdnsDomainPtr& forward_domain,
                    DdnsDomainPtr& reverse_domain,

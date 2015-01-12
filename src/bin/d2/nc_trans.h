@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,8 +17,8 @@
 
 /// @file nc_trans.h This file defines the class NameChangeTransaction.
 
+#include <asiolink/io_service.h>
 #include <exceptions/exceptions.h>
-#include <d2/d2_asio.h>
 #include <d2/d2_cfg_mgr.h>
 #include <d2/dns_client.h>
 #include <d2/state_model.h>
@@ -174,7 +174,7 @@ public:
     /// @throw NameChangeTransactionError if given an null request,
     /// if forward change is enabled but forward domain is null, if
     /// reverse change is enabled but reverse domain is null.
-    NameChangeTransaction(IOServicePtr& io_service,
+    NameChangeTransaction(asiolink::IOServicePtr& io_service,
                           dhcp_ddns::NameChangeRequestPtr& ncr,
                           DdnsDomainPtr& forward_domain,
                           DdnsDomainPtr& reverse_domain,
@@ -359,7 +359,7 @@ protected:
     /// @brief Fetches the IOService the transaction uses for IO processing.
     ///
     /// @return returns a const pointer to the IOService.
-    const IOServicePtr& getIOService() {
+    const asiolink::IOServicePtr& getIOService() {
         return (io_service_);
     }
 
@@ -523,7 +523,7 @@ public:
 
 private:
     /// @brief The IOService which should be used to for IO processing.
-    IOServicePtr io_service_;
+    asiolink::IOServicePtr io_service_;
 
     /// @brief The NameChangeRequest that the transaction is to fulfill.
     dhcp_ddns::NameChangeRequestPtr ncr_;

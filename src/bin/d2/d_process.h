@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,8 +15,8 @@
 #ifndef D_PROCESS_H
 #define D_PROCESS_H
 
+#include <asiolink/io_service.h>
 #include <cc/data.h>
-#include <d2/d2_asio.h>
 #include <d2/d_cfg_mgr.h>
 
 #include <boost/shared_ptr.hpp>
@@ -69,7 +69,7 @@ public:
     /// configuration parsing.
     ///
     /// @throw DProcessBaseError is io_service is NULL.
-    DProcessBase(const char* app_name, IOServicePtr io_service, 
+    DProcessBase(const char* app_name, asiolink::IOServicePtr io_service, 
                  DCfgMgrBasePtr cfg_mgr)
         : app_name_(app_name), io_service_(io_service), shut_down_flag_(false),
         cfg_mgr_(cfg_mgr) {
@@ -174,7 +174,7 @@ public:
     /// @brief Fetches the controller's IOService.
     ///
     /// @return a reference to the controller's IOService.
-    IOServicePtr& getIoService() {
+    asiolink::IOServicePtr& getIoService() {
         return (io_service_);
     }
 
@@ -199,7 +199,7 @@ private:
     std::string app_name_;
 
     /// @brief The IOService to be used for asynchronous event handling.
-    IOServicePtr io_service_;
+    asiolink::IOServicePtr io_service_;
 
     /// @brief Boolean flag set when shutdown has been requested.
     bool shut_down_flag_;

@@ -53,7 +53,6 @@ libd2_la_SOURCES  =
 libd2_la_SOURCES += d_process.h
 libd2_la_SOURCES += d_controller.cc d_controller.h
 libd2_la_SOURCES += d_cfg_mgr.cc d_cfg_mgr.h
-libd2_la_SOURCES += d2_asio.h
 libd2_la_SOURCES += d2_log.cc d2_log.h
 libd2_la_SOURCES += d2_process.cc d2_process.h
 libd2_la_SOURCES += d2_config.cc d2_config.h

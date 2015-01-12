@@ -26,7 +26,7 @@ namespace d2 {
 const size_t D2UpdateMgr::MAX_TRANSACTIONS_DEFAULT;
 
 D2UpdateMgr::D2UpdateMgr(D2QueueMgrPtr& queue_mgr, D2CfgMgrPtr& cfg_mgr,
-                         IOServicePtr& io_service,
+                         asiolink::IOServicePtr& io_service,
                          const size_t max_transactions)
     :queue_mgr_(queue_mgr), cfg_mgr_(cfg_mgr), io_service_(io_service) {
     if (!queue_mgr_) {
