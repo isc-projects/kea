@@ -294,63 +294,62 @@ AllocEngine::AllocEngine(AllocType engine_type, unsigned int attempts,
 }
 
 Lease6Collection
-AllocEngine::allocateLeases6(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                             const uint32_t iaid, const IOAddress& hint,
-                             Lease::Type type, const bool fwd_dns_update,
-                             const bool rev_dns_update,
-                             const std::string& hostname, bool fake_allocation,
-                             const isc::hooks::CalloutHandlePtr& callout_handle,
-                             Lease6Collection& old_leases, const HWAddrPtr& hwaddr) {
+AllocEngine::allocateLeases6(ClientContext6& ctx) {
 
     try {
-        AllocatorPtr allocator = getAllocator(type);
+        AllocatorPtr allocator = getAllocator(ctx.type_);
 
         if (!allocator) {
             isc_throw(InvalidOperation, "No allocator specified for "
-                      << Lease6::typeToText(type));
+                      << Lease6::typeToText(ctx.type_));
         }
 
-        if (!subnet) {
+        if (!ctx.subnet_) {
             isc_throw(InvalidOperation, "Subnet is required for allocation");
         }
 
-        if (!duid) {
+        if (!ctx.duid_) {
             isc_throw(InvalidOperation, "DUID is mandatory for allocation");
         }
 
         // Check if there's existing lease for that subnet/duid/iaid
         // combination.
         /// @todo: Make this generic (cover temp. addrs and prefixes)
-        Lease6Collection existing = LeaseMgrFactory::instance().getLeases6(type,
-                                    *duid, iaid, subnet->getID());
+        ctx.old_leases_ = LeaseMgrFactory::instance().getLeases6(ctx.type_,
+                              *ctx.duid_, ctx.iaid_, ctx.subnet_->getID());
 
         // There is at least one lease for this client. We will return these
         // leases for the client, but we may need to update FQDN information.
-        if (!existing.empty()) {
+        if (!ctx.old_leases_.empty()) {
             // Return old leases so the server can see what has changed.
-            old_leases = existing;
-            return (updateFqdnData(existing, fwd_dns_update, rev_dns_update,
-                                   hostname, fake_allocation));
+            return (updateFqdnData(ctx.old_leases_, ctx.fwd_dns_update_,
+                                   ctx.rev_dns_update_,
+                                   ctx.hostname_, ctx.fake_allocation_));
+        }
+
+        IOAddress hint("::");
+        if (!ctx.hints_.empty()) {
+            /// @todo: We support only one hint for now
+            hint = ctx.hints_[0];
         }
 
         // check if the hint is in pool and is available
         // This is equivalent of subnet->inPool(hint), but returns the pool
         Pool6Ptr pool = boost::dynamic_pointer_cast<
-            Pool6>(subnet->getPool(type, hint, false));
+            Pool6>(ctx.subnet_->getPool(ctx.type_, hint, false));
 
         if (pool) {
             /// @todo: We support only one hint for now
-            Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(type, hint);
+            Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(ctx.type_, hint);
             if (!lease) {
                 /// @todo: check if the hint is reserved once we have host
                 /// support implemented
 
                 // The hint is valid and not currently used, let's create a
                 // lease for it
-                lease = createLease6(subnet, duid, iaid, hint,
-                                     pool->getLength(), type,
-                                     fwd_dns_update, rev_dns_update,
-                                     hostname, hwaddr, callout_handle, fake_allocation);
+                lease = createLease6(ctx,
+                                     hint,
+                                     pool->getLength());
 
                 // It can happen that the lease allocation failed (we could
                 // have lost the race condition. That means that the hint is
@@ -359,7 +358,7 @@ AllocEngine::allocateLeases6(const Subnet6Ptr& subnet, const DuidPtr& duid,
                 if (lease) {
                     // We are allocating a new lease (not renewing). So, the
                     // old lease should be NULL.
-                    old_leases.push_back(Lease6Ptr());
+                    ctx.old_leases_.clear();
 
                     /// @todo: We support only one lease per ia for now
                     Lease6Collection collection;
@@ -371,14 +370,12 @@ AllocEngine::allocateLeases6(const Subnet6Ptr& subnet, const DuidPtr& duid,
                     // Copy an existing, expired lease so as it can be returned
                     // to the caller.
                     Lease6Ptr old_lease(new Lease6(*lease));
-                    old_leases.push_back(old_lease);
+                    ctx.old_leases_.push_back(old_lease);
 
                     /// We found a lease and it is expired, so we can reuse it
-                    lease = reuseExpiredLease(lease, subnet, duid, iaid,
-                                              pool->getLength(),
-                                              fwd_dns_update, rev_dns_update,
-                                              hostname, callout_handle,
-                                              fake_allocation);
+                    lease = reuseExpiredLease(lease,
+                                              ctx,
+                                              pool->getLength());
 
                     /// @todo: We support only one lease per ia for now
                     Lease6Collection collection;
@@ -407,7 +404,7 @@ AllocEngine::allocateLeases6(const Subnet6Ptr& subnet, const DuidPtr& duid,
 
         unsigned int i = attempts_;
         do {
-            IOAddress candidate = allocator->pickAddress(subnet, duid, hint);
+            IOAddress candidate = allocator->pickAddress(ctx.subnet_, ctx.duid_, hint);
 
             /// @todo: check if the address is reserved once we have host support
             /// implemented
@@ -415,27 +412,24 @@ AllocEngine::allocateLeases6(const Subnet6Ptr& subnet, const DuidPtr& duid,
             // The first step is to find out prefix length. It is 128 for
             // non-PD leases.
             uint8_t prefix_len = 128;
-            if (type == Lease::TYPE_PD) {
+            if (ctx.type_ == Lease::TYPE_PD) {
                 Pool6Ptr pool = boost::dynamic_pointer_cast<Pool6>(
-                    subnet->getPool(type, candidate, false));
+                    ctx.subnet_->getPool(ctx.type_, candidate, false));
                 prefix_len = pool->getLength();
             }
 
-            Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(type,
+            Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(ctx.type_,
                                  candidate);
             if (!existing) {
 
                 // there's no existing lease for selected candidate, so it is
                 // free. Let's allocate it.
 
-                Lease6Ptr lease = createLease6(subnet, duid, iaid, candidate,
-                                               prefix_len, type, fwd_dns_update,
-                                               rev_dns_update, hostname, hwaddr,
-                                               callout_handle, fake_allocation);
+                Lease6Ptr lease = createLease6(ctx, candidate, prefix_len);
                 if (lease) {
                     // We are allocating a new lease (not renewing). So, the
                     // old lease should be NULL.
-                    old_leases.push_back(Lease6Ptr());
+                    ctx.old_leases_.clear();
 
                     Lease6Collection collection;
                     collection.push_back(lease);
@@ -450,12 +444,11 @@ AllocEngine::allocateLeases6(const Subnet6Ptr& subnet, const DuidPtr& duid,
                     // Copy an existing, expired lease so as it can be returned
                     // to the caller.
                     Lease6Ptr old_lease(new Lease6(*existing));
-                    old_leases.push_back(old_lease);
+                    ctx.old_leases_.push_back(old_lease);
 
-                    existing = reuseExpiredLease(existing, subnet, duid, iaid,
-                                                 prefix_len, fwd_dns_update,
-                                                 rev_dns_update, hostname,
-                                                 callout_handle, fake_allocation);
+                    existing = reuseExpiredLease(existing,
+                                                 ctx,
+                                                 prefix_len);
                     Lease6Collection collection;
                     collection.push_back(existing);
                     return (collection);
@@ -809,15 +802,8 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
 }
 
 Lease6Ptr AllocEngine::reuseExpiredLease(Lease6Ptr& expired,
-                                         const Subnet6Ptr& subnet,
-                                         const DuidPtr& duid,
-                                         const uint32_t iaid,
-                                         uint8_t prefix_len,
-                                         const bool fwd_dns_update,
-                                         const bool rev_dns_update,
-                                         const std::string& hostname,
-                                         const isc::hooks::CalloutHandlePtr& callout_handle,
-                                         bool fake_allocation /*= false */ ) {
+                                         ClientContext6& ctx,
+                                         uint8_t prefix_len) {
 
     if (!expired->expired()) {
         isc_throw(BadValue, "Attempt to recycle lease that is still valid");
@@ -828,57 +814,57 @@ Lease6Ptr AllocEngine::reuseExpiredLease(Lease6Ptr& expired,
     }
 
     // address, lease type and prefixlen (0) stay the same
-    expired->iaid_ = iaid;
-    expired->duid_ = duid;
-    expired->preferred_lft_ = subnet->getPreferred();
-    expired->valid_lft_ = subnet->getValid();
-    expired->t1_ = subnet->getT1();
-    expired->t2_ = subnet->getT2();
+    expired->iaid_ = ctx.iaid_;
+    expired->duid_ = ctx.duid_;
+    expired->preferred_lft_ = ctx.subnet_->getPreferred();
+    expired->valid_lft_ = ctx.subnet_->getValid();
+    expired->t1_ = ctx.subnet_->getT1();
+    expired->t2_ = ctx.subnet_->getT2();
     expired->cltt_ = time(NULL);
-    expired->subnet_id_ = subnet->getID();
+    expired->subnet_id_ = ctx.subnet_->getID();
     expired->fixed_ = false;
-    expired->hostname_ = hostname;
-    expired->fqdn_fwd_ = fwd_dns_update;
-    expired->fqdn_rev_ = rev_dns_update;
+    expired->hostname_ = ctx.hostname_;
+    expired->fqdn_fwd_ = ctx.fwd_dns_update_;
+    expired->fqdn_rev_ = ctx.rev_dns_update_;
     expired->prefixlen_ = prefix_len;
 
     /// @todo: log here that the lease was reused (there's ticket #2524 for
     /// logging in libdhcpsrv)
 
     // Let's execute all callouts registered for lease6_select
-    if (callout_handle &&
+    if (ctx.callout_handle_ &&
         HooksManager::getHooksManager().calloutsPresent(hook_index_lease6_select_)) {
 
         // Delete all previous arguments
-        callout_handle->deleteAllArguments();
+        ctx.callout_handle_->deleteAllArguments();
 
         // Pass necessary arguments
         // Subnet from which we do the allocation
-        callout_handle->setArgument("subnet6", subnet);
+        ctx.callout_handle_->setArgument("subnet6", ctx.subnet_);
 
         // Is this solicit (fake = true) or request (fake = false)
-        callout_handle->setArgument("fake_allocation", fake_allocation);
+        ctx.callout_handle_->setArgument("fake_allocation", ctx.fake_allocation_);
 
         // The lease that will be assigned to a client
-        callout_handle->setArgument("lease6", expired);
+        ctx.callout_handle_->setArgument("lease6", expired);
 
         // Call the callouts
-        HooksManager::callCallouts(hook_index_lease6_select_, *callout_handle);
+        HooksManager::callCallouts(hook_index_lease6_select_, *ctx.callout_handle_);
 
         // Callouts decided to skip the action. This means that the lease is not
         // assigned, so the client will get NoAddrAvail as a result. The lease
         // won't be inserted into the database.
-        if (callout_handle->getSkip()) {
+        if (ctx.callout_handle_->getSkip()) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS, DHCPSRV_HOOK_LEASE6_SELECT_SKIP);
             return (Lease6Ptr());
         }
 
         // Let's use whatever callout returned. Hopefully it is the same lease
         // we handled to it.
-        callout_handle->getArgument("lease6", expired);
+        ctx.callout_handle_->getArgument("lease6", expired);
     }
 
-    if (!fake_allocation) {
+    if (!ctx.fake_allocation_) {
         // for REQUEST we do update the lease
         LeaseMgrFactory::instance().updateLease6(expired);
     }
@@ -1081,65 +1067,56 @@ AllocEngine::reallocateClientLease(Lease4Ptr& lease,
 }
 
 
-Lease6Ptr AllocEngine::createLease6(const Subnet6Ptr& subnet,
-                                    const DuidPtr& duid,
-                                    const uint32_t iaid,
+Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
                                     const IOAddress& addr,
-                                    uint8_t prefix_len,
-                                    const Lease::Type type,
-                                    const bool fwd_dns_update,
-                                    const bool rev_dns_update,
-                                    const std::string& hostname,
-                                    const HWAddrPtr& hwaddr,
-                                    const isc::hooks::CalloutHandlePtr& callout_handle,
-                                    bool fake_allocation /*= false */ ) {
+                                    uint8_t prefix_len) {
 
-    if (type != Lease::TYPE_PD) {
+    if (ctx.type_ != Lease::TYPE_PD) {
         prefix_len = 128; // non-PD lease types must be always /128
     }
 
-    Lease6Ptr lease(new Lease6(type, addr, duid, iaid,
-                               subnet->getPreferred(), subnet->getValid(),
-                               subnet->getT1(), subnet->getT2(), subnet->getID(),
-                               hwaddr, prefix_len));
+    Lease6Ptr lease(new Lease6(ctx.type_, addr, ctx.duid_, ctx.iaid_,
+                               ctx.subnet_->getPreferred(), ctx.subnet_->getValid(),
+                               ctx.subnet_->getT1(), ctx.subnet_->getT2(),
+                               ctx.subnet_->getID(), ctx.hwaddr_, prefix_len));
 
-    lease->fqdn_fwd_ = fwd_dns_update;
-    lease->fqdn_rev_ = rev_dns_update;
-    lease->hostname_ = hostname;
+    lease->fqdn_fwd_ = ctx.fwd_dns_update_;
+    lease->fqdn_rev_ = ctx.rev_dns_update_;
+    lease->hostname_ = ctx.hostname_;
 
     // Let's execute all callouts registered for lease6_select
-    if (callout_handle &&
+    if (ctx.callout_handle_ &&
         HooksManager::getHooksManager().calloutsPresent(hook_index_lease6_select_)) {
 
         // Delete all previous arguments
-        callout_handle->deleteAllArguments();
+        ctx.callout_handle_->deleteAllArguments();
 
         // Pass necessary arguments
 
         // Subnet from which we do the allocation
-        callout_handle->setArgument("subnet6", subnet);
+        ctx.callout_handle_->setArgument("subnet6", ctx.subnet_);
 
         // Is this solicit (fake = true) or request (fake = false)
-        callout_handle->setArgument("fake_allocation", fake_allocation);
-        callout_handle->setArgument("lease6", lease);
+        ctx.callout_handle_->setArgument("fake_allocation", ctx.fake_allocation_);
+        ctx.callout_handle_->setArgument("lease6", lease);
 
         // This is the first callout, so no need to clear any arguments
-        HooksManager::callCallouts(hook_index_lease6_select_, *callout_handle);
+        HooksManager::callCallouts(hook_index_lease6_select_, *ctx.callout_handle_);
 
         // Callouts decided to skip the action. This means that the lease is not
         // assigned, so the client will get NoAddrAvail as a result. The lease
         // won't be inserted into the database.
-        if (callout_handle->getSkip()) {
+        if (ctx.callout_handle_->getSkip()) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS, DHCPSRV_HOOK_LEASE6_SELECT_SKIP);
             return (Lease6Ptr());
         }
 
         // Let's use whatever callout returned. Hopefully it is the same lease
         // we handled to it.
-        callout_handle->getArgument("lease6", lease);
+        ctx.callout_handle_->getArgument("lease6", lease);
     }
 
-    if (!fake_allocation) {
+    if (!ctx.fake_allocation_) {
         // That is a real (REQUEST) allocation
         bool status = LeaseMgrFactory::instance().addLease(lease);
 
