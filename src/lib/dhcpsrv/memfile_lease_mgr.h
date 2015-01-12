@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,8 @@
 #ifndef MEMFILE_LEASE_MGR_H
 #define MEMFILE_LEASE_MGR_H
 
+#include <asiolink/interval_timer.h>
+#include <asiolink/io_service.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/csv_lease_file4.h>
 #include <dhcpsrv/csv_lease_file6.h>
@@ -335,6 +337,16 @@ public:
 
 protected:
 
+    /// @brief A callback function triggering Lease File Cleanup.
+    ///
+    /// This method is virtual so as it can be overriden and customized in
+    /// the unit tests. In particular, the unit test which checks that the
+    /// callback function has been executed would override this function
+    /// to increase the execution counter each time it is executed.
+    virtual void lfcCallback();
+
+private:
+
     /// @brief Load all DHCPv4 leases from the file.
     ///
     /// This method loads all DHCPv4 leases from a file to memory. It removes
@@ -395,6 +407,14 @@ protected:
     /// lease_file4_ or lease_file6_, depending on the universe specified as an
     /// argument to this function.
     std::string initLeaseFilePath(Universe u);
+
+    /// @brief Initialize the timers used to perform repeating tasks.
+    ///
+    /// Currently only one timer is supported. This timer executes the
+    /// Lease File Cleanup periodically.
+    ///
+    /// @param universe A V4 or V6 value.
+    void initTimers(const Universe& universe);
 
     // This is a multi-index container, which holds elements that can
     // be accessed using different search indexes.
@@ -513,6 +533,9 @@ protected:
 
     /// @brief Holds the pointer to the DHCPv6 lease file IO.
     boost::shared_ptr<CSVLeaseFile6> lease_file6_;
+
+    /// @brief A timer scheduled to perform Lease File Cleanup.
+    asiolink::IntervalTimer lfc_timer_;
 
 };
 
