@@ -481,8 +481,9 @@ TEST_F(MemfileLeaseMgrTest, versionCheck) {
     LeaseMgrFactory::destroy();
 }
 
-// This test checks that the backend reads lease data from multiple files.
-TEST_F(MemfileLeaseMgrTest, loadMultipleLeaseFiles) {
+// This test checks that the backend reads DHCPv4 lease data from multiple
+// files.
+TEST_F(MemfileLeaseMgrTest, load4MultipleLeaseFiles) {
     LeaseFileIO io2("leasefile4_0.csv.2");
     io2.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
                   "fqdn_fwd,fqdn_rev,hostname\n"
@@ -504,25 +505,99 @@ TEST_F(MemfileLeaseMgrTest, loadMultipleLeaseFiles) {
 
     startBackend(V4);
 
+    // This lease only exists in the second file and the cltt should
+    // be 0.
     Lease4Ptr lease = lmptr_->getLease4(IOAddress("192.0.2.1"));
     ASSERT_TRUE(lease);
     EXPECT_EQ(0, lease->cltt_);
 
+    // This lease only exists in the first file and the cltt should
+    // be 0.
     lease = lmptr_->getLease4(IOAddress("192.0.2.2"));
     ASSERT_TRUE(lease);
     EXPECT_EQ(0, lease->cltt_);
 
+    // This lease only exists in the third file and the cltt should
+    // be 0.
     lease = lmptr_->getLease4(IOAddress("192.0.2.10"));
     ASSERT_TRUE(lease);
     EXPECT_EQ(0, lease->cltt_);
 
+    // This lease exists in the first and second file and the cltt
+    // should be calculated using the expiration time and the
+    // valid lifetime from the second file.
     lease = lmptr_->getLease4(IOAddress("192.0.2.11"));
     ASSERT_TRUE(lease);
     EXPECT_EQ(200, lease->cltt_);
 
+    // Thsi lease exists in the second and third file and the cltt
+    // should be calculated using the expiration time and the
+    // valid lifetime from the third file.
     lease = lmptr_->getLease4(IOAddress("192.0.2.12"));
     ASSERT_TRUE(lease);
     EXPECT_EQ(200, lease->cltt_);
+}
+
+// This test checks that the backend reads DHCPv6 lease data from multiple
+// files.
+TEST_F(MemfileLeaseMgrTest, load6MultipleLeaseFiles) {
+    LeaseFileIO io2("leasefile6_0.csv.2");
+    io2.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+                  "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                  "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
+                  "200,200,8,100,0,7,0,1,1,,\n"
+                  "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
+                  "200,200,8,100,0,7,0,1,1,,\n");
+
+    LeaseFileIO io1("leasefile6_0.csv.1");
+    io1.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+                  "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                  "2001:db8:1::3,03:03:03:03:03:03:03:03:03:03:03:03:03,"
+                  "200,200,8,100,0,7,0,1,1,,\n"
+                  "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
+                  "300,800,8,100,0,7,0,1,1,,\n"
+                  "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
+                  "200,200,8,100,0,7,0,1,1,,\n");
+
+    LeaseFileIO io("leasefile6_0.csv");
+    io.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+                 "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                 "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
+                 "400,1000,8,100,0,7,0,1,1,,\n"
+                 "2001:db8:1::5,05:05:05:05:05:05:05:05:05:05:05:05:05,"
+                 "200,200,8,100,0,7,0,1,1,,\n");
+
+    startBackend(V6);
+
+    // This lease only exists in the first file and the cltt should be 0.
+    Lease6Ptr lease = lmptr_->getLease6(Lease::TYPE_NA,
+                                        IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(0, lease->cltt_);
+
+    // This lease exists in the first and second file and the cltt should
+    // be calculated using the expiration time and the valid lifetime
+    // from the second file.
+    lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(500, lease->cltt_);
+
+    // This lease only exists in the second file and the cltt should be 0.
+    lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::3"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(0, lease->cltt_);
+
+    // This lease exists in the second and third file and the cltt should
+    // be calculated using the expiration time and the valid lifetime
+    // from the third file.
+    lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::4"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(600, lease->cltt_);
+
+    // This lease only exists in the third file and the cltt should be 0.
+    lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::5"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(0, lease->cltt_);
 }
 
 }; // end of anonymous namespace
