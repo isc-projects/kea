@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #define LEASE_MGR_H
 
 #include <asiolink/io_address.h>
+#include <asiolink/io_service.h>
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
 #include <dhcp/hwaddr.h>
@@ -133,7 +134,8 @@ public:
     ///
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the database.
-    LeaseMgr(const ParameterMap& parameters) : parameters_(parameters)
+    LeaseMgr(const ParameterMap& parameters)
+        : parameters_(parameters), io_service_(new asiolink::IOService())
     {}
 
     /// @brief Destructor
@@ -379,6 +381,12 @@ public:
     /// @brief returns value of the parameter
     virtual std::string getParameter(const std::string& name) const;
 
+    /// @brief Returns a reference to the @c IOService object used
+    /// by the Lease Manager.
+    const asiolink::IOServicePtr& getIOService() const {
+        return (io_service_);
+    }
+
 private:
     /// @brief list of parameters passed in dbconfig
     ///
@@ -386,6 +394,10 @@ private:
     /// password and other parameters required for DB access. It is not
     /// intended to keep any DHCP-related parameters.
     ParameterMap parameters_;
+
+    /// @brief Pointer to the IO service object used by the derived classes
+    /// to trigger interval timers.
+    asiolink::IOServicePtr io_service_;
 };
 
 }; // end of isc::dhcp namespace

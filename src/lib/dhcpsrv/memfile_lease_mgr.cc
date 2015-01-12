@@ -22,7 +22,7 @@
 using namespace isc::dhcp;
 
 Memfile_LeaseMgr::Memfile_LeaseMgr(const ParameterMap& parameters)
-    : LeaseMgr(parameters) {
+    : LeaseMgr(parameters), lfc_timer_(*getIOService()) {
     // Check the universe and use v4 file or v6 file.
     std::string universe = getParameter("universe");
     if (universe == "4") {
@@ -47,6 +47,9 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const ParameterMap& parameters)
     // operation.
     if (!persistLeases(V4) && !persistLeases(V6)) {
         LOG_WARN(dhcpsrv_logger, DHCPSRV_MEMFILE_NO_STORAGE);
+
+    } else  {
+        initTimers(universe == "4" ? V4 : V6);
     }
 }
 
@@ -466,6 +469,34 @@ Memfile_LeaseMgr::initLeaseFilePath(Universe u) {
         lease_file = getDefaultLeaseFilePath(u);
     }
     return (lease_file);
+}
+
+void
+Memfile_LeaseMgr::initTimers(const Universe& universe) {
+    std::string lfc_interval_str = "0";
+    try {
+        lfc_interval_str = getParameter("lfc-interval");
+    } catch (const std::exception& ex) {
+        // Ignore and default to 0.
+    }
+
+    uint32_t lfc_interval = 0;
+    try {
+        lfc_interval = boost::lexical_cast<uint32_t>(lfc_interval_str);
+    } catch (boost::bad_lexical_cast& ex) {
+        isc_throw(isc::BadValue, "invalid value of the LFC interval "
+                  << lfc_interval_str << " specified");
+    }
+
+    if (lfc_interval > 0) {
+        asiolink::IntervalTimer::Callback cb =
+            boost::bind(&Memfile_LeaseMgr::lfcCallback, this);
+        lfc_timer_.setup(cb, lfc_interval * 1000);
+    }
+}
+
+void
+Memfile_LeaseMgr::lfcCallback() {
 }
 
 void
