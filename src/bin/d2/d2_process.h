@@ -66,7 +66,7 @@ public:
     /// asynchronous event handling.
     ///
     /// @throw DProcessBaseError is io_service is NULL.
-    D2Process(const char* name, IOServicePtr io_service);
+    D2Process(const char* name, asiolink::IOServicePtr io_service);
 
     /// @brief Called after instantiation to perform initialization unique to
     /// D2.

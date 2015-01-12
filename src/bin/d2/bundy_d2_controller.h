@@ -1,4 +1,4 @@
-// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,10 +15,10 @@
 #ifndef BUNDY_D2_CONTROLLER_H
 #define BUNDY_D2_CONTROLLER_H
 
+#include <asiolink/io_service.h>
 #include <cc/data.h>
 #include <cc/session.h>
 #include <config/ccsession.h>
-#include <d2/d2_asio.h>
 #include <d2/d2_log.h>
 #include <d2/d_controller.h>
 #include <d2/d_process.h>
