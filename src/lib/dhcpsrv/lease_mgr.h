@@ -118,9 +118,19 @@ public:
 /// be used directly, but rather specialized derived class should be used
 /// instead.
 ///
-/// As all methods are virtual, this class throws no exceptions.  However,
-/// methods in concrete implementations of this class may throw exceptions:
-/// see the documentation of those classes for details.
+/// This class creates an instance of the @c asiolink::IOService in the
+/// constructor. This object is required to execute the
+/// @c asiolink::IntervalTimer for the operations triggered periodically
+/// by the lease database backends which implement @c LeaseMgr interface.
+/// In order to execute the timers installed by the particular backend,
+/// the owner of the backend (e.g. DHCP server) should retrieve the pointer
+/// to the @c asiolink::IOService object by calling @c LeaseMgr::getIOService
+/// and call the appropriate functions, e.g. @c poll_one or @c run_one in a
+/// main loop.
+///
+/// This class throws no exceptions.  However, methods in concrete
+/// implementations of this class may throw exceptions: see the documentation
+/// of those classes for details.
 class LeaseMgr {
 public:
     /// @brief Defines maximum value for time that can be reliably stored.
