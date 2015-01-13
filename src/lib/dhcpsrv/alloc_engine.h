@@ -372,7 +372,8 @@ protected:
         /// update existing lease.
         bool fake_allocation_;
 
-        /// @brief A pointer to any old leases that the client had before update.
+        /// @brief A pointer to any old leases that the client had before update
+        ///        but are no longer valid after the update/allocation.
         ///
         /// This collection is typically empty, except cases when we are doing
         /// address reassignment, e.g. because there is a host reservation that
@@ -700,6 +701,58 @@ private:
     Lease6Ptr createLease6(ClientContext6& ctx,
                            const isc::asiolink::IOAddress& addr,
                            const uint8_t prefix_len);
+
+    /// @brief Allocates a normal, in-pool, unreserved lease from the pool.
+    ///
+    /// It attempts to pick a hint first, then uses allocator iteratively until
+    /// an available (not used, not reserved) lease is found. In principle, it
+    /// may return more than one lease, but we currently handle only one.
+    /// This may change in the future.
+    ///
+    /// @param ctx client context that contains all details (subnet, client-id, etc.)
+    /// @return collection of newly allocated leases
+    Lease6Collection allocateUnreservedLeases6(ClientContext6& ctx);
+
+    /// @brief Creates new leases based on reservations.
+    ///
+    /// This method allocates new leases, based on host reservation. Existing
+    /// leases are specified in existing_leases parameter. A new lease is not created,
+    /// if there is a lease for specified address on existing_leases list or there is
+    /// a lease used by someone else.
+    ///
+    /// @param ctx client context that contains all details (subnet, client-id, etc.)
+    /// @param existing_leases leases that are already associated with the client
+    void
+    allocateReservedLeases6(ClientContext6& ctx, Lease6Collection& existing_leases);
+
+    /// @brief Removes leases that are reserved for someone else.
+    ///
+    /// Goes through the list specified in existing_leases and removes those that
+    /// are reserved by someone else. The removed leases are added to the
+    /// ctx.removed_leases_ collection.
+    ///
+    /// @param ctx client context that contains all details (subnet, client-id, etc.)
+    /// @param existing_leases [in/out] leases that should be checked
+    void
+    removeNonmatchingReservedLeases6(ClientContext6& ctx,
+                                     Lease6Collection& existing_leases);
+
+    /// @brief Removed leases that are not reserved for this client
+    ///
+    /// This method iterates over existing_leases and will remove leases that are
+    /// not reserved for this client. It will leave at least one lease on the list,
+    /// if possible. The reason to run this method is that if there is a reservation
+    /// for address A for client X and client X already has a lease for a
+    /// diffierent address B, we should assign A and release B. However,
+    /// if for some reason we can't assign A, keeping B would be better than
+    /// not having a lease at all. Hence we may keep B if that's the only lease
+    /// left.
+    ///
+    /// @param ctx client context that contains all details (subnet, client-id, etc.)
+    /// @param existing_leases [in/out] leases that should be checked
+    void
+    removeNonreservedLeases6(ClientContext6& ctx,
+                             Lease6Collection& existing_leases);
 
     /// @brief Reuses expired DHCPv4 lease.
     ///
