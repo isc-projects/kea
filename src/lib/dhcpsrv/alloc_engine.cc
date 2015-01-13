@@ -297,13 +297,6 @@ Lease6Collection
 AllocEngine::allocateLeases6(ClientContext6& ctx) {
 
     try {
-        AllocatorPtr allocator = getAllocator(ctx.type_);
-
-        if (!allocator) {
-            isc_throw(InvalidOperation, "No allocator specified for "
-                      << Lease6::typeToText(ctx.type_));
-        }
-
         if (!ctx.subnet_) {
             isc_throw(InvalidOperation, "Subnet is required for allocation");
         }
@@ -312,153 +305,137 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
             isc_throw(InvalidOperation, "DUID is mandatory for allocation");
         }
 
-        // Check if there's existing lease for that subnet/duid/iaid
+        // Check if there's a host reservation for this client.
+        ctx.host_ = HostMgr::instance().get6(ctx.subnet_->getID(), ctx.duid_,
+                                             ctx.hwaddr_);
+
+        // Check if there are existing leases for that subnet/duid/iaid
         // combination.
-        /// @todo: Make this generic (cover temp. addrs and prefixes)
-        ctx.old_leases_ = LeaseMgrFactory::instance().getLeases6(ctx.type_,
-                              *ctx.duid_, ctx.iaid_, ctx.subnet_->getID());
+        Lease6Collection leases =
+            LeaseMgrFactory::instance().getLeases6(ctx.type_, *ctx.duid_, ctx.iaid_,
+                                                   ctx.subnet_->getID());
 
-        // There is at least one lease for this client. We will return these
-        // leases for the client, but we may need to update FQDN information.
-        if (!ctx.old_leases_.empty()) {
-            // Return old leases so the server can see what has changed.
-            return (updateFqdnData(ctx.old_leases_, ctx.fwd_dns_update_,
-                                   ctx.rev_dns_update_,
-                                   ctx.hostname_, ctx.fake_allocation_));
-        }
-
-        IOAddress hint("::");
-        if (!ctx.hints_.empty()) {
-            /// @todo: We support only one hint for now
-            hint = ctx.hints_[0];
-        }
-
-        // check if the hint is in pool and is available
-        // This is equivalent of subnet->inPool(hint), but returns the pool
-        Pool6Ptr pool = boost::dynamic_pointer_cast<
-            Pool6>(ctx.subnet_->getPool(ctx.type_, hint, false));
-
-        if (pool) {
-            /// @todo: We support only one hint for now
-            Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(ctx.type_, hint);
-            if (!lease) {
-                /// @todo: check if the hint is reserved once we have host
-                /// support implemented
-
-                // The hint is valid and not currently used, let's create a
-                // lease for it
-                lease = createLease6(ctx,
-                                     hint,
-                                     pool->getLength());
-
-                // It can happen that the lease allocation failed (we could
-                // have lost the race condition. That means that the hint is
-                // lo longer usable and we need to continue the regular
-                // allocation path.
-                if (lease) {
-                    // We are allocating a new lease (not renewing). So, the
-                    // old lease should be NULL.
-                    ctx.old_leases_.clear();
-
-                    /// @todo: We support only one lease per ia for now
-                    Lease6Collection collection;
-                    collection.push_back(lease);
-                    return (collection);
-                }
-            } else {
-                if (lease->expired()) {
-                    // Copy an existing, expired lease so as it can be returned
-                    // to the caller.
-                    Lease6Ptr old_lease(new Lease6(*lease));
-                    ctx.old_leases_.push_back(old_lease);
-
-                    /// We found a lease and it is expired, so we can reuse it
-                    lease = reuseExpiredLease(lease,
-                                              ctx,
-                                              pool->getLength());
-
-                    /// @todo: We support only one lease per ia for now
-                    Lease6Collection collection;
-                    collection.push_back(lease);
-                    return (collection);
-                }
-
-            }
-        }
-
-        // Hint is in the pool but is not available. Search the pool until first of
-        // the following occurs:
-        // - we find a free address
-        // - we find an address for which the lease has expired
-        // - we exhaust number of tries
+        // Now do the checks:
+        // Case 1. if there are no leases, and there are reservations...
+        //   1.1. are the reserved addresses are used by someone else?
+        //       yes: we have a problem
+        //       no: assign them => done
+        // Case 2. if there are leases and there are no reservations...
+        //   2.1 are the leases reserved for someone else?
+        //       yes: release them, assign something else
+        //       no: renew them => done
+        // Case 3. if there are leases and there are reservations...
+        //   3.1 are the leases matching reservations?
+        //       yes: renew them => done
+        //       no: release existing leases, assign new ones based on reservations
+        // Case 4. if there are no leases and no reservations...
+        //       assign new leases
         //
-        // @todo: Current code does not handle pool exhaustion well. It will be
-        // improved. Current problems:
-        // 1. with attempts set to too large value (e.g. 1000) and a small pool (e.g.
-        // 10 addresses), we will iterate over it 100 times before giving up
-        // 2. attempts 0 mean unlimited (this is really UINT_MAX, not infinite)
-        // 3. the whole concept of infinite attempts is just asking for infinite loop
-        // We may consider some form or reference counting (this pool has X addresses
-        // left), but this has one major problem. We exactly control allocation
-        // moment, but we currently do not control expiration time at all
+        // We could implement those checks as nested ifs, but the performance
+        // gain would be minimal and the code readibility loss would be substantial.
+        // Hence independent checks.
 
-        unsigned int i = attempts_;
-        do {
-            IOAddress candidate = allocator->pickAddress(ctx.subnet_, ctx.duid_, hint);
+        // Case 1: There are no leases and there's a reservation for this host.
+        if (leases.empty() && ctx.host_) {
 
-            /// @todo: check if the address is reserved once we have host support
-            /// implemented
+            // Try to allocate leases that match reservations. Typically this will
+            // succeed, except cases where the reserved addresses are used by
+            // someone else.
+            allocateReservedLeases6(ctx, leases);
 
-            // The first step is to find out prefix length. It is 128 for
-            // non-PD leases.
-            uint8_t prefix_len = 128;
-            if (ctx.type_ == Lease::TYPE_PD) {
-                Pool6Ptr pool = boost::dynamic_pointer_cast<Pool6>(
-                    ctx.subnet_->getPool(ctx.type_, candidate, false));
-                prefix_len = pool->getLength();
+            // If we got at least one lease, we're good to go.
+            if (!leases.empty()) {
+                return (leases);
             }
 
-            Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(ctx.type_,
-                                 candidate);
-            if (!existing) {
+            // If not, we'll need to continue and will eventually fall into case 4:
+            // getting a regular lease. That could happen when we're processing
+            // request from client X, there's a reserved address A for X, but
+            // A is currently used by client Y. We can't immediately reassign A
+            // from X to Y, because Y keeps using it, so X would send Decline right
+            // away. Need to wait till Y renews, then we can release A, so it
+            // will become available for X.
+        }
 
-                // there's no existing lease for selected candidate, so it is
-                // free. Let's allocate it.
+        // Case 2: There are existing leases and there are no reservations.
+        //
+        // There is at least one lease for this client and there are no reservations.
+        // We will return these leases for the client, but we may need to update
+        // FQDN information.
+        if (!leases.empty() && !ctx.host_) {
 
-                Lease6Ptr lease = createLease6(ctx, candidate, prefix_len);
-                if (lease) {
-                    // We are allocating a new lease (not renewing). So, the
-                    // old lease should be NULL.
-                    ctx.old_leases_.clear();
+            // Check if the existing leases are reserved for someone else.
+            // If they're not, we're ok to keep using them.
+            removeNonmatchingReservedLeases6(ctx, leases);
 
-                    Lease6Collection collection;
-                    collection.push_back(lease);
-                    return (collection);
-                }
-
-                // Although the address was free just microseconds ago, it may have
-                // been taken just now. If the lease insertion fails, we continue
-                // allocation attempts.
-            } else {
-                if (existing->expired()) {
-                    // Copy an existing, expired lease so as it can be returned
-                    // to the caller.
-                    Lease6Ptr old_lease(new Lease6(*existing));
-                    ctx.old_leases_.push_back(old_lease);
-
-                    existing = reuseExpiredLease(existing,
-                                                 ctx,
-                                                 prefix_len);
-                    Lease6Collection collection;
-                    collection.push_back(existing);
-                    return (collection);
-                }
+            if (!leases.empty()) {
+            // Return old leases so the server can see what has changed.
+                return (updateFqdnData(leases, ctx.fwd_dns_update_,
+                                       ctx.rev_dns_update_,
+                                       ctx.hostname_, ctx.fake_allocation_));
             }
 
-            // Continue trying allocation until we run out of attempts
-            // (or attempts are set to 0, which means infinite)
-            --i;
-        } while ((i > 0) || !attempts_);
+            // If leases is empty at this stage, it means that we used to have
+            // leases for this client, but we checked and those leases are reserved
+            // for someone else, so we lost them. We will need to continue and
+            // will finally end up in case 4 (no leases, no reservations), so we'll
+            // assign something new.
+        }
+
+        // Case 3: There are leases and there are reservations.
+        if (!leases.empty() && ctx.host_) {
+
+            // First, check if have leases matching reservations, and add new
+            // leases if we don't have them.
+            allocateReservedLeases6(ctx, leases);
+
+            // leases now contain both existing and new leases that were created
+            // from reservations.
+
+            // Second, let's remove leases that are reserved for someone else.
+            // This applies to any existing leases.
+            removeNonmatchingReservedLeases6(ctx, leases);
+
+            // leases now contain existing and new leases, but we removed those
+            // leases that are reserved for someone else (non-matching reserved).
+
+            // There's one more check to do. Let's remove leases that are not
+            // matching reservations, i.e. if client X has address A, but there's
+            // a reservation for address B, we should release A and reassign B.
+            // Caveat: do this only if we have at least one reserved address.
+            removeNonreservedLeases6(ctx, leases);
+
+            // All checks are done. Let's hope we do have any leases left.
+
+            // If we have any leases left, let's return them and we're done.
+            if (!leases.empty()) {
+                return (leases);
+            }
+
+            // If we don't have any leases at this stage, it means that we hit
+            // one of the following cases:
+            // - we have a reservation, but it's not for this IAID/ia-type and
+            //   we had to return the address we were using
+            // - we have a reservation for this iaid/ia-type, but the reserved
+            //   address is currently used by someone else. We can't assign it
+            //   yet.
+            // - we had an address, but we just discovered that it's reserved for
+            //   someone else, so we released it.
+        }
+
+        // Case 4: One of the following is true:
+        // - we don't have leases and there are no reservations
+        // - we used to have leases, but we lost them, because they are now
+        //   reserved for someone else
+        // - we have a reservation, but it is not usable yet, because the address
+        //   is still used by someone else
+        //
+        // In any case, we need to go through normal lease assignment process
+        // for now.
+
+        leases = allocateUnreservedLeases6(ctx);
+
+        return (leases);
 
         // Unable to allocate an address, return an empty lease.
         LOG_WARN(dhcpsrv_logger, DHCPSRV_ADDRESS6_ALLOC_FAIL).arg(attempts_);
@@ -470,6 +447,171 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
     }
 
     return (Lease6Collection());
+}
+
+Lease6Collection
+AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
+
+    AllocatorPtr allocator = getAllocator(ctx.type_);
+
+    if (!allocator) {
+        isc_throw(InvalidOperation, "No allocator specified for "
+                  << Lease6::typeToText(ctx.type_));
+    }
+
+    Lease6Collection leases;
+
+    IOAddress hint("::");
+    if (!ctx.hints_.empty()) {
+        /// @todo: We support only one hint for now
+        hint = ctx.hints_[0];
+    }
+
+    // check if the hint is in pool and is available
+    // This is equivalent of subnet->inPool(hint), but returns the pool
+    Pool6Ptr pool = boost::dynamic_pointer_cast<
+        Pool6>(ctx.subnet_->getPool(ctx.type_, hint, false));
+
+    if (pool) {
+        /// @todo: We support only one hint for now
+        Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(ctx.type_, hint);
+        if (!lease) {
+            /// @todo: check if the hint is reserved once we have host
+            /// support implemented
+
+            // The hint is valid and not currently used, let's create a
+            // lease for it
+            lease = createLease6(ctx, hint, pool->getLength());
+
+            // It can happen that the lease allocation failed (we could
+            // have lost the race condition. That means that the hint is
+            // lo longer usable and we need to continue the regular
+            // allocation path.
+            if (lease) {
+
+                /// @todo: We support only one lease per ia for now
+                Lease6Collection collection;
+                collection.push_back(lease);
+                return (collection);
+            }
+        } else {
+            if (lease->expired()) {
+                // Copy an existing, expired lease so as it can be returned
+                // to the caller.
+                Lease6Ptr old_lease(new Lease6(*lease));
+                ctx.old_leases_.push_back(old_lease);
+
+                /// We found a lease and it is expired, so we can reuse it
+                lease = reuseExpiredLease(lease, ctx, pool->getLength());
+
+                /// @todo: We support only one lease per ia for now
+                leases.push_back(lease);
+                return (leases);
+            }
+
+        }
+    }
+
+    // Hint is in the pool but is not available. Search the pool until first of
+    // the following occurs:
+    // - we find a free address
+    // - we find an address for which the lease has expired
+    // - we exhaust number of tries
+    //
+    // @todo: Current code does not handle pool exhaustion well. It will be
+    // improved. Current problems:
+    // 1. with attempts set to too large value (e.g. 1000) and a small pool (e.g.
+    // 10 addresses), we will iterate over it 100 times before giving up
+    // 2. attempts 0 mean unlimited (this is really UINT_MAX, not infinite)
+    // 3. the whole concept of infinite attempts is just asking for infinite loop
+    // We may consider some form or reference counting (this pool has X addresses
+    // left), but this has one major problem. We exactly control allocation
+    // moment, but we currently do not control expiration time at all
+
+    unsigned int i = attempts_;
+    do {
+        IOAddress candidate = allocator->pickAddress(ctx.subnet_, ctx.duid_, hint);
+
+        /// @todo: check if the address is reserved once we have host support
+        /// implemented
+
+        // The first step is to find out prefix length. It is 128 for
+        // non-PD leases.
+        uint8_t prefix_len = 128;
+        if (ctx.type_ == Lease::TYPE_PD) {
+            Pool6Ptr pool = boost::dynamic_pointer_cast<Pool6>(
+                ctx.subnet_->getPool(ctx.type_, candidate, false));
+            prefix_len = pool->getLength();
+        }
+
+        Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(ctx.type_,
+                                                                   candidate);
+        if (!existing) {
+
+            // there's no existing lease for selected candidate, so it is
+            // free. Let's allocate it.
+
+            Lease6Ptr lease = createLease6(ctx, candidate, prefix_len);
+            if (lease) {
+                // We are allocating a new lease (not renewing). So, the
+                // old lease should be NULL.
+                ctx.old_leases_.clear();
+
+                Lease6Collection collection;
+                collection.push_back(lease);
+                return (collection);
+            }
+
+            // Although the address was free just microseconds ago, it may have
+            // been taken just now. If the lease insertion fails, we continue
+            // allocation attempts.
+        } else {
+            if (existing->expired()) {
+                // Copy an existing, expired lease so as it can be returned
+                // to the caller.
+                Lease6Ptr old_lease(new Lease6(*existing));
+                ctx.old_leases_.push_back(old_lease);
+
+                existing = reuseExpiredLease(existing,
+                                             ctx,
+                                             prefix_len);
+                Lease6Collection collection;
+                collection.push_back(existing);
+                return (collection);
+            }
+        }
+
+        // Continue trying allocation until we run out of attempts
+        // (or attempts are set to 0, which means infinite)
+        --i;
+    } while ((i > 0) || !attempts_);
+
+    // We failed to allocate anything. Let's return empty collection.
+    return (Lease6Collection());
+}
+
+void
+AllocEngine::allocateReservedLeases6(ClientContext6& ctx, Lease6Collection& existing_leases) {
+    /// @todo
+    if (!ctx.host_ || existing_leases.empty()) {
+        return;
+    }
+}
+
+void
+AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
+                                              Lease6Collection& existing_leases) {
+    /// @todo
+    if (!ctx.host_ || existing_leases.empty()) {
+    }
+}
+
+void
+AllocEngine::removeNonreservedLeases6(ClientContext6& ctx,
+                                      Lease6Collection& existing_leases) {
+    /// @todo
+    if (!ctx.host_ || existing_leases.empty()) {
+    }
 }
 
 Lease4Ptr

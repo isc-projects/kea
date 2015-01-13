@@ -533,6 +533,7 @@ TEST_F(AllocEngine6Test, allocWithValidHint6) {
 
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::15"),
                                        false);
+    ASSERT_TRUE(lease);
 
     // We should get what we asked for
     EXPECT_EQ("2001:db8:1::15", lease->addr_.toText());
