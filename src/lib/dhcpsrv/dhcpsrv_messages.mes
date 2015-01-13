@@ -302,6 +302,10 @@ memory.
 A debug message issued when DHCPv6 lease is being loaded from the file to
 memory.
 
+% DHCPSRV_MEMFILE_LFC_START starting Lease File Cleanup
+An info message issued when the Memfile lease database backend starts the
+periodic Lease File Cleanup.
+
 % DHCPSRV_MEMFILE_NO_STORAGE running in non-persistent mode, leases will be lost after restart
 A warning message issued when writes of leases to disk have been disabled
 in the configuration. This mode is useful for some kinds of performance

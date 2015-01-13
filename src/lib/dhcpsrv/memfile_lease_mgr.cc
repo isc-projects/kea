@@ -484,7 +484,7 @@ Memfile_LeaseMgr::initTimers(const Universe& universe) {
     try {
         lfc_interval = boost::lexical_cast<uint32_t>(lfc_interval_str);
     } catch (boost::bad_lexical_cast& ex) {
-        isc_throw(isc::BadValue, "invalid value of the LFC interval "
+        isc_throw(isc::BadValue, "invalid value of the lfc-interval "
                   << lfc_interval_str << " specified");
     }
 
@@ -497,6 +497,9 @@ Memfile_LeaseMgr::initTimers(const Universe& universe) {
 
 void
 Memfile_LeaseMgr::lfcCallback() {
+    /// @todo Extend this method to spawn the new process which will
+    /// perform the Lease File Cleanup in background.
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_START);
 }
 
 void
