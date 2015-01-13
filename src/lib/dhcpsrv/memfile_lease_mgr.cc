@@ -491,6 +491,7 @@ Memfile_LeaseMgr::initTimers(const Universe& universe) {
     if (lfc_interval > 0) {
         asiolink::IntervalTimer::Callback cb =
             boost::bind(&Memfile_LeaseMgr::lfcCallback, this);
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_SETUP).arg(lfc_interval);
         lfc_timer_.setup(cb, lfc_interval * 1000);
     }
 }
