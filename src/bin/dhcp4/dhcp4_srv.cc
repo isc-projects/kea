@@ -161,7 +161,7 @@ Dhcpv4Srv::run() {
         /// Probing for the packets at this pace should not cause a
         /// significant rise of the CPU usage. However, in the future we
         /// should adjust the select timeout to the value reported by the
-        /// lease database backend as a minimal poll interval.
+        /// lease database backend as a maximum poll interval.
         //cppcheck-suppress variableScope This is temporary anyway
         const int timeout = 1;
 
