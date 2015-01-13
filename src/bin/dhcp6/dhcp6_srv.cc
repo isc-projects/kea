@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -46,6 +46,8 @@
 #include <util/encode/hex.h>
 #include <util/io_utilities.h>
 #include <util/range_utilities.h>
+
+#include <asio.hpp>
 
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
@@ -228,14 +230,20 @@ Dhcpv6Srv::testUnicast(const Pkt6Ptr& pkt) const {
 
 bool Dhcpv6Srv::run() {
     while (!shutdown_) {
-        /// @todo Calculate actual timeout to the next event (e.g. lease
-        /// expiration) once we have lease database. The idea here is that
-        /// it is possible to do everything in a single process/thread.
-        /// For now, we are just calling select for 1000 seconds. There
-        /// were some issues reported on some systems when calling select()
-        /// with too large values. Unfortunately, I don't recall the details.
+        /// @todo Currently we're using the fixed value of the timeout for
+        /// select. This value shouldn't be changed. Keeping it at 1s
+        /// guarantees that the main loop will be executed at least once
+        /// a seconds allowing for executing the interval timers associated
+        /// with the lease database backend in use. The intervals for these
+        /// timers are configured using the unit of 1 second. Bumping up
+        /// the select timeout would cause the timers to go out of sync
+        /// with the configured value.
+        /// Probing for the packets at this pace should not cause a
+        /// significant rise of the CPU usage. However, in the future we
+        /// should adjust the select timeout to the value reported by the
+        /// lease database backend as a minimal poll interval.
         //cppcheck-suppress variableScope This is temporary anyway
-        const int timeout = 1000;
+        const int timeout = 1;
 
         // client's message and server's response
         Pkt6Ptr query;
@@ -265,6 +273,15 @@ bool Dhcpv6Srv::run() {
         // process could wait up to the duration of timeout of select() to
         // terminate.
         handleSignal();
+
+        // Execute ready timers for the lease database, e.g. Lease File Cleanup.
+        try {
+            LeaseMgrFactory::instance().getIOService()->get_io_service().poll();
+
+        } catch (const std::exception& ex) {
+            LOG_WARN(dhcp6_logger, DHCP6_LEASE_DATABASE_TIMERS_EXEC_FAIL)
+                .arg(ex.what());
+        }
 
         // Timeout may be reached or signal received, which breaks select()
         // with no packet received

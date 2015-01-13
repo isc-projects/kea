@@ -302,6 +302,11 @@ memory.
 A debug message issued when DHCPv6 lease is being loaded from the file to
 memory.
 
+% DHCPSRV_MEMFILE_LFC_SETUP setting up the Lease File Cleanup interval to %1 sec
+An info message logged when the Memfile lease database backend configures
+the LFC to be executed periodically. An argument holds the interval in seconds
+in which the LFC will be executed.
+
 % DHCPSRV_MEMFILE_LFC_START starting Lease File Cleanup
 An info message issued when the Memfile lease database backend starts the
 periodic Lease File Cleanup.
