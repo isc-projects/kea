@@ -96,8 +96,7 @@ public:
             // The parameters which are not quoted are persist and
             // lfc-interval as they are boolean and integer respectively.
             result += quote + keyval[i] + quote + colon + space;
-            if (getNonQuotedParams().find(std::string(keyval[i])) !=
-                getNonQuotedParams().end()) {
+            if (!quoteValue(std::string(keyval[i]))) {
                 result += keyval[i + 1];
 
             } else {
@@ -177,16 +176,17 @@ public:
 
 private:
 
-    /// @brief Returns a set of parameters which should be quoted in the
-    /// test configuration.
+    /// @brief Checks if the value of the specified parameter should be
+    /// quoted in the configuration.
     ///
-    /// In particular, this method is called by the @c toJson to determine
-    /// that the parameter being included in the JSON configuration should
-    /// be quoted or not.
-    const std::set<std::string>& getNonQuotedParams() const {
+    /// @param parameter A parameter for which it should be checked whether
+    /// the value should be quoted or not.
+    ///
+    /// @return true if the value of the parameter should be quoted.
+     bool quoteValue(const std::string& parameter) const {
         static const char* params[] = { "persist", "lfc-interval" };
         static std::set<std::string> params_set(params, params + sizeof(params));
-        return (params_set);
+        return (params_set.find(parameter) == params_set.end());
     }
 
 };
