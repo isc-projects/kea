@@ -39,19 +39,19 @@ using namespace isc::dhcp::test;
 
 namespace {
 
-/// @brief Class derived from @c Memfile_LeaseMgr to test timers.
+/// @brief Class derived from @c Memfile_LeaseMgr to test LFC timer.
 ///
 /// This class provides a custom callback function which is invoked
 /// when the timer for Lease File Cleanup goes off. It is used to
 /// test that the timer is correctly installed.
-class TestMemfileLeaseMgr : public Memfile_LeaseMgr {
+class LFCMemfileLeaseMgr : public Memfile_LeaseMgr {
 public:
 
     /// @brief Constructor.
     ///
     /// Sets the counter for callbacks to 0.
-    TestMemfileLeaseMgr(const ParameterMap& parameters)
-        : Memfile_LeaseMgr(parameters) {
+    LFCMemfileLeaseMgr(const ParameterMap& parameters)
+        : Memfile_LeaseMgr(parameters), lfc_cnt_(0) {
     }
 
     /// @brief Returns the number of callback executions.
@@ -285,18 +285,45 @@ TEST_F(MemfileLeaseMgrTest, lfcTimer) {
     pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
     pmap["lfc-interval"] = "1";
 
-    boost::shared_ptr<TestMemfileLeaseMgr>
-        lease_mgr(new TestMemfileLeaseMgr(pmap));
+    boost::scoped_ptr<LFCMemfileLeaseMgr>
+        lease_mgr(new LFCMemfileLeaseMgr(pmap));
 
     io_service_ = lease_mgr->getIOService();
 
     // Run the test for at most 2.9 seconds.
     setTestTime(2900);
 
+    // Run the IO service to execute timers.
     io_service_->run();
 
     // Within 2.9 we should record two LFC executions.
     EXPECT_EQ(2, lease_mgr->getLFCCount());
+}
+
+
+// This test checks if the LFC timer is disabled (doesn't trigger)
+// cleanups when the lfc-interval is set to 0.
+TEST_F(MemfileLeaseMgrTest, lfcTimerDisabled) {
+    LeaseMgr::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "4";
+    pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
+    // Set the LFC interval to 0, which should effectively disable it.
+    pmap["lfc-interval"] = "0";
+
+    boost::scoped_ptr<LFCMemfileLeaseMgr>
+        lease_mgr(new LFCMemfileLeaseMgr(pmap));
+
+    io_service_ = lease_mgr->getIOService();
+
+    // Run the test for at most 1.9 seconds.
+    setTestTime(1900);
+
+    // Run the IO service to execute timers.
+    io_service_->run();
+
+    // There should be no LFC execution recorded.
+    EXPECT_EQ(0, lease_mgr->getLFCCount());
 }
 
 // Checks that adding/getting/deleting a Lease6 object works.
