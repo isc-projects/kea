@@ -482,25 +482,56 @@ loadLeasesFromFiles(const std::string& filename,
     storage.clear();
 
     for (int i = 2; i >= 0; --i) {
+        bool completed_exists = false;
+
         // Initialize the name of the lease file to parse. For the
         // first two loops we're going to append .2 and .1 to the
-        // lease file name.
+        // lease file name, unless the file with the .completed
+        // postfix exists.
         std::ostringstream s;
         s << filename;
-        if (i > 0) {
-            s << "." << i;
+
+        // If this is the first file to load leases from, we should check
+        // if the file with the .completed prefix exists. If it exists
+        // we are going to skip loading leases from the files with
+        // postfixes .2 and .1.
+        if (i == 2) {
+            s << ".completed";
+            lease_file.reset(new LeaseFileType(s.str()));
+            // If the .completed file exists, reduce the value of i to
+            // skip loop for the file with postfix .1. We will only
+            // load leases from the .completed file and the lease
+            // file without postfix (for i = 0).
+            if (lease_file->exists()) {
+                --i;
+                completed_exists = true;
+            }
         }
-        lease_file.reset(new LeaseFileType(s.str()));
+
+        // If .completed file doesn't exist, load the files with postfixes
+        // .1 and .2.
+        if (!completed_exists) {
+            std::ostringstream s2;
+            s2 << filename;
+            if (i > 0) {
+                s2 << "." << i;
+            }
+            lease_file.reset(new LeaseFileType(s2.str()));
+        }
+
         // Don't open the file if it doesn't exist and it is not the
-        // primary lease file - not ending with .1 or .2. Those files
-        // are optional and we don't want to create them if they don't
-        // exist.
+        // primary lease file - not ending with .1 or .2 or .completed.
+        // Those files are optional and we don't want to create them if
+        // they don't exist.
         if (i == 0 || lease_file->exists()) {
             // If the file doesn't exist it will be created as an empty
-            // file (with no leases).
-            lease_file->open();
+            // file (with no leases). The last parameter is set to false
+            // when the primary lease file is parsed. This is to
+            // indicate that the lease file should remain open after
+            // parsing. The backend will use this file to append future
+            // lease updates.
             LeaseFileLoader::load<LeaseObjectType>(*lease_file, storage,
-                                                   MAX_LEASE_ERRORS);
+                                                   MAX_LEASE_ERRORS, (i != 0));
         }
     }
 }

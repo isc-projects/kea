@@ -320,7 +320,7 @@ public:
     /// @brief Closes the CSV file.
     void close();
 
-    /// @brief Checks if the CSV file exists.
+    /// @brief Checks if the CSV file exists and can be opened for reading.
     ///
     /// This method doesn't check if the existing file has a correct file
     /// format.

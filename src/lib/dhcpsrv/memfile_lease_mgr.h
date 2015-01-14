@@ -18,7 +18,7 @@
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/csv_lease_file4.h>
 #include <dhcpsrv/csv_lease_file6.h>
-#include <dhcpsrv/inmemory_lease_storage.h>
+#include <dhcpsrv/memfile_lease_storage.h>
 #include <dhcpsrv/lease_mgr.h>
 
 #include <boost/shared_ptr.hpp>
@@ -353,9 +353,13 @@ private:
     ///
     /// This method loads DHCPv4 or DHCPv6 leases from lease files in the
     /// following order:
-    /// - leases from the <filename>.2
-    /// - leases from the <filename>.1
-    /// - leases from the <filename>
+    /// - If the <filename>.completed doesn't exist:
+    ///   - leases from the <filename>.2
+    ///   - leases from the <filename>.1
+    ///   - leases from the <filename>
+    /// - else
+    ///   - leases from the <filename>.completed
+    ///   - leases from the <filename>
     ///
     /// If any of the files doesn't exist the method proceeds to reading
     /// leases from the subsequent file. If the <filename> doesn't exist
@@ -366,9 +370,9 @@ private:
     /// end of file. The server will append lease entries to this file as
     /// a result of processing new messages from the clients.
     ///
-    /// The <filename>.2 and <filename>.1 are the products of the lease
-    /// file cleanups (LFC). See: http://kea.isc.org/wiki/LFCDesign for
-    /// details.
+    /// The <filename>.2, <filename>.1 and <filename>.completed are the
+    /// products of the lease file cleanups (LFC).
+    /// See: http://kea.isc.org/wiki/LFCDesign for details.
     ///
     /// @param filename Name of the lease file.
     /// @param lease_file An object representing a lease file to which

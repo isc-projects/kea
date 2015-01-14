@@ -16,7 +16,7 @@
 #include <asiolink/io_address.h>
 #include <dhcpsrv/csv_lease_file4.h>
 #include <dhcpsrv/csv_lease_file6.h>
-#include <dhcpsrv/inmemory_lease_storage.h>
+#include <dhcpsrv/memfile_lease_storage.h>
 #include <dhcpsrv/lease_file_loader.h>
 #include <dhcpsrv/tests/lease_file_io.h>
 #include <boost/scoped_ptr.hpp>
@@ -146,7 +146,7 @@ TEST_F(LeaseFileLoaderTest, load4) {
 }
 
 // This test verifies that the lease with a valid lifetime of 0
-// is removed from the storage. The valid lifetime of 0 set set
+// is removed from the storage. The valid lifetime of 0 is set
 // for the released leases.
 TEST_F(LeaseFileLoaderTest, load4LeaseRemove) {
     // Create lease file in which one of the entries for 192.0.2.1
@@ -264,7 +264,8 @@ TEST_F(LeaseFileLoaderTest, load6LeaseRemove) {
 }
 
 // This test verifies that the exception is thrown when the specific
-// number of errors occurs during reading of the lease file.
+// number of errors in the test data occur during reading of the lease
+// file.
 TEST_F(LeaseFileLoaderTest, loadMaxErrors) {
     // Create a lease file for which there is a number of invalid
     // entries.
@@ -308,6 +309,32 @@ TEST_F(LeaseFileLoaderTest, loadMaxErrors) {
     EXPECT_EQ(100, lease->cltt_);
 }
 
+// This test verifies that the lease with a valid lifetime set to 0 is
+// not loaded if there are no previous entries for this lease in the
+// lease file.
+TEST_F(LeaseFileLoaderTest, loadLeaseWithZeroLifetime) {
+    // Create lease file. The second lease has a valid lifetime of 0.
+    io_.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
+                  "fqdn_fwd,fqdn_rev,hostname\n"
+                  "192.0.2.1,06:07:08:09:0a:bc,,200,200,8,1,1,,\n"
+                  "192.0.2.3,06:07:08:09:0a:bd,,0,200,8,1,1,,\n");
+
+    boost::scoped_ptr<CSVLeaseFile4> lf(new CSVLeaseFile4(filename_));
+    ASSERT_NO_THROW(lf->open()); 
+
+    // Set the error count to 0 to make sure that lease with a zero
+    // lifetime doesn't cause an error.
+    Lease4Storage storage;
+    ASSERT_NO_THROW(LeaseFileLoader::load<Lease4>(*lf, storage, 0));
+
+    // The first lease should be present.
+    Lease4Ptr lease = getLease<Lease4Ptr>("192.0.2.1", storage);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(0, lease->cltt_);
+
+    // The lease with a valid lifetime of 0 should not be loaded.
+    EXPECT_FALSE(getLease<Lease4Ptr>("192.0.2.3", storage));
+}   
 
 
 } // end of anonymous namespace
