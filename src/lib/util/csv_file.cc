@@ -99,13 +99,10 @@ CSVFile::close() {
 
 bool
 CSVFile::exists() const {
-    std::ifstream fs(filename_);
-    if (fs.good()) {
-        fs.close();
-        return (true);
-    }
+    std::ifstream fs(filename_.c_str());
+    const bool file_exists = fs.good();
     fs.close();
-    return (false);
+    return (file_exists);
 }
 
 void

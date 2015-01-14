@@ -538,6 +538,56 @@ TEST_F(MemfileLeaseMgrTest, load4MultipleLeaseFiles) {
     EXPECT_EQ(200, lease->cltt_);
 }
 
+// This test checks that the lease database backend loads the file with
+// the .completed postfix instead of files with postfixes .1 and .2 if
+// the file with .completed postfix exists.
+TEST_F(MemfileLeaseMgrTest, load4CompletedFile) {
+    LeaseFileIO io2("leasefile4_0.csv.2");
+    io2.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
+                  "fqdn_fwd,fqdn_rev,hostname\n"
+                  "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,\n"
+                  "192.0.2.11,bb:bb:bb:bb:bb:bb,,200,200,8,1,1,,\n");
+
+    LeaseFileIO io1("leasefile4_0.csv.1");
+    io1.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
+                  "fqdn_fwd,fqdn_rev,hostname\n"
+                  "192.0.2.1,01:01:01:01:01:01,,200,200,8,1,1,,\n"
+                  "192.0.2.11,bb:bb:bb:bb:bb:bb,,200,400,8,1,1,,\n"
+                  "192.0.2.12,cc:cc:cc:cc:cc:cc,,200,200,8,1,1,,\n");
+
+    LeaseFileIO io("leasefile4_0.csv");
+    io.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
+                 "fqdn_fwd,fqdn_rev,hostname\n"
+                 "192.0.2.10,0a:0a:0a:0a:0a:0a,,200,200,8,1,1,,\n"
+                 "192.0.2.12,cc:cc:cc:cc:cc:cc,,200,400,8,1,1,,\n");
+
+    LeaseFileIO ioc("leasefile4_0.csv.completed");
+    ioc.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
+                  "fqdn_fwd,fqdn_rev,hostname\n"
+                  "192.0.2.13,ff:ff:ff:ff:ff:ff,,200,200,8,1,1,,\n");
+
+    startBackend(V4);
+
+    // We expect that this file only holds leases that belong to the
+    // lease file or to the file with .completed postfix.
+    Lease4Ptr lease = lmptr_->getLease4(IOAddress("192.0.2.10"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(0, lease->cltt_);
+
+    lease = lmptr_->getLease4(IOAddress("192.0.2.12"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(200, lease->cltt_);
+
+    // This lease is in the .completed file.
+    lease = lmptr_->getLease4(IOAddress("192.0.2.13"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(0, lease->cltt_);
+
+    // Leases from the .1 and .2 files should not be loaded.
+    EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.11")));
+    EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.1")));
+}
+
 // This test checks that the backend reads DHCPv6 lease data from multiple
 // files.
 TEST_F(MemfileLeaseMgrTest, load6MultipleLeaseFiles) {
@@ -598,6 +648,156 @@ TEST_F(MemfileLeaseMgrTest, load6MultipleLeaseFiles) {
     lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::5"));
     ASSERT_TRUE(lease);
     EXPECT_EQ(0, lease->cltt_);
+}
+
+// This test checks that the backend reads DHCPv6 lease data from the
+// leasefile without the postfix and the file with a .1 postfix when
+// the file with the .2 postfix is missing.
+TEST_F(MemfileLeaseMgrTest, load6MultipleNoSecondFile) {
+    LeaseFileIO io1("leasefile6_0.csv.1");
+    io1.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+                  "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                  "2001:db8:1::3,03:03:03:03:03:03:03:03:03:03:03:03:03,"
+                  "200,200,8,100,0,7,0,1,1,,\n"
+                  "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
+                  "300,800,8,100,0,7,0,1,1,,\n"
+                  "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
+                  "200,200,8,100,0,7,0,1,1,,\n");
+
+    LeaseFileIO io("leasefile6_0.csv");
+    io.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+                 "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                 "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
+                 "400,1000,8,100,0,7,0,1,1,,\n"
+                 "2001:db8:1::5,05:05:05:05:05:05:05:05:05:05:05:05:05,"
+                 "200,200,8,100,0,7,0,1,1,,\n");
+
+    startBackend(V6);
+
+    // Check that leases from the leasefile6_0 and leasefile6_0.1 have
+    // been loaded.
+    Lease6Ptr lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(500, lease->cltt_);
+
+    lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::3"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(0, lease->cltt_);
+
+    lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::4"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(600, lease->cltt_);
+
+    lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::5"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(0, lease->cltt_);
+
+    // Make sure that a lease which is not in those files is not loaded.
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1")));
+}
+
+// This test checks that the backend reads DHCPv6 lease data from the
+// leasefile without the postfix and the file with a .2 postfix when
+// the file with the .1 postfix is missing.
+TEST_F(MemfileLeaseMgrTest, load6MultipleNoFirstFile) {
+    LeaseFileIO io2("leasefile6_0.csv.2");
+    io2.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+                  "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                  "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
+                  "200,200,8,100,0,7,0,1,1,,\n"
+                  "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
+                  "200,200,8,100,0,7,0,1,1,,\n");
+
+    LeaseFileIO io("leasefile6_0.csv");
+    io.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+                 "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                 "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
+                 "400,1000,8,100,0,7,0,1,1,,\n"
+                 "2001:db8:1::5,05:05:05:05:05:05:05:05:05:05:05:05:05,"
+                 "200,200,8,100,0,7,0,1,1,,\n");
+
+    startBackend(V6);
+
+    // Verify that leases which belong to the leasefile6_0.csv and
+    // leasefile6_0.2 are loaded.
+    Lease6Ptr lease = lmptr_->getLease6(Lease::TYPE_NA,
+                                        IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(0, lease->cltt_);
+
+    lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(0, lease->cltt_);
+
+    lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::4"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(600, lease->cltt_);
+
+    lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::5"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(0, lease->cltt_);
+
+    // A lease which doesn't belong to these files should not be loaded.
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::3")));
+}
+
+
+// This test checks that the lease database backend loads the file with
+// the .completed postfix instead of files with postfixes .1 and .2 if
+// the file with .completed postfix exists.
+TEST_F(MemfileLeaseMgrTest, load6CompletedFile) {
+    LeaseFileIO io2("leasefile6_0.csv.2");
+    io2.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+                  "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                  "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
+                  "200,200,8,100,0,7,0,1,1,,\n"
+                  "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
+                  "200,200,8,100,0,7,0,1,1,,\n");
+
+    LeaseFileIO io1("leasefile6_0.csv.1");
+    io1.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+                  "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                  "2001:db8:1::3,03:03:03:03:03:03:03:03:03:03:03:03:03,"
+                  "200,200,8,100,0,7,0,1,1,,\n"
+                  "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
+                  "300,800,8,100,0,7,0,1,1,,\n"
+                  "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
+                  "200,200,8,100,0,7,0,1,1,,\n");
+
+    LeaseFileIO io("leasefile6_0.csv");
+    io.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+                 "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                 "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
+                 "400,1000,8,100,0,7,0,1,1,,\n"
+                 "2001:db8:1::5,05:05:05:05:05:05:05:05:05:05:05:05:05,"
+                 "200,200,8,100,0,7,0,1,1,,\n");
+
+    LeaseFileIO ioc("leasefile6_0.csv.completed");
+    ioc.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+                  "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                  "2001:db8:1::125,ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff,"
+                  "400,1000,8,100,0,7,0,1,1,,\n");
+
+    startBackend(V6);
+
+    // We expect that this file only holds leases that belong to the
+    // lease file or to the file with .completed postfix.
+    Lease6Ptr lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::4"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(600, lease->cltt_);
+
+    lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::5"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(0, lease->cltt_);
+
+    lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::125"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(600, lease->cltt_);
+
+    // Leases from the .1 and .2 files should not be loaded.
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1")));
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2")));
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::3")));
 }
 
 }; // end of anonymous namespace
