@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -128,6 +128,8 @@ Pkt::setHWAddrMember(const uint8_t htype, const uint8_t,
 HWAddrPtr
 Pkt::getMAC(uint32_t hw_addr_src) {
     HWAddrPtr mac;
+
+    /// @todo: Implement an array of method pointers instead of set of ifs
 
     // Method 1: from raw sockets.
     if (hw_addr_src & HWAddr::HWADDR_SOURCE_RAW) {

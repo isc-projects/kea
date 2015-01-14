@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -644,8 +644,8 @@ Pkt6::getMACFromDocsisModem() {
         return (HWAddrPtr());
     }
 
-    OptionBuffer buf = device_id->getData();
-    if (buf.size() > 1) {
+    // If the option contains any data, use it as MAC address
+    if (!device_id->getData().empty()) {
         return (HWAddrPtr(new HWAddr(device_id->getData(), HTYPE_DOCSIS)));
     } else {
         return (HWAddrPtr());
@@ -675,8 +675,8 @@ Pkt6::getMACFromDocsisCMTS() {
         return (HWAddrPtr());
     }
 
-    OptionBuffer buf = cm_mac->getData();
-    if (buf.size() > 1) {
+    // If the option contains any data, use it as MAC address
+    if (!cm_mac->getData().empty()) {
         return (HWAddrPtr(new HWAddr(cm_mac->getData(), HTYPE_DOCSIS)));
     } else {
         return (HWAddrPtr());
