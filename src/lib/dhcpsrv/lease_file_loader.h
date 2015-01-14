@@ -16,7 +16,7 @@
 #define LEASE_FILE_LOADER_H
 
 #include <dhcpsrv/dhcpsrv_log.h>
-#include <dhcpsrv/inmemory_lease_storage.h>
+#include <dhcpsrv/memfile_lease_storage.h>
 #include <util/csv_file.h>
 
 #include <boost/shared_ptr.hpp>
@@ -62,15 +62,19 @@ public:
     /// removes an existing lease from the container.
     ///
     /// @param lease_file A reference to the @c CSVLeaseFile4 or
-    /// @c CSVLeaseFile6 object representing the lease file. The
-    /// lease file must be opened and the internal file pointer should
-    /// be set to the beginning of the file.
+    /// @c CSVLeaseFile6 object representing the lease file. The file
+    /// doesn't need to be open because the method re-opens the file.
     /// @param storage A reference to the container to which leases
     /// should be inserted.
     /// @param max_errors Maximum number of corrupted leases in the
     /// lease file. The method will skip corrupted leases but after
     /// exceeding the specified number of errors it will throw an
     /// exception.
+    /// @param close_file_on_exit A boolean flag which indicates if
+    /// the file should be closed after it has been successfully parsed.
+    /// One case when the file is not opened is when the server starts
+    /// up, reads the leases in the file and then leaves the file open
+    /// for writing future lease updates.
     /// @tparam LeaseObjectType A @c Lease4 or @c Lease6.
     /// @tparam LeaseFileType A @c CSVLeaseFile4 or @c CSVLeaseFile6.
     /// @tparam StorageType A @c Lease4Storage or @c Lease6Storage.
@@ -80,10 +84,16 @@ public:
     template<typename LeaseObjectType, typename LeaseFileType,
              typename StorageType>
     static void load(LeaseFileType& lease_file, StorageType& storage,
-                     const uint32_t max_errors = 0xFFFFFFFF) {
+                     const uint32_t max_errors = 0xFFFFFFFF,
+                     const bool close_file_on_exit = true) {
 
         LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_LEASE_FILE_LOAD)
             .arg(lease_file.getFilename());
+
+        // Reopen the file, as we don't know whether the file is open
+        // and we also don't know its current state.
+        lease_file.close();
+        lease_file.open();
 
         boost::shared_ptr<LeaseObjectType> lease;
         // Track the number of corrupted leases.
@@ -95,7 +105,14 @@ public:
                 // until the whole file is parsed, even if errors occur.
                 // Otherwise, check if we have exceeded the maximum number
                 // of errors and throw an exception if we have.
-                if ((max_errors < 0xFFFFFFFF) && (++errcnt > max_errors)) {
+                if (++errcnt > max_errors) {
+                    // If we break parsing the CSV file because of too many
+                    // errors, it doesn't make sense to keep the file open.
+                    // This is because the caller wouldn't know where we
+                    // stopped parsing and where the internal file pointer
+                    // is. So, there are probably no cases when the caller
+                    // would continue to use the open file.
+                    lease_file.close();
                     isc_throw(util::CSVFileError, "exceeded maximum number of"
                               " failures " << max_errors << " to read a lease"
                               " from the lease file "
@@ -137,6 +154,10 @@ public:
                 break;
 
             }
+        }
+
+        if (close_file_on_exit) {
+            lease_file.close();
         }
     }
 };

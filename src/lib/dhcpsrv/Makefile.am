@@ -80,7 +80,6 @@ libkea_dhcpsrv_la_SOURCES += dhcpsrv_log.cc dhcpsrv_log.h
 libkea_dhcpsrv_la_SOURCES += host.cc host.h
 libkea_dhcpsrv_la_SOURCES += host_container.h
 libkea_dhcpsrv_la_SOURCES += host_mgr.cc host_mgr.h
-libkea_dhcpsrv_la_SOURCES += inmemory_lease_storage.h
 libkea_dhcpsrv_la_SOURCES += key_from_key.h
 libkea_dhcpsrv_la_SOURCES += lease.cc lease.h
 libkea_dhcpsrv_la_SOURCES += lease_file_loader.h
@@ -89,6 +88,7 @@ libkea_dhcpsrv_la_SOURCES += lease_mgr_factory.cc lease_mgr_factory.h
 libkea_dhcpsrv_la_SOURCES += logging.cc logging.h
 libkea_dhcpsrv_la_SOURCES += logging_info.cc logging_info.h
 libkea_dhcpsrv_la_SOURCES += memfile_lease_mgr.cc memfile_lease_mgr.h
+libkea_dhcpsrv_la_SOURCES += memfile_lease_storage.h
 
 if HAVE_MYSQL
 libkea_dhcpsrv_la_SOURCES += mysql_lease_mgr.cc mysql_lease_mgr.h
