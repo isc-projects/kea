@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -452,6 +452,30 @@ TEST_F(CSVFileTest, validateHeader) {
     csv->addColumn("animal");
     csv->addColumn("age");
     EXPECT_THROW(csv->open(), CSVFileError);
+}
+
+// This test checks that the exists method of the CSVFile class properly
+// checks that the file exists.
+TEST_F(CSVFileTest, exists) {
+    // Create a new CSV file that contains a header and two data rows.
+    writeFile("animal,age,color\n"
+              "cat,10,white\n"
+              "lion,15,yellow\n");
+
+    boost::scoped_ptr<CSVFile> csv(new CSVFile(testfile_));
+    // The CSVFile class should return true even if the file hasn't been
+    // opened.
+    EXPECT_TRUE(csv->exists());
+    // Now open the file and make sure it still returns true.
+    ASSERT_NO_THROW(csv->open());
+    EXPECT_TRUE(csv->exists());
+
+    // Close the file and remove it.
+    csv->close();
+    removeFile();
+
+    // The file should not exist.
+    EXPECT_FALSE(csv->exists());
 }
 
 

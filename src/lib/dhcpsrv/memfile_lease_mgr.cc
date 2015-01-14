@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,10 +14,18 @@
 
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
+#include <dhcpsrv/lease_file_loader.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
 #include <exceptions/exceptions.h>
-
 #include <iostream>
+#include <sstream>
+
+namespace {
+
+/// @brief Maximum number of errors to read the leases from the lease file.
+const uint32_t MAX_LEASE_ERRORS = 100;
+
+} // end of anonymous namespace
 
 using namespace isc::dhcp;
 
@@ -28,16 +36,14 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const ParameterMap& parameters)
     if (universe == "4") {
         std::string file4 = initLeaseFilePath(V4);
         if (!file4.empty()) {
-            lease_file4_.reset(new CSVLeaseFile4(file4));
-            lease_file4_->open();
-            load4();
+            loadLeasesFromFiles<Lease4, CSVLeaseFile4>(file4, lease_file4_,
+                                                       storage4_);
         }
     } else {
         std::string file6 = initLeaseFilePath(V6);
         if (!file6.empty()) {
-            lease_file6_.reset(new CSVLeaseFile6(file6));
-            lease_file6_->open();
-            load6();
+            loadLeasesFromFiles<Lease6, CSVLeaseFile6>(file6, lease_file6_,
+                                                       storage6_);
         }
     }
 
@@ -165,7 +171,7 @@ Lease4Collection
 Memfile_LeaseMgr::getLease4(const ClientId& client_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_GET_CLIENTID).arg(client_id.toText());
-    typedef Memfile_LeaseMgr::Lease4Storage::nth_index<0>::type SearchIndex;
+    typedef Lease4Storage::nth_index<0>::type SearchIndex;
     Lease4Collection collection;
     const SearchIndex& idx = storage4_.get<0>();
     for(SearchIndex::const_iterator lease = idx.begin();
@@ -468,127 +474,42 @@ Memfile_LeaseMgr::initLeaseFilePath(Universe u) {
     return (lease_file);
 }
 
-void
-Memfile_LeaseMgr::load4() {
-    // If lease file hasn't been opened, we are working in non-persistent mode.
-    // That's fine, just leave.
-    if (!persistLeases(V4)) {
-        return;
-    }
+template<typename LeaseObjectType, typename LeaseFileType, typename StorageType>
+void Memfile_LeaseMgr::
+loadLeasesFromFiles(const std::string& filename,
+                    boost::shared_ptr<LeaseFileType>& lease_file,
+                    StorageType& storage) {
+    storage.clear();
 
-    LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_LEASES_RELOAD4)
-        .arg(lease_file4_->getFilename());
+    // Load the leasefile.completed, if exists.
+    lease_file.reset(new LeaseFileType(std::string(filename + ".completed")));
+    if (lease_file->exists()) {
+        LeaseFileLoader::load<LeaseObjectType>(*lease_file, storage,
+                                               MAX_LEASE_ERRORS);
 
-    // Remove existing leases (if any). We will recreate them based on the
-    // data on disk.
-    storage4_.clear();
-
-    Lease4Ptr lease;
-    do {
-        /// @todo Currently we stop parsing on first failure. It is possible
-        /// that only one (or a few) leases are bad, so in theory we could
-        /// continue parsing but that would require some error counters to
-        /// prevent endless loops. That is enhancement for later time.
-        if (!lease_file4_->next(lease)) {
-            isc_throw(DbOperationError, "Failed to parse the DHCPv6 lease in"
-                      " the lease file: " << lease_file4_->getReadMsg());
-        }
-        // If we got the lease, we update the internal container holding
-        // leases. Otherwise, we reached the end of file and we leave.
-        if (lease) {
-            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL_DATA,
-                      DHCPSRV_MEMFILE_LEASE_LOAD4)
-                .arg(lease->toText());
-            loadLease4(lease);
-        }
-    } while (lease);
-}
-
-void
-Memfile_LeaseMgr::loadLease4(Lease4Ptr& lease) {
-    // Check if the lease already exists.
-    Lease4Storage::iterator lease_it = storage4_.find(lease->addr_);
-    // Lease doesn't exist.
-    if (lease_it == storage4_.end()) {
-        // Add the lease only if valid lifetime is greater than 0.
-        // We use valid lifetime of 0 to indicate that lease should
-        // be removed.
-        if (lease->valid_lft_ > 0) {
-           storage4_.insert(lease);
-       }
     } else {
-        // We use valid lifetime of 0 to indicate that the lease is
-        // to be removed. In such case, erase the lease.
-        if (lease->valid_lft_ == 0) {
-            storage4_.erase(lease_it);
-
-        } else {
-            // Update existing lease.
-            **lease_it = *lease;
+        // If the leasefile.completed doesn't exist, let's load the leases
+        // from leasefile.2 and leasefile.1, if they exist.
+        lease_file.reset(new LeaseFileType(std::string(filename + ".2")));
+        if (lease_file->exists()) {
+            LeaseFileLoader::load<LeaseObjectType>(*lease_file, storage,
+                                                   MAX_LEASE_ERRORS);
         }
-    }
-}
 
-void
-Memfile_LeaseMgr::load6() {
-    // If lease file hasn't been opened, we are working in non-persistent mode.
-    // That's fine, just leave.
-    if (!persistLeases(V6)) {
-        return;
-    }
-
-    LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_LEASES_RELOAD6)
-        .arg(lease_file6_->getFilename());
-
-    // Remove existing leases (if any). We will recreate them based on the
-    // data on disk.
-    storage6_.clear();
-
-    Lease6Ptr lease;
-    do {
-        /// @todo Currently we stop parsing on first failure. It is possible
-        /// that only one (or a few) leases are bad, so in theory we could
-        /// continue parsing but that would require some error counters to
-        /// prevent endless loops. That is enhancement for later time.
-        if (!lease_file6_->next(lease)) {
-            isc_throw(DbOperationError, "Failed to parse the DHCPv6 lease in"
-                      " the lease file: " << lease_file6_->getReadMsg());
-        }
-        // If we got the lease, we update the internal container holding
-        // leases. Otherwise, we reached the end of file and we leave.
-        if (lease) {
-            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL_DATA,
-                      DHCPSRV_MEMFILE_LEASE_LOAD6)
-                .arg(lease->toText());
-
-            loadLease6(lease);
-        }
-    } while (lease);
-}
-
-void
-Memfile_LeaseMgr::loadLease6(Lease6Ptr& lease) {
-    // Check if the lease already exists.
-    Lease6Storage::iterator lease_it = storage6_.find(lease->addr_);
-    // Lease doesn't exist.
-    if (lease_it == storage6_.end()) {
-        // Add the lease only if valid lifetime is greater than 0.
-        // We use valid lifetime of 0 to indicate that lease should
-        // be removed.
-        if (lease->valid_lft_ > 0) {
-            storage6_.insert(lease);
-       }
-    } else {
-        // We use valid lifetime of 0 to indicate that the lease is
-        // to be removed. In such case, erase the lease.
-        if (lease->valid_lft_ == 0) {
-            storage6_.erase(lease_it);
-
-        } else {
-            // Update existing lease.
-            **lease_it = *lease;
+        lease_file.reset(new LeaseFileType(std::string(filename + ".1")));
+        if (lease_file->exists()) {
+            LeaseFileLoader::load<LeaseObjectType>(*lease_file, storage,
+                                                   MAX_LEASE_ERRORS);
         }
     }
 
+    // Always load leases from the primary lease file. If the lease file
+    // doesn't exist it will be created by the LeaseFileLoader. Note
+    // that the false value passed as the last parameter to load
+    // function causes the function to leave the file open after
+    // it is parsed. This file will be used by the backend to record
+    // future lease updates.
+    lease_file.reset(new LeaseFileType(filename));
+    LeaseFileLoader::load<LeaseObjectType>(*lease_file, storage,
+                                           MAX_LEASE_ERRORS, false);;
 }
-

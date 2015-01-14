@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -319,6 +319,14 @@ public:
 
     /// @brief Closes the CSV file.
     void close();
+
+    /// @brief Checks if the CSV file exists and can be opened for reading.
+    ///
+    /// This method doesn't check if the existing file has a correct file
+    /// format.
+    ///
+    /// @return true if file exists, false otherwise.
+    bool exists() const;
 
     /// @brief Flushes a file.
     void flush() const;
