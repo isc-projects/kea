@@ -56,18 +56,18 @@ const unsigned int BPF_LOCAL_LOOPBACK_HEADER_LEN = 4;
 struct bpf_insn ethernet_ip_udp_filter [] = {
     // Make sure this is an IP packet: check the half-word (two bytes)
     // at offset 12 in the packet (the Ethernet packet type).  If it
-    // is, advance to the next instruction.  If not, advance 8
+    // is, advance to the next instruction.  If not, advance 11
     // instructions (which takes execution to the last instruction in
     // the sequence: "drop it").
     BPF_STMT(BPF_LD + BPF_H + BPF_ABS, ETHERNET_PACKET_TYPE_OFFSET),
-    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, ETHERTYPE_IP, 0, 8),
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, ETHERTYPE_IP, 0, 11),
 
     // Make sure it's a UDP packet.  The IP protocol is at offset
     // 9 in the IP header so, adding the Ethernet packet header size
     // of 14 bytes gives an absolute byte offset in the packet of 23.
     BPF_STMT(BPF_LD + BPF_B + BPF_ABS,
              ETHERNET_HEADER_LEN + IP_PROTO_TYPE_OFFSET),
-    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, IPPROTO_UDP, 0, 6),
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, IPPROTO_UDP, 0, 9),
 
     // Make sure this isn't a fragment by checking that the fragment
     // offset field in the IP header is zero.  This field is the
@@ -75,7 +75,22 @@ struct bpf_insn ethernet_ip_udp_filter [] = {
     // the IP header, so the half-word at offset 20 (6 + size of
     // Ethernet header) is loaded and an appropriate mask applied.
     BPF_STMT(BPF_LD + BPF_H + BPF_ABS, ETHERNET_HEADER_LEN + IP_FLAGS_OFFSET),
-    BPF_JUMP(BPF_JMP + BPF_JSET + BPF_K, 0x1fff, 4, 0),
+    BPF_JUMP(BPF_JMP + BPF_JSET + BPF_K, 0x1fff, 7, 0),
+
+    // Check the packet's destination address. The program will only
+    // allow the packets sent to the broadcast address or unicast
+    // to the specific address on the interface. By default, this
+    // address is set to 0 and must be set to the specific value
+    // when the raw socket is created and the program is attached
+    // to it. The caller must assign the address to the
+    // prog.bf_insns[8].k in the network byte order.
+    BPF_STMT(BPF_LD + BPF_W + BPF_ABS,
+             ETHERNET_HEADER_LEN + IP_DEST_ADDR_OFFSET),
+    // If this is a broadcast address, skip the next check.
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 0xffffffff, 1, 0),
+    // If this is not broadcast address, compare it with the unicast
+    // address specified for the interface.
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 0x00000000, 0, 4),
 
     // Get the IP header length.  This is achieved by the following
     // (special) instruction that, given the offset of the start
@@ -91,7 +106,7 @@ struct bpf_insn ethernet_ip_udp_filter [] = {
     // The following instruction tests against the default DHCP server port,
     // but the action port is actually set in PktFilterBPF::openSocket().
     // N.B. The code in that method assumes that this instruction is at
-    // offset 8 in the program.  If this is changed, openSocket() must be
+    // offset 11 in the program.  If this is changed, openSocket() must be
     // updated.
     BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, DHCP4_SERVER_PORT, 0, 1),
 
@@ -113,14 +128,14 @@ struct bpf_insn loopback_ip_udp_filter [] = {
     // AF_INET. The default value used here (0xFFFFFFFF) must be overriden
     // with htonl(AF_INET) from within the openSocket function.
     BPF_STMT(BPF_LD + BPF_W + BPF_ABS, 0),
-    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 0xFFFFFFFF, 0, 8),
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 0xFFFFFFFF, 0, 11),
 
     // Make sure it's a UDP packet.  The IP protocol is at offset
     // 9 in the IP header so, adding the pseudo header size 4 bytes
     // gives an absolute byte offset in the packet of 13.
     BPF_STMT(BPF_LD + BPF_B + BPF_ABS,
              BPF_LOCAL_LOOPBACK_HEADER_LEN + IP_PROTO_TYPE_OFFSET),
-    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, IPPROTO_UDP, 0, 6),
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, IPPROTO_UDP, 0, 9),
 
     // Make sure this isn't a fragment by checking that the fragment
     // offset field in the IP header is zero.  This field is the
@@ -129,7 +144,22 @@ struct bpf_insn loopback_ip_udp_filter [] = {
     // pseudo header) is loaded and an appropriate mask applied.
     BPF_STMT(BPF_LD + BPF_H + BPF_ABS,
              BPF_LOCAL_LOOPBACK_HEADER_LEN + IP_FLAGS_OFFSET),
-    BPF_JUMP(BPF_JMP + BPF_JSET + BPF_K, 0x1fff, 4, 0),
+    BPF_JUMP(BPF_JMP + BPF_JSET + BPF_K, 0x1fff, 7, 0),
+
+    // Check the packet's destination address. The program will only
+    // allow the packets sent to the broadcast address or unicast
+    // to the specific address on the interface. By default, this
+    // address is set to 0 and must be set to the specific value
+    // when the raw socket is created and the program is attached
+    // to it. The caller must assign the address to the
+    // prog.bf_insns[8].k in the network byte order.
+    BPF_STMT(BPF_LD + BPF_W + BPF_ABS,
+             BPF_LOCAL_LOOPBACK_HEADER_LEN + IP_DEST_ADDR_OFFSET),
+    // If this is a broadcast address, skip the next check.
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 0xffffffff, 1, 0),
+    // If this is not broadcast address, compare it with the unicast
+    // address specified for the interface.
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 0x00000000, 0, 4),
 
     // Get the IP header length.  This is achieved by the following
     // (special) instruction that, given the offset of the start
@@ -146,7 +176,7 @@ struct bpf_insn loopback_ip_udp_filter [] = {
     // The following instruction tests against the default DHCP server port,
     // but the action port is actually set in PktFilterBPF::openSocket().
     // N.B. The code in that method assumes that this instruction is at
-    // offset 8 in the program.  If this is changed, openSocket() must be
+    // offset 11 in the program.  If this is changed, openSocket() must be
     // updated.
     BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, DHCP4_SERVER_PORT, 0, 1),
 
@@ -230,7 +260,7 @@ PktFilterBPF::openSocket(Iface& iface,
     if ((ver.bv_major != BPF_MAJOR_VERSION) ||
         (ver.bv_minor < BPF_MINOR_VERSION)) {
         close(fallback);
-        close(sock);
+         close(sock);
         isc_throw(SocketConfigError, "Invalid BPF version: "
                   << ver.bv_major << "." << ver.bv_minor
                   << " Expected at least version:"
@@ -273,8 +303,13 @@ PktFilterBPF::openSocket(Iface& iface,
         prog.bf_len = sizeof(ethernet_ip_udp_filter) / sizeof(struct bpf_insn);
     }
 
+    // Configure the BPF program to receive unicast packets sent to the
+    // specified address. The program will also allow packets sent to the
+    // 255.255.255.255 broadcast address.
+    prog.bf_insns[8].k = static_cast<uint32_t>(addr);
+
     // Configure the BPF program to receive packets on the specified port.
-    prog.bf_insns[8].k = port;
+    prog.bf_insns[11].k = port;
 
     // Actually set the filter program for the device.
     if (ioctl(sock, BIOCSETF, &prog) < 0) {
