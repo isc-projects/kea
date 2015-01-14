@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -95,6 +95,14 @@ CSVFile::close() {
         fs_->close();
         fs_.reset();
     }
+}
+
+bool
+CSVFile::exists() const {
+    std::ifstream fs(filename_.c_str());
+    const bool file_exists = fs.good();
+    fs.close();
+    return (file_exists);
 }
 
 void
