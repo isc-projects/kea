@@ -149,7 +149,7 @@ PktFilterLPF::openSocket(Iface& iface,
     // Configure the filter program to receive unicast packets sent to the
     // specified address. The program will also allow packets sent to the
     // 255.255.255.255 broadcast address.
-    prog.bf_insns[8].k = static_cast<uint32_t>(addr);
+    dhcp_sock_filter[8].k = static_cast<uint32_t>(addr);
 
     // Override the default port value.
     dhcp_sock_filter[11].k = port;
