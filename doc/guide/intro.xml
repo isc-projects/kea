@@ -140,6 +140,14 @@
 
           <listitem>
             <simpara>
+              <command>kea-admin</command> &mdash;
+              A tool useful for database backend maintenance (creating new
+              database, checking versions, upgrading etc.)
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
               <command>perfdhcp</command> &mdash;
               DHCP benchmarking tool which simulates multiple clients to
               test both DHCPv4 and DHCPv6 servers performance.
