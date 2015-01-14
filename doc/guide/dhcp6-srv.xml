@@ -306,8 +306,8 @@ JSON validator is available at <ulink url="http://jsonviewer.stack.hu/"/>.
 "Dhcp6": { "lease-database": { <userinput>"type": "mysql"</userinput>, ... }, ... }
 </screen>
   Next, the name of the database is to hold the leases must be set: this is the
-  name used when the lease database was created (see <xref linkend="dhcp-mysql-database-create"/>
-  or <xref linkend="dhcp-pgsql-database-create"/>).
+  name used when the lease database was created (see <xref linkend="mysql-database-create"/>
+  or <xref linkend="pgsql-database-create"/>).
 <screen>
 "Dhcp6": { "lease-database": { <userinput>"name": "<replaceable>database-name</replaceable>" </userinput>, ... }, ... }
 </screen>

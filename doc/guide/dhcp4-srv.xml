@@ -302,8 +302,8 @@ url="http://jsonviewer.stack.hu/"/>.
 "Dhcp4": { "lease-database": { <userinput>"type": "mysql"</userinput>, ... }, ... }
 </screen>
   Next, the name of the database to hold the leases must be set: this is the
-  name used when the lease database was created (see <xref linkend="dhcp-mysql-database-create"/>
-  or <xref linkend="dhcp-pgsql-database-create"/>).
+  name used when the lease database was created (see <xref linkend="mysql-database-create"/>
+  or <xref linkend="pgsql-database-create"/>).
 <screen>
 "Dhcp4": { "lease-database": { <userinput>"name": "<replaceable>database-name</replaceable>" </userinput>, ... }, ... }
 </screen>
