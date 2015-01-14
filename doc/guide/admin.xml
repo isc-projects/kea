@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+<!ENTITY mdash  "&#x2014;" >
+]>
+
+  <chapter id="admin">
+    <title>Database administration</title>
+
+    <section id="kea-admin">
+      <title>kea-admin tool</title>
+
+      <para>
+        Kea is able to store leases in one of several supported databases.
+        Additional types of data, like host reservation details, will
+        be supported in the near future. To manage those databases, a
+        tool called <command>kea-admin</command> was introduced. Currently
+        it is able to initialize new database, check its version
+        and perform database upgrade, if needed.
+      </para>
+
+      <para>
+        Kea mantains separate version numbering for its database backends. These
+        are independent of the Kea version. It is possible that the backend
+        revision will stay the same through several Kea revisions. Likewise, it
+        is possible that a backend may go up several times between two Kea
+        revisions, if there were several changes introduced that required database
+        schema change. Versions for each backend are independent, so a bump
+        in MySQL version does not imply bump in the Postgres version.
+      </para>
+
+      <para>
+        Backend versions are specified in major.minor format. Minor number is
+        increased when there are backward compatibile changes introduced.  For
+        example, a new index is added. It is desirable, but not mandatory to
+        have it. You can run on older database version if you want to. On
+        the other hand, major number is increased when there's an incompatible
+        change introduced, for example an extra column is added. If you try
+        to run Kea software on a database that is too old (which is signified
+        by mismatched major backend version number), Kea will refuse to run
+        and an administrative action will be required to upgrade the database.
+      </para>
+      
+      <para>
+        <command>kea-admin</command> takes two mandatory parameters:
+        <command>command</command> and <command>backend</command>. Additional,
+        non-mandatory options may be specified. Currently supported commands
+        are:
+
+        <itemizedlist>
+
+          <listitem>
+            <simpara>
+              <command>lease-init</command> &mdash;
+              Initializes a new lease database. Useful during first Kea
+              installation. The database is initialized to the latest version
+              supported by the version of the software.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
+              <command>lease-version</command> &mdash;
+              Reports lease database version. This is not necessarily
+              equal to Kea version as each backend has its own versioning
+              scheme.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
+              <command>lease-upgrade</command> &mdash;
+              Conducts lease database upgrade. This is useful when
+              migrating between old and new Kea versions.
+            </simpara>
+          </listitem>
+
+        </itemizedlist>
+
+        The <command>backend</command> specified backend type. Currently
+        allowed backends are: memfile, mysql and pgsql. There are additional
+        parameters that may be needed, depending on your setup and specific
+        operation: specify username, password and database name or the directory
+        where specific files are located. See appropriate manual page for
+        details (<command>man 8 kea-admin</command>).
+      </para>
+
+    </section>
+
+    <section>
+      <title>memfile</title>
+
+      <para>There are no special initialization steps necessary for memfile
+      backend.  During the first run, both <command>kea-dhcp4</command> and
+      <command>kea-dhcp6</command> will create an empty lease file, if it is not
+      present. Necessary disk write permission is required.
+      </para>
+
+
+      <!-- @todo: document lease file upgrades once they are implemented in kea-admin -->
+
+    </section>
+
+    <section>
+      <title>MySQL</title>
+
+      <para>
+        MySQL database must be properly set up if you want Kea to store lease
+        and other information in MySQL. This step can be safely skipped if you
+        chose to store the data in other backends, like memfile or PosgreSQL.
+      </para>
+
+    <section id="mysql-database-create">
+      <title>Initialize the MySQL Database using kea-admin</title>
+
+      <para>
+        There are two ways to initialize the database. The first one involves
+        running <command>kea-admin</command> tool, which attempts to automate
+        the process. It is convenient to use, but may not cover more complex
+        cases. The second alternative is to run all the commands
+        manually.
+      </para>
+
+      <para>
+        When <command>kea-admin</command> is told to initialize the database, it
+        assumes that the database and database user has been created. If not,
+        please follow the necessary instructions in <xref
+        linkend="mysql-database-create-manual" />.
+      </para>
+
+      <para>
+        To initialize new MySQL database using <command>kea-admin</command>, use the
+        following command:
+          <screen>$ <userinput>kea-admin lease-init mysql -u <replaceable>database-user</replaceable> -p <replaceable>database-password</replaceable> -d <replaceable>database-name</replaceable></userinput>
+</screen>
+
+      <command>kea-admin</command> has rudimentary checks implemented. It will
+      refuse to initialize a database that has any existing tables. If you want
+      to start from scratch, you must remove existing data manually. This process
+      is left manual on purpose to avoid mistakes that could not be undone.
+      </para>
+
+    </section>
+
+    <section id="mysql-upgrade">
+      <title>Upgrading MySQL database from earlier Kea versions</title>
+
+      <para>Sometime a new Kea version may use newer database schema and there may
+      be a need to upgrade existing database. This can be done using <command>kea-admin</command>.
+      It is possible to check existing database version:
+          <screen>$ <userinput>kea-admin lease-version mysql -u <replaceable>database-user</replaceable> -p <replaceable>database-password</replaceable> -d <replaceable>database-name</replaceable></userinput>
+</screen>
+      See <xref linkend="kea-admin"/> for a discussion about versioning.</para>
+      <para>It may be required to run database upgrade. This process is designed
+      to not discard any data, but depending on the nature of the changes, it
+      may be impossible to downgrade to earlier Kea version. Please back up your
+      database if you consider reverting to an earlier Kea version. To conduct
+      an upgrade, the following command should be used:
+          <screen>$ <userinput>kea-admin lease-upgrade mysql -u <replaceable>database-user</replaceable> -p <replaceable>database-password</replaceable> -d <replaceable>database-name</replaceable></userinput>
+</screen>
+      </para>
+
+    </section>
+
+     <section id="mysql-database-create-manual">
+        <title>Manually create the MySQL Database and the Kea User</title>
+
+        <note>
+          <simpara>
+          This paragraph explains how to create and initialize MySQL database
+          manually. See <xref linkend="mysql-database-create" /> for a kea-admin,
+          a tool that automates most of those steps.
+          </simpara>
+        </note>
+        <para>
+          The first task is to create both the lease database and the user under
+          which the servers will access it. A number of steps are required:
+        </para>
+        <para>
+          1. Log into MySQL as "root":
+          <screen>$ <userinput>mysql -u root -p</userinput>
+Enter password:<userinput/>
+   :<userinput/>
+mysql></screen>
+        </para>
+        <para>
+          2. Create the database:
+          <screen>mysql> <userinput>CREATE DATABASE <replaceable>database-name</replaceable>;</userinput></screen>
+	  (<replaceable>database-name</replaceable> is the name you
+	  have chosen for the database.)
+        </para>
+         <para>
+          3. Create the database tables by running the dhcpdb_create.mysql script supplied as part of Kea:
+          <screen>mysql> <userinput>CONNECT <replaceable>database-name</replaceable>;</userinput>
+mysql> <userinput>SOURCE <replaceable>path-to-kea</replaceable>/share/kea/dhcpdb_create.mysql</userinput></screen>
+        </para>
+         <para>
+          4. Create the user under which Kea will access the database (and give it a password), then grant it access to the database tables:
+          <screen>mysql> <userinput>CREATE USER '<replaceable>user-name</replaceable>'@'localhost' IDENTIFIED BY '<replaceable>password</replaceable>';</userinput>
+mysql> <userinput>GRANT ALL ON <replaceable>database-name</replaceable>.* TO '<replaceable>user-name</replaceable>'@'localhost';</userinput></screen>
+        </para>
+        <para>
+          5. Exit MySQL:
+          <screen>mysql> <userinput>quit</userinput>
+Bye<userinput/>
+$</screen>
+       </para>
+     </section>
+
+    </section> <!-- end of MySQL sections -->
+
+    <section>
+      <title>PostgreSQL</title>
+
+      <para>
+        PostgreSQL database must be properly set up if you want Kea to store lease
+        and other information in PostgreSQL. This step can be safely skipped if you
+        chose to store the data in other backends, like memfile or MySQL.
+      </para>
+
+      <section>
+        <title>Initialize the PostgreSQL Database using kea-admin</title>
+
+        <para>
+          Support for PostgreSQL in kea-admin is currently not implemented.
+        </para>
+      <!-- @todo: document PgSQL upgrade once they are implemented in kea-admin -->
+
+      </section>
+      
+
+      <section id="pgsql-database-create">
+        <title>Create PostgreSQL Database and Kea User</title>
+        <para>
+          The next task is to create both the lease database and the user under which the servers will
+          access it. A number of steps are required:
+        </para>
+        <para>
+          1. Log into PostgreSQL as "root":
+          <screen>$ <userinput>sudo -u postgres psql postgres</userinput>
+Enter password:<userinput/>
+   :<userinput/>
+postgres=#</screen>
+        </para>
+        <para>
+          2. Create the database:
+<screen>
+postgres=#<userinput> CREATE DATABASE <replaceable>database-name</replaceable>;</userinput>
+CREATE DATABASE
+postgres=#
+</screen>
+	  (<replaceable>database-name</replaceable> is the name you
+	  have chosen for the database.)
+        </para>
+         <para>
+          3. Create the user under which Kea will access the database (and give it a password), then grant it access to the database:
+<screen>postgres=#<userinput> CREATE USER <replaceable>user-name</replaceable> WITH PASSWORD '<replaceable>password</replaceable>';</userinput>
+CREATE ROLE
+postgres=#
+postgres=#<userinput> GRANT ALL PRIVILEGES ON DATABASE <replaceable>database-name</replaceable> TO <replaceable>user-name</replaceable>;</userinput>
+GRANT
+postgres=#
+</screen>
+        </para>
+         <para>
+          4. Exit PostgreSQL:
+          <screen>postgres=# <userinput>\q</userinput>
+Bye<userinput/>
+$</screen>
+       </para>
+       <para>
+        5. Create the database tables using the new user's credentials and the dhcpdb_create.pgsql script supplied with Kea.
+        After entering the following command, you will be prompted for the new
+        user's password. When the command completes you will be returned to
+        the shell prompt. You should see output similar to following:
+<screen>$ <userinput>psql -d <replaceable>database-name</replaceable> -U <replaceable>user-name</replaceable> -f <replaceable>path-to-kea</replaceable>/share/kea/dhcpdb_create.pgsql</userinput>
+Password for user <replaceable>user-name</replaceable>:
+CREATE TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE TABLE
+CREATE INDEX
+CREATE TABLE
+START TRANSACTION
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+COMMIT
+CREATE TABLE
+START TRANSACTION
+INSERT 0 1
+COMMIT
+$
+</screen>
+  </para>
+  <para>
+  If instead you encounter an error like:
+  </para>
+<screen>
+psql: FATAL:  no pg_hba.conf entry for host "[local]", user "<replaceable>user-name</replaceable>", database "<replaceable>database-name</replaceable>", SSL off
+</screen>
+  <para>
+  ... you will need to alter the PostgreSQL configuration.
+  Kea uses password authentication when connecting to the database and must
+  have the appropriate entries added to PostgreSQL's pg_hba.conf file.  This
+  file is normally located in the primary data directory for your PostgreSQL
+  server. The precise path may vary but the default location for PostgreSQL 9.3
+  on Centos 6.5 is:
+  <filename>/var/lib/pgsql/9.3/data/pg_hba.conf</filename>.
+  Assuming Kea is running on the same host as PostgreSQL, adding lines similar
+  to following should be sufficient to provide password-authenticated access to
+  Kea's database:
+  </para>
+<screen>
+local   <replaceable>database-name</replaceable>    <replaceable>user-name</replaceable>                                 password
+host    <replaceable>database-name</replaceable>    <replaceable>user-name</replaceable>          127.0.0.1/32           password
+host    <replaceable>database-name</replaceable>    <replaceable>user-name</replaceable>          ::1/128                password
+</screen>
+  <para>
+  Please consult your PostgreSQL user manual before making these changes as they
+  may expose your other databases that you run on the same system.
+  </para>
+      </section>
+
+    </section> <!-- end of postgres sections -->
+
+  </chapter>
