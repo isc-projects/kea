@@ -1,3 +1,11 @@
+874.    [func]           marcin
+        Changes to the Memfile lease database backend to load
+        leases from multiple files during startup or server
+        reconfiguration. This change is required by the Lease File
+        Cleanup feature, which leads to the creation of additional
+        files holding cleaned up lease information.
+        (Trac #3671, git 667de2ef9044e97c76b15cacc7285132cdffdfcf)
+
 873.    [bug]           wlodek
 	Removed references to non-existing pgsql_test.sh script
 	from Makefile.
