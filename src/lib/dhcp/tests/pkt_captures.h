@@ -1,4 +1,4 @@
-// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -37,7 +37,7 @@ public:
     /// @return relayed DISCOVER
     static isc::dhcp::Pkt4Ptr captureRelayedDiscover2();
 
-    // see wireshark.cc for descriptions
+    // see pkt_captures6.cc for descriptions
     // The descriptions are too large and too closely related to the
     // code, so it is kept in .cc rather than traditionally in .h
     static isc::dhcp::Pkt6Ptr captureSimpleSolicit();
