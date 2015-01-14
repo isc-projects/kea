@@ -56,6 +56,8 @@ static const size_t IP_FLAGS_OFFSET = 6;
 static const size_t IP_PROTO_TYPE_OFFSET = 9;
 /// Offset of source address in the IPv4 header.
 static const size_t IP_SRC_ADDR_OFFSET = 12;
+/// Offset of destination address in the IPv4 header.
+static const size_t IP_DEST_ADDR_OFFSET = 16;
 
 /// UDP header length.
 static const size_t UDP_HEADER_LEN = 8;
