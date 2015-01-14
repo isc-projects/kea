@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2011, 2014 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2011, 2014-2015 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -54,7 +54,7 @@ static const uint16_t BOOTP_BROADCAST = 32768L;
 /* Possible values for hardware type (htype) field... */
 enum HType {
     HTYPE_ETHER = 1,   /* Ethernet 10Mbps */
-    HTYPE_DOCSIS = 1,  /* the traffic captures we have from cable modems as well
+    HTYPE_DOCSIS = 1,  /* The traffic captures we have from cable modems as well
                           as this list by IANA: http://www.iana.org/assignments/
                           arp-parameters/arp-parameters.xhtml suggest that
                           Ethernet (1) should be used in DOCSIS environment. */
