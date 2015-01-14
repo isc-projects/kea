@@ -50,17 +50,18 @@ using namespace isc::dhcp;
 struct sock_filter dhcp_sock_filter [] = {
     // Make sure this is an IP packet: check the half-word (two bytes)
     // at offset 12 in the packet (the Ethernet packet type).  If it
-    // is, advance to the next instruction.  If not, advance 8
+    // is, advance to the next instruction.  If not, advance 11
     // instructions (which takes execution to the last instruction in
     // the sequence: "drop it").
     BPF_STMT(BPF_LD + BPF_H + BPF_ABS, ETHERNET_PACKET_TYPE_OFFSET),
-    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, ETHERTYPE_IP, 0, 8),
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, ETHERTYPE_IP, 0, 11),
 
     // Make sure it's a UDP packet.  The IP protocol is at offset
     // 9 in the IP header so, adding the Ethernet packet header size
     // of 14 bytes gives an absolute byte offset in the packet of 23.
-    BPF_STMT(BPF_LD + BPF_B + BPF_ABS, ETHERNET_HEADER_LEN + IP_PROTO_TYPE_OFFSET),
-    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, IPPROTO_UDP, 0, 6),
+    BPF_STMT(BPF_LD + BPF_B + BPF_ABS,
+             ETHERNET_HEADER_LEN + IP_PROTO_TYPE_OFFSET),
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, IPPROTO_UDP, 0, 9),
 
     // Make sure this isn't a fragment by checking that the fragment
     // offset field in the IP header is zero.  This field is the
@@ -68,7 +69,22 @@ struct sock_filter dhcp_sock_filter [] = {
     // the IP header, so the half-word at offset 20 (6 + size of
     // Ethernet header) is loaded and an appropriate mask applied.
     BPF_STMT(BPF_LD + BPF_H + BPF_ABS, ETHERNET_HEADER_LEN + IP_FLAGS_OFFSET),
-    BPF_JUMP(BPF_JMP + BPF_JSET + BPF_K, 0x1fff, 4, 0),
+    BPF_JUMP(BPF_JMP + BPF_JSET + BPF_K, 0x1fff, 7, 0),
+
+    // Check the packet's destination address. The program will only
+    // allow the packets sent to the broadcast address or unicast
+    // to the specific address on the interface. By default, this
+    // address is set to 0 and must be set to the specific value
+    // when the raw socket is created and the program is attached
+    // to it. The caller must assign the address to the
+    // prog.bf_insns[8].k in the network byte order.
+    BPF_STMT(BPF_LD + BPF_W + BPF_ABS,
+             ETHERNET_HEADER_LEN + IP_DEST_ADDR_OFFSET),
+    // If this is a broadcast address, skip the next check.
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 0xffffffff, 1, 0),
+    // If this is not broadcast address, compare it with the unicast
+    // address specified for the interface.
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 0x00000000, 0, 4),
 
     // Get the IP header length.  This is achieved by the following
     // (special) instruction that, given the offset of the start
@@ -82,9 +98,9 @@ struct sock_filter dhcp_sock_filter [] = {
     // of the UDP destination port (2) within the UDP header.
     BPF_STMT(BPF_LD + BPF_H + BPF_IND, ETHERNET_HEADER_LEN + UDP_DEST_PORT),
     // The following instruction tests against the default DHCP server port,
-    // but the action port is actually set in PktFilterLPF::openSocket().
+    // but the action port is actually set in PktFilterBPF::openSocket().
     // N.B. The code in that method assumes that this instruction is at
-    // offset 8 in the program.  If this is changed, openSocket() must be
+    // offset 11 in the program.  If this is changed, openSocket() must be
     // updated.
     BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, DHCP4_SERVER_PORT, 0, 1),
 
@@ -129,8 +145,14 @@ PktFilterLPF::openSocket(Iface& iface,
 
     filter_program.filter = dhcp_sock_filter;
     filter_program.len = sizeof(dhcp_sock_filter) / sizeof(struct sock_filter);
+
+    // Configure the filter program to receive unicast packets sent to the
+    // specified address. The program will also allow packets sent to the
+    // 255.255.255.255 broadcast address.
+    prog.bf_insns[8].k = static_cast<uint32_t>(addr);
+
     // Override the default port value.
-    dhcp_sock_filter[8].k = port;
+    dhcp_sock_filter[11].k = port;
     // Apply the filter.
     if (setsockopt(sock, SOL_SOCKET, SO_ATTACH_FILTER, &filter_program,
                    sizeof(filter_program)) < 0) {
