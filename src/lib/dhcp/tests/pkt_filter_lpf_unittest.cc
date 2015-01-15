@@ -192,7 +192,7 @@ TEST_F(PktFilterLPFTest, DISABLED_receive) {
 // This test verifies that if the packet is received over the raw
 // socket and its destination address doesn't match the address
 // to which the socket is "bound", the packet is dropped.
-TEST_F(PktFilterBPFTest, DISABLED_filterOutUnicast) {
+TEST_F(PktFilterLPFTest, DISABLED_filterOutUnicast) {
 
     // Packet will be received over loopback interface.
     Iface iface(ifname_, ifindex_);
@@ -200,7 +200,7 @@ TEST_F(PktFilterBPFTest, DISABLED_filterOutUnicast) {
     IOAddress addr("127.0.0.1");
 
     // Create an instance of the class which we are testing.
-    PktFilterBPF pkt_filter;
+    PktFilterLPF pkt_filter;
     // Open socket. We don't check that the socket has appropriate
     // options and family set because we have checked that in the
     // openSocket test already.
