@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -91,7 +91,7 @@ PktFilterTest::loInit() {
 }
 
 void
-PktFilterTest::sendMessage() {
+PktFilterTest::sendMessage(const IOAddress& dest) {
 
     // Packet will be sent over loopback interface.
     Iface iface(ifname_, ifindex_);
@@ -112,6 +112,7 @@ PktFilterTest::sendMessage() {
     memset(&dest_addr4, 0, sizeof(sockaddr));
     dest_addr4.sin_family = AF_INET;
     dest_addr4.sin_port = htons(port_);
+    dest_addr4.sin_addr.s_addr = htonl(dest);
     ASSERT_EQ(sendto(send_msg_sock_, test_message_->getBuffer().getData(),
                      test_message_->getBuffer().getLength(), 0,
                      reinterpret_cast<struct sockaddr*>(&dest_addr4),
