@@ -172,9 +172,12 @@ public:
     /// ('.' for IPv4 or ':' for IPv6) replaced with a hyphen, '-'.
     ///
     /// @param address IP address from which to derive the name (IPv4 or IPv6)
+    /// @param trailing_dot A boolean value which indicates whether trailing
+    /// dot should be appended (if true) or not (false).
     ///
     /// @return std::string containing the generated name.
-    std::string generateFqdn(const asiolink::IOAddress& address) const;
+    std::string generateFqdn(const asiolink::IOAddress& address,
+                             const bool trailing_dot = true) const;
 
     /// @brief Adds a qualifying suffix to a given domain name
     ///
@@ -182,13 +185,14 @@ public:
     /// a partial domain name as follows:
     ///
     ///     <partial_name>.<qualifying-suffix>.
-    /// Note it will add a trailing '.' should qualifying-suffix not end with
-    /// one.
     ///
     /// @param partial_name domain name to qualify
+    /// @param trailing_dot A boolean value which indicates whether trailing
+    /// dot should be appended (if true) or not (false).
     ///
     /// @return std::string containing the qualified name.
-    std::string qualifyName(const std::string& partial_name) const;
+    std::string qualifyName(const std::string& partial_name,
+                            const bool trailing_dot) const;
 
     /// @brief Set server FQDN flags based on configuration and a given FQDN
     ///
@@ -465,7 +469,7 @@ D2ClientMgr::adjustDomainName(const T& fqdn, T& fqdn_resp) {
     } else {
         // If the supplied name is partial, qualify it by adding the suffix.
         if (fqdn.getDomainNameType() == T::PARTIAL) {
-            fqdn_resp.setDomainName(qualifyName(fqdn.getDomainName()), T::FULL);
+            fqdn_resp.setDomainName(qualifyName(fqdn.getDomainName(),true), T::FULL);
         }
     }
 }
