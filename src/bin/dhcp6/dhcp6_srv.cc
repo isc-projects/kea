@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -2609,7 +2609,7 @@ Dhcpv6Srv::generateFqdn(const Pkt6Ptr& answer) {
     // Get the IPv6 address acquired by the client.
     IOAddress addr = iaaddr->getAddress();
     std::string generated_name =
-        CfgMgr::instance().getD2ClientMgr().generateFqdn(addr,true);
+        CfgMgr::instance().getD2ClientMgr().generateFqdn(addr);
     try {
         // The lease has been acquired but the FQDN for this lease hasn't
         // been updated in the lease database. We now have new FQDN

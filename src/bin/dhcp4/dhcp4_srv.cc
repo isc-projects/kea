@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -816,8 +816,12 @@ Dhcpv4Srv::processHostnameOption(const OptionStringPtr& opt_hostname,
     } else if (label_count == 2) {
         // If there are two labels, it means that the client has specified
         // the unqualified name. We have to concatenate the unqalified name
-        // with the domain name.
-        opt_hostname_resp->setValue(d2_mgr.qualifyName(hostname,false));
+        // with the domain name. The false value passed as a second argument
+        // indicates that the trailing dot should not be appended to the
+        // hostname. We don't want to append the trailing dot because
+        // we don't know whether the hostname is partial or not and some
+        // clients do not handle the hostnames with the trailing dot.
+        opt_hostname_resp->setValue(d2_mgr.qualifyName(hostname, false));
     }
 
     answer->addOption(opt_hostname_resp);
@@ -1071,13 +1075,15 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
         // hostname is empty, it means that server is responsible for
         // generating the entire hostname for the client. The example of the
         // client's name, generated from the IP address is: host-192-0-2-3.
-	if ((fqdn || opt_hostname) && lease->hostname_.empty()) {
-		if(fqdn) {
-			lease->hostname_ = CfgMgr::instance().getD2ClientMgr().generateFqdn(lease->addr_,true);
-		}
-		if(opt_hostname) {
-			lease->hostname_ = CfgMgr::instance().getD2ClientMgr().generateFqdn(lease->addr_,false);
-		}
+        if ((fqdn || opt_hostname) && lease->hostname_.empty()) {
+            // Note that if we have received the hostname option, rather than
+            // Client FQDN the trailing dot is not appended to the generated
+            // hostname because some clients don't handle the trailing dot in
+            // the hostname. Whether the trailing dot is appended or not is
+            // controlled by the second argument to the generateFqdn().
+            lease->hostname_ = CfgMgr::instance().getD2ClientMgr()
+                .generateFqdn(lease->addr_, static_cast<bool>(fqdn));
+
             // The operations below are rather safe, but we want to catch
             // any potential exceptions (e.g. invalid lease database backend
             // implementation) and log an error.
