@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -219,6 +219,9 @@ NameChangeRequest::NameChangeRequest(const NameChangeType change_type,
     reverse_change_(reverse_change), fqdn_(fqdn), ip_io_address_("0.0.0.0"),
     dhcid_(dhcid), lease_expires_on_(lease_expires_on),
     lease_length_(lease_length), status_(ST_NEW) {
+
+    // User setter to validate fqdn.
+    setFqdn(fqdn);
 
     // User setter to validate address.
     setIpAddress(ip_address);
