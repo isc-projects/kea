@@ -139,7 +139,7 @@ public:
     ///
     /// @return An std::string contained the generated FQDN.
     std::string generatedNameFromAddress(const IOAddress& addr) {
-        return(CfgMgr::instance().getD2ClientMgr().generateFqdn(addr));
+        return(CfgMgr::instance().getD2ClientMgr().generateFqdn(addr,true));
     }
 
     // Get the Client FQDN Option from the given message.
