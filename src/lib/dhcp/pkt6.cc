@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,10 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
+#include <dhcp/option_vendor_class.h>
+#include <dhcp/option_vendor.h>
 #include <dhcp/pkt6.h>
+#include <dhcp/docsis3_option_defs.h>
 #include <util/io_utilities.h>
 #include <exceptions/exceptions.h>
 #include <dhcp/duid.h>
@@ -620,8 +623,62 @@ Pkt6::getMACFromIPv6RelayOpt() {
         // +2, -2 means to skip the initial 2 bytes which are hwaddress type
         return (HWAddrPtr(new HWAddr(&data[0] + 2, data.size() - 2,
                                      opt->getUint16())));
+    } else {
+        return (HWAddrPtr());
     }
-    else {
+}
+
+HWAddrPtr
+Pkt6::getMACFromDocsisModem() {
+    OptionVendorPtr vendor = boost::dynamic_pointer_cast<
+        OptionVendor>(getOption(D6O_VENDOR_OPTS));
+
+    // Check if this is indeed DOCSIS3 environment
+    if (!vendor || vendor->getVendorId() != VENDOR_ID_CABLE_LABS) {
+        return (HWAddrPtr());
+    }
+
+    // If it is, try to get device-id option
+    OptionPtr device_id = vendor->getOption(DOCSIS3_V6_DEVICE_ID);
+    if (!device_id) {
+        return (HWAddrPtr());
+    }
+
+    // If the option contains any data, use it as MAC address
+    if (!device_id->getData().empty()) {
+        return (HWAddrPtr(new HWAddr(device_id->getData(), HTYPE_DOCSIS)));
+    } else {
+        return (HWAddrPtr());
+    }
+}
+
+HWAddrPtr
+Pkt6::getMACFromDocsisCMTS() {
+    if (relay_info_.empty()) {
+        // This message didn't pass through a CMTS, so there won't be any
+        // CMTS-specific options in it.
+        return (HWAddrPtr());
+    }
+
+    OptionVendorPtr vendor = boost::dynamic_pointer_cast<
+        OptionVendor>(getAnyRelayOption(D6O_VENDOR_OPTS,
+                                        RELAY_SEARCH_FROM_CLIENT));
+
+    // Check if this is indeed DOCSIS3 environment
+    if (!vendor || vendor->getVendorId() != VENDOR_ID_CABLE_LABS) {
+        return (HWAddrPtr());
+    }
+
+    // If it is, try to get cable modem mac
+    OptionPtr cm_mac = vendor->getOption(DOCSIS3_V6_CMTS_CM_MAC);
+    if (!cm_mac) {
+        return (HWAddrPtr());
+    }
+
+    // If the option contains any data, use it as MAC address
+    if (!cm_mac->getData().empty()) {
+        return (HWAddrPtr(new HWAddr(cm_mac->getData(), HTYPE_DOCSIS)));
+    } else {
         return (HWAddrPtr());
     }
 }

@@ -305,9 +305,42 @@ protected:
     /// @return Hardware address (or NULL)
     virtual HWAddrPtr getMACFromIPv6RelayOpt();
 
+    /// @brief Extract MAC/Hardware address from client-id.
+    ///
+    /// This method attempts to extract MAC/Hardware address from DUID sent
+    /// as client-id. This method may fail, as only DUID-LLT and DUID-LL are
+    /// based on link-layer addresses. Client may use other valid DUID types
+    /// and this method will fail.
+    ///
+    /// @return Hardware address (or NULL)
     virtual HWAddrPtr getMACFromDUID();
 
-    HWAddrPtr hwaddr_;
+    /// @brief Attempts to extract MAC/Hardware address from DOCSIS options
+    ///        inserted by the modem itself.
+    ///
+    /// The mechanism extracts that information from DOCSIS option
+    /// (vendor-specific info, vendor-id=4491, suboption 36). Note that
+    /// in a DOCSIS capable network, the MAC address information is provided
+    /// several times. The first is specified by the modem itself. The second
+    /// is added by the CMTS, which acts as a relay agent. This method
+    /// attempts to extract the former. See @ref getMACFromDocsisCMTS
+    /// for a similar method that extracts from the CMTS (relay) options.
+    ///
+    /// @return hardware address (if DOCSIS suboption 36 is present)
+    virtual HWAddrPtr getMACFromDocsisModem();
+
+    /// @brief Attempts to extract MAC/Hardware address from DOCSIS options.
+    ///
+    /// The DHCPv6 mechanism extracts that information from DOCSIS option
+    /// (vendor-specific info, vendor-id=4491, suboption 1026). Note that
+    /// in a DOCSIS capable network, the MAC address information is provided
+    /// several times. The first is specified by the modem itself. The second
+    /// is added by the CMTS, which acts as a relay agent. This method
+    /// attempts to extract the latter. See @ref getMACFromDocsisModem
+    /// for a similar method that extracts from the modem (client) options.
+    ///
+    /// @return hardware address (if DOCSIS suboption 1026 is present)
+    virtual HWAddrPtr getMACFromDocsisCMTS();
 
     /// @brief Builds on wire packet for TCP transmission.
     ///

@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -129,6 +129,8 @@ HWAddrPtr
 Pkt::getMAC(uint32_t hw_addr_src) {
     HWAddrPtr mac;
 
+    /// @todo: Implement an array of method pointers instead of set of ifs
+
     // Method 1: from raw sockets.
     if (hw_addr_src & HWAddr::HWADDR_SOURCE_RAW) {
         mac = getRemoteHWAddr();
@@ -182,8 +184,28 @@ Pkt::getMAC(uint32_t hw_addr_src) {
     // Method 6: From subscriber-id option inserted by a relay
 
     // Method 7: From docsis options
+    if (hw_addr_src & HWAddr::HWADDR_SOURCE_DOCSIS_CMTS) {
+        mac = getMACFromDocsisCMTS();
+        if (mac) {
+            return (mac);
+        } else if (hw_addr_src == HWAddr::HWADDR_SOURCE_DOCSIS_CMTS) {
+            // If we're interested only in CMTS options as a source of that
+            // info, there's no point in trying other options.
+            return (HWAddrPtr());
+        }
+    }
 
-    /// @todo: add other MAC acquisition methods here
+    // Method 8: From docsis options
+    if (hw_addr_src & HWAddr::HWADDR_SOURCE_DOCSIS_MODEM) {
+        mac = getMACFromDocsisModem();
+        if (mac) {
+            return (mac);
+        } else if (hw_addr_src == HWAddr::HWADDR_SOURCE_DOCSIS_MODEM) {
+            // If we're interested only in CMTS options as a source of that
+            // info, there's no point in trying other options.
+            return (HWAddrPtr());
+        }
+    }
 
     // Ok, none of the methods were suitable. Return NULL.
     return (HWAddrPtr());
