@@ -2609,7 +2609,7 @@ Dhcpv6Srv::generateFqdn(const Pkt6Ptr& answer) {
     // Get the IPv6 address acquired by the client.
     IOAddress addr = iaaddr->getAddress();
     std::string generated_name =
-        CfgMgr::instance().getD2ClientMgr().generateFqdn(addr);
+        CfgMgr::instance().getD2ClientMgr().generateFqdn(addr,true);
     try {
         // The lease has been acquired but the FQDN for this lease hasn't
         // been updated in the lease database. We now have new FQDN
