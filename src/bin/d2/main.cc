@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -40,6 +40,8 @@ int main(int argc, char* argv[]) {
     try  {
         // 'false' value disables test mode.
         controller->launch(argc, argv, false);
+    } catch (const VersionMessage& ex) {
+        std::cout << ex.what() << std::endl;
     } catch (const isc::Exception& ex) {
         std::cerr << "Service failed:" << ex.what() << std::endl;
         ret = EXIT_FAILURE;
