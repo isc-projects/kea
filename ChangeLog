@@ -1,10 +1,17 @@
+875.    [bug]           afidalgo, marcin
+	The DHCPv4 server no longer appends the trailing dot to the
+	hostnames sent to the clients in the Hostname option (12).
+	Appending trailing dot confused some DHCPv4 clients.
+	Credits to Alexis Fidalgo for submitting a patch.
+	(Trac #3636, git 450867e6987f4c786ad6c2cc95cabcff601c1b48)
+
 874.    [func]           marcin
-        Changes to the Memfile lease database backend to load
-        leases from multiple files during startup or server
-        reconfiguration. This change is required by the Lease File
-        Cleanup feature, which leads to the creation of additional
-        files holding cleaned up lease information.
-        (Trac #3671, git 667de2ef9044e97c76b15cacc7285132cdffdfcf)
+	Changes to the Memfile lease database backend to load
+	leases from multiple files during startup or server
+	reconfiguration. This change is required by the Lease File
+	Cleanup feature, which leads to the creation of additional
+	files holding cleaned up lease information.
+	(Trac #3671, git 667de2ef9044e97c76b15cacc7285132cdffdfcf)
 
 873.    [bug]           wlodek
 	Removed references to non-existing pgsql_test.sh script
@@ -32,11 +39,11 @@
 	(Trac #3554, git 2e7c32e7c19372f0c97968ef7c8256509d80fdfc)
 
 868.    [func]          marcin
-        DHCPv4 server configuration allows for selection of the
-        address on the interface that server should listen on.
-        This is specifically useful in the environments with
-        multiple IPv4 addresses assigned to one interface.
-        (Trac #3539, git ff71887c605eedc3914bacfd2e551da7bddcc0d6)
+	DHCPv4 server configuration allows for selection of the
+	address on the interface that server should listen on.
+	This is specifically useful in the environments with
+	multiple IPv4 addresses assigned to one interface.
+	(Trac #3539, git ff71887c605eedc3914bacfd2e551da7bddcc0d6)
 
 867.	[func]		marcin
 	libdhcpsrv: Allocation Engine uses statically assigned
