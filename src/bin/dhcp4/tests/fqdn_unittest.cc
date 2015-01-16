@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -136,10 +136,15 @@ public:
     /// names are correct.
     ///
     /// @param addr IP address used in the lease.
+    /// @param trailing_dot A boolean flag which indicates whether the
+    /// trailing dot should be appended to the end of the hostname.
+    /// The defatult value is "true" which means that it should.
     ///
     /// @return An std::string contained the generated FQDN.
-    std::string generatedNameFromAddress(const IOAddress& addr) {
-        return(CfgMgr::instance().getD2ClientMgr().generateFqdn(addr,true));
+    std::string generatedNameFromAddress(const IOAddress& addr,
+                                         const bool trailing_dot = true) {
+        return(CfgMgr::instance().getD2ClientMgr()
+               .generateFqdn(addr, trailing_dot));
     }
 
     // Get the Client FQDN Option from the given message.
@@ -617,7 +622,7 @@ TEST_F(NameDhcpv4SrvTest, serverUpdateUnqualifiedHostname) {
     ASSERT_NO_THROW(hostname =  processHostname(query));
 
     ASSERT_TRUE(hostname);
-    EXPECT_EQ("myhost.example.com.", hostname->getValue());
+    EXPECT_EQ("myhost.example.com", hostname->getValue());
 
 }
 
