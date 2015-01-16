@@ -76,8 +76,15 @@ public:
 
     /// A CMTS (acting as DHCP relay agent) that supports DOCSIS standard
     /// can insert DOCSIS options that contain client's MAC address.
-    /// Client in this context would be a cable modem.
-    static const uint32_t HWADDR_SOURCE_DOCSIS;
+    /// This specific option is suboption 1026 in vendor-class option with
+    /// vendor-id=4491. Client in this context would be a cable modem.
+    static const uint32_t HWADDR_SOURCE_DOCSIS_CMTS;
+
+    /// A cable modem (acting as DHCP client) that supports DOCSIS standard
+    /// can insert DOCSIS options that contain client's MAC address.
+    /// This specific option is suboption 36 in vendor-class option with
+    /// vendor-id=4491.
+    static const uint32_t HWADDR_SOURCE_DOCSIS_MODEM;
 
     /// @}
 
