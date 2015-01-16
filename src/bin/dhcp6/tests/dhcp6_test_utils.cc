@@ -15,6 +15,7 @@
 #include <gtest/gtest.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/json_config_parser.h>
+#include <config/ccsession.h>
 
 using namespace isc::data;
 using namespace isc::dhcp;
@@ -603,7 +604,7 @@ Dhcpv6SrvTest::configure(const std::string& config, NakedDhcpv6Srv& srv) {
     EXPECT_NO_THROW(status = configureDhcp6Server(srv, json));
     ASSERT_TRUE(status);
     int rcode;
-    ConstElementPtr comment = config::parseAnswer(rcode, status);
+    ConstElementPtr comment = isc::config::parseAnswer(rcode, status);
     ASSERT_EQ(0, rcode);
 
     CfgMgr::instance().commit();

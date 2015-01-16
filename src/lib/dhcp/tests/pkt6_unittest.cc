@@ -21,10 +21,12 @@
 #include <dhcp/option6_ia.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/option_vendor.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/hwaddr.h>
 #include <dhcp/docsis3_option_defs.h>
+#include <dhcp/tests/pkt_captures.h>
 #include <util/range_utilities.h>
 
 #include <boost/bind.hpp>
@@ -1181,6 +1183,63 @@ TEST_F(Pkt6Test, getMACFromDUID) {
     ASSERT_TRUE(pkt.delOption(D6O_CLIENTID));
     pkt.addOption(clientid3);
     EXPECT_FALSE(pkt.getMAC(HWAddr::HWADDR_SOURCE_DUID));
+}
+
+// Test checks whether getMAC(DOCSIS_MODEM) is working properly.
+// We only have a small number of actual traffic captures from
+// cable networks, so the scope of unit-tests is somewhat limited.
+TEST_F(Pkt6Test, getMAC_DOCSIS_Modem) {
+
+    // Let's use a captured traffic. The one we have comes from a
+    // modem with MAC address 10:0d:7f:00:07:88.
+    Pkt6Ptr pkt = isc::test::PktCaptures::captureDocsisRelayedSolicit();
+    ASSERT_NO_THROW(pkt->unpack());
+
+    // The method should return MAC based on the vendor-specific info,
+    // suboption 36, which is inserted by the modem itself.
+    HWAddrPtr found = pkt->getMAC(HWAddr::HWADDR_SOURCE_DOCSIS_MODEM);
+    ASSERT_TRUE(found);
+
+    // Let's check the info.
+    EXPECT_EQ("hwtype=1 10:0d:7f:00:07:88", found->toText(true));
+
+    // Now let's remove the option
+    OptionVendorPtr vendor = boost::dynamic_pointer_cast<
+        OptionVendor>(pkt->getOption(D6O_VENDOR_OPTS));
+    ASSERT_TRUE(vendor);
+    ASSERT_TRUE(vendor->delOption(DOCSIS3_V6_DEVICE_ID));
+
+    // Ok, there's no more suboption 36. Now getMAC() should fail.
+    EXPECT_FALSE(pkt->getMAC(HWAddr::HWADDR_SOURCE_DOCSIS_MODEM));
+}
+
+// Test checks whether getMAC(DOCSIS_CMTS) is working properly.
+// We only have a small number of actual traffic captures from
+// cable networks, so the scope of unit-tests is somewhat limited.
+TEST_F(Pkt6Test, getMAC_DOCSIS_CMTS) {
+
+    // Let's use a captured traffic. The one we have comes from a
+    // modem with MAC address 20:e5:2a:b8:15:14.
+    Pkt6Ptr pkt = isc::test::PktCaptures::captureeRouterRelayedSolicit();
+    ASSERT_NO_THROW(pkt->unpack());
+
+    // The method should return MAC based on the vendor-specific info,
+    // suboption 36, which is inserted by the modem itself.
+    HWAddrPtr found = pkt->getMAC(HWAddr::HWADDR_SOURCE_DOCSIS_CMTS);
+    ASSERT_TRUE(found);
+
+    // Let's check the info.
+    EXPECT_EQ("hwtype=1 20:e5:2a:b8:15:14", found->toText(true));
+
+    // Now let's remove the suboption 1026 that is inserted by the
+    // relay.
+    OptionVendorPtr vendor = boost::dynamic_pointer_cast<
+        OptionVendor>(pkt->getAnyRelayOption(D6O_VENDOR_OPTS,
+                          isc::dhcp::Pkt6::RELAY_SEARCH_FROM_CLIENT));
+    ASSERT_TRUE(vendor);
+    EXPECT_TRUE(vendor->delOption(DOCSIS3_V6_CMTS_CM_MAC));
+
+    EXPECT_FALSE(pkt->getMAC(HWAddr::HWADDR_SOURCE_DOCSIS_CMTS));
 }
 
 }

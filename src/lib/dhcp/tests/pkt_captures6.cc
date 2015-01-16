@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -13,10 +13,12 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
-#include <dhcp6/tests/dhcp6_test_utils.h>
+#include <dhcp/pkt6.h>
+#include <util/encode/hex.h>
+#include <dhcp/tests/pkt_captures.h>
 #include <string>
 
-/// @file   wireshark.cc
+/// @file   pkt_captures6.cc
 ///
 /// @brief  contains packet captures imported from Wireshark
 ///
@@ -45,7 +47,7 @@ using namespace std;
 namespace isc {
 namespace test {
 
-void Dhcpv6SrvTest::captureSetDefaultFields(const Pkt6Ptr& pkt) {
+void PktCaptures::captureSetDefaultFields(const Pkt6Ptr& pkt) {
     pkt->setRemotePort(546);
     pkt->setRemoteAddr(IOAddress("fe80::1"));
     pkt->setLocalPort(0);
@@ -55,7 +57,7 @@ void Dhcpv6SrvTest::captureSetDefaultFields(const Pkt6Ptr& pkt) {
 }
 
 // This function returns buffer for very simple Solicit
-Pkt6Ptr Dhcpv6SrvTest::captureSimpleSolicit() {
+Pkt6Ptr PktCaptures::captureSimpleSolicit() {
     uint8_t data[] = {
         1,  // type 1 = SOLICIT
         0xca, 0xfe, 0x01, // trans-id = 0xcafe01
@@ -75,7 +77,7 @@ Pkt6Ptr Dhcpv6SrvTest::captureSimpleSolicit() {
     return (pkt);
 }
 
-Pkt6Ptr Dhcpv6SrvTest::captureRelayedSolicit() {
+Pkt6Ptr PktCaptures::captureRelayedSolicit() {
 
     // This is a very simple relayed SOLICIT message:
     // RELAY-FORW
@@ -105,7 +107,7 @@ Pkt6Ptr Dhcpv6SrvTest::captureRelayedSolicit() {
 }
 
 /// returns a buffer with relayed SOLICIT (from DOCSIS3.0 cable modem)
-Pkt6Ptr isc::test::Dhcpv6SrvTest::captureDocsisRelayedSolicit() {
+Pkt6Ptr isc::test::PktCaptures::captureDocsisRelayedSolicit() {
 
     // This is an actual DOCSIS packet
     // RELAY-FORW (12)
@@ -115,6 +117,7 @@ Pkt6Ptr isc::test::Dhcpv6SrvTest::captureDocsisRelayedSolicit() {
     //      - IA_NA (iaid=7f000788, t2=0, t2=0)
     //        - IAAddress (::, pref=0,valid=0)
     //      - rapid-commit
+    //      - elapsed
     //      - ORO
     //      - Reconfigure-accept
     //      - Vendor-Class ("docsis3.0")
@@ -166,7 +169,7 @@ Pkt6Ptr isc::test::Dhcpv6SrvTest::captureDocsisRelayedSolicit() {
 }
 
 /// returns a buffer with relayed SOLICIT (from DOCSIS3.0 eRouter)
-Pkt6Ptr isc::test::Dhcpv6SrvTest::captureeRouterRelayedSolicit() {
+Pkt6Ptr isc::test::PktCaptures::captureeRouterRelayedSolicit() {
 
 /* Packet description exported from wireshark:
 DHCPv6
@@ -301,7 +304,7 @@ DHCPv6
     return (pkt);
 }
 
-Pkt6Ptr isc::test::Dhcpv6SrvTest::captureCableLabsShortVendorClass() {
+Pkt6Ptr isc::test::PktCaptures::captureCableLabsShortVendorClass() {
     // This is a simple non-relayed Solicit:
     // - client-identifier
     // - IA_NA

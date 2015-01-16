@@ -79,7 +79,6 @@ dhcp6_unittests_SOURCES += dhcp6_test_utils.cc dhcp6_test_utils.h
 dhcp6_unittests_SOURCES += d2_unittest.cc d2_unittest.h
 dhcp6_unittests_SOURCES += marker_file.cc
 dhcp6_unittests_SOURCES += ctrl_dhcp6_srv_unittest.cc
-dhcp6_unittests_SOURCES += wireshark.cc
 dhcp6_unittests_SOURCES += dhcp6_client.cc dhcp6_client.h
 dhcp6_unittests_SOURCES += rebind_unittest.cc
 dhcp6_unittests_SOURCES += sarr_unittest.cc

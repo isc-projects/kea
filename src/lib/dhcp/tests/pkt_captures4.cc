@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
-#include <dhcp4/tests/dhcp4_test_utils.h>
+#include <dhcp/tests/pkt_captures.h>
 #include <string>
 #include <asiolink/io_address.h>
 #include <util/encode/hex.h>
@@ -41,13 +41,13 @@
 ///    contain whatever expansion level you have in the graphical tree.)
 
 using namespace std;
+using namespace isc::dhcp;
 using namespace isc::asiolink;
 
 namespace isc {
-namespace dhcp {
 namespace test {
 
-Pkt4Ptr Dhcpv4SrvTest::packetFromCapture(const std::string& hex_string) {
+Pkt4Ptr PktCaptures::packetFromCapture(const std::string& hex_string) {
     std::vector<uint8_t> bin;
 
     // Decode the hex string and store it in bin (which happens
@@ -60,7 +60,7 @@ Pkt4Ptr Dhcpv4SrvTest::packetFromCapture(const std::string& hex_string) {
     return (pkt);
 }
 
-void Dhcpv4SrvTest::captureSetDefaultFields(const Pkt4Ptr& pkt) {
+void PktCaptures::captureSetDefaultFields(const Pkt4Ptr& pkt) {
     pkt->setRemotePort(546);
     pkt->setRemoteAddr(IOAddress("fe80::1"));
     pkt->setLocalPort(0);
@@ -69,7 +69,7 @@ void Dhcpv4SrvTest::captureSetDefaultFields(const Pkt4Ptr& pkt) {
     pkt->setIface("eth0");
 }
 
-Pkt4Ptr Dhcpv4SrvTest::captureRelayedDiscover() {
+Pkt4Ptr PktCaptures::captureRelayedDiscover() {
 
 /* This is packet 1 from capture
    dhcp-val/pcap/docsis-*-CG3000DCR-Registration-Filtered.cap
@@ -132,7 +132,7 @@ Bootstrap Protocol
     return (packetFromCapture(hex_string));
 }
 
-Pkt4Ptr Dhcpv4SrvTest::captureRelayedDiscover2() {
+Pkt4Ptr PktCaptures::captureRelayedDiscover2() {
 
 /* This is packet 5 from capture
    dhcp-val/pcap/docsis-*-CG3000DCR-Registration-Filtered.cap
@@ -185,6 +185,5 @@ Bootstrap Protocol
     return (packetFromCapture(hex_string));
 }
 
-}; // end of isc::dhcp::test namespace
-}; // end of isc::dhcp namespace
+}; // end of isc::test namespace
 }; // end of isc namespace
