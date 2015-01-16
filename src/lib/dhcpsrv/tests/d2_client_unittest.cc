@@ -601,6 +601,8 @@ TEST(D2ClientMgr, qualifyName) {
 
     // Create enabled configuration.
     D2ClientConfigPtr cfg;
+
+    //append suffix and dot
     ASSERT_NO_THROW(cfg.reset(new D2ClientConfig(true,
                                   isc::asiolink::IOAddress("127.0.0.1"), 477,
                                   isc::asiolink::IOAddress("127.0.0.1"), 478,
@@ -612,9 +614,38 @@ TEST(D2ClientMgr, qualifyName) {
 
     // Verify that the qualifying suffix gets appended with trailing dot added.
     std::string partial_name = "somehost";
-    std::string qualified_name = mgr.qualifyName(partial_name);
+    std::string qualified_name = mgr.qualifyName(partial_name,true);
     EXPECT_EQ("somehost.suffix.com.", qualified_name);
 
+
+	//append suffix but dot
+    ASSERT_NO_THROW(cfg.reset(new D2ClientConfig(true,
+                                  isc::asiolink::IOAddress("127.0.0.1"), 477,
+                                  isc::asiolink::IOAddress("127.0.0.1"), 478,
+                                  1024,
+                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
+                                  false, false, true, false,
+                                  "prefix", "suffix.com")));
+    ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
+    partial_name = "somehost";
+    qualified_name = mgr.qualifyName(partial_name,false); //false means no dot
+    EXPECT_EQ("somehost.suffix.com", qualified_name);
+
+
+	//append no suffix and not dot
+    ASSERT_NO_THROW(cfg.reset(new D2ClientConfig(true,
+                                  isc::asiolink::IOAddress("127.0.0.1"), 477,
+                                  isc::asiolink::IOAddress("127.0.0.1"), 478,
+                                  1024,
+                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
+                                  false, false, true, false,
+                                  "prefix", ""))); //empty suffix
+    ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
+    partial_name = "somehost";
+    qualified_name = mgr.qualifyName(partial_name,false); //false means no dot
+    EXPECT_EQ("somehost", qualified_name);
+
+    // Verify that the qualifying suffix gets appended with trailing dot added.
     ASSERT_NO_THROW(cfg.reset(new D2ClientConfig(true,
                                   isc::asiolink::IOAddress("127.0.0.1"), 477,
                                   isc::asiolink::IOAddress("127.0.0.1"), 478,
@@ -625,7 +656,7 @@ TEST(D2ClientMgr, qualifyName) {
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
 
     // Verify that the qualifying suffix gets appended without dot added.
-    qualified_name = mgr.qualifyName(partial_name);
+    qualified_name = mgr.qualifyName(partial_name,true);
     EXPECT_EQ("somehost.hasdot.com.", qualified_name);
 }
 
@@ -647,19 +678,19 @@ TEST(D2ClientMgr, generateFqdn) {
 
     // Verify that it works with an IPv4 address.
     asiolink::IOAddress v4address("192.0.2.75");
-    EXPECT_EQ("prefix-192-0-2-75.suffix.com.", mgr.generateFqdn(v4address));
+    EXPECT_EQ("prefix-192-0-2-75.suffix.com.", mgr.generateFqdn(v4address,true));
 
     // Verify that it works with an IPv6 address.
     asiolink::IOAddress v6address("2001:db8::2");
-    EXPECT_EQ("prefix-2001-db8--2.suffix.com.", mgr.generateFqdn(v6address));
+    EXPECT_EQ("prefix-2001-db8--2.suffix.com.", mgr.generateFqdn(v6address,true));
 
     // Create a disabled config.
     ASSERT_NO_THROW(cfg.reset(new D2ClientConfig()));
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
 
     // Verify names generate properly with a disabled configuration.
-    EXPECT_EQ("myhost-192-0-2-75.example.com.", mgr.generateFqdn(v4address));
-    EXPECT_EQ("myhost-2001-db8--2.example.com.", mgr.generateFqdn(v6address));
+    EXPECT_EQ("myhost-192-0-2-75.example.com.", mgr.generateFqdn(v4address,true));
+    EXPECT_EQ("myhost-2001-db8--2.example.com.", mgr.generateFqdn(v6address,true));
 }
 
 /// @brief Tests adjustDomainName template method with Option4ClientFqdn
