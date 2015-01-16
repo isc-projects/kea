@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -171,42 +171,46 @@ D2ClientMgr::analyzeFqdn(const bool client_s, const bool client_n,
 }
 
 std::string
-D2ClientMgr::generateFqdn(const asiolink::IOAddress& address, bool appendDot) const {
+D2ClientMgr::generateFqdn(const asiolink::IOAddress& address,
+                          const bool trailing_dot) const {
     std::string hostname = address.toText();
     std::replace(hostname.begin(), hostname.end(),
                  (address.isV4() ? '.' : ':'), '-');
 
     std::ostringstream gen_name;
     gen_name << d2_client_config_->getGeneratedPrefix() << "-" << hostname;
-    return (qualifyName(gen_name.str(),appendDot));
+    return (qualifyName(gen_name.str(), trailing_dot));
 }
 
 
 std::string
-D2ClientMgr::qualifyName(const std::string& partial_name, bool appendDot) const {
+D2ClientMgr::qualifyName(const std::string& partial_name,
+                         const bool trailing_dot) const {
     std::ostringstream gen_name;
 
     gen_name << partial_name << "." << d2_client_config_->getQualifyingSuffix();
 
     std::string str = gen_name.str();
     size_t len = str.length();
-    //unless it's forced, will append trailing dot
-    if(appendDot) {
-	    // Tack on a trailing dot in case suffix doesn't have one.
-	    if ((len > 0) && (str[len - 1] != '.')) {
-		    gen_name << ".";
-	    }
+
+    if(trailing_dot) {
+        // If trailing dot should be added but there is no trailing dot,
+        // append it.
+        if ((len > 0) && (str[len - 1] != '.')) {
+            gen_name << ".";
+        }
+
     } else {
-	    //if a call with appendDot is false, remove the dot if exists
-	    if ((len > 0) && (str[len - 1] == '.')) {
-		    gen_name.str(str.substr(0,len-1));
-	    }
+        // If the trailing dot should not be appended but it is present,
+        // remove it.
+        if ((len > 0) && (str[len - 1] == '.')) {
+            gen_name.str(str.substr(0,len-1));
+        }
+
     }
 
     return (gen_name.str());
 }
-
-
 
 void
 D2ClientMgr::startSender(D2ClientErrorHandler error_handler) {
