@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -38,6 +38,18 @@ public:
     InvalidUsage(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
+
+/// @brief Exception used to convey version info upwards.
+/// Since command line argument parsing is done as part of
+/// DControllerBase::launch(), it uses this exception to propagate
+/// version information up to main(), when command line argument
+/// -v or -V is given.
+class VersionMessage : public isc::Exception {
+public:
+    VersionMessage(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
 
 /// @brief Exception thrown when the application process fails.
 class ProcessInitError: public isc::Exception {
@@ -366,7 +378,8 @@ protected:
     /// @param argc  is the number of command line arguments supplied
     /// @param argv  is the array of string (char *) command line arguments
     ///
-    /// @throw throws InvalidUsage when there are usage errors.
+    /// @throw InvalidUsage when there are usage errors.
+    /// @throw VersionMessage if the -v or -V arguments is given.
     void parseArgs(int argc, char* argv[]);
 
     /// @brief Instantiates the application process and then initializes it.
