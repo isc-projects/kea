@@ -49,7 +49,7 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const ParameterMap& parameters)
         LOG_WARN(dhcpsrv_logger, DHCPSRV_MEMFILE_NO_STORAGE);
 
     } else  {
-        initTimers(universe == "4" ? V4 : V6);
+        initTimers();
     }
 }
 
@@ -412,6 +412,11 @@ Memfile_LeaseMgr::rollback() {
               DHCPSRV_MEMFILE_ROLLBACK);
 }
 
+uint32_t
+Memfile_LeaseMgr::getIOServiceExecInterval() const {
+    return (static_cast<uint32_t>(lfc_timer_.getInterval() / 1000));
+}
+
 std::string
 Memfile_LeaseMgr::getDefaultLeaseFilePath(Universe u) const {
     std::ostringstream s;
@@ -472,7 +477,7 @@ Memfile_LeaseMgr::initLeaseFilePath(Universe u) {
 }
 
 void
-Memfile_LeaseMgr::initTimers(const Universe& universe) {
+Memfile_LeaseMgr::initTimers() {
     std::string lfc_interval_str = "0";
     try {
         lfc_interval_str = getParameter("lfc-interval");

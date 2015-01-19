@@ -323,6 +323,19 @@ public:
     /// support transactions, this is a no-op.
     virtual void rollback();
 
+    /// @brief Returns the interval at which the @c IOService events should
+    /// be released.
+    ///
+    /// The Memfile backend may install a timer to execute the Lease File
+    /// Cleanup periodically. If this timer is installed, the method returns
+    /// the LFC interval in milliseconds.
+    ///
+    /// @return A maximum interval (in seconds) at which the @c IOService
+    /// should be executed. A value of 0 means that no timers are installed
+    /// and that there is no requirement for the @c IOService to be
+    /// executed at any specific interval.
+    virtual uint32_t getIOServiceExecInterval() const;
+
     /// @brief Returns default path to the lease file.
     ///
     /// @param u Universe (V4 or V6).
@@ -430,9 +443,7 @@ private:
     ///
     /// Currently only one timer is supported. This timer executes the
     /// Lease File Cleanup periodically.
-    ///
-    /// @param universe A V4 or V6 value.
-    void initTimers(const Universe& universe);
+    void initTimers();
 
     // This is a multi-index container, which holds elements that can
     // be accessed using different search indexes.
