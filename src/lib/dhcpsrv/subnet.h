@@ -284,6 +284,21 @@ public:
     void
     allowClientClass(const isc::dhcp::ClientClass& class_name);
 
+    /// @brief Specifies whether in-pool host reservations are allowed.
+    ///
+    /// Host reservations may be either in-pool (they reserve an address that
+    /// is in the dynamic pool) or out-of-pool (they reserve an address that is
+    /// not in the dynamic pool).
+    ///
+    /// @todo: implement this.
+    ///
+    /// @return whether in-pool host reservations are allowed.
+    bool
+    allowInPoolReservations() {
+        /// @todo: Make this configurable.
+        return (true);
+    }
+
 protected:
     /// @brief Returns all pools (non-const variant)
     ///
