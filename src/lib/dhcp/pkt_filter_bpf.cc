@@ -260,7 +260,7 @@ PktFilterBPF::openSocket(Iface& iface,
     if ((ver.bv_major != BPF_MAJOR_VERSION) ||
         (ver.bv_minor < BPF_MINOR_VERSION)) {
         close(fallback);
-         close(sock);
+        close(sock);
         isc_throw(SocketConfigError, "Invalid BPF version: "
                   << ver.bv_major << "." << ver.bv_minor
                   << " Expected at least version:"
