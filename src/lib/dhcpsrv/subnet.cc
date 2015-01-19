@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -227,13 +227,21 @@ const PoolPtr Subnet::getPool(Lease::Type type, const isc::asiolink::IOAddress& 
 
 void
 Subnet::addPool(const PoolPtr& pool) {
-    IOAddress first_addr = pool->getFirstAddress();
-    IOAddress last_addr = pool->getLastAddress();
-
-    if (!inRange(first_addr) || !inRange(last_addr)) {
-        isc_throw(BadValue, "Pool (" << first_addr << "-" << last_addr
-                  << " does not belong in this (" << prefix_ << "/"
-                  << static_cast<int>(prefix_len_) << ") subnet");
+    // Check that the pool is in range with a subnet only if this is
+    // not a pool of IPv6 prefixes. The IPv6 prefixes delegated for
+    // the particular subnet don't need to match the prefix of the
+    // subnet.
+    if (pool->getType() != Lease::TYPE_PD) {
+        if (!inRange(pool->getFirstAddress()) || !inRange(pool->getLastAddress())) {
+            isc_throw(BadValue, "a pool of type "
+                      << Lease::typeToText(pool->getType())
+                      << ", with the following address range: "
+                      << pool->getFirstAddress() << "-"
+                      << pool->getLastAddress() << " does not match "
+                      << " the prefix of a subnet: "
+                      << prefix_ << "/" << static_cast<int>(prefix_len_)
+                      << " to which it is being added");
+        }
     }
 
     /// @todo: Check that pools do not overlap

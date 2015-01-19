@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -464,14 +464,14 @@ TEST(Subnet6Test, Pool6InSubnet6) {
 }
 
 // Check if Subnet6 supports different types of pools properly.
-TEST(Subnet6Test, PoolTypes) {
+TEST(Subnet6Test, poolTypes) {
 
     Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
 
     PoolPtr pool1(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:1::"), 64));
     PoolPtr pool2(new Pool6(Lease::TYPE_TA, IOAddress("2001:db8:1:2::"), 64));
     PoolPtr pool3(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:3::"), 64));
-    PoolPtr pool4(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:4::"), 64));
+    PoolPtr pool4(new Pool6(Lease::TYPE_PD, IOAddress("3000:1::"), 64));
 
     PoolPtr pool5(new Pool4(IOAddress("192.0.2.0"), 24));
 
@@ -525,7 +525,7 @@ TEST(Subnet6Test, PoolTypes) {
 
     // With valid hint, it should return that hint
     EXPECT_EQ(pool3, subnet->getPool(Lease::TYPE_PD, IOAddress("2001:db8:1:3::1")));
-    EXPECT_EQ(pool4, subnet->getPool(Lease::TYPE_PD, IOAddress("2001:db8:1:4::1")));
+    EXPECT_EQ(pool4, subnet->getPool(Lease::TYPE_PD, IOAddress("3000:1::")));
 
     // With invalid hint, it should return the first pool
     EXPECT_EQ(pool3, subnet->getPool(Lease::TYPE_PD, IOAddress("2001:db8::123")));
