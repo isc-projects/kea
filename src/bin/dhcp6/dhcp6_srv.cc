@@ -230,26 +230,21 @@ Dhcpv6Srv::testUnicast(const Pkt6Ptr& pkt) const {
 
 bool Dhcpv6Srv::run() {
     while (!shutdown_) {
-        /// @todo Currently we're using the fixed value of the timeout for
-        /// select. This value shouldn't be changed. Keeping it at 1s
-        /// guarantees that the main loop will be executed at least once
-        /// a seconds allowing for executing the interval timers associated
-        /// with the lease database backend in use. The intervals for these
-        /// timers are configured using the unit of 1 second. Bumping up
-        /// the select timeout would cause the timers to go out of sync
-        /// with the configured value.
-        /// Probing for the packets at this pace should not cause a
-        /// significant rise of the CPU usage. However, in the future we
-        /// should adjust the select timeout to the value reported by the
-        /// lease database backend as a maximum poll interval.
-        //cppcheck-suppress variableScope This is temporary anyway
-        const int timeout = 1;
-
         // client's message and server's response
         Pkt6Ptr query;
         Pkt6Ptr rsp;
 
         try {
+            // The lease database backend may install some timers for which
+            // the handlers need to be executed periodically. Retrieve the
+            // maximum interval at which the handlers must be executed from
+            // the lease manager.
+            uint32_t timeout = LeaseMgrFactory::instance().getIOServiceExecInterval();
+            // If the returned value is zero it means that there are no
+            // timers installed, so use a default value.
+            if (timeout == 0) {
+                timeout = 1000;
+            }
             query = receivePacket(timeout);
 
         } catch (const SignalInterruptOnSelect) {
@@ -276,7 +271,7 @@ bool Dhcpv6Srv::run() {
 
         // Execute ready timers for the lease database, e.g. Lease File Cleanup.
         try {
-            LeaseMgrFactory::instance().getIOService()->get_io_service().poll();
+            LeaseMgrFactory::instance().getIOService()->poll();
 
         } catch (const std::exception& ex) {
             LOG_WARN(dhcp6_logger, DHCP6_LEASE_DATABASE_TIMERS_EXEC_FAIL)

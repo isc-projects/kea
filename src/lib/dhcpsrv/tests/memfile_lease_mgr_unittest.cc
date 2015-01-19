@@ -288,6 +288,9 @@ TEST_F(MemfileLeaseMgrTest, lfcTimer) {
     boost::scoped_ptr<LFCMemfileLeaseMgr>
         lease_mgr(new LFCMemfileLeaseMgr(pmap));
 
+    // Check that the interval is correct.
+    EXPECT_EQ(1, lease_mgr->getIOServiceExecInterval());
+
     io_service_ = lease_mgr->getIOService();
 
     // Run the test for at most 2.9 seconds.
@@ -314,6 +317,8 @@ TEST_F(MemfileLeaseMgrTest, lfcTimerDisabled) {
     boost::scoped_ptr<LFCMemfileLeaseMgr>
         lease_mgr(new LFCMemfileLeaseMgr(pmap));
 
+    EXPECT_EQ(0, lease_mgr->getIOServiceExecInterval());
+
     io_service_ = lease_mgr->getIOService();
 
     // Run the test for at most 1.9 seconds.
@@ -324,6 +329,31 @@ TEST_F(MemfileLeaseMgrTest, lfcTimerDisabled) {
 
     // There should be no LFC execution recorded.
     EXPECT_EQ(0, lease_mgr->getLFCCount());
+}
+
+// Test that the backend returns a correct value of the interval
+// at which the IOService must be executed to run the handlers
+// for the installed timers.
+TEST_F(MemfileLeaseMgrTest, getIOServiceExecInterval) {
+        LeaseMgr::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "4";
+    pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
+
+    // The lfc-interval is not set, so the returned value should be 0.
+    boost::scoped_ptr<LFCMemfileLeaseMgr> lease_mgr(new LFCMemfileLeaseMgr(pmap));
+    EXPECT_EQ(0, lease_mgr->getIOServiceExecInterval());
+
+    // lfc-interval = 10
+    pmap["lfc-interval"] = 10;
+    lease_mgr.reset(new LFCMemfileLeaseMgr(pmap));
+    EXPECT_EQ(10, lease_mgr->getIOServiceExecInterval());
+
+    // lfc-interval = 20
+    pmap["lfc-interval"] = 20;
+    lease_mgr.reset(new LFCMemfileLeaseMgr(pmap));
+    EXPECT_EQ(10, lease_mgr->getIOServiceExecInterval());
+
 }
 
 // Checks that adding/getting/deleting a Lease6 object works.
