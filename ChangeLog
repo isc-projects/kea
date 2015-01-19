@@ -1,3 +1,10 @@
+876.   [func]          tomek
+       Two new MAC aquisition methods implemented for DHCPv6:
+       docsis-modem (which extracts MAC address from an option inserted
+       by a cable modem) and docsis-ctms (which extracts MAC address from
+       an option inserted by CMTS which acts as a DHCPv6 relay agent).
+       (Trac #3553, git ad0a3772774bc5f9831a5ba16725a5a22887b8cb)
+
 875.    [bug]           afidalgo, marcin
 	The DHCPv4 server no longer appends the trailing dot to the
 	hostnames sent to the clients in the Hostname option (12).
