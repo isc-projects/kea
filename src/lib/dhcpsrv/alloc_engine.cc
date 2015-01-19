@@ -15,6 +15,7 @@
 #include <dhcpsrv/alloc_engine.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/host_mgr.h>
+#include <dhcpsrv/host.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 
 #include <hooks/server_hooks.h>
@@ -476,39 +477,56 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         /// @todo: We support only one hint for now
         Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(ctx.type_, hint);
         if (!lease) {
-            /// @todo: check if the hint is reserved once we have host
-            /// support implemented
 
-            // The hint is valid and not currently used, let's create a
-            // lease for it
-            lease = createLease6(ctx, hint, pool->getLength());
+            // In-pool reservations: Check if this address is reserved for someone
+            // else. There is no need to check for whom it is reserved, because if
+            // it has been reserved for us we would have already allocated a lease.
 
-            // It can happen that the lease allocation failed (we could
-            // have lost the race condition. That means that the hint is
-            // lo longer usable and we need to continue the regular
-            // allocation path.
-            if (lease) {
+            /// @todo: BROKEN this call is broken. It tries to convert getID()
+            /// to IOAddress::uint32_t()
+            if (!ctx.subnet_->allowInPoolReservations() ||
+                !HostMgr::instance().get6(ctx.subnet_->getID(), hint)) {
+                // If the in-pool reservations are disabled, or there is no
+                // reservation for a given hint, we're good to go.
 
-                /// @todo: We support only one lease per ia for now
-                Lease6Collection collection;
-                collection.push_back(lease);
-                return (collection);
+                // The hint is valid and not currently used, let's create a
+                // lease for it
+                lease = createLease6(ctx, hint, pool->getLength());
+
+                // It can happen that the lease allocation failed (we could
+                // have lost the race condition. That means that the hint is
+                // lo longer usable and we need to continue the regular
+                // allocation path.
+                if (lease) {
+
+                    /// @todo: We support only one lease per ia for now
+                    Lease6Collection collection;
+                    collection.push_back(lease);
+                    return (collection);
+                }
             }
         } else {
+
+            // If the lease is expired, we may likely reuse it, but...
             if (lease->expired()) {
-                // Copy an existing, expired lease so as it can be returned
-                // to the caller.
-                Lease6Ptr old_lease(new Lease6(*lease));
-                ctx.old_leases_.push_back(old_lease);
 
-                /// We found a lease and it is expired, so we can reuse it
-                lease = reuseExpiredLease(lease, ctx, pool->getLength());
+                // Let's check if there is a reservation for this address.
+                if (!ctx.subnet_->allowInPoolReservations() ||
+                    !HostMgr::instance().get6(ctx.subnet_->getID(), hint)) {
 
-                /// @todo: We support only one lease per ia for now
-                leases.push_back(lease);
-                return (leases);
+                    // Copy an existing, expired lease so as it can be returned
+                    // to the caller.
+                    Lease6Ptr old_lease(new Lease6(*lease));
+                    ctx.old_leases_.push_back(old_lease);
+
+                    /// We found a lease and it is expired, so we can reuse it
+                    lease = reuseExpiredLease(lease, ctx, pool->getLength());
+
+                    /// @todo: We support only one lease per ia for now
+                    leases.push_back(lease);
+                    return (leases);
+                }
             }
-
         }
     }
 
@@ -532,8 +550,15 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
     do {
         IOAddress candidate = allocator->pickAddress(ctx.subnet_, ctx.duid_, hint);
 
-        /// @todo: check if the address is reserved once we have host support
-        /// implemented
+        /// In-pool reservations: Check if this address is reserved for someone
+        /// else. There is no need to check for whom it is reserved, because if
+        /// it has been reserved for us we would have already allocated a lease.
+        if (ctx.subnet_->allowInPoolReservations() &&
+            HostMgr::instance().get6(ctx.subnet_->getID(), candidate)) {
+
+            // Don't allocate.
+            continue;
+        }
 
         // The first step is to find out prefix length. It is 128 for
         // non-PD leases.
@@ -592,9 +617,39 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
 void
 AllocEngine::allocateReservedLeases6(ClientContext6& ctx, Lease6Collection& existing_leases) {
-    /// @todo
-    if (!ctx.host_ || existing_leases.empty()) {
+
+    // If there are no reservations or the reservation is v4, there's nothing to do.
+    if (!ctx.host_ || ctx.host_->hasIPv6Reservation()) {
         return;
+    }
+
+    // Let's convert this from Lease::Type to IPv6Reserv::Type
+    IPv6Resrv::Type type = ctx.type_ == Lease::TYPE_NA ? IPv6Resrv::TYPE_NA : IPv6Resrv::TYPE_PD;
+
+    // Get the IPv6 reservations of specified type.
+    const IPv6ResrvRange& reservs = ctx.host_->getIPv6Reservations(type);
+
+    if (std::distance(reservs.first, reservs.second) == 0) {
+        // No reservations? We're done here.
+        return;
+    }
+
+    for (IPv6ResrvIterator resv = reservs.first; resv != reservs.second; ++resv) {
+        // We do have a reservation for addr.
+        IOAddress addr = resv->second.getPrefix();
+        uint8_t prefix_len = resv->second.getPrefixLen();
+
+        // If there's a lease for this address, let's not create it.
+        // It doesn't matter whether it is for this client or for someone else.
+        if (LeaseMgrFactory::instance().getLease6(ctx.type_, addr)) {
+            continue;
+        }
+
+        // Ok, let's create a new lease...
+        Lease6Ptr lease = createLease6(ctx, addr, prefix_len);
+
+        // ... and add it to the existing leases list.
+        existing_leases.push_back(lease);
     }
 }
 
