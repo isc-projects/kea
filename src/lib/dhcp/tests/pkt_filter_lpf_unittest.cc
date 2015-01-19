@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -187,6 +187,43 @@ TEST_F(PktFilterLPFTest, DISABLED_receive) {
 
     // Check if the received message is correct.
     testRcvdMessage(rcvd_pkt);
+}
+
+// This test verifies that if the packet is received over the raw
+// socket and its destination address doesn't match the address
+// to which the socket is "bound", the packet is dropped.
+TEST_F(PktFilterLPFTest, DISABLED_filterOutUnicast) {
+
+    // Packet will be received over loopback interface.
+    Iface iface(ifname_, ifindex_);
+    iface.flag_loopback_ = true;
+    IOAddress addr("127.0.0.1");
+
+    // Create an instance of the class which we are testing.
+    PktFilterLPF pkt_filter;
+    // Open socket. We don't check that the socket has appropriate
+    // options and family set because we have checked that in the
+    // openSocket test already.
+    sock_info_ = pkt_filter.openSocket(iface, addr, PORT, false, false);
+    ASSERT_GE(sock_info_.sockfd_, 0);
+
+    // The message sent to the local loopback interface will have an
+    // invalid (non-existing) destination address. The socket should
+    // drop this packet.
+    sendMessage(IOAddress("128.0.0.1"));
+
+    // Perform select on the socket to make sure that the packet has
+    // been dropped.
+
+    fd_set readfds;
+    FD_ZERO(&readfds);
+    FD_SET(sock_info_.sockfd_, &readfds);
+
+    struct timeval timeout;
+    timeout.tv_sec = 1;
+    timeout.tv_usec = 0;
+    int result = select(sock_info_.sockfd_ + 1, &readfds, NULL, NULL, &timeout);
+    ASSERT_LE(result, 0);
 }
 
 } // anonymous namespace
