@@ -391,6 +391,25 @@ public:
     /// @brief returns value of the parameter
     virtual std::string getParameter(const std::string& name) const;
 
+    /// @brief Returns the interval at which the @c IOService events should
+    /// be released.
+    ///
+    /// The implementations of this class may install the timers which
+    /// periodically trigger event handlers defined for them. Depending
+    /// on the intervals specified for these timers the @c IOService::poll,
+    /// @c IOService::run etc. have to be executed to allow the timers
+    /// for checking whether they have already expired and the handler
+    /// must be executed. Running the @c IOService with a lower interval
+    /// would cause the desynchronization of timers with the clock.
+    ///
+    /// @return A maximum interval in seconds at which the @c IOService
+    /// should be executed. A value of 0 means that no timers are installed
+    /// and that there is no requirement for the @c IOService to be
+    /// executed at any specific interval.
+    virtual uint32_t getIOServiceExecInterval() const {
+        return (0);
+    }
+
     /// @brief Returns a reference to the @c IOService object used
     /// by the Lease Manager.
     const asiolink::IOServicePtr& getIOService() const {

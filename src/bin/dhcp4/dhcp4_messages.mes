@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -187,7 +187,7 @@ specified client after receiving a REQUEST message from it.  There are many
 possible reasons for such a failure. Additional messages will indicate the
 reason.
 
-% DHCP4_LEASE_DATABASE_TIMERS_EXEC_FAIL failed to execute the timers for lease database: %1
+% DHCP4_LEASE_DATABASE_TIMERS_EXEC_FAIL failed to execute timer-based functions for lease database: %1
 A warning message executed when a server process is unable to execute
 the periodic actions for the lease database. An example of the periodic
 action is a Lease File Cleanup. One of the reasons for the failure is
