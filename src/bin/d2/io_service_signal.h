@@ -20,6 +20,7 @@
 #include <exceptions/exceptions.h>
 
 #include <map>
+#include <stdint.h>
 
 namespace isc {
 namespace d2 {
