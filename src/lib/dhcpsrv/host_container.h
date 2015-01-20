@@ -16,9 +16,11 @@
 #define HOST_CONTAINER_H
 
 #include <dhcpsrv/host.h>
+#include <dhcpsrv/subnet_id.h>
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/composite_key.hpp>
 #include <boost/multi_index/mem_fun.hpp>
+#include <boost/multi_index/member.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 
 namespace isc {
@@ -95,6 +97,73 @@ typedef HostContainer::nth_index<1>::type HostContainerIndex1;
 /// @brief Results range returned using the @c HostContainerIndex1.
 typedef std::pair<HostContainerIndex1::iterator,
                   HostContainerIndex1::iterator> HostContainerIndex1Range;
+
+/// @brief Defines one entry for the Host Container for v6 hosts
+///
+/// It's essentially a pair of (IPv6 reservation, Host pointer).
+struct HostResrv6Tuple {
+
+    /// @brief Default constructor
+    HostResrv6Tuple(const IPv6Resrv& resrv, const ConstHostPtr& host)
+    :resrv_(resrv), host_(host), subnet_id_(host? host->getIPv6SubnetID() : 0) {
+    }
+
+    const IPv6Resrv resrv_;
+    ConstHostPtr host_;
+    const SubnetID subnet_id_;
+
+    const asiolink::IOAddress& getKey() const {
+        return (resrv_.getPrefix());
+    }
+};
+
+/// @brief Multi-index container holding IPv6 reservations.
+///
+/// This container holds HostResrv6Tuples, i.e. pairs of (IPv6Resrv, HostPtr)
+/// pieces of information. This is needed for efficiently finding a host
+/// for a given IPv6 address or prefix.
+typedef boost::multi_index_container<
+
+    /// This containers stores (IPv6Resrv, HostPtr) tuples
+    HostResrv6Tuple,
+
+    /// Start specification of indexes here.
+    boost::multi_index::indexed_by<
+
+        /// First index is used to search by an address.
+        boost::multi_index::ordered_non_unique<
+
+            /// Address is extracted by calling IPv6Resrv::getPrefix()
+            /// and it will return an IOAddress object.
+            boost::multi_index::const_mem_fun<
+                HostResrv6Tuple, const asiolink::IOAddress&,
+                &HostResrv6Tuple::getKey
+            >
+        >,
+
+        /// Second index is used to search by (subnet_id, address) pair
+        /// @todo: Let's make the first index working first.
+        boost::multi_index::ordered_non_unique<
+
+            boost::multi_index::composite_key<
+                  HostResrv6Tuple,
+
+                  boost::multi_index::member<
+                    HostResrv6Tuple, const SubnetID,
+                    &HostResrv6Tuple::subnet_id_
+                    >,
+
+                /// Address is extracted by calling IPv6Resrv::getPrefix()
+                /// and it will return an IOAddress object.
+                boost::multi_index::const_mem_fun<
+                    HostResrv6Tuple, const asiolink::IOAddress&,
+                    &HostResrv6Tuple::getKey
+                >
+           >
+        >
+
+> HostContainer6;
+
 
 }
 }
