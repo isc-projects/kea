@@ -194,6 +194,12 @@ Host::getIPv6Reservations(const IPv6Resrv::Type& type) const {
     return (ipv6_reservations_.equal_range(type));
 }
 
+IPv6ResrvRange
+Host::getIPv6Reservations() const {
+    return (IPv6ResrvRange(ipv6_reservations_.begin(),
+                           ipv6_reservations_.end()));
+}
+
 bool
 Host::hasIPv6Reservation() const {
     return (!ipv6_reservations_.empty());
