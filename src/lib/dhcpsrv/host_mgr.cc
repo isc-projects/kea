@@ -118,6 +118,17 @@ HostMgr::get6(const IOAddress& prefix, const uint8_t prefix_len) const {
     return (host);
 }
 
+ConstHostPtr
+HostMgr::get6(const SubnetID& subnet_id,
+              const asiolink::IOAddress& addr) const {
+    ConstHostPtr host = getCfgHosts()->get6(subnet_id, addr);
+    if (!host && alternate_source) {
+        host = alternate_source->get6(subnet_id, addr);
+    }
+    return (host);
+}
+
+
 void
 HostMgr::add(const HostPtr&) {
     isc_throw(isc::NotImplemented, "HostMgr::add is not implemented");

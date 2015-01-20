@@ -49,6 +49,20 @@ CfgHosts::getAll4(const IOAddress& address) {
     return (collection);
 }
 
+ConstHostCollection
+CfgHosts::getAll6(const IOAddress& address) const {
+    ConstHostCollection collection;
+    getAllInternal6<ConstHostCollection>(address, collection);
+    return (collection);
+}
+
+HostCollection
+CfgHosts::getAll6(const IOAddress& address) {
+    HostCollection collection;
+    getAllInternal6<HostCollection>(address, collection);
+    return (collection);
+}
+
 template<typename Storage>
 void
 CfgHosts::getAllInternal(const std::vector<uint8_t>& identifier,
@@ -86,6 +100,24 @@ CfgHosts::getAllInternal4(const IOAddress& address, Storage& storage) const {
     // Must not specify address other than IPv4.
     if (!address.isV4()) {
         isc_throw(BadHostAddress, "must specify an IPv4 address when searching"
+                  " for a host, specified address was " << address);
+    }
+    // Search for the Host using the reserved IPv4 address as a key.
+    const HostContainerIndex1& idx = hosts_.get<1>();
+    HostContainerIndex1Range r = idx.equal_range(address);
+    // Append each Host object to the storage.
+    for (HostContainerIndex1::iterator host = r.first; host != r.second;
+         ++host) {
+        storage.push_back(*host);
+    }
+}
+
+template<typename Storage>
+void
+CfgHosts::getAllInternal6(const IOAddress& address, Storage& storage) const {
+    // Must not specify address other than IPv6.
+    if (!address.isV6()) {
+        isc_throw(BadHostAddress, "must specify an IPv6 address when searching"
                   " for a host, specified address was " << address);
     }
     // Search for the Host using the reserved IPv4 address as a key.
@@ -151,6 +183,19 @@ CfgHosts::get6(const IOAddress&, const uint8_t) {
     isc_throw(isc::NotImplemented, "get6(prefix, len) is not implemented");
 }
 
+ConstHostPtr
+CfgHosts::get6(const SubnetID& subnet_id, const IOAddress& address) const {
+    ConstHostCollection hosts = getAll6(address);
+    for (ConstHostCollection::const_iterator host = hosts.begin();
+         host != hosts.end(); ++host) {
+        if ((*host)->getIPv4SubnetID() == subnet_id) {
+            return (*host);
+        }
+    }
+    return (ConstHostPtr());
+}
+
+
 HostPtr
 CfgHosts::getHostInternal(const SubnetID& subnet_id, const bool subnet6,
                           const HWAddrPtr& hwaddr, const DuidPtr& duid) const {
@@ -207,6 +252,19 @@ CfgHosts::add(const HostPtr& host) {
         isc_throw(BadValue, "must not use both IPv4 and IPv6 subnet ids of"
                   " 0 when adding new host reservation");
     }
+
+    if (host->getIPv4SubnetID() != 0) {
+        add4(host);
+    }
+
+    if (host->getIPv6SubnetID() != 0) {
+        add6(host);
+    }
+}
+
+void
+CfgHosts::add4(const HostPtr& host) {
+
     /// @todo This may need further sanity checks.
     HWAddrPtr hwaddr = host->getHWAddress();
     DuidPtr duid = host->getDuid();
@@ -236,8 +294,22 @@ CfgHosts::add(const HostPtr& host) {
                   << "' to the IPv4 subnet id '" << host->getIPv4SubnetID()
                   << "' as this host has already been added");
 
+    }
+    /// @todo This may need further sanity checks.
+
+    // This is a new instance - add it.
+    hosts_.insert(host);
+}
+
+void
+CfgHosts::add6(const HostPtr& host) {
+
+    /// @todo This may need further sanity checks.
+    HWAddrPtr hwaddr = host->getHWAddress();
+    DuidPtr duid = host->getDuid();
+
     // Check for duplicates for the specified IPv6 subnet.
-    } else if (host->getIPv6SubnetID() &&
+    if (host->getIPv6SubnetID() &&
                get6(host->getIPv6SubnetID(), duid, hwaddr)) {
         isc_throw(DuplicateHost, "failed to add new host using the HW"
                   " address '" << (hwaddr ? hwaddr->toText(false) : "(null)")
@@ -246,10 +318,29 @@ CfgHosts::add(const HostPtr& host) {
                   << "' as this host has already been added");
     }
 
-    /// @todo This may need further sanity checks.
+    // Now insert it into hosts_, which will be used for finding hosts
+    // based on their HW or DUID addresses. It cannot be used for
+    // finding IPv6 hosts by their IPv6 addresses, as there may be multiple
+    // addresses for a given host. However, insert only if this
+    // host doesn't have v4 subnet-id. If it does, it was just added
+    // by the previous call to add4().
+    if (! host->getIPv4SubnetID()) {
+        hosts_.insert(host);
+    }
 
-    // This is a new instance - add it.
-    hosts_.insert(host);
+    // Get all reservations for this host.
+    IPv6ResrvRange reservations = host->getIPv6Reservations();
+
+    if (std::distance(reservations.first, reservations.second) == 0) {
+
+        /// @todo: We don't handle address-less reservations yet
+        return;
+    }
+
+    for (IPv6ResrvIterator it = reservations.first; it != reservations.second;
+         ++it) {
+        hosts6_.insert(HostResrv6Tuple(it->second, host));
+    }
 }
 
 } // end of namespace isc::dhcp
