@@ -48,8 +48,8 @@ BUILT_SOURCES = lfc_messages.h lfc_messages.cc
 noinst_LTLIBRARIES = liblfc.la
 
 liblfc_la_SOURCES  =
-liblfc_la_SOURCES += lfc_lfc.h
-liblfc_la_SOURCES += lfc_lfc.cc
+liblfc_la_SOURCES += lfc.h
+liblfc_la_SOURCES += lfc.cc
 
 nodist_liblfc_la_SOURCES = lfc_messages.h lfc_messages.cc
 EXTRA_DIST += lfc_messages.mes
