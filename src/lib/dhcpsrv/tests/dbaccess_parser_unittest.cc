@@ -184,9 +184,7 @@ private:
     ///
     /// @return true if the value of the parameter should be quoted.
      bool quoteValue(const std::string& parameter) const {
-        static const char* params[] = { "persist", "lfc-interval" };
-        static std::set<std::string> params_set(params, params + sizeof(params));
-        return (params_set.find(parameter) == params_set.end());
+         return ((parameter != "persist") && (parameter != "lfc-interval"));
     }
 
 };
