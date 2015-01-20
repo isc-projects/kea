@@ -26,7 +26,7 @@ namespace d2 {
 // be configurable.
 const unsigned int D2Process::QUEUE_RESTART_PERCENT =  80;
 
-D2Process::D2Process(const char* name, asiolink::IOServicePtr io_service)
+D2Process::D2Process(const char* name, const asiolink::IOServicePtr& io_service)
     : DProcessBase(name, io_service, DCfgMgrBasePtr(new D2CfgMgr())),
      reconf_queue_flag_(false), shutdown_type_(SD_NORMAL) {
 
