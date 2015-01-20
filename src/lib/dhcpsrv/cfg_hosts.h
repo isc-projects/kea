@@ -297,6 +297,25 @@ private:
     void getAllInternal6(const asiolink::IOAddress& address,
                          Storage& storage) const;
 
+
+    /// @brief Returns @c Host objects for the specified (Subnet-id,IPv6 address) tuple.
+    ///
+    /// This private method is called by the @c CfgHosts::getAll6 methods
+    /// to retrieve the @c Host for which the specified IPv6 address is
+    /// reserved and is in specified subnet-id. The retrieved objects are
+    /// appended to the @c storage container.
+    ///
+    /// @param subnet_id Subnet Identifier.
+    /// @param address IPv6 address.
+    /// @param [out] storage Container to which the retrieved objects are
+    /// appended.
+    /// @tparam One of the @c ConstHostCollection or @c HostCollection.
+    template<typename Storage>
+    void
+    getAllInternal6(const SubnetID& subnet_id,
+                    const asiolink::IOAddress& address,
+                    Storage& storage) const;
+
     /// @brief Returns @c Host object connected to a subnet.
     ///
     /// This private method returns a pointer to the @c Host object identified
@@ -315,8 +334,6 @@ private:
                             const bool subnet6,
                             const HWAddrPtr& hwaddr,
                             const DuidPtr& duid) const;
-
-
 
     /// @brief Adds a new host to the v4 collection.
     ///

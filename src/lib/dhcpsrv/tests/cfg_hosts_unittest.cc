@@ -19,6 +19,7 @@
 #include <dhcpsrv/cfg_hosts.h>
 #include <dhcpsrv/host.h>
 #include <gtest/gtest.h>
+#include <sstream>
 #include <set>
 
 using namespace isc;
@@ -320,6 +321,115 @@ TEST_F(CfgHostsTest, get6) {
     // search criteria, it will throw an exception. Note that the reservation
     // exist both for hwaddrs_[0] and duids_[0].
     EXPECT_THROW(cfg.get6(SubnetID(1), duids_[0], hwaddrs_[0]), DuplicateHost);
+}
+
+// This test checks that the IPv6 reservations can be retrieved for a particular
+// (subnet-id, address) tuple.
+TEST_F(CfgHostsTest, get6ByAddr) {
+    CfgHosts cfg;
+    // Add hosts.
+    for (int i = 0; i < 25; ++i) {
+
+        // Add host identified by DUID.
+        HostPtr host = HostPtr(new Host(duids_[i]->toText(), "duid",
+                                        SubnetID(0), SubnetID(1 + i % 2),
+                                        IOAddress("0.0.0.0")));
+        host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                       increase(IOAddress("2001:db8:2::1"),
+                                                i)));
+        cfg.add(host);
+    }
+
+    for (int i = 0; i < 25; ++i) {
+        // Retrieve host by (subnet-id,address).
+        HostPtr host = cfg.get6(SubnetID(1 + i % 2),
+                                increase(IOAddress("2001:db8:2::1"), i));
+        ASSERT_TRUE(host);
+
+        EXPECT_EQ(1 + i % 2, host->getIPv6SubnetID());
+        IPv6ResrvRange reservations =
+            host->getIPv6Reservations(IPv6Resrv::TYPE_NA);
+        ASSERT_EQ(1, std::distance(reservations.first, reservations.second));
+        EXPECT_EQ(increase(IOAddress("2001:db8:2::1"), i),
+                  reservations.first->second.getPrefix());
+    }
+}
+
+// This test checks that the IPv6 reservations can be retrieved for a particular
+// (subnet-id, address) tuple.
+TEST_F(CfgHostsTest, get6MultipleAddrs) {
+    CfgHosts cfg;
+
+    // Add 25 hosts. Each host has reservations for 5 addresses.
+    for (int i = 0; i < 25; ++i) {
+
+        // Add host identified by DUID.
+        HostPtr host = HostPtr(new Host(duids_[i]->toText(), "duid",
+                                        SubnetID(0), SubnetID(1 + i % 2),
+                                        IOAddress("0.0.0.0")));
+
+        // Generate 5 unique addresses for this host.
+        for (int j = 0; j < 5; ++j) {
+            std::stringstream tmp;
+            tmp << "2001:db8:" << i << "::" << j;
+            host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA, tmp.str()));
+        }
+        cfg.add(host);
+    }
+
+    // We don't care about HW/MAC addresses for now.
+    HWAddrPtr hwaddr_not_used;
+
+    // Now check if we can retrieve each of those 25 hosts by using each
+    // of their addresses.
+    for (int i = 0; i < 25; ++i) {
+
+        // Check that the host is there.
+        HostPtr by_duid = cfg.get6(SubnetID(1 + i % 2), duids_[i], hwaddr_not_used);
+        ASSERT_TRUE(by_duid);
+
+        for (int j = 0; j < 5; ++j) {
+            std::stringstream tmp;
+            tmp << "2001:db8:" << i << "::" << j;
+
+            // Retrieve host by (subnet-id,address).
+            HostPtr by_addr = cfg.get6(SubnetID(1 + i % 2), tmp.str());
+            ASSERT_TRUE(by_addr);
+
+            // The pointers should match. Maybe we should compare contents
+            // rather than just pointers? I think there's no reason why
+            // the code would make any copies of the Host object, so
+            // the pointers should always point to the same object.
+            EXPECT_EQ(by_duid, by_addr);
+        }
+    }
+}
+
+
+// Checks that it's not possible for two hosts to have the same address
+// reserved at the same time.
+TEST_F(CfgHostsTest, add6Invalid2Hosts) {
+    CfgHosts cfg;
+
+    // First host has a reservation for address 2001:db8::1
+    HostPtr host1 = HostPtr(new Host(duids_[0]->toText(), "duid",
+                                     SubnetID(0), SubnetID(1),
+                                     IOAddress("0.0.0.0")));
+    host1->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                    IOAddress("2001:db8::1")));
+    // Adding this should work.
+    EXPECT_NO_THROW(cfg.add(host1));
+
+    // The second host has a reservation for the same address.
+    HostPtr host2 = HostPtr(new Host(duids_[1]->toText(), "duid",
+                                     SubnetID(0), SubnetID(1),
+                                     IOAddress("0.0.0.0")));
+    host2->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                    IOAddress("2001:db8::1")));
+
+    // This second host has a reservation for an address that is already
+    // reserved for the first host, so it should be rejected.
+    EXPECT_THROW(cfg.add(host2), isc::dhcp::DuplicateHost);
 }
 
 TEST_F(CfgHostsTest, zeroSubnetIDs) {
