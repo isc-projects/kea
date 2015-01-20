@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -26,7 +26,7 @@ namespace d2 {
 // be configurable.
 const unsigned int D2Process::QUEUE_RESTART_PERCENT =  80;
 
-D2Process::D2Process(const char* name, IOServicePtr io_service)
+D2Process::D2Process(const char* name, const asiolink::IOServicePtr& io_service)
     : DProcessBase(name, io_service, DCfgMgrBasePtr(new D2CfgMgr())),
      reconf_queue_flag_(false), shutdown_type_(SD_NORMAL) {
 
@@ -101,7 +101,7 @@ D2Process::runIO() {
     // service.  Secondly, asiolink::IOService does not provide the poll
     // method.  This is a handy method which runs all ready handlers without
     // blocking.
-    IOServicePtr& io = getIoService();
+    asiolink::IOServicePtr& io = getIoService();
     asio::io_service& asio_io_service  = io->get_io_service();
 
     // Poll runs all that are ready. If none are ready it returns immediately

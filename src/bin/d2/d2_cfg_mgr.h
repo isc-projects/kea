@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,9 +15,9 @@
 #ifndef D2_CFG_MGR_H
 #define D2_CFG_MGR_H
 
+#include <asiolink/io_service.h>
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
-#include <d2/d2_asio.h>
 #include <d2/d_cfg_mgr.h>
 #include <d2/d2_config.h>
 

@@ -15,6 +15,7 @@
 #ifndef MEMFILE_LEASE_MGR_H
 #define MEMFILE_LEASE_MGR_H
 
+#include <asiolink/interval_timer.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/csv_lease_file4.h>
 #include <dhcpsrv/csv_lease_file6.h>
@@ -32,9 +33,24 @@ namespace dhcp {
 /// DHCPv4 and DHCPv6 leases on disk. The format of the files is determined
 /// by the @c CSVLeaseFile4 and @c CSVLeaseFile6 classes.
 ///
-/// The backend stores leases incrementally, i.e. updates to leases are appended
-/// at the end of the lease file. To record the deletion of a lease, the lease
-/// record is appended to the lease file with the valid lifetime set to 0.
+/// In order to obtain good performance, the backend stores leases
+/// incrementally, i.e. updates to leases are appended at the end of the lease
+/// file. To record the deletion of a lease, the lease record is appended to
+/// the lease file with the valid lifetime set to 0. However, this may result
+/// in a significant growth of the lease file size over time, because the lease
+/// file will contain many entries for each lease. In order to mitigate this
+/// problem, the backend implements the Lease File Cleanup mechanism which is
+/// described on the Kea wiki: http://kea.isc.org/wiki/LFCDesign.
+///
+/// The backend installs an @c asiolink::IntervalTimer to periodically execute
+/// the @c Memfile_LeaseMgr::lfcCallback. This callback function controls
+/// the startup of the background process which removes redundant information
+/// from the lease file(s). Note that the @c asiolink::IntervalTimer uses
+/// @c asiolink::IOService to execute the callback. The @c LeaseMgr class
+/// creates this object, which can be obtained by the caller using the
+/// @c LeaseMgr::getIOService. The caller should later call an appropriate
+/// method, @c asio::io_service::poll_one to execute the callback when
+/// the timer is ready.
 ///
 /// When the backend is starting up, it reads leases from the lease file (one
 /// by one) and adds them to the in-memory container as follows:
@@ -304,6 +320,19 @@ public:
     /// support transactions, this is a no-op.
     virtual void rollback();
 
+    /// @brief Returns the interval at which the @c IOService events should
+    /// be released.
+    ///
+    /// The Memfile backend may install a timer to execute the Lease File
+    /// Cleanup periodically. If this timer is installed, the method returns
+    /// the LFC interval in milliseconds.
+    ///
+    /// @return A maximum interval (in seconds) at which the @c IOService
+    /// should be executed. A value of 0 means that no timers are installed
+    /// and that there is no requirement for the @c IOService to be
+    /// executed at any specific interval.
+    virtual uint32_t getIOServiceExecInterval() const;
+
     /// @brief Returns default path to the lease file.
     ///
     /// @param u Universe (V4 or V6).
@@ -332,6 +361,25 @@ public:
 
 private:
 
+    /// @brief A callback function triggering Lease File Cleanup.
+    ///
+    /// This method is virtual so as it can be overriden and customized in
+    /// the unit tests. In particular, the unit test which checks that the
+    /// callback function has been executed would override this function
+    /// to increase the execution counter each time it is executed.
+    ///
+    /// @todo Once the callback is implemented, there is a need to
+    /// extend the documentation of this method. Currently, it simply
+    /// logs that it has been called.
+    virtual void lfcCallback();
+
+private:
+
+    /// @brief Initialize the timers used to perform repeating tasks.
+    ///
+    /// Currently only one timer is supported. This timer executes the
+    /// Lease File Cleanup periodically.
+    void initTimers();
     /// @brief Initialize the location of the lease file.
     ///
     /// This method uses the parameters passed as a map to the constructor to
@@ -400,6 +448,9 @@ private:
 
     /// @brief Holds the pointer to the DHCPv6 lease file IO.
     boost::shared_ptr<CSVLeaseFile6> lease_file6_;
+
+    /// @brief A timer scheduled to perform Lease File Cleanup.
+    asiolink::IntervalTimer lfc_timer_;
 
 };
 
