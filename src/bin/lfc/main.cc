@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
-#include <lfc/lfc_lfc.h>
+#include <lfc/lfc.h>
 #include <exceptions/exceptions.h>
 #include <log/logger_support.h>
 #include <log/logger_manager.h>
@@ -31,16 +31,16 @@ using namespace std;
 /// errors, EXIT_FAILURE otherwise.
 int main(int argc, char* argv[]) {
     int ret = EXIT_SUCCESS;
+    lfc lfc;
 
-    // Instantiate/fetch the lfc application controller singleton.
-    //    DControllerBasePtr& controller = D2Controller::instance();
+    // Instantiate/fetch the lfc application controller.
+    //    lfc& lfc = lfc::lfc();
 
     // Launch the controller passing in command line arguments.
     // Exit program with the controller's return code.
     try  {
         // 'false' value disables test mode.
-      //controller->launch(argc, argv, false);
-        std::cerr << "Service started:" << std::endl;      
+        lfc.launch(argc, argv, false);
     } catch (const isc::Exception& ex) {
         std::cerr << "Service failed:" << ex.what() << std::endl;
         ret = EXIT_FAILURE;
