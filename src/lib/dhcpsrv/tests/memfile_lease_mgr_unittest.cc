@@ -335,7 +335,7 @@ TEST_F(MemfileLeaseMgrTest, lfcTimerDisabled) {
 // at which the IOService must be executed to run the handlers
 // for the installed timers.
 TEST_F(MemfileLeaseMgrTest, getIOServiceExecInterval) {
-        LeaseMgr::ParameterMap pmap;
+    LeaseMgr::ParameterMap pmap;
     pmap["type"] = "memfile";
     pmap["universe"] = "4";
     pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
@@ -345,14 +345,14 @@ TEST_F(MemfileLeaseMgrTest, getIOServiceExecInterval) {
     EXPECT_EQ(0, lease_mgr->getIOServiceExecInterval());
 
     // lfc-interval = 10
-    pmap["lfc-interval"] = 10;
+    pmap["lfc-interval"] = "10";
     lease_mgr.reset(new LFCMemfileLeaseMgr(pmap));
     EXPECT_EQ(10, lease_mgr->getIOServiceExecInterval());
 
     // lfc-interval = 20
-    pmap["lfc-interval"] = 20;
+    pmap["lfc-interval"] = "20";
     lease_mgr.reset(new LFCMemfileLeaseMgr(pmap));
-    EXPECT_EQ(10, lease_mgr->getIOServiceExecInterval());
+    EXPECT_EQ(20, lease_mgr->getIOServiceExecInterval());
 
 }
 
