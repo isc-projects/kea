@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,8 +15,8 @@
 #ifndef D_CONTROLLER_H
 #define D_CONTROLLER_H
 
+#include <asiolink/io_service.h>
 #include <cc/data.h>
-#include <d2/d2_asio.h>
 #include <d2/d2_log.h>
 #include <d2/d_process.h>
 #include <d2/io_service_signal.h>
@@ -320,7 +320,7 @@ protected:
     /// @brief Getter for fetching the controller's IOService
     ///
     /// @return returns a pointer reference to the IOService.
-    IOServicePtr& getIOService() {
+    asiolink::IOServicePtr& getIOService() {
         return (io_service_);
     }
 
@@ -481,7 +481,7 @@ private:
     DProcessBasePtr process_;
 
     /// @brief Shared pointer to an IOService object, used for ASIO operations.
-    IOServicePtr io_service_;
+    asiolink::IOServicePtr io_service_;
 
     /// @brief Set of registered signals to handle.
     util::SignalSetPtr signal_set_;

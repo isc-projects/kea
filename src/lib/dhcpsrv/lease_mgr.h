@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #define LEASE_MGR_H
 
 #include <asiolink/io_address.h>
+#include <asiolink/io_service.h>
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
 #include <dhcp/hwaddr.h>
@@ -117,9 +118,19 @@ public:
 /// be used directly, but rather specialized derived class should be used
 /// instead.
 ///
-/// As all methods are virtual, this class throws no exceptions.  However,
-/// methods in concrete implementations of this class may throw exceptions:
-/// see the documentation of those classes for details.
+/// This class creates an instance of the @c asiolink::IOService in the
+/// constructor. This object is required to execute the
+/// @c asiolink::IntervalTimer for the operations triggered periodically
+/// by the lease database backends which implement @c LeaseMgr interface.
+/// In order to execute the timers installed by the particular backend,
+/// the owner of the backend (e.g. DHCP server) should retrieve the pointer
+/// to the @c asiolink::IOService object by calling @c LeaseMgr::getIOService
+/// and call the appropriate functions, e.g. @c poll_one or @c run_one in a
+/// main loop.
+///
+/// This class throws no exceptions.  However, methods in concrete
+/// implementations of this class may throw exceptions: see the documentation
+/// of those classes for details.
 class LeaseMgr {
 public:
     /// @brief Defines maximum value for time that can be reliably stored.
@@ -133,7 +144,8 @@ public:
     ///
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the database.
-    LeaseMgr(const ParameterMap& parameters) : parameters_(parameters)
+    LeaseMgr(const ParameterMap& parameters)
+        : parameters_(parameters), io_service_(new asiolink::IOService())
     {}
 
     /// @brief Destructor
@@ -379,6 +391,31 @@ public:
     /// @brief returns value of the parameter
     virtual std::string getParameter(const std::string& name) const;
 
+    /// @brief Returns the interval at which the @c IOService events should
+    /// be released.
+    ///
+    /// The implementations of this class may install the timers which
+    /// periodically trigger event handlers defined for them. Depending
+    /// on the intervals specified for these timers the @c IOService::poll,
+    /// @c IOService::run etc. have to be executed to allow the timers
+    /// for checking whether they have already expired and the handler
+    /// must be executed. Running the @c IOService with a lower interval
+    /// would cause the desynchronization of timers with the clock.
+    ///
+    /// @return A maximum interval in seconds at which the @c IOService
+    /// should be executed. A value of 0 means that no timers are installed
+    /// and that there is no requirement for the @c IOService to be
+    /// executed at any specific interval.
+    virtual uint32_t getIOServiceExecInterval() const {
+        return (0);
+    }
+
+    /// @brief Returns a reference to the @c IOService object used
+    /// by the Lease Manager.
+    const asiolink::IOServicePtr& getIOService() const {
+        return (io_service_);
+    }
+
 private:
     /// @brief list of parameters passed in dbconfig
     ///
@@ -386,6 +423,10 @@ private:
     /// password and other parameters required for DB access. It is not
     /// intended to keep any DHCP-related parameters.
     ParameterMap parameters_;
+
+    /// @brief Pointer to the IO service object used by the derived classes
+    /// to trigger interval timers.
+    asiolink::IOServicePtr io_service_;
 };
 
 }; // end of isc::dhcp namespace

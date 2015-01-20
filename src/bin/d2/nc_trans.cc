@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -44,7 +44,7 @@ const int NameChangeTransaction::NCT_DERIVED_EVENT_MIN;
 const unsigned int NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER;
 
 NameChangeTransaction::
-NameChangeTransaction(IOServicePtr& io_service,
+NameChangeTransaction(asiolink::IOServicePtr& io_service,
                       dhcp_ddns::NameChangeRequestPtr& ncr,
                       DdnsDomainPtr& forward_domain,
                       DdnsDomainPtr& reverse_domain,

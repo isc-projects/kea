@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -22,7 +22,7 @@ namespace d2 {
 // Makes constant visible to Google test macros.
 const size_t D2QueueMgr::MAX_QUEUE_DEFAULT;
 
-D2QueueMgr::D2QueueMgr(IOServicePtr& io_service, const size_t max_queue_size)
+D2QueueMgr::D2QueueMgr(asiolink::IOServicePtr& io_service, const size_t max_queue_size)
     : io_service_(io_service), max_queue_size_(max_queue_size),
       mgr_state_(NOT_INITTED), target_stop_state_(NOT_INITTED) {
     if (!io_service_) {

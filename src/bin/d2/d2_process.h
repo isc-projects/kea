@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -66,7 +66,7 @@ public:
     /// asynchronous event handling.
     ///
     /// @throw DProcessBaseError is io_service is NULL.
-    D2Process(const char* name, IOServicePtr io_service);
+    D2Process(const char* name, const asiolink::IOServicePtr& io_service);
 
     /// @brief Called after instantiation to perform initialization unique to
     /// D2.

@@ -40,6 +40,7 @@
 #include <hooks/hooks_manager.h>
 #include <util/strutil.h>
 
+#include <asio.hpp>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 
@@ -149,15 +150,21 @@ Dhcpv4Srv::sendPacket(const Pkt4Ptr& packet) {
 bool
 Dhcpv4Srv::run() {
     while (!shutdown_) {
-        /// @todo: calculate actual timeout once we have lease database
-        //cppcheck-suppress variableScope This is temporary anyway
-        const int timeout = 1000;
-
         // client's message and server's response
         Pkt4Ptr query;
         Pkt4Ptr rsp;
 
         try {
+            // The lease database backend may install some timers for which
+            // the handlers need to be executed periodically. Retrieve the
+            // maximum interval at which the handlers must be executed from
+            // the lease manager.
+            uint32_t timeout = LeaseMgrFactory::instance().getIOServiceExecInterval();
+            // If the returned value is zero it means that there are no
+            // timers installed, so use a default value.
+            if (timeout == 0) {
+                timeout = 1000;
+            }
             query = receivePacket(timeout);
 
         } catch (const SignalInterruptOnSelect) {
@@ -182,6 +189,15 @@ Dhcpv4Srv::run() {
         // process could wait up to the duration of timeout of select() to
         // terminate.
         handleSignal();
+
+        // Execute ready timers for the lease database, e.g. Lease File Cleanup.
+        try {
+            LeaseMgrFactory::instance().getIOService()->poll();
+
+        } catch (const std::exception& ex) {
+            LOG_WARN(dhcp4_logger, DHCP4_LEASE_DATABASE_TIMERS_EXEC_FAIL)
+                .arg(ex.what());
+        }
 
         // Timeout may be reached or signal received, which breaks select()
         // with no reception ocurred
