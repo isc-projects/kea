@@ -1,3 +1,11 @@
+878.	[func]		marcin
+	DHCPv4 and DHCPv6 server now support the lfc-interval
+	parameter which configures the interval in which the
+	Memfile lease database backend executes the Lease File
+	Cleanup (LFC). Note: the LFC is currently no-op and will
+	be implemented shortly.
+	(Trac #3668, git 2ce54eeb607d2caa0901125b5d86a373e9e3f165)
+
 877.	[func]           marcin
 	DHCPv4 server drops unicast packets sent to the IPv4 address
 	on which the server is not configured to listen.
