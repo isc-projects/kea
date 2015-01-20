@@ -47,6 +47,8 @@
 #include <util/io_utilities.h>
 #include <util/range_utilities.h>
 
+#include <asio.hpp>
+
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/tokenizer.hpp>
@@ -228,20 +230,21 @@ Dhcpv6Srv::testUnicast(const Pkt6Ptr& pkt) const {
 
 bool Dhcpv6Srv::run() {
     while (!shutdown_) {
-        /// @todo Calculate actual timeout to the next event (e.g. lease
-        /// expiration) once we have lease database. The idea here is that
-        /// it is possible to do everything in a single process/thread.
-        /// For now, we are just calling select for 1000 seconds. There
-        /// were some issues reported on some systems when calling select()
-        /// with too large values. Unfortunately, I don't recall the details.
-        //cppcheck-suppress variableScope This is temporary anyway
-        const int timeout = 1000;
-
         // client's message and server's response
         Pkt6Ptr query;
         Pkt6Ptr rsp;
 
         try {
+            // The lease database backend may install some timers for which
+            // the handlers need to be executed periodically. Retrieve the
+            // maximum interval at which the handlers must be executed from
+            // the lease manager.
+            uint32_t timeout = LeaseMgrFactory::instance().getIOServiceExecInterval();
+            // If the returned value is zero it means that there are no
+            // timers installed, so use a default value.
+            if (timeout == 0) {
+                timeout = 1000;
+            }
             query = receivePacket(timeout);
 
         } catch (const SignalInterruptOnSelect) {
@@ -265,6 +268,15 @@ bool Dhcpv6Srv::run() {
         // process could wait up to the duration of timeout of select() to
         // terminate.
         handleSignal();
+
+        // Execute ready timers for the lease database, e.g. Lease File Cleanup.
+        try {
+            LeaseMgrFactory::instance().getIOService()->poll();
+
+        } catch (const std::exception& ex) {
+            LOG_WARN(dhcp6_logger, DHCP6_LEASE_DATABASE_TIMERS_EXEC_FAIL)
+                .arg(ex.what());
+        }
 
         // Timeout may be reached or signal received, which breaks select()
         // with no packet received

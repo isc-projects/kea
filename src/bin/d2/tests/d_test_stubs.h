@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,11 +15,12 @@
 #ifndef D_TEST_STUBS_H
 #define D_TEST_STUBS_H
 
+#include <asiolink/io_service.h>
+
 #include <cc/data.h>
 #include <cc/session.h>
 #include <config/ccsession.h>
 
-#include <d2/d2_asio.h>
 #include <d2/d_controller.h>
 #include <d2/d_cfg_mgr.h>
 
@@ -128,7 +129,7 @@ public:
     /// asynchronous event handling.
     ///
     /// @throw DProcessBaseError is io_service is NULL.
-    DStubProcess(const char* name, IOServicePtr io_service);
+    DStubProcess(const char* name, asiolink::IOServicePtr io_service);
 
     /// @brief Invoked after process instantiation to perform initialization.
     /// This implementation supports simulating an error initializing the
@@ -423,7 +424,7 @@ public:
     /// @brief Gets the Controller's IOService.
     ///
     /// @return returns a reference to the IOService
-    IOServicePtr& getIOService() {
+    asiolink::IOServicePtr& getIOService() {
         return (getController()->io_service_);
     }
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,8 @@
 
 /// @file nc_test_utils.h prototypes for functions related transaction testing.
 
+#include <asiolink/io_service.h>
+#include <asiolink/interval_timer.h>
 #include <d2/nc_trans.h>
 
 #include <asio/ip/udp.hpp>
@@ -138,7 +140,7 @@ public:
 /// valve so tests do not hang.
 class TimedIO  {
 public:
-    IOServicePtr io_service_;
+    asiolink::IOServicePtr io_service_;
     asiolink::IntervalTimer timer_;
     int run_time_;
 

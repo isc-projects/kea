@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 
+#include <asiolink/io_service.h>
 #include <config/ccsession.h>
 #include <d2/d2_process.h>
 #include <dhcp_ddns/ncr_io.h>
@@ -64,8 +65,9 @@ class D2ProcessTest : public D2Process, public ConfigParseTest {
 public:
 
     /// @brief Constructor
-    D2ProcessTest() : D2Process("d2test",
-                                IOServicePtr(new isc::asiolink::IOService())) {
+    D2ProcessTest() :
+        D2Process("d2test",
+                  asiolink::IOServicePtr(new isc::asiolink::IOService())) {
     }
 
     /// @brief Destructor
@@ -143,7 +145,7 @@ public:
 TEST(D2Process, construction) {
     // Verify that the constructor will fail if given an empty
     // io service.
-    IOServicePtr lcl_io_service;
+    asiolink::IOServicePtr lcl_io_service;
     EXPECT_THROW (D2Process("TestProcess", lcl_io_service), DProcessBaseError);
 
     // Verify that the constructor succeeds with a valid io_service
