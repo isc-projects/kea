@@ -1,8 +1,8 @@
 SHTESTS =
 
-noinst_SCRIPTS = lfc_tests.sh
+noinst_SCRIPTS = 
 
-EXTRA_DIST  = lfc_tests.sh.in
+EXTRA_DIST  = 
 
 # test using command-line arguments, so use check-local target instead of TESTS
 check-local:
@@ -24,7 +24,7 @@ AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
 CLEANFILES = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
 
-DISTCLEANFILES = lfc_process_tests.sh
+DISTCLEANFILES = 
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 if USE_CLANGPP
@@ -44,12 +44,13 @@ if HAVE_GTEST
 
 TESTS += lfc_unittests
 
-#lfc_unittests_SOURCES = d_test_stubs.cc d_test_stubs.h
+lfc_unittests_SOURCES = lfc_unittests.cc
+lfc_unittests_SOURCES += lfc_controller_unittests.cc
 
 lfc_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 lfc_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 lfc_unittests_LDADD = $(GTEST_LDADD)
-lfc_unittests_LDADD += $(top_builddir)/src/bin/d2/libd2.la
+lfc_unittests_LDADD += $(top_builddir)/src/bin/lfc/liblfc.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/asiodns/libkea-asiodns.la
