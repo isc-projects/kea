@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -140,14 +140,16 @@ DControllerBase::parseArgs(int argc, char* argv[])
             break;
 
         case 'v':
-            // Print just Kea version and exit
-            std::cout << getVersion(false) << std::endl;
-            exit(EXIT_SUCCESS);
+            // gather Kea version and throw so main() can catch and return
+            // rather than calling exit() here which disrupts gtest.
+            isc_throw(VersionMessage, getVersion(false));
+            break;
 
         case 'V':
-            // Print extended Kea version and exit
-            std::cout << getVersion(true) << std::endl;
-            exit(EXIT_SUCCESS);
+            // gather Kea version and throw so main() can catch and return
+            // rather than calling exit() here which disrupts gtest.
+            isc_throw(VersionMessage, getVersion(true));
+            break;
             
         case 'c':
             // config file name
