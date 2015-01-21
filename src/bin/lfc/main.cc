@@ -31,16 +31,13 @@ using namespace std;
 /// errors, EXIT_FAILURE otherwise.
 int main(int argc, char* argv[]) {
     int ret = EXIT_SUCCESS;
-    lfc lfc;
-
-    // Instantiate/fetch the lfc application controller.
-    //    lfc& lfc = lfc::lfc();
+    lfcController lfcController;
 
     // Launch the controller passing in command line arguments.
     // Exit program with the controller's return code.
     try  {
         // 'false' value disables test mode.
-        lfc.launch(argc, argv, false);
+        lfcController.launch(argc, argv, false);
     } catch (const isc::Exception& ex) {
         std::cerr << "Service failed:" << ex.what() << std::endl;
         ret = EXIT_FAILURE;

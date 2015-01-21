@@ -32,7 +32,7 @@ public:
 //class lfcBase;
 //typedef boost::shared_ptr<lfcBase> lfcBasePtr;
 
-class lfc {
+class lfcController {
 public:
     /// @brief Defines the application name, it may be used to locate
     /// configuration data and appears in log statements.
@@ -43,10 +43,10 @@ public:
     static const char* lfc_bin_name_;
 
     /// @brief Constructor
-    lfc();
+    lfcController();
 
     /// @brief Destructor
-    ~lfc();
+    ~lfcController();
 
     /// @brief Acts as the primary entry point to start execution
     /// of the process.  Provides the control logic:
@@ -63,26 +63,94 @@ public:
     /// step taken after the process has been launched.
     void parseArgs(int argc, char* argv[]);
 
-    /// @brief Use the pid to determine if there is another instance
-    /// and create a pid file if we are alone.
-    void pidCheck();
+    /// @brief Use the pid file to determine if there is another instance
+    ///
+    /// @param pid_file is the name of the file which holds the pid to check
+    /// returns true if there is a process with that pid
+    bool pidCheck(const std::string & pid_file);
+
+    /// @brief Extract the pid and Write it out to the pid file
+    ///
+    /// @param pid_file is the name of the file in which to write the pid
+    /// returns true if the write was successful
+    bool pidWrite(const std::string & pid_file);
 
     /// @brief Get rid of the pid file we created earlier
-    void pidDelete();
+    void pidDelete(const std::string & pid_file);
 
-    /// #brief prints the program usage text to std error.
+    /// @brief Prints the program usage text to std error.
     ///
     /// @param text is a string message which will preceded the usage text.
     /// This is intended to be used for specific usage violation messages.
     void usage(const std::string& text);
 
+    /// @brief Gets the Kea version number for printing
+    ///
+    /// @param extended is a boolean indicating if the version string
+    /// should be short (false) or extended (true)
+    std::string getVersion(bool extended);
+
+    // The following are primarly for the test code and not expected
+    // to be used in normal situations
+
+    /// @brief Gets the protocol version of the leaes files
+    ///
+    /// @return Returns the value of the protocol version
+    int getProtocolVersion() {
+      return (protocol_version_);
+    }
+
+    /// @brief Gets the config file name
+    ///
+    /// @return Returns the name of the config file
+    std::string getConfigFile() const {
+        return (config_file_);
+    }
+
+    /// @brief Gets the prevous file name
+    ///
+    /// @return Returns the name of the previous file
+    std::string getPreviousFile() const {
+        return (previous_file_);
+    }
+
+    /// @brief Gets the copy file name
+    ///
+    /// @return Returns the name of the copy file
+    std::string getCopyFile() const {
+        return (copy_file_);
+    }
+
+    /// @brief Gets the output file name
+    ///
+    /// @return Returns the name of the output file
+    std::string getOutputFile() const {
+        return (output_file_);
+    }
+
+    /// @brief Gets the finish file name
+    ///
+    /// @return Returns the name of the finish file
+    std::string getFinishFile() const {
+        return (finish_file_);
+    }
+
+    /// @brief Gets the pid file name
+    ///
+    /// @return Returns the name of the pid file
+    std::string getPidFile() const {
+        return (pid_file_);
+    }
+
 private:
-    int dhcp_version_;
+    int protocol_version_;
     bool verbose_;
     std::string config_file_;
     std::string previous_file_;
     std::string copy_file_;
     std::string output_file_;
+    std::string finish_file_;
+    std::string pid_file_;
 };
 
 }; // namespace isc:lfc
