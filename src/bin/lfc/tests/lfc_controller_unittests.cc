@@ -13,11 +13,12 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <lfc/lfc.h>
-#include <log/logger_support.h>
 #include <gtest/gtest.h>
 
 using namespace isc::lfc;
 using namespace std;
+
+namespace {
 
 TEST(lfcControllerTest, initialValues) {
     lfcController lfcController;
@@ -154,3 +155,5 @@ TEST(lfcControllerTest, someBadData) {
 
     EXPECT_THROW(lfcController.parseArgs(argc, argv), InvalidUsage);
 }
+
+} // end of anonymous namespace

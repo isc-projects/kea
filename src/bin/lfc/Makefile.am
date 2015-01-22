@@ -60,15 +60,9 @@ kea_lfc_SOURCES  = main.cc
 kea_lfc_LDADD  = liblfc.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-kea_lfc_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
-kea_lfc_LDADD += $(top_builddir)/src/lib/asiodns/libkea-asiodns.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
-kea_lfc_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
-kea_lfc_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
-kea_lfc_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
-kea_lfc_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 
 kea_lfcdir = $(pkgdatadir)

@@ -1393,8 +1393,8 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/keactrl/keactrl.conf
                  src/bin/keactrl/tests/Makefile
                  src/bin/keactrl/tests/keactrl_tests.sh
-		 src/bin/lfc/Makefile
-		 src/bin/lfc/tests/Makefile
+                 src/bin/lfc/Makefile
+                 src/bin/lfc/tests/Makefile
                  src/bin/perfdhcp/Makefile
                  src/bin/perfdhcp/tests/Makefile
                  src/bin/perfdhcp/tests/testdata/Makefile

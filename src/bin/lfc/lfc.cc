@@ -14,8 +14,6 @@
 
 #include <lfc/lfc.h>
 #include <exceptions/exceptions.h>
-#include <log/logger_support.h>
-#include <log/logger_manager.h>
 #include <config.h>
 #include <iostream>
 
