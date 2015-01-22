@@ -111,7 +111,7 @@ public:
     /// @brief Constructor
     ///
     /// @param ignored first parameter
-    /// stores global scope parameters, options, option defintions.
+    /// stores global scope parameters, options, option definitions.
     Subnet4ConfigParser(const std::string&)
         :SubnetConfigParser("", globalContext(), IOAddress("0.0.0.0")) {
     }
@@ -455,7 +455,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
 
     // Answer will hold the result.
     ConstElementPtr answer;
-    // Rollback informs whether error occured and original data
+    // Rollback informs whether error occurred and original data
     // have to be restored to global storages.
     bool rollback = false;
     // config_pair holds the details of the current parser when iterating over
@@ -520,7 +520,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                   .arg(config_pair.first).arg(ex.what());
         answer = isc::config::createAnswer(1, ex.what());
 
-        // An error occured, so make sure that we restore original data.
+        // An error occurred, so make sure that we restore original data.
         rollback = true;
 
     } catch (...) {
@@ -529,7 +529,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
         answer = isc::config::createAnswer(1, "undefined configuration"
                                            " processing error");
 
-        // An error occured, so make sure that we restore original data.
+        // An error occurred, so make sure that we restore original data.
         rollback = true;
     }
 
