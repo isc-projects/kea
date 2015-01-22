@@ -185,7 +185,7 @@ public:
     /// - Requested IP Address option
     /// - server identifier
     /// are used (as per RFC2131, section 4.3.2). Therefore, the unit tests
-    /// must setthe appropriate state of the client prior to calling this
+    /// must set the appropriate state of the client prior to calling this
     /// method using the @c setState function.
     ///
     /// When the server returns the DHCPACK the configuration carried in the
