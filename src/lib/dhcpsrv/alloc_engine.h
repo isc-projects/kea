@@ -861,6 +861,14 @@ private:
                                     const std::string& hostname,
                                     const bool fake_allocation);
 
+    /// @brief Utility function that removes all leases with a specified address
+    /// @param container A collection of Lease6 pointers
+    /// @param addr address to be removed
+    /// @return true if removed (false otherwise)
+    static bool
+    removeLeases(Lease6Collection& container,
+                 const asiolink::IOAddress& addr);
+
     /// @brief a pointer to currently used allocator
     ///
     /// For IPv4, there will be only one allocator: TYPE_V4
