@@ -101,7 +101,7 @@ public:
     /// - Direct DHCPv4 traffic - communication with clients which do not
     /// have IP address assigned yet.
     ///
-    /// Enabling these modes requires root privilges so they must be
+    /// Enabling these modes requires root privileges so they must be
     /// disabled for unit testing.
     ///
     /// Note, that disabling broadcast options on sockets does not impact
@@ -276,7 +276,7 @@ public:
     /// @brief generates client-id option
     ///
     /// Generate client-id option of specified length
-    /// Ids with different lengths are sufficent to generate
+    /// Ids with different lengths are sufficient to generate
     /// unique ids. If more fine grained control is required,
     /// tests generate client-ids on their own.
     /// Sets client_id_ field.
