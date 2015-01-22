@@ -29,7 +29,7 @@ to establish a session with the Kea control channel.
 
 % DHCP4_CLASS_ASSIGNED client packet has been assigned to the following class(es): %1
 This debug message informs that incoming packet has been assigned to specified
-class or classes. This is a norma
+class or classes. This is a normal behavior and indicates successful operation.
 
 % DHCP4_CLASS_PROCESSING_FAILED client class specific processing failed
 This debug message means that the server processing that is unique for each
@@ -80,7 +80,7 @@ updated configuration from the Kea configuration system.
 
 % DHCP4_DDNS_REQUEST_SEND_FAILED failed sending a request to kea-dhcp-ddns, error: %1,  ncr: %2
 This error message indicates that DHCP4 server attempted to send a DDNS
-update reqeust to the DHCP-DDNS server.  This is most likely a configuration or
+update request to the DHCP-DDNS server.  This is most likely a configuration or
 networking error.
 
 % DHCP4_DEACTIVATE_INTERFACE deactivate interface %1
@@ -93,7 +93,7 @@ This error message is logged when the attempt to compute DHCID for a specified
 lease has failed. The lease details and reason for failure is logged in the
 message.
 
-% DHCP4_DYNAMIC_RECONFIGURATION initate server reconfiguration using file: %1, after receiving SIGHUP signal
+% DHCP4_DYNAMIC_RECONFIGURATION initiate server reconfiguration using file: %1, after receiving SIGHUP signal
 This is the info message logged when the DHCPv4 server starts reconfiguration
 as a result of receiving SIGHUP signal.
 
@@ -171,7 +171,7 @@ combinations are invalid and trigger packet drop.
 
 % DHCP4_LEASE_ADVERT lease %1 advertised (client client-id %2, hwaddr %3)
 This debug message indicates that the server successfully advertised
-a lease. It is up to the client to choose one server out of othe advertised
+a lease. It is up to the client to choose one server out of other advertised
 and continue allocation with that server. This is a normal behavior and
 indicates successful operation.
 
@@ -221,7 +221,7 @@ no interfaces that server should listen on, or specified interfaces are not
 configured to receive the traffic.
 
 % DHCP4_NO_SUBNET_FOR_DIRECT_CLIENT no suitable subnet configured for a direct client sending packet with transaction id %1, on interface %2, received message is dropped
-This info messsage is logged when received a message from a directly connected
+This info message is logged when received a message from a directly connected
 client but there is no suitable subnet configured for the interface on
 which this message has been received. The IPv4 address assigned on this
 interface must belong to one of the configured subnets. Otherwise
