@@ -152,8 +152,9 @@ main(int argc, char* argv[]) {
                 log_manager.process();
                 LOG_ERROR(dhcp4_logger, DHCP4_INIT_FAIL).arg(ex.what());
             } catch (...) {
-                // The exeption thrown during the initialization could originate
-                // from logger subsystem. Therefore LOG_ERROR() may fail as well.
+                // The exception thrown during the initialization could
+                // originate from logger subsystem. Therefore LOG_ERROR()
+                // may fail as well.
                 cerr << "Failed to initialize server: " << ex.what() << endl;
             }
 
