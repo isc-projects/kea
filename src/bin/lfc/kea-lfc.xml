@@ -61,7 +61,7 @@
     <para>
       The <command>kea-lfc</command> service process removes redundant
       information for the files used to provide persistent storage for
-      the memfile data base back end.  The service is written to run as
+      the memfile data base backend.  The service is written to run as
       a stand alone process.  While it can be started externally it
       should be started by the Kea DHCP servers as desired and required.
     </para>
@@ -123,7 +123,7 @@
       <varlistentry>
         <term><option>-i</option></term>
         <listitem><para>
-          Input or copy of lease file - Before the DHCP serves invokes LFC it will move
+          Input or copy of lease file - Before the DHCP server invokes LFC it will move
 	  the current lease file to this file and then call LFC with the new file.
         </para></listitem>
       </varlistentry>
@@ -145,14 +145,6 @@
           this file to previous lease file.
         </para></listitem>
       </varlistentry>
-
-      <varlistentry>
-        <term><option>-c</option></term>
-        <listitem><para>
-          
-        </para></listitem>
-      </varlistentry>
-
     </variablelist>
   </refsect1>
 
