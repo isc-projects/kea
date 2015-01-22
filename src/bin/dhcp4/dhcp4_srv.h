@@ -97,7 +97,7 @@ public:
     ///
     /// Main server processing loop. Receives incoming packets, verifies
     /// their correctness, generates appropriate answer (if needed) and
-    /// transmits respones.
+    /// transmits responses.
     ///
     /// @return true, if being shut down gracefully, fail if experienced
     ///         critical error.
@@ -205,7 +205,7 @@ protected:
     bool accept(const Pkt4Ptr& query) const;
 
     /// @brief Check if a message sent by directly connected client should be
-    /// accepted or discared.
+    /// accepted or discarded.
     ///
     /// This function checks if the received message is from directly connected
     /// client. If it is, it checks that it should be processed or discarded.
@@ -236,9 +236,9 @@ protected:
     /// @brief Check if received message type is valid for the server to
     /// process.
     ///
-    /// This function checks that the received message type belongs to the range
-    /// of types regonized by the server and that the message of this type
-    /// should be processed by the server.
+    /// This function checks that the received message type belongs to
+    /// the range of types recognized by the server and that the
+    /// message of this type should be processed by the server.
     ///
     /// The messages types accepted for processing are:
     /// - Discover
@@ -354,7 +354,7 @@ protected:
 
     /// @brief Assigns a lease and appends corresponding options
     ///
-    /// This method chooses the most appropriate lease for reqesting
+    /// This method chooses the most appropriate lease for requesting
     /// client and assigning it. Options corresponding to the lease
     /// are added to specific message.
     ///
@@ -416,7 +416,7 @@ protected:
     /// This function does not throw. It simply logs the debug message if the
     /// processing of the FQDN or Hostname failed.
     ///
-    /// @param query A DISCOVER or REQUEST message from a cient.
+    /// @param query A DISCOVER or REQUEST message from a client.
     /// @param [out] answer A response message to be sent to a client.
     void processClientName(const Pkt4Ptr& query, Pkt4Ptr& answer);
 
@@ -444,7 +444,7 @@ private:
 
     /// @brief Process Hostname %Option sent by a client.
     ///
-    /// This function is called by the @c DHcpv4Srv::processClientName when
+    /// This function is called by the @c Dhcpv4Srv::processClientName when
     /// the client has sent the Hostname option in its message to the server.
     /// It comprises the actual logic to parse the Hostname option and
     /// prepare the Hostname option to be sent back to the client in the
@@ -461,7 +461,7 @@ protected:
     /// @brief Creates NameChangeRequests which correspond to the lease
     /// which has been acquired.
     ///
-    /// If this function is called whe an existing lease is renewed, it
+    /// If this function is called when an existing lease is renewed, it
     /// may generate NameChangeRequest to remove existing DNS entries which
     /// correspond to the old lease instance. This function may cease to
     /// generate NameChangeRequests if the notion of the client's FQDN hasn't
@@ -512,7 +512,7 @@ protected:
 
     /// @brief Adds server identifier option to the server's response.
     ///
-    /// This method adds a server identifier to the DHCPv4 message. It epxects
+    /// This method adds a server identifier to the DHCPv4 message. It expects
     /// that the local (source) address is set for this message. If address is
     /// not set, it will throw an exception. This method also expects that the
     /// server identifier option is not present in the specified message.
