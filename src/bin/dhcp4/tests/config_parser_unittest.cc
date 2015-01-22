@@ -295,7 +295,7 @@ public:
         EXPECT_TRUE(errorContainsPosition(x, "<string>"));
     }
 
-    /// @brief Test invalid option paramater value.
+    /// @brief Test invalid option parameter value.
     ///
     /// This test function constructs the simple configuration
     /// string and injects invalid option configuration into it.
@@ -2067,7 +2067,7 @@ TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
     EXPECT_TRUE(desc.option_);
     EXPECT_EQ(222, desc.option_->getType());
 
-    // This opton should comprise two sub-options.
+    // This option should comprise two sub-options.
     // One of them is 'foo' with code 1.
     OptionPtr option_foo = desc.option_->getOption(1);
     ASSERT_TRUE(option_foo);
@@ -2510,7 +2510,7 @@ TEST_F(Dhcp4ParserTest, DISABLED_Uint32Parser) {
 TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
 
     // The configuration is two stage process in this test.
-    // In the first stahe we create definitions of suboptions
+    // In the first stage we create definitions of suboptions
     // that we will add to the base option.
     // Let's create some dummy options: foo and foo2.
     string config = "{ \"interfaces\": [ \"*\" ],"
@@ -3346,7 +3346,7 @@ TEST_F(Dhcp4ParserTest, reservations) {
     ASSERT_TRUE(hosts_cfg);
 
     // Let's create an object holding hardware address of the host having
-    // a reservation in the subnet having id of 234. For simlicity the
+    // a reservation in the subnet having id of 234. For simplicity the
     // address is a collection of numbers from 1 to 6.
     std::vector<uint8_t> hwaddr_vec;
     for (int i = 1; i < 7; ++i) {
@@ -3396,7 +3396,7 @@ TEST_F(Dhcp4ParserTest, reservations) {
 
 }
 
-// This test verfies that the bogus host reservation would trigger a
+// This test verifies that the bogus host reservation would trigger a
 // server configuration error.
 TEST_F(Dhcp4ParserTest, reservationBogus) {
     // Case 1: misspelled hw-address parameter.
