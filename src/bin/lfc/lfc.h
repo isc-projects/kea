@@ -16,7 +16,6 @@
 #define LFC_H
 
 #include <boost/shared_ptr.hpp>
-
 #include <exceptions/exceptions.h>
 
 namespace isc {
@@ -53,30 +52,15 @@ public:
     ///
     /// 1. parse command line arguments
     /// 2. verifies that it is the only instance
-    /// 3. creates pid file
+    /// 3. creates pid file (TBD)
     /// .... TBD
-    /// 4. remove pid file
+    /// 4. remove pid file (TBD)
     /// 5. exit to the caller
     void launch(int argc, char* argv[], const bool test_mode);
 
     /// @brief Process the command line arguments.  It is the first
     /// step taken after the process has been launched.
     void parseArgs(int argc, char* argv[]);
-
-    /// @brief Use the pid file to determine if there is another instance
-    ///
-    /// @param pid_file is the name of the file which holds the pid to check
-    /// returns true if there is a process with that pid
-    bool pidCheck(const std::string & pid_file);
-
-    /// @brief Extract the pid and Write it out to the pid file
-    ///
-    /// @param pid_file is the name of the file in which to write the pid
-    /// returns true if the write was successful
-    bool pidWrite(const std::string & pid_file);
-
-    /// @brief Get rid of the pid file we created earlier
-    void pidDelete(const std::string & pid_file);
 
     /// @brief Prints the program usage text to std error.
     ///
@@ -157,4 +141,3 @@ private:
 }; // namespace isc
 
 #endif
-

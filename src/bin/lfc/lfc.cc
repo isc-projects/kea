@@ -12,11 +12,11 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <config.h>
 #include <lfc/lfc.h>
 #include <exceptions/exceptions.h>
 #include <log/logger_support.h>
 #include <log/logger_manager.h>
+#include <config.h>
 #include <iostream>
 
 using namespace std;
@@ -33,12 +33,10 @@ const char* lfcController::lfc_bin_name_ = "kea-lfc";
 
 lfcController::lfcController()
     : protocol_version_(0), verbose_(false), config_file_(""), previous_file_(""),
-      copy_file_(""), output_file_(""), finish_file_(""), pid_file_("./test_pid") {
-    std::cerr << "created lfc" << std::endl;
+      copy_file_(""), output_file_(""), finish_file_(""), pid_file_("") {
 }
 
 lfcController::~lfcController() {
-    std::cerr << "destroyed lfc" << std::endl;
 }
 
 void
@@ -49,85 +47,82 @@ lfcController::launch(int argc, char* argv[], const bool test_mode) {
     usage(ex.what());
     throw;  // rethrow it
   }
-
-  std::cerr << "launched lfc" << std::endl;
 }
 
 void
-lfcController::parseArgs(int argc, char* argv[])
-{
+lfcController::parseArgs(int argc, char* argv[]) {
     int ch;
 
     while ((ch = getopt(argc, argv, "46dvVp:i:o:c:f:")) != -1) {
         switch (ch) {
-	case '4':
+        case '4':
             // Process DHCPv4 lease files.
             protocol_version_ = 4;
             break;
 
-	case '6':
+        case '6':
             // Process DHCPv6 lease files.
             protocol_version_ = 6;
             break;
 
-	case 'v':
+        case 'v':
             // Print just Kea vesion and exit.
-	    std::cout << getVersion(false) << std::endl;
+            std::cout << getVersion(false) << std::endl;
             exit(EXIT_SUCCESS);
 
-	case 'V':
+        case 'V':
             // Print extended  Kea vesion and exit.
-	    std::cout << getVersion(true) << std::endl;
+            std::cout << getVersion(true) << std::endl;
             exit(EXIT_SUCCESS);
 
-	case 'd':
-	    // Verbose output.
-	    verbose_ = true;
-	    break;
+        case 'd':
+            // Verbose output.
+            verbose_ = true;
+            break;
 
-	case 'p':
-	    // Previous file name.
-	    if (optarg == NULL) {
-	        isc_throw(InvalidUsage, "Previous file name missing");
-	    }
-	    previous_file_ = optarg;
-	    break;
-	    
-	case 'i':
-	    // Copy file name.
-	    if (optarg == NULL) {
-	        isc_throw(InvalidUsage, "Copy file name missing");
-	    }
-	    copy_file_ = optarg;
-	    break;
+        case 'p':
+            // Previous file name.
+            if (optarg == NULL) {
+                isc_throw(InvalidUsage, "Previous file name missing");
+            }
+            previous_file_ = optarg;
+            break;
 
-	case 'o':
-	    // Output file name.
-	    if (optarg == NULL) {
-	        isc_throw(InvalidUsage, "Output file name missing");
-	    }
-	    output_file_ = optarg;
-	    break;
+        case 'i':
+            // Copy file name.
+            if (optarg == NULL) {
+                isc_throw(InvalidUsage, "Copy file name missing");
+            }
+            copy_file_ = optarg;
+            break;
 
-	case 'f':
-	    // Output file name.
-	    if (optarg == NULL) {
-	        isc_throw(InvalidUsage, "Finish file name missing");
-	    }
-	    finish_file_ = optarg;
-	    break;
+        case 'o':
+            // Output file name.
+            if (optarg == NULL) {
+                isc_throw(InvalidUsage, "Output file name missing");
+            }
+            output_file_ = optarg;
+            break;
 
-	case 'c':
-	    // Previous file name.
-	    if (optarg == NULL) {
-	        isc_throw(InvalidUsage, "Configuration file name missing");
-	    }
-	    config_file_ = optarg;
-	    break;
+        case 'f':
+            // Output file name.
+            if (optarg == NULL) {
+                isc_throw(InvalidUsage, "Finish file name missing");
+            }
+            finish_file_ = optarg;
+            break;
 
-	default:
-	    usage("");
-	}
+        case 'c':
+            // Previous file name.
+            if (optarg == NULL) {
+                isc_throw(InvalidUsage, "Configuration file name missing");
+            }
+            config_file_ = optarg;
+            break;
+
+        default:
+            usage("");
+        }
     }
 
     // Check for extraneous parameters.
@@ -140,57 +135,39 @@ lfcController::parseArgs(int argc, char* argv[])
     }
 
     if (previous_file_.empty()) {
-        isc_throw(InvalidUsage, "Previous file not specified");	
+        isc_throw(InvalidUsage, "Previous file not specified");
     }
 
     if (copy_file_.empty()) {
-        isc_throw(InvalidUsage, "Copy file not specified");	
+        isc_throw(InvalidUsage, "Copy file not specified");
     }
 
     if (output_file_.empty()) {
-        isc_throw(InvalidUsage, "Output file not specified");	
+        isc_throw(InvalidUsage, "Output file not specified");
     }
 
     if (finish_file_.empty()) {
-        isc_throw(InvalidUsage, "Finish file not specified");	
+        isc_throw(InvalidUsage, "Finish file not specified");
     }
 
     if (config_file_.empty()) {
-        isc_throw(InvalidUsage, "Config file not specified");	
+        isc_throw(InvalidUsage, "Config file not specified");
     }
 
     // If verbose is set echo the input information
     if (verbose_ == true) {
       std::cerr << "Protocol version:    " << protocol_version_ << std::endl
-	        << "Previous lease file: " << previous_file_ << std::endl
-	        << "Copy lease file:     " << copy_file_ << std::endl
-	        << "Output lease file:   " << output_file_ << std::endl
-	        << "Finishn file:        " << finish_file_ << std::endl
-	        << "Config file:         " << config_file_ << std::endl
-	        << "PID file:            " << pid_file_ << std::endl;
+                << "Previous lease file: " << previous_file_ << std::endl
+                << "Copy lease file:     " << copy_file_ << std::endl
+                << "Output lease file:   " << output_file_ << std::endl
+                << "Finishn file:        " << finish_file_ << std::endl
+                << "Config file:         " << config_file_ << std::endl
+                << "PID file:            " << pid_file_ << std::endl;
     }
 }
 
-bool
-lfcController::pidCheck(const std::string & pid_file)
-{
-    return (false);
-}
-
-bool
-lfcController::pidWrite(const std::string & pid_file)
-{
-    return (true);
-}
-
 void
-lfcController::pidDelete(const std::string & pid_file)
-{
-}
-
-void
-lfcController::usage(const std::string & text)
-{
+lfcController::usage(const std::string& text) {
     if (text != "") {
         std::cerr << "Usage error: " << text << std::endl;
     }
