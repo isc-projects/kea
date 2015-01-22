@@ -479,7 +479,7 @@ TEST_F(DORATest, reservation) {
 }
 
 // This test checks the following scenario:
-// 1. Client A performs 4-way exchange and obrains a lease from the dynamic pool.
+// 1. Client A performs 4-way exchange and obtains a lease from the dynamic pool.
 // 2. Reservation is created for the client A using an address out of the dynamic
 //    pool.
 // 3. Client A renews the lease.
@@ -506,7 +506,7 @@ TEST_F(DORATest, reservation) {
 // 15. Client A renews the lease.
 // 16. The server determines that the address that Client A is using is reserved
 //     for Client B. The server returns DHCPNAK to the Client A.
-// 17. Client B uses 4-way echange to obtain the reserved lease but the lease
+// 17. Client B uses 4-way exchange to obtain the reserved lease but the lease
 //     for the Client A hasn't been removed yet. Client B's DHCPDISCOVER
 //     message is dropped again.
 // 18. Client A uses 4-way exchange to allocate a new lease.
@@ -518,7 +518,7 @@ TEST_F(DORATest, reservationsWithConflicts) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(DORA_CONFIGS[0], *client.getServer());
-    // Client A performs 4-way exchange and obrains a lease from the
+    // Client A performs 4-way exchange and obtains a lease from the
     // dynamic pool.
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
                                   IOAddress>(new IOAddress("10.0.0.50"))));
