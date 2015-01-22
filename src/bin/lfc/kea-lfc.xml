@@ -44,17 +44,17 @@
   <refsynopsisdiv>
     <cmdsynopsis>
       <command>kea-lfc</command>
+      <arg><option>-4|-6</option></arg>
+      <arg><option>-c <replaceable class="parameter">config-file</replaceable></option></arg>
+      <arg><option>-p <replaceable class="parameter">previous-file</replaceable></option></arg>
+      <arg><option>-i <replaceable class="parameter">copy-file</replaceable></option></arg>
+      <arg><option>-o <replaceable class="parameter">output-file</replaceable></option></arg>
+      <arg><option>-f <replaceable class="parameter">finish-file</replaceable></option></arg>
       <arg><option>-v</option></arg>
+      <arg><option>-V</option></arg>
+      <arg><option>-d</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
-
-  <refsynopsisdiv>
-    <cmdsynopsis>
-      <command>kea-lfc</command>
-      <arg><option>-s</option></arg>
-    </cmdsynopsis>
-  </refsynopsisdiv>
-
 
   <refsect1>
     <title>DESCRIPTION</title>
@@ -76,10 +76,31 @@
     <variablelist>
 
       <varlistentry>
-        <term><option>-v</option></term>
+        <term><option>-d</option></term>
         <listitem><para>
           Verbose mode sets the logging level to debug. This is primarily
           for development purposes in stand-alone mode.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-v</option></term>
+        <listitem><para>
+          version causes the version stamp to be printed.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-V</option></term>
+        <listitem><para>
+          Version causes a longer form of the version stamp to be printed.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-4 | -6</option></term>
+        <listitem><para>
+          The protocol version of the lease files, must be one of 4 or 6.
         </para></listitem>
       </varlistentry>
 
@@ -88,6 +109,47 @@
         <listitem><para>
           Configuration file including the configuration for LFC process.
           It may also contain configuration entries for other Kea services.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-p</option></term>
+        <listitem><para>
+          Previous lease file - When LFC starts this is the result of any previous
+	  run of LFC.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-i</option></term>
+        <listitem><para>
+          Input or copy of lease file - Before the DHCP serves invokes LFC it will move
+	  the current lease file to this file and then call LFC with the new file.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-o</option></term>
+        <listitem><para>
+          Output lease file - The temporary file LFC should use to write the leases.
+          Upon completion this file will be moved to the finish file (see below).
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-f</option></term>
+        <listitem><para>
+          Finish or completion file - Another temporary file LFC uses for bookkeeping.
+          When LFC completes writing the output file it moves it to this file name.
+          After LFC finishes deleting the other files (previous and input) it moves
+          this file to previous lease file.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-c</option></term>
+        <listitem><para>
+          
         </para></listitem>
       </varlistentry>
 
