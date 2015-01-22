@@ -318,7 +318,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataBroadcast) {
 
     ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(req, resp));
 
-    // Server must repond to broadcast address when client desired that
+    // Server must respond to broadcast address when client desired that
     // by setting the broadcast flag in its request.
     EXPECT_EQ("255.255.255.255", resp->getRemoteAddr().toText());
 
@@ -1172,7 +1172,7 @@ TEST_F(Dhcpv4SrvTest, relayAgentInfoEcho) {
     // In particular, it should call registered buffer4_receive callback.
     srv.run();
 
-    // Check that the server did send a reposonse
+    // Check that the server did send a response
     ASSERT_EQ(1, srv.fake_sent_.size());
 
     // Make sure that we received a response
@@ -1248,7 +1248,7 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsDocsis) {
     // In particular, it should call registered buffer4_receive callback.
     srv.run();
 
-    // Check that the server did send a reposonse
+    // Check that the server did send a response
     ASSERT_EQ(1, srv.fake_sent_.size());
 
     // Make sure that we received a response
@@ -1772,7 +1772,7 @@ public:
         // get rid of the old client-id (and no HWADDR)
         vector<uint8_t> mac;
         pkt->delOption(DHO_DHCP_CLIENT_IDENTIFIER);
-        pkt->setHWAddr(1, 0, mac); // HWtype 1, hwardware len = 0
+        pkt->setHWAddr(1, 0, mac); // HWtype 1, hardware len = 0
 
         // carry on as usual
         return pkt4_receive_callout(callout_handle);
@@ -1878,7 +1878,7 @@ public:
         Pkt4Ptr pkt;
         callout_handle.getArgument("response4", pkt);
 
-        // modify buffer to set a diffferent payload
+        // modify buffer to set a different payload
         pkt->getBuffer().clear();
         pkt->getBuffer().writeData(dummyFile, sizeof(dummyFile));
 
@@ -1917,7 +1917,7 @@ public:
     static int
     subnet4_select_different_subnet_callout(CalloutHandle& callout_handle) {
 
-        // Call the basic calllout to record all passed values
+        // Call the basic callout to record all passed values
         subnet4_select_callout(callout_handle);
 
         const Subnet4Collection* subnets;
@@ -2078,7 +2078,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveValueChange) {
     // In particular, it should call registered buffer4_receive callback.
     srv_->run();
 
-    // Check that the server did send a reposonse
+    // Check that the server did send a response
     ASSERT_EQ(1, srv_->fake_sent_.size());
 
     // Make sure that we received a response
@@ -2183,7 +2183,7 @@ TEST_F(HooksDhcpv4SrvTest, valueChange_pkt4_receive) {
     // In particular, it should call registered pkt4_receive callback.
     srv_->run();
 
-    // check that the server did send a reposonce
+    // check that the server did send a response
     ASSERT_EQ(1, srv_->fake_sent_.size());
 
     // Make sure that we received a response
@@ -2312,7 +2312,7 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendValueChange) {
     // In particular, it should call registered pkt4_receive callback.
     srv_->run();
 
-    // check that the server did send a reposonce
+    // check that the server did send a response
     ASSERT_EQ(1, srv_->fake_sent_.size());
 
     // Make sure that we received a response
@@ -3049,7 +3049,7 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsORO) {
     offer = srv.processDiscover(dis);
     ASSERT_TRUE(offer);
 
-    // Check if thre is vendor option response
+    // Check if there is a vendor option response
     OptionPtr tmp = offer->getOption(DHO_VIVSO_SUBOPTIONS);
     ASSERT_TRUE(tmp);
 
@@ -3196,7 +3196,7 @@ TEST_F(Dhcpv4SrvTest, clientClassify2) {
     // Still not supported, because it belongs to wrong class.
     EXPECT_FALSE(srv_.selectSubnet(dis));
 
-    // Let's add it to maching class.
+    // Let's add it to matching class.
     dis->addClass("foo");
 
     // This time it should work
@@ -3396,7 +3396,7 @@ TEST_F(Dhcpv4SrvTest, acceptDirectRequest) {
     pkt->setRemoteAddr(IOAddress("10.0.0.101"));
     EXPECT_TRUE(srv.accept(pkt));
 
-    // When neither ciaddr nor source addres is present, the packet should
+    // When neither ciaddr nor source address is present, the packet should
     // be dropped.
     pkt->setRemoteAddr(IOAddress("0.0.0.0"));
     EXPECT_FALSE(srv.accept(pkt));
