@@ -12,9 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <lfc/lfc.h>
 #include <log/logger_support.h>
 #include <gtest/gtest.h>
-#include <lfc/lfc.h>
 
 using namespace isc::lfc;
 using namespace std;
@@ -23,14 +23,13 @@ TEST(lfcControllerTest, initialValues) {
     lfcController lfcController;
 
     // Verify that we start with everything empty
-    EXPECT_TRUE(lfcController.getProtocolVersion() == 0);
-    EXPECT_TRUE(lfcController.getConfigFile() == "");
-    EXPECT_TRUE(lfcController.getPreviousFile() == "");
-    EXPECT_TRUE(lfcController.getCopyFile() == "");
-    EXPECT_TRUE(lfcController.getOutputFile() == "");
-    EXPECT_TRUE(lfcController.getFinishFile() == "");
-    // Currently defaulting pid file for testing
-    // EXPECT_TRUE(lfcController.getPidFile() == "");
+    EXPECT_EQ(lfcController.getProtocolVersion(), 0);
+    EXPECT_EQ(lfcController.getConfigFile(), "");
+    EXPECT_EQ(lfcController.getPreviousFile(), "");
+    EXPECT_EQ(lfcController.getCopyFile(), "");
+    EXPECT_EQ(lfcController.getOutputFile(), "");
+    EXPECT_EQ(lfcController.getFinishFile(), "");
+    EXPECT_EQ(lfcController.getPidFile(), "");
 }
 
 TEST(lfcControllerTest, fullCommandLine) {
@@ -38,28 +37,28 @@ TEST(lfcControllerTest, fullCommandLine) {
 
     // Verify that standard options can be parsed without error
     char* argv[] = { const_cast<char*>("progName"),
-		     const_cast<char*>("-4"),
-		     const_cast<char*>("-p"),
-		     const_cast<char*>("previous"),
-		     const_cast<char*>("-i"),
-		     const_cast<char*>("copy"),
-		     const_cast<char*>("-o"),
-		     const_cast<char*>("output"),
-		     const_cast<char*>("-c"),
-		     const_cast<char*>("config"),
-		     const_cast<char*>("-f"),
-		     const_cast<char*>("finish") };
+                     const_cast<char*>("-4"),
+                     const_cast<char*>("-p"),
+                     const_cast<char*>("previous"),
+                     const_cast<char*>("-i"),
+                     const_cast<char*>("copy"),
+                     const_cast<char*>("-o"),
+                     const_cast<char*>("output"),
+                     const_cast<char*>("-c"),
+                     const_cast<char*>("config"),
+                     const_cast<char*>("-f"),
+                     const_cast<char*>("finish") };
     int argc = 12;
 
     EXPECT_NO_THROW(lfcController.parseArgs(argc, argv));
 
     // The parsed data
-    EXPECT_TRUE(lfcController.getProtocolVersion() == 4);
-    EXPECT_TRUE(lfcController.getConfigFile() == "config");
-    EXPECT_TRUE(lfcController.getPreviousFile() == "previous");
-    EXPECT_TRUE(lfcController.getCopyFile() == "copy");
-    EXPECT_TRUE(lfcController.getOutputFile() == "output");
-    EXPECT_TRUE(lfcController.getFinishFile() == "finish");
+    EXPECT_EQ(lfcController.getProtocolVersion(), 4);
+    EXPECT_EQ(lfcController.getConfigFile(), "config");
+    EXPECT_EQ(lfcController.getPreviousFile(), "previous");
+    EXPECT_EQ(lfcController.getCopyFile(), "copy");
+    EXPECT_EQ(lfcController.getOutputFile(), "output");
+    EXPECT_EQ(lfcController.getFinishFile(), "finish");
 }
 
 TEST(lfcControllerTest, notEnoughData) {
@@ -68,17 +67,17 @@ TEST(lfcControllerTest, notEnoughData) {
     // The standard options we shall test what happens
     // if we don't include all of them
     char* argv[] = { const_cast<char*>("progName"),
-		     const_cast<char*>("-4"),
-		     const_cast<char*>("-p"),
-		     const_cast<char*>("previous"),
-		     const_cast<char*>("-i"),
-		     const_cast<char*>("copy"),
-		     const_cast<char*>("-o"),
-		     const_cast<char*>("output"),
-		     const_cast<char*>("-c"),
-		     const_cast<char*>("config"),
-		     const_cast<char*>("-f"),
-		     const_cast<char*>("finish") };
+                     const_cast<char*>("-4"),
+                     const_cast<char*>("-p"),
+                     const_cast<char*>("previous"),
+                     const_cast<char*>("-i"),
+                     const_cast<char*>("copy"),
+                     const_cast<char*>("-o"),
+                     const_cast<char*>("output"),
+                     const_cast<char*>("-c"),
+                     const_cast<char*>("config"),
+                     const_cast<char*>("-f"),
+                     const_cast<char*>("finish") };
     int argc = 1;
 
     EXPECT_THROW(lfcController.parseArgs(argc, argv), InvalidUsage);
@@ -121,20 +120,20 @@ TEST(lfcControllerTest, tooMuchData) {
     // The standard options plus some others
 
     char* argv[] = { const_cast<char*>("progName"),
-		     const_cast<char*>("-4"),
-		     const_cast<char*>("-p"),
-		     const_cast<char*>("previous"),
-		     const_cast<char*>("-i"),
-		     const_cast<char*>("copy"),
-		     const_cast<char*>("-o"),
-		     const_cast<char*>("output"),
-		     const_cast<char*>("-c"),
-		     const_cast<char*>("config"),
-		     const_cast<char*>("-f"),
-		     const_cast<char*>("finish"),
-		     const_cast<char*>("some"),
-		     const_cast<char*>("other"),
-		     const_cast<char*>("args"),		     
+                     const_cast<char*>("-4"),
+                     const_cast<char*>("-p"),
+                     const_cast<char*>("previous"),
+                     const_cast<char*>("-i"),
+                     const_cast<char*>("copy"),
+                     const_cast<char*>("-o"),
+                     const_cast<char*>("output"),
+                     const_cast<char*>("-c"),
+                     const_cast<char*>("config"),
+                     const_cast<char*>("-f"),
+                     const_cast<char*>("finish"),
+                     const_cast<char*>("some"),
+                     const_cast<char*>("other"),
+                     const_cast<char*>("args"),
     };
     int argc = 15;
 
@@ -147,12 +146,11 @@ TEST(lfcControllerTest, someBadData) {
     // The standard options plus some others
 
     char* argv[] = { const_cast<char*>("progName"),
-		     const_cast<char*>("some"),
-		     const_cast<char*>("bad"),
-		     const_cast<char*>("args"),		     
+                     const_cast<char*>("some"),
+                     const_cast<char*>("bad"),
+                     const_cast<char*>("args"),
     };
     int argc = 4;
 
     EXPECT_THROW(lfcController.parseArgs(argc, argv), InvalidUsage);
 }
-//-4 -p previous -i copy -o output -c config -f finish -d

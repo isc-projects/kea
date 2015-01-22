@@ -12,12 +12,11 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <config.h>
 #include <lfc/lfc.h>
 #include <exceptions/exceptions.h>
 #include <log/logger_support.h>
 #include <log/logger_manager.h>
-
+#include <config.h>
 #include <iostream>
 
 using namespace isc::lfc;
