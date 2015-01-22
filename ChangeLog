@@ -1,7 +1,7 @@
 879.	[bug]		fdupont
 	Drop DHCPREQUEST message from an unknown client in the
 	INIT-REBOOT state.
-	(Trac #3656, git xxx)
+	(Trac #3656, git 8e205adc35d8e72d1802d5ee9056e6c4ac78274a)
 
 878.	[func]		marcin
 	DHCPv4 and DHCPv6 server now support the lfc-interval
