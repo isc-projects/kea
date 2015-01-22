@@ -66,6 +66,27 @@ public:
         isc::asiolink::IOAddress addr_;
     };
 
+    /// @brief Specifies allowed host reservation mode.
+    ///
+    typedef enum  {
+
+        /// None - host reservation is disabled. No reservation types
+        /// are allowed.
+        HR_DISABLED,
+
+        /// Only out-of-pool reservations is allowed. This mode
+        /// allows AllocEngine to skip reservation checks when
+        /// dealing with with addresses that are in pool.
+        HR_OUT_OF_POOL,
+
+        /// Both out-of-pool and in-pool reservations are allowed. This is the
+        /// most flexible mode, where sysadmin have biggest liberty. However,
+        /// there is a non-trivial performance penalty for it, as the
+        /// AllocEngine code has to check whether there are reservations, even
+        /// when dealing with reservations from within the dynamic pools.
+        HR_IN_POOL
+    } HRMode;
+
     /// Pointer to the RelayInfo structure
     typedef boost::shared_ptr<Subnet::RelayInfo> RelayInfoPtr;
 
@@ -284,19 +305,19 @@ public:
     void
     allowClientClass(const isc::dhcp::ClientClass& class_name);
 
-    /// @brief Specifies whether in-pool host reservations are allowed.
+    /// @brief Specifies what type of Host Reservations are supported.
     ///
     /// Host reservations may be either in-pool (they reserve an address that
     /// is in the dynamic pool) or out-of-pool (they reserve an address that is
-    /// not in the dynamic pool).
+    /// not in the dynamic pool). HR may also be completely disabled for
+    /// performance reasons.
     ///
     /// @todo: implement this.
     ///
     /// @return whether in-pool host reservations are allowed.
-    bool
-    allowInPoolReservations() {
-        /// @todo: Make this configurable.
-        return (true);
+    HRMode
+    getHostReservationMode() {
+        return (Subnet::HR_IN_POOL);
     }
 
 protected:
