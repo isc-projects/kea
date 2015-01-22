@@ -19,7 +19,7 @@
 namespace {
 
 /// As of May 2014, maintaining or extending Bundy support is very low
-/// prority for Kea team. We are looking for contributors, who would
+/// priority for Kea team. We are looking for contributors, who would
 /// like to maintain this backend.
 
 // Bundy framework specific tests should be added here.
