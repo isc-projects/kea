@@ -1372,7 +1372,7 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolReassignedThis) {
 
     // Check that the reserved lease is in the database.
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease1->type_,
-                                                  IOAddress("2001:db8:1::c"));
+                                                  IOAddress("2001:db8:1::1c"));
 
     ASSERT_TRUE(from_mgr);
 

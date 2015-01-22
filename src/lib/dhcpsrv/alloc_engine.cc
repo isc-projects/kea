@@ -692,7 +692,7 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
         ConstHostPtr host = HostMgr::instance().get6(ctx.subnet_->getID(),
                                                      (*candidate)->addr_);
 
-        if (!host && (host == ctx.host_)) {
+        if (!host || (host == ctx.host_)) {
             // Not reserved or reserved for us. That's ok, let's check
             // the next lease.
             continue;
@@ -701,9 +701,6 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
         // Ok, we have a problem. This host has a lease that is reserved
         // for someone else. We need to recover from this.
 
-        // Let's remove this candidate from existing leases
-        removeLeases(existing_leases, (*candidate)->addr_);
-
         // Remove this lease from LeaseMgr
         LeaseMgrFactory::instance().deleteLease((*candidate)->addr_);
 
@@ -711,6 +708,9 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
 
         // Add this to the list of removed leases.
         ctx.old_leases_.push_back(*candidate);
+
+        // Let's remove this candidate from existing leases
+        removeLeases(existing_leases, (*candidate)->addr_);
     }
 }
 
@@ -731,9 +731,44 @@ AllocEngine::removeLeases(Lease6Collection& container, const asiolink::IOAddress
 void
 AllocEngine::removeNonreservedLeases6(ClientContext6& ctx,
                                       Lease6Collection& existing_leases) {
-    /// @todo
-    if (!ctx.host_ || existing_leases.empty()) {
+    // This method removes leases that are not reserved for this host.
+    // It will keep at least one lease, though.
+    if (existing_leases.empty() || !ctx.host_ || !ctx.host_->hasIPv6Reservation()) {
         return;
+    }
+
+    // This is the total number of leases. We should not remove the last one.
+    int total = existing_leases.size();
+
+    // This is tricky/scary code. It iterates and possibly deletes at the same time.
+    for (Lease6Collection::iterator lease = existing_leases.begin();
+         lease != existing_leases.end();) {
+        IPv6Resrv resv(ctx.type_ == Lease::TYPE_NA ? IPv6Resrv::TYPE_NA : IPv6Resrv::TYPE_PD,
+                       (*lease)->addr_, (*lease)->prefixlen_);
+        if (ctx.host_->hasReservation(resv)) {
+            // This is a lease for reserved address. Let's keep it.
+            ++lease;
+        } else {
+            // We have reservations, but not for this lease. Release it.
+
+            // Remove this lease from LeaseMgr
+            LeaseMgrFactory::instance().deleteLease((*lease)->addr_);
+
+            /// @todo: Probably trigger a hook here
+
+            // Add this to the list of removed leases.
+            ctx.old_leases_.push_back(*lease);
+
+            // This is tricky part. We move lease to the next element and
+            // then pass the old value to erase.
+            existing_leases.erase(lease++);
+
+            if (--total == 1) {
+                // If there's only one lease left, return.
+                return;
+            }
+        }
+
     }
 }
 
