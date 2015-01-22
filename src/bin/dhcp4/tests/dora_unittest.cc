@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -327,7 +327,7 @@ TEST_F(DORATest, selectingRequestNonMatchingAddress) {
 
 // Test that the client in the INIT-REBOOT state can request the IP
 // address it has and the address is returned. Also, check that if
-// if the client requests in valid address the server sends a DHCPNAK.
+// if the client requests invalid address the server sends a DHCPNAK.
 TEST_F(DORATest, initRebootRequest) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
     // Configure DHCP server.
@@ -373,6 +373,12 @@ TEST_F(DORATest, initRebootRequest) {
     ASSERT_TRUE(client.getContext().response_);
     resp = client.getContext().response_;
     EXPECT_EQ(DHCPNAK, static_cast<int>(resp->getType()));
+
+    // Try to request from a different client.
+    client.modifyHWAddr();
+    ASSERT_NO_THROW(client.doRequest());
+    // The server should not respond.
+    EXPECT_FALSE(client.getContext().response_);
 }
 
 // Check that the ciaddr returned by the server is correct for DHCPOFFER and

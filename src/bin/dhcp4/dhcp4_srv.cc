@@ -1002,10 +1002,20 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
 
     // If there is no server id and there is a Requested IP Address option
     // the client is in the INIT-REBOOT state in which the server has to
-    // determine whether the client's notion of the address has to be verified.
+    // determine whether the client's notion of the address is correct
+    // and whether the client is known, i.e., has a lease.
     if (!fake_allocation && !opt_serverid && opt_requested_address) {
-        Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(hint);
-        if (!lease) {
+        Lease4Ptr lease;
+        if (hwaddr) {
+            lease = LeaseMgrFactory::instance().getLease4(*hwaddr,
+                                                          subnet->getID());
+        }
+        if (!lease && client_id) {
+            lease = LeaseMgrFactory::instance().getLease4(*client_id,
+                                                          subnet->getID());
+        }
+        // Got a lease so we can check the address.
+        if (lease && (lease->addr_ != hint)) {
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL,
                       DHCP4_INVALID_ADDRESS_INIT_REBOOT)
                 .arg(hint.toText())
@@ -1014,6 +1024,17 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
 
             answer->setType(DHCPNAK);
             answer->setYiaddr(IOAddress("0.0.0.0"));
+            return;
+        }
+        // Now check the second error case: unknown client.
+        if (!lease) {
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL,
+                      DHCP4_NO_LEASE_INIT_REBOOT)
+                .arg(hint.toText())
+                .arg(client_id ? client_id->toText():"(no client-id)")
+                .arg(hwaddr ? hwaddr->toText():"(no hwaddr info)");
+
+            answer.reset();
             return;
         }
     }
@@ -1329,6 +1350,11 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
 
     assignLease(discover, offer);
 
+    if (!offer) {
+        // The offer is empty so return it *now*!
+        return (offer);
+    }
+
     // Adding any other options makes sense only when we got the lease.
     if (offer->getYiaddr() != IOAddress("0.0.0.0")) {
         appendRequestedOptions(discover, offer);
@@ -1375,6 +1401,11 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
     // first request (requesting for new address), renewing existing address
     // or even rebinding.
     assignLease(request, ack);
+
+    if (!ack) {
+        // The ack is empty so return it *now*!
+        return (ack);
+    }
 
     // Adding any other options makes sense only when we got the lease.
     if (ack->getYiaddr() != IOAddress("0.0.0.0")) {
