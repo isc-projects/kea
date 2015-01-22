@@ -53,17 +53,10 @@ lfc_unittests_LDADD = $(GTEST_LDADD)
 lfc_unittests_LDADD += $(top_builddir)/src/bin/lfc/liblfc.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
-lfc_unittests_LDADD += $(top_builddir)/src/lib/asiodns/libkea-asiodns.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
-lfc_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
-lfc_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
-lfc_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
-lfc_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
-lfc_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
-lfc_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 
 endif
 

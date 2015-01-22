@@ -50,12 +50,12 @@ public:
     /// @brief Acts as the primary entry point to start execution
     /// of the process.  Provides the control logic:
     ///
-    /// 1. parse command line arguments
-    /// 2. verifies that it is the only instance
-    /// 3. creates pid file (TBD)
-    /// .... TBD
-    /// 4. remove pid file (TBD)
-    /// 5. exit to the caller
+    /// -# parse command line arguments
+    /// -# verifies that it is the only instance
+    /// -# creates pid file (TBD)
+    /// -# .... TBD
+    /// -# remove pid file (TBD)
+    /// -# exit to the caller
     void launch(int argc, char* argv[], const bool test_mode);
 
     /// @brief Process the command line arguments.  It is the first
@@ -80,7 +80,7 @@ public:
     /// @brief Gets the protocol version of the leaes files
     ///
     /// @return Returns the value of the protocol version
-    int getProtocolVersion() {
+    int getProtocolVersion() const {
       return (protocol_version_);
     }
 
@@ -137,7 +137,7 @@ private:
     std::string pid_file_;
 };
 
-}; // namespace isc:lfc
+}; // namespace isc::lfc
 }; // namespace isc
 
 #endif
