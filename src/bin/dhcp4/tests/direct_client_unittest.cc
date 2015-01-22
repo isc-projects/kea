@@ -50,7 +50,7 @@ public:
     /// This creates new configuration for the DHCPv4 with one subnet having
     /// a specified prefix.
     ///
-    /// The subnet parameters (such as options, timers etc.) are aribitrarily
+    /// The subnet parameters (such as options, timers etc.) are arbitrarily
     /// selected. The subnet and pool mask is always /24. The real configuration
     /// would exclude .0 (network address) and .255 (broadcast address), but we
     /// ignore that fact for the sake of test simplicity.
@@ -61,7 +61,7 @@ public:
     /// @brief Configures the server with two subnets.
     ///
     /// This function configures DHCPv4 server with two different subnets.
-    /// The subnet parameters (such as options, timers etc.) are aribitrarily
+    /// The subnet parameters (such as options, timers etc.) are arbitrarily
     /// selected. The subnet and pool mask is /24. The real configuration
     /// would exclude .0 (network address) and .255 (broadcast address), but we
     /// ignore that fact for the sake of test simplicity.
@@ -215,7 +215,7 @@ TEST_F(DirectClientTest,  twoSubnets) {
     // Process clients' messages.
     srv_.run();
 
-    // Check that the server did send reposonses.
+    // Check that the server did send responses.
     ASSERT_EQ(2, srv_.fake_sent_.size());
 
     // Make sure that we received a response.
@@ -271,7 +271,7 @@ TEST_F(DirectClientTest, oneSubnet) {
     srv_.run();
 
     // Check that the server sent one response for the message received
-    // through eth0. The other client's message should be dicarded.
+    // through eth0. The other client's message should be discarded.
     ASSERT_EQ(1, srv_.fake_sent_.size());
 
     // Check the response. The first Discover was sent via eth0 for which
@@ -335,7 +335,7 @@ TEST_F(DirectClientTest, renew) {
     // Process clients' messages.
     srv_.run();
 
-    // Check that the server did send reposonse.
+    // Check that the server did send response.
     ASSERT_EQ(1, srv_.fake_sent_.size());
     Pkt4Ptr response = srv_.fake_sent_.front();
     ASSERT_TRUE(response);
@@ -398,12 +398,12 @@ TEST_F(DirectClientTest, rebind) {
     // Process clients' messages.
     srv_.run();
 
-    // Check that the server did send exactly one reposonse.
+    // Check that the server did send exactly one response.
     ASSERT_EQ(1, srv_.fake_sent_.size());
     Pkt4Ptr response = srv_.fake_sent_.front();
     ASSERT_TRUE(response);
 
-    // Make sure that the server responsed with ACK, not NAK.
+    // Make sure that the server responded with ACK, not NAK.
     ASSERT_EQ(DHCPACK, response->getType());
     // Make sure that the response is generated for the second Request
     // (transmitted over eth0).
