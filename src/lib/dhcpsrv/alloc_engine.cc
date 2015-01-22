@@ -673,9 +673,59 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx, Lease6Collection& exis
 void
 AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
                                               Lease6Collection& existing_leases) {
-    /// @todo
-    if (!ctx.host_ || existing_leases.empty()) {
+    // If there are no leases (so nothing to remove) or
+    // host reservation is disabled (so there are no reserved leases),
+    // just return.
+    if (existing_leases.empty() || !ctx.subnet_ ||
+        (ctx.subnet_->getHostReservationMode() == Subnet::HR_DISABLED) ) {
+        return;
     }
+
+    // We need a copy, so we won't be iterating over a container and
+    // removing from it at the same time. It's only a copy of pointers,
+    // so the operation shouldn't be that expensive.
+    Lease6Collection copy = existing_leases;
+
+    for (Lease6Collection::const_iterator candidate = copy.begin();
+         candidate != copy.end(); ++candidate) {
+
+        ConstHostPtr host = HostMgr::instance().get6(ctx.subnet_->getID(),
+                                                     (*candidate)->addr_);
+
+        if (!host && (host == ctx.host_)) {
+            // Not reserved or reserved for us. That's ok, let's check
+            // the next lease.
+            continue;
+        }
+
+        // Ok, we have a problem. This host has a lease that is reserved
+        // for someone else. We need to recover from this.
+
+        // Let's remove this candidate from existing leases
+        removeLeases(existing_leases, (*candidate)->addr_);
+
+        // Remove this lease from LeaseMgr
+        LeaseMgrFactory::instance().deleteLease((*candidate)->addr_);
+
+        /// @todo: Probably trigger a hook here
+
+        // Add this to the list of removed leases.
+        ctx.old_leases_.push_back(*candidate);
+    }
+}
+
+bool
+AllocEngine::removeLeases(Lease6Collection& container, const asiolink::IOAddress& addr) {
+
+    for (Lease6Collection::iterator lease = container.begin();
+         lease != container.end(); ++lease) {
+        if ((*lease)->addr_ == addr) {
+            container.erase(lease);
+            return (true);
+        }
+    }
+
+    return (false);
 }
 
 void
@@ -683,6 +733,7 @@ AllocEngine::removeNonreservedLeases6(ClientContext6& ctx,
                                       Lease6Collection& existing_leases) {
     /// @todo
     if (!ctx.host_ || existing_leases.empty()) {
+        return;
     }
 }
 
