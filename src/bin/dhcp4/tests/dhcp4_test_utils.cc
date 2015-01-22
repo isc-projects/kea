@@ -436,7 +436,7 @@ Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
     // Create a DHCP message. It will be used to simulate the
     // incoming message.
     boost::shared_ptr<Pkt4> req(new Pkt4(msg_type, 1234));
-    // Create a response message. It will hold a reponse packet.
+    // Create a response message. It will hold a response packet.
     // Initially, set it to NULL.
     boost::shared_ptr<Pkt4> rsp;
     // Set the name of the interface on which packet is received.
