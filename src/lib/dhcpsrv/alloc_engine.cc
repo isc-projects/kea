@@ -306,9 +306,16 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
             isc_throw(InvalidOperation, "DUID is mandatory for allocation");
         }
 
-        // Check if there's a host reservation for this client.
-        ctx.host_ = HostMgr::instance().get6(ctx.subnet_->getID(), ctx.duid_,
-                                             ctx.hwaddr_);
+        // Check which host reservation mode is supported in this subnet.
+        Subnet::HRMode hr_mode = ctx.subnet_->getHostReservationMode();
+
+        // Check if there's a host reservation for this client. Attempt to get
+        // host info only if reservations are not disabled.
+        if (hr_mode != Subnet::HR_DISABLED) {
+
+            ctx.host_ = HostMgr::instance().get6(ctx.subnet_->getID(), ctx.duid_,
+                                                 ctx.hwaddr_);
+        }
 
         // Check if there are existing leases for that subnet/duid/iaid
         // combination.
@@ -337,7 +344,7 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
         // Hence independent checks.
 
         // Case 1: There are no leases and there's a reservation for this host.
-        if (leases.empty() && ctx.host_) {
+        if ((hr_mode != Subnet::HR_DISABLED) && leases.empty() && ctx.host_) {
 
             // Try to allocate leases that match reservations. Typically this will
             // succeed, except cases where the reserved addresses are used by
@@ -460,6 +467,10 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                   << Lease6::typeToText(ctx.type_));
     }
 
+
+    // Check which host reservation mode is supported in this subnet.
+    Subnet::HRMode hr_mode = ctx.subnet_->getHostReservationMode();
+
     Lease6Collection leases;
 
     IOAddress hint("::");
@@ -482,10 +493,12 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             // else. There is no need to check for whom it is reserved, because if
             // it has been reserved for us we would have already allocated a lease.
 
-            /// @todo: BROKEN this call is broken. It tries to convert getID()
-            /// to IOAddress::uint32_t()
-            if (!ctx.subnet_->allowInPoolReservations() ||
-                !HostMgr::instance().get6(ctx.subnet_->getID(), hint)) {
+            ConstHostPtr host;
+            if (hr_mode != Subnet::HR_DISABLED) {
+                host = HostMgr::instance().get6(ctx.subnet_->getID(), hint);
+            }
+
+            if (!host) {
                 // If the in-pool reservations are disabled, or there is no
                 // reservation for a given hint, we're good to go.
 
@@ -510,9 +523,13 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             // If the lease is expired, we may likely reuse it, but...
             if (lease->expired()) {
 
+                ConstHostPtr host;
+                if (hr_mode != Subnet::HR_DISABLED) {
+                    host = HostMgr::instance().get6(ctx.subnet_->getID(), hint);
+                }
+
                 // Let's check if there is a reservation for this address.
-                if (!ctx.subnet_->allowInPoolReservations() ||
-                    !HostMgr::instance().get6(ctx.subnet_->getID(), hint)) {
+                if (!host) {
 
                     // Copy an existing, expired lease so as it can be returned
                     // to the caller.
@@ -553,7 +570,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         /// In-pool reservations: Check if this address is reserved for someone
         /// else. There is no need to check for whom it is reserved, because if
         /// it has been reserved for us we would have already allocated a lease.
-        if (ctx.subnet_->allowInPoolReservations() &&
+        if (hr_mode == Subnet::HR_IN_POOL &&
             HostMgr::instance().get6(ctx.subnet_->getID(), candidate)) {
 
             // Don't allocate.
@@ -619,7 +636,7 @@ void
 AllocEngine::allocateReservedLeases6(ClientContext6& ctx, Lease6Collection& existing_leases) {
 
     // If there are no reservations or the reservation is v4, there's nothing to do.
-    if (!ctx.host_ || ctx.host_->hasIPv6Reservation()) {
+    if (!ctx.host_ || !ctx.host_->hasIPv6Reservation()) {
         return;
     }
 
