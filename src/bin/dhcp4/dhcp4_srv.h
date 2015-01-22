@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -359,7 +359,13 @@ protected:
     /// are added to specific message.
     ///
     /// @param question DISCOVER or REQUEST message from client
-    /// @param answer OFFER or ACK/NAK message (lease options will be added here)
+
+    /// @param answer OFFER or ACK/NAK message (lease options will be
+    /// added here)
+    /// 
+    /// This method may reset the @c answer shared pointer to indicate
+    /// that the response should not be sent to the client. The caller
+    /// must check if the @c answer is null after calling this method.
     void assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer);
 
     /// @brief Append basic options if they are not present.
