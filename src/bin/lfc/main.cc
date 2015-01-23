@@ -38,7 +38,7 @@ int main(int argc, char* argv[]) {
         // 'false' value disables test mode.
         lfc_controller.launch(argc, argv);
     } catch (const isc::Exception& ex) {
-        std::cerr << "Service failed:" << ex.what() << std::endl;
+        std::cerr << "Service failed: " << ex.what() << std::endl;
         ret = EXIT_FAILURE;
     }
 
