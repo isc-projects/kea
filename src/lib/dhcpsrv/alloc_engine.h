@@ -570,36 +570,72 @@ protected:
     /// it into LeaseMgr (if this allocation is not fake, i.e. this is not a
     /// response to SOLICIT).
     ///
+    /// This method uses host reservation if appropriate. The host reservation
+    /// is convenient, but incurs performance penalty, so it can be tweaked on
+    /// a per subnet basis. There are three possible modes:
+    /// 1. disabled (no host reservation at all). This is the most performant one
+    /// as the code can skip all checks;
+    /// 2. out-of-pool (only reservations that are outside
+    /// of the dynamic pools are allowed. This is a compromise - it requires
+    /// a sysadmin to be more careful with the reservations, but the code
+    /// can skip reservation checks while managing in-pool addresses);
+    /// 3. in-pool (which also allow out-of-pool; this is the most flexible
+    /// mode, but it means that the allocation engine has to do reservation
+    /// checks on every lease, even those dynamically assigned, which degrades
+    /// performance).
+    ///
+    /// The logic in this method is as follows:
+    /// -# Case 1. if there are no leases, and there are reservations...
+    ///    Are the reserved addresses/prefixes are used by someone else?
+    ///   -# yes: we have a problem. We can't assign the reserved address yet,
+    ///       because it is used by someone else. We can't immediately release
+    ///       the lease as there is some other client that is currently using it.
+    ///       We will temporarily assign a different, unreserved lease for this
+    ///       client. In the mean time, the other client will hopefully get back
+    ///       to us, so we could revoke his lease.
+    ///   -# no: assign them => done
+    /// -# Case 2. if there are leases and there are no reservations...
+    ///    Are the leases reserved for someone else?
+    ///    -# yes: release them, assign something else
+    ///    -#  no: renew them => done
+    /// -# Case 3. if there are leases and there are reservations...
+    ///    Are the leases matching reservations?
+    ///   -# yes: renew them => done
+    ///   -#  no: release existing leases, assign new ones based on reservations
+    /// -# Case 4. if there are no leases and no reservations...
+    ///       assign new leases (this is the "normal" case when the reservations
+    ///       are disabled).
+    ///
     /// @param ctx client context that passes all necessary information. See
     ///        @ref ClientContext6 for details.
     ///
     /// The following fields of ClientContext6 are used:
     ///
-    /// @ref ClientContext6::subnet_ subnet the allocation should come from
-    /// @ref ClientContext6::duid_ Client's DUID
-    /// @ref ClientContext6::param_ iaid iaid field from the IA_NA container
-    ///        that client sent
-    /// @ref ClientContext6::hint_ a hint that the client provided
-    /// @ref ClientContext6::type_ lease type (IA, TA or PD)
+    /// @ref ClientContext6::subnet_ subnet the allocation should come from<br/>
+    /// @ref ClientContext6::duid_ Client's DUID<br/>
+    /// @ref ClientContext6::iaid_ iaid field from the IA_NA container
+    ///        that client sent<br/>
+    /// @ref ClientContext6::hints_ a hint that the client provided<br/>
+    /// @ref ClientContext6::type_ lease type (IA, TA or PD)<br/>
     /// @ref ClientContext6::fwd_dns_update_ A boolean value which indicates
     ///        that server takes responsibility for the forward DNS Update
-    ///        for this lease (if true).
+    ///        for this lease (if true).<br/>
     /// @ref ClientContext6::rev_dns_update_ A boolean value which indicates
     ///        that server takes responsibility for the reverse DNS Update for
-    ///        this lease (if true).
-    /// @ref ClientContext6::hostname_ A fully qualified domain-name of the client.
+    ///        this lease (if true).<br/>
+    /// @ref ClientContext6::hostname_ A fully qualified domain-name of the client.<br/>
     /// @ref ClientContext6::fake_allocation_ is this real i.e. REQUEST (false)
     ///        or just picking an address for SOLICIT that is not really
-    ///        allocated (true)
+    ///        allocated (true)<br/>
     /// @ref ClientContext6::callout_handle_ a callout handle (used in hooks). A
-    ///        lease callouts will be executed if this parameter is passed.
+    ///        lease callouts will be executed if this parameter is passed.<br/>
     /// @ref ClientContext6::old_leases_ [out] Collection to which this function
     ///        will append old leases. Leases are stored in the same order as in
     ///        the collection of new leases, being returned. For newly allocated
     ///        leases (not renewed) the NULL pointers are stored in this
-    ///        collection as old leases.
+    ///        collection as old leases.<br/>
     /// @ref ClientContext6::hwaddr_ Hardware address (optional, may be null if
-    ///        not available)
+    ///        not available)<br/>
     ///
     /// @return Allocated IPv6 leases (may be empty if allocation failed)
     Lease6Collection
