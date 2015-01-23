@@ -12,10 +12,12 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <lfc/lfc.h>
+#include <lfc/lfc_controller.h>
 #include <exceptions/exceptions.h>
 #include <config.h>
 #include <iostream>
+#include <sstream>
+#include <unistd.h>
 
 using namespace std;
 
@@ -24,21 +26,21 @@ namespace lfc {
 
 /// @brief Defines the application name, it may be used to locate
 /// configuration data and appears in log statements.
-const char* lfcController::lfc_app_name_ = "DhcpLFC";
+const char* LFCController::lfc_app_name_ = "DhcpLFC";
 
 /// @brief Defines the executable name.
-const char* lfcController::lfc_bin_name_ = "kea-lfc";
+const char* LFCController::lfc_bin_name_ = "kea-lfc";
 
-lfcController::lfcController()
+LFCController::LFCController()
     : protocol_version_(0), verbose_(false), config_file_(""), previous_file_(""),
       copy_file_(""), output_file_(""), finish_file_(""), pid_file_("") {
 }
 
-lfcController::~lfcController() {
+LFCController::~LFCController() {
 }
 
 void
-lfcController::launch(int argc, char* argv[], const bool test_mode) {
+LFCController::launch(int argc, char* argv[]) {
   try {
     parseArgs(argc, argv);
   } catch (const InvalidUsage& ex) {
@@ -48,9 +50,11 @@ lfcController::launch(int argc, char* argv[], const bool test_mode) {
 }
 
 void
-lfcController::parseArgs(int argc, char* argv[]) {
+LFCController::parseArgs(int argc, char* argv[]) {
     int ch;
 
+    opterr = 0;
+    optind = 1;
     while ((ch = getopt(argc, argv, "46dvVp:i:o:c:f:")) != -1) {
         switch (ch) {
         case '4':
@@ -118,8 +122,13 @@ lfcController::parseArgs(int argc, char* argv[]) {
             config_file_ = optarg;
             break;
 
-        default:
+        case 'h':
             usage("");
+            return;
+
+        default:
+            // We should never actually get here
+            isc_throw(InvalidUsage, "Illegal result.");
         }
     }
 
@@ -154,7 +163,7 @@ lfcController::parseArgs(int argc, char* argv[]) {
 
     // If verbose is set echo the input information
     if (verbose_ == true) {
-      std::cerr << "Protocol version:    " << protocol_version_ << std::endl
+      std::cerr << "Protocol version:    DHCPv" << protocol_version_ << std::endl
                 << "Previous lease file: " << previous_file_ << std::endl
                 << "Copy lease file:     " << copy_file_ << std::endl
                 << "Output lease file:   " << output_file_ << std::endl
@@ -165,7 +174,7 @@ lfcController::parseArgs(int argc, char* argv[]) {
 }
 
 void
-lfcController::usage(const std::string& text) {
+LFCController::usage(const std::string& text) {
     if (text != "") {
         std::cerr << "Usage error: " << text << std::endl;
     }
@@ -181,19 +190,20 @@ lfcController::usage(const std::string& text) {
               << "   -v: print version number and exit" << std::endl
               << "   -V: print extended version inforamtion and exit" << std::endl
               << "   -d: optional, verbose output " << std::endl
+              << "   -h: print this message " << std::endl
               << std::endl;
 }
 
 std::string
-lfcController::getVersion(bool extended) {
-    std::stringstream tmp;
+LFCController::getVersion(const bool extended) const{
+    std::stringstream version_stream;
 
-    tmp << VERSION;
+    version_stream << VERSION;
     if (extended) {
-        tmp << std::endl << EXTENDED_VERSION;
+        version_stream << std::endl << EXTENDED_VERSION;
     }
 
-    return (tmp.str());
+    return (version_stream.str());
 }
 
 }; // namespace isc::lfc

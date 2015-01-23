@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <lfc/lfc.h>
+#include <lfc/lfc_controller.h>
 #include <exceptions/exceptions.h>
 #include <log/logger_support.h>
 #include <log/logger_manager.h>
@@ -24,19 +24,19 @@ using namespace std;
 
 /// This file contains the entry point (main() function for the
 /// standard LFC process, kea-lfc, component of the Kea software suite.
-/// It fetches the lfccontroller singleton instance and invokes its launch
-/// method.  
+/// It creates an instance of the LFCController class and invokes
+/// its launch method.
 /// The exit value of the program will be EXIT_SUCCESS if there were no
 /// errors, EXIT_FAILURE otherwise.
 int main(int argc, char* argv[]) {
     int ret = EXIT_SUCCESS;
-    lfcController lfcController;
+    LFCController lfc_controller;
 
     // Launch the controller passing in command line arguments.
     // Exit program with the controller's return code.
     try  {
         // 'false' value disables test mode.
-        lfcController.launch(argc, argv, false);
+        lfc_controller.launch(argc, argv);
     } catch (const isc::Exception& ex) {
         std::cerr << "Service failed:" << ex.what() << std::endl;
         ret = EXIT_FAILURE;

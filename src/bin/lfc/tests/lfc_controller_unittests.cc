@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <lfc/lfc.h>
+#include <lfc/lfc_controller.h>
 #include <gtest/gtest.h>
 
 using namespace isc::lfc;
@@ -20,21 +20,21 @@ using namespace std;
 
 namespace {
 
-TEST(lfcControllerTest, initialValues) {
-    lfcController lfcController;
+TEST(LFCControllerTest, initialValues) {
+    LFCController lfc_controller;
 
-    // Verify that we start with everything empty
-    EXPECT_EQ(lfcController.getProtocolVersion(), 0);
-    EXPECT_EQ(lfcController.getConfigFile(), "");
-    EXPECT_EQ(lfcController.getPreviousFile(), "");
-    EXPECT_EQ(lfcController.getCopyFile(), "");
-    EXPECT_EQ(lfcController.getOutputFile(), "");
-    EXPECT_EQ(lfcController.getFinishFile(), "");
-    EXPECT_EQ(lfcController.getPidFile(), "");
+    // Verify that we start with all the private variables empty
+    EXPECT_EQ(lfc_controller.getProtocolVersion(), 0);
+    EXPECT_TRUE(lfc_controller.getConfigFile().empty());
+    EXPECT_TRUE(lfc_controller.getPreviousFile().empty());
+    EXPECT_TRUE(lfc_controller.getCopyFile().empty());
+    EXPECT_TRUE(lfc_controller.getOutputFile().empty());
+    EXPECT_TRUE(lfc_controller.getFinishFile().empty());
+    EXPECT_TRUE(lfc_controller.getPidFile().empty());
 }
 
-TEST(lfcControllerTest, fullCommandLine) {
-    lfcController lfcController;
+TEST(LFCControllerTest, fullCommandLine) {
+    LFCController lfc_controller;
 
     // Verify that standard options can be parsed without error
     char* argv[] = { const_cast<char*>("progName"),
@@ -51,22 +51,23 @@ TEST(lfcControllerTest, fullCommandLine) {
                      const_cast<char*>("finish") };
     int argc = 12;
 
-    EXPECT_NO_THROW(lfcController.parseArgs(argc, argv));
+    ASSERT_NO_THROW(lfc_controller.parseArgs(argc, argv));
 
-    // The parsed data
-    EXPECT_EQ(lfcController.getProtocolVersion(), 4);
-    EXPECT_EQ(lfcController.getConfigFile(), "config");
-    EXPECT_EQ(lfcController.getPreviousFile(), "previous");
-    EXPECT_EQ(lfcController.getCopyFile(), "copy");
-    EXPECT_EQ(lfcController.getOutputFile(), "output");
-    EXPECT_EQ(lfcController.getFinishFile(), "finish");
+    // Check all the parsed data from above to the known values
+    EXPECT_EQ(lfc_controller.getProtocolVersion(), 4);
+    EXPECT_EQ(lfc_controller.getConfigFile(), "config");
+    EXPECT_EQ(lfc_controller.getPreviousFile(), "previous");
+    EXPECT_EQ(lfc_controller.getCopyFile(), "copy");
+    EXPECT_EQ(lfc_controller.getOutputFile(), "output");
+    EXPECT_EQ(lfc_controller.getFinishFile(), "finish");
 }
 
-TEST(lfcControllerTest, notEnoughData) {
-    lfcController lfcController;
+TEST(LFCControllerTest, notEnoughData) {
+    LFCController lfc_controller;
 
-    // The standard options we shall test what happens
-    // if we don't include all of them
+    // Test the results if we don't include all of the required arguments
+    // This argument list is correct but we shall only suppy part of it
+    // to the parse routine via the argc variable.
     char* argv[] = { const_cast<char*>("progName"),
                      const_cast<char*>("-4"),
                      const_cast<char*>("-p"),
@@ -79,44 +80,21 @@ TEST(lfcControllerTest, notEnoughData) {
                      const_cast<char*>("config"),
                      const_cast<char*>("-f"),
                      const_cast<char*>("finish") };
+
     int argc = 1;
 
-    EXPECT_THROW(lfcController.parseArgs(argc, argv), InvalidUsage);
+    for (; argc < 12; ++argc) {
+        EXPECT_THROW(lfc_controller.parseArgs(argc, argv), InvalidUsage)
+            << "test failed for argc = " << argc;
+    }
 
-    argc = 2;
-    EXPECT_THROW(lfcController.parseArgs(argc, argv), InvalidUsage);
-
-    argc = 3;
-    EXPECT_THROW(lfcController.parseArgs(argc, argv), InvalidUsage);
-
-    argc = 4;
-    EXPECT_THROW(lfcController.parseArgs(argc, argv), InvalidUsage);
-
-    argc = 5;
-    EXPECT_THROW(lfcController.parseArgs(argc, argv), InvalidUsage);
-
-    argc = 6;
-    EXPECT_THROW(lfcController.parseArgs(argc, argv), InvalidUsage);
-
-    argc = 7;
-    EXPECT_THROW(lfcController.parseArgs(argc, argv), InvalidUsage);
-
-    argc = 8;
-    EXPECT_THROW(lfcController.parseArgs(argc, argv), InvalidUsage);
-
-    argc = 9;
-    EXPECT_THROW(lfcController.parseArgs(argc, argv), InvalidUsage);
-
-    argc = 10;
-    EXPECT_THROW(lfcController.parseArgs(argc, argv), InvalidUsage);
-
-    argc = 11;
-    EXPECT_THROW(lfcController.parseArgs(argc, argv), InvalidUsage);
-
+    // Verify we can still parse the full string properly
+    ASSERT_NO_THROW(lfc_controller.parseArgs(argc, argv));
 }
 
-TEST(lfcControllerTest, tooMuchData) {
-    lfcController lfcController;
+
+TEST(LFCControllerTest, tooMuchData) {
+    LFCController lfc_controller;
 
     // The standard options plus some others
 
@@ -138,13 +116,14 @@ TEST(lfcControllerTest, tooMuchData) {
     };
     int argc = 15;
 
-    EXPECT_THROW(lfcController.parseArgs(argc, argv), InvalidUsage);
+    // We expect an error as we have arguments that aren't valid
+    EXPECT_THROW(lfc_controller.parseArgs(argc, argv), InvalidUsage);
 }
 
-TEST(lfcControllerTest, someBadData) {
-    lfcController lfcController;
+TEST(LFCControllerTest, someBadData) {
+    LFCController lfc_controller;
 
-    // The standard options plus some others
+    // Some random arguments
 
     char* argv[] = { const_cast<char*>("progName"),
                      const_cast<char*>("some"),
@@ -153,7 +132,8 @@ TEST(lfcControllerTest, someBadData) {
     };
     int argc = 4;
 
-    EXPECT_THROW(lfcController.parseArgs(argc, argv), InvalidUsage);
+    // We expect an error as the arguments aren't valid
+    EXPECT_THROW(lfc_controller.parseArgs(argc, argv), InvalidUsage);
 }
 
 } // end of anonymous namespace

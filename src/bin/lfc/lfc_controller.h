@@ -12,11 +12,11 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef LFC_H
-#define LFC_H
+#ifndef LFC_CONTROLLER_H
+#define LFC_CONTROLLER_H
 
-#include <boost/shared_ptr.hpp>
 #include <exceptions/exceptions.h>
+#include <string>
 
 namespace isc {
 namespace lfc {
@@ -28,10 +28,16 @@ public:
         isc::Exception(file, line, what) { };
 };
 
-//class lfcBase;
-//typedef boost::shared_ptr<lfcBase> lfcBasePtr;
-
-class lfcController {
+/// @brief Process controller for LFC process
+/// This class provides the LFC process functions.  These are used to:
+/// manage the command line, check for already running instances,
+/// invoke the code to process the lease files and finally to rename
+/// the lease files as necessary.
+/// @todo The current code simply processes the command line we still need
+/// -# handle PID file manipulation
+/// -# invoke the code to read, process and write the lease files
+/// -# rename and delete the shell files as required
+class LFCController {
 public:
     /// @brief Defines the application name, it may be used to locate
     /// configuration data and appears in log statements.
@@ -42,10 +48,10 @@ public:
     static const char* lfc_bin_name_;
 
     /// @brief Constructor
-    lfcController();
+    LFCController();
 
     /// @brief Destructor
-    ~lfcController();
+    ~LFCController();
 
     /// @brief Acts as the primary entry point to start execution
     /// of the process.  Provides the control logic:
@@ -56,10 +62,20 @@ public:
     /// -# .... TBD
     /// -# remove pid file (TBD)
     /// -# exit to the caller
-    void launch(int argc, char* argv[], const bool test_mode);
+    ///
+    /// @param argc Number of strings in the @c argv array.
+    /// @param argv Array of arguments passed in via the program's main function.
+    ///
+    /// @throw InvalidUsage if the command line parameters are invalid.
+    void launch(int argc, char* argv[]);
 
     /// @brief Process the command line arguments.  It is the first
     /// step taken after the process has been launched.
+    ///
+    /// @param argc Number of strings in the @c argv array.
+    /// @param argv Array of arguments passed in via the program's main function.
+    ///
+    /// @throw InvalidUsage if the command line parameters are invalid.
     void parseArgs(int argc, char* argv[]);
 
     /// @brief Prints the program usage text to std error.
@@ -72,72 +88,77 @@ public:
     ///
     /// @param extended is a boolean indicating if the version string
     /// should be short (false) or extended (true)
-    std::string getVersion(bool extended);
+    std::string getVersion(const bool extended) const;
 
-    // The following are primarly for the test code and not expected
-    // to be used in normal situations
+    /// @name Accessor methods mainly used for testing purposes
+    //@{
 
     /// @brief Gets the protocol version of the leaes files
     ///
-    /// @return Returns the value of the protocol version
+    /// @return Returns the value of the DHCP protocol version.
+    /// This can be 4 or 6 while in use and 0 before parsing
+    /// any arguments.
     int getProtocolVersion() const {
       return (protocol_version_);
     }
 
     /// @brief Gets the config file name
     ///
-    /// @return Returns the name of the config file
+    /// @return Returns the path to the config file
     std::string getConfigFile() const {
         return (config_file_);
     }
 
     /// @brief Gets the prevous file name
     ///
-    /// @return Returns the name of the previous file
+    /// @return Returns the path to the previous file
     std::string getPreviousFile() const {
         return (previous_file_);
     }
 
     /// @brief Gets the copy file name
     ///
-    /// @return Returns the name of the copy file
+    /// @return Returns the path to the copy file
     std::string getCopyFile() const {
         return (copy_file_);
     }
 
     /// @brief Gets the output file name
     ///
-    /// @return Returns the name of the output file
+    /// @return Returns the path to the output file
     std::string getOutputFile() const {
         return (output_file_);
     }
 
     /// @brief Gets the finish file name
     ///
-    /// @return Returns the name of the finish file
+    /// @return Returns the path to the finish file
     std::string getFinishFile() const {
         return (finish_file_);
     }
 
     /// @brief Gets the pid file name
     ///
-    /// @return Returns the name of the pid file
+    /// @return Returns the path to the pid file
     std::string getPidFile() const {
         return (pid_file_);
     }
+    //@}
 
 private:
+    ///< Version of the DHCP protocol used, i.e. 4 or 6.
     int protocol_version_;
+    ///< When true output the result of parsing the comamnd line
     bool verbose_;
-    std::string config_file_;
-    std::string previous_file_;
-    std::string copy_file_;
-    std::string output_file_;
-    std::string finish_file_;
-    std::string pid_file_;
+    std::string config_file_;   ///< The path to the config file
+    std::string previous_file_; ///< The path to the previous LFC file (if any)
+    std::string copy_file_;     ///< The path to the copy of the lease file
+    std::string output_file_;   ///< The path to the output file
+    std::string finish_file_;   ///< The path to the finished output file
+    std::string pid_file_;      ///< The path to the pid file
 };
 
 }; // namespace isc::lfc
 }; // namespace isc
 
-#endif
+#endif // LFC_CONTROLLER_H
