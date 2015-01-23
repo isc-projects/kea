@@ -1,6 +1,6 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
-	       [<!ENTITY mdash "&#8212;">]>
+               [<!ENTITY mdash "&#8212;">]>
 <!--
  - Copyright (C) 2015  Internet Systems Consortium, Inc. ("ISC")
  -
@@ -53,6 +53,7 @@
       <arg><option>-v</option></arg>
       <arg><option>-V</option></arg>
       <arg><option>-d</option></arg>
+      <arg><option>-h</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -65,7 +66,6 @@
       a stand alone process.  While it can be started externally it
       should be started by the Kea DHCP servers as desired and required.
     </para>
-
   </refsect1>
 
   <refsect1>
@@ -98,6 +98,13 @@
       </varlistentry>
 
       <varlistentry>
+        <term><option>-h</option></term>
+        <listitem><para>
+          Help causes the usage string to be printed.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term><option>-4 | -6</option></term>
         <listitem><para>
           The protocol version of the lease files, must be one of 4 or 6.
@@ -107,42 +114,57 @@
       <varlistentry>
         <term><option>-c</option></term>
         <listitem><para>
-          Configuration file including the configuration for LFC process.
-          It may also contain configuration entries for other Kea services.
+          Configuration file including the configuration for
+          <command>kea-lfc</command> process.  It may also
+          contain configuration entries for other Kea services.
+          Currently <command>kea-lfc</command> gets all of its arguments from 
+          the comamnd line, in the future it will be extended to get some arguments
+          from the config file.
         </para></listitem>
       </varlistentry>
 
       <varlistentry>
         <term><option>-p</option></term>
         <listitem><para>
-          Previous lease file - When LFC starts this is the result of any previous
-	  run of LFC.
+          Previous lease file - When <command>kea-lfc</command> starts this
+          is the result of any previous run of <command>kea-lfc</command>.
+          When <command>kea-lfc</command> finishes it is the result of this run.
+          If <command>kea-lfc</command> is interrupted before compelting
+          this file may not exist.
         </para></listitem>
       </varlistentry>
 
       <varlistentry>
         <term><option>-i</option></term>
         <listitem><para>
-          Input or copy of lease file - Before the DHCP server invokes LFC it will move
-	  the current lease file to this file and then call LFC with the new file.
+          Input or copy of lease file - Before the DHCP server invokes
+          <command>kea-lfc</command> it will copy the current lease file
+          here and then call <command>kea-lfc</command> with this file.
         </para></listitem>
       </varlistentry>
 
       <varlistentry>
         <term><option>-o</option></term>
         <listitem><para>
-          Output lease file - The temporary file LFC should use to write the leases.
-          Upon completion this file will be moved to the finish file (see below).
+          Output lease file - The temporary file <command>kea-lfc</command>
+          should use to write the leases.  Upon completion of writing this
+          this file it will be moved to the finish file (see below).
         </para></listitem>
       </varlistentry>
 
       <varlistentry>
         <term><option>-f</option></term>
         <listitem><para>
-          Finish or completion file - Another temporary file LFC uses for bookkeeping.
-          When LFC completes writing the output file it moves it to this file name.
-          After LFC finishes deleting the other files (previous and input) it moves
-          this file to previous lease file.
+          Finish or completion file - Another temporary file
+          <command>kea-lfc</command> uses for bookkeeping.  When
+          <command>kea-lfc</command> completes writing the output
+          file it moves it to this file name.  After
+          <command>kea-lfc</command> finishes deleting the other
+          files (previous and input) it moves this file to previous
+          lease file.  By moving the files in this fashion the
+          <command>kea-lfc</command> and the DHCP server processes
+          can determine the correct file to use even if one of the
+          processes was interrupted before completing its task.
         </para></listitem>
       </varlistentry>
     </variablelist>
