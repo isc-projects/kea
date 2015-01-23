@@ -22,7 +22,7 @@
 using namespace isc::lfc;
 using namespace std;
 
-/// This file contains the entry point (main() function for the
+/// This file contains the entry point (main() function) for the
 /// standard LFC process, kea-lfc, component of the Kea software suite.
 /// It creates an instance of the LFCController class and invokes
 /// its launch method.
