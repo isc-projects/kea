@@ -29,10 +29,12 @@ public:
 };
 
 /// @brief Process controller for LFC process
-/// This class provides the LFC process functions.  These are used to:
+///
+/// This class provides the LFC process functions. These are used to:
 /// manage the command line, check for already running instances,
 /// invoke the code to process the lease files and finally to rename
 /// the lease files as necessary.
+///
 /// @todo The current code simply processes the command line we still need
 /// -# handle PID file manipulation
 /// -# invoke the code to read, process and write the lease files
@@ -146,9 +148,9 @@ public:
     //@}
 
 private:
-    ///< Version of the DHCP protocol used, i.e. 4 or 6.
+    /// Version of the DHCP protocol used, i.e. 4 or 6.
     int protocol_version_;
-    ///< When true output the result of parsing the comamnd line
+    /// When true output the result of parsing the comamnd line
     bool verbose_;
     std::string config_file_;   ///< The path to the config file
     std::string previous_file_; ///< The path to the previous LFC file (if any)
