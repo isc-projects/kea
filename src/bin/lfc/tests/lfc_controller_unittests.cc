@@ -20,6 +20,9 @@ using namespace std;
 
 namespace {
 
+/// @brief Verify initial state of LFC controller.
+/// Create an instance of the controller and see that
+/// all of the initial values are empty as expected.
 TEST(LFCControllerTest, initialValues) {
     LFCController lfc_controller;
 
@@ -33,6 +36,9 @@ TEST(LFCControllerTest, initialValues) {
     EXPECT_TRUE(lfc_controller.getPidFile().empty());
 }
 
+/// @brief Verify that parsing a full command line works.
+/// Parse a complete command line then verify the parsed
+/// and saved data matches our expectations.
 TEST(LFCControllerTest, fullCommandLine) {
     LFCController lfc_controller;
 
@@ -62,6 +68,10 @@ TEST(LFCControllerTest, fullCommandLine) {
     EXPECT_EQ(lfc_controller.getFinishFile(), "finish");
 }
 
+/// @brief Verify that parsing a correct but incomplete line fails.
+/// Parse a command line that is correctly formatted but isn't complete
+/// (doesn't include some options or an some option arguments).  We
+/// expect that the parse will fail with an InvalidUsage exception.
 TEST(LFCControllerTest, notEnoughData) {
     LFCController lfc_controller;
 
@@ -92,7 +102,11 @@ TEST(LFCControllerTest, notEnoughData) {
     ASSERT_NO_THROW(lfc_controller.parseArgs(argc, argv));
 }
 
-
+/// @brief Verify that extra arguments cause the parse to fail.
+/// Parse a full command line plus some extra arguments on the end
+/// to verify that we don't stop parsing when we find all of the
+/// required arguments.  We exepct the parse to fail with an
+/// InvalidUsage exception.
 TEST(LFCControllerTest, tooMuchData) {
     LFCController lfc_controller;
 
@@ -120,6 +134,9 @@ TEST(LFCControllerTest, tooMuchData) {
     EXPECT_THROW(lfc_controller.parseArgs(argc, argv), InvalidUsage);
 }
 
+/// @brief Verify that unknown arguments cause the parse to fail.
+/// Parse some unknown arguments to verify that we generate the
+/// proper InvalidUsage exception.
 TEST(LFCControllerTest, someBadData) {
     LFCController lfc_controller;
 

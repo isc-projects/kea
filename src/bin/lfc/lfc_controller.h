@@ -35,7 +35,7 @@ public:
 /// invoke the code to process the lease files and finally to rename
 /// the lease files as necessary.
 ///
-/// @todo The current code simply processes the command line we still need
+/// @todo The current code simply processes the command line we still need to
 /// -# handle PID file manipulation
 /// -# invoke the code to read, process and write the lease files
 /// -# rename and delete the shell files as required
