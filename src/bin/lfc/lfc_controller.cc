@@ -55,7 +55,7 @@ LFCController::parseArgs(int argc, char* argv[]) {
 
     opterr = 0;
     optind = 1;
-    while ((ch = getopt(argc, argv, "46dvVp:i:o:c:f:")) != -1) {
+    while ((ch = getopt(argc, argv, ":46dvVp:i:o:c:f:")) != -1) {
         switch (ch) {
         case '4':
             // Process DHCPv4 lease files.
@@ -124,11 +124,20 @@ LFCController::parseArgs(int argc, char* argv[]) {
 
         case 'h':
             usage("");
-            return;
+            exit(EXIT_SUCCESS);
+
+        case '?':
+            // Unknown argument
+            isc_throw(InvalidUsage, "Unknown argument");
+
+        case ':':
+            // Missing option argument
+            isc_throw(InvalidUsage, "Missing option argument");
 
         default:
-            // We should never actually get here
-            isc_throw(InvalidUsage, "Illegal result.");
+            // I don't think we should get here as the unknown arguments
+            // and missing options cases should cover everything else
+            isc_throw(InvalidUsage, "Invalid command line");
         }
     }
 
