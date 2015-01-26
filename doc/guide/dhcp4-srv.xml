@@ -1746,12 +1746,13 @@ temporarily override a list of interface names and listen on all interfaces.
 
     <para>Hosts are defined as parameters for each subnet. Each host has to be
     identified by its hardware/MAC address. There is an optional
-    <command>reservation</command> array. Each element in that array is a
-    structure, that holds information about a single host. In particular, such
-    a structure has to have an indentifer that uniquely identifies a host.
-    In DHCPv4 context, such an identifier is a hardware or MAC address.
-    In most cases, also an address will be specified. It is possible to specify
-    a hostname. Additional capabilities are planed.</para>
+    <command>reservations</command> array in the <command>Subnet4</command>
+    element. Each element in that array is a structure, that holds information
+    about a single host. In particular, such a structure has to have an
+    indentifer that uniquely identifies a host.  In DHCPv4 context, such an
+    identifier is a hardware or MAC address.  In most cases, also an address
+    will be specified. It is possible to specify a hostname. Additional
+    capabilities are planed.</para>
 
     <para>The following example shows how to reserve addresses for specific
     hosts:
@@ -1765,17 +1766,22 @@ temporarily override a list of interface names and listen on all interfaces.
         <userinput>"reservations": [
             {
                 "hw-address": "1a:1b:1c:1d:1e:1f",
-                "ip-address": "192.0.2.202",
-                "hostname": "alice-laptop"
+                "ip-address": "192.0.2.202"
             },
             {
                 "hw-address": "0a:0b:0c:0d:0e:0f",
-                "ip-address": "192.0.2.100"
+                "ip-address": "192.0.2.100",
+                "hostname": "alice-laptop"
             }
         ]</userinput>
     }
 ]
 </screen>
+    The first entry reserves the 192.0.2.202 address for the client that uses
+    MAC adress of 1a:1b:1c:1d:1e:1f. The second entry reserves the address
+    192.0.2.100 address and a hostname of alice-laptop for client with MAC
+    address 0a:0b:0c:0d:0e:0f. Note that if you plan to do DNS updates, it
+    is strongly recommended for the hostnames to be unique.
     </para>
 
     <para>Making a reservation for a mobile host that may visit multiple subnets
@@ -1802,13 +1808,13 @@ temporarily override a list of interface names and listen on all interfaces.
       by the DHCPv4 server. That dynamic part is referred to as a dynamic pool or
       simply a pool. In principle the host reservation can reserve any address
       that belongs to the subnet. The reservations that specify an address that
-      belong to configure pools are called <command>in-pool reservations</command>.
+      belong to configured pools are called <command>in-pool reservations</command>.
       In contract, those that do not belong to dynamic pools are called
-      <command>out-of-pool reservations</command>. This is no formal difference
+      <command>out-of-pool reservations</command>. There is no formal difference
       in the reservation syntax. As of 0.9.1, both reservation types are
       handled uniformly. However, upcoming releases may offer improved performance
       if there are only out-of-pool reservations as the server will be able
-      to skip reservation checks when dealing with existing leases. Therefore
+      to skip reservation checks when dealing with existing leases. Therefore,
       system administrators are encouraged to use out-of-pool reservations, if
       possible.</para>
     </section>
@@ -1825,13 +1831,14 @@ temporarily override a list of interface names and listen on all interfaces.
       cases where such an operation is warranted.</para>
 
       <para>The server now has a conflict to resolve. Let's analyze the
-      situation here. If host B boots up and request an address, the server
-      is not able to assign the requested address 192.0.2.10. A naive approach
-      would to be immediately remove the lease for host A and create a new
-      one for host B. That would not solve the problem, though, because as soon
-      as host B get the address, it will detect that the address is already in use
-      by someone else (host A) and would send Decline. Therefore in this situation,
-      the server has to temporarily assign a different address to host B.</para>
+      situation here. If host B boots up and request an address, the server is
+      not able to assign the reserved address 192.0.2.10. A naive approach would
+      to be immediately remove the lease for host A and create a new one for
+      host B. That would not solve the problem, though, because as soon as host
+      B get the address, it will detect that the address is already in use by
+      someone else (host A) and would send Decline. Therefore in this situation,
+      the server has to temporarily assign a different address (not matching
+      what has been reserved) to host B.</para>
 
       <para>When the host A renews its address, the server will discover that
       the address being renewed is now reserved for someone else (host
