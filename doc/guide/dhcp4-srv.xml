@@ -1729,6 +1729,159 @@ temporarily override a list of interface names and listen on all interfaces.
 
   </section> <!-- end of configuring kea-dhcp4 server section with many subsections -->
 
+  <!-- Host reservation is a large topic. There will be many subsections,
+   so it should be a section on its own. -->
+  <section id="host-reservation-v4">
+    <title>Host reservation in DHCPv4</title>
+
+    <para>There are many cases where it is useful to provide a configuration on
+    a per host basis. The most obvious one is to reserve specific, static
+    address for exclusive use by a given client &dash; returning client will get
+    the same address every time and other clients will never get that
+    address. Other example may be a host that has specific requirements, e.g. a
+    printer that needs additional options. Yes another possible use case for
+    host reservation is to define unique host names for hosts.  Although not all
+    of those scenarios are possible yet, Kea software will support them in the
+    near future.</para>
+
+    <para>Hosts are defined as parameters for each subnet. Each host has to be
+    identified by its hardware/MAC address. There is an optional
+    <command>reservation</command> array. Each element in that array is a
+    structure, that holds information about a single host. In particular, such
+    a structure has to have an indentifer that uniquely identifies a host.
+    In DHCPv4 context, such an identifier is a hardware or MAC address.
+    In most cases, also an address will be specified. It is possible to specify
+    a hostname. Additional capabilities are planed.</para>
+
+    <para>The following example shows how to reserve addresses for specific
+    hosts:
+
+<screen>
+"subnet4": [
+    {
+        "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
+        "subnet": "192.0.2.0/24",
+        "interface": "eth0",
+        <userinput>"reservations": [
+            {
+                "hw-address": "1a:1b:1c:1d:1e:1f",
+                "ip-address": "192.0.2.202",
+                "hostname": "alice-laptop"
+            },
+            {
+                "hw-address": "0a:0b:0c:0d:0e:0f",
+                "ip-address": "192.0.2.100"
+            }
+        ]</userinput>
+    }
+]
+</screen>
+    </para>
+
+    <para>Making a reservation for a mobile host that may visit multiple subnets
+    requires a separate host definition in each subnet it is expected to visit.
+    It is not allowed to define multiple host definitions with the same hardware
+    address in a single subnet. It is a valid configuration, if such definitions
+    are specified in different subnets, though.
+    </para>
+
+    <para>Adding host reservation incurs a performance penalty. In principle,
+    when the server that does not support host reservation responds to a query,
+    it needs to check whether there is a lease for a given address being
+    considered for allocation or renewal. The server that also supports host
+    reservation, has to perform additional checks: not only if the address is
+    currently used (if there is a lease for it), but also whether the address
+    could be used by someone else (if there is a reservation for it). That
+    additional check incurs performance penalty.</para>
+
+    <section id="reservation4-types">
+      <title>Address reservation types</title>
+
+      <para>In a typical scenario there's an IPv4 subnet defined,
+      e.g. 192.0.2.0/24 with certain part of it dedicated for dynamic allocation
+      by the DHCPv4 server. That dynamic part is referred to as a dynamic pool or
+      simply a pool. In principle the host reservation can reserve any address
+      that belongs to the subnet. The reservations that specify an address that
+      belong to configure pools are called <command>in-pool reservations</command>.
+      In contract, those that do not belong to dynamic pools are called
+      <command>out-of-pool reservations</command>. This is no formal difference
+      in the reservation syntax. As of 0.9.1, both reservation types are
+      handled uniformly. However, upcoming releases may offer improved performance
+      if there are only out-of-pool reservations as the server will be able
+      to skip reservation checks when dealing with existing leases. Therefore
+      system administrators are encouraged to use out-of-pool reservations, if
+      possible.</para>
+    </section>
+
+    <section it="reservation4-conflict">
+      <title>Conflicts in DHCPv4 reservations</title>
+      <para>As reservations and lease information are kept in different places,
+      conflict may arrise. Consider the following series of events. The server
+      has configured 192.0.2.10 to 192.0.2.20 dynamic pool range. Host A
+      requests an address and gets 19.0.2.10. Now the system administrator
+      decides to reserve an address for host B. He decides to reserve 192.0.2.10
+      for that purpose. In general, reserving an address that is currently
+      assigned to someone else is not recommended, but there are valid use
+      cases where such an operation is warranted.</para>
+
+      <para>The server now has a conflict to resolve. Let's analyze the
+      situation here. If host B boots up and request an address, the server
+      is not able to assign the requested address 192.0.2.10. A naive approach
+      would to be immediately remove the lease for host A and create a new
+      one for host B. That would not solve the problem, though, because as soon
+      as host B get the address, it will detect that the address is already in use
+      by someone else (host A) and would send Decline. Therefore in this situation,
+      the server has to temporarily assign a different address to host B.</para>
+
+      <para>When the host A renews its address, the server will discover that
+      the address being renewed is now reserved for someone else (host
+      B). Therefore the server will remove the lease and will inform the host A
+      that it is no longer allowed to use it by sending NAK message. Host A
+      will then revert to server discovery and will eventually get a different
+      address.  The address 192.0.2.10 is now no longer used. When host B tries
+      to renew its temporary address, the server will detect that it has a valid
+      lease, but there is a reservation for a different address. The server will
+      send NAK to inform host B that its address is no longer usable. The
+      server will also remove its temporary lease. It will revert to the server
+      discovery phase and will eventually send a REQUEST message. This time the
+      server will find out that there is a reservation for that host and the
+      reserved address 192.0.2.10 is not used, so it will be granted.</para>
+
+      <para>This recovery will succeed, even if other hosts will attempt to get
+      the reserved address. Had the host C requested address 192.0.2.10 after
+      the reservation was made, the server will either propose a different
+      address (when responding to DISCOVER) or would send NAK (when responding
+      to REQUEST).</para>
+
+      <para>This recovery mechanism allows the server to fully recover from a
+      case where reservations conflict with existing leases. This procedure
+      takes time and will roughly take as long as renew-timer value specified.
+      The best way to avoid such recovery is to not define new reservations that
+      conflict with existing leases. Another recommendation is to use
+      out-of-pool reservations. If the reserved address does not belong to a
+      pool, there is no way that other clients could get this address (note that
+      having multiple reservations for the same address is not allowed).
+      </para>
+    </section>
+
+    <section id="reservation4-hostname">
+      <title>Reserving a hostname</title>
+      <!-- @todo: replace this with the actual text once #3688 is implemented -->
+      <para>Reserving a hostname is currently not supported. It is possible
+      to specify that information in the configuration file, but that data
+      is not used by the server engine yet.</para>
+    </section>
+
+    <section id="reservation4-options">
+      <title>Reserving specific options</title>
+      <!-- @todo: replace this with the actual text once #3572 is implemented -->
+      <para>Currently it is not possible to specify options in host
+      reservation. Such a feature will be added in the upcoming Kea
+      releases.</para>
+    </section>
+  </section>
+  <!-- end of host reservations section -->
+
     <section id="dhcp4-serverid">
       <title>Server Identifier in DHCPv4</title>
       <para>
