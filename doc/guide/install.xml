@@ -478,7 +478,7 @@ Debian and Ubuntu:
         </para>
         <para>
           See <xref linkend="pgsql-database-create"/> for details regarding
-          MySQL database configuration.
+          PostgreSQL database configuration.
         </para>
       </section>
    </section>
