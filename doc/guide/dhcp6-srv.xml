@@ -11,7 +11,7 @@
       <title>Starting and Stopping the DHCPv6 Server</title>
 
       <para>
-      It is recommended that the Kea DHCPv4 server be started and stopped
+      It is recommended that the Kea DHCPv6 server be started and stopped
       using <command>keactrl</command> (described in <xref linkend="keactrl"/>).
       However, it is also possible to run the server directly: it accepts
       the following command-line switches:
@@ -1728,16 +1728,17 @@ should include options from the isc option space:
     scenarios are possible yet, Kea software will support them in the near
     future.</para>
 
-    <para>Hosts are defined as parameters for each subnet. Each host can be
-    identified by either DUID or its hardware/MAC address. See <xref
-    linkend="mac-in-dhcpv6"/> for details. There is an optional
-    <command>reservations</command> array in the <command>Subnet6</command>
-    structure. Each element in that array is a structure, that holds information
-    about a single host. In particular, such a structure has to have an
-    indentifer that uniquely identifies a host.  In DHCPv4 context, such an
-    identifier is a hardware or MAC address.  In most cases, also an address
-    will be specified. It is possible to specify a hostname. Additional
-    capabilities are planed.</para>
+    <para>Hosts are defined as parameters for each subnet. Each host
+    can be identified by either DUID or its hardware/MAC address. See
+    <xref linkend="mac-in-dhcpv6"/> for details. There is an optional
+    <command>reservations</command> array in the
+    <command>Subnet6</command> structure. Each element in that array
+    is a structure, that holds information about a single host. In
+    particular, such a structure has to have an indentifer that
+    uniquely identifies a host.  In DHCPv6 context, such an identifier
+    is a hardware (MAC) address or a DUID.  Also, either one or more
+    addresses or prefixes should be specified. It is possible to
+    specify a hostname. Additional capabilities are planed.</para>
 
     <para>The following example shows how to reserve addresses and prefixes
     for specific hosts:
