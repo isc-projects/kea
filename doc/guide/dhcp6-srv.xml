@@ -1986,6 +1986,12 @@ should include options from the isc option space:
             Supported option is DNS_SERVERS.</simpara>
           </listitem>
           <listitem>
+            <simpara><emphasis>The Dynamic Host Configuration Protocol for IPv6 (DHCPv6)
+            Relay Agent Remote-ID Option</emphasis>,
+            <ulink url="http://tools.ietf.org/html/rfc4649">RFC 4649</ulink>:
+            REMOTE-ID option is supported.</simpara>
+          </listitem>
+          <listitem>
             <simpara><emphasis>The Dynamic Host Configuration Protocol for IPv6 (DHCPv6) Client
             Fully Qualified Domain Name (FQDN) Option</emphasis>,
             <ulink url="http://tools.ietf.org/html/rfc4704">RFC 4704</ulink>:
