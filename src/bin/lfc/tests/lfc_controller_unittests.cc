@@ -45,7 +45,7 @@ TEST(LFCControllerTest, fullCommandLine) {
     // Verify that standard options can be parsed without error
     char* argv[] = { const_cast<char*>("progName"),
                      const_cast<char*>("-4"),
-                     const_cast<char*>("-p"),
+                     const_cast<char*>("-x"),
                      const_cast<char*>("previous"),
                      const_cast<char*>("-i"),
                      const_cast<char*>("copy"),
@@ -54,8 +54,10 @@ TEST(LFCControllerTest, fullCommandLine) {
                      const_cast<char*>("-c"),
                      const_cast<char*>("config"),
                      const_cast<char*>("-f"),
-                     const_cast<char*>("finish") };
-    int argc = 12;
+                     const_cast<char*>("finish"),
+                     const_cast<char*>("-p"),
+                     const_cast<char*>("pid") };
+    int argc = 14;
 
     ASSERT_NO_THROW(lfc_controller.parseArgs(argc, argv));
 
@@ -66,6 +68,7 @@ TEST(LFCControllerTest, fullCommandLine) {
     EXPECT_EQ(lfc_controller.getCopyFile(), "copy");
     EXPECT_EQ(lfc_controller.getOutputFile(), "output");
     EXPECT_EQ(lfc_controller.getFinishFile(), "finish");
+    EXPECT_EQ(lfc_controller.getPidFile(), "pid");
 }
 
 /// @brief Verify that parsing a correct but incomplete line fails.
@@ -80,7 +83,7 @@ TEST(LFCControllerTest, notEnoughData) {
     // to the parse routine via the argc variable.
     char* argv[] = { const_cast<char*>("progName"),
                      const_cast<char*>("-4"),
-                     const_cast<char*>("-p"),
+                     const_cast<char*>("-x"),
                      const_cast<char*>("previous"),
                      const_cast<char*>("-i"),
                      const_cast<char*>("copy"),
@@ -89,11 +92,13 @@ TEST(LFCControllerTest, notEnoughData) {
                      const_cast<char*>("-c"),
                      const_cast<char*>("config"),
                      const_cast<char*>("-f"),
-                     const_cast<char*>("finish") };
+                     const_cast<char*>("finish"),
+                     const_cast<char*>("-p"),
+                     const_cast<char*>("pid") };
 
     int argc = 1;
 
-    for (; argc < 12; ++argc) {
+    for (; argc < 14; ++argc) {
         EXPECT_THROW(lfc_controller.parseArgs(argc, argv), InvalidUsage)
             << "test failed for argc = " << argc;
     }
@@ -114,7 +119,7 @@ TEST(LFCControllerTest, tooMuchData) {
 
     char* argv[] = { const_cast<char*>("progName"),
                      const_cast<char*>("-4"),
-                     const_cast<char*>("-p"),
+                     const_cast<char*>("-x"),
                      const_cast<char*>("previous"),
                      const_cast<char*>("-i"),
                      const_cast<char*>("copy"),
@@ -124,11 +129,13 @@ TEST(LFCControllerTest, tooMuchData) {
                      const_cast<char*>("config"),
                      const_cast<char*>("-f"),
                      const_cast<char*>("finish"),
+                     const_cast<char*>("-p"),
+                     const_cast<char*>("pid"),
                      const_cast<char*>("some"),
                      const_cast<char*>("other"),
                      const_cast<char*>("args"),
     };
-    int argc = 15;
+    int argc = 17;
 
     // We expect an error as we have arguments that aren't valid
     EXPECT_THROW(lfc_controller.parseArgs(argc, argv), InvalidUsage);
