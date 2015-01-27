@@ -181,13 +181,13 @@ Dhcpv4Srv::run() {
         // Handle next signal received by the process. It must be called after
         // an attempt to receive a packet to properly handle server shut down.
         // The SIGTERM or SIGINT will be received prior to, or during execution
-        // of select() (select is invoked by recivePacket()). When that happens,
-        // select will be interrupted. The signal handler will be invoked
-        // immediately after select(). The handler will set the shutdown flag
-        // and cause the process to terminate before the next select() function
-        // is called. If the function was called before receivePacket the
-        // process could wait up to the duration of timeout of select() to
-        // terminate.
+        // of select() (select is invoked by receivePacket()). When that
+        // happens, select will be interrupted. The signal handler will be
+        // invoked immediately after select(). The handler will set the
+        // shutdown flag and cause the process to terminate before the next
+        // select() function is called. If the function was called before
+        // receivePacket the process could wait up to the duration of timeout
+        // of select() to terminate.
         handleSignal();
 
         // Execute ready timers for the lease database, e.g. Lease File Cleanup.
@@ -200,7 +200,7 @@ Dhcpv4Srv::run() {
         }
 
         // Timeout may be reached or signal received, which breaks select()
-        // with no reception ocurred
+        // with no reception occurred
         if (!query) {
             continue;
         }
@@ -778,7 +778,7 @@ Dhcpv4Srv::processClientFqdnOption(const Option4ClientFqdnPtr& fqdn,
     // lease for a client will scan the response message for FQDN and if it
     // is found they will take necessary actions to store the FQDN information
     // in the lease database as well as to generate NameChangeRequests to DNS.
-    // If we don't store the option in the reponse message, we will have to
+    // If we don't store the option in the response message, we will have to
     // propagate it in the different way to the functions which acquire the
     // lease. This would require modifications to the API of this class.
     answer->addOption(fqdn_resp);
@@ -831,7 +831,7 @@ Dhcpv4Srv::processHostnameOption(const OptionStringPtr& opt_hostname,
         opt_hostname_resp->setValue(".");
     } else if (label_count == 2) {
         // If there are two labels, it means that the client has specified
-        // the unqualified name. We have to concatenate the unqalified name
+        // the unqualified name. We have to concatenate the unqualified name
         // with the domain name. The false value passed as a second argument
         // indicates that the trailing dot should not be appended to the
         // hostname. We don't want to append the trailing dot because
@@ -1002,10 +1002,20 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
 
     // If there is no server id and there is a Requested IP Address option
     // the client is in the INIT-REBOOT state in which the server has to
-    // determine whether the client's notion of the address has to be verified.
+    // determine whether the client's notion of the address is correct
+    // and whether the client is known, i.e., has a lease.
     if (!fake_allocation && !opt_serverid && opt_requested_address) {
-        Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(hint);
-        if (!lease) {
+        Lease4Ptr lease;
+        if (hwaddr) {
+            lease = LeaseMgrFactory::instance().getLease4(*hwaddr,
+                                                          subnet->getID());
+        }
+        if (!lease && client_id) {
+            lease = LeaseMgrFactory::instance().getLease4(*client_id,
+                                                          subnet->getID());
+        }
+        // Got a lease so we can check the address.
+        if (lease && (lease->addr_ != hint)) {
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL,
                       DHCP4_INVALID_ADDRESS_INIT_REBOOT)
                 .arg(hint.toText())
@@ -1014,6 +1024,17 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
 
             answer->setType(DHCPNAK);
             answer->setYiaddr(IOAddress("0.0.0.0"));
+            return;
+        }
+        // Now check the second error case: unknown client.
+        if (!lease) {
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL,
+                      DHCP4_NO_LEASE_INIT_REBOOT)
+                .arg(hint.toText())
+                .arg(client_id ? client_id->toText():"(no client-id)")
+                .arg(hwaddr ? hwaddr->toText():"(no hwaddr info)");
+
+            answer.reset();
             return;
         }
     }
@@ -1199,7 +1220,7 @@ Dhcpv4Srv::adjustIfaceData(const Pkt4Ptr& query, const Pkt4Ptr& response) {
     /// @todo Consider an optimization that we use local address from
     /// the query if this address is not broadcast.
     SocketInfo sock_info = IfaceMgr::instance().getSocket(*query);
-    // Set local adddress, port and interface.
+    // Set local address, port and interface.
     response->setLocalAddr(sock_info.addr_);
     response->setLocalPort(DHCP4_SERVER_PORT);
     response->setIface(query->getIface());
@@ -1226,7 +1247,7 @@ Dhcpv4Srv::adjustRemoteAddr(const Pkt4Ptr& question, const Pkt4Ptr& response) {
         if (question->getCiaddr() != zero_addr) {
             response->setRemoteAddr(question->getCiaddr());
 
-        // If we received DHCPINFOM via relay and the ciaddr is not set we
+        // If we received DHCPINFORM via relay and the ciaddr is not set we
         // will try to send the response via relay. The caveat is that the
         // relay will not have any idea where to forward the packet because
         // the yiaddr is likely not set. So, the broadcast flag is set so
@@ -1240,7 +1261,7 @@ Dhcpv4Srv::adjustRemoteAddr(const Pkt4Ptr& question, const Pkt4Ptr& response) {
         } else {
             response->setRemoteAddr(question->getRemoteAddr());
         }
-        // Remote addres is now set so return.
+        // Remote address is now set so return.
         return;
     }
 
@@ -1329,6 +1350,11 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
 
     assignLease(discover, offer);
 
+    if (!offer) {
+        // The offer is empty so return it *now*!
+        return (offer);
+    }
+
     // Adding any other options makes sense only when we got the lease.
     if (offer->getYiaddr() != IOAddress("0.0.0.0")) {
         appendRequestedOptions(discover, offer);
@@ -1375,6 +1401,11 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
     // first request (requesting for new address), renewing existing address
     // or even rebinding.
     assignLease(request, ack);
+
+    if (!ack) {
+        // The ack is empty so return it *now*!
+        return (ack);
+    }
 
     // Adding any other options makes sense only when we got the lease.
     if (ack->getYiaddr() != IOAddress("0.0.0.0")) {
@@ -1605,9 +1636,9 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) const {
         HooksManager::callCallouts(hook_index_subnet4_select_,
                                    *callout_handle);
 
-        // Callouts decided to skip this step. This means that no subnet will be
-        // selected. Packet processing will continue, but it will be severly
-        // limited (i.e. only global options will be assigned)
+        // Callouts decided to skip this step. This means that no subnet
+        // will be selected. Packet processing will continue, but it will
+        // be severely limited (i.e. only global options will be assigned)
         if (callout_handle->getSkip()) {
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_HOOKS,
                       DHCP4_HOOK_SUBNET4_SELECT_SKIP);
@@ -1741,7 +1772,7 @@ Dhcpv4Srv::acceptServerId(const Pkt4Ptr& query) const {
     // it here.
 
     // Check if server identifier option is present. If it is not present
-    // we accept the message because it is targetted to all servers.
+    // we accept the message because it is targeted to all servers.
     // Note that we don't check cases that server identifier is mandatory
     // but not present. This is meant to be sanity checked in other
     // functions.
@@ -1834,7 +1865,7 @@ Dhcpv4Srv::unpackOptions(const OptionBuffer& buf,
 
     OptionDefContainer option_defs;
     if (option_space == "dhcp4") {
-        // Get the list of stdandard option definitions.
+        // Get the list of standard option definitions.
         option_defs = LibDHCP::getOptionDefs(Option::V4);
     } else if (!option_space.empty()) {
         OptionDefContainerPtr option_defs_ptr = CfgMgr::instance()
@@ -2027,8 +2058,8 @@ Dhcpv4Srv::d2ClientErrorHandler(const
                                 dhcp_ddns::NameChangeRequestPtr& ncr) {
     LOG_ERROR(dhcp4_logger, DHCP4_DDNS_REQUEST_SEND_FAILED).
               arg(result).arg((ncr ? ncr->toText() : " NULL "));
-    // We cannot communicate with kea-dhcp-ddns, suspend futher updates.
-    /// @todo We may wish to revisit this, but for now we will simpy turn
+    // We cannot communicate with kea-dhcp-ddns, suspend further updates.
+    /// @todo We may wish to revisit this, but for now we will simply turn
     /// them off.
     CfgMgr::instance().getD2ClientMgr().suspendUpdates();
 }

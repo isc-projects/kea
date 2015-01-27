@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,19 +12,19 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <config.h>
-
+#include <log/logger_support.h>
 #include <gtest/gtest.h>
 
-namespace {
+int
+main(int argc, char* argv[]) {
 
-/// As of May 2014, maintaining or extending Bundy support is very low
-/// priority for Kea team. We are looking for contributors, who would
-/// like to maintain this backend.
+    ::testing::InitGoogleTest(&argc, argv);
 
-// Bundy framework specific tests should be added here.
-TEST(BundyBackendTest, dummy) {
+    // See the documentation of the KEA_* environment variables in
+    // src/lib/log/README for info on how to tweak logging
+    isc::log::initLogger();
 
+    int result = RUN_ALL_TESTS();
+
+    return (result);
 }
-
-} // End of anonymous namespace
