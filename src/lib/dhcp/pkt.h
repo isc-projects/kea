@@ -492,8 +492,7 @@ protected:
     /// @return hardware address (or NULL)
     virtual HWAddrPtr getMACFromIPv6RelayOpt() = 0;
 
-
-    /// @brief Attempts to obtain MAC address from DUID-LL or DUID-LLT
+    /// @brief Attempts to obtain MAC address from DUID-LL or DUID-LLT.
     ///
     /// This method is called from getMAC(HWADDR_SOURCE_DUID) and should not be
     /// called directly. It will attempt to extract MAC address information
@@ -506,6 +505,20 @@ protected:
     ///
     /// @return hardware address (or NULL)
     virtual HWAddrPtr getMACFromDUID() = 0;
+
+    /// @brief Attempts to obtain MAC address from remote-id relay option.
+    ///
+    /// This method is called from getMAC(HWADDR_SOURCE_REMOTE_ID) and should not be
+    /// called directly. It will attempt to extract MAC address information
+    /// from remote-id option inserted by a relay agent closest to the client.
+    /// If this method fails, it will return NULL.
+    ///
+    /// @note This is a pure virtual method and must be implemented in
+    /// the derived classes. The @c Pkt6 class have respective implementation.
+    /// This method is not applicable to DHCPv4.
+    ///
+    /// @return hardware address (or NULL)
+    virtual HWAddrPtr getMACFromRemoteIdRelayOption() = 0;
 
     /// @brief Attempts to convert IPv6 address into MAC.
     ///
