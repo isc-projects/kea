@@ -215,7 +215,7 @@ mysql> <userinput>GRANT ALL ON <replaceable>database-name</replaceable>.* TO '<r
                 as explained below.)  To do this:
 <screen>
 mysql> <userinput>CONNECT <replaceable>database-name</replaceable>;</userinput>
-mysql> <userinput>SOURCE <replaceable>path-to-kea</replaceable>/share/kea/dhcpdb_create.mysql</userinput>
+mysql> <userinput>SOURCE <replaceable>path-to-kea</replaceable>/share/kea/scripts/mysql/dhcpdb_create.mysql</userinput>
 </screen>
                 (<replaceable>path-to-kea</replaceable> is the
                 location where you installed Kea.)
@@ -363,7 +363,7 @@ $
                 command completes you will be returned to the shell
                 prompt. You should see output similar to following:
 <screen>
-$ <userinput>psql -d <replaceable>database-name</replaceable> -U <replaceable>user-name</replaceable> -f <replaceable>path-to-kea</replaceable>/share/kea/dhcpdb_create.pgsql</userinput>
+$ <userinput>psql -d <replaceable>database-name</replaceable> -U <replaceable>user-name</replaceable> -f <replaceable>path-to-kea</replaceable>/share/kea/scripts/pgsql/dhcpdb_create.pgsql</userinput>
 Password for user <replaceable>user-name</replaceable>:
 CREATE TABLE
 CREATE INDEX
