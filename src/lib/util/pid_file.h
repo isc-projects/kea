@@ -27,12 +27,12 @@ namespace util {
 class PIDFileError : public Exception {
 public:
     PIDFileError(const char* file, size_t line, const char* what) :
-    isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { };
 };
 
 /// @brief Class to help with processing PID files
 ///
-/// This is a utility class to manipulate PID files.  It provides
+/// This is a utility class to manipulate PID file. It provides
 /// functions for writing and deleting a file containing a PID as
 /// well as for extracting a PID from a file and checking if the
 /// process is still running.
@@ -50,7 +50,7 @@ public:
     /// @brief Read the PID in from the file and check it.
     ///
     /// Read the PID in from the file then use it to see if
-    /// a process with that PID exists.  If the file doesn't
+    /// a process with that PID exists. If the file doesn't
     /// exist treat it as the process not being there.
     /// If the file exists but can't be read or it doesn't have
     /// the proper format treat it as the process existing.
@@ -61,10 +61,10 @@ public:
     /// @brief Write the PID to the file.
     void write(int);
 
-    /// @brief Get PID of the proces and write it to the file.
+    /// @brief Get PID of the current process and write it to the file.
     void write();
 
-    /// @brief Delete the file.
+    /// @brief Delete the PID file.
     void deleteFile();
 
     /// @brief Returns the path to the PID file.

@@ -78,8 +78,8 @@ PIDFile::write(int pid) {
 void
 PIDFile::deleteFile() {
     if (remove(filename_.c_str()) != 0) {
-	isc_throw(PIDFileError, "Unable to delete PID file '"
-		  << filename_ << "'");
+        isc_throw(PIDFileError, "Unable to delete PID file '"
+                  << filename_ << "'");
     }
 }
 
