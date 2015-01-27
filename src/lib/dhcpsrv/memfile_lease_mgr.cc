@@ -17,6 +17,7 @@
 #include <dhcpsrv/lease_file_loader.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
 #include <exceptions/exceptions.h>
+#include <cstdio>
 #include <iostream>
 #include <sstream>
 
@@ -28,6 +29,7 @@ const uint32_t MAX_LEASE_ERRORS = 100;
 } // end of anonymous namespace
 
 using namespace isc::dhcp;
+using namespace isc::util;
 
 Memfile_LeaseMgr::Memfile_LeaseMgr(const ParameterMap& parameters)
     : LeaseMgr(parameters), lfc_timer_(*getIOService()) {
@@ -51,7 +53,7 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const ParameterMap& parameters)
     // issue a warning. It is ok not to write leases to disk when
     // doing testing, but it should not be done in normal server
     // operation.
-    if (!persistLeases(V4) && !persistLeases(V6)) {
+   if (!persistLeases(V4) && !persistLeases(V6)) {
         LOG_WARN(dhcpsrv_logger, DHCPSRV_MEMFILE_NO_STORAGE);
 
     } else  {
@@ -418,6 +420,32 @@ Memfile_LeaseMgr::rollback() {
               DHCPSRV_MEMFILE_ROLLBACK);
 }
 
+std::string
+Memfile_LeaseMgr::appendSuffix(const std::string& file_name,
+                               const LFCFileType& file_type) {
+    std::string name(file_name);
+    switch (file_type) {
+    case FILE_INPUT:
+        name += ".1";
+        break;
+    case FILE_PREVIOUS:
+        name += ".2";
+        break;
+    case FILE_OUTPUT:
+        name += ".output";
+        break;
+    case FILE_FINISH:
+        name += ".completed";
+        break;
+    default:
+        // Do not append any suffix for the FILE_CURRENT.
+        ;
+    }
+
+    return (name);
+}
+
+
 uint32_t
 Memfile_LeaseMgr::getIOServiceExecInterval() const {
     return (static_cast<uint32_t>(lfc_timer_.getInterval() / 1000));
@@ -512,6 +540,28 @@ Memfile_LeaseMgr::lfcCallback() {
     /// @todo Extend this method to spawn the new process which will
     /// perform the Lease File Cleanup in background.
     LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_START);
+
+    // Check if we're in the v4 or v6 space and use the appropriate file.
+    if (lease_file4_) {
+        leaseFileCleanup(lease_file4_);
+
+    } else if (lease_file6_) {
+        leaseFileCleanup(lease_file6_);
+
+    }
+}
+
+template<typename LeaseFileType>
+void Memfile_LeaseMgr::
+leaseFileCleanup(boost::shared_ptr<LeaseFileType>& lease_file) {
+    CSVFile lease_file_copy(appendSuffix(lease_file->getFilename(), FILE_INPUT));
+    if (!lease_file_copy.exists()) {
+        lease_file->close();
+        rename(lease_file->getFilename().c_str(),
+               lease_file_copy.getFilename().c_str());
+        lease_file.reset(new LeaseFileType(lease_file->getFilename()));
+        lease_file->open();
+    }
 }
 
 template<typename LeaseObjectType, typename LeaseFileType, typename StorageType>
@@ -530,13 +580,13 @@ loadLeasesFromFiles(const std::string& filename,
     } else {
         // If the leasefile.completed doesn't exist, let's load the leases
         // from leasefile.2 and leasefile.1, if they exist.
-        lease_file.reset(new LeaseFileType(std::string(filename + ".2")));
+        lease_file.reset(new LeaseFileType(appendSuffix(filename, FILE_PREVIOUS)));
         if (lease_file->exists()) {
             LeaseFileLoader::load<LeaseObjectType>(*lease_file, storage,
                                                    MAX_LEASE_ERRORS);
         }
 
-        lease_file.reset(new LeaseFileType(std::string(filename + ".1")));
+        lease_file.reset(new LeaseFileType(appendSuffix(filename, FILE_INPUT)));
         if (lease_file->exists()) {
             LeaseFileLoader::load<LeaseObjectType>(*lease_file, storage,
                                                    MAX_LEASE_ERRORS);
