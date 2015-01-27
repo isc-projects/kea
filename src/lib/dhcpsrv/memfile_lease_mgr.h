@@ -112,6 +112,18 @@ public:
         V6
     };
 
+    /// @brief Types of the lease files used by the Lease File Cleanup.
+    ///
+    /// This enumeration is used by a method which appends the appropriate
+    /// suffix to the lease file name.
+    enum LFCFileType {
+        FILE_CURRENT,
+        FILE_INPUT,
+        FILE_PREVIOUS,
+        FILE_OUTPUT,
+        FILE_FINISH
+    };
+
     /// @brief The sole lease manager constructor
     ///
     /// dbconfig is a generic way of passing parameters. Parameters
@@ -320,6 +332,24 @@ public:
     /// support transactions, this is a no-op.
     virtual void rollback();
 
+    /// @brief Appends appropriate suffix to the file name.
+    ///
+    /// The suffix is selected using the LFC file type specified as a
+    /// parameter. Each file type uses a unique suffix or no suffix:
+    /// - Current File: no suffix
+    /// - Lease File Copy or Input File: ".1"
+    /// - Previous File: ".2"
+    /// - LFC Output File: ".output"
+    /// - LFC Finish File: ".completed"
+    ///
+    /// See http://kea.isc.org/wiki/LFCDesign for details.
+    ///
+    /// @param file_name A base file name to which suffix is appended.
+    /// @param file_type An LFC file type.
+    /// @return A lease file name with a suffix appended.
+    static std::string appendSuffix(const std::string& file_name,
+                                    const LFCFileType& file_type);
+
     /// @brief Returns the interval at which the @c IOService events should
     /// be released.
     ///
@@ -359,7 +389,7 @@ public:
     /// server shut down.
     bool persistLeases(Universe u) const;
 
-private:
+protected:
 
     /// @brief A callback function triggering Lease File Cleanup.
     ///
@@ -396,6 +426,9 @@ private:
     /// lease_file4_ or lease_file6_, depending on the universe specified as an
     /// argument to this function.
     std::string initLeaseFilePath(Universe u);
+
+    template<typename LeaseFileType>
+    void leaseFileCleanup(boost::shared_ptr<LeaseFileType>& lease_file);
 
     /// @brief Load leases from the persistent storage.
     ///

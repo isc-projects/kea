@@ -30,6 +30,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <queue>
 
 using namespace std;
 using namespace isc;
@@ -77,6 +78,20 @@ private:
 
 };
 
+/// @brief A derivation of the lease manager exposing protected methods.
+class NakedMemfileLeaseMgr : public Memfile_LeaseMgr {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// Creates instance of the lease manager.
+    NakedMemfileLeaseMgr(const ParameterMap& parameters)
+        : Memfile_LeaseMgr(parameters) {
+    }
+
+    using Memfile_LeaseMgr::lfcCallback;
+};
+
 /// @brief Test fixture class for @c Memfile_LeaseMgr
 class MemfileLeaseMgrTest : public GenericLeaseMgrTest {
 public:
@@ -90,9 +105,9 @@ public:
         io_service_(),
         fail_on_callback_(false) {
 
-        // Make sure there are no dangling files after previous tests.
-        io4_.removeFile();
-        io6_.removeFile();
+        // Remove lease files and products of Lease File Cleanup.
+        removeFiles(getLeaseFilePath("leasefile4_0.csv"));
+        removeFiles(getLeaseFilePath("leasefile6_0.csv"));
     }
 
     /// @brief Reopens the connection to the backend.
@@ -112,6 +127,30 @@ public:
     /// destroys lease manager backend.
     virtual ~MemfileLeaseMgrTest() {
         LeaseMgrFactory::destroy();
+        // Remove lease files and products of Lease File Cleanup.
+        removeFiles(getLeaseFilePath("leasefile4_0.csv"));
+        removeFiles(getLeaseFilePath("leasefile6_0.csv"));
+    }
+
+
+    /// @brief Remove files being products of Lease File Cleanup.
+    ///
+    /// @param base_name Path to the lease file name. This file is removed
+    /// and all files which names are crated from this name (having specific
+    /// suffixes used by Lease File Cleanup mechanism).
+    void removeFiles(const std::string& base_name) const {
+        // Generate suffixes and append them to the base name. The
+        // resulting file names are the ones that may exist as a
+        // result of LFC.
+        for (int i = static_cast<int>(Memfile_LeaseMgr::FILE_CURRENT);
+             i <= static_cast<int>(Memfile_LeaseMgr::FILE_FINISH);
+             ++i) {
+            Memfile_LeaseMgr::LFCFileType type = static_cast<
+                Memfile_LeaseMgr::LFCFileType>(i);
+            std::string suffix = Memfile_LeaseMgr::appendSuffix(base_name, type);
+            LeaseFileIO io(Memfile_LeaseMgr::appendSuffix(base_name, type));
+            io.removeFile();
+        }
     }
 
     /// @brief Return path to the lease file used by unit tests.
@@ -329,6 +368,37 @@ TEST_F(MemfileLeaseMgrTest, lfcTimerDisabled) {
 
     // There should be no LFC execution recorded.
     EXPECT_EQ(0, lease_mgr->getLFCCount());
+}
+
+// This test that the callback function performing a Lease File Cleanup
+// works as expected.
+TEST_F(MemfileLeaseMgrTest, leaseFileCleanup) {
+    std::string new_file_contents =
+        "address,hwaddr,client_id,valid_lifetime,expire,"
+        "subnet_id,fqdn_fwd,fqdn_rev,hostname\n";
+
+    std::string current_file_contents = new_file_contents +
+        "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,\n";
+    LeaseFileIO current_file(getLeaseFilePath("leasefile4_0.csv"));
+    current_file.writeFile(current_file_contents);
+
+    LeaseMgr::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "4";
+    pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
+    pmap["lfc-interval"] = "1";
+
+    boost::scoped_ptr<NakedMemfileLeaseMgr>
+        lease_mgr(new NakedMemfileLeaseMgr(pmap));
+
+    ASSERT_NO_THROW(lease_mgr->lfcCallback());
+
+    LeaseFileIO input_file(getLeaseFilePath("leasefile4_0.csv.1"), false);
+    ASSERT_TRUE(input_file.exists());
+    EXPECT_EQ(current_file_contents, input_file.readFile());
+
+    ASSERT_TRUE(current_file.exists());
+    EXPECT_EQ(new_file_contents, current_file.readFile());
 }
 
 // Test that the backend returns a correct value of the interval
