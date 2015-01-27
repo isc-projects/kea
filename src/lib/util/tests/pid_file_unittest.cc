@@ -21,7 +21,7 @@ using namespace isc::util;
 
 #define TESTNAME "./pid_file.test"
 
-/// @brief Test file writing and deleteion. Start by removing
+/// @brief Test file writing and deletion. Start by removing
 /// any leftover file. Then write a known PID to the file and
 /// attempt to read the file and verify the PID. Next write
 /// a second and verify a second PID to verify that an existing
@@ -38,7 +38,7 @@ TEST(PIDFileTest, writeAndDelete) {
     // Write a known process id
     pid_file.write(10);
 
-    // Read the file and comapre the pid
+    // Read the file and compare the pid
     fs.open(TESTNAME, std::ifstream::in);
     fs >> pid;
     EXPECT_TRUE(fs.good());
