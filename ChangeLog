@@ -1,3 +1,7 @@
+8xx.	[doc]		tomek
+	kea-admin is now described in Kea User's Guide.
+	(Trac #3644, git fa83c48826e41663d93e56ec7fd6983e9b0b2cd1)
+
 879.	[bug]		fdupont
 	Drop DHCPREQUEST message from an unknown client in the
 	INIT-REBOOT state.
