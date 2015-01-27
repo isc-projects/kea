@@ -342,6 +342,16 @@ protected:
     /// @return hardware address (if DOCSIS suboption 1026 is present)
     virtual HWAddrPtr getMACFromDocsisCMTS();
 
+    /// @brief Attempts to obtain MAC address from remote-id relay option.
+    ///
+    /// This method is called from getMAC(HWADDR_SOURCE_REMOTE_ID) and should not be
+    /// called directly. It will attempt to extract MAC address information
+    /// from remote-id option inserted by a relay agent closest to the client.
+    /// If this method fails, it will return NULL.
+    ///
+    /// @return hardware address (or NULL)
+    virtual HWAddrPtr getMACFromRemoteIdRelayOption();
+
     /// @brief Builds on wire packet for TCP transmission.
     ///
     /// @todo This function is not implemented yet.

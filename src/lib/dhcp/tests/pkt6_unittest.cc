@@ -1242,4 +1242,56 @@ TEST_F(Pkt6Test, getMAC_DOCSIS_CMTS) {
     EXPECT_FALSE(pkt->getMAC(HWAddr::HWADDR_SOURCE_DOCSIS_CMTS));
 }
 
+// Test checks whether getMACFromRemoteIdRelayOption() returns the hardware (MAC)
+// address properly from a relayed message.
+TEST_F(Pkt6Test, getMACFromRemoteIdRelayOption) {
+
+    // Create a solicit message.
+    Pkt6 pkt(DHCPV6_SOLICIT, 1234);
+
+    // This should fail as the message is't relayed yet.
+    EXPECT_FALSE(pkt.getMAC(HWAddr::HWADDR_SOURCE_REMOTE_ID));
+
+    // Let's get the first interface
+    Iface* iface = IfaceMgr::instance().getIface(1);
+    ASSERT_TRUE(iface);
+
+    // and set source interface data properly. getMACFromIPv6LinkLocal attempts
+    // to use source interface to obtain hardware type
+    pkt.setIface(iface->getName());
+    pkt.setIndex(iface->getIndex());
+
+    // Generate option data with randomly picked enterprise number and MAC address
+    const uint8_t opt_data[] = {
+        1, 2, 3, 4,  // enterprise-number
+        0xa, 0xb, 0xc, 0xd, 0xe, 0xf // MAC
+    };
+
+    // Create option with number 37 (remote-id relay agent option)
+    OptionPtr relay_opt(new Option(Option::V6, D6O_REMOTE_ID,
+                        OptionBuffer(opt_data, opt_data + sizeof(opt_data))));
+
+    // First simulate relaying message without adding remote-id option
+    Pkt6::RelayInfo info;
+    pkt.addRelayInfo(info);
+    ASSERT_EQ(1, pkt.relay_info_.size());
+
+    // This should fail as the remote-id option isn't there
+    EXPECT_FALSE(pkt.getMAC(HWAddr::HWADDR_SOURCE_REMOTE_ID));
+
+    // Now add this option to the relayed message
+    info.options_.insert(make_pair(relay_opt->getType(), relay_opt));
+    pkt.addRelayInfo(info);
+    ASSERT_EQ(2, pkt.relay_info_.size());
+
+    // This should work now
+    HWAddrPtr mac = pkt.getMAC(HWAddr::HWADDR_SOURCE_REMOTE_ID);
+    ASSERT_TRUE(mac);
+
+    stringstream tmp;
+    tmp << "hwtype=" << (int)iface->getHWType() << " 0a:0b:0c:0d:0e:0f";
+
+    EXPECT_EQ(tmp.str(), mac->toText(true));
+}
+
 }

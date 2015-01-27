@@ -22,6 +22,7 @@
 #include <util/io_utilities.h>
 #include <exceptions/exceptions.h>
 #include <dhcp/duid.h>
+#include <dhcp/iface_mgr.h>
 
 #include <iostream>
 #include <sstream>
@@ -615,7 +616,7 @@ Pkt6::getMACFromIPv6RelayOpt() {
     if (opt) {
         const OptionBuffer data = opt->getData();
         if (data.size() < 3) {
-            // This client link address option is trucnated. It's supposed to be
+            // This client link address option is truncated. It's supposed to be
             // 2 bytes of link-layer type followed by link-layer address.
             return (HWAddrPtr());
         }
@@ -678,6 +679,40 @@ Pkt6::getMACFromDocsisCMTS() {
     // If the option contains any data, use it as MAC address
     if (!cm_mac->getData().empty()) {
         return (HWAddrPtr(new HWAddr(cm_mac->getData(), HTYPE_DOCSIS)));
+    } else {
+        return (HWAddrPtr());
+    }
+}
+
+HWAddrPtr
+Pkt6::getMACFromRemoteIdRelayOption() {
+    if (relay_info_.empty()) {
+        // This is a direct message
+        return (HWAddrPtr());
+    }
+
+    // Get remote-id option from a relay agent closest to the client
+    OptionPtr opt = getAnyRelayOption(D6O_REMOTE_ID, RELAY_GET_FIRST);
+    if (opt) {
+        const OptionBuffer data = opt->getData();
+        if (data.size() < 5) {
+            // This remote-id option is truncated. It's supposed to be
+            // 4 bytes of enterprise-number followed by remote-id.
+            return (HWAddrPtr());
+        }
+
+        // Let's get the interface this packet was received on. We need it to get
+        // the hardware type.
+        Iface* iface = IfaceMgr::instance().getIface(iface_);
+        uint16_t hwtype = 0; // not specified
+
+        // If we get the interface HW type, great! If not, let's not panic.
+        if (iface) {
+            hwtype = iface->getHWType();
+        }
+
+        // Skip the initial 4 bytes which are enterprise-number.
+        return (HWAddrPtr(new HWAddr(&data[0] + 4, data.size() - 4, hwtype)));
     } else {
         return (HWAddrPtr());
     }

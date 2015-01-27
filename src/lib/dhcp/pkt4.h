@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -445,6 +445,16 @@ protected:
     /// @return always NULL
     virtual HWAddrPtr getMACFromDocsisCMTS() {
         return (HWAddrPtr());
+    }
+
+    /// @brief No-op
+    ///
+    /// This method returns hardware address extracted from remote-id relay option.
+    /// Currently it is a no-op, it always returns NULL.
+    ///
+    /// @return always NULL
+    virtual HWAddrPtr getMACFromRemoteIdRelayOption(){
+        return(HWAddrPtr());
     }
 
     /// local HW address (dst if receiving packet, src if sending packet)
