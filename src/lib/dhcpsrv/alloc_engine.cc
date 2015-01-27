@@ -611,47 +611,51 @@ AllocEngine::allocateLease4(const SubnetPtr& subnet, const ClientIdPtr& clientid
             const IOAddress& candidate = ctx.host_ ?
                 ctx.host_->getIPv4Reservation() : ctx.requested_address_;
 
-            // Once we picked an address we want to allocate, we have to check
-            // if this address is available.
-            existing = LeaseMgrFactory::instance().getLease4(candidate);
-            if (!existing) {
-                // The candidate address is currently unused. Let's create a
-                // lease for it.
-                Lease4Ptr lease = createLease4(subnet, clientid, hwaddr,
-                                               candidate, fwd_dns_update,
-                                               rev_dns_update,
-                                               hostname, callout_handle,
-                                               fake_allocation);
+            if (ctx.host_ ||
+                (!ctx.host_ && !HostMgr::instance().get4(ctx.subnet_->getID(),
+                                                         candidate))) {
+                // Once we picked an address we want to allocate, we have to check
+                // if this address is available.
+                existing = LeaseMgrFactory::instance().getLease4(candidate);
+                if (!existing) {
+                    // The candidate address is currently unused. Let's create a
+                    // lease for it.
+                    Lease4Ptr lease = createLease4(subnet, clientid, hwaddr,
+                                                   candidate, fwd_dns_update,
+                                                   rev_dns_update,
+                                                   hostname, callout_handle,
+                                                   fake_allocation);
 
-                // If we have allocated the lease let's return it. Also,
-                // always return when tried to allocate reserved address,
-                // regardless if allocation was successful or not. If it
-                // was not successful, we will return a NULL pointer which
-                // indicates to the server that it should send NAK to the
-                // client.
-                if (lease || ctx.host_) {
-                    return (lease);
+                    // If we have allocated the lease let's return it. Also,
+                    // always return when tried to allocate reserved address,
+                    // regardless if allocation was successful or not. If it
+                    // was not successful, we will return a NULL pointer which
+                    // indicates to the server that it should send NAK to the
+                    // client.
+                    if (lease || ctx.host_) {
+                        return (lease);
+                    }
+
+                    // There is a lease for this address in the lease database but
+                    // it is possible that the lease has expired, in which case
+                    // we will be able to reuse it.
+                } else {
+                    if (existing->expired()) {
+                        // Save the old lease, before reusing it.
+                        old_lease.reset(new Lease4(*existing));
+                        return (reuseExpiredLease(existing, ctx));
+
+                        // The existing lease is not expired (is in use by some
+                        // other client). If we are trying to get this lease because
+                        // the address has been reserved for the client we have no
+                        // choice but to return a NULL lease to indicate that the
+                        // allocation has failed.
+                    } else if (ctx.host_) {
+                        return (Lease4Ptr());
+
+                    }
+
                 }
-
-            // There is a lease for this address in the lease database but
-            // it is possible that the lease has expired, in which case
-            // we will be able to reuse it.
-            } else {
-                if (existing->expired()) {
-                    // Save the old lease, before reusing it.
-                    old_lease.reset(new Lease4(*existing));
-                    return (reuseExpiredLease(existing, ctx));
-
-                // The existing lease is not expired (is in use by some
-                // other client). If we are trying to get this lease because
-                // the address has been reserved for the client we have no
-                // choice but to return a NULL lease to indicate that the
-                // allocation has failed.
-                } else if (ctx.host_) {
-                    return (Lease4Ptr());
-
-                }
-
             }
         }
 
