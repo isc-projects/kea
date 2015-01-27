@@ -180,6 +180,16 @@ Pkt::getMAC(uint32_t hw_addr_src) {
     }
 
     // Method 5: From remote-id option inserted by a relay
+    if(hw_addr_src & HWAddr::HWADDR_SOURCE_REMOTE_ID) {
+        mac = getMACFromRemoteIdRelayOption();
+        if (mac) {
+            return (mac);
+        } else if (hw_addr_src == HWAddr::HWADDR_SOURCE_REMOTE_ID) {
+            // If the only source allowed is remote-id option then we can skip
+            // the other methods.
+            return (HWAddrPtr());
+        }
+    }
 
     // Method 6: From subscriber-id option inserted by a relay
 
