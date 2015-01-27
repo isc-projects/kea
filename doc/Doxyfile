@@ -650,6 +650,7 @@ INPUT                  = ../src/bin/d2 \
                          ../src/bin/dhcp6 \
                          ../src/bin/perfdhcp \
                          ../src/bin/sockcreator \
+                         ../src/bin/lfc \
                          ../src/hooks/dhcp/user_chk \
                          ../src/lib/asiolink \
                          ../src/lib/cc \

@@ -83,7 +83,7 @@ public:
     ///
     /// @note It never throws.
     ///
-    /// @param command Text represenation of the command (e.g. "shutdown")
+    /// @param command Text representation of the command (e.g. "shutdown")
     /// @param args Optional parameters
     ///
     /// @return status of the command
