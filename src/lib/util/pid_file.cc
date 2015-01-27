@@ -12,42 +12,42 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <util/pid.h>
+#include <util/pid_file.h>
 #include <cstdio>
 #include <signal.h>
+#include <unistd.h>
 
 namespace isc {
 namespace util {
 
-pidFile::pidFile(const std::string& filename)
+PIDFile::PIDFile(const std::string& filename)
     : filename_(filename) {
 }
 
+PIDFile::~PIDFile() {
+}
+
 bool
-pidFile::check() {
-    boost::shared_ptr<std::ifstream> fs;
+PIDFile::check() {
+    std::ifstream fs(filename_.c_str());
     int pid;
     bool good;
 
-    fs.reset(new std::ifstream(filename_.c_str()));
-
     // If we weren't able to open the file treat
     // it as if the process wasn't running
-    if (fs->is_open() == false) {
-	fs.reset();
-	return (false);
+    if (fs.is_open() == false) {
+        return (false);
     }
 
     // Try to get the pid, get the status and get rid of the file
-    *fs >> pid;
-    good = fs->good();
-    fs->close();
-    fs.reset();
+    fs >> pid;
+    good = fs.good();
+    fs.close();
 
     // Treat being unable to read a pid the same as if we
     // got a pid and the process is still running.
     if ((good == false) || (kill(pid, 0) == 0)) {
-	return (true);
+        return (true);
     }
 
     // No process
@@ -55,37 +55,33 @@ pidFile::check() {
 }
 
 void
-pidFile::write() {
+PIDFile::write() {
     write(getpid());
 }
 
 void
-pidFile::write(int pid) {
-    boost::shared_ptr<std::ofstream> fs;
+PIDFile::write(int pid) {
+    std::ofstream fs(filename_.c_str());
 
-    fs.reset(new std::ofstream(filename_.c_str()));
-    if (fs->is_open() == false) {
-	fs.reset();
-	isc_throw(pidFileError, "Unable to open PID file '"
-		  << filename_ << "' for write");
+    if (fs.is_open() == false) {
+        isc_throw(PIDFileError, "Unable to open PID file '"
+                  << filename_ << "' for write");
     }
 
     // File is open, write the pid.
-    *fs << pid << std::endl;
+    fs << pid << std::endl;
 
     // That's it
-    fs->close();
-    fs.reset();
+    fs.close();
 }
 
 void
-pidFile::deleteFile() {
+PIDFile::deleteFile() {
     if (remove(filename_.c_str()) != 0) {
-        isc_throw(pidFileError, "Unable to delete PID file '"
+	isc_throw(PIDFileError, "Unable to delete PID file '"
 		  << filename_ << "'");
     }
 }
 
 } // namespace isc::util
 } // namespace isc
-
