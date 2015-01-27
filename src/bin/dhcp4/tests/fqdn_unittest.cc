@@ -53,7 +53,7 @@ public:
     virtual ~NameDhcpv4SrvTest() {
         delete srv_;
         // CfgMgr singleton doesn't get wiped between tests, so  we'll
-        // disable D2 explictly between tests.
+        // disable D2 explicitly between tests.
         disableD2();
     }
 
@@ -138,7 +138,7 @@ public:
     /// @param addr IP address used in the lease.
     /// @param trailing_dot A boolean flag which indicates whether the
     /// trailing dot should be appended to the end of the hostname.
-    /// The defatult value is "true" which means that it should.
+    /// The default value is "true" which means that it should.
     ///
     /// @return An std::string contained the generated FQDN.
     std::string generatedNameFromAddress(const IOAddress& addr,
@@ -481,7 +481,7 @@ TEST_F(NameDhcpv4SrvTest, dhcidComputeFromHWAddr) {
 //  - Client requests forward update  (N = 0, S = 1)
 //
 //  Server should perform the update:
-//  - Reponse flags should N = 0, S = 1, O = 0
+//  - Response flags should N = 0, S = 1, O = 0
 //  - Should queue an NCR
 TEST_F(NameDhcpv4SrvTest, updatesEnabled) {
     flagVsConfigScenario((Option4ClientFqdn::FLAG_E |
@@ -956,7 +956,7 @@ TEST_F(NameDhcpv4SrvTest, processTwoRequestsHostname) {
 }
 
 // Test that when a release message is sent for a previously acquired lease,
-// DDNS updates are enabled that the server genenerates a NameChangeRequest
+// DDNS updates are enabled that the server generates a NameChangeRequest
 // to remove entries corresponding to the released lease.
 TEST_F(NameDhcpv4SrvTest, processRequestRelease) {
     IfaceMgrTestConfig test_config(true);

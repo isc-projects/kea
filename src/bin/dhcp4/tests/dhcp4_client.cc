@@ -270,7 +270,7 @@ HWAddrPtr
 Dhcp4Client::generateHWAddr(const uint8_t htype) const {
     if (htype != HTYPE_ETHER) {
         isc_throw(isc::NotImplemented,
-                  "The harware address type " << static_cast<int>(htype)
+                  "The hardware address type " << static_cast<int>(htype)
                   << " is currently not supported");
     }
     std::vector<uint8_t> hwaddr(HWAddr::ETHERNET_HWADDR_LEN);
