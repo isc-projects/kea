@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -674,6 +674,9 @@ AllocEngine::allocateLease4(const SubnetPtr& subnet, const ClientIdPtr& clientid
         /// moment, but we currently do not control expiration time at all
         unsigned int i = attempts_;
         do {
+            // Decrease the number of remaining attempts here so as we guarantee
+            // that it is decreased when the code below uses "continue".
+            --i;
             IOAddress candidate = allocator->pickAddress(subnet, clientid,
                                                          ctx.requested_address_);
 
@@ -710,7 +713,6 @@ AllocEngine::allocateLease4(const SubnetPtr& subnet, const ClientIdPtr& clientid
 
             // Continue trying allocation until we run out of attempts
             // (or attempts are set to 0, which means infinite)
-            --i;
         } while ((i > 0) || !attempts_);
 
         // Unable to allocate an address, return an empty lease.
