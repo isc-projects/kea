@@ -22,6 +22,7 @@
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <set>
+#include <vector>
 
 namespace isc {
 namespace dhcp {
@@ -217,6 +218,12 @@ public:
     /// receiving server's response (if any).
     void doConfirm();
 
+
+    /// @brief Performs stateless (inf-request / reply) exchange.
+    ///
+    /// This function generates
+    void doInfRequest();
+
     /// @brief Removes the stateful configuration obtained from the server.
     ///
     /// It removes all leases held by the client.
@@ -365,6 +372,12 @@ public:
         relay_link_addr_ = link_addr;
     }
 
+    /// @brief Controls whether the client should send a client-id or not
+    /// @param send should the client-id be sent?
+    void sendClientId(bool send) {
+        send_client_id_ = send;
+    }
+
     /// @brief Lease configuration obtained by the client.
     Configuration config_;
 
@@ -470,8 +483,14 @@ private:
     bool use_pd_;    ///< Enable prefix delegation.
     bool use_relay_; ///< Enable relaying messages to the server.
 
+    bool send_oro_;
+    bool send_client_id_;
+
     /// @brief Pointer to the option holding a prefix hint.
     Option6IAPrefixPtr prefix_hint_;
+
+    // @brief List of options to be requested
+    std::vector<uint16_t> oro_;
 };
 
 } // end of namespace isc::dhcp::test
