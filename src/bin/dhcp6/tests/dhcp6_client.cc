@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #include <dhcp/option_custom.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
+#include <dhcp/option_int_array.h>
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/lease.h>
 #include <dhcp6/tests/dhcp6_client.h>
@@ -40,6 +41,8 @@ Dhcp6Client::Dhcp6Client() :
     use_na_(false),
     use_pd_(false),
     use_relay_(false),
+    send_oro_(false),
+    send_client_id_(true),
     prefix_hint_() {
 }
 
@@ -52,7 +55,10 @@ Dhcp6Client::Dhcp6Client(boost::shared_ptr<NakedDhcpv6Srv>& srv) :
     srv_(srv),
     use_na_(false),
     use_pd_(false),
-    use_relay_(false) {
+    use_relay_(false),
+    send_oro_(false),
+    send_client_id_(true),
+    prefix_hint_() {
 }
 
 void
@@ -245,7 +251,17 @@ Dhcp6Client::createLease(const Lease6& lease) {
 Pkt6Ptr
 Dhcp6Client::createMsg(const uint8_t msg_type) {
     Pkt6Ptr msg(new Pkt6(msg_type, curr_transid_++));
-    msg->addOption(getClientId());
+
+    if (send_client_id_) {
+        msg->addOption(getClientId());
+    }
+    if (send_oro_) {
+        OptionUint16ArrayPtr oro(new OptionUint16Array(Option::V6, D6O_ORO));
+        oro->setValues(oro_);
+
+        msg->addOption(oro);
+    };
+
     return (msg);
 }
 
@@ -293,6 +309,29 @@ Dhcp6Client::doRequest() {
     if (context_.response_) {
         applyRcvdConfiguration(context_.response_);
     }
+}
+
+void
+Dhcp6Client::doInfRequest() {
+    context_.query_ = createMsg(DHCPV6_INFORMATION_REQUEST);
+
+    // Not allowed in INF-REQUEST, but hey! Let's test it.
+    if (use_na_) {
+        context_.query_->addOption(Option6IAPtr(new Option6IA(D6O_IA_NA,
+                                                              1234)));
+    }
+
+    // IA-PD is also not allowed. So it may be useful in testing, too.
+    if (use_pd_) {
+        Option6IAPtr ia(new Option6IA(D6O_IA_PD, 5678));
+        if (prefix_hint_) {
+            ia->addOption(prefix_hint_);
+        }
+        context_.query_->addOption(ia);
+    }
+
+    sendMsg(context_.query_);
+    context_.response_ = receiveOneMsg();
 }
 
 void

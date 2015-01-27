@@ -25,7 +25,7 @@ AM_CPPFLAGS += -DTOP_BUILDDIR="\"$(top_builddir)\""
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
-CLEANFILES  = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
+CLEANFILES  = $(builddir)/logger_lockfile
 CLEANFILES += $(builddir)/load_marker.txt $(builddir)/unload_marker.txt
 CLEANFILES += *.json *.log
 
@@ -84,6 +84,7 @@ dhcp6_unittests_SOURCES += rebind_unittest.cc
 dhcp6_unittests_SOURCES += sarr_unittest.cc
 dhcp6_unittests_SOURCES += config_parser_unittest.cc
 dhcp6_unittests_SOURCES += confirm_unittest.cc
+dhcp6_unittests_SOURCES += infrequest_unittest.cc
 dhcp6_unittests_SOURCES += dhcp6_message_test.cc dhcp6_message_test.h
 
 if CONFIG_BACKEND_BUNDY
