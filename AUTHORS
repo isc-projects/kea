@@ -75,6 +75,7 @@ We have received the following contributions:
 
  - Adam Kalmus, Gdank University of Technology
    2014-12: Extract MAC address from DUID-LL and DUID-LLT types
+   2015-01: Extract MAC address from remote-id
 
 Kea uses log4cplus (http://sourceforge.net/projects/log4cplus/) for logging,
 Boost (http://www.boost.org/) library for almost everything, and can use Botan

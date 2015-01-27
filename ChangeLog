@@ -1,4 +1,9 @@
-8xx.	[doc]		tomek
+881.	[func]		kalmus
+	Extracting hardware/MAC address from the DHCPv6 remote-id
+	option is now implemented.
+	(Trac #3552, git 6db5fc158133b3f308c43f1fe2fa54a6f89baae1)
+
+880.	[doc]		tomek
 	kea-admin is now described in Kea User's Guide.
 	(Trac #3644, git fa83c48826e41663d93e56ec7fd6983e9b0b2cd1)
 
