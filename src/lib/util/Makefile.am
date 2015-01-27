@@ -18,6 +18,7 @@ libkea_util_la_SOURCES += time_utilities.h time_utilities.cc
 libkea_util_la_SOURCES += memory_segment.h
 libkea_util_la_SOURCES += memory_segment_local.h memory_segment_local.cc
 libkea_util_la_SOURCES += optional_value.h
+libkea_util_la_SOURCES += pid_file.h pid_file.cc
 libkea_util_la_SOURCES += range_utilities.h
 libkea_util_la_SOURCES += signal_set.cc signal_set.h
 libkea_util_la_SOURCES += encode/base16_from_binary.h
@@ -28,7 +29,6 @@ libkea_util_la_SOURCES += encode/binary_from_base32hex.h
 libkea_util_la_SOURCES += encode/binary_from_base16.h
 libkea_util_la_SOURCES += random/qid_gen.h random/qid_gen.cc
 libkea_util_la_SOURCES += random/random_number_generator.h
-libkea_util_la_SOURCES += pid.h pid.cc
 
 libkea_util_la_LIBADD = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 CLEANFILES = *.gcno *.gcda
