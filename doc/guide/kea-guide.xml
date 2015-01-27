@@ -57,6 +57,8 @@
 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="install.xml" />
 
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="admin.xml" />
+
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="config.xml" />
 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="keactrl.xml" />
