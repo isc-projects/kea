@@ -186,15 +186,10 @@ TEST_F(NakedDhcpv6SrvTest, ReleaseNoSubnet) {
     checkNakResponse (reply, DHCPV6_REPLY, 1234, STATUS_NoBinding);
 }
 
-
 // Test verifies that the Dhcpv6_srv class can be instantiated. It checks a mode
 // without open sockets and with sockets opened on a high port (to not require
 // root privileges).
 TEST_F(Dhcpv6SrvTest, basic) {
-    // srv has stubbed interface detection. It will read
-    // interfaces.txt instead. It will pretend to have detected
-    // fe80::1234 link-local address on eth0 interface. Obviously
-    // an attempt to bind this socket will fail.
     boost::scoped_ptr<Dhcpv6Srv> srv;
 
     ASSERT_NO_THROW( {
