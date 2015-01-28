@@ -75,13 +75,14 @@ PIDFile::write(int pid) const {
 
     // File is open, write the pid.
     fs << pid << std::endl;
-    if (!fs.good()) {
+
+    bool good = fs.good();
+    fs.close();
+
+    if (!good()) {
         isc_throw(PIDFileError, "Unable to write to PID file '"
                   << filename_ << "'");
     }
-
-    // That's it
-    fs.close();
 }
 
 void
