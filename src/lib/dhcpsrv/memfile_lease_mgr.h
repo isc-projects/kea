@@ -21,7 +21,9 @@
 #include <dhcpsrv/csv_lease_file6.h>
 #include <dhcpsrv/memfile_lease_storage.h>
 #include <dhcpsrv/lease_mgr.h>
+#include <util/process_spawn.h>
 
+#include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
 namespace isc {
@@ -405,11 +407,15 @@ protected:
 
 private:
 
-    /// @brief Initialize the timers used to perform repeating tasks.
+    /// @brief Setup the periodic Lease File Cleanup.
     ///
-    /// Currently only one timer is supported. This timer executes the
-    /// Lease File Cleanup periodically.
-    void initTimers();
+    /// This method checks if the @c lfc-interval configuration parameter
+    /// is set to a non-zero value and sets up the interval timer to
+    /// perform the Lease File Cleanup periodically. It also prepares the
+    /// path and arguments for the @c kea-lfc application which will be
+    /// executed to perform the cleanup.
+    void lfcSetup();
+
     /// @brief Initialize the location of the lease file.
     ///
     /// This method uses the parameters passed as a map to the constructor to
@@ -484,6 +490,10 @@ private:
 
     /// @brief A timer scheduled to perform Lease File Cleanup.
     asiolink::IntervalTimer lfc_timer_;
+
+protected:
+
+    boost::scoped_ptr<util::ProcessSpawn> lfc_process_;
 
 };
 
