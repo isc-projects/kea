@@ -86,7 +86,7 @@ const char* CONFIGS[] = {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "    \"option-data\": [ {"
-        "        \"name\": \"sip-server-dns\","
+        "        \"name\": \"sip-server-addr\","
         "        \"data\": \"2001:db8::1\""
         "    } ],"
         "\"subnet6\": [ { "
@@ -259,7 +259,7 @@ TEST_F(InfRequestTest, infRequestSubnetAndGlobal) {
     Option6AddrLstPtr dns = boost::dynamic_pointer_cast<Option6AddrLst>
                             (response->getOption(D6O_NAME_SERVERS));
     ASSERT_TRUE(dns);
-    addrs = sip->getAddresses();
+    addrs = dns->getAddresses();
     ASSERT_EQ(1, addrs.size());
     EXPECT_EQ("2001:db8::2", addrs[0].toText());
 }
@@ -291,7 +291,7 @@ TEST_F(InfRequestTest, infRequestNoSubnets) {
     Option6AddrLst::AddressContainer addrs = nis->getAddresses();
     ASSERT_EQ(2, addrs.size());
     EXPECT_EQ("2001:db8::1", addrs[0].toText());
-    EXPECT_EQ("2001:db8::2", addrs[0].toText());
+    EXPECT_EQ("2001:db8::2", addrs[1].toText());
 }
 
 
