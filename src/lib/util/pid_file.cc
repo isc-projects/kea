@@ -79,7 +79,7 @@ PIDFile::write(int pid) const {
     bool good = fs.good();
     fs.close();
 
-    if (!good()) {
+    if (!good) {
         isc_throw(PIDFileError, "Unable to write to PID file '"
                   << filename_ << "'");
     }
