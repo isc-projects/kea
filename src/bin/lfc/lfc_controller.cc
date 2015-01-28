@@ -55,9 +55,15 @@ LFCController::launch(int argc, char* argv[]) {
 
     // verify we are the only instance
     PIDFile pid_file(pid_file_);
-    if (pid_file.check() == true) {
-        // Already running instance, bail out
-        std::cerr << "LFC instance already running" <<  std::endl;
+
+    try {
+        if (pid_file.check() == true) {
+            // Already running instance, bail out
+            std::cerr << "LFC instance already running" <<  std::endl;
+            return;
+        }
+    } catch (const PIDFileError& pid_ex) {
+        std::cerr << pid_ex.what() << std::endl;
         return;
     }
 
@@ -73,7 +79,12 @@ LFCController::launch(int argc, char* argv[]) {
     std::cerr << "Add code to perform lease cleanup" << std::endl;
 
     // delete the pid file for this instance
-    pid_file.deleteFile();
+    try {
+        pid_file.deleteFile();
+    } catch (const PIDFileError& pid_ex) {
+        std::cerr << pid_ex.what() << std::endl;
+        return;
+    }
 
     std::cerr << "LFC complete" << std::endl;
 }
