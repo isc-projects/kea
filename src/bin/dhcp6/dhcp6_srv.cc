@@ -724,29 +724,43 @@ Dhcpv6Srv::appendDefaultOptions(const Pkt6Ptr&, Pkt6Ptr& answer) {
 
 void
 Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
-    // Get the configured subnet suitable for the incoming packet.
-    Subnet6Ptr subnet = selectSubnet(question);
-    // Leave if there is no subnet matching the incoming packet.
-    // There is no need to log the error message here because
-    // it will be logged in the assignLease() when it fails to
-    // pick the suitable subnet. We don't want to duplicate
-    // error messages in such case.
-    if (!subnet) {
-        return;
-    }
 
     // Client requests some options using ORO option. Try to
     // get this option from client's message.
     boost::shared_ptr<OptionIntArray<uint16_t> > option_oro =
-        boost::dynamic_pointer_cast<OptionIntArray<uint16_t> >(question->getOption(D6O_ORO));
-    // Option ORO not found. Don't do anything then.
+        boost::dynamic_pointer_cast<OptionIntArray<uint16_t> >
+        (question->getOption(D6O_ORO));
+
+    // Option ORO not found? We're done here then.
     if (!option_oro) {
         return;
     }
+
+    // Get global option definitions (i.e. options defined to apply to all,
+    // unless overwritten on a subnet or host level)
+    ConstCfgOptionPtr global_opts = CfgMgr::instance().getCurrentCfg()->
+        getCfgOption();
+
+    // Get the configured subnet suitable for the incoming packet.
+    // It may be NULL (if server is misconfigured or the client was rejected
+    // using client classes).
+    Subnet6Ptr subnet = selectSubnet(question);
+
     // Get the list of options that client requested.
     const std::vector<uint16_t>& requested_opts = option_oro->getValues();
     BOOST_FOREACH(uint16_t opt, requested_opts) {
-        OptionDescriptor desc = subnet->getCfgOption()->get("dhcp6", opt);
+        // If we found a subnet for this client, try subnet first.
+        if (subnet) {
+            OptionDescriptor desc = subnet->getCfgOption()->get("dhcp6", opt);
+            if (desc.option_) {
+                // Attempt to assign an option from subnet first.
+                answer->addOption(desc.option_);
+                continue;
+            }
+        }
+
+        // If subnet specific option is not there, try global.
+        OptionDescriptor desc = global_opts->get("dhcp6", opt);
         if (desc.option_) {
             answer->addOption(desc.option_);
         }
@@ -2450,8 +2464,14 @@ Dhcpv6Srv::processDecline(const Pkt6Ptr& decline) {
 
 Pkt6Ptr
 Dhcpv6Srv::processInfRequest(const Pkt6Ptr& infRequest) {
-    /// @todo: Implement this
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, infRequest->getTransid()));
+
+    copyDefaultOptions(infRequest, reply);
+
+    appendDefaultOptions(infRequest, reply);
+
+    appendRequestedOptions(infRequest, reply);
+
     return reply;
 }
 
