@@ -145,6 +145,17 @@ TEST_F(InfRequestTest, infRequestBasic) {
     Pkt6Ptr response = client.getContext().response_;
     ASSERT_TRUE(response);
 
+    // Check that it contains our client-id
+    OptionPtr client_id = response->getOption(D6O_CLIENTID);
+    ASSERT_TRUE(client_id);
+    EXPECT_EQ(client_id, client.getClientId());
+
+    // Check that it contains proper server-id
+    OptionPtr server_id = response->getOption(D6O_SERVERID);
+    ASSERT_TRUE(server_id);
+    EXPECT_EQ(server_id, client.getServer()->getServerID());
+
+    // Check that we received requested DNS servers option
     Option6AddrLstPtr dns = boost::dynamic_pointer_cast<Option6AddrLst>
                             (response->getOption(D6O_NAME_SERVERS));
     ASSERT_TRUE(dns);
@@ -176,6 +187,7 @@ TEST_F(InfRequestTest, infRequestAnonymous) {
     Pkt6Ptr response = client.getContext().response_;
     ASSERT_TRUE(response);
 
+    // Check that we received the requested DNS servers option
     Option6AddrLstPtr dns = boost::dynamic_pointer_cast<Option6AddrLst>
                             (response->getOption(D6O_NAME_SERVERS));
     ASSERT_TRUE(dns);
@@ -205,6 +217,7 @@ TEST_F(InfRequestTest, infRequestStateless) {
     Pkt6Ptr response = client.getContext().response_;
     ASSERT_TRUE(response);
 
+    // Check that we received the requested SIP servers option
     Option6AddrLstPtr sip = boost::dynamic_pointer_cast<Option6AddrLst>
                             (response->getOption(D6O_SIP_SERVERS_ADDR));
     ASSERT_TRUE(sip);
@@ -234,7 +247,7 @@ TEST_F(InfRequestTest, infRequestSubnetAndGlobal) {
     Pkt6Ptr response = client.getContext().response_;
     ASSERT_TRUE(response);
 
-    // Check sip servers
+    // Check that we received the requested sip servers option
     Option6AddrLstPtr sip = boost::dynamic_pointer_cast<Option6AddrLst>
                             (response->getOption(D6O_SIP_SERVERS_ADDR));
     ASSERT_TRUE(sip);
@@ -242,7 +255,7 @@ TEST_F(InfRequestTest, infRequestSubnetAndGlobal) {
     ASSERT_EQ(1, addrs.size());
     EXPECT_EQ("2001:db8::1", addrs[0].toText());
 
-    // Check dns servers
+    // Check that we received the requested dns servers option
     Option6AddrLstPtr dns = boost::dynamic_pointer_cast<Option6AddrLst>
                             (response->getOption(D6O_NAME_SERVERS));
     ASSERT_TRUE(dns);
@@ -271,7 +284,7 @@ TEST_F(InfRequestTest, infRequestNoSubnets) {
     Pkt6Ptr response = client.getContext().response_;
     ASSERT_TRUE(response);
 
-    // Check sip servers
+    // Check that we received the requested sip servers option
     Option6AddrLstPtr nis = boost::dynamic_pointer_cast<Option6AddrLst>
                             (response->getOption(D6O_NIS_SERVERS));
     ASSERT_TRUE(nis);
