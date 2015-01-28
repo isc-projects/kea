@@ -148,12 +148,12 @@ TEST_F(InfRequestTest, infRequestBasic) {
     // Check that it contains our client-id
     OptionPtr client_id = response->getOption(D6O_CLIENTID);
     ASSERT_TRUE(client_id);
-    EXPECT_EQ(client_id, client.getClientId());
+    EXPECT_TRUE(compareOptions(client_id, client.getClientId()));
 
     // Check that it contains proper server-id
     OptionPtr server_id = response->getOption(D6O_SERVERID);
     ASSERT_TRUE(server_id);
-    EXPECT_EQ(server_id, client.getServer()->getServerID());
+    EXPECT_TRUE(compareOptions(server_id, client.getServer()->getServerID()));
 
     // Check that we received requested DNS servers option
     Option6AddrLstPtr dns = boost::dynamic_pointer_cast<Option6AddrLst>
@@ -162,7 +162,7 @@ TEST_F(InfRequestTest, infRequestBasic) {
     Option6AddrLst::AddressContainer addrs = dns->getAddresses();
     ASSERT_EQ(2, addrs.size());
     EXPECT_EQ("2001:db8::1", addrs[0].toText());
-    EXPECT_EQ("2001:db8::2", addrs[0].toText());
+    EXPECT_EQ("2001:db8::2", addrs[1].toText());
 }
 
 /// Check that server processes correctly an incoming inf-request
@@ -194,7 +194,7 @@ TEST_F(InfRequestTest, infRequestAnonymous) {
     Option6AddrLst::AddressContainer addrs = dns->getAddresses();
     ASSERT_EQ(2, addrs.size());
     EXPECT_EQ("2001:db8::1", addrs[0].toText());
-    EXPECT_EQ("2001:db8::2", addrs[0].toText());
+    EXPECT_EQ("2001:db8::2", addrs[1].toText());
 }
 
 /// Check that server processes correctly an incoming inf-request
@@ -274,7 +274,7 @@ TEST_F(InfRequestTest, infRequestNoSubnets) {
     // Make sure we ended-up having expected number of subnets configured.
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->getAll();
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(0, subnets->size());
 
     // Perform 2-way exchange (Inf-request/reply)
     client.requestOption(D6O_NIS_SERVERS);
