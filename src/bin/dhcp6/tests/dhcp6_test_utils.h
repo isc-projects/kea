@@ -462,6 +462,22 @@ public:
              const isc::asiolink::IOAddress& addr,
              const uint8_t prefix_len, const uint32_t iaid);
 
+    /// @brief Compare options
+    ///
+    /// This method compares whether options content is identical. It writes
+    /// both options to a buffer and then compares the buffers. Comparing
+    /// two different instances of an option that has identical content
+    /// will return true.
+    ///
+    /// It is safe to pass NULL pointers. Two NULL pointers are equal.
+    /// NULL pointer and non-NULL pointers are obviously non-equal.
+    ///
+    /// @param option1 pointer to the first option
+    /// @param option2
+    /// @return true, if content is identical
+    bool compareOptions(const isc::dhcp::OptionPtr& option1,
+                        const isc::dhcp::OptionPtr& option2);
+
     /// @brief Performs basic (positive) RENEW test
     ///
     /// See renewBasic and pdRenewBasic tests for detailed explanation.
