@@ -29,8 +29,9 @@
 
 #include <iostream>
 #include <fstream>
-#include <sstream>
 #include <queue>
+#include <sstream>
+#include <unistd.h>
 
 using namespace std;
 using namespace isc;
@@ -90,6 +91,7 @@ public:
     }
 
     using Memfile_LeaseMgr::lfcCallback;
+    using Memfile_LeaseMgr::lfc_process_;
 };
 
 /// @brief Test fixture class for @c Memfile_LeaseMgr
@@ -104,6 +106,10 @@ public:
         io6_(getLeaseFilePath("leasefile6_0.csv")),
         io_service_(),
         fail_on_callback_(false) {
+
+        std::ostringstream s;
+        s << KEA_LFC_BUILD_DIR << "/kea-lfc";
+        setenv("KEA_LFC_EXECUTABLE", s.str().c_str(), 1);
 
         // Remove lease files and products of Lease File Cleanup.
         removeFiles(getLeaseFilePath("leasefile4_0.csv"));
@@ -211,6 +217,24 @@ public:
             FAIL() << "Test timeout reached";
         }
     }
+
+    /// @brief Waits for the specified process to finish.
+    ///
+    /// @param process An object which started the process.
+    /// @param timeout Timeout in seconds.
+    ///
+    /// @return true if the process ended, false otherwise
+    bool waitForProcess(const util::ProcessSpawn& process,
+                        const uint8_t timeout) {
+        uint32_t iterations = 0;
+        const uint32_t iterations_max = timeout * 1000;
+        while (process.isRunning() && (iterations < iterations_max)) {
+            usleep(1000);
+            ++iterations;
+        }
+        return (iterations < iterations_max);
+    }
+
 
     /// @brief Object providing access to v4 lease IO.
     LeaseFileIO io4_;
@@ -399,6 +423,10 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup) {
 
     ASSERT_TRUE(current_file.exists());
     EXPECT_EQ(new_file_contents, current_file.readFile());
+
+    ASSERT_TRUE(waitForProcess(*lease_mgr->lfc_process_, 2));
+
+    EXPECT_EQ(0, lease_mgr->lfc_process_->getExitStatus());
 }
 
 // Test that the backend returns a correct value of the interval
@@ -416,11 +444,13 @@ TEST_F(MemfileLeaseMgrTest, getIOServiceExecInterval) {
 
     // lfc-interval = 10
     pmap["lfc-interval"] = "10";
+    lease_mgr.reset();
     lease_mgr.reset(new LFCMemfileLeaseMgr(pmap));
     EXPECT_EQ(10, lease_mgr->getIOServiceExecInterval());
 
     // lfc-interval = 20
     pmap["lfc-interval"] = "20";
+    lease_mgr.reset();
     lease_mgr.reset(new LFCMemfileLeaseMgr(pmap));
     EXPECT_EQ(20, lease_mgr->getIOServiceExecInterval());
 

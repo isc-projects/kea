@@ -17,6 +17,7 @@
 #include <dhcpsrv/lease_file_loader.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
 #include <exceptions/exceptions.h>
+#include <util/process_spawn.h>
 #include <cstdio>
 #include <iostream>
 #include <sstream>
@@ -26,13 +27,17 @@ namespace {
 /// @brief Maximum number of errors to read the leases from the lease file.
 const uint32_t MAX_LEASE_ERRORS = 100;
 
+const char* KEA_LFC_EXECUTABLE_ENV_NAME = "KEA_LFC_EXECUTABLE";
+
 } // end of anonymous namespace
 
+using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::util;
 
 Memfile_LeaseMgr::Memfile_LeaseMgr(const ParameterMap& parameters)
-    : LeaseMgr(parameters), lfc_timer_(*getIOService()) {
+    : LeaseMgr(parameters), lfc_timer_(*getIOService()),
+      lfc_process_() {
     // Check the universe and use v4 file or v6 file.
     std::string universe = getParameter("universe");
     if (universe == "4") {
@@ -57,7 +62,7 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const ParameterMap& parameters)
         LOG_WARN(dhcpsrv_logger, DHCPSRV_MEMFILE_NO_STORAGE);
 
     } else  {
-        initTimers();
+        lfcSetup();
     }
 }
 
@@ -511,7 +516,7 @@ Memfile_LeaseMgr::initLeaseFilePath(Universe u) {
 }
 
 void
-Memfile_LeaseMgr::initTimers() {
+Memfile_LeaseMgr::lfcSetup() {
     std::string lfc_interval_str = "0";
     try {
         lfc_interval_str = getParameter("lfc-interval");
@@ -527,18 +532,51 @@ Memfile_LeaseMgr::initTimers() {
                   << lfc_interval_str << " specified");
     }
 
+    // If LFC is enabled, we have to setup the interval timer and prepare for
+    // executing the kea-lfc process.
     if (lfc_interval > 0) {
+        char* c_executable = getenv(KEA_LFC_EXECUTABLE_ENV_NAME);
+
+        // Set the timer to call callback function periodically.
         asiolink::IntervalTimer::Callback cb =
             boost::bind(&Memfile_LeaseMgr::lfcCallback, this);
         LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_SETUP).arg(lfc_interval);
         lfc_timer_.setup(cb, lfc_interval * 1000);
+
+        // Start preparing the command line for kea-lfc.
+
+        // Gather the base file name.
+        std::string lease_file = lease_file4_ ? lease_file4_->getFilename() :
+            lease_file6_->getFilename();
+
+        // Create the other names by appending suffixes to the base name.
+        util::ProcessArgs args;
+        // Universe: v4 or v6.
+        args.push_back(lease_file4_ ? "-4" : "-6");
+        // Previous file.
+        args.push_back("-p");
+        args.push_back(appendSuffix(lease_file, FILE_PREVIOUS));
+        // Input file.
+        args.push_back("-i");
+        args.push_back(appendSuffix(lease_file, FILE_INPUT));
+        // Output file.
+        args.push_back("-o");
+        args.push_back(appendSuffix(lease_file, FILE_OUTPUT));
+        // Finish file.
+        args.push_back("-f");
+        args.push_back(appendSuffix(lease_file, FILE_FINISH));
+        // The configuration file is currently unused.
+        args.push_back("-c");
+        args.push_back("ignored-path");
+
+        // Create the process (do not start it yet).
+        lfc_process_.reset(new util::ProcessSpawn(std::string(c_executable), args));
     }
 }
 
+
 void
 Memfile_LeaseMgr::lfcCallback() {
-    /// @todo Extend this method to spawn the new process which will
-    /// perform the Lease File Cleanup in background.
     LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_START);
 
     // Check if we're in the v4 or v6 space and use the appropriate file.
@@ -554,14 +592,25 @@ Memfile_LeaseMgr::lfcCallback() {
 template<typename LeaseFileType>
 void Memfile_LeaseMgr::
 leaseFileCleanup(boost::shared_ptr<LeaseFileType>& lease_file) {
+    // Check if the copy of the lease file exists already. If it does, it
+    // is an indication that another LFC instance may be in progress, in
+    // which case we don't want to rotate the current lease file to avoid
+    // overriding the contents of the existing file.
     CSVFile lease_file_copy(appendSuffix(lease_file->getFilename(), FILE_INPUT));
     if (!lease_file_copy.exists()) {
+        // Close the current file so as we can move it to the copy file.
         lease_file->close();
+        // Move the current file to the copy file.
         rename(lease_file->getFilename().c_str(),
                lease_file_copy.getFilename().c_str());
+        // Now that we moved the current file, we need to create a new one.
         lease_file.reset(new LeaseFileType(lease_file->getFilename()));
+        // Leave the new file open for writing.
         lease_file->open();
     }
+    // Once we have rotated files as needed, start the new kea-lfc process
+    // to perform a cleanup.
+    lfc_process_->spawn();
 }
 
 template<typename LeaseObjectType, typename LeaseFileType, typename StorageType>
