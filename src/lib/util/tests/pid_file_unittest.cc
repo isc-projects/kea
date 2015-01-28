@@ -19,8 +19,9 @@
 namespace {
 using namespace isc::util;
 
-#define TESTNAME "pid_file.test"
-#define TESTNAME2 "pid_file.test.2"
+// Filenames used for testing.
+const char* TESTNAME = "pid_file.test";
+const char* TESTNAME2 = "pid_file.test.2";
 
 class PIDFileTest : public ::testing::Test {
 public:
@@ -63,6 +64,7 @@ private:
     /// @brief Removes any remaining test files
     void removeTestFile() const {
         remove(TESTNAME);
+        remove(TESTNAME2);
     }
 
 };
