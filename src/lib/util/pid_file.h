@@ -30,13 +30,20 @@ public:
         isc::Exception(file, line, what) { };
 };
 
+/// @brief Exception thrown when an error occurs trying to read a PID
+/// from an opened file.
+class PIDCantReadPID : public Exception {
+public:
+    PIDCantReadPID(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
 /// @brief Class to help with processing PID files
 ///
 /// This is a utility class to manipulate PID file. It provides
 /// functions for writing and deleting a file containing a PID as
 /// well as for extracting a PID from a file and checking if the
 /// process is still running.
-
 class PIDFile {
 public:
     /// @brief Constructor
@@ -56,16 +63,27 @@ public:
     /// the proper format treat it as the process existing.
     ///
     /// @return true if the PID is in use, false otherwise
-    bool check();
+    ///
+    /// @throw throws PIDCantReadPID if it was able to open the file
+    /// but was unable to read the PID from it.
+    bool check() const;
 
     /// @brief Write the PID to the file.
-    void write(int);
+    ///
+    /// @param pid the pid to write to the file.
+    ///
+    /// @throw throws PIDFileError if it can't open or write to the PID file.
+    void write(int) const;
 
     /// @brief Get PID of the current process and write it to the file.
-    void write();
+    ///
+    /// @throw throws PIDFileError if it can't open or write to the PID file.
+    void write() const;
 
     /// @brief Delete the PID file.
-    void deleteFile();
+    ///
+    /// @throw throws PIDFileError if it can't delete the PID file
+    void deleteFile() const;
 
     /// @brief Returns the path to the PID file.
     std::string getFilename() const {
