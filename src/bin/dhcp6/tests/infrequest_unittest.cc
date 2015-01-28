@@ -64,6 +64,7 @@ const char* CONFIGS[] = {
         "    \"interface\": \"eth0\""
         " } ],"
         "\"valid-lifetime\": 4000 }",
+
     // Configuration 1
     "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
@@ -78,6 +79,7 @@ const char* CONFIGS[] = {
         "    \"interface\": \"eth0\""
         " } ],"
         "\"valid-lifetime\": 4000 }",
+
     // Configuration 2
     "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
@@ -96,7 +98,8 @@ const char* CONFIGS[] = {
         "    } ]"
         " } ],"
         "\"valid-lifetime\": 4000 }",
-    // Configuration 2
+
+    // Configuration 3
     "{ \"interfaces\": [ \"*\" ],"
         "\"option-data\": [ {"
         "    \"name\": \"nis-servers\","
@@ -135,6 +138,7 @@ TEST_F(InfRequestTest, infRequestBasic) {
     ASSERT_EQ(1, subnets->size());
 
     // Perform 2-way exchange (Inf-request/reply)
+    client.requestOption(D6O_NAME_SERVERS);
     ASSERT_NO_THROW(client.doInfRequest());
 
     // Confirm that there's a response
@@ -164,6 +168,7 @@ TEST_F(InfRequestTest, infRequestAnonymous) {
     ASSERT_EQ(1, subnets->size());
 
     // Perform 2-way exchange (Inf-request/reply)
+    client.requestOption(D6O_NAME_SERVERS);
     client.sendClientId(false);
     ASSERT_NO_THROW(client.doInfRequest());
 
@@ -193,6 +198,7 @@ TEST_F(InfRequestTest, infRequestStateless) {
     ASSERT_EQ(1, subnets->size());
 
     // Perform 2-way exchange (Inf-request/reply)
+    client.requestOption(D6O_SIP_SERVERS_ADDR);
     ASSERT_NO_THROW(client.doInfRequest());
 
     // Confirm that there's a response
@@ -206,6 +212,76 @@ TEST_F(InfRequestTest, infRequestStateless) {
     ASSERT_EQ(1, addrs.size());
     EXPECT_EQ("2001:db8::abcd", addrs[0].toText());
 }
+
+/// Check that server processes correctly an incoming inf-request
+/// if there are options defined at both global and subnet scope.
+TEST_F(InfRequestTest, infRequestSubnetAndGlobal) {
+    Dhcp6Client client;
+
+    // Configure client to request IA_PD.
+    configure(CONFIGS[2], *client.getServer());
+    // Make sure we ended-up having expected number of subnets configured.
+    const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets6()->getAll();
+    ASSERT_EQ(1, subnets->size());
+
+    // Perform 2-way exchange (Inf-request/reply)
+    client.requestOption(D6O_SIP_SERVERS_ADDR);
+    client.requestOption(D6O_NAME_SERVERS);
+    ASSERT_NO_THROW(client.doInfRequest());
+
+    // Confirm that there's a response
+    Pkt6Ptr response = client.getContext().response_;
+    ASSERT_TRUE(response);
+
+    // Check sip servers
+    Option6AddrLstPtr sip = boost::dynamic_pointer_cast<Option6AddrLst>
+                            (response->getOption(D6O_SIP_SERVERS_ADDR));
+    ASSERT_TRUE(sip);
+    Option6AddrLst::AddressContainer addrs = sip->getAddresses();
+    ASSERT_EQ(1, addrs.size());
+    EXPECT_EQ("2001:db8::1", addrs[0].toText());
+
+    // Check dns servers
+    Option6AddrLstPtr dns = boost::dynamic_pointer_cast<Option6AddrLst>
+                            (response->getOption(D6O_NAME_SERVERS));
+    ASSERT_TRUE(dns);
+    addrs = sip->getAddresses();
+    ASSERT_EQ(1, addrs.size());
+    EXPECT_EQ("2001:db8::2", addrs[0].toText());
+}
+
+/// Check that server processes correctly an incoming inf-request
+/// if there are options defined at global scope only (no subnets).
+TEST_F(InfRequestTest, infRequestNoSubnets) {
+    Dhcp6Client client;
+
+    // Configure client to request IA_PD.
+    configure(CONFIGS[3], *client.getServer());
+    // Make sure we ended-up having expected number of subnets configured.
+    const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets6()->getAll();
+    ASSERT_EQ(1, subnets->size());
+
+    // Perform 2-way exchange (Inf-request/reply)
+    client.requestOption(D6O_NIS_SERVERS);
+    ASSERT_NO_THROW(client.doInfRequest());
+
+    // Confirm that there's a response
+    Pkt6Ptr response = client.getContext().response_;
+    ASSERT_TRUE(response);
+
+    // Check sip servers
+    Option6AddrLstPtr nis = boost::dynamic_pointer_cast<Option6AddrLst>
+                            (response->getOption(D6O_NIS_SERVERS));
+    ASSERT_TRUE(nis);
+    Option6AddrLst::AddressContainer addrs = nis->getAddresses();
+    ASSERT_EQ(2, addrs.size());
+    EXPECT_EQ("2001:db8::1", addrs[0].toText());
+    EXPECT_EQ("2001:db8::2", addrs[0].toText());
+}
+
+
 
 
 } // end of anonymous namespace
