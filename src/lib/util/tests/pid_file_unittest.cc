@@ -14,7 +14,9 @@
 
 #include <util/pid_file.h>
 #include <gtest/gtest.h>
+#include <fstream>
 #include <signal.h>
+#include <stdint.h>
 
 namespace {
 using namespace isc::util;
@@ -93,7 +95,7 @@ TEST_F(PIDFileTest, writeAndDelete) {
     pid_file.write(10);
 
     // Read the file and compare the pid
-    fs.open(absolutePath(TESTNAME), std::ifstream::in);
+    fs.open(absolutePath(TESTNAME).c_str(), std::ifstream::in);
     fs >> pid;
     EXPECT_TRUE(fs.good());
     EXPECT_EQ(pid, 10);
@@ -103,7 +105,7 @@ TEST_F(PIDFileTest, writeAndDelete) {
     pid_file.write(20);
 
     // And comapre the second pid
-    fs.open(absolutePath(TESTNAME), std::ifstream::in);
+    fs.open(absolutePath(TESTNAME).c_str(), std::ifstream::in);
     fs >> pid;
     EXPECT_TRUE(fs.good());
     EXPECT_EQ(pid, 20);
@@ -113,7 +115,7 @@ TEST_F(PIDFileTest, writeAndDelete) {
     pid_file.deleteFile();
 
     // And verify that it's gone
-    fs.open(absolutePath(TESTNAME), std::ifstream::in);
+    fs.open(absolutePath(TESTNAME).c_str(), std::ifstream::in);
     EXPECT_FALSE(fs.good());
     fs.close();
 }
@@ -172,7 +174,7 @@ TEST_F(PIDFileTest, pidGarbage) {
     std::ofstream fs;
 
     // Open the file and write garbage to it
-    fs.open(absolutePath(TESTNAME), std::ofstream::out);
+    fs.open(absolutePath(TESTNAME).c_str(), std::ofstream::out);
     fs << "text" << std::endl;
     fs.close();
 
