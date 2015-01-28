@@ -384,6 +384,28 @@ public:
     /// @brief Link address of the relay to be used for relayed messages.
     asiolink::IOAddress relay_link_addr_;
 
+    /// @brief Controls whether client will send ORO
+    ///
+    /// The actual content of the ORO is specified in oro_.
+    /// It is useful to split the actual content and the ORO sending
+    /// decision, so we could test cases of sending empty ORO.
+    void sendORO(bool send) {
+        send_oro_ = send;
+    }
+
+    /// @brief Instructs client to request specified option in ORO
+    ///
+    /// @param option_code client will request this option code
+    void requestOption(uint16_t option_code) {
+        send_oro_ = true;
+        oro_.push_back(option_code);
+    }
+
+    /// @brief List of options to be requested
+    ///
+    /// Content of this vector will be sent as ORO if send_oro_ is set
+    /// to true. See @ref sendORO for details.
+    std::vector<uint16_t> oro_;
 private:
 
     /// @brief Applies the new leases for the client.
@@ -489,8 +511,6 @@ private:
     /// @brief Pointer to the option holding a prefix hint.
     Option6IAPrefixPtr prefix_hint_;
 
-    // @brief List of options to be requested
-    std::vector<uint16_t> oro_;
 };
 
 } // end of namespace isc::dhcp::test
