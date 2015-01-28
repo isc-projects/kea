@@ -104,8 +104,7 @@ const char* CONFIGS[] = {
         "\"option-data\": [ {"
         "    \"name\": \"nis-servers\","
         "    \"data\": \"2001:db8::1, 2001:db8::2\""
-        " } ],"
-        "\"subnet6\": [ ]"
+        " } ]"
         "}"
 };
 
