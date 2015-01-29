@@ -442,6 +442,9 @@ Memfile_LeaseMgr::appendSuffix(const std::string& file_name,
     case FILE_FINISH:
         name += ".completed";
         break;
+    case FILE_PID:
+        name += ".pid";
+        break;
     default:
         // Do not append any suffix for the FILE_CURRENT.
         ;
@@ -554,7 +557,7 @@ Memfile_LeaseMgr::lfcSetup() {
         // Universe: v4 or v6.
         args.push_back(lease_file4_ ? "-4" : "-6");
         // Previous file.
-        args.push_back("-p");
+        args.push_back("-x");
         args.push_back(appendSuffix(lease_file, FILE_PREVIOUS));
         // Input file.
         args.push_back("-i");
@@ -565,6 +568,10 @@ Memfile_LeaseMgr::lfcSetup() {
         // Finish file.
         args.push_back("-f");
         args.push_back(appendSuffix(lease_file, FILE_FINISH));
+        // PID file.
+        args.push_back("-p");
+        args.push_back(appendSuffix(lease_file, FILE_PID));
+
         // The configuration file is currently unused.
         args.push_back("-c");
         args.push_back("ignored-path");
