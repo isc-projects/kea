@@ -23,7 +23,6 @@ using namespace isc::util;
 
 // Filenames used for testing.
 const char* TESTNAME = "pid_file.test";
-const char* TESTNAME2 = "pid_file.test.2";
 
 class PIDFileTest : public ::testing::Test {
 public:
@@ -66,7 +65,6 @@ private:
     /// @brief Removes any remaining test files
     void removeTestFile() const {
         remove(TESTNAME);
-        remove(TESTNAME2);
     }
 
 };
@@ -184,8 +182,14 @@ TEST_F(PIDFileTest, pidGarbage) {
 
 /// @brief Test failing to write a file.
 TEST_F(PIDFileTest, pidWriteFail) {
-    PIDFile pid_file(absolutePath(TESTNAME2));
+    PIDFile pid_file(absolutePath(TESTNAME));
 
+    // Create the test file and change it's permission bits
+    // so we can't write to it.
+    pid_file.write(10);
+    chmod(absolutePath(TESTNAME).c_str(), S_IRUSR);
+
+    // Now try a write to the file, expecting an exception
     EXPECT_THROW(pid_file.write(10), PIDFileError);
 }
 
