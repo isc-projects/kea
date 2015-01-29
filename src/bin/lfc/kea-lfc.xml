@@ -46,7 +46,8 @@
       <command>kea-lfc</command>
       <arg><option>-4|-6</option></arg>
       <arg><option>-c <replaceable class="parameter">config-file</replaceable></option></arg>
-      <arg><option>-p <replaceable class="parameter">previous-file</replaceable></option></arg>
+      <arg><option>-p <replaceable class="parameter">pid-file</replaceable></option></arg>
+      <arg><option>-x <replaceable class="parameter">previous-file</replaceable></option></arg>
       <arg><option>-i <replaceable class="parameter">copy-file</replaceable></option></arg>
       <arg><option>-o <replaceable class="parameter">output-file</replaceable></option></arg>
       <arg><option>-f <replaceable class="parameter">finish-file</replaceable></option></arg>
@@ -117,7 +118,7 @@
           Configuration file including the configuration for
           <command>kea-lfc</command> process.  It may also
           contain configuration entries for other Kea services.
-          Currently <command>kea-lfc</command> gets all of its arguments from 
+          Currently <command>kea-lfc</command> gets all of its arguments from
           the comamnd line, in the future it will be extended to get some arguments
           from the config file.
         </para></listitem>
@@ -126,7 +127,18 @@
       <varlistentry>
         <term><option>-p</option></term>
         <listitem><para>
-          Previous lease file - When <command>kea-lfc</command> starts this
+          PID file - When the <command>kea-lfc</command> process starts
+          it attempts to determine if another instance of the process is
+          already running by examining the pid file.  If one is running
+          it aborts the new process.  If one isn't running it writes its
+          pid into the pid file.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-x</option></term>
+        <listitem><para>
+          Previous or ex lease file - When <command>kea-lfc</command> starts this
           is the result of any previous run of <command>kea-lfc</command>.
           When <command>kea-lfc</command> finishes it is the result of this run.
           If <command>kea-lfc</command> is interrupted before compelting
