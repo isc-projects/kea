@@ -123,7 +123,8 @@ public:
         FILE_INPUT,
         FILE_PREVIOUS,
         FILE_OUTPUT,
-        FILE_FINISH
+        FILE_FINISH,
+        FILE_PID
     };
 
     /// @brief The sole lease manager constructor
