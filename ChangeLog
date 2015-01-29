@@ -1,3 +1,8 @@
+880.	[func]		sar
+	A utility class has been added which handles writing and
+	deleting pid files as well as checking if the process with
+	the given pid is running.
+
 879.	[bug]		fdupont
 	Drop DHCPREQUEST message from an unknown client in the
 	INIT-REBOOT state.
