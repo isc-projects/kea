@@ -2,6 +2,7 @@
 	A utility class has been added which handles writing and
 	deleting pid files as well as checking if the process with
 	the given pid is running.
+	(Trac #3687, git 1e92382aaa2fbff08bbf1d6bbf0add195a7b6fae)
 
 881.	[func]		kalmus
 	Extracting hardware/MAC address from the DHCPv6 remote-id
