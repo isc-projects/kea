@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <lfc/lfc_controller.h>
+#include <util/pid_file.h>
 #include <exceptions/exceptions.h>
 #include <config.h>
 #include <iostream>
@@ -21,6 +22,7 @@
 #include <stdlib.h>
 
 using namespace std;
+using namespace isc::util;
 
 namespace isc {
 namespace lfc {
@@ -42,12 +44,49 @@ LFCController::~LFCController() {
 
 void
 LFCController::launch(int argc, char* argv[]) {
-  try {
-    parseArgs(argc, argv);
-  } catch (const InvalidUsage& ex) {
-    usage(ex.what());
-    throw;  // rethrow it
-  }
+    try {
+        parseArgs(argc, argv);
+    } catch (const InvalidUsage& ex) {
+        usage(ex.what());
+        throw;  // rethrow it
+    }
+
+    std::cerr << "Starting lease file cleanup" << std::endl;
+
+    // verify we are the only instance
+    PIDFile pid_file(pid_file_);
+
+    try {
+        if (pid_file.check() == true) {
+            // Already running instance, bail out
+            std::cerr << "LFC instance already running" <<  std::endl;
+            return;
+        }
+    } catch (const PIDFileError& pid_ex) {
+        std::cerr << pid_ex.what() << std::endl;
+        return;
+    }
+
+    // create the pid file for this instance
+    try {
+        pid_file.write();
+    } catch (const PIDFileError& pid_ex) {
+        std::cerr << pid_ex.what() << std::endl;
+        return;
+    }
+
+    // do other work (TBD)
+    std::cerr << "Add code to perform lease cleanup" << std::endl;
+
+    // delete the pid file for this instance
+    try {
+        pid_file.deleteFile();
+    } catch (const PIDFileError& pid_ex) {
+        std::cerr << pid_ex.what() << std::endl;
+        return;
+    }
+
+    std::cerr << "LFC complete" << std::endl;
 }
 
 void
@@ -56,7 +95,7 @@ LFCController::parseArgs(int argc, char* argv[]) {
 
     opterr = 0;
     optind = 1;
-    while ((ch = getopt(argc, argv, ":46dvVp:i:o:c:f:")) != -1) {
+    while ((ch = getopt(argc, argv, ":46dvVp:x:i:o:c:f:")) != -1) {
         switch (ch) {
         case '4':
             // Process DHCPv4 lease files.
@@ -84,9 +123,17 @@ LFCController::parseArgs(int argc, char* argv[]) {
             break;
 
         case 'p':
-            // Previous file name.
+            // PID file name.
             if (optarg == NULL) {
-                isc_throw(InvalidUsage, "Previous file name missing");
+                isc_throw(InvalidUsage, "PID file name missing");
+            }
+            pid_file_ = optarg;
+            break;
+
+        case 'x':
+            // Previous (or ex) file name.
+            if (optarg == NULL) {
+                isc_throw(InvalidUsage, "Previous (ex) file name missing");
             }
             previous_file_ = optarg;
             break;
@@ -108,7 +155,7 @@ LFCController::parseArgs(int argc, char* argv[]) {
             break;
 
         case 'f':
-            // Output file name.
+            // Finish file name.
             if (optarg == NULL) {
                 isc_throw(InvalidUsage, "Finish file name missing");
             }
@@ -116,7 +163,7 @@ LFCController::parseArgs(int argc, char* argv[]) {
             break;
 
         case 'c':
-            // Previous file name.
+            // Configuration file name
             if (optarg == NULL) {
                 isc_throw(InvalidUsage, "Configuration file name missing");
             }
@@ -151,6 +198,10 @@ LFCController::parseArgs(int argc, char* argv[]) {
         isc_throw(InvalidUsage, "DHCP version required");
     }
 
+    if (pid_file_.empty()) {
+        isc_throw(InvalidUsage, "PID file not specified");
+    }
+
     if (previous_file_.empty()) {
         isc_throw(InvalidUsage, "Previous file not specified");
     }
@@ -174,12 +225,12 @@ LFCController::parseArgs(int argc, char* argv[]) {
     // If verbose is set echo the input information
     if (verbose_ == true) {
       std::cerr << "Protocol version:    DHCPv" << protocol_version_ << std::endl
-                << "Previous lease file: " << previous_file_ << std::endl
-                << "Copy lease file:     " << copy_file_ << std::endl
-                << "Output lease file:   " << output_file_ << std::endl
-                << "Finishn file:        " << finish_file_ << std::endl
-                << "Config file:         " << config_file_ << std::endl
-                << "PID file:            " << pid_file_ << std::endl;
+                << "Previous or ex lease file: " << previous_file_ << std::endl
+                << "Copy lease file:           " << copy_file_ << std::endl
+                << "Output lease file:         " << output_file_ << std::endl
+                << "Finishn file:              " << finish_file_ << std::endl
+                << "Config file:               " << config_file_ << std::endl
+                << "PID file:                  " << pid_file_ << std::endl;
     }
 }
 
@@ -190,9 +241,10 @@ LFCController::usage(const std::string& text) {
     }
 
     std::cerr << "Usage: " << lfc_bin_name_ << std::endl
-              << " [-4|-6] -p file -i file -o file -f file -c file" << std::endl
+              << " [-4|-6] -p file -x file -i file -o file -f file -c file" << std::endl
               << "   -4 or -6 clean a set of v4 or v6 lease files" << std::endl
-              << "   -p <file>: previous lease file" << std::endl
+              << "   -p <file>: PID file" << std::endl
+              << "   -x <file>: previous or ex lease file" << std::endl
               << "   -i <file>: copy of lease file" << std::endl
               << "   -o <file>: output lease file" << std::endl
               << "   -f <file>: finish file" << std::endl

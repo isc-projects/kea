@@ -59,10 +59,10 @@ public:
     /// of the process.  Provides the control logic:
     ///
     /// -# parse command line arguments
-    /// -# verifies that it is the only instance
-    /// -# creates pid file (TBD)
+    /// -# verify that it is the only instance
+    /// -# create pid file
     /// -# .... TBD
-    /// -# remove pid file (TBD)
+    /// -# remove pid file
     /// -# exit to the caller
     ///
     /// @param argc Number of strings in the @c argv array.
@@ -111,7 +111,7 @@ public:
         return (config_file_);
     }
 
-    /// @brief Gets the prevous file name
+    /// @brief Gets the previous file name
     ///
     /// @return Returns the path to the previous file
     std::string getPreviousFile() const {
