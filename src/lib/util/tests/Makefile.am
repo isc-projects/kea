@@ -20,6 +20,8 @@ CLEANFILES += *.csv
 TESTS_ENVIRONMENT = \
         $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
+noinst_SCRIPTS = process_spawn_app.sh
+
 TESTS =
 if HAVE_GTEST
 TESTS += run_unittests
@@ -39,6 +41,7 @@ run_unittests_SOURCES += memory_segment_common_unittest.h
 run_unittests_SOURCES += memory_segment_common_unittest.cc
 run_unittests_SOURCES += optional_value_unittest.cc
 run_unittests_SOURCES += pid_file_unittest.cc
+run_unittests_SOURCES += process_spawn_unittest.cc
 run_unittests_SOURCES += qid_gen_unittest.cc
 run_unittests_SOURCES += random_number_generator_unittest.cc
 run_unittests_SOURCES += socketsession_unittest.cc
