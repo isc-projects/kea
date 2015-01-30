@@ -414,7 +414,12 @@ private:
     /// is set to a non-zero value and sets up the interval timer to
     /// perform the Lease File Cleanup periodically. It also prepares the
     /// path and arguments for the @c kea-lfc application which will be
-    /// executed to perform the cleanup.
+    /// executed to perform the cleanup. By default the backend will use
+    /// the path to the kea-lfc in the Kea installation directory. If
+    /// the unit tests need to override this path (with the path in the
+    /// Kea build directory, the @c KEA_LFC_EXECUTABLE environmental
+    /// variable should be set to hold an absolute path to the kea-lfc
+    /// excutable.
     void lfcSetup();
 
     /// @brief Initialize the location of the lease file.
@@ -494,6 +499,13 @@ private:
 
 protected:
 
+    /// @brief An object representing the kea-lfc process.
+    ///
+    /// This object is created when the LFC is configured to be executed
+    /// periodically. It holds the path to kea-lfc program and the
+    /// arguments. When the LFC timer kicks the lease file cleanup
+    /// this object is used to spawn the kea-lfc as a background
+    /// process.
     boost::scoped_ptr<util::ProcessSpawn> lfc_process_;
 
 };
