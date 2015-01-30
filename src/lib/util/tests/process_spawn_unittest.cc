@@ -15,6 +15,7 @@
 #include <util/process_spawn.h>
 #include <gtest/gtest.h>
 #include <signal.h>
+#include <stdint.h>
 #include <unistd.h>
 
 namespace {
