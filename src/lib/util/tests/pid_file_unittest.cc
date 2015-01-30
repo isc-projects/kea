@@ -64,7 +64,7 @@ protected:
 private:
     /// @brief Removes any remaining test files
     void removeTestFile() const {
-        remove(TESTNAME);
+        remove(absolutePath(TESTNAME).c_str());
     }
 
 };
@@ -192,4 +192,11 @@ TEST_F(PIDFileTest, pidWriteFail) {
     EXPECT_THROW(pid_file.write(10), PIDFileError);
 }
 
+/// @brief Test deleting a file that doesn't exist
+TEST_F(PIDFileTest, noDeleteFile) {
+    PIDFile pid_file(absolutePath(TESTNAME));
+
+    // Delete a file we haven't created
+    pid_file.deleteFile();
+}
 } // end of anonymous namespace
