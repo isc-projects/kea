@@ -20,6 +20,7 @@
 #include <sstream>
 #include <unistd.h>
 #include <stdlib.h>
+#include <cerrno>
 
 using namespace std;
 using namespace isc::util;
@@ -77,6 +78,16 @@ LFCController::launch(int argc, char* argv[]) {
 
     // do other work (TBD)
     std::cerr << "Add code to perform lease cleanup" << std::endl;
+    // If we don't have a finish file do the processing
+
+    // We either already had a finish file or just created one, do the
+    // file cleanup, we don't want to return after the catch as we
+    // still need to cleanup the pid file
+    try {
+        fileCleanup();
+    } catch (const RunTimeFail& run_ex) {
+        std::cerr << run_ex.what() << std::endl;
+    }
 
     // delete the pid file for this instance
     try {
@@ -268,5 +279,31 @@ LFCController::getVersion(const bool extended) const{
     return (version_stream.str());
 }
 
+void
+LFCController::processLeases() const {
+}
+
+void
+LFCController::fileCleanup() const {
+    // Remove the old previous file
+    if ((remove(previous_file_.c_str()) != 0) &&
+        (errno != ENOENT)) {
+        isc_throw(RunTimeFail, "Unable to delete previous file '"
+                  << previous_file_ << "' error: " << strerror(errno));
+    }
+
+    // Remove the copy file
+    if ((remove(copy_file_.c_str()) != 0) &&
+        (errno != ENOENT)) {
+        isc_throw(RunTimeFail, "Unable to delete copy file '"
+                  << copy_file_ << "' error: " << strerror(errno));
+    }
+
+    // Rename the finish file to be the previous file
+    if (rename(finish_file_.c_str(), previous_file_.c_str()) != 0)
+        isc_throw(RunTimeFail, "Unable to move finish (" << finish_file_
+                  << ") to previous (" << previous_file_
+                  << ") error: " << strerror(errno));
+}
 }; // namespace isc::lfc
 }; // namespace isc

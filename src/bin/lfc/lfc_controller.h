@@ -28,6 +28,13 @@ public:
         isc::Exception(file, line, what) { };
 };
 
+/// @brief Exceptions thrown when the processing fails
+class RunTimeFail : public isc::Exception {
+public:
+    RunTimeFail(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
 /// @brief Process controller for LFC process
 ///
 /// This class provides the LFC process functions. These are used to:
@@ -36,7 +43,6 @@ public:
 /// the lease files as necessary.
 ///
 /// @todo The current code simply processes the command line we still need to
-/// -# handle PID file manipulation
 /// -# invoke the code to read, process and write the lease files
 /// -# rename and delete the shell files as required
 class LFCController {
@@ -61,7 +67,10 @@ public:
     /// -# parse command line arguments
     /// -# verify that it is the only instance
     /// -# create pid file
-    /// -# .... TBD
+    /// -# read leases files TBD
+    /// -# write lease file TBD
+    /// -# move leases files TBD
+    /// -# cleanup artifacts TBD
     /// -# remove pid file
     /// -# exit to the caller
     ///
@@ -145,6 +154,19 @@ public:
     std::string getPidFile() const {
         return (pid_file_);
     }
+
+    /// @brief Process files.  Read in the leases from any previous & copy
+    /// files we have and write the results out to the output file.  Upon
+    /// completion of the write move the file to the finish file.
+    void processLeases() const;
+
+    /// @brief Cleanup files.  After we have a finish file, either from
+    /// doing the cleanup or because a previous instance was interrupted,
+    /// delete the work files (previous & copy) and move the finish file
+    /// to be the new previous file.
+    ///
+    /// @throw RunTimeFail if the command line parameters are invalid.
+    void fileCleanup() const;
     //@}
 
 private:
