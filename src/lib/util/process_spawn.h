@@ -66,6 +66,9 @@ public:
     /// @brief Destructor.
     ~ProcessSpawn();
 
+    /// @brief Returns full command line, including arguments, for the process.
+    std::string getCommandLine() const;
+
     /// @brief Spawn the new process.
     ///
     /// This method forks the current process and execues the specified

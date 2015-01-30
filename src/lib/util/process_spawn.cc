@@ -42,6 +42,9 @@ public:
     /// @brief Destructor.
     ~ProcessSpawnImpl();
 
+    /// @brief Returns full command line, including arguments, for the process.
+    std::string getCommandLine() const;
+
     /// @brief Spawn the new process.
     ///
     /// This method forks the current process and execues the specified
@@ -140,6 +143,21 @@ ProcessSpawnImpl::~ProcessSpawnImpl() {
     delete[] args_;
 }
 
+std::string
+ProcessSpawnImpl::getCommandLine() const {
+    std::ostringstream s;
+    s << executable_;
+    // Start with index 1, because the first argument duplicates the
+    // path to the executable. Note, that even if there are no parameters
+    // the minimum size of the table is 2.
+    int i = 1;
+    while (args_[i] != NULL) {
+        s << " " << args_[i];
+        ++i;
+    }
+    return (s.str());
+}
+
 void
 ProcessSpawnImpl::spawn() {
     pid_ = fork();
@@ -202,6 +220,11 @@ ProcessSpawn::ProcessSpawn(const std::string& executable,
 
 ProcessSpawn::~ProcessSpawn() {
     delete impl_;
+}
+
+std::string
+ProcessSpawn::getCommandLine() const {
+    return (impl_->getCommandLine());
 }
 
 void

@@ -85,7 +85,32 @@ TEST(ProcessSpawn, invalidExecutable) {
     ASSERT_TRUE(waitForProcess(process, 2));
 
     EXPECT_EQ(EXIT_FAILURE, process.getExitStatus());
+}
 
+// This test verifies that the full command line for the process is
+// returned.
+TEST(ProcessSpawn, getCommandLine) {
+    // Note that cases below are enclosed in separate scopes to make
+    // sure that the ProcessSpawn object is destructed before a new
+    // object is created. Current implementation doesn't allow for
+    // having two ProcessSpawn objects simulatneously as they will
+    // both try to allocate a signal handler for SIGCHLD.
+    {
+        // Case 1: arguments present.
+        ProcessArgs args;
+        args.push_back("-x");
+        args.push_back("-y");
+        args.push_back("foo");
+        args.push_back("bar");
+        ProcessSpawn process("myapp", args);
+        EXPECT_EQ("myapp -x -y foo bar", process.getCommandLine());
+    }
+
+    {
+        // Case 2: no arguments.
+        ProcessSpawn process("myapp");
+        EXPECT_EQ("myapp", process.getCommandLine());
+    }
 }
 
 } // end of anonymous namespace
