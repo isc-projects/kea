@@ -442,6 +442,17 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup4) {
     // And make sure it has returned an exit status of 0.
     EXPECT_EQ(0, lease_mgr->lfc_process_->getExitStatus());
 
+    // Check if we can still write to the lease file.
+    std::vector<uint8_t> hwaddr_vec(6);
+    HWAddrPtr hwaddr(new HWAddr(hwaddr_vec, HTYPE_ETHER));
+    Lease4Ptr new_lease(new Lease4(IOAddress("192.0.2.45"), hwaddr, 0, 0,
+                                   100, 50, 60, 0, 1));
+    ASSERT_NO_THROW(lease_mgr->addLease(new_lease));
+
+    std::string updated_file_contents = new_file_contents +
+        "192.0.2.45,00:00:00:00:00:00,,100,100,1,0,0,\n";
+    EXPECT_EQ(updated_file_contents, current_file.readFile());
+
     /// @todo Replace the following with the checks that the LFC has
     /// completed successfully, i.e. the leasefile4_0.csv.2 exists
     /// and it holds the cleaned up lease information.
@@ -506,6 +517,19 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup6) {
 
     // And make sure it has returned an exit status of 0.
     EXPECT_EQ(0, lease_mgr->lfc_process_->getExitStatus());
+
+    // Check if we can still write to the lease file.
+    std::vector<uint8_t> duid_vec(13);
+    DuidPtr duid(new DUID(duid_vec));
+    Lease6Ptr new_lease(new Lease6(Lease::TYPE_NA, IOAddress("3000::1"),duid,
+                                   123, 300, 400, 100, 300, 2));
+    new_lease->cltt_ = 0;
+    ASSERT_NO_THROW(lease_mgr->addLease(new_lease));
+
+    std::string update_file_contents = new_file_contents +
+        "3000::1,00:00:00:00:00:00:00:00:00:00:00:00:00,400,"
+        "400,2,300,0,123,128,0,0,,\n";
+    EXPECT_EQ(update_file_contents, current_file.readFile());
 
     /// @todo Replace the following with the checks that the LFC has
     /// completed successfully, i.e. the leasefile6_0.csv.2 exists
