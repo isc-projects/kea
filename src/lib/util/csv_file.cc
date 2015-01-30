@@ -261,7 +261,7 @@ CSVFile::next(CSVRow& row, const bool skip_validation) {
 }
 
 void
-CSVFile::open() {
+CSVFile::open(const bool seek_to_end) {
     // If file doesn't exist or is empty, we have to create our own file.
     if (size() == static_cast<std::streampos>(0)) {
         recreate();
@@ -308,6 +308,19 @@ CSVFile::open() {
                     addColumnInternal(header.readAt(i));
                 }
             }
+
+            // If caller requested that the pointer is set at the end of file,
+            // move both read and write pointer.
+            if (seek_to_end) {
+                fs_->seekp(0, std::ios_base::end);
+                fs_->seekg(0, std::ios_base::end);
+                if (!fs_->good()) {
+                    isc_throw(CSVFileError, "unable to move to the end of"
+                              " CSV file '" << filename_ << "'");
+                }
+                fs_->clear();
+            }
+
         } catch (const std::exception& ex) {
             close();
             throw;
