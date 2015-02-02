@@ -17,6 +17,7 @@
 #include <dhcpsrv/lease_file_loader.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
 #include <exceptions/exceptions.h>
+#include <util/pid_file.h>
 #include <util/process_spawn.h>
 #include <cstdio>
 #include <iostream>
@@ -675,6 +676,18 @@ template<typename LeaseObjectType, typename LeaseFileType, typename StorageType>
 void Memfile_LeaseMgr::loadLeasesFromFiles(const std::string& filename,
                                            boost::shared_ptr<LeaseFileType>& lease_file,
                                            StorageType& storage) {
+    // Check if the instance of the LFC is running right now. If it is
+    // running, we refuse to load leases as the LFC may be writing to the
+    // lease files right now. When the user retries server configuration
+    // it should go through.
+    /// @todo Consider applying a timeout for an LFC and retry when this
+    /// timeout elapses.
+    PIDFile pid_file(appendSuffix(filename, FILE_PID));
+    if (pid_file.check()) {
+        isc_throw(DbOpenError, "unable to load leases from files while the "
+                  "lease file cleanup is in progress");
+    }
+
     storage.clear();
 
     // Load the leasefile.completed, if exists.
