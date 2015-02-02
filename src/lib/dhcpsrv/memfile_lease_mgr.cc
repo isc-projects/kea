@@ -592,7 +592,7 @@ Memfile_LeaseMgr::lfcSetup() {
         args.push_back("ignored-path");
 
         // Create the process (do not start it yet).
-        lfc_process_.reset(new util::ProcessSpawn(std::string(c_executable), args));
+        lfc_process_.reset(new util::ProcessSpawn(executable, args));
     }
 }
 
