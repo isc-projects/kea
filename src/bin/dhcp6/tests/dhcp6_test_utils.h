@@ -211,7 +211,8 @@ public:
     void checkNakResponse(const isc::dhcp::Pkt6Ptr& rsp,
                           uint8_t expected_message_type,
                           uint32_t expected_transid,
-                          uint16_t expected_status_code)
+                          uint16_t expected_status_code,
+                          uint32_t expected_t1, uint32_t expected_t2)
     {
         // Check if we get response at all
         checkResponse(rsp, expected_message_type, expected_transid);
@@ -225,7 +226,8 @@ public:
             boost::dynamic_pointer_cast<isc::dhcp::Option6IA>(option_ia_na);
         ASSERT_TRUE(ia);
 
-        checkIA_NAStatusCode(ia, expected_status_code);
+        checkIA_NAStatusCode(ia, expected_status_code, expected_t1,
+                             expected_t2);
     }
 
     // Checks that server rejected IA_NA, i.e. that it has no addresses and
@@ -238,14 +240,17 @@ public:
     // as this is the default result and it saves bandwidth)
     void checkIA_NAStatusCode
         (const boost::shared_ptr<isc::dhcp::Option6IA>& ia,
-         uint16_t expected_status_code)
+         uint16_t expected_status_code, uint32_t expected_t1,
+         uint32_t expected_t2)
     {
         // Make sure there is no address assigned.
         EXPECT_FALSE(ia->getOption(D6O_IAADDR));
 
-        // T1, T2 should be zeroed
-        EXPECT_EQ(0, ia->getT1());
-        EXPECT_EQ(0, ia->getT2());
+        // T1, T2 should NOT be zeroed. draft-ietf-dhc-dhcpv6-stateful-issues-10,
+        // section 4.4.6 says says that T1,T2 should be consistent along all
+        // provided IA options.
+        EXPECT_EQ(expected_t1, ia->getT1());
+        EXPECT_EQ(expected_t2, ia->getT2());
 
         isc::dhcp::OptionCustomPtr status =
             boost::dynamic_pointer_cast<isc::dhcp::OptionCustom>
@@ -397,8 +402,8 @@ public:
         // an ostream, which means it can't be used in EXPECT_EQ.
         EXPECT_TRUE(subnet_->inPool(type, addr->getAddress()));
         EXPECT_EQ(expected_addr.toText(), addr->getAddress().toText());
-        EXPECT_EQ(addr->getPreferred(), subnet_->getPreferred());
-        EXPECT_EQ(addr->getValid(), subnet_->getValid());
+        EXPECT_EQ(subnet_->getPreferred(), addr->getPreferred());
+        EXPECT_EQ(subnet_->getValid(), addr->getValid());
     }
 
     // Checks if the lease sent to client is present in the database

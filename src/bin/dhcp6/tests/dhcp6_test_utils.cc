@@ -349,7 +349,7 @@ Dhcpv6SrvTest::testRenewReject(Lease::Type type, const IOAddress& addr) {
     // Check that IA_?? was returned and that there's proper status code
     boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
     ASSERT_TRUE(ia);
-    checkIA_NAStatusCode(ia, STATUS_NoBinding);
+    checkIA_NAStatusCode(ia, STATUS_NoBinding, subnet_->getT1(), subnet_->getT2());
 
     // Check that there is no lease added
     l = LeaseMgrFactory::instance().getLease6(type, addr);
@@ -375,7 +375,7 @@ Dhcpv6SrvTest::testRenewReject(Lease::Type type, const IOAddress& addr) {
     // Check that IA_?? was returned and that there's proper status code
     ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
     ASSERT_TRUE(ia);
-    checkIA_NAStatusCode(ia, STATUS_NoBinding);
+    checkIA_NAStatusCode(ia, STATUS_NoBinding, subnet_->getT1(), subnet_->getT2());
 
     // There is a iaid mis-match, so server should respond that there is
     // no such address to renew.
@@ -395,7 +395,7 @@ Dhcpv6SrvTest::testRenewReject(Lease::Type type, const IOAddress& addr) {
     // Check that IA_?? was returned and that there's proper status code
     ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
     ASSERT_TRUE(ia);
-    checkIA_NAStatusCode(ia, STATUS_NoBinding);
+    checkIA_NAStatusCode(ia, STATUS_NoBinding, subnet_->getT1(), subnet_->getT2());
 
     lease = LeaseMgrFactory::instance().getLease6(type, addr);
     ASSERT_TRUE(lease);
@@ -457,7 +457,7 @@ Dhcpv6SrvTest::testReleaseBasic(Lease::Type type, const IOAddress& existing,
 
     // Check that IA_NA was returned and that there's an address included
     boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
-    checkIA_NAStatusCode(ia, STATUS_Success);
+    checkIA_NAStatusCode(ia, STATUS_Success, subnet_->getT1(), subnet_->getT2());
     checkMsgStatusCode(reply, STATUS_Success);
 
     // There should be no address returned in RELEASE (see RFC3315, 18.2.6)
@@ -528,7 +528,7 @@ Dhcpv6SrvTest::testReleaseReject(Lease::Type type, const IOAddress& addr) {
     // Check that IA_NA/IA_PD was returned and that there's status code in it
     boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
     ASSERT_TRUE(ia);
-    checkIA_NAStatusCode(ia, STATUS_NoBinding);
+    checkIA_NAStatusCode(ia, STATUS_NoBinding, subnet_->getT1(), subnet_->getT2());
     checkMsgStatusCode(reply, STATUS_NoBinding);
 
     // Check that the lease is not there

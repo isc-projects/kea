@@ -18,6 +18,8 @@
 #include <asiolink/io_address.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
+#include <dhcp/pkt6.h>
+#include <dhcp/option6_ia.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/lease_mgr.h>
@@ -386,6 +388,14 @@ protected:
         /// May be NULL if there are no reservations.
         ConstHostPtr host_;
 
+        /// @brief A pointer to the client's message
+        ///
+        /// This is used exclusively for hook purposes.
+        Pkt6Ptr query_;
+
+        /// @brief A pointer to the IA_NA/IA_PD option to be sent in response
+        Option6IAPtr ia_rsp_;
+
         /// @brief Default constructor.
         ClientContext6()
            : subnet_(), duid_(), iaid_(0), type_(Lease::TYPE_NA), hwaddr_(),
@@ -418,11 +428,16 @@ protected:
                        const Lease::Type type, const bool fwd_dns, const bool
                        rev_dns, const std::string& hostname, const bool
                        fake_allocation):
-        subnet_(subnet), duid_(duid), iaid_(iaid), type_(type), hwaddr_(),
-            hints_(), fwd_dns_update_(fwd_dns), rev_dns_update_(rev_dns),
-            hostname_(hostname), fake_allocation_(fake_allocation),
-            old_leases_(), host_() {
-            hints_.push_back(hint);
+            subnet_(subnet), duid_(duid), iaid_(iaid), type_(type), hwaddr_(),
+            hints()_, fwd_dns_update_(fwd_dns), rev_dns_update_(rev_dns),
+            hostname_(hostname), fake_allocation_(fake_allocation), old_leases_(),
+            host_() {
+
+            static asiolink::IOAddress any("::");
+
+            if (hint != any) {
+                hints_.push_back(hint);
+            }
             // callout_handle, host pointers initiated to NULL by their
             // respective constructors.
         }
@@ -643,6 +658,31 @@ protected:
     /// @return Allocated IPv6 leases (may be empty if allocation failed)
     Lease6Collection
     allocateLeases6(ClientContext6& ctx);
+
+
+    /// @brief Renews existing DHCPv6 leases for a given IA.
+    ///
+    /// This method updates the leases associated with a specified IA container.
+    /// It will extend the leases under normal circumstances, but sometimes
+    /// there may be reasons why not to do so. Such a reasons may be:
+    /// - client attempts to renew an address that is not valid
+    /// - client attempts to renew an address that is now reserved for someone
+    ///   else (see host reservation)
+    /// - client's leases does not match his reservations
+    ///
+    /// This method will call  the lease4_renew callout.
+    ///
+    /// @param ctx Message processing context. It holds various information
+    /// extracted from the client's message and required to allocate a lease.
+    /// In particular, @ref ClientContext6::hints_ provides list of addresses or
+    /// prefixes the client had sent. @ref ClientContext6::old_leases_ will
+    /// contain removed leases in this case.
+    ///
+    /// @return Returns renewed lease.
+    Lease6Collection
+    renewLeases6(ClientContext6& ctx);
+
+
 
     /// @brief returns allocator for a given pool type
     /// @param type type of pool (V4, IA, TA or PD)
@@ -907,6 +947,18 @@ private:
     static bool
     removeLeases(Lease6Collection& container,
                  const asiolink::IOAddress& addr);
+
+    /// @brief Extends specified IPv6 lease
+    ///
+    /// This method attempts to extend the lease. It will call the lease6_renew
+    /// or lease6_rebind hooks (depending on the client's message specified in
+    /// ctx.query). The lease will be extended in LeaseMgr, unless the hooks
+    /// library will set skip flag.
+    ///
+    /// @param ctx client context that passes all necessary information. See
+    ///        @ref ClientContext6 for details.
+    /// @param lease IPv6 lease to be extended.
+    void extendLease6(ClientContext6& ctx, Lease6Ptr lease);
 
     /// @brief a pointer to currently used allocator
     ///

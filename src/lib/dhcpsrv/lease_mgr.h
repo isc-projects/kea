@@ -294,7 +294,7 @@ public:
     /// transition from single to multi address per IA. It may also be used
     /// in other cases where at most one lease is expected in the database.
     ///
-    /// It is a wrapper around getLease6(), which returns a collection of
+    /// It is a wrapper around getLeases6(), which returns a collection of
     /// leases. That collection can be converted into a single pointer if
     /// there are no leases (NULL pointer) or one lease (use that single lease).
     /// If there are more leases in the collection, the function will
