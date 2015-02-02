@@ -81,7 +81,8 @@ TEST_F(NakedDhcpv6SrvTest, SolicitNoSubnet) {
     Pkt6Ptr reply = srv.processSolicit(sol);
 
     // check that we get the right NAK
-    checkNakResponse (reply, DHCPV6_ADVERTISE, 1234, STATUS_NoAddrsAvail);
+    checkNakResponse(reply, DHCPV6_ADVERTISE, 1234, STATUS_NoAddrsAvail,
+                     0, 0);
 }
 
 // This test verifies that incoming REQUEST can be handled properly when
@@ -113,7 +114,8 @@ TEST_F(NakedDhcpv6SrvTest, RequestNoSubnet) {
     Pkt6Ptr reply = srv.processRequest(req);
 
     // check that we get the right NAK
-    checkNakResponse (reply, DHCPV6_REPLY, 1234, STATUS_NoAddrsAvail);
+    checkNakResponse (reply, DHCPV6_REPLY, 1234, STATUS_NoAddrsAvail,
+                      0, 0);
 }
 
 // This test verifies that incoming RENEW can be handled properly, even when
