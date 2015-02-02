@@ -23,6 +23,7 @@
 #include <dhcpsrv/tests/lease_file_io.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
+#include <util/pid_file.h>
 #include <gtest/gtest.h>
 
 #include <boost/bind.hpp>
@@ -39,6 +40,7 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::util;
 
 namespace {
 
@@ -992,6 +994,33 @@ TEST_F(MemfileLeaseMgrTest, load4CompletedFile) {
     EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.1")));
 }
 
+// This test checks that backend constructor refuses to load leases from the
+// lease files if the LFC is in progress.
+TEST_F(MemfileLeaseMgrTest, load4LFCInProgress) {
+    // Create the backend configuration.
+    LeaseMgr::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "4";
+    pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
+    pmap["lfc-interval"] = "1";
+
+    // Create a pid file holding the PID of the current process. Choosing the
+    // pid of the current process guarantees that when the backend starts up
+    // the process is alive.
+    PIDFile pid_file(Memfile_LeaseMgr::appendSuffix(pmap["name"], Memfile_LeaseMgr::FILE_PID));
+    pid_file.write();
+
+    // There is a pid file and the process which pid is in the file is
+    // running, so the backend should refuse to start.
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr;
+    ASSERT_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)),
+                 DbOpenError);
+
+    // Remove the pid file, and retry. The bakckend should be created.
+    pid_file.deleteFile();
+    ASSERT_NO_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)));
+}
+
 // This test checks that the backend reads DHCPv6 lease data from multiple
 // files.
 TEST_F(MemfileLeaseMgrTest, load6MultipleLeaseFiles) {
@@ -1202,6 +1231,33 @@ TEST_F(MemfileLeaseMgrTest, load6CompletedFile) {
     EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1")));
     EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2")));
     EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::3")));
+}
+
+// This test checks that backend constructor refuses to load leases from the
+// lease files if the LFC is in progress.
+TEST_F(MemfileLeaseMgrTest, load6LFCInProgress) {
+    // Create the backend configuration.
+    LeaseMgr::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "6";
+    pmap["name"] = getLeaseFilePath("leasefile6_0.csv");
+    pmap["lfc-interval"] = "1";
+
+    // Create a pid file holding the PID of the current process. Choosing the
+    // pid of the current process guarantees that when the backend starts up
+    // the process is alive.
+    PIDFile pid_file(Memfile_LeaseMgr::appendSuffix(pmap["name"], Memfile_LeaseMgr::FILE_PID));
+    pid_file.write();
+
+    // There is a pid file and the process which pid is in the file is
+    // running, so the backend should refuse to start.
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr;
+    ASSERT_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)),
+                 DbOpenError);
+
+    // Remove the pid file, and retry. The bakckend should be created.
+    pid_file.deleteFile();
+    ASSERT_NO_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)));
 }
 
 }; // end of anonymous namespace
