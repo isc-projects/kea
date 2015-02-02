@@ -17,6 +17,7 @@
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcp/dhcp6.h>
 
 #include <hooks/server_hooks.h>
 #include <hooks/hooks_manager.h>
@@ -37,12 +38,16 @@ struct AllocEngineHooks {
     int hook_index_lease4_select_; ///< index for "lease4_receive" hook point
     int hook_index_lease4_renew_;  ///< index for "lease4_renew" hook point
     int hook_index_lease6_select_; ///< index for "lease6_receive" hook point
+    int hook_index_lease6_renew_;  ///< index for "lease6_renew" hook point
+    int hook_index_lease6_rebind_; ///< index for "lease6_rebind" hook point
 
     /// Constructor that registers hook points for AllocationEngine
     AllocEngineHooks() {
         hook_index_lease4_select_ = HooksManager::registerHook("lease4_select");
         hook_index_lease4_renew_  = HooksManager::registerHook("lease4_renew");
         hook_index_lease6_select_ = HooksManager::registerHook("lease6_select");
+        hook_index_lease6_renew_   = HooksManager::registerHook("lease6_renew");
+        hook_index_lease6_rebind_   = HooksManager::registerHook("lease6_rebind");
     }
 };
 
@@ -1616,6 +1621,138 @@ AllocEngine::AllocatorPtr AllocEngine::getAllocator(Lease::Type type) {
                   << Lease::typeToText(type));
     }
     return (alloc->second);
+}
+
+Lease6Collection
+AllocEngine::renewLeases6(ClientContext6& ctx) {
+    try {
+        if (!ctx.subnet_) {
+            isc_throw(InvalidOperation, "Subnet is required for allocation");
+        }
+
+        if (!ctx.duid_) {
+            isc_throw(InvalidOperation, "DUID is mandatory for allocation");
+        }
+
+        // Check which host reservation mode is supported in this subnet.
+        Subnet::HRMode hr_mode = ctx.subnet_->getHostReservationMode();
+
+        // Check if there's a host reservation for this client. Attempt to get
+        // host info only if reservations are not disabled.
+        if (hr_mode != Subnet::HR_DISABLED) {
+
+            ctx.host_ = HostMgr::instance().get6(ctx.subnet_->getID(), ctx.duid_,
+                                                 ctx.hwaddr_);
+        }
+
+        // Check if there are any leases for this client.
+        Lease6Collection leases = LeaseMgrFactory::instance()
+            .getLeases6(ctx.type_, *ctx.duid_, ctx.iaid_, ctx.subnet_->getID());
+
+        // Now we have 3 lists:
+        // 1. what client requested (ctx.hints_)
+        // 2. what leases we currently have (leases)
+        // 3. reservation list: ctx.hosts_->getIPv6Reservations(TYPE_NA)
+
+        // The behavior here is similar to how we process requests, but
+        // there are noticable differences.
+
+        // Now do the checks:
+        // Case 1. if there are no leases, and there are reservations...
+        //   1.1. are the reserved addresses are used by someone else?
+        //       yes: we have a problem
+        //       no: assign them => done
+        // Case 2. if there are leases and there are no reservations...
+        //   2.1 are the leases reserved for someone else?
+        //       yes: release them, assign something else
+        //       no: renew them => done
+        // Case 3. if there are leases and there are reservations...
+        //   3.1 are the leases matching reservations?
+        //       yes: renew them => done
+        //       no: release existing leases, assign new ones based on reservations
+        // Case 4/catch-all. if there are no leases and no reservations...
+        //       assign new leases
+        //
+
+        // Extend all existing leases.
+        for (Lease6Collection::iterator l = leases.begin(); l != leases.end(); ++l) {
+            extendLease6(ctx, *l);
+        }
+
+        return (leases);
+
+    } catch (const isc::Exception& e) {
+
+        // Some other error, return an empty lease.
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_ADDRESS6_ALLOC_ERROR).arg(e.what());
+    }
+
+    return (Lease6Collection());
+}
+
+void
+AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
+
+    if (!lease || !ctx.subnet_) {
+        return;
+    }
+
+    // Keep the old data in case the callout tells us to skip update.
+    Lease6 old_data = *lease;
+
+    lease->preferred_lft_ = ctx.subnet_->getPreferred();
+    lease->valid_lft_ = ctx.subnet_->getValid();
+    lease->t1_ = ctx.subnet_->getT1();
+    lease->t2_ = ctx.subnet_->getT2();
+    lease->cltt_ = time(NULL);
+    lease->hostname_ = ctx.hostname_;
+    lease->fqdn_fwd_ = ctx.fwd_dns_update_;
+    lease->fqdn_rev_ = ctx.rev_dns_update_;
+    lease->hwaddr_ = ctx.hwaddr_;
+
+    bool skip = false;
+    // Get the callouts specific for the processed message and execute them.
+    int hook_point = ctx.query_->getType() == DHCPV6_RENEW ?
+        Hooks.hook_index_lease6_renew_ : Hooks.hook_index_lease6_rebind_;
+    if (HooksManager::calloutsPresent(hook_point)) {
+        CalloutHandlePtr callout_handle = ctx.callout_handle_;
+
+        // Delete all previous arguments
+        callout_handle->deleteAllArguments();
+
+        // Pass the original packet
+        callout_handle->setArgument("query6", ctx.query_);
+
+        // Pass the lease to be updated
+        callout_handle->setArgument("lease6", lease);
+
+        /// @todo: get the IA_NA/IA_PD
+        // Pass the IA option to be sent in response
+        callout_handle->setArgument("ia_na", ctx.ia_rsp_);
+
+        // Call all installed callouts
+        HooksManager::callCallouts(hook_point, *callout_handle);
+
+        // Callouts decided to skip the next processing step. The next
+        // processing step would to actually renew the lease, so skip at this
+        // stage means "keep the old lease as it is".
+        if (callout_handle->getSkip()) {
+            skip = true;
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS,
+                      DHCPSRV_HOOK_LEASE6_EXTEND_SKIP)
+                .arg(ctx.query_->getName());
+        }
+    }
+
+    if (!skip) {
+        LeaseMgrFactory::instance().updateLease6(lease);
+    } else {
+        // Copy back the original date to the lease. For MySQL it doesn't make
+        // much sense, but for memfile, the Lease6Ptr points to the actual lease
+        // in memfile, so the actual update is performed when we manipulate
+        // fields of returned Lease6Ptr, the actual updateLease6() is no-op.
+        *lease = old_data;
+    }
 }
 
 AllocEngine::~AllocEngine() {
