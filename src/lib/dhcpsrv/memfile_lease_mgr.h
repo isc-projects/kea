@@ -344,6 +344,7 @@ public:
     /// - Previous File: ".2"
     /// - LFC Output File: ".output"
     /// - LFC Finish File: ".completed"
+    /// - LFC PID File: ".pid"
     ///
     /// See http://kea.isc.org/wiki/LFCDesign for details.
     ///
@@ -439,6 +440,28 @@ private:
     /// argument to this function.
     std::string initLeaseFilePath(Universe u);
 
+    /// @brief Performs a lease file cleanup for DHCPv4 or DHCPv6.
+    ///
+    /// This method performs all the actions necessary to prepare for the
+    /// execution of the LFC and if these actions are sucessful, it executes
+    /// the @c kea-lfc application as a background process to process (cleanup)
+    /// the lease files.
+    ///
+    /// For the design and the terminology used in this description refer to
+    /// the http://kea.isc.org/wiki/LFCDesign.
+    ///
+    /// If the method finds that the Lease File Copy exists it simply runs
+    /// the @c kea-lfc application.
+    ///
+    /// If the Lease File Copy doesn't exist it moves the Current Lease File
+    /// to Lease File Copy, and then recreates the Current Lease File without
+    /// any lease entries. If the file has been successfully moved, it runs
+    /// the @c kea-lfc application.
+    ///
+    /// @param lease_file A pointer to the object representing the Current
+    /// Lease File (DHCPv4 or DHCPv6 lease file).
+    ///
+    /// @tparam LeaseFileType One of @c CSVLeaseFile4 or @c CSVLeaseFile6.
     template<typename LeaseFileType>
     void leaseFileCleanup(boost::shared_ptr<LeaseFileType>& lease_file);
 
@@ -467,6 +490,21 @@ private:
     /// products of the lease file cleanups (LFC).
     /// See: http://kea.isc.org/wiki/LFCDesign for details.
     ///
+    /// @note: When the server starts up or is reconfigured it will try to
+    /// read leases from the lease files using this method. It is possible
+    /// that the Lease File Cleanup is performed upon the lease files to
+    /// be read by this method. This may result in conflicts between the
+    /// server process and the LFC. To prevent it, the method checks if the
+    /// instance of the @c kea-lfc is running (using the PID file) before it
+    /// tries to load leases from the lease files. If it finds that there
+    /// is an LFC in progress, it throws an exception which will result
+    /// in the server refuse to start or reconfigure. When the administrator
+    /// retries starting up or reconfiguring the server it will most likely
+    /// be successful as the LFC should be complete by that time.
+    ///
+    /// @todo Consider implementing delaying the lease files loading when
+    /// the LFC is in progress by the specified amount of time.
+    ///
     /// @param filename Name of the lease file.
     /// @param lease_file An object representing a lease file to which
     /// the server will store lease updates.
@@ -476,6 +514,7 @@ private:
     /// @tparam StorageType @c Lease4Storage or @c Lease6Storage.
     ///
     /// @throw CSVFileError when parsing any of the lease files fails.
+    /// @throw DbOpenError when it is found that the LFC is in progress.
     template<typename LeaseObjectType, typename LeaseFileType,
              typename StorageType>
     void loadLeasesFromFiles(const std::string& filename,
