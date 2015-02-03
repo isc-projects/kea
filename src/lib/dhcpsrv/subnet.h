@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -150,8 +150,20 @@ public:
         return (std::make_pair(prefix_, prefix_len_));
     }
 
-    /// @brief Adds a new pool.
+    /// @brief Adds a new pool for the subnet.
+    ///
+    /// This method checks that the address range represented by the pool
+    /// matches the subnet prefix, if the pool type is different than
+    /// IA_PD. The prefixes from the IA_PD pools don't need to match the
+    /// prefix from the subnet from which they are handed out to the
+    /// requesting router because the requesting router may use the
+    /// delegated prefixes in different networks (using different subnets).
+    ///
     /// @param pool pool to be added
+    ///
+    /// @throw isc::BadValue if the pool type is invalid or the pool
+    /// is not an IA_PD pool and the address range of this pool does not
+    /// match the subnet prefix.
     void addPool(const PoolPtr& pool);
 
 
