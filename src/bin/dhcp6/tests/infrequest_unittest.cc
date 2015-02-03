@@ -179,7 +179,7 @@ TEST_F(InfRequestTest, infRequestAnonymous) {
 
     // Perform 2-way exchange (Inf-request/reply)
     client.requestOption(D6O_NAME_SERVERS);
-    client.sendClientId(false);
+    client.useClientId(false);
     ASSERT_NO_THROW(client.doInfRequest());
 
     // Confirm that there's a response

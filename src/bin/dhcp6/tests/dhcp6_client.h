@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -221,7 +221,11 @@ public:
 
     /// @brief Performs stateless (inf-request / reply) exchange.
     ///
-    /// This function generates
+    /// This function generates Information-request message, sends it
+    /// to the server and then receives the reply. Contents of the Inf-Request
+    /// are controlled by use_na_, use_pd_, use_client_id_ and use_oro_
+    /// fields. This method does not process the response in any specific
+    /// way, just stores it.
     void doInfRequest();
 
     /// @brief Removes the stateful configuration obtained from the server.
@@ -374,8 +378,8 @@ public:
 
     /// @brief Controls whether the client should send a client-id or not
     /// @param send should the client-id be sent?
-    void sendClientId(bool send) {
-        send_client_id_ = send;
+    void useClientId(bool send) {
+        use_client_id_ = send;
     }
 
     /// @brief Lease configuration obtained by the client.
@@ -384,26 +388,26 @@ public:
     /// @brief Link address of the relay to be used for relayed messages.
     asiolink::IOAddress relay_link_addr_;
 
-    /// @brief Controls whether client will send ORO
+    /// @brief Controls whether the client will send ORO
     ///
     /// The actual content of the ORO is specified in oro_.
     /// It is useful to split the actual content and the ORO sending
     /// decision, so we could test cases of sending empty ORO.
-    void sendORO(bool send) {
-        send_oro_ = send;
+    void useORO(bool send) {
+        use_oro_ = send;
     }
 
     /// @brief Instructs client to request specified option in ORO
     ///
     /// @param option_code client will request this option code
     void requestOption(uint16_t option_code) {
-        send_oro_ = true;
+        use_oro_ = true;
         oro_.push_back(option_code);
     }
 
     /// @brief List of options to be requested
     ///
-    /// Content of this vector will be sent as ORO if send_oro_ is set
+    /// Content of this vector will be sent as ORO if use_oro_ is set
     /// to true. See @ref sendORO for details.
     std::vector<uint16_t> oro_;
 private:
@@ -505,8 +509,8 @@ private:
     bool use_pd_;    ///< Enable prefix delegation.
     bool use_relay_; ///< Enable relaying messages to the server.
 
-    bool send_oro_;
-    bool send_client_id_;
+    bool use_oro_;  ///< Conth
+    bool use_client_id_;
 
     /// @brief Pointer to the option holding a prefix hint.
     Option6IAPrefixPtr prefix_hint_;
