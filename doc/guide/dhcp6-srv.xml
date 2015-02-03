@@ -550,8 +550,8 @@ temporarily override a list of interface names and listen on all interfaces.
 	    than <command>prefix-len</command>.
 	    If both <command>delegated-len</command>
 	    and <command>prefix-len</command> are equal, the server will be able to
-	    delegate only one prefix. The delegated <command>prefix</command> need
-        not match the <command>subnet</command> prefix.
+	    delegate only one prefix. The delegated <command>prefix</command> does
+        not have to match the <command>subnet</command> prefix.
       </para>
       <para> Below is a sample subnet configuration which enables prefix
       delegation for the subnet:
