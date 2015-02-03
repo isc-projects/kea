@@ -477,7 +477,6 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                   << Lease6::typeToText(ctx.type_));
     }
 
-
     // Check which host reservation mode is supported in this subnet.
     Subnet::HRMode hr_mode = ctx.subnet_->getHostReservationMode();
 
