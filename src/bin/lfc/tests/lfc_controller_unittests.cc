@@ -22,23 +22,24 @@ using namespace std;
 
 namespace {
 
-// Filenames used for testing.
-const char* PREVIOUS = "lease_file.2";
-const char* COPY   = "lease_file.1";
-const char* FINISH = "lease_file.completed";
-const char* OUTPUT = "lease_file.output";
-const char* PID    = "lease_file.pid";
-
 class LFCControllerTest : public ::testing::Test {
 public:
-    string pstr_;
-    string cstr_;
-    string fstr_;
-    string ostr_;
-    string istr_;
+    
+    string pstr_; ///< String for name for pid file
+    string xstr_; ///< String for name for previous file
+    string istr_; ///< String for name for copy file
+    string ostr_; ///< String for name for output file
+    string fstr_; ///< String for name for finish file
+    string cstr_; ///< String for name for config file
 
     /// @brief Create a file and write the filename into it.
     void touchFile(const std::string& filename, int);
+
+    /// @brief Create a file and write the given string into it.
+    void writeFile(const std::string& filename, const std::string& contents) const;
+
+    /// @brief Read a string from a file 
+    std::string readFile(const std::string& contents) const;
 
     /// @brief check the file to see if i matches what was written to it.
     bool checkFile(const std::string& filename, int);
@@ -48,26 +49,13 @@ protected:
     /// files before the test
     virtual void SetUp() {
         // set up the test files we need
-        std::ostringstream prev_str;
-        std::ostringstream copy_str;
-        std::ostringstream fin_str;
-        std::ostringstream out_str;
-        std::ostringstream pid_str;
-
-        prev_str << TEST_DATA_BUILDDIR << "/" << PREVIOUS;
-        pstr_ = prev_str.str();
-
-        copy_str << TEST_DATA_BUILDDIR << "/" << COPY;
-        cstr_ = copy_str.str();
-
-        fin_str << TEST_DATA_BUILDDIR << "/" << FINISH;
-        fstr_ = fin_str.str();
-
-        out_str << TEST_DATA_BUILDDIR << "/" << OUTPUT;
-        ostr_ = out_str.str();
-
-        pid_str << TEST_DATA_BUILDDIR << "/" << PID;
-        istr_ = pid_str.str();
+        string baseDir = TEST_DATA_BUILDDIR;
+	pstr_ = baseDir + "/" + "lease_file." + "pid";        // pid
+	xstr_ = baseDir + "/" + "lease_file." + "2";          // previous
+	istr_ = baseDir + "/" + "lease_file." + "1";          // copy
+	ostr_ = baseDir + "/" + "lease_file." + "output";     // output
+	fstr_ = baseDir + "/" + "lease_file." + "completed";  // finish
+	cstr_ = baseDir + "/" + "config_file";                // config
 
         // and remove any outstanding test files
         removeTestFile();
@@ -83,10 +71,10 @@ private:
     /// @brief Removes any remaining test files
     void removeTestFile() const {
         remove(pstr_.c_str());
-        remove(cstr_.c_str());
-        remove(fstr_.c_str());
-        remove(ostr_.c_str());
+        remove(xstr_.c_str());
         remove(istr_.c_str());
+        remove(ostr_.c_str());
+        remove(fstr_.c_str());
     }
 
 };
@@ -98,6 +86,29 @@ LFCControllerTest::touchFile(const std::string& filename, int i) {
     fs.open(filename, std::ofstream::out);
     fs << i << std::endl;
     fs.close();
+    
+}
+
+std::string
+LFCControllerTest::readFile(const std::string& filename) const {
+    std::ifstream fs;
+
+    fs.open(filename, std::ifstream::in);
+    std::string contents((std::istreambuf_iterator<char>(fs)),
+			 std::istreambuf_iterator<char>());
+    fs.close();
+    return (contents);
+}
+
+void
+LFCControllerTest::writeFile(const std::string& filename,
+			     const std::string& contents) const {
+    std::ofstream fs(filename, std::ofstream::out);
+
+    if (fs.is_open()) {
+        fs << contents;
+	fs.close();
+    }
 }
 
 bool
@@ -261,24 +272,26 @@ TEST_F(LFCControllerTest, fileCleanup) {
     LFCController lfc_controller, lfc_controller_launch;
 
     // We can use the same arguments and controller for all of the tests
-    // as the files get redone for each subtest.
+    // as the files get redone for each subtest.  We leave "-d" in the arg
+    // list but don't pass it as we use 14 as the argument count.  This
+    // makes it easy to turn it on by simply increasing argc below to 15
     char* argv[] = { const_cast<char*>("progName"),
                      const_cast<char*>("-4"),
                      const_cast<char*>("-x"),
-                     const_cast<char*>(pstr_.c_str()),
+                     const_cast<char*>(xstr_.c_str()),
                      const_cast<char*>("-i"),
-                     const_cast<char*>(cstr_.c_str()),
+                     const_cast<char*>(istr_.c_str()),
                      const_cast<char*>("-o"),
                      const_cast<char*>(ostr_.c_str()),
                      const_cast<char*>("-c"),
-                     const_cast<char*>("config"),
+                     const_cast<char*>(cstr_.c_str()),
                      const_cast<char*>("-f"),
                      const_cast<char*>(fstr_.c_str()),
                      const_cast<char*>("-p"),
-                     const_cast<char*>(istr_.c_str()),
+                     const_cast<char*>(pstr_.c_str()),
                      const_cast<char*>("-d")
     };
-    int argc = 15;
+    int argc = 14;
     lfc_controller.parseArgs(argc, argv);
 
     // Test 1: Start with no files - we expect an execption as there
@@ -288,41 +301,41 @@ TEST_F(LFCControllerTest, fileCleanup) {
 
     // Test 2: Create a file for each of previous, copy and finish.  We should
     // delete the previous and copy files then move finish to previous.
-    touchFile(pstr_.c_str(), 1);
-    touchFile(cstr_.c_str(), 2);
+    touchFile(xstr_.c_str(), 1);
+    touchFile(istr_.c_str(), 2);
     touchFile(fstr_.c_str(), 3);
 
     lfc_controller.fileCleanup();
 
     // verify finish is now previous and copy and finish are gone
-    EXPECT_TRUE(checkFile(pstr_.c_str(), 3));
-    EXPECT_TRUE((remove(cstr_.c_str()) != 0) && (errno == ENOENT));
+    EXPECT_TRUE(checkFile(xstr_.c_str(), 3));
+    EXPECT_TRUE((remove(istr_.c_str()) != 0) && (errno == ENOENT));
     EXPECT_TRUE((remove(fstr_.c_str()) != 0) && (errno == ENOENT));
     remove(pstr_.c_str());
 
 
     // Test 3: Create a file for previous and finish but not copy.
-    touchFile(pstr_.c_str(), 4);
+    touchFile(xstr_.c_str(), 4);
     touchFile(fstr_.c_str(), 6);
 
     lfc_controller.fileCleanup();
 
     // verify finish is now previous and copy and finish are gone
-    EXPECT_TRUE(checkFile(pstr_.c_str(), 6));
-    EXPECT_TRUE((remove(cstr_.c_str()) != 0) && (errno == ENOENT));
+    EXPECT_TRUE(checkFile(xstr_.c_str(), 6));
+    EXPECT_TRUE((remove(istr_.c_str()) != 0) && (errno == ENOENT));
     EXPECT_TRUE((remove(fstr_.c_str()) != 0) && (errno == ENOENT));
     remove(pstr_.c_str());
 
 
     // Test 4: Create a file for copy and finish but not previous.
-    touchFile(cstr_.c_str(), 8);
+    touchFile(istr_.c_str(), 8);
     touchFile(fstr_.c_str(), 9);
 
     lfc_controller.fileCleanup();
 
     // verify finish is now previous and copy and finish are gone
-    EXPECT_TRUE(checkFile(pstr_.c_str(), 9));
-    EXPECT_TRUE((remove(cstr_.c_str()) != 0) && (errno == ENOENT));
+    EXPECT_TRUE(checkFile(xstr_.c_str(), 9));
+    EXPECT_TRUE((remove(istr_.c_str()) != 0) && (errno == ENOENT));
     EXPECT_TRUE((remove(fstr_.c_str()) != 0) && (errno == ENOENT));
     remove(pstr_.c_str());
 
@@ -330,19 +343,174 @@ TEST_F(LFCControllerTest, fileCleanup) {
     // Test 5: rerun test 2 but using launch instead of cleanup
     // as we already have a finish file we shouldn't do any extra
     // processing
-    touchFile(pstr_.c_str(), 10);
-    touchFile(cstr_.c_str(), 11);
+    touchFile(xstr_.c_str(), 10);
+    touchFile(istr_.c_str(), 11);
     touchFile(fstr_.c_str(), 12);
 
     lfc_controller_launch.launch(argc, argv);
 
     // verify finish is now previous and copy and finish are gone
     // as we ran launch we also check to see if the pid is gone.
-    EXPECT_TRUE(checkFile(pstr_.c_str(), 12));
-    EXPECT_TRUE((remove(cstr_.c_str()) != 0) && (errno == ENOENT));
-    EXPECT_TRUE((remove(fstr_.c_str()) != 0) && (errno == ENOENT));
+    EXPECT_TRUE(checkFile(xstr_.c_str(), 12));
     EXPECT_TRUE((remove(istr_.c_str()) != 0) && (errno == ENOENT));
+    EXPECT_TRUE((remove(fstr_.c_str()) != 0) && (errno == ENOENT));
+    EXPECT_TRUE((remove(pstr_.c_str()) != 0) && (errno == ENOENT));
     remove(pstr_.c_str());
+}
+
+/// @brief Verify that we properly combine and clean up files
+/// 
+/// This is mostly a retest as we already test that the loader and
+/// writer functions work in their own tests but we combine it all
+/// here.  This is the v4 version
+
+TEST_F(LFCControllerTest, programLaunch4) {
+    LFCController lfc_controller;
+
+    // We can use the same arguments and controller for all of the tests
+    // as the files get redone for each subtest.
+    char* argv[] = { const_cast<char*>("progName"),
+                     const_cast<char*>("-4"),
+                     const_cast<char*>("-x"),
+                     const_cast<char*>(xstr_.c_str()),
+                     const_cast<char*>("-i"),
+                     const_cast<char*>(istr_.c_str()),
+                     const_cast<char*>("-o"),
+                     const_cast<char*>(ostr_.c_str()),
+                     const_cast<char*>("-c"),
+                     const_cast<char*>(cstr_.c_str()),
+                     const_cast<char*>("-f"),
+                     const_cast<char*>(fstr_.c_str()),
+                     const_cast<char*>("-p"),
+                     const_cast<char*>(pstr_.c_str()),
+                     const_cast<char*>("-d")
+    };
+    int argc = 14;
+    lfc_controller.parseArgs(argc, argv);
+
+    // Create the test previous file
+    writeFile(xstr_.c_str(),
+	      "address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
+	      "fqdn_fwd,fqdn_rev,hostname\n"
+	      "192.0.2.1,06:07:08:09:0a:bc,,200,200,8,1,1,"
+	      "host.example.com\n"
+	      "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,100,100,7,"
+	      "0,0,\n"
+	      "192.0.2.3,,a:11:01:04,200,200,8,1,1,host.example.com\n"
+	      "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,100,135,7,"
+	      "0,0,\n"
+	      "192.0.2.1,06:07:08:09:0a:bc,,200,500,8,1,1,"
+	      "host.example.com\n"
+	      "192.0.2.5,06:07:08:09:0a:bc,,200,200,8,1,1,"
+	      "host.example.com\n");
+
+
+
+    // Create the test copy file
+    writeFile(istr_.c_str(),
+	      "address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
+	      "fqdn_fwd,fqdn_rev,hostname\n"
+	      "192.0.2.1,06:07:08:09:0a:bc,,200,800,8,1,1,"
+	      "host.example.com\n"
+	      "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,100,150,7,"
+	      "0,0,\n"
+	      "192.0.2.5,06:07:08:09:0a:bc,,200,0,8,1,1,"
+	      "host.example.com\n");
+
+    // Run the cleanup
+    lfc_controller.launch(argc, argv);
+
+    // Compare the results
+    EXPECT_EQ(readFile(xstr_.c_str()),
+	      "address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
+	      "fqdn_fwd,fqdn_rev,hostname\n"
+	      "192.0.2.1,06:07:08:09:0a:bc,,200,800,8,1,1,"
+	      "host.example.com\n"
+	      "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,100,150,7,"
+	      "0,0,\n");
+
+	      
+
+}
+
+/// @brief Verify that we properly combine and clean up files
+/// 
+/// This is mostly a retest as we already test that the loader and
+/// writer functions work in their own tests but we combine it all
+/// here.  This is the v6 version
+
+TEST_F(LFCControllerTest, programLaunch6) {
+    LFCController lfc_controller;
+
+    // We can use the same arguments and controller for all of the tests
+    // as the files get redone for each subtest.
+    char* argv[] = { const_cast<char*>("progName"),
+                     const_cast<char*>("-6"),
+                     const_cast<char*>("-x"),
+                     const_cast<char*>(xstr_.c_str()),
+                     const_cast<char*>("-i"),
+                     const_cast<char*>(istr_.c_str()),
+                     const_cast<char*>("-o"),
+                     const_cast<char*>(ostr_.c_str()),
+                     const_cast<char*>("-c"),
+                     const_cast<char*>(cstr_.c_str()),
+                     const_cast<char*>("-f"),
+                     const_cast<char*>(fstr_.c_str()),
+                     const_cast<char*>("-p"),
+                     const_cast<char*>(pstr_.c_str()),
+                     const_cast<char*>("-d")
+    };
+    int argc = 14;
+    lfc_controller.parseArgs(argc, argv);
+
+    // Create the test previous file
+    writeFile(xstr_.c_str(),
+	      "address,duid,valid_lifetime,expire,subnet_id,"
+	      "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
+	      "fqdn_rev,hostname,hwaddr\n"
+	      "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
+	      "200,200,8,100,0,7,0,1,1,host.example.com,\n"
+	      "2001:db8:1::1,,200,200,8,100,0,7,0,1,1,host.example.com,\n"
+	      "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,300,300,6,150,"
+	      "0,8,0,0,0,,\n"
+	      "3000:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,100,200,8,0,2,"
+	      "16,64,0,0,,\n"
+	      "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,300,800,6,150,"
+	      "0,8,0,0,0,,\n"
+	      "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
+	      "200,400,8,100,0,7,0,1,1,host.example.com,\n"
+	      );
+
+    // Create the test copy file
+    writeFile(istr_.c_str(),
+	      "address,duid,valid_lifetime,expire,subnet_id,"
+	      "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
+	      "fqdn_rev,hostname,hwaddr\n"
+	      "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,300,1000,6,150,"
+	      "0,8,0,0,0,,\n"
+	      "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
+	      "0,200,8,100,0,7,0,1,1,host.example.com,\n"
+	      "2001:db8:1::3,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
+	      "200,600,8,100,0,7,0,1,1,host.example.com,\n"
+	      "3000:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,100,400,8,0,2,"
+	      "16,64,0,0,,\n"
+	      );
+
+    // Run the cleanup
+    lfc_controller.launch(argc, argv);
+
+    // Compare the results
+    EXPECT_EQ(readFile(xstr_.c_str()),
+	      "address,duid,valid_lifetime,expire,subnet_id,"
+	      "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
+	      "fqdn_rev,hostname,hwaddr\n"
+	      "2001:db8:1::3,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
+	      "200,600,8,100,0,7,0,1,1,host.example.com,\n"
+	      "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,300,1000,6,150,"
+	      "0,8,0,0,0,,\n"
+	      "3000:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,100,400,8,0,2,"
+	      "16,64,0,0,,\n"
+	      );
 }
 
 } // end of anonymous namespace

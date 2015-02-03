@@ -158,6 +158,7 @@ public:
     /// @brief Process files.  Read in the leases from any previous & copy
     /// files we have and write the results out to the output file.  Upon
     /// completion of the write move the file to the finish file.
+    template<typename LeaseObjectType, typename LeaseFileType, typename StorageType>
     void processLeases() const;
 
     /// @brief Cleanup files.  After we have a finish file, either from
