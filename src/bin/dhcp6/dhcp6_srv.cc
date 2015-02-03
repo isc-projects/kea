@@ -2459,20 +2459,26 @@ Pkt6Ptr
 Dhcpv6Srv::processDecline(const Pkt6Ptr& decline) {
     /// @todo: Implement this
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, decline->getTransid()));
-    return reply;
+    return (reply);
 }
 
 Pkt6Ptr
 Dhcpv6Srv::processInfRequest(const Pkt6Ptr& infRequest) {
+
+    // Create a Reply packet, with the same trans-id as the client's.
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, infRequest->getTransid()));
 
+    // Copy default options (client-id, also relay information if present)
     copyDefaultOptions(infRequest, reply);
 
+    // Append default options (server-id for now, but possibly other options
+    // once we start supporting authentication)
     appendDefaultOptions(infRequest, reply);
 
+    // Try to assign options that were requested by the client.
     appendRequestedOptions(infRequest, reply);
 
-    return reply;
+    return (reply);
 }
 
 size_t

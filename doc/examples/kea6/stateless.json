@@ -1,5 +1,5 @@
-# A very simply stateless configuration that provides DNS servers information
-# to all clients, regardless of their point of attachment.
+# A very simply stateless configuration that provides information about DNS
+# servers to all clients, regardless of their point of attachment.
 #
 # It is also possible to specify options on a per subnet basis
 # in the same way as in stateful mode.
