@@ -27,6 +27,7 @@
 #include <dhcp/option6_iaprefix.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_custom.h>
+#include <dhcp/option.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
@@ -241,38 +242,7 @@ public:
     void checkIA_NAStatusCode
         (const boost::shared_ptr<isc::dhcp::Option6IA>& ia,
          uint16_t expected_status_code, uint32_t expected_t1,
-         uint32_t expected_t2)
-    {
-        // Make sure there is no address assigned.
-        EXPECT_FALSE(ia->getOption(D6O_IAADDR));
-
-        // T1, T2 should NOT be zeroed. draft-ietf-dhc-dhcpv6-stateful-issues-10,
-        // section 4.4.6 says says that T1,T2 should be consistent along all
-        // provided IA options.
-        EXPECT_EQ(expected_t1, ia->getT1());
-        EXPECT_EQ(expected_t2, ia->getT2());
-
-        isc::dhcp::OptionCustomPtr status =
-            boost::dynamic_pointer_cast<isc::dhcp::OptionCustom>
-                (ia->getOption(D6O_STATUS_CODE));
-
-        // It is ok to not include status success as this is the default
-        // behavior
-        if (expected_status_code == STATUS_Success && !status) {
-            return;
-        }
-
-        EXPECT_TRUE(status);
-
-        if (status) {
-            // We don't have dedicated class for status code, so let's
-            // just interpret first 2 bytes as status. Remainder of the
-            // status code option content is just a text explanation
-            // what went wrong.
-            EXPECT_EQ(static_cast<uint16_t>(expected_status_code),
-                      status->readInteger<uint16_t>(0));
-        }
-    }
+         uint32_t expected_t2);
 
     void checkMsgStatusCode(const isc::dhcp::Pkt6Ptr& msg,
                             uint16_t expected_status)

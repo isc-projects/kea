@@ -1686,6 +1686,10 @@ Dhcpv6Srv::extendIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
         }
     }
 
+    // Set up T1, T2 timers
+    ia_rsp->setT1(subnet->getT1());
+    ia_rsp->setT2(subnet->getT2());
+
     // There is a subnet selected. Let's pick the lease.
     Lease6Ptr lease =
         LeaseMgrFactory::instance().getLease6(Lease::TYPE_PD,
@@ -1768,8 +1772,8 @@ Dhcpv6Srv::extendIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
     }
 
     (void)invalid_prefix;
-#if 0
     bool skip = false;
+#if 0
     // Execute all callouts registered for packet6_send
     // Get the callouts specific for the processed message and execute them.
     int hook_point = query->getType() == DHCPV6_RENEW ?
@@ -1796,6 +1800,7 @@ Dhcpv6Srv::extendIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
         // Remember hook's instruction whether we want to skip update or not
         skip = callout_handle->getSkip();
     }
+#endif
 
     if (!skip) {
         // If the prefix specified by the client is wrong, we don't want to
@@ -1816,7 +1821,6 @@ Dhcpv6Srv::extendIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
         // fields of returned Lease6Ptr, the actual updateLease6() is no-op.
         *lease = old_data;
     }
-#endif
 
     return (ia_rsp);
 }

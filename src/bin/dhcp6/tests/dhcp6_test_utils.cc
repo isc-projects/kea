@@ -285,10 +285,10 @@ Dhcpv6SrvTest::testRenewBasic(Lease::Type type, const std::string& existing_addr
     }
 
     // Check that T1, T2, preferred, valid and cltt were really updated
-    EXPECT_EQ(l->t1_, subnet_->getT1());
-    EXPECT_EQ(l->t2_, subnet_->getT2());
-    EXPECT_EQ(l->preferred_lft_, subnet_->getPreferred());
-    EXPECT_EQ(l->valid_lft_, subnet_->getValid());
+    EXPECT_EQ(subnet_->getT1(), l->t1_);
+    EXPECT_EQ(subnet_->getT2(), l->t2_);
+    EXPECT_EQ(subnet_->getPreferred(), l->preferred_lft_);
+    EXPECT_EQ(subnet_->getValid(), l->valid_lft_);
 
     // Checking for CLTT is a bit tricky if we want to avoid off by 1 errors
     int32_t cltt = static_cast<int32_t>(l->cltt_);
@@ -457,7 +457,7 @@ Dhcpv6SrvTest::testReleaseBasic(Lease::Type type, const IOAddress& existing,
 
     // Check that IA_NA was returned and that there's an address included
     boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
-    checkIA_NAStatusCode(ia, STATUS_Success, subnet_->getT1(), subnet_->getT2());
+    checkIA_NAStatusCode(ia, STATUS_Success, 0, 0);
     checkMsgStatusCode(reply, STATUS_Success);
 
     // There should be no address returned in RELEASE (see RFC3315, 18.2.6)
@@ -528,7 +528,7 @@ Dhcpv6SrvTest::testReleaseReject(Lease::Type type, const IOAddress& addr) {
     // Check that IA_NA/IA_PD was returned and that there's status code in it
     boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
     ASSERT_TRUE(ia);
-    checkIA_NAStatusCode(ia, STATUS_NoBinding, subnet_->getT1(), subnet_->getT2());
+    checkIA_NAStatusCode(ia, STATUS_NoBinding, 0, 0);
     checkMsgStatusCode(reply, STATUS_NoBinding);
 
     // Check that the lease is not there
@@ -556,7 +556,7 @@ Dhcpv6SrvTest::testReleaseReject(Lease::Type type, const IOAddress& addr) {
     // Check that IA_?? was returned and that there's proper status code
     ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
     ASSERT_TRUE(ia);
-    checkIA_NAStatusCode(ia, STATUS_NoBinding);
+    checkIA_NAStatusCode(ia, STATUS_NoBinding, 0, 0);
     checkMsgStatusCode(reply, STATUS_NoBinding);
 
     // Check that the lease is still there
@@ -580,7 +580,7 @@ Dhcpv6SrvTest::testReleaseReject(Lease::Type type, const IOAddress& addr) {
     // Check that IA_?? was returned and that there's proper status code
     ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
     ASSERT_TRUE(ia);
-    checkIA_NAStatusCode(ia, STATUS_NoBinding);
+    checkIA_NAStatusCode(ia, STATUS_NoBinding, 0, 0);
     checkMsgStatusCode(reply, STATUS_NoBinding);
 
     // Check that the lease is still there
@@ -651,6 +651,56 @@ Dhcpv6SrvTest::compareOptions(const isc::dhcp::OptionPtr& option1,
     return (!memcmp(buf1.getData(), buf2.getData(), buf1.getLength()));
 }
 
+void
+NakedDhcpv6SrvTest::checkIA_NAStatusCode(
+    const boost::shared_ptr<isc::dhcp::Option6IA>& ia,
+    uint16_t expected_status_code, uint32_t expected_t1, uint32_t expected_t2)
+{
+    // Make sure there is no address assigned. Depending on the situation,
+    // the server will either not return the address at all and sometimes
+    // it will return it with zeroed lifetimes.
+    dhcp::OptionCollection options = ia->getOptions();
+    for (isc::dhcp::OptionCollection::iterator opt = options.begin();
+         opt != options.end(); ++opt) {
+        if (opt->second->getType() != D6O_IAADDR) {
+            continue;
+        }
+
+        dhcp::Option6IAAddrPtr addr =
+            boost::dynamic_pointer_cast<isc::dhcp::Option6IAAddr>(opt->second);
+        ASSERT_TRUE(addr);
+
+        EXPECT_EQ(0, addr->getPreferred());
+        EXPECT_EQ(0, addr->getValid());
+    }
+
+    // T1, T2 should NOT be zeroed. draft-ietf-dhc-dhcpv6-stateful-issues-10,
+    // section 4.4.6 says says that T1,T2 should be consistent along all
+    // provided IA options.
+    EXPECT_EQ(expected_t1, ia->getT1());
+    EXPECT_EQ(expected_t2, ia->getT2());
+
+    isc::dhcp::OptionCustomPtr status =
+        boost::dynamic_pointer_cast<isc::dhcp::OptionCustom>
+        (ia->getOption(D6O_STATUS_CODE));
+
+    // It is ok to not include status success as this is the default
+    // behavior
+    if (expected_status_code == STATUS_Success && !status) {
+        return;
+    }
+
+    EXPECT_TRUE(status);
+
+    if (status) {
+        // We don't have dedicated class for status code, so let's
+        // just interpret first 2 bytes as status. Remainder of the
+        // status code option content is just a text explanation
+        // what went wrong.
+        EXPECT_EQ(static_cast<uint16_t>(expected_status_code),
+                  status->readInteger<uint16_t>(0));
+    }
+}
 
 }; // end of isc::test namespace
 }; // end of isc namespace
