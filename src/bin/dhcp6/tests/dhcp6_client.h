@@ -393,6 +393,7 @@ public:
     /// The actual content of the ORO is specified in oro_.
     /// It is useful to split the actual content and the ORO sending
     /// decision, so we could test cases of sending empty ORO.
+    /// @param send controls whether ORO will be sent or not.
     void useORO(bool send) {
         use_oro_ = send;
     }
