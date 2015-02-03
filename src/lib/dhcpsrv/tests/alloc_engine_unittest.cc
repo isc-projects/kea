@@ -433,11 +433,7 @@ public:
         // instantiate cfg_mgr
         CfgMgr& cfg_mgr = CfgMgr::instance();
 
-        subnet_ = Subnet4Ptr(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3));
-        pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"),
-                                   IOAddress("192.0.2.109")));
-        subnet_->addPool(pool_);
-        cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
+        initSubnet(IOAddress("192.0.2.100"), IOAddress("192.0.2.109"));
         cfg_mgr.commit();
 
         factory_.create("type=memfile universe=4 persist=false");
@@ -475,6 +471,20 @@ public:
         EXPECT_TRUE(*lease->hwaddr_ == *hwaddr_);
         /// @todo: check cltt
      }
+
+    /// @brief Create a subnet with a specified pool of addresses.
+    ///
+    /// @param pool_start First address in the pool.
+    /// @param pool_end Last address in the pool.
+    void initSubnet(const IOAddress& pool_start, const IOAddress& pool_end) {
+        CfgMgr& cfg_mgr = CfgMgr::instance();
+
+        subnet_ = Subnet4Ptr(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3));
+        pool_ = Pool4Ptr(new Pool4(pool_start, pool_end));
+        subnet_->addPool(pool_);
+
+        cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    }
 
     virtual ~AllocEngine4Test() {
         factory_.destroy();
@@ -2261,6 +2271,44 @@ TEST_F(AllocEngine4Test, reservedAddressVsDynamicPool) {
                                                       old_lease_);
     ASSERT_TRUE(allocated_lease);
     EXPECT_NE(allocated_lease->addr_.toText(), "192.0.2.100");
+}
+
+// This test checks that the allocation engine refuses to allocate an
+// address when the pool is exhausted, and the only one available
+// address is reserved for a different client.
+TEST_F(AllocEngine4Test, reservedAddressShortPool) {
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+
+    // Create short pool with only one address.
+    initSubnet(IOAddress("192.0.2.100"), IOAddress("192.0.2.100"));
+    // Reserve the address for a different client.
+    HostPtr host(new Host(&hwaddr2_->hwaddr_[0], hwaddr_->hwaddr_.size(),
+                          Host::IDENT_HWADDR, subnet_->getID(),
+                          SubnetID(0), IOAddress("192.0.2.100")));
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    // Allocation engine should determine that the available address is
+    // reserved for someone else and not allocate it.
+    Lease4Ptr allocated_lease = engine.allocateLease4(subnet_, ClientIdPtr(),
+                                                      hwaddr_,
+                                                      IOAddress("0.0.0.0"),
+                                                      false, false, "", false,
+                                                      CalloutHandlePtr(),
+                                                      old_lease_);
+    EXPECT_FALSE(allocated_lease);
+
+    // Now, let's remove the reservation.
+    initSubnet(IOAddress("192.0.2.100"), IOAddress("192.0.2.100"));
+    CfgMgr::instance().commit();
+
+    // Address should be successfully allocated.
+    allocated_lease = engine.allocateLease4(subnet_, ClientIdPtr(), hwaddr_,
+                                            IOAddress("0.0.0.0"), false, false,
+                                            "", false, CalloutHandlePtr(),
+                                            old_lease_);
+    ASSERT_TRUE(allocated_lease);
+    EXPECT_EQ("192.0.2.100", allocated_lease->addr_.toText());
 }
 
 /// @brief helper class used in Hooks testing in AllocEngine6
