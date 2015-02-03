@@ -400,7 +400,8 @@ protected:
         ClientContext6()
            : subnet_(), duid_(), iaid_(0), type_(Lease::TYPE_NA), hwaddr_(),
              hints_(), fwd_dns_update_(false), rev_dns_update_(false), hostname_(""),
-             callout_handle_(), fake_allocation_(false), old_leases_(), host_() {
+             callout_handle_(), fake_allocation_(false), old_leases_(), host_(),
+             query_(), ia_rsp_() {
         }
 
         /// @brief Constructor with parameters.
@@ -430,8 +431,8 @@ protected:
                        fake_allocation):
             subnet_(subnet), duid_(duid), iaid_(iaid), type_(type), hwaddr_(),
             hints()_, fwd_dns_update_(fwd_dns), rev_dns_update_(rev_dns),
-            hostname_(hostname), fake_allocation_(fake_allocation), old_leases_(),
-            host_() {
+            hostname_(hostname), fake_allocation_(fake_allocation),
+            old_leases_(), host_(), query_(), ia_rsp_() {
 
             static asiolink::IOAddress any("::");
 
