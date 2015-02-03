@@ -1074,7 +1074,7 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolSolicitNoHint) {
 // - Client sends REQUEST without any hints.
 // - Client is allocated a reserved address.
 //
-// Note that DHCPv6 client must send an address in Request that the server
+// Note that DHCPv6 client must send an address in REQUEST that the server
 // offered in Advertise. Nevertheless, the client may ignore this requirement.
 TEST_F(AllocEngine6Test, reservedAddressInPoolRequestNoHint) {
     // Create reservation for the client. This is in-pool reservation,
@@ -1118,10 +1118,10 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolSolicitValidHint) {
 // scenario:
 // - Client has no lease in the database.
 // - Client has an in-pool reservation.
-// - Client sends Request with a hint that does not match reservation
+// - Client sends REQUEST with a hint that does not match reservation
 // - Client is allocated a reserved address, not the hint.
 //
-// Note that DHCPv6 client must send an address in Request that the server
+// Note that DHCPv6 client must send an address in REQUEST that the server
 // offered in Advertise. Nevertheless, the client may ignore this requirement.
 TEST_F(AllocEngine6Test, reservedAddressInPoolRequestValidHint) {
     // Create reservation for the client This is in-pool reservation,
@@ -1168,10 +1168,10 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolSolicitMatchingHint) {
 // scenario:
 // - Client has no lease in the database.
 // - Client has an in-pool reservation.
-// - Client sends Request with a hint that does not match reservation
+// - Client sends REQUEST with a hint that does not match reservation
 // - Client is allocated a reserved address, not the hint.
 //
-// Note that DHCPv6 client must send an address in Request that the server
+// Note that DHCPv6 client must send an address in REQUEST that the server
 // offered in Advertise. Nevertheless, the client may ignore this requirement.
 TEST_F(AllocEngine6Test, reservedAddressInPoolRequestMatchingHint) {
     // Create reservation for the client. This is in-pool reservation,
@@ -1218,7 +1218,7 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolSolicitNoHint) {
 // - Client sends REQUEST without any hints.
 // - Client is allocated a reserved address.
 //
-// Note that DHCPv6 client must send an address in Request that the server
+// Note that DHCPv6 client must send an address in REQUEST that the server
 // offered in Advertise. Nevertheless, the client may ignore this requirement.
 TEST_F(AllocEngine6Test, reservedAddressOutOfPoolRequestNoHint) {
     // Create reservation for the client. This is out-of-pool reservation,
@@ -1262,10 +1262,10 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolSolicitValidHint) {
 // scenario:
 // - Client has no lease in the database.
 // - Client has an in-pool reservation.
-// - Client sends Request with a hint that does not match reservation
+// - Client sends REQUEST with a hint that does not match reservation
 // - Client is allocated a reserved address, not the hint.
 //
-// Note that DHCPv6 client must send an address in Request that the server
+// Note that DHCPv6 client must send an address in REQUEST that the server
 // offered in Advertise. Nevertheless, the client may ignore this requirement.
 TEST_F(AllocEngine6Test, reservedAddressOutOfPoolRequestValidHint) {
     // Create reservation for the client. This is out-of-pool reservation,
@@ -1312,10 +1312,10 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolSolicitMatchingHint) {
 // scenario:
 // - Client has no lease in the database.
 // - Client has an in-pool reservation.
-// - Client sends Request with a hint that does not match reservation
+// - Client sends REQUEST with a hint that does not match reservation
 // - Client is allocated a reserved address, not the hint.
 //
-// Note that DHCPv6 client must send an address in Request that the server
+// Note that DHCPv6 client must send an address in REQUEST that the server
 // offered in Advertise. Nevertheless, the client may ignore this requirement.
 TEST_F(AllocEngine6Test, reservedAddressOutOfPoolRequestMatchingHint) {
     // Create reservation for the client. This is out-of-pool reservation,
@@ -1490,6 +1490,39 @@ TEST_F(AllocEngine6Test, reservedAddress) {
     EXPECT_EQ("2001:db8:1::12", leases[0]->addr_.toText());
 }
 
+// Checks if the allocateLeases throws exceptions for invalid input data.
+TEST_F(AllocEngine6Test, allocateLeasesInvalidData) {
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, true);
+
+    // That looks like a valid context.
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, iaid_, IOAddress("::"),
+                                    Lease::TYPE_NA,  false, false, "", false);
+    Lease6Collection leases;
+
+    // Let's break it!
+    ctx.subnet_.reset();
+
+    // Subnet is required for allocation, so we should get no leases.
+    EXPECT_NO_THROW(leases = engine.allocateLeases6(ctx));
+    EXPECT_TRUE(leases.empty());
+
+    // Let's fix this and break it in a different way.
+    ctx.subnet_ = subnet_;
+    ctx.duid_.reset();
+
+    // We must know who we're allocating for. No duid = no service.
+    EXPECT_NO_THROW(leases = engine.allocateLeases6(ctx));
+    EXPECT_TRUE(leases.empty());
+
+}
+
+/// @todo: The following methods are tested indirectly by allocateLeases6()
+/// tests, but could use more direct testing:
+/// - AllocEngine::allocateUnreservedLeases6
+/// - AllocEngine::allocateReservedLeases6
+/// - AllocEngine::removeNonmatchingReservedLeases6
+/// - AllocEngine::removeLeases
+/// - AllocEngine::removeNonreservedLeases6
 
 // --- IPv4 ---
 
