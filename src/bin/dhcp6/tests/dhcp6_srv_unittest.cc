@@ -150,7 +150,8 @@ TEST_F(NakedDhcpv6SrvTest, RenewNoSubnet) {
     Pkt6Ptr reply = srv.processRenew(req);
 
     // check that we get the right NAK
-    checkNakResponse (reply, DHCPV6_REPLY, 1234, STATUS_NoBinding);
+    checkNakResponse (reply, DHCPV6_REPLY, 1234, STATUS_NoBinding,
+                      0, 0);
 }
 
 // This test verifies that incoming RELEASE can be handled properly, even when
@@ -185,7 +186,7 @@ TEST_F(NakedDhcpv6SrvTest, ReleaseNoSubnet) {
     Pkt6Ptr reply = srv.processRelease(req);
 
     // check that we get the right NAK
-    checkNakResponse (reply, DHCPV6_REPLY, 1234, STATUS_NoBinding);
+    checkNakResponse (reply, DHCPV6_REPLY, 1234, STATUS_NoBinding, 0, 0);
 }
 
 // Test verifies that the Dhcpv6_srv class can be instantiated. It checks a mode
