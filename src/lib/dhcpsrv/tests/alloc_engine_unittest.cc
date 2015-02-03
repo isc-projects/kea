@@ -1055,7 +1055,7 @@ TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
 // Note that DHCPv6 client can, but don't have to send any hints in its
 // Solicit message.
 TEST_F(AllocEngine6Test, reservedAddressInPoolSolicitNoHint) {
-    // Create reservation for the client. Tthis is in-pool reservation,
+    // Create reservation for the client. This is in-pool reservation,
     // as the pool is 2001:db8:1::10 - 2001:db8:1::20.
     createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::1c"), 128);
 
@@ -1433,6 +1433,63 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolReassignedOther) {
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease(lease3, from_mgr);
 }
+
+// Checks that a reserved address for client A is not assigned when
+// other clients are requesting addresses. The scenario is as follows:
+// we use a regular pool with 17 addresses in it. One of them is
+// reserved for client A. Now we try to allocate addresses for 30 clients
+// (A is not one of them). The first 16 attempts should succeed. Then
+// we run out of addresses and remaining 14 clients will get nothing.
+// Finally, we check that client A still can get his reserved address.
+TEST_F(AllocEngine6Test, reservedAddress) {
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, true);
+
+    // Create reservation for the client. This is in-pool reservation,
+    // as the pool is 2001:db8:1::10 - 2001:db8:1::20.
+    createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::12"), 128);
+
+    // Let's generate 30 DUIDs, each of them 16 bytes long
+    vector<DuidPtr> clients;
+    for (int i = 0; i < 30; i++) {
+        vector<uint8_t> data(16, i);
+        clients.push_back(DuidPtr(new DUID(data)));
+    }
+
+    // The default pool is 2001:db8:1::10 to 2001:db8:1::20. There's 17
+    // addresses in it. One of them is reserved, so this means that we should
+    // get 16 successes and 14 (20-16) failures.
+    int success = 0;
+    int failure = 0;
+    for (int i = 0; i < 30; i++) {
+        AllocEngine::ClientContext6 ctx(subnet_, clients[i], iaid_, IOAddress("::"),
+                                        Lease::TYPE_NA,  false, false, "", false);
+        Lease6Collection leases = engine.allocateLeases6(ctx);
+        if (leases.empty()) {
+            failure++;
+            std::cout << "Alloc for client " << (int)i << " failed." << std::endl;
+        } else {
+            success++;
+            std::cout << "Alloc for client " << (int)i << " succeeded:"
+                      << leases[0]->addr_.toText() << std::endl;
+
+            // The assigned addresses must not match the one reserved.
+            EXPECT_NE("2001:db8:1::12", leases[0]->addr_.toText());
+        }
+    }
+
+    EXPECT_EQ(16, success);
+    EXPECT_EQ(14, failure);
+
+    // We're now pretty sure that any clients other than the reserved address
+    // will not get any service. Now let's check if the client that has the
+    // address reserved, will get it (despite the pool being depleted).
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, iaid_, IOAddress("::"),
+                                    Lease::TYPE_NA,  false, false, "", false);
+    Lease6Collection leases = engine.allocateLeases6(ctx);
+    ASSERT_EQ(1, leases.size());
+    EXPECT_EQ("2001:db8:1::12", leases[0]->addr_.toText());
+}
+
 
 // --- IPv4 ---
 
