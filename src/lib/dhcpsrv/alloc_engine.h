@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -389,8 +389,8 @@ protected:
         /// @brief Default constructor.
         ClientContext6()
            : subnet_(), duid_(), iaid_(0), type_(Lease::TYPE_NA), hwaddr_(),
-             fwd_dns_update_(false), rev_dns_update_(false), hostname_(""),
-             callout_handle_(), fake_allocation_(false), host_() {
+             hints_(), fwd_dns_update_(false), rev_dns_update_(false), hostname_(""),
+             callout_handle_(), fake_allocation_(false), old_leases_(), host_() {
         }
 
         /// @brief Constructor with parameters.
@@ -418,9 +418,10 @@ protected:
                        const Lease::Type type, const bool fwd_dns, const bool
                        rev_dns, const std::string& hostname, const bool
                        fake_allocation):
-        subnet_(subnet), duid_(duid), iaid_(iaid), type_(type),
-            fwd_dns_update_(fwd_dns), rev_dns_update_(rev_dns),
-            hostname_(hostname), fake_allocation_(fake_allocation) {
+        subnet_(subnet), duid_(duid), iaid_(iaid), type_(type), hwaddr_(),
+            hints_(), fwd_dns_update_(fwd_dns), rev_dns_update_(rev_dns),
+            hostname_(hostname), fake_allocation_(fake_allocation),
+            old_leases_(), host_() {
             hints_.push_back(hint);
             // callout_handle, host pointers initiated to NULL by their
             // respective constructors.
@@ -636,6 +637,8 @@ protected:
     ///        collection as old leases.<br/>
     /// @ref ClientContext6::hwaddr_ Hardware address (optional, may be null if
     ///        not available)<br/>
+    /// @ref ClientContext6::host_ Host reservation. allocateLeases6 will set
+    ///        this field, if appropriate reservation is found.
     ///
     /// @return Allocated IPv6 leases (may be empty if allocation failed)
     Lease6Collection
@@ -779,7 +782,7 @@ private:
     /// not reserved for this client. It will leave at least one lease on the list,
     /// if possible. The reason to run this method is that if there is a reservation
     /// for address A for client X and client X already has a lease for a
-    /// diffierent address B, we should assign A and release B. However,
+    /// different address B, we should assign A and release B. However,
     /// if for some reason we can't assign A, keeping B would be better than
     /// not having a lease at all. Hence we may keep B if that's the only lease
     /// left.

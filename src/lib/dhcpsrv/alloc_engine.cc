@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -299,11 +299,10 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
 
     try {
         if (!ctx.subnet_) {
-            isc_throw(InvalidOperation, "Subnet is required for allocation");
-        }
-
+            isc_throw(InvalidOperation, "Subnet is required for IPv6 lease allocation");
+        } else
         if (!ctx.duid_) {
-            isc_throw(InvalidOperation, "DUID is mandatory for allocation");
+            isc_throw(InvalidOperation, "DUID is mandatory for IPv6 lease allocation");
         }
 
         // Check which host reservation mode is supported in this subnet.
@@ -315,6 +314,9 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
 
             ctx.host_ = HostMgr::instance().get6(ctx.subnet_->getID(), ctx.duid_,
                                                  ctx.hwaddr_);
+        } else {
+            // Let's explicitly set it to NULL if reservations are disabled.
+            ctx.host_.reset();
         }
 
         // Check if there are existing leases for that subnet/duid/iaid
@@ -336,7 +338,7 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
         //   3.1 are the leases matching reservations?
         //       yes: renew them => done
         //       no: release existing leases, assign new ones based on reservations
-        // Case 4. if there are no leases and no reservations...
+        // Case 4/catch-all. if there are no leases and no reservations...
         //       assign new leases
         //
         // We could implement those checks as nested ifs, but the performance
@@ -344,7 +346,7 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
         // Hence independent checks.
 
         // Case 1: There are no leases and there's a reservation for this host.
-        if ((hr_mode != Subnet::HR_DISABLED) && leases.empty() && ctx.host_) {
+        if (leases.empty() && ctx.host_) {
 
             // Try to allocate leases that match reservations. Typically this will
             // succeed, except cases where the reserved addresses are used by
@@ -377,13 +379,13 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
             removeNonmatchingReservedLeases6(ctx, leases);
 
             if (!leases.empty()) {
-            // Return old leases so the server can see what has changed.
+                // Return old leases so the server can see what has changed.
                 return (updateFqdnData(leases, ctx.fwd_dns_update_,
                                        ctx.rev_dns_update_,
                                        ctx.hostname_, ctx.fake_allocation_));
             }
 
-            // If leases is empty at this stage, it means that we used to have
+            // If leases are empty at this stage, it means that we used to have
             // leases for this client, but we checked and those leases are reserved
             // for someone else, so we lost them. We will need to continue and
             // will finally end up in case 4 (no leases, no reservations), so we'll
@@ -401,7 +403,12 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
             // from reservations.
 
             // Second, let's remove leases that are reserved for someone else.
-            // This applies to any existing leases.
+            // This applies to any existing leases. This will not happen frequently,
+            // but it may happen with the following chain of events:
+            // 1. client A gets address X;
+            // 2. reservation for client B for address X is made by a administrator;
+            // 3. client A reboots
+            // 4. client A requests the address (X) he got previously
             removeNonmatchingReservedLeases6(ctx, leases);
 
             // leases now contain existing and new leases, but we removed those
@@ -413,7 +420,7 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
             // Caveat: do this only if we have at least one reserved address.
             removeNonreservedLeases6(ctx, leases);
 
-            // All checks are done. Let's hope we do have any leases left.
+            // All checks are done. Let's hope we have some leases left.
 
             // If we have any leases left, let's return them and we're done.
             if (!leases.empty()) {
@@ -431,7 +438,7 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
             //   someone else, so we released it.
         }
 
-        // Case 4: One of the following is true:
+        // Case 4/catch-all: One of the following is true:
         // - we don't have leases and there are no reservations
         // - we used to have leases, but we lost them, because they are now
         //   reserved for someone else
@@ -439,11 +446,14 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
         //   is still used by someone else
         //
         // In any case, we need to go through normal lease assignment process
-        // for now.
+        // for now. This is also a catch-all or last resort attempt, when we
+        // couldn't find any reservations (or couldn't use them).
 
         leases = allocateUnreservedLeases6(ctx);
 
-        return (leases);
+        if (!leases.empty()) {
+            return (leases);
+        }
 
         // Unable to allocate an address, return an empty lease.
         LOG_WARN(dhcpsrv_logger, DHCPSRV_ADDRESS6_ALLOC_FAIL).arg(attempts_);
@@ -508,7 +518,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
                 // It can happen that the lease allocation failed (we could
                 // have lost the race condition. That means that the hint is
-                // lo longer usable and we need to continue the regular
+                // no longer usable and we need to continue the regular
                 // allocation path.
                 if (lease) {
 
@@ -547,8 +557,9 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         }
     }
 
-    // Hint is in the pool but is not available. Search the pool until first of
-    // the following occurs:
+    // The hint was useless (it was not provided at all, was used by someone else,
+    // was out of pool or reserved for someone else). Search the pool until first
+    // of the following occurs:
     // - we find a free address
     // - we find an address for which the lease has expired
     // - we exhaust number of tries
@@ -599,9 +610,8 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                 // old lease should be NULL.
                 ctx.old_leases_.clear();
 
-                Lease6Collection collection;
-                collection.push_back(lease);
-                return (collection);
+                leases.push_back(lease);
+                return (leases);
             }
 
             // Although the address was free just microseconds ago, it may have
@@ -617,9 +627,9 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                 existing = reuseExpiredLease(existing,
                                              ctx,
                                              prefix_len);
-                Lease6Collection collection;
-                collection.push_back(existing);
-                return (collection);
+
+                leases.push_back(existing);
+                return (leases);
             }
         }
 
@@ -717,15 +727,20 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
 bool
 AllocEngine::removeLeases(Lease6Collection& container, const asiolink::IOAddress& addr) {
 
+    bool removed = false;
     for (Lease6Collection::iterator lease = container.begin();
          lease != container.end(); ++lease) {
         if ((*lease)->addr_ == addr) {
-            container.erase(lease);
-            return (true);
+            lease->reset();
+            removed = true;
         }
     }
 
-    return (false);
+    // Remove all elements that have NULL value
+    container.erase(std::remove(container.begin(), container.end(), Lease6Ptr()),
+                    container.end());
+
+    return (removed);
 }
 
 void
@@ -740,15 +755,13 @@ AllocEngine::removeNonreservedLeases6(ClientContext6& ctx,
     // This is the total number of leases. We should not remove the last one.
     int total = existing_leases.size();
 
-    // This is tricky/scary code. It iterates and possibly deletes at the same time.
+    // This is officially not scary code anymore. iterates and marks specified
+    // leases for deletion, by setting appropriate pointers to NULL.
     for (Lease6Collection::iterator lease = existing_leases.begin();
-         lease != existing_leases.end();) {
+         lease != existing_leases.end(); ++lease) {
         IPv6Resrv resv(ctx.type_ == Lease::TYPE_NA ? IPv6Resrv::TYPE_NA : IPv6Resrv::TYPE_PD,
                        (*lease)->addr_, (*lease)->prefixlen_);
-        if (ctx.host_->hasReservation(resv)) {
-            // This is a lease for reserved address. Let's keep it.
-            ++lease;
-        } else {
+        if (!ctx.host_->hasReservation(resv)) {
             // We have reservations, but not for this lease. Release it.
 
             // Remove this lease from LeaseMgr
@@ -759,17 +772,23 @@ AllocEngine::removeNonreservedLeases6(ClientContext6& ctx,
             // Add this to the list of removed leases.
             ctx.old_leases_.push_back(*lease);
 
-            // This is tricky part. We move lease to the next element and
-            // then pass the old value to erase.
-            existing_leases.erase(lease++);
+            // Set this pointer to NULL. The pointer is still valid. We're just
+            // setting the Lease6Ptr to NULL value. We'll remove all NULL
+            // pointers once the loop is finished.
+            lease->reset();
 
             if (--total == 1) {
-                // If there's only one lease left, return.
-                return;
+                // If there's only one lease left, break the loop.
+                break;
             }
         }
 
     }
+
+    // Remove all elements that we previously marked for deletion (those that
+    // have NULL value).
+    existing_leases.erase(std::remove(existing_leases.begin(),
+        existing_leases.end(), Lease6Ptr()), existing_leases.end());
 }
 
 Lease4Ptr
