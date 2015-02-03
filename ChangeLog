@@ -1,3 +1,8 @@
+883.	[bug]		marcin
+	libdhcpsrv: Prevent infinite loops in the allocation engine,
+	when the address pool becomes exhausted.
+	(Trac #3692, git f1e464558c89a6dc88ab28a25dd14a65fee62578)
+
 882.	[func]		sar
 	A utility class has been added which handles writing and
 	deleting pid files as well as checking if the process with
