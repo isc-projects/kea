@@ -339,11 +339,11 @@ public:
     /// @brief checks if bogus hint can be ignored and the allocation succeeds
     ///
     /// This test checks if the allocation with a hing that is out of the blue
-    /// can succeed. The invalid hint should be ingored completely.
+    /// can succeed. The invalid hint should be ignored completely.
     ///
     /// @param type Lease type
     /// @param hint hint (as send by a client)
-    /// @param expectd_pd_len (used in validation)
+    /// @param expected_pd_len (used in validation)
     void allocBogusHint6(Lease::Type type, IOAddress hint,
                          uint8_t expected_pd_len) {
         boost::scoped_ptr<AllocEngine> engine;
@@ -697,7 +697,7 @@ TEST_F(AllocEngine6Test, IterativeAllocatorPrefixStep) {
     // Second pool (just one lease here)
     EXPECT_EQ("2001:db8:1::", alloc.pickAddress(subnet_, duid_, IOAddress("::")).toText());
 
-    // Third pool (256 leases, let's check first and last explictly and the
+    // Third pool (256 leases, let's check first and last explicitly and the
     // rest over in a pool
     EXPECT_EQ("2001:db8:2::", alloc.pickAddress(subnet_, duid_, IOAddress("::")).toText());
     for (int i = 1; i < 255; i++) {
