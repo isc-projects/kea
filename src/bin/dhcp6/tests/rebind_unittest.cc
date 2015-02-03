@@ -1,4 +1,4 @@
-// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -49,14 +49,14 @@ namespace {
 ///   - pools configured: 3000:3::/64 and 3000:4::/64
 ///   - this specific configuration is used by tests using relays
 ///
-/// - Configuration 5:
+/// - Configuration 4:
 ///   - only prefixes (no addresses)
 ///   - 2 subnets: 2001:db8:1::/40 and 2001:db8:2::/40
-///   - 2 prefix pools: 2001:db8:1::/72 and 2001:db8:2::/72
+///   - 2 prefix pools: 3000::/72 and 2001:db8:2::/72
 ///   - 1 subnet for eth0 and 1 subnet for eth1
 ///   - this specific configuration is used by tests which don't use relays
 ///
-/// - Configuration 6:
+/// - Configuration 5:
 ///   - similar to Configuration 5 but with different subnets
 ///   - 2 subnets: 2001:db8:3::/40 and 2001:db8:4::/40
 ///   - 2 prefix pools: 2001:db8:3::/72 and 2001:db8:4::/72
@@ -146,7 +146,7 @@ const char* REBIND_CONFIGS[] = {
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
         "    \"pd-pools\": ["
-        "        { \"prefix\": \"2001:db8:1:01::\", "
+        "        { \"prefix\": \"3000::\", "
         "          \"prefix-len\": 72, "
         "          \"delegated-len\": 80"
         "        } ],"
@@ -156,7 +156,7 @@ const char* REBIND_CONFIGS[] = {
         " },"
         " {"
         "    \"pd-pools\": ["
-        "        { \"prefix\": \"2001:db8:2:01::\", "
+        "        { \"prefix\": \"2001:db8:2::\", "
         "          \"prefix-len\": 72, "
         "          \"delegated-len\": 80"
         "        } ],"
@@ -498,8 +498,6 @@ TEST_F(RebindTest, directClientPD) {
     // subnets.
     ASSERT_EQ(1, client.getLeaseNum());
     Lease6 lease_client2 = client.getLease(0);
-    ASSERT_TRUE(CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->
-                selectSubnet(lease_client2.addr_, ClientClasses()));
     // The client's lease should have been extended. The client will
     // update the cltt to current time when the lease gets extended.
     ASSERT_GE(lease_client2.cltt_ - lease_client.cltt_, 1000);

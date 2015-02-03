@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -1259,10 +1259,13 @@ TEST_F(Dhcp6ParserTest, pdPoolList) {
 
     ConstElementPtr x;
 
+    // We will configure three pools of prefixes for the subnet. Note that
+    // the 3rd prefix is out of the subnet prefix (the prefix doesn't match
+    // the subnet prefix).
     const char* prefixes[] = {
         "2001:db8:1:1::",
         "2001:db8:1:2::",
-        "2001:db8:1:3::"
+        "3000:1:3::"
     };
 
     string config =
@@ -1282,7 +1285,7 @@ TEST_F(Dhcp6ParserTest, pdPoolList) {
         "          \"prefix-len\": 72, "
         "          \"delegated-len\": 88"
         "        },"
-        "        { \"prefix\": \"2001:db8:1:03::\", "
+        "        { \"prefix\": \"3000:1:03::\", "
         "          \"prefix-len\": 72, "
         "          \"delegated-len\": 96"
         "        }"
@@ -1441,20 +1444,6 @@ TEST_F(Dhcp6ParserTest, invalidPdPools) {
         "        { \"prefix\": \"2001:db8:1::\", "
         "          \"prefix-len\": 128, "
         "          \"delegated-len\": 64"
-        "        } ],"
-        "\"valid-lifetime\": 4000 }"
-        "] }",
-        // Pool is not within the subnet.
-        "{ \"interfaces\": [ \"*\" ],"
-        "\"preferred-lifetime\": 3000,"
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"subnet6\": [ { "
-        "    \"subnet\": \"2001:db8:1::/64\","
-        "    \"pd-pools\": ["
-        "        { \"prefix\": \"2001:db8:77::\", "
-        "          \"prefix-len\": 64, "
-        "          \"delegated-len\": 128"
         "        } ],"
         "\"valid-lifetime\": 4000 }"
         "] }"

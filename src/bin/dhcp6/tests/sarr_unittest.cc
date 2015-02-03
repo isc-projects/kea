@@ -1,4 +1,4 @@
-// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -27,8 +27,11 @@ namespace {
 /// @brief Set of JSON configurations used by the SARR unit tests.
 ///
 /// - Configuration 0:
-///   - one subnet used on eth0 interface
+///   - one subnet 3000::/32 used on eth0 interface
 ///   - prefixes of length 64, delegated from the pool: 2001:db8:3::/48
+///   - the delegated prefix was intentionally selected to not match the
+///     subnet prefix, to test that the delegated prefix doesn't need to
+///     match the subnet prefix
 const char* CONFIGS[] = {
     // Configuration 0
     "{ \"interfaces\": [ \"*\" ],"
@@ -41,7 +44,7 @@ const char* CONFIGS[] = {
         "          \"prefix-len\": 48, "
         "          \"delegated-len\": 64"
         "        } ],"
-        "    \"subnet\": \"2001:db8::/32\", "
+        "    \"subnet\": \"3000::/32\", "
         "    \"interface-id\": \"\","
         "    \"interface\": \"eth0\""
         " } ],"
