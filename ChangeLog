@@ -1,3 +1,9 @@
+884.	[func]		marcin
+	The DHCPv6 server configuration now allows for defining a pool
+	for prefix delegation in which prefixes do not match a
+	subnet prefix.
+	(Trac #3647, git 5455d96cbf773e678bd6b1c3e31bfdeb617e6c13)
+
 883.	[bug]		marcin
 	libdhcpsrv: Prevent infinite loops in the allocation engine,
 	when the address pool becomes exhausted.
