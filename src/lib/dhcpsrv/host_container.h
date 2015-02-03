@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -112,7 +112,7 @@ struct HostResrv6Tuple {
     /// @param resrv IPv6 address/prefix reservation
     /// @param host pointer to the host object
     HostResrv6Tuple(const IPv6Resrv& resrv, const HostPtr& host)
-    :resrv_(resrv), host_(host), subnet_id_(host? host->getIPv6SubnetID() : 0) {
+    :resrv_(resrv), host_(host), subnet_id_(host ? host->getIPv6SubnetID() : 0) {
     }
 
     /// @brief Address or prefix reservation.
