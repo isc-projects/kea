@@ -21,6 +21,7 @@
 #include <hooks/hooks_manager.h>
 
 #include <cstring>
+#include <limits>
 #include <vector>
 #include <string.h>
 
@@ -405,8 +406,13 @@ AllocEngine::allocateLeases6(const Subnet6Ptr& subnet, const DuidPtr& duid,
         // left), but this has one major problem. We exactly control allocation
         // moment, but we currently do not control expiration time at all
 
-        unsigned int i = attempts_;
-        do {
+        // Initialize the maximum number of attempts to pick and allocate an
+        // address. The value of 0 means "infinite", which is maximum uint32_t
+        // value.
+        uint32_t max_attempts = (attempts_ == 0) ?
+            std::numeric_limits<uint32_t>::max() : attempts_;
+
+        for (uint32_t i = 0; i < max_attempts; ++i) {
             IOAddress candidate = allocator->pickAddress(subnet, duid, hint);
 
             /// @todo: check if the address is reserved once we have host support
@@ -461,11 +467,7 @@ AllocEngine::allocateLeases6(const Subnet6Ptr& subnet, const DuidPtr& duid,
                     return (collection);
                 }
             }
-
-            // Continue trying allocation until we run out of attempts
-            // (or attempts are set to 0, which means infinite)
-            --i;
-        } while ((i > 0) || !attempts_);
+        }
 
         // Unable to allocate an address, return an empty lease.
         LOG_WARN(dhcpsrv_logger, DHCPSRV_ADDRESS6_ALLOC_FAIL).arg(attempts_);
