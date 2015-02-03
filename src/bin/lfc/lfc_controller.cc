@@ -15,7 +15,15 @@
 #include <lfc/lfc_controller.h>
 #include <util/pid_file.h>
 #include <exceptions/exceptions.h>
+#include <dhcpsrv/csv_lease_file4.h>
+#include <dhcpsrv/csv_lease_file6.h>
+#include <dhcpsrv/memfile_lease_storage.h>
+#include <dhcpsrv/lease_mgr.h>
+#include <dhcpsrv/lease_file_loader.h>
 #include <config.h>
+
+#include <boost/shared_ptr.hpp>
+
 #include <iostream>
 #include <sstream>
 #include <unistd.h>
@@ -24,6 +32,7 @@
 
 using namespace std;
 using namespace isc::util;
+using namespace isc::dhcp;
 
 namespace isc {
 namespace lfc {
@@ -34,6 +43,9 @@ const char* LFCController::lfc_app_name_ = "DhcpLFC";
 
 /// @brief Defines the executable name.
 const char* LFCController::lfc_bin_name_ = "kea-lfc";
+
+/// @brief Maximum number of errors to read the leases from the lease file.
+const uint32_t MAX_LEASE_ERRORS = 100;
 
 LFCController::LFCController()
     : protocol_version_(0), verbose_(false), config_file_(""), previous_file_(""),
@@ -77,13 +89,22 @@ LFCController::launch(int argc, char* argv[]) {
     }
 
     // do other work (TBD)
-    std::cerr << "Add code to perform lease cleanup" << std::endl;
     // If we don't have a finish file do the processing
+    if (access(finish_file_.c_str(), F_OK) == -1) {
+        std::cerr << "LFC Processing files" << std::endl;
+
+	if (protocol_version_ == 4) {
+	    processLeases<Lease4, CSVLeaseFile4, Lease4Storage>();
+	} else {
+	    processLeases<Lease6, CSVLeaseFile6, Lease6Storage>();
+	}
+    }
 
     // We either already had a finish file or just created one, do the
     // file cleanup, we don't want to return after the catch as we
     // still need to cleanup the pid file
     try {
+        std::cerr << "LFC cleaning files" << std::endl;
         fileCleanup();
     } catch (const RunTimeFail& run_ex) {
         std::cerr << run_ex.what() << std::endl;
@@ -239,7 +260,7 @@ LFCController::parseArgs(int argc, char* argv[]) {
                 << "Previous or ex lease file: " << previous_file_ << std::endl
                 << "Copy lease file:           " << copy_file_ << std::endl
                 << "Output lease file:         " << output_file_ << std::endl
-                << "Finishn file:              " << finish_file_ << std::endl
+                << "Finish file:               " << finish_file_ << std::endl
                 << "Config file:               " << config_file_ << std::endl
                 << "PID file:                  " << pid_file_ << std::endl;
     }
@@ -279,8 +300,35 @@ LFCController::getVersion(const bool extended) const{
     return (version_stream.str());
 }
 
+template<typename LeaseObjectType, typename LeaseFileType, typename StorageType>
 void
 LFCController::processLeases() const {
+    LeaseFileType lfPrev(previous_file_.c_str());
+    LeaseFileType lfCopy(copy_file_.c_str());
+    LeaseFileType lfOutput(output_file_.c_str());
+    StorageType storage;
+    storage.clear();
+
+    // If a previous file exists read the entries into storage
+    if (lfPrev.exists()) {
+        LeaseFileLoader::load<LeaseObjectType>(lfPrev, storage,
+					       MAX_LEASE_ERRORS);
+    }
+
+    // Follow that with the copy of the current lease file 
+    if (lfCopy.exists()) {
+        LeaseFileLoader::load<LeaseObjectType>(lfCopy, storage,
+					       MAX_LEASE_ERRORS);
+    }
+
+    // Write the result out to the output file
+    LeaseFileLoader::write<LeaseObjectType>(lfOutput, storage);
+
+    // Once we've finished the output file move it to the complete file
+    if (rename(output_file_.c_str(), finish_file_.c_str()) != 0)
+        isc_throw(RunTimeFail, "Unable to move output (" << output_file_
+                  << ") to complete (" << finish_file_
+                  << ") error: " << strerror(errno));
 }
 
 void
