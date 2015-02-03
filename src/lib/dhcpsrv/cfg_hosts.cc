@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -120,7 +120,7 @@ CfgHosts::getAllInternal6(const IOAddress& address, Storage& storage) const {
         isc_throw(BadHostAddress, "must specify an IPv6 address when searching"
                   " for a host, specified address was " << address);
     }
-    // Search for the Host using the reserved IPv4 address as a key.
+    // Search for the Host using the reserved IPv6 address as a key.
     const HostContainerIndex1& idx = hosts_.get<1>();
     HostContainerIndex1Range r = idx.equal_range(address);
     // Append each Host object to the storage.
