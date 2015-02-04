@@ -16,6 +16,7 @@
 #include <gtest/gtest.h>
 #include <signal.h>
 #include <stdint.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 namespace {
@@ -38,13 +39,15 @@ std::string getApp() {
 /// @brief Waits for the specified process to finish.
 ///
 /// @param process An object which started the process.
+/// @param pid ID of the spawned process.
 /// @param timeout Timeout in seconds.
 ///
 /// @return true if the process ended, false otherwise
-bool waitForProcess(const ProcessSpawn& process, const uint8_t timeout) {
+bool waitForProcess(const ProcessSpawn& process, const pid_t pid,
+                    const uint8_t timeout) {
     uint32_t iterations = 0;
     const uint32_t iterations_max = timeout * 1000;
-    while (process.isRunning() && (iterations < iterations_max)) {
+    while (process.isRunning(pid) && (iterations < iterations_max)) {
         usleep(1000);
         ++iterations;
     }
@@ -55,13 +58,32 @@ bool waitForProcess(const ProcessSpawn& process, const uint8_t timeout) {
 // arguments and that the exit code is gathered.
 TEST(ProcessSpawn, spawnWithArgs) {
     std::vector<std::string> args;
+    args.push_back("-e");
     args.push_back("64");
     ProcessSpawn process(getApp(), args);
-    ASSERT_NO_THROW(process.spawn());
+    pid_t pid = 0;
+    ASSERT_NO_THROW(pid = process.spawn());
 
-    ASSERT_TRUE(waitForProcess(process, 2));
+    ASSERT_TRUE(waitForProcess(process, pid, 2));
 
-    EXPECT_EQ(64, process.getExitStatus());
+    EXPECT_EQ(64, process.getExitStatus(pid));
+}
+
+// This test verifies that the single ProcessSpawn object can be used
+// to start two processes and that their status codes can be gathered.
+TEST(ProcessSpawn, spawnTwoProcesses) {
+    std::vector<std::string> args;
+    args.push_back("-p");
+    ProcessSpawn process(getApp(), args);
+    pid_t pid1 = 0;
+    ASSERT_NO_THROW(pid1 = process.spawn());
+    ASSERT_TRUE(waitForProcess(process, pid1, 2));
+
+    pid_t pid2 = 0;
+    ASSERT_NO_THROW(pid2 = process.spawn());
+    ASSERT_TRUE(waitForProcess(process, pid2, 2));
+
+    EXPECT_NE(process.getExitStatus(pid1), process.getExitStatus(pid2));
 }
 
 // This test verifies that the external application can be ran without
@@ -69,11 +91,12 @@ TEST(ProcessSpawn, spawnWithArgs) {
 TEST(ProcessSpawn, spawnNoArgs) {
     std::vector<std::string> args;
     ProcessSpawn process(getApp());
-    ASSERT_NO_THROW(process.spawn());
+    pid_t pid = 0;
+    ASSERT_NO_THROW(pid = process.spawn());
 
-    ASSERT_TRUE(waitForProcess(process, 2));
+    ASSERT_TRUE(waitForProcess(process, pid, 2));
 
-    EXPECT_EQ(32, process.getExitStatus());
+    EXPECT_EQ(32, process.getExitStatus(pid));
 }
 
 
@@ -81,11 +104,12 @@ TEST(ProcessSpawn, spawnNoArgs) {
 // application can't be executed.
 TEST(ProcessSpawn, invalidExecutable) {
     ProcessSpawn process("foo");
-    ASSERT_NO_THROW(process.spawn());
+    pid_t pid = 0;
+    ASSERT_NO_THROW(pid = process.spawn());
 
-    ASSERT_TRUE(waitForProcess(process, 2));
+    ASSERT_TRUE(waitForProcess(process, pid, 2));
 
-    EXPECT_EQ(EXIT_FAILURE, process.getExitStatus());
+    EXPECT_EQ(EXIT_FAILURE, process.getExitStatus(pid));
 }
 
 // This test verifies that the full command line for the process is

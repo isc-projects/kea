@@ -16,6 +16,7 @@
 #include <util/process_spawn.h>
 #include <util/signal_set.h>
 #include <boost/bind.hpp>
+#include <map>
 #include <signal.h>
 #include <stdlib.h>
 #include <sys/wait.h>
@@ -55,21 +56,25 @@ public:
     /// or when the executable does not exist. If the process ends successfully
     /// the EXIT_SUCCESS is returned.
     ///
+    /// @return PID of the spawned process.
     /// @throw ProcessSpawnError if forking a current process failed.
-    void spawn();
+    pid_t spawn();
 
     /// @brief Checks if the process is still running.
     ///
+    /// @param pid ID of the child processes for which state should be checked.
     /// @return true if the child process is running, false otherwise.
-    bool isRunning() const;
+    bool isRunning(const pid_t pid) const;
 
     /// @brief Returns exit status of the process.
     ///
     /// If the process is still running, the previous status is returned
     /// or 0, if the process is being ran for the first time.
     ///
+    /// @param pid ID of the child process for which exit status should be
+    /// returned.
     /// @return Exit code of the process.
-    int getExitStatus() const;
+    int getExitStatus(const pid_t pid) const;
 
 private:
 
@@ -98,11 +103,7 @@ private:
     /// @brief A signal set installing a handler for SIGCHLD.
     SignalSetPtr signals_;
 
-    /// @brief PID of the child process.
-    pid_t pid_;
-
-    /// @brief Last returned status code by the child process.
-    int status_;
+    std::map<pid_t, int> process_status_;
 
     /// @brief Path to an executable.
     std::string executable_;
@@ -113,7 +114,7 @@ private:
 
 ProcessSpawnImpl::ProcessSpawnImpl(const std::string& executable,
                                    const ProcessArgs& args)
-    : signals_(new SignalSet(SIGCHLD)), pid_(0), status_(0),
+    : signals_(new SignalSet(SIGCHLD)), process_status_(),
       executable_(executable), args_(new char*[args.size() + 2]) {
     // Set the handler which is invoked immediatelly when the signal
     // is received.
@@ -158,13 +159,13 @@ ProcessSpawnImpl::getCommandLine() const {
     return (s.str());
 }
 
-void
+pid_t
 ProcessSpawnImpl::spawn() {
-    pid_ = fork();
-    if (pid_ < 0) {
+    pid_t pid = fork();
+    if (pid < 0) {
         isc_throw(ProcessSpawnError, "unable to fork current process");
 
-    } else if (pid_ == 0) {
+    } else if (pid == 0) {
         // We're in the child process. Run the executable.
         if (execvp(executable_.c_str(), args_) != 0) {
             // We may end up here if the execvp failed, e.g. as a result
@@ -174,16 +175,30 @@ ProcessSpawnImpl::spawn() {
         // Process finished, exit the child process.
         exit(EXIT_SUCCESS);
     }
+
+    process_status_[pid] = 0;
+    return (pid);
 }
 
 bool
-ProcessSpawnImpl::isRunning() const {
-    return ((pid_ != 0) && (kill(pid_, 0) == 0));
+ProcessSpawnImpl::isRunning(const pid_t pid) const {
+    if (process_status_.find(pid) == process_status_.end()) {
+        isc_throw(BadValue, "the process with the pid '" << pid
+                  << "' hasn't been spawned and it status cannnot be"
+                  " returned");
+    }
+    return ((pid != 0) && (kill(pid, 0) == 0));
 }
 
 int
-ProcessSpawnImpl::getExitStatus() const {
-    return (WEXITSTATUS(status_));
+ProcessSpawnImpl::getExitStatus(const pid_t pid) const {
+    std::map<pid_t, int>::const_iterator status = process_status_.find(pid);
+    if (status == process_status_.end()) {
+        isc_throw(BadValue, "the process with the pid '" << pid
+                  << "' hasn't been spawned and it status cannnot be"
+                  " returned");
+    }
+    return (WEXITSTATUS(status->second));
 }
 
 char*
@@ -202,11 +217,11 @@ bool
 ProcessSpawnImpl::waitForProcess(int signum) {
     // We're only interested in SIGCHLD.
     if (signum == SIGCHLD) {
-        status_ = 0;
-        while (wait4(pid_, &status_, WNOHANG, NULL) > 0) {
-            // continue
+        int status = 0;
+        pid_t pid = waitpid(-1, &status, 0);
+        if (pid > 0) {
+            process_status_[pid] = status;
         }
-        pid_ = 0;
         return (true);
     }
     return (false);
@@ -227,19 +242,19 @@ ProcessSpawn::getCommandLine() const {
     return (impl_->getCommandLine());
 }
 
-void
+pid_t
 ProcessSpawn::spawn() {
-    impl_->spawn();
+    return (impl_->spawn());
 }
 
 bool
-ProcessSpawn::isRunning() const {
-    return (impl_->isRunning());
+ProcessSpawn::isRunning(const pid_t pid) const {
+    return (impl_->isRunning(pid));
 }
 
 int
-ProcessSpawn::getExitStatus() const {
-    return (impl_->getExitStatus());
+ProcessSpawn::getExitStatus(const pid_t pid) const {
+    return (impl_->getExitStatus(pid));
 }
 
 }

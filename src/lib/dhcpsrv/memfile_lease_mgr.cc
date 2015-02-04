@@ -20,6 +20,8 @@
 #include <util/pid_file.h>
 #include <util/process_spawn.h>
 #include <cstdio>
+#include <cstring>
+#include <errno.h>
 #include <iostream>
 #include <sstream>
 
@@ -559,6 +561,9 @@ Memfile_LeaseMgr::lfcSetup() {
         asiolink::IntervalTimer::Callback cb =
             boost::bind(&Memfile_LeaseMgr::lfcCallback, this);
         LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_SETUP).arg(lfc_interval);
+        // Multiple the lfc_interval value by 1000 as this value specifies
+        // a timeout in seconds, whereas the setup() method expects the
+        // timeout in milliseconds.
         lfc_timer_.setup(cb, lfc_interval * 1000);
 
         // Start preparing the command line for kea-lfc.
@@ -614,6 +619,8 @@ Memfile_LeaseMgr::lfcCallback() {
 template<typename LeaseFileType>
 void Memfile_LeaseMgr::leaseFileCleanup(boost::shared_ptr<LeaseFileType>& lease_file) {
     bool do_lfc = true;
+    // This string will hold a reason for the failure to rote the lease files.
+    std::string error_string = "(no details)";
     // Check if the copy of the lease file exists already. If it does, it
     // is an indication that another LFC instance may be in progress, in
     // which case we don't want to rotate the current lease file to avoid
@@ -626,6 +633,7 @@ void Memfile_LeaseMgr::leaseFileCleanup(boost::shared_ptr<LeaseFileType>& lease_
         // because we don't want to run LFC if the rename failed.
         do_lfc = (rename(lease_file->getFilename().c_str(),
                          lease_file_copy.getFilename().c_str()) == 0);
+        error_string = strerror(errno);
 
         // Regardless if we successfully moved the current file or not,
         // we need to re-open the current file for the server to write
@@ -651,6 +659,7 @@ void Memfile_LeaseMgr::leaseFileCleanup(boost::shared_ptr<LeaseFileType>& lease_
             // try to write leases to disk.
             lease_file.reset();
             do_lfc = false;
+            error_string = ex.what();
         }
     }
     // Once we have rotated files as needed, start the new kea-lfc process
@@ -668,7 +677,8 @@ void Memfile_LeaseMgr::leaseFileCleanup(boost::shared_ptr<LeaseFileType>& lease_
     } else {
         LOG_ERROR(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_ROTATION_FAIL)
             .arg(lease_file->getFilename())
-            .arg(lease_file_copy.getFilename());
+            .arg(lease_file_copy.getFilename())
+            .arg(error_string);
     }
 }
 
