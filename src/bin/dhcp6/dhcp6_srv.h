@@ -394,10 +394,11 @@ protected:
     /// Copies options that must appear in any server response (ADVERTISE, REPLY)
     /// to client's messages (SOLICIT, REQUEST, RENEW, REBIND, DECLINE, RELEASE).
     /// One notable example is client-id. Other options may be copied as required.
+    /// Relay information details are also copied here.
     ///
     /// @param question client's message (options will be copied from here)
     /// @param answer server's message (options will be copied here)
-    void copyDefaultOptions(const Pkt6Ptr& question, Pkt6Ptr& answer);
+    void copyClientOptions(const Pkt6Ptr& question, Pkt6Ptr& answer);
 
     /// @brief Appends default options to server's answer.
     ///

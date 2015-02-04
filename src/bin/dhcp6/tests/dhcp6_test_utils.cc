@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/json_config_parser.h>
 #include <config/ccsession.h>
+#include <string.h>
 
 using namespace isc::data;
 using namespace isc::dhcp;
@@ -620,6 +621,36 @@ NakedDhcpv6SrvTest::generateIA(uint16_t type, uint32_t iaid, uint32_t t1,
     ia->setT2(t2);
     return (ia);
 }
+
+bool
+Dhcpv6SrvTest::compareOptions(const isc::dhcp::OptionPtr& option1,
+                              const isc::dhcp::OptionPtr& option2) {
+    if ((!option1 && option2) || (option1 && !option2)) {
+        return (false);
+    }
+    if (!option1 && !option2) {
+        return (true);
+    }
+
+    // We could start by comparing option codes and option lengths
+    // here, but it's just a waste of time. These are tests, so they
+    // don't have to be super performant. The pack+memcmp approach
+    // verifies all in one go.
+
+    isc::util::OutputBuffer buf1(0);
+    isc::util::OutputBuffer buf2(0);
+
+    option1->pack(buf1);
+    option2->pack(buf2);
+
+    if (buf1.getLength() != buf2.getLength()) {
+        return (false);
+    }
+
+    // memcmp returns 0 when equal.
+    return (!memcmp(buf1.getData(), buf2.getData(), buf1.getLength()));
+}
+
 
 }; // end of isc::test namespace
 }; // end of isc namespace
