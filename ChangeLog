@@ -1,3 +1,7 @@
+885.	[func]		tomek
+	Information-Request (stateless mode) in DHCPv6 is now supported.
+	(Trac #2949, git 3185d229c39ed4660e9bc98a7f4a9d0dfbe64a04)
+
 884.	[func]		marcin
 	The DHCPv6 server configuration now allows for defining a pool
 	for prefix delegation in which prefixes do not match a
