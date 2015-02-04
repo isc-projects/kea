@@ -701,7 +701,7 @@ Dhcpv6Srv::generateServerID() {
 }
 
 void
-Dhcpv6Srv::copyDefaultOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
+Dhcpv6Srv::copyClientOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
     // Add client-id.
     OptionPtr clientid = question->getOption(D6O_CLIENTID);
     if (clientid) {
@@ -2286,7 +2286,7 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
 
     Pkt6Ptr advertise(new Pkt6(DHCPV6_ADVERTISE, solicit->getTransid()));
 
-    copyDefaultOptions(solicit, advertise);
+    copyClientOptions(solicit, advertise);
     appendDefaultOptions(solicit, advertise);
     appendRequestedOptions(solicit, advertise);
     appendRequestedVendorOptions(solicit, advertise);
@@ -2309,7 +2309,7 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
 
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, request->getTransid()));
 
-    copyDefaultOptions(request, reply);
+    copyClientOptions(request, reply);
     appendDefaultOptions(request, reply);
     appendRequestedOptions(request, reply);
     appendRequestedVendorOptions(request, reply);
@@ -2329,7 +2329,7 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
 
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, renew->getTransid()));
 
-    copyDefaultOptions(renew, reply);
+    copyClientOptions(renew, reply);
     appendDefaultOptions(renew, reply);
     appendRequestedOptions(renew, reply);
 
@@ -2346,7 +2346,7 @@ Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
 
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, rebind->getTransid()));
 
-    copyDefaultOptions(rebind, reply);
+    copyClientOptions(rebind, reply);
     appendDefaultOptions(rebind, reply);
     appendRequestedOptions(rebind, reply);
 
@@ -2370,7 +2370,7 @@ Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm) {
     // The server sends Reply message in response to Confirm.
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, confirm->getTransid()));
     // Make sure that the necessary options are included.
-    copyDefaultOptions(confirm, reply);
+    copyClientOptions(confirm, reply);
     appendDefaultOptions(confirm, reply);
     // Indicates if at least one address has been verified. If no addresses
     // are verified it means that the client has sent no IA_NA options
@@ -2444,7 +2444,7 @@ Dhcpv6Srv::processRelease(const Pkt6Ptr& release) {
 
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, release->getTransid()));
 
-    copyDefaultOptions(release, reply);
+    copyClientOptions(release, reply);
     appendDefaultOptions(release, reply);
 
     releaseLeases(release, reply);
@@ -2468,11 +2468,12 @@ Dhcpv6Srv::processInfRequest(const Pkt6Ptr& infRequest) {
     // Create a Reply packet, with the same trans-id as the client's.
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, infRequest->getTransid()));
 
-    // Copy default options (client-id, also relay information if present)
-    copyDefaultOptions(infRequest, reply);
+    // Copy client options (client-id, also relay information if present)
+    copyClientOptions(infRequest, reply);
 
-    // Append default options (server-id for now, but possibly other options
-    // once we start supporting authentication)
+    // Append default options, i.e. options that the server is supposed
+    // to put in all messages it sends (server-id for now, but possibly other
+    // options once we start supporting authentication)
     appendDefaultOptions(infRequest, reply);
 
     // Try to assign options that were requested by the client.
