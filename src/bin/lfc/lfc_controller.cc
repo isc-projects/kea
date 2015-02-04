@@ -22,8 +22,6 @@
 #include <dhcpsrv/lease_file_loader.h>
 #include <config.h>
 
-#include <boost/shared_ptr.hpp>
-
 #include <iostream>
 #include <sstream>
 #include <unistd.h>
@@ -44,7 +42,7 @@ const char* LFCController::lfc_app_name_ = "DhcpLFC";
 /// @brief Defines the executable name.
 const char* LFCController::lfc_bin_name_ = "kea-lfc";
 
-/// @brief Maximum number of errors to read the leases from the lease file.
+/// @brief Maximum number of errors to allow when reading leases from the file.
 const uint32_t MAX_LEASE_ERRORS = 100;
 
 LFCController::LFCController()
@@ -57,6 +55,8 @@ LFCController::~LFCController() {
 
 void
 LFCController::launch(int argc, char* argv[]) {
+    bool do_clean = true;
+
     try {
         parseArgs(argc, argv);
     } catch (const InvalidUsage& ex) {
@@ -64,7 +64,8 @@ LFCController::launch(int argc, char* argv[]) {
         throw;  // rethrow it
     }
 
-    std::cerr << "Starting lease file cleanup" << std::endl;
+    if (verbose_ == true)
+        std::cerr << "Starting lease file cleanup" << std::endl;
 
     // verify we are the only instance
     PIDFile pid_file(pid_file_);
@@ -88,26 +89,36 @@ LFCController::launch(int argc, char* argv[]) {
         return;
     }
 
-    // do other work (TBD)
     // If we don't have a finish file do the processing
     if (access(finish_file_.c_str(), F_OK) == -1) {
-        std::cerr << "LFC Processing files" << std::endl;
+        if (verbose_ == true)
+            std::cerr << "LFC Processing files" << std::endl;
 
-	if (protocol_version_ == 4) {
-	    processLeases<Lease4, CSVLeaseFile4, Lease4Storage>();
-	} else {
-	    processLeases<Lease6, CSVLeaseFile6, Lease6Storage>();
-	}
+        try {
+            if (protocol_version_ == 4) {
+                processLeases<Lease4, CSVLeaseFile4, Lease4Storage>();
+            } else {
+                processLeases<Lease6, CSVLeaseFile6, Lease6Storage>();
+            }
+        } catch (const isc::Exception& proc_ex) {
+            // We don't want to do the cleanup but do want to get rid of the pid
+            do_clean = false;
+            std::cerr << "Processing failed: " << proc_ex.what() << std::endl;
+        }
     }
 
-    // We either already had a finish file or just created one, do the
-    // file cleanup, we don't want to return after the catch as we
+    // If do_clean is true We either already had a finish file or
+    // were able to create one.  We now want to do the file cleanup,
+    // we don't want to return after the catch as we
     // still need to cleanup the pid file
-    try {
-        std::cerr << "LFC cleaning files" << std::endl;
-        fileCleanup();
-    } catch (const RunTimeFail& run_ex) {
-        std::cerr << run_ex.what() << std::endl;
+    if (do_clean == true) {
+        if (verbose_ == true)
+            std::cerr << "LFC cleaning files" << std::endl;
+        try {
+            fileCleanup();
+        } catch (const RunTimeFail& run_ex) {
+            std::cerr << run_ex.what() << std::endl;
+        }
     }
 
     // delete the pid file for this instance
@@ -115,10 +126,10 @@ LFCController::launch(int argc, char* argv[]) {
         pid_file.deleteFile();
     } catch (const PIDFileError& pid_ex) {
         std::cerr << pid_ex.what() << std::endl;
-        return;
     }
 
-    std::cerr << "LFC complete" << std::endl;
+    if (verbose_ == true)
+        std::cerr << "LFC complete" << std::endl;
 }
 
 void
@@ -256,13 +267,14 @@ LFCController::parseArgs(int argc, char* argv[]) {
 
     // If verbose is set echo the input information
     if (verbose_ == true) {
-      std::cerr << "Protocol version:    DHCPv" << protocol_version_ << std::endl
-                << "Previous or ex lease file: " << previous_file_ << std::endl
-                << "Copy lease file:           " << copy_file_ << std::endl
-                << "Output lease file:         " << output_file_ << std::endl
-                << "Finish file:               " << finish_file_ << std::endl
-                << "Config file:               " << config_file_ << std::endl
-                << "PID file:                  " << pid_file_ << std::endl;
+        std::cerr << "Protocol version:    DHCPv" << protocol_version_ << std::endl
+                  << "Previous or ex lease file: " << previous_file_ << std::endl
+                  << "Copy lease file:           " << copy_file_ << std::endl
+                  << "Output lease file:         " << output_file_ << std::endl
+                  << "Finish file:               " << finish_file_ << std::endl
+                  << "Config file:               " << config_file_ << std::endl
+                  << "PID file:                  " << pid_file_ << std::endl
+                  << std::endl;
     }
 }
 
@@ -303,26 +315,26 @@ LFCController::getVersion(const bool extended) const{
 template<typename LeaseObjectType, typename LeaseFileType, typename StorageType>
 void
 LFCController::processLeases() const {
-    LeaseFileType lfPrev(previous_file_.c_str());
-    LeaseFileType lfCopy(copy_file_.c_str());
-    LeaseFileType lfOutput(output_file_.c_str());
+    LeaseFileType lf_prev(previous_file_.c_str());
+    LeaseFileType lf_copy(copy_file_.c_str());
+    LeaseFileType lf_output(output_file_.c_str());
     StorageType storage;
     storage.clear();
 
     // If a previous file exists read the entries into storage
-    if (lfPrev.exists()) {
-        LeaseFileLoader::load<LeaseObjectType>(lfPrev, storage,
-					       MAX_LEASE_ERRORS);
+    if (lf_prev.exists()) {
+        LeaseFileLoader::load<LeaseObjectType>(lf_prev, storage,
+                                               MAX_LEASE_ERRORS);
     }
 
-    // Follow that with the copy of the current lease file 
-    if (lfCopy.exists()) {
-        LeaseFileLoader::load<LeaseObjectType>(lfCopy, storage,
-					       MAX_LEASE_ERRORS);
+    // Follow that with the copy of the current lease file
+    if (lf_copy.exists()) {
+        LeaseFileLoader::load<LeaseObjectType>(lf_copy, storage,
+                                               MAX_LEASE_ERRORS);
     }
 
     // Write the result out to the output file
-    LeaseFileLoader::write<LeaseObjectType>(lfOutput, storage);
+    LeaseFileLoader::write<LeaseObjectType>(lf_output, storage);
 
     // Once we've finished the output file move it to the complete file
     if (rename(output_file_.c_str(), finish_file_.c_str()) != 0)

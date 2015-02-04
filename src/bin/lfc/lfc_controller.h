@@ -41,10 +41,6 @@ public:
 /// manage the command line, check for already running instances,
 /// invoke the code to process the lease files and finally to rename
 /// the lease files as necessary.
-///
-/// @todo The current code simply processes the command line we still need to
-/// -# invoke the code to read, process and write the lease files
-/// -# rename and delete the shell files as required
 class LFCController {
 public:
     /// @brief Defines the application name, it may be used to locate
@@ -67,10 +63,10 @@ public:
     /// -# parse command line arguments
     /// -# verify that it is the only instance
     /// -# create pid file
-    /// -# read leases files TBD
-    /// -# write lease file TBD
-    /// -# move leases files TBD
-    /// -# cleanup artifacts TBD
+    /// -# read leases files
+    /// -# write lease file
+    /// -# move leases files
+    /// -# cleanup artifacts
     /// -# remove pid file
     /// -# exit to the caller
     ///
@@ -158,6 +154,8 @@ public:
     /// @brief Process files.  Read in the leases from any previous & copy
     /// files we have and write the results out to the output file.  Upon
     /// completion of the write move the file to the finish file.
+    ///
+    /// @throw RunTimeFail if we can't move the file.
     template<typename LeaseObjectType, typename LeaseFileType, typename StorageType>
     void processLeases() const;
 
@@ -166,7 +164,7 @@ public:
     /// delete the work files (previous & copy) and move the finish file
     /// to be the new previous file.
     ///
-    /// @throw RunTimeFail if the command line parameters are invalid.
+    /// @throw RunTimeFail if we can't manipulate the files.
     void fileCleanup() const;
     //@}
 

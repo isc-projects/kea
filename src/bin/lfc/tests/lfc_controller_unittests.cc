@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <lfc/lfc_controller.h>
+#include <util/csv_file.h>
 #include <gtest/gtest.h>
 #include <fstream>
 #include <cerrno>
@@ -24,7 +25,6 @@ namespace {
 
 class LFCControllerTest : public ::testing::Test {
 public:
-    
     string pstr_; ///< String for name for pid file
     string xstr_; ///< String for name for previous file
     string istr_; ///< String for name for copy file
@@ -32,30 +32,36 @@ public:
     string fstr_; ///< String for name for finish file
     string cstr_; ///< String for name for config file
 
-    /// @brief Create a file and write the filename into it.
-    void touchFile(const std::string& filename, int);
+    string v4_hdr_; ///< String for the header of the v4 csv test file
+    string v6_hdr_; ///< String for the header of the v6 csv test file
 
     /// @brief Create a file and write the given string into it.
     void writeFile(const std::string& filename, const std::string& contents) const;
 
-    /// @brief Read a string from a file 
+    /// @brief Read a string from a file
     std::string readFile(const std::string& contents) const;
 
-    /// @brief check the file to see if i matches what was written to it.
-    bool checkFile(const std::string& filename, int);
-
 protected:
-    /// @brief Sets up the file names and Removes any old test
-    /// files before the test
+    /// @brief Sets up the file names and header string and removes 
+    /// any old test files before the test
     virtual void SetUp() {
         // set up the test files we need
-        string baseDir = TEST_DATA_BUILDDIR;
-	pstr_ = baseDir + "/" + "lease_file." + "pid";        // pid
-	xstr_ = baseDir + "/" + "lease_file." + "2";          // previous
-	istr_ = baseDir + "/" + "lease_file." + "1";          // copy
-	ostr_ = baseDir + "/" + "lease_file." + "output";     // output
-	fstr_ = baseDir + "/" + "lease_file." + "completed";  // finish
-	cstr_ = baseDir + "/" + "config_file";                // config
+        string base_dir = TEST_DATA_BUILDDIR;
+        string lf = "lease_file.";
+
+        pstr_ = base_dir + "/" + lf + "pid";        // pid
+        xstr_ = base_dir + "/" + lf + "2";          // previous
+        istr_ = base_dir + "/" + lf + "1";          // copy
+        ostr_ = base_dir + "/" + lf + "output";     // output
+        fstr_ = base_dir + "/" + lf + "completed";  // finish
+        cstr_ = base_dir + "/" + "config_file";     // config
+
+        v4_hdr_ = "address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
+                  "fqdn_fwd,fqdn_rev,hostname\n";
+
+        v6_hdr_ = "address,duid,valid_lifetime,expire,subnet_id,"
+                  "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
+                  "fqdn_rev,hostname,hwaddr\n";
 
         // and remove any outstanding test files
         removeTestFile();
@@ -67,7 +73,6 @@ protected:
     }
 
 private:
-
     /// @brief Removes any remaining test files
     void removeTestFile() const {
         remove(pstr_.c_str());
@@ -79,52 +84,27 @@ private:
 
 };
 
-void
-LFCControllerTest::touchFile(const std::string& filename, int i) {
-    std::ofstream fs;
-
-    fs.open(filename, std::ofstream::out);
-    fs << i << std::endl;
-    fs.close();
-    
-}
-
 std::string
 LFCControllerTest::readFile(const std::string& filename) const {
     std::ifstream fs;
 
     fs.open(filename, std::ifstream::in);
     std::string contents((std::istreambuf_iterator<char>(fs)),
-			 std::istreambuf_iterator<char>());
+                         std::istreambuf_iterator<char>());
     fs.close();
     return (contents);
 }
 
 void
 LFCControllerTest::writeFile(const std::string& filename,
-			     const std::string& contents) const {
+                             const std::string& contents) const {
     std::ofstream fs(filename, std::ofstream::out);
 
     if (fs.is_open()) {
         fs << contents;
-	fs.close();
+        fs.close();
     }
 }
-
-bool
-LFCControllerTest::checkFile(const std::string& filename, int i) {
-    std::ifstream fs;
-    int j;
-
-    fs.open(filename, std::ifstream::in);
-    fs >> j;
-    fs.close();
-
-    if (i == j)
-        return (true);
-    return (false);
-}
-
 
 /// @brief Verify initial state of LFC controller.
 /// Create an instance of the controller and see that
@@ -301,74 +281,79 @@ TEST_F(LFCControllerTest, fileCleanup) {
 
     // Test 2: Create a file for each of previous, copy and finish.  We should
     // delete the previous and copy files then move finish to previous.
-    touchFile(xstr_.c_str(), 1);
-    touchFile(istr_.c_str(), 2);
-    touchFile(fstr_.c_str(), 3);
+    writeFile(xstr_.c_str(), "1");
+    writeFile(istr_.c_str(), "2");
+    writeFile(fstr_.c_str(), "3");
 
     lfc_controller.fileCleanup();
 
     // verify finish is now previous and copy and finish are gone
-    EXPECT_TRUE(checkFile(xstr_.c_str(), 3));
+    EXPECT_EQ(readFile(xstr_.c_str()), "3");
     EXPECT_TRUE((remove(istr_.c_str()) != 0) && (errno == ENOENT));
     EXPECT_TRUE((remove(fstr_.c_str()) != 0) && (errno == ENOENT));
-    remove(pstr_.c_str());
+    remove(xstr_.c_str());
 
 
     // Test 3: Create a file for previous and finish but not copy.
-    touchFile(xstr_.c_str(), 4);
-    touchFile(fstr_.c_str(), 6);
+    writeFile(xstr_.c_str(), "4");
+    writeFile(fstr_.c_str(), "6");
 
     lfc_controller.fileCleanup();
 
     // verify finish is now previous and copy and finish are gone
-    EXPECT_TRUE(checkFile(xstr_.c_str(), 6));
+    EXPECT_EQ(readFile(xstr_.c_str()), "6");
     EXPECT_TRUE((remove(istr_.c_str()) != 0) && (errno == ENOENT));
     EXPECT_TRUE((remove(fstr_.c_str()) != 0) && (errno == ENOENT));
-    remove(pstr_.c_str());
+    remove(xstr_.c_str());
 
 
     // Test 4: Create a file for copy and finish but not previous.
-    touchFile(istr_.c_str(), 8);
-    touchFile(fstr_.c_str(), 9);
+    writeFile(istr_.c_str(), "8");
+    writeFile(fstr_.c_str(), "9");
 
     lfc_controller.fileCleanup();
 
     // verify finish is now previous and copy and finish are gone
-    EXPECT_TRUE(checkFile(xstr_.c_str(), 9));
+    EXPECT_EQ(readFile(xstr_.c_str()), "9");
     EXPECT_TRUE((remove(istr_.c_str()) != 0) && (errno == ENOENT));
     EXPECT_TRUE((remove(fstr_.c_str()) != 0) && (errno == ENOENT));
-    remove(pstr_.c_str());
+    remove(xstr_.c_str());
 
 
     // Test 5: rerun test 2 but using launch instead of cleanup
     // as we already have a finish file we shouldn't do any extra
     // processing
-    touchFile(xstr_.c_str(), 10);
-    touchFile(istr_.c_str(), 11);
-    touchFile(fstr_.c_str(), 12);
+    writeFile(xstr_.c_str(), "10");
+    writeFile(istr_.c_str(), "11");
+    writeFile(fstr_.c_str(), "12");
 
     lfc_controller_launch.launch(argc, argv);
 
     // verify finish is now previous and copy and finish are gone
     // as we ran launch we also check to see if the pid is gone.
-    EXPECT_TRUE(checkFile(xstr_.c_str(), 12));
+    EXPECT_EQ(readFile(xstr_.c_str()), "12");
     EXPECT_TRUE((remove(istr_.c_str()) != 0) && (errno == ENOENT));
     EXPECT_TRUE((remove(fstr_.c_str()) != 0) && (errno == ENOENT));
     EXPECT_TRUE((remove(pstr_.c_str()) != 0) && (errno == ENOENT));
-    remove(pstr_.c_str());
+    remove(xstr_.c_str());
 }
 
 /// @brief Verify that we properly combine and clean up files
-/// 
+///
 /// This is mostly a retest as we already test that the loader and
 /// writer functions work in their own tests but we combine it all
-/// here.  This is the v4 version
+/// here.  We check: both files available, only previous, only copy
+/// neither and one of them having many lease errors.  This is the
+/// v4 version.
 
-TEST_F(LFCControllerTest, programLaunch4) {
+TEST_F(LFCControllerTest, launch4) {
     LFCController lfc_controller;
 
-    // We can use the same arguments and controller for all of the tests
-    // as the files get redone for each subtest.
+    // The arg list for our test.  We generally use the
+    // same file names to make it easy.  We include the -d
+    // in the argv list in case we want to enable verbose
+    // for debugging purposes.  To enable it change argc from
+    // 14 to 15
     char* argv[] = { const_cast<char*>("progName"),
                      const_cast<char*>("-4"),
                      const_cast<char*>("-x"),
@@ -386,64 +371,135 @@ TEST_F(LFCControllerTest, programLaunch4) {
                      const_cast<char*>("-d")
     };
     int argc = 14;
-    lfc_controller.parseArgs(argc, argv);
+    string test_str, astr;
 
+    // Create the various strings we want to use, the header is predefined.
+    // We have several entries for different leases, the naming is:
+    // <lease letter>_<version#>
+    string A_1 = "192.0.2.1,06:07:08:09:0a:bc,,"
+                 "200,200,8,1,1,host.example.com\n";
+    string A_2 = "192.0.2.1,06:07:08:09:0a:bc,,"
+                 "200,500,8,1,1,host.example.com\n";
+    string A_3 = "192.0.2.1,06:07:08:09:0a:bc,,"
+                 "200,800,8,1,1,host.example.com\n";
+
+    string B_1 = "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,"
+                 "100,100,7,0,0,\n";
+    string B_2 = "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,"
+                 "100,135,7,0,0,\n";
+    string B_3 = "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,"
+                 "100,150,7,0,0,\n";
+
+    string C_1 = "192.0.2.3,,a:11:01:04,"
+                 "200,200,8,1,1,host.example.com\n";
+
+    string D_1 = "192.0.2.5,16:17:18:19:1a:bc,,"
+                 "200,200,8,1,1,host.example.com\n";
+    string D_2 = "192.0.2.5,16:17:18:19:1a:bc,,"
+                 "0,200,8,1,1,host.example.com\n";
+
+    // Subtest 1: both previous and copy available.
     // Create the test previous file
-    writeFile(xstr_.c_str(),
-	      "address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-	      "fqdn_fwd,fqdn_rev,hostname\n"
-	      "192.0.2.1,06:07:08:09:0a:bc,,200,200,8,1,1,"
-	      "host.example.com\n"
-	      "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,100,100,7,"
-	      "0,0,\n"
-	      "192.0.2.3,,a:11:01:04,200,200,8,1,1,host.example.com\n"
-	      "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,100,135,7,"
-	      "0,0,\n"
-	      "192.0.2.1,06:07:08:09:0a:bc,,200,500,8,1,1,"
-	      "host.example.com\n"
-	      "192.0.2.5,06:07:08:09:0a:bc,,200,200,8,1,1,"
-	      "host.example.com\n");
-
-
+    test_str = v4_hdr_ + A_1 + B_1 + C_1 + B_2 + A_2 + D_1;
+    writeFile(xstr_.c_str(), test_str);
 
     // Create the test copy file
-    writeFile(istr_.c_str(),
-	      "address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-	      "fqdn_fwd,fqdn_rev,hostname\n"
-	      "192.0.2.1,06:07:08:09:0a:bc,,200,800,8,1,1,"
-	      "host.example.com\n"
-	      "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,100,150,7,"
-	      "0,0,\n"
-	      "192.0.2.5,06:07:08:09:0a:bc,,200,0,8,1,1,"
-	      "host.example.com\n");
+    test_str = v4_hdr_ + A_3 + B_3 + D_2;
+    writeFile(istr_.c_str(), test_str);
 
     // Run the cleanup
     lfc_controller.launch(argc, argv);
 
-    // Compare the results
-    EXPECT_EQ(readFile(xstr_.c_str()),
-	      "address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-	      "fqdn_fwd,fqdn_rev,hostname\n"
-	      "192.0.2.1,06:07:08:09:0a:bc,,200,800,8,1,1,"
-	      "host.example.com\n"
-	      "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,100,150,7,"
-	      "0,0,\n");
+    // Compare the results, we expect the last lease for each ip
+    // except for C which was invalid and D which has expired
+    test_str = v4_hdr_ + A_3 + B_3;
+    EXPECT_EQ(readFile(xstr_.c_str()), test_str);
+    remove(xstr_.c_str());
 
-	      
 
+    // Subtest 2: only previous available
+    // Create the test previous file
+    test_str = v4_hdr_ + A_1 + B_1 + C_1 + B_2 + A_2 + D_1;
+    writeFile(xstr_.c_str(), test_str);
+
+    // No copy file
+
+    // Run the cleanup
+    lfc_controller.launch(argc, argv);
+
+    // Compare the results, we expect the last lease for each ip
+    // except for C which was invalid and D which has expired
+    test_str = v4_hdr_ + A_2 + D_1 + B_2;
+    EXPECT_EQ(readFile(xstr_.c_str()), test_str);
+    remove(xstr_.c_str());
+
+
+    // Subtest 3: only copy available
+    // No previous file
+
+    // Create the test copy file
+    test_str = v4_hdr_ + D_1 + A_1 + B_1 + B_3 + D_2 + A_3;
+    writeFile(istr_.c_str(), test_str);
+
+    // Run the cleanup
+    lfc_controller.launch(argc, argv);
+
+    // Compare the results, we expect the last lease for each ip
+    // except for C which was invalid and D which has expired
+    test_str = v4_hdr_ + A_3 + B_3;
+    EXPECT_EQ(readFile(xstr_.c_str()), test_str);
+    remove(xstr_.c_str());
+
+
+    // Subtest 4: neither available
+    // No previous file
+
+    // No copy file
+
+    // Run the cleanup
+    lfc_controller.launch(argc, argv);
+
+    // Compare the results, we expect a header and no leaes
+    test_str = v4_hdr_;
+    EXPECT_EQ(readFile(xstr_.c_str()), test_str);
+    remove(xstr_.c_str());
+
+
+    // Subtest 5: a file with a lot of errors
+    // A previous file with a lot of errors
+    astr = "1,\n2,\n3,\n4,\n5,\n6,\n7,\n7,\n8,\n9,\n10,\n";
+    test_str = v4_hdr_ + astr + astr + astr + astr + astr +
+               astr + astr + astr + astr + astr + astr;
+    writeFile(xstr_.c_str(), test_str);
+
+    // No copy file
+
+    // Run the cleanup, the file should fail but we should
+    // catch the error and properly cleanup.
+    lfc_controller.launch(argc, argv);
+
+    // And we shouldn't have deleted the previous file, but should
+    // have deleted the pid file
+    EXPECT_EQ(readFile(xstr_.c_str()), test_str);
+    EXPECT_TRUE((remove(pstr_.c_str()) != 0) && (errno == ENOENT));
 }
 
 /// @brief Verify that we properly combine and clean up files
-/// 
+///
 /// This is mostly a retest as we already test that the loader and
 /// writer functions work in their own tests but we combine it all
-/// here.  This is the v6 version
+/// here.  We check: both files available, only previous, only copy
+/// neither and one of them having many lease errors.  This is the
+/// v6 version.
 
-TEST_F(LFCControllerTest, programLaunch6) {
+TEST_F(LFCControllerTest, launch6) {
     LFCController lfc_controller;
 
-    // We can use the same arguments and controller for all of the tests
-    // as the files get redone for each subtest.
+    // The arg list for our test.  We generally use the
+    // same file names to make it easy.  We include the -d
+    // in the argv list in case we want to enable verbose
+    // for debugging purposes.  To enable it change argc from
+    // 14 to 15
     char* argv[] = { const_cast<char*>("progName"),
                      const_cast<char*>("-6"),
                      const_cast<char*>("-x"),
@@ -461,56 +517,119 @@ TEST_F(LFCControllerTest, programLaunch6) {
                      const_cast<char*>("-d")
     };
     int argc = 14;
-    lfc_controller.parseArgs(argc, argv);
+    string test_str, astr;
 
+    // Create the various strings we want to use, the header is predefined.
+    // We have several entries for different leases, the naming is:
+    // <lease letter>_<version#>.
+    string A_1 = "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
+                 "200,200,8,100,0,7,0,1,1,host.example.com,\n";
+    string A_2 = "2001:db8:1::1,,200,200,8,100,0,7,0,1,1,host.example.com,\n";
+    string A_3 = "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
+                 "200,400,8,100,0,7,0,1,1,host.example.com,\n";
+    string A_4 = "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
+                 "0,200,8,100,0,7,0,1,1,host.example.com,\n";
+
+    string B_1 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
+                 "300,300,6,150,0,8,0,0,0,,\n";
+    string B_2 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
+                 "300,800,6,150,0,8,0,0,0,,\n";
+    string B_3 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
+                 "300,1000,6,150,0,8,0,0,0,,\n";
+
+    string C_1 = "3000:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,100,200,8,0,2,"
+                 "16,64,0,0,,\n";
+    string C_2 = "3000:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,100,400,8,0,2,"
+                 "16,64,0,0,,\n";
+
+    string D_1 = "2001:db8:1::3,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
+                 "200,600,8,100,0,7,0,1,1,host.example.com,\n";
+
+    // Subtest 1: bot previous and copy available
     // Create the test previous file
-    writeFile(xstr_.c_str(),
-	      "address,duid,valid_lifetime,expire,subnet_id,"
-	      "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
-	      "fqdn_rev,hostname,hwaddr\n"
-	      "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-	      "200,200,8,100,0,7,0,1,1,host.example.com,\n"
-	      "2001:db8:1::1,,200,200,8,100,0,7,0,1,1,host.example.com,\n"
-	      "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,300,300,6,150,"
-	      "0,8,0,0,0,,\n"
-	      "3000:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,100,200,8,0,2,"
-	      "16,64,0,0,,\n"
-	      "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,300,800,6,150,"
-	      "0,8,0,0,0,,\n"
-	      "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-	      "200,400,8,100,0,7,0,1,1,host.example.com,\n"
-	      );
+    test_str = v6_hdr_ + A_1 + B_1 + A_2 + C_1 + A_3 + B_2;
+    writeFile(xstr_.c_str(), test_str);
 
     // Create the test copy file
-    writeFile(istr_.c_str(),
-	      "address,duid,valid_lifetime,expire,subnet_id,"
-	      "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
-	      "fqdn_rev,hostname,hwaddr\n"
-	      "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,300,1000,6,150,"
-	      "0,8,0,0,0,,\n"
-	      "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-	      "0,200,8,100,0,7,0,1,1,host.example.com,\n"
-	      "2001:db8:1::3,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-	      "200,600,8,100,0,7,0,1,1,host.example.com,\n"
-	      "3000:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,100,400,8,0,2,"
-	      "16,64,0,0,,\n"
-	      );
+    test_str = v6_hdr_ + B_3 + A_4 + D_1 + C_2;
+    writeFile(istr_.c_str(), test_str);
 
     // Run the cleanup
     lfc_controller.launch(argc, argv);
 
-    // Compare the results
-    EXPECT_EQ(readFile(xstr_.c_str()),
-	      "address,duid,valid_lifetime,expire,subnet_id,"
-	      "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
-	      "fqdn_rev,hostname,hwaddr\n"
-	      "2001:db8:1::3,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-	      "200,600,8,100,0,7,0,1,1,host.example.com,\n"
-	      "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,300,1000,6,150,"
-	      "0,8,0,0,0,,\n"
-	      "3000:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,100,400,8,0,2,"
-	      "16,64,0,0,,\n"
-	      );
+    // Compare the results, we expect the last lease for each ip
+    // except for A which has expired
+    test_str = v6_hdr_ + D_1 + B_3 + C_2;
+    EXPECT_EQ(readFile(xstr_.c_str()), test_str);
+    remove(xstr_.c_str());
+
+
+    // Subtest 2: only previous available
+    // Create the test previous file
+    test_str = v6_hdr_ + A_1 + B_1 + A_2 + C_1 + A_3 + B_2;
+    writeFile(xstr_.c_str(), test_str);
+
+    // No copy file
+
+    // Run the cleanup
+    lfc_controller.launch(argc, argv);
+
+    // Compare the results, we expect the last lease for each ip
+    // except for A which has expired
+    test_str = v6_hdr_ + A_3 + B_2 + C_1;
+    EXPECT_EQ(readFile(xstr_.c_str()), test_str);
+    remove(xstr_.c_str());
+
+
+    // Subtest 3: only copy available
+    // No previous file
+
+    // Create the test copy file
+    test_str = v6_hdr_ + A_1 + B_2 + B_3 + A_4 + D_1 + C_2;
+    writeFile(istr_.c_str(), test_str);
+
+    // Run the cleanup
+    lfc_controller.launch(argc, argv);
+
+    // Compare the results, we expect the last lease for each ip
+    // except for A which has expired
+    test_str = v6_hdr_ + D_1 + B_3 + C_2;
+    EXPECT_EQ(readFile(xstr_.c_str()), test_str);
+    remove(xstr_.c_str());
+
+
+    // Subtest 4: neither available
+    // No previous file
+
+    // No copy file
+
+    // Run the cleanup
+    lfc_controller.launch(argc, argv);
+
+    // Compare the results, we expect a header and no leases
+    test_str = v6_hdr_;
+    EXPECT_EQ(readFile(xstr_.c_str()), test_str);
+    remove(xstr_.c_str());
+
+
+    // Subtest 5: a file with a lot of errors
+    // A previous file with a lot of errors
+    astr = "1,\n2,\n3,\n4,\n5,\n6,\n7,\n7,\n8,\n9,\n10,\n";
+    test_str = v6_hdr_ + astr + astr + astr + astr + astr +
+               astr + astr + astr + astr + astr + astr;
+    writeFile(xstr_.c_str(), test_str);
+
+    // No copy file
+
+    // Run the cleanup, the file should fail but we should
+    // catch the error and properly cleanup.
+    lfc_controller.launch(argc, argv);
+
+    // And we shouldn't have deleted the previous file, but should
+    // have deleted the pid file
+    EXPECT_EQ(readFile(xstr_.c_str()), test_str);
+    EXPECT_TRUE((remove(pstr_.c_str()) != 0) && (errno == ENOENT));
+
 }
 
 } // end of anonymous namespace
