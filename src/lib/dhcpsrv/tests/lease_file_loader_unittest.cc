@@ -82,31 +82,31 @@ public:
     /// @brief Tests the write function.
     ///
     /// This method writes the leases from the storage container to the lease file
-    /// then compares the output to the string provided in the aguments to verify
-    /// the write was correct.  The order of the leases in the output will dpend
+    /// then compares the output to the string provided in the arguments to verify
+    /// the write was correct.  The order of the leases in the output will depend
     /// on the order in which the container provides the leases.
     ///
     /// @param storage A reference to the container to be written to the file
-    /// @param compStr The string to compare to what was read from the file
-    /// 
+    /// @param compare The string to compare to what was read from the file
+    ///
     /// @tparam LeaseStorage Type of the container: @c Lease4Container
     /// @c Lease6Container.
     ///
     template<typename LeaseObjectType, typename LeaseFileType,
-	     typename StorageType>
+             typename StorageType>
     void writeLeases(LeaseFileType lease_file,
-		     const StorageType& storage,
-		     const std::string& compare) {
-      // Prepare for a new file, close and remove the old
-      lease_file.close();
-      io_.removeFile();
+                     const StorageType& storage,
+                     const std::string& compare) {
+        // Prepare for a new file, close and remove the old
+        lease_file.close();
+        io_.removeFile();
 
-      // Write the current leases to the file
-      LeaseFileLoader::write<LeaseObjectType, LeaseFileType, StorageType>
-	(lease_file, storage);
+        // Write the current leases to the file
+        LeaseFileLoader::write<LeaseObjectType, LeaseFileType, StorageType>
+            (lease_file, storage);
 
-      // Compare to see if we got what we exepcted.
-      EXPECT_EQ(compare, io_.readFile());
+        // Compare to see if we got what we exepcted.
+        EXPECT_EQ(compare, io_.readFile());
     }
 
 
@@ -131,6 +131,9 @@ LeaseFileLoaderTest::absolutePath(const std::string& filename) {
 // This test verifies that the DHCPv4 leases can be loaded from the lease
 // file and that only the most recent entry for each lease is loaded and
 // the previous entries are discarded.
+//
+// It also tests the write function by writing the storage to a file
+// and comparing that with the expected value.
 TEST_F(LeaseFileLoaderTest, load4) {
     // Create lease file with leases for 192.0.2.1, 192.0.3.15. The lease
     // entry for the 192.0.2.3 is invalid (lacks HW address) and should
@@ -177,17 +180,20 @@ TEST_F(LeaseFileLoaderTest, load4) {
 
     writeLeases<Lease4, CSVLeaseFile4, Lease4Storage>
         (*lf, storage,
-	 "address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-	 "fqdn_fwd,fqdn_rev,hostname\n"
-	 "192.0.2.1,06:07:08:09:0a:bc,,200,500,8,1,1,"
-	 "host.example.com\n"
-	 "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,100,135,7,"
-	 "0,0,\n");
+         "address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
+         "fqdn_fwd,fqdn_rev,hostname\n"
+         "192.0.2.1,06:07:08:09:0a:bc,,200,500,8,1,1,"
+         "host.example.com\n"
+         "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,100,135,7,"
+         "0,0,\n");
 }
 
 // This test verifies that the lease with a valid lifetime of 0
 // is removed from the storage. The valid lifetime of 0 is set
 // for the released leases.
+//
+// It also tests the write function by writing the storage to a file
+// and comparing that with the expected value.
 TEST_F(LeaseFileLoaderTest, load4LeaseRemove) {
     // Create lease file in which one of the entries for 192.0.2.1
     // has a valid_lifetime of 0 and results in the deletion of the
@@ -219,15 +225,18 @@ TEST_F(LeaseFileLoaderTest, load4LeaseRemove) {
 
     writeLeases<Lease4, CSVLeaseFile4, Lease4Storage>
         (*lf, storage,
-	 "address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-	 "fqdn_fwd,fqdn_rev,hostname\n"
-	 "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,100,135,7,"
-	 "0,0,\n");
+         "address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
+         "fqdn_fwd,fqdn_rev,hostname\n"
+         "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,100,135,7,"
+         "0,0,\n");
 }
 
 // This test verifies that the DHCPv6 leases can be loaded from the lease
 // file and that only the most recent entry for each lease is loaded and
 // the previous entries are discarded.
+//
+// It also tests the write function by writing the storage to a file
+// and comparing that with the expected value.
 TEST_F(LeaseFileLoaderTest, load6) {
     // Create a lease file with three valid leases: 2001:db8:1::1,
     // 3000:1:: and 2001:db8:2::10.
@@ -277,20 +286,23 @@ TEST_F(LeaseFileLoaderTest, load6) {
 
     writeLeases<Lease6, CSVLeaseFile6, Lease6Storage>
         (*lf, storage,
-	 "address,duid,valid_lifetime,expire,subnet_id,"
-	 "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
-	 "fqdn_rev,hostname,hwaddr\n"
-	 "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-	 "200,400,8,100,0,7,0,1,1,host.example.com,\n"
-	 "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,300,800,6,150,"
-	 "0,8,0,0,0,,\n"
-	 "3000:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,100,200,8,0,2,"
-	 "16,64,0,0,,\n");
+         "address,duid,valid_lifetime,expire,subnet_id,"
+         "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
+         "fqdn_rev,hostname,hwaddr\n"
+         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
+         "200,400,8,100,0,7,0,1,1,host.example.com,\n"
+         "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,300,800,6,150,"
+         "0,8,0,0,0,,\n"
+         "3000:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,100,200,8,0,2,"
+         "16,64,0,0,,\n");
 }
 
 // This test verifies that the lease with a valid lifetime of 0
 // is removed from the storage. The valid lifetime of 0 set set
 // for the released leases.
+//
+// It also tests the write function by writing the storage to a file
+// and comparing that with the expected value.
 TEST_F(LeaseFileLoaderTest, load6LeaseRemove) {
     // Create lease file in which one of the entries for the 2001:db8:1::1
     // has valid lifetime set to 0, in which case the lease should be
@@ -324,11 +336,11 @@ TEST_F(LeaseFileLoaderTest, load6LeaseRemove) {
 
     writeLeases<Lease6, CSVLeaseFile6, Lease6Storage>
         (*lf, storage,
-	 "address,duid,valid_lifetime,expire,subnet_id,"
-	 "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
-	 "fqdn_rev,hostname,hwaddr\n"
-	 "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,300,800,6,150,"
-	 "0,8,0,0,0,,\n");
+         "address,duid,valid_lifetime,expire,subnet_id,"
+         "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
+         "fqdn_rev,hostname,hwaddr\n"
+         "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,300,800,6,150,"
+         "0,8,0,0,0,,\n");
 }
 
 // This test verifies that the exception is thrown when the specific
@@ -380,6 +392,9 @@ TEST_F(LeaseFileLoaderTest, loadMaxErrors) {
 // This test verifies that the lease with a valid lifetime set to 0 is
 // not loaded if there are no previous entries for this lease in the
 // lease file.
+//
+// It also tests the write function by writing the storage to a file
+// and comparing that with the expected value.
 TEST_F(LeaseFileLoaderTest, loadLeaseWithZeroLifetime) {
     // Create lease file. The second lease has a valid lifetime of 0.
     io_.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
@@ -388,7 +403,7 @@ TEST_F(LeaseFileLoaderTest, loadLeaseWithZeroLifetime) {
                   "192.0.2.3,06:07:08:09:0a:bd,,0,200,8,1,1,,\n");
 
     boost::scoped_ptr<CSVLeaseFile4> lf(new CSVLeaseFile4(filename_));
-    ASSERT_NO_THROW(lf->open()); 
+    ASSERT_NO_THROW(lf->open());
 
     // Set the error count to 0 to make sure that lease with a zero
     // lifetime doesn't cause an error.
@@ -405,11 +420,11 @@ TEST_F(LeaseFileLoaderTest, loadLeaseWithZeroLifetime) {
 
     writeLeases<Lease4, CSVLeaseFile4, Lease4Storage>
         (*lf, storage,
-	 "address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-	 "fqdn_fwd,fqdn_rev,hostname\n"
-	 "192.0.2.1,06:07:08:09:0a:bc,,200,200,8,1,1,\n");
+         "address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
+         "fqdn_fwd,fqdn_rev,hostname\n"
+         "192.0.2.1,06:07:08:09:0a:bc,,200,200,8,1,1,\n");
 
-}   
+}
 
 
 } // end of anonymous namespace

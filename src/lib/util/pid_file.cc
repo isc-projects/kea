@@ -97,4 +97,3 @@ PIDFile::deleteFile() const {
 
 } // namespace isc::util
 } // namespace isc
-
