@@ -14,10 +14,30 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-exit_code=${1}
+exit_code=
 
-if [ $# -eq 0 ]; then
-    exit 32
+while [ ! -z "${1}" ]
+do
+    option=${1}
+    echo ${option}
+    case ${option} in
+        -p)
+            shift
+            exit_code=$$
+            ;;
+        -e)
+            shift
+            exit_code=${1}
+            ;;
+        *)
+            exit 123
+            ;;
+    esac
+    shift
+done
+
+if [ -z "${exit_code}" ]; then
+    exit 32;
 fi
 
 exit ${exit_code}

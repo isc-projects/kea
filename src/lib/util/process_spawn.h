@@ -17,6 +17,7 @@
 
 #include <exceptions/exceptions.h>
 #include <string>
+#include <sys/types.h>
 #include <vector>
 
 namespace isc {
@@ -80,20 +81,25 @@ public:
     /// the EXIT_SUCCESS is returned.
     ///
     /// @throw ProcessSpawnError if forking a current process failed.
-    void spawn();
+    pid_t spawn();
 
     /// @brief Checks if the process is still running.
     ///
+    /// @param pid ID of the child processes for which state should be checked.
+    ///
     /// @return true if the child process is running, false otherwise.
-    bool isRunning() const;
+    bool isRunning(const pid_t pid) const;
 
     /// @brief Returns exit status of the process.
     ///
     /// If the process is still running, the previous status is returned
     /// or 0, if the process is being ran for the first time.
     ///
+    /// @param pid ID of the child process for which exit status should be
+    /// returned.
+    ///
     /// @return Exit code of the process.
-    int getExitStatus() const;
+    int getExitStatus(const pid_t pid) const;
 
 private:
 
