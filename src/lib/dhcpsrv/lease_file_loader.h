@@ -161,20 +161,20 @@ public:
         }
     }
 
-    /// @brief Write leaes from the storage into a lease file
+    /// @brief Write leases from the storage into a lease file
     ///
     /// This method iterates over the @c Lease4 or @c Lease6 object in the
     /// storage specified in the arguments and writes them to the file
     /// specified in the arguments.
     /// 
-    /// This method writes all entries in the storege to the file, it does
-    /// not perform any checks for expriation or duplication.
+    /// This method writes all entries in the storage to the file, it does
+    /// not perform any checks for expiration or duplication.
     ///
     /// @param lease_file A reference to the @c CSVLeaseFile4 or
     /// @c CSVLeaseFile6 object representing the lease file. The file
     /// doesn't need to be open because the method re-opens the file.
     /// @param storage A reference to the container from which leases
-    /// should be written..
+    /// should be written.
     /// @tparam LeasePtrType A @c Lease4 or @c Lease6.
     /// @tparam LeaseFileType A @c CSVLeaseFile4 or @c CSVLeaseFile6.
     /// @tparam StorageType A @c Lease4Storage or @c Lease6Storage.
@@ -188,14 +188,14 @@ public:
         lease_file.close();
         lease_file.open();
 
-	// Iterate over the storage area writing out the leases
+        // Iterate over the storage area writing out the leases
         for (typename StorageType::const_iterator lease = storage.begin();
              lease != storage.end();
              ++lease) {
             lease_file.append(**lease);
         }
 
-	// Close the file 
+        // Close the file
         lease_file.close();
     }
 };
