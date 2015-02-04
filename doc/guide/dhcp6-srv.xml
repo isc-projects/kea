@@ -1743,6 +1743,49 @@ should include options from the isc option space:
 
     </section>
 
+    <section id="stateless-dhcp6">
+      <title>Stateless DHCPv6 (Information-Request Message)</title>
+      <para>Typically DHCPv6 is used to assign both addresses and options. These
+      assignments (leases) have state that changes over time, hence
+      their name, stateful. DHCPv6 also supports a stateless mode,
+      where clients request configuration options only. This mode is
+      considered lightweight from the server perspective, as it does not require
+      any state tracking; hence its name.</para>
+      <para>The Kea server supports stateless mode. Clients can send
+      Information-Request messages and the server will send back
+      answers with the requested options (providing the options are
+      available in the server configuration).  The server will attempt to
+      use per-subnet options first. If that fails - for whatever reason - it
+      will then try to provide options defined in the global scope.</para>
+
+      <para>Stateless and stateful mode can be used together. No special
+      configuration directives are required to handle this. Simply use the
+      configuration for stateful clients and the stateless clients will get
+      just options they requested.</para>
+
+      <para>This usage of global options allows for an interesting case.
+      It is possible to run a server that provides just options and no
+      addresses or prefixes. If the options have the same value in each
+      subnet, the configuration can define required options in the global
+      scope and skip subnet definitions altogether. Here's a simple example of
+      such a configuration:
+<screen>
+"Dhcp6": {
+    "interfaces": [ "ethX" ],
+    <userinput>"option-data": [ {
+        "name": "dns-servers",
+        "data": "2001:db8::1, 2001:db8::2"
+    } ]</userinput>,
+    "lease-database": { "type": "memfile" }
+ }
+</screen>
+      This very simple configuration will provide DNS server information
+      to all clients in the network, regardless of their location. Note the
+      specification of the memfile lease database: this is required since,
+      as of version 0.9.1, Kea requires a lease database to be specified
+      even if it is not used.</para>
+    </section>
+
     <section id="dhcp6-relay-override">
       <title>Using specific relay agent for a subnet</title>
       <para>
@@ -2051,8 +2094,7 @@ should include options from the isc option space:
 
         <listitem>
           <simpara>
-            Duplication report (DECLINE), stateless configuration
-            (INFORMATION-REQUEST) and client reconfiguration (RECONFIGURE) are
+            Duplication report (DECLINE) and client reconfiguration (RECONFIGURE) are
             not yet supported.
           </simpara>
         </listitem>
