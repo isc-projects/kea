@@ -406,11 +406,6 @@ public:
         oro_.push_back(option_code);
     }
 
-    /// @brief List of options to be requested
-    ///
-    /// Content of this vector will be sent as ORO if use_oro_ is set
-    /// to true. See @ref sendORO for details.
-    std::vector<uint16_t> oro_;
 private:
 
     /// @brief Applies the new leases for the client.
@@ -516,6 +511,11 @@ private:
     /// @brief Pointer to the option holding a prefix hint.
     Option6IAPrefixPtr prefix_hint_;
 
+    /// @brief List of options to be requested
+    ///
+    /// Content of this vector will be sent as ORO if use_oro_ is set
+    /// to true. See @ref sendORO for details.
+    std::vector<uint16_t> oro_;
 };
 
 } // end of namespace isc::dhcp::test
