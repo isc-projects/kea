@@ -71,6 +71,8 @@ TEST(ProcessSpawn, spawnWithArgs) {
 
 // This test verifies that the single ProcessSpawn object can be used
 // to start two processes and that their status codes can be gathered.
+// It also checks that it is possible to clear the status of the
+// process.
 TEST(ProcessSpawn, spawnTwoProcesses) {
     std::vector<std::string> args;
     args.push_back("-p");
@@ -84,6 +86,16 @@ TEST(ProcessSpawn, spawnTwoProcesses) {
     ASSERT_TRUE(waitForProcess(process, pid2, 2));
 
     EXPECT_NE(process.getExitStatus(pid1), process.getExitStatus(pid2));
+
+    // Clear the status of the first process. An atttempt to get the status
+    // for the cleared process should result in exception. But, there should
+    // be no exception for the second process.
+    process.clearStatus(pid1);
+    EXPECT_THROW(process.getExitStatus(pid1), InvalidOperation);
+    EXPECT_NO_THROW(process.getExitStatus(pid2));
+
+    process.clearStatus(pid2);
+    EXPECT_THROW(process.getExitStatus(pid2), InvalidOperation);
 }
 
 // This test verifies that the external application can be ran without

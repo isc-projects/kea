@@ -106,6 +106,15 @@ public:
     /// @return Exit code of the process.
     int getExitStatus(const pid_t pid) const;
 
+    /// @brief Removes the status of the process with a specified PID.
+    ///
+    /// This method removes the status of the process with a specified PID.
+    /// If the process is still running, the status is not removed and the
+    /// exception is thrown.
+    ///
+    /// @param pid A process pid.
+    void clearStatus(const pid_t pid);
+
 private:
 
     /// @brief A pointer to the implementation of this class.
