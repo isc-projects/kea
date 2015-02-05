@@ -386,9 +386,7 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
 
             if (!leases.empty()) {
                 // Return old leases so the server can see what has changed.
-                return (updateFqdnData(leases, ctx.fwd_dns_update_,
-                                       ctx.rev_dns_update_,
-                                       ctx.hostname_, ctx.fake_allocation_));
+                return (updateFqdnData(ctx, leases));
             }
 
             // If leases are empty at this stage, it means that we used to have
@@ -603,6 +601,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         if (ctx.type_ == Lease::TYPE_PD) {
             Pool6Ptr pool = boost::dynamic_pointer_cast<Pool6>(
                 ctx.subnet_->getPool(ctx.type_, candidate, false));
+            /// @todo: verify that the pool is non-null
             prefix_len = pool->getLength();
         }
 
@@ -1590,22 +1589,19 @@ AllocEngine::updateLease4Information(const Lease4Ptr& lease,
 }
 
 Lease6Collection
-AllocEngine::updateFqdnData(const Lease6Collection& leases,
-                            const bool fwd_dns_update,
-                            const bool rev_dns_update,
-                            const std::string& hostname,
-                            const bool fake_allocation) {
+AllocEngine::updateFqdnData(ClientContext6& ctx, const Lease6Collection& leases) {
     Lease6Collection updated_leases;
     for (Lease6Collection::const_iterator lease_it = leases.begin();
          lease_it != leases.end(); ++lease_it) {
         Lease6Ptr lease(new Lease6(**lease_it));
-        lease->fqdn_fwd_ = fwd_dns_update;
-        lease->fqdn_rev_ = rev_dns_update;
-        lease->hostname_ = hostname;
-        if (!fake_allocation &&
+        lease->fqdn_fwd_ = ctx.fwd_dns_update_;
+        lease->fqdn_rev_ = ctx.rev_dns_update_;
+        lease->hostname_ = ctx.hostname_;
+        if (!ctx.fake_allocation_ &&
             ((lease->fqdn_fwd_ != (*lease_it)->fqdn_fwd_) ||
              (lease->fqdn_rev_ != (*lease_it)->fqdn_rev_) ||
              (lease->hostname_ != (*lease_it)->hostname_))) {
+            ctx.changed_leases_.push_back(*lease_it);
             LeaseMgrFactory::instance().updateLease6(lease);
         }
         updated_leases.push_back(lease);

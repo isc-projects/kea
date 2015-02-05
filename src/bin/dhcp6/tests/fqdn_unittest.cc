@@ -414,7 +414,7 @@ public:
             ASSERT_NO_THROW(reply = srv_->processRequest(req));
 
         } else if (msg_type == DHCPV6_RENEW) {
-            ASSERT_NO_THROW(reply = srv_->processRequest(req));
+            ASSERT_NO_THROW(reply = srv_->processRenew(req));
 
         } else if (msg_type == DHCPV6_RELEASE) {
             // For Release no lease will be acquired so we have to leave
