@@ -59,10 +59,11 @@ public:
     ~LFCController();
 
     /// @brief Acts as the primary entry point to start execution
-    /// of the process.  Provides the control logic to combine
-    /// two lease files and weed out duplicate and expired leases.
-    /// A description of the design can be found at
-    /// http://kea.isc.org/wiki/LFCDesign
+    /// of the process.
+    ///
+    ///Provides the control logic to combine two lease files and
+    /// weed out duplicate and expired leases. A description of
+    /// the design can be found at http://kea.isc.org/wiki/LFCDesign
     ///
     /// -# parse command line arguments
     /// -# verify that it is the only instance
@@ -80,8 +81,9 @@ public:
     /// @throw InvalidUsage if the command line parameters are invalid.
     void launch(int argc, char* argv[]);
 
-    /// @brief Process the command line arguments.  It is the first
-    /// step taken after the process has been launched.
+    /// @brief Process the command line arguments.
+    ///
+    /// It is the first step taken after the process has been launched.
     ///
     /// @param argc Number of strings in the @c argv array.
     /// @param argv Array of arguments passed in via the program's main function.
@@ -89,10 +91,11 @@ public:
     /// @throw InvalidUsage if the command line parameters are invalid.
     void parseArgs(int argc, char* argv[]);
 
-    /// @brief Rotate files.  After we have a finish file, either from
-    /// doing the cleanup or because a previous instance was interrupted,
-    /// delete the work files (previous & copy) and move the finish file
-    /// to be the new previous file.
+    /// @brief Rotate files.
+    ///
+    /// After we have a finish file, either from doing the cleanup or because
+    /// a previous instance was interrupted, delete the work files (previous
+    /// & copy) and move the finish file to be the new previous file.
     ///
     /// @throw RunTimeFail if we can't manipulate the files.
     void fileRotate() const;
