@@ -134,7 +134,7 @@ LeaseFileLoaderTest::absolutePath(const std::string& filename) {
 //
 // It also tests the write function by writing the storage to a file
 // and comparing that with the expected value.
-TEST_F(LeaseFileLoaderTest, load4) {
+TEST_F(LeaseFileLoaderTest, loadWrite4) {
     // Create lease file with leases for 192.0.2.1, 192.0.3.15. The lease
     // entry for the 192.0.2.3 is invalid (lacks HW address) and should
     // be discarded.
@@ -194,7 +194,7 @@ TEST_F(LeaseFileLoaderTest, load4) {
 //
 // It also tests the write function by writing the storage to a file
 // and comparing that with the expected value.
-TEST_F(LeaseFileLoaderTest, load4LeaseRemove) {
+TEST_F(LeaseFileLoaderTest, loadWrite4LeaseRemove) {
     // Create lease file in which one of the entries for 192.0.2.1
     // has a valid_lifetime of 0 and results in the deletion of the
     // lease.
@@ -237,7 +237,7 @@ TEST_F(LeaseFileLoaderTest, load4LeaseRemove) {
 //
 // It also tests the write function by writing the storage to a file
 // and comparing that with the expected value.
-TEST_F(LeaseFileLoaderTest, load6) {
+TEST_F(LeaseFileLoaderTest, loadWrite6) {
     // Create a lease file with three valid leases: 2001:db8:1::1,
     // 3000:1:: and 2001:db8:2::10.
     io_.writeFile("address,duid,valid_lifetime,expire,subnet_id,"
@@ -283,7 +283,6 @@ TEST_F(LeaseFileLoaderTest, load6) {
     ASSERT_TRUE(lease);
     EXPECT_EQ(500, lease->cltt_);
 
-
     writeLeases<Lease6, CSVLeaseFile6, Lease6Storage>
         (*lf, storage,
          "address,duid,valid_lifetime,expire,subnet_id,"
@@ -303,7 +302,7 @@ TEST_F(LeaseFileLoaderTest, load6) {
 //
 // It also tests the write function by writing the storage to a file
 // and comparing that with the expected value.
-TEST_F(LeaseFileLoaderTest, load6LeaseRemove) {
+TEST_F(LeaseFileLoaderTest, loadWrite6LeaseRemove) {
     // Create lease file in which one of the entries for the 2001:db8:1::1
     // has valid lifetime set to 0, in which case the lease should be
     // deleted.
@@ -395,7 +394,7 @@ TEST_F(LeaseFileLoaderTest, loadMaxErrors) {
 //
 // It also tests the write function by writing the storage to a file
 // and comparing that with the expected value.
-TEST_F(LeaseFileLoaderTest, loadLeaseWithZeroLifetime) {
+TEST_F(LeaseFileLoaderTest, loadWriteLeaseWithZeroLifetime) {
     // Create lease file. The second lease has a valid lifetime of 0.
     io_.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
                   "fqdn_fwd,fqdn_rev,hostname\n"
@@ -423,7 +422,6 @@ TEST_F(LeaseFileLoaderTest, loadLeaseWithZeroLifetime) {
          "address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
          "fqdn_fwd,fqdn_rev,hostname\n"
          "192.0.2.1,06:07:08:09:0a:bc,,200,200,8,1,1,\n");
-
 }
 
 

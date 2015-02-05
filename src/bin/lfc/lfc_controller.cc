@@ -32,6 +32,11 @@ using namespace std;
 using namespace isc::util;
 using namespace isc::dhcp;
 
+namespace {
+/// @brief Maximum number of errors to allow when reading leases from the file.
+const uint32_t MAX_LEASE_ERRORS = 100;
+}; // namespace anonymous
+
 namespace isc {
 namespace lfc {
 
@@ -41,9 +46,6 @@ const char* LFCController::lfc_app_name_ = "DhcpLFC";
 
 /// @brief Defines the executable name.
 const char* LFCController::lfc_bin_name_ = "kea-lfc";
-
-/// @brief Maximum number of errors to allow when reading leases from the file.
-const uint32_t MAX_LEASE_ERRORS = 100;
 
 LFCController::LFCController()
     : protocol_version_(0), verbose_(false), config_file_(""), previous_file_(""),
@@ -55,7 +57,7 @@ LFCController::~LFCController() {
 
 void
 LFCController::launch(int argc, char* argv[]) {
-    bool do_clean = true;
+    bool do_rotate = true;
 
     try {
         parseArgs(argc, argv);
@@ -64,58 +66,60 @@ LFCController::launch(int argc, char* argv[]) {
         throw;  // rethrow it
     }
 
-    if (verbose_ == true)
+    if (verbose_) {
         std::cerr << "Starting lease file cleanup" << std::endl;
+    }
 
     // verify we are the only instance
     PIDFile pid_file(pid_file_);
 
     try {
-        if (pid_file.check() == true) {
+        if (pid_file.check()) {
             // Already running instance, bail out
             std::cerr << "LFC instance already running" <<  std::endl;
             return;
         }
-    } catch (const PIDFileError& pid_ex) {
-        std::cerr << pid_ex.what() << std::endl;
-        return;
-    }
 
-    // create the pid file for this instance
-    try {
+        // create the pid file for this instance
         pid_file.write();
     } catch (const PIDFileError& pid_ex) {
         std::cerr << pid_ex.what() << std::endl;
         return;
     }
 
-    // If we don't have a finish file do the processing
-    if (access(finish_file_.c_str(), F_OK) == -1) {
-        if (verbose_ == true)
+    // If we don't have a finish file do the processing.  We
+    // don't know the exact type of the finish file here but
+    // all we care about is if it exists so that's okay
+    CSVFile lf_finish(getFinishFile());
+    if (!lf_finish.exists()) {
+        if (verbose_) {
             std::cerr << "LFC Processing files" << std::endl;
+        }
 
         try {
-            if (protocol_version_ == 4) {
+            if (getProtocolVersion() == 4) {
                 processLeases<Lease4, CSVLeaseFile4, Lease4Storage>();
             } else {
                 processLeases<Lease6, CSVLeaseFile6, Lease6Storage>();
             }
         } catch (const isc::Exception& proc_ex) {
             // We don't want to do the cleanup but do want to get rid of the pid
-            do_clean = false;
+            do_rotate = false;
             std::cerr << "Processing failed: " << proc_ex.what() << std::endl;
         }
     }
 
-    // If do_clean is true We either already had a finish file or
+    // If do_rotate is true We either already had a finish file or
     // were able to create one.  We now want to do the file cleanup,
     // we don't want to return after the catch as we
     // still need to cleanup the pid file
-    if (do_clean == true) {
-        if (verbose_ == true)
+    if (do_rotate) {
+        if (verbose_) {
             std::cerr << "LFC cleaning files" << std::endl;
+        }
+
         try {
-            fileCleanup();
+            fileRotate();
         } catch (const RunTimeFail& run_ex) {
             std::cerr << run_ex.what() << std::endl;
         }
@@ -128,8 +132,9 @@ LFCController::launch(int argc, char* argv[]) {
         std::cerr << pid_ex.what() << std::endl;
     }
 
-    if (verbose_ == true)
+    if (verbose_) {
         std::cerr << "LFC complete" << std::endl;
+    }
 }
 
 void
@@ -266,7 +271,7 @@ LFCController::parseArgs(int argc, char* argv[]) {
     }
 
     // If verbose is set echo the input information
-    if (verbose_ == true) {
+    if (verbose_) {
         std::cerr << "Protocol version:    DHCPv" << protocol_version_ << std::endl
                   << "Previous or ex lease file: " << previous_file_ << std::endl
                   << "Copy lease file:           " << copy_file_ << std::endl
@@ -280,7 +285,7 @@ LFCController::parseArgs(int argc, char* argv[]) {
 
 void
 LFCController::usage(const std::string& text) {
-    if (text != "") {
+    if (!text.empty()) {
         std::cerr << "Usage error: " << text << std::endl;
     }
 
@@ -315,55 +320,56 @@ LFCController::getVersion(const bool extended) const{
 template<typename LeaseObjectType, typename LeaseFileType, typename StorageType>
 void
 LFCController::processLeases() const {
-    LeaseFileType lf_prev(previous_file_.c_str());
-    LeaseFileType lf_copy(copy_file_.c_str());
-    LeaseFileType lf_output(output_file_.c_str());
     StorageType storage;
-    storage.clear();
 
     // If a previous file exists read the entries into storage
+    LeaseFileType lf_prev(getPreviousFile());
     if (lf_prev.exists()) {
         LeaseFileLoader::load<LeaseObjectType>(lf_prev, storage,
                                                MAX_LEASE_ERRORS);
     }
 
     // Follow that with the copy of the current lease file
+    LeaseFileType lf_copy(getCopyFile());
     if (lf_copy.exists()) {
         LeaseFileLoader::load<LeaseObjectType>(lf_copy, storage,
                                                MAX_LEASE_ERRORS);
     }
 
     // Write the result out to the output file
+    LeaseFileType lf_output(getOutputFile());
     LeaseFileLoader::write<LeaseObjectType>(lf_output, storage);
 
     // Once we've finished the output file move it to the complete file
-    if (rename(output_file_.c_str(), finish_file_.c_str()) != 0)
+    if (rename(getOutputFile().c_str(), getFinishFile().c_str()) != 0) {
         isc_throw(RunTimeFail, "Unable to move output (" << output_file_
                   << ") to complete (" << finish_file_
                   << ") error: " << strerror(errno));
+    }
 }
 
 void
-LFCController::fileCleanup() const {
+LFCController::fileRotate() const {
     // Remove the old previous file
-    if ((remove(previous_file_.c_str()) != 0) &&
+    if ((remove(getPreviousFile().c_str()) != 0) &&
         (errno != ENOENT)) {
         isc_throw(RunTimeFail, "Unable to delete previous file '"
                   << previous_file_ << "' error: " << strerror(errno));
     }
 
     // Remove the copy file
-    if ((remove(copy_file_.c_str()) != 0) &&
+    if ((remove(getCopyFile().c_str()) != 0) &&
         (errno != ENOENT)) {
         isc_throw(RunTimeFail, "Unable to delete copy file '"
                   << copy_file_ << "' error: " << strerror(errno));
     }
 
     // Rename the finish file to be the previous file
-    if (rename(finish_file_.c_str(), previous_file_.c_str()) != 0)
+    if (rename(finish_file_.c_str(), previous_file_.c_str()) != 0) {
         isc_throw(RunTimeFail, "Unable to move finish (" << finish_file_
                   << ") to previous (" << previous_file_
                   << ") error: " << strerror(errno));
+    }
 }
 }; // namespace isc::lfc
 }; // namespace isc
