@@ -809,9 +809,9 @@ void Memfile_LeaseMgr::lfcExecute(boost::shared_ptr<LeaseFileType>& lease_file) 
     // This string will hold a reason for the failure to rote the lease files.
     std::string error_string = "(no details)";
     // Check if the copy of the lease file exists already. If it does, it
-    // is an indication that another LFC instance may be in progress, in
-    // which case we don't want to rotate the current lease file to avoid
-    // overriding the contents of the existing file.
+    // is an indication that another LFC instance may be in progress or
+    // may be stalled. In that case we don't want to rotate the current
+    // lease file to avoid overriding the contents of the existing file.
     CSVFile lease_file_copy(appendSuffix(lease_file->getFilename(), FILE_INPUT));
     if (!lease_file_copy.exists()) {
         // Close the current file so as we can move it to the copy file.
@@ -849,8 +849,8 @@ void Memfile_LeaseMgr::lfcExecute(boost::shared_ptr<LeaseFileType>& lease_file) 
             error_string = ex.what();
         }
     }
-    // Once we have rotated files as needed, start the new kea-lfc process
-    // to perform a cleanup.
+    // Once the files have been rotated, or untouched if another LFC had
+    // not finished, a new process is started.
     if (do_lfc) {
         lfc_setup_->execute();
 

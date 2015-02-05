@@ -339,12 +339,12 @@ public:
     /// This enumeration is used by a method which appends the appropriate
     /// suffix to the lease file name.
     enum LFCFileType {
-        FILE_CURRENT,
-        FILE_INPUT,
-        FILE_PREVIOUS,
-        FILE_OUTPUT,
-        FILE_FINISH,
-        FILE_PID
+        FILE_CURRENT,  ///< %Lease File
+        FILE_INPUT,    ///< %Lease File Copy
+        FILE_PREVIOUS, ///< Previous %Lease File
+        FILE_OUTPUT,   ///< LFC Output File
+        FILE_FINISH,   ///< LFC Finish File
+        FILE_PID       ///< PID File
     };
 
     /// @brief Appends appropriate suffix to the file name.
