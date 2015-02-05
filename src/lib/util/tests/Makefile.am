@@ -17,10 +17,10 @@ CLEANFILES = *.gcno *.gcda
 # CSV files are created by unit tests for CSVFile class.
 CLEANFILES += *.csv
 
+EXTRA_DIST = process_spawn_app.sh
+
 TESTS_ENVIRONMENT = \
         $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
-
-noinst_SCRIPTS = process_spawn_app.sh
 
 TESTS =
 if HAVE_GTEST
