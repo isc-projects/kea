@@ -183,11 +183,10 @@ public:
     /// doesn't need to be open because the method re-opens the file.
     /// @param storage A reference to the container from which leases
     /// should be written.
+    ///
     /// @tparam LeasePtrType A @c Lease4 or @c Lease6.
     /// @tparam LeaseFileType A @c CSVLeaseFile4 or @c CSVLeaseFile6.
     /// @tparam StorageType A @c Lease4Storage or @c Lease6Storage.
-    ///
-
     template<typename LeaseObjectType, typename LeaseFileType,
              typename StorageType>
     static void write(LeaseFileType& lease_file, const StorageType& storage) {
