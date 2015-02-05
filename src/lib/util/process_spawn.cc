@@ -48,11 +48,11 @@ public:
 
     /// @brief Spawn the new process.
     ///
-    /// This method forks the current process and execues the specified
+    /// This method forks the current process and executes the specified
     /// binary with arguments within the child process.
     ///
     /// The child process will return EXIT_FAILURE if the method was unable
-    /// to start the exuctable, e.g. as a result of insufficient permissions
+    /// to start the executable, e.g. as a result of insufficient permissions
     /// or when the executable does not exist. If the process ends successfully
     /// the EXIT_SUCCESS is returned.
     ///
@@ -131,7 +131,7 @@ ProcessSpawnImpl::ProcessSpawnImpl(const std::string& executable,
                                    const ProcessArgs& args)
     : signals_(new SignalSet(SIGCHLD)), process_status_(),
       executable_(executable), args_(new char*[args.size() + 2]) {
-    // Set the handler which is invoked immediatelly when the signal
+    // Set the handler which is invoked immediately when the signal
     // is received.
     signals_->setOnReceiptHandler(boost::bind(&ProcessSpawnImpl::waitForProcess,
                                               this, _1));
@@ -199,7 +199,7 @@ bool
 ProcessSpawnImpl::isRunning(const pid_t pid) const {
     if (process_status_.find(pid) == process_status_.end()) {
         isc_throw(BadValue, "the process with the pid '" << pid
-                  << "' hasn't been spawned and it status cannnot be"
+                  << "' hasn't been spawned and it status cannot be"
                   " returned");
     }
     return ((pid != 0) && (kill(pid, 0) == 0));
