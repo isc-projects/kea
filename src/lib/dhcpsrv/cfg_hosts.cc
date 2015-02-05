@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -49,6 +49,20 @@ CfgHosts::getAll4(const IOAddress& address) {
     return (collection);
 }
 
+ConstHostCollection
+CfgHosts::getAll6(const IOAddress& address) const {
+    ConstHostCollection collection;
+    getAllInternal6<ConstHostCollection>(address, collection);
+    return (collection);
+}
+
+HostCollection
+CfgHosts::getAll6(const IOAddress& address) {
+    HostCollection collection;
+    getAllInternal6<HostCollection>(address, collection);
+    return (collection);
+}
+
 template<typename Storage>
 void
 CfgHosts::getAllInternal(const std::vector<uint8_t>& identifier,
@@ -89,6 +103,24 @@ CfgHosts::getAllInternal4(const IOAddress& address, Storage& storage) const {
                   " for a host, specified address was " << address);
     }
     // Search for the Host using the reserved IPv4 address as a key.
+    const HostContainerIndex1& idx = hosts_.get<1>();
+    HostContainerIndex1Range r = idx.equal_range(address);
+    // Append each Host object to the storage.
+    for (HostContainerIndex1::iterator host = r.first; host != r.second;
+         ++host) {
+        storage.push_back(*host);
+    }
+}
+
+template<typename Storage>
+void
+CfgHosts::getAllInternal6(const IOAddress& address, Storage& storage) const {
+    // Must not specify address other than IPv6.
+    if (!address.isV6()) {
+        isc_throw(BadHostAddress, "must specify an IPv6 address when searching"
+                  " for a host, specified address was " << address);
+    }
+    // Search for the Host using the reserved IPv6 address as a key.
     const HostContainerIndex1& idx = hosts_.get<1>();
     HostContainerIndex1Range r = idx.equal_range(address);
     // Append each Host object to the storage.
@@ -151,6 +183,66 @@ CfgHosts::get6(const IOAddress&, const uint8_t) {
     isc_throw(isc::NotImplemented, "get6(prefix, len) is not implemented");
 }
 
+ConstHostPtr
+CfgHosts::get6(const SubnetID& subnet_id,
+               const asiolink::IOAddress& address) const {
+    ConstHostCollection storage;
+    getAllInternal6(subnet_id, address, storage);
+
+    switch (storage.size()) {
+    case 0:
+        return (ConstHostPtr());
+    case 1:
+        return (*storage.begin());
+    default:
+        isc_throw(DuplicateHost,  "more than one reservation found"
+                  " for the host belonging to the subnet with id '"
+                  << subnet_id << "' and using the address '"
+                  << address.toText() << "'");
+    }
+}
+
+template<typename Storage>
+void
+CfgHosts::getAllInternal6(const SubnetID& subnet_id,
+                          const asiolink::IOAddress& address,
+                          Storage& storage) const {
+    // Must not specify address other than IPv6.
+    if (!address.isV6()) {
+        isc_throw(BadHostAddress, "must specify an IPv6 address when searching"
+                  " for a host, specified address was " << address);
+    }
+
+    // Let's get all reservations that match subnet_id, address.
+    const HostContainer6Index1& idx = hosts6_.get<1>();
+    HostContainer6Index1Range r = idx.equal_range(boost::make_tuple(subnet_id, address));
+
+    // For each IPv6 reservation, add the host to the results list. Fortunately,
+    // in all sane cases, there will be only one such host. (Each host can have
+    // multiple addresses reserved, but for each (address, subnet_id) there should
+    // be at most one host reserving it).
+    for(HostContainer6Index1::iterator resrv = r.first; resrv != r.second; ++resrv) {
+        storage.push_back(resrv->host_);
+    }
+}
+
+HostPtr
+CfgHosts::get6(const SubnetID& subnet_id, const asiolink::IOAddress& address) {
+    HostCollection storage;
+    getAllInternal6<HostCollection>(subnet_id, address, storage);
+    switch (storage.size()) {
+    case 0:
+        return (HostPtr());
+    case 1:
+        return (*storage.begin());
+    default:
+        isc_throw(DuplicateHost,  "more than one reservation found"
+                  " for the host belonging to the subnet with id '"
+                  << subnet_id << "' and using the address '"
+                  << address.toText() << "'");
+    }
+}
+
 HostPtr
 CfgHosts::getHostInternal(const SubnetID& subnet_id, const bool subnet6,
                           const HWAddrPtr& hwaddr, const DuidPtr& duid) const {
@@ -207,6 +299,15 @@ CfgHosts::add(const HostPtr& host) {
         isc_throw(BadValue, "must not use both IPv4 and IPv6 subnet ids of"
                   " 0 when adding new host reservation");
     }
+
+    add4(host);
+
+    add6(host);
+}
+
+void
+CfgHosts::add4(const HostPtr& host) {
+
     /// @todo This may need further sanity checks.
     HWAddrPtr hwaddr = host->getHWAddress();
     DuidPtr duid = host->getDuid();
@@ -236,6 +337,7 @@ CfgHosts::add(const HostPtr& host) {
                   << "' to the IPv4 subnet id '" << host->getIPv4SubnetID()
                   << "' as this host has already been added");
 
+
     // Check for duplicates for the specified IPv6 subnet.
     } else if (host->getIPv6SubnetID() &&
                get6(host->getIPv6SubnetID(), duid, hwaddr)) {
@@ -250,6 +352,41 @@ CfgHosts::add(const HostPtr& host) {
 
     // This is a new instance - add it.
     hosts_.insert(host);
+}
+
+void
+CfgHosts::add6(const HostPtr& host) {
+
+    /// @todo This may need further sanity checks.
+    HWAddrPtr hwaddr = host->getHWAddress();
+    DuidPtr duid = host->getDuid();
+
+    // Get all reservations for this host.
+    IPv6ResrvRange reservations = host->getIPv6Reservations();
+
+    // Check if there are any IPv6 reservations.
+    if (std::distance(reservations.first, reservations.second) == 0) {
+        // If there aren't, we don't need to add this to hosts6_, which is used
+        // for getting hosts by their IPv6 address reservations.
+        return;
+    }
+
+    // Now for each reservation, insert corresponding (address, host) tuple.
+    for (IPv6ResrvIterator it = reservations.first; it != reservations.second;
+         ++it) {
+
+        // If there's an entry for this (subnet-id, address), reject it.
+        if (get6(host->getIPv6SubnetID(), it->second.getPrefix())) {
+            isc_throw(DuplicateHost, "failed to add address reservation for "
+                      << "host using the HW address '"
+                      << (hwaddr ? hwaddr->toText(false) : "(null)")
+                      << " and DUID '" << (duid ? duid->toText() : "(null)")
+                      << "' to the IPv6 subnet id '" << host->getIPv6SubnetID()
+                      << "' for address/prefix " << it->second.getPrefix()
+                      << ": There's already reservation for this address/prefix");
+        }
+        hosts6_.insert(HostResrv6Tuple(it->second, host));
+    }
 }
 
 } // end of namespace isc::dhcp

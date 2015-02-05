@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,10 +16,13 @@
 #define HOST_CONTAINER_H
 
 #include <dhcpsrv/host.h>
+#include <dhcpsrv/subnet_id.h>
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/composite_key.hpp>
 #include <boost/multi_index/mem_fun.hpp>
+#include <boost/multi_index/member.hpp>
 #include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index/hashed_index.hpp>
 
 namespace isc {
 namespace dhcp {
@@ -96,7 +99,107 @@ typedef HostContainer::nth_index<1>::type HostContainerIndex1;
 typedef std::pair<HostContainerIndex1::iterator,
                   HostContainerIndex1::iterator> HostContainerIndex1Range;
 
-}
-}
+/// @brief Defines one entry for the Host Container for v6 hosts
+///
+/// It's essentially a pair of (IPv6 reservation, Host pointer).
+/// This structure is used as an intermediate structure in HostContainer6.
+/// For a single host that has reservations for X addresses or prefixes, there
+/// will be X HostResrv6Tuple structures.
+struct HostResrv6Tuple {
+
+    /// @brief Default constructor.
+    ///
+    /// @param resrv IPv6 address/prefix reservation
+    /// @param host pointer to the host object
+    HostResrv6Tuple(const IPv6Resrv& resrv, const HostPtr& host)
+    :resrv_(resrv), host_(host), subnet_id_(host ? host->getIPv6SubnetID() : 0) {
+    }
+
+    /// @brief Address or prefix reservation.
+    const IPv6Resrv resrv_;
+
+    /// @brief Pointer to the host object.
+    HostPtr host_;
+
+    /// @brief Value of the IPv6 Subnet-id
+    const SubnetID subnet_id_;
+
+    /// @brief Key extractor (used in the second composite key)
+    const asiolink::IOAddress& getKey() const {
+        return (resrv_.getPrefix());
+    }
+};
+
+/// @brief Multi-index container holding IPv6 reservations.
+///
+/// This container holds HostResrv6Tuples, i.e. pairs of (IPv6Resrv, HostPtr)
+/// pieces of information. This is needed for efficiently finding a host
+/// for a given IPv6 address or prefix.
+typedef boost::multi_index_container<
+
+    // This containers stores (IPv6Resrv, HostPtr) tuples
+    HostResrv6Tuple,
+
+    // Start specification of indexes here.
+    boost::multi_index::indexed_by<
+
+        // First index is used to search by an address.
+        boost::multi_index::ordered_non_unique<
+
+            // Address is extracted by calling IPv6Resrv::getPrefix()
+            // and it will return an IOAddress object.
+            boost::multi_index::const_mem_fun<
+                HostResrv6Tuple, const asiolink::IOAddress&, &HostResrv6Tuple::getKey>
+        >,
+
+        // Second index is used to search by (subnet_id, address) pair.
+        // This is
+        boost::multi_index::ordered_unique<
+
+            /// This is a composite key. It uses two keys: subnet-id and
+            /// IPv6 address reservation.
+            boost::multi_index::composite_key<
+
+                // Composite key uses members of the HostResrv6Tuple class.
+                HostResrv6Tuple,
+
+                // First key extractor. Gets subnet-id as a member of the
+                // HostResrv6Tuple structure.
+                boost::multi_index::member<HostResrv6Tuple, const SubnetID,
+                    &HostResrv6Tuple::subnet_id_>,
+
+                // Second key extractor. Address is extracted by calling
+                // IPv6Resrv::getPrefix() and it will return an IOAddress object.
+                boost::multi_index::const_mem_fun<
+                    HostResrv6Tuple, const asiolink::IOAddress&,
+                    &HostResrv6Tuple::getKey
+                >
+           >
+        >
+    >
+> HostContainer6;
+
+/// @brief First index type in the @c HostContainer6.
+///
+/// This index allows for searching for @c Host objects using an
+/// address.
+typedef HostContainer6::nth_index<0>::type HostContainer6Index0;
+
+/// @brief Results range returned using the @c HostContainer6Index0.
+typedef std::pair<HostContainer6Index0::iterator,
+                  HostContainer6Index0::iterator> HostContainer6Index0Range;
+
+/// @brief Second index type in the @c HostContainer6.
+///
+/// This index allows for searching for @c Host objects using a
+/// reserved (SubnetID, IPv6 address) tuple.
+typedef HostContainer6::nth_index<1>::type HostContainer6Index1;
+
+/// @brief Results range returned using the @c HostContainer6Index1.
+typedef std::pair<HostContainer6Index1::iterator,
+                  HostContainer6Index1::iterator> HostContainer6Index1Range;
+
+}; // end of isc::dhcp namespace
+}; // end of isc namespace
 
 #endif // HOST_CONTAINER_H
