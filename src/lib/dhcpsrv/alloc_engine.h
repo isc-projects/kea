@@ -383,6 +383,13 @@ protected:
         /// and give a new one to this client.
         Lease6Collection old_leases_;
 
+        /// @brief A pointer to any leases that have changed FQDN information.
+        ///
+        /// This list may contain old versions of the leases that are still
+        /// valid. In particular, it will contain a lease if the client's
+        /// FQDN has changed.
+        Lease6Collection changed_leases_;
+
         /// @brief A pointer to the object identifying host reservations.
         ///
         /// May be NULL if there are no reservations.
@@ -908,10 +915,11 @@ private:
     ///        responsibility for the reverse DNS Update for this lease
     ///        (if true).
     /// @ref ClientContext6::hostname_ A fully qualified domain-name of the client.
-    /// @ref ClientContext6::callout_handle_ a callout handle (used in hooks). A lease callouts
-    ///        will be executed if this parameter is passed.
-    /// @ref ClientContext6::fake_allocation_ is this real i.e. REQUEST (false) or just picking
-    ///        an address for SOLICIT that is not really allocated (true)
+    /// @ref ClientContext6::callout_handle_ a callout handle (used in hooks). A
+    ///        lease callouts will be executed if this parameter is passed.
+    /// @ref ClientContext6::fake_allocation_ is this real i.e. REQUEST (false)
+    ///        or just picking an address for SOLICIT that is not really
+    ///        allocated (true)
     ///
     /// @return refreshed lease
     /// @throw BadValue if trying to recycle lease that is still valid
@@ -921,25 +929,17 @@ private:
 
     /// @brief Updates FQDN data for a collection of leases.
     ///
+    /// @param ctx IPv6 client context (old versions of the leases that had
+    ///            FQDN data changed will be stored in ctx.changed_leases_,
+    ///            ctx.fwd_dns_update, ctx.rev_dns_update, ctx.hostname_
+    ///            and ctx.fake_allocation_ will be used.
     /// @param leases Collection of leases for which FQDN data should be
     /// updated.
-    /// @param fwd_dns_update Boolean value which indicates whether forward FQDN
-    /// update was performed for each lease (true) or not (false).
-    /// @param rev_dns_update Boolean value which indicates whether reverse FQDN
-    /// update was performed for each lease (true) or not (false).
-    /// @param hostname Client hostname associated with a lease.
-    /// @param fake_allocation Boolean value which indicates that it is a real
-    /// lease allocation, e.g. Request message is processed (false), or address
-    /// is just being picked as a result of processing Solicit (true). In the
-    /// latter case, the FQDN data should not be updated in the lease database.
     ///
     /// @return Collection of leases with updated FQDN data. Note that returned
     /// collection holds updated FQDN data even for fake allocation.
-    Lease6Collection updateFqdnData(const Lease6Collection& leases,
-                                    const bool fwd_dns_update,
-                                    const bool rev_dns_update,
-                                    const std::string& hostname,
-                                    const bool fake_allocation);
+    Lease6Collection updateFqdnData(ClientContext6& ctx,
+                                    const Lease6Collection& leases);
 
     /// @brief Utility function that removes all leases with a specified address
     /// @param container A collection of Lease6 pointers

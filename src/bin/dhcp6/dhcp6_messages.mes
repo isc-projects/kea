@@ -91,8 +91,7 @@ to perform the DNS Update, which removes RRs from the DNS.
 This debug message is logged when FQDN mapping for a particular lease has
 been changed by the recent Request message. This mapping will be changed in DNS.
 
-% DHCP6_DDNS_LEASE_RENEW_FQDN_CHANGE FQDN for the renewed lease: %1 has changed
-New  values: hostname = %2, reverse mapping = %3, forward mapping = %4
+% DHCP6_DDNS_LEASE_RENEW_FQDN_CHANGE FQDN for the renewed lease: %1 has changed new  values: hostname = %2, reverse mapping = %3, forward mapping = %4
 This debug message is logged when FQDN mapping for a particular lease has been
 changed by the recent Renew message. This mapping will be changed in DNS.
 
