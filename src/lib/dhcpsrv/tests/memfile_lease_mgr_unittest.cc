@@ -94,7 +94,6 @@ public:
     }
 
     using Memfile_LeaseMgr::lfcCallback;
-    using Memfile_LeaseMgr::lfc_process_;
 };
 
 /// @brief Test fixture class for @c Memfile_LeaseMgr
@@ -227,11 +226,11 @@ public:
     /// @param timeout Timeout in seconds.
     ///
     /// @return true if the process ended, false otherwise
-    bool waitForProcess(const util::ProcessSpawn& process,
+    bool waitForProcess(const Memfile_LeaseMgr& lease_mgr,
                         const uint8_t timeout) {
         uint32_t iterations = 0;
         const uint32_t iterations_max = timeout * 1000;
-        while (process.isRunning() && (iterations < iterations_max)) {
+        while (lease_mgr.isLFCRunning() && (iterations < iterations_max)) {
             usleep(1000);
             ++iterations;
         }
@@ -439,10 +438,12 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup4) {
     EXPECT_EQ(new_file_contents, current_file.readFile());
 
     // Wait for the LFC process to complete.
-    ASSERT_TRUE(waitForProcess(*lease_mgr->lfc_process_, 2));
+    ASSERT_TRUE(waitForProcess(*lease_mgr, 2));
 
     // And make sure it has returned an exit status of 0.
-    EXPECT_EQ(0, lease_mgr->lfc_process_->getExitStatus());
+    EXPECT_EQ(0, lease_mgr->getLFCExitStatus())
+        << "Executing the LFC process failed: make sure that"
+        " the kea-lfc program has been compiled.";
 
     // Check if we can still write to the lease file.
     std::vector<uint8_t> hwaddr_vec(6);
@@ -515,10 +516,13 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup6) {
     EXPECT_EQ(new_file_contents, current_file.readFile());
 
     // Wait for the LFC process to complete.
-    ASSERT_TRUE(waitForProcess(*lease_mgr->lfc_process_, 2));
+    ASSERT_TRUE(waitForProcess(*lease_mgr, 2));
 
     // And make sure it has returned an exit status of 0.
-    EXPECT_EQ(0, lease_mgr->lfc_process_->getExitStatus());
+    EXPECT_EQ(0, lease_mgr->getLFCExitStatus())
+        << "Executing the LFC process failed: make sure that"
+        " the kea-lfc program has been compiled.";
+
 
     // Check if we can still write to the lease file.
     std::vector<uint8_t> duid_vec(13);
@@ -578,10 +582,12 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanupStartFail) {
     ASSERT_NO_THROW(lease_mgr->lfcCallback());
 
     // Wait for the LFC process to complete.
-    ASSERT_TRUE(waitForProcess(*lease_mgr->lfc_process_, 2));
+    ASSERT_TRUE(waitForProcess(*lease_mgr, 2));
 
     // And make sure it has returned an error.
-    EXPECT_EQ(EXIT_FAILURE, lease_mgr->lfc_process_->getExitStatus());
+    EXPECT_EQ(EXIT_FAILURE, lease_mgr->getLFCExitStatus())
+        << "Executing the LFC process failed: make sure that"
+        " the kea-lfc program has been compiled.";
 }
 
 // Test that the backend returns a correct value of the interval

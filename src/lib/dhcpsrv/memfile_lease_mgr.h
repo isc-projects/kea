@@ -29,6 +29,8 @@
 namespace isc {
 namespace dhcp {
 
+class LFCSetup;
+
 /// @brief Concrete implementation of a lease database backend using flat file.
 ///
 /// This class implements a lease database backend using CSV files to store
@@ -105,7 +107,7 @@ public:
 
     /// @brief Specifies universe (V4, V6)
     ///
-    /// This enumeration is used by various functions in Memfile Lease Manager,
+    /// This enumeration is used by various functions in Memfile %Lease Manager,
     /// to identify the lease type referred to. In particular, it is used by
     /// functions operating on the lease files to distinguish between lease
     /// files for DHCPv4 and DHCPv6.
@@ -114,18 +116,10 @@ public:
         V6
     };
 
-    /// @brief Types of the lease files used by the Lease File Cleanup.
-    ///
-    /// This enumeration is used by a method which appends the appropriate
-    /// suffix to the lease file name.
-    enum LFCFileType {
-        FILE_CURRENT,
-        FILE_INPUT,
-        FILE_PREVIOUS,
-        FILE_OUTPUT,
-        FILE_FINISH,
-        FILE_PID
-    };
+    /// @name Methods implementing the API of the lease database backend.
+    ///       The following methods are implementing the API of the
+    ///       @c LeaseMgr to manage leases.
+    //@{
 
     /// @brief The sole lease manager constructor
     ///
@@ -335,12 +329,30 @@ public:
     /// support transactions, this is a no-op.
     virtual void rollback();
 
+    //@}
+
+    /// @name Public type and method used to determine file names for LFC.
+    //@{
+
+    /// @brief Types of the lease files used by the %Lease File Cleanup.
+    ///
+    /// This enumeration is used by a method which appends the appropriate
+    /// suffix to the lease file name.
+    enum LFCFileType {
+        FILE_CURRENT,
+        FILE_INPUT,
+        FILE_PREVIOUS,
+        FILE_OUTPUT,
+        FILE_FINISH,
+        FILE_PID
+    };
+
     /// @brief Appends appropriate suffix to the file name.
     ///
     /// The suffix is selected using the LFC file type specified as a
     /// parameter. Each file type uses a unique suffix or no suffix:
     /// - Current File: no suffix
-    /// - Lease File Copy or Input File: ".1"
+    /// - %Lease File Copy or Input File: ".1"
     /// - Previous File: ".2"
     /// - LFC Output File: ".output"
     /// - LFC Finish File: ".completed"
@@ -353,11 +365,18 @@ public:
     /// @return A lease file name with a suffix appended.
     static std::string appendSuffix(const std::string& file_name,
                                     const LFCFileType& file_type);
+    //@}
+
+
+    /// @name Miscellaneous public convenience methods.
+    ///       The following methods allow for retrieving useful information
+    ///       about the state of the backend.
+    //@{
 
     /// @brief Returns the interval at which the @c IOService events should
     /// be released.
     ///
-    /// The Memfile backend may install a timer to execute the Lease File
+    /// The Memfile backend may install a timer to execute the %Lease File
     /// Cleanup periodically. If this timer is installed, the method returns
     /// the LFC interval in milliseconds.
     ///
@@ -393,35 +412,10 @@ public:
     /// server shut down.
     bool persistLeases(Universe u) const;
 
-protected:
-
-    /// @brief A callback function triggering Lease File Cleanup.
-    ///
-    /// This method is virtual so as it can be overriden and customized in
-    /// the unit tests. In particular, the unit test which checks that the
-    /// callback function has been executed would override this function
-    /// to increase the execution counter each time it is executed.
-    ///
-    /// @todo Once the callback is implemented, there is a need to
-    /// extend the documentation of this method. Currently, it simply
-    /// logs that it has been called.
-    virtual void lfcCallback();
+    //@}
 
 private:
 
-    /// @brief Setup the periodic Lease File Cleanup.
-    ///
-    /// This method checks if the @c lfc-interval configuration parameter
-    /// is set to a non-zero value and sets up the interval timer to
-    /// perform the Lease File Cleanup periodically. It also prepares the
-    /// path and arguments for the @c kea-lfc application which will be
-    /// executed to perform the cleanup. By default the backend will use
-    /// the path to the kea-lfc in the Kea installation directory. If
-    /// the unit tests need to override this path (with the path in the
-    /// Kea build directory, the @c KEA_LFC_EXECUTABLE environmental
-    /// variable should be set to hold an absolute path to the kea-lfc
-    /// excutable.
-    void lfcSetup();
 
     /// @brief Initialize the location of the lease file.
     ///
@@ -439,31 +433,6 @@ private:
     /// lease_file4_ or lease_file6_, depending on the universe specified as an
     /// argument to this function.
     std::string initLeaseFilePath(Universe u);
-
-    /// @brief Performs a lease file cleanup for DHCPv4 or DHCPv6.
-    ///
-    /// This method performs all the actions necessary to prepare for the
-    /// execution of the LFC and if these actions are sucessful, it executes
-    /// the @c kea-lfc application as a background process to process (cleanup)
-    /// the lease files.
-    ///
-    /// For the design and the terminology used in this description refer to
-    /// the http://kea.isc.org/wiki/LFCDesign.
-    ///
-    /// If the method finds that the Lease File Copy exists it simply runs
-    /// the @c kea-lfc application.
-    ///
-    /// If the Lease File Copy doesn't exist it moves the Current Lease File
-    /// to Lease File Copy, and then recreates the Current Lease File without
-    /// any lease entries. If the file has been successfully moved, it runs
-    /// the @c kea-lfc application.
-    ///
-    /// @param lease_file A pointer to the object representing the Current
-    /// Lease File (DHCPv4 or DHCPv6 lease file).
-    ///
-    /// @tparam LeaseFileType One of @c CSVLeaseFile4 or @c CSVLeaseFile6.
-    template<typename LeaseFileType>
-    void leaseFileCleanup(boost::shared_ptr<LeaseFileType>& lease_file);
 
     /// @brief Load leases from the persistent storage.
     ///
@@ -492,7 +461,7 @@ private:
     ///
     /// @note: When the server starts up or is reconfigured it will try to
     /// read leases from the lease files using this method. It is possible
-    /// that the Lease File Cleanup is performed upon the lease files to
+    /// that the %Lease File Cleanup is performed upon the lease files to
     /// be read by this method. This may result in conflicts between the
     /// server process and the LFC. To prevent it, the method checks if the
     /// instance of the @c kea-lfc is running (using the PID file) before it
@@ -533,19 +502,93 @@ private:
     /// @brief Holds the pointer to the DHCPv6 lease file IO.
     boost::shared_ptr<CSVLeaseFile6> lease_file6_;
 
-    /// @brief A timer scheduled to perform Lease File Cleanup.
-    asiolink::IntervalTimer lfc_timer_;
+public:
+
+    /// @name Public methods to retrieve information about the LFC process state.
+    ///       These methods are meant to be used by unit tests to retrieve the
+    ///       state of the spawned LFC process before validating the result of
+    ///       the lease file cleanup.
+    //@{
+
+    /// @brief Checks if the process performing lease file cleanup is running.
+    ///
+    /// @return true if the process performing lease file cleanup is running.
+    bool isLFCRunning() const;
+
+    /// @brief Returns the status code returned by the last executed
+    /// LFC process.
+    int getLFCExitStatus() const;
+    //@}
+
+
+    /// @name Protected methods used for %Lease File Cleanup.
+    /// The following methods are protected so as they can be accessed and
+    /// tested by unit tests.
+    //@{
 
 protected:
 
-    /// @brief An object representing the kea-lfc process.
+    /// @brief A callback function triggering %Lease File Cleanup (LFC).
     ///
-    /// This object is created when the LFC is configured to be executed
-    /// periodically. It holds the path to kea-lfc program and the
-    /// arguments. When the LFC timer kicks the lease file cleanup
-    /// this object is used to spawn the kea-lfc as a background
-    /// process.
-    boost::scoped_ptr<util::ProcessSpawn> lfc_process_;
+    /// This method is executed periodically to start the lease file cleanup.
+    /// It checks whether the file is a DHCPv4 lease file or DHCPv6 lease file
+    /// and executes the @c Memfile_LeaseMgr::lfcExecute private method
+    /// with the appropriate parameters.
+    ///
+    /// This method is virtual so as it can be overridden and customized in
+    /// the unit tests. In particular, the unit test which checks that the
+    /// callback function has been executed would override this function
+    /// to increase the execution counter each time it is executed.
+    virtual void lfcCallback();
+    //@}
+
+    /// @name Private methods and members used for %Lease File Cleanup.
+    //@{
+
+private:
+
+    /// @brief Setup the periodic %Lease File Cleanup.
+    ///
+    /// This method checks if the @c lfc-interval configuration parameter
+    /// is set to a non-zero value and sets up the interval timer to
+    /// perform the %Lease File Cleanup periodically. It also prepares the
+    /// path and arguments for the @c kea-lfc application which will be
+    /// executed to perform the cleanup. By default the backend will use
+    /// the path to the kea-lfc in the Kea installation directory. If
+    /// the unit tests need to override this path (with the path in the
+    /// Kea build directory, the @c KEA_LFC_EXECUTABLE environmental
+    /// variable should be set to hold an absolute path to the kea-lfc
+    /// excutable.
+    void lfcSetup();
+
+    /// @brief Performs a lease file cleanup for DHCPv4 or DHCPv6.
+    ///
+    /// This method performs all the actions necessary to prepare for the
+    /// execution of the LFC and if these actions are successful, it executes
+    /// the @c kea-lfc application as a background process to process (cleanup)
+    /// the lease files.
+    ///
+    /// For the design and the terminology used in this description refer to
+    /// the http://kea.isc.org/wiki/LFCDesign.
+    ///
+    /// If the method finds that the %Lease File Copy exists it simply runs
+    /// the @c kea-lfc application.
+    ///
+    /// If the %Lease File Copy doesn't exist it moves the Current %Lease File
+    /// to Lease File Copy, and then recreates the Current Lease File without
+    /// any lease entries. If the file has been successfully moved, it runs
+    /// the @c kea-lfc application.
+    ///
+    /// @param lease_file A pointer to the object representing the Current
+    /// %Lease File (DHCPv4 or DHCPv6 lease file).
+    ///
+    /// @tparam LeaseFileType One of @c CSVLeaseFile4 or @c CSVLeaseFile6.
+    template<typename LeaseFileType>
+    void lfcExecute(boost::shared_ptr<LeaseFileType>& lease_file);
+
+    /// @brief A pointer to the Lease File Cleanup configuration.
+    boost::scoped_ptr<LFCSetup> lfc_setup_;
+    //@}
 
 };
 
