@@ -66,6 +66,11 @@ public:
     /// @return true if the child process is running, false otherwise.
     bool isRunning(const pid_t pid) const;
 
+    /// @brief Checks if any of the spawned processes is still running.
+    ///
+    /// @return true if at least one child process is still running.
+    bool isAnyRunning() const;
+
     /// @brief Returns exit status of the process.
     ///
     /// If the process is still running, the previous status is returned
@@ -103,6 +108,7 @@ private:
     /// @brief A signal set installing a handler for SIGCHLD.
     SignalSetPtr signals_;
 
+    /// @brief A map holding the status codes of executed processes.
     std::map<pid_t, int> process_status_;
 
     /// @brief Path to an executable.
@@ -190,6 +196,17 @@ ProcessSpawnImpl::isRunning(const pid_t pid) const {
     return ((pid != 0) && (kill(pid, 0) == 0));
 }
 
+bool
+ProcessSpawnImpl::isAnyRunning() const {
+    for (std::map<pid_t, int>::const_iterator proc = process_status_.begin();
+         proc != process_status_.end(); ++proc) {
+        if (isRunning(proc->first)) {
+            return (true);
+        }
+    }
+    return (false);
+}
+
 int
 ProcessSpawnImpl::getExitStatus(const pid_t pid) const {
     std::map<pid_t, int>::const_iterator status = process_status_.find(pid);
@@ -250,6 +267,11 @@ ProcessSpawn::spawn() {
 bool
 ProcessSpawn::isRunning(const pid_t pid) const {
     return (impl_->isRunning(pid));
+}
+
+bool
+ProcessSpawn::isAnyRunning() const {
+    return (impl_->isAnyRunning());
 }
 
 int

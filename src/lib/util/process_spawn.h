@@ -90,6 +90,11 @@ public:
     /// @return true if the child process is running, false otherwise.
     bool isRunning(const pid_t pid) const;
 
+    /// @brief Checks if any of the spawned processes is still running.
+    ///
+    /// @return true if at least one child process is still running.
+    bool isAnyRunning() const;
+
     /// @brief Returns exit status of the process.
     ///
     /// If the process is still running, the previous status is returned
