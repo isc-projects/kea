@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -117,6 +117,17 @@ HostMgr::get6(const IOAddress& prefix, const uint8_t prefix_len) const {
     }
     return (host);
 }
+
+ConstHostPtr
+HostMgr::get6(const SubnetID& subnet_id,
+              const asiolink::IOAddress& addr) const {
+    ConstHostPtr host = getCfgHosts()->get6(subnet_id, addr);
+    if (!host && alternate_source) {
+        host = alternate_source->get6(subnet_id, addr);
+    }
+    return (host);
+}
+
 
 void
 HostMgr::add(const HostPtr&) {

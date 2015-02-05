@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -95,6 +95,28 @@ public:
     virtual HostCollection
     getAll4(const asiolink::IOAddress& address);
 
+    /// @brief Returns a collection of hosts using the specified IPv6 address.
+    ///
+    /// This method may return multiple @c Host objects if they are connected
+    /// to different subnets.
+    ///
+    /// @param address IPv6 address for which the @c Host object is searched.
+    ///
+    /// @return Collection of const @c Host objects.
+    virtual ConstHostCollection
+    getAll6(const asiolink::IOAddress& address) const;
+
+    /// @brief Returns a collection of hosts using the specified IPv6 address.
+    ///
+    /// This method may return multiple @c Host objects if they are connected
+    /// to different subnets.
+    ///
+    /// @param address IPv6 address for which the @c Host object is searched.
+    ///
+    /// @return Collection of const @c Host objects.
+    virtual HostCollection
+    getAll6(const asiolink::IOAddress& address);
+
     /// @brief Returns a host connected to the IPv4 subnet and matching
     /// specified identifiers.
     ///
@@ -183,6 +205,25 @@ public:
     virtual HostPtr
     get6(const asiolink::IOAddress& prefix, const uint8_t prefix_len);
 
+    /// @brief Returns a host connected to the IPv6 subnet and having
+    /// a reservation for a specified IPv6 address.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param address reserved IPv6 address.
+    ///
+    /// @return Const @c Host object using a specified IPv6 address.
+    virtual ConstHostPtr
+    get6(const SubnetID& subnet_id, const asiolink::IOAddress& address) const;
+
+    /// @brief Returns a host connected to the IPv6 subnet and having
+    /// a reservation for a specified IPv6 address.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param address reserved IPv6 address.
+    ///
+    /// @return Const @c Host object using a specified IPv6 address.
+    virtual HostPtr
+    get6(const SubnetID& subnet_id, const asiolink::IOAddress& address);
 
     /// @brief Adds a new host to the collection.
     ///
@@ -241,6 +282,40 @@ private:
     void getAllInternal4(const asiolink::IOAddress& address,
                          Storage& storage) const;
 
+    /// @brief Returns @c Host objects for the specified IPv6 address.
+    ///
+    /// This private method is called by the @c CfgHosts::getAll6 methods
+    /// to retrieve the @c Host for which the specified IPv6 address is
+    /// reserved. The retrieved objects are appended to the @c storage
+    /// container.
+    ///
+    /// @param address IPv6 address.
+    /// @param [out] storage Container to which the retrieved objects are
+    /// appended.
+    /// @tparam One of the @c ConstHostCollection or @c HostCollection.
+    template<typename Storage>
+    void getAllInternal6(const asiolink::IOAddress& address,
+                         Storage& storage) const;
+
+
+    /// @brief Returns @c Host objects for the specified (Subnet-id,IPv6 address) tuple.
+    ///
+    /// This private method is called by the @c CfgHosts::getAll6 methods
+    /// to retrieve the @c Host for which the specified IPv6 address is
+    /// reserved and is in specified subnet-id. The retrieved objects are
+    /// appended to the @c storage container.
+    ///
+    /// @param subnet_id Subnet Identifier.
+    /// @param address IPv6 address.
+    /// @param [out] storage Container to which the retrieved objects are
+    /// appended.
+    /// @tparam One of the @c ConstHostCollection or @c HostCollection.
+    template<typename Storage>
+    void
+    getAllInternal6(const SubnetID& subnet_id,
+                    const asiolink::IOAddress& address,
+                    Storage& storage) const;
+
     /// @brief Returns @c Host object connected to a subnet.
     ///
     /// This private method returns a pointer to the @c Host object identified
@@ -260,9 +335,41 @@ private:
                             const HWAddrPtr& hwaddr,
                             const DuidPtr& duid) const;
 
+    /// @brief Adds a new host to the v4 collection.
+    ///
+    /// This is an internal method called by public @ref add.
+    ///
+    /// @param host Pointer to the new @c Host object being added.
+    ///
+    /// @throw DuplicateHost If a host for a particular HW address or DUID
+    /// has already been added to the IPv4 subnet.
+    virtual void add4(const HostPtr& host);
+
+    /// @brief Adds a new host to the v6 collection.
+    ///
+    /// This is an internal method called by public @ref add.
+    ///
+    /// @param host Pointer to the new @c Host object being added.
+    ///
+    /// @throw DuplicateHost If a host for a particular HW address or DUID
+    /// or for the particular address or prefix has already been added to
+    /// the IPv6 subnet.
+    virtual void add6(const HostPtr& host);
+
     /// @brief Multi-index container holding @c Host objects.
+    ///
+    /// It can be used for finding hosts by the following criteria:
+    /// - IPv4 address
+    /// - DUID
+    /// - HW/MAC address
     HostContainer hosts_;
 
+    /// @brief Multi-index container holding @c Host objects with v6 reservations.
+    ///
+    /// It can be used for finding hosts by the following criteria:
+    /// - IPv6 address
+    /// - IPv6 prefix
+    HostContainer6 hosts6_;
 };
 
 /// @name Pointers to the @c CfgHosts objects.

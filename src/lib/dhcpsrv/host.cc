@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -192,6 +192,12 @@ Host::addReservation(const IPv6Resrv& reservation) {
 IPv6ResrvRange
 Host::getIPv6Reservations(const IPv6Resrv::Type& type) const {
     return (ipv6_reservations_.equal_range(type));
+}
+
+IPv6ResrvRange
+Host::getIPv6Reservations() const {
+    return (IPv6ResrvRange(ipv6_reservations_.begin(),
+                           ipv6_reservations_.end()));
 }
 
 bool

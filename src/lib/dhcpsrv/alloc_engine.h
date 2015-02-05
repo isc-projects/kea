@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -301,6 +301,133 @@ protected:
         }
     };
 
+
+    /// @brief Context information for the DHCPv6 leases allocation.
+    ///
+    /// This structure holds a set of information provided by the DHCPv6
+    /// server to the allocation engine. In particular, it holds the
+    /// client identifying information, such as HW address or client
+    /// identifier. It also holds the information about the subnet that
+    /// the client is connected to.
+    ///
+    /// This structure is also used to pass  some information from
+    /// the allocation engine back to the server, i.e. the old leases
+    /// which the client had before the allocation.
+    ///
+    /// This structure is expected to be common for a single client, even
+    /// if multiple IAs are used. Some of the fields will need to be
+    /// updated for every call (there's a separate call to the allocation
+    /// engine for each IA option).
+    ///
+    /// This structure is meant to be extended in the future, if more
+    /// information should be passed to the allocation engine. Note
+    /// that the big advantage of using the context structure to pass
+    /// information to the allocation engine methods is that adding
+    /// new information doesn't modify the API of the allocation engine.
+    struct ClientContext6 {
+        /// @brief Subnet selected for the client by the server.
+        Subnet6Ptr subnet_;
+
+        /// @brief Client identifier
+        DuidPtr duid_;
+
+        /// @brief iaid IAID field from IA_NA or IA_PD that is being processed
+        uint32_t iaid_;
+
+        /// @brief Lease type (IA or PD)
+        Lease::Type type_;
+
+        /// @brief Hardware/MAC address (if available, may be NULL)
+        HWAddrPtr hwaddr_;
+
+        /// @brief client's hints
+        ///
+        /// There will typically be just one address, but the protocol allows
+        /// more than one address or prefix for each IA container.
+        std::vector<isc::asiolink::IOAddress> hints_;
+
+        /// @brief A boolean value which indicates that server takes
+        ///        responsibility for the forward DNS Update for this lease
+        ///        (if true).
+        bool fwd_dns_update_;
+
+        /// @brief A boolean value which indicates that server takes
+        ///        responsibility for the reverse DNS Update for this lease
+        ///        (if true).
+        bool rev_dns_update_;
+
+        /// @brief Hostname.
+        ///
+        /// The server retrieves the hostname from the Client FQDN option,
+        /// Hostname option or the host reservation record for the client.
+        std::string hostname_;
+
+        /// @brief Callout handle associated with the client's message.
+        hooks::CalloutHandlePtr callout_handle_;
+
+        /// @brief Indicates if this is a real or fake allocation.
+        ///
+        /// The real allocation is when the allocation engine is supposed
+        /// to make an update in a lease database: create new lease, or
+        /// update existing lease.
+        bool fake_allocation_;
+
+        /// @brief A pointer to any old leases that the client had before update
+        ///        but are no longer valid after the update/allocation.
+        ///
+        /// This collection is typically empty, except cases when we are doing
+        /// address reassignment, e.g. because there is a host reservation that
+        /// gives this address to someone else, so we had to return the address,
+        /// and give a new one to this client.
+        Lease6Collection old_leases_;
+
+        /// @brief A pointer to the object identifying host reservations.
+        ///
+        /// May be NULL if there are no reservations.
+        ConstHostPtr host_;
+
+        /// @brief Default constructor.
+        ClientContext6()
+           : subnet_(), duid_(), iaid_(0), type_(Lease::TYPE_NA), hwaddr_(),
+             hints_(), fwd_dns_update_(false), rev_dns_update_(false), hostname_(""),
+             callout_handle_(), fake_allocation_(false), old_leases_(), host_() {
+        }
+
+        /// @brief Constructor with parameters.
+        ///
+        /// Note that several less frequently parameters (callout_handle,
+        /// old_leases, host) fields are not set. They should be set explicitly,
+        /// if needed.
+        ///
+        /// @param subnet subnet the allocation should come from
+        /// @param duid Client's DUID
+        /// @param iaid iaid field from the IA_NA container that client sent
+        /// @param hint a hint that the client provided
+        /// @param type lease type (IA, TA or PD)
+        /// @param fwd_dns A boolean value which indicates that server takes
+        ///        responsibility for the forward DNS Update for this lease
+        ///        (if true).
+        /// @param rev_dns A boolean value which indicates that server takes
+        ///        responsibility for the reverse DNS Update for this lease
+        ///        (if true).
+        /// @param hostname A fully qualified domain-name of the client.
+        /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
+        ///        an address for SOLICIT that is not really allocated (true)
+        ClientContext6(const Subnet6Ptr& subnet, const DuidPtr& duid,
+                       const uint32_t iaid, const isc::asiolink::IOAddress& hint,
+                       const Lease::Type type, const bool fwd_dns, const bool
+                       rev_dns, const std::string& hostname, const bool
+                       fake_allocation):
+        subnet_(subnet), duid_(duid), iaid_(iaid), type_(type), hwaddr_(),
+            hints_(), fwd_dns_update_(fwd_dns), rev_dns_update_(rev_dns),
+            hostname_(hostname), fake_allocation_(fake_allocation),
+            old_leases_(), host_() {
+            hints_.push_back(hint);
+            // callout_handle, host pointers initiated to NULL by their
+            // respective constructors.
+        }
+    };
+
     /// @brief Default constructor.
     ///
     /// Instantiates necessary services, required to run DHCPv6 server.
@@ -436,44 +563,86 @@ protected:
     Lease4Ptr
     renewLease4(const Lease4Ptr& lease, ClientContext4& ctx);
 
-    /// @brief Allocates an IPv6 lease
+    /// @brief Allocates IPv6 leases for a given IA container
     ///
-    /// This method uses currently selected allocator to pick an address from
-    /// specified subnet, creates a lease for that address and then inserts
-    /// it into LeaseMgr (if this allocation is not fake).
+    /// This method uses currently selected allocator to pick allocatable
+    /// resources (i.e. addresses or prefixes) from specified subnet, creates
+    /// a lease (one or more, if needed) for that resources and then inserts
+    /// it into LeaseMgr (if this allocation is not fake, i.e. this is not a
+    /// response to SOLICIT).
     ///
-    /// @param subnet subnet the allocation should come from
-    /// @param duid Client's DUID
-    /// @param iaid iaid field from the IA_NA container that client sent
-    /// @param hint a hint that the client provided
-    /// @param type lease type (IA, TA or PD)
-    /// @param fwd_dns_update A boolean value which indicates that server takes
-    ///        responsibility for the forward DNS Update for this lease
-    ///        (if true).
-    /// @param rev_dns_update A boolean value which indicates that server takes
-    ///        responsibility for the reverse DNS Update for this lease
-    ///        (if true).
-    /// @param hostname A fully qualified domain-name of the client.
-    /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
-    ///        an address for SOLICIT that is not really allocated (true)
-    /// @param callout_handle a callout handle (used in hooks). A lease callouts
-    ///        will be executed if this parameter is passed.
-    /// @param [out] old_leases Collection to which this function will append
-    ///        old leases. Leases are stored in the same order as in the
-    ///        collection of new leases, being returned. For newly allocated
+    /// This method uses host reservation if appropriate. The host reservation
+    /// is convenient, but incurs performance penalty, so it can be tweaked on
+    /// a per subnet basis. There are three possible modes:
+    /// 1. disabled (no host reservation at all). This is the most performant one
+    /// as the code can skip all checks;
+    /// 2. out-of-pool (only reservations that are outside
+    /// of the dynamic pools are allowed. This is a compromise - it requires
+    /// a sysadmin to be more careful with the reservations, but the code
+    /// can skip reservation checks while managing in-pool addresses);
+    /// 3. in-pool (which also allow out-of-pool; this is the most flexible
+    /// mode, but it means that the allocation engine has to do reservation
+    /// checks on every lease, even those dynamically assigned, which degrades
+    /// performance).
+    ///
+    /// The logic in this method is as follows:
+    /// -# Case 1. if there are no leases, and there are reservations...
+    ///    Are the reserved addresses/prefixes are used by someone else?
+    ///   -# yes: we have a problem. We can't assign the reserved address yet,
+    ///       because it is used by someone else. We can't immediately release
+    ///       the lease as there is some other client that is currently using it.
+    ///       We will temporarily assign a different, unreserved lease for this
+    ///       client. In the mean time, the other client will hopefully get back
+    ///       to us, so we could revoke his lease.
+    ///   -# no: assign them => done
+    /// -# Case 2. if there are leases and there are no reservations...
+    ///    Are the leases reserved for someone else?
+    ///    -# yes: release them, assign something else
+    ///    -#  no: renew them => done
+    /// -# Case 3. if there are leases and there are reservations...
+    ///    Are the leases matching reservations?
+    ///   -# yes: renew them => done
+    ///   -#  no: release existing leases, assign new ones based on reservations
+    /// -# Case 4. if there are no leases and no reservations...
+    ///       assign new leases (this is the "normal" case when the reservations
+    ///       are disabled).
+    ///
+    /// @param ctx client context that passes all necessary information. See
+    ///        @ref ClientContext6 for details.
+    ///
+    /// The following fields of ClientContext6 are used:
+    ///
+    /// @ref ClientContext6::subnet_ subnet the allocation should come from<br/>
+    /// @ref ClientContext6::duid_ Client's DUID<br/>
+    /// @ref ClientContext6::iaid_ iaid field from the IA_NA container
+    ///        that client sent<br/>
+    /// @ref ClientContext6::hints_ a hint that the client provided<br/>
+    /// @ref ClientContext6::type_ lease type (IA, TA or PD)<br/>
+    /// @ref ClientContext6::fwd_dns_update_ A boolean value which indicates
+    ///        that server takes responsibility for the forward DNS Update
+    ///        for this lease (if true).<br/>
+    /// @ref ClientContext6::rev_dns_update_ A boolean value which indicates
+    ///        that server takes responsibility for the reverse DNS Update for
+    ///        this lease (if true).<br/>
+    /// @ref ClientContext6::hostname_ A fully qualified domain-name of the client.<br/>
+    /// @ref ClientContext6::fake_allocation_ is this real i.e. REQUEST (false)
+    ///        or just picking an address for SOLICIT that is not really
+    ///        allocated (true)<br/>
+    /// @ref ClientContext6::callout_handle_ a callout handle (used in hooks). A
+    ///        lease callouts will be executed if this parameter is passed.<br/>
+    /// @ref ClientContext6::old_leases_ [out] Collection to which this function
+    ///        will append old leases. Leases are stored in the same order as in
+    ///        the collection of new leases, being returned. For newly allocated
     ///        leases (not renewed) the NULL pointers are stored in this
-    ///        collection as old leases.
-    /// @param hwaddr Hardware address (optional, may be null for Lease6)
+    ///        collection as old leases.<br/>
+    /// @ref ClientContext6::hwaddr_ Hardware address (optional, may be null if
+    ///        not available)<br/>
+    /// @ref ClientContext6::host_ Host reservation. allocateLeases6 will set
+    ///        this field, if appropriate reservation is found.
     ///
     /// @return Allocated IPv6 leases (may be empty if allocation failed)
     Lease6Collection
-    allocateLeases6(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                    const uint32_t iaid,
-                    const isc::asiolink::IOAddress& hint, Lease::Type type,
-                    const bool fwd_dns_update, const bool rev_dns_update,
-                    const std::string& hostname, bool fake_allocation,
-                    const isc::hooks::CalloutHandlePtr& callout_handle,
-                    Lease6Collection& old_leases, const HWAddrPtr& hwaddr);
+    allocateLeases6(ClientContext6& ctx);
 
     /// @brief returns allocator for a given pool type
     /// @param type type of pool (V4, IA, TA or PD)
@@ -541,36 +710,88 @@ private:
     /// into the database. That may fail in some cases, i.e. when there is another
     /// allocation process and we lost a race to a specific lease.
     ///
-    /// @param subnet subnet the lease is allocated from
-    /// @param duid client's DUID
-    /// @param iaid IAID from the IA_NA container the client sent to us
+    /// @param ctx client context that passes all necessary information. See
+    ///        @ref ClientContext6 for details.
     /// @param addr an address that was selected and is confirmed to be
     ///        available
     /// @param prefix_len length of the prefix (for PD only)
     ///        should be 128 for other lease types
-    /// @param type lease type (IA, TA or PD)
-    /// @param fwd_dns_update A boolean value which indicates that server takes
+    ///
+    /// The following fields of the ctx structure are used:
+    /// @ref ClientContext6::subnet_ subnet the lease is allocated from
+    /// @ref ClientContext6::duid_ client's DUID
+    /// @ref ClientContext6::iaid_ IAID from the IA_NA container the client sent to us
+    /// @ref ClientContext6::type_ lease type (IA, TA or PD)
+    /// @ref ClientContext6::fwd_dns_update_ A boolean value which indicates that server takes
     ///        responsibility for the forward DNS Update for this lease
     ///        (if true).
-    /// @param rev_dns_update A boolean value which indicates that server takes
+    /// @ref ClientContext6::rev_dns_update_ A boolean value which indicates that server takes
     ///        responsibility for the reverse DNS Update for this lease
     ///        (if true).
-    /// @param hostname A fully qualified domain-name of the client.
-    /// @param hwaddr Hardware address (optional, may be null for Lease6)
-    /// @param callout_handle a callout handle (used in hooks). A lease callouts
+    /// @ref ClientContext6::hostname_ A fully qualified domain-name of the client.
+    /// @ref ClientContext6::hwaddr_ Hardware address (optional, may be null for Lease6)
+    /// @ref ClientContext6::callout_handle_ a callout handle (used in hooks). A lease callouts
     ///        will be executed if this parameter is passed (and there are callouts
     ///        registered)
-    /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
+    /// @ref ClientContext6::fake_allocation_ is this real i.e. REQUEST (false) or just picking
     ///        an address for SOLICIT that is not really allocated (true)
     /// @return allocated lease (or NULL in the unlikely case of the lease just
     ///         became unavailable)
-    Lease6Ptr createLease6(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                           const uint32_t iaid, const isc::asiolink::IOAddress& addr,
-                           const uint8_t prefix_len, const Lease::Type type,
-                           const bool fwd_dns_update, const bool rev_dns_update,
-                           const std::string& hostname, const HWAddrPtr& hwaddr,
-                           const isc::hooks::CalloutHandlePtr& callout_handle,
-                           bool fake_allocation = false);
+    Lease6Ptr createLease6(ClientContext6& ctx,
+                           const isc::asiolink::IOAddress& addr,
+                           const uint8_t prefix_len);
+
+    /// @brief Allocates a normal, in-pool, unreserved lease from the pool.
+    ///
+    /// It attempts to pick a hint first, then uses allocator iteratively until
+    /// an available (not used, not reserved) lease is found. In principle, it
+    /// may return more than one lease, but we currently handle only one.
+    /// This may change in the future.
+    ///
+    /// @param ctx client context that contains all details (subnet, client-id, etc.)
+    /// @return collection of newly allocated leases
+    Lease6Collection allocateUnreservedLeases6(ClientContext6& ctx);
+
+    /// @brief Creates new leases based on reservations.
+    ///
+    /// This method allocates new leases, based on host reservation. Existing
+    /// leases are specified in existing_leases parameter. A new lease is not created,
+    /// if there is a lease for specified address on existing_leases list or there is
+    /// a lease used by someone else.
+    ///
+    /// @param ctx client context that contains all details (subnet, client-id, etc.)
+    /// @param existing_leases leases that are already associated with the client
+    void
+    allocateReservedLeases6(ClientContext6& ctx, Lease6Collection& existing_leases);
+
+    /// @brief Removes leases that are reserved for someone else.
+    ///
+    /// Goes through the list specified in existing_leases and removes those that
+    /// are reserved by someone else. The removed leases are added to the
+    /// ctx.removed_leases_ collection.
+    ///
+    /// @param ctx client context that contains all details (subnet, client-id, etc.)
+    /// @param existing_leases [in/out] leases that should be checked
+    void
+    removeNonmatchingReservedLeases6(ClientContext6& ctx,
+                                     Lease6Collection& existing_leases);
+
+    /// @brief Removed leases that are not reserved for this client
+    ///
+    /// This method iterates over existing_leases and will remove leases that are
+    /// not reserved for this client. It will leave at least one lease on the list,
+    /// if possible. The reason to run this method is that if there is a reservation
+    /// for address A for client X and client X already has a lease for a
+    /// different address B, we should assign A and release B. However,
+    /// if for some reason we can't assign A, keeping B would be better than
+    /// not having a lease at all. Hence we may keep B if that's the only lease
+    /// left.
+    ///
+    /// @param ctx client context that contains all details (subnet, client-id, etc.)
+    /// @param existing_leases [in/out] leases that should be checked
+    void
+    removeNonreservedLeases6(ClientContext6& ctx,
+                             Lease6Collection& existing_leases);
 
     /// @brief Reuses expired DHCPv4 lease.
     ///
@@ -631,32 +852,31 @@ private:
     /// dummy allocation request (i.e. SOLICIT, fake_allocation = true).
     ///
     /// @param expired old, expired lease
-    /// @param subnet subnet the lease is allocated from
-    /// @param duid client's DUID
-    /// @param iaid IAID from the IA_NA container the client sent to us
+    /// @param ctx client context that contains all details.
     /// @param prefix_len prefix length (for PD leases)
     ///        Should be 128 for other lease types
-    /// @param fwd_dns_update A boolean value which indicates that server takes
+    ///
+    /// The following parameters are used from the ctx structure:
+    /// @ref ClientContext6::subnet_ subnet the lease is allocated from
+    /// @ref ClientContext6::duid_ client's DUID
+    /// @ref ClientContext6::iaid_ IAID from the IA_NA container the client sent to us
+    /// @ref ClientContext6::fwd_dns_update_ A boolean value which indicates that server takes
     ///        responsibility for the forward DNS Update for this lease
     ///        (if true).
-    /// @param rev_dns_update A boolean value which indicates that server takes
+    /// @ref ClientContext6::rev_dns_update_ A boolean value which indicates that server takes
     ///        responsibility for the reverse DNS Update for this lease
     ///        (if true).
-    /// @param hostname A fully qualified domain-name of the client.
-    /// @param callout_handle a callout handle (used in hooks). A lease callouts
+    /// @ref ClientContext6::hostname_ A fully qualified domain-name of the client.
+    /// @ref ClientContext6::callout_handle_ a callout handle (used in hooks). A lease callouts
     ///        will be executed if this parameter is passed.
-    /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
+    /// @ref ClientContext6::fake_allocation_ is this real i.e. REQUEST (false) or just picking
     ///        an address for SOLICIT that is not really allocated (true)
+    ///
     /// @return refreshed lease
     /// @throw BadValue if trying to recycle lease that is still valid
-    Lease6Ptr reuseExpiredLease(Lease6Ptr& expired, const Subnet6Ptr& subnet,
-                                const DuidPtr& duid, const uint32_t iaid,
-                                uint8_t prefix_len,
-                                const bool fwd_dns_update,
-                                const bool rev_dns_update,
-                                const std::string& hostname,
-                                const isc::hooks::CalloutHandlePtr& callout_handle,
-                                bool fake_allocation = false);
+    Lease6Ptr reuseExpiredLease(Lease6Ptr& expired,
+                                ClientContext6& ctx,
+                                uint8_t prefix_len);
 
     /// @brief Updates FQDN data for a collection of leases.
     ///
@@ -679,6 +899,14 @@ private:
                                     const bool rev_dns_update,
                                     const std::string& hostname,
                                     const bool fake_allocation);
+
+    /// @brief Utility function that removes all leases with a specified address
+    /// @param container A collection of Lease6 pointers
+    /// @param addr address to be removed
+    /// @return true if removed (false otherwise)
+    static bool
+    removeLeases(Lease6Collection& container,
+                 const asiolink::IOAddress& addr);
 
     /// @brief a pointer to currently used allocator
     ///
