@@ -150,4 +150,23 @@ TEST(ProcessSpawn, getCommandLine) {
     }
 }
 
+// This test verifies that it is possible to check if the process is
+// running.
+TEST(ProcessSpawn, isRunning) {
+    // Run the process which sleeps for 10 seconds, so as we have
+    // enough time to check if it is running.
+    std::vector<std::string> args;
+    args.push_back("-s");
+    args.push_back("10");
+    ProcessSpawn process(getApp(), args);
+    pid_t pid = 0;
+    ASSERT_NO_THROW(pid = process.spawn());
+    EXPECT_TRUE(process.isRunning(pid));
+
+    // Kill the process.
+    ASSERT_EQ(0, kill(pid, SIGKILL));
+    // And make sure if died.
+    ASSERT_TRUE(waitForProcess(process, pid, 2));
+}
+
 } // end of anonymous namespace

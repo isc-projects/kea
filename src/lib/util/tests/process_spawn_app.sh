@@ -14,6 +14,24 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
+
+# This script is used for testing the ProcessSpawn utility class. This
+# class is used to fork and execute a new process. It also allows for
+# checking the exit code returned when the process terminates.
+# The unit tests execute this script via ProcessSpawn class with
+# different command line parameters to test the class functionality.
+#
+# In particular, they check if the class correctly records the exit code
+# returned. The exit code returned is controlled by the caller. It is
+# possible to explictily specify the exit code to be returned using
+# the command line options. It is also possible to specify that the
+# exit code is "unique" for the process, so as the test can check
+# that two distinct processes spawned by the same ProcessSpawn
+# object may return different status code. The command line of this
+# script also allows for forcing the process to sleep so as the
+# test has much enough time to verify that the convenience methods
+# checking the state of the process, i.e. process running or not.
+
 exit_code=
 
 while [ ! -z "${1}" ]
@@ -29,6 +47,10 @@ do
             shift
             exit_code=${1}
             ;;
+        -s)
+            shift
+            sleep ${1}
+            ;;
         *)
             exit 123
             ;;
@@ -36,6 +58,8 @@ do
     shift
 done
 
+# The exit code of 32 is returned when no args specified or
+# when only the -s arg has been specified.
 if [ -z "${exit_code}" ]; then
     exit 32;
 fi
