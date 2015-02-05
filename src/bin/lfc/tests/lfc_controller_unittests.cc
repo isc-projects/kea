@@ -45,10 +45,7 @@ public:
     ///
     /// @returns true if the file doesn't exist, false if it does
     bool noExist(const std::string& filename) const {
-        if ((remove(filename.c_str()) != 0) && (errno == ENOENT)) {
-            return (true);
-        }
-        return (false);
+        return ((remove(filename.c_str()) != 0) && (errno == ENOENT));
     }
 
     /// @brief Test if any of the temporary (copy, output or finish)
@@ -56,10 +53,7 @@ public:
     ///
     /// @returns true if no files exist, and false if any do.
     bool noExistIOF() const {
-        if (noExist(istr_) && noExist(ostr_) && noExist(fstr_)) {
-            return (true);
-        }
-        return (false);
+        return (noExist(istr_) && noExist(ostr_) && noExist(fstr_));
     }
 
     /// @brief Test if any of the temporary (copy, output or finish)
@@ -67,11 +61,8 @@ public:
     ///
     /// @returns true if no files exist, and false if any do.
     bool noExistIOFP() const {
-        if (noExist(istr_) && noExist(ostr_) &&
-            noExist(fstr_) && noExist(pstr_)) {
-            return (true);
-        }
-        return (false);
+        return ((noExist(istr_) && noExist(ostr_) &&
+                 noExist(fstr_) && noExist(pstr_)));
     }
 
     /// @brief Remove any files we may have created

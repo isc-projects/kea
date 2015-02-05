@@ -62,7 +62,7 @@ public:
     /// of the process.  Provides the control logic to combine
     /// two lease files and weed out duplicate and expired leases.
     /// A description of the design can be found at
-    /// http://kea.isc.org/wiki/LFCDesign#no1
+    /// http://kea.isc.org/wiki/LFCDesign
     ///
     /// -# parse command line arguments
     /// -# verify that it is the only instance
@@ -176,9 +176,11 @@ private:
     /// should be short (false) or extended (true)
     std::string getVersion(const bool extended) const;
 
-    /// @brief Process files.  Read in the leases from any previous & copy
-    /// files we have and write the results out to the output file.  Upon
-    /// completion of the write move the file to the finish file.
+    /// @brief Process files.
+    ///
+    /// Read in the leases from any previous & copy files we have and
+    /// write the results out to the output file.  Upon completion of
+    /// the write move the file to the finish file.
     ///
     /// @tparam LeaseObjectType A @c Lease4 or @c Lease6.
     /// @tparam LeaseFileType A @c CSVLeaseFile4 or @c CSVLeaseFile6.
