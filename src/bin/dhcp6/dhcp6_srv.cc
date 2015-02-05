@@ -1294,24 +1294,21 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
         hostname = fqdn->getDomainName();
     }
 
-    // Attempt to get MAC address using configured mechanisms.
-    // It's ok if there response is NULL. Hardware address is optional in Lease6.
-    HWAddrPtr hwaddr = getMAC(query);
-
     // Use allocation engine to pick a lease for this client. Allocation engine
     // will try to honour the hint, but it is just a hint - some other address
     // may be used instead. If fake_allocation is set to false, the lease will
     // be inserted into the LeaseMgr as well.
-    Lease6Collection old_leases;
-    Lease6Collection leases = alloc_engine_->allocateLeases6(subnet, duid,
-                                                             ia->getIAID(),
-                                                             hint, Lease::TYPE_NA,
-                                                             do_fwd, do_rev,
-                                                             hostname,
-                                                             fake_allocation,
-                                                             callout_handle,
-                                                             old_leases,
-                                                             hwaddr);
+    AllocEngine::ClientContext6 ctx(subnet, duid, ia->getIAID(),
+                                    hint, Lease::TYPE_NA, do_fwd, do_rev,
+                                    hostname, fake_allocation);
+    ctx.callout_handle_ = callout_handle;
+
+    // Attempt to get MAC address using configured mechanisms.
+    // It's ok if there response is NULL. Hardware address is optional in Lease6.
+    ctx.hwaddr_ = getMAC(query);
+
+    Lease6Collection leases = alloc_engine_->allocateLeases6(ctx);
+
     /// @todo: Handle more than one lease
     Lease6Ptr lease;
     if (!leases.empty()) {
@@ -1347,8 +1344,8 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
         // code is considered a success.
 
         Lease6Ptr old_lease;
-        if (!old_leases.empty()) {
-            old_lease = *old_leases.begin();
+        if (!ctx.old_leases_.empty()) {
+            old_lease = *ctx.old_leases_.begin();
         }
         // Allocation engine may have returned an existing lease. If so, we
         // have to check that the FQDN settings we provided are the same
@@ -1414,10 +1411,6 @@ Dhcpv6Srv::assignIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
         hint = hint_opt->getAddress();
     }
 
-    // Attempt to get MAC address using any of available mechanisms.
-    // It's ok if there response is NULL. Hardware address is optional in Lease6
-    HWAddrPtr hwaddr = getMAC(query);
-
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_PROCESS_IA_PD_REQUEST)
         .arg(duid ? duid->toText() : "(no-duid)").arg(ia->getIAID())
         .arg(hint_opt ? hint.toText() : "(no hint)");
@@ -1437,14 +1430,15 @@ Dhcpv6Srv::assignIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
     // may be used instead. If fake_allocation is set to false, the lease will
     // be inserted into the LeaseMgr as well.
     Lease6Collection old_leases;
-    Lease6Collection leases = alloc_engine_->allocateLeases6(subnet, duid,
-                                                             ia->getIAID(),
-                                                             hint, Lease::TYPE_PD,
-                                                             false, false,
-                                                             string(),
-                                                             fake_allocation,
-                                                             callout_handle,
-                                                             old_leases, hwaddr);
+    AllocEngine::ClientContext6 ctx(subnet, duid, ia->getIAID(), hint, Lease::TYPE_PD,
+                                    false, false, string(), fake_allocation);
+    ctx.callout_handle_ = callout_handle;
+
+    // Attempt to get MAC address using any of available mechanisms.
+    // It's ok if there response is NULL. Hardware address is optional in Lease6
+    ctx.hwaddr_ = getMAC(query);
+
+    Lease6Collection leases = alloc_engine_->allocateLeases6(ctx);
 
     if (!leases.empty()) {
 

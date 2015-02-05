@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -351,6 +351,12 @@ public:
     /// @return A range of iterators pointing to the reservations of
     /// the specified type.
     IPv6ResrvRange getIPv6Reservations(const IPv6Resrv::Type& type) const;
+
+    /// @brief Returns all IPv6 reservations.
+    ///
+    /// @return A range of iterators pointing to the reservations of
+    /// the specified type.
+    IPv6ResrvRange getIPv6Reservations() const;
 
     /// @brief Checks if there is at least one IPv6 reservation for this host.
     ///
