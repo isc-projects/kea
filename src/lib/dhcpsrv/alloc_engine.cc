@@ -23,6 +23,7 @@
 
 #include <cstring>
 #include <vector>
+#include <stdint.h>
 #include <string.h>
 
 using namespace isc::asiolink;
@@ -365,14 +366,13 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
             // from X to Y, because Y keeps using it, so X would send Decline right
             // away. Need to wait till Y renews, then we can release A, so it
             // will become available for X.
-        }
 
         // Case 2: There are existing leases and there are no reservations.
         //
         // There is at least one lease for this client and there are no reservations.
         // We will return these leases for the client, but we may need to update
         // FQDN information.
-        if (!leases.empty() && !ctx.host_) {
+        } else if (!leases.empty() && !ctx.host_) {
 
             // Check if the existing leases are reserved for someone else.
             // If they're not, we're ok to keep using them.
@@ -390,10 +390,9 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
             // for someone else, so we lost them. We will need to continue and
             // will finally end up in case 4 (no leases, no reservations), so we'll
             // assign something new.
-        }
 
         // Case 3: There are leases and there are reservations.
-        if (!leases.empty() && ctx.host_) {
+        } else if (!leases.empty() && ctx.host_) {
 
             // First, check if have leases matching reservations, and add new
             // leases if we don't have them.
@@ -446,7 +445,7 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
         //   is still used by someone else
         //
         // In any case, we need to go through normal lease assignment process
-        // for now. This is also a catch-all or last resort attempt, when we
+        // for now. This is also a catch-all or last resort approach, when we
         // couldn't find any reservations (or couldn't use them).
 
         leases = allocateUnreservedLeases6(ctx);
@@ -573,8 +572,9 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
     // left), but this has one major problem. We exactly control allocation
     // moment, but we currently do not control expiration time at all
 
-    unsigned int i = attempts_;
-    do {
+    unsigned int max_attempts = (attempts_ == 0) ? UINT_MAX : attempts_;
+    for (unsigned int i = 0; i < max_attempts; ++i)
+    {
         IOAddress candidate = allocator->pickAddress(ctx.subnet_, ctx.duid_, hint);
 
         /// In-pool reservations: Check if this address is reserved for someone
@@ -631,11 +631,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                 return (leases);
             }
         }
-
-        // Continue trying allocation until we run out of attempts
-        // (or attempts are set to 0, which means infinite)
-        --i;
-    } while ((i > 0) || !attempts_);
+    }
 
     // We failed to allocate anything. Let's return empty collection.
     return (Lease6Collection());
