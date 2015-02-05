@@ -28,7 +28,8 @@ public:
         isc::Exception(file, line, what) { };
 };
 
-/// @brief Exceptions thrown when the processing fails
+/// @brief Exceptions thrown when a method is unable to manipulate
+/// (remove or rename) a file.
 class RunTimeFail : public isc::Exception {
 public:
     RunTimeFail(const char* file, size_t line, const char* what) :
@@ -58,7 +59,10 @@ public:
     ~LFCController();
 
     /// @brief Acts as the primary entry point to start execution
-    /// of the process.  Provides the control logic:
+    /// of the process.  Provides the control logic to combine
+    /// two lease files and weed out duplicate and expired leases.
+    /// A description of the design can be found at
+    /// http://kea.isc.org/wiki/LFCDesign#no1
     ///
     /// -# parse command line arguments
     /// -# verify that it is the only instance
@@ -85,17 +89,13 @@ public:
     /// @throw InvalidUsage if the command line parameters are invalid.
     void parseArgs(int argc, char* argv[]);
 
-    /// @brief Prints the program usage text to std error.
+    /// @brief Rotate files.  After we have a finish file, either from
+    /// doing the cleanup or because a previous instance was interrupted,
+    /// delete the work files (previous & copy) and move the finish file
+    /// to be the new previous file.
     ///
-    /// @param text is a string message which will preceded the usage text.
-    /// This is intended to be used for specific usage violation messages.
-    void usage(const std::string& text);
-
-    /// @brief Gets the Kea version number for printing
-    ///
-    /// @param extended is a boolean indicating if the version string
-    /// should be short (false) or extended (true)
-    std::string getVersion(const bool extended) const;
+    /// @throw RunTimeFail if we can't manipulate the files.
+    void fileRotate() const;
 
     /// @name Accessor methods mainly used for testing purposes
     //@{
@@ -150,22 +150,6 @@ public:
     std::string getPidFile() const {
         return (pid_file_);
     }
-
-    /// @brief Process files.  Read in the leases from any previous & copy
-    /// files we have and write the results out to the output file.  Upon
-    /// completion of the write move the file to the finish file.
-    ///
-    /// @throw RunTimeFail if we can't move the file.
-    template<typename LeaseObjectType, typename LeaseFileType, typename StorageType>
-    void processLeases() const;
-
-    /// @brief Cleanup files.  After we have a finish file, either from
-    /// doing the cleanup or because a previous instance was interrupted,
-    /// delete the work files (previous & copy) and move the finish file
-    /// to be the new previous file.
-    ///
-    /// @throw RunTimeFail if we can't manipulate the files.
-    void fileCleanup() const;
     //@}
 
 private:
@@ -179,6 +163,30 @@ private:
     std::string output_file_;   ///< The path to the output file
     std::string finish_file_;   ///< The path to the finished output file
     std::string pid_file_;      ///< The path to the pid file
+
+    /// @brief Prints the program usage text to std error.
+    ///
+    /// @param text is a string message which will preceded the usage text.
+    /// This is intended to be used for specific usage violation messages.
+    void usage(const std::string& text);
+
+    /// @brief Gets the Kea version number for printing
+    ///
+    /// @param extended is a boolean indicating if the version string
+    /// should be short (false) or extended (true)
+    std::string getVersion(const bool extended) const;
+
+    /// @brief Process files.  Read in the leases from any previous & copy
+    /// files we have and write the results out to the output file.  Upon
+    /// completion of the write move the file to the finish file.
+    ///
+    /// @tparam LeaseObjectType A @c Lease4 or @c Lease6.
+    /// @tparam LeaseFileType A @c CSVLeaseFile4 or @c CSVLeaseFile6.
+    /// @tparam StorageType A @c Lease4Storage or @c Lease6Storage.
+    ///
+    /// @throw RunTimeFail if we can't move the file.
+    template<typename LeaseObjectType, typename LeaseFileType, typename StorageType>
+    void processLeases() const;
 };
 
 }; // namespace isc::lfc
