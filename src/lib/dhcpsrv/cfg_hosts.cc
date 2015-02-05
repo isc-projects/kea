@@ -215,7 +215,8 @@ CfgHosts::getAllInternal6(const SubnetID& subnet_id,
 
     // Let's get all reservations that match subnet_id, address.
     const HostContainer6Index1& idx = hosts6_.get<1>();
-    HostContainer6Index1Range r = idx.equal_range(boost::make_tuple(subnet_id, address));
+    HostContainer6Index1Range r = make_pair(idx.lower_bound(boost::make_tuple(subnet_id, address)),
+                                            idx.upper_bound(boost::make_tuple(subnet_id, address)));
 
     // For each IPv6 reservation, add the host to the results list. Fortunately,
     // in all sane cases, there will be only one such host. (Each host can have
