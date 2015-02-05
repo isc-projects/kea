@@ -166,9 +166,17 @@ public:
     /// This method iterates over the @c Lease4 or @c Lease6 object in the
     /// storage specified in the arguments and writes them to the file
     /// specified in the arguments.
-    /// 
+    ///
     /// This method writes all entries in the storage to the file, it does
     /// not perform any checks for expiration or duplication.
+    ///
+    /// The order in which the entries will be written to the file depends
+    /// on the first index in the multi-index container.  Currently that
+    /// is the v4 or v6 IP address and they are written from lowest to highest.
+    ///
+    /// Before writing the method will close the file if it is open
+    /// and reopen it for writing.  After completion it will close
+    /// the file.
     ///
     /// @param lease_file A reference to the @c CSVLeaseFile4 or
     /// @c CSVLeaseFile6 object representing the lease file. The file
@@ -192,7 +200,13 @@ public:
         for (typename StorageType::const_iterator lease = storage.begin();
              lease != storage.end();
              ++lease) {
-            lease_file.append(**lease);
+            try {
+                lease_file.append(**lease);
+            } catch (const isc::Exception& ex) {
+            // Close the file
+            lease_file.close();
+            throw;
+            }
         }
 
         // Close the file
