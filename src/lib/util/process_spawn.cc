@@ -81,6 +81,15 @@ public:
     /// @return Exit code of the process.
     int getExitStatus(const pid_t pid) const;
 
+    /// @brief Removes the status of the process with a specified PID.
+    ///
+    /// This method removes the status of the process with a specified PID.
+    /// If the process is still running, the status is not removed and the
+    /// exception is thrown.
+    ///
+    /// @param pid A process pid.
+    void clearStatus(const pid_t pid);
+
 private:
 
     /// @brief Copies the argument specified as a C++ string to the new
@@ -211,8 +220,8 @@ int
 ProcessSpawnImpl::getExitStatus(const pid_t pid) const {
     std::map<pid_t, int>::const_iterator status = process_status_.find(pid);
     if (status == process_status_.end()) {
-        isc_throw(BadValue, "the process with the pid '" << pid
-                  << "' hasn't been spawned and it status cannnot be"
+        isc_throw(InvalidOperation, "the process with the pid '" << pid
+                  << "' hasn't been spawned and it status cannot be"
                   " returned");
     }
     return (WEXITSTATUS(status->second));
@@ -244,6 +253,14 @@ ProcessSpawnImpl::waitForProcess(int signum) {
     return (false);
 }
 
+void
+ProcessSpawnImpl::clearStatus(const pid_t pid) {
+    if (isRunning(pid)) {
+        isc_throw(InvalidOperation, "unable to remove the status for the"
+                  "process (pid: " << pid << ") which is still running");
+    }
+    process_status_.erase(pid);
+}
 
 ProcessSpawn::ProcessSpawn(const std::string& executable,
                            const ProcessArgs& args)
@@ -277,6 +294,11 @@ ProcessSpawn::isAnyRunning() const {
 int
 ProcessSpawn::getExitStatus(const pid_t pid) const {
     return (impl_->getExitStatus(pid));
+}
+
+void
+ProcessSpawn::clearStatus(const pid_t pid) {
+    return (impl_->clearStatus(pid));
 }
 
 }
