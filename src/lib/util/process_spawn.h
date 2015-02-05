@@ -48,12 +48,14 @@ typedef std::vector<std::string> ProcessArgs;
 /// it. The exit code can be retrieved by the caller using the
 /// @c ProcessSpawn::getExitStatus method.
 ///
-/// @warning It is not recommended to use multiple instances of the
-/// @c ProcessSpawn classes at the same time, because each newly
-/// created instance would replace the SIGCHLD handler. This means that
-/// it would not be possible to gather the exit code of all but one
-/// (newly created) process, because the SIGCHLD handler is responsible
-/// for checking the exit code of the process.
+/// @warning Only one instance of the @c ProcessSpawn class may exist
+/// at the given time. Creating additional instance would cause an
+/// attempt to register a new SIGCHLD signal handler and, as a
+/// consequence, the new @c ProcessSpawn object will fail to create.
+///
+/// @todo The SIGCHLD handling logic should be moved to the @c SignalSet
+/// class so as multiple instances of the @c ProcessSpawn use the same
+/// SIGCHLD signal handler.
 class ProcessSpawn {
 public:
 
