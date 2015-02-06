@@ -1,12 +1,8 @@
-xxx.    [func]          sar
-	A new process, lfc, has been added.  When invoked this
-	process will load leases from a previous lease file and
-	a copy of the current lease file.  It removes duplicate
-	and expired leases and writes the result to an output
-	file.  If all goes well the old files are removed
-	and the new file is renamed to the name of the previous
-	file.  See http://kea.isc.org/wiki/LFCDesign#no1 for
-	the design.
+xxx.	[func]		sar
+	A new process, kea-lfc, has been added. It is meant to
+	be periodically executed by the DHCPv4 and DHCPv6 servers
+	to remove redundant information from the lease files.
+	See http://kea.isc.org/wiki/LFCDesign#no1 for the design.
 
 882.	[func]		sar
 	A utility class has been added which handles writing and
