@@ -112,7 +112,7 @@ std::string
 LFCControllerTest::readFile(const std::string& filename) const {
     std::ifstream fs;
 
-    fs.open(filename, std::ifstream::in);
+    fs.open(filename.c_str(), std::ifstream::in);
     std::string contents((std::istreambuf_iterator<char>(fs)),
                          std::istreambuf_iterator<char>());
     fs.close();
@@ -122,7 +122,7 @@ LFCControllerTest::readFile(const std::string& filename) const {
 void
 LFCControllerTest::writeFile(const std::string& filename,
                              const std::string& contents) const {
-    std::ofstream fs(filename, std::ofstream::out);
+    std::ofstream fs(filename.c_str(), std::ofstream::out);
 
     if (fs.is_open()) {
         fs << contents;
