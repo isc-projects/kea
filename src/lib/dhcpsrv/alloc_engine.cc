@@ -1693,6 +1693,20 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
         return;
     }
 
+    // Check if the lease still belongs to the subnet. If it doesn't,
+    // we'll need to remove it.
+    if ((lease->type_ != Lease::TYPE_PD) && !ctx.subnet_->inRange(lease->addr_)) {
+        // Oh dear, the lease is no longer valid. We need to get rid of it.
+
+        // Remove this lease from LeaseMgr
+        LeaseMgrFactory::instance().deleteLease(lease->addr_);
+
+        // Add it to the removed leases list.
+        ctx.old_leases_.push_back(lease);
+
+        return;
+    }
+
     // Keep the old data in case the callout tells us to skip update.
     Lease6 old_data = *lease;
 
