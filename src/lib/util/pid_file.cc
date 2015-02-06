@@ -16,6 +16,7 @@
 #include <cstdio>
 #include <signal.h>
 #include <unistd.h>
+#include <cerrno>
 
 namespace isc {
 namespace util {
@@ -87,7 +88,8 @@ PIDFile::write(int pid) const {
 
 void
 PIDFile::deleteFile() const {
-    if (remove(filename_.c_str()) != 0) {
+    if ((remove(filename_.c_str()) != 0) &&
+        (errno != ENOENT)) {
         isc_throw(PIDFileError, "Unable to delete PID file '"
                   << filename_ << "'");
     }

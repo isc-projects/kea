@@ -160,9 +160,60 @@ public:
             lease_file.close();
         }
     }
+
+    /// @brief Write leases from the storage into a lease file
+    ///
+    /// This method iterates over the @c Lease4 or @c Lease6 object in the
+    /// storage specified in the arguments and writes them to the file
+    /// specified in the arguments.
+    ///
+    /// This method writes all entries in the storage to the file, it does
+    /// not perform any checks for expiration or duplication.
+    ///
+    /// The order in which the entries will be written to the file depends
+    /// on the first index in the multi-index container.  Currently that
+    /// is the v4 or v6 IP address and they are written from lowest to highest.
+    ///
+    /// Before writing the method will close the file if it is open
+    /// and reopen it for writing.  After completion it will close
+    /// the file.
+    ///
+    /// @param lease_file A reference to the @c CSVLeaseFile4 or
+    /// @c CSVLeaseFile6 object representing the lease file. The file
+    /// doesn't need to be open because the method re-opens the file.
+    /// @param storage A reference to the container from which leases
+    /// should be written.
+    ///
+    /// @tparam LeasePtrType A @c Lease4 or @c Lease6.
+    /// @tparam LeaseFileType A @c CSVLeaseFile4 or @c CSVLeaseFile6.
+    /// @tparam StorageType A @c Lease4Storage or @c Lease6Storage.
+    template<typename LeaseObjectType, typename LeaseFileType,
+             typename StorageType>
+    static void write(LeaseFileType& lease_file, const StorageType& storage) {
+        // Reopen the file, as we don't know whether the file is open
+        // and we also don't know its current state.
+        lease_file.close();
+        lease_file.open();
+
+        // Iterate over the storage area writing out the leases
+        for (typename StorageType::const_iterator lease = storage.begin();
+             lease != storage.end();
+             ++lease) {
+            try {
+                lease_file.append(**lease);
+            } catch (const isc::Exception& ex) {
+            // Close the file
+            lease_file.close();
+            throw;
+            }
+        }
+
+        // Close the file
+        lease_file.close();
+    }
 };
 
-}
-}
+} // namesapce dhcp
+} // namespace isc
 
 #endif // LEASE_FILE_LOADER_H
