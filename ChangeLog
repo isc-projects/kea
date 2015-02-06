@@ -3,6 +3,7 @@
 	be periodically executed by the DHCPv4 and DHCPv6 servers
 	to remove redundant information from the lease files.
 	See http://kea.isc.org/wiki/LFCDesign#no1 for the design.
+	[Trac #3665, git b1707981f48b13895b50bf27176dede866576292]
 
 886.	[func]		tomek
 	libdhcpsrv: Allocation Engine now uses statically assigned
