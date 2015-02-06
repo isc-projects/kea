@@ -2,8 +2,10 @@
 	A new process, kea-lfc, has been added. It is meant to
 	be periodically executed by the DHCPv4 and DHCPv6 servers
 	to remove redundant information from the lease files.
-	See http://kea.isc.org/wiki/LFCDesign#no1 for the design.
-	[Trac #3665, git b1707981f48b13895b50bf27176dede866576292]
+	See http://kea.isc.org/wiki/LFCDesign for the design.
+	(Trac #3664, git cc85938b35e2d4bd00ccb74f1b83d3017ab0e41b)
+	(Trac #3665, git b1707981f48b13895b50bf27176dede866576292)
+	(Trac #3687, git 1e92382aaa2fbff08bbf1d6bbf0add195a7b6fae)
 
 886.	[func]		tomek
 	libdhcpsrv: Allocation Engine now uses statically assigned
