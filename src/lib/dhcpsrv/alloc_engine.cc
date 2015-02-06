@@ -488,7 +488,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
     IOAddress hint("::");
     if (!ctx.hints_.empty()) {
         /// @todo: We support only one hint for now
-        hint = ctx.hints_[0];
+        hint = ctx.hints_[0].first;
     }
 
     // check if the hint is in pool and is available
@@ -1722,9 +1722,12 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
         // Pass the lease to be updated
         callout_handle->setArgument("lease6", lease);
 
-        /// @todo: get the IA_NA/IA_PD
         // Pass the IA option to be sent in response
-        callout_handle->setArgument("ia_na", ctx.ia_rsp_);
+        if (lease->type_ == Lease::TYPE_NA) {
+            callout_handle->setArgument("ia_na", ctx.ia_rsp_);
+        } else {
+            callout_handle->setArgument("ia_pd", ctx.ia_rsp_);
+        }
 
         // Call all installed callouts
         HooksManager::callCallouts(hook_point, *callout_handle);

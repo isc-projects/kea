@@ -303,6 +303,21 @@ protected:
         }
     };
 
+    /// @brief Defines a single hint (an address + prefix-length).
+    ///
+    /// This is an entry that represents what the client had requested,
+    /// either an address or a prefix. Prefix length is 128 for regular
+    /// addresses.
+    typedef std::pair<isc::asiolink::IOAddress, uint8_t> HintType;
+
+    /// @brief Container for client's hints.
+    typedef std::vector< HintType > HintContainer;
+
+    /// @brief Non-const iterator for hint container.
+    typedef HintContainer::iterator HintContainerIter;
+
+    /// @brief Const iterator for hint container.
+    typedef HintContainer::const_iterator HintContainerConstIter;
 
     /// @brief Context information for the DHCPv6 leases allocation.
     ///
@@ -346,7 +361,7 @@ protected:
         ///
         /// There will typically be just one address, but the protocol allows
         /// more than one address or prefix for each IA container.
-        std::vector<isc::asiolink::IOAddress> hints_;
+        HintContainer hints_;
 
         /// @brief A boolean value which indicates that server takes
         ///        responsibility for the forward DNS Update for this lease
@@ -437,14 +452,14 @@ protected:
                        rev_dns, const std::string& hostname, const bool
                        fake_allocation):
             subnet_(subnet), duid_(duid), iaid_(iaid), type_(type), hwaddr_(),
-            hints()_, fwd_dns_update_(fwd_dns), rev_dns_update_(rev_dns),
+            hints_(), fwd_dns_update_(fwd_dns), rev_dns_update_(rev_dns),
             hostname_(hostname), fake_allocation_(fake_allocation),
             old_leases_(), host_(), query_(), ia_rsp_() {
 
             static asiolink::IOAddress any("::");
 
             if (hint != any) {
-                hints_.push_back(hint);
+                hints_.push_back(std::make_pair(hint, 128));
             }
             // callout_handle, host pointers initiated to NULL by their
             // respective constructors.
