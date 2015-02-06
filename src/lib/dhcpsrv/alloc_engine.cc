@@ -1672,6 +1672,11 @@ AllocEngine::renewLeases6(ClientContext6& ctx) {
             removeNonreservedLeases6(ctx, leases);
         }
 
+        // If we happen to removed all leases, get something new for this guy.
+        if (leases.empty()) {
+            leases = allocateUnreservedLeases6(ctx);
+        }
+
         // Extend all existing leases that passed all checks.
         for (Lease6Collection::iterator l = leases.begin(); l != leases.end(); ++l) {
             extendLease6(ctx, *l);
