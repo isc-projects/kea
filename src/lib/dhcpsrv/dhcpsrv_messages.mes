@@ -215,6 +215,16 @@ hook point sets the skip flag. It means that the server was told that
 no lease6 should be assigned. The server will not put that lease in its
 database and the client will get a NoAddrsAvail for that IA_NA option.
 
+% DHCPSRV_HR_RESERVED_ADDR_GRANTED Reserved address %1 was was assigned to client (duid=%2)
+This informational message singals that there is a reservation for this client
+and this client got this specific address. This is normal operation for
+host reservation.
+
+% DHCPSRV_HR_RESERVED_PREFIX_GRANTED Reserved prefix %1/%2 was was assigned to client (duid=%3)
+This informational message singals that there is a reservation for this client
+and this client got this specific prefix. This is normal operation for
+host reservation.
+
 % DHCPSRV_INVALID_ACCESS invalid database access string: %1
 This is logged when an attempt has been made to parse a database access string
 and the attempt ended in error.  The access string in question - which
