@@ -1567,7 +1567,7 @@ Dhcpv6Srv::extendIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
     // It's ok if there response is NULL. Hardware address is optional in Lease6.
     ctx.hwaddr_ = getMAC(query);
 
-    // Extract addresses that are being renewed.
+    // Extract the addresses that the client is trying to obtain.
     int hints_count = 0;
     OptionCollection addrs = ia->getOptions();
     for (OptionCollection::const_iterator it = addrs.begin();
@@ -1577,10 +1577,10 @@ Dhcpv6Srv::extendIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
         }
         Option6IAAddrPtr iaaddr = boost::dynamic_pointer_cast<Option6IAAddr>(it->second);
         if (!iaaddr) {
-            // That's weird.
+            // That's weird. Option code was ok, but the object type was not.
             continue;
         }
-        ctx.hints_.push_back(iaaddr->getAddress());
+        ctx.hints_.push_back(make_pair(iaaddr->getAddress(), 128));
 
         // We need to remember it as we'll be removing hints from this list as
         // we extend, cancel or otherwise deal with the leases.
@@ -1601,8 +1601,9 @@ Dhcpv6Srv::extendIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
         ia_rsp->addOption(iaaddr);
 
         // Now remove this address from the hints list.
-        ctx.hints_.erase(std::remove(ctx.hints_.begin(), ctx.hints_.end(),
-                                     (*l)->addr_), ctx.hints_.end());
+        AllocEngine::HintType tmp((*l)->addr_, 128);
+        ctx.hints_.erase(std::remove(ctx.hints_.begin(), ctx.hints_.end(), tmp),
+                         ctx.hints_.end());
     }
 
     // For the leases that we just retired, send the addresses with 0 lifetimes.
@@ -1613,8 +1614,9 @@ Dhcpv6Srv::extendIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
         ia_rsp->addOption(iaaddr);
 
         // Now remove this address from the hints list.
-        ctx.hints_.erase(std::remove(ctx.hints_.begin(), ctx.hints_.end(),
-                                     (*l)->addr_), ctx.hints_.end());
+        AllocEngine::HintType tmp((*l)->addr_, 128);
+        ctx.hints_.erase(std::remove(ctx.hints_.begin(), ctx.hints_.end(), tmp),
+                         ctx.hints_.end());
 
         // If the new FQDN settings have changed for the lease, we need to
         // delete any existing FQDN records for this lease.
@@ -1633,10 +1635,10 @@ Dhcpv6Srv::extendIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
 
     // Finally, if there are any addresses requested that we haven't dealt with
     // already, inform the client that he can't have them.
-    for (vector<IOAddress>::const_iterator addr = ctx.hints_.begin();
-                                          addr != ctx.hints_.end(); ++addr) {
+    for (AllocEngine::HintContainerConstIter hint = ctx.hints_.begin();
+         hint != ctx.hints_.end(); ++hint) {
         Option6IAAddrPtr iaaddr(new Option6IAAddr(D6O_IAADDR,
-                                                  *addr, 0, 0));
+                                                  hint->first, 0, 0));
         ia_rsp->addOption(iaaddr);
     }
 
@@ -1700,10 +1702,13 @@ Dhcpv6Srv::extendIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
         // here should propagate to the main loop and cause the message to
         // be discarded.
         } else {
+
+            /// @todo: RFC3315bis will probably change that behavior. Client
+            /// may rebind prefixes and addresses at the same time.
             isc_throw(DHCPv6DiscardMessageError, "no subnet found for the"
                       " client sending Rebind to extend lifetime of the"
                       " prefix (DUID=" << duid->toText() << ", IAID="
-                      << ia->getIAID());
+                      << ia->getIAID() << ")");
         }
     }
 
@@ -1711,136 +1716,115 @@ Dhcpv6Srv::extendIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
     ia_rsp->setT1(subnet->getT1());
     ia_rsp->setT2(subnet->getT2());
 
-    // There is a subnet selected. Let's pick the lease.
-    Lease6Ptr lease =
-        LeaseMgrFactory::instance().getLease6(Lease::TYPE_PD,
-                                              *duid, ia->getIAID(),
-                                              subnet->getID());
+    // Create client context for this renewal
+    static const IOAddress none("::");
+    AllocEngine::ClientContext6 ctx(subnet, duid, ia->getIAID(), none,
+                                    Lease::TYPE_PD, false, false, string(""),
+                                    false);
+    ctx.callout_handle_ = getCalloutHandle(query);
+    ctx.query_ = query;
+    ctx.ia_rsp_ = ia_rsp;
 
-    // There is no binding for the client.
-    if (!lease) {
-        // Per RFC3633, section 12.2, if there is no binding and we are
-        // processing a Renew, the NoBinding status code should be returned.
+    // Attempt to get MAC address using configured mechanisms.
+    // It's ok if there response is NULL. Hardware address is optional in Lease6.
+    ctx.hwaddr_ = getMAC(query);
+
+    // Extract prefixes that the client is trying to renew.
+    int hints_count = 0;
+    OptionCollection addrs = ia->getOptions();
+    for (OptionCollection::const_iterator it = addrs.begin();
+         it != addrs.end(); ++it) {
+        if (it->second->getType() != D6O_IAPREFIX) {
+            continue;
+        }
+        Option6IAPrefixPtr prf = boost::dynamic_pointer_cast<Option6IAPrefix>(it->second);
+        if (!prf) {
+            // That's weird. Option code was ok, but the object type was not.
+            continue;
+        }
+
+        // Put the client's prefix into the hints list.
+        ctx.hints_.push_back(make_pair(prf->getAddress(), prf->getLength()));
+
+        // We need to remember it as we'll be removing hints from this list as
+        // we extend, cancel or otherwise deal with the leases.
+        hints_count++;
+    }
+
+    // Call Allocation Engine and attempt to renew leases. Number of things
+    // may happen. Leases may be extended, revoked (if the lease is no longer
+    // valid or reserved for someone else), or new leases may be added.
+    // Important parameters are:
+    // - returned container - current valid leases
+    // - old_leases - leases that used to be, but are no longer valid
+    // - changed_leases - leases that have FQDN changed (not really important
+    //                    in PD context)
+    Lease6Collection leases = alloc_engine_->renewLeases6(ctx);
+
+    // For all the leases we have now, add the IAPPREFIX with non-zero lifetimes
+    for (Lease6Collection::const_iterator l = leases.begin(); l != leases.end(); ++l) {
+        Option6IAPrefixPtr prf(new Option6IAPrefix(D6O_IAPREFIX,
+                               (*l)->addr_, (*l)->prefixlen_,
+                               (*l)->preferred_lft_, (*l)->valid_lft_));
+        ia_rsp->addOption(prf);
+
+        // Now remove this address from the hints list.
+        AllocEngine::HintType tmp((*l)->addr_, (*l)->prefixlen_);
+        ctx.hints_.erase(std::remove(ctx.hints_.begin(), ctx.hints_.end(), tmp),
+                                     ctx.hints_.end());
+    }
+
+    /// @todo: Maybe we should iterate over ctx.old_leases_, i.e. the leases
+    /// that used to be valid, but they are not anymore.
+
+    // For all the leases the client had requested, but we didn't assign, put them with
+    // zero lifetimes
+    // Finally, if there are any addresses requested that we haven't dealt with
+    // already, inform the client that he can't have them.
+    for (AllocEngine::HintContainerIter prefix = ctx.hints_.begin();
+         prefix != ctx.hints_.end(); ++prefix) {
+        OptionPtr prefix_opt(new Option6IAPrefix(D6O_IAPREFIX, prefix->first,
+                                                 prefix->second, 0, 0));
+        ia_rsp->addOption(prefix_opt);
+    }
+
+    // All is left is to insert the status code.
+    if (leases.empty()) {
         if (query->getType() == DHCPV6_RENEW) {
-            // Insert status code NoBinding.
-            ia_rsp->addOption(createStatusCode(STATUS_NoBinding,
-                                               "Sorry, no known PD"
-                                               " leases for this duid/iaid."));
-            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
-                      DHCP6_EXTEND_PD_NO_BINDING)
-                .arg(query->getName())
-                .arg(duid->toText())
-                .arg(ia->getIAID())
-                .arg(subnet->toText());
 
-        // Per RFC3633, section 12.2, if there is no binding and we are
-        // processing Rebind, the message has to be discarded (assuming that
-        // the server doesn't know if the prefix in the IA_PD option is
-        // appropriate for the client's link). The exception being thrown
-        // here should propagate to the main loop and cause the message to
-        // be discarded.
+            // We did not assign anything. If client has sent something, then
+            // the status code is NoBinding, if he sent an empty IA_NA, then it's
+            // NoAddrsAvailable
+            if (hints_count) {
+                // Insert status code NoBinding to indicate that the lease does not
+                // exist for this client.
+                ia_rsp->addOption(createStatusCode(STATUS_NoBinding,
+                    "Sorry, no known PD leases for this duid/iaid/subnet."));
+
+                LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_EXTEND_PD_UNKNOWN_SUBNET)
+                    .arg(duid->toText())
+                    .arg(ia->getIAID())
+                    .arg(subnet->toText());
+            } else {
+                LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_EXTEND_PD_NO_BINDING)
+                    .arg(query->getName()).arg(duid->toText()).arg(ia->getIAID())
+                    .arg(subnet->toText());
+                ia_rsp->addOption(createStatusCode(STATUS_NoPrefixAvail,
+                    "Sorry, no prefixes could be assigned at this time."));
+            }
         } else {
+            // Per RFC3633, section 12.2, if there is no binding and we are
+            // processing Rebind, the message has to be discarded (assuming that
+            // the server doesn't know if the prefix in the IA_PD option is
+            // appropriate for the client's link). The exception being thrown
+            // here should propagate to the main loop and cause the message to
+            // be discarded.
             isc_throw(DHCPv6DiscardMessageError, "no binding found for the"
                       " DUID=" << duid->toText() << ", IAID="
                       << ia->getIAID() << ", subnet="
                       << subnet->toText() << " when processing a Rebind"
                       " message with IA_PD option");
         }
-        return (ia_rsp);
-
-    }
-
-    // Keep the old data in case the callout tells us to skip update.
-    Lease6 old_data = *lease;
-
-    bool invalid_prefix = false;
-    // Check what prefix the client has sent. The prefix should match the
-    // one that we have associated with the IAID. If it doesn't match we
-    // have to return the prefix with the lifetimes set to 0 (see section
-    // 12.2. of RFC3633).
-    Option6IAPrefixPtr ia_prefix = boost::dynamic_pointer_cast<
-        Option6IAPrefix>(ia->getOption(D6O_IAPREFIX));
-    if (ia_prefix && ((ia_prefix->getAddress() != lease->addr_) ||
-                      (ia_prefix->getLength() != lease->prefixlen_))) {
-        Option6IAPrefixPtr prefix(new Option6IAPrefix(D6O_IAPREFIX,
-                                                      ia_prefix->getAddress(),
-                                                      ia_prefix->getLength(),
-                                                      0, 0));
-        ia_rsp->addOption(prefix);
-        invalid_prefix = true;
-
-    } else {
-        // The prefix sent by a client is correct. Let's extend the lease
-        // for the client.
-        lease->preferred_lft_ = subnet->getPreferred();
-        lease->valid_lft_ = subnet->getValid();
-        // Do the actual lease update
-        lease->t1_ = subnet->getT1();
-        lease->t2_ = subnet->getT2();
-        lease->cltt_ = time(NULL);
-
-        // Also update IA_PD container with proper T1, T2 values
-        ia_rsp->setT1(subnet->getT1());
-        ia_rsp->setT2(subnet->getT2());
-
-        Option6IAPrefixPtr prefix(new Option6IAPrefix(D6O_IAPREFIX,
-                                                      lease->addr_,
-                                                      lease->prefixlen_,
-                                                      lease->preferred_lft_,
-                                                      lease->valid_lft_));
-        ia_rsp->addOption(prefix);
-
-    }
-
-    (void)invalid_prefix;
-    bool skip = false;
-#if 0
-    // Execute all callouts registered for packet6_send
-    // Get the callouts specific for the processed message and execute them.
-    int hook_point = query->getType() == DHCPV6_RENEW ?
-        Hooks.hook_index_lease6_renew_ : Hooks.hook_index_lease6_rebind_;
-    if (HooksManager::calloutsPresent(hook_point)) {
-        CalloutHandlePtr callout_handle = getCalloutHandle(query);
-
-        // Delete all previous arguments
-        callout_handle->deleteAllArguments();
-
-        // Pass the original packet
-        callout_handle->setArgument("query6", query);
-
-        // Pass the lease to be updated
-        callout_handle->setArgument("lease6", lease);
-
-        // Pass the IA option to be sent in response
-        callout_handle->setArgument("ia_pd", ia_rsp);
-
-        // Call all installed callouts
-        HooksManager::callCallouts(hook_point,
-                                   *callout_handle);
-
-        // Remember hook's instruction whether we want to skip update or not
-        skip = callout_handle->getSkip();
-    }
-#endif
-
-    if (!skip) {
-        // If the prefix specified by the client is wrong, we don't want to
-        // update client's lease.
-        if (!invalid_prefix) {
-            LeaseMgrFactory::instance().updateLease6(lease);
-        }
-    } else {
-        // Callouts decided to skip the next processing step. The next
-        // processing step would to actually renew/rebind the lease, so skip
-        // at this stage means "keep the old lease as it is".
-        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_LEASE6_EXTEND_SKIP)
-            .arg(query->getName());
-
-        // Copy back the original date to the lease. For MySQL it doesn't make
-        // much sense, but for memfile, the Lease6Ptr points to the actual lease
-        // in memfile, so the actual update is performed when we manipulate
-        // fields of returned Lease6Ptr, the actual updateLease6() is no-op.
-        *lease = old_data;
     }
 
     return (ia_rsp);
