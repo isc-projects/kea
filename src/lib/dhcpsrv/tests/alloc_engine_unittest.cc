@@ -17,6 +17,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/duid.h>
 #include <dhcp/dhcp4.h>
+#include <dhcp/dhcp6.h>
 #include <dhcpsrv/alloc_engine.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/host_mgr.h>
@@ -296,6 +297,98 @@ public:
         }
 
         return (lease);
+    }
+
+    /// @brief Checks if the simple allocation can succeed
+    ///
+    /// The type of lease is determined by pool type (pool->getType()
+    ///
+    /// @param pool pool from which the lease will be allocated from
+    /// @param hint address to be used as a hint
+    /// @param fake true - this is fake allocation (SOLICIT)
+    /// @param in_pool specifies whether the lease is expected to be in pool
+    /// @return allocated lease(s) (may be empty)
+    Lease6Collection allocateTest(AllocEngine& engine, const Pool6Ptr& pool,
+                                  const IOAddress& hint, bool fake, bool in_pool = true) {
+        Lease::Type type = pool->getType();
+        uint8_t expected_len = pool->getLength();
+
+        AllocEngine::ClientContext6 ctx(subnet_, duid_, iaid_, hint, type,
+                                        false, false, "", fake);
+
+        Lease6Collection leases;
+        EXPECT_NO_THROW(leases = engine.allocateLeases6(ctx));
+
+        for (Lease6Collection::iterator it = leases.begin(); it != leases.end(); ++it) {
+
+            // Do all checks on the lease
+            checkLease6(*it, type, expected_len, in_pool, in_pool);
+
+            // Check that the lease is indeed in LeaseMgr
+            Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(type,
+                                                                       (*it)->addr_);
+            if (!fake) {
+                // This is a real (REQUEST) allocation, the lease must be in the DB
+                EXPECT_TRUE(from_mgr) << "Lease " << from_mgr->addr_.toText()
+                                      << " returned by allocateLeases6(), "
+                                      << "but was not present in LeaseMgr";
+                if (!from_mgr) {
+                    return (leases);
+                }
+
+                // Now check that the lease in LeaseMgr has the same parameters
+                detailCompareLease(*it, from_mgr);
+            } else {
+                // This is a fake (SOLICIT) allocation, the lease must not be in DB
+                EXPECT_FALSE(from_mgr) << "Lease " << from_mgr->addr_.toText()
+                                       << " returned by allocateLeases6(), "
+                                       << "was present in LeaseMgr (expected to be"
+                                       << " not present)";
+                if (from_mgr) {
+                    return (leases);
+                }
+            }
+        }
+
+        return (leases);
+    }
+
+    Lease6Collection renewTest(AllocEngine& engine, const Pool6Ptr& pool,
+                               AllocEngine::HintContainer& hints, bool in_pool = true) {
+
+        Lease::Type type = pool->getType();
+        uint8_t expected_len = pool->getLength();
+
+        AllocEngine::ClientContext6 ctx(subnet_, duid_, iaid_, IOAddress("::"),
+                                        type, false, false, "", false);
+        ctx.hints_ = hints;
+        ctx.query_.reset(new Pkt6(DHCPV6_RENEW, 123));
+
+        Lease6Collection leases = engine.renewLeases6(ctx);
+
+
+        for (Lease6Collection::iterator it = leases.begin(); it != leases.end(); ++it) {
+
+            // Do all checks on the lease
+            checkLease6(*it, type, expected_len, in_pool, in_pool);
+
+            // Check that the lease is indeed in LeaseMgr
+            Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(type,
+                                                                       (*it)->addr_);
+
+            // This is a real (REQUEST) allocation, the lease must be in the DB
+            EXPECT_TRUE(from_mgr) << "Lease " << from_mgr->addr_.toText()
+                                  << " returned by allocateLeases6(), "
+                                  << "but was not present in LeaseMgr";
+            if (!from_mgr) {
+                return (leases);
+            }
+
+            // Now check that the lease in LeaseMgr has the same parameters
+            detailCompareLease(*it, from_mgr);
+        }
+
+        return (leases);
     }
 
     /// @brief Checks if the address allocation with a hint that is in range,
@@ -1525,6 +1618,127 @@ TEST_F(AllocEngine6Test, allocateLeasesInvalidData) {
     EXPECT_TRUE(leases.empty());
 
 }
+
+// Checks whether an address can be renewed (simple case, no reservation tricks)
+TEST_F(AllocEngine6Test, addressRenewal) {
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100);
+
+    Lease6Collection leases;
+
+    leases = allocateTest(engine, pool_, IOAddress("::"), false, true);
+    ASSERT_EQ(1, leases.size());
+
+    // This is what the client will send in his renew message.
+    AllocEngine::HintContainer hints;
+    hints.push_back(make_pair(leases[0]->addr_, 128));
+
+    Lease6Collection renewed = renewTest(engine, pool_, hints);
+    ASSERT_EQ(1, renewed.size());
+
+    // Check that the lease was indeed renewed and hasn't changed
+    // (i.e. the same address, preferred and valid lifetimes)
+
+    /// @todo: use leaseCompare, but ignore cltt_
+    EXPECT_EQ(leases[0]->addr_, renewed[0]->addr_);
+    EXPECT_EQ(leases[0]->type_, renewed[0]->type_);
+    EXPECT_EQ(leases[0]->preferred_lft_, renewed[0]->preferred_lft_);
+    EXPECT_EQ(leases[0]->valid_lft_, renewed[0]->valid_lft_);
+}
+
+// Checks whether an address can be renewed (in-pool reservation)
+TEST_F(AllocEngine6Test, reservedAddressRenewal) {
+    // Create reservation for the client. This is in-pool reservation,
+    // as the pool is 2001:db8:1::10 - 2001:db8:1::20.
+    createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::1c"), 128);
+
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100);
+
+    Lease6Collection leases;
+
+    leases = allocateTest(engine, pool_, IOAddress("::"), false, true);
+    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ("2001:db8:1::1c", leases[0]->addr_.toText());
+
+    // This is what the client will send in his renew message.
+    AllocEngine::HintContainer hints;
+    hints.push_back(make_pair(leases[0]->addr_, 128));
+
+    Lease6Collection renewed = renewTest(engine, pool_, hints);
+    ASSERT_EQ(1, renewed.size());
+    ASSERT_EQ("2001:db8:1::1c", leases[0]->addr_.toText());
+}
+
+// Checks whether address can change during renew (if there is a new
+// reservation for this client)
+TEST_F(AllocEngine6Test, reservedAddressRenewChange) {
+
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100);
+
+    Lease6Collection leases;
+
+    leases = allocateTest(engine, pool_, IOAddress("::"), false, true);
+    ASSERT_EQ(1, leases.size());
+    ASSERT_NE("2001:db8:1::1c", leases[0]->addr_.toText());
+
+    // This is what the client will send in his renew message.
+    AllocEngine::HintContainer hints;
+    hints.push_back(make_pair(leases[0]->addr_, 128));
+
+    // Create reservation for the client. This is in-pool reservation,
+    // as the pool is 2001:db8:1::10 - 2001:db8:1::20.
+    createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::1c"), 128);
+
+    Lease6Collection renewed = renewTest(engine, pool_, hints);
+    ASSERT_EQ(1, renewed.size());
+    ASSERT_EQ("2001:db8:1::1c", renewed[0]->addr_.toText());
+}
+
+// Checks whether address can change during renew (if there is a new
+// reservation for this address for another client)
+TEST_F(AllocEngine6Test, reservedAddressRenewReserved) {
+
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100);
+
+    Lease6Collection leases;
+
+    leases = allocateTest(engine, pool_, IOAddress("::"), false, true);
+    ASSERT_EQ(1, leases.size());
+
+    // This is what the client will send in his renew message.
+    AllocEngine::HintContainer hints;
+    hints.push_back(make_pair(leases[0]->addr_, 128));
+
+    // Create reservation for this address, but for another client.
+    // This is in-pool reservation, as the pool is 2001:db8:1::10 - 2001:db8:1::20.
+    HostPtr host = createHost6(false, IPv6Resrv::TYPE_NA, leases[0]->addr_, 128);
+
+    // We need to tweak reservation id: use a different DUID for client Y
+    vector<uint8_t> other_duid(8, 0x45);
+    host->setIdentifier(&other_duid[0], other_duid.size(), Host::IDENT_DUID);
+    // Ok, now add it to the HostMgr
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    Lease6Collection renewed = renewTest(engine, pool_, hints);
+    ASSERT_EQ(1, renewed.size());
+
+    // Check that we no longer have the reserved address.
+    ASSERT_NE(leases[0]->addr_.toText(), renewed[0]->addr_.toText());
+
+    // Check that the lease for the now reserved address is no longer in
+    // the lease database.
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                               leases[0]->addr_);
+    EXPECT_FALSE(from_mgr);
+}
+
+
+TEST_F(AllocEngine6Test, prefixRenewal) {
+
+
+}
+
+
 
 /// @todo: The following methods are tested indirectly by allocateLeases6()
 /// tests, but could use more direct testing:
