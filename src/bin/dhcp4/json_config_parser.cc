@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,6 +24,7 @@
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/host_reservation_parser.h>
 #include <dhcpsrv/parsers/host_reservations_list_parser.h>
+#include <dhcpsrv/parsers/ifaces_config_parser.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 
@@ -370,7 +371,7 @@ namespace dhcp {
         parser = new Uint32Parser(config_id,
                                  globalContext()->uint32_values_);
     } else if (config_id.compare("interfaces") == 0) {
-        parser = new InterfaceListConfigParser(config_id, globalContext());
+        parser = new IfacesConfigParser4();
     } else if (config_id.compare("subnet4") == 0) {
         parser = new Subnets4ListConfigParser(config_id);
     } else if (config_id.compare("option-data") == 0) {
@@ -475,7 +476,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                 subnet_parser = parser;
             } else if (config_pair.first == "option-data") {
                 option_parser = parser;
-            } else if (config_pair.first == "interfaces") {
+            } else if (config_pair.first == "interface-config") {
                 // The interface parser is independent from any other
                 // parser and can be run here before any other parsers.
                 iface_parser = parser;
