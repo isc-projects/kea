@@ -250,15 +250,21 @@ TEST_F(RebindTest, directClientChangingSubnet) {
     configure(REBIND_CONFIGS[1], *client.getServer());
     // Try to rebind, using the address that the client had acquired using
     // previous server configuration.
+
     ASSERT_NO_THROW(client.doRebind());
+
     // We are expecting that the server didn't extend the lease because
     // the address that client is using doesn't match the new subnet.
     // But, the client still has an old lease.
     ASSERT_EQ(1, client.getLeaseNum());
     Lease6 lease_client2 = client.getLease(0);
+
     // The current lease should be exactly the same as old lease,
     // because server shouldn't have extended.
-    EXPECT_TRUE(lease_client == lease_client2);
+    EXPECT_TRUE(lease_client.addr_ == lease_client2.addr_);
+    EXPECT_EQ(0, lease_client2.preferred_lft_);
+    EXPECT_EQ(0, lease_client2.valid_lft_);
+
     // Make sure, that the lease that client has, is matching the lease
     // in the lease database.
     Lease6Ptr lease_server2 = checkLease(lease_client2);
