@@ -88,7 +88,8 @@ Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply) {
             case D6O_IAADDR:
                 {
                     Option6IAAddrPtr iaaddr = boost::dynamic_pointer_cast<
-                        Option6IAAddr>(ia->getOption(D6O_IAADDR));
+                        Option6IAAddr>(ia_opt);
+
                     if (!iaaddr) {
                         // There is no address. This IA option may simply
                         // contain a status code, so let's just reset the
@@ -113,7 +114,7 @@ Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply) {
             case D6O_IAPREFIX:
                 {
                     Option6IAPrefixPtr iaprefix = boost::dynamic_pointer_cast<
-                        Option6IAPrefix>(ia->getOption(D6O_IAPREFIX));
+                        Option6IAPrefix>(ia_opt);
                     if (!iaprefix) {
                         // There is no prefix. This IA option may simply
                         // contain a status code, so let's just reset the

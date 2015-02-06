@@ -474,13 +474,31 @@ TEST_F(RebindTest, relayedClientChangingAddress) {
         << "The server discarded the Rebind message, while it should have"
         " sent a response indicating that the client should stop using the"
         " lease, by setting lifetime values to 0.";
-    // Get the client's lease.
-    ASSERT_EQ(1, client.getLeaseNum());
-    Lease6 lease_client2 = client.getLease(0);
+    // Get the client's leases. He should get two addresses:
+    // the first one for the bogus 3000::100 address with 0 lifetimes.
+    // the second one with the actual lease with non-zero lifetimes.
+    ASSERT_EQ(2, client.getLeaseNum());
+
+    // Let's check the first one
+    Lease6 lease_client1 = client.getLease(0);
+    Lease6 lease_client2 = client.getLease(1);
+
+    if (lease_client1.addr_.toText() != "3000::100") {
+        lease_client1 = client.getLease(1);
+        lease_client2 = client.getLease(0);
+    }
+
     // The lifetimes should be set to 0, as an explicit notification to the
     // client to stop using invalid prefix.
-    EXPECT_EQ(0, lease_client2.valid_lft_);
-    EXPECT_EQ(0, lease_client2.preferred_lft_);
+    EXPECT_EQ(0, lease_client1.valid_lft_);
+    EXPECT_EQ(0, lease_client1.preferred_lft_);
+
+    // Let's check the second lease
+    // The lifetimes should be set to 0, as an explicit notification to the
+    // client to stop using invalid prefix.
+    EXPECT_NE(0, lease_client2.valid_lft_);
+    EXPECT_NE(0, lease_client2.preferred_lft_);
+
     // Check that server still has the same lease.
     Lease6Ptr lease_server = checkLease(lease_client);
     EXPECT_TRUE(lease_server);
@@ -610,12 +628,24 @@ TEST_F(RebindTest, directClientPDChangingPrefix) {
         " sent a response indicating that the client should stop using the"
         " lease, by setting lifetime values to 0.";
     // Get the client's lease.
-    ASSERT_EQ(1, client.getLeaseNum());
-    Lease6 lease_client2 = client.getLease(0);
+    ASSERT_EQ(2, client.getLeaseNum());
+
+    // Client should get two entries. One with the invalid address he requested
+    // with zeroed lifetimes and a second one with the actual prefix he has
+    // with non-zero lifetimes.
+    Lease6 lease_client1 = client.getLease(0);
+    Lease6 lease_client2 = client.getLease(1);
+
     // The lifetimes should be set to 0, as an explicit notification to the
     // client to stop using invalid prefix.
-    EXPECT_EQ(0, lease_client2.valid_lft_);
-    EXPECT_EQ(0, lease_client2.preferred_lft_);
+    EXPECT_EQ(0, lease_client1.valid_lft_);
+    EXPECT_EQ(0, lease_client1.preferred_lft_);
+
+    // The lifetimes should be set to 0, as an explicit notification to the
+    // client to stop using invalid prefix.
+    EXPECT_NE(0, lease_client2.valid_lft_);
+    EXPECT_NE(0, lease_client2.preferred_lft_);
+
     // Check that server still has the same lease.
     Lease6Ptr lease_server = checkLease(lease_client);
     ASSERT_TRUE(lease_server);
