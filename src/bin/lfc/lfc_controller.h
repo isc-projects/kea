@@ -61,7 +61,7 @@ public:
     /// @brief Acts as the primary entry point to start execution
     /// of the process.
     ///
-    ///Provides the control logic to combine two lease files and
+    /// Provides the control logic to combine two lease files and
     /// weed out duplicate and expired leases. A description of
     /// the design can be found at http://kea.isc.org/wiki/LFCDesign
     ///
