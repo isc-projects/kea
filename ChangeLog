@@ -1,3 +1,9 @@
+887.	[func]		sar
+	A new process, kea-lfc, has been added. It is meant to
+	be periodically executed by the DHCPv4 and DHCPv6 servers
+	to remove redundant information from the lease files.
+	See http://kea.isc.org/wiki/LFCDesign#no1 for the design.
+
 886.	[func]		tomek
 	libdhcpsrv: Allocation Engine now uses statically assigned
 	addresses when it allocates leases for the DHCPv6 clients.
