@@ -606,14 +606,28 @@ AllocEngine::allocateLease4(const SubnetPtr& subnet, const ClientIdPtr& clientid
                 return (Lease4Ptr());
             }
 
-            // The reserved address always takes precedence over an address
-            // supplied by the client (renewed address or requested).
-            const IOAddress& candidate = ctx.host_ ?
-                ctx.host_->getIPv4Reservation() : ctx.requested_address_;
+            // Now let's pick an address to be allocated to the client. The
+            // candidate address may either be a reserved one or the one that
+            // the client requests.
+            IOAddress candidate = 0;
+            ConstHostPtr other_host;
+            if (ctx.host_) {
+                candidate = ctx.host_->getIPv4Reservation();
 
-            if (ctx.host_ ||
-                (!ctx.host_ && !HostMgr::instance().get4(ctx.subnet_->getID(),
-                                                         candidate))) {
+            } else {
+                candidate = ctx.requested_address_;
+                // If client is requesting an address we have to check if this address
+                // is not reserved for someone else. Note that for DHCPDISCOVER we
+                // treat the requested address as a hint and we don't return an empty
+                // lease.
+                other_host = HostMgr::instance().get4(ctx.subnet_->getID(), candidate);
+                if (!ctx.fake_allocation_ && other_host) {
+                    return (Lease4Ptr());
+                }
+            }
+
+            // If address is not reserved for another client, let's try allocate it.
+            if (!other_host) {
                 // Once we picked an address we want to allocate, we have to check
                 // if this address is available.
                 existing = LeaseMgrFactory::instance().getLease4(candidate);
