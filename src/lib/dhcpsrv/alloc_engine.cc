@@ -672,15 +672,22 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx, Lease6Collection& exis
 
         // If there's a lease for this address, let's not create it.
         // It doesn't matter whether it is for this client or for someone else.
-        if (LeaseMgrFactory::instance().getLease6(ctx.type_, addr)) {
-            continue;
+        if (!LeaseMgrFactory::instance().getLease6(ctx.type_, addr)) {
+            // Ok, let's create a new lease...
+            Lease6Ptr lease = createLease6(ctx, addr, prefix_len);
+
+            // ... and add it to the existing leases list.
+            existing_leases.push_back(lease);
+
+            if (ctx.type_ == Lease::TYPE_NA) {
+                LOG_INFO(dhcpsrv_logger, DHCPSRV_HR_RESERVED_ADDR_GRANTED)
+                    .arg(addr.toText()).arg(ctx.duid_->toText());
+            } else {
+                LOG_INFO(dhcpsrv_logger, DHCPSRV_HR_RESERVED_PREFIX_GRANTED)
+                    .arg(addr.toText()).arg(static_cast<int>(prefix_len))
+                    .arg(ctx.duid_->toText());
+            }
         }
-
-        // Ok, let's create a new lease...
-        Lease6Ptr lease = createLease6(ctx, addr, prefix_len);
-
-        // ... and add it to the existing leases list.
-        existing_leases.push_back(lease);
     }
 }
 
@@ -1639,38 +1646,33 @@ AllocEngine::renewLeases6(ClientContext6& ctx) {
 
             ctx.host_ = HostMgr::instance().get6(ctx.subnet_->getID(), ctx.duid_,
                                                  ctx.hwaddr_);
+        } else {
+            // Host reservations disabled? Then explicitly set host to NULL
+            ctx.host_.reset();
         }
 
         // Check if there are any leases for this client.
         Lease6Collection leases = LeaseMgrFactory::instance()
             .getLeases6(ctx.type_, *ctx.duid_, ctx.iaid_, ctx.subnet_->getID());
 
-        // Now we have 3 lists:
-        // 1. what client requested (ctx.hints_)
-        // 2. what leases we currently have (leases)
-        // 3. reservation list: ctx.hosts_->getIPv6Reservations(TYPE_NA)
+        if (!leases.empty()) {
+            // Check if the existing leases are reserved for someone else.
+            // If they're not, we're ok to keep using them.
+            removeNonmatchingReservedLeases6(ctx, leases);
+        }
 
-        // The behavior here is similar to how we process requests, but
-        // there are noticable differences.
+        if (ctx.host_) {
+            // If we have host reservation, allocate those leases.
+            allocateReservedLeases6(ctx, leases);
 
-        // Now do the checks:
-        // Case 1. if there are no leases, and there are reservations...
-        //   1.1. are the reserved addresses are used by someone else?
-        //       yes: we have a problem
-        //       no: assign them => done
-        // Case 2. if there are leases and there are no reservations...
-        //   2.1 are the leases reserved for someone else?
-        //       yes: release them, assign something else
-        //       no: renew them => done
-        // Case 3. if there are leases and there are reservations...
-        //   3.1 are the leases matching reservations?
-        //       yes: renew them => done
-        //       no: release existing leases, assign new ones based on reservations
-        // Case 4/catch-all. if there are no leases and no reservations...
-        //       assign new leases
-        //
+            // There's one more check to do. Let's remove leases that are not
+            // matching reservations, i.e. if client X has address A, but there's
+            // a reservation for address B, we should release A and reassign B.
+            // Caveat: do this only if we have at least one reserved address.
+            removeNonreservedLeases6(ctx, leases);
+        }
 
-        // Extend all existing leases.
+        // Extend all existing leases that passed all checks.
         for (Lease6Collection::iterator l = leases.begin(); l != leases.end(); ++l) {
             extendLease6(ctx, *l);
         }
