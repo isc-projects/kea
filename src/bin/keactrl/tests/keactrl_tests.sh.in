@@ -35,7 +35,9 @@ d2_name="${wildcard_name}-ddns"
 config="{
     \"Dhcp4\":
     {
-        \"interfaces\": [ ],
+        \"interfaces-config\": {
+            \"interfaces\": [ ]
+        },
         \"valid-lifetime\": 4000,
         \"renew-timer\": 1000,
         \"rebind-timer\": 2000,
@@ -52,7 +54,9 @@ config="{
     },
     \"Dhcp6\":
     {
-        \"interfaces\": [ ],
+        \"interfaces-config\": {
+            \"interfaces\": [ ]
+        },
         \"preferred-lifetime\": 3000,
         \"valid-lifetime\": 4000,
         \"renew-timer\": 1000,

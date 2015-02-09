@@ -597,7 +597,7 @@ namespace dhcp {
         (config_id.compare("rebind-timer") == 0))  {
         parser = new Uint32Parser(config_id,
                                  globalContext()->uint32_values_);
-    } else if (config_id.compare("interface-config") == 0) {
+    } else if (config_id.compare("interfaces-config") == 0) {
         parser = new IfacesConfigParser6();
     } else if (config_id.compare("subnet6") == 0) {
         parser = new Subnets6ListConfigParser(config_id);
@@ -697,7 +697,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
                 // committed.
                 hooks_parser = parser;
                 hooks_parser->build(config_pair.second);
-            } else if (config_pair.first == "interface-config") {
+            } else if (config_pair.first == "interfaces-config") {
                 // The interface parser is independent from any other parser and
                 // can be run here before other parsers.
                 parser->build(config_pair.second);

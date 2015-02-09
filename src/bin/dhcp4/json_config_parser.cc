@@ -370,7 +370,7 @@ namespace dhcp {
         (config_id.compare("rebind-timer") == 0))  {
         parser = new Uint32Parser(config_id,
                                  globalContext()->uint32_values_);
-    } else if (config_id.compare("interfaces") == 0) {
+    } else if (config_id.compare("interfaces-config") == 0) {
         parser = new IfacesConfigParser4();
     } else if (config_id.compare("subnet4") == 0) {
         parser = new Subnets4ListConfigParser(config_id);
@@ -476,7 +476,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                 subnet_parser = parser;
             } else if (config_pair.first == "option-data") {
                 option_parser = parser;
-            } else if (config_pair.first == "interface-config") {
+            } else if (config_pair.first == "interfaces-config") {
                 // The interface parser is independent from any other
                 // parser and can be run here before any other parsers.
                 iface_parser = parser;

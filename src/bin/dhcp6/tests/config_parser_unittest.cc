@@ -129,7 +129,7 @@ public:
     /// @brief Returns an interface configuration used by the most of the
     /// unit tests.
     std::string genIfaceConfig() const {
-        return ("\"interface-config\": {"
+        return ("\"interfaces-config\": {"
                 "  \"interfaces\": [ \"*\" ]"
                 "}");
     }
@@ -1402,7 +1402,7 @@ TEST_F(Dhcp6ParserTest, invalidPdPools) {
 
     const char *config[] =  {
         // No prefix.
-        "{ \"interface-config\": { },"
+        "{ \"interfaces-config\": { },"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1416,7 +1416,7 @@ TEST_F(Dhcp6ParserTest, invalidPdPools) {
         "\"valid-lifetime\": 4000 }"
         "] }",
         // No prefix-len.
-        "{ \"interface-config\": { },"
+        "{ \"interfaces-config\": { },"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1429,7 +1429,7 @@ TEST_F(Dhcp6ParserTest, invalidPdPools) {
         "\"valid-lifetime\": 4000 }"
         "] }",
         // No delegated-len.
-        "{ \"interface-config\": { },"
+        "{ \"interfaces-config\": { },"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1442,7 +1442,7 @@ TEST_F(Dhcp6ParserTest, invalidPdPools) {
         "\"valid-lifetime\": 4000 }"
         "] }",
         // Delegated length is too short.
-        "{ \"interface-config\": { },"
+        "{ \"interfaces-config\": { },"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -2939,7 +2939,7 @@ buildHooksLibrariesConfig(const std::vector<std::string>& libraries) {
 
     // Create the first part of the configuration string.
     string config =
-        "{ \"interface-config\": { },"
+        "{ \"interfaces-config\": { },"
            "\"hooks-libraries\": [";
 
     // Append the libraries (separated by commas if needed)
@@ -3087,7 +3087,7 @@ TEST_F(Dhcp6ParserTest, selectedInterfaces) {
 
     ConstElementPtr status;
 
-    string config = "{ \"interface-config\": {"
+    string config = "{ \"interfaces-config\": {"
         "  \"interfaces\": [ \"eth0\" ]"
         "},"
         "\"preferred-lifetime\": 3000,"
@@ -3126,7 +3126,7 @@ TEST_F(Dhcp6ParserTest, allInterfaces) {
     // but also includes '*'. This keyword switches server into the
     // mode when it listens on all interfaces regardless of what interface names
     // were specified in the "interfaces" parameter.
-    string config = "{ \"interface-config\": {"
+    string config = "{ \"interfaces-config\": {"
         "  \"interfaces\": [ \"eth0\", \"eth1\", \"*\" ]"
         "},"
         "\"preferred-lifetime\": 3000,"

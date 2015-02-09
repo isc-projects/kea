@@ -9,7 +9,9 @@
 "Dhcp4":
 {
 # Add names of interfaces to listen on.
-  "interfaces": [ ],
+  "interfaces-config:" {
+    "interfaces": [ ]
+  },
 
 # Use Memfile lease database backend to store leases in a CSV file.
   "lease-database": {
@@ -34,7 +36,9 @@
 "Dhcp6":
 {
 # Add names of interfaces to listen on.
-  "interfaces": [ ],
+  "interfaces-config:" {
+    "interfaces": [ ]
+  },
 
 # Use Memfile lease database backend to store leases in a CSV file.
   "lease-database": {

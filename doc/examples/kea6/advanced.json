@@ -11,7 +11,9 @@
 
 {
 # Kea is told to listen on ethX network interface only.
-  "interfaces": [ "ethX" ],
+  "interfaces-config:" {
+    "interfaces": [ "ethX" ]
+  },
 
 # We need to specify lease type. As of May 2014, three backends are supported:
 # memfile, mysql and pgsql. We'll just use memfile, because it doesn't require
