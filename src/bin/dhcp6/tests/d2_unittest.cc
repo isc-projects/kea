@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -75,7 +75,9 @@ Dhcp6SrvD2Test::buildTestNcr(uint32_t dhcid_id_num) {
 
 void
 Dhcp6SrvD2Test::reset() {
-    std::string config = "{ \"interfaces\": [ \"*\" ],"
+    std::string config = "{ \"interfaces-config\": {"
+            "  \"interfaces\": [ \"*\" ]"
+            "},"
             "\"hooks-libraries\": [ ],"
             "\"preferred-lifetime\": 3000,"
             "\"rebind-timer\": 2000, "
@@ -97,7 +99,9 @@ Dhcp6SrvD2Test::configureD2(bool enable_d2, const bool exp_result,
                             const size_t max_queue_size) {
     std::ostringstream config;
     config <<
-        "{ \"interfaces\": [ \"*\" ],"
+        "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
         "\"hooks-libraries\": [ ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
