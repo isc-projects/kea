@@ -820,7 +820,13 @@ void Memfile_LeaseMgr::lfcExecute(boost::shared_ptr<LeaseFileType>& lease_file) 
         // because we don't want to run LFC if the rename failed.
         do_lfc = (rename(lease_file->getFilename().c_str(),
                          lease_file_copy.getFilename().c_str()) == 0);
-        error_string = strerror(errno);
+
+        if (!do_lfc) {
+            LOG_ERROR(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_LEASE_FILE_RENAME_FAIL)
+                .arg(lease_file->getFilename())
+                .arg(lease_file_copy.getFilename())
+                .arg(strerror(errno));
+        }
 
         // Regardless if we successfully moved the current file or not,
         // we need to re-open the current file for the server to write
@@ -841,24 +847,18 @@ void Memfile_LeaseMgr::lfcExecute(boost::shared_ptr<LeaseFileType>& lease_file) 
             /// is most likely related to a human error, e.g. changing
             /// file permissions.
             LOG_ERROR(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_LEASE_FILE_REOPEN_FAIL)
-                .arg(lease_file->getFilename());
+                .arg(lease_file->getFilename())
+                .arg(ex.what());
             // Reset the pointer to the file so as the backend doesn't
             // try to write leases to disk.
             lease_file.reset();
             do_lfc = false;
-            error_string = ex.what();
         }
     }
     // Once the files have been rotated, or untouched if another LFC had
     // not finished, a new process is started.
     if (do_lfc) {
         lfc_setup_->execute();
-
-    } else {
-        LOG_ERROR(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_ROTATION_FAIL)
-            .arg(lease_file->getFilename())
-            .arg(lease_file_copy.getFilename())
-            .arg(error_string);
     }
 }
 
