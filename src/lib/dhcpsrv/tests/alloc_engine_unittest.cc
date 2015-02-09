@@ -1685,6 +1685,56 @@ TEST_F(AllocEngine6Test, reservedAddressRenewal) {
 }
 
 // Checks whether a single host can have more than one reservation.
+//
+/// @todo: as of #3677, this does not work. When processing solicit with two
+/// IA_NAs and two reservations, there currently no way to indicate that
+/// the first reservation should be used for the first IA and the second
+/// reservation for the second IA. This works for Requests and Renews, though.
+/// In both of those messages, when processing of the first IA is complete,
+/// we have a lease in the database. Based on that, when processing the second
+/// IA we can detect that the first reservated address is in use already and
+/// use the second reservation.
+TEST_F(AllocEngine6Test, DISABLED_reserved2AddressesSolicit) {
+    // Create reservation for the client. This is in-pool reservation,
+    // as the pool is 2001:db8:1::10 - 2001:db8:1::20.
+    // Two addresses are reserved: 2001:db8:1::babe and 2001:db8:1::cafe
+    HostPtr host = createHost6(true, IPv6Resrv::TYPE_NA,
+                               IOAddress("2001:db8:1::babe"), 128);
+
+    IPv6Resrv resv2(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::cafe"), 128);
+    host->addReservation(resv2);
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100);
+
+    AllocEngine::ClientContext6 ctx1(subnet_, duid_, iaid_, IOAddress("::"),
+                                    pool_->getType(), false, false, "", true);
+    Lease6Collection leases1;
+    EXPECT_NO_THROW(leases1 = engine.allocateLeases6(ctx1));
+    ASSERT_EQ(1, leases1.size());
+    EXPECT_EQ("2001:db8:1::babe", leases1[0]->addr_.toText());
+
+    // Double check that repeating the same duid/type/iaid will end up with
+    // the same address.
+    AllocEngine::ClientContext6 ctx2(subnet_, duid_, iaid_, IOAddress("::"),
+                                    pool_->getType(), false, false, "", true);
+    Lease6Collection leases2;
+    EXPECT_NO_THROW(leases2 = engine.allocateLeases6(ctx2));
+    EXPECT_EQ(1, leases2.size());
+    EXPECT_EQ("2001:db8:1::babe", leases2[0]->addr_.toText());
+
+    // Ok, now the tricky part. Request allocation for the same duid and type, but
+    // different iaid. The second address should be assigned.
+    AllocEngine::ClientContext6 ctx3(subnet_, duid_, iaid_ + 1, IOAddress("::"),
+                                    pool_->getType(), false, false, "", true);
+    Lease6Collection leases3;
+    EXPECT_NO_THROW(leases3 = engine.allocateLeases6(ctx3));
+    ASSERT_EQ(1, leases3.size());
+    EXPECT_EQ("2001:db8:1::cafe", leases3[0]->addr_.toText());
+}
+
+// Checks whether a single host can have more than one reservation.
 TEST_F(AllocEngine6Test, reserved2Addresses) {
     // Create reservation for the client. This is in-pool reservation,
     // as the pool is 2001:db8:1::10 - 2001:db8:1::20.
