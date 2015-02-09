@@ -59,6 +59,24 @@ AllocEngine6Test::AllocEngine6Test() {
     factory_.create("type=memfile universe=6 persist=false");
 }
 
+void
+AllocEngine6Test::initSubnet(const asiolink::IOAddress& subnet,
+                    const asiolink::IOAddress& pool_start,
+                    const asiolink::IOAddress& pool_end) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+
+    subnet_ = Subnet6Ptr(new Subnet6(subnet, 56, 1, 2, 3, 4));
+    pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, pool_start, pool_end));
+
+    subnet_->addPool(pool_);
+
+    pd_pool_ = Pool6Ptr(new Pool6(Lease::TYPE_PD, subnet, 56, 64));
+    subnet_->addPool(pd_pool_);
+
+    cfg_mgr.getStagingCfg()->getCfgSubnets6()->add(subnet_);
+    cfg_mgr.commit();
+}
+
 Lease6Collection
 AllocEngine6Test::allocateTest(AllocEngine& engine, const Pool6Ptr& pool,
                                const asiolink::IOAddress& hint, bool fake,
@@ -88,7 +106,7 @@ AllocEngine6Test::allocateTest(AllocEngine& engine, const Pool6Ptr& pool,
             if (!from_mgr) {
                 return (leases);
             }
-            
+
             // Now check that the lease in LeaseMgr has the same parameters
             detailCompareLease(*it, from_mgr);
         } else {
@@ -102,7 +120,7 @@ AllocEngine6Test::allocateTest(AllocEngine& engine, const Pool6Ptr& pool,
             }
         }
     }
-    
+
     return (leases);
 }
 
@@ -126,7 +144,7 @@ AllocEngine6Test::simpleAlloc6Test(const Pool6Ptr& pool, const IOAddress& hint,
                                     false, false, "", fake);
 
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
-    
+
     // Check that we got a lease
     EXPECT_TRUE(lease);
     if (!lease) {
@@ -213,7 +231,7 @@ AllocEngine6Test::allocWithUsedHintTest(Lease::Type type, IOAddress used_addr,
     Lease6Ptr used(new Lease6(type, used_addr,
                               duid2, 1, 2, 3, 4, now, subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
-    
+
     // Another client comes in and request an address that is in pool, but
     // unfortunately it is used already. The same address must not be allocated
     // twice.
@@ -221,10 +239,10 @@ AllocEngine6Test::allocWithUsedHintTest(Lease::Type type, IOAddress used_addr,
     AllocEngine::ClientContext6 ctx(subnet_, duid_, iaid_, requested, type,
                                     false, false, "", false);
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
-    
+
     // Check that we got a lease
     ASSERT_TRUE(lease);
-        
+
     // Allocated address must be different
     EXPECT_NE(used_addr, lease->addr_);
 
@@ -280,7 +298,7 @@ void
 AllocEngine4Test::initSubnet(const asiolink::IOAddress& pool_start,
                              const asiolink::IOAddress& pool_end) {
     CfgMgr& cfg_mgr = CfgMgr::instance();
-    
+
     subnet_ = Subnet4Ptr(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3));
     pool_ = Pool4Ptr(new Pool4(pool_start, pool_end));
     subnet_->addPool(pool_);
