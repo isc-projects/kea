@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <lfc/lfc_controller.h>
+#include <lfc/lfc_log.h>
 #include <util/pid_file.h>
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/csv_lease_file4.h>
@@ -31,6 +32,7 @@
 using namespace std;
 using namespace isc::util;
 using namespace isc::dhcp;
+using namespace isc::log;
 
 namespace {
 /// @brief Maximum number of errors to allow when reading leases from the file.
@@ -56,8 +58,13 @@ LFCController::~LFCController() {
 }
 
 void
-LFCController::launch(int argc, char* argv[]) {
+LFCController::launch(int argc, char* argv[], const bool test_mode) {
     bool do_rotate = true;
+
+    // If we aren't running in test mode initialize the logging
+    // system with the defaults.
+    if (!test_mode)
+        initLogger(lfc_app_name_, WARN, 0, NULL, false);
 
     try {
         parseArgs(argc, argv);
@@ -66,9 +73,13 @@ LFCController::launch(int argc, char* argv[]) {
         throw;  // rethrow it
     }
 
+    // Now that we have parsed the arguments we can
+    // update the logging level.
     if (verbose_) {
-        std::cerr << "Starting lease file cleanup" << std::endl;
+        setDefaultLoggingOutput(verbose_);
     }
+
+    LOG_WARN(lfc_logger, LFC_START_MESSAGE);
 
     // verify we are the only instance
     PIDFile pid_file(pid_file_);
@@ -76,14 +87,14 @@ LFCController::launch(int argc, char* argv[]) {
     try {
         if (pid_file.check()) {
             // Already running instance, bail out
-            std::cerr << "LFC instance already running" <<  std::endl;
+            LOG_FATAL(lfc_logger, LFC_RUNNING_MESSAGE);
             return;
         }
 
         // create the pid file for this instance
         pid_file.write();
     } catch (const PIDFileError& pid_ex) {
-        std::cerr << pid_ex.what() << std::endl;
+        LOG_FATAL(lfc_logger, LFC_FAILURE_MESSAGE).arg(pid_ex.what());
         return;
     }
 
@@ -92,9 +103,7 @@ LFCController::launch(int argc, char* argv[]) {
     // all we care about is if it exists so that's okay
     CSVFile lf_finish(getFinishFile());
     if (!lf_finish.exists()) {
-        if (verbose_) {
-            std::cerr << "LFC Processing files" << std::endl;
-        }
+        LOG_INFO(lfc_logger, LFC_PROCESSING_MESSAGE);
 
         try {
             if (getProtocolVersion() == 4) {
@@ -105,7 +114,7 @@ LFCController::launch(int argc, char* argv[]) {
         } catch (const isc::Exception& proc_ex) {
             // We don't want to do the cleanup but do want to get rid of the pid
             do_rotate = false;
-            std::cerr << "Processing failed: " << proc_ex.what() << std::endl;
+            LOG_FATAL(lfc_logger, LFC_FAILURE_MESSAGE).arg(proc_ex.what());
         }
     }
 
@@ -114,14 +123,12 @@ LFCController::launch(int argc, char* argv[]) {
     // we don't want to return after the catch as we
     // still need to cleanup the pid file
     if (do_rotate) {
-        if (verbose_) {
-            std::cerr << "LFC cleaning files" << std::endl;
-        }
+        LOG_INFO(lfc_logger, LFC_ROTATING_MESSAGE);
 
         try {
             fileRotate();
         } catch (const RunTimeFail& run_ex) {
-            std::cerr << run_ex.what() << std::endl;
+          LOG_FATAL(lfc_logger, LFC_FAILURE_MESSAGE).arg(run_ex.what());
         }
     }
 
@@ -129,12 +136,10 @@ LFCController::launch(int argc, char* argv[]) {
     try {
         pid_file.deleteFile();
     } catch (const PIDFileError& pid_ex) {
-        std::cerr << pid_ex.what() << std::endl;
+          LOG_FATAL(lfc_logger, LFC_FAILURE_MESSAGE).arg(pid_ex.what());
     }
 
-    if (verbose_) {
-        std::cerr << "LFC complete" << std::endl;
-    }
+    LOG_WARN(lfc_logger, LFC_COMPLETE_MESSAGE);
 }
 
 void
@@ -272,7 +277,7 @@ LFCController::parseArgs(int argc, char* argv[]) {
 
     // If verbose is set echo the input information
     if (verbose_) {
-        std::cerr << "Protocol version:    DHCPv" << protocol_version_ << std::endl
+        std::cout << "Protocol version:    DHCPv" << protocol_version_ << std::endl
                   << "Previous or ex lease file: " << previous_file_ << std::endl
                   << "Copy lease file:           " << copy_file_ << std::endl
                   << "Output lease file:         " << output_file_ << std::endl

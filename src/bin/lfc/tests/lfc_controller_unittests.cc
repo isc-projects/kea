@@ -75,7 +75,7 @@ public:
     }
 
 protected:
-    /// @brief Sets up the file names and header string and removes 
+    /// @brief Sets up the file names and header string and removes
     /// any old test files before the test
     virtual void SetUp() {
         // set up the test files we need
@@ -103,6 +103,13 @@ protected:
     /// @brief Removes any remaining test files after the test
     virtual void TearDown() {
         removeTestFile();
+    }
+
+    /// @Wrapper to invoke the controller's launch method  Please refer to
+    /// lfcController::launch for details.  This is wrapped to provide
+    /// a single place to update the test_mode throughout the file.
+    void launch(LFCController lfc_controller, int argc, char* argv[]) {
+        lfc_controller.launch(argc, argv, true);
     }
 
 private:
@@ -348,7 +355,7 @@ TEST_F(LFCControllerTest, fileRotate) {
     writeFile(istr_, "11");
     writeFile(fstr_, "12");
 
-    lfc_controller_launch.launch(argc, argv);
+    launch(lfc_controller_launch, argc, argv);
 
     // verify finish is now previous and no temp files or pid remain.
     EXPECT_EQ(readFile(xstr_), "12");
@@ -426,7 +433,7 @@ TEST_F(LFCControllerTest, launch4) {
     writeFile(istr_, test_str);
 
     // Run the cleanup
-    lfc_controller.launch(argc, argv);
+    launch(lfc_controller, argc, argv);
 
     // Compare the results, we expect the last lease for each ip
     // except for C which was invalid and D which has expired.
@@ -445,7 +452,7 @@ TEST_F(LFCControllerTest, launch4) {
     // No copy file
 
     // Run the cleanup
-    lfc_controller.launch(argc, argv);
+    launch(lfc_controller, argc, argv);
 
     // Compare the results, we expect the last lease for each ip
     // except for C which was invalid and D which has expired.
@@ -464,7 +471,7 @@ TEST_F(LFCControllerTest, launch4) {
     writeFile(istr_, test_str);
 
     // Run the cleanup
-    lfc_controller.launch(argc, argv);
+    launch(lfc_controller, argc, argv);
 
     // Compare the results, we expect the last lease for each ip
     // except for C which was invalid and D which has expired.
@@ -481,7 +488,7 @@ TEST_F(LFCControllerTest, launch4) {
     // No copy file
 
     // Run the cleanup
-    lfc_controller.launch(argc, argv);
+    launch(lfc_controller, argc, argv);
 
     // Compare the results, we expect a header and no leaes.
     // We also verify none of the temp or pid files remain.
@@ -502,7 +509,7 @@ TEST_F(LFCControllerTest, launch4) {
 
     // Run the cleanup, the file should fail but we should
     // catch the error and properly cleanup.
-    lfc_controller.launch(argc, argv);
+    launch(lfc_controller, argc, argv);
 
     // And we shouldn't have deleted the previous file.
     // We also verify none of the temp or pid files remain.
@@ -581,7 +588,7 @@ TEST_F(LFCControllerTest, launch6) {
     writeFile(istr_, test_str);
 
     // Run the cleanup
-    lfc_controller.launch(argc, argv);
+    launch(lfc_controller, argc, argv);
 
     // Compare the results, we expect the last lease for each ip
     // except for A which has expired.
@@ -600,7 +607,7 @@ TEST_F(LFCControllerTest, launch6) {
     // No copy file
 
     // Run the cleanup
-    lfc_controller.launch(argc, argv);
+    launch(lfc_controller, argc, argv);
 
     // Compare the results, we expect the last lease for each ip.
     // We also verify none of the temp or pid files remain.
@@ -618,7 +625,7 @@ TEST_F(LFCControllerTest, launch6) {
     writeFile(istr_, test_str);
 
     // Run the cleanup
-    lfc_controller.launch(argc, argv);
+    launch(lfc_controller, argc, argv);
 
     // Compare the results, we expect the last lease for each ip.
     // We also verify none of the temp or pid files remain.
@@ -634,7 +641,7 @@ TEST_F(LFCControllerTest, launch6) {
     // No copy file
 
     // Run the cleanup
-    lfc_controller.launch(argc, argv);
+    launch(lfc_controller, argc, argv);
 
     // Compare the results, we expect a header and no leases.
     // We also verify none of the temp or pid files remain.
@@ -655,7 +662,7 @@ TEST_F(LFCControllerTest, launch6) {
 
     // Run the cleanup, the file should fail but we should
     // catch the error and properly cleanup.
-    lfc_controller.launch(argc, argv);
+    launch(lfc_controller, argc, argv);
 
     // And we shouldn't have deleted the previous file.
     // We also verify none of the temp or pid files remain.
