@@ -418,12 +418,24 @@ protected:
         /// @brief A pointer to the IA_NA/IA_PD option to be sent in response
         Option6IAPtr ia_rsp_;
 
+
+        /// @brief Specifies whether new leases in Renew/Rebind are allowed
+        ///
+        /// This field controls what to do when renewing or rebinding client
+        /// does not have any leases. RFC3315 and stateful-issues draft does not
+        /// specify it and it is left up to the server configuration policy.
+        /// False (the default) means that the client will not get any new
+        /// unreserved leases if his existing leases are no longer suitable.
+        /// True means that the allocation engine will do its best to assign
+        /// something.
+        bool allow_new_leases_in_renewals_;
+
         /// @brief Default constructor.
         ClientContext6()
            : subnet_(), duid_(), iaid_(0), type_(Lease::TYPE_NA), hwaddr_(),
              hints_(), fwd_dns_update_(false), rev_dns_update_(false), hostname_(""),
              callout_handle_(), fake_allocation_(false), old_leases_(), host_(),
-             query_(), ia_rsp_() {
+             query_(), ia_rsp_(), allow_new_leases_in_renewals_(false) {
         }
 
         /// @brief Constructor with parameters.
@@ -454,7 +466,8 @@ protected:
             subnet_(subnet), duid_(duid), iaid_(iaid), type_(type), hwaddr_(),
             hints_(), fwd_dns_update_(fwd_dns), rev_dns_update_(rev_dns),
             hostname_(hostname), fake_allocation_(fake_allocation),
-            old_leases_(), host_(), query_(), ia_rsp_() {
+            old_leases_(), host_(), query_(), ia_rsp_(),
+            allow_new_leases_in_renewals_(false){
 
             static asiolink::IOAddress any("::");
 
