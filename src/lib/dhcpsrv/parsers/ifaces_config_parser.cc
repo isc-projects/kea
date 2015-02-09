@@ -89,7 +89,9 @@ IfacesConfigParser4::build(isc::data::ConstElementPtr ifaces_config) {
     BOOST_FOREACH(ConfigPair element, ifaces_config->mapValue()) {
         try {
             if (element.first == "socket-type") {
-                /// @todo set socket-type
+                CfgIface cfg = CfgMgr::instance().getStagingCfg()->getCfgIface();
+                cfg.useSocketType(AF_INET, element.second->stringValue());
+                CfgMgr::instance().getStagingCfg()->setCfgIface(cfg);
 
             } else if (!isGenericParameter(element.first)) {
                 isc_throw(DhcpConfigError, "usupported parameter '"
