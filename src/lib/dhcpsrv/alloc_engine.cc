@@ -670,6 +670,16 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx, Lease6Collection& exis
         IOAddress addr = resv->second.getPrefix();
         uint8_t prefix_len = resv->second.getPrefixLen();
 
+        // Check if already have this lease on the existing_leases list.
+        for (Lease6CollectionConstIter l = existing_leases.begin();
+             l != existing_leases.end(); ++l) {
+
+            // Ok, we already have a lease for this reservation and it's usable
+            if (((*l)->addr_ == addr) && (*l)->valid_lft_ != 0) {
+                return;
+            }
+        }
+
         // If there's a lease for this address, let's not create it.
         // It doesn't matter whether it is for this client or for someone else.
         if (!LeaseMgrFactory::instance().getLease6(ctx.type_, addr)) {
