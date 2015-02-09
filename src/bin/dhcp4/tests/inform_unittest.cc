@@ -1,4 +1,4 @@
-// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -48,7 +48,9 @@ namespace {
 ///   - Quotes Servers option present: 192.0.2.202, 192.0.2.203.
 const char* INFORM_CONFIGS[] = {
 // Configuration 0
-    "{ \"interfaces\": [ \"*\" ],"
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
         "\"valid-lifetime\": 600,"
         "\"subnet4\": [ { "
         "    \"subnet\": \"10.0.0.0/24\", "
@@ -85,7 +87,9 @@ const char* INFORM_CONFIGS[] = {
     "}",
 
 // Configuration 1
-    "{ \"interfaces\": [ \"*\" ],"
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
         "\"valid-lifetime\": 600,"
         "\"subnet4\": [ { "
         "    \"subnet\": \"192.0.2.0/24\", "

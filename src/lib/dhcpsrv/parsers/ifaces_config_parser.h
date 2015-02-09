@@ -24,8 +24,8 @@ namespace dhcp {
 
 /// @brief Parser for interface list definition.
 ///
-/// This parser handles Dhcp4/interface-config/interfaces and
-/// Dhcp6/interface-config/interfaces entries.
+/// This parser handles Dhcp4/interfaces-config/interfaces and
+/// Dhcp6/interfaces-config/interfaces entries.
 /// It contains a list of network interfaces that the server listens on.
 /// In particular, it can contain an "*" that designates all interfaces.
 class InterfaceListConfigParser : public DhcpConfigParser {
@@ -66,7 +66,7 @@ private:
 
 /// @brief Parser for the configuration of interfaces.
 ///
-/// This parser parses the "interface-config" parameter which holds the
+/// This parser parses the "interfaces-config" parameter which holds the
 /// full configuration of the DHCP server with respect to the use of
 /// interfaces, sockets and alike.
 ///
@@ -84,9 +84,9 @@ public:
     /// @param protocol AF_INET for DHCPv4 and AF_INET6 for DHCPv6.
     IfacesConfigParser(const int protocol);
 
-    /// @brief Parses generic parameters in "interface-config".
+    /// @brief Parses generic parameters in "interfaces-config".
     ///
-    /// The generic parameters in the "interface-config" map are
+    /// The generic parameters in the "interfaces-config" map are
     /// the ones that are common for DHCPv4 and DHCPv6.
     ///
     /// @param ifaces_config A data element holding configuration of
@@ -116,7 +116,7 @@ private:
 };
 
 
-/// @brief Parser for the "interface-config" parameter of the DHCPv4 server.
+/// @brief Parser for the "interfaces-config" parameter of the DHCPv4 server.
 class IfacesConfigParser4 : public IfacesConfigParser {
 public:
 
@@ -139,7 +139,7 @@ public:
 
 };
 
-/// @brief Parser for the "interface-config" parameter of the DHCPv4 server.
+/// @brief Parser for the "interfaces-config" parameter of the DHCPv4 server.
 class IfacesConfigParser6 : public IfacesConfigParser {
 public:
 

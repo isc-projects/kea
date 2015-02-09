@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -286,7 +286,9 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
     IfaceMgrTestConfig test_config(true);
 
     ConstElementPtr x;
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1569,7 +1571,9 @@ TEST_F(Dhcpv6SrvTest, vendorOptionsORO) {
 
     IfaceMgrTestConfig test_config(true);
 
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1654,7 +1658,9 @@ TEST_F(Dhcpv6SrvTest, vendorOptionsORO) {
 // src/lib/dhcp/docsis3_option_defs.h.
 TEST_F(Dhcpv6SrvTest, vendorOptionsDocsisDefinitions) {
     ConstElementPtr x;
-    string config_prefix = "{ \"interfaces\": [ \"*\" ],"
+    string config_prefix = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1820,7 +1826,9 @@ TEST_F(Dhcpv6SrvTest, clientClassify2) {
     // The second subnet does not play any role here. The client's
     // IP address belongs to the first subnet, so only that first
     // subnet it being tested.
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1925,7 +1933,9 @@ TEST_F(Dhcpv6SrvTest, relayOverride) {
     // defined. Both are not belonging to the subnets. That is
     // important, because if the relay belongs to the subnet, there's
     // no need to specify relay override.
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -2001,7 +2011,9 @@ TEST_F(Dhcpv6SrvTest, relayOverrideAndClientClass) {
     // This test configures 2 subnets. They both are on the same link, so they
     // have the same relay-ip address. Furthermore, the first subnet is
     // reserved for clients that belong to class "foo".
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -1142,7 +1142,9 @@ TEST_F(Dhcpv4SrvTest, relayAgentInfoEcho) {
     // subnet 10.254.226.0/24 is in use, because this packet
     // contains the giaddr which belongs to this subnet and
     // this giaddr is used to select the subnet
-    std::string config = "{ \"interfaces\": [ \"*\" ],"
+    std::string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -1202,7 +1204,9 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsDocsis) {
 
     NakedDhcpv4Srv srv(0);
 
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "    \"option-data\": [ {"
@@ -1460,7 +1464,9 @@ TEST_F(Dhcpv4SrvTest, nextServerOverride) {
 
     ConstElementPtr status;
 
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"next-server\": \"192.0.0.1\", "
@@ -1507,7 +1513,9 @@ TEST_F(Dhcpv4SrvTest, nextServerGlobal) {
 
     ConstElementPtr status;
 
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"next-server\": \"192.0.0.1\", "
@@ -2501,7 +2509,9 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectSimple) {
 
     // Configure 2 subnets, both directly reachable over local interface
     // (let's not complicate the matter with relays)
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -2570,7 +2580,9 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectChange) {
 
     // Configure 2 subnets, both directly reachable over local interface
     // (let's not complicate the matter with relays)
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -2987,7 +2999,9 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsORO) {
     NakedDhcpv4Srv srv(0);
 
     ConstElementPtr x;
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "    \"option-data\": [ {"
@@ -3074,7 +3088,9 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsORO) {
 // src/lib/dhcp/docsis3_option_defs.h.
 TEST_F(Dhcpv4SrvTest, vendorOptionsDocsisDefinitions) {
     ConstElementPtr x;
-    string config_prefix = "{ \"interfaces\": [ \"*\" ],"
+    string config_prefix = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "    \"option-data\": [ {"
@@ -3163,7 +3179,9 @@ TEST_F(Dhcpv4SrvTest, clientClassify2) {
     // The second subnet does not play any role here. The client's
     // IP address belongs to the first subnet, so only that first
     // subnet it being tested.
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ "
@@ -3211,7 +3229,9 @@ TEST_F(Dhcpv4SrvTest, relayOverride) {
     // defined. Both are not belonging to the subnets. That is
     // important, because if the relay belongs to the subnet, there's
     // no need to specify relay override.
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ "
@@ -3287,7 +3307,9 @@ TEST_F(Dhcpv4SrvTest, relayOverrideAndClientClass) {
     // This test configures 2 subnets. They both are on the same link, so they
     // have the same relay-ip address. Furthermore, the first subnet is
     // reserved for clients that belong to class "foo".
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ "
