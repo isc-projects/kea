@@ -59,9 +59,7 @@ TEST_F(IfacesConfigParserTest, interfaces) {
     IfaceMgrTestConfig test_config(true);
 
     // Configuration with one interface.
-    std::string config = "{"
-        "\"interfaces\": [ \"eth0\" ],"
-        "\"socket-type\": \"raw\" }";
+    std::string config = "{ ""\"interfaces\": [ \"eth0\" ] }";
 
     ElementPtr config_element = Element::fromJSON(config);
 
@@ -84,10 +82,7 @@ TEST_F(IfacesConfigParserTest, interfaces) {
 
     // Try similar configuration but this time add a wildcard interface
     // to see if sockets will open on all interfaces.
-    config = "{"
-        "\"interfaces\": [ \"eth0\", \"*\" ],"
-        "\"socket-type\": \"raw\" }";
-
+    config = "{ \"interfaces\": [ \"eth0\", \"*\" ] }";
     config_element = Element::fromJSON(config);
 
     ASSERT_NO_THROW(parser.build(config_element));
@@ -99,5 +94,71 @@ TEST_F(IfacesConfigParserTest, interfaces) {
     EXPECT_TRUE(test_config.socketOpen("eth1", AF_INET));
 }
 
+// This test verifies that it is possible to select the raw socket
+// use in the configuration for interfaces.
+TEST_F(IfacesConfigParserTest, socketTypeRaw) {
+    // Create the reference configuration, which we will compare
+    // the parsed configuration to.
+    CfgIface cfg_ref;
+
+    // Configuration with a raw socket selected.
+    std::string config = "{ ""\"interfaces\": [ ],"
+        " \"socket-type\": \"raw\" }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse the configuration.
+    IfacesConfigParser4 parser;
+    ASSERT_NO_THROW(parser.build(config_element));
+
+    // Compare the resulting configuration with a reference
+    // configuration using the raw socket.
+    SrvConfigPtr cfg = CfgMgr::instance().getStagingCfg();
+    ASSERT_TRUE(cfg);
+    cfg_ref.useSocketType(AF_INET, CfgIface::SOCKET_RAW);
+    EXPECT_TRUE(cfg->getCfgIface() == cfg_ref);
+}
+
+// This test verifies that it is possible to select the datagram socket
+// use in the configuration for interfaces.
+TEST_F(IfacesConfigParserTest, socketTypeDatagram) {
+    // Create the reference configuration, which we will compare
+    // the parsed configuration to.
+    CfgIface cfg_ref;
+
+    // Configuration with a datagram socket selected.
+    std::string config = "{ ""\"interfaces\": [ ],"
+        " \"socket-type\": \"datagram\" }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse the configuration.
+    IfacesConfigParser4 parser;
+    ASSERT_NO_THROW(parser.build(config_element));
+
+    // Compare the resulting configuration with a reference
+    // configuration using the raw socket.
+    SrvConfigPtr cfg = CfgMgr::instance().getStagingCfg();
+    ASSERT_TRUE(cfg);
+    cfg_ref.useSocketType(AF_INET, CfgIface::SOCKET_DGRAM);
+    EXPECT_TRUE(cfg->getCfgIface() == cfg_ref);
+}
+
+// Test that the configuration rejects the invalid socket type.
+TEST_F(IfacesConfigParserTest, socketTypeInvalid) {
+    // For DHCPv4 we only accept the raw socket or datagram socket.
+    IfacesConfigParser4 parser4;
+    std::string config = "{ \"interfaces\": [ ],"
+        "\"socket-type\": \"default\" }";
+    ElementPtr config_element = Element::fromJSON(config);
+    ASSERT_THROW(parser4.build(config_element), DhcpConfigError);
+
+    // For DHCPv6 we don't accept any socket type.
+    IfacesConfigParser6 parser6;
+    config = "{ \"interfaces\": [ ],"
+        " \"socket-type\": \"datagram\" }";
+    config_element = Element::fromJSON(config);
+    ASSERT_THROW(parser6.build(config_element), DhcpConfigError);
+}
 
 } // end of anonymous namespace
