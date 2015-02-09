@@ -16,7 +16,6 @@
 #define LIBDHCPSRV_TEST_UTILS_H
 
 #include <dhcpsrv/lease_mgr.h>
-#include <gtest/gtest.h>
 #include <vector>
 
 namespace isc {
