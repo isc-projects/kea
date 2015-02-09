@@ -1,3 +1,9 @@
+888.	[func]		marcin
+	DHCPv4 and DHCPv6 servers launch the kea-lfc program, according
+	to the value of lfc-interval configuration parameter for the
+	Memfile lease database backend.
+	(Trac #3669, git c92665ce05d71e9e5cad9a0679018e9e3f7e3be5)
+
 887.	[func]		sar
 	A new process, kea-lfc, has been added. It is meant to
 	be periodically executed by the DHCPv4 and DHCPv6 servers
