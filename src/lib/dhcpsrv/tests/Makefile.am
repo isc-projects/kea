@@ -53,7 +53,10 @@ TESTS += libdhcpsrv_unittests
 
 libdhcpsrv_unittests_SOURCES  = run_unittests.cc
 libdhcpsrv_unittests_SOURCES += addr_utilities_unittest.cc
-libdhcpsrv_unittests_SOURCES += alloc_engine_unittest.cc
+libdhcpsrv_unittests_SOURCES += alloc_engine_utils.cc alloc_engine_utils.h
+libdhcpsrv_unittests_SOURCES += alloc_engine_hooks_unittest.cc
+libdhcpsrv_unittests_SOURCES += alloc_engine4_unittest.cc
+libdhcpsrv_unittests_SOURCES += alloc_engine6_unittest.cc
 libdhcpsrv_unittests_SOURCES += callout_handle_store_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_hosts_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_iface_unittest.cc
