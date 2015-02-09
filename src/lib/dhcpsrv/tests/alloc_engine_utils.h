@@ -28,9 +28,9 @@ namespace dhcp {
 namespace test {
 
 /// @file   alloc_engine_utils.h
-/// 
+///
 /// @brief This is a header file for all Allocation Engine tests.
-/// 
+///
 /// There used to be one, huge (over 3kloc) alloc_engine_unittest.cc. It is now
 /// split into serveral smaller files:
 /// alloc_engine_utils.h - contains test class definitions (this file)
@@ -93,21 +93,7 @@ public:
     /// @param pool_end Last address in the address pool.
     void initSubnet(const asiolink::IOAddress& subnet,
                     const asiolink::IOAddress& pool_start,
-                    const asiolink::IOAddress& pool_end) {
-        CfgMgr& cfg_mgr = CfgMgr::instance();
-
-        subnet_ = Subnet6Ptr(new Subnet6(subnet, 56, 1, 2, 3, 4));
-        pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, pool_start, pool_end));
-
-        subnet_->addPool(pool_);
-
-        pd_pool_ = Pool6Ptr(new Pool6(Lease::TYPE_PD, subnet, 56, 64));
-        subnet_->addPool(pd_pool_);
-
-        cfg_mgr.getStagingCfg()->getCfgSubnets6()->add(subnet_);
-        cfg_mgr.commit();
-
-    }
+                    const asiolink::IOAddress& pool_end);
 
     /// @brief Initializes FQDN data for a test.
     ///
