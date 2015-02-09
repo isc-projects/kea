@@ -13,5 +13,26 @@
 # PERFORMANCE OF THIS SOFTWARE.
 
 $NAMESPACE isc::lfc
-% LFC_TEST_MESSAGE test messages
-This is a test and placeholder debug message
+% LFC_START_MESSAGE Starting lease file cleanup
+This message is issued as the LFC process starts.
+
+% LFC_COMPLETE_MESSAGE LFC complete
+This message is issued when the LFC process completes.  It does not
+indicate that the process was successful only that it has finished.
+
+% LFC_RUNNING_MESSAGE LFC instance already running
+This message is issued if LFC detects that a previous copy of LFC
+may still be running via the PID check.
+
+% LFC_PROCESSING_MESSAGE LFC Processing files
+This message is issued just before LFC starts processing the 
+lease files.
+
+% LFC_ROTATING_MESSAGE LFC rotating files
+This message is issued just before LFC starts rotating the
+lease files - removing the old and replacing them with the new.
+
+% LFC_FAILURE_MESSAGE LFC failed: %1
+This message is issued if LFC detected a failure when trying
+to manipulate the files.  It includes a more specifc error string.
+

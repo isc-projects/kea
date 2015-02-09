@@ -77,9 +77,13 @@ public:
     ///
     /// @param argc Number of strings in the @c argv array.
     /// @param argv Array of arguments passed in via the program's main function.
+    /// @param test_mode is a bool value which indicates if @c launch
+    /// should be run in the test mode (if true).  This parameter doesn't
+    /// have a default value to force test implementers to enable test
+    /// mode explicitly.
     ///
     /// @throw InvalidUsage if the command line parameters are invalid.
-    void launch(int argc, char* argv[]);
+    void launch(int argc, char* argv[], const bool test_mode);
 
     /// @brief Process the command line arguments.
     ///
