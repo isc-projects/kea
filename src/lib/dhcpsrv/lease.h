@@ -415,6 +415,13 @@ typedef boost::shared_ptr<const Lease6> ConstLease6Ptr;
 /// @brief A collection of IPv6 leases.
 typedef std::vector<Lease6Ptr> Lease6Collection;
 
+/// @brief A non-const iterator for IPv6 leases collection
+typedef std::vector<Lease6Ptr>::iterator Lease6CollectionIter;
+
+/// @brief A const iterator for IPv6 leases collection
+typedef std::vector<Lease6Ptr>::const_iterator Lease6CollectionConstIter;
+
+
 /// @brief Stream output operator.
 ///
 /// Dumps the output of Lease::toText to the given stream.
