@@ -37,10 +37,8 @@ exit_code=
 while [ ! -z "${1}" ]
 do
     option=${1}
-    echo ${option}
     case ${option} in
         -p)
-            shift
             exit_code=$$
             ;;
         -e)
