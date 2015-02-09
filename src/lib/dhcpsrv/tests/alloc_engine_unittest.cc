@@ -1684,6 +1684,47 @@ TEST_F(AllocEngine6Test, reservedAddressRenewal) {
     ASSERT_EQ("2001:db8:1::1c", leases[0]->addr_.toText());
 }
 
+// Checks whether a single host can have more than one reservation.
+TEST_F(AllocEngine6Test, reserved2Addresses) {
+    // Create reservation for the client. This is in-pool reservation,
+    // as the pool is 2001:db8:1::10 - 2001:db8:1::20.
+    // Two addresses are reserved: 2001:db8:1::babe and 2001:db8:1::cafe
+    HostPtr host = createHost6(true, IPv6Resrv::TYPE_NA,
+                               IOAddress("2001:db8:1::babe"), 128);
+
+    IPv6Resrv resv2(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::cafe"), 128);
+    host->addReservation(resv2);
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100);
+
+    AllocEngine::ClientContext6 ctx1(subnet_, duid_, iaid_, IOAddress("::"),
+                                    pool_->getType(), false, false, "", false);
+    Lease6Collection leases1;
+    EXPECT_NO_THROW(leases1 = engine.allocateLeases6(ctx1));
+    ASSERT_EQ(1, leases1.size());
+    EXPECT_EQ("2001:db8:1::babe", leases1[0]->addr_.toText());
+
+    // Double check that repeating the same duid/type/iaid will end up with
+    // the same address.
+    AllocEngine::ClientContext6 ctx2(subnet_, duid_, iaid_, IOAddress("::"),
+                                    pool_->getType(), false, false, "", false);
+    Lease6Collection leases2;
+    EXPECT_NO_THROW(leases2 = engine.allocateLeases6(ctx2));
+    EXPECT_EQ(1, leases2.size());
+    EXPECT_EQ("2001:db8:1::babe", leases2[0]->addr_.toText());
+
+    // Ok, now the tricky part. Request allocation for the same duid and type, but
+    // different iaid. The second address should be assigned.
+    AllocEngine::ClientContext6 ctx3(subnet_, duid_, iaid_ + 1, IOAddress("::"),
+                                    pool_->getType(), false, false, "", false);
+    Lease6Collection leases3;
+    EXPECT_NO_THROW(leases3 = engine.allocateLeases6(ctx3));
+    ASSERT_EQ(1, leases3.size());
+    EXPECT_EQ("2001:db8:1::cafe", leases3[0]->addr_.toText());
+}
+
 // Checks whether address can change during renew (if there is a new
 // reservation for this client)
 TEST_F(AllocEngine6Test, reservedAddressRenewChange) {
