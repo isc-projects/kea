@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -209,7 +209,6 @@ TEST_F(CfgIfaceTest, explicitNamesV6) {
     EXPECT_FALSE(socketOpen("eth0", AF_INET6));
     EXPECT_TRUE(socketOpen("eth1", AF_INET6));
     EXPECT_FALSE(socketOpen("lo", AF_INET6));
-
 }
 
 // This test checks that the wildcard interface name can be specified to
@@ -338,6 +337,54 @@ TEST_F(CfgIfaceTest, equality) {
     cfg2.use(AF_INET, "*");
     EXPECT_TRUE(cfg1 == cfg2);
     EXPECT_FALSE(cfg1 != cfg2);
+
+    // Differ by socket type.
+    cfg1.useSocketType(AF_INET, "raw");
+    EXPECT_FALSE(cfg1 == cfg2);
+    EXPECT_TRUE(cfg1 != cfg2);
+
+    // Now, both should use the same socket type.
+    cfg2.useSocketType(AF_INET, "raw");
+    EXPECT_TRUE(cfg1 == cfg2);
+    EXPECT_FALSE(cfg1 != cfg2);
 }
+
+// This test verifies that it is possible to specify the socket
+// type to be used by the DHCPv4 server.
+// This test is enabled on LINUX and BSD only, because the
+// direct traffic is only supported on those systems.
+#if defined OS_LINUX || defined OS_BSD
+TEST(CfgIfaceNoStubTest, useSocketType) {
+    CfgIface cfg;
+    // Select datagram sockets.
+    ASSERT_NO_THROW(cfg.useSocketType(AF_INET, "datagram"));
+    ASSERT_NO_THROW(cfg.openSockets(AF_INET, 10067, true));
+    // For datagram sockets, the direct traffic is not supported.
+    ASSERT_TRUE(!IfaceMgr::instance().isDirectResponseSupported());
+
+    // Select raw sockets.
+    ASSERT_NO_THROW(cfg.useSocketType(AF_INET, "raw"));
+    ASSERT_NO_THROW(cfg.openSockets(AF_INET, 10067, true));
+    // For raw sockets, the direct traffic is supported.
+    ASSERT_TRUE(IfaceMgr::instance().isDirectResponseSupported());
+
+    ASSERT_NO_THROW(cfg.useSocketType(AF_INET, CfgIface::SOCKET_DGRAM));
+    ASSERT_NO_THROW(cfg.openSockets(AF_INET, 10067, true));
+    ASSERT_TRUE(!IfaceMgr::instance().isDirectResponseSupported());
+
+    ASSERT_NO_THROW(cfg.useSocketType(AF_INET, CfgIface::SOCKET_RAW));
+    ASSERT_NO_THROW(cfg.openSockets(AF_INET, 10067, true));
+    ASSERT_TRUE(IfaceMgr::instance().isDirectResponseSupported());
+
+    // Test invalid values.
+    EXPECT_THROW(cfg.useSocketType(AF_INET, CfgIface::SOCKET_DEFAULT),
+        InvalidSocketType);
+    EXPECT_THROW(cfg.useSocketType(AF_INET, "default"),
+        InvalidSocketType);
+    EXPECT_THROW(cfg.useSocketType(AF_INET6, "datagram"),
+        InvalidSocketType);
+}
+#endif
+
 
 } // end of anonymous namespace

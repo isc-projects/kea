@@ -99,6 +99,18 @@ This is a debug message reporting that the DHCP configuration manager has
 returned the specified IPv6 subnet when given the address hint specified
 because it is the only subnet defined.
 
+% DHCPSRV_CFGMGR_SOCKET_RAW_UNSUPPORTED use of raw sockets is unsupported on this OS, datagram sockets will be used
+This warning message is logged when the user specified that the
+DHCPv4 server should use the raw sockets to receive the DHCP
+messages and respond to the clients, but the use of raw sockets
+is not supported on the particular environment. The raw sockets
+are useful when the server must respond to the directly connected
+clients which don't have an address yet. If the raw sockets are
+not supported by Kea on the particular platform, Kea will fall
+back to use of the datagram IP/UDP sockets. The responses to
+the directly connected clients will be broadcast. The responses
+to relayed clients will be unicast as usual.
+
 % DHCPSRV_CFGMGR_SUBNET4 retrieved subnet %1 for address hint %2
 This is a debug message reporting that the DHCP configuration manager has
 returned the specified IPv4 subnet when given the address hint specified
