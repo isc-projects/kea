@@ -687,6 +687,17 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx, Lease6Collection& exis
                     .arg(addr.toText()).arg(static_cast<int>(prefix_len))
                     .arg(ctx.duid_->toText());
             }
+
+            // We found a lease for this client and this IA. Let's return.
+            // Returning after the first lease was assigned is useful if we
+            // have multiple reservations for the same client. If the client
+            // sends 2 IAs, the first time we call allocateReservedLeases6 will
+            // use the first reservation and return. The second time, we'll
+            // go over the first reservation, but will discover that there's
+            // a lease corresponding to it and will skip it and then pick
+            // the second reservation and turn it into the lease. This approach
+            // would work for any number of reservations.
+            return;
         }
     }
 }
@@ -721,11 +732,25 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
 
         // Ok, we have a problem. This host has a lease that is reserved
         // for someone else. We need to recover from this.
+        if (ctx.type_ == Lease::TYPE_NA) {
+            LOG_INFO(dhcpsrv_logger, DHCPSRV_HR_REVOKED_ADDR6_LEASE)
+                .arg((*candidate)->addr_.toText()).arg(ctx.duid_->toText())
+                .arg(host->getIdentifierAsText());
+        } else {
+            LOG_INFO(dhcpsrv_logger, DHCPSRV_HR_REVOKED_PREFIX6_LEASE)
+                .arg((*candidate)->addr_.toText())
+                .arg(static_cast<int>((*candidate)->prefixlen_))
+                .arg(ctx.duid_->toText())
+                .arg(host->getIdentifierAsText());
+        }
 
         // Remove this lease from LeaseMgr
         LeaseMgrFactory::instance().deleteLease((*candidate)->addr_);
 
-        /// @todo: Probably trigger a hook here
+        // In principle, we could trigger a hook here, but we will do this
+        // only if we get serious complaints from actual users. We want the
+        // conflict resolution procedure to really work and user libraries
+        // should not interfere with it.
 
         // Add this to the list of removed leases.
         ctx.old_leases_.push_back(*candidate);
@@ -1673,7 +1698,10 @@ AllocEngine::renewLeases6(ClientContext6& ctx) {
         }
 
         // If we happen to removed all leases, get something new for this guy.
-        if (leases.empty()) {
+        // Depending on the configuration, we may enable or disable granting
+        // new leases during renewals. This is controlled with the
+        // allow_new_leases_in_renewals_ field.
+        if (leases.empty() && ctx.allow_new_leases_in_renewals_) {
             leases = allocateUnreservedLeases6(ctx);
         }
 
@@ -1687,7 +1715,7 @@ AllocEngine::renewLeases6(ClientContext6& ctx) {
     } catch (const isc::Exception& e) {
 
         // Some other error, return an empty lease.
-        LOG_ERROR(dhcpsrv_logger, DHCPSRV_ADDRESS6_ALLOC_ERROR).arg(e.what());
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_RENEW6_ERROR).arg(e.what());
     }
 
     return (Lease6Collection());

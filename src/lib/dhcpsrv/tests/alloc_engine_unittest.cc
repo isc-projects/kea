@@ -299,10 +299,12 @@ public:
         return (lease);
     }
 
-    /// @brief Checks if the simple allocation can succeed
+    /// @brief Checks if the allocation can succeed.
     ///
-    /// The type of lease is determined by pool type (pool->getType()
+    /// The type of lease is determined by pool type (pool->getType()).
+    /// This test is particularly useful in connection with @ref renewTest.
     ///
+    /// @param engine a reference to Allocation Engine
     /// @param pool pool from which the lease will be allocated from
     /// @param hint address to be used as a hint
     /// @param fake true - this is fake allocation (SOLICIT)
@@ -353,8 +355,21 @@ public:
         return (leases);
     }
 
+    /// @brief Checks if the allocation can be renewed.
+    ///
+    /// The type of lease is determined by pool type (pool->getType()).
+    /// This test is particularly useful as a follow up to @ref allocateTest.
+    ///
+    /// @param engine a reference to Allocation Engine
+    /// @param pool pool from which the lease will be allocated from
+    /// @param hint address to be used as a hint
+    /// @param fake true - this is fake allocation (SOLICIT)
+    /// @param in_pool specifies whether the lease is expected to be in pool
+    /// @return allocated lease(s) (may be empty)
     Lease6Collection renewTest(AllocEngine& engine, const Pool6Ptr& pool,
-                               AllocEngine::HintContainer& hints, bool in_pool = true) {
+                               AllocEngine::HintContainer& hints,
+                               bool allow_new_leases_in_renewal,
+                               bool in_pool = true) {
 
         Lease::Type type = pool->getType();
         uint8_t expected_len = pool->getLength();
@@ -363,6 +378,7 @@ public:
                                         type, false, false, "", false);
         ctx.hints_ = hints;
         ctx.query_.reset(new Pkt6(DHCPV6_RENEW, 123));
+        ctx.allow_new_leases_in_renewals_ = allow_new_leases_in_renewal;
 
         Lease6Collection leases = engine.renewLeases6(ctx);
 
@@ -1632,7 +1648,7 @@ TEST_F(AllocEngine6Test, addressRenewal) {
     AllocEngine::HintContainer hints;
     hints.push_back(make_pair(leases[0]->addr_, 128));
 
-    Lease6Collection renewed = renewTest(engine, pool_, hints);
+    Lease6Collection renewed = renewTest(engine, pool_, hints, true);
     ASSERT_EQ(1, renewed.size());
 
     // Check that the lease was indeed renewed and hasn't changed
@@ -1663,7 +1679,7 @@ TEST_F(AllocEngine6Test, reservedAddressRenewal) {
     AllocEngine::HintContainer hints;
     hints.push_back(make_pair(leases[0]->addr_, 128));
 
-    Lease6Collection renewed = renewTest(engine, pool_, hints);
+    Lease6Collection renewed = renewTest(engine, pool_, hints, true);
     ASSERT_EQ(1, renewed.size());
     ASSERT_EQ("2001:db8:1::1c", leases[0]->addr_.toText());
 }
@@ -1688,7 +1704,7 @@ TEST_F(AllocEngine6Test, reservedAddressRenewChange) {
     // as the pool is 2001:db8:1::10 - 2001:db8:1::20.
     createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::1c"), 128);
 
-    Lease6Collection renewed = renewTest(engine, pool_, hints);
+    Lease6Collection renewed = renewTest(engine, pool_, hints, true);
     ASSERT_EQ(1, renewed.size());
     ASSERT_EQ("2001:db8:1::1c", renewed[0]->addr_.toText());
 }
@@ -1719,7 +1735,7 @@ TEST_F(AllocEngine6Test, reservedAddressRenewReserved) {
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
-    Lease6Collection renewed = renewTest(engine, pool_, hints);
+    Lease6Collection renewed = renewTest(engine, pool_, hints, true);
     ASSERT_EQ(1, renewed.size());
 
     // Check that we no longer have the reserved address.

@@ -225,6 +225,24 @@ This informational message singals that there is a reservation for this client
 and this client got this specific prefix. This is normal operation for
 host reservation.
 
+% DHCPSRV_HR_REVOKED_ADDR6_LEASE Address %1 was revoked from client %2 as it is reserved for client %3
+This informational message is an indication that the specified IPv6 address used
+to be used by client A, but it is now reserved for client B. As such, client
+A was told to stop using it, so it could be leased to client B. This is
+normal operation when doing conflict resolution, i.e. system administrator
+added reservation for an address that is currently in use by someone other
+than the reservation is for. The server will fully recover from this situation,
+but clients will experience address change.
+
+% DHCPSRV_HR_REVOKED_PREFIX6_LEASE Prefix %1/%2 was revoked from client %3 as it is reserved for client %4
+This informational message is an indication that the specified IPv6 address used
+to be used by client A, but it is now reserved for client B. As such, client
+A was told to stop using it, so it could be leased to client B. This is
+normal operation when doing conflict resolution, i.e. system administrator
+added reservation for an address that is currently in use by someone other
+than the reservation is for. The server will fully recover from this situation,
+but clients will experience address change.
+
 % DHCPSRV_INVALID_ACCESS invalid database access string: %1
 This is logged when an attempt has been made to parse a database access string
 and the attempt ended in error.  The access string in question - which
@@ -518,6 +536,13 @@ lease from the PostgreSQL database for the specified address.
 % DHCPSRV_PGSQL_UPDATE_ADDR6 updating IPv6 lease for address %1
 A debug message issued when the server is attempting to update IPv6
 lease from the PostgreSQL database for the specified address.
+
+% DHCPSRV_RENEW6_ERROR allocation engine experienced error with attempting to renew a lease: %1
+This error message indicates that an error was experienced during Renew or Rebind
+processing. Additional explanation is provided with this message. Depending
+on its nature, manual intervention may be required to continue processing
+messages from this particular client. The server will handle other clients
+normally.
 
 % DHCPSRV_UNEXPECTED_NAME database access parameters passed through '%1', expected 'lease-database'
 The parameters for access the lease database were passed to the server through
