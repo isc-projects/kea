@@ -3,9 +3,12 @@ AUTOMAKE_OPTIONS = subdir-objects
 SUBDIRS = . testutils tests
 
 dhcp_data_dir = @localstatedir@/@PACKAGE@
+kea_lfc_location = @prefix@/sbin/kea-lfc
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib -DDHCP_DATA_DIR="\"$(dhcp_data_dir)\""
 AM_CPPFLAGS += -DTOP_BUILDDIR="\"$(top_builddir)\""
+# Set location of the kea-lfc binary.
+AM_CPPFLAGS += -DKEA_LFC_EXECUTABLE="\"$(kea_lfc_location)\""
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 if HAVE_MYSQL
 AM_CPPFLAGS += $(MYSQL_CPPFLAGS)

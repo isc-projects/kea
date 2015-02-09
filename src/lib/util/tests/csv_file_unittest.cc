@@ -303,6 +303,30 @@ TEST_F(CSVFileTest, openReadAllWrite) {
     // Any attempt to read from the file or write to it should now fail.
     EXPECT_FALSE(csv->next(row));
     EXPECT_THROW(csv->append(row_write), CSVFileError);
+
+    CSVRow row_write2(3);
+    row_write2.writeAt(0, "bird");
+    row_write2.writeAt(1, 3);
+    row_write2.writeAt(2, "purple");
+
+    // Reopen the file, seek to the end of file so as we can append
+    // some more data.
+    ASSERT_NO_THROW(csv->open(true));
+    // The file pointer should be at the end of file, so an attempt
+    //  to read should result in an empty row.
+    ASSERT_TRUE(csv->next(row));
+    EXPECT_EQ(CSVFile::EMPTY_ROW(), row);
+    // We should be able to append new data.
+    ASSERT_NO_THROW(csv->append(row_write2));
+    ASSERT_NO_THROW(csv->flush());
+    csv->close();
+    // Check that new data has been appended.
+    EXPECT_EQ("animal,age,color\n"
+              "cat,10,white\n"
+              "lion,15,yellow\n"
+              "dog,2,blue\n"
+              "bird,3,purple\n",
+              readFile());
 }
 
 // This test checks that contents may be appended to a file which hasn't

@@ -1469,6 +1469,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/util/python/Makefile
                  src/lib/util/python/gen_wiredata.py
                  src/lib/util/tests/Makefile
+                 src/lib/util/tests/process_spawn_app.sh
                  src/lib/util/threads/Makefile
                  src/lib/util/threads/tests/Makefile
                  src/lib/util/unittests/Makefile
@@ -1491,6 +1492,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
            chmod +x src/lib/log/tests/logger_lock_test.sh
            chmod +x src/lib/log/tests/severity_test.sh
            chmod +x src/lib/util/python/gen_wiredata.py
+           chmod +x src/lib/util/tests/process_spawn_app.sh
            chmod +x tools/path_replacer.sh
 ])
 
