@@ -385,12 +385,17 @@ public:
     /// greater than 0. If the file doesn't exist or has size of 0, the
     /// file is recreated. If the existing file has been opened, the header
     /// is parsed and column names are initialized in the @c CSVFile object.
-    /// The data pointer in the file is set to the beginning of the first
-    /// row. In order to retrieve the row contents the @c next function should
-    /// be called.
+    /// By default, the data pointer in the file is set to the beginning of
+    /// the first row. In order to retrieve the row contents the @c next
+    /// function should be called. If a @c seek_to_end parameter is set to
+    /// true, the file will be opened and the interal pointer will be set
+    /// to the end of file.
+    ///
+    /// @param seek_to_end A boolean value which indicates if the intput and
+    /// output file pointer should be set at the end of file.
     ///
     /// @throw CSVFileError when IO operation fails.
-    void open();
+    void open(const bool seek_to_end = false);
 
     /// @brief Creates a new CSV file.
     ///
