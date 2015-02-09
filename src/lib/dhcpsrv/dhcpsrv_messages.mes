@@ -292,7 +292,13 @@ replaced by those read from the file.
 % DHCPSRV_MEMFILE_LEASE_LOAD loading lease %1
 A debug message issued when DHCP lease is being loaded from the file to memory.
 
-% DHCPSRV_MEMFILE_LFC_LEASE_FILE_REOPEN_FAIL failed to reopen lease file %1 after preparing input file for lease file cleanup: new leases will not be persisted!
+% DHCPSRV_MEMFILE_LFC_LEASE_FILE_RENAME_FAIL failed to rename the current lease file %1 to %2, reason: %3
+An error message logged when the Memfile lease database backend fails to
+move the current lease file to a new file on which the cleanup should
+be performed. This effectively means that the lease file cleanup
+will not take place.
+
+% DHCPSRV_MEMFILE_LFC_LEASE_FILE_REOPEN_FAIL failed to reopen lease file %1 after preparing input file for lease file cleanup, reason: %2, new leases will not be persisted!
 An error message logged when the Memfile lease database backend
 failed to re-open or re-create the lease file after renaming the
 lease file for lease file cleanup. The server will continue to
@@ -302,12 +308,6 @@ operate but leases will not be persisted to disk.
 An informational message logged when the Memfile lease database backend
 configures the LFC to be executed periodically. The argument holds the
 interval in seconds in which the LFC will be executed.
-
-% DHCPSRV_MEMFILE_LFC_ROTATION_FAIL failed to rotate the current lease file %1 to %2, reason: %3
-An error message logged when the Memfile lease database backend fails to
-move the current lease file to a new file on which the cleanup should
-be performed. This effectively means that the lease file cleanup
-will not take place.
 
 % DHCPSRV_MEMFILE_LFC_SPAWN_FAIL lease file cleanup failed to run because kea-lfc process couldn't be spawned
 This error message is logged when the the Kea server fails to run kea-lfc,

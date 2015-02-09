@@ -246,6 +246,9 @@ ProcessSpawnImpl::waitForProcess(int signum) {
         int status = 0;
         pid_t pid = waitpid(-1, &status, 0);
         if (pid > 0) {
+            /// @todo Check that the terminatin process was started
+            /// by our instance of ProcessSpawn and only handle it
+            /// if it was.
             process_status_[pid] = status;
         }
         return (true);
