@@ -14,6 +14,7 @@
 
 #include <cc/data.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/parsers/ifaces_config_parser.h>
 #include <boost/foreach.hpp>
 #include <string>
@@ -88,14 +89,12 @@ IfacesConfigParser4::build(isc::data::ConstElementPtr ifaces_config) {
 
     // Get the pointer to the interface configuration.
     CfgIfacePtr cfg = CfgMgr::instance().getStagingCfg()->getCfgIface();
-    // The default is to use the raw sockets, if the "socket-type" parameter
-    // hasn't been specified.
-    cfg->useSocketType(AF_INET, CfgIface::SOCKET_RAW);
-
+    bool socket_type_specified = false;
     BOOST_FOREACH(ConfigPair element, ifaces_config->mapValue()) {
         try {
             if (element.first == "socket-type") {
                 cfg->useSocketType(AF_INET, element.second->stringValue());
+                socket_type_specified = true;
 
             } else if (!isGenericParameter(element.first)) {
                 isc_throw(DhcpConfigError, "usupported parameter '"
@@ -107,6 +106,13 @@ IfacesConfigParser4::build(isc::data::ConstElementPtr ifaces_config) {
             isc_throw(DhcpConfigError, ex.what() << " ("
                       << element.second->getPosition() << ")");
         }
+    }
+
+    // User hasn't specified the socket type. Log that we are using
+    // the default type.
+    if (!socket_type_specified) {
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_SOCKET_TYPE_DEFAULT)
+            .arg(cfg->socketTypeToText());
     }
 }
 

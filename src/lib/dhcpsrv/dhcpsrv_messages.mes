@@ -99,6 +99,11 @@ This is a debug message reporting that the DHCP configuration manager has
 returned the specified IPv6 subnet when given the address hint specified
 because it is the only subnet defined.
 
+% DHCPSRV_CFGMGR_SOCKET_TYPE_DEFAULT "socket-type" not specified , using default socket type %1
+This informational message is logged when the administrator hasn't
+specified the "socket-type" parameter in configuration for interfaces.
+In such case, the default socket type will be used.
+
 % DHCPSRV_CFGMGR_SOCKET_RAW_UNSUPPORTED use of raw sockets is unsupported on this OS, datagram sockets will be used
 This warning message is logged when the user specified that the
 DHCPv4 server should use the raw sockets to receive the DHCP
@@ -111,7 +116,7 @@ back to use of the datagram IP/UDP sockets. The responses to
 the directly connected clients will be broadcast. The responses
 to relayed clients will be unicast as usual.
 
-% DHCPSRV_CFGMGR_SOCKET_TYPE_SELECT trying to use socket type %1
+% DHCPSRV_CFGMGR_SOCKET_TYPE_SELECT using socket type %1
 This informational message is logged when the DHCPv4 server selects the
 socket type to be used for all sockets that will be opened on the
 interfaces. Typically, the socket type is specified by the server
