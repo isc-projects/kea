@@ -377,8 +377,6 @@ TEST(CfgIfaceNoStubTest, useSocketType) {
     ASSERT_TRUE(IfaceMgr::instance().isDirectResponseSupported());
 
     // Test invalid values.
-    EXPECT_THROW(cfg.useSocketType(AF_INET, CfgIface::SOCKET_DEFAULT),
-        InvalidSocketType);
     EXPECT_THROW(cfg.useSocketType(AF_INET, "default"),
         InvalidSocketType);
     EXPECT_THROW(cfg.useSocketType(AF_INET6, "datagram"),

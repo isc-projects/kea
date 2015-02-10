@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -129,21 +129,24 @@ public:
         logging_info_.push_back(logging_info);
     }
 
-    /// @brief Returns object which represents selection of interfaces.
+    /// @brief Returns non-const pointer to interface configuration.
     ///
-    /// This function returns a reference to the object which represents the
-    /// set of interfaces being used to receive DHCP traffic.
+    /// This function returns a non-const pointer to the interface
+    /// configuration.
     ///
-    /// @return Object representing selection of interfaces.
-    const CfgIface& getCfgIface() const {
+    /// @return Object representing configuration of interfaces.
+    CfgIfacePtr getCfgIface() {
         return (cfg_iface_);
     }
 
-    /// @brief Sets the object representing selection of interfaces.
+    /// @brief Returns const pointer to interface configuration.
     ///
-    /// @param cfg_iface Object representing selection of interfaces.
-    void setCfgIface(const CfgIface& cfg_iface) {
-        cfg_iface_ = cfg_iface;
+    /// This function returns a const pointer to the interface
+    /// configuration.
+    ///
+    /// @return Object representing configuration of interfaces.
+    ConstCfgIfacePtr getCfgIface() const {
+        return (cfg_iface_);
     }
 
     /// @brief Return pointer to non-const object representing user-defined
@@ -340,7 +343,7 @@ private:
     ///
     /// Used to select interfaces on which the DHCP server will listen to
     /// queries.
-    CfgIface cfg_iface_;
+    CfgIfacePtr cfg_iface_;
 
     /// @brief Pointer to option definitions configuration.
     ///

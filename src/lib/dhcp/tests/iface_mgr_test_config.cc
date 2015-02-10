@@ -26,6 +26,7 @@ namespace dhcp {
 namespace test {
 
 IfaceMgrTestConfig::IfaceMgrTestConfig(const bool default_config) {
+    IfaceMgr::instance().setTestMode(true);
     IfaceMgr::instance().closeSockets();
     IfaceMgr::instance().clearIfaces();
     packet_filter4_ = PktFilterPtr(new PktFilterTestStub());
@@ -44,7 +45,7 @@ IfaceMgrTestConfig::~IfaceMgrTestConfig() {
     IfaceMgr::instance().clearIfaces();
     IfaceMgr::instance().setPacketFilter(PktFilterPtr(new PktFilterInet()));
     IfaceMgr::instance().setPacketFilter(PktFilter6Ptr(new PktFilterInet6()));
-
+    IfaceMgr::instance().setTestMode(false);
     IfaceMgr::instance().detectIfaces();
 }
 

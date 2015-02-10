@@ -1659,7 +1659,7 @@ TEST_F(Dhcpv6SrvTest, vendorOptionsORO) {
 TEST_F(Dhcpv6SrvTest, vendorOptionsDocsisDefinitions) {
     ConstElementPtr x;
     string config_prefix = "{ \"interfaces-config\": {"
-        "  \"interfaces\": [ \"*\" ]"
+        "  \"interfaces\": [ ]"
         "},"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
