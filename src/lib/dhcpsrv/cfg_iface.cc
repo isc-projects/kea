@@ -61,8 +61,6 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
     // sockets. However, this may be unsupported on some operating
     // systems, so there is no guarantee.
     if ((family == AF_INET) && (!IfaceMgr::instance().isTestMode())) {
-        LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_SOCKET_TYPE_SELECT)
-            .arg(socketTypeToText());
         iface_mgr.setMatchingPacketFilter(socket_type_ == SOCKET_RAW);
         if ((socket_type_ == SOCKET_RAW) &&
             !iface_mgr.isDirectResponseSupported()) {
@@ -358,6 +356,8 @@ CfgIface::useSocketType(const uint16_t family,
                   " the DHCPv6 server");
     }
     socket_type_ = socket_type;
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_SOCKET_TYPE_SELECT)
+        .arg(socketTypeToText());
 }
 
 void
