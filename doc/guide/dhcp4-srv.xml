@@ -92,12 +92,16 @@
 "Dhcp4": {
 
 # First we set up global values
-    "interfaces": [ "eth0" ],
     "valid-lifetime": 4000,
     "renew-timer": 1000,
     "rebind-timer": 2000,
 
-# Next we specify the type of lease database
+# Next we setup the interfaces to be used by the server.
+    "interfaces-config": {
+        "interfaces": [ "eth0" ]
+    },
+
+# And we specify the type of lease database
     "lease-database": {
         "type": "memfile",
         "persist": true,
@@ -154,19 +158,8 @@ ignored. This is unlikely to cause any confusion as there are no real life
 reasons to keep multiple copies of the same parameter in your configuration
 file.</para>
 
-<para>Moving onto the DHCPv4 configuration elements,
-the line defining <command>interfaces</command> parameter specifies a list
-of network interfaces on which the server should listen.
-Lists are opened and closed with square brackets, with elements
-separated by commas. Had we wanted to listen on two interfaces, the line could
-look like this:
-<screen>
-"interfaces": [ "eth0", "eth1" ],
-</screen>
-As "<command>interfaces</command>" is not the last parameter in the configuration,
-a trailing comma is required.</para>
-<para>A number of other parameters
-follow. <command>valid-lifetime</command> defines for how long the addresses (leases) given out by the
+<para>Moving onto the DHCPv4 configuration elements, the very first few elements
+define some global parameters. <command>valid-lifetime</command> defines for how long the addresses (leases) given out by the
 server are valid. If nothing changes, a client that got an address is allowed to
 use it for 4000 seconds. (Note that integer numbers are specified as is,
 without any quotes around them.) <command>renew-timer</command> and
@@ -176,6 +169,20 @@ rebind procedures. Note that <command>renew-timer</command> and
 <command>rebind-timer</command> are optional. If they are not specified the
 client will select values for T1 and T2 timers according to the
 <ulink url="http://tools.ietf.org/html/rfc2131">RFC 2131</ulink>.</para>
+
+<para>The <command>interfaces-config</command> map specifies the server
+configuration concerning the network interfaces, on which the server should
+listen to the DHCP messages. The <command>interfaces</command> parameter
+specifies a list of network interfaces on which the server should listen.
+Lists are opened and closed with square brackets, with elements separated
+by commas. Had we wanted to listen on two interfaces, the
+<command>interfaces-config</command> would look like this:
+<screen>
+"interfaces-config": {
+    "interfaces": [ "eth0", "eth1" ]
+},
+</screen>
+</para>
 
 <para>The next couple of lines define the lease database, the place where the server
 stores its lease information. This particular example tells the server to use
@@ -332,22 +339,40 @@ url="http://jsonviewer.stack.hu/"/>.
 </section>
 </section>
 
-<section id="dhcp4-interface-selection">
-  <title>Interface selection</title>
+<section id="dhcp4-interface-configuration">
+  <title>Interface configuration</title>
   <para>The DHCPv4 server has to be configured to listen on specific network
   interfaces.  The simplest network interface configuration tells the server to
   listen on all available interfaces:
   <screen>
-"Dhcp4": { <userinput>"interfaces": ["*"]</userinput>, ... }</screen>
+"Dhcp4": {
+    "interfaces-config": {
+        "interfaces": [ <userinput>"*"</userinput> ]
+    }
+    ...
+},
+  </screen>
   The asterisk plays the role of a wildcard and means "listen on all interfaces".
   However, it is usually a good idea to explicitly specify interface names:
   <screen>
-"Dhcp4": { <userinput>"interfaces": [ "eth1", "eth3" ]</userinput>, ... }</screen>
+"Dhcp4": {
+    "interfaces-config": {
+        "interfaces": [ <userinput>"eth1", "eth3"</userinput> ]
+    },
+    ...
+}
+  </screen>
   </para>
   <para>It is possible to use wildcard interface name (asterisk) concurrently
   with explicit interface names:
   <screen>
-"Dhcp4": { <userinput>"interfaces": [ "eth1", "eth3", "*" ]</userinput>, ... }</screen>
+"Dhcp4": {
+    "interfaces-config": {
+        "interfaces": [ <userinput>"eth1", "eth3", "*"</userinput> ]
+    },
+    ...
+}
+  </screen>
 It is anticipated that this form of usage will only be used when it is desired to
 temporarily override a list of interface names and listen on all interfaces.
   </para>
@@ -357,10 +382,60 @@ temporarily override a list of interface names and listen on all interfaces.
   instance should be bound to a different address on the particular interface.
   In these situations, the address to use can be selected by
   appending an IPv4 address to the interface name in the following manner:
-<screen>
-"Dhcp4": { <userinput>"interfaces": [ "eth1/10.0.0.1", "eth3/192.0.2.3" ]</userinput>, ... }</screen>
+  <screen>
+"Dhcp4": {
+    "interfaces-config": {
+        "interfaces": [ <userinput>"eth1/10.0.0.1", "eth3/192.0.2.3"</userinput> ]
+    },
+    ...
+}
+  </screen>
   Note that only one address can be specified on each interface.
   </para>
+
+  <para>Kea supports responding to directly connected clients which don't have
+  an address configured on the interface yet. This requires that the server
+  injects the hardware address of the destination into the data link layer
+  of the packet being sent to the client. The DHCPv4 server utilizes the
+  raw sockets to achieve this, and builds the entire IP/UDP stack for the
+  outgoing packets. The down side of raw socket use, however, is that incoming
+  and outgoing packets bypass the firewalls (e.g. iptables). It is also
+  troublesome to handle traffic on multiple IPv4 addresses assigned to the
+  same interface, as raw sockets are bound to the interface and advanced
+  packet filtering techniques (e.g. using the BPF) have to be used to
+  receive unicast traffic on the desired addresses assigned to the interface,
+  rather than capturing whole traffic reaching the interface to which the raw
+  socket is bound. Therefore, in the deployments where the server doesn't
+  have to provision the directly connected clients and only receives the
+  unicast packets from the relay agents, it is desired to configure the
+  DHCP server to utilize the IP/UDP datagram sockets, instead of raw sockets.
+  The following configuration demonstrates how this can be achieved:
+
+  <screen>
+"Dhcp4": {
+    "interfaces-config": {
+        "interfaces": [ <userinput>"eth1", "eth3"</userinput> ],
+        "socket-type": "datagram"
+    },
+    ...
+}
+  </screen>
+  The <command>socket-type</command> specifies that the datagram sockets will
+  be opened on all interfaces on which the server listens, i.e. "eth1" and
+  "eth3" in our case. If the <command>socket-type</command> is set to
+  <userinput>raw</userinput>, it configures the server to use raw sockets
+  instead. If the <command>socket-type</command> value is not specified, the
+  default value <userinput>raw</userinput> is used.
+  </para>
+
+  <note>
+    <para>Specifying the value <userinput>raw</userinput> as the socket type,
+    doesn't guarantee that the raw sockets will be used! The use of raw sockets
+    to handle the traffic from the directly connected clients is currently
+    supported on Linux and BSD systems only. If the raw sockets are not
+    supported on the particular OS, the server will issue a warning and
+    fall back to use the datagram sockets.</para>
+  </note>
 </section>
 
 <section id="ipv4-subnet-id">
