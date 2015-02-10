@@ -70,14 +70,14 @@ TEST_F(IfacesConfigParserTest, interfaces) {
     // Open sockets according to the parsed configuration.
     SrvConfigPtr cfg = CfgMgr::instance().getStagingCfg();
     ASSERT_TRUE(cfg);
-    ASSERT_NO_THROW(cfg->getCfgIface().openSockets(AF_INET, 10000));
+    ASSERT_NO_THROW(cfg->getCfgIface()->openSockets(AF_INET, 10000));
 
     // Only eth0 should have an open socket.
     EXPECT_TRUE(test_config.socketOpen("eth0", AF_INET));
     EXPECT_FALSE(test_config.socketOpen("eth1", AF_INET));
 
     // Reset configuration.
-    cfg->getCfgIface().closeSockets();
+    cfg->getCfgIface()->closeSockets();
     CfgMgr::instance().clear();
 
     // Try similar configuration but this time add a wildcard interface
@@ -88,7 +88,7 @@ TEST_F(IfacesConfigParserTest, interfaces) {
     ASSERT_NO_THROW(parser.build(config_element));
 
     cfg = CfgMgr::instance().getStagingCfg();
-    ASSERT_NO_THROW(cfg->getCfgIface().openSockets(AF_INET, 10000));
+    ASSERT_NO_THROW(cfg->getCfgIface()->openSockets(AF_INET, 10000));
 
     EXPECT_TRUE(test_config.socketOpen("eth0", AF_INET));
     EXPECT_TRUE(test_config.socketOpen("eth1", AF_INET));
@@ -116,7 +116,7 @@ TEST_F(IfacesConfigParserTest, socketTypeRaw) {
     SrvConfigPtr cfg = CfgMgr::instance().getStagingCfg();
     ASSERT_TRUE(cfg);
     cfg_ref.useSocketType(AF_INET, CfgIface::SOCKET_RAW);
-    EXPECT_TRUE(cfg->getCfgIface() == cfg_ref);
+    EXPECT_TRUE(*cfg->getCfgIface() == cfg_ref);
 }
 
 // This test verifies that it is possible to select the datagram socket
@@ -141,7 +141,7 @@ TEST_F(IfacesConfigParserTest, socketTypeDatagram) {
     SrvConfigPtr cfg = CfgMgr::instance().getStagingCfg();
     ASSERT_TRUE(cfg);
     cfg_ref.useSocketType(AF_INET, CfgIface::SOCKET_DGRAM);
-    EXPECT_TRUE(cfg->getCfgIface() == cfg_ref);
+    EXPECT_TRUE(*cfg->getCfgIface() == cfg_ref);
 }
 
 // Test that the configuration rejects the invalid socket type.

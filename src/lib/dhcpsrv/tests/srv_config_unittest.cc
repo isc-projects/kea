@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -254,11 +254,8 @@ TEST_F(SrvConfigTest, copy) {
     info.destinations_.push_back(LoggingDestination());
 
     // Set interface configuration for conf1.
-    CfgIface cfg_iface;
-    cfg_iface.use(AF_INET, "eth0");
-
+    conf1.getCfgIface()->use(AF_INET, "eth0");
     conf1.addLoggingInfo(info);
-    conf1.setCfgIface(cfg_iface);
 
     // Add option definition.
     OptionDefinitionPtr def(new OptionDefinition("option-foo", 5, "string"));
@@ -310,17 +307,12 @@ TEST_F(SrvConfigTest, equality) {
     EXPECT_FALSE(conf1 != conf2);
 
     // Differ by interface configuration.
-    CfgIface cfg_iface1;
-    CfgIface cfg_iface2;
-
-    cfg_iface1.use(AF_INET, "eth0");
-    conf1.setCfgIface(cfg_iface1);
+    conf1.getCfgIface()->use(AF_INET, "eth0");
 
     EXPECT_FALSE(conf1 == conf2);
     EXPECT_TRUE(conf1 != conf2);
 
-    cfg_iface2.use(AF_INET, "eth0");
-    conf2.setCfgIface(cfg_iface2);
+    conf2.getCfgIface()->use(AF_INET, "eth0");
 
     EXPECT_TRUE(conf1 == conf2);
     EXPECT_FALSE(conf1 != conf2);

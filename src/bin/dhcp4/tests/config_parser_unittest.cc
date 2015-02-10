@@ -964,6 +964,7 @@ TEST_F(Dhcp4ParserTest, nextServerSubnet) {
 // Test checks several negative scenarios for next-server configuration: bogus
 // address, IPv6 adddress and empty string.
 TEST_F(Dhcp4ParserTest, nextServerNegative) {
+    IfaceMgrTestConfig test_config(true);
 
     ConstElementPtr status;
 
@@ -1012,9 +1013,13 @@ TEST_F(Dhcp4ParserTest, nextServerNegative) {
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
+    CfgMgr::instance().clear();
+
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json2));
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+
+    CfgMgr::instance().clear();
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json3));
     checkResult(status, 0);
@@ -2970,8 +2975,7 @@ TEST_F(Dhcp4ParserTest, selectedInterfaces) {
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
-    CfgMgr::instance().getStagingCfg()->
-        getCfgIface().openSockets(AF_INET, 10000);
+    CfgMgr::instance().getStagingCfg()->getCfgIface()->openSockets(AF_INET, 10000);
 
     // eth0 and eth1 were explicitly selected. eth2 was not.
     EXPECT_TRUE(test_config.socketOpen("eth0", AF_INET));
@@ -3008,8 +3012,7 @@ TEST_F(Dhcp4ParserTest, allInterfaces) {
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
-    CfgMgr::instance().getStagingCfg()->
-        getCfgIface().openSockets(AF_INET, 10000);
+    CfgMgr::instance().getStagingCfg()->getCfgIface()->openSockets(AF_INET, 10000);
 
     // All interfaces should be now active.
     ASSERT_TRUE(test_config.socketOpen("eth0", AF_INET));
@@ -3044,8 +3047,7 @@ TEST_F(Dhcp4ParserTest, selectedInterfacesAndAddresses) {
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
-    CfgMgr::instance().getStagingCfg()->
-        getCfgIface().openSockets(AF_INET, 10000);
+    CfgMgr::instance().getStagingCfg()->getCfgIface()->openSockets(AF_INET, 10000);
 
     // An address on eth0 was selected
     EXPECT_TRUE(test_config.socketOpen("eth0", "10.0.0.1"));

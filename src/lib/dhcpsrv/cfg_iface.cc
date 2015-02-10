@@ -26,7 +26,7 @@ namespace dhcp {
 const char* CfgIface::ALL_IFACES_KEYWORD = "*";
 
 CfgIface::CfgIface()
-    : wildcard_used_(false), socket_type_(SOCKET_DEFAULT) {
+    : wildcard_used_(false), socket_type_(SOCKET_DGRAM) {
 }
 
 void
@@ -60,7 +60,9 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
     // IP address. This should effectively turn on the use of raw
     // sockets. However, this may be unsupported on some operating
     // systems, so there is no guarantee.
-    if ((family == AF_INET) && (socket_type_ != SOCKET_DEFAULT)) {
+    if ((family == AF_INET) && (!IfaceMgr::instance().isTestMode())) {
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_SOCKET_TYPE_SELECT)
+            .arg(socketTypeToText());
         iface_mgr.setMatchingPacketFilter(socket_type_ == SOCKET_RAW);
         if ((socket_type_ == SOCKET_RAW) &&
             !iface_mgr.isDirectResponseSupported()) {
@@ -151,7 +153,7 @@ CfgIface::reset() {
     wildcard_used_ = false;
     iface_set_.clear();
     address_map_.clear();
-    socket_type_ = SOCKET_DEFAULT;
+    useSocketType(AF_INET, SOCKET_DGRAM);
 }
 
 void
@@ -184,6 +186,22 @@ CfgIface::setState(const uint16_t family, const bool inactive,
 void
 CfgIface::socketOpenErrorHandler(const std::string& errmsg) {
     LOG_WARN(dhcpsrv_logger, DHCPSRV_OPEN_SOCKET_FAIL).arg(errmsg);
+}
+
+std::string
+CfgIface::socketTypeToText() const {
+    switch (socket_type_) {
+    case SOCKET_RAW:
+        return ("raw");
+
+    case SOCKET_DGRAM:
+        return ("datagram");
+
+    default:
+        ;
+    }
+
+    isc_throw(Unexpected, "unsupported socket type " << socket_type_);
 }
 
 void
@@ -338,10 +356,6 @@ CfgIface::useSocketType(const uint16_t family,
     if (family != AF_INET) {
         isc_throw(InvalidSocketType, "socket type must not be specified for"
                   " the DHCPv6 server");
-    } else if (socket_type == SOCKET_DEFAULT) {
-            isc_throw(InvalidSocketType, "invalid value SOCKET_DEFAULT"
-                      " used to specify the socket type to be used by"
-                      " the DHCPv4 server");
     }
     socket_type_ = socket_type;
 }

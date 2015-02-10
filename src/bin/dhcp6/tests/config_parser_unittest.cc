@@ -354,7 +354,9 @@ public:
     /// test to make sure that contents of the database do not affect the
     /// results of subsequent tests.
     void resetConfiguration() {
-        string config = "{ " + genIfaceConfig() + ","
+        string config = "{ \"interfaces-config\": {"
+            "    \"interfaces\": [ ]"
+            "},"
             "\"hooks-libraries\": [ ],"
             "\"preferred-lifetime\": 3000,"
             "\"rebind-timer\": 2000, "
@@ -3104,8 +3106,7 @@ TEST_F(Dhcp6ParserTest, selectedInterfaces) {
     // as the pool does not belong to that subnet
     checkResult(status, 0);
 
-    CfgMgr::instance().getStagingCfg()->
-        getCfgIface().openSockets(AF_INET6, 10000);
+    CfgMgr::instance().getStagingCfg()->getCfgIface()->openSockets(AF_INET6, 10000);
 
     // eth0 and eth1 were explicitly selected. eth2 was not.
     EXPECT_TRUE(test_config.socketOpen("eth0", AF_INET6));
@@ -3140,8 +3141,7 @@ TEST_F(Dhcp6ParserTest, allInterfaces) {
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
     checkResult(status, 0);
 
-    CfgMgr::instance().getStagingCfg()->
-        getCfgIface().openSockets(AF_INET6, 10000);
+    CfgMgr::instance().getStagingCfg()->getCfgIface()->openSockets(AF_INET6, 10000);
 
     // All interfaces should be now active.
     EXPECT_TRUE(test_config.socketOpen("eth0", AF_INET6));

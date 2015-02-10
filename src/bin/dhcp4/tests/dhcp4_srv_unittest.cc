@@ -3089,7 +3089,7 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsORO) {
 TEST_F(Dhcpv4SrvTest, vendorOptionsDocsisDefinitions) {
     ConstElementPtr x;
     string config_prefix = "{ \"interfaces-config\": {"
-        "    \"interfaces\": [ \"*\" ]"
+        "    \"interfaces\": [ ]"
         "},"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
