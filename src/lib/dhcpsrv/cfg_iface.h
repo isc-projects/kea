@@ -16,8 +16,10 @@
 #define CFG_IFACE_H
 
 #include <asiolink/io_address.h>
+#include <boost/shared_ptr.hpp>
 #include <map>
 #include <set>
+#include <string>
 
 namespace isc {
 namespace dhcp {
@@ -81,12 +83,7 @@ public:
 /// in such case the use of datagram sockets is preferred. The type of the
 /// sockets to be opened is specified using one of the
 /// @c CfgIface::useSocketType method variants. The @c CfgIface::SocketType
-/// enumeration specifies the possible values. The @c CfgIface::SOCKET_DEFAULT
-/// is a default setting of the @c CfgIface and it indicates that the
-/// @c IfaceMgr should continue using the currently used sockets' type.
-/// This is mostly used for unit testing to avoid modifying fake
-/// configurations of the @c IfaceMgr. In the real case, one of the
-/// remaining values should be used.
+/// enumeration specifies the possible values.
 ///
 /// @warning This class makes use of the AF_INET and AF_INET6 family literals,
 /// but it doesn't verify that the address family value passed as @c uint16_t
@@ -97,8 +94,6 @@ public:
 
     /// @brief Socket type used by the DHCPv4 server.
     enum SocketType  {
-        /// Default socket type, mainly used for testing.
-        SOCKET_DEFAULT,
         /// Raw socket, used for direct DHCPv4 traffic.
         SOCKET_RAW,
         /// Datagram socket, i.e. IP/UDP socket.
@@ -247,6 +242,9 @@ private:
     /// @param errmsg Error message being logged by the function.
     static void socketOpenErrorHandler(const std::string& errmsg);
 
+    /// @brief Returns the socket type in the textual format.
+    std::string socketTypeToText() const;
+
     /// @brief Represents a set of interface names.
     typedef std::set<std::string> IfaceSet;
 
@@ -268,6 +266,12 @@ private:
     /// @brief A type of the sockets used by the DHCP server.
     SocketType socket_type_;
 };
+
+/// @brief A pointer to the @c CfgIface .
+typedef boost::shared_ptr<CfgIface> CfgIfacePtr;
+
+/// @brief A pointer to the const @c CfgIface.
+typedef boost::shared_ptr<const CfgIface> ConstCfgIfacePtr;
 
 }
 }

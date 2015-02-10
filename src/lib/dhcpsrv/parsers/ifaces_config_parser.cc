@@ -30,19 +30,18 @@ InterfaceListConfigParser::InterfaceListConfigParser(const int protocol)
 
 void
 InterfaceListConfigParser::build(ConstElementPtr value) {
-    CfgIface cfg_iface;
+    CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
 
     BOOST_FOREACH(ConstElementPtr iface, value->listValue()) {
         std::string iface_name = iface->stringValue();
         try {
-            cfg_iface.use(protocol_, iface_name);
+            cfg_iface->use(protocol_, iface_name);
 
         } catch (const std::exception& ex) {
             isc_throw(DhcpConfigError, "Failed to select interface: "
                       << ex.what() << " (" << value->getPosition() << ")");
         }
     }
-    CfgMgr::instance().getStagingCfg()->setCfgIface(cfg_iface);
 }
 
 void
@@ -86,12 +85,17 @@ IfacesConfigParser4::IfacesConfigParser4()
 void
 IfacesConfigParser4::build(isc::data::ConstElementPtr ifaces_config) {
     IfacesConfigParser::build(ifaces_config);
+
+    // Get the pointer to the interface configuration.
+    CfgIfacePtr cfg = CfgMgr::instance().getStagingCfg()->getCfgIface();
+    // The default is to use the raw sockets, if the "socket-type" parameter
+    // hasn't been specified.
+    cfg->useSocketType(AF_INET, CfgIface::SOCKET_RAW);
+
     BOOST_FOREACH(ConfigPair element, ifaces_config->mapValue()) {
         try {
             if (element.first == "socket-type") {
-                CfgIface cfg = CfgMgr::instance().getStagingCfg()->getCfgIface();
-                cfg.useSocketType(AF_INET, element.second->stringValue());
-                CfgMgr::instance().getStagingCfg()->setCfgIface(cfg);
+                cfg->useSocketType(AF_INET, element.second->stringValue());
 
             } else if (!isGenericParameter(element.first)) {
                 isc_throw(DhcpConfigError, "usupported parameter '"
