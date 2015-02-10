@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -515,7 +515,7 @@ AllocEngine::allocateLease4(const SubnetPtr& subnet, const ClientIdPtr& clientid
         /// API which would in turn require lots of changes in unit tests.
         /// The ticket introducing a context and host reservation in the
         /// allocation engine is complex enough by itself to warrant that
-        /// the API change is done with a separate ticket.
+        /// the API change is done with a separate ticket (#3709).
         ClientContext4 ctx;
         ctx.subnet_ = subnet;
         ctx.clientid_ = clientid;
