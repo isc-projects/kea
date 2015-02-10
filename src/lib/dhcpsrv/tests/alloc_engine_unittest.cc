@@ -2780,6 +2780,42 @@ TEST_F(AllocEngine4Test, reservedAddressVsDynamicPool) {
     EXPECT_NE(allocated_lease->addr_.toText(), "192.0.2.100");
 }
 
+// This test checks that the client requesting an address which is
+// reserved for another client will get no lease or a different
+// address will be assigned if the client is sending a DHCPDISCOVER.
+TEST_F(AllocEngine4Test, reservedAddressHintUsedByOtherClient) {
+    // Create a reservation for the client.
+    HostPtr host(new Host(&hwaddr2_->hwaddr_[0], hwaddr_->hwaddr_.size(),
+                          Host::IDENT_HWADDR, subnet_->getID(),
+                          SubnetID(0), IOAddress("192.0.2.100")));
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+
+    // Different client is requesting this address.
+    Lease4Ptr allocated_lease = engine.allocateLease4(subnet_, ClientIdPtr(),
+                                                      hwaddr_,
+                                                      IOAddress("192.0.2.100"),
+                                                      false, false, "", false,
+                                                      CalloutHandlePtr(),
+                                                      old_lease_);
+    // The client should get no lease (DHCPNAK).
+    ASSERT_FALSE(allocated_lease);
+
+    // The same client should get a different lease than requested if
+    // if is sending a DHCPDISCOVER (fake allocation is true).
+    allocated_lease = engine.allocateLease4(subnet_, ClientIdPtr(),
+                                            hwaddr_,
+                                            IOAddress("192.0.2.100"),
+                                            false, false, "", true,
+                                            CalloutHandlePtr(),
+                                            old_lease_);
+    ASSERT_TRUE(allocated_lease);
+    // Make sure the lease obtained is for a different address.
+    EXPECT_NE(allocated_lease->addr_.toText(), "192.0.2.100");
+}
+
 // This test checks that the allocation engine refuses to allocate an
 // address when the pool is exhausted, and the only one available
 // address is reserved for a different client.
