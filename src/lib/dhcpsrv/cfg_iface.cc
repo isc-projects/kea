@@ -26,7 +26,7 @@ namespace dhcp {
 const char* CfgIface::ALL_IFACES_KEYWORD = "*";
 
 CfgIface::CfgIface()
-    : wildcard_used_(false), socket_type_(SOCKET_DGRAM) {
+    : wildcard_used_(false), socket_type_(SOCKET_RAW) {
 }
 
 void
@@ -151,7 +151,7 @@ CfgIface::reset() {
     wildcard_used_ = false;
     iface_set_.clear();
     address_map_.clear();
-    useSocketType(AF_INET, SOCKET_DGRAM);
+    useSocketType(AF_INET, SOCKET_RAW);
 }
 
 void
