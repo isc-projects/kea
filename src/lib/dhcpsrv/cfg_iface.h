@@ -198,6 +198,9 @@ public:
     void useSocketType(const uint16_t family,
                        const std::string& socket_type_name);
 
+    /// @brief Returns the socket type in the textual format.
+    std::string socketTypeToText() const;
+
     /// @brief Equality operator.
     ///
     /// @param other Object to be compared with this object.
@@ -241,9 +244,6 @@ private:
     ///
     /// @param errmsg Error message being logged by the function.
     static void socketOpenErrorHandler(const std::string& errmsg);
-
-    /// @brief Returns the socket type in the textual format.
-    std::string socketTypeToText() const;
 
     /// @brief Represents a set of interface names.
     typedef std::set<std::string> IfaceSet;

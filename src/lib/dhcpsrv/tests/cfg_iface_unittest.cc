@@ -358,21 +358,25 @@ TEST(CfgIfaceNoStubTest, useSocketType) {
     CfgIface cfg;
     // Select datagram sockets.
     ASSERT_NO_THROW(cfg.useSocketType(AF_INET, "datagram"));
+    EXPECT_EQ("datagram", cfg.socketTypeToText());
     ASSERT_NO_THROW(cfg.openSockets(AF_INET, 10067, true));
     // For datagram sockets, the direct traffic is not supported.
     ASSERT_TRUE(!IfaceMgr::instance().isDirectResponseSupported());
 
     // Select raw sockets.
     ASSERT_NO_THROW(cfg.useSocketType(AF_INET, "raw"));
+    EXPECT_EQ("raw", cfg.socketTypeToText());
     ASSERT_NO_THROW(cfg.openSockets(AF_INET, 10067, true));
     // For raw sockets, the direct traffic is supported.
     ASSERT_TRUE(IfaceMgr::instance().isDirectResponseSupported());
 
     ASSERT_NO_THROW(cfg.useSocketType(AF_INET, CfgIface::SOCKET_DGRAM));
+    EXPECT_EQ("datagram", cfg.socketTypeToText());
     ASSERT_NO_THROW(cfg.openSockets(AF_INET, 10067, true));
     ASSERT_TRUE(!IfaceMgr::instance().isDirectResponseSupported());
 
     ASSERT_NO_THROW(cfg.useSocketType(AF_INET, CfgIface::SOCKET_RAW));
+    EXPECT_EQ("raw", cfg.socketTypeToText());
     ASSERT_NO_THROW(cfg.openSockets(AF_INET, 10067, true));
     ASSERT_TRUE(IfaceMgr::instance().isDirectResponseSupported());
 
