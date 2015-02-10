@@ -1,3 +1,9 @@
+889.	[bug]		marcin
+	Resolved a bug in the DHCPv4 allocation engine whereby the
+	client could request and obtain an address reserved for
+	another client.
+	(Trac #3690, git 1afa4e24b0fcdd6d3a2e596663ce1102ffe2340d)
+
 888.	[func]		marcin
 	DHCPv4 and DHCPv6 servers launch the kea-lfc program, according
 	to the value of lfc-interval configuration parameter for the
