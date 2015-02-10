@@ -827,7 +827,7 @@ AllocEngine::allocateLease4(const SubnetPtr& subnet, const ClientIdPtr& clientid
         /// API which would in turn require lots of changes in unit tests.
         /// The ticket introducing a context and host reservation in the
         /// allocation engine is complex enough by itself to warrant that
-        /// the API change is done with a separate ticket.
+        /// the API change is done with a separate ticket (#3709).
         ClientContext4 ctx;
         ctx.subnet_ = subnet;
         ctx.clientid_ = clientid;
@@ -918,52 +918,70 @@ AllocEngine::allocateLease4(const SubnetPtr& subnet, const ClientIdPtr& clientid
                 return (Lease4Ptr());
             }
 
-            // The reserved address always takes precedence over an address
-            // supplied by the client (renewed address or requested).
-            const IOAddress& candidate = ctx.host_ ?
-                ctx.host_->getIPv4Reservation() : ctx.requested_address_;
+            // Now let's pick an address to be allocated to the client. The
+            // candidate address may either be a reserved one or the one that
+            // the client requests.
+            IOAddress candidate = 0;
+            ConstHostPtr other_host;
+            if (ctx.host_) {
+                candidate = ctx.host_->getIPv4Reservation();
 
-            // Once we picked an address we want to allocate, we have to check
-            // if this address is available.
-            existing = LeaseMgrFactory::instance().getLease4(candidate);
-            if (!existing) {
-                // The candidate address is currently unused. Let's create a
-                // lease for it.
-                Lease4Ptr lease = createLease4(subnet, clientid, hwaddr,
-                                               candidate, fwd_dns_update,
-                                               rev_dns_update,
-                                               hostname, callout_handle,
-                                               fake_allocation);
-
-                // If we have allocated the lease let's return it. Also,
-                // always return when tried to allocate reserved address,
-                // regardless if allocation was successful or not. If it
-                // was not successful, we will return a NULL pointer which
-                // indicates to the server that it should send NAK to the
-                // client.
-                if (lease || ctx.host_) {
-                    return (lease);
-                }
-
-            // There is a lease for this address in the lease database but
-            // it is possible that the lease has expired, in which case
-            // we will be able to reuse it.
             } else {
-                if (existing->expired()) {
-                    // Save the old lease, before reusing it.
-                    old_lease.reset(new Lease4(*existing));
-                    return (reuseExpiredLease(existing, ctx));
-
-                // The existing lease is not expired (is in use by some
-                // other client). If we are trying to get this lease because
-                // the address has been reserved for the client we have no
-                // choice but to return a NULL lease to indicate that the
-                // allocation has failed.
-                } else if (ctx.host_) {
+                candidate = ctx.requested_address_;
+                // If client is requesting an address we have to check if this address
+                // is not reserved for someone else. Note that for DHCPDISCOVER we
+                // treat the requested address as a hint and we don't return an empty
+                // lease.
+                other_host = HostMgr::instance().get4(ctx.subnet_->getID(), candidate);
+                if (!ctx.fake_allocation_ && other_host) {
                     return (Lease4Ptr());
+                }
+            }
+
+            // If address is not reserved for another client, let's try allocate it.
+            if (!other_host) {
+                // Once we picked an address we want to allocate, we have to check
+                // if this address is available.
+                existing = LeaseMgrFactory::instance().getLease4(candidate);
+                if (!existing) {
+                    // The candidate address is currently unused. Let's create a
+                    // lease for it.
+                    Lease4Ptr lease = createLease4(subnet, clientid, hwaddr,
+                                                   candidate, fwd_dns_update,
+                                                   rev_dns_update,
+                                                   hostname, callout_handle,
+                                                   fake_allocation);
+
+                    // If we have allocated the lease let's return it. Also,
+                    // always return when tried to allocate reserved address,
+                    // regardless if allocation was successful or not. If it
+                    // was not successful, we will return a NULL pointer which
+                    // indicates to the server that it should send NAK to the
+                    // client.
+                    if (lease || ctx.host_) {
+                        return (lease);
+                    }
+
+                    // There is a lease for this address in the lease database but
+                    // it is possible that the lease has expired, in which case
+                    // we will be able to reuse it.
+                } else {
+                    if (existing->expired()) {
+                        // Save the old lease, before reusing it.
+                        old_lease.reset(new Lease4(*existing));
+                        return (reuseExpiredLease(existing, ctx));
+
+                        // The existing lease is not expired (is in use by some
+                        // other client). If we are trying to get this lease because
+                        // the address has been reserved for the client we have no
+                        // choice but to return a NULL lease to indicate that the
+                        // allocation has failed.
+                    } else if (ctx.host_) {
+                        return (Lease4Ptr());
+
+                    }
 
                 }
-
             }
         }
 
