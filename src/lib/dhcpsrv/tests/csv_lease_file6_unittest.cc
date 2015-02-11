@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -63,6 +63,19 @@ public:
     /// @brief Create lease file that can be parsed by unit tests.
     void writeSampleFile() const;
 
+    /// @brief Checks the stats for the file
+    void checkStats(CSVLeaseFile6& lease_file,
+                    uint32_t reads, uint32_t read_leases,
+                    uint32_t read_errs, uint32_t writes,
+                    uint32_t write_leases, uint32_t write_errs) const {
+        EXPECT_EQ(lease_file.getReads(), reads);
+        EXPECT_EQ(lease_file.getReadLeases(), read_leases);
+        EXPECT_EQ(lease_file.getReadErrs(), read_errs);
+        EXPECT_EQ(lease_file.getWrites(), writes);
+        EXPECT_EQ(lease_file.getWriteLeases(), write_leases);
+        EXPECT_EQ(lease_file.getWriteErrs(), write_errs);
+    }
+
     /// @brief Name of the test lease file.
     std::string filename_;
 
@@ -105,10 +118,14 @@ TEST_F(CSVLeaseFile6Test, parse) {
     boost::scoped_ptr<CSVLeaseFile6> lf(new CSVLeaseFile6(filename_));
     ASSERT_NO_THROW(lf->open());
 
+    // Verify the counters are cleared
+    checkStats(*lf, 0, 0, 0, 0, 0, 0);
+
     Lease6Ptr lease;
     // Reading first read should be successful.
     EXPECT_TRUE(lf->next(lease));
     ASSERT_TRUE(lease);
+    checkStats(*lf, 1, 1, 0, 0, 0, 0);
 
     // Verify that the lease attributes are correct.
     EXPECT_EQ("2001:db8:1::1", lease->addr_.toText());
@@ -127,11 +144,14 @@ TEST_F(CSVLeaseFile6Test, parse) {
 
     // Second lease is malformed - DUID is empty.
     EXPECT_FALSE(lf->next(lease));
+    checkStats(*lf, 2, 1, 1, 0, 0, 0);
 
     // Even, parsing previous lease failed, reading the next lease should be
     // successful.
     EXPECT_TRUE(lf->next(lease));
     ASSERT_TRUE(lease);
+    checkStats(*lf, 3, 2, 1, 0, 0, 0);
+
     // Verify that the third lease is correct.
     EXPECT_EQ("2001:db8:2::10", lease->addr_.toText());
     ASSERT_TRUE(lease->duid_);
@@ -150,6 +170,8 @@ TEST_F(CSVLeaseFile6Test, parse) {
     // Reading the fourth lease should be successful.
     EXPECT_TRUE(lf->next(lease));
     ASSERT_TRUE(lease);
+    checkStats(*lf, 4, 3, 1, 0, 0, 0);
+
     // Verify that the lease is correct.
     EXPECT_EQ("3000:1::", lease->addr_.toText());
     ASSERT_TRUE(lease->duid_);
@@ -169,11 +191,12 @@ TEST_F(CSVLeaseFile6Test, parse) {
     // lease pointer should be NULL.
     EXPECT_TRUE(lf->next(lease));
     EXPECT_FALSE(lease);
+    checkStats(*lf, 5, 3, 1, 0, 0, 0);
 
     // We should be able to do it again.
     EXPECT_TRUE(lf->next(lease));
     EXPECT_FALSE(lease);
-
+    checkStats(*lf, 6, 3, 1, 0, 0, 0);
 }
 
 // This test checks creation of the lease file and writing leases.
@@ -182,12 +205,16 @@ TEST_F(CSVLeaseFile6Test, recreate) {
     ASSERT_NO_THROW(lf->recreate());
     ASSERT_TRUE(io_.exists());
 
+    // Verify the counters are cleared
+    checkStats(*lf, 0, 0, 0, 0, 0, 0);
+
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"),
                                makeDUID(DUID0, sizeof(DUID0)),
                                7, 100, 200, 50, 80, 8, true, true,
                                "host.example.com"));
     lease->cltt_ = 0;
     ASSERT_NO_THROW(lf->append(*lease));
+    checkStats(*lf, 0, 0, 0, 1, 1, 0);
 
     lease.reset(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:2::10"),
                            makeDUID(DUID1, sizeof(DUID1)),
@@ -195,6 +222,7 @@ TEST_F(CSVLeaseFile6Test, recreate) {
                            "", HWAddrPtr(), 128));
     lease->cltt_ = 0;
     ASSERT_NO_THROW(lf->append(*lease));
+    checkStats(*lf, 0, 0, 0, 2, 2, 0);
 
     lease.reset(new Lease6(Lease::TYPE_PD, IOAddress("3000:1:1::"),
                            makeDUID(DUID0, sizeof(DUID0)),
@@ -202,6 +230,7 @@ TEST_F(CSVLeaseFile6Test, recreate) {
                            "", HWAddrPtr(), 64));
     lease->cltt_ = 0;
     ASSERT_NO_THROW(lf->append(*lease));
+    checkStats(*lf, 0, 0, 0, 3, 3, 0);
 
     EXPECT_EQ("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
               "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"

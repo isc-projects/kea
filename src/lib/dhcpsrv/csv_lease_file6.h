@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,7 @@
 #include <dhcp/duid.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/subnet.h>
+#include <dhcpsrv/lease_stats.h>
 #include <util/csv_file.h>
 #include <stdint.h>
 #include <string>
@@ -37,7 +38,7 @@ namespace dhcp {
 /// validation (see http://kea.isc.org/ticket/2405). However, when #2405
 /// is implemented, the @c next function may need to be updated to use the
 /// validation capablity of @c Lease6.
-class CSVLeaseFile6 : public isc::util::CSVFile {
+  class CSVLeaseFile6 : public isc::util::CSVFile, public LeaseFileStats {
 public:
 
     /// @brief Constructor.
@@ -47,6 +48,13 @@ public:
     /// @param filename Name of the lease file.
     CSVLeaseFile6(const std::string& filename);
 
+    /// @brief Opens a lease file.
+    ///
+    /// This function is used to clear the statistics while
+    /// calling the base class open.  It doesn't throw any
+    /// exceptions of its own but the base class may.
+    void open();
+
     /// @brief Appends the lease record to the CSV file.
     ///
     /// This function doesn't throw exceptions itself. In theory, exceptions
@@ -55,7 +63,7 @@ public:
     /// error.
     ///
     /// @param lease Structure representing a DHCPv6 lease.
-    void append(const Lease6& lease) const;
+    void append(const Lease6& lease);
 
     /// @brief Reads next lease from the CSV file.
     ///
