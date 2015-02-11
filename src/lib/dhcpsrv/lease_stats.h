@@ -21,9 +21,8 @@ namespace dhcp {
 /// @brief Provides statistics for leases.
 ///
 /// This class provides a common space for statistics that we wish
-/// to keep about leases.  Currently this is foe use with lease files
-/// but it may be exannded in the future.
-
+/// to keep about leases.  Currently this is for use with lease files
+/// but it may be expanded in the future.
 class LeaseFileStats {
 public:
     /// @brief Constructor
