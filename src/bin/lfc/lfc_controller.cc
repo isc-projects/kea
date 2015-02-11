@@ -64,7 +64,7 @@ LFCController::launch(int argc, char* argv[], const bool test_mode) {
     // If we aren't running in test mode initialize the logging
     // system with the defaults.
     if (!test_mode)
-        initLogger(lfc_app_name_, WARN, 0, NULL, false);
+        initLogger(lfc_app_name_, INFO, 0, NULL, false);
 
     try {
         parseArgs(argc, argv);
@@ -344,6 +344,17 @@ LFCController::processLeases() const {
     // Write the result out to the output file
     LeaseFileType lf_output(getOutputFile());
     LeaseFileLoader::write<LeaseObjectType>(lf_output, storage);
+
+    // If desired log the stats
+    LOG_INFO(lfc_logger, LFC_READ_MESSAGE)
+      .arg(lf_prev.getReadLeases() + lf_copy.getReadLeases())
+      .arg(lf_prev.getReads() + lf_copy.getReads())
+      .arg(lf_prev.getReadErrs() + lf_copy.getReadErrs());
+
+    LOG_INFO(lfc_logger, LFC_WRITE_MESSAGE)
+      .arg(lf_output.getWriteLeases())
+      .arg(lf_output.getWrites())
+      .arg(lf_output.getWriteErrs());
 
     // Once we've finished the output file move it to the complete file
     if (rename(getOutputFile().c_str(), getFinishFile().c_str()) != 0) {
