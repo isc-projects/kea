@@ -86,15 +86,17 @@ public:
     /// the write was correct.  The order of the leases in the output will depend
     /// on the order in which the container provides the leases.
     ///
+    /// @param lease_file A reference to the file to write to
     /// @param storage A reference to the container to be written to the file
     /// @param compare The string to compare to what was read from the file
     ///
-    /// @tparam LeaseStorage Type of the container: @c Lease4Container
-    /// @c Lease6Container.
+    /// @tparam LeaseObjectType A @c Lease4 or @c Lease6.
+    /// @tparam LeaseFileType A @c CSVLeaseFile4 or @c CSVLeaseFile6.
+    /// @tparam StorageType A @c Lease4Storage or @c Lease6Storage.
     ///
     template<typename LeaseObjectType, typename LeaseFileType,
              typename StorageType>
-    void writeLeases(LeaseFileType lease_file,
+    void writeLeases(LeaseFileType& lease_file,
                      const StorageType& storage,
                      const std::string& compare) {
         // Prepare for a new file, close and remove the old
@@ -109,12 +111,48 @@ public:
         EXPECT_EQ(compare, io_.readFile());
     }
 
+    /// @brief Checks the stats for the file
+    ///
+    /// This method is passed a leasefile and the values for the statistics it
+    /// should have for comparison.
+    ///
+    /// @param lease_file A reference to the file we are using
+    /// @param the statistics, in order, reads attempted, leases read, errors
+    /// while reading, writes attempted, leases written, and errors while writing
+    ///
+    /// @tparam LeaseFileType A @c CSVLeaseFile4 or @c CSVLeaseFile6.
+    template<typename LeaseFileType>
+    void checkStats(LeaseFileType& lease_file,
+                    uint32_t reads, uint32_t read_leases,
+                    uint32_t read_errs, uint32_t writes,
+                    uint32_t write_leases, uint32_t write_errs) const {
+        EXPECT_EQ(lease_file.getReads(), reads);
+        EXPECT_EQ(lease_file.getReadLeases(), read_leases);
+        EXPECT_EQ(lease_file.getReadErrs(), read_errs);
+        EXPECT_EQ(lease_file.getWrites(), writes);
+        EXPECT_EQ(lease_file.getWriteLeases(), write_leases);
+        EXPECT_EQ(lease_file.getWriteErrs(), write_errs);
+    }
 
     /// @brief Name of the test lease file.
     std::string filename_;
 
     /// @brief Object providing access to lease file IO.
     LeaseFileIO io_;
+
+    std::string v4_hdr_; ///< String for the header of the v4 csv test file
+    std::string v6_hdr_; ///< String for the header of the v6 csv test file
+
+protected:
+    /// @brief Sets up the header strings
+    virtual void SetUp() {
+        v4_hdr_ = "address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
+                  "fqdn_fwd,fqdn_rev,hostname\n";
+
+        v6_hdr_ = "address,duid,valid_lifetime,expire,subnet_id,"
+                  "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
+                  "fqdn_rev,hostname,hwaddr\n";
+    }
 };
 
 LeaseFileLoaderTest::LeaseFileLoaderTest()
@@ -135,20 +173,25 @@ LeaseFileLoaderTest::absolutePath(const std::string& filename) {
 // It also tests the write function by writing the storage to a file
 // and comparing that with the expected value.
 TEST_F(LeaseFileLoaderTest, loadWrite4) {
+    std::string test_str;
+    std::string a_1 = "192.0.2.1,06:07:08:09:0a:bc,,"
+                      "200,200,8,1,1,host.example.com\n";
+    std::string a_2 = "192.0.2.1,06:07:08:09:0a:bc,,"
+                      "200,500,8,1,1,host.example.com\n";
+
+    std::string b_1 = "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,"
+                      "100,100,7,0,0,\n";
+    std::string b_2 = "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,"
+                      "100,135,7,0,0,\n";
+
+    std::string c_1 = "192.0.2.3,,a:11:01:04,"
+                      "200,200,8,1,1,host.example.com\n";
+
     // Create lease file with leases for 192.0.2.1, 192.0.3.15. The lease
     // entry for the 192.0.2.3 is invalid (lacks HW address) and should
     // be discarded.
-    io_.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-                  "fqdn_fwd,fqdn_rev,hostname\n"
-                  "192.0.2.1,06:07:08:09:0a:bc,,200,200,8,1,1,"
-                  "host.example.com\n"
-                  "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,100,100,7,"
-                  "0,0,\n"
-                  "192.0.2.3,,a:11:01:04,200,200,8,1,1,host.example.com\n"
-                  "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,100,135,7,"
-                  "0,0,\n"
-                  "192.0.2.1,06:07:08:09:0a:bc,,200,500,8,1,1,"
-                  "host.example.com\n");
+    test_str = v4_hdr_ + a_1 + b_1 + c_1 + b_2 + a_2;
+    io_.writeFile(test_str);
 
     boost::scoped_ptr<CSVLeaseFile4> lf(new CSVLeaseFile4(filename_));
     ASSERT_NO_THROW(lf->open());
@@ -156,6 +199,9 @@ TEST_F(LeaseFileLoaderTest, loadWrite4) {
     // Load leases from the file.
     Lease4Storage storage;
     ASSERT_NO_THROW(LeaseFileLoader::load<Lease4>(*lf, storage, 10));
+
+    // We should have made 6 attempts to read, with 4 leases read and 1 error
+    checkStats(*lf, 6, 4, 1, 0, 0, 0);
 
     // There are two unique leases.
     ASSERT_EQ(2, storage.size());
@@ -178,14 +224,11 @@ TEST_F(LeaseFileLoaderTest, loadWrite4) {
     ASSERT_TRUE(lease);
     EXPECT_EQ(35, lease->cltt_);
 
-    writeLeases<Lease4, CSVLeaseFile4, Lease4Storage>
-        (*lf, storage,
-         "address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-         "fqdn_fwd,fqdn_rev,hostname\n"
-         "192.0.2.1,06:07:08:09:0a:bc,,200,500,8,1,1,"
-         "host.example.com\n"
-         "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,100,135,7,"
-         "0,0,\n");
+    test_str = v4_hdr_ + a_2 + b_2;
+    writeLeases<Lease4, CSVLeaseFile4, Lease4Storage>(*lf, storage, test_str);
+
+    // We should have made 2 attempts to write, with 2 leases written and 0 errors
+    checkStats(*lf, 0, 0, 0, 2, 2, 0);
 }
 
 // This test verifies that the lease with a valid lifetime of 0
@@ -195,25 +238,32 @@ TEST_F(LeaseFileLoaderTest, loadWrite4) {
 // It also tests the write function by writing the storage to a file
 // and comparing that with the expected value.
 TEST_F(LeaseFileLoaderTest, loadWrite4LeaseRemove) {
+    std::string test_str;
+    std::string a_1 = "192.0.2.1,06:07:08:09:0a:bc,,"
+                      "200,200,8,1,1,host.example.com\n";
+    std::string a_2 = "192.0.2.1,06:07:08:09:0a:bc,,"
+                      "0,500,8,1,1,host.example.com\n";
+
+    std::string b_1 = "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,"
+                      "100,100,7,0,0,\n";
+    std::string b_2 = "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,"
+                      "100,135,7,0,0,\n";
+
+
     // Create lease file in which one of the entries for 192.0.2.1
     // has a valid_lifetime of 0 and results in the deletion of the
     // lease.
-    io_.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-                  "fqdn_fwd,fqdn_rev,hostname\n"
-                  "192.0.2.1,06:07:08:09:0a:bc,,200,200,8,1,1,"
-                  "host.example.com\n"
-                  "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,100,100,7,"
-                  "0,0,\n"
-                  "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,100,135,7,"
-                  "0,0,\n"
-                  "192.0.2.1,06:07:08:09:0a:bc,,0,500,8,1,1,"
-                  "host.example.com\n");
+    test_str = v4_hdr_ + a_1 + b_1 + b_2 + a_2;
+    io_.writeFile(test_str);
 
     boost::scoped_ptr<CSVLeaseFile4> lf(new CSVLeaseFile4(filename_));
     ASSERT_NO_THROW(lf->open());
 
     Lease4Storage storage;
     ASSERT_NO_THROW(LeaseFileLoader::load<Lease4>(*lf, storage, 10));
+
+    // We should have made 5 attempts to read, with 4 leases read and 0 error
+    checkStats(*lf, 5, 4, 0, 0, 0, 0);
 
     // There should only be one lease. The one with the valid_lifetime
     // of 0 should be removed.
@@ -223,12 +273,11 @@ TEST_F(LeaseFileLoaderTest, loadWrite4LeaseRemove) {
     ASSERT_TRUE(lease);
     EXPECT_EQ(35, lease->cltt_);
 
-    writeLeases<Lease4, CSVLeaseFile4, Lease4Storage>
-        (*lf, storage,
-         "address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-         "fqdn_fwd,fqdn_rev,hostname\n"
-         "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,100,135,7,"
-         "0,0,\n");
+    test_str = v4_hdr_ + b_2;
+    writeLeases<Lease4, CSVLeaseFile4, Lease4Storage>(*lf, storage, test_str);
+
+    // We should have made 1 attempts to write, with 1 leases written and 0 errors
+    checkStats(*lf, 0, 0, 0, 1, 1, 0);
 }
 
 // This test verifies that the DHCPv6 leases can be loaded from the lease
@@ -238,22 +287,28 @@ TEST_F(LeaseFileLoaderTest, loadWrite4LeaseRemove) {
 // It also tests the write function by writing the storage to a file
 // and comparing that with the expected value.
 TEST_F(LeaseFileLoaderTest, loadWrite6) {
+    std::string test_str;
+    std::string a_1 = "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
+                      "200,200,8,100,0,7,0,1,1,host.example.com,\n";
+    std::string a_2 = "2001:db8:1::1,,"
+                      "200,200,8,100,0,7,0,1,1,host.example.com,\n";
+    std::string a_3 = "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
+                      "200,400,8,100,0,7,0,1,1,host.example.com,\n";
+
+    std::string b_1 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
+                      "300,300,6,150,0,8,0,0,0,,\n";
+    std::string b_2 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
+                      "300,800,6,150,0,8,0,0,0,,\n";
+
+    std::string c_1 = "3000:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
+                      "100,200,8,0,2,16,64,0,0,,\n";
+
+
+
     // Create a lease file with three valid leases: 2001:db8:1::1,
     // 3000:1:: and 2001:db8:2::10.
-    io_.writeFile("address,duid,valid_lifetime,expire,subnet_id,"
-                  "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
-                  "fqdn_rev,hostname,hwaddr\n"
-                  "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                  "200,200,8,100,0,7,0,1,1,host.example.com,\n"
-                  "2001:db8:1::1,,200,200,8,100,0,7,0,1,1,host.example.com,\n"
-                  "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,300,300,6,150,"
-                  "0,8,0,0,0,,\n"
-                  "3000:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,100,200,8,0,2,"
-                  "16,64,0,0,,\n"
-                  "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,300,800,6,150,"
-                  "0,8,0,0,0,,\n"
-                  "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                  "200,400,8,100,0,7,0,1,1,host.example.com,\n");
+    test_str = v6_hdr_ + a_1 + a_2 + b_1 + c_1 + b_2 + a_3;
+    io_.writeFile(test_str);
 
     boost::scoped_ptr<CSVLeaseFile6> lf(new CSVLeaseFile6(filename_));
     ASSERT_NO_THROW(lf->open());
@@ -261,6 +316,9 @@ TEST_F(LeaseFileLoaderTest, loadWrite6) {
     // Load leases from the lease file.
     Lease6Storage storage;
     ASSERT_NO_THROW(LeaseFileLoader::load<Lease6>(*lf, storage, 10));
+
+    // We should have made 7 attempts to read, with 5 leases read and 1 error
+    checkStats(*lf, 7, 5, 1, 0, 0, 0);
 
     // There should be 3 unique leases.
     ASSERT_EQ(3, storage.size());
@@ -283,17 +341,11 @@ TEST_F(LeaseFileLoaderTest, loadWrite6) {
     ASSERT_TRUE(lease);
     EXPECT_EQ(500, lease->cltt_);
 
-    writeLeases<Lease6, CSVLeaseFile6, Lease6Storage>
-        (*lf, storage,
-         "address,duid,valid_lifetime,expire,subnet_id,"
-         "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
-         "fqdn_rev,hostname,hwaddr\n"
-         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-         "200,400,8,100,0,7,0,1,1,host.example.com,\n"
-         "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,300,800,6,150,"
-         "0,8,0,0,0,,\n"
-         "3000:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,100,200,8,0,2,"
-         "16,64,0,0,,\n");
+    test_str = v6_hdr_ + a_3 + b_2 + c_1;
+    writeLeases<Lease6, CSVLeaseFile6, Lease6Storage>(*lf, storage, test_str);
+
+    // We should have made 3 attempts to write, with 3 leases written and 0 errors
+    checkStats(*lf, 0, 0, 0, 3, 3, 0);
 }
 
 // This test verifies that the lease with a valid lifetime of 0
@@ -303,20 +355,22 @@ TEST_F(LeaseFileLoaderTest, loadWrite6) {
 // It also tests the write function by writing the storage to a file
 // and comparing that with the expected value.
 TEST_F(LeaseFileLoaderTest, loadWrite6LeaseRemove) {
+    std::string test_str;
+    std::string a_1 = "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
+                      "200,200,8,100,0,7,0,1,1,host.example.com,\n";
+    std::string a_2 = "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
+                      "0,400,8,100,0,7,0,1,1,host.example.com,\n";
+
+    std::string b_1 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
+                      "300,300,6,150,0,8,0,0,0,,\n";
+    std::string b_2 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
+                      "300,800,6,150,0,8,0,0,0,,\n";
+
     // Create lease file in which one of the entries for the 2001:db8:1::1
     // has valid lifetime set to 0, in which case the lease should be
     // deleted.
-    io_.writeFile("address,duid,valid_lifetime,expire,subnet_id,"
-                  "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
-                  "fqdn_rev,hostname,hwaddr\n"
-                  "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                  "200,200,8,100,0,7,0,1,1,host.example.com,\n"
-                  "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,300,300,6,150,"
-                  "0,8,0,0,0,,\n"
-                  "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,300,800,6,150,"
-                  "0,8,0,0,0,,\n"
-                  "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                  "0,400,8,100,0,7,0,1,1,host.example.com,\n");
+    test_str = v6_hdr_ + a_1 + b_1 + b_2 + a_2;
+    io_.writeFile(test_str);
 
     boost::scoped_ptr<CSVLeaseFile6> lf(new CSVLeaseFile6(filename_));
     ASSERT_NO_THROW(lf->open());
@@ -324,6 +378,9 @@ TEST_F(LeaseFileLoaderTest, loadWrite6LeaseRemove) {
     // Loaded leases.
     Lease6Storage storage;
     ASSERT_NO_THROW(LeaseFileLoader::load<Lease6>(*lf, storage, 10));
+
+    // We should have made 5 attempts to read, with 4 leases read and 0 error
+    checkStats(*lf, 5, 4, 0, 0, 0, 0);
 
     // There should be only one lease for 2001:db8:2::10. The other one
     // should have been deleted (or rather not loaded).
@@ -333,32 +390,31 @@ TEST_F(LeaseFileLoaderTest, loadWrite6LeaseRemove) {
     ASSERT_TRUE(lease);
     EXPECT_EQ(500, lease->cltt_);
 
-    writeLeases<Lease6, CSVLeaseFile6, Lease6Storage>
-        (*lf, storage,
-         "address,duid,valid_lifetime,expire,subnet_id,"
-         "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
-         "fqdn_rev,hostname,hwaddr\n"
-         "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,300,800,6,150,"
-         "0,8,0,0,0,,\n");
+    test_str = v6_hdr_ + b_2;
+    writeLeases<Lease6, CSVLeaseFile6, Lease6Storage>(*lf, storage, test_str);
+
+    // We should have made 1 attempts to write, with 1 leases written and 0 errors
+    checkStats(*lf, 0, 0, 0, 1, 1, 0);
 }
 
 // This test verifies that the exception is thrown when the specific
 // number of errors in the test data occur during reading of the lease
 // file.
 TEST_F(LeaseFileLoaderTest, loadMaxErrors) {
+    std::string test_str;
+    std::string a_1 = "192.0.2.1,06:07:08:09:0a:bc,,"
+                      "200,200,8,1,1,host.example.com\n";
+    std::string a_2 = "192.0.2.1,06:07:08:09:0a:bc,,"
+                      "200,500,8,1,1,host.example.com\n";
+
+    std::string b_1 = "192.0.2.3,,a:11:01:04,200,200,8,1,1,host.example.com\n";
+
+    std::string c_1 = "192.0.2.10,01:02:03:04:05:06,,200,300,8,1,1,\n";
+
     // Create a lease file for which there is a number of invalid
-    // entries.
-    io_.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-                  "fqdn_fwd,fqdn_rev,hostname\n"
-                  "192.0.2.1,06:07:08:09:0a:bc,,200,200,8,1,1,"
-                  "host.example.com\n"
-                  "192.0.2.3,,a:11:01:04,200,200,8,1,1,host.example.com\n"
-                  "192.0.2.3,,a:11:01:04,200,200,8,1,1,host.example.com\n"
-                  "192.0.2.10,01:02:03:04:05:06,,200,300,8,1,1,,\n"
-                  "192.0.2.3,,a:11:01:04,200,200,8,1,1,host.example.com\n"
-                  "192.0.2.3,,a:11:01:04,200,200,8,1,1,host.example.com\n"
-                  "192.0.2.1,06:07:08:09:0a:bc,,200,500,8,1,1,"
-                  "host.example.com\n");
+    // entries.  b_1 is invalid and gets used multiple times.
+    test_str = v4_hdr_ + a_1 + b_1 + b_1 + c_1 + b_1 + b_1 + a_2;
+    io_.writeFile(test_str);
 
     boost::scoped_ptr<CSVLeaseFile4> lf(new CSVLeaseFile4(filename_));
     ASSERT_NO_THROW(lf->open());
@@ -369,6 +425,9 @@ TEST_F(LeaseFileLoaderTest, loadMaxErrors) {
     ASSERT_THROW(LeaseFileLoader::load<Lease4>(*lf, storage, 3),
                  util::CSVFileError);
 
+    // We should have made 6 attempts to read, with 2 leases read and 4 error
+    checkStats(*lf, 6, 2, 4, 0, 0, 0);
+
     lf->close();
     ASSERT_NO_THROW(lf->open());
 
@@ -376,6 +435,9 @@ TEST_F(LeaseFileLoaderTest, loadMaxErrors) {
     // should load just fine.
     storage.clear();
     ASSERT_NO_THROW(LeaseFileLoader::load<Lease4>(*lf, storage, 4));
+
+    // We should have made 8 attempts to read, with 3 leases read and 4 error
+    checkStats(*lf, 8, 3, 4, 0, 0, 0);
 
     ASSERT_EQ(2, storage.size());
 
@@ -386,6 +448,12 @@ TEST_F(LeaseFileLoaderTest, loadMaxErrors) {
     lease = getLease<Lease4Ptr>("192.0.2.10", storage);
     ASSERT_TRUE(lease);
     EXPECT_EQ(100, lease->cltt_);
+
+    test_str = v4_hdr_ + a_2 + c_1;
+    writeLeases<Lease4, CSVLeaseFile4, Lease4Storage>(*lf, storage, test_str);
+
+    // We should have made 1 attempts to write, with 1 leases written and 0 errors
+    checkStats(*lf, 0, 0, 0, 2, 2, 0);
 }
 
 // This test verifies that the lease with a valid lifetime set to 0 is
@@ -395,11 +463,13 @@ TEST_F(LeaseFileLoaderTest, loadMaxErrors) {
 // It also tests the write function by writing the storage to a file
 // and comparing that with the expected value.
 TEST_F(LeaseFileLoaderTest, loadWriteLeaseWithZeroLifetime) {
+    std::string test_str;
+    std::string a_1 = "192.0.2.1,06:07:08:09:0a:bc,,200,200,8,1,1,\n";
+    std::string b_2 = "192.0.2.3,06:07:08:09:0a:bd,,0,200,8,1,1,\n";
+
     // Create lease file. The second lease has a valid lifetime of 0.
-    io_.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-                  "fqdn_fwd,fqdn_rev,hostname\n"
-                  "192.0.2.1,06:07:08:09:0a:bc,,200,200,8,1,1,,\n"
-                  "192.0.2.3,06:07:08:09:0a:bd,,0,200,8,1,1,,\n");
+    test_str = v4_hdr_ + a_1 + b_2;
+    io_.writeFile(test_str);
 
     boost::scoped_ptr<CSVLeaseFile4> lf(new CSVLeaseFile4(filename_));
     ASSERT_NO_THROW(lf->open());
@@ -409,6 +479,9 @@ TEST_F(LeaseFileLoaderTest, loadWriteLeaseWithZeroLifetime) {
     Lease4Storage storage;
     ASSERT_NO_THROW(LeaseFileLoader::load<Lease4>(*lf, storage, 0));
 
+    // We should have made 3 attempts to read, with 2 leases read and 0 error
+    checkStats(*lf, 3, 2, 0, 0, 0, 0);
+
     // The first lease should be present.
     Lease4Ptr lease = getLease<Lease4Ptr>("192.0.2.1", storage);
     ASSERT_TRUE(lease);
@@ -417,12 +490,10 @@ TEST_F(LeaseFileLoaderTest, loadWriteLeaseWithZeroLifetime) {
     // The lease with a valid lifetime of 0 should not be loaded.
     EXPECT_FALSE(getLease<Lease4Ptr>("192.0.2.3", storage));
 
-    writeLeases<Lease4, CSVLeaseFile4, Lease4Storage>
-        (*lf, storage,
-         "address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-         "fqdn_fwd,fqdn_rev,hostname\n"
-         "192.0.2.1,06:07:08:09:0a:bc,,200,200,8,1,1,\n");
+    test_str = v4_hdr_ + a_1;
+    writeLeases<Lease4, CSVLeaseFile4, Lease4Storage>(*lf, storage, test_str);
+
+    // We should have made 1 attempts to write, with 1 leases written and 0 errors
+    checkStats(*lf, 0, 0, 0, 1, 1, 0);
 }
-
-
 } // end of anonymous namespace
