@@ -37,12 +37,12 @@ This message is issued if LFC detected a failure when trying
 to manipulate the files.  It includes a more specifc error string.
 
 % LFC_READ_MESSAGE Leases: %1, attempts: %2, errors: %3.
-This message print out the number of leases that were read, the
+This message prints out the number of leases that were read, the
 number of attempts to read leases and the number of errors
 encountered while reading.
 
 % LFC_WRITE_MESSAGE Leases: %1, attempts: %2, errors: %3.
-This message print out the number of leases that were written, the
+This message prints out the number of leases that were written, the
 number of attempts to write leases and the number of errors
 encountered while writing.
 
