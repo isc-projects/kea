@@ -50,9 +50,11 @@ public:
 
     /// @brief Opens a lease file.
     ///
-    /// This function is used to clear the statistics while
-    /// calling the base class open.  It doesn't throw any
-    /// exceptions of its own but the base class may.
+    /// This function calls the base class open to do the
+    /// work of opening a file.  It is used to clear any
+    /// statistics associated with any previous use of the file
+    /// While it doesn't throw any exceptions of its own
+    /// the base class may do so.
     void open();
 
     /// @brief Appends the lease record to the CSV file.
