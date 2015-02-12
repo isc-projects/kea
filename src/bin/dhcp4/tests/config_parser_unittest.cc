@@ -3478,8 +3478,68 @@ TEST_F(Dhcp4ParserTest, reservationBogus) {
 
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
     checkResult(x, 1);
-
-
 }
+
+/// The goal of this test is to verify that Host Reservation modes can be
+/// specified on a per-subnet basis.
+TEST_F(Dhcp4ParserTest, hostReservationPerSubnet) {
+
+    /// - Configuration:
+    ///   - only addresses (no prefixes)
+    ///   - 4 subnets with:
+    ///       - 192.0.2.0/24 (all reservations enabled)
+    ///       - 192.0.3.0/24 (out-of-pool reservations)
+    ///       - 192.0.4.0/24 (reservations disabled)
+    ///       - 192.0.5.0/24 (reservations not specified)
+    const char* hr_config =
+        "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.0/24\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"reservation-mode\": \"all\","
+        "    \"interface\": \"eth0\""
+        " },"
+        " {"
+        "    \"pools\": [ { \"pool\": \"192.0.3.0/24\" } ],"
+        "    \"subnet\": \"192.0.3.0/24\", "
+        "    \"reservation-mode\": \"out-of-pool\","
+        "    \"interface\": \"eth1\""
+        " },"
+        " {"
+        "    \"pools\": [ { \"pool\": \"192.0.4.0/24\" } ],"
+        "    \"subnet\": \"192.0.4.0/24\", "
+        "    \"reservation-mode\": \"disabled\","
+        "    \"interface\": \"eth1\""
+        " },"
+        " {"
+        "    \"pools\": [ { \"pool\": \"192.0.5.0/24\" } ],"
+        "    \"subnet\": \"192.0.5.0/24\", "
+        "    \"interface\": \"eth1\""
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(hr_config);
+    CfgMgr::instance().clear();
+    ConstElementPtr result;
+    EXPECT_NO_THROW(result = configureDhcp4Server(*srv_, json));
+
+    // returned value should be 0 (success)
+    checkResult(result, 0);
+
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->getAll();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(4, subnets->size()); // We expect 4 subnets
+
+    // Check subnet-ids of each subnet (it should be monotonously increasing)
+    EXPECT_EQ(Subnet::HR_ALL, subnets->at(0)->getHostReservationMode());
+    EXPECT_EQ(Subnet::HR_OUT_OF_POOL, subnets->at(1)->getHostReservationMode());
+    EXPECT_EQ(Subnet::HR_DISABLED, subnets->at(2)->getHostReservationMode());
+    EXPECT_EQ(Subnet::HR_ALL, subnets->at(3)->getHostReservationMode());
+}
+
+
 
 }

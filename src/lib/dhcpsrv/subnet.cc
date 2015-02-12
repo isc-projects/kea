@@ -38,8 +38,7 @@ Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
      last_allocated_ia_(lastAddrInPrefix(prefix, len)),
      last_allocated_ta_(lastAddrInPrefix(prefix, len)),
      last_allocated_pd_(lastAddrInPrefix(prefix, len)), relay_(relay),
-     cfg_option_(new CfgOption())
-
+     host_reservation_mode_(HR_ALL), cfg_option_(new CfgOption())
       {
     if ((prefix.isV6() && len > 128) ||
         (prefix.isV4() && len > 32)) {
