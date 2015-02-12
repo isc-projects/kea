@@ -1233,6 +1233,105 @@ TEST_F(AllocEngine6Test, reservedAddressRenewReserved) {
 /// - AllocEngine::removeLeases
 /// - AllocEngine::removeNonreservedLeases6
 
+// Checks that a client gets the address reserved (in-pool case)
+// This test checks the behavior of the allocation engine in the following
+// scenario:
+// - Client has no lease in the database.
+// - Client has an in-pool reservation.
+// - Client sends SOLICIT without any hints.
+// - Client is allocated a reserved address.
+//
+// Note that DHCPv6 client can, but don't have to send any hints in its
+// Solicit message.
+TEST_F(AllocEngine6Test, reservedAddressByMacInPoolSolicitNoHint) {
+    // Create reservation for the client. This is in-pool reservation,
+    // as the pool is 2001:db8:1::10 - 2001:db8:1::20.
+    createHost6HWAddr(true, IPv6Resrv::TYPE_NA, hwaddr_,
+                      IOAddress("2001:db8:1::1c"), 128);
+
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+
+    Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("::"), true);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1::1c", lease->addr_.toText());
+}
+
+// Checks that a client gets the address reserved (in-pool case)
+// This test checks the behavior of the allocation engine in the following
+// scenario:
+// - Client has no lease in the database.
+// - Client has an in-pool reservation.
+// - Client sends REQUEST without any hints.
+// - Client is allocated a reserved address.
+//
+// Note that DHCPv6 client must send an address in REQUEST that the server
+// offered in Advertise. Nevertheless, the client may ignore this requirement.
+TEST_F(AllocEngine6Test, reservedAddressByMacInPoolRequestNoHint) {
+    // Create reservation for the client. This is in-pool reservation,
+    // as the pool is 2001:db8:1::10 - 2001:db8:1::20.
+    createHost6HWAddr(true, IPv6Resrv::TYPE_NA, hwaddr_,
+                      IOAddress("2001:db8:1::1c"), 128);
+
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+
+    Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("::"), false);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1::1c", lease->addr_.toText());
+}
+
+
+// Checks that a client gets the address reserved (in-pool case)
+// This test checks the behavior of the allocation engine in the following
+// scenario:
+// - Client has no lease in the database.
+// - Client has an in-pool reservation.
+// - Client sends SOLICIT with a hint that does not match reservation
+// - Client is allocated a reserved address, not the hint.
+//
+// Note that DHCPv6 client can, but don't have to send any hints in its
+// Solicit message.
+TEST_F(AllocEngine6Test, reservedAddressByMacInPoolSolicitValidHint) {
+    // Create reservation for the client. This is in-pool reservation,
+    // as the pool is 2001:db8:1::10 - 2001:db8:1::20.
+    createHost6HWAddr(true, IPv6Resrv::TYPE_NA, hwaddr_,
+                      IOAddress("2001:db8:1::1c"), 128);
+
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+
+    // Let's pretend the client sends hint 2001:db8:1::10.
+    Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::10"), true);
+    ASSERT_TRUE(lease);
+
+    // The hint should be ignored and the reserved address should be assigned
+    EXPECT_EQ("2001:db8:1::1c", lease->addr_.toText());
+}
+
+// Checks that a client gets the address reserved (in-pool case)
+// This test checks the behavior of the allocation engine in the following
+// scenario:
+// - Client has no lease in the database.
+// - Client has an in-pool reservation.
+// - Client sends REQUEST with a hint that does not match reservation
+// - Client is allocated a reserved address, not the hint.
+//
+// Note that DHCPv6 client must send an address in REQUEST that the server
+// offered in Advertise. Nevertheless, the client may ignore this requirement.
+TEST_F(AllocEngine6Test, reservedAddressByMacInPoolRequestValidHint) {
+    // Create reservation for the client This is in-pool reservation,
+    // as the pool is 2001:db8:1::10 - 2001:db8:1::20.
+    createHost6HWAddr(true, IPv6Resrv::TYPE_NA, hwaddr_,
+                      IOAddress("2001:db8:1::1c"), 128);
+
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+
+    // Let's pretend the client sends hint 2001:db8:1::10.
+    Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::10"), false);
+    ASSERT_TRUE(lease);
+
+    // The hint should be ignored and the reserved address should be assigned
+    EXPECT_EQ("2001:db8:1::1c", lease->addr_.toText());
+}
+
 }; // namespace test
 }; // namespace dhcp
 }; // namespace isc
