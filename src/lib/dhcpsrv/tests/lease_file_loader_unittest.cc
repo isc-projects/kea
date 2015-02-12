@@ -117,8 +117,12 @@ public:
     /// should have for comparison.
     ///
     /// @param lease_file A reference to the file we are using
-    /// @param the statistics, in order, reads attempted, leases read, errors
-    /// while reading, writes attempted, leases written, and errors while writing
+    /// @param reads the number of attempted reads
+    /// @param read_leases the number of valid leases read
+    /// @param read_errs the number of errors while reading leases
+    /// @param writes the number of attempted writes
+    /// @param write_leases the number of leases successfully written
+    /// @param write_errs the number of errors while writing
     ///
     /// @tparam LeaseFileType A @c CSVLeaseFile4 or @c CSVLeaseFile6.
     template<typename LeaseFileType>
@@ -126,12 +130,12 @@ public:
                     uint32_t reads, uint32_t read_leases,
                     uint32_t read_errs, uint32_t writes,
                     uint32_t write_leases, uint32_t write_errs) const {
-        EXPECT_EQ(lease_file.getReads(), reads);
-        EXPECT_EQ(lease_file.getReadLeases(), read_leases);
-        EXPECT_EQ(lease_file.getReadErrs(), read_errs);
-        EXPECT_EQ(lease_file.getWrites(), writes);
-        EXPECT_EQ(lease_file.getWriteLeases(), write_leases);
-        EXPECT_EQ(lease_file.getWriteErrs(), write_errs);
+        EXPECT_EQ(reads, lease_file.getReads());
+        EXPECT_EQ(read_leases, lease_file.getReadLeases());
+        EXPECT_EQ(read_errs, lease_file.getReadErrs());
+        EXPECT_EQ(writes, lease_file.getWrites());
+        EXPECT_EQ(write_leases, lease_file.getWriteLeases());
+        EXPECT_EQ(write_errs, lease_file.getWriteErrs());
     }
 
     /// @brief Name of the test lease file.
@@ -201,7 +205,10 @@ TEST_F(LeaseFileLoaderTest, loadWrite4) {
     ASSERT_NO_THROW(LeaseFileLoader::load<Lease4>(*lf, storage, 10));
 
     // We should have made 6 attempts to read, with 4 leases read and 1 error
+    {
+    SCOPED_TRACE("Read leases");
     checkStats(*lf, 6, 4, 1, 0, 0, 0);
+    }
 
     // There are two unique leases.
     ASSERT_EQ(2, storage.size());
@@ -228,7 +235,10 @@ TEST_F(LeaseFileLoaderTest, loadWrite4) {
     writeLeases<Lease4, CSVLeaseFile4, Lease4Storage>(*lf, storage, test_str);
 
     // We should have made 2 attempts to write, with 2 leases written and 0 errors
+    {
+    SCOPED_TRACE("Write leases");
     checkStats(*lf, 0, 0, 0, 2, 2, 0);
+    }
 }
 
 // This test verifies that the lease with a valid lifetime of 0
@@ -263,7 +273,10 @@ TEST_F(LeaseFileLoaderTest, loadWrite4LeaseRemove) {
     ASSERT_NO_THROW(LeaseFileLoader::load<Lease4>(*lf, storage, 10));
 
     // We should have made 5 attempts to read, with 4 leases read and 0 error
+    {
+    SCOPED_TRACE("Read leases");
     checkStats(*lf, 5, 4, 0, 0, 0, 0);
+    }
 
     // There should only be one lease. The one with the valid_lifetime
     // of 0 should be removed.
@@ -277,7 +290,10 @@ TEST_F(LeaseFileLoaderTest, loadWrite4LeaseRemove) {
     writeLeases<Lease4, CSVLeaseFile4, Lease4Storage>(*lf, storage, test_str);
 
     // We should have made 1 attempts to write, with 1 leases written and 0 errors
+    {
+    SCOPED_TRACE("Write leases");
     checkStats(*lf, 0, 0, 0, 1, 1, 0);
+    }
 }
 
 // This test verifies that the DHCPv6 leases can be loaded from the lease
@@ -318,7 +334,10 @@ TEST_F(LeaseFileLoaderTest, loadWrite6) {
     ASSERT_NO_THROW(LeaseFileLoader::load<Lease6>(*lf, storage, 10));
 
     // We should have made 7 attempts to read, with 5 leases read and 1 error
+    {
+    SCOPED_TRACE("Read leases");
     checkStats(*lf, 7, 5, 1, 0, 0, 0);
+    }
 
     // There should be 3 unique leases.
     ASSERT_EQ(3, storage.size());
@@ -345,7 +364,10 @@ TEST_F(LeaseFileLoaderTest, loadWrite6) {
     writeLeases<Lease6, CSVLeaseFile6, Lease6Storage>(*lf, storage, test_str);
 
     // We should have made 3 attempts to write, with 3 leases written and 0 errors
+    {
+    SCOPED_TRACE("Write leases");
     checkStats(*lf, 0, 0, 0, 3, 3, 0);
+    }
 }
 
 // This test verifies that the lease with a valid lifetime of 0
@@ -380,7 +402,10 @@ TEST_F(LeaseFileLoaderTest, loadWrite6LeaseRemove) {
     ASSERT_NO_THROW(LeaseFileLoader::load<Lease6>(*lf, storage, 10));
 
     // We should have made 5 attempts to read, with 4 leases read and 0 error
+    {
+    SCOPED_TRACE("Read leases");
     checkStats(*lf, 5, 4, 0, 0, 0, 0);
+    }
 
     // There should be only one lease for 2001:db8:2::10. The other one
     // should have been deleted (or rather not loaded).
@@ -394,7 +419,10 @@ TEST_F(LeaseFileLoaderTest, loadWrite6LeaseRemove) {
     writeLeases<Lease6, CSVLeaseFile6, Lease6Storage>(*lf, storage, test_str);
 
     // We should have made 1 attempts to write, with 1 leases written and 0 errors
+    {
+    SCOPED_TRACE("Write leases");
     checkStats(*lf, 0, 0, 0, 1, 1, 0);
+    }
 }
 
 // This test verifies that the exception is thrown when the specific
@@ -426,7 +454,10 @@ TEST_F(LeaseFileLoaderTest, loadMaxErrors) {
                  util::CSVFileError);
 
     // We should have made 6 attempts to read, with 2 leases read and 4 error
+    {
+    SCOPED_TRACE("Read leases 1");
     checkStats(*lf, 6, 2, 4, 0, 0, 0);
+    }
 
     lf->close();
     ASSERT_NO_THROW(lf->open());
@@ -437,7 +468,10 @@ TEST_F(LeaseFileLoaderTest, loadMaxErrors) {
     ASSERT_NO_THROW(LeaseFileLoader::load<Lease4>(*lf, storage, 4));
 
     // We should have made 8 attempts to read, with 3 leases read and 4 error
+    {
+    SCOPED_TRACE("Read leases 2");
     checkStats(*lf, 8, 3, 4, 0, 0, 0);
+    }
 
     ASSERT_EQ(2, storage.size());
 
@@ -453,7 +487,10 @@ TEST_F(LeaseFileLoaderTest, loadMaxErrors) {
     writeLeases<Lease4, CSVLeaseFile4, Lease4Storage>(*lf, storage, test_str);
 
     // We should have made 1 attempts to write, with 1 leases written and 0 errors
+    {
+    SCOPED_TRACE("Write leases");
     checkStats(*lf, 0, 0, 0, 2, 2, 0);
+    }
 }
 
 // This test verifies that the lease with a valid lifetime set to 0 is
@@ -480,7 +517,10 @@ TEST_F(LeaseFileLoaderTest, loadWriteLeaseWithZeroLifetime) {
     ASSERT_NO_THROW(LeaseFileLoader::load<Lease4>(*lf, storage, 0));
 
     // We should have made 3 attempts to read, with 2 leases read and 0 error
+    {
+    SCOPED_TRACE("Read leases");
     checkStats(*lf, 3, 2, 0, 0, 0, 0);
+    }
 
     // The first lease should be present.
     Lease4Ptr lease = getLease<Lease4Ptr>("192.0.2.1", storage);
@@ -494,6 +534,9 @@ TEST_F(LeaseFileLoaderTest, loadWriteLeaseWithZeroLifetime) {
     writeLeases<Lease4, CSVLeaseFile4, Lease4Storage>(*lf, storage, test_str);
 
     // We should have made 1 attempts to write, with 1 leases written and 0 errors
+    {
+    SCOPED_TRACE("Write leases");
     checkStats(*lf, 0, 0, 0, 1, 1, 0);
+    }
 }
 } // end of anonymous namespace

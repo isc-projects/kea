@@ -37,32 +37,32 @@ public:
     }
 
     /// @brief Gets the number of attempts to read a lease
-    uint32_t getReads() {
+    uint32_t getReads() const {
         return (reads_);
     }
 
     /// @brief Gets the number of leases read
-    uint32_t getReadLeases() {
+    uint32_t getReadLeases() const {
         return (read_leases_);
     }
 
     /// @brief Gets the number of errors when reading leases
-    uint32_t getReadErrs() {
+    uint32_t getReadErrs() const {
         return (read_errs_);
     }
 
     /// @brief Gets the number of attempts to write a lease
-    uint32_t getWrites() {
+    uint32_t getWrites() const {
         return (writes_);
     }
 
     /// @brief Gets the number of leases written
-    uint32_t getWriteLeases() {
+    uint32_t getWriteLeases() const {
         return (write_leases_);
     }
 
     /// @brief Gets the number of errors when writting leases
-    uint32_t getWriteErrs() {
+    uint32_t getWriteErrs() const {
         return (write_errs_);
     }
 
@@ -77,26 +77,23 @@ public:
     }
 
 protected:
-    /// @brief Number of attempts to read a lease (calls to next), reset to 0 on open
+    /// @brief Number of attempts to read a lease
     uint32_t reads_;
 
-    /// @brief Number of leases read, reset to 0 on open
+    /// @brief Number of leases read
     uint32_t read_leases_;
 
-    /// @brief Number of errors when reading, reset to 0 on open
+    /// @brief Number of errors when reading
     uint32_t read_errs_;
 
-    /// @brief Number of attempts to write a lease, reset to 0 on open
+    /// @brief Number of attempts to write a lease
     uint32_t writes_;
 
-    /// @brief Number of lease written, reset to 0 on open
+    /// @brief Number of lease written
     uint32_t write_leases_;
 
-    /// @brief Number of errors when writing , reset to 0 on open
+    /// @brief Number of errors when writing
     uint32_t write_errs_;
-
-private:
-
 };
 
 } // namespace isc::dhcp

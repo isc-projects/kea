@@ -21,6 +21,8 @@
 #include <dhcpsrv/memfile_lease_storage.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_file_loader.h>
+#include <log/logger_manager.h>
+#include <log/logger_name.h>
 #include <config.h>
 
 #include <iostream>
@@ -61,10 +63,30 @@ void
 LFCController::launch(int argc, char* argv[], const bool test_mode) {
     bool do_rotate = true;
 
-    // If we aren't running in test mode initialize the logging
-    // system with the defaults.
-    if (!test_mode)
+    // If we are running in test mode use the environment variables
+    // else use our defaults
+    if (test_mode) {
+        initLogger();
+    }
+    else {
+        OutputOption option;
+        LoggerManager manager;
+
         initLogger(lfc_app_name_, INFO, 0, NULL, false);
+
+        // Prepare the objects to define the logging specification
+        LoggerSpecification spec(getRootLoggerName(),
+                                 keaLoggerSeverity(INFO),
+                                 keaLoggerDbglevel(0));
+
+        // We simply want the default syslog option
+        option.destination = OutputOption::DEST_SYSLOG;
+
+        // ... and set the destination
+        spec.addOutputOption(option);
+
+        manager.process(spec);
+    }
 
     try {
         parseArgs(argc, argv);
@@ -79,7 +101,7 @@ LFCController::launch(int argc, char* argv[], const bool test_mode) {
         setDefaultLoggingOutput(verbose_);
     }
 
-    LOG_WARN(lfc_logger, LFC_START_MESSAGE);
+    LOG_INFO(lfc_logger, LFC_START);
 
     // verify we are the only instance
     PIDFile pid_file(pid_file_);
@@ -87,14 +109,14 @@ LFCController::launch(int argc, char* argv[], const bool test_mode) {
     try {
         if (pid_file.check()) {
             // Already running instance, bail out
-            LOG_FATAL(lfc_logger, LFC_RUNNING_MESSAGE);
+            LOG_FATAL(lfc_logger, LFC_RUNNING);
             return;
         }
 
         // create the pid file for this instance
         pid_file.write();
     } catch (const PIDFileError& pid_ex) {
-        LOG_FATAL(lfc_logger, LFC_FAILURE_MESSAGE).arg(pid_ex.what());
+        LOG_FATAL(lfc_logger, LFC_FAIL_PID_CREATE).arg(pid_ex.what());
         return;
     }
 
@@ -103,7 +125,9 @@ LFCController::launch(int argc, char* argv[], const bool test_mode) {
     // all we care about is if it exists so that's okay
     CSVFile lf_finish(getFinishFile());
     if (!lf_finish.exists()) {
-        LOG_INFO(lfc_logger, LFC_PROCESSING_MESSAGE);
+        LOG_INFO(lfc_logger, LFC_PROCESSING)
+          .arg(previous_file_)
+          .arg(copy_file_);
 
         try {
             if (getProtocolVersion() == 4) {
@@ -114,7 +138,7 @@ LFCController::launch(int argc, char* argv[], const bool test_mode) {
         } catch (const isc::Exception& proc_ex) {
             // We don't want to do the cleanup but do want to get rid of the pid
             do_rotate = false;
-            LOG_FATAL(lfc_logger, LFC_FAILURE_MESSAGE).arg(proc_ex.what());
+            LOG_FATAL(lfc_logger, LFC_FAIL_PROCESS).arg(proc_ex.what());
         }
     }
 
@@ -123,12 +147,12 @@ LFCController::launch(int argc, char* argv[], const bool test_mode) {
     // we don't want to return after the catch as we
     // still need to cleanup the pid file
     if (do_rotate) {
-        LOG_INFO(lfc_logger, LFC_ROTATING_MESSAGE);
+        LOG_INFO(lfc_logger, LFC_ROTATING);
 
         try {
             fileRotate();
         } catch (const RunTimeFail& run_ex) {
-          LOG_FATAL(lfc_logger, LFC_FAILURE_MESSAGE).arg(run_ex.what());
+          LOG_FATAL(lfc_logger, LFC_FAIL_ROTATE).arg(run_ex.what());
         }
     }
 
@@ -136,10 +160,10 @@ LFCController::launch(int argc, char* argv[], const bool test_mode) {
     try {
         pid_file.deleteFile();
     } catch (const PIDFileError& pid_ex) {
-          LOG_FATAL(lfc_logger, LFC_FAILURE_MESSAGE).arg(pid_ex.what());
+          LOG_FATAL(lfc_logger, LFC_FAIL_PID_DEL).arg(pid_ex.what());
     }
 
-    LOG_WARN(lfc_logger, LFC_COMPLETE_MESSAGE);
+    LOG_INFO(lfc_logger, LFC_TERMINATE);
 }
 
 void
@@ -346,12 +370,12 @@ LFCController::processLeases() const {
     LeaseFileLoader::write<LeaseObjectType>(lf_output, storage);
 
     // If desired log the stats
-    LOG_INFO(lfc_logger, LFC_READ_MESSAGE)
+    LOG_INFO(lfc_logger, LFC_READ_STATS)
       .arg(lf_prev.getReadLeases() + lf_copy.getReadLeases())
       .arg(lf_prev.getReads() + lf_copy.getReads())
       .arg(lf_prev.getReadErrs() + lf_copy.getReadErrs());
 
-    LOG_INFO(lfc_logger, LFC_WRITE_MESSAGE)
+    LOG_INFO(lfc_logger, LFC_WRITE_STATS)
       .arg(lf_output.getWriteLeases())
       .arg(lf_output.getWrites())
       .arg(lf_output.getWriteErrs());
