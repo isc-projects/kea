@@ -339,12 +339,12 @@ TEST_F(CfgIfaceTest, equality) {
     EXPECT_FALSE(cfg1 != cfg2);
 
     // Differ by socket type.
-    cfg1.useSocketType(AF_INET, "raw");
+    cfg1.useSocketType(AF_INET, "datagram");
     EXPECT_FALSE(cfg1 == cfg2);
     EXPECT_TRUE(cfg1 != cfg2);
 
     // Now, both should use the same socket type.
-    cfg2.useSocketType(AF_INET, "raw");
+    cfg2.useSocketType(AF_INET, "datagram");
     EXPECT_TRUE(cfg1 == cfg2);
     EXPECT_FALSE(cfg1 != cfg2);
 }
