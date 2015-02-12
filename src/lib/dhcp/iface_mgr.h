@@ -81,6 +81,20 @@ public:
         isc::Exception(file, line, what) { };
 };
 
+/// @brief IfaceMgr exception thrown when there is no suitable interface.
+class IfaceNotFound : public Exception {
+public:
+    IfaceNotFound(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
+/// @brief IfaceMgr exception thrown when there is no suitable socket found.
+class SocketNotFound : public Exception {
+public:
+    SocketNotFound(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
 
 /// Holds information about socket.
 struct SocketInfo {
@@ -613,26 +627,30 @@ public:
     ///
     /// This method takes Pkt6 (see overloaded implementation that takes
     /// Pkt4) and chooses appropriate socket to send it. This method
-    /// may throw BadValue if specified packet does not have outbound
-    /// interface specified, no such interface exists, or specified
-    /// interface does not have any appropriate sockets open.
+    /// may throw if specified packet does not have outbound interface specified,
+    /// no such interface exists, or specified interface does not have any
+    /// appropriate sockets open.
     ///
     /// @param pkt a packet to be transmitted
     ///
     /// @return a socket descriptor
+    /// @throw SocketNotFound If no suitable socket found.
+    /// @throw IfaceNotFound If interface is not set for the packet.
     uint16_t getSocket(const isc::dhcp::Pkt6& pkt);
 
     /// @brief Return most suitable socket for transmitting specified IPv4 packet.
     ///
-    /// This method takes Pkt4 (see overloaded implementation that takes
-    /// Pkt6) and chooses appropriate socket to send it. This method
-    /// may throw BadValue if specified packet does not have outbound
-    /// interface specified, no such interface exists, or specified
-    /// interface does not have any appropriate sockets open.
+    /// This method uses the local address assigned to the packet and tries
+    /// to match it with addresses to which sockets are bound for the particular
+    /// interface. If the match is not found, the method returns the first IPv4
+    /// socket found for the particular interface. In case, there are no IPv4
+    /// sockets assigned to the interface the exception is thrown.
     ///
-    /// @param pkt a packet to be transmitted
+    /// @param pkt A packet to be transmitted. It must hold a local address and
+    /// a valid pointer to the interface.
     ///
     /// @return A structure describing a socket.
+    /// @throw SocketNotFound if no suitable socket found.
     SocketInfo getSocket(const isc::dhcp::Pkt4& pkt);
 
     /// Debugging method that prints out all available interfaces.

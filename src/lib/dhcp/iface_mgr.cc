@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -1165,7 +1165,7 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
 uint16_t IfaceMgr::getSocket(const isc::dhcp::Pkt6& pkt) {
     Iface* iface = getIface(pkt.getIface());
     if (iface == NULL) {
-        isc_throw(BadValue, "Tried to find socket for non-existent interface");
+        isc_throw(IfaceNotFound, "Tried to find socket for non-existent interface");
     }
 
 
@@ -1214,7 +1214,7 @@ uint16_t IfaceMgr::getSocket(const isc::dhcp::Pkt6& pkt) {
         return (candidate->sockfd_);
     }
 
-    isc_throw(Unexpected, "Interface " << iface->getFullName()
+    isc_throw(SocketNotFound, "Interface " << iface->getFullName()
               << " does not have any suitable IPv6 sockets open.");
 }
 
@@ -1222,22 +1222,33 @@ SocketInfo
 IfaceMgr::getSocket(isc::dhcp::Pkt4 const& pkt) {
     Iface* iface = getIface(pkt.getIface());
     if (iface == NULL) {
-        isc_throw(BadValue, "Tried to find socket for non-existent interface");
+        isc_throw(IfaceNotFound, "Tried to find socket for non-existent interface");
     }
 
     const Iface::SocketCollection& socket_collection = iface->getSockets();
+    // A candidate being an end of the iterator marks that it is a begining of
+    // the socket search and that the candidate needs to be set to the first
+    // socket found.
+    Iface::SocketCollection::const_iterator candidate = socket_collection.end();
     Iface::SocketCollection::const_iterator s;
     for (s = socket_collection.begin(); s != socket_collection.end(); ++s) {
         if (s->family_ == AF_INET) {
-            return (*s);
+            if (s->addr_ == pkt.getLocalAddr()) {
+                return (*s);
+            }
+
+            if (candidate == socket_collection.end()) {
+                candidate = s;
+            }
         }
-        /// TODO: Add more checks here later. If remote address is
-        /// not link-local, we can't use link local bound socket
-        /// to send data.
     }
 
-    isc_throw(Unexpected, "Interface " << iface->getFullName()
-              << " does not have any suitable IPv4 sockets open.");
+    if (candidate == socket_collection.end()) {
+        isc_throw(SocketNotFound, "Interface " << iface->getFullName()
+                  << " does not have any suitable IPv4 sockets open.");
+    }
+
+    return (*candidate);
 }
 
 } // end of namespace isc::dhcp
