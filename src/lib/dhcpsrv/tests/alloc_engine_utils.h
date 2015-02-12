@@ -270,7 +270,7 @@ public:
     void allocBogusHint6(Lease::Type type, asiolink::IOAddress hint,
                          uint8_t expected_pd_len);
 
-    /// @brief Utility function that creates a host reservation
+    /// @brief Utility function that creates a host reservation (duid)
     ///
     /// @param add_to_host_mgr true if the reservation should be added
     /// @param type specifies reservation type
@@ -293,11 +293,25 @@ public:
         return (host);
     }
 
+    /// @brief Utility function that creates a host reservation (hwaddr)
+    ///
+    /// @param add_to_host_mgr true if the reservation should be added
+    /// @param type specifies reservation type
+    /// @param hwaddr hardware address to be reserved to
+    /// @param addr specifies reserved address or prefix
+    /// @param prefix_len prefix length (should be 128 for addresses)
+    /// @return created Host object.
+    HostPtr
+    createHost6HWAddr(bool add_to_host_mgr, IPv6Resrv::Type type,
+                      HWAddrPtr& hwaddr, const asiolink::IOAddress& addr,
+                      uint8_t prefix_len);
+
     virtual ~AllocEngine6Test() {
         factory_.destroy();
     }
 
     DuidPtr duid_;            ///< client-identifier (value used in tests)
+    HWAddrPtr hwaddr_;          ///< client's hardware address
     uint32_t iaid_;           ///< IA identifier (value used in tests)
     Subnet6Ptr subnet_;       ///< subnet6 (used in tests)
     Pool6Ptr pool_;           ///< NA pool belonging to subnet_
