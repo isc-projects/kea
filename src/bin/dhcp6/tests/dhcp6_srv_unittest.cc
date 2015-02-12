@@ -903,20 +903,38 @@ TEST_F(Dhcpv6SrvTest, pdRenewBasic) {
 }
 
 // This test verifies that incoming (invalid) RENEW with an address
-// can be handled properly.
+// can be handled properly. This has changed with #3565. The server
+// is now able to allocate a lease in Renew if it's available.
+// Previous testRenewReject is now split into 3 tests.
 //
-// This test checks 3 scenarios:
-// 1. there is no such lease at all
-// 2. there is such a lease, but it is assigned to a different IAID
-// 3. there is such a lease, but it belongs to a different client
-//
-// expected:
-// - returned REPLY message has copy of client-id
-// - returned REPLY message has server-id
-// - returned REPLY message has IA_NA that includes STATUS-CODE
-// - No lease in LeaseMgr
-TEST_F(Dhcpv6SrvTest, RenewReject) {
-    testRenewReject(Lease::TYPE_NA, IOAddress("2001:db8:1:1::dead"));
+// This test checks the first scenario: There is no lease at all.
+// The server will try to assign it. Since it is not used by anyone else,
+// the server will assign it. This is convenient for various types
+// of recoveries, e.g. when the server lost its database.
+TEST_F(Dhcpv6SrvTest, RenewUnknown) {
+    // False means that the lease should not be created before renewal attempt
+    testRenewBasic(Lease::TYPE_NA, "2001:db8:1:1::abc", "2001:db8:1:1::abc",
+                   128, false);
+}
+
+// This test checks that a client that renews existing lease, but uses
+// a wrong IAID, will be processed correctly. As there is no lease for
+// this (duid, type, iaid) tuple, this is treated as a new IA, regardless
+// if the client inserted an address that is used in a different IA.
+// After #3565 was implemented, the server will attempt to assign a lease.
+// The one that client requested is already used with different IAID, so
+// it will just pick a different lease. This is the second out of three
+// scenarios tests by old RenewReject test.
+TEST_F(Dhcpv6SrvTest, RenewWrongIAID) {
+    testRenewWrongIAID(Lease::TYPE_NA, IOAddress("2001:db8:1:1::abc"));
+}
+
+// This test checks whether client A can renew an address that is currently
+// leased by client B. The server should detect that the lease belong to
+// someone else and assign a different lease. This is the third out of three
+// scenarios tests by old RenewReject test.
+TEST_F(Dhcpv6SrvTest, RenewSomeoneElesesLease) {
+    testRenewSomeoneElsesLease(Lease::TYPE_NA, IOAddress("2001:db8::1"));
 }
 
 // This test verifies that incoming (invalid) RENEW with a prefix
