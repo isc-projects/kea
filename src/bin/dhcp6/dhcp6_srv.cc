@@ -1587,6 +1587,10 @@ Dhcpv6Srv::extendIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
         hints_count++;
     }
 
+    // If this is a Renew, it's ok to allocate new leases
+    if (query->getType() == DHCPV6_RENEW) {
+        ctx.allow_new_leases_in_renewals_ = true;
+    }
     Lease6Collection leases = alloc_engine_->renewLeases6(ctx);
 
     // Ok, now we have the leases extended. We have:
