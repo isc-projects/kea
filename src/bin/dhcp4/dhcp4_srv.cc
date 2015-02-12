@@ -522,10 +522,10 @@ Dhcpv4Srv::copyDefaultFields(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     answer->setIface(question->getIface());
     answer->setIndex(question->getIndex());
 
-    answer->setSiaddr(IOAddress("0.0.0.0")); // explicitly set this to 0
+    answer->setSiaddr(IOAddress::IPV4_ZERO_ADDRESS()); // explicitly set this to 0
     // ciaddr is always 0, except for the Renew/Rebind state when it may
     // be set to the ciaddr sent by the client.
-    answer->setCiaddr(IOAddress("0.0.0.0"));
+    answer->setCiaddr(IOAddress::IPV4_ZERO_ADDRESS());
     answer->setHops(question->getHops());
 
     // copy MAC address
@@ -949,7 +949,7 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
             .arg(question->getRemoteAddr().toText())
             .arg(serverReceivedPacketName(question->getType()));
         answer->setType(DHCPNAK);
-        answer->setYiaddr(IOAddress("0.0.0.0"));
+        answer->setYiaddr(IOAddress::IPV4_ZERO_ADDRESS());
         return;
     }
 
@@ -981,11 +981,11 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     // ciaddr.
     OptionCustomPtr opt_requested_address = boost::dynamic_pointer_cast<
         OptionCustom>(question->getOption(DHO_DHCP_REQUESTED_ADDRESS));
-    IOAddress hint("0.0.0.0");
+    IOAddress hint(0);
     if (opt_requested_address) {
         hint = opt_requested_address->readAddress();
 
-    } else if (question->getCiaddr() != IOAddress("0.0.0.0")) {
+    } else if (question->getCiaddr() != IOAddress::IPV4_ZERO_ADDRESS()) {
         hint = question->getCiaddr();
 
     }
@@ -1023,7 +1023,7 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
                 .arg(hwaddr ? hwaddr->toText():"(no hwaddr info)");
 
             answer->setType(DHCPNAK);
-            answer->setYiaddr(IOAddress("0.0.0.0"));
+            answer->setYiaddr(IOAddress::IPV4_ZERO_ADDRESS());
             return;
         }
         // Now check the second error case: unknown client.
@@ -1191,7 +1191,7 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
             .arg(hint.toText());
 
         answer->setType(DHCPNAK);
-        answer->setYiaddr(IOAddress("0.0.0.0"));
+        answer->setYiaddr(IOAddress::IPV4_ZERO_ADDRESS());
 
         answer->delOption(DHO_FQDN);
         answer->delOption(DHO_HOST_NAME);
@@ -1211,6 +1211,27 @@ Dhcpv4Srv::adjustIfaceData(const Pkt4Ptr& query, const Pkt4Ptr& response) {
     response->setRemotePort(query->isRelayed() ? DHCP4_SERVER_PORT :
                             DHCP4_CLIENT_PORT);
 
+
+    IOAddress local_addr = query->getLocalAddr();
+
+    // In many cases the query is sent to a broadcast address. This address
+    // apears as a local address in the query message. We can't simply copy
+    // this address to a response message and use it as a source address.
+    // Instead we will need to use the address assigned to the interface
+    // on which the query has been received. In other cases, we will just
+    // use this address as a source address for the response.
+    if (local_addr == IOAddress::IPV4_BCAST_ADDRESS()) {
+        SocketInfo sock_info = IfaceMgr::instance().getSocket(*query);
+        local_addr = sock_info.addr_;
+    }
+    // We assume that there is an appropriate socket bound to this address
+    // and that the address is correct. This is safe assumption because
+    // the local address of the query is set when the query is received.
+    // The query sent to an incorrect address wouldn't have been received.
+    // However, if socket is closed for this address between the reception
+    // of the query and sending a response, the IfaceMgr should detect it
+    // and return an error.
+    response->setLocalAddr(local_addr);
     // In many cases the query is sent to a broadcast address. This address
     // appears as a local address in the query message. Therefore we can't
     // simply copy local address from the query and use it as a source
@@ -1219,9 +1240,6 @@ Dhcpv4Srv::adjustIfaceData(const Pkt4Ptr& query, const Pkt4Ptr& response) {
     // may throw if for some reason the socket is closed.
     /// @todo Consider an optimization that we use local address from
     /// the query if this address is not broadcast.
-    SocketInfo sock_info = IfaceMgr::instance().getSocket(*query);
-    // Set local address, port and interface.
-    response->setLocalAddr(sock_info.addr_);
     response->setLocalPort(DHCP4_SERVER_PORT);
     response->setIface(query->getIface());
     response->setIndex(query->getIndex());
@@ -1229,13 +1247,6 @@ Dhcpv4Srv::adjustIfaceData(const Pkt4Ptr& query, const Pkt4Ptr& response) {
 
 void
 Dhcpv4Srv::adjustRemoteAddr(const Pkt4Ptr& question, const Pkt4Ptr& response) {
-    // Let's create static objects representing zeroed and broadcast
-    // addresses. We will use them further in this function to test
-    // other addresses against them. Since they are static, they will
-    // be created only once.
-    static const IOAddress zero_addr("0.0.0.0");
-    static const IOAddress bcast_addr("255.255.255.255");
-
     // The DHCPINFORM is slightly different than other messages in a sense
     // that the server should always unicast the response to the ciaddr.
     // It appears however that some clients don't set the ciaddr. We still
@@ -1244,7 +1255,7 @@ Dhcpv4Srv::adjustRemoteAddr(const Pkt4Ptr& question, const Pkt4Ptr& response) {
     if (question->getType() == DHCPINFORM) {
         // If client adheres to RFC2131 it will set the ciaddr and in this
         // case we always unicast our response to this address.
-        if (question->getCiaddr() != zero_addr) {
+        if (question->getCiaddr() != IOAddress::IPV4_ZERO_ADDRESS()) {
             response->setRemoteAddr(question->getCiaddr());
 
         // If we received DHCPINFORM via relay and the ciaddr is not set we
@@ -1275,24 +1286,24 @@ Dhcpv4Srv::adjustRemoteAddr(const Pkt4Ptr& question, const Pkt4Ptr& response) {
         // the message is relayed. Therefore, we set the BROADCAST flag so
         // as the relay can broadcast the packet.
         if ((question->getType() == DHCPINFORM) &&
-            (question->getCiaddr() == zero_addr)) {
+            (question->getCiaddr() == IOAddress::IPV4_ZERO_ADDRESS())) {
             response->setFlags(BOOTP_BROADCAST);
         }
         response->setRemoteAddr(question->getGiaddr());
 
     // If giaddr is 0 but client set ciaddr, server should unicast the
     // response to ciaddr.
-    } else if (question->getCiaddr() != zero_addr) {
+    } else if (question->getCiaddr() != IOAddress::IPV4_ZERO_ADDRESS()) {
         response->setRemoteAddr(question->getCiaddr());
 
     // We can't unicast the response to the client when sending NAK,
     // because we haven't allocated address for him. Therefore,
     // NAK is broadcast.
     } else if (response->getType() == DHCPNAK) {
-        response->setRemoteAddr(bcast_addr);
+        response->setRemoteAddr(IOAddress::IPV4_BCAST_ADDRESS());
 
     // If yiaddr is set it means that we have created a lease for a client.
-    } else if (response->getYiaddr() != zero_addr) {
+    } else if (response->getYiaddr() != IOAddress::IPV4_ZERO_ADDRESS()) {
         // If the broadcast bit is set in the flags field, we have to
         // send the response to broadcast address. Client may have requested it
         // because it doesn't support reception of messages on the interface
@@ -1301,7 +1312,7 @@ Dhcpv4Srv::adjustRemoteAddr(const Pkt4Ptr& question, const Pkt4Ptr& response) {
         // directly to a client without address assigned.
         const bool bcast_flag = ((question->getFlags() & Pkt4::FLAG_BROADCAST_MASK) != 0);
         if (!IfaceMgr::instance().isDirectResponseSupported() || bcast_flag) {
-            response->setRemoteAddr(bcast_addr);
+            response->setRemoteAddr(IOAddress::IPV4_BCAST_ADDRESS());
 
         // Client cleared the broadcast bit and we support direct responses
         // so we should unicast the response to a newly allocated address -
@@ -1356,7 +1367,7 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
     }
 
     // Adding any other options makes sense only when we got the lease.
-    if (offer->getYiaddr() != IOAddress("0.0.0.0")) {
+    if (offer->getYiaddr() != IOAddress::IPV4_ZERO_ADDRESS()) {
         appendRequestedOptions(discover, offer);
         appendRequestedVendorOptions(discover, offer);
         // There are a few basic options that we always want to
@@ -1408,7 +1419,7 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
     }
 
     // Adding any other options makes sense only when we got the lease.
-    if (ack->getYiaddr() != IOAddress("0.0.0.0")) {
+    if (ack->getYiaddr() != IOAddress::IPV4_ZERO_ADDRESS()) {
         appendRequestedOptions(request, ack);
         appendRequestedVendorOptions(request, ack);
         // There are a few basic options that we always want to
@@ -1562,7 +1573,7 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
     // Also Relay Agent Options should be removed if present.
     if (ack->getRemoteAddr() != inform->getGiaddr()) {
         ack->setHops(0);
-        ack->setGiaddr(IOAddress("0.0.0.0"));
+        ack->setGiaddr(IOAddress::IPV4_ZERO_ADDRESS());
         ack->delOption(DHO_DHCP_AGENT_OPTIONS);
     }
 
@@ -1703,11 +1714,10 @@ Dhcpv4Srv::acceptDirectRequest(const Pkt4Ptr& pkt) const {
     // The source address must not be zero for the DHCPINFORM message from
     // the directly connected client because the server will not know where
     // to respond if the ciaddr was not present.
-    static const IOAddress zero_addr("0.0.0.0");
     try {
         if (pkt->getType() == DHCPINFORM) {
-            if ((pkt->getRemoteAddr() == zero_addr) &&
-                (pkt->getCiaddr() == zero_addr)) {
+            if ((pkt->getRemoteAddr() == IOAddress::IPV4_ZERO_ADDRESS()) &&
+                (pkt->getCiaddr() == IOAddress::IPV4_ZERO_ADDRESS())) {
                 return (false);
             }
         }
@@ -1717,8 +1727,7 @@ Dhcpv4Srv::acceptDirectRequest(const Pkt4Ptr& pkt) const {
         // we validate the message type prior to calling this function.
         return (false);
     }
-    static const IOAddress bcast("255.255.255.255");
-    return ((pkt->getLocalAddr() != bcast || selectSubnet(pkt)));
+    return ((pkt->getLocalAddr() != IOAddress::IPV4_BCAST_ADDRESS() || selectSubnet(pkt)));
 }
 
 bool
@@ -2034,7 +2043,7 @@ bool Dhcpv4Srv::classSpecificProcessing(const Pkt4Ptr& query, const Pkt4Ptr& rsp
     if (query->inClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_EROUTER)) {
 
         // Do not set TFTP server address for eRouter devices.
-        rsp->setSiaddr(IOAddress("0.0.0.0"));
+        rsp->setSiaddr(IOAddress::IPV4_ZERO_ADDRESS());
     }
 
     return (true);

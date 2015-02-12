@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -2159,17 +2159,17 @@ TEST_F(IfaceMgrTest, socketInfo) {
 
     Pkt6 pkt6(DHCPV6_REPLY, 123456);
 
-    // pkt6 dos not have interface set yet
+    // pkt6 does not have interface set yet
     EXPECT_THROW(
         ifacemgr->getSocket(pkt6),
-        BadValue
+        IfaceNotFound
     );
 
     // Try to send over non-existing interface
     pkt6.setIface("nosuchinterface45");
     EXPECT_THROW(
         ifacemgr->getSocket(pkt6),
-        BadValue
+        IfaceNotFound
     );
 
     // This will work
@@ -2185,7 +2185,7 @@ TEST_F(IfaceMgrTest, socketInfo) {
     // It should throw again, there's no usable socket anymore
     EXPECT_THROW(
         ifacemgr->getSocket(pkt6),
-        Unexpected
+        SocketNotFound
     );
 
     // Repeat for pkt4
@@ -2194,19 +2194,29 @@ TEST_F(IfaceMgrTest, socketInfo) {
     // pkt4 does not have interface set yet.
     EXPECT_THROW(
         ifacemgr->getSocket(pkt4),
-        BadValue
+        IfaceNotFound
     );
 
     // Try to send over non-existing interface.
     pkt4.setIface("nosuchinterface45");
     EXPECT_THROW(
         ifacemgr->getSocket(pkt4),
-        BadValue
+        IfaceNotFound
     );
 
     // Socket info is set, packet has well defined interface. It should work.
     pkt4.setIface(LOOPBACK);
     EXPECT_EQ(7, ifacemgr->getSocket(pkt4).sockfd_);
+
+    // Set the local address to check if the socket for this address will
+    // be returned.
+    pkt4.setLocalAddr(IOAddress("192.0.2.56"));
+    EXPECT_EQ(7, ifacemgr->getSocket(pkt4).sockfd_);
+
+    // Modify the local address and expect that the other socket will be
+    // returned.
+    pkt4.setLocalAddr(IOAddress("192.0.2.53"));
+    EXPECT_EQ(8, ifacemgr->getSocket(pkt4).sockfd_);
 
     EXPECT_NO_THROW(
         ifacemgr->getIface(LOOPBACK)->delSocket(7);
@@ -2216,7 +2226,7 @@ TEST_F(IfaceMgrTest, socketInfo) {
     // It should throw again, there's no usable socket anymore.
     EXPECT_THROW(
         ifacemgr->getSocket(pkt4),
-        Unexpected
+        SocketNotFound
     );
 }
 
