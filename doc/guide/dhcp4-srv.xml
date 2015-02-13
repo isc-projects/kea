@@ -377,11 +377,9 @@ It is anticipated that this form of usage will only be used when it is desired t
 temporarily override a list of interface names and listen on all interfaces.
   </para>
   <para>Some deployments of the DHCP servers require that the servers listen
-  on the interfaces with multiple IPv4 addresses configured. In some cases,
-  multiple instances of the DHCP servers are running concurrently and each
-  instance should be bound to a different address on the particular interface.
-  In these situations, the address to use can be selected by
-  appending an IPv4 address to the interface name in the following manner:
+  on the interfaces with multiple IPv4 addresses configured. In these situations,
+  the address to use can be selected by appending an IPv4 address to the interface
+  name in the following manner:
   <screen>
 "Dhcp4": {
     "interfaces-config": {
@@ -390,8 +388,23 @@ temporarily override a list of interface names and listen on all interfaces.
     ...
 }
   </screen>
-  Note that only one address can be specified on each interface.
   </para>
+
+  <para>If it is desired that the server listens on multiple IPv4 addresses assigned
+  to the same interface, multiple addresses can be specified for this interface
+  as in the example below:
+  <screen>
+"Dhcp4": {
+    "interfaces-config": {
+        "interfaces": [ <userinput>"eth1/10.0.0.1", "eth1/10.0.0.2"</userinput> ]
+    },
+    ...
+}
+  </screen>
+  </para>
+
+  <para>Alternatively, if the server should listen on all addresses for the particular
+  interface, an interface name without any address should be specified.</para>
 
   <para>Kea supports responding to directly connected clients which don't have
   an address configured on the interface yet. This requires that the server
@@ -426,6 +439,20 @@ temporarily override a list of interface names and listen on all interfaces.
   <userinput>raw</userinput>, it configures the server to use raw sockets
   instead. If the <command>dhcp-socket-type</command> value is not specified, the
   default value <userinput>raw</userinput> is used.
+  </para>
+
+  <para>Using UDP sockets automatically disables the reception of brodcast
+  packets from directly connected clients. This effectively means that the
+  UDP sockets can be used for relayed traffic only. When using the raw sockets,
+  both the traffic from the directly connected clients and the relayed traffic
+  will be handled. Caution should be taken when configuring the server to open
+  multiple raw sockets on the interface with several IPv4 addresses assigned.
+  If the directly connected client sends the message to the brodcast address
+  all sockets on this link will receive this message and multiple responses
+  will be sent to the client. Hence, the configuration with multiple IPv4
+  addresses assigned to the interface should not be used when the directly
+  connected clients are operating on that link. To use a single address on
+  such interface, the "interface-name/address" notation should be used.
   </para>
 
   <note>
