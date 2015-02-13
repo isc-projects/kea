@@ -1268,8 +1268,6 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
         fake_allocation = true;
     }
 
-    CalloutHandlePtr callout_handle = getCalloutHandle(query);
-
     // At this point, we have to make make some decisions with respect to the
     // FQDN option that we have generated as a result of receiving client's
     // FQDN. In particular, we have to get to know if the DNS update will be
@@ -1297,7 +1295,7 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
     AllocEngine::ClientContext6 ctx(subnet, duid, ia->getIAID(),
                                     hint, Lease::TYPE_NA, do_fwd, do_rev,
                                     hostname, fake_allocation);
-    ctx.callout_handle_ = callout_handle;
+    ctx.callout_handle_ = getCalloutHandle(query);
 
     // Attempt to get MAC address using configured mechanisms.
     // It's ok if there response is NULL. Hardware address is optional in Lease6.
@@ -1339,28 +1337,25 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
         // but this is considered waste of bandwidth as absence of status
         // code is considered a success.
 
-        Lease6Ptr old_lease;
-        if (!ctx.changed_leases_.empty()) {
-            old_lease = *ctx.changed_leases_.begin();
-        }
-        // Allocation engine may have returned an existing lease. If so, we
-        // have to check that the FQDN settings we provided are the same
-        // that were set. If they aren't, we will have to remove existing
-        // DNS records and update the lease with the new settings.
-        if (!fake_allocation && old_lease) {
-            conditionalNCRRemoval(old_lease, lease, hostname, do_fwd, do_rev);
-        }
-        old_lease.reset();
+        if (!fake_allocation) {
+            Lease6Ptr old_lease;
+            if (!ctx.changed_leases_.empty()) {
+                old_lease = *ctx.changed_leases_.begin();
 
-        // We need to repeat that check for leases that used to be used, but
-        // are no longer valid.
-        if (!ctx.old_leases_.empty()) {
-            old_lease = *ctx.old_leases_.begin();
-        }
-        if (!fake_allocation && old_lease) {
-            conditionalNCRRemoval(old_lease, lease, hostname, do_fwd, do_rev);
-        }
+                // Allocation engine has returned an existing lease. If so, we
+                // have to check that the FQDN settings we provided are the same
+                // that were set. If they aren't, we will have to remove existing
+                // DNS records and update the lease with the new settings.
+                conditionalNCRRemoval(old_lease, lease, hostname, do_fwd, do_rev);
+            }
 
+            // We need to repeat that check for leases that used to be used, but
+            // are no longer valid.
+            if (!ctx.old_leases_.empty()) {
+                old_lease = *ctx.old_leases_.begin();
+                conditionalNCRRemoval(old_lease, lease, hostname, do_fwd, do_rev);
+            }
+        }
     } else {
         // Allocation engine did not allocate a lease. The engine logged
         // cause of that failure. The only thing left is to insert
@@ -1381,11 +1376,7 @@ void
 Dhcpv6Srv::conditionalNCRRemoval(Lease6Ptr& old_lease, Lease6Ptr& new_lease,
                                  const std::string& hostname, bool do_fwd,
                                  bool do_rev) {
-    if (!old_lease) {
-        return;
-    }
-
-    if (!new_lease->hasIdenticalFqdn(*old_lease)) {
+    if (old_lease && !new_lease->hasIdenticalFqdn(*old_lease)) {
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_DDNS_LEASE_ASSIGN_FQDN_CHANGE)
             .arg(old_lease->toText())
             .arg(hostname)
@@ -1440,8 +1431,6 @@ Dhcpv6Srv::assignIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
     // allocation.
     bool fake_allocation = (query->getType() == DHCPV6_SOLICIT);
 
-    CalloutHandlePtr callout_handle = getCalloutHandle(query);
-
     // Use allocation engine to pick a lease for this client. Allocation engine
     // will try to honour the hint, but it is just a hint - some other address
     // may be used instead. If fake_allocation is set to false, the lease will
@@ -1449,7 +1438,7 @@ Dhcpv6Srv::assignIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
     Lease6Collection old_leases;
     AllocEngine::ClientContext6 ctx(subnet, duid, ia->getIAID(), hint, Lease::TYPE_PD,
                                     false, false, string(), fake_allocation);
-    ctx.callout_handle_ = callout_handle;
+    ctx.callout_handle_ = getCalloutHandle(query);
 
     // Attempt to get MAC address using any of available mechanisms.
     // It's ok if there response is NULL. Hardware address is optional in Lease6
@@ -1542,15 +1531,15 @@ Dhcpv6Srv::extendIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
     // server didn't force the update.
     bool do_fwd = false;
     bool do_rev = false;
+    std::string hostname;
     Option6ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
         Option6ClientFqdn>(answer->getOption(D6O_CLIENT_FQDN));
     if (fqdn) {
         CfgMgr::instance().getD2ClientMgr().getUpdateDirections(*fqdn, do_fwd, do_rev);
-    }
 
-    std::string hostname;
-    if (fqdn && (do_fwd || do_rev)) {
-        hostname = fqdn->getDomainName();
+        if (do_fwd || do_rev) {
+            hostname = fqdn->getDomainName();
+        }
     }
 
     // Create client context for this renewal
@@ -1568,7 +1557,6 @@ Dhcpv6Srv::extendIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
     ctx.hwaddr_ = getMAC(query);
 
     // Extract the addresses that the client is trying to obtain.
-    int hints_count = 0;
     OptionCollection addrs = ia->getOptions();
     for (OptionCollection::const_iterator it = addrs.begin();
          it != addrs.end(); ++it) {
@@ -1578,14 +1566,19 @@ Dhcpv6Srv::extendIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
         Option6IAAddrPtr iaaddr = boost::dynamic_pointer_cast<Option6IAAddr>(it->second);
         if (!iaaddr) {
             // That's weird. Option code was ok, but the object type was not.
+            // As we use Dhcpv6Srv::unpackOptions() that is guaranteed to use
+            // Option7IAAddr for D6O_IAADDR, this should never happen. The only
+            // case would be with badly mis-implemented hook libraries that
+            // insert invalid option objects. There's no way to protect against
+            // this.
             continue;
         }
         ctx.hints_.push_back(make_pair(iaaddr->getAddress(), 128));
-
-        // We need to remember it as we'll be removing hints from this list as
-        // we extend, cancel or otherwise deal with the leases.
-        hints_count++;
     }
+
+    // We need to remember it as we'll be removing hints from this list as
+    // we extend, cancel or otherwise deal with the leases.
+    bool hints_present = !ctx.hints_.empty();
 
     Lease6Collection leases = alloc_engine_->renewLeases6(ctx);
 
@@ -1635,7 +1628,7 @@ Dhcpv6Srv::extendIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
 
     // Finally, if there are any addresses requested that we haven't dealt with
     // already, inform the client that he can't have them.
-    for (AllocEngine::HintContainerConstIter hint = ctx.hints_.begin();
+    for (AllocEngine::HintContainer::const_iterator hint = ctx.hints_.begin();
          hint != ctx.hints_.end(); ++hint) {
         Option6IAAddrPtr iaaddr(new Option6IAAddr(D6O_IAADDR,
                                                   hint->first, 0, 0));
@@ -1647,7 +1640,7 @@ Dhcpv6Srv::extendIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
         // We did not assign anything. If client has sent something, then
         // the status code is NoBinding, if he sent an empty IA_NA, then it's
         // NoAddrsAvailable
-        if (hints_count) {
+        if (hints_present) {
             // Insert status code NoBinding to indicate that the lease does not
             // exist for this client.
             ia_rsp->addOption(createStatusCode(STATUS_NoBinding,
@@ -1730,7 +1723,6 @@ Dhcpv6Srv::extendIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
     ctx.hwaddr_ = getMAC(query);
 
     // Extract prefixes that the client is trying to renew.
-    int hints_count = 0;
     OptionCollection addrs = ia->getOptions();
     for (OptionCollection::const_iterator it = addrs.begin();
          it != addrs.end(); ++it) {
@@ -1740,16 +1732,20 @@ Dhcpv6Srv::extendIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
         Option6IAPrefixPtr prf = boost::dynamic_pointer_cast<Option6IAPrefix>(it->second);
         if (!prf) {
             // That's weird. Option code was ok, but the object type was not.
+            // As we use Dhcpv6Srv::unpackOptions() that is guaranteed to use
+            // Option7IAAddr for D6O_IAADDR, this should never happen. The only
+            // case would be with badly mis-implemented hook libraries that
+            // insert invalid option objects. There's no way to protect against
+            // this.
             continue;
         }
 
         // Put the client's prefix into the hints list.
         ctx.hints_.push_back(make_pair(prf->getAddress(), prf->getLength()));
-
-        // We need to remember it as we'll be removing hints from this list as
-        // we extend, cancel or otherwise deal with the leases.
-        hints_count++;
     }
+    // We need to remember it as we'll be removing hints from this list as
+    // we extend, cancel or otherwise deal with the leases.
+    bool hints_present = !ctx.hints_.empty();
 
     // Call Allocation Engine and attempt to renew leases. Number of things
     // may happen. Leases may be extended, revoked (if the lease is no longer
@@ -1781,7 +1777,7 @@ Dhcpv6Srv::extendIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
     // zero lifetimes
     // Finally, if there are any addresses requested that we haven't dealt with
     // already, inform the client that he can't have them.
-    for (AllocEngine::HintContainerIter prefix = ctx.hints_.begin();
+    for (AllocEngine::HintContainer::const_iterator prefix = ctx.hints_.begin();
          prefix != ctx.hints_.end(); ++prefix) {
         OptionPtr prefix_opt(new Option6IAPrefix(D6O_IAPREFIX, prefix->first,
                                                  prefix->second, 0, 0));
@@ -1795,7 +1791,7 @@ Dhcpv6Srv::extendIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
             // We did not assign anything. If client has sent something, then
             // the status code is NoBinding, if he sent an empty IA_NA, then it's
             // NoAddrsAvailable
-            if (hints_count) {
+            if (hints_present) {
                 // Insert status code NoBinding to indicate that the lease does not
                 // exist for this client.
                 ia_rsp->addOption(createStatusCode(STATUS_NoBinding,

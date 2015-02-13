@@ -203,6 +203,7 @@ no lease4 should be assigned. The server will not put that lease in its
 database and the client will get a NAK packet.
 
 % DHCPSRV_HOOK_LEASE6_EXTEND_SKIP DHCPv6 lease lifetime was not extended because a callout set the skip flag for message %1
+This debug message is printed when a callout installed on lease6_renew
 or the lease6_rebind hook point set the skip flag. For this particular hook
 point, the setting of the flag by a callout instructs the server to not
 extend the lifetime for a lease. If the client requested renewal of multiple

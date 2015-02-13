@@ -408,7 +408,7 @@ public:
 
     /// @brief returns client-id
     /// @return client-id
-    DuidPtr getDuid() {
+    DuidPtr getDuid() const {
         return (duid_);
     }
 
