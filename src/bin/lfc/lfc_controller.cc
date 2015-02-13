@@ -93,14 +93,15 @@ LFCController::launch(int argc, char* argv[], const bool test_mode) {
                                  keaLoggerSeverity(INFO),
                                  keaLoggerDbglevel(0));
 
-	// If we are running in verbose (debugging) mode
-	// we send the output to the console, otherwise
-	// by default we send it to the SYSLOG
-	if (verbose_) {
-	    option.destination = OutputOption::DEST_CONSOLE;
-	} else {
-	    option.destination = OutputOption::DEST_SYSLOG;
-	}
+        // If we are running in verbose (debugging) mode
+        // we send the output to the console, otherwise
+        // by default we send it to the SYSLOG
+        if (verbose_) {
+            option.destination = OutputOption::DEST_CONSOLE;
+        } else {
+            option.destination = OutputOption::DEST_SYSLOG;
+
+        }
 
         // ... and set the destination
         spec.addOutputOption(option);
