@@ -192,8 +192,8 @@ CfgIface::socketTypeToText() const {
     case SOCKET_RAW:
         return ("raw");
 
-    case SOCKET_DGRAM:
-        return ("datagram");
+    case SOCKET_UDP:
+        return ("udp");
 
     default:
         ;
@@ -364,8 +364,8 @@ void
 CfgIface::useSocketType(const uint16_t family,
                         const std::string& socket_type_name) {
     SocketType socket_type;
-    if (socket_type_name == "datagram") {
-        socket_type = SOCKET_DGRAM;
+    if (socket_type_name == "udp") {
+        socket_type = SOCKET_UDP;
 
     } else if (socket_type_name == "raw") {
         socket_type = SOCKET_RAW;
