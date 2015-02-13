@@ -17,6 +17,7 @@
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcp/dhcp6.h>
 
 #include <hooks/server_hooks.h>
 #include <hooks/hooks_manager.h>
@@ -37,12 +38,16 @@ struct AllocEngineHooks {
     int hook_index_lease4_select_; ///< index for "lease4_receive" hook point
     int hook_index_lease4_renew_;  ///< index for "lease4_renew" hook point
     int hook_index_lease6_select_; ///< index for "lease6_receive" hook point
+    int hook_index_lease6_renew_;  ///< index for "lease6_renew" hook point
+    int hook_index_lease6_rebind_; ///< index for "lease6_rebind" hook point
 
     /// Constructor that registers hook points for AllocationEngine
     AllocEngineHooks() {
         hook_index_lease4_select_ = HooksManager::registerHook("lease4_select");
         hook_index_lease4_renew_  = HooksManager::registerHook("lease4_renew");
         hook_index_lease6_select_ = HooksManager::registerHook("lease6_select");
+        hook_index_lease6_renew_   = HooksManager::registerHook("lease6_renew");
+        hook_index_lease6_rebind_   = HooksManager::registerHook("lease6_rebind");
     }
 };
 
@@ -381,9 +386,7 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
 
             if (!leases.empty()) {
                 // Return old leases so the server can see what has changed.
-                return (updateFqdnData(leases, ctx.fwd_dns_update_,
-                                       ctx.rev_dns_update_,
-                                       ctx.hostname_, ctx.fake_allocation_));
+                return (updateFqdnData(ctx, leases));
             }
 
             // If leases are empty at this stage, it means that we used to have
@@ -485,7 +488,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
     IOAddress hint("::");
     if (!ctx.hints_.empty()) {
         /// @todo: We support only one hint for now
-        hint = ctx.hints_[0];
+        hint = ctx.hints_[0].first;
     }
 
     // check if the hint is in pool and is available
@@ -598,6 +601,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         if (ctx.type_ == Lease::TYPE_PD) {
             Pool6Ptr pool = boost::dynamic_pointer_cast<Pool6>(
                 ctx.subnet_->getPool(ctx.type_, candidate, false));
+            /// @todo: verify that the pool is non-null
             prefix_len = pool->getLength();
         }
 
@@ -666,17 +670,45 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx, Lease6Collection& exis
         IOAddress addr = resv->second.getPrefix();
         uint8_t prefix_len = resv->second.getPrefixLen();
 
-        // If there's a lease for this address, let's not create it.
-        // It doesn't matter whether it is for this client or for someone else.
-        if (LeaseMgrFactory::instance().getLease6(ctx.type_, addr)) {
-            continue;
+        // Check if already have this lease on the existing_leases list.
+        for (Lease6Collection::const_iterator l = existing_leases.begin();
+             l != existing_leases.end(); ++l) {
+
+            // Ok, we already have a lease for this reservation and it's usable
+            if (((*l)->addr_ == addr) && (*l)->valid_lft_ != 0) {
+                return;
+            }
         }
 
-        // Ok, let's create a new lease...
-        Lease6Ptr lease = createLease6(ctx, addr, prefix_len);
+        // If there's a lease for this address, let's not create it.
+        // It doesn't matter whether it is for this client or for someone else.
+        if (!LeaseMgrFactory::instance().getLease6(ctx.type_, addr)) {
+            // Ok, let's create a new lease...
+            Lease6Ptr lease = createLease6(ctx, addr, prefix_len);
 
-        // ... and add it to the existing leases list.
-        existing_leases.push_back(lease);
+            // ... and add it to the existing leases list.
+            existing_leases.push_back(lease);
+
+            if (ctx.type_ == Lease::TYPE_NA) {
+                LOG_INFO(dhcpsrv_logger, DHCPSRV_HR_RESERVED_ADDR_GRANTED)
+                    .arg(addr.toText()).arg(ctx.duid_->toText());
+            } else {
+                LOG_INFO(dhcpsrv_logger, DHCPSRV_HR_RESERVED_PREFIX_GRANTED)
+                    .arg(addr.toText()).arg(static_cast<int>(prefix_len))
+                    .arg(ctx.duid_->toText());
+            }
+
+            // We found a lease for this client and this IA. Let's return.
+            // Returning after the first lease was assigned is useful if we
+            // have multiple reservations for the same client. If the client
+            // sends 2 IAs, the first time we call allocateReservedLeases6 will
+            // use the first reservation and return. The second time, we'll
+            // go over the first reservation, but will discover that there's
+            // a lease corresponding to it and will skip it and then pick
+            // the second reservation and turn it into the lease. This approach
+            // would work for any number of reservations.
+            return;
+        }
     }
 }
 
@@ -710,11 +742,25 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
 
         // Ok, we have a problem. This host has a lease that is reserved
         // for someone else. We need to recover from this.
+        if (ctx.type_ == Lease::TYPE_NA) {
+            LOG_INFO(dhcpsrv_logger, DHCPSRV_HR_REVOKED_ADDR6_LEASE)
+                .arg((*candidate)->addr_.toText()).arg(ctx.duid_->toText())
+                .arg(host->getIdentifierAsText());
+        } else {
+            LOG_INFO(dhcpsrv_logger, DHCPSRV_HR_REVOKED_PREFIX6_LEASE)
+                .arg((*candidate)->addr_.toText())
+                .arg(static_cast<int>((*candidate)->prefixlen_))
+                .arg(ctx.duid_->toText())
+                .arg(host->getIdentifierAsText());
+        }
 
         // Remove this lease from LeaseMgr
         LeaseMgrFactory::instance().deleteLease((*candidate)->addr_);
 
-        /// @todo: Probably trigger a hook here
+        // In principle, we could trigger a hook here, but we will do this
+        // only if we get serious complaints from actual users. We want the
+        // conflict resolution procedure to really work and user libraries
+        // should not interfere with it.
 
         // Add this to the list of removed leases.
         ctx.old_leases_.push_back(*candidate);
@@ -1603,22 +1649,19 @@ AllocEngine::updateLease4Information(const Lease4Ptr& lease,
 }
 
 Lease6Collection
-AllocEngine::updateFqdnData(const Lease6Collection& leases,
-                            const bool fwd_dns_update,
-                            const bool rev_dns_update,
-                            const std::string& hostname,
-                            const bool fake_allocation) {
+AllocEngine::updateFqdnData(ClientContext6& ctx, const Lease6Collection& leases) {
     Lease6Collection updated_leases;
     for (Lease6Collection::const_iterator lease_it = leases.begin();
          lease_it != leases.end(); ++lease_it) {
         Lease6Ptr lease(new Lease6(**lease_it));
-        lease->fqdn_fwd_ = fwd_dns_update;
-        lease->fqdn_rev_ = rev_dns_update;
-        lease->hostname_ = hostname;
-        if (!fake_allocation &&
+        lease->fqdn_fwd_ = ctx.fwd_dns_update_;
+        lease->fqdn_rev_ = ctx.rev_dns_update_;
+        lease->hostname_ = ctx.hostname_;
+        if (!ctx.fake_allocation_ &&
             ((lease->fqdn_fwd_ != (*lease_it)->fqdn_fwd_) ||
              (lease->fqdn_rev_ != (*lease_it)->fqdn_rev_) ||
              (lease->hostname_ != (*lease_it)->hostname_))) {
+            ctx.changed_leases_.push_back(*lease_it);
             LeaseMgrFactory::instance().updateLease6(lease);
         }
         updated_leases.push_back(lease);
@@ -1634,6 +1677,158 @@ AllocEngine::AllocatorPtr AllocEngine::getAllocator(Lease::Type type) {
                   << Lease::typeToText(type));
     }
     return (alloc->second);
+}
+
+Lease6Collection
+AllocEngine::renewLeases6(ClientContext6& ctx) {
+    try {
+        if (!ctx.subnet_) {
+            isc_throw(InvalidOperation, "Subnet is required for allocation");
+        }
+
+        if (!ctx.duid_) {
+            isc_throw(InvalidOperation, "DUID is mandatory for allocation");
+        }
+
+        // Check which host reservation mode is supported in this subnet.
+        Subnet::HRMode hr_mode = ctx.subnet_->getHostReservationMode();
+
+        // Check if there's a host reservation for this client. Attempt to get
+        // host info only if reservations are not disabled.
+        if (hr_mode != Subnet::HR_DISABLED) {
+
+            ctx.host_ = HostMgr::instance().get6(ctx.subnet_->getID(), ctx.duid_,
+                                                 ctx.hwaddr_);
+        } else {
+            // Host reservations disabled? Then explicitly set host to NULL
+            ctx.host_.reset();
+        }
+
+        // Check if there are any leases for this client.
+        Lease6Collection leases = LeaseMgrFactory::instance()
+            .getLeases6(ctx.type_, *ctx.duid_, ctx.iaid_, ctx.subnet_->getID());
+
+        if (!leases.empty()) {
+            // Check if the existing leases are reserved for someone else.
+            // If they're not, we're ok to keep using them.
+            removeNonmatchingReservedLeases6(ctx, leases);
+        }
+
+        if (ctx.host_) {
+            // If we have host reservation, allocate those leases.
+            allocateReservedLeases6(ctx, leases);
+
+            // There's one more check to do. Let's remove leases that are not
+            // matching reservations, i.e. if client X has address A, but there's
+            // a reservation for address B, we should release A and reassign B.
+            // Caveat: do this only if we have at least one reserved address.
+            removeNonreservedLeases6(ctx, leases);
+        }
+
+        // If we happen to removed all leases, get something new for this guy.
+        // Depending on the configuration, we may enable or disable granting
+        // new leases during renewals. This is controlled with the
+        // allow_new_leases_in_renewals_ field.
+        if (leases.empty() && ctx.allow_new_leases_in_renewals_) {
+            leases = allocateUnreservedLeases6(ctx);
+        }
+
+        // Extend all existing leases that passed all checks.
+        for (Lease6Collection::iterator l = leases.begin(); l != leases.end(); ++l) {
+            extendLease6(ctx, *l);
+        }
+
+        return (leases);
+
+    } catch (const isc::Exception& e) {
+
+        // Some other error, return an empty lease.
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_RENEW6_ERROR).arg(e.what());
+    }
+
+    return (Lease6Collection());
+}
+
+void
+AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
+
+    if (!lease || !ctx.subnet_) {
+        return;
+    }
+
+    // Check if the lease still belongs to the subnet. If it doesn't,
+    // we'll need to remove it.
+    if ((lease->type_ != Lease::TYPE_PD) && !ctx.subnet_->inRange(lease->addr_)) {
+        // Oh dear, the lease is no longer valid. We need to get rid of it.
+
+        // Remove this lease from LeaseMgr
+        LeaseMgrFactory::instance().deleteLease(lease->addr_);
+
+        // Add it to the removed leases list.
+        ctx.old_leases_.push_back(lease);
+
+        return;
+    }
+
+    // Keep the old data in case the callout tells us to skip update.
+    Lease6 old_data = *lease;
+
+    lease->preferred_lft_ = ctx.subnet_->getPreferred();
+    lease->valid_lft_ = ctx.subnet_->getValid();
+    lease->t1_ = ctx.subnet_->getT1();
+    lease->t2_ = ctx.subnet_->getT2();
+    lease->cltt_ = time(NULL);
+    lease->hostname_ = ctx.hostname_;
+    lease->fqdn_fwd_ = ctx.fwd_dns_update_;
+    lease->fqdn_rev_ = ctx.rev_dns_update_;
+    lease->hwaddr_ = ctx.hwaddr_;
+
+    bool skip = false;
+    // Get the callouts specific for the processed message and execute them.
+    int hook_point = ctx.query_->getType() == DHCPV6_RENEW ?
+        Hooks.hook_index_lease6_renew_ : Hooks.hook_index_lease6_rebind_;
+    if (HooksManager::calloutsPresent(hook_point)) {
+        CalloutHandlePtr callout_handle = ctx.callout_handle_;
+
+        // Delete all previous arguments
+        callout_handle->deleteAllArguments();
+
+        // Pass the original packet
+        callout_handle->setArgument("query6", ctx.query_);
+
+        // Pass the lease to be updated
+        callout_handle->setArgument("lease6", lease);
+
+        // Pass the IA option to be sent in response
+        if (lease->type_ == Lease::TYPE_NA) {
+            callout_handle->setArgument("ia_na", ctx.ia_rsp_);
+        } else {
+            callout_handle->setArgument("ia_pd", ctx.ia_rsp_);
+        }
+
+        // Call all installed callouts
+        HooksManager::callCallouts(hook_point, *callout_handle);
+
+        // Callouts decided to skip the next processing step. The next
+        // processing step would to actually renew the lease, so skip at this
+        // stage means "keep the old lease as it is".
+        if (callout_handle->getSkip()) {
+            skip = true;
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS,
+                      DHCPSRV_HOOK_LEASE6_EXTEND_SKIP)
+                .arg(ctx.query_->getName());
+        }
+    }
+
+    if (!skip) {
+        LeaseMgrFactory::instance().updateLease6(lease);
+    } else {
+        // Copy back the original date to the lease. For MySQL it doesn't make
+        // much sense, but for memfile, the Lease6Ptr points to the actual lease
+        // in memfile, so the actual update is performed when we manipulate
+        // fields of returned Lease6Ptr, the actual updateLease6() is no-op.
+        *lease = old_data;
+    }
 }
 
 AllocEngine::~AllocEngine() {
