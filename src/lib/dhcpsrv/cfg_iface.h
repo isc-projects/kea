@@ -16,6 +16,7 @@
 #define CFG_IFACE_H
 
 #include <asiolink/io_address.h>
+#include <dhcp/iface_mgr.h>
 #include <boost/shared_ptr.hpp>
 #include <map>
 #include <set>
@@ -45,6 +46,13 @@ public:
         isc::Exception(file, line, what) { };
 };
 
+/// @brief Exception thrown when duplicated address specified.
+class DuplicateAddress : public Exception {
+public:
+    DuplicateAddress(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
 /// @brief Exception thrown when specified unicast address is not assigned
 /// to the interface specified.
 class NoSuchAddress : public Exception {
@@ -65,9 +73,9 @@ public:
 ///
 /// This class manages selection of interfaces on which the DHCP server is
 /// listening to queries. The interfaces are selected in the server
-/// configuration by their names or by the pairs of interface names and unicast
-/// addresses (e.g. eth0/2001:db8:1::1). The latter format is only accepted when
-/// IPv6 configuration is in use.
+/// configuration by their names or by the pairs of interface names and
+/// addresses, e.g. eth0/2001:db8:1::1 (DHCPv6) or e.g. eth0/192.168.8.1
+/// (DHCPv4).
 ///
 /// This class also accepts "wildcard" interface name which, if specified,
 /// instructs the server to listen on all available interfaces.
@@ -146,9 +154,9 @@ public:
     /// passed as the argument of this function may appear in one of the following
     /// formats:
     /// - interface-name, e.g. eth0
-    /// - interface-name/unicast-address, e.g. eth0/2001:db8:1::1 (V6 only)
+    /// - interface-name/address, e.g. eth0/2001:db8:1::1 or eth0/192.168.8.1
     ///
-    /// Extraneous spaces surrounding the interface name and/or unicast address
+    /// Extraneous spaces surrounding the interface name and/or address
     /// are accepted. For example: eth0 / 2001:db8:1::1 will be accepted.
     ///
     /// When only interface name is specified (without an address) it is allowed
@@ -157,6 +165,24 @@ public:
     /// will be bound to the link local addresses. Wildcard interface names are
     /// not allowed when specifying a unicast address. For example:
     /// */2001:db8:1::1 is not allowed.
+    ///
+    /// The DHCPv6 configuration accepts simultaneous use of the "interface-name"
+    /// and "interface-name/address" tuple for the same interface, e.g.
+    /// "eth0", "eth0/2001:db8:1::1" specifies that the server should open a
+    /// socket and bind to link local address as well as open a socket bound to
+    /// the specified unicast address.
+    ///
+    /// The DHCPv4 configuration doesn't accept the simulatenous use of the
+    /// "interface-name" and the "interface-name/address" tuple for the
+    /// given interface. When the "interface-name" is specified it implies
+    /// that the sockets will be opened on for all addresses configured on
+    /// this interface. If the tuple of "interface-name/address" is specified
+    /// there will be only one socket opened and bound to the specified address.
+    /// This socket will be configured to listen to the broadcast messages
+    /// reaching the interface as well as unicast messages sent to the address
+    /// to which it is bound. It is allowed to select multiple addresses on the
+    /// particular interface explicitly, e.g. "eth0/192.168.8.1",
+    /// "eth0/192.168.8.2".
     ///
     /// @param family Address family (AF_INET or AF_INET6).
     /// @param iface_name Explicit interface name, a wildcard name (*) of
@@ -246,6 +272,19 @@ private:
     void setState(const uint16_t family, const bool inactive,
                   const bool loopback_inactive) const;
 
+    /// @brief Selects or deselects addresses on the interface.
+    ///
+    /// This function selects all address on the interface to receive DHCP
+    /// traffic or deselects all addresses so as none of them receives the
+    /// DHCP traffic.
+    ///
+    /// @param family Address family (AF_INET or AF_INET6).
+    /// @param active A boolean value which indicates if all addresses should
+    /// be active (if true), or inactive (if false).
+    /// @param iface An interface on which addresses are selected/deselected.
+    void setIfaceAddrsState(const uint16_t family, const bool inactive,
+                            Iface& iface) const;
+
     /// @brief Error handler for executed when opening a socket fail.
     ///
     /// A pointer to this function is passed to the @c IfaceMgr::openSockets4
@@ -264,7 +303,7 @@ private:
 
     /// @brief A map of interfaces and addresses to which the server
     /// should bind sockets.
-    typedef std::map<std::string, asiolink::IOAddress> ExplicitAddressMap;
+    typedef std::multimap<std::string, asiolink::IOAddress> ExplicitAddressMap;
 
     /// @brief A map which holds the pairs of interface names and addresses
     /// for which the sockets should be opened.
