@@ -128,7 +128,7 @@ TEST_F(IfacesConfigParserTest, socketTypeDatagram) {
 
     // Configuration with a datagram socket selected.
     std::string config = "{ ""\"interfaces\": [ ],"
-        " \"dhcp-socket-type\": \"datagram\" }";
+        " \"dhcp-socket-type\": \"udp\" }";
 
     ElementPtr config_element = Element::fromJSON(config);
 
@@ -140,7 +140,7 @@ TEST_F(IfacesConfigParserTest, socketTypeDatagram) {
     // configuration using the raw socket.
     SrvConfigPtr cfg = CfgMgr::instance().getStagingCfg();
     ASSERT_TRUE(cfg);
-    cfg_ref.useSocketType(AF_INET, CfgIface::SOCKET_DGRAM);
+    cfg_ref.useSocketType(AF_INET, CfgIface::SOCKET_UDP);
     EXPECT_TRUE(*cfg->getCfgIface() == cfg_ref);
 }
 
@@ -156,7 +156,7 @@ TEST_F(IfacesConfigParserTest, socketTypeInvalid) {
     // For DHCPv6 we don't accept any socket type.
     IfacesConfigParser6 parser6;
     config = "{ \"interfaces\": [ ],"
-        " \"dhcp-socket-type\": \"datagram\" }";
+        " \"dhcp-socket-type\": \"udp\" }";
     config_element = Element::fromJSON(config);
     ASSERT_THROW(parser6.build(config_element), DhcpConfigError);
 }
