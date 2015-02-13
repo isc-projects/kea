@@ -43,6 +43,18 @@ CfgIface::equals(const CfgIface& other) const {
             socket_type_ == other.socket_type_);
 }
 
+bool
+CfgIface::multipleAddressesPerInterfaceActive() const {
+    const IfaceMgr::IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
+    for (IfaceMgr::IfaceCollection::const_iterator iface = ifaces.begin();
+         iface != ifaces.end(); ++iface) {
+        if (iface->countActive() > 1) {
+            return (true);
+        }
+    }
+    return (false);
+}
+
 void
 CfgIface::openSockets(const uint16_t family, const uint16_t port,
                       const bool use_bcast) const {
@@ -124,10 +136,18 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
         boost::bind(&CfgIface::socketOpenErrorHandler, _1);
     bool sopen;
     if (family == AF_INET) {
-        // Do not use broadcast if there are multiple addresses selected for any of the
-        // interfaces. In that case, we fallback to unicast only (relayed traffic).
-        sopen = IfaceMgr::instance().openSockets4(port, use_bcast && address_map_.empty(),
-                                                  error_callback);
+        // Use broadcast only if we're using raw sockets. For the UDP sockets,
+        // we only handle the relayed (unicast) traffic.
+        const bool can_use_bcast = use_bcast && (socket_type_ == SOCKET_RAW);
+        // Opening multiple raw sockets handling brodcast traffic on the single
+        // interface may lead to processing the same message multiple times.
+        // We don't prohibit such configuration because raw sockets can as well
+        // handle the relayed traffic. We have to issue a warning, however, to
+        // draw administrator's attention.
+        if (can_use_bcast && multipleAddressesPerInterfaceActive()) {
+            LOG_WARN(dhcpsrv_logger, DHCPSRV_MULTIPLE_RAW_SOCKETS_PER_IFACE);
+        }
+        sopen = IfaceMgr::instance().openSockets4(port, can_use_bcast, error_callback);
     } else {
         // use_bcast is ignored for V6.
         sopen = IfaceMgr::instance().openSockets6(port, error_callback);

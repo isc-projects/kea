@@ -340,6 +340,9 @@ public:
     /// should be active (if true) or inactive (if false).
     void setActive(const bool active);
 
+    /// @brief Returns a number of activated IPv4 addresses on the interface.
+    uint16_t countActive() const;
+
     /// @brief Deletes an address from an interface.
     ///
     /// This only deletes address from collection, it does not physically
