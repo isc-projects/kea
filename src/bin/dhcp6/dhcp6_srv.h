@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -666,6 +666,21 @@ private:
     /// @throw isc::Unexpected if specified message is NULL. This is treated
     /// as a programmatic error.
     void generateFqdn(const Pkt6Ptr& answer);
+
+
+    /// @brief Triggers removal Name Change Request if FQDN data changes in leases
+    ///
+    /// If there are any differences (different fwd or rev flags, or different
+    /// hostname) a DNS update for removing entry will be generated.
+    ///
+    /// @param old_lease old version of the lease
+    /// @param new_lease new version of the lease (may be NULL)
+    /// @param hostname specifies hostname (for printing purposes)
+    /// @param do_fwd specifies if reverse updates are enabled (for printing purposes)
+    /// @param do_rev specifies if reverse updates are enabled (for printing purposes)
+    void conditionalNCRRemoval(Lease6Ptr& old_lease, Lease6Ptr& new_lease,
+                               const std::string& hostname,
+                               bool do_fwd, bool do_rev);
 
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using

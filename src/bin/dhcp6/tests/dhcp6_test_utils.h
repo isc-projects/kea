@@ -27,6 +27,7 @@
 #include <dhcp/option6_iaprefix.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_custom.h>
+#include <dhcp/option.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
@@ -211,7 +212,8 @@ public:
     void checkNakResponse(const isc::dhcp::Pkt6Ptr& rsp,
                           uint8_t expected_message_type,
                           uint32_t expected_transid,
-                          uint16_t expected_status_code)
+                          uint16_t expected_status_code,
+                          uint32_t expected_t1, uint32_t expected_t2)
     {
         // Check if we get response at all
         checkResponse(rsp, expected_message_type, expected_transid);
@@ -225,7 +227,8 @@ public:
             boost::dynamic_pointer_cast<isc::dhcp::Option6IA>(option_ia_na);
         ASSERT_TRUE(ia);
 
-        checkIA_NAStatusCode(ia, expected_status_code);
+        checkIA_NAStatusCode(ia, expected_status_code, expected_t1,
+                             expected_t2);
     }
 
     // Checks that server rejected IA_NA, i.e. that it has no addresses and
@@ -238,36 +241,8 @@ public:
     // as this is the default result and it saves bandwidth)
     void checkIA_NAStatusCode
         (const boost::shared_ptr<isc::dhcp::Option6IA>& ia,
-         uint16_t expected_status_code)
-    {
-        // Make sure there is no address assigned.
-        EXPECT_FALSE(ia->getOption(D6O_IAADDR));
-
-        // T1, T2 should be zeroed
-        EXPECT_EQ(0, ia->getT1());
-        EXPECT_EQ(0, ia->getT2());
-
-        isc::dhcp::OptionCustomPtr status =
-            boost::dynamic_pointer_cast<isc::dhcp::OptionCustom>
-                (ia->getOption(D6O_STATUS_CODE));
-
-        // It is ok to not include status success as this is the default
-        // behavior
-        if (expected_status_code == STATUS_Success && !status) {
-            return;
-        }
-
-        EXPECT_TRUE(status);
-
-        if (status) {
-            // We don't have dedicated class for status code, so let's
-            // just interpret first 2 bytes as status. Remainder of the
-            // status code option content is just a text explanation
-            // what went wrong.
-            EXPECT_EQ(static_cast<uint16_t>(expected_status_code),
-                      status->readInteger<uint16_t>(0));
-        }
-    }
+         uint16_t expected_status_code, uint32_t expected_t1,
+         uint32_t expected_t2);
 
     void checkMsgStatusCode(const isc::dhcp::Pkt6Ptr& msg,
                             uint16_t expected_status)
@@ -397,8 +372,8 @@ public:
         // an ostream, which means it can't be used in EXPECT_EQ.
         EXPECT_TRUE(subnet_->inPool(type, addr->getAddress()));
         EXPECT_EQ(expected_addr.toText(), addr->getAddress().toText());
-        EXPECT_EQ(addr->getPreferred(), subnet_->getPreferred());
-        EXPECT_EQ(addr->getValid(), subnet_->getValid());
+        EXPECT_EQ(subnet_->getPreferred(), addr->getPreferred());
+        EXPECT_EQ(subnet_->getValid(), addr->getValid());
     }
 
     // Checks if the lease sent to client is present in the database

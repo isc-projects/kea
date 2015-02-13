@@ -18,6 +18,8 @@
 #include <asiolink/io_address.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
+#include <dhcp/pkt6.h>
+#include <dhcp/option6_ia.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/lease_mgr.h>
@@ -301,6 +303,15 @@ protected:
         }
     };
 
+    /// @brief Defines a single hint (an address + prefix-length).
+    ///
+    /// This is an entry that represents what the client had requested,
+    /// either an address or a prefix. Prefix length is 128 for regular
+    /// addresses.
+    typedef std::pair<isc::asiolink::IOAddress, uint8_t> HintType;
+
+    /// @brief Container for client's hints.
+    typedef std::vector<HintType> HintContainer;
 
     /// @brief Context information for the DHCPv6 leases allocation.
     ///
@@ -344,7 +355,7 @@ protected:
         ///
         /// There will typically be just one address, but the protocol allows
         /// more than one address or prefix for each IA container.
-        std::vector<isc::asiolink::IOAddress> hints_;
+        HintContainer hints_;
 
         /// @brief A boolean value which indicates that server takes
         ///        responsibility for the forward DNS Update for this lease
@@ -381,16 +392,44 @@ protected:
         /// and give a new one to this client.
         Lease6Collection old_leases_;
 
+        /// @brief A pointer to any leases that have changed FQDN information.
+        ///
+        /// This list may contain old versions of the leases that are still
+        /// valid. In particular, it will contain a lease if the client's
+        /// FQDN has changed.
+        Lease6Collection changed_leases_;
+
         /// @brief A pointer to the object identifying host reservations.
         ///
         /// May be NULL if there are no reservations.
         ConstHostPtr host_;
 
+        /// @brief A pointer to the client's message
+        ///
+        /// This is used exclusively for hook purposes.
+        Pkt6Ptr query_;
+
+        /// @brief A pointer to the IA_NA/IA_PD option to be sent in response
+        Option6IAPtr ia_rsp_;
+
+
+        /// @brief Specifies whether new leases in Renew/Rebind are allowed
+        ///
+        /// This field controls what to do when renewing or rebinding client
+        /// does not have any leases. RFC3315 and the stateful-issues draft does
+        /// not specify it and it is left up to the server configuration policy.
+        /// False (the default) means that the client will not get any new
+        /// unreserved leases if his existing leases are no longer suitable.
+        /// True means that the allocation engine will do its best to assign
+        /// something.
+        bool allow_new_leases_in_renewals_;
+
         /// @brief Default constructor.
         ClientContext6()
            : subnet_(), duid_(), iaid_(0), type_(Lease::TYPE_NA), hwaddr_(),
              hints_(), fwd_dns_update_(false), rev_dns_update_(false), hostname_(""),
-             callout_handle_(), fake_allocation_(false), old_leases_(), host_() {
+             callout_handle_(), fake_allocation_(false), old_leases_(), host_(),
+             query_(), ia_rsp_(), allow_new_leases_in_renewals_(false) {
         }
 
         /// @brief Constructor with parameters.
@@ -418,11 +457,17 @@ protected:
                        const Lease::Type type, const bool fwd_dns, const bool
                        rev_dns, const std::string& hostname, const bool
                        fake_allocation):
-        subnet_(subnet), duid_(duid), iaid_(iaid), type_(type), hwaddr_(),
+            subnet_(subnet), duid_(duid), iaid_(iaid), type_(type), hwaddr_(),
             hints_(), fwd_dns_update_(fwd_dns), rev_dns_update_(rev_dns),
             hostname_(hostname), fake_allocation_(fake_allocation),
-            old_leases_(), host_() {
-            hints_.push_back(hint);
+            old_leases_(), host_(), query_(), ia_rsp_(),
+            allow_new_leases_in_renewals_(false){
+
+            static asiolink::IOAddress any("::");
+
+            if (hint != any) {
+                hints_.push_back(std::make_pair(hint, 128));
+            }
             // callout_handle, host pointers initiated to NULL by their
             // respective constructors.
         }
@@ -643,6 +688,31 @@ protected:
     /// @return Allocated IPv6 leases (may be empty if allocation failed)
     Lease6Collection
     allocateLeases6(ClientContext6& ctx);
+
+
+    /// @brief Renews existing DHCPv6 leases for a given IA.
+    ///
+    /// This method updates the leases associated with a specified IA container.
+    /// It will extend the leases under normal circumstances, but sometimes
+    /// there may be reasons why not to do so. Such a reasons may be:
+    /// - client attempts to renew an address that is not valid
+    /// - client attempts to renew an address that is now reserved for someone
+    ///   else (see host reservation)
+    /// - client's leases does not match his reservations
+    ///
+    /// This method will call  the lease4_renew callout.
+    ///
+    /// @param ctx Message processing context. It holds various information
+    /// extracted from the client's message and required to allocate a lease.
+    /// In particular, @ref ClientContext6::hints_ provides list of addresses or
+    /// prefixes the client had sent. @ref ClientContext6::old_leases_ will
+    /// contain removed leases in this case.
+    ///
+    /// @return Returns renewed lease.
+    Lease6Collection
+    renewLeases6(ClientContext6& ctx);
+
+
 
     /// @brief returns allocator for a given pool type
     /// @param type type of pool (V4, IA, TA or PD)
@@ -867,10 +937,11 @@ private:
     ///        responsibility for the reverse DNS Update for this lease
     ///        (if true).
     /// @ref ClientContext6::hostname_ A fully qualified domain-name of the client.
-    /// @ref ClientContext6::callout_handle_ a callout handle (used in hooks). A lease callouts
-    ///        will be executed if this parameter is passed.
-    /// @ref ClientContext6::fake_allocation_ is this real i.e. REQUEST (false) or just picking
-    ///        an address for SOLICIT that is not really allocated (true)
+    /// @ref ClientContext6::callout_handle_ a callout handle (used in hooks). A
+    ///        lease callouts will be executed if this parameter is passed.
+    /// @ref ClientContext6::fake_allocation_ is this real i.e. REQUEST (false)
+    ///        or just picking an address for SOLICIT that is not really
+    ///        allocated (true)
     ///
     /// @return refreshed lease
     /// @throw BadValue if trying to recycle lease that is still valid
@@ -880,25 +951,17 @@ private:
 
     /// @brief Updates FQDN data for a collection of leases.
     ///
+    /// @param ctx IPv6 client context (old versions of the leases that had
+    ///            FQDN data changed will be stored in ctx.changed_leases_,
+    ///            ctx.fwd_dns_update, ctx.rev_dns_update, ctx.hostname_
+    ///            and ctx.fake_allocation_ will be used.
     /// @param leases Collection of leases for which FQDN data should be
     /// updated.
-    /// @param fwd_dns_update Boolean value which indicates whether forward FQDN
-    /// update was performed for each lease (true) or not (false).
-    /// @param rev_dns_update Boolean value which indicates whether reverse FQDN
-    /// update was performed for each lease (true) or not (false).
-    /// @param hostname Client hostname associated with a lease.
-    /// @param fake_allocation Boolean value which indicates that it is a real
-    /// lease allocation, e.g. Request message is processed (false), or address
-    /// is just being picked as a result of processing Solicit (true). In the
-    /// latter case, the FQDN data should not be updated in the lease database.
     ///
     /// @return Collection of leases with updated FQDN data. Note that returned
     /// collection holds updated FQDN data even for fake allocation.
-    Lease6Collection updateFqdnData(const Lease6Collection& leases,
-                                    const bool fwd_dns_update,
-                                    const bool rev_dns_update,
-                                    const std::string& hostname,
-                                    const bool fake_allocation);
+    Lease6Collection updateFqdnData(ClientContext6& ctx,
+                                    const Lease6Collection& leases);
 
     /// @brief Utility function that removes all leases with a specified address
     /// @param container A collection of Lease6 pointers
@@ -907,6 +970,18 @@ private:
     static bool
     removeLeases(Lease6Collection& container,
                  const asiolink::IOAddress& addr);
+
+    /// @brief Extends specified IPv6 lease
+    ///
+    /// This method attempts to extend the lease. It will call the lease6_renew
+    /// or lease6_rebind hooks (depending on the client's message specified in
+    /// ctx.query). The lease will be extended in LeaseMgr, unless the hooks
+    /// library will set the skip flag.
+    ///
+    /// @param ctx client context that passes all necessary information. See
+    ///        @ref ClientContext6 for details.
+    /// @param lease IPv6 lease to be extended.
+    void extendLease6(ClientContext6& ctx, Lease6Ptr lease);
 
     /// @brief a pointer to currently used allocator
     ///
