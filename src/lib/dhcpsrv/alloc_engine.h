@@ -311,13 +311,7 @@ protected:
     typedef std::pair<isc::asiolink::IOAddress, uint8_t> HintType;
 
     /// @brief Container for client's hints.
-    typedef std::vector< HintType > HintContainer;
-
-    /// @brief Non-const iterator for hint container.
-    typedef HintContainer::iterator HintContainerIter;
-
-    /// @brief Const iterator for hint container.
-    typedef HintContainer::const_iterator HintContainerConstIter;
+    typedef std::vector<HintType> HintContainer;
 
     /// @brief Context information for the DHCPv6 leases allocation.
     ///
@@ -422,8 +416,8 @@ protected:
         /// @brief Specifies whether new leases in Renew/Rebind are allowed
         ///
         /// This field controls what to do when renewing or rebinding client
-        /// does not have any leases. RFC3315 and stateful-issues draft does not
-        /// specify it and it is left up to the server configuration policy.
+        /// does not have any leases. RFC3315 and the stateful-issues draft does
+        /// not specify it and it is left up to the server configuration policy.
         /// False (the default) means that the client will not get any new
         /// unreserved leases if his existing leases are no longer suitable.
         /// True means that the allocation engine will do its best to assign
@@ -982,7 +976,7 @@ private:
     /// This method attempts to extend the lease. It will call the lease6_renew
     /// or lease6_rebind hooks (depending on the client's message specified in
     /// ctx.query). The lease will be extended in LeaseMgr, unless the hooks
-    /// library will set skip flag.
+    /// library will set the skip flag.
     ///
     /// @param ctx client context that passes all necessary information. See
     ///        @ref ClientContext6 for details.

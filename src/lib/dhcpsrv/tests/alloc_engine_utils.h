@@ -236,8 +236,9 @@ public:
     ///
     /// @param engine a reference to Allocation Engine
     /// @param pool pool from which the lease will be allocated from
-    /// @param hint address to be used as a hint
-    /// @param fake true - this is fake allocation (SOLICIT)
+    /// @param hints address to be used as a hint
+    /// @param allow_new_leases_in_renewal - specifies how to set the
+    ///        allow_new_leases_in_renewal flag in ClientContext6
     /// @param in_pool specifies whether the lease is expected to be in pool
     /// @return allocated lease(s) (may be empty)
     Lease6Collection renewTest(AllocEngine& engine, const Pool6Ptr& pool,
