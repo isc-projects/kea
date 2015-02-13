@@ -380,47 +380,6 @@ private:
 
 };
 
-/// @brief parser for interface list definition
-///
-/// This parser handles Dhcp4/interfaces and Dhcp6/interfaces entries.
-/// It contains a list of network interfaces that the server listens on.
-/// In particular, it can contain an entry called "all" or "any" that
-/// designates all interfaces.
-class InterfaceListConfigParser : public DhcpConfigParser {
-public:
-
-    /// @brief constructor
-    ///
-    /// As this is a dedicated parser, it must be used to parse
-    /// "interface" parameter only. All other types will throw exception.
-    ///
-    /// @param param_name name of the configuration parameter being parsed
-    /// @param global_context Global parser context.
-    /// @throw BadValue if supplied parameter name is not "interface"
-    InterfaceListConfigParser(const std::string& param_name,
-                              ParserContextPtr global_context);
-
-    /// @brief parses parameters value
-    ///
-    /// Parses configuration entry (list of parameters) and adds each element
-    /// to the interfaces list.
-    ///
-    /// @param value pointer to the content of parsed values
-    virtual void build(isc::data::ConstElementPtr value);
-
-    /// @brief Does nothing.
-    virtual void commit();
-
-private:
-
-    // Parsed parameter name
-    std::string param_name_;
-
-    /// Global parser context.
-    ParserContextPtr global_context_;
-};
-
-
 /// @brief parser for MAC/hardware aquisition sources
 ///
 /// This parser handles Dhcp6/mac-sources entry.

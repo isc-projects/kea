@@ -213,65 +213,6 @@ TEST_F(DhcpParserTest, uint32ParserTest) {
     EXPECT_EQ(test_value, actual_value);
 }
 
-/// @brief Check InterfaceListConfigParser  basic functionality
-///
-/// Verifies that the parser:
-/// 1. Does not allow empty for storage.
-/// 2. Does not allow name other than "interfaces"
-/// 3. Parses list of interfaces and adds them to CfgMgr
-/// 4. Parses wildcard interface name and sets a CfgMgr flag which indicates
-/// that server will listen on all interfaces.
-TEST_F(DhcpParserTest, interfaceListParserTest) {
-    IfaceMgrTestConfig test_config(true);
-
-    const std::string name = "interfaces";
-
-    ParserContextPtr parser_context(new ParserContext(Option::V4));
-
-    // Verify that parser constructor fails if parameter name isn't "interface"
-    EXPECT_THROW(InterfaceListConfigParser("bogus_name", parser_context),
-                 isc::BadValue);
-
-    boost::scoped_ptr<InterfaceListConfigParser>
-        parser(new InterfaceListConfigParser(name, parser_context));
-    ElementPtr list_element = Element::createList();
-    list_element->add(Element::create("eth0"));
-
-    // This should parse the configuration and add eth0 and eth1 to the list
-    // of interfaces that server should listen on.
-    parser->build(list_element);
-    parser->commit();
-
-    // Use CfgMgr instance to check if eth0 and eth1 was added, and that
-    // eth2 was not added.
-    SrvConfigPtr cfg = CfgMgr::instance().getStagingCfg();
-    ASSERT_TRUE(cfg);
-    ASSERT_NO_THROW(cfg->getCfgIface().openSockets(AF_INET, 10000));
-
-    EXPECT_TRUE(test_config.socketOpen("eth0", AF_INET));
-    EXPECT_FALSE(test_config.socketOpen("eth1", AF_INET));
-
-    // Add keyword all to the configuration. This should activate all
-    // interfaces, including eth2, even though it has not been explicitly
-    // added.
-    list_element->add(Element::create("*"));
-
-    // Reset parser and configuration.
-    parser.reset(new InterfaceListConfigParser(name, parser_context));
-    cfg->getCfgIface().closeSockets();
-    CfgMgr::instance().clear();
-
-    parser->build(list_element);
-    parser->commit();
-
-    cfg = CfgMgr::instance().getStagingCfg();
-    ASSERT_NO_THROW(cfg->getCfgIface().openSockets(AF_INET, 10000));
-
-    EXPECT_TRUE(test_config.socketOpen("eth0", AF_INET));
-    EXPECT_TRUE(test_config.socketOpen("eth1", AF_INET));
-}
-
-
 /// @brief Check MACSourcesListConfigParser  basic functionality
 ///
 /// Verifies that the parser:

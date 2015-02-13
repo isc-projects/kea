@@ -534,6 +534,26 @@ public:
     /// @return the only existing instance of interface manager
     static IfaceMgr& instance();
 
+    /// @brief Sets or clears the test mode for @c IfaceMgr.
+    ///
+    /// Various unit test may set this flag to true, to indicate that the 
+    /// @c IfaceMgr is in the test mode. There are places in the code that
+    /// modify the behavior depending if the @c IfaceMgr is in the test
+    /// mode or not.
+    ///
+    /// @param test_mode A flag which indicates that the @c IfaceMgr is in the
+    /// test mode (if true), or not (if false).
+    void setTestMode(const bool test_mode) {
+        test_mode_ = test_mode;
+    }
+
+    /// @brief Checks if the @c IfaceMgr is in the test mode.
+    ///
+    /// @return true if the @c IfaceMgr is in the test mode, false otherwise.
+    bool isTestMode() const {
+        return (test_mode_);
+    }
+
     /// @brief Check if packet be sent directly to the client having no address.
     ///
     /// Checks if IfaceMgr can send DHCPv4 packet to the client
@@ -1167,6 +1187,9 @@ private:
 
     /// @brief Contains list of callbacks for external sockets
     SocketCallbackInfoContainer callbacks_;
+
+    /// @brief Indicates if the IfaceMgr is in the test mode.
+    bool test_mode_;
 };
 
 }; // namespace isc::dhcp

@@ -92,13 +92,17 @@
 "Dhcp6": {
 
 # First we set up global values
-    "interfaces": [ "eth0" ],
     "renew-timer": 1000,
     "rebind-timer": 2000,
     "preferred-lifetime": 3000,
     "valid-lifetime": 4000,
 
-# Next we specify the type of lease database
+# Next we setup the interfaces to be used by the server.
+    "interfaces-config": {
+        "interfaces": [ "eth0" ]
+    },
+
+# And we specify the type of a lease database
     "lease-database": {
         "type": "memfile",
         "persist": true,
@@ -156,19 +160,8 @@ ignored. This is unlikely to cause any confusion as there are no real life
 reasons to keep multiple copies of the same parameter in your configuration
 file.</para>
 
-<para>Moving onto the DHCPv6 configuration elements,
-the line defining <command>interfaces</command> parameter specifies a list
-of network interfaces on which the server should listen.
-Lists are opened and closed with square brackets, with elements
-separated by commas. Had we wanted to listen on two interfaces, the line could
-look like this:
-<screen>
-"interfaces": [ "eth0", "eth1" ],
-</screen>
-
-As "<command>interfaces</command>" is not the last parameter in the
-configuration, a trailing comma is required.</para>
-<para>A number of other parameters follow. <command>valid-lifetime</command>
+<para>Moving onto the DHCPv6 configuration elements, the very first few elements
+define some global parameters. <command>valid-lifetime</command>
 defines for how long the addresses (leases) given out by the server are valid. If
 nothing changes, a client that got an address is allowed to use it for 4000
 seconds. (Note that integer numbers are specified as is, without any quotes
@@ -177,6 +170,20 @@ allowed to keep old connections, but can't use this address for creating new
 connections). <command>renew-timer</command> and <command>
 rebind-timer</command> are values that define T1 and T2 timers that govern when
 the client will begin the renewal and rebind procedures.</para>
+
+<para>The <command>interfaces-config</command> map specifies the server
+configuration concerning the network interfaces, on which the server should
+listen to the DHCP messages. The <command>interfaces</command> parameter
+specifies a list of network interfaces on which the server should listen.
+Lists are opened and closed with square brackets, with elements separated
+by commas. Had we wanted to listen on two interfaces, the
+<command>interfaces-config</command> would look like this:
+<screen>
+"interfaces-config": {
+    "interfaces": [ "eth0", "eth1" ]
+},
+</screen>
+</para>
 
 <para>The next couple of lines define the lease database, the place where the server
 stores its lease information. This particular example tells the server to use
@@ -339,19 +346,37 @@ JSON validator is available at <ulink url="http://jsonviewer.stack.hu/"/>.
 <section id="dhcp6-interface-selection">
   <title>Interface selection</title>
   <para>The DHCPv6 server has to be configured to listen on specific network
-  interfaces.  The simplest network interface configuration tells the server to
+  interfaces.  The simplest network interface configuration instructs the server to
   listen on all available interfaces:
   <screen>
-"Dhcp6": { <userinput>"interfaces": ["*"]</userinput>, ... }</screen>
+"Dhcp6": {
+    "interfaces-config": {
+        "interfaces": [ <userinput>"*"</userinput> ]
+    }
+    ...
+}
+</screen>
   The asterisk plays the role of a wildcard and means "listen on all interfaces".
   However, it is usually a good idea to explicitly specify interface names:
   <screen>
-"Dhcp6": { <userinput>"interfaces": [ "eth1", "eth3" ]</userinput>, ... }</screen>
-  </para>
+"Dhcp6": {
+    "interfaces-config": {
+        "interfaces": [ <userinput>"eth1", "eth3"</userinput> ]
+    },
+    ...
+}
+  </screen>
+</para>
   <para>It is possible to use wildcard interface name (asterisk) concurrently
-  with explicit interface names:
+  with the actual interface names:
   <screen>
-"Dhcp6": { <userinput>"interfaces": [ "eth1", "eth3", "*" ]</userinput>, ... }</screen>
+"Dhcp6": {
+    "interfaces-config": {
+        "interfaces": [ <userinput>"eth1", "eth3", "*"</userinput> ]
+    },
+    ...
+}
+  </screen>
 It is anticipated that this will form of usage only be used where it is desired to
 temporarily override a list of interface names and listen on all interfaces.
   </para>
@@ -413,23 +438,26 @@ temporarily override a list of interface names and listen on all interfaces.
         notation to specify interfaces has been extended.  An interface name can be
         optionally followed by a slash, followed by the global unicast address on which
         the server should listen. This will be done in addition to normal
-        link-local binding + listening on ff02::1:2 address. The sample commands
-        listed below show how to listen on 2001:db8::1 (a global address)
+        link-local binding + listening on ff02::1:2 address. The sample configuration
+        below shows how to listen on 2001:db8::1 (a global address)
         configured on the eth1 interface.
       </para>
       <para>
  <screen>
 "Dhcp6": {
-    <userinput>"interfaces": [ "eth1/2001:db8::1"],</userinput>
+    "interfaces-config": {
+        "interfaces": [ <userinput>"eth1/2001:db8::1"</userinput> ]
+    },
     ...
-}</screen>
+}
+ </screen>
 
-        When this configuration gets committed, the server will start to listen on
+        This configuration will cause the server to listen on
         eth1 on link-local address, multicast group (ff02::1:2) and 2001:db8::1.
       </para>
       <para>
         It is possible to mix interface names, wildcards and interface name/addresses
-        on the Dhcp6/interface list. It is not possible to specify more than one
+        on the list of interfaces. It is not possible to specify more than one
         unicast address on a given interface.
       </para>
       <para>
@@ -1771,7 +1799,9 @@ should include options from the isc option space:
       such a configuration:
 <screen>
 "Dhcp6": {
-    "interfaces": [ "ethX" ],
+    "interfaces-config": {
+        "interfaces": [ "ethX" ]
+    },
     <userinput>"option-data": [ {
         "name": "dns-servers",
         "data": "2001:db8::1, 2001:db8::2"
