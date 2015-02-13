@@ -109,7 +109,7 @@ protected:
     /// lfcController::launch for details.  This is wrapped to provide
     /// a single place to update the test_mode throughout the file.
     void launch(LFCController lfc_controller, int argc, char* argv[]) {
-        lfc_controller.launch(argc, argv, true);
+        lfc_controller.launch(argc, argv, false);
     }
 
 private:
