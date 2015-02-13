@@ -56,7 +56,10 @@
 
 # DHCPv4 specific configuration starts here.
 "Dhcp4": {
-    "interfaces": [ "eth0" ],
+    "interfaces-config": {
+        "interfaces": [ "eth0" ],
+        "dhcp-socket-type": "raw"
+    },
     "valid-lifetime": 4000,
     "renew-timer": 1000,
     "rebind-timer": 2000,
@@ -70,7 +73,9 @@
 
 # DHCPv6 specific configuration starts here.
 "Dhcp6": {
-    "interfaces": [ "eth1" ],
+    "interfaces-config": {
+        "interfaces": [ "eth1" ]
+    },
     "preferred-lifetime": 3000,
     "valid-lifetime": 4000,
     "renew-timer": 1000,
@@ -119,8 +124,7 @@
         If there is an array, a specific instance within that array is referenced by
         a number in square brackets (with numbering starting at zero). For example, in the above configuration the
         valid-lifetime in the Dhcp6 component can be referred to as
-        Dhcp6/valid-lifetime, the first interface for the DHCPv4 server as
-        Dhcp4/interfaces[0] and the pool in the first subnet defined in the DHCPv6
+        Dhcp6/valid-lifetime and the pool in the first subnet defined in the DHCPv6
         configuration as Dhcp6/subnet6[0]/pool.</para>
       
       <!-- @todo Add a reference here after #3422 is done -->

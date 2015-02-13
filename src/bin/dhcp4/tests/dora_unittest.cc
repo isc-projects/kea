@@ -59,7 +59,9 @@ namespace {
 ///     aa:bb:cc:dd:ee:ff, reserved address 10.0.0.7
 const char* DORA_CONFIGS[] = {
 // Configuration 0
-    "{ \"interfaces\": [ \"*\" ],"
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
         "\"valid-lifetime\": 600,"
         "\"subnet4\": [ { "
         "    \"subnet\": \"10.0.0.0/24\", "
@@ -97,7 +99,10 @@ const char* DORA_CONFIGS[] = {
     "}",
 
 // Configuration 1
-    "{ \"interfaces\": [ \"*\" ],"
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+
         "\"valid-lifetime\": 600,"
         "\"subnet4\": [ { "
         "    \"subnet\": \"192.0.2.0/24\", "
@@ -133,7 +138,9 @@ const char* DORA_CONFIGS[] = {
     "}",
 
 // Configuration 2
-    "{ \"interfaces\": [ \"*\" ],"
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
         "\"valid-lifetime\": 600,"
         "\"subnet4\": [ { "
         "    \"subnet\": \"10.0.0.0/24\", "

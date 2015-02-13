@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,8 +16,10 @@
 #define CFG_IFACE_H
 
 #include <asiolink/io_address.h>
+#include <boost/shared_ptr.hpp>
 #include <map>
 #include <set>
+#include <string>
 
 namespace isc {
 namespace dhcp {
@@ -51,6 +53,14 @@ public:
         isc::Exception(file, line, what) { };
 };
 
+/// @brief Exception thrown when invalid socket type has been specified
+/// for the given family.
+class InvalidSocketType : public Exception {
+public:
+    InvalidSocketType(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
 /// @brief Represents selection of interfaces for DHCP server.
 ///
 /// This class manages selection of interfaces on which the DHCP server is
@@ -63,7 +73,17 @@ public:
 /// instructs the server to listen on all available interfaces.
 ///
 /// Once interfaces have been specified the sockets (either IPv4 or IPv6)
-/// can be opened by calling @c CfgIface::openSockets function.
+/// can be opened by calling @c CfgIface::openSockets function. Kea
+/// offers configuration parameters to control the types of sockets to be
+/// opened by the DHCPv4 server. In small deployments it is requires that
+/// the server can handle messages from the directly connected clients
+/// which don't have an address yet. Unicasting the response to such
+/// client is possible by the use of raw sockets. In larger deployments
+/// it is often the case that whole traffic is received via relays, and
+/// in such case the use of UDP sockets is preferred. The type of the
+/// sockets to be opened is specified using one of the
+/// @c CfgIface::useSocketType method variants. The @c CfgIface::SocketType
+/// enumeration specifies the possible values.
 ///
 /// @warning This class makes use of the AF_INET and AF_INET6 family literals,
 /// but it doesn't verify that the address family value passed as @c uint16_t
@@ -71,6 +91,15 @@ public:
 /// guarantee that the address family value is correct.
 class CfgIface {
 public:
+
+    /// @brief Socket type used by the DHCPv4 server.
+    enum SocketType  {
+        /// Raw socket, used for direct DHCPv4 traffic.
+        SOCKET_RAW,
+        /// Datagram socket, i.e. IP/UDP socket.
+        SOCKET_UDP
+    };
+
     /// @brief Keyword used to enable all interfaces.
     ///
     /// This keyword can be used instead of the interface name to specify
@@ -143,6 +172,46 @@ public:
     /// @c CfgIface::use has been already called for this interface.
     void use(const uint16_t family, const std::string& iface_name);
 
+    /// @brief Sets the specified socket type to be used by the server.
+    ///
+    /// Supported socket types for DHCPv4 are:
+    /// - @c SOCKET_RAW
+    /// - @c SOCKET_UDP
+    ///
+    /// @param family Address family (AF_INET or AF_INET6).
+    /// @param socket_type Socket type.
+    ///
+    /// @throw InvalidSocketType if the unsupported socket type has been
+    /// specified for the address family. Currently, the socket type
+    /// can only be selected for the AF_INET family.
+    void useSocketType(const uint16_t family, const SocketType& socket_type);
+
+    /// @brief Sets the specified socket type specified in textual format.
+    ///
+    /// The following names of the socket types are currently supported, and
+    /// can be passed in the @c socket_type parameter:
+    /// - raw - for raw sockets,
+    /// - udp - for the IP/UDP datagram sockets,
+    ///
+    /// @param family Address family (AF_INET or AF_INET6)
+    /// @param socket_type_name Socket type in the textual format.
+    ///
+    /// @throw InvalidSocketType if the unsupported socket type has been
+    /// specified for the address family. Currently, the socket type
+    /// can only be selected for the AF_INET family.
+    void useSocketType(const uint16_t family,
+                       const std::string& socket_type_name);
+
+    /// @brief Returns the socket type in the textual format.
+    std::string socketTypeToText() const;
+
+    /// @brief Converts the socket type in the textual format to the type
+    /// represented by the @c SocketType.
+    ///
+    /// @throw InvalidSocketType if the specified value of the @c socket_type_name
+    /// is invalid.
+    SocketType textToSocketType(const std::string& socket_type_name) const;
+
     /// @brief Equality operator.
     ///
     /// @param other Object to be compared with this object.
@@ -204,7 +273,16 @@ private:
     /// @brief A booolean value which indicates that the wildcard interface name
     /// has been specified (*).
     bool wildcard_used_;
+
+    /// @brief A type of the sockets used by the DHCP server.
+    SocketType socket_type_;
 };
+
+/// @brief A pointer to the @c CfgIface .
+typedef boost::shared_ptr<CfgIface> CfgIfacePtr;
+
+/// @brief A pointer to the const @c CfgIface.
+typedef boost::shared_ptr<const CfgIface> ConstCfgIfacePtr;
 
 }
 }

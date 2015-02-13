@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -26,15 +26,17 @@ namespace isc {
 namespace dhcp {
 
 SrvConfig::SrvConfig()
-    : sequence_(0), cfg_option_def_(new CfgOptionDef()),
-      cfg_option_(new CfgOption()), cfg_subnets4_(new CfgSubnets4()),
-      cfg_subnets6_(new CfgSubnets6()), cfg_hosts_(new CfgHosts()) {
+    : sequence_(0), cfg_iface_(new CfgIface()),
+      cfg_option_def_(new CfgOptionDef()), cfg_option_(new CfgOption()),
+      cfg_subnets4_(new CfgSubnets4()), cfg_subnets6_(new CfgSubnets6()),
+      cfg_hosts_(new CfgHosts()) {
 }
 
 SrvConfig::SrvConfig(const uint32_t sequence)
-    : sequence_(sequence), cfg_option_def_(new CfgOptionDef()),
-      cfg_option_(new CfgOption()), cfg_subnets4_(new CfgSubnets4()),
-      cfg_subnets6_(new CfgSubnets6()), cfg_hosts_(new CfgHosts()) {
+    : sequence_(sequence), cfg_iface_(new CfgIface()),
+      cfg_option_def_(new CfgOptionDef()), cfg_option_(new CfgOption()),
+      cfg_subnets4_(new CfgSubnets4()), cfg_subnets6_(new CfgSubnets6()),
+      cfg_hosts_(new CfgHosts()) {
 }
 
 std::string
@@ -92,7 +94,7 @@ SrvConfig::copy(SrvConfig& new_config) const {
         new_config.addLoggingInfo(*it);
     }
     // Replace interface configuration.
-    new_config.setCfgIface(cfg_iface_);
+    new_config.cfg_iface_.reset(new CfgIface(*cfg_iface_));
     // Replace option definitions.
     cfg_option_def_->copyTo(*new_config.cfg_option_def_);
     cfg_option_->copyTo(*new_config.cfg_option_);
@@ -137,7 +139,7 @@ SrvConfig::equals(const SrvConfig& other) const {
         }
     }
     // Logging information is equal between objects, so check other values.
-    return ((cfg_iface_ == other.cfg_iface_) &&
+    return ((*cfg_iface_ == *other.cfg_iface_) &&
             (*cfg_option_def_ == *other.cfg_option_def_) &&
             (*cfg_option_ == *other.cfg_option_));
 }

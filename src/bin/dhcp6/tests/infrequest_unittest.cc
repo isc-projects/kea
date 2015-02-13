@@ -45,7 +45,9 @@ namespace {
 ///   - no subnets defined
 const char* CONFIGS[] = {
     // Configuration 0
-    "{ \"interfaces\": [ \"*\" ],"
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -66,7 +68,9 @@ const char* CONFIGS[] = {
         "\"valid-lifetime\": 4000 }",
 
     // Configuration 1
-    "{ \"interfaces\": [ \"*\" ],"
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -81,7 +85,9 @@ const char* CONFIGS[] = {
         "\"valid-lifetime\": 4000 }",
 
     // Configuration 2
-    "{ \"interfaces\": [ \"*\" ],"
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -100,7 +106,9 @@ const char* CONFIGS[] = {
         "\"valid-lifetime\": 4000 }",
 
     // Configuration 3
-    "{ \"interfaces\": [ \"*\" ],"
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
         "\"option-data\": [ {"
         "    \"name\": \"nis-servers\","
         "    \"data\": \"2001:db8::1, 2001:db8::2\""

@@ -7,7 +7,9 @@
 
 {
 "Dhcp6": {
-    "interfaces": [ "ethX" ],
+    "interfaces-config:" {
+        "interfaces": [ "ethX" ]
+    },
 
 # This is the list of options that will be granted to all clients that ask.
     "option-data": [ {

@@ -94,7 +94,7 @@ public:
     ///
     template<typename LeaseObjectType, typename LeaseFileType,
              typename StorageType>
-    void writeLeases(LeaseFileType lease_file,
+    void writeLeases(LeaseFileType& lease_file,
                      const StorageType& storage,
                      const std::string& compare) {
         // Prepare for a new file, close and remove the old
