@@ -671,7 +671,7 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx, Lease6Collection& exis
         uint8_t prefix_len = resv->second.getPrefixLen();
 
         // Check if already have this lease on the existing_leases list.
-        for (Lease6CollectionConstIter l = existing_leases.begin();
+        for (Lease6Collection::const_iterator l = existing_leases.begin();
              l != existing_leases.end(); ++l) {
 
             // Ok, we already have a lease for this reservation and it's usable
