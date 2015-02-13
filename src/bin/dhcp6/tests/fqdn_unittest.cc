@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -414,7 +414,7 @@ public:
             ASSERT_NO_THROW(reply = srv_->processRequest(req));
 
         } else if (msg_type == DHCPV6_RENEW) {
-            ASSERT_NO_THROW(reply = srv_->processRequest(req));
+            ASSERT_NO_THROW(reply = srv_->processRenew(req));
 
         } else if (msg_type == DHCPV6_RELEASE) {
             // For Release no lease will be acquired so we have to leave

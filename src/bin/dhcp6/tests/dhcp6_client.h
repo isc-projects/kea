@@ -406,6 +406,12 @@ public:
         oro_.push_back(option_code);
     }
 
+    /// @brief returns client-id
+    /// @return client-id
+    DuidPtr getDuid() const {
+        return (duid_);
+    }
+
 private:
 
     /// @brief Applies the new leases for the client.

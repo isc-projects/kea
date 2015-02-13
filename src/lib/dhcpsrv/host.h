@@ -295,9 +295,17 @@ public:
         return (duid_);
     }
 
+    /// @brief Returns the identifier (MAC or DUID) in binary form.
+    /// @return const reference to MAC or DUID in vector<uint8_t> form
     const std::vector<uint8_t>& getIdentifier() const;
 
+    /// @brief Returns the identifier type.
+    /// @return the identifier type
     IdentifierType getIdentifierType() const;
+
+    /// @brief Returns host identifier (mac or DUID) in printer friendly form.
+    /// @return text form of the identifier, including (duid= or mac=).
+    std::string getIdentifierAsText() const;
 
     /// @brief Sets new IPv4 subnet identifier.
     ///

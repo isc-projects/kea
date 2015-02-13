@@ -500,4 +500,17 @@ TEST(HostTest, addClientClasses) {
     EXPECT_TRUE(host->getClientClasses6().contains("bar"));
 }
 
+TEST(HostTest, getIdentifierAsText) {
+    Host host1("01:02:03:04:05:06", "hw-address",
+               SubnetID(1), SubnetID(2),
+               IOAddress("192.0.2.3"));
+    EXPECT_EQ("hwaddr=01:02:03:04:05:06", host1.getIdentifierAsText());
+
+    Host host2("0a:0b:0c:0d:0e:0f:ab:cd:ef", "duid",
+               SubnetID(1), SubnetID(2),
+               IOAddress("192.0.2.3"));
+    EXPECT_EQ("duid=0a:0b:0c:0d:0e:0f:ab:cd:ef",
+              host2.getIdentifierAsText());
+}
+
 } // end of anonymous namespace

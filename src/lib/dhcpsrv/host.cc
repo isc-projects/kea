@@ -230,5 +230,22 @@ Host::addClientClassInternal(ClientClasses& classes,
     }
 }
 
+std::string
+Host::getIdentifierAsText() const {
+    std::string txt;
+    if (hw_address_) {
+        txt = "hwaddr=" + hw_address_->toText(false);
+    } else {
+        txt = "duid=";
+        if (duid_) {
+            txt += duid_->toText();
+        } else {
+            txt += "(none)";
+        }
+    }
+
+    return (txt);
+}
+
 } // end of namespace isc::dhcp
 } // end of namespace isc
