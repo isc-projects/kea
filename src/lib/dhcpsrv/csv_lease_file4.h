@@ -56,7 +56,7 @@ public:
     /// statistics associated with any previous use of the file
     /// While it doesn't throw any exceptions of its own
     /// the base class may do so.
-    void open();
+    virtual void open();
 
     /// @brief Appends the lease record to the CSV file.
     ///

@@ -38,7 +38,7 @@ namespace dhcp {
 /// validation (see http://kea.isc.org/ticket/2405). However, when #2405
 /// is implemented, the @c next function may need to be updated to use the
 /// validation capablity of @c Lease6.
-  class CSVLeaseFile6 : public isc::util::CSVFile, public LeaseFileStats {
+class CSVLeaseFile6 : public isc::util::CSVFile, public LeaseFileStats {
 public:
 
     /// @brief Constructor.
@@ -55,7 +55,7 @@ public:
     /// statistics associated with any previous use of the file
     /// While it doesn't throw any exceptions of its own
     /// the base class may do so.
-    void open();
+    virtual void open();
 
     /// @brief Appends the lease record to the CSV file.
     ///
