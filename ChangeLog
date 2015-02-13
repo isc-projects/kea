@@ -1,3 +1,13 @@
+890.	[func]		marcin
+	It is now possible to specify whether the DHCPv4 server
+	should use raw sockets or IP/UDP datagram sockets to
+	receive and send DHCP messages. The configuration format
+	has been changed for the selection of interfaces on which
+	the DHCPv4 and DHCPv6 servers should listen. The
+	configuration files using an old format are incompatible
+	with the latest version of Kea.
+	(Trac #3604, git c726bbc4eae0f576f6791c7490bfba8c30a401d9)
+
 889.	[bug]		marcin
 	Resolved a bug in the DHCPv4 allocation engine whereby the
 	client could request and obtain an address reserved for
