@@ -80,7 +80,7 @@ public:
 /// which don't have an address yet. Unicasting the response to such
 /// client is possible by the use of raw sockets. In larger deployments
 /// it is often the case that whole traffic is received via relays, and
-/// in such case the use of datagram sockets is preferred. The type of the
+/// in such case the use of UDP sockets is preferred. The type of the
 /// sockets to be opened is specified using one of the
 /// @c CfgIface::useSocketType method variants. The @c CfgIface::SocketType
 /// enumeration specifies the possible values.
@@ -97,7 +97,7 @@ public:
         /// Raw socket, used for direct DHCPv4 traffic.
         SOCKET_RAW,
         /// Datagram socket, i.e. IP/UDP socket.
-        SOCKET_DGRAM
+        SOCKET_UDP
     };
 
     /// @brief Keyword used to enable all interfaces.
@@ -187,7 +187,7 @@ public:
     /// The following names of the socket types are currently supported, and
     /// can be passed in the @c socket_type parameter:
     /// - raw - for raw sockets,
-    /// - datagram - for the datagram sockets,
+    /// - udp - for the IP/UDP datagram sockets,
     ///
     /// @param family Address family (AF_INET or AF_INET6)
     /// @param socket_type_name Socket type in the textual format.

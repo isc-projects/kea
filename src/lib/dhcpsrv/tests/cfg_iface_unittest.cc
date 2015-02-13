@@ -339,12 +339,12 @@ TEST_F(CfgIfaceTest, equality) {
     EXPECT_FALSE(cfg1 != cfg2);
 
     // Differ by socket type.
-    cfg1.useSocketType(AF_INET, "datagram");
+    cfg1.useSocketType(AF_INET, "udp");
     EXPECT_FALSE(cfg1 == cfg2);
     EXPECT_TRUE(cfg1 != cfg2);
 
     // Now, both should use the same socket type.
-    cfg2.useSocketType(AF_INET, "datagram");
+    cfg2.useSocketType(AF_INET, "udp");
     EXPECT_TRUE(cfg1 == cfg2);
     EXPECT_FALSE(cfg1 != cfg2);
 }
@@ -357,8 +357,8 @@ TEST_F(CfgIfaceTest, equality) {
 TEST(CfgIfaceNoStubTest, useSocketType) {
     CfgIface cfg;
     // Select datagram sockets.
-    ASSERT_NO_THROW(cfg.useSocketType(AF_INET, "datagram"));
-    EXPECT_EQ("datagram", cfg.socketTypeToText());
+    ASSERT_NO_THROW(cfg.useSocketType(AF_INET, "udp"));
+    EXPECT_EQ("udp", cfg.socketTypeToText());
     ASSERT_NO_THROW(cfg.openSockets(AF_INET, 10067, true));
     // For datagram sockets, the direct traffic is not supported.
     ASSERT_TRUE(!IfaceMgr::instance().isDirectResponseSupported());
@@ -370,8 +370,8 @@ TEST(CfgIfaceNoStubTest, useSocketType) {
     // For raw sockets, the direct traffic is supported.
     ASSERT_TRUE(IfaceMgr::instance().isDirectResponseSupported());
 
-    ASSERT_NO_THROW(cfg.useSocketType(AF_INET, CfgIface::SOCKET_DGRAM));
-    EXPECT_EQ("datagram", cfg.socketTypeToText());
+    ASSERT_NO_THROW(cfg.useSocketType(AF_INET, CfgIface::SOCKET_UDP));
+    EXPECT_EQ("udp", cfg.socketTypeToText());
     ASSERT_NO_THROW(cfg.openSockets(AF_INET, 10067, true));
     ASSERT_TRUE(!IfaceMgr::instance().isDirectResponseSupported());
 
@@ -383,7 +383,7 @@ TEST(CfgIfaceNoStubTest, useSocketType) {
     // Test invalid values.
     EXPECT_THROW(cfg.useSocketType(AF_INET, "default"),
         InvalidSocketType);
-    EXPECT_THROW(cfg.useSocketType(AF_INET6, "datagram"),
+    EXPECT_THROW(cfg.useSocketType(AF_INET6, "udp"),
         InvalidSocketType);
 }
 #endif
