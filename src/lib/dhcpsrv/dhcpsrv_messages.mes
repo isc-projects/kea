@@ -99,9 +99,9 @@ This is a debug message reporting that the DHCP configuration manager has
 returned the specified IPv6 subnet when given the address hint specified
 because it is the only subnet defined.
 
-% DHCPSRV_CFGMGR_SOCKET_TYPE_DEFAULT "socket-type" not specified , using default socket type %1
+% DHCPSRV_CFGMGR_SOCKET_TYPE_DEFAULT "dhcp-socket-type" not specified , using default socket type %1
 This informational message is logged when the administrator hasn't
-specified the "socket-type" parameter in configuration for interfaces.
+specified the "dhcp-socket-type" parameter in configuration for interfaces.
 In such case, the default socket type will be used.
 
 % DHCPSRV_CFGMGR_SOCKET_RAW_UNSUPPORTED use of raw sockets is unsupported on this OS, datagram sockets will be used
