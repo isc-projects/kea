@@ -390,7 +390,7 @@ public:
     /// be called.
     ///
     /// @throw CSVFileError when IO operation fails.
-    void open();
+    virtual void open();
 
     /// @brief Creates a new CSV file.
     ///
