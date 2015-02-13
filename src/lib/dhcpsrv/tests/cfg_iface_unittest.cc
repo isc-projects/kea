@@ -125,7 +125,6 @@ TEST_F(CfgIfaceTest, explicitNamesAndAddressesV4) {
     CfgIface cfg;
     ASSERT_NO_THROW(cfg.use(AF_INET, "eth0/10.0.0.1"));
     ASSERT_NO_THROW(cfg.use(AF_INET, "eth1/192.0.2.3"));
-    ASSERT_THROW(cfg.use(AF_INET, "eth1/192.0.2.5"), DuplicateIfaceName);
 
     // Open sockets on specified interfaces and addresses.
     cfg.openSockets(AF_INET, DHCP4_SERVER_PORT);
@@ -146,7 +145,6 @@ TEST_F(CfgIfaceTest, explicitNamesAndAddressesV4) {
     // Now check that the socket can be bound to a different address on
     // eth1.
     ASSERT_NO_THROW(cfg.use(AF_INET, "eth1/192.0.2.5"));
-    ASSERT_THROW(cfg.use(AF_INET, "eth1/192.0.2.3"), DuplicateIfaceName);
 
     // Open sockets according to the new configuration.
     cfg.openSockets(AF_INET, DHCP4_SERVER_PORT);
@@ -170,6 +168,25 @@ TEST_F(CfgIfaceTest, explicitNamesAndAddressesInvalidV4) {
     // Duplicated interface.
     ASSERT_NO_THROW(cfg.use(AF_INET, "eth1"));
     EXPECT_THROW(cfg.use(AF_INET, "eth1/192.0.2.3"), DuplicateIfaceName);
+}
+
+// This test checks that it is possible to explicitly select multiple
+// IPv4 addresses on a single interface.
+TEST_F(CfgIfaceTest, multipleAddressesSameInterfaceV4) {
+    CfgIface cfg;
+    ASSERT_NO_THROW(cfg.use(AF_INET, "eth1/192.0.2.3"));
+    // Cannot add the same address twice.
+    ASSERT_THROW(cfg.use(AF_INET, "eth1/192.0.2.3"), DuplicateAddress);
+    // Can add another address on this interface.
+    ASSERT_NO_THROW(cfg.use(AF_INET, "eth1/192.0.2.5"));
+    // Can't select the whole interface.
+    ASSERT_THROW(cfg.use(AF_INET, "eth1"), DuplicateIfaceName);
+
+    cfg.openSockets(AF_INET, DHCP4_SERVER_PORT);
+
+    EXPECT_FALSE(socketOpen("eth0", "10.0.0.1"));
+    EXPECT_TRUE(socketOpen("eth1", "192.0.2.3"));
+    EXPECT_TRUE(socketOpen("eth1", "192.0.2.5"));
 }
 
 // This test checks that the interface names can be explicitly selected
