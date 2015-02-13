@@ -197,7 +197,8 @@ IfaceMgr::IfaceMgr()
     :control_buf_len_(CMSG_SPACE(sizeof(struct in6_pktinfo))),
      control_buf_(new char[control_buf_len_]),
      packet_filter_(new PktFilterInet()),
-     packet_filter6_(new PktFilterInet6())
+     packet_filter6_(new PktFilterInet6()),
+     test_mode_(false)
 {
 
     try {

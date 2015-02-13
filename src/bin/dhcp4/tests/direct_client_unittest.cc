@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -116,7 +116,9 @@ DirectClientTest::DirectClientTest() : Dhcpv4SrvTest() {
 void
 DirectClientTest::configureSubnet(const std::string& prefix) {
     std::ostringstream config;
-    config << "{ \"interfaces\": [ \"*\" ],"
+    config << "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"option-data\": [ ],"
@@ -137,7 +139,9 @@ void
 DirectClientTest::configureTwoSubnets(const std::string& prefix1,
                                       const std::string& prefix2) {
     std::ostringstream config;
-    config << "{ \"interfaces\": [ \"*\" ],"
+    config << "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"option-data\": [ ],"

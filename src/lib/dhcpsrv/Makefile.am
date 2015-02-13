@@ -118,6 +118,8 @@ libkea_dhcpsrv_la_SOURCES += parsers/dhcp_parsers.h
 libkea_dhcpsrv_la_SOURCES += parsers/host_reservation_parser.cc
 libkea_dhcpsrv_la_SOURCES += parsers/host_reservation_parser.h
 libkea_dhcpsrv_la_SOURCES += parsers/host_reservations_list_parser.h
+libkea_dhcpsrv_la_SOURCES += parsers/ifaces_config_parser.cc
+libkea_dhcpsrv_la_SOURCES += parsers/ifaces_config_parser.h
 
 
 nodist_libkea_dhcpsrv_la_SOURCES = dhcpsrv_messages.h dhcpsrv_messages.cc

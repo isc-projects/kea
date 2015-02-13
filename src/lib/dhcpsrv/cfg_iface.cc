@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -26,7 +26,7 @@ namespace dhcp {
 const char* CfgIface::ALL_IFACES_KEYWORD = "*";
 
 CfgIface::CfgIface()
-    : wildcard_used_(false) {
+    : wildcard_used_(false), socket_type_(SOCKET_RAW) {
 }
 
 void
@@ -38,7 +38,8 @@ bool
 CfgIface::equals(const CfgIface& other) const {
     return (iface_set_ == other.iface_set_ &&
             address_map_ == other.address_map_ &&
-            wildcard_used_ == other.wildcard_used_);
+            wildcard_used_ == other.wildcard_used_ &&
+            socket_type_ == other.socket_type_);
 }
 
 void
@@ -50,8 +51,22 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
     // specified, mark all interfaces active. In all cases, mark loopback
     // inactive.
     setState(family, !wildcard_used_, true);
+    IfaceMgr& iface_mgr = IfaceMgr::instance();
     // Remove selection of unicast addresses from all interfaces.
-    IfaceMgr::instance().clearUnicasts();
+    iface_mgr.clearUnicasts();
+    // For the DHCPv4 server, if the user has selected that raw sockets
+    // should be used, we will try to configure the Interface Manager to
+    // support the direct responses to the clients that don't have the
+    // IP address. This should effectively turn on the use of raw
+    // sockets. However, this may be unsupported on some operating
+    // systems, so there is no guarantee.
+    if ((family == AF_INET) && (!IfaceMgr::instance().isTestMode())) {
+        iface_mgr.setMatchingPacketFilter(socket_type_ == SOCKET_RAW);
+        if ((socket_type_ == SOCKET_RAW) &&
+            !iface_mgr.isDirectResponseSupported()) {
+            LOG_WARN(dhcpsrv_logger, DHCPSRV_CFGMGR_SOCKET_RAW_UNSUPPORTED);
+        }
+    }
     // If there is no wildcard interface specified, we will have to iterate
     // over the names specified by the caller and enable them.
     if (!wildcard_used_) {
@@ -136,6 +151,7 @@ CfgIface::reset() {
     wildcard_used_ = false;
     iface_set_.clear();
     address_map_.clear();
+    useSocketType(AF_INET, SOCKET_RAW);
 }
 
 void
@@ -168,6 +184,36 @@ CfgIface::setState(const uint16_t family, const bool inactive,
 void
 CfgIface::socketOpenErrorHandler(const std::string& errmsg) {
     LOG_WARN(dhcpsrv_logger, DHCPSRV_OPEN_SOCKET_FAIL).arg(errmsg);
+}
+
+std::string
+CfgIface::socketTypeToText() const {
+    switch (socket_type_) {
+    case SOCKET_RAW:
+        return ("raw");
+
+    case SOCKET_UDP:
+        return ("udp");
+
+    default:
+        ;
+    }
+
+    isc_throw(Unexpected, "unsupported socket type " << socket_type_);
+}
+
+CfgIface::SocketType
+CfgIface::textToSocketType(const std::string& socket_type_name) const {
+    if (socket_type_name == "udp") {
+        return (SOCKET_UDP);
+
+    } else if (socket_type_name == "raw") {
+        return (SOCKET_RAW);
+
+    } else {
+        isc_throw(InvalidSocketType, "unsupported socket type '"
+                  << socket_type_name << "'");
+    }
 }
 
 void
@@ -314,6 +360,24 @@ CfgIface::use(const uint16_t family, const std::string& iface_name) {
         }
         iface_set_.insert(name);
     }
+}
+
+void
+CfgIface::useSocketType(const uint16_t family,
+                        const SocketType& socket_type) {
+    if (family != AF_INET) {
+        isc_throw(InvalidSocketType, "socket type must not be specified for"
+                  " the DHCPv6 server");
+    }
+    socket_type_ = socket_type;
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_SOCKET_TYPE_SELECT)
+        .arg(socketTypeToText());
+}
+
+void
+CfgIface::useSocketType(const uint16_t family,
+                        const std::string& socket_type_name) {
+    useSocketType(family, textToSocketType(socket_type_name));
 }
 
 } // end of isc::dhcp namespace

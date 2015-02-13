@@ -17,18 +17,26 @@
         }
       },
 
-      { "item_name": "interfaces",
-        "item_type": "list",
+      { "item_name": "interfaces-config",
+        "item_type": "map",
         "item_optional": false,
-        "item_default": [ "*" ],
-        "list_item_spec":
+        "item_default": {},
+        "map_item_spec": [
         {
-          "item_name": "interface_name",
-          "item_type": "string",
-          "item_optional": false,
-          "item_default": "*"
+            "item_name": "interfaces",
+            "item_type": "list",
+            "item_optional": false,
+            "item_default": [ "*" ],
+            "list_item_spec":
+            {
+                "item_name": "interface_name",
+                "item_type": "string",
+                "item_optional": false,
+                "item_default": "*"
+            }
         }
-      } ,
+        ]
+      },
 
       { "item_name": "renew-timer",
         "item_type": "integer",
