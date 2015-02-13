@@ -174,6 +174,10 @@ public:
 
     /// @brief Sets the specified socket type to be used by the server.
     ///
+    /// Supported socket types for DHCPv4 are:
+    /// - @c SOCKET_RAW
+    /// - @c SOCKET_UDP
+    ///
     /// @param family Address family (AF_INET or AF_INET6).
     /// @param socket_type Socket type.
     ///
@@ -200,6 +204,13 @@ public:
 
     /// @brief Returns the socket type in the textual format.
     std::string socketTypeToText() const;
+
+    /// @brief Converts the socket type in the textual format to the type
+    /// represented by the @c SocketType.
+    ///
+    /// @throw InvalidSocketType if the specified value of the @c socket_type_name
+    /// is invalid.
+    SocketType textToSocketType(const std::string& socket_type_name) const;
 
     /// @brief Equality operator.
     ///

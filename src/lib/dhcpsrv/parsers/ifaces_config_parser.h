@@ -34,9 +34,7 @@ public:
     /// @brief Constructor
     ///
     /// @param protocol AF_INET for DHCPv4 and AF_INET6 for DHCPv6.
-    ///
-    /// @throw BadValue if supplied parameter name is not "interface"
-    InterfaceListConfigParser(const int protocol);
+    InterfaceListConfigParser(const uint16_t protocol);
 
     /// @brief Parses a list of interface names.
     ///
@@ -59,7 +57,7 @@ public:
 private:
 
     /// @brief AF_INET for DHCPv4 and AF_INET6 for DHCPv6.
-    int protocol_;
+    uint16_t protocol_;
 
 };
 
@@ -82,7 +80,7 @@ public:
     /// @brief Constructor
     ///
     /// @param protocol AF_INET for DHCPv4 and AF_INET6 for DHCPv6.
-    IfacesConfigParser(const int protocol);
+    IfacesConfigParser(const uint16_t protocol);
 
     /// @brief Parses generic parameters in "interfaces-config".
     ///

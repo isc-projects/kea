@@ -25,7 +25,7 @@ using namespace isc::data;
 namespace isc {
 namespace dhcp {
 
-InterfaceListConfigParser::InterfaceListConfigParser(const int protocol)
+InterfaceListConfigParser::InterfaceListConfigParser(const uint16_t protocol)
     : protocol_(protocol) {
 }
 
@@ -50,7 +50,7 @@ InterfaceListConfigParser::commit() {
     // Nothing to do.
 }
 
-IfacesConfigParser::IfacesConfigParser(const int protocol)
+IfacesConfigParser::IfacesConfigParser(const uint16_t protocol)
     : protocol_(protocol) {
 }
 
