@@ -258,6 +258,20 @@ public:
 
 private:
 
+    /// @brief Checks if multiple IPv4 addresses has been activate on any
+    /// interface.
+    ///
+    /// This method is useful to check if the current configuration uses
+    /// multiple IPv4 addresses on any interface. This is important when
+    /// using raw sockets to recieve messages from the clients because
+    /// each packet may be received multiple times when it is sent from
+    /// a directly connected client. If this is the case, a warning must
+    /// be logged.
+    ///
+    /// @return true if multiple addresses are activated on any interface,
+    /// false otherwise.
+    bool multipleAddressesPerInterfaceActive() const;
+
     /// @brief Selects or deselects interfaces.
     ///
     /// This function selects all interfaces to receive DHCP traffic or
