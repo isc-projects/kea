@@ -415,16 +415,16 @@ temporarily override a list of interface names and listen on all interfaces.
 "Dhcp4": {
     "interfaces-config": {
         "interfaces": [ <userinput>"eth1", "eth3"</userinput> ],
-        "socket-type": "datagram"
+        "dhcp-socket-type": "datagram"
     },
     ...
 }
   </screen>
-  The <command>socket-type</command> specifies that the datagram sockets will
+  The <command>dhcp-socket-type</command> specifies that the datagram sockets will
   be opened on all interfaces on which the server listens, i.e. "eth1" and
-  "eth3" in our case. If the <command>socket-type</command> is set to
+  "eth3" in our case. If the <command>dhcp-socket-type</command> is set to
   <userinput>raw</userinput>, it configures the server to use raw sockets
-  instead. If the <command>socket-type</command> value is not specified, the
+  instead. If the <command>dhcp-socket-type</command> value is not specified, the
   default value <userinput>raw</userinput> is used.
   </para>
 

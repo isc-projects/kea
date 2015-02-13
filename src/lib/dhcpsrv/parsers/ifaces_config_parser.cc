@@ -92,7 +92,7 @@ IfacesConfigParser4::build(isc::data::ConstElementPtr ifaces_config) {
     bool socket_type_specified = false;
     BOOST_FOREACH(ConfigPair element, ifaces_config->mapValue()) {
         try {
-            if (element.first == "socket-type") {
+            if (element.first == "dhcp-socket-type") {
                 cfg->useSocketType(AF_INET, element.second->stringValue());
                 socket_type_specified = true;
 

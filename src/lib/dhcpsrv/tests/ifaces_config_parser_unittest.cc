@@ -103,7 +103,7 @@ TEST_F(IfacesConfigParserTest, socketTypeRaw) {
 
     // Configuration with a raw socket selected.
     std::string config = "{ ""\"interfaces\": [ ],"
-        " \"socket-type\": \"raw\" }";
+        " \"dhcp-socket-type\": \"raw\" }";
 
     ElementPtr config_element = Element::fromJSON(config);
 
@@ -128,7 +128,7 @@ TEST_F(IfacesConfigParserTest, socketTypeDatagram) {
 
     // Configuration with a datagram socket selected.
     std::string config = "{ ""\"interfaces\": [ ],"
-        " \"socket-type\": \"datagram\" }";
+        " \"dhcp-socket-type\": \"datagram\" }";
 
     ElementPtr config_element = Element::fromJSON(config);
 
@@ -149,14 +149,14 @@ TEST_F(IfacesConfigParserTest, socketTypeInvalid) {
     // For DHCPv4 we only accept the raw socket or datagram socket.
     IfacesConfigParser4 parser4;
     std::string config = "{ \"interfaces\": [ ],"
-        "\"socket-type\": \"default\" }";
+        "\"dhcp-socket-type\": \"default\" }";
     ElementPtr config_element = Element::fromJSON(config);
     ASSERT_THROW(parser4.build(config_element), DhcpConfigError);
 
     // For DHCPv6 we don't accept any socket type.
     IfacesConfigParser6 parser6;
     config = "{ \"interfaces\": [ ],"
-        " \"socket-type\": \"datagram\" }";
+        " \"dhcp-socket-type\": \"datagram\" }";
     config_element = Element::fromJSON(config);
     ASSERT_THROW(parser6.build(config_element), DhcpConfigError);
 }

@@ -129,7 +129,7 @@ public:
     ///
     /// Internally it invokes the @c InterfaceConfigParser::build to parse
     /// generic parameters. In addition, it parses the following parameters:
-    /// - socket-type
+    /// - dhcp-socket-type
     ///
     /// @param ifaces_config A data element holding configuration of
     /// interfaces.

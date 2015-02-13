@@ -36,7 +36,7 @@
             }
         },
 
-        { "item_name": "socket-type",
+        { "item_name": "dhcp-socket-type",
           "item_type": "string",
           "item_optional": true,
           "item_default": ""
