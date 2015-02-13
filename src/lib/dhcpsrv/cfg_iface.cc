@@ -202,6 +202,20 @@ CfgIface::socketTypeToText() const {
     isc_throw(Unexpected, "unsupported socket type " << socket_type_);
 }
 
+CfgIface::SocketType
+CfgIface::textToSocketType(const std::string& socket_type_name) const {
+    if (socket_type_name == "udp") {
+        return (SOCKET_UDP);
+
+    } else if (socket_type_name == "raw") {
+        return (SOCKET_RAW);
+
+    } else {
+        isc_throw(InvalidSocketType, "unsupported socket type '"
+                  << socket_type_name << "'");
+    }
+}
+
 void
 CfgIface::use(const uint16_t family, const std::string& iface_name) {
     // The interface name specified may have two formats, e.g.:
@@ -363,18 +377,7 @@ CfgIface::useSocketType(const uint16_t family,
 void
 CfgIface::useSocketType(const uint16_t family,
                         const std::string& socket_type_name) {
-    SocketType socket_type;
-    if (socket_type_name == "udp") {
-        socket_type = SOCKET_UDP;
-
-    } else if (socket_type_name == "raw") {
-        socket_type = SOCKET_RAW;
-
-    } else {
-        isc_throw(InvalidSocketType, "unsupported socket type '"
-                  << socket_type_name << "'");
-    }
-    useSocketType(family, socket_type);
+    useSocketType(family, textToSocketType(socket_type_name));
 }
 
 } // end of isc::dhcp namespace
