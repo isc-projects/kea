@@ -1,3 +1,8 @@
+891.	[func]		tomek
+	libdhcpsrv: Allocation Engine now uses statically assigned
+	addresses when processing DHCPv6 renewals.
+	(Trac #3677, git 9ce50790c91624937ff2b622e4afff36d5d3cc2d)
+
 890.	[func]		marcin
 	It is now possible to specify whether the DHCPv4 server
 	should use raw sockets or IP/UDP datagram sockets to
