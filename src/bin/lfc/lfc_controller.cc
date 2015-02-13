@@ -63,6 +63,20 @@ void
 LFCController::launch(int argc, char* argv[], const bool test_mode) {
     bool do_rotate = true;
 
+    // It would be nice to set up the logger as the first step
+    // in the process, but we don't know where to send logging
+    // info until after we have parsed our arguments.  As we
+    // don't currently log anything when trying to parse the
+    // arguments we do the parse before the logging setup.  If
+    // we do decide to log something then the code will need
+    // to move around a bit.
+
+    try {
+        parseArgs(argc, argv);
+    } catch (const InvalidUsage& ex) {
+        usage(ex.what());
+        throw;  // rethrow it
+    }
     // If we are running in test mode use the environment variables
     // else use our defaults
     if (test_mode) {
@@ -79,26 +93,19 @@ LFCController::launch(int argc, char* argv[], const bool test_mode) {
                                  keaLoggerSeverity(INFO),
                                  keaLoggerDbglevel(0));
 
-        // We simply want the default syslog option
-        option.destination = OutputOption::DEST_SYSLOG;
+	// If we are running in verbose (debugging) mode
+	// we send the output to the console, otherwise
+	// by default we send it to the SYSLOG
+	if (verbose_) {
+	    option.destination = OutputOption::DEST_CONSOLE;
+	} else {
+	    option.destination = OutputOption::DEST_SYSLOG;
+	}
 
         // ... and set the destination
         spec.addOutputOption(option);
 
         manager.process(spec);
-    }
-
-    try {
-        parseArgs(argc, argv);
-    } catch (const InvalidUsage& ex) {
-        usage(ex.what());
-        throw;  // rethrow it
-    }
-
-    // Now that we have parsed the arguments we can
-    // update the logging level.
-    if (verbose_) {
-        setDefaultLoggingOutput(verbose_);
     }
 
     LOG_INFO(lfc_logger, LFC_START);
