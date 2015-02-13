@@ -58,7 +58,7 @@
 "Dhcp4": {
     "interfaces-config": {
         "interfaces": [ "eth0" ],
-        "socket-type": "raw"
+        "dhcp-socket-type": "raw"
     },
     "valid-lifetime": 4000,
     "renew-timer": 1000,
