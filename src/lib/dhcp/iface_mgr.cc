@@ -282,6 +282,18 @@ Iface::setActive(const bool active) {
     }
 }
 
+uint16_t
+Iface::countActive() const {
+    uint16_t count = 0;
+    for (AddressCollection::const_iterator addr_it = addrs_.begin();
+         addr_it != addrs_.end(); ++addr_it) {
+        if (addr_it->get().isV4() && addr_it->isSpecified()) {
+            ++count;
+        }
+    }
+    return (count);
+}
+
 void IfaceMgr::closeSockets() {
     for (IfaceCollection::iterator iface = ifaces_.begin();
          iface != ifaces_.end(); ++iface) {

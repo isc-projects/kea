@@ -90,6 +90,28 @@ TEST(IfaceTest, readBuffer) {
     }
 }
 
+// Check that counting the number of active addresses on the interface
+// works as expected.
+TEST(IfaceTest, countActive) {
+    Iface iface("eth0", 0);
+    ASSERT_EQ(0, iface.countActive());
+
+    iface.addAddress(IOAddress("192.168.0.2"));
+    ASSERT_EQ(1, iface.countActive());
+
+    iface.addAddress(IOAddress("2001:db8:1::1"));
+    ASSERT_EQ(1, iface.countActive());
+
+    iface.addAddress(IOAddress("192.168.0.3"));
+    ASSERT_EQ(2, iface.countActive());
+
+    ASSERT_NO_THROW(iface.setActive(IOAddress("192.168.0.2"), false));
+    ASSERT_EQ(1, iface.countActive());
+
+    ASSERT_NO_THROW(iface.setActive(IOAddress("192.168.0.3"), false));
+    ASSERT_EQ(0, iface.countActive());
+}
+
 /// Mock object implementing PktFilter class.  It is used by
 /// IfaceMgrTest::setPacketFilter to verify that IfaceMgr::setPacketFilter
 /// sets this object as a handler for opening sockets. This dummy
