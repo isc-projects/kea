@@ -1,9 +1,9 @@
-XXX.	[func]		sar
+892.	[func]		sar
 	A class, LeaseFileStats, has been added to provide simple
 	statistics for use with lease files.  Also added logging
 	to the kea-lfc process per the design.
 	See http://kea.isc.org/wiki/LFCDesign for the design.
-	(Trac #3667, git )
+	(Trac #3667, git 7f36e034fe79d85f317d7d07e2fe636d6cdf1f6e)
 
 891.	[func]		tomek
 	libdhcpsrv: Allocation Engine now uses statically assigned
