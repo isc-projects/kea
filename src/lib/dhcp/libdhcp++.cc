@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -383,7 +383,7 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
         if (opt_type == DHO_PAD)
             continue;
 
-        if (offset + 1 >= buf.size()) {
+        if (offset + 1 > buf.size()) {
             // opt_type must be cast to integer so as it is not treated as
             // unsigned char value (a number is presented in error message).
             isc_throw(OutOfRange, "Attempt to parse truncated option "
@@ -574,7 +574,7 @@ size_t LibDHCP::unpackVendorOptions4(const uint32_t vendor_id, const OptionBuffe
             if (opt_type == DHO_PAD)
                 continue;
 
-            if (offset + 1 >= buf.size()) {
+            if (offset + 1 > buf.size()) {
                 // opt_type must be cast to integer so as it is not treated as
                 // unsigned char value (a number is presented in error message).
                 isc_throw(OutOfRange, "Attempt to parse truncated vendor option "

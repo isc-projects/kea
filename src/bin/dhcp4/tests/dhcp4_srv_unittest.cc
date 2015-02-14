@@ -1328,7 +1328,7 @@ TEST_F(Dhcpv4SrvTest, Hooks) {
 //   - sub option (option space 'foo')
 //      - sub option (option space 'bar')
 // @todo Add more thorough unit tests for unpackOptions.
-TEST_F(Dhcpv4SrvTest, unpackOptions) {
+TEST_F(Dhcpv4SrvTest, unpackSubOptions) {
     // Create option definition for each level of encapsulation. Each option
     // definition is for the option code 1. Options may have the same
     // option code because they belong to different option spaces.
@@ -1353,7 +1353,7 @@ TEST_F(Dhcpv4SrvTest, unpackOptions) {
     CfgMgr::instance().commit();
 
     // Create the buffer holding the structure of options.
-    const char raw_data[] = {
+    const uint8_t raw_data[] = {
         // First option starts here.
         0x01,                   // option code = 1
         0x0B,                   // option length = 11
@@ -1368,7 +1368,8 @@ TEST_F(Dhcpv4SrvTest, unpackOptions) {
         0x00                    // This option carries a single uint8
                                 // value and has no sub options.
     };
-    OptionBuffer buf(raw_data, raw_data + sizeof(raw_data));
+    size_t raw_data_len = sizeof(raw_data) / sizeof(uint8_t);
+    OptionBuffer buf(raw_data, raw_data + raw_data_len);
 
     // Parse options.
     NakedDhcpv4Srv srv(0);
@@ -1396,6 +1397,111 @@ TEST_F(Dhcpv4SrvTest, unpackOptions) {
     ASSERT_TRUE(option_bar);
     EXPECT_EQ(1, option_bar->getType());
     EXPECT_EQ(0x0, option_bar->getValue());
+}
+
+// Check parsing of an empty option
+TEST_F(Dhcpv4SrvTest, unpackEmptyOption) {
+    // Create option definition for the option code 1 without fields.
+    OptionDefinitionPtr opt_def(new OptionDefinition("option-empty", 1,
+                                                     "empty", false));
+
+    // Add it to the Configuration Manager.
+    CfgOptionDefPtr cfg_option_def =
+        CfgMgr::instance().getStagingCfg()->getCfgOptionDef();
+    ASSERT_NO_THROW(cfg_option_def->add(opt_def, "space-empty"));
+    CfgMgr::instance().commit();
+
+    // Create the buffer holding the structure of the empty option.
+    const uint8_t raw_data[] = {
+      0x01,                     // option code = 1
+      0x00                      // option length = 0
+    };
+    size_t raw_data_len = sizeof(raw_data) / sizeof(uint8_t);
+    OptionBuffer buf(raw_data, raw_data + raw_data_len);
+
+    // Parse options.
+    NakedDhcpv4Srv srv(0);
+    OptionCollection options;
+    ASSERT_NO_THROW(srv.unpackOptions(buf, "space-empty", options));
+
+    // There should be one option.
+    ASSERT_EQ(1, options.size());
+    OptionPtr option_empty = options.begin()->second;
+    ASSERT_TRUE(option_empty);
+    EXPECT_EQ(1, option_empty->getType());
+    EXPECT_EQ(2, option_empty->len());
+}
+
+// Check parsing of an empty VSI sub option
+TEST_F(Dhcpv4SrvTest, unpackVSIOption) {
+    // Create the buffer holding the structure of the Vendor-Specific Info
+    const uint8_t raw_data[] = {
+      43,     // option code = DHO_VENDOR_ENCAPSULATED_OPTIONS
+      2,      // option length
+      0xdc,   // suboption code
+      0       // suboption length
+    };
+    size_t raw_data_len = sizeof(raw_data) / sizeof(uint8_t);
+    OptionBuffer buf(raw_data, raw_data + raw_data_len);
+
+    // Parse options.
+    NakedDhcpv4Srv srv(0);
+    OptionCollection options;
+    ASSERT_NO_THROW(srv.unpackOptions(buf, "dhcp4", options));
+
+    // There should be one option: the VSI
+    ASSERT_EQ(1, options.size());
+    OptionPtr vsi = options.begin()->second;
+    ASSERT_TRUE(vsi);
+    EXPECT_EQ(DHO_VENDOR_ENCAPSULATED_OPTIONS, vsi->getType());
+    OptionCollection suboptions = vsi->getOptions();
+
+    // There should be one suboption
+    ASSERT_EQ(1, suboptions.size());
+    OptionPtr eso = suboptions.begin()->second;
+    ASSERT_TRUE(eso);
+    EXPECT_EQ(0xdc, eso->getType());
+    EXPECT_EQ(2, eso->len());
+}
+
+// Check parsing of an empty VIVSI sub option
+TEST_F(Dhcpv4SrvTest, unpackVIVSIOption) {
+    // Create the buffer holding the structure of the Vendor-Identifying
+    // Vendor-Specific Info
+    const uint8_t raw_data[] = {
+      125,            // option code = DHO_VIVSO_SUBOPTIONS
+      7,              // option length
+      0, 0, 9, 0xbf,  // ISC enterprise number (2495)
+      2,              // option data length
+      0xdc,           // suboption code
+      0               // suboption length
+    };
+    size_t raw_data_len = sizeof(raw_data) / sizeof(uint8_t);
+    OptionBuffer buf(raw_data, raw_data + raw_data_len);
+
+    // Parse options.
+    NakedDhcpv4Srv srv(0);
+    OptionCollection options;
+    ASSERT_NO_THROW(srv.unpackOptions(buf, "dhcp4", options));
+
+    // There should be one option: the VIVSI
+    ASSERT_EQ(1, options.size());
+    OptionPtr vivsi = options.begin()->second;
+    ASSERT_TRUE(vivsi);
+    EXPECT_EQ(DHO_VIVSO_SUBOPTIONS, vivsi->getType());
+
+    // Cast to OptionVendor
+    OptionVendorPtr vsi = boost::dynamic_pointer_cast<OptionVendor>(vivsi);
+    ASSERT_TRUE(vsi);
+    EXPECT_EQ(2495, vsi->getVendorId());
+    OptionCollection suboptions = vsi->getOptions();
+
+    // There should be one suboption
+    ASSERT_EQ(1, suboptions.size());
+    OptionPtr eso = suboptions.begin()->second;
+    ASSERT_TRUE(eso);
+    EXPECT_EQ(0xdc, eso->getType());
+    EXPECT_EQ(2, eso->len());
 }
 
 // Checks whether the server uses default (0.0.0.0) siaddr value, unless
