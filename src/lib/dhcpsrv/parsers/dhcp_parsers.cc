@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -1238,6 +1238,11 @@ D2ClientConfigParser::build(isc::data::ConstElementPtr client_config) {
         }
 
         // Get all parameters that are needed to create the D2ClientConfig.
+
+        // The qualifying suffix is mandatory when updates are enabled
+        std::string qualifying_suffix =
+            string_values_->getParam("qualifying-suffix");
+
         IOAddress server_ip =
             IOAddress(string_values_->getOptionalParam("server-ip",
                                                        D2ClientConfig::
@@ -1278,11 +1283,6 @@ D2ClientConfigParser::build(isc::data::ConstElementPtr client_config) {
             string_values_->getOptionalParam("generated-prefix",
                                              D2ClientConfig::
                                              DFT_GENERATED_PREFIX);
-        std::string qualifying_suffix =
-            string_values_->getOptionalParam("qualifying-suffix",
-                                             D2ClientConfig::
-                                             DFT_QUALIFYING_SUFFIX);
-
         bool always_include_fqdn =
             boolean_values_->getOptionalParam("always-include-fqdn",
                                                 D2ClientConfig::
