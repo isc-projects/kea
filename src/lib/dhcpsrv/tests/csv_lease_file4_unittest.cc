@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -57,6 +57,30 @@ public:
     /// @brief Creates the lease file to be parsed by unit tests.
     void writeSampleFile() const;
 
+    /// @brief Checks the stats for the file
+    ///
+    /// This method is passed a leasefile and the values for the statistics it
+    /// should have for comparison.
+    ///
+    /// @param lease_file A reference to the file we are using
+    /// @param reads the number of attempted reads
+    /// @param read_leases the number of valid leases read
+    /// @param read_errs the number of errors while reading leases
+    /// @param writes the number of attempted writes
+    /// @param write_leases the number of leases successfully written
+    /// @param write_errs the number of errors while writing
+    void checkStats(CSVLeaseFile4& lease_file,
+                    uint32_t reads, uint32_t read_leases,
+                    uint32_t read_errs, uint32_t writes,
+                    uint32_t write_leases, uint32_t write_errs) const {
+        EXPECT_EQ(reads, lease_file.getReads());
+        EXPECT_EQ(read_leases, lease_file.getReadLeases());
+        EXPECT_EQ(read_errs, lease_file.getReadErrs());
+        EXPECT_EQ(writes, lease_file.getWrites());
+        EXPECT_EQ(write_leases, lease_file.getWriteLeases());
+        EXPECT_EQ(write_errs, lease_file.getWriteErrs());
+    }
+
     /// @brief Name of the test lease file.
     std::string filename_;
 
@@ -104,10 +128,19 @@ TEST_F(CSVLeaseFile4Test, parse) {
     boost::scoped_ptr<CSVLeaseFile4> lf(new CSVLeaseFile4(filename_));
     ASSERT_NO_THROW(lf->open());
 
+    // Verify the counters are cleared
+    {
+    SCOPED_TRACE("Check stats are empty");
+    checkStats(*lf, 0, 0, 0, 0, 0, 0);
+    }
+
     Lease4Ptr lease;
     // Reading first read should be successful.
+    {
+    SCOPED_TRACE("First lease valid");
     EXPECT_TRUE(lf->next(lease));
     ASSERT_TRUE(lease);
+    checkStats(*lf, 1, 1, 0, 0, 0, 0);
 
     // Verify that the lease attributes are correct.
     EXPECT_EQ("192.0.2.1", lease->addr_.toText());
@@ -120,14 +153,23 @@ TEST_F(CSVLeaseFile4Test, parse) {
     EXPECT_TRUE(lease->fqdn_fwd_);
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("host.example.com", lease->hostname_);
+    }
 
     // Second lease is malformed - HW address is empty.
+    {
+    SCOPED_TRACE("Second lease malformed");
     EXPECT_FALSE(lf->next(lease));
+    checkStats(*lf, 2, 1, 1, 0, 0, 0);
+    }
 
     // Even though parsing previous lease failed, reading the next lease should be
     // successful.
+    {
+    SCOPED_TRACE("Third lease valid");
     EXPECT_TRUE(lf->next(lease));
     ASSERT_TRUE(lease);
+    checkStats(*lf, 3, 2, 1, 0, 0, 0);
+
     // Verify that the third lease is correct.
     EXPECT_EQ("192.0.3.15", lease->addr_.toText());
     HWAddr hwaddr3(*lease->hwaddr_);
@@ -140,16 +182,24 @@ TEST_F(CSVLeaseFile4Test, parse) {
     EXPECT_FALSE(lease->fqdn_fwd_);
     EXPECT_FALSE(lease->fqdn_rev_);
     EXPECT_TRUE(lease->hostname_.empty());
+    }
 
     // There are no more leases. Reading should cause no error, but the returned
     // lease pointer should be NULL.
+    {
+    SCOPED_TRACE("Fifth read empty");
     EXPECT_TRUE(lf->next(lease));
     EXPECT_FALSE(lease);
+    checkStats(*lf, 4, 2, 1, 0, 0, 0);
+    }
 
     // We should be able to do it again.
+    {
+    SCOPED_TRACE("Sixth read empty");
     EXPECT_TRUE(lf->next(lease));
     EXPECT_FALSE(lease);
-
+    checkStats(*lf, 5, 2, 1, 0, 0, 0);
+    }
 }
 
 // This test checks creation of the lease file and writing leases.
@@ -157,19 +207,33 @@ TEST_F(CSVLeaseFile4Test, recreate) {
     boost::scoped_ptr<CSVLeaseFile4> lf(new CSVLeaseFile4(filename_));
     ASSERT_NO_THROW(lf->recreate());
     ASSERT_TRUE(io_.exists());
+
+    // Verify the counters are cleared
+    checkStats(*lf, 0, 0, 0, 0, 0, 0);
+
     // Create first lease, with NULL client id.
     Lease4Ptr lease(new Lease4(IOAddress("192.0.3.2"),
                                hwaddr0_,
                                NULL, 0,
                                200, 50, 80, 0, 8, true, true,
                                "host.example.com"));
+    {
+    SCOPED_TRACE("First write");
     ASSERT_NO_THROW(lf->append(*lease));
+    checkStats(*lf, 0, 0, 0, 1, 1, 0);
+    }
+
     // Create second lease, with non-NULL client id.
     lease.reset(new Lease4(IOAddress("192.0.3.10"),
                            hwaddr1_,
                            CLIENTID0, sizeof(CLIENTID0),
                            100, 60, 90, 0, 7));
+    {
+    SCOPED_TRACE("Second write");
     ASSERT_NO_THROW(lf->append(*lease));
+    checkStats(*lf, 0, 0, 0, 2, 2, 0);
+    }
+
     // Close the lease file.
     lf->close();
     // Check that the contents of the csv file are correct.

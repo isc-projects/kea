@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -63,6 +63,30 @@ public:
     /// @brief Create lease file that can be parsed by unit tests.
     void writeSampleFile() const;
 
+    /// @brief Checks the stats for the file
+    ///
+    /// This method is passed a leasefile and the values for the statistics it
+    /// should have for comparison.
+    ///
+    /// @param lease_file A reference to the file we are using
+    /// @param reads the number of attempted reads
+    /// @param read_leases the number of valid leases read
+    /// @param read_errs the number of errors while reading leases
+    /// @param writes the number of attempted writes
+    /// @param write_leases the number of leases successfully written
+    /// @param write_errs the number of errors while writing
+    void checkStats(CSVLeaseFile6& lease_file,
+                    uint32_t reads, uint32_t read_leases,
+                    uint32_t read_errs, uint32_t writes,
+                    uint32_t write_leases, uint32_t write_errs) const {
+        EXPECT_EQ(reads, lease_file.getReads());
+        EXPECT_EQ(read_leases, lease_file.getReadLeases());
+        EXPECT_EQ(read_errs, lease_file.getReadErrs());
+        EXPECT_EQ(writes, lease_file.getWrites());
+        EXPECT_EQ(write_leases, lease_file.getWriteLeases());
+        EXPECT_EQ(write_errs, lease_file.getWriteErrs());
+    }
+
     /// @brief Name of the test lease file.
     std::string filename_;
 
@@ -105,10 +129,19 @@ TEST_F(CSVLeaseFile6Test, parse) {
     boost::scoped_ptr<CSVLeaseFile6> lf(new CSVLeaseFile6(filename_));
     ASSERT_NO_THROW(lf->open());
 
+    // Verify the counters are cleared
+    {
+    SCOPED_TRACE("Check stats are empty");
+    checkStats(*lf, 0, 0, 0, 0, 0, 0);
+    }
+
     Lease6Ptr lease;
     // Reading first read should be successful.
+    {
+    SCOPED_TRACE("First lease valid");
     EXPECT_TRUE(lf->next(lease));
     ASSERT_TRUE(lease);
+    checkStats(*lf, 1, 1, 0, 0, 0, 0);
 
     // Verify that the lease attributes are correct.
     EXPECT_EQ("2001:db8:1::1", lease->addr_.toText());
@@ -124,14 +157,23 @@ TEST_F(CSVLeaseFile6Test, parse) {
     EXPECT_TRUE(lease->fqdn_fwd_);
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("host.example.com", lease->hostname_);
+    }
 
     // Second lease is malformed - DUID is empty.
+    {
+    SCOPED_TRACE("Second lease malformed");
     EXPECT_FALSE(lf->next(lease));
+    checkStats(*lf, 2, 1, 1, 0, 0, 0);
+    }
 
     // Even, parsing previous lease failed, reading the next lease should be
     // successful.
+    {
+    SCOPED_TRACE("Third lease valid");
     EXPECT_TRUE(lf->next(lease));
     ASSERT_TRUE(lease);
+    checkStats(*lf, 3, 2, 1, 0, 0, 0);
+
     // Verify that the third lease is correct.
     EXPECT_EQ("2001:db8:2::10", lease->addr_.toText());
     ASSERT_TRUE(lease->duid_);
@@ -146,10 +188,15 @@ TEST_F(CSVLeaseFile6Test, parse) {
     EXPECT_FALSE(lease->fqdn_fwd_);
     EXPECT_FALSE(lease->fqdn_rev_);
     EXPECT_TRUE(lease->hostname_.empty());
+    }
 
     // Reading the fourth lease should be successful.
+    {
+    SCOPED_TRACE("Fourth lease valid");
     EXPECT_TRUE(lf->next(lease));
     ASSERT_TRUE(lease);
+    checkStats(*lf, 4, 3, 1, 0, 0, 0);
+
     // Verify that the lease is correct.
     EXPECT_EQ("3000:1::", lease->addr_.toText());
     ASSERT_TRUE(lease->duid_);
@@ -164,16 +211,24 @@ TEST_F(CSVLeaseFile6Test, parse) {
     EXPECT_FALSE(lease->fqdn_fwd_);
     EXPECT_FALSE(lease->fqdn_rev_);
     EXPECT_TRUE(lease->hostname_.empty());
+    }
 
     // There are no more leases. Reading should cause no error, but the returned
     // lease pointer should be NULL.
+    {
+    SCOPED_TRACE("Fifth read empty");
     EXPECT_TRUE(lf->next(lease));
     EXPECT_FALSE(lease);
+    checkStats(*lf, 5, 3, 1, 0, 0, 0);
+    }
 
     // We should be able to do it again.
+    {
+    SCOPED_TRACE("Sixth read empty");
     EXPECT_TRUE(lf->next(lease));
     EXPECT_FALSE(lease);
-
+    checkStats(*lf, 6, 3, 1, 0, 0, 0);
+    }
 }
 
 // This test checks creation of the lease file and writing leases.
@@ -182,26 +237,44 @@ TEST_F(CSVLeaseFile6Test, recreate) {
     ASSERT_NO_THROW(lf->recreate());
     ASSERT_TRUE(io_.exists());
 
+    // Verify the counters are cleared
+    {
+    SCOPED_TRACE("Check stats are empty");
+    checkStats(*lf, 0, 0, 0, 0, 0, 0);
+    }
+
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"),
                                makeDUID(DUID0, sizeof(DUID0)),
                                7, 100, 200, 50, 80, 8, true, true,
                                "host.example.com"));
     lease->cltt_ = 0;
+    {
+    SCOPED_TRACE("First write");
     ASSERT_NO_THROW(lf->append(*lease));
+    checkStats(*lf, 0, 0, 0, 1, 1, 0);
+    }
 
     lease.reset(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:2::10"),
                            makeDUID(DUID1, sizeof(DUID1)),
                            8, 150, 300, 40, 70, 6, false, false,
                            "", HWAddrPtr(), 128));
     lease->cltt_ = 0;
+    {
+    SCOPED_TRACE("Second write");
     ASSERT_NO_THROW(lf->append(*lease));
+    checkStats(*lf, 0, 0, 0, 2, 2, 0);
+    }
 
     lease.reset(new Lease6(Lease::TYPE_PD, IOAddress("3000:1:1::"),
                            makeDUID(DUID0, sizeof(DUID0)),
                            7, 150, 300, 40, 70, 10, false, false,
                            "", HWAddrPtr(), 64));
     lease->cltt_ = 0;
+    {
+    SCOPED_TRACE("Third write");
     ASSERT_NO_THROW(lf->append(*lease));
+    checkStats(*lf, 0, 0, 0, 3, 3, 0);
+    }
 
     EXPECT_EQ("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
               "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"

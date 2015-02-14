@@ -43,8 +43,6 @@ namespace dhcp {
 /// with the @c Lease4Storage and @c Lease6Storage to process the DHCPv4
 /// and DHCPv6 leases respectively.
 ///
-/// @todo Add a method which dumps all leases from the storage to a
-/// specified lease file.
 class LeaseFileLoader {
 public:
 
@@ -184,7 +182,7 @@ public:
     /// @param storage A reference to the container from which leases
     /// should be written.
     ///
-    /// @tparam LeasePtrType A @c Lease4 or @c Lease6.
+    /// @tparam LeaseObjectType A @c Lease4 or @c Lease6.
     /// @tparam LeaseFileType A @c CSVLeaseFile4 or @c CSVLeaseFile6.
     /// @tparam StorageType A @c Lease4Storage or @c Lease6Storage.
     template<typename LeaseObjectType, typename LeaseFileType,
