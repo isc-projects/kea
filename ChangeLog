@@ -1,3 +1,8 @@
+894.	[bug]		fdupont
+	Accept empty options or sub options in DHCPv4 messages unpacking
+	routines.
+	(Trac #3661, git )
+
 893.	[func,bug]	fdupont
 	Changed the qualifying-suffix parameter in the dhcp-ddns
 	configuration element to be mandatory with no default value when
