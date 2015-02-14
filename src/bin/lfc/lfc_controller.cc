@@ -77,37 +77,9 @@ LFCController::launch(int argc, char* argv[], const bool test_mode) {
         usage(ex.what());
         throw;  // rethrow it
     }
-    // If we are running in test mode use the environment variables
-    // else use our defaults
-    if (test_mode) {
-        initLogger();
-    }
-    else {
-        OutputOption option;
-        LoggerManager manager;
 
-        initLogger(lfc_app_name_, INFO, 0, NULL, false);
-
-        // Prepare the objects to define the logging specification
-        LoggerSpecification spec(getRootLoggerName(),
-                                 keaLoggerSeverity(INFO),
-                                 keaLoggerDbglevel(0));
-
-        // If we are running in verbose (debugging) mode
-        // we send the output to the console, otherwise
-        // by default we send it to the SYSLOG
-        if (verbose_) {
-            option.destination = OutputOption::DEST_CONSOLE;
-        } else {
-            option.destination = OutputOption::DEST_SYSLOG;
-
-        }
-
-        // ... and set the destination
-        spec.addOutputOption(option);
-
-        manager.process(spec);
-    }
+    // Start up the logging system.
+    startLogger(test_mode);
 
     LOG_INFO(lfc_logger, LFC_START);
 
@@ -419,5 +391,40 @@ LFCController::fileRotate() const {
                   << ") error: " << strerror(errno));
     }
 }
+
+void
+LFCController::startLogger(const bool test_mode) const {
+    // If we are running in test mode use the environment variables
+    // else use our defaults
+    if (test_mode) {
+        initLogger();
+    }
+    else {
+        OutputOption option;
+        LoggerManager manager;
+
+        initLogger(lfc_app_name_, INFO, 0, NULL, false);
+
+        // Prepare the objects to define the logging specification
+        LoggerSpecification spec(getRootLoggerName(),
+                                 keaLoggerSeverity(INFO),
+                                 keaLoggerDbglevel(0));
+
+        // If we are running in verbose (debugging) mode
+        // we send the output to the console, otherwise
+        // by default we send it to the SYSLOG
+        if (verbose_) {
+            option.destination = OutputOption::DEST_CONSOLE;
+        } else {
+            option.destination = OutputOption::DEST_SYSLOG;
+        }
+
+        // ... and set the destination
+        spec.addOutputOption(option);
+
+        manager.process(spec);
+    }
+}
+
 }; // namespace isc::lfc
 }; // namespace isc
