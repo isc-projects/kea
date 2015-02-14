@@ -1719,16 +1719,23 @@ should include options from the isc option space:
 
     <para>There are many cases where it is useful to provide a configuration on
     a per host basis. The most obvious one is to reserve specific, static IPv6
-    address or prefix for exclusive use by a given client &dash; returning
-    client will get the same address or prefix every time and other clients will
-    never get that address. Other example may be a host that has specific
-    requirements, e.g. a printer that needs additional options or a cable modem
-    need specific parameter. Yes another possible use case for host reservation
-    is to define unique host names for hosts.  Although not all of those
-    scenarios are possible yet, Kea software will support them in the near
-    future.</para>
+    address or/and prefix for exclusive use by a given client (host) &dash; returning
+    client will get the same address or/and prefix every time and other clients will
+    never get that address. Note that there may be cases when the
+    new reservation has been made for the client for the address or prefix being
+    currently in use by another client. We call this situation a "conflict". The
+    conflicts get resolved automatically over time as described in the subsequent
+    sections. Once conflict is resolved, the client will keep receiving the reserved
+    configuration when it renews.</para>
 
-    <para>Hosts are defined as parameters for each subnet. Each host
+    <para>Another example when the host reservations are applicable is when a host
+    that has specific requirements, e.g. a printer that needs additional DHCP options
+    or a cable modem needs specific parameters. Yet another possible use case for
+    host reservation is to define unique names for hosts.  Although not all of
+    the presented use cases are are implemented yet, Kea software will support them
+    in the near future.</para>
+
+    <para>Hosts reservations are defined as parameters for each subnet. Each host
     can be identified by either DUID or its hardware/MAC address. See
     <xref linkend="mac-in-dhcpv6"/> for details. There is an optional
     <command>reservations</command> array in the
@@ -1738,7 +1745,7 @@ should include options from the isc option space:
     uniquely identifies a host.  In DHCPv6 context, such an identifier
     is a hardware (MAC) address or a DUID.  Also, either one or more
     addresses or prefixes should be specified. It is possible to
-    specify a hostname. Additional capabilities are planed.</para>
+    specify a hostname. Additional capabilities are planned.</para>
 
     <para>The following example shows how to reserve addresses and prefixes
     for specific hosts:
@@ -1784,7 +1791,7 @@ should include options from the isc option space:
     <para>Note that DHCPv6 allows for a single client to lease multiple addresses
     and multiple prefixes at the same time. In the upcoming Kea releases, it will
     be possible to have multiple addresses and prefixes reserved for a single
-    host. Therefore <command>ip-addresses"</command> and <command>prefixes</command>
+    host. Therefore <command>ip-addresses</command> and <command>prefixes</command>
     are plural and are actually arrays. As of 0.9.1 having more than one IPv6
     address or prefix is only partially supported.</para>
 
@@ -1810,11 +1817,11 @@ should include options from the isc option space:
       <para>In a typical scenario there's an IPv6 subnet defined with a certain
       part of it dedicated for dynamic address allocation by the DHCPv6
       server. There may be an additional address space defined for prefix
-      delegation. Those dynamic parts is referred to as dynamic pools, address
-      and prefix pools or simply pools. In principle the host reservation can
+      delegation. Those dynamic parts are referred to as dynamic pools, address
+      and prefix pools or simply pools. In principle, the host reservation can
       reserve any address or prefix that belongs to the subnet. The reservations
-      that specify an address that belong to configured pools are called
-      <command>in-pool reservations</command>.  In contract, those that do not
+      that specify an address that belongs to configured pools are called
+      <command>in-pool reservations</command>. In contrast, those that do not
       belong to dynamic pools are called <command>out-of-pool
       reservations</command>. There is no formal difference in the reservation
       syntax. As of 0.9.1, both reservation types are handled
@@ -1825,16 +1832,16 @@ should include options from the isc option space:
       possible.</para>
     </section>
 
-    <section it="reservation6-conflict">
+    <section id="reservation6-conflict">
       <title>Conflicts in DHCPv6 reservations</title>
-      <para>As reservations and lease information are kept in different places,
-      conflict may arrise. Consider the following series of events. The server
-      has configured 2001:db8::10  to 2001:db8::20 dynamic pool range. Host A
-      requests an address and gets 2001:db8::10. Now the system administrator
-      decides to reserve an address for host B. He decides to reserve 2001:db8::10
-      for that purpose. In general, reserving an address that is currently
-      assigned to someone else is not recommended, but there are valid use
-      cases where such an operation is warranted.</para>
+      <para>As reservations and lease information are stored in different places,
+      conflicts may arrise. Consider the following series of events. The server
+      has configured the dynamic pool of addresses from the range of 2001:db8::10
+      to 2001:db8::20. Host A requests an address and gets 2001:db8::10. Now the
+      system administrator decides to reserve an address for host B. He decides
+      to reserve 2001:db8::10 for that purpose. In general, reserving an address
+      that is currently assigned to someone else is not recommended, but there
+      are valid use cases where such an operation is warranted.</para>
 
       <para>The server now has a conflict to resolve. Let's analyze the
       situation here. If host B boots up and request an address, the server is
@@ -1843,8 +1850,8 @@ should include options from the isc option space:
       for host B. That would not solve the problem, though, because as soon as
       host B get the address, it will detect that the address is already in use
       by someone else (host A) and would send Decline. Therefore in this
-      situation, the server has to temporarily assign a different address (not
-      matching what has been reserved) to host B.</para>
+      situation, the server has to temporarily assign a different address from the
+      dynamic pool (not matching what has been reserved) to host B.</para>
 
       <para>When the host A renews its address, the server will discover that
       the address being renewed is now reserved for someone else (host
@@ -1852,12 +1859,13 @@ should include options from the isc option space:
       a new address and will create a new lease for it. It will send two
       addresses in its response: the old address with lifetimes set to 0 to
       explicitly indicate that it is no longer valid and a new address with
-      non-zero lifetimes.When the host B renews its temporarily assigned
+      non-zero lifetimes. When the host B renews its temporarily assigned
       address, the server will detect that the existing lease does not match
       reservation, so it will release the current address host B has and will
       create a new lease matching the reservation. Similar as before, the server
-      will send two addresses: the temporary one with zeroed lifetimes and the
-      new one that matches reservation with proper lifetimes set.</para>
+      will send two addresses: the temporarily assigned one with zeroed
+      lifetimes, and the new one that matches reservation with proper lifetimes
+      set.</para>
 
       <para>This recovery will succeed, even if other hosts will attempt to get
       the reserved address. Had the host C requested address 2001:db8::10 after
