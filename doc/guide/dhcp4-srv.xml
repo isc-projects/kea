@@ -318,7 +318,7 @@ url="http://jsonviewer.stack.hu/"/>.
   database host name must also be specified (although it should be noted that this
   configuration may have a severe impact on server performance):
 <screen>
-"Dhcp4": { "lease-database": { <userinput>"host": <replaceable>remote-host-name</replaceable>"</userinput>, ... }, ... }
+"Dhcp4": { "lease-database": { <userinput>"host": <replaceable>remote-host-name</replaceable></userinput>, ... }, ... }
 </screen>
   The usual state of affairs will be to have the database on the same machine as
   the DHCPv4 server.  In this case, set the value to the empty string:
@@ -1270,7 +1270,7 @@ temporarily override a list of interface names and listen on all interfaces.
     "subnet4": [
         {
             "subnet": "192.0.2.0/24"
-            "option-data": [ {"
+            "option-data": [ {
                 "name": "domain-name-servers",
                 "code": 6,
                 "data": "192.0.2.200,192.0.2.201",
@@ -1416,27 +1416,68 @@ temporarily override a list of interface names and listen on all interfaces.
       </orderedlist>
       The parameters for controlling the generation of NCRs for submission to D2
       are contained in the <command>dhcp-ddns</command> section of the kea-dhcp4 server
-      configuration. The default values for this section are as follows:
+      configuration. The mandatory parameters for the DHCP DDNS configuration
+      are <command>enable-updates</command> which is unconditionally
+      required, and <command>qualifying-suffix</command> which has no
+      default value and is required when <command>enable-updates</command>
+      is set to <command>true</command>.
+
+      The two (disabled and enabled) minimal DHCP DDNS configurations are:
 <screen>
 "Dhcp4": {
     "dhcp-ddns": {
-        <userinput>"enable-updates": true,
-        "server-ip": "127.0.0.1",
-        "server-port": 53001,
-        "sender-ip": "",
-        "sender-port": 0,
-        "max-queue-size": 1024,
-        "ncr-protocol": "UDP",
-        "ncr-format": "JSON",
-        "override-no-update": false,
-        "override-client-update": false,
-        "replace-client-name": false,
-        "generated-prefix": "myhost",
-        "qualifying-suffix": "example.com"</userinput>
+        <userinput>"enable-updates": false</userinput>
     },
     ...
 }
 </screen>
+      and for example:
+<screen>
+"Dhcp4": {
+    "dhcp-ddns": {
+        <userinput>"enable-updates": true,
+        "qualifying-suffix": "example."</userinput>
+    },
+    ...
+}
+</screen>
+
+      The default values for the "dhcp-ddns" section are as follows:
+      <itemizedlist>
+      <listitem><simpara>
+      <command>"server-ip": "127.0.0.1"</command>
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>"server-port": 53001</command>
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>"sender-ip": ""</command>
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>"sender-port": 0</command>
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>"max-queue-size": 1024</command>
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>"ncr-protocol": "UDP"</command>
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>"ncr-format": "JSON"</command>
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>"override-no-update": false</command>
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>"override-client-update": false</command>
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>"replace-client-name": false</command>
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>"generated-prefix": "myhost"</command>
+      </simpara></listitem>
+      </itemizedlist>
       </para>
 
       <section id="dhcpv4-d2-io-config">
@@ -1712,9 +1753,12 @@ temporarily override a list of interface names and listen on all interfaces.
 }
 </screen>
       <para>
-      The suffix used when generating a FQDN or when qualifying a partial name
-      is specified by the <command>qualifying-suffix</command> parameter. There
-      is no default value. To set its value simply set it to the desired string:
+      The suffix used when generating a FQDN or when qualifying a
+      partial name is specified by
+      the <command>qualifying-suffix</command> parameter. This
+      parameter has no default value, thus it is mandatory when
+      DDNS updates are enabled.
+      To set its value simply set it to the desired string:
       </para>
 <screen>
 "Dhcp4": {
@@ -1734,10 +1778,9 @@ temporarily override a list of interface names and listen on all interfaces.
       </para>
       <para>
       where address-text is simply the lease IP address converted to a
-      hyphenated string.  For example, if the lease address is 172.16.1.10 and
-      default values are used for
-      <command>generated-prefix</command> and <command>qualifying-suffix</command>, the
-      generated FQDN would be:
+      hyphenated string.  For example, if the lease address is 172.16.1.10,
+      the qualifying suffix "example.com", and the default value is used for
+      <command>generated-prefix</command>, the generated FQDN would be:
       </para>
       <para>
         myhost-172-16-1-10.example.com.

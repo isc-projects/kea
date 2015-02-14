@@ -689,8 +689,8 @@ TEST(D2ClientMgr, generateFqdn) {
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
 
     // Verify names generate properly with a disabled configuration.
-    EXPECT_EQ("myhost-192-0-2-75.example.com.", mgr.generateFqdn(v4address,true));
-    EXPECT_EQ("myhost-2001-db8--2.example.com.", mgr.generateFqdn(v6address,true));
+    EXPECT_EQ("myhost-192-0-2-75.", mgr.generateFqdn(v4address,true));
+    EXPECT_EQ("myhost-2001-db8--2.", mgr.generateFqdn(v6address,true));
 }
 
 /// @brief Tests adjustDomainName template method with Option4ClientFqdn
