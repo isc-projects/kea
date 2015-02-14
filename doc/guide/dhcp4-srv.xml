@@ -1736,23 +1736,30 @@ temporarily override a list of interface names and listen on all interfaces.
 
     <para>There are many cases where it is useful to provide a configuration on
     a per host basis. The most obvious one is to reserve specific, static
-    address for exclusive use by a given client &dash; returning client will get
-    the same address every time and other clients will never get that
-    address. Other example may be a host that has specific requirements, e.g. a
-    printer that needs additional options. Yes another possible use case for
-    host reservation is to define unique host names for hosts.  Although not all
-    of those scenarios are possible yet, Kea software will support them in the
+    address for exclusive use by a given client (host) &dash; returning client will
+    receive the same address from the server every time, and other clients will
+    generally not receive that address. Note that there may be cases when the
+    new reservation has been made for the client for the address being currently
+    in use by another client. We call this situation a "conflict". The conflicts
+    get resolved automatically over time as described in the subsequent sections.
+    Once conflict is resolved,the client will keep receiving the reserved
+    configuration when it renews.</para>
+
+    <para>Another example when the host reservations are applicable is when a host
+    that has specific requirements, e.g. a printer that needs additional DHCP options.
+    Yet another possible use case is to define unique names for hosts. Although not all
+    of the presented use cases are implemented yet, Kea software will support them in the
     near future.</para>
 
-    <para>Hosts are defined as parameters for each subnet. Each host has to be
-    identified by its hardware/MAC address. There is an optional
+    <para>Hosts reservations are defined as parameters for each subnet. Each host
+    has to be identified by its hardware/MAC address. There is an optional
     <command>reservations</command> array in the <command>Subnet4</command>
     element. Each element in that array is a structure, that holds information
-    about a single host. In particular, such a structure has to have an
-    indentifer that uniquely identifies a host.  In DHCPv4 context, such an
+    about reservrations for a single host. In particular, such a structure has
+    to have an indentifer that uniquely identifies a host.  In DHCPv4 context, such an
     identifier is a hardware or MAC address.  In most cases, also an address
     will be specified. It is possible to specify a hostname. Additional
-    capabilities are planed.</para>
+    capabilities are planned.</para>
 
     <para>The following example shows how to reserve addresses for specific
     hosts:
@@ -1779,7 +1786,7 @@ temporarily override a list of interface names and listen on all interfaces.
 </screen>
     The first entry reserves the 192.0.2.202 address for the client that uses
     MAC adress of 1a:1b:1c:1d:1e:1f. The second entry reserves the address
-    192.0.2.100 address and a hostname of alice-laptop for client with MAC
+    192.0.2.100 and the hostname of alice-laptop for client using MAC
     address 0a:0b:0c:0d:0e:0f. Note that if you plan to do DNS updates, it
     is strongly recommended for the hostnames to be unique.
     </para>
@@ -1803,13 +1810,13 @@ temporarily override a list of interface names and listen on all interfaces.
     <section id="reservation4-types">
       <title>Address reservation types</title>
 
-      <para>In a typical scenario there's an IPv4 subnet defined,
-      e.g. 192.0.2.0/24 with certain part of it dedicated for dynamic allocation
+      <para>In a typical scenario there is an IPv4 subnet defined,
+      e.g. 192.0.2.0/24, with certain part of it dedicated for dynamic allocation
       by the DHCPv4 server. That dynamic part is referred to as a dynamic pool or
-      simply a pool. In principle the host reservation can reserve any address
-      that belongs to the subnet. The reservations that specify an address that
+      simply a pool. In principle, the host reservation can reserve any address
+      that belongs to the subnet. The reservations that specify addresses that
       belong to configured pools are called <command>in-pool reservations</command>.
-      In contract, those that do not belong to dynamic pools are called
+      In contrast, those that do not belong to dynamic pools are called
       <command>out-of-pool reservations</command>. There is no formal difference
       in the reservation syntax. As of 0.9.1, both reservation types are
       handled uniformly. However, upcoming releases may offer improved performance
@@ -1819,19 +1826,19 @@ temporarily override a list of interface names and listen on all interfaces.
       possible.</para>
     </section>
 
-    <section it="reservation4-conflict">
+    <section id="reservation4-conflict">
       <title>Conflicts in DHCPv4 reservations</title>
-      <para>As reservations and lease information are kept separately,
-      conflict may arrise. Consider the following series of events. The server
-      has configured 192.0.2.10 to 192.0.2.20 dynamic pool range. Host A
-      requests an address and gets 19.0.2.10. Now the system administrator
-      decides to reserve an address for host B. He decides to reserve 192.0.2.10
-      for that purpose. In general, reserving an address that is currently
-      assigned to someone else is not recommended, but there are valid use
-      cases where such an operation is warranted.</para>
+      <para>As reservations and lease information are stored separately,
+      conflicts may arrise. Consider the following series of events. The server
+      has configured dynamic pool of addresses from the range of 192.0.2.10 to
+      192.0.2.20. Host A requests an address and gets 19.0.2.10. Now the system
+      administrator decides to reserve an address for host B. He decides to
+      reserve 192.0.2.10 for that purpose. In general, reserving an address that
+      is currently assigned to someone else is not recommended, but there are
+      valid use cases where such an operation is warranted.</para>
 
       <para>The server now has a conflict to resolve. Let's analyze the
-      situation here. If host B boots up and request an address, the server is
+      situation here. If the host B boots up and requests an address, the server is
       not able to assign the reserved address 192.0.2.10. A naive approach would
       to be immediately remove the lease for host A and create a new one for
       host B. That would not solve the problem, though, because as soon as host
