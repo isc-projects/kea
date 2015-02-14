@@ -554,7 +554,7 @@
                 "item_name": "qualifying-suffix",
                 "item_type": "string",
                 "item_optional": true,
-                "item_default": "example.com",
+                "item_default": "",
                 "item_description": "Fully qualified domain-name suffix if partial name provided by client"
             },
         ]

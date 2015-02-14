@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -1036,7 +1036,7 @@ TEST_F(ParseConfigTest, validD2Config) {
 /// false only.
 TEST_F(ParseConfigTest, validDisabledD2Config) {
 
-    // Configuration string.  This contains a set of valid libraries.
+    // Configuration string.  This defines a disabled D2 client config.
     std::string config_str =
         "{ \"dhcp-ddns\" :"
         "    {"
@@ -1062,11 +1062,14 @@ TEST_F(ParseConfigTest, validDisabledD2Config) {
 /// default values
 TEST_F(ParseConfigTest, parserDefaultsD2Config) {
 
-    // Configuration string.  This contains a set of valid libraries.
+    // Configuration string.  This defines an enabled D2 client config
+    // with the mandatory parameter in such a case, all other parameters
+    // are optional and their default values will be used.
     std::string config_str =
         "{ \"dhcp-ddns\" :"
         "    {"
-        "     \"enable-updates\" : true"
+        "     \"enable-updates\" : true, "
+        "     \"qualifying-suffix\" : \"test.suffix.\" "
         "    }"
         "}";
 
@@ -1100,7 +1103,7 @@ TEST_F(ParseConfigTest, parserDefaultsD2Config) {
               d2_client_config->getReplaceClientName());
     EXPECT_EQ(D2ClientConfig::DFT_GENERATED_PREFIX,
               d2_client_config->getGeneratedPrefix());
-    EXPECT_EQ(D2ClientConfig::DFT_QUALIFYING_SUFFIX,
+    EXPECT_EQ("test.suffix.",
               d2_client_config->getQualifyingSuffix());
 }
 
@@ -1108,9 +1111,15 @@ TEST_F(ParseConfigTest, parserDefaultsD2Config) {
 /// @brief Check various invalid D2 client configurations.
 TEST_F(ParseConfigTest, invalidD2Config) {
     std::string invalid_configs[] = {
-        // Must supply at lease enable-updates
+        // Must supply at least enable-updates
         "{ \"dhcp-ddns\" :"
         "    {"
+        "    }"
+        "}",
+        // Must supply qualifying-suffix when updates are enabled
+        "{ \"dhcp-ddns\" :"
+        "    {"
+        "     \"enable-updates\" : true"
         "    }"
         "}",
         // Invalid server ip value
