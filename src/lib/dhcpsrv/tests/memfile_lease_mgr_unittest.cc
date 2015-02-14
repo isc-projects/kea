@@ -456,17 +456,19 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup4) {
         "192.0.2.45,00:00:00:00:00:00,,100,100,1,0,0,\n";
     EXPECT_EQ(updated_file_contents, current_file.readFile());
 
-    /// @todo Replace the following with the checks that the LFC has
-    /// completed successfully, i.e. the leasefile4_0.csv.2 exists
-    /// and it holds the cleaned up lease information.
+    // This string contains the contents of the lease file we
+    // expect after the LFC run.  It has two leases with one
+    // entry each.
+    std::string result_file_contents = new_file_contents +
+        "192.0.2.2,02:02:02:02:02:02,,200,800,8,1,1,\n"
+        "192.0.2.3,03:03:03:03:03:03,,200,800,8,1,1,\n";
 
-    // Until the kea-lfc is implemented and performs the cleanup, we can
-    // only check that the backend has moved the lease file to a lease
-    // file with suffix ".1".
-    LeaseFileIO input_file(getLeaseFilePath("leasefile4_0.csv.1"), false);
+    // The LFC should have created a file with the two leases and moved it
+    // to leasefile4_0.csv.2
+    LeaseFileIO input_file(getLeaseFilePath("leasefile4_0.csv.2"), false);
     ASSERT_TRUE(input_file.exists());
-    // And this file should contain the contents of the original file.
-    EXPECT_EQ(current_file_contents, input_file.readFile());
+    // And this file should contain the contents of the result file.
+    EXPECT_EQ(result_file_contents, input_file.readFile());
 }
 
 // This test that the callback function executing the cleanup of the
@@ -537,17 +539,21 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup6) {
         "400,2,300,0,123,128,0,0,,\n";
     EXPECT_EQ(update_file_contents, current_file.readFile());
 
-    /// @todo Replace the following with the checks that the LFC has
-    /// completed successfully, i.e. the leasefile6_0.csv.2 exists
-    /// and it holds the cleaned up lease information.
+    // This string contains the contents of the lease file we
+    // expect after the LFC run.  It has two leases with one
+    // entry each.
+    std::string result_file_contents = new_file_contents +
+        "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,800,"
+        "8,100,0,7,0,1,1,,\n"
+        "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,800,"
+        "8,100,0,7,0,1,1,,\n";
 
-    // Until the kea-lfc is implemented and performs the cleanup, we can
-    // only check that the backend has moved the lease file to a lease
-    // file with suffix ".1".
-    LeaseFileIO input_file(getLeaseFilePath("leasefile6_0.csv.1"), false);
+    // The LFC should have created a file with the two leases and moved it
+    // to leasefile6_0.csv.2
+    LeaseFileIO input_file(getLeaseFilePath("leasefile6_0.csv.2"), false);
     ASSERT_TRUE(input_file.exists());
-    // And this file should contain the contents of the original file.
-    EXPECT_EQ(current_file_contents, input_file.readFile());
+    // And this file should contain the contents of the result file.
+    EXPECT_EQ(result_file_contents, input_file.readFile());
 }
 
 // This test verifies that EXIT_FAILURE status code is returned when

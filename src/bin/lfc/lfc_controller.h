@@ -77,9 +77,13 @@ public:
     ///
     /// @param argc Number of strings in the @c argv array.
     /// @param argv Array of arguments passed in via the program's main function.
+    /// @param test_mode is a bool value which indicates if @c launch
+    /// should be run in the test mode (if true).  This parameter doesn't
+    /// have a default value to force test implementers to enable test
+    /// mode explicitly.
     ///
     /// @throw InvalidUsage if the command line parameters are invalid.
-    void launch(int argc, char* argv[]);
+    void launch(int argc, char* argv[], const bool test_mode);
 
     /// @brief Process the command line arguments.
     ///
@@ -192,6 +196,12 @@ private:
     /// @throw RunTimeFail if we can't move the file.
     template<typename LeaseObjectType, typename LeaseFileType, typename StorageType>
     void processLeases() const;
+
+    ///@brief Start up the logging system
+    ///
+    /// @param test_mode indicates if we have have been started from the test
+    /// system (true) or are running normally (false)
+    void startLogger(const bool test_mode) const;
 };
 
 }; // namespace isc::lfc

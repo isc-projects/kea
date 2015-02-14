@@ -19,8 +19,8 @@
 #include <config.h>
 #include <iostream>
 
-using namespace isc::lfc;
 using namespace std;
+using namespace isc::lfc;
 
 /// This file contains the entry point (main() function) for the
 /// standard LFC process, kea-lfc, component of the Kea software suite.
@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
     // Exit program with the controller's return code.
     try  {
         // 'false' value disables test mode.
-        lfc_controller.launch(argc, argv);
+        lfc_controller.launch(argc, argv, false);
     } catch (const isc::Exception& ex) {
         std::cerr << "Service failed: " << ex.what() << std::endl;
         ret = EXIT_FAILURE;
