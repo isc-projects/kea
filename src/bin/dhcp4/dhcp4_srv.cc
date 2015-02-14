@@ -1892,7 +1892,7 @@ Dhcpv4Srv::unpackOptions(const OptionBuffer& buf,
         if (opt_type == DHO_PAD)
             continue;
 
-        if (offset + 1 >= buf.size()) {
+        if (offset + 1 > buf.size()) {
             // opt_type must be cast to integer so as it is not treated as
             // unsigned char value (a number is presented in error message).
             isc_throw(OutOfRange, "Attempt to parse truncated option "
