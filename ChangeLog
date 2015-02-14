@@ -3,7 +3,7 @@
 	configuration element to be mandatory with no default value when
 	updates are enabled (i.e., the enable-updates mandatory parameter
 	is true).
-	(Trac #3632, git )
+	(Trac #3632, git 12808651448837c611e4f6a262f7a1eb3deaf8da)
 
 892.	[func]		sar
 	A class, LeaseFileStats, has been added to provide simple
