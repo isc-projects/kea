@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <lfc/lfc_controller.h>
+#include <lfc/lfc_log.h>
 #include <util/pid_file.h>
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/csv_lease_file4.h>
@@ -20,6 +21,8 @@
 #include <dhcpsrv/memfile_lease_storage.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_file_loader.h>
+#include <log/logger_manager.h>
+#include <log/logger_name.h>
 #include <config.h>
 
 #include <iostream>
@@ -31,6 +34,7 @@
 using namespace std;
 using namespace isc::util;
 using namespace isc::dhcp;
+using namespace isc::log;
 
 namespace {
 /// @brief Maximum number of errors to allow when reading leases from the file.
@@ -56,8 +60,16 @@ LFCController::~LFCController() {
 }
 
 void
-LFCController::launch(int argc, char* argv[]) {
+LFCController::launch(int argc, char* argv[], const bool test_mode) {
     bool do_rotate = true;
+
+    // It would be nice to set up the logger as the first step
+    // in the process, but we don't know where to send logging
+    // info until after we have parsed our arguments.  As we
+    // don't currently log anything when trying to parse the
+    // arguments we do the parse before the logging setup.  If
+    // we do decide to log something then the code will need
+    // to move around a bit.
 
     try {
         parseArgs(argc, argv);
@@ -66,9 +78,10 @@ LFCController::launch(int argc, char* argv[]) {
         throw;  // rethrow it
     }
 
-    if (verbose_) {
-        std::cerr << "Starting lease file cleanup" << std::endl;
-    }
+    // Start up the logging system.
+    startLogger(test_mode);
+
+    LOG_INFO(lfc_logger, LFC_START);
 
     // verify we are the only instance
     PIDFile pid_file(pid_file_);
@@ -76,14 +89,14 @@ LFCController::launch(int argc, char* argv[]) {
     try {
         if (pid_file.check()) {
             // Already running instance, bail out
-            std::cerr << "LFC instance already running" <<  std::endl;
+            LOG_FATAL(lfc_logger, LFC_RUNNING);
             return;
         }
 
         // create the pid file for this instance
         pid_file.write();
     } catch (const PIDFileError& pid_ex) {
-        std::cerr << pid_ex.what() << std::endl;
+        LOG_FATAL(lfc_logger, LFC_FAIL_PID_CREATE).arg(pid_ex.what());
         return;
     }
 
@@ -92,9 +105,9 @@ LFCController::launch(int argc, char* argv[]) {
     // all we care about is if it exists so that's okay
     CSVFile lf_finish(getFinishFile());
     if (!lf_finish.exists()) {
-        if (verbose_) {
-            std::cerr << "LFC Processing files" << std::endl;
-        }
+        LOG_INFO(lfc_logger, LFC_PROCESSING)
+          .arg(previous_file_)
+          .arg(copy_file_);
 
         try {
             if (getProtocolVersion() == 4) {
@@ -105,7 +118,7 @@ LFCController::launch(int argc, char* argv[]) {
         } catch (const isc::Exception& proc_ex) {
             // We don't want to do the cleanup but do want to get rid of the pid
             do_rotate = false;
-            std::cerr << "Processing failed: " << proc_ex.what() << std::endl;
+            LOG_FATAL(lfc_logger, LFC_FAIL_PROCESS).arg(proc_ex.what());
         }
     }
 
@@ -114,14 +127,12 @@ LFCController::launch(int argc, char* argv[]) {
     // we don't want to return after the catch as we
     // still need to cleanup the pid file
     if (do_rotate) {
-        if (verbose_) {
-            std::cerr << "LFC cleaning files" << std::endl;
-        }
+        LOG_INFO(lfc_logger, LFC_ROTATING);
 
         try {
             fileRotate();
         } catch (const RunTimeFail& run_ex) {
-            std::cerr << run_ex.what() << std::endl;
+          LOG_FATAL(lfc_logger, LFC_FAIL_ROTATE).arg(run_ex.what());
         }
     }
 
@@ -129,12 +140,10 @@ LFCController::launch(int argc, char* argv[]) {
     try {
         pid_file.deleteFile();
     } catch (const PIDFileError& pid_ex) {
-        std::cerr << pid_ex.what() << std::endl;
+          LOG_FATAL(lfc_logger, LFC_FAIL_PID_DEL).arg(pid_ex.what());
     }
 
-    if (verbose_) {
-        std::cerr << "LFC complete" << std::endl;
-    }
+    LOG_INFO(lfc_logger, LFC_TERMINATE);
 }
 
 void
@@ -272,7 +281,7 @@ LFCController::parseArgs(int argc, char* argv[]) {
 
     // If verbose is set echo the input information
     if (verbose_) {
-        std::cerr << "Protocol version:    DHCPv" << protocol_version_ << std::endl
+        std::cout << "Protocol version:    DHCPv" << protocol_version_ << std::endl
                   << "Previous or ex lease file: " << previous_file_ << std::endl
                   << "Copy lease file:           " << copy_file_ << std::endl
                   << "Output lease file:         " << output_file_ << std::endl
@@ -340,6 +349,17 @@ LFCController::processLeases() const {
     LeaseFileType lf_output(getOutputFile());
     LeaseFileLoader::write<LeaseObjectType>(lf_output, storage);
 
+    // If desired log the stats
+    LOG_INFO(lfc_logger, LFC_READ_STATS)
+      .arg(lf_prev.getReadLeases() + lf_copy.getReadLeases())
+      .arg(lf_prev.getReads() + lf_copy.getReads())
+      .arg(lf_prev.getReadErrs() + lf_copy.getReadErrs());
+
+    LOG_INFO(lfc_logger, LFC_WRITE_STATS)
+      .arg(lf_output.getWriteLeases())
+      .arg(lf_output.getWrites())
+      .arg(lf_output.getWriteErrs());
+
     // Once we've finished the output file move it to the complete file
     if (rename(getOutputFile().c_str(), getFinishFile().c_str()) != 0) {
         isc_throw(RunTimeFail, "Unable to move output (" << output_file_
@@ -371,5 +391,40 @@ LFCController::fileRotate() const {
                   << ") error: " << strerror(errno));
     }
 }
+
+void
+LFCController::startLogger(const bool test_mode) const {
+    // If we are running in test mode use the environment variables
+    // else use our defaults
+    if (test_mode) {
+        initLogger();
+    }
+    else {
+        OutputOption option;
+        LoggerManager manager;
+
+        initLogger(lfc_app_name_, INFO, 0, NULL, false);
+
+        // Prepare the objects to define the logging specification
+        LoggerSpecification spec(getRootLoggerName(),
+                                 keaLoggerSeverity(INFO),
+                                 keaLoggerDbglevel(0));
+
+        // If we are running in verbose (debugging) mode
+        // we send the output to the console, otherwise
+        // by default we send it to the SYSLOG
+        if (verbose_) {
+            option.destination = OutputOption::DEST_CONSOLE;
+        } else {
+            option.destination = OutputOption::DEST_SYSLOG;
+        }
+
+        // ... and set the destination
+        spec.addOutputOption(option);
+
+        manager.process(spec);
+    }
+}
+
 }; // namespace isc::lfc
 }; // namespace isc

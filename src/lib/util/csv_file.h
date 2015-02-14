@@ -395,7 +395,8 @@ public:
     /// output file pointer should be set at the end of file.
     ///
     /// @throw CSVFileError when IO operation fails.
-    void open(const bool seek_to_end = false);
+
+    virtual void open(const bool seek_to_end = false);
 
     /// @brief Creates a new CSV file.
     ///
