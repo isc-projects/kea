@@ -196,6 +196,12 @@ private:
     /// @throw RunTimeFail if we can't move the file.
     template<typename LeaseObjectType, typename LeaseFileType, typename StorageType>
     void processLeases() const;
+
+    ///@brief Start up the logging system
+    ///
+    /// @param test_mode indicates if we have have been started from the test
+    /// system (true) or are running normally (false)
+    void startLogger(const bool test_mode) const;
 };
 
 }; // namespace isc::lfc

@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef LEASE_STATS_H
-#define LEASE_STATS_H
+#ifndef LEASE_FILE_STATS_H
+#define LEASE_FILE_STATS_H
 
 namespace isc {
 namespace dhcp {
@@ -99,4 +99,4 @@ protected:
 } // namespace isc::dhcp
 } // namesapce isc
 
-#endif // LEASE_STATS_H
+#endif // LEASE_FILE_STATS_H
