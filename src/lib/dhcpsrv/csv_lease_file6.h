@@ -19,7 +19,7 @@
 #include <dhcp/duid.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/subnet.h>
-#include <dhcpsrv/lease_stats.h>
+#include <dhcpsrv/lease_file_stats.h>
 #include <util/csv_file.h>
 #include <stdint.h>
 #include <string>

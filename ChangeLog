@@ -1,3 +1,10 @@
+XXX.	[func]		sar
+	A class, LeaseFileStats, has been added to provide simple
+	statistics for use with lease files.  Also added logging
+	to the kea-lfc process per the design.
+	See http://kea.isc.org/wiki/LFCDesign for the design.
+	(Trac #3667, git )
+
 887.	[func]		sar
 	A new process, kea-lfc, has been added. It is meant to
 	be periodically executed by the DHCPv4 and DHCPv6 servers
