@@ -1,3 +1,8 @@
+896.	[bug]		fdupont
+	Removed exit() in D2 for version command line processing.
+	This interfered with how the unit-tests were run.
+	(Trac #3616, git 758a61e277675e89d857a22c3f8e844de307dca6)
+
 895.	[doc]		tomek
 	Host reservation for DHCPv4 and DHCPv6 is now documented.
 	(Trac #3575, git a981e42eb0f39d27795364a6862b3a5e574e540a)
