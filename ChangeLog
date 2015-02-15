@@ -1,3 +1,7 @@
+895.	[doc]		tomek
+	Host reservation for DHCPv4 and DHCPv6 is now documented.
+	(Trac #3575, git a981e42eb0f39d27795364a6862b3a5e574e540a)
+
 894.	[bug]		fdupont
 	Accept empty options or sub options in DHCPv4 messages unpacking
 	routines.
