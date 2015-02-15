@@ -1799,7 +1799,10 @@ should include options from the isc option space:
     requires a separate host definition in each subnet it is expected to visit.
     It is not allowed to define multiple host definitions with the same hardware
     address in a single subnet. It is a valid configuration, if such definitions
-    are specified in different subnets, though.
+    are specified in different subnets, though. The reservation for a given host
+    should include only one identifier, either DUID or hwardware address. Defining
+    both for the same host is considered a configuration error, but as of 0.9.1
+    beta, it is not rejected.
     </para>
 
     <para>Adding host reservation incurs a performance penalty. In principle,
