@@ -379,11 +379,11 @@ PktFilterBPF::openSocket(Iface& iface,
 }
 
 Pkt4Ptr
-PktFilterBPF::receive(const Iface& iface, const SocketInfo& socket_info) {
+PktFilterBPF::receive(Iface& iface, const SocketInfo& socket_info) {
     // When using BPF, the read buffer must be allocated for the interface.
     // If it is not allocated, it is a programmatic error.
     if (iface.getReadBufferSize() == 0) {
-        isc_throw(SocketConfigError, "socket read buffer not allocated"
+        isc_throw(SocketConfigError, "socket read buffer empty"
                   " for the interface: " << iface.getName());
     }
 
