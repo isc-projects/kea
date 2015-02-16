@@ -282,8 +282,8 @@ Iface::setActive(const bool active) {
     }
 }
 
-uint16_t
-Iface::countActive() const {
+unsigned int
+Iface::countActive4() const {
     uint16_t count = 0;
     for (AddressCollection::const_iterator addr_it = addrs_.begin();
          addr_it != addrs_.end(); ++addr_it) {
