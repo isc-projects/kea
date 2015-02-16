@@ -144,7 +144,7 @@ public:
     /// @note All parameters are ignored.
     ///
     /// @return always a NULL object.
-    virtual Pkt4Ptr receive(const Iface& iface, const SocketInfo& sock_info);
+    virtual Pkt4Ptr receive(Iface& iface, const SocketInfo& sock_info);
 
     /// @brief Simulates sending a DHCPv4 message.
     ///

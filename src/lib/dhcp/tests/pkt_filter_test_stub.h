@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -77,7 +77,7 @@ public:
     /// @note All parameters are ignored.
     ///
     /// @return always a NULL object.
-    virtual Pkt4Ptr receive(const Iface& iface, const SocketInfo& sock_info);
+    virtual Pkt4Ptr receive(Iface& iface, const SocketInfo& sock_info);
 
     /// @brief Simulates sending a DHCPv4 message.
     ///

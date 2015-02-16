@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -56,16 +56,9 @@ Iface::Iface(const std::string& name, int ifindex)
     :name_(name), ifindex_(ifindex), mac_len_(0), hardware_type_(0),
      flag_loopback_(false), flag_up_(false), flag_running_(false),
      flag_multicast_(false), flag_broadcast_(false), flags_(0),
-     inactive4_(false), inactive6_(false), read_buffer_(NULL),
-     read_buffer_size_(0)
+     inactive4_(false), inactive6_(false)
 {
     memset(mac_, 0, sizeof(mac_));
-}
-
-Iface::~Iface() {
-    if (read_buffer_ != NULL) {
-        free(read_buffer_);
-    }
 }
 
 void
@@ -173,24 +166,6 @@ bool Iface::delSocket(const uint16_t sockfd) {
         ++sock;
     }
     return (false); // socket not found
-}
-
-void
-Iface::resizeReadBuffer(const size_t new_size) {
-    // Do nothing if the new size is equal to the current size.
-    if (new_size == read_buffer_size_) {
-        return;
-    }
-
-    read_buffer_size_ = new_size;
-    read_buffer_ = static_cast<uint8_t*>(realloc(read_buffer_,
-                                                 read_buffer_size_));
-    if (read_buffer_ == NULL) {
-        free(read_buffer_);
-        read_buffer_size_ = 0;
-        isc_throw(SocketConfigError, "failed to resize the socket read"
-                  " buffer");
-    }
 }
 
 IfaceMgr::IfaceMgr()
@@ -943,7 +918,7 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
                   " one million microseconds");
     }
     const SocketInfo* candidate = 0;
-    IfaceCollection::const_iterator iface;
+    IfaceCollection::iterator iface;
     fd_set sockets;
     int maxfd = 0;
 
