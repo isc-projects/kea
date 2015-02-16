@@ -106,7 +106,8 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
         }
     }
 
-    // Select unicast sockets. It works only for V6. Ignore for V4.
+    // Select unicast sockets for DHCPv6 or activate specific IPv4 addresses
+    // for DHCPv4.
     for (ExplicitAddressMap::const_iterator unicast = address_map_.begin();
          unicast != address_map_.end(); ++unicast) {
         Iface* iface = IfaceMgr::instance().getIface(unicast->first);
