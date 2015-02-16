@@ -311,7 +311,7 @@ public:
     }
 
     DuidPtr duid_;            ///< client-identifier (value used in tests)
-    HWAddrPtr hwaddr_;          ///< client's hardware address
+    HWAddrPtr hwaddr_;        ///< client's hardware address
     uint32_t iaid_;           ///< IA identifier (value used in tests)
     Subnet6Ptr subnet_;       ///< subnet6 (used in tests)
     Pool6Ptr pool_;           ///< NA pool belonging to subnet_
