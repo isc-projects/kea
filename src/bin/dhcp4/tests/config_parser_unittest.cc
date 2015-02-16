@@ -3496,8 +3496,79 @@ TEST_F(Dhcp4ParserTest, reservationBogus) {
 
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
     checkResult(x, 1);
+}
 
+/// The goal of this test is to verify that Host Reservation modes can be
+/// specified on a per-subnet basis.
+TEST_F(Dhcp4ParserTest, hostReservationPerSubnet) {
 
+    /// - Configuration:
+    ///   - only addresses (no prefixes)
+    ///   - 4 subnets with:
+    ///       - 192.0.2.0/24 (all reservations enabled)
+    ///       - 192.0.3.0/24 (out-of-pool reservations)
+    ///       - 192.0.4.0/24 (reservations disabled)
+    ///       - 192.0.5.0/24 (reservations not specified)
+    const char* hr_config =
+        "{ "
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.0/24\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"reservation-mode\": \"all\""
+        " },"
+        " {"
+        "    \"pools\": [ { \"pool\": \"192.0.3.0/24\" } ],"
+        "    \"subnet\": \"192.0.3.0/24\", "
+        "    \"reservation-mode\": \"out-of-pool\""
+        " },"
+        " {"
+        "    \"pools\": [ { \"pool\": \"192.0.4.0/24\" } ],"
+        "    \"subnet\": \"192.0.4.0/24\", "
+        "    \"reservation-mode\": \"disabled\""
+        " },"
+        " {"
+        "    \"pools\": [ { \"pool\": \"192.0.5.0/24\" } ],"
+        "    \"subnet\": \"192.0.5.0/24\""
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(hr_config);
+    ConstElementPtr result;
+    EXPECT_NO_THROW(result = configureDhcp4Server(*srv_, json));
+
+    // returned value should be 0 (success)
+    checkResult(result, 0);
+
+    // Let's get all subnets and check that there are 4 of them.
+    ConstCfgSubnets4Ptr subnets = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
+    ASSERT_TRUE(subnets);
+    const Subnet4Collection* subnet_col = subnets->getAll();
+    ASSERT_EQ(4, subnet_col->size()); // We expect 4 subnets
+
+    // Let's check if the parsed subnets have correct HR modes.
+
+    // Subnet 1
+    Subnet4Ptr subnet;
+    subnet = subnets->selectSubnet(IOAddress("192.0.2.1"));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ(Subnet::HR_ALL, subnet->getHostReservationMode());
+
+    // Subnet 2
+    subnet = subnets->selectSubnet(IOAddress("192.0.3.1"));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ(Subnet::HR_OUT_OF_POOL, subnet->getHostReservationMode());
+
+    // Subnet 3
+    subnet = subnets->selectSubnet(IOAddress("192.0.4.1"));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ(Subnet::HR_DISABLED, subnet->getHostReservationMode());
+
+    // Subnet 4
+    subnet = subnets->selectSubnet(IOAddress("192.0.5.1"));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ(Subnet::HR_ALL, subnet->getHostReservationMode());
 }
 
 }

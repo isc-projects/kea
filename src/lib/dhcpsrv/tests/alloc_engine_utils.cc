@@ -49,6 +49,11 @@ AllocEngine6Test::AllocEngine6Test() {
     duid_ = DuidPtr(new DUID(std::vector<uint8_t>(8, 0x42)));
     iaid_ = 42;
 
+    // Let's use odd hardware type to check if there is no Ethernet
+    // hardcoded anywhere.
+    const uint8_t mac[] = { 0, 1, 22, 33, 44, 55};
+    hwaddr_ = HWAddrPtr(new HWAddr(mac, sizeof(mac), HTYPE_FDDI));
+
     // Initialize a subnet and short address pool.
     initSubnet(IOAddress("2001:db8:1::"),
                IOAddress("2001:db8:1::10"),
@@ -75,6 +80,23 @@ AllocEngine6Test::initSubnet(const asiolink::IOAddress& subnet,
 
     cfg_mgr.getStagingCfg()->getCfgSubnets6()->add(subnet_);
     cfg_mgr.commit();
+}
+
+HostPtr
+AllocEngine6Test::createHost6HWAddr(bool add_to_host_mgr, IPv6Resrv::Type type,
+                                    HWAddrPtr& hwaddr, const asiolink::IOAddress& addr,
+                                    uint8_t prefix_len) {
+    HostPtr host(new Host(&hwaddr->hwaddr_[0], hwaddr->hwaddr_.size(),
+                          Host::IDENT_HWADDR, SubnetID(0), subnet_->getID(),
+                          asiolink::IOAddress("0.0.0.0")));
+    IPv6Resrv resv(type, addr, prefix_len);
+    host->addReservation(resv);
+
+    if (add_to_host_mgr) {
+        CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+        CfgMgr::instance().commit();
+    }
+    return (host);
 }
 
 Lease6Collection
@@ -142,6 +164,7 @@ AllocEngine6Test::simpleAlloc6Test(const Pool6Ptr& pool, const IOAddress& hint,
     Lease6Ptr lease;
     AllocEngine::ClientContext6 ctx(subnet_, duid_, iaid_, hint, type,
                                     false, false, "", fake);
+    ctx.hwaddr_ = hwaddr_;
 
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
 

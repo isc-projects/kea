@@ -390,7 +390,8 @@ protected:
         } else if ((config_id.compare("subnet") == 0) ||
                    (config_id.compare("interface") == 0) ||
                    (config_id.compare("client-class") == 0) ||
-                   (config_id.compare("interface-id") == 0)) {
+                   (config_id.compare("interface-id") == 0) ||
+                   (config_id.compare("reservation-mode") == 0)) {
             parser = new StringParser(config_id, string_values_);
         } else if (config_id.compare("pools") == 0) {
             parser = new Pools6ListParser(config_id, pools_);

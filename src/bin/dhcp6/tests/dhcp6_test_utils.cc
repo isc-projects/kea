@@ -200,7 +200,7 @@ Dhcpv6SrvTest::createIA(isc::dhcp::Lease::Type lease_type,
 void
 Dhcpv6SrvTest::testRenewBasic(Lease::Type type, const std::string& existing_addr,
                               const std::string& renew_addr,
-                              const uint8_t prefix_len) {
+                              const uint8_t prefix_len, bool insert_before_renew) {
     NakedDhcpv6Srv srv(0);
 
     const IOAddress existing(existing_addr);
@@ -213,24 +213,27 @@ Dhcpv6SrvTest::testRenewBasic(Lease::Type type, const std::string& existing_addr
     // Check that the address we are about to use is indeed in pool
     ASSERT_TRUE(subnet_->inPool(type, existing));
 
-    // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
-    // value on purpose. They should be updated during RENEW.
-    Lease6Ptr lease(new Lease6(type, existing, duid_, iaid, 501, 502, 503, 504,
-                               subnet_->getID(), HWAddrPtr(), prefix_len));
-    lease->cltt_ = 1234;
-    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+    Lease6Ptr l;
+    if (insert_before_renew) {
+        // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
+        // value on purpose. They should be updated during RENEW.
+        Lease6Ptr lease(new Lease6(type, existing, duid_, iaid, 501, 502, 503, 504,
+                                   subnet_->getID(), HWAddrPtr(), prefix_len));
+        lease->cltt_ = 1234;
+        ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
-    // Check that the lease is really in the database
-    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(type, existing);
-    ASSERT_TRUE(l);
+        // Check that the lease is really in the database
+        l = LeaseMgrFactory::instance().getLease6(type, existing);
+        ASSERT_TRUE(l);
 
-    // Check that T1, T2, preferred, valid and cltt really set and not using
-    // previous (500, 501, etc.) values
-    EXPECT_NE(l->t1_, subnet_->getT1());
-    EXPECT_NE(l->t2_, subnet_->getT2());
-    EXPECT_NE(l->preferred_lft_, subnet_->getPreferred());
-    EXPECT_NE(l->valid_lft_, subnet_->getValid());
-    EXPECT_NE(l->cltt_, time(NULL));
+        // Check that T1, T2, preferred, valid and cltt really set and not using
+        // previous (500, 501, etc.) values
+        EXPECT_NE(l->t1_, subnet_->getT1());
+        EXPECT_NE(l->t2_, subnet_->getT2());
+        EXPECT_NE(l->preferred_lft_, subnet_->getPreferred());
+        EXPECT_NE(l->valid_lft_, subnet_->getValid());
+        EXPECT_NE(l->cltt_, time(NULL));
+    }
 
     Pkt6Ptr req = createMessage(DHCPV6_RENEW, type, IOAddress(renew_addr),
                                 prefix_len, iaid);
@@ -300,6 +303,114 @@ Dhcpv6SrvTest::testRenewBasic(Lease::Type type, const std::string& existing_addr
 }
 
 void
+Dhcpv6SrvTest::testRenewWrongIAID(Lease::Type type, const IOAddress& addr) {
+
+    NakedDhcpv6Srv srv(0);
+
+    const uint32_t transid = 1234;
+    const uint32_t valid_iaid = 234;
+    const uint32_t bogus_iaid = 456;
+
+    uint8_t prefix_len = (type == Lease::TYPE_PD) ? 128 : pd_pool_->getLength();
+
+    // Quick sanity check that the address we're about to use is ok
+    ASSERT_TRUE(subnet_->inPool(type, addr));
+
+    // Check that the lease is NOT in the database
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(type, addr);
+    ASSERT_FALSE(l);
+
+    // GenerateClientId() also sets duid_
+    OptionPtr clientid = generateClientId();
+
+    // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
+    // value on purpose. They should be updated during RENEW.
+    Lease6Ptr lease(new Lease6(type, addr, duid_, valid_iaid,
+                               501, 502, 503, 504, subnet_->getID(),
+                               HWAddrPtr(), prefix_len));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Pass it to the server and hope for a REPLY
+    // Let's create a RENEW
+    Pkt6Ptr renew = createMessage(DHCPV6_RENEW, type, IOAddress(addr), prefix_len,
+                                  bogus_iaid);
+    renew->addOption(clientid);
+    renew->addOption(srv.getServerID());
+
+    // The duid and address matches, but the iaid is different. The server could
+    // respond with NoBinding. However, according to
+    // draft-ietf-dhc-dhcpv6-stateful-issues-10, the server can also assign a
+    // new address. And that's what we expect here.
+    Pkt6Ptr reply = srv.processRenew(renew);
+    checkResponse(reply, DHCPV6_REPLY, transid);
+
+    // Check that IA_NA was returned and that there's an address included
+    boost::shared_ptr<Option6IAAddr>
+        addr_opt = checkIA_NA(reply, bogus_iaid, subnet_->getT1(), subnet_->getT2());
+
+    ASSERT_TRUE(addr_opt);
+
+    // Check that we've got the an address
+    checkIAAddr(addr_opt, addr_opt->getAddress(), Lease::TYPE_NA);
+
+    // Check that we got a different address than was in the database.
+    EXPECT_NE(addr_opt->getAddress().toText(), addr.toText());
+
+    // Check that the lease is really in the database
+    l = checkLease(duid_, reply->getOption(D6O_IA_NA), addr_opt);
+    ASSERT_TRUE(l);
+}
+
+void
+Dhcpv6SrvTest::testRenewSomeoneElsesLease(Lease::Type type, const IOAddress& addr) {
+
+    NakedDhcpv6Srv srv(0);
+    const uint32_t valid_iaid = 234;
+    const uint32_t transid = 1234;
+
+    uint8_t prefix_len = (type == Lease::TYPE_PD) ? 128 : pd_pool_->getLength();
+
+    // GenerateClientId() also sets duid_
+    OptionPtr clientid = generateClientId();
+
+    // Let's create a lease.
+    Lease6Ptr lease(new Lease6(type, addr, duid_, valid_iaid,
+                               501, 502, 503, 504, subnet_->getID(),
+                               HWAddrPtr(), prefix_len));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // CASE 3: Lease belongs to a client with different client-id
+    Pkt6Ptr renew = createMessage(DHCPV6_RENEW, type, IOAddress(addr), prefix_len,
+                                  valid_iaid);
+    renew->addOption(generateClientId(13)); // generate different DUID (length 13)
+    renew->addOption(srv.getServerID());
+
+    // The iaid and address matches, but the duid is different.
+    // The server should not renew it, but assign something else.
+    Pkt6Ptr reply = srv.processRenew(renew);
+    checkResponse(reply, DHCPV6_REPLY, transid);
+    OptionPtr tmp = reply->getOption(D6O_IA_NA);
+    ASSERT_TRUE(tmp);
+
+    // Check that IA_?? was returned and that there's proper status code
+    // Check that IA_NA was returned and that there's an address included
+    boost::shared_ptr<Option6IAAddr>
+        addr_opt = checkIA_NA(reply, valid_iaid, subnet_->getT1(), subnet_->getT2());
+
+    ASSERT_TRUE(addr_opt);
+
+    // Check that we've got the an address
+    checkIAAddr(addr_opt, addr_opt->getAddress(), Lease::TYPE_NA);
+
+    // Check that we got a different address than was in the database.
+    EXPECT_NE(addr_opt->getAddress().toText(), addr.toText());
+
+    // Check that the lease is really in the database
+    Lease6Ptr l = checkLease(duid_, reply->getOption(D6O_IA_NA), addr_opt);
+    ASSERT_TRUE(l);
+}
+
+void
 Dhcpv6SrvTest::testRenewReject(Lease::Type type, const IOAddress& addr) {
 
     NakedDhcpv6Srv srv(0);
@@ -349,7 +460,41 @@ Dhcpv6SrvTest::testRenewReject(Lease::Type type, const IOAddress& addr) {
     // Check that IA_?? was returned and that there's proper status code
     boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
     ASSERT_TRUE(ia);
-    checkIA_NAStatusCode(ia, STATUS_NoBinding, subnet_->getT1(), subnet_->getT2());
+
+    if (type == Lease::TYPE_PD) {
+        // For PD, the check is easy. NoBinding and no prefixes
+        checkIA_NAStatusCode(ia, STATUS_NoBinding, subnet_->getT1(), subnet_->getT2());
+    } else {
+        // For IA, it's more involved, as the server will reject the address
+        // (and send it with 0 lifetimes), but will also assign a new address.
+
+        // First, check that the requested address is rejected.
+        bool found = false;
+
+        dhcp::OptionCollection options = ia->getOptions();
+        for (isc::dhcp::OptionCollection::iterator opt = options.begin();
+             opt != options.end(); ++opt) {
+            if (opt->second->getType() != D6O_IAADDR) {
+                continue;
+            }
+
+            dhcp::Option6IAAddrPtr opt_addr =
+                boost::dynamic_pointer_cast<isc::dhcp::Option6IAAddr>(opt->second);
+            ASSERT_TRUE(opt_addr);
+
+            if (opt_addr->getAddress() != addr) {
+                // There may be other addresses, e.g. the newly assigned one
+                continue;
+            }
+
+            found = true;
+            EXPECT_NE(0, opt_addr->getPreferred());
+            EXPECT_NE(0, opt_addr->getValid());
+        }
+
+        EXPECT_TRUE(found) << "Expected address " << addr.toText()
+                           << " with zero lifetimes not found.";
+    }
 
     // Check that there is no lease added
     l = LeaseMgrFactory::instance().getLease6(type, addr);
@@ -654,24 +799,27 @@ Dhcpv6SrvTest::compareOptions(const isc::dhcp::OptionPtr& option1,
 void
 NakedDhcpv6SrvTest::checkIA_NAStatusCode(
     const boost::shared_ptr<isc::dhcp::Option6IA>& ia,
-    uint16_t expected_status_code, uint32_t expected_t1, uint32_t expected_t2)
+    uint16_t expected_status_code, uint32_t expected_t1, uint32_t expected_t2,
+    bool check_addr)
 {
     // Make sure there is no address assigned. Depending on the situation,
     // the server will either not return the address at all and sometimes
     // it will return it with zeroed lifetimes.
-    dhcp::OptionCollection options = ia->getOptions();
-    for (isc::dhcp::OptionCollection::iterator opt = options.begin();
-         opt != options.end(); ++opt) {
-        if (opt->second->getType() != D6O_IAADDR) {
-            continue;
+    if (check_addr) {
+        dhcp::OptionCollection options = ia->getOptions();
+        for (isc::dhcp::OptionCollection::iterator opt = options.begin();
+             opt != options.end(); ++opt) {
+            if (opt->second->getType() != D6O_IAADDR) {
+                continue;
+            }
+
+            dhcp::Option6IAAddrPtr addr =
+                boost::dynamic_pointer_cast<isc::dhcp::Option6IAAddr>(opt->second);
+            ASSERT_TRUE(addr);
+
+            EXPECT_EQ(0, addr->getPreferred());
+            EXPECT_EQ(0, addr->getValid());
         }
-
-        dhcp::Option6IAAddrPtr addr =
-            boost::dynamic_pointer_cast<isc::dhcp::Option6IAAddr>(opt->second);
-        ASSERT_TRUE(addr);
-
-        EXPECT_EQ(0, addr->getPreferred());
-        EXPECT_EQ(0, addr->getValid());
     }
 
     // T1, T2 should NOT be zeroed. draft-ietf-dhc-dhcpv6-stateful-issues-10,

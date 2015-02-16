@@ -1580,6 +1580,15 @@ Dhcpv6Srv::extendIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
     // we extend, cancel or otherwise deal with the leases.
     bool hints_present = !ctx.hints_.empty();
 
+    /// @todo: This was clarfied in draft-ietf-dhc-dhcpv6-stateful-issues that
+    /// the server is allowed to assign new leases in both Renew and Rebind. For
+    /// now, we only support it in Renew, because it breaks a lot of Rebind
+    /// unit-tests. Ultimately, whether we allow it or not, should be exposed
+    /// as configurable policy. See ticket #3717.
+    if (query->getType() == DHCPV6_RENEW) {
+        ctx.allow_new_leases_in_renewals_ = true;
+    }
+
     Lease6Collection leases = alloc_engine_->renewLeases6(ctx);
 
     // Ok, now we have the leases extended. We have:
@@ -1746,6 +1755,12 @@ Dhcpv6Srv::extendIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
     // We need to remember it as we'll be removing hints from this list as
     // we extend, cancel or otherwise deal with the leases.
     bool hints_present = !ctx.hints_.empty();
+
+    /// @todo: The draft-ietf-dhc-dhcpv6-stateful-issues added a new capability
+    /// of the server to to assign new PD leases in both Renew and Rebind.
+    /// There's allow_new_leases_in_renewals_ in the ClientContext6, but we
+    /// currently not use it in PD yet. This should be implemented as part
+    /// of the stateful-issues implementation effort. See ticket #3718.
 
     // Call Allocation Engine and attempt to renew leases. Number of things
     // may happen. Leases may be extended, revoked (if the lease is no longer
