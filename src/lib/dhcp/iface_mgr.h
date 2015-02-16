@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -341,7 +341,7 @@ public:
     void setActive(const bool active);
 
     /// @brief Returns a number of activated IPv4 addresses on the interface.
-    uint16_t countActive() const;
+    unsigned int countActive4() const;
 
     /// @brief Deletes an address from an interface.
     ///

@@ -245,6 +245,12 @@ public:
         return (address);
     }
 
+    /// @brief Returns an IPv6 zero address.
+    static const IOAddress& IPV6_ZERO_ADDRESS() {
+        static IOAddress address("::");
+        return (address);
+    }
+
     //@}
 
 private:
