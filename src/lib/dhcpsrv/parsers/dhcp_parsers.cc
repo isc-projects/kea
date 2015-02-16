@@ -1089,6 +1089,21 @@ SubnetConfigParser::build(ConstElementPtr subnet) {
     }
 }
 
+Subnet::HRMode
+SubnetConfigParser::hrModeFromText(const std::string& txt) {
+    if ( (txt.compare("disabled") == 0) ||
+         (txt.compare("off") == 0) )  {
+        return (Subnet::HR_DISABLED);
+    } else if (txt.compare("out-of-pool") == 0) {
+        return (Subnet::HR_OUT_OF_POOL);
+    } else if (txt.compare("all") == 0) {
+        return (Subnet::HR_ALL);
+    } else {
+        isc_throw(BadValue, "Can't convert '" << txt
+                  << "' into any valid reservation-mode values");
+    }
+}
+
 void
 SubnetConfigParser::createSubnet() {
     std::string subnet_txt;
@@ -1140,6 +1155,19 @@ SubnetConfigParser::createSubnet() {
         iface = string_values_->getParam("interface");
     } catch (const DhcpConfigError &) {
         // iface not mandatory so swallow the exception
+    }
+
+
+    // Let's set host reservation mode. If not specified, the default value of
+    // all will be used.
+    std::string hr_mode;
+    try {
+        hr_mode = string_values_->getOptionalParam("reservation-mode", "all");
+        subnet_->setHostReservationMode(hrModeFromText(hr_mode));
+    } catch (const BadValue& ex) {
+        isc_throw(DhcpConfigError, "Failed to process specified value "
+                  " of reservation-mode parameter: " << ex.what()
+                  << string_values_->getPosition("reservation-mode"));
     }
 
     if (!iface.empty()) {

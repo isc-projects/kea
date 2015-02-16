@@ -3703,4 +3703,80 @@ TEST_F(Dhcp6ParserTest, macSourcesBogus) {
     checkResult(status, 1);
 }
 
+/// The goal of this test is to verify that Host Reservation modes can be
+/// specified on a per-subnet basis.
+TEST_F(Dhcp6ParserTest, hostReservationPerSubnet) {
+
+    /// - Configuration:
+    ///   - only addresses (no prefixes)
+    ///   - 4 subnets with:
+    ///       - 2001:db8:1::/64 (all reservations enabled)
+    ///       - 2001:db8:2::/64 (out-of-pool reservations)
+    ///       - 2001:db8:3::/64 (reservations disabled)
+    ///       - 2001:db8:3::/64 (reservations not specified)
+    const char* HR_CONFIG =
+        "{"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"reservation-mode\": \"all\""
+        " },"
+        " {"
+        "    \"pools\": [ { \"pool\": \"2001:db8:2::/64\" } ],"
+        "    \"subnet\": \"2001:db8:2::/48\", "
+        "    \"reservation-mode\": \"out-of-pool\""
+        " },"
+        " {"
+        "    \"pools\": [ { \"pool\": \"2001:db8:3::/64\" } ],"
+        "    \"subnet\": \"2001:db8:3::/48\", "
+        "    \"reservation-mode\": \"disabled\""
+        " },"
+        " {"
+        "    \"pools\": [ { \"pool\": \"2001:db8:4::/64\" } ],"
+        "    \"subnet\": \"2001:db8:4::/48\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr status;
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_,
+                    Element::fromJSON(HR_CONFIG)));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+    CfgMgr::instance().commit();
+
+    // Let's get all subnets and check that there are 4 of them.
+    ConstCfgSubnets6Ptr subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6();
+    ASSERT_TRUE(subnets);
+    const Subnet6Collection* subnet_col = subnets->getAll();
+    ASSERT_EQ(4, subnet_col->size()); // We expect 4 subnets
+
+    // Let's check if the parsed subnets have correct HR modes.
+
+    // Subnet 1
+    Subnet6Ptr subnet;
+    subnet = subnets->selectSubnet(IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ(Subnet::HR_ALL, subnet->getHostReservationMode());
+
+    // Subnet 2
+    subnet = subnets->selectSubnet(IOAddress("2001:db8:2::1"));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ(Subnet::HR_OUT_OF_POOL, subnet->getHostReservationMode());
+
+    // Subnet 3
+    subnet = subnets->selectSubnet(IOAddress("2001:db8:3::1"));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ(Subnet::HR_DISABLED, subnet->getHostReservationMode());
+
+    // Subnet 4
+    subnet = subnets->selectSubnet(IOAddress("2001:db8:4::1"));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ(Subnet::HR_ALL, subnet->getHostReservationMode());
+}
+
 };

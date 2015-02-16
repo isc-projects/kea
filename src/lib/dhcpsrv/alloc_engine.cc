@@ -588,7 +588,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         /// In-pool reservations: Check if this address is reserved for someone
         /// else. There is no need to check for whom it is reserved, because if
         /// it has been reserved for us we would have already allocated a lease.
-        if (hr_mode == Subnet::HR_IN_POOL &&
+        if (hr_mode == Subnet::HR_ALL &&
             HostMgr::instance().get6(ctx.subnet_->getID(), candidate)) {
 
             // Don't allocate.

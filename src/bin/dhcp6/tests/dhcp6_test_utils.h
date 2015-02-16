@@ -231,18 +231,26 @@ public:
                              expected_t2);
     }
 
-    // Checks that server rejected IA_NA, i.e. that it has no addresses and
-    // that expected status code really appears there. In some limited cases
-    // (reply to RELEASE) it may be used to verify positive case, where
-    // IA_NA response is expected to not include address.
-    //
-    // Status code indicates type of error encountered (in theory it can also
-    // indicate success, but servers typically don't send success status
-    // as this is the default result and it saves bandwidth)
+    /// @brief Checks that the server inserted expected status code in IA_NA
+    ///
+    /// Check that the server used status code as expected, i.e. that it has
+    /// no addresses (if status code is non-zero) and that expected status
+    /// code really appears there. In some limited cases (reply to RELEASE)
+    /// it may be used to verify positive case, where IA_NA response is
+    /// expected to not include address.
+    ///
+    /// Status code indicates type of error encountered (in theory it can also
+    /// indicate success, but servers typically don't send success status
+    /// as this is the default result and it saves bandwidth)
+    /// @param ia IA_NA container to be checked
+    /// @param expected_status_code expected value in status-code option
+    /// @param expected_t1 expected T1 in IA_NA option
+    /// @param expected_t2 expected T2 in IA_NA option
+    /// @param check_addr whether to check for address with 0 lifetimes
     void checkIA_NAStatusCode
         (const boost::shared_ptr<isc::dhcp::Option6IA>& ia,
          uint16_t expected_status_code, uint32_t expected_t1,
-         uint32_t expected_t2);
+         uint32_t expected_t2, bool check_addr = true);
 
     void checkMsgStatusCode(const isc::dhcp::Pkt6Ptr& msg,
                             uint16_t expected_status)
@@ -464,10 +472,29 @@ public:
     /// @param existing_addr address to be preinserted into the database
     /// @param renew_addr address being sent in RENEW
     /// @param prefix_len length of the prefix (128 for addresses)
+    /// @param insert_before_renew should the lease be inserted into the database
+    ///        before we try renewal?
     void
     testRenewBasic(isc::dhcp::Lease::Type type,
                    const std::string& existing_addr,
-                   const std::string& renew_addr, const uint8_t prefix_len);
+                   const std::string& renew_addr, const uint8_t prefix_len,
+                   bool insert_before_renew = true);
+
+    /// @brief Checks if RENEW with invalid IAID is processed correctly.
+    ///
+    /// @param type lease type (currently only IA_NA is supported)
+    /// @param addr address to be renewed
+    void
+    testRenewWrongIAID(isc::dhcp::Lease::Type type,
+                       const asiolink::IOAddress& addr);
+
+    /// @brief Checks if client A can renew address used by client B
+    ///
+    /// @param type lease type (currently only IA_NA is supported)
+    /// @param addr address to be renewed
+    void
+    testRenewSomeoneElsesLease(isc::dhcp::Lease::Type type,
+                               const asiolink::IOAddress& addr);
 
     /// @brief Performs negative RENEW test
     ///
