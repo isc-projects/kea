@@ -1,3 +1,11 @@
+899.	[func]		tomek
+	reservation-mode parameter has been added to DHCPv6 server.
+	It controls what host reservation types are allowed and may
+	improve performance in certain situations. It is also
+	accepted in the DHCPv4 configuration, but currently not
+	used.
+	(Trac #3565, git cfbe13ad05aac23e09357fc78507cf9a82c908e6)
+
 898.	[func]		marcin
 	The DHCPv4 server configuration allows for opening multiple
 	sockets on a single interface with multiple IPv4 addresses
