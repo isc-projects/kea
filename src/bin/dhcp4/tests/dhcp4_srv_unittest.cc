@@ -81,7 +81,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelay) {
     req->setFlags(0x0000);
 
     // Set local address, port and interface.
-    req->setLocalAddr(IOAddress("192.0.2.1"));
+    req->setLocalAddr(IOAddress("192.0.2.5"));
     req->setLocalPort(1001);
     req->setIface("eth1");
     req->setIndex(1);
@@ -104,7 +104,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelay) {
     // The query has been relayed, so the response must be sent to the port 67.
     EXPECT_EQ(DHCP4_SERVER_PORT, resp->getRemotePort());
     // Local address should be the address assigned to interface eth1.
-    EXPECT_EQ("192.0.2.3", resp->getLocalAddr().toText());
+    EXPECT_EQ("192.0.2.5", resp->getLocalAddr().toText());
     // The local port is always DHCPv4 server port 67.
     EXPECT_EQ(DHCP4_SERVER_PORT, resp->getLocalPort());
     // We will send response over the same interface which was used to receive
@@ -184,7 +184,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRenew) {
     EXPECT_EQ(DHCP4_CLIENT_PORT, resp->getRemotePort());
     // The response should be sent from the unicast address on which the
     // query has been received.
-    EXPECT_EQ("192.0.2.3", resp->getLocalAddr().toText());
+    EXPECT_EQ("192.0.2.1", resp->getLocalAddr().toText());
     // The response should be sent from the DHCPv4 server port.
     EXPECT_EQ(DHCP4_SERVER_PORT, resp->getLocalPort());
     // The interface data should match the data in the query.

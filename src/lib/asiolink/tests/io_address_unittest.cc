@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -216,4 +216,10 @@ TEST(IOAddressTest, accessClassificationMethods) {
     EXPECT_TRUE (addr5.isV6());
     EXPECT_FALSE(addr5.isV6LinkLocal());
     EXPECT_TRUE (addr5.isV6Multicast());
+}
+
+TEST(IOAddressTest, staticAddresses) {
+    EXPECT_EQ(IOAddress("0.0.0.0"), IOAddress::IPV4_ZERO_ADDRESS());
+    EXPECT_EQ(IOAddress("255.255.255.255"), IOAddress::IPV4_BCAST_ADDRESS());
+    EXPECT_EQ(IOAddress("::"), IOAddress::IPV6_ZERO_ADDRESS());
 }

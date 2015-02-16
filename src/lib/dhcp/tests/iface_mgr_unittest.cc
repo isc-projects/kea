@@ -90,6 +90,28 @@ TEST(IfaceTest, readBuffer) {
     }
 }
 
+// Check that counting the number of active addresses on the interface
+// works as expected.
+TEST(IfaceTest, countActive4) {
+    Iface iface("eth0", 0);
+    ASSERT_EQ(0, iface.countActive4());
+
+    iface.addAddress(IOAddress("192.168.0.2"));
+    ASSERT_EQ(1, iface.countActive4());
+
+    iface.addAddress(IOAddress("2001:db8:1::1"));
+    ASSERT_EQ(1, iface.countActive4());
+
+    iface.addAddress(IOAddress("192.168.0.3"));
+    ASSERT_EQ(2, iface.countActive4());
+
+    ASSERT_NO_THROW(iface.setActive(IOAddress("192.168.0.2"), false));
+    ASSERT_EQ(1, iface.countActive4());
+
+    ASSERT_NO_THROW(iface.setActive(IOAddress("192.168.0.3"), false));
+    ASSERT_EQ(0, iface.countActive4());
+}
+
 /// Mock object implementing PktFilter class.  It is used by
 /// IfaceMgrTest::setPacketFilter to verify that IfaceMgr::setPacketFilter
 /// sets this object as a handler for opening sockets. This dummy
@@ -2158,17 +2180,17 @@ TEST_F(IfaceMgrTest, socketInfo) {
 
     Pkt6 pkt6(DHCPV6_REPLY, 123456);
 
-    // pkt6 dos not have interface set yet
+    // pkt6 does not have interface set yet
     EXPECT_THROW(
         ifacemgr->getSocket(pkt6),
-        BadValue
+        IfaceNotFound
     );
 
     // Try to send over non-existing interface
     pkt6.setIface("nosuchinterface45");
     EXPECT_THROW(
         ifacemgr->getSocket(pkt6),
-        BadValue
+        IfaceNotFound
     );
 
     // This will work
@@ -2184,7 +2206,7 @@ TEST_F(IfaceMgrTest, socketInfo) {
     // It should throw again, there's no usable socket anymore
     EXPECT_THROW(
         ifacemgr->getSocket(pkt6),
-        Unexpected
+        SocketNotFound
     );
 
     // Repeat for pkt4
@@ -2193,19 +2215,29 @@ TEST_F(IfaceMgrTest, socketInfo) {
     // pkt4 does not have interface set yet.
     EXPECT_THROW(
         ifacemgr->getSocket(pkt4),
-        BadValue
+        IfaceNotFound
     );
 
     // Try to send over non-existing interface.
     pkt4.setIface("nosuchinterface45");
     EXPECT_THROW(
         ifacemgr->getSocket(pkt4),
-        BadValue
+        IfaceNotFound
     );
 
     // Socket info is set, packet has well defined interface. It should work.
     pkt4.setIface(LOOPBACK);
     EXPECT_EQ(7, ifacemgr->getSocket(pkt4).sockfd_);
+
+    // Set the local address to check if the socket for this address will
+    // be returned.
+    pkt4.setLocalAddr(IOAddress("192.0.2.56"));
+    EXPECT_EQ(7, ifacemgr->getSocket(pkt4).sockfd_);
+
+    // Modify the local address and expect that the other socket will be
+    // returned.
+    pkt4.setLocalAddr(IOAddress("192.0.2.53"));
+    EXPECT_EQ(8, ifacemgr->getSocket(pkt4).sockfd_);
 
     EXPECT_NO_THROW(
         ifacemgr->getIface(LOOPBACK)->delSocket(7);
@@ -2215,7 +2247,7 @@ TEST_F(IfaceMgrTest, socketInfo) {
     // It should throw again, there's no usable socket anymore.
     EXPECT_THROW(
         ifacemgr->getSocket(pkt4),
-        Unexpected
+        SocketNotFound
     );
 }
 
