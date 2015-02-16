@@ -258,7 +258,7 @@ public:
 
 private:
 
-    /// @brief Checks if multiple IPv4 addresses has been activate on any
+    /// @brief Checks if multiple IPv4 addresses has been activated on any
     /// interface.
     ///
     /// This method is useful to check if the current configuration uses
@@ -296,7 +296,7 @@ private:
     /// @param active A boolean value which indicates if all addresses should
     /// be active (if true), or inactive (if false).
     /// @param iface An interface on which addresses are selected/deselected.
-    void setIfaceAddrsState(const uint16_t family, const bool inactive,
+    void setIfaceAddrsState(const uint16_t family, const bool active,
                             Iface& iface) const;
 
     /// @brief Error handler for executed when opening a socket fail.

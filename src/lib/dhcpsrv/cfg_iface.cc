@@ -48,7 +48,7 @@ CfgIface::multipleAddressesPerInterfaceActive() const {
     const IfaceMgr::IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
     for (IfaceMgr::IfaceCollection::const_iterator iface = ifaces.begin();
          iface != ifaces.end(); ++iface) {
-        if (iface->countActive() > 1) {
+        if (iface->countActive4() > 1) {
             return (true);
         }
     }
