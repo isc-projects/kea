@@ -180,7 +180,7 @@ PktFilterStub::openSocket(Iface&,
 }
 
 Pkt4Ptr
-PktFilterStub::receive(const Iface&, const SocketInfo&) {
+PktFilterStub::receive(Iface&, const SocketInfo&) {
     return Pkt4Ptr();
 }
 

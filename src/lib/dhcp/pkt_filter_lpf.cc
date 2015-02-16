@@ -201,7 +201,7 @@ PktFilterLPF::openSocket(Iface& iface,
 }
 
 Pkt4Ptr
-PktFilterLPF::receive(const Iface& iface, const SocketInfo& socket_info) {
+PktFilterLPF::receive(Iface& iface, const SocketInfo& socket_info) {
     uint8_t raw_buf[IfaceMgr::RCVBUFSIZE];
     // First let's get some data from the fallback socket. The data will be
     // discarded but we don't want the socket buffer to bloat. We get the

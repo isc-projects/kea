@@ -1,3 +1,9 @@
+897.	[bug]		fdupont
+	Removed a double free of the read_buffer_ field of Iface
+	objects after (spurious) copy (partial as copies are not
+	yet fixed).
+	(Trac #3712, git )
+
 896.	[bug]		fdupont
 	Removed exit() in D2 for version command line processing.
 	This interfered with how the unit-tests were run.

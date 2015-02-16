@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -30,6 +30,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <list>
+#include <vector>
 
 namespace isc {
 
@@ -174,9 +175,7 @@ public:
     Iface(const std::string& name, int ifindex);
 
     /// @brief Destructor.
-    ///
-    /// Deallocates the socket read buffer.
-    ~Iface();
+    ~Iface() { }
 
     /// @brief Closes all open sockets on interface.
     void closeSockets();
@@ -398,19 +397,24 @@ public:
     ///
     /// @return Pointer to the first element of the read buffer or
     /// NULL if the buffer is empty.
-    uint8_t* getReadBuffer() const {
-        return (read_buffer_);
+    uint8_t* getReadBuffer() {
+        if (read_buffer_.empty()) {
+            return NULL;
+        }
+        return (&read_buffer_[0]);
     }
 
     /// @brief Returns the current size of the socket read buffer.
     size_t getReadBufferSize() const {
-        return (read_buffer_size_);
+        return (read_buffer_.size());
     }
 
     /// @brief Reallocates the socket read buffer.
     ///
     /// @param new_size New size of the buffer.
-    void resizeReadBuffer(const size_t new_size);
+    void resizeReadBuffer(const size_t new_size) {
+        read_buffer_.resize(new_size);
+    }
 
 protected:
     /// Socket used to send data.
@@ -473,13 +477,10 @@ public:
 
 private:
 
-    /// @brief Pointer to the buffer holding the data read from the socket.
+    /// @brief The buffer holding the data read from the socket.
     ///
     /// See @c Iface manager description for details.
-    uint8_t* read_buffer_;
-
-    /// @brief Allocated size of the read buffer.
-    size_t read_buffer_size_;
+    std::vector<uint8_t> read_buffer_;
 };
 
 /// @brief This type describes the callback function invoked when error occurs

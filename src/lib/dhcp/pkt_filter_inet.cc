@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -100,7 +100,7 @@ PktFilterInet::openSocket(Iface& iface,
 }
 
 Pkt4Ptr
-PktFilterInet::receive(const Iface& iface, const SocketInfo& socket_info) {
+PktFilterInet::receive(Iface& iface, const SocketInfo& socket_info) {
     struct sockaddr_in from_addr;
     uint8_t buf[IfaceMgr::RCVBUFSIZE];
 
