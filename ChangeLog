@@ -1,3 +1,10 @@
+898.	[func]		marcin
+	The DHCPv4 server configuration allows for opening multiple
+	sockets on a single interface with multiple IPv4 addresses
+	assigned. This facilitates te use case when different relay
+	agents send messages to different addresses on the interface.
+	(Trac #3695, git 3116243706a2dbcae3f9b5b3af9d2241a07b9ab2)
+
 897.	[bug]		fdupont
 	Removed a double free of the read_buffer_ field of Iface
 	objects after (spurious) copy (partial as copies are not
