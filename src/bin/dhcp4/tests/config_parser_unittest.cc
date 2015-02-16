@@ -3523,18 +3523,34 @@ TEST_F(Dhcp4ParserTest, hostReservationPerSubnet) {
     // returned value should be 0 (success)
     checkResult(result, 0);
 
-    const Subnet4Collection* subnets =
-        CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->getAll();
+    // Let's get all subnets and check that there are 4 of them.
+    ConstCfgSubnets4Ptr subnets = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
     ASSERT_TRUE(subnets);
-    ASSERT_EQ(4, subnets->size()); // We expect 4 subnets
+    const Subnet4Collection* subnet_col = subnets->getAll();
+    ASSERT_EQ(4, subnet_col->size()); // We expect 4 subnets
 
-    // Check subnet-ids of each subnet (it should be monotonously increasing)
-    EXPECT_EQ(Subnet::HR_ALL, subnets->at(0)->getHostReservationMode());
-    EXPECT_EQ(Subnet::HR_OUT_OF_POOL, subnets->at(1)->getHostReservationMode());
-    EXPECT_EQ(Subnet::HR_DISABLED, subnets->at(2)->getHostReservationMode());
-    EXPECT_EQ(Subnet::HR_ALL, subnets->at(3)->getHostReservationMode());
+    // Let's check if the parsed subnets have correct HR modes.
+
+    // Subnet 1
+    Subnet4Ptr subnet;
+    subnet = subnets->selectSubnet(IOAddress("192.0.2.1"));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ(Subnet::HR_ALL, subnet->getHostReservationMode());
+
+    // Subnet 2
+    subnet = subnets->selectSubnet(IOAddress("192.0.3.1"));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ(Subnet::HR_OUT_OF_POOL, subnet->getHostReservationMode());
+
+    // Subnet 3
+    subnet = subnets->selectSubnet(IOAddress("192.0.4.1"));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ(Subnet::HR_DISABLED, subnet->getHostReservationMode());
+
+    // Subnet 4
+    subnet = subnets->selectSubnet(IOAddress("192.0.5.1"));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ(Subnet::HR_ALL, subnet->getHostReservationMode());
 }
-
-
 
 }
