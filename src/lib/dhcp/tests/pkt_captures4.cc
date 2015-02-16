@@ -62,9 +62,9 @@ Pkt4Ptr PktCaptures::packetFromCapture(const std::string& hex_string) {
 
 void PktCaptures::captureSetDefaultFields(const Pkt4Ptr& pkt) {
     pkt->setRemotePort(546);
-    pkt->setRemoteAddr(IOAddress("fe80::1"));
+    pkt->setRemoteAddr(IOAddress("10.0.0.2"));
     pkt->setLocalPort(0);
-    pkt->setLocalAddr(IOAddress("ff02::1:2"));
+    pkt->setLocalAddr(IOAddress("10.0.0.1"));
     pkt->setIndex(2);
     pkt->setIface("eth0");
 }
