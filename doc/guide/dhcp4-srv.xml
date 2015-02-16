@@ -1891,24 +1891,28 @@ temporarily override a list of interface names and listen on all interfaces.
       <title>Fine Tuning IPv4 Host Reservation</title>
 
       <note>
-        <para><command>reservation-mode</command> in DHCPv6 server in 0.9.1 beta is
-        accepted, but not used. Full implementation will be available in the upcoming
-        releases.</para>
+        <para><command>reservation-mode</command> configuration parameter in DHCPv4
+        server is accepted, but not used in the Kea 0.9.1 beta. Full implementation
+        will be available in the upcoming releases.</para>
       </note>
 
       <para>Host reservation capability introduces additional restrictions for the
       allocation engine during lease selection and renewal. In particular, three
       major checks are necessary. First, when selecting a new lease, it is not
-      sufficient for a candidate lease to be not used by anyone else. It also must
-      not be reserved for anyone else. Second, when renewing a lease, additional
-      check must be performed whether the address being renewed is not reserved
-      for anyone else. Finally, when a host renews an address, the server has to
-      check whether there's a reservation for this host, so the exisiting (dynamically
-      allocated) address should be revoked and the reserved one be used instead.
+      sufficient for a candidate lease to be not used by another DHCP client. It
+      also must not be reserved for another client. Second, when renewing a lease,
+      additional check must be performed whether the address being renewed is not
+      reserved for another client. Finally, when a host renews an address, the server
+      has to check whether there's a reservation for this host, so the exisiting
+      (dynamically allocated) address should be revoked and the reserved one be
+      used instead.
       </para>
-      <para>Some of those checks in certain deployments may be not necessary. Skipping
-      them may improve performance. The Kea server allows configuration of the
-      reservation types allowed for each subnet using <command>reservation-mode</command>.
+      <para>Some of those checks may be unnecessary in certain deployments. Not
+      performing them may improve performance. The Kea server provides the
+      <command>reservation-mode</command> configuration parameter to select the
+      types of reservations allowed for the particular subnet. Each reservation
+      type has different constraints for the checks to be performed by the
+      server when allocating or renewing a lease for the client.
       Allowed values are:
 
       <itemizedlist>
