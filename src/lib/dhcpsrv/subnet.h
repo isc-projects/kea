@@ -84,7 +84,7 @@ public:
         /// there is a non-trivial performance penalty for it, as the
         /// AllocEngine code has to check whether there are reservations, even
         /// when dealing with reservations from within the dynamic pools.
-        HR_IN_POOL
+        HR_ALL
     } HRMode;
 
     /// Pointer to the RelayInfo structure
@@ -324,12 +324,19 @@ public:
     /// not in the dynamic pool). HR may also be completely disabled for
     /// performance reasons.
     ///
-    /// @todo: implement this.
-    ///
     /// @return whether in-pool host reservations are allowed.
     HRMode
-    getHostReservationMode() {
-        return (Subnet::HR_IN_POOL);
+    getHostReservationMode() const {
+        return (host_reservation_mode_);
+    }
+
+    /// @brief Sets host reservation mode.
+    ///
+    /// See @getHostReservationMode for details.
+    ///
+    /// @param mode mode to be set
+    void setHostReservationMode(HRMode mode) {
+        host_reservation_mode_ = mode;
     }
 
 protected:
@@ -477,6 +484,10 @@ protected:
     /// so it may be a while until we support this.
     ClientClasses white_list_;
 
+    /// @brief Specifies host reservation mode
+    ///
+    /// See @ref HRMode type for details.
+    HRMode host_reservation_mode_;
 private:
 
     /// @brief Pointer to the option data configuration for this subnet.
