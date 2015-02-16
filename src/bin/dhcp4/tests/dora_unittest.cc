@@ -656,6 +656,8 @@ TEST_F(DORATest, reservationsWithConflicts) {
 
     // Client A performs 4-way exchange.
     client.setState(Dhcp4Client::SELECTING);
+    // Revert to the broadcast address for the selcting client.
+    client.setDestAddress(IOAddress::IPV4_BCAST_ADDRESS());
     // Obtain a lease from the server using the 4-way exchange.
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
                                   IOAddress>(new IOAddress("0.0.0.0"))));

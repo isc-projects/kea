@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010,2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -229,6 +229,29 @@ public:
     /// \return uint32_t that represents IPv4 address in
     ///         network byte order
     operator uint32_t () const;
+
+    /// @name Methods returning @c IOAddress objects encapsulating typical addresses.
+    ///
+    //@{
+    /// @brief Returns an address set to all zeros.
+    static const IOAddress& IPV4_ZERO_ADDRESS() {
+        static IOAddress address(0);
+        return (address);
+    }
+
+    /// @brief Returns a "255.255.255.255" broadcast address.
+    static const IOAddress& IPV4_BCAST_ADDRESS() {
+        static IOAddress address(0xFFFFFFFF);
+        return (address);
+    }
+
+    /// @brief Returns an IPv6 zero address.
+    static const IOAddress& IPV6_ZERO_ADDRESS() {
+        static IOAddress address("::");
+        return (address);
+    }
+
+    //@}
 
 private:
     asio::ip::address asio_address_;
