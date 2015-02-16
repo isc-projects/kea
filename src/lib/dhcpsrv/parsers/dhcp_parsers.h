@@ -1093,6 +1093,17 @@ protected:
     /// unspecified value.
     isc::dhcp::Triplet<uint32_t> getOptionalParam(const std::string& name);
 
+    /// @brief Attempts to convert text representation to HRMode enum.
+    ///
+    /// Allowed values are "disabled", "off" (alias for disabled),
+    /// "out-of-pool" and "all". See Subnet::HRMode for their exact meaning.
+    ///
+    /// @throw BadValue if the text cannot be converted.
+    ///
+    /// @param text representation for conversion
+    /// @return one of allowed HRMode values
+    static Subnet::HRMode hrModeFromText(const std::string& txt);
+
 private:
 
     /// @brief Create a new subnet using a data from child parsers.
