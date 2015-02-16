@@ -11,6 +11,7 @@ nobase_dist_doc_DATA += examples/kea6/several-subnets.json
 nobase_dist_doc_DATA += examples/kea6/multiple-options.json
 nobase_dist_doc_DATA += examples/kea6/advanced.json
 nobase_dist_doc_DATA += examples/kea6/stateless.json
+nobase_dist_doc_DATA += examples/kea6/reservations.json
 nobase_dist_doc_DATA += examples/ddns/sample1.json
 nobase_dist_doc_DATA += examples/ddns/template.json
 
