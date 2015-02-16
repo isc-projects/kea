@@ -326,7 +326,7 @@ public:
     ///
     /// @return whether in-pool host reservations are allowed.
     HRMode
-    getHostReservationMode() {
+    getHostReservationMode() const {
         return (host_reservation_mode_);
     }
 
@@ -338,14 +338,6 @@ public:
     void setHostReservationMode(HRMode mode) {
         host_reservation_mode_ = mode;
     }
-
-    /// @brief Attempts to convert text representation to HRMode enum
-    ///
-    /// @throw BadValue if the text cannot be converted
-    ///
-    /// @param text representation for conversion
-    /// @return one of allowed HRMode values
-    static HRMode HRModeFromText(const std::string& txt);
 
 protected:
     /// @brief Returns all pools (non-const variant)

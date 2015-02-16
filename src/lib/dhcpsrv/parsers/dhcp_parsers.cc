@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -1125,7 +1125,7 @@ SubnetConfigParser::build(ConstElementPtr subnet) {
 }
 
 Subnet::HRMode
-HRModeFromText(const std::string& txt) {
+SubnetConfigParser::hrModeFromText(const std::string& txt) {
     if ( (txt.compare("disabled") == 0) ||
          (txt.compare("off") == 0) )  {
         return (Subnet::HR_DISABLED);
@@ -1192,18 +1192,13 @@ SubnetConfigParser::createSubnet() {
         // iface not mandatory so swallow the exception
     }
 
+
+    // Let's set host reservation mode. If not specified, the default value of
+    // all will be used.
     std::string hr_mode;
     try {
-        hr_mode = string_values_->getParam("reservation-mode");
-    } catch (const DhcpConfigError &) {
-        // Host reservation mode is not mandatory, so don't complain
-    }
-
-    try {
-        // This may throw if the user didn't specify one of allowed values
-        if (!hr_mode.empty()) {
-            subnet_->setHostReservationMode(HRModeFromText(hr_mode));
-        }
+        hr_mode = string_values_->getOptionalParam("reservation-mode", "all");
+        subnet_->setHostReservationMode(hrModeFromText(hr_mode));
     } catch (const BadValue& ex) {
         isc_throw(DhcpConfigError, "Failed to process specified value "
                   " of reservation-mode parameter: " << ex.what()

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -3498,30 +3498,25 @@ TEST_F(Dhcp4ParserTest, hostReservationPerSubnet) {
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.0/24\" } ],"
         "    \"subnet\": \"192.0.2.0/24\", "
-        "    \"reservation-mode\": \"all\","
-        "    \"interface\": \"eth0\""
+        "    \"reservation-mode\": \"all\""
         " },"
         " {"
         "    \"pools\": [ { \"pool\": \"192.0.3.0/24\" } ],"
         "    \"subnet\": \"192.0.3.0/24\", "
-        "    \"reservation-mode\": \"out-of-pool\","
-        "    \"interface\": \"eth1\""
+        "    \"reservation-mode\": \"out-of-pool\""
         " },"
         " {"
         "    \"pools\": [ { \"pool\": \"192.0.4.0/24\" } ],"
         "    \"subnet\": \"192.0.4.0/24\", "
-        "    \"reservation-mode\": \"disabled\","
-        "    \"interface\": \"eth1\""
+        "    \"reservation-mode\": \"disabled\""
         " },"
         " {"
         "    \"pools\": [ { \"pool\": \"192.0.5.0/24\" } ],"
-        "    \"subnet\": \"192.0.5.0/24\", "
-        "    \"interface\": \"eth1\""
+        "    \"subnet\": \"192.0.5.0/24\""
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
     ElementPtr json = Element::fromJSON(hr_config);
-    CfgMgr::instance().clear();
     ConstElementPtr result;
     EXPECT_NO_THROW(result = configureDhcp4Server(*srv_, json));
 

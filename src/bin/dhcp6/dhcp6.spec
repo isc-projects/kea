@@ -425,6 +425,13 @@
                         }
                       } ]
                   }
+                },
+                {
+                  "item_name": "reservation-mode",
+                  "item_type": "string",
+                  "item_optional": true,
+                  "item_default": "all",
+                  "item_description": "Specifies allowed host reservation types. Disabling unused modes may improve performance. Allowed values: disabled, off, out-of-pool, all"
                 } ]
             }
       },

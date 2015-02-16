@@ -1894,6 +1894,70 @@ should include options from the isc option space:
       releases.</para>
     </section>
 
+    <section id="reservation6-mode">
+      <title>Fine Tuning IPv6 Host Reservation</title>
+
+      <note>
+        <para><command>reservation-mode</command> in the DHCPv6 server in 0.9.1 beta is
+        implemented, but was not tested and is considered experimental.</para>
+      </note>
+
+      <para>Host reservation capability introduces additional restrictions for the
+      allocation engine during lease selection and renewal. In particular, three
+      major checks are necessary. First, when selecting a new lease, it is not
+      sufficient for a candidate lease to be not used by anyone else. It also must
+      not be reserved for anyone else. Second, when renewing a lease, additional
+      check must be performed whether the address being renewed is not reserved
+      for anyone else. Finally, when a host renews an address, the server has to
+      check whether there's a reservation for this host, so the exisiting (dynamically
+      allocated) address should be revoked and the reserved one be used instead.
+      </para>
+      <para>Some of those checks in certain deployments may be not necessary. Skipping
+      them may improve performance. The Kea server allows configuration of the
+      reservation types allowed for each subnet using <command>reservation-mode</command>.
+      Allowed values are:
+
+      <itemizedlist>
+      <listitem><simpara> <command>all</command> - enables all host reservation
+      types. This is the default value. This setting is the safest and the most
+      flexible. It allows in-pool and out-of-pool reservations. As all checks
+      are conducted, it is also the slowest.
+      </simpara></listitem>
+
+      <listitem><simpara> <command>out-of-pool</command> - allows only out of
+      pool host reservations.  With this setting in place, the server may assume
+      that all host reservations are for addresses that do not belong to the
+      dynamic pool. Therefore it can skip the reservation checks when dealing
+      with in-pool addresses, thus improving performance. Do not use this mode
+      if any of your reservations use in-pool address. Caution is advised when
+      using this setting. Kea 0.9.1 does not sanity check the reservations against
+      <command>reservation-mode</command>. Misconfiguration may cause problems.
+      </simpara></listitem>
+
+      <listitem><simpara>
+      <command>disabled</command> - host reservation support is disabled. As there
+      are no reservations, the server will skip all checks. Any reservations defined
+      will be completely ignored. As the checks are skipped, the server may
+      operate faster in this mode.
+      </simpara></listitem>
+
+      </itemizedlist>
+      </para>
+
+      <para>
+        An example configuration that disables reservation looks like follows:
+	<screen>
+"Dhcp6": {
+    "subnet6": [
+        "subnet": "2001:db8:1::/64",
+        <userinput>"reservation-mode": "disabled"</userinput>,
+        ...
+    ]
+}
+</screen>
+      </para>        
+   </section>
+
     <!-- @todo: add support for per IA reservation (that specifies IAID in
                 the ip-addresses and prefixes) -->
   </section>
