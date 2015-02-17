@@ -50,6 +50,12 @@ Pool4::Pool4(const isc::asiolink::IOAddress& first,
     if (last < first) {
         isc_throw(BadValue, "Upper boundary is smaller than lower boundary.");
     }
+
+    // This is IPv4 pool, which only has one type. We can calculate
+    // the number of theoretically possible leases in it. As there's 2^32
+    // possible IPv4 addresses, we'll be able to accurately store that
+    // info.
+    leases_count_ = addrsInRange(first, last);
 }
 
 Pool4::Pool4( const isc::asiolink::IOAddress& prefix, uint8_t prefix_len)
@@ -67,8 +73,13 @@ Pool4::Pool4( const isc::asiolink::IOAddress& prefix, uint8_t prefix_len)
 
     // Let's now calculate the last address in defined pool
     last_ = lastAddrInPrefix(prefix, prefix_len);
-}
 
+    // This is IPv4 pool, which only has one type. We can calculate
+    // the number of theoretically possible leases in it. As there's 2^32
+    // possible IPv4 addresses, we'll be able to accurately store that
+    // info.
+    leases_count_ = addrsInRange(prefix, last_);
+}
 
 Pool6::Pool6(Lease::Type type, const isc::asiolink::IOAddress& first,
              const isc::asiolink::IOAddress& last)
@@ -105,6 +116,11 @@ Pool6::Pool6(Lease::Type type, const isc::asiolink::IOAddress& first,
         isc_throw(BadValue, "Invalid Pool6 type specified:"
                   << static_cast<int>(type));
     }
+
+    // Let's calculate the theoretical number of leases in this pool.
+    // If the pool is extremely large (i.e. contains more than 2^64 addresses,
+    // we'll just cap it at max value of uint64_t).
+    leases_count_ = addrsInRange(first, last);
 }
 
 Pool6::Pool6(Lease::Type type, const isc::asiolink::IOAddress& prefix,
@@ -123,7 +139,7 @@ Pool6::Pool6(Lease::Type type, const isc::asiolink::IOAddress& prefix,
 
     if (prefix_len > delegated_len) {
         isc_throw(BadValue, "Delegated length (" << static_cast<int>(delegated_len)
-                  << ") must be longer than prefix length ("
+                  << ") must be longer than or equal to prefix length ("
                   << static_cast<int>(prefix_len) << ")");
     }
 
@@ -138,6 +154,11 @@ Pool6::Pool6(Lease::Type type, const isc::asiolink::IOAddress& prefix,
 
     // Let's now calculate the last address in defined pool
     last_ = lastAddrInPrefix(prefix, prefix_len);
+
+    // Let's calculate the theoretical number of leases in this pool.
+    // For addresses, we could use addrsInRange(prefix, last_), but it's
+    // much faster to do calculations on prefix lengths.
+    leases_count_ = prefixesInRange(prefix_len, delegated_len);
 }
 
 std::string
@@ -148,7 +169,6 @@ Pool6::toText() const {
         << static_cast<int>(prefix_len_);
     return (tmp.str());
 }
-
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace

@@ -81,6 +81,21 @@ TEST(Pool4Test, in_range) {
    EXPECT_FALSE(pool1.inRange(IOAddress("0.0.0.0")));
 }
 
+// Checks if the number of possible leases in range is reported correctly.
+TEST(Pool4Test, leasesCount) {
+    Pool4 pool1(IOAddress("192.0.2.10"), IOAddress("192.0.2.20"));
+    EXPECT_EQ(11, pool1.getLeasesCount());
+
+    Pool4 pool2(IOAddress("192.0.2.0"), IOAddress("192.0.2.255"));
+    EXPECT_EQ(256, pool2.getLeasesCount());
+
+    Pool4 pool3(IOAddress("192.168.0.0"), IOAddress("192.168.255.255"));
+    EXPECT_EQ(65536, pool3.getLeasesCount());
+
+    Pool4 pool4(IOAddress("10.0.0.0"), IOAddress("10.255.255.255"));
+    EXPECT_EQ(16777216, pool4.getLeasesCount());
+}
+
 // This test creates 100 pools and verifies that their IDs are unique.
 TEST(Pool4Test, unique_id) {
 
@@ -262,5 +277,17 @@ TEST(Poo6Test,toText) {
     EXPECT_EQ("type=IA_PD, 2001:db8:1::-2001:db8:1::ffff:ffff, delegated_len=112",
               pool2.toText());
 }
+
+// Checks if the number of possible leases in range is reported correctly.
+TEST(Pool6Test, leasesCount) {
+    Pool6 pool1(Lease::TYPE_NA, IOAddress("2001:db8::1"),
+                IOAddress("2001:db8::2"));
+    EXPECT_EQ(2, pool1.getLeasesCount());
+
+    Pool6 pool2(Lease::TYPE_PD, IOAddress("2001:db8:1::"), 96, 112);
+    EXPECT_EQ(65536, pool2.getLeasesCount());
+}
+
+
 
 }; // end of anonymous namespace
