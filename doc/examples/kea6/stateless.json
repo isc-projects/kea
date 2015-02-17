@@ -7,7 +7,7 @@
 
 {
 "Dhcp6": {
-    "interfaces-config:" {
+    "interfaces-config": {
         "interfaces": [ "ethX" ]
     },
 
