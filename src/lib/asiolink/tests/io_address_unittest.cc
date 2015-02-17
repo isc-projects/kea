@@ -264,3 +264,22 @@ TEST(IOAddressTest, subtract) {
     EXPECT_THROW(IOAddress::subtract(addr1, addr6), isc::BadValue);
     EXPECT_THROW(IOAddress::subtract(addr6, addr1), isc::BadValue);
 }
+
+// Test checks whether an address can be increased.
+TEST(IOAddressTest, increaseAddr) {
+    IOAddress addr1("192.0.2.12");
+    IOAddress any4("0.0.0.0");
+    IOAddress bcast("255.255.255.255");
+    IOAddress addr6("2001:db8::ffff:ffff:ffff:ffff");
+    IOAddress addr11("::1");
+    IOAddress any6("::");
+    IOAddress the_last_one("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff");
+
+    EXPECT_EQ("192.0.2.13", IOAddress::increaseAddress(addr1).toText());
+    EXPECT_EQ("0.0.0.1", IOAddress::increaseAddress(any4).toText());
+    EXPECT_EQ("0.0.0.0", IOAddress::increaseAddress(bcast).toText());
+    EXPECT_EQ("2001:db8:0:1::", IOAddress::increaseAddress(addr6).toText());
+    EXPECT_EQ("::2", IOAddress::increaseAddress(addr11).toText());
+    EXPECT_EQ("::1", IOAddress::increaseAddress(any6).toText());
+    EXPECT_EQ("::", IOAddress::increaseAddress(the_last_one).toText());
+}
