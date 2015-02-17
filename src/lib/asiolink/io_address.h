@@ -221,6 +221,20 @@ public:
         return (nequals(other));
     }
 
+    /// @brief Subtracts one address from another (a - b)
+    ///
+    /// Treats addresses as integers and subtracts them. For example:
+    /// 192.0.2.5 - 192.0.2.0 = 0.0.0.5
+    /// fe80::abcd - fe80:: = ::abcd
+    ///
+    /// This operation is essential for calculating the number of
+    /// leases in a pool, where we need to calculate (max - min).
+    /// @throw BadValue if addresses are of different family
+    /// @param a address to be subtracted from
+    /// @param b address to be subtracted
+    /// @return IOAddress object that represents the difference
+    static IOAddress subtract(const IOAddress& a, const IOAddress& b);
+
     /// \brief Converts IPv4 address to uint32_t
     ///
     /// Will throw BadValue exception if that is not IPv4

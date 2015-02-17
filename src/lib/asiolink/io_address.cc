@@ -131,5 +131,45 @@ operator<<(std::ostream& os, const IOAddress& address) {
     return (os);
 }
 
+IOAddress
+IOAddress::subtract(const IOAddress& a, const IOAddress& b) {
+    if (a.isV4() != b.isV4()) {
+        isc_throw(BadValue, "Both addresses have to be the same family");
+    }
+    if (a.isV4()) {
+        // Subtracting v4 is easy. We have uint32_t operator.
+        return (IOAddress((uint32_t)a - (uint32_t)b));
+    } else {
+        // v6 is more involved.
+
+        // Let's extract the raw data first.
+        vector<uint8_t> a_vec = a.toBytes();
+        vector<uint8_t> b_vec = b.toBytes();
+
+        // ... and prepare the result
+        vector<uint8_t> result(16,0);
+
+        // Carry is a boolean, but to avoid its frequent casting, let's
+        // use uint8_t. Also, some would prefer to call it borrow, but I prefer
+        // carry. Somewhat relevant discussion here:
+        // http://en.wikipedia.org/wiki/Carry_flag#Carry_flag_vs._Borrow_flag
+        uint8_t carry = 0;
+
+        // Now perform subtraction with borrow.
+        for (int i = 15; i >=0; --i) {
+            if (a_vec[i] >= (b_vec[i] + carry) ) {
+                result[i] = a_vec[i] - b_vec[i] - carry;
+                carry = 0;
+            } else {
+                result[i] = a_vec[i] - b_vec[i] - carry;
+                carry = 1;
+            }
+        }
+
+        return (fromBytes(AF_INET6, &result[0]));
+    }
+}
+
+
 } // namespace asiolink
 } // namespace isc
