@@ -538,21 +538,12 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
     // - we find an address for which the lease has expired
     // - we exhaust number of tries
     //
-    // @todo: Current code does not handle pool exhaustion well. It will be
-    // improved. Current problems:
-    // 1. with attempts set to too large value (e.g. 1000) and a small pool (e.g.
-    // 10 addresses), we will iterate over it 100 times before giving up
-    // 2. attempts 0 mean unlimited (this is really UINT_MAX, not infinite)
-    // 3. the whole concept of infinite attempts is just asking for infinite loop
-    // We may consider some form or reference counting (this pool has X addresses
-    // left), but this has one major problem. We exactly control allocation
-    // moment, but we currently do not control expiration time at all
-
-    // Initialize the maximum number of attempts to pick and allocate an
-    // address. The value of 0 means "infinite", which is maximum uint32_t
-    // value.
-    uint32_t max_attempts = (attempts_ == 0) ?
-        std::numeric_limits<uint32_t>::max() : attempts_;
+    /// @todo: We used to use hardcoded number of attempts (100). Now we dynamically
+    /// calculate the number of possible leases in all pools in this subnet and
+    /// try that number of times at most. It would be useful to that value if
+    /// attempts_, specified by the user could override that value (and keep
+    /// dynamic if they're set to 0).
+    uint32_t max_attempts = ctx.subnet_->getLeasesCount(ctx.type_);
     for (uint32_t i = 0; i < max_attempts; ++i)
     {
         IOAddress candidate = allocator->pickAddress(ctx.subnet_, ctx.duid_, hint);
@@ -1011,16 +1002,12 @@ AllocEngine::allocateLease4(const SubnetPtr& subnet, const ClientIdPtr& clientid
         // - we find an address for which the lease has expired
         // - we exhaust the number of tries
         //
-        /// @todo: Current code does not handle pool exhaustion well. It will be
-        /// improved. Current problems:
-        /// 1. with attempts set to too large value (e.g. 1000) and a small pool (e.g.
-        /// 10 addresses), we will iterate over it 100 times before giving up
-        /// 2. attempts 0 mean unlimited (this is really UINT_MAX, not infinite)
-        /// 3. the whole concept of infinite attempts is just asking for infinite loop
-        /// We may consider some form or reference counting (this pool has X addresses
-        /// left), but this has one major problem. We exactly control allocation
-        /// moment, but we currently do not control expiration time at all
-        unsigned int i = attempts_;
+        /// @todo: We used to use hardcoded number of attempts (100). Now we dynamically
+        /// calculate the number of possible leases in all pools in this subnet and
+        /// try that number of times at most. It would be useful to that value if
+        /// attempts_, specified by the user could override that value (and keep
+        /// dynamic if they're set to 0).
+        uint64_t i = subnet->getLeasesCount(Lease::TYPE_V4);
         do {
             // Decrease the number of remaining attempts here so as we guarantee
             // that it is decreased when the code below uses "continue".
