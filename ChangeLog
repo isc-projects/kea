@@ -1,3 +1,8 @@
+900.	[doc]		marcin
+	Documented configuration of the Lease File Cleanup (LFC) in
+	the Kea Administrator Reference.
+	(Trac #3672, git da3c676f009785204f9d84ca008890959bffcc18)
+
 899.	[func]		tomek
 	reservation-mode parameter has been added to DHCPv6 server.
 	It controls what host reservation types are allowed and may
