@@ -1,8 +1,9 @@
 # This is a basic configuration for the Kea DHCPv4 and DHCPv6 servers.
 # Subnet declarations are commented out and no interfaces are listed.
-# Therefore, the servers will not listen or to any queries. The basic
-# configuration must be extended to specify interfaces on which the
-# servers should listen. Also, subnets and options must be declared.
+# Therefore, the servers will not listen to or respond any queries.
+# The basic configuration must be extended to specify interfaces on
+# which the servers should listen. Also, subnets and options must be
+# declared.
 {
 
 # DHCPv4 configuration starts here.
