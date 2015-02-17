@@ -321,7 +321,7 @@ url="http://jsonviewer.stack.hu/"/>.
 </screen>
 
     This configuration selects the <filename>/tmp/kea-leases4.csv</filename> as
-    the storge for lease information and enables persistence (writing lease updates
+    the storage for lease information and enables persistence (writing lease updates
     to this file). It also configures the backend perform the periodic cleanup
     of the lease files, executed every 30 minutes.
   </para>
