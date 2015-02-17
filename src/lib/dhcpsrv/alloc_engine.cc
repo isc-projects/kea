@@ -67,34 +67,6 @@ AllocEngine::IterativeAllocator::IterativeAllocator(Lease::Type lease_type)
 }
 
 isc::asiolink::IOAddress
-AllocEngine::IterativeAllocator::increaseAddress(const isc::asiolink::IOAddress& addr) {
-    // Get a buffer holding an address.
-    const std::vector<uint8_t>& vec = addr.toBytes();
-    // Get the address length.
-    const int len = vec.size();
-
-    // Since the same array will be used to hold the IPv4 and IPv6
-    // address we have to make sure that the size of the array
-    // we allocate will work for both types of address.
-    BOOST_STATIC_ASSERT(V4ADDRESS_LEN <= V6ADDRESS_LEN);
-    uint8_t packed[V6ADDRESS_LEN];
-
-    // Copy the address. It can be either V4 or V6.
-    std::memcpy(packed, &vec[0], len);
-
-    // Start increasing the least significant byte
-    for (int i = len - 1; i >= 0; --i) {
-        ++packed[i];
-        // if we haven't overflowed (0xff -> 0x0), than we are done
-        if (packed[i] != 0) {
-            break;
-        }
-    }
-
-    return (IOAddress::fromBytes(addr.getFamily(), packed));
-}
-
-isc::asiolink::IOAddress
 AllocEngine::IterativeAllocator::increasePrefix(const isc::asiolink::IOAddress& prefix,
                                                 const uint8_t prefix_len) {
     if (!prefix.isV6()) {
@@ -193,7 +165,7 @@ AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
 
     IOAddress next("::");
     if (!prefix) {
-        next = increaseAddress(last); // basically addr++
+        next = IOAddress::increaseAddress(last); // basically addr++
     } else {
         Pool6Ptr pool6 = boost::dynamic_pointer_cast<Pool6>(*it);
         if (!pool6) {

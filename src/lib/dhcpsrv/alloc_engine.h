@@ -137,16 +137,6 @@ protected:
                         const isc::asiolink::IOAddress& hint);
     protected:
 
-        /// @brief Returns an address increased by one
-        ///
-        /// This method works for both IPv4 and IPv6 addresses. For example,
-        /// increase 192.0.2.255 will become 192.0.3.0.
-        ///
-        /// @param addr address to be increased
-        /// @return address increased by one
-        static isc::asiolink::IOAddress
-        increaseAddress(const isc::asiolink::IOAddress& addr);
-
         /// @brief Returns the next prefix
         ///
         /// This method works for IPv6 addresses only. It increases
