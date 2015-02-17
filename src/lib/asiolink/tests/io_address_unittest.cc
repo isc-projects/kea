@@ -17,6 +17,7 @@
 
 #include <asiolink/io_error.h>
 #include <asiolink/io_address.h>
+#include <exceptions/exceptions.h>
 
 #include <algorithm>
 #include <cstring>
@@ -102,7 +103,7 @@ TEST(IOAddressTest, toBytesV6) {
     const char* V6STRING = "2001:db8:1::dead:beef";
     uint8_t V6[] = {
         0x20, 0x01, 0x0d, 0xb8, 0x00, 0x01, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0xde, 0xad, 0xbe, 0xef 
+        0x00, 0x00, 0x00, 0x00, 0xde, 0xad, 0xbe, 0xef
     };
 
     std::vector<uint8_t> actual = IOAddress(V6STRING).toBytes();
@@ -216,4 +217,50 @@ TEST(IOAddressTest, accessClassificationMethods) {
     EXPECT_TRUE (addr5.isV6());
     EXPECT_FALSE(addr5.isV6LinkLocal());
     EXPECT_TRUE (addr5.isV6Multicast());
+}
+
+// Tests whether address subtraction works correctly.
+TEST(IOAddressTest, subtract) {
+    IOAddress addr1("192.0.2.12");
+    IOAddress addr2("192.0.2.5");
+    IOAddress addr3("192.0.2.0");
+    IOAddress addr4("0.0.2.1");
+    IOAddress any4("0.0.0.0");
+    IOAddress bcast("255.255.255.255");
+
+    EXPECT_EQ("0.0.0.7", IOAddress::subtract(addr1, addr2).toText());
+    EXPECT_EQ("0.0.0.12", IOAddress::subtract(addr1, addr3).toText());
+
+    // Subtracting 0.0.0.0 is like subtracting 0.
+    EXPECT_EQ("192.0.2.12", IOAddress::subtract(addr1, any4).toText());
+    EXPECT_EQ("192.0.2.13", IOAddress::subtract(addr1, bcast).toText());
+    EXPECT_EQ("191.255.255.255", IOAddress::subtract(addr3, addr4).toText());
+
+    IOAddress addr6("fe80::abcd");
+    IOAddress addr7("fe80::");
+    IOAddress addr8("fe80::1234");
+    IOAddress addr9("2001:db8::face");
+    IOAddress addr10("2001:db8::ffff:ffff:ffff:ffff");
+    IOAddress addr11("::1");
+    IOAddress any6("::");
+
+    EXPECT_EQ("::abcd", IOAddress::subtract(addr6, addr7).toText());
+    EXPECT_EQ("::9999", IOAddress::subtract(addr6, addr8).toText());
+    EXPECT_EQ("::ffff:ffff:ffff:531", IOAddress::subtract(addr10, addr9).toText());
+
+    // Subtract with borrow, extreme edition. Need to borrow one bit
+    // 112 times.
+    EXPECT_EQ("fe7f:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+              IOAddress::subtract(addr7, addr11).toText());
+
+    // Now check if we can loop beyond :: (:: - ::1 is a lot of F's)
+    EXPECT_EQ("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+              IOAddress::subtract(any6, addr11).toText());
+
+    // Subtracting :: is like subtracting 0.
+    EXPECT_EQ("2001:db8::face", IOAddress::subtract(addr9, any6).toText());
+
+    // Inter-family relations are not allowed.
+    EXPECT_THROW(IOAddress::subtract(addr1, addr6), isc::BadValue);
+    EXPECT_THROW(IOAddress::subtract(addr6, addr1), isc::BadValue);
 }
