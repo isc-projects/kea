@@ -9,7 +9,7 @@
 898.	[func]		marcin
 	The DHCPv4 server configuration allows for opening multiple
 	sockets on a single interface with multiple IPv4 addresses
-	assigned. This facilitates te use case when different relay
+	assigned. This facilitates to use case when different relay
 	agents send messages to different addresses on the interface.
 	(Trac #3695, git 3116243706a2dbcae3f9b5b3af9d2241a07b9ab2)
 
@@ -137,7 +137,7 @@
 	(Trac #3547, git 803f1f0f145b0f252ffc3637f758a47e0061de85)
 
 876.	[func]          tomek
-	Two new MAC aquisition methods implemented for DHCPv6:
+	Two new MAC acquisition methods implemented for DHCPv6:
 	docsis-modem (which extracts MAC address from an option inserted
 	by a cable modem) and docsis-ctms (which extracts MAC address from
 	an option inserted by CMTS which acts as a DHCPv6 relay agent).
@@ -197,7 +197,7 @@
 	(Trac #3564, git 7b192fe314c12e38622742b3b338e997934f862f)
 
 866.	[doc]		stephen
-	Corrected documentation concering the way to configure hooks
+	Corrected documentation concerning the way to configure hooks
 	libraries.
 	(Trac #3635, git 42d1c98a2e66ab7fc3e372365edad1f5709df885)
 
@@ -215,7 +215,7 @@
 
 863.	[func]		tomek
 	A new tool called kea-admin added. It allows database maintenance.
-	Initalization of a new database, version check and upgrade between
+	Initialization of a new database, version check and upgrade between
 	version is now supported. Currently the only backend supported is
 	mysql, but support for memfile and pgsql is planned.
 	(Trac #3599, git cf22f8d212f2435957f89b51722f8e26e14635f2)
@@ -5422,12 +5422,11 @@ bind10-devel-20101201 released on December 01, 2010
 
 bind10-devel-20100917 released on September 17, 2010
 
-95.	[doc]		jreed
+95.	[doc, bug]	jreed
 	Add b10-zonemgr manual page. Update other docs to introduce
-	this secondary manager. (Trac #341, svn r2951)
-
-95.	[bug]		jreed
+	this secondary manager.
 	bin/xfrout and bin/zonemgr: Fixed some stderr output.
+	(Trac #341, svn r2951)
 	(Trac #342, svn r2949)
 
 94.	[bug]		jelte
