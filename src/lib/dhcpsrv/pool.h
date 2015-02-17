@@ -79,6 +79,14 @@ public:
     virtual ~Pool() {
     }
 
+    /// @brief Returns the number of all leases in this pool.
+    ///
+    /// Note that this is the upper bound, assuming that no leases are used
+    /// and there are no host reservations. This is just a theoretical calculation.
+    /// @return number of possible leases in this pool
+    uint64_t getLeasesCount() const {
+        return (leases_count_);
+    }
 protected:
 
     /// @brief protected constructor
@@ -120,6 +128,14 @@ protected:
 
     /// @brief defines a lease type that will be served from this pool
     Lease::Type type_;
+
+    /// @brief Stores number of possible leases.
+    ///
+    /// This could be calculated on the fly, but the calculations are somewhat
+    /// involved, so it is more efficient to calculate it once and just store
+    /// the result. Note that for very large pools, the number is capped at
+    /// max value of uint64_t.
+    uint64_t leases_count_;
 };
 
 /// @brief Pool information for IPv4 addresses
