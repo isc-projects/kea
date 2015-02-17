@@ -105,7 +105,7 @@
             "name": "d2.sha1.key",
             "algorithm": "HMAC-SHA1",
             "secret": "hRrp29wzUv3uzSNRLlY68w=="
-        }
+        },
         {
             "name": "d2.sha512.key",
             "algorithm": "HMAC-SHA512",

@@ -6,7 +6,7 @@
 
 {
 # Kea is told to listen on ethX interface only.
-  "interfaces-config:" {
+  "interfaces-config": {
     "interfaces": [ "ethX" ]
   },
 
