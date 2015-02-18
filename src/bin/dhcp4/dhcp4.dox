@@ -203,7 +203,7 @@ becoming more and more popular among various projects. There are unofficial patc
 ISC-DHCP that keep parts of the configuration in LDAP. It was also suggested that in some
 cases it would be convenient to keep configuration in XML files.
 
-Kea 0.9 introduces configuration backends that are switchable during compilation phase.
+Kea 0.9 has introduced configuration backends that are switchable during compilation phase.
 There is a new parameter for configure script: --with-kea-config. It currently supports
 two values: BUNDY and JSON.
 
