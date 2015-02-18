@@ -20,6 +20,7 @@ CLEANFILES = spec_config.h dhcp6_messages.h dhcp6_messages.cc s-messages
 man_MANS = kea-dhcp6.8
 DISTCLEANFILES = $(man_MANS)
 EXTRA_DIST = $(man_MANS) kea-dhcp6.xml dhcp6.spec
+EXTRA_DIST += dhcp6.dox dhcp6_hooks.dox
 
 if GENERATE_DOCS
 

@@ -25,6 +25,9 @@ BUILT_SOURCES = hooks_messages.h hooks_messages.cc
 # Ensure that the message file is included in the distribution
 EXTRA_DIST = hooks_messages.mes
 
+# Include developer's guide files
+EXTRA_DIST += hooks_user.dox hooks_maintenance.dox hooks_component_developer.dox
+
 # Get rid of generated message files on a clean
 CLEANFILES = *.gcno *.gcda hooks_messages.h hooks_messages.cc s-messages
 
