@@ -221,6 +221,47 @@ public:
         return (nequals(other));
     }
 
+    /// @brief Subtracts one address from another (a - b)
+    ///
+    /// Treats addresses as integers and subtracts them. For example:
+    /// 192.0.2.5 - 192.0.2.0 = 0.0.0.5
+    /// fe80::abcd - fe80:: = ::abcd
+    ///
+    /// It is possible to subtract greater from lesser address, e.g.
+    /// 192.168.56.10 - 192.168.67.20, but please do understand that
+    /// the address space is a finite field in mathematical sense, so
+    /// you may end up with a result that is greater then any of the
+    /// addresses you specified. Also, subtraction is not commutative,
+    /// so a - b != b - a.
+    ///
+    /// This operation is essential for calculating the number of
+    /// leases in a pool, where we need to calculate (max - min).
+    /// @throw BadValue if addresses are of different family
+    /// @param a address to be subtracted from
+    /// @param b address to be subtracted
+    /// @return IOAddress object that represents the difference
+    static IOAddress subtract(const IOAddress& a, const IOAddress& b);
+
+    /// @brief Returns an address increased by one
+    ///
+    /// This method works for both IPv4 and IPv6 addresses. For example,
+    /// increase 192.0.2.255 will become 192.0.3.0.
+    ///
+    /// Address space is a finite field in the mathematical sense, so keep
+    /// in mind that the address space "loops". 255.255.255.255 increased
+    /// by one gives 0.0.0.0. The same is true for maximum value of IPv6
+    /// (all 1's) looping to ::.
+    ///
+    /// @todo Determine if we have a use-case for increasing the address
+    /// by more than one. Increase by one is used in AllocEngine. This method
+    /// could take extra parameter that specifies the value by which the
+    /// address should be increased.
+    ///
+    /// @param addr address to be increased
+    /// @return address increased by one
+    static IOAddress
+    increase(const IOAddress& addr);
+
     /// \brief Converts IPv4 address to uint32_t
     ///
     /// Will throw BadValue exception if that is not IPv4
