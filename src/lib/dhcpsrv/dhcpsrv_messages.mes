@@ -79,13 +79,6 @@ of active interfaces. This doesn't prevent the server from listening to
 the DHCP traffic through open sockets, but will rather be used by Interface
 Manager to select active interfaces when sockets are re-opened.
 
-% DHCPSRV_MULTIPLE_RAW_SOCKETS_PER_IFACE current configuration will result in opening multiple brodcast capable sockets on some interfaces and some DHCP messages may be duplicated
-A warning message issued when the current configuration indicates that multiple
-sockets, capable of receiving brodcast traffic, will be opened on some of the
-interfaces. It must be noted that this may lead to receiving and processing
-the same DHCP message multiple times, as it will be received by each socket
-individually.
-
 % DHCPSRV_CFGMGR_NO_SUBNET4 no suitable subnet is defined for address hint %1
 This debug message is output when the DHCP configuration manager has received
 a request for an IPv4 subnet for the specified address, but no such
@@ -106,11 +99,6 @@ This is a debug message reporting that the DHCP configuration manager has
 returned the specified IPv6 subnet when given the address hint specified
 because it is the only subnet defined.
 
-% DHCPSRV_CFGMGR_SOCKET_TYPE_DEFAULT "dhcp-socket-type" not specified , using default socket type %1
-This informational message is logged when the administrator hasn't
-specified the "dhcp-socket-type" parameter in configuration for interfaces.
-In such case, the default socket type will be used.
-
 % DHCPSRV_CFGMGR_SOCKET_RAW_UNSUPPORTED use of raw sockets is unsupported on this OS, UDP sockets will be used
 This warning message is logged when the user specified that the
 DHCPv4 server should use the raw sockets to receive the DHCP
@@ -122,6 +110,11 @@ not supported by Kea on the particular platform, Kea will fall
 back to use of the IP/UDP sockets. The responses to
 the directly connected clients will be broadcast. The responses
 to relayed clients will be unicast as usual.
+
+% DHCPSRV_CFGMGR_SOCKET_TYPE_DEFAULT "dhcp-socket-type" not specified , using default socket type %1
+This informational message is logged when the administrator hasn't
+specified the "dhcp-socket-type" parameter in configuration for interfaces.
+In such case, the default socket type will be used.
 
 % DHCPSRV_CFGMGR_SOCKET_TYPE_SELECT using socket type %1
 This informational message is logged when the DHCPv4 server selects the
@@ -359,6 +352,10 @@ replaced by those read from the file.
 % DHCPSRV_MEMFILE_LEASE_LOAD loading lease %1
 A debug message issued when DHCP lease is being loaded from the file to memory.
 
+% DHCPSRV_MEMFILE_LFC_EXECUTE executing Lease File Cleanup using: %1
+An informational message issued when the Memfile lease database backend
+starts a new process to perform Lease File Cleanup.
+
 % DHCPSRV_MEMFILE_LFC_LEASE_FILE_RENAME_FAIL failed to rename the current lease file %1 to %2, reason: %3
 An error message logged when the Memfile lease database backend fails to
 move the current lease file to a new file on which the cleanup should
@@ -388,10 +385,6 @@ failure persist however, the size of the lease file will increase without bound.
 An informational message issued when the Memfile lease database backend
 starts the periodic Lease File Cleanup.
 
-% DHCPSRV_MEMFILE_LFC_EXECUTE executing Lease File Cleanup using: %1
-An informational message issued when the Memfile lease database backend
-starts a new process to perform Lease File Cleanup.
-
 % DHCPSRV_MEMFILE_NO_STORAGE running in non-persistent mode, leases will be lost after restart
 A warning message issued when writes of leases to disk have been disabled
 in the configuration. This mode is useful for some kinds of performance
@@ -416,6 +409,13 @@ lease from the memory file database for the specified address.
 % DHCPSRV_MEMFILE_UPDATE_ADDR6 updating IPv6 lease for address %1
 A debug message issued when the server is attempting to update IPv6
 lease from the memory file database for the specified address.
+
+% DHCPSRV_MULTIPLE_RAW_SOCKETS_PER_IFACE current configuration will result in opening multiple brodcast capable sockets on some interfaces and some DHCP messages may be duplicated
+A warning message issued when the current configuration indicates that multiple
+sockets, capable of receiving brodcast traffic, will be opened on some of the
+interfaces. It must be noted that this may lead to receiving and processing
+the same DHCP message multiple times, as it will be received by each socket
+individually.
 
 % DHCPSRV_MYSQL_ADD_ADDR4 adding IPv4 lease with address %1
 A debug message issued when the server is about to add an IPv4 lease
@@ -494,16 +494,16 @@ lease from the MySQL database for the specified address.
 A debug message issued when the server is attempting to update IPv6
 lease from the MySQL database for the specified address.
 
-% DHCPSRV_NO_SOCKETS_OPEN no interface configured to listen to DHCP traffic
-This warning message is issued when the current server configuration specifies
-no interfaces that the server should listen on, or when the specified interfaces are not
-configured to receive the traffic.
-
 % DHCPSRV_NOTYPE_DB no 'type' keyword to determine database backend: %1
 This is an error message, logged when an attempt has been made to access
 a database backend, but where no 'type' keyword has been included in
 the access string.  The access string (less any passwords) is included
 in the message.
+
+% DHCPSRV_NO_SOCKETS_OPEN no interface configured to listen to DHCP traffic
+This warning message is issued when the current server configuration specifies
+no interfaces that the server should listen on, or when the specified interfaces are not
+configured to receive the traffic.
 
 % DHCPSRV_OPEN_SOCKET_FAIL failed to open socket: %1
 A warning message issued when IfaceMgr fails to open and bind a socket.
