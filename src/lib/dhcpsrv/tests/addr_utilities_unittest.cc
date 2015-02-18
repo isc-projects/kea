@@ -265,7 +265,7 @@ TEST(AddrUtilitiesTest, prefixesInRange) {
     EXPECT_EQ(65536, prefixesInRange(48, 64));
 
     // How many /127 prefixes are in /64 pool?
-    EXPECT_EQ(uint64_t(9223372036854775808u), prefixesInRange(64, 127));
+    EXPECT_EQ(uint64_t(9223372036854775808ull), prefixesInRange(64, 127));
 
     // How many /128 prefixes are in /64 pool?
     EXPECT_EQ(std::numeric_limits<uint64_t>::max(),
