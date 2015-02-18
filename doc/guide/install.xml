@@ -388,7 +388,7 @@ Debian and Ubuntu:
 
     <section id="dhcp-config-backend">
       <title>Selecting the Configuration Backend</title>
-      <para>Kea 0.9 introduces configuration backends that are
+      <para>Kea 0.9 has introduced configuration backends that are
       switchable during the compilation phase. The backend is chosen using
       the --with-kea-config switch when running the configure script. It
       currently supports two values: BUNDY and JSON. JSON is the default.
