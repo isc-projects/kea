@@ -158,10 +158,6 @@ This debug message is issued when the client being in the INIT-REBOOT state
 requested an address which is not assigned to him. The server will respond
 to this client with DHCPNAK.
 
-% DHCP4_NO_LEASE_INIT_REBOOT no lease for address %1 requested by INIT-REBOOT client (id: %2, hwaddr: %3)
-This debug message is issued when the client being in the INIT-REBOOT state
-requested an address but this client is unknown. The server will not respond.
-
 % DHCP4_INVALID_RELAY_INFO malformed packet received from client-id %1, hwaddr %2: %3
 This message is logged when the client sends invalid combination of
 values in the giaddr and hops fields. If the packet is relayed it should
@@ -214,6 +210,10 @@ message.
 % DHCP4_NOT_RUNNING DHCPv4 server is not running
 A warning message is issued when an attempt is made to shut down the
 DHCPv4 server but it is not running.
+
+% DHCP4_NO_LEASE_INIT_REBOOT no lease for address %1 requested by INIT-REBOOT client (id: %2, hwaddr: %3)
+This debug message is issued when the client being in the INIT-REBOOT state
+requested an address but this client is unknown. The server will not respond.
 
 % DHCP4_NO_SOCKETS_OPEN no interface configured to listen to DHCP traffic
 This warning message is issued when current server configuration specifies
