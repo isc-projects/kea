@@ -1,3 +1,5 @@
+Kea 0.9.1beta released on February 18, 2015
+
 901.	[bug]		tomek
 	Previously, the DHCPv4 and DHCPv6 servers gave up after
 	100 failed lease selection attempts. Now both DHCPv4 and
