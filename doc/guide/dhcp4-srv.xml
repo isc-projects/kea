@@ -237,14 +237,6 @@ global and Dhcp4, hence we need two closing curly brackets to close them.
 In a real life configuration file there most likely would be additional
 components defined such as Logging or DhcpDdns, so the closing brace would
 be followed by a comma and another object definition.</para>
-
-<para>Kea 0.9 does not have configuration syntax validation
-implemented yet. Such a feature is planned for the near future. For
-the time being, it is convenient to use on-line JSON validators and/or
-viewers to check whether the syntax is correct. One example of such a
-JSON validator is available at <ulink
-url="http://jsonviewer.stack.hu/"/>.
-</para>
 </section>
 
 <section>
