@@ -132,6 +132,40 @@ Subnet::toText() const {
     return (tmp.str());
 }
 
+uint64_t
+Subnet::getPoolCapacity(Lease::Type type) const {
+    switch (type) {
+    case Lease::TYPE_V4:
+    case Lease::TYPE_NA:
+        return sumPoolCapacity(pools_);
+    case Lease::TYPE_TA:
+        return sumPoolCapacity(pools_ta_);
+    case Lease::TYPE_PD:
+        return sumPoolCapacity(pools_pd_);
+    default:
+        isc_throw(BadValue, "Unsupported pool type: "
+                  << static_cast<int>(type));
+    }
+}
+
+uint64_t
+Subnet::sumPoolCapacity(const PoolCollection& pools) const {
+    uint64_t sum = 0;
+    for (PoolCollection::const_iterator p = pools.begin(); p != pools.end(); ++p) {
+        uint64_t x = (*p)->getCapacity();
+
+        // Check if we can add it. If sum + x > uint64::max, then we would have
+        // overflown if we tried to add it.
+        if (x > std::numeric_limits<uint64_t>::max() - sum) {
+            return (std::numeric_limits<uint64_t>::max());
+        }
+
+        sum += x;
+    }
+
+    return (sum);
+}
+
 void Subnet4::checkType(Lease::Type type) const {
     if (type != Lease::TYPE_V4) {
         isc_throw(BadValue, "Only TYPE_V4 is allowed for Subnet4");

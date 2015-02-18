@@ -67,7 +67,6 @@ public:
             :IterativeAllocator(type) {
         }
 
-        using AllocEngine::IterativeAllocator::increaseAddress;
         using AllocEngine::IterativeAllocator::increasePrefix;
     };
 };
@@ -173,16 +172,17 @@ public:
 
     /// @brief Checks if specified address is increased properly
     ///
-    /// Method uses gtest macros to mark check failure.
+    /// Method uses gtest macros to mark check failure. This is a proxy
+    /// method, since increaseAddress was moved to IOAddress class.
     ///
     /// @param alloc IterativeAllocator that is tested
     /// @param input address to be increased
     /// @param exp_output expected address after increase
     void
-    checkAddrIncrease(NakedAllocEngine::NakedIterativeAllocator& alloc,
+    checkAddrIncrease(NakedAllocEngine::NakedIterativeAllocator&,
                       std::string input, std::string exp_output) {
-        EXPECT_EQ(exp_output, alloc.increaseAddress(asiolink::IOAddress(input))
-                  .toText());
+        EXPECT_EQ(exp_output, asiolink::IOAddress::increase(
+                      asiolink::IOAddress(input)).toText());
     }
 
     /// @brief Checks if increasePrefix() works as expected
