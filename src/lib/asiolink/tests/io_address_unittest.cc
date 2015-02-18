@@ -254,8 +254,8 @@ TEST(IOAddressTest, subtract) {
     IOAddress addr11("::1");
     IOAddress any6("::");
 
-    EXPECT_EQ("::abcd", IOAddress::subtract(addr6, addr7).toText());
-    EXPECT_EQ("::9999", IOAddress::subtract(addr6, addr8).toText());
+    EXPECT_EQ(IOAddress("::abcd"), IOAddress::subtract(addr6, addr7));
+    EXPECT_EQ(IOAddress("::9999"), IOAddress::subtract(addr6, addr8));
     EXPECT_EQ("::ffff:ffff:ffff:531", IOAddress::subtract(addr10, addr9).toText());
 
     // Subtract with borrow, extreme edition. Need to borrow one bit
@@ -294,7 +294,7 @@ TEST(IOAddressTest, increaseAddr) {
     EXPECT_EQ("0.0.0.1", IOAddress::increase(any4).toText());
     EXPECT_EQ("0.0.0.0", IOAddress::increase(bcast).toText());
     EXPECT_EQ("2001:db8:0:1::", IOAddress::increase(addr6).toText());
-    EXPECT_EQ("::2", IOAddress::increase(addr11).toText());
-    EXPECT_EQ("::1", IOAddress::increase(any6).toText());
-    EXPECT_EQ("::", IOAddress::increase(the_last_one).toText());
+    EXPECT_EQ(IOAddress("::2"), IOAddress::increase(addr11));
+    EXPECT_EQ(IOAddress("::1"), IOAddress::increase(any6));
+    EXPECT_EQ(IOAddress("::"), IOAddress::increase(the_last_one));
 }
