@@ -134,15 +134,15 @@ Subnet::toText() const {
 }
 
 uint64_t
-Subnet::getLeasesCount(Lease::Type type) const {
+Subnet::getPoolCapacity(Lease::Type type) const {
     switch (type) {
     case Lease::TYPE_V4:
     case Lease::TYPE_NA:
-        return sumLeasesCount(pools_);
+        return sumPoolCapacity(pools_);
     case Lease::TYPE_TA:
-        return sumLeasesCount(pools_ta_);
+        return sumPoolCapacity(pools_ta_);
     case Lease::TYPE_PD:
-        return sumLeasesCount(pools_pd_);
+        return sumPoolCapacity(pools_pd_);
     default:
         isc_throw(BadValue, "Unsupported pool type: "
                   << static_cast<int>(type));
@@ -150,10 +150,10 @@ Subnet::getLeasesCount(Lease::Type type) const {
 }
 
 uint64_t
-Subnet::sumLeasesCount(const PoolCollection& pools) const {
+Subnet::sumPoolCapacity(const PoolCollection& pools) const {
     uint64_t sum = 0;
     for (PoolCollection::const_iterator p = pools.begin(); p != pools.end(); ++p) {
-        uint64_t x = (*p)->getLeasesCount();
+        uint64_t x = (*p)->getCapacity();
 
         // Check if we can add it. If sum + x > uint64::max, then we would have
         // overflown if we tried to add it.
