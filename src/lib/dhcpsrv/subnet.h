@@ -236,7 +236,7 @@ public:
     /// @brief Returns the number of possible leases for specified lease type
     ///
     /// @param type type of the lease
-    uint64_t getLeasesCount(Lease::Type type) const;
+    uint64_t getPoolCapacity(Lease::Type type) const;
 
     /// @brief Sets name of the network interface for directly attached networks
     ///
@@ -408,11 +408,10 @@ protected:
     /// @throw BadValue if invalid value is used
     virtual void checkType(Lease::Type type) const = 0;
 
-
     /// @brief returns a sum of possible leases in all pools
     /// @param pools list of pools
     /// @return sum of possible leases
-    uint64_t sumLeasesCount(const PoolCollection& pools) const;
+    uint64_t sumPoolCapacity(const PoolCollection& pools) const;
 
     /// @brief subnet-id
     ///

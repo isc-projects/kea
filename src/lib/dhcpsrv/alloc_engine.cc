@@ -543,7 +543,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
     /// try that number of times at most. It would be useful to that value if
     /// attempts_, specified by the user could override that value (and keep
     /// dynamic if they're set to 0).
-    uint32_t max_attempts = ctx.subnet_->getLeasesCount(ctx.type_);
+    uint32_t max_attempts = ctx.subnet_->getPoolCapacity(ctx.type_);
     for (uint32_t i = 0; i < max_attempts; ++i)
     {
         IOAddress candidate = allocator->pickAddress(ctx.subnet_, ctx.duid_, hint);
@@ -1007,7 +1007,7 @@ AllocEngine::allocateLease4(const SubnetPtr& subnet, const ClientIdPtr& clientid
         /// try that number of times at most. It would be useful to that value if
         /// attempts_, specified by the user could override that value (and keep
         /// dynamic if they're set to 0).
-        uint64_t i = subnet->getLeasesCount(Lease::TYPE_V4);
+        uint64_t i = subnet->getPoolCapacity(Lease::TYPE_V4);
         do {
             // Decrease the number of remaining attempts here so as we guarantee
             // that it is decreased when the code below uses "continue".
