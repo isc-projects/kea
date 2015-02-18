@@ -181,7 +181,7 @@ public:
     void
     checkAddrIncrease(NakedAllocEngine::NakedIterativeAllocator&,
                       std::string input, std::string exp_output) {
-        EXPECT_EQ(exp_output, asiolink::IOAddress::increaseAddress(
+        EXPECT_EQ(exp_output, asiolink::IOAddress::increase(
                       asiolink::IOAddress(input)).toText());
     }
 

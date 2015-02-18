@@ -133,21 +133,21 @@ operator<<(std::ostream& os, const IOAddress& address) {
 
 IOAddress
 IOAddress::subtract(const IOAddress& a, const IOAddress& b) {
-    if (a.isV4() != b.isV4()) {
+    if (a.getFamily() != b.getFamily()) {
         isc_throw(BadValue, "Both addresses have to be the same family");
     }
     if (a.isV4()) {
         // Subtracting v4 is easy. We have uint32_t operator.
-        return (IOAddress((uint32_t)a - (uint32_t)b));
+        return (IOAddress(static_cast<uint32_t>(a) - static_cast<uint32_t>(b)));
     } else {
         // v6 is more involved.
 
         // Let's extract the raw data first.
-        vector<uint8_t> a_vec = a.toBytes();
-        vector<uint8_t> b_vec = b.toBytes();
+        const vector<uint8_t>& a_vec(a.toBytes());
+        const vector<uint8_t>& b_vec(b.toBytes());
 
         // ... and prepare the result
-        vector<uint8_t> result(16,0);
+        vector<uint8_t> result(V6ADDRESS_LEN,0);
 
         // Carry is a boolean, but to avoid its frequent casting, let's
         // use uint8_t. Also, some would prefer to call it borrow, but I prefer
@@ -156,14 +156,9 @@ IOAddress::subtract(const IOAddress& a, const IOAddress& b) {
         uint8_t carry = 0;
 
         // Now perform subtraction with borrow.
-        for (int i = 15; i >=0; --i) {
-            if (a_vec[i] >= (b_vec[i] + carry) ) {
-                result[i] = a_vec[i] - b_vec[i] - carry;
-                carry = 0;
-            } else {
-                result[i] = a_vec[i] - b_vec[i] - carry;
-                carry = 1;
-            }
+        for (int i = a_vec.size(); i >= 0; --i) {
+            result[i] = a_vec[i] - b_vec[i] - carry;
+            carry = (a_vec[i] < b_vec[i] + carry);
         }
 
         return (fromBytes(AF_INET6, &result[0]));
@@ -171,7 +166,7 @@ IOAddress::subtract(const IOAddress& a, const IOAddress& b) {
 }
 
 IOAddress
-IOAddress::increaseAddress(const IOAddress& addr) {
+IOAddress::increase(const IOAddress& addr) {
     // Get a buffer holding an address.
     const std::vector<uint8_t>& vec = addr.toBytes();
     // Get the address length.
@@ -188,9 +183,8 @@ IOAddress::increaseAddress(const IOAddress& addr) {
 
     // Start increasing the least significant byte
     for (int i = len - 1; i >= 0; --i) {
-        ++packed[i];
         // if we haven't overflowed (0xff -> 0x0), than we are done
-        if (packed[i] != 0) {
+        if (++packed[i] != 0) {
             break;
         }
     }
