@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013,2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -79,6 +79,14 @@ public:
     virtual ~Pool() {
     }
 
+    /// @brief Returns the number of all leases in this pool.
+    ///
+    /// Note that this is the upper bound, assuming that no leases are used
+    /// and there are no host reservations. This is just a theoretical calculation.
+    /// @return number of possible leases in this pool
+    uint64_t getCapacity() const {
+        return (capacity_);
+    }
 protected:
 
     /// @brief protected constructor
@@ -120,6 +128,14 @@ protected:
 
     /// @brief defines a lease type that will be served from this pool
     Lease::Type type_;
+
+    /// @brief Stores number of possible leases.
+    ///
+    /// This could be calculated on the fly, but the calculations are somewhat
+    /// involved, so it is more efficient to calculate it once and just store
+    /// the result. Note that for very large pools, the number is capped at
+    /// max value of uint64_t.
+    uint64_t capacity_;
 };
 
 /// @brief Pool information for IPv4 addresses

@@ -22,6 +22,7 @@
 
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
+#include <limits>
 
 // don't import the entire boost namespace.  It will unexpectedly hide uint8_t
 // for some systems.
@@ -145,6 +146,32 @@ TEST(Subnet4Test, Pool4InSubnet4) {
 
     EXPECT_EQ(mypool, pool3);
 
+}
+
+// Check if it's possible to get specified number of possible leases for
+// an IPv4 subnet.
+TEST(Subnet4Test, getCapacity) {
+
+    // There's one /24 pool.
+    Subnet4Ptr subnet(new Subnet4(IOAddress("192.1.2.0"), 24, 1, 2, 3));
+
+    // There are no pools defined, so the total number of available addrs is 0.
+    EXPECT_EQ(0, subnet->getPoolCapacity(Lease::TYPE_V4));
+
+    // Let's add a /25 pool. That's 128 addresses.
+    PoolPtr pool1(new Pool4(IOAddress("192.1.2.0"), 25));
+    subnet->addPool(pool1);
+    EXPECT_EQ(128, subnet->getPoolCapacity(Lease::TYPE_V4));
+
+    // Let's add another /26 pool. That's extra 64 addresses.
+    PoolPtr pool2(new Pool4(IOAddress("192.1.2.128"), 26));
+    subnet->addPool(pool2);
+    EXPECT_EQ(192, subnet->getPoolCapacity(Lease::TYPE_V4));
+
+    // Let's add a third pool /30. This one has 4 addresses.
+    PoolPtr pool3(new Pool4(IOAddress("192.1.2.192"), 30));
+    subnet->addPool(pool3);
+    EXPECT_EQ(196, subnet->getPoolCapacity(Lease::TYPE_V4));
 }
 
 TEST(Subnet4Test, Subnet4_Pool4_checks) {
@@ -432,6 +459,84 @@ TEST(Subnet6Test, relay) {
     subnet.setRelayInfo(IOAddress("2001:ffff::1"));
 
     EXPECT_EQ("2001:ffff::1", subnet.getRelayInfo().addr_.toText());
+}
+
+// Test checks whether the number of addresses available in the pools are
+// calculated properly.
+TEST(Subnet6Test, Pool6getCapacity) {
+
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
+
+    // There's 2^16 = 65536 addresses in this one.
+    PoolPtr pool1(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:1::"), 112));
+
+    // There's 2^32 = 4294967296 addresses in each of those.
+    PoolPtr pool2(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:2::"), 96));
+    PoolPtr pool3(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:3::"), 96));
+
+    EXPECT_EQ(0, subnet->getPoolCapacity(Lease::TYPE_NA));
+    EXPECT_EQ(0, subnet->getPoolCapacity(Lease::TYPE_TA));
+    EXPECT_EQ(0, subnet->getPoolCapacity(Lease::TYPE_PD));
+
+    subnet->addPool(pool1);
+    EXPECT_EQ(65536, subnet->getPoolCapacity(Lease::TYPE_NA));
+
+    subnet->addPool(pool2);
+    EXPECT_EQ(uint64_t(4294967296 + 65536), subnet->getPoolCapacity(Lease::TYPE_NA));
+
+    subnet->addPool(pool3);
+    EXPECT_EQ(uint64_t(4294967296 + 4294967296 + 65536),
+              subnet->getPoolCapacity(Lease::TYPE_NA));
+
+    // This is 2^64 prefixes. We're overflown uint64_t.
+    PoolPtr pool4(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:4::"), 64));
+    subnet->addPool(pool4);
+    EXPECT_EQ(std::numeric_limits<uint64_t>::max(),
+              subnet->getPoolCapacity(Lease::TYPE_NA));
+
+    PoolPtr pool5(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:5::"), 64));
+    subnet->addPool(pool5);
+    EXPECT_EQ(std::numeric_limits<uint64_t>::max(),
+              subnet->getPoolCapacity(Lease::TYPE_NA));
+}
+
+// Test checks whether the number of prefixes available in the pools are
+// calculated properly.
+TEST(Subnet6Test, Pool6PdgetPoolCapacity) {
+
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8::"), 32, 1, 2, 3, 4));
+
+    // There's 2^16 = 65536 addresses in this one.
+    PoolPtr pool1(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1::"), 48, 64));
+
+    // There's 2^32 = 4294967296 addresses in each of those.
+    PoolPtr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:2::"), 48, 80));
+    PoolPtr pool3(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:3::"), 48, 80));
+
+    EXPECT_EQ(0, subnet->getPoolCapacity(Lease::TYPE_NA));
+    EXPECT_EQ(0, subnet->getPoolCapacity(Lease::TYPE_TA));
+    EXPECT_EQ(0, subnet->getPoolCapacity(Lease::TYPE_PD));
+
+    subnet->addPool(pool1);
+    EXPECT_EQ(65536, subnet->getPoolCapacity(Lease::TYPE_PD));
+
+    subnet->addPool(pool2);
+    EXPECT_EQ(uint64_t(4294967296 + 65536), subnet->getPoolCapacity(Lease::TYPE_PD));
+
+    subnet->addPool(pool3);
+    EXPECT_EQ(uint64_t(4294967296 + 4294967296 + 65536),
+              subnet->getPoolCapacity(Lease::TYPE_PD));
+
+    // This is 2^64.
+    PoolPtr pool4(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:4::"), 48, 112));
+    subnet->addPool(pool4);
+    EXPECT_EQ(std::numeric_limits<uint64_t>::max(),
+              subnet->getPoolCapacity(Lease::TYPE_PD));
+
+    PoolPtr pool5(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:5::"), 48, 112));
+    subnet->addPool(pool5);
+    EXPECT_EQ(std::numeric_limits<uint64_t>::max(),
+              subnet->getPoolCapacity(Lease::TYPE_PD));
 }
 
 TEST(Subnet6Test, Pool6InSubnet6) {
