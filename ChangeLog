@@ -1,3 +1,10 @@
+901.	[bug]		tomek
+	Previously, the DHCPv4 and DHCPv6 servers gave up after
+	100 failed lease selection attempts. Now both DHCPv4 and
+	DHCPv6 servers calculate the number of attempts required
+	to find a lease using the pool capacity.
+	(Trac #3711, git cb5533a1bf1023faf61c1b8ade6ac8fa425f46c2)
+
 900.	[doc]		marcin
 	Documented configuration of the Lease File Cleanup (LFC) in
 	the Kea Administrator Reference.
