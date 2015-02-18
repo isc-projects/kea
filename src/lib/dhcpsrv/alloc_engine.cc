@@ -165,7 +165,7 @@ AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
 
     IOAddress next("::");
     if (!prefix) {
-        next = IOAddress::increaseAddress(last); // basically addr++
+        next = IOAddress::increase(last); // basically addr++
     } else {
         Pool6Ptr pool6 = boost::dynamic_pointer_cast<Pool6>(*it);
         if (!pool6) {

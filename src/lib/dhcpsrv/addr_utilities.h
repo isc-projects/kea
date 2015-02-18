@@ -79,10 +79,10 @@ uint64_t addrsInRange(const isc::asiolink::IOAddress& min,
 /// Example: prefixesInRange(48, 64) returns 65536, as there are /48 pool
 /// can be split into 65536 prefixes, each /64 large.
 ///
-/// @param min the first address in range
-/// @param max the last address in range
-/// @return number of addresses in range
-uint64_t prefixesInRange(uint8_t pool_len, uint8_t delegated_len);
+/// @param pool_len length of the pool in bits
+/// @param delegated_len length of the prefixes to be delegated from the pool
+/// @return number of prefixes in range
+uint64_t prefixesInRange(const uint8_t pool_len, const uint8_t delegated_len);
 };
 };
 
