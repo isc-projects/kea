@@ -236,6 +236,10 @@ TEST(IOAddressTest, subtract) {
     EXPECT_EQ("192.0.2.13", IOAddress::subtract(addr1, bcast).toText());
     EXPECT_EQ("191.255.255.255", IOAddress::subtract(addr3, addr4).toText());
 
+    // Let's check if we can subtract greater address from smaller.
+    // This will check if we can "loop"
+    EXPECT_EQ("255.255.255.251", IOAddress::subtract(addr3, addr2).toText());
+
     IOAddress addr6("fe80::abcd");
     IOAddress addr7("fe80::");
     IOAddress addr8("fe80::1234");
@@ -260,6 +264,11 @@ TEST(IOAddressTest, subtract) {
     // Subtracting :: is like subtracting 0.
     EXPECT_EQ("2001:db8::face", IOAddress::subtract(addr9, any6).toText());
 
+    // Let's check if we can subtract greater address from smaller.
+    // This will check if we can "loop"
+    EXPECT_EQ("ffff:ffff:ffff:ffff:ffff:ffff:ffff:edcc",
+              IOAddress::subtract(addr7, addr8).toText());
+
     // Inter-family relations are not allowed.
     EXPECT_THROW(IOAddress::subtract(addr1, addr6), isc::BadValue);
     EXPECT_THROW(IOAddress::subtract(addr6, addr1), isc::BadValue);
@@ -275,11 +284,11 @@ TEST(IOAddressTest, increaseAddr) {
     IOAddress any6("::");
     IOAddress the_last_one("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff");
 
-    EXPECT_EQ("192.0.2.13", IOAddress::increaseAddress(addr1).toText());
-    EXPECT_EQ("0.0.0.1", IOAddress::increaseAddress(any4).toText());
-    EXPECT_EQ("0.0.0.0", IOAddress::increaseAddress(bcast).toText());
-    EXPECT_EQ("2001:db8:0:1::", IOAddress::increaseAddress(addr6).toText());
-    EXPECT_EQ("::2", IOAddress::increaseAddress(addr11).toText());
-    EXPECT_EQ("::1", IOAddress::increaseAddress(any6).toText());
-    EXPECT_EQ("::", IOAddress::increaseAddress(the_last_one).toText());
+    EXPECT_EQ("192.0.2.13", IOAddress::increase(addr1).toText());
+    EXPECT_EQ("0.0.0.1", IOAddress::increase(any4).toText());
+    EXPECT_EQ("0.0.0.0", IOAddress::increase(bcast).toText());
+    EXPECT_EQ("2001:db8:0:1::", IOAddress::increase(addr6).toText());
+    EXPECT_EQ("::2", IOAddress::increase(addr11).toText());
+    EXPECT_EQ("::1", IOAddress::increase(any6).toText());
+    EXPECT_EQ("::", IOAddress::increase(the_last_one).toText());
 }

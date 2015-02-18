@@ -210,16 +210,21 @@ isc::asiolink::IOAddress getNetmask4(uint8_t len) {
 uint64_t
 addrsInRange(const isc::asiolink::IOAddress& min,
              const isc::asiolink::IOAddress& max) {
-    if (min.isV4() != max.isV4()) {
+    if (min.getFamily() != max.getFamily()) {
         isc_throw(BadValue, "Both addresses have to be the same family");
+    }
+
+    if (max < min) {
+        isc_throw(BadValue, min.toText() << " must not be greater than "
+                  << max.toText());
     }
 
     if (min.isV4()) {
         // Let's explicitly cast last_ and first_ (IOAddress). This conversion is
         // automatic, but let's explicitly cast it show that we moved to integer
         // domain and addresses are now substractable.
-        uint64_t max_numeric = uint32_t(max);
-        uint64_t min_numeric = uint32_t(min);
+        uint64_t max_numeric = static_cast<uint32_t>(max);
+        uint64_t min_numeric = static_cast<uint32_t>(min);
 
         // We can simply subtract the values. We need to increase the result
         // by one, as both min and max are included in the range. So even if
@@ -247,11 +252,11 @@ addrsInRange(const isc::asiolink::IOAddress& min,
 
         // Increase it by one (a..a range still contains one address, even though
         // a subtracted from a is zero).
-        count = IOAddress::increaseAddress(count);
+        count = IOAddress::increase(count);
 
         // We don't have uint128, so for anything greater than 2^64, we'll just
         // assume numeric_limits<uint64_t>::max. Let's do it the manual way.
-        std::vector<uint8_t> bin = count.toBytes();
+        const std::vector<uint8_t>& bin(count.toBytes());
 
         // If any of the most significant 64 bits is set, we have more than
         // 2^64 addresses and can't represent it even on uint64_t.
@@ -273,7 +278,7 @@ addrsInRange(const isc::asiolink::IOAddress& min,
     }
 }
 
-uint64_t prefixesInRange(uint8_t pool_len, uint8_t delegated_len) {
+uint64_t prefixesInRange(const uint8_t pool_len, const uint8_t delegated_len) {
     if (delegated_len < pool_len) {
         return (0);
     }
@@ -293,7 +298,7 @@ uint64_t prefixesInRange(uint8_t pool_len, uint8_t delegated_len) {
         // Now count specifies the exponent (e.g. if the difference between the
         // delegated and pool length is 4, we have 16 prefixes), so we need
         // to calculate 2^(count - 1)
-        return (((uint64_t)2) << (count - 1));
+        return ((static_cast<uint64_t>(2)) << (count - 1));
     }
 }
 

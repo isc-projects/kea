@@ -217,6 +217,10 @@ TEST(AddrUtilitiesTest, addrsInRange4) {
     // cannot be stored in uint32_t.
     EXPECT_EQ(uint64_t(std::numeric_limits<uint32_t>::max()) + 1,
               addrsInRange(IOAddress("0.0.0.0"), IOAddress("255.255.255.255")));
+
+    // The upper bound cannot be smaller than the lower bound.
+    EXPECT_THROW(addrsInRange(IOAddress("192.0.2.5"), IOAddress("192.0.2.4")),
+                 isc::BadValue);
 }
 
 // Checks if the calculation for IPv6 addresses in range are correct.
@@ -243,6 +247,9 @@ TEST(AddrUtilitiesTest, addrsInRange6) {
     // at max value of uint64_t.
     EXPECT_EQ(std::numeric_limits<uint64_t>::max(), addrsInRange(IOAddress("::"),
               IOAddress("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff")));
+
+    EXPECT_THROW(addrsInRange(IOAddress("fe80::5"), IOAddress("fe80::4")),
+                 isc::BadValue);
 }
 
 // Checks if prefixInRange returns valid number of prefixes in specified range.
