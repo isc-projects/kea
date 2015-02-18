@@ -482,10 +482,10 @@ TEST(Subnet6Test, Pool6getCapacity) {
     EXPECT_EQ(65536, subnet->getPoolCapacity(Lease::TYPE_NA));
 
     subnet->addPool(pool2);
-    EXPECT_EQ(uint64_t(4294967296 + 65536), subnet->getPoolCapacity(Lease::TYPE_NA));
+    EXPECT_EQ(uint64_t(4294967296ull + 65536), subnet->getPoolCapacity(Lease::TYPE_NA));
 
     subnet->addPool(pool3);
-    EXPECT_EQ(uint64_t(4294967296 + 4294967296 + 65536),
+    EXPECT_EQ(uint64_t(4294967296ull + 4294967296ull + 65536),
               subnet->getPoolCapacity(Lease::TYPE_NA));
 
     // This is 2^64 prefixes. We're overflown uint64_t.
@@ -521,10 +521,10 @@ TEST(Subnet6Test, Pool6PdgetPoolCapacity) {
     EXPECT_EQ(65536, subnet->getPoolCapacity(Lease::TYPE_PD));
 
     subnet->addPool(pool2);
-    EXPECT_EQ(uint64_t(4294967296 + 65536), subnet->getPoolCapacity(Lease::TYPE_PD));
+    EXPECT_EQ(uint64_t(4294967296ull + 65536), subnet->getPoolCapacity(Lease::TYPE_PD));
 
     subnet->addPool(pool3);
-    EXPECT_EQ(uint64_t(4294967296 + 4294967296 + 65536),
+    EXPECT_EQ(uint64_t(4294967296ull + 4294967296ull + 65536),
               subnet->getPoolCapacity(Lease::TYPE_PD));
 
     // This is 2^64.
