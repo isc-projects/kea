@@ -24,7 +24,8 @@ namespace dhcp {
 
 Pool::Pool(Lease::Type type, const isc::asiolink::IOAddress& first,
            const isc::asiolink::IOAddress& last)
-    :id_(getNextID()), first_(first), last_(last), type_(type) {
+    :id_(getNextID()), first_(first), last_(last), type_(type),
+     capacity_(0) {
 }
 
 bool Pool::inRange(const isc::asiolink::IOAddress& addr) const {
@@ -55,7 +56,7 @@ Pool4::Pool4(const isc::asiolink::IOAddress& first,
     // the number of theoretically possible leases in it. As there's 2^32
     // possible IPv4 addresses, we'll be able to accurately store that
     // info.
-    leases_count_ = addrsInRange(first, last);
+    capacity_ = addrsInRange(first, last);
 }
 
 Pool4::Pool4( const isc::asiolink::IOAddress& prefix, uint8_t prefix_len)
@@ -78,7 +79,7 @@ Pool4::Pool4( const isc::asiolink::IOAddress& prefix, uint8_t prefix_len)
     // the number of theoretically possible leases in it. As there's 2^32
     // possible IPv4 addresses, we'll be able to accurately store that
     // info.
-    leases_count_ = addrsInRange(prefix, last_);
+    capacity_ = addrsInRange(prefix, last_);
 }
 
 Pool6::Pool6(Lease::Type type, const isc::asiolink::IOAddress& first,
@@ -120,7 +121,7 @@ Pool6::Pool6(Lease::Type type, const isc::asiolink::IOAddress& first,
     // Let's calculate the theoretical number of leases in this pool.
     // If the pool is extremely large (i.e. contains more than 2^64 addresses,
     // we'll just cap it at max value of uint64_t).
-    leases_count_ = addrsInRange(first, last);
+    capacity_ = addrsInRange(first, last);
 }
 
 Pool6::Pool6(Lease::Type type, const isc::asiolink::IOAddress& prefix,
@@ -158,7 +159,7 @@ Pool6::Pool6(Lease::Type type, const isc::asiolink::IOAddress& prefix,
     // Let's calculate the theoretical number of leases in this pool.
     // For addresses, we could use addrsInRange(prefix, last_), but it's
     // much faster to do calculations on prefix lengths.
-    leases_count_ = prefixesInRange(prefix_len, delegated_len);
+    capacity_ = prefixesInRange(prefix_len, delegated_len);
 }
 
 std::string

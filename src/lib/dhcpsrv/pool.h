@@ -84,8 +84,8 @@ public:
     /// Note that this is the upper bound, assuming that no leases are used
     /// and there are no host reservations. This is just a theoretical calculation.
     /// @return number of possible leases in this pool
-    uint64_t getLeasesCount() const {
-        return (leases_count_);
+    uint64_t getCapacity() const {
+        return (capacity_);
     }
 protected:
 
@@ -135,7 +135,7 @@ protected:
     /// involved, so it is more efficient to calculate it once and just store
     /// the result. Note that for very large pools, the number is capped at
     /// max value of uint64_t.
-    uint64_t leases_count_;
+    uint64_t capacity_;
 };
 
 /// @brief Pool information for IPv4 addresses

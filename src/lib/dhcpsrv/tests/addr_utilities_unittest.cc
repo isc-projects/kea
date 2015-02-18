@@ -213,7 +213,7 @@ TEST(AddrUtilitiesTest, addrsInRange4) {
     EXPECT_EQ(3, addrsInRange(IOAddress("10.0.0.255"), IOAddress("10.0.1.1")));
 
     // Let's go a bit overboard with this! How many addresses are there in
-    // IPv4 address space? That's a slightly tricku question, as the answer
+    // IPv4 address space? That's a slightly tricky question, as the answer
     // cannot be stored in uint32_t.
     EXPECT_EQ(uint64_t(std::numeric_limits<uint32_t>::max()) + 1,
               addrsInRange(IOAddress("0.0.0.0"), IOAddress("255.255.255.255")));

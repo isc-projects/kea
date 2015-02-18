@@ -143,8 +143,8 @@ IOAddress::subtract(const IOAddress& a, const IOAddress& b) {
         // v6 is more involved.
 
         // Let's extract the raw data first.
-        const vector<uint8_t>& a_vec(a.toBytes());
-        const vector<uint8_t>& b_vec(b.toBytes());
+        vector<uint8_t> a_vec = a.toBytes();
+        vector<uint8_t> b_vec = b.toBytes();
 
         // ... and prepare the result
         vector<uint8_t> result(V6ADDRESS_LEN,0);
@@ -156,9 +156,14 @@ IOAddress::subtract(const IOAddress& a, const IOAddress& b) {
         uint8_t carry = 0;
 
         // Now perform subtraction with borrow.
-        for (int i = a_vec.size(); i >= 0; --i) {
-            result[i] = a_vec[i] - b_vec[i] - carry;
-            carry = (a_vec[i] < b_vec[i] + carry);
+        for (int i = 15; i >=0; --i) {
+            if (a_vec[i] >= (b_vec[i] + carry) ) {
+                result[i] = a_vec[i] - b_vec[i] - carry;
+                carry = 0;
+            } else {
+                result[i] = a_vec[i] - b_vec[i] - carry;
+                carry = 1;
+            }
         }
 
         return (fromBytes(AF_INET6, &result[0]));
@@ -167,29 +172,21 @@ IOAddress::subtract(const IOAddress& a, const IOAddress& b) {
 
 IOAddress
 IOAddress::increase(const IOAddress& addr) {
-    // Get a buffer holding an address.
-    const std::vector<uint8_t>& vec = addr.toBytes();
-    // Get the address length.
-    const int len = vec.size();
-
     // Since the same array will be used to hold the IPv4 and IPv6
     // address we have to make sure that the size of the array
     // we allocate will work for both types of address.
     BOOST_STATIC_ASSERT(V4ADDRESS_LEN <= V6ADDRESS_LEN);
-    uint8_t packed[V6ADDRESS_LEN];
-
-    // Copy the address. It can be either V4 or V6.
-    std::memcpy(packed, &vec[0], len);
+    std::vector<uint8_t> packed(addr.toBytes());
 
     // Start increasing the least significant byte
-    for (int i = len - 1; i >= 0; --i) {
+    for (int i = packed.size() - 1; i >= 0; --i) {
         // if we haven't overflowed (0xff -> 0x0), than we are done
         if (++packed[i] != 0) {
             break;
         }
     }
 
-    return (IOAddress::fromBytes(addr.getFamily(), packed));
+    return (IOAddress::fromBytes(addr.getFamily(), &packed[0]));
 }
 
 
