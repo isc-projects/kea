@@ -156,14 +156,9 @@ IOAddress::subtract(const IOAddress& a, const IOAddress& b) {
         uint8_t carry = 0;
 
         // Now perform subtraction with borrow.
-        for (int i = 15; i >=0; --i) {
-            if (a_vec[i] >= (b_vec[i] + carry) ) {
-                result[i] = a_vec[i] - b_vec[i] - carry;
-                carry = 0;
-            } else {
-                result[i] = a_vec[i] - b_vec[i] - carry;
-                carry = 1;
-            }
+        for (int i = a_vec.size() - 1; i >= 0; --i) {
+            result[i] = a_vec[i] - b_vec[i] - carry;
+            carry = (a_vec[i] < b_vec[i] + carry);
         }
 
         return (fromBytes(AF_INET6, &result[0]));
@@ -172,10 +167,6 @@ IOAddress::subtract(const IOAddress& a, const IOAddress& b) {
 
 IOAddress
 IOAddress::increase(const IOAddress& addr) {
-    // Since the same array will be used to hold the IPv4 and IPv6
-    // address we have to make sure that the size of the array
-    // we allocate will work for both types of address.
-    BOOST_STATIC_ASSERT(V4ADDRESS_LEN <= V6ADDRESS_LEN);
     std::vector<uint8_t> packed(addr.toBytes());
 
     // Start increasing the least significant byte
