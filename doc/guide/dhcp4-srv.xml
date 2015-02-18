@@ -237,10 +237,6 @@ global and Dhcp4, hence we need two closing curly brackets to close them.
 In a real life configuration file there most likely would be additional
 components defined such as Logging or DhcpDdns, so the closing brace would
 be followed by a comma and another object definition.</para>
-<<<<<<< HEAD
-
-=======
->>>>>>> 75361d975ca689a02f6d5b759f92d07c022c86b1
 </section>
 
 <section>
