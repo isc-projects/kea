@@ -18,7 +18,7 @@ CLEANFILES  = *.gcno *.gcda spec_config.h d2_messages.h d2_messages.cc s-message
 
 man_MANS = kea-dhcp-ddns.8
 DISTCLEANFILES = $(man_MANS)
-EXTRA_DIST = $(man_MANS) kea-dhcp-ddns.xml dhcp-ddns.spec
+EXTRA_DIST = $(man_MANS) kea-dhcp-ddns.xml dhcp-ddns.spec d2.dox
 
 if GENERATE_DOCS
 kea-dhcp-ddns.8: kea-dhcp-ddns.xml
