@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -30,7 +30,7 @@
 
  @section dhcpv6Session Bundy message queue integration
 
-DHCPv4 server now has two configuration backends: JSON and Bundy. The
+DHCPv6 server now has two configuration backends: JSON and Bundy. The
 following section applies only to the Bundy backend.
 
  DHCPv6 server component is now integrated with Bundy/BIND10 message queue.
