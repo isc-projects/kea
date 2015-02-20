@@ -323,7 +323,7 @@ public:
         :SubnetConfigParser("", globalContext(), IOAddress("::")) {
     }
 
-    /// @brief Parses a single IPv4 subnet configuration and adds to the
+    /// @brief Parses a single IPv6 subnet configuration and adds to the
     /// Configuration Manager.
     ///
     /// @param subnet A new subnet being configured.
