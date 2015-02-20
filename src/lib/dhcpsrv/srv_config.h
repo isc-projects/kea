@@ -210,13 +210,13 @@ public:
     /// @brief Returns pointer to non-const object holding subnets configuration
     /// for DHCPv6.
     ///
-    /// @return Pointer to the object holding subnets configuration for DHCPv4.
+    /// @return Pointer to the object holding subnets configuration for DHCPv6.
     CfgSubnets6Ptr getCfgSubnets6() {
         return (cfg_subnets6_);
     }
 
     /// @brief Returns pointer to const object holding subnets configuration for
-    /// DHCPv4.
+    /// DHCPv6.
     ///
     /// @return Pointer to the object holding subnets configuration for DHCPv6.
     ConstCfgSubnets6Ptr getCfgSubnets6() const {
@@ -360,7 +360,7 @@ private:
     /// @brief Pointer to subnets configuration for IPv4.
     CfgSubnets4Ptr cfg_subnets4_;
 
-    /// @brief Pointer to subnets configuration for IPv4.
+    /// @brief Pointer to subnets configuration for IPv6.
     CfgSubnets6Ptr cfg_subnets6_;
 
     /// @brief Pointer to the configuration for hosts reservation.
