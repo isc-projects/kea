@@ -119,12 +119,36 @@ TEST(IOAddressTest, isV4) {
     EXPECT_FALSE(address6.isV4());
 }
 
+TEST(IOAddressTest, isV4Zero) {
+    const IOAddress address_zero("0.0.0.0");
+    const IOAddress address_non_zero("192.0.2.3");
+
+    EXPECT_TRUE(address_zero.isV4Zero());
+    EXPECT_FALSE(address_non_zero.isV4Zero());
+}
+
+TEST(IOAddressTest, isV4Bcast) {
+    const IOAddress address_bcast("255.255.255.255");
+    const IOAddress address_non_bcast("10.2.3.4");
+
+    EXPECT_TRUE(address_bcast.isV4Bcast());
+    EXPECT_FALSE(address_non_bcast.isV4Bcast());
+}
+
 TEST(IOAddressTest, isV6) {
     const IOAddress address4("192.0.2.1");
     const IOAddress address6("2001:db8:1::dead:beef");
 
     EXPECT_FALSE(address4.isV6());
     EXPECT_TRUE(address6.isV6());
+}
+
+TEST(IOAddressTest, isV6Zero) {
+    const IOAddress address_zero("::");
+    const IOAddress address_non_zero("0.0.0.0");
+
+    EXPECT_TRUE(address_zero.isV6Zero());
+    EXPECT_FALSE(address_non_zero.isV6Zero());
 }
 
 TEST(IOAddressTest, uint32) {
