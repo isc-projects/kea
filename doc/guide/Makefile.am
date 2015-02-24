@@ -1,6 +1,6 @@
 # generated documentation
 HTMLDOCS = kea-guide.html kea-messages.html
-DOCS = kea-guide.txt
+DOCS = kea-guide.txt kea-guide.pdf kea-messages.pdf
 
 dist_doc_DATA = $(DOCS)
 dist_html_DATA = $(HTMLDOCS) kea-guide.css
