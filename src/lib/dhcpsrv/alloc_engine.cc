@@ -1293,7 +1293,8 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
         }
     }
 
-    if (client_lease && !addressReserved(ctx.requested_address_, ctx)) {
+    if (client_lease && !addressReserved(ctx.requested_address_, ctx) &&
+        ctx.subnet_->inPool(Lease::TYPE_V4, ctx.requested_address_)) {
         return (renewLease4(client_lease, ctx));
     }
 
@@ -1349,7 +1350,19 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
                 return (Lease4Ptr());
             }
 
-        } else if (ctx.host_ && (ctx.host_->getIPv4Reservation() != ctx.requested_address_)) {
+        }
+
+        if (ctx.host_ && (ctx.host_->getIPv4Reservation() != ctx.requested_address_)) {
+            existing = LeaseMgrFactory::instance().getLease4(ctx.host_->getIPv4Reservation());
+            if (!existing || existing->expired()) {
+                return (Lease4Ptr());
+            }
+        }
+    }
+
+    if (!ctx.subnet_->inPool(Lease4::TYPE_V4, ctx.requested_address_)) {
+        if ((ctx.host_ && (ctx.host_->getIPv4Reservation() != ctx.requested_address_)) ||
+            (!ctx.host_ && !ctx.requested_address_.isV4Zero())) {
             return (Lease4Ptr());
         }
     }
@@ -1358,13 +1371,6 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
         if ((client_lease->addr_ == ctx.requested_address_) ||
             ctx.requested_address_.isV4Zero()) {
             return (renewLease4(client_lease, ctx));
-        }
-    }
-
-    if (!ctx.subnet_->inPool(Lease4::TYPE_V4, ctx.requested_address_)) {
-        if ((ctx.host_ && (ctx.host_->getIPv4Reservation() != ctx.requested_address_)) ||
-            (!ctx.host_ && !ctx.requested_address_.isV4Zero())) {
-            return (Lease4Ptr());
         }
     }
 
