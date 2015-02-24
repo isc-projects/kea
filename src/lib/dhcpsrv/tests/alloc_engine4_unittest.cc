@@ -548,54 +548,6 @@ TEST_F(AllocEngine4Test, requestReuseExpiredLease4) {
 
 /// @todo write renewLease6
 
-// This test checks if a lease is really renewed when renewLease4 method is
-// called
-TEST_F(AllocEngine4Test, renewLease4) {
-    boost::scoped_ptr<AllocEngine> engine;
-
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                                 100, false)));
-    ASSERT_TRUE(engine);
-
-    IOAddress addr("192.0.2.102");
-    const uint32_t old_lifetime = 100;
-    const uint32_t old_t1 = 50;
-    const uint32_t old_t2 = 75;
-    const time_t old_timestamp = time(NULL) - 45; // Allocated 45 seconds ago
-
-    // Just a different hw/client-id for the second client
-    const uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
-    HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
-    const uint8_t clientid2[] = { 8, 7, 6, 5, 4, 3, 2, 1 };
-    Lease4Ptr lease(new Lease4(addr, hwaddr2, clientid2, sizeof(clientid2),
-                               old_lifetime, old_t1, old_t2,
-                               old_timestamp, subnet_->getID()));
-    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
-
-    // Lease was assigned 45 seconds ago and is valid for 100 seconds. Let's
-    // renew it.
-    ASSERT_FALSE(lease->expired());
-    ctx_.fwd_dns_update_ = true;
-    ctx_.rev_dns_update_ = true;
-    ctx_.hostname_ = "host.example.com.";
-    ctx_.fake_allocation_ = false;
-    lease = engine->renewLease4(lease, ctx_);
-
-    // Check that he got that single lease
-    ASSERT_TRUE(lease);
-    EXPECT_EQ(addr, lease->addr_);
-
-    // Check that the lease matches subnet_, hwaddr_,clientid_ parameters
-    checkLease4(lease);
-
-    // Check that the lease is indeed updated in LeaseMgr
-    Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(addr);
-    ASSERT_TRUE(from_mgr);
-
-    // Now check that the lease in LeaseMgr has the same parameters
-    detailCompareLease(lease, from_mgr);
-}
-
 TEST_F(AllocEngine4Test, requestOtherClientLease) {
     Lease4Ptr lease(new Lease4(IOAddress("192.0.2.101"), hwaddr_, 0, 0,
                                100, 30, 60, time(NULL), subnet_->getID(),
