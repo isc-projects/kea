@@ -1293,7 +1293,11 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
         }
     }
 
-    if (ctx.requested_address_.isV4Zero() && !addressReserved(ctx.requested_address_, ctx)) {
+    if (client_lease && !addressReserved(ctx.requested_address_, ctx)) {
+        return (renewLease4(client_lease, ctx));
+    }
+
+    if (!ctx.requested_address_.isV4Zero() && !addressReserved(ctx.requested_address_, ctx)) {
         if (ctx.subnet_->inPool(Lease::TYPE_V4, ctx.requested_address_)) {
             new_lease = allocateOrReuseLease(ctx.requested_address_, ctx);
             if (new_lease) {
@@ -1301,13 +1305,6 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
                     ctx.old_lease_.reset(new Lease4(*client_lease));
                 }
                 return (new_lease);
-            }
-        }
-
-        if (client_lease) {
-            if ((client_lease->addr_ == ctx.requested_address_) ||
-                ctx.requested_address_.isV4Zero()) {
-                return (renewLease4(client_lease, ctx));
             }
         }
     }
@@ -1497,23 +1494,6 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
                          AllocEngine::ClientContext4& ctx) {
     if (!lease) {
         isc_throw(BadValue, "null lease specified for renewLease4");
-    }
-
-    // The ctx.host_ possibly contains a reservation for the client for which
-    // we are renewing a lease. If this reservation exists, we assume that
-    // there is no conflict in assigning the address to this client. Note
-    // that the reallocateClientLease checks if the address reserved for
-    // the client matches the address in the lease we're renewing here.
-    if (!ctx.host_) {
-        // Do not renew the lease if:
-        // - If address is reserved for someone else or ...
-        // - renewed address doesn't belong to a pool.
-        if (addressReserved(lease->addr_, ctx) ||
-            (!ctx.subnet_->inPool(Lease::TYPE_V4, lease->addr_))) {
-            ctx.interrupt_processing_ = !ctx.fake_allocation_;
-            return (Lease4Ptr());
-        }
-
     }
 
     // Let's keep the old data. This is essential if we are using memfile
