@@ -268,6 +268,9 @@ protected:
         /// @brief A pointer to the object identifying host reservations.
         ConstHostPtr host_;
 
+        /// @brief A pointer to the existing lease for the host reservation.
+        Lease4Ptr lease_for_host_;
+
         /// @brief Signals that the allocation should be interrupted.
         ///
         /// This flag is set by the downstream methods called by the
@@ -285,12 +288,10 @@ protected:
         bool interrupt_processing_;
 
         /// @brief Default constructor.
-        ClientContext4()
-            : subnet_(), clientid_(), hwaddr_(), requested_address_("0.0.0.0"),
-              fwd_dns_update_(false), rev_dns_update_(false),
-              hostname_(""), callout_handle_(), fake_allocation_(false),
-              old_lease_(), host_(), interrupt_processing_(false) {
-        }
+        ClientContext4();
+
+        bool myLease(const Lease4& lease) const;
+
     };
 
     /// @brief Defines a single hint (an address + prefix-length).
@@ -853,6 +854,9 @@ private:
     removeNonreservedLeases6(ClientContext6& ctx,
                              Lease6Collection& existing_leases);
 
+    Lease4Ptr allocateOrReuseLease(const asiolink::IOAddress& address,
+                                   ClientContext4& ctx);
+
     /// @brief Reuses expired DHCPv4 lease.
     ///
     /// Makes new allocation using an expired lease. The lease is updated with
@@ -904,6 +908,10 @@ private:
     /// @return Updated lease, or NULL if allocation was unsucessful.
     /// @throw BadValue if specified parameters are invalid.
     Lease4Ptr reallocateClientLease(Lease4Ptr& lease, ClientContext4& ctx);
+
+    Lease4Ptr discoverLease4(ClientContext4& ctx);
+
+    Lease4Ptr requestLease4(ClientContext4& ctx);
 
     /// @brief Reuses expired IPv6 lease
     ///
