@@ -796,6 +796,15 @@ public:
         /// @brief Default constructor.
         ClientContext4();
 
+        /// @brief Check if the specified lease belongs to the client.
+        ///
+        /// This method compares the hardware address and the client id
+        /// in the lease with the relevant values in the context. That
+        /// way the method determines whether the lease belongs to the
+        /// client which message the server is processing.
+        ///
+        /// @return true if the lease belongs to the client for which
+        /// the context has been created, false otherwise.
         bool myLease(const Lease4& lease) const;
 
     };
@@ -913,8 +922,76 @@ private:
     ///
     //@{
 
+    /// @brief Offers the lease.
+    ///
+    /// This method is called by the @c AllocEngine::allocateLease4 when
+    /// the server is processing DHCPDISCOVER message, i.e. the fake
+    /// allocation case.
+    ///
+    /// This method doesn't modify leases in the lease database. It finds
+    /// the most suitable lease for the client and returns it to the caller.
+    /// The server uses this lease when it sends the DHCPOFFER to the
+    /// client from which it has received a DHCPDISCOVER message.
+    ///
+    /// The lease is found using the following algorithm:
+    /// -# If there is a reservation for the client, try to use the reserved
+    ///    address. This may fail if the particular address is in use by
+    ///    another client. In such case:
+    /// -# If the client has a lease, try to offer this lease. This may fail
+    ///    if it turns out that this address is reserved for another client
+    ///    or the address doesn't belong to the address pool. In such case:
+    /// -# Try to allocate the address provided by the client as a hint.
+    ///    This may fail if the address is in use or is reserved by some
+    ///    other client. In such case:
+    /// -# Try to offer the address from the dynamic pool.
+    ///
+    /// @throw various exceptions if the allocation goes wrong.
+    ///
+    /// @param ctx Client context holding the data extracted from the
+    /// client's message.
+    ///
+    /// @return A pointer to the offered lease, or NULL if no suitable lease
+    /// has been found.
     Lease4Ptr discoverLease4(ClientContext4& ctx);
 
+    /// @brief Allocates the lease.
+    ///
+    /// This method is called by the @c AllocEngine::allocateLease4 when
+    /// the server is processing DHCPREQUEST message, i.e. the real
+    /// allocation case.
+    ///
+    /// This method modifies the lease information in the lease database.
+    /// It adds new leases, modifies existing leases or deletes them.
+    ///
+    /// The method returns NULL to indicate that the lease allocation
+    /// has failed when any of the following occur:
+    /// -# The requested address is specified but is reserved for another
+    ///    client.
+    /// -# The requested address is in use by another client.
+    /// -# There is a reservation for the particular client, the
+    ///    reserved address is not in use by another client and the
+    ///    but the requested address is different than the reserved
+    ///    address.
+    /// -# There is no reservation for the client and the requested address
+    ///    is not in the dynamic pool.
+    ///
+    /// If none of the above occurs, the method will try to allocate the
+    /// lease for the client using the following algorithm:
+    /// -# If the client has a lease and the client is requesting the
+    ///    address for which it has a lease, renew its lease.
+    /// -# If the client is requesting a different address than that for
+    ///    which it has a lease, try to allocate the requested address.
+    ///    This may fail if the address is in use by another client.
+    /// -# If the client is not requesting any specific address, allocate
+    ///    the address from the dynamic pool.
+    ///
+    /// @throws various exceptions if the allocation goes wrong.
+    ///
+    /// @param ctx Client context holding the data extracted from the
+    /// client's message.
+    ///
+    /// @return A pointer to the allocated lease, or NULL if no suitable
+    /// lease could be allocated.
     Lease4Ptr requestLease4(ClientContext4& ctx);
 
     /// @brief Creates a lease and inserts it in LeaseMgr if necessary
@@ -977,11 +1054,44 @@ private:
     /// @return Updated lease instance.
     /// @throw BadValue if trying to reuse a lease which is still valid or
     /// when the provided parameters are invalid.
-    Lease4Ptr reuseExpiredLease(Lease4Ptr& expired, ClientContext4& ctx);
+    Lease4Ptr reuseExpiredLease4(Lease4Ptr& expired, ClientContext4& ctx);
 
-    Lease4Ptr allocateOrReuseLease(const asiolink::IOAddress& address,
+    /// @brief Allocates the lease by replacing an existing lease.
+    ///
+    /// This method checks if the lease database contains the lease for
+    /// the specified address. If the lease exists and has expired, it
+    /// reuses the expired lease. If the lease doesn't exist, it creates
+    /// the new lease.
+    ///
+    /// @param address Requested address for which the lease should be
+    /// allocted.
+    /// @param ctx Client context holding the data extracted from the
+    /// client's message.
+    ///
+    /// @return A pointer to the allocated lease or NULL if the allocation
+    /// was not successful.
+    Lease4Ptr allocateOrReuseLease4(const asiolink::IOAddress& address,
                                    ClientContext4& ctx);
 
+    /// @brief Allocates the lease from the dynamic pool.
+    ///
+    /// This method allocates the lease from the dynamic pool. It uses
+    /// one of the allocators to pick addresses from the pool and if the
+    /// address appears to be available, it allocates the new lease
+    /// using this address. The number of attempts depends on the size
+    /// of the dynamic pool. If all of the addresses in the pool have
+    /// been tried and all of them appeared to be used, the allocation
+    /// fails. This is the case when the pool is exhausted.
+    ///
+    /// The time required to suitable lease depends on the current pool
+    /// utilization.
+    ///
+    /// @param ctx Client context holding the data extracted from the
+    /// client's message.
+    ///
+    /// @return A pointer to the allocated lease or NULL if the allocation
+    /// was not successful.
+    Lease4Ptr allocateUnreservedLease4(ClientContext4& ctx);
 
     /// @brief Updates the specified lease with the information from a context.
     ///
