@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,22 +15,22 @@
 #ifndef WRITABLE_HOST_DATA_SOURCE_H
 #define WRITABLE_HOST_DATA_SOURCE_H
 
-#include <dhcpsrv/base_host_data_source.h>
-
 namespace isc {
 namespace dhcp {
 
 /// @brief Interface for retrieving writable host reservations.
 ///
-/// This interface extends the @c BaseHostDataSource with methods which return
-/// pointers to the @c Host objects, which can be modified.
-class WritableHostDataSource : public BaseHostDataSource {
+/// This interface specifies the methods which return pointers to the
+/// @c Host objects, which can be modified. Deriving from this interface
+/// is needed if the class implementation must return the pointers to the
+/// objects which may be modified by the caller. Such classes usually
+/// also derive from the @c BaseHostDataSource to implement methods which
+/// return the const objects.
+class WritableHostDataSource {
 public:
 
-    using BaseHostDataSource::getAll;
-    using BaseHostDataSource::getAll4;
-    using BaseHostDataSource::get4;
-    using BaseHostDataSource::get6;
+    /// @brief Default destructor implementation.
+    virtual ~WritableHostDataSource() { }
 
     /// @brief Non-const version of the @c getAll const method.
     ///
