@@ -777,22 +777,6 @@ public:
         /// @brief A pointer to the object identifying host reservations.
         ConstHostPtr host_;
 
-        /// @brief Signals that the allocation should be interrupted.
-        ///
-        /// This flag is set by the downstream methods called by the
-        /// @c AllocEngine::allocateLease4. This flag is set to true to
-        /// indicate that an attempt to allocate a lease should be
-        /// interrupted.
-        ///
-        /// One possible use case is when the allocation engine tries
-        /// to renew the client's lease and the leased address appears
-        /// to be reserved for someone else. In such case, the allocation
-        /// engine should signal to the server that the address that the
-        /// client should stop using this address. The
-        /// @c AllocEngine::renewLease4 sets this flag so as the
-        /// upstream methods return the NULL lease pointer to the server.
-        bool interrupt_processing_;
-
         /// @brief Default constructor.
         ClientContext4();
 
