@@ -777,6 +777,13 @@ public:
         /// @brief A pointer to the object identifying host reservations.
         ConstHostPtr host_;
 
+        /// @brief A pointer to the object representing a lease in conflict.
+        ///
+        /// This pointer is set by some of the allocation methods when
+        /// the lease can't be allocated because there is another lease
+        /// which is in conflict with this allocation.
+        Lease4Ptr conflicting_lease_;
+
         /// @brief Default constructor.
         ClientContext4();
 
