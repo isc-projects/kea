@@ -63,35 +63,6 @@ AllocEngineHooks Hooks;
 namespace isc {
 namespace dhcp {
 
-AllocEngine::ClientContext4::ClientContext4()
-    : subnet_(), clientid_(), hwaddr_(),
-      requested_address_(IOAddress::IPV4_ZERO_ADDRESS()),
-      fwd_dns_update_(false), rev_dns_update_(false),
-      hostname_(""), callout_handle_(), fake_allocation_(false),
-      old_lease_(), host_() {
-}
-
-bool
-AllocEngine::ClientContext4::myLease(const Lease4& lease) const {
-    if ((!hwaddr_ && lease.hwaddr_) || (hwaddr_ && !lease.hwaddr_)) {
-        return (false);
-    }
-
-    if ((hwaddr_ && lease.hwaddr_) && (hwaddr_->hwaddr_ != lease.hwaddr_->hwaddr_)) {
-        return (false);
-    }
-
-    if ((!clientid_ && lease.client_id_) || (clientid_ && !lease.client_id_)) {
-        return (false);
-    }
-
-    if ((clientid_ && lease.client_id_) && (*clientid_ != *lease.client_id_)) {
-        return (false);
-    }
-
-    return (true);
-}
-
 AllocEngine::IterativeAllocator::IterativeAllocator(Lease::Type lease_type)
     :Allocator(lease_type) {
 }
@@ -1218,6 +1189,35 @@ addressReserved(const IOAddress& address, const AllocEngine::ClientContext4& ctx
 namespace isc {
 namespace dhcp {
 
+AllocEngine::ClientContext4::ClientContext4()
+    : subnet_(), clientid_(), hwaddr_(),
+      requested_address_(IOAddress::IPV4_ZERO_ADDRESS()),
+      fwd_dns_update_(false), rev_dns_update_(false),
+      hostname_(""), callout_handle_(), fake_allocation_(false),
+      old_lease_(), host_(), conflicting_lease_() {
+}
+
+bool
+AllocEngine::ClientContext4::myLease(const Lease4& lease) const {
+    if ((!hwaddr_ && lease.hwaddr_) || (hwaddr_ && !lease.hwaddr_)) {
+        return (false);
+    }
+
+    if ((hwaddr_ && lease.hwaddr_) && (hwaddr_->hwaddr_ != lease.hwaddr_->hwaddr_)) {
+        return (false);
+    }
+
+    if ((!clientid_ && lease.client_id_) || (clientid_ && !lease.client_id_)) {
+        return (false);
+    }
+
+    if ((clientid_ && lease.client_id_) && (*clientid_ != *lease.client_id_)) {
+        return (false);
+    }
+
+    return (true);
+}
+
 Lease4Ptr
 AllocEngine::allocateLease4(const SubnetPtr& subnet, const ClientIdPtr& clientid,
                             const HWAddrPtr& hwaddr, const IOAddress& hint,
@@ -1317,6 +1317,12 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
             // because this is not a real allocation, we just offer what we can
             // allocate in the DHCPREQUEST time.
             new_lease = allocateOrReuseLease4(ctx.host_->getIPv4Reservation(), ctx);
+            if (!new_lease) {
+                LOG_WARN(dhcpsrv_logger, DHCPSRV_DISCOVER_ADDRESS_CONFLICT)
+                    .arg(ctx.host_->getIPv4Reservation().toText())
+                    .arg(ctx.conflicting_lease_ ? ctx.conflicting_lease_->toText() :
+                         "(no lease info)");
+            }
 
         } else {
             new_lease = renewLease4(client_lease, ctx);
@@ -1720,11 +1726,19 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
 
 Lease4Ptr
 AllocEngine::allocateOrReuseLease4(const IOAddress& candidate, ClientContext4& ctx) {
+    ctx.conflicting_lease_.reset();
+
     Lease4Ptr exist_lease = LeaseMgrFactory::instance().getLease4(candidate);
     if (exist_lease) {
         if (exist_lease->expired()) {
             ctx.old_lease_ = Lease4Ptr(new Lease4(*exist_lease));
             return (reuseExpiredLease4(exist_lease, ctx));
+
+        } else {
+            // If there is a lease and it is not expired, pass this lease back
+            // to the caller in the context. The caller may need to know
+            // which lease we're conflicting with.
+            ctx.conflicting_lease_ = exist_lease;
         }
 
     } else {
