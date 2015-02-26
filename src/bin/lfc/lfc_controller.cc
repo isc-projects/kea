@@ -115,7 +115,7 @@ LFCController::launch(int argc, char* argv[], const bool test_mode) {
             } else {
                 processLeases<Lease6, CSVLeaseFile6, Lease6Storage>();
             }
-        } catch (const isc::Exception& proc_ex) {
+        } catch (const std::exception& proc_ex) {
             // We don't want to do the cleanup but do want to get rid of the pid
             do_rotate = false;
             LOG_FATAL(lfc_logger, LFC_FAIL_PROCESS).arg(proc_ex.what());
