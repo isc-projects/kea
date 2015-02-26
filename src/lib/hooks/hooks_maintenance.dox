@@ -368,7 +368,7 @@
  initialized Kea.  (In fact, running it against a dynamically-linked
  Kea should have no effect, as the load operation discards any duplicate
  message entries.)  The hooks library tests do this, the code being
- copnditionally compiled within a test of the USE_STATIC_LINK macro, set
+ conditionally compiled within a test of the USE_STATIC_LINK macro, set
  by the configure script.
 
  @note Not everything is completely rosy with logging and static linking.
