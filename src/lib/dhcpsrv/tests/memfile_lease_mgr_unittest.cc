@@ -155,7 +155,6 @@ public:
              ++i) {
             Memfile_LeaseMgr::LFCFileType type = static_cast<
                 Memfile_LeaseMgr::LFCFileType>(i);
-            std::string suffix = Memfile_LeaseMgr::appendSuffix(base_name, type);
             LeaseFileIO io(Memfile_LeaseMgr::appendSuffix(base_name, type));
             io.removeFile();
         }
