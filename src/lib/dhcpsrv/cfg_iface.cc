@@ -65,6 +65,9 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
     // inactive.
     setState(family, !wildcard_used_, true);
     IfaceMgr& iface_mgr = IfaceMgr::instance();
+    // Close any open sockets because we're going to modify some properties
+    // of the IfaceMgr. Those modifications require that sockets are closed.
+    closeSockets();
     // Remove selection of unicast addresses from all interfaces.
     iface_mgr.clearUnicasts();
     // For the DHCPv4 server, if the user has selected that raw sockets
@@ -126,9 +129,6 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
             iface->inactive4_ = false;
         }
     }
-
-    // Before opening any sockets, close existing ones.
-    closeSockets();
 
     // Set the callback which is called when the socket fails to open
     // for some specific interface. This callback will simply log a
