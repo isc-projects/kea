@@ -2046,70 +2046,71 @@ temporarily override a list of interface names and listen on all interfaces.
 
     <section id="reservation4-conflict">
       <title>Conflicts in DHCPv4 reservations</title>
-      <para>As reservations and lease information are stored separately,
-      conflicts may arrise. Consider the following series of events. The server
-      has configured dynamic pool of addresses from the range of 192.0.2.10 to
-      192.0.2.20. Host A requests an address and gets 19.0.2.10. Now the system
-      administrator decides to reserve an address for host B. He decides to
+      <para>As the reservations and lease information are stored separately,
+      conflicts may arise. Consider the following series of events. The server
+      has configured the dynamic pool of addresses from the range of 192.0.2.10 to
+      192.0.2.20. The Host A requests an address and gets 19.0.2.10. Now the system
+      administrator decides to reserve the address for the Host B. He decides to
       reserve 192.0.2.10 for that purpose. In general, reserving an address that
       is currently assigned to someone else is not recommended, but there are
       valid use cases where such an operation is warranted.</para>
 
       <para>The server now has a conflict to resolve. Let's analyze the
-      situation here. If the host B boots up and requests an address, the server is
-      not able to assign the reserved address 192.0.2.10. A naive approach would
-      to be immediately remove the lease for host A and create a new one for
-      host B. That would not solve the problem, though, because as soon as host
-      B get the address, it will detect that the address is already in use by
-      someone else (host A) and would send Decline. Therefore in this situation,
-      the server has to temporarily assign a different address (not matching
-      what has been reserved) to host B.</para>
+      situation here. If the Host B boots up and requests an address, the server is
+      not able to assign the reserved address 192.0.2.10 for the Host B. A naive
+      approach would to be immediately remove the existing lease for the Host A
+      and create a new one for the Host B. That would not solve the problem,
+      though, because as soon as the Host B gets the address, it will detect
+      that the address is already in use by the Host A and would send
+      the DHCPDECLINE message. Therefore, in this situation, the server has
+      to temporarily assign a different address (not matching what has been
+      reserved) to the Host B.</para>
 
       <!-- let's keep this text around. It describes how that is working in v6
-      <para>When the host A renews its address, the server will discover that
+      <para>When the Host A renews its address, the server will discover that
       the address being renewed is now reserved for someone else (host
-      B). Therefore the server will remove the lease and will inform the host A
-      that it is no longer allowed to use it by sending NAK message. Host A
+      B). Therefore the server will remove the lease and will inform the Host A
+      that it is no longer allowed to use it by sending DHCPNAK message. Host A
       will then revert to server discovery and will eventually get a different
       address.  The address 192.0.2.10 is now no longer used. When host B tries
       to renew its temporary address, the server will detect that it has a valid
       lease, but there is a reservation for a different address. The server will
-      send NAK to inform host B that its address is no longer usable. The
+      send DHCPNAK to inform host B that its address is no longer usable. The
       server will also remove its temporary lease. It will revert to the server
-      discovery phase and will eventually send a REQUEST message. This time the
+      discovery phase and will eventually send a DHCPREQUEST message. This time the
       server will find out that there is a reservation for that host and the
       reserved address 192.0.2.10 is not used, so it will be granted.</para> -->
 
-      <para>When the host A renews its address, the server will discover that
-      the address being renewed is now reserved for someone else (host
-      B). Therefore the server will inform the host A that it is no longer
-      allowed to use it by sending NAK message. The server will remove the
-      lease, though, as there's small chance that the NAK may be lost if the
+      <para>When the Host A renews its address, the server will discover that
+      the address being renewed is now reserved for another host - the Host
+      B. Therefore the server will inform the Host A that it is no longer
+      allowed to use it by sending DHCPNAK message. The server will remove the
+      lease, though, as there's small chance that the DHCPNAK may be lost if the
       network is lossy. If that happens, the client will not receive any
-      responses, so it will retransmit its Request packet. Once the NAK is
-      received by the host A, it will then revert to the server discovery and
-      will eventually get a different address. Besides allocating a new lease,
-      the server will also remove the old one. As a result the address
-      192.0.2.10 will be no longer used. When host B tries to renew its
-      temporary address, the server will detect that it has a valid lease, but
-      there is a reservation for a different address. The server will send NAK
-      to inform host B that its address is no longer usable, but will keep its
-      least (again, the NAK may be lost, so the server will keep it, until the
-      client gets back for a new address). The host B will revert to the server
-      discovery phase and will eventually send a REQUEST message. This time the
-      server will find out that there is a reservation for that host and the
-      reserved address 192.0.2.10 is not used, so it will be granted. It will
-      also remove the lease for the temporary address that the host B previously
-      had.</para>
+      responses, so it will retransmit its DHCPREQUEST packet. Once the
+      DHCPNAK is received by the Host A, it will then revert to the server
+      discovery and will eventually get a different address. Besides
+      allocating a new lease, the server will also remove the old one. As
+      a result, the address 192.0.2.10 will be no longer used. When Host B
+      tries to renew its temporary address, the server will detect that it has
+      a valid lease, but there is a reservation for a different address. The
+      server will send DHCPNAK to inform Host B that its address is no longer
+      usable, but will keep its lease (again, the DHCPNAK may be lost, so the
+      server will keep it, until the client returns for a new address). The
+      Host B will revert to the server discovery phase and will eventually
+      send a DHCPREQUEST message. This time the server will find out that
+      there is a reservation for that host and the reserved address
+      192.0.2.10 is not used, so it will be granted. It will also remove the
+      lease for the temporary address that the Host B previously obtained.</para>
 
       <para>This recovery will succeed, even if other hosts will attempt to get
-      the reserved address. Had the host C requested address 192.0.2.10 after
-      the reservation was made, the server will either propose a different
-      address (when responding to DISCOVER) or would send NAK (when responding
-      to REQUEST).</para>
+      the reserved address. Had the Host C requested address 192.0.2.10 after
+      the reservation was made, the server will either offer a different
+      address (when responding to DHCPDISCOVER) or would send DHCPNAK
+      (when responding to DHCPREQUEST).</para>
 
       <para>This recovery mechanism allows the server to fully recover from a
-      case where reservations conflict with existing leases. This procedure
+      case where reservations conflict with the existing leases. This procedure
       takes time and will roughly take as long as renew-timer value specified.
       The best way to avoid such recovery is to not define new reservations that
       conflict with existing leases. Another recommendation is to use
