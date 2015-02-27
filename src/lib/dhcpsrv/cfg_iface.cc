@@ -58,6 +58,9 @@ CfgIface::multipleAddressesPerInterfaceActive() const {
 void
 CfgIface::openSockets(const uint16_t family, const uint16_t port,
                       const bool use_bcast) const {
+    // Close any open sockets because we're going to modify some properties
+    // of the IfaceMgr. Those modifications require that sockets are closed.
+    closeSockets();
     // If wildcard interface '*' was not specified, set all interfaces to
     // inactive state. We will later enable them selectively using the
     // interface names specified by the user. If wildcard interface was
@@ -65,9 +68,6 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
     // inactive.
     setState(family, !wildcard_used_, true);
     IfaceMgr& iface_mgr = IfaceMgr::instance();
-    // Close any open sockets because we're going to modify some properties
-    // of the IfaceMgr. Those modifications require that sockets are closed.
-    closeSockets();
     // Remove selection of unicast addresses from all interfaces.
     iface_mgr.clearUnicasts();
     // For the DHCPv4 server, if the user has selected that raw sockets
