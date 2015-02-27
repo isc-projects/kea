@@ -1,3 +1,9 @@
+902.	[bug]		marcin
+	Fixed the bug in the DHCPv4 server whereby the server
+	reconfiguration (using the SIGHUP signal) failed because
+	of sockets remaining open since the previous configuration.
+	(Trac #3730, git 3ceb0cd97cf5e44e8fc151d0a38db553530dd3ed)
+
 Kea 0.9.1beta released on February 18, 2015
 
 901.	[bug]		tomek
