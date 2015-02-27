@@ -366,6 +366,7 @@ AC_TYPE_SIZE_T
 # Detect OS type (it may be used to do OS-specific things, e.g.
 # interface detection in DHCP)
 AC_MSG_CHECKING(OS type)
+BSD_TYPE="notaBSD"
 case $host in
     *-linux*)
       AC_DEFINE([OS_LINUX], [1], [Running on Linux?])
