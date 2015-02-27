@@ -45,6 +45,7 @@ typedef std::vector<std::string> lines_type;
 struct Details {
     std::string text;
     lines_type description;
+    std::string sname;
     std::string filename;
 };
 
@@ -137,7 +138,11 @@ const std::string FILE_HEADER =
   </chapter>\n\
 \n\
   <chapter id=\"messages\">\n\
-    <title>Kea Log Messages</title>\n\
+    <title>Kea Log Messages</title>\n";
+
+// This is output one for each module. $M substitution token is the name.
+const std::string SECTION_HEADER = "  <section id=\"$M\">\n\
+    <title>$M Module</title>\n\
     <para>\n\
       <variablelist>\n";
 
@@ -153,18 +158,23 @@ $D</para></listitem>\n\
 
 // A description may contain blank lines intended to separate
 // paragraphs.  If so, each blank line is replaced by the following.
-const std::string SEC_BLANK = "</para><para>";
+const std::string BLANK = "</para><para>";
 
 // The separator is copied to the output verbatim after each message except
 // the last.
 const std::string SEPARATOR = "";
 
 // The trailier is copied to the output verbatim after the last message.
-const std::string FILE_TRAILER =
+const std::string SECTION_TRAILER =
 "      </variablelist>\n\
     </para>\n\
-  </chapter>\n\
+  </section>";
+
+// The trailier is copied to the output verbatim after the last section.
+const std::string FILE_TRAILER =
+"  </chapter>\n\
 </book>";
+
 
 /// Report an error and exit
 void reportError(const std::string& filename, const std::string& what)
@@ -224,7 +234,7 @@ lines_type replaceBlankLines(const lines_type lines)
     lines_type result;
     for (lines_type::const_iterator l = lines.begin(); l != lines.end(); ++l) {
         if (l->empty()) {
-            result.push_back(SEC_BLANK);
+            result.push_back(BLANK);
         } else {
             result.push_back(*l);
         }
@@ -242,9 +252,16 @@ void printSeparator() {
     std::cout << SEPARATOR << "\n";
 }
 
+void printSectionHeader(const std::string& sname)
+{
+    // In the section name, replace "<" and ">" with XML-safe versions and
+    // substitute into the data.
+    std::cout << replaceShell(SECTION_HEADER, 'M', replaceTag(sname));
+}
+
 void printMessage(const std::string& msgid)
 {
-    //In the message ID, replace "<" and ">" with XML-safe versions and
+    // In the message ID, replace "<" and ">" with XML-safe versions and
     // substitute into the data.
     const std::string m0 = ID_MESSAGE;
     const std::string m1 = replaceShell(m0, 'I', replaceTag(msgid));
@@ -272,6 +289,10 @@ void printMessage(const std::string& msgid)
     }
 
     std::cout << replaceShell(m2, 'D', m3) << "\n";
+}
+
+void printSectionTrailer() {
+    std::cout << SECTION_TRAILER << "\n";
 }
 
 void printTrailer() {
@@ -330,6 +351,7 @@ lines_type removeEmptyLeadingTrailing(lines_type lines)
     return retlines;
 }
 
+
 /// Add the current message ID and associated information to the global
 /// dictionary.  If a message with that ID already exists, loop appending
 /// suffixes of the form "(n)" to it until one is found that doesn't.
@@ -367,6 +389,8 @@ void addToDictionary(const std::string& msgid,
     Details details;
     details.text = msgtext;
     details.description = removeEmptyLeadingTrailing(desc);
+    size_t underscore = msgid.find_first_of('_');
+    details.sname = msgid.substr(0, underscore);
     details.filename = filename;
     dictionary.insert(std::pair<const std::string, Details>(key, details));
 }
@@ -438,7 +462,6 @@ void processFileContent(const std::string& filename,
         addToDictionary(msgid, msgtext, description, filename);
     }
 }
-
 
 /// Processes a file by reading it in and stripping out all comments and
 /// and directives.  Leading and trailing blank lines in the file are removed
@@ -518,6 +541,7 @@ void processAllFiles(const boost::filesystem::path& root)
     }
 }
 
+
 void usage(char* progname)
 {
     std::cerr << "Usage: " << progname <<
@@ -548,6 +572,8 @@ int main(int argc, char* argv[])
             }
             fout.open(argv[0], std::ofstream::out | std::ofstream::trunc);
             std::cout.rdbuf(fout.rdbuf());
+            --argc;
+            ++argv;
         }
     }
 
@@ -570,15 +596,28 @@ int main(int argc, char* argv[])
 
     // Now just print out everything we've read (in alphabetical order).
     bool first = true;
+    std::string sname;
     printHeader();
     for (dictionary_type::iterator it = dictionary.begin();
          it != dictionary.end();
          ++it) {
-         if (!first) {
-             printSeparator();
-         }
-         first = false;
-         printMessage(it->first);
+        if (sname.compare(it->second.sname) != 0) {
+            if (!sname.empty()) {
+                printSectionTrailer();
+                printSeparator();
+            }
+            sname = it->second.sname;
+            printSectionHeader(sname);
+            first = true;
+        }
+        if (!first) {
+            printSeparator();
+        }
+        first = false;
+        printMessage(it->first);
+    }
+    if (!sname.empty()) {
+        printSectionTrailer();
     }
     printTrailer();
     exit(0);
