@@ -57,7 +57,7 @@ dictionary = {}
 # illustration to make the structure clearer.)  The text of these section is:
 
 # Header - this is output before anything else.
-FILE_HEADER="""<?xml version="1.0" encoding="UTF-8"?>
+FILE_HEADER = """<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
 "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
 <!ENTITY mdash  "&#x2014;" >
@@ -119,9 +119,13 @@ FILE_HEADER="""<?xml version="1.0" encoding="UTF-8"?>
 
   <chapter id="messages">
     <title>Kea Log Messages</title>
-    <para>
-      <variablelist>
 """
+
+# This is output one for each module. $M substitution token is the name.
+SECTION_HEADER = """  <section id="$M">
+    <title>$M Module</title>
+    <para>
+      <variablelist>"""
 
 # This is output once for each message.  The string contains substitution
 # tokens: $I is replaced by the message identification, $T by the message text,
@@ -133,18 +137,21 @@ $D
 </para></listitem>
 </varlistentry>"""
 
-# A description may contain blank lines intended to separate paragraphs.  If so,
-# each blank line is replaced by the following.
-SEC_BLANK = "</para><para>"
+# A description may contain blank lines intended to separate
+# paragraphs.  If so, each blank line is replaced by the following.
+BLANK = "</para><para>"
 
-# The separator is copied to the output verbatim after each message except
-# the last.
+# The separator is copied to the output verbatim after each message or
+# section except the last.
 SEPARATOR = ""
 
-# The trailier is copied to the output verbatim after the last message.
-FILE_TRAILER = """      </variablelist>
+# The trailer is copied to the output verbatim after the last message.
+SECTION_TRAILER = """      </variablelist>
     </para>
-  </chapter>
+  </section>"""
+
+# The trailer is copied to the output verbatim after the last section.
+FILE_TRAILER = """  </chapter>
 </book>"""
 
 
@@ -156,7 +163,6 @@ def reportError(filename, what):
     sys.exit(1)
 
 
-
 def replaceTag(string):
     """Replaces the '<' and '>' in text about to be inserted into the template
        sections above with &lt; and &gt; to avoid problems with message text
@@ -166,8 +172,6 @@ def replaceTag(string):
     string2 = string1.replace(">", "&gt;")
     return string2
 
-
-
 def replaceBlankLines(lines):
     """Replaces blank lines in an array with the contents of the 'blank'
        section.
@@ -175,12 +179,11 @@ def replaceBlankLines(lines):
     result = []
     for l in lines:
         if len(l) == 0:
-            result.append(SEC_BLANK)
+            result.append(BLANK)
         else:
             result.append(l)
 
     return result
-
 
 
 # Printing functions
@@ -189,6 +192,13 @@ def printHeader():
 
 def printSeparator():
     print(SEPARATOR)
+
+def printSectionHeader(sname):
+    # In the section name, replace "<" and ">" with XML-safe versions and
+    # substitute into the data.
+    m = SECTION_HEADER.replace("$M", replaceTag(sname));
+
+    print(m)
 
 def printMessage(msgid):
     # In the message ID, replace "<" and ">" with XML-safe versions and
@@ -210,9 +220,11 @@ def printMessage(msgid):
 
     print(m3)
 
+def printSectionTrailer():
+    print(SECTION_TRAILER)
+
 def printTrailer():
     print(FILE_TRAILER)
-
 
 
 def removeEmptyLeadingTrailing(lines):
@@ -259,7 +271,6 @@ def removeEmptyLeadingTrailing(lines):
     return retlines
 
 
-
 def addToDictionary(msgid, msgtext, desc, filename):
     """Add the current message ID and associated information to the global
        dictionary.  If a message with that ID already exists, loop appending
@@ -269,6 +280,7 @@ def addToDictionary(msgid, msgtext, desc, filename):
        msgid        Message ID
        msgtext      Message text
        desc         Message description
+       sname        Section name (part before the first _ of the ID)
        filename     File from which the message came.  Currently this is
                     not used, but a future enhancement may wish to include the
                     name of the message file in the messages manual.
@@ -287,11 +299,12 @@ def addToDictionary(msgid, msgtext, desc, filename):
     # add everything into a subdictionary which is then added to the main
     # one.
     details = {}
+    words = re.split("_", msgid)
     details['text'] = msgtext
     details['description'] = removeEmptyLeadingTrailing(desc)
+    details['sname'] = words[0]
     details['filename'] = filename
     dictionary[msgid] = details
-
 
 
 def processFileContent(filename, lines):
@@ -349,7 +362,6 @@ def processFileContent(filename, lines):
         addToDictionary(msgid, msgtext, description, filename)
 
 
-
 def processFile(filename):
     """Processes a file by reading it in and stripping out all comments and
        and directives.  Leading and trailing blank lines in the file are removed
@@ -369,7 +381,6 @@ def processFile(filename):
 
     # Interpret content
     processFileContent(filename, lines)
-
 
 
 def processAllFiles(root):
@@ -410,11 +421,20 @@ if __name__ == "__main__":
     processAllFiles(args[0])
 
     # Now just print out everything we've read (in alphabetical order).
-    count = 1
+    sname = ""
     printHeader()
     for msgid in sorted(dictionary):
+        if dictionary[msgid]['sname'] != sname:
+            if sname != "":
+               printSectionTrailer()
+               printSeparator()
+            sname = dictionary[msgid]['sname']
+            printSectionHeader(sname)
+            count = 1
         if count > 1:
             printSeparator()
         count = count + 1
         printMessage(msgid)
+    if sname !="":
+        printSectionTrailer()
     printTrailer()
