@@ -56,20 +56,26 @@ dictionary_type dictionary;
 // The structure of the output page is:
 //
 //        header
-//           message
-//        separator
-//           message
-//        separator
-//          :
-//        separator
-//           message
+//           section header
+//                 message
+//              separator
+//                 message
+//              separator
+//                :
+//              separator
+//                 message
+//           section trailer
+//           separator
+//           section header
+//             :
+//           section trailer
 //        trailer
 //
 // (Indentation is not relevant - it has only been added to the above
 // illustration to make the structure clearer.)  The text of these section is:
 
 // Header - this is output before anything else.
-const std::string SEC_HEADER =
+const std::string FILE_HEADER =
 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\
 <!DOCTYPE book PUBLIC \"-//OASIS//DTD DocBook XML V4.2//EN\"\n\
 \"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd\" [\n\
@@ -96,8 +102,8 @@ const std::string SEC_HEADER =
     <abstract>\n\
       <para>\n\
         This is the messages manual for Kea version &__VERSION__;.\n\
-\t    The most up-to-date version of this document, along with\n\
-\t    other documents for Kea, can be found at\n\
+            The most up-to-date version of this document, along with\n\
+            other documents for Kea, can be found at\n\
         <ulink url=\"http://kea.isc.org/docs\"/>.\n\
       </para>\n\
     </abstract>\n\
@@ -138,7 +144,7 @@ const std::string SEC_HEADER =
 // This is output once for each message.  The string contains
 // substitution tokens: $I is replaced by the message identification,
 // $T by the message text, and $D by the message description.
-const std::string SEC_MESSAGE =
+const std::string ID_MESSAGE =
 "<varlistentry id=\"$I\">\n\
 <term>$I $T</term>\n\
 <listitem><para>\n\
@@ -151,10 +157,10 @@ const std::string SEC_BLANK = "</para><para>";
 
 // The separator is copied to the output verbatim after each message except
 // the last.
-const std::string SEC_SEPARATOR = "";
+const std::string SEPARATOR = "";
 
 // The trailier is copied to the output verbatim after the last message.
-const std::string SEC_TRAILER =
+const std::string FILE_TRAILER =
 "      </variablelist>\n\
     </para>\n\
   </chapter>\n\
@@ -229,18 +235,18 @@ lines_type replaceBlankLines(const lines_type lines)
 
 /// Printing functions
 void printHeader() {
-    std::cout << SEC_HEADER << "\n";
+    std::cout << FILE_HEADER << "\n";
 }
 
 void printSeparator() {
-    std::cout << SEC_SEPARATOR << "\n";
+    std::cout << SEPARATOR << "\n";
 }
 
 void printMessage(const std::string& msgid)
 {
     //In the message ID, replace "<" and ">" with XML-safe versions and
     // substitute into the data.
-    const std::string m0 = SEC_MESSAGE;
+    const std::string m0 = ID_MESSAGE;
     const std::string m1 = replaceShell(m0, 'I', replaceTag(msgid));
 
     // Do the same for the message text.
@@ -269,7 +275,7 @@ void printMessage(const std::string& msgid)
 }
 
 void printTrailer() {
-    std::cout << SEC_TRAILER << "\n";
+    std::cout << FILE_TRAILER << "\n";
 }
 
 
