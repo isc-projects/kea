@@ -16,6 +16,7 @@
 #define PROCESS_SPAWN_H
 
 #include <exceptions/exceptions.h>
+#include <boost/noncopyable.hpp>
 #include <string>
 #include <sys/types.h>
 #include <vector>
@@ -53,10 +54,13 @@ typedef std::vector<std::string> ProcessArgs;
 /// attempt to register a new SIGCHLD signal handler and, as a
 /// consequence, the new @c ProcessSpawn object will fail to create.
 ///
+/// Made noncopyable to avoid problems with global operations
+///
 /// @todo The SIGCHLD handling logic should be moved to the @c SignalSet
 /// class so as multiple instances of the @c ProcessSpawn use the same
 /// SIGCHLD signal handler.
-class ProcessSpawn {
+
+class ProcessSpawn : boost::noncopyable {
 public:
 
     /// @brief Constructor.
