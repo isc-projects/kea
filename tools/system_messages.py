@@ -1,4 +1,4 @@
-# Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -38,20 +38,26 @@ dictionary = {}
 # The structure of the output page is:
 #
 #        header
-#           message
-#        separator
-#           message
-#        separator
-#          :
-#        separator
-#           message
+#           section header
+#                 message
+#              separator
+#                 message
+#              separator
+#                :
+#              separator
+#                 message
+#           section trailer
+#           separator
+#           section header
+#             :
+#           section trailer
 #        trailer
 #
 # (Indentation is not relevant - it has only been added to the above
 # illustration to make the structure clearer.)  The text of these section is:
 
 # Header - this is output before anything else.
-SEC_HEADER="""<?xml version="1.0" encoding="UTF-8"?>
+FILE_HEADER="""<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
 "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
 <!ENTITY mdash  "&#x2014;" >
@@ -77,8 +83,8 @@ SEC_HEADER="""<?xml version="1.0" encoding="UTF-8"?>
     <abstract>
       <para>
         This is the messages manual for Kea version &__VERSION__;.
-	    The most up-to-date version of this document, along with
-	    other documents for Kea, can be found at
+            The most up-to-date version of this document, along with
+            other documents for Kea, can be found at
         <ulink url="http://kea.isc.org/docs"/>.
       </para>
     </abstract>
@@ -120,7 +126,7 @@ SEC_HEADER="""<?xml version="1.0" encoding="UTF-8"?>
 # This is output once for each message.  The string contains substitution
 # tokens: $I is replaced by the message identification, $T by the message text,
 # and $D by the message description.
-SEC_MESSAGE = """<varlistentry id="$I">
+ID_MESSAGE = """<varlistentry id="$I">
 <term>$I $T</term>
 <listitem><para>
 $D
@@ -133,10 +139,10 @@ SEC_BLANK = "</para><para>"
 
 # The separator is copied to the output verbatim after each message except
 # the last.
-SEC_SEPARATOR = ""
+SEPARATOR = ""
 
 # The trailier is copied to the output verbatim after the last message.
-SEC_TRAILER = """      </variablelist>
+FILE_TRAILER = """      </variablelist>
     </para>
   </chapter>
 </book>"""
@@ -179,15 +185,15 @@ def replaceBlankLines(lines):
 
 # Printing functions
 def printHeader():
-    print(SEC_HEADER)
+    print(FILE_HEADER)
 
 def printSeparator():
-    print(SEC_SEPARATOR)
+    print(SEPARATOR)
 
 def printMessage(msgid):
     # In the message ID, replace "<" and ">" with XML-safe versions and
     # substitute into the data.
-    m1 = SEC_MESSAGE.replace("$I", replaceTag(msgid))
+    m1 = ID_MESSAGE.replace("$I", replaceTag(msgid))
 
     # Do the same for the message text.
     m2 = m1.replace("$T", replaceTag(dictionary[msgid]['text']))
@@ -205,7 +211,7 @@ def printMessage(msgid):
     print(m3)
 
 def printTrailer():
-    print(SEC_TRAILER)
+    print(FILE_TRAILER)
 
 
 
