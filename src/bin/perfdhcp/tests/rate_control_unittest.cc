@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -129,29 +129,51 @@ TEST(RateControl, isLateSent) {
 // it is quite hard to fully test this function as its behaviour strongly
 // depends on time.
 TEST(RateControl, getOutboundMessageCount) {
-    NakedRateControl rc1(1000, 1);
-    // Set the timestamp of the last sent message well to the past.
-    // The resulting due time will be in the past too.
+    // Test that the number of outbound messages is correctly defined by the
+    // rate.  The agressivity is set high enough so that it will not restrict
+    // the calculated count.
+    NakedRateControl rc1(1000, 1000000);
+    // Set the timestamp of the last sent message well to the past. The
+    // resulting due time will be in the past too.  A fractional number of
+    // seconds is used to check the floating point arithmetic performed inside
+    // the RateControl class.
     rc1.last_sent_ =
-        NakedRateControl::currentTime() - boost::posix_time::seconds(5);
-    // The number of messages to be sent must be greater than 0.
+        NakedRateControl::currentTime() - boost::posix_time::seconds(5) -
+        boost::posix_time::milliseconds(250);
+    // The number of messages to be sent must be roughly equal to the time
+    // between the last sent message and the current time multiplied by the
+    // rate.  ("Roughly", as current time is advancing, so the actual interval
+    // when the calcuation is made may be different from the interval set.)  The
+    // margin in this test is reasonably generous, allowing for a timing error
+    // of around 10ms.
     uint64_t count;
     ASSERT_NO_THROW(count = rc1.getOutboundMessageCount());
-    EXPECT_GT(count, 0);
+    EXPECT_TRUE((count >= 5240) && (count <= 5260)) <<
+        "count is " << count << ", expected range 5240-5260";
+
+    // Check that the agressivity limits the count of messages.
+    NakedRateControl rc2(1000, 3500);
+    rc2.last_sent_ =
+        NakedRateControl::currentTime() - boost::posix_time::seconds(5) -
+        boost::posix_time::milliseconds(250);
+    ASSERT_NO_THROW(count = rc2.getOutboundMessageCount());
+    EXPECT_EQ(3500, count);
+
     // Now, don't specify the rate. In this case the aggressivity dictates
     // how many messages to send.
-    NakedRateControl rc2(0, 3);
-    rc2.last_sent_ =
+    NakedRateControl rc3(0, 3);
+    rc3.last_sent_ =
         NakedRateControl::currentTime() - boost::posix_time::seconds(5);
-    ASSERT_NO_THROW(count = rc2.getOutboundMessageCount());
+    ASSERT_NO_THROW(count = rc3.getOutboundMessageCount());
     EXPECT_EQ(3, count);
+
     // Specify the rate and set the timestamp of the last sent message well
     // to the future. If the resulting due time is well in the future too,
     // the number of messages to be sent must be 0.
-    NakedRateControl rc3(10, 3);
-    rc3.last_sent_ = NakedRateControl::currentTime() +
+    NakedRateControl rc4(10, 3);
+    rc4.last_sent_ = NakedRateControl::currentTime() +
         boost::posix_time::seconds(5);
-    ASSERT_NO_THROW(count = rc3.getOutboundMessageCount());
+    ASSERT_NO_THROW(count = rc4.getOutboundMessageCount());
     EXPECT_EQ(0, count);
 
 }
