@@ -58,6 +58,9 @@ CfgIface::multipleAddressesPerInterfaceActive() const {
 void
 CfgIface::openSockets(const uint16_t family, const uint16_t port,
                       const bool use_bcast) const {
+    // Close any open sockets because we're going to modify some properties
+    // of the IfaceMgr. Those modifications require that sockets are closed.
+    closeSockets();
     // If wildcard interface '*' was not specified, set all interfaces to
     // inactive state. We will later enable them selectively using the
     // interface names specified by the user. If wildcard interface was
@@ -126,9 +129,6 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
             iface->inactive4_ = false;
         }
     }
-
-    // Before opening any sockets, close existing ones.
-    closeSockets();
 
     // Set the callback which is called when the socket fails to open
     // for some specific interface. This callback will simply log a
