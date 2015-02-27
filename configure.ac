@@ -26,6 +26,8 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])dnl be backward compatible
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4macros])
 
+AC_CANONICAL_HOST
+
 # Checks for programs.
 AC_PROG_CXX
 
@@ -253,19 +255,18 @@ case "$host" in
 
 	# In OS X 10.9 (and possibly any future versions?) pthread_cond_destroy
 	# doesn't work as documented, which makes some of unit tests fail.
-        AC_TRY_RUN([
-	#include <Availability.h>
-	int main(void)
-	{
-	#ifdef __MAC_OS_X_VERSION_MIN_REQUIRED
-	#if __MAC_OS_X_VERSION_MIN_REQUIRED < 1090
-	return 1;
-	#else
-	return 0;
-	#endif
-	#endif
-	return 1;
-	}],[kea_undefined_pthread_behavior=yes],[],[])
+	AC_MSG_CHECKING([OS X versions where destroying locked locks do not fail])
+	AC_TRY_COMPILE(
+	[#include <Availability.h>],
+	[#ifdef __MAC_OS_X_VERSION_MIN_REQUIRED
+	 #if __MAC_OS_X_VERSION_MIN_REQUIRED >= 1090
+	 #error " OS X >= 10.9"
+	 #endif
+	 #endif
+	 return 1;],
+	[AC_MSG_RESULT([OS X < 10.9])],
+	[AC_MSG_RESULT([OS X >= 10.9])
+	 kea_undefined_pthread_behavior=yes])
 
 	# libtool doesn't work perfectly with Darwin: libtool embeds the
 	# final install path in dynamic libraries and our loadable python
@@ -364,44 +365,61 @@ AC_TYPE_SIZE_T
 
 # Detect OS type (it may be used to do OS-specific things, e.g.
 # interface detection in DHCP)
-AC_MSG_CHECKING(OS family)
-system=`uname -s`
-case $system in
-    Linux)
+AC_MSG_CHECKING(OS type)
+case $host in
+    *-linux*)
+      AC_DEFINE([OS_LINUX], [1], [Running on Linux?])
       OS_TYPE="Linux"
       CPPFLAGS="$CPPFLAGS -DOS_LINUX"
       ;;
-    Darwin | FreeBSD | NetBSD | OpenBSD)
+    *-apple-darwin*)
+      AC_DEFINE([OS_BSD], [1], [Running on BSD?])
+      AC_DEFINE([OS_OSX], [1], [Running on OSX?])
       OS_TYPE="BSD"
+      BSD_TYPE="OSX"
       CPPFLAGS="$CPPFLAGS -DOS_BSD"
       ;;
-    SunOS)
+    *-freebsd*)
+      AC_DEFINE([OS_BSD], [1], [Running on BSD?])
+      AC_DEFINE([OS_FREEBSD], [1], [Running on FreeBSD?])
+      OS_TYPE="BSD"
+      BSD_TYPE="FreeBSD"
+      CPPFLAGS="$CPPFLAGS -DOS_BSD"
+      ;;
+    *-netbsd*)
+      AC_DEFINE([OS_BSD], [1], [Running on BSD?])
+      AC_DEFINE([OS_NETBSD], [1], [Running on NetBSD?])
+      OS_TYPE="BSD"
+      BSD_TYPE="NetBSD"
+      CPPFLAGS="$CPPFLAGS -DOS_BSD"
+      ;;
+    *-openbsd*)
+      AC_DEFINE([OS_BSD], [1], [Running on BSD?])
+      AC_DEFINE([OS_OPENBSD], [1], [Running on OpenBSD?])
+      OS_TYPE="BSD"
+      BSD_TYPE="OpenBSD"
+      CPPFLAGS="$CPPFLAGS -DOS_BSD"
+      ;;
+    *-solaris*)
+      AC_DEFINE([OS_SOLARIS], [1], [Running on Solaris?])
       OS_TYPE="Solaris"
       CPPFLAGS="$CPPFLAGS -DOS_SUN"
       ;;
     *)
       OS_TYPE="Unknown"
-      AC_MSG_WARN("Unsupported OS: uname returned $system")
+      # $host_os is more user friendly than full $host
+      AC_MSG_WARN("Unsupported OS: $host_os")
       ;;
 esac
 AC_MSG_RESULT($OS_TYPE)
 
 AM_CONDITIONAL(OS_LINUX, test $OS_TYPE = Linux)
-AM_COND_IF([OS_LINUX], [AC_DEFINE([OS_LINUX], [1], [Running on Linux?])])
 AM_CONDITIONAL(OS_BSD, test $OS_TYPE = BSD)
-AM_COND_IF([OS_BSD], [AC_DEFINE([OS_BSD], [1], [Running on BSD?])])
 AM_CONDITIONAL(OS_SOLARIS, test $OS_TYPE = Solaris)
-AM_COND_IF([OS_SOLARIS], [AC_DEFINE([OS_SOLARIS], [1], [Running on Solaris?])])
-
-# Deal with variants
-AM_CONDITIONAL(OS_FREEBSD, test $system = FreeBSD)
-AM_COND_IF([OS_FREEBSD], [AC_DEFINE([OS_FREEBSD], [1], [Running on FreeBSD?])])
-AM_CONDITIONAL(OS_NETBSD, test $system = NetBSD)
-AM_COND_IF([OS_NETBSD], [AC_DEFINE([OS_NETBSD], [1], [Running on NetBSD?])])
-AM_CONDITIONAL(OS_OPENBSD, test $system = OpenBSD)
-AM_COND_IF([OS_OPENBSD], [AC_DEFINE([OS_OPENBSD], [1], [Running on OpenBSD?])])
-AM_CONDITIONAL(OS_OSX, test $system = Darwin)
-AM_COND_IF([OS_OSX], [AC_DEFINE([OS_OSX], [1], [Running on OSX?])])
+AM_CONDITIONAL(OS_OSX, test $BSD_TYPE = OSX)
+AM_CONDITIONAL(OS_FREEBSD, test $BSD_TYPE = FreeBSD)
+AM_CONDITIONAL(OS_NETBSD, test $BSD_TYPE = NetBSD)
+AM_CONDITIONAL(OS_OPENBSD, test $BSD_TYPE = OpenBSD)
 
 
 AC_MSG_CHECKING(for sa_len in struct sockaddr)
