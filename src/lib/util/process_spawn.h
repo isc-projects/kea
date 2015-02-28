@@ -74,11 +74,11 @@ public:
 
     /// @brief Spawn the new process.
     ///
-    /// This method forks the current process and execues the specified
+    /// This method forks the current process and executes the specified
     /// binary with arguments within the child process.
     ///
     /// The child process will return EXIT_FAILURE if the method was unable
-    /// to start the exuctable, e.g. as a result of insufficient permissions
+    /// to start the executable, e.g. as a result of insufficient permissions
     /// or when the executable does not exist. If the process ends successfully
     /// the EXIT_SUCCESS is returned.
     ///
