@@ -23,7 +23,7 @@
 #
 # In particular, they check if the class correctly records the exit code
 # returned. The exit code returned is controlled by the caller. It is
-# possible to explictily specify the exit code to be returned using
+# possible to explicitly specify the exit code to be returned using
 # the command line options. It is also possible to specify that the
 # exit code is "unique" for the process, so as the test can check
 # that two distinct processes spawned by the same ProcessSpawn
