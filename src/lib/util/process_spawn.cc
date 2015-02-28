@@ -135,7 +135,7 @@ ProcessSpawnImpl::ProcessSpawnImpl(const std::string& executable,
     // is received.
     signals_->setOnReceiptHandler(boost::bind(&ProcessSpawnImpl::waitForProcess,
                                               this, _1));
-    // Convertion of the arguments to the C-style array we start by setting
+    // Conversion of the arguments to the C-style array we start by setting
     // all pointers within an array to NULL to indicate that they haven't
     // been allocated yet.
     memset(args_, 0, (args.size() + 2) * sizeof(char*));
@@ -246,7 +246,7 @@ ProcessSpawnImpl::waitForProcess(int signum) {
         int status = 0;
         pid_t pid = waitpid(-1, &status, 0);
         if (pid > 0) {
-            /// @todo Check that the terminatin process was started
+            /// @todo Check that the terminating process was started
             /// by our instance of ProcessSpawn and only handle it
             /// if it was.
             process_status_[pid] = status;
