@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -215,7 +215,7 @@ void memfile_uBenchmark::createLease4Test() {
     time_t cltt = time(NULL);       // Timestamp
     uint32_t pool_id = 0;           // Let's use pools 0-99
     bool fixed = false;
-    string hostname("foo");         // Will generate it dynamically
+                                    // Hostname will be generated dynamically
     bool fqdn_fwd = true;           // Let's pretend to do AAAA update
     bool fqdn_rev = true;           // Let's pretend to do PTR update
 
