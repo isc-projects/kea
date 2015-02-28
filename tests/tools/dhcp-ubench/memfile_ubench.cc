@@ -215,7 +215,7 @@ void memfile_uBenchmark::createLease4Test() {
     time_t cltt = time(NULL);       // Timestamp
     uint32_t pool_id = 0;           // Let's use pools 0-99
     bool fixed = false;
-    string hostname("foo");         // Hostname dynamically
+    string hostname("foo");         // Will generate it dynamically
     bool fqdn_fwd = true;           // Let's pretend to do AAAA update
     bool fqdn_rev = true;           // Let's pretend to do PTR update
 
