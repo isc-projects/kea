@@ -54,7 +54,12 @@ typedef std::vector<std::string> ProcessArgs;
 /// attempt to register a new SIGCHLD signal handler and, as a
 /// consequence, the new @c ProcessSpawn object will fail to create.
 ///
-/// Made noncopyable to avoid problems with global operations
+/// This class is made noncopyable so that we don't have attempts
+/// to make multiple copies of an object.  This avoid problems
+/// with multiple copies of objects for a single global resource
+/// such as the SIGCHLD signal handler.  In addition making it
+/// noncopyable keeps the static check codd from flagging the
+/// lack of a copy constructor as an issue.
 ///
 /// @todo The SIGCHLD handling logic should be moved to the @c SignalSet
 /// class so as multiple instances of the @c ProcessSpawn use the same
