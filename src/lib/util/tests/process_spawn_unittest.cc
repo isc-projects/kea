@@ -87,7 +87,7 @@ TEST(ProcessSpawn, spawnTwoProcesses) {
 
     EXPECT_NE(process.getExitStatus(pid1), process.getExitStatus(pid2));
 
-    // Clear the status of the first process. An atttempt to get the status
+    // Clear the status of the first process. An attempt to get the status
     // for the cleared process should result in exception. But, there should
     // be no exception for the second process.
     process.clearStatus(pid1);
@@ -128,9 +128,9 @@ TEST(ProcessSpawn, invalidExecutable) {
 // returned.
 TEST(ProcessSpawn, getCommandLine) {
     // Note that cases below are enclosed in separate scopes to make
-    // sure that the ProcessSpawn object is destructed before a new
+    // sure that the ProcessSpawn object is destroyed before a new
     // object is created. Current implementation doesn't allow for
-    // having two ProcessSpawn objects simulatneously as they will
+    // having two ProcessSpawn objects simultaneously as they will
     // both try to allocate a signal handler for SIGCHLD.
     {
         // Case 1: arguments present.
