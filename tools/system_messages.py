@@ -22,7 +22,7 @@
 # Invocation:
 # The code is invoked using the command line:
 #
-# python system_messages.py [-o <output-file>] <top-source-directory>
+# python system_messages.py [-o <output-file>] <top-source-directory>|<files>
 #
 # If no output file is specified, output is written to stdout.
 
@@ -402,23 +402,25 @@ def processAllFiles(root):
 
 # Main program
 if __name__ == "__main__":
-    parser = OptionParser(usage="Usage: %prog [--help | options] root")
+    parser = OptionParser(usage="Usage: %prog [--help | options] root|files")
     parser.add_option("-o", "--output", dest="output", default=None,
                       metavar="FILE", 
                       help="output file name (default to stdout)")
     (options, args) = parser.parse_args()
 
     if len(args) == 0:
-        parser.error("Must supply directory at which to begin search")
-    elif len(args) > 1:
-        parser.error("Only a single root directory can be given")
+        parser.error("Must supply directory at which to begin search or files")
 
     # Redirect output if specified (errors are written to stderr)
     if options.output is not None:
         sys.stdout = open(options.output, 'w')
 
     # Read the files and load the data
-    processAllFiles(args[0])
+    if (len(args) > 1) or (not os.path.isdir(args[0])):
+        for file in args:
+            processFile(file)
+    else:
+        processAllFiles(args[0])
 
     # Now just print out everything we've read (in alphabetical order).
     sname = ""
