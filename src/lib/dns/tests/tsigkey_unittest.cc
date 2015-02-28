@@ -1,4 +1,4 @@
-// Copyright (C) 2010, 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -116,6 +116,11 @@ TEST_F(TSIGKeyTest, construct) {
                  isc::InvalidParameter);
     EXPECT_THROW(TSIGKey(key_name, TSIGKey::HMACSHA256_NAME(), NULL, 16),
                  isc::InvalidParameter);
+
+    // Empty secret
+    TSIGKey keye = TSIGKey(key_name, TSIGKey::HMACSHA256_NAME(), NULL, 0);
+    EXPECT_EQ(keye.getSecretLength(), 0);
+    EXPECT_EQ(keye.getSecret(), (const void*)0);
 }
 
 void
