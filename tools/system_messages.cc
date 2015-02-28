@@ -14,15 +14,14 @@
 
 // Produce System Messages Manual
 //
-// This tool reads all the .mes files in the directory tree whose root is given
-// on the command line and interprets them as message files.  It pulls
-// all the messages and description out, sorts them by message ID, and writes
-// them out as a single (formatted) file.
+// This tool reads all the message files given on the command line.
+// It pulls all the messages and description out, sorts them by
+// message ID, and writes them out as a single (formatted) file.
 //
 // Invocation:
 // The code is invoked using the command line:
 //
-// kt_system_messages.py [-o <output-file>] [<top-source-directory>|<files>]
+// system_messages [-o <output-file>] <files>
 //
 // If no output file is specified, output is written to stdout.
 
@@ -36,7 +35,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef USE_BOOST_FILESYSTEM
 #include <boost/filesystem.hpp>
+#endif
 #include <boost/lexical_cast.hpp>
 
 typedef std::vector<std::string> lines_type;
@@ -522,6 +523,7 @@ void processFile(const std::string& filename)
 ///
 /// Parameters:
 ///  root     Directory that is the root of the source tree
+#ifdef USE_BOOST_FILESYSTEM
 void processAllFiles(const boost::filesystem::path& root)
 {
     boost::filesystem::directory_iterator endd;
@@ -540,12 +542,17 @@ void processAllFiles(const boost::filesystem::path& root)
         }
     }
 }
-
+#endif
 
 void usage(char* progname)
 {
+#ifdef USE_BOOST_FILESYSTEM
     std::cerr << "Usage: " << progname <<
-        " [--help | options] [root|files]\n";
+        " [--help | options] root|files\n";
+#else
+    std::cerr << "Usage: " << progname <<
+        " [--help | options] files\n";
+#endif
     std::cerr << " options: --output file: " <<
         "output file name (default to stdout)\n";
 }
@@ -581,6 +588,7 @@ int main(int argc, char* argv[])
         usage(progname);
         exit(-1);
     }
+#ifdef USE_BOOST_FILESYSTEM
     if (argc > 1) {
         for (int i = 0; i < argc; ++i) {
             processFile(argv[i]);
@@ -593,6 +601,11 @@ int main(int argc, char* argv[])
             processFile(argv[0]);
         }
     }
+#else
+    for (int i = 0; i < argc; ++i) {
+        processFile(argv[i]);
+    }
+#endif
 
     // Now just print out everything we've read (in alphabetical order).
     bool first = true;
