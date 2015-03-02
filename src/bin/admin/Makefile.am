@@ -10,7 +10,7 @@ EXTRA_DIST = $(man_MANS) kea-admin.xml admin-utils.sh
 if GENERATE_DOCS
 
 kea-admin.8: kea-admin.xml
-	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(builddir)/kea-admin.xml
+	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/kea-admin.xml
 
 else
 
