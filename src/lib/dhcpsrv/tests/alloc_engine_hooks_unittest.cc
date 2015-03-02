@@ -383,11 +383,13 @@ TEST_F(HookAllocEngine4Test, lease4_select) {
 
     CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
 
-    Lease4Ptr lease = engine->allocateLease4(subnet_, clientid_, hwaddr_,
-                                               IOAddress("0.0.0.0"),
-                                               false, false, "",
-                                               false, callout_handle,
-                                               old_lease_);
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
+                                    IOAddress("0.0.0.0"),
+                                    false, false, "", false);
+    ctx.callout_handle_ = callout_handle;
+
+    Lease4Ptr lease = engine->allocateLease4(ctx);
+
     // Check that we got a lease
     ASSERT_TRUE(lease);
 
@@ -449,12 +451,14 @@ TEST_F(HookAllocEngine4Test, change_lease4_select) {
     // but in tests we need to create it on our own.
     CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
 
+
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
+                                    false, true, "somehost.example.com.", false);
+    ctx.callout_handle_ = callout_handle;
+
     // Call allocateLease4. Callouts should be triggered here.
-    Lease4Ptr lease = engine->allocateLease4(subnet_, clientid_, hwaddr_,
-                                             IOAddress("0.0.0.0"),
-                                             false, false, "",
-                                             false, callout_handle,
-                                             old_lease_);
+    Lease4Ptr lease = engine->allocateLease4(ctx);
+
     // Check that we got a lease
     ASSERT_TRUE(lease);
 
