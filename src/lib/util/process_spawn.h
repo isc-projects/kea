@@ -57,8 +57,8 @@ typedef std::vector<std::string> ProcessArgs;
 /// This class is made noncopyable so that we don't have attempts
 /// to make multiple copies of an object.  This avoid problems
 /// with multiple copies of objects for a single global resource
-/// such as the SIGCHLD signal handler.  In addition making it
-/// noncopyable keeps the static check codd from flagging the
+/// such as the SIGCHLD signal handler. In addition making it
+/// noncopyable keeps the static check code from flagging the
 /// lack of a copy constructor as an issue.
 ///
 /// @todo The SIGCHLD handling logic should be moved to the @c SignalSet
