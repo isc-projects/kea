@@ -19,7 +19,7 @@ BUILT_SOURCES = kea.conf
 if GENERATE_DOCS
 
 keactrl.8: keactrl.xml
-	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(builddir)/keactrl.xml
+	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/keactrl.xml
 
 else
 
