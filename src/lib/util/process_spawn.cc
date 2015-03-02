@@ -30,7 +30,14 @@ namespace util {
 /// avoid exposing the internals of the implementation, such as
 /// custom handling of a SIGCHLD signal, and the conversion of the
 /// arguments of the executable from the STL container to the array.
-class ProcessSpawnImpl {
+///
+/// This class is made noncopyable so that we don't have attempts
+/// to make multiple copies of an object.  This avoid problems
+/// with multiple copies of objects for a single global resource
+/// such as the SIGCHLD signal handler. In addition making it
+/// noncopyable keeps the static check code from flagging the
+/// lack of a copy constructor as an issue.
+class ProcessSpawnImpl : boost::noncopyable {
 public:
 
     /// @brief Constructor.

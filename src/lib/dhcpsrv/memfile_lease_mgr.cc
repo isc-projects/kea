@@ -806,8 +806,7 @@ Memfile_LeaseMgr::lfcSetup() {
 template<typename LeaseFileType>
 void Memfile_LeaseMgr::lfcExecute(boost::shared_ptr<LeaseFileType>& lease_file) {
     bool do_lfc = true;
-    // This string will hold a reason for the failure to rote the lease files.
-    std::string error_string = "(no details)";
+
     // Check if the copy of the lease file exists already. If it does, it
     // is an indication that another LFC instance may be in progress or
     // may be stalled. In that case we don't want to rotate the current
