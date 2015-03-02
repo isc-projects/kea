@@ -225,8 +225,8 @@ void
 Host::addClientClassInternal(ClientClasses& classes,
                              const std::string& class_name) {
     std::string trimmed = util::str::trim(class_name);
-    if (!class_name.empty()) {
-        classes.insert(ClientClass(class_name));
+    if (!trimmed.empty()) {
+        classes.insert(ClientClass(trimmed));
     }
 }
 
