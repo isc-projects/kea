@@ -12,11 +12,13 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
 #include <lfc/lfc_controller.h>
 #include <exceptions/exceptions.h>
 #include <log/logger_support.h>
 #include <log/logger_manager.h>
-#include <config.h>
+#include <boost/exception/diagnostic_information.hpp>
+#include <boost/exception_ptr.hpp>
 #include <iostream>
 
 using namespace std;
@@ -37,7 +39,12 @@ int main(int argc, char* argv[]) {
     try  {
         // 'false' value disables test mode.
         lfc_controller.launch(argc, argv, false);
-    } catch (const isc::Exception& ex) {
+
+    } catch (const boost::exception& ex) {
+        std::cerr << boost::diagnostic_information(ex) << std::endl;
+        ret = EXIT_FAILURE;
+
+    } catch (const std::exception& ex) {
         std::cerr << "Service failed: " << ex.what() << std::endl;
         ret = EXIT_FAILURE;
     }
