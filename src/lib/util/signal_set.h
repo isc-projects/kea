@@ -37,12 +37,12 @@ public:
 
 /// @brief Defines a set of integer signal identifiers: SIGHUP, SIGTERM...
 typedef std::set<int> SigIntSet;
-/// @gbrief Pointer to a set of signal identifiers
+/// @brief Pointer to a set of signal identifiers
 typedef boost::shared_ptr<SigIntSet> SigIntSetPtr;
 
 /// @brief Defines a list of integer signal identifiers: SIGHUP, SIGTERM...
 typedef std::list<int> SigIntList;
-/// @gbrief Pointer to a list of signal identifiers
+/// @brief Pointer to a list of signal identifiers
 typedef boost::shared_ptr<SigIntList> SigIntListPtr;
 
 
@@ -171,7 +171,7 @@ public:
     /// @param handler the signal handler to register
     static void setOnReceiptHandler(BoolSignalHandler handler);
 
-    /// @brief Unregeisters the onreceipt signal handler
+    /// @brief Unregisters the onreceipt signal handler
     static void clearOnReceiptHandler();
 
     /// @brief Invokes the onreceipt handler if it exists
@@ -181,7 +181,7 @@ public:
     /// a registered signal.
     ///
     /// Prior to invoking the handler, it sets signal action for the given
-    /// signal to SIG_IGN which prevents any repeat signal occurences from
+    /// signal to SIG_IGN which prevents any repeat signal occurrences from
     /// queuing while the handler is executing.  Upon completion of the handler,
     /// the signal action is restored which reenables receipt and handling of
     /// the signal.
