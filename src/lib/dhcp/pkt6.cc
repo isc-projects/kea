@@ -313,7 +313,10 @@ Pkt6::unpackMsg(OptionBuffer::const_iterator begin,
         ((*begin++) << 8) + (*begin++);
     transid_ = transid_ & 0xffffff;
 
-    size -= sizeof(uint32_t); // We just parsed 4 bytes header
+    // See below about invoking Postel's law, as we aren't using
+    // size we don't need to update it.  If we do so in the future
+    // perhaps for stats gathering we can uncomment this.
+    //    size -= sizeof(uint32_t); // We just parsed 4 bytes header
 
     OptionBuffer opt_buffer(begin, end);
 

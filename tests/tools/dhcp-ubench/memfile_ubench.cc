@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -247,7 +247,7 @@ void memfile_uBenchmark::createLease4Test() {
         lease->cltt = cltt;
         lease->pool_id = pool_id;
         lease->fixed = fixed;
-        lease->hostname = "foo";
+        lease->hostname = hostname;
         lease->fqdn_fwd = fqdn_fwd;
         lease->fqdn_rev = fqdn_rev;
 
