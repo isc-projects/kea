@@ -575,6 +575,70 @@ public:
     ParserCollection subnets_;
 };
 
+/// @brief parser for list of RSOO options
+///
+/// This parser handles Dhcp6/relay-supplied-options entry.
+/// It contains a list of option codes.
+class RSOOListConfigParser : public DhcpConfigParser {
+public:
+
+    /// @brief constructor
+    ///
+    /// As this is a dedicated parser, it must be used to parse
+    /// "relay-supplied-options" parameter only. All other types will throw exception.
+    ///
+    /// @param param_name name of the configuration parameter being parsed
+    /// @throw BadValue if supplied parameter name is not "relay-supplied-options"
+    RSOOListConfigParser(const std::string& param_name) {
+        if (param_name != "relay-supplied-options") {
+            isc_throw(BadValue, "Internal error. RSOO configuration "
+                      "parser called for the wrong parameter: " << param_name);
+        }
+    }
+
+    /// @brief parses parameters value
+    ///
+    /// Parses configuration entry (list of sources) and adds each element
+    /// to the RSOO list.
+    ///
+    /// @param value pointer to the content of parsed values
+    virtual void build(isc::data::ConstElementPtr value) {
+
+        // By default, there's only one RSOO option defined: 65
+        // http://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->clearRSOO();
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->addRSOO(D6O_ERP_LOCAL_DOMAIN_NAME);
+
+        BOOST_FOREACH(ConstElementPtr source_elem, value->listValue()) {
+
+            std::string option_str = source_elem->stringValue();
+            // This option can be either code (integer) or name. Let's try code first
+            uint16_t code = 0;
+            try {
+                code = boost::lexical_cast<uint16_t>(option_str);
+            } catch (const boost::bad_lexical_cast &) {
+                // Oh well, it's not a number
+            }
+
+            if (!code) {
+                OptionDefinitionPtr def = LibDHCP::getOptionDef(Option::V6, option_str);
+                if (def) {
+                    code = def->getCode();
+                } else {
+                    isc_throw(BadValue, "Unable to convert '" << option_str
+                              << "' to option code while parsing allowed"
+                              << "relay-supplied-options");
+                }
+            }
+            CfgMgr::instance().getStagingCfg()->getCfgOption()->addRSOO(code);
+        }
+    }
+
+    /// @brief Does nothing.
+    virtual void commit() {}
+};
+
+
 } // anonymous namespace
 
 namespace isc {
@@ -618,6 +682,8 @@ namespace dhcp {
     } else if (config_id.compare("mac-sources") == 0) {
         parser = new MACSourcesListConfigParser(config_id,
                                                 globalContext());
+    } else if (config_id.compare("relay-supplied-options") == 0) {
+        parser = new RSOOListConfigParser(config_id);
     } else {
         isc_throw(DhcpConfigError,
                 "unsupported global configuration parameter: "
