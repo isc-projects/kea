@@ -1,3 +1,9 @@
+903.	[bug]		stephen
+	Corrected arithmetical error in the rate control module of
+	perfdhcp which led to the incorrect calculation of the rate
+	at which packets should be sent.
+	(Trac #3729, git bb5bca3d9b68abc4b83abdd204bfb075dda630ac)
+
 902.	[bug]		marcin
 	Fixed the bug in the DHCPv4 server whereby the server
 	reconfiguration (using the SIGHUP signal) failed because
