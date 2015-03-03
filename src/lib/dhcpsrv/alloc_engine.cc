@@ -926,13 +926,7 @@ AllocEngine::allocateLease4(ClientContext4& ctx) {
                 if (!existing) {
                     // The candidate address is currently unused. Let's create a
                     // lease for it.
-                    Lease4Ptr lease = createLease4(ctx.subnet_, ctx.clientid_,
-                                                   ctx.hwaddr_, candidate,
-                                                   ctx.fwd_dns_update_,
-                                                   ctx.rev_dns_update_,
-                                                   ctx.hostname_,
-                                                   ctx.callout_handle_,
-                                                   ctx.fake_allocation_);
+                    Lease4Ptr lease = createLease4(ctx, candidate);
 
                     // If we have allocated the lease let's return it. Also,
                     // always return when tried to allocate reserved address,
@@ -995,10 +989,7 @@ AllocEngine::allocateLease4(ClientContext4& ctx) {
             if (!existing) {
                 // there's no existing lease for selected candidate, so it is
                 // free. Let's allocate it.
-                Lease4Ptr lease = createLease4(ctx.subnet_, ctx.clientid_, ctx.hwaddr_,
-                                               candidate, ctx.fwd_dns_update_,
-                                               ctx.rev_dns_update_, ctx.hostname_,
-                                               ctx.callout_handle_, ctx.fake_allocation_);
+                Lease4Ptr lease = createLease4(ctx, candidate);
                 if (lease) {
                     return (lease);
                 }
@@ -1457,41 +1448,39 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
     }
 }
 
-Lease4Ptr AllocEngine::createLease4(const SubnetPtr& subnet,
-                                    const DuidPtr& clientid,
-                                    const HWAddrPtr& hwaddr,
-                                    const IOAddress& addr,
-                                    const bool fwd_dns_update,
-                                    const bool rev_dns_update,
-                                    const std::string& hostname,
-                                    const isc::hooks::CalloutHandlePtr& callout_handle,
-                                    bool fake_allocation /*= false */ ) {
-    if (!hwaddr) {
+Lease4Ptr AllocEngine::createLease4(const ClientContext4& ctx,
+                                    const IOAddress& addr) {
+    if (!ctx.hwaddr_) {
         isc_throw(BadValue, "Can't create a lease with NULL HW address");
     }
+    if (!ctx.subnet_) {
+        isc_throw(BadValue, "Can't create a lease without a subnet");
+    }
+
     time_t now = time(NULL);
 
     // @todo: remove this kludge after ticket #2590 is implemented
     std::vector<uint8_t> local_copy;
-    if (clientid) {
-        local_copy = clientid->getDuid();
+    if (ctx.clientid_) {
+        local_copy = ctx.clientid_->getDuid();
     }
 
-    Lease4Ptr lease(new Lease4(addr, hwaddr, &local_copy[0], local_copy.size(),
-                               subnet->getValid(), subnet->getT1(), subnet->getT2(),
-                               now, subnet->getID()));
+    Lease4Ptr lease(new Lease4(addr, ctx.hwaddr_, &local_copy[0], local_copy.size(),
+                               ctx.subnet_->getValid(), ctx.subnet_->getT1(),
+                               ctx.subnet_->getT2(),
+                               now, ctx.subnet_->getID()));
 
     // Set FQDN specific lease parameters.
-    lease->fqdn_fwd_ = fwd_dns_update;
-    lease->fqdn_rev_ = rev_dns_update;
-    lease->hostname_ = hostname;
+    lease->fqdn_fwd_ = ctx.fwd_dns_update_;
+    lease->fqdn_rev_ = ctx.rev_dns_update_;
+    lease->hostname_ = ctx.hostname_;
 
     // Let's execute all callouts registered for lease4_select
-    if (callout_handle &&
+    if (ctx.callout_handle_ &&
         HooksManager::getHooksManager().calloutsPresent(hook_index_lease4_select_)) {
 
         // Delete all previous arguments
-        callout_handle->deleteAllArguments();
+        ctx.callout_handle_->deleteAllArguments();
 
         // Pass necessary arguments
 
@@ -1499,32 +1488,32 @@ Lease4Ptr AllocEngine::createLease4(const SubnetPtr& subnet,
         // with using SubnetPtr to point to Subnet4 object. Users should not
         // be confused with dynamic_pointer_casts. They should get a concrete
         // pointer (Subnet4Ptr) pointing to a Subnet4 object.
-        Subnet4Ptr subnet4 = boost::dynamic_pointer_cast<Subnet4>(subnet);
-        callout_handle->setArgument("subnet4", subnet4);
+        Subnet4Ptr subnet4 = boost::dynamic_pointer_cast<Subnet4>(ctx.subnet_);
+        ctx.callout_handle_->setArgument("subnet4", subnet4);
 
         // Is this solicit (fake = true) or request (fake = false)
-        callout_handle->setArgument("fake_allocation", fake_allocation);
+        ctx.callout_handle_->setArgument("fake_allocation", ctx.fake_allocation_);
 
         // Pass the intended lease as well
-        callout_handle->setArgument("lease4", lease);
+        ctx.callout_handle_->setArgument("lease4", lease);
 
         // This is the first callout, so no need to clear any arguments
-        HooksManager::callCallouts(hook_index_lease4_select_, *callout_handle);
+        HooksManager::callCallouts(hook_index_lease4_select_, *ctx.callout_handle_);
 
         // Callouts decided to skip the action. This means that the lease is not
         // assigned, so the client will get NoAddrAvail as a result. The lease
         // won't be inserted into the database.
-        if (callout_handle->getSkip()) {
+        if (ctx.callout_handle_->getSkip()) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS, DHCPSRV_HOOK_LEASE4_SELECT_SKIP);
             return (Lease4Ptr());
         }
 
         // Let's use whatever callout returned. Hopefully it is the same lease
         // we handled to it.
-        callout_handle->getArgument("lease4", lease);
+        ctx.callout_handle_->getArgument("lease4", lease);
     }
 
-    if (!fake_allocation) {
+    if (!ctx.fake_allocation_) {
         // That is a real (REQUEST) allocation
         bool status = LeaseMgrFactory::instance().addLease(lease);
         if (status) {
