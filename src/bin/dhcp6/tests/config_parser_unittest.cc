@@ -3779,4 +3779,91 @@ TEST_F(Dhcp6ParserTest, hostReservationPerSubnet) {
     EXPECT_EQ(Subnet::HR_ALL, subnet->getHostReservationMode());
 }
 
+/// The goal of this test is to verify that configuration can include
+/// Relay Supplied options (specified as numbers).
+TEST_F(Dhcp6ParserTest, rsooNumbers) {
+
+    ConstElementPtr status;
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_,
+        Element::fromJSON("{ " + genIfaceConfig() + ","
+                          "\"relay-supplied-options\": [ \"10\", \"20\", \"30\" ],"
+                          "\"preferred-lifetime\": 3000,"
+                          "\"rebind-timer\": 2000, "
+                          "\"renew-timer\": 1000, "
+                          "\"subnet6\": [  ], "
+                          "\"valid-lifetime\": 4000 }")));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+
+    // The following codes should be enabled now
+    EXPECT_TRUE(CfgMgr::instance().getStagingCfg()->getCfgOption()->isRSOOEnabled(10));
+    EXPECT_TRUE(CfgMgr::instance().getStagingCfg()->getCfgOption()->isRSOOEnabled(20));
+    EXPECT_TRUE(CfgMgr::instance().getStagingCfg()->getCfgOption()->isRSOOEnabled(30));
+
+    // This option is on the IANA list, so it should be allowed all the time
+    // (http://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml)
+    EXPECT_TRUE(CfgMgr::instance().getStagingCfg()->getCfgOption()
+                ->isRSOOEnabled(D6O_ERP_LOCAL_DOMAIN_NAME));
+
+    // Those options are not enabled
+    EXPECT_FALSE(CfgMgr::instance().getStagingCfg()->getCfgOption()->isRSOOEnabled(25));
+    EXPECT_FALSE(CfgMgr::instance().getStagingCfg()->getCfgOption()->isRSOOEnabled(1));
+}
+
+/// The goal of this test is to verify that configuration can include
+/// Relay Supplied options (specified as names).
+TEST_F(Dhcp6ParserTest, rsooNames) {
+
+    ConstElementPtr status;
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_,
+        Element::fromJSON("{ " + genIfaceConfig() + ","
+                          "\"relay-supplied-options\": [ \"dns-servers\", \"remote-id\" ],"
+                          "\"preferred-lifetime\": 3000,"
+                          "\"rebind-timer\": 2000, "
+                          "\"renew-timer\": 1000, "
+                          "\"subnet6\": [  ], "
+                          "\"valid-lifetime\": 4000 }")));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+
+    for (uint16_t code = 0; code < D6O_NAME_SERVERS; ++code) {
+        EXPECT_FALSE(CfgMgr::instance().getStagingCfg()->getCfgOption()
+                     ->isRSOOEnabled(code)) << " for option code " << code;
+    }
+
+    // The following codes should be enabled now
+    EXPECT_TRUE(CfgMgr::instance().getStagingCfg()->getCfgOption()
+                ->isRSOOEnabled(D6O_NAME_SERVERS));
+
+    for (uint16_t code = D6O_NAME_SERVERS + 1; code < D6O_REMOTE_ID; ++code) {
+        EXPECT_FALSE(CfgMgr::instance().getStagingCfg()->getCfgOption()
+                     ->isRSOOEnabled(code)) << " for option code " << code;
+    }
+
+    // Check remote-id. It should be enabled.
+    EXPECT_TRUE(CfgMgr::instance().getStagingCfg()->getCfgOption()
+                ->isRSOOEnabled(D6O_REMOTE_ID));
+    for (uint16_t code = D6O_REMOTE_ID + 1; code < D6O_ERP_LOCAL_DOMAIN_NAME; ++code) {
+        EXPECT_FALSE(CfgMgr::instance().getStagingCfg()->getCfgOption()
+                     ->isRSOOEnabled(code)) << " for option code " << code;
+    }
+
+    // This option is on the IANA list, so it should be allowed all the time
+    // (http://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml)
+    EXPECT_TRUE(CfgMgr::instance().getStagingCfg()->getCfgOption()
+                ->isRSOOEnabled(D6O_ERP_LOCAL_DOMAIN_NAME));
+
+    for (uint16_t code = D6O_ERP_LOCAL_DOMAIN_NAME + 1; code < 300; ++code) {
+        EXPECT_FALSE(CfgMgr::instance().getStagingCfg()->getCfgOption()
+                     ->isRSOOEnabled(code)) << " for option code " << code;
+    }
+
+
+}
+
+
 };
