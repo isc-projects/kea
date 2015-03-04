@@ -240,7 +240,8 @@ public:
     ///        data associated with one of the "bind" elements, the
     ///        corresponding element in the error array is set to MLM_TRUE.
     /// @param count Size of each of the arrays.
-    void setErrorIndicators(MYSQL_BIND* bind, my_bool* error, size_t count) {
+    static void setErrorIndicators(MYSQL_BIND* bind, my_bool* error,
+                                   size_t count) {
         for (size_t i = 0; i < count; ++i) {
             error[i] = MLM_FALSE;
             bind[i].error = reinterpret_cast<char*>(&error[i]);
@@ -260,8 +261,8 @@ public:
     ///        the error.
     /// @param names Array of column names, the same size as the error array.
     /// @param count Size of each of the arrays.
-    std::string getColumnsInError(my_bool* error, std::string* names,
-                                  size_t count) {
+    static std::string getColumnsInError(my_bool* error, std::string* names,
+                                         size_t count) {
         std::string result = "";
 
         // Accumulate list of column names

@@ -508,7 +508,7 @@ public:
     }
 
     /// @brief Returns column label given a column number
-    std::string getColumnLabel(const size_t column) {
+    std::string getColumnLabel(const size_t column) const {
         if (column > columnLabels_.size()) {
             ostringstream os;
             os << "Unknown column:" << column;
