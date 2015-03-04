@@ -49,7 +49,7 @@ public:
 
 /// @brief DHCPv4 and DHCPv6 allocation engine
 ///
-/// This class represents DHCP allocation engine. It is responsible
+/// This class represents a DHCP allocation engine. It is responsible
 /// for picking subnets, choosing and allocating a lease, extending,
 /// renewing, releasing and possibly expiring leases.
 ///
@@ -116,7 +116,7 @@ protected:
 
     /// @brief Address/prefix allocator that iterates over all addresses
     ///
-    /// This class implements iterative algorithm that returns all addresses in
+    /// This class implements an iterative algorithm that returns all addresses in
     /// a pool iteratively, one after another. Once the last address is reached,
     /// it starts allocating from the beginning of the first pool (i.e. it loops
     /// over).
@@ -143,7 +143,7 @@ protected:
 
         /// @brief Returns the next prefix
         ///
-        /// This method works for IPv6 addresses only. It increases
+        /// This method works for IPv6 addresses only. It increases the
         /// specified prefix by a given prefix_len. For example, 2001:db8::
         /// increased by prefix length /32 will become 2001:db9::. This method
         /// is used to iterate over IPv6 prefix pools
@@ -158,7 +158,7 @@ protected:
 
     /// @brief Address/prefix allocator that gets an address based on a hash
     ///
-    /// @todo: This is a skeleton class for now and is missing implementation.
+    /// @todo: This is a skeleton class for now and is missing an implementation.
     class HashedAllocator : public Allocator {
     public:
 
@@ -181,7 +181,7 @@ protected:
 
     /// @brief Random allocator that picks address randomly
     ///
-    /// @todo: This is a skeleton class for now and is missing implementation.
+    /// @todo: This is a skeleton class for now and is missing an implementation.
     class RandomAllocator : public Allocator {
     public:
 
@@ -189,7 +189,7 @@ protected:
         /// @param type - specifies allocation type
         RandomAllocator(Lease::Type type);
 
-        /// @brief returns an random address from pool of specified subnet
+        /// @brief returns a random address from pool of specified subnet
         ///
         /// @todo: Implement this method
         ///
@@ -237,7 +237,7 @@ protected:
     ///
     /// @param type type of pool (V4, IA, TA or PD)
     /// @throw BadValue if allocator for a given type is missing
-    /// @return pointer to allocator handing a given resource types
+    /// @return pointer to allocator handling a given resource types
     AllocatorPtr getAllocator(Lease::Type type);
 
     //@}
@@ -287,7 +287,7 @@ public:
     /// identifier. It also holds the information about the subnet that
     /// the client is connected to.
     ///
-    /// This structure is also used to pass  some information from
+    /// This structure is also used to pass some information from
     /// the allocation engine back to the server, i.e. the old leases
     /// which the client had before the allocation.
     ///
@@ -382,7 +382,7 @@ public:
         /// @brief Specifies whether new leases in Renew/Rebind are allowed
         ///
         /// This field controls what to do when renewing or rebinding client
-        /// does not have any leases. RFC3315 and the stateful-issues draft does
+        /// does not have any leases. RFC3315 and the stateful-issues draft do
         /// not specify it and it is left up to the server configuration policy.
         /// False (the default) means that the client will not get any new
         /// unreserved leases if his existing leases are no longer suitable.
@@ -400,7 +400,7 @@ public:
 
         /// @brief Constructor with parameters.
         ///
-        /// Note that several less frequently parameters (callout_handle,
+        /// Note that several less frequently used parameters (callout_handle,
         /// old_leases, host) fields are not set. They should be set explicitly,
         /// if needed.
         ///
@@ -441,7 +441,7 @@ public:
 
     /// @brief Allocates IPv6 leases for a given IA container
     ///
-    /// This method uses currently selected allocator to pick allocatable
+    /// This method uses the currently selected allocator to pick allocatable
     /// resources (i.e. addresses or prefixes) from specified subnet, creates
     /// a lease (one or more, if needed) for that resources and then inserts
     /// it into LeaseMgr (if this allocation is not fake, i.e. this is not a
@@ -463,7 +463,7 @@ public:
     ///
     /// The logic in this method is as follows:
     /// -# Case 1. if there are no leases, and there are reservations...
-    ///    Are the reserved addresses/prefixes are used by someone else?
+    ///    Are the reserved addresses/prefixes used by someone else?
     ///   -# yes: we have a problem. We can't assign the reserved address yet,
     ///       because it is used by someone else. We can't immediately release
     ///       the lease as there is some other client that is currently using it.
@@ -531,7 +531,7 @@ public:
     ///   else (see host reservation)
     /// - client's leases does not match his reservations
     ///
-    /// This method will call  the lease4_renew callout.
+    /// This method will call  the lease6_renew callout.
     ///
     /// @param ctx Message processing context. It holds various information
     /// extracted from the client's message and required to allocate a lease.
@@ -815,30 +815,30 @@ public:
     ///   to allocate a new lease. If the client has a reservation for the
     ///   particular address or if it has specified a desired address the
     ///   server will check if the particular address is not allocated to
-    ///   other client. If the address is available, the server will allocate
+    ///   another client. If the address is available, the server will allocate
     ///   this address for the client.
     /// - If the desired address is unavailable the server checks if the
     ///   lease for this address has expired. If the lease is expired, the
     ///   server will allocate this lease to the client. The relevant
     ///   information will be updated, e.g. new client HW address, host name
     ///   etc.
-    /// - If the desired address is in use by other client, the server will try
-    ///   to allocate a different address. The server picks addresses from
+    /// - If the desired address is in use by another client, the server will
+    ///   try to allocate a different address. The server picks addresses from
     ///   a dynamic pool and checks if the address is available and that
     ///   it is not reserved for another client. If it is in use by another
-    ///   client or if it is reserved for another client, this address is not
-    ///   allocated. The server picks next address and repeats this check.
-    ///   Note that the server ceases allocation after configured number
+    ///   client or if it is reserved for another client, the address is not
+    ///   allocated. The server picks the next address and repeats this check.
+    ///   Note that the server ceases allocation after the configured number
     ///   of unsuccessful attempts.
     ///
     /// The lease allocation process is slightly different for the
     /// DHCPDISCOVER and DHCPREQUEST messages. In the former case, the client
     /// may specify the requested IP address option with a desired address and
-    /// the server treats this address as hint. This means that the server may
-    /// allocate a different address on its discretion and send it to the
+    /// the server treats this address as a hint. This means that the server may
+    /// allocate a different address at its discretion and send it to the
     /// client in the DHCPOFFER. If the client accepts this offer it specifies
     /// this address in the requested IP address option in the DHCPREQUEST.
-    /// At this point, the allocation engine will use the request IP address
+    /// At this point, the allocation engine will use the requested IP address
     /// as a hard requirement and if this address can't be allocated for
     /// any reason, the allocation engine returns NULL lease. As a result,
     /// the DHCP server sends a DHCPNAK to the client and the client
@@ -853,7 +853,7 @@ public:
     /// dynamic pool or even an address currently allocated for this client.
     ///
     /// It is possible that the address reserved for the particular client
-    /// is in use by other client, e.g. as a result of pools reconfigruation.
+    /// is in use by another client, e.g. as a result of pools reconfigruation.
     /// In this case, when the client requests allocation of the reserved
     /// address and the server determines that it is leased to someone else,
     /// the allocation engine doesn't allocate a lease for the client having
@@ -864,15 +864,15 @@ public:
     /// can be allocated to the client which holds this reservation.
     ///
     /// When a server should do DNS updates, it is required that allocation
-    /// returns the information how the lease was obtained by the allocation
+    /// returns the information about how the lease was obtained by the allocation
     /// engine. In particular, the DHCP server should be able to check whether
-    /// existing lease was returned, or new lease was allocated. When existing
-    /// lease was returned, server should check whether the FQDN has changed
-    /// between the allocation of the old and new lease. If so, server should
-    /// perform appropriate DNS update. If not, server may choose to not
-    /// perform the update. The information about the old lease is returned via
+    /// an existing lease was returned, or a new lease was allocated. When an
+    /// existing lease was returned, the server should check whether the FQDN has
+    /// changed between the allocation of the old and new lease. If so, the server
+    /// should perform the appropriate DNS update. If not, the server may choose
+    /// to not perform the update. The information about the old lease is returned via
     /// @c old_lease parameter. If NULL value is returned, it is an indication
-    /// that new lease was allocated for the client. If non-NULL value is
+    /// that a new lease was allocated for the client. If non-NULL value is
     /// returned, it is an indication that allocation engine reused/renewed an
     /// existing lease.
     ///
@@ -916,7 +916,7 @@ private:
     /// @brief Offers the lease.
     ///
     /// This method is called by the @c AllocEngine::allocateLease4 when
-    /// the server is processing DHCPDISCOVER message, i.e. the fake
+    /// the server is processing a DHCPDISCOVER message, i.e. the fake
     /// allocation case.
     ///
     /// This method doesn't modify leases in the lease database. It finds
@@ -934,7 +934,7 @@ private:
     /// -# Try to allocate the address provided by the client as a hint.
     ///    This may fail if the address is in use or is reserved by some
     ///    other client. In such case:
-    /// -# Try to offer the address from the dynamic pool.
+    /// -# Try to offer an address from the dynamic pool.
     ///
     /// @throw various exceptions if the allocation goes wrong.
     ///
@@ -948,7 +948,7 @@ private:
     /// @brief Allocates the lease.
     ///
     /// This method is called by the @c AllocEngine::allocateLease4 when
-    /// the server is processing DHCPREQUEST message, i.e. the real
+    /// the server is processing a DHCPREQUEST message, i.e. the real
     /// allocation case.
     ///
     /// This method modifies the lease information in the lease database.
@@ -961,8 +961,7 @@ private:
     /// -# The requested address is in use by another client.
     /// -# There is a reservation for the particular client, the
     ///    reserved address is not in use by another client and the
-    ///    but the requested address is different than the reserved
-    ///    address.
+    ///    requested address is different than the reserved address.
     /// -# There is no reservation for the client and the requested address
     ///    is not in the dynamic pool.
     ///
@@ -1006,17 +1005,17 @@ private:
     /// @param fake_allocation Is this real i.e. REQUEST (false) or just picking
     ///        an address for DISCOVER that is not really allocated (true)
     /// @return allocated lease (or NULL in the unlikely case of the lease just
-    ///        becomed unavailable)
+    ///        became unavailable)
     Lease4Ptr createLease4(const SubnetPtr& subnet, const DuidPtr& clientid,
-                                  const HWAddrPtr& hwaddr,
-                                  const isc::asiolink::IOAddress& addr,
-                                  const bool fwd_dns_update,
-                                  const bool rev_dns_update,
-                                  const std::string& hostname,
-                                  const isc::hooks::CalloutHandlePtr& callout_handle,
-                                  bool fake_allocation = false);
+                           const HWAddrPtr& hwaddr,
+                           const isc::asiolink::IOAddress& addr,
+                           const bool fwd_dns_update,
+                           const bool rev_dns_update,
+                           const std::string& hostname,
+                           const isc::hooks::CalloutHandlePtr& callout_handle,
+                           bool fake_allocation = false);
 
-    /// @brief Renews an DHCPv4 lease.
+    /// @brief Renews a DHCPv4 lease.
     ///
     /// This method updates the lease with the information from the provided
     /// context and invokes the lease4_renew callout.
@@ -1028,14 +1027,14 @@ private:
     /// extracted from the client's message and required to allocate a lease.
     ///
     /// @return Returns renewed lease. Note that the lease is only updated when
-    /// it is an actual allocation (not processing DHCPDISCOVER message).
+    /// it is an actual allocation (not processing a DHCPDISCOVER message).
     Lease4Ptr renewLease4(const Lease4Ptr& lease, ClientContext4& ctx);
 
     /// @brief Reuses expired DHCPv4 lease.
     ///
-    /// Makes new allocation using an expired lease. The lease is updated with
+    /// Makes a new allocation using an expired lease. The lease is updated with
     /// the information from the provided context. Typically, an expired lease
-    /// lease which belonged to one client may be assigned to another client
+    /// which belonged to one client may be assigned to another client
     /// which asked for the specific address.
     ///
     /// @param expired An old, expired lease.
@@ -1062,7 +1061,7 @@ private:
     /// @return A pointer to the allocated lease or NULL if the allocation
     /// was not successful.
     Lease4Ptr allocateOrReuseLease4(const asiolink::IOAddress& address,
-                                   ClientContext4& ctx);
+                                    ClientContext4& ctx);
 
     /// @brief Allocates the lease from the dynamic pool.
     ///
@@ -1071,11 +1070,11 @@ private:
     /// address appears to be available, it allocates the new lease
     /// using this address. The number of attempts depends on the size
     /// of the dynamic pool. If all of the addresses in the pool have
-    /// been tried and all of them appeared to be used, the allocation
+    /// been tried and all of them appeared to be in use, the allocation
     /// fails. This is the case when the pool is exhausted.
     ///
-    /// The time required to suitable lease depends on the current pool
-    /// utilization.
+    /// The time required to find a suitable lease depends on the current
+    /// pool utilization.
     ///
     /// @param ctx Client context holding the data extracted from the
     /// client's message.
@@ -1092,7 +1091,7 @@ private:
     /// lease allocation decisions. Some public methods of the allocation engine
     /// requires updating the lease information with the data gathered from the
     /// context, e.g. @c AllocEngine::reuseExpiredLease requires updating the
-    /// expired lease with a fresh information from the context to create a
+    /// expired lease with fresh information from the context to create a
     /// lease to be held for the client.
     ///
     /// Note that this doesn't update the lease address.
