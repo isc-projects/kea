@@ -2084,7 +2084,7 @@ temporarily override a list of interface names and listen on all interfaces.
       <para>When the Host A renews its address, the server will discover that
       the address being renewed is now reserved for another host - the Host
       B. Therefore the server will inform the Host A that it is no longer
-      allowed to use it by sending DHCPNAK message. The server will remove the
+      allowed to use it by sending DHCPNAK message. The server will not remove the
       lease, though, as there's small chance that the DHCPNAK may be lost if the
       network is lossy. If that happens, the client will not receive any
       responses, so it will retransmit its DHCPREQUEST packet. Once the
