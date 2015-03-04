@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -1270,9 +1270,17 @@ void
 MySqlLeaseMgr::convertToDatabaseTime(time_t cltt, uint32_t valid_lifetime,
                                     MYSQL_TIME& expire) {
 
-    // Calculate expiry time.
-    // @TODO: handle overflows
-    time_t expire_time = cltt + valid_lifetime;
+    // Calculate expiry time. Store it in the 64-bit value so as we can detect
+    // overflows.
+    int64_t expire_time_64 = static_cast<int64_t>(cltt) +
+        static_cast<iint64_t>(valid_lifetime);
+
+    // Prevent too large value.
+    if (expire_time_64 > LeaseMgr::MAX_DB_TIME) {
+        isc_throw(BadValue, "Time value is too large: " << expire_time_64);
+    }
+
+    const time_t expire_time = static_cast<const time_t>(expire_time_64);
 
     // Convert to broken-out time
     struct tm expire_tm;
