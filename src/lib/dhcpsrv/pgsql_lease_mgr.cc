@@ -302,7 +302,7 @@ public:
     /// 64-bit value to avoid overflows on the 32-bit systems where time_t
     /// is implemented as int32_t.
     /// @return std::string containing the stringified time
-    std::string
+    static std::string
     convertToDatabaseTime(const int64_t& time_val_64) {
         // PostgreSQL does funny things with time if you get past Y2038.  It
         // will accept the values (unlike MySQL which throws) but it
@@ -326,7 +326,7 @@ public:
     /// is expected to be the number of seconds since the epoch
     /// expressed as base-10 integer string.
     /// @return Converted timestamp as time_t value.
-    time_t convertFromDatabaseTime(const std::string& db_time_val) {
+    static time_t convertFromDatabaseTime(const std::string& db_time_val) {
         // Convert string time value to time_t
         try  {
             return (boost::lexical_cast<time_t>(db_time_val));
@@ -351,7 +351,7 @@ public:
     /// @return a const char* pointer to the column's raw data
     /// @throw  DbOperationError if the value cannot be fetched.
     const char* getRawColumnValue(PGresult*& r, const int row,
-                                  const size_t col) {
+                                  const size_t col) const {
         const char* value = PQgetvalue(r, row, col);
         if (!value) {
             isc_throw(DbOperationError, "getRawColumnValue no data for :"
@@ -371,7 +371,7 @@ public:
     /// @throw  DbOperationError if the value cannot be fetched or is
     /// invalid.
     void getColumnValue(PGresult*& r, const int row, const size_t col,
-                        bool &value) {
+                        bool &value) const {
         const char* data = getRawColumnValue(r, row, col);
         if (!strlen(data) || *data == 'f') {
             value = false;
@@ -394,7 +394,7 @@ public:
     /// @throw  DbOperationError if the value cannot be fetched or is
     /// invalid.
     void getColumnValue(PGresult*& r, const int row, const size_t col,
-                        uint32_t &value) {
+                        uint32_t &value) const {
         const char* data = getRawColumnValue(r, row, col);
         try {
             value = boost::lexical_cast<uint32_t>(data);
@@ -415,7 +415,7 @@ public:
     /// @throw  DbOperationError if the value cannot be fetched or is
     /// invalid.
     void getColumnValue(PGresult*& r, const int row, const size_t col,
-                        uint8_t &value) {
+                        uint8_t &value) const {
         const char* data = getRawColumnValue(r, row, col);
         try {
             // lexically casting as uint8_t doesn't convert from char
@@ -438,7 +438,7 @@ public:
     /// @throw  DbOperationError if the value cannot be fetched or is
     /// invalid.
     void getColumnValue(PGresult*& r, const int row, const size_t col,
-                        Lease6::Type& value) {
+                        Lease6::Type& value) const {
         uint32_t raw_value = 0;
         getColumnValue(r, row , col, raw_value);
         switch (raw_value) {
@@ -478,7 +478,8 @@ public:
     /// invalid.
     void convertFromBytea(PGresult*& r, const int row, const size_t col,
                           uint8_t* buffer,
-                          const size_t buffer_size, size_t &bytes_converted) {
+                          const size_t buffer_size,
+                          size_t &bytes_converted) const {
 
         // Returns converted bytes in a dynamically allocated buffer, and
         // sets bytes_converted.
@@ -509,19 +510,19 @@ public:
 
     /// @brief Returns column label given a column number
     std::string getColumnLabel(const size_t column) const {
-        if (column > columnLabels_.size()) {
+        if (column > column_labels_.size()) {
             ostringstream os;
             os << "Unknown column:" << column;
             return (os.str());
         }
 
-        return (columnLabels_[column]);
+        return (column_labels_[column]);
     }
 
 protected:
     /// @brief Stores text labels for columns, currently only used for
     /// logging and errors.
-    std::vector<std::string>columnLabels_;
+    std::vector<std::string>column_labels_;
 
     /// @brief Common Instance members used for binding and conversion
     //@{
@@ -574,15 +575,15 @@ public:
         memset(client_id_buffer_, 0, sizeof(client_id_buffer_));
 
         // Set the column names (for error messages)
-        columnLabels_.push_back("address");
-        columnLabels_.push_back("hwaddr");
-        columnLabels_.push_back("client_id");
-        columnLabels_.push_back("valid_lifetime");
-        columnLabels_.push_back("expire");
-        columnLabels_.push_back("subnet_id");
-        columnLabels_.push_back("fqdn_fwd");
-        columnLabels_.push_back("fqdn_rev");
-        columnLabels_.push_back("hostname");
+        column_labels_.push_back("address");
+        column_labels_.push_back("hwaddr");
+        column_labels_.push_back("client_id");
+        column_labels_.push_back("valid_lifetime");
+        column_labels_.push_back("expire");
+        column_labels_.push_back("subnet_id");
+        column_labels_.push_back("fqdn_fwd");
+        column_labels_.push_back("fqdn_rev");
+        column_labels_.push_back("hostname");
     }
 
     /// @brief Creates the bind array for sending Lease4 data to the database.
@@ -753,18 +754,18 @@ public:
         memset(duid_buffer_, 0, sizeof(duid_buffer_));
 
         // Set the column names (for error messages)
-        columnLabels_.push_back("address");
-        columnLabels_.push_back("duid");
-        columnLabels_.push_back("valid_lifetime");
-        columnLabels_.push_back("expire");
-        columnLabels_.push_back("subnet_id");
-        columnLabels_.push_back("pref_lifetime");
-        columnLabels_.push_back("lease_type");
-        columnLabels_.push_back("iaid");
-        columnLabels_.push_back("prefix_len");
-        columnLabels_.push_back("fqdn_fwd");
-        columnLabels_.push_back("fqdn_rev");
-        columnLabels_.push_back("hostname");
+        column_labels_.push_back("address");
+        column_labels_.push_back("duid");
+        column_labels_.push_back("valid_lifetime");
+        column_labels_.push_back("expire");
+        column_labels_.push_back("subnet_id");
+        column_labels_.push_back("pref_lifetime");
+        column_labels_.push_back("lease_type");
+        column_labels_.push_back("iaid");
+        column_labels_.push_back("prefix_len");
+        column_labels_.push_back("fqdn_fwd");
+        column_labels_.push_back("fqdn_rev");
+        column_labels_.push_back("hostname");
     }
 
     /// @brief Creates the bind array for sending Lease6 data to the database.
@@ -898,7 +899,7 @@ public:
     /// @throw  DbOperationError if the value cannot be fetched or is
     /// invalid.
     isc::asiolink::IOAddress getIPv6Value(PGresult*& r, const int row,
-                                          const size_t col) {
+                                          const size_t col) const {
         const char* data = getRawColumnValue(r, row, col);
         try {
             return (isc::asiolink::IOAddress(data));
