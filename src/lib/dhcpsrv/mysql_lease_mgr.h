@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -423,8 +423,11 @@ public:
     /// @param valid_lifetime Valid lifetime
     /// @param expire Reference to MYSQL_TIME object where the expiry time of
     ///        the lease will be put.
+    ///
+    /// @throw isc::BadValue if the sum of the calculated expiration time is
+    /// greater than the value of @c LeaseMgr::MAX_DB_TIME.
     static
-    void convertToDatabaseTime(time_t cltt, uint32_t valid_lifetime,
+    void convertToDatabaseTime(const time_t cltt, const uint32_t valid_lifetime,
                                MYSQL_TIME& expire);
 
     /// @brief Convert Database Time to Lease Times

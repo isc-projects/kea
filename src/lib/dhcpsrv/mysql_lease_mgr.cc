@@ -1278,8 +1278,9 @@ MySqlLeaseMgr::~MySqlLeaseMgr() {
 //    from a time read from the database into a local time.
 
 void
-MySqlLeaseMgr::convertToDatabaseTime(time_t cltt, uint32_t valid_lifetime,
-                                    MYSQL_TIME& expire) {
+MySqlLeaseMgr::convertToDatabaseTime(const time_t cltt,
+                                     const uint32_t valid_lifetime,
+                                     MYSQL_TIME& expire) {
 
     // Calculate expiry time. Store it in the 64-bit value so as we can detect
     // overflows.
