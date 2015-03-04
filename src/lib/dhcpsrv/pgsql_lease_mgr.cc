@@ -647,10 +647,11 @@ public:
             bind_array.add(lease->fqdn_rev_);
 
             bind_array.add(lease->hostname_);
+
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
-                      "Could not create bind array for Lease4 lease: "
-                      << lease_->addr_.toText() << " reason: " << ex.what());
+                      "Could not create bind array for Lease4: "
+                      << lease_->addr_.toText() << ", reason: " << ex.what());
         }
     }
 
@@ -829,7 +830,7 @@ public:
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
                       "Could not create bind array from Lease6: "
-                      << lease_->addr_.toText() << " reason: " << ex.what());
+                      << lease_->addr_.toText() << ", reason: " << ex.what());
         }
     }
 
