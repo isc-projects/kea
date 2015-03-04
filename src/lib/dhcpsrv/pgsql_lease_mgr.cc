@@ -289,7 +289,11 @@ public:
 
     virtual ~PgSqlLeaseExchange(){}
 
-    /// @brief Converts time_t structure to a text representation in local time.
+    /// @brief Converts lease expiration time to a text representation in
+    /// local time.
+    ///
+    /// The expiration time is calculated as a sum of the cltt (client last
+    /// transmit time) and the valid lifetime.
     ///
     /// The format of the output string is "%Y-%m-%d %H:%M:%S".  Database
     /// table columns using this value should be typed as TIMESTAMP WITH
@@ -298,23 +302,30 @@ public:
     /// when stored.  Likewise, these columns are automatically adjusted
     /// upon retrieval unless fetched via "extract(epoch from <column>))".
     ///
-    /// @param time_val_64 timestamp to be converted. This is given as a
-    /// 64-bit value to avoid overflows on the 32-bit systems where time_t
-    /// is implemented as int32_t.
+    /// @param cltt Client last transmit time
+    /// @param valid_lifetime Valid lifetime
+    ///
     /// @return std::string containing the stringified time
+    /// @throw isc::BadValue if the sum of the calculated expiration time is
+    /// greater than the value of @c LeaseMgr::MAX_DB_TIME.
     static std::string
-    convertToDatabaseTime(const int64_t& time_val_64) {
+    convertToDatabaseTime(const time_t cltt, const uint32_t valid_lifetime) {
+        // Calculate expiry time. Store it in the 64-bit value so as we can detect
+        // overflows.
+        int64_t expire_time_64 = static_cast<int64_t>(cltt) +
+            static_cast<int64_t>(valid_lifetime);
+
         // PostgreSQL does funny things with time if you get past Y2038.  It
         // will accept the values (unlike MySQL which throws) but it
         // stops correctly adjusting to local time when reading them back
         // out. So lets disallow it here.
-        if (time_val_64 > LeaseMgr::MAX_DB_TIME) {
-            isc_throw(BadValue, "Time value is too large: " << time_val_64);
+        if (expire_time_64 > LeaseMgr::MAX_DB_TIME) {
+            isc_throw(isc::BadValue, "Time value is too large: " << expire_time_64);
         }
 
         struct tm tinfo;
         char buffer[20];
-        const time_t time_val = static_cast<time_t>(time_val_64);
+        const time_t time_val = static_cast<time_t>(expire_time_64);
         localtime_r(&time_val, &tinfo);
         strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tinfo);
         return (std::string(buffer));
@@ -636,8 +647,7 @@ public:
                              (lease->valid_lft_);
             bind_array.add(valid_lft_str_);
 
-            expire_str_ = convertToDatabaseTime(static_cast<int64_t>(lease->valid_lft_) +
-                                                static_cast<int64_t>(lease->cltt_));
+            expire_str_ = convertToDatabaseTime(lease->cltt_, lease_->valid_lft_);
             bind_array.add(expire_str_);
 
             subnet_id_str_ = boost::lexical_cast<std::string>
@@ -801,8 +811,7 @@ public:
                              (lease->valid_lft_);
             bind_array.add(valid_lft_str_);
 
-            expire_str_ = convertToDatabaseTime(static_cast<int64_t>(lease->valid_lft_) +
-                                                static_cast<int64_t>(lease->cltt_));
+            expire_str_ = convertToDatabaseTime(lease->cltt_, lease_->valid_lft_);
             bind_array.add(expire_str_);
 
             subnet_id_str_ = boost::lexical_cast<std::string>
