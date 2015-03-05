@@ -225,6 +225,41 @@ protected:
     /// information to the allocation engine methods is that adding
     /// new information doesn't modify the API of the allocation engine.
     struct ClientContext4 {
+        /// @brief Default constructor.
+        ClientContext4()
+            : subnet_(), clientid_(), hwaddr_(), requested_address_("0.0.0.0"),
+              fwd_dns_update_(false), rev_dns_update_(false),
+              hostname_(""), callout_handle_(), fake_allocation_(false),
+              old_lease_(), host_(), interrupt_processing_(false) {
+        }
+
+        /// @brief Constructor with parameters
+        ///
+        /// @param subnet subnet the allocation should come from (mandatory)
+        /// @param clientid Client identifier (optional)
+        /// @param hwaddr Client's hardware address info (mandatory)
+        /// @param requested_addr A hint that the client provided (may be 0.0.0.0)
+        /// @param fwd_dns_update Indicates whether forward DNS
+        ///      update will be performed for the client (true) or not (false).
+        /// @param rev_dns_update Indicates whether reverse DNS
+        ///      update will be performed for the client (true) or not (false).
+        /// @param hostname A string carrying hostname to be used for DNS updates.
+        /// @param fake_allocation Is this real i.e. REQUEST (false)
+        ///      or just picking an address for DISCOVER that is not really
+        ///      allocated (true)
+        ClientContext4(const SubnetPtr& subnet, const ClientIdPtr& clientid,
+                       const HWAddrPtr& hwaddr,
+                       const asiolink::IOAddress& requested_addr,
+                       const bool fwd_dns_update, const bool rev_dns_update,
+                       const std::string& hostname, const bool fake_allocation)
+            : subnet_(subnet), clientid_(clientid), hwaddr_(hwaddr),
+            requested_address_(requested_addr),
+            fwd_dns_update_(fwd_dns_update), rev_dns_update_(rev_dns_update),
+            hostname_(hostname), callout_handle_(),
+            fake_allocation_(fake_allocation), old_lease_(), host_(),
+            interrupt_processing_(false) {
+        }
+
         /// @brief Subnet selected for the client by the server.
         SubnetPtr subnet_;
 
@@ -283,14 +318,6 @@ protected:
         /// @c AllocEngine::renewLease4 sets this flag so as the
         /// upstream methods return the NULL lease pointer to the server.
         bool interrupt_processing_;
-
-        /// @brief Default constructor.
-        ClientContext4()
-            : subnet_(), clientid_(), hwaddr_(), requested_address_("0.0.0.0"),
-              fwd_dns_update_(false), rev_dns_update_(false),
-              hostname_(""), callout_handle_(), fake_allocation_(false),
-              old_lease_(), host_(), interrupt_processing_(false) {
-        }
     };
 
     /// @brief Defines a single hint (an address + prefix-length).
@@ -552,35 +579,32 @@ protected:
     /// returned, it is an indication that allocation engine reused/renewed an
     /// existing lease.
     ///
-    /// @todo Replace parameters with a single parameter of a
-    /// @c ClientContext4 type.
+    /// @param ctx client context that passes all necessary information. See
+    ///        @ref ClientContext4 for details.
     ///
-    /// @param subnet subnet the allocation should come from
-    /// @param clientid Client identifier
-    /// @param hwaddr Client's hardware address info
-    /// @param hint A hint that the client provided
-    /// @param fwd_dns_update Indicates whether forward DNS update will be
-    ///        performed for the client (true) or not (false).
-    /// @param rev_dns_update Indicates whether reverse DNS update will be
-    ///        performed for the client (true) or not (false).
-    /// @param hostname A string carrying hostname to be used for DNS updates.
-    /// @param fake_allocation Is this real i.e. REQUEST (false) or just picking
-    ///        an address for DISCOVER that is not really allocated (true)
-    /// @param callout_handle A callout handle (used in hooks). A lease callouts
-    ///        will be executed if this parameter is passed.
-    /// @param [out] old_lease Holds the pointer to a previous instance of a
-    ///        lease. The NULL pointer indicates that lease didn't exist prior
-    ///        to calling this function (e.g. new lease has been allocated).
+    /// The following fields of @ref ClientContext4 are used:
+    ///
+    /// - @ref ClientContext4::subnet_ subnet the allocation should come from
+    /// - @ref ClientContext4::clientid_ Client identifier
+    /// - @ref ClientContext4::hwaddr_ Client's hardware address info
+    /// - @ref ClientContext4::requested_address_ A hint that the client provided
+    /// - @ref ClientContext4::fwd_dns_update_ Indicates whether forward DNS
+    ///      update will be performed for the client (true) or not (false).
+    /// - @ref ClientContext4::rev_dns_update_ Indicates whether reverse DNS
+    ///      update will be performed for the client (true) or not (false).
+    /// - @ref ClientContext4::hostname_ A string carrying hostname to be used for
+    ///      DNS updates.
+    /// - @ref ClientContext4::fake_allocation_ Is this real i.e. REQUEST (false)
+    ///      or just picking an address for DISCOVER that is not really
+    ///      allocated (true)
+    /// - @ref ClientContext4::callout_handle_ A callout handle (used in hooks).
+    ///      A lease callouts will be executed if this parameter is passed.
+    /// - @ref ClientContext4::old_lease_ [out] Holds the pointer to a previous
+    ///      instance of a lease. The NULL pointer indicates that lease didn't
+    ///      exist prior to calling this function (e.g. new lease has been allocated).
     ///
     /// @return Allocated IPv4 lease (or NULL if allocation failed).
-    Lease4Ptr
-    allocateLease4(const SubnetPtr& subnet, const ClientIdPtr& clientid,
-                   const HWAddrPtr& hwaddr,
-                   const isc::asiolink::IOAddress& hint,
-                   const bool fwd_dns_update, const bool rev_dns_update,
-                   const std::string& hostname, bool fake_allocation,
-                   const isc::hooks::CalloutHandlePtr& callout_handle,
-                   Lease4Ptr& old_lease);
+    Lease4Ptr allocateLease4(ClientContext4& ctx);
 
     /// @brief Renews an DHCPv4 lease.
     ///
@@ -647,38 +671,37 @@ protected:
     ///
     /// The following fields of ClientContext6 are used:
     ///
-    /// @ref ClientContext6::subnet_ subnet the allocation should come from<br/>
-    /// @ref ClientContext6::duid_ Client's DUID<br/>
-    /// @ref ClientContext6::iaid_ iaid field from the IA_NA container
-    ///        that client sent<br/>
-    /// @ref ClientContext6::hints_ a hint that the client provided<br/>
-    /// @ref ClientContext6::type_ lease type (IA, TA or PD)<br/>
-    /// @ref ClientContext6::fwd_dns_update_ A boolean value which indicates
+    /// - @ref ClientContext6::subnet_ subnet the allocation should come from
+    /// - @ref ClientContext6::duid_ Client's DUID
+    /// - @ref ClientContext6::iaid_ iaid field from the IA_NA container
+    ///        that client sent
+    /// - @ref ClientContext6::hints_ a hint that the client provided
+    /// - @ref ClientContext6::type_ lease type (IA, TA or PD)
+    /// - @ref ClientContext6::fwd_dns_update_ A boolean value which indicates
     ///        that server takes responsibility for the forward DNS Update
-    ///        for this lease (if true).<br/>
-    /// @ref ClientContext6::rev_dns_update_ A boolean value which indicates
+    ///        for this lease (if true).
+    /// - @ref ClientContext6::rev_dns_update_ A boolean value which indicates
     ///        that server takes responsibility for the reverse DNS Update for
-    ///        this lease (if true).<br/>
-    /// @ref ClientContext6::hostname_ A fully qualified domain-name of the client.<br/>
-    /// @ref ClientContext6::fake_allocation_ is this real i.e. REQUEST (false)
+    ///        this lease (if true).
+    /// - @ref ClientContext6::hostname_ A fully qualified domain-name of the client.
+    /// - @ref ClientContext6::fake_allocation_ is this real i.e. REQUEST (false)
     ///        or just picking an address for SOLICIT that is not really
-    ///        allocated (true)<br/>
-    /// @ref ClientContext6::callout_handle_ a callout handle (used in hooks). A
-    ///        lease callouts will be executed if this parameter is passed.<br/>
-    /// @ref ClientContext6::old_leases_ [out] Collection to which this function
+    ///        allocated (true)
+    /// - @ref ClientContext6::callout_handle_ a callout handle (used in hooks).
+    ///        Lease callouts will be executed if this parameter is passed.
+    /// - @ref ClientContext6::old_leases_ [out] Collection to which this function
     ///        will append old leases. Leases are stored in the same order as in
     ///        the collection of new leases, being returned. For newly allocated
     ///        leases (not renewed) the NULL pointers are stored in this
-    ///        collection as old leases.<br/>
-    /// @ref ClientContext6::hwaddr_ Hardware address (optional, may be null if
-    ///        not available)<br/>
-    /// @ref ClientContext6::host_ Host reservation. allocateLeases6 will set
+    ///        collection as old leases.
+    /// - @ref ClientContext6::hwaddr_ Hardware address (optional, may be null if
+    ///        not available)
+    /// - @ref ClientContext6::host_ Host reservation. allocateLeases6 will set
     ///        this field, if appropriate reservation is found.
     ///
     /// @return Allocated IPv6 leases (may be empty if allocation failed)
     Lease6Collection
     allocateLeases6(ClientContext6& ctx);
-
 
     /// @brief Renews existing DHCPv6 leases for a given IA.
     ///
@@ -702,8 +725,6 @@ protected:
     Lease6Collection
     renewLeases6(ClientContext6& ctx);
 
-
-
     /// @brief returns allocator for a given pool type
     /// @param type type of pool (V4, IA, TA or PD)
     /// @throw BadValue if allocator for a given type is missing
@@ -720,30 +741,29 @@ private:
     /// into the database. That may fail in some cases, e.g. when there is another
     /// allocation process and we lost a race to a specific lease.
     ///
-    /// @param subnet Subnet the lease is allocated from
-    /// @param clientid Client identifier
-    /// @param hwaddr Client's hardware address
     /// @param addr An address that was selected and is confirmed to be available
-    /// @param fwd_dns_update Indicates whether forward DNS update will be
-    ///        performed for the client (true) or not (false).
-    /// @param rev_dns_update Indicates whether reverse DNS update will be
-    ///        performed for the client (true) or not (false).
-    /// @param hostname A string carrying hostname to be used for DNS updates.
-    /// @param callout_handle a callout handle (used in hooks). A lease callouts
-    ///        will be executed if this parameter is passed (and there are callouts
-    ///        registered)
-    /// @param fake_allocation Is this real i.e. REQUEST (false) or just picking
-    ///        an address for DISCOVER that is not really allocated (true)
+    /// @param ctx client context that contains additional parameters.
+    ///
+    /// In particular, the following fields from Client context are used:
+    /// - @ref ClientContext4::subnet_ Subnet the lease is allocated from
+    /// - @ref ClientContext4::clientid_ Client identifier
+    /// - @ref ClientContext4::hwaddr_ Client's hardware address
+    /// - @ref ClientContext4::fwd_dns_update_ Indicates whether forward DNS update
+    ///        will be performed for the client (true) or not (false).
+    /// - @ref ClientContext4::rev_dns_update_ Indicates whether reverse DNS update
+    ///        will be performed for the client (true) or not (false).
+    /// - @ref ClientContext4::hostname_ A string carrying hostname to be used for
+    ///        DNS updates.
+    /// - @ref ClientContext4::callout_handle_ a callout handle (used in hooks).
+    ///        A lease callouts will be executed if this parameter is passed
+    ///        (and there are callouts registered)
+    /// - @ref ClientContext4::fake_allocation_ Is this real i.e. REQUEST (false)
+    ///        or just picking an address for DISCOVER that is not really
+    ///        allocated (true)
     /// @return allocated lease (or NULL in the unlikely case of the lease just
     ///        becomed unavailable)
-    Lease4Ptr createLease4(const SubnetPtr& subnet, const DuidPtr& clientid,
-                           const HWAddrPtr& hwaddr,
-                           const isc::asiolink::IOAddress& addr,
-                           const bool fwd_dns_update,
-                           const bool rev_dns_update,
-                           const std::string& hostname,
-                           const isc::hooks::CalloutHandlePtr& callout_handle,
-                           bool fake_allocation = false);
+    Lease4Ptr createLease4(const ClientContext4& ctx,
+                           const isc::asiolink::IOAddress& addr);
 
     /// @brief Updates the specified lease with the information from a context.
     ///
@@ -778,23 +798,23 @@ private:
     ///        should be 128 for other lease types
     ///
     /// The following fields of the ctx structure are used:
-    /// @ref ClientContext6::subnet_ subnet the lease is allocated from
-    /// @ref ClientContext6::duid_ client's DUID
-    /// @ref ClientContext6::iaid_ IAID from the IA_NA container the client sent to us
-    /// @ref ClientContext6::type_ lease type (IA, TA or PD)
-    /// @ref ClientContext6::fwd_dns_update_ A boolean value which indicates that server takes
-    ///        responsibility for the forward DNS Update for this lease
+    /// - @ref ClientContext6::subnet_ subnet the lease is allocated from
+    /// - @ref ClientContext6::duid_ client's DUID
+    /// - @ref ClientContext6::iaid_ IAID from the IA_NA container the client sent to us
+    /// - @ref ClientContext6::type_ lease type (IA, TA or PD)
+    /// - @ref ClientContext6::fwd_dns_update_ A boolean value which indicates that
+    ///        server takes responsibility for the forward DNS Update for this lease
     ///        (if true).
-    /// @ref ClientContext6::rev_dns_update_ A boolean value which indicates that server takes
-    ///        responsibility for the reverse DNS Update for this lease
+    /// - @ref ClientContext6::rev_dns_update_ A boolean value which indicates that
+    ///        server takes responsibility for the reverse DNS Update for this lease
     ///        (if true).
-    /// @ref ClientContext6::hostname_ A fully qualified domain-name of the client.
-    /// @ref ClientContext6::hwaddr_ Hardware address (optional, may be null for Lease6)
-    /// @ref ClientContext6::callout_handle_ a callout handle (used in hooks). A lease callouts
-    ///        will be executed if this parameter is passed (and there are callouts
-    ///        registered)
-    /// @ref ClientContext6::fake_allocation_ is this real i.e. REQUEST (false) or just picking
-    ///        an address for SOLICIT that is not really allocated (true)
+    /// - @ref ClientContext6::hostname_ A fully qualified domain-name of the client.
+    /// - @ref ClientContext6::hwaddr_ Hardware address (optional, may be null for Lease6)
+    /// - @ref ClientContext6::callout_handle_ a callout handle (used in hooks). A
+    ///        lease callouts will be executed if this parameter is passed (and there
+    ///        are callouts registered)
+    /// - @ref ClientContext6::fake_allocation_ is this real i.e. REQUEST (false) or
+    ///        just picking an address for SOLICIT that is not really allocated (true)
     /// @return allocated lease (or NULL in the unlikely case of the lease just
     ///         became unavailable)
     Lease6Ptr createLease6(ClientContext6& ctx,
