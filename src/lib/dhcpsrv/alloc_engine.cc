@@ -1384,8 +1384,8 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
     // reserved for another client, and must be in the range of the
     // dynamic pool.
     if (!new_lease && !ctx.requested_address_.isV4Zero() &&
-        !addressReserved(ctx.requested_address_, ctx) &&
-        ctx.subnet_->inPool(Lease::TYPE_V4, ctx.requested_address_)) {
+        ctx.subnet_->inPool(Lease::TYPE_V4, ctx.requested_address_) &&
+        !addressReserved(ctx.requested_address_, ctx)) {
 
         new_lease = allocateOrReuseLease4(ctx.requested_address_, ctx);
     }
