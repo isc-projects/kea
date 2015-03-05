@@ -1077,13 +1077,11 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     // may be used instead. If fake_allocation is set to false, the lease will
     // be inserted into the LeaseMgr as well.
     /// @todo pass the actual FQDN data.
-    Lease4Ptr old_lease;
-    Lease4Ptr lease = alloc_engine_->allocateLease4(subnet, client_id, hwaddr,
-                                                    hint, fqdn_fwd, fqdn_rev,
-                                                    hostname,
-                                                    fake_allocation,
-                                                    callout_handle,
-                                                    old_lease);
+    AllocEngine::ClientContext4 ctx(subnet, client_id, hwaddr, hint, fqdn_fwd,
+                                    fqdn_rev, hostname, fake_allocation);
+    ctx.callout_handle_ = callout_handle;
+
+    Lease4Ptr lease = alloc_engine_->allocateLease4(ctx);
 
     if (lease) {
         // We have a lease! Let's set it in the packet and send it back to
@@ -1172,7 +1170,7 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
         // real allocation.
         if (!fake_allocation && CfgMgr::instance().ddnsEnabled()) {
             try {
-                createNameChangeRequests(lease, old_lease);
+                createNameChangeRequests(lease, ctx.old_lease_);
             } catch (const Exception& ex) {
                 LOG_ERROR(dhcp4_logger, DHCP4_NCR_CREATION_FAILED)
                     .arg(ex.what());
