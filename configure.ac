@@ -278,6 +278,17 @@ case "$host" in
 	ENV_LIBRARY_PATH=DYLD_LIBRARY_PATH
 	;;
 *-freebsd*)
+	# On FreeBSD10.1 pthread_cond_destroy doesn't work as documented, which
+	# causes the CondVarTest.destroyWhileWait test to fail. According to the
+	# pthread_cond_destroy documentation for FreeBSD, this function should
+	# return EBUSY error when there is a thread waiting for the conditional
+	# variable, whereas this function returned success code. We treat it here
+	# as an undefined behavior. Also note that this issue was only visible
+	# when gtest 1.7 was in use, because the previous versions of gtest
+	# didn't seem to have support for the death tests on FreeBSD. As a
+	# result, the test was not executed and the error didn't occur.
+	kea_undefined_pthread_behavior=yes
+
 	SET_ENV_LIBRARY_PATH=yes
 	;;
 *-netbsd*)
