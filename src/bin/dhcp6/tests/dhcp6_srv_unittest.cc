@@ -40,6 +40,7 @@
 #include <hooks/server_hooks.h>
 
 #include <dhcp6/tests/dhcp6_test_utils.h>
+#include <dhcp6/tests/dhcp6_client.h>
 #include <dhcp/tests/pkt_captures.h>
 #include <config/ccsession.h>
 #include <boost/pointer_cast.hpp>
@@ -2092,6 +2093,188 @@ TEST_F(Dhcpv6SrvTest, relayOverrideAndClientClass) {
     // be accepted in the first subnet, because both class and relay-ip match.
     sol->addClass("foo");
     EXPECT_TRUE(subnet1 == srv_.selectSubnet(sol));
+}
+
+/// @brief Creates RSOO option with suboptions
+///
+/// Creates Relay-Supplied Options option that includes nested options. The
+/// codes of those nested options are specified in codes parameter. Content of
+/// the options is controlled with payload parameter. When it is zero, option
+/// code will be used (e.g. option 100 will contain repeating bytes of value 100).
+/// When non-zero is used, payload will used. Each suboption is always set to
+/// arbitrary chosen value of 10.
+///
+/// @param codes a vector of option codes to be created
+/// @param payload specified payload (0 = fill payload with repeating option code)
+/// @return RSOO with nested options
+OptionPtr createRSOO(const std::vector<uint16_t> codes, uint8_t payload = 0) {
+    OptionDefinitionPtr def = LibDHCP::getOptionDef(Option::V6, D6O_RSOO);
+    if (!def) {
+        isc_throw(BadValue, "Can't find RSOO definition");
+    }
+    OptionPtr rsoo_container(new OptionCustom(*def, Option::V6));
+
+    for (int i = 0; i < codes.size(); ++i) {
+        OptionBuffer buf(10, payload ? payload : codes[i]); // let's make the option 10 bytes long
+        rsoo_container->addOption(OptionPtr(new Option(Option::V6, codes[i], buf)));
+    }
+
+    return (rsoo_container);
+}
+
+// Test that the server processes RSOO (Relay Supplied Options option) correctly,
+// i.e. it includes in its response the options that are inserted by the relay.
+// The server must do this only for options that are RSOO-enabled.
+TEST_F(Dhcpv6SrvTest, rsoo) {
+
+    Dhcp6Client client;
+
+    string config =
+        "{"
+        "    \"relay-supplied-options\": [ \"110\", \"120\", \"130\" ],"
+        "    \"preferred-lifetime\": 3000,"
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"subnet6\": [ { "
+        "        \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
+        "        \"subnet\": \"2001:db8::/48\" "
+        "     } ],"
+        "    \"valid-lifetime\": 4000"
+        "}";
+
+    EXPECT_NO_THROW(configure(config, *client.getServer()));
+
+    // Now pretend the packet came via one relay.
+    Pkt6::RelayInfo relay;
+    relay.msg_type_ = DHCPV6_RELAY_FORW;
+    relay.hop_count_ = 1;
+    relay.linkaddr_ = IOAddress("2001:db8::1");
+    relay.peeraddr_ = IOAddress("fe80::1");
+    vector<uint16_t> rsoo1;
+    rsoo1.push_back(109);
+    rsoo1.push_back(110);
+    rsoo1.push_back(111);
+
+    // The relay will request echoing back 3 options: 109, 110, 111.
+    // The configuration allows echoing back only 110.
+    OptionPtr opt = createRSOO(rsoo1);
+    relay.options_.insert(make_pair(opt->getType(), opt));
+    client.relay_info_.push_back(relay);
+
+    client.doSARR();
+
+    // Option 110 should be copied to the client
+    EXPECT_NE(client.config_.options_.find(110), client.config_.options_.end());
+
+    // Options 109 and 111 should not be copied (they are not RSOO-enabled)
+    EXPECT_EQ(client.config_.options_.find(109), client.config_.options_.end());
+    EXPECT_EQ(client.config_.options_.find(111), client.config_.options_.end());
+}
+
+// Test that the server processes RSOO (Relay Supplied Options option) correctly
+// when there are more relays. In particular, the following case is tested:
+// if relay1 inserts option A and B, relay2 inserts option B and C, the response
+// should include options A, B and C. The server must use instance of option B
+// that comes from the first relay, not the second one.
+TEST_F(Dhcpv6SrvTest, rsoo2relays) {
+
+    Dhcp6Client client;
+
+    string config =
+        "{"
+        "    \"relay-supplied-options\": [ \"110\", \"120\", \"130\" ],"
+        "    \"preferred-lifetime\": 3000,"
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"subnet6\": [ { "
+        "        \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
+        "        \"subnet\": \"2001:db8::/48\" "
+        "     } ],"
+        "    \"valid-lifetime\": 4000"
+        "}";
+
+    EXPECT_NO_THROW(configure(config, *client.getServer()));
+
+    // Now pretend the packet came via two relays.
+
+    // This situation reflects the following case:
+    // client----relay1----relay2----server
+
+    // Fabricate the first relay.
+    Pkt6::RelayInfo relay1;
+    relay1.msg_type_ = DHCPV6_RELAY_FORW;
+    relay1.hop_count_ = 1;
+    relay1.linkaddr_ = IOAddress("2001:db8::1");
+    relay1.peeraddr_ = IOAddress("fe80::1");
+    vector<uint16_t> rsoo1;
+    rsoo1.push_back(110); // The relay1 will send 2 options: 110, 120
+    rsoo1.push_back(120);
+    OptionPtr opt = createRSOO(rsoo1, 1); // use 0x1 as payload
+    relay1.options_.insert(make_pair(opt->getType(), opt));
+
+    // Now the second relay.
+    Pkt6::RelayInfo relay2;
+    relay2.msg_type_ = DHCPV6_RELAY_FORW;
+    relay2.hop_count_ = 1;
+    relay2.linkaddr_ = IOAddress("2001:db8::1");
+    relay2.peeraddr_ = IOAddress("fe80::1");
+    vector<uint16_t> rsoo2;
+    rsoo2.push_back(120); // The relay2 will send 2 options: 120, 130
+    rsoo2.push_back(130);
+    opt = createRSOO(rsoo2, 2); // use 0x2 as payload
+    relay2.options_.insert(make_pair(opt->getType(), opt));
+
+    // The relays ecapsulate packet in this order: relay1, relay2, but the server
+    // decapsulates the packet in reverse order.
+    client.relay_info_.push_back(relay2);
+    client.relay_info_.push_back(relay1);
+
+    // There's a conflict here. Both relays want the server to echo back option
+    // 120. According to RFC6422, section 6:
+    //
+    // When such a conflict exists, the DHCP server MUST choose no more than
+    // one of these options to forward to the client.  The DHCP server MUST
+    // NOT forward more than one of these options to the client.
+    //
+    // By default, the DHCP server MUST choose the innermost value -- the
+    // value supplied by the relay agent closest to the DHCP client -- to
+    // forward to the DHCP client.
+
+    // Let the client do his thing.
+    client.doSARR();
+
+    int count110 = 0; // Let's count how many times option 110 was echoed back
+    int count120 = 0; // Let's count how many times option 120 was echoed back
+    int count130 = 0; // Let's count how many times option 130 was echoed back
+    OptionPtr opt120;
+    for (OptionCollection::const_iterator it = client.config_.options_.begin();
+         it != client.config_.options_.end(); ++it) {
+        switch (it->second->getType()) {
+        case 110:
+            count110++;
+            break;
+        case 120:
+            count120++;
+            opt120 = it->second;
+            break;
+        case 130:
+            count130++;
+            break;
+        default:
+            break;
+        }
+    }
+
+    // We expect to have exactly one instance of each option code.
+    EXPECT_EQ(1, count110);
+    EXPECT_EQ(1, count120);
+    EXPECT_EQ(1, count130);
+
+    // Now, let's check if the proper instance of option 120 was sent. It should
+    // match the content of what the first relay had sent.
+    ASSERT_TRUE(opt120);
+    vector<uint8_t> expected(10, 1);
+    EXPECT_EQ(expected, opt120->getData());
 }
 
 /// @todo: Add more negative tests for processX(), e.g. extend sanityCheck() test

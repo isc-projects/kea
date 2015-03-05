@@ -606,6 +606,16 @@ protected:
     /// @return HWaddr pointer (or NULL if configured methods fail)
     static HWAddrPtr getMAC(const Pkt6Ptr& pkt);
 
+    /// @brief Processes Relay-supplied options, if present
+    ///
+    /// This method implements RFC6422. It checks if there are any RSOO options
+    /// inserted by the relay agents in the query message. If there are, they
+    /// are copied over to the response if the met the following criteria:
+    /// - the option is marked as RSOO-enabled (see relay-supplied-options
+    ///   configuration parameter)
+    /// - there is no such option provided by the server)
+    void processRSOO(const Pkt6Ptr& query, const Pkt6Ptr& rsp);
+
     /// @brief this is a prefix added to the contend of vendor-class option
     ///
     /// If incoming packet has a vendor class option, its content is
