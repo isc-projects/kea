@@ -1368,6 +1368,43 @@ should include options from the isc option space:
         </para>
       </section>
 
+    <section id="dhcp6-rsoo">
+      <title>Relay-Supplied Options</title>
+      <para><ulink url="http://tools.ietf.org/html/rfc6422">RFC 6422</ulink>
+      defines a mechanism called Relay supplied options. In certain cases relay
+      agents are the only entities that may have specific information. They can
+      insert options when relaying messages from the client to the server. The
+      server will then do certain checks and copy those options to the response
+      that will be sent to the client.</para>
+
+      <para>There are certain conditions that must be met for the option to be
+      included. First, the server must not provide the option by itself. In
+      other words, if both relay and server provide an option, the server always
+      takes precedence. Second, the option must be RSOO-enabled. IANA mantains a
+      list of RSOO-enabled options here: <ulink url="http://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml#options-relay-supplied">List of RSOO-enabled options</ulink>.
+      However, there may cases when system administrators want to echo other
+      options. Kea can be instructed to treat other options as RSOO-enabled.
+      For example, to mark options 110, 120 and 130 as RSOO-enabled, the following
+      syntax may be used:
+<screen>
+"Dhcp6": {
+    <userinput>"relay-supplied-options": [ "110", "120", "130" ],</userinput>
+    ...
+}
+</screen>
+      </para>
+      <para>As of March 2015, the only option 65 is RSOO-enabled by IANA. This
+      option will always be treated as such and there's no need to explicitly
+      mark it. Also, when enabling standard options, it is possible to use their
+      names, rather than option code, e.g. (e.g. use
+      <command>dns-servers</command> instead of <command>23</command>). See
+      <xref linkend="dhcp6-std-options-list" /> for the names. In certain cases
+      it could also work for custom options, but due to the nature of the parser
+      code this may be unreliable and should be avoided.
+      </para>
+
+    </section>
+
     <section id="dhcp6-client-classifier">
       <title>Client Classification in DHCPv6</title>
       <note>
@@ -2421,7 +2458,8 @@ should include options from the isc option space:
             <simpara><emphasis>Dynamic Host Configuration Protocol for IPv6</emphasis>,
             <ulink url="http://tools.ietf.org/html/rfc3315">RFC 3315</ulink>:
             Supported messages are SOLICIT,
-            ADVERTISE, REQUEST, RELEASE, RENEW, REBIND, CONFIRM and REPLY.</simpara>
+            ADVERTISE, REQUEST, RELEASE, RENEW, REBIND, INFORMATION-REQUEST,
+            CONFIRM and REPLY.</simpara>
           </listitem>
           <listitem>
             <simpara><emphasis>IPv6 Prefix Options for
@@ -2447,6 +2485,13 @@ should include options from the isc option space:
             Fully Qualified Domain Name (FQDN) Option</emphasis>,
             <ulink url="http://tools.ietf.org/html/rfc4704">RFC 4704</ulink>:
             Supported option is CLIENT_FQDN.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><emphasis>Relay-Supplied DHCP Options</emphasis>,
+            <ulink url="http://tools.ietf.org/html/rfc6422">RFC 6422</ulink>:
+            Full functionality is supported: OPTION_RSOO, ability of the server
+            to echo back the options, checks whether an option is RSOO-enabled,
+            ability to mark additional options as RSOO-enabled.</simpara>
           </listitem>
 	  <listitem>
 	    <simpara><emphasis>Client Link-Layer Address Option in
