@@ -1308,13 +1308,8 @@ TEST_F(Pkt6Test, rsoo) {
 
     ASSERT_EQ(2, msg->relay_info_.size());
 
-    OptionPtr opt;
-
-    Pkt6::RelayInfo& relay1 = msg->relay_info_[0];
-    Pkt6::RelayInfo& relay2 = msg->relay_info_[1];
-
     // There should be an RSOO option in the outermost relay
-    opt = msg->getRelayOption(D6O_RSOO, 1);
+    OptionPtr opt = msg->getRelayOption(D6O_RSOO, 1);
     ASSERT_TRUE(opt);
 
     EXPECT_EQ(D6O_RSOO, opt->getType());
