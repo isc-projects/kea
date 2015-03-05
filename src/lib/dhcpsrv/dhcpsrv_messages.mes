@@ -183,8 +183,7 @@ the new parameters.
 This warning message is issued when the DHCP server finds that the
 address reserved for the client can't be offered because this address
 is currently allocated to another client. The server will try to allocate
-a different (temporary) address to the client to use until the conflict
-is resolved.
+a different address to the client to use until the conflict is resolved.
 
 % DHCPSRV_DHCP_DDNS_ERROR_EXCEPTION error handler for DHCP_DDNS IO generated an expected exception: %1
 This is an error message that occurs when an attempt to send a request to

@@ -202,7 +202,7 @@ protected:
                     const isc::asiolink::IOAddress& hint);
     };
 
-    public:
+public:
 
     /// @brief specifies allocation type
     typedef enum {
@@ -391,12 +391,7 @@ public:
         bool allow_new_leases_in_renewals_;
 
         /// @brief Default constructor.
-        ClientContext6()
-           : subnet_(), duid_(), iaid_(0), type_(Lease::TYPE_NA), hwaddr_(),
-             hints_(), fwd_dns_update_(false), rev_dns_update_(false), hostname_(""),
-             callout_handle_(), fake_allocation_(false), old_leases_(), host_(),
-             query_(), ia_rsp_(), allow_new_leases_in_renewals_(false) {
-        }
+        ClientContext6();
 
         /// @brief Constructor with parameters.
         ///
@@ -422,21 +417,7 @@ public:
                        const uint32_t iaid, const isc::asiolink::IOAddress& hint,
                        const Lease::Type type, const bool fwd_dns, const bool
                        rev_dns, const std::string& hostname, const bool
-                       fake_allocation):
-            subnet_(subnet), duid_(duid), iaid_(iaid), type_(type), hwaddr_(),
-            hints_(), fwd_dns_update_(fwd_dns), rev_dns_update_(rev_dns),
-            hostname_(hostname), fake_allocation_(fake_allocation),
-            old_leases_(), host_(), query_(), ia_rsp_(),
-            allow_new_leases_in_renewals_(false){
-
-            static asiolink::IOAddress any("::");
-
-            if (hint != any) {
-                hints_.push_back(std::make_pair(hint, 128));
-            }
-            // callout_handle, host pointers initiated to NULL by their
-            // respective constructors.
-        }
+                       fake_allocation);
     };
 
     /// @brief Allocates IPv6 leases for a given IA container
@@ -853,15 +834,19 @@ public:
     /// dynamic pool or even an address currently allocated for this client.
     ///
     /// It is possible that the address reserved for the particular client
-    /// is in use by another client, e.g. as a result of pools reconfigruation.
+    /// is in use by another client, e.g. as a result of pools reconfiguration.
     /// In this case, when the client requests allocation of the reserved
     /// address and the server determines that it is leased to someone else,
-    /// the allocation engine doesn't allocate a lease for the client having
-    /// a reservation. When the client having a lease returns to renew, the
-    /// allocation engine doesn't extend the lease for it and returns a NULL
-    /// pointer. The client falls back to the 4-way exchange and a different
-    /// lease is allocated. At this point, the reserved address is freed and
-    /// can be allocated to the client which holds this reservation.
+    /// the allocation engine allocates a different address for this client.
+    ///
+    /// When the client having a lease returns to renew, the allocation engine
+    /// doesn't extend the lease for it and returns a NULL pointer. The client
+    /// falls back to the 4-way exchange and a different lease is allocated.
+    /// At this point, the reserved address is freed and can be allocated to
+    /// the client which holds this reservation. However, this client has a
+    /// lease for a different address at this time. When the client renews its
+    /// lease it receives the DHCPNAK and falls back to the DHCP server
+    /// discovery and obtains the lease for the reserved address.
     ///
     /// When a server should do DNS updates, it is required that allocation
     /// returns the information about how the lease was obtained by the allocation
@@ -1095,6 +1080,10 @@ private:
     /// lease to be held for the client.
     ///
     /// Note that this doesn't update the lease address.
+    ///
+    /// @warning This method doesn't check if the pointer to the lease is
+    /// valid nor if the subnet to the pointer in the @c ctx is valid.
+    /// The caller is responsible for making sure that they are valid.
     ///
     /// @param [out] lease A pointer to the lease to be updated.
     /// @param ctx A context containing information from the server about the
