@@ -120,19 +120,34 @@ TEST(IOAddressTest, isV4) {
 }
 
 TEST(IOAddressTest, isV4Zero) {
+    // 0.0.0.0
     const IOAddress address_zero("0.0.0.0");
-    const IOAddress address_non_zero("192.0.2.3");
-
     EXPECT_TRUE(address_zero.isV4Zero());
+    // 192.0.2.3
+    const IOAddress address_non_zero("192.0.2.3");
     EXPECT_FALSE(address_non_zero.isV4Zero());
+    // 0.0.0.100
+    const IOAddress address_non_zero1("0.0.0.100");
+    EXPECT_FALSE(address_non_zero1.isV4Zero());
+    // 64.0.0.0
+    const IOAddress address_non_zero2("64.0.0.0");
+    EXPECT_FALSE(address_non_zero2.isV4Zero());
 }
 
 TEST(IOAddressTest, isV4Bcast) {
+    // 255.255.255.255
     const IOAddress address_bcast("255.255.255.255");
-    const IOAddress address_non_bcast("10.2.3.4");
-
     EXPECT_TRUE(address_bcast.isV4Bcast());
+    // 10.2.3.4
+    const IOAddress address_non_bcast("10.2.3.4");
     EXPECT_FALSE(address_non_bcast.isV4Bcast());
+    // 255.255.255.23
+    const IOAddress address_non_bcast1("255.255.255.23");
+    EXPECT_FALSE(address_non_bcast1.isV4Bcast());
+    // 123.255.255.255
+    const IOAddress address_non_bcast2("123.255.255.255");
+    EXPECT_FALSE(address_non_bcast2.isV4Bcast());
+
 }
 
 TEST(IOAddressTest, isV6) {
@@ -144,11 +159,18 @@ TEST(IOAddressTest, isV6) {
 }
 
 TEST(IOAddressTest, isV6Zero) {
+    // ::
     const IOAddress address_zero("::");
-    const IOAddress address_non_zero("0.0.0.0");
-
     EXPECT_TRUE(address_zero.isV6Zero());
+    // 0.0.0.0
+    const IOAddress address_non_zero("0.0.0.0");
     EXPECT_FALSE(address_non_zero.isV6Zero());
+    // ::ff
+    const IOAddress address_non_zero1("::ff");
+    EXPECT_FALSE(address_non_zero1.isV6Zero());
+    // ff::
+    const IOAddress address_non_zero2("::ff");
+    EXPECT_FALSE(address_non_zero2.isV6Zero());
 }
 
 TEST(IOAddressTest, uint32) {

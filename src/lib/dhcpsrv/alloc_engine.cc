@@ -288,6 +288,37 @@ AllocEngine::AllocatorPtr AllocEngine::getAllocator(Lease::Type type) {
 // #    DHCPv6 lease allocation code starts here.
 // ##########################################################################
 
+AllocEngine::ClientContext6::ClientContext6()
+    : subnet_(), duid_(), iaid_(0), type_(Lease::TYPE_NA), hwaddr_(),
+      hints_(), fwd_dns_update_(false), rev_dns_update_(false), hostname_(""),
+      callout_handle_(), fake_allocation_(false), old_leases_(), host_(),
+      query_(), ia_rsp_(), allow_new_leases_in_renewals_(false) {
+}
+
+AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet, const DuidPtr& duid,
+                                            const uint32_t iaid,
+                                            const isc::asiolink::IOAddress& hint,
+                                            const Lease::Type type, const bool fwd_dns,
+                                            const bool rev_dns,
+                                            const std::string& hostname,
+                                            const bool fake_allocation):
+    subnet_(subnet), duid_(duid), iaid_(iaid), type_(type), hwaddr_(),
+    hints_(), fwd_dns_update_(fwd_dns), rev_dns_update_(rev_dns),
+    hostname_(hostname), fake_allocation_(fake_allocation),
+    old_leases_(), host_(), query_(), ia_rsp_(),
+    allow_new_leases_in_renewals_(false) {
+
+    static asiolink::IOAddress any("::");
+
+    if (hint != any) {
+        hints_.push_back(std::make_pair(hint, 128));
+    }
+    // callout_handle, host pointers initiated to NULL by their
+    // respective constructors.
+}
+
+
+
 Lease6Collection
 AllocEngine::allocateLeases6(ClientContext6& ctx) {
 
@@ -1177,7 +1208,7 @@ addressReserved(const IOAddress& address, const AllocEngine::ClientContext4& ctx
             return (host_hwaddr->hwaddr_ != ctx.hwaddr_->hwaddr_);
 
         } else {
-            return (true);
+            return (false);
 
         }
     }
@@ -1776,16 +1807,6 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
 void
 AllocEngine::updateLease4Information(const Lease4Ptr& lease,
                                      AllocEngine::ClientContext4& ctx) const {
-    // This should not happen in theory.
-    if (!lease) {
-        isc_throw(BadValue, "null lease specified for updateLease4Information");
-    }
-
-    if (!ctx.subnet_) {
-        isc_throw(BadValue, "null subnet specified for"
-                  " updateLease4Information");
-    }
-
     lease->subnet_id_ = ctx.subnet_->getID();
     lease->hwaddr_ = ctx.hwaddr_;
     lease->client_id_ = ctx.clientid_;
