@@ -1,3 +1,12 @@
+904.	[bug]		marcin
+	FreeBSD-only change: Disabled unit test expecting the death
+	of the process when conditional variable was destroyed when
+	the thread was still waiting for the variable. This is due
+	invalid behavior of the pthread_cond_destroy on FreeBSD
+	which should return EBUSY in such case, whereas it returns
+	success error code.
+	(Trac #3710, git bdb442402ef023055715baf597c401c9974a7fb2)
+
 903.	[bug]		stephen
 	Corrected arithmetical error in the rate control module of
 	perfdhcp which led to the incorrect calculation of the rate
