@@ -143,7 +143,7 @@ TEST_F(AllocEngine4Test, allocWithValidHint4) {
 
 
 // This test checks if the allocation with a hint that is in range,
-// in pool, but is currently used) can succeed
+// in pool, but is currently used can succeed
 TEST_F(AllocEngine4Test, allocWithUsedHint4) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
@@ -189,7 +189,7 @@ TEST_F(AllocEngine4Test, allocWithUsedHint4) {
 }
 
 
-// This test checks if the allocation with a hint that is out the blue
+// This test checks if an allocation with a hint that is out of the blue
 // can succeed. The invalid hint should be ignored completely.
 TEST_F(AllocEngine4Test, allocBogusHint4) {
     boost::scoped_ptr<AllocEngine> engine;
@@ -197,7 +197,7 @@ TEST_F(AllocEngine4Test, allocBogusHint4) {
                                                  100, false)));
     ASSERT_TRUE(engine);
 
-    // Client would like to get a 3000::abc lease, which does not belong to any
+    // Client would like to get a 10.1.1.1 lease, which does not belong to any
     // supported lease. Allocation engine should ignore it and carry on
     // with the normal allocation
     Lease4Ptr lease = engine->allocateLease4(subnet_, clientid_, hwaddr_,
@@ -571,10 +571,10 @@ TEST_F(AllocEngine4Test, requestOtherClientLease) {
     ASSERT_FALSE(new_lease);
 
     new_lease = engine.allocateLease4(subnet_, clientid_, hwaddr_,
-                                                IOAddress("192.0.2.102"),
-                                                false, false, "",
-                                                true, CalloutHandlePtr(),
-                                                old_lease_);
+                                      IOAddress("192.0.2.102"),
+                                      false, false, "",
+                                      true, CalloutHandlePtr(),
+                                      old_lease_);
     ASSERT_TRUE(new_lease);
 
 }
@@ -854,7 +854,7 @@ TEST_F(AllocEngine4Test, reservedAddressHijacked) {
 // - Client B has a reservation for the address in use by client A.
 // - Client B sends a DHCPDISCOVER.
 // - Server determines that the reserved address is in use by a different client
-//   so it offers and address from the dynamic pool.
+//   so it offers an address from the dynamic pool.
 TEST_F(AllocEngine4Test, reservedAddressHijackedFakeAllocation) {
     // Create a reservation for the client B.
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
@@ -1184,7 +1184,7 @@ TEST_F(AllocEngine4Test, reservedAddressConflictResolution) {
     ASSERT_TRUE(offered_lease);
     EXPECT_NE(offered_lease->addr_.toText(), "192.0.2.101");
 
-    // Client A tried to acquire the lease. It should succeed. At this point
+    // Client A trys to acquire the lease. It should succeed. At this point
     // the previous lease should be released and become available for the
     // Client B.
     Lease4Ptr allocated_lease = engine.allocateLease4(subnet_, clientid_,

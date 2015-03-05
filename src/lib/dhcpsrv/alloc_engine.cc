@@ -874,7 +874,7 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
         }
 
         // Let's use whatever callout returned. Hopefully it is the same lease
-        // we handled to it.
+        // we handed to it.
         ctx.callout_handle_->getArgument("lease6", expired);
     }
 
@@ -936,7 +936,7 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
         }
 
         // Let's use whatever callout returned. Hopefully it is the same lease
-        // we handled to it.
+        // we handed to it.
         ctx.callout_handle_->getArgument("lease6", lease);
     }
 
@@ -1100,7 +1100,7 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
         HooksManager::callCallouts(hook_point, *callout_handle);
 
         // Callouts decided to skip the next processing step. The next
-        // processing step would to actually renew the lease, so skip at this
+        // processing step would actually renew the lease, so skip at this
         // stage means "keep the old lease as it is".
         if (callout_handle->getSkip()) {
             skip = true;
@@ -1305,7 +1305,7 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
     // Check if there is a reservation for the client. If there is, we want to
     // assign the reserved address, rather than any other one.
     if (ctx.host_) {
-        // If the client doesn't have a lease or the leased addres is different
+        // If the client doesn't have a lease or the leased address is different
         // than the reserved one then let's try to allocate the reserved address.
         // Otherwise the address that the client has is the one for which it
         // has a reservation, so just renew it.
@@ -1367,7 +1367,7 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
     }
 
     // Some of the methods like reuseExpiredLease4 may set the old lease to point
-    // to the lease which they remove/override. If is it not set, but we have
+    // to the lease which they remove/override. If it is not set, but we have
     // found that the client has the lease the client's lease is the one
     // to return as an old lease.
     if (!ctx.old_lease_ && client_lease) {
@@ -1393,7 +1393,7 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
     // address which it is requesting or renewing. That is, the client should
     // either use the requested IP address option or set the ciaddr. However,
     // we try to be liberal and allow the clients to not specify an address
-    // in which case the allocation engine will pick the suitable address
+    // in which case the allocation engine will pick a suitable address
     // for the client.
     if (!ctx.requested_address_.isV4Zero()) {
         // If the client has specified an address, make sure this address
@@ -1484,7 +1484,7 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
 
     // If we allocated the lease for the client, but the client already had a
     // lease, we will need to return the pointer to the previous lease and
-    // the previous lease need to be removed from the lease database.
+    // the previous lease needs to be removed from the lease database.
     if (new_lease && client_lease) {
         ctx.old_lease_ = Lease4Ptr(new Lease4(*client_lease));
         lease_mgr.deleteLease(client_lease->addr_);
@@ -1558,7 +1558,7 @@ Lease4Ptr AllocEngine::createLease4(const SubnetPtr& subnet,
         }
 
         // Let's use whatever callout returned. Hopefully it is the same lease
-        // we handled to it.
+        // we handed to it.
         callout_handle->getArgument("lease4", lease);
     }
 
@@ -1632,7 +1632,7 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
                                    *ctx.callout_handle_);
 
         // Callouts decided to skip the next processing step. The next
-        // processing step would to actually renew the lease, so skip at this
+        // processing step would actually renew the lease, so skip at this
         // stage means "keep the old lease as it is".
         if (ctx.callout_handle_->getSkip()) {
             skip = true;
@@ -1707,7 +1707,7 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
         }
 
         // Let's use whatever callout returned. Hopefully it is the same lease
-        // we handled to it.
+        // we handed to it.
         ctx.callout_handle_->getArgument("lease4", expired);
     }
 
