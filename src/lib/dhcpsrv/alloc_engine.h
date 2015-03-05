@@ -58,10 +58,6 @@ public:
 class AllocEngine : public boost::noncopyable {
 protected:
 
-    /// @name Declaration of the allocator classes.
-    ///
-    //@{
-
     /// @brief base class for all address/prefix allocation algorithms
     ///
     /// This is an abstract class that should not be used directly, but rather
@@ -211,12 +207,6 @@ public:
         ALLOC_RANDOM     // random - an address is randomly selected
     } AllocType;
 
-    //@}
-
-    /// @name Construction, destruction and allocator.
-    ///
-    //@{
-
     /// @brief Constructor.
     ///
     /// Instantiates necessary services, required to run DHCP server.
@@ -240,13 +230,7 @@ public:
     /// @return pointer to allocator handling a given resource types
     AllocatorPtr getAllocator(Lease::Type type);
 
-    //@}
-
 private:
-
-    /// @name Private members, common for DHCPv4 and DHCPv6 service.
-    ///
-    //@{
 
     /// @brief a pointer to currently used allocator
     ///
@@ -261,13 +245,7 @@ private:
     int hook_index_lease4_select_; ///< index for lease4_select hook
     int hook_index_lease6_select_; ///< index for lease6_select hook
 
-    //@}
-
 public:
-
-    /// @name Public method, structure and types for DHCPv6 leass allocation.
-    ///
-    //@{
 
     /// @brief Defines a single hint (an address + prefix-length).
     ///
@@ -524,13 +502,7 @@ public:
     Lease6Collection
     renewLeases6(ClientContext6& ctx);
 
-    //@}
-
 private:
-
-    /// @name Private methods for DHCPv6 leases allocation
-    ///
-    //@{
 
     /// @brief creates a lease and inserts it in LeaseMgr if necessary
     ///
@@ -689,13 +661,7 @@ private:
     /// @param lease IPv6 lease to be extended.
     void extendLease6(ClientContext6& ctx, Lease6Ptr lease);
 
-    //@}
-
 public:
-
-    /// @name Public method and structure for DHCPv4 lease allocation.
-    ///
-    //@{
 
     /// @brief Context information for the DHCPv4 lease allocation.
     ///
@@ -890,13 +856,7 @@ public:
                              const isc::hooks::CalloutHandlePtr& callout_handle,
                              Lease4Ptr& old_lease);
 
-    //@}
-
 private:
-
-    /// @name Private methods for DHCPv4 lease allocation
-    ///
-    //@{
 
     /// @brief Offers the lease.
     ///
@@ -1090,8 +1050,6 @@ private:
     /// client and its message.
     void updateLease4Information(const Lease4Ptr& lease,
                                  ClientContext4& ctx) const;
-
-    //@}
 };
 
 }; // namespace isc::dhcp
