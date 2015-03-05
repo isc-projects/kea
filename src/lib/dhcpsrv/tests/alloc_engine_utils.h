@@ -379,7 +379,6 @@ public:
     Subnet4Ptr subnet_;         ///< Subnet4 (used in tests)
     Pool4Ptr pool_;             ///< Pool belonging to subnet_
     LeaseMgrFactory factory_;   ///< Pointer to LeaseMgr factory
-    Lease4Ptr old_lease_;       ///< Holds previous instance of the lease.
     AllocEngine::ClientContext4 ctx_; ///< Context information passed to various
                                      ///< allocation engine functions.
 };
