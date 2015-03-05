@@ -634,7 +634,8 @@ TEST_F(DORATest, reservationsWithConflicts) {
                                    IOAddress>(new IOAddress("0.0.0.0"))));
     ASSERT_TRUE(clientB.getContext().response_);
     ASSERT_EQ(DHCPACK, static_cast<int>(clientB.getContext().response_->getType()));
-    ASSERT_NE(clientB.config_.lease_.addr_, in_pool_addr);
+    IOAddress client_b_addr = clientB.config_.lease_.addr_;
+    ASSERT_NE(client_b_addr, in_pool_addr);
 
     // Client A renews the lease.
     client.setState(Dhcp4Client::RENEWING);
@@ -657,6 +658,7 @@ TEST_F(DORATest, reservationsWithConflicts) {
     ASSERT_TRUE(clientB.getContext().response_);
     ASSERT_EQ(DHCPACK, static_cast<int>(clientB.getContext().response_->getType()));
     ASSERT_NE(clientB.config_.lease_.addr_, in_pool_addr);
+    ASSERT_EQ(client_b_addr, clientB.config_.lease_.addr_);
 
     // Client B renews its lease.
     clientB.setState(Dhcp4Client::RENEWING);
@@ -667,6 +669,7 @@ TEST_F(DORATest, reservationsWithConflicts) {
     ASSERT_TRUE(clientB.getContext().response_);
     EXPECT_EQ(DHCPACK, static_cast<int>(clientB.getContext().response_->getType()));
     ASSERT_NE(clientB.config_.lease_.addr_, in_pool_addr);
+    ASSERT_EQ(client_b_addr, clientB.config_.lease_.addr_);
 
     // Client A performs 4-way exchange.
     client.setState(Dhcp4Client::SELECTING);
@@ -681,7 +684,7 @@ TEST_F(DORATest, reservationsWithConflicts) {
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
     // The server should have assigned a different address than the one
     // reserved for the Client B.
-    ASSERT_NE(client.config_.lease_.addr_.toText(), in_pool_addr.toText());
+    ASSERT_NE(client.config_.lease_.addr_, in_pool_addr);
     subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->
         selectSubnet(client.config_.lease_.addr_);
     ASSERT_TRUE(subnet);

@@ -307,10 +307,6 @@ TEST_F(DirectClientTest, renew) {
     ASSERT_NO_THROW(IfaceMgr::instance().openSockets4());
     // Add a subnet.
     ASSERT_NO_FATAL_FAILURE(configureSubnet("10.0.0.0"));
-    // Make sure that the subnet has been really added. Also, the subnet
-    // will be needed to create a lease for a client.
-    Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
-        getCfgSubnets4()->selectSubnet(IOAddress("10.0.0.10"));
 
     // Create the DHCPv4 client.
     Dhcp4Client client;
@@ -343,10 +339,6 @@ TEST_F(DirectClientTest, rebind) {
     ASSERT_NO_THROW(IfaceMgr::instance().openSockets4());
     // Add a subnet.
     ASSERT_NO_FATAL_FAILURE(configureSubnet("10.0.0.0"));
-    // Make sure that the subnet has been really added. Also, the subnet
-    // will be needed to create a lease for a client.
-    Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
-        getCfgSubnets4()->selectSubnet(IOAddress("10.0.0.10"));
 
     // Create the DHCPv4 client.
     Dhcp4Client client;
