@@ -74,9 +74,16 @@ public:
     /// @brief Holds the current client configuration obtained from the
     /// server over DHCP.
     ///
-    /// Currently it simply contains the collection of leases acquired.
+    /// Currently it simply contains the collection of leases acquired
+    /// and a list of options. Note: this is a simple copy of all
+    /// non-IA options and often includes "protocol" options, like
+    /// server-id and client-id.
     struct Configuration {
+        /// @brief List of received leases
         std::vector<LeaseInfo> leases_;
+
+        /// @brief List of received options
+        OptionCollection options_;
 
         /// @brief Status code received in the global option scope.
         uint16_t status_code_;
@@ -387,6 +394,12 @@ public:
 
     /// @brief Link address of the relay to be used for relayed messages.
     asiolink::IOAddress relay_link_addr_;
+
+    /// @brief RelayInfo (information about relays)
+    ///
+    /// Dhcp6Client will typically contruct this info itself, but if
+    /// it is provided here by the test, this data will be used as is.
+    std::vector<Pkt6::RelayInfo> relay_info_;
 
     /// @brief Controls whether the client will send ORO
     ///

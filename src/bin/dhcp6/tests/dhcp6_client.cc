@@ -76,6 +76,8 @@ Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply) {
     for (Opts::const_iterator opt = opts.begin(); opt != opts.end(); ++opt) {
         Option6IAPtr ia = boost::dynamic_pointer_cast<Option6IA>(opt->second);
         if (!ia) {
+            // This is not IA, so let's just store it.
+            config_.options_.insert(*opt);
             continue;
         }
 
@@ -453,13 +455,19 @@ Dhcp6Client::sendMsg(const Pkt6Ptr& msg) {
     srv_->shutdown_ = false;
     // The client is configured to send through the relay. We achieve that
     // adding the relay structure.
-    if (use_relay_) {
-        Pkt6::RelayInfo relay;
-        relay.linkaddr_ = relay_link_addr_;
-        relay.peeraddr_ = asiolink::IOAddress("fe80::1");
-        relay.msg_type_ = DHCPV6_RELAY_FORW;
-        relay.hop_count_ = 1;
-        msg->relay_info_.push_back(relay);
+    if (use_relay_ || !relay_info_.empty()) {
+        if (relay_info_.empty()) {
+            // Let's craft the relay info by hand
+            Pkt6::RelayInfo relay;
+            relay.linkaddr_ = relay_link_addr_;
+            relay.peeraddr_ = asiolink::IOAddress("fe80::1");
+            relay.msg_type_ = DHCPV6_RELAY_FORW;
+            relay.hop_count_ = 1;
+            msg->relay_info_.push_back(relay);
+        } else {
+            // The test provided relay_info_, let's use that.
+            msg->relay_info_ = relay_info_;
+        }
     }
     // Repack the message to simulate wire-data parsing.
     msg->pack();
