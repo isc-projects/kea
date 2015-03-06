@@ -1,3 +1,8 @@
+905.	[func]		marcin
+	DHCPv4 server assigns an address from the dynamic address
+	pool if the reserved address is in use by another client.
+	(Trac #3694, git 95b09ff53b941691cba172c933de0682b05a0d85)
+
 904.	[bug]		marcin
 	FreeBSD-only change: Disabled unit test expecting the death
 	of the process when conditional variable was destroyed when
