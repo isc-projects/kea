@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011,2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -61,11 +61,12 @@ MyType::toWire(AbstractMessageRenderer& renderer) const {
 }
 
 int
-MyType::compare(const Rdata& other) const {
+MyType::compare(const Rdata&) const {
     // The compare method normally begins with this dynamic cast.
     // cppcheck-suppress unreadVariable
-    const MyType& other_mytype = dynamic_cast<const MyType&>(other);
+    // const MyType& other_mytype = dynamic_cast<const MyType&>(other);
     // ...
+    return (0);
 }
 
 // END_RDATA_NAMESPACE
