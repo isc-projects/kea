@@ -845,6 +845,7 @@ TEST_F(Dhcpv4SrvTest, RenewBasic) {
     req->setYiaddr(addr);
     req->setCiaddr(addr); // client's address
     req->setIface("eth0");
+    req->setHWAddr(hwaddr2);
 
     req->addOption(clientid);
     req->addOption(srv->getServerID());
@@ -2782,6 +2783,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSimple) {
     req->setYiaddr(addr);
     req->setCiaddr(addr); // client's address
     req->setIface("eth0");
+    req->setHWAddr(hwaddr2);
 
     req->addOption(clientid);
     req->addOption(srv_->getServerID());
@@ -2877,6 +2879,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSkip) {
     req->setYiaddr(addr);
     req->setCiaddr(addr); // client's address
     req->setIface("eth0");
+    req->setHWAddr(hwaddr2);
 
     req->addOption(clientid);
     req->addOption(srv_->getServerID());

@@ -29,6 +29,7 @@
 #include <string.h>
 
 using namespace isc::asiolink;
+using namespace isc::dhcp;
 using namespace isc::hooks;
 
 namespace {
@@ -272,6 +273,51 @@ AllocEngine::AllocEngine(AllocType engine_type, unsigned int attempts,
     hook_index_lease4_select_ = Hooks.hook_index_lease4_select_;
     hook_index_lease6_select_ = Hooks.hook_index_lease6_select_;
 }
+
+AllocEngine::AllocatorPtr AllocEngine::getAllocator(Lease::Type type) {
+    std::map<Lease::Type, AllocatorPtr>::const_iterator alloc = allocators_.find(type);
+
+    if (alloc == allocators_.end()) {
+        isc_throw(BadValue, "No allocator initialized for pool type "
+                  << Lease::typeToText(type));
+    }
+    return (alloc->second);
+}
+
+// ##########################################################################
+// #    DHCPv6 lease allocation code starts here.
+// ##########################################################################
+
+AllocEngine::ClientContext6::ClientContext6()
+    : subnet_(), duid_(), iaid_(0), type_(Lease::TYPE_NA), hwaddr_(),
+      hints_(), fwd_dns_update_(false), rev_dns_update_(false), hostname_(""),
+      callout_handle_(), fake_allocation_(false), old_leases_(), host_(),
+      query_(), ia_rsp_(), allow_new_leases_in_renewals_(false) {
+}
+
+AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet, const DuidPtr& duid,
+                                            const uint32_t iaid,
+                                            const isc::asiolink::IOAddress& hint,
+                                            const Lease::Type type, const bool fwd_dns,
+                                            const bool rev_dns,
+                                            const std::string& hostname,
+                                            const bool fake_allocation):
+    subnet_(subnet), duid_(duid), iaid_(iaid), type_(type), hwaddr_(),
+    hints_(), fwd_dns_update_(fwd_dns), rev_dns_update_(rev_dns),
+    hostname_(hostname), fake_allocation_(fake_allocation),
+    old_leases_(), host_(), query_(), ia_rsp_(),
+    allow_new_leases_in_renewals_(false) {
+
+    static asiolink::IOAddress any("::");
+
+    if (hint != any) {
+        hints_.push_back(std::make_pair(hint, 128));
+    }
+    // callout_handle, host pointers initiated to NULL by their
+    // respective constructors.
+}
+
+
 
 Lease6Collection
 AllocEngine::allocateLeases6(ClientContext6& ctx) {
@@ -800,313 +846,9 @@ AllocEngine::removeNonreservedLeases6(ClientContext6& ctx,
         existing_leases.end(), Lease6Ptr()), existing_leases.end());
 }
 
-Lease4Ptr
-AllocEngine::allocateLease4(ClientContext4& ctx) {
-
-    // The NULL pointer indicates that the old lease didn't exist. It may
-    // be later set to non NULL value if existing lease is found in the
-    // database.
-    ctx.old_lease_.reset();
-
-    try {
-
-        // Set allocator.
-        AllocatorPtr allocator = getAllocator(Lease::TYPE_V4);
-
-        if (!ctx.subnet_) {
-            isc_throw(BadValue, "Can't allocate IPv4 address without subnet");
-        }
-
-        if (!ctx.hwaddr_) {
-            isc_throw(BadValue, "HWAddr must be defined");
-        }
-
-        ctx.host_ = HostMgr::instance().get4(ctx.subnet_->getID(), ctx.hwaddr_);
-
-        // If there is a reservation for this client we want to allocate the
-        // reserved address to the client, rather than any other address.
-        if (ctx.host_) {
-            // In some cases the client doesn't supply any address, e.g. when
-            // it sends a DHCPDISCOVER. In such cases, we use the reserved
-            // address as a hint.
-            if (ctx.requested_address_ == IOAddress("0.0.0.0")) {
-                ctx.requested_address_ = ctx.host_->getIPv4Reservation();
-
-            // If the client supplied an address we have to check if this
-            // address is reserved for this client. If not, we will send
-            // DHCPNAK to inform the client that we were not able to
-            // assign a requested address. The fake allocation (DHCPDISCOVER
-            // case) is an exception. In such case we treat the address
-            // supplied by the client as a hint, but we may offer address
-            // other than desired by the client. So, we don't return an
-            // empty lease.
-            } else if (!ctx.fake_allocation_ &&
-                       (ctx.requested_address_ != ctx.host_->getIPv4Reservation())) {
-                return (Lease4Ptr());
-            }
-        }
-
-        // Check if the client has any leases in the lease database, using HW
-        // address or client identifier.
-        LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
-        Lease4Ptr existing = lease_mgr.getLease4(*ctx.hwaddr_, ctx.subnet_->getID());
-        if (!existing && ctx.clientid_) {
-            existing = lease_mgr.getLease4(*ctx.clientid_, ctx.subnet_->getID());
-        }
-
-        // If client has a lease there are two choices. The server may need
-        // to renew (no address change) the lease. Or, the server may need
-        // to replace the lease with a different one. This is the case when
-        // the server has a dynamically assigned lease but an administrator
-        // has made a new reservation for the client for a different address.
-        if (existing) {
-            existing = reallocateClientLease(existing, ctx);
-            // The interrupt_processing_ flag indicates that the lease
-            // reallocation was not successful and that the allocation
-            // engine should cease allocation process for this client.
-            // This may occur when the client is trying to renew the
-            // lease which is reserved for someone else. The server should
-            // send DHCPNAK to indicate that the client should try to
-            // start over the allocation process.
-            if (ctx.interrupt_processing_) {
-                return (Lease4Ptr());
-
-            // If we tried to reallocate the reserved lease we return
-            // at this point regardless if reallocation failed or passed.
-            // We also return when allocation passed, no matter if this
-            // was a reserved address or not.
-            } else  if (ctx.host_ || existing) {
-                return (existing);
-            }
-        }
-
-        // There is no lease in the database for this client, so we will
-        // proceed with a new allocation. We will try to allocate a
-        // reserved address or an address from a dynamic pool if there is
-        // no reservation.
-        if (ctx.host_ || ctx.subnet_->inPool(Lease::TYPE_V4, ctx.requested_address_)) {
-            // If a client is requesting specific IP address, but the
-            // reservation was made for a different address the server returns
-            // NAK to the client. By returning NULL lease here we indicate to
-            // the server that we're not able to fulfil client's request for the
-            // particular IP address. We don't return NULL lease in case of the
-            // fake allocation (DHCPDISCOVER) because in this case the address
-            // supplied by the client is only a hint.
-            if (!ctx.fake_allocation_ && ctx.host_ &&
-                (ctx.requested_address_ != IOAddress("0.0.0.0")) &&
-                (ctx.host_->getIPv4Reservation() != ctx.requested_address_)) {
-                return (Lease4Ptr());
-            }
-
-            // Now let's pick an address to be allocated to the client. The
-            // candidate address may either be a reserved one or the one that
-            // the client requests.
-            IOAddress candidate = 0;
-            ConstHostPtr other_host;
-            if (ctx.host_) {
-                candidate = ctx.host_->getIPv4Reservation();
-
-            } else {
-                candidate = ctx.requested_address_;
-                // If client is requesting an address we have to check if this address
-                // is not reserved for someone else. Note that for DHCPDISCOVER we
-                // treat the requested address as a hint and we don't return an empty
-                // lease.
-                other_host = HostMgr::instance().get4(ctx.subnet_->getID(), candidate);
-                if (!ctx.fake_allocation_ && other_host) {
-                    return (Lease4Ptr());
-                }
-            }
-
-            // If address is not reserved for another client, let's try allocate it.
-            if (!other_host) {
-                // Once we picked an address we want to allocate, we have to check
-                // if this address is available.
-                existing = LeaseMgrFactory::instance().getLease4(candidate);
-                if (!existing) {
-                    // The candidate address is currently unused. Let's create a
-                    // lease for it.
-                    Lease4Ptr lease = createLease4(ctx, candidate);
-
-                    // If we have allocated the lease let's return it. Also,
-                    // always return when tried to allocate reserved address,
-                    // regardless if allocation was successful or not. If it
-                    // was not successful, we will return a NULL pointer which
-                    // indicates to the server that it should send NAK to the
-                    // client.
-                    if (lease || ctx.host_) {
-                        return (lease);
-                    }
-
-                    // There is a lease for this address in the lease database but
-                    // it is possible that the lease has expired, in which case
-                    // we will be able to reuse it.
-                } else {
-                    if (existing->expired()) {
-                        // Save the old lease, before reusing it.
-                        ctx.old_lease_.reset(new Lease4(*existing));
-                        return (reuseExpiredLease(existing, ctx));
-
-                        // The existing lease is not expired (is in use by some
-                        // other client). If we are trying to get this lease because
-                        // the address has been reserved for the client we have no
-                        // choice but to return a NULL lease to indicate that the
-                        // allocation has failed.
-                    } else if (ctx.host_) {
-                        return (Lease4Ptr());
-
-                    }
-
-                }
-            }
-        }
-
-        // No address was requested, requested address was not in pool or the
-        // allocation was not successful so far. Let's try to find a different
-        // address for the client.  Search the pool until first of the following
-        // occurs:
-        // - we find a free address
-        // - we find an address for which the lease has expired
-        // - we exhaust the number of tries
-        uint64_t i = ctx.subnet_->getPoolCapacity(Lease::TYPE_V4);
-        do {
-            // Decrease the number of remaining attempts here so as we guarantee
-            // that it is decreased when the code below uses "continue".
-            --i;
-            IOAddress candidate = allocator->pickAddress(ctx.subnet_,
-                                                         ctx.clientid_,
-                                                         ctx.requested_address_);
-
-            // Check if this address is reserved. There is no need to check for
-            // whom it is reserved, because if it has been reserved for us we would
-            // have already allocated a lease.
-            if (HostMgr::instance().get4(ctx.subnet_->getID(), candidate)) {
-                // Don't allocate a reserved address.
-                continue;
-            }
-
-            Lease4Ptr existing = LeaseMgrFactory::instance().getLease4(candidate);
-            if (!existing) {
-                // there's no existing lease for selected candidate, so it is
-                // free. Let's allocate it.
-                Lease4Ptr lease = createLease4(ctx, candidate);
-                if (lease) {
-                    return (lease);
-                }
-
-                // Although the address was free just microseconds ago, it may have
-                // been taken just now. If the lease insertion fails, we continue
-                // allocation attempts.
-            } else {
-                if (existing->expired()) {
-                    // Save old lease before reusing it.
-                    ctx.old_lease_.reset(new Lease4(*existing));
-                    return (reuseExpiredLease(existing, ctx));
-                }
-            }
-
-            // Continue trying allocation until we run out of attempts
-            // (or attempts are set to 0, which means infinite)
-        } while ((i > 0) || !attempts_);
-
-        // Unable to allocate an address, return an empty lease.
-        LOG_WARN(dhcpsrv_logger, DHCPSRV_ADDRESS4_ALLOC_FAIL).arg(attempts_);
-
-    } catch (const isc::Exception& e) {
-
-        // Some other error, return an empty lease.
-        LOG_ERROR(dhcpsrv_logger, DHCPSRV_ADDRESS4_ALLOC_ERROR).arg(e.what());
-    }
-    return (Lease4Ptr());
-}
-
-Lease4Ptr
-AllocEngine::renewLease4(const Lease4Ptr& lease,
-                         AllocEngine::ClientContext4& ctx) {
-    if (!lease) {
-        isc_throw(BadValue, "null lease specified for renewLease4");
-    }
-
-    // The ctx.host_ possibly contains a reservation for the client for which
-    // we are renewing a lease. If this reservation exists, we assume that
-    // there is no conflict in assigning the address to this client. Note
-    // that the reallocateClientLease checks if the address reserved for
-    // the client matches the address in the lease we're renewing here.
-    if (!ctx.host_) {
-        ConstHostPtr host = HostMgr::instance().get4(ctx.subnet_->getID(),
-                                                     lease->addr_);
-        // Do not renew the lease if:
-        // - If address is reserved for someone else or ...
-        // - renewed address doesn't belong to a pool.
-        if ((host && ctx.hwaddr_ && (*host->getHWAddress() != *ctx.hwaddr_)) ||
-            (!ctx.subnet_->inPool(Lease::TYPE_V4, lease->addr_))) {
-            ctx.interrupt_processing_ = !ctx.fake_allocation_;
-            return (Lease4Ptr());
-        }
-
-    }
-
-    // Let's keep the old data. This is essential if we are using memfile
-    // (the lease returned points directly to the lease4 object in the database)
-    // We'll need it if we want to skip update (i.e. roll back renewal)
-    /// @todo: remove this once #3083 is implemented
-    Lease4 old_values = *lease;
-
-    // Update the lease with the information from the context.
-    updateLease4Information(lease, ctx);
-
-    bool skip = false;
-    // Execute all callouts registered for lease4_renew.
-    if (HooksManager::getHooksManager().
-        calloutsPresent(Hooks.hook_index_lease4_renew_)) {
-
-        // Delete all previous arguments
-        ctx.callout_handle_->deleteAllArguments();
-
-        // Subnet from which we do the allocation. Convert the general subnet
-        // pointer to a pointer to a Subnet4.  Note that because we are using
-        // boost smart pointers here, we need to do the cast using the boost
-        // version of dynamic_pointer_cast.
-        Subnet4Ptr subnet4 = boost::dynamic_pointer_cast<Subnet4>(ctx.subnet_);
-
-        // Pass the parameters
-        ctx.callout_handle_->setArgument("subnet4", subnet4);
-        ctx.callout_handle_->setArgument("clientid", ctx.clientid_);
-        ctx.callout_handle_->setArgument("hwaddr", ctx.hwaddr_);
-
-        // Pass the lease to be updated
-        ctx.callout_handle_->setArgument("lease4", lease);
-
-        // Call all installed callouts
-        HooksManager::callCallouts(Hooks.hook_index_lease4_renew_,
-                                   *ctx.callout_handle_);
-
-        // Callouts decided to skip the next processing step. The next
-        // processing step would to actually renew the lease, so skip at this
-        // stage means "keep the old lease as it is".
-        if (ctx.callout_handle_->getSkip()) {
-            skip = true;
-            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS,
-                      DHCPSRV_HOOK_LEASE4_RENEW_SKIP);
-        }
-    }
-
-    if (!ctx.fake_allocation_ && !skip) {
-        // for REQUEST we do update the lease
-        LeaseMgrFactory::instance().updateLease4(lease);
-    }
-    if (skip) {
-        // Rollback changes (really useful only for memfile)
-        /// @todo: remove this once #3083 is implemented
-        *lease = old_values;
-    }
-
-    return (lease);
-}
-
-Lease6Ptr AllocEngine::reuseExpiredLease(Lease6Ptr& expired,
-                                         ClientContext6& ctx,
-                                         uint8_t prefix_len) {
+Lease6Ptr
+AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
+                               uint8_t prefix_len) {
 
     if (!expired->expired()) {
         isc_throw(BadValue, "Attempt to recycle lease that is still valid");
@@ -1163,7 +905,7 @@ Lease6Ptr AllocEngine::reuseExpiredLease(Lease6Ptr& expired,
         }
 
         // Let's use whatever callout returned. Hopefully it is the same lease
-        // we handled to it.
+        // we handed to it.
         ctx.callout_handle_->getArgument("lease6", expired);
     }
 
@@ -1179,196 +921,6 @@ Lease6Ptr AllocEngine::reuseExpiredLease(Lease6Ptr& expired,
     // an updated lease
     return (expired);
 }
-
-Lease4Ptr
-AllocEngine::reuseExpiredLease(Lease4Ptr& expired,
-                               AllocEngine::ClientContext4& ctx) {
-    if (!expired) {
-        isc_throw(BadValue, "null lease specified for reuseExpiredLease");
-    }
-
-    if (!ctx.subnet_) {
-        isc_throw(BadValue, "null subnet specified for the reuseExpiredLease");
-    }
-
-    updateLease4Information(expired, ctx);
-    expired->fixed_ = false;
-
-    /// @todo: log here that the lease was reused (there's ticket #2524 for
-    /// logging in libdhcpsrv)
-
-    // Let's execute all callouts registered for lease4_select
-    if (ctx.callout_handle_ &&  HooksManager::getHooksManager()
-        .calloutsPresent(hook_index_lease4_select_)) {
-
-        // Delete all previous arguments
-        ctx.callout_handle_->deleteAllArguments();
-
-        // Pass necessary arguments
-
-        // Subnet from which we do the allocation. Convert the general subnet
-        // pointer to a pointer to a Subnet4.  Note that because we are using
-        // boost smart pointers here, we need to do the cast using the boost
-        // version of dynamic_pointer_cast.
-        Subnet4Ptr subnet4 = boost::dynamic_pointer_cast<Subnet4>(ctx.subnet_);
-        ctx.callout_handle_->setArgument("subnet4", subnet4);
-
-        // Is this solicit (fake = true) or request (fake = false)
-        ctx.callout_handle_->setArgument("fake_allocation",
-                                         ctx.fake_allocation_);
-
-        // The lease that will be assigned to a client
-        ctx.callout_handle_->setArgument("lease4", expired);
-
-        // Call the callouts
-        HooksManager::callCallouts(hook_index_lease4_select_, *ctx.callout_handle_);
-
-        // Callouts decided to skip the action. This means that the lease is not
-        // assigned, so the client will get NoAddrAvail as a result. The lease
-        // won't be inserted into the database.
-        if (ctx.callout_handle_->getSkip()) {
-            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS,
-                      DHCPSRV_HOOK_LEASE4_SELECT_SKIP);
-            return (Lease4Ptr());
-        }
-
-        // Let's use whatever callout returned. Hopefully it is the same lease
-        // we handled to it.
-        ctx.callout_handle_->getArgument("lease4", expired);
-    }
-
-    if (!ctx.fake_allocation_) {
-        // for REQUEST we do update the lease
-        LeaseMgrFactory::instance().updateLease4(expired);
-    }
-
-    // We do nothing for SOLICIT. We'll just update database when
-    // the client gets back to us with REQUEST message.
-
-    // it's not really expired at this stage anymore - let's return it as
-    // an updated lease
-    return (expired);
-}
-
-Lease4Ptr
-AllocEngine::replaceClientLease(Lease4Ptr& lease, ClientContext4& ctx) {
-
-    if (!lease) {
-        isc_throw(BadValue, "null lease specified for replaceClientLease");
-    }
-
-    if (!ctx.subnet_) {
-        isc_throw(BadValue, "null subnet specified for replaceClientLease");
-    }
-
-    if (ctx.requested_address_ == IOAddress("0.0.0.0")) {
-        isc_throw(BadValue, "zero address specified for the"
-                  " replaceClientLease");
-    }
-
-    // Remember the previous address for this lease.
-    IOAddress prev_address = lease->addr_;
-
-    if (!ctx.host_) {
-        ConstHostPtr host = HostMgr::instance().get4(ctx.subnet_->getID(),
-                                                     ctx.requested_address_);
-        // If there is a reservation for the new address and the reservation
-        // is made for another client, do not use this address.
-        if (host && ctx.hwaddr_ && (*host->getHWAddress() != *ctx.hwaddr_)) {
-            ctx.interrupt_processing_ = true;
-            return (Lease4Ptr());
-        }
-        lease->addr_ = ctx.requested_address_;
-    } else {
-        lease->addr_ = ctx.host_->getIPv4Reservation();
-    }
-
-    updateLease4Information(lease, ctx);
-
-    bool skip = false;
-    // Execute callouts registered for lease4_select.
-    if (ctx.callout_handle_ && HooksManager::getHooksManager()
-        .calloutsPresent(hook_index_lease4_select_)) {
-
-        // Delete all previous arguments.
-        ctx.callout_handle_->deleteAllArguments();
-
-        // Pass arguments.
-        Subnet4Ptr subnet4 = boost::dynamic_pointer_cast<Subnet4>(ctx.subnet_);
-        ctx.callout_handle_->setArgument("subnet4", subnet4);
-
-        ctx.callout_handle_->setArgument("fake_allocation",
-                                         ctx.fake_allocation_);
-
-        ctx.callout_handle_->setArgument("lease4", lease);
-
-        HooksManager::callCallouts(hook_index_lease4_select_,
-                                   *ctx.callout_handle_);
-
-        if (ctx.callout_handle_->getSkip()) {
-            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS,
-                      DHCPSRV_HOOK_LEASE4_SELECT_SKIP);
-            return (Lease4Ptr());
-        }
-
-        // Let's use whatever callout returned.
-        ctx.callout_handle_->getArgument("lease4", lease);
-
-        // Callouts decided to skip the next processing step. The next
-        // processing step would to actually renew the lease, so skip at this
-        // stage means "keep the old lease as it is".
-        if (ctx.callout_handle_->getSkip()) {
-            skip = true;
-            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS,
-                      DHCPSRV_HOOK_LEASE4_SELECT_SKIP);
-        }
-    }
-
-    /// @todo There should be a callout for a deletion of an old lease.
-    /// The lease4_release callout is in appropriate, because by definition
-    /// it is invoked when DHCPRELEASE packet is received.
-
-    if (!ctx.fake_allocation_ && !skip) {
-        // We can't use LeaseMgr::updateLease because it identifies the
-        // lease by an IP address. Instead, we have to delete an old
-        // lease and add a new one.
-        LeaseMgrFactory::instance().deleteLease(prev_address);
-        LeaseMgrFactory::instance().addLease(lease);
-    }
-
-    return (lease);
-}
-
-Lease4Ptr
-AllocEngine::reallocateClientLease(Lease4Ptr& lease,
-                                   AllocEngine::ClientContext4& ctx) {
-    // Save the old lease, before renewal.
-    ctx.old_lease_.reset(new Lease4(*lease));
-
-    /// The client's address will need to be modified in case if:
-    /// - There is a reservation for the client (likely new one) and
-    ///   the currently used address is different.
-    /// - Client requested some IP address and the requested address
-    ///   is different than the currently used one. Note that if this
-    ///   is a DHCPDISCOVER the requested IP address is ignored when
-    ///   it doesn't match the one in use.
-    if ((ctx.host_ && (ctx.host_->getIPv4Reservation() != lease->addr_)) ||
-        (!ctx.fake_allocation_ &&
-         (ctx.requested_address_ != IOAddress("0.0.0.0")) &&
-         (lease->addr_ != ctx.requested_address_))) {
-        lease = replaceClientLease(lease, ctx);
-        return (lease);
-
-    } else {
-        lease = renewLease4(lease, ctx);
-        if (lease) {
-            return (lease);
-        }
-    }
-
-    return (Lease4Ptr());
-}
-
 
 Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
                                     const IOAddress& addr,
@@ -1415,7 +967,7 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
         }
 
         // Let's use whatever callout returned. Hopefully it is the same lease
-        // we handled to it.
+        // we handed to it.
         ctx.callout_handle_->getArgument("lease6", lease);
     }
 
@@ -1446,153 +998,6 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
             return (Lease6Ptr());
         }
     }
-}
-
-Lease4Ptr AllocEngine::createLease4(const ClientContext4& ctx,
-                                    const IOAddress& addr) {
-    if (!ctx.hwaddr_) {
-        isc_throw(BadValue, "Can't create a lease with NULL HW address");
-    }
-    if (!ctx.subnet_) {
-        isc_throw(BadValue, "Can't create a lease without a subnet");
-    }
-
-    time_t now = time(NULL);
-
-    // @todo: remove this kludge after ticket #2590 is implemented
-    std::vector<uint8_t> local_copy;
-    if (ctx.clientid_) {
-        local_copy = ctx.clientid_->getDuid();
-    }
-
-    Lease4Ptr lease(new Lease4(addr, ctx.hwaddr_, &local_copy[0], local_copy.size(),
-                               ctx.subnet_->getValid(), ctx.subnet_->getT1(),
-                               ctx.subnet_->getT2(),
-                               now, ctx.subnet_->getID()));
-
-    // Set FQDN specific lease parameters.
-    lease->fqdn_fwd_ = ctx.fwd_dns_update_;
-    lease->fqdn_rev_ = ctx.rev_dns_update_;
-    lease->hostname_ = ctx.hostname_;
-
-    // Let's execute all callouts registered for lease4_select
-    if (ctx.callout_handle_ &&
-        HooksManager::getHooksManager().calloutsPresent(hook_index_lease4_select_)) {
-
-        // Delete all previous arguments
-        ctx.callout_handle_->deleteAllArguments();
-
-        // Pass necessary arguments
-
-        // Subnet from which we do the allocation (That's as far as we can go
-        // with using SubnetPtr to point to Subnet4 object. Users should not
-        // be confused with dynamic_pointer_casts. They should get a concrete
-        // pointer (Subnet4Ptr) pointing to a Subnet4 object.
-        Subnet4Ptr subnet4 = boost::dynamic_pointer_cast<Subnet4>(ctx.subnet_);
-        ctx.callout_handle_->setArgument("subnet4", subnet4);
-
-        // Is this solicit (fake = true) or request (fake = false)
-        ctx.callout_handle_->setArgument("fake_allocation", ctx.fake_allocation_);
-
-        // Pass the intended lease as well
-        ctx.callout_handle_->setArgument("lease4", lease);
-
-        // This is the first callout, so no need to clear any arguments
-        HooksManager::callCallouts(hook_index_lease4_select_, *ctx.callout_handle_);
-
-        // Callouts decided to skip the action. This means that the lease is not
-        // assigned, so the client will get NoAddrAvail as a result. The lease
-        // won't be inserted into the database.
-        if (ctx.callout_handle_->getSkip()) {
-            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS, DHCPSRV_HOOK_LEASE4_SELECT_SKIP);
-            return (Lease4Ptr());
-        }
-
-        // Let's use whatever callout returned. Hopefully it is the same lease
-        // we handled to it.
-        ctx.callout_handle_->getArgument("lease4", lease);
-    }
-
-    if (!ctx.fake_allocation_) {
-        // That is a real (REQUEST) allocation
-        bool status = LeaseMgrFactory::instance().addLease(lease);
-        if (status) {
-            return (lease);
-        } else {
-            // One of many failures with LeaseMgr (e.g. lost connection to the
-            // database, database failed etc.). One notable case for that
-            // is that we are working in multi-process mode and we lost a race
-            // (some other process got that address first)
-            return (Lease4Ptr());
-        }
-    } else {
-        // That is only fake (DISCOVER) allocation
-
-        // It is for OFFER only. We should not insert the lease into LeaseMgr,
-        // but rather check that we could have inserted it.
-        Lease4Ptr existing = LeaseMgrFactory::instance().getLease4(addr);
-        if (!existing) {
-            return (lease);
-        } else {
-            return (Lease4Ptr());
-        }
-    }
-}
-
-void
-AllocEngine::updateLease4Information(const Lease4Ptr& lease,
-                                     AllocEngine::ClientContext4& ctx) const {
-    // This should not happen in theory.
-    if (!lease) {
-        isc_throw(BadValue, "null lease specified for updateLease4Information");
-    }
-
-    if (!ctx.subnet_) {
-        isc_throw(BadValue, "null subnet specified for"
-                  " updateLease4Information");
-    }
-
-    lease->subnet_id_ = ctx.subnet_->getID();
-    lease->hwaddr_ = ctx.hwaddr_;
-    lease->client_id_ = ctx.clientid_;
-    lease->cltt_ = time(NULL);
-    lease->t1_ = ctx.subnet_->getT1();
-    lease->t2_ = ctx.subnet_->getT2();
-    lease->valid_lft_ = ctx.subnet_->getValid();
-    lease->fqdn_fwd_ = ctx.fwd_dns_update_;
-    lease->fqdn_rev_ = ctx.rev_dns_update_;
-    lease->hostname_ = ctx.hostname_;
-}
-
-Lease6Collection
-AllocEngine::updateFqdnData(ClientContext6& ctx, const Lease6Collection& leases) {
-    Lease6Collection updated_leases;
-    for (Lease6Collection::const_iterator lease_it = leases.begin();
-         lease_it != leases.end(); ++lease_it) {
-        Lease6Ptr lease(new Lease6(**lease_it));
-        lease->fqdn_fwd_ = ctx.fwd_dns_update_;
-        lease->fqdn_rev_ = ctx.rev_dns_update_;
-        lease->hostname_ = ctx.hostname_;
-        if (!ctx.fake_allocation_ &&
-            ((lease->fqdn_fwd_ != (*lease_it)->fqdn_fwd_) ||
-             (lease->fqdn_rev_ != (*lease_it)->fqdn_rev_) ||
-             (lease->hostname_ != (*lease_it)->hostname_))) {
-            ctx.changed_leases_.push_back(*lease_it);
-            LeaseMgrFactory::instance().updateLease6(lease);
-        }
-        updated_leases.push_back(lease);
-    }
-    return (updated_leases);
-}
-
-AllocEngine::AllocatorPtr AllocEngine::getAllocator(Lease::Type type) {
-    std::map<Lease::Type, AllocatorPtr>::const_iterator alloc = allocators_.find(type);
-
-    if (alloc == allocators_.end()) {
-        isc_throw(BadValue, "No allocator initialized for pool type "
-                  << Lease::typeToText(type));
-    }
-    return (alloc->second);
 }
 
 Lease6Collection
@@ -1726,7 +1131,7 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
         HooksManager::callCallouts(hook_point, *callout_handle);
 
         // Callouts decided to skip the next processing step. The next
-        // processing step would to actually renew the lease, so skip at this
+        // processing step would actually renew the lease, so skip at this
         // stage means "keep the old lease as it is".
         if (callout_handle->getSkip()) {
             skip = true;
@@ -1747,8 +1152,650 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
     }
 }
 
-AllocEngine::~AllocEngine() {
-    // no need to delete allocator. smart_ptr will do the trick for us
+Lease6Collection
+AllocEngine::updateFqdnData(ClientContext6& ctx, const Lease6Collection& leases) {
+    Lease6Collection updated_leases;
+    for (Lease6Collection::const_iterator lease_it = leases.begin();
+         lease_it != leases.end(); ++lease_it) {
+        Lease6Ptr lease(new Lease6(**lease_it));
+        lease->fqdn_fwd_ = ctx.fwd_dns_update_;
+        lease->fqdn_rev_ = ctx.rev_dns_update_;
+        lease->hostname_ = ctx.hostname_;
+        if (!ctx.fake_allocation_ &&
+            ((lease->fqdn_fwd_ != (*lease_it)->fqdn_fwd_) ||
+             (lease->fqdn_rev_ != (*lease_it)->fqdn_rev_) ||
+             (lease->hostname_ != (*lease_it)->hostname_))) {
+            ctx.changed_leases_.push_back(*lease_it);
+            LeaseMgrFactory::instance().updateLease6(lease);
+        }
+        updated_leases.push_back(lease);
+    }
+    return (updated_leases);
+}
+
+} // end of isc::dhcp namespace
+} // end of isc namespace
+
+// ##########################################################################
+// #    DHCPv4 lease allocation code starts here.
+// ##########################################################################
+
+namespace {
+
+/// @brief Check if the specific address is reserved for another client.
+///
+/// This function uses the HW address from the context to check if the
+/// requested address (specified as first parameter) is reserved for
+/// another client, i.e. client using a different HW address.
+///
+/// @param address An address for which the function should check if
+/// there is a reservation for the different client.
+/// @param ctx Client context holding the data extracted from the
+/// client's message.
+///
+/// @return true if the address is reserved for another client.
+bool
+addressReserved(const IOAddress& address, const AllocEngine::ClientContext4& ctx) {
+    ConstHostPtr host = HostMgr::instance().get4(ctx.subnet_->getID(), address);
+    HWAddrPtr host_hwaddr;
+    if (host) {
+        host_hwaddr = host->getHWAddress();
+        if (ctx.hwaddr_ && host_hwaddr) {
+            /// @todo Use the equality operators for HWAddr class.
+            /// Currently, this is impossible because the HostMgr uses the
+            /// HTYPE_ETHER type, whereas the unit tests may use other types
+            /// which HostMgr doesn't support yet.
+            return (host_hwaddr->hwaddr_ != ctx.hwaddr_->hwaddr_);
+
+        } else {
+            return (false);
+
+        }
+    }
+    return (false);
+}
+
+} // end of anonymous namespace
+
+namespace isc {
+namespace dhcp {
+
+AllocEngine::ClientContext4::ClientContext4()
+    : subnet_(), clientid_(), hwaddr_(),
+      requested_address_(IOAddress::IPV4_ZERO_ADDRESS()),
+      fwd_dns_update_(false), rev_dns_update_(false),
+      hostname_(""), callout_handle_(), fake_allocation_(false),
+      old_lease_(), host_(), conflicting_lease_() {
+}
+
+AllocEngine::ClientContext4::ClientContext4(const SubnetPtr& subnet,
+                                            const ClientIdPtr& clientid,
+                                            const HWAddrPtr& hwaddr,
+                                            const asiolink::IOAddress& requested_addr,
+                                            const bool fwd_dns_update,
+                                            const bool rev_dns_update,
+                                            const std::string& hostname,
+                                            const bool fake_allocation)
+    : subnet_(subnet), clientid_(clientid), hwaddr_(hwaddr),
+      requested_address_(requested_addr),
+      fwd_dns_update_(fwd_dns_update), rev_dns_update_(rev_dns_update),
+      hostname_(hostname), callout_handle_(),
+      fake_allocation_(fake_allocation), old_lease_(), host_() {
+}
+
+
+
+bool
+AllocEngine::ClientContext4::myLease(const Lease4& lease) const {
+    if ((!hwaddr_ && lease.hwaddr_) || (hwaddr_ && !lease.hwaddr_)) {
+        return (false);
+    }
+
+    if ((hwaddr_ && lease.hwaddr_) && (hwaddr_->hwaddr_ != lease.hwaddr_->hwaddr_)) {
+        return (false);
+    }
+
+    if ((!clientid_ && lease.client_id_) || (clientid_ && !lease.client_id_)) {
+        return (false);
+    }
+
+    if ((clientid_ && lease.client_id_) && (*clientid_ != *lease.client_id_)) {
+        return (false);
+    }
+
+    return (true);
+}
+
+Lease4Ptr
+AllocEngine::allocateLease4(ClientContext4& ctx) {
+    // The NULL pointer indicates that the old lease didn't exist. It may
+    // be later set to non NULL value if existing lease is found in the
+    // database.
+    ctx.old_lease_.reset();
+
+    Lease4Ptr new_lease;
+
+    try {
+        if (!ctx.subnet_) {
+            isc_throw(BadValue, "Can't allocate IPv4 address without subnet");
+        }
+
+        if (!ctx.hwaddr_) {
+            isc_throw(BadValue, "HWAddr must be defined");
+        }
+
+        ctx.host_ = HostMgr::instance().get4(ctx.subnet_->getID(), ctx.hwaddr_);
+
+        new_lease = ctx.fake_allocation_ ? discoverLease4(ctx) : requestLease4(ctx);
+        if (!new_lease) {
+            // Unable to allocate an address, return an empty lease.
+            LOG_WARN(dhcpsrv_logger, DHCPSRV_ADDRESS4_ALLOC_FAIL).arg(attempts_);
+        }
+
+    } catch (const isc::Exception& e) {
+        // Some other error, return an empty lease.
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_ADDRESS4_ALLOC_ERROR).arg(e.what());
+    }
+
+    return (new_lease);
+}
+
+Lease4Ptr
+AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
+    // Obtain the sole instance of the LeaseMgr.
+    LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
+
+    // Check if the client has any lease already. This information is needed
+    // to either return this lease to the client or to return it as an old
+    // (existing) lease if a different one is offered.
+    Lease4Ptr client_lease = lease_mgr.getLease4(*ctx.hwaddr_, ctx.subnet_->getID());
+    if (!client_lease && ctx.clientid_) {
+        client_lease = lease_mgr.getLease4(*ctx.clientid_, ctx.subnet_->getID());
+    }
+
+    // new_lease will hold the pointer to the lease that we will offer to the
+    // caller.
+    Lease4Ptr new_lease;
+
+    // Check if there is a reservation for the client. If there is, we want to
+    // assign the reserved address, rather than any other one.
+    if (ctx.host_) {
+        // If the client doesn't have a lease or the leased address is different
+        // than the reserved one then let's try to allocate the reserved address.
+        // Otherwise the address that the client has is the one for which it
+        // has a reservation, so just renew it.
+        if (!client_lease || (client_lease->addr_ != ctx.host_->getIPv4Reservation())) {
+            // The call below will return a pointer to the lease for the address
+            // reserved to this client, if the lease is available, i.e. is not
+            // currently assigned to any other client.
+            // Note that we don't remove the existing client's lease at this point
+            // because this is not a real allocation, we just offer what we can
+            // allocate in the DHCPREQUEST time.
+            new_lease = allocateOrReuseLease4(ctx.host_->getIPv4Reservation(), ctx);
+            if (!new_lease) {
+                LOG_WARN(dhcpsrv_logger, DHCPSRV_DISCOVER_ADDRESS_CONFLICT)
+                    .arg(ctx.host_->getIPv4Reservation().toText())
+                    .arg(ctx.conflicting_lease_ ? ctx.conflicting_lease_->toText() :
+                         "(no lease info)");
+            }
+
+        } else {
+            new_lease = renewLease4(client_lease, ctx);
+        }
+    }
+
+    // Client does not have a reservation or the allocation of the reserved
+    // address has failed, probably because the reserved address is in use
+    // by another client. If the client has a lease, we will check if we can
+    // offer this lease to the client. The lease can't be offered in the
+    // situation when it is reserved for another client or when the address
+    // is not in the dynamic pool. The former may be the result of adding the
+    // new reservation for the address used by this client. The latter may
+    // be due to the client using the reserved out-of-the pool address, for
+    // which the reservation has just been removed.
+    if (!new_lease && client_lease &&
+        ctx.subnet_->inPool(Lease::TYPE_V4, client_lease->addr_) &&
+        !addressReserved(client_lease->addr_, ctx)) {
+
+        new_lease = renewLease4(client_lease, ctx);
+    }
+
+    // The client doesn't have any lease or the lease can't be offered
+    // because it is either reserved for some other client or the
+    // address is not in the dynamic pool.
+    // Let's use the client's hint (requested IP address), if the client
+    // has provided it, and try to offer it. This address must not be
+    // reserved for another client, and must be in the range of the
+    // dynamic pool.
+    if (!new_lease && !ctx.requested_address_.isV4Zero() &&
+        ctx.subnet_->inPool(Lease::TYPE_V4, ctx.requested_address_) &&
+        !addressReserved(ctx.requested_address_, ctx)) {
+
+        new_lease = allocateOrReuseLease4(ctx.requested_address_, ctx);
+    }
+
+    // The allocation engine failed to allocate all of the candidate
+    // addresses. We will now use the allocator to pick the address
+    // from the dynamic pool.
+    if (!new_lease) {
+        new_lease = allocateUnreservedLease4(ctx);
+    }
+
+    // Some of the methods like reuseExpiredLease4 may set the old lease to point
+    // to the lease which they remove/override. If it is not set, but we have
+    // found that the client has the lease the client's lease is the one
+    // to return as an old lease.
+    if (!ctx.old_lease_ && client_lease) {
+        ctx.old_lease_ = client_lease;
+    }
+    return (new_lease);
+}
+
+Lease4Ptr
+AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
+    // Obtain the sole instance of the LeaseMgr.
+    LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
+
+    // Check if the client has any lease already. This information is needed
+    // to either return this lease to the client or to delete this lease if
+    // the new lease is allocated.
+    Lease4Ptr client_lease = lease_mgr.getLease4(*ctx.hwaddr_, ctx.subnet_->getID());
+    if (!client_lease && ctx.clientid_) {
+        client_lease = lease_mgr.getLease4(*ctx.clientid_, ctx.subnet_->getID());
+    }
+
+    // When the client sends the DHCPREQUEST, it should always specify the
+    // address which it is requesting or renewing. That is, the client should
+    // either use the requested IP address option or set the ciaddr. However,
+    // we try to be liberal and allow the clients to not specify an address
+    // in which case the allocation engine will pick a suitable address
+    // for the client.
+    if (!ctx.requested_address_.isV4Zero()) {
+        // If the client has specified an address, make sure this address
+        // is not reserved for another client. If it is, stop here because
+        // we can't allocate this address.
+        if (addressReserved(ctx.requested_address_, ctx)) {
+            return (Lease4Ptr());
+        }
+
+    } else if (ctx.host_) {
+        // The client hasn't specified an address to allocate, so the
+        // allocation engine needs to find an appropriate address.
+        // If there is a reservation for the client, let's try to
+        // allocate the reserved address.
+        ctx.requested_address_ = ctx.host_->getIPv4Reservation();
+    }
+
+    if (!ctx.requested_address_.isV4Zero()) {
+        // There is a specific address to be allocated. Let's find out if
+        // the address is in use.
+        Lease4Ptr existing = LeaseMgrFactory::instance().getLease4(ctx.requested_address_);
+        // If the address is in use (allocated and not expired), we check
+        // if the address is in use by our client or another client.
+        // If it is in use by another client, the address can't be
+        // allocated.
+        if (existing && !existing->expired() && !ctx.myLease(*existing)) {
+            return (Lease4Ptr());
+        }
+
+        // If the client has a reservation but it is requesting a different
+        // address it is possible that the client was offered this different
+        // address because the reserved address is in use. We will have to
+        // check if the address is in use.
+        if (ctx.host_ && (ctx.host_->getIPv4Reservation() != ctx.requested_address_)) {
+            existing = LeaseMgrFactory::instance().getLease4(ctx.host_->getIPv4Reservation());
+            // If the reserved address is not in use, i.e. the lease doesn't
+            // exist or is expired, and the client is requesting a different
+            // address, return NULL. The client should go back to the
+            // DHCPDISCOVER and the reserved address will be offered.
+            if (!existing || existing->expired()) {
+                return (Lease4Ptr());
+            }
+        }
+
+        // The use of the out-of-pool addresses is only allowed when the requested
+        // address is reserved for the client. If the address is not reserved one
+        // and it doesn't belong to the dynamic pool, do not allocate it.
+        if ((!ctx.host_ || (ctx.host_->getIPv4Reservation() != ctx.requested_address_)) &&
+            !ctx.subnet_->inPool(Lease4::TYPE_V4, ctx.requested_address_)) {
+            return (Lease4Ptr());
+        }
+    }
+
+    // We have gone through all the checks, so we can now allocate the address
+    // for the client.
+
+    // If the client is requesting an address which is assigned to the client
+    // let's just renew this address. Also, renew this address if the client
+    // doesn't request any specific address.
+    if (client_lease) {
+        if ((client_lease->addr_ == ctx.requested_address_) ||
+            ctx.requested_address_.isV4Zero()) {
+            return (renewLease4(client_lease, ctx));
+        }
+    }
+
+    // new_lease will hold the pointer to the allocated lease if we allocate
+    // successfully.
+    Lease4Ptr new_lease;
+
+    // The client doesn't have the lease or it is requesting an address
+    // which it doesn't have. Let's try to allocate the requested address.
+    if (!ctx.requested_address_.isV4Zero()) {
+        // The call below will return a pointer to the lease allocated
+        // for the client if there is no lease for the requested address,
+        // or the existing lease has expired. If the allocation fails,
+        // e.g. because the lease is in use, we will return NULL to
+        // indicate that we were unable to allocate the lease.
+        new_lease = allocateOrReuseLease4(ctx.requested_address_, ctx);
+
+    } else {
+
+        // We will only get here if the client didn't specify which
+        // address it wanted to be allocated. The allocation engine will
+        // to pick the address from the dynamic pool.
+        new_lease = allocateUnreservedLease4(ctx);
+    }
+
+    // If we allocated the lease for the client, but the client already had a
+    // lease, we will need to return the pointer to the previous lease and
+    // the previous lease needs to be removed from the lease database.
+    if (new_lease && client_lease) {
+        ctx.old_lease_ = Lease4Ptr(new Lease4(*client_lease));
+        lease_mgr.deleteLease(client_lease->addr_);
+    }
+
+    // Return the allocated lease or NULL pointer if allocation was
+    // unsuccessful.
+    return (new_lease);
+}
+
+Lease4Ptr
+AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr) {
+    if (!ctx.hwaddr_) {
+        isc_throw(BadValue, "Can't create a lease with NULL HW address");
+    }
+    if (!ctx.subnet_) {
+        isc_throw(BadValue, "Can't create a lease without a subnet");
+    }
+
+    time_t now = time(NULL);
+
+    // @todo: remove this kludge after ticket #2590 is implemented
+    std::vector<uint8_t> local_copy;
+    if (ctx.clientid_) {
+        local_copy = ctx.clientid_->getDuid();
+    }
+
+    Lease4Ptr lease(new Lease4(addr, ctx.hwaddr_, &local_copy[0], local_copy.size(),
+                               ctx.subnet_->getValid(), ctx.subnet_->getT1(),
+                               ctx.subnet_->getT2(),
+                               now, ctx.subnet_->getID()));
+
+    // Set FQDN specific lease parameters.
+    lease->fqdn_fwd_ = ctx.fwd_dns_update_;
+    lease->fqdn_rev_ = ctx.rev_dns_update_;
+    lease->hostname_ = ctx.hostname_;
+
+    // Let's execute all callouts registered for lease4_select
+    if (ctx.callout_handle_ &&
+        HooksManager::getHooksManager().calloutsPresent(hook_index_lease4_select_)) {
+
+        // Delete all previous arguments
+        ctx.callout_handle_->deleteAllArguments();
+
+        // Pass necessary arguments
+
+        // Subnet from which we do the allocation (That's as far as we can go
+        // with using SubnetPtr to point to Subnet4 object. Users should not
+        // be confused with dynamic_pointer_casts. They should get a concrete
+        // pointer (Subnet4Ptr) pointing to a Subnet4 object.
+        Subnet4Ptr subnet4 = boost::dynamic_pointer_cast<Subnet4>(ctx.subnet_);
+        ctx.callout_handle_->setArgument("subnet4", subnet4);
+
+        // Is this solicit (fake = true) or request (fake = false)
+        ctx.callout_handle_->setArgument("fake_allocation", ctx.fake_allocation_);
+
+        // Pass the intended lease as well
+        ctx.callout_handle_->setArgument("lease4", lease);
+
+        // This is the first callout, so no need to clear any arguments
+        HooksManager::callCallouts(hook_index_lease4_select_, *ctx.callout_handle_);
+
+        // Callouts decided to skip the action. This means that the lease is not
+        // assigned, so the client will get NoAddrAvail as a result. The lease
+        // won't be inserted into the database.
+        if (ctx.callout_handle_->getSkip()) {
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS, DHCPSRV_HOOK_LEASE4_SELECT_SKIP);
+            return (Lease4Ptr());
+        }
+
+        // Let's use whatever callout returned. Hopefully it is the same lease
+        // we handled to it.
+        ctx.callout_handle_->getArgument("lease4", lease);
+    }
+
+    if (!ctx.fake_allocation_) {
+        // That is a real (REQUEST) allocation
+        bool status = LeaseMgrFactory::instance().addLease(lease);
+        if (status) {
+            return (lease);
+        } else {
+            // One of many failures with LeaseMgr (e.g. lost connection to the
+            // database, database failed etc.). One notable case for that
+            // is that we are working in multi-process mode and we lost a race
+            // (some other process got that address first)
+            return (Lease4Ptr());
+        }
+    } else {
+        // That is only fake (DISCOVER) allocation
+
+        // It is for OFFER only. We should not insert the lease into LeaseMgr,
+        // but rather check that we could have inserted it.
+        Lease4Ptr existing = LeaseMgrFactory::instance().getLease4(addr);
+        if (!existing) {
+            return (lease);
+        } else {
+            return (Lease4Ptr());
+        }
+    }
+}
+
+Lease4Ptr
+AllocEngine::renewLease4(const Lease4Ptr& lease,
+                         AllocEngine::ClientContext4& ctx) {
+    if (!lease) {
+        isc_throw(BadValue, "null lease specified for renewLease4");
+    }
+
+    // Let's keep the old data. This is essential if we are using memfile
+    // (the lease returned points directly to the lease4 object in the database)
+    // We'll need it if we want to skip update (i.e. roll back renewal)
+    /// @todo: remove this once #3083 is implemented
+    Lease4 old_values = *lease;
+    ctx.old_lease_.reset(new Lease4(old_values));
+
+    // Update the lease with the information from the context.
+    updateLease4Information(lease, ctx);
+
+    bool skip = false;
+    // Execute all callouts registered for lease4_renew.
+    if (HooksManager::getHooksManager().
+        calloutsPresent(Hooks.hook_index_lease4_renew_)) {
+
+        // Delete all previous arguments
+        ctx.callout_handle_->deleteAllArguments();
+
+        // Subnet from which we do the allocation. Convert the general subnet
+        // pointer to a pointer to a Subnet4.  Note that because we are using
+        // boost smart pointers here, we need to do the cast using the boost
+        // version of dynamic_pointer_cast.
+        Subnet4Ptr subnet4 = boost::dynamic_pointer_cast<Subnet4>(ctx.subnet_);
+
+        // Pass the parameters
+        ctx.callout_handle_->setArgument("subnet4", subnet4);
+        ctx.callout_handle_->setArgument("clientid", ctx.clientid_);
+        ctx.callout_handle_->setArgument("hwaddr", ctx.hwaddr_);
+
+        // Pass the lease to be updated
+        ctx.callout_handle_->setArgument("lease4", lease);
+
+        // Call all installed callouts
+        HooksManager::callCallouts(Hooks.hook_index_lease4_renew_,
+                                   *ctx.callout_handle_);
+
+        // Callouts decided to skip the next processing step. The next
+        // processing step would actually renew the lease, so skip at this
+        // stage means "keep the old lease as it is".
+        if (ctx.callout_handle_->getSkip()) {
+            skip = true;
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS,
+                      DHCPSRV_HOOK_LEASE4_RENEW_SKIP);
+        }
+    }
+
+    if (!ctx.fake_allocation_ && !skip) {
+        // for REQUEST we do update the lease
+        LeaseMgrFactory::instance().updateLease4(lease);
+    }
+    if (skip) {
+        // Rollback changes (really useful only for memfile)
+        /// @todo: remove this once #3083 is implemented
+        *lease = old_values;
+    }
+
+    return (lease);
+}
+
+Lease4Ptr
+AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
+                                AllocEngine::ClientContext4& ctx) {
+    if (!expired) {
+        isc_throw(BadValue, "null lease specified for reuseExpiredLease");
+    }
+
+    if (!ctx.subnet_) {
+        isc_throw(BadValue, "null subnet specified for the reuseExpiredLease");
+    }
+
+    updateLease4Information(expired, ctx);
+    expired->fixed_ = false;
+
+    /// @todo: log here that the lease was reused (there's ticket #2524 for
+    /// logging in libdhcpsrv)
+
+    // Let's execute all callouts registered for lease4_select
+    if (ctx.callout_handle_ &&  HooksManager::getHooksManager()
+        .calloutsPresent(hook_index_lease4_select_)) {
+
+        // Delete all previous arguments
+        ctx.callout_handle_->deleteAllArguments();
+
+        // Pass necessary arguments
+
+        // Subnet from which we do the allocation. Convert the general subnet
+        // pointer to a pointer to a Subnet4.  Note that because we are using
+        // boost smart pointers here, we need to do the cast using the boost
+        // version of dynamic_pointer_cast.
+        Subnet4Ptr subnet4 = boost::dynamic_pointer_cast<Subnet4>(ctx.subnet_);
+        ctx.callout_handle_->setArgument("subnet4", subnet4);
+
+        // Is this solicit (fake = true) or request (fake = false)
+        ctx.callout_handle_->setArgument("fake_allocation",
+                                         ctx.fake_allocation_);
+
+        // The lease that will be assigned to a client
+        ctx.callout_handle_->setArgument("lease4", expired);
+
+        // Call the callouts
+        HooksManager::callCallouts(hook_index_lease4_select_, *ctx.callout_handle_);
+
+        // Callouts decided to skip the action. This means that the lease is not
+        // assigned, so the client will get NoAddrAvail as a result. The lease
+        // won't be inserted into the database.
+        if (ctx.callout_handle_->getSkip()) {
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS,
+                      DHCPSRV_HOOK_LEASE4_SELECT_SKIP);
+            return (Lease4Ptr());
+        }
+
+        // Let's use whatever callout returned. Hopefully it is the same lease
+        // we handed to it.
+        ctx.callout_handle_->getArgument("lease4", expired);
+    }
+
+    if (!ctx.fake_allocation_) {
+        // for REQUEST we do update the lease
+        LeaseMgrFactory::instance().updateLease4(expired);
+    }
+
+    // We do nothing for SOLICIT. We'll just update database when
+    // the client gets back to us with REQUEST message.
+
+    // it's not really expired at this stage anymore - let's return it as
+    // an updated lease
+    return (expired);
+}
+
+Lease4Ptr
+AllocEngine::allocateOrReuseLease4(const IOAddress& candidate, ClientContext4& ctx) {
+    ctx.conflicting_lease_.reset();
+
+    Lease4Ptr exist_lease = LeaseMgrFactory::instance().getLease4(candidate);
+    if (exist_lease) {
+        if (exist_lease->expired()) {
+            ctx.old_lease_ = Lease4Ptr(new Lease4(*exist_lease));
+            return (reuseExpiredLease4(exist_lease, ctx));
+
+        } else {
+            // If there is a lease and it is not expired, pass this lease back
+            // to the caller in the context. The caller may need to know
+            // which lease we're conflicting with.
+            ctx.conflicting_lease_ = exist_lease;
+        }
+
+    } else {
+        return (createLease4(ctx, candidate));
+    }
+    return (Lease4Ptr());
+}
+
+Lease4Ptr
+AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
+    Lease4Ptr new_lease;
+    AllocatorPtr allocator = getAllocator(Lease::TYPE_V4);
+    const uint64_t max_attempts = ctx.subnet_->getPoolCapacity(Lease::TYPE_V4);
+    for (uint64_t i = 0; i < max_attempts; ++i) {
+        IOAddress candidate = allocator->pickAddress(ctx.subnet_, ctx.clientid_,
+                                                     ctx.requested_address_);
+        // If address is not reserved for another client, try to allocate it.
+        if (!addressReserved(candidate, ctx)) {
+            // The call below will return the non-NULL pointer if we
+            // successfully allocate this lease. This means that the
+            // address is not in use by another client.
+            new_lease = allocateOrReuseLease4(candidate, ctx);
+            if (new_lease) {
+                return (new_lease);
+            }
+        }
+    }
+
+    return (new_lease);
+}
+
+void
+AllocEngine::updateLease4Information(const Lease4Ptr& lease,
+                                     AllocEngine::ClientContext4& ctx) const {
+    lease->subnet_id_ = ctx.subnet_->getID();
+    lease->hwaddr_ = ctx.hwaddr_;
+    lease->client_id_ = ctx.clientid_;
+    lease->cltt_ = time(NULL);
+    lease->t1_ = ctx.subnet_->getT1();
+    lease->t2_ = ctx.subnet_->getT2();
+    lease->valid_lft_ = ctx.subnet_->getValid();
+    lease->fqdn_fwd_ = ctx.fwd_dns_update_;
+    lease->fqdn_rev_ = ctx.rev_dns_update_;
+    lease->hostname_ = ctx.hostname_;
 }
 
 }; // end of isc::dhcp namespace

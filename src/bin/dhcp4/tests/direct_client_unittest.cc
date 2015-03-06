@@ -21,6 +21,7 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcp4/json_config_parser.h>
+#include <dhcp4/tests/dhcp4_client.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <gtest/gtest.h>
 #include <string>
@@ -306,51 +307,23 @@ TEST_F(DirectClientTest, renew) {
     ASSERT_NO_THROW(IfaceMgr::instance().openSockets4());
     // Add a subnet.
     ASSERT_NO_FATAL_FAILURE(configureSubnet("10.0.0.0"));
-    // Make sure that the subnet has been really added. Also, the subnet
-    // will be needed to create a lease for a client.
-    Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
-        getCfgSubnets4()->selectSubnet(IOAddress("10.0.0.10"));
-    // Create a lease for a client that we will later renewed. By explicitly
-    // creating a lease we will get to know the lease parameters, such as
-    // leased address etc.
-    const uint8_t hwaddr_data[] = { 1, 2, 3, 4, 5, 6 };
-    HWAddrPtr hwaddr(new HWAddr(hwaddr_data, sizeof(hwaddr_data), HTYPE_ETHER));
-    Lease4Ptr lease(new Lease4(IOAddress("10.0.0.10"), hwaddr,
-                               &generateClientId()->getData()[0],
-                               generateClientId()->getData().size(),
-                               100, 50, 75, time(NULL),
-                               subnet->getID()));
-    LeaseMgrFactory::instance().addLease(lease);
 
-    // Create a Request to renew client's lease. The renew request is unicast
-    // through eth1. Note, that in case of renewal the client unicasts its
-    // Request and sets the ciaddr. The server is supposed to use ciaddr to
-    // pick the subnet for the client. In order to make sure that the server
-    // uses ciaddr, we simulate reception of the packet through eth1, for which
-    // there is no subnet for directly connected clients.
-    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
-    req->setCiaddr(IOAddress("10.0.0.10"));
-    req = createClientMessage(req, "eth1");
-    req->setLocalAddr(IOAddress("10.0.0.1"));
-    req->setRemoteAddr(req->getCiaddr());
+    // Create the DHCPv4 client.
+    Dhcp4Client client;
+    client.useRelay(false);
 
-    srv_.fakeReceive(req);
+    // Obtain the lease using the 4-way exchange.
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("10.0.0.10"))));
+    ASSERT_EQ("10.0.0.10", client.config_.lease_.addr_.toText());
 
-    // Process clients' messages.
-    srv_.run();
+    // Put the client into the renewing state.
+    client.setState(Dhcp4Client::RENEWING);
 
-    // Check that the server did send response.
-    ASSERT_EQ(1, srv_.fake_sent_.size());
-    Pkt4Ptr response = srv_.fake_sent_.front();
-    ASSERT_TRUE(response);
-
-    ASSERT_EQ(DHCPACK, response->getType());
-    // Check that the offered address belongs to the suitable subnet.
-    subnet = CfgMgr::instance().getCurrentCfg()->
-        getCfgSubnets4()->selectSubnet(response->getYiaddr());
-    ASSERT_TRUE(subnet);
-    EXPECT_EQ("10.0.0.0", subnet->get().first.toText());
-
+    // Renew, and make sure we have obtained the same address.
+    ASSERT_NO_THROW(client.doRequest());
+    ASSERT_TRUE(client.getContext().response_);
+    EXPECT_EQ(DHCPACK, static_cast<int>(client.getContext().response_->getType()));
+    EXPECT_EQ("10.0.0.10", client.config_.lease_.addr_.toText());
 }
 
 // This test verifies that when a client in the Rebinding state broadcasts
@@ -366,58 +339,31 @@ TEST_F(DirectClientTest, rebind) {
     ASSERT_NO_THROW(IfaceMgr::instance().openSockets4());
     // Add a subnet.
     ASSERT_NO_FATAL_FAILURE(configureSubnet("10.0.0.0"));
-    // Make sure that the subnet has been really added. Also, the subnet
-    // will be needed to create a lease for a client.
-    Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
-        getCfgSubnets4()->selectSubnet(IOAddress("10.0.0.10"));
-    // Create a lease, which will be later renewed. By explicitly creating a
-    // lease we will know the lease parameters, such as leased address etc.
-    const uint8_t hwaddr_data[] = { 1, 2, 3, 4, 5, 6 };
-    HWAddrPtr hwaddr(new HWAddr(hwaddr_data, sizeof(hwaddr_data), HTYPE_ETHER));
-    Lease4Ptr lease(new Lease4(IOAddress("10.0.0.10"), hwaddr,
-                               &generateClientId()->getData()[0],
-                               generateClientId()->getData().size(),
-                               100, 50, 75, time(NULL),
-                               subnet->getID()));
-    LeaseMgrFactory::instance().addLease(lease);
+
+    // Create the DHCPv4 client.
+    Dhcp4Client client;
+    client.useRelay(false);
+
+    // Obtain the lease using the 4-way exchange.
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("10.0.0.10"))));
+    ASSERT_EQ("10.0.0.10", client.config_.lease_.addr_.toText());
+
+    // Put the client into the rebinding state.
+    client.setState(Dhcp4Client::REBINDING);
 
     // Broadcast Request through an interface for which there is no subnet
     // configured. This message should be discarded by the server.
-    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
-     req->setCiaddr(IOAddress("10.0.0.10"));
-    req = createClientMessage(req, "eth1");
-    req->setRemoteAddr(req->getCiaddr());
+    client.setIfaceName("eth1");
+    ASSERT_NO_THROW(client.doRequest());
+    EXPECT_FALSE(client.getContext().response_);
 
-    srv_.fakeReceive(req);
-
-    // Broadcast another Request through an interface for which there is
-    // a subnet configured. The server should generate a response.
-    req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 5678));
-    req->setCiaddr(IOAddress("10.0.0.10"));
-    req = createClientMessage(req, "eth0");
-    req->setRemoteAddr(req->getCiaddr());
-
-    srv_.fakeReceive(req);
-
-    // Process clients' messages.
-    srv_.run();
-
-    // Check that the server did send exactly one response.
-    ASSERT_EQ(1, srv_.fake_sent_.size());
-    Pkt4Ptr response = srv_.fake_sent_.front();
-    ASSERT_TRUE(response);
-
-    // Make sure that the server responded with ACK, not NAK.
-    ASSERT_EQ(DHCPACK, response->getType());
-    // Make sure that the response is generated for the second Request
-    // (transmitted over eth0).
-    EXPECT_EQ(5678, response->getTransid());
-    // Check that the offered address belongs to the suitable subnet.
-    subnet = CfgMgr::instance().getCurrentCfg()->
-        getCfgSubnets4()->selectSubnet(response->getYiaddr());
-    ASSERT_TRUE(subnet);
-    EXPECT_EQ("10.0.0.0", subnet->get().first.toText());
-
+    // Send Rebind over the correct interface, and make sure we have obtained
+    // the same address.
+    client.setIfaceName("eth0");
+    ASSERT_NO_THROW(client.doRequest());
+    ASSERT_TRUE(client.getContext().response_);
+    EXPECT_EQ(DHCPACK, static_cast<int>(client.getContext().response_->getType()));
+    EXPECT_EQ("10.0.0.10", client.config_.lease_.addr_.toText());
 }
 
 }

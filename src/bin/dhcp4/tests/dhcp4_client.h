@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -273,6 +273,14 @@ public:
     /// @param hwaddr_str String representation of the HW address.
     void setHWAddress(const std::string& hwaddr_str);
 
+    /// @brief Sets the interface over which the messages should be sent.
+    ///
+    /// @param iface_name Name of the interface over which the messages should
+    /// be sent.
+    void setIfaceName(const std::string& iface_name) {
+        iface_name_ = iface_name;
+    }
+
     /// @brief Sets client state.
     ///
     /// Depending on the current state the client's behavior is different
@@ -370,6 +378,9 @@ private:
 
     /// @brief Current hardware address of the client.
     HWAddrPtr hwaddr_;
+
+    /// @brief Interface to be used to send the messages.
+    std::string iface_name_;
 
     /// @brief Relay address to use.
     asiolink::IOAddress relay_addr_;

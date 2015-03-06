@@ -88,7 +88,7 @@ typedef boost::multi_index_container<
         >,
 
         // Specification of the second index starts here.
-        boost::multi_index::ordered_unique<
+        boost::multi_index::ordered_non_unique<
             // This is a composite index that combines two attributes of the
             // Lease4 object: hardware address and subnet id.
             boost::multi_index::composite_key<
