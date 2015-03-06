@@ -103,11 +103,33 @@ public:
         return (asio_address_.is_v4());
     }
 
+    /// \brief Convenience function to check if it is an IPv4 zero address.
+    ///
+    /// \return true if the address is the zero IPv4 address.
+    bool isV4Zero() const {
+        return (equals(IPV4_ZERO_ADDRESS()));
+    }
+
+    /// \brief Convenience function to check if it is an IPv4 broadcast
+    ///        address.
+    ///
+    /// \return true if the address is the broadcast IPv4 address.
+    bool isV4Bcast() const {
+        return (equals(IPV4_BCAST_ADDRESS()));
+    }
+
     /// \brief Convenience function to check for an IPv6 address
     ///
     /// \return true if the address is a V6 address
     bool isV6() const {
         return (asio_address_.is_v6());
+    }
+
+    /// \brief Convenience function to check if it is an IPv4 zero address.
+    ///
+    /// \return true if the address is the zero IPv4 address.
+    bool isV6Zero() const {
+        return (equals(IPV6_ZERO_ADDRESS()));
     }
 
     /// \brief checks whether and address is IPv6 and is link-local

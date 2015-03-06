@@ -141,7 +141,7 @@ TEST_F(AllocEngine4Test, allocWithValidHint4) {
 
 
 // This test checks if the allocation with a hint that is in range,
-// in pool, but is currently used) can succeed
+// in pool, but is currently used can succeed
 TEST_F(AllocEngine4Test, allocWithUsedHint4) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
@@ -162,7 +162,7 @@ TEST_F(AllocEngine4Test, allocWithUsedHint4) {
     // twice.
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
                                     IOAddress("192.0.2.106"), false, false,
-                                    "", false);
+                                    "", true);
     Lease4Ptr lease = engine->allocateLease4(ctx);
 
     // New lease has been allocated, so the old lease should not exist.
@@ -180,16 +180,13 @@ TEST_F(AllocEngine4Test, allocWithUsedHint4) {
     // Do all checks on the lease
     checkLease4(lease);
 
-    // Check that the lease is indeed in LeaseMgr
+    // The lease should not be in the LeaseMgr because it was a failed allocation.
     Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
-    ASSERT_TRUE(from_mgr);
-
-    // Now check that the lease in LeaseMgr has the same parameters
-    detailCompareLease(lease, from_mgr);
+    ASSERT_FALSE(from_mgr);
 }
 
 
-// This test checks if the allocation with a hint that is out the blue
+// This test checks if an allocation with a hint that is out of the blue
 // can succeed. The invalid hint should be ignored completely.
 TEST_F(AllocEngine4Test, allocBogusHint4) {
     boost::scoped_ptr<AllocEngine> engine;
@@ -197,12 +194,12 @@ TEST_F(AllocEngine4Test, allocBogusHint4) {
                                                  100, false)));
     ASSERT_TRUE(engine);
 
-    // Client would like to get a 3000::abc lease, which does not belong to any
+    // Client would like to get a 10.1.1.1 lease, which does not belong to any
     // supported lease. Allocation engine should ignore it and carry on
     // with the normal allocation
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
                                     IOAddress("10.1.1.1"), false, false,
-                                    "", false);
+                                    "", true);
     Lease4Ptr lease = engine->allocateLease4(ctx);
     // Check that we got a lease
     ASSERT_TRUE(lease);
@@ -216,14 +213,10 @@ TEST_F(AllocEngine4Test, allocBogusHint4) {
     // Do all checks on the lease
     checkLease4(lease);
 
-    // Check that the lease is indeed in LeaseMgr
+    // Check that the lease is not in the LeaseMgr as it is a fake allocation.
     Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
-    ASSERT_TRUE(from_mgr);
-
-    // Now check that the lease in LeaseMgr has the same parameters
-    detailCompareLease(lease, from_mgr);
+    EXPECT_FALSE(from_mgr);
 }
-
 
 // This test checks that NULL values are handled properly
 TEST_F(AllocEngine4Test, allocateLease4Nulls) {
@@ -543,54 +536,39 @@ TEST_F(AllocEngine4Test, requestReuseExpiredLease4) {
     EXPECT_TRUE(*ctx.old_lease_ == original_lease);
 }
 
-/// @todo write renewLease6
+// This test checks that when the client requests the address which belongs
+// to another client, the allocation engine returns NULL (for the
+// DHCPREQUEST case) or a lease for the address which belongs to this
+// client (DHCPDISCOVER case).
+TEST_F(AllocEngine4Test, requestOtherClientLease) {
+    // Create the first lease.
+    Lease4Ptr lease(new Lease4(IOAddress("192.0.2.101"), hwaddr_, 0, 0,
+                               100, 30, 60, time(NULL), subnet_->getID(),
+                               false, false, ""));
+    // Create the second lease.
+    Lease4Ptr lease2(new Lease4(IOAddress("192.0.2.102"), hwaddr2_, 0, 0,
+                               100, 30, 60, time(NULL), subnet_->getID(),
+                               false, false, ""));
+    // Add leases for both clients to the Lease Manager.
+    LeaseMgrFactory::instance().addLease(lease);
+    LeaseMgrFactory::instance().addLease(lease2);
 
-// This test checks if a lease is really renewed when renewLease4 method is
-// called
-TEST_F(AllocEngine4Test, renewLease4) {
-    boost::scoped_ptr<AllocEngine> engine;
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
 
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                                 100, false)));
-    ASSERT_TRUE(engine);
+    // First client requests the lease which belongs to the second client.
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("192.0.2.102"),
+                                    false, false, "", false);
+    Lease4Ptr new_lease = engine.allocateLease4(ctx);
+    // Allocation engine should return NULL.
+    ASSERT_FALSE(new_lease);
 
-    IOAddress addr("192.0.2.102");
-    const uint32_t old_lifetime = 100;
-    const uint32_t old_t1 = 50;
-    const uint32_t old_t2 = 75;
-    const time_t old_timestamp = time(NULL) - 45; // Allocated 45 seconds ago
-
-    // Just a different hw/client-id for the second client
-    const uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
-    HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
-    const uint8_t clientid2[] = { 8, 7, 6, 5, 4, 3, 2, 1 };
-    Lease4Ptr lease(new Lease4(addr, hwaddr2, clientid2, sizeof(clientid2),
-                               old_lifetime, old_t1, old_t2,
-                               old_timestamp, subnet_->getID()));
-    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
-
-    // Lease was assigned 45 seconds ago and is valid for 100 seconds. Let's
-    // renew it.
-    ASSERT_FALSE(lease->expired());
-    ctx_.fwd_dns_update_ = true;
-    ctx_.rev_dns_update_ = true;
-    ctx_.hostname_ = "host.example.com.";
-    ctx_.fake_allocation_ = false;
-    lease = engine->renewLease4(lease, ctx_);
-
-    // Check that he got that single lease
-    ASSERT_TRUE(lease);
-    EXPECT_EQ(addr, lease->addr_);
-
-    // Check that the lease matches subnet_, hwaddr_,clientid_ parameters
-    checkLease4(lease);
-
-    // Check that the lease is indeed updated in LeaseMgr
-    Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(addr);
-    ASSERT_TRUE(from_mgr);
-
-    // Now check that the lease in LeaseMgr has the same parameters
-    detailCompareLease(lease, from_mgr);
+    // Now simulate the DHCPDISCOVER case when the provided address is
+    // treated as a hint. The engine should return a lease for a
+    // different address than requested.
+    ctx.fake_allocation_ = true;
+    new_lease = engine.allocateLease4(ctx);
+    ASSERT_TRUE(new_lease);
+    EXPECT_EQ("192.0.2.101", new_lease->addr_.toText());
 }
 
 // This test checks the behavior of the allocation engine in the following
@@ -790,8 +768,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLease) {
     EXPECT_EQ("192.0.2.123", allocated_lease->addr_.toText());
 
     // Make sure that the lease has been committed to the lease database.
-    Lease4Ptr from_mgr =
-        LeaseMgrFactory::instance().getLease4(allocated_lease->addr_);
+    Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(allocated_lease->addr_);
     ASSERT_TRUE(from_mgr);
     detailCompareLease(allocated_lease, from_mgr);
 
@@ -863,13 +840,7 @@ TEST_F(AllocEngine4Test, reservedAddressHijacked) {
 // - Client B has a reservation for the address in use by client A.
 // - Client B sends a DHCPDISCOVER.
 // - Server determines that the reserved address is in use by a different client
-// and that it can't allocate a lease to the client B.
-//
-// In the scenario presented here, the allocation engine should return a
-// NULL lease to the server. When the server receives NULL pointer from the
-// allocation engine the proper action for the server will be to not
-// respond to the client. Instead it should report to the administrator
-// that it was unable to allocate the (reserved) lease.
+//   so it offers an address from the dynamic pool.
 TEST_F(AllocEngine4Test, reservedAddressHijackedFakeAllocation) {
     // Create a reservation for the client B.
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
@@ -894,9 +865,13 @@ TEST_F(AllocEngine4Test, reservedAddressHijackedFakeAllocation) {
                                     "", true);
     Lease4Ptr allocated_lease = engine.allocateLease4(ctx1);
 
-    // The allocation engine should return no lease.
-    ASSERT_FALSE(allocated_lease);
+    // The allocation engine should return a lease but for a different address
+    // than requested because this address is in use.
+    ASSERT_TRUE(allocated_lease);
     EXPECT_FALSE(ctx1.old_lease_);
+    EXPECT_NE(allocated_lease->addr_.toText(), "192.0.2.123");
+    EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, allocated_lease->addr_));
+
 
     // Do the same test. But, this time do not specify any address to be
     // allocated.
@@ -905,7 +880,9 @@ TEST_F(AllocEngine4Test, reservedAddressHijackedFakeAllocation) {
                                     "", true);
     allocated_lease = engine.allocateLease4(ctx2);
 
-    EXPECT_FALSE(allocated_lease);
+    ASSERT_TRUE(allocated_lease);
+    EXPECT_NE(allocated_lease->addr_.toText(), "192.0.2.123");
+    EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, allocated_lease->addr_));
     EXPECT_FALSE(ctx2.old_lease_);
 }
 
@@ -968,7 +945,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseInvalidHint) {
 // - Client has a reservation for a different address than the one for which it
 // has a lease.
 // - Client sends a DHCPDISCOVER and asks for a different address than reserved
-// and different from which it has a lease for.
+//   and different from which it has a lease for.
 // - Server ignores the client's hint and offers a reserved address.
 TEST_F(AllocEngine4Test, reservedAddressExistingLeaseFakeAllocation) {
     // Create a reservation for the client.
@@ -1075,8 +1052,8 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseNoHint) {
 // - Client has a lease for a different address than reserved.
 // - Client sends a DHCPDISCOVER with no hint.
 // - Server determines that there is a reservation for the client and that
-// the current lease should be removed and the reserved address should be
-// allocated.
+//   the reserved address should be offered when the client sends a
+//   DHCPDISCOVER.
 TEST_F(AllocEngine4Test, reservedAddressExistingLeaseNoHintFakeAllocation) {
     // Create a reservation.
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
@@ -1113,6 +1090,8 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseNoHintFakeAllocation) {
     Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
     ASSERT_TRUE(from_mgr);
     detailCompareLease(lease, from_mgr);
+
+
 }
 
 // This test checks that the behavior of the allocation engine in the following
@@ -1153,12 +1132,13 @@ TEST_F(AllocEngine4Test, reservedAddressConflictResolution) {
 
 
     // Client B sends a DHCPREQUEST to allocate a reserved lease. The
-    // allocation engine declines allocation of the address for the
-    // client because Client A has a lease for it.
+    // allocation engine can't allocate a reserved lease for this client
+    // because this specific address is in use by the Client A.
     AllocEngine::ClientContext4 ctx1(subnet_, ClientIdPtr(), hwaddr2_,
                                     IOAddress("192.0.2.101"), false, false,
                                     "", false);
-    ASSERT_FALSE(engine.allocateLease4(ctx1));
+    Lease4Ptr offered_lease = engine.allocateLease4(ctx1);
+    ASSERT_FALSE(offered_lease);
 
     // Client A tries to renew the lease. The renewal should fail because
     // server detects that Client A doesn't have reservation for this
@@ -1168,8 +1148,7 @@ TEST_F(AllocEngine4Test, reservedAddressConflictResolution) {
                                     "", false);
     ASSERT_FALSE(engine.allocateLease4(ctx2));
 
-    ASSERT_TRUE(ctx2.old_lease_);
-    EXPECT_EQ("192.0.2.101", ctx2.old_lease_->addr_.toText());
+    ASSERT_FALSE(ctx2.old_lease_);
 
     // Client A returns to DHCPDISCOVER and should be offered a lease.
     // The offered lease address must be different than the one the
@@ -1177,11 +1156,11 @@ TEST_F(AllocEngine4Test, reservedAddressConflictResolution) {
     AllocEngine::ClientContext4 ctx3(subnet_, clientid_, hwaddr_,
                                     IOAddress("192.0.2.101"), false, false,
                                     "", true);
-    Lease4Ptr offered_lease = engine.allocateLease4(ctx3);
+    offered_lease = engine.allocateLease4(ctx3);
     ASSERT_TRUE(offered_lease);
     EXPECT_NE(offered_lease->addr_.toText(), "192.0.2.101");
 
-    // Client A tried to acquire the lease. It should succeed. At this point
+    // Client A tries to acquire the lease. It should succeed. At this point
     // the previous lease should be released and become available for the
     // Client B.
     AllocEngine::ClientContext4 ctx4(subnet_, clientid_, hwaddr_,
@@ -1235,6 +1214,10 @@ TEST_F(AllocEngine4Test, reservedAddressVsDynamicPool) {
 
     ASSERT_TRUE(allocated_lease);
     EXPECT_NE(allocated_lease->addr_.toText(), "192.0.2.100");
+
+    Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(allocated_lease->addr_);
+    ASSERT_TRUE(from_mgr);
+    detailCompareLease(allocated_lease, from_mgr);
 }
 
 // This test checks that the client requesting an address which is
@@ -1272,7 +1255,7 @@ TEST_F(AllocEngine4Test, reservedAddressHintUsedByOtherClient) {
 }
 
 // This test checks that the allocation engine refuses to allocate an
-// address when the pool is exhausted, and the only one available
+// address when the pool is exhausted, and the only available
 // address is reserved for a different client.
 TEST_F(AllocEngine4Test, reservedAddressShortPool) {
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);

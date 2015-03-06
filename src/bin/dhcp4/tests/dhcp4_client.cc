@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -49,6 +49,7 @@ Dhcp4Client::Dhcp4Client(const Dhcp4Client::State& state) :
     curr_transid_(0),
     dest_addr_("255.255.255.255"),
     hwaddr_(generateHWAddr()),
+    iface_name_("eth0"),
     relay_addr_("192.0.2.2"),
     requested_options_(),
     server_facing_relay_addr_("10.0.0.2"),
@@ -64,6 +65,7 @@ Dhcp4Client::Dhcp4Client(boost::shared_ptr<NakedDhcpv4Srv> srv,
     curr_transid_(0),
     dest_addr_("255.255.255.255"),
     hwaddr_(generateHWAddr()),
+    iface_name_("eth0"),
     relay_addr_("192.0.2.2"),
     requested_options_(),
     server_facing_relay_addr_("10.0.0.2"),
@@ -344,7 +346,7 @@ Dhcp4Client::sendMsg(const Pkt4Ptr& msg) {
                               msg->getBuffer().getLength()));
     msg_copy->setRemoteAddr(msg->getLocalAddr());
     msg_copy->setLocalAddr(dest_addr_);
-    msg_copy->setIface("eth0");
+    msg_copy->setIface(iface_name_);
     srv_->fakeReceive(msg_copy);
     srv_->run();
 }
