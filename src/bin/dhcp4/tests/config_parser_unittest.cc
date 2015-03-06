@@ -73,9 +73,19 @@ TEST(Dhcp4SpecTest, basicSpec) {
 }
 
 class Dhcp4ParserTest : public ::testing::Test {
+protected:
+    // Check that no hooks libraries are loaded.  This is a pre-condition for
+    // a number of tests, so is checked in one place.  As this uses an
+    // ASSERT call - and it is not clear from the documentation that Gtest
+    // predicates can be used in a constructor - the check is placed in SetUp.
+    virtual void SetUp() {
+        std::vector<std::string> libraries = HooksManager::getLibraryNames();
+        ASSERT_TRUE(libraries.empty());
+    }
+
 public:
     Dhcp4ParserTest()
-    :rcode_(-1) {
+    : rcode_(-1) {
         // Open port 0 means to not do anything at all. We don't want to
         // deal with sockets here, just check if configuration handling
         // is sane.
@@ -85,15 +95,7 @@ public:
         resetConfiguration();
     }
 
-    // Check that no hooks libraries are loaded.  This is a pre-condition for
-    // a number of tests, so is checked in one place.  As this uses an
-    // ASSERT call - and it is not clear from the documentation that Gtest
-    // predicates can be used in a constructor - the check is placed in SetUp.
-    void SetUp() {
-        std::vector<std::string> libraries = HooksManager::getLibraryNames();
-        ASSERT_TRUE(libraries.empty());
-    }
-
+public:
     // Checks if global parameter of name have expected_value
     void checkGlobalUint32(string name, uint32_t expected_value) {
         const Uint32StoragePtr uint32_defaults =
