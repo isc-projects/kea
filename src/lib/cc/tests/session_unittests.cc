@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009,2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -77,9 +77,8 @@ public:
         acceptor_(io_service_, ep_),
         socket_(io_service_)
     {
-        acceptor_.async_accept(socket_,
-                               boost::bind(&TestDomainSocket::acceptHandler,
-                                           this, _1));
+        acceptor_.async_accept(socket_, boost::bind(&TestDomainSocket::acceptHandler,
+                                                    _1));
     }
 
     ~TestDomainSocket() {
@@ -87,7 +86,7 @@ public:
         unlink(BUNDY_TEST_SOCKET_FILE);
     }
 
-    void acceptHandler(const asio::error_code&) const {
+    static void acceptHandler(const asio::error_code&) {
     }
 
     void sendmsg(isc::data::ElementPtr& env, isc::data::ElementPtr& msg) {
