@@ -319,10 +319,8 @@ AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet, const Duid
 
 
 void AllocEngine::findReservation(ClientContext6& ctx) const {
-    if (!ctx.subnet_) {
-        isc_throw(InvalidOperation, "Subnet is required for IPv6 lease allocation");
-    } else if (!ctx.duid_) {
-        isc_throw(InvalidOperation, "DUID is mandatory for IPv6 lease allocation");
+    if (!ctx.subnet_ || !ctx.duid_) {
+        return;
     }
 
     // Check which host reservation mode is supported in this subnet.

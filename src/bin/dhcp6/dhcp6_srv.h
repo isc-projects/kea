@@ -416,7 +416,9 @@ protected:
     ///
     /// @param question client's message
     /// @param answer server's message (options will be added here)
-    void appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer);
+    /// @param ctx client context (contains subnet, duid and other parameters)
+    void appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
+                                const AllocEngine::ClientContext6 ctx);
 
     /// @brief Appends requested vendor options to server's answer.
     ///
@@ -429,15 +431,16 @@ protected:
 
     /// @brief Assigns leases.
     ///
-    /// It supports addresses (IA_NA) only. It does NOT support temporary
-    /// addresses (IA_TA) nor prefixes (IA_PD).
-    /// @todo: Extend this method once TA and PD becomes supported
+    /// It supports non-temporary addresses (IA_NA) and prefixes (IA_PD). It
+    /// does NOT support temporary addresses (IA_TA).
     ///
-    /// @param question client's message (with requested IA_NA)
-    /// @param answer server's message (IA_NA options will be added here).
-    /// This message should contain Client FQDN option being sent by the server
-    /// to the client (if the client sent this option to the server).
-    void assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer);
+    /// @param question client's message (with requested IA options)
+    /// @param answer server's message (IA options will be added here).
+    ///   This message should contain Client FQDN option being sent by the server
+    ///   to the client (if the client sent this option to the server).
+    /// @param ctx client context (contains subnet, duid and other parameters)
+    void assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
+                      const AllocEngine::ClientContext6& ctx);
 
     /// @brief Processes Client FQDN Option.
     ///
@@ -460,7 +463,9 @@ protected:
     /// @param answer Server's response to a client. If server generated
     /// Client FQDN option for the client, this option is stored in this
     /// object.
-    void processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer);
+    /// @param ctx client context (includes subnet, client-id, hw-addr etc.)
+    void processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer,
+                           const AllocEngine::ClientContext6 ctx);
 
     /// @brief Creates a number of @c isc::dhcp_ddns::NameChangeRequest objects
     /// based on the DHCPv6 Client FQDN %Option.
@@ -518,7 +523,9 @@ protected:
     /// to REPLY packet, just its IA_NA containers.
     /// @param release client's message asking to release
     /// @param reply server's response
-    void releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply);
+    /// @param ctx client context (includes subnet, client-id, hw-addr etc.)
+    void releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply,
+                       AllocEngine::ClientContext6& ctx);
 
     /// @brief Sets server-identifier.
     ///
@@ -606,6 +613,13 @@ protected:
     /// @return HWaddr pointer (or NULL if configured methods fail)
     static HWAddrPtr getMAC(const Pkt6Ptr& pkt);
 
+    /// @brief Creates client context for specified packet
+    ///
+    /// Creates context that includes subnet, client-id, hw address and
+    /// possibly other parameters.
+    /// @return client context
+    AllocEngine::ClientContext6 createContext(const Pkt6Ptr& pkt);
+
     /// @brief this is a prefix added to the contend of vendor-class option
     ///
     /// If incoming packet has a vendor class option, its content is
@@ -681,6 +695,12 @@ private:
     void conditionalNCRRemoval(Lease6Ptr& old_lease, Lease6Ptr& new_lease,
                                const std::string& hostname,
                                bool do_fwd, bool do_rev);
+
+    /// @brief Utility method that extracts DUID from client-id option
+    ///
+    /// @param pkt the message that contains client-id option
+    /// @return extracted DUID (or NULL if client-id is missing)
+    DuidPtr extractClientId(const Pkt6Ptr& pkt);
 
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using
