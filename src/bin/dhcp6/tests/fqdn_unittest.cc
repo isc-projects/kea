@@ -329,7 +329,8 @@ public:
         // Create three IAs, each having different address.
         addIA(1234, IOAddress("2001:db8:1::1"), answer);
 
-        ASSERT_NO_THROW(srv_->processClientFqdn(question, answer));
+        AllocEngine::ClientContext6 ctx;
+        ASSERT_NO_THROW(srv_->processClientFqdn(question, answer, ctx));
         Option6ClientFqdnPtr answ_fqdn = boost::dynamic_pointer_cast<
             Option6ClientFqdn>(answer->getOption(D6O_CLIENT_FQDN));
         ASSERT_TRUE(answ_fqdn);
@@ -393,6 +394,7 @@ public:
                             const std::string& exp_hostname,
                             const uint8_t client_flags =
                                 Option6ClientFqdn::FLAG_S,
+                            const IOAddress expected_address = IOAddress("2001:db8:1:1::dead:beef"),
                             const bool include_oro = true) {
         // Create a message of a specified type, add server id and
         // FQDN option.
@@ -440,7 +442,7 @@ public:
         ASSERT_TRUE(addr);
 
         // Check that we have got the address we requested.
-        checkIAAddr(addr, IOAddress("2001:db8:1:1::dead:beef"),
+        checkIAAddr(addr, expected_address,
                     Lease::TYPE_NA);
 
         if (msg_type != DHCPV6_SOLICIT) {
@@ -503,6 +505,40 @@ public:
 
         // Process the message off the queue
         ASSERT_NO_THROW(d2_mgr_.runReadyIO());
+    }
+
+    /// @brief Utility function that creates a host reservation (duid)
+    ///
+    /// @param add_to_host_mgr true if the reservation should be added
+    /// @param type specifies reservation type (NA or PD)
+    /// @param addr specifies reserved address
+    /// @param hostname specifies hostname to be used in reservation
+    /// @return created Host object.
+    HostPtr
+    createHost6(bool add_to_host_mgr, IPv6Resrv::Type type,
+                const asiolink::IOAddress& addr, const std::string& hostname) {
+        HostPtr host(new Host(&duid_->getDuid()[0], duid_->getDuid().size(),
+                              Host::IDENT_DUID, SubnetID(0), subnet_->getID(),
+                              asiolink::IOAddress("0.0.0.0"),
+                              hostname));
+
+        // Prefix length doesn't matter here, let's assume address is /128 and
+        // prefix is /64
+        IPv6Resrv resv(type, addr, type == IPv6Resrv::TYPE_NA? 128 : 64);
+        host->addReservation(resv);
+
+        if (add_to_host_mgr) {
+
+            // Let's add the host.
+            CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+
+            // We also need to add existing subnet
+            CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet_);
+
+            // Commit this configuration.
+            CfgMgr::instance().commit();
+        }
+        return (host);
     }
 
     // Holds a lease used by a test.
@@ -943,7 +979,8 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestWithoutFqdn) {
     // In this case, we expect that the FQDN option will not be included
     // in the server's response. The testProcessMessage will check that.
     testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",
-                       "myhost.example.com.", Option6ClientFqdn::FLAG_S, false);
+                       "myhost.example.com.", Option6ClientFqdn::FLAG_S,
+                       IOAddress("2001:db8:1:1::dead:beef"), false);
     ASSERT_EQ(1, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
@@ -957,7 +994,8 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestWithoutFqdn) {
 TEST_F(FqdnDhcpv6SrvTest, processRequestEmptyFqdn) {
     testProcessMessage(DHCPV6_REQUEST, "",
                        "myhost-2001-db8-1-1--dead-beef.example.com.",
-                       Option6ClientFqdn::FLAG_S, false);
+                       Option6ClientFqdn::FLAG_S,
+                       IOAddress("2001:db8:1:1::dead:beef"), false);
     ASSERT_EQ(1, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
@@ -1048,6 +1086,16 @@ TEST_F(FqdnDhcpv6SrvTest, processClientDelegation) {
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
                             0, 4000);
+}
+
+TEST_F(FqdnDhcpv6SrvTest, hostnameReservation) {
+
+    createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1:1::babe"),
+                "alice.example.org.");
+
+    testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",
+                       "alice.example.org.", 0, IOAddress("2001:db8:1:1::babe"));
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
 }
 
 
