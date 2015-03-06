@@ -1301,7 +1301,8 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
     // It's ok if there response is NULL. Hardware address is optional in Lease6.
     ctx.hwaddr_ = getMAC(query);
 
-    Lease6Collection leases = alloc_engine_->allocateLeases6(ctx);
+    alloc_engine_->findReservation(ctx);
+    Lease6Collection leases = alloc_engine_->allocateLeases6(ctx, false);
 
     /// @todo: Handle more than one lease
     Lease6Ptr lease;
@@ -1444,7 +1445,8 @@ Dhcpv6Srv::assignIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
     // It's ok if there response is NULL. Hardware address is optional in Lease6
     ctx.hwaddr_ = getMAC(query);
 
-    Lease6Collection leases = alloc_engine_->allocateLeases6(ctx);
+    alloc_engine_->findReservation(ctx);
+    Lease6Collection leases = alloc_engine_->allocateLeases6(ctx, false);
 
     if (!leases.empty()) {
 
@@ -1589,7 +1591,8 @@ Dhcpv6Srv::extendIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
         ctx.allow_new_leases_in_renewals_ = true;
     }
 
-    Lease6Collection leases = alloc_engine_->renewLeases6(ctx);
+    alloc_engine_->findReservation(ctx);
+    Lease6Collection leases = alloc_engine_->renewLeases6(ctx, false);
 
     // Ok, now we have the leases extended. We have:
     // - what the client tried to renew in ctx.hints_
@@ -1770,7 +1773,8 @@ Dhcpv6Srv::extendIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
     // - old_leases - leases that used to be, but are no longer valid
     // - changed_leases - leases that have FQDN changed (not really important
     //                    in PD context)
-    Lease6Collection leases = alloc_engine_->renewLeases6(ctx);
+    alloc_engine_->findReservation(ctx);
+    Lease6Collection leases = alloc_engine_->renewLeases6(ctx, false);
 
     // For all the leases we have now, add the IAPPREFIX with non-zero lifetimes
     for (Lease6Collection::const_iterator l = leases.begin(); l != leases.end(); ++l) {
