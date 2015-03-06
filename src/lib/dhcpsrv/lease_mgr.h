@@ -198,7 +198,7 @@ public:
     ///        and a subnet
     ///
     /// There can be at most one lease for a given HW address in a single
-    /// pool, so this method with either return a single lease or NULL.
+    /// pool, so this method will either return a single lease or NULL.
     ///
     /// @param hwaddr hardware address of the client
     /// @param subnet_id identifier of the subnet that lease must belong to
@@ -235,8 +235,8 @@ public:
 
     /// @brief Returns existing IPv4 lease for specified client-id
     ///
-    /// There can be at most one lease for a given HW address in a single
-    /// pool, so this method with either return a single lease or NULL.
+    /// There can be at most one lease for a given client-id in a single
+    /// pool, so this method will either return a single lease or NULL.
     ///
     /// @param clientid client identifier
     /// @param subnet_id identifier of the subnet that lease must belong to

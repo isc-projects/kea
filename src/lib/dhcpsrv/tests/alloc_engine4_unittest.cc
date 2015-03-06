@@ -1173,7 +1173,7 @@ TEST_F(AllocEngine4Test, reservedAddressConflictResolution) {
                                                     old_lease_);
     ASSERT_FALSE(offered_lease);
 
-    // Client A tries to renew the lease. The renewal should fail because
+    // Client A trys to renew the lease. The renewal should fail because
     // server detects that Client A doesn't have reservation for this
     // address.
     ASSERT_FALSE(engine.allocateLease4(subnet_, clientid_, hwaddr_,
@@ -1295,7 +1295,7 @@ TEST_F(AllocEngine4Test, reservedAddressHintUsedByOtherClient) {
 }
 
 // This test checks that the allocation engine refuses to allocate an
-// address when the pool is exhausted, and the only one available
+// address when the pool is exhausted, and the only available
 // address is reserved for a different client.
 TEST_F(AllocEngine4Test, reservedAddressShortPool) {
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);

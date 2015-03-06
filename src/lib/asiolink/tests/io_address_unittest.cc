@@ -169,7 +169,7 @@ TEST(IOAddressTest, isV6Zero) {
     const IOAddress address_non_zero1("::ff");
     EXPECT_FALSE(address_non_zero1.isV6Zero());
     // ff::
-    const IOAddress address_non_zero2("::ff");
+    const IOAddress address_non_zero2("ff::");
     EXPECT_FALSE(address_non_zero2.isV6Zero());
 }
 
