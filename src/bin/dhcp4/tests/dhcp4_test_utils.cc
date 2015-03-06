@@ -388,7 +388,9 @@ Dhcpv4SrvTest::createPacketFromBuffer(const Pkt4Ptr& src_pkt,
     return (::testing::AssertionSuccess());
 }
 
-void Dhcpv4SrvTest::TearDown() {
+void
+// cppcheck-suppress unusedFunction
+Dhcpv4SrvTest::TearDown() {
 
     CfgMgr::instance().clear();
 
