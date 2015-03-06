@@ -71,6 +71,16 @@ TEST(Dhcp6SpecTest, basicSpec) {
 }
 
 class Dhcp6ParserTest : public ::testing::Test {
+protected:
+    // Check that no hooks libraries are loaded.  This is a pre-condition for
+    // a number of tests, so is checked in one place.  As this uses an
+    // ASSERT call - and it is not clear from the documentation that Gtest
+    // predicates can be used in a constructor - the check is placed in SetUp.
+    virtual void SetUp() {
+        std::vector<std::string> libraries = HooksManager::getLibraryNames();
+        ASSERT_TRUE(libraries.empty());
+    }
+
 public:
     Dhcp6ParserTest() :rcode_(-1), srv_(0) {
         // srv_(0) means to not open any sockets. We don't want to
@@ -97,15 +107,6 @@ public:
 
         // Reset configuration for each test.
         resetConfiguration();
-    }
-
-    // Check that no hooks libraries are loaded.  This is a pre-condition for
-    // a number of tests, so is checked in one place.  As this uses an
-    // ASSERT call - and it is not clear from the documentation that Gtest
-    // predicates can be used in a constructor - the check is placed in SetUp.
-    void SetUp() {
-        std::vector<std::string> libraries = HooksManager::getLibraryNames();
-        ASSERT_TRUE(libraries.empty());
     }
 
     ~Dhcp6ParserTest() {
