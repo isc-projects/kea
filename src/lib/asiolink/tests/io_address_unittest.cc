@@ -123,6 +123,9 @@ TEST(IOAddressTest, isV4Zero) {
     // 0.0.0.0
     const IOAddress address_zero("0.0.0.0");
     EXPECT_TRUE(address_zero.isV4Zero());
+    // :: (v6 zero address)
+    const IOAddress address_zero_v6("::");
+    EXPECT_FALSE(address_zero_v6.isV4Zero());
     // 192.0.2.3
     const IOAddress address_non_zero("192.0.2.3");
     EXPECT_FALSE(address_non_zero.isV4Zero());
