@@ -989,18 +989,30 @@ protected:
     /// Get the number of received packets from the Statistics Manager.
     /// Function may throw if Statistics Manager object is not
     /// initialized.
+    ///
+    /// \note The method parameter is non-const to suppress the cppcheck
+    /// warning about the object being passed by value. However, passing
+    /// an enum by reference doesn't make much sense. At the same time,
+    /// removing the constness should be pretty safe for this function.
+    ///
     /// \param xchg_type packet exchange type.
     /// \return number of received packets.
-    uint64_t getRcvdPacketsNum(const ExchangeType xchg_type) const;
+    uint64_t getRcvdPacketsNum(ExchangeType xchg_type) const;
 
     /// \brief Get number of sent packets.
     ///
     /// Get the number of sent packets from the Statistics Manager.
     /// Function may throw if Statistics Manager object is not
     /// initialized.
+    ///
+    /// \note The method parameter is non-const to suppress the cppcheck
+    /// warning about the object being passed by value. However, passing
+    /// an enum by reference doesn't make much sense. At the same time,
+    /// removing the constness should be pretty safe for this function.
+    ///
     /// \param xchg_type packet exchange type.
     /// \return number of sent packets.
-    uint64_t getSentPacketsNum(const ExchangeType xchg_type) const;
+    uint64_t getSentPacketsNum(ExchangeType xchg_type) const;
 
     /// \brief Handle child signal.
     ///

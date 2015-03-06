@@ -589,7 +589,7 @@ TestControl::getRequestedIpOffset() const {
 }
 
 uint64_t
-TestControl::getRcvdPacketsNum(const ExchangeType xchg_type) const {
+TestControl::getRcvdPacketsNum(ExchangeType xchg_type) const {
     uint8_t ip_version = CommandOptions::instance().getIpVersion();
     if (ip_version == 4) {
         return (stats_mgr4_->getRcvdPacketsNum(xchg_type));
@@ -599,7 +599,7 @@ TestControl::getRcvdPacketsNum(const ExchangeType xchg_type) const {
 }
 
 uint64_t
-TestControl::getSentPacketsNum(const ExchangeType xchg_type) const {
+TestControl::getSentPacketsNum(ExchangeType xchg_type) const {
     uint8_t ip_version = CommandOptions::instance().getIpVersion();
     if (ip_version == 4) {
         return (stats_mgr4_->getSentPacketsNum(xchg_type));
