@@ -27,6 +27,7 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4macros])
 
 AC_CANONICAL_HOST
+AC_CANONICAL_BUILD
 
 # Checks for programs.
 AC_PROG_CXX
@@ -43,6 +44,21 @@ fi
 # Export EXTENDED_VERSION to config.h
 # This will be either "tarball" or "git abcd".
 AC_DEFINE_UNQUOTED([EXTENDED_VERSION], ["${KEA_SRCID}"], [Extended Kea version])
+
+# If cross compiling assume the message compiler executable was
+# magically already in place...
+if test "$cross_compiling" = "yes"; then
+        AC_MSG_CHECKING("build (vs. host) compiled message compiler")
+	if test -x "${srcdir}/src/lib/log/compiler/message"; then
+		AC_MSG_RESULT(yes)
+	else
+		AC_MSG_RESULT(no)
+		AC_MSG_WARN("you must install a message compiler in:")
+		AC_MSG_WARN("    ${srcdir}/src/lib/log/compiler/message")
+		AC_MSG_WARN("compiled for build ($build).")
+	fi
+fi
+AM_CONDITIONAL([CROSS_COMPILING], [test "$cross_compiling" = "yes"])
 
 # Enable low-performing debugging facilities? This option optionally
 # enables some debugging aids that perform slowly and hence aren't built
