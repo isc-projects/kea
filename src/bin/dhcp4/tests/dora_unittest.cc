@@ -508,19 +508,21 @@ TEST_F(DORATest, reservation) {
 //     Client A still holds this address.
 // 13. Client B uses 4-way exchange to obtain a new lease.
 // 14. The server determines that the Client B has a reservation for the
-//     address which is in use by Client A. The server drops the client's
-//     DHCPDISCOVER message.
-// 15. Client A renews the lease.
-// 16. The server determines that the address that Client A is using is reserved
+//     address which is in use by Client A and offers an address different
+//     than reserved.
+// 15. Client B requests the allocation of the offered address and the server
+//     allocates this address.
+// 16. Client A renews the lease.
+// 17. The server determines that the address that Client A is using is reserved
 //     for Client B. The server returns DHCPNAK to the Client A.
-// 17. Client B uses 4-way exchange to obtain the reserved lease but the lease
-//     for the Client A hasn't been removed yet. Client B's DHCPDISCOVER
-//     message is dropped again.
-// 18. Client A uses 4-way exchange to allocate a new lease.
-// 19. The server allocates a new lease from the dynamic pool but it avoids
+// 18. Client B uses 4-way exchange to obtain the reserved lease but the lease
+//     for the Client A hasn't been removed yet. Client B is assigned the same
+//     address it has been using.
+// 19. Client A uses 4-way exchange to allocate a new lease.
+// 20. The server allocates a new lease from the dynamic pool but it avoids
 //     allocating the address reserved for the Client B.
-// 20. Client B uses 4-way exchange to obtain a new lease.
-// 21. The server finally allocates a reserved address to the Client B.
+// 21. Client B uses 4-way exchange to obtain a new lease.
+// 22. The server finally allocates a reserved address to the Client B.
 TEST_F(DORATest, reservationsWithConflicts) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
     // Configure DHCP server.
