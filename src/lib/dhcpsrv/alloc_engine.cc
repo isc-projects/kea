@@ -318,9 +318,30 @@ AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet, const Duid
 }
 
 
+void AllocEngine::findReservation(ClientContext6& ctx) const {
+    if (!ctx.subnet_) {
+        isc_throw(InvalidOperation, "Subnet is required for IPv6 lease allocation");
+    } else if (!ctx.duid_) {
+        isc_throw(InvalidOperation, "DUID is mandatory for IPv6 lease allocation");
+    }
+
+    // Check which host reservation mode is supported in this subnet.
+    Subnet::HRMode hr_mode = ctx.subnet_->getHostReservationMode();
+
+    // Check if there's a host reservation for this client. Attempt to get
+    // host info only if reservations are not disabled.
+    if (hr_mode != Subnet::HR_DISABLED) {
+
+        ctx.host_ = HostMgr::instance().get6(ctx.subnet_->getID(), ctx.duid_,
+                                             ctx.hwaddr_);
+        } else {
+        // Let's explicitly set it to NULL if reservations are disabled.
+        ctx.host_.reset();
+    }
+}
 
 Lease6Collection
-AllocEngine::allocateLeases6(ClientContext6& ctx) {
+AllocEngine::allocateLeases6(ClientContext6& ctx, bool find_reservation) {
 
     try {
         if (!ctx.subnet_) {
@@ -330,18 +351,17 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
             isc_throw(InvalidOperation, "DUID is mandatory for IPv6 lease allocation");
         }
 
-        // Check which host reservation mode is supported in this subnet.
-        Subnet::HRMode hr_mode = ctx.subnet_->getHostReservationMode();
+        if (find_reservation) {
+            findReservation(ctx);
+        }
 
-        // Check if there's a host reservation for this client. Attempt to get
-        // host info only if reservations are not disabled.
-        if (hr_mode != Subnet::HR_DISABLED) {
-
-            ctx.host_ = HostMgr::instance().get6(ctx.subnet_->getID(), ctx.duid_,
-                                                 ctx.hwaddr_);
-        } else {
-            // Let's explicitly set it to NULL if reservations are disabled.
-            ctx.host_.reset();
+        // Let's check whether there's a hostname specified in the reservation
+        if (ctx.host_) {
+            std::string hostname = ctx.host_->getHostname();
+            // If there is, let's use it
+            if (!hostname.empty()) {
+                ctx.hostname_ = hostname;
+            }
         }
 
         // Check if there are existing leases for that subnet/duid/iaid
@@ -1001,7 +1021,7 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
 }
 
 Lease6Collection
-AllocEngine::renewLeases6(ClientContext6& ctx) {
+AllocEngine::renewLeases6(ClientContext6& ctx, bool find_host) {
     try {
         if (!ctx.subnet_) {
             isc_throw(InvalidOperation, "Subnet is required for allocation");
@@ -1011,19 +1031,20 @@ AllocEngine::renewLeases6(ClientContext6& ctx) {
             isc_throw(InvalidOperation, "DUID is mandatory for allocation");
         }
 
-        // Check which host reservation mode is supported in this subnet.
-        Subnet::HRMode hr_mode = ctx.subnet_->getHostReservationMode();
-
-        // Check if there's a host reservation for this client. Attempt to get
-        // host info only if reservations are not disabled.
-        if (hr_mode != Subnet::HR_DISABLED) {
-
-            ctx.host_ = HostMgr::instance().get6(ctx.subnet_->getID(), ctx.duid_,
-                                                 ctx.hwaddr_);
-        } else {
-            // Host reservations disabled? Then explicitly set host to NULL
-            ctx.host_.reset();
+        // We can attempt to find appropriate reservation
+        if (find_host) {
+            findReservation(ctx);
         }
+
+        // Let's check whether there's a hostname specified in the reservation
+        if (ctx.host_) {
+            std::string hostname = ctx.host_->getHostname();
+            // If there is, let's use it
+            if (!hostname.empty()) {
+                ctx.hostname_ = hostname;
+            }
+        }
+
 
         // Check if there are any leases for this client.
         Lease6Collection leases = LeaseMgrFactory::instance()

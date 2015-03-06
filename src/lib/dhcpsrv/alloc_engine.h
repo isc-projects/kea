@@ -406,7 +406,8 @@ public:
     /// it into LeaseMgr (if this allocation is not fake, i.e. this is not a
     /// response to SOLICIT).
     ///
-    /// This method uses host reservation if appropriate. The host reservation
+    /// This method uses host reservation if ctx.host_ is set. The easy way to
+    /// set it is to call @ref AllocEngine::findReservation(ctx). The host reservation
     /// is convenient, but incurs performance penalty, so it can be tweaked on
     /// a per subnet basis. There are three possible modes:
     /// 1. disabled (no host reservation at all). This is the most performant one
@@ -444,6 +445,12 @@ public:
     ///
     /// @param ctx client context that passes all necessary information. See
     ///        @ref ClientContext6 for details.
+    /// @param find_resrv specifies whether the code should search for host
+    ///   reservation. true means that the code will consult HostMgr, false means
+    ///   to skip this check. That is easier to use, but is redundant if the
+    ///   ctx.host_ field is already set. We can't use ctx.host_ == NULL as
+    ///   check, because for cases whithout reservations, the reservation
+    ///   search would be repeated.
     ///
     /// The following fields of ClientContext6 are used:
     ///
@@ -477,8 +484,7 @@ public:
     ///
     /// @return Allocated IPv6 leases (may be empty if allocation failed)
     Lease6Collection
-    allocateLeases6(ClientContext6& ctx);
-
+    allocateLeases6(ClientContext6& ctx, bool find_resrv = true);
 
     /// @brief Renews existing DHCPv6 leases for a given IA.
     ///
@@ -498,9 +504,23 @@ public:
     /// prefixes the client had sent. @ref ClientContext6::old_leases_ will
     /// contain removed leases in this case.
     ///
+    /// @param find_resrv specifies whether the code should search for host
+    ///   reservation. true means that the code will consult HostMgr, false means
+    ///   to skip this check. That is easier to use, but is redundant if the
+    ///   ctx.host_ field is already set. We can't use ctx.host_ == NULL as
+    ///   check, because for cases whithout reservations, the reservation
+    ///   search would be repeated.
+    ///
+    ///
     /// @return Returns renewed lease.
-    Lease6Collection
-    renewLeases6(ClientContext6& ctx);
+    Lease6Collection renewLeases6(ClientContext6& ctx, bool find_resrv = true);
+
+    /// @brief Attempts to find appropriate host reservation.
+    ///
+    /// Attempts to find appropriate host reservation in HostMgr. If found, it
+    /// will be set in ctx.host_.
+    /// @param ctx Client context that contains all necessary information.
+    void findReservation(ClientContext6& ctx) const;
 
 private:
 
