@@ -222,6 +222,16 @@ Host::hasReservation(const IPv6Resrv& reservation) const {
 }
 
 void
+Host::addClientClass4(const std::string& class_name) {
+    addClientClassInternal(dhcp4_client_classes_, class_name);
+}
+
+void
+Host::addClientClass6(const std::string& class_name) {
+    addClientClassInternal(dhcp6_client_classes_, class_name);
+}
+
+void
 Host::addClientClassInternal(ClientClasses& classes,
                              const std::string& class_name) {
     std::string trimmed = util::str::trim(class_name);

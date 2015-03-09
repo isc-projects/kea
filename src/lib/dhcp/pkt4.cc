@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -379,6 +379,7 @@ Pkt4::setFile(const uint8_t* file, size_t fileLen /*= MAX_FILE_LEN*/) {
 }
 
 uint8_t
+// cppcheck-suppress unusedFunction
 Pkt4::DHCPTypeToBootpType(uint8_t dhcpType) {
     switch (dhcpType) {
     case DHCPDISCOVER:
