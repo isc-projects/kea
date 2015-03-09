@@ -394,9 +394,7 @@ public:
     /// @brief Adds new client class for DHCPv4.
     ///
     /// @param class_name Class name.
-    void addClientClass4(const std::string& class_name) {
-        addClientClassInternal(dhcp4_client_classes_, class_name);
-    }
+    void addClientClass4(const std::string& class_name);
 
     /// @brief Returns classes which DHCPv4 client is associated with.
     const ClientClasses& getClientClasses4() const {
@@ -406,9 +404,7 @@ public:
     /// @brief Adds new client class for DHCPv6.
     ///
     /// @param class_name Class name.
-    void addClientClass6(const std::string& class_name) {
-        addClientClassInternal(dhcp6_client_classes_, class_name);
-    }
+    void addClientClass6(const std::string& class_name);
 
     /// @brief Returns classes which DHCPv6 client is associated with.
     const ClientClasses& getClientClasses6() const {
