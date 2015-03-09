@@ -874,6 +874,16 @@ public:
     /// @return Allocated IPv4 lease (or NULL if allocation failed).
     Lease4Ptr allocateLease4(ClientContext4& ctx);
 
+    /// @brief Attempts to find the host reservation for the client.
+    ///
+    /// This method attempts to find the host reservation for the client. If
+    /// found, it is set in the @c ctx.host_. If the host reservations are
+    /// disabled for the particular subnet or the reservation is not found
+    /// for the client, the @ctx.host_ is set to NULL.
+    ///
+    /// @param ctx Client context holding various information about the client.
+    void findReservation(ClientContext4& ctx) const;
+
 private:
 
     /// @brief Offers the lease.
