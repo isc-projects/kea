@@ -1292,6 +1292,80 @@ TEST_F(AllocEngine4Test, reservedAddressShortPool) {
     EXPECT_EQ("192.0.2.100", allocated_lease->addr_.toText());
 }
 
+// This test checks that the AllocEngine::findReservation method finds
+// and returns host reservation for the DHCPv4 client using the data from
+// the client context. If the host reservation can't be found, it sets
+// the value of NULL in the host_ field of the client context.
+TEST_F(AllocEngine4Test, findReservation) {
+    // Create the instance of the allocation engine.
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+
+    // Context is required to call the AllocEngine::findReservation.
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
+                                    IOAddress("0.0.0.0"), false, false,
+                                    "", false);
+
+    // There is no reservation in the database so no host should be
+    // retruned.
+    ASSERT_NO_THROW(engine.findReservation(ctx));
+    EXPECT_FALSE(ctx.host_);
+
+    // Create a reservation for the client.
+    HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
+                          Host::IDENT_HWADDR, subnet_->getID(),
+                          SubnetID(0), IOAddress("192.0.2.100")));
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    // This time the reservation should be returned.
+    ASSERT_NO_THROW(engine.findReservation(ctx));
+    EXPECT_TRUE(ctx.host_);
+    EXPECT_EQ(ctx.host_->getIPv4Reservation(), host->getIPv4Reservation());
+
+    // If the host reservation mode for the subnet is disabled, the
+    // host should not be returned, even though it exists in the
+    // host database.
+    subnet_->setHostReservationMode(Subnet::HR_DISABLED);
+    ASSERT_NO_THROW(engine.findReservation(ctx));
+    EXPECT_FALSE(ctx.host_);
+
+    // Check the third possible reservation mode.
+    subnet_->setHostReservationMode(Subnet::HR_OUT_OF_POOL);
+    ASSERT_NO_THROW(engine.findReservation(ctx));
+    EXPECT_TRUE(ctx.host_);
+    EXPECT_EQ(ctx.host_->getIPv4Reservation(), host->getIPv4Reservation());
+
+    // This time use the client identifier to search for the host.
+    host.reset(new Host(&clientid_->getClientId()[0],
+                        clientid_->getClientId().size(),
+                        Host::IDENT_DUID, subnet_->getID(),
+                        SubnetID(0), IOAddress("192.0.2.101")));
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    ASSERT_NO_THROW(engine.findReservation(ctx));
+    EXPECT_TRUE(ctx.host_);
+    EXPECT_EQ(ctx.host_->getIPv4Reservation(), host->getIPv4Reservation());
+
+    // Remove the subnet. Subnet id is required to find host reservations, so
+    // if it is set to NULL, no reservation should be returned
+    ctx.subnet_.reset();
+    ASSERT_NO_THROW(engine.findReservation(ctx));
+    EXPECT_FALSE(ctx.host_);
+
+    // The same if there is a mismatch of the subnet id between the reservation
+    // and the context.
+    ctx.subnet_ = subnet_;
+    host.reset(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
+                        Host::IDENT_HWADDR, subnet_->getID() + 1,
+                        SubnetID(0), IOAddress("192.0.2.100")));
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    ASSERT_NO_THROW(engine.findReservation(ctx));
+    EXPECT_FALSE(ctx.host_);
+}
+
 }; // namespace test
 }; // namespace dhcp
 }; // namespace isc

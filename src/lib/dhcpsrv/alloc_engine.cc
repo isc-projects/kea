@@ -1300,6 +1300,26 @@ AllocEngine::allocateLease4(ClientContext4& ctx) {
     return (new_lease);
 }
 
+void
+AllocEngine::findReservation(ClientContext4& ctx) const {
+    ctx.host_.reset();
+
+    // We can only search for the reservation if a subnet has been selected.
+    if (ctx.subnet_) {
+        // Check which host reservation mode is supported in this subnet.
+        Subnet::HRMode hr_mode = ctx.subnet_->getHostReservationMode();
+
+        // Check if there is a host reseravtion for this client. Attempt to
+        // get host information
+        if (hr_mode != Subnet::HR_DISABLED) {
+            // This method should handle the case when there is neither hwaddr
+            // nor clientid_ available and simply return NULL.
+            ctx.host_ = HostMgr::instance().get4(ctx.subnet_->getID(), ctx.hwaddr_,
+                                                 ctx.clientid_);
+        }
+    }
+}
+
 Lease4Ptr
 AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
     // Obtain the sole instance of the LeaseMgr.
