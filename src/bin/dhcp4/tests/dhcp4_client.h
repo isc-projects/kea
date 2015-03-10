@@ -217,6 +217,21 @@ public:
         return (srv_);
     }
 
+    /// @brief Creates an instance of the Client FQDN option to be included
+    /// in the client's message.
+    ///
+    /// @param flags Flags.
+    /// @param fqdn_name Name in the textual format.
+    /// @param fqdn_type Type of the name (fully qualified or partial).
+    void includeFQDN(const uint8_t flags, const std::string& fqdn_name,
+                     Option4ClientFqdn::DomainNameType fqdn_type);
+
+    /// @brief Creates an instance of the Hostname option to be included
+    /// in the client's message.
+    ///
+    /// @param name Name to be stored in the option.
+    void includeHostname(const std::string& name);
+
     /// @brief Modifies the client's HW address (adds one to it).
     ///
     /// The HW address should be modified to test negative scenarios when the
@@ -345,6 +360,13 @@ private:
     /// @return An instance of the message created.
     Pkt4Ptr createMsg(const uint8_t msg_type);
 
+    /// @brief Includes FQDN or Hostname option in the client's message.
+    ///
+    /// This method checks if @c fqdn_ or @c hostname_ is specified and
+    /// includes it in the client's message. If both are specified, the
+    /// @c fqdn_ will be used.
+    void includeName();
+
     /// @brief Include PRL Option in the query message.
     ///
     /// This function creates the instance of the PRL (Parameter Request List)
@@ -376,6 +398,12 @@ private:
     /// @brief Currently used destination address.
     asiolink::IOAddress dest_addr_;
 
+    /// @brief FQDN requested by the client.
+    Option4ClientFqdnPtr fqdn_;
+
+    /// @brief Hostname requested by the client.
+    OptionStringPtr hostname_;
+
     /// @brief Current hardware address of the client.
     HWAddrPtr hwaddr_;
 
@@ -406,4 +434,4 @@ private:
 } // end of namespace isc::dhcp
 } // end of namespace isc
 
-#endif // DHCP4_CLIENT
+#endif // DHCP4_CLIENT_H

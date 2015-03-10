@@ -43,6 +43,7 @@
 #include <asio.hpp>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <iomanip>
 
@@ -79,6 +80,152 @@ struct Dhcp4Hooks {
 // As a result, the hook indexes will be defined before any method in this
 // module is called.
 Dhcp4Hooks Hooks;
+
+namespace {
+
+/// @brief DHCPv4 message exchange.
+///
+/// This class represents the DHCPv4 message exchange. The message exchange
+/// consists of the single client message, server response to this message
+/// and the mechanisms to generate the server's response. The server creates
+/// the instance of the @c DHCPv4Exchange for each inbound message that it
+/// accepts for processing.
+///
+/// The use of the @c DHCPv4Exchange object as a central repository of
+/// information about the message exchange simplifies the API of the
+/// @c Dhcpv4Srv class.
+///
+/// Another benefit of using this class is that different methods of the
+/// @c Dhcpv4Srv may share information. For example, the constructor of this
+/// class selects the subnet and multiple methods of @c Dhcpv4Srv use this
+/// subnet, without the need to select it again.
+///
+/// @todo This is the initial version of this class. In the future a lot of
+/// code from the @c Dhcpv4Srv class will be migrated here.
+class DHCPv4Exchange {
+public:
+    /// @brief Constructor.
+    ///
+    /// The constructor selects the subnet for the query and checks for the
+    /// static host reservations for the client which has sent the message.
+    /// The information about the reservations is stored in the
+    /// @c AllocEngine::ClientContext4 object, which can be obtained by
+    /// calling the @c getContext.
+    ///
+    /// @param alloc_engine Pointer to the instance of the Allocation Engine
+    /// used by the server.
+    /// @param query Pointer to the client message.
+    DHCPv4Exchange(const AllocEnginePtr& alloc_engine, const Pkt4Ptr& query);
+
+    /// @brief Selects the subnet for the message processing.
+    ///
+    /// The pointer to the selected subnet is stored in the @c ClientContext4
+    /// structure.
+    void selectSubnet();
+
+    /// @brief Selects the subnet for the message processing.
+    ///
+    /// @todo This variant of the @c selectSubnet method is static and public so
+    /// as it may be invoked by the @c Dhcpv4Srv object. This is temporary solution
+    /// and the function will go away once the server code fully supports the use
+    /// of this class and it obtains the subnet from the context returned by the
+    /// @c getContext method.
+    ///
+    /// @param query Pointer to the client's message.
+    /// @return Pointer to the selected subnet or NULL if no suitable subnet
+    /// has been found.
+    static Subnet4Ptr selectSubnet(const Pkt4Ptr& query);
+
+    /// @brief Returns the copy of the context for the Allocation engine.
+    AllocEngine::ClientContext4 getContext() const {
+        return (context_);
+    }
+
+private:
+    /// @brief Pointer to the allocation engine used by the server.
+    AllocEnginePtr alloc_engine_;
+    /// @brief Pointer to the DHCPv4 message sent by the client.
+    Pkt4Ptr query_;
+    /// @brief Context for use with allocation engine.
+    AllocEngine::ClientContext4 context_;
+};
+
+/// @brief Type representing the pointer to the @c DHCPv4Exchange.
+typedef boost::shared_ptr<DHCPv4Exchange> DHCPv4ExchangePtr;
+
+DHCPv4Exchange::DHCPv4Exchange(const AllocEnginePtr& alloc_engine,
+                               const Pkt4Ptr& query)
+    : alloc_engine_(alloc_engine), query_(query), context_() {
+    selectSubnet();
+    // Hardware address.
+    context_.hwaddr_ = query->getHWAddr();
+    // Client Identifier
+    OptionPtr opt_clientid = query->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
+    if (opt_clientid) {
+        context_.clientid_.reset(new ClientId(opt_clientid->getData()));
+    }
+    // Check for static reservations.
+    alloc_engine->findReservation(context_);
+};
+
+void
+DHCPv4Exchange::selectSubnet() {
+    context_.subnet_ = selectSubnet(query_);
+}
+
+Subnet4Ptr
+DHCPv4Exchange::selectSubnet(const Pkt4Ptr& query) {
+
+    Subnet4Ptr subnet;
+
+    SubnetSelector selector;
+    selector.ciaddr_ = query->getCiaddr();
+    selector.giaddr_ = query->getGiaddr();
+    selector.local_address_ = query->getLocalAddr();
+    selector.remote_address_ = query->getRemoteAddr();
+    selector.client_classes_ = query->classes_;
+    selector.iface_name_ = query->getIface();
+
+    CfgMgr& cfgmgr = CfgMgr::instance();
+    subnet = cfgmgr.getCurrentCfg()->getCfgSubnets4()->selectSubnet(selector);
+
+    // Let's execute all callouts registered for subnet4_select
+    if (HooksManager::calloutsPresent(Hooks.hook_index_subnet4_select_)) {
+        CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+        // We're reusing callout_handle from previous calls
+        callout_handle->deleteAllArguments();
+
+        // Set new arguments
+        callout_handle->setArgument("query4", query);
+        callout_handle->setArgument("subnet4", subnet);
+        callout_handle->setArgument("subnet4collection",
+                                    cfgmgr.getCurrentCfg()->
+                                    getCfgSubnets4()->getAll());
+
+        // Call user (and server-side) callouts
+        HooksManager::callCallouts(Hooks.hook_index_subnet4_select_,
+                                   *callout_handle);
+
+        // Callouts decided to skip this step. This means that no subnet
+        // will be selected. Packet processing will continue, but it will
+        // be severely limited (i.e. only global options will be assigned)
+        if (callout_handle->getSkip()) {
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_HOOKS,
+                      DHCP4_HOOK_SUBNET4_SELECT_SKIP);
+            return (Subnet4Ptr());
+        }
+
+        // Use whatever subnet was specified by the callout
+        callout_handle->getArgument("subnet4", subnet);
+    }
+
+    return (subnet);
+}
+
+DHCPv4ExchangePtr exchange;
+
+};
 
 namespace isc {
 namespace dhcp {
@@ -137,6 +284,11 @@ Dhcpv4Srv::shutdown() {
     shutdown_ = true;
 }
 
+isc::dhcp::Subnet4Ptr
+Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) {
+    return (DHCPv4Exchange::selectSubnet(question));
+}
+
 Pkt4Ptr
 Dhcpv4Srv::receivePacket(int timeout) {
     return (IfaceMgr::instance().receive4(timeout));
@@ -150,6 +302,9 @@ Dhcpv4Srv::sendPacket(const Pkt4Ptr& packet) {
 bool
 Dhcpv4Srv::run() {
     while (!shutdown_) {
+        // Reset pointer to the current exchange.
+        exchange.reset();
+
         // client's message and server's response
         Pkt4Ptr query;
         Pkt4Ptr rsp;
@@ -592,7 +747,7 @@ Dhcpv4Srv::appendRequestedOptions(const Pkt4Ptr& question, Pkt4Ptr& msg) {
 
     // Get the subnet relevant for the client. We will need it
     // to get the options associated with it.
-    Subnet4Ptr subnet = selectSubnet(question);
+    Subnet4Ptr subnet = DHCPv4Exchange::selectSubnet(question);
     // If we can't find the subnet for the client there is no way
     // to get the options to be sent to a client. We don't log an
     // error because it will be logged by the assignLease method
@@ -629,7 +784,7 @@ Dhcpv4Srv::appendRequestedOptions(const Pkt4Ptr& question, Pkt4Ptr& msg) {
 void
 Dhcpv4Srv::appendRequestedVendorOptions(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     // Get the configured subnet suitable for the incoming packet.
-    Subnet4Ptr subnet = selectSubnet(question);
+    Subnet4Ptr subnet = DHCPv4Exchange::selectSubnet(question);
     // Leave if there is no subnet matching the incoming packet.
     // There is no need to log the error message here because
     // it will be logged in the assignLease() when it fails to
@@ -696,7 +851,7 @@ Dhcpv4Srv::appendBasicOptions(const Pkt4Ptr& question, Pkt4Ptr& msg) {
         sizeof(required_options) / sizeof(required_options[0]);
 
     // Get the subnet.
-    Subnet4Ptr subnet = selectSubnet(question);
+    Subnet4Ptr subnet = DHCPv4Exchange::selectSubnet(question);
     if (!subnet) {
         return;
     }
@@ -764,10 +919,16 @@ Dhcpv4Srv::processClientFqdnOption(const Option4ClientFqdnPtr& fqdn,
     fqdn_resp->setFlag(Option4ClientFqdn::FLAG_E,
                        fqdn->getFlag(Option4ClientFqdn::FLAG_E));
 
+    if (exchange && exchange->getContext().host_ &&
+        !exchange->getContext().host_->getHostname().empty()) {
+        fqdn_resp->setDomainName(exchange->getContext().host_->getHostname(),
+                                 Option4ClientFqdn::FULL);
 
-    // Adjust the domain name based on domain name value and type sent by the
-    // client and current configuration.
-    d2_mgr.adjustDomainName<Option4ClientFqdn>(*fqdn, *fqdn_resp);
+    } else {
+        // Adjust the domain name based on domain name value and type sent by the
+        // client and current configuration.
+        d2_mgr.adjustDomainName<Option4ClientFqdn>(*fqdn, *fqdn_resp);
+    }
 
     // Add FQDN option to the response message. Note that, there may be some
     // cases when server may choose not to include the FQDN option in a
@@ -818,17 +979,23 @@ Dhcpv4Srv::processHostnameOption(const OptionStringPtr& opt_hostname,
     // By checking the number of labels present in the hostname we may infer
     // whether client has sent the fully qualified or unqualified hostname.
 
-    /// @todo We may want to reconsider whether it is appropriate for the
-    /// client to send a root domain name as a Hostname. There are
-    /// also extensions to the auto generation of the client's name,
-    /// e.g. conversion to the puny code which may be considered at some point.
-    /// For now, we just remain liberal and expect that the DNS will handle
-    /// conversion if needed and possible.
-    if ((d2_mgr.getD2ClientConfig()->getReplaceClientName()) ||
-        (label_count < 2)) {
+    // If there is a hostname reservation for this client, use it.
+    if (exchange && exchange->getContext().host_ &&
+        !exchange->getContext().host_->getHostname().empty()) {
+        opt_hostname_resp->setValue(exchange->getContext().host_->getHostname());
+
+    } else if ((d2_mgr.getD2ClientConfig()->getReplaceClientName()) ||
+               (label_count < 2)) {
         // Set to root domain to signal later on that we should replace it.
         // DHO_HOST_NAME is a string option which cannot be empty.
+        /// @todo We may want to reconsider whether it is appropriate for the
+        /// client to send a root domain name as a Hostname. There are
+        /// also extensions to the auto generation of the client's name,
+        /// e.g. conversion to the puny code which may be considered at some point.
+        /// For now, we just remain liberal and expect that the DNS will handle
+        /// conversion if needed and possible.
         opt_hostname_resp->setValue(".");
+
     } else if (label_count == 2) {
         // If there are two labels, it means that the client has specified
         // the unqualified name. We have to concatenate the unqualified name
@@ -933,7 +1100,7 @@ void
 Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
 
     // We need to select a subnet the client is connected in.
-    Subnet4Ptr subnet = selectSubnet(question);
+    Subnet4Ptr subnet = DHCPv4Exchange::selectSubnet(question);
     if (!subnet) {
         // This particular client is out of luck today. We do not have
         // information about the subnet he is connected to. This likely means
@@ -1072,13 +1239,18 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
         }
     }
 
-    // Use allocation engine to pick a lease for this client. Allocation engine
-    // will try to honour the hint, but it is just a hint - some other address
-    // may be used instead. If fake_allocation is set to false, the lease will
-    // be inserted into the LeaseMgr as well.
-    /// @todo pass the actual FQDN data.
-    AllocEngine::ClientContext4 ctx(subnet, client_id, hwaddr, hint, fqdn_fwd,
-                                    fqdn_rev, hostname, fake_allocation);
+    AllocEngine::ClientContext4 ctx;
+    if (exchange) {
+        ctx = exchange->getContext();
+    }
+    ctx.subnet_ = subnet;
+    ctx.clientid_ = client_id;
+    ctx.hwaddr_ = hwaddr;
+    ctx.requested_address_ = hint;
+    ctx.fwd_dns_update_ = fqdn_fwd;
+    ctx.rev_dns_update_ = fqdn_rev;
+    ctx.hostname_ = hostname;
+    ctx.fake_allocation_ = fake_allocation;
     ctx.callout_handle_ = callout_handle;
 
     Lease4Ptr lease = alloc_engine_->allocateLease4(ctx);
@@ -1342,6 +1514,9 @@ Dhcpv4Srv::getNetmaskOption(const Subnet4Ptr& subnet) {
 
 Pkt4Ptr
 Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
+    /// @todo Move this call to run() once we reorgnize some unit tests
+    /// which directly call this method.
+    exchange.reset(new DHCPv4Exchange(alloc_engine_, discover));
 
     sanityCheck(discover, FORBIDDEN);
 
@@ -1390,6 +1565,9 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
 
 Pkt4Ptr
 Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
+    /// @todo Move this call to run() once we reorgnize some unit tests
+    /// which directly call this method.
+    exchange.reset(new DHCPv4Exchange(alloc_engine_, request));
 
     /// @todo Uncomment this (see ticket #3116)
     /// sanityCheck(request, MANDATORY);
@@ -1437,6 +1615,9 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
 
 void
 Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
+    /// @todo Move this call to run() once we reorgnize some unit tests
+    /// which directly call this method.
+    exchange.reset(new DHCPv4Exchange(alloc_engine_, release));
 
     /// @todo Uncomment this (see ticket #3116)
     /// sanityCheck(release, MANDATORY);
@@ -1548,12 +1729,20 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
 }
 
 void
-Dhcpv4Srv::processDecline(Pkt4Ptr& /* decline */) {
+Dhcpv4Srv::processDecline(Pkt4Ptr& decline) {
+    /// @todo Move this call to run() once we reorgnize some unit tests
+    /// which directly call this method.
+    exchange.reset(new DHCPv4Exchange(alloc_engine_, decline));
+
     /// @todo Implement this (also see ticket #3116)
 }
 
 Pkt4Ptr
 Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
+    /// @todo Move this call to run() once we reorgnize some unit tests
+    /// which directly call this method.
+    exchange.reset(new DHCPv4Exchange(alloc_engine_, inform));
+
     // DHCPINFORM MUST not include server identifier.
     sanityCheck(inform, FORBIDDEN);
 
@@ -1609,56 +1798,6 @@ Dhcpv4Srv::serverReceivedPacketName(uint8_t type) {
         ;
     }
     return (UNKNOWN);
-}
-
-Subnet4Ptr
-Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) const {
-
-    Subnet4Ptr subnet;
-
-    SubnetSelector selector;
-    selector.ciaddr_ = question->getCiaddr();
-    selector.giaddr_ = question->getGiaddr();
-    selector.local_address_ = question->getLocalAddr();
-    selector.remote_address_ = question->getRemoteAddr();
-    selector.client_classes_ = question->classes_;
-    selector.iface_name_ = question->getIface();
-
-    CfgMgr& cfgmgr = CfgMgr::instance();
-    subnet = cfgmgr.getCurrentCfg()->getCfgSubnets4()->selectSubnet(selector);
-
-    // Let's execute all callouts registered for subnet4_select
-    if (HooksManager::calloutsPresent(hook_index_subnet4_select_)) {
-        CalloutHandlePtr callout_handle = getCalloutHandle(question);
-
-        // We're reusing callout_handle from previous calls
-        callout_handle->deleteAllArguments();
-
-        // Set new arguments
-        callout_handle->setArgument("query4", question);
-        callout_handle->setArgument("subnet4", subnet);
-        callout_handle->setArgument("subnet4collection",
-                                    cfgmgr.getCurrentCfg()->
-                                    getCfgSubnets4()->getAll());
-
-        // Call user (and server-side) callouts
-        HooksManager::callCallouts(hook_index_subnet4_select_,
-                                   *callout_handle);
-
-        // Callouts decided to skip this step. This means that no subnet
-        // will be selected. Packet processing will continue, but it will
-        // be severely limited (i.e. only global options will be assigned)
-        if (callout_handle->getSkip()) {
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_HOOKS,
-                      DHCP4_HOOK_SUBNET4_SELECT_SKIP);
-            return (Subnet4Ptr());
-        }
-
-        // Use whatever subnet was specified by the callout
-        callout_handle->getArgument("subnet4", subnet);
-    }
-
-    return (subnet);
 }
 
 bool
@@ -1725,7 +1864,8 @@ Dhcpv4Srv::acceptDirectRequest(const Pkt4Ptr& pkt) const {
         // we validate the message type prior to calling this function.
         return (false);
     }
-    return ((pkt->getLocalAddr() != IOAddress::IPV4_BCAST_ADDRESS() || selectSubnet(pkt)));
+    return ((pkt->getLocalAddr() != IOAddress::IPV4_BCAST_ADDRESS()
+             || DHCPv4Exchange::selectSubnet(pkt)));
 }
 
 bool
@@ -2012,7 +2152,7 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
 
 bool Dhcpv4Srv::classSpecificProcessing(const Pkt4Ptr& query, const Pkt4Ptr& rsp) {
 
-    Subnet4Ptr subnet = selectSubnet(query);
+    Subnet4Ptr subnet = DHCPv4Exchange::selectSubnet(query);
     if (!subnet) {
         return (true);
     }

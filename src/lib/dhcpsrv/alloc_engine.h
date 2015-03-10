@@ -682,7 +682,7 @@ public:
     /// new information doesn't modify the API of the allocation engine.
     struct ClientContext4 {
         /// @brief Subnet selected for the client by the server.
-        SubnetPtr subnet_;
+        Subnet4Ptr subnet_;
 
         /// @brief Client identifier from the DHCP message.
         ClientIdPtr clientid_;
@@ -748,7 +748,7 @@ public:
         /// @param fake_allocation Is this real i.e. REQUEST (false)
         ///      or just picking an address for DISCOVER that is not really
         ///      allocated (true)
-        ClientContext4(const SubnetPtr& subnet, const ClientIdPtr& clientid,
+        ClientContext4(const Subnet4Ptr& subnet, const ClientIdPtr& clientid,
                        const HWAddrPtr& hwaddr,
                        const asiolink::IOAddress& requested_addr,
                        const bool fwd_dns_update, const bool rev_dns_update,
@@ -1078,6 +1078,9 @@ private:
     void updateLease4Information(const Lease4Ptr& lease,
                                  ClientContext4& ctx) const;
 };
+
+/// @brief A pointer to the @c AllocEngine object.
+typedef boost::shared_ptr<AllocEngine> AllocEnginePtr;
 
 }; // namespace isc::dhcp
 }; // namespace isc

@@ -226,7 +226,7 @@ TEST_F(AllocEngine4Test, allocateLease4Nulls) {
     ASSERT_TRUE(engine);
 
     // Allocations without subnet are not allowed
-    AllocEngine::ClientContext4 ctx1(SubnetPtr(), clientid_, hwaddr_,
+    AllocEngine::ClientContext4 ctx1(Subnet4Ptr(), clientid_, hwaddr_,
                                     IOAddress("0.0.0.0"), false, false,
                                     "", false);
     Lease4Ptr lease = engine->allocateLease4(ctx1);
