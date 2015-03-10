@@ -1294,7 +1294,7 @@ TEST_F(Pkt6Test, getMACFromRemoteIdRelayOption) {
     EXPECT_EQ(tmp.str(), mac->toText(true));
 }
 
-// This test verifies that a solicit that passed through two be parsed
+// This test verifies that a solicit that passed through two relays is parsed
 // properly. In particular the second relay (outer encapsulation) included RSOO
 // (Relay Supplied Options option). This test checks whether it was parsed
 // properly. See captureRelayed2xRSOO() description for details.

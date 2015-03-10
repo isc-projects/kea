@@ -256,7 +256,7 @@ bool Dhcpv6Srv::run() {
         // Handle next signal received by the process. It must be called after
         // an attempt to receive a packet to properly handle server shut down.
         // The SIGTERM or SIGINT will be received prior to, or during execution
-        // of select() (select is invoked by recivePacket()). When that happens,
+        // of select() (select is invoked by receivePacket()). When that happens,
         // select will be interrupted. The signal handler will be invoked
         // immediately after select(). The handler will set the shutdown flag
         // and cause the process to terminate before the next select() function
