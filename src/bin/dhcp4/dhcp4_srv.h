@@ -619,7 +619,7 @@ protected:
     ///
     /// @param question client's message
     /// @return selected subnet (or NULL if no suitable subnet was found)
-    isc::dhcp::Subnet4Ptr selectSubnet(const Pkt4Ptr& question) const;
+    static isc::dhcp::Subnet4Ptr selectSubnet(const Pkt4Ptr& question);
 
     /// indicates if shutdown is in progress. Setting it to true will
     /// initiate server shutdown procedure.

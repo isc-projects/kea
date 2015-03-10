@@ -1228,7 +1228,7 @@ AllocEngine::ClientContext4::ClientContext4()
       old_lease_(), host_(), conflicting_lease_() {
 }
 
-AllocEngine::ClientContext4::ClientContext4(const SubnetPtr& subnet,
+AllocEngine::ClientContext4::ClientContext4(const Subnet4Ptr& subnet,
                                             const ClientIdPtr& clientid,
                                             const HWAddrPtr& hwaddr,
                                             const asiolink::IOAddress& requested_addr,
