@@ -81,96 +81,50 @@ struct Dhcp4Hooks {
 // module is called.
 Dhcp4Hooks Hooks;
 
-namespace {
-
-/// @brief DHCPv4 message exchange.
-///
-/// This class represents the DHCPv4 message exchange. The message exchange
-/// consists of the single client message, server response to this message
-/// and the mechanisms to generate the server's response. The server creates
-/// the instance of the @c DHCPv4Exchange for each inbound message that it
-/// accepts for processing.
-///
-/// The use of the @c DHCPv4Exchange object as a central repository of
-/// information about the message exchange simplifies the API of the
-/// @c Dhcpv4Srv class.
-///
-/// Another benefit of using this class is that different methods of the
-/// @c Dhcpv4Srv may share information. For example, the constructor of this
-/// class selects the subnet and multiple methods of @c Dhcpv4Srv use this
-/// subnet, without the need to select it again.
-///
-/// @todo This is the initial version of this class. In the future a lot of
-/// code from the @c Dhcpv4Srv class will be migrated here.
-class DHCPv4Exchange {
-public:
-    /// @brief Constructor.
-    ///
-    /// The constructor selects the subnet for the query and checks for the
-    /// static host reservations for the client which has sent the message.
-    /// The information about the reservations is stored in the
-    /// @c AllocEngine::ClientContext4 object, which can be obtained by
-    /// calling the @c getContext.
-    ///
-    /// @param alloc_engine Pointer to the instance of the Allocation Engine
-    /// used by the server.
-    /// @param query Pointer to the client message.
-    DHCPv4Exchange(const AllocEnginePtr& alloc_engine, const Pkt4Ptr& query);
-
-    /// @brief Selects the subnet for the message processing.
-    ///
-    /// The pointer to the selected subnet is stored in the @c ClientContext4
-    /// structure.
-    void selectSubnet();
-
-    /// @brief Selects the subnet for the message processing.
-    ///
-    /// @todo This variant of the @c selectSubnet method is static and public so
-    /// as it may be invoked by the @c Dhcpv4Srv object. This is temporary solution
-    /// and the function will go away once the server code fully supports the use
-    /// of this class and it obtains the subnet from the context returned by the
-    /// @c getContext method.
-    ///
-    /// @param query Pointer to the client's message.
-    /// @return Pointer to the selected subnet or NULL if no suitable subnet
-    /// has been found.
-    static Subnet4Ptr selectSubnet(const Pkt4Ptr& query);
-
-    /// @brief Returns the copy of the context for the Allocation engine.
-    AllocEngine::ClientContext4 getContext() const {
-        return (context_);
-    }
-
-private:
-    /// @brief Pointer to the allocation engine used by the server.
-    AllocEnginePtr alloc_engine_;
-    /// @brief Pointer to the DHCPv4 message sent by the client.
-    Pkt4Ptr query_;
-    /// @brief Context for use with allocation engine.
-    AllocEngine::ClientContext4 context_;
-};
-
-/// @brief Type representing the pointer to the @c DHCPv4Exchange.
-typedef boost::shared_ptr<DHCPv4Exchange> DHCPv4ExchangePtr;
+namespace isc {
+namespace dhcp {
 
 DHCPv4Exchange::DHCPv4Exchange(const AllocEnginePtr& alloc_engine,
                                const Pkt4Ptr& query)
-    : alloc_engine_(alloc_engine), query_(query), context_() {
+    : alloc_engine_(alloc_engine), query_(query), resp_(),
+      context_(new AllocEngine::ClientContext4()) {
+    // Create response message.
+    initResponse();
+    // Select subnet for the query message.
     selectSubnet();
     // Hardware address.
-    context_.hwaddr_ = query->getHWAddr();
+    context_->hwaddr_ = query->getHWAddr();
     // Client Identifier
     OptionPtr opt_clientid = query->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
     if (opt_clientid) {
-        context_.clientid_.reset(new ClientId(opt_clientid->getData()));
+        context_->clientid_.reset(new ClientId(opt_clientid->getData()));
     }
     // Check for static reservations.
-    alloc_engine->findReservation(context_);
+    alloc_engine->findReservation(*context_);
 };
 
 void
+DHCPv4Exchange::initResponse() {
+    uint8_t resp_type = 0;
+    switch (getQuery()->getType()) {
+    case DHCPDISCOVER:
+        resp_type = DHCPOFFER;
+        break;
+    case DHCPREQUEST:
+    case DHCPINFORM:
+        resp_type = DHCPACK;
+        break;
+    default:
+        ;
+    }
+    if (resp_type > 0) {
+        resp_.reset(new Pkt4(resp_type, getQuery()->getTransid()));
+    }
+}
+
+void
 DHCPv4Exchange::selectSubnet() {
-    context_.subnet_ = selectSubnet(query_);
+    context_->subnet_ = selectSubnet(query_);
 }
 
 Subnet4Ptr
@@ -222,13 +176,6 @@ DHCPv4Exchange::selectSubnet(const Pkt4Ptr& query) {
 
     return (subnet);
 }
-
-DHCPv4ExchangePtr exchange;
-
-};
-
-namespace isc {
-namespace dhcp {
 
 const std::string Dhcpv4Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
 
@@ -302,9 +249,6 @@ Dhcpv4Srv::sendPacket(const Pkt4Ptr& packet) {
 bool
 Dhcpv4Srv::run() {
     while (!shutdown_) {
-        // Reset pointer to the current exchange.
-        exchange.reset();
-
         // client's message and server's response
         Pkt4Ptr query;
         Pkt4Ptr rsp;
@@ -673,28 +617,28 @@ Dhcpv4Srv::computeDhcid(const Lease4Ptr& lease) {
 }
 
 void
-Dhcpv4Srv::copyDefaultFields(const Pkt4Ptr& question, Pkt4Ptr& answer) {
-    answer->setIface(question->getIface());
-    answer->setIndex(question->getIndex());
+Dhcpv4Srv::copyDefaultFields(DHCPv4Exchange& ex) {
+    ex.getResponse()->setIface(ex.getQuery()->getIface());
+    ex.getResponse()->setIndex(ex.getQuery()->getIndex());
 
-    answer->setSiaddr(IOAddress::IPV4_ZERO_ADDRESS()); // explicitly set this to 0
+    ex.getResponse()->setSiaddr(IOAddress::IPV4_ZERO_ADDRESS()); // explicitly set this to 0
     // ciaddr is always 0, except for the Renew/Rebind state when it may
     // be set to the ciaddr sent by the client.
-    answer->setCiaddr(IOAddress::IPV4_ZERO_ADDRESS());
-    answer->setHops(question->getHops());
+    ex.getResponse()->setCiaddr(IOAddress::IPV4_ZERO_ADDRESS());
+    ex.getResponse()->setHops(ex.getQuery()->getHops());
 
     // copy MAC address
-    answer->setHWAddr(question->getHWAddr());
+    ex.getResponse()->setHWAddr(ex.getQuery()->getHWAddr());
 
     // relay address
-    answer->setGiaddr(question->getGiaddr());
+    ex.getResponse()->setGiaddr(ex.getQuery()->getGiaddr());
 
     // Let's copy client-id to response. See RFC6842.
     // It is possible to disable RFC6842 to keep backward compatibility
     bool echo = CfgMgr::instance().echoClientId();
-    OptionPtr client_id = question->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
+    OptionPtr client_id = ex.getQuery()->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
     if (client_id && echo) {
-        answer->addOption(client_id);
+        ex.getResponse()->addOption(client_id);
     }
 
     // If src/dest HW addresses are used by the packet filtering class
@@ -704,50 +648,43 @@ Dhcpv4Srv::copyDefaultFields(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     // the default HW addresses (zeroed) should be generated by the
     // packet filtering class when creating Ethernet header for
     // outgoing packet.
-    HWAddrPtr src_hw_addr = question->getLocalHWAddr();
+    HWAddrPtr src_hw_addr = ex.getQuery()->getLocalHWAddr();
     if (src_hw_addr) {
-        answer->setLocalHWAddr(src_hw_addr);
+        ex.getResponse()->setLocalHWAddr(src_hw_addr);
     }
-    HWAddrPtr dst_hw_addr = question->getRemoteHWAddr();
+    HWAddrPtr dst_hw_addr = ex.getQuery()->getRemoteHWAddr();
     if (dst_hw_addr) {
-        answer->setRemoteHWAddr(dst_hw_addr);
+        ex.getResponse()->setRemoteHWAddr(dst_hw_addr);
     }
 
     // If this packet is relayed, we want to copy Relay Agent Info option
-    OptionPtr rai = question->getOption(DHO_DHCP_AGENT_OPTIONS);
+    OptionPtr rai = ex.getQuery()->getOption(DHO_DHCP_AGENT_OPTIONS);
     if (rai) {
-        answer->addOption(rai);
+        ex.getResponse()->addOption(rai);
     }
 }
 
 void
-Dhcpv4Srv::appendDefaultOptions(Pkt4Ptr& msg, uint8_t msg_type) {
-    OptionPtr opt;
-
-    // add Message Type Option (type 53)
-    msg->setType(msg_type);
-
-    // more options will be added here later
+Dhcpv4Srv::appendDefaultOptions(DHCPv4Exchange& ex) {
+    // no-op at this time
 }
 
 void
-Dhcpv4Srv::appendServerID(const Pkt4Ptr& response) {
+Dhcpv4Srv::appendServerID(DHCPv4Exchange& ex) {
     // The source address for the outbound message should have been set already.
     // This is the address that to the best of the server's knowledge will be
     // available from the client.
     /// @todo: perhaps we should consider some more sophisticated server id
     /// generation, but for the current use cases, it should be ok.
-    response->addOption(OptionPtr(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
-                                                     response->getLocalAddr()))
-                        );
+    ex.getResponse()->addOption(OptionPtr(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
+                                                             ex.getResponse()->getLocalAddr())));
 }
 
 void
-Dhcpv4Srv::appendRequestedOptions(const Pkt4Ptr& question, Pkt4Ptr& msg) {
-
+Dhcpv4Srv::appendRequestedOptions(DHCPv4Exchange& ex) {
     // Get the subnet relevant for the client. We will need it
     // to get the options associated with it.
-    Subnet4Ptr subnet = DHCPv4Exchange::selectSubnet(question);
+    Subnet4Ptr subnet = ex.getContext()->subnet_;
     // If we can't find the subnet for the client there is no way
     // to get the options to be sent to a client. We don't log an
     // error because it will be logged by the assignLease method
@@ -759,7 +696,7 @@ Dhcpv4Srv::appendRequestedOptions(const Pkt4Ptr& question, Pkt4Ptr& msg) {
     // try to get the 'Parameter Request List' option which holds the
     // codes of requested options.
     OptionUint8ArrayPtr option_prl = boost::dynamic_pointer_cast<
-        OptionUint8Array>(question->getOption(DHO_DHCP_PARAMETER_REQUEST_LIST));
+        OptionUint8Array>(ex.getQuery()->getOption(DHO_DHCP_PARAMETER_REQUEST_LIST));
     // If there is no PRL option in the message from the client then
     // there is nothing to do.
     if (!option_prl) {
@@ -772,19 +709,19 @@ Dhcpv4Srv::appendRequestedOptions(const Pkt4Ptr& question, Pkt4Ptr& msg) {
     // to be returned to the client.
     for (std::vector<uint8_t>::const_iterator opt = requested_opts.begin();
          opt != requested_opts.end(); ++opt) {
-        if (!msg->getOption(*opt)) {
+        if (!ex.getResponse()->getOption(*opt)) {
             OptionDescriptor desc = subnet->getCfgOption()->get("dhcp4", *opt);
-            if (desc.option_ && !msg->getOption(*opt)) {
-                msg->addOption(desc.option_);
+            if (desc.option_) {
+                ex.getResponse()->addOption(desc.option_);
             }
         }
     }
 }
 
 void
-Dhcpv4Srv::appendRequestedVendorOptions(const Pkt4Ptr& question, Pkt4Ptr& answer) {
+Dhcpv4Srv::appendRequestedVendorOptions(DHCPv4Exchange& ex) {
     // Get the configured subnet suitable for the incoming packet.
-    Subnet4Ptr subnet = DHCPv4Exchange::selectSubnet(question);
+    Subnet4Ptr subnet = ex.getContext()->subnet_;
     // Leave if there is no subnet matching the incoming packet.
     // There is no need to log the error message here because
     // it will be logged in the assignLease() when it fails to
@@ -795,8 +732,8 @@ Dhcpv4Srv::appendRequestedVendorOptions(const Pkt4Ptr& question, Pkt4Ptr& answer
     }
 
     // Try to get the vendor option
-    boost::shared_ptr<OptionVendor> vendor_req =
-        boost::dynamic_pointer_cast<OptionVendor>(question->getOption(DHO_VIVSO_SUBOPTIONS));
+    boost::shared_ptr<OptionVendor> vendor_req = boost::dynamic_pointer_cast<
+        OptionVendor>(ex.getQuery()->getOption(DHO_VIVSO_SUBOPTIONS));
     if (!vendor_req) {
         return;
     }
@@ -832,14 +769,14 @@ Dhcpv4Srv::appendRequestedVendorOptions(const Pkt4Ptr& question, Pkt4Ptr& answer
         }
 
         if (added) {
-            answer->addOption(vendor_rsp);
+            ex.getResponse()->addOption(vendor_rsp);
         }
     }
 }
 
 
 void
-Dhcpv4Srv::appendBasicOptions(const Pkt4Ptr& question, Pkt4Ptr& msg) {
+Dhcpv4Srv::appendBasicOptions(DHCPv4Exchange& ex) {
     // Identify options that we always want to send to the
     // client (if they are configured).
     static const uint16_t required_options[] = {
@@ -851,7 +788,7 @@ Dhcpv4Srv::appendBasicOptions(const Pkt4Ptr& question, Pkt4Ptr& msg) {
         sizeof(required_options) / sizeof(required_options[0]);
 
     // Get the subnet.
-    Subnet4Ptr subnet = DHCPv4Exchange::selectSubnet(question);
+    Subnet4Ptr subnet = ex.getContext()->subnet_;
     if (!subnet) {
         return;
     }
@@ -859,34 +796,35 @@ Dhcpv4Srv::appendBasicOptions(const Pkt4Ptr& question, Pkt4Ptr& msg) {
     // Try to find all 'required' options in the outgoing
     // message. Those that are not present will be added.
     for (int i = 0; i < required_options_size; ++i) {
-        OptionPtr opt = msg->getOption(required_options[i]);
+        OptionPtr opt = ex.getResponse()->getOption(required_options[i]);
         if (!opt) {
             // Check whether option has been configured.
             OptionDescriptor desc = subnet->getCfgOption()->
                 get("dhcp4", required_options[i]);
             if (desc.option_) {
-                msg->addOption(desc.option_);
+                ex.getResponse()->addOption(desc.option_);
             }
         }
     }
 }
 
 void
-Dhcpv4Srv::processClientName(const Pkt4Ptr& query, Pkt4Ptr& answer) {
+Dhcpv4Srv::processClientName(DHCPv4Exchange& ex) {
     // It is possible that client has sent both Client FQDN and Hostname
     // option. In such case, server should prefer Client FQDN option and
     // ignore the Hostname option.
     try {
+        Pkt4Ptr resp = ex.getResponse();
         Option4ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>
-            (query->getOption(DHO_FQDN));
+            (ex.getQuery()->getOption(DHO_FQDN));
         if (fqdn) {
-            processClientFqdnOption(fqdn, answer);
+            processClientFqdnOption(ex);
 
         } else {
             OptionStringPtr hostname = boost::dynamic_pointer_cast<OptionString>
-                (query->getOption(DHO_HOST_NAME));
+                (ex.getQuery()->getOption(DHO_HOST_NAME));
             if (hostname) {
-                processHostnameOption(hostname, answer);
+                processHostnameOption(ex);
             }
         }
     } catch (const Exception& ex) {
@@ -904,8 +842,11 @@ Dhcpv4Srv::processClientName(const Pkt4Ptr& query, Pkt4Ptr& answer) {
 }
 
 void
-Dhcpv4Srv::processClientFqdnOption(const Option4ClientFqdnPtr& fqdn,
-                                   Pkt4Ptr& answer) {
+Dhcpv4Srv::processClientFqdnOption(DHCPv4Exchange& ex) {
+    // Obtain the FQDN option from the client's message.
+    Option4ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
+        Option4ClientFqdn>(ex.getQuery()->getOption(DHO_FQDN));
+
     // Create the DHCPv4 Client FQDN Option to be included in the server's
     // response to a client.
     Option4ClientFqdnPtr fqdn_resp(new Option4ClientFqdn(*fqdn));
@@ -919,9 +860,8 @@ Dhcpv4Srv::processClientFqdnOption(const Option4ClientFqdnPtr& fqdn,
     fqdn_resp->setFlag(Option4ClientFqdn::FLAG_E,
                        fqdn->getFlag(Option4ClientFqdn::FLAG_E));
 
-    if (exchange && exchange->getContext().host_ &&
-        !exchange->getContext().host_->getHostname().empty()) {
-        fqdn_resp->setDomainName(exchange->getContext().host_->getHostname(),
+    if (ex.getContext()->host_ && !ex.getContext()->host_->getHostname().empty()) {
+        fqdn_resp->setDomainName(ex.getContext()->host_->getHostname(),
                                  Option4ClientFqdn::FULL);
 
     } else {
@@ -942,12 +882,15 @@ Dhcpv4Srv::processClientFqdnOption(const Option4ClientFqdnPtr& fqdn,
     // If we don't store the option in the response message, we will have to
     // propagate it in the different way to the functions which acquire the
     // lease. This would require modifications to the API of this class.
-    answer->addOption(fqdn_resp);
+    ex.getResponse()->addOption(fqdn_resp);
 }
 
 void
-Dhcpv4Srv::processHostnameOption(const OptionStringPtr& opt_hostname,
-                                 Pkt4Ptr& answer) {
+Dhcpv4Srv::processHostnameOption(DHCPv4Exchange& ex) {
+    // Obtain the Hostname option from the client's message.
+    OptionStringPtr opt_hostname = boost::dynamic_pointer_cast<OptionString>
+        (ex.getQuery()->getOption(DHO_HOST_NAME));
+
     // Fetch D2 configuration.
     D2ClientMgr& d2_mgr = CfgMgr::instance().getD2ClientMgr();
 
@@ -980,9 +923,8 @@ Dhcpv4Srv::processHostnameOption(const OptionStringPtr& opt_hostname,
     // whether client has sent the fully qualified or unqualified hostname.
 
     // If there is a hostname reservation for this client, use it.
-    if (exchange && exchange->getContext().host_ &&
-        !exchange->getContext().host_->getHostname().empty()) {
-        opt_hostname_resp->setValue(exchange->getContext().host_->getHostname());
+    if (ex.getContext()->host_ && !ex.getContext()->host_->getHostname().empty()) {
+        opt_hostname_resp->setValue(ex.getContext()->host_->getHostname());
 
     } else if ((d2_mgr.getD2ClientConfig()->getReplaceClientName()) ||
                (label_count < 2)) {
@@ -1007,7 +949,7 @@ Dhcpv4Srv::processHostnameOption(const OptionStringPtr& opt_hostname,
         opt_hostname_resp->setValue(d2_mgr.qualifyName(hostname, false));
     }
 
-    answer->addOption(opt_hostname_resp);
+    ex.getResponse()->addOption(opt_hostname_resp);
 }
 
 void
@@ -1097,10 +1039,16 @@ queueNameChangeRequest(const isc::dhcp_ddns::NameChangeType chg_type,
 }
 
 void
-Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
+Dhcpv4Srv::assignLease(DHCPv4Exchange& ex) {
+    // Get the pointers to the query and the response messages.
+    Pkt4Ptr query = ex.getQuery();
+    Pkt4Ptr resp = ex.getResponse();
 
-    // We need to select a subnet the client is connected in.
-    Subnet4Ptr subnet = DHCPv4Exchange::selectSubnet(question);
+    // Get the context.
+    AllocEngine::ClientContext4Ptr ctx = ex.getContext();
+
+    // Subnet should have been already selected when the context was created.
+    Subnet4Ptr subnet = ctx->subnet_;
     if (!subnet) {
         // This particular client is out of luck today. We do not have
         // information about the subnet he is connected to. This likely means
@@ -1113,10 +1061,10 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
         // perhaps this should be logged on some higher level? This is most
         // likely configuration bug.
         LOG_ERROR(dhcp4_logger, DHCP4_SUBNET_SELECTION_FAILED)
-            .arg(question->getRemoteAddr().toText())
-            .arg(serverReceivedPacketName(question->getType()));
-        answer->setType(DHCPNAK);
-        answer->setYiaddr(IOAddress::IPV4_ZERO_ADDRESS());
+            .arg(query->getRemoteAddr().toText())
+            .arg(serverReceivedPacketName(query->getType()));
+        resp->setType(DHCPNAK);
+        resp->setYiaddr(IOAddress::IPV4_ZERO_ADDRESS());
         return;
     }
 
@@ -1125,14 +1073,14 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     // to select subnet twice (performance hit) or update too many functions
     // at once.
     /// @todo: move subnet selection to a common code
-    answer->setSiaddr(subnet->getSiaddr());
+    resp->setSiaddr(subnet->getSiaddr());
 
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_SUBNET_SELECTED)
         .arg(subnet->toText());
 
     // Get client-id option
     ClientIdPtr client_id;
-    OptionPtr opt = question->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
+    OptionPtr opt = query->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
     if (opt) {
         client_id = ClientIdPtr(new ClientId(opt->getData()));
     }
@@ -1142,22 +1090,22 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     // Get the server identifier. It will be used to determine the state
     // of the client.
     OptionCustomPtr opt_serverid = boost::dynamic_pointer_cast<
-        OptionCustom>(question->getOption(DHO_DHCP_SERVER_IDENTIFIER));
+        OptionCustom>(query->getOption(DHO_DHCP_SERVER_IDENTIFIER));
 
     // Check if the client has sent a requested IP address option or
     // ciaddr.
     OptionCustomPtr opt_requested_address = boost::dynamic_pointer_cast<
-        OptionCustom>(question->getOption(DHO_DHCP_REQUESTED_ADDRESS));
+        OptionCustom>(query->getOption(DHO_DHCP_REQUESTED_ADDRESS));
     IOAddress hint(0);
     if (opt_requested_address) {
         hint = opt_requested_address->readAddress();
 
-    } else if (question->getCiaddr() != IOAddress::IPV4_ZERO_ADDRESS()) {
-        hint = question->getCiaddr();
+    } else if (query->getCiaddr() != IOAddress::IPV4_ZERO_ADDRESS()) {
+        hint = query->getCiaddr();
 
     }
 
-    HWAddrPtr hwaddr = question->getHWAddr();
+    HWAddrPtr hwaddr = query->getHWAddr();
 
     // "Fake" allocation is processing of DISCOVER message. We pretend to do an
     // allocation, but we do not put the lease in the database. That is ok,
@@ -1165,7 +1113,7 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     // the user selects this server to do actual allocation (i.e. sends REQUEST)
     // it should include this hint. That will help us during the actual lease
     // allocation.
-    bool fake_allocation = (question->getType() == DHCPDISCOVER);
+    bool fake_allocation = (query->getType() == DHCPDISCOVER);
 
     // If there is no server id and there is a Requested IP Address option
     // the client is in the INIT-REBOOT state in which the server has to
@@ -1189,8 +1137,8 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
                 .arg(client_id ? client_id->toText():"(no client-id)")
                 .arg(hwaddr ? hwaddr->toText():"(no hwaddr info)");
 
-            answer->setType(DHCPNAK);
-            answer->setYiaddr(IOAddress::IPV4_ZERO_ADDRESS());
+            resp->setType(DHCPNAK);
+            resp->setYiaddr(IOAddress::IPV4_ZERO_ADDRESS());
             return;
         }
         // Now check the second error case: unknown client.
@@ -1201,20 +1149,20 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
                 .arg(client_id ? client_id->toText():"(no client-id)")
                 .arg(hwaddr ? hwaddr->toText():"(no hwaddr info)");
 
-            answer.reset();
+            ex.deleteResponse();
             return;
         }
     }
 
 
-    CalloutHandlePtr callout_handle = getCalloutHandle(question);
+    CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
     std::string hostname;
     bool fqdn_fwd = false;
     bool fqdn_rev = false;
     OptionStringPtr opt_hostname;
     Option4ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
-        Option4ClientFqdn>(answer->getOption(DHO_FQDN));
+        Option4ClientFqdn>(resp->getOption(DHO_FQDN));
     if (fqdn) {
         hostname = fqdn->getDomainName();
         CfgMgr::instance().getD2ClientMgr().getUpdateDirections(*fqdn,
@@ -1222,7 +1170,7 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
                                                                 fqdn_rev);
     } else {
         opt_hostname = boost::dynamic_pointer_cast<OptionString>
-            (answer->getOption(DHO_HOST_NAME));
+            (resp->getOption(DHO_HOST_NAME));
         if (opt_hostname) {
             hostname = opt_hostname->getValue();
             // DHO_HOST_NAME is string option which cannot be blank,
@@ -1239,21 +1187,15 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
         }
     }
 
-    AllocEngine::ClientContext4 ctx;
-    if (exchange) {
-        ctx = exchange->getContext();
-    }
-    ctx.subnet_ = subnet;
-    ctx.clientid_ = client_id;
-    ctx.hwaddr_ = hwaddr;
-    ctx.requested_address_ = hint;
-    ctx.fwd_dns_update_ = fqdn_fwd;
-    ctx.rev_dns_update_ = fqdn_rev;
-    ctx.hostname_ = hostname;
-    ctx.fake_allocation_ = fake_allocation;
-    ctx.callout_handle_ = callout_handle;
+    // We need to set these values in the context as they haven't been set yet.
+    ctx->requested_address_ = hint;
+    ctx->fwd_dns_update_ = fqdn_fwd;
+    ctx->rev_dns_update_ = fqdn_rev;
+    ctx->hostname_ = hostname;
+    ctx->fake_allocation_ = fake_allocation;
+    ctx->callout_handle_ = callout_handle;
 
-    Lease4Ptr lease = alloc_engine_->allocateLease4(ctx);
+    Lease4Ptr lease = alloc_engine_->allocateLease4(*ctx);
 
     if (lease) {
         // We have a lease! Let's set it in the packet and send it back to
@@ -1264,7 +1206,7 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
             .arg(client_id?client_id->toText():"(no client-id)")
             .arg(hwaddr?hwaddr->toText():"(no hwaddr info)");
 
-        answer->setYiaddr(lease->addr_);
+        resp->setYiaddr(lease->addr_);
 
         /// @todo The server should check what ciaddr the client has supplied
         /// in ciaddr. Currently the ciaddr is ignored except for the subnet
@@ -1274,8 +1216,8 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
             // If this is a renewing client it will set a ciaddr which the
             // server may include in the response. If this is a new allocation
             // the client will set ciaddr to 0 and this will also be propagated
-            // to the server's answer.
-            answer->setCiaddr(question->getCiaddr());
+            // to the server's resp.
+            resp->setCiaddr(query->getCiaddr());
         }
 
         // If there has been Client FQDN or Hostname option sent, but the
@@ -1317,17 +1259,17 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
         // IP Address Lease time (type 51)
         opt.reset(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME,
                                    lease->valid_lft_));
-        answer->addOption(opt);
+        resp->addOption(opt);
 
         // Subnet mask (type 1)
-        answer->addOption(getNetmaskOption(subnet));
+        resp->addOption(getNetmaskOption(subnet));
 
         // renewal-timer (type 58)
         if (!subnet->getT1().unspecified()) {
             OptionUint32Ptr t1(new OptionUint32(Option::V4,
                                                 DHO_DHCP_RENEWAL_TIME,
                                                 subnet->getT1()));
-            answer->addOption(t1);
+            resp->addOption(t1);
         }
 
         // rebind timer (type 59)
@@ -1335,14 +1277,14 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
             OptionUint32Ptr t2(new OptionUint32(Option::V4,
                                                 DHO_DHCP_REBINDING_TIME,
                                                 subnet->getT2()));
-            answer->addOption(t2);
+            resp->addOption(t2);
         }
 
         // Create NameChangeRequests if DDNS is enabled and this is a
         // real allocation.
         if (!fake_allocation && CfgMgr::instance().ddnsEnabled()) {
             try {
-                createNameChangeRequests(lease, ctx.old_lease_);
+                createNameChangeRequests(lease, ctx->old_lease_);
             } catch (const Exception& ex) {
                 LOG_ERROR(dhcp4_logger, DHCP4_NCR_CREATION_FAILED)
                     .arg(ex.what());
@@ -1360,17 +1302,22 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
             .arg(hwaddr?hwaddr->toText():"(no hwaddr info)")
             .arg(hint.toText());
 
-        answer->setType(DHCPNAK);
-        answer->setYiaddr(IOAddress::IPV4_ZERO_ADDRESS());
+        resp->setType(DHCPNAK);
+        resp->setYiaddr(IOAddress::IPV4_ZERO_ADDRESS());
 
-        answer->delOption(DHO_FQDN);
-        answer->delOption(DHO_HOST_NAME);
+        resp->delOption(DHO_FQDN);
+        resp->delOption(DHO_HOST_NAME);
     }
 }
 
 void
-Dhcpv4Srv::adjustIfaceData(const Pkt4Ptr& query, const Pkt4Ptr& response) {
-    adjustRemoteAddr(query, response);
+Dhcpv4Srv::adjustIfaceData(DHCPv4Exchange& ex) {
+    adjustRemoteAddr(ex);
+
+    // Initialize the pointers to the client's message and the server's
+    // response.
+    Pkt4Ptr query = ex.getQuery();
+    Pkt4Ptr response = ex.getResponse();
 
     // For the non-relayed message, the destination port is the client's port.
     // For the relayed message, the server/relay port is a destination.
@@ -1416,38 +1363,43 @@ Dhcpv4Srv::adjustIfaceData(const Pkt4Ptr& query, const Pkt4Ptr& response) {
 }
 
 void
-Dhcpv4Srv::adjustRemoteAddr(const Pkt4Ptr& question, const Pkt4Ptr& response) {
+Dhcpv4Srv::adjustRemoteAddr(DHCPv4Exchange& ex) {
+    // Initialize the pointers to the client's message and the server's
+    // response.
+    Pkt4Ptr query = ex.getQuery();
+    Pkt4Ptr response = ex.getResponse();
+
     // The DHCPINFORM is slightly different than other messages in a sense
     // that the server should always unicast the response to the ciaddr.
     // It appears however that some clients don't set the ciaddr. We still
     // want to provision these clients and we do what we can't to send the
     // packet to the address where client can receive it.
-    if (question->getType() == DHCPINFORM) {
+    if (query->getType() == DHCPINFORM) {
         // If client adheres to RFC2131 it will set the ciaddr and in this
         // case we always unicast our response to this address.
-        if (question->getCiaddr() != IOAddress::IPV4_ZERO_ADDRESS()) {
-            response->setRemoteAddr(question->getCiaddr());
+        if (query->getCiaddr() != IOAddress::IPV4_ZERO_ADDRESS()) {
+            response->setRemoteAddr(query->getCiaddr());
 
         // If we received DHCPINFORM via relay and the ciaddr is not set we
         // will try to send the response via relay. The caveat is that the
         // relay will not have any idea where to forward the packet because
         // the yiaddr is likely not set. So, the broadcast flag is set so
         // as the response may be broadcast.
-        } else if (question->isRelayed()) {
-            response->setRemoteAddr(question->getGiaddr());
+        } else if (query->isRelayed()) {
+            response->setRemoteAddr(query->getGiaddr());
             response->setFlags(response->getFlags() | BOOTP_BROADCAST);
 
         // If there is no ciaddr and no giaddr the only thing we can do is
         // to use the source address of the packet.
         } else {
-            response->setRemoteAddr(question->getRemoteAddr());
+            response->setRemoteAddr(query->getRemoteAddr());
         }
         // Remote address is now set so return.
         return;
     }
 
     // If received relayed message, server responds to the relay address.
-    if (question->isRelayed()) {
+    if (query->isRelayed()) {
         // The client should set the ciaddr when sending the DHCPINFORM
         // but in case he didn't, the relay may not be able to determine the
         // address of the client, because yiaddr is not set when responding
@@ -1455,16 +1407,16 @@ Dhcpv4Srv::adjustRemoteAddr(const Pkt4Ptr& question, const Pkt4Ptr& response) {
         // of the client. The source address is however not used here because
         // the message is relayed. Therefore, we set the BROADCAST flag so
         // as the relay can broadcast the packet.
-        if ((question->getType() == DHCPINFORM) &&
-            (question->getCiaddr() == IOAddress::IPV4_ZERO_ADDRESS())) {
+        if ((query->getType() == DHCPINFORM) &&
+            (query->getCiaddr() == IOAddress::IPV4_ZERO_ADDRESS())) {
             response->setFlags(BOOTP_BROADCAST);
         }
-        response->setRemoteAddr(question->getGiaddr());
+        response->setRemoteAddr(query->getGiaddr());
 
     // If giaddr is 0 but client set ciaddr, server should unicast the
     // response to ciaddr.
-    } else if (question->getCiaddr() != IOAddress::IPV4_ZERO_ADDRESS()) {
-        response->setRemoteAddr(question->getCiaddr());
+    } else if (query->getCiaddr() != IOAddress::IPV4_ZERO_ADDRESS()) {
+        response->setRemoteAddr(query->getCiaddr());
 
     // We can't unicast the response to the client when sending NAK,
     // because we haven't allocated address for him. Therefore,
@@ -1480,7 +1432,7 @@ Dhcpv4Srv::adjustRemoteAddr(const Pkt4Ptr& question, const Pkt4Ptr& response) {
         // which doesn't have an address assigned. The other case when response
         // must be broadcasted is when our server does not support responding
         // directly to a client without address assigned.
-        const bool bcast_flag = ((question->getFlags() & Pkt4::FLAG_BROADCAST_MASK) != 0);
+        const bool bcast_flag = ((query->getFlags() & Pkt4::FLAG_BROADCAST_MASK) != 0);
         if (!IfaceMgr::instance().isDirectResponseSupported() || bcast_flag) {
             response->setRemoteAddr(IOAddress::IPV4_BCAST_ADDRESS());
 
@@ -1496,7 +1448,7 @@ Dhcpv4Srv::adjustRemoteAddr(const Pkt4Ptr& question, const Pkt4Ptr& response) {
     // found ourselves at this point, the rational thing to do is to respond
     // to the address we got the query from.
     } else {
-        response->setRemoteAddr(question->getRemoteAddr());
+        response->setRemoteAddr(query->getRemoteAddr());
 
     }
 }
@@ -1514,39 +1466,34 @@ Dhcpv4Srv::getNetmaskOption(const Subnet4Ptr& subnet) {
 
 Pkt4Ptr
 Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
-    /// @todo Move this call to run() once we reorgnize some unit tests
-    /// which directly call this method.
-    exchange.reset(new DHCPv4Exchange(alloc_engine_, discover));
+    DHCPv4Exchange ex(alloc_engine_, discover);
 
-    sanityCheck(discover, FORBIDDEN);
+    sanityCheck(ex, FORBIDDEN);
 
-    Pkt4Ptr offer = Pkt4Ptr
-        (new Pkt4(DHCPOFFER, discover->getTransid()));
+    copyDefaultFields(ex);
+    appendDefaultOptions(ex);
 
-    copyDefaultFields(discover, offer);
-    appendDefaultOptions(offer, DHCPOFFER);
-
-    // If DISCOVER message contains the FQDN or Hostname option, server
+    // If DHCPDISCOVER message contains the FQDN or Hostname option, server
     // may respond to the client with the appropriate FQDN or Hostname
     // option to indicate that whether it will take responsibility for
-    // updating DNS when the client sends REQUEST message.
-    processClientName(discover, offer);
+    // updating DNS when the client sends DHCPREQUEST message.
+    processClientName(ex);
 
-    assignLease(discover, offer);
+    assignLease(ex);
 
-    if (!offer) {
+    if (!ex.getResponse()) {
         // The offer is empty so return it *now*!
-        return (offer);
+        return (Pkt4Ptr());
     }
 
     // Adding any other options makes sense only when we got the lease.
-    if (offer->getYiaddr() != IOAddress::IPV4_ZERO_ADDRESS()) {
-        appendRequestedOptions(discover, offer);
-        appendRequestedVendorOptions(discover, offer);
+    if (!ex.getResponse()->getYiaddr().isV4Zero()) {
+        appendRequestedOptions(ex);
+        appendRequestedVendorOptions(ex);
         // There are a few basic options that we always want to
         // include in the response. If client did not request
         // them we append them for him.
-        appendBasicOptions(discover, offer);
+        appendBasicOptions(ex);
 
     } else {
         // If the server can't offer an address, it drops the packet.
@@ -1556,69 +1503,60 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
 
     // Set the src/dest IP address, port and interface for the outgoing
     // packet.
-    adjustIfaceData(discover, offer);
+    adjustIfaceData(ex);
 
-    appendServerID(offer);
+    appendServerID(ex);
 
-    return (offer);
+    return (ex.getResponse());
 }
 
 Pkt4Ptr
 Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
-    /// @todo Move this call to run() once we reorgnize some unit tests
-    /// which directly call this method.
-    exchange.reset(new DHCPv4Exchange(alloc_engine_, request));
+    DHCPv4Exchange ex(alloc_engine_, request);
 
     /// @todo Uncomment this (see ticket #3116)
-    /// sanityCheck(request, MANDATORY);
+    /// sanityCheck(ex, MANDATORY);
 
-    Pkt4Ptr ack = Pkt4Ptr
-        (new Pkt4(DHCPACK, request->getTransid()));
+    copyDefaultFields(ex);
+    appendDefaultOptions(ex);
 
-    copyDefaultFields(request, ack);
-    appendDefaultOptions(ack, DHCPACK);
-
-    // If REQUEST message contains the FQDN or Hostname option, server
+    // If DHCPREQUEST message contains the FQDN or Hostname option, server
     // should respond to the client with the appropriate FQDN or Hostname
     // option to indicate if it takes responsibility for the DNS updates.
     // This is performed by the function below.
-    processClientName(request, ack);
+    processClientName(ex);
 
     // Note that we treat REQUEST message uniformly, regardless if this is a
     // first request (requesting for new address), renewing existing address
     // or even rebinding.
-    assignLease(request, ack);
+    assignLease(ex);
 
-    if (!ack) {
+    if (!ex.getResponse()) {
         // The ack is empty so return it *now*!
-        return (ack);
+        return (Pkt4Ptr());
     }
 
     // Adding any other options makes sense only when we got the lease.
-    if (ack->getYiaddr() != IOAddress::IPV4_ZERO_ADDRESS()) {
-        appendRequestedOptions(request, ack);
-        appendRequestedVendorOptions(request, ack);
+    if (!ex.getResponse()->getYiaddr().isV4Zero()) {
+        appendRequestedOptions(ex);
+        appendRequestedVendorOptions(ex);
         // There are a few basic options that we always want to
         // include in the response. If client did not request
         // them we append them for him.
-        appendBasicOptions(request, ack);
+        appendBasicOptions(ex);
     }
 
     // Set the src/dest IP address, port and interface for the outgoing
     // packet.
-    adjustIfaceData(request, ack);
+    adjustIfaceData(ex);
 
-    appendServerID(ack);
+    appendServerID(ex);
 
-    return (ack);
+    return (ex.getResponse());
 }
 
 void
 Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
-    /// @todo Move this call to run() once we reorgnize some unit tests
-    /// which directly call this method.
-    exchange.reset(new DHCPv4Exchange(alloc_engine_, release));
-
     /// @todo Uncomment this (see ticket #3116)
     /// sanityCheck(release, MANDATORY);
 
@@ -1729,29 +1667,24 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
 }
 
 void
-Dhcpv4Srv::processDecline(Pkt4Ptr& decline) {
-    /// @todo Move this call to run() once we reorgnize some unit tests
-    /// which directly call this method.
-    exchange.reset(new DHCPv4Exchange(alloc_engine_, decline));
-
+Dhcpv4Srv::processDecline(Pkt4Ptr&) {
     /// @todo Implement this (also see ticket #3116)
 }
 
 Pkt4Ptr
 Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
-    /// @todo Move this call to run() once we reorgnize some unit tests
-    /// which directly call this method.
-    exchange.reset(new DHCPv4Exchange(alloc_engine_, inform));
+    DHCPv4Exchange ex(alloc_engine_, inform);
 
     // DHCPINFORM MUST not include server identifier.
-    sanityCheck(inform, FORBIDDEN);
+    sanityCheck(ex, FORBIDDEN);
 
-    Pkt4Ptr ack = Pkt4Ptr(new Pkt4(DHCPACK, inform->getTransid()));
-    copyDefaultFields(inform, ack);
-    appendRequestedOptions(inform, ack);
-    appendRequestedVendorOptions(inform, ack);
-    appendBasicOptions(inform, ack);
-    adjustIfaceData(inform, ack);
+    Pkt4Ptr ack = ex.getResponse();
+
+    copyDefaultFields(ex);
+    appendRequestedOptions(ex);
+    appendRequestedVendorOptions(ex);
+    appendBasicOptions(ex);
+    adjustIfaceData(ex);
 
     // There are cases for the DHCPINFORM that the server receives it via
     // relay but will send the response to the client's unicast address
@@ -1765,8 +1698,8 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
     }
 
     // The DHCPACK must contain server id.
-    appendServerID(ack);
-    return (ack);
+    appendServerID(ex);
+    return (ex.getResponse());
 }
 
 const char*
@@ -1964,13 +1897,14 @@ Dhcpv4Srv::acceptServerId(const Pkt4Ptr& query) const {
 }
 
 void
-Dhcpv4Srv::sanityCheck(const Pkt4Ptr& pkt, RequirementLevel serverid) {
-    OptionPtr server_id = pkt->getOption(DHO_DHCP_SERVER_IDENTIFIER);
+Dhcpv4Srv::sanityCheck(const DHCPv4Exchange& ex, RequirementLevel serverid) {
+    OptionPtr server_id = ex.getQuery()->getOption(DHO_DHCP_SERVER_IDENTIFIER);
     switch (serverid) {
     case FORBIDDEN:
         if (server_id) {
             isc_throw(RFCViolation, "Server-id option was not expected, but "
-                      << "received in " << serverReceivedPacketName(pkt->getType()));
+                      << "received in "
+                      << serverReceivedPacketName(ex.getQuery()->getType()));
         }
         break;
 
@@ -1978,7 +1912,7 @@ Dhcpv4Srv::sanityCheck(const Pkt4Ptr& pkt, RequirementLevel serverid) {
         if (!server_id) {
             isc_throw(RFCViolation, "Server-id option was expected, but not "
                       " received in message "
-                      << serverReceivedPacketName(pkt->getType()));
+                      << serverReceivedPacketName(ex.getQuery()->getType()));
         }
         break;
 
@@ -1988,19 +1922,19 @@ Dhcpv4Srv::sanityCheck(const Pkt4Ptr& pkt, RequirementLevel serverid) {
     }
 
     // If there is HWAddress set and it is non-empty, then we're good
-    if (pkt->getHWAddr() && !pkt->getHWAddr()->hwaddr_.empty()) {
+    if (ex.getQuery()->getHWAddr() && !ex.getQuery()->getHWAddr()->hwaddr_.empty()) {
         return;
     }
 
     // There has to be something to uniquely identify the client:
     // either non-zero MAC address or client-id option present (or both)
-    OptionPtr client_id = pkt->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
+    OptionPtr client_id = ex.getQuery()->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
 
     // If there's no client-id (or a useless one is provided, i.e. 0 length)
     if (!client_id || client_id->len() == client_id->getHeaderLen()) {
         isc_throw(RFCViolation, "Missing or useless client-id and no HW address "
                   " provided in message "
-                  << serverReceivedPacketName(pkt->getType()));
+                  << serverReceivedPacketName(ex.getQuery()->getType()));
     }
 }
 
