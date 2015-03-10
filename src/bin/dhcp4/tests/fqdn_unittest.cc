@@ -309,12 +309,13 @@ public:
             answer.reset(new Pkt4(DHCPACK, 1234));
 
         }
-        ASSERT_NO_THROW(srv_->processClientName(query, answer));
+        DHCPv4Exchange ex = createExchange(query);
+        ASSERT_NO_THROW(srv_->processClientName(ex));
 
-        Option4ClientFqdnPtr fqdn = getClientFqdnOption(answer);
+        Option4ClientFqdnPtr fqdn = getClientFqdnOption(ex.getResponse());
         ASSERT_TRUE(fqdn);
 
-        checkFqdnFlags(answer, exp_flags);
+        checkFqdnFlags(ex.getResponse(), exp_flags);
 
         EXPECT_EQ(exp_domain_name, fqdn->getDomainName());
         EXPECT_EQ(exp_domain_type, fqdn->getDomainNameType());
@@ -358,9 +359,10 @@ public:
             answer.reset(new Pkt4(DHCPACK, 1234));
 
         }
-        srv_->processClientName(query, answer);
+        DHCPv4Exchange ex = createExchange(query);
+        srv_->processClientName(ex);
 
-        OptionStringPtr hostname = getHostnameOption(answer);
+        OptionStringPtr hostname = getHostnameOption(ex.getResponse());
         return (hostname);
 
     }
