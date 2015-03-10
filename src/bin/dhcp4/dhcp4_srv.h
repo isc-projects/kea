@@ -43,6 +43,104 @@ public:
         isc::Exception(file, line, what) { };
 };
 
+/// @brief DHCPv4 message exchange.
+///
+/// This class represents the DHCPv4 message exchange. The message exchange
+/// consists of the single client message, server response to this message
+/// and the mechanisms to generate the server's response. The server creates
+/// the instance of the @c DHCPv4Exchange for each inbound message that it
+/// accepts for processing.
+///
+/// The use of the @c DHCPv4Exchange object as a central repository of
+/// information about the message exchange simplifies the API of the
+/// @c Dhcpv4Srv class.
+///
+/// Another benefit of using this class is that different methods of the
+/// @c Dhcpv4Srv may share information. For example, the constructor of this
+/// class selects the subnet and multiple methods of @c Dhcpv4Srv use this
+/// subnet, without the need to select it again.
+///
+/// @todo This is the initial version of this class. In the future a lot of
+/// code from the @c Dhcpv4Srv class will be migrated here.
+class DHCPv4Exchange {
+public:
+    /// @brief Constructor.
+    ///
+    /// The constructor selects the subnet for the query and checks for the
+    /// static host reservations for the client which has sent the message.
+    /// The information about the reservations is stored in the
+    /// @c AllocEngine::ClientContext4 object, which can be obtained by
+    /// calling the @c getContext.
+    ///
+    /// @param alloc_engine Pointer to the instance of the Allocation Engine
+    /// used by the server.
+    /// @param query Pointer to the client message.
+    DHCPv4Exchange(const AllocEnginePtr& alloc_engine, const Pkt4Ptr& query);
+
+    /// @brief Initializes the instance of the response message.
+    ///
+    /// The type of the response depends on the type of the query message.
+    /// For the DHCPDISCOVER the DHCPOFFER is created. For the DHCPREQUEST
+    /// and DHCPINFORM the DHCPACK is created. For the DHCPRELEASE the
+    /// response is not initialized.
+    void initResponse();
+
+    /// @brief Selects the subnet for the message processing.
+    ///
+    /// The pointer to the selected subnet is stored in the @c ClientContext4
+    /// structure.
+    void selectSubnet();
+
+    /// @brief Selects the subnet for the message processing.
+    ///
+    /// @todo This variant of the @c selectSubnet method is static and public so
+    /// as it may be invoked by the @c Dhcpv4Srv object. This is temporary solution
+    /// and the function will go away once the server code fully supports the use
+    /// of this class and it obtains the subnet from the context returned by the
+    /// @c getContext method.
+    ///
+    /// @param query Pointer to the client's message.
+    /// @return Pointer to the selected subnet or NULL if no suitable subnet
+    /// has been found.
+    static Subnet4Ptr selectSubnet(const Pkt4Ptr& query);
+
+    /// @brief Returns the pointer to the query from the client.
+    Pkt4Ptr getQuery() const {
+        return (query_);
+    }
+
+    /// @brief Returns the pointer to the server's response.
+    ///
+    /// The returned pointer is NULL if the query type is DHCPRELEASE or DHCPDECLINE.
+    Pkt4Ptr getResponse() const {
+        return (resp_);
+    }
+
+    /// @brief Removes the response message by resetting the pointer to NULL.
+    void deleteResponse() {
+        resp_.reset();
+    }
+
+    /// @brief Returns the copy of the context for the Allocation engine.
+    AllocEngine::ClientContext4Ptr getContext() const {
+        return (context_);
+    }
+
+private:
+    /// @brief Pointer to the allocation engine used by the server.
+    AllocEnginePtr alloc_engine_;
+    /// @brief Pointer to the DHCPv4 message sent by the client.
+    Pkt4Ptr query_;
+    /// @brief Pointer to the DHCPv4 message to be sent to the client.
+    Pkt4Ptr resp_;
+    /// @brief Context for use with allocation engine.
+    AllocEngine::ClientContext4Ptr context_;
+};
+
+/// @brief Type representing the pointer to the @c DHCPv4Exchange.
+typedef boost::shared_ptr<DHCPv4Exchange> DHCPv4ExchangePtr;
+
+
 /// @brief DHCPv4 server service.
 ///
 /// This singleton class represents DHCPv4 server. It contains all
@@ -269,15 +367,15 @@ protected:
     bool acceptServerId(const Pkt4Ptr& pkt) const;
     //@}
 
-    /// @brief verifies if specified packet meets RFC requirements
+    /// @brief Verifies if specified packet meets RFC requirements
     ///
     /// Checks if mandatory option is really there, that forbidden option
     /// is not there, and that client-id or server-id appears only once.
     ///
-    /// @param pkt packet to be checked
+    /// @param ex DHCPv4 exchange holding the client's message to be checked.
     /// @param serverid expectation regarding server-id option
     /// @throw RFCViolation if any issues are detected
-    static void sanityCheck(const Pkt4Ptr& pkt, RequirementLevel serverid);
+    static void sanityCheck(const DHCPv4Exchange& ex, RequirementLevel serverid);
 
     /// @brief Processes incoming DISCOVER and returns response.
     ///
@@ -327,18 +425,18 @@ protected:
     /// Some fields are copied from client's message into server's response,
     /// e.g. client HW address, number of hops, transaction-id etc.
     ///
-    /// @param question any message sent by client
-    /// @param answer any message server is going to send as response
-    void copyDefaultFields(const Pkt4Ptr& question, Pkt4Ptr& answer);
+    /// @param ex The exchange holding both the client's message and the
+    /// server's response.
+    void copyDefaultFields(DHCPv4Exchange& ex);
 
     /// @brief Appends options requested by client.
     ///
     /// This method assigns options that were requested by client
     /// (sent in PRL) or are enforced by server.
     ///
-    /// @param question DISCOVER or REQUEST message from a client.
-    /// @param msg outgoing message (options will be added here)
-    void appendRequestedOptions(const Pkt4Ptr& question, Pkt4Ptr& msg);
+    /// @param ex The exchange holding both the client's message and the
+    /// server's response.
+    void appendRequestedOptions(DHCPv4Exchange& ex);
 
     /// @brief Appends requested vendor options as requested by client.
     ///
@@ -348,9 +446,9 @@ protected:
     /// options, each with unique vendor-id). Vendor options are requested
     /// using separate options within their respective vendor-option spaces.
     ///
-    /// @param question DISCOVER or REQUEST message from a client.
-    /// @param answer outgoing message (options will be added here)
-    void appendRequestedVendorOptions(const Pkt4Ptr& question, Pkt4Ptr& answer);
+    /// @param ex The exchange holding both the client's message and the
+    /// server's response.
+    void appendRequestedVendorOptions(DHCPv4Exchange& ex);
 
     /// @brief Assigns a lease and appends corresponding options
     ///
@@ -358,28 +456,27 @@ protected:
     /// client and assigning it. Options corresponding to the lease
     /// are added to specific message.
     ///
-    /// @param question DISCOVER or REQUEST message from client
-
-    /// @param answer OFFER or ACK/NAK message (lease options will be
-    /// added here)
-    /// 
-    /// This method may reset the @c answer shared pointer to indicate
-    /// that the response should not be sent to the client. The caller
-    /// must check if the @c answer is null after calling this method.
-    void assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer);
+    /// This method may reset the pointer to the response in the @c ex object
+    /// to indicate that the response should not be sent to the client.
+    /// The caller must check if the response is is null after calling
+    /// this method.
+    ///
+    /// The response type in the @c ex object may be set to DHCPACK or DHCPNAK.
+    ///
+    /// @param ex DHCPv4 exchange holding the client's message to be checked.
+    void assignLease(DHCPv4Exchange& ex);
 
     /// @brief Append basic options if they are not present.
     ///
     /// This function adds the following basic options if they
-    /// are not yet added to the message:
+    /// are not yet added to the response message:
     /// - Subnet Mask,
     /// - Router,
     /// - Name Server,
     /// - Domain Name.
     ///
-    /// @param question DISCOVER or REQUEST message from a client.
-    /// @param msg the message to add options to.
-    void appendBasicOptions(const Pkt4Ptr& question, Pkt4Ptr& msg);
+    /// @param ex DHCPv4 exchange holding the client's message to be checked.
+    void appendBasicOptions(DHCPv4Exchange& ex);
 
     /// @brief Processes Client FQDN and Hostname Options sent by a client.
     ///
@@ -416,9 +513,9 @@ protected:
     /// This function does not throw. It simply logs the debug message if the
     /// processing of the FQDN or Hostname failed.
     ///
-    /// @param query A DISCOVER or REQUEST message from a client.
-    /// @param [out] answer A response message to be sent to a client.
-    void processClientName(const Pkt4Ptr& query, Pkt4Ptr& answer);
+    /// @param ex The exchange holding both the client's message and the
+    /// server's response.
+    void processClientName(DHCPv4Exchange& ex);
 
     /// @brief this is a prefix added to the contend of vendor-class option
     ///
@@ -437,10 +534,9 @@ private:
     /// the FQDN option to be sent back to the client in the server's
     /// response.
     ///
-    /// @param fqdn An DHCPv4 Client FQDN %Option sent by a client.
-    /// @param [out] answer A response message to be sent to a client.
-    void processClientFqdnOption(const Option4ClientFqdnPtr& fqdn,
-                                 Pkt4Ptr& answer);
+    /// @param ex The exchange holding both the client's message and the
+    /// server's response.
+    void processClientFqdnOption(DHCPv4Exchange& ex);
 
     /// @brief Process Hostname %Option sent by a client.
     ///
@@ -450,11 +546,9 @@ private:
     /// prepare the Hostname option to be sent back to the client in the
     /// server's response.
     ///
-    /// @param opt_hostname An @c OptionString object encapsulating the Hostname
-    /// %Option.
-    /// @param [out] answer A response message to be sent to a client.
-    void processHostnameOption(const OptionStringPtr& opt_hostname,
-                               Pkt4Ptr& answer);
+    /// @param ex The exchange holding both the client's message and the
+    /// server's response.
+    void processHostnameOption(DHCPv4Exchange& ex);
 
 protected:
 
@@ -499,16 +593,13 @@ protected:
     /// @param reply server's response (ACK or NAK)
     void renewLease(const Pkt4Ptr& renew, Pkt4Ptr& reply);
 
-    /// @brief Appends default options to a message
+    /// @brief Appends default options to a message.
     ///
-    /// Currently it is only a Message Type option. This function does not add
-    /// the Server Identifier option as this option must be added using
-    /// @c Dhcpv4Srv::appendServerID.
+    /// This method is currently no-op.
     ///
-    ///
-    /// @param msg message object (options will be added to it)
-    /// @param msg_type specifies message type
-    void appendDefaultOptions(Pkt4Ptr& msg, uint8_t msg_type);
+    /// @param ex The exchange holding both the client's message and the
+    /// server's response.
+    void appendDefaultOptions(DHCPv4Exchange& ex);
 
     /// @brief Adds server identifier option to the server's response.
     ///
@@ -527,9 +618,9 @@ protected:
     /// @note This method is static because it is not dependent on the class
     /// state.
     ///
-    /// @param [out] response DHCPv4 message to which the server identifier
-    /// option should be added.
-    static void appendServerID(const Pkt4Ptr& response);
+    /// @param ex The exchange holding both the client's message and the
+    /// server's response.
+    static void appendServerID(DHCPv4Exchange& ex);
 
     /// @brief Set IP/UDP and interface parameters for the DHCPv4 response.
     ///
@@ -561,7 +652,10 @@ protected:
     ///
     /// @note This method is static because it is not dependent on the class
     /// state.
-    static void adjustIfaceData(const Pkt4Ptr& query, const Pkt4Ptr& response);
+    ///
+    /// @param ex The exchange holding both the client's message and the
+    /// server's response.
+    static void adjustIfaceData(DHCPv4Exchange& ex);
 
     /// @brief Sets remote addresses for outgoing packet.
     ///
@@ -579,11 +673,9 @@ protected:
     /// @note This method is static because it is not dependent on the class
     /// state.
     ///
-    /// @param question instance of a packet received by a server.
-    /// @param [out] response response packet which addresses are to be
-    /// adjusted.
-    static void adjustRemoteAddr(const Pkt4Ptr& question,
-                                 const Pkt4Ptr& response);
+    /// @param ex The exchange holding both the client's message and the
+    /// server's response.
+    static void adjustRemoteAddr(DHCPv4Exchange& ex);
 
     /// @brief converts server-id to text
     /// Converts content of server-id option to a text representation, e.g.
@@ -668,6 +760,12 @@ protected:
     /// @return true if successful, false otherwise (will prevent sending response)
     bool classSpecificProcessing(const Pkt4Ptr& query, const Pkt4Ptr& rsp);
 
+    /// @brief Allocation Engine.
+    /// Pointer to the allocation engine that we are currently using
+    /// It must be a pointer, because we will support changing engines
+    /// during normal operation (e.g. to use different allocators)
+    boost::shared_ptr<AllocEngine> alloc_engine_;
+
 private:
 
     /// @brief Constructs netmask option based on subnet4
@@ -684,12 +782,6 @@ private:
     ///
     /// @param errmsg An error message containing a cause of the failure.
     static void ifaceMgrSocket4ErrorHandler(const std::string& errmsg);
-
-    /// @brief Allocation Engine.
-    /// Pointer to the allocation engine that we are currently using
-    /// It must be a pointer, because we will support changing engines
-    /// during normal operation (e.g. to use different allocators)
-    boost::shared_ptr<AllocEngine> alloc_engine_;
 
     uint16_t port_;  ///< UDP port number on which server listens.
     bool use_bcast_; ///< Should broadcast be enabled on sockets (if true).

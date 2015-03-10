@@ -205,6 +205,7 @@ public:
     using Dhcpv4Srv::selectSubnet;
     using Dhcpv4Srv::VENDOR_CLASS_PREFIX;
     using Dhcpv4Srv::shutdown_;
+    using Dhcpv4Srv::alloc_engine_;
 };
 
 class Dhcpv4SrvTest : public ::testing::Test {
@@ -389,6 +390,9 @@ public:
     /// should be committed (if true), or not (if false).
     void configure(const std::string& config, NakedDhcpv4Srv& srv,
                    const bool commit = true);
+
+    /// @brief Create @c DHCPv4Exchange from client's query.
+    DHCPv4Exchange createExchange(const Pkt4Ptr& query);
 
     /// @brief This function cleans up after the test.
     virtual void TearDown();

@@ -767,6 +767,9 @@ public:
 
     };
 
+    /// @brief Pointer to the @c ClientContext4.
+    typedef boost::shared_ptr<ClientContext4> ClientContext4Ptr;
+
     /// @brief Returns IPv4 lease.
     ///
     /// This method finds a lease for a client using the following algorithm:
