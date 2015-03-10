@@ -2356,8 +2356,10 @@ should include options from the isc option space:
         sending their packets from IPv6 link-local addresses. There's a good chance
         that those addresses are based on EUI-64, which contains MAC address. This
         method is not completely reliable, as clients may use other link-local address
-        types. In particular, privacy extensions, defined in RFC4941, do not use
-        MAC addresses.
+        types.  In particular, privacy extensions, defined in RFC4941, do not use
+        MAC addresses.  Also note that to extract successfully the address's u-bit must
+        be set to 1 and its g-bit must be set to 0 indicating that it is an interface
+        identifier per RFC 2373 section 2.5.1.
         </simpara>
       </listitem>
       <listitem>
