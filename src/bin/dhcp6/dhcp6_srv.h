@@ -610,7 +610,7 @@ protected:
     ///
     /// This method implements RFC6422. It checks if there are any RSOO options
     /// inserted by the relay agents in the query message. If there are, they
-    /// are copied over to the response if the met the following criteria:
+    /// are copied over to the response if they meet the following criteria:
     /// - the option is marked as RSOO-enabled (see relay-supplied-options
     ///   configuration parameter)
     /// - there is no such option provided by the server)

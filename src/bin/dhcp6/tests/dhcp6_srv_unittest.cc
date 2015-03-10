@@ -2101,8 +2101,8 @@ TEST_F(Dhcpv6SrvTest, relayOverrideAndClientClass) {
 /// codes of those nested options are specified in codes parameter. Content of
 /// the options is controlled with payload parameter. When it is zero, option
 /// code will be used (e.g. option 100 will contain repeating bytes of value 100).
-/// When non-zero is used, payload will used. Each suboption is always set to
-/// arbitrary chosen value of 10.
+/// When non-zero is used, payload will be used. Each suboption length is always
+/// set to the arbitrarily chosen value of 10.
 ///
 /// @param codes a vector of option codes to be created
 /// @param payload specified payload (0 = fill payload with repeating option code)

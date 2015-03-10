@@ -1393,7 +1393,7 @@ should include options from the isc option space:
 }
 </screen>
       </para>
-      <para>As of March 2015, the only option 65 is RSOO-enabled by IANA. This
+      <para>As of March 2015, only option 65 is RSOO-enabled by IANA. This
       option will always be treated as such and there's no need to explicitly
       mark it. Also, when enabling standard options, it is possible to use their
       names, rather than option code, e.g. (e.g. use
