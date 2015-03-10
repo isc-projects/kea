@@ -90,11 +90,11 @@ TEST(ProcessSpawn, spawnTwoProcesses) {
     // Clear the status of the first process. An attempt to get the status
     // for the cleared process should result in exception. But, there should
     // be no exception for the second process.
-    process.clearStatus(pid1);
+    process.clearState(pid1);
     EXPECT_THROW(process.getExitStatus(pid1), InvalidOperation);
     EXPECT_NO_THROW(process.getExitStatus(pid2));
 
-    process.clearStatus(pid2);
+    process.clearState(pid2);
     EXPECT_THROW(process.getExitStatus(pid2), InvalidOperation);
 }
 

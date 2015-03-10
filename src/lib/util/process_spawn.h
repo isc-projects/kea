@@ -96,6 +96,10 @@ public:
 
     /// @brief Checks if the process is still running.
     ///
+    /// Note that only a negative (false) result is reliable as the child
+    /// process can exit between the time its state is checked and this
+    /// function returns.
+    ///
     /// @param pid ID of the child processes for which state should be checked.
     ///
     /// @return true if the child process is running, false otherwise.
@@ -111,6 +115,9 @@ public:
     /// If the process is still running, the previous status is returned
     /// or 0, if the process is being ran for the first time.
     ///
+    /// @note @c ProcessSpawn::isRunning should be called and have returned
+    /// false before using @c ProcessSpawn::getExitStatus.
+    ///
     /// @param pid ID of the child process for which exit status should be
     /// returned.
     ///
@@ -123,8 +130,13 @@ public:
     /// If the process is still running, the status is not removed and the
     /// exception is thrown.
     ///
+    /// Note @c ProcessSpawn::isRunning must be called and have returned
+    /// false before using clearState(). And of course
+    /// @c ProcessSpawn::getExitStatus should be called first, if there is
+    /// some interest in the status.
+    ///
     /// @param pid A process pid.
-    void clearStatus(const pid_t pid);
+    void clearState(const pid_t pid);
 
 private:
 

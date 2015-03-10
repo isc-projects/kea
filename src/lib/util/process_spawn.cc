@@ -19,10 +19,27 @@
 #include <map>
 #include <signal.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <sys/wait.h>
 
 namespace isc {
 namespace util {
+
+/// @brief Type for process state
+struct ProcessState {
+
+    /// @brief Constructor
+    ProcessState() : running_(true), status_(0) {
+    }
+
+    /// @brief true until the exit status is collected
+    bool running_;
+
+    /// @brief 0 or the exit status
+    int status_;
+};
+
+typedef std::map<pid_t, ProcessState> ProcessStates;
 
 /// @brief Implementation of the @c ProcessSpawn class.
 ///
@@ -95,7 +112,7 @@ public:
     /// exception is thrown.
     ///
     /// @param pid A process pid.
-    void clearStatus(const pid_t pid);
+    void clearState(const pid_t pid);
 
 private:
 
@@ -125,7 +142,7 @@ private:
     SignalSetPtr signals_;
 
     /// @brief A map holding the status codes of executed processes.
-    std::map<pid_t, int> process_status_;
+    ProcessStates process_state_;
 
     /// @brief Path to an executable.
     std::string executable_;
@@ -136,7 +153,7 @@ private:
 
 ProcessSpawnImpl::ProcessSpawnImpl(const std::string& executable,
                                    const ProcessArgs& args)
-    : signals_(new SignalSet(SIGCHLD)), process_status_(),
+    : signals_(new SignalSet(SIGCHLD)), process_state_(),
       executable_(executable), args_(new char*[args.size() + 2]) {
     // Set the handler which is invoked immediately when the signal
     // is received.
@@ -153,7 +170,6 @@ ProcessSpawnImpl::ProcessSpawnImpl(const std::string& executable,
         args_[i] = allocateArg(args[i-1]);
     }
 }
-
 
 ProcessSpawnImpl::~ProcessSpawnImpl() {
     int i = 0;
@@ -183,12 +199,20 @@ ProcessSpawnImpl::getCommandLine() const {
 
 pid_t
 ProcessSpawnImpl::spawn() {
+    // Protect us against SIGCHLD signals
+    sigset_t sset;
+    sigemptyset(&sset);
+    sigaddset(&sset, SIGCHLD);
+    sigprocmask(SIG_BLOCK, &sset, 0);
+    // Create the child
     pid_t pid = fork();
     if (pid < 0) {
         isc_throw(ProcessSpawnError, "unable to fork current process");
 
     } else if (pid == 0) {
-        // We're in the child process. Run the executable.
+        // We're in the child process.
+        sigprocmask(SIG_UNBLOCK, &sset, 0);
+        // Run the executable.
         if (execvp(executable_.c_str(), args_) != 0) {
             // We may end up here if the execvp failed, e.g. as a result
             // of issue with permissions or invalid executable name.
@@ -198,25 +222,28 @@ ProcessSpawnImpl::spawn() {
         exit(EXIT_SUCCESS);
     }
 
-    process_status_[pid] = 0;
+    // We're in the parent process.
+    process_state_.insert(std::pair<pid_t, ProcessState>(pid, ProcessState()));
+    sigprocmask(SIG_UNBLOCK, &sset, 0);
     return (pid);
 }
 
 bool
 ProcessSpawnImpl::isRunning(const pid_t pid) const {
-    if (process_status_.find(pid) == process_status_.end()) {
+    ProcessStates::const_iterator proc = process_state_.find(pid);
+    if (proc == process_state_.end()) {
         isc_throw(BadValue, "the process with the pid '" << pid
                   << "' hasn't been spawned and it status cannot be"
                   " returned");
     }
-    return ((pid != 0) && (kill(pid, 0) == 0));
+    return (proc->second.running_); 
 }
 
 bool
 ProcessSpawnImpl::isAnyRunning() const {
-    for (std::map<pid_t, int>::const_iterator proc = process_status_.begin();
-         proc != process_status_.end(); ++proc) {
-        if (isRunning(proc->first)) {
+    for (ProcessStates::const_iterator proc = process_state_.begin();
+         proc != process_state_.end(); ++proc) {
+        if (proc->second.running_) {
             return (true);
         }
     }
@@ -225,13 +252,13 @@ ProcessSpawnImpl::isAnyRunning() const {
 
 int
 ProcessSpawnImpl::getExitStatus(const pid_t pid) const {
-    std::map<pid_t, int>::const_iterator status = process_status_.find(pid);
-    if (status == process_status_.end()) {
+    ProcessStates::const_iterator proc = process_state_.find(pid);
+    if (proc == process_state_.end()) {
         isc_throw(InvalidOperation, "the process with the pid '" << pid
                   << "' hasn't been spawned and it status cannot be"
                   " returned");
     }
-    return (WEXITSTATUS(status->second));
+    return (WEXITSTATUS(proc->second.status_));
 }
 
 char*
@@ -249,27 +276,34 @@ ProcessSpawnImpl::allocateArg(const std::string& src) const {
 bool
 ProcessSpawnImpl::waitForProcess(int signum) {
     // We're only interested in SIGCHLD.
-    if (signum == SIGCHLD) {
-        int status = 0;
-        pid_t pid = waitpid(-1, &status, 0);
-        if (pid > 0) {
-            /// @todo Check that the terminating process was started
-            /// by our instance of ProcessSpawn and only handle it
-            /// if it was.
-            process_status_[pid] = status;
-        }
-        return (true);
+    if (signum != SIGCHLD) {
+        return (false);
     }
-    return (false);
+    for (;;) {
+        int status = 0;
+        pid_t pid = waitpid(-1, &status, WNOHANG);
+        if (pid <= 0) {
+            break;
+        }
+        ProcessStates::iterator proc = process_state_.find(pid);
+        /// Check that the terminating process was started
+        /// by our instance of ProcessSpawn
+        if (proc != process_state_.end()) {
+            // In this order please
+            proc->second.status_ = status;
+            proc->second.running_ = false;
+        }
+    }
+    return (true);
 }
 
 void
-ProcessSpawnImpl::clearStatus(const pid_t pid) {
+ProcessSpawnImpl::clearState(const pid_t pid) {
     if (isRunning(pid)) {
         isc_throw(InvalidOperation, "unable to remove the status for the"
                   "process (pid: " << pid << ") which is still running");
     }
-    process_status_.erase(pid);
+    process_state_.erase(pid);
 }
 
 ProcessSpawn::ProcessSpawn(const std::string& executable,
@@ -307,8 +341,8 @@ ProcessSpawn::getExitStatus(const pid_t pid) const {
 }
 
 void
-ProcessSpawn::clearStatus(const pid_t pid) {
-    return (impl_->clearStatus(pid));
+ProcessSpawn::clearState(const pid_t pid) {
+    return (impl_->clearState(pid));
 }
 
 }
