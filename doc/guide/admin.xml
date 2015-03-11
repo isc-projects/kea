@@ -239,7 +239,7 @@ $
           If you elected not to create the tables in step 4, you can do
           so now by running the <command>kea-admin</command> tool:
 <screen>
-$ <userinput>kea-admin lease-init mysql -u <replaceable>database-user</replaceable> -p <replaceable>database-password</replaceable> -d <replaceable>database-name</replaceable></userinput>
+$ <userinput>kea-admin lease-init mysql -u <replaceable>database-user</replaceable> -p <replaceable>database-password</replaceable> -n <replaceable>database-name</replaceable></userinput>
 </screen>
           (Do not do this if you did create the tables in step 4.)
           <command>kea-admin</command> implements rudimentary checks:
@@ -264,7 +264,7 @@ $ <userinput>kea-admin lease-init mysql -u <replaceable>database-user</replaceab
         <para>
           To check the current version of the database, use the following command:
 <screen>
-$ <userinput>kea-admin lease-version mysql -u <replaceable>database-user</replaceable> -p <replaceable>database-password</replaceable> -d <replaceable>database-name</replaceable></userinput>
+$ <userinput>kea-admin lease-version mysql -u <replaceable>database-user</replaceable> -p <replaceable>database-password</replaceable> -n <replaceable>database-name</replaceable></userinput>
 </screen>
           (See <xref linkend="kea-database-version"/> for a discussion
           about versioning.)  If the version does not match the minimum
@@ -279,7 +279,7 @@ $ <userinput>kea-admin lease-version mysql -u <replaceable>database-user</replac
           to subsequently downgrade to an earlier version.  To perform
           an upgrade, issue the following command:
 <screen>
-$ <userinput>kea-admin lease-upgrade mysql -u <replaceable>database-user</replaceable> -p <replaceable>database-password</replaceable> -d <replaceable>database-name</replaceable></userinput>
+$ <userinput>kea-admin lease-upgrade mysql -u <replaceable>database-user</replaceable> -p <replaceable>database-password</replaceable> -n <replaceable>database-name</replaceable></userinput>
 </screen>
         </para>
       </section>
