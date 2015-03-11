@@ -1,7 +1,15 @@
+907.	[doc]		tmark
+	Corrected depictions of kea-admin command line options for
+	database-name in Kea Administrator Reference. Prior to this
+	the document showed "-d" as the database name option, when
+	in fact it is "-n".
+	(Trac #3742, git ec427e4c9d008abc800f87eda3c0024b35e4c2e2)
+
 906.	[doc]		tmark
 	Added description of a restriction on extracting a MAC
 	address from an IPv6 link-local address to the Kea
 	Adminstrator Reference, section 8.8, item "ipv6-link-local".
+	(Trac #3691, git ca9f5541cb36f815ac614c5c21088d545eafcac6)
 
 905.	[func]		marcin
 	DHCPv4 server assigns an address from the dynamic address
