@@ -36,7 +36,7 @@ namespace dhcp {
 ///
 /// It makes no sense to copy an object of this class.  After the copy, both
 /// objects would contain pointers to the same MySql context object.  The
-/// destruction of one would invalid the context in the remaining object.
+/// destruction of one would invalidate the context in the remaining object.
 /// For this reason, the class is declared noncopyable.
 class MySqlHolder : public boost::noncopyable {
 public:
