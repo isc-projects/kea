@@ -199,7 +199,6 @@ LFCSetup::execute() {
         LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_EXECUTE)
             .arg(process_->getCommandLine());
         pid_ = process_->spawn();
-        std::cout << process_->getCommandLine() << std::endl;
 
     } catch (const ProcessSpawnError& ex) {
         LOG_ERROR(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_SPAWN_FAIL);
