@@ -1178,7 +1178,7 @@ should include options from the isc option space:
     "data" is not set the parser will assume that this parameter is not
     specified and an error will be reported.
     </para>
-    
+
     <para>Note that it is possible to create an option which carries some data
     in addition to the sub-options defined in the encapsulated option space.
     For example, if the "container" option from the previous example was
@@ -1728,8 +1728,8 @@ should include options from the isc option space:
       The third row in the table above describes the case in which the client
       requests that no DNS updates be done. The parameter, "override-no-update",
       can be used to instruct the server to disregard the client's wishes. When
-      this parameter is true, kea-dhcp6 will generate DDNS update requests to 
-      kea-dhcp-ddns even if the client requests no updates be done.  The N-S-O 
+      this parameter is true, kea-dhcp6 will generate DDNS update requests to
+      kea-dhcp-ddns even if the client requests no updates be done.  The N-S-O
       flags in the server's response to the client will be 0-1-1.
       </para>
       <para>
@@ -2110,7 +2110,7 @@ should include options from the isc option space:
     ]
 }
 </screen>
-      </para>        
+      </para>
    </section>
 
     <!-- @todo: add support for per IA reservation (that specifies IAID in
@@ -2270,7 +2270,7 @@ should include options from the isc option space:
             "relay": {
                 "ip-address": "3000::1"
             }</userinput>
-        },	    
+        },
 
         {
             "subnet": "2001:db8:1::/64",
@@ -2356,8 +2356,12 @@ should include options from the isc option space:
         sending their packets from IPv6 link-local addresses. There's a good chance
         that those addresses are based on EUI-64, which contains MAC address. This
         method is not completely reliable, as clients may use other link-local address
-        types. In particular, privacy extensions, defined in RFC4941, do not use
-        MAC addresses.
+        types.  In particular, privacy extensions, defined in RFC4941, do not use
+        MAC addresses.  Also note that successful extraction requires that the
+        address's u-bit must be set to 1 and its g-bit set to 0, indicating that it
+        is an interface identifier as per
+        <ulink url="http://tools.ietf.org/html/rfc2373#section-2.5.1">
+        RFC 2373, section 2.5.1</ulink>.
         </simpara>
       </listitem>
       <listitem>
