@@ -1215,6 +1215,26 @@ addressReserved(const IOAddress& address, const AllocEngine::ClientContext4& ctx
     return (false);
 }
 
+/// @brief Check if the context contains the reservation for the
+/// IPv4 address.
+///
+/// This convenience function checks if the context contains the reservation
+/// for the IPv4 address. Note that some reservations may not assign a
+/// static IPv4 address to the clients, but may rather reserve a hostname.
+/// Allocation engine should check if the existing reservation is made
+/// for the IPv4 address and if it is not, allocate the address from the
+/// dynamic pool. The allocation engine uses this function to check if
+/// the reservation is made for the IPv4 address.
+///
+/// @param ctx Client context holding the data extracted from the
+/// client's message.
+///
+/// @return true if the context contains the reservation for the IPv4 address.
+bool
+hasAddressReservation(const AllocEngine::ClientContext4& ctx) {
+    return (ctx.host_ && !ctx.host_->getIPv4Reservation().isV4Zero());
+}
+
 } // end of anonymous namespace
 
 namespace isc {
@@ -1339,7 +1359,7 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
 
     // Check if there is a reservation for the client. If there is, we want to
     // assign the reserved address, rather than any other one.
-    if (ctx.host_) {
+    if (hasAddressReservation(ctx)) {
         // If the client doesn't have a lease or the leased address is different
         // than the reserved one then let's try to allocate the reserved address.
         // Otherwise the address that the client has is the one for which it
@@ -1438,7 +1458,7 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
             return (Lease4Ptr());
         }
 
-    } else if (ctx.host_) {
+    } else if (hasAddressReservation(ctx)) {
         // The client hasn't specified an address to allocate, so the
         // allocation engine needs to find an appropriate address.
         // If there is a reservation for the client, let's try to
@@ -1462,7 +1482,8 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
         // address it is possible that the client was offered this different
         // address because the reserved address is in use. We will have to
         // check if the address is in use.
-        if (ctx.host_ && (ctx.host_->getIPv4Reservation() != ctx.requested_address_)) {
+        if (hasAddressReservation(ctx) &&
+            (ctx.host_->getIPv4Reservation() != ctx.requested_address_)) {
             existing = LeaseMgrFactory::instance().getLease4(ctx.host_->getIPv4Reservation());
             // If the reserved address is not in use, i.e. the lease doesn't
             // exist or is expired, and the client is requesting a different
@@ -1476,7 +1497,8 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
         // The use of the out-of-pool addresses is only allowed when the requested
         // address is reserved for the client. If the address is not reserved one
         // and it doesn't belong to the dynamic pool, do not allocate it.
-        if ((!ctx.host_ || (ctx.host_->getIPv4Reservation() != ctx.requested_address_)) &&
+        if ((!hasAddressReservation(ctx) ||
+             (ctx.host_->getIPv4Reservation() != ctx.requested_address_)) &&
             !ctx.subnet_->inPool(Lease4::TYPE_V4, ctx.requested_address_)) {
             return (Lease4Ptr());
         }
