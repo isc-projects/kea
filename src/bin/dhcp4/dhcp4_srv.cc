@@ -861,8 +861,9 @@ Dhcpv4Srv::processClientFqdnOption(DHCPv4Exchange& ex) {
                        fqdn->getFlag(Option4ClientFqdn::FLAG_E));
 
     if (ex.getContext()->host_ && !ex.getContext()->host_->getHostname().empty()) {
-        fqdn_resp->setDomainName(ex.getContext()->host_->getHostname(),
-                                 Option4ClientFqdn::FULL);
+        D2ClientMgr& d2_mgr = CfgMgr::instance().getD2ClientMgr();
+        fqdn_resp->setDomainName(d2_mgr.qualifyName(ex.getContext()->host_->getHostname(),
+                                                    true), Option4ClientFqdn::FULL);
 
     } else {
         // Adjust the domain name based on domain name value and type sent by the
@@ -924,7 +925,8 @@ Dhcpv4Srv::processHostnameOption(DHCPv4Exchange& ex) {
 
     // If there is a hostname reservation for this client, use it.
     if (ex.getContext()->host_ && !ex.getContext()->host_->getHostname().empty()) {
-        opt_hostname_resp->setValue(ex.getContext()->host_->getHostname());
+        opt_hostname_resp->setValue(d2_mgr.qualifyName(ex.getContext()->host_->getHostname(),
+                                                       false));
 
     } else if ((d2_mgr.getD2ClientConfig()->getReplaceClientName()) ||
                (label_count < 2)) {
