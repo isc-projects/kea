@@ -315,10 +315,11 @@ public:
         int64_t expire_time_64 = static_cast<int64_t>(cltt) +
             static_cast<int64_t>(valid_lifetime);
 
-        // On 32-bit systems the time_t is implemented as the int32_t value.
-        // We want to detect overflows beyond maximum int32_t value here
-        // to avoid the overflow in the PostgreSQL database. The PostgreSQL
-        // doesn't catch those overflows on its own.
+        // It has been observed that the PostgreSQL doesn't deal well with the
+        // timestamp values beyond the LeaseMgr::MAX_DB_TIME seconds since the
+        // beginning of the epoch (around year 2038). The value is often
+        // stored in the database but it is invalid when read back (overflow?).
+        // Hence, the maximum timestamp value is restricted here.
         if (expire_time_64 > LeaseMgr::MAX_DB_TIME) {
             isc_throw(isc::BadValue, "Time value is too large: " << expire_time_64);
         }
