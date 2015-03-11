@@ -884,7 +884,7 @@ public:
     /// This method attempts to find the host reservation for the client. If
     /// found, it is set in the @c ctx.host_. If the host reservations are
     /// disabled for the particular subnet or the reservation is not found
-    /// for the client, the @ctx.host_ is set to NULL.
+    /// for the client, the @c ctx.host_ is set to NULL.
     ///
     /// @param ctx Client context holding various information about the client.
     static void findReservation(ClientContext4& ctx);
