@@ -1287,7 +1287,8 @@ MySqlLeaseMgr::convertToDatabaseTime(const time_t cltt,
     int64_t expire_time_64 = static_cast<int64_t>(cltt) +
         static_cast<int64_t>(valid_lifetime);
 
-    // Prevent too large value.
+    // Even on 64-bit systems MySQL doesn't seem to accept the timestamps
+    // beyond the max value of int32_t.
     if (expire_time_64 > LeaseMgr::MAX_DB_TIME) {
         isc_throw(BadValue, "Time value is too large: " << expire_time_64);
     }

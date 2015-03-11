@@ -315,10 +315,10 @@ public:
         int64_t expire_time_64 = static_cast<int64_t>(cltt) +
             static_cast<int64_t>(valid_lifetime);
 
-        // PostgreSQL does funny things with time if you get past Y2038.  It
-        // will accept the values (unlike MySQL which throws) but it
-        // stops correctly adjusting to local time when reading them back
-        // out. So lets disallow it here.
+        // On 32-bit systems the time_t is implemented as the int32_t value.
+        // We want to detect overflows beyond maximum int32_t value here
+        // to avoid the overflow in the PostgreSQL database. The PostgreSQL
+        // doesn't catch those overflows on its own.
         if (expire_time_64 > LeaseMgr::MAX_DB_TIME) {
             isc_throw(isc::BadValue, "Time value is too large: " << expire_time_64);
         }
