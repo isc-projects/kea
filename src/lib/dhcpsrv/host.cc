@@ -83,15 +83,17 @@ Host::Host(const uint8_t* identifier, const size_t identifier_len,
            const std::string& dhcp6_client_classes)
     : hw_address_(), duid_(), ipv4_subnet_id_(ipv4_subnet_id),
       ipv6_subnet_id_(ipv6_subnet_id),
-      ipv4_reservation_(asiolink::IOAddress("0.0.0.0")),
+      ipv4_reservation_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
        hostname_(hostname), dhcp4_client_classes_(dhcp4_client_classes),
        dhcp6_client_classes_(dhcp6_client_classes) {
 
     // Initialize HWAddr or DUID
     setIdentifier(identifier, identifier_len, identifier_type);
 
-    // Validate and set IPv4 address reservation.
-    setIPv4Reservation(ipv4_reservation);
+    if (!ipv4_reservation.isV4Zero()) {
+        // Validate and set IPv4 address reservation.
+        setIPv4Reservation(ipv4_reservation);
+    }
 }
 
 Host::Host(const std::string& identifier, const std::string& identifier_name,
@@ -102,15 +104,17 @@ Host::Host(const std::string& identifier, const std::string& identifier_name,
            const std::string& dhcp6_client_classes)
     : hw_address_(), duid_(), ipv4_subnet_id_(ipv4_subnet_id),
       ipv6_subnet_id_(ipv6_subnet_id),
-      ipv4_reservation_(asiolink::IOAddress("0.0.0.0")),
+      ipv4_reservation_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
       hostname_(hostname), dhcp4_client_classes_(dhcp4_client_classes),
       dhcp6_client_classes_(dhcp6_client_classes) {
 
     // Initialize HWAddr or DUID
     setIdentifier(identifier, identifier_name);
 
-    // Validate and set IPv4 address reservation.
-    setIPv4Reservation(ipv4_reservation);
+    if (!ipv4_reservation.isV4Zero()) {
+        // Validate and set IPv4 address reservation.
+        setIPv4Reservation(ipv4_reservation);
+    }
 }
 
 const std::vector<uint8_t>&
@@ -172,10 +176,17 @@ Host::setIPv4Reservation(const asiolink::IOAddress& address) {
     if (!address.isV4()) {
         isc_throw(isc::BadValue, "address '" << address << "' is not a valid"
                   " IPv4 address");
+    } else if (address.isV4Zero() || address.isV4Bcast()) {
+        isc_throw(isc::BadValue, "must not make reservation for the '"
+                  << address << "' address");
     }
     ipv4_reservation_ = address;
 }
 
+void
+Host::removeIPv4Reservation() {
+    ipv4_reservation_ = asiolink::IOAddress::IPV4_ZERO_ADDRESS();
+}
 
 void
 Host::addReservation(const IPv6Resrv& reservation) {

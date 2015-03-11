@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -242,6 +242,30 @@ TEST_F(HostReservationParserTest, emptyHostname) {
 TEST_F(HostReservationParserTest, malformedAddress) {
     std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
         "\"ip-address\": \"192.0.2.bogus\" }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser4 parser(SubnetID(10));
+    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+}
+
+// This test verifies that the configuration parser for host reservations
+// throws an exception when zero IP address is specified.
+TEST_F(HostReservationParserTest, zeroAddress) {
+    std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
+        "\"ip-address\": \"0.0.0.0\" }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser4 parser(SubnetID(10));
+    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+}
+
+// This test verifies that the configuration parser for host reservations
+// throws an exception when broadcast IP address is specified.
+TEST_F(HostReservationParserTest, bcastAddress) {
+    std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
+        "\"ip-address\": \"255.255.255.255\" }";
 
     ElementPtr config_element = Element::fromJSON(config);
 
