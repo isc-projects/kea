@@ -1304,8 +1304,6 @@ AllocEngine::allocateLease4(ClientContext4& ctx) {
             isc_throw(BadValue, "HWAddr must be defined");
         }
 
-        ctx.host_ = HostMgr::instance().get4(ctx.subnet_->getID(), ctx.hwaddr_);
-
         new_lease = ctx.fake_allocation_ ? discoverLease4(ctx) : requestLease4(ctx);
         if (!new_lease) {
             // Unable to allocate an address, return an empty lease.
@@ -1321,7 +1319,7 @@ AllocEngine::allocateLease4(ClientContext4& ctx) {
 }
 
 void
-AllocEngine::findReservation(ClientContext4& ctx) const {
+AllocEngine::findReservation(ClientContext4& ctx) {
     ctx.host_.reset();
 
     // We can only search for the reservation if a subnet has been selected.

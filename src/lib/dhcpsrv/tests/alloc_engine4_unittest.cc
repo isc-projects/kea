@@ -598,6 +598,7 @@ TEST_F(AllocEngine4Test, reservedAddressNoHint) {
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
                                     IOAddress("0.0.0.0"), false, false,
                                     "", false);
+    AllocEngine::findReservation(ctx);
     Lease4Ptr lease = engine.allocateLease4(ctx);
 
     ASSERT_TRUE(lease);
@@ -634,6 +635,7 @@ TEST_F(AllocEngine4Test,reservedAddressNoHintFakeAllocation) {
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
                                     IOAddress("0.0.0.0"), false, false,
                                     "", true);
+    AllocEngine::findReservation(ctx);
     Lease4Ptr lease = engine.allocateLease4(ctx);
 
     ASSERT_TRUE(lease);
@@ -671,6 +673,7 @@ TEST_F(AllocEngine4Test, reservedAddressHint) {
     AllocEngine::ClientContext4 ctx1(subnet_, clientid_, hwaddr_,
                                     IOAddress("192.0.2.234"), false, false,
                                     "", false);
+    AllocEngine::findReservation(ctx1);
     Lease4Ptr lease = engine.allocateLease4(ctx1);
 
     // The client requested a different address than reserved, so
@@ -683,6 +686,7 @@ TEST_F(AllocEngine4Test, reservedAddressHint) {
     AllocEngine::ClientContext4 ctx2(subnet_, clientid_, hwaddr_,
                                     IOAddress("192.0.2.123"), false, false,
                                     "", false);
+    AllocEngine::findReservation(ctx2);
     lease = engine.allocateLease4(ctx2);
     ASSERT_TRUE(lease);
     EXPECT_EQ("192.0.2.123", lease->addr_.toText());
@@ -718,6 +722,7 @@ TEST_F(AllocEngine4Test, reservedAddressHintFakeAllocation) {
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
                                     IOAddress("192.0.2.234"), false, false,
                                     "", true);
+    AllocEngine::findReservation(ctx);
     Lease4Ptr lease = engine.allocateLease4(ctx);
 
     ASSERT_TRUE(lease);
@@ -761,6 +766,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLease) {
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
                                     IOAddress("192.0.2.123"), false, false,
                                     "", false);
+    AllocEngine::findReservation(ctx);
     Lease4Ptr allocated_lease = engine.allocateLease4(ctx);
 
     ASSERT_TRUE(allocated_lease);
@@ -808,6 +814,7 @@ TEST_F(AllocEngine4Test, reservedAddressHijacked) {
     AllocEngine::ClientContext4 ctx1(subnet_, clientid_, hwaddr_,
                                     IOAddress("192.0.2.123"), false, false,
                                     "", false);
+    AllocEngine::findReservation(ctx1);
     Lease4Ptr allocated_lease = engine.allocateLease4(ctx1);
     // The lease is allocated to someone else, so the allocation should not
     // succeed.
@@ -825,6 +832,7 @@ TEST_F(AllocEngine4Test, reservedAddressHijacked) {
     AllocEngine::ClientContext4 ctx2(subnet_, clientid_, hwaddr_,
                                     IOAddress("0.0.0.0"), false, false,
                                     "", false);
+    AllocEngine::findReservation(ctx2);
     allocated_lease = engine.allocateLease4(ctx2);
     ASSERT_FALSE(allocated_lease);
     EXPECT_FALSE(ctx2.old_lease_);
@@ -863,6 +871,7 @@ TEST_F(AllocEngine4Test, reservedAddressHijackedFakeAllocation) {
     AllocEngine::ClientContext4 ctx1(subnet_, clientid_, hwaddr_,
                                     IOAddress("192.0.2.123"), false, false,
                                     "", true);
+    AllocEngine::findReservation(ctx1);
     Lease4Ptr allocated_lease = engine.allocateLease4(ctx1);
 
     // The allocation engine should return a lease but for a different address
@@ -878,6 +887,7 @@ TEST_F(AllocEngine4Test, reservedAddressHijackedFakeAllocation) {
     AllocEngine::ClientContext4 ctx2(subnet_, clientid_, hwaddr_,
                                     IOAddress("0.0.0.0"), false, false,
                                     "", true);
+    AllocEngine::findReservation(ctx2);
     allocated_lease = engine.allocateLease4(ctx2);
 
     ASSERT_TRUE(allocated_lease);
@@ -918,6 +928,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseInvalidHint) {
     AllocEngine::ClientContext4 ctx1(subnet_, clientid_, hwaddr_,
                                     IOAddress("192.0.2.102"), false, false,
                                     "", false);
+    AllocEngine::findReservation(ctx1);
     Lease4Ptr allocated_lease = engine.allocateLease4(ctx1);
     ASSERT_FALSE(allocated_lease);
     ASSERT_FALSE(ctx1.old_lease_);
@@ -968,6 +979,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseFakeAllocation) {
     AllocEngine::ClientContext4 ctx1(subnet_, clientid_, hwaddr_,
                                     IOAddress("192.0.2.102"), false, false,
                                     "", true);
+    AllocEngine::findReservation(ctx1);
     Lease4Ptr allocated_lease = engine.allocateLease4(ctx1);
 
     // Server should offer a lease for a reserved address.
@@ -986,6 +998,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseFakeAllocation) {
     AllocEngine::ClientContext4 ctx2(subnet_, clientid_, hwaddr_,
                                     IOAddress("192.0.2.101"), false, false,
                                     "", true);
+    AllocEngine::findReservation(ctx2);
     allocated_lease = engine.allocateLease4(ctx2);
 
     // The server should offer the lease, but not for the address that
@@ -1026,6 +1039,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseNoHint) {
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
                                     IOAddress("0.0.0.0"), false, false,
                                     "", false);
+    AllocEngine::findReservation(ctx);
     Lease4Ptr allocated_lease = engine.allocateLease4(ctx);
 
     // The reserved address should be allocated.
@@ -1075,6 +1089,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseNoHintFakeAllocation) {
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
                                     IOAddress("0.0.0.0"), false, false,
                                     "", true);
+    AllocEngine::findReservation(ctx);
     Lease4Ptr allocated_lease = engine.allocateLease4(ctx);
 
     // The server should offer the reserved address.
@@ -1137,6 +1152,7 @@ TEST_F(AllocEngine4Test, reservedAddressConflictResolution) {
     AllocEngine::ClientContext4 ctx1(subnet_, ClientIdPtr(), hwaddr2_,
                                     IOAddress("192.0.2.101"), false, false,
                                     "", false);
+    AllocEngine::findReservation(ctx1);
     Lease4Ptr offered_lease = engine.allocateLease4(ctx1);
     ASSERT_FALSE(offered_lease);
 
@@ -1146,6 +1162,7 @@ TEST_F(AllocEngine4Test, reservedAddressConflictResolution) {
     AllocEngine::ClientContext4 ctx2(subnet_, clientid_, hwaddr_,
                                     IOAddress("192.0.2.101"), false, false,
                                     "", false);
+    AllocEngine::findReservation(ctx2);
     ASSERT_FALSE(engine.allocateLease4(ctx2));
 
     ASSERT_FALSE(ctx2.old_lease_);
@@ -1156,6 +1173,7 @@ TEST_F(AllocEngine4Test, reservedAddressConflictResolution) {
     AllocEngine::ClientContext4 ctx3(subnet_, clientid_, hwaddr_,
                                     IOAddress("192.0.2.101"), false, false,
                                     "", true);
+    AllocEngine::findReservation(ctx3);
     offered_lease = engine.allocateLease4(ctx3);
     ASSERT_TRUE(offered_lease);
     EXPECT_NE(offered_lease->addr_.toText(), "192.0.2.101");
@@ -1166,6 +1184,7 @@ TEST_F(AllocEngine4Test, reservedAddressConflictResolution) {
     AllocEngine::ClientContext4 ctx4(subnet_, clientid_, hwaddr_,
                                     offered_lease->addr_, false, false,
                                     "", false);
+    AllocEngine::findReservation(ctx4);
     Lease4Ptr allocated_lease = engine.allocateLease4(ctx4);
 
     ASSERT_TRUE(allocated_lease);
@@ -1176,6 +1195,7 @@ TEST_F(AllocEngine4Test, reservedAddressConflictResolution) {
     AllocEngine::ClientContext4 ctx5(subnet_, ClientIdPtr(), hwaddr2_,
                                      IOAddress("0.0.0.0"), false, false,
                                     "", true);
+    AllocEngine::findReservation(ctx5);
     offered_lease = engine.allocateLease4(ctx5);
 
     ASSERT_TRUE(offered_lease);
@@ -1210,6 +1230,7 @@ TEST_F(AllocEngine4Test, reservedAddressVsDynamicPool) {
     AllocEngine::ClientContext4 ctx(subnet_, ClientIdPtr(), hwaddr_,
                                      IOAddress("0.0.0.0"), false, false,
                                     "", false);
+    AllocEngine::findReservation(ctx);
     Lease4Ptr allocated_lease = engine.allocateLease4(ctx);
 
     ASSERT_TRUE(allocated_lease);
@@ -1236,7 +1257,8 @@ TEST_F(AllocEngine4Test, reservedAddressHintUsedByOtherClient) {
     // Different client is requesting this address.
     AllocEngine::ClientContext4 ctx1(subnet_, ClientIdPtr(), hwaddr_,
                                      IOAddress("192.0.2.100"), false, false,
-                                    "", false);
+                                     "", false);
+    AllocEngine::findReservation(ctx1);
     Lease4Ptr allocated_lease = engine.allocateLease4(ctx1);
 
     // The client should get no lease (DHCPNAK).
@@ -1246,7 +1268,8 @@ TEST_F(AllocEngine4Test, reservedAddressHintUsedByOtherClient) {
     // if is sending a DHCPDISCOVER (fake allocation is true).
     AllocEngine::ClientContext4 ctx2(subnet_, ClientIdPtr(), hwaddr_,
                                      IOAddress("192.0.2.100"), false, false,
-                                    "", true);
+                                     "", true);
+    AllocEngine::findReservation(ctx2);
     allocated_lease = engine.allocateLease4(ctx2);
 
     ASSERT_TRUE(allocated_lease);
@@ -1274,6 +1297,7 @@ TEST_F(AllocEngine4Test, reservedAddressShortPool) {
     AllocEngine::ClientContext4 ctx1(subnet_, ClientIdPtr(), hwaddr_,
                                      IOAddress("0.0.0.0"), false, false,
                                      "", false);
+    AllocEngine::findReservation(ctx1);
     Lease4Ptr allocated_lease = engine.allocateLease4(ctx1);
 
     EXPECT_FALSE(allocated_lease);
@@ -1286,6 +1310,7 @@ TEST_F(AllocEngine4Test, reservedAddressShortPool) {
     AllocEngine::ClientContext4 ctx2(subnet_, ClientIdPtr(), hwaddr_,
                                      IOAddress("0.0.0.0"), false, false,
                                      "", false);
+    AllocEngine::findReservation(ctx2);
     allocated_lease = engine.allocateLease4(ctx2);
 
     ASSERT_TRUE(allocated_lease);
@@ -1311,6 +1336,7 @@ TEST_F(AllocEngine4Test, reservedHostname) {
     AllocEngine::ClientContext4 ctx(subnet_, ClientIdPtr(), hwaddr_,
                                     IOAddress::IPV4_ZERO_ADDRESS(), false, false,
                                     "foo.example.org", true);
+    AllocEngine::findReservation(ctx);
     Lease4Ptr allocated_lease = engine.allocateLease4(ctx);
     ASSERT_TRUE(allocated_lease);
     ASSERT_FALSE(allocated_lease->addr_.isV4Zero());
