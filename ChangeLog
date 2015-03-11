@@ -1,3 +1,8 @@
+906.	[doc]		tmark
+	Added description of a restriction on extracting a MAC
+	address from an IPv6 link-local address to the Kea
+	Adminstrator Reference, section 8.8, item "ipv6-link-local".
+
 905.	[func]		marcin
 	DHCPv4 server assigns an address from the dynamic address
 	pool if the reserved address is in use by another client.
