@@ -1263,7 +1263,7 @@ TEST_F(AllocEngine4Test, reservedAddressShortPool) {
     // Create short pool with only one address.
     initSubnet(IOAddress("192.0.2.100"), IOAddress("192.0.2.100"));
     // Reserve the address for a different client.
-    HostPtr host(new Host(&hwaddr2_->hwaddr_[0], hwaddr_->hwaddr_.size(),
+    HostPtr host(new Host(&hwaddr2_->hwaddr_[0], hwaddr2_->hwaddr_.size(),
                           Host::IDENT_HWADDR, subnet_->getID(),
                           SubnetID(0), IOAddress("192.0.2.100")));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
@@ -1290,6 +1290,35 @@ TEST_F(AllocEngine4Test, reservedAddressShortPool) {
 
     ASSERT_TRUE(allocated_lease);
     EXPECT_EQ("192.0.2.100", allocated_lease->addr_.toText());
+}
+
+// This test checks that the AllocEngine allocates an address from the
+// dynamic pool if the client's reservation is made for a hostname but
+// not for an address.
+TEST_F(AllocEngine4Test, reservedHostname) {
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+
+    // Create a reservation for a hostname. Address is set to 0 which
+    // indicates that there is no reservation.
+    HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
+                          Host::IDENT_HWADDR, subnet_->getID(),
+                          SubnetID(0), IOAddress::IPV4_ZERO_ADDRESS(),
+                          "foo.example.org"));
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    // Try to allocate a lease.
+    AllocEngine::ClientContext4 ctx(subnet_, ClientIdPtr(), hwaddr_,
+                                    IOAddress::IPV4_ZERO_ADDRESS(), false, false,
+                                    "foo.example.org", true);
+    Lease4Ptr allocated_lease = engine.allocateLease4(ctx);
+    ASSERT_TRUE(allocated_lease);
+    ASSERT_FALSE(allocated_lease->addr_.isV4Zero());
+
+    ctx.requested_address_ = allocated_lease->addr_;
+    ctx.fake_allocation_ = false;
+    allocated_lease = engine.allocateLease4(ctx);
+    ASSERT_TRUE(allocated_lease);
 }
 
 // This test checks that the AllocEngine::findReservation method finds
