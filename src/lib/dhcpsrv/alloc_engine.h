@@ -868,6 +868,8 @@ public:
     /// - @ref ClientContext4::fake_allocation_ Is this real i.e. REQUEST (false)
     ///      or just picking an address for DISCOVER that is not really
     ///      allocated (true)
+    /// - @ref ClientContext4::host_ Pointer to the object representing the
+    //       static reservations (host reservations) for the client.
     /// - @ref ClientContext4::callout_handle_ A callout handle (used in hooks).
     ///      A lease callouts will be executed if this parameter is passed.
     /// - @ref ClientContext4::old_lease_ [out] Holds the pointer to a previous
@@ -885,7 +887,7 @@ public:
     /// for the client, the @ctx.host_ is set to NULL.
     ///
     /// @param ctx Client context holding various information about the client.
-    void findReservation(ClientContext4& ctx) const;
+    static void findReservation(ClientContext4& ctx);
 
 private:
 
