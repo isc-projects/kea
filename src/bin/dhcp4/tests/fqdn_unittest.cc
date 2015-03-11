@@ -61,7 +61,7 @@ const char* CONFIGS[] = {
         " }],"
         "\"dhcp-ddns\": {"
             "\"enable-updates\": true,"
-            "\"qualifying-suffix\": \"fake-suffix.isc.org.\""
+            "\"qualifying-suffix\": \"\""
         "}"
     "}",
     "{ \"interfaces-config\": {"
@@ -82,7 +82,7 @@ const char* CONFIGS[] = {
         "    \"reservations\": ["
         "       {"
         "         \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
-        "         \"hostname\":   \"foobar.org\""
+        "         \"hostname\":   \"foobar\""
         "       }"
         "    ]"
         " }],"
@@ -1146,15 +1146,20 @@ TEST_F(NameDhcpv4SrvTest, fqdnReservation) {
     ASSERT_TRUE(fqdn);
     EXPECT_EQ("unique-host.example.org.", fqdn->getDomainName());
 
-    // Because this is a new lease, there should be one NCR which adds the
-    // new DNS entry.
-    ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
-    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
-                            resp->getYiaddr().toText(),
-                            "unique-host.example.org.",
-                            "000001ACB52196C8F3BCC1DF3BA1F40BAC39BF23"
-                            "0D280858B1ED7696E174C4479E3372",
-                            time(NULL), subnet_->getValid(), true);
+    {
+        SCOPED_TRACE("Verify the correctness of the NCR for the"
+                     "unique-host.example.org");
+
+        // Because this is a new lease, there should be one NCR which adds the
+        // new DNS entry.
+        ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+        verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                                resp->getYiaddr().toText(),
+                                "unique-host.example.org.",
+                                "000001ACB52196C8F3BCC1DF3BA1F40BAC39BF23"
+                                "0D280858B1ED7696E174C4479E3372",
+                                time(NULL), subnet_->getValid(), true);
+    }
     
     // And that this FQDN has been stored in the lease database.
     Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(client.config_.lease_.addr_);
@@ -1163,6 +1168,9 @@ TEST_F(NameDhcpv4SrvTest, fqdnReservation) {
 
     // Reconfigure DHCP server to use a different hostname for the client.
     configure(CONFIGS[1], *client.getServer());
+    // Make sure that DDNS is enabled.
+    ASSERT_TRUE(CfgMgr::instance().ddnsEnabled());
+    ASSERT_NO_THROW(client.getServer()->startD2());
 
     // Client is in the renewing state.
     client.setState(Dhcp4Client::RENEWING);
@@ -1174,29 +1182,40 @@ TEST_F(NameDhcpv4SrvTest, fqdnReservation) {
     // The new FQDN should contain a different name this time.
     fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>(resp->getOption(DHO_FQDN));
     ASSERT_TRUE(fqdn);
-    EXPECT_EQ("foobar.org.", fqdn->getDomainName());
+    EXPECT_EQ("foobar.fake-suffix.isc.org.", fqdn->getDomainName());
 
     // And the lease in the lease database should also contain this new FQDN.
     lease = LeaseMgrFactory::instance().getLease4(client.config_.lease_.addr_);
     ASSERT_TRUE(lease);
-    EXPECT_EQ("foobar.org.", lease->hostname_);
+    EXPECT_EQ("foobar.fake-suffix.isc.org.", lease->hostname_);
 
     // Now there should be two name NCRs. One that removes the previous entry
     // and the one that adds a new entry for the new hostname.
     ASSERT_EQ(2, CfgMgr::instance().getD2ClientMgr().getQueueSize());
-    verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
-                            resp->getYiaddr().toText(),
-                            "unique-host.example.org.",
-                            "000001ACB52196C8F3BCC1DF3BA1F40BAC39BF23"
-                            "0D280858B1ED7696E174C4479E3372",
-                            time(NULL), subnet_->getValid(), true);
 
-    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
-                            resp->getYiaddr().toText(),
-                            "foobar.org.",
-                            "000001B722C2FB5FAFE25B99178A0BFEC05127B9"
-                            "5DC843E00941D444D53B24C2365337",
-                            time(NULL), subnet_->getValid(), true);
+    {
+        SCOPED_TRACE("Verify the correctness of the CHG_REMOVE NCR for the "
+                     "unique-host.example.org");
+
+        verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
+                                resp->getYiaddr().toText(),
+                                "unique-host.example.org.",
+                                "000001ACB52196C8F3BCC1DF3BA1F40BAC39BF23"
+                                "0D280858B1ED7696E174C4479E3372",
+                                time(NULL), subnet_->getValid(), true);
+    }
+
+    {
+        SCOPED_TRACE("Verify the correctness of the CHG_ADD NCR for the "
+                     "foobar.fake-suffix.isc.org");
+
+        verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                                resp->getYiaddr().toText(),
+                                "foobar.fake-suffix.isc.org.",
+                                "0000017C29B3C236344924E448E247F3FD56C7E9"
+                                "167B3397B1305FB664C160B967CE1F",
+                                time(NULL), subnet_->getValid(), true);
+    }
 }
 
 // This test verifies that the server sends the Hostname option to the client
@@ -1247,15 +1266,23 @@ TEST_F(NameDhcpv4SrvTest, hostnameReservation) {
     // Because this is a new lease, there should be one NCR which adds the
     // new DNS entry.
     ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
-    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
-                            resp->getYiaddr().toText(),
-                            "unique-host.example.org.",
-                            "000001ACB52196C8F3BCC1DF3BA1F40BAC39BF23"
-                            "0D280858B1ED7696E174C4479E3372",
-                            time(NULL), subnet_->getValid(), true);
+    {
+        SCOPED_TRACE("Verify the correctness of the NCR for the"
+                     "unique-host.example.org");
+
+        verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                                resp->getYiaddr().toText(),
+                                "unique-host.example.org.",
+                                "000001ACB52196C8F3BCC1DF3BA1F40BAC39BF23"
+                                "0D280858B1ED7696E174C4479E3372",
+                                time(NULL), subnet_->getValid(), true);
+    }
 
     // Reconfigure DHCP server to use a different hostname for the client.
     configure(CONFIGS[1], *client.getServer());
+    // Make sure that DDNS is enabled.
+    ASSERT_TRUE(CfgMgr::instance().ddnsEnabled());
+    ASSERT_NO_THROW(client.getServer()->startD2());
 
     // Client is in the renewing state.
     client.setState(Dhcp4Client::RENEWING);
@@ -1267,29 +1294,39 @@ TEST_F(NameDhcpv4SrvTest, hostnameReservation) {
     // The new hostname should be different than previously.
     hostname = boost::dynamic_pointer_cast<OptionString>(resp->getOption(DHO_HOST_NAME));
     ASSERT_TRUE(hostname);
-    EXPECT_EQ("foobar.org", hostname->getValue());
+    EXPECT_EQ("foobar.fake-suffix.isc.org", hostname->getValue());
 
     // And the lease in the lease database should also contain this new FQDN.
     lease = LeaseMgrFactory::instance().getLease4(client.config_.lease_.addr_);
     ASSERT_TRUE(lease);
-    EXPECT_EQ("foobar.org", lease->hostname_);
+    EXPECT_EQ("foobar.fake-suffix.isc.org", lease->hostname_);
 
     // Now there should be two name NCRs. One that removes the previous entry
     // and the one that adds a new entry for the new hostname.
     ASSERT_EQ(2, CfgMgr::instance().getD2ClientMgr().getQueueSize());
-    verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
-                            resp->getYiaddr().toText(),
-                            "unique-host.example.org.",
-                            "000001ACB52196C8F3BCC1DF3BA1F40BAC39BF23"
-                            "0D280858B1ED7696E174C4479E3372",
-                            time(NULL), subnet_->getValid(), true);
+    {
+        SCOPED_TRACE("Verify the correctness of the CHG_REMOVE NCR for the "
+                     "unique-host.example.org");
 
-    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
-                            resp->getYiaddr().toText(),
-                            "foobar.org.",
-                            "000001B722C2FB5FAFE25B99178A0BFEC05127B9"
-                            "5DC843E00941D444D53B24C2365337",
-                            time(NULL), subnet_->getValid(), true);
+        verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
+                                resp->getYiaddr().toText(),
+                                "unique-host.example.org.",
+                                "000001ACB52196C8F3BCC1DF3BA1F40BAC39BF23"
+                                "0D280858B1ED7696E174C4479E3372",
+                                time(NULL), subnet_->getValid(), true);
+    }
+
+    {
+        SCOPED_TRACE("Verify the correctness of the CHG_ADD NCR for the "
+                     "foobar.fake-suffix.isc.org");
+
+        verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                                resp->getYiaddr().toText(),
+                                "foobar.fake-suffix.isc.org.",
+                                "0000017C29B3C236344924E448E247F3FD56C7E9"
+                                "167B3397B1305FB664C160B967CE1F",
+                                time(NULL), subnet_->getValid(), true);
+    }
 }
 
 
