@@ -960,28 +960,25 @@ TEST_F(Dhcpv4SrvTest, sanityCheck) {
     pkt->setHWAddr(generateHWAddr(6));
 
     // Server-id is optional for information-request, so
-    EXPECT_NO_THROW(NakedDhcpv4Srv::sanityCheck(createExchange(pkt),
-                                                Dhcpv4Srv::OPTIONAL));
+    EXPECT_NO_THROW(NakedDhcpv4Srv::sanityCheck(pkt, Dhcpv4Srv::OPTIONAL));
 
     // Empty packet, no server-id
-    EXPECT_THROW(NakedDhcpv4Srv::sanityCheck(createExchange(pkt), Dhcpv4Srv::MANDATORY),
+    EXPECT_THROW(NakedDhcpv4Srv::sanityCheck(pkt, Dhcpv4Srv::MANDATORY),
                  RFCViolation);
 
     pkt->addOption(srv->getServerID());
 
     // Server-id is mandatory and present = no exception
-    EXPECT_NO_THROW(NakedDhcpv4Srv::sanityCheck(createExchange(pkt),
-                                                Dhcpv4Srv::MANDATORY));
+    EXPECT_NO_THROW(NakedDhcpv4Srv::sanityCheck(pkt, Dhcpv4Srv::MANDATORY));
 
     // Server-id is forbidden, but present => exception
-    EXPECT_THROW(NakedDhcpv4Srv::sanityCheck(createExchange(pkt), Dhcpv4Srv::FORBIDDEN),
+    EXPECT_THROW(NakedDhcpv4Srv::sanityCheck(pkt, Dhcpv4Srv::FORBIDDEN),
                  RFCViolation);
 
     // There's no client-id and no HWADDR. Server needs something to
     // identify the client
     pkt->setHWAddr(generateHWAddr(0));
-    EXPECT_THROW(NakedDhcpv4Srv::sanityCheck(createExchange(pkt),
-                                             Dhcpv4Srv::MANDATORY),
+    EXPECT_THROW(NakedDhcpv4Srv::sanityCheck(pkt, Dhcpv4Srv::MANDATORY),
                  RFCViolation);
 }
 
