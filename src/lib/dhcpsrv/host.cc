@@ -84,8 +84,8 @@ Host::Host(const uint8_t* identifier, const size_t identifier_len,
     : hw_address_(), duid_(), ipv4_subnet_id_(ipv4_subnet_id),
       ipv6_subnet_id_(ipv6_subnet_id),
       ipv4_reservation_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
-       hostname_(hostname), dhcp4_client_classes_(dhcp4_client_classes),
-       dhcp6_client_classes_(dhcp6_client_classes) {
+      hostname_(hostname), dhcp4_client_classes_(dhcp4_client_classes),
+      dhcp6_client_classes_(dhcp6_client_classes) {
 
     // Initialize HWAddr or DUID
     setIdentifier(identifier, identifier_len, identifier_type);
