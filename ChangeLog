@@ -1,3 +1,8 @@
+908.	[bug]		marcin
+	Handle overflows during time conversions in the MySQL and
+	PostgreSQL lease database backends.
+	(Trac #3673, git 27b4e4590fdee507f0e877d7b771dc6c6457a4b5)
+
 907.	[doc]		tmark
 	Corrected depictions of kea-admin command line options for
 	database-name in Kea Administrator Reference. Prior to this
