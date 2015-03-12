@@ -52,6 +52,7 @@ protected:
 };
 
 void
+// cppcheck-suppress unusedFunction
 HostMgrTest::SetUp() {
     // Remove all configuration which may be dangling from the previous test.
     CfgMgr::instance().clear();

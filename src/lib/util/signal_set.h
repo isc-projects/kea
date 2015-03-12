@@ -197,9 +197,7 @@ private:
     ///
     /// This function blocks the signals in a set to prevent race condition
     /// between the signal handler and the new signal coming in.
-    void block() const {
-        maskSignals(SIG_BLOCK);
-    }
+    void block() const;
 
     /// @brief Removes the signal from the set.
     ///
@@ -235,9 +233,7 @@ private:
     /// @brief Unblocks signals in the set.
     ///
     /// This function unblocks the signals in a set.
-    void unblock() const {
-        maskSignals(SIG_UNBLOCK);
-    }
+    void unblock() const;
 
     /// @brief Stores the set of signals registered in this signal set.
     std::set<int> local_signals_;
