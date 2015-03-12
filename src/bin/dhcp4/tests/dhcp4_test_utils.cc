@@ -587,9 +587,9 @@ Dhcpv4SrvTest::configure(const std::string& config, NakedDhcpv4Srv& srv,
     }
  }
 
-DHCPv4Exchange
+Dhcpv4Exchange
 Dhcpv4SrvTest::createExchange(const Pkt4Ptr& query) {
-    return (DHCPv4Exchange(srv_.alloc_engine_, query));
+    return (Dhcpv4Exchange(srv_.alloc_engine_, query));
 }
 
 

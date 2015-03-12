@@ -48,10 +48,10 @@ public:
 /// This class represents the DHCPv4 message exchange. The message exchange
 /// consists of the single client message, server response to this message
 /// and the mechanisms to generate the server's response. The server creates
-/// the instance of the @c DHCPv4Exchange for each inbound message that it
+/// the instance of the @c Dhcpv4Exchange for each inbound message that it
 /// accepts for processing.
 ///
-/// The use of the @c DHCPv4Exchange object as a central repository of
+/// The use of the @c Dhcpv4Exchange object as a central repository of
 /// information about the message exchange simplifies the API of the
 /// @c Dhcpv4Srv class.
 ///
@@ -62,7 +62,7 @@ public:
 ///
 /// @todo This is the initial version of this class. In the future a lot of
 /// code from the @c Dhcpv4Srv class will be migrated here.
-class DHCPv4Exchange {
+class Dhcpv4Exchange {
 public:
     /// @brief Constructor.
     ///
@@ -75,7 +75,7 @@ public:
     /// @param alloc_engine Pointer to the instance of the Allocation Engine
     /// used by the server.
     /// @param query Pointer to the client message.
-    DHCPv4Exchange(const AllocEnginePtr& alloc_engine, const Pkt4Ptr& query);
+    Dhcpv4Exchange(const AllocEnginePtr& alloc_engine, const Pkt4Ptr& query);
 
     /// @brief Initializes the instance of the response message.
     ///
@@ -137,8 +137,8 @@ private:
     AllocEngine::ClientContext4Ptr context_;
 };
 
-/// @brief Type representing the pointer to the @c DHCPv4Exchange.
-typedef boost::shared_ptr<DHCPv4Exchange> DHCPv4ExchangePtr;
+/// @brief Type representing the pointer to the @c Dhcpv4Exchange.
+typedef boost::shared_ptr<Dhcpv4Exchange> Dhcpv4ExchangePtr;
 
 
 /// @brief DHCPv4 server service.
@@ -375,7 +375,7 @@ protected:
     /// @param ex DHCPv4 exchange holding the client's message to be checked.
     /// @param serverid expectation regarding server-id option
     /// @throw RFCViolation if any issues are detected
-    static void sanityCheck(const DHCPv4Exchange& ex, RequirementLevel serverid);
+    static void sanityCheck(const Dhcpv4Exchange& ex, RequirementLevel serverid);
 
     /// @brief Processes incoming DISCOVER and returns response.
     ///
@@ -427,7 +427,7 @@ protected:
     ///
     /// @param ex The exchange holding both the client's message and the
     /// server's response.
-    void copyDefaultFields(DHCPv4Exchange& ex);
+    void copyDefaultFields(Dhcpv4Exchange& ex);
 
     /// @brief Appends options requested by client.
     ///
@@ -436,7 +436,7 @@ protected:
     ///
     /// @param ex The exchange holding both the client's message and the
     /// server's response.
-    void appendRequestedOptions(DHCPv4Exchange& ex);
+    void appendRequestedOptions(Dhcpv4Exchange& ex);
 
     /// @brief Appends requested vendor options as requested by client.
     ///
@@ -448,7 +448,7 @@ protected:
     ///
     /// @param ex The exchange holding both the client's message and the
     /// server's response.
-    void appendRequestedVendorOptions(DHCPv4Exchange& ex);
+    void appendRequestedVendorOptions(Dhcpv4Exchange& ex);
 
     /// @brief Assigns a lease and appends corresponding options
     ///
@@ -464,7 +464,7 @@ protected:
     /// The response type in the @c ex object may be set to DHCPACK or DHCPNAK.
     ///
     /// @param ex DHCPv4 exchange holding the client's message to be checked.
-    void assignLease(DHCPv4Exchange& ex);
+    void assignLease(Dhcpv4Exchange& ex);
 
     /// @brief Append basic options if they are not present.
     ///
@@ -476,7 +476,7 @@ protected:
     /// - Domain Name.
     ///
     /// @param ex DHCPv4 exchange holding the client's message to be checked.
-    void appendBasicOptions(DHCPv4Exchange& ex);
+    void appendBasicOptions(Dhcpv4Exchange& ex);
 
     /// @brief Processes Client FQDN and Hostname Options sent by a client.
     ///
@@ -515,7 +515,7 @@ protected:
     ///
     /// @param ex The exchange holding both the client's message and the
     /// server's response.
-    void processClientName(DHCPv4Exchange& ex);
+    void processClientName(Dhcpv4Exchange& ex);
 
     /// @brief this is a prefix added to the contend of vendor-class option
     ///
@@ -536,7 +536,7 @@ private:
     ///
     /// @param ex The exchange holding both the client's message and the
     /// server's response.
-    void processClientFqdnOption(DHCPv4Exchange& ex);
+    void processClientFqdnOption(Dhcpv4Exchange& ex);
 
     /// @brief Process Hostname %Option sent by a client.
     ///
@@ -548,7 +548,7 @@ private:
     ///
     /// @param ex The exchange holding both the client's message and the
     /// server's response.
-    void processHostnameOption(DHCPv4Exchange& ex);
+    void processHostnameOption(Dhcpv4Exchange& ex);
 
 protected:
 
@@ -599,7 +599,7 @@ protected:
     ///
     /// @param ex The exchange holding both the client's message and the
     /// server's response.
-    void appendDefaultOptions(DHCPv4Exchange& ex);
+    void appendDefaultOptions(Dhcpv4Exchange& ex);
 
     /// @brief Adds server identifier option to the server's response.
     ///
@@ -620,7 +620,7 @@ protected:
     ///
     /// @param ex The exchange holding both the client's message and the
     /// server's response.
-    static void appendServerID(DHCPv4Exchange& ex);
+    static void appendServerID(Dhcpv4Exchange& ex);
 
     /// @brief Set IP/UDP and interface parameters for the DHCPv4 response.
     ///
@@ -655,7 +655,7 @@ protected:
     ///
     /// @param ex The exchange holding both the client's message and the
     /// server's response.
-    static void adjustIfaceData(DHCPv4Exchange& ex);
+    static void adjustIfaceData(Dhcpv4Exchange& ex);
 
     /// @brief Sets remote addresses for outgoing packet.
     ///
@@ -675,7 +675,7 @@ protected:
     ///
     /// @param ex The exchange holding both the client's message and the
     /// server's response.
-    static void adjustRemoteAddr(DHCPv4Exchange& ex);
+    static void adjustRemoteAddr(Dhcpv4Exchange& ex);
 
     /// @brief converts server-id to text
     /// Converts content of server-id option to a text representation, e.g.

@@ -87,7 +87,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelay) {
     req->setIndex(1);
 
     // Create the exchange using the req.
-    DHCPv4Exchange ex = createExchange(req);
+    Dhcpv4Exchange ex = createExchange(req);
 
     Pkt4Ptr resp = ex.getResponse();
     resp->setYiaddr(IOAddress("192.0.1.100"));
@@ -164,7 +164,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRenew) {
     req->setIndex(1);
 
     // Create the exchange using the req.
-    DHCPv4Exchange ex = createExchange(req);
+    Dhcpv4Exchange ex = createExchange(req);
     Pkt4Ptr resp = ex.getResponse();
 
     // Let's extend the lease for the client in such a way that
@@ -228,7 +228,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataSelect) {
     req->setIndex(1);
 
     // Create the exchange using the req.
-    DHCPv4Exchange ex = createExchange(req);
+    Dhcpv4Exchange ex = createExchange(req);
     Pkt4Ptr resp = ex.getResponse();
     // Assign some new address for this client.
     resp->setYiaddr(IOAddress("192.0.1.13"));
@@ -312,7 +312,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataBroadcast) {
     req->setFlags(Pkt4::FLAG_BROADCAST_MASK);
 
     // Create the exchange using the req.
-    DHCPv4Exchange ex = createExchange(req);
+    Dhcpv4Exchange ex = createExchange(req);
     Pkt4Ptr resp = ex.getResponse();
 
     // Assign some new address for this client.
@@ -369,7 +369,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataInvalid) {
     req->setIndex(1);
 
     // Create the exchange using the req.
-    DHCPv4Exchange ex = createExchange(req);
+    Dhcpv4Exchange ex = createExchange(req);
     Pkt4Ptr resp = ex.getResponse();
 
     // Assign some new address for this client.
@@ -385,7 +385,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataInvalid) {
 // a specified DHCPv4 message and the server identifier is correct.
 TEST_F(Dhcpv4SrvTest, appendServerID) {
     Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
-    DHCPv4Exchange ex = createExchange(query);
+    Dhcpv4Exchange ex = createExchange(query);
     Pkt4Ptr response = ex.getResponse();
 
     // Set a local address. It is required by the function under test
