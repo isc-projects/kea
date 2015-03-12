@@ -291,37 +291,6 @@ public:
 
     }
 
-    // Test that the client message holding an FQDN is processed and
-    // that the response packet is as expected.
-    void testProcessMessageWithFqdn(const uint8_t msg_type,
-                            const std::string& hostname) {
-        Pkt4Ptr req = generatePktWithFqdn(msg_type, Option4ClientFqdn::FLAG_S |
-                                          Option4ClientFqdn::FLAG_E, hostname,
-                                          Option4ClientFqdn::FULL, true);
-        Pkt4Ptr reply;
-        if (msg_type == DHCPDISCOVER) {
-            ASSERT_NO_THROW(reply = srv_->processDiscover(req));
-
-        } else if (msg_type == DHCPREQUEST) {
-            ASSERT_NO_THROW(reply = srv_->processRequest(req));
-
-        } else if (msg_type == DHCPRELEASE) {
-            ASSERT_NO_THROW(srv_->processRelease(req));
-            return;
-
-        } else {
-            return;
-        }
-
-        if (msg_type == DHCPDISCOVER) {
-            checkResponse(reply, DHCPOFFER, 1234);
-
-        } else {
-            checkResponse(reply, DHCPACK, 1234);
-        }
-
-    }
-
     // Verify that NameChangeRequest holds valid values.
     void verifyNameChangeRequest(const isc::dhcp_ddns::NameChangeType type,
                                  const bool reverse, const bool forward,

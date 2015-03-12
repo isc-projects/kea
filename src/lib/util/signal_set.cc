@@ -185,6 +185,11 @@ SignalSet::add(const int sig) {
 }
 
 void
+SignalSet::block() const {
+    maskSignals(SIG_BLOCK);
+}
+
+void
 SignalSet::clear() {
     // Iterate over a copy of the registered signal set because the
     // remove function is erasing the elements and we don't want to
@@ -296,6 +301,12 @@ SignalSet::remove(const int sig) {
                   << ": this signal is not owned by the signal set");
     }
 }
+
+void
+SignalSet::unblock() const {
+    maskSignals(SIG_UNBLOCK);
+}
+
 
 void
 SignalSet::setOnReceiptHandler(BoolSignalHandler handler) {
