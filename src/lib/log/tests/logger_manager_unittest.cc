@@ -64,12 +64,13 @@ class SpecificationForFileLogger {
 public:
 
     // Constructor - allocate file and create the specification object
-    SpecificationForFileLogger() : spec_(), name_(""), logname_("filelogger") {
+    SpecificationForFileLogger() : spec_(), name_(createTempFileName()),
+                                   logname_("filelogger") {
 
         // Set the output to a temporary file.
         OutputOption option;
         option.destination = OutputOption::DEST_FILE;
-        option.filename = name_ = createTempFilename();
+        option.filename = name_;
 
         // Set target output to the file logger.  The defauls indicate
         // INFO severity.
