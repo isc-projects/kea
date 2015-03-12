@@ -62,7 +62,7 @@
     <title>DESCRIPTION</title>
     <para>
       The <command>kea-lfc</command> service process removes redundant
-      information for the files used to provide persistent storage for
+      information from the files used to provide persistent storage for
       the memfile data base backend.  The service is written to run as
       a stand alone process.  While it can be started externally it
       should be started by the Kea DHCP servers as desired and required.
