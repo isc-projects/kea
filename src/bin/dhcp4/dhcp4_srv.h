@@ -110,6 +110,18 @@ public:
     }
 
 private:
+
+    /// @brief Copies default parameters from client's to server's message
+    ///
+    /// Some fields are copied from client's message into server's response,
+    /// e.g. client HW address, number of hops, transaction-id etc.
+    ///
+    /// @warning This message is called internally by @c initResponse and
+    /// thus it doesn't check if the resp_ value has been initialized. The
+    /// calling method is responsible for making sure that @c resp_ is
+    /// not NULL.
+    void copyDefaultFields();
+
     /// @brief Pointer to the allocation engine used by the server.
     AllocEnginePtr alloc_engine_;
     /// @brief Pointer to the DHCPv4 message sent by the client.
@@ -402,15 +414,6 @@ protected:
     ///
     /// @param inform message received from client
     Pkt4Ptr processInform(Pkt4Ptr& inform);
-
-    /// @brief Copies default parameters from client's to server's message
-    ///
-    /// Some fields are copied from client's message into server's response,
-    /// e.g. client HW address, number of hops, transaction-id etc.
-    ///
-    /// @param ex The exchange holding both the client's message and the
-    /// server's response.
-    void copyDefaultFields(Dhcpv4Exchange& ex);
 
     /// @brief Appends options requested by client.
     ///
