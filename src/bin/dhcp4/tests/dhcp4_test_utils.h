@@ -391,8 +391,8 @@ public:
     void configure(const std::string& config, NakedDhcpv4Srv& srv,
                    const bool commit = true);
 
-    /// @brief Create @c DHCPv4Exchange from client's query.
-    DHCPv4Exchange createExchange(const Pkt4Ptr& query);
+    /// @brief Create @c Dhcpv4Exchange from client's query.
+    Dhcpv4Exchange createExchange(const Pkt4Ptr& query);
 
     /// @brief This function cleans up after the test.
     virtual void TearDown();
