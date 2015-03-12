@@ -307,7 +307,7 @@ public:
             answer.reset(new Pkt4(DHCPACK, 1234));
 
         }
-        DHCPv4Exchange ex = createExchange(query);
+        Dhcpv4Exchange ex = createExchange(query);
         ASSERT_NO_THROW(srv_->processClientName(ex));
 
         Option4ClientFqdnPtr fqdn = getClientFqdnOption(ex.getResponse());
@@ -357,7 +357,7 @@ public:
             answer.reset(new Pkt4(DHCPACK, 1234));
 
         }
-        DHCPv4Exchange ex = createExchange(query);
+        Dhcpv4Exchange ex = createExchange(query);
         srv_->processClientName(ex);
 
         OptionStringPtr hostname = getHostnameOption(ex.getResponse());

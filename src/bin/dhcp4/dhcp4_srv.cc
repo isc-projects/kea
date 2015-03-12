@@ -84,7 +84,7 @@ Dhcp4Hooks Hooks;
 namespace isc {
 namespace dhcp {
 
-DHCPv4Exchange::DHCPv4Exchange(const AllocEnginePtr& alloc_engine,
+Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
                                const Pkt4Ptr& query)
     : alloc_engine_(alloc_engine), query_(query), resp_(),
       context_(new AllocEngine::ClientContext4()) {
@@ -104,7 +104,7 @@ DHCPv4Exchange::DHCPv4Exchange(const AllocEnginePtr& alloc_engine,
 };
 
 void
-DHCPv4Exchange::initResponse() {
+Dhcpv4Exchange::initResponse() {
     uint8_t resp_type = 0;
     switch (getQuery()->getType()) {
     case DHCPDISCOVER:
@@ -123,12 +123,12 @@ DHCPv4Exchange::initResponse() {
 }
 
 void
-DHCPv4Exchange::selectSubnet() {
+Dhcpv4Exchange::selectSubnet() {
     context_->subnet_ = selectSubnet(query_);
 }
 
 Subnet4Ptr
-DHCPv4Exchange::selectSubnet(const Pkt4Ptr& query) {
+Dhcpv4Exchange::selectSubnet(const Pkt4Ptr& query) {
 
     Subnet4Ptr subnet;
 
@@ -233,7 +233,7 @@ Dhcpv4Srv::shutdown() {
 
 isc::dhcp::Subnet4Ptr
 Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) {
-    return (DHCPv4Exchange::selectSubnet(question));
+    return (Dhcpv4Exchange::selectSubnet(question));
 }
 
 Pkt4Ptr
@@ -617,7 +617,7 @@ Dhcpv4Srv::computeDhcid(const Lease4Ptr& lease) {
 }
 
 void
-Dhcpv4Srv::copyDefaultFields(DHCPv4Exchange& ex) {
+Dhcpv4Srv::copyDefaultFields(Dhcpv4Exchange& ex) {
     ex.getResponse()->setIface(ex.getQuery()->getIface());
     ex.getResponse()->setIndex(ex.getQuery()->getIndex());
 
@@ -665,12 +665,12 @@ Dhcpv4Srv::copyDefaultFields(DHCPv4Exchange& ex) {
 }
 
 void
-Dhcpv4Srv::appendDefaultOptions(DHCPv4Exchange& ex) {
+Dhcpv4Srv::appendDefaultOptions(Dhcpv4Exchange& ex) {
     // no-op at this time
 }
 
 void
-Dhcpv4Srv::appendServerID(DHCPv4Exchange& ex) {
+Dhcpv4Srv::appendServerID(Dhcpv4Exchange& ex) {
     // The source address for the outbound message should have been set already.
     // This is the address that to the best of the server's knowledge will be
     // available from the client.
@@ -681,7 +681,7 @@ Dhcpv4Srv::appendServerID(DHCPv4Exchange& ex) {
 }
 
 void
-Dhcpv4Srv::appendRequestedOptions(DHCPv4Exchange& ex) {
+Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
     // Get the subnet relevant for the client. We will need it
     // to get the options associated with it.
     Subnet4Ptr subnet = ex.getContext()->subnet_;
@@ -719,7 +719,7 @@ Dhcpv4Srv::appendRequestedOptions(DHCPv4Exchange& ex) {
 }
 
 void
-Dhcpv4Srv::appendRequestedVendorOptions(DHCPv4Exchange& ex) {
+Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
     // Get the configured subnet suitable for the incoming packet.
     Subnet4Ptr subnet = ex.getContext()->subnet_;
     // Leave if there is no subnet matching the incoming packet.
@@ -776,7 +776,7 @@ Dhcpv4Srv::appendRequestedVendorOptions(DHCPv4Exchange& ex) {
 
 
 void
-Dhcpv4Srv::appendBasicOptions(DHCPv4Exchange& ex) {
+Dhcpv4Srv::appendBasicOptions(Dhcpv4Exchange& ex) {
     // Identify options that we always want to send to the
     // client (if they are configured).
     static const uint16_t required_options[] = {
@@ -809,7 +809,7 @@ Dhcpv4Srv::appendBasicOptions(DHCPv4Exchange& ex) {
 }
 
 void
-Dhcpv4Srv::processClientName(DHCPv4Exchange& ex) {
+Dhcpv4Srv::processClientName(Dhcpv4Exchange& ex) {
     // It is possible that client has sent both Client FQDN and Hostname
     // option. In such case, server should prefer Client FQDN option and
     // ignore the Hostname option.
@@ -842,7 +842,7 @@ Dhcpv4Srv::processClientName(DHCPv4Exchange& ex) {
 }
 
 void
-Dhcpv4Srv::processClientFqdnOption(DHCPv4Exchange& ex) {
+Dhcpv4Srv::processClientFqdnOption(Dhcpv4Exchange& ex) {
     // Obtain the FQDN option from the client's message.
     Option4ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
         Option4ClientFqdn>(ex.getQuery()->getOption(DHO_FQDN));
@@ -887,7 +887,7 @@ Dhcpv4Srv::processClientFqdnOption(DHCPv4Exchange& ex) {
 }
 
 void
-Dhcpv4Srv::processHostnameOption(DHCPv4Exchange& ex) {
+Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
     // Obtain the Hostname option from the client's message.
     OptionStringPtr opt_hostname = boost::dynamic_pointer_cast<OptionString>
         (ex.getQuery()->getOption(DHO_HOST_NAME));
@@ -1041,7 +1041,7 @@ queueNameChangeRequest(const isc::dhcp_ddns::NameChangeType chg_type,
 }
 
 void
-Dhcpv4Srv::assignLease(DHCPv4Exchange& ex) {
+Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     // Get the pointers to the query and the response messages.
     Pkt4Ptr query = ex.getQuery();
     Pkt4Ptr resp = ex.getResponse();
@@ -1313,7 +1313,7 @@ Dhcpv4Srv::assignLease(DHCPv4Exchange& ex) {
 }
 
 void
-Dhcpv4Srv::adjustIfaceData(DHCPv4Exchange& ex) {
+Dhcpv4Srv::adjustIfaceData(Dhcpv4Exchange& ex) {
     adjustRemoteAddr(ex);
 
     // Initialize the pointers to the client's message and the server's
@@ -1365,7 +1365,7 @@ Dhcpv4Srv::adjustIfaceData(DHCPv4Exchange& ex) {
 }
 
 void
-Dhcpv4Srv::adjustRemoteAddr(DHCPv4Exchange& ex) {
+Dhcpv4Srv::adjustRemoteAddr(Dhcpv4Exchange& ex) {
     // Initialize the pointers to the client's message and the server's
     // response.
     Pkt4Ptr query = ex.getQuery();
@@ -1468,7 +1468,7 @@ Dhcpv4Srv::getNetmaskOption(const Subnet4Ptr& subnet) {
 
 Pkt4Ptr
 Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
-    DHCPv4Exchange ex(alloc_engine_, discover);
+    Dhcpv4Exchange ex(alloc_engine_, discover);
 
     sanityCheck(ex, FORBIDDEN);
 
@@ -1514,7 +1514,7 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
 
 Pkt4Ptr
 Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
-    DHCPv4Exchange ex(alloc_engine_, request);
+    Dhcpv4Exchange ex(alloc_engine_, request);
 
     /// @todo Uncomment this (see ticket #3116)
     /// sanityCheck(ex, MANDATORY);
@@ -1675,7 +1675,7 @@ Dhcpv4Srv::processDecline(Pkt4Ptr&) {
 
 Pkt4Ptr
 Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
-    DHCPv4Exchange ex(alloc_engine_, inform);
+    Dhcpv4Exchange ex(alloc_engine_, inform);
 
     // DHCPINFORM MUST not include server identifier.
     sanityCheck(ex, FORBIDDEN);
@@ -1800,7 +1800,7 @@ Dhcpv4Srv::acceptDirectRequest(const Pkt4Ptr& pkt) const {
         return (false);
     }
     return ((pkt->getLocalAddr() != IOAddress::IPV4_BCAST_ADDRESS()
-             || DHCPv4Exchange::selectSubnet(pkt)));
+             || Dhcpv4Exchange::selectSubnet(pkt)));
 }
 
 bool
@@ -1899,7 +1899,7 @@ Dhcpv4Srv::acceptServerId(const Pkt4Ptr& query) const {
 }
 
 void
-Dhcpv4Srv::sanityCheck(const DHCPv4Exchange& ex, RequirementLevel serverid) {
+Dhcpv4Srv::sanityCheck(const Dhcpv4Exchange& ex, RequirementLevel serverid) {
     OptionPtr server_id = ex.getQuery()->getOption(DHO_DHCP_SERVER_IDENTIFIER);
     switch (serverid) {
     case FORBIDDEN:
@@ -2088,7 +2088,7 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
 
 bool Dhcpv4Srv::classSpecificProcessing(const Pkt4Ptr& query, const Pkt4Ptr& rsp) {
 
-    Subnet4Ptr subnet = DHCPv4Exchange::selectSubnet(query);
+    Subnet4Ptr subnet = Dhcpv4Exchange::selectSubnet(query);
     if (!subnet) {
         return (true);
     }
