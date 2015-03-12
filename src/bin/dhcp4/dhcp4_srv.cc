@@ -85,13 +85,21 @@ namespace isc {
 namespace dhcp {
 
 Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
-                               const Pkt4Ptr& query)
+                               const Pkt4Ptr& query,
+                               const Subnet4Ptr& subnet)
     : alloc_engine_(alloc_engine), query_(query), resp_(),
       context_(new AllocEngine::ClientContext4()) {
+
+    if (!alloc_engine_ || !query_) {
+        isc_throw(BadValue, "alloc_engine and query values must not"
+                  " be NULL when creating an instance of the"
+                  " Dhcpv4Exchange");
+    }
+
     // Create response message.
     initResponse();
     // Select subnet for the query message.
-    selectSubnet();
+    context_->subnet_ = subnet;
     // Hardware address.
     context_->hwaddr_ = query->getHWAddr();
     // Client Identifier
@@ -120,61 +128,6 @@ Dhcpv4Exchange::initResponse() {
     if (resp_type > 0) {
         resp_.reset(new Pkt4(resp_type, getQuery()->getTransid()));
     }
-}
-
-void
-Dhcpv4Exchange::selectSubnet() {
-    context_->subnet_ = selectSubnet(query_);
-}
-
-Subnet4Ptr
-Dhcpv4Exchange::selectSubnet(const Pkt4Ptr& query) {
-
-    Subnet4Ptr subnet;
-
-    SubnetSelector selector;
-    selector.ciaddr_ = query->getCiaddr();
-    selector.giaddr_ = query->getGiaddr();
-    selector.local_address_ = query->getLocalAddr();
-    selector.remote_address_ = query->getRemoteAddr();
-    selector.client_classes_ = query->classes_;
-    selector.iface_name_ = query->getIface();
-
-    CfgMgr& cfgmgr = CfgMgr::instance();
-    subnet = cfgmgr.getCurrentCfg()->getCfgSubnets4()->selectSubnet(selector);
-
-    // Let's execute all callouts registered for subnet4_select
-    if (HooksManager::calloutsPresent(Hooks.hook_index_subnet4_select_)) {
-        CalloutHandlePtr callout_handle = getCalloutHandle(query);
-
-        // We're reusing callout_handle from previous calls
-        callout_handle->deleteAllArguments();
-
-        // Set new arguments
-        callout_handle->setArgument("query4", query);
-        callout_handle->setArgument("subnet4", subnet);
-        callout_handle->setArgument("subnet4collection",
-                                    cfgmgr.getCurrentCfg()->
-                                    getCfgSubnets4()->getAll());
-
-        // Call user (and server-side) callouts
-        HooksManager::callCallouts(Hooks.hook_index_subnet4_select_,
-                                   *callout_handle);
-
-        // Callouts decided to skip this step. This means that no subnet
-        // will be selected. Packet processing will continue, but it will
-        // be severely limited (i.e. only global options will be assigned)
-        if (callout_handle->getSkip()) {
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_HOOKS,
-                      DHCP4_HOOK_SUBNET4_SELECT_SKIP);
-            return (Subnet4Ptr());
-        }
-
-        // Use whatever subnet was specified by the callout
-        callout_handle->getArgument("subnet4", subnet);
-    }
-
-    return (subnet);
 }
 
 const std::string Dhcpv4Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
@@ -232,8 +185,53 @@ Dhcpv4Srv::shutdown() {
 }
 
 isc::dhcp::Subnet4Ptr
-Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) {
-    return (Dhcpv4Exchange::selectSubnet(question));
+Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, const bool run_hooks) const {
+
+    Subnet4Ptr subnet;
+
+    SubnetSelector selector;
+    selector.ciaddr_ = query->getCiaddr();
+    selector.giaddr_ = query->getGiaddr();
+    selector.local_address_ = query->getLocalAddr();
+    selector.remote_address_ = query->getRemoteAddr();
+    selector.client_classes_ = query->classes_;
+    selector.iface_name_ = query->getIface();
+
+    CfgMgr& cfgmgr = CfgMgr::instance();
+    subnet = cfgmgr.getCurrentCfg()->getCfgSubnets4()->selectSubnet(selector);
+
+    // Let's execute all callouts registered for subnet4_select
+    if (run_hooks && HooksManager::calloutsPresent(hook_index_subnet4_select_)) {
+        CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+        // We're reusing callout_handle from previous calls
+        callout_handle->deleteAllArguments();
+
+        // Set new arguments
+        callout_handle->setArgument("query4", query);
+        callout_handle->setArgument("subnet4", subnet);
+        callout_handle->setArgument("subnet4collection",
+                                    cfgmgr.getCurrentCfg()->
+                                    getCfgSubnets4()->getAll());
+
+        // Call user (and server-side) callouts
+        HooksManager::callCallouts(hook_index_subnet4_select_,
+                                   *callout_handle);
+
+        // Callouts decided to skip this step. This means that no subnet
+        // will be selected. Packet processing will continue, but it will
+        // be severely limited (i.e. only global options will be assigned)
+        if (callout_handle->getSkip()) {
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_HOOKS,
+                      DHCP4_HOOK_SUBNET4_SELECT_SKIP);
+            return (Subnet4Ptr());
+        }
+
+        // Use whatever subnet was specified by the callout
+        callout_handle->getArgument("subnet4", subnet);
+    }
+
+    return (subnet);
 }
 
 Pkt4Ptr
@@ -457,17 +455,6 @@ Dhcpv4Srv::run() {
             continue;
         }
 
-        // Let's do class specific processing. This is done before
-        // pkt4_send.
-        //
-        /// @todo: decide whether we want to add a new hook point for
-        /// doing class specific processing.
-        if (!classSpecificProcessing(query, rsp)) {
-            /// @todo add more verbosity here
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_PROCESSING_FAILED);
-
-            continue;
-        }
 
         // Specifies if server should do the packing
         bool skip_pack = false;
@@ -1468,9 +1455,9 @@ Dhcpv4Srv::getNetmaskOption(const Subnet4Ptr& subnet) {
 
 Pkt4Ptr
 Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
-    Dhcpv4Exchange ex(alloc_engine_, discover);
+    sanityCheck(discover, FORBIDDEN);
 
-    sanityCheck(ex, FORBIDDEN);
+    Dhcpv4Exchange ex(alloc_engine_, discover, selectSubnet(discover));
 
     copyDefaultFields(ex);
     appendDefaultOptions(ex);
@@ -1509,15 +1496,22 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
 
     appendServerID(ex);
 
+    /// @todo: decide whether we want to add a new hook point for
+    /// doing class specific processing.
+    if (!classSpecificProcessing(ex)) {
+        /// @todo add more verbosity here
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_DISCOVER_CLASS_PROCESSING_FAILED);
+    }
+
     return (ex.getResponse());
 }
 
 Pkt4Ptr
 Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
-    Dhcpv4Exchange ex(alloc_engine_, request);
-
     /// @todo Uncomment this (see ticket #3116)
-    /// sanityCheck(ex, MANDATORY);
+    /// sanityCheck(request, MANDATORY);
+
+    Dhcpv4Exchange ex(alloc_engine_, request, selectSubnet(request));
 
     copyDefaultFields(ex);
     appendDefaultOptions(ex);
@@ -1553,6 +1547,13 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
     adjustIfaceData(ex);
 
     appendServerID(ex);
+
+    /// @todo: decide whether we want to add a new hook point for
+    /// doing class specific processing.
+    if (!classSpecificProcessing(ex)) {
+        /// @todo add more verbosity here
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_REQUEST_CLASS_PROCESSING_FAILED);
+    }
 
     return (ex.getResponse());
 }
@@ -1675,10 +1676,10 @@ Dhcpv4Srv::processDecline(Pkt4Ptr&) {
 
 Pkt4Ptr
 Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
-    Dhcpv4Exchange ex(alloc_engine_, inform);
-
     // DHCPINFORM MUST not include server identifier.
-    sanityCheck(ex, FORBIDDEN);
+    sanityCheck(inform, FORBIDDEN);
+
+    Dhcpv4Exchange ex(alloc_engine_, inform, selectSubnet(inform));
 
     Pkt4Ptr ack = ex.getResponse();
 
@@ -1701,6 +1702,14 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
 
     // The DHCPACK must contain server id.
     appendServerID(ex);
+
+    /// @todo: decide whether we want to add a new hook point for
+    /// doing class specific processing.
+    if (!classSpecificProcessing(ex)) {
+        /// @todo add more verbosity here
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_INFORM_CLASS_PROCESSING_FAILED);
+    }
+
     return (ex.getResponse());
 }
 
@@ -1800,7 +1809,7 @@ Dhcpv4Srv::acceptDirectRequest(const Pkt4Ptr& pkt) const {
         return (false);
     }
     return ((pkt->getLocalAddr() != IOAddress::IPV4_BCAST_ADDRESS()
-             || Dhcpv4Exchange::selectSubnet(pkt)));
+             || selectSubnet(pkt, false)));
 }
 
 bool
@@ -1899,14 +1908,14 @@ Dhcpv4Srv::acceptServerId(const Pkt4Ptr& query) const {
 }
 
 void
-Dhcpv4Srv::sanityCheck(const Dhcpv4Exchange& ex, RequirementLevel serverid) {
-    OptionPtr server_id = ex.getQuery()->getOption(DHO_DHCP_SERVER_IDENTIFIER);
+Dhcpv4Srv::sanityCheck(const Pkt4Ptr& query, RequirementLevel serverid) {
+    OptionPtr server_id = query->getOption(DHO_DHCP_SERVER_IDENTIFIER);
     switch (serverid) {
     case FORBIDDEN:
         if (server_id) {
             isc_throw(RFCViolation, "Server-id option was not expected, but "
                       << "received in "
-                      << serverReceivedPacketName(ex.getQuery()->getType()));
+                      << serverReceivedPacketName(query->getType()));
         }
         break;
 
@@ -1914,7 +1923,7 @@ Dhcpv4Srv::sanityCheck(const Dhcpv4Exchange& ex, RequirementLevel serverid) {
         if (!server_id) {
             isc_throw(RFCViolation, "Server-id option was expected, but not "
                       " received in message "
-                      << serverReceivedPacketName(ex.getQuery()->getType()));
+                      << serverReceivedPacketName(query->getType()));
         }
         break;
 
@@ -1924,19 +1933,19 @@ Dhcpv4Srv::sanityCheck(const Dhcpv4Exchange& ex, RequirementLevel serverid) {
     }
 
     // If there is HWAddress set and it is non-empty, then we're good
-    if (ex.getQuery()->getHWAddr() && !ex.getQuery()->getHWAddr()->hwaddr_.empty()) {
+    if (query->getHWAddr() && !query->getHWAddr()->hwaddr_.empty()) {
         return;
     }
 
     // There has to be something to uniquely identify the client:
     // either non-zero MAC address or client-id option present (or both)
-    OptionPtr client_id = ex.getQuery()->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
+    OptionPtr client_id = query->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
 
     // If there's no client-id (or a useless one is provided, i.e. 0 length)
     if (!client_id || client_id->len() == client_id->getHeaderLen()) {
         isc_throw(RFCViolation, "Missing or useless client-id and no HW address "
                   " provided in message "
-                  << serverReceivedPacketName(ex.getQuery()->getType()));
+                  << serverReceivedPacketName(query->getType()));
     }
 }
 
@@ -2086,10 +2095,15 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
     }
 }
 
-bool Dhcpv4Srv::classSpecificProcessing(const Pkt4Ptr& query, const Pkt4Ptr& rsp) {
+bool
+Dhcpv4Srv::classSpecificProcessing(const Dhcpv4Exchange& ex) {
 
-    Subnet4Ptr subnet = Dhcpv4Exchange::selectSubnet(query);
-    if (!subnet) {
+    Subnet4Ptr subnet = ex.getContext()->subnet_;
+    Pkt4Ptr query = ex.getQuery();
+    Pkt4Ptr rsp = ex.getResponse();
+
+    // If any of those is missing, there is nothing to do.
+    if (!subnet || !query || !rsp) {
         return (true);
     }
 

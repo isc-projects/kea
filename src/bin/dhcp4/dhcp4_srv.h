@@ -75,7 +75,9 @@ public:
     /// @param alloc_engine Pointer to the instance of the Allocation Engine
     /// used by the server.
     /// @param query Pointer to the client message.
-    Dhcpv4Exchange(const AllocEnginePtr& alloc_engine, const Pkt4Ptr& query);
+    /// @param subnet Pointer to the subnet to which the client belongs.
+    Dhcpv4Exchange(const AllocEnginePtr& alloc_engine, const Pkt4Ptr& query,
+                   const Subnet4Ptr& subnet);
 
     /// @brief Initializes the instance of the response message.
     ///
@@ -84,25 +86,6 @@ public:
     /// and DHCPINFORM the DHCPACK is created. For the DHCPRELEASE the
     /// response is not initialized.
     void initResponse();
-
-    /// @brief Selects the subnet for the message processing.
-    ///
-    /// The pointer to the selected subnet is stored in the @c ClientContext4
-    /// structure.
-    void selectSubnet();
-
-    /// @brief Selects the subnet for the message processing.
-    ///
-    /// @todo This variant of the @c selectSubnet method is static and public so
-    /// as it may be invoked by the @c Dhcpv4Srv object. This is temporary solution
-    /// and the function will go away once the server code fully supports the use
-    /// of this class and it obtains the subnet from the context returned by the
-    /// @c getContext method.
-    ///
-    /// @param query Pointer to the client's message.
-    /// @return Pointer to the selected subnet or NULL if no suitable subnet
-    /// has been found.
-    static Subnet4Ptr selectSubnet(const Pkt4Ptr& query);
 
     /// @brief Returns the pointer to the query from the client.
     Pkt4Ptr getQuery() const {
@@ -372,10 +355,10 @@ protected:
     /// Checks if mandatory option is really there, that forbidden option
     /// is not there, and that client-id or server-id appears only once.
     ///
-    /// @param ex DHCPv4 exchange holding the client's message to be checked.
+    /// @param query Pointer to the client's message.
     /// @param serverid expectation regarding server-id option
     /// @throw RFCViolation if any issues are detected
-    static void sanityCheck(const Dhcpv4Exchange& ex, RequirementLevel serverid);
+    static void sanityCheck(const Pkt4Ptr& query, RequirementLevel serverid);
 
     /// @brief Processes incoming DISCOVER and returns response.
     ///
@@ -709,9 +692,19 @@ protected:
 
     /// @brief Selects a subnet for a given client's packet.
     ///
-    /// @param question client's message
+    /// The @c run_hooks parameters controls whether the method should run
+    /// installed hooks for subnet selection. Disabling it is useful in
+    /// cases when the server should sanity check the client's packet before
+    /// the actual processing. If the sanity check fails, the packet can
+    /// be discarded.
+    ///
+    /// @param query client's message
+    /// @param run_hooks A boolean value which specifies if the method should
+    /// run installed hooks after selecting the subnet (if true). The default
+    /// value is true.
     /// @return selected subnet (or NULL if no suitable subnet was found)
-    static isc::dhcp::Subnet4Ptr selectSubnet(const Pkt4Ptr& question);
+    isc::dhcp::Subnet4Ptr selectSubnet(const Pkt4Ptr& query,
+                                       const bool run_hooks = true) const;
 
     /// indicates if shutdown is in progress. Setting it to true will
     /// initiate server shutdown procedure.
@@ -753,12 +746,15 @@ protected:
 
     /// @brief Performs packet processing specific to a class
     ///
-    /// This processing is a likely candidate to be pushed into hooks.
+    /// If the selected subnet, query or response in the @c ex object is NULL
+    /// this method returns immediately and returns true.
     ///
-    /// @param query incoming client's packet
-    /// @param rsp server's response
+    /// @note This processing is a likely candidate to be pushed into hooks.
+    ///
+    /// @param ex The exchange holding both the client's message and the
+    /// server's response.
     /// @return true if successful, false otherwise (will prevent sending response)
-    bool classSpecificProcessing(const Pkt4Ptr& query, const Pkt4Ptr& rsp);
+    bool classSpecificProcessing(const Dhcpv4Exchange& ex);
 
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using
