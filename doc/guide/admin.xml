@@ -432,6 +432,22 @@ host    <replaceable>database-name</replaceable>    <replaceable>user-name</repl
         <!-- @todo: document PgSQL upgrade once they are implemented in kea-admin -->
       </section>
     </section> <!-- end of PostgreSQL sections -->
+    <section>
+      <title>Limitations related to the use of the SQL databases</title>
+
+      <para>
+        The lease expiration time is stored in the SQL database for each lease
+        as a timestamp value. Kea developers observed that MySQL database doesn't
+        accept timestamps beyond 2147483647 seconds (maximum signed 32-bit number)
+        from the beginning of the epoch. At the same time, some versions of PostgreSQL
+        do accept greater values but the value is altered when it is read back.
+        For this reason the lease database backends put the restriction for the
+        maximum timestamp to be stored in the database, which is equal to the
+        maximum signed 32-bit number. This effectively means that the current
+        Kea version can't store the leases which expiration time is later than
+        2147483647 seconds since the beginning of the epoch (around year 2038).
+      </para>
+    </section>
   </section> <!-- End of Database sections -->
 
 </chapter>
