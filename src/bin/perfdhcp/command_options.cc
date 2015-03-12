@@ -526,13 +526,12 @@ CommandOptions::initClientsNum() {
     const std::string errmsg =
         "value of -R <value> must be non-negative integer";
 
-    // Declare clients_num as as 64-bit signed value to
-    // be able to detect negative values provided
-    // by user. We would not detect negative values
-    // if we casted directly to unsigned value.
-    long long clients_num = 0;
     try {
-        clients_num = boost::lexical_cast<long long>(optarg);
+        // Declare clients_num as as 64-bit signed value to
+        // be able to detect negative values provided
+        // by user. We would not detect negative values
+        // if we casted directly to unsigned value.
+        long long clients_num = boost::lexical_cast<long long>(optarg);
         check(clients_num < 0, errmsg);
         clients_num_ = boost::lexical_cast<uint32_t>(optarg);
     } catch (boost::bad_lexical_cast&) {

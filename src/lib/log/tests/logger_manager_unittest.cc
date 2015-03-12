@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011,2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -64,12 +64,13 @@ class SpecificationForFileLogger {
 public:
 
     // Constructor - allocate file and create the specification object
-    SpecificationForFileLogger() : spec_(), name_(""), logname_("filelogger") {
+    SpecificationForFileLogger() : spec_(), name_(createTempFilename()),
+                                   logname_("filelogger") {
 
         // Set the output to a temporary file.
         OutputOption option;
         option.destination = OutputOption::DEST_FILE;
-        option.filename = name_ = createTempFilename();
+        option.filename = name_;
 
         // Set target output to the file logger.  The defauls indicate
         // INFO severity.
@@ -113,7 +114,7 @@ public:
     // does not exist, use /tmp.
     //
     // \return Temporary file name
-    std::string createTempFilename() {
+    static std::string createTempFilename() {
         string filename = TEMP_DIR + "/kea_logger_manager_test_XXXXXX";
 
         // Copy into writeable storage for the call to mkstemp

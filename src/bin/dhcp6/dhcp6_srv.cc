@@ -2582,12 +2582,6 @@ Dhcpv6Srv::unpackOptions(const OptionBuffer& buf,
     return (offset);
 }
 
-void
-Dhcpv6Srv::ifaceMgrSocket6ErrorHandler(const std::string& errmsg) {
-    // Log the reason for socket opening failure and return.
-    LOG_WARN(dhcp6_logger, DHCP6_OPEN_SOCKET_FAIL).arg(errmsg);
-}
-
 void Dhcpv6Srv::classifyPacket(const Pkt6Ptr& pkt) {
     OptionVendorClassPtr vclass = boost::dynamic_pointer_cast<
         OptionVendorClass>(pkt->getOption(D6O_VENDOR_CLASS));

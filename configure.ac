@@ -1504,8 +1504,6 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/util/threads/tests/Makefile
                  src/lib/util/unittests/Makefile
                  tools/path_replacer.sh
-                 tests/Makefile
-                 tests/tools/Makefile
 ])
 
  AC_CONFIG_COMMANDS([permissions], [
