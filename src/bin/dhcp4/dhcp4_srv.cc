@@ -1960,12 +1960,6 @@ Dhcpv4Srv::unpackOptions(const OptionBuffer& buf,
     return (offset);
 }
 
-void
-Dhcpv4Srv::ifaceMgrSocket4ErrorHandler(const std::string& errmsg) {
-    // Log the reason for socket opening failure and return.
-    LOG_WARN(dhcp4_logger, DHCP4_OPEN_SOCKET_FAIL).arg(errmsg);
-}
-
 void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
     boost::shared_ptr<OptionString> vendor_class =
         boost::dynamic_pointer_cast<OptionString>(pkt->getOption(DHO_VENDOR_CLASS_IDENTIFIER));
