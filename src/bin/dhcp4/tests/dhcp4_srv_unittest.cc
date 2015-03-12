@@ -1815,22 +1815,6 @@ public:
         return buffer4_receive_callout(callout_handle);
     }
 
-    /// Test callback that deletes MAC address
-    /// @param callout_handle handle passed by the hooks framework
-    /// @return always 0
-    static int
-    buffer4_receive_delete_hwaddr(CalloutHandle& callout_handle) {
-
-        Pkt4Ptr pkt;
-        callout_handle.getArgument("query4", pkt);
-
-        pkt->data_[2] = 0; // offset 2 is hlen, let's set it to zero
-        memset(&pkt->data_[28], 0, Pkt4::MAX_CHADDR_LEN); // Clear CHADDR content
-
-        // carry on as usual
-        return buffer4_receive_callout(callout_handle);
-    }
-
     /// Test callback that sets skip flag
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0

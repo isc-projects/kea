@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009,2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -75,11 +75,11 @@ public:
         io_service_(io_service),
         ep_(file),
         acceptor_(io_service_, ep_),
-        socket_(io_service_)
+        socket_(io_service_),
+        data_buf_(1024)
     {
-        acceptor_.async_accept(socket_,
-                               boost::bind(&TestDomainSocket::acceptHandler,
-                                           this, _1));
+        acceptor_.async_accept(socket_, boost::bind(&TestDomainSocket::acceptHandler,
+                                                    _1));
     }
 
     ~TestDomainSocket() {
@@ -87,7 +87,7 @@ public:
         unlink(BUNDY_TEST_SOCKET_FILE);
     }
 
-    void acceptHandler(const asio::error_code&) const {
+    static void acceptHandler(const asio::error_code&) {
     }
 
     void sendmsg(isc::data::ElementPtr& env, isc::data::ElementPtr& msg) {
@@ -116,7 +116,7 @@ public:
 
     void setSendLname() {
         // ignore whatever data we get, send back an lname
-        asio::async_read(socket_,  asio::buffer(data_buf, 0),
+        asio::async_read(socket_,  asio::buffer(&data_buf_[0], 0),
                          boost::bind(&TestDomainSocket::sendLname, this));
     }
 
@@ -125,7 +125,7 @@ private:
     asio::local::stream_protocol::endpoint ep_;
     asio::local::stream_protocol::acceptor acceptor_;
     asio::local::stream_protocol::socket socket_;
-    char data_buf[1024];
+    std::vector<char> data_buf_;
 };
 
 /// \brief Pair holding header and data of a message sent over the connection.

@@ -1132,23 +1132,6 @@ protected:
     /// Control-buffer, used in transmission and reception.
     boost::scoped_array<char> control_buf_;
 
-    /// @brief A wrapper for OS-specific operations before sending IPv4 packet
-    ///
-    /// @param m message header (will be later used for sendmsg() call)
-    /// @param control_buf buffer to be used during transmission
-    /// @param control_buf_len buffer length
-    /// @param pkt packet to be sent
-    void os_send4(struct msghdr& m, boost::scoped_array<char>& control_buf,
-                  size_t control_buf_len, const Pkt4Ptr& pkt);
-
-    /// @brief OS-specific operations during IPv4 packet reception
-    ///
-    /// @param m message header (was used during recvmsg() call)
-    /// @param pkt packet received (some fields will be set here)
-    ///
-    /// @return true if successful, false otherwise
-    bool os_receive4(struct msghdr& m, Pkt4Ptr& pkt);
-
 private:
     /// @brief Identifies local network address to be used to
     /// connect to remote address.

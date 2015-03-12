@@ -524,16 +524,6 @@ IfaceMgr::setMatchingPacketFilter(const bool direct_response_desired) {
     }
 }
 
-void IfaceMgr::os_send4(struct msghdr&, boost::scoped_array<char>&,
-                        size_t, const Pkt4Ptr&) {
-    return;
-
-}
-
-bool IfaceMgr::os_receive4(struct msghdr&, Pkt4Ptr&) {
-    return (true);
-}
-
 bool
 IfaceMgr::openMulticastSocket(Iface& iface,
                               const isc::asiolink::IOAddress& addr,
