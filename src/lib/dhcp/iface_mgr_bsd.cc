@@ -129,21 +129,6 @@ void Iface::setFlags(uint64_t flags) {
     flag_broadcast_ = flags & IFF_BROADCAST;
 }
 
-void IfaceMgr::os_send4(struct msghdr& /*m*/,
-                        boost::scoped_array<char>& /*control_buf*/,
-                        size_t /*control_buf_len*/,
-                        const Pkt4Ptr& /*pkt*/) {
-  // @todo: Are there any specific actions required before sending IPv4 packet
-  // on BSDs? See iface_mgr_linux.cc for working Linux implementation.
-}
-
-bool IfaceMgr::os_receive4(struct msghdr& /*m*/, Pkt4Ptr& /*pkt*/) {
-  // @todo: Are there any specific actions required before receiving IPv4 packet
-  // on BSDs? See iface_mgr_linux.cc for working Linux implementation.
-
-  return (true); // pretend that we have everything set up for reception.
-}
-
 void
 IfaceMgr::setMatchingPacketFilter(const bool direct_response_desired) {
     // If direct response is desired we have to use BPF. If the direct

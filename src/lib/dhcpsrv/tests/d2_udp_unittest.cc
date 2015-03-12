@@ -62,14 +62,6 @@ public:
     virtual ~D2ClientMgrTest(){
     }
 
-    /// @brief Updates the D2ClientMgr's configuration to DDNS disabled.
-    void disableDdns() {
-        D2ClientConfigPtr new_cfg;
-        ASSERT_NO_THROW(new_cfg.reset(new D2ClientConfig()));
-        ASSERT_NO_THROW(setD2ClientConfig(new_cfg));
-        ASSERT_FALSE(ddnsEnabled());
-    }
-
     /// @brief Updates the D2ClientMgr's configuration to DDNS enabled.
     ///
     /// @param server_address IP address of kea-dhcp-ddns.

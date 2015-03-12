@@ -616,15 +616,6 @@ protected:
 
 private:
 
-    /// @brief Implements the error handler for socket open failure.
-    ///
-    /// This callback function is installed on the @c isc::dhcp::IfaceMgr
-    /// when IPv6 sockets are being open. When socket fails to open for
-    /// any reason, this function is called. It simply logs the error message.
-    ///
-    /// @param errmsg An error message containing a cause of the failure.
-    static void ifaceMgrSocket6ErrorHandler(const std::string& errmsg);
-
     /// @brief Generate FQDN to be sent to a client if none exists.
     ///
     /// This function is meant to be called by the functions which process

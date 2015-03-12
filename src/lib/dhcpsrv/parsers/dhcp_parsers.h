@@ -996,22 +996,6 @@ protected:
     virtual DhcpConfigParser* createSubnetConfigParser(
                                             const std::string& config_id) = 0;
 
-    /// @brief Determines if the given option space name and code describe
-    /// a standard option for the  server.
-    ///
-    /// @param option_space is the name of the option space to consider
-    /// @param code is the numeric option code to consider
-    /// @return returns true if the space and code are part of the server's
-    /// standard options.
-    virtual bool isServerStdOption(std::string option_space, uint32_t code) = 0;
-
-    /// @brief Returns the option definition for a given option code from
-    /// the server's standard set of options.
-    /// @param code is the numeric option code of the desired option definition.
-    /// @return returns a pointer the option definition
-    virtual OptionDefinitionPtr getServerStdOptionDefinition (
-                                                             uint32_t code) = 0;
-
     /// @brief Issues a server specific warning regarding duplicate subnet
     /// options.
     ///

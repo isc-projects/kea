@@ -408,27 +408,6 @@ protected:
         return (parser);
     }
 
-
-    /// @brief Determines if the given option space name and code describe
-    /// a standard option for the DHCP6 server.
-    ///
-    /// @param option_space is the name of the option space to consider
-    /// @param code is the numeric option code to consider
-    /// @return returns true if the space and code are part of the server's
-    /// standard options.
-    bool isServerStdOption(std::string option_space, uint32_t code) {
-        return ((option_space.compare("dhcp6") == 0)
-                && LibDHCP::isStandardOption(Option::V6, code));
-    }
-
-    /// @brief Returns the option definition for a given option code from
-    /// the DHCP6 server's standard set of options.
-    /// @param code is the numeric option code of the desired option definition.
-    /// @return returns a pointer the option definition
-    OptionDefinitionPtr getServerStdOptionDefinition (uint32_t code) {
-        return (LibDHCP::getOptionDef(Option::V6, code));
-    }
-
     /// @brief Issues a DHCP6 server specific warning regarding duplicate subnet
     /// options.
     ///

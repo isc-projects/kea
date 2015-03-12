@@ -64,7 +64,7 @@ class SpecificationForFileLogger {
 public:
 
     // Constructor - allocate file and create the specification object
-    SpecificationForFileLogger() : spec_(), name_(createTempFileName()),
+    SpecificationForFileLogger() : spec_(), name_(createTempFilename()),
                                    logname_("filelogger") {
 
         // Set the output to a temporary file.
