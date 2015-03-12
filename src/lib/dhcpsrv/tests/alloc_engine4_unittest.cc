@@ -1334,17 +1334,19 @@ TEST_F(AllocEngine4Test, reservedHostname) {
 
     // Try to allocate a lease.
     AllocEngine::ClientContext4 ctx(subnet_, ClientIdPtr(), hwaddr_,
-                                    IOAddress::IPV4_ZERO_ADDRESS(), false, false,
+                                    IOAddress::IOAddress("192.0.2.109"), false, false,
                                     "foo.example.org", true);
     AllocEngine::findReservation(ctx);
     Lease4Ptr allocated_lease = engine.allocateLease4(ctx);
     ASSERT_TRUE(allocated_lease);
     ASSERT_FALSE(allocated_lease->addr_.isV4Zero());
+    ASSERT_EQ("192.0.2.109", allocated_lease->addr_.toText());
 
     ctx.requested_address_ = allocated_lease->addr_;
     ctx.fake_allocation_ = false;
     allocated_lease = engine.allocateLease4(ctx);
     ASSERT_TRUE(allocated_lease);
+    EXPECT_EQ("192.0.2.109", allocated_lease->addr_.toText());
 }
 
 // This test checks that the AllocEngine::findReservation method finds
