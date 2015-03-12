@@ -1067,14 +1067,8 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_SUBNET_SELECTED)
         .arg(subnet->toText());
 
-    // Get client-id option
-    ClientIdPtr client_id;
-    OptionPtr opt = query->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
-    if (opt) {
-        client_id = ClientIdPtr(new ClientId(opt->getData()));
-    }
-
-    // client-id is not mandatory in DHCPv4
+    // Get client-id. It is not mandatory in DHCPv4.
+    ClientIdPtr client_id = ex.getContext()->clientid_;
 
     // Get the server identifier. It will be used to determine the state
     // of the client.
@@ -1246,8 +1240,8 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         }
 
         // IP Address Lease time (type 51)
-        opt.reset(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME,
-                                   lease->valid_lft_));
+        OptionPtr opt(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME,
+                                       lease->valid_lft_));
         resp->addOption(opt);
 
         // Subnet mask (type 1)
