@@ -1334,7 +1334,7 @@ TEST_F(AllocEngine4Test, reservedHostname) {
 
     // Try to allocate a lease.
     AllocEngine::ClientContext4 ctx(subnet_, ClientIdPtr(), hwaddr_,
-                                    IOAddress::IOAddress("192.0.2.109"), false, false,
+                                    IOAddress("192.0.2.109"), false, false,
                                     "foo.example.org", true);
     AllocEngine::findReservation(ctx);
     Lease4Ptr allocated_lease = engine.allocateLease4(ctx);
