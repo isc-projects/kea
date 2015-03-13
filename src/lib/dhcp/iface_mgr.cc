@@ -367,11 +367,9 @@ bool
 IfaceMgr::hasOpenSocket(const uint16_t family) const {
     // Iterate over all interfaces and search for open sockets.
     BOOST_FOREACH(IfacePtr iface, ifaces_) {
-        const Iface::SocketCollection& sockets = iface->getSockets();
-        for (Iface::SocketCollection::const_iterator sock = sockets.begin();
-             sock != sockets.end(); ++sock) {
+        BOOST_FOREACH(SocketInfo sock, iface->getSockets()) {
             // Check if the socket matches specified family.
-            if (sock->family_ == family) {
+            if (sock.family_ == family) {
                 // There is at least one socket open, so return.
                 return (true);
             }
@@ -385,14 +383,13 @@ bool
 IfaceMgr::hasOpenSocket(const IOAddress& addr) const {
     // Iterate over all interfaces and search for open sockets.
     BOOST_FOREACH(IfacePtr iface, ifaces_) {
-        const Iface::SocketCollection& sockets = iface->getSockets();
-        for (Iface::SocketCollection::const_iterator sock = sockets.begin();
-             sock != sockets.end(); ++sock) {
+        BOOST_FOREACH(SocketInfo sock, iface->getSockets()) {
             // Check if the socket address matches the specified address or
             // if address is unspecified (in6addr_any).
-            if (sock->addr_ == addr) {
+            if (sock.addr_ == addr) {
                 return (true);
-            } else if (sock->addr_ == IOAddress("::")) {
+
+            } else if (sock.addr_ == IOAddress("::")) {
                 // Handle the case that the address is unspecified (any).
                 // In this case, we should check if the specified address
                 // belongs to any of the interfaces.
@@ -896,17 +893,15 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
     /// and then use its copy for select(). Please note that select() modifies
     /// provided set to indicated which sockets have something to read.
     BOOST_FOREACH(iface, ifaces_) {
-        const Iface::SocketCollection& socket_collection = iface->getSockets();
-        for (Iface::SocketCollection::const_iterator s = socket_collection.begin();
-             s != socket_collection.end(); ++s) {
+        BOOST_FOREACH(SocketInfo s, iface->getSockets()) {
 
             // Only deal with IPv4 addresses.
-            if (s->addr_.isV4()) {
+            if (s.addr_.isV4()) {
 
                 // Add this socket to listening set
-                FD_SET(s->sockfd_, &sockets);
-                if (maxfd < s->sockfd_) {
-                    maxfd = s->sockfd_;
+                FD_SET(s.sockfd_, &sockets);
+                if (maxfd < s.sockfd_) {
+                    maxfd = s.sockfd_;
                 }
             }
         }
@@ -969,11 +964,9 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
 
     // Let's find out which interface/socket has the data
     BOOST_FOREACH(iface, ifaces_) {
-        const Iface::SocketCollection& socket_collection = iface->getSockets();
-        for (Iface::SocketCollection::const_iterator s = socket_collection.begin();
-             s != socket_collection.end(); ++s) {
-            if (FD_ISSET(s->sockfd_, &sockets)) {
-                candidate = &(*s);
+        BOOST_FOREACH(SocketInfo s, iface->getSockets()) {
+            if (FD_ISSET(s.sockfd_, &sockets)) {
+                candidate = &(s);
                 break;
             }
         }
@@ -1008,17 +1001,15 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     /// and then use its copy for select(). Please note that select() modifies
     /// provided set to indicated which sockets have something to read.
     BOOST_FOREACH(IfacePtr iface, ifaces_) {
-        const Iface::SocketCollection& socket_collection = iface->getSockets();
-        for (Iface::SocketCollection::const_iterator s = socket_collection.begin();
-             s != socket_collection.end(); ++s) {
 
+        BOOST_FOREACH(SocketInfo s, iface->getSockets()) {
             // Only deal with IPv6 addresses.
-            if (s->addr_.isV6()) {
+            if (s.addr_.isV6()) {
 
                 // Add this socket to listening set
-                FD_SET(s->sockfd_, &sockets);
-                if (maxfd < s->sockfd_) {
-                    maxfd = s->sockfd_;
+                FD_SET(s.sockfd_, &sockets);
+                if (maxfd < s.sockfd_) {
+                    maxfd = s.sockfd_;
                 }
             }
         }
@@ -1083,11 +1074,9 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
 
     // Let's find out which interface/socket has the data
     BOOST_FOREACH(IfacePtr iface, ifaces_) {
-        const Iface::SocketCollection& socket_collection = iface->getSockets();
-        for (Iface::SocketCollection::const_iterator s = socket_collection.begin();
-             s != socket_collection.end(); ++s) {
-            if (FD_ISSET(s->sockfd_, &sockets)) {
-                candidate = &(*s);
+        BOOST_FOREACH(SocketInfo s, iface->getSockets()) {
+            if (FD_ISSET(s.sockfd_, &sockets)) {
+                candidate = &(s);
                 break;
             }
         }

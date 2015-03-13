@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,8 @@
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp/tests/pkt_filter_test_stub.h>
 #include <dhcp/tests/pkt_filter6_test_stub.h>
+
+#include <boost/foreach.hpp>
 
 using namespace isc::asiolink;
 
@@ -151,10 +153,8 @@ IfaceMgrTestConfig::socketOpen(const std::string& iface_name,
         isc_throw(Unexpected, "No such interface '" << iface_name << "'");
     }
 
-    const Iface::SocketCollection& sockets = iface->getSockets();
-    for (Iface::SocketCollection::const_iterator sock = sockets.begin();
-         sock != sockets.end(); ++sock) {
-        if (sock->family_ == family) {
+    BOOST_FOREACH(SocketInfo sock, iface->getSockets()) {
+        if (sock.family_ == family) {
             return (true);
         }
     }
@@ -169,11 +169,9 @@ IfaceMgrTestConfig::socketOpen(const std::string& iface_name,
         isc_throw(Unexpected, "No such interface '" << iface_name << "'");
     }
 
-    const Iface::SocketCollection& sockets = iface->getSockets();
-    for (Iface::SocketCollection::const_iterator sock = sockets.begin();
-         sock != sockets.end(); ++sock) {
-        if ((sock->family_ == AF_INET) &&
-            (sock->addr_ == IOAddress(address))) {
+    BOOST_FOREACH(SocketInfo sock, iface->getSockets()) {
+        if ((sock.family_ == AF_INET) &&
+            (sock.addr_ == IOAddress(address))) {
             return (true);
         }
     }
@@ -187,11 +185,9 @@ IfaceMgrTestConfig::unicastOpen(const std::string& iface_name) const {
         isc_throw(Unexpected, "No such interface '" << iface_name << "'");
     }
 
-    const Iface::SocketCollection& sockets = iface->getSockets();
-    for (Iface::SocketCollection::const_iterator sock = sockets.begin();
-         sock != sockets.end(); ++sock) {
-        if ((!sock->addr_.isV6LinkLocal()) &&
-            (!sock->addr_.isV6Multicast())) {
+    BOOST_FOREACH(SocketInfo sock, iface->getSockets()) {
+        if ((!sock.addr_.isV6LinkLocal()) &&
+            (!sock.addr_.isV6Multicast())) {
             return (true);
         }
     }
