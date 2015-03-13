@@ -579,14 +579,6 @@ protected:
     /// @param reply server's response (ACK or NAK)
     void renewLease(const Pkt4Ptr& renew, Pkt4Ptr& reply);
 
-    /// @brief Appends default options to a message.
-    ///
-    /// This method is currently no-op.
-    ///
-    /// @param ex The exchange holding both the client's message and the
-    /// server's response.
-    void appendDefaultOptions(Dhcpv4Exchange& ex);
-
     /// @brief Adds server identifier option to the server's response.
     ///
     /// This method adds a server identifier to the DHCPv4 message. It expects
