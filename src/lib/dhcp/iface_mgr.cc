@@ -28,6 +28,8 @@
 #include <exceptions/exceptions.h>
 #include <util/io/pktinfo_utilities.h>
 
+#include <boost/foreach.hpp>
+
 #include <cstring>
 #include <errno.h>
 #include <fstream>
@@ -270,16 +272,14 @@ Iface::countActive4() const {
 }
 
 void IfaceMgr::closeSockets() {
-    for (IfaceCollection::iterator iface = ifaces_.begin();
-         iface != ifaces_.end(); ++iface) {
+    BOOST_FOREACH(IfacePtr iface, ifaces_) {
         iface->closeSockets();
     }
 }
 
 void
 IfaceMgr::closeSockets(const uint16_t family) {
-    for (IfaceCollection::iterator iface = ifaces_.begin();
-         iface != ifaces_.end(); ++iface) {
+    BOOST_FOREACH(IfacePtr iface, ifaces_) {
         iface->closeSockets(family);
     }
 }
@@ -372,8 +372,7 @@ IfaceMgr::setPacketFilter(const PktFilter6Ptr& packet_filter) {
 bool
 IfaceMgr::hasOpenSocket(const uint16_t family) const {
     // Iterate over all interfaces and search for open sockets.
-    for (IfaceCollection::const_iterator iface = ifaces_.begin();
-         iface != ifaces_.end(); ++iface) {
+    BOOST_FOREACH(IfacePtr iface, ifaces_) {
         const Iface::SocketCollection& sockets = iface->getSockets();
         for (Iface::SocketCollection::const_iterator sock = sockets.begin();
              sock != sockets.end(); ++sock) {
@@ -391,8 +390,7 @@ IfaceMgr::hasOpenSocket(const uint16_t family) const {
 bool
 IfaceMgr::hasOpenSocket(const IOAddress& addr) const {
     // Iterate over all interfaces and search for open sockets.
-    for (IfaceCollection::const_iterator iface = ifaces_.begin();
-         iface != ifaces_.end(); ++iface) {
+    BOOST_FOREACH(IfacePtr iface, ifaces_) {
         const Iface::SocketCollection& sockets = iface->getSockets();
         for (Iface::SocketCollection::const_iterator sock = sockets.begin();
              sock != sockets.end(); ++sock) {
@@ -439,21 +437,21 @@ void IfaceMgr::stubDetectIfaces() {
                   "Interface detection on this OS is not supported.");
     }
 
-    Iface iface(ifaceName, if_nametoindex(ifaceName.c_str()));
-    iface.flag_up_ = true;
-    iface.flag_running_ = true;
+    IfacePtr iface(new Iface(ifaceName, if_nametoindex(ifaceName.c_str())));
+    iface->flag_up_ = true;
+    iface->flag_running_ = true;
 
     // Note that we claim that this is not a loopback. iface_mgr tries to open a
     // socket on all interaces that are up, running and not loopback. As this is
     // the only interface we were able to detect, let's pretend this is a normal
     // interface.
-    iface.flag_loopback_ = false;
-    iface.flag_multicast_ = true;
-    iface.flag_broadcast_ = true;
-    iface.setHWType(HWTYPE_ETHERNET);
+    iface->flag_loopback_ = false;
+    iface->flag_multicast_ = true;
+    iface->flag_broadcast_ = true;
+    iface->setHWType(HWTYPE_ETHERNET);
 
-    iface.addAddress(IOAddress(v4addr));
-    iface.addAddress(IOAddress(v6addr));
+    iface->addAddress(IOAddress(v4addr));
+    iface->addAddress(IOAddress(v6addr));
     addInterface(iface);
 }
 
@@ -463,10 +461,7 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
     int count = 0;
     int bcast_num = 0;
 
-    for (IfaceCollection::iterator iface = ifaces_.begin();
-         iface != ifaces_.end();
-         ++iface) {
-
+    BOOST_FOREACH(IfacePtr iface, ifaces_) {
         // If the interface is inactive, there is nothing to do. Simply
         // proceed to the next detected interface.
         if (iface->inactive4_) {
@@ -577,10 +572,7 @@ IfaceMgr::openSockets6(const uint16_t port,
                        IfaceMgrErrorMsgCallback error_handler) {
     int count = 0;
 
-    for (IfaceCollection::iterator iface = ifaces_.begin();
-         iface != ifaces_.end();
-         ++iface) {
-
+    BOOST_FOREACH(IfacePtr iface, ifaces_) {
         if (iface->inactive6_) {
             continue;
 
@@ -658,10 +650,7 @@ IfaceMgr::openSockets6(const uint16_t port,
 
 void
 IfaceMgr::printIfaces(std::ostream& out /*= std::cout*/) {
-    for (IfaceCollection::const_iterator iface=ifaces_.begin();
-         iface!=ifaces_.end();
-         ++iface) {
-
+    BOOST_FOREACH(IfacePtr iface, ifaces_) {
         const Iface::AddressCollection& addrs = iface->getAddresses();
 
         out << "Detected interface " << iface->getFullName()
@@ -684,28 +673,24 @@ IfaceMgr::printIfaces(std::ostream& out /*= std::cout*/) {
     }
 }
 
-Iface*
+IfacePtr
 IfaceMgr::getIface(int ifindex) {
-    for (IfaceCollection::iterator iface=ifaces_.begin();
-         iface!=ifaces_.end();
-         ++iface) {
+    BOOST_FOREACH(IfacePtr iface, ifaces_) {
         if (iface->getIndex() == ifindex)
-            return (&(*iface));
+            return (iface);
     }
 
-    return (NULL); // not found
+    return (IfacePtr()); // not found
 }
 
-Iface*
+IfacePtr
 IfaceMgr::getIface(const std::string& ifname) {
-    for (IfaceCollection::iterator iface=ifaces_.begin();
-         iface!=ifaces_.end();
-         ++iface) {
+    BOOST_FOREACH(IfacePtr iface, ifaces_) {
         if (iface->getName() == ifname)
-            return (&(*iface));
+            return (iface);
     }
 
-    return (NULL); // not found
+    return (IfacePtr()); // not found
 }
 
 void
@@ -715,8 +700,7 @@ IfaceMgr::clearIfaces() {
 
 void
 IfaceMgr::clearUnicasts() {
-    for (IfaceCollection::iterator iface=ifaces_.begin();
-         iface!=ifaces_.end(); ++iface) {
+    BOOST_FOREACH(IfacePtr iface, ifaces_) {
         iface->clearUnicasts();
     }
 }
@@ -724,7 +708,7 @@ IfaceMgr::clearUnicasts() {
 int IfaceMgr::openSocket(const std::string& ifname, const IOAddress& addr,
                          const uint16_t port, const bool receive_bcast,
                          const bool send_bcast) {
-    Iface* iface = getIface(ifname);
+    IfacePtr iface = getIface(ifname);
     if (!iface) {
         isc_throw(BadValue, "There is no " << ifname << " interface present.");
     }
@@ -744,10 +728,7 @@ int IfaceMgr::openSocketFromIface(const std::string& ifname,
                                   const uint16_t port,
                                   const uint8_t family) {
     // Search for specified interface among detected interfaces.
-    for (IfaceCollection::iterator iface = ifaces_.begin();
-         iface != ifaces_.end();
-         ++iface) {
-
+    BOOST_FOREACH(IfacePtr iface, ifaces_) {
         if ((iface->getFullName() != ifname) &&
             (iface->getName() != ifname)) {
             continue;
@@ -788,10 +769,7 @@ int IfaceMgr::openSocketFromAddress(const IOAddress& addr,
                                     const uint16_t port) {
     // Search through detected interfaces and addresses to match
     // local address we got.
-    for (IfaceCollection::iterator iface = ifaces_.begin();
-         iface != ifaces_.end();
-         ++iface) {
-
+    BOOST_FOREACH(IfacePtr iface, ifaces_) {
         Iface::AddressCollection addrs = iface->getAddresses();
 
         for (Iface::AddressCollection::iterator addr_it = addrs.begin();
@@ -898,7 +876,7 @@ IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr,
 
 bool
 IfaceMgr::send(const Pkt6Ptr& pkt) {
-    Iface* iface = getIface(pkt->getIface());
+    IfacePtr iface = getIface(pkt->getIface());
     if (!iface) {
         isc_throw(BadValue, "Unable to send DHCPv6 message. Invalid interface ("
                   << pkt->getIface() << ") specified.");
@@ -911,7 +889,7 @@ IfaceMgr::send(const Pkt6Ptr& pkt) {
 bool
 IfaceMgr::send(const Pkt4Ptr& pkt) {
 
-    Iface* iface = getIface(pkt->getIface());
+    IfacePtr iface = getIface(pkt->getIface());
     if (!iface) {
         isc_throw(BadValue, "Unable to send DHCPv4 message. Invalid interface ("
                   << pkt->getIface() << ") specified.");
@@ -930,7 +908,7 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
                   " one million microseconds");
     }
     const SocketInfo* candidate = 0;
-    IfaceCollection::iterator iface;
+    IfacePtr iface;
     fd_set sockets;
     int maxfd = 0;
 
@@ -939,8 +917,7 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
     /// @todo: marginal performance optimization. We could create the set once
     /// and then use its copy for select(). Please note that select() modifies
     /// provided set to indicated which sockets have something to read.
-    for (iface = ifaces_.begin(); iface != ifaces_.end(); ++iface) {
-
+    BOOST_FOREACH(iface, ifaces_) {
         const Iface::SocketCollection& socket_collection = iface->getSockets();
         for (Iface::SocketCollection::const_iterator s = socket_collection.begin();
              s != socket_collection.end(); ++s) {
@@ -1013,7 +990,7 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
     }
 
     // Let's find out which interface/socket has the data
-    for (iface = ifaces_.begin(); iface != ifaces_.end(); ++iface) {
+    BOOST_FOREACH(iface, ifaces_) {
         const Iface::SocketCollection& socket_collection = iface->getSockets();
         for (Iface::SocketCollection::const_iterator s = socket_collection.begin();
              s != socket_collection.end(); ++s) {
@@ -1052,8 +1029,7 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     /// @todo: marginal performance optimization. We could create the set once
     /// and then use its copy for select(). Please note that select() modifies
     /// provided set to indicated which sockets have something to read.
-    IfaceCollection::const_iterator iface;
-    for (iface = ifaces_.begin(); iface != ifaces_.end(); ++iface) {
+    BOOST_FOREACH(IfacePtr iface, ifaces_) {
         const Iface::SocketCollection& socket_collection = iface->getSockets();
         for (Iface::SocketCollection::const_iterator s = socket_collection.begin();
              s != socket_collection.end(); ++s) {
@@ -1128,7 +1104,7 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     }
 
     // Let's find out which interface/socket has the data
-    for (iface = ifaces_.begin(); iface != ifaces_.end(); ++iface) {
+    BOOST_FOREACH(IfacePtr iface, ifaces_) {
         const Iface::SocketCollection& socket_collection = iface->getSockets();
         for (Iface::SocketCollection::const_iterator s = socket_collection.begin();
              s != socket_collection.end(); ++s) {
@@ -1150,8 +1126,8 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
 }
 
 uint16_t IfaceMgr::getSocket(const isc::dhcp::Pkt6& pkt) {
-    Iface* iface = getIface(pkt.getIface());
-    if (iface == NULL) {
+    IfacePtr iface = getIface(pkt.getIface());
+    if (!iface) {
         isc_throw(IfaceNotFound, "Tried to find socket for non-existent interface");
     }
 
@@ -1207,7 +1183,7 @@ uint16_t IfaceMgr::getSocket(const isc::dhcp::Pkt6& pkt) {
 
 SocketInfo
 IfaceMgr::getSocket(isc::dhcp::Pkt4 const& pkt) {
-    Iface* iface = getIface(pkt.getIface());
+    IfacePtr iface = getIface(pkt.getIface());
     if (iface == NULL) {
         isc_throw(IfaceNotFound, "Tried to find socket for non-existent interface");
     }

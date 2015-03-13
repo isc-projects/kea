@@ -86,7 +86,7 @@ public:
             ADD_FAILURE() << "No interfaces detected.";
         }
 
-        valid_iface_ = ifaces.begin()->getName();
+        valid_iface_ = (*ifaces.begin())->getName();
         bogus_iface_ = "nonexisting0";
 
         if (IfaceMgr::instance().getIface(bogus_iface_)) {

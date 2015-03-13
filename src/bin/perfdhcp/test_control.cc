@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014,2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -57,7 +57,7 @@ TestControl::TestControlSocket::TestControlSocket(const int socket) :
 }
 
 TestControl::TestControlSocket::~TestControlSocket() {
-    Iface* iface = IfaceMgr::instance().getIface(ifindex_);
+    IfacePtr iface = IfaceMgr::instance().getIface(ifindex_);
     if (iface) {
         iface->delSocket(sockfd_);
     }
@@ -65,19 +65,15 @@ TestControl::TestControlSocket::~TestControlSocket() {
 
 void
 TestControl::TestControlSocket::initSocketData() {
-    const IfaceMgr::IfaceCollection& ifaces =
-        IfaceMgr::instance().getIfaces();
-    for (IfaceMgr::IfaceCollection::const_iterator it = ifaces.begin();
-         it != ifaces.end();
-         ++it) {
+    BOOST_FOREACH(IfacePtr iface, IfaceMgr::instance().getIfaces()) {
         const Iface::SocketCollection& socket_collection =
-            it->getSockets();
+            iface->getSockets();
         for (Iface::SocketCollection::const_iterator s =
                  socket_collection.begin();
              s != socket_collection.end();
              ++s) {
             if (s->sockfd_ == sockfd_) {
-                ifindex_ = it->getIndex();
+                ifindex_ = iface->getIndex();
                 addr_ = s->addr_;
                 return;
             }
@@ -784,7 +780,7 @@ TestControl::openSocket() const {
             // If user specified interface name with '-l' the
             // IPV6_MULTICAST_IF has to be set.
             if ((ret >= 0)  && options.isInterface()) {
-                Iface* iface =
+                IfacePtr iface =
                     IfaceMgr::instance().getIface(options.getLocalName());
                 if (iface == NULL) {
                     isc_throw(Unexpected, "unknown interface "
@@ -2050,7 +2046,7 @@ TestControl::setDefaults4(const TestControlSocket& socket,
                           const Pkt4Ptr& pkt) {
     CommandOptions& options = CommandOptions::instance();
     // Interface name.
-    Iface* iface = IfaceMgr::instance().getIface(socket.ifindex_);
+    IfacePtr iface = IfaceMgr::instance().getIface(socket.ifindex_);
     if (iface == NULL) {
         isc_throw(BadValue, "unable to find interface with given index");
     }
@@ -2076,7 +2072,7 @@ TestControl::setDefaults6(const TestControlSocket& socket,
                           const Pkt6Ptr& pkt) {
     CommandOptions& options = CommandOptions::instance();
     // Interface name.
-    Iface* iface = IfaceMgr::instance().getIface(socket.ifindex_);
+    IfacePtr iface = IfaceMgr::instance().getIface(socket.ifindex_);
     if (iface == NULL) {
         isc_throw(BadValue, "unable to find interface with given index");
     }
