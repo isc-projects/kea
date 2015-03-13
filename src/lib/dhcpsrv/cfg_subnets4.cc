@@ -91,7 +91,7 @@ CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
     // If local interface name is known, use the local address on this
     // interface.
     } else if (!selector.iface_name_.empty()) {
-        Iface* iface = IfaceMgr::instance().getIface(selector.iface_name_);
+        IfacePtr iface = IfaceMgr::instance().getIface(selector.iface_name_);
         // This should never happen in the real life. Hence we throw an
         // exception.
         if (iface == NULL) {

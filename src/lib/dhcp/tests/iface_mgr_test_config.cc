@@ -52,8 +52,8 @@ IfaceMgrTestConfig::~IfaceMgrTestConfig() {
 void
 IfaceMgrTestConfig::addAddress(const std::string& iface_name,
                                const IOAddress& address) {
-    Iface* iface = IfaceMgr::instance().getIface(iface_name);
-    if (iface == NULL) {
+    IfacePtr iface = IfaceMgr::instance().getIface(iface_name);
+    if (!iface) {
         isc_throw(isc::BadValue, "interface '" << iface_name
                   << "' doesn't exist");
     }
@@ -61,7 +61,7 @@ IfaceMgrTestConfig::addAddress(const std::string& iface_name,
 }
 
 void
-IfaceMgrTestConfig::addIface(const Iface& iface) {
+IfaceMgrTestConfig::addIface(const IfacePtr& iface) {
     IfaceMgr::instance().addInterface(iface);
 }
 
@@ -70,27 +70,27 @@ IfaceMgrTestConfig::addIface(const std::string& name, const int ifindex) {
     IfaceMgr::instance().addInterface(createIface(name, ifindex));
 }
 
-Iface
+IfacePtr
 IfaceMgrTestConfig::createIface(const std::string &name, const int ifindex) {
-    Iface iface(name, ifindex);
+    IfacePtr iface(new Iface(name, ifindex));
     if (name == "lo") {
-        iface.flag_loopback_ = true;
+        iface->flag_loopback_ = true;
         // Don't open sockets on the loopback interface.
-        iface.inactive4_ = true;
-        iface.inactive6_ = true;
+        iface->inactive4_ = true;
+        iface->inactive6_ = true;
     } else {
-        iface.inactive4_ = false;
-        iface.inactive6_ = false;
+        iface->inactive4_ = false;
+        iface->inactive6_ = false;
     }
-    iface.flag_multicast_ = true;
+    iface->flag_multicast_ = true;
     // On BSD systems, the SO_BINDTODEVICE option is not supported.
     // Therefore the IfaceMgr will throw an exception on attempt to
     // open sockets on more than one broadcast-capable interface at
     // the same time. In order to prevent this error, we mark all
     // interfaces broadcast-incapable for unit testing.
-    iface.flag_broadcast_ = false;
-    iface.flag_up_ = true;
-    iface.flag_running_ = true;
+    iface->flag_broadcast_ = false;
+    iface->flag_up_ = true;
+    iface->flag_running_ = true;
     return (iface);
 }
 
@@ -132,7 +132,7 @@ IfaceMgrTestConfig::setIfaceFlags(const std::string& name,
                                   const FlagRunning& running,
                                   const FlagInactive4& inactive4,
                                   const FlagInactive6& inactive6) {
-    Iface* iface = IfaceMgr::instance().getIface(name);
+    IfacePtr iface = IfaceMgr::instance().getIface(name);
     if (iface == NULL) {
         isc_throw(isc::BadValue, "interface '" << name << "' doesn't exist");
     }
@@ -146,7 +146,7 @@ IfaceMgrTestConfig::setIfaceFlags(const std::string& name,
 bool
 IfaceMgrTestConfig::socketOpen(const std::string& iface_name,
                                const int family) const {
-    Iface* iface = IfaceMgr::instance().getIface(iface_name);
+    IfacePtr iface = IfaceMgr::instance().getIface(iface_name);
     if (iface == NULL) {
         isc_throw(Unexpected, "No such interface '" << iface_name << "'");
     }
@@ -164,8 +164,8 @@ IfaceMgrTestConfig::socketOpen(const std::string& iface_name,
 bool
 IfaceMgrTestConfig::socketOpen(const std::string& iface_name,
                                const std::string& address) const {
-    Iface* iface = IfaceMgr::instance().getIface(iface_name);
-    if (iface == NULL) {
+    IfacePtr iface = IfaceMgr::instance().getIface(iface_name);
+    if (!iface) {
         isc_throw(Unexpected, "No such interface '" << iface_name << "'");
     }
 
@@ -182,8 +182,8 @@ IfaceMgrTestConfig::socketOpen(const std::string& iface_name,
 
 bool
 IfaceMgrTestConfig::unicastOpen(const std::string& iface_name) const {
-    Iface* iface = IfaceMgr::instance().getIface(iface_name);
-    if (iface == NULL) {
+    IfacePtr iface = IfaceMgr::instance().getIface(iface_name);
+    if (!iface) {
         isc_throw(Unexpected, "No such interface '" << iface_name << "'");
     }
 
