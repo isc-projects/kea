@@ -67,15 +67,10 @@ TestControl::TestControlSocket::~TestControlSocket() {
 void
 TestControl::TestControlSocket::initSocketData() {
     BOOST_FOREACH(IfacePtr iface, IfaceMgr::instance().getIfaces()) {
-        const Iface::SocketCollection& socket_collection =
-            iface->getSockets();
-        for (Iface::SocketCollection::const_iterator s =
-                 socket_collection.begin();
-             s != socket_collection.end();
-             ++s) {
-            if (s->sockfd_ == sockfd_) {
+        BOOST_FOREACH(SocketInfo s, iface->getSockets()) {
+            if (s.sockfd_ == sockfd_) {
                 ifindex_ = iface->getIndex();
-                addr_ = s->addr_;
+                addr_ = s.addr_;
                 return;
             }
         }
