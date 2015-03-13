@@ -190,11 +190,9 @@ void
 CfgIface::setIfaceAddrsState(const uint16_t family, const bool active,
                              Iface& iface) const {
     // Activate/deactivate all addresses.
-    const Iface::AddressCollection addresses = iface.getAddresses();
-    for (Iface::AddressCollection::const_iterator addr_it =
-                 addresses.begin(); addr_it != addresses.end(); ++addr_it) {
-        if (addr_it->get().getFamily() == family) {
-            iface.setActive(addr_it->get(), active);
+    BOOST_FOREACH(Iface::Address addr, iface.getAddresses()) {
+        if (addr.get().getFamily() == family) {
+            iface.setActive(addr.get(), active);
         }
     }
 }

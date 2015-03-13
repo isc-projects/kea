@@ -24,6 +24,7 @@
 #include <dhcp/tests/pkt_filter6_test_utils.h>
 
 #include <boost/bind.hpp>
+#include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
@@ -304,13 +305,11 @@ public:
              sock != sockets.end(); ++sock) {
             if (sock->addr_ == IOAddress(addr)) {
                 return (true);
+
             } else if ((sock->addr_ == IOAddress("::")) &&
                        (IOAddress(addr).isV6LinkLocal())) {
-                for (Iface::AddressCollection::const_iterator addr_it =
-                         iface->getAddresses().begin();
-                     addr_it != iface->getAddresses().end();
-                     ++addr_it) {
-                    if (addr_it->get() == IOAddress(addr)) {
+                BOOST_FOREACH(Iface::Address a, iface->getAddresses()) {
+                    if (a.get() == IOAddress(addr)) {
                         return (true);
                     }
                 }
@@ -2360,10 +2359,8 @@ checkIfAddrs(const Iface & iface, struct ifaddrs *& ifptr) {
 
             IOAddress addrv4 = IOAddress::fromBytes(AF_INET, p);
 
-            for (Iface::AddressCollection::const_iterator a =
-                     iface.getAddresses().begin();
-                 a != iface.getAddresses().end(); ++ a) {
-                if(a->get().isV4() && (a->get()) == addrv4) {
+            BOOST_FOREACH(Iface::Address a, iface.getAddresses()) {
+                if(a.get().isV4() && (a.get()) == addrv4) {
                     return (true);
                 }
             }
@@ -2377,10 +2374,8 @@ checkIfAddrs(const Iface & iface, struct ifaddrs *& ifptr) {
 
             IOAddress addrv6 = IOAddress::fromBytes(AF_INET6, p);
 
-            for(Iface::AddressCollection::const_iterator a =
-                    iface.getAddresses().begin();
-                a != iface.getAddresses().end(); ++ a) {
-                if (a->get().isV6() && (a->get() == addrv6)) {
+            BOOST_FOREACH(Iface::Address a, iface.getAddresses()) {
+                if (a.get().isV6() && (a.get() == addrv6)) {
                     return (true);
                 }
             }

@@ -165,9 +165,11 @@ public:
     /// Maximum MAC address length (Infiniband uses 20 bytes)
     static const unsigned int MAX_MAC_LEN = 20;
 
+    /// @brief Address type.
+    typedef util::OptionalValue<asiolink::IOAddress> Address;
+
     /// Type that defines list of addresses
-    typedef
-    std::list<util::OptionalValue<asiolink::IOAddress> > AddressCollection;
+    typedef std::list<Address> AddressCollection;
 
     /// @brief Type that holds a list of socket information.
     ///
