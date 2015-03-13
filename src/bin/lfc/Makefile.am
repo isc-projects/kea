@@ -18,7 +18,7 @@ CLEANFILES  = lfc_messages.h lfc_messages.cc s-messages
 
 man_MANS = kea-lfc.8
 DISTCLEANFILES = $(man_MANS)
-EXTRA_DIST = $(man_MANS) kea-lfc.xml
+EXTRA_DIST = $(man_MANS) kea-lfc.xml lfc.dox
 
 if GENERATE_DOCS
 kea-lfc.8: kea-lfc.xml
