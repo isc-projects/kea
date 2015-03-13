@@ -257,7 +257,7 @@ Pkt::getMACFromIPv6(const isc::asiolink::IOAddress& addr) {
 
     // Let's get the interface this packet was received on. We need it to get
     // hardware type
-    Iface* iface = IfaceMgr::instance().getIface(iface_);
+    IfacePtr iface = IfaceMgr::instance().getIface(iface_);
     uint16_t hwtype = 0; // not specified
     if (iface) {
         hwtype = iface->getHWType();

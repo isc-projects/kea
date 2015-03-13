@@ -621,8 +621,7 @@ Dhcpv6Srv::generateServerID() {
     const IfaceMgr::IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
 
     // Let's find suitable interface.
-    for (IfaceMgr::IfaceCollection::const_iterator iface = ifaces.begin();
-         iface != ifaces.end(); ++iface) {
+    BOOST_FOREACH(IfacePtr iface, ifaces) {
         // All the following checks could be merged into one multi-condition
         // statement, but let's keep them separated as perhaps one day
         // we will grow knobs to selectively turn them on or off. Also,

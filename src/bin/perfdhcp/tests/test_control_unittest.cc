@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013,2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,7 @@
 #include <dhcp/iface_mgr.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/foreach.hpp>
 
 #include <cstddef>
 #include <stdint.h>
@@ -217,11 +218,7 @@ public:
     ///
     /// \return local loopback interface name.
     std::string getLocalLoopback() const {
-        const IfaceMgr::IfaceCollection& ifaces =
-            IfaceMgr::instance().getIfaces();
-        for (IfaceMgr::IfaceCollection::const_iterator iface = ifaces.begin();
-             iface != ifaces.end();
-             ++iface) {
+        BOOST_FOREACH(IfacePtr iface, IfaceMgr::instance().getIfaces()) {
             if (iface->flag_loopback_) {
                 return (iface->getName());
             }
