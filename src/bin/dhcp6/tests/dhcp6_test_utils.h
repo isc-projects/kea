@@ -146,7 +146,7 @@ public:
             ADD_FAILURE() << "No interfaces detected.";
         }
 
-        valid_iface_ = ifaces.begin()->getName();
+        valid_iface_ = (*ifaces.begin())->getName();
     }
 
     // Generate IA_NA or IA_PD option with specified parameters

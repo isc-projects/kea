@@ -47,9 +47,9 @@ IfaceMgr::detectIfaces() {
         isc_throw(Unexpected, "Network interfaces detection failed.");
     }
 
-    typedef map<string, Iface> ifaceLst;
-    ifaceLst::iterator iface_iter;
-    ifaceLst ifaces;
+    typedef map<string, IfacePtr> IfaceLst;
+    IfaceLst::iterator iface_iter;
+    IfaceLst ifaces;
 
     // First lookup for getting interfaces ...
     for (ifptr = iflist; ifptr != 0; ifptr = ifptr->ifa_next) {
@@ -66,9 +66,9 @@ IfaceMgr::detectIfaces() {
             continue;
         }
 
-        Iface iface(ifname, ifindex);
-        iface.setFlags(ifptr->ifa_flags);
-        ifaces.insert(pair<string, Iface>(ifname, iface));
+        IfacePtr iface(new Iface(ifname, ifindex));
+        iface->setFlags(ifptr->ifa_flags);
+        ifaces.insert(pair<string, IfacePtr>(ifname, iface));
     }
 
     // Second lookup to get MAC and IP addresses
@@ -84,8 +84,8 @@ IfaceMgr::detectIfaces() {
                 reinterpret_cast<struct sockaddr_dl *>(ifptr->ifa_addr);
             ptr = reinterpret_cast<uint8_t *>(LLADDR(ldata));
 
-            iface_iter->second.setHWType(ldata->sdl_type);
-            iface_iter->second.setMac(ptr, ldata->sdl_alen);
+            iface_iter->second->setHWType(ldata->sdl_type);
+            iface_iter->second->setMac(ptr, ldata->sdl_alen);
         } else if(ifptr->ifa_addr->sa_family == AF_INET6) {
             // IPv6 Addr
             struct sockaddr_in6 * adata =
@@ -93,7 +93,7 @@ IfaceMgr::detectIfaces() {
             ptr = reinterpret_cast<uint8_t *>(&adata->sin6_addr);
 
             IOAddress a = IOAddress::fromBytes(AF_INET6, ptr);
-            iface_iter->second.addAddress(a);
+            iface_iter->second->addAddress(a);
         } else {
             // IPv4 Addr
             struct sockaddr_in * adata =
@@ -101,16 +101,16 @@ IfaceMgr::detectIfaces() {
             ptr = reinterpret_cast<uint8_t *>(&adata->sin_addr);
 
             IOAddress a = IOAddress::fromBytes(AF_INET, ptr);
-            iface_iter->second.addAddress(a);
+            iface_iter->second->addAddress(a);
         }
     }
 
     freeifaddrs(iflist);
 
     // Interfaces registering
-    for(ifaceLst::const_iterator iface_iter = ifaces.begin();
+    for(IfaceLst::const_iterator iface_iter = ifaces.begin();
         iface_iter != ifaces.end(); ++iface_iter) {
-        ifaces_.push_back(iface_iter->second);
+        addInterface(iface_iter->second);
     }
 }
 

@@ -926,7 +926,7 @@ TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_direct) {
     Pkt6 pkt(DHCPV6_ADVERTISE, 1234);
 
     // Let's get the first interface
-    Iface* iface = IfaceMgr::instance().getIface(1);
+    IfacePtr iface = IfaceMgr::instance().getIface(1);
     ASSERT_TRUE(iface);
 
     // and set source interface data properly. getMACFromIPv6LinkLocal attempts
@@ -968,7 +968,7 @@ TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_singleRelay) {
     ASSERT_EQ(1, pkt.relay_info_.size());
 
     // Let's get the first interface
-    Iface* iface = IfaceMgr::instance().getIface(1);
+    IfacePtr iface = IfaceMgr::instance().getIface(1);
     ASSERT_TRUE(iface);
 
     // and set source interface data properly. getMACFromIPv6LinkLocal attempts
@@ -1034,7 +1034,7 @@ TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_multiRelay) {
     ASSERT_EQ(3, pkt.relay_info_.size());
 
     // Let's get the first interface
-    Iface* iface = IfaceMgr::instance().getIface(1);
+    IfacePtr iface = IfaceMgr::instance().getIface(1);
     ASSERT_TRUE(iface);
 
     // and set source interface data properly. getMACFromIPv6LinkLocal attempts
@@ -1253,7 +1253,7 @@ TEST_F(Pkt6Test, getMACFromRemoteIdRelayOption) {
     EXPECT_FALSE(pkt.getMAC(HWAddr::HWADDR_SOURCE_REMOTE_ID));
 
     // Let's get the first interface
-    Iface* iface = IfaceMgr::instance().getIface(1);
+    IfacePtr iface = IfaceMgr::instance().getIface(1);
     ASSERT_TRUE(iface);
 
     // and set source interface data properly. getMACFromIPv6LinkLocal attempts

@@ -786,7 +786,7 @@ TEST_F(CommandOptionsTest, Interface) {
     // not fail this test.
     if (ifaces.size() > 0) {
         // Get the name of the interface we detected.
-        iface_name = ifaces.begin()->getName();
+        iface_name = (*ifaces.begin())->getName();
         // Use the name in the command parser.
         ASSERT_NO_THROW(process("perfdhcp -4 -l " + iface_name + " abc"));
         // We expect that command parser will detect that argument
