@@ -193,9 +193,8 @@ IfaceMgr::IfaceMgr()
 }
 
 void Iface::addUnicast(const isc::asiolink::IOAddress& addr) {
-    for (Iface::AddressCollection::const_iterator i = unicasts_.begin();
-         i != unicasts_.end(); ++i) {
-        if (i->get() == addr) {
+    BOOST_FOREACH(Address a, unicasts_) {
+        if (a.get() == addr) {
             isc_throw(BadValue, "Address " << addr
                       << " already defined on the " << name_ << " interface.");
         }
@@ -207,13 +206,11 @@ bool
 Iface::getAddress4(isc::asiolink::IOAddress& address) const {
     // Iterate over existing addresses assigned to the interface.
     // Try to find the one that is IPv4.
-    const AddressCollection& addrs = getAddresses();
-    for (AddressCollection::const_iterator addr = addrs.begin();
-         addr != addrs.end(); ++addr) {
+    BOOST_FOREACH(Address addr, getAddresses()) {
         // If address is IPv4, we assign it to the function argument
         // and return true.
-        if (addr->get().isV4()) {
-            address = addr->get();
+        if (addr.get().isV4()) {
+            address = addr.get();
             return (true);
         }
     }
@@ -223,10 +220,8 @@ Iface::getAddress4(isc::asiolink::IOAddress& address) const {
 
 bool
 Iface::hasAddress(const isc::asiolink::IOAddress& address) const {
-    const AddressCollection& addrs = getAddresses();
-    for (AddressCollection::const_iterator addr = addrs.begin();
-         addr != addrs.end(); ++addr) {
-        if (address == addr->get()) {
+    BOOST_FOREACH(Address addr, getAddresses()) {
+        if (address == addr.get()) {
             return (true);
         }
     }
@@ -235,7 +230,7 @@ Iface::hasAddress(const isc::asiolink::IOAddress& address) const {
 
 void
 Iface::addAddress(const isc::asiolink::IOAddress& addr) {
-    addrs_.push_back(OptionalValue<IOAddress>(addr, OptionalValueState(true)));
+    addrs_.push_back(Address(addr, OptionalValueState(true)));
 }
 
 void
@@ -262,9 +257,8 @@ Iface::setActive(const bool active) {
 unsigned int
 Iface::countActive4() const {
     uint16_t count = 0;
-    for (AddressCollection::const_iterator addr_it = addrs_.begin();
-         addr_it != addrs_.end(); ++addr_it) {
-        if (addr_it->get().isV4() && addr_it->isSpecified()) {
+    BOOST_FOREACH(Address addr, addrs_) {
+        if (addr.get().isV4() && addr.isSpecified()) {
             ++count;
         }
     }
@@ -402,11 +396,8 @@ IfaceMgr::hasOpenSocket(const IOAddress& addr) const {
                 // Handle the case that the address is unspecified (any).
                 // In this case, we should check if the specified address
                 // belongs to any of the interfaces.
-                for (Iface::AddressCollection::const_iterator addr_it =
-                         iface->getAddresses().begin();
-                     addr_it != iface->getAddresses().end();
-                     ++addr_it) {
-                    if (addr == addr_it->get()) {
+                BOOST_FOREACH(Iface::Address a, iface->getAddresses()) {
+                    if (addr == a.get()) {
                         return (true);
                     }
                 }
@@ -493,12 +484,9 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
         }
 
         Iface::AddressCollection addrs = iface->getAddresses();
-        for (Iface::AddressCollection::iterator addr = addrs.begin();
-             addr != addrs.end();
-             ++addr) {
-
+        BOOST_FOREACH(Iface::Address addr, iface->getAddresses()) {
             // Skip non-IPv4 addresses and those that weren't selected..
-            if (!addr->get().isV4() || !addr->isSpecified()) {
+            if (!addr.get().isV4() || !addr.isSpecified()) {
                 continue;
             }
 
@@ -532,7 +520,7 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                     try {
                         // We haven't open any broadcast sockets yet, so we can
                         // open at least one more.
-                        openSocket(iface->getName(), *addr, port, true, true);
+                        openSocket(iface->getName(), addr.get(), port, true, true);
                     } catch (const Exception& ex) {
                         IFACEMGR_ERROR(SocketConfigError, error_handler,
                                        "failed to open socket on interface "
@@ -550,7 +538,7 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
             } else {
                 try {
                     // Not broadcast capable, do not set broadcast flags.
-                    openSocket(iface->getName(), *addr, port, false, false);
+                    openSocket(iface->getName(), addr.get(), port, false, false);
                 } catch (const Exception& ex) {
                     IFACEMGR_ERROR(SocketConfigError, error_handler,
                                    "failed to open socket on interface "
@@ -599,12 +587,10 @@ IfaceMgr::openSockets6(const uint16_t port,
         }
 
         // Open unicast sockets if there are any unicast addresses defined
-        Iface::AddressCollection unicasts = iface->getUnicasts();
-        for (Iface::AddressCollection::iterator addr = unicasts.begin();
-             addr != unicasts.end(); ++addr) {
+        BOOST_FOREACH(Iface::Address addr, iface->getUnicasts()) {
 
             try {
-                openSocket(iface->getName(), *addr, port);
+                openSocket(iface->getName(), addr, port);
             } catch (const Exception& ex) {
                 IFACEMGR_ERROR(SocketConfigError, error_handler,
                                "Failed to open unicast socket on  interface "
@@ -617,13 +603,10 @@ IfaceMgr::openSockets6(const uint16_t port,
 
         }
 
-        Iface::AddressCollection addrs = iface->getAddresses();
-        for (Iface::AddressCollection::iterator addr = addrs.begin();
-             addr != addrs.end();
-             ++addr) {
+        BOOST_FOREACH(Iface::Address addr, iface->getAddresses()) {
 
             // Skip all but V6 addresses.
-            if (!addr->get().isV6()) {
+            if (!addr.get().isV6()) {
                 continue;
             }
 
@@ -632,14 +615,14 @@ IfaceMgr::openSockets6(const uint16_t port,
             // with interface with 2 global addresses, we would bind 3 sockets
             // (one for link-local and two for global). That would result in
             // getting each message 3 times.
-            if (!addr->get().isV6LinkLocal()){
+            if (!addr.get().isV6LinkLocal()){
                 continue;
             }
 
             // Run OS-specific function to open a socket capable of receiving
             // packets sent to All_DHCP_Relay_Agents_and_Servers multicast
             // address.
-            if (openMulticastSocket(*iface, *addr, port, error_handler)) {
+            if (openMulticastSocket(*iface, addr, port, error_handler)) {
                 ++count;
             }
 
@@ -665,9 +648,8 @@ IfaceMgr::printIfaces(std::ostream& out /*= std::cout*/) {
             << ")" << endl;
         out << "  " << addrs.size() << " addr(s):";
 
-        for (Iface::AddressCollection::const_iterator addr = addrs.begin();
-             addr != addrs.end(); ++addr) {
-            out << "  " << addr->get().toText();
+        BOOST_FOREACH(Iface::Address addr, addrs) {
+            out << "  " << addr.get().toText();
         }
         out << endl;
     }
@@ -770,20 +752,16 @@ int IfaceMgr::openSocketFromAddress(const IOAddress& addr,
     // Search through detected interfaces and addresses to match
     // local address we got.
     BOOST_FOREACH(IfacePtr iface, ifaces_) {
-        Iface::AddressCollection addrs = iface->getAddresses();
-
-        for (Iface::AddressCollection::iterator addr_it = addrs.begin();
-             addr_it != addrs.end();
-             ++addr_it) {
+        BOOST_FOREACH(Iface::Address a, iface->getAddresses()) {
 
             // Local address must match one of the addresses
             // on detected interfaces. If it does, we have
             // address and interface detected so we can open
             // socket.
-            if (addr_it->get() == addr) {
+            if (a.get() == addr) {
                 // Open socket using local interface, address and port.
                 // This may cause isc::Unexpected exception.
-                return (openSocket(iface->getName(), *addr_it, port, false));
+                return (openSocket(iface->getName(), a, port, false));
             }
         }
     }

@@ -25,6 +25,9 @@
 #include "perf_pkt4.h"
 #include "perf_pkt6.h"
 
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/foreach.hpp>
+
 #include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,8 +35,6 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/wait.h>
-
-#include <boost/date_time/posix_time/posix_time.hpp>
 
 using namespace std;
 using namespace boost::posix_time;

@@ -21,6 +21,7 @@
 #include <dhcp/iface_mgr.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/foreach.hpp>
 
 #include <cstddef>
 #include <stdint.h>
