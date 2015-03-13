@@ -159,6 +159,10 @@ struct SocketInfo {
 /// returned by the OS kernel when the socket is opened. Hence, it is
 /// convenient to allocate the buffer when the socket is being opened and
 /// utilze it throughout the lifetime of the socket.
+///
+/// In order to avoid potentially expensive copies of the @c Iface objects
+/// holding pre-allocated buffers and multiple containers, this class is
+/// noncopyable.
 class Iface : public boost::noncopyable {
 public:
 
@@ -547,7 +551,7 @@ public:
     //      2 maps (ifindex-indexed and name-indexed) and
     //      also hide it (make it public make tests easier for now)
 
-    /// Type that holds a list of interfaces.
+    /// Type that holds a list of pointers to interfaces.
     typedef std::list<IfacePtr> IfaceCollection;
 
     /// IfaceMgr is a singleton class. This method returns reference
@@ -586,7 +590,7 @@ public:
     /// @return true if direct response is supported.
     bool isDirectResponseSupported() const;
 
-    /// @brief Returns interfac specified interface index
+    /// @brief Returns interface specified interface index
     ///
     /// @param ifindex index of searched interface
     ///
@@ -601,7 +605,6 @@ public:
     ///
     /// @return interface with requested name (or NULL if no such
     ///         interface is present)
-    ///
     IfacePtr getIface(const std::string& ifname);
 
     /// @brief Returns container with all interfaces.
