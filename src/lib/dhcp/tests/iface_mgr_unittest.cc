@@ -24,6 +24,7 @@
 #include <dhcp/tests/pkt_filter6_test_utils.h>
 
 #include <boost/bind.hpp>
+#include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
@@ -228,20 +229,20 @@ public:
         ifaces_.clear();
 
         // local loopback
-        Iface lo = createIface("lo", 0);
-        lo.addAddress(IOAddress("127.0.0.1"));
-        lo.addAddress(IOAddress("::1"));
+        IfacePtr lo = createIface("lo", 0);
+        lo->addAddress(IOAddress("127.0.0.1"));
+        lo->addAddress(IOAddress("::1"));
         ifaces_.push_back(lo);
         // eth0
-        Iface eth0 = createIface("eth0", 1);
-        eth0.addAddress(IOAddress("10.0.0.1"));
-        eth0.addAddress(IOAddress("fe80::3a60:77ff:fed5:cdef"));
-        eth0.addAddress(IOAddress("2001:db8:1::1"));
+        IfacePtr eth0 = createIface("eth0", 1);
+        eth0->addAddress(IOAddress("10.0.0.1"));
+        eth0->addAddress(IOAddress("fe80::3a60:77ff:fed5:cdef"));
+        eth0->addAddress(IOAddress("2001:db8:1::1"));
         ifaces_.push_back(eth0);
         // eth1
-        Iface eth1 = createIface("eth1", 2);
-        eth1.addAddress(IOAddress("192.0.2.3"));
-        eth1.addAddress(IOAddress("fe80::3a60:77ff:fed5:abcd"));
+        IfacePtr eth1 = createIface("eth1", 2);
+        eth1->addAddress(IOAddress("192.0.2.3"));
+        eth1->addAddress(IOAddress("fe80::3a60:77ff:fed5:abcd"));
         ifaces_.push_back(eth1);
     }
 
@@ -263,26 +264,26 @@ public:
     /// @param ifindex An index of the interface to be created.
     ///
     /// @return An object representing interface.
-    static Iface createIface(const std::string& name, const int ifindex) {
-        Iface iface(name, ifindex);
+    static IfacePtr createIface(const std::string& name, const int ifindex) {
+        IfacePtr iface(new Iface(name, ifindex));
         if (name == "lo") {
-            iface.flag_loopback_ = true;
+            iface->flag_loopback_ = true;
             // Don't open sockets on loopback interface.
-            iface.inactive4_ = true;
-            iface.inactive6_ = true;
+            iface->inactive4_ = true;
+            iface->inactive6_ = true;
         } else {
-            iface.inactive4_ = false;
-            iface.inactive6_ = false;
+            iface->inactive4_ = false;
+            iface->inactive6_ = false;
         }
-        iface.flag_multicast_ = true;
+        iface->flag_multicast_ = true;
         // On BSD systems, the SO_BINDTODEVICE option is not supported.
         // Therefore the IfaceMgr will throw an exception on attempt to
         // open sockets on more than one broadcast-capable interface at
         // the same time. In order to prevent this error, we mark all
         // interfaces broadcast-incapable for unit testing.
-        iface.flag_broadcast_ = false;
-        iface.flag_up_ = true;
-        iface.flag_running_ = true;
+        iface->flag_broadcast_ = false;
+        iface->flag_up_ = true;
+        iface->flag_running_ = true;
         return (iface);
     }
 
@@ -294,8 +295,8 @@ public:
     ///
     /// @return true if there is a socket bound to the specified address.
     bool isBound(const std::string& iface_name, const std::string& addr) {
-        Iface* iface = getIface(iface_name);
-        if (iface == NULL) {
+        IfacePtr iface = getIface(iface_name);
+        if (!iface) {
             ADD_FAILURE() << "the interface " << iface_name << " doesn't exist";
             return (false);
         }
@@ -304,13 +305,11 @@ public:
              sock != sockets.end(); ++sock) {
             if (sock->addr_ == IOAddress(addr)) {
                 return (true);
+
             } else if ((sock->addr_ == IOAddress("::")) &&
                        (IOAddress(addr).isV6LinkLocal())) {
-                for (Iface::AddressCollection::const_iterator addr_it =
-                         iface->getAddresses().begin();
-                     addr_it != iface->getAddresses().end();
-                     ++addr_it) {
-                    if (addr_it->get() == IOAddress(addr)) {
+                BOOST_FOREACH(Iface::Address a, iface->getAddresses()) {
+                    if (a.get() == IOAddress(addr)) {
                         return (true);
                     }
                 }
@@ -332,12 +331,12 @@ public:
                        const bool inactive6) {
         for (IfaceMgr::IfaceCollection::iterator iface = ifaces_.begin();
              iface != ifaces_.end(); ++iface) {
-            if (iface->getName() == name) {
-                iface->flag_loopback_ = loopback;
-                iface->flag_up_ = up;
-                iface->flag_running_ = running;
-                iface->inactive4_ = inactive4;
-                iface->inactive6_ = inactive6;
+            if ((*iface)->getName() == name) {
+                (*iface)->flag_loopback_ = loopback;
+                (*iface)->flag_up_ = up;
+                (*iface)->flag_running_ = running;
+                (*iface)->inactive4_ = inactive4;
+                (*iface)->inactive6_ = inactive6;
             }
         }
     }
@@ -550,7 +549,7 @@ TEST_F(IfaceMgrTest, closeSockets) {
     // to create one and add.
     int ifindex = if_nametoindex(LOOPBACK);
     ASSERT_GT(ifindex, 0);
-    Iface lo_iface(LOOPBACK, ifindex);
+    IfacePtr lo_iface(new Iface(LOOPBACK, ifindex));
     iface_mgr->getIfacesLst().push_back(lo_iface);
 
     // Create set of V4 and V6 sockets on the loopback interface.
@@ -569,7 +568,7 @@ TEST_F(IfaceMgrTest, closeSockets) {
     }
 
     // At the end we should have 3 IPv4 and 3 IPv6 sockets open.
-    Iface* iface = iface_mgr->getIface(LOOPBACK);
+    IfacePtr iface = iface_mgr->getIface(LOOPBACK);
     ASSERT_TRUE(iface != NULL);
 
     int v4_sockets_count = getOpenSocketsCount(*iface, AF_INET);
@@ -632,8 +631,8 @@ TEST_F(IfaceMgrTest, ifaceGetAddress) {
 TEST_F(IfaceMgrTest, ifaceHasAddress) {
     IfaceMgrTestConfig config(true);
 
-    Iface* iface = IfaceMgr::instance().getIface("eth0");
-    ASSERT_FALSE(iface == NULL);
+    IfacePtr iface = IfaceMgr::instance().getIface("eth0");
+    ASSERT_TRUE(iface);
     EXPECT_TRUE(iface->hasAddress(IOAddress("10.0.0.1")));
     EXPECT_FALSE(iface->hasAddress(IOAddress("10.0.0.2")));
     EXPECT_TRUE(iface->hasAddress(IOAddress("fe80::3a60:77ff:fed5:cdef")));
@@ -649,10 +648,10 @@ TEST_F(IfaceMgrTest, getIface) {
     scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
     // Interface name, ifindex
-    Iface iface1("lo1", 100);
-    Iface iface2("eth9", 101);
-    Iface iface3("en3", 102);
-    Iface iface4("e1000g4", 103);
+    IfacePtr iface1(new Iface("lo1", 100));
+    IfacePtr iface2(new Iface("eth9", 101));
+    IfacePtr iface3(new Iface("en3", 102));
+    IfacePtr iface4(new Iface("e1000g4", 103));
     cout << "This test assumes that there are less than 100 network interfaces"
          << " in the tested system and there are no lo1, eth9, en3, e1000g4"
          << " or wifi15 interfaces present." << endl;
@@ -668,26 +667,26 @@ TEST_F(IfaceMgrTest, getIface) {
     for (IfaceMgr::IfaceCollection::iterator iface=ifacemgr->getIfacesLst().begin();
          iface != ifacemgr->getIfacesLst().end();
          ++iface) {
-        cout << "  " << iface->getFullName() << endl;
+        cout << "  " << (*iface)->getFullName() << endl;
     }
 
 
     // Check that interface can be retrieved by ifindex
-    Iface* tmp = ifacemgr->getIface(102);
-    ASSERT_TRUE(tmp != NULL);
+    IfacePtr tmp = ifacemgr->getIface(102);
+    ASSERT_TRUE(tmp);
 
     EXPECT_EQ("en3", tmp->getName());
     EXPECT_EQ(102, tmp->getIndex());
 
     // Check that interface can be retrieved by name
     tmp = ifacemgr->getIface("lo1");
-    ASSERT_TRUE(tmp != NULL);
+    ASSERT_TRUE(tmp);
 
     EXPECT_EQ("lo1", tmp->getName());
     EXPECT_EQ(100, tmp->getIndex());
 
     // Check that non-existing interfaces are not returned
-    EXPECT_EQ(static_cast<void*>(NULL), ifacemgr->getIface("wifi15") );
+    EXPECT_FALSE(ifacemgr->getIface("wifi15") );
 }
 
 TEST_F(IfaceMgrTest, clearIfaces) {
@@ -838,7 +837,7 @@ TEST_F(IfaceMgrTest, multipleSockets) {
 
     // Get loopback interface. If we don't find one we are unable to run
     // this test but we don't want to fail.
-    Iface* iface_ptr = ifacemgr->getIface(LOOPBACK);
+    IfacePtr iface_ptr = ifacemgr->getIface(LOOPBACK);
     if (iface_ptr == NULL) {
         cout << "Local loopback interface not found. Skipping test. " << endl;
         return;
@@ -2172,7 +2171,7 @@ TEST_F(IfaceMgrTest, socketInfo) {
 
     // Now let's test if IfaceMgr handles socket info properly
     scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
-    Iface* loopback = ifacemgr->getIface(LOOPBACK);
+    IfacePtr loopback = ifacemgr->getIface(LOOPBACK);
     ASSERT_TRUE(loopback);
     loopback->addSocket(sock1);
     loopback->addSocket(sock2);
@@ -2360,10 +2359,8 @@ checkIfAddrs(const Iface & iface, struct ifaddrs *& ifptr) {
 
             IOAddress addrv4 = IOAddress::fromBytes(AF_INET, p);
 
-            for (Iface::AddressCollection::const_iterator a =
-                     iface.getAddresses().begin();
-                 a != iface.getAddresses().end(); ++ a) {
-                if(a->get().isV4() && (a->get()) == addrv4) {
+            BOOST_FOREACH(Iface::Address a, iface.getAddresses()) {
+                if(a.get().isV4() && (a.get()) == addrv4) {
                     return (true);
                 }
             }
@@ -2377,10 +2374,8 @@ checkIfAddrs(const Iface & iface, struct ifaddrs *& ifptr) {
 
             IOAddress addrv6 = IOAddress::fromBytes(AF_INET6, p);
 
-            for(Iface::AddressCollection::const_iterator a =
-                    iface.getAddresses().begin();
-                a != iface.getAddresses().end(); ++ a) {
-                if (a->get().isV6() && (a->get() == addrv6)) {
+            BOOST_FOREACH(Iface::Address a, iface.getAddresses()) {
+                if (a.get().isV6() && (a.get() == addrv6)) {
                     return (true);
                 }
             }
@@ -2420,7 +2415,7 @@ TEST_F(IfaceMgrTest, detectIfaces) {
         // with the interface name held by IfaceMgr. Instead, we use the
         // index of the interface because the virtual interfaces have the
         // same indexes as the physical interfaces.
-        Iface* i = ifacemgr.getIface(if_nametoindex(ifptr->ifa_name));
+        IfacePtr i = ifacemgr.getIface(if_nametoindex(ifptr->ifa_name));
 
         // If the given interface was also detected by the IfaceMgr,
         // check that its properties are correct.
@@ -2819,7 +2814,7 @@ TEST_F(IfaceMgrTest, DISABLED_openUnicastSockets) {
     scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
     // Get the interface (todo: which interface)
-    Iface* iface = ifacemgr->getIface("eth0");
+    IfacePtr iface = ifacemgr->getIface("eth0");
     ASSERT_TRUE(iface);
     iface->inactive6_ = false;
 
@@ -2843,8 +2838,8 @@ TEST_F(IfaceMgrTest, DISABLED_openUnicastSockets) {
 TEST_F(IfaceMgrTest, unicastDuplicates) {
     NakedIfaceMgr ifacemgr;
 
-    Iface* iface = ifacemgr.getIface(LOOPBACK);
-    if (iface == NULL) {
+    IfacePtr iface = ifacemgr.getIface(LOOPBACK);
+    if (iface) {
         cout << "Local loopback interface not found. Skipping test. " << endl;
         return;
     }
