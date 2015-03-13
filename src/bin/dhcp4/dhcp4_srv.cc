@@ -240,7 +240,7 @@ Dhcpv4Srv::shutdown() {
 }
 
 isc::dhcp::Subnet4Ptr
-Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, const bool run_hooks) const {
+Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query) const {
 
     Subnet4Ptr subnet;
 
@@ -256,7 +256,7 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, const bool run_hooks) const {
     subnet = cfgmgr.getCurrentCfg()->getCfgSubnets4()->selectSubnet(selector);
 
     // Let's execute all callouts registered for subnet4_select
-    if (run_hooks && HooksManager::calloutsPresent(hook_index_subnet4_select_)) {
+    if (HooksManager::calloutsPresent(hook_index_subnet4_select_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
         // We're reusing callout_handle from previous calls
@@ -1805,7 +1805,7 @@ Dhcpv4Srv::acceptDirectRequest(const Pkt4Ptr& pkt) const {
         return (false);
     }
     return ((pkt->getLocalAddr() != IOAddress::IPV4_BCAST_ADDRESS()
-             || selectSubnet(pkt, false)));
+             || selectSubnet(pkt)));
 }
 
 bool

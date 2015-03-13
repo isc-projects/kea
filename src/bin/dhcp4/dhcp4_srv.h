@@ -687,19 +687,9 @@ protected:
 
     /// @brief Selects a subnet for a given client's packet.
     ///
-    /// The @c run_hooks parameters controls whether the method should run
-    /// installed hooks for subnet selection. Disabling it is useful in
-    /// cases when the server should sanity check the client's packet before
-    /// the actual processing. If the sanity check fails, the packet can
-    /// be discarded.
-    ///
     /// @param query client's message
-    /// @param run_hooks A boolean value which specifies if the method should
-    /// run installed hooks after selecting the subnet (if true). The default
-    /// value is true.
     /// @return selected subnet (or NULL if no suitable subnet was found)
-    isc::dhcp::Subnet4Ptr selectSubnet(const Pkt4Ptr& query,
-                                       const bool run_hooks = true) const;
+    isc::dhcp::Subnet4Ptr selectSubnet(const Pkt4Ptr& query) const;
 
     /// indicates if shutdown is in progress. Setting it to true will
     /// initiate server shutdown procedure.
