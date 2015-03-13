@@ -86,10 +86,10 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelay) {
     req->setIface("eth1");
     req->setIndex(1);
 
-    // Create a response packet. Assume that the new lease have
-    // been created and new address allocated. This address is
-    // stored in yiaddr field.
-    boost::shared_ptr<Pkt4> resp(new Pkt4(DHCPOFFER, 1234));
+    // Create the exchange using the req.
+    Dhcpv4Exchange ex = createExchange(req);
+
+    Pkt4Ptr resp = ex.getResponse();
     resp->setYiaddr(IOAddress("192.0.1.100"));
     // Clear the remote address.
     resp->setRemoteAddr(IOAddress("0.0.0.0"));
@@ -97,7 +97,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelay) {
     resp->setHops(req->getHops());
 
     // This function never throws.
-    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(req, resp));
+    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(ex));
 
     // Now the destination address should be relay's address.
     EXPECT_EQ("192.0.1.1", resp->getRemoteAddr().toText());
@@ -123,7 +123,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelay) {
     // Clear remote address.
     resp->setRemoteAddr(IOAddress("0.0.0.0"));
 
-    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(req, resp));
+    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(ex));
 
     // Response should be sent back to the relay address.
     EXPECT_EQ("192.0.1.50", resp->getRemoteAddr().toText());
@@ -163,8 +163,10 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRenew) {
     req->setIface("eth1");
     req->setIndex(1);
 
-    // Create a response.
-    boost::shared_ptr<Pkt4> resp(new Pkt4(DHCPOFFER, 1234));
+    // Create the exchange using the req.
+    Dhcpv4Exchange ex = createExchange(req);
+    Pkt4Ptr resp = ex.getResponse();
+
     // Let's extend the lease for the client in such a way that
     // it will actually get different address. The response
     // should not be sent to this address but rather to ciaddr
@@ -175,7 +177,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRenew) {
     // Copy hops value from the query.
     resp->setHops(req->getHops());
 
-    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(req, resp));
+    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(ex));
 
     // Check that server responds to ciaddr
     EXPECT_EQ("192.0.1.15", resp->getRemoteAddr().toText());
@@ -225,8 +227,9 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataSelect) {
     req->setIface("eth1");
     req->setIndex(1);
 
-    // Create a response.
-    boost::shared_ptr<Pkt4> resp(new Pkt4(DHCPOFFER, 1234));
+    // Create the exchange using the req.
+    Dhcpv4Exchange ex = createExchange(req);
+    Pkt4Ptr resp = ex.getResponse();
     // Assign some new address for this client.
     resp->setYiaddr(IOAddress("192.0.1.13"));
     // Clear the remote address.
@@ -247,7 +250,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataSelect) {
     // are zero and client has just got new lease, the assigned address is
     // carried in yiaddr. In order to send this address to the client,
     // server must broadcast its response.
-    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(req, resp));
+    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(ex));
 
     // Check that the response is sent to broadcast address as the
     // server doesn't have capability to respond directly.
@@ -276,7 +279,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataSelect) {
 
     // Now we expect that the server will send its response to the
     // address assigned for the client.
-    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(req, resp));
+    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(ex));
 
     EXPECT_EQ("192.0.1.13", resp->getRemoteAddr().toText());
 }
@@ -308,15 +311,17 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataBroadcast) {
     // Let's set the broadcast flag.
     req->setFlags(Pkt4::FLAG_BROADCAST_MASK);
 
-    // Create a response.
-    boost::shared_ptr<Pkt4> resp(new Pkt4(DHCPOFFER, 1234));
+    // Create the exchange using the req.
+    Dhcpv4Exchange ex = createExchange(req);
+    Pkt4Ptr resp = ex.getResponse();
+
     // Assign some new address for this client.
     resp->setYiaddr(IOAddress("192.0.1.13"));
 
     // Clear the remote address.
     resp->setRemoteAddr(IOAddress("0.0.0.0"));
 
-    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(req, resp));
+    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(ex));
 
     // Server must respond to broadcast address when client desired that
     // by setting the broadcast flag in its request.
@@ -340,6 +345,9 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataBroadcast) {
 // This test verifies that exception is thrown of the invalid combination
 // of giaddr and hops is specified in a client's message.
 TEST_F(Dhcpv4SrvTest, adjustIfaceDataInvalid) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
 
     // The hops and giaddr values are used to determine if the client's
@@ -360,27 +368,32 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataInvalid) {
     req->setIface("eth0");
     req->setIndex(1);
 
-    // Create a response.
-    boost::shared_ptr<Pkt4> resp(new Pkt4(DHCPOFFER, 1234));
+    // Create the exchange using the req.
+    Dhcpv4Exchange ex = createExchange(req);
+    Pkt4Ptr resp = ex.getResponse();
+
     // Assign some new address for this client.
     resp->setYiaddr(IOAddress("192.0.2.13"));
 
     // Clear the remote address.
     resp->setRemoteAddr(IOAddress("0.0.0.0"));
 
-    EXPECT_THROW(NakedDhcpv4Srv::adjustIfaceData(req, resp), isc::BadValue);
+    EXPECT_THROW(NakedDhcpv4Srv::adjustIfaceData(ex), isc::BadValue);
 }
 
 // This test verifies that the server identifier option is appended to
 // a specified DHCPv4 message and the server identifier is correct.
 TEST_F(Dhcpv4SrvTest, appendServerID) {
-    Pkt4Ptr response(new Pkt4(DHCPDISCOVER, 1234));
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+    Dhcpv4Exchange ex = createExchange(query);
+    Pkt4Ptr response = ex.getResponse();
+
     // Set a local address. It is required by the function under test
     // to create the Server Identifier option.
     response->setLocalAddr(IOAddress("192.0.3.1"));
 
     // Append the Server Identifier.
-    ASSERT_NO_THROW(NakedDhcpv4Srv::appendServerID(response));
+    ASSERT_NO_THROW(NakedDhcpv4Srv::appendServerID(ex));
 
     // Make sure that the option has been added.
     OptionPtr opt = response->getOption(DHO_DHCP_SERVER_IDENTIFIER);
@@ -783,10 +796,10 @@ TEST_F(Dhcpv4SrvTest, requestEchoClientId) {
     checkClientId(ack, clientid);
 
     CfgMgr::instance().echoClientId(false);
-    ack = srv.processDiscover(dis);
+    ack = srv.processRequest(dis);
 
     // Check if we get response at all
-    checkResponse(ack, DHCPOFFER, 1234);
+    checkResponse(ack, DHCPACK, 1234);
     checkClientId(ack, clientid);
 }
 

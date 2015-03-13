@@ -1215,6 +1215,26 @@ addressReserved(const IOAddress& address, const AllocEngine::ClientContext4& ctx
     return (false);
 }
 
+/// @brief Check if the context contains the reservation for the
+/// IPv4 address.
+///
+/// This convenience function checks if the context contains the reservation
+/// for the IPv4 address. Note that some reservations may not assign a
+/// static IPv4 address to the clients, but may rather reserve a hostname.
+/// Allocation engine should check if the existing reservation is made
+/// for the IPv4 address and if it is not, allocate the address from the
+/// dynamic pool. The allocation engine uses this function to check if
+/// the reservation is made for the IPv4 address.
+///
+/// @param ctx Client context holding the data extracted from the
+/// client's message.
+///
+/// @return true if the context contains the reservation for the IPv4 address.
+bool
+hasAddressReservation(const AllocEngine::ClientContext4& ctx) {
+    return (ctx.host_ && !ctx.host_->getIPv4Reservation().isV4Zero());
+}
+
 } // end of anonymous namespace
 
 namespace isc {
@@ -1228,7 +1248,7 @@ AllocEngine::ClientContext4::ClientContext4()
       old_lease_(), host_(), conflicting_lease_() {
 }
 
-AllocEngine::ClientContext4::ClientContext4(const SubnetPtr& subnet,
+AllocEngine::ClientContext4::ClientContext4(const Subnet4Ptr& subnet,
                                             const ClientIdPtr& clientid,
                                             const HWAddrPtr& hwaddr,
                                             const asiolink::IOAddress& requested_addr,
@@ -1284,8 +1304,6 @@ AllocEngine::allocateLease4(ClientContext4& ctx) {
             isc_throw(BadValue, "HWAddr must be defined");
         }
 
-        ctx.host_ = HostMgr::instance().get4(ctx.subnet_->getID(), ctx.hwaddr_);
-
         new_lease = ctx.fake_allocation_ ? discoverLease4(ctx) : requestLease4(ctx);
         if (!new_lease) {
             // Unable to allocate an address, return an empty lease.
@@ -1298,6 +1316,26 @@ AllocEngine::allocateLease4(ClientContext4& ctx) {
     }
 
     return (new_lease);
+}
+
+void
+AllocEngine::findReservation(ClientContext4& ctx) {
+    ctx.host_.reset();
+
+    // We can only search for the reservation if a subnet has been selected.
+    if (ctx.subnet_) {
+        // Check which host reservation mode is supported in this subnet.
+        Subnet::HRMode hr_mode = ctx.subnet_->getHostReservationMode();
+
+        // Check if there is a host reseravtion for this client. Attempt to
+        // get host information
+        if (hr_mode != Subnet::HR_DISABLED) {
+            // This method should handle the case when there is neither hwaddr
+            // nor clientid_ available and simply return NULL.
+            ctx.host_ = HostMgr::instance().get4(ctx.subnet_->getID(), ctx.hwaddr_,
+                                                 ctx.clientid_);
+        }
+    }
 }
 
 Lease4Ptr
@@ -1319,7 +1357,7 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
 
     // Check if there is a reservation for the client. If there is, we want to
     // assign the reserved address, rather than any other one.
-    if (ctx.host_) {
+    if (hasAddressReservation(ctx)) {
         // If the client doesn't have a lease or the leased address is different
         // than the reserved one then let's try to allocate the reserved address.
         // Otherwise the address that the client has is the one for which it
@@ -1418,7 +1456,7 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
             return (Lease4Ptr());
         }
 
-    } else if (ctx.host_) {
+    } else if (hasAddressReservation(ctx)) {
         // The client hasn't specified an address to allocate, so the
         // allocation engine needs to find an appropriate address.
         // If there is a reservation for the client, let's try to
@@ -1442,7 +1480,8 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
         // address it is possible that the client was offered this different
         // address because the reserved address is in use. We will have to
         // check if the address is in use.
-        if (ctx.host_ && (ctx.host_->getIPv4Reservation() != ctx.requested_address_)) {
+        if (hasAddressReservation(ctx) &&
+            (ctx.host_->getIPv4Reservation() != ctx.requested_address_)) {
             existing = LeaseMgrFactory::instance().getLease4(ctx.host_->getIPv4Reservation());
             // If the reserved address is not in use, i.e. the lease doesn't
             // exist or is expired, and the client is requesting a different
@@ -1456,7 +1495,8 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
         // The use of the out-of-pool addresses is only allowed when the requested
         // address is reserved for the client. If the address is not reserved one
         // and it doesn't belong to the dynamic pool, do not allocate it.
-        if ((!ctx.host_ || (ctx.host_->getIPv4Reservation() != ctx.requested_address_)) &&
+        if ((!hasAddressReservation(ctx) ||
+             (ctx.host_->getIPv4Reservation() != ctx.requested_address_)) &&
             !ctx.subnet_->inPool(Lease4::TYPE_V4, ctx.requested_address_)) {
             return (Lease4Ptr());
         }

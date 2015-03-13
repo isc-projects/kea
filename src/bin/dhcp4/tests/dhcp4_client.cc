@@ -64,6 +64,7 @@ Dhcp4Client::Dhcp4Client(boost::shared_ptr<NakedDhcpv4Srv> srv,
     ciaddr_(IOAddress("0.0.0.0")),
     curr_transid_(0),
     dest_addr_("255.255.255.255"),
+    fqdn_(),
     hwaddr_(generateHWAddr()),
     iface_name_("eth0"),
     relay_addr_("192.0.2.2"),
@@ -150,6 +151,8 @@ Dhcp4Client::doDiscover(const boost::shared_ptr<IOAddress>& requested_addr) {
     context_.query_ = createMsg(DHCPDISCOVER);
     // Request options if any.
     includePRL();
+    // Include FQDN or Hostname.
+    includeName();
     if (requested_addr) {
         addRequestedAddress(*requested_addr);
     }
@@ -239,6 +242,8 @@ Dhcp4Client::doRequest() {
 
     // Request options if any.
     includePRL();
+    // Include FQDN or Hostname.
+    includeName();
     // Send the message to the server.
     sendMsg(context_.query_);
     // Expect response.
@@ -246,6 +251,33 @@ Dhcp4Client::doRequest() {
     // If the server has responded, store the configuration received.
     if (context_.response_) {
         applyConfiguration();
+    }
+}
+
+void
+Dhcp4Client::includeFQDN(const uint8_t flags, const std::string& fqdn_name,
+                         Option4ClientFqdn::DomainNameType fqdn_type) {
+    fqdn_.reset(new Option4ClientFqdn(flags, Option4ClientFqdn::RCODE_CLIENT(),
+                                      fqdn_name, fqdn_type));
+}
+
+void
+Dhcp4Client::includeHostname(const std::string& name) {
+    hostname_.reset(new OptionString(Option::V4, DHO_HOST_NAME, name));
+}
+
+void
+Dhcp4Client::includeName() {
+    if (!context_.query_) {
+        isc_throw(Dhcp4ClientError, "pointer to the query must not be NULL"
+                  " when adding FQDN or Hostname option");
+    }
+
+    if (fqdn_) {
+        context_.query_->addOption(fqdn_);
+
+    } else if (hostname_) {
+        context_.query_->addOption(hostname_);
     }
 }
 
