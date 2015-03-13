@@ -64,8 +64,9 @@
       The <command>kea-lfc</command> service process removes redundant
       information from the files used to provide persistent storage for
       the memfile data base backend.  The service is written to run as
-      a stand alone process.  While it can be started externally it
-      should be started by the Kea DHCP servers as desired and required.
+      a stand alone process.  While it can be started externally, there
+      is usually no need to do this.  It will be run on a periodic basis
+      by the Kea DHCP servers.
     </para>
   </refsect1>
 
@@ -129,9 +130,9 @@
         <listitem><para>
           PID file - When the <command>kea-lfc</command> process starts
           it attempts to determine if another instance of the process is
-          already running by examining the pid file.  If one is running
-          it aborts the new process.  If one isn't running it writes its
-          pid into the pid file.
+          already running by examining the pid file.  If one is already
+          running the new process is terminated.  If one isn't running it
+          writes its pid into the pid file.
         </para></listitem>
       </varlistentry>
 
@@ -150,7 +151,7 @@
         <term><option>-i</option></term>
         <listitem><para>
           Input or copy of lease file - Before the DHCP server invokes
-          <command>kea-lfc</command> it will copy the current lease file
+          <command>kea-lfc</command> it will move the current lease file
           here and then call <command>kea-lfc</command> with this file.
         </para></listitem>
       </varlistentry>
