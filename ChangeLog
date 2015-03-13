@@ -1,3 +1,10 @@
+911.	[func]*		marcin
+	libdhcp++: the C++ objects representing network interfaces
+	(Iface objects) are now non-copyable. As a result, the API
+	of the Interface Manager functions returning the pointers
+	to the Iface objects has changed.
+	(Trac #3715, git 7415c74e38e13385a75e7200cb23b7d6ca86df7f)
+
 910.	[func]		marcin
 	DHCPv4 server supports static reservations of the hostnames
 	for the clients.
