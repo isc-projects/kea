@@ -90,10 +90,14 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
     : alloc_engine_(alloc_engine), query_(query), resp_(),
       context_(new AllocEngine::ClientContext4()) {
 
-    if (!alloc_engine_ || !query_) {
-        isc_throw(BadValue, "alloc_engine and query values must not"
-                  " be NULL when creating an instance of the"
-                  " Dhcpv4Exchange");
+    if (!alloc_engine_) {
+        isc_throw(BadValue, "alloc_engine value must not be NULL"
+                  " when creating an instance of the Dhcpv4Exchange");
+    }
+
+    if (!query_) {
+        isc_throw(BadValue, "query value must not be NULL when"
+                  " creating an instance of the Dhcpv4Exchange");
     }
 
     // Create response message.
@@ -125,6 +129,7 @@ Dhcpv4Exchange::initResponse() {
     default:
         ;
     }
+    // Only create a response if one is required.
     if (resp_type > 0) {
         resp_.reset(new Pkt4(resp_type, getQuery()->getTransid()));
         copyDefaultFields();
@@ -136,7 +141,8 @@ Dhcpv4Exchange::copyDefaultFields() {
     resp_->setIface(query_->getIface());
     resp_->setIndex(query_->getIndex());
 
-    resp_->setSiaddr(IOAddress::IPV4_ZERO_ADDRESS()); // explicitly set this to 0
+    // explicitly set this to 0
+    resp_->setSiaddr(IOAddress::IPV4_ZERO_ADDRESS());
     // ciaddr is always 0, except for the Renew/Rebind state when it may
     // be set to the ciaddr sent by the client.
     resp_->setCiaddr(IOAddress::IPV4_ZERO_ADDRESS());
@@ -653,19 +659,15 @@ Dhcpv4Srv::computeDhcid(const Lease4Ptr& lease) {
 }
 
 void
-Dhcpv4Srv::appendDefaultOptions(Dhcpv4Exchange& ex) {
-    // no-op at this time
-}
-
-void
 Dhcpv4Srv::appendServerID(Dhcpv4Exchange& ex) {
     // The source address for the outbound message should have been set already.
     // This is the address that to the best of the server's knowledge will be
     // available from the client.
     /// @todo: perhaps we should consider some more sophisticated server id
     /// generation, but for the current use cases, it should be ok.
-    ex.getResponse()->addOption(OptionPtr(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
-                                                             ex.getResponse()->getLocalAddr())));
+    OptionPtr opt_srvid(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
+                                           ex.getResponse()->getLocalAddr()));
+    ex.getResponse()->addOption(opt_srvid);
 }
 
 void
@@ -1460,8 +1462,6 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
 
     Dhcpv4Exchange ex(alloc_engine_, discover, selectSubnet(discover));
 
-    appendDefaultOptions(ex);
-
     // If DHCPDISCOVER message contains the FQDN or Hostname option, server
     // may respond to the client with the appropriate FQDN or Hostname
     // option to indicate that whether it will take responsibility for
@@ -1512,8 +1512,6 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
     /// sanityCheck(request, MANDATORY);
 
     Dhcpv4Exchange ex(alloc_engine_, request, selectSubnet(request));
-
-    appendDefaultOptions(ex);
 
     // If DHCPREQUEST message contains the FQDN or Hostname option, server
     // should respond to the client with the appropriate FQDN or Hostname
