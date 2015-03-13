@@ -706,7 +706,7 @@ Pkt6::getMACFromRemoteIdRelayOption() {
 
         // Let's get the interface this packet was received on. We need it to get
         // the hardware type.
-        Iface* iface = IfaceMgr::instance().getIface(iface_);
+        IfacePtr iface = IfaceMgr::instance().getIface(iface_);
         uint16_t hwtype = 0; // not specified
 
         // If we get the interface HW type, great! If not, let's not panic.

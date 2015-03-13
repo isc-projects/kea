@@ -224,7 +224,7 @@ PktFilterInet6::receive(const SocketInfo& socket_info) {
     pkt->setRemotePort(ntohs(from.sin6_port));
     pkt->setIndex(ifindex);
 
-    Iface* received = IfaceMgr::instance().getIface(pkt->getIndex());
+    IfacePtr received = IfaceMgr::instance().getIface(pkt->getIndex());
     if (received) {
         pkt->setIface(received->getName());
     } else {

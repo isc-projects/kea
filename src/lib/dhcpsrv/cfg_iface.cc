@@ -17,6 +17,7 @@
 #include <dhcpsrv/cfg_iface.h>
 #include <util/strutil.h>
 #include <boost/bind.hpp>
+#include <boost/foreach.hpp>
 #include <algorithm>
 
 using namespace isc::asiolink;
@@ -46,8 +47,7 @@ CfgIface::equals(const CfgIface& other) const {
 bool
 CfgIface::multipleAddressesPerInterfaceActive() const {
     const IfaceMgr::IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
-    for (IfaceMgr::IfaceCollection::const_iterator iface = ifaces.begin();
-         iface != ifaces.end(); ++iface) {
+    BOOST_FOREACH(IfacePtr iface, ifaces) {
         if (iface->countActive4() > 1) {
             return (true);
         }
@@ -88,7 +88,7 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
     if (!wildcard_used_) {
         for (IfaceSet::const_iterator iface_name = iface_set_.begin();
              iface_name != iface_set_.end(); ++iface_name) {
-            Iface* iface = IfaceMgr::instance().getIface(*iface_name);
+            IfacePtr iface = IfaceMgr::instance().getIface(*iface_name);
             // This shouldn't really happen because we are checking the
             // names of interfaces when they are being added (use()
             // function). But, if someone has triggered detection of
@@ -113,7 +113,7 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
     // for DHCPv4.
     for (ExplicitAddressMap::const_iterator unicast = address_map_.begin();
          unicast != address_map_.end(); ++unicast) {
-        Iface* iface = IfaceMgr::instance().getIface(unicast->first);
+        IfacePtr iface = IfaceMgr::instance().getIface(unicast->first);
         if (iface == NULL) {
             isc_throw(Unexpected,
                       "fail to open unicast socket on interface '"
@@ -172,20 +172,17 @@ CfgIface::reset() {
 void
 CfgIface::setState(const uint16_t family, const bool inactive,
                    const bool loopback_inactive) const {
-    IfaceMgr::IfaceCollection ifaces = IfaceMgr::instance().getIfaces();
-    for (IfaceMgr::IfaceCollection::iterator iface = ifaces.begin();
-         iface != ifaces.end(); ++iface) {
-        Iface* iface_ptr = IfaceMgr::instance().getIface(iface->getName());
-        bool iface_inactive = iface_ptr->flag_loopback_ ?
-            loopback_inactive : inactive;
+    const IfaceMgr::IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
+    BOOST_FOREACH(IfacePtr iface, ifaces) {
+        bool iface_inactive = iface->flag_loopback_ ? loopback_inactive : inactive;
         if (family == AF_INET) {
-            iface_ptr->inactive4_ = iface_inactive;
+            iface->inactive4_ = iface_inactive;
         } else {
-            iface_ptr->inactive6_ = iface_inactive;
+            iface->inactive6_ = iface_inactive;
         }
 
         // Activate/deactivate all addresses.
-        setIfaceAddrsState(family, !inactive, *iface_ptr);
+        setIfaceAddrsState(family, !inactive, *iface);
     }
 }
 
@@ -304,8 +301,8 @@ CfgIface::use(const uint16_t family, const std::string& iface_name) {
         }
 
         // Interface must exist.
-        Iface* iface = IfaceMgr::instance().getIface(name);
-        if (iface == NULL) {
+        IfacePtr iface = IfaceMgr::instance().getIface(name);
+        if (!iface) {
             isc_throw(NoSuchIface, "interface '" << name
                       << "' doesn't exist in the system");
 

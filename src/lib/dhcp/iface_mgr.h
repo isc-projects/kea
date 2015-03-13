@@ -159,7 +159,7 @@ struct SocketInfo {
 /// returned by the OS kernel when the socket is opened. Hence, it is
 /// convenient to allocate the buffer when the socket is being opened and
 /// utilze it throughout the lifetime of the socket.
-class Iface {
+class Iface : public boost::noncopyable {
 public:
 
     /// Maximum MAC address length (Infiniband uses 20 bytes)
@@ -500,6 +500,8 @@ private:
     std::vector<uint8_t> read_buffer_;
 };
 
+typedef boost::shared_ptr<Iface> IfacePtr;
+
 /// @brief This type describes the callback function invoked when error occurs
 /// in the IfaceMgr.
 ///
@@ -544,7 +546,7 @@ public:
     //      also hide it (make it public make tests easier for now)
 
     /// Type that holds a list of interfaces.
-    typedef std::list<Iface> IfaceCollection;
+    typedef std::list<IfacePtr> IfaceCollection;
 
     /// IfaceMgr is a singleton class. This method returns reference
     /// to its sole instance.
@@ -589,7 +591,7 @@ public:
     /// @return interface with requested index (or NULL if no such
     ///         interface is present)
     ///
-    Iface* getIface(int ifindex);
+    IfacePtr getIface(int ifindex);
 
     /// @brief Returns interface with specified interface name
     ///
@@ -598,7 +600,7 @@ public:
     /// @return interface with requested name (or NULL if no such
     ///         interface is present)
     ///
-    Iface* getIface(const std::string& ifname);
+    IfacePtr getIface(const std::string& ifname);
 
     /// @brief Returns container with all interfaces.
     ///
@@ -1031,7 +1033,7 @@ public:
     /// @param iface reference to Iface object.
     /// @note This function must be public because it has to be callable
     /// from unit tests.
-    void addInterface(const Iface& iface) {
+    void addInterface(const IfacePtr& iface) {
         ifaces_.push_back(iface);
     }
 
