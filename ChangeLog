@@ -1,3 +1,8 @@
+910.	[func]		marcin
+	DHCPv4 server supports static reservations of the hostnames
+	for the clients.
+	(Trac #3688, git b5c50e2aff64da05b439da8d5fa4913fc8a704ca)
+
 909.	[bug]		marcin
 	Removed many cppcheck errors in the code. Also removed the
 	dhcp-ubench test tool.
