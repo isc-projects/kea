@@ -292,13 +292,11 @@ IfaceMgr::isDirectResponseSupported() const {
 
 void
 IfaceMgr::addExternalSocket(int socketfd, SocketCallback callback) {
-    for (SocketCallbackInfoContainer::iterator s = callbacks_.begin();
-         s != callbacks_.end(); ++s) {
-
+    BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
         // There's such a socket description there already.
         // Update the callback and we're done
-        if (s->socket_ == socketfd) {
-            s->callback_ = callback;
+        if (s.socket_ == socketfd) {
+            s.callback_ = callback;
             return;
         }
     }
@@ -909,11 +907,10 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
 
     // if there are any callbacks for external sockets registered...
     if (!callbacks_.empty()) {
-        for (SocketCallbackInfoContainer::const_iterator s = callbacks_.begin();
-             s != callbacks_.end(); ++s) {
-            FD_SET(s->socket_, &sockets);
-            if (maxfd < s->socket_) {
-                maxfd = s->socket_;
+        BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
+            FD_SET(s.socket_, &sockets);
+            if (maxfd < s.socket_) {
+                maxfd = s.socket_;
             }
         }
     }
@@ -944,9 +941,8 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
     }
 
     // Let's find out which socket has the data
-    for (SocketCallbackInfoContainer::iterator s = callbacks_.begin();
-         s != callbacks_.end(); ++s) {
-        if (!FD_ISSET(s->socket_, &sockets)) {
+    BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
+        if (!FD_ISSET(s.socket_, &sockets)) {
             continue;
         }
 
@@ -955,8 +951,8 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
         // Calling the external socket's callback provides its service
         // layer access without integrating any specific features
         // in IfaceMgr
-        if (s->callback_) {
-            s->callback_();
+        if (s.callback_) {
+            s.callback_();
         }
 
         return (Pkt4Ptr());
@@ -1017,13 +1013,11 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
 
     // if there are any callbacks for external sockets registered...
     if (!callbacks_.empty()) {
-        for (SocketCallbackInfoContainer::const_iterator s = callbacks_.begin();
-             s != callbacks_.end(); ++s) {
-
+        BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
             // Add it to the set as well
-            FD_SET(s->socket_, &sockets);
-            if (maxfd < s->socket_) {
-                maxfd = s->socket_;
+            FD_SET(s.socket_, &sockets);
+            if (maxfd < s.socket_) {
+                maxfd = s.socket_;
             }
         }
     }
@@ -1054,9 +1048,8 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     }
 
     // Let's find out which socket has the data
-    for (SocketCallbackInfoContainer::iterator s = callbacks_.begin();
-         s != callbacks_.end(); ++s) {
-        if (!FD_ISSET(s->socket_, &sockets)) {
+    BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
+        if (!FD_ISSET(s.socket_, &sockets)) {
             continue;
         }
 
@@ -1065,8 +1058,8 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         // Calling the external socket's callback provides its service
         // layer access without integrating any specific features
         // in IfaceMgr
-        if (s->callback_) {
-            s->callback_();
+        if (s.callback_) {
+            s.callback_();
         }
 
         return (Pkt6Ptr());
