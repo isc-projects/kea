@@ -427,8 +427,19 @@ TEST(HostTest, setValues) {
     EXPECT_EQ("10.0.0.1", host->getIPv4Reservation().toText());
     EXPECT_EQ("other-host.example.org", host->getHostname());
 
+    // Remove IPv4 reservation.
+    host->removeIPv4Reservation();
+    EXPECT_EQ(IOAddress::IPV4_ZERO_ADDRESS(), host->getIPv4Reservation());
+
     // An IPv6 address can't be used for IPv4 reservations.
     EXPECT_THROW(host->setIPv4Reservation(IOAddress("2001:db8:1::1")),
+                 isc::BadValue);
+    // Zero address can't be set, the removeIPv4Reservation should be
+    // used intead.
+    EXPECT_THROW(host->setIPv4Reservation(IOAddress::IPV4_ZERO_ADDRESS()),
+                 isc::BadValue);
+    // Broadcast address can't be set.
+    EXPECT_THROW(host->setIPv4Reservation(IOAddress::IPV4_BCAST_ADDRESS()),
                  isc::BadValue);
 }
 

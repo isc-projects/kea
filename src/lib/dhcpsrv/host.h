@@ -337,8 +337,14 @@ public:
     ///
     /// @param address Address to be reserved for the client.
     ///
-    /// @throw isc::BadValue if the provided address is not an IPv4 address.
+    /// @throw isc::BadValue if the provided address is not an IPv4 address,
+    /// is a 0 address or broadcast address.
     void setIPv4Reservation(const asiolink::IOAddress& address);
+
+    /// @brief Removes the IPv4 reservation.
+    ///
+    /// Sets the IPv4 reserved address to 0.
+    void removeIPv4Reservation();
 
     /// @brief Returns reserved IPv4 address.
     ///

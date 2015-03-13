@@ -31,10 +31,6 @@ to establish a session with the Kea control channel.
 This debug message informs that incoming packet has been assigned to specified
 class or classes. This is a normal behavior and indicates successful operation.
 
-% DHCP4_CLASS_PROCESSING_FAILED client class specific processing failed
-This debug message means that the server processing that is unique for each
-client class has reported a failure. The response packet will not be sent.
-
 % DHCP4_CLIENT_NAME_PROC_FAIL failed to process the fqdn or hostname sent by a client: %1
 This debug message is issued when the DHCP server was unable to process the
 FQDN or Hostname option sent by a client. This is likely because the client's
@@ -77,6 +73,10 @@ change is committed by the administrator.
 % DHCP4_CONFIG_UPDATE updated configuration received: %1
 A debug message indicating that the DHCPv4 server has received an
 updated configuration from the Kea configuration system.
+
+% DHCP4_DISCOVER_CLASS_PROCESSING_FAILED client class specific processing failed for DHCPDISCOVER
+This debug message means that the server processing that is unique for each
+client class has reported a failure. The response packet will not be sent.
 
 % DHCP4_DDNS_REQUEST_SEND_FAILED failed sending a request to kea-dhcp-ddns, error: %1,  ncr: %2
 This error message indicates that DHCP4 server attempted to send a DDNS
@@ -147,6 +147,10 @@ subnet4_select hook point sets the skip flag. For this particular hook
 point, the setting of the flag instructs the server not to choose a
 subnet, an action that severely limits further processing; the server
 will be only able to offer global options - no addresses will be assigned.
+
+% DHCP4_INFORM_CLASS_PROCESSING_FAILED client class specific processing failed for DHCPINFORM
+This debug message means that the server processing that is unique for each
+client class has reported a failure. The response packet will not be sent.
 
 % DHCP4_INIT_FAIL failed to initialize Kea server: %1
 The server has failed to initialize. This may be because the configuration
@@ -348,6 +352,10 @@ that does belong to it, but the lease information was associated with
 a different hardware address. One possible reason for using different
 hardware address is that a cloned virtual machine was not updated and
 both clones use the same client-id.
+
+% DHCP4_REQUEST_CLASS_PROCESSING_FAILED client class specific processing failed for DHCPREQUEST
+This debug message means that the server processing that is unique for each
+client class has reported a failure. The response packet will not be sent.
 
 % DHCP4_RESPONSE_DATA responding with packet type %1, data is <%2>
 A debug message listing the data returned to the client.

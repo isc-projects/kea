@@ -682,7 +682,7 @@ public:
     /// new information doesn't modify the API of the allocation engine.
     struct ClientContext4 {
         /// @brief Subnet selected for the client by the server.
-        SubnetPtr subnet_;
+        Subnet4Ptr subnet_;
 
         /// @brief Client identifier from the DHCP message.
         ClientIdPtr clientid_;
@@ -748,7 +748,7 @@ public:
         /// @param fake_allocation Is this real i.e. REQUEST (false)
         ///      or just picking an address for DISCOVER that is not really
         ///      allocated (true)
-        ClientContext4(const SubnetPtr& subnet, const ClientIdPtr& clientid,
+        ClientContext4(const Subnet4Ptr& subnet, const ClientIdPtr& clientid,
                        const HWAddrPtr& hwaddr,
                        const asiolink::IOAddress& requested_addr,
                        const bool fwd_dns_update, const bool rev_dns_update,
@@ -766,6 +766,9 @@ public:
         bool myLease(const Lease4& lease) const;
 
     };
+
+    /// @brief Pointer to the @c ClientContext4.
+    typedef boost::shared_ptr<ClientContext4> ClientContext4Ptr;
 
     /// @brief Returns IPv4 lease.
     ///
@@ -865,6 +868,8 @@ public:
     /// - @ref ClientContext4::fake_allocation_ Is this real i.e. REQUEST (false)
     ///      or just picking an address for DISCOVER that is not really
     ///      allocated (true)
+    /// - @ref ClientContext4::host_ Pointer to the object representing the
+    //       static reservations (host reservations) for the client.
     /// - @ref ClientContext4::callout_handle_ A callout handle (used in hooks).
     ///      A lease callouts will be executed if this parameter is passed.
     /// - @ref ClientContext4::old_lease_ [out] Holds the pointer to a previous
@@ -873,6 +878,16 @@ public:
     ///
     /// @return Allocated IPv4 lease (or NULL if allocation failed).
     Lease4Ptr allocateLease4(ClientContext4& ctx);
+
+    /// @brief Attempts to find the host reservation for the client.
+    ///
+    /// This method attempts to find the host reservation for the client. If
+    /// found, it is set in the @c ctx.host_. If the host reservations are
+    /// disabled for the particular subnet or the reservation is not found
+    /// for the client, the @c ctx.host_ is set to NULL.
+    ///
+    /// @param ctx Client context holding various information about the client.
+    static void findReservation(ClientContext4& ctx);
 
 private:
 
@@ -1068,6 +1083,9 @@ private:
     void updateLease4Information(const Lease4Ptr& lease,
                                  ClientContext4& ctx) const;
 };
+
+/// @brief A pointer to the @c AllocEngine object.
+typedef boost::shared_ptr<AllocEngine> AllocEnginePtr;
 
 }; // namespace isc::dhcp
 }; // namespace isc
