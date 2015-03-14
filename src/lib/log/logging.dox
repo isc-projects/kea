@@ -84,7 +84,7 @@ address and a level of 70 records every update of the round-trip time.
 
 Like severities, levels are cumulative; so if level 25 is set as the
 debug level, all debug messages associated levels 0 to 25 (inclusive)
-will be output.  In fact, it is probably easier to visualise the debug
+will be output.  In fact, it is probably easier to visualize the debug
 levels as part of the severity system:
 @code
 FATAL            Most severe
@@ -268,7 +268,7 @@ blank lines are ignored.</li>
 </ul>
 
 Although there are few restriction on what can be in the message
-identifcation and text, there are a number of conventions used by Kea,
+identification and text, there are a number of conventions used by Kea,
 both in the contents of the message and in the usage.  All code
 should adhere to these:
 
@@ -331,7 +331,7 @@ message identification - appears in the Kea message manual.  It
 should:
 
 <ul>
-<li>Describe the serverity of the message (debug, informational etc.)</li>
+<li>Describe the severity of the message (debug, informational etc.)</li>
 
 <li>Expand on the text of the message.  In some cases, such as
 debug messages, the message text may provide more or less sufficient
@@ -471,7 +471,7 @@ which is in the repository - is accessed through the "top_srcdir" macro.
 
 The BUILT_SOURCES line notifies the Automake that the .h and .cc files
 need to be created before they can be used in the compilation, so
-instructs it to organse things so that the message compiler is run first.
+instructs it to organize things so that the message compiler is run first.
 
 As the .mes file is not directly included in any compilation, it will
 not be automatically copied into a distribution created through this
