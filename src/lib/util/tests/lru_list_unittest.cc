@@ -91,7 +91,7 @@ public:
 
     /// \brief Invalidate Iterator
     ///
-    /// Marks the iterator as invalid; it can oly be set valid again by a call
+    /// Marks the iterator as invalid; it can only be set valid again by a call
     /// to setLruIterator.
     virtual void invalidateIterator() {
         valid_ = false;
@@ -188,7 +188,7 @@ TEST_F(LruListTest, Constructor) {
     EXPECT_EQ(0, lru.size());
 }
 
-// Test of Get/Set the maximum number of entrys
+// Test of Get/Set the maximum number of entries
 TEST_F(LruListTest, GetSet) {
     LruList<TestEntry>  lru(100);
     EXPECT_EQ(100, lru.getMaxSize());
@@ -284,7 +284,7 @@ TEST_F(LruListTest, Touch) {
     lru.add(entry2_);
     lru.add(entry3_);
 
-    // Check the reference counts of the entrys and the list size
+    // Check the reference counts of the entries and the list size
     EXPECT_EQ(2, entry1_.use_count());
     EXPECT_EQ(2, entry2_.use_count());
     EXPECT_EQ(2, entry3_.use_count());
@@ -301,7 +301,7 @@ TEST_F(LruListTest, Touch) {
     lru.add(entry4_);
     lru.add(entry5_);
 
-    // Check the status of the entrys and the list.
+    // Check the status of the entries and the list.
     EXPECT_EQ(2, entry1_.use_count());
     EXPECT_EQ(1, entry2_.use_count());
     EXPECT_EQ(1, entry3_.use_count());
@@ -316,7 +316,7 @@ TEST_F(LruListTest, Touch) {
     // last touch operation is valid.
     lru.touch(entry1_);
 
-    // Check this by adding two more entrys and checking reference counts
+    // Check this by adding two more entries and checking reference counts
     // to see what is stored.
     lru.add(entry6_);
     lru.add(entry7_);
@@ -393,13 +393,13 @@ TEST_F(LruListTest, Clear) {
 // Miscellaneous tests - pathological conditions
 TEST_F(LruListTest, Miscellaneous) {
 
-    // Zero size list should not allow entrys to be added
+    // Zero size list should not allow entries to be added
     LruList<TestEntry> lru_1(0);
     lru_1.add(entry1_);
     EXPECT_EQ(0, lru_1.size());
     EXPECT_EQ(1, entry1_.use_count());
 
-    // Removing an uninserted entry should not affect the list.
+    // Removing a not-inserted entry should not affect the list.
     LruList<TestEntry> lru_2(100);
     lru_2.add(entry1_);
     lru_2.add(entry2_);
@@ -414,7 +414,7 @@ TEST_F(LruListTest, Miscellaneous) {
     EXPECT_EQ(1, entry5_.use_count());
     EXPECT_EQ(3, lru_2.size());
 
-    // Touching an uninserted entry should not affect the list.
+    // Touching a not-inserted entry should not affect the list.
     lru_2.touch(entry5_);
     EXPECT_EQ(2, entry1_.use_count());
     EXPECT_EQ(2, entry2_.use_count());

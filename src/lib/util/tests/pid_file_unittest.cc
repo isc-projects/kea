@@ -101,7 +101,7 @@ TEST_F(PIDFileTest, writeAndDelete) {
     // Write a second known process id
     pid_file.write(20);
 
-    // And comapre the second pid
+    // And compare the second pid
     fs.open(absolutePath(TESTNAME).c_str(), std::ifstream::in);
     fs >> pid;
     EXPECT_TRUE(fs.good());
@@ -141,7 +141,7 @@ TEST_F(PIDFileTest, pidNotInUse) {
     PIDFile pid_file(absolutePath(TESTNAME));
     int pid;
 
-    // get a pid betwen 10000 and 20000
+    // get a pid between 10000 and 20000
     pid = randomizePID(10000, 10000);
 
     // write it
@@ -152,7 +152,7 @@ TEST_F(PIDFileTest, pidNotInUse) {
         return;
     }
 
-    // get a pid betwen 40000 and 50000
+    // get a pid between 40000 and 50000
     pid = randomizePID(10000, 40000);
 
     // write it
@@ -175,7 +175,7 @@ TEST_F(PIDFileTest, pidGarbage) {
     fs << "text" << std::endl;
     fs.close();
 
-    // Run the check, we expect to get an execption
+    // Run the check, we expect to get an exception
     EXPECT_THROW(pid_file.check(), PIDCantReadPID);
 }
 

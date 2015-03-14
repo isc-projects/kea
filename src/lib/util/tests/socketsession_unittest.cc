@@ -118,7 +118,7 @@ typedef pair<const struct sockaddr*, socklen_t> SockAddrInfo;
 // A helper class to convert textual representation of IP address and port
 // to a pair of sockaddr and its length (in the form of a SockAddrInfo
 // pair).  Its get method uses getaddrinfo(3) for the conversion and stores
-// the result in the addrinfo_list_ vector until the object is destructed.
+// the result in the addrinfo_list_ vector until the object is destroyed.
 // The allocated resources will be automatically freed in an RAII manner.
 class SockAddrCreator {
 public:
@@ -338,7 +338,7 @@ protected:
     }
 
     // See below
-    void checkPushAndPop(int family, int type, int protocoal,
+    void checkPushAndPop(int family, int type, int protocol,
                          const SockAddrInfo& local,
                          const SockAddrInfo& remote, const void* const data,
                          size_t data_len, bool new_connection);

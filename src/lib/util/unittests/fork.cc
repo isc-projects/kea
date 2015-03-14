@@ -81,7 +81,7 @@ provide_input(int *read_pipe, const void *input, const size_t length)
     pid_t pid(fork());
     if (pid) { // We are in the parent
         return pid;
-    } else { // This is in the child, just puth the data there
+    } else { // This is in the child, just puts the data there
         close(pipes[0]);
         if (!write_data(pipes[1], input, length)) {
             exit(1);
