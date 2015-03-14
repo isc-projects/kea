@@ -21,7 +21,7 @@
 /// \file
 /// \brief Miscellaneous logging functions used by the unit tests.
 ///
-/// As the configuration database is unsually unavailable during unit tests,
+/// As the configuration database is usually unavailable during unit tests,
 /// the functions defined here allow a limited amount of logging configuration
 /// through the use of environment variables
 

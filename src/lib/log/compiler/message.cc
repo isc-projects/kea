@@ -195,7 +195,7 @@ sortedIdentifiers(MessageDictionary& dictionary) {
 /// The $NAMESPACE directive may well specify a namespace in the form a::b.
 /// Unfortunately, the C++ "namespace" statement can only accept a single
 /// string - to set up the namespace of "a::b" requires two statements, one
-/// for "namspace a" and the other for "namespace b".
+/// for "namespace a" and the other for "namespace b".
 ///
 /// This function returns the set of namespace components as a vector of
 /// strings.  A vector of one element, containing the empty string, is returned
@@ -252,7 +252,7 @@ writeClosingNamespace(ostream& output, const vector<string>& ns) {
 /// \brief Write python file
 ///
 /// Writes the python file containing the symbol definitions as module level
-/// constants. These are objects which register themself at creation time,
+/// constants. These are objects which register themselves at creation time,
 /// so they can be replaced by dictionary later.
 ///
 /// \param file Name of the message file. The source code is written to a file
@@ -403,8 +403,8 @@ replaceNonAlphaNum(char c) {
 /// of objects declared outside functions) gets run.)
 ///
 /// There _may_ be a problem when we come to port this to Windows.  Microsoft
-/// Visual Studio contains a "Whole Program Optimisation" option, where the
-/// optimisation is done at link-time, not compiler-time.  In this it _may_
+/// Visual Studio contains a "Whole Program Optimization" option, where the
+/// optimization is done at link-time, not compiler-time.  In this it _may_
 /// decide to remove the initializer object because of a lack of references
 /// to it.  But until BIND-10 is ported to Windows, we won't know.
 ///

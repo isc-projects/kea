@@ -118,7 +118,7 @@ public:
     ///
     /// \param elements null-terminated array of const char* alternating ID and
     /// message text.  This should be an odd number of elements long, the last
-    /// elemnent being NULL.  If it is an even number of elements long, the
+    /// element being NULL.  If it is an even number of elements long, the
     /// last ID is ignored.
     ///
     /// \return Vector of message IDs that were not loaded because an ID of the
@@ -134,7 +134,7 @@ public:
     /// \param ident Message identification
     ///
     /// \return Text associated with message or empty string if the ID is not
-    /// recognised.  (Note: this precludes an ID being associated with an empty
+    /// recognized.  (Note: this precludes an ID being associated with an empty
     /// string.)
     virtual const std::string& getText(const MessageID& ident) const {
         return(getText(boost::lexical_cast<std::string>(ident)));
@@ -148,7 +148,7 @@ public:
     /// \param ident Message identification
     ///
     /// \return Text associated with message or empty string if the ID is not
-    /// recognised.  (Note: this precludes an ID being associated with an empty
+    /// recognized.  (Note: this precludes an ID being associated with an empty
     /// string.)
     virtual const std::string& getText(const std::string& ident) const;
 

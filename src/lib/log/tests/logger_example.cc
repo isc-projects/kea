@@ -65,7 +65,7 @@ void usage() {
 "    -l logger      Give the name of the logger to which the following\n"
 "                   output specifications will apply.\n"
 "\n"
-"Each logger is followed by the indication of the serverity it is logging\n"
+"Each logger is followed by the indication of the severity it is logging\n"
 "and, if applicable, its debug level:\n"
 "\n"
 "   -d dbglevel     Debug level.  Only interpreted if the severity is 'debug'\n"
@@ -158,7 +158,7 @@ int main(int argc, char** argv) {
                 cur_opt.stream = OutputOption::STR_STDERR;
 
             } else {
-                cerr << "Unrecognised console option: " << optarg << "\n";
+                cerr << "Unrecognized console option: " << optarg << "\n";
                 return (1);
             }
             break;
@@ -259,7 +259,7 @@ int main(int argc, char** argv) {
 
 
         default:
-            std::cerr << "Unrecognised option: " <<
+            std::cerr << "Unrecognized option: " <<
                 static_cast<char>(option) << "\n";
             return (1);
         }
