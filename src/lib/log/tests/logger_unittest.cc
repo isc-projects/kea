@@ -247,7 +247,7 @@ TEST_F(LoggerTest, EffectiveSeverityInheritance) {
     EXPECT_EQ(isc::log::INFO, parent.getEffectiveSeverity());
     EXPECT_EQ(isc::log::INFO, child.getEffectiveSeverity());
 
-    // Change the parwnt's severity and check it is reflects in the child.
+    // Change the parent's severity and check it is reflects in the child.
     parent.setSeverity(isc::log::WARN);
     EXPECT_EQ(isc::log::WARN, parent.getEffectiveSeverity());
     EXPECT_EQ(isc::log::WARN, child.getEffectiveSeverity());

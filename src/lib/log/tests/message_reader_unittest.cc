@@ -97,7 +97,7 @@ processLineException(MessageReader& reader, const char* what,
     }
 }
 
-// Check that it recognises invalid directives
+// Check that it recognizes invalid directives
 
 TEST_F(MessageReaderTest, InvalidDirectives) {
 
@@ -170,7 +170,7 @@ TEST_F(MessageReaderTest, Namespace) {
     EXPECT_NO_THROW(reader_.processLine("$NAMESPACE isc::log"));
     EXPECT_EQ(string("isc::log"), reader_.getNamespace());
 
-    // Check that the indication of the anonymous namespace will be recognised.
+    // Check that the indication of the anonymous namespace will be recognized.
     reader_.clearNamespace();
     EXPECT_NO_THROW(reader_.processLine("$NAMESPACE ::"));
     EXPECT_EQ(string("::"), reader_.getNamespace());

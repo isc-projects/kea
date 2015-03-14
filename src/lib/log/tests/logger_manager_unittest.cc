@@ -72,7 +72,7 @@ public:
         option.destination = OutputOption::DEST_FILE;
         option.filename = name_;
 
-        // Set target output to the file logger.  The defauls indicate
+        // Set target output to the file logger.  The defaults indicate
         // INFO severity.
         spec_.setName(logname_);
         spec_.addOutputOption(option);
