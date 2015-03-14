@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+<!ENTITY mdash  "&#x2014;" >
+]>
+
+  <chapter id="kea-lfc">
+    <title>The LFC process</title>
+
+    <section id="kea-lfc-overview">
+      <title>Overview</title>
+      <para><command>kea-lfc</command> is a service process that removes
+      redundant infomation from the files used to provide persistent storage
+      for the memfile data base backend. This service is written to run as a
+      stand alone process.  
+      </para>
+      <para>While <command>kea-lfc</command> can be started externally, there is
+      usually no need to do this.  <command>kea-lfc</command> is run on a periodic
+      basis by the Kea DHCP servers.
+      </para>
+      <para>The process operates on a set of files, using them for input and output
+      of the lease entries and to indicate where it is in the process in case of an
+      interruption.  Currently the caller must supply names for all of the files, in
+      the future this requirement may be relaxed with the process getting the names
+      from either the config file or from defaults.
+      </para>
+    </section>
+
+    <section id="kea-lfc-usage">
+      <title>Command Line Options</title>
+      <para><command>kea-lfc</command> is run as follows:
+<screen>
+kea-lfc [-4 | -6] -c config-file -p pid-file -x previous-file -i copy-file -o output-file -f finish-file
+</screen>
+      </para>
+
+      <para>The argument <command>-4</command> or <command>-6</command> selects the protocol
+      version of the lease files.
+      </para>
+
+      <para>The <command>-c</command> argument specifies the configuration file.  This is
+      required, but not currently used by the process.
+      </para>
+
+      <para>The <command>-p</command> argument specifies the PID file. When the
+      <command>kea-lfc</command> process starts it attempts to determine if another
+      instance of the process is already running by examining the pid file.  If one
+      is already running the new process is terminated.  If one isn't running it writes
+      its pid into the pid file.
+      </para>
+
+      <para>The other filenames specify where the <command>kea-lfc</command> process
+      should look for input, write its output and use for bookkeeping.
+
+        <itemizedlist>
+          <listitem><simpara>
+            <command>previous</command> &mdash;
+            When <command>kea-lfc</command> starts this
+            is the result of any previous run of <command>kea-lfc</command>.
+            When <command>kea-lfc</command> finishes it is the result of this run.
+            If <command>kea-lfc</command> is interrupted before compelting
+            this file may not exist.
+          </simpara></listitem>
+
+          <listitem><simpara>
+            <command>input</command> &mdash;
+            Before the DHCP server invokes <command>kea-lfc</command> it will
+            move the current lease file here and then call <command>kea-lfc</command>
+            with this file.
+          </simpara></listitem>
+
+          <listitem><simpara>
+            <command>output</command> &mdash;
+            The temporary file <command>kea-lfc</command> should use to write the leases.
+            Upon completion of writing this this file it will be moved to the finish file
+           (see below).
+          </simpara></listitem>
+
+          <listitem><simpara>
+            <command>finish</command> &mdash;
+            Another temporary file <command>kea-lfc</command> uses for bookkeeping.  When
+            <command>kea-lfc</command> completes writing the outputfile it moves it to this
+            file name.  After <command>kea-lfc</command> finishes deleting the other files
+            (previous and input) it moves this file to previous lease file.  By moving the
+            files in this fashion the <command>kea-lfc</command> and the DHCP server
+            processes can determine the correct file to use even if one of the
+            processes was interrupted before completing its task.
+          </simpara></listitem>
+
+        </itemizedlist>
+      </para>
+
+      <para>There are several additional arguments mostly for debugging purposes.
+      <command>-d</command> Sets the logging level to debug. <command>-v</command> and
+      <command>-V</command> print out version stamps with <command>-V</command> providing
+      a longer form.  <command>-h</command> prints out the usage string.
+      </para>
+
+    </section>
+  </chapter>

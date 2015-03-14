@@ -1,0 +1,88 @@
+// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+/**
+ @page lfc Lease File Cleanup Component
+
+The Lease File Cleanup component (kea-lfc) is a service process that removes redundant
+information from the files used to provide persistent storage for the memfile data base
+backend.
+
+When using the memfile database backend Kea servers store persistent lease information
+in lease files.  They add new lease information to the file by appending it to the end
+of the file.  In a typical lease file you might find several instances of the same lease,
+one for each time the client acquired or renewed the lease.  In order to remove this
+redundant information and to keep the lease files from growing without bound the
+Kea servers will periodically run kea-lfc.  This process will read the leases from
+the lease files and keep only the most recent instance of each lease.  When it finishes
+reading the leases it will write the unique leases to the output file.
+
+The design documentation for kea-lfc can be found here:
+<a href="http://kea.isc.org/wiki/LFCDesign"> LFC Design</a>
+
+While kea-lfc can be started externally, there is usually no need to do this as the
+Kea servers will run it on a periodic basis.
+
+@section lfcProcessing Processing
+kea-lfc operates on a set of files, using them for input and output
+of the lease entries and to indicate where it is in the process in case of an
+interruption.  Currently the caller must supply names for all of the files, in
+the future this requirement may be relaxed with the process getting the names
+from either the config file or from defaults.
+
+kea-lfc is built on the isc::lfc::LFCController class.  Effectively this provides
+a single external routine, isc::lfc::LFCController::launch, which is called with
+the arguments from the command line and proceeds to parse the arguments and
+then process the lease files.
+
+It uses isc::util::PIDFile to manipulate a PID file to mediate access to the
+leases.  When a new process is started it will check the PID file.  If the
+PID file exists and a process with that ID is still running already the new
+process will be terminated.  If no other process is running the PID of the
+new process is written to the file.
+
+It uses the isc::dhcp::LeaseFileLoader class to first read all of the leases
+into either isc::dhcp::Lease6Storage or isc::dhcp::Lease4Storage containers.
+The leases are read in the order they were written to the file and younger leases
+overwrite older leases for the same address.  When the process finishes reading
+the lease files there will be a single lease entry for each address used.  At
+this point the process again uses the isc::dhcp::LeaseFileLoader class to write
+an entry for each remaining lease into the output file.
+
+Lastly kea-lfc moves the files to indicate completion (see below) and removes
+the extra files then exits.
+
+@section lfcFiles File Manipulation
+
+This section is intended to provide a brief overview of how kea-lfc uses its
+files.  For a more in depth discussion of the design see
+<a href="http://kea.isc.org/wiki/LFCDesign"> LFC Design</a>
+
+There are four files used during the kea-lfc process: previous, input, output
+and finish.  They are used to both hold the leases and to indicate to the Kea
+servers and to other instances of kea-lfc what processing has been completed.
+
+The previous file is the result of a previous run of the kea-lfc process.
+
+The input (or copy) file is created by the kea server just before invoking
+the kea-lfc process.  The kea server will move it's current lease file to
+the input file and then start using a new current file.
+
+The output file is created by kea-lfc as it writes the leases to a file.  When
+kea-lfc finishes writing all the leases to the output file it renames the output
+file to be the finish file.  It then removes the previous and input files and
+renames the finish file to be the previous file.
+
+*/
+

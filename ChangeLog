@@ -1,3 +1,8 @@
+912.	[doc]		sar
+	Added sections on LFC to the administrators and developers
+	guides.
+	(Trac #3720, git )
+
 911.	[func]*		marcin
 	libdhcp++: the C++ objects representing network interfaces
 	(Iface objects) are now non-copyable. As a result, the API
