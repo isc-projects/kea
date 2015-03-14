@@ -43,7 +43,7 @@ from either the config file or from defaults.
 
 kea-lfc is built on the isc::lfc::LFCController class.  Effectively this provides
 a single external routine, isc::lfc::LFCController::launch, which is called with
-the arguments fromt the command line and proceeds to parse the arguments and
+the arguments from the command line and proceeds to parse the arguments and
 then process the lease files.
 
 It uses isc::util::PIDFile to manipulate a PID file to mediate access to the

@@ -1,3 +1,8 @@
+xxx.	[doc]		sar
+	Added sections on LFC to the administrators and developers
+	guides.
+	(Trac #3720, git )
+
 907.	[doc]		tmark
 	Corrected depictions of kea-admin command line options for
 	database-name in Kea Administrator Reference. Prior to this
