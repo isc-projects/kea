@@ -58,7 +58,7 @@ trim(const string& instring) {
     return (retstring);
 }
 
-// Tokenise string.  As noted in the header, this is locally written to avoid
+// Tokenize string.  As noted in the header, this is locally written to avoid
 // another dependency on a Boost library.
 
 vector<string>

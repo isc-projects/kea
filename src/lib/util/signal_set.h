@@ -180,11 +180,11 @@ public:
     /// invoke the registered handler (if one) immediately upon receipt of
     /// a registered signal.
     ///
-    /// Prior to invoking the handler, it sets signal action for the given
-    /// signal to SIG_IGN which prevents any repeat signal occurrences from
-    /// queuing while the handler is executing.  Upon completion of the handler,
-    /// the signal action is restored which reenables receipt and handling of
-    /// the signal.
+    /// Prior to invoking the handler, it sets signal action for the
+    /// given signal to SIG_IGN which prevents any repeat signal
+    /// occurrences from queuing while the handler is executing.  Upon
+    /// completion of the handler, the signal action is restored which
+    /// re-enables receipt and handling of the signal.
     ///
     /// @param sig Signal number.
     /// @return Boolean false if no on-receipt handler was registered,

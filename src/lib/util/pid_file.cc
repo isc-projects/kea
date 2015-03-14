@@ -45,7 +45,7 @@ PIDFile::check() const {
     good = fs.good();
     fs.close();
 
-    // If we weren't able to read a pid send back an execption
+    // If we weren't able to read a pid send back an exception
     if (!good) {
         isc_throw(PIDCantReadPID, "Unable to read PID from file '"
                   << filename_ << "'");

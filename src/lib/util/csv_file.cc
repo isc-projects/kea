@@ -141,7 +141,7 @@ CSVFile::append(const CSVRow& row) const {
                   " columns in the CSV file '" << getColumnCount() << "'");
     }
 
-    /// @todo Apparently, seekp and seekg are interchangable. A call to seekp
+    /// @todo Apparently, seekp and seekg are interchangeable. A call to seekp
     /// results in moving the input pointer too. This is ok for now. It means
     /// that when the append() is called, the read pointer is moved to the EOF.
     /// For the current use cases we only read a file and then append a new
@@ -223,7 +223,7 @@ CSVFile::getColumnName(const size_t col_index) const {
 
 bool
 CSVFile::next(CSVRow& row, const bool skip_validation) {
-    // Set somethings as row validation error. Although, we haven't started
+    // Set something as row validation error. Although, we haven't started
     // actual row validation we should get rid of any previously recorded
     // errors so as the caller doesn't interpret them as the current one.
     setReadMsg("validation not started");
@@ -273,13 +273,13 @@ CSVFile::open(const bool seek_to_end) {
         // Catch exceptions so as we can close the file if error occurs.
         try {
             // The file may fail to open. For example, because of insufficient
-            // persmissions. Although the file is not open we should call close
+            // permissions. Although the file is not open we should call close
             // to reset our internal pointer.
             if (!fs_->is_open()) {
                 isc_throw(CSVFileError, "unable to open '" << filename_ << "'");
             }
-            // Make sure we are on the beginning of the file, so as we can parse
-            // the header.
+            // Make sure we are on the beginning of the file, so as we
+            // can parse the header.
             fs_->seekg(0);
             if (!fs_->good()) {
                 isc_throw(CSVFileError, "unable to set read pointer in the file '"
@@ -344,7 +344,7 @@ CSVFile::recreate() {
         close();
         isc_throw(CSVFileError, "unable to open '" << filename_ << "'");
     }
-    // Opened successfuly. Write a header to it.
+    // Opened successfully. Write a header to it.
     try {
         CSVRow header(getColumnCount());
         for (int i = 0; i < getColumnCount(); ++i) {

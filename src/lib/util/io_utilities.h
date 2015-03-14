@@ -48,7 +48,7 @@ readUint16(const void* buffer, size_t length) {
     return (result);
 }
 
-/// \brief Write Unisgned 16-Bit Integer to Buffer
+/// \brief Write Unsigned 16-Bit Integer to Buffer
 ///
 /// This is essentially a copy of isc::util::OutputBuffer::writeUint16.  It
 /// should really be moved into a separate library.
@@ -101,7 +101,7 @@ readUint32(const uint8_t* buffer, size_t length) {
     return (result);
 }
 
-/// \brief Write Unisgned 32-Bit Integer to Buffer
+/// \brief Write Unsigned 32-Bit Integer to Buffer
 ///
 /// \param value 32-bit value to convert
 /// \param buffer Data buffer at least four bytes long into which the 32-bit

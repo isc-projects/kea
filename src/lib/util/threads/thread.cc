@@ -74,7 +74,7 @@ public:
             impl->exception_text_ = e.what();
         } catch (...) {
             impl->exception_ = true;
-            impl->exception_text_ = "Uknown exception";
+            impl->exception_text_ = "Unknown exception";
         }
         done(impl);
         return (NULL);

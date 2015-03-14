@@ -126,7 +126,7 @@ SignalSet::invokeOnReceiptHandler(int sig) {
                   << sig << ": " << ex.what());
     }
 
-    // Restore the sig action to reenable handling this signal.
+    // Restore the sig action to re-enable handling this signal.
     if (sigaction(sig, &prev_sa, 0) < 0) {
         // Highly unlikely we can get here.
         const char* errmsg = strerror(errno);
