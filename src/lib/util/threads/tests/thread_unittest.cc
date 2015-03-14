@@ -23,7 +23,7 @@
 // started, but we at least check the function is run and exceptions are
 // propagated as they should.
 //
-// We run some tests mutiple times to see if there happen to be a race
+// We run some tests multiple times to see if there happen to be a race
 // condition (then it would have better chance showing up).
 //
 // The detached tests are not run as many times to prevent many threads being

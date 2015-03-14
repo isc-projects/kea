@@ -182,7 +182,7 @@ TEST_F(BufferTest, outputBufferTrim) {
     EXPECT_THROW(obuffer.trim(3), OutOfRange);
 }
 
-TEST_F(BufferTest, outputBufferReadat) {
+TEST_F(BufferTest, outputBufferReadAt) {
     obuffer.writeData(testdata, sizeof(testdata));
     for (int i = 0; i < sizeof(testdata); i ++) {
         EXPECT_EQ(testdata[i], obuffer[i]);

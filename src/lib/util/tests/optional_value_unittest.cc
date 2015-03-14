@@ -80,7 +80,7 @@ TEST(OptionalValueTest, specifyValue) {
     ASSERT_TRUE(value.isSpecified());
 }
 
-// This test checks if the assignment operator assignining an actual
+// This test checks if the assignment operator assigning an actual
 // value to the optional value works as expected.
 TEST(OptionalValueTest, assignValue) {
     OptionalValue<int> value(10);
