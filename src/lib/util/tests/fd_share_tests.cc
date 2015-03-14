@@ -39,7 +39,7 @@ TEST(FDShare, transfer) {
         const pid_t sender(fork());
         ASSERT_NE(-1, sender);
         if (sender) { // We are in parent
-            // Close the other side of pipe, we want only writible one
+            // Close the other side of pipe, we want only writable one
             EXPECT_NE(-1, close(pipes[0]));
             // Get a process to check data
             int fd(0);

@@ -415,7 +415,7 @@ TEST_F(CSVFileTest, recreate) {
 TEST_F(CSVFileTest, validate) {
     // Create CSV file with 2 invalid rows in it: one too long, one too short.
     // Apart from that, there are two valid columns that should be read
-    // successfuly.
+    // successfully.
     writeFile("animal,age,color\n"
               "cat,10,white\n"
               "lion,15,yellow,black\n"
