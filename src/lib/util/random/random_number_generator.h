@@ -97,7 +97,7 @@ class WeightedRandomIntegerGenerator {
 public:
     /// \brief Constructor
     ///
-    /// \param probabilities The probabies for all the integers, the probability must be 
+    /// \param probabilities The probabilities for all the integers, the probability must be 
     /// between 0 and 1.0, the sum of probabilities must be equal to 1.
     /// For example, if the probabilities contains the following values:
     /// 0.5 0.3 0.2, the 1st integer will be generated more frequently than the
@@ -129,7 +129,7 @@ public:
     /// \brief Reset the probabilities
     ///
     /// Change the weights of each integers
-    /// \param probabilities The probabies for all the integers
+    /// \param probabilities The probabilities for all the integers
     /// \param min The minimum integer that generated
     void reset(const std::vector<double>& probabilities, size_t min = 0)
     {
