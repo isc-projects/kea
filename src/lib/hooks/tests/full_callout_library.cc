@@ -91,7 +91,7 @@ hook_nonstandard_two(CalloutHandle& handle) {
     return (0);
 }
 
-// Final callout multplies the current running total by data_3.
+// Final callout multiplies the current running total by data_3.
 
 static int
 hook_nonstandard_three(CalloutHandle& handle) {
