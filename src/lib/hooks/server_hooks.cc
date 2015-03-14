@@ -111,7 +111,7 @@ ServerHooks::getName(int index) const {
     // Get iterator to matching element.
     InverseHookCollection::const_iterator i = inverse_hooks_.find(index);
     if (i == inverse_hooks_.end()) {
-        isc_throw(NoSuchHook, "hook index " << index << " is not recognised");
+        isc_throw(NoSuchHook, "hook index " << index << " is not recognized");
     }
 
     return (i->second);
@@ -125,7 +125,7 @@ ServerHooks::getIndex(const string& name) const {
     // Get iterator to matching element.
     HookCollection::const_iterator i = hooks_.find(name);
     if (i == hooks_.end()) {
-        isc_throw(NoSuchHook, "hook name " << name << " is not recognised");
+        isc_throw(NoSuchHook, "hook name " << name << " is not recognized");
     }
 
     return (i->second);

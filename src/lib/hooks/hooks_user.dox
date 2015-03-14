@@ -50,7 +50,7 @@ to as "user code".)  At specific points in its processing
 data that the user code can examine and, if required, modify.
 Kea uses the modified data in the remainder of its processing.
 
-In order to minimise the interaction between Kea and the user
+In order to minimize the interaction between Kea and the user
 code, the latter is built independently of Kea in the form of
 a shared library (or libraries).  These are made known to Kea
 through its configuration mechanism, and Kea loads the library at
@@ -420,7 +420,7 @@ later in the list are able to examine (and modify) the settings of earlier ones.
 
 @subsubsection hooksdgCalloutContext Per-Request Context
 
-Although the Kea modules can be characterised as handling a single
+Although the Kea modules can be characterized as handling a single
 packet at a time - e.g. the DHCPv4 server receives a DHCPDISCOVER packet,
 processes it and responds with an DHCPOFFER, this may not always be true.
 Future developments may have the server processing multiple packets
@@ -578,8 +578,8 @@ int pkt4_send(CalloutHandle& handle) {
 
 @subsection hooksdgBuild Building the Library
 
-Building the code requires building a shareable library.  This requires
-the the code be compiled as positition-independent code (using the
+Building the code requires building a sharable library.  This requires
+the the code be compiled as position-independent code (using the
 compiler's "-fpic" switch) and linked as a shared library (with the
 linker's "-shared" switch).  The build command also needs to point to
 the Kea include directory and link in the appropriate libraries.
@@ -765,7 +765,7 @@ int pkt4_receive(CalloutHandle& handle) {
     si->setSomething(...);
 
     // The pointed-to information has been updated but the pointer has not
-    // altered, so theree is no need to reset the context.
+    // altered, so there is no need to reset the context.
 }
 
 // No context_destroy callout is needed to delete the allocated
@@ -860,7 +860,7 @@ registered.  The same CalloutHandle is passed between them, so any
 change made to the CalloutHandle's arguments, "skip" flag, or per-request
 context by the first is visible to the second.
 
-@subsubsection hooksdgDynamicRegistration Dynamic Registration and Reregistration of Callouts
+@subsubsection hooksdgDynamicRegistration Dynamic Registration and Re-registration of Callouts
 
 The previous sections have dealt with callouts being registered during
 the call to "load".  The hooks framework is more flexible than that

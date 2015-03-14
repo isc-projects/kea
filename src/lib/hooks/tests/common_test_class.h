@@ -67,7 +67,7 @@ public:
     /// operation on it and r0 yielding a result r1.  Hence we can say that
     /// @f[ r1 = hookpt_one(r0, d1) @f]
     ///
-    /// Callout hookpt_two is passed a value d2 and peforms another simple
+    /// Callout hookpt_two is passed a value d2 and performs another simple
     /// arithmetic operation on it and d2, yielding r2, i.e.
     /// @f[ r2 = hookpt_two(d1, d2) @f]
     ///
@@ -96,7 +96,7 @@ public:
     void executeCallCallouts(
             const boost::shared_ptr<isc::hooks::CalloutManager>& manager,
             int r0, int d1, int r1, int d2, int r2, int d3, int r3) {
-        static const char* COMMON_TEXT = " callout returned the wong value";
+        static const char* COMMON_TEXT = " callout returned the wrong value";
         static const char* RESULT = "result";
 
         int result;
