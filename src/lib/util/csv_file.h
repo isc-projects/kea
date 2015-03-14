@@ -238,13 +238,13 @@ private:
 
     /// @brief Check if the specified index of the value is in range.
     ///
-    /// This function is used interally by other functions.
+    /// This function is used internally by other functions.
     ///
     /// @param at Value index.
     /// @throw CSVFileError if specified index is not in range.
     void checkIndex(const size_t at) const;
 
-    /// @brief Separator character specifed in the constructor.
+    /// @brief Separator character specified in the constructor.
     ///
     /// @note Separator is held as a string object (one character long),
     /// because the boost::is_any_of algorithm requires a string, not a
@@ -277,7 +277,7 @@ std::ostream& operator<<(std::ostream& os, const CSVRow& row);
 /// - @c recreate - removes existing file and creates a new one.
 ///
 /// When the file is opened its header file is parsed and column names are
-/// idenetified. At this point it is already possible to get the list of the
+/// identified. At this point it is already possible to get the list of the
 /// column names using appropriate accessors. The data rows are not parsed
 /// at this time. The row parsing is triggered by calling @c next function.
 /// The result of parsing a row is stored in the @c CSVRow object passed as
@@ -313,7 +313,7 @@ public:
     ///
     /// @param Object representing a CSV file row.
     ///
-    /// @throw CSVFileError When error occured during IO operation or if the
+    /// @throw CSVFileError When error occurred during IO operation or if the
     /// size of the row doesn't match the number of columns.
     void append(const CSVRow& row) const;
 
@@ -388,7 +388,7 @@ public:
     /// By default, the data pointer in the file is set to the beginning of
     /// the first row. In order to retrieve the row contents the @c next
     /// function should be called. If a @c seek_to_end parameter is set to
-    /// true, the file will be opened and the interal pointer will be set
+    /// true, the file will be opened and the internal pointer will be set
     /// to the end of file.
     ///
     /// @param seek_to_end A boolean value which indicates if the intput and

@@ -452,7 +452,7 @@ public:
     ///
     /// The returned SocketSession object is valid only until the next time
     /// this method is called or until the \c SocketSessionReceiver object is
-    /// destructed.
+    /// destroyed.
     ///
     /// The caller is responsible for closing the received socket (whose
     /// file descriptor is accessible via \c SocketSession::getSocket()).

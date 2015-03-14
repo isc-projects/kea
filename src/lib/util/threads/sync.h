@@ -28,7 +28,7 @@ class CondVar;
 
 /// \brief Mutex with very simple interface
 ///
-/// Since mutexes are very system dependant, we create our own wrapper around
+/// Since mutexes are very system dependent, we create our own wrapper around
 /// whatever is available on the system and hide it.
 ///
 /// To use this mutex, create it and then lock and unlock it by creating the
@@ -38,11 +38,11 @@ class CondVar;
 /// operation with it. We convert many errors to the isc::InvalidOperation,
 /// since the errors usually happen only when used in a wrong way. Any methods
 /// or constructors in this class can throw. Allocation errors are converted
-/// to std::bad_alloc (for example when OS-dependant limit of mutexes is
+/// to std::bad_alloc (for example when OS-dependent limit of mutexes is
 /// exceeded). Some errors which usually mean a programmer error abort the
 /// program, since there could be no safe way to recover from them.
 ///
-/// The current interface is somewhat minimalistic. If we ever need more, we
+/// The current interface is somewhat minimalist. If we ever need more, we
 /// can add it later.
 class Mutex : boost::noncopyable {
 public:
@@ -121,7 +121,7 @@ public:
     /// \brief If the mutex is currently locked
     ///
     /// This is debug aiding method only. And it might be unavailable in
-    /// non-debug build (because keeping the state might be needlesly
+    /// non-debug build (because keeping the state might be needlessly
     /// slow).
     ///
     /// \todo Disable in non-debug build

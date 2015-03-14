@@ -41,10 +41,10 @@ public:
 
 /// \brief Normalize Backslash
 ///
-/// Only relevant to Windows, this replaces all "\" in a string with "/" and
-/// returns the result.  On other systems it is a no-op.  Note that Windows does
-/// recognise file names with the "\" replaced by "/" (at least in system calls,
-/// if not the command line).
+/// Only relevant to Windows, this replaces all "\" in a string with "/"
+/// and returns the result.  On other systems it is a no-op.  Note
+/// that Windows does recognize file names with the "\" replaced by "/"
+/// (at least in system calls, if not the command line).
 ///
 /// \param name Name to be substituted
 void normalizeSlash(std::string& name);
