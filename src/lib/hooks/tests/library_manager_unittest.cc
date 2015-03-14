@@ -376,7 +376,7 @@ TEST_F(LibraryManagerTest, CheckUnloadException) {
 }
 
 // Check that the case of the library's unload() function returning a
-// success is handled correcty.
+// success is handled correctly.
 
 TEST_F(LibraryManagerTest, CheckUnload) {
 

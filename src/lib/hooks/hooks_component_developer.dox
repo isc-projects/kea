@@ -39,7 +39,7 @@ In the remainder of this guide, the following terminology is used:
 
 - Component - a Kea process, e.g. the DHCPv4 or DHCPv6 server.
 
-- Hook/Hook Point - used interchageably, this is a point in the code at
+- Hook/Hook Point - used interchangeably, this is a point in the code at
 which a call to user-written functions is made. Each hook has a name and
 each hook can have any number (including 0) of user-written functions
 attached to it.
@@ -86,7 +86,7 @@ component.
 
 The following sections will describe these tasks in more detail.
 
-@section hooksComponentDefinition Determing the Hook Points
+@section hooksComponentDefinition Determining the Hook Points
 
 Before any other action takes place, the location of the hook points
 in the code need to be determined.  This of course depends on the
@@ -96,7 +96,7 @@ affect processing.  Typically this means at the start or end of a major
 step in the processing of a request, at a point where either useful
 information can be passed to a callout and/or the callout can affect
 the processing of the component. The latter is achieved in either or both
-of the following eays:
+of the following ways:
 
 - Setting the "skip" flag.  This is a boolean flag that the callout can set
   and is a quick way of passing information back to the component.  It is used
@@ -460,7 +460,7 @@ the libraries, then resuming processing.
 Previous sections have discussed callout registration by user libraries.
 It is possible for a component to register its own functions (i.e. within
 its own address space) as hook callouts.  These functions are called
-in eactly the same way as user callouts, being passed their arguments
+in exactly the same way as user callouts, being passed their arguments
 though a CalloutHandle object.  (Guidelines for writing callouts can be
 found in @ref hooksdgDevelopersGuide.)
 

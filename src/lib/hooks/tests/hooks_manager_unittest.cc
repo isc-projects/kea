@@ -62,7 +62,7 @@ public:
     ///        the order they are used.
     void executeCallCallouts(int r0, int d1, int r1, int d2, int r2, int d3,
                              int r3) {
-        static const char* COMMON_TEXT = " callout returned the wong value";
+        static const char* COMMON_TEXT = " callout returned the wrong value";
         static const char* RESULT = "result";
 
         // Get a CalloutHandle for the calculation.
@@ -171,7 +171,7 @@ TEST_F(HooksManagerTest, CalloutHandleUnloadLibrary) {
     // Load the libraries.
     EXPECT_TRUE(HooksManager::loadLibraries(library_names));
 
-    // Execute the callouts.  Thiis library implements:
+    // Execute the callouts.  This library implements:
     //
     // r3 = (7 * d1 - d2) * d3
     {
@@ -205,7 +205,7 @@ TEST_F(HooksManagerTest, CalloutHandleLoadLibrary) {
     // Load the libraries.
     EXPECT_TRUE(HooksManager::loadLibraries(library_names));
 
-    // Execute the callouts.  Thiis library implements:
+    // Execute the callouts.  This library implements:
     //
     // r3 = (7 * d1 - d2) * d3
     {
