@@ -77,7 +77,7 @@ public:
         EVP_DigestInit_ex(md_.get(), algo, NULL);
     }
 
-    /// @brief Destrucotr
+    /// @brief Destructor
     ~HashImpl() {
         if (md_) {
             EVP_MD_CTX_cleanup(md_.get());
