@@ -395,7 +395,7 @@ TEST_F(MemfileLeaseMgrTest, lfcTimerDisabled) {
     EXPECT_EQ(0, lease_mgr->getLFCCount());
 }
 
-// This test that the callback function executing the cleanup of the
+// This test checks that the callback function executing the cleanup of the
 // DHCPv4 lease file works as expected.
 TEST_F(MemfileLeaseMgrTest, leaseFileCleanup4) {
     // This string contains the lease file header, which matches
@@ -470,7 +470,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup4) {
     EXPECT_EQ(result_file_contents, input_file.readFile());
 }
 
-// This test that the callback function executing the cleanup of the
+// This test checks that the callback function executing the cleanup of the
 // DHCPv6 lease file works as expected.
 TEST_F(MemfileLeaseMgrTest, leaseFileCleanup6) {
     // This string contains the lease file header, which matches
@@ -594,6 +594,135 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanupStartFail) {
         << "Executing the LFC process failed: make sure that"
         " the kea-lfc program has been compiled.";
 }
+
+// This test checks that the callback function executing the cleanup of the
+// files doesn't move the current file if the finish file exists
+TEST_F(MemfileLeaseMgrTest, leaseFileFinish) {
+    // This string contains the lease file header, which matches
+    // the contents of the new file in which no leases have been
+    // stored.
+    std::string new_file_contents =
+        "address,duid,valid_lifetime,expire,subnet_id,"
+        "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
+        "fqdn_rev,hostname,hwaddr\n";
+
+    // This string contains the contents of the current lease file.
+    // It should not be moved.
+    std::string current_file_contents = new_file_contents +
+        "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,200,"
+        "8,100,0,7,0,1,1,,\n"
+        "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,800,"
+        "8,100,0,7,0,1,1,,\n";
+    LeaseFileIO current_file(getLeaseFilePath("leasefile6_0.csv"));
+    current_file.writeFile(current_file_contents);
+
+    // This string contains the contents of the finish file.  It should
+    // be moved to the previous file.
+    std::string finish_file_contents = new_file_contents +
+        "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,800,"
+        "8,100,0,7,0,1,1,,\n";
+    LeaseFileIO finish_file(getLeaseFilePath("leasefile6_0.csv.completed"));
+    finish_file.writeFile(finish_file_contents);
+
+    // Create the backend.
+    LeaseMgr::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "6";
+    pmap["name"] = getLeaseFilePath("leasefile6_0.csv");
+    pmap["lfc-interval"] = "1";
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr(new NakedMemfileLeaseMgr(pmap));
+
+    // Try to run the lease file cleanup.
+    ASSERT_NO_THROW(lease_mgr->lfcCallback());
+
+    // The current lease file should not have been touched.
+    ASSERT_TRUE(current_file.exists());
+    EXPECT_EQ(current_file_contents, current_file.readFile());
+
+    // Wait for the LFC process to complete.
+    ASSERT_TRUE(waitForProcess(*lease_mgr, 2));
+
+    // And make sure it has returned an exit status of 0.
+    EXPECT_EQ(0, lease_mgr->getLFCExitStatus())
+        << "Executing the LFC process failed: make sure that"
+        " the kea-lfc program has been compiled.";
+
+    // The LFC should have moved the finish file to the previous file -
+    // leasefile6_0.csv.2
+    LeaseFileIO previous_file(getLeaseFilePath("leasefile6_0.csv.2"), false);
+    ASSERT_TRUE(previous_file.exists());
+    // And this file should contain the contents of the finish file.
+    EXPECT_EQ(finish_file_contents, previous_file.readFile());
+
+    // The finish file should have been removed
+    ASSERT_FALSE(finish_file.exists());
+}
+
+// This test checks that the callback function executing the cleanup of the
+// files doesn't move the current file if the copy file exists
+TEST_F(MemfileLeaseMgrTest, leaseFileCopy) {
+    // This string contains the lease file header, which matches
+    // the contents of the new file in which no leases have been
+    // stored.
+    std::string new_file_contents =
+        "address,duid,valid_lifetime,expire,subnet_id,"
+        "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
+        "fqdn_rev,hostname,hwaddr\n";
+
+    // This string contains the contents of the current lease file.
+    // It should not be moved.
+    std::string current_file_contents = new_file_contents +
+        "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,200,"
+        "8,100,0,7,0,1,1,,\n"
+        "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,800,"
+        "8,100,0,7,0,1,1,,\n";
+    LeaseFileIO current_file(getLeaseFilePath("leasefile6_0.csv"));
+    current_file.writeFile(current_file_contents);
+
+    // This string contains the contents of the copy file.  It should
+    // be processed and moved to the previous file.  As there is only
+    // one lease the processing should result in the previous file being
+    // the same.
+    std::string input_file_contents = new_file_contents +
+        "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,800,"
+        "8,100,0,7,0,1,1,,\n";
+    LeaseFileIO input_file(getLeaseFilePath("leasefile6_0.csv.1"));
+    input_file.writeFile(input_file_contents);
+
+    // Create the backend.
+    LeaseMgr::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "6";
+    pmap["name"] = getLeaseFilePath("leasefile6_0.csv");
+    pmap["lfc-interval"] = "1";
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr(new NakedMemfileLeaseMgr(pmap));
+
+    // Try to run the lease file cleanup.
+    ASSERT_NO_THROW(lease_mgr->lfcCallback());
+
+    // The current lease file should not have been touched.
+    ASSERT_TRUE(current_file.exists());
+    EXPECT_EQ(current_file_contents, current_file.readFile());
+
+    // Wait for the LFC process to complete.
+    ASSERT_TRUE(waitForProcess(*lease_mgr, 2));
+
+    // And make sure it has returned an exit status of 0.
+    EXPECT_EQ(0, lease_mgr->getLFCExitStatus())
+        << "Executing the LFC process failed: make sure that"
+        " the kea-lfc program has been compiled.";
+
+    // The LFC should have processed the lease and moved it to the previous
+    // file - leasefile6_0.csv.2
+    LeaseFileIO previous_file(getLeaseFilePath("leasefile6_0.csv.2"), false);
+    ASSERT_TRUE(previous_file.exists());
+    // And this file should contain the contents of the copy file.
+    EXPECT_EQ(input_file_contents, previous_file.readFile());
+
+    // The input file should have been removed
+    ASSERT_FALSE(input_file.exists());
+}
+
 
 // Test that the backend returns a correct value of the interval
 // at which the IOService must be executed to run the handlers
