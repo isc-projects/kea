@@ -1,7 +1,7 @@
-XXX.	[bug]		sar
+913.	[bug]		sar
 	Handle recovery properly should the LFC crash while
 	manipulating files after completing processing.
-	(Trac 3759, git )
+	(Trac 3759, git bb3b4d14119392261a1766da2b406fa46d4c0f21)
 
 912.	[doc]		sar
 	Added sections on LFC to the administrators and developers
