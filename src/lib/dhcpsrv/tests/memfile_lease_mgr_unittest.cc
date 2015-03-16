@@ -616,7 +616,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileFinish) {
     LeaseFileIO current_file(getLeaseFilePath("leasefile6_0.csv"));
     current_file.writeFile(current_file_contents);
 
-    // This string contains the contens of the finish file.  It should
+    // This string contains the contents of the finish file.  It should
     // be moved to the previous file.
     std::string finish_file_contents = new_file_contents +
         "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,800,"
@@ -653,6 +653,9 @@ TEST_F(MemfileLeaseMgrTest, leaseFileFinish) {
     ASSERT_TRUE(previous_file.exists());
     // And this file should contain the contents of the finish file.
     EXPECT_EQ(finish_file_contents, previous_file.readFile());
+
+    // The finish file should have been removed
+    ASSERT_FALSE(finish_file.exists());
 }
 
 // This test checks that the callback function executing the cleanup of the
@@ -715,6 +718,9 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCopy) {
     ASSERT_TRUE(previous_file.exists());
     // And this file should contain the contents of the copy file.
     EXPECT_EQ(input_file_contents, previous_file.readFile());
+
+    // The input file should have been removed
+    ASSERT_FALSE(input_file.exists());
 }
 
 
