@@ -806,12 +806,14 @@ template<typename LeaseFileType>
 void Memfile_LeaseMgr::lfcExecute(boost::shared_ptr<LeaseFileType>& lease_file) {
     bool do_lfc = true;
 
-    // Check if the copy of the lease file exists already. If it does, it
+    // Check the status of the LFC instance.
+    // If the finish file exists or the copy of the lease file exists it
     // is an indication that another LFC instance may be in progress or
     // may be stalled. In that case we don't want to rotate the current
     // lease file to avoid overriding the contents of the existing file.
+    CSVFile lease_file_finish(appendSuffix(lease_file->getFilename(), FILE_FINISH));
     CSVFile lease_file_copy(appendSuffix(lease_file->getFilename(), FILE_INPUT));
-    if (!lease_file_copy.exists()) {
+    if (!lease_file_finish.exists() && !lease_file_copy.exists()) {
         // Close the current file so as we can move it to the copy file.
         lease_file->close();
         // Move the current file to the copy file. Remember the result
