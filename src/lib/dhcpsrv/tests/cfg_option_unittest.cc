@@ -477,33 +477,5 @@ TEST(CfgOptionTest, addVendorOptions) {
     EXPECT_TRUE(options->empty());
 }
 
-// This test verifies that Relay-Supplied Options option (RSOO) is handled
-// properly.
-TEST(CfgOptionTest, rsoo) {
-    CfgOption cfg;
-
-    // All options from 0..64 are not RSOO-enabled
-    for (uint16_t code = 0; code < D6O_ERP_LOCAL_DOMAIN_NAME; ++code) {
-        EXPECT_FALSE(cfg.isRSOOEnabled(code));
-    }
-
-    // Option 65 is the only one so far that is enabled
-    EXPECT_TRUE(cfg.isRSOOEnabled(D6O_ERP_LOCAL_DOMAIN_NAME));
-
-    // Let's check other options. They should not be enabled.
-    for (uint16_t code = D6O_ERP_LOCAL_DOMAIN_NAME + 1; code < 300; ++code) {
-        EXPECT_FALSE(cfg.isRSOOEnabled(code)) << " for option code " << code;
-    }
-
-    // Let's clear it.
-    cfg.clearRSOO();
-
-    // Now not even option 65 is enabled.
-    EXPECT_FALSE(cfg.isRSOOEnabled(D6O_ERP_LOCAL_DOMAIN_NAME));
-
-    // Should be possible to specify that an option is RSOO-enabled
-    EXPECT_NO_THROW(cfg.addRSOO(200));
-    EXPECT_TRUE(cfg.isRSOOEnabled(200));
-}
 
 } // end of anonymous namespace

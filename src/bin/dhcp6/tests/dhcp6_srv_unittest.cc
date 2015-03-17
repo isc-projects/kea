@@ -2277,6 +2277,80 @@ TEST_F(Dhcpv6SrvTest, rsoo2relays) {
     EXPECT_EQ(expected, opt120->getData());
 }
 
+// This test verifies that the server will send the option for which it
+// has a candidate, rather than the option sent by the relay in the RSOO.
+TEST_F(Dhcpv6SrvTest, rsooOverride) {
+    Dhcp6Client client;
+    // The client will be requesting specific options.
+    client.useORO(true);
+
+    // The following configuration enables RSOO options: 110 and 120.
+    // It also configures the server with option 120 which should
+    // "override" the option 120 sent in the RSOO by the relay.
+    string config =
+        "{"
+        "    \"relay-supplied-options\": [ \"110\", \"120\" ],"
+        "    \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 120,"
+        "      \"type\": \"binary\","
+        "      \"array\": False,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"dhcp6\","
+        "      \"encapsulate\": \"\""
+        "    } ],"
+        "    \"option-data\": [ {"
+        "      \"code\": 120,"
+        "      \"data\": \"05\""
+        "    } ],"
+        "    \"preferred-lifetime\": 3000,"
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"subnet6\": [ { "
+        "        \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
+        "        \"subnet\": \"2001:db8::/48\" "
+        "     } ],"
+        "    \"valid-lifetime\": 4000"
+        "}";
+
+    EXPECT_NO_THROW(configure(config, *client.getServer()));
+
+    // Fabricate the relay.
+    Pkt6::RelayInfo relay;
+    relay.msg_type_ = DHCPV6_RELAY_FORW;
+    relay.hop_count_ = 1;
+    relay.linkaddr_ = IOAddress("2001:db8::1");
+    relay.peeraddr_ = IOAddress("fe80::1");
+    vector<uint16_t> rsoo;
+    // The relay will send 2 options: 110, 120
+    rsoo.push_back(110);
+    rsoo.push_back(120);
+    // Use 0x1 as payload
+    OptionPtr opt = createRSOO(rsoo, 1);
+    relay.options_.insert(make_pair(opt->getType(), opt));
+    client.relay_info_.push_back(relay);
+
+    // Client should request option 120 in the ORO so as the server
+    // sends the configured option 120 to the client.
+    client.requestOption(120);
+    client.doSARR();
+
+    // The option 110 should be the one injected by the relay.
+    opt = client.config_.findOption(110);
+    ASSERT_TRUE(opt);
+    // We check that this is the option injected by the relay by
+    // checking option length. It should has 10 bytes long payload.
+    ASSERT_EQ(10, opt->getData().size());
+
+    // The second option should be the one configured on the server,
+    // rather than the one injected by the relay.
+    opt = client.config_.findOption(120);
+    ASSERT_TRUE(opt);
+    // It should have the size of 1.
+    ASSERT_EQ(1, opt->getData().size());
+}
+
+
 /// @todo: Add more negative tests for processX(), e.g. extend sanityCheck() test
 /// to call processX() methods.
 

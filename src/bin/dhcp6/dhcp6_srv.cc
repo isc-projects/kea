@@ -2739,39 +2739,28 @@ void Dhcpv6Srv::processRSOO(const Pkt6Ptr& query, const Pkt6Ptr& rsp) {
         return;
     }
 
-    // Get the global options info. We'll use it to check whether an
-    // option is RSOO-enabled or not.
-    ConstCfgOptionPtr global_opts = CfgMgr::instance().getCurrentCfg()->
-        getCfgOption();
+    // Get RSOO configuration.
+    ConstCfgRSOOPtr cfg_rsoo  = CfgMgr::instance().getCurrentCfg()->getCfgRSOO();
 
     // Let's get over all relays (encapsulation levels). We need to do
     // it in the same order as the client packet traversed the relays.
     for (int i = query->relay_info_.size(); i > 0 ; --i) {
         OptionPtr rsoo_container = query->getRelayOption(D6O_RSOO, i - 1);
-        if (!rsoo_container) {
-            // No relay-supplied options by this relay? Ok, carry on.
-            continue;
-        }
+        if (rsoo_container) {
+            // There are RSOO options. Let's get through them one by one
+            // and if it's RSOO-enabled and there's no such option provided yet,
+            // copy it to the server's response
+            const OptionCollection& rsoo = rsoo_container->getOptions();
+            for (OptionCollection::const_iterator opt = rsoo.begin();
+                 opt != rsoo.end(); ++opt) {
 
-        // There are RSOO options. Let's get through them one by one
-        // and if it's RSOO-enabled and there's no such option provided yet,
-        // copy it to the server's response
-        const OptionCollection& rsoo = rsoo_container->getOptions();
-        for (OptionCollection::const_iterator opt = rsoo.begin(); opt != rsoo.end();
-             ++opt) {
-            if (!global_opts->isRSOOEnabled(opt->second->getType())) {
-                // We didn't copy this option, because it's not RSOO-enabled.
-                continue;
+                // Echo option if it is RSOO enabled option and there is no such
+                // option added yet.
+                if (cfg_rsoo->enabled(opt->second->getType()) &&
+                    !rsp->getOption(opt->second->getType())) {
+                    rsp->addOption(opt->second);
+                }
             }
-
-            if (rsp->getOption(opt->second->getType())) {
-                // There is such an option in the server's response already,
-                // we'll skip relay's option
-                continue;
-            }
-
-            // All checks went ok, let's add this option.
-            rsp->addOption(opt->second);
         }
     }
 }
