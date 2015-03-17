@@ -195,11 +195,6 @@ typedef OptionContainer::nth_index<2>::type OptionContainerPersistIndex;
 /// options is useful when the client requests stateless configuration from
 /// the DHCP server and no subnet is selected for this client. This client
 /// will only receive global options.
-///
-/// isRSSOEnabled(), addRSOO(), clearRSOO() are methods related to
-/// Relay-Supplied Options option. This information does not provide any values
-/// about the options themselves, but rather contain a list of options that
-/// are allowed in RSOO ("RSOO-enabled").
 class CfgOption {
 public:
 
@@ -357,23 +352,6 @@ public:
     /// @return vendor id.
     static uint32_t optionSpaceToVendorId(const std::string& option_space);
 
-    /// @brief Removes designation of all options as RSOO-enabled.
-    ///
-    /// This method removes all designations of all options as being RSOO-enabled.
-    /// Note that the list is maintained by IANA and option 65 is officially
-    /// RSOO-enabled. This list may be extended in the future. Also, the user may
-    /// add extra options here.
-    void clearRSOO();
-
-    /// @brief Returns whether specific option code is RSOO-enabled.
-    /// @param code option code to check
-    /// @return true, if it is allowed in Relay-Supplied Options option
-    bool isRSOOEnabled(uint16_t code) const;
-
-    /// @brief Marks specified option code as RSOO-enabled.
-    /// @param code option to be enabled in RSOO
-    void addRSOO(uint16_t code);
-
 private:
 
     /// @brief Appends encapsulated options to the options in an option space.
@@ -419,15 +397,6 @@ private:
                                  uint32_t> VendorOptionSpaceCollection;
     /// @brief Container holding options grouped by vendor id.
     VendorOptionSpaceCollection vendor_options_;
-
-    /// @brief Contains a list of options that are allowed in RSOO option
-    ///
-    /// RSOO stands for Relay-Supplied Options option. This is an option that
-    /// is inserted by the relay agent with the intention that the server will
-    /// echo those options back to the client. Only those options marked as
-    /// RSOO-enabled may appear in the RSOO. Currently only option 65 is marked
-    /// as such, but more options may be added in the future. See RFC6422 for details.
-    std::set<uint16_t> rsoo_options_;
 };
 
 /// @name Pointers to the @c CfgOption objects.

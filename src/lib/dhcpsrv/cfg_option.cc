@@ -29,10 +29,6 @@ OptionDescriptor::equals(const OptionDescriptor& other) const {
 }
 
 CfgOption::CfgOption() {
-
-    // By default, the only allowed Relay-Supplied Options option is
-    // ERP local domain name. Other options may be added in configuration.
-    rsoo_options_.insert(D6O_ERP_LOCAL_DOMAIN_NAME);
 }
 
 bool
@@ -196,21 +192,6 @@ CfgOption::optionSpaceToVendorId(const std::string& option_space) {
 
     // value is small enough to fit
     return (static_cast<uint32_t>(check));
-}
-
-void CfgOption::clearRSOO() {
-    rsoo_options_.clear();
-}
-
-bool CfgOption::isRSOOEnabled(uint16_t code) const {
-    return (rsoo_options_.find(code) != rsoo_options_.end());
-}
-
-void CfgOption::addRSOO(uint16_t code) {
-    if (rsoo_options_.find(code) == rsoo_options_.end()) {
-        // If there's no such code added yet, let's add it
-        rsoo_options_.insert(code);
-    }
 }
 
 } // end of namespace isc::dhcp

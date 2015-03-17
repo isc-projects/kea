@@ -327,7 +327,7 @@ const OptionDefParams OPTION_DEF_PARAMS6[] = {
       RECORD_DEF(LQ_RELAY_DATA_RECORDS), "" },
     { "lq-client-link", D6O_LQ_CLIENT_LINK, OPT_IPV6_ADDRESS_TYPE, true,
       NO_RECORD_DEF, "" },
-    { "rsoo", D6O_RSOO, OPT_EMPTY_TYPE, false, NO_RECORD_DEF, "dhcp4" },
+    { "rsoo", D6O_RSOO, OPT_EMPTY_TYPE, false, NO_RECORD_DEF, "rsoo-opts" },
     { "client-linklayer-addr", D6O_CLIENT_LINKLAYER_ADDR, OPT_BINARY_TYPE, false,
         NO_RECORD_DEF, "" }
 

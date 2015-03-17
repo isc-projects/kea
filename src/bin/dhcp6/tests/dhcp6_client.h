@@ -110,6 +110,21 @@ public:
             status_code_ = 0;
             received_status_code_ = false;
         }
+
+        /// @brief Finds an option with the specific code in the received
+        /// configuration.
+        ///
+        /// @param code Option code.
+        ///
+        /// @return Pointer to the option if the option exists, or NULL if
+        /// the option doesn't exist.
+        OptionPtr findOption(const uint16_t code) const {
+            std::multimap<unsigned int, OptionPtr>::const_iterator it = options_.find(code);
+            if (it != options_.end()) {
+                return (it->second);
+            }
+            return (OptionPtr());
+        }
     };
 
     /// @brief Holds the DHCPv6 messages taking part in transaction between
