@@ -1770,23 +1770,9 @@ Dhcpv4Srv::accept(const Pkt4Ptr& query) const {
 
 bool
 Dhcpv4Srv::acceptDirectRequest(const Pkt4Ptr& pkt) const {
-    try {
-        // This is the first call to the isRelayed function for this packet,
-        // so we have to catch exceptions which will be emitted if the
-        // packet contains invalid combination of hops and giaddr. For all
-        // other invocations of isRelayed function we will not catch
-        // exceptions because we eliminate malformed packets here.
-        if (pkt->isRelayed()) {
-            return (true);
-        }
-    } catch (const Exception& ex) {
-        OptionPtr client_id = pkt->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
-        HWAddrPtr hwaddr = pkt->getHWAddr();
-        LOG_INFO(dhcp4_logger, DHCP4_INVALID_RELAY_INFO)
-            .arg(client_id ? client_id->toText():"(no client-id)")
-            .arg(hwaddr ? hwaddr->toText():"(no hwaddr info)")
-            .arg(ex.what());
-        return (false);
+    // Accept all relayed messages.
+    if (pkt->isRelayed()) {
+        return (true);
     }
     // The source address must not be zero for the DHCPINFORM message from
     // the directly connected client because the server will not know where
