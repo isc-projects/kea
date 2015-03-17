@@ -3835,7 +3835,7 @@ TEST_F(Dhcp6ParserTest, rsooNames) {
                      ->enabled(code)) << " for option code " << code;
     }
 
-    // The following codes should be enabled now
+    // The following code should be enabled now
     EXPECT_TRUE(CfgMgr::instance().getStagingCfg()->getCfgRSOO()
                 ->enabled(D6O_NAME_SERVERS));
 

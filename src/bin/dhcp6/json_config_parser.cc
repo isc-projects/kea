@@ -578,10 +578,10 @@ public:
 
 /// @brief Parser for list of RSOO options
 ///
-/// This parser handles Dhcp6/relay-supplied-options entry. It contains a
+/// This parser handles a Dhcp6/relay-supplied-options entry. It contains a
 /// list of RSOO-enabled options which should be sent back to the client.
 ///
-/// The option on this list can be specified using an option code or option
+/// The options on this list can be specified using an option code or option
 /// name. Therefore, the values on the list should always be enclosed in
 /// "quotes".
 class RSOOListConfigParser : public DhcpConfigParser {

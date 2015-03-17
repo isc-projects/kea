@@ -2339,7 +2339,7 @@ TEST_F(Dhcpv6SrvTest, rsooOverride) {
     opt = client.config_.findOption(110);
     ASSERT_TRUE(opt);
     // We check that this is the option injected by the relay by
-    // checking option length. It should has 10 bytes long payload.
+    // checking option length. It should have 10 bytes long payload.
     ASSERT_EQ(10, opt->getData().size());
 
     // The second option should be the one configured on the server,
