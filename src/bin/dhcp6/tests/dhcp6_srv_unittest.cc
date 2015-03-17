@@ -2216,8 +2216,8 @@ TEST_F(Dhcpv6SrvTest, rsoo2relays) {
     Pkt6::RelayInfo relay2;
     relay2.msg_type_ = DHCPV6_RELAY_FORW;
     relay2.hop_count_ = 1;
-    relay2.linkaddr_ = IOAddress("2001:db8::1");
-    relay2.peeraddr_ = IOAddress("fe80::1");
+    relay2.linkaddr_ = IOAddress("2001:db8::2");
+    relay2.peeraddr_ = IOAddress("fe80::2");
     vector<uint16_t> rsoo2;
     rsoo2.push_back(120); // The relay2 will send 2 options: 120, 130
     rsoo2.push_back(130);
