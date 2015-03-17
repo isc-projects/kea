@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -819,6 +819,7 @@ TEST_F(Pkt4Test, isRelayed) {
     // Setting the giaddr to 255.255.255.255 should not cause it to
     // be relayed message.
     pkt.setGiaddr(IOAddress(IOAddress::IPV4_BCAST_ADDRESS()));
+    EXPECT_FALSE(pkt.isRelayed());
 }
 
 // Tests whether a packet can be assigned to a class and later
