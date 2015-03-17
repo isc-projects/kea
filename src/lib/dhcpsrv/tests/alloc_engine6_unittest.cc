@@ -968,6 +968,7 @@ TEST_F(AllocEngine6Test, reservedAddress) {
     for (int i = 0; i < 30; i++) {
         AllocEngine::ClientContext6 ctx(subnet_, clients[i], iaid_, IOAddress("::"),
                                         Lease::TYPE_NA,  false, false, "", false);
+        findReservation(engine, ctx);
         Lease6Collection leases = engine.allocateLeases6(ctx);
         if (leases.empty()) {
             failure++;
@@ -990,6 +991,7 @@ TEST_F(AllocEngine6Test, reservedAddress) {
     // address reserved, will get it (despite the pool being depleted).
     AllocEngine::ClientContext6 ctx(subnet_, duid_, iaid_, IOAddress("::"),
                                     Lease::TYPE_NA,  false, false, "", false);
+    findReservation(engine, ctx);
     Lease6Collection leases = engine.allocateLeases6(ctx);
     ASSERT_EQ(1, leases.size());
     EXPECT_EQ("2001:db8:1::12", leases[0]->addr_.toText());
@@ -1097,6 +1099,7 @@ TEST_F(AllocEngine6Test, DISABLED_reserved2AddressesSolicit) {
     AllocEngine::ClientContext6 ctx1(subnet_, duid_, iaid_, IOAddress("::"),
                                     pool_->getType(), false, false, "", true);
     Lease6Collection leases1;
+    findReservation(engine, ctx1);
     EXPECT_NO_THROW(leases1 = engine.allocateLeases6(ctx1));
     ASSERT_EQ(1, leases1.size());
     EXPECT_EQ("2001:db8:1::babe", leases1[0]->addr_.toText());
@@ -1106,6 +1109,7 @@ TEST_F(AllocEngine6Test, DISABLED_reserved2AddressesSolicit) {
     AllocEngine::ClientContext6 ctx2(subnet_, duid_, iaid_, IOAddress("::"),
                                     pool_->getType(), false, false, "", true);
     Lease6Collection leases2;
+    findReservation(engine, ctx2);
     EXPECT_NO_THROW(leases2 = engine.allocateLeases6(ctx2));
     EXPECT_EQ(1, leases2.size());
     EXPECT_EQ("2001:db8:1::babe", leases2[0]->addr_.toText());
@@ -1115,6 +1119,7 @@ TEST_F(AllocEngine6Test, DISABLED_reserved2AddressesSolicit) {
     AllocEngine::ClientContext6 ctx3(subnet_, duid_, iaid_ + 1, IOAddress("::"),
                                     pool_->getType(), false, false, "", true);
     Lease6Collection leases3;
+    findReservation(engine, ctx3);
     EXPECT_NO_THROW(leases3 = engine.allocateLeases6(ctx3));
     ASSERT_EQ(1, leases3.size());
     EXPECT_EQ("2001:db8:1::cafe", leases3[0]->addr_.toText());
@@ -1138,6 +1143,7 @@ TEST_F(AllocEngine6Test, reserved2Addresses) {
     AllocEngine::ClientContext6 ctx1(subnet_, duid_, iaid_, IOAddress("::"),
                                     pool_->getType(), false, false, "", false);
     Lease6Collection leases1;
+    findReservation(engine, ctx1);
     EXPECT_NO_THROW(leases1 = engine.allocateLeases6(ctx1));
     ASSERT_EQ(1, leases1.size());
     EXPECT_EQ("2001:db8:1::babe", leases1[0]->addr_.toText());
@@ -1147,6 +1153,7 @@ TEST_F(AllocEngine6Test, reserved2Addresses) {
     AllocEngine::ClientContext6 ctx2(subnet_, duid_, iaid_, IOAddress("::"),
                                     pool_->getType(), false, false, "", false);
     Lease6Collection leases2;
+    findReservation(engine, ctx2);
     EXPECT_NO_THROW(leases2 = engine.allocateLeases6(ctx2));
     EXPECT_EQ(1, leases2.size());
     EXPECT_EQ("2001:db8:1::babe", leases2[0]->addr_.toText());
@@ -1156,6 +1163,7 @@ TEST_F(AllocEngine6Test, reserved2Addresses) {
     AllocEngine::ClientContext6 ctx3(subnet_, duid_, iaid_ + 1, IOAddress("::"),
                                     pool_->getType(), false, false, "", false);
     Lease6Collection leases3;
+    findReservation(engine, ctx3);
     EXPECT_NO_THROW(leases3 = engine.allocateLeases6(ctx3));
     ASSERT_EQ(1, leases3.size());
     EXPECT_EQ("2001:db8:1::cafe", leases3[0]->addr_.toText());

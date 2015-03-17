@@ -339,7 +339,7 @@ void AllocEngine::findReservation(ClientContext6& ctx) const {
 }
 
 Lease6Collection
-AllocEngine::allocateLeases6(ClientContext6& ctx, bool find_reservation) {
+AllocEngine::allocateLeases6(ClientContext6& ctx) {
 
     try {
         if (!ctx.subnet_) {
@@ -347,23 +347,6 @@ AllocEngine::allocateLeases6(ClientContext6& ctx, bool find_reservation) {
         } else
         if (!ctx.duid_) {
             isc_throw(InvalidOperation, "DUID is mandatory for IPv6 lease allocation");
-        }
-
-        /// @todo This is ONLY used for unit tests and really should be taken out
-        /// Currently production code passes in find_reservation as false
-        if (find_reservation) {
-            std::cout << "***** TKM findReservation being called from allocateLeases6"
-                        << std::endl;
-            findReservation(ctx);
-
-            // Let's check whether there's a hostname specified in the reservation
-            if (ctx.host_) {
-                std::string hostname = ctx.host_->getHostname();
-                // If there is, let's use it
-                if (!hostname.empty()) {
-                    ctx.hostname_ = hostname;
-                }
-            }
         }
 
         // Check if there are existing leases for that subnet/duid/iaid
