@@ -414,12 +414,14 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
     // depend on the global values. Also, option values configuration
     // must be performed after the option definitions configurations.
     // Thus we group parsers and will fire them in the right order:
-    // all parsers other than subnet4 and option-data parser,
-    // option-data parser, subnet4 parser.
+    // all parsers other than: lease-database, subnet4 and option-data parser,
+    // then: option-data parser, subnet4 parser, lease-database parser.
+    // Please do not change this order!
     ParserCollection independent_parsers;
     ParserPtr subnet_parser;
     ParserPtr option_parser;
     ParserPtr iface_parser;
+    ParserPtr leases_parser;
 
     // Some of the parsers alter the state of the system in a way that can't
     // easily be undone. (Or alter it in a way such that undoing the change has
@@ -455,6 +457,8 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                       .arg(config_pair.first);
             if (config_pair.first == "subnet4") {
                 subnet_parser = parser;
+            } else if (config_pair.first == "lease-database") {
+                leases_parser = parser;
             } else if (config_pair.first == "option-data") {
                 option_parser = parser;
             } else if (config_pair.first == "interfaces-config") {
@@ -489,12 +493,21 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
             option_parser->commit();
         }
 
-        // The subnet parser is the last one to be run.
+        // The subnet parser is the next one to be run.
         std::map<std::string, ConstElementPtr>::const_iterator subnet_config =
             values_map.find("subnet4");
         if (subnet_config != values_map.end()) {
             config_pair.first = "subnet4";
             subnet_parser->build(subnet_config->second);
+        }
+
+        // the leases database parser is the last to be run.
+        std::map<std::string, ConstElementPtr>::const_iterator leases_config =
+            values_map.find("lease-database");
+        if (leases_config != values_map.end()) {
+            config_pair.first = "lease-database";
+            leases_parser->build(leases_config->second);
+            leases_parser->commit();
         }
 
     } catch (const isc::Exception& ex) {
