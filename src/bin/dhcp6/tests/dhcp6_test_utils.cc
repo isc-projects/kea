@@ -77,6 +77,40 @@ Dhcpv6SrvTest::checkIA_NA(const Pkt6Ptr& rsp, uint32_t expected_iaid,
     return (addr);
 }
 
+/// @brief Utility function that creates a host reservation (duid)
+///
+/// @param add_to_host_mgr true if the reservation should be added
+/// @param type specifies reservation type (NA or PD)
+/// @param addr specifies reserved address
+/// @param hostname specifies hostname to be used in reservation
+/// @return created Host object.
+HostPtr
+Dhcpv6SrvTest::createHost6(bool add_to_host_mgr, IPv6Resrv::Type type,
+    const asiolink::IOAddress& addr, const std::string& hostname) {
+    HostPtr host(new Host(&duid_->getDuid()[0], duid_->getDuid().size(),
+                 Host::IDENT_DUID, SubnetID(0), subnet_->getID(),
+                 asiolink::IOAddress("0.0.0.0"), hostname));
+
+    // Prefix length doesn't matter here, let's assume address is /128 and
+    // prefix is /64
+    IPv6Resrv resv(type, addr, type == IPv6Resrv::TYPE_NA? 128 : 64);
+    host->addReservation(resv);
+
+    if (add_to_host_mgr) {
+
+    // Let's add the host.
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+
+    // We also need to add existing subnet
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet_);
+
+    // Commit this configuration.
+    CfgMgr::instance().commit();
+    }
+
+    return (host);
+}
+
 boost::shared_ptr<Option6IAPrefix>
 Dhcpv6SrvTest::checkIA_PD(const Pkt6Ptr& rsp, uint32_t expected_iaid,
                           uint32_t expected_t1, uint32_t expected_t2) {
