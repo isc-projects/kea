@@ -445,12 +445,6 @@ public:
     ///
     /// @param ctx client context that passes all necessary information. See
     ///        @ref ClientContext6 for details.
-    /// @param find_resrv specifies whether the code should search for host
-    ///   reservation. true means that the code will consult HostMgr, false means
-    ///   to skip this check. That is easier to use, but is redundant if the
-    ///   ctx.host_ field is already set. We can't use ctx.host_ == NULL as
-    ///   check, because for cases whithout reservations, the reservation
-    ///   search would be repeated.
     ///
     /// The following fields of ClientContext6 are used:
     ///
@@ -484,7 +478,7 @@ public:
     ///
     /// @return Allocated IPv6 leases (may be empty if allocation failed)
     Lease6Collection
-    allocateLeases6(ClientContext6& ctx, bool find_resrv = true);
+    allocateLeases6(ClientContext6& ctx);
 
     /// @brief Renews existing DHCPv6 leases for a given IA.
     ///

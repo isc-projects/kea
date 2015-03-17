@@ -82,6 +82,20 @@ AllocEngine6Test::initSubnet(const asiolink::IOAddress& subnet,
     cfg_mgr.commit();
 }
 
+void
+AllocEngine6Test::findReservation(AllocEngine& engine,
+    AllocEngine::ClientContext6& ctx) {
+    engine.findReservation(ctx);
+    // Let's check whether there's a hostname specified in the reservation
+    if (ctx.host_) {
+        std::string hostname = ctx.host_->getHostname();
+        // If there is, let's use it
+        if (!hostname.empty()) {
+            ctx.hostname_ = hostname;
+        }
+    }
+}
+
 HostPtr
 AllocEngine6Test::createHost6HWAddr(bool add_to_host_mgr, IPv6Resrv::Type type,
                                     HWAddrPtr& hwaddr, const asiolink::IOAddress& addr,
@@ -110,6 +124,8 @@ AllocEngine6Test::allocateTest(AllocEngine& engine, const Pool6Ptr& pool,
                                     false, false, "", fake);
 
     Lease6Collection leases;
+
+    findReservation(engine, ctx);
     EXPECT_NO_THROW(leases = engine.allocateLeases6(ctx));
 
     for (Lease6Collection::iterator it = leases.begin(); it != leases.end(); ++it) {
@@ -165,7 +181,7 @@ AllocEngine6Test::simpleAlloc6Test(const Pool6Ptr& pool, const IOAddress& hint,
     AllocEngine::ClientContext6 ctx(subnet_, duid_, iaid_, hint, type,
                                     false, false, "", fake);
     ctx.hwaddr_ = hwaddr_;
-
+    findReservation(*engine, ctx);
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
 
     // Check that we got a lease
