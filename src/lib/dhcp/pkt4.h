@@ -332,17 +332,11 @@ public:
     /// This function returns a boolean value which indicates whether a DHCPv4
     /// message has been relayed (if true is returned) or not (if false).
     ///
-    /// This function uses a combination of Giaddr and Hops. It is expected that
-    /// if Giaddr is not 0, the Hops is greater than 0. In this case the message
-    /// is considered relayed. If Giaddr is 0, the Hops value must also be 0. In
-    /// this case the message is considered non-relayed. For any other
-    /// combination of Giaddr and Hops, an exception is thrown to indicate that
-    /// the message is malformed.
+    /// The message is considered relayed if the giaddr field is non-zero and
+    /// non-broadcast.
     ///
     /// @return Boolean value which indicates whether the message is relayed
     /// (true) or non-relayed (false).
-    /// @throw isc::BadValue if invalid combination of Giaddr and Hops values is
-    /// found.
     bool isRelayed() const;
 
     /// @brief That's the data of input buffer used in RX packet.
