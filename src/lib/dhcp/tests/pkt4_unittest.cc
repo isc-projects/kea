@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -800,25 +800,26 @@ TEST_F(Pkt4Test, hwaddrSrcRemote) {
 }
 
 // This test verifies that the check for a message being relayed is correct.
-// It also checks that the exception is thrown if the combination of hops and
-// giaddr is invalid.
 TEST_F(Pkt4Test, isRelayed) {
     Pkt4 pkt(DHCPDISCOVER, 1234);
     // By default, the hops and giaddr should be 0.
-    ASSERT_EQ("0.0.0.0", pkt.getGiaddr().toText());
+    ASSERT_TRUE(pkt.getGiaddr().isV4Zero());
     ASSERT_EQ(0, pkt.getHops());
-    // For hops = 0 and giaddr = 0, the message is non-relayed.
+    // For zero giaddr the packet is non-relayed.
     EXPECT_FALSE(pkt.isRelayed());
-    // Set giaddr but leave hops = 0. This should result in exception.
+    // Set giaddr but leave hops = 0.
     pkt.setGiaddr(IOAddress("10.0.0.1"));
-    EXPECT_THROW(pkt.isRelayed(), isc::BadValue);
-    // Set hops. Now both hops and giaddr is set. The message is relayed.
+    EXPECT_TRUE(pkt.isRelayed());
+    // After setting hops the message should still be relayed.
     pkt.setHops(10);
     EXPECT_TRUE(pkt.isRelayed());
-    // Set giaddr to 0. For hops being set to non-zero value the function
-    // should throw an exception.
-    pkt.setGiaddr(IOAddress("0.0.0.0"));
-    EXPECT_THROW(pkt.isRelayed(), isc::BadValue);
+    // Set giaddr to 0. The message is now not-relayed.
+    pkt.setGiaddr(IOAddress(IOAddress::IPV4_ZERO_ADDRESS()));
+    EXPECT_FALSE(pkt.isRelayed());
+    // Setting the giaddr to 255.255.255.255 should not cause it to
+    // be relayed message.
+    pkt.setGiaddr(IOAddress(IOAddress::IPV4_BCAST_ADDRESS()));
+    EXPECT_FALSE(pkt.isRelayed());
 }
 
 // Tests whether a packet can be assigned to a class and later
