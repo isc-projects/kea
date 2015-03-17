@@ -342,45 +342,6 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataBroadcast) {
 
 }
 
-// This test verifies that exception is thrown of the invalid combination
-// of giaddr and hops is specified in a client's message.
-TEST_F(Dhcpv4SrvTest, adjustIfaceDataInvalid) {
-    IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
-
-    boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
-
-    // The hops and giaddr values are used to determine if the client's
-    // message has been relayed or sent directly. The allowed combinations
-    // are (giaddr = 0 and hops = 0) or (giaddr != 0 and hops != 0). Any
-    // other combination is invalid and the adjustIfaceData should throw
-    // an exception. We will test that exception is indeed thrown.
-    req->setGiaddr(IOAddress("0.0.0.0"));
-    req->setHops(1);
-
-    // Clear client address as it hasn't got any address configured yet.
-    req->setCiaddr(IOAddress("0.0.0.0"));
-    // The query is sent to the broadcast address in the Select state.
-    req->setLocalAddr(IOAddress("255.255.255.255"));
-    // The query has been received on the DHCPv4 server port 67.
-    req->setLocalPort(DHCP4_SERVER_PORT);
-    // Set the interface. The response should be sent via the same interface.
-    req->setIface("eth0");
-    req->setIndex(1);
-
-    // Create the exchange using the req.
-    Dhcpv4Exchange ex = createExchange(req);
-    Pkt4Ptr resp = ex.getResponse();
-
-    // Assign some new address for this client.
-    resp->setYiaddr(IOAddress("192.0.2.13"));
-
-    // Clear the remote address.
-    resp->setRemoteAddr(IOAddress("0.0.0.0"));
-
-    EXPECT_THROW(NakedDhcpv4Srv::adjustIfaceData(ex), isc::BadValue);
-}
-
 // This test verifies that the server identifier option is appended to
 // a specified DHCPv4 message and the server identifier is correct.
 TEST_F(Dhcpv4SrvTest, appendServerID) {
@@ -3479,16 +3440,15 @@ TEST_F(Dhcpv4SrvTest, acceptDirectRequest) {
 
     Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 1234));
     // Set Giaddr and local server's unicast address, but don't set hops.
-    // Hops value must be greater than 0, when giaddr is set. Otherwise,
-    // message is considered malformed and the accept() function should
-    // return false.
+    // Hops value should not matter. The server will treat the message
+    // with the hops value of 0 and non-zero giaddr as relayed.
     pkt->setGiaddr(IOAddress("192.0.10.1"));
     pkt->setRemoteAddr(IOAddress("0.0.0.0"));
     pkt->setLocalAddr(IOAddress("192.0.2.3"));
     pkt->setIface("eth1");
-    EXPECT_FALSE(srv.accept(pkt));
+    EXPECT_TRUE(srv.accept(pkt));
 
-    // Let's set hops and check that the message is now accepted as
+    // Let's set hops and check that the message is still accepted as
     // a relayed message.
     pkt->setHops(1);
     EXPECT_TRUE(srv.accept(pkt));
