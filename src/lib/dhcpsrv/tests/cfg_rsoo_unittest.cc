@@ -38,7 +38,7 @@ TEST(CfgRSOOTest, defaults) {
     }
 
     // Now, let's see if we can remove the default options.
-    ASSER_NO_THROW(rsoo.clear());
+    ASSERT_NO_THROW(rsoo.clear());
     EXPECT_FALSE(rsoo.enabled(D6O_ERP_LOCAL_DOMAIN_NAME));
 
     // Make sure it can be added again.
@@ -84,7 +84,7 @@ TEST(CfgRSOOTest, enableTwice) {
     // Enable option 88.
     ASSERT_FALSE(rsoo.enabled(88));
     ASSERT_NO_THROW(rsoo.enable(88));
-    EXPECT_TRUE(rsoo.enabled);
+    EXPECT_TRUE(rsoo.enabled(88));
 
     // And enable it again.
     ASSERT_NO_THROW(rsoo.enabled(88));
