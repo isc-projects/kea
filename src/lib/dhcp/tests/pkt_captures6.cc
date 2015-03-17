@@ -351,6 +351,7 @@ Pkt6Ptr isc::test::PktCaptures::captureCableLabsShortVendorClass() {
 ///          - rsoo (66)
 ///              - option 255 (len 4)
 ///              - option 256 (len 9)
+///          - remote-id option (37)
 ///          - RELAY-FORW
 ///             - SOLICIT
 ///                  - client-id option
