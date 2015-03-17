@@ -416,6 +416,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
     // Thus we group parsers and will fire them in the right order:
     // all parsers other than: lease-database, subnet4 and option-data parser,
     // then: option-data parser, subnet4 parser, lease-database parser.
+    // Please do not change this order!
     ParserCollection independent_parsers;
     ParserPtr subnet_parser;
     ParserPtr option_parser;
