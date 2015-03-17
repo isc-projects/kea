@@ -393,8 +393,8 @@ private:
 
     /// @brief Pointer to the configuration for RSOO-enabled options.
     ///
-    /// This object holds a set of RSOO-enabled options. See the
-    /// RFC 6422 for the definition of RSOO-enabled option.
+    /// This object holds a set of RSOO-enabled options. See
+    /// RFC 6422 for the definition of the RSOO-enabled option.
     CfgRSOOPtr cfg_rsoo_;
 };
 
