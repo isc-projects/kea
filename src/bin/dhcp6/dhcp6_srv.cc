@@ -1327,7 +1327,7 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     ctx.hwaddr_ = orig_ctx.hwaddr_;
     ctx.host_ = orig_ctx.host_;
 
-    Lease6Collection leases = alloc_engine_->allocateLeases6(ctx, false);
+    Lease6Collection leases = alloc_engine_->allocateLeases6(ctx);
 
     /// @todo: Handle more than one lease
     Lease6Ptr lease;
@@ -1472,7 +1472,7 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query,
     ctx.hwaddr_ = orig_ctx.hwaddr_;
     ctx.host_ = orig_ctx.host_;
 
-    Lease6Collection leases = alloc_engine_->allocateLeases6(ctx, false);
+    Lease6Collection leases = alloc_engine_->allocateLeases6(ctx);
 
     if (!leases.empty()) {
 
