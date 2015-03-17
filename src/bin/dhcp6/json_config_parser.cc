@@ -626,8 +626,10 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
     // depend on the global values. Also, option values configuration
     // must be performed after the option definitions configurations.
     // Thus we group parsers and will fire them in the right order:
-    // all parsers other than subnet6 and option-data parser,
-    // option-data parser, subnet6 parser.
+    // all parsers other than lease-database, subnet6 and
+    // option-data parser, then option-data parser, subnet6 parser,
+    // lease-database parser.
+    // Please do not change this order!
     ParserCollection independent_parsers;
     ParserPtr subnet_parser;
     ParserPtr option_parser;
