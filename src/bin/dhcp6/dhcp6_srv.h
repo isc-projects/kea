@@ -266,19 +266,17 @@ protected:
     /// status code option with non-zero status, denoting cause of the
     /// allocation failure.
     ///
-    /// @param subnet subnet the client is connected to
-    /// @param duid client's duid
     /// @param query client's message (typically SOLICIT or REQUEST)
     /// @param answer server's response to the client's message. This
     /// message should contain Client FQDN option being sent by the server
     /// to the client (if the client sent this option to the server).
+    /// @param orig_ctx client context (contains subnet, duid and other parameters)
     /// @param ia pointer to client's IA_NA option (client's request)
     ///
     /// @return IA_NA option (server's response)
-    OptionPtr assignIA_NA(const isc::dhcp::Subnet6Ptr& subnet,
-                          const isc::dhcp::DuidPtr& duid,
-                          const isc::dhcp::Pkt6Ptr& query,
+    OptionPtr assignIA_NA(const isc::dhcp::Pkt6Ptr& query,
                           const isc::dhcp::Pkt6Ptr& answer,
+                          AllocEngine::ClientContext6& orig_ctx,
                           Option6IAPtr ia);
 
     /// @brief Processes IA_PD option (and assigns prefixes if necessary).
@@ -289,13 +287,12 @@ protected:
     /// status code option with non-zero status denoting the cause of the
     /// allocation failure.
     ///
-    /// @param subnet subnet the client is connected to
-    /// @param duid client's duid
     /// @param query client's message (typically SOLICIT or REQUEST)
+    /// @param orig_ctx client context (contains subnet, duid and other parameters)
     /// @param ia pointer to client's IA_PD option (client's request)
     /// @return IA_PD option (server's response)
-    OptionPtr assignIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                          const Pkt6Ptr& query,
+    OptionPtr assignIA_PD(const Pkt6Ptr& query,
+                          AllocEngine::ClientContext6& orig_ctx,
                           boost::shared_ptr<Option6IA> ia);
 
     /// @brief Extends lifetime of the specific IA_NA option.
@@ -323,11 +320,12 @@ protected:
     /// @param answer server's response to the client's message. This
     /// message should contain Client FQDN option being sent by the server
     /// to the client (if the client sent this option to the server).
+    /// @param orig_ctx client context (contains subnet, duid and other parameters)
     /// @param ia IA_NA option which carries adress for which lease lifetime
     /// will be extended.
     /// @return IA_NA option (server's response)
-    OptionPtr extendIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                          const Pkt6Ptr& query, const Pkt6Ptr& answer,
+    OptionPtr extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
+                          AllocEngine::ClientContext6& orig_ctx,
                           Option6IAPtr ia);
 
     /// @brief Extends lifetime of the prefix.
@@ -341,16 +339,16 @@ protected:
     /// is thrown when there is no binding and the Rebind message is processed
     /// (see RFC3633, section 12.2. for details).
     ///
-    /// @param subnet subnet the sender belongs to
-    /// @param duid client's duid
     /// @param query client's message
+    /// @param orig_ctx client context (contains subnet, duid and other parameters)
     /// @param ia IA_PD option that is being renewed
     /// @return IA_PD option (server's response)
     /// @throw DHCPv6DiscardMessageError when the message being processed should
     /// be discarded by the server, i.e. there is no binding for the client doing
     /// Rebind.
-    OptionPtr extendIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                          const Pkt6Ptr& query, Option6IAPtr ia);
+    OptionPtr extendIA_PD(const Pkt6Ptr& query,
+                          AllocEngine::ClientContext6& orig_ctx,
+                          Option6IAPtr ia);
 
     /// @brief Releases specific IA_NA option
     ///
@@ -418,7 +416,7 @@ protected:
     /// @param answer server's message (options will be added here)
     /// @param ctx client context (contains subnet, duid and other parameters)
     void appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
-                                const AllocEngine::ClientContext6 ctx);
+                                AllocEngine::ClientContext6& ctx);
 
     /// @brief Appends requested vendor options to server's answer.
     ///
@@ -427,7 +425,9 @@ protected:
     ///
     /// @param question client's message
     /// @param answer server's message (vendor options will be added here)
-    void appendRequestedVendorOptions(const Pkt6Ptr& question, Pkt6Ptr& answer);
+    /// @param ctx client context (contains subnet, duid and other parameters)
+    void appendRequestedVendorOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
+                                AllocEngine::ClientContext6& ctx);
 
     /// @brief Assigns leases.
     ///
@@ -440,7 +440,7 @@ protected:
     ///   to the client (if the client sent this option to the server).
     /// @param ctx client context (contains subnet, duid and other parameters)
     void assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
-                      const AllocEngine::ClientContext6& ctx);
+                      AllocEngine::ClientContext6& ctx);
 
     /// @brief Processes Client FQDN Option.
     ///
@@ -456,6 +456,28 @@ protected:
     /// domain-name, i.e. if the provided domain-name is partial it should
     /// generate the fully qualified domain-name.
     ///
+    /// This function takes into account the host reservation if one is matched
+    /// to this client when forming the FQDN to be used with DNS as well as the
+    /// lease name to be stored with the lease. In the following the term
+    /// "reserved hostname" means a host reservation which includes a
+    /// non-blank hostname.
+    ///
+    /// - If there is no Client FQDN and no reserved hostname then there
+    /// will no be DNS updates and the lease hostname will be empty.
+    ///
+    /// - If there is no Client FQDN but there is reserverd hostname then
+    /// there will be no DNS updates and the lease hostname will be equal
+    /// to reserverd hostname.
+    ///
+    /// - If there is a Client FQDN and a reserved hostname, then both the
+    /// FQDN and lease hostname will be equal to reserved hostname with
+    /// the qualifying suffix appended.
+    ///
+    /// - If there is a Client FQDN but no reserverd hostname then both the
+    /// FQDN and lease hostname will be equal to the name provided in the
+    /// client FQDN adjusted according the the DhcpDdns configuration
+    /// parameters (e.g.replace-client-name, qualifying suffix...).
+    ///
     /// All the logic required to form appropriate answer to the client is
     /// held in this function.
     ///
@@ -465,7 +487,7 @@ protected:
     /// object.
     /// @param ctx client context (includes subnet, client-id, hw-addr etc.)
     void processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer,
-                           const AllocEngine::ClientContext6 ctx);
+                           AllocEngine::ClientContext6& ctx);
 
     /// @brief Creates a number of @c isc::dhcp_ddns::NameChangeRequest objects
     /// based on the DHCPv6 Client FQDN %Option.
@@ -512,7 +534,9 @@ protected:
     ///
     /// @param query client's Renew or Rebind message
     /// @param reply server's response
-    void extendLeases(const Pkt6Ptr& query, Pkt6Ptr& reply);
+    /// @param ctx client context (contains subnet, duid and other parameters)
+    void extendLeases(const Pkt6Ptr& query, Pkt6Ptr& reply,
+                      AllocEngine::ClientContext6& ctx);
 
     /// @brief Attempts to release received addresses
     ///
