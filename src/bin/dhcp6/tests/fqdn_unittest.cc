@@ -507,40 +507,6 @@ public:
         ASSERT_NO_THROW(d2_mgr_.runReadyIO());
     }
 
-    /// @brief Utility function that creates a host reservation (duid)
-    ///
-    /// @param add_to_host_mgr true if the reservation should be added
-    /// @param type specifies reservation type (NA or PD)
-    /// @param addr specifies reserved address
-    /// @param hostname specifies hostname to be used in reservation
-    /// @return created Host object.
-    HostPtr
-    createHost6(bool add_to_host_mgr, IPv6Resrv::Type type,
-                const asiolink::IOAddress& addr, const std::string& hostname) {
-        HostPtr host(new Host(&duid_->getDuid()[0], duid_->getDuid().size(),
-                              Host::IDENT_DUID, SubnetID(0), subnet_->getID(),
-                              asiolink::IOAddress("0.0.0.0"),
-                              hostname));
-
-        // Prefix length doesn't matter here, let's assume address is /128 and
-        // prefix is /64
-        IPv6Resrv resv(type, addr, type == IPv6Resrv::TYPE_NA? 128 : 64);
-        host->addReservation(resv);
-
-        if (add_to_host_mgr) {
-
-            // Let's add the host.
-            CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
-
-            // We also need to add existing subnet
-            CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet_);
-
-            // Commit this configuration.
-            CfgMgr::instance().commit();
-        }
-        return (host);
-    }
-
     // Holds a lease used by a test.
     Lease6Ptr lease_;
 
@@ -1088,15 +1054,114 @@ TEST_F(FqdnDhcpv6SrvTest, processClientDelegation) {
                             0, 4000);
 }
 
-TEST_F(FqdnDhcpv6SrvTest, hostnameReservation) {
-
+// Verify that the host reservation is found and used. Lease host name and
+// FQDN should be the reservation hostname suffixed by the qualifying suffix.
+TEST_F(FqdnDhcpv6SrvTest, hostnameReservationSuffix) {
+    // Create host reservation with a partial FQDN for hostname
     createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1:1::babe"),
-                "alice.example.org.");
+                "alice");
 
+    // Verify that the host reservation is found and lease name/FQDN are
+    // formed properly from the host name and qualifying suffix.
     testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",
-                       "alice.example.org.", 0, IOAddress("2001:db8:1:1::babe"));
+                       "alice.example.com.", 0, IOAddress("2001:db8:1:1::babe"));
     ASSERT_EQ(1, d2_mgr_.getQueueSize());
 }
 
+// Verify that the host reservation is found and used, rather than dynamic
+// Address.  Lease host name and FQDN should be the reservation hostname
+// without a qualifying suffix.
+TEST_F(FqdnDhcpv6SrvTest, hostnameReservationNoSuffix) {
+
+    string config_str = "{ "
+        "\"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"valid-lifetime\": 4000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/80\" } ],"
+        "    \"subnet\": \"2001:db8:1::/64\" } ], "
+        " \"dhcp-ddns\" : {"
+        "     \"enable-updates\" : true, "
+        "     \"server-ip\" : \"::1\", "
+        "     \"server-port\" : 53001, "
+        "     \"sender-ip\" : \"::\", "
+        "     \"sender-port\" : 0, "
+        "     \"max-queue-size\" : 2048, "
+        "     \"ncr-protocol\" : \"UDP\", "
+        "     \"ncr-format\" : \"JSON\", "
+        "     \"always-include-fqdn\" : true, "
+        "     \"allow-client-update\" : true, "
+        "     \"override-no-update\" : true, "
+        "     \"override-client-update\" : true, "
+        "     \"replace-client-name\" : true, "
+        "     \"generated-prefix\" : \"test.prefix\", "
+        "     \"qualifying-suffix\" : \"\" },"
+        "\"valid-lifetime\": 4000 }";
+
+    configure(config_str);
+
+    ASSERT_NO_THROW(srv_->startD2());
+
+    ASSERT_TRUE(CfgMgr::instance().ddnsEnabled());
+
+    createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1:1::babe"),
+                "alice.example.com");
+
+    testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",
+                       "alice.example.com.", 0, IOAddress("2001:db8:1:1::babe"));
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+}
+
+// Verify that the host reservation is found and used, rather than dynamic
+// Address.  Lease host name and FQDN should be the reservation hostname
+// with the qualifying suffix even though updates are disabled.
+TEST_F(FqdnDhcpv6SrvTest, hostnameReservationDdnsDisabled) {
+
+    string config_str = "{ "
+        "\"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"valid-lifetime\": 4000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/80\" } ],"
+        "    \"subnet\": \"2001:db8:1::/64\" } ], "
+        " \"dhcp-ddns\" : {"
+        "     \"enable-updates\" : false, "
+        "     \"server-ip\" : \"::1\", "
+        "     \"server-port\" : 53001, "
+        "     \"sender-ip\" : \"::\", "
+        "     \"sender-port\" : 0, "
+        "     \"max-queue-size\" : 2048, "
+        "     \"ncr-protocol\" : \"UDP\", "
+        "     \"ncr-format\" : \"JSON\", "
+        "     \"always-include-fqdn\" : true, "
+        "     \"allow-client-update\" : true, "
+        "     \"override-no-update\" : true, "
+        "     \"override-client-update\" : true, "
+        "     \"replace-client-name\" : true, "
+        "     \"generated-prefix\" : \"test.prefix\", "
+        "     \"qualifying-suffix\" : \"disabled.example.com\" },"
+        "\"valid-lifetime\": 4000 }";
+
+    configure(config_str);
+
+    ASSERT_NO_THROW(srv_->startD2());
+
+    ASSERT_FALSE(CfgMgr::instance().ddnsEnabled());
+
+    createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1:1::babe"),
+                "alice");
+
+    testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",
+                       "alice.disabled.example.com.", 0, 
+                       IOAddress("2001:db8:1:1::babe"));
+}
 
 }   // end of anonymous namespace
