@@ -19,6 +19,7 @@
 #include <dhcpsrv/cfg_iface.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfg_option_def.h>
+#include <dhcpsrv/cfg_rsoo.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/cfg_subnets6.h>
 #include <dhcpsrv/cfg_mac_source.h>
@@ -239,6 +240,24 @@ public:
         return (cfg_hosts_);
     }
 
+    /// @brief Returns pointer to the non-const object representing
+    /// set of RSOO-enabled options.
+    ///
+    /// @return Pointer to the non-const object holding RSOO-enabled
+    /// options.
+    CfgRSOOPtr getCfgRSOO() {
+        return (cfg_rsoo_);
+    }
+
+    /// @brief Returns pointer to the const object representing set
+    /// of RSOO-enabled options.
+    ///
+    /// @return Pointer to the const object holding RSOO-enabled
+    /// options.
+    ConstCfgRSOOPtr getCfgRSOO() const {
+        return (cfg_rsoo_);
+    }
+
     //@}
 
     /// @brief Returns non-const reference to an array that stores
@@ -371,6 +390,12 @@ private:
 
     /// @brief A list of configured MAC sources.
     CfgMACSource cfg_mac_source_;
+
+    /// @brief Pointer to the configuration for RSOO-enabled options.
+    ///
+    /// This object holds a set of RSOO-enabled options. See
+    /// RFC 6422 for the definition of the RSOO-enabled option.
+    CfgRSOOPtr cfg_rsoo_;
 };
 
 /// @name Pointers to the @c SrvConfig object.

@@ -41,6 +41,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <iostream>
+#include <limits>
 #include <map>
 #include <vector>
 
@@ -554,6 +555,87 @@ public:
     ParserCollection subnets_;
 };
 
+/// @brief Parser for list of RSOO options
+///
+/// This parser handles a Dhcp6/relay-supplied-options entry. It contains a
+/// list of RSOO-enabled options which should be sent back to the client.
+///
+/// The options on this list can be specified using an option code or option
+/// name. Therefore, the values on the list should always be enclosed in
+/// "quotes".
+class RSOOListConfigParser : public DhcpConfigParser {
+public:
+
+    /// @brief constructor
+    ///
+    /// As this is a dedicated parser, it must be used to parse
+    /// "relay-supplied-options" parameter only. All other types will throw exception.
+    ///
+    /// @param param_name name of the configuration parameter being parsed
+    /// @throw BadValue if supplied parameter name is not "relay-supplied-options"
+    RSOOListConfigParser(const std::string& param_name) {
+        if (param_name != "relay-supplied-options") {
+            isc_throw(BadValue, "Internal error. RSOO configuration "
+                      "parser called for the wrong parameter: " << param_name);
+        }
+    }
+
+    /// @brief parses parameters value
+    ///
+    /// Parses configuration entry (list of sources) and adds each element
+    /// to the RSOO list.
+    ///
+    /// @param value pointer to the content of parsed values
+    virtual void build(isc::data::ConstElementPtr value) {
+        try {
+            BOOST_FOREACH(ConstElementPtr source_elem, value->listValue()) {
+                std::string option_str = source_elem->stringValue();
+                // This option can be either code (integer) or name. Let's try code first
+                int64_t code = 0;
+                try {
+                    code = boost::lexical_cast<int64_t>(option_str);
+                    // Protect against the negative value and too high value.
+                    if (code < 0) {
+                        isc_throw(BadValue, "invalid option code value specified '"
+                                  << option_str << "', the option code must be a"
+                                  " non-negative value");
+
+                    } else if (code > std::numeric_limits<uint16_t>::max()) {
+                        isc_throw(BadValue, "invalid option code value specified '"
+                                  << option_str << "', the option code must not be"
+                                  " greater than '" << std::numeric_limits<uint16_t>::max()
+                                  << "'");
+                    }
+
+                } catch (const boost::bad_lexical_cast &) {
+                    // Oh well, it's not a number
+                }
+
+                if (!code) {
+                    OptionDefinitionPtr def = LibDHCP::getOptionDef(Option::V6, option_str);
+                    if (def) {
+                        code = def->getCode();
+                    } else {
+                        isc_throw(BadValue, "unable to find option code for the "
+                                  " specified option name '" << option_str << "'"
+                                  " while parsing the list of enabled"
+                                  " relay-supplied-options");
+                    }
+                }
+                CfgMgr::instance().getStagingCfg()->getCfgRSOO()->enable(code);
+            }
+        } catch (const std::exception& ex) {
+            // Rethrow exception with the appended position of the parsed
+            // element.
+            isc_throw(DhcpConfigError, ex.what() << " (" << value->getPosition() << ")");
+        }
+    }
+
+    /// @brief Does nothing.
+    virtual void commit() {}
+};
+
+
 } // anonymous namespace
 
 namespace isc {
@@ -597,6 +679,8 @@ namespace dhcp {
     } else if (config_id.compare("mac-sources") == 0) {
         parser = new MACSourcesListConfigParser(config_id,
                                                 globalContext());
+    } else if (config_id.compare("relay-supplied-options") == 0) {
+        parser = new RSOOListConfigParser(config_id);
     } else {
         isc_throw(DhcpConfigError,
                 "unsupported global configuration parameter: "
