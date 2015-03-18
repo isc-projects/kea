@@ -765,7 +765,9 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
     // Get the list of options that client requested.
     const std::vector<uint16_t>& requested_opts = option_oro->getValues();
     BOOST_FOREACH(uint16_t opt, requested_opts) {
-        // If we found a subnet for this client, try subnet first.
+        // If we found a subnet for this client, all options (including the
+        // global options) should be available through the options
+        // configuration for the subnet.
         if (ctx.subnet_) {
             OptionDescriptor desc = ctx.subnet_->getCfgOption()->get("dhcp6",
                                                                      opt);
@@ -774,12 +776,14 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
                 answer->addOption(desc.option_);
                 continue;
             }
-        }
 
-        // If subnet specific option is not there, try global.
-        OptionDescriptor desc = global_opts->get("dhcp6", opt);
-        if (desc.option_) {
-            answer->addOption(desc.option_);
+        // If there is no subnet selected (e.g. Information-request message
+        // case) we need to look at the global options.
+        } else {
+            OptionDescriptor desc = global_opts->get("dhcp6", opt);
+            if (desc.option_) {
+                answer->addOption(desc.option_);
+            }
         }
     }
 }
