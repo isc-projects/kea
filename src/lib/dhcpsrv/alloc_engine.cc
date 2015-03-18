@@ -1006,7 +1006,7 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
 }
 
 Lease6Collection
-AllocEngine::renewLeases6(ClientContext6& ctx, bool find_host) {
+AllocEngine::renewLeases6(ClientContext6& ctx) {
     try {
         if (!ctx.subnet_) {
             isc_throw(InvalidOperation, "Subnet is required for allocation");
@@ -1015,21 +1015,6 @@ AllocEngine::renewLeases6(ClientContext6& ctx, bool find_host) {
         if (!ctx.duid_) {
             isc_throw(InvalidOperation, "DUID is mandatory for allocation");
         }
-
-        // We can attempt to find appropriate reservation
-        if (find_host) {
-            findReservation(ctx);
-        }
-
-        // Let's check whether there's a hostname specified in the reservation
-        if (ctx.host_) {
-            std::string hostname = ctx.host_->getHostname();
-            // If there is, let's use it
-            if (!hostname.empty()) {
-                ctx.hostname_ = hostname;
-            }
-        }
-
 
         // Check if there are any leases for this client.
         Lease6Collection leases = LeaseMgrFactory::instance()
