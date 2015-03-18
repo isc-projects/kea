@@ -45,6 +45,7 @@ public:
     static isc::dhcp::Pkt6Ptr captureDocsisRelayedSolicit();
     static isc::dhcp::Pkt6Ptr captureeRouterRelayedSolicit();
     static isc::dhcp::Pkt6Ptr captureCableLabsShortVendorClass();
+    static isc::dhcp::Pkt6Ptr captureRelayed2xRSOO();
 
 protected:
     /// @brief Auxiliary method that sets Pkt6 fields

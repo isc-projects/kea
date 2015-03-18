@@ -328,5 +328,77 @@ Pkt6Ptr isc::test::PktCaptures::captureCableLabsShortVendorClass() {
 
 }
 
+/// @brief creates doubly relayed solicit message
+///
+/// This is a traffic capture exported from wireshark and manually modified
+/// to include necessary options (RSOO). It includes a SOLICIT message
+/// that passed through two relays. It is especially interesting,
+/// because of the following properties:
+/// - double encapsulation
+/// - first relay inserts relay-msg before extra options
+/// - second relay inserts relay-msg after extra options
+/// - both relays are from different vendors
+/// - interface-id are different for each relay
+/// - first relay inserts valid remote-id
+/// - second relay inserts remote-id with empty vendor data
+/// - the solicit message requests for custom options in ORO
+/// - there are option types in RELAY-FORW that do not appear in SOLICIT
+/// - there are option types in SOLICT that do not appear in RELAY-FORW
+///
+/// RELAY-FORW
+///  - relay message option
+///      - RELAY-FORW
+///          - rsoo (66)
+///              - option 255 (len 4)
+///              - option 256 (len 9)
+///          - remote-id option (37)
+///          - relay message option
+///             - SOLICIT
+///                  - client-id option
+///                  - ia_na option
+///                  - elapsed time
+///                  - ORO
+/// - interface-id option (18)
+/// - remote-id option (37)
+///
+/// The original capture was posted to dibbler users mailing list.
+///
+/// @return created double relayed SOLICIT message
+isc::dhcp::Pkt6Ptr isc::test::PktCaptures::captureRelayed2xRSOO() {
+
+    // string exported from Wireshark
+    string hex_string =
+        "0c01200108880db800010000000000000000fe80000000000000020021fffe5c18a9"
+        "0009007d0c0000000000000000000000000000000000fe80000000000000020021fffe5c18a9"
+        "00420015" // RSOO (includes ...
+        "00ff000401020304" // ... option 255, len 4, content 0x01020304
+        "01000009010203040506070809" // ... option 256, len 9, content 0x010203040506070809
+        "0025000400000de9" // remote-id
+        "00090036" // relay-msg, len 54
+        "016b4fe2" // solicit"
+        "0001000e0001000118b033410000215c18a9" // client-id
+        "0003000c00000001ffffffffffffffff" // ia-na
+        "000800020000"
+        "00060006001700f200f3"
+        "0012001c4953414d3134347c3239397c697076367c6e743a76703a313a" // vendor-class
+        "313130002500120000197f0001000118b033410000215c18a9";
+
+    std::vector<uint8_t> bin;
+
+    // Decode the hex string and store it in bin (which happens
+    // to be OptionBuffer format)
+    isc::util::encode::decodeHex(hex_string, bin);
+
+    Pkt6Ptr pkt(new Pkt6(&bin[0], bin.size()));
+    pkt->setRemotePort(547);
+    pkt->setRemoteAddr(IOAddress("fe80::1234"));
+    pkt->setLocalPort(547);
+    pkt->setLocalAddr(IOAddress("ff05::1:3"));
+    pkt->setIndex(2);
+    pkt->setIface("eth0");
+    return (pkt);
+}
+
+
 }; // end of isc::test namespace
 }; // end of isc namespace

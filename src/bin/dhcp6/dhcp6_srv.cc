@@ -256,7 +256,7 @@ bool Dhcpv6Srv::run() {
         // Handle next signal received by the process. It must be called after
         // an attempt to receive a packet to properly handle server shut down.
         // The SIGTERM or SIGINT will be received prior to, or during execution
-        // of select() (select is invoked by recivePacket()). When that happens,
+        // of select() (select is invoked by receivePacket()). When that happens,
         // select will be interrupted. The signal handler will be invoked
         // immediately after select(). The handler will set the shutdown flag
         // and cause the process to terminate before the next select() function
@@ -444,6 +444,19 @@ bool Dhcpv6Srv::run() {
         }
 
         if (rsp) {
+
+            // Process relay-supplied options. It is important to call this very
+            // late in the process, because we now have all the options the
+            // server wanted to send already set. This is important, because
+            // RFC6422, section 6 states:
+            //
+            //   The server SHOULD discard any options that appear in the RSOO
+            //   for which it already has one or more candidates.
+            //
+            // So we ignore any RSOO options if there's an option with the same
+            // code already present.
+            processRSOO(query, rsp);
+
             rsp->setRemoteAddr(query->getRemoteAddr());
             rsp->setLocalAddr(query->getLocalAddr());
 
@@ -2709,6 +2722,40 @@ Daemon::getVersion(bool extended) {
     }
 
     return (tmp.str());
+}
+
+void Dhcpv6Srv::processRSOO(const Pkt6Ptr& query, const Pkt6Ptr& rsp) {
+
+    if (query->relay_info_.empty()) {
+        // RSOO is inserted by relay agents, nothing to do here if it's
+        // a direct message.
+        return;
+    }
+
+    // Get RSOO configuration.
+    ConstCfgRSOOPtr cfg_rsoo  = CfgMgr::instance().getCurrentCfg()->getCfgRSOO();
+
+    // Let's get over all relays (encapsulation levels). We need to do
+    // it in the same order as the client packet traversed the relays.
+    for (int i = query->relay_info_.size(); i > 0 ; --i) {
+        OptionPtr rsoo_container = query->getRelayOption(D6O_RSOO, i - 1);
+        if (rsoo_container) {
+            // There are RSOO options. Let's get through them one by one
+            // and if it's RSOO-enabled and there's no such option provided yet,
+            // copy it to the server's response
+            const OptionCollection& rsoo = rsoo_container->getOptions();
+            for (OptionCollection::const_iterator opt = rsoo.begin();
+                 opt != rsoo.end(); ++opt) {
+
+                // Echo option if it is RSOO enabled option and there is no such
+                // option added yet.
+                if (cfg_rsoo->enabled(opt->second->getType()) &&
+                    !rsp->getOption(opt->second->getType())) {
+                    rsp->addOption(opt->second);
+                }
+            }
+        }
+    }
 }
 
 };
