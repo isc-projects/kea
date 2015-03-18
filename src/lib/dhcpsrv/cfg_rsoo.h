@@ -16,6 +16,7 @@
 #define CFG_RSOO_H
 
 #include <boost/shared_ptr.hpp>
+#include <stdint.h>
 #include <set>
 
 namespace isc {
