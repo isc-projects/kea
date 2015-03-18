@@ -1092,7 +1092,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     if (opt_requested_address) {
         hint = opt_requested_address->readAddress();
 
-    } else if (query->getCiaddr() != IOAddress::IPV4_ZERO_ADDRESS()) {
+    } else if (!query->getCiaddr().isV4Zero()) {
         hint = query->getCiaddr();
 
     }
@@ -1292,7 +1292,9 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
                   DHCP4_LEASE_ADVERT_FAIL:DHCP4_LEASE_ALLOC_FAIL)
             .arg(client_id?client_id->toText():"(no client-id)")
             .arg(hwaddr?hwaddr->toText():"(no hwaddr info)")
-            .arg(hint.toText());
+            .arg(query->getCiaddr().toText())
+            .arg(opt_requested_address ?
+                 opt_requested_address->readAddress().toText() : "(no address)");
 
         resp->setType(DHCPNAK);
         resp->setYiaddr(IOAddress::IPV4_ZERO_ADDRESS());
