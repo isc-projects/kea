@@ -1,7 +1,14 @@
+914.	[bug]		marcin
+	DHCPv4 server: corrected the logging message issued when
+	the server could not allocate or offer the lease for the
+	client. The corrected message contains the client-id,
+	hardware address, ciaddr and requested-ip-address.
+	(Trac #3737, git 4c56e1348c5d50eaa5b3083a0a8c346966e1b603)
+
 913.	[bug]		sar
 	Handle recovery properly should the LFC crash while
 	manipulating files after completing processing.
-	(Trac 3759, git bb3b4d14119392261a1766da2b406fa46d4c0f21)
+	(Trac #3759, git bb3b4d14119392261a1766da2b406fa46d4c0f21)
 
 912.	[doc]		sar
 	Added sections on LFC to the administrators and developers
