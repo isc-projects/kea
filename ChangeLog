@@ -1,3 +1,10 @@
+915.	[func]		tomek, marcin
+	The DHCPv6 server now supports the Relay-Supplied Options
+	option,	as defined in RFC 6422. The relay can insert options
+	in the relay forward message that the server will send back
+	to the client if certain criteria are met.
+	(Trac #3705, git 4772ee589712f5359ecbd79ebf71fbc7bb68741b)
+
 914.	[bug]		marcin
 	DHCPv4 server: corrected the logging message issued when
 	the server could not allocate or offer the lease for the
