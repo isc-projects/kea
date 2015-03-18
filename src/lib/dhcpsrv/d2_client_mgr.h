@@ -187,8 +187,10 @@ public:
     ///     <partial_name>.<qualifying-suffix>.
     ///
     /// @param partial_name domain name to qualify
-    /// @param trailing_dot A boolean value which indicates whether trailing
-    /// dot should be appended (if true) or not (false).
+    /// @param trailing_dot A boolean value which when true guarantees the
+    /// result will end with a "." and when false that the result will not
+    /// end with a "."   Note that this rule is applied even if the qualifying
+    /// suffix itself is empty (i.e. "").
     ///
     /// @return std::string containing the qualified name.
     std::string qualifyName(const std::string& partial_name,
