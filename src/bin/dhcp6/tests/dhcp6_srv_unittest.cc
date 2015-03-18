@@ -2164,11 +2164,11 @@ TEST_F(Dhcpv6SrvTest, rsoo) {
     client.doSARR();
 
     // Option 110 should be copied to the client
-    EXPECT_NE(client.config_.options_.find(110), client.config_.options_.end());
+    EXPECT_FALSE(client.config_.options_.find(110) == client.config_.options_.end());
 
     // Options 109 and 111 should not be copied (they are not RSOO-enabled)
-    EXPECT_EQ(client.config_.options_.find(109), client.config_.options_.end());
-    EXPECT_EQ(client.config_.options_.find(111), client.config_.options_.end());
+    EXPECT_TRUE(client.config_.options_.find(109) == client.config_.options_.end());
+    EXPECT_TRUE(client.config_.options_.find(111) == client.config_.options_.end());
 }
 
 // Test that the server processes RSOO (Relay Supplied Options option) correctly
