@@ -2501,24 +2501,24 @@ Dhcpv6Srv::processDecline(const Pkt6Ptr& decline) {
 }
 
 Pkt6Ptr
-Dhcpv6Srv::processInfRequest(const Pkt6Ptr& infRequest) {
+Dhcpv6Srv::processInfRequest(const Pkt6Ptr& inf_request) {
 
     // Let's create a simplified client context here.
-    AllocEngine::ClientContext6 ctx = createContext(infRequest);
+    AllocEngine::ClientContext6 ctx = createContext(inf_request);
 
     // Create a Reply packet, with the same trans-id as the client's.
-    Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, infRequest->getTransid()));
+    Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, inf_request->getTransid()));
 
     // Copy client options (client-id, also relay information if present)
-    copyClientOptions(infRequest, reply);
+    copyClientOptions(inf_request, reply);
 
     // Append default options, i.e. options that the server is supposed
     // to put in all messages it sends (server-id for now, but possibly other
     // options once we start supporting authentication)
-    appendDefaultOptions(infRequest, reply);
+    appendDefaultOptions(inf_request, reply);
 
     // Try to assign options that were requested by the client.
-    appendRequestedOptions(infRequest, reply, ctx);
+    appendRequestedOptions(inf_request, reply, ctx);
 
     return (reply);
 }
