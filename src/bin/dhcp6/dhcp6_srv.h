@@ -242,8 +242,8 @@ protected:
 
     /// @brief Stub function that will handle incoming INF-REQUEST messages.
     ///
-    /// @param infRequest message received from client
-    Pkt6Ptr processInfRequest(const Pkt6Ptr& infRequest);
+    /// @param inf_request message received from client
+    Pkt6Ptr processInfRequest(const Pkt6Ptr& inf_request);
 
     /// @brief Creates status-code option.
     ///
