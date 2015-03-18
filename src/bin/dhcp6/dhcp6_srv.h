@@ -649,8 +649,14 @@ protected:
 
     /// @brief Creates client context for specified packet
     ///
-    /// Creates context that includes subnet, client-id, hw address and
-    /// possibly other parameters.
+    /// Instantiates the ClientContext6 and then:
+    /// - Performs the subnet selection and stores the result in context
+    /// - Extracts the duid from the packet and saves it to the context
+    /// - Extracts the hardware address from the packet and saves it to
+    /// the context
+    /// - Performs host reservation lookup and stores the result in the
+    /// context
+    ///
     /// @return client context
     AllocEngine::ClientContext6 createContext(const Pkt6Ptr& pkt);
 

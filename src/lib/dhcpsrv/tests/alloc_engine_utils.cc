@@ -230,6 +230,7 @@ AllocEngine6Test::renewTest(AllocEngine& engine, const Pool6Ptr& pool,
     ctx.query_.reset(new Pkt6(DHCPV6_RENEW, 123));
     ctx.allow_new_leases_in_renewals_ = allow_new_leases_in_renewal;
 
+    findReservation(engine, ctx);
     Lease6Collection leases = engine.renewLeases6(ctx);
 
     for (Lease6Collection::iterator it = leases.begin(); it != leases.end(); ++it) {

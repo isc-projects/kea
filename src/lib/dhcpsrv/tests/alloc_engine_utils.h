@@ -113,7 +113,7 @@ public:
 
     /// @brief Wrapper around call to AllocEngine6::findRervation
     ///
-    /// If a reservation is found bg the engine, the function sets
+    /// If a reservation is found by the engine, the function sets
     /// ctx.hostname_ accordingly.
     ///
     /// @param engine allocation engine to use
