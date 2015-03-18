@@ -2274,7 +2274,7 @@ TEST_F(Dhcpv6SrvTest, rsoo2relays) {
     // match the content of what the first relay had sent.
     ASSERT_TRUE(opt120);
     vector<uint8_t> expected(10, 1);
-    EXPECT_EQ(expected, opt120->getData());
+    EXPECT_TRUE(expected == opt120->getData());
 }
 
 // This test verifies that the server will send the option for which it
