@@ -217,6 +217,14 @@ public:
         return (srv_);
     }
 
+    /// @brief Creates the client id from the client id in the textual format.
+    ///
+    /// The generated client id will be added to the client's messages to the
+    /// server.
+    ///
+    /// @param clientid Client id in the textual format.
+    void includeClientId(const std::string& clientid);
+
     /// @brief Creates an instance of the Client FQDN option to be included
     /// in the client's message.
     ///
@@ -360,6 +368,13 @@ private:
     /// @return An instance of the message created.
     Pkt4Ptr createMsg(const uint8_t msg_type);
 
+    /// @brief Includes the Client Identifier option in the client's message.
+    ///
+    /// This function creates an instance of the Client Identifier option
+    /// if the client identifier has been specified and includes this
+    /// option in the client's message to the server.
+    void includeClientId();
+
     /// @brief Includes FQDN or Hostname option in the client's message.
     ///
     /// This method checks if @c fqdn_ or @c hostname_ is specified and
@@ -406,6 +421,9 @@ private:
 
     /// @brief Current hardware address of the client.
     HWAddrPtr hwaddr_;
+
+    /// @brief Current client identifier.
+    ClientIdPtr clientid_;
 
     /// @brief Interface to be used to send the messages.
     std::string iface_name_;

@@ -441,6 +441,28 @@ TEST_F(DORATest, ciaddr) {
     EXPECT_EQ("0.0.0.0", resp->getCiaddr().toText());
 }
 
+TEST_F(DORATest, overlappingClientId) {
+    Dhcp4Client clientA(Dhcp4Client::SELECTING);
+    clientA.includeClientId("12:34");
+    configure(DORA_CONFIGS[0], *clientA.getServer());
+    ASSERT_NO_THROW(clientA.doDORA());
+    // Make sure that the server responded.
+    ASSERT_TRUE(clientA.getContext().response_);
+    Pkt4Ptr respA = clientA.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(respA->getType()));
+
+    Dhcp4Client clientB(clientA.getServer(), Dhcp4Client::SELECTING);
+    clientB.includeClientId("12:34");
+    ASSERT_NO_THROW(clientB.doDiscover());
+
+    Pkt4Ptr respB = clientB.getContext().response_;
+    // Make sure that the server has responded with DHCPOFFER.
+    ASSERT_EQ(DHCPOFFER, static_cast<int>(respB->getType()));
+
+    EXPECT_NE(clientA.config_.lease_.addr_, respB->getYiaddr());
+}
+
 // This is a simple test for the host reservation. It creates a reservation
 // for an address for a single client, identified by the HW address. The
 // test verifies that the client using this HW address will obtain a
