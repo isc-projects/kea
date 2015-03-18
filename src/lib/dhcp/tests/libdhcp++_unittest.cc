@@ -1140,6 +1140,14 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
 
     LibDhcpTest::testStdOptionDefs6(D6O_LQ_CLIENT_LINK, begin, end,
                                     typeid(Option6AddrLst));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_RSOO, begin, end,
+                                    typeid(OptionCustom),
+                                    "rsoo-opts");
+
+    LibDhcpTest::testStdOptionDefs6(D6O_ERP_LOCAL_DOMAIN_NAME,
+                                    fqdn_buf.begin(), fqdn_buf.end(),
+                                    typeid(OptionCustom));
 }
 
 // This test checks if the DHCPv6 option definition can be searched by

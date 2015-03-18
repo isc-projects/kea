@@ -352,14 +352,14 @@ Pkt6Ptr isc::test::PktCaptures::captureCableLabsShortVendorClass() {
 ///              - option 255 (len 4)
 ///              - option 256 (len 9)
 ///          - remote-id option (37)
-///          - RELAY-FORW
+///          - relay message option
 ///             - SOLICIT
 ///                  - client-id option
 ///                  - ia_na option
 ///                  - elapsed time
 ///                  - ORO
-///      - interface-id option (18)
-///      - remote-id option (37)
+/// - interface-id option (18)
+/// - remote-id option (37)
 ///
 /// The original capture was posted to dibbler users mailing list.
 ///
