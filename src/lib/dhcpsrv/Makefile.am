@@ -70,6 +70,7 @@ libkea_dhcpsrv_la_SOURCES += cfg_hosts.cc cfg_hosts.h
 libkea_dhcpsrv_la_SOURCES += cfg_iface.cc cfg_iface.h
 libkea_dhcpsrv_la_SOURCES += cfg_option.cc cfg_option.h
 libkea_dhcpsrv_la_SOURCES += cfg_option_def.cc cfg_option_def.h
+libkea_dhcpsrv_la_SOURCES += cfg_rsoo.cc cfg_rsoo.h
 libkea_dhcpsrv_la_SOURCES += cfg_subnets4.cc cfg_subnets4.h
 libkea_dhcpsrv_la_SOURCES += cfg_subnets6.cc cfg_subnets6.h
 libkea_dhcpsrv_la_SOURCES += cfg_mac_source.cc cfg_mac_source.h

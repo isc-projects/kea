@@ -65,6 +65,8 @@
 #define D6O_CLT_TIME                            46 /* RFC5007 */
 #define D6O_LQ_RELAY_DATA                       47 /* RFC5007 */
 #define D6O_LQ_CLIENT_LINK                      48 /* RFC5007 */
+#define D6O_ERP_LOCAL_DOMAIN_NAME               65 /* RFC6440 */
+#define D6O_RSOO                                66 /* RFC6422 */
 #define D6O_CLIENT_LINKLAYER_ADDR               79 /* RFC6939 */
 
 /*

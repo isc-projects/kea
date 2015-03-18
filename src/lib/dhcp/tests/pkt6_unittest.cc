@@ -1294,4 +1294,38 @@ TEST_F(Pkt6Test, getMACFromRemoteIdRelayOption) {
     EXPECT_EQ(tmp.str(), mac->toText(true));
 }
 
+// This test verifies that a solicit that passed through two relays is parsed
+// properly. In particular the second relay (outer encapsulation) included RSOO
+// (Relay Supplied Options option). This test checks whether it was parsed
+// properly. See captureRelayed2xRSOO() description for details.
+TEST_F(Pkt6Test, rsoo) {
+    Pkt6Ptr msg = test::PktCaptures::captureRelayed2xRSOO();
+
+    EXPECT_NO_THROW(msg->unpack());
+
+    EXPECT_EQ(DHCPV6_SOLICIT, msg->getType());
+    EXPECT_EQ(217, msg->len());
+
+    ASSERT_EQ(2, msg->relay_info_.size());
+
+    // There should be an RSOO option in the outermost relay
+    OptionPtr opt = msg->getRelayOption(D6O_RSOO, 1);
+    ASSERT_TRUE(opt);
+
+    EXPECT_EQ(D6O_RSOO, opt->getType());
+    const OptionCollection& rsoo = opt->getOptions();
+    ASSERT_EQ(2, rsoo.size());
+
+    OptionPtr rsoo1 = opt->getOption(255);
+    OptionPtr rsoo2 = opt->getOption(256);
+
+    ASSERT_TRUE(rsoo1);
+    ASSERT_TRUE(rsoo2);
+
+    EXPECT_EQ(8, rsoo1->len()); // 4 bytes of data + header
+    EXPECT_EQ(13, rsoo2->len()); // 9 bytes of data + header
+
+}
+
+
 }

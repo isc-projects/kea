@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 #include <dhcp/option_space.h>
 #include <dhcpsrv/cfg_option.h>
 #include <boost/lexical_cast.hpp>
+#include <dhcp/dhcp6.h>
 #include <limits>
 #include <string>
 
@@ -25,6 +26,9 @@ bool
 OptionDescriptor::equals(const OptionDescriptor& other) const {
     return (persistent_ == other.persistent_ &&
             option_->equals(other.option_));
+}
+
+CfgOption::CfgOption() {
 }
 
 bool
@@ -189,7 +193,6 @@ CfgOption::optionSpaceToVendorId(const std::string& option_space) {
     // value is small enough to fit
     return (static_cast<uint32_t>(check));
 }
-
 
 } // end of namespace isc::dhcp
 } // end of namespace isc

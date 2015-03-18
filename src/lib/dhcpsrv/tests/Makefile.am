@@ -64,6 +64,7 @@ libdhcpsrv_unittests_SOURCES += cfg_iface_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_mac_source_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_option_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_option_def_unittest.cc
+libdhcpsrv_unittests_SOURCES += cfg_rsoo_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_subnets4_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_subnets6_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfgmgr_unittest.cc
