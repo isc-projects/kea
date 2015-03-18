@@ -166,25 +166,25 @@ protected:
     void sanityCheck(const Pkt6Ptr& pkt, RequirementLevel clientid,
                      RequirementLevel serverid);
 
-    /// @brief Processes incoming SOLICIT and returns response.
+    /// @brief Processes incoming Solicit and returns response.
     ///
-    /// Processes received SOLICIT message and verifies that its sender
+    /// Processes received Solicit message and verifies that its sender
     /// should be served. In particular IA, TA and PD options are populated
     /// with to-be assigned addresses, temporary addresses and delegated
     /// prefixes, respectively. In the usual 4 message exchange, server is
-    /// expected to respond with ADVERTISE message. However, if client
-    /// requests rapid-commit and server supports it, REPLY will be sent
-    /// instead of ADVERTISE and requested leases will be assigned
+    /// expected to respond with Advertise message. However, if client
+    /// requests rapid-commit and server supports it, Reply will be sent
+    /// instead of Advertise and requested leases will be assigned
     /// immediately.
     ///
-    /// @param solicit SOLICIT message received from client
+    /// @param solicit Solicit message received from client
     ///
-    /// @return ADVERTISE, REPLY message or NULL
+    /// @return Advertise, Reply message or NULL.
     Pkt6Ptr processSolicit(const Pkt6Ptr& solicit);
 
-    /// @brief Processes incoming REQUEST and returns REPLY response.
+    /// @brief Processes incoming Request and returns Reply response.
     ///
-    /// Processes incoming REQUEST message and verifies that its sender
+    /// Processes incoming Request message and verifies that its sender
     /// should be served. In particular IA, TA and PD options are populated
     /// with assigned addresses, temporary addresses and delegated
     /// prefixes, respectively. Uses LeaseMgr to allocate or update existing
@@ -195,14 +195,22 @@ protected:
     /// @return REPLY message or NULL
     Pkt6Ptr processRequest(const Pkt6Ptr& request);
 
-    /// @brief Stub function that will handle incoming RENEW messages.
+    /// @brief Processes incoming Renew message.
     ///
-    /// @param renew message received from client
+    /// @param renew message received from the client
+    /// @return Reply message to be sent to the client.
     Pkt6Ptr processRenew(const Pkt6Ptr& renew);
 
-    /// @brief Stub function that will handle incoming REBIND messages.
+    /// @brief Processes incoming Rebind message.
     ///
-    /// @param rebind message received from client
+    /// @todo There are cases when the Rebind message should be  discarded
+    /// by the DHCP server. One of those is when the server doesn't have a
+    /// record of the client and it is unable to determine whether the
+    /// client is on the appropriate link or not. We don't seem to do it
+    /// now.
+    ///
+    /// @param rebind message received from the client.
+    /// @return Reply message to be sent to the client.
     Pkt6Ptr processRebind(const Pkt6Ptr& rebind);
 
     /// @brief Processes incoming Confirm message and returns Reply.
@@ -226,23 +234,25 @@ protected:
     ///
     /// @param confirm Confirm message sent by a client.
     ///
-    /// @return Reply message from the server al NULL pointer if Confirm
+    /// @return Reply message from the server or NULL pointer if Confirm
     /// message should be discarded by the server.
     Pkt6Ptr processConfirm(const Pkt6Ptr& confirm);
 
-    /// @brief Stub function that will handle incoming RELEASE messages.
+    /// @brief Process incoming Release message.
     ///
     /// @param release message received from client
+    /// @return Reply message to be sent to the client.
     Pkt6Ptr processRelease(const Pkt6Ptr& release);
 
-    /// @brief Stub function that will handle incoming DECLINE messages.
+    /// @brief Stub function that will handle incoming Decline.
     ///
     /// @param decline message received from client
     Pkt6Ptr processDecline(const Pkt6Ptr& decline);
 
-    /// @brief Stub function that will handle incoming INF-REQUEST messages.
+    /// @brief Processes incoming Information-request message.
     ///
     /// @param inf_request message received from client
+    /// @return Reply message to be sent to the client.
     Pkt6Ptr processInfRequest(const Pkt6Ptr& inf_request);
 
     /// @brief Creates status-code option.
