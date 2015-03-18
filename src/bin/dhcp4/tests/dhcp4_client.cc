@@ -49,6 +49,7 @@ Dhcp4Client::Dhcp4Client(const Dhcp4Client::State& state) :
     curr_transid_(0),
     dest_addr_("255.255.255.255"),
     hwaddr_(generateHWAddr()),
+    clientid_(),
     iface_name_("eth0"),
     relay_addr_("192.0.2.2"),
     requested_options_(),
@@ -66,6 +67,7 @@ Dhcp4Client::Dhcp4Client(boost::shared_ptr<NakedDhcpv4Srv> srv,
     dest_addr_("255.255.255.255"),
     fqdn_(),
     hwaddr_(generateHWAddr()),
+    clientid_(),
     iface_name_("eth0"),
     relay_addr_("192.0.2.2"),
     requested_options_(),
@@ -153,6 +155,8 @@ Dhcp4Client::doDiscover(const boost::shared_ptr<IOAddress>& requested_addr) {
     includePRL();
     // Include FQDN or Hostname.
     includeName();
+    // Include Client Identifier
+    includeClientId();
     if (requested_addr) {
         addRequestedAddress(*requested_addr);
     }
@@ -244,6 +248,8 @@ Dhcp4Client::doRequest() {
     includePRL();
     // Include FQDN or Hostname.
     includeName();
+    // Include Client Identifier
+    includeClientId();
     // Send the message to the server.
     sendMsg(context_.query_);
     // Expect response.
@@ -251,6 +257,25 @@ Dhcp4Client::doRequest() {
     // If the server has responded, store the configuration received.
     if (context_.response_) {
         applyConfiguration();
+    }
+}
+
+void
+Dhcp4Client::includeClientId(const std::string& clientid) {
+    clientid_ = ClientId::fromText(clientid);
+}
+
+void
+Dhcp4Client::includeClientId() {
+    if (!context_.query_) {
+        isc_throw(Dhcp4ClientError, "pointer to the query must not be NULL"
+                  " when adding Client Identifier option");
+    }
+
+    if (clientid_) {
+        OptionPtr opt(new Option(Option::V4, DHO_DHCP_CLIENT_IDENTIFIER,
+                                 clientid_->getClientId()));
+        context_.query_->addOption(opt);
     }
 }
 
