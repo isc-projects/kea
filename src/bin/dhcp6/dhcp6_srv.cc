@@ -224,7 +224,8 @@ Dhcpv6Srv::testUnicast(const Pkt6Ptr& pkt) const {
     return (true);
 }
 
-DuidPtr Dhcpv6Srv::extractClientId(const Pkt6Ptr& pkt) {
+DuidPtr
+Dhcpv6Srv::extractClientId(const Pkt6Ptr& pkt) {
     // Let's find client's DUID. Client is supposed to include its client-id
     // option almost all the time (the only exception is an anonymous inf-request,
     // but that is mostly a theoretical case). Our allocation engine needs DUID
@@ -237,7 +238,8 @@ DuidPtr Dhcpv6Srv::extractClientId(const Pkt6Ptr& pkt) {
     }
 }
 
-AllocEngine::ClientContext6 Dhcpv6Srv::createContext(const Pkt6Ptr& pkt) {
+AllocEngine::ClientContext6
+Dhcpv6Srv::createContext(const Pkt6Ptr& pkt) {
     AllocEngine::ClientContext6 ctx;
     ctx.subnet_ = selectSubnet(pkt);
     ctx.duid_ = extractClientId(pkt);
@@ -1271,8 +1273,8 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     // to say that we are sorry, but the user won't get an address. As a convenience, we
     // use a different status text to indicate that (compare to the same status code,
     // but different wording below)
-    if (!orig_ctx.subnet_) {
-        // Creatasse empty IA_NA option with IAID matching the request.
+    if (!subnet) {
+        // Create an empty IA_NA option with IAID matching the request.
         // Note that we don't use OptionDefinition class to create this option.
         // This is because we prefer using a constructor of Option6IA that
         // initializes IAID. Otherwise we would have to use setIAID() after
@@ -1613,7 +1615,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
         ctx.allow_new_leases_in_renewals_ = true;
     }
 
-    Lease6Collection leases = alloc_engine_->renewLeases6(ctx, false);
+    Lease6Collection leases = alloc_engine_->renewLeases6(ctx);
 
     // Ok, now we have the leases extended. We have:
     // - what the client tried to renew in ctx.hints_
@@ -1796,7 +1798,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
     // - old_leases - leases that used to be, but are no longer valid
     // - changed_leases - leases that have FQDN changed (not really important
     //                    in PD context)
-    Lease6Collection leases = alloc_engine_->renewLeases6(ctx, false);
+    Lease6Collection leases = alloc_engine_->renewLeases6(ctx);
 
     // For all the leases we have now, add the IAPPREFIX with non-zero lifetimes
     for (Lease6Collection::const_iterator l = leases.begin(); l != leases.end(); ++l) {

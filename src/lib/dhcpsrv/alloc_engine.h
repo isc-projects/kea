@@ -498,16 +498,8 @@ public:
     /// prefixes the client had sent. @ref ClientContext6::old_leases_ will
     /// contain removed leases in this case.
     ///
-    /// @param find_resrv specifies whether the code should search for host
-    ///   reservation. true means that the code will consult HostMgr, false means
-    ///   to skip this check. That is easier to use, but is redundant if the
-    ///   ctx.host_ field is already set. We can't use ctx.host_ == NULL as
-    ///   check, because for cases whithout reservations, the reservation
-    ///   search would be repeated.
-    ///
-    ///
     /// @return Returns renewed lease.
-    Lease6Collection renewLeases6(ClientContext6& ctx, bool find_resrv = true);
+    Lease6Collection renewLeases6(ClientContext6& ctx);
 
     /// @brief Attempts to find appropriate host reservation.
     ///
