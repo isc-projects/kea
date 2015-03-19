@@ -765,6 +765,8 @@ public:
         /// the context has been created, false otherwise.
         bool myLease(const Lease4& lease) const;
 
+        bool isInConflict(const Lease4& lease) const;
+
     };
 
     /// @brief Pointer to the @c ClientContext4.

@@ -262,7 +262,12 @@ Dhcp4Client::doRequest() {
 
 void
 Dhcp4Client::includeClientId(const std::string& clientid) {
-    clientid_ = ClientId::fromText(clientid);
+    if (clientid.empty()) {
+        clientid_.reset();
+
+    } else {
+        clientid_ = ClientId::fromText(clientid);
+    }
 }
 
 void
@@ -410,7 +415,11 @@ Dhcp4Client::sendMsg(const Pkt4Ptr& msg) {
 
 void
 Dhcp4Client::setHWAddress(const std::string& hwaddr_str) {
-    hwaddr_.reset(new HWAddr(HWAddr::fromText(hwaddr_str)));
+    if (hwaddr_str.empty()) {
+        hwaddr_.reset();
+    } else {
+        hwaddr_.reset(new HWAddr(HWAddr::fromText(hwaddr_str)));
+    }
 }
 
 } // end of namespace isc::dhcp::test
