@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -163,6 +163,9 @@ main(int argc, char* argv[]) {
 
             return (EXIT_FAILURE);
         }
+
+        // Tell the admin we are ready to process packets
+        LOG_INFO(dhcp6_logger, DHCP6_STARTED).arg(VERSION);
 
         // And run the main loop of the server.
         server.run();
