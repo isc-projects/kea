@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -660,7 +660,7 @@ TEST(D2ClientMgr, qualifyName) {
     EXPECT_EQ("somehost.hasdot.com.", qualified_name);
 
     // Verify that the qualifying suffix gets appended without an
-    // extraneous dot when parital_name ends with a "."
+    // extraneous dot when partial_name ends with a "."
     qualified_name = mgr.qualifyName("somehost.", true);
     EXPECT_EQ("somehost.hasdot.com.", qualified_name);
 
