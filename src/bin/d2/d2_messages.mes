@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -431,10 +431,6 @@ This is a debug message issued when reverse DNS updates are disabled and
 DHCP_DDNS receives an update request containing a reverse DNS update.  The
 reverse update will not performed.
 
-% DHCP_DDNS_RUN_ENTER application has entered the event loop
-This is a debug message issued when the DHCP-DDNS application enters
-its run method.
-
 % DHCP_DDNS_RUN_EXIT application is exiting the event loop
 This is a debug message issued when the DHCP-DDNS server exits its
 event lo
@@ -456,6 +452,11 @@ This is an error message indicating that the application encountered an unexpect
 error after receiving a signal.  This is a programmatic error and should be
 reported.  While The application will likely continue to operating, it may be
 unable to respond correctly to signals.
+
+% DHCP_DDNS_STARTED Kea DHCP-DDNS server version %1 started
+This informational message indicates that the DHCP-DDNS server has
+processed all configuration information and is ready to beging processing.
+The version is also printed.
 
 % DHCP_DDNS_STARTING DHCP-DDNS starting, pid: %1, version: %2
 This is an informational message issued when controller for the

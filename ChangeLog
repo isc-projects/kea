@@ -1,3 +1,10 @@
+916.	[func]		sar
+	Add a log message that indicates when the v4, v6 or
+	DHCP-DDNS server has completed processing its
+	configuration and is about to enter the loop to process
+	messages.
+	(Trac #3755, git TBD)
+	
 915.	[func]		tomek, marcin
 	The DHCPv6 server now supports the Relay-Supplied Options
 	option,	as defined in RFC 6422. The relay can insert options

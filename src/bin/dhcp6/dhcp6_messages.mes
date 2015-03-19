@@ -550,6 +550,11 @@ standalone mode, not connected to the message queue.  Standalone mode
 is only useful during program development, and should not be used in a
 production environment.
 
+% DHCP6_STARTED Kea DHCPv6 server version %1 started
+This informational message indicates that the IPv6 DHCP server has
+processed all configuration information and is ready to process
+DHCPv6 packets.  The version is also printed.
+
 % DHCP6_STARTING Kea DHCPv6 server version %1 starting
 This informational message indicates that the IPv6 DHCP server has
 processed any command-line switches and is starting. The version
