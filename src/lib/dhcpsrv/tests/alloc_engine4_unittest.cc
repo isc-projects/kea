@@ -542,11 +542,17 @@ TEST_F(AllocEngine4Test, requestReuseExpiredLease4) {
 // client (DHCPDISCOVER case).
 TEST_F(AllocEngine4Test, requestOtherClientLease) {
     // Create the first lease.
-    Lease4Ptr lease(new Lease4(IOAddress("192.0.2.101"), hwaddr_, 0, 0,
+    Lease4Ptr lease(new Lease4(IOAddress("192.0.2.101"), hwaddr_,
+                               &clientid_->getClientId()[0],
+                               clientid_->getClientId().size(),
                                100, 30, 60, time(NULL), subnet_->getID(),
                                false, false, ""));
-    // Create the second lease.
-    Lease4Ptr lease2(new Lease4(IOAddress("192.0.2.102"), hwaddr2_, 0, 0,
+    // Create the second lease. Note that we use the same client id here and
+    // we expect that the allocation engine will figure out that the hardware
+    // address is different.
+    Lease4Ptr lease2(new Lease4(IOAddress("192.0.2.102"), hwaddr2_,
+                               &clientid_->getClientId()[0],
+                               clientid_->getClientId().size(),
                                100, 30, 60, time(NULL), subnet_->getID(),
                                false, false, ""));
     // Add leases for both clients to the Lease Manager.
@@ -967,7 +973,9 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseFakeAllocation) {
     CfgMgr::instance().commit();
 
     // Create a lease for a different address than reserved.
-    Lease4Ptr lease(new Lease4(IOAddress("192.0.2.101"), hwaddr_, 0, 0,
+    Lease4Ptr lease(new Lease4(IOAddress("192.0.2.101"), hwaddr_,
+                               &clientid_->getClientId()[0],
+                               clientid_->getClientId().size(),
                                100, 30, 60, time(NULL), subnet_->getID(),
                                false, false, ""));
     LeaseMgrFactory::instance().addLease(lease);
@@ -1077,7 +1085,9 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseNoHintFakeAllocation) {
     CfgMgr::instance().commit();
 
     // Create a lease for a different address than reserved.
-    Lease4Ptr lease(new Lease4(IOAddress("192.0.2.101"), hwaddr_, 0, 0,
+    Lease4Ptr lease(new Lease4(IOAddress("192.0.2.101"), hwaddr_,
+                               &clientid_->getClientId()[0],
+                               clientid_->getClientId().size(),
                                100, 30, 60, time(NULL), subnet_->getID(),
                                false, false, ""));
     LeaseMgrFactory::instance().addLease(lease);
