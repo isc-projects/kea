@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -187,8 +187,10 @@ public:
     ///     <partial_name>.<qualifying-suffix>.
     ///
     /// @param partial_name domain name to qualify
-    /// @param trailing_dot A boolean value which indicates whether trailing
-    /// dot should be appended (if true) or not (false).
+    /// @param trailing_dot A boolean value which when true guarantees the
+    /// result will end with a "." and when false that the result will not
+    /// end with a "."   Note that this rule is applied even if the qualifying
+    /// suffix itself is empty (i.e. "").
     ///
     /// @return std::string containing the qualified name.
     std::string qualifyName(const std::string& partial_name,

@@ -188,12 +188,21 @@ D2ClientMgr::qualifyName(const std::string& partial_name,
                          const bool trailing_dot) const {
     std::ostringstream gen_name;
 
-    gen_name << partial_name << "." << d2_client_config_->getQualifyingSuffix();
+    gen_name << partial_name;
+    if (!d2_client_config_->getQualifyingSuffix().empty()) {
+        std::string str = gen_name.str();
+        size_t len = str.length();
+        if ((len > 0) && (str[len - 1] != '.')) {
+            gen_name << ".";
+        }
+
+        gen_name << d2_client_config_->getQualifyingSuffix();
+    }
 
     std::string str = gen_name.str();
     size_t len = str.length();
 
-    if(trailing_dot) {
+    if (trailing_dot) {
         // If trailing dot should be added but there is no trailing dot,
         // append it.
         if ((len > 0) && (str[len - 1] != '.')) {
