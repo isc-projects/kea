@@ -75,6 +75,7 @@ dhcp6_unittests_SOURCES  = dhcp6_unittests.cc
 dhcp6_unittests_SOURCES += dhcp6_srv_unittest.cc
 dhcp6_unittests_SOURCES += fqdn_unittest.cc
 dhcp6_unittests_SOURCES += hooks_unittest.cc
+dhcp6_unittests_SOURCES += host_unittest.cc
 dhcp6_unittests_SOURCES += dhcp6_test_utils.cc dhcp6_test_utils.h
 dhcp6_unittests_SOURCES += d2_unittest.cc d2_unittest.h
 dhcp6_unittests_SOURCES += marker_file.cc
