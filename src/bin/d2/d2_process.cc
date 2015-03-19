@@ -50,7 +50,7 @@ D2Process::init() {
 
 void
 D2Process::run() {
-    LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DHCP_DDNS_RUN_ENTER);
+    LOG_INFO(dctl_logger, DHCP_DDNS_STARTED).arg(VERSION);
     // Loop forever until we are allowed to shutdown.
     while (!canShutdown()) {
         try {
