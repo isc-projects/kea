@@ -339,6 +339,20 @@ Dhcp6Client::doInfRequest() {
 }
 
 void
+Dhcp6Client::doRenew() {
+    Pkt6Ptr query = createMsg(DHCPV6_RENEW);
+    query->addOption(context_.response_->getOption(D6O_SERVERID));
+    copyIAsFromLeases(query);
+    context_.query_ = query;
+    sendMsg(context_.query_);
+    context_.response_ = receiveOneMsg();
+    // Apply configuration only if the server has responded.
+    if (context_.response_) {
+        applyRcvdConfiguration(context_.response_);
+    }
+}
+
+void
 Dhcp6Client::doRebind() {
     Pkt6Ptr query = createMsg(DHCPV6_REBIND);
     copyIAsFromLeases(query);
