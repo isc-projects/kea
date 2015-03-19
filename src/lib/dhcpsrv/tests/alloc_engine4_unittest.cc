@@ -761,7 +761,9 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLease) {
 
     // Create a lease for the client with a different address than the reserved
     // one.
-    Lease4Ptr lease(new Lease4(IOAddress("192.0.2.101"), hwaddr_, 0, 0,
+    Lease4Ptr lease(new Lease4(IOAddress("192.0.2.101"), hwaddr_,
+                               &clientid_->getClientId()[0],
+                               clientid_->getClientId().size(),
                                100, 30, 60, time(NULL), subnet_->getID(),
                                false, false, ""));
     LeaseMgrFactory::instance().addLease(lease);
@@ -1036,7 +1038,9 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseNoHint) {
     CfgMgr::instance().commit();
 
     // Create a lease for a different address than reserved.
-    Lease4Ptr lease(new Lease4(IOAddress("192.0.2.101"), hwaddr_, 0, 0,
+    Lease4Ptr lease(new Lease4(IOAddress("192.0.2.101"), hwaddr_,
+                               &clientid_->getClientId()[0],
+                               clientid_->getClientId().size(),
                                100, 30, 60, time(NULL), subnet_->getID(),
                                false, false, ""));
     LeaseMgrFactory::instance().addLease(lease);
@@ -1148,7 +1152,9 @@ TEST_F(AllocEngine4Test, reservedAddressConflictResolution) {
     CfgMgr::instance().commit();
 
     // Create a lease for Client A.
-    Lease4Ptr lease(new Lease4(IOAddress("192.0.2.101"), hwaddr_, 0, 0,
+    Lease4Ptr lease(new Lease4(IOAddress("192.0.2.101"), hwaddr_,
+                               &clientid_->getClientId()[0],
+                               clientid_->getClientId().size(),
                                100, 30, 60, time(NULL), subnet_->getID(),
                                false, false, ""));
     LeaseMgrFactory::instance().addLease(lease);
