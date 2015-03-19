@@ -3,7 +3,7 @@
 	DHCP-DDNS server has completed processing its
 	configuration and is about to enter the loop to process
 	messages.
-	(Trac #3755, git TBD)
+	(Trac #3755, git c71c7836804842bae51fe79fd599c57f5b3d007d)
 	
 915.	[func]		tomek, marcin
 	The DHCPv6 server now supports the Relay-Supplied Options
