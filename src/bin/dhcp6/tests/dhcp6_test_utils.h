@@ -345,17 +345,6 @@ public:
     /// @param srv Server to be configured.
     void configure(const std::string& config, NakedDhcpv6Srv& srv);
 
-    /// @brief Utility function that creates a host reservation (duid)
-    ///
-    /// @param add_to_host_mgr true if the reservation should be added
-    /// @param type specifies reservation type (NA or PD)
-    /// @param addr specifies reserved address
-    /// @param hostname specifies hostname to be used in reservation
-    /// @return created Host object.
-    isc::dhcp::HostPtr
-    createHost6(bool add_to_host_mgr, isc::dhcp::IPv6Resrv::Type type,
-                const asiolink::IOAddress& addr, const std::string& hostname);
-
     /// @brief Checks that server response (ADVERTISE or REPLY) contains proper
     ///        IA_NA option
     ///

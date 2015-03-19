@@ -426,6 +426,12 @@ Dhcp6Client::getLeasesByIAID(const uint32_t iaid) const {
 }
 
 void
+Dhcp6Client::setDUID(const std::string& str) {
+    DUID d = DUID::fromText(str);
+    duid_.reset(new DUID(d));
+}
+
+void
 Dhcp6Client::modifyDUID() {
     if (!duid_) {
         duid_ = generateDUID(DUID::DUID_LLT);

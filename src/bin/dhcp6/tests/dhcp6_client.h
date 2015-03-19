@@ -302,6 +302,16 @@ public:
         return (srv_);
     }
 
+    /// @brief Sets the client's DUID from a string value
+    ///
+    /// Replaces the client's DUID with one constructed from the given
+    /// string.  The string is expected to hexadecimal digits with or
+    /// without ":" separators.
+    ///
+    /// The DUID modification affects the value returned by the
+    /// @c Dhcp6Client::getClientId
+    void setDUID(const std::string& duid_str);
+
     /// @brief Modifies the client's DUID (adds one to it).
     ///
     /// The DUID should be modified to test negative scenarios when the client
