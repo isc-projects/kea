@@ -222,7 +222,8 @@ public:
     /// The generated client id will be added to the client's messages to the
     /// server.
     ///
-    /// @param clientid Client id in the textual format.
+    /// @param clientid Client id in the textual format. Use the empty client id
+    /// value to not include the client id.
     void includeClientId(const std::string& clientid);
 
     /// @brief Creates an instance of the Client FQDN option to be included
@@ -293,7 +294,8 @@ public:
 
     /// @brief Sets the explicit hardware address for the client.
     ///
-    /// @param hwaddr_str String representation of the HW address.
+    /// @param hwaddr_str String representation of the HW address. Use an
+    /// empty string to set the NULL hardware address.
     void setHWAddress(const std::string& hwaddr_str);
 
     /// @brief Sets the interface over which the messages should be sent.

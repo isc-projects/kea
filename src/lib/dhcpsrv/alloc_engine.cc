@@ -1286,6 +1286,14 @@ AllocEngine::ClientContext4::myLease(const Lease4& lease) const {
     return (true);
 }
 
+bool
+AllocEngine::ClientContext4::isInConflict(const Lease4& lease) const {
+    return ((!(hwaddr_ && lease.hwaddr_) && (clientid_ && lease.client_id_) &&
+             (*clientid_ == *lease.client_id_)) ||
+            (!(clientid_ && lease.client_id_) && (hwaddr_ && lease.hwaddr_) &&
+             (hwaddr_->hwaddr_ == lease.hwaddr_->hwaddr_)));
+}
+
 Lease4Ptr
 AllocEngine::allocateLease4(ClientContext4& ctx) {
     // The NULL pointer indicates that the old lease didn't exist. It may
@@ -1347,8 +1355,18 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
     // to either return this lease to the client or to return it as an old
     // (existing) lease if a different one is offered.
     Lease4Ptr client_lease = lease_mgr.getLease4(*ctx.hwaddr_, ctx.subnet_->getID());
-    if (!client_lease && ctx.clientid_) {
+    if (ctx.clientid_ && ((!client_lease) || (client_lease && !ctx.myLease(*client_lease)))) {
+        if (client_lease && ctx.isInConflict(*client_lease)) {
+            return (Lease4Ptr());
+        }
         client_lease = lease_mgr.getLease4(*ctx.clientid_, ctx.subnet_->getID());
+    }
+
+    if (client_lease && !ctx.myLease(*client_lease)) {
+        if (ctx.isInConflict(*client_lease)) {
+            return (Lease4Ptr());
+        }
+        client_lease.reset();
     }
 
     // new_lease will hold the pointer to the lease that we will offer to the
@@ -1435,11 +1453,15 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
     LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
 
     // Check if the client has any lease already. This information is needed
-    // to either return this lease to the client or to delete this lease if
-    // the new lease is allocated.
+    // to either return this lease to the client or to return it as an old
+    // (existing) lease if a different one is offered.
     Lease4Ptr client_lease = lease_mgr.getLease4(*ctx.hwaddr_, ctx.subnet_->getID());
-    if (!client_lease && ctx.clientid_) {
+    if (ctx.clientid_ && ((!client_lease) || (client_lease && !ctx.myLease(*client_lease)))) {
         client_lease = lease_mgr.getLease4(*ctx.clientid_, ctx.subnet_->getID());
+    }
+
+    if (client_lease && !ctx.myLease(*client_lease)) {
+        client_lease.reset();
     }
 
     // When the client sends the DHCPREQUEST, it should always specify the
