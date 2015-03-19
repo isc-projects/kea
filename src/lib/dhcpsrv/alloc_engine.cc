@@ -1235,6 +1235,71 @@ hasAddressReservation(const AllocEngine::ClientContext4& ctx) {
     return (ctx.host_ && !ctx.host_->getIPv4Reservation().isV4Zero());
 }
 
+/// @brief Check if there is a lease for the client which message is processed.
+///
+/// This function searches the lease database to find existing lease for the client.
+/// It finds the lease using the client's HW address first. If the lease exists and
+/// appears to belong to the client the lease is returned. Otherwise, the function
+/// will search for the lease using the client identifier (if supplied). If the
+/// lease exists and appears to belong to the client, it is returned.
+///
+/// This function also identifies the conflicts between existing leases and the
+/// lease to be allocated for the client, when the client is using a HW address
+/// or client identifier which is already in use by the client having a lease in
+/// the database. If the client uses an identifier which is already used by another
+/// client and no other unique identifier which could be used to identify the client's
+/// lease this function signals the conflict by returning 'true'.
+///
+/// @param ctx Client context.
+/// @param [out] client_lease Client's lease found in the database.
+///
+/// @return true if there is a conflict of identifiers (HW address or client id)
+/// between the client which message is being processed and the client which has
+/// a lease in the database. When the value 'true' is returned, the caller should
+/// cease the lease allocation for the client.
+bool matchClientLease(const AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) {
+    // Obtain the sole instance of the LeaseMgr.
+    LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
+
+    // The server should hand out existing lease to the client, so we have to check
+    // if there is one. First, try to use the client's HW address.
+    client_lease = lease_mgr.getLease4(*ctx.hwaddr_, ctx.subnet_->getID());
+    // If there is no lease for this HW address or the lease doesn't seem to be ours,
+    // we will have to use the client identifier. Note that in some situations two
+    // clients may use the same HW address so even if we find the lease for the HW
+    // address it doesn't mean it is ours, because client identifier may not match.
+    if (ctx.clientid_ && ((!client_lease) || (client_lease && !ctx.myLease(*client_lease)))) {
+        // Check if the lease is in conflict with the lease that we want to allocate.
+        // If the lease is in conflict because of using overlapping HW address or
+        // client identifier, we can't allocate the lease for this client.
+        if (client_lease && ctx.isInConflict(*client_lease)) {
+            return (true);
+        }
+        // There is no lease or the lease we found is not conflicting with the lease
+        // which we have found for the HW address, so there is still a chance that
+        // we will allocate the lease. Check if there is a lease using the client
+        // identifier.
+        client_lease = lease_mgr.getLease4(*ctx.clientid_, ctx.subnet_->getID());
+    }
+
+    // Check if the lease we have found belongs to us.
+    if (client_lease && !ctx.myLease(*client_lease)) {
+        // If the lease doesn't belong to us, check if we can add new lease for
+        // the client which message we're processing, or its identifiers are
+        // in conflict with this lease.
+        if (ctx.isInConflict(*client_lease)) {
+            return (true);
+        }
+        // If there is no conflict we can proceed and try to find the appropriate
+        // lease but we don't use the one we found, because it is assigned to
+        // someone else. Reset the pointer to indicate that we're not
+        // renewing this lease.
+        client_lease.reset();
+    }
+
+    return (false);
+}
+
 } // end of anonymous namespace
 
 namespace isc {
@@ -1348,43 +1413,13 @@ AllocEngine::findReservation(ClientContext4& ctx) {
 
 Lease4Ptr
 AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
-    // Obtain the sole instance of the LeaseMgr.
-    LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
-
-    // The server should hand out existing lease to the client, so we have to check
-    // if there is one. First, try to use the client's HW address.
-    Lease4Ptr client_lease = lease_mgr.getLease4(*ctx.hwaddr_, ctx.subnet_->getID());
-    // If there is no lease for this HW address or the lease doesn't seem to be ours,
-    // we will have to use the client identifier. Note that in some situations two
-    // clients may use the same HW address so even if we find the lease for the HW
-    // address it doesn't mean it is ours, because client identifier may not match.
-    if (ctx.clientid_ && ((!client_lease) || (client_lease && !ctx.myLease(*client_lease)))) {
-        // Check if the lease is in conflict with the lease that we want to allocate.
-        // If the lease is in conflict because of using overlapping HW address or
-        // client identifier, we can't allocate the lease for this client.
-        if (client_lease && ctx.isInConflict(*client_lease)) {
-            return (Lease4Ptr());
-        }
-        // There is no lease or the lease we found is not conflicting with the lease
-        // which we have found for the HW address, so there is still a chance that
-        // we will allocate the lease. Check if there is a lease using the client
-        // identifier.
-        client_lease = lease_mgr.getLease4(*ctx.clientid_, ctx.subnet_->getID());
-    }
-
-    // Check if the lease we have found belongs to us.
-    if (client_lease && !ctx.myLease(*client_lease)) {
-        // If the lease doesn't belong to us, check if we can add new lease for
-        // the client which message we're processing, or its identifiers are
-        // in conflict with this lease.
-        if (ctx.isInConflict(*client_lease)) {
-            return (Lease4Ptr());
-        }
-        // If there is no conflict we can proceed and try to find the appropriate
-        // lease but we don't use the one we found, because it is assigned to
-        // someone else. Reset the pointer to indicate that we're not
-        // renewing this lease.
-        client_lease.reset();
+    // Find an existing lease for this client. This function will return true
+    // if there is a conflict with existing lease and the allocation should
+    // not be continued.
+    Lease4Ptr client_lease;
+    bool conflict = matchClientLease(ctx, client_lease);
+    if (conflict) {
+        return (Lease4Ptr());
     }
 
     // new_lease will hold the pointer to the lease that we will offer to the
@@ -1467,44 +1502,17 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
 
 Lease4Ptr
 AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
+    // Find an existing lease for this client. This function will return true
+    // if there is a conflict with existing lease and the allocation should
+    // not be continued.
+    Lease4Ptr client_lease;
+    bool conflict = matchClientLease(ctx, client_lease);
+    if (conflict) {
+        return (Lease4Ptr());
+    }
+
     // Obtain the sole instance of the LeaseMgr.
     LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
-
-    // The server should hand out existing lease to the client, so we have to check
-    // if there is one. First, try to use the client's HW address.
-    Lease4Ptr client_lease = lease_mgr.getLease4(*ctx.hwaddr_, ctx.subnet_->getID());
-    // If there is no lease for this HW address or the lease doesn't seem to be ours,
-    // we will have to use the client identifier. Note that in some situations two
-    // clients may use the same HW address so even if we find the lease for the HW
-    // address it doesn't mean it is ours, because client identifier may not match.
-    if (ctx.clientid_ && ((!client_lease) || (client_lease && !ctx.myLease(*client_lease)))) {
-        // Check if the lease is in conflict with the lease that we want to allocate.
-        // If the lease is in conflict because of using overlapping HW address or
-        // client identifier, we can't allocate the lease for this client.
-        if (client_lease && ctx.isInConflict(*client_lease)) {
-            return (Lease4Ptr());
-        }
-        // There is no lease or the lease we found is not conflicting with the lease
-        // which we have found for the HW address, so there is still a chance that
-        // we will allocate the lease. Check if there is a lease using the client
-        // identifier.
-        client_lease = lease_mgr.getLease4(*ctx.clientid_, ctx.subnet_->getID());
-    }
-
-    // Check if the lease we have found belongs to us.
-    if (client_lease && !ctx.myLease(*client_lease)) {
-        // If the lease doesn't belong to us, check if we can add new lease for
-        // the client which message we're processing, or its identifiers are
-        // in conflict with this lease.
-        if (ctx.isInConflict(*client_lease)) {
-            return (Lease4Ptr());
-        }
-        // If there is no conflict we can proceed and try to find the appropriate
-        // lease but we don't use the one we found, because it is assigned to
-        // someone else. Reset the pointer to indicate that we're not
-        // renewing this lease.
-        client_lease.reset();
-    }
 
     // When the client sends the DHCPREQUEST, it should always specify the
     // address which it is requesting or renewing. That is, the client should
