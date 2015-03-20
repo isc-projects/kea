@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011,2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -122,7 +122,7 @@ currentTime() {
 /// \brief Create Header Sentinel
 ///
 /// Given the name of a file, create an \#ifdef sentinel name.  The name is
-/// <name>_<ext>, where &lt;name&gt; is the name of the file, and &lt;ext&gt;
+/// &lt;name&gt;_&lt;ext&gt;, where &lt;name&gt; is the name of the file, and &lt;ext&gt;
 /// is the extension less the leading period.  The sentinel will be upper-case.
 ///
 /// \param file Filename object representing the file.
