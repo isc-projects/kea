@@ -1,10 +1,16 @@
+917.	[bug]		marcin
+	DHCPv4 server may allocate lease for the client which is
+	using a non-unique identifier (HW address or client id),
+	if the other identifier is unique.
+	(Trac #3768, git 0f7a029e2a2a7652d49a0bcd9f49e879fac9136f)
+
 916.	[func]		sar
 	Add a log message that indicates when the v4, v6 or
 	DHCP-DDNS server has completed processing its
 	configuration and is about to enter the loop to process
 	messages.
 	(Trac #3755, git c71c7836804842bae51fe79fd599c57f5b3d007d)
-	
+
 915.	[func]		tomek, marcin
 	The DHCPv6 server now supports the Relay-Supplied Options
 	option,	as defined in RFC 6422. The relay can insert options
