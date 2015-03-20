@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -218,7 +218,7 @@ public:
     /// * forward will be true if S_FLAG is true
     /// * reverse will be true if N_FLAG is false
     ///
-    /// @param fqdn FQDN option from which to read server (outbound) flags
+    /// @param fqdn_resp FQDN option from which to read server (outbound) flags
     /// @param [out] forward bool value will be set to true if forward udpates
     /// should be done, false if not.
     /// @param [out] reverse bool value will be set to true if reverse udpates
