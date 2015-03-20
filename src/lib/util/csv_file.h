@@ -311,7 +311,7 @@ public:
 
     /// @brief Writes the CSV row into the file.
     ///
-    /// @param Object representing a CSV file row.
+    /// @param row Object representing a CSV file row.
     ///
     /// @throw CSVFileError When error occurred during IO operation or if the
     /// size of the row doesn't match the number of columns.
@@ -414,7 +414,7 @@ public:
     /// @c validate function can set a message after successful validation
     /// too. Such message could say "success", or something similar.
     ///
-    /// @param val_msg Error message to be set.
+    /// @param read_msg Error message to be set.
     void setReadMsg(const std::string& read_msg) {
         read_msg_ = read_msg;
     }
@@ -466,7 +466,7 @@ protected:
     /// compare that they exactly match (including order) the header read
     /// from the file.
     ///
-    /// This function is called internally by @CSVFile::open. Derived classes
+    /// This function is called internally by @ref CSVFile::open. Derived classes
     /// may add extra validation steps.
     ///
     /// @todo There should be a support for optional columns (see ticket #3626).

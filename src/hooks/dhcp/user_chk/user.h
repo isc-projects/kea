@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013,2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -67,7 +67,7 @@ public:
     /// The string is expected to contain an even number of hex digits
     /// with or without colon (':') as a delimiter.
     ///
-    /// @param id a vector of unsigned bytes containing the id
+    /// @param id_str string of hex digits representing the user's id
     ///
     /// @throw isc::BadValue if the string is empty, contains non
     /// valid hex digits, or an odd number of hex digits.
@@ -134,8 +134,8 @@ private:
 ///
 /// The output string has the form "<type>=<id>" where:
 ///
-/// <type> is the text label returned by UserId::lookupTypeStr()
-/// <id> is the output of UserId::toText() without a delimiter.
+/// &lt;type&gt; is the text label returned by UserId::lookupTypeStr()
+/// &lt;id&gt; is the output of UserId::toText() without a delimiter.
 ///
 /// Examples:
 ///       HW_ADDR=0c0e0a01ff06
@@ -171,7 +171,7 @@ public:
     /// Constructs a new User from a given id type and vector containing the
     /// id data with an empty set of properties.
     ///
-    /// @param user_id Type of id contained in the id vector
+    /// @param id_type Type of id contained in the id vector
     /// @param id Vector of data representing the user's id
     ///
     /// @throw isc::BadValue if user id vector is empty.
@@ -182,8 +182,8 @@ public:
     /// Constructs a new User from a given id type and string containing the
     /// id data with an empty set of properties.
     ///
-    /// @param user_id Type of id contained in the id vector
-    /// @param id string of hex digits representing the user's id
+    /// @param id_type Type of id contained in the id vector
+    /// @param id_str string of hex digits representing the user's id
     ///
     /// @throw isc::BadValue if user id string is empty or invalid
     User(UserId::UserIdType id_type, const std::string& id_str);
