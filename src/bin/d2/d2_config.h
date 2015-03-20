@@ -887,8 +887,6 @@ public:
     /// Parses a configuration for the elements needed to instantiate a
     /// DnsServerInfo, validates those entries, creates a DnsServerInfo instance
     /// then attempts to add to a list of  servers.
-    /// @param pos position within the configuration text (or file) of element
-    /// to be parsed.  This is passed for error messaging.
     ///
     /// @param server_config is the "dns_server" configuration to parse
     ///
