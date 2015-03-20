@@ -111,6 +111,15 @@ public:
         fqdn_rev_ = fqdn_rev;
     }
 
+    /// @brief Wrapper around call to AllocEngine6::findRervation
+    ///
+    /// If a reservation is found by the engine, the function sets
+    /// ctx.hostname_ accordingly.
+    ///
+    /// @param engine allocation engine to use
+    /// @param ctx client context to pass into engine's findReservation method
+    void findReservation(AllocEngine& engine, AllocEngine::ClientContext6& ctx);
+
     /// @brief attempts to convert leases collection to a single lease
     ///
     /// This operation makes sense if there is at most one lease in the

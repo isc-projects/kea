@@ -406,7 +406,8 @@ public:
     /// it into LeaseMgr (if this allocation is not fake, i.e. this is not a
     /// response to SOLICIT).
     ///
-    /// This method uses host reservation if appropriate. The host reservation
+    /// This method uses host reservation if ctx.host_ is set. The easy way to
+    /// set it is to call @ref AllocEngine::findReservation(ctx). The host reservation
     /// is convenient, but incurs performance penalty, so it can be tweaked on
     /// a per subnet basis. There are three possible modes:
     /// 1. disabled (no host reservation at all). This is the most performant one
@@ -479,7 +480,6 @@ public:
     Lease6Collection
     allocateLeases6(ClientContext6& ctx);
 
-
     /// @brief Renews existing DHCPv6 leases for a given IA.
     ///
     /// This method updates the leases associated with a specified IA container.
@@ -499,8 +499,14 @@ public:
     /// contain removed leases in this case.
     ///
     /// @return Returns renewed lease.
-    Lease6Collection
-    renewLeases6(ClientContext6& ctx);
+    Lease6Collection renewLeases6(ClientContext6& ctx);
+
+    /// @brief Attempts to find appropriate host reservation.
+    ///
+    /// Attempts to find appropriate host reservation in HostMgr. If found, it
+    /// will be set in ctx.host_.
+    /// @param ctx Client context that contains all necessary information.
+    void findReservation(ClientContext6& ctx) const;
 
 private:
 
