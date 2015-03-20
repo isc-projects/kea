@@ -173,7 +173,7 @@ public:
         IfaceMgr::instance().openSockets4();
     }
 
-    /// @brief Test that server doesn't allocate the lease for the client
+    /// @brief Test that server doesn't allocate the lease for a client
     /// which has the same address or client identifier as another client.
     ///
     /// This test checks the server's behavior in the following scenario:
@@ -181,8 +181,8 @@ public:
     ///   and client identifier or only one of those.
     /// - Client A performs the 4-way exchange and obtains a lease from the server.
     /// - Client B uses the same HW address or client identifier as the client A.
-    /// - Client B uses HW address and client identifier if the client A is using
-    ///   only the one of them. Client B uses one of the HW address or client
+    /// - Client B uses both HW address and client identifier if the client A is using
+    ///   only one of them. Client B uses one of the HW address or client
     ///   identifier if the client A is using both.
     /// - Client B sends the DHCPDISCOVER to the server.
     ///   The server determines that there is a lease for the client A using the
@@ -206,7 +206,7 @@ public:
                                   const std::string& hwaddr_b,
                                   const std::string& clientid_b);
 
-    /// @brief Test that server can allocate the lease for the client having
+    /// @brief Test that server can allocate the lease for a client having
     /// the same HW Address or client id as another client.
     ///
     /// This test checks the server behavior in the following situation:
