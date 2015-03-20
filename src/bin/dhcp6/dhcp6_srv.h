@@ -477,7 +477,7 @@ protected:
     ///
     /// - If there is no Client FQDN but there is reserverd hostname then
     /// there will be no DNS updates and the lease hostname will be equal
-    /// to reserverd hostname.
+    /// to reserved hostname.
     ///
     /// - If there is a Client FQDN and a reserved hostname, then both the
     /// FQDN and lease hostname will be equal to reserved hostname with
