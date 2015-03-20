@@ -1,3 +1,8 @@
+918.	[func]		tomek,tmark
+	DHCPv6 server now supports static reservations of hostnames
+	for clients.
+	(Trac #3689 git c13c824d9948f7e3f71a65ed43798f3b5c14042c)
+
 917.	[bug]		marcin
 	DHCPv4 server may allocate lease for the client which is
 	using a non-unique identifier (HW address or client id),
