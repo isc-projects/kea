@@ -318,6 +318,25 @@ AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet, const Duid
 }
 
 
+void AllocEngine::findReservation(ClientContext6& ctx) const {
+    if (!ctx.subnet_ || !ctx.duid_) {
+        return;
+    }
+
+    // Check which host reservation mode is supported in this subnet.
+    Subnet::HRMode hr_mode = ctx.subnet_->getHostReservationMode();
+
+    // Check if there's a host reservation for this client. Attempt to get
+    // host info only if reservations are not disabled.
+    if (hr_mode != Subnet::HR_DISABLED) {
+
+        ctx.host_ = HostMgr::instance().get6(ctx.subnet_->getID(), ctx.duid_,
+                                             ctx.hwaddr_);
+        } else {
+        // Let's explicitly set it to NULL if reservations are disabled.
+        ctx.host_.reset();
+    }
+}
 
 Lease6Collection
 AllocEngine::allocateLeases6(ClientContext6& ctx) {
@@ -328,20 +347,6 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
         } else
         if (!ctx.duid_) {
             isc_throw(InvalidOperation, "DUID is mandatory for IPv6 lease allocation");
-        }
-
-        // Check which host reservation mode is supported in this subnet.
-        Subnet::HRMode hr_mode = ctx.subnet_->getHostReservationMode();
-
-        // Check if there's a host reservation for this client. Attempt to get
-        // host info only if reservations are not disabled.
-        if (hr_mode != Subnet::HR_DISABLED) {
-
-            ctx.host_ = HostMgr::instance().get6(ctx.subnet_->getID(), ctx.duid_,
-                                                 ctx.hwaddr_);
-        } else {
-            // Let's explicitly set it to NULL if reservations are disabled.
-            ctx.host_.reset();
         }
 
         // Check if there are existing leases for that subnet/duid/iaid
@@ -1009,20 +1014,6 @@ AllocEngine::renewLeases6(ClientContext6& ctx) {
 
         if (!ctx.duid_) {
             isc_throw(InvalidOperation, "DUID is mandatory for allocation");
-        }
-
-        // Check which host reservation mode is supported in this subnet.
-        Subnet::HRMode hr_mode = ctx.subnet_->getHostReservationMode();
-
-        // Check if there's a host reservation for this client. Attempt to get
-        // host info only if reservations are not disabled.
-        if (hr_mode != Subnet::HR_DISABLED) {
-
-            ctx.host_ = HostMgr::instance().get6(ctx.subnet_->getID(), ctx.duid_,
-                                                 ctx.hwaddr_);
-        } else {
-            // Host reservations disabled? Then explicitly set host to NULL
-            ctx.host_.reset();
         }
 
         // Check if there are any leases for this client.

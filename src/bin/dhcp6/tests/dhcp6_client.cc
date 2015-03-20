@@ -341,6 +341,20 @@ Dhcp6Client::doInfRequest() {
 }
 
 void
+Dhcp6Client::doRenew() {
+    Pkt6Ptr query = createMsg(DHCPV6_RENEW);
+    query->addOption(context_.response_->getOption(D6O_SERVERID));
+    copyIAsFromLeases(query);
+    context_.query_ = query;
+    sendMsg(context_.query_);
+    context_.response_ = receiveOneMsg();
+    // Apply configuration only if the server has responded.
+    if (context_.response_) {
+        applyRcvdConfiguration(context_.response_);
+    }
+}
+
+void
 Dhcp6Client::doRebind() {
     Pkt6Ptr query = createMsg(DHCPV6_REBIND);
     copyIAsFromLeases(query);
@@ -425,6 +439,12 @@ Dhcp6Client::getLeasesByIAID(const uint32_t iaid) const {
         }
     }
     return (leases);
+}
+
+void
+Dhcp6Client::setDUID(const std::string& str) {
+    DUID d = DUID::fromText(str);
+    duid_.reset(new DUID(d));
 }
 
 void

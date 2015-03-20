@@ -204,6 +204,21 @@ public:
     /// @todo Perform sanity checks on returned messages.
     void doSolicit();
 
+    /// @brief Sends a Renew to the server and receives the Reply.
+    ///
+    /// This function simulates sending the Renew message to the server and
+    /// receiving server's response (if any). The client uses existing leases
+    /// (either address or prefixes) and places them in the Renew message.
+    /// If the server responds to the Renew (and extends the lease lifetimes)
+    /// the current lease configuration is updated.
+    ///
+    /// @throw This function doesn't throw exceptions on its own, but it calls
+    /// functions that are not exception safe, so it may throw exceptions if
+    /// error occurs.
+    ///
+    /// @todo Perform sanity checks on returned messages.
+    void doRenew();
+
     /// @brief Sends a Rebind to the server and receives the Reply.
     ///
     /// This function simulates sending the Rebind message to the server and
@@ -323,6 +338,18 @@ public:
     boost::shared_ptr<isc::test::NakedDhcpv6Srv> getServer() const {
         return (srv_);
     }
+
+    /// @brief Sets the client's DUID from a string value
+    ///
+    /// Replaces the client's DUID with one constructed from the given
+    /// string.  The string is expected to contain hexadecimal digits with or
+    /// without ":" separators.
+    ///
+    /// @param str The string of digits from which to create the DUID
+    ///
+    /// The DUID modification affects the value returned by the
+    /// @c Dhcp6Client::getClientId
+    void setDUID(const std::string& duid_str);
 
     /// @brief Modifies the client's DUID (adds one to it).
     ///

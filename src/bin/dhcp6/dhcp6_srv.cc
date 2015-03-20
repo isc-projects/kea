@@ -224,6 +224,31 @@ Dhcpv6Srv::testUnicast(const Pkt6Ptr& pkt) const {
     return (true);
 }
 
+DuidPtr
+Dhcpv6Srv::extractClientId(const Pkt6Ptr& pkt) {
+    // Let's find client's DUID. Client is supposed to include its client-id
+    // option almost all the time (the only exception is an anonymous inf-request,
+    // but that is mostly a theoretical case). Our allocation engine needs DUID
+    // and will refuse to allocate anything to anonymous clients.
+    OptionPtr opt_duid = pkt->getOption(D6O_CLIENTID);
+    if (opt_duid) {
+        return (DuidPtr(new DUID(opt_duid->getData())));
+    } else {
+        return (DuidPtr());
+    }
+}
+
+AllocEngine::ClientContext6
+Dhcpv6Srv::createContext(const Pkt6Ptr& pkt) {
+    AllocEngine::ClientContext6 ctx;
+    ctx.subnet_ = selectSubnet(pkt);
+    ctx.duid_ = extractClientId(pkt);
+    ctx.hwaddr_ = getMAC(pkt);
+    alloc_engine_->findReservation(ctx);
+
+    return (ctx);
+}
+
 bool Dhcpv6Srv::run() {
     while (!shutdown_) {
         // client's message and server's response
@@ -378,7 +403,8 @@ bool Dhcpv6Srv::run() {
         classifyPacket(query);
 
         try {
-                NameChangeRequestPtr ncr;
+            NameChangeRequestPtr ncr;
+
             switch (query->getType()) {
             case DHCPV6_SOLICIT:
                 rsp = processSolicit(query);
@@ -731,7 +757,8 @@ Dhcpv6Srv::appendDefaultOptions(const Pkt6Ptr&, Pkt6Ptr& answer) {
 }
 
 void
-Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
+Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
+                                  AllocEngine::ClientContext6& ctx) {
 
     // Client requests some options using ORO option. Try to
     // get this option from client's message.
@@ -749,42 +776,42 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
     ConstCfgOptionPtr global_opts = CfgMgr::instance().getCurrentCfg()->
         getCfgOption();
 
-    // Get the configured subnet suitable for the incoming packet.
-    // It may be NULL (if server is misconfigured or the client was rejected
-    // using client classes).
-    Subnet6Ptr subnet = selectSubnet(question);
-
     // Get the list of options that client requested.
     const std::vector<uint16_t>& requested_opts = option_oro->getValues();
     BOOST_FOREACH(uint16_t opt, requested_opts) {
-        // If we found a subnet for this client, try subnet first.
-        if (subnet) {
-            OptionDescriptor desc = subnet->getCfgOption()->get("dhcp6", opt);
+        // If we found a subnet for this client, all options (including the
+        // global options) should be available through the options
+        // configuration for the subnet.
+        if (ctx.subnet_) {
+            OptionDescriptor desc = ctx.subnet_->getCfgOption()->get("dhcp6",
+                                                                     opt);
             if (desc.option_) {
                 // Attempt to assign an option from subnet first.
                 answer->addOption(desc.option_);
                 continue;
             }
-        }
 
-        // If subnet specific option is not there, try global.
-        OptionDescriptor desc = global_opts->get("dhcp6", opt);
-        if (desc.option_) {
-            answer->addOption(desc.option_);
+        // If there is no subnet selected (e.g. Information-request message
+        // case) we need to look at the global options.
+        } else {
+            OptionDescriptor desc = global_opts->get("dhcp6", opt);
+            if (desc.option_) {
+                answer->addOption(desc.option_);
+            }
         }
     }
 }
 
 void
-Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
-    // Get the configured subnet suitable for the incoming packet.
-    Subnet6Ptr subnet = selectSubnet(question);
+Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
+                                        AllocEngine::ClientContext6& ctx) {
+
     // Leave if there is no subnet matching the incoming packet.
     // There is no need to log the error message here because
     // it will be logged in the assignLease() when it fails to
     // pick the suitable subnet. We don't want to duplicate
     // error messages in such case.
-    if (!subnet) {
+    if (!ctx.subnet_) {
         return;
     }
 
@@ -814,7 +841,7 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question, Pkt6Ptr& answer
     bool added = false;
     const std::vector<uint16_t>& requested_opts = oro->getValues();
     BOOST_FOREACH(uint16_t opt, requested_opts) {
-        OptionDescriptor desc = subnet->getCfgOption()->get(vendor_id, opt);
+        OptionDescriptor desc = ctx.subnet_->getCfgOption()->get(vendor_id, opt);
         if (desc.option_) {
             vendor_rsp->addOption(desc.option_);
             added = true;
@@ -959,15 +986,15 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
 }
 
 void
-Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
+Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
+                        AllocEngine::ClientContext6& ctx) {
 
     // We need to allocate addresses for all IA_NA options in the client's
     // question (i.e. SOLICIT or REQUEST) message.
     // @todo add support for IA_TA
 
     // We need to select a subnet the client is connected in.
-    Subnet6Ptr subnet = selectSubnet(question);
-    if (!subnet) {
+    if (!ctx.subnet_) {
         // This particular client is out of luck today. We do not have
         // information about the subnet he is connected to. This likely means
         // misconfiguration of the server (or some relays). We will continue to
@@ -982,22 +1009,12 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
 
     } else {
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_SUBNET_SELECTED)
-            .arg(subnet->toText());
+            .arg(ctx.subnet_->toText());
     }
 
-    // @todo: We should implement Option6Duid some day, but we can do without it
-    // just fine for now
-
-    // Let's find client's DUID. Client is supposed to include its client-id
-    // option almost all the time (the only exception is an anonymous inf-request,
-    // but that is mostly a theoretical case). Our allocation engine needs DUID
-    // and will refuse to allocate anything to anonymous clients.
-    DuidPtr duid;
-    OptionPtr opt_duid = question->getOption(D6O_CLIENTID);
-    if (opt_duid) {
-        duid = DuidPtr(new DUID(opt_duid->getData()));
-    } else {
-        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLIENTID_MISSING);
+    if (!ctx.duid_) {
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLIENTID_MISSING)
+            .arg(question->getIface());
         // Let's drop the message. This client is not sane.
         isc_throw(RFCViolation, "Mandatory client-id is missing in received message");
     }
@@ -1011,7 +1028,7 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
          opt != question->options_.end(); ++opt) {
         switch (opt->second->getType()) {
         case D6O_IA_NA: {
-            OptionPtr answer_opt = assignIA_NA(subnet, duid, question, answer,
+            OptionPtr answer_opt = assignIA_NA(question, answer, ctx,
                                                boost::dynamic_pointer_cast<
                                                Option6IA>(opt->second));
             if (answer_opt) {
@@ -1020,7 +1037,7 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
             break;
         }
         case D6O_IA_PD: {
-            OptionPtr answer_opt = assignIA_PD(subnet, duid, question,
+            OptionPtr answer_opt = assignIA_PD(question, ctx,
                                                boost::dynamic_pointer_cast<
                                                Option6IA>(opt->second));
             if (answer_opt) {
@@ -1033,18 +1050,26 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
     }
 }
 
+
 void
-Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer) {
+Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer,
+                             AllocEngine::ClientContext6& ctx) {
     // Get Client FQDN Option from the client's message. If this option hasn't
     // been included, do nothing.
     Option6ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
         Option6ClientFqdn>(question->getOption(D6O_CLIENT_FQDN));
     if (!fqdn) {
+        // No FQDN so lease hostname comes from host reservation if one
+        if (ctx.host_) {
+            ctx.hostname_ = ctx.host_->getHostname();
+        }
+
         return;
     }
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
               DHCP6_DDNS_RECEIVE_FQDN).arg(fqdn->toText());
+
     // Create the DHCPv6 Client FQDN Option to be included in the server's
     // response to a client.
     Option6ClientFqdnPtr fqdn_resp(new Option6ClientFqdn(*fqdn));
@@ -1054,9 +1079,23 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer) {
     D2ClientMgr& d2_mgr = CfgMgr::instance().getD2ClientMgr();
     d2_mgr.adjustFqdnFlags<Option6ClientFqdn>(*fqdn, *fqdn_resp);
 
-    // Adjust the domain name based on domain name value and type sent by the
-    // client and current configuration.
-    d2_mgr.adjustDomainName<Option6ClientFqdn>(*fqdn, *fqdn_resp);
+    // If there's a reservation and it has a hostname specified, use it!
+    if (ctx.host_ && !ctx.host_->getHostname().empty()) {
+        D2ClientMgr& d2_mgr = CfgMgr::instance().getD2ClientMgr();
+        // Add the qualifying suffix.
+        // After #3765, this will only occur if the suffix is not empty.
+        fqdn_resp->setDomainName(d2_mgr.qualifyName(ctx.host_->getHostname(),
+                                                    true),
+                                                    Option6ClientFqdn::FULL);
+    } else {
+        // Adjust the domain name based on domain name value and type sent by
+        // the client and current configuration.
+        d2_mgr.adjustDomainName<Option6ClientFqdn>(*fqdn, *fqdn_resp);
+    }
+
+    // Once we have the FQDN setup to use it for the lease hostname.  This
+    // only gets replaced later if the FQDN is to be generated from the address.
+    ctx.hostname_ = fqdn_resp->getDomainName();
 
     // The FQDN has been processed successfully. Let's append it to the
     // response to be sent to a client. Note that the Client FQDN option is
@@ -1234,15 +1273,20 @@ Dhcpv6Srv::getMAC(const Pkt6Ptr& pkt) {
 }
 
 OptionPtr
-Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                       const Pkt6Ptr& query, const Pkt6Ptr& answer,
+Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
+                       AllocEngine::ClientContext6& orig_ctx,
                        boost::shared_ptr<Option6IA> ia) {
+
+    // convenience values
+    const Subnet6Ptr& subnet = orig_ctx.subnet_;
+    const DuidPtr& duid = orig_ctx.duid_;
+
     // If there is no subnet selected for handling this IA_NA, the only thing to do left is
     // to say that we are sorry, but the user won't get an address. As a convenience, we
     // use a different status text to indicate that (compare to the same status code,
     // but different wording below)
     if (!subnet) {
-        // Creatasse empty IA_NA option with IAID matching the request.
+        // Create an empty IA_NA option with IAID matching the request.
         // Note that we don't use OptionDefinition class to create this option.
         // This is because we prefer using a constructor of Option6IA that
         // initializes IAID. Otherwise we would have to use setIAID() after
@@ -1280,24 +1324,14 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
         fake_allocation = true;
     }
 
-    // At this point, we have to make make some decisions with respect to the
-    // FQDN option that we have generated as a result of receiving client's
-    // FQDN. In particular, we have to get to know if the DNS update will be
-    // performed or not. It is possible that option is NULL, which is valid
-    // condition if client didn't request DNS updates and server didn't force
-    // the update.
+    // Get DDNS update direction flags
     bool do_fwd = false;
     bool do_rev = false;
     Option6ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
         Option6ClientFqdn>(answer->getOption(D6O_CLIENT_FQDN));
     if (fqdn) {
-        CfgMgr::instance().getD2ClientMgr().getUpdateDirections(*fqdn,
-                                                                do_fwd, do_rev);
-    }
-    // Set hostname only in case any of the updates is being performed.
-    std::string hostname;
-    if (do_fwd || do_rev) {
-        hostname = fqdn->getDomainName();
+        CfgMgr::instance().getD2ClientMgr().getUpdateDirections(*fqdn, do_fwd,
+                                                                do_rev);
     }
 
     // Use allocation engine to pick a lease for this client. Allocation engine
@@ -1306,12 +1340,10 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
     // be inserted into the LeaseMgr as well.
     AllocEngine::ClientContext6 ctx(subnet, duid, ia->getIAID(),
                                     hint, Lease::TYPE_NA, do_fwd, do_rev,
-                                    hostname, fake_allocation);
+                                    orig_ctx.hostname_, fake_allocation);
     ctx.callout_handle_ = getCalloutHandle(query);
-
-    // Attempt to get MAC address using configured mechanisms.
-    // It's ok if there response is NULL. Hardware address is optional in Lease6.
-    ctx.hwaddr_ = getMAC(query);
+    ctx.hwaddr_ = orig_ctx.hwaddr_;
+    ctx.host_ = orig_ctx.host_;
 
     Lease6Collection leases = alloc_engine_->allocateLeases6(ctx);
 
@@ -1358,14 +1390,14 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
                 // have to check that the FQDN settings we provided are the same
                 // that were set. If they aren't, we will have to remove existing
                 // DNS records and update the lease with the new settings.
-                conditionalNCRRemoval(old_lease, lease, hostname, do_fwd, do_rev);
+                conditionalNCRRemoval(old_lease, lease, ctx.hostname_, do_fwd, do_rev);
             }
 
             // We need to repeat that check for leases that used to be used, but
             // are no longer valid.
             if (!ctx.old_leases_.empty()) {
                 old_lease = *ctx.old_leases_.begin();
-                conditionalNCRRemoval(old_lease, lease, hostname, do_fwd, do_rev);
+                conditionalNCRRemoval(old_lease, lease, ctx.hostname_, do_fwd, do_rev);
             }
         }
     } else {
@@ -1401,8 +1433,12 @@ Dhcpv6Srv::conditionalNCRRemoval(Lease6Ptr& old_lease, Lease6Ptr& new_lease,
 }
 
 OptionPtr
-Dhcpv6Srv::assignIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                       const Pkt6Ptr& query, boost::shared_ptr<Option6IA> ia) {
+Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query,
+                       AllocEngine::ClientContext6& orig_ctx,
+                       boost::shared_ptr<Option6IA> ia) {
+
+    const Subnet6Ptr& subnet = orig_ctx.subnet_;
+    const DuidPtr& duid = orig_ctx.duid_;
 
     // Create IA_PD that we will put in the response.
     // Do not use OptionDefinition to create option's instance so
@@ -1451,10 +1487,8 @@ Dhcpv6Srv::assignIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
     AllocEngine::ClientContext6 ctx(subnet, duid, ia->getIAID(), hint, Lease::TYPE_PD,
                                     false, false, string(), fake_allocation);
     ctx.callout_handle_ = getCalloutHandle(query);
-
-    // Attempt to get MAC address using any of available mechanisms.
-    // It's ok if there response is NULL. Hardware address is optional in Lease6
-    ctx.hwaddr_ = getMAC(query);
+    ctx.hwaddr_ = orig_ctx.hwaddr_;
+    ctx.host_ = orig_ctx.host_;
 
     Lease6Collection leases = alloc_engine_->allocateLeases6(ctx);
 
@@ -1503,9 +1537,12 @@ Dhcpv6Srv::assignIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
 }
 
 OptionPtr
-Dhcpv6Srv::extendIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                       const Pkt6Ptr& query, const Pkt6Ptr& answer,
+Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
+                       AllocEngine::ClientContext6& orig_ctx,
                        boost::shared_ptr<Option6IA> ia) {
+    // convenience values
+    const Subnet6Ptr& subnet = orig_ctx.subnet_;
+    const DuidPtr& duid = orig_ctx.duid_;
 
     // Create empty IA_NA option with IAID matching the request.
     Option6IAPtr ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
@@ -1535,38 +1572,27 @@ Dhcpv6Srv::extendIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
     ia_rsp->setT1(subnet->getT1());
     ia_rsp->setT2(subnet->getT2());
 
-    // At this point, we have to make make some decisions with respect to
-    // the FQDN option that we have generated as a result of receiving
-    // client's FQDN. In particular, we have to get to know if the DNS
-    // update will be performed or not. It is possible that option is NULL,
-    // which is valid condition if client didn't request DNS updates and
-    // server didn't force the update.
+    // Get DDNS udpate directions
     bool do_fwd = false;
     bool do_rev = false;
-    std::string hostname;
     Option6ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
         Option6ClientFqdn>(answer->getOption(D6O_CLIENT_FQDN));
     if (fqdn) {
-        CfgMgr::instance().getD2ClientMgr().getUpdateDirections(*fqdn, do_fwd, do_rev);
-
-        if (do_fwd || do_rev) {
-            hostname = fqdn->getDomainName();
-        }
+        CfgMgr::instance().getD2ClientMgr().getUpdateDirections(*fqdn,
+                                                                do_fwd, do_rev);
     }
 
     // Create client context for this renewal
     static const IOAddress none("::");
     AllocEngine::ClientContext6 ctx(subnet, duid, ia->getIAID(),
                                     none, Lease::TYPE_NA, do_fwd, do_rev,
-                                    hostname, false);
+                                    orig_ctx.hostname_, false);
 
     ctx.callout_handle_ = getCalloutHandle(query);
     ctx.query_ = query;
     ctx.ia_rsp_ = ia_rsp;
-
-    // Attempt to get MAC address using configured mechanisms.
-    // It's ok if there response is NULL. Hardware address is optional in Lease6.
-    ctx.hwaddr_ = getMAC(query);
+    ctx.hwaddr_ = orig_ctx.hwaddr_;
+    ctx.host_ = orig_ctx.host_;
 
     // Extract the addresses that the client is trying to obtain.
     OptionCollection addrs = ia->getOptions();
@@ -1634,12 +1660,12 @@ Dhcpv6Srv::extendIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
 
         // If the new FQDN settings have changed for the lease, we need to
         // delete any existing FQDN records for this lease.
-        if (((*l)->hostname_ != hostname) || ((*l)->fqdn_fwd_ != do_fwd) ||
+        if (((*l)->hostname_ != ctx.hostname_) || ((*l)->fqdn_fwd_ != do_fwd) ||
             ((*l)->fqdn_rev_ != do_rev)) {
             LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
                       DHCP6_DDNS_LEASE_RENEW_FQDN_CHANGE)
                 .arg((*l)->toText())
-                .arg(hostname)
+                .arg(ctx.hostname_)
                 .arg(do_rev ? "true" : "false")
                 .arg(do_fwd ? "true" : "false");
 
@@ -1684,8 +1710,12 @@ Dhcpv6Srv::extendIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
 }
 
 OptionPtr
-Dhcpv6Srv::extendIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                       const Pkt6Ptr& query, boost::shared_ptr<Option6IA> ia) {
+Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
+                       AllocEngine::ClientContext6& orig_ctx,
+                       boost::shared_ptr<Option6IA> ia) {
+
+    const Subnet6Ptr& subnet = orig_ctx.subnet_;
+    const DuidPtr& duid = orig_ctx.duid_;
 
     // Let's create a IA_PD response and fill it in later
     Option6IAPtr ia_rsp(new Option6IA(D6O_IA_PD, ia->getIAID()));
@@ -1738,10 +1768,8 @@ Dhcpv6Srv::extendIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
     ctx.callout_handle_ = getCalloutHandle(query);
     ctx.query_ = query;
     ctx.ia_rsp_ = ia_rsp;
-
-    // Attempt to get MAC address using configured mechanisms.
-    // It's ok if there response is NULL. Hardware address is optional in Lease6.
-    ctx.hwaddr_ = getMAC(query);
+    ctx.hwaddr_ = orig_ctx.hwaddr_;
+    ctx.host_ = orig_ctx.host_;
 
     // Extract prefixes that the client is trying to renew.
     OptionCollection addrs = ia->getOptions();
@@ -1854,17 +1882,15 @@ Dhcpv6Srv::extendIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
 }
 
 void
-Dhcpv6Srv::extendLeases(const Pkt6Ptr& query, Pkt6Ptr& reply) {
+Dhcpv6Srv::extendLeases(const Pkt6Ptr& query, Pkt6Ptr& reply,
+                       AllocEngine::ClientContext6& ctx) {
 
     // We will try to extend lease lifetime for all IA options in the client's
     // Renew or Rebind message.
     /// @todo add support for IA_TA
 
-    // We need to select a subnet the client is connected in. This is needed
-    // to get the client's bindings from the lease database. The subnet id
-    // is one of the lease search parameters.
-    Subnet6Ptr subnet = selectSubnet(query);
-    if (!subnet) {
+    // We need to select a subnet the client is connected in.
+    if (! ctx.subnet_) {
         // This particular client is out of luck today. We do not have
         // information about the subnet he is connected to. This likely means
         // misconfiguration of the server (or some relays). We will continue to
@@ -1879,30 +1905,25 @@ Dhcpv6Srv::extendLeases(const Pkt6Ptr& query, Pkt6Ptr& reply) {
     } else {
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA,
                   DHCP6_EXTEND_LEASE_SUBNET_SELECTED)
-            .arg(subnet->toText());
+            .arg(ctx.subnet_->toText());
     }
 
-    // Let's find client's DUID. Client is supposed to include its client-id
-    // option almost all the time (the only exception is an anonymous
-    // inf-request, but that is mostly a theoretical case). Our allocation
-    // engine needs DUID and will refuse to allocate anything to anonymous
-    // clients.
-    /// @todo Consider removing this check from here and rely on what we have
-    /// checked on the earlier processing stage.
-    OptionPtr opt_duid = query->getOption(D6O_CLIENTID);
-    if (!opt_duid) {
+    /// @todo - assignLeases() drops the packet as RFC violation, shouldn't
+    /// we do that here? Shouldn't sanityCheck defend against this? Maybe
+    /// this should treated as a code error instead. If we're this far with
+    /// no duid that seems wrong.
+    if (!ctx.duid_) {
         // This should not happen. We have checked this before.
         reply->addOption(createStatusCode(STATUS_UnspecFail,
                          "You did not include mandatory client-id"));
         return;
     }
-    DuidPtr duid(new DUID(opt_duid->getData()));
 
     for (OptionCollection::iterator opt = query->options_.begin();
          opt != query->options_.end(); ++opt) {
         switch (opt->second->getType()) {
         case D6O_IA_NA: {
-            OptionPtr answer_opt = extendIA_NA(subnet, duid, query, reply,
+            OptionPtr answer_opt = extendIA_NA(query, reply, ctx,
                                                boost::dynamic_pointer_cast<
                                                    Option6IA>(opt->second));
             if (answer_opt) {
@@ -1912,7 +1933,7 @@ Dhcpv6Srv::extendLeases(const Pkt6Ptr& query, Pkt6Ptr& reply) {
         }
 
         case D6O_IA_PD: {
-            OptionPtr answer_opt = extendIA_PD(subnet, duid, query,
+            OptionPtr answer_opt = extendIA_PD(query, ctx,
                                                boost::dynamic_pointer_cast<
                                                    Option6IA>(opt->second));
             if (answer_opt) {
@@ -1928,7 +1949,8 @@ Dhcpv6Srv::extendLeases(const Pkt6Ptr& query, Pkt6Ptr& reply) {
 }
 
 void
-Dhcpv6Srv::releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply) {
+Dhcpv6Srv::releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply,
+                         AllocEngine::ClientContext6& ctx) {
 
     // We need to release addresses for all IA_NA options in the client's
     // RELEASE message.
@@ -1944,8 +1966,7 @@ Dhcpv6Srv::releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply) {
     // option almost all the time (the only exception is an anonymous inf-request,
     // but that is mostly a theoretical case). Our allocation engine needs DUID
     // and will refuse to allocate anything to anonymous clients.
-    OptionPtr opt_duid = release->getOption(D6O_CLIENTID);
-    if (!opt_duid) {
+    if (!ctx.duid_) {
         // This should not happen. We have checked this before.
         // see sanityCheck() called from processRelease()
         LOG_WARN(dhcp6_logger, DHCP6_RELEASE_MISSING_CLIENTID)
@@ -1955,7 +1976,6 @@ Dhcpv6Srv::releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply) {
                          "You did not include mandatory client-id"));
         return;
     }
-    DuidPtr duid(new DUID(opt_duid->getData()));
 
     // Let's set the status to be success by default. We can override it with
     // error status if needed. The important thing to understand here is that
@@ -1967,7 +1987,7 @@ Dhcpv6Srv::releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply) {
          opt != release->options_.end(); ++opt) {
         switch (opt->second->getType()) {
         case D6O_IA_NA: {
-            OptionPtr answer_opt = releaseIA_NA(duid, release, general_status,
+            OptionPtr answer_opt = releaseIA_NA(ctx.duid_, release, general_status,
                                    boost::dynamic_pointer_cast<Option6IA>(opt->second));
             if (answer_opt) {
                 reply->addOption(answer_opt);
@@ -1975,7 +1995,7 @@ Dhcpv6Srv::releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply) {
             break;
         }
         case D6O_IA_PD: {
-            OptionPtr answer_opt = releaseIA_PD(duid, release, general_status,
+            OptionPtr answer_opt = releaseIA_PD(ctx.duid_, release, general_status,
                                    boost::dynamic_pointer_cast<Option6IA>(opt->second));
             if (answer_opt) {
                 reply->addOption(answer_opt);
@@ -2289,20 +2309,25 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
     return (ia_rsp);
 }
 
+
+
 Pkt6Ptr
 Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
 
     sanityCheck(solicit, MANDATORY, FORBIDDEN);
 
+    // Let's create a simplified client context here.
+    AllocEngine::ClientContext6 ctx = createContext(solicit);
+
     Pkt6Ptr advertise(new Pkt6(DHCPV6_ADVERTISE, solicit->getTransid()));
 
     copyClientOptions(solicit, advertise);
     appendDefaultOptions(solicit, advertise);
-    appendRequestedOptions(solicit, advertise);
-    appendRequestedVendorOptions(solicit, advertise);
+    appendRequestedOptions(solicit, advertise, ctx);
+    appendRequestedVendorOptions(solicit, advertise, ctx);
 
-    processClientFqdn(solicit, advertise);
-    assignLeases(solicit, advertise);
+    processClientFqdn(solicit, advertise, ctx);
+    assignLeases(solicit, advertise, ctx);
     // Note, that we don't create NameChangeRequests here because we don't
     // perform DNS Updates for Solicit. Client must send Request to update
     // DNS.
@@ -2317,15 +2342,18 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
 
     sanityCheck(request, MANDATORY, MANDATORY);
 
+    // Let's create a simplified client context here.
+    AllocEngine::ClientContext6 ctx = createContext(request);
+
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, request->getTransid()));
 
     copyClientOptions(request, reply);
     appendDefaultOptions(request, reply);
-    appendRequestedOptions(request, reply);
-    appendRequestedVendorOptions(request, reply);
+    appendRequestedOptions(request, reply, ctx);
+    appendRequestedVendorOptions(request, reply, ctx);
 
-    processClientFqdn(request, reply);
-    assignLeases(request, reply);
+    processClientFqdn(request, reply, ctx);
+    assignLeases(request, reply, ctx);
     generateFqdn(reply);
     createNameChangeRequests(reply);
 
@@ -2337,14 +2365,17 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
 
     sanityCheck(renew, MANDATORY, MANDATORY);
 
+    // Let's create a simplified client context here.
+    AllocEngine::ClientContext6 ctx = createContext(renew);
+
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, renew->getTransid()));
 
     copyClientOptions(renew, reply);
     appendDefaultOptions(renew, reply);
-    appendRequestedOptions(renew, reply);
+    appendRequestedOptions(renew, reply, ctx);
 
-    processClientFqdn(renew, reply);
-    extendLeases(renew, reply);
+    processClientFqdn(renew, reply, ctx);
+    extendLeases(renew, reply, ctx);
     generateFqdn(reply);
     createNameChangeRequests(reply);
 
@@ -2354,14 +2385,17 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
 Pkt6Ptr
 Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
 
+    // Let's create a simplified client context here.
+    AllocEngine::ClientContext6 ctx = createContext(rebind);
+
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, rebind->getTransid()));
 
     copyClientOptions(rebind, reply);
     appendDefaultOptions(rebind, reply);
-    appendRequestedOptions(rebind, reply);
+    appendRequestedOptions(rebind, reply, ctx);
 
-    processClientFqdn(rebind, reply);
-    extendLeases(rebind, reply);
+    processClientFqdn(rebind, reply, ctx);
+    extendLeases(rebind, reply, ctx);
     generateFqdn(reply);
     createNameChangeRequests(rebind);
 
@@ -2370,6 +2404,10 @@ Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
 
 Pkt6Ptr
 Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm) {
+
+    // Let's create a simplified client context here.
+    AllocEngine::ClientContext6 ctx = createContext(confirm);
+
     // Get IA_NAs from the Confirm. If there are none, the message is
     // invalid and must be discarded. There is nothing more to do.
     OptionCollection ias = confirm->getOptions(D6O_IA_NA);
@@ -2386,9 +2424,10 @@ Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm) {
     // are verified it means that the client has sent no IA_NA options
     // or no IAAddr options and that client's message has to be discarded.
     bool verified = false;
-    // Check if subnet can be selected for the message. If no subnet
+    // Check if subnet was selected for the message. If no subnet
     // has been selected, the client is not on link.
-    SubnetPtr subnet = selectSubnet(confirm);
+    SubnetPtr subnet = ctx.subnet_;
+
     // Regardless if the subnet has been selected or not, we will iterate
     // over the IA_NA options to check if they hold any addresses. If there
     // are no, the Confirm is discarded.
@@ -2452,12 +2491,15 @@ Dhcpv6Srv::processRelease(const Pkt6Ptr& release) {
 
     sanityCheck(release, MANDATORY, MANDATORY);
 
+    // Let's create a simplified client context here.
+    AllocEngine::ClientContext6 ctx = createContext(release);
+
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, release->getTransid()));
 
     copyClientOptions(release, reply);
     appendDefaultOptions(release, reply);
 
-    releaseLeases(release, reply);
+    releaseLeases(release, reply, ctx);
 
     // @todo If client sent a release and we should remove outstanding
     // DNS records.
@@ -2473,21 +2515,24 @@ Dhcpv6Srv::processDecline(const Pkt6Ptr& decline) {
 }
 
 Pkt6Ptr
-Dhcpv6Srv::processInfRequest(const Pkt6Ptr& infRequest) {
+Dhcpv6Srv::processInfRequest(const Pkt6Ptr& inf_request) {
+
+    // Let's create a simplified client context here.
+    AllocEngine::ClientContext6 ctx = createContext(inf_request);
 
     // Create a Reply packet, with the same trans-id as the client's.
-    Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, infRequest->getTransid()));
+    Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, inf_request->getTransid()));
 
     // Copy client options (client-id, also relay information if present)
-    copyClientOptions(infRequest, reply);
+    copyClientOptions(inf_request, reply);
 
     // Append default options, i.e. options that the server is supposed
     // to put in all messages it sends (server-id for now, but possibly other
     // options once we start supporting authentication)
-    appendDefaultOptions(infRequest, reply);
+    appendDefaultOptions(inf_request, reply);
 
     // Try to assign options that were requested by the client.
-    appendRequestedOptions(infRequest, reply);
+    appendRequestedOptions(inf_request, reply, ctx);
 
     return (reply);
 }
