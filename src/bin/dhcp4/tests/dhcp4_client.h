@@ -375,14 +375,14 @@ private:
     /// This function creates an instance of the Client Identifier option
     /// if the client identifier has been specified and includes this
     /// option in the client's message to the server.
-    void includeClientId();
+    void appendClientId();
 
     /// @brief Includes FQDN or Hostname option in the client's message.
     ///
     /// This method checks if @c fqdn_ or @c hostname_ is specified and
     /// includes it in the client's message. If both are specified, the
     /// @c fqdn_ will be used.
-    void includeName();
+    void appendName();
 
     /// @brief Include PRL Option in the query message.
     ///
@@ -390,7 +390,7 @@ private:
     /// option and adds option codes from the @c requested_options_ to it.
     /// It later adds the PRL option to the @c context_.query_ message
     /// if it is non-NULL.
-    void includePRL();
+    void appendPRL();
 
     /// @brief Simulates reception of the message from the server.
     ///
