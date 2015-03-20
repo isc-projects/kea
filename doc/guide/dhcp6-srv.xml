@@ -1046,7 +1046,7 @@ temporarily override a list of interface names and listen on all interfaces.
 "Dhcp6": {
     "option-data": [
         {
-            <userinput>"name": "foo"
+            <userinput>"name": "foo",
             "space": "vendor-encapsulated-options-space",
             "code": 1,
             "csv-format": true,
@@ -1063,7 +1063,7 @@ temporarily override a list of interface names and listen on all interfaces.
     "option-data": [
         ...,
         {
-            <userinput>"name": "vendor-encapsulated-options"
+            <userinput>"name": "vendor-encapsulated-options",
             "space": "dhcp6",
             "code": 17,
             "csv-format": true,
@@ -1100,7 +1100,7 @@ temporarily override a list of interface names and listen on all interfaces.
             <userinput>"name": "subopt1",
             "code": 1,
             "space": "isc",
-            "type": "ipv6-address".
+            "type": "ipv6-address",
             "record-types": "",
             "array": false,
             "encapsulate": ""</userinput>
@@ -2146,9 +2146,11 @@ should include options from the isc option space:
 	<screen>
 "Dhcp6": {
     "subnet6": [
+	{
         "subnet": "2001:db8:1::/64",
         <userinput>"reservation-mode": "disabled"</userinput>,
         ...
+	}
     ]
 }
 </screen>

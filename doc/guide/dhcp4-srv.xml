@@ -1130,7 +1130,7 @@ temporarily override a list of interface names and listen on all interfaces.
 "Dhcp4": {
     "option-data": [
         {
-            <userinput>"name": "foo"
+            <userinput>"name": "foo",
             "space": "vendor-encapsulated-options-space",
             "code": 1,
             "csv-format": true,
@@ -1145,7 +1145,7 @@ temporarily override a list of interface names and listen on all interfaces.
 "Dhcp4": {
     "option-data": [
         {
-            <userinput>"name": "vendor-encapsulated-options"
+            <userinput>"name": "vendor-encapsulated-options",
             "space": "dhcp4",
             "code": 43,
             "csv-format": false,
@@ -1194,7 +1194,7 @@ temporarily override a list of interface names and listen on all interfaces.
             <userinput>"name": "subopt1",
             "code": 1,
             "space": "isc",
-            "type": "ipv4-address".
+            "type": "ipv4-address",
             "record-types": "",
             "array": false,
             "encapsulate ""
@@ -1205,7 +1205,7 @@ temporarily override a list of interface names and listen on all interfaces.
             "space": "isc",
             "type": "string",
             "record-types": "",
-            "array": false
+            "array": false,
             "encapsulate": ""</userinput>
         }
     ],
@@ -1908,12 +1908,12 @@ temporarily override a list of interface names and listen on all interfaces.
 "Dhcp4": {
     <userinput>"next-server": "192.0.2.123"</userinput>,
     ...,
-    "subnet4": {
-        [
+    "subnet4": [
+        {
             <userinput>"next-server": "192.0.2.234"</userinput>,
             ...
-        ]
-    }
+        }
+    ]
 }
 </screen>
     </section>
@@ -2258,9 +2258,11 @@ temporarily override a list of interface names and listen on all interfaces.
 	<screen>
 "Dhcp4": {
     "subnet4": [
+	{
         "subnet": "192.0.2.0/24",
         <userinput>"reservation-mode": "disabled"</userinput>,
         ...
+	}
     ]
 }
 </screen>
