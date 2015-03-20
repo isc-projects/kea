@@ -191,6 +191,7 @@ public:
     ///   lease without a unique identifier.
     /// - The client sends the DHCPREQUEST and the server sends the DHCPNAK for the
     ///   same reason.
+    /// - The client A renews its address successfully.
     ///
     /// The specific test cases using this test must make sure that one of the
     /// provided parameters is an empty string. This simulates the situation where
@@ -218,7 +219,7 @@ public:
     ///   identifier of the client A.
     /// - Client B sends DHCPDISCOVER.
     /// - Server should determine that the client B is not client A, because
-    ///   it is using a different hadrware address or client identifier, even
+    ///   it is using a different hadrware address or client identifier.
     ///   As a consequence, the server should offer a different address to the
     ///   client B.
     /// - The client B performs the 4-way exchange again, and the server
@@ -226,6 +227,7 @@ public:
     ///   than the address used by the client A.
     /// - Client B is in the renewing state and it successfully renews its
     ///   address.
+    /// - The client A also renews its address successfully.
     ///
     /// @param hwaddr_a HW address of client A.
     /// @param clientid_a Client id of client A.
@@ -569,6 +571,14 @@ DORATest::twoAllocationsOverlapTest(const std::string& hwaddr_a,
     resp_b = client_b.getContext().response_;
     ASSERT_EQ(DHCPACK, static_cast<int>(resp_b->getType()));
     ASSERT_NE(client_b.config_.lease_.addr_, client_a.config_.lease_.addr_);
+
+    // Client A should also be able to renew its address.
+    client_a.setState(Dhcp4Client::RENEWING);
+    ASSERT_NO_THROW(client_a.doRequest());
+    ASSERT_TRUE(client_a.getContext().response_);
+    resp_b = client_a.getContext().response_;
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp_b->getType()));
+    ASSERT_NE(client_a.config_.lease_.addr_, client_b.config_.lease_.addr_);
 }
 
 void
@@ -612,6 +622,14 @@ DORATest::oneAllocationOverlapTest(const std::string& hwaddr_a,
     resp_b = client_b.getContext().response_;
     ASSERT_TRUE(resp_b);
     ASSERT_EQ(DHCPNAK, static_cast<int>(resp_b->getType()));
+
+    // Client A should also be able to renew its address.
+    client_a.setState(Dhcp4Client::RENEWING);
+    ASSERT_NO_THROW(client_a.doRequest());
+    ASSERT_TRUE(client_a.getContext().response_);
+    resp_b = client_a.getContext().response_;
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp_b->getType()));
+    ASSERT_NE(client_a.config_.lease_.addr_, client_b.config_.lease_.addr_);
 }
 
 // This test checks the server behavior in the following situation:
@@ -630,10 +648,7 @@ DORATest::oneAllocationOverlapTest(const std::string& hwaddr_a,
 //   than the address used by the client A.
 // - Client B is in the renewing state and it successfully renews its
 //   address.
-// - Client B goes to INIT_REBOOT state and asks for the address used
-//   by the client A.
-// - The server sends DHCPNAK to refuse the allocation of this address
-//   to the client B.
+// - Client A also renews its address successfully.
 TEST_F(DORATest, twoAllocationsOverlap1) {
     twoAllocationsOverlapTest("01:02:03:04:05:06", "12:34",
                               "02:02:03:03:04:04", "12:34");
@@ -659,6 +674,7 @@ TEST_F(DORATest, twoAllocationsOverlap2) {
 //   lease without a unique identifier.
 // - The client sends the DHCPREQUEST and the server sends the DHCPNAK for the
 //   same reason.
+// - Client A renews its address successfully.
 TEST_F(DORATest, oneAllocationOverlap1) {
     oneAllocationOverlapTest("01:02:03:04:05:06", "12:34",
                              "01:02:03:04:05:06", "");
