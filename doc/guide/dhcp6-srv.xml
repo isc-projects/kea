@@ -2085,7 +2085,7 @@ should include options from the isc option space:
     "enable-updates": true,
 }
 </screen>
-      will result in assigning the "mark-desktip.example.org." hostname to the
+      will result in assigning the "mark-desktop.example.org." hostname to the
       client using the DUID "01:02:03:04:05:0A:0B:0C:0D:0E".
     </para>
 </section>
