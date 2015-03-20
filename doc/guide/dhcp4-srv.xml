@@ -567,9 +567,11 @@ temporarily override a list of interface names and listen on all interfaces.
         <screen>
 "Dhcp4": {
     "subnet4": [
-        "subnet": "192.0.2.0/24",
-        <userinput>"id": 1024</userinput>,
-        ...
+        {
+            "subnet": "192.0.2.0/24",
+            <userinput>"id": 1024</userinput>,
+            ...
+        }
     ]
 }
 </screen>
@@ -594,22 +596,22 @@ temporarily override a list of interface names and listen on all interfaces.
     <screen>
 "Dhcp4": {
     <userinput>"subnet4": [
-        "subnet": "192.0.2.0/24",
-        "pools": [
-	    {
-	        "pool": "192.0.2.10 - 192.0.2.20"
-            }
-        ]</userinput>,
-        ...
-    ]
+        {
+            "subnet": "192.0.2.0/24",
+            "pools": [
+                { "pool": "192.0.2.10 - 192.0.2.20" }
+            ],
+            ...
+        }
+    ]</userinput>
 }</screen>
 
-    Note that subnet is defined as a simple string, but the 'pools' parameter is
-    actually a list of pools: for this reason, the pool definition is enclosed
+    Note that subnet is defined as a simple string, but the <command>pools</command> parameter is
+    actually a list of pools: for this reason, the pools definition is enclosed
     in square brackets, even though only one range of addresses is
     specified in this example.</para>
 
-    <para>Each <command>pool</command> is a structure that contains the parameters
+    <para>Each pool is a structure that contains the parameters
     that describe a single pool. Currently there is only one parameter,
     <command>pool</command>, which gives the range of addresses
     in the pool. Additional parameters will be added in future
@@ -624,11 +626,14 @@ temporarily override a list of interface names and listen on all interfaces.
 <screen>
 "Dhcp4": {
     "subnet4": [
-        <userinput>"pools": [
-            { "pool": "192.0.2.10-192.0.2.20" },
-            { "pool": "192.0.2.64/26" }
-        ]</userinput>,
-        ...
+        {
+            "subnet": "192.0.2.0/24",
+            <userinput>"pools": [
+                { "pool": "192.0.2.10-192.0.2.20" },
+                { "pool": "192.0.2.64/26" }
+            ]</userinput>,
+            ...
+        }
     ],
     ...
 }
