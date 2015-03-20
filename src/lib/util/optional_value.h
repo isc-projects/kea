@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -76,8 +76,8 @@ public:
     /// Creates optional value. The value defaults to "unspecified".
     ///
     /// @param value Default explicit value.
-    /// @param specified Value which determines if the value is initially
-    // specified or not (default is false).
+    /// @param state Specifies bool which determines if the value is initially
+    /// specified or not (default is false).
     explicit OptionalValue(const T& value, const OptionalValueState& state =
                            OptionalValueState(false))
         : value_(value), specified_(state.specified_) {

@@ -43,8 +43,8 @@ public:
 ///
 /// where:
 ///
-/// <user_type>  text label of the id type: "HW_ADDR" or "DUID"
-/// <user_id>  the user's id as a string of hex digits with or without
+/// &lt;user_type&gt;  text label of the id type: "HW_ADDR" or "DUID"
+/// &lt;user_id&gt;  the user's id as a string of hex digits with or without
 /// colons (':') as a delimiter
 /// (options) zero or more string elements as name-value pairs, separated by
 /// commas: "opt1" : "val1",  "other_opt", "77" ...

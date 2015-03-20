@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013,2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -48,7 +48,7 @@ public:
 ///
 /// - The list of server hooks, which is used in two ways.  Firstly, when a
 ///   callout registers or deregisters a hook, it does so by name: the
-///   @ref isc::util::ServerHooks object supplies the names of registered
+///   @ref isc::hooks::ServerHooks object supplies the names of registered
 ///   hooks.  Secondly, when the callouts associated with a hook are called by
 ///   the server, the server supplies the index of the relevant hook: this is
 ///   validated by reference to the list of hook.
@@ -87,7 +87,7 @@ public:
 /// Indexes range between 1 and n (where n is the number of the libraries
 /// loaded) and are assigned to libraries based on the order the libraries
 /// presented to the hooks framework for loading (something that occurs in the
-/// isc::util::HooksManager) class.  However, two other indexes are recognized,
+/// isc::hooks::HooksManager) class.  However, two other indexes are recognized,
 /// 0 and INT_MAX.  These are used when the server itself registers callouts -
 /// the server is able to register callouts that get called before any
 /// user-library callouts, and ones that get called after user-library callouts.

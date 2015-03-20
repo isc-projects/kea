@@ -220,7 +220,7 @@ public:
     /// * forward will be true if S_FLAG is true
     /// * reverse will be true if N_FLAG is false
     ///
-    /// @param fqdn FQDN option from which to read server (outbound) flags
+    /// @param fqdn_resp FQDN option from which to read server (outbound) flags
     /// @param [out] forward bool value will be set to true if forward udpates
     /// should be done, false if not.
     /// @param [out] reverse bool value will be set to true if reverse udpates

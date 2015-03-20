@@ -337,7 +337,7 @@ public:
 
     /// @brief Sets host reservation mode.
     ///
-    /// See @getHostReservationMode for details.
+    /// See @ref getHostReservationMode for details.
     ///
     /// @param mode mode to be set
     void setHostReservationMode(HRMode mode) {
