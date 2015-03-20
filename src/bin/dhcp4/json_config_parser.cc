@@ -340,6 +340,7 @@ namespace dhcp {
 /// those that take format of Dhcp4/param1, Dhcp4/param2 and so forth.
 ///
 /// @param config_id pointer to received global configuration entry
+/// @param element pointer to the element to be parsed
 /// @return parser for specified global DHCPv4 parameter
 /// @throw NotImplemented if trying to create a parser for unknown
 /// config element

@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013,2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -188,7 +188,7 @@ public:
     /// libraries is changed, each of the new libraries is checked before the
     /// change is committed.
     ///
-    /// @param List of libraries to be validated.
+    /// @param libraries List of libraries to be validated.
     ///
     /// @return An empty vector if all libraries validated.  Otherwise it
     ///         holds the names of the libraries that failed validation.
