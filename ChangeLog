@@ -1,3 +1,4 @@
+Kea 0.9.1 released on March 31, 2015
 919.	[doc]		stephen
 	Corrected some configuration examples in the documentation.
 	(Trac #3772 git e9f084525bc1eec1cca635c00f33228bf7fac6a4)
@@ -77,7 +78,7 @@
 906.	[doc]		tmark
 	Added description of a restriction on extracting a MAC
 	address from an IPv6 link-local address to the Kea
-	Adminstrator Reference, section 8.8, item "ipv6-link-local".
+	Administrator Reference, section 8.8, item "ipv6-link-local".
 	(Trac #3691, git ca9f5541cb36f815ac614c5c21088d545eafcac6)
 
 905.	[func]		marcin
@@ -131,7 +132,7 @@ Kea 0.9.1beta released on February 18, 2015
 898.	[func]		marcin
 	The DHCPv4 server configuration allows for opening multiple
 	sockets on a single interface with multiple IPv4 addresses
-	assigned. This facilitates to use case when different relay
+	assigned. This facilitates the use case when different relay
 	agents send messages to different addresses on the interface.
 	(Trac #3695, git 3116243706a2dbcae3f9b5b3af9d2241a07b9ab2)
 
