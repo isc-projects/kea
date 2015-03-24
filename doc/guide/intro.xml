@@ -15,10 +15,10 @@
     </para>
 
     <para>
-      Kea was initially developed as a part of the BIND 10 framework
-      (<ulink url="http://bind10.isc.org"/>). In early 2014, ISC
-      made the decision to discontinue active development of BIND 10 and
-      continue development of Kea as standalone DHCP software.
+      Kea was initially developed as a part of the BIND 10 framework.
+      In early 2014, ISC made the decision to discontinue active
+      development of BIND 10 and continue development of Kea as
+      standalone DHCP software.
     </para>
 
     <para>
