@@ -74,10 +74,6 @@ change is committed by the administrator.
 A debug message indicating that the DHCPv4 server has received an
 updated configuration from the Kea configuration system.
 
-% DHCP4_DISCOVER_CLASS_PROCESSING_FAILED client class specific processing failed for DHCPDISCOVER
-This debug message means that the server processing that is unique for each
-client class has reported a failure. The response packet will not be sent.
-
 % DHCP4_DDNS_REQUEST_SEND_FAILED failed sending a request to kea-dhcp-ddns, error: %1,  ncr: %2
 This error message indicates that DHCP4 server attempted to send a DDNS
 update request to the DHCP-DDNS server.  This is most likely a configuration or
@@ -92,6 +88,10 @@ by the Interface Manager until interface is enabled.
 This error message is logged when the attempt to compute DHCID for a specified
 lease has failed. The lease details and reason for failure is logged in the
 message.
+
+% DHCP4_DISCOVER_CLASS_PROCESSING_FAILED client class specific processing failed for DHCPDISCOVER
+This debug message means that the server processing that is unique for each
+client class has reported a failure. The response packet will not be sent.
 
 % DHCP4_DYNAMIC_RECONFIGURATION initiate server reconfiguration using file: %1, after receiving SIGHUP signal
 This is the info message logged when the DHCPv4 server starts reconfiguration

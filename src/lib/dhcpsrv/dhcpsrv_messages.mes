@@ -179,12 +179,6 @@ the database access parameters are changed: in the latter case, the
 server closes the currently open database, and opens a database using
 the new parameters.
 
-% DHCPSRV_DISCOVER_ADDRESS_CONFLICT conflicting reservation for address %1 with existing lease %2
-This warning message is issued when the DHCP server finds that the
-address reserved for the client can't be offered because this address
-is currently allocated to another client. The server will try to allocate
-a different address to the client to use until the conflict is resolved.
-
 % DHCPSRV_DHCP_DDNS_ERROR_EXCEPTION error handler for DHCP_DDNS IO generated an expected exception: %1
 This is an error message that occurs when an attempt to send a request to
 kea-dhcp-ddns fails there registered error handler threw an uncaught exception.
@@ -221,6 +215,12 @@ off.  This should only occur if IO errors communicating with kea-dhcp-ddns
 have been experienced.  Any such errors should have preceding entries in the
 log with details.  No further attempts to communicate with kea-dhcp-ddns will
 be made without intervention.
+
+% DHCPSRV_DISCOVER_ADDRESS_CONFLICT conflicting reservation for address %1 with existing lease %2
+This warning message is issued when the DHCP server finds that the
+address reserved for the client can't be offered because this address
+is currently allocated to another client. The server will try to allocate
+a different address to the client to use until the conflict is resolved.
 
 % DHCPSRV_HOOK_LEASE4_RENEW_SKIP DHCPv4 lease was not renewed because a callout set the skip flag.
 This debug message is printed when a callout installed on lease4_renew
