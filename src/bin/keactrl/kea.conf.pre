@@ -1,6 +1,6 @@
 # This is a basic configuration for the Kea DHCPv4 and DHCPv6 servers.
 # Subnet declarations are commented out and no interfaces are listed.
-# Therefore, the servers will not listen to or respond any queries.
+# Therefore, the servers will not listen or respond to any queries.
 # The basic configuration must be extended to specify interfaces on
 # which the servers should listen. Also, subnets and options must be
 # declared.
@@ -48,7 +48,7 @@
 
 # Addresses will be assigned with preferred and valid lifetimes
 # being 3000 and 4000, respectively. Client is told to start
-# renewing after 1000 seconds. If the server does not repond
+# renewing after 1000 seconds. If the server does not respond
 # after 2000 seconds since the lease was granted, client is supposed
 # to start REBIND procedure (emergency renewal that allows switching
 # to a different server).
