@@ -71,7 +71,7 @@ SEC_HEADER="""<?xml version="1.0" encoding="UTF-8"?>
     <title>Kea Messages Manual</title>
 
     <copyright>
-      <year>2011-2014</year><holder>Internet Systems Consortium, Inc.</holder>
+      <year>2011-2015</year><holder>Internet Systems Consortium, Inc.</holder>
     </copyright>
 
     <abstract>
