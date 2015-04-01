@@ -176,16 +176,17 @@ packet processing. Hook points that are not specific to packet processing
 
  - @b Arguments:
    - name: @b response4, type: isc::dhcp::Pkt4Ptr, direction: <b>in/out</b>
+   - name: @b query4, type: isc::dhcp::Pkt4Ptr, direction: <b>in</b>
 
  - @b Description: this callout is executed when server's response
-   is about to be sent back to the client. The sole argument - response4 -
+   is about to be sent back to the client. The argument response4
    contains a pointer to an isc::dhcp::Pkt4 object that contains the
    packet, with source and destination addresses set, interface over which
    it will be sent, and a list of all options and relay information.  All fields
    of the Pkt4 object can be modified at this time, except buffer_out_.
    (This is scratch space used for constructing the packet after all
    pkt4_send callouts are complete, so any changes to that field will
-   be overwritten.)
+   be overwritten.)\n\n
 
  - <b>Skip flag action</b>: if any callout sets the skip flag, the server
    will not construct raw buffer. The expectation is that if the callout
