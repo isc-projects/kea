@@ -187,6 +187,9 @@ packet processing. Hook points that are not specific to packet processing
    (This is scratch space used for constructing the packet after all
    pkt4_send callouts are complete, so any changes to that field will
    be overwritten.)\n\n
+   The argument query4 contains a pointer to the corresponding query packet
+   (allowing to perform correlation between response and query). This object
+   cannot be modified.
 
  - <b>Skip flag action</b>: if any callout sets the skip flag, the server
    will not construct raw buffer. The expectation is that if the callout
