@@ -526,13 +526,14 @@ TEST_F(IfaceMgrTest, dhcp6Sniffer) {
 }
 #endif
 
+#if !defined(__apple_build_version__) || (__apple_build_version__ < 6020000)
 TEST_F(IfaceMgrTest, basic) {
     // Checks that IfaceManager can be instantiated
 
     IfaceMgr & ifacemgr = IfaceMgr::instance();
     ASSERT_TRUE(&ifacemgr != 0);
 }
-
+#endif
 
 // This test verifies that sockets can be closed selectively, i.e. all
 // IPv4 sockets can be closed first and all IPv6 sockets remain open.
