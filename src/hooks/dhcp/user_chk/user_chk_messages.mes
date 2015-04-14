@@ -1,4 +1,4 @@
-# Copyright (C) 2013,2015 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -11,9 +11,6 @@
 # LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
-
-% USER_CHK_HOOK_LOAD load function called: %1
-This message is logged by the hook library on entry to the load function.
 
 % USER_CHK_HOOK_LOAD_ERROR DHCP UserCheckHook could not be loaded: %1
 This is an error message issued when the DHCP UserCheckHook could not be loaded.
