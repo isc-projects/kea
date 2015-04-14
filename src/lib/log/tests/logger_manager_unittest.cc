@@ -32,6 +32,7 @@
 #include <log/logger_level.h>
 #include <log/logger_manager.h>
 #include <log/logger_specification.h>
+#include <log/message_initializer.h>
 #include <log/output_option.h>
 
 #include "tempdir.h"
@@ -404,4 +405,28 @@ TEST_F(LoggerManagerTest, checkLayoutPattern) {
     const int re = regexec(*regex, line.c_str(), 0, NULL, 0);
     ASSERT_EQ(0, re)
         << "Logged message does not match expected layout pattern";
+}
+
+// Check that after calling the logDuplicatedMessages, the duplicated
+// messages are removed.
+TEST_F(LoggerManagerTest, logDuplicatedMessages) {
+    // Original set should not have duplicates.
+    ASSERT_EQ(0, MessageInitializer::getDuplicates().size());
+
+    // This just defines 1, but we'll add it a number of times.
+    const char* dupe[] = {
+        "DUPE", "dupe",
+        NULL
+    };
+    const MessageInitializer init_message_initializer_1(dupe);
+    const MessageInitializer init_message_initializer_2(dupe);
+
+    MessageInitializer::loadDictionary();
+    // Should have a duplicate now.
+    ASSERT_EQ(1, MessageInitializer::getDuplicates().size());
+
+    // The logDuplicatedMessages, besides logging, should also remove the
+    // duplicates.
+    LoggerManager::logDuplicatedMessages();
+    ASSERT_EQ(0, MessageInitializer::getDuplicates().size());
 }

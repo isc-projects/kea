@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011,2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,11 +21,18 @@
 #include <vector>
 
 #include <boost/lexical_cast.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <log/message_types.h>
 
 namespace isc {
 namespace log {
+
+/// \brief Forward declaration of \c MessageDictionary
+class MessageDictionary;
+
+/// \brief Shared pointer to the \c MessageDictionary.
+typedef boost::shared_ptr<MessageDictionary> MessageDictionaryPtr;
 
 /// \brief Message Dictionary
 ///
@@ -96,7 +103,6 @@ public:
         return (replace(boost::lexical_cast<std::string>(ident), text));
     }
 
-
     /// \brief Replace Message
     ///
     /// Alternate signature.
@@ -108,6 +114,25 @@ public:
     /// message did not exist and it was not added.
     virtual bool replace(const std::string& ident, const std::string& text);
 
+
+    /// \brief Removes the specified message from the dictionary.
+    ///
+    /// Checks if both the message identifier and the text match the message
+    /// in the dictionary before removal. If the text doesn't match it is
+    /// an indication that the message which removal is requested is a
+    /// duplicate of another message. This may occur when two Kea modules
+    /// register messages with the same identifier. When one of the modules
+    /// is unloaded and the relevant messages are unregistered, there is a
+    /// need to make sure that the message registered by the other module
+    /// is not accidentally removed. Hence, the additional check for the
+    /// text match is needed.
+    ///
+    /// \param ident Identification of the message to remove.
+    /// \param text Message text
+    ///
+    /// \return true of the message has been removed, false if the message
+    /// couldn't be found.
+    virtual bool erase(const std::string& ident, const std::string& text);
 
     /// \brief Load Dictionary
     ///
@@ -125,7 +150,6 @@ public:
     /// same name already existing in the dictionary.  This vector may be
     /// empty.
     virtual std::vector<std::string> load(const char* elements[]);
-
 
     /// \brief Get Message Text
     ///
@@ -178,7 +202,7 @@ public:
     /// Returns a pointer to the singleton global dictionary.
     ///
     /// \return Pointer to global dictionary.
-    static MessageDictionary& globalDictionary();
+    static const MessageDictionaryPtr& globalDictionary();
 
 private:
     Dictionary       dictionary_;   ///< Holds the ID to text lookups

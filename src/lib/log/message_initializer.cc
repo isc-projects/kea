@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011,2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,10 +12,13 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <cassert>
-#include <cstdlib>
 #include <log/message_dictionary.h>
 #include <log/message_initializer.h>
+#include <boost/array.hpp>
+#include <algorithm>
+#include <cassert>
+#include <cstdlib>
+
 
 
 // As explained in the header file, initialization of the message dictionary
@@ -32,20 +35,15 @@
 
 namespace {
 
-// Declare the array of pointers to value arrays.
-const char** logger_values[isc::log::MessageInitializer::MAX_MESSAGE_ARRAYS];
-
-// Declare the index used to access the array.  As this needs to be initialized
-// at first used, it is accessed it via a function.
-size_t& getIndex() {
-    static size_t index = 0;
-    return (index);
-}
+/// Type definition for the list of pointers to messages.
+typedef std::list<const char**> LoggerValuesList;
+// Declare the list of pointers to messages.
+LoggerValuesList logger_values;
 
 // Return the duplicates singleton version (non-const for local use)
-std::vector<std::string>&
+std::list<std::string>&
 getNonConstDuplicates() {
-    static std::vector<std::string> duplicates;
+    static std::list<std::string> duplicates;
     return (duplicates);
 }
 } // end unnamed namespace
@@ -57,16 +55,41 @@ namespace log {
 // Constructor.  Add the pointer to the message array to the global array.
 // This method will trigger an assertion failure if the array overflows.
 
-MessageInitializer::MessageInitializer(const char* values[]) {
-    assert(getIndex() < MAX_MESSAGE_ARRAYS);
-    logger_values[getIndex()++] = values;
+MessageInitializer::MessageInitializer(const char* values[])
+    : values_(values),
+      global_dictionary_(MessageDictionary::globalDictionary()) {
+    assert(logger_values.size() < MAX_MESSAGE_ARRAYS);
+    logger_values.push_back(values);
+}
+
+MessageInitializer::~MessageInitializer() {
+    // Search for the pointer to pending messages belonging to our instance.
+    LoggerValuesList::iterator my_messages = std::find(logger_values.begin(),
+                                                       logger_values.end(),
+                                                       values_);
+    bool pending = (my_messages != logger_values.end());
+    // Our messages are still pending, so let's remove them from the list
+    // of pending messages.
+    if (pending) {
+        logger_values.erase(my_messages);
+
+    } else {
+        // Our messages are not pending, so they might have been loaded to
+        // the dictionary and/or duplicates.
+        int i = 0;
+        while (values_[i]) {
+            getNonConstDuplicates().remove(values_[i]);
+            global_dictionary_->erase(values_[i], values_[i + 1]);
+            i += 2;
+        }
+    }
 }
 
 // Return the number of arrays registered but not yet loaded.
 
 size_t
 MessageInitializer::getPendingCount() {
-    return (getIndex());
+    return (logger_values.size());
 }
 
 // Load the messages in the arrays registered in the logger_values array
@@ -74,15 +97,16 @@ MessageInitializer::getPendingCount() {
 
 void
 MessageInitializer::loadDictionary(bool ignore_duplicates) {
-    MessageDictionary& global = MessageDictionary::globalDictionary();
+    const MessageDictionaryPtr& global = MessageDictionary::globalDictionary();
 
-    for (size_t i = 0; i < getIndex(); ++i) {
-        std::vector<std::string> repeats = global.load(logger_values[i]);
+    for (LoggerValuesList::const_iterator values = logger_values.begin();
+         values != logger_values.end(); ++values) {
+        std::vector<std::string> repeats = global->load(*values);
 
         // Append the IDs in the list just loaded (the "repeats") to the
         // global list of duplicate IDs.
         if (!ignore_duplicates && !repeats.empty()) {
-            std::vector<std::string>& duplicates = getNonConstDuplicates();
+            std::list<std::string>& duplicates = getNonConstDuplicates();
             duplicates.insert(duplicates.end(), repeats.begin(),
                               repeats.end());
         }
@@ -91,11 +115,11 @@ MessageInitializer::loadDictionary(bool ignore_duplicates) {
     // ... and mark that the messages have been loaded.  (This avoids a lot
     // of "duplicate message ID" messages in some of the unit tests where the
     // logging initialization code may be called multiple times.)
-    getIndex() = 0;
+    logger_values.clear();
 }
 
 // Return reference to duplicates vector
-const std::vector<std::string>&
+const std::list<std::string>&
 MessageInitializer::getDuplicates() {
     return (getNonConstDuplicates());
 }
