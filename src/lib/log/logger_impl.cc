@@ -1,4 +1,4 @@
-// Copyright (C) 2011,2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011,2014-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -126,7 +126,7 @@ LoggerImpl::getEffectiveDebugLevel() {
 string*
 LoggerImpl::lookupMessage(const MessageID& ident) {
     return (new string(string(ident) + " " +
-                       MessageDictionary::globalDictionary().getText(ident)));
+                       MessageDictionary::globalDictionary()->getText(ident)));
 }
 
 // Replace the interprocess synchronization object

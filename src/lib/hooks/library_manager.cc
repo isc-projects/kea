@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013,2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,8 @@
 #include <hooks/library_manager.h>
 #include <hooks/pointer_converter.h>
 #include <hooks/server_hooks.h>
+#include <log/logger_manager.h>
+#include <log/message_initializer.h>
 
 #include <string>
 #include <vector>
@@ -262,6 +264,19 @@ LibraryManager::loadLibrary() {
 
     // Open the library (which is a check that it exists and is accessible).
     if (openLibrary()) {
+
+        // The hook libraries provide their own log messages and logger
+        // instances. This step is required to register log messages for
+        // the library being loaded in the global dictionary. Ideally, this
+        // should be called after all libraries have been loaded but we're
+        // going to call the version() and load() functions here and these
+        // functions may already contain logging statements.
+        isc::log::MessageInitializer::loadDictionary();
+
+        // The log messages registered by the new hook library may duplicate
+        // some of the existing messages. Log warning for each duplicated
+        // message now.
+        isc::log::LoggerManager::logDuplicatedMessages();
 
         // Library opened OK, see if a version function is present and if so,
         // check what value it returns.

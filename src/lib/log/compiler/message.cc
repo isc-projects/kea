@@ -619,10 +619,10 @@ main(int argc, char* argv[]) {
     }
     catch (const MessageException& e) {
         // Create an error message from the ID and the text
-        MessageDictionary& global = MessageDictionary::globalDictionary();
+        const MessageDictionaryPtr& global = MessageDictionary::globalDictionary();
         string text = e.id();
         text += ", ";
-        text += global.getText(e.id());
+        text += global->getText(e.id());
         // Format with arguments
         vector<string> args(e.arguments());
         for (size_t i(0); i < args.size(); ++ i) {
