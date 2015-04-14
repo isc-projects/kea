@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -703,6 +703,34 @@ output is appended.  If the file does not exist, a new one is opened.</li>
 In the case of "stdout", "stderr" and "syslog", they must be written exactly
 as is - no leading or trailing spaces, and in lower-case.</dd>
 </dl>
+
+@subsection logInitializationHooks Hooks Specific Notes
+All hooks libraries should use Kea logging mechanisms. The loggers and the
+library specific log messages are created in the same way as for the core
+Kea modules. The loggers created within the hook library belong to the
+logging hierarchy of the Kea process and their configuration can be
+controlled from the Kea configuration file. If the configuration file doesn't
+contain the specific configuration for the logger used in the library,
+this logger is given the configuration of the root Kea logger.
+
+The hook libraries are loaded dynamically. This requires that the global log
+messages dictionary, holding the mapping of specific log message
+identifiers to the actual messages, is updated to include the messages
+specified in the hook library when the library is loaded. Conversely, the
+messages have to be removed from the dictionary when the library is unloaded.
+
+The new messages are added to the global dictionary using the
+@c isc::log::MessageInitializer::loadDictionary static function. It is
+called by the @c isc::hooks::LibraryManager::loadLibrary for each loaded
+library.
+
+When the library is unloaded, the instance of the
+@c isc::log::MessageInitializer defined in the library is destroyed
+and its destructor removes the messages registered by the destroyed
+instance from the global dictionary.
+
+The hook library itself must not perform any action to register or
+unregister log messages in the global dictionary!
 
 @subsection logInitializationPython Python Initialization
 To initialize the logger in a Python program, the "init" method must be
