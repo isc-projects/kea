@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013,2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 /// @file load_unload.cc Defines the load and unload hooks library functions.
 
 #include <hooks/hooks.h>
+#include <user_chk_log.h>
 #include <user_registry.h>
 #include <user_file.h>
 
@@ -69,6 +70,13 @@ extern "C" {
 ///
 /// @return Returns 0 upon success, non-zero upon failure.
 int load(LibraryHandle&) {
+    /// @todo The following log message includes a dummy parameter for us
+    /// to check if parameters are logged properly. This parameter will have
+    /// to be removed.
+    int test_value = 123;
+    LOG_INFO(user_chk_logger, USER_CHK_HOOK_LOAD)
+        .arg(test_value);
+
     // non-zero indicates an error.
     int ret_val = 0;
     try {
