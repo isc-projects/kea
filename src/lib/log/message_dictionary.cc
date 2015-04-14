@@ -58,7 +58,7 @@ MessageDictionary::replace(const std::string& ident, const std::string& text) {
 
 bool
 MessageDictionary::erase(const std::string& ident, const std::string& text) {
-    const_iterator mes = dictionary_.find(ident);
+    Dictionary::iterator mes = dictionary_.find(ident);
     // Both the ID and the text must match.
     bool found = (mes != dictionary_.end() && (mes->second == text));
     if (found) {
