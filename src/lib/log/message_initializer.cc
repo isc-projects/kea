@@ -37,8 +37,12 @@ namespace {
 
 /// Type definition for the list of pointers to messages.
 typedef std::list<const char**> LoggerValuesList;
-// Declare the list of pointers to messages.
-LoggerValuesList logger_values;
+
+/// Return reference to the list of log messages.
+LoggerValuesList& getNonConstLoggerValues() {
+    static LoggerValuesList logger_values;
+    return (logger_values);
+}
 
 // Return the duplicates singleton version (non-const for local use)
 std::list<std::string>&
@@ -58,11 +62,13 @@ namespace log {
 MessageInitializer::MessageInitializer(const char* values[])
     : values_(values),
       global_dictionary_(MessageDictionary::globalDictionary()) {
-    assert(logger_values.size() < MAX_MESSAGE_ARRAYS);
-    logger_values.push_back(values);
+    assert(getNonConstLoggerValues().size() < MAX_MESSAGE_ARRAYS);
+    getNonConstLoggerValues().push_back(values);
 }
 
 MessageInitializer::~MessageInitializer() {
+    LoggerValuesList& logger_values = getNonConstLoggerValues();
+
     // Search for the pointer to pending messages belonging to our instance.
     LoggerValuesList::iterator my_messages = std::find(logger_values.begin(),
                                                        logger_values.end(),
@@ -89,7 +95,7 @@ MessageInitializer::~MessageInitializer() {
 
 size_t
 MessageInitializer::getPendingCount() {
-    return (logger_values.size());
+    return (getNonConstLoggerValues().size());
 }
 
 // Load the messages in the arrays registered in the logger_values array
@@ -98,6 +104,7 @@ MessageInitializer::getPendingCount() {
 void
 MessageInitializer::loadDictionary(bool ignore_duplicates) {
     const MessageDictionaryPtr& global = MessageDictionary::globalDictionary();
+    LoggerValuesList& logger_values = getNonConstLoggerValues(); 
 
     for (LoggerValuesList::const_iterator values = logger_values.begin();
          values != logger_values.end(); ++values) {

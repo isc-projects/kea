@@ -18,8 +18,7 @@ s-messages: user_chk_messages.mes
 
 # Tell automake that the message files are built as part of the build process
 # (so that they are built before the main library is built).
-# BUILT_SOURCES = user_chk_messages.h user_chk_messages.cc
-BUILT_SOURCES =
+BUILT_SOURCES = user_chk_messages.h user_chk_messages.cc
 
 # Ensure that the message file is included in the distribution
 EXTRA_DIST = libdhcp_user_chk.dox
