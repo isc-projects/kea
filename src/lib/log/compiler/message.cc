@@ -622,7 +622,6 @@ main(int argc, char* argv[]) {
         const MessageDictionaryPtr& global = MessageDictionary::globalDictionary();
         string text = e.id();
         text += ", ";
-        assert(global);
         text += global->getText(e.id());
         // Format with arguments
         vector<string> args(e.arguments());
