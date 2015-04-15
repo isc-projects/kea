@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013,2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -119,6 +119,10 @@ public:
     ///
     /// Open the library and check the version.  If all is OK, load all standard
     /// symbols then call "load" if present.
+    ///
+    /// It also calls the @c isc::log::MessageInitializer::loadDictionary, prior
+    /// to invoking the @c version function of the library, to update the global
+    /// logging dictionary with the log messages registered by the loaded library.
     ///
     /// @return true if the library loaded successfully, false otherwise. In the
     ///         latter case, the library will be unloaded if possible.
