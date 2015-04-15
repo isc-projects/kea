@@ -120,7 +120,7 @@ TEST(MessageInitializerTest1, dynamicLoadUnload) {
     EXPECT_EQ("global message nine", global->getText("GLOBAL9"));
 
     // Destroy the first initializer. The first two messages should
-    // be unregistsred.
+    // be unregistered.
     init1.reset();
     EXPECT_TRUE(global->getText("GLOBAL7").empty());
     EXPECT_TRUE(global->getText("GLOBAL8").empty());
