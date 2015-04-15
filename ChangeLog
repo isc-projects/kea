@@ -1,3 +1,10 @@
+920.	[bug]		marcin
+	Corrected issues with logging initialization in hooks
+	libraries. The dynamically loaded hooks libraries may now
+	define their own loggers which are configurable using Kea
+	configuration file.
+	(Trac #3198 git 8216a6b1a2ed6e2b38919280809ee21fc4107fd6)
+
 Kea 0.9.1 released on March 31, 2015
 
 919.	[doc]		stephen
