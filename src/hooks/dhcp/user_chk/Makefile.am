@@ -20,8 +20,9 @@ s-messages: user_chk_messages.mes
 # (so that they are built before the main library is built).
 BUILT_SOURCES = user_chk_messages.h user_chk_messages.cc
 
-# Ensure that the message file is included in the distribution
 EXTRA_DIST = libdhcp_user_chk.dox
+# Ensure that the message file is included in the distribution
+EXTRA_DIST += user_chk_messages.mes
 
 # Get rid of generated message files on a clean
 CLEANFILES = *.gcno *.gcda user_chk_messages.h user_chk_messages.cc s-messages
