@@ -155,6 +155,13 @@
             provided.</simpara>
           </listitem>
           <listitem>
+            <simpara><command>kea-dhcp4.bad_packet</command> - this is the
+            logger used by the DHCPv4 server deamon for logging inbound clien
+            packets that were dropped or to which the server responded with a
+            NAK.  The allows adminstrators to configure a separate log
+            output that contains only packet drop and reject entries.</simpara>
+          </listitem>
+          <listitem>
             <simpara><command>kea-dhcp4.dhcp4</command> - this is the logger
             used solely by the DHCPv4 server deamon. This logger does not
             specify logging settings for libraries used by the deamon.</simpara>
@@ -362,7 +369,7 @@ TODO; there's a ticket to determine these levels, see #1074
 
         </para>
 
-        <!-- configuration of flush is not supported yet. 
+        <!-- configuration of flush is not supported yet.
         <section>
           <title>flush (true of false)</title>
 
@@ -442,7 +449,7 @@ TODO; there's a ticket to determine these levels, see #1074
                 {
                     "output": "stdout"
                 }
-            ], 
+            ],
             "severity": "WARN"
         }
     ]
@@ -467,7 +474,7 @@ file be created.</para>
                     "maxsize": 204800,
                     "destination": "file"
                 }
-            ], 
+            ],
             "severity": "DEBUG",
             "debuglevel": 99
         }

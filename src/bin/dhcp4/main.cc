@@ -40,8 +40,6 @@ namespace {
 
 const char* const DHCP4_NAME = "kea-dhcp4";
 
-const char* const DHCP4_LOGGER_NAME = "kea-dhcp4";
-
 /// @brief Prints Kea Usage and exits
 ///
 /// Note: This function never returns. It terminates the process.
@@ -126,10 +124,10 @@ main(int argc, char* argv[]) {
         // It is important that we set a default logger name because this name
         // will be used when the user doesn't provide the logging configuration
         // in the Kea configuration file.
-        CfgMgr::instance().setDefaultLoggerName(DHCP4_LOGGER_NAME);
+        CfgMgr::instance().setDefaultLoggerName(DHCP4_ROOT_LOGGER_NAME);
 
         // Initialize logging.  If verbose, we'll use maximum verbosity.
-        Daemon::loggerInit(DHCP4_LOGGER_NAME, verbose_mode);
+        Daemon::loggerInit(DHCP4_ROOT_LOGGER_NAME, verbose_mode);
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_START_INFO)
             .arg(getpid()).arg(port_number).arg(verbose_mode ? "yes" : "no");
 
