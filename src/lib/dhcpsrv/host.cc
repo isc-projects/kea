@@ -268,5 +268,61 @@ Host::getIdentifierAsText() const {
     return (txt);
 }
 
+std::string
+Host::toText() const {
+    std::ostringstream s;
+
+    // Add HW address or DUID.
+    s << getIdentifierAsText();
+
+    // Add IPv4 subnet id if exists (non-zero).
+    if (ipv4_subnet_id_) {
+        s << " ipv4_subnet_id=" << ipv4_subnet_id_;
+    }
+
+    // Add IPv6 subnet id if exists (non-zero).
+    if (ipv6_subnet_id_) {
+        s << " ipv6_subnet_id=" << ipv6_subnet_id_;
+    }
+
+    // Add hostname.
+    s << " hostname=" << (hostname_.empty() ? "(empty)" : hostname_);
+
+    // Add IPv4 reservation.
+    s << " ipv4_reservation=" << (ipv4_reservation_.isV4Zero() ? "(no)" :
+                                  ipv4_reservation_.toText());
+
+    if (ipv6_reservations_.empty()) {
+        s << " ipv6_reservations=(none)";
+
+    } else {
+        // Add all IPv6 reservations.
+        for (IPv6ResrvIterator resrv = ipv6_reservations_.begin();
+             resrv != ipv6_reservations_.end(); ++resrv) {
+            s << " ipv6_reservation"
+              << std::distance(ipv6_reservations_.begin(), resrv)
+              << "=" << resrv->second.toText();
+        }
+    }
+
+    // Add DHCPv4 client classes.
+    for (ClientClasses::const_iterator cclass = dhcp4_client_classes_.begin();
+         cclass != dhcp4_client_classes_.end(); ++cclass) {
+        s << " dhcp4_class"
+          << std::distance(dhcp4_client_classes_.begin(), cclass)
+          << "=" << *cclass;
+    }
+
+    // Add DHCPv6 client classes.
+    for (ClientClasses::const_iterator cclass = dhcp6_client_classes_.begin();
+         cclass != dhcp6_client_classes_.end(); ++cclass) {
+        s << " dhcp6_class"
+          << std::distance(dhcp6_client_classes_.begin(), cclass)
+          << "=" << *cclass;
+    }
+
+    return (s.str());
+}
+
 } // end of namespace isc::dhcp
 } // end of namespace isc
