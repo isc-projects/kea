@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013,2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,7 @@
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/subnet.h>
 #include <user_chk.h>
+#include <user_chk_log.h>
 
 using namespace isc::dhcp;
 using namespace isc::hooks;
@@ -49,8 +50,7 @@ extern "C" {
 /// @return 0 upon success, non-zero otherwise.
 int subnet4_select(CalloutHandle& handle) {
     if (!user_registry) {
-        std::cout << "DHCP UserCheckHook : subnet4_select UserRegistry is null"
-                  << std::endl;
+        LOG_ERROR(user_chk_logger, USER_CHK_SUBNET4_SELECT_REGISTRY_NULL);
         return (1);
     }
 
@@ -78,8 +78,8 @@ int subnet4_select(CalloutHandle& handle) {
             handle.setArgument("subnet4", subnet);
         }
     } catch (const std::exception& ex) {
-        std::cout << "DHCP UserCheckHook : subnet6_select unexpected error: "
-                  << ex.what() << std::endl;
+        LOG_ERROR(user_chk_logger, USER_CHK_SUBNET4_SELECT_ERROR)
+            .arg(ex.what());
         return (1);
     }
 
@@ -104,8 +104,7 @@ int subnet4_select(CalloutHandle& handle) {
 /// @return 0 upon success, non-zero otherwise.
 int subnet6_select(CalloutHandle& handle) {
     if (!user_registry) {
-        std::cout << "DHCP UserCheckHook : subnet6_select UserRegistry is null"
-                  << std::endl;
+        LOG_ERROR(user_chk_logger, USER_CHK_SUBNET6_SELECT_REGISTRY_NULL);
         return (1);
     }
 
@@ -133,8 +132,8 @@ int subnet6_select(CalloutHandle& handle) {
             handle.setArgument("subnet6", subnet);
         }
     } catch (const std::exception& ex) {
-        std::cout << "DHCP UserCheckHook : subnet6_select unexpected error: "
-                  << ex.what() << std::endl;
+        LOG_ERROR(user_chk_logger, USER_CHK_SUBNET6_SELECT_ERROR)
+            .arg(ex.what());
         return (1);
     }
 

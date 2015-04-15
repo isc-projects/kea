@@ -99,8 +99,8 @@ int load(LibraryHandle&) {
     }
     catch (const std::exception& ex) {
         // Log the error and return failure.
-        std::cout << "DHCP UserCheckHook could not be loaded: "
-                  << ex.what() << std::endl;
+        LOG_ERROR(user_chk_logger, USER_CHK_HOOK_LOAD_ERROR)
+            .arg(ex.what());
         ret_val = 1;
     }
 
@@ -121,8 +121,8 @@ int unload() {
     } catch (const std::exception& ex) {
         // On the off chance something goes awry, catch it and log it.
         // @todo Not sure if we should return a non-zero result or not.
-        std::cout << "DHCP UserCheckHook could not be unloaded: "
-                  << ex.what() << std::endl;
+        LOG_ERROR(user_chk_logger, USER_CHK_HOOK_UNLOAD_ERROR)
+            .arg(ex.what());
     }
 
     return (0);
