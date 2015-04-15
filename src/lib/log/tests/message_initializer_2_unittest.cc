@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012,2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -31,13 +31,17 @@ const char* values[] = {
 }
 
 TEST(MessageInitializerTest2, MessageLoadTest) {
+    // Create the list where the initializers will be held.
+    std::list<boost::shared_ptr<MessageInitializer> > initializers;
+
     // Load the maximum number of message arrays allowed.  Some arrays may
     // already have been loaded because of static initialization from modules
     // in libraries linked against the test program, hence the reason for the
-    // loop starting from the value returned by getPendingCount() instead of 0.
+    // loop starting from the value returned by getPendingCount() instead of 0
     for (size_t i = MessageInitializer::getPendingCount();
          i < MessageInitializer::MAX_MESSAGE_ARRAYS; ++i) {
-        MessageInitializer initializer1(values);
+        boost::shared_ptr<MessageInitializer> initializer(new MessageInitializer(values));
+        initializers.push_back(initializer);
     }
 
     // Note: Not all systems have EXPECT_DEATH.  As it is a macro we can just
@@ -48,7 +52,7 @@ TEST(MessageInitializerTest2, MessageLoadTest) {
         EXPECT_DEATH({
             isc::util::unittests::dontCreateCoreDumps();
 
-            MessageInitializer initializer2(values);
+            MessageInitializer initializer(values);
           }, ".*");
     }
 #endif
