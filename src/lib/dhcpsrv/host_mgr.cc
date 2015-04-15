@@ -15,6 +15,7 @@
 #include <dhcpsrv/cfg_hosts.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/host_mgr.h>
+#include <dhcpsrv/hosts_log.h>
 
 namespace {
 
@@ -83,6 +84,11 @@ HostMgr::get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
               const DuidPtr& duid) const {
     ConstHostPtr host = getCfgHosts()->get4(subnet_id, hwaddr, duid);
     if (!host && alternate_source) {
+        LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE,
+                  HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_HWADDR_DUID)
+            .arg(subnet_id)
+            .arg(hwaddr ? hwaddr->toText() : "(no-hwaddr)")
+            .arg(duid ? duid->toText() : "(duid)");
         host = alternate_source->get4(subnet_id, hwaddr, duid);
     }
     return (host);
@@ -93,6 +99,10 @@ HostMgr::get4(const SubnetID& subnet_id,
               const asiolink::IOAddress& address) const {
     ConstHostPtr host = getCfgHosts()->get4(subnet_id, address);
     if (!host && alternate_source) {
+        LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE,
+                  HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_ADDRESS4)
+            .arg(subnet_id)
+            .arg(address.toText());
         host = alternate_source->get4(subnet_id, address);
     }
     return (host);
@@ -104,6 +114,11 @@ HostMgr::get6(const SubnetID& subnet_id, const DuidPtr& duid,
                const HWAddrPtr& hwaddr) const {
     ConstHostPtr host = getCfgHosts()->get6(subnet_id, duid, hwaddr);
     if (!host && alternate_source) {
+        LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE,
+                  HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_DUID_HWADDR)
+            .arg(subnet_id)
+            .arg(duid ? duid->toText() : "(duid)")
+            .arg(hwaddr ? hwaddr->toText() : "(no-hwaddr)");
         host = alternate_source->get6(subnet_id, duid, hwaddr);
     }
     return (host);
@@ -113,6 +128,10 @@ ConstHostPtr
 HostMgr::get6(const IOAddress& prefix, const uint8_t prefix_len) const {
     ConstHostPtr host = getCfgHosts()->get6(prefix, prefix_len);
     if (!host && alternate_source) {
+        LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE,
+                  HOSTS_MGR_ALTERNATE_GET6_PREFIX)
+            .arg(prefix.toText())
+            .arg(static_cast<int>(prefix_len));
         host = alternate_source->get6(prefix, prefix_len);
     }
     return (host);
@@ -123,6 +142,10 @@ HostMgr::get6(const SubnetID& subnet_id,
               const asiolink::IOAddress& addr) const {
     ConstHostPtr host = getCfgHosts()->get6(subnet_id, addr);
     if (!host && alternate_source) {
+        LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE,
+                  HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_ADDRESS6)
+            .arg(subnet_id)
+            .arg(addr.toText());
         host = alternate_source->get6(subnet_id, addr);
     }
     return (host);

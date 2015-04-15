@@ -339,6 +339,23 @@ private:
                             const HWAddrPtr& hwaddr,
                             const DuidPtr& duid) const;
 
+    /// @brief Returns the @c Host object holding reservation for the IPv6
+    /// address and connected to the specific subnet.
+    ///
+    /// This private method is called by the public @c get6 method variants.
+    ///
+    /// @param subnet_id IPv6 subnet identifier.
+    /// @param address IPv6 address.
+    /// @tparam ReturnType One of @c HostPtr or @c ConstHostPtr
+    /// @tparam One of the @c ConstHostCollection or @c HostCollection.
+    ///
+    /// @return Pointer to the found host, or NULL if no host found.
+    /// @throw isc::dhcp::DuplicateHost if method found more than one matching
+    /// @c Host object.
+    template<typename ReturnType, typename Storage>
+    ReturnType getHostInternal6(const SubnetID& subnet_id,
+                                const asiolink::IOAddress& adddress) const;
+
     /// @brief Adds a new host to the v4 collection.
     ///
     /// This is an internal method called by public @ref add.
