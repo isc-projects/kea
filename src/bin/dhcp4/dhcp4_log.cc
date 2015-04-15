@@ -19,7 +19,12 @@
 namespace isc {
 namespace dhcp {
 
+const char* DHCP4_ROOT_LOGGER_NAME = "kea-dhcp4";
+const char* DHCP4_APP_LOGGER_NAME = "dhcp4";
+const char* DHCP4_BAD_PACKET_LOGGER_NAME = "bad-packet";
+
 isc::log::Logger dhcp4_logger("dhcp4");
+isc::log::Logger bad_packet_logger(DHCP4_BAD_PACKET_LOGGER_NAME);
 
 } // namespace dhcp
 } // namespace isc
