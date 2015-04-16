@@ -138,6 +138,24 @@ Host::getIdentifierType() const {
     return (IDENT_DUID);
 }
 
+std::string
+Host::getIdentifierAsText() const {
+    std::string txt;
+    if (hw_address_) {
+        txt = "hwaddr=" + hw_address_->toText(false);
+    } else {
+        txt = "duid=";
+        if (duid_) {
+            txt += duid_->toText();
+        } else {
+            txt += "(none)";
+        }
+    }
+
+    return (txt);
+
+}
+
 void
 Host::setIdentifier(const uint8_t* identifier, const size_t len,
                     const IdentifierType& type) {
@@ -249,23 +267,6 @@ Host::addClientClassInternal(ClientClasses& classes,
     if (!trimmed.empty()) {
         classes.insert(ClientClass(trimmed));
     }
-}
-
-std::string
-Host::getIdentifierAsText() const {
-    std::string txt;
-    if (hw_address_) {
-        txt = "hwaddr=" + hw_address_->toText(false);
-    } else {
-        txt = "duid=";
-        if (duid_) {
-            txt += duid_->toText();
-        } else {
-            txt += "(none)";
-        }
-    }
-
-    return (txt);
 }
 
 std::string
