@@ -118,8 +118,17 @@ CfgHosts::getAllInternal(const std::vector<uint8_t>& identifier,
     // Append each Host object to the storage.
     for (HostContainerIndex0::iterator host = idx.lower_bound(t); host != idx.upper_bound(t);
          ++host) {
+        LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE_DETAIL_DATA,
+                  HOSTS_CFG_GET_ALL_IDENTIFIER_HOST)
+            .arg(identifier_text)
+            .arg((*host)->toText());
         storage.push_back(*host);
     }
+
+    // Log how many hosts found.
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS, HOSTS_CFG_GET_ALL_IDENTIFIER_COUNT)
+        .arg(identifier_text)
+        .arg(storage.size());
 }
 
 template<typename Storage>
@@ -157,8 +166,16 @@ CfgHosts::getAllInternal4(const IOAddress& address, Storage& storage) const {
     // Append each Host object to the storage.
     for (HostContainerIndex1::iterator host = r.first; host != r.second;
          ++host) {
+        LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE_DETAIL_DATA,
+                  HOSTS_CFG_GET_ALL_ADDRESS4_HOST)
+            .arg(address.toText())
+            .arg((*host)->toText());
         storage.push_back(*host);
     }
+
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS, HOSTS_CFG_GET_ALL_ADDRESS4_COUNT)
+        .arg(address.toText())
+        .arg(storage.size());
 }
 
 template<typename Storage>
@@ -178,8 +195,16 @@ CfgHosts::getAllInternal6(const IOAddress& address, Storage& storage) const {
     // Append each Host object to the storage.
     for (HostContainerIndex1::iterator host = r.first; host != r.second;
          ++host) {
+        LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE_DETAIL_DATA,
+                  HOSTS_CFG_GET_ALL_ADDRESS6_HOST)
+            .arg(address.toText())
+            .arg((*host)->toText());
         storage.push_back(*host);
     }
+
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS, HOSTS_CFG_GET_ALL_ADDRESS6_COUNT)
+        .arg(address.toText())
+        .arg(storage.size());
 }
 
 
@@ -208,6 +233,11 @@ CfgHosts::get4(const SubnetID& subnet_id, const IOAddress& address) const {
     for (ConstHostCollection::const_iterator host = hosts.begin();
          host != hosts.end(); ++host) {
         if ((*host)->getIPv4SubnetID() == subnet_id) {
+            LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE_DETAIL_DATA,
+                      HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS4_HOST)
+                .arg(subnet_id)
+                .arg(address.toText())
+                .arg((*host)->toText());
             return (*host);
         }
     }
@@ -268,8 +298,15 @@ CfgHosts::getHostInternal6(const SubnetID& subnet_id,
     switch (storage.size()) {
     case 0:
         return (HostPtr());
+
     case 1:
+        LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE_DETAIL_DATA,
+                  HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS6_HOST)
+            .arg(subnet_id)
+            .arg(address.toText())
+            .arg((*storage.begin())->toText());
         return (*storage.begin());
+
     default:
         isc_throw(DuplicateHost,  "more than one reservation found"
                   " for the host belonging to the subnet with id '"
@@ -303,8 +340,19 @@ CfgHosts::getAllInternal6(const SubnetID& subnet_id,
     // multiple addresses reserved, but for each (address, subnet_id) there should
     // be at most one host reserving it).
     for(HostContainer6Index1::iterator resrv = r.first; resrv != r.second; ++resrv) {
+        LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE_DETAIL_DATA,
+                  HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS6_HOST)
+            .arg(subnet_id)
+            .arg(address.toText())
+            .arg(resrv->host_);
         storage.push_back(resrv->host_);
     }
+
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS,
+              HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS6_COUNT)
+        .arg(subnet_id)
+        .arg(address.toText())
+        .arg(storage.size());
 }
 
 HostPtr
@@ -353,6 +401,16 @@ CfgHosts::getHostInternal(const SubnetID& subnet_id, const bool subnet6,
             }
         }
     }
+
+    if (host) {
+        LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE_DETAIL_DATA,
+                  HOSTS_CFG_GET_ONE_SUBNET_ID_HWADDR_DUID)
+            .arg(subnet_id)
+            .arg(hwaddr ? hwaddr->toText() : "(no-hwaddr)")
+            .arg(duid ? duid->toText() : "(no-duid)")
+            .arg(host->toText());
+    }
+
     return (host);
 }
 
