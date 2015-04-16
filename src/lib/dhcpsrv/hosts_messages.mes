@@ -34,6 +34,11 @@ This debug message is issued when retrieving reservations for all hosts
 using specific HW address or DUID. The arguments specify the HW address and
 DUID respectively. The argument specify the HW address and DUID respectively.
 
+% HOSTS_CFG_GET_ALL_IDENTIFIER get all hosts with reservations using identifier: %1
+This debug message is issued when retrieving reservations for all hosts
+identified by HW address or DUID. The argument holds both the identifier
+type and the value.
+
 % HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS6 get all hosts with reservations for subnet id %1 and IPv6 address %2
 This debug message is issued when retrieving all hosts connected to
 the specific subnet and having the specific IPv6 address reserved.
