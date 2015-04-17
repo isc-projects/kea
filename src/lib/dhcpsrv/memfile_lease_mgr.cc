@@ -17,6 +17,7 @@
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_file_loader.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
+#include <dhcpsrv/mysql_connection.h>
 #include <exceptions/exceptions.h>
 #include <util/pid_file.h>
 #include <util/process_spawn.h>
@@ -222,7 +223,7 @@ LFCSetup::getExitStatus() const {
 
 
 Memfile_LeaseMgr::Memfile_LeaseMgr(const ParameterMap& parameters)
-    : LeaseMgr(parameters),
+    : MySqlConnection(parameters),
       lfc_setup_(new LFCSetup(boost::bind(&Memfile_LeaseMgr::lfcCallback, this),
                               *getIOService()))
     {
