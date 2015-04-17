@@ -68,27 +68,6 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Exception thrown if name of database is not specified
-class NoDatabaseName : public Exception {
-public:
-    NoDatabaseName(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
-};
-
-/// @brief Exception thrown on failure to open database
-class DbOpenError : public Exception {
-public:
-    DbOpenError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
-};
-
-/// @brief Exception thrown on failure to execute a database function
-class DbOperationError : public Exception {
-public:
-    DbOperationError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
-};
-
 /// @brief Multiple lease records found where one expected
 class MultipleRecords : public Exception {
 public:
@@ -133,19 +112,11 @@ public:
 /// of those classes for details.
 class LeaseMgr {
 public:
-    /// @brief Defines maximum value for time that can be reliably stored.
-    // If I'm still alive I'll be too old to care. You fix it.
-    static const time_t MAX_DB_TIME;
-
-    /// Database configuration parameter map
-    typedef std::map<std::string, std::string> ParameterMap;
-
     /// @brief Constructor
     ///
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the database.
-    LeaseMgr(const ParameterMap& parameters)
-        : parameters_(parameters), io_service_(new asiolink::IOService())
+    LeaseMgr() : io_service_(new asiolink::IOService())
     {}
 
     /// @brief Destructor
@@ -392,8 +363,6 @@ public:
     /// As host reservation is outside of scope for 2012, support for hosts
     /// is currently postponed.
 
-    /// @brief returns value of the parameter
-    virtual std::string getParameter(const std::string& name) const;
 
     /// @brief Returns the interval at which the @c IOService events should
     /// be released.
@@ -420,17 +389,13 @@ public:
         return (io_service_);
     }
 
+
 private:
-    /// @brief list of parameters passed in dbconfig
-    ///
-    /// That will be mostly used for storing database name, username,
-    /// password and other parameters required for DB access. It is not
-    /// intended to keep any DHCP-related parameters.
-    ParameterMap parameters_;
 
     /// @brief Pointer to the IO service object used by the derived classes
     /// to trigger interval timers.
     asiolink::IOServicePtr io_service_;
+
 };
 
 }; // end of isc::dhcp namespace
