@@ -125,7 +125,7 @@ CfgHosts::getAllInternal(const std::vector<uint8_t>& identifier,
         storage.push_back(*host);
     }
 
-    // Log how many hosts found.
+    // Log how many hosts have been found.
     LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS, HOSTS_CFG_GET_ALL_IDENTIFIER_COUNT)
         .arg(identifier_text)
         .arg(storage.size());
@@ -416,6 +416,13 @@ CfgHosts::getHostInternal(const SubnetID& subnet_id, const bool subnet6,
             .arg(hwaddr ? hwaddr->toText() : "(no-hwaddr)")
             .arg(duid ? duid->toText() : "(no-duid)")
             .arg(host->toText());
+
+    } else {
+        LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS,
+                  HOSTS_CFG_GET_ONE_SUBNET_ID_HWADDR_DUID_NULL)
+            .arg(subnet_id)
+            .arg(hwaddr ? hwaddr->toText() : "(no-hwaddr)")
+            .arg(duid ? duid->toText() : "(no-duid)");
     }
 
     return (host);
