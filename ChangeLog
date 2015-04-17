@@ -1,3 +1,7 @@
+921.	[func]		marcin
+	libdhcpsrv: Added log traces to the host manager.
+	(Trac #3699 git 75b75c89db88eb1a81e76f5550f2a5b3155ce42d)
+
 920.	[bug]		marcin
 	Corrected issues with logging initialization in hooks
 	libraries. The dynamically loaded hooks libraries may now
