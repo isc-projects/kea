@@ -417,6 +417,9 @@ public:
         return (dhcp6_client_classes_);
     }
 
+    /// @brief Returns information about the host in the textual format.
+    std::string toText() const;
+
 private:
 
     /// @brief Adds new client class for DHCPv4 or DHCPv6.
