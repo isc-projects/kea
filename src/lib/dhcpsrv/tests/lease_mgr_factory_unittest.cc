@@ -41,7 +41,7 @@ public:
 // This test checks that a database access string can be parsed correctly.
 TEST_F(LeaseMgrFactoryTest, parse) {
 
-    LeaseMgr::ParameterMap parameters = LeaseMgrFactory::parse(
+    DataSource::ParameterMap parameters = LeaseMgrFactory::parse(
         "user=me password=forbidden name=kea somethingelse= type=mysql");
 
     EXPECT_EQ(5, parameters.size());
@@ -57,7 +57,7 @@ TEST_F(LeaseMgrFactoryTest, parseInvalid) {
 
     // No tokens in the string, so we expect no parameters
     std::string invalid = "";
-    LeaseMgr::ParameterMap parameters = LeaseMgrFactory::parse(invalid);
+    DataSource::ParameterMap parameters = LeaseMgrFactory::parse(invalid);
     EXPECT_EQ(0, parameters.size());
 
     // With spaces, there are some tokens so we expect invalid parameter
@@ -82,7 +82,7 @@ TEST_F(LeaseMgrFactoryTest, parseInvalid) {
 /// as a set of asterisks.
 TEST_F(LeaseMgrFactoryTest, redactAccessString) {
 
-    LeaseMgr::ParameterMap parameters =
+    DataSource::ParameterMap parameters =
         LeaseMgrFactory::parse("user=me password=forbidden name=kea type=mysql");
     EXPECT_EQ(4, parameters.size());
     EXPECT_EQ("me", parameters["user"]);
@@ -108,7 +108,7 @@ TEST_F(LeaseMgrFactoryTest, redactAccessString) {
 /// as a set of asterisks, even if the password is null.
 TEST_F(LeaseMgrFactoryTest, redactAccessStringEmptyPassword) {
 
-    LeaseMgr::ParameterMap parameters =
+    DataSource::ParameterMap parameters =
         LeaseMgrFactory::parse("user=me name=kea type=mysql password=");
     EXPECT_EQ(4, parameters.size());
     EXPECT_EQ("me", parameters["user"]);
@@ -152,7 +152,7 @@ TEST_F(LeaseMgrFactoryTest, redactAccessStringEmptyPassword) {
 /// was no password to begin with.
 TEST_F(LeaseMgrFactoryTest, redactAccessStringNoPassword) {
 
-    LeaseMgr::ParameterMap parameters =
+    DataSource::ParameterMap parameters =
         LeaseMgrFactory::parse("user=me name=kea type=mysql");
     EXPECT_EQ(3, parameters.size());
     EXPECT_EQ("me", parameters["user"]);

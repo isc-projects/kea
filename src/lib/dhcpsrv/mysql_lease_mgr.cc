@@ -76,6 +76,111 @@ using namespace std;
 /// - If there is output, copy the data from the bound variables to the output
 ///   lease object.
 
+namespace {
+/// @brief Maximum length of the hostname stored in DNS.
+///
+/// This length is restricted by the length of the domain-name carried
+/// in the Client FQDN %Option (see RFC4702 and RFC4704).
+const size_t HOSTNAME_MAX_LEN = 255;
+
+/// @brief Maximum size of an IPv6 address represented as a text string.
+///
+/// This is 32 hexadecimal characters written in 8 groups of four, plus seven
+/// colon separators.
+const size_t ADDRESS6_TEXT_MAX_LEN = 39;
+
+TaggedStatement tagged_statements[] = {
+    {MySqlLeaseMgr::DELETE_LEASE4,
+                    "DELETE FROM lease4 WHERE address = ?"},
+    {MySqlLeaseMgr::DELETE_LEASE6,
+                    "DELETE FROM lease6 WHERE address = ?"},
+    {MySqlLeaseMgr::GET_LEASE4_ADDR,
+                    "SELECT address, hwaddr, client_id, "
+                        "valid_lifetime, expire, subnet_id, "
+                        "fqdn_fwd, fqdn_rev, hostname "
+                            "FROM lease4 "
+                            "WHERE address = ?"},
+    {MySqlLeaseMgr::GET_LEASE4_CLIENTID,
+                    "SELECT address, hwaddr, client_id, "
+                        "valid_lifetime, expire, subnet_id, "
+                        "fqdn_fwd, fqdn_rev, hostname "
+                            "FROM lease4 "
+                            "WHERE client_id = ?"},
+    {MySqlLeaseMgr::GET_LEASE4_CLIENTID_SUBID,
+                    "SELECT address, hwaddr, client_id, "
+                        "valid_lifetime, expire, subnet_id, "
+                        "fqdn_fwd, fqdn_rev, hostname "
+                            "FROM lease4 "
+                            "WHERE client_id = ? AND subnet_id = ?"},
+    {MySqlLeaseMgr::GET_LEASE4_HWADDR,
+                    "SELECT address, hwaddr, client_id, "
+                        "valid_lifetime, expire, subnet_id, "
+                        "fqdn_fwd, fqdn_rev, hostname "
+                            "FROM lease4 "
+                            "WHERE hwaddr = ?"},
+    {MySqlLeaseMgr::GET_LEASE4_HWADDR_SUBID,
+                    "SELECT address, hwaddr, client_id, "
+                        "valid_lifetime, expire, subnet_id, "
+                        "fqdn_fwd, fqdn_rev, hostname "
+                            "FROM lease4 "
+                            "WHERE hwaddr = ? AND subnet_id = ?"},
+    {MySqlLeaseMgr::GET_LEASE6_ADDR,
+                    "SELECT address, duid, valid_lifetime, "
+                        "expire, subnet_id, pref_lifetime, "
+                        "lease_type, iaid, prefix_len, "
+                        "fqdn_fwd, fqdn_rev, hostname, "
+                        "hwaddr, hwtype, hwaddr_source "
+                            "FROM lease6 "
+                            "WHERE address = ? AND lease_type = ?"},
+    {MySqlLeaseMgr::GET_LEASE6_DUID_IAID,
+                    "SELECT address, duid, valid_lifetime, "
+                        "expire, subnet_id, pref_lifetime, "
+                        "lease_type, iaid, prefix_len, "
+                        "fqdn_fwd, fqdn_rev, hostname, "
+                        "hwaddr, hwtype, hwaddr_source "
+                            "FROM lease6 "
+                            "WHERE duid = ? AND iaid = ? AND lease_type = ?"},
+    {MySqlLeaseMgr::GET_LEASE6_DUID_IAID_SUBID,
+                    "SELECT address, duid, valid_lifetime, "
+                        "expire, subnet_id, pref_lifetime, "
+                        "lease_type, iaid, prefix_len, "
+                        "fqdn_fwd, fqdn_rev, hostname, "
+                        "hwaddr, hwtype, hwaddr_source "
+                            "FROM lease6 "
+                            "WHERE duid = ? AND iaid = ? AND subnet_id = ? "
+                            "AND lease_type = ?"},
+    {MySqlLeaseMgr::GET_VERSION,
+                    "SELECT version, minor FROM schema_version"},
+    {MySqlLeaseMgr::INSERT_LEASE4,
+                    "INSERT INTO lease4(address, hwaddr, client_id, "
+                        "valid_lifetime, expire, subnet_id, "
+                        "fqdn_fwd, fqdn_rev, hostname) "
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"},
+    {MySqlLeaseMgr::INSERT_LEASE6,
+                    "INSERT INTO lease6(address, duid, valid_lifetime, "
+                        "expire, subnet_id, pref_lifetime, "
+                        "lease_type, iaid, prefix_len, "
+                        "fqdn_fwd, fqdn_rev, hostname, "
+                        "hwaddr, hwtype, hwaddr_source) "
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"},
+    {MySqlLeaseMgr::UPDATE_LEASE4,
+                    "UPDATE lease4 SET address = ?, hwaddr = ?, "
+                        "client_id = ?, valid_lifetime = ?, expire = ?, "
+                        "subnet_id = ?, fqdn_fwd = ?, fqdn_rev = ?, "
+                        "hostname = ? "
+                            "WHERE address = ?"},
+    {MySqlLeaseMgr::UPDATE_LEASE6,
+                    "UPDATE lease6 SET address = ?, duid = ?, "
+                        "valid_lifetime = ?, expire = ?, subnet_id = ?, "
+                        "pref_lifetime = ?, lease_type = ?, iaid = ?, "
+                        "prefix_len = ?, fqdn_fwd = ?, fqdn_rev = ?, "
+                        "hostname = ?, hwaddr = ?, hwtype = ?, hwaddr_source = ? "
+                            "WHERE address = ?"},
+    // End of list sentinel
+    {MySqlLeaseMgr::NUM_STATEMENTS, NULL}
+};
+
+};
 
 namespace isc {
 namespace dhcp {
@@ -1062,7 +1167,7 @@ MySqlLeaseMgr::MySqlLeaseMgr(const MySqlConnection::ParameterMap& parameters)
     }
 
     // Prepare all statements likely to be used.
-    prepareStatements();
+    prepareStatements(tagged_statements, MySqlLeaseMgr::NUM_STATEMENTS);
 
     // Create the exchange objects for use in exchanging data between the
     // program and the database.
@@ -1759,7 +1864,93 @@ MySqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
     }
 }
 
+// Miscellaneous database methods.
 
+std::string
+MySqlLeaseMgr::getName() const {
+    std::string name = "";
+    try {
+        name = getParameter("name");
+    } catch (...) {
+        // Return an empty name
+    }
+    return (name);
+}
+
+
+std::string
+MySqlLeaseMgr::getDescription() const {
+    return (std::string("MySQL Database"));
+}
+
+
+std::pair<uint32_t, uint32_t>
+MySqlLeaseMgr::getVersion() const {
+    const StatementIndex stindex = GET_VERSION;
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MYSQL_GET_VERSION);
+
+    uint32_t    major;      // Major version number
+    uint32_t    minor;      // Minor version number
+
+    // Execute the prepared statement
+    int status = mysql_stmt_execute(statements_[stindex]);
+    if (status != 0) {
+        isc_throw(DbOperationError, "unable to execute <"
+                  << text_statements_[stindex] << "> - reason: " <<
+                  mysql_error(mysql_));
+    }
+
+    // Bind the output of the statement to the appropriate variables.
+    MYSQL_BIND bind[2];
+    memset(bind, 0, sizeof(bind));
+
+    bind[0].buffer_type = MYSQL_TYPE_LONG;
+    bind[0].is_unsigned = 1;
+    bind[0].buffer = &major;
+    bind[0].buffer_length = sizeof(major);
+
+    bind[1].buffer_type = MYSQL_TYPE_LONG;
+    bind[1].is_unsigned = 1;
+    bind[1].buffer = &minor;
+    bind[1].buffer_length = sizeof(minor);
+
+    status = mysql_stmt_bind_result(statements_[stindex], bind);
+    if (status != 0) {
+        isc_throw(DbOperationError, "unable to bind result set: " <<
+                  mysql_error(mysql_));
+    }
+
+    // Fetch the data and set up the "release" object to release associated
+    // resources when this method exits then retrieve the data.
+    MySqlFreeResult fetch_release(statements_[stindex]);
+    status = mysql_stmt_fetch(statements_[stindex]);
+    if (status != 0) {
+        isc_throw(DbOperationError, "unable to obtain result set: " <<
+                  mysql_error(mysql_));
+    }
+
+    return (std::make_pair(major, minor));
+}
+
+
+void
+MySqlLeaseMgr::commit() {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_COMMIT);
+    if (mysql_commit(mysql_) != 0) {
+        isc_throw(DbOperationError, "commit failed: " << mysql_error(mysql_));
+    }
+}
+
+
+void
+MySqlLeaseMgr::rollback() {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_ROLLBACK);
+    if (mysql_rollback(mysql_) != 0) {
+        isc_throw(DbOperationError, "rollback failed: " << mysql_error(mysql_));
+    }
+}
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace

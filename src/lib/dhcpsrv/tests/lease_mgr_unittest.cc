@@ -43,11 +43,8 @@ public:
     /// dbconfig is a generic way of passing parameters. Parameters
     /// are passed in the "name=value" format, separated by spaces.
     /// Values may be enclosed in double quotes, if needed.
-    ///
-    /// @param parameters A data structure relating keywords and values
-    ///        concerned with the database.
-    ConcreteLeaseMgr(const LeaseMgr::ParameterMap& parameters)
-        : LeaseMgr(parameters)
+    ConcreteLeaseMgr(const DataSource::ParameterMap&)
+        : LeaseMgr()
     {}
 
     /// @brief Destructor
@@ -260,27 +257,11 @@ public:
 
 namespace {
 
-/// @brief getParameter test
-///
-/// This test checks if the LeaseMgr can be instantiated and that it
-/// parses parameters string properly.
-TEST_F(LeaseMgrTest, getParameter) {
-
-    LeaseMgr::ParameterMap pmap;
-    pmap[std::string("param1")] = std::string("value1");
-    pmap[std::string("param2")] = std::string("value2");
-    ConcreteLeaseMgr leasemgr(pmap);
-
-    EXPECT_EQ("value1", leasemgr.getParameter("param1"));
-    EXPECT_EQ("value2", leasemgr.getParameter("param2"));
-    EXPECT_THROW(leasemgr.getParameter("param3"), BadValue);
-}
-
 // This test checks if getLease6() method is working properly for 0 (NULL),
 // 1 (return the lease) and more than 1 leases (throw).
 TEST_F(LeaseMgrTest, getLease6) {
 
-    LeaseMgr::ParameterMap pmap;
+    DataSource::ParameterMap pmap;
     boost::scoped_ptr<ConcreteLeaseMgr> mgr(new ConcreteLeaseMgr(pmap));
 
     vector<Lease6Ptr> leases = createLeases6();

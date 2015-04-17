@@ -257,7 +257,7 @@ public:
 // This test checks if the LeaseMgr can be instantiated and that it
 // parses parameters string properly.
 TEST_F(MemfileLeaseMgrTest, constructor) {
-    LeaseMgr::ParameterMap pmap;
+    DataSource::ParameterMap pmap;
     pmap["universe"] = "4";
     pmap["persist"] = "false";
     boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr;
@@ -295,7 +295,7 @@ TEST_F(MemfileLeaseMgrTest, getLeaseFilePath) {
     LeaseFileIO io4(getLeaseFilePath("leasefile4_1.csv"));
     LeaseFileIO io6(getLeaseFilePath("leasefile6_1.csv"));
 
-    LeaseMgr::ParameterMap pmap;
+    DataSource::ParameterMap pmap;
     pmap["universe"] = "4";
     pmap["name"] = getLeaseFilePath("leasefile4_1.csv");
     boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr(new Memfile_LeaseMgr(pmap));
@@ -317,7 +317,7 @@ TEST_F(MemfileLeaseMgrTest, persistLeases) {
     LeaseFileIO io4(getLeaseFilePath("leasefile4_1.csv"));
     LeaseFileIO io6(getLeaseFilePath("leasefile6_1.csv"));
 
-    LeaseMgr::ParameterMap pmap;
+    DataSource::ParameterMap pmap;
     pmap["universe"] = "4";
     // Specify the names of the lease files. Leases will be written.
     pmap["name"] = getLeaseFilePath("leasefile4_1.csv");
@@ -343,7 +343,7 @@ TEST_F(MemfileLeaseMgrTest, persistLeases) {
 // Check if it is possible to schedule the timer to perform the Lease
 // File Cleanup periodically.
 TEST_F(MemfileLeaseMgrTest, lfcTimer) {
-    LeaseMgr::ParameterMap pmap;
+    DataSource::ParameterMap pmap;
     pmap["type"] = "memfile";
     pmap["universe"] = "4";
     // Specify the names of the lease files. Leases will be written.
@@ -372,7 +372,7 @@ TEST_F(MemfileLeaseMgrTest, lfcTimer) {
 // This test checks if the LFC timer is disabled (doesn't trigger)
 // cleanups when the lfc-interval is set to 0.
 TEST_F(MemfileLeaseMgrTest, lfcTimerDisabled) {
-    LeaseMgr::ParameterMap pmap;
+    DataSource::ParameterMap pmap;
     pmap["type"] = "memfile";
     pmap["universe"] = "4";
     pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
@@ -422,7 +422,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup4) {
     previous_file.writeFile(previous_file_contents);
 
     // Create the backend.
-    LeaseMgr::ParameterMap pmap;
+    DataSource::ParameterMap pmap;
     pmap["type"] = "memfile";
     pmap["universe"] = "4";
     pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
@@ -502,7 +502,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup6) {
     previous_file.writeFile(previous_file_contents);
 
     // Create the backend.
-    LeaseMgr::ParameterMap pmap;
+    DataSource::ParameterMap pmap;
     pmap["type"] = "memfile";
     pmap["universe"] = "6";
     pmap["name"] = getLeaseFilePath("leasefile6_0.csv");
@@ -577,7 +577,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanupStartFail) {
     setenv("KEA_LFC_EXECUTABLE", "foobar", 1);
 
     // Create the backend.
-    LeaseMgr::ParameterMap pmap;
+    DataSource::ParameterMap pmap;
     pmap["type"] = "memfile";
     pmap["universe"] = "4";
     pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
@@ -626,7 +626,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileFinish) {
     finish_file.writeFile(finish_file_contents);
 
     // Create the backend.
-    LeaseMgr::ParameterMap pmap;
+    DataSource::ParameterMap pmap;
     pmap["type"] = "memfile";
     pmap["universe"] = "6";
     pmap["name"] = getLeaseFilePath("leasefile6_0.csv");
@@ -691,7 +691,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCopy) {
     input_file.writeFile(input_file_contents);
 
     // Create the backend.
-    LeaseMgr::ParameterMap pmap;
+    DataSource::ParameterMap pmap;
     pmap["type"] = "memfile";
     pmap["universe"] = "6";
     pmap["name"] = getLeaseFilePath("leasefile6_0.csv");
@@ -729,7 +729,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCopy) {
 // at which the IOService must be executed to run the handlers
 // for the installed timers.
 TEST_F(MemfileLeaseMgrTest, getIOServiceExecInterval) {
-    LeaseMgr::ParameterMap pmap;
+    DataSource::ParameterMap pmap;
     pmap["type"] = "memfile";
     pmap["universe"] = "4";
     pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
@@ -1139,7 +1139,7 @@ TEST_F(MemfileLeaseMgrTest, load4CompletedFile) {
 // lease files if the LFC is in progress.
 TEST_F(MemfileLeaseMgrTest, load4LFCInProgress) {
     // Create the backend configuration.
-    LeaseMgr::ParameterMap pmap;
+    DataSource::ParameterMap pmap;
     pmap["type"] = "memfile";
     pmap["universe"] = "4";
     pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
@@ -1378,7 +1378,7 @@ TEST_F(MemfileLeaseMgrTest, load6CompletedFile) {
 // lease files if the LFC is in progress.
 TEST_F(MemfileLeaseMgrTest, load6LFCInProgress) {
     // Create the backend configuration.
-    LeaseMgr::ParameterMap pmap;
+    DataSource::ParameterMap pmap;
     pmap["type"] = "memfile";
     pmap["universe"] = "6";
     pmap["name"] = getLeaseFilePath("leasefile6_0.csv");
