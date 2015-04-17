@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
 
 #include <asiolink/io_service.h>
 #include <config/ccsession.h>
@@ -23,7 +24,6 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
 
-#include <config.h>
 #include <sstream>
 
 using namespace std;

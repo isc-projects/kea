@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <asiolink/io_service.h>
 #include <asiolink/interval_timer.h>
 #include <d2/d2_queue_mgr.h>

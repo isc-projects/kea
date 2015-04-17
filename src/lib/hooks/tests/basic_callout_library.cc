@@ -39,6 +39,7 @@
 ///   log messages are duplicated purposely, to check that the logger handles
 ///   the duplicates correctly.
 
+#include <config.h>
 #include <hooks/hooks.h>
 #include <fstream>
 #include <log/logger.h>

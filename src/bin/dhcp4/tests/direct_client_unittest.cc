@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/classify.h>

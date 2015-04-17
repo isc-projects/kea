@@ -11,7 +11,7 @@ endif
 
 CLEANFILES = *.gcno *.gcda
 
-noinst_PROGRAMS = message
+bin_PROGRAMS = message
 
 message_SOURCES = message.cc
 message_LDADD   = $(top_builddir)/src/lib/log/libkea-log.la

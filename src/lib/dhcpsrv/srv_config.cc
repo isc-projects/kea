@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/srv_config.h>
 #include <log/logger_manager.h>

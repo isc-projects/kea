@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <asiolink/io_address.h>
 #include <dhcp/option_space.h>
 #include <dhcpsrv/addr_utilities.h>

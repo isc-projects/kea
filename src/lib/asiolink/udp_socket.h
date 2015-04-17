@@ -25,8 +25,6 @@
 
 #include <cstddef>
 
-#include <config.h>
-
 #include <asiolink/io_asio_socket.h>
 #include <asiolink/io_endpoint.h>
 #include <asiolink/io_service.h>

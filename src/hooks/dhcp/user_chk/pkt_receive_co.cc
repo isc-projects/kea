@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,6 +14,7 @@
 
 /// @file pkt_receive_co.cc Defines the pkt4_receive and pkt6_receive callout functions.
 
+#include <config.h>
 #include <hooks/hooks.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/dhcp6.h>

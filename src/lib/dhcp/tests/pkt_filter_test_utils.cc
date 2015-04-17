@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
 #include <asiolink/io_address.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/tests/pkt_filter_test_utils.h>
