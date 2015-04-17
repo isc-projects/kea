@@ -14,6 +14,7 @@
 
 /// @file subnet_select_co.cc Defines the subnet4_select and subnet6_select callout functions.
 
+#include <config.h>
 #include <hooks/hooks.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/dhcp6.h>

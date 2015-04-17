@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <lfc/lfc_controller.h>
 #include <lfc/lfc_log.h>
 #include <util/pid_file.h>
@@ -23,7 +25,6 @@
 #include <dhcpsrv/lease_file_loader.h>
 #include <log/logger_manager.h>
 #include <log/logger_name.h>
-#include <config.h>
 
 #include <iostream>
 #include <sstream>

@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -22,6 +22,8 @@
 /// - The "version" and "unload" framework functions are supplied. "version"
 ///   returns a valid value and "unload" creates a marker file and returns
 ///   success.
+
+#include <config.h>
 
 #include <hooks/hooks.h>
 #include <hooks/tests/marker_file.h>

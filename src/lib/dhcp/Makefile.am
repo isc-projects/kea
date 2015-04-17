@@ -97,6 +97,7 @@ libkea_dhcp___include_HEADERS = \
     option_int_array.h \
     option_space.h \
     option_string.h \
+    pkt.h \
     pkt4.h \
     pkt6.h \
     pkt_filter.h \

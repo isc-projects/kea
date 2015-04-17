@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
 #include <dhcpsrv/cfg_hosts.h>
 #include <dhcpsrv/hosts_log.h>
 #include <exceptions/exceptions.h>
