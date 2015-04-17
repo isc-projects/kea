@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <dhcp_ddns/ncr_udp.h>
 #include <dhcpsrv/d2_client_cfg.h>
 #include <dhcpsrv/dhcpsrv_log.h>

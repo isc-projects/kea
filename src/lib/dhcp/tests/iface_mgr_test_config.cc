@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <dhcp/pkt_filter.h>
 #include <dhcp/pkt_filter_inet.h>
 #include <dhcp/pkt_filter_inet6.h>

@@ -14,6 +14,8 @@
 
 /// @file load_unload.cc Defines the load and unload hooks library functions.
 
+#include <config.h>
+
 #include <hooks/hooks.h>
 #include <user_chk_log.h>
 #include <user_registry.h>

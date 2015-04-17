@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <dhcp/iface_mgr.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/tests/d2_unittest.h>

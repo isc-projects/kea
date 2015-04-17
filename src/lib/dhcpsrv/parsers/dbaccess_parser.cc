@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <dhcp/option.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_mgr_factory.h>

@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <d2/d2_update_mgr.h>
 #include <d2/nc_add.h>
 #include <d2/nc_remove.h>

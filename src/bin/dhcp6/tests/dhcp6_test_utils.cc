@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
 #include <gtest/gtest.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/json_config_parser.h>

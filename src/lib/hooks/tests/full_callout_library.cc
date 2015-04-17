@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -36,6 +36,8 @@
 ///   ...where data_1, data_2 and data_3 are the values passed in arguments of
 ///   the same name to the three callouts (data_1 passed to hookpt_one, data_2
 ///   to hookpt_two etc.) and the result is returned in the argument "result".
+
+#include <config.h>
 
 #include <hooks/hooks.h>
 #include <hooks/tests/marker_file.h>
