@@ -16,6 +16,7 @@
 #define LEASE_MGR_FACTORY_H
 
 #include <dhcpsrv/lease_mgr.h>
+#include <dhcpsrv/data_source.h>
 #include <exceptions/exceptions.h>
 
 #include <string>
@@ -106,7 +107,7 @@ public:
     /// @param dbaccess Database access string.
     ///
     /// @return std::map<std::string, std::string> Map of keyword/value pairs.
-    static LeaseMgr::ParameterMap parse(const std::string& dbaccess);
+    static DataSource::ParameterMap parse(const std::string& dbaccess);
 
     /// @brief Redact database access string
     ///
@@ -117,7 +118,7 @@ public:
     ///
     /// @return Redacted database access string.
     static std::string redactedAccessString(
-            const LeaseMgr::ParameterMap& parameters);
+            const DataSource::ParameterMap& parameters);
 
 private:
     /// @brief Hold pointer to lease manager

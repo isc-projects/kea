@@ -36,6 +36,8 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
+const time_t LeaseMgr::MAX_DB_TIME = 2147483647;
+
 Lease6Ptr
 LeaseMgr::getLease6(Lease::Type type, const DUID& duid,
                     uint32_t iaid, SubnetID subnet_id) const {
