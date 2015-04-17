@@ -1,7 +1,7 @@
 922.	[build]		fdupont
 	The config.h file should never be included by another include file.
 	Copy missing header files to the install directory.
-	(Trac #3782, git xxx)
+	(Trac #3782, git ea6e9d166faa54b1f9781bc56d7d8fee6c87b1f9)
 
 921.	[func]		marcin
 	libdhcpsrv: Added log traces to the host manager.
