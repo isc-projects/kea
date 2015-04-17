@@ -17,6 +17,7 @@
 
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/lease_mgr.h>
+#include <dhcpsrv/mysql_connection.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/utility.hpp>
@@ -93,8 +94,9 @@ class MySqlLease6Exchange;
 /// database.  Use of this backend presupposes that a MySQL database is
 /// available and that the Kea schema has been created within it.
 
-class MySqlLeaseMgr : public LeaseMgr {
+class MySqlLeaseMgr : public LeaseMgr, public MySqlConnection {
 public:
+
     /// @brief Constructor
     ///
     /// Uses the following keywords in the parameters passed to it to
@@ -354,54 +356,6 @@ public:
     ///        failed.
     virtual bool deleteLease(const isc::asiolink::IOAddress& addr);
 
-    /// @brief Return backend type
-    ///
-    /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
-    ///
-    /// @return Type of the backend.
-    virtual std::string getType() const {
-        return (std::string("mysql"));
-    }
-
-    /// @brief Returns backend name.
-    ///
-    /// Each backend have specific name, e.g. "mysql" or "sqlite".
-    ///
-    /// @return Name of the backend.
-    virtual std::string getName() const;
-
-    /// @brief Returns description of the backend.
-    ///
-    /// This description may be multiline text that describes the backend.
-    ///
-    /// @return Description of the backend.
-    virtual std::string getDescription() const;
-
-    /// @brief Returns backend version.
-    ///
-    /// @return Version number as a pair of unsigned integers.  "first" is the
-    ///         major version number, "second" the minor number.
-    ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
-    ///        failed.
-    virtual std::pair<uint32_t, uint32_t> getVersion() const;
-
-    /// @brief Commit Transactions
-    ///
-    /// Commits all pending database operations.  On databases that don't
-    /// support transactions, this is a no-op.
-    ///
-    /// @throw DbOperationError Iif the commit failed.
-    virtual void commit();
-
-    /// @brief Rollback Transactions
-    ///
-    /// Rolls back all pending database operations.  On databases that don't
-    /// support transactions, this is a no-op.
-    ///
-    /// @throw DbOperationError If the rollback failed.
-    virtual void rollback();
-
     ///@{
     /// The following methods are used to convert between times and time
     /// intervals stored in the Lease object, and the times stored in the
@@ -455,63 +409,9 @@ public:
                                  uint32_t valid_lifetime, time_t& cltt);
     ///@}
 
-    /// @brief Statement Tags
-    ///
-    /// The contents of the enum are indexes into the list of SQL statements
-    enum StatementIndex {
-        DELETE_LEASE4,              // Delete from lease4 by address
-        DELETE_LEASE6,              // Delete from lease6 by address
-        GET_LEASE4_ADDR,            // Get lease4 by address
-        GET_LEASE4_CLIENTID,        // Get lease4 by client ID
-        GET_LEASE4_CLIENTID_SUBID,  // Get lease4 by client ID & subnet ID
-        GET_LEASE4_HWADDR,          // Get lease4 by HW address
-        GET_LEASE4_HWADDR_SUBID,    // Get lease4 by HW address & subnet ID
-        GET_LEASE6_ADDR,            // Get lease6 by address
-        GET_LEASE6_DUID_IAID,       // Get lease6 by DUID and IAID
-        GET_LEASE6_DUID_IAID_SUBID, // Get lease6 by DUID, IAID and subnet ID
-        GET_VERSION,                // Obtain version number
-        INSERT_LEASE4,              // Add entry to lease4 table
-        INSERT_LEASE6,              // Add entry to lease6 table
-        UPDATE_LEASE4,              // Update a Lease4 entry
-        UPDATE_LEASE6,              // Update a Lease6 entry
-        NUM_STATEMENTS              // Number of statements
-    };
+
 
 private:
-    /// @brief Prepare Single Statement
-    ///
-    /// Creates a prepared statement from the text given and adds it to the
-    /// statements_ vector at the given index.
-    ///
-    /// @param index Index into the statements_ vector into which the text
-    ///        should be placed.  The vector must be big enough for the index
-    ///        to be valid, else an exception will be thrown.
-    /// @param text Text of the SQL statement to be prepared.
-    ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
-    ///        failed.
-    /// @throw isc::InvalidParameter 'index' is not valid for the vector.
-    void prepareStatement(StatementIndex index, const char* text);
-
-    /// @brief Prepare statements
-    ///
-    /// Creates the prepared statements for all of the SQL statements used
-    /// by the MySQL backend.
-    ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
-    ///        failed.
-    /// @throw isc::InvalidParameter 'index' is not valid for the vector.  This
-    ///        represents an internal error within the code.
-    void prepareStatements();
-
-    /// @brief Open Database
-    ///
-    /// Opens the database using the information supplied in the parameters
-    /// passed to the constructor.
-    ///
-    /// @throw NoDatabaseName Mandatory database name not given
-    /// @throw DbOpenError Error opening the database
-    void openDatabase();
 
     /// @brief Add Lease Common Code
     ///
@@ -688,9 +588,8 @@ private:
     /// declare them as "mutable".)
     boost::scoped_ptr<MySqlLease4Exchange> exchange4_; ///< Exchange object
     boost::scoped_ptr<MySqlLease6Exchange> exchange6_; ///< Exchange object
-    MySqlHolder mysql_;
-    std::vector<MYSQL_STMT*> statements_;       ///< Prepared statements
-    std::vector<std::string> text_statements_;  ///< Raw text of statements
+
+
 };
 
 }; // end of isc::dhcp namespace

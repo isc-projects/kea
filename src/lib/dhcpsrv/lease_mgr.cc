@@ -15,6 +15,7 @@
 #include <config.h>
 
 #include <dhcpsrv/lease_mgr.h>
+#include <dhcpsrv/mysql_connection.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/foreach.hpp>
@@ -29,20 +30,11 @@
 
 #include <time.h>
 
+
 using namespace std;
 
 namespace isc {
 namespace dhcp {
-
-const time_t LeaseMgr::MAX_DB_TIME = 2147483647;
-
-std::string LeaseMgr::getParameter(const std::string& name) const {
-    ParameterMap::const_iterator param = parameters_.find(name);
-    if (param == parameters_.end()) {
-        isc_throw(BadValue, "Parameter not found");
-    }
-    return (param->second);
-}
 
 Lease6Ptr
 LeaseMgr::getLease6(Lease::Type type, const DUID& duid,
