@@ -233,7 +233,7 @@ CfgHosts::get4(const SubnetID& subnet_id, const IOAddress& address) const {
     for (ConstHostCollection::const_iterator host = hosts.begin();
          host != hosts.end(); ++host) {
         if ((*host)->getIPv4SubnetID() == subnet_id) {
-            LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE_DETAIL_DATA,
+            LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS,
                       HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS4_HOST)
                 .arg(subnet_id)
                 .arg(address.toText())
@@ -241,6 +241,9 @@ CfgHosts::get4(const SubnetID& subnet_id, const IOAddress& address) const {
             return (*host);
         }
     }
+
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS, HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS4_NULL)
+        .arg(subnet_id).arg(address.toText());
     return (ConstHostPtr());
 }
 
@@ -297,10 +300,14 @@ CfgHosts::getHostInternal6(const SubnetID& subnet_id,
     getAllInternal6<Storage>(subnet_id, address, storage);
     switch (storage.size()) {
     case 0:
+        LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS,
+                  HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS6_NULL)
+            .arg(subnet_id)
+            .arg(address.toText());
         return (HostPtr());
 
     case 1:
-        LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE_DETAIL_DATA,
+        LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS,
                   HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS6_HOST)
             .arg(subnet_id)
             .arg(address.toText())
@@ -403,7 +410,7 @@ CfgHosts::getHostInternal(const SubnetID& subnet_id, const bool subnet6,
     }
 
     if (host) {
-        LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE_DETAIL_DATA,
+        LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS,
                   HOSTS_CFG_GET_ONE_SUBNET_ID_HWADDR_DUID)
             .arg(subnet_id)
             .arg(hwaddr ? hwaddr->toText() : "(no-hwaddr)")
