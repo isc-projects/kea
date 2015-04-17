@@ -14,6 +14,7 @@
 
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
 #include <dhcpsrv/tests/test_utils.h>
+#include <dhcpsrv/data_source.h>
 #include <asiolink/io_address.h>
 #include <gtest/gtest.h>
 #include <sstream>

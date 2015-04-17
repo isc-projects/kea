@@ -17,9 +17,8 @@
 
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/lease_mgr.h>
-
+#include <dhcpsrv/data_source.h>
 #include <boost/scoped_ptr.hpp>
-#include <boost/utility.hpp>
 #include <mysql/mysql.h>		// TODO poprawić przed oddaniem
 
 #include <time.h>
@@ -27,26 +26,14 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Exception thrown if name of database is not specified
-class NoDatabaseName : public Exception {
-public:
-    NoDatabaseName(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
-};
-
-/// @brief Exception thrown on failure to open database
-class DbOpenError : public Exception {
-public:
-    DbOpenError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
-};
-
-/// @brief Exception thrown on failure to execute a database function
-class DbOperationError : public Exception {
-public:
-    DbOperationError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
-};
+/// @brief MySQL True/False constants
+///
+/// Declare typed values so as to avoid problems of data conversion.  These
+/// are local to the file but are given the prefix MLM (MySql Lease Manager) to
+/// avoid any likely conflicts with variables in header files named TRUE or
+/// FALSE.
+extern const my_bool MLM_FALSE;
+extern const my_bool MLM_TRUE;
 
 /// @brief Fetch and Release MySQL Results
 ///
@@ -87,6 +74,16 @@ public:
 
 private:
     MYSQL_STMT*     statement_;     ///< Statement for which results are freed
+};
+
+/// @brief MySQL Selection Statements
+///
+/// Each statement is associated with an index, which is used to reference the
+/// associated prepared statement.
+
+struct TaggedStatement {
+    uint32_t index;
+    const char* text;
 };
 
 /// @brief MySQL Handle Holder
@@ -139,100 +136,15 @@ private:
 
 // Define the current database schema values
 
-const uint32_t CURRENT_VERSION_VERSION = 3;		// version 3: adding host managment features
-const uint32_t CURRENT_VERSION_MINOR = 0;
-
-
-
-class MySqlConnection {
+class MySqlConnection : public DataSource {
 public:
 
-    /// @brief Defines maximum value for time that can be reliably stored.
-    // If I'm still alive I'll be too old to care. You fix it.
-    static const time_t MAX_DB_TIME;
-
-    /// Database configuration parameter map
-    typedef std::map<std::string, std::string> ParameterMap;
-
-	MySqlConnection(const ParameterMap& parameters)
-    	: parameters_(parameters)
-    {}
-
-	virtual ~MySqlConnection()
-	{}
-
-    /// @brief Statement Tags
-    ///
-    /// The contents of the enum are indexes into the list of SQL statements
-    enum StatementIndex {
-        DELETE_LEASE4,              // Delete from lease4 by address
-        DELETE_LEASE6,              // Delete from lease6 by address
-        GET_LEASE4_ADDR,            // Get lease4 by address
-        GET_LEASE4_CLIENTID,        // Get lease4 by client ID
-        GET_LEASE4_CLIENTID_SUBID,  // Get lease4 by client ID & subnet ID
-        GET_LEASE4_HWADDR,          // Get lease4 by HW address
-        GET_LEASE4_HWADDR_SUBID,    // Get lease4 by HW address & subnet ID
-        GET_LEASE6_ADDR,            // Get lease6 by address
-        GET_LEASE6_DUID_IAID,       // Get lease6 by DUID and IAID
-        GET_LEASE6_DUID_IAID_SUBID, // Get lease6 by DUID, IAID and subnet ID
-        GET_VERSION,                // Obtain version number
-        INSERT_LEASE4,              // Add entry to lease4 table
-        INSERT_LEASE6,              // Add entry to lease6 table
-        UPDATE_LEASE4,              // Update a Lease4 entry
-        UPDATE_LEASE6,              // Update a Lease6 entry
-        NUM_STATEMENTS              // Number of statements
-    };
-
-    /// @brief returns value of the parameter
-    virtual std::string getParameter(const std::string& name) const;
-
-    /// @brief Return backend type
-    ///
-    /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
-    ///
-    /// @return Type of the backend.
-    virtual std::string getType() const {
-        return (std::string("mysql"));
+    MySqlConnection(const ParameterMap& parameters)
+        : DataSource(parameters) {
     }
 
-    /// @brief Returns backend name.
-    ///
-    /// Each backend have specific name, e.g. "mysql" or "sqlite".
-    ///
-    /// @return Name of the backend.
-    virtual std::string getName() const;
-
-    /// @brief Returns description of the backend.
-    ///
-    /// This description may be multiline text that describes the backend.
-    ///
-    /// @return Description of the backend.
-    virtual std::string getDescription() const;
-
-    /// @brief Returns backend version.
-    ///
-    /// @return Version number as a pair of unsigned integers.  "first" is the
-    ///         major version number, "second" the minor number.
-    ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
-    ///        failed.
-    virtual std::pair<uint32_t, uint32_t> getVersion() const;
-
-    /// @brief Commit Transactions
-    ///
-    /// Commits all pending database operations.  On databases that don't
-    /// support transactions, this is a no-op.
-    ///
-    /// @throw DbOperationError Iif the commit failed.
-    virtual void commit();
-
-    /// @brief Rollback Transactions
-    ///
-    /// Rolls back all pending database operations.  On databases that don't
-    /// support transactions, this is a no-op.
-    ///
-    /// @throw DbOperationError If the rollback failed.
-    virtual void rollback();
+    virtual ~MySqlConnection() {
+    }
 
     /// @brief Prepare Single Statement
     ///
@@ -247,7 +159,7 @@ public:
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     /// @throw isc::InvalidParameter 'index' is not valid for the vector.
-    void prepareStatement(StatementIndex index, const char* text);
+    void prepareStatement(uint32_t index, const char* text);
 
     /// @brief Prepare statements
     ///
@@ -258,7 +170,8 @@ public:
     ///        failed.
     /// @throw isc::InvalidParameter 'index' is not valid for the vector.  This
     ///        represents an internal error within the code.
-    void prepareStatements();
+    void prepareStatements(const TaggedStatement tagged_statements[],
+                           size_t num_statements);
 
     /// @brief Open Database
     ///
@@ -272,15 +185,7 @@ public:
     std::vector<MYSQL_STMT*> statements_;       ///< Prepared statements
     std::vector<std::string> text_statements_;  ///< Raw text of statements
 
-
-private:
-    /// @brief list of parameters passed in dbconfig
-    ///
-    /// That will be mostly used for storing database name, username,
-    /// password and other parameters required for DB access. It is not
-    /// intended to keep any DHCP-related parameters.
-    ParameterMap parameters_;
-
+protected:
 
     MySqlHolder mysql_;
 
