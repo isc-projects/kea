@@ -46,9 +46,9 @@ LeaseMgrFactory::getLeaseMgrPtr() {
     return (leaseMgrPtr);
 }
 
-LeaseMgr::ParameterMap
+DataSource::ParameterMap
 LeaseMgrFactory::parse(const std::string& dbaccess) {
-    LeaseMgr::ParameterMap mapped_tokens;
+    DataSource::ParameterMap mapped_tokens;
 
     if (!dbaccess.empty()) {
         vector<string> tokens;
@@ -76,11 +76,11 @@ LeaseMgrFactory::parse(const std::string& dbaccess) {
 }
 
 std::string
-LeaseMgrFactory::redactedAccessString(const LeaseMgr::ParameterMap& parameters) {
+LeaseMgrFactory::redactedAccessString(const DataSource::ParameterMap& parameters) {
     // Reconstruct the access string: start of with an empty string, then
     // work through all the parameters in the original string and add them.
     std::string access;
-    for (LeaseMgr::ParameterMap::const_iterator i = parameters.begin();
+    for (DataSource::ParameterMap::const_iterator i = parameters.begin();
          i != parameters.end(); ++i) {
 
         // Separate second and subsequent tokens are preceded by a space.
@@ -109,7 +109,7 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
     const std::string type = "type";
 
     // Parse the access string and create a redacted string for logging.
-    LeaseMgr::ParameterMap parameters = parse(dbaccess);
+    DataSource::ParameterMap parameters = parse(dbaccess);
     std::string redacted = redactedAccessString(parameters);
 
     // Is "type" present?
