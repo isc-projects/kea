@@ -524,4 +524,77 @@ TEST(HostTest, getIdentifierAsText) {
               host2.getIdentifierAsText());
 }
 
+// This test checks that Host object is correctly described in the
+// textual format using the toText method.
+TEST(HostTest, toText) {
+    boost::scoped_ptr<Host> host;
+    ASSERT_NO_THROW(host.reset(new Host("01:02:03:04:05:06", "hw-address",
+                                        SubnetID(1), SubnetID(2),
+                                        IOAddress("192.0.2.3"),
+                                        "myhost.example.com")));
+
+    // Add 4 reservations: 2 for NAs, 2 for PDs.
+    ASSERT_NO_THROW(
+        host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                       IOAddress("2001:db8:1::cafe")));
+        host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
+                                       IOAddress("2001:db8:1:1::"), 64));
+        host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
+                                       IOAddress("2001:db8:1:2::"), 64));
+        host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                       IOAddress("2001:db8:1::1")));
+    );
+
+    // Make sure that the output is correct,
+    EXPECT_EQ("hwaddr=01:02:03:04:05:06 ipv4_subnet_id=1 ipv6_subnet_id=2"
+              " hostname=myhost.example.com"
+              " ipv4_reservation=192.0.2.3"
+              " ipv6_reservation0=2001:db8:1::cafe"
+              " ipv6_reservation1=2001:db8:1::1"
+              " ipv6_reservation2=2001:db8:1:1::/64"
+              " ipv6_reservation3=2001:db8:1:2::/64",
+              host->toText());
+
+    // Reset some of the data and make sure that the output is affected.
+    host->setHostname("");
+    host->removeIPv4Reservation();
+    host->setIPv4SubnetID(0);
+
+    EXPECT_EQ("hwaddr=01:02:03:04:05:06 ipv6_subnet_id=2"
+              " hostname=(empty) ipv4_reservation=(no)"
+              " ipv6_reservation0=2001:db8:1::cafe"
+              " ipv6_reservation1=2001:db8:1::1"
+              " ipv6_reservation2=2001:db8:1:1::/64"
+              " ipv6_reservation3=2001:db8:1:2::/64",
+              host->toText());
+
+    // Create host identified by DUID, instead of HWADDR, with a very
+    // basic configuration.
+    ASSERT_NO_THROW(host.reset(new Host("11:12:13:14:15", "duid",
+                                        SubnetID(0), SubnetID(0),
+                                        IOAddress::IPV4_ZERO_ADDRESS(),
+                                        "myhost")));
+
+    EXPECT_EQ("duid=11:12:13:14:15 hostname=myhost ipv4_reservation=(no)"
+              " ipv6_reservations=(none)", host->toText());
+
+    // Add some classes.
+    host->addClientClass4("modem");
+    host->addClientClass4("router");
+
+    EXPECT_EQ("duid=11:12:13:14:15 hostname=myhost ipv4_reservation=(no)"
+              " ipv6_reservations=(none)"
+              " dhcp4_class0=modem dhcp4_class1=router",
+              host->toText());
+
+    host->addClientClass6("hub");
+    host->addClientClass6("device");
+
+    EXPECT_EQ("duid=11:12:13:14:15 hostname=myhost ipv4_reservation=(no)"
+              " ipv6_reservations=(none)"
+              " dhcp4_class0=modem dhcp4_class1=router"
+              " dhcp6_class0=device dhcp6_class1=hub",
+              host->toText());
+}
+
 } // end of anonymous namespace
