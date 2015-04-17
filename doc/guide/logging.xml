@@ -171,6 +171,12 @@
             libraries will be logged using this logger.</simpara>
           </listitem>
           <listitem>
+            <simpara><command>kea-dhcp4.hosts</command> - this logger is used
+            within the libdhcpsrv and it logs messages related to the management
+            of the DHCPv4 host reservations, i.e. retrieval of the resevations
+            and adding new reservations.</simpara>
+          </listitem>
+          <listitem>
             <simpara><command>kea-dhcp6</command> - this is the root logger for
             the DHCPv6 server. All components used by the DHCPv6 server inherit
             the settings from this logger if there is no specialized logger
@@ -191,6 +197,12 @@
             <simpara><command>kea-dhcp6.hooks</command> - this logger is used
             during DHCPv6 hooks operation, i.e. anything related to user
             libraries will be logged using this logger.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><command>kea-dhcp6.hosts</command> - this logger is used
+            within the libdhcpsrv and it logs messages related to the management
+            of the DHCPv6 host reservations, i.e. retrieval of the resevations
+            and adding new reservations.</simpara>
           </listitem>
           <listitem>
             <simpara><command>kea-dhcp-ddns</command> - this is the root logger for
