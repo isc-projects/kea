@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -29,8 +29,6 @@
 
 #ifndef UTIL_UNITTESTS_CHECK_VALGRIND_H
 #define UTIL_UNITTESTS_CHECK_VALGRIND_H 1
-
-#include <config.h>
 
 namespace isc {
 namespace util {
