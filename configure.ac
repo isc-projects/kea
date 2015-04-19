@@ -27,6 +27,7 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4macros])
 
 AC_CANONICAL_HOST
+AC_CANONICAL_BUILD
 
 # Checks for programs.
 AC_PROG_CXX
@@ -43,6 +44,35 @@ fi
 # Export EXTENDED_VERSION to config.h
 # This will be either "tarball" or "git abcd".
 AC_DEFINE_UNQUOTED([EXTENDED_VERSION], ["${KEA_SRCID}"], [Extended Kea version])
+
+# Find a separator for path_replacer
+for sep in "+" "," ";" "&" "__NONE__"; do
+	if `pwd | grep -q $sep`; then continue; fi
+	if `echo ${prefix} | grep -q $sep`; then continue; fi
+	if `echo ${sysconfdir} | grep -q $sep`; then continue; fi
+	if `echo ${localstatedir} | grep -q $sep`; then continue; fi
+	SEP=$sep
+	break
+done
+if test "$sep" = "__NONE__"; then
+	AC_MSG_ERROR([can't find a separator character in '+,;&' for the path_replacer shell script])
+fi
+AC_SUBST(SEP)
+
+# If cross compiling assume the message compiler executable was
+# magically already in place...
+if test "$cross_compiling" = "yes"; then
+        AC_MSG_CHECKING("build (vs. host) compiled message compiler")
+	if test -x "${srcdir}/src/lib/log/compiler/message"; then
+		AC_MSG_RESULT(yes)
+	else
+		AC_MSG_RESULT(no)
+		AC_MSG_WARN("you must install a message compiler in:")
+		AC_MSG_WARN("    ${srcdir}/src/lib/log/compiler/message")
+		AC_MSG_WARN("compiled for build ($build).")
+	fi
+fi
+AM_CONDITIONAL([CROSS_COMPILING], [test "$cross_compiling" = "yes"])
 
 # Enable low-performing debugging facilities? This option optionally
 # enables some debugging aids that perform slowly and hence aren't built
@@ -387,6 +417,14 @@ case $host in
       OS_TYPE="Linux"
       CPPFLAGS="$CPPFLAGS -DOS_LINUX"
       ;;
+    arm*-apple-darwin*)
+      # in fact i(Phone)OS aka iOS.
+      # Perhaps it will be fixed one day in config.guess to avoid
+      # confusion with with darwin-on-gnu...
+      AC_DEFINE([OS_IOS], [1], [Running on iOS])
+      OS_TYPE="iOS"
+      CPPFLAGS="$CPPFLAGS -DOS_IOS"
+      ;;
     *-apple-darwin*)
       AC_DEFINE([OS_BSD], [1], [Running on BSD?])
       AC_DEFINE([OS_OSX], [1], [Running on OSX?])
@@ -431,6 +469,7 @@ AC_MSG_RESULT($OS_TYPE)
 AM_CONDITIONAL(OS_LINUX, test $OS_TYPE = Linux)
 AM_CONDITIONAL(OS_BSD, test $OS_TYPE = BSD)
 AM_CONDITIONAL(OS_SOLARIS, test $OS_TYPE = Solaris)
+AM_CONDITIONAL(OS_IOS, test $OS_TYPE = IOS)
 AM_CONDITIONAL(OS_OSX, test $BSD_TYPE = OSX)
 AM_CONDITIONAL(OS_FREEBSD, test $BSD_TYPE = FreeBSD)
 AM_CONDITIONAL(OS_NETBSD, test $BSD_TYPE = NetBSD)
@@ -1389,6 +1428,8 @@ AC_TRY_LINK(
 )
 AM_CONDITIONAL(HAVE_OPTRESET, test "x$var_optreset_exists" != "xno")
 AM_COND_IF([HAVE_OPTRESET], [AC_DEFINE([HAVE_OPTRESET], [1], [Check for optreset?])])
+
+AC_DEFINE([CONFIG_H_WAS_INCLUDED], [1], [config.h inclusion marker])
 
 AC_CONFIG_FILES([compatcheck/Makefile
                  dns++.pc

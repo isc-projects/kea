@@ -16,11 +16,13 @@
 
 #include <config.h>
 
-#if defined(OS_BSD)
+#if defined(OS_BSD) || defined(OS_IOS)
 
 #include <dhcp/iface_mgr.h>
 #include <dhcp/iface_mgr_error_handler.h>
+#ifdef OS_BSD
 #include <dhcp/pkt_filter_bpf.h>
+#endif
 #include <dhcp/pkt_filter_inet.h>
 #include <exceptions/exceptions.h>
 
@@ -38,7 +40,7 @@ using namespace isc::dhcp;
 namespace isc {
 namespace dhcp {
 
-/// This is a BSD specific interface detection method.
+/// This is a BSD/iOS specific interface detection method.
 void
 IfaceMgr::detectIfaces() {
     struct ifaddrs* iflist = 0;// The whole interface list
@@ -140,6 +142,7 @@ IfaceMgr::setMatchingPacketFilter(const bool direct_response_desired) {
     // have no means to determine on which interface the packet has been
     // received. Hence, it is discouraged to use PktFilterInet for the
     // server.
+#ifdef OS_BSD
     if (direct_response_desired) {
         setPacketFilter(PktFilterPtr(new PktFilterBPF()));
 
@@ -147,6 +150,10 @@ IfaceMgr::setMatchingPacketFilter(const bool direct_response_desired) {
         setPacketFilter(PktFilterPtr(new PktFilterInet()));
 
     }
+#else
+    // iOS does not support BPF
+    setPacketFilter(PktFilterPtr(new PktFilterInet()));
+#endif
 }
 
 bool

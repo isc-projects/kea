@@ -20,8 +20,11 @@
 /// only the very minimal set of methods that we actually use is defined.
 ///
 /// Note that we need to include <config.h> in our .cc files for that
-/// to be set. we might want to enfore this at compile time with a check
-/// (TODO)
+/// to be set.
+
+#ifndef CONFIG_H_WAS_INCLUDED
+#error "config.h must be included before but was not"
+#endif
 
 #ifndef LOCKS
 #define LOCKS

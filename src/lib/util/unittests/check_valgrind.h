@@ -30,8 +30,6 @@
 #ifndef UTIL_UNITTESTS_CHECK_VALGRIND_H
 #define UTIL_UNITTESTS_CHECK_VALGRIND_H 1
 
-#include <config.h>
-
 #include <util/unittests/api.h>
 
 namespace isc {

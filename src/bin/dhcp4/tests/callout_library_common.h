@@ -29,7 +29,6 @@
 /// by itself - it is included into each callout library which specifies the
 /// missing constant LIBRARY_NUMBER before the inclusion.
 
-#include <config.h>
 #include <hooks/hooks.h>
 #include "marker_file.h"
 
