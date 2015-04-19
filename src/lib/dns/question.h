@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,8 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <util/api.h>
+#include <dns/api.h>
 #include <dns/name.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
@@ -33,7 +35,7 @@ class OutputBuffer;
 namespace dns {
 
 class AbstractMessageRenderer;
-class Question;
+class KEA_DNS_API Question;
 
 /// \brief A pointer-like type pointing to an \c Question object.
 typedef boost::shared_ptr<Question> QuestionPtr;
@@ -100,7 +102,7 @@ typedef boost::shared_ptr<const Question> ConstQuestionPtr;
 /// \c AbstractRRset such as \c %getName() or \c %toWire().
 /// So the user class may use a template function that is applicable to both
 /// \c Question and \c RRset to avoid writing duplicate code logic.
-class Question {
+class KEA_DNS_API Question {
     ///
     /// \name Constructors and Destructor
     ///
@@ -289,6 +291,7 @@ private:
 /// operation.
 /// \return A reference to the same \c std::ostream object referenced by
 /// parameter \c os after the insertion operation.
+KEA_DNS_API
 std::ostream& operator<<(std::ostream& os, const Question& question);
 } // end of namespace dns
 } // end of namespace isc

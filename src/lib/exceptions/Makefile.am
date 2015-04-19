@@ -1,10 +1,10 @@
 SUBDIRS = . tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
-AM_CXXFLAGS=$(KEA_CXXFLAGS)
+AM_CXXFLAGS = $(KEA_CXXFLAGS) $(SHLIB_CXXFLAGS)
 
 lib_LTLIBRARIES = libkea-exceptions.la
-libkea_exceptions_la_SOURCES = exceptions.h exceptions.cc
+libkea_exceptions_la_SOURCES = api.h exceptions.h exceptions.cc
 
 CLEANFILES = *.gcno *.gcda
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#define KEA_CC_EXPORT
 
 #include <config.h>
 #include <cc/session_config.h>

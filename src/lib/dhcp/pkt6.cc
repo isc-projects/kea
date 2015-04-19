@@ -14,6 +14,8 @@
 
 #include <config.h>
 
+#define KEA_DHCP_EXPORT
+
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>

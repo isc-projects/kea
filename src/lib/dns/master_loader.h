@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 #ifndef MASTER_LOADER_H
 #define MASTER_LOADER_H
 
+#include <dns/api.h>
 #include <dns/master_loader_callbacks.h>
 
 #include <boost/noncopyable.hpp>
@@ -27,7 +28,7 @@ class RRClass;
 
 /// \brief Error while loading by MasterLoader without specifying the
 ///     MANY_ERRORS option.
-class MasterLoaderError : public isc::Exception {
+class KEA_DNS_API MasterLoaderError : public isc::Exception {
 public:
     MasterLoaderError(const char* file, size_t line, const char* what) :
         Exception(file, line, what)
@@ -41,7 +42,7 @@ public:
 /// incrementally.
 ///
 /// It reports the loaded RRs and encountered errors by callbacks.
-class MasterLoader : boost::noncopyable {
+class KEA_DNS_API MasterLoader : boost::noncopyable {
 public:
     /// \brief Options how the parsing should work.
     enum Options {

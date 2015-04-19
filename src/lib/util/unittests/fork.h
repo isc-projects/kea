@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,8 @@
 #define UTIL_UNITTESTS_FORK_H 1
 
 #include <unistd.h>
+
+#include <util/unittests/api.h>
 
 /**
  * \file fork.h
@@ -36,13 +38,13 @@ namespace unittests {
  * @return True if the process terminates with 0, false otherwise.
  * @param process The ID of process to wait for.
  */
-bool
+KEA_UTIL_UNITTESTS_API bool
 process_ok(pid_t process);
 
-pid_t
+KEA_UTIL_UNITTESTS_API pid_t
 provide_input(int* read_pipe, const void* input, const size_t length);
 
-pid_t
+KEA_UTIL_UNITTESTS_API pid_t
 check_output(int* write_pipe, const void* const output, const size_t length);
 
 } // End of the namespace

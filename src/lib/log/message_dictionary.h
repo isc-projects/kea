@@ -23,6 +23,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <log/api.h>
 #include <log/message_types.h>
 
 namespace isc {
@@ -52,7 +53,7 @@ typedef boost::shared_ptr<MessageDictionary> MessageDictionaryPtr;
 /// Although the class can be used stand-alone, it does supply a static method
 /// to return a particular instance - the "global" dictionary.
 
-class MessageDictionary {
+class KEA_LOG_API MessageDictionary {
 public:
 
     typedef std::map<std::string, std::string> Dictionary;

@@ -229,6 +229,9 @@ def generate_rdatadef(file, basemtime):
         return
     rdata_deffile = open(file, 'w')
     rdata_deffile.write(heading_txt)
+    rdata_deffile.write('''
+#define KEA_DNS_EXPORT
+''')
     rdata_deffile.write(class_definitions)
     rdata_deffile.close()
 
@@ -240,6 +243,7 @@ def generate_rdatahdr(file, heading, declarations, basemtime):
 #ifndef DNS_RDATACLASS_H
 #define DNS_RDATACLASS_H 1
 
+#include <dns/api.h>
 #include <dns/master_loader.h>
 
 namespace isc {

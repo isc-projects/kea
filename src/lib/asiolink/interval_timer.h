@@ -1,4 +1,4 @@
-// Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,7 @@
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <asiolink/api.h>
 #include <asiolink/io_service.h>
 
 namespace isc {
@@ -57,7 +58,7 @@ class IntervalTimerImpl;
 ///  intervalTimer.setup(function_to_call_back, interval_in_milliseconds);
 ///  io_service.run();
 /// \endcode
-class IntervalTimer {
+class KEA_ASIOLINK_API IntervalTimer {
 public:
     /// \name The type of timer callback function
     typedef boost::function<void()> Callback;

@@ -1,4 +1,4 @@
-// Copyright (C) 2011,2015  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#include <config.h>
 
 #include <cctype>
 #include <cstddef>
@@ -43,7 +45,7 @@ using namespace std;
 using namespace isc::log;
 using namespace isc::util;
 
-static const char* VERSION = "1.0-0";
+static const char* KEA_VERSION = "1.0-0";
 
 /// \file log/compiler/message.cc
 /// \brief Message Compiler
@@ -76,7 +78,7 @@ static const char* VERSION = "1.0-0";
 
 void
 version() {
-    cout << VERSION << "\n";
+    cout << KEA_VERSION << "\n";
 }
 
 /// \brief Print Usage
@@ -353,7 +355,8 @@ writeHeaderFile(const string& file, const vector<string>& ns_components,
     vector<string> idents = sortedIdentifiers(dictionary);
     for (vector<string>::const_iterator j = idents.begin();
         j != idents.end(); ++j) {
-        hfile << "extern const isc::log::MessageID " << *j << ";\n";
+        hfile << "extern const KEA_LOG_API isc::log::MessageID " <<
+        *j << ";\n";
     }
     hfile << "\n";
 
@@ -443,6 +446,7 @@ writeProgramFile(const string& file, const vector<string>& ns_components,
         "// File created from " << message_file.fullName() << " on " <<
             currentTime() << "\n" <<
          "\n" <<
+         "#define KEA_LOG_EXPORT\n" << "\n" <<
          "#include <cstddef>\n" <<
          "#include <log/message_types.h>\n" <<
          "#include <log/message_initializer.h>\n" <<
@@ -455,7 +459,7 @@ writeProgramFile(const string& file, const vector<string>& ns_components,
     vector<string> idents = sortedIdentifiers(dictionary);
     for (vector<string>::const_iterator j = idents.begin();
         j != idents.end(); ++j) {
-        ccfile << "extern const isc::log::MessageID " << *j <<
+        ccfile << "extern const KEA_LOG_API isc::log::MessageID " << *j <<
             " = \"" << *j << "\";\n";
     }
     ccfile << "\n";

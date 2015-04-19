@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #define SIGNAL_SET_H
 
 #include <exceptions/exceptions.h>
+#include <util/api.h>
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
@@ -28,7 +29,7 @@ namespace util {
 
 /// @brief Exception thrown when the @c isc::util::io::SignalSet class
 /// experiences an error.
-class SignalSetError : public Exception {
+class KEA_UTIL_API SignalSetError : public Exception {
 public:
     SignalSetError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
@@ -47,7 +48,7 @@ typedef boost::shared_ptr<SigIntList> SigIntListPtr;
 
 
 /// @brief Forward declaration to the @c isc::util::io::SignalSet.
-class SignalSet;
+class KEA_UTIL_API SignalSet;
 /// @brief Pointer to the @c isc::util::io::SignalSet.
 typedef boost::shared_ptr<SignalSet> SignalSetPtr;
 /// @brief Pointer to the signal handling function.
@@ -90,7 +91,7 @@ typedef boost::function<bool(int signum)> BoolSignalHandler;
 /// @note This class is not thread safe. It uses static variables and
 /// functions to track a global state of signal registration and received
 /// signals' queue.
-class SignalSet : public boost::noncopyable {
+class KEA_UTIL_API SignalSet : public boost::noncopyable {
 public:
     /// @brief Constructor installing one signal.
     ///

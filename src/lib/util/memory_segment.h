@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,8 @@
 
 #include <exceptions/exceptions.h>
 
+#include <util/api.h>
+
 #include <utility>
 
 #include <stdlib.h>
@@ -26,7 +28,7 @@ namespace util {
 
 /// \brief Exception that can be thrown when constructing a MemorySegment
 /// object.
-class MemorySegmentOpenError : public Exception {
+class KEA_UTIL_API MemorySegmentOpenError : public Exception {
 public:
     MemorySegmentOpenError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
@@ -36,7 +38,7 @@ public:
 /// results in growing the underlying segment.
 ///
 /// See MemorySegment::allocate() for details.
-class MemorySegmentGrown : public Exception {
+class KEA_UTIL_API MemorySegmentGrown : public Exception {
 public:
     MemorySegmentGrown(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
@@ -44,7 +46,7 @@ public:
 
 /// \brief General error that can be thrown by a MemorySegment
 /// implementation.
-class MemorySegmentError : public Exception {
+class KEA_UTIL_API MemorySegmentError : public Exception {
 public:
     MemorySegmentError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
@@ -59,7 +61,7 @@ public:
 ///
 /// This is an abstract class and a real implementation such as
 /// MemorySegmentLocal should be used in code.
-class MemorySegment {
+class KEA_UTIL_API MemorySegment {
 public:
     /// \brief Destructor
     virtual ~MemorySegment() {}

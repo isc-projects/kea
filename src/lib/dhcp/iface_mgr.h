@@ -16,6 +16,7 @@
 #define IFACE_MGR_H
 
 #include <asiolink/io_address.h>
+#include <dhcp/api.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt4.h>
@@ -38,21 +39,21 @@ namespace dhcp {
 
 
 /// @brief IfaceMgr exception thrown thrown when interface detection fails.
-class IfaceDetectError : public Exception {
+class KEA_DHCP_API IfaceDetectError : public Exception {
 public:
     IfaceDetectError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
 /// @brief Exception thrown when it is not allowed to set new Packet Filter.
-class PacketFilterChangeDenied : public Exception {
+class KEA_DHCP_API PacketFilterChangeDenied : public Exception {
 public:
     PacketFilterChangeDenied(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
 /// @brief Exception thrown when a call to select is interrupted by a signal.
-class SignalInterruptOnSelect : public Exception {
+class KEA_DHCP_API SignalInterruptOnSelect : public Exception {
 public:
     SignalInterruptOnSelect(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
@@ -60,7 +61,7 @@ public:
 
 /// @brief IfaceMgr exception thrown thrown when socket opening
 /// or configuration failed.
-class SocketConfigError : public Exception {
+class KEA_DHCP_API SocketConfigError : public Exception {
 public:
     SocketConfigError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
@@ -68,7 +69,7 @@ public:
 
 /// @brief IfaceMgr exception thrown thrown when error occured during
 /// reading data from socket.
-class SocketReadError : public Exception {
+class KEA_DHCP_API SocketReadError : public Exception {
 public:
     SocketReadError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
@@ -76,21 +77,21 @@ public:
 
 /// @brief IfaceMgr exception thrown thrown when error occured during
 /// sedning data through socket.
-class SocketWriteError : public Exception {
+class KEA_DHCP_API SocketWriteError : public Exception {
 public:
     SocketWriteError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
 /// @brief IfaceMgr exception thrown when there is no suitable interface.
-class IfaceNotFound : public Exception {
+class KEA_DHCP_API IfaceNotFound : public Exception {
 public:
     IfaceNotFound(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
 /// @brief IfaceMgr exception thrown when there is no suitable socket found.
-class SocketNotFound : public Exception {
+class KEA_DHCP_API SocketNotFound : public Exception {
 public:
     SocketNotFound(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
@@ -163,7 +164,7 @@ struct SocketInfo {
 /// In order to avoid potentially expensive copies of the @c Iface objects
 /// holding pre-allocated buffers and multiple containers, this class is
 /// noncopyable.
-class Iface : public boost::noncopyable {
+class KEA_DHCP_API Iface : public boost::noncopyable {
 public:
 
     /// Maximum MAC address length (Infiniband uses 20 bytes)
@@ -521,7 +522,7 @@ boost::function<void(const std::string& errmsg)> IfaceMgrErrorMsgCallback;
 /// interfaces, configured addresses, link-local addresses, and provides
 /// API for using sockets.
 ///
-class IfaceMgr : public boost::noncopyable {
+class KEA_DHCP_API IfaceMgr : public boost::noncopyable {
 public:
     /// Defines callback used when data is received over external sockets.
     typedef boost::function<void ()> SocketCallback;

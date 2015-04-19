@@ -15,6 +15,7 @@
 #ifndef PKT_FILTER_H
 #define PKT_FILTER_H
 
+#include <dhcp/api.h>
 #include <dhcp/pkt4.h>
 #include <asiolink/io_address.h>
 #include <boost/shared_ptr.hpp>
@@ -23,7 +24,7 @@ namespace isc {
 namespace dhcp {
 
 /// @brief Exception thrown when invalid packet filter object specified.
-class InvalidPacketFilter : public Exception {
+class KEA_DHCP_API InvalidPacketFilter : public Exception {
 public:
     InvalidPacketFilter(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
@@ -49,7 +50,7 @@ class Iface;
 /// In order to overcome this problem, it is recommended to create mock object derived
 /// from this class that mimics the behavior of the real packet handling class making
 /// IfaceMgr testable.
-class PktFilter {
+class KEA_DHCP_API PktFilter {
 public:
 
     /// @brief Virtual Destructor

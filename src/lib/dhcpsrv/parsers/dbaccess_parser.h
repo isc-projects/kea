@@ -16,6 +16,7 @@
 #define DBACCESS_PARSER_H
 
 #include <cc/data.h>
+#include <dhcpsrv/api.h>
 #include <dhcpsrv/parsers/dhcp_config_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <exceptions/exceptions.h>
@@ -29,7 +30,7 @@ namespace dhcp {
 ///
 /// This condition is checked, but should never occur because 'type' is marked
 /// as mandatory in the .spec file for the server.
-class TypeKeywordMissing : public isc::Exception {
+class KEA_DHCPSRV_API TypeKeywordMissing : public isc::Exception {
 public:
     TypeKeywordMissing(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
@@ -43,7 +44,7 @@ public:
 ///
 /// Only the "type" sub-element is mandatory: the remaining sub-elements 
 /// depend on the database chosen.
-class DbAccessParser: public DhcpConfigParser {
+class KEA_DHCPSRV_API DbAccessParser: public DhcpConfigParser {
 public:
     /// @brief Keyword and associated value
     typedef std::pair<std::string, std::string> StringPair;

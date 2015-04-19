@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2006-2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,6 +14,8 @@
 
 #ifndef DHCP6_H
 #define DHCP6_H
+
+#include <dhcp/api.h>
 
 /* DHCPv6 Option codes: */
 

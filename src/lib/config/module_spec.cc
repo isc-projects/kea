@@ -1,4 +1,4 @@
-// Copyright (C) 2010, 2011  Internet Systems Consortium.
+// Copyright (C) 2010, 2011, 2015 Internet Systems Consortium.
 //
 // Permission to use, copy, modify, and distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,6 +12,8 @@
 // FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
 // NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 // WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+#define KEA_CONFIG_EXPORT
 
 #include <config/module_spec.h>
 
@@ -305,7 +307,7 @@ ModuleSpec::validateStatistics(ConstElementPtr data, const bool full,
     return (validateSpecList(spec, data, full, errors));
 }
 
-ModuleSpec
+KEA_CONFIG_API ModuleSpec
 moduleSpecFromFile(const std::string& file_name, const bool check)
                    throw(JSONError, ModuleSpecError)
 {
@@ -326,7 +328,7 @@ moduleSpecFromFile(const std::string& file_name, const bool check)
     }
 }
 
-ModuleSpec
+KEA_CONFIG_API ModuleSpec
 moduleSpecFromFile(std::ifstream& in, const bool check)
                    throw(JSONError, ModuleSpecError)
 {

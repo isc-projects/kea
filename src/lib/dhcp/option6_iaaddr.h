@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,18 +16,19 @@
 #define OPTION6_IAADDR_H
 
 #include <asiolink/io_address.h>
+#include <dhcp/api.h>
 #include <dhcp/option.h>
 #include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace dhcp {
 
-class Option6IAAddr;
+class KEA_DHCP_API Option6IAAddr;
 
 /// A pointer to the @c isc::dhcp::Option6IAAddr object.
 typedef boost::shared_ptr<Option6IAAddr> Option6IAAddrPtr;
 
-class Option6IAAddr: public Option {
+class KEA_DHCP_API Option6IAAddr: public Option {
 
 public:
     /// length of the fixed part of the IAADDR option

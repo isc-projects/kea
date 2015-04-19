@@ -36,6 +36,8 @@
 
 #include <stdint.h>
 
+#include <dhcp/api.h>
+
 namespace isc {
 namespace dhcp {
 

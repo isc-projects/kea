@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 #ifndef ISC_SESSION_H
 #define ISC_SESSION_H 1
 
+#include <cc/api.h>
 #include <cc/data.h>
 #include <cc/session_config.h>
 #include <cc/proto_defs.h>
@@ -33,7 +34,7 @@ namespace isc {
     namespace cc {
         class SessionImpl;
 
-        class SessionError : public isc::Exception {
+        class KEA_CC_API SessionError : public isc::Exception {
         public:
             SessionError(const char* file, size_t line, const char* what) :
                 isc::Exception(file, line, what) {}
@@ -42,7 +43,7 @@ namespace isc {
         /// \brief A standard Exception class that is thrown when a
         /// blocking readData call does not read the given number of
         /// bytes before the timeout expires
-        class SessionTimeout : public isc::Exception {
+        class KEA_CC_API SessionTimeout : public isc::Exception {
         public:
             SessionTimeout(const char* file, size_t line, const char* what) :
                 isc::Exception(file, line, what) {}
@@ -56,7 +57,7 @@ namespace isc {
         /// For simplicity we only define the methods that are necessary for
         /// existing test cases that use this base class.  Eventually we'll
         /// probably have to extend them.
-        class AbstractSession {
+        class KEA_CC_API AbstractSession {
             ///
             /// \name Constructors, Assignment Operator and Destructor.
             ///
@@ -111,7 +112,7 @@ namespace isc {
             virtual size_t getTimeout() const = 0;
         };
 
-    class Session : public AbstractSession {
+    class KEA_CC_API Session : public AbstractSession {
         private:
             SessionImpl* impl_;
 

@@ -17,6 +17,7 @@
 
 #include <asiolink/interval_timer.h>
 #include <dhcp/hwaddr.h>
+#include <dhcpsrv/api.h>
 #include <dhcpsrv/csv_lease_file4.h>
 #include <dhcpsrv/csv_lease_file6.h>
 #include <dhcpsrv/memfile_lease_storage.h>
@@ -29,7 +30,7 @@
 namespace isc {
 namespace dhcp {
 
-class LFCSetup;
+class KEA_DHCPSRV_API LFCSetup;
 
 /// @brief Concrete implementation of a lease database backend using flat file.
 ///
@@ -85,7 +86,7 @@ class LFCSetup;
 /// is not specified, the default location in the installation
 /// directory is used: var/kea/kea-leases4.csv and
 /// var/kea/kea-leases6.csv.
-class Memfile_LeaseMgr : public LeaseMgr {
+class KEA_DHCPSRV_API Memfile_LeaseMgr : public LeaseMgr {
 public:
 
     /// @defgroup versions Specified memfile backend version.

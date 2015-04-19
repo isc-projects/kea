@@ -22,6 +22,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp_ddns/ncr_io.h>
 #include <exceptions/exceptions.h>
+#include <dhcpsrv/api.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -35,7 +36,7 @@ namespace dhcp {
 
 /// An exception that is thrown if an error occurs while configuring
 /// the D2 DHCP DDNS client.
-class D2ClientError : public isc::Exception {
+class KEA_DHCPSRV_API D2ClientError : public isc::Exception {
 public:
 
     /// @brief constructor
@@ -53,7 +54,7 @@ public:
 /// parameters associated with DHCP-DDNS and acting as a client of D2.
 /// Instances of this class may be constructed through configuration parsing.
 ///
-class D2ClientConfig {
+class KEA_DHCPSRV_API D2ClientConfig {
 public:
 
 
@@ -266,7 +267,7 @@ private:
     std::string qualifying_suffix_;
 };
 
-std::ostream&
+KEA_DHCPSRV_API std::ostream&
 operator<<(std::ostream& os, const D2ClientConfig& config);
 
 /// @brief Defines a pointer for D2ClientConfig instances.

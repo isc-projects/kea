@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -22,6 +22,7 @@
 
 #include <util/buffer.h>
 
+#include <dns/api.h>
 #include <dns/name.h>
 #include <dns/rdataclass.h>
 
@@ -59,7 +60,7 @@ class AbstractMessageRenderer;
 /// handle it through a generic interface in a polymorphic way.
 /// We therefore chose to define it as a separate class.  This is also
 /// similar to why \c EDNS is a separate class.
-class TSIGRecord {
+class KEA_DNS_API TSIGRecord {
 public:
     ///
     /// \name Constructors
@@ -297,6 +298,7 @@ typedef boost::shared_ptr<const TSIGRecord> ConstTSIGRecordPtr;
 /// \param record A \c TSIGRecord object output by the operation.
 /// \return A reference to the same \c std::ostream object referenced by
 /// parameter \c os after the insertion operation.
+KEA_DNS_API
 std::ostream& operator<<(std::ostream& os, const TSIGRecord& record);
 }
 }

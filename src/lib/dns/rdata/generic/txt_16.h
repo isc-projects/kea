@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -32,7 +32,7 @@ namespace detail {
 template<class Type, uint16_t typeCode> class TXTLikeImpl;
 }
 
-class TXT : public Rdata {
+class KEA_DNS_API TXT : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
     // END_COMMON_MEMBERS

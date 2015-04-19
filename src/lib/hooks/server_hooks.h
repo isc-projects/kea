@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,8 @@
 
 #include <exceptions/exceptions.h>
 
+#include <hooks/api.h>
+
 #include <boost/noncopyable.hpp>
 
 #include <map>
@@ -30,7 +32,7 @@ namespace hooks {
 ///
 /// Thrown if an attempt is made to register a hook with the same name as a
 /// previously-registered hook.
-class DuplicateHook : public Exception {
+class KEA_HOOKS_API DuplicateHook : public Exception {
 public:
     DuplicateHook(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
@@ -39,7 +41,7 @@ public:
 /// @brief Invalid hook
 ///
 /// Thrown if an attempt is made to get the index for an invalid hook.
-class NoSuchHook : public Exception {
+class KEA_HOOKS_API NoSuchHook : public Exception {
 public:
     NoSuchHook(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
@@ -63,7 +65,7 @@ public:
 /// ServerHooks is a singleton object and is only accessible by the static
 /// method getServerHooks().
 
-class ServerHooks : public boost::noncopyable {
+class KEA_HOOKS_API ServerHooks : public boost::noncopyable {
 public:
 
     /// Index numbers for pre-defined hooks.

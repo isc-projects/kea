@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,8 @@
 #define LOGGER_LEVEL_H
 
 #include <string>
+
+#include <log/api.h>
 
 namespace isc {
 namespace log {
@@ -68,6 +70,7 @@ struct Level {
 ///
 /// \return The severity. If the string is not recognized, an error will be
 ///         logged and the string will return  isc::log::INFO.
+KEA_LOG_API
 isc::log::Severity getSeverity(const std::string& sev_str);
 
 }   // namespace log

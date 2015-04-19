@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -23,6 +23,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <asiolink/asiolink.h>
+#include <asiodns/api.h>
 #include <coroutine.h>
 #include "dns_server.h"
 #include "dns_lookup.h"
@@ -35,7 +36,8 @@ namespace asiodns {
 ///
 /// This class inherits from both \c DNSServer and from \c coroutine,
 /// defined in coroutine.h.
-class TCPServer : public virtual DNSServer, public virtual coroutine {
+class KEA_ASIODNS_API TCPServer :
+    public virtual DNSServer, public virtual coroutine {
 public:
     /// \brief Constructor
     /// \param io_service the asio::io_service to work with

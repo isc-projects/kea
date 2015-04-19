@@ -16,8 +16,8 @@
 #define PKT4_H
 
 #include <asiolink/io_address.h>
-#include <dhcp/option.h>
 #include <util/buffer.h>
+#include <dhcp/api.h>
 #include <dhcp/option.h>
 #include <dhcp/classify.h>
 #include <dhcp/pkt.h>
@@ -41,7 +41,7 @@ namespace dhcp {
 /// (add, get, remove), on-wire assembly, sanity checks and other operations.
 /// This specific class has several DHCPv4-specific methods, but it uses a lot
 /// of common operations from its base @c Pkt class that is shared with Pkt6.
-class Pkt4 : public Pkt {
+class KEA_DHCP_API Pkt4 : public Pkt {
 public:
 
     /// length of the CHADDR field in DHCPv4 message

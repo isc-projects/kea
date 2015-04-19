@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#define KEA_DHCPSRV_EXPORT
+
 #include <asiolink/io_address.h>
 #include <dhcpsrv/addr_utilities.h>
 #include <dhcpsrv/pool.h>

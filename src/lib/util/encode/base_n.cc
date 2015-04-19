@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#define KEA_UTIL_EXPORT
 
 #include <util/encode/base32hex_from_binary.h>
 #include <util/encode/binary_from_base32hex.h>
@@ -443,32 +445,32 @@ typedef BaseNTransformer<4, '0', base16_encoder, base16_decoder>
 Base16Transformer;
 }
 
-string
+KEA_UTIL_API string
 encodeBase64(const vector<uint8_t>& binary) {
     return (Base64Transformer::encode(binary));
 }
 
-void
+KEA_UTIL_API void
 decodeBase64(const string& input, vector<uint8_t>& result) {
     Base64Transformer::decode("base64", input, result);
 }
 
-string
+KEA_UTIL_API string
 encodeBase32Hex(const vector<uint8_t>& binary) {
     return (Base32HexTransformer::encode(binary));
 }
 
-void
+KEA_UTIL_API void
 decodeBase32Hex(const string& input, vector<uint8_t>& result) {
     Base32HexTransformer::decode("base32hex", input, result);
 }
 
-string
+KEA_UTIL_API string
 encodeHex(const vector<uint8_t>& binary) {
     return (Base16Transformer::encode(binary));
 }
 
-void
+KEA_UTIL_API void
 decodeHex(const string& input, vector<uint8_t>& result) {
     Base16Transformer::decode("base16", input, result);
 }

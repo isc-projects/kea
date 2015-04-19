@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,8 @@
  * \todo This interface is very C-ish. Should we have some kind of exceptions?
  */
 
+#include <util/io/api.h>
+
 namespace isc {
 namespace util {
 namespace io {
@@ -41,7 +43,7 @@ const int FD_OTHER_ERROR = -1;
  * \param sock The unix domain socket to read from. Tested and it does
  *     not work with a pipe.
  */
-int recv_fd(const int sock);
+KEA_UTIL_IO_API int recv_fd(const int sock);
 
 /**
  * \short Sends a file descriptor.
@@ -56,7 +58,7 @@ int recv_fd(const int sock);
  * \param fd The file descriptor to send. It should work with any valid
  *     file descriptor.
  */
-int send_fd(const int sock, const int fd);
+KEA_UTIL_IO_API int send_fd(const int sock, const int fd);
 
 } // End for namespace io
 } // End for namespace util

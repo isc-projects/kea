@@ -21,6 +21,7 @@
 ///
 #include <asiolink/io_address.h>
 #include <dhcp_ddns/ncr_io.h>
+#include <dhcpsrv/api.h>
 #include <dhcpsrv/d2_client_cfg.h>
 #include <exceptions/exceptions.h>
 
@@ -81,8 +82,9 @@ boost::function<void(const dhcp_ddns::NameChangeSender::Result result,
 /// into the sender.  Using a private service isolates the sender's IO from
 /// any other services.
 ///
-class D2ClientMgr : public dhcp_ddns::NameChangeSender::RequestSendHandler,
-                    boost::noncopyable {
+class KEA_DHCPSRV_API D2ClientMgr :
+    public dhcp_ddns::NameChangeSender::RequestSendHandler,
+    boost::noncopyable {
 public:
     /// @brief Constructor
     ///

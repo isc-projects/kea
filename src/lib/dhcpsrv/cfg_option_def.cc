@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#define KEA_DHCPSRV_EXPORT
+
 #include <config.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_definition.h>

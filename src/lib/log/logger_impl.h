@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -30,6 +30,7 @@
 #include <log4cplus/logger.h>
 
 // Kea logger files
+#include <log/api.h>
 #include <log/logger_level_impl.h>
 #include <log/message_types.h>
 #include <log/interprocess/interprocess_sync.h>
@@ -62,7 +63,7 @@ namespace log {
 /// b) The idea of debug levels is implemented.  See logger_level.h and
 /// logger_level_impl.h for more details on this.
 
-class LoggerImpl : public boost::noncopyable {
+class KEA_LOG_API LoggerImpl : public boost::noncopyable {
 public:
 
     /// \brief Constructor

@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,7 @@
 
 #include <log4cplus/logger.h>
 #include <log4cplus/version.h>
+#include <log/api.h>
 #include <log/logger_level.h>
 
 namespace isc {
@@ -63,7 +64,7 @@ namespace log {
 /// of logging levels between log4cplus and Kea, and to register those
 /// levels with log4cplus.
 
-class LoggerLevelImpl {
+class KEA_LOG_API LoggerLevelImpl {
 public:
 
 #if (LOG4CPLUS_VERSION >= LOG4CPLUS_MAKE_VERSION(1, 1, 0))

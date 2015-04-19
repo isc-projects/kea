@@ -2,7 +2,7 @@ SUBDIRS = . tests
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
-AM_CXXFLAGS = $(KEA_CXXFLAGS)
+AM_CXXFLAGS = $(KEA_CXXFLAGS) $(SHLIB_CXXFLAGS)
 
 # Some versions of GCC warn about some versions of Boost regarding
 # missing initializer for members in its posix_time.
@@ -13,7 +13,7 @@ AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 CLEANFILES = *.gcno *.gcda
 
 lib_LTLIBRARIES = libkea-dhcp++.la
-libkea_dhcp___la_SOURCES  =
+libkea_dhcp___la_SOURCES  = api.h
 libkea_dhcp___la_SOURCES += classify.cc classify.h
 libkea_dhcp___la_SOURCES += dhcp6.h dhcp4.h
 libkea_dhcp___la_SOURCES += duid.cc duid.h
@@ -34,8 +34,8 @@ libkea_dhcp___la_SOURCES += option6_addrlst.cc option6_addrlst.h
 libkea_dhcp___la_SOURCES += option6_client_fqdn.cc option6_client_fqdn.h
 libkea_dhcp___la_SOURCES += option_vendor.cc option_vendor.h
 libkea_dhcp___la_SOURCES += option_vendor_class.cc option_vendor_class.h
-libkea_dhcp___la_SOURCES += option_int.h
-libkea_dhcp___la_SOURCES += option_int_array.h
+libkea_dhcp___la_SOURCES += option_int.cc option_int.h
+libkea_dhcp___la_SOURCES += option_int_array.cc option_int_array.h
 libkea_dhcp___la_SOURCES += option.cc option.h
 libkea_dhcp___la_SOURCES += option_custom.cc option_custom.h
 libkea_dhcp___la_SOURCES += option_data_types.cc option_data_types.h

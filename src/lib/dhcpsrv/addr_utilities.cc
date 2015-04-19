@@ -1,4 +1,4 @@
-// Copyright (C) 2012,2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#define KEA_DHCPSRV_EXPORT
 
 #include <dhcpsrv/addr_utilities.h>
 #include <exceptions/exceptions.h>
@@ -175,6 +177,7 @@ isc::asiolink::IOAddress lastAddrInPrefix6(const isc::asiolink::IOAddress& prefi
 namespace isc {
 namespace dhcp {
 
+KEA_DHCPSRV_API
 isc::asiolink::IOAddress firstAddrInPrefix(const isc::asiolink::IOAddress& prefix,
                                            uint8_t len) {
     if (prefix.isV4()) {
@@ -186,6 +189,7 @@ isc::asiolink::IOAddress firstAddrInPrefix(const isc::asiolink::IOAddress& prefi
     }
 }
 
+KEA_DHCPSRV_API
 isc::asiolink::IOAddress lastAddrInPrefix(const isc::asiolink::IOAddress& prefix,
                                            uint8_t len) {
     if (prefix.isV4()) {
@@ -197,6 +201,7 @@ isc::asiolink::IOAddress lastAddrInPrefix(const isc::asiolink::IOAddress& prefix
     }
 }
 
+KEA_DHCPSRV_API
 isc::asiolink::IOAddress getNetmask4(uint8_t len) {
     if (len > 32) {
         isc_throw(BadValue, "Invalid netmask size " << len << ", allowed range "
@@ -207,7 +212,7 @@ isc::asiolink::IOAddress getNetmask4(uint8_t len) {
     return (IOAddress(x));
 }
 
-uint64_t
+KEA_DHCPSRV_API uint64_t
 addrsInRange(const isc::asiolink::IOAddress& min,
              const isc::asiolink::IOAddress& max) {
     if (min.getFamily() != max.getFamily()) {
@@ -278,6 +283,7 @@ addrsInRange(const isc::asiolink::IOAddress& min,
     }
 }
 
+KEA_DHCPSRV_API
 uint64_t prefixesInRange(const uint8_t pool_len, const uint8_t delegated_len) {
     if (delegated_len < pool_len) {
         return (0);

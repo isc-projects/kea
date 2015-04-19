@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE
 
+#define KEA_LOG_EXPORT
+
 #include <log/logger_level.h>
 #include <log/macros.h>
 #include <log/log_messages.h>
@@ -22,7 +24,7 @@
 namespace isc {
 namespace log {
 
-isc::log::Severity
+KEA_LOG_API isc::log::Severity
 getSeverity(const std::string& sev_str) {
     if (boost::iequals(sev_str, "DEBUG")) {
         return isc::log::DEBUG;

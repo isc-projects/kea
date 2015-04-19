@@ -18,6 +18,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/option.h>
 #include <dhcp/classify.h>
+#include <dhcpsrv/api.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/pool.h>
@@ -46,7 +47,7 @@ namespace dhcp {
 /// @brief Unique identifier for a subnet (both v4 and v6)
 typedef uint32_t SubnetID;
 
-class Subnet {
+class KEA_DHCPSRV_API Subnet {
 public:
 
     /// @brief Holds optional information about relay.
@@ -510,7 +511,7 @@ typedef boost::shared_ptr<Subnet> SubnetPtr;
 /// @brief A configuration holder for IPv4 subnet.
 ///
 /// This class represents an IPv4 subnet.
-class Subnet4 : public Subnet {
+class KEA_DHCPSRV_API Subnet4 : public Subnet {
 public:
 
     /// @brief Constructor with all parameters
@@ -576,7 +577,7 @@ typedef std::vector<Subnet4Ptr> Subnet4Collection;
 /// @brief A configuration holder for IPv6 subnet.
 ///
 /// This class represents an IPv6 subnet.
-class Subnet6 : public Subnet {
+class KEA_DHCPSRV_API Subnet6 : public Subnet {
 public:
 
     /// @brief Constructor with all parameters

@@ -2,7 +2,7 @@ SUBDIRS = . tests
 
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
-AM_CXXFLAGS  = $(KEA_CXXFLAGS)
+AM_CXXFLAGS  = $(KEA_CXXFLAGS) $(SHLIB_CXXFLAGS)
 
 # Some versions of GCC warn about some versions of Boost regarding
 # missing initializer for members in its posix_time.
@@ -29,7 +29,7 @@ EXTRA_DIST = dhcp_ddns_messages.mes libdhcp_ddns.dox
 CLEANFILES = *.gcno *.gcda dhcp_ddns_messages.h dhcp_ddns_messages.cc s-messages
 
 lib_LTLIBRARIES = libkea-dhcp_ddns.la
-libkea_dhcp_ddns_la_SOURCES  =
+libkea_dhcp_ddns_la_SOURCES  = api.h
 libkea_dhcp_ddns_la_SOURCES += dhcp_ddns_log.cc dhcp_ddns_log.h
 libkea_dhcp_ddns_la_SOURCES += ncr_io.cc ncr_io.h
 libkea_dhcp_ddns_la_SOURCES += ncr_msg.cc ncr_msg.h

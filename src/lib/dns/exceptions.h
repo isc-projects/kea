@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,7 @@
 #define DNS_EXCEPTIONS_H 1
 
 #include <exceptions/exceptions.h>
+#include <dns/api.h>
 
 namespace isc {
 namespace dns {
@@ -30,7 +31,7 @@ namespace dns {
 ///
 class Rcode;                    // forward declaration
 
-class Exception : public isc::Exception {
+class KEA_DNS_API Exception : public isc::Exception {
 public:
     Exception(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
@@ -39,7 +40,7 @@ public:
 ///
 /// \brief Base class for all sorts of text parse errors.
 ///
-class DNSTextError : public isc::dns::Exception {
+class KEA_DNS_API DNSTextError : public isc::dns::Exception {
 public:
     DNSTextError(const char* file, size_t line, const char* what) :
         isc::dns::Exception(file, line, what) {}
@@ -48,27 +49,27 @@ public:
 ///
 /// \brief Base class for name parser exceptions.
 ///
-class NameParserException : public DNSTextError {
+class KEA_DNS_API NameParserException : public DNSTextError {
 public:
     NameParserException(const char* file, size_t line, const char* what) :
         DNSTextError(file, line, what) {}
 };
 
-class DNSProtocolError : public isc::dns::Exception {
+class KEA_DNS_API DNSProtocolError : public isc::dns::Exception {
 public:
     DNSProtocolError(const char* file, size_t line, const char* what) :
         isc::dns::Exception(file, line, what) {}
     virtual const Rcode& getRcode() const = 0;
 };
 
-class DNSMessageFORMERR : public DNSProtocolError {
+class KEA_DNS_API DNSMessageFORMERR : public DNSProtocolError {
 public:
     DNSMessageFORMERR(const char* file, size_t line, const char* what) :
         DNSProtocolError(file, line, what) {}
     virtual const Rcode& getRcode() const;
 };
 
-class DNSMessageBADVERS : public DNSProtocolError {
+class KEA_DNS_API DNSMessageBADVERS : public DNSProtocolError {
 public:
     DNSMessageBADVERS(const char* file, size_t line, const char* what) :
         DNSProtocolError(file, line, what) {}

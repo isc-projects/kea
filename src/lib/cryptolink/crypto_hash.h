@@ -1,4 +1,4 @@
-// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 
 #include <boost/noncopyable.hpp>
 
+#include <cryptolink/api.h>
 #include <cryptolink/cryptolink.h>
 
 #ifndef ISC_CRYPTO_HASH_H
@@ -32,7 +33,7 @@ class HashImpl;
 /// This class is used to create Hash digests. Instances
 /// can be created with CryptoLink::createHash()
 ///
-class Hash : private boost::noncopyable {
+class KEA_CRYPTOLINK_API Hash : private boost::noncopyable {
 private:
     /// \brief Constructor from a hash algorithm
     ///
@@ -131,6 +132,7 @@ private:
 /// \param len If this is non-zero and less than the output size, the result
 ///            will be truncated to len bytes. If greater than output size
 ///            (or equal to zero) only output size bytes are written
+KEA_CRYPTOLINK_API
 void digest(const void* data,
             const size_t data_len,
             const HashAlgorithm hash_algorithm,
@@ -138,7 +140,7 @@ void digest(const void* data,
             size_t len = 0);
 
 /// \brief Delete an Hash object
-void deleteHash(Hash* hash);
+KEA_CRYPTOLINK_API void deleteHash(Hash* hash);
 
 } // namespace cryptolink
 } // namespace isc

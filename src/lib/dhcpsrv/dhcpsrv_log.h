@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 #ifndef DHCPSRV_LOG_H
 #define DHCPSRV_LOG_H
 
+#include <dhcpsrv/api.h>
 #include <dhcpsrv/dhcpsrv_messages.h>
 #include <log/macros.h>
 
@@ -61,7 +62,7 @@ const int DHCPSRV_DBG_HOOKS = DBGLVL_TRACE_BASIC;
 /// Define the logger used to log messages.  We could define it in multiple
 /// modules, but defining in a single module and linking to it saves time and
 /// space.
-extern isc::log::Logger dhcpsrv_logger;
+extern KEA_DHCPSRV_API isc::log::Logger dhcpsrv_logger;
 
 } // namespace dhcp
 } // namespace isc

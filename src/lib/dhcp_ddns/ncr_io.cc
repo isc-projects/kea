@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#define KEA_DHCP_DDNS_EXPORT
+
 #include <dhcp_ddns/dhcp_ddns_log.h>
 #include <dhcp_ddns/ncr_io.h>
 
@@ -21,6 +23,7 @@
 namespace isc {
 namespace dhcp_ddns {
 
+KEA_DHCP_DDNS_API
 NameChangeProtocol stringToNcrProtocol(const std::string& protocol_str) {
     if (boost::iequals(protocol_str, "UDP")) {
         return (NCR_UDP);
@@ -33,6 +36,7 @@ NameChangeProtocol stringToNcrProtocol(const std::string& protocol_str) {
     isc_throw(BadValue, "Invalid NameChangeRequest protocol:" << protocol_str);
 }
 
+KEA_DHCP_DDNS_API
 std::string ncrProtocolToString(NameChangeProtocol protocol) {
     switch (protocol) {
     case NCR_UDP:

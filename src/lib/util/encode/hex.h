@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,8 @@
 #include <stdint.h>
 #include <string>
 #include <vector>
+
+#include <util/api.h>
 
 //
 // Note: this helper module isn't specific to the DNS protocol per se.
@@ -39,6 +41,7 @@ namespace encode {
 /// \param binary A vector object storing the data to be encoded. 
 /// \return A newly created string that stores base16 encoded value for
 /// binary.
+KEA_UTIL_API
 std::string encodeHex(const std::vector<uint8_t>& binary);
 
 /// \brief Decode a text encoded in the base16 ('hex') format into the
@@ -52,6 +55,7 @@ std::string encodeHex(const std::vector<uint8_t>& binary);
 ///
 /// \param input A text encoded in the base16 format.
 /// \param result A vector in which the decoded %data is to be stored.
+KEA_UTIL_API
 void decodeHex(const std::string& input, std::vector<uint8_t>& result);
 
 } // namespace encode

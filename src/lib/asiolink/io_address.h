@@ -1,4 +1,4 @@
-// Copyright (C) 2010,2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -27,6 +27,7 @@
 #include <vector>
 
 #include <exceptions/exceptions.h>
+#include <asiolink/api.h>
 
 namespace isc {
 namespace asiolink {
@@ -41,7 +42,7 @@ namespace asiolink {
 /// agnostic)
 ///
 /// This class is a wrapper for the ASIO \c ip::address class.
-class IOAddress {
+class KEA_ASIOLINK_API IOAddress {
 public:
     ///
     /// \name Constructors and Destructor
@@ -333,7 +334,7 @@ private:
 /// \param address The \c IOAddress object output by the operation.
 /// \return A reference to the same \c std::ostream object referenced by
 /// parameter \c os after the insertion operation.
-std::ostream&
+KEA_ASIOLINK_API std::ostream&
 operator<<(std::ostream& os, const IOAddress& address);
 
 } // namespace asiolink

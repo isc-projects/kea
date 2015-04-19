@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,7 @@
 
 #include <exceptions/exceptions.h>
 #include <boost/lexical_cast.hpp>
+#include <log/api.h>
 #include <log/logger_level.h>
 
 namespace isc {
@@ -31,7 +32,7 @@ namespace log {
 /// This exception is used to wrap a bad_lexical_cast exception thrown during
 /// formatting an argument.
 
-class FormatFailure : public isc::Exception {
+class KEA_LOG_API FormatFailure : public isc::Exception {
 public:
     FormatFailure(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what)
@@ -44,7 +45,7 @@ public:
 /// This exception is used when the number of placeholders do not match
 /// the number of arguments passed to the formatter.
 
-class MismatchedPlaceholders : public isc::Exception {
+class KEA_LOG_API MismatchedPlaceholders : public isc::Exception {
 public:
     MismatchedPlaceholders(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what)
@@ -57,7 +58,7 @@ public:
 ///
 /// This is used internally by the Formatter to check for excess
 /// placeholders (and fewer arguments).
-void
+KEA_LOG_API void
 checkExcessPlaceholders(std::string* message, unsigned int placeholder);
 
 ///
@@ -66,7 +67,7 @@ checkExcessPlaceholders(std::string* message, unsigned int placeholder);
 /// This is used internally by the Formatter. Replaces a placeholder
 /// in the message by replacement. If the placeholder is not found,
 /// it adds a complain at the end.
-void
+KEA_LOG_API void
 replacePlaceholder(std::string* message, const std::string& replacement,
                    const unsigned placeholder);
 

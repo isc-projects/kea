@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#define KEA_UTIL_EXPORT
+
 #include <exceptions/exceptions.h>
 #include <util/process_spawn.h>
 #include <util/signal_set.h>

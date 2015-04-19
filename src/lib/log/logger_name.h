@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,8 @@
 
 #include <string>
 
+#include <log/api.h>
+
 /// \brief Define Name of Root Logger
 ///
 /// In BIND-10, the name root logger of a program is the name of the program
@@ -33,17 +35,20 @@ namespace log {
 /// any logging functions are called.
 ///
 /// \param name Name of the root logger.  This should be the program name.
+KEA_LOG_API
 void setRootLoggerName(const std::string& name);
 
 /// \brief Get root logger name
 ///
 /// \return Name of the root logger.
+KEA_LOG_API
 const std::string& getRootLoggerName();
 
 
 /// @brief Returns the default ('kea') root logger name
 ///
 /// @return The default name of root logger.
+KEA_LOG_API
 const std::string& getDefaultRootLoggerName();
 
 /// \brief Expand logger name
@@ -55,6 +60,7 @@ const std::string& getDefaultRootLoggerName();
 /// \param name Name to expand.
 ///
 /// \return Fully-expanded logger name.
+KEA_LOG_API
 std::string expandLoggerName(const std::string& name);
 
 }

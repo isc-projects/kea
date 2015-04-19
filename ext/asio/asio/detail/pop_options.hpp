@@ -41,6 +41,10 @@
 #  endif
 # endif
 
+#ifdef HAVE_ATTRIBUTE_VISIBILITY
+#pragma GCC visibility pop
+#endif
+
 #elif defined(__KCC)
 
 // Kai C++

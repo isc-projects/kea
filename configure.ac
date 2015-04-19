@@ -103,6 +103,9 @@ fi
 
 # Linker options
 
+# -fvisibility=hidden
+AX_ISC_VISIBILITY
+
 # check -R, "-Wl,-R" or -rpath
 AX_ISC_RPATH
 
@@ -1554,6 +1557,7 @@ C++ Compiler:
   CXXFLAGS:        ${CXXFLAGS}
   LDFLAGS:         ${LDFLAGS}
   KEA_CXXFLAGS:    ${KEA_CXXFLAGS}
+  SHLIB_CXXFLAGS:  ${SHLIB_CXXFLAGS}
 END
 
 if test "$PYTHON" != "no" ; then

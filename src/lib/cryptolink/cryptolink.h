@@ -1,4 +1,4 @@
-// Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,7 @@
 #include <string>
 #include <util/buffer.h>
 #include <exceptions/exceptions.h>
+#include <cryptolink/api.h>
 
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -52,7 +53,7 @@ class HMAC;
 
 /// General exception class that is the base for all crypto-related
 /// exceptions
-class CryptoLinkError : public Exception {
+class KEA_CRYPTOLINK_API CryptoLinkError : public Exception {
 public:
     CryptoLinkError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
@@ -60,7 +61,7 @@ public:
 
 /// This exception is thrown if there was a problem initializing the
 /// crypto library
-class InitializationError : public CryptoLinkError {
+class KEA_CRYPTOLINK_API InitializationError : public CryptoLinkError {
 public:
     InitializationError(const char* file, size_t line, const char* what) :
         CryptoLinkError(file, line, what) {}
@@ -68,7 +69,7 @@ public:
 
 /// This exception is thrown when a cryptographic action is requested
 /// for an algorithm that is not supported by the underlying library.
-class UnsupportedAlgorithm : public CryptoLinkError {
+class KEA_CRYPTOLINK_API UnsupportedAlgorithm : public CryptoLinkError {
 public:
     UnsupportedAlgorithm(const char* file, size_t line, const char* what) :
         CryptoLinkError(file, line, what) {}
@@ -76,7 +77,7 @@ public:
 
 /// This exception is thrown when the underlying library could not
 /// handle the key data.
-class BadKey : public CryptoLinkError {
+class KEA_CRYPTOLINK_API BadKey : public CryptoLinkError {
 public:
     BadKey(const char* file, size_t line, const char* what) :
         CryptoLinkError(file, line, what) {}
@@ -86,7 +87,7 @@ public:
 /// specifically caught is thrown by the underlying library. It
 /// is replaced by this one so as not have 'external' exceptions
 /// bubbling up
-class LibraryError : public CryptoLinkError {
+class KEA_CRYPTOLINK_API LibraryError : public CryptoLinkError {
 public:
     LibraryError(const char* file, size_t line, const char* what) :
         CryptoLinkError(file, line, what) {}
@@ -133,7 +134,7 @@ class CryptoLinkImpl;
 ///
 // Internal note: we can use this class later to initialize and manage
 // dynamic (PKCS#11) libs
-class CryptoLink : private boost::noncopyable {
+class KEA_CRYPTOLINK_API CryptoLink : private boost::noncopyable {
 public:
     /// \brief Returns a reference to the singleton instance
     ///

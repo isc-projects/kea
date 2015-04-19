@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -23,6 +23,8 @@
 
 #include <exceptions/exceptions.h>
 
+#include <util/api.h>
+
 #include <boost/shared_ptr.hpp>
 
 namespace isc {
@@ -32,7 +34,7 @@ namespace util {
 /// \brief A standard DNS module exception that is thrown if an out-of-range
 /// buffer operation is being performed.
 ///
-class InvalidBufferPosition : public Exception {
+class KEA_UTIL_API InvalidBufferPosition : public Exception {
 public:
     InvalidBufferPosition(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
@@ -86,7 +88,7 @@ public:
 /// head of the unread data.  An object of this class internally holds (a
 /// notion of) where the next read operation should start.  We call it the
 /// <em>read position</em> in this document.
-class InputBuffer {
+class KEA_UTIL_API InputBuffer {
 public:
     ///
     /// \name Constructors and Destructor
@@ -299,7 +301,7 @@ protected:
 /// if we really want that flexibility.  We may revisit the class design as
 /// we see more applications of the class.  The same considerations apply to
 /// the \c InputBuffer and \c MessageRenderer classes.
-class OutputBuffer {
+class KEA_UTIL_API OutputBuffer {
 public:
     ///
     /// \name Constructors and Destructor

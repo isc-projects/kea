@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #define ASIOLINK_DNS_SERVER_H 1
 
 #include <asiolink/io_message.h>
+#include <asiodns/api.h>
 
 namespace isc {
 namespace asiodns {
@@ -45,7 +46,7 @@ namespace asiodns {
 ///
 /// Because these objects are frequently copied, it is recommended
 /// that derived classes be kept small to reduce copy overhead.
-class DNSServer {
+class KEA_ASIODNS_API DNSServer {
 protected:
     ///
     /// \name Constructors and destructors

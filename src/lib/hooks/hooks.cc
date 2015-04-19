@@ -14,6 +14,8 @@
 
 #include <config.h>
 
+#define KEA_HOOKS_EXPORT
+
 #include <hooks/hooks.h>
 #include <log/logger_support.h>
 
@@ -25,7 +27,7 @@ namespace hooks {
 
 // Load the logging message dictionary if not already loaded
 
-void
+KEA_HOOKS_API void
 hooksStaticLinkInit() {
     if (!isc::log::isLoggingInitialized()) {
         isc::log::initLogger(std::string("userlib"));

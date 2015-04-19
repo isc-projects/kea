@@ -19,6 +19,7 @@
 #include <dhcp/classify.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
+#include <dhcpsrv/api.h>
 #include <dhcpsrv/subnet_id.h>
 #include <boost/shared_ptr.hpp>
 #include <list>
@@ -37,7 +38,7 @@ namespace dhcp {
 /// The class holds the address and prefix length, a value of 128
 /// for the latter implying that the reservation is for a single
 /// IPv6 address.
-class IPv6Resrv {
+class KEA_DHCPSRV_API IPv6Resrv {
 public:
 
     /// @brief Type of the reservation.
@@ -170,7 +171,7 @@ typedef std::pair<IPv6ResrvIterator, IPv6ResrvIterator> IPv6ResrvRange;
 /// - disable IPv4 reservation without a need to set it to the 0.0.0.0 address
 /// Note that the last three operations are mainly required for managing
 /// host reservations which will be implemented later.
-class Host {
+class KEA_DHCPSRV_API Host {
 public:
 
     /// @brief Type of the host identifier.

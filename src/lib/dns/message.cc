@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#define KEA_DNS_EXPORT
 
 #include <stdint.h>
 
@@ -1159,7 +1161,7 @@ Message::endSection(const Section section) const {
     return (RRsetIterator(RRsetIteratorImpl(impl_->rrsets_[section].end())));
 }
 
-ostream&
+KEA_DNS_API ostream&
 operator<<(ostream& os, const Message& message) {
     return (os << message.toText());
 }

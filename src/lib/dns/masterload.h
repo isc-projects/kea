@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,7 @@
 
 #include <exceptions/exceptions.h>
 
+#include <dns/api.h>
 #include <dns/rrset.h>
 
 namespace isc {
@@ -30,7 +31,7 @@ class RRClass;
 
 /// \brief An exception that is thrown if an error occurs while loading a
 /// master zone data.
-class MasterLoadError : public isc::Exception {
+class KEA_DNS_API MasterLoadError : public isc::Exception {
 public:
     MasterLoadError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
@@ -146,6 +147,7 @@ typedef boost::function<void(RRsetPtr)> MasterLoadCallback;
 /// \param zone_class The RR class of the zone.
 /// \param callback A callback functor or function that is to be called
 /// for each RRset.
+KEA_DNS_API
 void masterLoad(const char* const filename, const Name& origin,
                 const RRClass& zone_class, MasterLoadCallback callback);
 
@@ -169,6 +171,7 @@ void masterLoad(const char* const filename, const Name& origin,
 /// \param callback A callback functor or function that is to be called for
 /// each RRset.
 /// \param source This parameter is now ignored but left for compatibility.
+KEA_DNS_API
 void masterLoad(std::istream& input, const Name& origin,
                 const RRClass& zone_class, MasterLoadCallback callback,
                 const char* source = NULL);

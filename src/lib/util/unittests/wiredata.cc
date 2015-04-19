@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,13 +19,15 @@
 #include <algorithm>            // for std::min
 #include <stdint.h>
 
+#define KEA_UTIL_UNITTESTS_EXPORT
+
 using namespace std;
 
 namespace isc {
 namespace util {
 namespace unittests {
 
-void
+KEA_UTIL_UNITTESTS_API void
 matchWireData(const void* expected_data, size_t expected_len,
               const void* actual_data, size_t actual_len)
 {

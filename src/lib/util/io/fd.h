@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,8 @@
 #define UTIL_IO_FD_H 1
 
 #include <unistd.h>
+
+#include <util/io/api.h>
 
 /**
  * @file fd.h
@@ -38,7 +40,7 @@ namespace io {
  * \param data The buffer to write.
  * \param length How much data is there to write.
  */
-bool
+KEA_UTIL_IO_API bool
 write_data(const int fd, const void *data, const size_t length);
 
 /*
@@ -51,7 +53,7 @@ write_data(const int fd, const void *data, const size_t length);
  * \param data Where to put the data.
  * \param length How many of them.
  */
-ssize_t
+KEA_UTIL_IO_API ssize_t
 read_data(const int fd, void *buffer, const size_t length);
 
 }

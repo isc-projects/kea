@@ -24,6 +24,8 @@
 
 #include <asiodns/asiodns.h>
 
+#include <testutils/api.h>
+
 #include <utility>
 #include <vector>
 
@@ -33,7 +35,7 @@ namespace testutils {
 // A minimal mock configuration session.  Most the methods are
 // stubbed out, except for a very basic group_sendmsg() and
 // group_recvmsg().  hasQueuedMessages() always returns false.
-class MockSession : public isc::cc::AbstractSession {
+class KEA_TESTUTILS_API MockSession : public isc::cc::AbstractSession {
 public:
     MockSession() :
         // by default we return a simple "success" message.
@@ -111,7 +113,7 @@ private:
 
 // This mock object does nothing except for recording passed parameters
 // to addServerXXX methods so the test code subsequently checks the parameters.
-class MockDNSService : public isc::asiodns::DNSServiceBase {
+class KEA_TESTUTILS_API MockDNSService : public isc::asiodns::DNSServiceBase {
 public:
     MockDNSService() : tcp_recv_timeout_(0) {}
 
@@ -160,7 +162,7 @@ private:
 };
 
 // A nonoperative DNSServer object to be used in calls to processMessage().
-class MockServer : public isc::asiodns::DNSServer {
+class KEA_TESTUTILS_API MockServer : public isc::asiodns::DNSServer {
 public:
     MockServer() : done_(false) {}
     void operator()(asio::error_code, size_t) {}

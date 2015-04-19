@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 #ifndef DOCSIS3_OPTION_DEFS_H
 #define DOCSIS3_OPTION_DEFS_H
 
+#include <dhcp/api.h>
 #include <dhcp/std_option_defs.h>
 #include <dhcp/option_data_types.h>
 
@@ -69,8 +70,8 @@ const OptionDefParams DOCSIS3_V6_DEFS[] = {
 const int DOCSIS3_V6_DEFS_SIZE  = sizeof(DOCSIS3_V6_DEFS) / sizeof(OptionDefParams);
 
 /// The class as specified in vendor-class option by the devices
-extern const char* DOCSIS3_CLASS_EROUTER;
-extern const char* DOCSIS3_CLASS_MODEM;
+extern const KEA_DHCP_API char* DOCSIS3_CLASS_EROUTER;
+extern const KEA_DHCP_API char* DOCSIS3_CLASS_MODEM;
 
 }; // isc::dhcp namespace
 }; // isc namespace

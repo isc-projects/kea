@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,8 @@
 #define MESSAGERENDERER_H 1
 
 #include <util/buffer.h>
+
+#include <dns/api.h>
 
 #include <boost/noncopyable.hpp>
 
@@ -73,7 +75,7 @@ class LabelSequence;
 ///     The only one that is virtual is writeName and it's because this
 ///     function is much more complicated, therefore there's a lot of space
 ///     for different implementations or behaviours.
-class AbstractMessageRenderer {
+class KEA_DNS_API AbstractMessageRenderer {
 public:
     /// \brief Compression mode constants.
     ///
@@ -361,7 +363,7 @@ public:
 /// end of the buffer at the time of construction.  However, if the
 /// pre-existing portion of the buffer contains DNS names, these names won't
 /// be considered for name compression.
-class MessageRenderer : public AbstractMessageRenderer,
+class KEA_DNS_API MessageRenderer : public AbstractMessageRenderer,
     public boost::noncopyable { // Can crash if copied
 public:
     using AbstractMessageRenderer::CASE_INSENSITIVE;

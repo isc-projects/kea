@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -23,6 +23,7 @@
 #include <cc/data.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
+#include <dhcp_ddns/api.h>
 #include <dns/name.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
@@ -36,7 +37,7 @@ namespace isc {
 namespace dhcp_ddns {
 
 /// @brief Exception thrown when NameChangeRequest marshalling error occurs.
-class NcrMessageError : public isc::Exception {
+class KEA_DHCP_DDNS_API NcrMessageError : public isc::Exception {
 public:
     NcrMessageError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
@@ -44,7 +45,7 @@ public:
 
 /// @brief Exception thrown when there is an error occured during computation
 /// of the DHCID.
-class DhcidRdataComputeError : public isc::Exception {
+class KEA_DHCP_DDNS_API DhcidRdataComputeError : public isc::Exception {
 public:
     DhcidRdataComputeError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
@@ -79,7 +80,8 @@ enum NameChangeFormat {
 ///
 /// @throw isc::BadValue if given a string value which does not map to an
 /// enum value.
-extern NameChangeFormat stringToNcrFormat(const std::string& fmt_str);
+extern KEA_DHCP_DDNS_API
+NameChangeFormat stringToNcrFormat(const std::string& fmt_str);
 
 /// @brief Function which converts NameChangeFormat enums to text labels.
 ///
@@ -87,12 +89,13 @@ extern NameChangeFormat stringToNcrFormat(const std::string& fmt_str);
 ///
 /// @return std:string containing the text label if the value is valid, or
 /// "UNKNOWN" if not.
-extern std::string ncrFormatToString(NameChangeFormat format);
+extern KEA_DHCP_DDNS_API
+std::string ncrFormatToString(NameChangeFormat format);
 
 /// @brief Container class for handling the DHCID value within a
 /// NameChangeRequest. It provides conversion to and from string for JSON
 /// formatting, but stores the data internally as unsigned bytes.
-class D2Dhcid {
+class KEA_DHCP_DDNS_API D2Dhcid {
 public:
     /// @brief Default constructor
     D2Dhcid();
@@ -215,10 +218,10 @@ private:
     std::vector<uint8_t> bytes_;
 };
 
-std::ostream&
+KEA_DHCP_DDNS_API std::ostream&
 operator<<(std::ostream& os, const D2Dhcid& dhcid);
 
-class NameChangeRequest;
+class KEA_DHCP_DDNS_API NameChangeRequest;
 /// @brief Defines a pointer to a NameChangeRequest.
 typedef boost::shared_ptr<NameChangeRequest> NameChangeRequestPtr;
 
@@ -233,7 +236,7 @@ typedef std::map<std::string, isc::data::ConstElementPtr> ElementMap;
 /// supported is JSON detailed here isc::dhcp_ddns::NameChangeRequest::fromJSON
 /// The class provides an interface such that other formats can be readily
 /// supported.
-class NameChangeRequest {
+class KEA_DHCP_DDNS_API NameChangeRequest {
 public:
     /// @brief Default Constructor.
     ///

@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -23,6 +23,7 @@
 #include <string>
 
 #include <exceptions/exceptions.h>
+#include <asiolink/api.h>
 #include <asiolink/io_address.h>
 
 # include <ostream>
@@ -43,7 +44,7 @@ namespace asiolink {
 /// Derived class implementations are completely hidden within the
 /// implementation.  User applications only get access to concrete
 /// \c IOEndpoint objects via the abstract interfaces.
-class IOEndpoint {
+class KEA_ASIOLINK_API IOEndpoint {
     ///
     /// \name Constructors and Destructor
     ///
@@ -181,6 +182,7 @@ public:
 /// operation.
 /// \return A reference to the same \c std::ostream object referenced by
 /// parameter \c os after the insertion operation.
+KEA_ASIOLINK_API
 std::ostream& operator<<(std::ostream& os, const IOEndpoint& endpoint);
 } // namespace asiolink
 } // namespace isc

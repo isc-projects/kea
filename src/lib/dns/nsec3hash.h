@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,7 @@
 #include <vector>
 #include <stdint.h>
 #include <exceptions/exceptions.h>
+#include <dns/api.h>
 
 namespace isc {
 namespace dns {
@@ -38,7 +39,7 @@ class NSEC3PARAM;
 /// A specific exception class is used so that the caller can selectively
 /// catch this exception, e.g., while loading a zone, and handle it
 /// accordingly.
-class UnknownNSEC3HashAlgorithm : public isc::Exception {
+class KEA_DNS_API UnknownNSEC3HashAlgorithm : public isc::Exception {
 public:
     UnknownNSEC3HashAlgorithm(const char* file, size_t line,
                               const char* what) :
@@ -79,7 +80,7 @@ public:
 /// - Allow producing hash value as binary data
 /// - Allow updating NSEC3 parameters of a class object so we can still reuse
 ///   the internal resources for different sets of parameters.
-class NSEC3Hash {
+class KEA_DNS_API NSEC3Hash {
 protected:
     /// \brief The default constructor.
     ///
@@ -208,7 +209,7 @@ public:
 /// as const member functions for this reason.  But if we see the need for
 /// having a customized creator that benefits from its own state in future,
 /// this condition can be loosened.
-class NSEC3HashCreator {
+class KEA_DNS_API NSEC3HashCreator {
 protected:
     /// \brief The default constructor.
     ///
@@ -263,7 +264,7 @@ public:
 /// convenience of special applications that want to customize the creator
 /// behavior for a particular type of parameters while preserving the default
 /// behavior for others.
-class DefaultNSEC3HashCreator : public NSEC3HashCreator {
+class KEA_DNS_API DefaultNSEC3HashCreator : public NSEC3HashCreator {
 public:
     virtual NSEC3Hash* create(const rdata::generic::NSEC3PARAM& param) const;
     virtual NSEC3Hash* create(const rdata::generic::NSEC3& nsec3) const;
@@ -287,6 +288,7 @@ public:
 ///
 /// \exception None
 /// \param new_creator A pointer to the new creator object or NULL.
+KEA_DNS_API
 void setNSEC3HashCreator(const NSEC3HashCreator* new_creator);
 
 }

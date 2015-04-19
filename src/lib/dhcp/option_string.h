@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 #ifndef OPTION_STRING_H
 #define OPTION_STRING_H
 
+#include <dhcp/api.h>
 #include <dhcp/option.h>
 #include <util/buffer.h>
 
@@ -32,7 +33,7 @@ namespace dhcp {
 ///
 /// @todo In the future this class may be extended with some more string
 /// content checks and encoding methods if required.
-class OptionString : public Option {
+class KEA_DHCP_API OptionString : public Option {
 public:
 
     /// @brief Constructor, used to create options to be sent.

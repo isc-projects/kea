@@ -17,6 +17,7 @@
 
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
+#include <dhcpsrv/api.h>
 #include <dhcpsrv/base_host_data_source.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/subnet_id.h>
@@ -61,7 +62,7 @@ namespace dhcp {
 /// reservations specified in the configuration file) can't be disabled.
 ///
 /// @todo Implement alternate host data sources: MySQL, PostgreSQL, etc.
-class HostMgr : public boost::noncopyable, BaseHostDataSource {
+class KEA_DHCPSRV_API HostMgr : public boost::noncopyable, BaseHostDataSource {
 public:
 
     /// @brief Creates new instance of the @c HostMgr.

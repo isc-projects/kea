@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 #ifndef PKT_FILTER_INET6_H
 #define PKT_FILTER_INET6_H
 
+#include <dhcp/api.h>
 #include <dhcp/pkt_filter6.h>
 #include <boost/scoped_array.hpp>
 
@@ -26,7 +27,7 @@ namespace dhcp {
 /// This class opens a datagram IPv6/UDPv6 socket. It also implements functions
 /// to send and receive DHCPv6 messages through this socket. It is a default
 /// class to be used by @c IfaceMgr to access IPv6 sockets.
-class PktFilterInet6 : public PktFilter6 {
+class KEA_DHCP_API PktFilterInet6 : public PktFilter6 {
 public:
 
     /// @brief Constructor.

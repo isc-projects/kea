@@ -1,4 +1,4 @@
-// Copyright (C) 2010, 2011  Internet Systems Consortium.
+// Copyright (C) 2010, 2011, 2015 Internet Systems Consortium.
 //
 // Permission to use, copy, modify, and distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #ifndef MODULE_SPEC_H
 #define MODULE_SPEC_H 1
 
+#include <config/api.h>
 #include <cc/data.h>
 
 #include <sstream>
@@ -26,7 +27,7 @@ namespace isc { namespace config {
     /// A standard ModuleSpec exception that is thrown when a
     /// specification is not in the correct form.
     ///
-    class ModuleSpecError : public isc::Exception {
+    class KEA_CONFIG_API ModuleSpecError : public isc::Exception {
     public:
         ModuleSpecError(const char* file, size_t line,
                         const char* what = "Module specification is invalid") :
@@ -43,7 +44,7 @@ namespace isc { namespace config {
     ///
     /// The form of the specification is described in doc/ (TODO)
     ///
-    class ModuleSpec {
+    class KEA_CONFIG_API ModuleSpec {
     public:
         ModuleSpec() {};
         /// Create a \c ModuleSpec instance with the given data as
@@ -184,7 +185,7 @@ namespace isc { namespace config {
     /// \param file_name The file to be opened and parsed
     /// \param check If true, the module specification in the file
     /// is checked to be of the correct form
-    ModuleSpec
+    KEA_CONFIG_API ModuleSpec
     moduleSpecFromFile(const std::string& file_name, const bool check = true)
         throw(isc::data::JSONError, ModuleSpecError);
 
@@ -196,7 +197,7 @@ namespace isc { namespace config {
     /// \param in The std::istream containing the .spec file data
     /// \param check If true, the module specification is checked
     /// to be of the correct form
-    ModuleSpec
+    KEA_CONFIG_API ModuleSpec
     moduleSpecFromFile(std::ifstream& in, const bool check = true)
                        throw(isc::data::JSONError, ModuleSpecError);
 } }

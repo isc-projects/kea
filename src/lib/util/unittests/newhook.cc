@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#define KEA_UTIL_UNITTESTS_EXPORT
+
 #include <stdlib.h>
 
 #include <new>
@@ -20,7 +22,7 @@
 #include "newhook.h"
 
 #ifdef ENABLE_CUSTOM_OPERATOR_NEW
-void*
+KEA_UTIL_UNITTESTS_API void*
 operator new(size_t size) throw(std::bad_alloc) {
     if (isc::util::unittests::force_throw_on_new &&
         size == isc::util::unittests::throw_size_on_new) {
@@ -33,7 +35,7 @@ operator new(size_t size) throw(std::bad_alloc) {
     return (p);
 }
 
-void
+KEA_UTIL_UNITTESTS_API void
 operator delete(void* p) throw() {
     if (p != NULL) {
         free(p);
@@ -44,8 +46,8 @@ operator delete(void* p) throw() {
 namespace isc {
 namespace util {
 namespace unittests {
-bool force_throw_on_new = false;
-size_t throw_size_on_new = 0;
+KEA_UTIL_UNITTESTS_API bool force_throw_on_new = false;
+KEA_UTIL_UNITTESTS_API size_t throw_size_on_new = 0;
 }
 }
 }

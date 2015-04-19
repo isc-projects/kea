@@ -305,6 +305,16 @@ Debian and Ubuntu:
             </listitem>
           </varlistentry>
 
+          <varlistentry>
+            <term>--enable-visibility</term>
+            <listitem>
+              <simpara>Use the <option>-fvisibility=hidden</option> G++
+                compiler flag so not global symbols of shared objects
+                will be no longer exported.
+              </simpara>
+            </listitem>
+          </varlistentry>
+
           </variablelist>
           <note>
             <para>

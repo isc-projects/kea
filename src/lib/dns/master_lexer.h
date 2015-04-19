@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 #ifndef MASTER_LEXER_H
 #define MASTER_LEXER_H 1
 
+#include <dns/api.h>
 #include <dns/exceptions.h>
 
 #include <istream>
@@ -44,7 +45,7 @@ class State;
 /// (using the default version of copy constructor and assignment operator),
 /// but it's mainly for internal implementation convenience.  Applications will
 /// simply refer to Token object as a reference via the \c MasterLexer class.
-class MasterToken {
+class KEA_DNS_API MasterToken {
 public:
     /// \brief Enumeration for token types
     ///
@@ -306,7 +307,7 @@ private:
 /// implementation of the exception handling).  For these reasons, some of
 /// this class does not throw for an error that would be reported as an
 /// exception in other classes.
-class MasterLexer : public boost::noncopyable {
+class KEA_DNS_API MasterLexer : public boost::noncopyable {
     friend class master_lexer_internal::State;
 public:
     /// \brief Exception thrown when we fail to read from the input

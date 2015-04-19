@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,8 @@
 #include <stdint.h>
 
 #include <ostream>
+
+#include <dns/api.h>
 
 #ifndef OPCODE_H
 #define OPCODE_H 1
@@ -37,7 +39,7 @@ namespace dns {
 /// to handle OPCODEs through this class.  In fact, public interfaces of
 /// this library uses this class to pass or return OPCODEs instead of the
 /// bare code values.
-class Opcode {
+class KEA_DNS_API Opcode {
 public:
     /// Constants for standard OPCODE values.
     enum CodeValue {
@@ -280,6 +282,7 @@ Opcode::RESERVED15() {
 /// \param opcode A reference to an \c Opcode object output by the operation.
 /// \return A reference to the same \c std::ostream object referenced by
 /// parameter \c os after the insertion operation.
+KEA_DNS_API
 std::ostream& operator<<(std::ostream& os, const Opcode& opcode);
 }
 }

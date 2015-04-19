@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,6 +14,9 @@
 
 #ifndef RDATA_H
 #define RDATA_H 1
+
+#include <util/api.h>
+#include <dns/api.h>
 
 #include <dns/master_lexer.h>
 #include <dns/master_loader.h>
@@ -42,7 +45,7 @@ namespace rdata {
 /// \brief A standard DNS module exception that is thrown if RDATA parser
 /// encounters an invalid or inconsistent data length.
 ///
-class InvalidRdataLength : public DNSTextError {
+class KEA_DNS_API InvalidRdataLength : public DNSTextError {
 public:
     InvalidRdataLength(const char* file, size_t line, const char* what) :
         DNSTextError(file, line, what) {}
@@ -52,7 +55,7 @@ public:
 /// \brief A standard DNS module exception that is thrown if RDATA parser
 /// fails to recognize a given textual representation.
 ///
-class InvalidRdataText : public DNSTextError {
+class KEA_DNS_API InvalidRdataText : public DNSTextError {
 public:
     InvalidRdataText(const char* file, size_t line, const char* what) :
         DNSTextError(file, line, what) {}
@@ -63,14 +66,14 @@ public:
 /// encounters a character-string (as defined in RFC1035) exceeding
 /// the maximum allowable length (\c MAX_CHARSTRING_LEN).
 ///
-class CharStringTooLong : public DNSTextError {
+class KEA_DNS_API CharStringTooLong : public DNSTextError {
 public:
     CharStringTooLong(const char* file, size_t line, const char* what) :
         DNSTextError(file, line, what) {}
 };
 
 // Forward declaration to define RdataPtr.
-class Rdata;
+class KEA_DNS_API Rdata;
 
 ///
 /// The \c RdataPtr type is a pointer-like type, pointing to an
@@ -128,7 +131,7 @@ const unsigned int MAX_CHARSTRING_LEN = 255;
 /// specifically concerned about a particular type.
 /// So, this API generally handles \c Rdata in a polymorphic way through
 /// a pointer or reference to this base abstract class.
-class Rdata {
+class KEA_DNS_API Rdata {
     ///
     /// \name Constructors and Destructor
     ///
@@ -254,7 +257,7 @@ struct GenericImpl;
 /// This class is used as a placeholder for all non well-known type of RDATA.
 /// By definition, the stored data is regarded as opaque binary without
 /// assuming any structure.
-class Generic : public Rdata {
+class KEA_DNS_API Generic : public Rdata {
 public:
     ///
     /// \name Constructors, Assignment Operator and Destructor.
@@ -412,6 +415,7 @@ private:
 /// \param rdata The \c Generic object output by the operation.
 /// \return A reference to the same \c std::ostream object referenced by
 /// parameter \c os after the insertion operation.
+KEA_DNS_API
 std::ostream& operator<<(std::ostream& os, const Generic& rdata);
 } // end of namespace "generic"
 
@@ -457,6 +461,7 @@ std::ostream& operator<<(std::ostream& os, const Generic& rdata);
 /// \param rdata_string A string of textual representation of the \c Rdata.
 /// \return An \c RdataPtr object pointing to the created \c Rdata
 /// object.
+KEA_DNS_API
 RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
                      const std::string& rdata_string);
 
@@ -481,6 +486,7 @@ RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
 /// \param len The length in buffer of the \c Rdata.  In bytes.
 /// \return An \c RdataPtr object pointing to the created \c Rdata
 /// object.
+KEA_DNS_API
 RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
                      isc::util::InputBuffer& buffer, size_t len);
 
@@ -497,6 +503,7 @@ RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
 /// is to be copied to the created \c Rdata object.
 /// \return An \c RdataPtr object pointing to the created
 /// \c Rdata object.
+KEA_DNS_API
 RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
                      const Rdata& source);
 
@@ -541,6 +548,7 @@ RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
 /// is found.
 /// \return An \c RdataPtr object pointing to the created
 /// \c Rdata object.  Will be NULL if parsing fails.
+KEA_DNS_API
 RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
                      MasterLexer& lexer, const Name* origin,
                      MasterLoader::Options options,
@@ -578,7 +586,7 @@ RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
 /// \return 0 if \c n1 is identical to \c n2 in terms of sorting order.
 /// \return 1 if \c n1 would be sorted after \c n2.
 ///
-int compareNames(const Name& n1, const Name& n2);
+KEA_DNS_API int compareNames(const Name& n1, const Name& n2);
 
 } // end of namespace "rdata"
 }

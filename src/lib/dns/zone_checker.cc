@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#define KEA_DNS_EXPORT
 
 #include <dns/zone_checker.h>
 
@@ -177,7 +179,7 @@ errorWrapper(const string& reason, const ZoneCheckerCallbacks* callbacks,
 }
 }
 
-bool
+KEA_DNS_API bool
 checkZone(const Name& zone_name, const RRClass& zone_class,
           const RRsetCollectionBase& zone_rrsets,
           const ZoneCheckerCallbacks& callbacks) {

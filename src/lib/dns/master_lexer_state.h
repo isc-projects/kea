@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 #ifndef MASTER_LEXER_STATE_H
 #define MASTER_LEXER_STATE_H 1
 
+#include <dns/api.h>
 #include <dns/master_lexer.h>
 
 #include <boost/function.hpp>
@@ -55,7 +56,7 @@ namespace master_lexer_internal {
 /// testability.  It's defined in a publicly visible header, but that's only
 /// for testing purposes.  No normal application or even no other classes of
 /// this library are expected to use this class.
-class State {
+class KEA_DNS_API State {
 public:
     /// \brief Virtual destructor.
     ///

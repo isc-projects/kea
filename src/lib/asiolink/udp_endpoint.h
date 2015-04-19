@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,7 @@
 #error "asio.hpp must be included before including this, see asiolink.h as to why"
 #endif
 
+#include <asiolink/api.h>
 #include <asiolink/io_endpoint.h>
 
 namespace isc {
@@ -28,7 +29,7 @@ namespace asiolink {
 /// \c IOEndpoint that represents an endpoint of a UDP packet.
 ///
 /// Other notes about \c TCPEndpoint applies to this class, too.
-class UDPEndpoint : public IOEndpoint {
+class KEA_ASIOLINK_API UDPEndpoint : public IOEndpoint {
 public:
     ///
     /// \name Constructors and Destructor.

@@ -1,6 +1,6 @@
 dnl @synopsis AX_BOOST_FOR_KEA
 dnl
-dnl Test for the Boost C++ header files intended to be used within BIND 10
+dnl Test for the Boost C++ header files intended to be used within KEA
 dnl
 dnl If no path to the installed boost header files is given via the
 dnl --with-boost-include option,  the macro searchs under

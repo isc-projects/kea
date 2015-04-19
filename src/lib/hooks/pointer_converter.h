@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 #ifndef POINTER_CONVERTER_H
 #define POINTER_CONVERTER_H
 
+#include <hooks/api.h>
 #include <hooks/hooks.h>
 
 namespace isc {
@@ -30,7 +31,7 @@ namespace hooks {
 /// union is declared (and zeroed) and the appropriate member extracted when
 /// needed.
 
-class PointerConverter {
+class KEA_HOOKS_API PointerConverter {
 public:
     /// @brief Constructor
     ///

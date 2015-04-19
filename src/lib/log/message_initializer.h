@@ -15,6 +15,7 @@
 #ifndef MESSAGEINITIALIZER_H
 #define MESSAGEINITIALIZER_H
 
+#include <log/api.h>
 #include <log/message_dictionary.h>
 #include <boost/noncopyable.hpp>
 #include <cstdlib>
@@ -67,7 +68,7 @@ namespace log {
 /// global dictionary's overflow lince whence they can be retrieved at
 /// run-time.
 
-class MessageInitializer : public boost::noncopyable {
+class KEA_LOG_API MessageInitializer : public boost::noncopyable {
 public:
     /// Maximum number of message arrays that can be initialized in this way
     static const size_t MAX_MESSAGE_ARRAYS = 256;

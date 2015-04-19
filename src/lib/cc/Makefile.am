@@ -4,7 +4,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
 
-AM_CXXFLAGS = $(KEA_CXXFLAGS)
+AM_CXXFLAGS = $(KEA_CXXFLAGS) $(SHLIB_CXXFLAGS)
 if USE_GXX
 # ASIO header files used in session.cc will trigger the "unused-parameter"
 # warning.  Unfortunately there doesn't seem to be an easy way to selectively
@@ -15,7 +15,7 @@ AM_CXXFLAGS += -fno-strict-aliasing
 endif
 
 lib_LTLIBRARIES = libkea-cc.la
-libkea_cc_la_SOURCES = data.cc data.h session.cc session.h
+libkea_cc_la_SOURCES = api.h data.cc data.h session.cc session.h
 libkea_cc_la_SOURCES += logger.cc logger.h
 nodist_libkea_cc_la_SOURCES = cc_messages.cc cc_messages.h
 libkea_cc_la_SOURCES += proto_defs.cc proto_defs.h

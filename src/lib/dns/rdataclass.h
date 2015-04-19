@@ -9,6 +9,7 @@
 #ifndef DNS_RDATACLASS_H
 #define DNS_RDATACLASS_H 1
 
+#include <dns/api.h>
 #include <dns/master_loader.h>
 
 namespace isc {
@@ -18,7 +19,7 @@ class MasterLexer;
 class MasterLoaderCallbacks;
 }
 }
-// Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -68,7 +69,7 @@ struct TSIGImpl;
 /// This class implements the basic interfaces inherited from the abstract
 /// \c rdata::Rdata class, and provides trivial accessors specific to the
 /// TSIG RDATA.
-class TSIG : public Rdata {
+class KEA_DNS_API TSIG : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
@@ -197,7 +198,7 @@ private:
 } // end of namespace "isc"
 #endif // ANY_TSIG_250_H
 
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -236,7 +237,7 @@ class AbstractMessageRenderer;
 namespace rdata {
 namespace ch {
 
-class A : public Rdata {
+class KEA_DNS_API A : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
@@ -260,7 +261,7 @@ public:
 } // end of namespace "isc"
 #endif // CH_A_1_H
 
-// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -308,7 +309,7 @@ namespace generic {
 /// This class implements the basic interfaces inherited from the abstract
 /// \c rdata::Rdata class, and provides trivial accessors specific to the
 /// AFSDB RDATA.
-class AFSDB : public Rdata {
+class KEA_DNS_API AFSDB : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
@@ -359,7 +360,7 @@ private:
 } // end of namespace "isc"
 #endif // GENERIC_AFSDB_18_H
 
-// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -404,7 +405,7 @@ namespace generic {
 
 struct CAAImpl;
 
-class CAA : public Rdata {
+class KEA_DNS_API CAA : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
@@ -454,7 +455,7 @@ private:
 } // end of namespace "isc"
 #endif // GENERIC_CAA_257_H
 
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -494,7 +495,7 @@ class AbstractMessageRenderer;
 namespace rdata {
 namespace generic {
 
-class CNAME : public Rdata {
+class KEA_DNS_API CNAME : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
@@ -524,7 +525,7 @@ private:
 } // end of namespace "isc"
 #endif // GENERIC_CNAME_5_H
 
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -578,7 +579,7 @@ template <class Type, uint16_t typeCode> class DSLikeImpl;
 /// This class implements the basic interfaces inherited from the abstract
 /// \c rdata::Rdata class, and provides trivial accessors specific to the
 /// DLV RDATA.
-class DLV : public Rdata {
+class KEA_DNS_API DLV : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
@@ -624,7 +625,7 @@ private:
 } // end of namespace "isc"
 #endif // GENERIC_DLV_32769_H
 
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -664,7 +665,7 @@ class AbstractMessageRenderer;
 namespace rdata {
 namespace generic {
 
-class DNAME : public Rdata {
+class KEA_DNS_API DNAME : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
@@ -694,7 +695,7 @@ private:
 } // end of namespace "isc"
 #endif // GENERIC_DNAME_39_H
 
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -741,7 +742,7 @@ namespace generic {
 
 struct DNSKEYImpl;
 
-class DNSKEY : public Rdata {
+class KEA_DNS_API DNSKEY : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
@@ -785,7 +786,7 @@ private:
 } // end of namespace "isc"
 #endif // GENERIC_DNSKEY_48_H
 
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -839,7 +840,7 @@ template <class Type, uint16_t typeCode> class DSLikeImpl;
 /// This class implements the basic interfaces inherited from the abstract
 /// \c rdata::Rdata class, and provides trivial accessors specific to the
 /// DS RDATA.
-class DS : public Rdata {
+class KEA_DNS_API DS : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
@@ -885,7 +886,7 @@ private:
 } // end of namespace "isc"
 #endif // GENERIC_DS_43_H
 
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -938,7 +939,7 @@ class HINFOImpl;
 /// This class implements the basic interfaces inherited from the
 /// \c rdata::Rdata class, and provides accessors specific to the
 /// HINFO rdata.
-class HINFO : public Rdata {
+class KEA_DNS_API HINFO : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
@@ -980,7 +981,7 @@ private:
 } // end of namespace "isc"
 #endif // GENERIC_HINFO_13_H
 
-// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -1026,7 +1027,7 @@ namespace generic {
 /// This class implements the basic interfaces inherited from the abstract
 /// \c rdata::Rdata class, and provides trivial accessors specific to the
 /// MINFO RDATA.
-class MINFO : public Rdata {
+class KEA_DNS_API MINFO : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
@@ -1085,7 +1086,7 @@ private:
 } // end of namespace "isc"
 #endif // GENERIC_MINFO_14_H
 
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -1127,7 +1128,7 @@ class AbstractMessageRenderer;
 namespace rdata {
 namespace generic {
 
-class MX : public Rdata {
+class KEA_DNS_API MX : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
@@ -1168,7 +1169,7 @@ private:
 } // end of namespace "isc"
 #endif // GENERIC_MX_15_H
 
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -1219,7 +1220,7 @@ class NAPTRImpl;
 /// This class implements the basic interfaces inherited from the
 /// \c rdata::Rdata class, and provides accessors specific to the
 /// NAPTR rdata.
-class NAPTR : public Rdata {
+class KEA_DNS_API NAPTR : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
@@ -1263,7 +1264,7 @@ private:
 } // end of namespace "isc"
 #endif // GENERIC_NAPTR_35_H
 
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -1303,7 +1304,7 @@ class AbstractMessageRenderer;
 namespace rdata {
 namespace generic {
 
-class NS : public Rdata {
+class KEA_DNS_API NS : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
@@ -1337,7 +1338,7 @@ private:
 } // end of namespace "isc"
 #endif // GENERIC_NS_2_H
 
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -1385,7 +1386,7 @@ namespace generic {
 
 struct NSEC3Impl;
 
-class NSEC3 : public Rdata {
+class KEA_DNS_API NSEC3 : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
@@ -1422,7 +1423,7 @@ private:
 } // end of namespace "isc"
 #endif // GENERIC_NSEC3_50_H
 
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -1470,7 +1471,7 @@ namespace generic {
 
 struct NSEC3PARAMImpl;
 
-class NSEC3PARAM : public Rdata {
+class KEA_DNS_API NSEC3PARAM : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
@@ -1509,7 +1510,7 @@ private:
 } // end of namespace "isc"
 #endif // GENERIC_NSEC3PARAM_51_H
 
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -1555,7 +1556,7 @@ namespace generic {
 
 struct NSECImpl;
 
-class NSEC : public Rdata {
+class KEA_DNS_API NSEC : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
@@ -1593,7 +1594,7 @@ private:
 } // end of namespace "isc"
 #endif // GENERIC_NSEC_47_H
 
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -1638,7 +1639,7 @@ namespace generic {
 
 struct OPTImpl;
 
-class OPT : public Rdata {
+class KEA_DNS_API OPT : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
@@ -1714,7 +1715,7 @@ private:
 } // end of namespace "isc"
 #endif // GENERIC_OPT_41_H
 
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -1754,7 +1755,7 @@ class AbstractMessageRenderer;
 namespace rdata {
 namespace generic {
 
-class PTR : public Rdata {
+class KEA_DNS_API PTR : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
@@ -1789,7 +1790,7 @@ private:
 } // end of namespace "isc"
 #endif // GENERIC_PTR_12_H
 
-// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -1835,7 +1836,7 @@ namespace generic {
 /// This class implements the basic interfaces inherited from the abstract
 /// \c rdata::Rdata class, and provides trivial accessors specific to the
 /// RP RDATA.
-class RP : public Rdata {
+class KEA_DNS_API RP : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
@@ -1898,7 +1899,7 @@ private:
 } // end of namespace "isc"
 #endif // GENERIC_RP_17_H
 
-// Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -1949,7 +1950,7 @@ struct RRSIGImpl;
 /// This class implements the basic interfaces inherited from the abstract
 /// \c rdata::Rdata class, and provides trivial accessors specific to the
 /// RRSIG RDATA.
-class RRSIG : public Rdata {
+class KEA_DNS_API RRSIG : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
@@ -1983,7 +1984,7 @@ private:
 } // end of namespace "isc"
 #endif // GENERIC_RRSIG_46_H
 
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -2024,7 +2025,7 @@ class AbstractMessageRenderer;
 namespace rdata {
 namespace generic {
 
-class SOA : public Rdata {
+class KEA_DNS_API SOA : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
@@ -2065,7 +2066,7 @@ private:
 } // end of namespace "isc"
 #endif // GENERIC_SOA_6_H
 
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -2117,7 +2118,7 @@ template<class Type, uint16_t typeCode> class TXTLikeImpl;
 /// This class implements the basic interfaces inherited from the abstract
 /// \c rdata::Rdata class. The semantics of the class is provided by
 /// a copy of instantiated TXTLikeImpl class common to both TXT and SPF.
-class SPF : public Rdata {
+class KEA_DNS_API SPF : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
@@ -2168,7 +2169,7 @@ private:
 } // end of namespace "isc"
 #endif // GENERIC_SPF_99_H
 
-// Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -2213,7 +2214,7 @@ namespace generic {
 
 struct SSHFPImpl;
 
-class SSHFP : public Rdata {
+class KEA_DNS_API SSHFP : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
@@ -2255,7 +2256,7 @@ private:
 } // end of namespace "isc"
 #endif // GENERIC_SSHFP_44_H
 
-// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -2300,7 +2301,7 @@ namespace generic {
 
 struct TLSAImpl;
 
-class TLSA : public Rdata {
+class KEA_DNS_API TLSA : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
@@ -2343,7 +2344,7 @@ private:
 } // end of namespace "isc"
 #endif // GENERIC_TLSA_52_H
 
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -2389,7 +2390,7 @@ namespace detail {
 template<class Type, uint16_t typeCode> class TXTLikeImpl;
 }
 
-class TXT : public Rdata {
+class KEA_DNS_API TXT : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
@@ -2420,7 +2421,7 @@ private:
 } // end of namespace "isc"
 #endif // GENERIC_TXT_16_H
 
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -2459,7 +2460,7 @@ class AbstractMessageRenderer;
 namespace rdata {
 namespace hs {
 
-class A : public Rdata {
+class KEA_DNS_API A : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
@@ -2483,7 +2484,7 @@ public:
 } // end of namespace "isc"
 #endif // HS_A_1_H
 
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -2522,7 +2523,7 @@ class AbstractMessageRenderer;
 namespace rdata {
 namespace in {
 
-class A : public Rdata {
+class KEA_DNS_API A : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
@@ -2552,7 +2553,7 @@ private:
 } // end of namespace "isc"
 #endif // IN_A_1_H
 
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -2593,7 +2594,7 @@ class AbstractMessageRenderer;
 namespace rdata {
 namespace in {
 
-class AAAA : public Rdata {
+class KEA_DNS_API AAAA : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
@@ -2621,7 +2622,7 @@ private:
 } // end of namespace "isc"
 #endif // IN_AAAA_28_H
 
-// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -2667,7 +2668,7 @@ namespace in {
 /// This class implements the basic interfaces inherited from the abstract
 /// \c rdata::Rdata class, and provides trivial accessors specific to the
 /// DHCID RDATA.
-class DHCID : public Rdata {
+class KEA_DNS_API DHCID : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
@@ -2705,7 +2706,7 @@ private:
 } // end of namespace "isc"
 #endif // IN_DHCID_49_H
 
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -2753,7 +2754,7 @@ struct SRVImpl;
 /// This class implements the basic interfaces inherited from the abstract
 /// \c rdata::Rdata class, and provides trivial accessors specific to the
 /// SRV RDATA.
-class SRV : public Rdata {
+class KEA_DNS_API SRV : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 

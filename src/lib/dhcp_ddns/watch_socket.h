@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,8 @@
 
 #include <exceptions/exceptions.h>
 
+#include <dhcp_ddns/api.h>
+
 #include <boost/shared_ptr.hpp>
 
 #include <stdint.h>
@@ -27,7 +29,7 @@ namespace isc {
 namespace dhcp_ddns {
 
 /// @brief Exception thrown if an error occurs during IO source open.
-class WatchSocketError : public isc::Exception {
+class KEA_DHCP_DDNS_API WatchSocketError : public isc::Exception {
 public:
     WatchSocketError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
@@ -51,7 +53,7 @@ public:
 /// such as close, read, or altering behavior flags with fcntl or ioctl can have
 /// unpredictable results.  It is intended strictly use with functions such as select()
 /// poll() or their variants.
-class WatchSocket {
+class KEA_DHCP_DDNS_API WatchSocket {
 public:
     /// @brief Value used to signify an invalid descriptor.
     static const int INVALID_SOCKET = -1;

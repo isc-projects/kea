@@ -16,6 +16,7 @@
 #define INMEMORY_LEASE_STORAGE_H
 
 #include <asiolink/io_address.h>
+#include <dhcpsrv/api.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/subnet_id.h>
 

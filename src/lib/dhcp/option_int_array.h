@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 #ifndef OPTION_INT_ARRAY_H
 #define OPTION_INT_ARRAY_H
 
+#include <dhcp/api.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
 #include <dhcp/option_data_types.h>
@@ -253,6 +254,16 @@ private:
 
     std::vector<T> values_;
 };
+
+/// Export the typeinfo for dynamic_cast
+#ifdef HAVE_ATTRIBUTE_VISIBILITY
+extern template class KEA_DHCP_API OptionIntArray<uint8_t>;
+extern template class KEA_DHCP_API OptionIntArray<uint16_t>;
+extern template class KEA_DHCP_API OptionIntArray<uint32_t>;
+extern template class KEA_DHCP_API OptionIntArray<int8_t>;
+extern template class KEA_DHCP_API OptionIntArray<int16_t>;
+extern template class KEA_DHCP_API OptionIntArray<int32_t>;
+#endif
 
 } // isc::dhcp namespace
 } // isc namespace

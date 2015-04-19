@@ -15,6 +15,7 @@
 #ifndef HOOKS_MANAGER_H
 #define HOOKS_MANAGER_H
 
+#include <hooks/api.h>
 #include <hooks/server_hooks.h>
 
 #include <boost/noncopyable.hpp>
@@ -42,7 +43,7 @@ class LibraryManagerCollection;
 /// The class is a singleton, the single instance of the object being accessed
 /// through the static getHooksManager() method.
 
-class HooksManager : boost::noncopyable {
+class KEA_HOOKS_API HooksManager : boost::noncopyable {
 public:
     /// @brief Get singleton hooks manager
     ///

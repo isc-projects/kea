@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -23,6 +23,7 @@
 #include <dns/rcode.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
+#include <testutils/api.h>
 
 #include "mockups.h"
 #include <boost/scoped_ptr.hpp>
@@ -35,22 +36,22 @@ class IOEndpoint;
 
 namespace isc {
 namespace testutils {
-extern const char* const DEFAULT_REMOTE_ADDRESS;
-extern const uint16_t DEFAULT_REMOTE_PORT;
+extern const KEA_TESTUTILS_API char* const DEFAULT_REMOTE_ADDRESS;
+extern const KEA_TESTUTILS_API uint16_t DEFAULT_REMOTE_PORT;
 
 // These are flags to indicate whether the corresponding flag bit of the
 // DNS header is to be set in the test cases.  (The flag values
 // is irrelevant to their wire-format values)
-extern const unsigned int QR_FLAG;
-extern const unsigned int AA_FLAG;
-extern const unsigned int TC_FLAG;
-extern const unsigned int RD_FLAG;
-extern const unsigned int RA_FLAG;
-extern const unsigned int AD_FLAG;
-extern const unsigned int CD_FLAG;
+extern const KEA_TESTUTILS_API unsigned int QR_FLAG;
+extern const KEA_TESTUTILS_API unsigned int AA_FLAG;
+extern const KEA_TESTUTILS_API unsigned int TC_FLAG;
+extern const KEA_TESTUTILS_API unsigned int RD_FLAG;
+extern const KEA_TESTUTILS_API unsigned int RA_FLAG;
+extern const KEA_TESTUTILS_API unsigned int AD_FLAG;
+extern const KEA_TESTUTILS_API unsigned int CD_FLAG;
 
 /// \brief The base class for Auth and Recurse test case
-class SrvTestBase : public ::testing::Test {
+class KEA_TESTUTILS_API SrvTestBase : public ::testing::Test {
 protected:
     SrvTestBase();
 

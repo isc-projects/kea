@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,8 @@
 #define LIBRARY_HANDLE_H
 
 #include <string>
+
+#include <hooks/api.h>
 
 namespace isc {
 namespace hooks {
@@ -48,7 +50,7 @@ extern "C" {
 /// library": the registration functions only operator on data whose
 /// associated library is equal to the "current library".)
 
-class LibraryHandle {
+class KEA_HOOKS_API LibraryHandle {
 public:
 
     /// @brief Constructor

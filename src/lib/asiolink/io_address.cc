@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#define KEA_ASIOLINK_EXPORT
+
 #include <config.h>
 
 #include <unistd.h>             // for some IPC/network system calls
@@ -125,7 +127,7 @@ IOAddress::operator uint32_t() const {
     }
 }
 
-std::ostream&
+KEA_ASIOLINK_API std::ostream&
 operator<<(std::ostream& os, const IOAddress& address) {
     os << address.toText();
     return (os);

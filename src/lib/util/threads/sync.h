@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,8 @@
 
 #include <exceptions/exceptions.h>
 
+#include <util/threads/api.h>
+
 #include <boost/noncopyable.hpp>
 
 #include <cstdlib> // for NULL.
@@ -24,7 +26,7 @@
 namespace isc {
 namespace util {
 namespace thread {
-class CondVar;
+class KEA_UTIL_THREADS_API CondVar;
 
 /// \brief Mutex with very simple interface
 ///
@@ -44,7 +46,7 @@ class CondVar;
 ///
 /// The current interface is somewhat minimalist. If we ever need more, we
 /// can add it later.
-class Mutex : boost::noncopyable {
+class KEA_UTIL_THREADS_API Mutex : boost::noncopyable {
 public:
     /// \brief Constructor.
     ///
@@ -210,7 +212,7 @@ private:
 /// So, this is a kind of compromise.  If this class is needed to be
 /// extended, first consider a way to use public interfaces of \c Mutex;
 /// do not easily rely on the fact that this class is a friend of it.
-class CondVar : boost::noncopyable {
+class KEA_UTIL_THREADS_API CondVar : boost::noncopyable {
 public:
     /// \brief Constructor.
     ///

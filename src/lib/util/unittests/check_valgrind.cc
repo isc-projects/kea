@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,11 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#define KEA_UTIL_UNITTESTS_EXPORT
+
 #include <config.h>
+
+#include "check_valgrind.h"
 
 namespace isc {
 namespace util {
@@ -25,12 +29,12 @@ namespace unittests {
 /// \return true if valgrind headers are available, and valgrind is running,
 ///         false if the headers are not available, or if valgrind is not
 ///         running
-bool
+KEA_UTIL_UNITTESTS_API bool
 runningOnValgrind() {
     return (RUNNING_ON_VALGRIND != 0);
 }
 #else
-bool
+KEA_UTIL_UNITTESTS_API bool
 runningOnValgrind() {
     return (false);
 }

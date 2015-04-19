@@ -1,4 +1,4 @@
-// Copyright (C) 2012,2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#define KEA_DNS_EXPORT
 
 #include <stdint.h>
 
@@ -265,7 +267,7 @@ DefaultNSEC3HashCreator::create(uint8_t algorithm, uint16_t iterations,
                                  salt_data, salt_length));
 }
 
-void
+KEA_DNS_API void
 setNSEC3HashCreator(const NSEC3HashCreator* new_creator) {
     creator = new_creator;
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #define CFG_OPTION_DEF_H
 
 #include <dhcp/option_definition.h>
+#include <dhcpsrv/api.h>
 #include <dhcpsrv/option_space_container.h>
 #include <string>
 
@@ -34,7 +35,7 @@ namespace dhcp {
 /// following names: "dhcp4" and "dhcp6" are reserved, though. They are
 /// names of option spaces used for standard top-level DHCPv4 and DHCPv6
 /// options respectively.
-class CfgOptionDef {
+class KEA_DHCPSRV_API CfgOptionDef {
 public:
 
     /// @brief Copies this configuration to a new configuration.

@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #define CALLOUT_HANDLE_H
 
 #include <exceptions/exceptions.h>
+#include <hooks/api.h>
 #include <hooks/library_handle.h>
 
 #include <boost/any.hpp>
@@ -34,7 +35,7 @@ class ServerHooks;
 ///
 /// Thrown if an attempt is made access an argument that does not exist.
 
-class NoSuchArgument : public Exception {
+class KEA_HOOKS_API NoSuchArgument : public Exception {
 public:
     NoSuchArgument(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
@@ -46,7 +47,7 @@ public:
 /// context and either the context or an item in the context with that name
 /// does not exist.
 
-class NoSuchCalloutContext : public Exception {
+class KEA_HOOKS_API NoSuchCalloutContext : public Exception {
 public:
     NoSuchCalloutContext(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
@@ -88,7 +89,7 @@ class LibraryManagerCollection;
 ///   callout doing the deregistration can be removed: callouts registered by
 ///   other libraries cannot be modified.
 
-class CalloutHandle {
+class KEA_HOOKS_API CalloutHandle {
 public:
 
     /// Typedef to allow abbreviation of iterator specification in methods.

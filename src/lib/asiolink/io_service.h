@@ -17,6 +17,8 @@
 
 #include <boost/function.hpp>
 
+#include <asiolink/api.h>
+
 namespace asio {
     class io_service;
 }
@@ -29,7 +31,7 @@ class IOServiceImpl;
 /// \brief The \c IOService class is a wrapper for the ASIO \c io_service
 /// class.
 ///
-class IOService {
+class KEA_ASIOLINK_API IOService {
     ///
     /// \name Constructors and Destructor
     ///

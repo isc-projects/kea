@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #define DUID_H
 
 #include <asiolink/io_address.h>
+#include <dhcp/api.h>
 
 #include <vector>
 
@@ -29,7 +30,7 @@ namespace dhcp {
 ///
 /// This class holds DUID, that is used in client-id, server-id and
 /// several other options. It is used to identify DHCPv6 entity.
-class DUID {
+class KEA_DHCP_API DUID {
  public:
     /// @brief maximum duid size
     /// As defined in RFC3315, section 9.1
@@ -115,7 +116,7 @@ class DUID {
 typedef boost::shared_ptr<DUID> DuidPtr;
 
 /// @brief Forward declaration to the @c ClientId class.
-class ClientId;
+class KEA_DHCP_API ClientId;
 /// @brief Shared pointer to a Client ID.
 typedef boost::shared_ptr<ClientId> ClientIdPtr;
 
@@ -123,7 +124,7 @@ typedef boost::shared_ptr<ClientId> ClientIdPtr;
 ///
 /// This class is intended to be a generic IPv4 client identifier. It can hold
 /// a client-id
-class ClientId : public DUID {
+class KEA_DHCP_API ClientId : public DUID {
 public:
 
     /// @brief Minimum size of a client ID

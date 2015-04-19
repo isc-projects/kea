@@ -1,4 +1,4 @@
-// Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,7 @@
 #include <ostream>
 #include <string>
 
+#include <dns/api.h>
 #include <dns/rcode.h>
 
 namespace isc {
@@ -27,7 +28,7 @@ namespace dns {
 /// The \c TSIGError class objects represent standard errors related to
 /// TSIG protocol operations as defined in related specifications, mainly
 /// in RFC2845, RFC2930 and RFC4635.
-class TSIGError {
+class KEA_DNS_API TSIGError {
 public:
     /// Constants for pre-defined TSIG error values.
     ///
@@ -371,6 +372,7 @@ TSIGError::BAD_TRUNC() {
 /// \param tsig_error An \c TSIGError object output by the operation.
 /// \return A reference to the same \c std::ostream object referenced by
 /// parameter \c os after the insertion operation.
+KEA_DNS_API
 std::ostream& operator<<(std::ostream& os, const TSIGError& tsig_error);
 }
 }

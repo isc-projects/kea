@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #define MASTER_LOADER_CALLBACKS_H
 
 #include <exceptions/exceptions.h>
+#include <dns/api.h>
 
 #include <string>
 #include <boost/function.hpp>
@@ -54,7 +55,7 @@ typedef boost::function<void(const Name& name, const RRClass& rrclass,
 /// can report loaded RRsets, errors and other unusual conditions.
 ///
 /// All the callbacks must be set.
-class MasterLoaderCallbacks {
+class KEA_DNS_API MasterLoaderCallbacks {
 public:
     /// \brief Type of one callback to report problems.
     ///

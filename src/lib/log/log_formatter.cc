@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#define KEA_LOG_EXPORT
+
 #include <config.h>
 #include <log/log_formatter.h>
 
@@ -27,7 +29,7 @@ using namespace boost;
 namespace isc {
 namespace log {
 
-void
+KEA_LOG_API void
 replacePlaceholder(string* message, const string& arg,
                    const unsigned placeholder)
 {
@@ -53,7 +55,7 @@ replacePlaceholder(string* message, const string& arg,
 #endif /* ENABLE_LOGGER_CHECKS */
 }
 
-void
+KEA_LOG_API void
 checkExcessPlaceholders(string* message, unsigned int placeholder) {
     const string mark("%" + lexical_cast<string>(placeholder));
     const size_t pos(message->find(mark));

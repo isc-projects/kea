@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,13 +21,14 @@
 
 #include <asiolink/io_service.h>
 #include <asiolink/simple_callback.h>
+#include <asiodns/api.h>
 
 namespace isc {
 namespace asiodns {
 
-class DNSLookup;
-class DNSAnswer;
-class DNSServiceImpl;
+class KEA_ASIODNS_API DNSLookup;
+class KEA_ASIODNS_API DNSAnswer;
+class KEA_ASIODNS_API DNSServiceImpl;
 
 /// \brief A base class for common \c DNSService interfaces.
 ///
@@ -40,7 +41,7 @@ class DNSServiceImpl;
 /// For this reason most of the detailed description are given in the
 /// \c DNSService class.  See that for further details of specific methods
 /// and class behaviors.
-class DNSServiceBase {
+class KEA_ASIODNS_API DNSServiceBase {
 protected:
     /// \brief Default constructor.
     ///
@@ -111,7 +112,7 @@ public:
 /// logic that is shared between the authoritative and the recursive
 /// server implementations. As such, it handles asio and listening
 /// sockets.
-class DNSService : public DNSServiceBase {
+class KEA_ASIODNS_API DNSService : public DNSServiceBase {
     ///
     /// \name Constructors and Destructor
     ///

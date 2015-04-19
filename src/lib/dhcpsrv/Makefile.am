@@ -17,7 +17,7 @@ if HAVE_PGSQL
 AM_CPPFLAGS += $(PGSQL_CPPFLAGS)
 endif
 
-AM_CXXFLAGS = $(KEA_CXXFLAGS)
+AM_CXXFLAGS = $(KEA_CXXFLAGS) $(SHLIB_CXXFLAGS)
 
 # The files in the subfolder must be explicitly specified here so
 # as they are copied to the distribution. The other option would
@@ -65,7 +65,7 @@ CLEANFILES += hosts_messages.h hosts_messages.cc s-messages
 CLEANFILES += *.csv
 
 lib_LTLIBRARIES = libkea-dhcpsrv.la
-libkea_dhcpsrv_la_SOURCES  =
+libkea_dhcpsrv_la_SOURCES  = api.h
 libkea_dhcpsrv_la_SOURCES += addr_utilities.cc addr_utilities.h
 libkea_dhcpsrv_la_SOURCES += alloc_engine.cc alloc_engine.h
 libkea_dhcpsrv_la_SOURCES += base_host_data_source.h

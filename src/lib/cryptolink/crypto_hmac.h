@@ -1,4 +1,4 @@
-// Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 
 #include <boost/noncopyable.hpp>
 
+#include <cryptolink/api.h>
 #include <cryptolink/cryptolink.h>
 
 #ifndef ISC_CRYPTO_HMAC_H
@@ -32,7 +33,7 @@ class HMACImpl;
 /// This class is used to create and verify HMAC signatures. Instances
 /// can be created with CryptoLink::createHMAC()
 ///
-class HMAC : private boost::noncopyable {
+class KEA_CRYPTOLINK_API HMAC : private boost::noncopyable {
 private:
     /// \brief Constructor from a secret and a hash algorithm
     ///
@@ -161,6 +162,7 @@ private:
 /// \param len If this is non-zero and less than the output size, the result
 ///            will be truncated to len bytes. If greater than output size
 ///            (or equal to zero) only output size bytes are written
+KEA_CRYPTOLINK_API
 void signHMAC(const void* data,
               const size_t data_len,
               const void* secret,
@@ -196,6 +198,7 @@ void signHMAC(const void* data,
 /// \param sig The signature to verify
 /// \param sig_len The length of the signature
 /// \return True if the signature verifies, false if not
+KEA_CRYPTOLINK_API
 bool verifyHMAC(const void* data,
                 const size_t data_len,
                 const void* secret,
@@ -205,7 +208,7 @@ bool verifyHMAC(const void* data,
                 const size_t sig_len);
 
 /// \brief Delete an HMAC object
-void deleteHMAC(HMAC* hmac);
+KEA_CRYPTOLINK_API void deleteHMAC(HMAC* hmac);
 
 } // namespace cryptolink
 } // namespace isc

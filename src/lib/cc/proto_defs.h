@@ -2,7 +2,7 @@
 // by the const2hdr.py script.
 // Do not edit, all changes will be lost.
 
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,8 @@
 
 #ifndef KEA_COMMON_DEFS_H
 #define KEA_COMMON_DEFS_H
+
+#include <cc/api.h>
 
 // \file proto_defs.h
 // \brief Common shared constants
@@ -38,35 +40,35 @@ namespace cc {
 
 // The constants used in the CC protocol
 // First the header names
-extern const char* const CC_HEADER_TYPE;
-extern const char* const CC_HEADER_FROM;
-extern const char* const CC_HEADER_TO;
-extern const char* const CC_HEADER_GROUP;
-extern const char* const CC_HEADER_INSTANCE;
-extern const char* const CC_HEADER_SEQ;
-extern const char* const CC_HEADER_WANT_ANSWER;
-extern const char* const CC_HEADER_REPLY;
+extern const KEA_CC_API char* const CC_HEADER_TYPE;
+extern const KEA_CC_API char* const CC_HEADER_FROM;
+extern const KEA_CC_API char* const CC_HEADER_TO;
+extern const KEA_CC_API char* const CC_HEADER_GROUP;
+extern const KEA_CC_API char* const CC_HEADER_INSTANCE;
+extern const KEA_CC_API char* const CC_HEADER_SEQ;
+extern const KEA_CC_API char* const CC_HEADER_WANT_ANSWER;
+extern const KEA_CC_API char* const CC_HEADER_REPLY;
 // The commands in the "type" header
-extern const char* const CC_COMMAND_SEND;
-extern const char* const CC_COMMAND_SUBSCRIBE;
-extern const char* const CC_COMMAND_UNSUBSCRIBE;
-extern const char* const CC_COMMAND_GET_LNAME;
-extern const char* const CC_COMMAND_PING;
-extern const char* const CC_COMMAND_PONG;
-extern const char* const CC_COMMAND_STOP;
+extern const KEA_CC_API char* const CC_COMMAND_SEND;
+extern const KEA_CC_API char* const CC_COMMAND_SUBSCRIBE;
+extern const KEA_CC_API char* const CC_COMMAND_UNSUBSCRIBE;
+extern const KEA_CC_API char* const CC_COMMAND_GET_LNAME;
+extern const KEA_CC_API char* const CC_COMMAND_PING;
+extern const KEA_CC_API char* const CC_COMMAND_PONG;
+extern const KEA_CC_API char* const CC_COMMAND_STOP;
 // The wildcards of some headers
-extern const char* const CC_TO_WILDCARD;
-extern const char* const CC_INSTANCE_WILDCARD;
+extern const KEA_CC_API char* const CC_TO_WILDCARD;
+extern const KEA_CC_API char* const CC_INSTANCE_WILDCARD;
 // Prefixes for groups
-extern const char* const CC_GROUP_NOTIFICATION_PREFIX;
+extern const KEA_CC_API char* const CC_GROUP_NOTIFICATION_PREFIX;
 // Reply codes
-extern const int CC_REPLY_NO_RECPT;
-extern const int CC_REPLY_SUCCESS;
+extern const KEA_CC_API int CC_REPLY_NO_RECPT;
+extern const KEA_CC_API int CC_REPLY_SUCCESS;
 // Payload in the message
-extern const char *const CC_PAYLOAD_LNAME;
-extern const char *const CC_PAYLOAD_RESULT;
-extern const char *const CC_PAYLOAD_COMMAND;
-extern const char *const CC_PAYLOAD_NOTIFICATION;
+extern const KEA_CC_API char *const CC_PAYLOAD_LNAME;
+extern const KEA_CC_API char *const CC_PAYLOAD_RESULT;
+extern const KEA_CC_API char *const CC_PAYLOAD_COMMAND;
+extern const KEA_CC_API char *const CC_PAYLOAD_NOTIFICATION;
 
 }
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,7 @@
 
 #include <exceptions/exceptions.h>
 
+#include <dns/api.h>
 #include <dns/tsigerror.h>
 #include <dns/tsigkey.h>
 #include <dns/tsigrecord.h>
@@ -33,7 +34,7 @@ namespace dns {
 /// Note that this exception is not thrown for TSIG protocol errors such as
 /// verification failures.  In general, this exception indicates an internal
 /// program bug.
-class TSIGContextError : public isc::Exception {
+class KEA_DNS_API TSIGContextError : public isc::Exception {
 public:
     TSIGContextError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
@@ -173,7 +174,7 @@ public:
 /// direct or indirect dependencies.  The interface of \c sign() that takes
 /// opaque data (instead of, e.g., a \c Message or \c MessageRenderer object)
 /// is therefore a deliberate design decision.
-class TSIGContext : boost::noncopyable {
+class KEA_DNS_API TSIGContext : boost::noncopyable {
 public:
     /// Internal state of context
     ///

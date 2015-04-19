@@ -16,6 +16,7 @@
 #define PROCESS_SPAWN_H
 
 #include <exceptions/exceptions.h>
+#include <util/api.h>
 #include <boost/noncopyable.hpp>
 #include <string>
 #include <sys/types.h>
@@ -25,7 +26,7 @@ namespace isc {
 namespace util {
 
 /// @brief Exception thrown when error occurs during spawning a process.
-class ProcessSpawnError : public Exception {
+class KEA_UTIL_API ProcessSpawnError : public Exception {
 public:
     ProcessSpawnError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
@@ -65,7 +66,7 @@ typedef std::vector<std::string> ProcessArgs;
 /// class so as multiple instances of the @c ProcessSpawn use the same
 /// SIGCHLD signal handler.
 
-class ProcessSpawn : boost::noncopyable {
+class KEA_UTIL_API ProcessSpawn : boost::noncopyable {
 public:
 
     /// @brief Constructor.

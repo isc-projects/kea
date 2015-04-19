@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #define KEA_THREAD_H
 
 #include <exceptions/exceptions.h>
+#include <util/threads/api.h>
 
 #include <boost/noncopyable.hpp>
 #include <boost/function.hpp>
@@ -41,7 +42,7 @@ namespace thread {
 ///     are not thread-safe. You're not supposed to call wait() on the same
 ///     object from multiple threads or so. They are reentrant (you can
 ///     wait for different threads from different threads).
-class Thread : public boost::noncopyable {
+class KEA_UTIL_THREADS_API Thread : public boost::noncopyable {
 public:
     /// \brief There's an uncaught exception in a thread.
     ///

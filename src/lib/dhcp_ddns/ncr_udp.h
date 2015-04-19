@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -111,6 +111,7 @@
 #include <asiolink/io_service.h>
 #include <asiolink/udp_endpoint.h>
 #include <asiolink/udp_socket.h>
+#include <dhcp_ddns/api.h>
 #include <dhcp_ddns/ncr_io.h>
 #include <dhcp_ddns/watch_socket.h>
 #include <util/buffer.h>
@@ -126,13 +127,13 @@ namespace isc {
 namespace dhcp_ddns {
 
 /// @brief Thrown when a UDP level exception occurs.
-class NcrUDPError : public isc::Exception {
+class KEA_DHCP_DDNS_API NcrUDPError : public isc::Exception {
 public:
     NcrUDPError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
-class UDPCallback;
+class KEA_DHCP_DDNS_API UDPCallback;
 /// @brief Defines a function pointer for NameChangeRequest completion handlers.
 typedef boost::function<void(const bool, const UDPCallback*)>
           UDPCompletionHandler;
@@ -151,7 +152,7 @@ typedef boost::shared_ptr<asiolink::UDPEndpoint> UDPEndpointPtr;
 /// and completion of a service, as well as a pointer to NameChangeRequest
 /// layer completion handler to invoke.
 ///
-class UDPCallback {
+class KEA_DHCP_DDNS_API UDPCallback {
 
 public:
     /// @brief Container class which stores service invocation related data.
@@ -323,7 +324,7 @@ typedef isc::asiolink::UDPSocket<UDPCallback> NameChangeUDPSocket;
 /// receiving NameChangeRequests through a UDP socket.  The caller need only
 /// supply network addressing and a RequestReceiveHandler instance to receive
 /// NameChangeRequests asynchronously.
-class NameChangeUDPListener : public NameChangeListener {
+class KEA_DHCP_DDNS_API NameChangeUDPListener : public NameChangeListener {
 public:
     /// @brief Defines the maximum size packet that can be received.
     static const size_t RECV_BUF_MAX = isc::asiolink::
@@ -445,7 +446,7 @@ private:
 /// sending NameChangeRequests through a UDP socket.  The caller need only
 /// supply network addressing and a RequestSendHandler instance to send
 /// NameChangeRequests asynchronously.
-class NameChangeUDPSender : public NameChangeSender {
+class KEA_DHCP_DDNS_API NameChangeUDPSender : public NameChangeSender {
 public:
 
     /// @brief Defines the maximum size packet that can be sent.

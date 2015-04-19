@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,7 @@
 #include <vector>
 
 #include <exceptions/exceptions.h>
+#include <util/api.h>
 
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int.hpp>
@@ -31,19 +32,19 @@ namespace isc {
 namespace util {
 namespace random {
 
-class InvalidLimits : public isc::BadValue {
+class KEA_UTIL_API InvalidLimits : public isc::BadValue {
 public:
     InvalidLimits(const char* file, size_t line, const char* what) :
         isc::BadValue(file, line, what) {}
 };
 
-class SumNotOne : public isc::BadValue {
+class KEA_UTIL_API SumNotOne : public isc::BadValue {
 public:
     SumNotOne(const char* file, size_t line, const char* what) :
         isc::BadValue(file, line, what) {}
 };
 
-class InvalidProbValue : public isc::BadValue {
+class KEA_UTIL_API InvalidProbValue : public isc::BadValue {
 public:
     InvalidProbValue(const char* file, size_t line, const char* what) :
         isc::BadValue(file, line, what) {}
@@ -54,7 +55,7 @@ public:
 /// \brief Uniform random integer generator
 ///
 /// Generate uniformly distributed integers in range of [min, max]
-class UniformRandomIntegerGenerator{
+class KEA_UTIL_API UniformRandomIntegerGenerator{
 public:
     /// \brief Constructor
     ///
@@ -93,7 +94,7 @@ private:
 /// \brief Weighted random integer generator
 ///
 /// Generate random integers according different probabilities
-class WeightedRandomIntegerGenerator {
+class KEA_UTIL_API WeightedRandomIntegerGenerator {
 public:
     /// \brief Constructor
     ///

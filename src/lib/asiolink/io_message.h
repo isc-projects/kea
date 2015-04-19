@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -25,6 +25,7 @@
 
 #include <exceptions/exceptions.h>
 
+#include <asiolink/api.h>
 #include <asiolink/io_endpoint.h>
 #include <asiolink/io_socket.h>
 
@@ -43,7 +44,7 @@ namespace asiolink {
 /// It only provides a minimal level of support that is necessary for
 /// the current implementation of the authoritative server.
 /// A future version of this class will definitely support more.
-class IOMessage {
+class KEA_ASIOLINK_API IOMessage {
     ///
     /// \name Constructors and Destructor
     ///

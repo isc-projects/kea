@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013,2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,7 @@
 
 #include <asiolink/io_address.h>
 #include <boost/shared_ptr.hpp>
+#include <dhcpsrv/api.h>
 #include <dhcpsrv/lease.h>
 
 #include <vector>
@@ -28,7 +29,7 @@ namespace dhcp {
 ///
 /// Stores information about pool of IPv4 or IPv6 addresses.
 /// That is a basic component of a configuration.
-class Pool {
+class KEA_DHCPSRV_API Pool {
 
 public:
     /// @note:
@@ -142,7 +143,7 @@ protected:
 ///
 /// It holds information about pool4, i.e. a range of IPv4 address space that
 /// is configured for DHCP allocation.
-class Pool4 : public Pool {
+class KEA_DHCPSRV_API Pool4 : public Pool {
 public:
     /// @brief the constructor for Pool4 "min-max" style definition
     ///
@@ -166,7 +167,7 @@ typedef boost::shared_ptr<Pool4> Pool4Ptr;
 ///
 /// It holds information about pool6, i.e. a range of IPv6 address space that
 /// is configured for DHCP allocation.
-class Pool6 : public Pool {
+class KEA_DHCPSRV_API Pool6 : public Pool {
 public:
 
     /// @brief the constructor for Pool6 "min-max" style definition

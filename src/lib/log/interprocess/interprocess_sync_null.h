@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 #ifndef INTERPROCESS_SYNC_NULL_H
 #define INTERPROCESS_SYNC_NULL_H
 
+#include <log/interprocess/api.h>
 #include <log/interprocess/interprocess_sync.h>
 
 namespace isc {
@@ -26,7 +27,7 @@ namespace interprocess {
 /// This class specifies a concrete implementation for a null (no effect)
 /// interprocess synchronization mechanism. Please see the
 /// InterprocessSync class documentation for usage.
-class InterprocessSyncNull : public InterprocessSync {
+class KEA_LOG_INTERPROCESS_API InterprocessSyncNull : public InterprocessSync {
 public:
     /// \brief Constructor
     ///

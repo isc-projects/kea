@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#define KEA_UTIL_EXPORT
+
 #include <util/csv_file.h>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/constants.hpp>
@@ -65,6 +67,7 @@ CSVRow::writeAt(const size_t at, const char* value) {
     values_[at] = value;
 }
 
+KEA_UTIL_API
 std::ostream& operator<<(std::ostream& os, const CSVRow& row) {
     os << row.render();
     return (os);

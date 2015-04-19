@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,8 @@
 
 #include <exceptions/exceptions.h>
 
+#include <hooks/api.h>
+
 #include <boost/shared_ptr.hpp>
 
 #include <vector>
@@ -28,7 +30,7 @@ namespace hooks {
 ///
 /// Thrown if an attempt is made get a CalloutManager before the libraries
 /// have been loaded.
-class LoadLibrariesNotCalled : public Exception {
+class KEA_HOOKS_API LoadLibrariesNotCalled : public Exception {
 public:
     LoadLibrariesNotCalled(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
@@ -74,7 +76,7 @@ class LibraryManager;
 /// of libraries.  The function checks that each library exists, can be opened,
 /// that the "version" function exists and return the right number.
 
-class LibraryManagerCollection {
+class KEA_HOOKS_API LibraryManagerCollection {
 public:
     /// @brief Constructor
     ///

@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -27,6 +27,8 @@
 
 #include <stdint.h>
 
+#include <util/api.h>
+
 namespace isc {
 namespace util {
 namespace random {
@@ -38,7 +40,7 @@ namespace random {
 ///
 /// It automatically seeds it with the current time when it is first
 /// used.
-class QidGenerator {
+class KEA_UTIL_API QidGenerator {
 public:
     /// \brief Returns the singleton instance of the QidGenerator
     ///

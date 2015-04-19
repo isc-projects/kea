@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,8 @@
 #include <string>
 #include <vector>
 
+#include <util/api.h>
+#include <dns/api.h>
 #include <dns/exceptions.h>
 
 namespace isc {
@@ -35,7 +37,7 @@ class AbstractMessageRenderer;
 /// \brief A standard DNS module exception that is thrown if the name parser
 /// encounters an empty label in the middle of a name.
 ///
-class EmptyLabel : public NameParserException {
+class KEA_DNS_API EmptyLabel : public NameParserException {
 public:
     EmptyLabel(const char* file, size_t line, const char* what) :
         NameParserException(file, line, what) {}
@@ -45,7 +47,7 @@ public:
 /// \brief A standard DNS module exception that is thrown if the name parser
 /// encounters too long a name.
 ///
-class TooLongName : public NameParserException {
+class KEA_DNS_API TooLongName : public NameParserException {
 public:
     TooLongName(const char* file, size_t line, const char* what) :
         NameParserException(file, line, what) {}
@@ -55,7 +57,7 @@ public:
 /// \brief A standard DNS module exception that is thrown if the name parser
 /// encounters too long a label.
 ///
-class TooLongLabel : public NameParserException {
+class KEA_DNS_API TooLongLabel : public NameParserException {
 public:
     TooLongLabel(const char* file, size_t line, const char* what) :
         NameParserException(file, line, what) {}
@@ -67,7 +69,7 @@ public:
 /// applies to bitstring labels, which would begin with "\[".  Incomplete cases
 /// include an incomplete escaped sequence such as "\12".
 ///
-class BadLabelType : public NameParserException {
+class KEA_DNS_API BadLabelType : public NameParserException {
 public:
     BadLabelType(const char* file, size_t line, const char* what) :
         NameParserException(file, line, what) {}
@@ -77,7 +79,7 @@ public:
 /// \brief A standard DNS module exception that is thrown if the name parser
 /// fails to decode a "\"-escaped sequence.
 ///
-class BadEscape : public NameParserException {
+class KEA_DNS_API BadEscape : public NameParserException {
 public:
     BadEscape(const char* file, size_t line, const char* what) :
         NameParserException(file, line, what) {}
@@ -90,7 +92,7 @@ public:
 /// An attempt of constructing a name from an empty string will trigger this
 /// exception.
 ///
-class IncompleteName : public NameParserException {
+class KEA_DNS_API IncompleteName : public NameParserException {
 public:
     IncompleteName(const char* file, size_t line, const char* what) :
         NameParserException(file, line, what) {}
@@ -101,7 +103,7 @@ public:
 /// The exception is thrown when the Name constructor for master file
 /// is used, the provided data is relative and the origin parameter is
 /// set to NULL.
-class MissingNameOrigin : public NameParserException {
+class KEA_DNS_API MissingNameOrigin : public NameParserException {
 public:
     MissingNameOrigin(const char* file, size_t line, const char* what) :
         NameParserException(file, line, what) {}
@@ -122,7 +124,7 @@ public:
 /// For example, two non absolute (or "relative") sequences "example.com" and
 /// "example.org" have no hierarchical relationship, and the former should be
 /// sorted before (i.e. "smaller") than the latter.
-class NameComparisonResult {
+class KEA_DNS_API NameComparisonResult {
 public:
     /// The relation of two names under comparison.
     /// Its semantics for the case of
@@ -228,7 +230,7 @@ private:
 /// introduce a parser of master files, we'll introduce the notion of relative
 /// names as a special case.
 ///
-class Name {
+class KEA_DNS_API Name {
     // LabelSequences use knowledge about the internal data structure
     // of this class for efficiency (they use the offsets_ vector and
     // the ndata_ string)
@@ -752,7 +754,7 @@ Name::ROOT_NAME() {
 /// \param name The \c Name object output by the operation.
 /// \return A reference to the same \c std::ostream object referenced by
 /// parameter \c os after the insertion operation.
-std::ostream&
+KEA_DNS_API std::ostream&
 operator<<(std::ostream& os, const Name& name);
 
 }

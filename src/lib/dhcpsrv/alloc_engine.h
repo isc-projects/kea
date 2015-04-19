@@ -20,6 +20,7 @@
 #include <dhcp/hwaddr.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/option6_ia.h>
+#include <dhcpsrv/api.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/lease_mgr.h>
@@ -35,7 +36,7 @@ namespace dhcp {
 
 /// An exception that is thrown when allocation module fails (e.g. due to
 /// lack of available addresses)
-class AllocFailed : public isc::Exception {
+class KEA_DHCPSRV_API AllocFailed : public isc::Exception {
 public:
 
     /// @brief constructor
@@ -55,7 +56,7 @@ public:
 ///
 /// @todo: Does not handle out of leases well
 /// @todo: Does not handle out of allocation attempts well
-class AllocEngine : public boost::noncopyable {
+class KEA_DHCPSRV_API AllocEngine : public boost::noncopyable {
 protected:
 
     /// @brief base class for all address/prefix allocation algorithms

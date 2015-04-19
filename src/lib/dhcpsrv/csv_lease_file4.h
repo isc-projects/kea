@@ -17,6 +17,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/duid.h>
+#include <dhcpsrv/api.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/lease_file_stats.h>
@@ -39,7 +40,9 @@ namespace dhcp {
 /// validation (see http://kea.isc.org/ticket/2405). However, when #2405
 /// is implemented, the @c next function may need to be updated to use the
 /// validation capablity of @c Lease4.
-class CSVLeaseFile4 : public isc::util::CSVFile, public LeaseFileStats {
+class KEA_DHCPSRV_API CSVLeaseFile4 :
+    public isc::util::CSVFile,
+    public LeaseFileStats {
 public:
 
     /// @brief Constructor.

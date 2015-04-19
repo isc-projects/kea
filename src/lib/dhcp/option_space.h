@@ -1,4 +1,4 @@
-// Copyright (C) 2012, 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #define OPTION_SPACE_H
 
 #include <exceptions/exceptions.h>
+#include <dhcp/api.h>
 #include <boost/shared_ptr.hpp>
 #include <map>
 #include <stdint.h>
@@ -29,14 +30,14 @@ namespace dhcp {
 
 /// @brief Exception to be thrown when invalid option space
 /// is specified.
-class InvalidOptionSpace : public Exception {
+class KEA_DHCP_API InvalidOptionSpace : public Exception {
 public:
     InvalidOptionSpace(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
 /// OptionSpace forward declaration.
-class OptionSpace;
+class KEA_DHCP_API OptionSpace;
 /// A pointer to OptionSpace object.
 typedef boost::shared_ptr<OptionSpace> OptionSpacePtr;
 /// A collection of option spaces.
@@ -72,7 +73,7 @@ typedef std::map<std::string, OptionSpacePtr> OptionSpaceCollection;
 /// it could hold both DHCPv4 and DHCPv6 option spaces as the OptionSpace6
 /// object could be upcast to OptionSpace4. This confusion does not appear
 /// when OptionSpace is used as a name for the base class.
-class OptionSpace {
+class KEA_DHCP_API OptionSpace {
 public:
 
     /// @brief Constructor.
@@ -142,7 +143,7 @@ private:
 /// objects. Also, it is easy to mark vendor-specific option space as non-vendor
 /// specific option space (and the other way around) without a need to cast
 /// between OptionSpace and OptionSpace6 types.
-class OptionSpace6 : public OptionSpace {
+class KEA_DHCP_API OptionSpace6 : public OptionSpace {
 public:
 
     /// @brief Constructor for non-vendor-specific options.

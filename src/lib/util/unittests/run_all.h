@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,8 @@
 
 #include <gtest/gtest.h>
 
+#include <util/unittests/api.h>
+
 namespace isc {
 namespace util {
 namespace unittests {
@@ -41,7 +43,7 @@ namespace unittests {
 ///
 /// \return Return value from RUN_ALL_TESTS().
 
-int run_all();
+KEA_UTIL_UNITTESTS_API int run_all();
 
 } // namespace unittests
 } // namespace util

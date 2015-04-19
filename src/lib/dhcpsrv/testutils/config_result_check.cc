@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#define KEA_DHCPSRV_TESTUTILS_EXPORT
 
 #include <cc/proto_defs.h>
 #include <dhcpsrv/testutils/config_result_check.h>
@@ -26,6 +28,7 @@ namespace test {
 using namespace isc;
 using namespace isc::data;
 
+KEA_DHCPSRV_TESTUTILS_API
 bool errorContainsPosition(ConstElementPtr error_element,
                            const std::string& file_name) {
     if (error_element->contains(isc::cc::CC_PAYLOAD_RESULT)) {

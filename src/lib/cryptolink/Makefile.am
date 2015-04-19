@@ -2,13 +2,14 @@ SUBDIRS = . tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
-AM_CXXFLAGS = $(KEA_CXXFLAGS)
+AM_CXXFLAGS = $(KEA_CXXFLAGS) $(SHLIB_CXXFLAGS)
 
 CLEANFILES = *.gcno *.gcda
 
 lib_LTLIBRARIES = libkea-cryptolink.la
 
-libkea_cryptolink_la_SOURCES = cryptolink.h cryptolink.cc
+libkea_cryptolink_la_SOURCES = api.h
+libkea_cryptolink_la_SOURCES += cryptolink.h cryptolink.cc
 libkea_cryptolink_la_SOURCES += crypto_hash.h crypto_hash.cc
 libkea_cryptolink_la_SOURCES += crypto_hmac.h crypto_hmac.cc
 if HAVE_BOTAN

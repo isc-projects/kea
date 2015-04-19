@@ -6,7 +6,7 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/asiolink -I$(top_builddir)/src/lib/asiolink
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/util -I$(top_builddir)/src/lib/util
 
-AM_CXXFLAGS = $(KEA_CXXFLAGS)
+AM_CXXFLAGS = $(KEA_CXXFLAGS) $(SHLIB_CXXFLAGS)
 
 CLEANFILES = *.gcno *.gcda asiodns_messages.h asiodns_messages.cc s-messages
 
@@ -20,7 +20,7 @@ s-messages: asiodns_messages.mes
 BUILT_SOURCES = asiodns_messages.h asiodns_messages.cc
 
 lib_LTLIBRARIES = libkea-asiodns.la
-libkea_asiodns_la_SOURCES = dns_answer.h
+libkea_asiodns_la_SOURCES = api.h dns_answer.h
 libkea_asiodns_la_SOURCES += asiodns.h
 libkea_asiodns_la_SOURCES += dns_lookup.h
 libkea_asiodns_la_SOURCES += dns_server.h

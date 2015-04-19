@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 #ifndef LABELSEQUENCE_H
 #define LABELSEQUENCE_H 1
 
+#include <dns/api.h>
 #include <dns/name.h>
 #include <util/buffer.h>
 
@@ -40,7 +41,7 @@ namespace dns {
 /// LabelSequences can be compared to other LabelSequences, and their
 /// data can be requested (which then points to part of the original
 /// data of the original Name object).
-class LabelSequence {
+class KEA_DNS_API LabelSequence {
     // Name calls the private toText(bool) method of LabelSequence.
     friend std::string Name::toText(bool) const;
 
@@ -415,7 +416,7 @@ private:
 /// \param label_sequence The \c LabelSequence object output by the operation.
 /// \return A reference to the same \c std::ostream object referenced by
 /// parameter \c os after the insertion operation.
-std::ostream&
+KEA_DNS_API std::ostream&
 operator<<(std::ostream& os, const LabelSequence& label_sequence);
 
 inline const LabelSequence&

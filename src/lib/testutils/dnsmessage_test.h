@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -28,6 +28,8 @@
 #include <dns/rrclass.h>
 #include <dns/rrset.h>
 
+#include <testutils/api.h>
+
 #include <gtest/gtest.h>
 
 namespace isc {
@@ -40,13 +42,13 @@ namespace testutils {
 /// (The flag values is irrelevant to their wire-format values).
 /// The meaning of the flags should be obvious from the variable names.
 //@{
-extern const unsigned int QR_FLAG;
-extern const unsigned int AA_FLAG;
-extern const unsigned int TC_FLAG;
-extern const unsigned int RD_FLAG;
-extern const unsigned int RA_FLAG;
-extern const unsigned int AD_FLAG;
-extern const unsigned int CD_FLAG;
+extern const KEA_TESTUTILS_API unsigned int QR_FLAG;
+extern const KEA_TESTUTILS_API unsigned int AA_FLAG;
+extern const KEA_TESTUTILS_API unsigned int TC_FLAG;
+extern const KEA_TESTUTILS_API unsigned int RD_FLAG;
+extern const KEA_TESTUTILS_API unsigned int RA_FLAG;
+extern const KEA_TESTUTILS_API unsigned int AD_FLAG;
+extern const KEA_TESTUTILS_API unsigned int CD_FLAG;
 //@}
 
 /// Set of unit tests to examine a DNS message header.
@@ -78,7 +80,7 @@ extern const unsigned int CD_FLAG;
 /// \param ancount The expected value of ANCOUNT
 /// \param nscount The expected value of NSCOUNT
 /// \param arcount The expected value of ARCOUNT
-void
+KEA_TESTUTILS_API void
 headerCheck(const isc::dns::Message& message, const isc::dns::qid_t qid,
             const isc::dns::Rcode& rcode,
             const uint16_t opcodeval, const unsigned int flags,
@@ -111,6 +113,7 @@ headerCheck(const isc::dns::Message& message, const isc::dns::qid_t qid,
 ///
 /// \param expected_rrset The expected RRset
 /// \param actual_rrset The RRset to be tested
+KEA_TESTUTILS_API
 void rrsetCheck(isc::dns::ConstRRsetPtr expected_rrset,
                 isc::dns::ConstRRsetPtr actual_rrset);
 
@@ -149,7 +152,7 @@ struct RRsetMatch : public std::unary_function<isc::dns::ConstRRsetPtr, bool> {
 
 // Helper callback functor for masterLoad() used in rrsetsCheck (stream
 // version)
-class RRsetInserter {
+class KEA_TESTUTILS_API RRsetInserter {
 public:
     RRsetInserter(std::vector<isc::dns::ConstRRsetPtr>& rrsets) :
         rrsets_(rrsets)
@@ -179,6 +182,7 @@ private:
 /// parameter normally doesn't have to be specified, but for an SOA RR it
 /// must be set to its owner name, due to the internal check of
 /// \c dns::masterLoad().
+KEA_TESTUTILS_API
 isc::dns::RRsetPtr textToRRset(const std::string& text_rrset,
                                const isc::dns::RRClass& rrclass =
                                isc::dns::RRClass::IN(),
@@ -246,7 +250,7 @@ pullSigs(std::vector<isc::dns::ConstRRsetPtr>& rrsets,
 /// \param actual_begin The beginning of the set of RRsets to be tested
 /// \param actual_end The end of the set of RRsets to be tested
 template<typename EXPECTED_ITERATOR, typename ACTUAL_ITERATOR>
-void
+KEA_TESTUTILS_API void
 rrsetsCheck(EXPECTED_ITERATOR expected_begin, EXPECTED_ITERATOR expected_end,
             ACTUAL_ITERATOR actual_begin, ACTUAL_ITERATOR actual_end)
 {

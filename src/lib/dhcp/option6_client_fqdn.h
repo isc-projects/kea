@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 #ifndef OPTION6_CLIENT_FQDN_H
 #define OPTION6_CLIENT_FQDN_H
 
+#include <dhcp/api.h>
 #include <dhcp/option.h>
 #include <dns/name.h>
 
@@ -25,14 +26,14 @@ namespace dhcp {
 
 /// @brief Exception thrown when invalid flags have been specified for
 /// DHCPv6 Client Fqdn %Option.
-class InvalidOption6FqdnFlags : public Exception {
+class KEA_DHCP_API InvalidOption6FqdnFlags : public Exception {
 public:
     InvalidOption6FqdnFlags(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
 
 /// @brief Exception thrown when invalid domain name is specified.
-class InvalidOption6FqdnDomainName : public Exception {
+class KEA_DHCP_API InvalidOption6FqdnDomainName : public Exception {
 public:
     InvalidOption6FqdnDomainName(const char* file, size_t line,
                                 const char* what) :
@@ -40,7 +41,7 @@ public:
 };
 
 /// Forward declaration to implementation of @c Option6ClientFqdn class.
-class Option6ClientFqdnImpl;
+class KEA_DHCP_API Option6ClientFqdnImpl;
 
 /// @brief Represents DHCPv6 Client FQDN %Option (code 39).
 ///
@@ -88,7 +89,7 @@ class Option6ClientFqdnImpl;
 /// that the part of implementation which deals with domain-names is modified to
 /// not use classes from libdns. These changes will be transparent for this
 /// interface.
-class Option6ClientFqdn : public Option {
+class KEA_DHCP_API Option6ClientFqdn : public Option {
 public:
 
     ///

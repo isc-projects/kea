@@ -1,4 +1,4 @@
-// Copyright (C) 2012,2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #define ADDR_UTILITIES_H
 
 #include <asiolink/io_address.h>
+#include <dhcpsrv/api.h>
 
 namespace isc {
 namespace dhcp {
@@ -35,8 +36,8 @@ namespace dhcp {
 /// @param len prefix length
 ///
 /// @return first address from a prefix
-isc::asiolink::IOAddress firstAddrInPrefix(const isc::asiolink::IOAddress& prefix,
-                                            uint8_t len);
+KEA_DHCPSRV_API isc::asiolink::IOAddress
+firstAddrInPrefix(const isc::asiolink::IOAddress& prefix, uint8_t len);
 
 /// @brief returns a last address in a given prefix
 ///
@@ -49,13 +50,13 @@ isc::asiolink::IOAddress firstAddrInPrefix(const isc::asiolink::IOAddress& prefi
 /// @param len prefix length
 ///
 /// @return first address from a prefix
-isc::asiolink::IOAddress lastAddrInPrefix(const isc::asiolink::IOAddress& prefix,
-                                           uint8_t len);
+KEA_DHCPSRV_API isc::asiolink::IOAddress
+lastAddrInPrefix(const isc::asiolink::IOAddress& prefix, uint8_t len);
 
 /// @brief Generates an IPv4 netmask of specified length
 /// @throw BadValue if len is greater than 32
 /// @return netmask
-isc::asiolink::IOAddress getNetmask4(uint8_t len);
+KEA_DHCPSRV_API isc::asiolink::IOAddress getNetmask4(uint8_t len);
 
 
 /// @brief Returns number of available addresses in the specified range (min - max).
@@ -68,6 +69,7 @@ isc::asiolink::IOAddress getNetmask4(uint8_t len);
 /// @param min the first address in range
 /// @param max the last address in range
 /// @return number of addresses in range
+KEA_DHCPSRV_API
 uint64_t addrsInRange(const isc::asiolink::IOAddress& min,
                       const isc::asiolink::IOAddress& max);
 

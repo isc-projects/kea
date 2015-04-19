@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,8 @@
 // We probably want to merge this with the weighted random in the nsas
 // (and other parts where we need randomness, perhaps another thing
 // for a general libutil?)
+
+#define KEA_UTIL_EXPORT
 
 #include <util/random/qid_gen.h>
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 #ifndef OPTION_DEFINITION_H
 #define OPTION_DEFINITION_H
 
+#include <dhcp/api.h>
 #include <dhcp/option.h>
 #include <dhcp/option_data_types.h>
 
@@ -30,14 +31,14 @@ namespace dhcp {
 
 /// @brief Exception to be thrown when invalid option value has been
 /// specified for a particular option definition.
-class InvalidOptionValue : public Exception {
+class KEA_DHCP_API InvalidOptionValue : public Exception {
 public:
     InvalidOptionValue(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
 /// @brief Exception to be thrown when option definition is invalid.
-class MalformedOptionDefinition : public Exception {
+class KEA_DHCP_API MalformedOptionDefinition : public Exception {
 public:
     MalformedOptionDefinition(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
@@ -45,14 +46,14 @@ public:
 
 /// @brief Exception to be thrown when the particular option definition
 /// duplicates existing option definition.
-class DuplicateOptionDefinition : public Exception {
+class KEA_DHCP_API DuplicateOptionDefinition : public Exception {
 public:
     DuplicateOptionDefinition(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
 /// @brief Forward declaration to OptionDefinition.
-class OptionDefinition;
+class KEA_DHCP_API OptionDefinition;
 
 /// @brief Pointer to option definition object.
 typedef boost::shared_ptr<OptionDefinition> OptionDefinitionPtr;
@@ -132,7 +133,7 @@ class OptionIntArray;
 /// @todo Extend the comment to describe "generic factories".
 /// @todo Extend this class to use custom namespaces.
 /// @todo Extend this class with more factory functions.
-class OptionDefinition {
+class KEA_DHCP_API OptionDefinition {
 public:
 
     /// List of fields within the record.

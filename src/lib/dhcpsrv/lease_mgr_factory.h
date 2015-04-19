@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 #ifndef LEASE_MGR_FACTORY_H
 #define LEASE_MGR_FACTORY_H
 
+#include <dhcpsrv/api.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <exceptions/exceptions.h>
 
@@ -26,7 +27,7 @@ namespace dhcp {
 /// @brief Invalid type exception
 ///
 /// Thrown when the factory doesn't recognise the type of the backend.
-class InvalidType : public Exception {
+class KEA_DHCPSRV_API InvalidType : public Exception {
 public:
     InvalidType(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
@@ -36,7 +37,7 @@ public:
 ///
 /// Thrown if an attempt is made to get a reference to the current lease
 /// manager and none is currently available.
-class NoLeaseManager : public Exception {
+class KEA_DHCPSRV_API NoLeaseManager : public Exception {
 public:
     NoLeaseManager(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
@@ -54,7 +55,7 @@ public:
 ///
 /// @todo: Will need to develop some form of registration mechanism for
 ///        user-supplied backends (so that there is no need to modify the code).
-class LeaseMgrFactory {
+class KEA_DHCPSRV_API LeaseMgrFactory {
 public:
     /// @brief Create an instance of a lease manager.
     ///

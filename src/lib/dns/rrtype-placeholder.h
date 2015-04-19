@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,8 @@
 #include <string>
 #include <ostream>
 
+#include <util/api.h>
+#include <dns/api.h>
 #include <dns/exceptions.h>
 
 // Solaris x86 defines DS in <sys/regset.h>, which gets pulled in by Boost
@@ -42,7 +44,7 @@ class AbstractMessageRenderer;
 /// \brief A standard DNS module exception that is thrown if an RRType object
 /// is being constructed from an unrecognized string.
 ///
-class InvalidRRType : public DNSTextError {
+class KEA_DNS_API InvalidRRType : public DNSTextError {
 public:
     InvalidRRType(const char* file, size_t line, const char* what) :
         DNSTextError(file, line, what) {}
@@ -52,7 +54,7 @@ public:
 /// \brief A standard DNS module exception that is thrown if an RRType object
 /// is being constructed from a incomplete (too short) wire-format data.
 ///
-class IncompleteRRType : public isc::dns::Exception {
+class KEA_DNS_API IncompleteRRType : public isc::dns::Exception {
 public:
     IncompleteRRType(const char* file, size_t line, const char* what) :
         isc::dns::Exception(file, line, what) {}
@@ -104,7 +106,7 @@ public:
 /// this assumption, but if we encounter memory bloat due to this problem with
 /// particular compilers we need to revisit the design or think about
 /// workaround.
-class RRType {
+class KEA_DNS_API RRType {
 public:
     ///
     /// \name Constructors and Destructor
@@ -283,7 +285,7 @@ private:
 /// \param rrtype The \c RRType object output by the operation.
 /// \return A reference to the same \c std::ostream object referenced by
 /// parameter \c os after the insertion operation.
-std::ostream&
+KEA_DNS_API std::ostream&
 operator<<(std::ostream& os, const RRType& rrtype);
 }
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,11 +17,13 @@
 
 #include <string>
 
+#include <log/interprocess/api.h>
+
 namespace isc {
 namespace log {
 namespace interprocess {
 
-class InterprocessSyncLocker; // forward declaration
+class KEA_LOG_INTERPROCESS_API InterprocessSyncLocker; // forward declaration
 
 /// \brief Interprocess Sync Class
 ///
@@ -43,7 +45,7 @@ class InterprocessSyncLocker; // forward declaration
 /// NOTE: All implementations of InterprocessSync should keep the
 /// is_locked_ member variable updated whenever their
 /// lock()/tryLock()/unlock() implementations are called.
-class InterprocessSync {
+class KEA_LOG_INTERPROCESS_API InterprocessSync {
   // InterprocessSyncLocker is the only code outside this class that
   // should be allowed to call the lock(), tryLock() and unlock()
   // methods.
@@ -91,7 +93,7 @@ protected:
 /// locks that are released automatically when the block is exited
 /// (RAII). It is meant to be used along with InterprocessSync objects. See
 /// the description of InterprocessSync.
-class InterprocessSyncLocker {
+class KEA_LOG_INTERPROCESS_API InterprocessSyncLocker {
 public:
     /// \brief Constructor
     ///

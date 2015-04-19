@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,8 @@
 #ifndef RRTTL_H
 #define RRTTL_H 1
 
+#include <util/api.h>
+#include <dns/api.h>
 #include <dns/exceptions.h>
 
 #include <boost/optional.hpp>
@@ -36,7 +38,7 @@ class AbstractMessageRenderer;
 /// \brief A standard DNS module exception that is thrown if an RRTTL object
 /// is being constructed from an unrecognized string.
 ///
-class InvalidRRTTL : public DNSTextError {
+class KEA_DNS_API InvalidRRTTL : public DNSTextError {
 public:
     InvalidRRTTL(const char* file, size_t line, const char* what) :
         DNSTextError(file, line, what) {}
@@ -46,7 +48,7 @@ public:
 /// \brief A standard DNS module exception that is thrown if an RRTTL object
 /// is being constructed from a incomplete (too short) wire-format data.
 ///
-class IncompleteRRTTL : public isc::dns::Exception {
+class KEA_DNS_API IncompleteRRTTL : public isc::dns::Exception {
 public:
     IncompleteRRTTL(const char* file, size_t line, const char* what) :
         isc::dns::Exception(file, line, what) {}
@@ -60,7 +62,7 @@ public:
 /// of this class is to provide convenient interfaces to convert a textual
 /// representation into the integer TTL value and vice versa, and to handle
 /// wire-format representations.
-class RRTTL {
+class KEA_DNS_API RRTTL {
 public:
     ///
     /// \name Constructors, Factory and Destructor
@@ -303,7 +305,7 @@ private:
 /// \param rrttl The \c RRTTL object output by the operation.
 /// \return A reference to the same \c std::ostream object referenced by
 /// parameter \c os after the insertion operation.
-std::ostream&
+KEA_DNS_API std::ostream&
 operator<<(std::ostream& os, const RRTTL& rrttl);
 }
 }

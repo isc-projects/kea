@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,7 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <dns/api.h>
 #include <dns/exceptions.h>
 
 #include <dns/rdata.h>
@@ -35,7 +36,7 @@ struct RRParamRegistryImpl;
 /// \brief A standard DNS module exception that is thrown if a new RR type is
 /// being registered with a different type string.
 ///
-class RRTypeExists : public isc::dns::Exception {
+class KEA_DNS_API RRTypeExists : public isc::dns::Exception {
 public:
     RRTypeExists(const char* file, size_t line, const char* what) :
         isc::dns::Exception(file, line, what) {}
@@ -45,7 +46,7 @@ public:
 /// \brief A standard DNS module exception that is thrown if a new RR class is
 /// being registered with a different type string.
 ///
-class RRClassExists : public isc::dns::Exception {
+class KEA_DNS_API RRClassExists : public isc::dns::Exception {
 public:
     RRClassExists(const char* file, size_t line, const char* what) :
         isc::dns::Exception(file, line, what) {}
@@ -62,7 +63,7 @@ namespace rdata {
 /// Other users of this API normally do not have to care about this class
 /// or its derived classes; this class is generally intended to be used
 /// as an internal utility of the API implementation.
-class AbstractRdataFactory {
+class KEA_DNS_API AbstractRdataFactory {
     ///
     /// \name Constructors and Destructor
     ///
@@ -176,7 +177,7 @@ typedef boost::shared_ptr<AbstractRdataFactory> RdataFactoryPtr;
 /// Note: the implementation of this class is incomplete: we should at least
 /// add RDATA related parameters.  This will be done in a near future version,
 /// at which point some of method signatures will be changed.
-class RRParamRegistry {
+class KEA_DNS_API RRParamRegistry {
     ///
     /// \name Constructors and Destructor
     ///

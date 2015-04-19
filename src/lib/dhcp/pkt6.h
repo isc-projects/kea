@@ -16,6 +16,7 @@
 #define PKT6_H
 
 #include <asiolink/io_address.h>
+#include <dhcp/api.h>
 #include <dhcp/option.h>
 #include <dhcp/pkt.h>
 
@@ -32,7 +33,7 @@ namespace isc {
 
 namespace dhcp {
 
-class Pkt6;
+class KEA_DHCP_API Pkt6;
 
 /// @brief A pointer to Pkt6 packet
 typedef boost::shared_ptr<Pkt6> Pkt6Ptr;
@@ -48,7 +49,7 @@ typedef boost::shared_ptr<Pkt6> Pkt6Ptr;
 /// This class also handles relayed packets. For example, a RELAY-FORW message
 /// with a SOLICIT inside will be represented as SOLICIT and the RELAY-FORW
 /// layers will be stored in relay_info_ vector.
-class Pkt6 : public Pkt {
+class KEA_DHCP_API Pkt6 : public Pkt {
 public:
     /// specifies non-relayed DHCPv6 packet header length (over UDP)
     const static size_t DHCPV6_PKT_HDR_LEN = 4;

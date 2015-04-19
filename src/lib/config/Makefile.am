@@ -4,6 +4,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/lib/cc
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/log -I$(top_builddir)/src/lib/log
 AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CXXFLAGS = $(SHLIB_CXXFLAGS)
 
 # Define rule to build logging source files from message file
 config_messages.h config_messages.cc: s-messages
@@ -15,7 +16,8 @@ s-messages: config_messages.mes
 BUILT_SOURCES = config_messages.h config_messages.cc
 
 lib_LTLIBRARIES = libkea-cfgclient.la
-libkea_cfgclient_la_SOURCES = config_data.h config_data.cc
+libkea_cfgclient_la_SOURCES = api.h
+libkea_cfgclient_la_SOURCES += config_data.h config_data.cc
 libkea_cfgclient_la_SOURCES += module_spec.h module_spec.cc
 libkea_cfgclient_la_SOURCES += ccsession.cc ccsession.h
 libkea_cfgclient_la_SOURCES += config_log.h config_log.cc

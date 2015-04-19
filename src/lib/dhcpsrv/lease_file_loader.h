@@ -15,6 +15,7 @@
 #ifndef LEASE_FILE_LOADER_H
 #define LEASE_FILE_LOADER_H
 
+#include <dhcpsrv/api.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/memfile_lease_storage.h>
 #include <util/csv_file.h>
@@ -43,7 +44,7 @@ namespace dhcp {
 /// with the @c Lease4Storage and @c Lease6Storage to process the DHCPv4
 /// and DHCPv6 leases respectively.
 ///
-class LeaseFileLoader {
+class KEA_DHCPSRV_API LeaseFileLoader {
 public:
 
     /// @brief Load leases from the lease file into the specified storage.

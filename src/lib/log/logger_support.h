@@ -1,4 +1,4 @@
-// Copyright (C) 2011,2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,7 @@
 #include <unistd.h>
 
 #include <string>
+#include <log/api.h>
 #include <log/logger.h>
 #include <log/logger_unittest_support.h>
 
@@ -38,12 +39,14 @@ namespace log {
 /// and throw an exception if logging is not initialized at that point.
 ///
 /// \return true if logging has been initialized, false if not
+KEA_LOG_API
 bool isLoggingInitialized();
 
 /// \brief Set state of "logging initialized" flag
 ///
 /// \param state State to set the flag to. (This is expected to be "true" - the
 ///        default - for all code apart from specific unit tests.)
+KEA_LOG_API
 void setLoggingInitialized(bool state = true);
 
 /// \brief Run-time initialization
@@ -64,6 +67,7 @@ void setLoggingInitialized(bool state = true);
 /// \param buffer If true, all log messages will be buffered until one of
 ///        the \c process() methods is called. If false, initial logging
 ///        shall go to the default output (i.e. stdout)
+KEA_LOG_API
 void initLogger(const std::string& root,
                 isc::log::Severity severity = isc::log::INFO,
                 int dbglevel = 0, const char* file = NULL,
@@ -77,6 +81,7 @@ void initLogger(const std::string& root,
 /// It uses KEA_LOGGER_DESTINATION environment variable to specify
 /// logging destination.
 /// @param verbose defines whether logging should be verbose or not
+KEA_LOG_API
 void setDefaultLoggingOutput(bool verbose = true);
 
 

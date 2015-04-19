@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,8 @@
 #include <stdint.h>
 
 #include <ostream>
+
+#include <dns/api.h>
 
 #ifndef RCODE_H
 #define RCODE_H 1
@@ -45,7 +47,7 @@ namespace dns {
 /// to handle RCODEs through this class.  In fact, public interfaces of
 /// this library uses this class to pass or return RCODEs instead of the
 /// bare code values.
-class Rcode {
+class KEA_DNS_API Rcode {
 public:
     /// Constants for pre-defined RCODE values.
     enum CodeValue {
@@ -336,6 +338,7 @@ Rcode::BADVERS() {
 /// \param rcode A reference to an \c Rcode object output by the operation.
 /// \return A reference to the same \c std::ostream object referenced by
 /// parameter \c os after the insertion operation.
+KEA_DNS_API
 std::ostream& operator<<(std::ostream& os, const Rcode& rcode);
 }
 }

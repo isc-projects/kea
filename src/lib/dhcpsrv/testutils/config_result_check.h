@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #define CONFIG_RESULT_CHECK_H
 
 #include <cc/data.h>
+#include <dhcpsrv/testutils/api.h>
 
 namespace isc {
 namespace dhcp {
@@ -46,6 +47,7 @@ namespace test {
 /// @return true if the provided configuration result comprises a string
 /// which holds a position of the data element which caused the error;
 /// false otherwise.
+KEA_DHCPSRV_TESTUTILS_API
 bool errorContainsPosition(isc::data::ConstElementPtr error_element,
                            const std::string& file_name);
 

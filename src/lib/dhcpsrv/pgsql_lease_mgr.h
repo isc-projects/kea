@@ -16,6 +16,7 @@
 #define PGSQL_LEASE_MGR_H
 
 #include <dhcp/hwaddr.h>
+#include <dhcpsrv/api.h>
 #include <dhcpsrv/lease_mgr.h>
 
 #include <boost/scoped_ptr.hpp>
@@ -36,7 +37,7 @@ namespace dhcp {
 /// valid for the duration of the PostgreSQL statement execution.  In other
 /// words populating them with pointers to values that go out of scope before
 /// statement is executed is a bad idea.
-struct PsqlBindArray {
+struct KEA_DHCPSRV_API PsqlBindArray {
     /// @brief Vector of pointers to the data values.
     std::vector<const char *> values_;
     /// @brief Vector of data lengths for each value.
@@ -109,8 +110,8 @@ struct PsqlBindArray {
 
 // Forward definitions (needed for shared_ptr definitions)
 // See pgsql_lease_mgr.cc file for actual class definitions
-class PgSqlLease4Exchange;
-class PgSqlLease6Exchange;
+class KEA_DHCPSRV_API PgSqlLease4Exchange;
+class KEA_DHCPSRV_API PgSqlLease6Exchange;
 
 /// Defines PostgreSQL backend version: 1.0
 const uint32_t PG_CURRENT_VERSION = 1;
@@ -121,7 +122,7 @@ const uint32_t PG_CURRENT_MINOR = 0;
 /// This class provides the \ref isc::dhcp::LeaseMgr interface to the PostgreSQL
 /// database.  Use of this backend presupposes that a PostgreSQL database is
 /// available and that the Kea schema has been created within it.
-class PgSqlLeaseMgr : public LeaseMgr {
+class KEA_DHCPSRV_API PgSqlLeaseMgr : public LeaseMgr {
 public:
 
     /// @brief Constructor

@@ -6,7 +6,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/util -I$(top_builddir)/src/lib/util
 AM_CPPFLAGS += $(BOOST_INCLUDES)
-AM_CXXFLAGS = $(KEA_CXXFLAGS)
+AM_CXXFLAGS = $(KEA_CXXFLAGS) $(SHLIB_CXXFLAGS)
 
 CLEANFILES = *.gcno *.gcda
 CLEANFILES += s-rdatacode
@@ -105,7 +105,7 @@ lib_LTLIBRARIES = libkea-dns++.la
 
 libkea_dns___la_LDFLAGS = -no-undefined -version-info 2:0:0
 
-libkea_dns___la_SOURCES =
+libkea_dns___la_SOURCES =  api.h
 libkea_dns___la_SOURCES += dns_fwd.h
 libkea_dns___la_SOURCES += edns.h edns.cc
 libkea_dns___la_SOURCES += exceptions.h exceptions.cc

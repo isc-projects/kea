@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #define OPTION_H
 
 #include <util/buffer.h>
+#include <dhcp/api.h>
 
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
@@ -42,7 +43,7 @@ typedef OptionBuffer::const_iterator OptionBufferConstIter;
 typedef boost::shared_ptr<OptionBuffer> OptionBufferPtr;
 
 /// shared pointer to Option object
-class Option;
+class KEA_DHCP_API Option;
 typedef boost::shared_ptr<Option> OptionPtr;
 
 /// A collection of DHCP (v4 or v6) options
@@ -74,7 +75,7 @@ typedef boost::function< size_t(const OptionBuffer& buffer,
                          > UnpackOptionsCallback;
 
 
-class Option {
+class KEA_DHCP_API Option {
 public:
     /// length of the usual DHCPv4 option header (there are exceptions)
     const static size_t OPTION4_HDR_LEN = 2;

@@ -14,6 +14,8 @@
 
 #include <config.h>
 
+#define KEA_DHCPSRV_EXPORT
+
 #include <dhcpsrv/alloc_engine.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/host_mgr.h>

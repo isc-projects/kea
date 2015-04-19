@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,8 @@
 
 #include <ostream>
 
+#include <util/api.h>
+#include <dns/api.h>
 #include <dns/rdata.h>
 
 namespace isc {
@@ -30,7 +32,7 @@ class OutputBuffer;
 
 namespace dns {
 
-class EDNS;
+class KEA_DNS_API EDNS;
 class Name;
 class AbstractMessageRenderer;
 class RRClass;
@@ -128,7 +130,7 @@ typedef boost::shared_ptr<const EDNS> ConstEDNSPtr;
 /// If a future version of the %EDNS protocol introduces further relationship
 /// between the message and the %EDNS, we might reconsider the interface,
 /// probably with higher abstraction.
-class EDNS {
+class KEA_DNS_API EDNS {
 public:
     ///
     /// \name Constructors and Destructor
@@ -421,6 +423,7 @@ private:
 /// \param extended_rcode A placeholder to store the topmost 8 bits of the
 /// extended Rcode.
 /// \return A pointer to the created \c EDNS object.
+KEA_DNS_API
 EDNS* createEDNSFromRR(const Name& name, const RRClass& rrclass,
                        const RRType& rrtype, const RRTTL& ttl,
                        const rdata::Rdata& rdata, uint8_t& extended_rcode);
@@ -435,6 +438,7 @@ EDNS* createEDNSFromRR(const Name& name, const RRClass& rrclass,
 /// \param edns A reference to an \c EDNS object output by the operation.
 /// \return A reference to the same \c std::ostream object referenced by
 /// parameter \c os after the insertion operation.
+KEA_DNS_API
 std::ostream& operator<<(std::ostream& os, const EDNS& edns);
 }
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 #ifndef MEMORY_SEGMENT_LOCAL_H
 #define MEMORY_SEGMENT_LOCAL_H
 
+#include <util/api.h>
 #include <util/memory_segment.h>
 
 #include <string>
@@ -28,7 +29,7 @@ namespace util {
 /// This class specifies a concrete implementation for a malloc/free
 /// based MemorySegment. Please see the MemorySegment class
 /// documentation for usage.
-class MemorySegmentLocal : public MemorySegment {
+class KEA_UTIL_API MemorySegmentLocal : public MemorySegment {
 public:
     /// \brief Constructor
     ///

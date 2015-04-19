@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 #ifndef RRCOLLATOR_H
 #define RRCOLLATOR_H 1
 
+#include <dns/api.h>
 #include <dns/master_loader_callbacks.h>
 #include <dns/rrset.h>
 
@@ -50,7 +51,7 @@ namespace dns {
 /// implementation details, but it actually doesn't make sense to copy
 /// an object of this class, if not harmful, for the intended usage of
 /// the class.
-class RRCollator : boost::noncopyable {
+class KEA_DNS_API RRCollator : boost::noncopyable {
 public:
     /// \brief Callback functor type for \c RRCollator.
     ///

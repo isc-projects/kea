@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 #ifndef DNS_INPUTSOURCE_H
 #define DNS_INPUTSOURCE_H 1
 
+#include <dns/api.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/noncopyable.hpp>
@@ -38,7 +39,7 @@ namespace master_lexer_internal {
 ///
 /// This class is not meant for public use. We also enforce that
 /// instances are non-copyable.
-class InputSource : boost::noncopyable {
+class KEA_DNS_API InputSource : boost::noncopyable {
 public:
     /// \brief Returned by getChar() when end of stream is reached.
     ///

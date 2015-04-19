@@ -6,10 +6,11 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/util -I$(top_builddir)/src/lib/util
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/exceptions -I$(top_builddir)/src/lib/exceptions
 AM_CPPFLAGS += $(BOOST_INCLUDES)
-AM_CXXFLAGS = $(KEA_CXXFLAGS)
+AM_CXXFLAGS = $(KEA_CXXFLAGS) $(SHLIB_CXXFLAGS)
 
 lib_LTLIBRARIES = libkea-util.la
-libkea_util_la_SOURCES  = csv_file.h csv_file.cc
+libkea_util_la_SOURCES  = api.h
+libkea_util_la_SOURCES += csv_file.h csv_file.cc
 libkea_util_la_SOURCES += filename.h filename.cc
 libkea_util_la_SOURCES += locks.h lru_list.h
 libkea_util_la_SOURCES += strutil.h strutil.cc

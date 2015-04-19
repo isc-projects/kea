@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,8 @@
 #include <netinet/in.h>
 
 #include <cassert>
+
+#include <util/io/api.h>
 
 // These definitions in this file are for the convenience of internal
 // implementation and test code, and are not intended to be used publicly.

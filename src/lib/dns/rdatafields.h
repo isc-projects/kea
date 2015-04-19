@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,9 @@
 #include <stdint.h>
 
 #include <cstddef>
+
+#include <util/api.h>
+#include <dns/api.h>
 
 namespace isc {
 namespace util {
@@ -156,7 +159,7 @@ getFieldSpecData()-> { compressible name { compressible name { other data
 /// future version.  One possibility is to store offset information as well
 /// as the name data (at the cost of increasing memory footprint), and
 /// to use the pair of data for faster rendering.
-class RdataFields {
+class KEA_DNS_API RdataFields {
 public:
     /// Types of \c RdataFields fields.
     ///

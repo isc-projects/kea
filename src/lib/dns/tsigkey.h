@@ -1,4 +1,4 @@
-// Copyright (C) 2010, 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #define TSIGKEY_H 1
 
 #include <cryptolink/cryptolink.h>
+#include <dns/api.h>
 
 namespace isc {
 namespace dns {
@@ -61,7 +62,7 @@ class Name;
 /// remember the actual domain names defined in the protocol specification.
 /// We may also have to add conversion routines between domain names
 /// and more intuitive representations (e.g. strings) for algorithms.
-class TSIGKey {
+class KEA_DNS_API TSIGKey {
 public:
     ///
     /// \name Constructors, Assignment Operator and Destructor.
@@ -248,7 +249,7 @@ private:
 /// in different DNS transactions).
 /// If this assumption does not hold and memory consumption becomes an issue
 /// we may have to revisit the design.
-class TSIGKeyRing {
+class KEA_DNS_API TSIGKeyRing {
 public:
     /// Result codes of various public methods of \c TSIGKeyRing
     enum Result {

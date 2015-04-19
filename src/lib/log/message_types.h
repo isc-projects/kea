@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,8 @@
 
 #include <string.h>
 
+#include <log/api.h>
+
 namespace isc {
 namespace log {
 
@@ -27,6 +29,7 @@ typedef const char* MessageID;
 /// \param m1 First message ID
 /// \param m2 Second message ID
 /// \return true if they are equal, false if not
+KEA_LOG_API
 bool equalMessageID(const MessageID& m1, const MessageID& m2);
 
 } // namespace log

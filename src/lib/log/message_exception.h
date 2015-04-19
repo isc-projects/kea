@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #define MESSAGE_EXCEPTION_H
 
 #include <exceptions/exceptions.h>
+#include <log/api.h>
 #include <log/message_types.h>
 
 #include <stdexcept>
@@ -33,7 +34,7 @@ namespace log {
 /// code and its arguments to be encapsulated in an exception and thrown
 /// up the stack.
 
-class MessageException : public isc::Exception {
+class KEA_LOG_API MessageException : public isc::Exception {
 public:
 
     /// \brief Constructor

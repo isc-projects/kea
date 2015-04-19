@@ -15,6 +15,7 @@
 #ifndef HOOKS_H
 #define HOOKS_H
 
+#include <hooks/api.h>
 #include <hooks/callout_handle.h>
 #include <hooks/library_handle.h>
 
@@ -68,7 +69,7 @@ namespace hooks {
 /// loading multiple user libraries may involve loading one message dictionary
 /// per library.
 
-void hooksStaticLinkInit();
+KEA_HOOKS_API void hooksStaticLinkInit();
 
 } // namespace hooks
 } // namespace isc

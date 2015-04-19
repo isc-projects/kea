@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#define KEA_CC_EXPORT
+
 #include <cc/proto_defs.h>
 
 namespace isc {
@@ -24,35 +26,35 @@ namespace cc {
 
 // The constants used in the CC protocol
 // First the header names
-const char* const CC_HEADER_TYPE = "type";
-const char* const CC_HEADER_FROM = "from";
-const char* const CC_HEADER_TO = "to";
-const char* const CC_HEADER_GROUP = "group";
-const char* const CC_HEADER_INSTANCE = "instance";
-const char* const CC_HEADER_SEQ = "seq";
-const char* const CC_HEADER_WANT_ANSWER = "want_answer";
-const char* const CC_HEADER_REPLY = "reply";
+const KEA_CC_DATA_API char* const CC_HEADER_TYPE = "type";
+const KEA_CC_DATA_API char* const CC_HEADER_FROM = "from";
+const KEA_CC_DATA_API char* const CC_HEADER_TO = "to";
+const KEA_CC_DATA_API char* const CC_HEADER_GROUP = "group";
+const KEA_CC_DATA_API char* const CC_HEADER_INSTANCE = "instance";
+const KEA_CC_DATA_API char* const CC_HEADER_SEQ = "seq";
+const KEA_CC_DATA_API char* const CC_HEADER_WANT_ANSWER = "want_answer";
+const KEA_CC_DATA_API char* const CC_HEADER_REPLY = "reply";
 // The commands in the "type" header
-const char* const CC_COMMAND_SEND = "send";
-const char* const CC_COMMAND_SUBSCRIBE = "subscribe";
-const char* const CC_COMMAND_UNSUBSCRIBE = "unsubscribe";
-const char* const CC_COMMAND_GET_LNAME = "getlname";
-const char* const CC_COMMAND_PING = "ping";
-const char* const CC_COMMAND_PONG = "pong";
-const char* const CC_COMMAND_STOP = "stop";
+const KEA_CC_DATA_API char* const CC_COMMAND_SEND = "send";
+const KEA_CC_DATA_API char* const CC_COMMAND_SUBSCRIBE = "subscribe";
+const KEA_CC_DATA_API char* const CC_COMMAND_UNSUBSCRIBE = "unsubscribe";
+const KEA_CC_DATA_API char* const CC_COMMAND_GET_LNAME = "getlname";
+const KEA_CC_DATA_API char* const CC_COMMAND_PING = "ping";
+const KEA_CC_DATA_API char* const CC_COMMAND_PONG = "pong";
+const KEA_CC_DATA_API char* const CC_COMMAND_STOP = "stop";
 // The wildcards of some headers
-const char* const CC_TO_WILDCARD = "*";
-const char* const CC_INSTANCE_WILDCARD = "*";
+const KEA_CC_DATA_API char* const CC_TO_WILDCARD = "*";
+const KEA_CC_DATA_API char* const CC_INSTANCE_WILDCARD = "*";
 // Prefixes for groups
-const char* const CC_GROUP_NOTIFICATION_PREFIX = "notifications/";
+const KEA_CC_DATA_API char* const CC_GROUP_NOTIFICATION_PREFIX = "notifications/";
 // Reply codes
-const int CC_REPLY_NO_RECPT = -1;
-const int CC_REPLY_SUCCESS = 0;
+const KEA_CC_DATA_API int CC_REPLY_NO_RECPT = -1;
+const KEA_CC_DATA_API int CC_REPLY_SUCCESS = 0;
 // Payload in the message
-const char *const CC_PAYLOAD_LNAME = "lname";
-const char *const CC_PAYLOAD_RESULT = "result";
-const char *const CC_PAYLOAD_COMMAND = "command";
-const char *const CC_PAYLOAD_NOTIFICATION = "notification";
+const KEA_CC_DATA_API char *const CC_PAYLOAD_LNAME = "lname";
+const KEA_CC_DATA_API char *const CC_PAYLOAD_RESULT = "result";
+const KEA_CC_DATA_API char *const CC_PAYLOAD_COMMAND = "command";
+const KEA_CC_DATA_API char *const CC_PAYLOAD_NOTIFICATION = "notification";
 
 }
 }

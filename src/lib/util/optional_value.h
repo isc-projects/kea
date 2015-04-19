@@ -17,6 +17,8 @@
 
 #include <ostream>
 
+#include <util/api.h>
+
 namespace isc {
 namespace util {
 
@@ -26,7 +28,7 @@ namespace util {
 /// if the @c OptionalValue is specified or not. By using this class in the
 /// @c OptionalValue class constructor we avoid the ambiguity when the
 /// @c OptionalValue encapsulates a bool type.
-struct OptionalValueState {
+struct KEA_UTIL_API OptionalValueState {
 
     /// @brief Constructor.
     ///

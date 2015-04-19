@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,7 @@
 
 #include <util/io/socketsession.h>
 #include <util/io/sockaddr_util.h>
+#include <util/unittests/api.h>
 
 #include <cassert>
 #include <cstring>
@@ -36,7 +37,7 @@ namespace unittests {
 /// It emulates the behavior of SocketSessionForwarder without involving
 /// network communication, and allowing the tester to customize the behavior
 /// and to examine forwarded data afterwards.
-class MockSocketSessionForwarder :
+class KEA_UTIL_UNITTESTS_API MockSocketSessionForwarder :
     public isc::util::io::BaseSocketSessionForwarder
 {
 public:

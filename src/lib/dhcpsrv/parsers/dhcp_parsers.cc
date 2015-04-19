@@ -14,6 +14,8 @@
 
 #include <config.h>
 
+#define KEA_DHCPSRV_EXPORT
+
 #include <dhcp/iface_mgr.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -120,7 +122,8 @@ DebugParser::commit() {
 
 // **************************** BooleanParser  *************************
 
-template<> void ValueParser<bool>::build(isc::data::ConstElementPtr value) {
+template <> KEA_DHCPSRV_API
+void ValueParser<bool>::build(isc::data::ConstElementPtr value) {
     // Invoke common code for all specializations of build().
     buildCommon(value);
     // The Config Manager checks if user specified a
@@ -137,7 +140,8 @@ template<> void ValueParser<bool>::build(isc::data::ConstElementPtr value) {
 
 // **************************** Uin32Parser  *************************
 
-template<> void ValueParser<uint32_t>::build(ConstElementPtr value) {
+template <> KEA_DHCPSRV_API
+void ValueParser<uint32_t>::build(ConstElementPtr value) {
     // Invoke common code for all specializations of build().
     buildCommon(value);
 
@@ -167,7 +171,8 @@ template<> void ValueParser<uint32_t>::build(ConstElementPtr value) {
 
 // **************************** StringParser  *************************
 
-template <> void ValueParser<std::string>::build(ConstElementPtr value) {
+template <> KEA_DHCPSRV_API
+void ValueParser<std::string>::build(ConstElementPtr value) {
     // Invoke common code for all specializations of build().
     buildCommon(value);
 

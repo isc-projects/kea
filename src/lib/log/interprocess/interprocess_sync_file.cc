@@ -1,4 +1,4 @@
-// Copyright (C) 2012,2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,6 +14,8 @@
 
 // This file requires LOCKFILE_DIR to be defined. It points to the default
 // directory where lockfile will be created.
+
+#define KEA_LOG_INTERPROCESS_EXPORT
 
 #include <log/interprocess/interprocess_sync_file.h>
 

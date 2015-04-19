@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#define KEA_DNS_EXPORT
 
 #include <istream>
 #include <fstream>
@@ -84,7 +86,7 @@ loadHelper(InputType input, const Name& origin,
 }
 }
 
-void
+KEA_DNS_API void
 masterLoad(const char* const filename, const Name& origin,
            const RRClass& zone_class, MasterLoadCallback callback)
 {
@@ -95,7 +97,7 @@ masterLoad(const char* const filename, const Name& origin,
     loadHelper<const char*>(filename, origin, zone_class, callback);
 }
 
-void
+KEA_DNS_API void
 masterLoad(istream& input, const Name& origin, const RRClass& zone_class,
            MasterLoadCallback callback, const char*)
 {

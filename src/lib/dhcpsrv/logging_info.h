@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,7 @@
 
 #include <log/logger_level.h>
 #include <log/logger_specification.h>
+#include <dhcpsrv/api.h>
 #include <stdint.h>
 #include <vector>
 
@@ -26,7 +27,7 @@ namespace dhcp {
 /// @brief Defines single logging destination
 ///
 /// This structure is used to keep log4cplus configuration parameters.
-struct LoggingDestination {
+struct KEA_DHCPSRV_API LoggingDestination {
 
     /// @brief defines logging destination output
     ///
@@ -69,7 +70,7 @@ struct LoggingDestination {
 ///            "severity": "WARN",
 ///            "debuglevel": 99
 ///        },
-struct LoggingInfo {
+struct KEA_DHCPSRV_API LoggingInfo {
 
     /// @brief logging name
     std::string name_;

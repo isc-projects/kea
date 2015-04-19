@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,8 @@
 // IMPORTANT NOTE: only very few ASIO headers files can be included in
 // this file.  In particular, asio.hpp should never be included here.
 // See the description of the namespace below.
+
+#include <asiolink/api.h>
 
 #include <asiolink/io_service.h>
 #include <asiolink/simple_callback.h>

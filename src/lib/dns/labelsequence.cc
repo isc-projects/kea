@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#define KEA_DNS_EXPORT
 
 #include <config.h>
 
@@ -414,7 +416,7 @@ LabelSequence::extend(const LabelSequence& labels,
     last_label_ = label_count + append_label_count - 1;
 }
 
-std::ostream&
+KEA_DNS_API std::ostream&
 operator<<(std::ostream& os, const LabelSequence& label_sequence) {
     os << label_sequence.toText();
     return (os);

@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,7 @@
 #include <stdint.h>
 
 #include <exceptions/exceptions.h>
+#include <util/api.h>
 
 //
 // Note: this helper module isn't specific to the DNS protocol per se.
@@ -35,7 +36,7 @@ namespace util {
 /// \brief A standard DNS (or ISC) module exception that is thrown if
 /// a time conversion function encounters bad input
 ///
-class InvalidTime : public Exception {
+class KEA_UTIL_API InvalidTime : public Exception {
 public:
     InvalidTime(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
@@ -64,7 +65,7 @@ namespace detail {
 /// If the implementation doesn't need to be tested with faked current time,
 /// it should simply use the system supplied library function instead of
 /// this one.
-int64_t gettimeWrapper();
+KEA_UTIL_API int64_t gettimeWrapper();
 }
 
 ///
@@ -112,7 +113,7 @@ int64_t gettimeWrapper();
 ///
 /// \param time_txt Textual time in the form of YYYYMMDDHHmmSS
 /// \return Seconds since epoch corresponding to \c time_txt
-uint64_t
+KEA_UTIL_API uint64_t
 timeFromText64(const std::string& time_txt);
 
 /// Convert textual DNSSEC time to integer, 32-bit version.
@@ -120,7 +121,7 @@ timeFromText64(const std::string& time_txt);
 /// This version is the same as \c timeFromText64() except that the return
 /// value is wrapped around to an unsigned 32-bit integer, simply dropping
 /// the upper 32 bits.
-uint32_t
+KEA_UTIL_API uint32_t
 timeFromText32(const std::string& time_txt);
 
 /// Convert integral DNSSEC time to textual form, 64-bit version.
@@ -137,7 +138,7 @@ timeFromText32(const std::string& time_txt);
 ///
 /// \param value Seconds since epoch to be converted.
 /// \return Textual representation of \c value in the form of YYYYMMDDHHmmSS.
-std::string
+KEA_UTIL_API std::string
 timeToText64(uint64_t value);
 
 /// Convert integral DNSSEC time to textual form, 32-bit version.
@@ -159,7 +160,7 @@ timeToText64(uint64_t value);
 /// half of the 32-bit values are treated as a future time.  For example,
 /// 2^32-1 (the highest value in 32-bit unsigned integers) will be converted
 /// to "21060207062815", instead of "19691231235959".
-std::string
+KEA_UTIL_API std::string
 timeToText32(const uint32_t value);
 
 //@}

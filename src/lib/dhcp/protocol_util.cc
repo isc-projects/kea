@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#define KEA_DHCP_EXPORT
+
 #include <config.h>
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp6.h>
@@ -29,7 +31,7 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 
-void
+KEA_DHCP_API void
 decodeEthernetHeader(InputBuffer& buf, Pkt4Ptr& pkt) {
     // The size of the buffer to be parsed must not be lower
     // then the size of the Ethernet frame header.
@@ -66,7 +68,7 @@ decodeEthernetHeader(InputBuffer& buf, Pkt4Ptr& pkt) {
     buf.setPosition(start_pos + ETHERNET_HEADER_LEN);
 }
 
-void
+KEA_DHCP_API void
 decodeIpUdpHeader(InputBuffer& buf, Pkt4Ptr& pkt) {
     // The size of the buffer must be at least equal to the minimal size of
     // the IPv4 packet header plus UDP header length.
@@ -120,7 +122,7 @@ decodeIpUdpHeader(InputBuffer& buf, Pkt4Ptr& pkt) {
     buf.setPosition(start_pos + ip_len * 4 + UDP_HEADER_LEN);
 }
 
-void
+KEA_DHCP_API void
 writeEthernetHeader(const Pkt4Ptr& pkt, OutputBuffer& out_buf) {
     // Set destination HW address.
     HWAddrPtr remote_addr = pkt->getRemoteHWAddr();
@@ -165,7 +167,7 @@ writeEthernetHeader(const Pkt4Ptr& pkt, OutputBuffer& out_buf) {
     out_buf.writeUint16(ETHERNET_TYPE_IP);
 }
 
-void
+KEA_DHCP_API void
 writeIpUdpHeader(const Pkt4Ptr& pkt, util::OutputBuffer& out_buf) {
 
     out_buf.writeUint8(0x45); // IP version 4, IP header length 5
@@ -218,7 +220,7 @@ writeIpUdpHeader(const Pkt4Ptr& pkt, util::OutputBuffer& out_buf) {
     out_buf.writeUint16(udp_checksum);
 }
 
-uint16_t
+KEA_DHCP_API uint16_t
 calcChecksum(const uint8_t* buf, const uint32_t buf_size, uint32_t sum) {
     uint32_t i;
     for (i = 0; i < (buf_size & ~1U); i += 2) {

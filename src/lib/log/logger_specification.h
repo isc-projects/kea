@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include <log/api.h>
 #include <log/logger_level.h>
 #include <log/output_option.h>
 
@@ -34,7 +35,7 @@
 namespace isc {
 namespace log {
 
-class LoggerSpecification {
+class KEA_LOG_API LoggerSpecification {
 public:
     typedef std::vector<OutputOption>::iterator         iterator;
     typedef std::vector<OutputOption>::const_iterator   const_iterator;

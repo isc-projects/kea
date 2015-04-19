@@ -31,6 +31,8 @@ namespace std{
 // simply include the base64 header here.
 #include <boost/archive/iterators/base64_from_binary.hpp>
 
+#include <util/api.h>
+
 namespace boost { 
 namespace archive {
 namespace iterators {

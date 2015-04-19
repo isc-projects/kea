@@ -19,6 +19,8 @@
 #include <stdint.h>
 #include <set>
 
+#include <dhcpsrv/api.h>
+
 namespace isc {
 namespace dhcp {
 
@@ -29,7 +31,7 @@ namespace dhcp {
 /// 65 is officially RSSO-enabled. The list may be extended in the future
 /// and this class allows for specifying any future RSOO-enabled options.
 /// The administrator may also use existing options as RSOO-enabled.
-class CfgRSOO {
+class KEA_DHCPSRV_API CfgRSOO {
 public:
 
     /// @brief Constructor.

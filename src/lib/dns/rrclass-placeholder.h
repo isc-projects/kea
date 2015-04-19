@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,8 @@
 #include <string>
 #include <ostream>
 
+#include <util/api.h>
+#include <dns/api.h>
 #include <dns/exceptions.h>
 
 #include <boost/optional.hpp>
@@ -39,7 +41,7 @@ class AbstractMessageRenderer;
 /// \brief A standard DNS module exception that is thrown if an RRClass object
 /// is being constructed from an unrecognized string.
 ///
-class InvalidRRClass : public DNSTextError {
+class KEA_DNS_API InvalidRRClass : public DNSTextError {
 public:
     InvalidRRClass(const char* file, size_t line, const char* what) :
         DNSTextError(file, line, what) {}
@@ -49,7 +51,7 @@ public:
 /// \brief A standard DNS module exception that is thrown if an RRClass object
 /// is being constructed from a incomplete (too short) wire-format data.
 ///
-class IncompleteRRClass : public isc::dns::Exception {
+class KEA_DNS_API IncompleteRRClass : public isc::dns::Exception {
 public:
     IncompleteRRClass(const char* file, size_t line, const char* what) :
         isc::dns::Exception(file, line, what) {}
@@ -89,7 +91,7 @@ public:
 /// the proxy function.
 ///
 /// Note to developers: same note as \c RRType applies.
-class RRClass {
+class KEA_DNS_API RRClass {
 public:
     ///
     /// \name Constructors and Destructor
@@ -302,7 +304,7 @@ private:
 /// \param rrclass The \c RRClass object output by the operation.
 /// \return A reference to the same \c std::ostream object referenced by
 /// parameter \c os after the insertion operation.
-std::ostream&
+KEA_DNS_API std::ostream&
 operator<<(std::ostream& os, const RRClass& rrclass);
 }
 }

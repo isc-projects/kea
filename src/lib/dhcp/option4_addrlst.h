@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #define OPTION4_ADDRLST_H
 
 #include <asiolink/io_address.h>
+#include <dhcp/api.h>
 #include <dhcp/option.h>
 #include <util/buffer.h>
 
@@ -30,7 +31,7 @@ namespace isc {
 namespace dhcp {
 
 /// Forward declaration to Option4AddrLst class.
-class Option4AddrLst;
+class KEA_DHCP_API Option4AddrLst;
 
 /// A pointer to the Option4AddrLst object.
 typedef boost::shared_ptr<Option4AddrLst> Option4AddrLstPtr;
@@ -39,7 +40,7 @@ typedef boost::shared_ptr<Option4AddrLst> Option4AddrLstPtr;
 ///
 /// This class handles a list of IPv4 addresses. An example of such option
 /// is dns-servers option. It can also be used to handle a single address.
-class Option4AddrLst : public isc::dhcp::Option {
+class KEA_DHCP_API Option4AddrLst : public isc::dhcp::Option {
 public:
 
     /// Defines a collection of IPv4 addresses.

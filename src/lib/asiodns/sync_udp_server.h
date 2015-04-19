@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,8 @@
 #ifndef ASIO_HPP
 #error "asio.hpp must be included before including this, see asiolink.h as to why"
 #endif
+
+#include <asiodns/api.h>
 
 #include "dns_answer.h"
 #include "dns_lookup.h"
@@ -40,7 +42,7 @@
 namespace isc {
 namespace asiodns {
 
-class SyncUDPServer;
+class KEA_ASIODNS_API SyncUDPServer;
 typedef boost::shared_ptr<SyncUDPServer> SyncUDPServerPtr;
 
 /// \brief An UDP server that doesn't asynchronous lookup handlers.
@@ -54,9 +56,10 @@ typedef boost::shared_ptr<SyncUDPServer> SyncUDPServerPtr;
 /// accidentally destroyed while waiting for events.  To enforce this style
 /// of creation, a static factory method is provided, and the constructor is
 /// hidden as a private.
-class SyncUDPServer : public DNSServer,
-                      public boost::enable_shared_from_this<SyncUDPServer>,
-                      boost::noncopyable
+class KEA_ASIODNS_API SyncUDPServer :
+    public DNSServer,
+    public boost::enable_shared_from_this<SyncUDPServer>,
+    boost::noncopyable
 {
 private:
     /// \brief Constructor.

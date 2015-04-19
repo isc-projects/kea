@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #define PKT_FILTER6_H
 
 #include <asiolink/io_address.h>
+#include <dhcp/api.h>
 #include <dhcp/pkt6.h>
 
 namespace isc {
@@ -75,7 +76,7 @@ class Iface;
 /// Linux Packet Filtering or Berkeley Packet Filtering is used, hence the
 /// name of the class. In case of DHCPv6 regular IPv6/UDPv6 sockets are used
 /// and derived classes do not use Linux or Berkeley Packet Filtering.
-class PktFilter6 {
+class KEA_DHCP_API PktFilter6 {
 public:
 
     /// @brief Virtual Destructor.

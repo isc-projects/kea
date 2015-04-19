@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,8 @@
 #include <boost/noncopyable.hpp>
 
 #include <exceptions/exceptions.h>
+
+#include <util/io/api.h>
 
 #include <string>
 
@@ -152,7 +154,7 @@ namespace io {
 /// In general the errors are unusual but possible failures such as unexpected
 /// connection reset, and suggest the application to close the connection and
 /// (if necessary) reestablish it.
-class SocketSessionError: public Exception {
+class KEA_UTIL_IO_API SocketSessionError: public Exception {
 public:
     SocketSessionError(const char *file, size_t line, const char *what):
         isc::Exception(file, line, what) {}
@@ -173,7 +175,7 @@ public:
 /// version of this base class, while it's not prohibited at the API level.
 ///
 /// See description of \c SocketSessionForwarder for the expected interface.
-class BaseSocketSessionForwarder  {
+class KEA_UTIL_IO_API BaseSocketSessionForwarder  {
 protected:
     BaseSocketSessionForwarder() {}
 
@@ -195,8 +197,8 @@ public:
 ///
 /// See the description of \ref SocketSessionUtility for other details of how
 /// the session forwarding works.
-class SocketSessionForwarder : boost::noncopyable,
-                               public BaseSocketSessionForwarder
+class KEA_UTIL_IO_API SocketSessionForwarder :
+    boost::noncopyable, public BaseSocketSessionForwarder
 {
 public:
     /// The constructor.
@@ -334,7 +336,7 @@ private:
 /// (e.g. a class or a function that constructs it) is responsible for validity
 /// of the data passed to the object.  See the description of
 /// \c SocketSessionReceiver::pop() for the specific case of that usage.
-class SocketSession {
+class KEA_UTIL_IO_API SocketSession {
 public:
     /// The constructor.
     ///
@@ -423,7 +425,7 @@ private:
 ///
 /// See the description of \ref SocketSessionUtility for other details of how
 /// the session forwarding works.
-class SocketSessionReceiver : boost::noncopyable {
+class KEA_UTIL_IO_API SocketSessionReceiver : boost::noncopyable {
 public:
     /// The constructor.
     ///

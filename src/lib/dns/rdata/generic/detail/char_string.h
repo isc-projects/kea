@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 #ifndef DNS_RDATA_CHARSTRING_H
 #define DNS_RDATA_CHARSTRING_H 1
 
+#include <dns/api.h>
 #include <dns/master_lexer.h>
 
 #include <string>
@@ -53,6 +54,7 @@ typedef std::vector<uint8_t> CharStringData;
 /// \brief str_region A string that represents a character-string.
 /// \brief result A placeholder vector where the resulting data are to be
 /// stored.  Expected to be empty, but it's not checked.
+KEA_DNS_API
 void stringToCharString(const MasterToken::StringRegion& str_region,
                         CharString& result);
 
@@ -67,6 +69,7 @@ void stringToCharString(const MasterToken::StringRegion& str_region,
 /// \brief str_region A string that represents a character-string.
 /// \brief result A placeholder vector where the resulting data are to be
 /// stored.  Expected to be empty, but it's not checked.
+KEA_DNS_API
 void stringToCharStringData(const MasterToken::StringRegion& str_region,
                             CharStringData& result);
 
@@ -82,6 +85,7 @@ void stringToCharStringData(const MasterToken::StringRegion& str_region,
 ///
 /// \param char_string The \c CharString to convert.
 /// \return A string representation of \c char_string.
+KEA_DNS_API
 std::string charStringToString(const CharString& char_string);
 
 /// \brief Convert a CharStringData into a textual DNS character-string.
@@ -91,6 +95,7 @@ std::string charStringToString(const CharString& char_string);
 ///
 /// \param char_string The \c CharStringData to convert.
 /// \return A string representation of \c char_string.
+KEA_DNS_API
 std::string charStringDataToString(const CharStringData& char_string);
 
 /// \brief Compare two CharString objects
@@ -101,6 +106,7 @@ std::string charStringDataToString(const CharStringData& char_string);
 /// \return -1 if \c self would be sorted before \c other
 ///          1 if \c self would be sorted after \c other
 ///          0 if \c self and \c other are equal
+KEA_DNS_API
 int compareCharStrings(const CharString& self, const CharString& other);
 
 /// \brief Compare two CharStringData objects
@@ -111,6 +117,7 @@ int compareCharStrings(const CharString& self, const CharString& other);
 /// \return -1 if \c self would be sorted before \c other
 ///          1 if \c self would be sorted after \c other
 ///          0 if \c self and \c other are equal
+KEA_DNS_API
 int compareCharStringDatas(const CharStringData& self,
                            const CharStringData& other);
 
@@ -132,6 +139,7 @@ int compareCharStringDatas(const CharStringData& self,
 /// \throw DNSMessageFORMERR If the available data is not enough to read
 /// the character-string, or if the character-string length is out of bounds
 /// \return The number of bytes read
+KEA_DNS_API
 size_t bufferToCharString(isc::util::InputBuffer& buffer, size_t rdata_len,
                           CharString& target);
 

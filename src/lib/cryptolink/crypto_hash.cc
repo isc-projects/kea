@@ -1,4 +1,4 @@
-// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#define KEA_CRYPTOLINK_EXPORT
+
 #include <cryptolink.h>
 #include <cryptolink/crypto_hash.h>
 
@@ -22,7 +24,7 @@
 namespace isc {
 namespace cryptolink {
 
-void
+KEA_CRYPTOLINK_API void
 digest(const void* data, const size_t data_len,
        const HashAlgorithm hash_algorithm,
        isc::util::OutputBuffer& result, size_t len)
@@ -36,7 +38,7 @@ digest(const void* data, const size_t data_len,
     hash->final(result, len);
 }
 
-void
+KEA_CRYPTOLINK_API void
 deleteHash(Hash* hash) {
     delete hash;
 }

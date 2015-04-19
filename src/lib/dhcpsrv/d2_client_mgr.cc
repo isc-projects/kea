@@ -14,6 +14,8 @@
 
 #include <config.h>
 
+#define KEA_DHCPSRV_EXPORT
+
 #include <dhcp/iface_mgr.h>
 #include <dhcp_ddns/ncr_udp.h>
 #include <dhcpsrv/d2_client_mgr.h>

@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#define KEA_TESTUTILS_EXPORT
 
 #include <dns/message.h>
 #include <dns/opcode.h>
@@ -33,15 +35,15 @@ using namespace isc::dns;
 
 namespace isc {
 namespace testutils {
-const unsigned int QR_FLAG = 0x1;
-const unsigned int AA_FLAG = 0x2;
-const unsigned int TC_FLAG = 0x4;
-const unsigned int RD_FLAG = 0x8;
-const unsigned int RA_FLAG = 0x10;
-const unsigned int AD_FLAG = 0x20;
-const unsigned int CD_FLAG = 0x40;
+const KEA_TESTUTILS_DATA_API unsigned int QR_FLAG = 0x1;
+const KEA_TESTUTILS_DATA_API unsigned int AA_FLAG = 0x2;
+const KEA_TESTUTILS_DATA_API unsigned int TC_FLAG = 0x4;
+const KEA_TESTUTILS_DATA_API unsigned int RD_FLAG = 0x8;
+const KEA_TESTUTILS_DATA_API unsigned int RA_FLAG = 0x10;
+const KEA_TESTUTILS_DATA_API unsigned int AD_FLAG = 0x20;
+const KEA_TESTUTILS_DATA_API unsigned int CD_FLAG = 0x40;
 
-void
+KEA_TESTUTILS_API void
 headerCheck(const Message& message, const qid_t qid, const Rcode& rcode,
             const uint16_t opcodeval, const unsigned int flags,
             const unsigned int qdcount,
@@ -104,7 +106,7 @@ setRRset(RRsetPtr rrset, RRsetPtr* rrsetp) {
 }
 }
 
-RRsetPtr
+KEA_TESTUTILS_API RRsetPtr
 textToRRset(const string& text_rrset, const RRClass& rrclass,
             const Name& origin)
 {
@@ -114,7 +116,7 @@ textToRRset(const string& text_rrset, const RRClass& rrclass,
     return (rrset);
 }
 
-void
+KEA_TESTUTILS_API void
 rrsetCheck(isc::dns::ConstRRsetPtr expected_rrset,
            isc::dns::ConstRRsetPtr actual_rrset)
 {

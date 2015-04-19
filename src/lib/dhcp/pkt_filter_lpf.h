@@ -15,6 +15,7 @@
 #ifndef PKT_FILTER_LPF_H
 #define PKT_FILTER_LPF_H
 
+#include <dhcp/api.h>
 #include <dhcp/pkt_filter.h>
 
 #include <util/buffer.h>
@@ -28,7 +29,7 @@ namespace dhcp {
 /// sockets and Linux Packet Filtering. It is used by @c isc::dhcp::IfaceMgr
 /// to send DHCPv4 messages to the hosts which don't have an IPv4 address
 /// assigned yet.
-class PktFilterLPF : public PktFilter {
+class KEA_DHCP_API PktFilterLPF : public PktFilter {
 public:
 
     /// @brief Check if packet can be sent to the host without address directly.

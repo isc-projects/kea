@@ -1,4 +1,4 @@
-// Copyright (C) 2011,2015  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,13 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#define KEA_LOG_EXPORT
+
+#include <config.h>
 #include <log/message_dictionary.h>
 #include <log/message_initializer.h>
 #include <boost/array.hpp>
 #include <algorithm>
 #include <cassert>
 #include <cstdlib>
-
 
 
 // As explained in the header file, initialization of the message dictionary

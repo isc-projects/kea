@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,7 @@
 #endif
 
 #include <asiolink/simple_callback.h>
+#include <asiodns/api.h>
 #include <asiodns/dns_answer.h>
 #include <asiodns/dns_lookup.h>
 #include <asiodns/dns_server.h>
@@ -37,7 +38,8 @@ namespace asiodns {
 ///        DNS query event. As such, it is both a \c DNSServer and
 ///        a \c coroutine
 ///
-class UDPServer : public virtual DNSServer, public virtual coroutine {
+class KEA_ASIODNS_API UDPServer :
+    public virtual DNSServer, public virtual coroutine {
 public:
     /// \brief Constructor
     /// \param io_service the asio::io_service to work with

@@ -1,4 +1,4 @@
-// Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -23,6 +23,7 @@
 #include <boost/static_assert.hpp>
 
 #include <exceptions/exceptions.h>
+#include <log/api.h>
 #include <log/logger_level.h>
 #include <log/message_types.h>
 #include <log/log_formatter.h>
@@ -98,7 +99,7 @@ class LoggerImpl;   // Forward declaration of the implementation class
 ///
 /// Exception thrown if a bad InterprocessSync object (such as NULL) is
 /// used.
-class BadInterprocessSync : public isc::Exception {
+class KEA_LOG_API BadInterprocessSync : public isc::Exception {
 public:
     BadInterprocessSync(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what)
@@ -108,7 +109,7 @@ public:
 /// \brief Logger Name Error
 ///
 /// Exception thrown if a logger name is too short or too long.
-class LoggerNameError : public isc::Exception {
+class KEA_LOG_API LoggerNameError : public isc::Exception {
 public:
     LoggerNameError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what)
@@ -118,7 +119,7 @@ public:
 /// \brief Logger Name is Null
 ///
 /// Exception thrown if a logger name is null
-class LoggerNameNull : public isc::Exception {
+class KEA_LOG_API LoggerNameNull : public isc::Exception {
 public:
     LoggerNameNull(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what)
@@ -129,7 +130,7 @@ public:
 ///
 /// Exception thrown if an attempt is made to access a logging function
 /// if the logging system has not been initialized.
-class LoggingNotInitialized : public isc::Exception {
+class KEA_LOG_API LoggingNotInitialized : public isc::Exception {
 public:
     LoggingNotInitialized(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what)
@@ -148,7 +149,7 @@ public:
 /// These will avoid the potentially-expensive evaluation of arguments if the
 /// severity is such that the message will be suppressed.)
 
-class Logger {
+class KEA_LOG_API Logger {
 public:
     /// Maximum size of a logger name
     static const size_t MAX_LOGGER_NAME_SIZE = 31;

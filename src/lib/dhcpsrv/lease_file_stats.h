@@ -15,6 +15,8 @@
 #ifndef LEASE_FILE_STATS_H
 #define LEASE_FILE_STATS_H
 
+#include <dhcpsrv/api.h>
+
 namespace isc {
 namespace dhcp {
 
@@ -23,7 +25,7 @@ namespace dhcp {
 /// This class provides a common space for statistics that we wish
 /// to keep about leases.  Currently this is for use with lease files
 /// but it may be expanded in the future.
-class LeaseFileStats {
+class KEA_DHCPSRV_API LeaseFileStats {
 public:
     /// @brief Constructor
     ///

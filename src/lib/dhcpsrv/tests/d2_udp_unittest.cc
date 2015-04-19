@@ -16,6 +16,8 @@
 /// Note these tests are not intended to verify the actual send and receive
 /// across UDP sockets.  This level of testing is done in libdhcp-ddns.
 
+#include <config.h>
+
 #include <asio.hpp>
 #include <asiolink/io_service.h>
 #include <config.h>

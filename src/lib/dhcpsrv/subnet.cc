@@ -14,6 +14,8 @@
 
 #include <config.h>
 
+#define KEA_DHCPSRV_EXPORT
+
 #include <asiolink/io_address.h>
 #include <dhcp/option_space.h>
 #include <dhcpsrv/addr_utilities.h>

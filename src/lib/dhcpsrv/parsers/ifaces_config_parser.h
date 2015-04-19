@@ -16,6 +16,7 @@
 #define IFACES_CONFIG_PARSER_H
 
 #include <cc/data.h>
+#include <dhcpsrv/api.h>
 #include <dhcpsrv/parsers/dhcp_config_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 
@@ -28,7 +29,7 @@ namespace dhcp {
 /// Dhcp6/interfaces-config/interfaces entries.
 /// It contains a list of network interfaces that the server listens on.
 /// In particular, it can contain an "*" that designates all interfaces.
-class InterfaceListConfigParser : public DhcpConfigParser {
+class KEA_DHCPSRV_API InterfaceListConfigParser : public DhcpConfigParser {
 public:
 
     /// @brief Constructor
@@ -74,7 +75,7 @@ private:
 ///
 /// This parser is used as a base for the DHCPv4 and DHCPv6 specific
 /// parsers and should not be used directly.
-class IfacesConfigParser : public DhcpConfigParser {
+class KEA_DHCPSRV_API IfacesConfigParser : public DhcpConfigParser {
 public:
 
     /// @brief Constructor
@@ -115,7 +116,7 @@ private:
 
 
 /// @brief Parser for the "interfaces-config" parameter of the DHCPv4 server.
-class IfacesConfigParser4 : public IfacesConfigParser {
+class KEA_DHCPSRV_API IfacesConfigParser4 : public IfacesConfigParser {
 public:
 
     /// @brief Constructor.
@@ -138,7 +139,7 @@ public:
 };
 
 /// @brief Parser for the "interfaces-config" parameter of the DHCPv4 server.
-class IfacesConfigParser6 : public IfacesConfigParser {
+class KEA_DHCPSRV_API IfacesConfigParser6 : public IfacesConfigParser {
 public:
 
     /// @brief Constructor.

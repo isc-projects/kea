@@ -14,11 +14,14 @@
 
 /// @file Defines the logger used by the @c isc::dhcp::HostMgr
 
+#define KEA_DHCPSRV_EXPORT
+
 #include "dhcpsrv/hosts_log.h"
 
 namespace isc {
 namespace dhcp {
 
+KEA_DHCPSRV_API
 isc::log::Logger hosts_logger("hosts");
 
 } // namespace dhcp

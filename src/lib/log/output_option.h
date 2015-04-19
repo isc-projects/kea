@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string>
+
+#include <log/api.h>
 
 /// \brief Logger Output Option
 ///
@@ -42,7 +44,7 @@
 namespace isc {
 namespace log {
 
-struct OutputOption {
+struct KEA_LOG_API OutputOption {
 
     /// Destinations.  Prefixed "DEST_" to avoid problems with the C stdio.h
     /// FILE type.
@@ -75,7 +77,9 @@ struct OutputOption {
     unsigned int    maxver;             ///< Maximum versions (none if <= 0)
 };
 
+KEA_LOG_API
 OutputOption::Destination getDestination(const std::string& dest_str);
+KEA_LOG_API
 OutputOption::Stream getStream(const std::string& stream_str);
 
 

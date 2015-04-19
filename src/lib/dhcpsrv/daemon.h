@@ -16,6 +16,7 @@
 #define DAEMON_H
 
 #include <cc/data.h>
+#include <dhcpsrv/api.h>
 #include <dhcpsrv/srv_config.h>
 #include <util/signal_set.h>
 #include <boost/noncopyable.hpp>
@@ -56,7 +57,7 @@ namespace dhcp {
 /// @note Only one instance of this class is instantiated as it encompasses
 ///       the whole operation of the server.  Nothing, however, enforces the
 ///       singleton status of the object.
-class Daemon : public boost::noncopyable {
+class KEA_DHCPSRV_API Daemon : public boost::noncopyable {
 
 public:
     /// @brief Default constructor

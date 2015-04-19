@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -32,7 +32,7 @@
 /// This class implements the basic interfaces inherited from the abstract
 /// \c rdata::Rdata class, and provides trivial accessors specific to the
 /// DHCID RDATA.
-class DHCID : public Rdata {
+class KEA_DNS_API DHCID : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
     // END_COMMON_MEMBERS

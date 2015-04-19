@@ -3,11 +3,12 @@ SUBDIRS = interprocess . compiler tests
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DTOP_BUILDDIR=\"${abs_top_builddir}\"
+AM_CXXFLAGS = $(KEA_CXXFLAGS) $(SHLIB_CXXFLAGS)
 
 CLEANFILES = *.gcno *.gcda
 
 lib_LTLIBRARIES = libkea-log.la
-libkea_log_la_SOURCES  =
+libkea_log_la_SOURCES  = api.h
 libkea_log_la_SOURCES += logimpl_messages.cc logimpl_messages.h
 libkea_log_la_SOURCES += log_dbglevels.h
 libkea_log_la_SOURCES += log_formatter.h log_formatter.cc

@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,8 @@
 #ifndef UTIL_UNITTESTS_RESOURCE_H
 #define UTIL_UNITTESTS_RESOURCE_H 1
 
+#include <util/unittests/api.h>
+
 namespace isc {
 namespace util {
 namespace unittests {
@@ -26,7 +28,7 @@ namespace unittests {
 /// is used, where processes abort (and create cores in the process).
 /// As a new process is forked to run EXPECT_DEATH tests, the rlimits of
 /// the parent process that runs the other tests should be unaffected.
-void dontCreateCoreDumps();
+KEA_UTIL_UNITTESTS_API void dontCreateCoreDumps();
 
 } // end of namespace unittests
 } // end of namespace util

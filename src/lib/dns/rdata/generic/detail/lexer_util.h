@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 #ifndef DNS_RDATA_LEXER_UTIL_H
 #define DNS_RDATA_LEXER_UTIL_H 1
 
+#include <dns/api.h>
 #include <dns/name.h>
 #include <dns/master_lexer.h>
 

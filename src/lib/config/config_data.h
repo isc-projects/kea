@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 
+#include <config/api.h>
 #include <config/module_spec.h>
 #include <exceptions/exceptions.h>
 
@@ -27,13 +28,13 @@ namespace config {
 /// This exception is thrown when the caller is trying to access
 /// data that doesn't exist (i.e. with an identifier that does not
 /// point to anything defined in the .spec file)
-class DataNotFoundError : public isc::Exception {
+class KEA_CONFIG_API DataNotFoundError : public isc::Exception {
 public:
     DataNotFoundError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
 
-class ConfigData {
+class KEA_CONFIG_API ConfigData {
 public:
     /// Constructs a ConfigData option with no specification and an
     /// empty configuration.

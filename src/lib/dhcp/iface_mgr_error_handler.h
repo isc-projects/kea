@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,6 +14,8 @@
 
 #ifndef IFACE_MGR_ERROR_HANDLER_H
 #define IFACE_MGR_ERROR_HANDLER_H
+
+#include <dhcp/api.h>
 
 /// @brief A macro which handles an error in IfaceMgr.
 ///

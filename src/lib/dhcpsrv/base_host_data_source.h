@@ -18,6 +18,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
+#include <dhcpsrv/api.h>
 #include <dhcpsrv/host.h>
 #include <exceptions/exceptions.h>
 
@@ -25,7 +26,7 @@ namespace isc {
 namespace dhcp {
 
 /// @brief Exception thrown when the duplicate @c Host object is detected.
-class DuplicateHost : public Exception {
+class KEA_DHCPSRV_API DuplicateHost : public Exception {
 public:
     DuplicateHost(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
@@ -33,7 +34,7 @@ public:
 
 /// @brief Exception thrown when invalid IP address has been specified for
 /// @c Host.
-class BadHostAddress : public isc::BadValue {
+class KEA_DHCPSRV_API BadHostAddress : public isc::BadValue {
 public:
     BadHostAddress(const char* file, size_t line, const char* what) :
         isc::BadValue(file, line, what) { };
@@ -53,7 +54,7 @@ public:
 /// other reservations. It also lacks the methods used for preparing
 /// the data to be added to the SQL database: commit, rollback etc.
 /// Such methods are declared in other interfaces.
-class BaseHostDataSource {
+class KEA_DHCPSRV_API BaseHostDataSource {
 public:
 
     /// @brief Default destructor implementation.

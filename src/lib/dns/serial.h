@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,8 @@
 
 #include <stdint.h>
 #include <iostream>
+
+#include <dns/api.h>
 
 namespace isc {
 namespace dns {
@@ -46,7 +48,7 @@ const uint64_t MAX_SERIAL_VALUE = 4294967296ull;
 /// \note RFC 1982 defines everything based on the value SERIAL_BITS. Since
 /// the serial number has a fixed length of 32 bits, the values we use are
 /// hard-coded, and not computed based on variable bit lengths.
-class Serial {
+class KEA_DNS_API Serial {
 public:
     /// \brief Constructor with value
     ///
@@ -150,6 +152,7 @@ private:
 /// \param os The ostream to write to
 /// \param serial The Serial to write
 /// \return the output stream
+KEA_DNS_API
 std::ostream& operator<<(std::ostream& os, const Serial& serial);
 
 } // end namespace dns

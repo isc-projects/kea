@@ -1,4 +1,4 @@
-// Copyright (C) 2013, 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -13,6 +13,8 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 /// Defines the logger used by the top-level component of kea-dhcp_ddns.
+
+#define KEA_DHCP_DDNS_EXPORT
 
 #include <dhcp_ddns/dhcp_ddns_log.h>
 

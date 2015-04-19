@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 #ifndef ZONE_CHECKER_H
 #define ZONE_CHECKER_H 1
 
+#include <dns/api.h>
 #include <dns/dns_fwd.h>
 
 #include <boost/function.hpp>
@@ -27,7 +28,7 @@ namespace dns {
 /// \brief Set of callbacks used in zone checks.
 ///
 /// Objects of this class are expected to be passed to \c checkZone().
-class ZoneCheckerCallbacks {
+class KEA_DNS_API ZoneCheckerCallbacks {
 public:
     /// \brief Functor type of the callback on some issue (error or warning).
     ///
@@ -148,7 +149,7 @@ private:
 /// \param callbacks Callback object used to report errors and issues
 ///
 /// \return \c true if no critical errors are found; \c false otherwise.
-bool
+KEA_DNS_API bool
 checkZone(const Name& zone_name, const RRClass& zone_class,
           const RRsetCollectionBase& zone_rrsets,
           const ZoneCheckerCallbacks& callbacks);

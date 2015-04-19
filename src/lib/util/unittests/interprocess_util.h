@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <util/unittests/api.h>
+
 namespace isc {
 namespace util {
 namespace unittests {
@@ -21,7 +23,7 @@ namespace unittests {
 /// (arbitrary choice), read one byte data, and return it to the caller.
 /// On any failure it returns 0xff (255), so the sender process should use
 /// a different value to pass.
-unsigned char parentReadState(int fd);
+KEA_UTIL_UNITTESTS_API unsigned char parentReadState(int fd);
 }
 }
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,13 +18,15 @@
 
 #include <exceptions/exceptions.h>
 
+#include <asiolink/api.h>
+
 namespace isc {
 namespace asiolink {
 
 /// \brief An exception that is thrown if an error occurs within the IO
 /// module.  This is mainly intended to be a wrapper exception class for
 /// ASIO specific exceptions.
-class IOError : public isc::Exception {
+class KEA_ASIOLINK_API IOError : public isc::Exception {
 public:
     IOError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}

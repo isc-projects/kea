@@ -23,6 +23,8 @@
 
 #include <exceptions/exceptions.h>
 
+#include <util/api.h>
+
 namespace boost { 
 namespace archive {
 namespace iterators {

@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,16 +12,20 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#define KEA_UTIL_UNITTESTS_EXPORT
+
 #include <gtest/gtest.h>
 
 #include <sys/select.h>
 #include <cstddef>
 
+#include "interprocess_util.h"
+
 namespace isc {
 namespace util {
 namespace unittests {
 
-unsigned char
+KEA_UTIL_UNITTESTS_API unsigned char
 parentReadState(int fd) {
   unsigned char result = 0xff;
 

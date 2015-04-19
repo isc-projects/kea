@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option_space.h>
 #include <dhcp/classify.h>
+#include <dhcpsrv/api.h>
 #include <dhcpsrv/d2_client_mgr.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet.h>
@@ -40,7 +41,7 @@ namespace dhcp {
 ///
 /// In particular, this exception is thrown when adding interface to the set
 /// of interfaces on which server is supposed to listen.
-class DuplicateListeningIface : public Exception {
+class KEA_DHCPSRV_API DuplicateListeningIface : public Exception {
 public:
     DuplicateListeningIface(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
@@ -82,7 +83,7 @@ public:
 /// @todo: Implement Subnet4 support (ticket #2237)
 /// @todo: Implement option definition support
 /// @todo: Implement parameter inheritance
-class CfgMgr : public boost::noncopyable {
+class KEA_DHCPSRV_API CfgMgr : public boost::noncopyable {
 public:
 
     /// @brief A number of configurations held by @c CfgMgr.

@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -34,7 +34,7 @@
 
 struct NSEC3PARAMImpl;
 
-class NSEC3PARAM : public Rdata {
+class KEA_DNS_API NSEC3PARAM : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
     // END_COMMON_MEMBERS

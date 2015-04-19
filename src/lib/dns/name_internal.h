@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,6 +14,8 @@
 
 #ifndef NAME_INTERNAL_H
 #define NAME_INTERNAL_H 1
+
+#include <dns/api.h>
 
 // This is effectively a "private" namespace for the Name class implementation,
 // but exposed publicly so the definitions in it can be shared with other

@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -28,6 +28,7 @@
 
 #include <util/buffer.h>
 
+#include <asiolink/api.h>
 #include <asiolink/io_error.h>
 #include <asiolink/io_socket.h>
 
@@ -37,7 +38,7 @@ namespace asiolink {
 /// \brief Socket not open
 ///
 /// Thrown on an attempt to do read/write to a socket that is not open.
-class SocketNotOpen : public IOError {
+class KEA_ASIOLINK_API SocketNotOpen : public IOError {
 public:
     SocketNotOpen(const char* file, size_t line, const char* what) :
         IOError(file, line, what) {}
@@ -46,7 +47,7 @@ public:
 /// \brief Error setting socket options
 ///
 /// Thrown if attempt to change socket options fails.
-class SocketSetError : public IOError {
+class KEA_ASIOLINK_API SocketSetError : public IOError {
 public:
     SocketSetError(const char* file, size_t line, const char* what) :
         IOError(file, line, what) {}
@@ -56,7 +57,7 @@ public:
 ///
 /// Thrown if an attempt is made to receive into an area beyond the end of
 /// the receive data buffer.
-class BufferOverflow : public IOError {
+class KEA_ASIOLINK_API BufferOverflow : public IOError {
 public:
     BufferOverflow(const char* file, size_t line, const char* what) :
         IOError(file, line, what) {}

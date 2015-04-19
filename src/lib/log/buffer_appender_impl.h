@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #define LOG_BUFFER_H
 
 #include <exceptions/exceptions.h>
+#include <log/api.h>
 
 #include <log4cplus/logger.h>
 #include <log4cplus/spi/loggingevent.h>
@@ -31,7 +32,7 @@ namespace internal {
 /// is called after the log buffer has been flushed; the buffer
 /// is only supposed to be used once (until the first time a
 /// logger specification is processed)
-class LogBufferAddAfterFlush : public isc::Exception {
+class KEA_LOG_API LogBufferAddAfterFlush : public isc::Exception {
 public:
     LogBufferAddAfterFlush(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what)
@@ -70,7 +71,7 @@ typedef std::vector<LevelAndEvent> LogEventList;
 ///
 /// If the BufferAppender instance is destroyed before being flushed,
 /// it will dump any event it has left to stdout.
-class BufferAppender : public log4cplus::Appender {
+class KEA_LOG_API BufferAppender : public log4cplus::Appender {
 public:
     /// \brief Constructor
     ///

@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 #ifndef OPTION_VENDOR_H
 #define OPTION_VENDOR_H
 
+#include <dhcp/api.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
 #include <dhcp/option_data_types.h>
@@ -35,7 +36,7 @@ const int VENDOR_CLASS_STRING_INDEX = 2;
 /// As specified in RFC3925, the option formatting is slightly different
 /// for DHCPv4 than DHCPv6. The DHCPv4 Option includes additional field
 /// holding vendor data length.
-class OptionVendor: public Option {
+class KEA_DHCP_API OptionVendor: public Option {
 public:
     /// @brief Constructor.
     ///

@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#define KEA_DHCP_EXPORT
+
 #include <config.h>
 
 #include <dhcp/dhcp4.h>
@@ -55,10 +57,10 @@ VendorOptionDefContainers LibDHCP::vendor6_defs_;
 // Those two vendor classes are used for cable modems:
 
 /// DOCSIS3.0 compatible cable modem
-const char* isc::dhcp::DOCSIS3_CLASS_MODEM = "docsis3.0";
+const KEA_DHCP_API char* isc::dhcp::DOCSIS3_CLASS_MODEM = "docsis3.0";
 
 /// DOCSIS3.0 cable modem that has router built-in
-const char* isc::dhcp::DOCSIS3_CLASS_EROUTER = "eRouter1.0";
+const KEA_DHCP_API char* isc::dhcp::DOCSIS3_CLASS_EROUTER = "eRouter1.0";
 
 // Let's keep it in .cc file. Moving it to .h would require including optionDefParams
 // definitions there

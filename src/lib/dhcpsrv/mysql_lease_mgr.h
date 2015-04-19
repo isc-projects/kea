@@ -16,6 +16,7 @@
 #define MYSQL_LEASE_MGR_H
 
 #include <dhcp/hwaddr.h>
+#include <dhcpsrv/api.h>
 #include <dhcpsrv/lease_mgr.h>
 
 #include <boost/scoped_ptr.hpp>
@@ -38,7 +39,7 @@ namespace dhcp {
 /// objects would contain pointers to the same MySql context object.  The
 /// destruction of one would invalidate the context in the remaining object.
 /// For this reason, the class is declared noncopyable.
-class MySqlHolder : public boost::noncopyable {
+class KEA_DHCPSRV_API MySqlHolder : public boost::noncopyable {
 public:
 
     /// @brief Constructor
@@ -83,8 +84,8 @@ const uint32_t CURRENT_VERSION_MINOR = 0;
 
 // Forward declaration of the Lease exchange objects.  These classes are defined
 // in the .cc file.
-class MySqlLease4Exchange;
-class MySqlLease6Exchange;
+class KEA_DHCPSRV_API MySqlLease4Exchange;
+class KEA_DHCPSRV_API MySqlLease6Exchange;
 
 
 /// @brief MySQL Lease Manager
@@ -93,7 +94,7 @@ class MySqlLease6Exchange;
 /// database.  Use of this backend presupposes that a MySQL database is
 /// available and that the Kea schema has been created within it.
 
-class MySqlLeaseMgr : public LeaseMgr {
+class KEA_DHCPSRV_API MySqlLeaseMgr : public LeaseMgr {
 public:
     /// @brief Constructor
     ///

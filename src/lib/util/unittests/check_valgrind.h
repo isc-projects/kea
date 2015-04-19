@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -32,6 +32,8 @@
 
 #include <config.h>
 
+#include <util/unittests/api.h>
+
 namespace isc {
 namespace util {
 namespace unittests {
@@ -46,7 +48,7 @@ namespace unittests {
 /// \return true if valgrind headers are available, and valgrind is running,
 ///         false if the headers are not available, or if valgrind is not
 ///         running
-bool runningOnValgrind();
+KEA_UTIL_UNITTESTS_API bool runningOnValgrind();
 
 } // end namespace unittests
 } // end namespace util

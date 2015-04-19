@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #define OPTION_DATA_TYPES_H
 
 #include <asiolink/io_address.h>
+#include <dhcp/api.h>
 #include <dhcp/option.h>
 #include <exceptions/exceptions.h>
 #include <util/io_utilities.h>
@@ -26,14 +27,14 @@ namespace isc {
 namespace dhcp {
 
 /// @brief Exception to be thrown when invalid type specified as template parameter.
-class InvalidDataType : public Exception {
+class KEA_DHCP_API InvalidDataType : public Exception {
 public:
     InvalidDataType(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
 /// @brief Exception to be thrown when cast to the data type was unsuccessful.
-class BadDataTypeCast : public Exception {
+class KEA_DHCP_API BadDataTypeCast : public Exception {
 public:
     BadDataTypeCast(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
@@ -192,7 +193,7 @@ struct OptionDataTypeTraits<std::string> {
 /// data types.
 /// @note This is a singleton class but it can be accessed via
 /// static methods only.
-class OptionDataTypeUtil {
+class KEA_DHCP_API OptionDataTypeUtil {
 public:
 
     /// @brief Return option data type from its name.

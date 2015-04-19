@@ -15,6 +15,7 @@
 #ifndef PKT_FILTER_INET_H
 #define PKT_FILTER_INET_H
 
+#include <dhcp/api.h>
 #include <dhcp/pkt_filter.h>
 #include <boost/scoped_array.hpp>
 
@@ -25,7 +26,7 @@ namespace dhcp {
 ///
 /// This class provides methods to send and recive packet via socket using
 /// AF_INET family and SOCK_DGRAM type.
-class PktFilterInet : public PktFilter {
+class KEA_DHCP_API PktFilterInet : public PktFilter {
 public:
 
     /// @brief Constructor

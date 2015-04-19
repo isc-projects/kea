@@ -20,6 +20,7 @@
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
 #include <dhcp/hwaddr.h>
+#include <dhcpsrv/api.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/subnet.h>
 #include <exceptions/exceptions.h>
@@ -69,42 +70,42 @@ namespace isc {
 namespace dhcp {
 
 /// @brief Exception thrown if name of database is not specified
-class NoDatabaseName : public Exception {
+class KEA_DHCPSRV_API NoDatabaseName : public Exception {
 public:
     NoDatabaseName(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
 
 /// @brief Exception thrown on failure to open database
-class DbOpenError : public Exception {
+class KEA_DHCPSRV_API DbOpenError : public Exception {
 public:
     DbOpenError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
 
 /// @brief Exception thrown on failure to execute a database function
-class DbOperationError : public Exception {
+class KEA_DHCPSRV_API DbOperationError : public Exception {
 public:
     DbOperationError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
 
 /// @brief Multiple lease records found where one expected
-class MultipleRecords : public Exception {
+class KEA_DHCPSRV_API MultipleRecords : public Exception {
 public:
     MultipleRecords(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
 
 /// @brief Attempt to update lease that was not there
-class NoSuchLease : public Exception {
+class KEA_DHCPSRV_API NoSuchLease : public Exception {
 public:
     NoSuchLease(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
 
 /// @brief Data is truncated
-class DataTruncated : public Exception {
+class KEA_DHCPSRV_API DataTruncated : public Exception {
 public:
     DataTruncated(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
@@ -131,7 +132,7 @@ public:
 /// This class throws no exceptions.  However, methods in concrete
 /// implementations of this class may throw exceptions: see the documentation
 /// of those classes for details.
-class LeaseMgr {
+class KEA_DHCPSRV_API LeaseMgr {
 public:
     /// @brief Defines maximum value for time that can be reliably stored.
     // If I'm still alive I'll be too old to care. You fix it.

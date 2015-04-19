@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#define KEA_LOG_EXPORT
+
 #include <cstddef>
 #include <log/message_dictionary.h>
 #include <log/message_types.h>

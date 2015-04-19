@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -38,7 +38,7 @@ template<class Type, uint16_t typeCode> class TXTLikeImpl;
 /// This class implements the basic interfaces inherited from the abstract
 /// \c rdata::Rdata class. The semantics of the class is provided by
 /// a copy of instantiated TXTLikeImpl class common to both TXT and SPF.
-class SPF : public Rdata {
+class KEA_DNS_API SPF : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
     // END_COMMON_MEMBERS

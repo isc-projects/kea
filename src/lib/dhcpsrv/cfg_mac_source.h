@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,8 @@
 #include <vector>
 #include <string>
 
+#include <dhcpsrv/api.h>
+
 namespace isc {
 namespace dhcp {
 
@@ -29,7 +31,7 @@ typedef std::vector<uint32_t> CfgMACSources;
 ///
 /// It's a simple wrapper around a vector of uint32_t, with each entry
 /// holding one MAC source.
-class CfgMACSource {
+class KEA_DHCPSRV_API CfgMACSource {
 
  public:
     /// @brief Default constructor.

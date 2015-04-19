@@ -15,6 +15,10 @@
 # pragma once
 #endif // defined(_MSC_VER) && (_MSC_VER >= 1200)
 
+#ifdef HAVE_ATTRIBUTE_VISIBILITY
+#pragma GCC visibility push(default)
+#endif
+
 #include "asio/basic_datagram_socket.hpp"
 #include "asio/basic_deadline_timer.hpp"
 #include "asio/basic_io_object.hpp"
@@ -97,5 +101,9 @@
 #include "asio/windows/stream_handle_service.hpp"
 #include "asio/write.hpp"
 #include "asio/write_at.hpp"
+
+#ifdef HAVE_ATTRIBUTE_VISIBILITY
+#pragma GCC visibility pop
+#endif
 
 #endif // ASIO_HPP

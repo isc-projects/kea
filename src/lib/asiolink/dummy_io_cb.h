@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,7 @@
 
 #include <exceptions/exceptions.h>
 
+#include <asiolink/api.h>
 #include <asio/error.hpp>
 #include <asio/error_code.hpp>
 
@@ -36,7 +37,7 @@ namespace asiolink {
 /// template parameter.  This is the reason for this class - it is the dummy
 /// template parameter.
 
-class DummyIOCallback {
+class KEA_ASIOLINK_API DummyIOCallback {
 public:
 
     /// \brief Asynchronous I/O callback method

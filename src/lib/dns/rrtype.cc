@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#define KEA_DNS_EXPORT
 
 #include <stdint.h>
 
@@ -60,7 +62,7 @@ RRType::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeUint16(typecode_);
 }
 
-ostream&
+KEA_DNS_API ostream&
 operator<<(ostream& os, const RRType& rrtype) {
     os << rrtype.toText();
     return (os);

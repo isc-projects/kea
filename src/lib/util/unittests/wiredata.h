@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,8 @@
 
 #include <cstddef>
 
+#include <util/unittests/api.h>
+
 /// \file wiredata.h
 /// \brief Utilities for tests with wire data.
 ///
@@ -32,6 +34,7 @@ namespace unittests {
 /// This method checks if the expected and actual data have the same length
 /// and all bytes are the same.  If not, it reports the point of mismatch in
 /// the google test format.
+KEA_UTIL_UNITTESTS_API
 void matchWireData(const void* expected_data, std::size_t expected_len,
                    const void* actual_data, std::size_t actual_len);
 }

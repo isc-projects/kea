@@ -16,6 +16,7 @@
 #define CSV_FILE_H
 
 #include <exceptions/exceptions.h>
+#include <util/api.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
 #include <fstream>
@@ -27,7 +28,7 @@ namespace isc {
 namespace util {
 
 /// @brief Exception thrown when an error occurs during CSV file processing.
-class CSVFileError : public Exception {
+class KEA_UTIL_API CSVFileError : public Exception {
 public:
     CSVFileError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
@@ -56,7 +57,7 @@ public:
 ///
 /// This class is meant to be used by the @c CSVFile class to manipulate
 /// individual rows of the CSV file.
-class CSVRow {
+class KEA_UTIL_API CSVRow {
 public:
 
     /// @brief Constructor, creates the raw to be used for output.
@@ -263,6 +264,7 @@ private:
 ///
 /// @param os Output stream.
 /// @param row Object representing a CSV file row.
+KEA_UTIL_API
 std::ostream& operator<<(std::ostream& os, const CSVRow& row);
 
 /// @brief Provides input/output access to CSV files.
@@ -287,7 +289,7 @@ std::ostream& operator<<(std::ostream& os, const CSVRow& row);
 /// immediately written into it. The header consists of the column names
 /// specified with the @c addColumn function. The subsequent rows are written
 /// into this file by calling @c append.
-class CSVFile {
+class KEA_UTIL_API CSVFile {
 public:
 
     /// @brief Constructor.

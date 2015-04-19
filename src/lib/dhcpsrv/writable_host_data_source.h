@@ -15,6 +15,8 @@
 #ifndef WRITABLE_HOST_DATA_SOURCE_H
 #define WRITABLE_HOST_DATA_SOURCE_H
 
+#include <dhcpsrv/api.h>
+
 namespace isc {
 namespace dhcp {
 
@@ -26,7 +28,7 @@ namespace dhcp {
 /// objects which may be modified by the caller. Such classes usually
 /// also derive from the @c BaseHostDataSource to implement methods which
 /// return the const objects.
-class WritableHostDataSource {
+class KEA_DHCPSRV_API WritableHostDataSource {
 public:
 
     /// @brief Default destructor implementation.

@@ -5,7 +5,7 @@
 ///////////////
 ///////////////
 
-// Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#define KEA_DNS_EXPORT
 
 #include <cassert>
 #include <algorithm>
@@ -275,42 +277,42 @@ RRParamRegistry::RRParamRegistry() {
         add("CAA", 257, RdataFactoryPtr(new RdataFactory<generic::CAA>()));
         add("DLV", 32769, RdataFactoryPtr(new RdataFactory<generic::DLV>()));
         // Meta and non-implemented RR types
-        addType("IPSECKEY", 45);
+        addType("UNSPEC", 103);
+        addType("ANY", 255);
+        addType("AXFR", 252);
+        addType("NULL", 10);
+        addType("TKEY", 249);
+        addType("RT", 21);
         addType("L32", 105);
         addType("NID", 104);
-        addType("LP", 107);
-        addType("L64", 106);
-        addType("KX", 36);
-        addType("UNSPEC", 103);
-        addType("MAILA", 254);
-        addType("MAILB", 253);
-        addType("HIP", 55);
-        addType("LOC", 29);
         addType("URI", 256);
-        addType("APL", 42);
-        addType("GPOS", 27);
-        addType("TKEY", 249);
-        addType("MG", 8);
-        addType("MR", 9);
-        addType("IXFR", 251);
-        addType("MB", 7);
-        addType("MF", 4);
-        addType("AXFR", 252);
-        addType("ANY", 255);
-        addType("MD", 3);
         addType("CERT", 37);
+        addType("WKS", 11);
+        addType("LOC", 29);
+        addType("APL", 42);
         addType("KEY", 25);
+        addType("HIP", 55);
+        addType("MAILB", 253);
+        addType("NSAP", 22);
         addType("SIG", 24);
+        addType("MD", 3);
+        addType("X25", 19);
+        addType("IPSECKEY", 45);
+        addType("MB", 7);
+        addType("MAILA", 254);
+        addType("L64", 106);
+        addType("NXT", 30);
+        addType("MR", 9);
         addType("A6", 38);
         addType("PX", 26);
-        addType("RT", 21);
-        addType("X25", 19);
-        addType("NSAP-PTR", 23);
-        addType("NSAP", 22);
-        addType("NXT", 30);
-        addType("NULL", 10);
-        addType("WKS", 11);
+        addType("KX", 36);
+        addType("GPOS", 27);
         addType("ISDN", 20);
+        addType("IXFR", 251);
+        addType("MF", 4);
+        addType("MG", 8);
+        addType("NSAP-PTR", 23);
+        addType("LP", 107);
         // Meta classes
         addClass("NONE", 254);
         // END_WELL_KNOWN_PARAMS

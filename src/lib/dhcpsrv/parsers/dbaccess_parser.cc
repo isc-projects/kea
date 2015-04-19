@@ -14,6 +14,8 @@
 
 #include <config.h>
 
+#define KEA_DHCPSRV_EXPORT
+
 #include <dhcp/option.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_mgr_factory.h>

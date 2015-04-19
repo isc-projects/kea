@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #define ASIOLINK_DNS_ANSWER_H 1
 
 #include <asiolink/io_message.h>
+#include <asiodns/api.h>
 #include <util/buffer.h>
 #include <dns/message.h>
 
@@ -35,7 +36,7 @@ namespace asiodns {
 /// from a DNS Lookup provider function and readies it to be sent to the
 /// client.  After it has run, the OutputBuffer object passed to it should
 /// contain the answer to the query rendered into wire format.
-class DNSAnswer {
+class KEA_ASIODNS_API DNSAnswer {
     ///
     /// \name Constructors and Destructor
     ///

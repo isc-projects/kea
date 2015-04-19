@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#define KEA_DHCP_DDNS_EXPORT
+
 #include <dhcp_ddns/ncr_msg.h>
 #include <dns/name.h>
 #include <asiolink/io_address.h>
@@ -28,7 +30,7 @@
 namespace isc {
 namespace dhcp_ddns {
 
-
+KEA_DHCP_DDNS_API
 NameChangeFormat stringToNcrFormat(const std::string& fmt_str) {
     if (boost::iequals(fmt_str, "JSON")) {
         return FMT_JSON;
@@ -37,7 +39,7 @@ NameChangeFormat stringToNcrFormat(const std::string& fmt_str) {
     isc_throw(BadValue, "Invalid NameChangeRequest format:" << fmt_str);
 }
 
-
+KEA_DHCP_DDNS_API
 std::string ncrFormatToString(NameChangeFormat format) {
     if (format == FMT_JSON) {
         return ("JSON");
@@ -193,7 +195,7 @@ D2Dhcid::createDigest(const uint8_t identifier_type,
     std::memcpy(&bytes_[3], hash.getData(), hash.getLength());
 }
 
-std::ostream&
+KEA_DHCP_DDNS_API std::ostream&
 operator<<(std::ostream& os, const D2Dhcid& dhcid) {
     os << dhcid.toStr();
     return (os);

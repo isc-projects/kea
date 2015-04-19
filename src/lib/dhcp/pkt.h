@@ -17,6 +17,7 @@
 
 #include <asiolink/io_address.h>
 #include <util/buffer.h>
+#include <dhcp/api.h>
 #include <dhcp/option.h>
 #include <dhcp/hwaddr.h>
 #include <dhcp/classify.h>
@@ -36,7 +37,7 @@ namespace dhcp {
 ///
 /// @note This is abstract class. Please instantiate derived classes
 /// such as @c Pkt4 or @c Pkt6.
-class Pkt {
+class KEA_DHCP_API Pkt {
 protected:
 
     /// @brief Constructor.

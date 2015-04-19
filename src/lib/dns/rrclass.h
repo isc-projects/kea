@@ -5,7 +5,7 @@
 ///////////////
 ///////////////
 
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -27,6 +27,8 @@
 #include <string>
 #include <ostream>
 
+#include <util/api.h>
+#include <dns/api.h>
 #include <dns/exceptions.h>
 
 #include <boost/optional.hpp>
@@ -46,7 +48,7 @@ class AbstractMessageRenderer;
 /// \brief A standard DNS module exception that is thrown if an RRClass object
 /// is being constructed from an unrecognized string.
 ///
-class InvalidRRClass : public DNSTextError {
+class KEA_DNS_API InvalidRRClass : public DNSTextError {
 public:
     InvalidRRClass(const char* file, size_t line, const char* what) :
         DNSTextError(file, line, what) {}
@@ -56,7 +58,7 @@ public:
 /// \brief A standard DNS module exception that is thrown if an RRClass object
 /// is being constructed from a incomplete (too short) wire-format data.
 ///
-class IncompleteRRClass : public isc::dns::Exception {
+class KEA_DNS_API IncompleteRRClass : public isc::dns::Exception {
 public:
     IncompleteRRClass(const char* file, size_t line, const char* what) :
         isc::dns::Exception(file, line, what) {}
@@ -96,7 +98,7 @@ public:
 /// the proxy function.
 ///
 /// Note to developers: same note as \c RRType applies.
-class RRClass {
+class KEA_DNS_API RRClass {
 public:
     ///
     /// \name Constructors and Destructor
@@ -286,11 +288,11 @@ public:
     { return (classcode_ < other.classcode_); }
 
     // BEGIN_WELL_KNOWN_CLASS_DECLARATIONS
+    static const RRClass& ANY();
     static const RRClass& HS();
     static const RRClass& NONE();
-    static const RRClass& ANY();
-    static const RRClass& CH();
     static const RRClass& IN();
+    static const RRClass& CH();
     // END_WELL_KNOWN_CLASS_DECLARATIONS
 
 private:
@@ -298,6 +300,12 @@ private:
 };
 
 // BEGIN_WELL_KNOWN_CLASS_DEFINITIONS
+inline const RRClass&
+RRClass::ANY() {
+    static RRClass rrclass(255);
+    return (rrclass);
+}
+
 inline const RRClass&
 RRClass::HS() {
     static RRClass rrclass(4);
@@ -311,20 +319,14 @@ RRClass::NONE() {
 }
 
 inline const RRClass&
-RRClass::ANY() {
-    static RRClass rrclass(255);
+RRClass::IN() {
+    static RRClass rrclass(1);
     return (rrclass);
 }
 
 inline const RRClass&
 RRClass::CH() {
     static RRClass rrclass(3);
-    return (rrclass);
-}
-
-inline const RRClass&
-RRClass::IN() {
-    static RRClass rrclass(1);
     return (rrclass);
 }
 
@@ -344,7 +346,7 @@ RRClass::IN() {
 /// \param rrclass The \c RRClass object output by the operation.
 /// \return A reference to the same \c std::ostream object referenced by
 /// parameter \c os after the insertion operation.
-std::ostream&
+KEA_DNS_API std::ostream&
 operator<<(std::ostream& os, const RRClass& rrclass);
 }
 }

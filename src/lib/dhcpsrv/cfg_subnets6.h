@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/option.h>
+#include <dhcpsrv/api.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_selector.h>
 #include <util/optional_value.h>
@@ -34,7 +35,7 @@ namespace dhcp {
 ///
 /// See @c CfgSubnets6::selectSubnet documentation for more details on how the subnet
 /// is selected for the client.
-class CfgSubnets6 {
+class KEA_DHCPSRV_API CfgSubnets6 {
 public:
 
     /// @brief Adds new subnet to the configuration.

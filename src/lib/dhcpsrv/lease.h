@@ -19,6 +19,7 @@
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
 #include <dhcp/hwaddr.h>
+#include <dhcpsrv/api.h>
 
 namespace isc {
 namespace dhcp {
@@ -33,7 +34,7 @@ typedef uint32_t SubnetID;
 ///
 /// This structure holds all information that is common between IPv4 and IPv6
 /// leases.
-struct Lease {
+struct KEA_DHCPSRV_API Lease {
 
     /// @brief Type of lease or pool
     typedef enum {
@@ -173,7 +174,7 @@ struct Lease {
 /// make it a class, all fields would have to made private and getters/setters
 /// would be required. As this is a critical part of the code that will be used
 /// extensively, direct access is warranted.
-struct Lease4 : public Lease {
+struct KEA_DHCPSRV_API Lease4 : public Lease {
 
     /// @brief Address extension
     ///
@@ -290,7 +291,7 @@ typedef std::vector<Lease4Ptr> Lease4Collection;
 /// make it a class, all fields would have to made private and getters/setters
 /// would be required. As this is a critical part of the code that will be used
 /// extensively, direct access is warranted.
-struct Lease6 : public Lease {
+struct KEA_DHCPSRV_API Lease6 : public Lease {
 
     /// @brief Lease type
     ///
@@ -421,7 +422,7 @@ typedef std::vector<Lease6Ptr> Lease6Collection;
 /// @param os output stream to which the output is
 /// @param lease reference to Lease object to dump
 /// @return a reference to the output stream paramater
-std::ostream&
+KEA_DHCPSRV_API std::ostream&
 operator<<(std::ostream& os, const Lease& lease);
 
 }; // end of isc::dhcp namespace

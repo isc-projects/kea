@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 #ifndef PROTOCOL_UTIL_H
 #define PROTOCOL_UTIL_H
 
+#include <dhcp/api.h>
 #include <dhcp/pkt4.h>
 #include <util/buffer.h>
 
@@ -27,7 +28,7 @@ namespace dhcp {
 ///
 /// This exception is thrown when parsing link, Internet or Transport layer
 /// header has failed.
-class InvalidPacketHeader : public Exception {
+class KEA_DHCP_API InvalidPacketHeader : public Exception {
 public:
     InvalidPacketHeader(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
@@ -81,6 +82,7 @@ static const size_t UDP_DEST_PORT = 2;
 ///
 /// @throw InvalidPacketHeader if packet header is truncated
 /// @throw BadValue if pkt object is NULL.
+KEA_DHCP_API
 void decodeEthernetHeader(util::InputBuffer& buf, Pkt4Ptr& pkt);
 
 /// @brief Decode IP and UDP header.
@@ -100,6 +102,7 @@ void decodeEthernetHeader(util::InputBuffer& buf, Pkt4Ptr& pkt);
 ///
 /// @throw InvalidPacketHeader if packet header is truncated
 /// @throw BadValue if pkt object is NULL.
+KEA_DHCP_API
 void decodeIpUdpHeader(util::InputBuffer& buf, Pkt4Ptr& pkt);
 
 /// @brief Writes ethernet frame header into a buffer.
@@ -110,6 +113,7 @@ void decodeIpUdpHeader(util::InputBuffer& buf, Pkt4Ptr& pkt);
 ///
 /// @param pkt packet object holding source and destination HW address.
 /// @param [out] out_buf buffer where a header is written.
+KEA_DHCP_API
 void writeEthernetHeader(const Pkt4Ptr& pkt,
                          util::OutputBuffer& out_buf);
 
@@ -126,6 +130,7 @@ void writeEthernetHeader(const Pkt4Ptr& pkt,
 ///
 /// @param pkt DHCPv4 packet to be sent in IP packet
 /// @param [out] out_buf buffer where an IP header is written
+KEA_DHCP_API
 void writeIpUdpHeader(const Pkt4Ptr& pkt, util::OutputBuffer& out_buf);
 
 /// @brief Calculates checksum for provided buffer
@@ -147,6 +152,7 @@ void writeIpUdpHeader(const Pkt4Ptr& pkt, util::OutputBuffer& out_buf);
 /// @param sum initial checksum value, other values will be added to it.
 ///
 /// @return calculated checksum.
+KEA_DHCP_API
 uint16_t calcChecksum(const uint8_t* buf, const uint32_t buf_size,
                       uint32_t sum = 0);
 

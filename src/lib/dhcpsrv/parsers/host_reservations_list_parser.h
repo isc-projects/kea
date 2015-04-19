@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #define HOST_RESERVATIONS_LIST_PARSER_H
 
 #include <cc/data.h>
+#include <dhcpsrv/api.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/parsers/dhcp_config_parser.h>
 #include <boost/foreach.hpp>

@@ -5,6 +5,8 @@
 ///////////////
 ///////////////
 
+
+#define KEA_DNS_EXPORT
 // Copyright (C) 2010-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any

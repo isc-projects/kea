@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/classify.h>
 #include <dhcp/option.h>
+#include <dhcpsrv/api.h>
 #include <string>
 
 namespace isc {
@@ -28,7 +29,7 @@ namespace dhcp {
 /// This structure holds various parameters extracted from a packet sent
 /// by a DHCP client used to select the subnet for the client. This selector
 /// is common for IPv4 and IPv6 subnets.
-struct SubnetSelector {
+struct KEA_DHCPSRV_API SubnetSelector {
     /// @name DHCPv4 specific parameters.
     //@{
     /// @brief ciaddr from the client's message.

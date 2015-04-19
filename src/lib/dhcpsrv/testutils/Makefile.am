@@ -3,7 +3,7 @@ SUBDIRS = .
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 
-AM_CXXFLAGS = $(KEA_CXXFLAGS)
+AM_CXXFLAGS = $(KEA_CXXFLAGS) $(SHLIB_CXXFLAGS)
 
 if USE_STATIC_LINK
 AM_LDFLAGS = -static
@@ -15,7 +15,8 @@ if HAVE_GTEST
 
 noinst_LTLIBRARIES = libdhcpsrvtest.la
 
-libdhcpsrvtest_la_SOURCES  = config_result_check.cc config_result_check.h
+libdhcpsrvtest_la_SOURCES  = api.h
+libdhcpsrvtest_la_SOURCES += config_result_check.cc config_result_check.h
 libdhcpsrvtest_la_CXXFLAGS = $(AM_CXXFLAGS)
 libdhcpsrvtest_la_CPPFLAGS = $(AM_CPPFLAGS)
 libdhcpsrvtest_la_LDFLAGS  = $(AM_LDFLAGS)

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012, 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012, 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #define OPTION6_ADDRLST_H
 
 #include <asiolink/io_address.h>
+#include <dhcp/api.h>
 #include <dhcp/option.h>
 #include <boost/shared_ptr.hpp>
 #include <vector>
@@ -27,7 +28,7 @@ namespace dhcp {
 ///
 /// This class handles a list of IPv6 addresses. An example of such option
 /// is dns-servers option. It can also be used to handle single address.
-class Option6AddrLst: public Option {
+class KEA_DHCP_API Option6AddrLst: public Option {
 
 public:
     /// a container for (IPv6) addresses

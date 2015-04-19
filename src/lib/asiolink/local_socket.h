@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 #ifndef LOCAL_SOCKET_H
 #define LOCAL_SOCKET_H 1
 
+#include <asiolink/api.h>
 #include <asiolink/io_socket.h>
 #include <asiolink/io_service.h>
 
@@ -35,7 +36,7 @@ namespace asiolink {
 /// Note that in the initial implementation there's even no stop() or cancel()
 /// method; for these cases users are expected to just destroy the socket
 /// object (this may be extended in future, too).
-class LocalSocket : boost::noncopyable, public IOSocket {
+class KEA_ASIOLINK_API LocalSocket : boost::noncopyable, public IOSocket {
 public:
     /// \brief Constructor from a native file descriptor of AF_UNIX stream
     /// socket.

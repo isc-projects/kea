@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,8 @@
 #include <sstream>
 
 #include <gtest/gtest.h>
+
+#include <util/unittests/api.h>
 
 #ifndef UTIL_UNITTESTS_TEXTDATA_H
 #define UTIL_UNITTESTS_TEXTDATA_H 1
@@ -83,7 +85,7 @@ matchTextData(const std::string& expected_text, ACTUAL_STREAM& actual) {
 
 /// Same for the previous two, but takes strings for both expected and
 /// actual data.
-void
+KEA_UTIL_UNITTESTS_API void
 matchTextData(const std::string& expected_text,
               const std::string& actual_text)
 {

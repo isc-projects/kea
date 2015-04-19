@@ -18,6 +18,8 @@
 #include <set>
 #include <string>
 
+#include <dhcp/api.h>
+
 /// @file   classify.h
 ///
 /// @brief Defines basic elements of client classification.
@@ -49,7 +51,7 @@ namespace dhcp {
     ///
     /// Note: This class is derived from std::set which may not have Doxygen
     /// documentation. See  http://www.cplusplus.com/reference/set/set/.
-    class ClientClasses : public std::set<ClientClass> {
+    class KEA_DHCP_API ClientClasses : public std::set<ClientClass> {
     public:
 
         /// @brief Default constructor.

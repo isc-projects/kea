@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,7 @@
 #include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <dhcp/option_definition.h>
+#include <dhcpsrv/api.h>
 #include <dhcpsrv/d2_client_cfg.h>
 #include <dhcpsrv/cfg_iface.h>
 #include <dhcpsrv/cfg_option.h>
@@ -200,7 +201,7 @@ typedef boost::shared_ptr<BooleanStorage> BooleanStoragePtr;
 /// options, option definitions, and other context specific information
 /// that needs to be accessible throughout the parsing and parsing
 /// constructs.
-class ParserContext {
+class KEA_DHCPSRV_API ParserContext {
 public:
     /// @brief Constructor
     ///
@@ -346,7 +347,7 @@ typedef ValueParser<std::string> StringParser;
 /// will accept any configuration and will just print it out
 /// on commit. Useful for debugging existing configurations and
 /// adding new ones.
-class DebugParser : public DhcpConfigParser {
+class KEA_DHCPSRV_API DebugParser : public DhcpConfigParser {
 public:
 
     /// @brief Constructor
@@ -386,7 +387,7 @@ private:
 /// It contains a list of MAC/hardware aquisition source, i.e. methods how
 /// MAC address can possibly by obtained in DHCPv6. For a currently supported
 /// methods, see @ref isc::dhcp::Pkt::getMAC.
-class MACSourcesListConfigParser : public DhcpConfigParser {
+class KEA_DHCPSRV_API MACSourcesListConfigParser : public DhcpConfigParser {
 public:
 
     /// @brief constructor
@@ -441,7 +442,7 @@ private:
 ///
 /// Only if the library list has changed and the libraries are valid will the
 /// change be applied.
-class HooksLibrariesParser : public DhcpConfigParser {
+class KEA_DHCPSRV_API HooksLibrariesParser : public DhcpConfigParser {
 public:
 
     /// @brief Constructor
@@ -510,7 +511,7 @@ private:
 /// an option the configuration will not be accepted. If parsing
 /// is successful then an instance of an option is created and
 /// added to the storage provided by the calling class.
-class OptionDataParser : public DhcpConfigParser {
+class KEA_DHCPSRV_API OptionDataParser : public DhcpConfigParser {
 public:
     /// @brief Constructor.
     ///
@@ -656,7 +657,7 @@ typedef OptionDataParser *OptionDataParserFactory(const std::string&,
 /// data for a particular subnet and creates a collection of options.
 /// If parsing is successful, all these options are added to the Subnet
 /// object.
-class OptionDataListParser : public DhcpConfigParser {
+class KEA_DHCPSRV_API OptionDataListParser : public DhcpConfigParser {
 public:
     /// @brief Constructor.
     ///
@@ -698,7 +699,7 @@ private:
 /// @brief Parser for a single option definition.
 ///
 /// This parser creates an instance of a single option definition.
-class OptionDefParser : public DhcpConfigParser {
+class KEA_DHCPSRV_API OptionDefParser : public DhcpConfigParser {
 public:
     /// @brief Constructor.
     ///
@@ -751,7 +752,7 @@ private:
 /// option definitions and creates instances of these definitions.
 /// If the parsing is successful, the collection of created definitions
 /// is put into the provided storage.
-class OptionDefListParser : public DhcpConfigParser {
+class KEA_DHCPSRV_API OptionDefListParser : public DhcpConfigParser {
 public:
     /// @brief Constructor.
     ///
@@ -798,7 +799,7 @@ typedef boost::shared_ptr<PoolStorage> PoolStoragePtr;
 /// and stored in chosen PoolStorage container.
 ///
 /// It is useful for parsing Dhcp<4/6>/subnet<4/6>[X]/pools[X] structure.
-class PoolParser : public DhcpConfigParser {
+class KEA_DHCPSRV_API PoolParser : public DhcpConfigParser {
 public:
 
     /// @brief constructor.
@@ -861,7 +862,7 @@ protected:
 ///
 /// This class is not intended to be used directly. Instead, derived classes
 /// should implement poolParserMaker() method.
-class PoolsListParser :  public DhcpConfigParser {
+class KEA_DHCPSRV_API PoolsListParser :  public DhcpConfigParser {
 public:
 
     /// @brief constructor.
@@ -915,7 +916,7 @@ protected:
 /// is expected that the number of parameters will increase over time.
 ///
 /// It is useful for parsing Dhcp<4/6>/subnet<4/6>[x]/relay parameters.
-class RelayInfoParser : public DhcpConfigParser {
+class KEA_DHCPSRV_API RelayInfoParser : public DhcpConfigParser {
 public:
 
     /// @brief constructor
@@ -965,7 +966,7 @@ protected:
 ///
 /// This class parses the whole subnet definition. It creates parsers
 /// for received configuration parameters as needed.
-class SubnetConfigParser : public DhcpConfigParser {
+class KEA_DHCPSRV_API SubnetConfigParser : public DhcpConfigParser {
 public:
 
     /// @brief constructor
@@ -1088,7 +1089,8 @@ protected:
 /// This class parses the configuration element "dhcp-ddns" common to the
 /// spec files for both dhcp4 and dhcp6. It creates an instance of a
 /// D2ClientConfig.
-class D2ClientConfigParser : public  isc::dhcp::DhcpConfigParser {
+class KEA_DHCPSRV_API D2ClientConfigParser :
+    public  isc::dhcp::DhcpConfigParser {
 public:
     /// @brief Constructor
     ///

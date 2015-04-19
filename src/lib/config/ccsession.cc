@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#define KEA_CONFIG_EXPORT
 
 #include <config.h>
 
@@ -55,7 +57,7 @@ namespace isc {
 namespace config {
 
 /// Creates a standard config/command protocol answer message
-ConstElementPtr
+KEA_CONFIG_API ConstElementPtr
 createAnswer() {
     ElementPtr answer = Element::createMap();
     ElementPtr answer_content = Element::createList();
@@ -65,7 +67,7 @@ createAnswer() {
     return (answer);
 }
 
-ConstElementPtr
+KEA_CONFIG_API ConstElementPtr
 createAnswer(const int rcode, ConstElementPtr arg) {
     if (rcode != 0 && (!arg || arg->getType() != Element::string)) {
         isc_throw(CCSessionError, "Bad or no argument for rcode != 0");
@@ -79,7 +81,7 @@ createAnswer(const int rcode, ConstElementPtr arg) {
     return (answer);
 }
 
-ConstElementPtr
+KEA_CONFIG_API ConstElementPtr
 createAnswer(const int rcode, const std::string& arg) {
     ElementPtr answer = Element::createMap();
     ElementPtr answer_content = Element::createList();
@@ -90,7 +92,7 @@ createAnswer(const int rcode, const std::string& arg) {
     return (answer);
 }
 
-ConstElementPtr
+KEA_CONFIG_API ConstElementPtr
 parseAnswer(int &rcode, ConstElementPtr msg) {
     if (msg &&
         msg->getType() == Element::map &&
@@ -120,12 +122,12 @@ parseAnswer(int &rcode, ConstElementPtr msg) {
     }
 }
 
-ConstElementPtr
+KEA_CONFIG_API ConstElementPtr
 createCommand(const std::string& command) {
     return (createCommand(command, ElementPtr()));
 }
 
-ConstElementPtr
+KEA_CONFIG_API ConstElementPtr
 createCommand(const std::string& command, ConstElementPtr arg) {
     ElementPtr cmd = Element::createMap();
     ElementPtr cmd_parts = Element::createList();
@@ -137,7 +139,7 @@ createCommand(const std::string& command, ConstElementPtr arg) {
     return (cmd);
 }
 
-std::string
+KEA_CONFIG_API std::string
 parseCommand(ConstElementPtr& arg, ConstElementPtr command) {
     if (command &&
         command->getType() == Element::map &&
@@ -309,7 +311,7 @@ copyLogger(ConstElementPtr& cur_logger, const std::string& new_name) {
 } // end anonymous namespace
 
 
-ConstElementPtr
+KEA_CONFIG_API ConstElementPtr
 getRelatedLoggers(ConstElementPtr loggers) {
     // Keep a list of names for easier lookup later
     std::set<std::string> our_names;
@@ -374,7 +376,7 @@ getRelatedLoggers(ConstElementPtr loggers) {
     return (result);
 }
 
-void
+KEA_CONFIG_API void
 default_logconfig_handler(const std::string& module_name,
                           ConstElementPtr new_config,
                           const ConfigData& config_data) {

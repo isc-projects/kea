@@ -1,4 +1,4 @@
-// Copyright (C) 2010, 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -22,10 +22,11 @@
 #include <boost/shared_ptr.hpp>
 #include <stdexcept>
 #include <exceptions/exceptions.h>
+#include <cc/api.h>
 
 namespace isc { namespace data {
 
-class Element;
+class KEA_CC_API Element;
 // todo: describe the rationale behind ElementPtr?
 typedef boost::shared_ptr<Element> ElementPtr;
 typedef boost::shared_ptr<const Element> ConstElementPtr;
@@ -35,7 +36,7 @@ typedef boost::shared_ptr<const Element> ConstElementPtr;
 /// is called for an Element that has a wrong type (e.g. int_value on a
 /// ListElement)
 ///
-class TypeError : public isc::Exception {
+class KEA_CC_API TypeError : public isc::Exception {
 public:
     TypeError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
@@ -48,7 +49,7 @@ public:
 // i'd like to use Exception here but we need one that is derived from
 // runtime_error (as this one is directly based on external data, and
 // i want to add some values to any static data string that is provided)
-class JSONError : public isc::Exception {
+class KEA_CC_API JSONError : public isc::Exception {
 public:
     JSONError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
@@ -71,7 +72,7 @@ public:
 /// raising a \c TypeError for functions that are not supported for
 /// the type in question.
 ///
-class Element {
+class KEA_CC_API Element {
 
 public:
     /// \brief Represents the position of the data element within a
@@ -528,7 +529,7 @@ public:
 ///        Therefore, call by value methods (create, setValue) have three
 ///        (int,long,long long) definitions. Others use int64_t.
 ///
-class IntElement : public Element {
+class KEA_CC_API IntElement : public Element {
     int64_t i;
 private:
 
@@ -544,7 +545,7 @@ public:
     bool equals(const Element& other) const;
 };
 
-class DoubleElement : public Element {
+class KEA_CC_API DoubleElement : public Element {
     double d;
 
 public:
@@ -559,7 +560,7 @@ public:
     bool equals(const Element& other) const;
 };
 
-class BoolElement : public Element {
+class KEA_CC_API BoolElement : public Element {
     bool b;
 
 public:
@@ -574,7 +575,7 @@ public:
     bool equals(const Element& other) const;
 };
 
-class NullElement : public Element {
+class KEA_CC_API NullElement : public Element {
 public:
     NullElement(const Position& pos = ZERO_POSITION())
         : Element(null, pos) {};
@@ -582,7 +583,7 @@ public:
     bool equals(const Element& other) const;
 };
 
-class StringElement : public Element {
+class KEA_CC_API StringElement : public Element {
     std::string s;
 
 public:
@@ -597,7 +598,7 @@ public:
     bool equals(const Element& other) const;
 };
 
-class ListElement : public Element {
+class KEA_CC_API ListElement : public Element {
     std::vector<ConstElementPtr> l;
 
 public:
@@ -629,7 +630,7 @@ public:
     bool equals(const Element& other) const;
 };
 
-class MapElement : public Element {
+class KEA_CC_API MapElement : public Element {
     std::map<std::string, ConstElementPtr> m;
 
 public:
@@ -681,6 +682,7 @@ public:
 /// Checks whether the given ElementPtr is a NULL pointer
 /// \param p The ElementPtr to check
 /// \return true if it is NULL, false if not.
+KEA_CC_API
 bool isNull(ConstElementPtr p);
 
 ///
@@ -690,6 +692,7 @@ bool isNull(ConstElementPtr p);
 /// only contains new and changed values (for ModuleCCSession and
 /// configuration update handlers)
 /// Raises a TypeError if a or b are not MapElements
+KEA_CC_API
 void removeIdentical(ElementPtr a, ConstElementPtr b);
 
 /// \brief Create a new ElementPtr from the first ElementPtr, removing all
@@ -697,6 +700,7 @@ void removeIdentical(ElementPtr a, ConstElementPtr b);
 /// The returned ElementPtr will be a MapElement that only contains new and
 /// changed values (for ModuleCCSession and configuration update handlers).
 /// Raises a TypeError if a or b are not MapElements
+KEA_CC_API
 ConstElementPtr removeIdentical(ConstElementPtr a, ConstElementPtr b);
 
 /// \brief Merges the data from other into element.
@@ -711,6 +715,7 @@ ConstElementPtr removeIdentical(ConstElementPtr a, ConstElementPtr b);
 /// configuration data (which would then result in reverting back
 /// to the default).
 /// Raises a TypeError if either ElementPtr is not a MapElement
+KEA_CC_API
 void merge(ElementPtr element, ConstElementPtr other);
 
 ///
@@ -724,6 +729,7 @@ void merge(ElementPtr element, ConstElementPtr other);
 /// \param pos The \c Element::Position structure to insert.
 /// \return A reference to the same \c std::ostream object referenced by
 /// parameter \c out after the insertion operation.
+KEA_CC_API
 std::ostream& operator<<(std::ostream& out, const Element::Position& pos);
 
 ///
@@ -741,9 +747,12 @@ std::ostream& operator<<(std::ostream& out, const Element::Position& pos);
 /// \param e The \c ElementPtr object to insert.
 /// \return A reference to the same \c std::ostream object referenced by
 /// parameter \c out after the insertion operation.
+KEA_CC_API
 std::ostream& operator<<(std::ostream& out, const Element& e);
 
+KEA_CC_API
 bool operator==(const Element& a, const Element& b);
+KEA_CC_API
 bool operator!=(const Element& a, const Element& b);
 } }
 #endif // ISC_DATA_H

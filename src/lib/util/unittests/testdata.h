@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,8 @@
 #ifndef UTIL_UNITTESTS_TESTDATA_H
 #define UTIL_UNITTESTS_TESTDATA_H 1
 
+#include <util/unittests/api.h>
+
 /**
  * \file testdata.h
  * \brief Manipulating test data files.
@@ -28,6 +30,7 @@ namespace util {
 namespace unittests {
 /// Add a path (directory) that \c openTestData() will search for test data
 /// files.
+KEA_UTIL_UNITTESTS_API
 void addTestDataPath(const std::string& path);
 
 /// Open a file specified by 'datafile' using the data paths registered via
@@ -42,6 +45,7 @@ void addTestDataPath(const std::string& path);
 /// is to use a different \c ifstream object for a new call to this function;
 /// alternatively make sure you explicitly clear the error bit by calling
 /// \c ifstream::clear() on \c ifs.
+KEA_UTIL_UNITTESTS_API
 void openTestData(const char* const datafile, std::ifstream& ifs);
 }
 }

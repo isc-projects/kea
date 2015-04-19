@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,7 @@
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <util/api.h>
 #include <util/locks.h>
 
 namespace isc {
@@ -37,7 +38,7 @@ namespace util {
 /// It is not intended that the class be copied, and the derivation from
 /// boost::noncopyable enforces this.
 template <typename T>
-class LruList : boost::noncopyable {
+class KEA_UTIL_API LruList : boost::noncopyable {
 public:
     typedef typename std::list<boost::shared_ptr<T> > lru_list;
     typedef typename lru_list::iterator               iterator;

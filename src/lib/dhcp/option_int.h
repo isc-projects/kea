@@ -15,6 +15,7 @@
 #ifndef OPTION_INT_H
 #define OPTION_INT_H
 
+#include <dhcp/api.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
 #include <dhcp/option_data_types.h>
@@ -209,6 +210,16 @@ private:
 
     T value_;  ///< Value conveyed by the option.
 };
+
+/// Export the typeinfo for dynamic_cast
+#ifdef HAVE_ATTRIBUTE_VISIBILITY
+extern template class KEA_DHCP_API OptionInt<uint8_t>;
+extern template class KEA_DHCP_API OptionInt<uint16_t>;
+extern template class KEA_DHCP_API OptionInt<uint32_t>;
+extern template class KEA_DHCP_API OptionInt<int8_t>;
+extern template class KEA_DHCP_API OptionInt<int16_t>;
+extern template class KEA_DHCP_API OptionInt<int32_t>;
+#endif
 
 } // isc::dhcp namespace
 } // isc namespace

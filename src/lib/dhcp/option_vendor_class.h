@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 #ifndef OPTION_VENDOR_CLASS_H
 #define OPTION_VENDOR_CLASS_H
 
+#include <dhcp/api.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/opaque_data_tuple.h>
@@ -46,7 +47,7 @@ namespace dhcp {
 /// @todo Currently, the enterprise id field is set to a value of the first
 /// enterprise id occurrence in the parsed option. At some point we should
 /// be able to differentiate between enterprise ids.
-class OptionVendorClass : public Option {
+class KEA_DHCP_API OptionVendorClass : public Option {
 public:
 
     /// @brief Collection of opaque data tuples carried by the option.

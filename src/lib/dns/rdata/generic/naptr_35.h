@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -37,7 +37,7 @@ class NAPTRImpl;
 /// This class implements the basic interfaces inherited from the
 /// \c rdata::Rdata class, and provides accessors specific to the
 /// NAPTR rdata.
-class NAPTR : public Rdata {
+class KEA_DNS_API NAPTR : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
     // END_COMMON_MEMBERS

@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #define HOST_RESERVATION_PARSER_H
 
 #include <cc/data.h>
+#include <dhcpsrv/api.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/parsers/dhcp_config_parser.h>
 
@@ -23,7 +24,7 @@ namespace isc {
 namespace dhcp {
 
 /// @brief Parser for a single host reservation entry.
-class HostReservationParser : public DhcpConfigParser {
+class KEA_DHCPSRV_API HostReservationParser : public DhcpConfigParser {
 public:
 
     /// @brief Constructor.
@@ -66,7 +67,7 @@ protected:
 };
 
 /// @brief Parser for a single host reservation for DHCPv4.
-class HostReservationParser4 : public HostReservationParser {
+class KEA_DHCPSRV_API HostReservationParser4 : public HostReservationParser {
 public:
 
     /// @brief Constructor.
@@ -85,7 +86,7 @@ public:
 };
 
 /// @brief Parser for a single host reservation for DHCPv6.
-class HostReservationParser6 : public HostReservationParser {
+class KEA_DHCPSRV_API HostReservationParser6 : public HostReservationParser {
 public:
 
     /// @brief Constructor.

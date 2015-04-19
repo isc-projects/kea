@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #define OPTION6_IAPREFIX_H
 
 #include <asiolink/io_address.h>
+#include <dhcp/api.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option.h>
 
@@ -56,7 +57,7 @@ namespace dhcp {
 /// need to be turned into wire format, appropriate bits set to 0 and then
 /// option would need to be created again from the wire format. We may consider
 /// doing it if we find a use case where it is required.
-class Option6IAPrefix : public Option6IAAddr {
+class KEA_DHCP_API Option6IAPrefix : public Option6IAAddr {
 
 public:
     /// length of the fixed part of the IAPREFIX option

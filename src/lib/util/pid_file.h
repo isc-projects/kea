@@ -16,6 +16,7 @@
 #define PID_FILE_H
 
 #include <exceptions/exceptions.h>
+#include <util/api.h>
 #include <fstream>
 #include <ostream>
 #include <string>
@@ -24,7 +25,7 @@ namespace isc {
 namespace util {
 
 /// @brief Exception thrown when an error occurs during PID file processing.
-class PIDFileError : public Exception {
+class KEA_UTIL_API PIDFileError : public Exception {
 public:
     PIDFileError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
@@ -32,7 +33,7 @@ public:
 
 /// @brief Exception thrown when an error occurs trying to read a PID
 /// from an opened file.
-class PIDCantReadPID : public Exception {
+class KEA_UTIL_API PIDCantReadPID : public Exception {
 public:
     PIDCantReadPID(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
@@ -44,7 +45,7 @@ public:
 /// functions for writing and deleting a file containing a PID as
 /// well as for extracting a PID from a file and checking if the
 /// process is still running.
-class PIDFile {
+class KEA_UTIL_API PIDFile {
 public:
     /// @brief Constructor
     ///

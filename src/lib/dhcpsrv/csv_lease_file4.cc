@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#define KEA_DHCPSRV_EXPORT
+
 #include <config.h>
 #include <dhcpsrv/csv_lease_file4.h>
 

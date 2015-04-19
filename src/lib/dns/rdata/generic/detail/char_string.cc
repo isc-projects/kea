@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#define KEA_DNS_EXPORT
 
 #include <exceptions/exceptions.h>
 
@@ -58,7 +60,7 @@ decimalToNumber(const char* s, const char* s_end) {
 }
 }
 
-void
+KEA_DNS_API void
 stringToCharString(const MasterToken::StringRegion& str_region,
                    CharString& result)
 {
@@ -93,7 +95,7 @@ stringToCharString(const MasterToken::StringRegion& str_region,
     result[0] = result.size() - 1;
 }
 
-void
+KEA_DNS_API void
 stringToCharStringData(const MasterToken::StringRegion& str_region,
                        CharStringData& result)
 {
@@ -126,7 +128,7 @@ stringToCharStringData(const MasterToken::StringRegion& str_region,
     }
 }
 
-std::string
+KEA_DNS_API std::string
 charStringToString(const CharString& char_string) {
     std::string s;
     for (CharString::const_iterator it = char_string.begin() + 1;
@@ -149,7 +151,7 @@ charStringToString(const CharString& char_string) {
     return (s);
 }
 
-std::string
+KEA_DNS_API std::string
 charStringDataToString(const CharStringData& char_string) {
     std::string s;
     for (CharString::const_iterator it = char_string.begin();
@@ -172,6 +174,7 @@ charStringDataToString(const CharStringData& char_string) {
     return (s);
 }
 
+KEA_DNS_API
 int compareCharStrings(const detail::CharString& self,
                        const detail::CharString& other) {
     if (self.size() == 0 && other.size() == 0) {
@@ -200,6 +203,7 @@ int compareCharStrings(const detail::CharString& self,
     }
 }
 
+KEA_DNS_API
 int compareCharStringDatas(const detail::CharStringData& self,
                            const detail::CharStringData& other) {
     if (self.size() == 0 && other.size() == 0) {
@@ -228,7 +232,7 @@ int compareCharStringDatas(const detail::CharStringData& self,
     }
 }
 
-size_t
+KEA_DNS_API size_t
 bufferToCharString(isc::util::InputBuffer& buffer, size_t rdata_len,
                    CharString& target) {
     if (rdata_len < 1 || buffer.getLength() - buffer.getPosition() < 1) {

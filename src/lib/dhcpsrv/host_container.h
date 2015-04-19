@@ -15,6 +15,7 @@
 #ifndef HOST_CONTAINER_H
 #define HOST_CONTAINER_H
 
+#include <dhcpsrv/api.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/subnet_id.h>
 #include <boost/multi_index_container.hpp>
@@ -105,7 +106,7 @@ typedef std::pair<HostContainerIndex1::iterator,
 /// This structure is used as an intermediate structure in HostContainer6.
 /// For a single host that has reservations for X addresses or prefixes, there
 /// will be X HostResrv6Tuple structures.
-struct HostResrv6Tuple {
+struct KEA_DHCPSRV_API HostResrv6Tuple {
 
     /// @brief Default constructor.
     ///

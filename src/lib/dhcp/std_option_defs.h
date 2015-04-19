@@ -15,6 +15,7 @@
 #ifndef STD_OPTION_DEFS_H
 #define STD_OPTION_DEFS_H
 
+#include <dhcp/api.h>
 #include <dhcp/option_data_types.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>

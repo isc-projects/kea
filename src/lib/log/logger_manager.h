@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,13 +17,14 @@
 
 #include "exceptions/exceptions.h"
 #include <util/threads/sync.h>
+#include <log/api.h>
 #include <log/logger_specification.h>
 
 #include <boost/noncopyable.hpp>
 
 // Generated if, when updating the logging specification, an unknown
 // destination is encountered.
-class UnknownLoggingDestination : public isc::Exception {
+class KEA_LOG_API UnknownLoggingDestination : public isc::Exception {
 public:
     UnknownLoggingDestination(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what)
@@ -43,7 +44,7 @@ class LoggerManagerImpl;
 /// To isolate the underlying implementation from basic processing, the
 /// LoggerManager is implemented using the "pimpl" idiom.
 
-class LoggerManager : public boost::noncopyable {
+class KEA_LOG_API LoggerManager : public boost::noncopyable {
 public:
     /// \brief Constructor
     LoggerManager();

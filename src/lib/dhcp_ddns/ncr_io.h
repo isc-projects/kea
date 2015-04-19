@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -58,6 +58,7 @@
 
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
+#include <dhcp_ddns/api.h>
 #include <dhcp_ddns/ncr_msg.h>
 #include <exceptions/exceptions.h>
 
@@ -85,7 +86,8 @@ enum NameChangeProtocol {
 ///
 /// @throw isc::BadValue if given a string value which does not map to an
 /// enum value.
-extern NameChangeProtocol stringToNcrProtocol(const std::string& protocol_str);
+extern KEA_DHCP_DDNS_API
+NameChangeProtocol stringToNcrProtocol(const std::string& protocol_str);
 
 /// @brief Function which converts NameChangeProtocol enums to text labels.
 ///
@@ -93,24 +95,25 @@ extern NameChangeProtocol stringToNcrProtocol(const std::string& protocol_str);
 ///
 /// @return std:string containing the text label if the value is valid, or
 /// "UNKNOWN" if not.
-extern std::string ncrProtocolToString(NameChangeProtocol protocol);
+extern KEA_DHCP_DDNS_API
+std::string ncrProtocolToString(NameChangeProtocol protocol);
 
 /// @brief Exception thrown if an NcrListenerError encounters a general error.
-class NcrListenerError : public isc::Exception {
+class KEA_DHCP_DDNS_API NcrListenerError : public isc::Exception {
 public:
     NcrListenerError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
 /// @brief Exception thrown if an error occurs during IO source open.
-class NcrListenerOpenError : public isc::Exception {
+class KEA_DHCP_DDNS_API NcrListenerOpenError : public isc::Exception {
 public:
     NcrListenerOpenError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
 /// @brief Exception thrown if an error occurs initiating an IO receive.
-class NcrListenerReceiveError : public isc::Exception {
+class KEA_DHCP_DDNS_API NcrListenerReceiveError : public isc::Exception {
 public:
     NcrListenerReceiveError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
@@ -170,7 +173,7 @@ public:
 /// NameChangeRequest or an error status and an empty request into the
 /// listener's invokeRecvHandler method. This is the mechanism by which the
 /// listener's caller is handed inbound NCRs.
-class NameChangeListener {
+class KEA_DHCP_DDNS_API NameChangeListener {
 public:
 
     /// @brief Defines the outcome of an asynchronous NCR receive
@@ -353,28 +356,28 @@ typedef boost::shared_ptr<NameChangeListener> NameChangeListenerPtr;
 
 
 /// @brief Thrown when a NameChangeSender encounters an error.
-class NcrSenderError : public isc::Exception {
+class KEA_DHCP_DDNS_API NcrSenderError : public isc::Exception {
 public:
     NcrSenderError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
 /// @brief Exception thrown if an error occurs during IO source open.
-class NcrSenderOpenError : public isc::Exception {
+class KEA_DHCP_DDNS_API NcrSenderOpenError : public isc::Exception {
 public:
     NcrSenderOpenError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
 /// @brief Exception thrown if an error occurs initiating an IO send.
-class NcrSenderQueueFull : public isc::Exception {
+class KEA_DHCP_DDNS_API NcrSenderQueueFull : public isc::Exception {
 public:
     NcrSenderQueueFull(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
 /// @brief Exception thrown if an error occurs initiating an IO send.
-class NcrSenderSendError : public isc::Exception {
+class KEA_DHCP_DDNS_API NcrSenderSendError : public isc::Exception {
 public:
     NcrSenderSendError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
@@ -462,7 +465,7 @@ public:
 /// will call the sendNext() method to initiate the next send.  This ensures
 /// that requests continue to dequeue and ship.
 ///
-class NameChangeSender {
+class KEA_DHCP_DDNS_API NameChangeSender {
 public:
 
     /// @brief Defines the type used for the request send queue.

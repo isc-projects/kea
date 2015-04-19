@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,6 +14,8 @@
 
 #ifndef UTIL_UNITTESTS_NEWHOOK_H
 #define UTIL_UNITTESTS_NEWHOOK_H 1
+
+#include <util/unittests/api.h>
 
 /**
  * \file newhook.h
@@ -57,7 +59,7 @@ namespace unittests {
 /// Switch to enable the use of special operator new
 ///
 /// This is set to \c false by default.
-extern bool force_throw_on_new;
+extern KEA_UTIL_UNITTESTS_API bool force_throw_on_new;
 
 /// The allocation size that triggers an exception in the special operator new
 ///
@@ -70,7 +72,7 @@ extern bool force_throw_on_new;
 /// The default value is 0.  The value of this variable has no meaning
 /// unless the use of the special operator is enabled at build time and
 /// via \c force_throw_on_new.
-extern size_t throw_size_on_new;
+extern KEA_UTIL_UNITTESTS_API size_t throw_size_on_new;
 }
 }
 }

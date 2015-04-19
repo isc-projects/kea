@@ -14,6 +14,8 @@
 
 #include <config.h>
 
+#define KEA_HOOKS_EXPORT
+
 #include <exceptions/exceptions.h>
 #include <hooks/hooks.h>
 #include <hooks/hooks_log.h>

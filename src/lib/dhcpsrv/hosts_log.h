@@ -15,6 +15,7 @@
 #ifndef HOSTS_LOG_H
 #define HOSTS_LOG_H
 
+#include <dhcpsrv/api.h>
 #include <dhcpsrv/hosts_messages.h>
 #include <log/macros.h>
 
@@ -56,7 +57,7 @@ const int HOSTS_DBG_TRACE_DETAIL_DATA = DBGLVL_TRACE_DETAIL_DATA;
 ///
 /// Define the logger used to log messages in @c HostMgr and the code it
 /// calls to manage host reservations.
-extern isc::log::Logger hosts_logger;
+extern KEA_DHCPSRV_API isc::log::Logger hosts_logger;
 
 } // namespace dhcp
 } // namespace isc

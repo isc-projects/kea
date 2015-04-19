@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#define KEA_LOG_EXPORT
+
 #include <iostream>
 #include <algorithm>
 #include <string>
@@ -34,7 +36,7 @@ namespace log {
 // of "FATAL".  (Note that the string must be in upper case with no leading
 // of trailing blanks.)  If not present, the default severity passed to the
 // function is returned.
-isc::log::Severity
+KEA_LOG_API isc::log::Severity
 keaLoggerSeverity(isc::log::Severity defseverity) {
     const char* sev_char = getenv("KEA_LOGGER_SEVERITY");
     if (sev_char) {
@@ -46,7 +48,7 @@ keaLoggerSeverity(isc::log::Severity defseverity) {
 // Get the debug level.  This is defined by the environment variable
 // KEA_LOGGER_DBGLEVEL.  If not defined, a default value passed to the function
 // is returned.
-int
+KEA_LOG_API int
 keaLoggerDbglevel(int defdbglevel) {
     const char* dbg_char = getenv("KEA_LOGGER_DBGLEVEL");
     if (dbg_char) {
@@ -76,6 +78,7 @@ keaLoggerDbglevel(int defdbglevel) {
 }
 
 // Logger Run-Time Initialization via Environment Variables
+KEA_LOG_API
 void initLogger(isc::log::Severity severity, int dbglevel) {
 
     // Root logger name is defined by the environment variable KEA_LOGGER_ROOT.

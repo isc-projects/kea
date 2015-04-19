@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,9 @@
 #include <string>
 #include <ostream>
 
+#include <util/api.h>
+
+#include <dns/api.h>
 #include <dns/exceptions.h>
 
 #include <dns/edns.h>
@@ -41,7 +44,7 @@ class TSIGRecord;
 /// message parser encounters a short length of data that don't even contain
 /// the full header section.
 ///
-class MessageTooShort : public isc::dns::Exception {
+class KEA_DNS_API MessageTooShort : public isc::dns::Exception {
 public:
     MessageTooShort(const char* file, size_t line, const char* what) :
         isc::dns::Exception(file, line, what) {}
@@ -52,7 +55,7 @@ public:
 /// is being constructed for an incompatible section.  Specifically, this
 /// happens RRset iterator is being constructed for a Question section.
 ///
-class InvalidMessageSection : public isc::dns::Exception {
+class KEA_DNS_API InvalidMessageSection : public isc::dns::Exception {
 public:
     InvalidMessageSection(const char* file, size_t line, const char* what) :
         isc::dns::Exception(file, line, what) {}
@@ -63,7 +66,7 @@ public:
 /// class method is called that is prohibited for the current mode of
 /// the message.
 ///
-class InvalidMessageOperation : public isc::dns::Exception {
+class KEA_DNS_API InvalidMessageOperation : public isc::dns::Exception {
 public:
     InvalidMessageOperation(const char* file, size_t line, const char* what) :
         isc::dns::Exception(file, line, what) {}
@@ -74,7 +77,7 @@ public:
 /// smaller than the standard default maximum (DEFAULT_MAX_UDPSIZE) is
 /// being specified for the message.
 ///
-class InvalidMessageUDPSize : public isc::dns::Exception {
+class KEA_DNS_API InvalidMessageUDPSize : public isc::dns::Exception {
 public:
     InvalidMessageUDPSize(const char* file, size_t line, const char* what) :
         isc::dns::Exception(file, line, what) {}
@@ -83,10 +86,10 @@ public:
 typedef uint16_t qid_t;
 
 class AbstractMessageRenderer;
-class Message;
 class MessageImpl;
 class Opcode;
 class Rcode;
+class KEA_DNS_API Message;
 
 template <typename T>
 struct SectionIteratorImpl;
@@ -115,6 +118,12 @@ private:
 
 typedef SectionIterator<QuestionPtr> QuestionIterator;
 typedef SectionIterator<RRsetPtr> RRsetIterator;
+
+/// Useful but not universally supported feature, so guard it
+#ifdef HAVE_ATTRIBUTE_VISIBILITY
+extern template class KEA_DNS_API SectionIterator<QuestionPtr>;
+extern template class KEA_DNS_API SectionIterator<RRsetPtr>;
+#endif
 
 /// \brief The \c Message class encapsulates a standard DNS message.
 ///
@@ -148,7 +157,7 @@ typedef SectionIterator<RRsetPtr> RRsetIterator;
 ///   so the implementation can only be moderately efficient.
 /// - We may want to provide a "find" method for a specified type
 ///   of RR in the message.
-class Message {
+class KEA_DNS_API Message {
 public:
     /// Constants to specify the operation mode of the \c Message.
     enum Mode {
@@ -680,6 +689,7 @@ typedef boost::shared_ptr<const Message> ConstMessagePtr;
 /// \param message A \c Message object output by the operation.
 /// \return A reference to the same \c std::ostream object referenced by
 /// parameter \c os after the insertion operation.
+KEA_DNS_API
 std::ostream& operator<<(std::ostream& os, const Message& message);
 }
 }

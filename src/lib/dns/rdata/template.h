@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -44,7 +44,7 @@
 // entry from the meta_types dictionary of gen-rdatacode.py.in.  Otherwise
 // it will cause build failure.
 
-class MyType : public Rdata {
+class KEA_DNS_API MyType : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
     // Do not remove the BEGIN_xxx and END_xxx comment lines.

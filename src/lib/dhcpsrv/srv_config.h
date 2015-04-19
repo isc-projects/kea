@@ -15,6 +15,7 @@
 #ifndef DHCPSRV_CONFIG_H
 #define DHCPSRV_CONFIG_H
 
+#include <dhcpsrv/api.h>
 #include <dhcpsrv/cfg_hosts.h>
 #include <dhcpsrv/cfg_iface.h>
 #include <dhcpsrv/cfg_option.h>
@@ -37,7 +38,7 @@ class CfgMgr;
 /// @brief Specifies current DHCP configuration
 ///
 /// @todo Migrate all other configuration parameters from cfgmgr.h here
-class SrvConfig {
+class KEA_DHCPSRV_API SrvConfig {
 public:
     /// @name Constants for selection of parameters returned by @c getConfigSummary
     ///

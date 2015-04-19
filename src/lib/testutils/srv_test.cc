@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#define KEA_TESTUTILS_EXPORT
 
 #include <config.h>
 
@@ -35,8 +37,8 @@ using namespace isc::asiolink;
 
 namespace isc {
 namespace testutils {
-const char* const DEFAULT_REMOTE_ADDRESS = "192.0.2.1";
-const uint16_t DEFAULT_REMOTE_PORT = 53210;
+const KEA_TESTUTILS_DATA_API char* const DEFAULT_REMOTE_ADDRESS = "192.0.2.1";
+const KEA_TESTUTILS_DATA_API uint16_t DEFAULT_REMOTE_PORT = 53210;
 
 SrvTestBase::SrvTestBase() : request_message(Message::RENDER),
                              parse_message(new Message(Message::PARSE)),

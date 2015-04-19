@@ -16,6 +16,7 @@
 #define CALLOUT_MANAGER_H
 
 #include <exceptions/exceptions.h>
+#include <hooks/api.h>
 #include <hooks/library_handle.h>
 #include <hooks/server_hooks.h>
 
@@ -32,7 +33,7 @@ namespace hooks {
 ///
 /// Thrown if an attempt is made to set the current library index to a value
 /// that is invalid for the number of loaded libraries.
-class NoSuchLibrary : public Exception {
+class KEA_HOOKS_API NoSuchLibrary : public Exception {
 public:
     NoSuchLibrary(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
@@ -109,7 +110,7 @@ public:
 /// the CalloutManager, but provides a restricted interface.  In that way,
 /// callouts are unable to affect callouts supplied by other libraries.
 
-class CalloutManager {
+class KEA_HOOKS_API CalloutManager {
 private:
 
     // Private typedefs

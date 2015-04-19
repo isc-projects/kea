@@ -17,6 +17,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcpsrv/api.h>
 #include <boost/shared_ptr.hpp>
 #include <map>
 #include <set>
@@ -26,28 +27,28 @@ namespace isc {
 namespace dhcp {
 
 /// @brief Exception thrown when duplicated interface names specified.
-class DuplicateIfaceName : public Exception {
+class KEA_DHCPSRV_API DuplicateIfaceName : public Exception {
 public:
     DuplicateIfaceName(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
 /// @brief Exception thrown when specified interface name is invalid.
-class InvalidIfaceName : public Exception {
+class KEA_DHCPSRV_API InvalidIfaceName : public Exception {
 public:
     InvalidIfaceName(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
 /// @brief Exception thrown when specified interface doesn't exist in a system.
-class NoSuchIface : public Exception {
+class KEA_DHCPSRV_API NoSuchIface : public Exception {
 public:
     NoSuchIface(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
 /// @brief Exception thrown when duplicated address specified.
-class DuplicateAddress : public Exception {
+class KEA_DHCPSRV_API DuplicateAddress : public Exception {
 public:
     DuplicateAddress(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
@@ -55,7 +56,7 @@ public:
 
 /// @brief Exception thrown when specified unicast address is not assigned
 /// to the interface specified.
-class NoSuchAddress : public Exception {
+class KEA_DHCPSRV_API NoSuchAddress : public Exception {
 public:
     NoSuchAddress(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
@@ -63,7 +64,7 @@ public:
 
 /// @brief Exception thrown when invalid socket type has been specified
 /// for the given family.
-class InvalidSocketType : public Exception {
+class KEA_DHCPSRV_API InvalidSocketType : public Exception {
 public:
     InvalidSocketType(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
@@ -97,7 +98,7 @@ public:
 /// but it doesn't verify that the address family value passed as @c uint16_t
 /// parameter is equal to one of them. It is a callers responsibility to
 /// guarantee that the address family value is correct.
-class CfgIface {
+class KEA_DHCPSRV_API CfgIface {
 public:
 
     /// @brief Socket type used by the DHCPv4 server.

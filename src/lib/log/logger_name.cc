@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#define KEA_LOG_EXPORT
 
 #include <string>
 #include "log/logger_name.h"
@@ -31,21 +33,21 @@ getRootLoggerNameInternal() {
 
 } // Anonymous namespace
 
-void
+KEA_LOG_API void
 setRootLoggerName(const std::string& name) {
     getRootLoggerNameInternal() = name;
 }
 
-const std::string& getRootLoggerName() {
+KEA_LOG_API const std::string& getRootLoggerName() {
     return (getRootLoggerNameInternal());
 }
 
-const std::string& getDefaultRootLoggerName() {
+KEA_LOG_API const std::string& getDefaultRootLoggerName() {
     static std::string root_name("kea");
     return (root_name);
 }
 
-std::string expandLoggerName(const std::string& name) {
+KEA_LOG_API std::string expandLoggerName(const std::string& name) {
 
     // Are we the root logger, or does the logger name start with
     // the string "<root_logger_name>.".  If so, use a logger

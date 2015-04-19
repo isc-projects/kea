@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,7 @@
 
 #include <util/buffer.h>
 #include <util/io_utilities.h>
+#include <dhcp/api.h>
 #include <iostream>
 #include <iterator>
 #include <string>
@@ -27,7 +28,7 @@ namespace dhcp {
 
 /// @brief Exception to be thrown when the operation on @c OpaqueDataTuple
 /// object results in an error.
-class OpaqueDataTupleError : public Exception {
+class KEA_DHCP_API OpaqueDataTupleError : public Exception {
 public:
     OpaqueDataTupleError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
@@ -50,7 +51,7 @@ public:
 /// opaque data from the tuple. It also implements a method to render the tuple
 /// data into a wire format, as well as a method to create an instance of the
 /// tuple from the wire format.
-class OpaqueDataTuple {
+class KEA_DHCP_API OpaqueDataTuple {
 public:
 
     /// @brief Size of the length field in the tuple.
@@ -301,6 +302,7 @@ typedef boost::shared_ptr<OpaqueDataTuple> OpaqueDataTuplePtr;
 /// @param tuple Object encapsulating a tuple which data in the textual format
 /// is inserted into the stream.
 /// @return Reference to the same stream but after insertion operation.
+KEA_DHCP_API
 std::ostream& operator<<(std::ostream& os, const OpaqueDataTuple& tuple);
 
 /// @brief Inserts data carried in the stream into the tuple.
@@ -311,6 +313,7 @@ std::ostream& operator<<(std::ostream& os, const OpaqueDataTuple& tuple);
 /// @param is Input stream from which the data will be inserted.
 /// @param tuple @c OpaqueDataTuple object to which the data will be inserted.
 /// @return Input stream after insertion to the tuple is performed.
+KEA_DHCP_API
 std::istream& operator>>(std::istream& is, OpaqueDataTuple& tuple);
 
 } // namespace isc::dhcp

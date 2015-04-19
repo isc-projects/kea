@@ -17,6 +17,8 @@
 
 #include <exceptions/exceptions.h>
 
+#include <hooks/api.h>
+
 #include <boost/shared_ptr.hpp>
 
 #include <string>
@@ -28,7 +30,7 @@ namespace hooks {
 ///
 /// Thrown if a library manager is instantiated by an external agency without
 /// specifying a CalloutManager object.
-class NoCalloutManager : public Exception {
+class KEA_HOOKS_API NoCalloutManager : public Exception {
 public:
     NoCalloutManager(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
@@ -36,7 +38,7 @@ public:
 
 class CalloutManager;
 class LibraryHandle;
-class LibraryManager;
+class KEA_HOOKS_API LibraryManager;
 
 /// @brief Library manager
 ///
@@ -77,7 +79,7 @@ class LibraryManager;
 /// version() exists and returns the correct number is checked.  The library
 /// is closed after the validation.
 
-class LibraryManager {
+class KEA_HOOKS_API LibraryManager {
 public:
     /// @brief Constructor
     ///

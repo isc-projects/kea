@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,7 @@
 
 #include <exceptions/exceptions.h>
 #include <cc/data.h>
+#include <dhcpsrv/api.h>
 #include <stdint.h>
 #include <string>
 #include <map>
@@ -26,7 +27,7 @@ namespace dhcp {
 
 /// An exception that is thrown if an error occurs while configuring
 /// DHCP server.
-class DhcpConfigError : public isc::Exception {
+class KEA_DHCPSRV_API DhcpConfigError : public isc::Exception {
 public:
 
     /// @brief constructor
@@ -42,7 +43,7 @@ public:
 ///
 /// It is only needed here to define types that are
 /// based on this class before the class definition.
-class DhcpConfigParser;
+class KEA_DHCPSRV_API DhcpConfigParser;
 
 /// @brief a pointer to configuration parser
 typedef boost::shared_ptr<DhcpConfigParser> ParserPtr;
@@ -61,7 +62,7 @@ typedef std::pair<std::string, isc::data::ConstElementPtr> ConfigPair;
 /// element. Sometimes elements are simple (e.g. a string) and sometimes quite
 /// complex (e.g. a subnet). In such case, it is likely that a parser will
 /// spawn child parsers to parse child elements in the configuration.
-class DhcpConfigParser {
+class KEA_DHCPSRV_API DhcpConfigParser {
     ///
     /// @name Constructors and Destructor
     ///

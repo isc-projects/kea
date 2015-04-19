@@ -1,4 +1,4 @@
-// Copyright (C) 2011,2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #define LOGGER_UNITTEST_SUPPORT_H
 
 #include <string>
+#include <log/api.h>
 #include <log/logger.h>
 
 /// \file
@@ -76,6 +77,7 @@ namespace log {
 ///
 /// @todo: Rename. This function overloads the initLogger() function that can
 ///       be used to initialize production programs.  This may lead to confusion.
+KEA_LOG_API
 void initLogger(isc::log::Severity severity = isc::log::DEBUG,
                 int dbglevel = isc::log::MAX_DEBUG_LEVEL);
 
@@ -90,6 +92,7 @@ void initLogger(isc::log::Severity severity = isc::log::DEBUG,
 //         defined.
 ///
 /// \return Severity to use for the logging.
+KEA_LOG_API
 isc::log::Severity keaLoggerSeverity(isc::log::Severity defseverity);
 
 
@@ -109,6 +112,7 @@ isc::log::Severity keaLoggerSeverity(isc::log::Severity defseverity);
 ///        is not defined.
 ///
 /// \return Debug level to use.
+KEA_LOG_API
 int keaLoggerDbglevel(int defdbglevel);
 
 } // namespace log

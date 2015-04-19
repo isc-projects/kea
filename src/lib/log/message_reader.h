@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 
+#include <log/api.h>
 #include <log/message_dictionary.h>
 #include <log/message_types.h>
 
@@ -30,7 +31,7 @@ namespace log {
 /// Reads a message file and creates a map of identifier against the text of the
 /// message.  This map can be retrieved for subsequent processing.
 
-class MessageReader {
+class KEA_LOG_API MessageReader {
 public:
 
     /// \brief Read Mode

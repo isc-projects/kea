@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,9 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <util/api.h>
+
+#include <dns/api.h>
 #include <dns/exceptions.h>
 
 #include <dns/rdata.h>
@@ -27,7 +30,7 @@
 
 namespace isc {
 namespace util {
-class OututBuffer;
+class OutputBuffer;
 }
 
 namespace dns {
@@ -36,7 +39,7 @@ namespace dns {
 /// \brief A standard DNS module exception that is thrown if an RRset object
 /// does not contain any RDATA where required.
 ///
-class EmptyRRset : public isc::dns::Exception {
+class KEA_DNS_API EmptyRRset : public isc::dns::Exception {
 public:
     EmptyRRset(const char* file, size_t line, const char* what) :
         isc::dns::Exception(file, line, what) {}
@@ -48,11 +51,11 @@ class RRType;
 class RRClass;
 class RRTTL;
 class AbstractMessageRenderer;
-class AbstractRRset;
-class BasicRRset;
-class RdataIterator;
-class BasicRRsetImpl;
-class RRset;
+class KEA_DNS_API AbstractRRset;
+class KEA_DNS_API BasicRRset;
+class KEA_DNS_API RdataIterator;
+class KEA_DNS_API BasicRRsetImpl;
+class KEA_DNS_API RRset;
 
 /// \brief A pointer-like type pointing to an \c RRset object.
 ///
@@ -159,7 +162,7 @@ typedef boost::shared_ptr<RdataIterator> RdataIteratorPtr;
 ///     monolithic.)
 ///   - Do we need to allow the user to remove specific Rdata?
 ///     Probably not, according to the current usage of the BIND9 code.
-class AbstractRRset {
+class KEA_DNS_API AbstractRRset {
     ///
     /// \name Constructors and Destructor
     ///
@@ -563,7 +566,7 @@ public:
 /// Most applications will simply go through the RDATA objects contained in
 /// an RRset, examining (and possibly using) each object, as one path
 /// operation.
-class RdataIterator {
+class KEA_DNS_API RdataIterator {
     ///
     /// \name Constructors and Destructor
     ///
@@ -634,7 +637,7 @@ public:
 /// Highly performance-sensitive applications, such as a large scale
 /// authoritative or caching name servers will implement and use a customized
 /// version of derived \c AbstractRRset class.
-class BasicRRset : public AbstractRRset {
+class KEA_DNS_API BasicRRset : public AbstractRRset {
     ///
     /// \name Constructors and Destructor
     ///
@@ -852,7 +855,7 @@ private:
 /// containing associated RRSIG records.  This allows DNSSEC aware
 /// applications to treat data associated with a particular
 /// QNAME/QTYPE/QCLASS as a single object.
-class RRset : public BasicRRset {
+class KEA_DNS_API RRset : public BasicRRset {
 public:
     RRset(const Name& name, const RRClass& rrclass,
           const RRType& rrtype, const RRTTL& ttl);
@@ -956,6 +959,7 @@ private:
 /// output by the operation.
 /// \return A reference to the same \c std::ostream object referenced by
 /// parameter \c os after the insertion operation.
+KEA_DNS_API
 std::ostream& operator<<(std::ostream& os, const AbstractRRset& rrset);
 } // end of namespace dns
 } // end of namespace isc

@@ -3,7 +3,7 @@ SUBDIRS = . tests
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 
-AM_CXXFLAGS = $(KEA_CXXFLAGS)
+AM_CXXFLAGS = $(KEA_CXXFLAGS) $(SHLIB_CXXFLAGS)
 
 CLEANFILES = *.gcno *.gcda
 
@@ -17,7 +17,7 @@ lib_LTLIBRARIES = libkea-asiolink.la
 
 libkea_asiolink_la_LDFLAGS = -no-undefined -version-info 1:0:1
 
-libkea_asiolink_la_SOURCES  = asiolink.h
+libkea_asiolink_la_SOURCES  = api.h asiolink.h
 libkea_asiolink_la_SOURCES += dummy_io_cb.h
 libkea_asiolink_la_SOURCES += interval_timer.cc interval_timer.h
 libkea_asiolink_la_SOURCES += io_address.cc io_address.h

@@ -2,7 +2,7 @@ SUBDIRS = . tests
 
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
-AM_CXXFLAGS  = $(KEA_CXXFLAGS)
+AM_CXXFLAGS  = $(KEA_CXXFLAGS) $(SHLIB_CXXFLAGS)
 
 # Some versions of GCC warn about some versions of Boost regarding
 # missing initializer for members in its posix_time.
@@ -32,7 +32,7 @@ EXTRA_DIST += hooks_user.dox hooks_maintenance.dox hooks_component_developer.dox
 CLEANFILES = *.gcno *.gcda hooks_messages.h hooks_messages.cc s-messages
 
 lib_LTLIBRARIES = libkea-hooks.la
-libkea_hooks_la_SOURCES  =
+libkea_hooks_la_SOURCES  = api.h
 libkea_hooks_la_SOURCES += callout_handle.cc callout_handle.h
 libkea_hooks_la_SOURCES += callout_manager.cc callout_manager.h
 libkea_hooks_la_SOURCES += hooks.h hooks.cc

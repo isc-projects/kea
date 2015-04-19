@@ -14,6 +14,10 @@
 
 #include <config.h>
 
+#define KEA_DHCPSRV_EXPORT
+
+#include <config.h>
+
 #include <dhcp_ddns/ncr_udp.h>
 #include <dhcpsrv/d2_client_cfg.h>
 #include <dhcpsrv/dhcpsrv_log.h>
@@ -180,7 +184,7 @@ D2ClientConfig::toText() const {
     return (stream.str());
 }
 
-std::ostream&
+KEA_DHCPSRV_API std::ostream&
 operator<<(std::ostream& os, const D2ClientConfig& config) {
     os << config.toText();
     return (os);

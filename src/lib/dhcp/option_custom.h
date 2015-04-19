@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 #ifndef OPTION_CUSTOM_H
 #define OPTION_CUSTOM_H
 
+#include <dhcp/api.h>
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
 #include <util/io_utilities.h>
@@ -35,7 +36,7 @@ namespace dhcp {
 /// within this class. This class is used to represent those options that
 /// can't be represented by any other specialized class (this excludes the
 /// Option class which is generic and can be used to represent any option).
-class OptionCustom : public Option {
+class KEA_DHCP_API OptionCustom : public Option {
 public:
 
     /// @brief Constructor, used for options to be sent.

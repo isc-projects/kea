@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -26,27 +26,29 @@
 #ifndef LOCKS
 #define LOCKS
 
+#include <util/api.h>
+
 namespace isc {
 namespace util {
 namespace locks {
 
-class mutex {
+class KEA_UTIL_API mutex {
 };
 
-class recursive_mutex {
+class KEA_UTIL_API recursive_mutex {
 };
 
-class upgradable_mutex {
+class KEA_UTIL_API upgradable_mutex {
 };
 
 template <typename T>
-class sharable_lock {
+class KEA_UTIL_API sharable_lock {
 public:
     sharable_lock(T) {}
 };
 
 template <typename T>
-class scoped_lock {
+class KEA_UTIL_API scoped_lock {
 public:
     scoped_lock(T) {}
 

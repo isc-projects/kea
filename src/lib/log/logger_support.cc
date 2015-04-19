@@ -1,4 +1,4 @@
-// Copyright (C) 2011,2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE
+
+#define KEA_LOG_EXPORT
 
 #include <string>
 #include <log/logger_support.h>
@@ -30,7 +32,7 @@ namespace isc {
 namespace log {
 
 // Return initialization state.
-bool
+KEA_LOG_API bool
 isLoggingInitialized() {
     return (logging_init_state);
 }
@@ -38,14 +40,14 @@ isLoggingInitialized() {
 // Set initialization state.  (Note: as logging can be initialized via a direct
 // call to LoggerManager::init(), this function is called from there, not from
 // the initialization functions in this file.
-void
+KEA_LOG_API void
 setLoggingInitialized(bool state) {
     logging_init_state = state;
 }
 
 // Logger Run-Time Initialization.
 
-void
+KEA_LOG_API void
 initLogger(const string& root, isc::log::Severity severity, int dbglevel,
            const char* file, bool buffer) {
     LoggerManager::init(root, severity, dbglevel, file, buffer);
@@ -54,7 +56,7 @@ initLogger(const string& root, isc::log::Severity severity, int dbglevel,
 // Reset characteristics of the root logger to that set by the environment
 // variables KEA_LOGGER_SEVERITY, KEA_LOGGER_DBGLEVEL and KEA_LOGGER_DESTINATION.
 
-void
+KEA_LOG_API void
 setDefaultLoggingOutput(bool verbose) {
 
     using namespace isc::log;

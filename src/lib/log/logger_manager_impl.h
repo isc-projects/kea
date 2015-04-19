@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,7 @@
 #include <string>
 
 #include <log4cplus/appender.h>
+#include <log/api.h>
 #include <log/logger_level.h>
 
 // Forward declaration to avoid need to include log4cplus header file here.

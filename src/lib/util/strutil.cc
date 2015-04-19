@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#define KEA_UTIL_EXPORT
 
 #include <numeric>
 
@@ -25,7 +27,7 @@ namespace str {
 
 // Normalize slashes
 
-void
+KEA_UTIL_API void
 normalizeSlash(std::string& name) {
     if (!name.empty()) {
         size_t pos = 0;
@@ -37,7 +39,7 @@ normalizeSlash(std::string& name) {
 
 // Trim String
 
-string
+KEA_UTIL_API string
 trim(const string& instring) {
     string retstring = "";
     if (!instring.empty()) {
@@ -61,7 +63,7 @@ trim(const string& instring) {
 // Tokenize string.  As noted in the header, this is locally written to avoid
 // another dependency on a Boost library.
 
-vector<string>
+KEA_UTIL_API vector<string>
 tokens(const std::string& text, const std::string& delim) {
     vector<string> result;
 
@@ -102,7 +104,7 @@ lengthSum(string::size_type curlen, const string& cur_string) {
 
 // Provide printf-style formatting.
 
-std::string
+KEA_UTIL_API std::string
 format(const std::string& format, const std::vector<std::string>& args) {
 
     static const string flag = "%s";
@@ -131,7 +133,7 @@ format(const std::string& format, const std::vector<std::string>& args) {
     return (result);
 }
 
-std::string
+KEA_UTIL_API std::string
 getToken(std::istringstream& iss) {
     string token;
     iss >> token;

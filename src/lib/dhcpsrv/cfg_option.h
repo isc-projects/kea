@@ -16,6 +16,7 @@
 #define CFG_OPTION_H
 
 #include <dhcp/option.h>
+#include <dhcpsrv/api.h>
 #include <dhcpsrv/key_from_key.h>
 #include <dhcpsrv/option_space_container.h>
 #include <boost/multi_index_container.hpp>
@@ -37,7 +38,7 @@ namespace dhcp {
 /// for this option. This information comprises whether this option is sent
 /// to DHCP client only on request (persistent = false) or always
 /// (persistent = true).
-struct OptionDescriptor {
+struct KEA_DHCPSRV_API OptionDescriptor {
     /// Option instance.
     OptionPtr option_;
     /// Persistent flag, if true option is always sent to the client,
@@ -195,7 +196,7 @@ typedef OptionContainer::nth_index<2>::type OptionContainerPersistIndex;
 /// options is useful when the client requests stateless configuration from
 /// the DHCP server and no subnet is selected for this client. This client
 /// will only receive global options.
-class CfgOption {
+class KEA_DHCPSRV_API CfgOption {
 public:
 
     /// @brief default constructor

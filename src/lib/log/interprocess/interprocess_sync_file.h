@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,8 +15,9 @@
 #ifndef INTERPROCESS_SYNC_FILE_H
 #define INTERPROCESS_SYNC_FILE_H
 
-#include <log/interprocess/interprocess_sync.h>
 #include <exceptions/exceptions.h>
+#include <log/interprocess/api.h>
+#include <log/interprocess/interprocess_sync.h>
 
 namespace isc {
 namespace log {
@@ -26,7 +27,7 @@ namespace interprocess {
 ///
 /// Exception that is thrown if it's not possible to open the
 /// lock file.
-class InterprocessSyncFileError : public Exception {
+class KEA_LOG_INTERPROCESS_API InterprocessSyncFileError : public Exception {
 public:
     InterprocessSyncFileError(const char* file, size_t line,
                               const char* what) :
@@ -47,7 +48,7 @@ public:
 /// This implementation opens lock files lazily (only when
 /// necessary). It also leaves the lock files lying around as multiple
 /// processes may have locks on them.
-class InterprocessSyncFile : public InterprocessSync {
+class KEA_LOG_INTERPROCESS_API InterprocessSyncFile : public InterprocessSync {
 public:
     /// \brief Constructor
     ///

@@ -15,6 +15,7 @@
 #ifndef PKT_FILTER_BPF_H
 #define PKT_FILTER_BPF_H
 
+#include <dhcp/api.h>
 #include <dhcp/pkt_filter.h>
 
 #include <util/buffer.h>
@@ -61,7 +62,7 @@ namespace dhcp {
 /// layer headers. Currently Kea supports encoding and decoding ethernet
 /// frames on physical interfaces and pseudo headers received on local
 /// loopback interface.
-class PktFilterBPF : public PktFilter {
+class KEA_DHCP_API PktFilterBPF : public PktFilter {
 public:
 
     /// @brief Check if packet can be sent to the host without address directly.
