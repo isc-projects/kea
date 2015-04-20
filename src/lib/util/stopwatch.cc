@@ -28,6 +28,10 @@ Stopwatch::Stopwatch(const bool autostart)
     }
 }
 
+Stopwatch::~Stopwatch() {
+    delete impl_;
+}
+
 void
 Stopwatch::start() {
     impl_->start();
@@ -71,6 +75,16 @@ Stopwatch::getMicroseconds() const {
 long
 Stopwatch::getTotalMicroseconds() const {
     return (getTotalDuration().total_microseconds());
+}
+
+std::string
+Stopwatch::logFormatLastDuration() const {
+    return (StopwatchImpl::logFormat(getLastDuration()));
+}
+
+std::string
+Stopwatch::logFormatTotalDuration() const {
+    return (StopwatchImpl::logFormat(getTotalDuration()));
 }
 
 } // end of isc::util

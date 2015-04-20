@@ -14,8 +14,10 @@
 
 #include <util/stopwatch.h>
 #include <util/stopwatch_impl.h>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
 #include <unistd.h>
+
 namespace {
 
 using namespace isc;
@@ -48,12 +50,14 @@ public:
     /// @brief Fast forward time.
     ///
     /// Moves the value of the @c current_time_ forward by the specified
-    /// number of milliseconds. As a result the timestamp returned by the
-    /// @c StopwatchMock::getCurrentTime moves by this value. This simulates
-    /// the time progress.
+    /// number of milliseconds (microseconds). As a result the timestamp
+    /// returned by the @c StopwatchMock::getCurrentTime moves by this value.
+    /// This simulates the time progress.
     ///
     /// @param ms Specifies the number of milliseconds to move current time.
-    void ffwd(const uint32_t ms);
+    /// @param us Specifies the number of fractional microseconds to move
+    /// current time.
+    void ffwd(const uint32_t ms, const uint32_t us = 0);
 
     /// @brief Returns the last duration in milliseconds.
     uint32_t getLastDurationInMs() const;
@@ -81,8 +85,9 @@ StopwatchMock::StopwatchMock(const ptime& ref_time)
 }
 
 void
-StopwatchMock::ffwd(const uint32_t ms) {
+StopwatchMock::ffwd(const uint32_t ms, const uint32_t us) {
     current_time_ += milliseconds(ms);
+    current_time_ += microseconds(us);
 }
 
 uint32_t
@@ -278,6 +283,18 @@ TEST_F(StopwatchTest, autostart) {
 
     EXPECT_GE(stopwatch.getMilliseconds(), 1);
     EXPECT_EQ(stopwatch.getMilliseconds(), stopwatch.getTotalMilliseconds());
+}
+
+// Make sure that the conversion to the loggable string works as expected.
+TEST_F(StopwatchTest, logFormat) {
+    time_duration duration = microseconds(223543);
+    EXPECT_EQ("223.543 ms", StopwatchImpl::logFormat(duration));
+
+    duration = microseconds(1234);
+    EXPECT_EQ("1.234 ms", StopwatchImpl::logFormat(duration));
+
+    duration = microseconds(2000);
+    EXPECT_EQ("2.0 ms", StopwatchImpl::logFormat(duration));
 }
 
 } // end of anonymous namespace
