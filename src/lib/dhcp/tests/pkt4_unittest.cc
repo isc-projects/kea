@@ -878,4 +878,42 @@ TEST_F(Pkt4Test, getMAC) {
     ASSERT_TRUE(*dummy_hwaddr == *pkt.getMAC(HWAddr::HWADDR_SOURCE_RAW));
 }
 
+// Tests that getLabel/makeLabel methods produces the expected strings based on
+// packet content.
+TEST_F(Pkt4Test, getLabel) {
+    Pkt4 pkt(DHCPOFFER, 1234);
+
+    // Verify makeLabel() handles empty values
+    EXPECT_EQ ("hwaddr=[no info], client-id=[no info], transid=0x0",
+               Pkt4::makeLabel(HWAddrPtr(), OptionPtr(), 0));
+
+    // Verify an "empty" packet label is as we expect
+    EXPECT_EQ ("hwaddr=[hwtype=1 ], client-id=[no info], transid=0x4d2",
+               pkt.getLabel());
+
+    // Set that packet hardware address, then verify getLabel
+    const uint8_t hw[] = { 2, 4, 6, 8, 10, 12 }; // MAC
+    const uint8_t hw_type = 123; // hardware type
+    HWAddrPtr dummy_hwaddr(new HWAddr(hw, sizeof(hw), hw_type));
+    pkt.setHWAddr(dummy_hwaddr);
+
+    EXPECT_EQ ("hwaddr=[hwtype=123 02:04:06:08:0a:0c],"
+               " client-id=[no info], transid=0x4d2", pkt.getLabel());
+
+    // Add a client id to the packet then verify getLabel
+    OptionBuffer clnt_id(4);
+    for (int i = 0; i < 4; i++) {
+        clnt_id[i] = 100 + i;
+    }
+
+    OptionPtr opt(new Option(Option::V4, DHO_DHCP_CLIENT_IDENTIFIER,
+                                 clnt_id.begin(), clnt_id.begin() + 4));
+    pkt.addOption(opt);
+
+    EXPECT_EQ ("hwaddr=[hwtype=123 02:04:06:08:0a:0c],"
+               " client-id=[type=61, len=4: 64:65:66:67], transid=0x4d2",
+               pkt.getLabel());
+
+}
+
 } // end of anonymous namespace

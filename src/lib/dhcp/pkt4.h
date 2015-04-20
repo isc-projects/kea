@@ -108,6 +108,27 @@ public:
     /// Method will throw exception if anomaly is found.
     void check();
 
+    /// @brief Returns text representation primary packet identifiers
+    ///
+    /// This method is intended to be used to provide a consistent way to
+    /// identify packets within log statements.  It is an instance-level
+    /// wrapper around static makeLabel()(). See this method for string
+    /// content.
+    ///
+    /// @return string with text representation
+    std::string getLabel();
+
+    /// @brief Returns text representation of the given packet identifiers
+    ///
+    /// @param hwaddr - hardware address to include in the string
+    /// @param client_id - DHO_DHCP_CLIENT_ID_OPTION containing the client id
+    /// to include in the string
+    /// @param transid - numeric transaction id to include in the string
+    ///
+    /// @return string with text representation
+    static std::string makeLabel(HWAddrPtr hwaddr, OptionPtr client_id,
+                                 uint32_t transid);
+
     /// @brief Returns text representation of the packet.
     ///
     /// This function is useful mainly for debugging.
