@@ -156,7 +156,7 @@
           </listitem>
           <listitem>
             <simpara><command>kea-dhcp4.bad_packet</command> - this is the
-            logger used by the DHCPv4 server deamon for logging inbound clien
+            logger used by the DHCPv4 server deamon for logging inbound client
             packets that were dropped or to which the server responded with a
             NAK.  The allows adminstrators to configure a separate log
             output that contains only packet drop and reject entries.</simpara>

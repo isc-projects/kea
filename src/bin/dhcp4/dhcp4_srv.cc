@@ -1753,7 +1753,7 @@ Dhcpv4Srv::accept(const Pkt4Ptr& query) const {
     // Check if the message from directly connected client (if directly
     // connected) should be dropped or processed.
     if (!acceptDirectRequest(query)) {
-        LOG_INFO(bad_packet_logger, DHCP4_PACKET_DROP_0002)
+        LOG_DEBUG(bad_packet_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0002)
             .arg(query->getTransid())
             .arg(query->getIface());
         return (false);

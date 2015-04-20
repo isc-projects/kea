@@ -249,7 +249,7 @@ received packet failed.  The reason is given in the message.  The server
 will not send a response but will instead ignore the packet.
 
 % DHCP4_PACKET_NAK_0001 failed to select a subnet for incoming packet, src: %1, type: %2
-This warning message is output when a packet was received from a subnet
+This error message is output when a packet was received from a subnet
 for which the DHCPv4 server has not been configured. The most probable
 cause is a misconfiguration of the server.
 
