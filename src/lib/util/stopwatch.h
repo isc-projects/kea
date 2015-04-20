@@ -16,7 +16,6 @@
 #define STOPWATCH_H
 
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/scoped_ptr.hpp>
 
 namespace isc {
 namespace util {
@@ -51,6 +50,11 @@ public:
     /// If the parameter is set to false (default value), the
     /// @c Stopwatch::start must be called to start time measurement.
     Stopwatch(const bool autostart = true);
+
+    /// @brief Destructor.
+    ///
+    /// Destroys the implementation instance.
+    ~Stopwatch();
 
     /// @brief Starts the stopwatch.
     ///
@@ -110,10 +114,18 @@ public:
     /// @brief Retrieves the total measured duration in microseconds.
     long getTotalMicroseconds() const;
 
+    /// @brief Returns the last measured duration in the format directly
+    /// usable in log messages.
+    std::string logFormatLastDuration() const;
+
+    /// @brief Returns the total measured duration in the format directly
+    /// usable in the log messages.
+    std::string logFormatTotalDuration() const;
+
 private:
 
     /// @brief Pointer to the @c StopwatchImpl.
-    boost::scoped_ptr<StopwatchImpl> impl_;
+    StopwatchImpl* impl_;
 
 };
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013,2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #include <hooks/callout_manager.h>
 #include <hooks/hooks_log.h>
 #include <hooks/pointer_converter.h>
+#include <util/stopwatch.h>
 
 #include <boost/static_assert.hpp>
 
@@ -134,6 +135,8 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
         // change and potentially affect the iteration through that vector.
         CalloutVector callouts(hook_vector_[hook_index]);
 
+        util::Stopwatch stopwatch;
+
         // Call all the callouts.
         for (CalloutVector::const_iterator i = callouts.begin();
              i != callouts.end(); ++i) {
@@ -144,17 +147,21 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
 
             // Call the callout
             try {
+                stopwatch.start();
                 int status = (*i->second)(callout_handle);
+                stopwatch.stop();
                 if (status == 0) {
                     LOG_DEBUG(hooks_logger, HOOKS_DBG_EXTENDED_CALLS,
                               HOOKS_CALLOUT_CALLED).arg(current_library_)
                         .arg(server_hooks_.getName(current_hook_))
-                        .arg(PointerConverter(i->second).dlsymPtr());
+                        .arg(PointerConverter(i->second).dlsymPtr())
+                        .arg(stopwatch.logFormatLastDuration());
                 } else {
                     LOG_ERROR(hooks_logger, HOOKS_CALLOUT_ERROR)
                         .arg(current_library_)
                         .arg(server_hooks_.getName(current_hook_))
-                        .arg(PointerConverter(i->second).dlsymPtr());
+                        .arg(PointerConverter(i->second).dlsymPtr())
+                        .arg(stopwatch.logFormatLastDuration());
                 }
             } catch (const std::exception& e) {
                 // Any exception, not just ones based on isc::Exception
@@ -162,7 +169,8 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
                     .arg(current_library_)
                     .arg(server_hooks_.getName(current_hook_))
                     .arg(PointerConverter(i->second).dlsymPtr())
-                    .arg(e.what());
+                    .arg(e.what())
+                    .arg(stopwatch.logFormatLastDuration());
             }
 
         }

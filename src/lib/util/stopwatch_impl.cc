@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <util/stopwatch_impl.h>
+#include <sstream>
 
 namespace isc {
 namespace util {
@@ -80,6 +81,14 @@ StopwatchImpl::getTotalDuration() const {
         total_duration += (getCurrentTime() - last_start_);
     }
     return (total_duration);
+}
+
+std::string
+StopwatchImpl::logFormat(const boost::posix_time::time_duration& duration) {
+    std::ostringstream s;
+    s << duration.total_milliseconds() << ".";
+    s << (duration.total_microseconds() % 1000) << " ms";
+    return (s.str());
 }
 
 ptime
