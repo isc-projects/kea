@@ -82,6 +82,19 @@ public:
     /// Also see the @c Stopwatch::getTotalDuration for details.
     boost::posix_time::time_duration getTotalDuration() const;
 
+    /// @brief Returns the duration in the textual format which can be
+    /// directly used in log messages.
+    ///
+    /// @todo Currently this function returns the duration as fractional
+    /// milliseconds. We may come up with something more sophisticated
+    /// in the future.
+    ///
+    /// @param duration Duration to be converted to the textual format.
+    ///
+    /// @return Converted value which can be used to log duration.
+    static std::string
+    logFormat(const boost::posix_time::time_duration& duration);
+
 protected:
 
     /// @brief Returns the current time.
