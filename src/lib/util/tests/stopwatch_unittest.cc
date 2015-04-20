@@ -287,14 +287,14 @@ TEST_F(StopwatchTest, autostart) {
 
 // Make sure that the conversion to the loggable string works as expected.
 TEST_F(StopwatchTest, logFormat) {
-    time_duration duration = microseconds(223543);
-    EXPECT_EQ("223.543 ms", StopwatchImpl::logFormat(duration));
+    time_duration duration = microseconds(223043);
+    EXPECT_EQ("223.043 ms", StopwatchImpl::logFormat(duration));
 
     duration = microseconds(1234);
     EXPECT_EQ("1.234 ms", StopwatchImpl::logFormat(duration));
 
     duration = microseconds(2000);
-    EXPECT_EQ("2.0 ms", StopwatchImpl::logFormat(duration));
+    EXPECT_EQ("2.000 ms", StopwatchImpl::logFormat(duration));
 }
 
 } // end of anonymous namespace
