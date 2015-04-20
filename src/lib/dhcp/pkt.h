@@ -148,7 +148,7 @@ public:
     /// there own implementation.
     ///
     /// @return string with text representation
-    virtual std::string getLabel() {
+    virtual std::string getLabel() const {
         isc_throw(NotImplemented, "Pkt::getLabel()");
     }
 
