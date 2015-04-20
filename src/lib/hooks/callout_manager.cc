@@ -135,7 +135,13 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
         // change and potentially affect the iteration through that vector.
         CalloutVector callouts(hook_vector_[hook_index]);
 
+        // This object will be used to measure execution time of each callout
+        // and the total time spent in callouts for this hook point.
         util::Stopwatch stopwatch;
+
+        // Mark that the callouts begin for the hook.
+        LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS, HOOKS_CALLOUTS_BEGIN)
+            .arg(server_hooks_.getName(current_hook_));
 
         // Call all the callouts.
         for (CalloutVector::const_iterator i = callouts.begin();
@@ -174,6 +180,12 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
             }
 
         }
+
+        // Mark end of callout execution. Include the total execution
+        // time for callouts.
+        LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS, HOOKS_CALLOUTS_COMPLETE)
+            .arg(server_hooks_.getName(current_hook_))
+            .arg(stopwatch.logFormatTotalDuration());
 
         // Reset the current hook and library indexs to an invalid value to
         // catch any programming errors.
