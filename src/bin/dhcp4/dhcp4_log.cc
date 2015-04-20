@@ -1,4 +1,4 @@
-// Copyright (C) 2012, 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -23,7 +23,7 @@ const char* DHCP4_ROOT_LOGGER_NAME = "kea-dhcp4";
 const char* DHCP4_APP_LOGGER_NAME = "dhcp4";
 const char* DHCP4_BAD_PACKET_LOGGER_NAME = "bad-packet";
 
-isc::log::Logger dhcp4_logger("dhcp4");
+isc::log::Logger dhcp4_logger(DHCP4_APP_LOGGER_NAME);
 isc::log::Logger bad_packet_logger(DHCP4_BAD_PACKET_LOGGER_NAME);
 
 } // namespace dhcp
