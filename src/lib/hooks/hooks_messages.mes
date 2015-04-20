@@ -20,6 +20,15 @@ by the library with the given index were removed.  This is similar to
 the HOOKS_CALLOUTS_REMOVED message (and the two are likely to be seen
 together), but is issued at a lower-level in the hook framework.
 
+% HOOKS_CALLOUTS_BEGIN begin all callouts for hook %1
+This debug message is issued when callout manager begins to invoke callouts
+for the hook. The argument specifies the hook name.
+
+% HOOKS_CALLOUTS_COMPLETE completed callouts for hook %1 (total callouts duration: %2)
+This debug message is issued when callout manager has completed execution
+of all callouts for the particular hook. The arguments specify the hook
+name and total execution time for all callouts.
+
 % HOOKS_CALLOUTS_REMOVED callouts removed from hook %1 for library %2
 This is a debug message issued during library unloading.  It notes that
 one of more callouts registered by that library have been removed from
