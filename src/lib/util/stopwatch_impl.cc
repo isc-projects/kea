@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <util/stopwatch_impl.h>
+#include <iomanip>
 #include <sstream>
 
 namespace isc {
@@ -87,7 +88,8 @@ std::string
 StopwatchImpl::logFormat(const boost::posix_time::time_duration& duration) {
     std::ostringstream s;
     s << duration.total_milliseconds() << ".";
-    s << (duration.total_microseconds() % 1000) << " ms";
+    s << std::setfill('0') << std::setw(3) << (duration.total_microseconds() % 1000)
+      << " ms";
     return (s.str());
 }
 
