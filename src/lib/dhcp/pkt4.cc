@@ -282,6 +282,24 @@ void Pkt4::setType(uint8_t dhcp_type) {
 }
 
 std::string
+Pkt4::getLabel() {
+    return makeLabel(hwaddr_, getOption(DHO_DHCP_CLIENT_IDENTIFIER), transid_);
+}
+
+std::string
+Pkt4::makeLabel(HWAddrPtr hwaddr, OptionPtr client_id, uint32_t transid)
+{
+    stringstream tmp;
+
+    tmp << "hwaddr=[" << (hwaddr ? hwaddr->toText() : "no info")
+        << "], client-id=[" << (client_id ? client_id->toText() : "no info")
+        << "], transid=0x" << hex << transid << dec;
+
+    return tmp.str();
+}
+
+
+std::string
 Pkt4::toText() {
     stringstream tmp;
     tmp << "localAddr=" << local_addr_ << ":" << local_port_
