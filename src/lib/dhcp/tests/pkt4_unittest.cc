@@ -885,7 +885,7 @@ TEST_F(Pkt4Test, getLabel) {
 
     // Verify makeLabel() handles empty values
     EXPECT_EQ ("hwaddr=[no info], client-id=[no info], transid=0x0",
-               Pkt4::makeLabel(HWAddrPtr(), OptionPtr(), 0));
+               Pkt4::makeLabel(HWAddrPtr(), ClientIdPtr(), 0));
 
     // Verify an "empty" packet label is as we expect
     EXPECT_EQ ("hwaddr=[hwtype=1 ], client-id=[no info], transid=0x4d2",
@@ -911,7 +911,7 @@ TEST_F(Pkt4Test, getLabel) {
     pkt.addOption(opt);
 
     EXPECT_EQ ("hwaddr=[hwtype=123 02:04:06:08:0a:0c],"
-               " client-id=[type=61, len=4: 64:65:66:67], transid=0x4d2",
+               " client-id=[64:65:66:67], transid=0x4d2",
                pkt.getLabel());
 
 }

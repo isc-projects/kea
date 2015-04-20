@@ -404,7 +404,8 @@ Dhcpv4Srv::run() {
                 // Failed to parse the packet.
                 LOG_DEBUG(bad_packet_logger, DBG_DHCP4_DETAIL,
                           DHCP4_PACKET_DROP_0001)
-                    .arg(query->getLabel()).arg(e.what());
+                    .arg(query->getLabel())
+                    .arg(e.what());
                 continue;
             }
         }
