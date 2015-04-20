@@ -404,7 +404,7 @@ Dhcpv4Srv::run() {
                 // Failed to parse the packet.
                 LOG_DEBUG(bad_packet_logger, DBG_DHCP4_DETAIL,
                           DHCP4_PACKET_DROP_0001)
-                    .arg(e.what());
+                    .arg(query->getLabel()).arg(e.what());
                 continue;
             }
         }
@@ -503,7 +503,8 @@ Dhcpv4Srv::run() {
                 }
                 LOG_DEBUG(bad_packet_logger, DBG_DHCP4_BASIC,
                           DHCP4_PACKET_DROP_0007)
-                    .arg(source).arg(e.what());
+                    .arg(query->getLabel())
+                    .arg(e.what());
             }
         }
 
@@ -1060,6 +1061,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         // perhaps this should be logged on some higher level? This is most
         // likely configuration bug.
         LOG_ERROR(bad_packet_logger, DHCP4_PACKET_NAK_0001)
+            .arg(query->getLabel())
             .arg(query->getRemoteAddr().toText())
             .arg(serverReceivedPacketName(query->getType()));
         resp->setType(DHCPNAK);
@@ -1126,9 +1128,8 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         if (lease && (lease->addr_ != hint)) {
             LOG_DEBUG(bad_packet_logger, DBG_DHCP4_DETAIL,
                       DHCP4_PACKET_NAK_0002)
-                .arg(hint.toText())
-                .arg(client_id ? client_id->toText():"(no client-id)")
-                .arg(hwaddr ? hwaddr->toText():"(no hwaddr info)");
+                .arg(query->getLabel())
+                .arg(hint.toText());
 
             resp->setType(DHCPNAK);
             resp->setYiaddr(IOAddress::IPV4_ZERO_ADDRESS());
@@ -1291,8 +1292,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
 
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, fake_allocation ?
                   DHCP4_PACKET_NAK_0003 : DHCP4_PACKET_NAK_0004)
-            .arg(client_id?client_id->toText():"(no client-id)")
-            .arg(hwaddr?hwaddr->toText():"(no hwaddr info)")
+            .arg(query->getLabel())
             .arg(query->getCiaddr().toText())
             .arg(opt_requested_address ?
                  opt_requested_address->readAddress().toText() : "(no address)");
@@ -1754,7 +1754,7 @@ Dhcpv4Srv::accept(const Pkt4Ptr& query) const {
     // connected) should be dropped or processed.
     if (!acceptDirectRequest(query)) {
         LOG_DEBUG(bad_packet_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0002)
-            .arg(query->getTransid())
+            .arg(query->getLabel())
             .arg(query->getIface());
         return (false);
     }
@@ -1763,7 +1763,7 @@ Dhcpv4Srv::accept(const Pkt4Ptr& query) const {
     // If it hasn't been sent to us, drop it!
     if (!acceptServerId(query)) {
         LOG_DEBUG(bad_packet_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0003)
-            .arg(query->getTransid())
+            .arg(query->getLabel())
             .arg(query->getIface());
         return (false);
     }
@@ -1807,6 +1807,7 @@ Dhcpv4Srv::acceptMessageType(const Pkt4Ptr& query) const {
 
     } catch (...) {
         LOG_DEBUG(bad_packet_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0004)
+            .arg(query->getLabel())
             .arg(query->getIface());
         return (false);
     }
@@ -1814,8 +1815,8 @@ Dhcpv4Srv::acceptMessageType(const Pkt4Ptr& query) const {
     // If we receive a message with a non-existing type, we are logging it.
     if (type > DHCPLEASEQUERYDONE) {
         LOG_DEBUG(bad_packet_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0005)
-            .arg(type)
-            .arg(query->getTransid());
+            .arg(query->getLabel())
+            .arg(type);
         return (false);
     }
 
@@ -1831,8 +1832,8 @@ Dhcpv4Srv::acceptMessageType(const Pkt4Ptr& query) const {
         (type != DHCPRELEASE) && (type != DHCPDECLINE) &&
         (type != DHCPINFORM)) {
         LOG_DEBUG(bad_packet_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0006)
-            .arg(type)
-            .arg(query->getTransid());
+            .arg(query->getLabel())
+            .arg(type);
         return (false);
     }
 
