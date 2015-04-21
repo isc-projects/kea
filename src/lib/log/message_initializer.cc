@@ -53,15 +53,11 @@ getNonConstDuplicates() {
 namespace isc {
 namespace log {
 
-// Constructor.  Add the pointer to the message array to the global array.
-// This method will trigger an assertion failure if the array overflows.
-
 MessageInitializer::MessageInitializer(const char* values[])
     : values_(values),
       global_dictionary_(MessageDictionary::globalDictionary()),
       global_logger_values_(getNonConstLoggerValues()),
       global_logger_duplicates_(getNonConstDuplicates()) {
-    assert(global_logger_values_->size() < MAX_MESSAGE_ARRAYS);
     global_logger_values_->push_back(values);
 }
 

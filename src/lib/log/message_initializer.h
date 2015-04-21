@@ -70,12 +70,6 @@ typedef boost::shared_ptr<LoggerDuplicatesList> LoggerDuplicatesListPtr;
 /// called to populate the messages defined in various instances of the
 /// \c MessageInitializer class to the global dictionary.
 ///
-/// \note The maximum number of message arrays that can be added to the
-/// dictionary in this way is defined by the constant
-/// MessageInitializer::MAX_MESSAGE_ARRAYS.  This is set to 256 as a compromise
-/// between wasted space and allowing for future expansion, but can be
-/// changed (by editing the source file) to any value desired.
-///
 /// When messages are added to the dictionary, the are added via the
 /// MessageDictionary::add() method, so any duplicates are stored in the
 /// global dictionary's overflow lince whence they can be retrieved at
@@ -83,8 +77,6 @@ typedef boost::shared_ptr<LoggerDuplicatesList> LoggerDuplicatesListPtr;
 
 class MessageInitializer : public boost::noncopyable {
 public:
-    /// Maximum number of message arrays that can be initialized in this way
-    static const size_t MAX_MESSAGE_ARRAYS = 256;
 
     /// \brief Constructor
     ///
