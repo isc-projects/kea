@@ -1,4 +1,4 @@
-// Copyright (C) 2012, 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,9 @@
 
 namespace isc {
 namespace dhcp {
+
+/// Defines the name of the root level "default" logger for kea dhcp4 server.
+extern const char* DHCP4_ROOT_LOGGER_NAME;
 
 /// \brief DHCP4 Logging
 ///
@@ -54,7 +57,16 @@ const int DBG_DHCP4_DETAIL_DATA = DBGLVL_TRACE_DETAIL_DATA;
 /// a logger in each file, but we would want to define a common name to avoid
 /// spelling mistakes, so it is just one small step from there to define a
 /// module-common logger.
+extern const char* DHCP4_APP_LOGGER_NAME;
 extern isc::log::Logger dhcp4_logger;
+
+/// Define a separate logger to which bad packets are logged.  This allows
+/// users to segregate them into a separate log destination for easy monitoring
+/// and diagnostics.  Here "bad packet" are packets that are either dropped
+/// (i.e malformed, unsupported types) or packets that are rejected and NAKed
+/// for logical reasons.
+extern const char* DHCP4_BAD_PACKET_LOGGER_NAME;
+extern isc::log::Logger bad_packet_logger;
 
 } // namespace dhcp4
 } // namespace isc

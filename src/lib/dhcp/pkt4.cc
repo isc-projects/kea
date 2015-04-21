@@ -283,6 +283,33 @@ void Pkt4::setType(uint8_t dhcp_type) {
 }
 
 std::string
+Pkt4::getLabel() const {
+
+    /// @todo If and when client id is extracted into Pkt4, this method should
+    /// the instance member rather than fetch it every time.
+    ClientIdPtr client_id;
+    OptionPtr client_opt = getOption(DHO_DHCP_CLIENT_IDENTIFIER);
+    if (client_opt ) {
+        client_id = ClientIdPtr(new ClientId(client_opt->getData()));
+    }
+
+    return makeLabel(hwaddr_, client_id, transid_);
+
+}
+
+std::string
+Pkt4::makeLabel(const HWAddrPtr& hwaddr, const ClientIdPtr& client_id,
+                const uint32_t transid) {
+    stringstream label;
+    label << "hwaddr=[" << (hwaddr ? hwaddr->toText() : "no info")
+          << "], client-id=[" << (client_id ? client_id->toText() : "no info")
+          << "], transid=0x" << hex << transid << dec;
+
+    return label.str();
+}
+
+
+std::string
 Pkt4::toText() {
     stringstream tmp;
     tmp << "localAddr=" << local_addr_ << ":" << local_port_
