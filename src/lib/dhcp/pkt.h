@@ -141,6 +141,17 @@ public:
     /// @return true if option was deleted, false if no such option existed
     bool delOption(uint16_t type);
 
+    /// @brief Returns text representation primary packet identifiers
+    ///
+    /// This method is intended to be used to provide as a consistent way to
+    /// identify packets within log statements.  Derivations should supply
+    /// there own implementation.
+    ///
+    /// @return string with text representation
+    virtual std::string getLabel() const {
+        isc_throw(NotImplemented, "Pkt::getLabel()");
+    }
+
     /// @brief Returns text representation of the packet.
     ///
     /// This function is useful mainly for debugging.

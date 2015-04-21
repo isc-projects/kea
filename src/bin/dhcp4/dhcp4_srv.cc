@@ -403,8 +403,10 @@ Dhcpv4Srv::run() {
                 query->unpack();
             } catch (const std::exception& e) {
                 // Failed to parse the packet.
-                LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL,
-                          DHCP4_PACKET_PARSE_FAIL).arg(e.what());
+                LOG_DEBUG(bad_packet_logger, DBG_DHCP4_DETAIL,
+                          DHCP4_PACKET_DROP_0001)
+                    .arg(query->getLabel())
+                    .arg(e.what());
                 continue;
             }
         }
@@ -501,9 +503,10 @@ Dhcpv4Srv::run() {
                 if (hwptr) {
                     source = hwptr->toText();
                 }
-                LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC,
-                          DHCP4_PACKET_PROCESS_FAIL)
-                    .arg(source).arg(e.what());
+                LOG_DEBUG(bad_packet_logger, DBG_DHCP4_BASIC,
+                          DHCP4_PACKET_DROP_0007)
+                    .arg(query->getLabel())
+                    .arg(e.what());
             }
         }
 
@@ -1059,7 +1062,8 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
 
         // perhaps this should be logged on some higher level? This is most
         // likely configuration bug.
-        LOG_ERROR(dhcp4_logger, DHCP4_SUBNET_SELECTION_FAILED)
+        LOG_ERROR(bad_packet_logger, DHCP4_PACKET_NAK_0001)
+            .arg(query->getLabel())
             .arg(query->getRemoteAddr().toText())
             .arg(serverReceivedPacketName(query->getType()));
         resp->setType(DHCPNAK);
@@ -1124,11 +1128,10 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         }
         // Got a lease so we can check the address.
         if (lease && (lease->addr_ != hint)) {
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL,
-                      DHCP4_INVALID_ADDRESS_INIT_REBOOT)
-                .arg(hint.toText())
-                .arg(client_id ? client_id->toText():"(no client-id)")
-                .arg(hwaddr ? hwaddr->toText():"(no hwaddr info)");
+            LOG_DEBUG(bad_packet_logger, DBG_DHCP4_DETAIL,
+                      DHCP4_PACKET_NAK_0002)
+                .arg(query->getLabel())
+                .arg(hint.toText());
 
             resp->setType(DHCPNAK);
             resp->setYiaddr(IOAddress::IPV4_ZERO_ADDRESS());
@@ -1289,10 +1292,9 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         // cause of that failure. The only thing left is to insert
         // status code to pass the sad news to the client.
 
-        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, fake_allocation?
-                  DHCP4_LEASE_ADVERT_FAIL:DHCP4_LEASE_ALLOC_FAIL)
-            .arg(client_id?client_id->toText():"(no client-id)")
-            .arg(hwaddr?hwaddr->toText():"(no hwaddr info)")
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, fake_allocation ?
+                  DHCP4_PACKET_NAK_0003 : DHCP4_PACKET_NAK_0004)
+            .arg(query->getLabel())
             .arg(query->getCiaddr().toText())
             .arg(opt_requested_address ?
                  opt_requested_address->readAddress().toText() : "(no address)");
@@ -1753,8 +1755,8 @@ Dhcpv4Srv::accept(const Pkt4Ptr& query) const {
     // Check if the message from directly connected client (if directly
     // connected) should be dropped or processed.
     if (!acceptDirectRequest(query)) {
-        LOG_INFO(dhcp4_logger, DHCP4_NO_SUBNET_FOR_DIRECT_CLIENT)
-            .arg(query->getTransid())
+        LOG_DEBUG(bad_packet_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0002)
+            .arg(query->getLabel())
             .arg(query->getIface());
         return (false);
     }
@@ -1762,8 +1764,8 @@ Dhcpv4Srv::accept(const Pkt4Ptr& query) const {
     // Check if the DHCPv4 packet has been sent to us or to someone else.
     // If it hasn't been sent to us, drop it!
     if (!acceptServerId(query)) {
-        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_NOT_FOR_US)
-            .arg(query->getTransid())
+        LOG_DEBUG(bad_packet_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0003)
+            .arg(query->getLabel())
             .arg(query->getIface());
         return (false);
     }
@@ -1806,17 +1808,17 @@ Dhcpv4Srv::acceptMessageType(const Pkt4Ptr& query) const {
         type = query->getType();
 
     } catch (...) {
-        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_NO_TYPE)
+        LOG_DEBUG(bad_packet_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0004)
+            .arg(query->getLabel())
             .arg(query->getIface());
         return (false);
     }
 
     // If we receive a message with a non-existing type, we are logging it.
     if (type > DHCPLEASEQUERYDONE) {
-        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL,
-                  DHCP4_UNRECOGNIZED_RCVD_PACKET_TYPE)
-            .arg(type)
-            .arg(query->getTransid());
+        LOG_DEBUG(bad_packet_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0005)
+            .arg(query->getLabel())
+            .arg(type);
         return (false);
     }
 
@@ -1831,10 +1833,9 @@ Dhcpv4Srv::acceptMessageType(const Pkt4Ptr& query) const {
     if ((type != DHCPDISCOVER) && (type != DHCPREQUEST) &&
         (type != DHCPRELEASE) && (type != DHCPDECLINE) &&
         (type != DHCPINFORM)) {
-        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL,
-                  DHCP4_UNSUPPORTED_RCVD_PACKET_TYPE)
-            .arg(type)
-            .arg(query->getTransid());
+        LOG_DEBUG(bad_packet_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0006)
+            .arg(query->getLabel())
+            .arg(type);
         return (false);
     }
 

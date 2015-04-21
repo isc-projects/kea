@@ -17,6 +17,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/option.h>
+#include <dhcp/duid.h>
 #include <util/buffer.h>
 #include <dhcp/option.h>
 #include <dhcp/classify.h>
@@ -107,6 +108,29 @@ public:
     ///
     /// Method will throw exception if anomaly is found.
     void check();
+
+    /// @brief Returns text representation of the primary packet identifiers
+    ///
+    /// This method is intended to be used to provide a consistent way to
+    /// identify packets within log statements.  It is an instance-level
+    /// wrapper around static makeLabel(). See this method for string
+    /// content.
+    ///
+    /// @return string with text representation
+    std::string getLabel() const;
+
+    /// @brief Returns text representation of the given packet identifiers
+    ///
+    /// @param hwaddr - hardware address to include in the string, it may be
+    /// NULL.
+    /// @param client_id - client id to include in the string, it may be NULL.
+    /// to include in the string
+    /// @param transid - numeric transaction id to include in the string
+    ///
+    /// @return string with text representation
+    static std::string makeLabel(const HWAddrPtr& hwaddr,
+                                 const ClientIdPtr& client_id,
+                                 const uint32_t transid);
 
     /// @brief Returns text representation of the packet.
     ///
