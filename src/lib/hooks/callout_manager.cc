@@ -170,6 +170,9 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
                         .arg(stopwatch.logFormatLastDuration());
                 }
             } catch (const std::exception& e) {
+                // If an exception occurred, the stopwatch.stop() hasn't been
+                // called, so we have to call it here.
+                stopwatch.stop();
                 // Any exception, not just ones based on isc::Exception
                 LOG_ERROR(hooks_logger, HOOKS_CALLOUT_EXCEPTION)
                     .arg(current_library_)

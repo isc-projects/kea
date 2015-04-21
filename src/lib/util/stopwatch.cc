@@ -58,7 +58,7 @@ Stopwatch::getTotalDuration() const {
 }
 
 long
-Stopwatch::getMilliseconds() const {
+Stopwatch::getLastMilliseconds() const {
     return (getLastDuration().total_milliseconds());
 }
 
@@ -68,7 +68,7 @@ Stopwatch::getTotalMilliseconds() const {
 }
 
 long
-Stopwatch::getMicroseconds() const {
+Stopwatch::getLastMicroseconds() const {
     return (getLastDuration().total_microseconds());
 }
 
