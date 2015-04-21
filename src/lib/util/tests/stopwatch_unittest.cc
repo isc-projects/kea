@@ -224,7 +224,7 @@ TEST_F(StopwatchTest, multipleMeasurements) {
 TEST_F(StopwatchTest, realTime) {
     // Initially, the measured time should be 0.
     Stopwatch stopwatch;
-    EXPECT_EQ(0, stopwatch.getMilliseconds());
+    EXPECT_EQ(0, stopwatch.getLastMilliseconds());
     EXPECT_EQ(0, stopwatch.getTotalMilliseconds());
 
     // Start the stopwatch.
@@ -236,7 +236,7 @@ TEST_F(StopwatchTest, realTime) {
     stopwatch.stop();
 
     // The measured duration should be greater or equal 1 ms.
-    long current_duration = stopwatch.getMilliseconds();
+    long current_duration = stopwatch.getLastMilliseconds();
     EXPECT_GE(current_duration, 1);
     EXPECT_EQ(current_duration, stopwatch.getTotalMilliseconds());
 
@@ -244,7 +244,7 @@ TEST_F(StopwatchTest, realTime) {
     usleep(2000);
 
     // In the stopped state, we should still have old durations measured.
-    EXPECT_EQ(current_duration, stopwatch.getMilliseconds());
+    EXPECT_EQ(current_duration, stopwatch.getLastMilliseconds());
     EXPECT_EQ(current_duration, stopwatch.getTotalMilliseconds());
 
     // Start it again.
@@ -254,13 +254,13 @@ TEST_F(StopwatchTest, realTime) {
     usleep(1000);
 
     // The durations should get updated as appropriate.
-    current_duration = stopwatch.getMilliseconds();
-    EXPECT_GE(stopwatch.getMilliseconds(), 1);
+    current_duration = stopwatch.getLastMilliseconds();
+    EXPECT_GE(stopwatch.getLastMilliseconds(), 1);
     EXPECT_GE(stopwatch.getTotalMilliseconds(), 2);
 }
 
 // Make sure that we can obtain the durations as microseconds.
-TEST_F(StopwatchTest, getMicroseconds) {
+TEST_F(StopwatchTest, getLastMicroseconds) {
     Stopwatch stopwatch;
     stopwatch.start();
 
@@ -268,7 +268,7 @@ TEST_F(StopwatchTest, getMicroseconds) {
 
     stopwatch.stop();
 
-    long current_duration = stopwatch.getMicroseconds();
+    long current_duration = stopwatch.getLastMicroseconds();
     EXPECT_GE(current_duration, 1000);
     EXPECT_EQ(current_duration, stopwatch.getTotalMicroseconds());
 }
@@ -281,8 +281,8 @@ TEST_F(StopwatchTest, autostart) {
 
     stopwatch.stop();
 
-    EXPECT_GE(stopwatch.getMilliseconds(), 1);
-    EXPECT_EQ(stopwatch.getMilliseconds(), stopwatch.getTotalMilliseconds());
+    EXPECT_GE(stopwatch.getLastMilliseconds(), 1);
+    EXPECT_EQ(stopwatch.getLastMilliseconds(), stopwatch.getTotalMilliseconds());
 }
 
 // Make sure that the conversion to the loggable string works as expected.

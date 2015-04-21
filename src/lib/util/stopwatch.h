@@ -61,7 +61,7 @@ public:
     /// Sets the stopwatch to the "started" state. In this state the stopwatch
     /// is measuring the duration since @c Stopwatch::start has been invoked.
     ///
-    //// This method is no-op if the stopwatch is already in the "stopped"
+    //// This method is no-op if the stopwatch is already in the "started"
     /// state.
     void start();
 
@@ -103,13 +103,13 @@ public:
     boost::posix_time::time_duration getTotalDuration() const;
 
     /// @brief Retrieves the last measured duration in milliseconds.
-    long getMilliseconds() const;
+    long getLastMilliseconds() const;
 
     /// @brief Retrieves the total measured duration in milliseconds.
     long getTotalMilliseconds() const;
 
     /// @brief Retrieves the last measured duration in microseconds.
-    long getMicroseconds() const;
+    long getLastMicroseconds() const;
 
     /// @brief Retrieves the total measured duration in microseconds.
     long getTotalMicroseconds() const;
