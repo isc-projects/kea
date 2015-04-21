@@ -1,3 +1,9 @@
+923.	[func]		tmark
+	The DHCPv4 server now logs packets it has either dropped as invalid
+	or to which it has replied with a NAK to a separate logger, 
+	"kea_dhcp4.bad_packet".
+	(Trac #3743, git cb91ca851099423e1b6c39cca3f3e2ba29795a51)
+
 922.	[build]		fdupont
 	The config.h file should never be included by another include file.
 	Copy missing header files to the install directory.
