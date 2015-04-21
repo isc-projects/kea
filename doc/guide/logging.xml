@@ -167,8 +167,14 @@
           </listitem>
           <listitem>
             <simpara><command>kea-dhcp4.hooks</command> - this logger is used
-            during DHCPv4 hooks operation, i.e. anything related to user
-            libraries will be logged using this logger.</simpara>
+            to log messages related to management of hooks libraries, e.g.
+            registration and deregistration of the libraries.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><command>kea-dhcp4.callouts</command> - this logger is used
+            to log messages pertaining to the callouts registration and execution
+            for the particular hook point.
+            </simpara>
           </listitem>
           <listitem>
             <simpara><command>kea-dhcp6</command> - this is the root logger for
@@ -189,8 +195,14 @@
           </listitem>
           <listitem>
             <simpara><command>kea-dhcp6.hooks</command> - this logger is used
-            during DHCPv6 hooks operation, i.e. anything related to user
-            libraries will be logged using this logger.</simpara>
+            to log messages related to management of hooks libraries, e.g.
+            registration and deregistration of the libraries.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><command>kea-dhcp6.callouts</command> - this logger is used
+            to log messages pertaining to the callouts registration and execution
+            for the particular hook point.
+            </simpara>
           </listitem>
           <listitem>
             <simpara><command>kea-dhcp-ddns</command> - this is the root logger for
