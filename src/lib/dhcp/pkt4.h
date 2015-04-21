@@ -128,8 +128,8 @@ public:
     /// @param transid - numeric transaction id to include in the string
     ///
     /// @return string with text representation
-    static std::string makeLabel(const HWAddrPtr hwaddr,
-                                 const ClientIdPtr client_id,
+    static std::string makeLabel(const HWAddrPtr& hwaddr,
+                                 const ClientIdPtr& client_id,
                                  const uint32_t transid);
 
     /// @brief Returns text representation of the packet.
