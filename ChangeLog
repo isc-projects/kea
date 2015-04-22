@@ -1,3 +1,9 @@
+925.	[func]		marcin
+	libkea-hooks logs when the callouts execution begins or ends
+	for the particular hook. It also logs the execution time of
+	individual callouts and the total time for all callouts.
+	(Trac #3804 git dd1432d7807e7d3b54c87dd4b3155d3110619fbd)
+
 924.	[bug]		marcin
 	Removed shell warning about the "missing format character"
 	in the keactrl usage.
