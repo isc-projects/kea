@@ -20,6 +20,15 @@ by the library with the given index were removed.  This is similar to
 the HOOKS_CALLOUTS_REMOVED message (and the two are likely to be seen
 together), but is issued at a lower-level in the hook framework.
 
+% HOOKS_CALLOUTS_BEGIN begin all callouts for hook %1
+This debug message is issued when callout manager begins to invoke callouts
+for the hook. The argument specifies the hook name.
+
+% HOOKS_CALLOUTS_COMPLETE completed callouts for hook %1 (total callouts duration: %2)
+This debug message is issued when callout manager has completed execution
+of all callouts for the particular hook. The arguments specify the hook
+name and total execution time for all callouts in milliseconds.
+
 % HOOKS_CALLOUTS_REMOVED callouts removed from hook %1 for library %2
 This is a debug message issued during library unloading.  It notes that
 one of more callouts registered by that library have been removed from
@@ -27,28 +36,31 @@ the specified hook.  This is similar to the HOOKS_DEREGISTER_ALL_CALLOUTS
 message (and the two are likely to be seen together), but is issued at a
 higher-level in the hook framework.
 
-% HOOKS_CALLOUT_CALLED hooks library with index %1 has called a callout on hook %2 that has address %3
+% HOOKS_CALLOUT_CALLED hooks library with index %1 has called a callout on hook %2 that has address %3 (callout duration: %4)
 Only output at a high debugging level, this message indicates that
 a callout on the named hook registered by the library with the given
 index (in the list of loaded libraries) has been called and returned a
-success state.  The address of the callout is given in the message
+success state.  The address of the callout is given in the message.
+The message includes the callout execution time in milliseconds.
 
 % HOOKS_CALLOUT_DEREGISTERED hook library at index %1 deregistered a callout on hook %2
 A debug message issued when all instances of a particular callouts on
 the hook identified in the message that were registered by the library
 with the given index have been removed.
 
-% HOOKS_CALLOUT_ERROR error returned by callout on hook %1 registered by library with index %2 (callout address %3)
+% HOOKS_CALLOUT_ERROR error returned by callout on hook %1 registered by library with index %2 (callout address %3) (callout duration %4)
 If a callout returns an error status when called, this error message
 is issued.  It identifies the hook to which the callout is attached, the
 index of the library (in the list of loaded libraries) that registered
 it and the address of the callout.  The error is otherwise ignored.
+The error message includes the callout execution time in milliseconds.
 
-% HOOKS_CALLOUT_EXCEPTION exception thrown by callout on hook %1 registered by library with index %2 (callout address %3): %4
+% HOOKS_CALLOUT_EXCEPTION exception thrown by callout on hook %1 registered by library with index %2 (callout address %3): %4 (callout duration: $5)
 If a callout throws an exception when called, this error message is
 issued.  It identifies the hook to which the callout is attached, the
 index of the library (in the list of loaded libraries) that registered
 it and the address of the callout.  The error is otherwise ignored.
+The error message includes the callout execution time in milliseconds.
 
 % HOOKS_CALLOUT_REGISTRATION hooks library with index %1 registering callout for hook '%2'
 This is a debug message, output when a library (whose index in the list
