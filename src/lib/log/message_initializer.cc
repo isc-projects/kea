@@ -1,3 +1,4 @@
+
 // Copyright (C) 2011,2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
@@ -77,8 +78,18 @@ MessageInitializer::~MessageInitializer() {
         // the dictionary and/or duplicates.
         int i = 0;
         while (values_[i]) {
-            global_logger_duplicates_->remove(values_[i]);
-            global_dictionary_->erase(values_[i], values_[i + 1]);
+            // Check if the unloaded message is registered as duplicate. If it is,
+            // remove it from the duplicates list.
+            LoggerDuplicatesList::const_iterator dup =
+                std::find(global_logger_duplicates_->begin(),
+                          global_logger_duplicates_->end(),
+                          values_[i]);
+            if (dup != global_logger_duplicates_->end()) {
+                global_logger_duplicates_->erase(dup);
+
+            } else {
+                global_dictionary_->erase(values_[i], values_[i + 1]);
+            }
             i += 2;
         }
     }
