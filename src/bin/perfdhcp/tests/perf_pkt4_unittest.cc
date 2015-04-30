@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -220,8 +220,8 @@ TEST_F(PerfPkt4Test, RawUnpack) {
         (pkt->getOption(DHO_MERIT_DUMP));
     opt_msg_type = boost::dynamic_pointer_cast<LocalizedOption>
         (pkt->getOption(DHO_DHCP_MESSAGE_TYPE));
-    ASSERT_TRUE(opt_merit);
-    ASSERT_TRUE(opt_msg_type);
+    ASSERT_TRUE(opt_merit.get() != 0);
+    ASSERT_TRUE(opt_msg_type.get() != 0);
 
     // Get first option payload.
     OptionBuffer opt_merit_data = opt_merit->getData();

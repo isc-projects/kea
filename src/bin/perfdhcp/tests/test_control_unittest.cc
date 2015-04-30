@@ -687,7 +687,7 @@ public:
         // Check that the message is created.
         ASSERT_NO_THROW(msg = tc.createMessageFromReply(msg_type, reply));
 
-        ASSERT_TRUE(msg);
+        ASSERT_TRUE(msg.get() != 0);
         // Check that the message type and transaction id is correct.
         EXPECT_EQ(msg_type, msg->getType());
         EXPECT_EQ(1, msg->getTransid());
@@ -697,25 +697,25 @@ public:
 
         // Client Identifier.
         OptionPtr opt_clientid = msg->getOption(D6O_CLIENTID);
-        ASSERT_TRUE(opt_clientid);
+        ASSERT_TRUE(opt_clientid.get() != 0);
         EXPECT_TRUE(reply->getOption(D6O_CLIENTID)->getData() ==
                     opt_clientid->getData());
 
         // Server identifier
         OptionPtr opt_serverid = msg->getOption(D6O_SERVERID);
-        ASSERT_TRUE(opt_serverid);
+        ASSERT_TRUE(opt_serverid.get() != 0);
         EXPECT_TRUE(reply->getOption(D6O_SERVERID)->getData() ==
                 opt_serverid->getData());
 
         // IA_NA
         OptionPtr opt_ia_na = msg->getOption(D6O_IA_NA);
-        ASSERT_TRUE(opt_ia_na);
+        ASSERT_TRUE(opt_ia_na.get() != 0);
         EXPECT_TRUE(reply->getOption(D6O_IA_NA)->getData() ==
                     opt_ia_na->getData());
 
         // IA_PD
         OptionPtr opt_ia_pd = msg->getOption(D6O_IA_PD);
-        ASSERT_TRUE(opt_ia_pd);
+        ASSERT_TRUE(opt_ia_pd.get() != 0);
         EXPECT_TRUE(reply->getOption(D6O_IA_PD)->getData() ==
                     opt_ia_pd->getData());
 

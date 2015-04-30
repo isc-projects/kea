@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -194,8 +194,8 @@ TEST_F(PerfPkt6Test, RawPackUnpack) {
 
     // Check if options are present. They have to be there since
     // we have added them ourselfs.
-    ASSERT_TRUE(pkt2_elapsed_time);
-    ASSERT_TRUE(pkt2_duid);
+    ASSERT_TRUE(pkt2_elapsed_time.get() != 0);
+    ASSERT_TRUE(pkt2_duid.get() != 0);
 
     // Expecting option contents be the same as original.
     OptionBuffer pkt2_elapsed_time_data = pkt2_elapsed_time->getData();

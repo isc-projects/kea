@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -66,7 +66,7 @@ TEST(UserRegistry, userBasics) {
     // Verify that the user can be found.
     UserPtr found_user;
     ASSERT_NO_THROW(found_user = reg->findUser(*id));
-    EXPECT_TRUE(found_user);
+    EXPECT_TRUE(found_user.get() != 0);
     EXPECT_EQ(found_user->getUserId(), *id);
 
     // Verify that searching for a non-existant user returns empty user pointer.
@@ -98,7 +98,7 @@ TEST(UserRegistry, findByHWAddr) {
     // Verify user can be found by HWAddr.
     UserPtr found_user;
     ASSERT_NO_THROW(found_user = reg->findUser(hwaddr));
-    EXPECT_TRUE(found_user);
+    EXPECT_TRUE(found_user.get() != 0);
     EXPECT_EQ(found_user->getUserId(), user->getUserId());
 }
 
@@ -119,7 +119,7 @@ TEST(UserRegistry, findByDUID) {
     // Verify user can be found by DUID.
     UserPtr found_user;
     ASSERT_NO_THROW(found_user = reg->findUser(duid));
-    EXPECT_TRUE(found_user);
+    EXPECT_TRUE(found_user.get() != 0);
     EXPECT_EQ(found_user->getUserId(), user->getUserId());
 }
 
@@ -171,10 +171,10 @@ TEST(UserRegistry, refreshFromFile) {
     // Verify we can find all the expected users.
     UserIdPtr id;
     ASSERT_NO_THROW(id.reset(new UserId(UserId::HW_ADDRESS, "01ac00f03344")));
-    EXPECT_TRUE(reg->findUser(*id));
+    EXPECT_TRUE(reg->findUser(*id).get() != 0);
 
     ASSERT_NO_THROW(id.reset(new UserId(UserId::DUID, "225060de0a0b")));
-    EXPECT_TRUE(reg->findUser(*id));
+    EXPECT_TRUE(reg->findUser(*id).get() != 0);
 }
 
 /// @brief Tests preservation of registry upon refresh failure.
@@ -198,8 +198,8 @@ TEST(UserRegistry, refreshFail) {
     ASSERT_NO_THROW(id2.reset(new UserId(UserId::DUID, "225060de0a0b")));
 
     // Verify we can find all the expected users.
-    EXPECT_TRUE(reg->findUser(*id1));
-    EXPECT_TRUE(reg->findUser(*id2));
+    EXPECT_TRUE(reg->findUser(*id1).get() != 0);
+    EXPECT_TRUE(reg->findUser(*id2).get() != 0);
 
     // Replace original data source with a new one containing an invalid entry.
     ASSERT_NO_THROW(user_file.reset(new UserFile
@@ -210,8 +210,8 @@ TEST(UserRegistry, refreshFail) {
     EXPECT_THROW(reg->refresh(), UserRegistryError);
 
     // Verify we can still find all the original users.
-    EXPECT_TRUE(reg->findUser(*id1));
-    EXPECT_TRUE(reg->findUser(*id2));
+    EXPECT_TRUE(reg->findUser(*id1).get() != 0);
+    EXPECT_TRUE(reg->findUser(*id2).get() != 0);
 }
 
 } // end of anonymous namespace

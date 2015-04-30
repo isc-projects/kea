@@ -65,7 +65,8 @@ TEST_F(PacketStorageTest, getNext) {
     ASSERT_EQ(STORAGE_SIZE, storage_.size());
     for (int i = 0; i < STORAGE_SIZE; ++i) {
         Pkt6Ptr packet = storage_.getNext();
-        ASSERT_TRUE(packet) << "NULL packet returned by storage_.getNext() for"
+        ASSERT_TRUE(packet.get() != 0)
+                            << "NULL packet returned by storage_.getNext() for"
                             << " iteration number " << i;
         EXPECT_EQ(i, packet->getTransid());
         EXPECT_EQ(STORAGE_SIZE - i - 1, storage_.size());
@@ -98,8 +99,9 @@ TEST_F(PacketStorageTest, getRandom) {
     int cnt_equals = 0;
     for (int i = 0; i < STORAGE_SIZE; ++i) {
         Pkt6Ptr packet = storage_.getRandom();
-        ASSERT_TRUE(packet) << "NULL packet returned by storage_.getRandom()"
-            " for iteration number " << i;
+        ASSERT_TRUE(packet.get() != 0)
+            << "NULL packet returned by storage_.getRandom()"
+            << " for iteration number " << i;
         EXPECT_EQ(STORAGE_SIZE - i - 1, storage_.size());
         cnt_equals += (i == packet->getTransid() ? 1 : 0);
     }
@@ -124,7 +126,7 @@ TEST_F(PacketStorageTest, getRandom) {
     storage_.append(createPacket6(DHCPV6_REPLY, 100));
     ASSERT_EQ(1, storage_.size());
     Pkt6Ptr packet = storage_.getRandom();
-    ASSERT_TRUE(packet);
+    ASSERT_TRUE(packet.get() != 0);
     EXPECT_EQ(100, packet->getTransid());
     EXPECT_FALSE(storage_.getRandom());
 }
@@ -136,11 +138,11 @@ TEST_F(PacketStorageTest, getNextAndRandom) {
     ASSERT_EQ(STORAGE_SIZE, storage_.size());
     for (int i = 0; i < STORAGE_SIZE / 2; ++i) {
         Pkt6Ptr packet_random = storage_.getRandom();
-        ASSERT_TRUE(packet_random) << "NULL packet returned by"
+        ASSERT_TRUE(packet_random.get() != 0) << "NULL packet returned by"
             " storage_.getRandom() for iteration number " << i;
         EXPECT_EQ(STORAGE_SIZE - 2 *i - 1, storage_.size());
         Pkt6Ptr packet_seq = storage_.getNext();
-        ASSERT_TRUE(packet_seq) << "NULL packet returned by"
+        ASSERT_TRUE(packet_seq.get() != 0) << "NULL packet returned by"
             " storage_.getNext()  for iteration number " << i;
         EXPECT_EQ(STORAGE_SIZE - 2 * i - 2, storage_.size());
     }
@@ -156,7 +158,7 @@ TEST_F(PacketStorageTest, getNextAndRandom) {
     // The newly added elements haven't been accessed yet. So, if we
     // call getNext the first one should be returned.
     Pkt6Ptr packet_next = storage_.getNext();
-    ASSERT_TRUE(packet_next);
+    ASSERT_TRUE(packet_next.get() != 0);
     // The first packet has transaction id equal to 100.
     EXPECT_EQ(100, packet_next->getTransid());
     // There should be just one packet left in the storage.
@@ -164,7 +166,7 @@ TEST_F(PacketStorageTest, getNextAndRandom) {
     // The call to getRandom should return the sole packet from the
     // storage.
     Pkt6Ptr packet_random = storage_.getRandom();
-    ASSERT_TRUE(packet_random);
+    ASSERT_TRUE(packet_random.get() != 0);
     EXPECT_EQ(101, packet_random->getTransid());
     // Any further calls to getRandom and getNext should return NULL.
     EXPECT_FALSE(storage_.getRandom());
@@ -192,8 +194,8 @@ TEST_F(PacketStorageTest, clear) {
     ASSERT_EQ(10, storage_.size());
 
     // Check that the retrieval still works after partial clear.
-    EXPECT_TRUE(storage_.getNext());
-    EXPECT_TRUE(storage_.getRandom());
+    EXPECT_TRUE(storage_.getNext().get() != 0);
+    EXPECT_TRUE(storage_.getRandom().get() != 0);
     // We should have 10 - 2 = 8 packets in the storage after retrieval.
     ASSERT_EQ(8, storage_.size());
 
