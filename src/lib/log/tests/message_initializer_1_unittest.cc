@@ -45,7 +45,7 @@ const char* values3[] = {
 };
 
 const char* values4[] = {
-    "GLOBAL8", "global message eight bis",
+    "GLOBAL8", "global message eight",
     "GLOBAL9", "global message nine",
     NULL
 };
@@ -119,11 +119,12 @@ TEST(MessageInitializerTest1, dynamicLoadUnload) {
     EXPECT_EQ("global message eight", global->getText("GLOBAL8"));
     EXPECT_EQ("global message nine", global->getText("GLOBAL9"));
 
-    // Destroy the first initializer. The first two messages should
-    // be unregistered.
+    // Destroy the first initializer. The first message should be removed.
+    // The second message should not be removed because it is also held
+    // by another object.
     init1.reset();
     EXPECT_TRUE(global->getText("GLOBAL7").empty());
-    EXPECT_TRUE(global->getText("GLOBAL8").empty());
+    EXPECT_EQ("global message eight", global->getText("GLOBAL8"));
     EXPECT_EQ("global message nine", global->getText("GLOBAL9"));
 
     // Destroy the second initializer. Now, all messages should be
