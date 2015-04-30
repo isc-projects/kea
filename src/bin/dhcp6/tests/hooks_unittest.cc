@@ -574,12 +574,12 @@ TEST_F(HooksDhcpv6SrvTest, valueChange_buffer6_receive) {
 
     // Make sure that we received a response
     Pkt6Ptr adv = srv_->fake_sent_.front();
-    ASSERT_TRUE(adv);
+    ASSERT_TRUE(adv.get() != 0);
 
     // Get client-id...
     OptionPtr clientid = adv->getOption(D6O_CLIENTID);
 
-    ASSERT_TRUE(clientid);
+    ASSERT_TRUE(clientid.get() != 0);
 
     // ... and check if it is the modified value
     EXPECT_EQ(0xff, clientid->getData()[0]);
@@ -695,7 +695,7 @@ TEST_F(HooksDhcpv6SrvTest, valueChange_pkt6_receive) {
 
     // Make sure that we received a response
     Pkt6Ptr adv = srv_->fake_sent_.front();
-    ASSERT_TRUE(adv);
+    ASSERT_TRUE(adv.get() != 0);
 
     // Get client-id...
     OptionPtr clientid = adv->getOption(D6O_CLIENTID);
@@ -816,7 +816,7 @@ TEST_F(HooksDhcpv6SrvTest, valueChange_pkt6_send) {
 
     // Make sure that we received a response
     Pkt6Ptr adv = srv_->fake_sent_.front();
-    ASSERT_TRUE(adv);
+    ASSERT_TRUE(adv.get() != 0);
 
     // Get client-id...
     OptionPtr clientid = adv->getOption(D6O_SERVERID);
@@ -853,7 +853,7 @@ TEST_F(HooksDhcpv6SrvTest, deleteServerId_pkt6_send) {
 
     // Get that ADVERTISE
     Pkt6Ptr adv = srv_->fake_sent_.front();
-    ASSERT_TRUE(adv);
+    ASSERT_TRUE(adv.get() != 0);
 
     // Make sure that it does not have server-id
     EXPECT_FALSE(adv->getOption(D6O_SERVERID));
@@ -921,7 +921,7 @@ TEST_F(HooksDhcpv6SrvTest, subnet6_select) {
 
     // Configure the server and make sure the config is accepted
     EXPECT_NO_THROW(status = configureDhcp6Server(*srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     comment_ = isc::config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
 
@@ -939,7 +939,7 @@ TEST_F(HooksDhcpv6SrvTest, subnet6_select) {
     Pkt6Ptr adv = srv_->processSolicit(sol);
 
     // Check if we get response at all
-    ASSERT_TRUE(adv);
+    ASSERT_TRUE(adv.get() != 0);
 
     // Check that the callback called is indeed the one we installed
     EXPECT_EQ("subnet6_select", callback_name_);
@@ -952,7 +952,7 @@ TEST_F(HooksDhcpv6SrvTest, subnet6_select) {
 
     // The server is supposed to pick the first subnet, because of matching
     // interface. Check that the value is reported properly.
-    ASSERT_TRUE(callback_subnet6_);
+    ASSERT_TRUE(callback_subnet6_.get() != 0);
     EXPECT_EQ(callback_subnet6_.get(), exp_subnets->front().get());
 
     // Server is supposed to report two subnets
@@ -994,7 +994,7 @@ TEST_F(HooksDhcpv6SrvTest, subnet_select_change) {
 
     // Configure the server and make sure the config is accepted
     EXPECT_NO_THROW(status = configureDhcp6Server(*srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     comment_ = isc::config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
 
@@ -1012,18 +1012,18 @@ TEST_F(HooksDhcpv6SrvTest, subnet_select_change) {
     Pkt6Ptr adv = srv_->processSolicit(sol);
 
     // Check if we get response at all
-    ASSERT_TRUE(adv);
+    ASSERT_TRUE(adv.get() != 0);
 
     // The response should have an address from second pool, so let's check it
     OptionPtr tmp = adv->getOption(D6O_IA_NA);
-    ASSERT_TRUE(tmp);
+    ASSERT_TRUE(tmp.get() != 0);
     boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
-    ASSERT_TRUE(ia);
+    ASSERT_TRUE(ia.get() != 0);
     tmp = ia->getOption(D6O_IAADDR);
-    ASSERT_TRUE(tmp);
+    ASSERT_TRUE(tmp.get() != 0);
     boost::shared_ptr<Option6IAAddr> addr_opt =
         boost::dynamic_pointer_cast<Option6IAAddr>(tmp);
-    ASSERT_TRUE(addr_opt);
+    ASSERT_TRUE(addr_opt.get() != 0);
 
     // Get all subnets and use second subnet for verification
     const Subnet6Collection* subnets =
@@ -1065,7 +1065,7 @@ TEST_F(HooksDhcpv6SrvTest, basic_lease6_renew) {
     // Check that the lease is really in the database
     Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
                                                         addr);
-    ASSERT_TRUE(l);
+    ASSERT_TRUE(l.get() != 0);
 
     // Check that T1, T2, preferred, valid and cltt really set and not using
     // previous (500, 501, etc.) values
@@ -1091,15 +1091,15 @@ TEST_F(HooksDhcpv6SrvTest, basic_lease6_renew) {
 
     // Pass it to the server and hope for a REPLY
     Pkt6Ptr reply = srv.processRenew(req);
-    ASSERT_TRUE(reply);
+    ASSERT_TRUE(reply.get() != 0);
 
     // Check that the callback called is indeed the one we installed
     EXPECT_EQ("lease6_renew", callback_name_);
 
     // Check that appropriate parameters are passed to the callouts
-    EXPECT_TRUE(callback_pkt6_);
-    EXPECT_TRUE(callback_lease6_);
-    EXPECT_TRUE(callback_ia_na_);
+    EXPECT_TRUE(callback_pkt6_.get() != 0);
+    EXPECT_TRUE(callback_lease6_.get() != 0);
+    EXPECT_TRUE(callback_ia_na_.get() != 0);
 
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
@@ -1116,19 +1116,19 @@ TEST_F(HooksDhcpv6SrvTest, basic_lease6_renew) {
     checkResponse(reply, DHCPV6_REPLY, 1234);
 
     OptionPtr tmp = reply->getOption(D6O_IA_NA);
-    ASSERT_TRUE(tmp);
+    ASSERT_TRUE(tmp.get() != 0);
 
     // Check that IA_NA was returned and that there's an address included
     boost::shared_ptr<Option6IAAddr> addr_opt = checkIA_NA(reply, 234, subnet_->getT1(),
                                                            subnet_->getT2());
 
-    ASSERT_TRUE(addr_opt);
+    ASSERT_TRUE(addr_opt.get() != 0);
     // Check that the lease is really in the database
     l = checkLease(duid_, reply->getOption(D6O_IA_NA), addr_opt);
-    ASSERT_TRUE(l);
+    ASSERT_TRUE(l.get() != 0);
 
     // Check that the lease has been returned
-    ASSERT_TRUE(callback_lease6_);
+    ASSERT_TRUE(callback_lease6_.get() != 0);
 
     // Check that the returned lease6 in callout is the same as the one in the
     // database
@@ -1164,7 +1164,7 @@ TEST_F(HooksDhcpv6SrvTest, leaseUpdate_lease6_renew) {
     // Check that the lease is really in the database
     Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
                                                         addr);
-    ASSERT_TRUE(l);
+    ASSERT_TRUE(l.get() != 0);
 
     // Check that T1, T2, preferred, valid and cltt really set and not using
     // previous (500, 501, etc.) values
@@ -1190,21 +1190,21 @@ TEST_F(HooksDhcpv6SrvTest, leaseUpdate_lease6_renew) {
 
     // Pass it to the server and hope for a REPLY
     Pkt6Ptr reply = srv.processRenew(req);
-    ASSERT_TRUE(reply);
+    ASSERT_TRUE(reply.get() != 0);
 
     // Check if we get response at all
     checkResponse(reply, DHCPV6_REPLY, 1234);
 
     OptionPtr tmp = reply->getOption(D6O_IA_NA);
-    ASSERT_TRUE(tmp);
+    ASSERT_TRUE(tmp.get() != 0);
 
     // Check that IA_NA was returned and that there's an address included
     boost::shared_ptr<Option6IAAddr> addr_opt = checkIA_NA(reply, 1000, 1001, 1002);
 
-    ASSERT_TRUE(addr_opt);
+    ASSERT_TRUE(addr_opt.get() != 0);
     // Check that the lease is really in the database
     l = checkLease(duid_, reply->getOption(D6O_IA_NA), addr_opt);
-    ASSERT_TRUE(l);
+    ASSERT_TRUE(l.get() != 0);
 
     // Check that we chose the distinct override values
     ASSERT_NE(override_t1_,        subnet_->getT1());
@@ -1257,7 +1257,7 @@ TEST_F(HooksDhcpv6SrvTest, skip_lease6_renew) {
     // Check that the lease is really in the database
     Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
                                                         addr);
-    ASSERT_TRUE(l);
+    ASSERT_TRUE(l.get() != 0);
 
     // Check that T1, T2, preferred, valid and cltt really set and not using
     // previous (500, 501, etc.) values
@@ -1283,7 +1283,7 @@ TEST_F(HooksDhcpv6SrvTest, skip_lease6_renew) {
 
     // Pass it to the server and hope for a REPLY
     Pkt6Ptr reply = srv.processRenew(req);
-    ASSERT_TRUE(reply);
+    ASSERT_TRUE(reply.get() != 0);
 
     // Check that our callback was called
     EXPECT_EQ("lease6_renew", callback_name_);
@@ -1335,7 +1335,7 @@ TEST_F(HooksDhcpv6SrvTest, basic_lease6_release) {
     // Check that the lease is really in the database
     Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
                                                         addr);
-    ASSERT_TRUE(l);
+    ASSERT_TRUE(l.get() != 0);
 
     // Let's create a RELEASE
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RELEASE, 1234));
@@ -1353,14 +1353,14 @@ TEST_F(HooksDhcpv6SrvTest, basic_lease6_release) {
     // Pass it to the server and hope for a REPLY
     Pkt6Ptr reply = srv.processRelease(req);
 
-    ASSERT_TRUE(reply);
+    ASSERT_TRUE(reply.get() != 0);
 
     // Check that the callback called is indeed the one we installed
     EXPECT_EQ("lease6_release", callback_name_);
 
     // Check that appropriate parameters are passed to the callouts
-    EXPECT_TRUE(callback_pkt6_);
-    EXPECT_TRUE(callback_lease6_);
+    EXPECT_TRUE(callback_pkt6_.get() != 0);
+    EXPECT_TRUE(callback_lease6_.get() != 0);
 
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
@@ -1417,7 +1417,7 @@ TEST_F(HooksDhcpv6SrvTest, skip_lease6_release) {
     // Check that the lease is really in the database
     Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
                                                         addr);
-    ASSERT_TRUE(l);
+    ASSERT_TRUE(l.get() != 0);
 
     // Let's create a RELEASE
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RELEASE, 1234));
@@ -1435,7 +1435,7 @@ TEST_F(HooksDhcpv6SrvTest, skip_lease6_release) {
     // Pass it to the server and hope for a REPLY
     Pkt6Ptr reply = srv.processRelease(req);
 
-    ASSERT_TRUE(reply);
+    ASSERT_TRUE(reply.get() != 0);
 
     // Check that the callback called is indeed the one we installed
     EXPECT_EQ("lease6_release", callback_name_);
@@ -1444,12 +1444,12 @@ TEST_F(HooksDhcpv6SrvTest, skip_lease6_release) {
     // get lease by address
     l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
                                               addr);
-    ASSERT_TRUE(l);
+    ASSERT_TRUE(l.get() != 0);
 
     // Get lease by subnetid/duid/iaid combination
     l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, *duid_, iaid,
                                               subnet_->getID());
-    ASSERT_TRUE(l);
+    ASSERT_TRUE(l.get() != 0);
 }
 
 }   // end of anonymous namespace

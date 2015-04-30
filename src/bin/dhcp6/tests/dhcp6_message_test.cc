@@ -79,7 +79,7 @@ Dhcpv6MessageTest::requestLease(const std::string& config,
     // Check that the client's lease matches the information on the server
     // side.
     Lease6Ptr lease_server = checkLease(lease_client);
-    ASSERT_TRUE(lease_server);
+    ASSERT_TRUE(lease_server.get() != 0);
     // And that status code was OK.
     ASSERT_EQ(STATUS_Success, client.getStatusCode(0));
 }

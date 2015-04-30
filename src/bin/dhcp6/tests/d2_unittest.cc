@@ -140,7 +140,7 @@ Dhcp6SrvD2Test::configure(const std::string& config, bool exp_result) {
 
     // Configure the server and make sure the config is accepted
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
 
     int rcode;
     ConstElementPtr comment = config::parseAnswer(rcode, status);

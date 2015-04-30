@@ -321,7 +321,7 @@ public:
                                            in_domain_type,
                                            true);
 
-        ASSERT_TRUE(getClientFqdnOption(question));
+        ASSERT_TRUE(getClientFqdnOption(question).get() != 0);
 
         Pkt6Ptr answer = generateMessageWithIds(msg_type == DHCPV6_SOLICIT
                                                 ? DHCPV6_ADVERTISE :
@@ -334,7 +334,7 @@ public:
         ASSERT_NO_THROW(srv_->processClientFqdn(question, answer, ctx));
         Option6ClientFqdnPtr answ_fqdn = boost::dynamic_pointer_cast<
             Option6ClientFqdn>(answer->getOption(D6O_CLIENT_FQDN));
-        ASSERT_TRUE(answ_fqdn);
+        ASSERT_TRUE(answ_fqdn.get() != 0);
 
         const bool flag_n = (exp_flags & Option6ClientFqdn::FLAG_N) != 0;
         const bool flag_s = (exp_flags & Option6ClientFqdn::FLAG_S) != 0;
@@ -367,7 +367,7 @@ public:
                 NameChangeRequestPtr ncr;
                 ASSERT_EQ(1, d2_mgr_.getQueueSize());
                 ASSERT_NO_THROW(ncr = d2_mgr_.peekAt(0));
-                ASSERT_TRUE(ncr);
+                ASSERT_TRUE(ncr.get() != 0);
                 EXPECT_EQ(dhcp_ddns::CHG_ADD, ncr->getChangeType());
                 EXPECT_EQ(exp_fwd.value_, ncr->isForwardChange());
                 EXPECT_EQ(exp_rev.value_, ncr->isReverseChange());
@@ -440,7 +440,7 @@ public:
         // Check verify that IA_NA is correct.
         Option6IAAddrPtr addr =
             checkIA_NA(reply, 234, subnet_->getT1(), subnet_->getT2());
-        ASSERT_TRUE(addr);
+        ASSERT_TRUE(addr.get() != 0);
 
         // Check that we have got the address we requested.
         checkIAAddr(addr, expected_address,
@@ -450,15 +450,16 @@ public:
             // Check that the lease exists.
             Lease6Ptr lease =
                 checkLease(duid_, reply->getOption(D6O_IA_NA), addr);
-            ASSERT_TRUE(lease);
+            ASSERT_TRUE(lease.get() != 0);
             EXPECT_EQ(exp_hostname, lease->hostname_);
         }
 
         // The Client FQDN option should be always present in the server's
         // response, regardless if requested using ORO or not.
         Option6ClientFqdnPtr fqdn;
-        ASSERT_TRUE(fqdn = boost::dynamic_pointer_cast<
-                        Option6ClientFqdn>(reply->getOption(D6O_CLIENT_FQDN)));
+        fqdn = boost::dynamic_pointer_cast<
+                   Option6ClientFqdn>(reply->getOption(D6O_CLIENT_FQDN));
+        ASSERT_TRUE(fqdn.get() != 0);
         EXPECT_EQ(exp_hostname, fqdn->getDomainName());
     }
 
@@ -496,7 +497,7 @@ public:
                                  const std::string& fqdn="") {
         NameChangeRequestPtr ncr;
         ASSERT_NO_THROW(ncr = d2_mgr_.peekAt(0));
-        ASSERT_TRUE(ncr);
+        ASSERT_TRUE(ncr.get() != 0);
 
         EXPECT_EQ(type, ncr->getChangeType());
         EXPECT_EQ(forward, ncr->isForwardChange());
@@ -527,18 +528,18 @@ public:
     ///
     void setSubnetAndPool(int subnet_idx, int pool_idx, Lease::Type type) {
         ConstCfgSubnets6Ptr subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6();
-        ASSERT_TRUE(subnets);
+        ASSERT_TRUE(subnets.get() != 0);
         const Subnet6Collection* subnet_col = subnets->getAll();
         ASSERT_EQ(subnet_idx + 1, subnet_col->size());
         subnet_ = subnet_col->at(subnet_idx);
-        ASSERT_TRUE(subnet_);
+        ASSERT_TRUE(subnet_.get() != 0);
 
         const PoolCollection& pool_col = subnet_->getPools(type);
         ASSERT_EQ(pool_idx + 1, pool_col.size());
         PoolPtr pool  = (subnet_->getPools(type)).at(pool_idx);
-        ASSERT_TRUE(pool);
+        ASSERT_TRUE(pool.get() != 0);
         pool_ = boost::dynamic_pointer_cast<Pool6>(pool);
-        ASSERT_TRUE(pool);
+        ASSERT_TRUE(pool.get() != 0);
     }
 
     // Holds a lease used by a test.
@@ -1036,7 +1037,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestReuseExpiredLease) {
     // Get the lease acquired and modify it. In particular, expire it.
     Lease6Ptr lease =
         LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     // One of the following: IAID, DUID or subnet identifier has to be changed
     // because otherwise the allocation engine will treat the lease as
     // being renewed by the same client. If we at least change subnet identifier

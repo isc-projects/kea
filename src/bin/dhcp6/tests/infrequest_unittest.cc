@@ -150,22 +150,22 @@ TEST_F(InfRequestTest, infRequestBasic) {
 
     // Confirm that there's a response
     Pkt6Ptr response = client.getContext().response_;
-    ASSERT_TRUE(response);
+    ASSERT_TRUE(response.get() != 0);
 
     // Check that it contains our client-id
     OptionPtr client_id = response->getOption(D6O_CLIENTID);
-    ASSERT_TRUE(client_id);
+    ASSERT_TRUE(client_id.get() != 0);
     EXPECT_TRUE(compareOptions(client_id, client.getClientId()));
 
     // Check that it contains proper server-id
     OptionPtr server_id = response->getOption(D6O_SERVERID);
-    ASSERT_TRUE(server_id);
+    ASSERT_TRUE(server_id.get() != 0);
     EXPECT_TRUE(compareOptions(server_id, client.getServer()->getServerID()));
 
     // Check that we received requested DNS servers option
     Option6AddrLstPtr dns = boost::dynamic_pointer_cast<Option6AddrLst>
                             (response->getOption(D6O_NAME_SERVERS));
-    ASSERT_TRUE(dns);
+    ASSERT_TRUE(dns.get() != 0);
     Option6AddrLst::AddressContainer addrs = dns->getAddresses();
     ASSERT_EQ(2, addrs.size());
     EXPECT_EQ("2001:db8::1", addrs[0].toText());
@@ -192,12 +192,12 @@ TEST_F(InfRequestTest, infRequestAnonymous) {
 
     // Confirm that there's a response
     Pkt6Ptr response = client.getContext().response_;
-    ASSERT_TRUE(response);
+    ASSERT_TRUE(response.get() != 0);
 
     // Check that we received the requested DNS servers option
     Option6AddrLstPtr dns = boost::dynamic_pointer_cast<Option6AddrLst>
                             (response->getOption(D6O_NAME_SERVERS));
-    ASSERT_TRUE(dns);
+    ASSERT_TRUE(dns.get() != 0);
     Option6AddrLst::AddressContainer addrs = dns->getAddresses();
     ASSERT_EQ(2, addrs.size());
     EXPECT_EQ("2001:db8::1", addrs[0].toText());
@@ -222,12 +222,12 @@ TEST_F(InfRequestTest, infRequestStateless) {
 
     // Confirm that there's a response
     Pkt6Ptr response = client.getContext().response_;
-    ASSERT_TRUE(response);
+    ASSERT_TRUE(response.get() != 0);
 
     // Check that we received the requested SIP servers option
     Option6AddrLstPtr sip = boost::dynamic_pointer_cast<Option6AddrLst>
                             (response->getOption(D6O_SIP_SERVERS_ADDR));
-    ASSERT_TRUE(sip);
+    ASSERT_TRUE(sip.get() != 0);
     Option6AddrLst::AddressContainer addrs = sip->getAddresses();
     ASSERT_EQ(1, addrs.size());
     EXPECT_EQ("2001:db8::abcd", addrs[0].toText());
@@ -252,12 +252,12 @@ TEST_F(InfRequestTest, infRequestSubnetAndGlobal) {
 
     // Confirm that there's a response
     Pkt6Ptr response = client.getContext().response_;
-    ASSERT_TRUE(response);
+    ASSERT_TRUE(response.get() != 0);
 
     // Check that we received the requested sip servers option
     Option6AddrLstPtr sip = boost::dynamic_pointer_cast<Option6AddrLst>
                             (response->getOption(D6O_SIP_SERVERS_ADDR));
-    ASSERT_TRUE(sip);
+    ASSERT_TRUE(sip.get() != 0);
     Option6AddrLst::AddressContainer addrs = sip->getAddresses();
     ASSERT_EQ(1, addrs.size());
     EXPECT_EQ("2001:db8::1", addrs[0].toText());
@@ -265,7 +265,7 @@ TEST_F(InfRequestTest, infRequestSubnetAndGlobal) {
     // Check that we received the requested dns servers option
     Option6AddrLstPtr dns = boost::dynamic_pointer_cast<Option6AddrLst>
                             (response->getOption(D6O_NAME_SERVERS));
-    ASSERT_TRUE(dns);
+    ASSERT_TRUE(dns.get() != 0);
     addrs = dns->getAddresses();
     ASSERT_EQ(1, addrs.size());
     EXPECT_EQ("2001:db8::2", addrs[0].toText());
@@ -289,12 +289,12 @@ TEST_F(InfRequestTest, infRequestNoSubnets) {
 
     // Confirm that there's a response
     Pkt6Ptr response = client.getContext().response_;
-    ASSERT_TRUE(response);
+    ASSERT_TRUE(response.get() != 0);
 
     // Check that we received the requested sip servers option
     Option6AddrLstPtr nis = boost::dynamic_pointer_cast<Option6AddrLst>
                             (response->getOption(D6O_NIS_SERVERS));
-    ASSERT_TRUE(nis);
+    ASSERT_TRUE(nis.get() != 0);
     Option6AddrLst::AddressContainer addrs = nis->getAddresses();
     ASSERT_EQ(2, addrs.size());
     EXPECT_EQ("2001:db8::1", addrs[0].toText());

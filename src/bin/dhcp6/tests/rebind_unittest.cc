@@ -236,14 +236,14 @@ TEST_F(RebindTest, directClient) {
     ASSERT_EQ(1, client.getLeaseNum());
     Lease6 lease_client2 = client.getLease(0);
     ASSERT_TRUE(CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->
-                selectSubnet(lease_client2.addr_, ClientClasses()));
+                selectSubnet(lease_client2.addr_, ClientClasses()).get() != 0);
     // The client's lease should have been extended. The client will
     // update the cltt to current time when the lease gets extended.
     ASSERT_GE(lease_client2.cltt_ - lease_client.cltt_, 1000);
     // Make sure, that the client's lease matches the lease held by the
     // server.
     Lease6Ptr lease_server2 = checkLease(lease_client2);
-    EXPECT_TRUE(lease_server2);
+    EXPECT_TRUE(lease_server2.get() != 0);
 }
 
 // Test that server doesn't extend the lease when the configuration has changed
@@ -280,7 +280,7 @@ TEST_F(RebindTest, directClientChangingSubnet) {
     // Make sure, that the lease that client has, is matching the lease
     // in the lease database.
     Lease6Ptr lease_server2 = checkLease(lease_client2);
-    EXPECT_TRUE(lease_server2);
+    EXPECT_TRUE(lease_server2.get() != 0);
     // Client should have received NoBinding status code.
     EXPECT_EQ(STATUS_NoBinding, client.getStatusCode(0));
 
@@ -307,7 +307,7 @@ TEST_F(RebindTest, directClientChangingIAID) {
     // The lease obtained in 4-way exchange should not change after the Rebind
     // attempt.
     Lease6Ptr lease_server2 = checkLease(lease_client);
-    EXPECT_TRUE(lease_server2);
+    EXPECT_TRUE(lease_server2.get() != 0);
     // The Status code returned to the client, should be NoBinding.
     EXPECT_EQ(STATUS_NoBinding, client.getStatusCode(0));
 
@@ -356,14 +356,14 @@ TEST_F(RebindTest, relayedClient) {
     ASSERT_EQ(1, client.getLeaseNum());
     Lease6 lease_client2 = client.getLease(0);
     ASSERT_TRUE(CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->
-                selectSubnet(lease_client2.addr_, ClientClasses()));
+                selectSubnet(lease_client2.addr_, ClientClasses()).get() != 0);
     // The client's lease should have been extended. The client will
     // update the cltt to current time when the lease gets extended.
     ASSERT_GE(lease_client2.cltt_ - lease_client.cltt_, 1000);
     // Make sure, that the client's lease matches the lease held by the
     // server.
     Lease6Ptr lease_server2 = checkLease(lease_client2);
-    EXPECT_TRUE(lease_server2);
+    EXPECT_TRUE(lease_server2.get() != 0);
 }
 
 // Check that the lease is not extended for the relayed client when the
@@ -401,7 +401,7 @@ TEST_F(RebindTest, relayedClientChangingSubnet) {
     // Make sure, that the lease that client has, is matching the lease
     // in the lease database.
     Lease6Ptr lease_server2 = checkLease(lease_client2);
-    EXPECT_TRUE(lease_server2);
+    EXPECT_TRUE(lease_server2.get() != 0);
     // Client should have received NoBinding status code.
     EXPECT_EQ(STATUS_NoBinding, client.getStatusCode(0));
 
@@ -432,7 +432,7 @@ TEST_F(RebindTest, relayedClientChangingIAID) {
     // The lease obtained in 4-way exchange should not change after the Rebind
     // attempt.
     Lease6Ptr lease_server2 = checkLease(lease_client);
-    EXPECT_TRUE(lease_server2);
+    EXPECT_TRUE(lease_server2.get() != 0);
     // The Status code returned to the client, should be NoBinding.
     EXPECT_EQ(STATUS_NoBinding, client.getStatusCode(0));
 
@@ -482,7 +482,7 @@ TEST_F(RebindTest, relayedClientChangingAddress) {
     ASSERT_NO_THROW(client.doRebind());
     // Make sure that the server has discarded client's message. In such case,
     // the message sent back to the client should be NULL.
-    EXPECT_TRUE(client.getContext().response_)
+    EXPECT_TRUE(client.getContext().response_.get() != 0)
         << "The server discarded the Rebind message, while it should have"
         " sent a response indicating that the client should stop using the"
         " lease, by setting lifetime values to 0.";
@@ -513,7 +513,7 @@ TEST_F(RebindTest, relayedClientChangingAddress) {
 
     // Check that server still has the same lease.
     Lease6Ptr lease_server = checkLease(lease_client);
-    EXPECT_TRUE(lease_server);
+    EXPECT_TRUE(lease_server.get() != 0);
     // Make sure that the lease in the data base hasn't been addected.
     EXPECT_NE(0, lease_server->valid_lft_);
     EXPECT_NE(0, lease_server->preferred_lft_);
@@ -540,7 +540,7 @@ TEST_F(RebindTest, directClientPD) {
     // Make sure, that the client's lease matches the lease held by the
     // server.
     Lease6Ptr lease_server2 = checkLease(lease_client2);
-    EXPECT_TRUE(lease_server2);
+    EXPECT_TRUE(lease_server2.get() != 0);
 }
 
 // Check that the prefix lifetime is not extended for the client in case
@@ -577,7 +577,7 @@ TEST_F(RebindTest, directClientPDChangingSubnet) {
     // Make sure, that the lease that client has, is matching the lease
     // in the lease database.
     Lease6Ptr lease_server2 = checkLease(lease_client2);
-    EXPECT_TRUE(lease_server2);
+    EXPECT_TRUE(lease_server2.get() != 0);
 }
 
 // Check that the prefix lifetime is not extended for the client when the
@@ -608,7 +608,7 @@ TEST_F(RebindTest, directClientPDChangingIAID) {
         " discarded it because there is no binding for the client.";
     // Check that server still has the same lease.
     Lease6Ptr lease_server = checkLease(lease_client);
-    EXPECT_TRUE(lease_server);
+    EXPECT_TRUE(lease_server.get() != 0);
 }
 
 // Check that the prefix lifetime is not extended for the client when the
@@ -635,7 +635,7 @@ TEST_F(RebindTest, directClientPDChangingPrefix) {
     ASSERT_NO_THROW(client.doRebind());
     // Make sure that the server has discarded client's message. In such case,
     // the message sent back to the client should be NULL.
-    EXPECT_TRUE(client.getContext().response_)
+    EXPECT_TRUE(client.getContext().response_.get() != 0)
         << "The server discarded the Rebind message, while it should have"
         " sent a response indicating that the client should stop using the"
         " lease, by setting lifetime values to 0.";
@@ -660,7 +660,7 @@ TEST_F(RebindTest, directClientPDChangingPrefix) {
 
     // Check that server still has the same lease.
     Lease6Ptr lease_server = checkLease(lease_client);
-    ASSERT_TRUE(lease_server);
+    ASSERT_TRUE(lease_server.get() != 0);
     // Make sure that the lease in the data base hasn't been addected.
     EXPECT_NE(0, lease_server->valid_lft_);
     EXPECT_NE(0, lease_server->preferred_lft_);
@@ -692,7 +692,7 @@ TEST_F(RebindTest, unicast) {
     ASSERT_TRUE(lease_client2 == lease_client);
     // Check that server still has the lease.
     Lease6Ptr lease_server2 = checkLease(lease_client2);
-    EXPECT_TRUE(lease_server2);
+    EXPECT_TRUE(lease_server2.get() != 0);
     // Make sure that the server has discarded client's message. In such case,
     // the message sent back to the client should be NULL.
     EXPECT_FALSE(client.getContext().response_);
@@ -722,14 +722,14 @@ TEST_F(RebindTest, relayedUnicast) {
     ASSERT_EQ(1, client.getLeaseNum());
     Lease6 lease_client2 = client.getLease(0);
     ASSERT_TRUE(CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->
-                selectSubnet(lease_client2.addr_, ClientClasses()));
+                selectSubnet(lease_client2.addr_, ClientClasses()).get() != 0);
     // The client's lease should have been extended. The client will
     // update the cltt to current time when the lease gets extended.
     ASSERT_GE(lease_client2.cltt_ - lease_client.cltt_, 1000);
     // Make sure, that the client's lease matches the lease held by the
     // server.
     Lease6Ptr lease_server2 = checkLease(lease_client2);
-    EXPECT_TRUE(lease_server2);
+    EXPECT_TRUE(lease_server2.get() != 0);
 }
 
 } // end of anonymous namespace

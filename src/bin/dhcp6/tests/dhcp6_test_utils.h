@@ -201,7 +201,7 @@ public:
     {
         // check that server included our own client-id
         isc::dhcp::OptionPtr tmp = rsp->getOption(D6O_CLIENTID);
-        ASSERT_TRUE(tmp);
+        ASSERT_TRUE(tmp.get() != 0);
         EXPECT_EQ(expected_clientid->getType(), tmp->getType());
         ASSERT_EQ(expected_clientid->len(), tmp->len());
 
@@ -221,12 +221,12 @@ public:
 
         // Check that IA_NA was returned
         isc::dhcp::OptionPtr option_ia_na = rsp->getOption(D6O_IA_NA);
-        ASSERT_TRUE(option_ia_na);
+        ASSERT_TRUE(option_ia_na.get() != 0);
 
         // check that the status is no address available
         boost::shared_ptr<isc::dhcp::Option6IA> ia =
             boost::dynamic_pointer_cast<isc::dhcp::Option6IA>(option_ia_na);
-        ASSERT_TRUE(ia);
+        ASSERT_TRUE(ia.get() != 0);
 
         checkIA_NAStatusCode(ia, expected_status_code, expected_t1,
                              expected_t2);
@@ -266,7 +266,7 @@ public:
             return;
         }
 
-        EXPECT_TRUE(status);
+        EXPECT_TRUE(status.get() != 0);
         if (status) {
             // We don't have dedicated class for status code, so let's
             // just interpret first 2 bytes as status. Remainder of the
@@ -281,7 +281,7 @@ public:
     void checkResponse(const isc::dhcp::Pkt6Ptr& rsp,
                        uint8_t expected_message_type,
                        uint32_t expected_transid) {
-        ASSERT_TRUE(rsp);
+        ASSERT_TRUE(rsp.get() != 0);
         EXPECT_EQ(expected_message_type, rsp->getType());
         EXPECT_EQ(expected_transid, rsp->getTransid());
     }

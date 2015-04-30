@@ -225,7 +225,7 @@ Dhcpv6SrvTest::testRenewBasic(Lease::Type type, const std::string& existing_addr
 
         // Check that the lease is really in the database
         l = LeaseMgrFactory::instance().getLease6(type, existing);
-        ASSERT_TRUE(l);
+        ASSERT_TRUE(l.get() != 0);
 
         // Check that T1, T2, preferred, valid and cltt really set and not using
         // previous (500, 501, etc.) values
@@ -257,14 +257,14 @@ Dhcpv6SrvTest::testRenewBasic(Lease::Type type, const std::string& existing_addr
         boost::shared_ptr<Option6IAAddr>
           addr_opt = checkIA_NA(reply, 234, subnet_->getT1(), subnet_->getT2());
 
-        ASSERT_TRUE(addr_opt);
+        ASSERT_TRUE(addr_opt.get() != 0);
 
         // Check that we've got the address we requested
         checkIAAddr(addr_opt, renew, Lease::TYPE_NA);
 
         // Check that the lease is really in the database
         l = checkLease(duid_, reply->getOption(D6O_IA_NA), addr_opt);
-        ASSERT_TRUE(l);
+        ASSERT_TRUE(l.get() != 0);
         break;
     }
 
@@ -273,7 +273,7 @@ Dhcpv6SrvTest::testRenewBasic(Lease::Type type, const std::string& existing_addr
         boost::shared_ptr<Option6IAPrefix> prefix_opt
             = checkIA_PD(reply, 234, subnet_->getT1(), subnet_->getT2());
 
-        ASSERT_TRUE(prefix_opt);
+        ASSERT_TRUE(prefix_opt.get() != 0);
 
         // Check that we've got the address we requested
         checkIAAddr(prefix_opt, renew, Lease::TYPE_PD);
@@ -281,7 +281,7 @@ Dhcpv6SrvTest::testRenewBasic(Lease::Type type, const std::string& existing_addr
 
         // Check that the lease is really in the database
         l = checkPdLease(duid_, reply->getOption(D6O_IA_PD), prefix_opt);
-        ASSERT_TRUE(l);
+        ASSERT_TRUE(l.get() != 0);
         break;
     }
     default:
@@ -349,7 +349,7 @@ Dhcpv6SrvTest::testRenewWrongIAID(Lease::Type type, const IOAddress& addr) {
     boost::shared_ptr<Option6IAAddr>
         addr_opt = checkIA_NA(reply, bogus_iaid, subnet_->getT1(), subnet_->getT2());
 
-    ASSERT_TRUE(addr_opt);
+    ASSERT_TRUE(addr_opt.get() != 0);
 
     // Check that we've got the an address
     checkIAAddr(addr_opt, addr_opt->getAddress(), Lease::TYPE_NA);
@@ -359,7 +359,7 @@ Dhcpv6SrvTest::testRenewWrongIAID(Lease::Type type, const IOAddress& addr) {
 
     // Check that the lease is really in the database
     l = checkLease(duid_, reply->getOption(D6O_IA_NA), addr_opt);
-    ASSERT_TRUE(l);
+    ASSERT_TRUE(l.get() != 0);
 }
 
 void
@@ -391,14 +391,14 @@ Dhcpv6SrvTest::testRenewSomeoneElsesLease(Lease::Type type, const IOAddress& add
     Pkt6Ptr reply = srv.processRenew(renew);
     checkResponse(reply, DHCPV6_REPLY, transid);
     OptionPtr tmp = reply->getOption(D6O_IA_NA);
-    ASSERT_TRUE(tmp);
+    ASSERT_TRUE(tmp.get() != 0);
 
     // Check that IA_?? was returned and that there's proper status code
     // Check that IA_NA was returned and that there's an address included
     boost::shared_ptr<Option6IAAddr>
         addr_opt = checkIA_NA(reply, valid_iaid, subnet_->getT1(), subnet_->getT2());
 
-    ASSERT_TRUE(addr_opt);
+    ASSERT_TRUE(addr_opt.get() != 0);
 
     // Check that we've got the an address
     checkIAAddr(addr_opt, addr_opt->getAddress(), Lease::TYPE_NA);
@@ -408,7 +408,7 @@ Dhcpv6SrvTest::testRenewSomeoneElsesLease(Lease::Type type, const IOAddress& add
 
     // Check that the lease is really in the database
     Lease6Ptr l = checkLease(duid_, reply->getOption(D6O_IA_NA), addr_opt);
-    ASSERT_TRUE(l);
+    ASSERT_TRUE(l.get() != 0);
 }
 
 void
@@ -456,11 +456,11 @@ Dhcpv6SrvTest::testRenewReject(Lease::Type type, const IOAddress& addr) {
     // Check if we get response at all
     checkResponse(reply, DHCPV6_REPLY, transid);
     OptionPtr tmp = reply->getOption(code);
-    ASSERT_TRUE(tmp);
+    ASSERT_TRUE(tmp.get() != 0);
 
     // Check that IA_?? was returned and that there's proper status code
     boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
-    ASSERT_TRUE(ia);
+    ASSERT_TRUE(ia.get() != 0);
 
     if (type == Lease::TYPE_PD) {
         // For PD, the check is easy. NoBinding and no prefixes
@@ -481,7 +481,7 @@ Dhcpv6SrvTest::testRenewReject(Lease::Type type, const IOAddress& addr) {
 
             dhcp::Option6IAAddrPtr opt_addr =
                 boost::dynamic_pointer_cast<isc::dhcp::Option6IAAddr>(opt->second);
-            ASSERT_TRUE(opt_addr);
+            ASSERT_TRUE(opt_addr.get() != 0);
 
             if (opt_addr->getAddress() != addr) {
                 // There may be other addresses, e.g. the newly assigned one
@@ -516,11 +516,11 @@ Dhcpv6SrvTest::testRenewReject(Lease::Type type, const IOAddress& addr) {
     reply = srv.processRenew(req);
     checkResponse(reply, DHCPV6_REPLY, transid);
     tmp = reply->getOption(code);
-    ASSERT_TRUE(tmp);
+    ASSERT_TRUE(tmp.get() != 0);
 
     // Check that IA_?? was returned and that there's proper status code
     ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
-    ASSERT_TRUE(ia);
+    ASSERT_TRUE(ia.get() != 0);
     checkIA_NAStatusCode(ia, STATUS_NoBinding, subnet_->getT1(), subnet_->getT2());
 
     // There is a iaid mis-match, so server should respond that there is
@@ -536,15 +536,15 @@ Dhcpv6SrvTest::testRenewReject(Lease::Type type, const IOAddress& addr) {
     reply = srv.processRenew(req);
     checkResponse(reply, DHCPV6_REPLY, transid);
     tmp = reply->getOption(code);
-    ASSERT_TRUE(tmp);
+    ASSERT_TRUE(tmp.get() != 0);
 
     // Check that IA_?? was returned and that there's proper status code
     ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
-    ASSERT_TRUE(ia);
+    ASSERT_TRUE(ia.get() != 0);
     checkIA_NAStatusCode(ia, STATUS_NoBinding, subnet_->getT1(), subnet_->getT2());
 
     lease = LeaseMgrFactory::instance().getLease6(type, addr);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     // Verify that the lease was not updated.
     EXPECT_EQ(123, lease->cltt_);
 
@@ -584,7 +584,7 @@ Dhcpv6SrvTest::testReleaseBasic(Lease::Type type, const IOAddress& existing,
 
     // Check that the lease is really in the database
     Lease6Ptr l = LeaseMgrFactory::instance().getLease6(type, existing);
-    ASSERT_TRUE(l);
+    ASSERT_TRUE(l.get() != 0);
 
     // Let's create a RELEASE
     Pkt6Ptr rel = createMessage(DHCPV6_RELEASE, type, release_addr, prefix_len,
@@ -599,7 +599,7 @@ Dhcpv6SrvTest::testReleaseBasic(Lease::Type type, const IOAddress& existing,
     checkResponse(reply, DHCPV6_REPLY, 1234);
 
     OptionPtr tmp = reply->getOption(code);
-    ASSERT_TRUE(tmp);
+    ASSERT_TRUE(tmp.get() != 0);
 
     // Check that IA_NA was returned and that there's an address included
     boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
@@ -670,10 +670,10 @@ Dhcpv6SrvTest::testReleaseReject(Lease::Type type, const IOAddress& addr) {
     // Check if we get response at all
     checkResponse(reply, DHCPV6_REPLY, transid);
     OptionPtr tmp = reply->getOption(code);
-    ASSERT_TRUE(tmp);
+    ASSERT_TRUE(tmp.get() != 0);
     // Check that IA_NA/IA_PD was returned and that there's status code in it
     boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
-    ASSERT_TRUE(ia);
+    ASSERT_TRUE(ia.get() != 0);
     checkIA_NAStatusCode(ia, STATUS_NoBinding, 0, 0);
     checkMsgStatusCode(reply, STATUS_NoBinding);
 
@@ -697,17 +697,17 @@ Dhcpv6SrvTest::testReleaseReject(Lease::Type type, const IOAddress& addr) {
     reply = srv.processRelease(rel);
     checkResponse(reply, DHCPV6_REPLY, transid);
     tmp = reply->getOption(code);
-    ASSERT_TRUE(tmp);
+    ASSERT_TRUE(tmp.get() != 0);
 
     // Check that IA_?? was returned and that there's proper status code
     ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
-    ASSERT_TRUE(ia);
+    ASSERT_TRUE(ia.get() != 0);
     checkIA_NAStatusCode(ia, STATUS_NoBinding, 0, 0);
     checkMsgStatusCode(reply, STATUS_NoBinding);
 
     // Check that the lease is still there
     l = LeaseMgrFactory::instance().getLease6(type, addr);
-    ASSERT_TRUE(l);
+    ASSERT_TRUE(l.get() != 0);
 
     // CASE 3: Lease belongs to a client with different client-id
     SCOPED_TRACE("CASE 3: Lease belongs to a client with different client-id");
@@ -721,17 +721,17 @@ Dhcpv6SrvTest::testReleaseReject(Lease::Type type, const IOAddress& addr) {
     reply = srv.processRelease(rel);
     checkResponse(reply, DHCPV6_REPLY, transid);
     tmp = reply->getOption(code);
-    ASSERT_TRUE(tmp);
+    ASSERT_TRUE(tmp.get() != 0);
 
     // Check that IA_?? was returned and that there's proper status code
     ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
-    ASSERT_TRUE(ia);
+    ASSERT_TRUE(ia.get() != 0);
     checkIA_NAStatusCode(ia, STATUS_NoBinding, 0, 0);
     checkMsgStatusCode(reply, STATUS_NoBinding);
 
     // Check that the lease is still there
     l = LeaseMgrFactory::instance().getLease6(type, addr);
-    ASSERT_TRUE(l);
+    ASSERT_TRUE(l.get() != 0);
 
     // Finally, let's cleanup the database
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr));
@@ -749,7 +749,7 @@ Dhcpv6SrvTest::configure(const std::string& config, NakedDhcpv6Srv& srv) {
 
     // Configure the server and make sure the config is accepted
     EXPECT_NO_THROW(status = configureDhcp6Server(srv, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     int rcode;
     ConstElementPtr comment = isc::config::parseAnswer(rcode, status);
     ASSERT_EQ(0, rcode);
@@ -816,7 +816,7 @@ NakedDhcpv6SrvTest::checkIA_NAStatusCode(
 
             dhcp::Option6IAAddrPtr addr =
                 boost::dynamic_pointer_cast<isc::dhcp::Option6IAAddr>(opt->second);
-            ASSERT_TRUE(addr);
+            ASSERT_TRUE(addr.get() != 0);
 
             EXPECT_EQ(0, addr->getPreferred());
             EXPECT_EQ(0, addr->getValid());
@@ -839,7 +839,7 @@ NakedDhcpv6SrvTest::checkIA_NAStatusCode(
         return;
     }
 
-    EXPECT_TRUE(status);
+    EXPECT_TRUE(status.get() != 0);
 
     if (status) {
         // We don't have dedicated class for status code, so let's

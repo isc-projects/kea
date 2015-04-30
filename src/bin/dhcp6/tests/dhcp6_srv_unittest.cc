@@ -216,7 +216,7 @@ TEST_F(Dhcpv6SrvTest, DUID) {
     });
 
     OptionPtr srvid = srv->getServerID();
-    ASSERT_TRUE(srvid);
+    ASSERT_TRUE(srvid.get() != 0);
 
     EXPECT_EQ(D6O_SERVERID, srvid->getType());
 
@@ -329,7 +329,7 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
     Pkt6Ptr adv = srv_.processSolicit(sol);
 
     // check if we get response at all
-    ASSERT_TRUE(adv);
+    ASSERT_TRUE(adv.get() != 0);
 
     // We have not requested any options so they should not
     // be included in the response.
@@ -351,14 +351,14 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
 
     // Need to process SOLICIT again after requesting new option.
     adv = srv_.processSolicit(sol);
-    ASSERT_TRUE(adv);
+    ASSERT_TRUE(adv.get() != 0);
 
     OptionPtr tmp = adv->getOption(D6O_NAME_SERVERS);
-    ASSERT_TRUE(tmp);
+    ASSERT_TRUE(tmp.get() != 0);
 
     boost::shared_ptr<Option6AddrLst> reply_nameservers =
         boost::dynamic_pointer_cast<Option6AddrLst>(tmp);
-    ASSERT_TRUE(reply_nameservers);
+    ASSERT_TRUE(reply_nameservers.get() != 0);
 
     Option6AddrLst::AddressContainer addrs = reply_nameservers->getAddresses();
     ASSERT_EQ(2, addrs.size());
@@ -368,7 +368,7 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
     // There is a dummy option with code 1000 we requested from a server.
     // Expect that this option is in server's response.
     tmp = adv->getOption(D6O_SUBSCRIBER_ID);
-    ASSERT_TRUE(tmp);
+    ASSERT_TRUE(tmp.get() != 0);
 
     // Check that the option contains valid data (from configuration).
     std::vector<uint8_t> data = tmp->getData();
@@ -419,7 +419,7 @@ TEST_F(Dhcpv6SrvTest, SolicitBasic) {
     // check that IA_NA was returned and that there's an address included
     boost::shared_ptr<Option6IAAddr> addr = checkIA_NA(reply, 234, subnet_->getT1(),
                                                 subnet_->getT2());
-    ASSERT_TRUE(addr);
+    ASSERT_TRUE(addr.get() != 0);
 
     // Check that the assigned address is indeed from the configured pool
     checkIAAddr(addr, addr->getAddress(), Lease::TYPE_NA);
@@ -463,7 +463,7 @@ TEST_F(Dhcpv6SrvTest, pdSolicitBasic) {
     // check that IA_NA was returned and that there's an address included
     boost::shared_ptr<Option6IAPrefix> prefix = checkIA_PD(reply, 234, subnet_->getT1(),
                                                            subnet_->getT2());
-    ASSERT_TRUE(prefix);
+    ASSERT_TRUE(prefix.get() != 0);
 
     // Check that the assigned prefix is indeed from the configured pool
     checkIAAddr(prefix, prefix->getAddress(), Lease::TYPE_PD);
@@ -514,12 +514,12 @@ TEST_F(Dhcpv6SrvTest, SolicitHint) {
     checkResponse(reply, DHCPV6_ADVERTISE, 1234);
 
     OptionPtr tmp = reply->getOption(D6O_IA_NA);
-    ASSERT_TRUE(tmp);
+    ASSERT_TRUE(tmp.get() != 0);
 
     // check that IA_NA was returned and that there's an address included
     boost::shared_ptr<Option6IAAddr> addr = checkIA_NA(reply, 234, subnet_->getT1(),
                                                 subnet_->getT2());
-    ASSERT_TRUE(addr);
+    ASSERT_TRUE(addr.get() != 0);
 
     // check that we've got the address we requested
     checkIAAddr(addr, hint, Lease::TYPE_NA);
@@ -569,7 +569,7 @@ TEST_F(Dhcpv6SrvTest, SolicitInvalidHint) {
     // check that IA_NA was returned and that there's an address included
     boost::shared_ptr<Option6IAAddr> addr = checkIA_NA(reply, 234, subnet_->getT1(),
                                                 subnet_->getT2());
-    ASSERT_TRUE(addr);
+    ASSERT_TRUE(addr.get() != 0);
 
     // Check that the assigned address is indeed from the configured pool
     checkIAAddr(addr, addr->getAddress(), Lease::TYPE_NA);
@@ -635,9 +635,9 @@ TEST_F(Dhcpv6SrvTest, ManySolicits) {
                                                 subnet_->getT2());
     boost::shared_ptr<Option6IAAddr> addr3 = checkIA_NA(reply3, 3, subnet_->getT1(),
                                                 subnet_->getT2());
-    ASSERT_TRUE(addr1);
-    ASSERT_TRUE(addr2);
-    ASSERT_TRUE(addr3);
+    ASSERT_TRUE(addr1.get() != 0);
+    ASSERT_TRUE(addr2.get() != 0);
+    ASSERT_TRUE(addr3.get() != 0);
 
     // Check that the assigned address is indeed from the configured pool
     checkIAAddr(addr1, addr1->getAddress(), Lease::TYPE_NA);
@@ -704,13 +704,13 @@ TEST_F(Dhcpv6SrvTest, RequestBasic) {
     checkResponse(reply, DHCPV6_REPLY, 1234);
 
     OptionPtr tmp = reply->getOption(D6O_IA_NA);
-    ASSERT_TRUE(tmp);
+    ASSERT_TRUE(tmp.get() != 0);
 
     // check that IA_NA was returned and that there's an address included
     boost::shared_ptr<Option6IAAddr> addr = checkIA_NA(reply, 234,
                                                        subnet_->getT1(),
                                                        subnet_->getT2());
-    ASSERT_TRUE(addr);
+    ASSERT_TRUE(addr.get() != 0);
 
     // check that we've got the address we requested
     checkIAAddr(addr, hint, Lease::TYPE_NA);
@@ -721,7 +721,7 @@ TEST_F(Dhcpv6SrvTest, RequestBasic) {
 
     // check that the lease is really in the database
     Lease6Ptr l = checkLease(duid_, reply->getOption(D6O_IA_NA), addr);
-    EXPECT_TRUE(l);
+    EXPECT_TRUE(l.get() != 0);
     LeaseMgrFactory::instance().deleteLease(addr->getAddress());
 }
 
@@ -769,13 +769,13 @@ TEST_F(Dhcpv6SrvTest, pdRequestBasic) {
     checkResponse(reply, DHCPV6_REPLY, 1234);
 
     OptionPtr tmp = reply->getOption(D6O_IA_PD);
-    ASSERT_TRUE(tmp);
+    ASSERT_TRUE(tmp.get() != 0);
 
     // check that IA_NA was returned and that there's an address included
     boost::shared_ptr<Option6IAPrefix> prf = checkIA_PD(reply, 234,
                                                         subnet_->getT1(),
                                                         subnet_->getT2());
-    ASSERT_TRUE(prf);
+    ASSERT_TRUE(prf.get() != 0);
 
     // check that we've got the address we requested
     checkIAAddr(prf, hint, Lease::TYPE_PD);
@@ -787,7 +787,7 @@ TEST_F(Dhcpv6SrvTest, pdRequestBasic) {
 
     // check that the lease is really in the database
     Lease6Ptr l = checkPdLease(duid_, reply->getOption(D6O_IA_PD), prf);
-    EXPECT_TRUE(l);
+    EXPECT_TRUE(l.get() != 0);
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(prf->getAddress()));
 }
 
@@ -801,7 +801,7 @@ TEST_F(Dhcpv6SrvTest, pdRequestBasic) {
 TEST_F(Dhcpv6SrvTest, ManyRequests) {
     NakedDhcpv6Srv srv(0);
 
-    ASSERT_TRUE(subnet_);
+    ASSERT_TRUE(subnet_.get() != 0);
 
     Pkt6Ptr req1 = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
     Pkt6Ptr req2 = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 2345));
@@ -851,9 +851,9 @@ TEST_F(Dhcpv6SrvTest, ManyRequests) {
     boost::shared_ptr<Option6IAAddr> addr3 = checkIA_NA(reply3, 3, subnet_->getT1(),
                                                 subnet_->getT2());
 
-    ASSERT_TRUE(addr1);
-    ASSERT_TRUE(addr2);
-    ASSERT_TRUE(addr3);
+    ASSERT_TRUE(addr1.get() != 0);
+    ASSERT_TRUE(addr2.get() != 0);
+    ASSERT_TRUE(addr3.get() != 0);
 
     // Check that the assigned address is indeed from the configured pool
     checkIAAddr(addr1, addr1->getAddress(), Lease::TYPE_NA);
@@ -1440,7 +1440,7 @@ TEST_F(Dhcpv6SrvTest, ServerID) {
 
     // Test reading from a file
     EXPECT_TRUE(srv.loadServerID(DUID_FILE));
-    ASSERT_TRUE(srv.getServerID());
+    ASSERT_TRUE(srv.getServerID().get() != 0);
     ASSERT_EQ(sizeof(duid1) + Option::OPTION6_HDR_LEN, srv.getServerID()->len());
     ASSERT_TRUE(expected_duid1 == srv.getServerID()->getData());
 
@@ -1476,7 +1476,7 @@ TEST_F(Dhcpv6SrvTest, portsDirectTraffic) {
     // Get Advertise...
     ASSERT_FALSE(srv.fake_sent_.empty());
     Pkt6Ptr adv = srv.fake_sent_.front();
-    ASSERT_TRUE(adv);
+    ASSERT_TRUE(adv.get() != 0);
 
     // This is sent back to client directly, should be port 546
     EXPECT_EQ(DHCP6_CLIENT_PORT, adv->getRemotePort());
@@ -1501,7 +1501,7 @@ TEST_F(Dhcpv6SrvTest, portsRelayedTraffic) {
     // Get Advertise...
     ASSERT_FALSE(srv.fake_sent_.empty());
     Pkt6Ptr adv = srv.fake_sent_.front();
-    ASSERT_TRUE(adv);
+    ASSERT_TRUE(adv.get() != 0);
 
     // This is sent back to relay, so port is 547
     EXPECT_EQ(DHCP6_SERVER_PORT, adv->getRemotePort());
@@ -1528,7 +1528,7 @@ TEST_F(Dhcpv6SrvTest, docsisTraffic) {
     // We should have an Advertise in response
     ASSERT_FALSE(srv.fake_sent_.empty());
     Pkt6Ptr adv = srv.fake_sent_.front();
-    ASSERT_TRUE(adv);
+    ASSERT_TRUE(adv.get() != 0);
 }
 
 // Checks if server is able to handle a relayed traffic from DOCSIS3.0 modems
@@ -1540,24 +1540,24 @@ TEST_F(Dhcpv6SrvTest, docsisVendorOptionsParse) {
 
     // Check if the packet contain
     OptionPtr opt = sol->getOption(D6O_VENDOR_OPTS);
-    ASSERT_TRUE(opt);
+    ASSERT_TRUE(opt.get() != 0);
 
     boost::shared_ptr<OptionVendor> vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
-    ASSERT_TRUE(vendor);
+    ASSERT_TRUE(vendor.get() != 0);
 
-    EXPECT_TRUE(vendor->getOption(DOCSIS3_V6_ORO));
-    EXPECT_TRUE(vendor->getOption(36));
-    EXPECT_TRUE(vendor->getOption(35));
-    EXPECT_TRUE(vendor->getOption(DOCSIS3_V6_DEVICE_TYPE));
-    EXPECT_TRUE(vendor->getOption(3));
-    EXPECT_TRUE(vendor->getOption(4));
-    EXPECT_TRUE(vendor->getOption(5));
-    EXPECT_TRUE(vendor->getOption(6));
-    EXPECT_TRUE(vendor->getOption(7));
-    EXPECT_TRUE(vendor->getOption(8));
-    EXPECT_TRUE(vendor->getOption(9));
-    EXPECT_TRUE(vendor->getOption(DOCSIS3_V6_VENDOR_NAME));
-    EXPECT_TRUE(vendor->getOption(15));
+    EXPECT_TRUE(vendor->getOption(DOCSIS3_V6_ORO).get() != 0);
+    EXPECT_TRUE(vendor->getOption(36).get() != 0);
+    EXPECT_TRUE(vendor->getOption(35).get() != 0);
+    EXPECT_TRUE(vendor->getOption(DOCSIS3_V6_DEVICE_TYPE).get() != 0);
+    EXPECT_TRUE(vendor->getOption(3).get() != 0);
+    EXPECT_TRUE(vendor->getOption(4).get() != 0);
+    EXPECT_TRUE(vendor->getOption(5).get() != 0);
+    EXPECT_TRUE(vendor->getOption(6).get() != 0);
+    EXPECT_TRUE(vendor->getOption(7).get() != 0);
+    EXPECT_TRUE(vendor->getOption(8).get() != 0);
+    EXPECT_TRUE(vendor->getOption(9).get() != 0);
+    EXPECT_TRUE(vendor->getOption(DOCSIS3_V6_VENDOR_NAME).get() != 0);
+    EXPECT_TRUE(vendor->getOption(15).get() != 0);
 
     EXPECT_FALSE(vendor->getOption(20));
     EXPECT_FALSE(vendor->getOption(11));
@@ -1575,16 +1575,16 @@ TEST_F(Dhcpv6SrvTest, docsisVendorORO) {
 
     // Check if the packet contains vendor options option
     OptionPtr opt = sol->getOption(D6O_VENDOR_OPTS);
-    ASSERT_TRUE(opt);
+    ASSERT_TRUE(opt.get() != 0);
 
     boost::shared_ptr<OptionVendor> vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
-    ASSERT_TRUE(vendor);
+    ASSERT_TRUE(vendor.get() != 0);
 
     opt = vendor->getOption(DOCSIS3_V6_ORO);
-    ASSERT_TRUE(opt);
+    ASSERT_TRUE(opt.get() != 0);
 
     OptionUint16ArrayPtr oro = boost::dynamic_pointer_cast<OptionUint16Array>(opt);
-    EXPECT_TRUE(oro);
+    EXPECT_TRUE(oro.get() != 0);
 }
 
 // This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
@@ -1640,7 +1640,7 @@ TEST_F(Dhcpv6SrvTest, vendorOptionsORO) {
     Pkt6Ptr adv = srv_.processSolicit(sol);
 
     // check if we get response at all
-    ASSERT_TRUE(adv);
+    ASSERT_TRUE(adv.get() != 0);
 
     // We did not include any vendor opts in SOLCIT, so there should be none
     // in ADVERTISE.
@@ -1657,22 +1657,22 @@ TEST_F(Dhcpv6SrvTest, vendorOptionsORO) {
 
     // Need to process SOLICIT again after requesting new option.
     adv = srv_.processSolicit(sol);
-    ASSERT_TRUE(adv);
+    ASSERT_TRUE(adv.get() != 0);
 
     // Check if thre is vendor option response
     OptionPtr tmp = adv->getOption(D6O_VENDOR_OPTS);
-    ASSERT_TRUE(tmp);
+    ASSERT_TRUE(tmp.get() != 0);
 
     // The response should be OptionVendor object
     boost::shared_ptr<OptionVendor> vendor_resp =
         boost::dynamic_pointer_cast<OptionVendor>(tmp);
-    ASSERT_TRUE(vendor_resp);
+    ASSERT_TRUE(vendor_resp.get() != 0);
 
     OptionPtr docsis33 = vendor_resp->getOption(33);
-    ASSERT_TRUE(docsis33);
+    ASSERT_TRUE(docsis33.get() != 0);
 
     OptionStringPtr config_file = boost::dynamic_pointer_cast<OptionString>(docsis33);
-    ASSERT_TRUE(config_file);
+    ASSERT_TRUE(config_file.get() != 0);
     EXPECT_EQ("normal_erouter_v6.cm", config_file->getValue());
 }
 
@@ -1721,13 +1721,13 @@ TEST_F(Dhcpv6SrvTest, vendorOptionsDocsisDefinitions) {
 
     // This should fail (missing option definition)
     EXPECT_NO_THROW(x = configureDhcp6Server(srv, json_bogus));
-    ASSERT_TRUE(x);
+    ASSERT_TRUE(x.get() != 0);
     comment_ = isc::config::parseAnswer(rcode_, x);
     ASSERT_EQ(1, rcode_);
 
     // This should work (option definition present)
     EXPECT_NO_THROW(x = configureDhcp6Server(srv, json_valid));
-    ASSERT_TRUE(x);
+    ASSERT_TRUE(x.get() != 0);
     comment_ = isc::config::parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
 }
@@ -1787,20 +1787,20 @@ TEST_F(Dhcpv6SrvTest, unpackOptions) {
     boost::shared_ptr<OptionInt<uint32_t> > option_foobar =
         boost::dynamic_pointer_cast<OptionInt<uint32_t> >(options.begin()->
                                                           second);
-    ASSERT_TRUE(option_foobar);
+    ASSERT_TRUE(option_foobar.get() != 0);
     EXPECT_EQ(1, option_foobar->getType());
     EXPECT_EQ(0x00010203, option_foobar->getValue());
     // There should be a middle level option held in option_foobar.
     boost::shared_ptr<OptionInt<uint16_t> > option_foo =
         boost::dynamic_pointer_cast<OptionInt<uint16_t> >(option_foobar->
                                                           getOption(1));
-    ASSERT_TRUE(option_foo);
+    ASSERT_TRUE(option_foo.get() != 0);
     EXPECT_EQ(1, option_foo->getType());
     EXPECT_EQ(0x0102, option_foo->getValue());
     // Finally, there should be a low level option under option_foo.
     boost::shared_ptr<OptionInt<uint8_t> > option_bar =
         boost::dynamic_pointer_cast<OptionInt<uint8_t> >(option_foo->getOption(1));
-    ASSERT_TRUE(option_bar);
+    ASSERT_TRUE(option_bar.get() != 0);
     EXPECT_EQ(1, option_bar->getType());
     EXPECT_EQ(0x0, option_bar->getValue());
 }
@@ -1888,7 +1888,7 @@ TEST_F(Dhcpv6SrvTest, clientClassify2) {
     sol->addClass("foo");
 
     // This time it should work
-    EXPECT_TRUE(srv_.selectSubnet(sol));
+    EXPECT_TRUE(srv_.selectSubnet(sol).get() != 0);
 }
 
 // Tests whether a packet with custom vendor-class (not erouter or docsis)
@@ -1941,7 +1941,7 @@ TEST_F(Dhcpv6SrvTest, cableLabsShortVendorClass) {
     // Get Advertise...
     ASSERT_FALSE(srv.fake_sent_.empty());
     Pkt6Ptr adv = srv.fake_sent_.front();
-    ASSERT_TRUE(adv);
+    ASSERT_TRUE(adv.get() != 0);
 
     // This is sent back to client, so port is 546
     EXPECT_EQ(DHCP6_CLIENT_PORT, adv->getRemotePort());
@@ -1988,8 +1988,8 @@ TEST_F(Dhcpv6SrvTest, relayOverride) {
     // Let's get them for easy reference
     Subnet6Ptr subnet1 = (*subnets)[0];
     Subnet6Ptr subnet2 = (*subnets)[1];
-    ASSERT_TRUE(subnet1);
-    ASSERT_TRUE(subnet2);
+    ASSERT_TRUE(subnet1.get() != 0);
+    ASSERT_TRUE(subnet2.get() != 0);
 
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("2001:db8:1::3"));
@@ -2067,8 +2067,8 @@ TEST_F(Dhcpv6SrvTest, relayOverrideAndClientClass) {
     // Let's get them for easy reference
     Subnet6Ptr subnet1 = (*subnets)[0];
     Subnet6Ptr subnet2 = (*subnets)[1];
-    ASSERT_TRUE(subnet1);
-    ASSERT_TRUE(subnet2);
+    ASSERT_TRUE(subnet1.get() != 0);
+    ASSERT_TRUE(subnet2.get() != 0);
 
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("2001:db8:1::3"));
@@ -2272,7 +2272,7 @@ TEST_F(Dhcpv6SrvTest, rsoo2relays) {
 
     // Now, let's check if the proper instance of option 120 was sent. It should
     // match the content of what the first relay had sent.
-    ASSERT_TRUE(opt120);
+    ASSERT_TRUE(opt120.get() != 0);
     vector<uint8_t> expected(10, 1);
     EXPECT_TRUE(expected == opt120->getData());
 }
@@ -2337,7 +2337,7 @@ TEST_F(Dhcpv6SrvTest, rsooOverride) {
 
     // The option 110 should be the one injected by the relay.
     opt = client.config_.findOption(110);
-    ASSERT_TRUE(opt);
+    ASSERT_TRUE(opt.get() != 0);
     // We check that this is the option injected by the relay by
     // checking option length. It should have 10 bytes long payload.
     ASSERT_EQ(10, opt->getData().size());
@@ -2345,7 +2345,7 @@ TEST_F(Dhcpv6SrvTest, rsooOverride) {
     // The second option should be the one configured on the server,
     // rather than the one injected by the relay.
     opt = client.config_.findOption(120);
-    ASSERT_TRUE(opt);
+    ASSERT_TRUE(opt.get() != 0);
     // It should have the size of 1.
     ASSERT_EQ(1, opt->getData().size());
 }

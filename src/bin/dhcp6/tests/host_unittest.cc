@@ -110,7 +110,7 @@ TEST_F(HostTest, basicSarrs) {
     // Check that the server recorded the lease.
     // and lease has reserved hostname
     Lease6Ptr lease_server = checkLease(lease_client);
-    ASSERT_TRUE(lease_server);
+    ASSERT_TRUE(lease_server.get() != 0);
     EXPECT_EQ("alice", lease_server->hostname_);
 
     // Now redo the client, adding one to the DUID
@@ -130,7 +130,7 @@ TEST_F(HostTest, basicSarrs) {
     // Check that the server recorded the lease.
     // and that the server lease has NO hostname
     lease_server = checkLease(lease_client);
-    ASSERT_TRUE(lease_server);
+    ASSERT_TRUE(lease_server.get() != 0);
     EXPECT_EQ("", lease_server->hostname_);
 
     // Now redo the client with yet another DUID and verify that
@@ -151,7 +151,7 @@ TEST_F(HostTest, basicSarrs) {
     // Check that the server recorded the lease.
     // and that the server lease has NO hostname
     lease_server = checkLease(lease_client);
-    ASSERT_TRUE(lease_server);
+    ASSERT_TRUE(lease_server.get() != 0);
     EXPECT_EQ("", lease_server->hostname_);
 }
 
@@ -201,7 +201,7 @@ TEST_F(HostTest, sarrAndRenew) {
     // Make sure, that the client's lease matches the lease held by the
     // server and that we have the reserved host name.
     Lease6Ptr lease_server2 = checkLease(lease_client2);
-    EXPECT_TRUE(lease_server2);
+    EXPECT_TRUE(lease_server2.get() != 0);
     EXPECT_EQ("alice", lease_server2->hostname_);
 }
 
@@ -251,7 +251,7 @@ TEST_F(HostTest, sarrAndRebind) {
     // Make sure, that the client's lease matches the lease held by the
     // server and that we have the reserved host name.
     Lease6Ptr lease_server2 = checkLease(lease_client2);
-    EXPECT_TRUE(lease_server2);
+    EXPECT_TRUE(lease_server2.get() != 0);
     EXPECT_EQ("alice", lease_server2->hostname_);
 }
 

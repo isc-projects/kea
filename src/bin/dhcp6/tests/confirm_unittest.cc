@@ -137,7 +137,7 @@ TEST_F(ConfirmTest, directClientSameIAID) {
     ASSERT_TRUE(client.receivedStatusCode());
     ASSERT_EQ(STATUS_NotOnLink, client.getStatusCode());
     // Make sure that the server id has been included.
-    EXPECT_TRUE(client.getContext().response_->getOption(D6O_SERVERID));
+    EXPECT_TRUE(client.getContext().response_->getOption(D6O_SERVERID).get() != 0);
 }
 
 // Test that directly connected client's Confirm message is processed and Reply
@@ -169,8 +169,8 @@ TEST_F(ConfirmTest, directClientDifferentIAID) {
     ASSERT_TRUE(client.receivedStatusCode());
     ASSERT_EQ(STATUS_Success, client.getStatusCode());
     // Make sure that the server id and client id have been included.
-    EXPECT_TRUE(client.getContext().response_->getOption(D6O_SERVERID));
-    EXPECT_TRUE(client.getContext().response_->getOption(D6O_CLIENTID));
+    EXPECT_TRUE(client.getContext().response_->getOption(D6O_SERVERID).get() != 0);
+    EXPECT_TRUE(client.getContext().response_->getOption(D6O_CLIENTID).get() != 0);
 
     ASSERT_EQ(2, client.getLeaseNum());
     lease_client2 = client.getLease(1);
@@ -183,8 +183,8 @@ TEST_F(ConfirmTest, directClientDifferentIAID) {
     ASSERT_TRUE(client.receivedStatusCode());
     ASSERT_EQ(STATUS_NotOnLink, client.getStatusCode());
     // Make sure that the server id have been included.
-    EXPECT_TRUE(client.getContext().response_->getOption(D6O_SERVERID));
-    EXPECT_TRUE(client.getContext().response_->getOption(D6O_CLIENTID));
+    EXPECT_TRUE(client.getContext().response_->getOption(D6O_SERVERID).get() != 0);
+    EXPECT_TRUE(client.getContext().response_->getOption(D6O_CLIENTID).get() != 0);
 }
 
 
@@ -226,8 +226,8 @@ TEST_F(ConfirmTest, relayedClient) {
     ASSERT_TRUE(client.receivedStatusCode());
     ASSERT_EQ(STATUS_NotOnLink, client.getStatusCode());
     // Make sure that the server id and client id have been included.
-    EXPECT_TRUE(client.getContext().response_->getOption(D6O_SERVERID));
-    EXPECT_TRUE(client.getContext().response_->getOption(D6O_CLIENTID));
+    EXPECT_TRUE(client.getContext().response_->getOption(D6O_SERVERID).get() != 0);
+    EXPECT_TRUE(client.getContext().response_->getOption(D6O_CLIENTID).get() != 0);
 }
 
 // Test that the Confirm message without any addresses is discarded
@@ -304,14 +304,14 @@ TEST_F(ConfirmTest, relayedUnicast) {
     // Send Confirm message to the server.
     ASSERT_NO_THROW(client.doConfirm());
     // Client should have received a response.
-    ASSERT_TRUE(client.getContext().response_);
+    ASSERT_TRUE(client.getContext().response_.get() != 0);
     // Client should have received a status code option and this option should
     // indicate the success.
     ASSERT_TRUE(client.receivedStatusCode());
     ASSERT_EQ(STATUS_Success, client.getStatusCode());
     // Make sure that the server id and client id have been included.
-    EXPECT_TRUE(client.getContext().response_->getOption(D6O_SERVERID));
-    EXPECT_TRUE(client.getContext().response_->getOption(D6O_CLIENTID));
+    EXPECT_TRUE(client.getContext().response_->getOption(D6O_SERVERID).get() != 0);
+    EXPECT_TRUE(client.getContext().response_->getOption(D6O_CLIENTID).get() != 0);
 }
 
 // This test checks that the Confirm message is discarded by the server if it

@@ -101,7 +101,7 @@ TEST_F(SARRTest, directClientPrefixHint) {
     EXPECT_EQ(4000, lease_client.valid_lft_);
     Lease6Ptr lease_server = checkLease(lease_client);
     // Check that the server recorded the lease.
-    ASSERT_TRUE(lease_server);
+    ASSERT_TRUE(lease_server.get() != 0);
 
     // Remove existing lease and modify the DUID of the client to simulate
     // the case that different client is trying to get the prefix.
@@ -124,7 +124,7 @@ TEST_F(SARRTest, directClientPrefixHint) {
     EXPECT_EQ(3000, lease_client.preferred_lft_);
     EXPECT_EQ(4000, lease_client.valid_lft_);
     lease_server = checkLease(lease_client);
-    ASSERT_TRUE(lease_server);
+    ASSERT_TRUE(lease_server.get() != 0);
 }
 
 } // end of anonymous namespace

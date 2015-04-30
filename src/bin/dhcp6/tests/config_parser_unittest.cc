@@ -122,7 +122,7 @@ public:
     // expected code (0 for success, other for failures).
     // Also stores result in rcode_ and comment_.
     void checkResult(ConstElementPtr status, int expected_code) {
-        ASSERT_TRUE(status);
+        ASSERT_TRUE(status.get() != 0);
         comment_ = parseAnswer(rcode_, status);
         EXPECT_EQ(expected_code, rcode_);
     }
@@ -431,7 +431,7 @@ public:
                     size_t expected_data_len,
                     bool extra_data = false) {
         // Check if option descriptor contains valid option pointer.
-        ASSERT_TRUE(option_desc.option_);
+        ASSERT_TRUE(option_desc.option_.get() != 0);
         // Verify option type.
         EXPECT_EQ(expected_code, option_desc.option_->getType());
         // We may have many different option types being created. Some of them
@@ -490,7 +490,7 @@ public:
         // The subnet should now hold one option with the specified code.
         OptionDescriptor desc =
             getOptionFromSubnet(IOAddress("2001:db8:1::5"), option_code);
-        ASSERT_TRUE(desc.option_);
+        ASSERT_TRUE(desc.option_.get() != 0);
         testOption(desc, option_code, expected_data, expected_data_len);
         CfgMgr::instance().clear();
     }
@@ -574,7 +574,7 @@ TEST_F(Dhcp6ParserTest, subnetGlobalDefaults) {
     // expected pool configured.
     Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
         selectSubnet(IOAddress("2001:db8:1::5"), classify_);
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     EXPECT_EQ(1000, subnet->getT1());
     EXPECT_EQ(2000, subnet->getT2());
     EXPECT_EQ(3000, subnet->getPreferred());
@@ -895,7 +895,7 @@ TEST_F(Dhcp6ParserTest, subnetLocal) {
 
     Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
         selectSubnet(IOAddress("2001:db8:1::5"), classify_);
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     EXPECT_EQ(1, subnet->getT1());
     EXPECT_EQ(2, subnet->getT2());
     EXPECT_EQ(3, subnet->getPreferred());
@@ -930,7 +930,7 @@ TEST_F(Dhcp6ParserTest, subnetInterface) {
 
     Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
         selectSubnet(IOAddress("2001:db8:1::5"), classify_);
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     EXPECT_EQ(valid_iface_, subnet->getIface());
 }
 
@@ -1035,7 +1035,7 @@ TEST_F(Dhcp6ParserTest, subnetInterfaceId) {
     selector.interface_id_.reset(new Option(Option::V6, D6O_INTERFACE_ID, tmp));
     subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
         selectSubnet(selector);
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     EXPECT_TRUE(selector.interface_id_->equals(subnet->getInterfaceId()));
 }
 
@@ -1200,7 +1200,7 @@ TEST_F(Dhcp6ParserTest, poolPrefixLen) {
 
     Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
         selectSubnet(IOAddress("2001:db8:1::5"), classify_);
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     EXPECT_EQ(1000, subnet->getT1());
     EXPECT_EQ(2000, subnet->getT2());
     EXPECT_EQ(3000, subnet->getPreferred());
@@ -1242,7 +1242,7 @@ TEST_F(Dhcp6ParserTest, pdPoolBasics) {
     // Test that we can retrieve the subnet.
     Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
         selectSubnet(IOAddress("2001:db8:1::5"), classify_);
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
 
     // Fetch the collection of PD pools.  It should have 1 entry.
     PoolCollection pc;
@@ -1252,7 +1252,7 @@ TEST_F(Dhcp6ParserTest, pdPoolBasics) {
     // Get a pointer to the pd pool instance, and verify its contents.
     Pool6Ptr p6;
     ASSERT_NO_THROW(p6 = boost::dynamic_pointer_cast<Pool6>(pc[0]));
-    ASSERT_TRUE(p6);
+    ASSERT_TRUE(p6.get() != 0);
     EXPECT_EQ("2001:db8:1::", p6->getFirstAddress().toText());
     EXPECT_EQ(128, p6->getLength());
 
@@ -1317,7 +1317,7 @@ TEST_F(Dhcp6ParserTest, pdPoolList) {
     // Test that we can retrieve the subnet.
     Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
         selectSubnet(IOAddress("2001:db8:1::5"), classify_);
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
 
     // Fetch the collection of NA pools.  It should have 1 entry.
     PoolCollection pc;
@@ -1332,7 +1332,7 @@ TEST_F(Dhcp6ParserTest, pdPoolList) {
     for (int i = 0; i < 3; i++) {
         Pool6Ptr p6;
         ASSERT_NO_THROW(p6 = boost::dynamic_pointer_cast<Pool6>(pc[i]));
-        ASSERT_TRUE(p6);
+        ASSERT_TRUE(p6.get() != 0);
         EXPECT_EQ(prefixes[i], p6->getFirstAddress().toText());
         EXPECT_EQ((80 + (i * 8)), p6->getLength());
     }
@@ -1374,7 +1374,7 @@ TEST_F(Dhcp6ParserTest, subnetAndPrefixDelegated) {
     Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
         selectSubnet(IOAddress("2001:db8:1::5"), classify_);
 
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
 
     // Fetch the collection of PD pools.  It should have 1 entry.
     PoolCollection pc;
@@ -1384,7 +1384,7 @@ TEST_F(Dhcp6ParserTest, subnetAndPrefixDelegated) {
     // Get a pointer to the pd pool instance, and verify its contents.
     Pool6Ptr p6;
     ASSERT_NO_THROW(p6 = boost::dynamic_pointer_cast<Pool6>(pc[0]));
-    ASSERT_TRUE(p6);
+    ASSERT_TRUE(p6.get() != 0);
     EXPECT_EQ("2001:db8:1::", p6->getFirstAddress().toText());
     EXPECT_EQ(64, p6->getLength());
 
@@ -1502,11 +1502,11 @@ TEST_F(Dhcp6ParserTest, optionDefIpv6Address) {
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
 
     // The option definition should now be available in the CfgMgr.
     def = CfgMgr::instance().getStagingCfg()->getCfgOptionDef()->get("isc", 100);
-    ASSERT_TRUE(def);
+    ASSERT_TRUE(def.get() != 0);
 
     // Verify that the option definition data is valid.
     EXPECT_EQ("foo", def->getName());
@@ -1542,12 +1542,12 @@ TEST_F(Dhcp6ParserTest, optionDefRecord) {
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     checkResult(status, 0);
 
     // The option definition should now be available in the CfgMgr.
     def = CfgMgr::instance().getStagingCfg()->getCfgOptionDef()->get("isc", 100);
-    ASSERT_TRUE(def);
+    ASSERT_TRUE(def.get() != 0);
 
     // Check the option data.
     EXPECT_EQ("foo", def->getName());
@@ -1601,13 +1601,13 @@ TEST_F(Dhcp6ParserTest, optionDefMultiple) {
     // Use the configuration string to create new option definitions.
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     checkResult(status, 0);
 
     // Check the first definition we have created.
     OptionDefinitionPtr def1 = CfgMgr::instance().getStagingCfg()->
         getCfgOptionDef()->get("isc", 100);
-    ASSERT_TRUE(def1);
+    ASSERT_TRUE(def1.get() != 0);
 
     // Check the option data.
     EXPECT_EQ("foo", def1->getName());
@@ -1618,7 +1618,7 @@ TEST_F(Dhcp6ParserTest, optionDefMultiple) {
     // Check the second option definition we have created.
     OptionDefinitionPtr def2 = CfgMgr::instance().getStagingCfg()->
         getCfgOptionDef()->get("isc", 101);
-    ASSERT_TRUE(def2);
+    ASSERT_TRUE(def2.get() != 0);
 
     // Check the option data.
     EXPECT_EQ("foo-2", def2->getName());
@@ -1663,7 +1663,7 @@ TEST_F(Dhcp6ParserTest, optionDefDuplicate) {
     // Use the configuration string to create new option definitions.
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
@@ -1695,12 +1695,12 @@ TEST_F(Dhcp6ParserTest, optionDefArray) {
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     checkResult(status, 0);
 
     // The option definition should now be available in the CfgMgr.
     def = CfgMgr::instance().getStagingCfg()->getCfgOptionDef()->get("isc", 100);
-    ASSERT_TRUE(def);
+    ASSERT_TRUE(def.get() != 0);
 
     // Check the option data.
     EXPECT_EQ("foo", def->getName());
@@ -1736,12 +1736,12 @@ TEST_F(Dhcp6ParserTest, optionDefEncapsulate) {
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     checkResult(status, 0);
 
     // The option definition should now be available in the CfgMgr.
     def = CfgMgr::instance().getStagingCfg()->getCfgOptionDef()->get("isc", 100);
-    ASSERT_TRUE(def);
+    ASSERT_TRUE(def.get() != 0);
 
     // Check the option data.
     EXPECT_EQ("foo", def->getName());
@@ -1772,7 +1772,7 @@ TEST_F(Dhcp6ParserTest, optionDefInvalidName) {
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
@@ -1799,7 +1799,7 @@ TEST_F(Dhcp6ParserTest, optionDefInvalidType) {
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
@@ -1826,7 +1826,7 @@ TEST_F(Dhcp6ParserTest, optionDefInvalidRecordType) {
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
@@ -1853,7 +1853,7 @@ TEST_F(Dhcp6ParserTest, optionDefInvalidEncapsulatedSpace) {
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
@@ -1882,7 +1882,7 @@ TEST_F(Dhcp6ParserTest, optionDefEncapsulatedSpaceAndArray) {
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
@@ -1909,7 +1909,7 @@ TEST_F(Dhcp6ParserTest, optionDefEncapsulateOwnSpace) {
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
@@ -1945,13 +1945,13 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     checkResult(status, 0);
 
     // The option definition should now be available in the CfgMgr.
     def = CfgMgr::instance().getStagingCfg()->
         getCfgOptionDef()->get("dhcp6", 100);
-    ASSERT_TRUE(def);
+    ASSERT_TRUE(def.get() != 0);
 
     // Check the option data.
     EXPECT_EQ("foo", def->getName());
@@ -1977,7 +1977,7 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
 
     // Use the configuration string to create new option definition.
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
@@ -2002,13 +2002,13 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
 
     // Use the configuration string to create new option definition.
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     // Expecting success.
     checkResult(status, 0);
 
     def = CfgMgr::instance().getStagingCfg()->
         getCfgOptionDef()->get("dhcp6", 59);
-    ASSERT_TRUE(def);
+    ASSERT_TRUE(def.get() != 0);
 
     // Check the option data.
     EXPECT_EQ("boot-file-name", def->getName());
@@ -2053,7 +2053,7 @@ TEST_F(Dhcp6ParserTest, optionDataDefaults) {
 
     Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
         selectSubnet(IOAddress("2001:db8:1::5"), classify_);
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp6");
     ASSERT_EQ(2, options->size());
 
@@ -2142,20 +2142,20 @@ TEST_F(Dhcp6ParserTest, optionDataTwoSpaces) {
     ElementPtr json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     checkResult(status, 0);
 
     // Options should be now available for the subnet.
     Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
         selectSubnet(IOAddress("2001:db8:1::5"), classify_);
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     // Try to get the option from the space dhcp6.
     OptionDescriptor desc1 = subnet->getCfgOption()->get("dhcp6", 38);
-    ASSERT_TRUE(desc1.option_);
+    ASSERT_TRUE(desc1.option_.get() != 0);
     EXPECT_EQ(38, desc1.option_->getType());
     // Try to get the option from the space isc.
     OptionDescriptor desc2 = subnet->getCfgOption()->get("isc", 38);
-    ASSERT_TRUE(desc2.option_);
+    ASSERT_TRUE(desc2.option_.get() != 0);
     EXPECT_EQ(38, desc1.option_->getType());
     // Try to get the non-existing option from the non-existing
     // option space and  expect that option is not returned.
@@ -2228,7 +2228,7 @@ TEST_F(Dhcp6ParserTest, optionDataEncapsulate) {
     ElementPtr json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     checkResult(status, 0);
 
     CfgMgr::instance().clear();
@@ -2298,33 +2298,33 @@ TEST_F(Dhcp6ParserTest, optionDataEncapsulate) {
     json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     checkResult(status, 0);
 
     // Get the subnet.
     Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
         selectSubnet(IOAddress("2001:db8:1::5"), classify_);
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
 
     // We should have one option available.
     OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp6");
-    ASSERT_TRUE(options);
+    ASSERT_TRUE(options.get() != 0);
     ASSERT_EQ(1, options->size());
 
     // Get the option.
     OptionDescriptor desc = subnet->getCfgOption()->get("dhcp6", 100);
-    EXPECT_TRUE(desc.option_);
+    EXPECT_TRUE(desc.option_.get() != 0);
     EXPECT_EQ(100, desc.option_->getType());
 
     // This opton should comprise two sub-options.
     // Onf of them is 'foo' with code 110.
     OptionPtr option_foo = desc.option_->getOption(110);
-    ASSERT_TRUE(option_foo);
+    ASSERT_TRUE(option_foo.get() != 0);
     EXPECT_EQ(110, option_foo->getType());
 
     // ...another one 'foo2' with code 111.
     OptionPtr option_foo2 = desc.option_->getOption(111);
-    ASSERT_TRUE(option_foo2);
+    ASSERT_TRUE(option_foo2.get() != 0);
     EXPECT_EQ(111, option_foo2->getType());
 }
 
@@ -2367,7 +2367,7 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
 
     Subnet6Ptr subnet1 = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
         selectSubnet(IOAddress("2001:db8:1::5"), classify_);
-    ASSERT_TRUE(subnet1);
+    ASSERT_TRUE(subnet1.get() != 0);
     OptionContainerPtr options1 = subnet1->getCfgOption()->getAll("dhcp6");
     ASSERT_EQ(1, options1->size());
 
@@ -2393,7 +2393,7 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
     // Test another subnet in the same way.
     Subnet6Ptr subnet2 = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
         selectSubnet(IOAddress("2001:db8:2::4"), classify_);
-    ASSERT_TRUE(subnet2);
+    ASSERT_TRUE(subnet2.get() != 0);
     OptionContainerPtr options2 = subnet2->getCfgOption()->getAll("dhcp6");
     ASSERT_EQ(1, options2->size());
 
@@ -2429,7 +2429,7 @@ TEST_F(Dhcp6ParserTest, optionDataBoolean) {
     // The subnet should now hold one option with the code 1000.
     OptionDescriptor desc =
         getOptionFromSubnet(IOAddress("2001:db8:1::5"), 1000);
-    ASSERT_TRUE(desc.option_);
+    ASSERT_TRUE(desc.option_.get() != 0);
 
     // This option should be set to "true", represented as 0x1 in the option
     // buffer.
@@ -2562,7 +2562,7 @@ TEST_F(Dhcp6ParserTest, optionDataLowerCase) {
 
     Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
         selectSubnet(IOAddress("2001:db8:1::5"), classify_);
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp6");
     ASSERT_EQ(1, options->size());
 
@@ -2605,7 +2605,7 @@ TEST_F(Dhcp6ParserTest, stdOptionData) {
 
     Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
         selectSubnet(IOAddress("2001:db8:1::5"), classify_);
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp6");
     ASSERT_EQ(1, options->size());
 
@@ -2623,7 +2623,7 @@ TEST_F(Dhcp6ParserTest, stdOptionData) {
     // The actual pointer to the option is held in the option field
     // in the structure returned.
     OptionPtr option = range.first->option_;
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
     // Option object returned for here is expected to be Option6IA
     // which is derived from Option. This class is dedicated to
     // represent standard option IA_NA.
@@ -2631,7 +2631,7 @@ TEST_F(Dhcp6ParserTest, stdOptionData) {
         boost::dynamic_pointer_cast<Option6IA>(option);
     // If cast is unsuccessful than option returned was of a
     // different type than Option6IA. This is wrong.
-    ASSERT_TRUE(optionIA);
+    ASSERT_TRUE(optionIA.get() != 0);
     // If cast was successful we may use accessors exposed by
     // Option6IA to validate that the content of this option
     // has been set correctly.
@@ -2677,21 +2677,21 @@ TEST_F(Dhcp6ParserTest, vendorOptionsHex) {
     ElementPtr json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     checkResult(status, 0);
 
     // Options should be now available for the subnet.
     Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
         selectSubnet(IOAddress("2001:db8:1::5"), classify_);
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
 
     // Try to get the option from the vendor space 4491
     OptionDescriptor desc1 = subnet->getCfgOption()->get(4491, 100);
-    ASSERT_TRUE(desc1.option_);
+    ASSERT_TRUE(desc1.option_.get() != 0);
     EXPECT_EQ(100, desc1.option_->getType());
     // Try to get the option from the vendor space 1234
     OptionDescriptor desc2 = subnet->getCfgOption()->get(1234, 100);
-    ASSERT_TRUE(desc2.option_);
+    ASSERT_TRUE(desc2.option_.get() != 0);
     EXPECT_EQ(100, desc1.option_->getType());
 
     // Try to get the non-existing option from the non-existing
@@ -2739,17 +2739,17 @@ TEST_F(Dhcp6ParserTest, vendorOptionsCsv) {
     ElementPtr json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     checkResult(status, 0);
 
     // Options should be now available for the subnet.
     Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
         selectSubnet(IOAddress("2001:db8:1::5"), classify_);
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
 
     // Try to get the option from the vendor space 4491
     OptionDescriptor desc1 = subnet->getCfgOption()->get(4491, 100);
-    ASSERT_TRUE(desc1.option_);
+    ASSERT_TRUE(desc1.option_.get() != 0);
     EXPECT_EQ(100, desc1.option_->getType());
 
     // Try to get the non-existing option from the non-existing
@@ -2817,7 +2817,7 @@ TEST_F(Dhcp6ParserTest, DISABLED_stdOptionDataEncapsulate) {
     ElementPtr json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     checkResult(status, 0);
 
     CfgMgr::instance().clear();
@@ -2882,46 +2882,46 @@ TEST_F(Dhcp6ParserTest, DISABLED_stdOptionDataEncapsulate) {
     json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     checkResult(status, 0);
 
     // Get the subnet.
     Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
         selectSubnet(IOAddress("2001:db8:1::5"), classify_);
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
 
     // We should have one option available.
     OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp6");
-    ASSERT_TRUE(options);
+    ASSERT_TRUE(options.get() != 0);
     ASSERT_EQ(1, options->size());
 
     // Get the option.
     OptionDescriptor desc = subnet->getCfgOption()->get("dhcp6", D6O_VENDOR_OPTS);
-    EXPECT_TRUE(desc.option_);
+    EXPECT_TRUE(desc.option_.get() != 0);
     EXPECT_EQ(D6O_VENDOR_OPTS, desc.option_->getType());
 
     // Option with the code 110 should be added as a sub-option.
     OptionPtr option_foo = desc.option_->getOption(110);
-    ASSERT_TRUE(option_foo);
+    ASSERT_TRUE(option_foo.get() != 0);
     EXPECT_EQ(110, option_foo->getType());
     // This option comprises a single uint32_t value thus it is
     // represented by OptionInt<uint32_t> class. Let's get the
     // object of this type.
     boost::shared_ptr<OptionInt<uint32_t> > option_foo_uint32 =
         boost::dynamic_pointer_cast<OptionInt<uint32_t> >(option_foo);
-    ASSERT_TRUE(option_foo_uint32);
+    ASSERT_TRUE(option_foo_uint32.get() != 0);
     // Validate the value according to the configuration.
     EXPECT_EQ(1234, option_foo_uint32->getValue());
 
     // Option with the code 111 should be added as a sub-option.
     OptionPtr option_foo2 = desc.option_->getOption(111);
-    ASSERT_TRUE(option_foo2);
+    ASSERT_TRUE(option_foo2.get() != 0);
     EXPECT_EQ(111, option_foo2->getType());
     // This option comprises the IPV4 address. Such option is
     // represented by OptionCustom object.
     OptionCustomPtr option_foo2_v4 =
         boost::dynamic_pointer_cast<OptionCustom>(option_foo2);
-    ASSERT_TRUE(option_foo2_v4);
+    ASSERT_TRUE(option_foo2_v4.get() != 0);
     // Get the IP address carried by this option and validate it.
     EXPECT_EQ("192.168.2.1", option_foo2_v4->readAddress().toText());
 
@@ -3037,7 +3037,7 @@ TEST_F(Dhcp6ParserTest, InvalidLibrary) {
     ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
     // The status object must not be NULL
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
 
     // Returned value should not be 0
     comment_ = parseAnswer(rcode_, status);
@@ -3177,7 +3177,7 @@ TEST_F(Dhcp6ParserTest, subnetRelayInfo) {
 
     Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
         selectSubnet(IOAddress("2001:db8:1::1"), classify_);
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     EXPECT_EQ("2001:db8:1::abcd", subnet->getRelayInfo().addr_.toText());
 }
 
@@ -3321,7 +3321,7 @@ TEST_F(Dhcp6ParserTest, d2ClientConfig) {
 
     // Verify that the D2 configuration can be retrieved.
     d2_client_config = CfgMgr::instance().getD2ClientConfig();
-    ASSERT_TRUE(d2_client_config);
+    ASSERT_TRUE(d2_client_config.get() != 0);
 
     // Verify that the configuration values are correct.
     EXPECT_TRUE(d2_client_config->getEnableUpdates());
@@ -3470,7 +3470,7 @@ TEST_F(Dhcp6ParserTest, reservations) {
 
     // Hosts configuration must be available.
     CfgHostsPtr hosts_cfg = CfgMgr::instance().getStagingCfg()->getCfgHosts();
-    ASSERT_TRUE(hosts_cfg);
+    ASSERT_TRUE(hosts_cfg.get() != 0);
 
     // Let's create an object holding hardware address of the host having
     // a reservation in the subnet having id of 234. For simlicity the
@@ -3482,7 +3482,7 @@ TEST_F(Dhcp6ParserTest, reservations) {
     HWAddrPtr hwaddr(new HWAddr(hwaddr_vec, HTYPE_ETHER));
     // Retrieve the reservation and sanity check the address reserved.
     ConstHostPtr host = hosts_cfg->get6(234, DuidPtr(), hwaddr);
-    ASSERT_TRUE(host);
+    ASSERT_TRUE(host.get() != 0);
     IPv6ResrvRange resrv = host->getIPv6Reservations(IPv6Resrv::TYPE_NA);
     ASSERT_EQ(1, std::distance(resrv.first, resrv.second));
     EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_NA,
@@ -3500,7 +3500,7 @@ TEST_F(Dhcp6ParserTest, reservations) {
     }
     DuidPtr duid(new DUID(duid_vec));
     host = hosts_cfg->get6(234, duid);
-    ASSERT_TRUE(host);
+    ASSERT_TRUE(host.get() != 0);
     resrv = host->getIPv6Reservations(IPv6Resrv::TYPE_NA);
     ASSERT_EQ(1, std::distance(resrv.first, resrv.second));
     EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_NA,
@@ -3514,7 +3514,7 @@ TEST_F(Dhcp6ParserTest, reservations) {
     // of the address from the previous test.
     hwaddr->hwaddr_.assign(hwaddr_vec.rbegin(), hwaddr_vec.rend());
     host = hosts_cfg->get6(542, DuidPtr(), hwaddr);
-    EXPECT_TRUE(host);
+    EXPECT_TRUE(host.get() != 0);
     resrv = host->getIPv6Reservations(IPv6Resrv::TYPE_PD);
     ASSERT_EQ(1, std::distance(resrv.first, resrv.second));
     EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_PD,
@@ -3529,7 +3529,7 @@ TEST_F(Dhcp6ParserTest, reservations) {
     duid.reset(new DUID(std::vector<uint8_t>(duid_vec.rbegin(),
                                              duid_vec.rend())));
     host = hosts_cfg->get6(542, duid);
-    ASSERT_TRUE(host);
+    ASSERT_TRUE(host.get() != 0);
     resrv = host->getIPv6Reservations(IPv6Resrv::TYPE_PD);
     ASSERT_EQ(1, std::distance(resrv.first, resrv.second));
     EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_PD,
@@ -3752,7 +3752,7 @@ TEST_F(Dhcp6ParserTest, hostReservationPerSubnet) {
 
     // Let's get all subnets and check that there are 4 of them.
     ConstCfgSubnets6Ptr subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6();
-    ASSERT_TRUE(subnets);
+    ASSERT_TRUE(subnets.get() != 0);
     const Subnet6Collection* subnet_col = subnets->getAll();
     ASSERT_EQ(4, subnet_col->size()); // We expect 4 subnets
 
@@ -3761,22 +3761,22 @@ TEST_F(Dhcp6ParserTest, hostReservationPerSubnet) {
     // Subnet 1
     Subnet6Ptr subnet;
     subnet = subnets->selectSubnet(IOAddress("2001:db8:1::1"));
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     EXPECT_EQ(Subnet::HR_ALL, subnet->getHostReservationMode());
 
     // Subnet 2
     subnet = subnets->selectSubnet(IOAddress("2001:db8:2::1"));
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     EXPECT_EQ(Subnet::HR_OUT_OF_POOL, subnet->getHostReservationMode());
 
     // Subnet 3
     subnet = subnets->selectSubnet(IOAddress("2001:db8:3::1"));
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     EXPECT_EQ(Subnet::HR_DISABLED, subnet->getHostReservationMode());
 
     // Subnet 4
     subnet = subnets->selectSubnet(IOAddress("2001:db8:4::1"));
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     EXPECT_EQ(Subnet::HR_ALL, subnet->getHostReservationMode());
 }
 
