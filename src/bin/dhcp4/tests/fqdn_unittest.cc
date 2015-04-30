@@ -297,7 +297,7 @@ public:
                          const std::string& exp_domain_name,
                          Option4ClientFqdn::DomainNameType
                          exp_domain_type = Option4ClientFqdn::FULL) {
-        ASSERT_TRUE(getClientFqdnOption(query));
+        ASSERT_TRUE(getClientFqdnOption(query).get() != 0);
 
         Pkt4Ptr answer;
         if (query->getType() == DHCPDISCOVER) {
@@ -311,7 +311,7 @@ public:
         ASSERT_NO_THROW(srv_->processClientName(ex));
 
         Option4ClientFqdnPtr fqdn = getClientFqdnOption(ex.getResponse());
-        ASSERT_TRUE(fqdn);
+        ASSERT_TRUE(fqdn.get() != 0);
 
         checkFqdnFlags(ex.getResponse(), exp_flags);
 
@@ -326,7 +326,7 @@ public:
     /// @param exp_flags Bit mask of flags that are expected to be true.
     void checkFqdnFlags(const Pkt4Ptr& pkt, const uint8_t exp_flags) {
         Option4ClientFqdnPtr fqdn = getClientFqdnOption(pkt);
-        ASSERT_TRUE(fqdn);
+        ASSERT_TRUE(fqdn.get() != 0);
 
         const bool flag_n = (exp_flags & Option4ClientFqdn::FLAG_N) != 0;
         const bool flag_s = (exp_flags & Option4ClientFqdn::FLAG_S) != 0;
@@ -376,7 +376,7 @@ public:
                                  const bool not_strict_expire_check = false) {
         NameChangeRequestPtr ncr;
         ASSERT_NO_THROW(ncr = d2_mgr_.peekAt(0));
-        ASSERT_TRUE(ncr);
+        ASSERT_TRUE(ncr.get() != 0);
 
         EXPECT_EQ(type, ncr->getChangeType());
         EXPECT_EQ(forward, ncr->isForwardChange());
@@ -620,7 +620,7 @@ TEST_F(NameDhcpv4SrvTest, serverUpdateHostname) {
     OptionStringPtr hostname;
     ASSERT_NO_THROW(hostname = processHostname(query));
 
-    ASSERT_TRUE(hostname);
+    ASSERT_TRUE(hostname.get() != 0);
     EXPECT_EQ("myhost.example.com.", hostname->getValue());
 
 }
@@ -660,7 +660,7 @@ TEST_F(NameDhcpv4SrvTest, serverUpdateUnqualifiedHostname) {
     OptionStringPtr hostname;
     ASSERT_NO_THROW(hostname =  processHostname(query));
 
-    ASSERT_TRUE(hostname);
+    ASSERT_TRUE(hostname.get() != 0);
     EXPECT_EQ("myhost.example.com", hostname->getValue());
 
 }
@@ -843,7 +843,7 @@ TEST_F(NameDhcpv4SrvTest, processRequestEmptyDomainNameDisabled) {
     checkResponse(reply, DHCPACK, 1234);
 
     Option4ClientFqdnPtr fqdn = getClientFqdnOption(reply);
-    ASSERT_TRUE(fqdn);
+    ASSERT_TRUE(fqdn.get() != 0);
 
     // The hostname is generated from the IP address acquired (yiaddr).
     std::string hostname = generatedNameFromAddress(reply->getYiaddr());
@@ -1091,14 +1091,14 @@ TEST_F(NameDhcpv4SrvTest, fqdnReservation) {
 
     // Make sure that the server responded.
     Pkt4Ptr resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
+    ASSERT_TRUE(resp.get() != 0);
     ASSERT_EQ(DHCPOFFER, static_cast<int>(resp->getType()));
 
     // Obtain the FQDN option sent in the response and make sure that the server
     // has used the hostname reserved for this client.
     Option4ClientFqdnPtr fqdn;
     fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>(resp->getOption(DHO_FQDN));
-    ASSERT_TRUE(fqdn);
+    ASSERT_TRUE(fqdn.get() != 0);
     EXPECT_EQ("unique-host.example.org.", fqdn->getDomainName());
 
     // When receiving DHCPDISCOVER, no NCRs should be generated.
@@ -1107,12 +1107,12 @@ TEST_F(NameDhcpv4SrvTest, fqdnReservation) {
     // Now send the DHCPREQUEST with including the FQDN option.
     ASSERT_NO_THROW(client.doRequest());
     resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
+    ASSERT_TRUE(resp.get() != 0);
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
 
     // Once again check that the FQDN is as expected.
     fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>(resp->getOption(DHO_FQDN));
-    ASSERT_TRUE(fqdn);
+    ASSERT_TRUE(fqdn.get() != 0);
     EXPECT_EQ("unique-host.example.org.", fqdn->getDomainName());
 
     {
@@ -1132,7 +1132,7 @@ TEST_F(NameDhcpv4SrvTest, fqdnReservation) {
     
     // And that this FQDN has been stored in the lease database.
     Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(client.config_.lease_.addr_);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ("unique-host.example.org.", lease->hostname_);
 
     // Reconfigure DHCP server to use a different hostname for the client.
@@ -1145,17 +1145,17 @@ TEST_F(NameDhcpv4SrvTest, fqdnReservation) {
     client.setState(Dhcp4Client::RENEWING);
     client.doRequest();
     resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
+    ASSERT_TRUE(resp.get() != 0);
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
 
     // The new FQDN should contain a different name this time.
     fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>(resp->getOption(DHO_FQDN));
-    ASSERT_TRUE(fqdn);
+    ASSERT_TRUE(fqdn.get() != 0);
     EXPECT_EQ("foobar.fake-suffix.isc.org.", fqdn->getDomainName());
 
     // And the lease in the lease database should also contain this new FQDN.
     lease = LeaseMgrFactory::instance().getLease4(client.config_.lease_.addr_);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ("foobar.fake-suffix.isc.org.", lease->hostname_);
 
     // Now there should be two name NCRs. One that removes the previous entry
@@ -1206,30 +1206,30 @@ TEST_F(NameDhcpv4SrvTest, hostnameReservation) {
 
     // Make sure that the server responded.
     Pkt4Ptr resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
+    ASSERT_TRUE(resp.get() != 0);
     ASSERT_EQ(DHCPOFFER, static_cast<int>(resp->getType()));
 
     // Obtain the Hostname option sent in the response and make sure that the server
     // has used the hostname reserved for this client.
     OptionStringPtr hostname; 
     hostname = boost::dynamic_pointer_cast<OptionString>(resp->getOption(DHO_HOST_NAME));
-    ASSERT_TRUE(hostname);
+    ASSERT_TRUE(hostname.get() != 0);
     EXPECT_EQ("unique-host.example.org", hostname->getValue());
 
     // Now send the DHCPREQUEST with including the Hostname option.
     ASSERT_NO_THROW(client.doRequest());
     resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
+    ASSERT_TRUE(resp.get() != 0);
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
 
     // Once again check that the Hostname is as expected.
     hostname = boost::dynamic_pointer_cast<OptionString>(resp->getOption(DHO_HOST_NAME));
-    ASSERT_TRUE(hostname);
+    ASSERT_TRUE(hostname.get() != 0);
     EXPECT_EQ("unique-host.example.org", hostname->getValue());
 
     // And that this hostname has been stored in the lease database.
     Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(client.config_.lease_.addr_);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ("unique-host.example.org", lease->hostname_);
 
     // Because this is a new lease, there should be one NCR which adds the
@@ -1257,17 +1257,17 @@ TEST_F(NameDhcpv4SrvTest, hostnameReservation) {
     client.setState(Dhcp4Client::RENEWING);
     client.doRequest();
     resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
+    ASSERT_TRUE(resp.get() != 0);
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
 
     // The new hostname should be different than previously.
     hostname = boost::dynamic_pointer_cast<OptionString>(resp->getOption(DHO_HOST_NAME));
-    ASSERT_TRUE(hostname);
+    ASSERT_TRUE(hostname.get() != 0);
     EXPECT_EQ("foobar.fake-suffix.isc.org", hostname->getValue());
 
     // And the lease in the lease database should also contain this new FQDN.
     lease = LeaseMgrFactory::instance().getLease4(client.config_.lease_.addr_);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ("foobar.fake-suffix.isc.org", lease->hostname_);
 
     // Now there should be two name NCRs. One that removes the previous entry

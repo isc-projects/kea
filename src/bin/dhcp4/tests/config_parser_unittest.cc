@@ -113,7 +113,7 @@ public:
     // expected code (0 for success, other for failures).
     // Also stores result in rcode_ and comment_.
     void checkResult(ConstElementPtr status, int expected_code) {
-        ASSERT_TRUE(status);
+        ASSERT_TRUE(status.get() != 0);
         comment_ = parseAnswer(rcode_, status);
         EXPECT_EQ(expected_code, rcode_);
     }
@@ -336,7 +336,7 @@ public:
                     size_t expected_data_len,
                     bool extra_data = false) {
         // Check if option descriptor contains valid option pointer.
-        ASSERT_TRUE(option_desc.option_);
+        ASSERT_TRUE(option_desc.option_.get() != 0);
         // Verify option type.
         EXPECT_EQ(expected_code, option_desc.option_->getType());
         // We may have many different option types being created. Some of them
@@ -392,7 +392,7 @@ public:
         // The subnet should now hold one option with the specified option code.
         OptionDescriptor desc =
             getOptionFromSubnet(IOAddress("192.0.2.24"), option_code);
-        ASSERT_TRUE(desc.option_);
+        ASSERT_TRUE(desc.option_.get() != 0);
         testOption(desc, option_code, expected_data, expected_data_len);
     }
 
@@ -547,7 +547,7 @@ TEST_F(Dhcp4ParserTest, unspecifiedRenewTimer) {
 
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     EXPECT_TRUE(subnet->getT1().unspecified());
     EXPECT_FALSE(subnet->getT2().unspecified());
     EXPECT_EQ(2000, subnet->getT2());
@@ -581,7 +581,7 @@ TEST_F(Dhcp4ParserTest, unspecifiedRebindTimer) {
 
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     EXPECT_FALSE(subnet->getT1().unspecified());
     EXPECT_EQ(1000, subnet->getT1());
     EXPECT_TRUE(subnet->getT2().unspecified());
@@ -616,7 +616,7 @@ TEST_F(Dhcp4ParserTest, subnetGlobalDefaults) {
     // expected pool configured.
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     EXPECT_EQ(1000, subnet->getT1());
     EXPECT_EQ(2000, subnet->getT2());
     EXPECT_EQ(4000, subnet->getValid());
@@ -929,7 +929,7 @@ TEST_F(Dhcp4ParserTest, nextServerGlobal) {
     // expected pool configured.
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     EXPECT_EQ("1.2.3.4", subnet->getSiaddr().toText());
 }
 
@@ -959,7 +959,7 @@ TEST_F(Dhcp4ParserTest, nextServerSubnet) {
     // expected pool configured.
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     EXPECT_EQ("1.2.3.4", subnet->getSiaddr().toText());
 }
 
@@ -1055,7 +1055,7 @@ TEST_F(Dhcp4ParserTest, nextServerOverride) {
     // expected pool configured.
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     EXPECT_EQ("1.2.3.4", subnet->getSiaddr().toText());
 }
 
@@ -1128,7 +1128,7 @@ TEST_F(Dhcp4ParserTest, subnetLocal) {
 
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     EXPECT_EQ(1, subnet->getT1());
     EXPECT_EQ(2, subnet->getT2());
     EXPECT_EQ(4, subnet->getValid());
@@ -1240,7 +1240,7 @@ TEST_F(Dhcp4ParserTest, poolPrefixLen) {
 
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     EXPECT_EQ(1000, subnet->getT1());
     EXPECT_EQ(2000, subnet->getT2());
     EXPECT_EQ(4000, subnet->getValid());
@@ -1272,12 +1272,12 @@ TEST_F(Dhcp4ParserTest, optionDefIpv4Address) {
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     checkResult(status, 0);
 
     // The option definition should now be available in the CfgMgr.
     def = CfgMgr::instance().getStagingCfg()->getCfgOptionDef()->get("isc", 100);
-    ASSERT_TRUE(def);
+    ASSERT_TRUE(def.get() != 0);
 
     // Verify that the option definition data is valid.
     EXPECT_EQ("foo", def->getName());
@@ -1314,12 +1314,12 @@ TEST_F(Dhcp4ParserTest, optionDefRecord) {
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     checkResult(status, 0);
 
     // The option definition should now be available in the CfgMgr.
     def = CfgMgr::instance().getStagingCfg()->getCfgOptionDef()->get("isc", 100);
-    ASSERT_TRUE(def);
+    ASSERT_TRUE(def.get() != 0);
 
     // Check the option data.
     EXPECT_EQ("foo", def->getName());
@@ -1374,13 +1374,13 @@ TEST_F(Dhcp4ParserTest, optionDefMultiple) {
     // Use the configuration string to create new option definitions.
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     checkResult(status, 0);
 
     // Check the first definition we have created.
     OptionDefinitionPtr def1 = CfgMgr::instance().getStagingCfg()->
         getCfgOptionDef()->get("isc", 100);
-    ASSERT_TRUE(def1);
+    ASSERT_TRUE(def1.get() != 0);
 
     // Check the option data.
     EXPECT_EQ("foo", def1->getName());
@@ -1392,7 +1392,7 @@ TEST_F(Dhcp4ParserTest, optionDefMultiple) {
     // Check the second option definition we have created.
     OptionDefinitionPtr def2 = CfgMgr::instance().getStagingCfg()->
         getCfgOptionDef()->get("isc", 101);
-    ASSERT_TRUE(def2);
+    ASSERT_TRUE(def2.get() != 0);
 
     // Check the option data.
     EXPECT_EQ("foo-2", def2->getName());
@@ -1438,7 +1438,7 @@ TEST_F(Dhcp4ParserTest, optionDefDuplicate) {
     // Use the configuration string to create new option definitions.
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
@@ -1470,13 +1470,13 @@ TEST_F(Dhcp4ParserTest, optionDefArray) {
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     checkResult(status, 0);
 
     // The option definition should now be available in the CfgMgr.
     def = CfgMgr::instance().getStagingCfg()->
         getCfgOptionDef()->get("isc", 100);
-    ASSERT_TRUE(def);
+    ASSERT_TRUE(def.get() != 0);
 
     // Check the option data.
     EXPECT_EQ("foo", def->getName());
@@ -1513,13 +1513,13 @@ TEST_F(Dhcp4ParserTest, optionDefEncapsulate) {
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     checkResult(status, 0);
 
     // The option definition should now be available in the CfgMgr.
     def = CfgMgr::instance().getStagingCfg()->
         getCfgOptionDef()->get("isc", 100);
-    ASSERT_TRUE(def);
+    ASSERT_TRUE(def.get() != 0);
 
     // Check the option data.
     EXPECT_EQ("foo", def->getName());
@@ -1550,7 +1550,7 @@ TEST_F(Dhcp4ParserTest, optionDefInvalidName) {
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
@@ -1577,7 +1577,7 @@ TEST_F(Dhcp4ParserTest, optionDefInvalidType) {
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
@@ -1604,7 +1604,7 @@ TEST_F(Dhcp4ParserTest, optionDefInvalidRecordType) {
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
@@ -1631,7 +1631,7 @@ TEST_F(Dhcp4ParserTest, optionDefInvalidEncapsulatedSpace) {
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
@@ -1660,7 +1660,7 @@ TEST_F(Dhcp4ParserTest, optionDefEncapsulatedSpaceAndArray) {
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
@@ -1687,7 +1687,7 @@ TEST_F(Dhcp4ParserTest, optionDefEncapsulateOwnSpace) {
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
@@ -1722,13 +1722,13 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     checkResult(status, 0);
 
     // The option definition should now be available in the CfgMgr.
     def = CfgMgr::instance().getStagingCfg()->
         getCfgOptionDef()->get("dhcp4", 109);
-    ASSERT_TRUE(def);
+    ASSERT_TRUE(def.get() != 0);
 
     // Check the option data.
     EXPECT_EQ("foo", def->getName());
@@ -1754,7 +1754,7 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
 
     // Use the configuration string to create new option definition.
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
@@ -1779,13 +1779,13 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
 
     // Use the configuration string to create new option definition.
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     // Expecting success.
     checkResult(status, 0);
 
     def = CfgMgr::instance().getStagingCfg()->
         getCfgOptionDef()->get("dhcp4", 65);
-    ASSERT_TRUE(def);
+    ASSERT_TRUE(def.get() != 0);
 
     // Check the option data.
     EXPECT_EQ("nis-server-addr", def->getName());
@@ -1830,7 +1830,7 @@ TEST_F(Dhcp4ParserTest, optionDataDefaults) {
 
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp4");
     ASSERT_EQ(2, options->size());
 
@@ -1910,20 +1910,20 @@ TEST_F(Dhcp4ParserTest, optionDataTwoSpaces) {
     ElementPtr json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     checkResult(status, 0);
 
     // Options should be now available for the subnet.
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     // Try to get the option from the space dhcp4.
     OptionDescriptor desc1 = subnet->getCfgOption()->get("dhcp4", 56);
-    ASSERT_TRUE(desc1.option_);
+    ASSERT_TRUE(desc1.option_.get() != 0);
     EXPECT_EQ(56, desc1.option_->getType());
     // Try to get the option from the space isc.
     OptionDescriptor desc2 = subnet->getCfgOption()->get("isc", 56);
-    ASSERT_TRUE(desc2.option_);
+    ASSERT_TRUE(desc2.option_.get() != 0);
     EXPECT_EQ(56, desc1.option_->getType());
     // Try to get the non-existing option from the non-existing
     // option space and  expect that option is not returned.
@@ -1995,7 +1995,7 @@ TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
     ElementPtr json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     checkResult(status, 0);
 
     CfgMgr::instance().clear();
@@ -2064,33 +2064,33 @@ TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
     json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     checkResult(status, 0);
 
     // Get the subnet.
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.5"));
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
 
     // We should have one option available.
     OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp4");
-    ASSERT_TRUE(options);
+    ASSERT_TRUE(options.get() != 0);
     ASSERT_EQ(1, options->size());
 
     // Get the option.
     OptionDescriptor desc = subnet->getCfgOption()->get("dhcp4", 222);
-    EXPECT_TRUE(desc.option_);
+    EXPECT_TRUE(desc.option_.get() != 0);
     EXPECT_EQ(222, desc.option_->getType());
 
     // This option should comprise two sub-options.
     // One of them is 'foo' with code 1.
     OptionPtr option_foo = desc.option_->getOption(1);
-    ASSERT_TRUE(option_foo);
+    ASSERT_TRUE(option_foo.get() != 0);
     EXPECT_EQ(1, option_foo->getType());
 
     // ...another one 'foo2' with code 2.
     OptionPtr option_foo2 = desc.option_->getOption(2);
-    ASSERT_TRUE(option_foo2);
+    ASSERT_TRUE(option_foo2.get() != 0);
     EXPECT_EQ(2, option_foo2->getType());
 }
 
@@ -2137,7 +2137,7 @@ TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
 
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.24"));
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp4");
     ASSERT_EQ(2, options->size());
 
@@ -2186,7 +2186,7 @@ TEST_F(Dhcp4ParserTest, optionDataBoolean) {
     // The subnet should now hold one option with the code 19.
     OptionDescriptor desc = getOptionFromSubnet(IOAddress("192.0.2.24"),
                                                         19);
-    ASSERT_TRUE(desc.option_);
+    ASSERT_TRUE(desc.option_.get() != 0);
 
     // This option should be set to "true", represented as 0x1 in the option
     // buffer.
@@ -2288,7 +2288,7 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
 
     Subnet4Ptr subnet1 = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.100"));
-    ASSERT_TRUE(subnet1);
+    ASSERT_TRUE(subnet1.get() != 0);
     OptionContainerPtr options1 = subnet1->getCfgOption()->getAll("dhcp4");
     ASSERT_EQ(1, options1->size());
 
@@ -2313,7 +2313,7 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
     // Test another subnet in the same way.
     Subnet4Ptr subnet2 = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.3.102"));
-    ASSERT_TRUE(subnet2);
+    ASSERT_TRUE(subnet2.get() != 0);
     OptionContainerPtr options2 = subnet2->getCfgOption()->getAll("dhcp4");
     ASSERT_EQ(1, options2->size());
 
@@ -2391,7 +2391,7 @@ TEST_F(Dhcp4ParserTest, optionDataLowerCase) {
 
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.5"));
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp4");
     ASSERT_EQ(1, options->size());
 
@@ -2434,10 +2434,10 @@ TEST_F(Dhcp4ParserTest, stdOptionData) {
 
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.5"));
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     OptionContainerPtr options =
         subnet->getCfgOption()->getAll("dhcp4");
-    ASSERT_TRUE(options);
+    ASSERT_TRUE(options.get() != 0);
     ASSERT_EQ(1, options->size());
 
     // Get the search index. Index #1 is to search using option code.
@@ -2454,7 +2454,7 @@ TEST_F(Dhcp4ParserTest, stdOptionData) {
     // The actual pointer to the option is held in the option field
     // in the structure returned.
     OptionPtr option = range.first->option_;
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
     // Option object returned for here is expected to be Option6IA
     // which is derived from Option. This class is dedicated to
     // represent standard option IA_NA.
@@ -2462,7 +2462,7 @@ TEST_F(Dhcp4ParserTest, stdOptionData) {
         boost::dynamic_pointer_cast<Option4AddrLst>(option);
     // If cast is unsuccessful than option returned was of a
     // different type than Option6IA. This is wrong.
-    ASSERT_TRUE(option_addrs);
+    ASSERT_TRUE(option_addrs.get() != 0);
 
     // Get addresses from the option.
     Option4AddrLst::AddressContainer addrs = option_addrs->getAddresses();
@@ -2571,7 +2571,7 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
     ElementPtr json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     checkResult(status, 0);
 
     CfgMgr::instance().clear();
@@ -2636,47 +2636,47 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
     json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     checkResult(status, 0);
 
     // Get the subnet.
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.5"));
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
 
     // We should have one option available.
     OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp4");
-    ASSERT_TRUE(options);
+    ASSERT_TRUE(options.get() != 0);
     ASSERT_EQ(1, options->size());
 
     // Get the option.
     OptionDescriptor desc =
         subnet->getCfgOption()->get("dhcp4", DHO_VENDOR_ENCAPSULATED_OPTIONS);
-    EXPECT_TRUE(desc.option_);
+    EXPECT_TRUE(desc.option_.get() != 0);
     EXPECT_EQ(DHO_VENDOR_ENCAPSULATED_OPTIONS, desc.option_->getType());
 
     // Option with the code 1 should be added as a sub-option.
     OptionPtr option_foo = desc.option_->getOption(1);
-    ASSERT_TRUE(option_foo);
+    ASSERT_TRUE(option_foo.get() != 0);
     EXPECT_EQ(1, option_foo->getType());
     // This option comprises a single uint32_t value thus it is
     // represented by OptionInt<uint32_t> class. Let's get the
     // object of this type.
     boost::shared_ptr<OptionInt<uint32_t> > option_foo_uint32 =
         boost::dynamic_pointer_cast<OptionInt<uint32_t> >(option_foo);
-    ASSERT_TRUE(option_foo_uint32);
+    ASSERT_TRUE(option_foo_uint32.get() != 0);
     // Validate the value according to the configuration.
     EXPECT_EQ(1234, option_foo_uint32->getValue());
 
     // Option with the code 2 should be added as a sub-option.
     OptionPtr option_foo2 = desc.option_->getOption(2);
-    ASSERT_TRUE(option_foo2);
+    ASSERT_TRUE(option_foo2.get() != 0);
     EXPECT_EQ(2, option_foo2->getType());
     // This option comprises the IPV4 address. Such option is
     // represented by OptionCustom object.
     OptionCustomPtr option_foo2_v4 =
         boost::dynamic_pointer_cast<OptionCustom>(option_foo2);
-    ASSERT_TRUE(option_foo2_v4);
+    ASSERT_TRUE(option_foo2_v4.get() != 0);
     // Get the IP address carried by this option and validate it.
     EXPECT_EQ("192.168.2.1", option_foo2_v4->readAddress().toText());
 
@@ -2720,21 +2720,21 @@ TEST_F(Dhcp4ParserTest, vendorOptionsHex) {
     ElementPtr json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     checkResult(status, 0);
 
     // Options should be now available for the subnet.
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.5"));
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
 
     // Try to get the option from the vendor space 4491
     OptionDescriptor desc1 = subnet->getCfgOption()->get(VENDOR_ID_CABLE_LABS, 100);
-    ASSERT_TRUE(desc1.option_);
+    ASSERT_TRUE(desc1.option_.get() != 0);
     EXPECT_EQ(100, desc1.option_->getType());
     // Try to get the option from the vendor space 1234
     OptionDescriptor desc2 = subnet->getCfgOption()->get(1234, 100);
-    ASSERT_TRUE(desc2.option_);
+    ASSERT_TRUE(desc2.option_.get() != 0);
     EXPECT_EQ(100, desc1.option_->getType());
 
     // Try to get the non-existing option from the non-existing
@@ -2781,17 +2781,17 @@ TEST_F(Dhcp4ParserTest, vendorOptionsCsv) {
     ElementPtr json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     checkResult(status, 0);
 
     // Options should be now available for the subnet.
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.5"));
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
 
     // Try to get the option from the vendor space 4491
     OptionDescriptor desc1 = subnet->getCfgOption()->get(VENDOR_ID_CABLE_LABS, 100);
-    ASSERT_TRUE(desc1.option_);
+    ASSERT_TRUE(desc1.option_.get() != 0);
     EXPECT_EQ(100, desc1.option_->getType());
 
     // Try to get the non-existing option from the non-existing
@@ -2907,7 +2907,7 @@ TEST_F(Dhcp4ParserTest, InvalidLibrary) {
     ASSERT_NO_THROW(status = configureDhcp4Server(*srv_, json));
 
     // The status object must not be NULL
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
 
     // Returned value should not be 0
     comment_ = parseAnswer(rcode_, status);
@@ -2974,7 +2974,7 @@ TEST_F(Dhcp4ParserTest, selectedInterfaces) {
 
     // Apply configuration.
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     checkResult(status, 0);
 
     CfgMgr::instance().getStagingCfg()->getCfgIface()->openSockets(AF_INET, 10000);
@@ -3011,7 +3011,7 @@ TEST_F(Dhcp4ParserTest, allInterfaces) {
 
     // Apply configuration.
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     checkResult(status, 0);
 
     CfgMgr::instance().getStagingCfg()->getCfgIface()->openSockets(AF_INET, 10000);
@@ -3046,7 +3046,7 @@ TEST_F(Dhcp4ParserTest, selectedInterfacesAndAddresses) {
 
     // Apply configuration.
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     checkResult(status, 0);
 
     CfgMgr::instance().getStagingCfg()->getCfgIface()->openSockets(AF_INET, 10000);
@@ -3112,7 +3112,7 @@ TEST_F(Dhcp4ParserTest, d2ClientConfig) {
 
     // Verify that the D2 configuration can be retrieved.
     d2_client_config = CfgMgr::instance().getD2ClientConfig();
-    ASSERT_TRUE(d2_client_config);
+    ASSERT_TRUE(d2_client_config.get() != 0);
 
     // Verify that the configuration values are correct.
     EXPECT_TRUE(d2_client_config->getEnableUpdates());
@@ -3207,7 +3207,7 @@ TEST_F(Dhcp4ParserTest, subnetRelayInfo) {
 
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     EXPECT_EQ("192.0.2.123", subnet->getRelayInfo().addr_.toText());
 }
 
@@ -3363,7 +3363,7 @@ TEST_F(Dhcp4ParserTest, reservations) {
 
     // Hosts configuration must be available.
     CfgHostsPtr hosts_cfg = CfgMgr::instance().getStagingCfg()->getCfgHosts();
-    ASSERT_TRUE(hosts_cfg);
+    ASSERT_TRUE(hosts_cfg.get() != 0);
 
     // Let's create an object holding hardware address of the host having
     // a reservation in the subnet having id of 234. For simplicity the
@@ -3375,7 +3375,7 @@ TEST_F(Dhcp4ParserTest, reservations) {
     HWAddrPtr hwaddr(new HWAddr(hwaddr_vec, HTYPE_ETHER));
     // Retrieve the reservation and sanity check the address reserved.
     ConstHostPtr host = hosts_cfg->get4(234, hwaddr);
-    ASSERT_TRUE(host);
+    ASSERT_TRUE(host.get() != 0);
     EXPECT_EQ("192.0.3.120", host->getIPv4Reservation().toText());
     // This reservation should be solely assigned to the subnet 234,
     // and not to other two.
@@ -3389,7 +3389,7 @@ TEST_F(Dhcp4ParserTest, reservations) {
     }
     DuidPtr duid(new DUID(duid_vec));
     host = hosts_cfg->get4(234, HWAddrPtr(), duid);
-    ASSERT_TRUE(host);
+    ASSERT_TRUE(host.get() != 0);
     EXPECT_EQ("192.0.3.112", host->getIPv4Reservation().toText());
     EXPECT_FALSE(hosts_cfg->get4(123, HWAddrPtr(), duid));
     EXPECT_FALSE(hosts_cfg->get4(542, HWAddrPtr(), duid));
@@ -3399,7 +3399,7 @@ TEST_F(Dhcp4ParserTest, reservations) {
     // of the address from the previous test.
     hwaddr->hwaddr_.assign(hwaddr_vec.rbegin(), hwaddr_vec.rend());
     host = hosts_cfg->get4(542, hwaddr);
-    EXPECT_TRUE(host);
+    EXPECT_TRUE(host.get() != 0);
     EXPECT_EQ("192.0.4.102", host->getIPv4Reservation().toText());
     // This reservation must not belong to other subnets.
     EXPECT_FALSE(hosts_cfg->get4(123, hwaddr));
@@ -3409,7 +3409,7 @@ TEST_F(Dhcp4ParserTest, reservations) {
     duid.reset(new DUID(std::vector<uint8_t>(duid_vec.rbegin(),
                                              duid_vec.rend())));
     host = hosts_cfg->get4(542, HWAddrPtr(), duid);
-    ASSERT_TRUE(host);
+    ASSERT_TRUE(host.get() != 0);
     EXPECT_EQ("192.0.4.101", host->getIPv4Reservation().toText());
     EXPECT_FALSE(hosts_cfg->get4(123, HWAddrPtr(), duid));
     EXPECT_FALSE(hosts_cfg->get4(234, HWAddrPtr(), duid));
@@ -3545,7 +3545,7 @@ TEST_F(Dhcp4ParserTest, hostReservationPerSubnet) {
 
     // Let's get all subnets and check that there are 4 of them.
     ConstCfgSubnets4Ptr subnets = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
-    ASSERT_TRUE(subnets);
+    ASSERT_TRUE(subnets.get() != 0);
     const Subnet4Collection* subnet_col = subnets->getAll();
     ASSERT_EQ(4, subnet_col->size()); // We expect 4 subnets
 
@@ -3554,22 +3554,22 @@ TEST_F(Dhcp4ParserTest, hostReservationPerSubnet) {
     // Subnet 1
     Subnet4Ptr subnet;
     subnet = subnets->selectSubnet(IOAddress("192.0.2.1"));
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     EXPECT_EQ(Subnet::HR_ALL, subnet->getHostReservationMode());
 
     // Subnet 2
     subnet = subnets->selectSubnet(IOAddress("192.0.3.1"));
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     EXPECT_EQ(Subnet::HR_OUT_OF_POOL, subnet->getHostReservationMode());
 
     // Subnet 3
     subnet = subnets->selectSubnet(IOAddress("192.0.4.1"));
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     EXPECT_EQ(Subnet::HR_DISABLED, subnet->getHostReservationMode());
 
     // Subnet 4
     subnet = subnets->selectSubnet(IOAddress("192.0.5.1"));
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     EXPECT_EQ(Subnet::HR_ALL, subnet->getHostReservationMode());
 }
 

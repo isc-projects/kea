@@ -158,7 +158,7 @@ TEST_F(InformTest, directClientBroadcast) {
     ASSERT_NO_THROW(client.doInform());
 
     // Make sure that the server responded.
-    ASSERT_TRUE(client.getContext().response_);
+    ASSERT_TRUE(client.getContext().response_.get() != 0);
     Pkt4Ptr resp = client.getContext().response_;
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
@@ -198,7 +198,7 @@ TEST_F(InformTest, directClientBroadcast) {
 
     // Make sure that the server responded.
     resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
+    ASSERT_TRUE(resp.get() != 0);
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
     // Response should have been unicast to the ciaddr.
@@ -248,7 +248,7 @@ TEST_F(InformTest, directClientUnicast) {
     // Send DHCPINFORM message to the server.
     ASSERT_NO_THROW(client.doInform());
     // Make sure that the server responded.
-    ASSERT_TRUE(client.getContext().response_);
+    ASSERT_TRUE(client.getContext().response_.get() != 0);
     Pkt4Ptr resp = client.getContext().response_;
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
@@ -280,7 +280,7 @@ TEST_F(InformTest, directClientNoCiaddr) {
     // Send DHCPINFORM message (with ciaddr not set) to the server.
     ASSERT_NO_THROW(client.doInform(false));
     // Make sure that the server responded.
-    ASSERT_TRUE(client.getContext().response_);
+    ASSERT_TRUE(client.getContext().response_.get() != 0);
     Pkt4Ptr resp = client.getContext().response_;
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
@@ -315,7 +315,7 @@ TEST_F(InformTest, relayedClient) {
     // Send DHCPINFORM message to the server.
     ASSERT_NO_THROW(client.doInform());
     // Make sure that the server responded.
-    ASSERT_TRUE(client.getContext().response_);
+    ASSERT_TRUE(client.getContext().response_.get() != 0);
     Pkt4Ptr resp = client.getContext().response_;
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
@@ -354,7 +354,7 @@ TEST_F(InformTest, relayedClientNoCiaddr) {
     // Send DHCPINFORM message to the server.
     ASSERT_NO_THROW(client.doInform());
     // Make sure that the server responded.
-    ASSERT_TRUE(client.getContext().response_);
+    ASSERT_TRUE(client.getContext().response_.get() != 0);
     Pkt4Ptr resp = client.getContext().response_;
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));

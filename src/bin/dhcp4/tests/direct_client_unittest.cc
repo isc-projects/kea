@@ -226,7 +226,7 @@ TEST_F(DirectClientTest,  twoSubnets) {
 
     // Make sure that we received a response.
     Pkt4Ptr response = srv_.fake_sent_.front();
-    ASSERT_TRUE(response);
+    ASSERT_TRUE(response.get() != 0);
     srv_.fake_sent_.pop_front();
 
     // Client should get an Offer (not a NAK).
@@ -234,19 +234,19 @@ TEST_F(DirectClientTest,  twoSubnets) {
     // Check that the offered address belongs to the suitable subnet.
     Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets4()->selectSubnet(response->getYiaddr());
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     EXPECT_EQ("10.0.0.0", subnet->get().first.toText());
 
     // A client that sent Request over the other interface should get Ack.
     response = srv_.fake_sent_.front();
-    ASSERT_TRUE(response);
+    ASSERT_TRUE(response.get() != 0);
 
     // Client should get an Ack (not a NAK).
     ASSERT_EQ(DHCPACK, response->getType());
     // Check that the offered address belongs to the suitable subnet.
     subnet = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets4()->selectSubnet(response->getYiaddr());
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     EXPECT_EQ("192.0.2.0", subnet->get().first.toText());
 
 }
@@ -283,7 +283,7 @@ TEST_F(DirectClientTest, oneSubnet) {
     // Check the response. The first Discover was sent via eth0 for which
     // the subnet has been configured.
     Pkt4Ptr response = srv_.fake_sent_.front();
-    ASSERT_TRUE(response);
+    ASSERT_TRUE(response.get() != 0);
     srv_.fake_sent_.pop_front();
 
     // Since Discover has been received through the interface for which
@@ -293,7 +293,7 @@ TEST_F(DirectClientTest, oneSubnet) {
     // Check that the offered address belongs to the suitable subnet.
     Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets4()->selectSubnet(response->getYiaddr());
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     EXPECT_EQ("10.0.0.0", subnet->get().first.toText());
 
 }
@@ -322,7 +322,7 @@ TEST_F(DirectClientTest, renew) {
 
     // Renew, and make sure we have obtained the same address.
     ASSERT_NO_THROW(client.doRequest());
-    ASSERT_TRUE(client.getContext().response_);
+    ASSERT_TRUE(client.getContext().response_.get() != 0);
     EXPECT_EQ(DHCPACK, static_cast<int>(client.getContext().response_->getType()));
     EXPECT_EQ("10.0.0.10", client.config_.lease_.addr_.toText());
 }
@@ -362,7 +362,7 @@ TEST_F(DirectClientTest, rebind) {
     // the same address.
     client.setIfaceName("eth0");
     ASSERT_NO_THROW(client.doRequest());
-    ASSERT_TRUE(client.getContext().response_);
+    ASSERT_TRUE(client.getContext().response_.get() != 0);
     EXPECT_EQ(DHCPACK, static_cast<int>(client.getContext().response_->getType()));
     EXPECT_EQ("10.0.0.10", client.config_.lease_.addr_.toText());
 }

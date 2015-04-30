@@ -256,7 +256,7 @@ TEST_F(DORATest, selectingDoNotRequestAddress) {
     ASSERT_NO_THROW(client.doDORA());
 
     // Make sure that the server responded.
-    ASSERT_TRUE(client.getContext().response_);
+    ASSERT_TRUE(client.getContext().response_.get() != 0);
     Pkt4Ptr resp = client.getContext().response_;
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
@@ -280,7 +280,7 @@ TEST_F(DORATest, selectingMultipleClients) {
 
     // Make sure that the server responded.
     Pkt4Ptr resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
+    ASSERT_TRUE(resp.get() != 0);
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
     // Store the lease.
     Lease4 lease1 = client.config_.lease_;
@@ -290,7 +290,7 @@ TEST_F(DORATest, selectingMultipleClients) {
     ASSERT_NO_THROW(client.doDORA());
     // Make sure that the server responded.
     resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
+    ASSERT_TRUE(resp.get() != 0);
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
     // Store the lease.
     Lease4 lease2 = client.config_.lease_;
@@ -300,7 +300,7 @@ TEST_F(DORATest, selectingMultipleClients) {
     ASSERT_NO_THROW(client.doDORA());
     // Make sure that the server responded.
     resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
+    ASSERT_TRUE(resp.get() != 0);
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
     // Store the lease.
     Lease4 lease3 = client.config_.lease_;
@@ -325,7 +325,7 @@ TEST_F(DORATest, selectingRequestAddress) {
                                   IOAddress>(new IOAddress("10.0.0.50"))));
 
     // Make sure that the server responded.
-    ASSERT_TRUE(client.getContext().response_);
+    ASSERT_TRUE(client.getContext().response_.get() != 0);
     Pkt4Ptr resp = client.getContext().response_;
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
@@ -342,7 +342,7 @@ TEST_F(DORATest, selectingRequestAddress) {
                                   IOAddress>(new IOAddress("10.0.0.50"))));
     resp = client.getContext().response_;
     // Make sure that the server responded.
-    ASSERT_TRUE(resp);
+    ASSERT_TRUE(resp.get() != 0);
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
     // Response must not be relayed.
@@ -368,7 +368,7 @@ TEST_F(DORATest, selectingRequestNonMatchingAddress) {
                                   IOAddress>(new IOAddress("10.0.0.50"))));
 
     // Make sure that the server responded.
-    ASSERT_TRUE(client.getContext().response_);
+    ASSERT_TRUE(client.getContext().response_.get() != 0);
     Pkt4Ptr resp = client.getContext().response_;
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
@@ -384,7 +384,7 @@ TEST_F(DORATest, selectingRequestNonMatchingAddress) {
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
                                   IOAddress>(new IOAddress("10.0.0.80"))));
     // Make sure that the server responded.
-    ASSERT_TRUE(client.getContext().response_);
+    ASSERT_TRUE(client.getContext().response_.get() != 0);
     resp = client.getContext().response_;
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
@@ -408,7 +408,7 @@ TEST_F(DORATest, initRebootRequest) {
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
                                   IOAddress>(new IOAddress("10.0.0.50"))));
     // Make sure that the server responded.
-    ASSERT_TRUE(client.getContext().response_);
+    ASSERT_TRUE(client.getContext().response_.get() != 0);
     Pkt4Ptr resp = client.getContext().response_;
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
@@ -426,7 +426,7 @@ TEST_F(DORATest, initRebootRequest) {
     ASSERT_NO_THROW(client.doRequest());
 
     // Make sure that the server responded.
-    ASSERT_TRUE(client.getContext().response_);
+    ASSERT_TRUE(client.getContext().response_.get() != 0);
     resp = client.getContext().response_;
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
@@ -442,7 +442,7 @@ TEST_F(DORATest, initRebootRequest) {
     client.config_.lease_.addr_ = IOAddress("10.0.0.30");
     ASSERT_NO_THROW(client.doRequest());
     // Make sure that the server responded.
-    ASSERT_TRUE(client.getContext().response_);
+    ASSERT_TRUE(client.getContext().response_.get() != 0);
     resp = client.getContext().response_;
     EXPECT_EQ(DHCPNAK, static_cast<int>(resp->getType()));
 
@@ -465,7 +465,7 @@ TEST_F(DORATest, ciaddr) {
     ASSERT_NO_THROW(client.doDiscover(boost::shared_ptr<
                                       IOAddress>(new IOAddress("10.0.0.50"))));
     // Make sure that the server responded.
-    ASSERT_TRUE(client.getContext().response_);
+    ASSERT_TRUE(client.getContext().response_.get() != 0);
     Pkt4Ptr resp = client.getContext().response_;
     // Make sure that the server has responded with DHCPOFFER.
     ASSERT_EQ(DHCPOFFER, static_cast<int>(resp->getType()));
@@ -475,7 +475,7 @@ TEST_F(DORATest, ciaddr) {
     // Obtain a lease from the server using the 4-way exchange.
     ASSERT_NO_THROW(client.doRequest());
     // Make sure that the server responded.
-    ASSERT_TRUE(client.getContext().response_);
+    ASSERT_TRUE(client.getContext().response_.get() != 0);
     resp = client.getContext().response_;
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
@@ -518,14 +518,14 @@ DORATest::twoAllocationsOverlapTest(const std::string& hwaddr_a,
     configure(DORA_CONFIGS[0], *client_a.getServer());
     ASSERT_NO_THROW(client_a.doDORA());
     // Make sure that the server responded.
-    ASSERT_TRUE(client_a.getContext().response_);
+    ASSERT_TRUE(client_a.getContext().response_.get() != 0);
     Pkt4Ptr resp_a = client_a.getContext().response_;
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp_a->getType()));
 
     // Make sure that the lease has been recorded by the server.
     Lease4Ptr lease_a = LeaseMgrFactory::instance().getLease4(client_a.config_.lease_.addr_);
-    ASSERT_TRUE(lease_a);
+    ASSERT_TRUE(lease_a.get() != 0);
 
     // Create client B.
     Dhcp4Client client_b(client_a.getServer(), Dhcp4Client::SELECTING);
@@ -542,14 +542,14 @@ DORATest::twoAllocationsOverlapTest(const std::string& hwaddr_a,
 
     // Make sure that the client A lease hasn't been modified.
     lease_a = LeaseMgrFactory::instance().getLease4(client_a.config_.lease_.addr_);
-    ASSERT_TRUE(lease_a);
+    ASSERT_TRUE(lease_a.get() != 0);
 
     // Now that we know that the server will avoid assigning the same
     // address that the client A has, use the 4-way exchange to actually
     // allocate some address.
     ASSERT_NO_THROW(client_b.doDORA());
     // Make sure that the server responded.
-    ASSERT_TRUE(client_b.getContext().response_);
+    ASSERT_TRUE(client_b.getContext().response_.get() != 0);
     resp_b = client_b.getContext().response_;
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp_b->getType()));
@@ -558,16 +558,16 @@ DORATest::twoAllocationsOverlapTest(const std::string& hwaddr_a,
 
     // Make sure that the client A still has a lease.
     lease_a = LeaseMgrFactory::instance().getLease4(client_a.config_.lease_.addr_);
-    ASSERT_TRUE(lease_a);
+    ASSERT_TRUE(lease_a.get() != 0);
 
     // Make sure that the client B has a lease.
     Lease4Ptr lease_b = LeaseMgrFactory::instance().getLease4(client_b.config_.lease_.addr_);
-    ASSERT_TRUE(lease_b);
+    ASSERT_TRUE(lease_b.get() != 0);
 
     // Client B should be able to renew its address.
     client_b.setState(Dhcp4Client::RENEWING);
     ASSERT_NO_THROW(client_b.doRequest());
-    ASSERT_TRUE(client_b.getContext().response_);
+    ASSERT_TRUE(client_b.getContext().response_.get() != 0);
     resp_b = client_b.getContext().response_;
     ASSERT_EQ(DHCPACK, static_cast<int>(resp_b->getType()));
     ASSERT_NE(client_b.config_.lease_.addr_, client_a.config_.lease_.addr_);
@@ -575,7 +575,7 @@ DORATest::twoAllocationsOverlapTest(const std::string& hwaddr_a,
     // Client A should also be able to renew its address.
     client_a.setState(Dhcp4Client::RENEWING);
     ASSERT_NO_THROW(client_a.doRequest());
-    ASSERT_TRUE(client_a.getContext().response_);
+    ASSERT_TRUE(client_a.getContext().response_.get() != 0);
     resp_b = client_a.getContext().response_;
     ASSERT_EQ(DHCPACK, static_cast<int>(resp_b->getType()));
     ASSERT_NE(client_a.config_.lease_.addr_, client_b.config_.lease_.addr_);
@@ -593,12 +593,12 @@ DORATest::oneAllocationOverlapTest(const std::string& hwaddr_a,
     configure(DORA_CONFIGS[0], *client_a.getServer());
     ASSERT_NO_THROW(client_a.doDORA());
     // Make sure that the server responded.
-    ASSERT_TRUE(client_a.getContext().response_);
+    ASSERT_TRUE(client_a.getContext().response_.get() != 0);
     Pkt4Ptr resp_a = client_a.getContext().response_;
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp_a->getType()));
     Lease4Ptr lease_a = LeaseMgrFactory::instance().getLease4(client_a.config_.lease_.addr_);
-    ASSERT_TRUE(lease_a);
+    ASSERT_TRUE(lease_a.get() != 0);
 
     // Client B sends a DHCPDISCOVER.
     Dhcp4Client client_b(client_a.getServer(), Dhcp4Client::SELECTING);
@@ -620,13 +620,13 @@ DORATest::oneAllocationOverlapTest(const std::string& hwaddr_a,
     client_b.setState(Dhcp4Client::INIT_REBOOT);
     ASSERT_NO_THROW(client_b.doRequest());
     resp_b = client_b.getContext().response_;
-    ASSERT_TRUE(resp_b);
+    ASSERT_TRUE(resp_b.get() != 0);
     ASSERT_EQ(DHCPNAK, static_cast<int>(resp_b->getType()));
 
     // Client A should also be able to renew its address.
     client_a.setState(Dhcp4Client::RENEWING);
     ASSERT_NO_THROW(client_a.doRequest());
-    ASSERT_TRUE(client_a.getContext().response_);
+    ASSERT_TRUE(client_a.getContext().response_.get() != 0);
     resp_b = client_a.getContext().response_;
     ASSERT_EQ(DHCPACK, static_cast<int>(resp_b->getType()));
     ASSERT_NE(client_a.config_.lease_.addr_, client_b.config_.lease_.addr_);
@@ -706,7 +706,7 @@ TEST_F(DORATest, reservation) {
     ASSERT_NO_THROW(clientA.doDORA(boost::shared_ptr<
                                   IOAddress>(new IOAddress("0.0.0.0"))));
     // Make sure that the server responded.
-    ASSERT_TRUE(clientA.getContext().response_);
+    ASSERT_TRUE(clientA.getContext().response_.get() != 0);
     Pkt4Ptr resp = clientA.getContext().response_;
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
@@ -720,14 +720,14 @@ TEST_F(DORATest, reservation) {
     ASSERT_NO_THROW(clientB.doDORA(boost::shared_ptr<
                                   IOAddress>(new IOAddress("0.0.0.0"))));
     // Make sure that the server responded.
-    ASSERT_TRUE(clientB.getContext().response_);
+    ASSERT_TRUE(clientB.getContext().response_.get() != 0);
     resp = clientB.getContext().response_;
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
     // Obtain the subnet to which the returned address belongs.
     Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->
         selectSubnet(clientB.config_.lease_.addr_);
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     // Make sure that the address has been allocated from the dynamic pool.
     ASSERT_TRUE(subnet->inPool(Lease::TYPE_V4, clientB.config_.lease_.addr_));
 }
@@ -779,7 +779,7 @@ TEST_F(DORATest, reservationsWithConflicts) {
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
                                   IOAddress>(new IOAddress("10.0.0.50"))));
     // Make sure that the server responded.
-    ASSERT_TRUE(client.getContext().response_);
+    ASSERT_TRUE(client.getContext().response_.get() != 0);
     Pkt4Ptr resp = client.getContext().response_;
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
@@ -814,7 +814,7 @@ TEST_F(DORATest, reservationsWithConflicts) {
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
                                   IOAddress>(new IOAddress("0.0.0.0"))));
     // Make sure that the server responded.
-    ASSERT_TRUE(client.getContext().response_);
+    ASSERT_TRUE(client.getContext().response_.get() != 0);
     resp = client.getContext().response_;
     // Make sure that the server has responded with DHCPACK with a reserved
     // address
@@ -847,14 +847,14 @@ TEST_F(DORATest, reservationsWithConflicts) {
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
                                   IOAddress>(new IOAddress("0.0.0.0"))));
     // Make sure that the server responded.
-    ASSERT_TRUE(client.getContext().response_);
+    ASSERT_TRUE(client.getContext().response_.get() != 0);
     resp = client.getContext().response_;
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
     // Obtain the subnet to which the returned address belongs.
     Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->
         selectSubnet(client.config_.lease_.addr_);
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     // Make sure that the address has been allocated from the dynamic pool.
     ASSERT_TRUE(subnet->inPool(Lease::TYPE_V4, client.config_.lease_.addr_));
 
@@ -881,7 +881,7 @@ TEST_F(DORATest, reservationsWithConflicts) {
     // in use by Client A so it offers a different address.
     ASSERT_NO_THROW(clientB.doDORA(boost::shared_ptr<
                                    IOAddress>(new IOAddress("0.0.0.0"))));
-    ASSERT_TRUE(clientB.getContext().response_);
+    ASSERT_TRUE(clientB.getContext().response_.get() != 0);
     ASSERT_EQ(DHCPACK, static_cast<int>(clientB.getContext().response_->getType()));
     IOAddress client_b_addr = clientB.config_.lease_.addr_;
     ASSERT_NE(client_b_addr, in_pool_addr);
@@ -904,7 +904,7 @@ TEST_F(DORATest, reservationsWithConflicts) {
     ASSERT_NO_THROW(clientB.doDORA(boost::shared_ptr<
                                    IOAddress>(new IOAddress("0.0.0.0"))));
     // Make sure that the server responded.
-    ASSERT_TRUE(clientB.getContext().response_);
+    ASSERT_TRUE(clientB.getContext().response_.get() != 0);
     ASSERT_EQ(DHCPACK, static_cast<int>(clientB.getContext().response_->getType()));
     ASSERT_NE(clientB.config_.lease_.addr_, in_pool_addr);
     ASSERT_EQ(client_b_addr, clientB.config_.lease_.addr_);
@@ -915,7 +915,7 @@ TEST_F(DORATest, reservationsWithConflicts) {
     ASSERT_NO_THROW(clientB.doRequest());
     // The server should renew the client's B lease because the address
     // reserved for client B is still in use by the client A.
-    ASSERT_TRUE(clientB.getContext().response_);
+    ASSERT_TRUE(clientB.getContext().response_.get() != 0);
     EXPECT_EQ(DHCPACK, static_cast<int>(clientB.getContext().response_->getType()));
     ASSERT_NE(clientB.config_.lease_.addr_, in_pool_addr);
     ASSERT_EQ(client_b_addr, clientB.config_.lease_.addr_);
@@ -928,7 +928,7 @@ TEST_F(DORATest, reservationsWithConflicts) {
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
                                   IOAddress>(new IOAddress("0.0.0.0"))));
     // Make sure that the server responded.
-    ASSERT_TRUE(client.getContext().response_);
+    ASSERT_TRUE(client.getContext().response_.get() != 0);
     resp = client.getContext().response_;
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
     // The server should have assigned a different address than the one
@@ -936,7 +936,7 @@ TEST_F(DORATest, reservationsWithConflicts) {
     ASSERT_NE(client.config_.lease_.addr_, in_pool_addr);
     subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->
         selectSubnet(client.config_.lease_.addr_);
-    ASSERT_TRUE(subnet);
+    ASSERT_TRUE(subnet.get() != 0);
     ASSERT_TRUE(subnet->inPool(Lease::TYPE_V4, client.config_.lease_.addr_));
 
     // Client B renews again.
@@ -944,7 +944,7 @@ TEST_F(DORATest, reservationsWithConflicts) {
     // The client B should now receive the DHCPNAK from the server because
     // the reserved address is now available and the client should
     // revert to the DHCPDISCOVER to obtain it.
-    ASSERT_TRUE(clientB.getContext().response_);
+    ASSERT_TRUE(clientB.getContext().response_.get() != 0);
     EXPECT_EQ(DHCPNAK, static_cast<int>(clientB.getContext().response_->getType()));
 
     // Client B performs 4-way exchange and obtains a lease for the
@@ -953,7 +953,7 @@ TEST_F(DORATest, reservationsWithConflicts) {
     ASSERT_NO_THROW(clientB.doDORA(boost::shared_ptr<
                                   IOAddress>(new IOAddress("0.0.0.0"))));
     // Make sure that the server responded.
-    ASSERT_TRUE(clientB.getContext().response_);
+    ASSERT_TRUE(clientB.getContext().response_.get() != 0);
     resp = clientB.getContext().response_;
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
     ASSERT_EQ(in_pool_addr, clientB.config_.lease_.addr_);

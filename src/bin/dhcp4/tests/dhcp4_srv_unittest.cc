@@ -358,10 +358,10 @@ TEST_F(Dhcpv4SrvTest, appendServerID) {
 
     // Make sure that the option has been added.
     OptionPtr opt = response->getOption(DHO_DHCP_SERVER_IDENTIFIER);
-    ASSERT_TRUE(opt);
+    ASSERT_TRUE(opt.get() != 0);
     Option4AddrLstPtr opt_server_id =
         boost::dynamic_pointer_cast<Option4AddrLst>(opt);
-    ASSERT_TRUE(opt_server_id);
+    ASSERT_TRUE(opt_server_id.get() != 0);
 
     // The option is represented as a list of IPv4 addresses but with
     // only one address added.
@@ -804,7 +804,7 @@ TEST_F(Dhcpv4SrvTest, RenewBasic) {
 
     // Check that the lease is really in the database
     Lease4Ptr l = LeaseMgrFactory::instance().getLease4(addr);
-    ASSERT_TRUE(l);
+    ASSERT_TRUE(l.get() != 0);
 
     // Check that T1, T2, preferred, valid and cltt really set.
     // Constructed lease looks as if it was assigned 10 seconds ago
@@ -841,7 +841,7 @@ TEST_F(Dhcpv4SrvTest, RenewBasic) {
 
     // Check that the lease is really in the database
     l = checkLease(ack, clientid, req->getHWAddr(), addr);
-    ASSERT_TRUE(l);
+    ASSERT_TRUE(l.get() != 0);
 
     // Check that T1, T2, preferred, valid and cltt were really updated
     EXPECT_EQ(l->t1_, subnet_->getT1());
@@ -973,7 +973,7 @@ TEST_F(Dhcpv4SrvTest, ReleaseBasic) {
 
     // Check that the lease is really in the database
     Lease4Ptr l = LeaseMgrFactory::instance().getLease4(addr);
-    ASSERT_TRUE(l);
+    ASSERT_TRUE(l.get() != 0);
 
     // Let's create a RELEASE
     // Generate client-id also duid_
@@ -1069,7 +1069,7 @@ TEST_F(Dhcpv4SrvTest, ReleaseReject) {
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
     // Check that the lease is really in the database
     Lease4Ptr l = LeaseMgrFactory::instance().getLease4(addr);
-    ASSERT_TRUE(l);
+    ASSERT_TRUE(l.get() != 0);
 
     rel->setHWAddr(bogus_hw);
 
@@ -1077,7 +1077,7 @@ TEST_F(Dhcpv4SrvTest, ReleaseReject) {
 
     // Check that the lease was not removed (due to hardware address mis-match)
     l = LeaseMgrFactory::instance().getLease4(addr);
-    ASSERT_TRUE(l);
+    ASSERT_TRUE(l.get() != 0);
 
     // CASE 3: Lease belongs to a client with different client-id
     SCOPED_TRACE("CASE 3: Lease belongs to a client with different client-id");
@@ -1092,7 +1092,7 @@ TEST_F(Dhcpv4SrvTest, ReleaseReject) {
 
     // Check that the lease is still there
     l = LeaseMgrFactory::instance().getLease4(addr);
-    ASSERT_TRUE(l);
+    ASSERT_TRUE(l.get() != 0);
 
     // Final sanity check. Verify that with valid hw and client-id release is successful
     rel->delOption(DHO_DHCP_CLIENT_IDENTIFIER);
@@ -1154,15 +1154,15 @@ TEST_F(Dhcpv4SrvTest, relayAgentInfoEcho) {
 
     // Make sure that we received a response
     Pkt4Ptr offer = srv.fake_sent_.front();
-    ASSERT_TRUE(offer);
+    ASSERT_TRUE(offer.get() != 0);
 
     // Get Relay Agent Info from query...
     OptionPtr rai_query = dis->getOption(DHO_DHCP_AGENT_OPTIONS);
-    ASSERT_TRUE(rai_query);
+    ASSERT_TRUE(rai_query.get() != 0);
 
     // Get Relay Agent Info from response...
     OptionPtr rai_response = offer->getOption(DHO_DHCP_AGENT_OPTIONS);
-    ASSERT_TRUE(rai_response);
+    ASSERT_TRUE(rai_response.get() != 0);
 
     EXPECT_TRUE(rai_response->equals(rai_query));
 }
@@ -1206,7 +1206,7 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsDocsis) {
 
     // Configure the server and make sure the config is accepted
     EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
 
@@ -1232,25 +1232,25 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsDocsis) {
 
     // Make sure that we received a response
     Pkt4Ptr offer = srv.fake_sent_.front();
-    ASSERT_TRUE(offer);
+    ASSERT_TRUE(offer.get() != 0);
 
     // Get Relay Agent Info from query...
     OptionPtr vendor_opt_response = offer->getOption(DHO_VIVSO_SUBOPTIONS);
-    ASSERT_TRUE(vendor_opt_response);
+    ASSERT_TRUE(vendor_opt_response.get() != 0);
 
     // Check if it's of a correct type
     boost::shared_ptr<OptionVendor> vendor_opt =
         boost::dynamic_pointer_cast<OptionVendor>(vendor_opt_response);
-    ASSERT_TRUE(vendor_opt);
+    ASSERT_TRUE(vendor_opt.get() != 0);
 
     // Get Relay Agent Info from response...
     OptionPtr tftp_servers_generic = vendor_opt->getOption(DOCSIS3_V4_TFTP_SERVERS);
-    ASSERT_TRUE(tftp_servers_generic);
+    ASSERT_TRUE(tftp_servers_generic.get() != 0);
 
     Option4AddrLstPtr tftp_servers =
         boost::dynamic_pointer_cast<Option4AddrLst>(tftp_servers_generic);
 
-    ASSERT_TRUE(tftp_servers);
+    ASSERT_TRUE(tftp_servers.get() != 0);
 
     Option4AddrLst::AddressContainer addrs = tftp_servers->getAddresses();
     ASSERT_EQ(1, addrs.size());
@@ -1356,20 +1356,20 @@ TEST_F(Dhcpv4SrvTest, unpackSubOptions) {
     boost::shared_ptr<OptionInt<uint32_t> > option_foobar =
         boost::dynamic_pointer_cast<OptionInt<uint32_t> >(options.begin()->
                                                           second);
-    ASSERT_TRUE(option_foobar);
+    ASSERT_TRUE(option_foobar.get() != 0);
     EXPECT_EQ(1, option_foobar->getType());
     EXPECT_EQ(0x00010203, option_foobar->getValue());
     // There should be a middle level option held in option_foobar.
     boost::shared_ptr<OptionInt<uint16_t> > option_foo =
         boost::dynamic_pointer_cast<OptionInt<uint16_t> >(option_foobar->
                                                           getOption(1));
-    ASSERT_TRUE(option_foo);
+    ASSERT_TRUE(option_foo.get() != 0);
     EXPECT_EQ(1, option_foo->getType());
     EXPECT_EQ(0x0102, option_foo->getValue());
     // Finally, there should be a low level option under option_foo.
     boost::shared_ptr<OptionInt<uint8_t> > option_bar =
         boost::dynamic_pointer_cast<OptionInt<uint8_t> >(option_foo->getOption(1));
-    ASSERT_TRUE(option_bar);
+    ASSERT_TRUE(option_bar.get() != 0);
     EXPECT_EQ(1, option_bar->getType());
     EXPECT_EQ(0x0, option_bar->getValue());
 }
@@ -1402,7 +1402,7 @@ TEST_F(Dhcpv4SrvTest, unpackEmptyOption) {
     // There should be one option.
     ASSERT_EQ(1, options.size());
     OptionPtr option_empty = options.begin()->second;
-    ASSERT_TRUE(option_empty);
+    ASSERT_TRUE(option_empty.get() != 0);
     EXPECT_EQ(1, option_empty->getType());
     EXPECT_EQ(2, option_empty->len());
 }
@@ -1427,14 +1427,14 @@ TEST_F(Dhcpv4SrvTest, unpackVSIOption) {
     // There should be one option: the VSI
     ASSERT_EQ(1, options.size());
     OptionPtr vsi = options.begin()->second;
-    ASSERT_TRUE(vsi);
+    ASSERT_TRUE(vsi.get() != 0);
     EXPECT_EQ(DHO_VENDOR_ENCAPSULATED_OPTIONS, vsi->getType());
     OptionCollection suboptions = vsi->getOptions();
 
     // There should be one suboption
     ASSERT_EQ(1, suboptions.size());
     OptionPtr eso = suboptions.begin()->second;
-    ASSERT_TRUE(eso);
+    ASSERT_TRUE(eso.get() != 0);
     EXPECT_EQ(0xdc, eso->getType());
     EXPECT_EQ(2, eso->len());
 }
@@ -1462,19 +1462,19 @@ TEST_F(Dhcpv4SrvTest, unpackVIVSIOption) {
     // There should be one option: the VIVSI
     ASSERT_EQ(1, options.size());
     OptionPtr vivsi = options.begin()->second;
-    ASSERT_TRUE(vivsi);
+    ASSERT_TRUE(vivsi.get() != 0);
     EXPECT_EQ(DHO_VIVSO_SUBOPTIONS, vivsi->getType());
 
     // Cast to OptionVendor
     OptionVendorPtr vsi = boost::dynamic_pointer_cast<OptionVendor>(vivsi);
-    ASSERT_TRUE(vsi);
+    ASSERT_TRUE(vsi.get() != 0);
     EXPECT_EQ(2495, vsi->getVendorId());
     OptionCollection suboptions = vsi->getOptions();
 
     // There should be one suboption
     ASSERT_EQ(1, suboptions.size());
     OptionPtr eso = suboptions.begin()->second;
-    ASSERT_TRUE(eso);
+    ASSERT_TRUE(eso.get() != 0);
     EXPECT_EQ(0xdc, eso->getType());
     EXPECT_EQ(2, eso->len());
 }
@@ -1498,7 +1498,7 @@ TEST_F(Dhcpv4SrvTest, siaddrDefault) {
 
     // Pass it to the server and get an offer
     Pkt4Ptr offer = srv->processDiscover(dis);
-    ASSERT_TRUE(offer);
+    ASSERT_TRUE(offer.get() != 0);
 
     // Check if we get response at all
     checkResponse(offer, DHCPOFFER, 1234);
@@ -1524,7 +1524,7 @@ TEST_F(Dhcpv4SrvTest, siaddr) {
 
     // Pass it to the server and get an offer
     Pkt4Ptr offer = srv->processDiscover(dis);
-    ASSERT_TRUE(offer);
+    ASSERT_TRUE(offer.get() != 0);
 
     // Check if we get response at all
     checkResponse(offer, DHCPOFFER, 1234);
@@ -1564,7 +1564,7 @@ TEST_F(Dhcpv4SrvTest, nextServerOverride) {
     CfgMgr::instance().commit();
 
     // check if returned status is OK
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
 
@@ -1576,7 +1576,7 @@ TEST_F(Dhcpv4SrvTest, nextServerOverride) {
 
     // Pass it to the server and get an offer
     Pkt4Ptr offer = srv.processDiscover(dis);
-    ASSERT_TRUE(offer);
+    ASSERT_TRUE(offer.get() != 0);
     EXPECT_EQ(DHCPOFFER, offer->getType());
 
     EXPECT_EQ("1.2.3.4", offer->getSiaddr().toText());
@@ -1612,7 +1612,7 @@ TEST_F(Dhcpv4SrvTest, nextServerGlobal) {
     CfgMgr::instance().commit();
 
     // check if returned status is OK
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
 
@@ -1624,7 +1624,7 @@ TEST_F(Dhcpv4SrvTest, nextServerGlobal) {
 
     // Pass it to the server and get an offer
     Pkt4Ptr offer = srv.processDiscover(dis);
-    ASSERT_TRUE(offer);
+    ASSERT_TRUE(offer.get() != 0);
     EXPECT_EQ(DHCPOFFER, offer->getType());
 
     EXPECT_EQ("192.0.0.1", offer->getSiaddr().toText());
@@ -2156,12 +2156,13 @@ TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveValueChange) {
 
     // Make sure that we received a response
     Pkt4Ptr offer = srv_->fake_sent_.front();
-    ASSERT_TRUE(offer);
+    ASSERT_TRUE(offer.get() != 0);
 
     // Get client-id...
     HWAddrPtr hwaddr = offer->getHWAddr();
 
-    ASSERT_TRUE(hwaddr); // basic sanity check. HWAddr is always present
+    // basic sanity check. HWAddr is always present
+    ASSERT_TRUE(hwaddr.get() != 0);
 
     // ... and check if it is the modified value
     ASSERT_FALSE(hwaddr->hwaddr_.empty()); // there must be a MAC address
@@ -2261,7 +2262,7 @@ TEST_F(HooksDhcpv4SrvTest, valueChange_pkt4_receive) {
 
     // Make sure that we received a response
     Pkt4Ptr adv = srv_->fake_sent_.front();
-    ASSERT_TRUE(adv);
+    ASSERT_TRUE(adv.get() != 0);
 
     // Get client-id...
     OptionPtr clientid = adv->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
@@ -2390,7 +2391,7 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendValueChange) {
 
     // Make sure that we received a response
     Pkt4Ptr adv = srv_->fake_sent_.front();
-    ASSERT_TRUE(adv);
+    ASSERT_TRUE(adv.get() != 0);
 
     // Get client-id...
     OptionPtr clientid = adv->getOption(DHO_DHCP_SERVER_IDENTIFIER);
@@ -2429,7 +2430,7 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendDeleteServerId) {
 
     // Get that ADVERTISE
     Pkt4Ptr adv = srv_->fake_sent_.front();
-    ASSERT_TRUE(adv);
+    ASSERT_TRUE(adv.get() != 0);
 
     // Make sure that it does not have server-id
     EXPECT_FALSE(adv->getOption(DHO_DHCP_SERVER_IDENTIFIER));
@@ -2594,7 +2595,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectSimple) {
 
     // Configure the server and make sure the config is accepted
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
 
@@ -2609,7 +2610,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectSimple) {
     Pkt4Ptr adv = srv_->processDiscover(sol);
 
     // check if we get response at all
-    ASSERT_TRUE(adv);
+    ASSERT_TRUE(adv.get() != 0);
 
     // Check that the callback called is indeed the one we installed
     EXPECT_EQ("subnet4_select", callback_name_);
@@ -2622,7 +2623,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectSimple) {
 
     // The server is supposed to pick the first subnet, because of matching
     // interface. Check that the value is reported properly.
-    ASSERT_TRUE(callback_subnet4_);
+    ASSERT_TRUE(callback_subnet4_.get() != 0);
     EXPECT_EQ(exp_subnets->front().get(), callback_subnet4_.get());
 
     // Server is supposed to report two subnets
@@ -2665,7 +2666,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectChange) {
 
     // Configure the server and make sure the config is accepted
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status.get() != 0);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
 
@@ -2682,7 +2683,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectChange) {
     Pkt4Ptr adv = srv_->processDiscover(sol);
 
     // check if we get response at all
-    ASSERT_TRUE(adv);
+    ASSERT_TRUE(adv.get() != 0);
 
     // The response should have an address from second pool, so let's check it
     IOAddress addr = adv->getYiaddr();
@@ -2733,7 +2734,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSimple) {
 
     // Check that the lease is really in the database
     Lease4Ptr l = LeaseMgrFactory::instance().getLease4(addr);
-    ASSERT_TRUE(l);
+    ASSERT_TRUE(l.get() != 0);
 
     // Let's create a RENEW
     Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
@@ -2754,7 +2755,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSimple) {
 
     // Check that the lease is really in the database
     l = checkLease(ack, clientid, req->getHWAddr(), addr);
-    ASSERT_TRUE(l);
+    ASSERT_TRUE(l.get() != 0);
 
     // Check that T1, T2, preferred, valid and cltt were really updated
     EXPECT_EQ(l->t1_, subnet_->getT1());
@@ -2765,15 +2766,15 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSimple) {
     EXPECT_EQ("lease4_renew", callback_name_);
 
     // Check that hwaddr parameter is passed properly
-    ASSERT_TRUE(callback_hwaddr_);
+    ASSERT_TRUE(callback_hwaddr_.get() != 0);
     EXPECT_TRUE(*callback_hwaddr_ == *req->getHWAddr());
 
     // Check that the subnet is passed properly
-    ASSERT_TRUE(callback_subnet4_);
+    ASSERT_TRUE(callback_subnet4_.get() != 0);
     EXPECT_EQ(callback_subnet4_->toText(), subnet_->toText());
 
-    ASSERT_TRUE(callback_clientid_);
-    ASSERT_TRUE(client_id_);
+    ASSERT_TRUE(callback_clientid_.get() != 0);
+    ASSERT_TRUE(client_id_.get() != 0);
     EXPECT_TRUE(*client_id_ == *callback_clientid_);
 
     // Check if all expected parameters were really received
@@ -2822,7 +2823,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSkip) {
 
     // Check that the lease is really in the database
     Lease4Ptr l = LeaseMgrFactory::instance().getLease4(addr);
-    ASSERT_TRUE(l);
+    ASSERT_TRUE(l.get() != 0);
 
     // Check that T1, T2, preferred, valid and cltt really set.
     // Constructed lease looks as if it was assigned 10 seconds ago
@@ -2844,11 +2845,11 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSkip) {
 
     // Pass it to the server and hope for a REPLY
     Pkt4Ptr ack = srv_->processRequest(req);
-    ASSERT_TRUE(ack);
+    ASSERT_TRUE(ack.get() != 0);
 
     // Check that the lease is really in the database
     l = checkLease(ack, clientid, req->getHWAddr(), addr);
-    ASSERT_TRUE(l);
+    ASSERT_TRUE(l.get() != 0);
 
     // Check that T1, T2, valid and cltt were NOT updated
     EXPECT_EQ(temp_t1, l->t1_);
@@ -2891,7 +2892,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimple) {
 
     // Check that the lease is really in the database
     Lease4Ptr l = LeaseMgrFactory::instance().getLease4(addr);
-    ASSERT_TRUE(l);
+    ASSERT_TRUE(l.get() != 0);
 
     // Let's create a RELEASE
     // Generate client-id also duid_
@@ -2978,7 +2979,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
 
     // Check that the lease is really in the database
     Lease4Ptr l = LeaseMgrFactory::instance().getLease4(addr);
-    ASSERT_TRUE(l);
+    ASSERT_TRUE(l.get() != 0);
 
     // Let's create a RELEASE
     // Generate client-id also duid_
@@ -2995,11 +2996,11 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
 
     // The lease should be still there
     l = LeaseMgrFactory::instance().getLease4(addr);
-    EXPECT_TRUE(l);
+    EXPECT_TRUE(l.get() != 0);
 
     // Try by client-id/subnet-id
     l = LeaseMgrFactory::instance().getLease4(*client_id_, subnet_->getID());
-    EXPECT_TRUE(l);
+    EXPECT_TRUE(l.get() != 0);
 
     // Try to get the lease by hardware address
     // @todo: Uncomment this once trac2592 is implemented
@@ -3021,14 +3022,14 @@ TEST_F(Dhcpv4SrvTest, docsisVendorOptionsParse) {
 
     // Check if the packet contain
     OptionPtr opt = dis->getOption(DHO_VIVSO_SUBOPTIONS);
-    ASSERT_TRUE(opt);
+    ASSERT_TRUE(opt.get() != 0);
 
     boost::shared_ptr<OptionVendor> vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
-    ASSERT_TRUE(vendor);
+    ASSERT_TRUE(vendor.get() != 0);
 
     // This particular capture that we have included options 1 and 5
-    EXPECT_TRUE(vendor->getOption(1));
-    EXPECT_TRUE(vendor->getOption(5));
+    EXPECT_TRUE(vendor->getOption(1).get() != 0);
+    EXPECT_TRUE(vendor->getOption(5).get() != 0);
 
     // It did not include options any other options
     EXPECT_FALSE(vendor->getOption(2));
@@ -3045,16 +3046,16 @@ TEST_F(Dhcpv4SrvTest, docsisVendorORO) {
 
     // Check if the packet contains vendor specific information option
     OptionPtr opt = dis->getOption(DHO_VIVSO_SUBOPTIONS);
-    ASSERT_TRUE(opt);
+    ASSERT_TRUE(opt.get() != 0);
 
     boost::shared_ptr<OptionVendor> vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
-    ASSERT_TRUE(vendor);
+    ASSERT_TRUE(vendor.get() != 0);
 
     opt = vendor->getOption(DOCSIS3_V4_ORO);
-    ASSERT_TRUE(opt);
+    ASSERT_TRUE(opt.get() != 0);
 
     OptionUint8ArrayPtr oro = boost::dynamic_pointer_cast<OptionUint8Array>(opt);
-    EXPECT_TRUE(oro);
+    EXPECT_TRUE(oro.get() != 0);
 }
 
 // This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
@@ -3091,7 +3092,7 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsORO) {
     ElementPtr json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(x = configureDhcp4Server(srv, json));
-    ASSERT_TRUE(x);
+    ASSERT_TRUE(x.get() != 0);
     comment_ = isc::config::parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
 
@@ -3111,7 +3112,7 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsORO) {
     Pkt4Ptr offer = srv.processDiscover(dis);
 
     // check if we get response at all
-    ASSERT_TRUE(offer);
+    ASSERT_TRUE(offer.get() != 0);
 
     // We did not include any vendor opts in DISCOVER, so there should be none
     // in OFFER.
@@ -3128,22 +3129,22 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsORO) {
 
     // Need to process SOLICIT again after requesting new option.
     offer = srv.processDiscover(dis);
-    ASSERT_TRUE(offer);
+    ASSERT_TRUE(offer.get() != 0);
 
     // Check if there is a vendor option response
     OptionPtr tmp = offer->getOption(DHO_VIVSO_SUBOPTIONS);
-    ASSERT_TRUE(tmp);
+    ASSERT_TRUE(tmp.get() != 0);
 
     // The response should be OptionVendor object
     boost::shared_ptr<OptionVendor> vendor_resp =
         boost::dynamic_pointer_cast<OptionVendor>(tmp);
-    ASSERT_TRUE(vendor_resp);
+    ASSERT_TRUE(vendor_resp.get() != 0);
 
     OptionPtr docsis2 = vendor_resp->getOption(DOCSIS3_V4_TFTP_SERVERS);
-    ASSERT_TRUE(docsis2);
+    ASSERT_TRUE(docsis2.get() != 0);
 
     Option4AddrLstPtr tftp_srvs = boost::dynamic_pointer_cast<Option4AddrLst>(docsis2);
-    ASSERT_TRUE(tftp_srvs);
+    ASSERT_TRUE(tftp_srvs.get() != 0);
 
     Option4AddrLst::AddressContainer addrs = tftp_srvs->getAddresses();
     ASSERT_EQ(2, addrs.size());
@@ -3193,13 +3194,13 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsDocsisDefinitions) {
 
     // This should fail (missing option definition)
     EXPECT_NO_THROW(x = configureDhcp4Server(srv, json_bogus));
-    ASSERT_TRUE(x);
+    ASSERT_TRUE(x.get() != 0);
     comment_ = isc::config::parseAnswer(rcode_, x);
     ASSERT_EQ(1, rcode_);
 
     // This should work (option definition present)
     EXPECT_NO_THROW(x = configureDhcp4Server(srv, json_valid));
-    ASSERT_TRUE(x);
+    ASSERT_TRUE(x.get() != 0);
     comment_ = isc::config::parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
 }
@@ -3285,7 +3286,7 @@ TEST_F(Dhcpv4SrvTest, clientClassify2) {
     dis->addClass("foo");
 
     // This time it should work
-    EXPECT_TRUE(srv_.selectSubnet(dis));
+    EXPECT_TRUE(srv_.selectSubnet(dis).get() != 0);
 }
 
 // Checks if relay IP address specified in the relay-info structure in
@@ -3326,8 +3327,8 @@ TEST_F(Dhcpv4SrvTest, relayOverride) {
     // Let's get them for easy reference
     Subnet4Ptr subnet1 = (*subnets)[0];
     Subnet4Ptr subnet2 = (*subnets)[1];
-    ASSERT_TRUE(subnet1);
-    ASSERT_TRUE(subnet2);
+    ASSERT_TRUE(subnet1.get() != 0);
+    ASSERT_TRUE(subnet2.get() != 0);
 
     // Let's create a packet.
     Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
@@ -3404,8 +3405,8 @@ TEST_F(Dhcpv4SrvTest, relayOverrideAndClientClass) {
     // Let's get them for easy reference
     Subnet4Ptr subnet1 = (*subnets)[0];
     Subnet4Ptr subnet2 = (*subnets)[1];
-    ASSERT_TRUE(subnet1);
-    ASSERT_TRUE(subnet2);
+    ASSERT_TRUE(subnet1.get() != 0);
+    ASSERT_TRUE(subnet2.get() != 0);
 
     // Let's create a packet.
     Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
