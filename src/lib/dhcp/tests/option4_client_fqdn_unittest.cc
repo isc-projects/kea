@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -36,7 +36,7 @@ TEST(Option4ClientFqdnTest, constructEmptyName) {
                                            "",
                                            Option4ClientFqdn::PARTIAL))
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
     EXPECT_FALSE(option->getFlag(Option4ClientFqdn::FLAG_O));
     EXPECT_FALSE(option->getFlag(Option4ClientFqdn::FLAG_N));
     EXPECT_TRUE(option->getFlag(Option4ClientFqdn::FLAG_S));
@@ -66,7 +66,7 @@ TEST(Option4ClientFqdnTest, constructEmptyName) {
                                            Option4ClientFqdn::FLAG_E,
                                            Option4ClientFqdn::RCODE_SERVER()))
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
     EXPECT_TRUE(option->getFlag(Option4ClientFqdn::FLAG_O));
     EXPECT_TRUE(option->getFlag(Option4ClientFqdn::FLAG_E));
     EXPECT_FALSE(option->getFlag(Option4ClientFqdn::FLAG_N));
@@ -88,14 +88,14 @@ TEST(Option4ClientFqdnTest, copyConstruct) {
                                            "myhost.example.com",
                                            Option4ClientFqdn::FULL))
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // Use copy constructor to create a second instance of the option.
     boost::scoped_ptr<Option4ClientFqdn> option_copy;
     ASSERT_NO_THROW(
         option_copy.reset(new Option4ClientFqdn(*option))
     );
-    ASSERT_TRUE(option_copy);
+    ASSERT_TRUE(option_copy.get() != 0);
 
     // Copy construction should result in no shared resources between
     // two objects. In particular, pointer to implementation should not
@@ -121,13 +121,13 @@ TEST(Option4ClientFqdnTest, copyConstruct) {
                                            "example",
                                            Option4ClientFqdn::PARTIAL))
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // Call copy-constructor to copy the option.
     ASSERT_NO_THROW(
         option_copy.reset(new Option4ClientFqdn(*option))
     );
-    ASSERT_TRUE(option_copy);
+    ASSERT_TRUE(option_copy.get() != 0);
 
     option.reset();
 
@@ -159,7 +159,7 @@ TEST(Option4ClientFqdnTest, constructFromWire) {
     ASSERT_NO_THROW(
         option.reset(new Option4ClientFqdn(in_buf.begin(), in_buf.end()))
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     EXPECT_TRUE(option->getFlag(Option4ClientFqdn::FLAG_S));
     EXPECT_TRUE(option->getFlag(Option4ClientFqdn::FLAG_E));
@@ -191,7 +191,7 @@ TEST(Option4ClientFqdnTest, constructFromWireASCII) {
     ASSERT_NO_THROW(
         option.reset(new Option4ClientFqdn(in_buf.begin(), in_buf.end()))
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     EXPECT_TRUE(option->getFlag(Option4ClientFqdn::FLAG_S));
     EXPECT_FALSE(option->getFlag(Option4ClientFqdn::FLAG_E));
@@ -269,7 +269,7 @@ TEST(Option4ClientFqdnTest, constructFromWirePartial) {
     ASSERT_NO_THROW(
         option.reset(new Option4ClientFqdn(in_buf.begin(), in_buf.end()))
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     EXPECT_FALSE(option->getFlag(Option4ClientFqdn::FLAG_S));
     EXPECT_TRUE(option->getFlag(Option4ClientFqdn::FLAG_E));
@@ -298,7 +298,7 @@ TEST(Option4ClientFqdnTest, constructFromWirePartialASCII) {
     ASSERT_NO_THROW(
         option.reset(new Option4ClientFqdn(in_buf.begin(), in_buf.end()))
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     EXPECT_FALSE(option->getFlag(Option4ClientFqdn::FLAG_S));
     EXPECT_FALSE(option->getFlag(Option4ClientFqdn::FLAG_E));
@@ -319,7 +319,7 @@ TEST(Option4ClientFqdnTest, constructFromWireEmpty) {
     ASSERT_NO_THROW(
         option.reset(new Option4ClientFqdn(in_buf.begin(), in_buf.end()))
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // domain-name field should be empty because on-wire data comprised
     // flags field only.
@@ -485,7 +485,7 @@ TEST(Option4ClientFqdnTest, getFlag) {
                                            Option4ClientFqdn::RCODE_CLIENT(),
                                            "myhost.example.com"))
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // The value of 0x3 (binary 0011) is invalid because it specifies two bits
     // in the flags field which value is to be checked.
@@ -502,7 +502,7 @@ TEST(Option4ClientFqdnTest, setFlag) {
                                            Option4ClientFqdn::RCODE_CLIENT(),
                                            "myhost.example.com"))
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // All flags should be set to 0 initially.
     ASSERT_FALSE(option->getFlag(Option4ClientFqdn::FLAG_N));
@@ -568,7 +568,7 @@ TEST(Option4ClientFqdnTest, resetFlags) {
                                            "myhost.example.com",
                                            Option4ClientFqdn::FULL))
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // Check that flags we set in the constructor are set.
     ASSERT_TRUE(option->getFlag(Option4ClientFqdn::FLAG_S));
@@ -596,7 +596,7 @@ TEST(Option4ClientFqdnTest, setDomainName) {
                                            "myhost.example.com",
                                            Option4ClientFqdn::FULL))
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
     ASSERT_EQ("myhost.example.com.", option->getDomainName());
     ASSERT_EQ(Option4ClientFqdn::FULL, option->getDomainNameType());
 
@@ -634,7 +634,7 @@ TEST(Option4ClientFqdnTest, resetDomainName) {
                                            "myhost.example.com",
                                            Option4ClientFqdn::FULL))
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
     ASSERT_EQ("myhost.example.com.", option->getDomainName());
     ASSERT_EQ(Option4ClientFqdn::FULL, option->getDomainNameType());
 
@@ -653,7 +653,7 @@ TEST(Option4ClientFqdnTest, pack) {
                                            Option4ClientFqdn::RCODE_CLIENT(),
                                            "myhost.example.com"))
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // Prepare on-wire format of the option.
     isc::util::OutputBuffer buf(10);
@@ -686,7 +686,7 @@ TEST(Option4ClientFqdnTest, packASCII) {
                                            Option4ClientFqdn::RCODE_CLIENT(),
                                            "myhost.example.com"))
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // Prepare on-wire format of the option.
     isc::util::OutputBuffer buf(10);
@@ -723,7 +723,7 @@ TEST(Option4ClientFqdnTest, packPartial) {
                                            "myhost",
                                            Option4ClientFqdn::PARTIAL))
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // Prepare on-wire format of the option.
     isc::util::OutputBuffer buf(10);
@@ -755,7 +755,7 @@ TEST(Option4ClientFqdnTest, packEmpty) {
         option.reset(new Option4ClientFqdn(flags,
                                            Option4ClientFqdn::RCODE_CLIENT()))
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // Prepare on-wire format of the option.
     isc::util::OutputBuffer buf(10);
@@ -788,7 +788,7 @@ TEST(Option4ClientFqdnTest, unpack) {
                                            "myhost",
                                            Option4ClientFqdn::PARTIAL))
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
     // Make sure that the parameters have been set correctly. Later in this
     // test we will check that they will be replaced with new values when
     // unpack is called.
@@ -833,7 +833,7 @@ TEST(Option4ClientFqdnTest, unpackPartial) {
                                            Option4ClientFqdn::RCODE_CLIENT(),
                                            "myhost.example.com"))
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
     // Make sure that the parameters have been set correctly. Later in this
     // test we will check that they will be replaced with new values when
     // unpack is called.
@@ -874,7 +874,7 @@ TEST(Option4ClientFqdnTest, unpackTruncated) {
                                            Option4ClientFqdn::FLAG_E,
                                            Option4ClientFqdn::RCODE_CLIENT()))
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // Empty buffer is invalid. It should be at least 1 octet long.
     OptionBuffer in_buf;
@@ -893,7 +893,7 @@ TEST(Option4ClientFqdnTest, toText) {
                                            Option4ClientFqdn::RCODE_CLIENT(),
                                            "myhost.example.com"))
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // The base indentation of the option will be set to 2. It should appear
     // as follows.
@@ -930,7 +930,7 @@ TEST(Option4ClientFqdnTest, len) {
                                            Option4ClientFqdn::RCODE_CLIENT(),
                                            "myhost.example.com"))
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
     // This option comprises a header (2 octets), flag field (1 octet),
     // RCODE1 and RCODE2 (2 octets) and wire representation of the
     // domain name (length equal to the length of the string representation
@@ -944,7 +944,7 @@ TEST(Option4ClientFqdnTest, len) {
                                            Option4ClientFqdn::RCODE_CLIENT(),
                                            "example.com"))
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
     EXPECT_EQ(18, option->len());
 
     ASSERT_NO_THROW(
@@ -953,7 +953,7 @@ TEST(Option4ClientFqdnTest, len) {
                                            "myhost",
                                            Option4ClientFqdn::PARTIAL))
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
     EXPECT_EQ(12, option->len());
 
     // Another test for partial domain name but this time the domain name
@@ -964,7 +964,7 @@ TEST(Option4ClientFqdnTest, len) {
                                            "myhost.example",
                                            Option4ClientFqdn::PARTIAL))
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
     EXPECT_EQ(20, option->len());
 
 }
@@ -978,7 +978,7 @@ TEST(Option4ClientFqdnTest, lenAscii) {
         option.reset(new Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
                                            "myhost.example.com"))
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // This option comprises a header (2 octets), flag field (1 octet),
     // RCODE1 and RCODE2 (2 octets) and the domain name in the ASCII format.
@@ -991,7 +991,7 @@ TEST(Option4ClientFqdnTest, lenAscii) {
         option.reset(new Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
                                            "example.com"))
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     EXPECT_EQ(17, option->len());
 
@@ -1002,7 +1002,7 @@ TEST(Option4ClientFqdnTest, lenAscii) {
                                            "myhost",
                                            Option4ClientFqdn::PARTIAL))
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // For partial names, there is no terminating dot, so the length of the
     // domain name is equal to the length of the "myhost".
@@ -1015,7 +1015,7 @@ TEST(Option4ClientFqdnTest, lenAscii) {
                                            "myhost.example",
                                            Option4ClientFqdn::PARTIAL))
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     EXPECT_EQ(19, option->len());
 
@@ -1027,7 +1027,7 @@ TEST(Option4ClientFqdnTest, lenAscii) {
         option.reset(new Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
                                            "", Option4ClientFqdn::PARTIAL))
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     EXPECT_EQ(5, option->len());
 }

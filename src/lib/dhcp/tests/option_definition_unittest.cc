@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -372,7 +372,7 @@ TEST_F(OptionDefinitionTest, ipv6AddressArray) {
     ASSERT_TRUE(typeid(*option_v6) == typeid(Option6AddrLst));
     boost::shared_ptr<Option6AddrLst> option_cast_v6 =
         boost::static_pointer_cast<Option6AddrLst>(option_v6);
-    ASSERT_TRUE(option_cast_v6);
+    ASSERT_TRUE(option_cast_v6.get() != 0);
     // Get the list of parsed addresses from the option object.
     std::vector<asiolink::IOAddress> addrs_returned =
         option_cast_v6->getAddresses();
@@ -423,13 +423,13 @@ TEST_F(OptionDefinitionTest, ipv6AddressArrayTokenized) {
     );
     // Non-null pointer option is supposed to be returned and it
     // should have Option6AddrLst type.
-    ASSERT_TRUE(option_v6);
+    ASSERT_TRUE(option_v6.get() != 0);
     ASSERT_TRUE(typeid(*option_v6) == typeid(Option6AddrLst));
     // Cast to the actual option type to get IPv6 addresses from it.
     boost::shared_ptr<Option6AddrLst> option_cast_v6 =
         boost::static_pointer_cast<Option6AddrLst>(option_v6);
     // Check that cast was successful.
-    ASSERT_TRUE(option_cast_v6);
+    ASSERT_TRUE(option_cast_v6.get() != 0);
     // Get the list of parsed addresses from the option object.
     std::vector<asiolink::IOAddress> addrs_returned =
         option_cast_v6->getAddresses();
@@ -518,13 +518,13 @@ TEST_F(OptionDefinitionTest, ipv4AddressArrayTokenized) {
     );
     // Non-null pointer option is supposed to be returned and it
     // should have Option6AddrLst type.
-    ASSERT_TRUE(option_v4);
+    ASSERT_TRUE(option_v4.get() != 0);
     ASSERT_TRUE(typeid(*option_v4) == typeid(Option4AddrLst));
     // Cast to the actual option type to get IPv4 addresses from it.
     boost::shared_ptr<Option4AddrLst> option_cast_v4 =
         boost::static_pointer_cast<Option4AddrLst>(option_v4);
     // Check that cast was successful.
-    ASSERT_TRUE(option_cast_v4);
+    ASSERT_TRUE(option_cast_v4.get() != 0);
     // Get the list of parsed addresses from the option object.
     std::vector<asiolink::IOAddress> addrs_returned =
         option_cast_v4->getAddresses();
@@ -592,7 +592,7 @@ TEST_F(OptionDefinitionTest, emptyWithSuboptions) {
     EXPECT_EQ(4, option_v6->getHeaderLen());
     // This option should have one suboption with the code of 1025.
     OptionPtr subopt_v6 = option_v6->getOption(1025);
-    EXPECT_TRUE(subopt_v6);
+    EXPECT_TRUE(subopt_v6.get() != 0);
     // Check that this suboption holds valid data.
     EXPECT_EQ(1025, subopt_v6->getType());
     EXPECT_EQ(Option::V6, subopt_v6->getUniverse());
@@ -1180,7 +1180,7 @@ TEST_F(OptionDefinitionTest, utf8StringTokenized) {
     EXPECT_NO_THROW(
         option_v6 = opt_def.optionFactory(Option::V6, opt_code, values);
     );
-    ASSERT_TRUE(option_v6);
+    ASSERT_TRUE(option_v6.get() != 0);
     ASSERT_TRUE(typeid(*option_v6) == typeid(OptionString));
     OptionStringPtr option_v6_string =
         boost::static_pointer_cast<OptionString>(option_v6);

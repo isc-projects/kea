@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -184,7 +184,7 @@ protected:
             isc_throw(isc::Unexpected, "failed to create UNIX domain socket" <<
                       strerror(errno));
         }
-        if (bind(listen_fd_, convertSockAddr(&test_un_), test_un_len_) == -1) {
+        if (::bind(listen_fd_, convertSockAddr(&test_un_), test_un_len_) == -1) {
             isc_throw(isc::Unexpected, "failed to bind UNIX domain socket" <<
                       strerror(errno));
         }

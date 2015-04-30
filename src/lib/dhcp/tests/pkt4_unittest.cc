@@ -215,50 +215,50 @@ public:
     ///
     /// @param pkt A packet holding parsed options.
     void verifyParsedOptions(const Pkt4Ptr& pkt) {
-        EXPECT_TRUE(pkt->getOption(12));
-        EXPECT_TRUE(pkt->getOption(60));
-        EXPECT_TRUE(pkt->getOption(14));
-        EXPECT_TRUE(pkt->getOption(128));
-        EXPECT_TRUE(pkt->getOption(254));
+        EXPECT_TRUE(pkt->getOption(12).get() != 0);
+        EXPECT_TRUE(pkt->getOption(60).get() != 0);
+        EXPECT_TRUE(pkt->getOption(14).get() != 0);
+        EXPECT_TRUE(pkt->getOption(128).get() != 0);
+        EXPECT_TRUE(pkt->getOption(254).get() != 0);
 
         boost::shared_ptr<Option> x = pkt->getOption(12);
-        ASSERT_TRUE(x); // option 1 should exist
+        ASSERT_TRUE(x.get() != 0); // option 1 should exist
         // Option 12 is represented by the OptionString class so let's do
         // the appropriate conversion.
         OptionStringPtr option12 = boost::static_pointer_cast<OptionString>(x);
-        ASSERT_TRUE(option12);
+        ASSERT_TRUE(option12.get() != 0);
         EXPECT_EQ(12, option12->getType());  // this should be option 12
         ASSERT_EQ(3, option12->getValue().length()); // it should be of length 3
         EXPECT_EQ(5, option12->len()); // total option length 5
         EXPECT_EQ(0, memcmp(&option12->getValue()[0], v4_opts + 2, 3)); // data len=3
 
         x = pkt->getOption(14);
-        ASSERT_TRUE(x); // option 14 should exist
+        ASSERT_TRUE(x.get() != 0); // option 14 should exist
         // Option 14 is represented by the OptionString class so let's do
         // the appropriate conversion.
         OptionStringPtr option14 = boost::static_pointer_cast<OptionString>(x);
-        ASSERT_TRUE(option14);
+        ASSERT_TRUE(option14.get() != 0);
         EXPECT_EQ(14, option14->getType());  // this should be option 14
         ASSERT_EQ(3, option14->getValue().length()); // it should be of length 3
         EXPECT_EQ(5, option14->len()); // total option length 5
         EXPECT_EQ(0, memcmp(&option14->getValue()[0], v4_opts + 7, 3)); // data len=3
 
         x = pkt->getOption(60);
-        ASSERT_TRUE(x); // option 60 should exist
+        ASSERT_TRUE(x.get() != 0); // option 60 should exist
         EXPECT_EQ(60, x->getType());  // this should be option 60
         ASSERT_EQ(3, x->getData().size()); // it should be of length 3
         EXPECT_EQ(5, x->len()); // total option length 5
         EXPECT_EQ(0, memcmp(&x->getData()[0], v4_opts + 15, 3)); // data len=3
 
         x = pkt->getOption(128);
-        ASSERT_TRUE(x); // option 3 should exist
+        ASSERT_TRUE(x.get() != 0); // option 3 should exist
         EXPECT_EQ(128, x->getType());  // this should be option 254
         ASSERT_EQ(3, x->getData().size()); // it should be of length 3
         EXPECT_EQ(5, x->len()); // total option length 5
         EXPECT_EQ(0, memcmp(&x->getData()[0], v4_opts + 20, 3)); // data len=3
 
         x = pkt->getOption(254);
-        ASSERT_TRUE(x); // option 3 should exist
+        ASSERT_TRUE(x.get() != 0); // option 3 should exist
         EXPECT_EQ(254, x->getType());  // this should be option 254
         ASSERT_EQ(3, x->getData().size()); // it should be of length 3
         EXPECT_EQ(5, x->len()); // total option length 5
@@ -583,12 +583,12 @@ TEST_F(Pkt4Test, options) {
     pkt->addOption(opt4);
     pkt->addOption(opt5);
 
-    EXPECT_TRUE(pkt->getOption(12));
-    EXPECT_TRUE(pkt->getOption(60));
-    EXPECT_TRUE(pkt->getOption(14));
-    EXPECT_TRUE(pkt->getOption(128));
-    EXPECT_TRUE(pkt->getOption(254));
-    EXPECT_FALSE(pkt->getOption(127)); //  no such option
+    EXPECT_TRUE(pkt->getOption(12).get() != 0);
+    EXPECT_TRUE(pkt->getOption(60).get() != 0);
+    EXPECT_TRUE(pkt->getOption(14).get() != 0);
+    EXPECT_TRUE(pkt->getOption(128).get() != 0);
+    EXPECT_TRUE(pkt->getOption(254).get() != 0);
+    EXPECT_FALSE(pkt->getOption(127).get() != 0); //  no such option
 
     // Options are unique in DHCPv4. It should not be possible
     // to add more than one option of the same type.
@@ -618,7 +618,7 @@ TEST_F(Pkt4Test, options) {
     EXPECT_EQ(DHO_END, static_cast<uint8_t>(*(ptr + sizeof(v4_opts))));
 
     // delOption() checks
-    EXPECT_TRUE(pkt->getOption(12));  // Sanity check: option 12 is still there
+    EXPECT_TRUE(pkt->getOption(12).get() != 0);  // Sanity check: option 12 is still there
     EXPECT_TRUE(pkt->delOption(12));  // We should be able to remove it
     EXPECT_FALSE(pkt->getOption(12)); // It should not be there anymore
     EXPECT_FALSE(pkt->delOption(12)); // And removal should fail
@@ -783,7 +783,7 @@ TEST_F(Pkt4Test, hwaddrSrcRemote) {
     const uint8_t hw_type2 = 234;
     EXPECT_NO_THROW(pkt->setLocalHWAddr(hw_type2, sizeof(dst_hw2), dst_hw_vec));
     HWAddrPtr local_addr = pkt->getLocalHWAddr();
-    ASSERT_TRUE(local_addr);
+    ASSERT_TRUE(local_addr.get() != 0);
     EXPECT_EQ(hw_type2, local_addr->htype_);
     EXPECT_TRUE(std::equal(dst_hw_vec.begin(), dst_hw_vec.end(),
                            local_addr->hwaddr_.begin()));
@@ -793,7 +793,7 @@ TEST_F(Pkt4Test, hwaddrSrcRemote) {
     std::vector<uint8_t> src_hw_vec(src_hw2, src_hw2 + sizeof(src_hw2));
     EXPECT_NO_THROW(pkt->setRemoteHWAddr(hw_type2, sizeof(src_hw2), src_hw_vec));
     HWAddrPtr remote_addr = pkt->getRemoteHWAddr();
-    ASSERT_TRUE(remote_addr);
+    ASSERT_TRUE(remote_addr.get() != 0);
     EXPECT_EQ(hw_type2, remote_addr->htype_);
     EXPECT_TRUE(std::equal(src_hw_vec.begin(), src_hw_vec.end(),
                            remote_addr->hwaddr_.begin()));
@@ -870,8 +870,8 @@ TEST_F(Pkt4Test, getMAC) {
     pkt.setRemoteHWAddr(dummy_hwaddr);
 
     // Now we should be able to get something
-    ASSERT_TRUE(pkt.getMAC(HWAddr::HWADDR_SOURCE_ANY));
-    ASSERT_TRUE(pkt.getMAC(HWAddr::HWADDR_SOURCE_RAW));
+    ASSERT_TRUE(pkt.getMAC(HWAddr::HWADDR_SOURCE_ANY).get() != 0);
+    ASSERT_TRUE(pkt.getMAC(HWAddr::HWADDR_SOURCE_RAW).get() != 0);
 
     // Check that the returned MAC is indeed the expected one
     ASSERT_TRUE(*dummy_hwaddr == *pkt.getMAC(HWAddr::HWADDR_SOURCE_ANY));

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -288,7 +288,7 @@ TEST_F(Option6IATest, suboptions_unpack) {
         ia.reset(new Option6IA(D6O_IA_NA, buf_.begin() + 4,
                                buf_.begin() + sizeof(expected)));
     );
-    ASSERT_TRUE(ia);
+    ASSERT_TRUE(ia.get() != 0);
 
     EXPECT_EQ(D6O_IA_NA, ia->getType());
     EXPECT_EQ(0x13579ace, ia->getIAID());
@@ -310,7 +310,7 @@ TEST_F(Option6IATest, suboptions_unpack) {
 
     // Checks for dummy option
     subopt = ia->getOption(0xcafe);
-    ASSERT_TRUE(subopt); // should be non-NULL
+    ASSERT_TRUE(subopt.get() != 0); // should be non-NULL
 
     EXPECT_EQ(0xcafe, subopt->getType());
     EXPECT_EQ(4, subopt->len());

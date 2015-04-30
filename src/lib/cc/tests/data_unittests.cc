@@ -1,4 +1,4 @@
-// Copyright (C) 2009, 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -1012,53 +1012,53 @@ TEST(Element, getPosition) {
     // values in the config string are not aligned, so as we can check that
     // the position is set correctly for the elements.
     ElementPtr top = Element::fromJSON(ss, string("kea.conf"));
-    ASSERT_TRUE(top);
+    ASSERT_TRUE(top.get() != 0);
 
     // Element "a"
     ConstElementPtr level1_el = top->get("a");
-    ASSERT_TRUE(level1_el);
+    ASSERT_TRUE(level1_el.get() != 0);
     EXPECT_EQ(2, level1_el->getPosition().line_);
     EXPECT_EQ(11, level1_el->getPosition().pos_);
     EXPECT_EQ("kea.conf", level1_el->getPosition().file_);
 
     // Element "b"
     level1_el = top->get("b");
-    ASSERT_TRUE(level1_el);
+    ASSERT_TRUE(level1_el.get() != 0);
     EXPECT_EQ(3, level1_el->getPosition().line_);
     EXPECT_EQ(9, level1_el->getPosition().pos_);
     EXPECT_EQ("kea.conf", level1_el->getPosition().file_);
 
     // Element "cy"
     level1_el = top->get("cy");
-    ASSERT_TRUE(level1_el);
+    ASSERT_TRUE(level1_el.get() != 0);
     EXPECT_EQ(4, level1_el->getPosition().line_);
     EXPECT_EQ(11, level1_el->getPosition().pos_);
     EXPECT_EQ("kea.conf", level1_el->getPosition().file_);
 
     // Element "dyz"
     level1_el = top->get("dyz");
-    ASSERT_TRUE(level1_el);
+    ASSERT_TRUE(level1_el.get() != 0);
     EXPECT_EQ(5, level1_el->getPosition().line_);
     EXPECT_EQ(13, level1_el->getPosition().pos_);
     EXPECT_EQ("kea.conf", level1_el->getPosition().file_);
 
     // Element "e" is a sub element of "dyz".
     ConstElementPtr level2_el = level1_el->get("e");
-    ASSERT_TRUE(level2_el);
+    ASSERT_TRUE(level2_el.get() != 0);
     EXPECT_EQ(7, level2_el->getPosition().line_);
     EXPECT_EQ(12, level2_el->getPosition().pos_);
     EXPECT_EQ("kea.conf", level2_el->getPosition().file_);
 
     // Element "f" is also a sub element of "dyz"
     level2_el = level1_el->get("f");
-    ASSERT_TRUE(level2_el);
+    ASSERT_TRUE(level2_el.get() != 0);
     EXPECT_EQ(8, level2_el->getPosition().line_);
     EXPECT_EQ(14, level2_el->getPosition().pos_);
     EXPECT_EQ("kea.conf", level2_el->getPosition().file_);
 
     // Element "g" is a list.
     level1_el = top->get("g");
-    ASSERT_TRUE(level1_el);
+    ASSERT_TRUE(level1_el.get() != 0);
     EXPECT_EQ(11, level1_el->getPosition().line_);
     // Position indicates where the values start (excluding the "[" character)"
     EXPECT_EQ(11, level1_el->getPosition().pos_);
@@ -1066,21 +1066,21 @@ TEST(Element, getPosition) {
 
     // First element from the list.
     level2_el = level1_el->get(0);
-    ASSERT_TRUE(level2_el);
+    ASSERT_TRUE(level2_el.get() != 0);
     EXPECT_EQ(11, level2_el->getPosition().line_);
     EXPECT_EQ(12, level2_el->getPosition().pos_);
     EXPECT_EQ("kea.conf", level2_el->getPosition().file_);
 
     // Second element from the list.
     level2_el = level1_el->get(1);
-    ASSERT_TRUE(level2_el);
+    ASSERT_TRUE(level2_el.get() != 0);
     EXPECT_EQ(11, level2_el->getPosition().line_);
     EXPECT_EQ(15, level2_el->getPosition().pos_);
     EXPECT_EQ("kea.conf", level2_el->getPosition().file_);
 
     // Third element from the list.
     level2_el = level1_el->get(2);
-    ASSERT_TRUE(level2_el);
+    ASSERT_TRUE(level2_el.get() != 0);
     EXPECT_EQ(12, level2_el->getPosition().line_);
     EXPECT_EQ(14, level2_el->getPosition().pos_);
     EXPECT_EQ("kea.conf", level2_el->getPosition().file_);
@@ -1104,39 +1104,39 @@ TEST(Element, getPositionCommented) {
     // values in the config string are not aligned, so as we can check that
     // the position is set correctly for the elements.
     ElementPtr top = Element::fromJSON(ss, string("kea.conf"), true);
-    ASSERT_TRUE(top);
+    ASSERT_TRUE(top.get() != 0);
 
     // Element "a"
     ConstElementPtr level1_el = top->get("a");
-    ASSERT_TRUE(level1_el);
+    ASSERT_TRUE(level1_el.get() != 0);
     EXPECT_EQ(2, level1_el->getPosition().line_);
     EXPECT_EQ(11, level1_el->getPosition().pos_);
     EXPECT_EQ("kea.conf", level1_el->getPosition().file_);
 
     // Element "cy"
     level1_el = top->get("cy");
-    ASSERT_TRUE(level1_el);
+    ASSERT_TRUE(level1_el.get() != 0);
     EXPECT_EQ(4, level1_el->getPosition().line_);
     EXPECT_EQ(11, level1_el->getPosition().pos_);
     EXPECT_EQ("kea.conf", level1_el->getPosition().file_);
 
     // Element "dyz"
     level1_el = top->get("dyz");
-    ASSERT_TRUE(level1_el);
+    ASSERT_TRUE(level1_el.get() != 0);
     EXPECT_EQ(5, level1_el->getPosition().line_);
     EXPECT_EQ(13, level1_el->getPosition().pos_);
     EXPECT_EQ("kea.conf", level1_el->getPosition().file_);
 
     // Element "e" is a sub element of "dyz".
     ConstElementPtr level2_el = level1_el->get("e");
-    ASSERT_TRUE(level2_el);
+    ASSERT_TRUE(level2_el.get() != 0);
     EXPECT_EQ(7, level2_el->getPosition().line_);
     EXPECT_EQ(12, level2_el->getPosition().pos_);
     EXPECT_EQ("kea.conf", level2_el->getPosition().file_);
 
     // Element "f" is also a sub element of "dyz"
     level2_el = level1_el->get("f");
-    ASSERT_TRUE(level2_el);
+    ASSERT_TRUE(level2_el.get() != 0);
     EXPECT_EQ(8, level2_el->getPosition().line_);
     EXPECT_EQ(14, level2_el->getPosition().pos_);
     EXPECT_EQ("kea.conf", level2_el->getPosition().file_);

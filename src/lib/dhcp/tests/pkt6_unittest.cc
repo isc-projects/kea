@@ -292,11 +292,11 @@ TEST_F(Pkt6Test, unpack_solicit1) {
     EXPECT_EQ(DHCPV6_SOLICIT, sol->getType() );
 
     // Check that all present options are returned
-    EXPECT_TRUE(sol->getOption(D6O_CLIENTID)); // client-id is present
-    EXPECT_TRUE(sol->getOption(D6O_IA_NA));    // IA_NA is present
-    EXPECT_TRUE(sol->getOption(D6O_ELAPSED_TIME));  // elapsed is present
-    EXPECT_TRUE(sol->getOption(D6O_NAME_SERVERS));
-    EXPECT_TRUE(sol->getOption(D6O_ORO));
+    EXPECT_TRUE(sol->getOption(D6O_CLIENTID).get() != 0); // client-id is present
+    EXPECT_TRUE(sol->getOption(D6O_IA_NA).get() != 0);    // IA_NA is present
+    EXPECT_TRUE(sol->getOption(D6O_ELAPSED_TIME).get() != 0);  // elapsed is present
+    EXPECT_TRUE(sol->getOption(D6O_NAME_SERVERS).get() != 0);
+    EXPECT_TRUE(sol->getOption(D6O_ORO).get() != 0);
 
     // Let's check that non-present options are not returned
     EXPECT_FALSE(sol->getOption(D6O_SERVERID)); // server-id is missing
@@ -315,9 +315,9 @@ TEST_F(Pkt6Test, packUnpack) {
     EXPECT_EQ(0x020304, clone->getTransid());
     EXPECT_EQ(DHCPV6_SOLICIT, clone->getType());
 
-    EXPECT_TRUE(clone->getOption(1));
-    EXPECT_TRUE(clone->getOption(2));
-    EXPECT_TRUE(clone->getOption(100));
+    EXPECT_TRUE(clone->getOption(1).get() != 0);
+    EXPECT_TRUE(clone->getOption(2).get() != 0);
+    EXPECT_TRUE(clone->getOption(100).get() != 0);
     EXPECT_FALSE(clone->getOption(4));
 }
 
@@ -406,9 +406,9 @@ TEST_F(Pkt6Test, packUnpackWithCallback) {
     EXPECT_EQ(0x020304, clone->getTransid());
     EXPECT_EQ(DHCPV6_SOLICIT, clone->getType());
 
-    EXPECT_TRUE(clone->getOption(1));
-    EXPECT_TRUE(clone->getOption(2));
-    EXPECT_TRUE(clone->getOption(100));
+    EXPECT_TRUE(clone->getOption(1).get() != 0);
+    EXPECT_TRUE(clone->getOption(2).get() != 0);
+    EXPECT_TRUE(clone->getOption(100).get() != 0);
     EXPECT_FALSE(clone->getOption(4));
 
     // Reset the indicator to perform another check: uninstall the callback.
@@ -576,7 +576,8 @@ TEST_F(Pkt6Test, relayUnpack) {
     EXPECT_EQ(2, msg->relay_info_[0].options_.size());
 
     // There should be interface-id option
-    ASSERT_TRUE(opt = msg->getRelayOption(D6O_INTERFACE_ID, 0));
+    opt = msg->getRelayOption(D6O_INTERFACE_ID, 0);
+    ASSERT_TRUE(opt.get() != 0);
     OptionBuffer data = opt->getData();
     EXPECT_EQ(32, opt->len()); // 28 bytes of data + 4 bytes header
     EXPECT_EQ(data.size(), 28);
@@ -584,7 +585,8 @@ TEST_F(Pkt6Test, relayUnpack) {
     EXPECT_TRUE(0 == memcmp("ISAM144|299|ipv6|nt:vp:1:110", &data[0], 28));
 
     // Get the remote-id option
-    ASSERT_TRUE(opt = msg->getRelayOption(D6O_REMOTE_ID, 0));
+    opt = msg->getRelayOption(D6O_REMOTE_ID, 0);
+    ASSERT_TRUE(opt.get() != 0);
     EXPECT_EQ(22, opt->len()); // 18 bytes of data + 4 bytes header
     boost::shared_ptr<OptionCustom> custom = boost::dynamic_pointer_cast<OptionCustom>(opt);
 
@@ -601,14 +603,16 @@ TEST_F(Pkt6Test, relayUnpack) {
     // Part 2: Check options inserted by the second relay
 
     // Get the interface-id from the second relay
-    ASSERT_TRUE(opt = msg->getRelayOption(D6O_INTERFACE_ID, 1));
+    opt = msg->getRelayOption(D6O_INTERFACE_ID, 1);
+    ASSERT_TRUE(opt.get() != 0);
     data = opt->getData();
     EXPECT_EQ(25, opt->len()); // 21 bytes + 4 bytes header
     EXPECT_EQ(data.size(), 21);
     EXPECT_TRUE(0 == memcmp("ISAM144 eth 1/1/05/01", &data[0], 21));
 
     // Get the remote-id option
-    ASSERT_TRUE(opt = msg->getRelayOption(D6O_REMOTE_ID, 1));
+    opt = msg->getRelayOption(D6O_REMOTE_ID, 1);
+    ASSERT_TRUE(opt.get() != 0);
     EXPECT_EQ(8, opt->len());
     custom = boost::dynamic_pointer_cast<OptionCustom>(opt);
 
@@ -627,7 +631,8 @@ TEST_F(Pkt6Test, relayUnpack) {
     EXPECT_EQ(DHCPV6_SOLICIT, msg->getType());
     EXPECT_EQ(0x6b4fe2, msg->getTransid());
 
-    ASSERT_TRUE(opt = msg->getOption(D6O_CLIENTID));
+    opt = msg->getOption(D6O_CLIENTID);
+    ASSERT_TRUE(opt.get() != 0);
     EXPECT_EQ(18, opt->len()); // 14 bytes of data + 4 bytes of header
     uint8_t expected_client_id[] = { 0x00, 0x01, 0x00, 0x01, 0x18, 0xb0,
                                      0x33, 0x41, 0x00, 0x00, 0x21, 0x5c,
@@ -636,22 +641,25 @@ TEST_F(Pkt6Test, relayUnpack) {
     ASSERT_EQ(data.size(), sizeof(expected_client_id));
     ASSERT_EQ(0, memcmp(&data[0], expected_client_id, data.size()));
 
-    ASSERT_TRUE(opt = msg->getOption(D6O_IA_NA));
+    opt = msg->getOption(D6O_IA_NA);
+    ASSERT_TRUE(opt.get() != 0);
     boost::shared_ptr<Option6IA> ia =
         boost::dynamic_pointer_cast<Option6IA>(opt);
-    ASSERT_TRUE(ia);
+    ASSERT_TRUE(ia.get() != 0);
     EXPECT_EQ(1, ia->getIAID());
     EXPECT_EQ(0xffffffff, ia->getT1());
     EXPECT_EQ(0xffffffff, ia->getT2());
 
-    ASSERT_TRUE(opt = msg->getOption(D6O_ELAPSED_TIME));
+    opt = msg->getOption(D6O_ELAPSED_TIME);
+    ASSERT_TRUE(opt.get() != 0);
     EXPECT_EQ(6, opt->len()); // 2 bytes of data + 4 bytes of header
     boost::shared_ptr<OptionInt<uint16_t> > elapsed =
         boost::dynamic_pointer_cast<OptionInt<uint16_t> > (opt);
-    ASSERT_TRUE(elapsed);
+    ASSERT_TRUE(elapsed.get() != 0);
     EXPECT_EQ(0, elapsed->getValue());
 
-    ASSERT_TRUE(opt = msg->getOption(D6O_ORO));
+    opt = msg->getOption(D6O_ORO);
+    ASSERT_TRUE(opt.get() != 0);
     boost::shared_ptr<OptionIntArray<uint16_t> > oro =
         boost::dynamic_pointer_cast<OptionIntArray<uint16_t> > (opt);
     const std::vector<uint16_t> oro_list = oro->getValues();
@@ -715,9 +723,9 @@ TEST_F(Pkt6Test, relayPack) {
     EXPECT_EQ(parent->getTransid(), parent->getTransid());
     EXPECT_EQ(DHCPV6_ADVERTISE, clone->getType());
 
-    EXPECT_TRUE( clone->getOption(100));
-    EXPECT_TRUE( clone->getOption(101));
-    EXPECT_TRUE( clone->getOption(102));
+    EXPECT_TRUE( clone->getOption(100).get() != 0);
+    EXPECT_TRUE( clone->getOption(101).get() != 0);
+    EXPECT_TRUE( clone->getOption(102).get() != 0);
     EXPECT_FALSE(clone->getOption(103));
 
     // Now check relay info
@@ -730,7 +738,7 @@ TEST_F(Pkt6Test, relayPack) {
     // There should be exactly one option
     EXPECT_EQ(1, clone->relay_info_[0].options_.size());
     OptionPtr opt = clone->getRelayOption(200, 0);
-    EXPECT_TRUE(opt);
+    EXPECT_TRUE(opt.get() != 0);
     EXPECT_EQ(opt->getType() , optRelay1->getType());
     EXPECT_EQ(opt->len(), optRelay1->len());
     OptionBuffer data = opt->getData();
@@ -800,33 +808,33 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     // We want to get that one inserted by relay3 (first match, starting from
     // closest to the client.
     opt = msg->getAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
-    ASSERT_TRUE(opt);
+    ASSERT_TRUE(opt.get() != 0);
     EXPECT_TRUE(opt->equals(relay3_opt1));
 
     // We want to ge that one inserted by relay1 (first match, starting from
     // closest to the server.
     opt = msg->getAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
-    ASSERT_TRUE(opt);
+    ASSERT_TRUE(opt.get() != 0);
     EXPECT_TRUE(opt->equals(relay1_opt1));
 
     // We just want option from the first relay (closest to the client)
     opt = msg->getAnyRelayOption(200, Pkt6::RELAY_GET_FIRST);
-    ASSERT_TRUE(opt);
+    ASSERT_TRUE(opt.get() != 0);
     EXPECT_TRUE(opt->equals(relay3_opt1));
 
     // We just want option from the last relay (closest to the server)
     opt = msg->getAnyRelayOption(200, Pkt6::RELAY_GET_LAST);
-    ASSERT_TRUE(opt);
+    ASSERT_TRUE(opt.get() != 0);
     EXPECT_TRUE(opt->equals(relay1_opt1));
 
     // Let's try to ask for something that is inserted by the middle relay
     // only.
     opt = msg->getAnyRelayOption(100, Pkt6::RELAY_SEARCH_FROM_SERVER);
-    ASSERT_TRUE(opt);
+    ASSERT_TRUE(opt.get() != 0);
     EXPECT_TRUE(opt->equals(relay2_opt1));
 
     opt = msg->getAnyRelayOption(100, Pkt6::RELAY_SEARCH_FROM_CLIENT);
-    ASSERT_TRUE(opt);
+    ASSERT_TRUE(opt.get() != 0);
     EXPECT_TRUE(opt->equals(relay2_opt1));
 
     opt = msg->getAnyRelayOption(100, Pkt6::RELAY_GET_FIRST);
@@ -895,10 +903,10 @@ TEST_F(Pkt6Test, getMAC) {
     // Let's check if setting IPv6 address improves the situation.
     IOAddress linklocal_eui64("fe80::204:06ff:fe08:0a0c");
     pkt.setRemoteAddr(linklocal_eui64);
-    EXPECT_TRUE(pkt.getMAC(HWAddr::HWADDR_SOURCE_ANY));
-    EXPECT_TRUE(pkt.getMAC(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL));
+    EXPECT_TRUE(pkt.getMAC(HWAddr::HWADDR_SOURCE_ANY).get() != 0);
+    EXPECT_TRUE(pkt.getMAC(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL).get() != 0);
     EXPECT_TRUE(pkt.getMAC(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL |
-                           HWAddr::HWADDR_SOURCE_RAW));
+                           HWAddr::HWADDR_SOURCE_RAW).get() != 0);
     pkt.setRemoteAddr(IOAddress("::"));
 
     // Let's invent a MAC
@@ -910,10 +918,10 @@ TEST_F(Pkt6Test, getMAC) {
     pkt.setRemoteHWAddr(dummy_hwaddr);
 
     // Now we should be able to get something
-    ASSERT_TRUE(pkt.getMAC(HWAddr::HWADDR_SOURCE_ANY));
-    ASSERT_TRUE(pkt.getMAC(HWAddr::HWADDR_SOURCE_RAW));
+    ASSERT_TRUE(pkt.getMAC(HWAddr::HWADDR_SOURCE_ANY).get() != 0);
+    ASSERT_TRUE(pkt.getMAC(HWAddr::HWADDR_SOURCE_RAW).get() != 0);
     EXPECT_TRUE(pkt.getMAC(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL |
-                           HWAddr::HWADDR_SOURCE_RAW));
+                           HWAddr::HWADDR_SOURCE_RAW).get() != 0);
 
     // Check that the returned MAC is indeed the expected one
     ASSERT_TRUE(*dummy_hwaddr == *pkt.getMAC(HWAddr::HWADDR_SOURCE_ANY));
@@ -927,7 +935,7 @@ TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_direct) {
 
     // Let's get the first interface
     IfacePtr iface = IfaceMgr::instance().getIface(1);
-    ASSERT_TRUE(iface);
+    ASSERT_TRUE(iface.get() != 0);
 
     // and set source interface data properly. getMACFromIPv6LinkLocal attempts
     // to use source interface to obtain hardware type
@@ -948,7 +956,7 @@ TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_direct) {
     // If received from link-local that is EUI-64 based, it should succeed
     pkt.setRemoteAddr(linklocal_eui64);
     HWAddrPtr found = pkt.getMAC(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL);
-    ASSERT_TRUE(found);
+    ASSERT_TRUE(found.get() != 0);
 
     stringstream tmp;
     tmp << "hwtype=" << (int)iface->getHWType() << " f0:04:06:08:0a:0c";
@@ -969,7 +977,7 @@ TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_singleRelay) {
 
     // Let's get the first interface
     IfacePtr iface = IfaceMgr::instance().getIface(1);
-    ASSERT_TRUE(iface);
+    ASSERT_TRUE(iface.get() != 0);
 
     // and set source interface data properly. getMACFromIPv6LinkLocal attempts
     // to use source interface to obtain hardware type
@@ -991,7 +999,7 @@ TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_singleRelay) {
     // If received from link-local that is EUI-64 based, it should succeed
     pkt.relay_info_[0].peeraddr_ = linklocal_eui64;
     HWAddrPtr found = pkt.getMAC(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL);
-    ASSERT_TRUE(found);
+    ASSERT_TRUE(found.get() != 0);
 
     stringstream tmp;
     tmp << "hwtype=" << (int)iface->getHWType() << " f0:04:06:08:0a:0c";
@@ -1035,7 +1043,7 @@ TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_multiRelay) {
 
     // Let's get the first interface
     IfacePtr iface = IfaceMgr::instance().getIface(1);
-    ASSERT_TRUE(iface);
+    ASSERT_TRUE(iface.get() != 0);
 
     // and set source interface data properly. getMACFromIPv6LinkLocal attempts
     // to use source interface to obtain hardware type
@@ -1044,7 +1052,7 @@ TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_multiRelay) {
 
     // The method should return MAC based on the first relay that was closest
     HWAddrPtr found = pkt.getMAC(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL);
-    ASSERT_TRUE(found);
+    ASSERT_TRUE(found.get() != 0);
 
     // Let's check the info now.
     stringstream tmp;
@@ -1078,7 +1086,7 @@ TEST_F(Pkt6Test, getMACFromIPv6RelayOpt_singleRelay) {
     ASSERT_EQ(1, pkt.relay_info_.size());
 
     HWAddrPtr found = pkt.getMAC(HWAddr::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION);
-    ASSERT_TRUE(found);
+    ASSERT_TRUE(found.get() != 0);
 
     stringstream tmp;
     tmp << "hwtype=1 0a:1b:0b:01:ca:fe";
@@ -1126,7 +1134,7 @@ TEST_F(Pkt6Test, getMACFromIPv6RelayOpt_multipleRelay) {
 
     // Now extract the MAC address from the relayed option
     HWAddrPtr found = pkt.getMAC(HWAddr::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION);
-    ASSERT_TRUE(found);
+    ASSERT_TRUE(found.get() != 0);
 
     stringstream tmp;
     tmp << "hwtype=1 fa:30:0b:fa:c0:fe";
@@ -1168,14 +1176,14 @@ TEST_F(Pkt6Test, getMACFromDUID) {
     // Let's test DUID-LLT. This should work.
     pkt.addOption(clientid1);
     HWAddrPtr mac = pkt.getMAC(HWAddr::HWADDR_SOURCE_DUID);
-    ASSERT_TRUE(mac);
+    ASSERT_TRUE(mac.get() != 0);
     EXPECT_EQ("hwtype=7 0a:0b:0c:0d:0e:0f:10", mac->toText(true));
 
     // Let's test DUID-LL. This should work.
     ASSERT_TRUE(pkt.delOption(D6O_CLIENTID));
     pkt.addOption(clientid2);
     mac = pkt.getMAC(HWAddr::HWADDR_SOURCE_DUID);
-    ASSERT_TRUE(mac);
+    ASSERT_TRUE(mac.get() != 0);
     EXPECT_EQ("hwtype=11 0a:0b:0c:0d:0e", mac->toText(true));
 
     // Finally, let's try DUID-EN. This should fail, as EN type does not
@@ -1198,7 +1206,7 @@ TEST_F(Pkt6Test, getMAC_DOCSIS_Modem) {
     // The method should return MAC based on the vendor-specific info,
     // suboption 36, which is inserted by the modem itself.
     HWAddrPtr found = pkt->getMAC(HWAddr::HWADDR_SOURCE_DOCSIS_MODEM);
-    ASSERT_TRUE(found);
+    ASSERT_TRUE(found.get() != 0);
 
     // Let's check the info.
     EXPECT_EQ("hwtype=1 10:0d:7f:00:07:88", found->toText(true));
@@ -1206,7 +1214,7 @@ TEST_F(Pkt6Test, getMAC_DOCSIS_Modem) {
     // Now let's remove the option
     OptionVendorPtr vendor = boost::dynamic_pointer_cast<
         OptionVendor>(pkt->getOption(D6O_VENDOR_OPTS));
-    ASSERT_TRUE(vendor);
+    ASSERT_TRUE(vendor.get() != 0);
     ASSERT_TRUE(vendor->delOption(DOCSIS3_V6_DEVICE_ID));
 
     // Ok, there's no more suboption 36. Now getMAC() should fail.
@@ -1226,7 +1234,7 @@ TEST_F(Pkt6Test, getMAC_DOCSIS_CMTS) {
     // The method should return MAC based on the vendor-specific info,
     // suboption 36, which is inserted by the modem itself.
     HWAddrPtr found = pkt->getMAC(HWAddr::HWADDR_SOURCE_DOCSIS_CMTS);
-    ASSERT_TRUE(found);
+    ASSERT_TRUE(found.get() != 0);
 
     // Let's check the info.
     EXPECT_EQ("hwtype=1 20:e5:2a:b8:15:14", found->toText(true));
@@ -1236,7 +1244,7 @@ TEST_F(Pkt6Test, getMAC_DOCSIS_CMTS) {
     OptionVendorPtr vendor = boost::dynamic_pointer_cast<
         OptionVendor>(pkt->getAnyRelayOption(D6O_VENDOR_OPTS,
                           isc::dhcp::Pkt6::RELAY_SEARCH_FROM_CLIENT));
-    ASSERT_TRUE(vendor);
+    ASSERT_TRUE(vendor.get() != 0);
     EXPECT_TRUE(vendor->delOption(DOCSIS3_V6_CMTS_CM_MAC));
 
     EXPECT_FALSE(pkt->getMAC(HWAddr::HWADDR_SOURCE_DOCSIS_CMTS));
@@ -1254,7 +1262,7 @@ TEST_F(Pkt6Test, getMACFromRemoteIdRelayOption) {
 
     // Let's get the first interface
     IfacePtr iface = IfaceMgr::instance().getIface(1);
-    ASSERT_TRUE(iface);
+    ASSERT_TRUE(iface.get() != 0);
 
     // and set source interface data properly. getMACFromIPv6LinkLocal attempts
     // to use source interface to obtain hardware type
@@ -1286,7 +1294,7 @@ TEST_F(Pkt6Test, getMACFromRemoteIdRelayOption) {
 
     // This should work now
     HWAddrPtr mac = pkt.getMAC(HWAddr::HWADDR_SOURCE_REMOTE_ID);
-    ASSERT_TRUE(mac);
+    ASSERT_TRUE(mac.get() != 0);
 
     stringstream tmp;
     tmp << "hwtype=" << (int)iface->getHWType() << " 0a:0b:0c:0d:0e:0f";
@@ -1310,7 +1318,7 @@ TEST_F(Pkt6Test, rsoo) {
 
     // There should be an RSOO option in the outermost relay
     OptionPtr opt = msg->getRelayOption(D6O_RSOO, 1);
-    ASSERT_TRUE(opt);
+    ASSERT_TRUE(opt.get() != 0);
 
     EXPECT_EQ(D6O_RSOO, opt->getType());
     const OptionCollection& rsoo = opt->getOptions();
@@ -1319,8 +1327,8 @@ TEST_F(Pkt6Test, rsoo) {
     OptionPtr rsoo1 = opt->getOption(255);
     OptionPtr rsoo2 = opt->getOption(256);
 
-    ASSERT_TRUE(rsoo1);
-    ASSERT_TRUE(rsoo2);
+    ASSERT_TRUE(rsoo1.get() != 0);
+    ASSERT_TRUE(rsoo2.get() != 0);
 
     EXPECT_EQ(8, rsoo1->len()); // 4 bytes of data + header
     EXPECT_EQ(13, rsoo2->len()); // 9 bytes of data + header

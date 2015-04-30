@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -100,7 +100,7 @@ TEST_F(RRTTLTest, createFromText) {
     // It returns an actual RRTTL iff the given text is recognized as a
     // valid RR TTL.
     scoped_ptr<RRTTL> good_ttl(RRTTL::createFromText("3600"));
-    EXPECT_TRUE(good_ttl);
+    EXPECT_TRUE(good_ttl.get() != 0);
     EXPECT_EQ(RRTTL(3600), *good_ttl);
 
     scoped_ptr<RRTTL> bad_ttl(RRTTL::createFromText("bad"));

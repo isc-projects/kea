@@ -188,7 +188,8 @@ private:
         // It should not happen that option definition is NULL but
         // let's make sure (test should take things like that into
         // account).
-        ASSERT_TRUE(def) << "Option definition for the code "
+        ASSERT_TRUE(def.get() != 0)
+                         << "Option definition for the code "
                          << code << " is NULL.";
         // Check that option definition is valid.
         ASSERT_NO_THROW(def->validate())
@@ -202,7 +203,7 @@ private:
         ASSERT_NO_THROW(option = def->optionFactory(u, code, begin, end))
             << "Option creation failed for option code " << code;
         // Make sure it is not NULL.
-        ASSERT_TRUE(option);
+        ASSERT_TRUE(option.get() != 0);
         // And the actual object type is the one that we expect.
         // Note that for many options there are dedicated classes
         // derived from Option class to represent them.
@@ -263,7 +264,7 @@ TEST_F(LibDhcpTest, optionFactory) {
                                              DHO_SUBNET_MASK,
                                              buf);
     // Check if non-NULL DHO_SUBNET_MASK option pointer has been returned.
-    ASSERT_TRUE(opt_subnet_mask);
+    ASSERT_TRUE(opt_subnet_mask.get() != 0);
     // Validate if type and universe is correct.
     EXPECT_EQ(Option::V4, opt_subnet_mask->getUniverse());
     EXPECT_EQ(DHO_SUBNET_MASK, opt_subnet_mask->getType());
@@ -277,7 +278,7 @@ TEST_F(LibDhcpTest, optionFactory) {
                                              DHO_TIME_OFFSET,
                                              time_offset_buf);
     // Check if non-NULL DHO_TIME_OFFSET option pointer has been returned.
-    ASSERT_TRUE(opt_time_offset);
+    ASSERT_TRUE(opt_time_offset.get() != 0);
     // Validate if option length, type and universe is correct.
     EXPECT_EQ(Option::V4, opt_time_offset->getUniverse());
     EXPECT_EQ(DHO_TIME_OFFSET, opt_time_offset->getType());
@@ -294,7 +295,7 @@ TEST_F(LibDhcpTest, optionFactory) {
                                           D6O_CLIENTID,
                                           clientid_buf);
     // Check if non-NULL D6O_CLIENTID option pointer has been returned.
-    ASSERT_TRUE(opt_clientid);
+    ASSERT_TRUE(opt_clientid.get() != 0);
     // Validate if option length, type and universe is correct.
     EXPECT_EQ(Option::V6, opt_clientid->getUniverse());
     EXPECT_EQ(D6O_CLIENTID, opt_clientid->getType());
@@ -394,7 +395,7 @@ TEST_F(LibDhcpTest, unpackOptions6) {
         boost::dynamic_pointer_cast<OptionIntArray<uint16_t> >(x->second);
     // This value will be NULL if cast was unsuccessful. This is the case
     // when returned option has different type than expected.
-    ASSERT_TRUE(opt_oro);
+    ASSERT_TRUE(opt_oro.get() != 0);
     // Get set of uint16_t values.
     std::vector<uint16_t> opts = opt_oro->getValues();
     // Prepare the refrence data.
@@ -417,7 +418,7 @@ TEST_F(LibDhcpTest, unpackOptions6) {
         boost::dynamic_pointer_cast<OptionInt<uint16_t> >(x->second);
     // This value will be NULL if cast was unsuccessful. This is the case
     // when returned option has different type than expected.
-    ASSERT_TRUE(opt_elapsed_time);
+    ASSERT_TRUE(opt_elapsed_time.get() != 0);
     // Returned value should be equivalent to two byte values: 112, 113
     EXPECT_EQ(0x7071, opt_elapsed_time->getValue());
 
@@ -430,14 +431,14 @@ TEST_F(LibDhcpTest, unpackOptions6) {
 
     // CM MAC Address Option
     OptionPtr cm_mac = x->second->getOption(OPTION_CM_MAC);
-    ASSERT_TRUE(cm_mac);
+    ASSERT_TRUE(cm_mac.get() != 0);
     EXPECT_EQ(OPTION_CM_MAC, cm_mac->getType());
     ASSERT_EQ(10, cm_mac->len());
     EXPECT_EQ(0, memcmp(&cm_mac->getData()[0], v6packed + 54, 6));
 
     // CMTS Capabilities
     OptionPtr cmts_caps = x->second->getOption(OPTION_CMTS_CAPS);
-    ASSERT_TRUE(cmts_caps);
+    ASSERT_TRUE(cmts_caps.get() != 0);
     EXPECT_EQ(OPTION_CMTS_CAPS, cmts_caps->getType());
     ASSERT_EQ(8, cmts_caps->len());
     EXPECT_EQ(0, memcmp(&cmts_caps->getData()[0], v6packed + 46, 4));
@@ -496,7 +497,7 @@ TEST_F(LibDhcpTest, packOptions4) {
     // the constructor.
     OptionDefinitionPtr rai_def = LibDHCP::getOptionDef(Option::V4,
                                                         DHO_DHCP_AGENT_OPTIONS);
-    ASSERT_TRUE(rai_def);
+    ASSERT_TRUE(rai_def.get() != 0);
     // Create RAI option.
     OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4));
 
@@ -551,7 +552,7 @@ TEST_F(LibDhcpTest, unpackOptions4) {
     ASSERT_FALSE(x == options.end()); // option 1 should exist
     // Option 12 holds a string so let's cast it to an appropriate type.
     OptionStringPtr option12 = boost::static_pointer_cast<OptionString>(x->second);
-    ASSERT_TRUE(option12);
+    ASSERT_TRUE(option12.get() != 0);
     EXPECT_EQ(12, option12->getType());  // this should be option 12
     ASSERT_EQ(3, option12->getValue().length()); // it should be of length 3
     EXPECT_EQ(5, option12->len()); // total option length 5
@@ -567,7 +568,7 @@ TEST_F(LibDhcpTest, unpackOptions4) {
     x = options.find(14);
     ASSERT_FALSE(x == options.end()); // option 3 should exist
     OptionStringPtr option14 = boost::static_pointer_cast<OptionString>(x->second);
-    ASSERT_TRUE(option14);
+    ASSERT_TRUE(option14.get() != 0);
     EXPECT_EQ(14, option14->getType());  // this should be option 14
     ASSERT_EQ(3, option14->getValue().length()); // it should be of length 3
     EXPECT_EQ(5, option14->len()); // total option length 5
@@ -593,7 +594,7 @@ TEST_F(LibDhcpTest, unpackOptions4) {
     EXPECT_EQ(DHO_DHCP_AGENT_OPTIONS, x->second->getType());
     // RAI is represented by OptionCustom.
     OptionCustomPtr rai = boost::dynamic_pointer_cast<OptionCustom>(x->second);
-    ASSERT_TRUE(rai);
+    ASSERT_TRUE(rai.get() != 0);
     // RAI should have 3 sub-options: Circuit ID, Agent Remote ID, Vendor
     // Specific Information option. Note that by parsing these suboptions we
     // are checking that unpackOptions4 differentiates between standard option
@@ -606,21 +607,21 @@ TEST_F(LibDhcpTest, unpackOptions4) {
 
     // Check that Circuit ID option is among parsed options.
     OptionPtr rai_option = rai->getOption(RAI_OPTION_AGENT_CIRCUIT_ID);
-    ASSERT_TRUE(rai_option);
+    ASSERT_TRUE(rai_option.get() != 0);
     EXPECT_EQ(RAI_OPTION_AGENT_CIRCUIT_ID, rai_option->getType());
     ASSERT_EQ(6, rai_option->len());
     EXPECT_EQ(0, memcmp(&rai_option->getData()[0], v4_opts + 29, 4));
 
     // Check that Remote ID option is among parsed options.
     rai_option = rai->getOption(RAI_OPTION_REMOTE_ID);
-    ASSERT_TRUE(rai_option);
+    ASSERT_TRUE(rai_option.get() != 0);
     EXPECT_EQ(RAI_OPTION_REMOTE_ID, rai_option->getType());
     ASSERT_EQ(8, rai_option->len());
     EXPECT_EQ(0, memcmp(&rai_option->getData()[0], v4_opts + 35, 6));
 
     // Check that Vendor Specific Information option is among parsed options.
     rai_option = rai->getOption(RAI_OPTION_VSI);
-    ASSERT_TRUE(rai_option);
+    ASSERT_TRUE(rai_option.get() != 0);
     EXPECT_EQ(RAI_OPTION_VSI, rai_option->getType());
     ASSERT_EQ(11, rai_option->len());
     EXPECT_EQ(0, memcmp(&rai_option->getData()[0], v4_opts + 43, 9));
@@ -1160,7 +1161,7 @@ TEST_F(LibDhcpTest, getOptionDefByName6) {
          def != defs.end(); ++def) {
         OptionDefinitionPtr def_by_name =
             LibDHCP::getOptionDef(Option::V6, (*def)->getName());
-        ASSERT_TRUE(def_by_name);
+        ASSERT_TRUE(def_by_name.get() != 0);
         ASSERT_TRUE(**def == *def_by_name);
     }
 }
@@ -1176,7 +1177,7 @@ TEST_F(LibDhcpTest, getOptionDefByName4) {
          def != defs.end(); ++def) {
         OptionDefinitionPtr def_by_name =
             LibDHCP::getOptionDef(Option::V4, (*def)->getName());
-        ASSERT_TRUE(def_by_name);
+        ASSERT_TRUE(def_by_name.get() != 0);
         ASSERT_TRUE(**def == *def_by_name);
     }
 }
@@ -1192,7 +1193,7 @@ TEST_F(LibDhcpTest, getVendorOptionDefByName6) {
         OptionDefinitionPtr def_by_name =
             LibDHCP::getVendorOptionDef(Option::V6, VENDOR_ID_CABLE_LABS,
                                         (*def)->getName());
-        ASSERT_TRUE(def_by_name);
+        ASSERT_TRUE(def_by_name.get() != 0);
         ASSERT_TRUE(**def == *def_by_name);
     }
 }
@@ -1208,7 +1209,7 @@ TEST_F(LibDhcpTest, getVendorOptionDefByName4) {
         OptionDefinitionPtr def_by_name =
             LibDHCP::getVendorOptionDef(Option::V4, VENDOR_ID_CABLE_LABS,
                                         (*def)->getName());
-        ASSERT_TRUE(def_by_name);
+        ASSERT_TRUE(def_by_name.get() != 0);
         ASSERT_TRUE(**def == *def_by_name);
     }
 }
@@ -1239,7 +1240,7 @@ TEST_F(LibDhcpTest, vendorClass6) {
     // It should be of type OptionVendorClass
     boost::shared_ptr<OptionVendorClass> vclass =
         boost::dynamic_pointer_cast<OptionVendorClass>(options.begin()->second);
-    ASSERT_TRUE(vclass);
+    ASSERT_TRUE(vclass.get() != 0);
 
     // Let's investigate if the option content is correct
 

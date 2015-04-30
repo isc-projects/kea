@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -217,7 +217,7 @@ TEST(NameChangeRequestTest, constructionTests) {
     // Verify the default constructor works.
     NameChangeRequestPtr ncr;
     EXPECT_NO_THROW(ncr.reset(new NameChangeRequest()));
-    EXPECT_TRUE(ncr);
+    EXPECT_TRUE(ncr.get() != 0);
 
     // Verify that full constructor works.
     uint64_t expiry = isc::util::detail::gettimeWrapper();
@@ -226,7 +226,7 @@ TEST(NameChangeRequestTest, constructionTests) {
     EXPECT_NO_THROW(ncr.reset(new NameChangeRequest(
                     CHG_ADD, true, true, "walah.walah.com",
                     "192.168.1.101", dhcid, expiry, 1300)));
-    EXPECT_TRUE(ncr);
+    EXPECT_TRUE(ncr.get() != 0);
     ncr.reset();
 
     // Verify blank FQDN is detected.
@@ -484,7 +484,7 @@ TEST(NameChangeRequestTest, basicJsonTest) {
     // a valid JSON rendition.
     NameChangeRequestPtr ncr;
     ASSERT_NO_THROW(ncr  = NameChangeRequest::fromJSON(msg_str));
-    ASSERT_TRUE(ncr);
+    ASSERT_TRUE(ncr.get() != 0);
 
     // Verify that the JSON string created by the new request equals the
     // original input string.

@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -103,7 +103,7 @@ TEST_F(RRClassTest, toText) {
 
 TEST_F(RRClassTest, createFromText) {
     scoped_ptr<RRClass> chclass(RRClass::createFromText("CH"));
-    EXPECT_TRUE(chclass);
+    EXPECT_TRUE(chclass.get() != 0);
     EXPECT_EQ("CH", chclass->toText());
 
     scoped_ptr<RRClass> zzclass(RRClass::createFromText("ZZ"));

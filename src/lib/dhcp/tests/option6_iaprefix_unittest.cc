@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -140,7 +140,7 @@ TEST_F(Option6IAPrefixTest, parseShort) {
     boost::scoped_ptr<Option6IAPrefix> opt;
     ASSERT_NO_THROW(opt.reset(new Option6IAPrefix(D6O_IAPREFIX, buf_.begin(),
                                                   buf_.begin() + 25)));
-    ASSERT_TRUE(opt);
+    ASSERT_TRUE(opt.get() != 0);
 
     // Pack this option
     opt->pack(out_buf_);
@@ -171,7 +171,7 @@ TEST_F(Option6IAPrefixTest, parseLong) {
     boost::scoped_ptr<Option6IAPrefix> opt;
     ASSERT_NO_THROW(opt.reset(new Option6IAPrefix(D6O_IAPREFIX, buf_.begin(),
                                                   buf_.begin() + 25)));
-    ASSERT_TRUE(opt);
+    ASSERT_TRUE(opt.get() != 0);
 
     // Pack this option
     opt->pack(out_buf_);
@@ -196,7 +196,7 @@ TEST_F(Option6IAPrefixTest, parseZero) {
     boost::scoped_ptr<Option6IAPrefix> opt;
     ASSERT_NO_THROW(opt.reset(new Option6IAPrefix(D6O_IAPREFIX, buf_.begin(),
                                                   buf_.begin() + 25)));
-    ASSERT_TRUE(opt);
+    ASSERT_TRUE(opt.get() != 0);
 
     // Pack this option
     opt->pack(out_buf_);
@@ -222,7 +222,7 @@ TEST_F(Option6IAPrefixTest, build) {
     ASSERT_NO_THROW(opt.reset(new Option6IAPrefix(12345,
                     IOAddress("2001:db8:1:0:afaf:0:dead:beef"), 77,
                                                   1000, 3000000000u)));
-    ASSERT_TRUE(opt);
+    ASSERT_TRUE(opt.get() != 0);
 
     checkOption(*opt, 12345, 77, IOAddress("2001:db8:1:0:afaf:0:dead:beef"));
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -109,7 +109,7 @@ TEST_F(PktFilterInetTest, send) {
 
     // Create the DHCPv4 packet from the received data.
     Pkt4Ptr rcvd_pkt(new Pkt4(rcv_buf, result));
-    ASSERT_TRUE(rcvd_pkt);
+    ASSERT_TRUE(rcvd_pkt.get() != 0);
 
     // Parse the packet.
     ASSERT_NO_THROW(rcvd_pkt->unpack());
@@ -141,7 +141,7 @@ TEST_F(PktFilterInetTest, receive) {
     // Receive the packet.
     Pkt4Ptr rcvd_pkt = pkt_filter.receive(iface, sock_info_);
     // Check that the packet has been correctly received.
-    ASSERT_TRUE(rcvd_pkt);
+    ASSERT_TRUE(rcvd_pkt.get() != 0);
 
     // Parse the packet.
     ASSERT_NO_THROW(rcvd_pkt->unpack());

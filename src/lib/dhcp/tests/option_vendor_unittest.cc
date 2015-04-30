@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -152,8 +152,8 @@ TEST_F(OptionVendorTest, v4Parse) {
                                                   binary.end())));
 
     // We know that there are supposed to be 2 options inside
-    EXPECT_TRUE(vendor->getOption(DOCSIS3_V4_ORO));
-    EXPECT_TRUE(vendor->getOption(5));
+    EXPECT_TRUE(vendor->getOption(DOCSIS3_V4_ORO).get() != 0);
+    EXPECT_TRUE(vendor->getOption(5).get() != 0);
 }
 
 // Tests whether we can parse and then pack a v4 option.
@@ -191,22 +191,22 @@ TEST_F(OptionVendorTest, v6Parse) {
 
     OptionPtr opt;
     opt = vendor->getOption(DOCSIS3_V6_ORO);
-    ASSERT_TRUE(opt);
+    ASSERT_TRUE(opt.get() != 0);
     OptionUint16ArrayPtr oro =
         boost::dynamic_pointer_cast<OptionUint16Array>(opt);
 
     // Check that all remaining expected options are there
-    EXPECT_TRUE(vendor->getOption(2));
-    EXPECT_TRUE(vendor->getOption(3));
-    EXPECT_TRUE(vendor->getOption(4));
-    EXPECT_TRUE(vendor->getOption(5));
-    EXPECT_TRUE(vendor->getOption(6));
-    EXPECT_TRUE(vendor->getOption(7));
-    EXPECT_TRUE(vendor->getOption(8));
-    EXPECT_TRUE(vendor->getOption(9));
-    EXPECT_TRUE(vendor->getOption(10));
-    EXPECT_TRUE(vendor->getOption(35));
-    EXPECT_TRUE(vendor->getOption(36));
+    EXPECT_TRUE(vendor->getOption(2).get() != 0);
+    EXPECT_TRUE(vendor->getOption(3).get() != 0);
+    EXPECT_TRUE(vendor->getOption(4).get() != 0);
+    EXPECT_TRUE(vendor->getOption(5).get() != 0);
+    EXPECT_TRUE(vendor->getOption(6).get() != 0);
+    EXPECT_TRUE(vendor->getOption(7).get() != 0);
+    EXPECT_TRUE(vendor->getOption(8).get() != 0);
+    EXPECT_TRUE(vendor->getOption(9).get() != 0);
+    EXPECT_TRUE(vendor->getOption(10).get() != 0);
+    EXPECT_TRUE(vendor->getOption(35).get() != 0);
+    EXPECT_TRUE(vendor->getOption(36).get() != 0);
 
     // Check that there are no other options there
     for (uint16_t i = 11; i < 35; ++i) {

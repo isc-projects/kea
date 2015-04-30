@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -642,8 +642,8 @@ TEST_F(OptionTest, unpackCallback) {
     // This function uses LibDHCP to parse options so they should be parsed
     // correctly.
     ASSERT_NO_THROW(option.unpackOptions(opt_buf));
-    EXPECT_TRUE(option.getOption(1));
-    EXPECT_TRUE(option.getOption(2));
+    EXPECT_TRUE(option.getOption(1).get() != 0);
+    EXPECT_TRUE(option.getOption(2).get() != 0);
     EXPECT_FALSE(option.getOption(3));
     // The callback should have been registered.
     EXPECT_TRUE(cb.executed_);
@@ -654,8 +654,8 @@ TEST_F(OptionTest, unpackCallback) {
     option.setCallback(NULL);
     ASSERT_NO_THROW(option.unpackOptions(opt_buf));
     // Options should still get unpacked...
-    EXPECT_TRUE(option.getOption(1));
-    EXPECT_TRUE(option.getOption(2));
+    EXPECT_TRUE(option.getOption(1).get() != 0);
+    EXPECT_TRUE(option.getOption(2).get() != 0);
     EXPECT_FALSE(option.getOption(3));
     // ... but not via callback.
     EXPECT_FALSE(cb.executed_);

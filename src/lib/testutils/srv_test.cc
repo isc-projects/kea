@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -209,7 +209,7 @@ SrvTestBase::ednsBadVers() {
     parsed.fromWire(ib);
     EXPECT_EQ(isc::dns::Rcode::BADVERS(), parsed.getRcode());
     isc::dns::ConstEDNSPtr edns(parsed.getEDNS());
-    ASSERT_TRUE(edns);
+    ASSERT_TRUE(edns.get() != 0);
     EXPECT_FALSE(edns->getDNSSECAwareness());
 }
 

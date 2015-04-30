@@ -382,7 +382,7 @@ TEST(NameChangeUDPSenderBasicTest, basicSendTests) {
 
         // Verify that peekAt(i) returns the NCR we just added.
         ASSERT_NO_THROW(ncr2 = sender.peekAt(i));
-        ASSERT_TRUE(ncr2);
+        ASSERT_TRUE(ncr2.get() != 0);
         EXPECT_TRUE(*ncr == *ncr2);
     }
 

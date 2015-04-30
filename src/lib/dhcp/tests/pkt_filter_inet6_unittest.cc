@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -95,7 +95,7 @@ TEST_F(PktFilterInet6Test, send) {
 
     // Create the DHCPv6 packet from the received data.
     Pkt6Ptr rcvd_pkt(new Pkt6(rcv_buf, result));
-    ASSERT_TRUE(rcvd_pkt);
+    ASSERT_TRUE(rcvd_pkt.get() != 0);
 
     // Parse the packet.
     ASSERT_NO_THROW(rcvd_pkt->unpack());
@@ -128,7 +128,7 @@ TEST_F(PktFilterInet6Test, receive) {
     // Receive the packet.
     Pkt6Ptr rcvd_pkt = pkt_filter.receive(sock_info_);
     // Check that the packet has been correctly received.
-    ASSERT_TRUE(rcvd_pkt);
+    ASSERT_TRUE(rcvd_pkt.get() != 0);
 
     // Parse the packet.
     ASSERT_NO_THROW(rcvd_pkt->unpack());

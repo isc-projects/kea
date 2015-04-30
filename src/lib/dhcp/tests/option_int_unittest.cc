@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -472,7 +472,7 @@ TEST_F(OptionIntTest, unpackSuboptions4) {
                                                           buf_.begin() + 2,
                                                           buf_.begin() + sizeof(expected)));
     );
-    ASSERT_TRUE(opt);
+    ASSERT_TRUE(opt.get() != 0);
 
     // Verify that it has expected type and data.
     EXPECT_EQ(TEST_OPT_CODE, opt->getType());
@@ -481,7 +481,7 @@ TEST_F(OptionIntTest, unpackSuboptions4) {
     // Expect that there is the sub option with the particular
     // option code added.
     OptionPtr subopt = opt->getOption(TEST_OPT_CODE + 1);
-    ASSERT_TRUE(subopt);
+    ASSERT_TRUE(subopt.get() != 0);
     // Check that this option has correct universe and code.
     EXPECT_EQ(Option::V4, subopt->getUniverse());
     EXPECT_EQ(TEST_OPT_CODE + 1, subopt->getType());
@@ -528,16 +528,16 @@ TEST_F(OptionIntTest, unpackSuboptions6) {
                                                           buf_.begin() + 4,
                                                           buf_.begin() + sizeof(expected)));
     );
-    ASSERT_TRUE(opt);
+    ASSERT_TRUE(opt.get() != 0);
 
     EXPECT_EQ(opt_code, opt->getType());
     EXPECT_EQ(0x0102, opt->getValue());
 
     // Checks for address option
     OptionPtr subopt = opt->getOption(D6O_IAADDR);
-    ASSERT_TRUE(subopt);
+    ASSERT_TRUE(subopt.get() != 0);
     boost::shared_ptr<Option6IAAddr> addr(boost::dynamic_pointer_cast<Option6IAAddr>(subopt));
-    ASSERT_TRUE(addr);
+    ASSERT_TRUE(addr.get() != 0);
 
     EXPECT_EQ(D6O_IAADDR, addr->getType());
     EXPECT_EQ(28, addr->len());
@@ -547,7 +547,7 @@ TEST_F(OptionIntTest, unpackSuboptions6) {
 
     // Checks for dummy option
     subopt = opt->getOption(0xcafe);
-    ASSERT_TRUE(subopt); // should be non-NULL
+    ASSERT_TRUE(subopt.get() != 0); // should be non-NULL
 
     EXPECT_EQ(0xcafe, subopt->getType());
     EXPECT_EQ(4, subopt->len());

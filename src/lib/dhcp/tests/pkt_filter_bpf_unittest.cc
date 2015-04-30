@@ -160,7 +160,7 @@ TEST_F(PktFilterBPFTest, DISABLED_send) {
     std::vector<uint8_t> dhcp_buf;
     buf.readVector(dhcp_buf, buf.getLength() - buf.getPosition());
     Pkt4Ptr rcvd_pkt(new Pkt4(&dhcp_buf[0], dhcp_buf.size()));
-    ASSERT_TRUE(rcvd_pkt);
+    ASSERT_TRUE(rcvd_pkt.get() != 0);
 
     // Parse the packet.
     ASSERT_NO_THROW(rcvd_pkt->unpack());
@@ -193,7 +193,7 @@ TEST_F(PktFilterBPFTest, DISABLED_receive) {
     Pkt4Ptr rcvd_pkt;
     ASSERT_NO_THROW(rcvd_pkt = pkt_filter.receive(iface, sock_info_));
     // Check that the packet has been correctly received.
-    ASSERT_TRUE(rcvd_pkt);
+    ASSERT_TRUE(rcvd_pkt.get() != 0);
 
     // Parse the packet.
     ASSERT_NO_THROW(rcvd_pkt->unpack());

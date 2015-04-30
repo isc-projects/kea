@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -112,7 +112,7 @@ TEST(ProtocolUtilTest, decodeEthernetHeader) {
     ASSERT_NO_THROW(decodeEthernetHeader(in_buf, pkt));
     // Verify that the destination HW address has been initialized...
     HWAddrPtr checked_dest_hwaddr = pkt->getLocalHWAddr();
-    ASSERT_TRUE(checked_dest_hwaddr);
+    ASSERT_TRUE(checked_dest_hwaddr.get() != 0);
     // and is correct.
     EXPECT_EQ(HWTYPE_ETHERNET, checked_dest_hwaddr->htype_);
     ASSERT_EQ(sizeof(dest_hw_addr), checked_dest_hwaddr->hwaddr_.size());
@@ -121,7 +121,7 @@ TEST(ProtocolUtilTest, decodeEthernetHeader) {
 
     // Verify that the HW address of the source has been initialized.
     HWAddrPtr checked_src_hwaddr = pkt->getRemoteHWAddr();
-    ASSERT_TRUE(checked_src_hwaddr);
+    ASSERT_TRUE(checked_src_hwaddr.get() != 0);
     // And that it is correct.
     EXPECT_EQ(HWTYPE_ETHERNET, checked_src_hwaddr->htype_);
     ASSERT_EQ(sizeof(src_hw_addr), checked_src_hwaddr->hwaddr_.size());
@@ -182,7 +182,7 @@ TEST(ProtocolUtilTest, decodeIpUdpHeader) {
 
     // Now, let's provide valid arguments and make sure it doesn't throw.
     pkt.reset(new Pkt4(DHCPDISCOVER, 0));
-    ASSERT_TRUE(pkt);
+    ASSERT_TRUE(pkt.get() != 0);
     EXPECT_NO_THROW(decodeIpUdpHeader(in_buf, pkt));
 
     // Verify the source address and port.
@@ -268,7 +268,7 @@ TEST(ProtocolUtilTest, writeIpUdpHeader) {
     // contents of the IP and UDP headers, e.g. source and
     // destination IP address or port number.
     Pkt4Ptr pkt(new Pkt4(DHCPOFFER, 0));
-    ASSERT_TRUE(pkt);
+    ASSERT_TRUE(pkt.get() != 0);
 
     // Set local and remote address and port.
     pkt->setLocalAddr(IOAddress("192.0.2.1"));

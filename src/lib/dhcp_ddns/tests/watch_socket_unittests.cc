@@ -1,4 +1,4 @@
-// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -37,7 +37,7 @@ TEST(WatchSocketTest, basics) {
 
     /// Verify that we can construct a WatchSocket.
     ASSERT_NO_THROW(watch.reset(new WatchSocket()));
-    ASSERT_TRUE(watch);
+    ASSERT_TRUE(watch.get() != 0);
 
     /// Verify that post-construction the state the select-fd is valid.
     int select_fd = watch->getSelectFd();
@@ -81,7 +81,7 @@ TEST(WatchSocketTest, closedWhileClear) {
 
     /// Verify that we can construct a WatchSocket.
     ASSERT_NO_THROW(watch.reset(new WatchSocket()));
-    ASSERT_TRUE(watch);
+    ASSERT_TRUE(watch.get() != 0);
 
     /// Verify that post-construction the state the select-fd is valid.
     int select_fd = watch->getSelectFd();
@@ -116,7 +116,7 @@ TEST(WatchSocketTest, closedWhileReady) {
 
     /// Verify that we can construct a WatchSocket.
     ASSERT_NO_THROW(watch.reset(new WatchSocket()));
-    ASSERT_TRUE(watch);
+    ASSERT_TRUE(watch.get() != 0);
 
     /// Verify that post-construction the state the select-fd is valid.
     int select_fd = watch->getSelectFd();
@@ -146,7 +146,7 @@ TEST(WatchSocketTest, emptyReadySelectFd) {
 
     /// Verify that we can construct a WatchSocket.
     ASSERT_NO_THROW(watch.reset(new WatchSocket()));
-    ASSERT_TRUE(watch);
+    ASSERT_TRUE(watch.get() != 0);
 
     /// Verify that post-construction the state the select-fd is valid.
     int select_fd = watch->getSelectFd();
@@ -179,7 +179,7 @@ TEST(WatchSocketTest, badReadOnClear) {
 
     /// Verify that we can construct a WatchSocket.
     ASSERT_NO_THROW(watch.reset(new WatchSocket()));
-    ASSERT_TRUE(watch);
+    ASSERT_TRUE(watch.get() != 0);
 
     /// Verify that post-construction the state the select-fd is valid.
     int select_fd = watch->getSelectFd();

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -135,7 +135,7 @@ TEST_F(OptionCustomTest, constructor) {
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def1, Option::V6, buf));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // Check if constructor initialized the universe and type correctly.
     EXPECT_EQ(Option::V6, option->getUniverse());
@@ -147,7 +147,7 @@ TEST_F(OptionCustomTest, constructor) {
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def2, Option::V4, buf.begin(), buf.end()));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     EXPECT_EQ(Option::V4, option->getUniverse());
     EXPECT_EQ(232, option->getType());
@@ -158,7 +158,7 @@ TEST_F(OptionCustomTest, constructor) {
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def3, Option::V6));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     EXPECT_EQ(Option::V6, option->getUniverse());
     EXPECT_EQ(1000, option->getType());
@@ -178,7 +178,7 @@ TEST_F(OptionCustomTest, emptyData) {
         option.reset(new OptionCustom(opt_def, Option::V4, buf.begin(),
                                       buf.end()));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // Option is 'empty' so no data fields are expected.
     EXPECT_EQ(0, option->getDataFieldsNum());
@@ -212,7 +212,7 @@ TEST_F(OptionCustomTest, binaryData) {
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def, Option::V4, buf_in));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // We should have just one data field.
     ASSERT_EQ(1, option->getDataFieldsNum());
@@ -257,7 +257,7 @@ TEST_F(OptionCustomTest, booleanData) {
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def, Option::V6, buf));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // We should have just one data field.
     ASSERT_EQ(1, option->getDataFieldsNum());
@@ -305,7 +305,7 @@ TEST_F(OptionCustomTest, fqdnData) {
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.end()));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     ASSERT_EQ(1, option->getDataFieldsNum());
 
@@ -340,7 +340,7 @@ TEST_F(OptionCustomTest, int16Data) {
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def, Option::V6, buf));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // We should have just one data field.
     ASSERT_EQ(1, option->getDataFieldsNum());
@@ -378,7 +378,7 @@ TEST_F(OptionCustomTest, int32Data) {
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def, Option::V6, buf));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // We should have just one data field.
     ASSERT_EQ(1, option->getDataFieldsNum());
@@ -418,7 +418,7 @@ TEST_F(OptionCustomTest, ipv4AddressData) {
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def, Option::V4, buf));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // We should have just one data field.
     ASSERT_EQ(1, option->getDataFieldsNum());
@@ -458,7 +458,7 @@ TEST_F(OptionCustomTest, ipv6AddressData) {
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def, Option::V6, buf));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // We should have just one data field.
     ASSERT_EQ(1, option->getDataFieldsNum());
@@ -505,7 +505,7 @@ TEST_F(OptionCustomTest, stringData) {
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.end()));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // We should have just one data field.
     ASSERT_EQ(1, option->getDataFieldsNum());
@@ -551,7 +551,7 @@ TEST_F(OptionCustomTest, booleanDataArray) {
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.end()));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // We should have 5 data fields.
     ASSERT_EQ(5, option->getDataFieldsNum());
@@ -614,7 +614,7 @@ TEST_F(OptionCustomTest, uint32DataArray) {
         // accepted and only 3 (instead of 4) elements will be stored in a custom option.
         option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.begin() + 13));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // We should have 3 data fields.
     ASSERT_EQ(3, option->getDataFieldsNum());
@@ -658,7 +658,7 @@ TEST_F(OptionCustomTest, ipv4AddressDataArray) {
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def, Option::V4, buf));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // We should have 3 data fields.
     ASSERT_EQ(3, option->getDataFieldsNum());
@@ -708,7 +708,7 @@ TEST_F(OptionCustomTest, ipv6AddressDataArray) {
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def, Option::V6, buf));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // We should have 3 data fields.
     ASSERT_EQ(3, option->getDataFieldsNum());
@@ -761,7 +761,7 @@ TEST_F(OptionCustomTest, fqdnDataArray) {
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def, Option::V6, buf));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // We expect that two FQDN values have been extracted
     // from a buffer.
@@ -797,7 +797,7 @@ TEST_F(OptionCustomTest, recordDataWithSuboption) {
          option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(),
                                        buf.end()));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // We should have two data fields parsed.
     ASSERT_EQ(2, option->getDataFieldsNum());
@@ -855,7 +855,7 @@ TEST_F(OptionCustomTest, recordData) {
     ASSERT_NO_THROW(
          option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.end()));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // We should have 6 data fields.
     ASSERT_EQ(6, option->getDataFieldsNum());
@@ -959,7 +959,7 @@ TEST_F(OptionCustomTest, setBinaryData) {
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def, Option::V6));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // Get the default binary value.
     OptionBuffer buf;
@@ -991,7 +991,7 @@ TEST_F(OptionCustomTest, setBooleanData) {
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def, Option::V6));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
     // Check that the default boolean value is false.
     bool value = false;
     ASSERT_NO_THROW(value = option->readBoolean());
@@ -1016,7 +1016,7 @@ TEST_F(OptionCustomTest, setUint32Data) {
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def, Option::V6));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // The default value for integer data fields is 0.
     uint32_t value = 0;
@@ -1044,7 +1044,7 @@ TEST_F(OptionCustomTest, setIpv4AddressData) {
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def, Option::V4));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     asiolink::IOAddress address("127.0.0.1");
     ASSERT_NO_THROW(address = option->readAddress());
@@ -1068,7 +1068,7 @@ TEST_F(OptionCustomTest, setIpv6AddressData) {
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def, Option::V6));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     asiolink::IOAddress address("::1");
     ASSERT_NO_THROW(address = option->readAddress());
@@ -1093,7 +1093,7 @@ TEST_F(OptionCustomTest, setStringData) {
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def, Option::V6));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // Get the default value of the option.
     std::string value;
@@ -1119,7 +1119,7 @@ TEST_F(OptionCustomTest, setFqdnData) {
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def, Option::V6));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
     // Read a default FQDN value from the option.
     std::string fqdn;
     ASSERT_NO_THROW(fqdn = option->readFqdn());
@@ -1143,7 +1143,7 @@ TEST_F(OptionCustomTest, setBooleanDataArray) {
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def, Option::V6));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // Initially, the array should contain no values.
     ASSERT_EQ(0, option->getDataFieldsNum());
@@ -1177,7 +1177,7 @@ TEST_F(OptionCustomTest, setUint16DataArray) {
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def, Option::V6));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // Initially, the array should contain no values.
     ASSERT_EQ(0, option->getDataFieldsNum());
@@ -1214,7 +1214,7 @@ TEST_F(OptionCustomTest, setIpv4AddressDataArray) {
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def, Option::V4));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // Expect that the array does not contain any data fields yet.
     ASSERT_EQ(0, option->getDataFieldsNum());
@@ -1256,7 +1256,7 @@ TEST_F(OptionCustomTest, setIpv6AddressDataArray) {
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def, Option::V6));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // Initially, the array does not contain any data fields.
     ASSERT_EQ(0, option->getDataFieldsNum());
@@ -1303,7 +1303,7 @@ TEST_F(OptionCustomTest, setRecordData) {
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def, Option::V6));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // The number of elements should be equal to number of elements
     // in the record.
@@ -1369,7 +1369,7 @@ TEST_F(OptionCustomTest, pack4) {
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def, Option::V4, buf));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     util::OutputBuffer buf_out(7);
     ASSERT_NO_THROW(option->pack(buf_out));
@@ -1402,7 +1402,7 @@ TEST_F(OptionCustomTest, pack6) {
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def, Option::V6, buf));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     util::OutputBuffer buf_out(buf.size() + option->getHeaderLen());
     ASSERT_NO_THROW(option->pack(buf_out));
@@ -1442,7 +1442,7 @@ TEST_F(OptionCustomTest, unpack) {
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def, Option::V4, buf.begin(), buf.end()));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // We should have 3 data fields.
     ASSERT_EQ(3, option->getDataFieldsNum());
@@ -1504,7 +1504,7 @@ TEST_F(OptionCustomTest, initialize) {
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.end()));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // We should have 3 data fields.
     ASSERT_EQ(3, option->getDataFieldsNum());
@@ -1558,7 +1558,7 @@ TEST_F(OptionCustomTest, invalidIndex) {
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def, Option::V6, buf));
     );
-    ASSERT_TRUE(option);
+    ASSERT_TRUE(option.get() != 0);
 
     // We expect that there are 10 uint32_t values stored in
     // the option. The 10th element is accessed by index eq 9.

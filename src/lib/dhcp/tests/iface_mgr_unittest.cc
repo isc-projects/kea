@@ -541,7 +541,7 @@ TEST_F(IfaceMgrTest, closeSockets) {
 
     // Create instance of IfaceMgr.
     boost::scoped_ptr<NakedIfaceMgr> iface_mgr(new NakedIfaceMgr());
-    ASSERT_TRUE(iface_mgr);
+    ASSERT_TRUE(iface_mgr.get() != 0);
 
     // Out constructor does not detect interfaces by itself. We need
     // to create one and add.
@@ -630,7 +630,7 @@ TEST_F(IfaceMgrTest, ifaceHasAddress) {
     IfaceMgrTestConfig config(true);
 
     IfacePtr iface = IfaceMgr::instance().getIface("eth0");
-    ASSERT_TRUE(iface);
+    ASSERT_TRUE(iface.get() != 0);
     EXPECT_TRUE(iface->hasAddress(IOAddress("10.0.0.1")));
     EXPECT_FALSE(iface->hasAddress(IOAddress("10.0.0.2")));
     EXPECT_TRUE(iface->hasAddress(IOAddress("fe80::3a60:77ff:fed5:cdef")));
@@ -671,14 +671,14 @@ TEST_F(IfaceMgrTest, getIface) {
 
     // Check that interface can be retrieved by ifindex
     IfacePtr tmp = ifacemgr->getIface(102);
-    ASSERT_TRUE(tmp);
+    ASSERT_TRUE(tmp.get() != 0);
 
     EXPECT_EQ("en3", tmp->getName());
     EXPECT_EQ(102, tmp->getIndex());
 
     // Check that interface can be retrieved by name
     tmp = ifacemgr->getIface("lo1");
-    ASSERT_TRUE(tmp);
+    ASSERT_TRUE(tmp.get() != 0);
 
     EXPECT_EQ("lo1", tmp->getName());
     EXPECT_EQ(100, tmp->getIndex());
@@ -696,7 +696,7 @@ TEST_F(IfaceMgrTest, clearIfaces) {
     ASSERT_GT(ifacemgr.countIfaces(), 0);
 
     boost::shared_ptr<TestPktFilter> custom_packet_filter(new TestPktFilter());
-    ASSERT_TRUE(custom_packet_filter);
+    ASSERT_TRUE(custom_packet_filter.get() != 0);
     ASSERT_NO_THROW(ifacemgr.setPacketFilter(custom_packet_filter));
 
     ASSERT_NO_THROW(ifacemgr.openSockets4());
@@ -1117,7 +1117,7 @@ TEST_F(IfaceMgrTest, sendReceive6) {
 
     rcvPkt = ifacemgr->receive6(10);
 
-    ASSERT_TRUE(rcvPkt); // received our own packet
+    ASSERT_TRUE(rcvPkt.get() != 0); // received our own packet
 
     // let's check that we received what was sent
     ASSERT_EQ(sendPkt->data_.size(), rcvPkt->data_.size());
@@ -1183,7 +1183,7 @@ TEST_F(IfaceMgrTest, sendReceive4) {
     EXPECT_NO_THROW(ifacemgr->send(sendPkt));
 
     ASSERT_NO_THROW(rcvPkt = ifacemgr->receive4(10));
-    ASSERT_TRUE(rcvPkt); // received our own packet
+    ASSERT_TRUE(rcvPkt.get() != 0); // received our own packet
 
     ASSERT_NO_THROW(
         rcvPkt->unpack();
@@ -1248,7 +1248,7 @@ TEST_F(IfaceMgrTest, setPacketFilter) {
 
     // Create an instance of IfaceMgr.
     boost::scoped_ptr<NakedIfaceMgr> iface_mgr(new NakedIfaceMgr());
-    ASSERT_TRUE(iface_mgr);
+    ASSERT_TRUE(iface_mgr.get() != 0);
 
     // Try to set NULL packet filter object and make sure it is rejected.
     boost::shared_ptr<TestPktFilter> custom_packet_filter;
@@ -1257,7 +1257,7 @@ TEST_F(IfaceMgrTest, setPacketFilter) {
 
     // Create valid object and check if it can be set.
     custom_packet_filter.reset(new TestPktFilter());
-    ASSERT_TRUE(custom_packet_filter);
+    ASSERT_TRUE(custom_packet_filter.get() != 0);
     ASSERT_NO_THROW(iface_mgr->setPacketFilter(custom_packet_filter));
 
     // Try to open socket using IfaceMgr. It should call the openSocket() function
@@ -1288,7 +1288,7 @@ TEST_F(IfaceMgrTest, setPacketFilter) {
 TEST_F(IfaceMgrTest, setPacketFilter6) {
     // Create an instance of IfaceMgr.
     boost::scoped_ptr<NakedIfaceMgr> iface_mgr(new NakedIfaceMgr());
-    ASSERT_TRUE(iface_mgr);
+    ASSERT_TRUE(iface_mgr.get() != 0);
 
     // Try to set NULL packet filter object and make sure it is rejected.
     boost::shared_ptr<PktFilter6Stub> custom_packet_filter;
@@ -1297,7 +1297,7 @@ TEST_F(IfaceMgrTest, setPacketFilter6) {
 
     // Create valid object and check if it can be set.
     custom_packet_filter.reset(new PktFilter6Stub());
-    ASSERT_TRUE(custom_packet_filter);
+    ASSERT_TRUE(custom_packet_filter.get() != 0);
     ASSERT_NO_THROW(iface_mgr->setPacketFilter(custom_packet_filter));
 
     // Try to open socket using IfaceMgr. It should call the openSocket()
@@ -1336,7 +1336,7 @@ TEST_F(IfaceMgrTest, setMatchingPacketFilter) {
 
     // Create an instance of IfaceMgr.
     boost::scoped_ptr<NakedIfaceMgr> iface_mgr(new NakedIfaceMgr());
-    ASSERT_TRUE(iface_mgr);
+    ASSERT_TRUE(iface_mgr.get() != 0);
 
     // Let IfaceMgr figure out which Packet Filter to use when
     // direct response capability is not desired. It should pick
@@ -1365,9 +1365,9 @@ TEST_F(IfaceMgrTest, checkPacketFilterRawSocket) {
     int socket1 = -1, socket2 = -1;
     // Create two instances of IfaceMgr.
     boost::scoped_ptr<NakedIfaceMgr> iface_mgr1(new NakedIfaceMgr());
-    ASSERT_TRUE(iface_mgr1);
+    ASSERT_TRUE(iface_mgr1.get() != 0);
     boost::scoped_ptr<NakedIfaceMgr> iface_mgr2(new NakedIfaceMgr());
-    ASSERT_TRUE(iface_mgr2);
+    ASSERT_TRUE(iface_mgr2.get() != 0);
 
     // Let IfaceMgr figure out which Packet Filter to use when
     // direct response capability is not desired. It should pick
@@ -1474,7 +1474,7 @@ TEST_F(IfaceMgrTest, openSockets4) {
     // Use the custom packet filter object. This object mimics the socket
     // opening operation - the real socket is not open.
     boost::shared_ptr<TestPktFilter> custom_packet_filter(new TestPktFilter());
-    ASSERT_TRUE(custom_packet_filter);
+    ASSERT_TRUE(custom_packet_filter.get() != 0);
     ASSERT_NO_THROW(ifacemgr.setPacketFilter(custom_packet_filter));
 
     // Simulate opening sockets using the dummy packet filter.
@@ -1535,7 +1535,7 @@ TEST_F(IfaceMgrTest, openSockets4IfaceInactive) {
     ifacemgr.createIfaces();
 
     boost::shared_ptr<TestPktFilter> custom_packet_filter(new TestPktFilter());
-    ASSERT_TRUE(custom_packet_filter);
+    ASSERT_TRUE(custom_packet_filter.get() != 0);
     ASSERT_NO_THROW(ifacemgr.setPacketFilter(custom_packet_filter));
 
     // Boolean parameters specify that eth1 is:
@@ -1565,7 +1565,7 @@ TEST_F(IfaceMgrTest, openSockets4NoErrorHandler) {
     ifacemgr.createIfaces();
 
     boost::shared_ptr<TestPktFilter> custom_packet_filter(new TestPktFilter());
-    ASSERT_TRUE(custom_packet_filter);
+    ASSERT_TRUE(custom_packet_filter.get() != 0);
     ASSERT_NO_THROW(ifacemgr.setPacketFilter(custom_packet_filter));
 
     // Open socket on eth1. The openSockets4 should detect that this
@@ -1591,7 +1591,7 @@ TEST_F(IfaceMgrTest, openSocket4ErrorHandler) {
     ifacemgr.createIfaces();
 
     boost::shared_ptr<TestPktFilter> custom_packet_filter(new TestPktFilter());
-    ASSERT_TRUE(custom_packet_filter);
+    ASSERT_TRUE(custom_packet_filter.get() != 0);
     ASSERT_NO_THROW(ifacemgr.setPacketFilter(custom_packet_filter));
 
     // Open socket on eth0.
@@ -1632,7 +1632,7 @@ TEST_F(IfaceMgrTest, hasOpenSocketForAddress4) {
     // Use the custom packet filter object. This object mimics the socket
     // opening operation - the real socket is not open.
     boost::shared_ptr<TestPktFilter> custom_packet_filter(new TestPktFilter());
-    ASSERT_TRUE(custom_packet_filter);
+    ASSERT_TRUE(custom_packet_filter.get() != 0);
     ASSERT_NO_THROW(ifacemgr.setPacketFilter(custom_packet_filter));
 
     // Simulate opening sockets using the dummy packet filter.
@@ -1667,7 +1667,7 @@ TEST_F(IfaceMgrTest, openSockets6LinkLocal) {
     ifacemgr.createIfaces();
 
     boost::shared_ptr<PktFilter6Stub> filter(new PktFilter6Stub());
-    ASSERT_TRUE(filter);
+    ASSERT_TRUE(filter.get() != 0);
     ASSERT_NO_THROW(ifacemgr.setPacketFilter(filter));
 
     // Simulate opening sockets using the dummy packet filter.
@@ -1704,7 +1704,7 @@ TEST_F(IfaceMgrTest, openSockets6NoLinkLocal) {
     ifacemgr.createIfaces();
 
     boost::shared_ptr<PktFilter6Stub> filter(new PktFilter6Stub());
-    ASSERT_TRUE(filter);
+    ASSERT_TRUE(filter.get() != 0);
     ASSERT_NO_THROW(ifacemgr.setPacketFilter(filter));
 
     // Remove a link local address from eth0. If there is no link-local
@@ -1747,7 +1747,7 @@ TEST_F(IfaceMgrTest, openSockets6NotMulticast) {
     ifacemgr.createIfaces();
 
     boost::shared_ptr<PktFilter6Stub> filter(new PktFilter6Stub());
-    ASSERT_TRUE(filter);
+    ASSERT_TRUE(filter.get() != 0);
     ASSERT_NO_THROW(ifacemgr.setPacketFilter(filter));
 
     // Make eth0 multicast-incapable.
@@ -1790,7 +1790,7 @@ TEST_F(IfaceMgrTest, openSockets6Unicast) {
     ifacemgr.createIfaces();
 
     boost::shared_ptr<PktFilter6Stub> filter(new PktFilter6Stub());
-    ASSERT_TRUE(filter);
+    ASSERT_TRUE(filter.get() != 0);
     ASSERT_NO_THROW(ifacemgr.setPacketFilter(filter));
 
     // Configure the eth0 to open socket on the unicast address, apart
@@ -1832,7 +1832,7 @@ TEST_F(IfaceMgrTest, openSockets6UnicastOnly) {
     ifacemgr.createIfaces();
 
     boost::shared_ptr<PktFilter6Stub> filter(new PktFilter6Stub());
-    ASSERT_TRUE(filter);
+    ASSERT_TRUE(filter.get() != 0);
     ASSERT_NO_THROW(ifacemgr.setPacketFilter(filter));
 
     // Configure the eth0 to open socket on the unicast address, apart
@@ -1876,7 +1876,7 @@ TEST_F(IfaceMgrTest, openSockets6IfaceDown) {
     ifacemgr.createIfaces();
 
     boost::shared_ptr<PktFilter6Stub> filter(new PktFilter6Stub());
-    ASSERT_TRUE(filter);
+    ASSERT_TRUE(filter.get() != 0);
     ASSERT_NO_THROW(ifacemgr.setPacketFilter(filter));
 
     // Configure the eth0 to open socket on the unicast address, apart
@@ -1934,7 +1934,7 @@ TEST_F(IfaceMgrTest, openSockets6IfaceInactive) {
     ifacemgr.createIfaces();
 
     boost::shared_ptr<PktFilter6Stub> filter(new PktFilter6Stub());
-    ASSERT_TRUE(filter);
+    ASSERT_TRUE(filter.get() != 0);
     ASSERT_NO_THROW(ifacemgr.setPacketFilter(filter));
 
     // Configure the eth0 to open socket on the unicast address, apart
@@ -1985,7 +1985,7 @@ TEST_F(IfaceMgrTest, openSockets6NoIfaces) {
     ifacemgr.getIfacesLst().clear();
 
     boost::shared_ptr<PktFilter6Stub> filter(new PktFilter6Stub());
-    ASSERT_TRUE(filter);
+    ASSERT_TRUE(filter.get() != 0);
     ASSERT_NO_THROW(ifacemgr.setPacketFilter(filter));
 
     // This value indicates if at least one socket opens. There are no
@@ -2005,7 +2005,7 @@ TEST_F(IfaceMgrTest, openSocket6ErrorHandler) {
     ifacemgr.createIfaces();
 
     boost::shared_ptr<PktFilter6Stub> filter(new PktFilter6Stub());
-    ASSERT_TRUE(filter);
+    ASSERT_TRUE(filter.get() != 0);
     ASSERT_NO_THROW(ifacemgr.setPacketFilter(filter));
 
     // Open multicast socket on eth0.
@@ -2045,7 +2045,7 @@ TEST_F(IfaceMgrTest, hasOpenSocketForAddress6) {
     ifacemgr.createIfaces();
 
     boost::shared_ptr<PktFilter6Stub> filter(new PktFilter6Stub());
-    ASSERT_TRUE(filter);
+    ASSERT_TRUE(filter.get() != 0);
     ASSERT_NO_THROW(ifacemgr.setPacketFilter(filter));
 
     // Simulate opening sockets using the dummy packet filter.
@@ -2170,7 +2170,7 @@ TEST_F(IfaceMgrTest, socketInfo) {
     // Now let's test if IfaceMgr handles socket info properly
     scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
     IfacePtr loopback = ifacemgr->getIface(LOOPBACK);
-    ASSERT_TRUE(loopback);
+    ASSERT_TRUE(loopback.get() != 0);
     loopback->addSocket(sock1);
     loopback->addSocket(sock2);
     loopback->addSocket(sock3);
@@ -2813,7 +2813,7 @@ TEST_F(IfaceMgrTest, DISABLED_openUnicastSockets) {
 
     // Get the interface (todo: which interface)
     IfacePtr iface = ifacemgr->getIface("eth0");
-    ASSERT_TRUE(iface);
+    ASSERT_TRUE(iface.get() != 0);
     iface->inactive6_ = false;
 
     // Tell the interface that it should bind to this global interface

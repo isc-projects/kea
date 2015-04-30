@@ -45,7 +45,7 @@
     if (handler) { \
         handler(oss__.str()); \
     } else { \
-        isc_throw(ex_type, oss__); \
+        isc_throw(ex_type, oss__.str()); \
     } \
 } \
 

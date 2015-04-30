@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -86,7 +86,7 @@ TEST_F(OptionStringTest, constructorFromBuffer) {
         optv4.reset(new OptionString(Option::V4, 234, buf_.begin(), buf_.end()));
     );
     // Make sure that it has been initialized to non-NULL value.
-    ASSERT_TRUE(optv4);
+    ASSERT_TRUE(optv4.get() != 0);
 
     // Test the instance of the created option.
     const std::string optv4_value = "This is a test string";
@@ -103,7 +103,7 @@ TEST_F(OptionStringTest, constructorFromBuffer) {
         optv6.reset(new OptionString(Option::V6, 123, buf_.begin(), buf_.end() - 1));
     );
     // Make sure that it has been initialized to non-NULL value.
-    ASSERT_TRUE(optv6);
+    ASSERT_TRUE(optv6.get() != 0);
 
     // Test the instance of the created option.
     const std::string optv6_value = "This is a test strin";

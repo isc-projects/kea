@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -181,13 +181,14 @@ TEST_F(MessageTest, headerFlag) {
                  InvalidMessageOperation);
 }
 TEST_F(MessageTest, getEDNS) {
-    EXPECT_FALSE(message_parse.getEDNS()); // by default EDNS isn't set
+    ConstEDNSPtr ep(message_parse.getEDNS());
+    EXPECT_FALSE(ep); // by default EDNS isn't set
 
     factoryFromFile(message_parse, "message_fromWire10.wire");
-    EXPECT_TRUE(message_parse.getEDNS());
-    EXPECT_EQ(0, message_parse.getEDNS()->getVersion());
-    EXPECT_EQ(4096, message_parse.getEDNS()->getUDPSize());
-    EXPECT_TRUE(message_parse.getEDNS()->getDNSSECAwareness());
+    EXPECT_TRUE(ep.get() != 0);
+    EXPECT_EQ(0, ep->getVersion());
+    EXPECT_EQ(4096, ep->getUDPSize());
+    EXPECT_TRUE(ep->getDNSSECAwareness());
 }
 
 TEST_F(MessageTest, setEDNS) {
