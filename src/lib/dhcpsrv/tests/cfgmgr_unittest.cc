@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -295,11 +295,11 @@ public:
 TEST_F(CfgMgrTest, configuration) {
 
     ConstSrvConfigPtr configuration = CfgMgr::instance().getCurrentCfg();
-    ASSERT_TRUE(configuration);
+    ASSERT_TRUE(configuration.get() != 0);
     EXPECT_TRUE(configuration->getLoggingInfo().empty());
 
     configuration = CfgMgr::instance().getStagingCfg();
-    ASSERT_TRUE(configuration);
+    ASSERT_TRUE(configuration.get() != 0);
     EXPECT_TRUE(configuration->getLoggingInfo().empty());
 }
 
@@ -396,7 +396,7 @@ TEST_F(CfgMgrTest, d2ClientConfig) {
 
     // Make sure the convenience method fetches the config correctly.
     D2ClientConfigPtr original_config = CfgMgr::instance().getD2ClientConfig();
-    ASSERT_TRUE(original_config);
+    ASSERT_TRUE(original_config.get() != 0);
     EXPECT_FALSE(original_config->getEnableUpdates());
 
     // Verify that we cannot set the configuration to an empty pointer.
@@ -417,7 +417,7 @@ TEST_F(CfgMgrTest, d2ClientConfig) {
 
     // Verify that we can fetch the newly assigned configuration.
     D2ClientConfigPtr updated_config = CfgMgr::instance().getD2ClientConfig();
-    ASSERT_TRUE(updated_config);
+    ASSERT_TRUE(updated_config.get() != 0);
     EXPECT_TRUE(updated_config->getEnableUpdates());
 
     // Make sure convenience method agrees with updated configuration.
@@ -439,8 +439,8 @@ TEST_F(CfgMgrTest, staging) {
     ConstSrvConfigPtr const_config;
     for (int i = 0; i < 5; ++i) {
         const_config = cfg_mgr.getCurrentCfg();
-        ASSERT_TRUE(const_config) << "Returned NULL current configuration"
-            " for iteration " << i;
+        ASSERT_TRUE(const_config.get() != 0)
+            << "Returned NULL current configuration for iteration " << i;
         EXPECT_EQ(0, const_config->getSequence())
             << "Returned invalid sequence number "
             << const_config->getSequence() << " for iteration " << i;
@@ -453,8 +453,8 @@ TEST_F(CfgMgrTest, staging) {
     SrvConfigPtr config;
     for (int i = 0; i < 5; ++i) {
         config = cfg_mgr.getStagingCfg();
-        ASSERT_TRUE(config) << "Returned NULL staging configuration for"
-            " iteration " << i;
+        ASSERT_TRUE(config.get() != 0)
+            << "Returned NULL staging configuration for iteration " << i;
         // The sequence id is 1 for staging because it is ahead of current
         // configuration having sequence number 0.
         EXPECT_EQ(1, config->getSequence()) << "Returned invalid sequence"
@@ -465,7 +465,7 @@ TEST_F(CfgMgrTest, staging) {
     // one.
     cfg_mgr.commit();
     const_config = cfg_mgr.getCurrentCfg();
-    ASSERT_TRUE(const_config);
+    ASSERT_TRUE(const_config.get() != 0);
     // Sequence id equal to 1 indicates that the current configuration points
     // to the configuration that used to be a staging configuration previously.
     EXPECT_EQ(1, const_config->getSequence());
@@ -473,7 +473,7 @@ TEST_F(CfgMgrTest, staging) {
     // Create a new staging configuration. It should be assigned a new
     // sequence id.
     config = cfg_mgr.getStagingCfg();
-    ASSERT_TRUE(config);
+    ASSERT_TRUE(config.get() != 0);
     EXPECT_EQ(2, config->getSequence());
 
     // Let's execute commit a couple of times. The first invocation to commit
@@ -485,7 +485,7 @@ TEST_F(CfgMgrTest, staging) {
 
     // The current configuration now have sequence number 2.
     const_config = cfg_mgr.getCurrentCfg();
-    ASSERT_TRUE(const_config);
+    ASSERT_TRUE(const_config.get() != 0);
     EXPECT_EQ(2, const_config->getSequence());
 
     // Clear configuration along with a history.
@@ -494,12 +494,12 @@ TEST_F(CfgMgrTest, staging) {
     // After clearing configuration we should successfully get the
     // new staging configuration.
     config = cfg_mgr.getStagingCfg();
-    ASSERT_TRUE(config);
+    ASSERT_TRUE(config.get() != 0);
     EXPECT_EQ(1, config->getSequence());
 
     // Modify the staging configuration.
     config->addLoggingInfo(LoggingInfo());
-    ASSERT_TRUE(config);
+    ASSERT_TRUE(config.get() != 0);
     // The modified staging configuration should have one logger configured.
     ASSERT_EQ(1, config->getLoggingInfo().size());
 
@@ -509,7 +509,7 @@ TEST_F(CfgMgrTest, staging) {
     // Make sure that the logger is not set. This is an indication that the
     // rollback worked.
     config = cfg_mgr.getStagingCfg();
-    ASSERT_TRUE(config);
+    ASSERT_TRUE(config.get() != 0);
     EXPECT_EQ(0, config->getLoggingInfo().size());
 }
 

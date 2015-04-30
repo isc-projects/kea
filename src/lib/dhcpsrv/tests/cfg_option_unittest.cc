@@ -100,34 +100,34 @@ TEST(CfgOptionTest, add) {
 
     // Get options from the Subnet and check if all 10 are there.
     OptionContainerPtr options = cfg.getAll("dhcp6");
-    ASSERT_TRUE(options);
+    ASSERT_TRUE(options.get() != 0);
     ASSERT_EQ(10, options->size());
 
     // Validate codes of options added to dhcp6 option space.
     uint16_t expected_code = 100;
     for (OptionContainer::const_iterator option_desc = options->begin();
          option_desc != options->end(); ++option_desc) {
-        ASSERT_TRUE(option_desc->option_);
+      ASSERT_TRUE(option_desc->option_.get() != 0);
         EXPECT_EQ(expected_code, option_desc->option_->getType());
         ++expected_code;
     }
 
     options = cfg.getAll("isc");
-    ASSERT_TRUE(options);
+    ASSERT_TRUE(options.get() != 0);
     ASSERT_EQ(7, options->size());
 
     // Validate codes of options added to isc option space.
     expected_code = 105;
     for (OptionContainer::const_iterator option_desc = options->begin();
          option_desc != options->end(); ++option_desc) {
-        ASSERT_TRUE(option_desc->option_);
+        ASSERT_TRUE(option_desc->option_.get() != 0);
         EXPECT_EQ(expected_code, option_desc->option_->getType());
         ++expected_code;
     }
 
     // Try to get options from a non-existing option space.
     options = cfg.getAll("abcd");
-    ASSERT_TRUE(options);
+    ASSERT_TRUE(options.get() != 0);
     EXPECT_TRUE(options->empty());
 }
 
@@ -175,7 +175,7 @@ TEST(CfgOption, merge) {
     // Validate the options in the dhcp6 option space in the destination.
     for (uint16_t code = 100; code < 110; ++code) {
         OptionDescriptor desc = cfg_dst.get("dhcp6", code);
-        ASSERT_TRUE(desc.option_);
+        ASSERT_TRUE(desc.option_.get() != 0);
         ASSERT_EQ(1, desc.option_->getData().size());
         // The options with even option codes should hold one byte of data
         // equal to 0x1. These are the ones that we have initially added to
@@ -192,7 +192,7 @@ TEST(CfgOption, merge) {
     // Validate the options in the vendor space.
     for (uint16_t code = 100; code < 110; ++code) {
         OptionDescriptor desc = cfg_dst.get(123, code);
-        ASSERT_TRUE(desc.option_);
+        ASSERT_TRUE(desc.option_.get() != 0);
         ASSERT_EQ(1, desc.option_->getData().size());
         // This time, the options with even option codes should hold a byte
         // of data equal to 0xFF. The other options should hold the byte of
@@ -229,19 +229,19 @@ TEST(CfgOptionTest, copy) {
     // Validate options in the destination configuration.
     for (uint16_t code = 100; code < 110; ++code) {
         OptionDescriptor desc = cfg_dst.get("foo", code);
-        ASSERT_TRUE(desc.option_);
+        ASSERT_TRUE(desc.option_.get() != 0);
         ASSERT_EQ(1, desc.option_->getData().size());
         EXPECT_EQ(0x01, desc.option_->getData()[0]);
     }
 
     // Any existing options should be removed.
     OptionContainerPtr container = cfg_dst.getAll("isc");
-    ASSERT_TRUE(container);
+    ASSERT_TRUE(container.get() != 0);
     EXPECT_TRUE(container->empty());
 
     // The option space "foo" should contain exactly 10 options.
     container = cfg_dst.getAll("foo");
-    ASSERT_TRUE(container);
+    ASSERT_TRUE(container.get() != 0);
     EXPECT_EQ(10, container->size());
 }
 
@@ -289,14 +289,15 @@ TEST(CfgOptionTest, encapsulate) {
     for (uint16_t code = 1000; code < 1040; ++code) {
         OptionUint16Ptr option = boost::dynamic_pointer_cast<
             OptionUint16>(cfg.get(DHCP6_OPTION_SPACE, code).option_);
-        ASSERT_TRUE(option) << "option with code " << code << " not found";
+        ASSERT_TRUE(option.get() != 0)
+              << "option with code " << code << " not found";
         const OptionCollection& suboptions = option->getOptions();
         for (OptionCollection::const_iterator suboption =
                  suboptions.begin(); suboption != suboptions.end();
              ++suboption) {
             OptionUint8Ptr opt = boost::dynamic_pointer_cast<
                 OptionUint8>(suboption->second);
-            ASSERT_TRUE(opt);
+            ASSERT_TRUE(opt.get() != 0);
             if (code < 1020) {
                 EXPECT_EQ(0x01, opt->getValue());
             } else {
@@ -328,7 +329,7 @@ TEST(CfgOption, get) {
         // Now, try the valid option space.
         desc = cfg.get("dhcp6", code);
         // Test that the option code matches the expected code.
-        ASSERT_TRUE(desc.option_);
+        ASSERT_TRUE(desc.option_.get() != 0);
         EXPECT_EQ(code, desc.option_->getType());
     }
 }
@@ -365,7 +366,7 @@ TEST(CfgOptionTest, addNonUniqueOptions) {
         // Check that returned options actually have the expected option code.
         for (OptionContainerTypeIndex::const_iterator option_desc = range.first;
              option_desc != range.second; ++option_desc) {
-            ASSERT_TRUE(option_desc->option_);
+            ASSERT_TRUE(option_desc->option_.get() != 0);
             EXPECT_EQ(code, option_desc->option_->getType());
         }
     }
@@ -446,34 +447,34 @@ TEST(CfgOptionTest, addVendorOptions) {
 
     // Get options from the Subnet and check if all 10 are there.
     OptionContainerPtr options = cfg.getAll(12345678);
-    ASSERT_TRUE(options);
+    ASSERT_TRUE(options.get() != 0);
     ASSERT_EQ(10, options->size());
 
     // Validate codes of options added to dhcp6 option space.
     uint16_t expected_code = 100;
     for (OptionContainer::const_iterator option_desc = options->begin();
          option_desc != options->end(); ++option_desc) {
-        ASSERT_TRUE(option_desc->option_);
+        ASSERT_TRUE(option_desc->option_.get() != 0);
         EXPECT_EQ(expected_code, option_desc->option_->getType());
         ++expected_code;
     }
 
     options = cfg.getAll(vendor_id);
-    ASSERT_TRUE(options);
+    ASSERT_TRUE(options.get() != 0);
     ASSERT_EQ(7, options->size());
 
     // Validate codes of options added to isc option space.
     expected_code = 105;
     for (OptionContainer::const_iterator option_desc = options->begin();
          option_desc != options->end(); ++option_desc) {
-        ASSERT_TRUE(option_desc->option_);
+        ASSERT_TRUE(option_desc->option_.get() != 0);
         EXPECT_EQ(expected_code, option_desc->option_->getType());
         ++expected_code;
     }
 
     // Try to get options from a non-existing option space.
     options = cfg.getAll(1111111);
-    ASSERT_TRUE(options);
+    ASSERT_TRUE(options.get() != 0);
     EXPECT_TRUE(options->empty());
 }
 

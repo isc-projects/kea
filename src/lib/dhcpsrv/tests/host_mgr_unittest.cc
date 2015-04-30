@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -182,7 +182,7 @@ TEST_F(HostMgrTest, get4) {
     CfgMgr::instance().commit();
 
     host = HostMgr::instance().get4(SubnetID(1), hwaddrs_[0]);
-    ASSERT_TRUE(host);
+    ASSERT_TRUE(host.get() != 0);
     EXPECT_EQ(1, host->getIPv4SubnetID());
     EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
 }
@@ -202,7 +202,7 @@ TEST_F(HostMgrTest, get6) {
     CfgMgr::instance().commit();
 
     host = HostMgr::instance().get6(SubnetID(2), duids_[0]);
-    ASSERT_TRUE(host);
+    ASSERT_TRUE(host.get() != 0);
     EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
                                                IOAddress("2001:db8:1::1"))));
 }
@@ -223,7 +223,7 @@ TEST_F(HostMgrTest, DISABLED_get6ByPrefix) {
     CfgMgr::instance().commit();
 
     host = HostMgr::instance().get6(IOAddress("2001:db8:1::"), 64);
-    ASSERT_TRUE(host);
+    ASSERT_TRUE(host.get() != 0);
     EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
     IOAddress("2001:db8:1::"), 64)));
 }

@@ -139,7 +139,7 @@ TEST(HostTest, createFromHWAddrString) {
                                         "somehost.example.org")));
     // The HW address should be set to non-null.
     HWAddrPtr hwaddr = host->getHWAddress();
-    ASSERT_TRUE(hwaddr);
+    ASSERT_TRUE(hwaddr.get() != 0);
 
     EXPECT_EQ("hwtype=1 01:02:03:04:05:06", hwaddr->toText());
 
@@ -172,7 +172,7 @@ TEST(HostTest, createFromDUIDString) {
 
     // DUID should be set to non-null value.
     DuidPtr duid = host->getDuid();
-    ASSERT_TRUE(duid);
+    ASSERT_TRUE(duid.get() != 0);
 
     EXPECT_EQ("a1:b2:c3:d4:e5:06", duid->toText());
 
@@ -211,7 +211,7 @@ TEST(HostTest, createFromHWAddrBinary) {
                                         "somehost.example.org")));
     // Hardware address should be non-null.
     HWAddrPtr hwaddr = host->getHWAddress();
-    ASSERT_TRUE(hwaddr);
+    ASSERT_TRUE(hwaddr.get() != 0);
 
     EXPECT_EQ("hwtype=1 aa:ab:ca:da:bb:ee", hwaddr->toText());
 
@@ -239,7 +239,7 @@ TEST(HostTest, createFromDuidBinary) {
                                         "me.example.org")));
     // DUID should be non null.
     DuidPtr duid = host->getDuid();
-    ASSERT_TRUE(duid);
+    ASSERT_TRUE(duid.get() != 0);
 
     EXPECT_EQ("01:02:03:04:05:06", duid->toText());
 
@@ -261,7 +261,7 @@ TEST(HostTest, setIdentifierString) {
                                         IOAddress("192.0.2.3"),
                                         "me.example.com")));
     // Initially, there should be a HW address, but not a DUID set.
-    ASSERT_TRUE(host->getHWAddress());
+    ASSERT_TRUE(host->getHWAddress().get() != 0);
     ASSERT_FALSE(host->getDuid());
 
     // Now, use a DUID as identifier.
@@ -269,7 +269,7 @@ TEST(HostTest, setIdentifierString) {
 
     // Verify that the DUID is correct.
     DuidPtr duid = host->getDuid();
-    ASSERT_TRUE(duid);
+    ASSERT_TRUE(duid.get() != 0);
     EXPECT_EQ("aa:bb:cc:dd:ee", duid->toText());
     // HW address should be not set.
     EXPECT_FALSE(host->getHWAddress());
@@ -280,7 +280,7 @@ TEST(HostTest, setIdentifierString) {
 
     // Verify that HW address is correct.
     HWAddrPtr hw_addr = host->getHWAddress();
-    ASSERT_TRUE(hw_addr);
+    ASSERT_TRUE(hw_addr.get() != 0);
     EXPECT_EQ("hwtype=1 09:08:07:06:05:04", hw_addr->toText());
     // DUID should be not set.
     EXPECT_FALSE(host->getDuid());
@@ -296,7 +296,7 @@ TEST(HostTest, setIdentifierBinary) {
                                         IOAddress("192.0.2.3"),
                                         "me.example.com")));
     // Initially, there should be a HW address, but not a DUID set.
-    ASSERT_TRUE(host->getHWAddress());
+    ASSERT_TRUE(host->getHWAddress().get() != 0);
     ASSERT_FALSE(host->getDuid());
 
     // Now, use a DUID as identifier.
@@ -308,7 +308,7 @@ TEST(HostTest, setIdentifierBinary) {
 
     // Verify that the DUID is correct.
     DuidPtr duid = host->getDuid();
-    ASSERT_TRUE(duid);
+    ASSERT_TRUE(duid.get() != 0);
     EXPECT_EQ("aa:bb:cc:dd:ee", duid->toText());
     // HW address should be not set.
     EXPECT_FALSE(host->getHWAddress());
@@ -323,7 +323,7 @@ TEST(HostTest, setIdentifierBinary) {
 
     // Verify that HW address is correct.
     HWAddrPtr hw_addr = host->getHWAddress();
-    ASSERT_TRUE(hw_addr);
+    ASSERT_TRUE(hw_addr.get() != 0);
     EXPECT_EQ("hwtype=1 09:08:07:06:05:04", hw_addr->toText());
     // DUID should be not set.
     EXPECT_FALSE(host->getDuid());

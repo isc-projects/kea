@@ -755,34 +755,34 @@ TEST(Subnet6Test, addOptions) {
 
     // Get options from the Subnet and check if all 10 are there.
     OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp6");
-    ASSERT_TRUE(options);
+    ASSERT_TRUE(options.get() != 0);
     ASSERT_EQ(10, options->size());
 
     // Validate codes of options added to dhcp6 option space.
     uint16_t expected_code = 100;
     for (OptionContainer::const_iterator option_desc = options->begin();
          option_desc != options->end(); ++option_desc) {
-        ASSERT_TRUE(option_desc->option_);
+        ASSERT_TRUE(option_desc->option_.get() != 0);
         EXPECT_EQ(expected_code, option_desc->option_->getType());
         ++expected_code;
     }
 
     options = subnet->getCfgOption()->getAll("isc");
-    ASSERT_TRUE(options);
+    ASSERT_TRUE(options.get() != 0);
     ASSERT_EQ(7, options->size());
 
     // Validate codes of options added to isc option space.
     expected_code = 105;
     for (OptionContainer::const_iterator option_desc = options->begin();
          option_desc != options->end(); ++option_desc) {
-        ASSERT_TRUE(option_desc->option_);
+        ASSERT_TRUE(option_desc->option_.get() != 0);
         EXPECT_EQ(expected_code, option_desc->option_->getType());
         ++expected_code;
     }
 
     // Try to get options from a non-existing option space.
     options = subnet->getCfgOption()->getAll("abcd");
-    ASSERT_TRUE(options);
+    ASSERT_TRUE(options.get() != 0);
     EXPECT_TRUE(options->empty());
 }
 
@@ -817,7 +817,7 @@ TEST(Subnet6Test, addNonUniqueOptions) {
         // Check that returned options actually have the expected option code.
         for (OptionContainerTypeIndex::const_iterator option_desc = range.first;
              option_desc != range.second; ++option_desc) {
-            ASSERT_TRUE(option_desc->option_);
+            ASSERT_TRUE(option_desc->option_.get() != 0);
             EXPECT_EQ(code, option_desc->option_->getType());
         }
     }
@@ -892,7 +892,7 @@ TEST(Subnet6Test, getOptions) {
         // Now, try the valid option space.
         desc = subnet->getCfgOption()->get("dhcp6", code);
         // Test that the option code matches the expected code.
-        ASSERT_TRUE(desc.option_);
+        ASSERT_TRUE(desc.option_.get() != 0);
         EXPECT_EQ(code, desc.option_->getType());
     }
 }
@@ -918,34 +918,34 @@ TEST(Subnet6Test, addVendorOption) {
 
     // Get options from the Subnet and check if all 10 are there.
     OptionContainerPtr options = subnet->getCfgOption()->getAll(12345678);
-    ASSERT_TRUE(options);
+    ASSERT_TRUE(options.get() != 0);
     ASSERT_EQ(10, options->size());
 
     // Validate codes of options added to dhcp6 option space.
     uint16_t expected_code = 100;
     for (OptionContainer::const_iterator option_desc = options->begin();
          option_desc != options->end(); ++option_desc) {
-        ASSERT_TRUE(option_desc->option_);
+        ASSERT_TRUE(option_desc->option_.get() != 0);
         EXPECT_EQ(expected_code, option_desc->option_->getType());
         ++expected_code;
     }
 
     options = subnet->getCfgOption()->getAll(87654321);
-    ASSERT_TRUE(options);
+    ASSERT_TRUE(options.get() != 0);
     ASSERT_EQ(7, options->size());
 
     // Validate codes of options added to isc option space.
     expected_code = 105;
     for (OptionContainer::const_iterator option_desc = options->begin();
          option_desc != options->end(); ++option_desc) {
-        ASSERT_TRUE(option_desc->option_);
+        ASSERT_TRUE(option_desc->option_.get() != 0);
         EXPECT_EQ(expected_code, option_desc->option_->getType());
         ++expected_code;
     }
 
     // Try to get options from a non-existing option space.
     options = subnet->getCfgOption()->getAll(1111111);
-    ASSERT_TRUE(options);
+    ASSERT_TRUE(options.get() != 0);
     EXPECT_TRUE(options->empty());
 }
 

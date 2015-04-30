@@ -36,13 +36,13 @@ TEST_F(AllocEngine6Test, constructor) {
     ASSERT_NO_THROW(x.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100, true)));
 
     // Check that allocator for normal addresses is created
-    ASSERT_TRUE(x->getAllocator(Lease::TYPE_NA));
+    ASSERT_TRUE(x->getAllocator(Lease::TYPE_NA).get() != 0);
 
     // Check that allocator for temporary address is created
-    ASSERT_TRUE(x->getAllocator(Lease::TYPE_TA));
+    ASSERT_TRUE(x->getAllocator(Lease::TYPE_TA).get() != 0);
 
     // Check that allocator for prefixes is created
-    ASSERT_TRUE(x->getAllocator(Lease::TYPE_PD));
+    ASSERT_TRUE(x->getAllocator(Lease::TYPE_PD).get() != 0);
 
     // There should be no V4 allocator
     EXPECT_THROW(x->getAllocator(Lease::TYPE_V4), BadValue);
@@ -75,7 +75,7 @@ TEST_F(AllocEngine6Test, allocWithValidHint6) {
 
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::15"),
                                        false);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
 
     // We should get what we asked for
     EXPECT_EQ("2001:db8:1::15", lease->addr_.toText());
@@ -117,7 +117,7 @@ TEST_F(AllocEngine6Test, pdAllocBogusHint6) {
 TEST_F(AllocEngine6Test, allocateAddress6Nulls) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
-    ASSERT_TRUE(engine);
+    ASSERT_TRUE(engine.get() != 0);
 
     // Allocations without subnet are not allowed
     Lease6Ptr lease;
@@ -364,7 +364,7 @@ TEST_F(AllocEngine6Test, IterativeAllocator_manyPools6) {
 TEST_F(AllocEngine6Test, smallPool6) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
-    ASSERT_TRUE(engine);
+    ASSERT_TRUE(engine.get() != 0);
 
     IOAddress addr("2001:db8:1::ad");
 
@@ -381,7 +381,7 @@ TEST_F(AllocEngine6Test, smallPool6) {
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
 
     // Check that we got that single lease
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
 
     EXPECT_EQ("2001:db8:1::ad", lease->addr_.toText());
 
@@ -391,7 +391,7 @@ TEST_F(AllocEngine6Test, smallPool6) {
     // Check that the lease is indeed in LeaseMgr
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
                                                                lease->addr_);
-    ASSERT_TRUE(from_mgr);
+    ASSERT_TRUE(from_mgr.get() != 0);
 
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease(lease, from_mgr);
@@ -406,7 +406,7 @@ TEST_F(AllocEngine6Test, smallPool6) {
 TEST_F(AllocEngine6Test, outOfAddresses6) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
-    ASSERT_TRUE(engine);
+    ASSERT_TRUE(engine.get() != 0);
 
     IOAddress addr("2001:db8:1::ad");
     CfgMgr& cfg_mgr = CfgMgr::instance();
@@ -441,7 +441,7 @@ TEST_F(AllocEngine6Test, outOfAddresses6) {
 TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
-    ASSERT_TRUE(engine);
+    ASSERT_TRUE(engine.get() != 0);
 
     IOAddress addr("2001:db8:1::ad");
 
@@ -469,7 +469,7 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
                                      Lease::TYPE_NA, fqdn_fwd_, fqdn_rev_, hostname_, true);
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx1)));
     // Check that we got that single lease
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(addr, lease->addr_);
 
     // Do all checks on the lease (if subnet-id, preferred/valid times are ok etc.)
@@ -481,7 +481,7 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx2)));
 
     // Check that we got that single lease
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(addr, lease->addr_);
 }
 
@@ -489,7 +489,7 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
 TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
-    ASSERT_TRUE(engine);
+    ASSERT_TRUE(engine.get() != 0);
 
     IOAddress addr("2001:db8:1::ad");
     CfgMgr& cfg_mgr = CfgMgr::instance();
@@ -522,7 +522,7 @@ TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
 
     // Check that he got that single lease
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(addr, lease->addr_);
     // This reactivated lease should have updated FQDN data.
     EXPECT_TRUE(lease->hostname_.empty());
@@ -541,7 +541,7 @@ TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
     // Check that the lease is indeed updated in LeaseMgr
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
                                                                addr);
-    ASSERT_TRUE(from_mgr);
+    ASSERT_TRUE(from_mgr.get() != 0);
 
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease(lease, from_mgr);
@@ -567,7 +567,7 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolSolicitNoHint) {
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
 
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("::"), true);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ("2001:db8:1::1c", lease->addr_.toText());
 }
 
@@ -589,7 +589,7 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolRequestNoHint) {
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
 
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("::"), false);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ("2001:db8:1::1c", lease->addr_.toText());
 }
 
@@ -612,7 +612,7 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolSolicitValidHint) {
 
     // Let's pretend the client sends hint 2001:db8:1::10.
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::10"), true);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
 
     // The hint should be ignored and the reserved address should be assigned
     EXPECT_EQ("2001:db8:1::1c", lease->addr_.toText());
@@ -637,7 +637,7 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolRequestValidHint) {
 
     // Let's pretend the client sends hint 2001:db8:1::10.
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::10"), false);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
 
     // The hint should be ignored and the reserved address should be assigned
     EXPECT_EQ("2001:db8:1::1c", lease->addr_.toText());
@@ -662,7 +662,7 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolSolicitMatchingHint) {
 
     // Let's pretend the client sends hint 2001:db8:1::10.
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::1c"), true);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
 
     // The hint should be ignored and the reserved address should be assigned
     EXPECT_EQ("2001:db8:1::1c", lease->addr_.toText());
@@ -687,7 +687,7 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolRequestMatchingHint) {
 
     // Let's pretend the client sends hint 2001:db8:1::10.
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::1c"), false);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
 
     // The hint should be ignored and the reserved address should be assigned
     EXPECT_EQ("2001:db8:1::1c", lease->addr_.toText());
@@ -711,7 +711,7 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolSolicitNoHint) {
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
 
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("::"), true, false);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ("2001:db8::abcd", lease->addr_.toText());
 }
 
@@ -733,7 +733,7 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolRequestNoHint) {
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
 
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("::"), false, false);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ("2001:db8::abcd", lease->addr_.toText());
 }
 
@@ -756,7 +756,7 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolSolicitValidHint) {
 
     // Let's pretend the client sends hint 2001:db8:1::10.
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::10"), true, false);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
 
     // The hint should be ignored and the reserved address should be assigned
     EXPECT_EQ("2001:db8::abcd", lease->addr_.toText());
@@ -781,7 +781,7 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolRequestValidHint) {
 
     // Let's pretend the client sends hint 2001:db8:1::10.
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::10"), false, false);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
 
     // The hint should be ignored and the reserved address should be assigned
     EXPECT_EQ("2001:db8::abcd", lease->addr_.toText());
@@ -806,7 +806,7 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolSolicitMatchingHint) {
 
     // Let's pretend the client sends hint 2001:db8:1::10.
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::1c"), true, false);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
 
     // The hint should be ignored and the reserved address should be assigned
     EXPECT_EQ("2001:db8::abcd", lease->addr_.toText());
@@ -831,7 +831,7 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolRequestMatchingHint) {
 
     // Let's pretend the client sends hint 2001:db8:1::10.
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::1c"), false, false);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
 
     // The hint should be ignored and the reserved address should be assigned
     EXPECT_EQ("2001:db8::abcd", lease->addr_.toText());
@@ -848,12 +848,12 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolReassignedThis) {
 
     // Client gets an address
     Lease6Ptr lease1 = simpleAlloc6Test(pool_, IOAddress("::"), false);
-    ASSERT_TRUE(lease1);
+    ASSERT_TRUE(lease1.get() != 0);
 
     // Just check that if the client requests again, it will get the same
     // address.
     Lease6Ptr lease2 = simpleAlloc6Test(pool_, lease1->addr_, false);
-    ASSERT_TRUE(lease2);
+    ASSERT_TRUE(lease2.get() != 0);
     detailCompareLease(lease1, lease2);
 
     // Now admin creates a reservation for this client. This is in-pool
@@ -862,7 +862,7 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolReassignedThis) {
 
     // Just check that this time the client will get.
     Lease6Ptr lease3 = simpleAlloc6Test(pool_, lease1->addr_, false);
-    ASSERT_TRUE(lease3);
+    ASSERT_TRUE(lease3.get() != 0);
 
     // Check that previous lease was not used anymore.
     EXPECT_NE(lease1->addr_.toText(), lease3->addr_.toText());
@@ -879,7 +879,7 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolReassignedThis) {
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease1->type_,
                                                   IOAddress("2001:db8:1::1c"));
 
-    ASSERT_TRUE(from_mgr);
+    ASSERT_TRUE(from_mgr.get() != 0);
 
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease(lease3, from_mgr);
@@ -896,12 +896,12 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolReassignedOther) {
 
     // Client gets an address
     Lease6Ptr lease1 = simpleAlloc6Test(pool_, IOAddress("::"), false);
-    ASSERT_TRUE(lease1);
+    ASSERT_TRUE(lease1.get() != 0);
 
     // Just check that if the client requests again, it will get the same
     // address.
     Lease6Ptr lease2 = simpleAlloc6Test(pool_, lease1->addr_, false);
-    ASSERT_TRUE(lease2);
+    ASSERT_TRUE(lease2.get() != 0);
     detailCompareLease(lease1, lease2);
 
     // Now admin creates a reservation for this client. Let's use the
@@ -919,7 +919,7 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolReassignedOther) {
 
     // Just check that this time the client will get a different lease.
     Lease6Ptr lease3 = simpleAlloc6Test(pool_, lease1->addr_, false);
-    ASSERT_TRUE(lease3);
+    ASSERT_TRUE(lease3.get() != 0);
 
     // Check that previous lease was not used anymore.
     EXPECT_NE(lease1->addr_.toText(), lease3->addr_.toText());
@@ -933,7 +933,7 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolReassignedOther) {
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease1->type_,
                                                                lease3->addr_);
 
-    ASSERT_TRUE(from_mgr);
+    ASSERT_TRUE(from_mgr.get() != 0);
 
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease(lease3, from_mgr);
@@ -1260,7 +1260,7 @@ TEST_F(AllocEngine6Test, reservedAddressByMacInPoolSolicitNoHint) {
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
 
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("::"), true);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ("2001:db8:1::1c", lease->addr_.toText());
 }
 
@@ -1283,7 +1283,7 @@ TEST_F(AllocEngine6Test, reservedAddressByMacInPoolRequestNoHint) {
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
 
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("::"), false);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ("2001:db8:1::1c", lease->addr_.toText());
 }
 
@@ -1308,7 +1308,7 @@ TEST_F(AllocEngine6Test, reservedAddressByMacInPoolSolicitValidHint) {
 
     // Let's pretend the client sends hint 2001:db8:1::10.
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::10"), true);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
 
     // The hint should be ignored and the reserved address should be assigned
     EXPECT_EQ("2001:db8:1::1c", lease->addr_.toText());
@@ -1334,7 +1334,7 @@ TEST_F(AllocEngine6Test, reservedAddressByMacInPoolRequestValidHint) {
 
     // Let's pretend the client sends hint 2001:db8:1::10.
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::10"), false);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
 
     // The hint should be ignored and the reserved address should be assigned
     EXPECT_EQ("2001:db8:1::1c", lease->addr_.toText());

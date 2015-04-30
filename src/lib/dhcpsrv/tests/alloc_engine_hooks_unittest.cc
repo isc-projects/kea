@@ -142,7 +142,7 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
     // Create allocation engine (hook names are registered in its ctor)
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
-    ASSERT_TRUE(engine);
+    ASSERT_TRUE(engine.get() != 0);
 
     // Initialize Hooks Manager
     vector<string> libraries; // no libraries at this time
@@ -160,7 +160,7 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
     ctx.callout_handle_ = callout_handle;
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
     // Check that we got a lease
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
 
     // Do all checks on the lease
     checkLease6(lease, Lease::TYPE_NA, 128);
@@ -168,16 +168,16 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
     // Check that the lease is indeed in LeaseMgr
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
                                                                lease->addr_);
-    ASSERT_TRUE(from_mgr);
+    ASSERT_TRUE(from_mgr.get() != 0);
 
     // Check that callouts were indeed called
     EXPECT_EQ("lease6_select", callback_name_);
 
     // Now check that the lease in LeaseMgr has the same parameters
-    ASSERT_TRUE(callback_lease6_);
+    ASSERT_TRUE(callback_lease6_.get() != 0);
     detailCompareLease(callback_lease6_, from_mgr);
 
-    ASSERT_TRUE(callback_subnet6_);
+    ASSERT_TRUE(callback_subnet6_.get() != 0);
     EXPECT_EQ(subnet_->toText(), callback_subnet6_->toText());
 
     EXPECT_FALSE(callback_fake_allocation_);
@@ -211,7 +211,7 @@ TEST_F(HookAllocEngine6Test, change_lease6_select) {
     // Create allocation engine (hook names are registered in its ctor)
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
-    ASSERT_TRUE(engine);
+    ASSERT_TRUE(engine.get() != 0);
 
     // Initialize Hooks Manager
     vector<string> libraries; // no libraries at this time
@@ -232,7 +232,7 @@ TEST_F(HookAllocEngine6Test, change_lease6_select) {
     ctx.callout_handle_ = callout_handle;
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
     // Check that we got a lease
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
 
     // See if the values overridden by callout are there
     EXPECT_TRUE(lease->addr_.equals(addr_override_));
@@ -244,7 +244,7 @@ TEST_F(HookAllocEngine6Test, change_lease6_select) {
     // Now check if the lease is in the database
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
                                                                lease->addr_);
-    ASSERT_TRUE(from_mgr);
+    ASSERT_TRUE(from_mgr.get() != 0);
 
     // Check if values in the database are overridden
     EXPECT_TRUE(from_mgr->addr_.equals(addr_override_));
@@ -371,7 +371,7 @@ TEST_F(HookAllocEngine4Test, lease4_select) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
                                                  100, false)));
-    ASSERT_TRUE(engine);
+    ASSERT_TRUE(engine.get() != 0);
 
     // Initialize Hooks Manager
     vector<string> libraries; // no libraries at this time
@@ -391,23 +391,23 @@ TEST_F(HookAllocEngine4Test, lease4_select) {
     Lease4Ptr lease = engine->allocateLease4(ctx);
 
     // Check that we got a lease
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
 
     // Do all checks on the lease
     checkLease4(lease);
 
     // Check that the lease is indeed in LeaseMgr
     Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
-    ASSERT_TRUE(from_mgr);
+    ASSERT_TRUE(from_mgr.get() != 0);
 
     // Check that callouts were indeed called
     EXPECT_EQ("lease4_select", callback_name_);
 
     // Now check that the lease in LeaseMgr has the same parameters
-    ASSERT_TRUE(callback_lease4_);
+    ASSERT_TRUE(callback_lease4_.get() != 0);
     detailCompareLease(callback_lease4_, from_mgr);
 
-    ASSERT_TRUE(callback_subnet4_);
+    ASSERT_TRUE(callback_subnet4_.get() != 0);
     EXPECT_EQ(subnet_->toText(), callback_subnet4_->toText());
 
     EXPECT_EQ(callback_fake_allocation_, false);
@@ -437,7 +437,7 @@ TEST_F(HookAllocEngine4Test, change_lease4_select) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
                                                  100, false)));
-    ASSERT_TRUE(engine);
+    ASSERT_TRUE(engine.get() != 0);
 
     // Initialize Hooks Manager
     vector<string> libraries; // no libraries at this time
@@ -460,7 +460,7 @@ TEST_F(HookAllocEngine4Test, change_lease4_select) {
     Lease4Ptr lease = engine->allocateLease4(ctx);
 
     // Check that we got a lease
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
 
     // See if the values overridden by callout are there
     EXPECT_TRUE(lease->addr_.equals(addr_override_));
@@ -470,7 +470,7 @@ TEST_F(HookAllocEngine4Test, change_lease4_select) {
 
     // Now check if the lease is in the database
     Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
-    ASSERT_TRUE(from_mgr);
+    ASSERT_TRUE(from_mgr.get() != 0);
 
     // Check if values in the database are overridden
     EXPECT_TRUE(from_mgr->addr_.equals(addr_override_));

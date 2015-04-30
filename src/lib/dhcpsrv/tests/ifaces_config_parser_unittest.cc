@@ -69,7 +69,7 @@ TEST_F(IfacesConfigParserTest, interfaces) {
 
     // Open sockets according to the parsed configuration.
     SrvConfigPtr cfg = CfgMgr::instance().getStagingCfg();
-    ASSERT_TRUE(cfg);
+    ASSERT_TRUE(cfg.get() != 0);
     ASSERT_NO_THROW(cfg->getCfgIface()->openSockets(AF_INET, 10000));
 
     // Only eth0 should have an open socket.
@@ -114,7 +114,7 @@ TEST_F(IfacesConfigParserTest, socketTypeRaw) {
     // Compare the resulting configuration with a reference
     // configuration using the raw socket.
     SrvConfigPtr cfg = CfgMgr::instance().getStagingCfg();
-    ASSERT_TRUE(cfg);
+    ASSERT_TRUE(cfg.get() != 0);
     cfg_ref.useSocketType(AF_INET, CfgIface::SOCKET_RAW);
     EXPECT_TRUE(*cfg->getCfgIface() == cfg_ref);
 }
@@ -139,7 +139,7 @@ TEST_F(IfacesConfigParserTest, socketTypeDatagram) {
     // Compare the resulting configuration with a reference
     // configuration using the raw socket.
     SrvConfigPtr cfg = CfgMgr::instance().getStagingCfg();
-    ASSERT_TRUE(cfg);
+    ASSERT_TRUE(cfg.get() != 0);
     cfg_ref.useSocketType(AF_INET, CfgIface::SOCKET_UDP);
     EXPECT_TRUE(*cfg->getCfgIface() == cfg_ref);
 }

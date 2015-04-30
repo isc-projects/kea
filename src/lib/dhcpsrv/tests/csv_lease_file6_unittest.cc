@@ -140,12 +140,12 @@ TEST_F(CSVLeaseFile6Test, parse) {
     {
     SCOPED_TRACE("First lease valid");
     EXPECT_TRUE(lf->next(lease));
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     checkStats(*lf, 1, 1, 0, 0, 0, 0);
 
     // Verify that the lease attributes are correct.
     EXPECT_EQ("2001:db8:1::1", lease->addr_.toText());
-    ASSERT_TRUE(lease->duid_);
+    ASSERT_TRUE(lease->duid_.get() != 0);
     EXPECT_EQ("00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f", lease->duid_->toText());
     EXPECT_EQ(200, lease->valid_lft_);
     EXPECT_EQ(0, lease->cltt_);
@@ -171,12 +171,12 @@ TEST_F(CSVLeaseFile6Test, parse) {
     {
     SCOPED_TRACE("Third lease valid");
     EXPECT_TRUE(lf->next(lease));
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     checkStats(*lf, 3, 2, 1, 0, 0, 0);
 
     // Verify that the third lease is correct.
     EXPECT_EQ("2001:db8:2::10", lease->addr_.toText());
-    ASSERT_TRUE(lease->duid_);
+    ASSERT_TRUE(lease->duid_.get() != 0);
     EXPECT_EQ("01:01:01:01:0a:01:02:03:04:05", lease->duid_->toText());
     EXPECT_EQ(300, lease->valid_lft_);
     EXPECT_EQ(0, lease->cltt_);
@@ -194,12 +194,12 @@ TEST_F(CSVLeaseFile6Test, parse) {
     {
     SCOPED_TRACE("Fourth lease valid");
     EXPECT_TRUE(lf->next(lease));
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     checkStats(*lf, 4, 3, 1, 0, 0, 0);
 
     // Verify that the lease is correct.
     EXPECT_EQ("3000:1::", lease->addr_.toText());
-    ASSERT_TRUE(lease->duid_);
+    ASSERT_TRUE(lease->duid_.get() != 0);
     EXPECT_EQ("00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f", lease->duid_->toText());
     EXPECT_EQ(0, lease->valid_lft_);
     EXPECT_EQ(200, lease->cltt_);

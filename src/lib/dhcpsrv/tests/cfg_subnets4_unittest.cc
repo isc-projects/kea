@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -248,7 +248,7 @@ TEST(CfgSubnetsTest, selectSubnetInterface) {
     // The address on eth0 should match the existing subnet.
     selector.iface_name_ = "eth0";
     Subnet4Ptr subnet1_ret = cfg.selectSubnet(selector);
-    ASSERT_TRUE(subnet1_ret);
+    ASSERT_TRUE(subnet1_ret.get() != 0);
     EXPECT_EQ(subnet1->get().first, subnet1_ret->get().first);
     // There should still be no match for eth1.
     selector.iface_name_ = "eth1";
@@ -262,11 +262,11 @@ TEST(CfgSubnetsTest, selectSubnetInterface) {
     // subnet 2.
     selector.iface_name_ = "eth0";
     subnet1_ret = cfg.selectSubnet(selector);
-    ASSERT_TRUE(subnet1_ret);
+    ASSERT_TRUE(subnet1_ret.get() != 0);
     EXPECT_EQ(subnet1->get().first, subnet1_ret->get().first);
     selector.iface_name_ = "eth1";
     Subnet4Ptr subnet2_ret = cfg.selectSubnet(selector);
-    ASSERT_TRUE(subnet2_ret);
+    ASSERT_TRUE(subnet2_ret.get() != 0);
     EXPECT_EQ(subnet2->get().first, subnet2_ret->get().first);
 
     // This function throws an exception if the name of the interface is wrong.

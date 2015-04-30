@@ -72,8 +72,8 @@ detailCompareLease(const Lease6Ptr& first, const Lease6Ptr& second) {
     EXPECT_EQ(first->addr_, second->addr_);
     EXPECT_EQ(first->prefixlen_, second->prefixlen_);
     EXPECT_EQ(first->iaid_, second->iaid_);
-    ASSERT_TRUE(first->duid_);
-    ASSERT_TRUE(second->duid_);
+    ASSERT_TRUE(first->duid_.get() != 0);
+    ASSERT_TRUE(second->duid_.get() != 0);
     EXPECT_TRUE(*first->duid_ == *second->duid_);
     EXPECT_EQ(first->preferred_lft_, second->preferred_lft_);
     EXPECT_EQ(first->valid_lft_, second->valid_lft_);

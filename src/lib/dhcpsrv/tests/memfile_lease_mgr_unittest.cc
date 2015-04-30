@@ -999,15 +999,15 @@ TEST_F(MemfileLeaseMgrTest, testUpgrade0_9_0_to_0_9_1) {
 
     // None of the leases should have any hardware addresses assigned.
     Lease6Ptr stored1 = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
-    ASSERT_TRUE(stored1);
+    ASSERT_TRUE(stored1.get() != 0);
     EXPECT_FALSE(stored1->hwaddr_);
 
     Lease6Ptr stored2 = lmptr_->getLease6(leasetype6_[2], ioaddress6_[2]);
-    ASSERT_TRUE(stored2);
+    ASSERT_TRUE(stored2.get() != 0);
     EXPECT_FALSE(stored2->hwaddr_);
 
     Lease6Ptr stored3 = lmptr_->getLease6(leasetype6_[3], ioaddress6_[3]);
-    ASSERT_TRUE(stored3);
+    ASSERT_TRUE(stored3.get() != 0);
     EXPECT_FALSE(stored3->hwaddr_);
 }
 
@@ -1054,33 +1054,33 @@ TEST_F(MemfileLeaseMgrTest, load4MultipleLeaseFiles) {
     // This lease only exists in the second file and the cltt should
     // be 0.
     Lease4Ptr lease = lmptr_->getLease4(IOAddress("192.0.2.1"));
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(0, lease->cltt_);
 
     // This lease only exists in the first file and the cltt should
     // be 0.
     lease = lmptr_->getLease4(IOAddress("192.0.2.2"));
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(0, lease->cltt_);
 
     // This lease only exists in the third file and the cltt should
     // be 0.
     lease = lmptr_->getLease4(IOAddress("192.0.2.10"));
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(0, lease->cltt_);
 
     // This lease exists in the first and second file and the cltt
     // should be calculated using the expiration time and the
     // valid lifetime from the second file.
     lease = lmptr_->getLease4(IOAddress("192.0.2.11"));
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(200, lease->cltt_);
 
     // Thsi lease exists in the second and third file and the cltt
     // should be calculated using the expiration time and the
     // valid lifetime from the third file.
     lease = lmptr_->getLease4(IOAddress("192.0.2.12"));
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(200, lease->cltt_);
 }
 
@@ -1117,16 +1117,16 @@ TEST_F(MemfileLeaseMgrTest, load4CompletedFile) {
     // We expect that this file only holds leases that belong to the
     // lease file or to the file with .completed postfix.
     Lease4Ptr lease = lmptr_->getLease4(IOAddress("192.0.2.10"));
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(0, lease->cltt_);
 
     lease = lmptr_->getLease4(IOAddress("192.0.2.12"));
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(200, lease->cltt_);
 
     // This lease is in the .completed file.
     lease = lmptr_->getLease4(IOAddress("192.0.2.13"));
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(0, lease->cltt_);
 
     // Leases from the .1 and .2 files should not be loaded.
@@ -1195,31 +1195,31 @@ TEST_F(MemfileLeaseMgrTest, load6MultipleLeaseFiles) {
     // This lease only exists in the first file and the cltt should be 0.
     Lease6Ptr lease = lmptr_->getLease6(Lease::TYPE_NA,
                                         IOAddress("2001:db8:1::1"));
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(0, lease->cltt_);
 
     // This lease exists in the first and second file and the cltt should
     // be calculated using the expiration time and the valid lifetime
     // from the second file.
     lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2"));
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(500, lease->cltt_);
 
     // This lease only exists in the second file and the cltt should be 0.
     lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::3"));
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(0, lease->cltt_);
 
     // This lease exists in the second and third file and the cltt should
     // be calculated using the expiration time and the valid lifetime
     // from the third file.
     lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::4"));
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(600, lease->cltt_);
 
     // This lease only exists in the third file and the cltt should be 0.
     lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::5"));
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(0, lease->cltt_);
 }
 
@@ -1250,19 +1250,19 @@ TEST_F(MemfileLeaseMgrTest, load6MultipleNoSecondFile) {
     // Check that leases from the leasefile6_0 and leasefile6_0.1 have
     // been loaded.
     Lease6Ptr lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2"));
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(500, lease->cltt_);
 
     lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::3"));
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(0, lease->cltt_);
 
     lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::4"));
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(600, lease->cltt_);
 
     lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::5"));
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(0, lease->cltt_);
 
     // Make sure that a lease which is not in those files is not loaded.
@@ -1295,19 +1295,19 @@ TEST_F(MemfileLeaseMgrTest, load6MultipleNoFirstFile) {
     // leasefile6_0.2 are loaded.
     Lease6Ptr lease = lmptr_->getLease6(Lease::TYPE_NA,
                                         IOAddress("2001:db8:1::1"));
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(0, lease->cltt_);
 
     lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2"));
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(0, lease->cltt_);
 
     lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::4"));
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(600, lease->cltt_);
 
     lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::5"));
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(0, lease->cltt_);
 
     // A lease which doesn't belong to these files should not be loaded.
@@ -1356,15 +1356,15 @@ TEST_F(MemfileLeaseMgrTest, load6CompletedFile) {
     // We expect that this file only holds leases that belong to the
     // lease file or to the file with .completed postfix.
     Lease6Ptr lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::4"));
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(600, lease->cltt_);
 
     lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::5"));
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(0, lease->cltt_);
 
     lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::125"));
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(600, lease->cltt_);
 
     // Leases from the .1 and .2 files should not be loaded.

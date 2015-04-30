@@ -241,7 +241,7 @@ TEST_F(DbAccessParserTest, validTypeMemfile) {
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
-    EXPECT_TRUE(json_elements);
+    EXPECT_TRUE(json_elements.get() != 0);
 
     TestDbAccessParser parser("lease-database", ParserContext(Option::V4));
     EXPECT_NO_THROW(parser.build(json_elements));
@@ -257,7 +257,7 @@ TEST_F(DbAccessParserTest, emptyKeyword) {
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
-    EXPECT_TRUE(json_elements);
+    EXPECT_TRUE(json_elements.get() != 0);
 
     TestDbAccessParser parser("lease-database", ParserContext(Option::V4));
     EXPECT_NO_THROW(parser.build(json_elements));
@@ -274,7 +274,7 @@ TEST_F(DbAccessParserTest, persistV4Memfile) {
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
-    EXPECT_TRUE(json_elements);
+    EXPECT_TRUE(json_elements.get() != 0);
 
     TestDbAccessParser parser("lease-database", ParserContext(Option::V4));
     EXPECT_NO_THROW(parser.build(json_elements));
@@ -293,7 +293,7 @@ TEST_F(DbAccessParserTest, persistV6Memfile) {
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
-    EXPECT_TRUE(json_elements);
+    EXPECT_TRUE(json_elements.get() != 0);
 
     TestDbAccessParser parser("lease-database", ParserContext(Option::V6));
     EXPECT_NO_THROW(parser.build(json_elements));
@@ -312,7 +312,7 @@ TEST_F(DbAccessParserTest, validLFCInterval) {
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
-    EXPECT_TRUE(json_elements);
+    EXPECT_TRUE(json_elements.get() != 0);
 
     TestDbAccessParser parser("lease-database", ParserContext(Option::V6));
     ASSERT_NO_THROW(parser.build(json_elements));
@@ -330,7 +330,7 @@ TEST_F(DbAccessParserTest, negativeLFCInterval) {
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
-    EXPECT_TRUE(json_elements);
+    EXPECT_TRUE(json_elements.get() != 0);
 
     TestDbAccessParser parser("lease-database", ParserContext(Option::V6));
     EXPECT_THROW(parser.build(json_elements), BadValue);
@@ -346,7 +346,7 @@ TEST_F(DbAccessParserTest, largeLFCInterval) {
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
-    EXPECT_TRUE(json_elements);
+    EXPECT_TRUE(json_elements.get() != 0);
 
     TestDbAccessParser parser("lease-database", ParserContext(Option::V6));
     EXPECT_THROW(parser.build(json_elements), BadValue);
@@ -363,7 +363,7 @@ TEST_F(DbAccessParserTest, validTypeMysql) {
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
-    EXPECT_TRUE(json_elements);
+    EXPECT_TRUE(json_elements.get() != 0);
 
     TestDbAccessParser parser("lease-database", ParserContext(Option::V4));
     EXPECT_NO_THROW(parser.build(json_elements));
@@ -380,7 +380,7 @@ TEST_F(DbAccessParserTest, missingTypeKeyword) {
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
-    EXPECT_TRUE(json_elements);
+    EXPECT_TRUE(json_elements.get() != 0);
 
     TestDbAccessParser parser("lease-database", ParserContext(Option::V4));
     EXPECT_THROW(parser.build(json_elements), TypeKeywordMissing);
@@ -393,7 +393,7 @@ TEST_F(DbAccessParserTest, factory) {
     boost::scoped_ptr<DhcpConfigParser> parser(
         DbAccessParser::factory("lease-database", ParserContext(Option::V4))
     );
-    EXPECT_TRUE(parser);
+    EXPECT_TRUE(parser.get() != 0);
     DbAccessParser* dbap = dynamic_cast<DbAccessParser*>(parser.get());
     EXPECT_NE(static_cast<DbAccessParser*>(NULL), dbap);
 }
@@ -448,7 +448,7 @@ TEST_F(DbAccessParserTest, incrementalChanges) {
     // to be held.
     string json_config = toJson(config1);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
-    EXPECT_TRUE(json_elements);
+    EXPECT_TRUE(json_elements.get() != 0);
 
     EXPECT_NO_THROW(parser.build(json_elements));
     checkAccessString("Initial configuration", parser.getDbAccessParameters(),
@@ -458,7 +458,7 @@ TEST_F(DbAccessParserTest, incrementalChanges) {
     // to a representation of the new configuration.
     json_config = toJson(config2);
     json_elements = Element::fromJSON(json_config);
-    EXPECT_TRUE(json_elements);
+    EXPECT_TRUE(json_elements.get() != 0);
 
     EXPECT_NO_THROW(parser.build(json_elements));
     checkAccessString("Subsequent configuration", parser.getDbAccessParameters(),
@@ -468,7 +468,7 @@ TEST_F(DbAccessParserTest, incrementalChanges) {
     // incrementally.
     json_config = toJson(incremental2);
     json_elements = Element::fromJSON(json_config);
-    EXPECT_TRUE(json_elements);
+    EXPECT_TRUE(json_elements.get() != 0);
 
     EXPECT_NO_THROW(parser.build(json_elements));
     checkAccessString("Incremental configuration", parser.getDbAccessParameters(),
@@ -478,7 +478,7 @@ TEST_F(DbAccessParserTest, incrementalChanges) {
     // thrown and there be no change to the access string.
     json_config = toJson(incremental3);
     json_elements = Element::fromJSON(json_config);
-    EXPECT_TRUE(json_elements);
+    EXPECT_TRUE(json_elements.get() != 0);
 
     EXPECT_THROW(parser.build(json_elements), BadValue);
     checkAccessString("Incompatible incremental change", parser.getDbAccessParameters(),
@@ -488,7 +488,7 @@ TEST_F(DbAccessParserTest, incrementalChanges) {
     // incrementally.
     json_config = toJson(incremental4);
     json_elements = Element::fromJSON(json_config);
-    EXPECT_TRUE(json_elements);
+    EXPECT_TRUE(json_elements.get() != 0);
 
     EXPECT_NO_THROW(parser.build(json_elements));
     checkAccessString("Compatible incremental change", parser.getDbAccessParameters(),
@@ -504,7 +504,7 @@ TEST_F(DbAccessParserTest, getDbAccessString) {
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
-    EXPECT_TRUE(json_elements);
+    EXPECT_TRUE(json_elements.get() != 0);
 
     TestDbAccessParser parser("lease-database", ParserContext(Option::V4));
     EXPECT_NO_THROW(parser.build(json_elements));
@@ -534,7 +534,7 @@ TEST_F(DbAccessParserTest, commit) {
     string json_config = toJson(config);
 
     ConstElementPtr json_elements = Element::fromJSON(json_config);
-    EXPECT_TRUE(json_elements);
+    EXPECT_TRUE(json_elements.get() != 0);
 
     TestDbAccessParser parser("lease-database", ParserContext(Option::V4));
     EXPECT_NO_THROW(parser.build(json_elements));

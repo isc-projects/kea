@@ -217,7 +217,7 @@ TEST_F(LeaseFileLoaderTest, loadWrite4) {
     // set to the expire-valid_lifetime for the second entry for
     // this lease, i.e. 500 - 200 = 300.
     Lease4Ptr lease = getLease<Lease4Ptr>("192.0.2.1", storage);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(300, lease->cltt_);
 
     // The invalid entry should not be loaded.
@@ -228,7 +228,7 @@ TEST_F(LeaseFileLoaderTest, loadWrite4) {
     // be set according to the values in the second entry for this
     // lease.
     lease = getLease<Lease4Ptr>("192.0.3.15", storage);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(35, lease->cltt_);
 
     test_str = v4_hdr_ + a_2 + b_2;
@@ -283,7 +283,7 @@ TEST_F(LeaseFileLoaderTest, loadWrite4LeaseRemove) {
     ASSERT_EQ(1, storage.size());
 
     Lease4Ptr lease = getLease<Lease4Ptr>("192.0.3.15", storage);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(35, lease->cltt_);
 
     test_str = v4_hdr_ + b_2;
@@ -346,18 +346,18 @@ TEST_F(LeaseFileLoaderTest, loadWrite6) {
     // calculated according to the expiration time and the valid
     // lifetime from the last entry for this lease: 400 - 200 = 200.
     Lease6Ptr lease = getLease<Lease6Ptr>("2001:db8:1::1", storage);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(200, lease->cltt_);
 
     // The 3000:1:: lease should be present.
     lease = getLease<Lease6Ptr>("3000:1::", storage);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(100, lease->cltt_);
 
     // The 2001:db8:2::10 should be present and the cltt should be
     // calculated according to the last entry in the lease file.
     lease = getLease<Lease6Ptr>("2001:db8:2::10", storage);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(500, lease->cltt_);
 
     test_str = v6_hdr_ + a_3 + b_2 + c_1;
@@ -412,7 +412,7 @@ TEST_F(LeaseFileLoaderTest, loadWrite6LeaseRemove) {
     ASSERT_EQ(1, storage.size());
 
     Lease6Ptr lease = getLease<Lease6Ptr>("2001:db8:2::10", storage);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(500, lease->cltt_);
 
     test_str = v6_hdr_ + b_2;
@@ -476,11 +476,11 @@ TEST_F(LeaseFileLoaderTest, loadMaxErrors) {
     ASSERT_EQ(2, storage.size());
 
     Lease4Ptr lease = getLease<Lease4Ptr>("192.0.2.1", storage);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(300, lease->cltt_);
 
     lease = getLease<Lease4Ptr>("192.0.2.10", storage);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(100, lease->cltt_);
 
     test_str = v4_hdr_ + a_2 + c_1;
@@ -524,7 +524,7 @@ TEST_F(LeaseFileLoaderTest, loadWriteLeaseWithZeroLifetime) {
 
     // The first lease should be present.
     Lease4Ptr lease = getLease<Lease4Ptr>("192.0.2.1", storage);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(0, lease->cltt_);
 
     // The lease with a valid lifetime of 0 should not be loaded.

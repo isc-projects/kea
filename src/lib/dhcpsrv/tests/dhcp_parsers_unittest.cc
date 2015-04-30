@@ -247,7 +247,7 @@ TEST_F(DhcpParserTest, MacSourcesListConfigParserTest) {
     // Use CfgMgr instance to check if eth0 and eth1 was added, and that
     // eth2 was not added.
     SrvConfigPtr cfg = CfgMgr::instance().getStagingCfg();
-    ASSERT_TRUE(cfg);
+    ASSERT_TRUE(cfg.get() != 0);
     CfgMACSources configured_sources =  cfg->getMACSources().get();
 
     ASSERT_EQ(2, configured_sources.size());
@@ -385,7 +385,7 @@ public:
         // Turn config into elements.
         // Test json just to make sure its valid.
         ElementPtr json = Element::fromJSON(config);
-        EXPECT_TRUE(json);
+        EXPECT_TRUE(json.get() != 0);
         if (json) {
             ConstElementPtr status = parseElementSet(json);
             ConstElementPtr comment = parseAnswer(rcode_, status);
@@ -413,7 +413,7 @@ public:
         OptionContainerPtr options = CfgMgr::instance().getStagingCfg()->
             getCfgOption()->getAll(space);
         // Should always be able to get options list even if it is empty.
-        EXPECT_TRUE(options);
+        EXPECT_TRUE(options.get() != 0);
         if (options) {
             // Attempt to find desired option.
             const OptionContainerTypeIndex& idx = options->get<1>();
@@ -423,7 +423,7 @@ public:
             if (cnt == 1) {
                 OptionDescriptor desc = *(idx.begin());
                 option_ptr = desc.option_;
-                EXPECT_TRUE(option_ptr);
+                EXPECT_TRUE(option_ptr.get() != 0);
             }
         }
 
@@ -486,7 +486,7 @@ TEST_F(ParseConfigTest, basicOptionDefTest) {
     // Verify that the option definition can be retrieved.
     OptionDefinitionPtr def =
         CfgMgr::instance().getStagingCfg()->getCfgOptionDef()->get("isc", 100);
-    ASSERT_TRUE(def);
+    ASSERT_TRUE(def.get() != 0);
 
     // Verify that the option definition is correct.
     EXPECT_EQ("foo", def->getName());
@@ -530,7 +530,7 @@ TEST_F(ParseConfigTest, basicOptionDataTest) {
 
     // Verify that the option can be retrieved.
     OptionPtr opt_ptr = getOptionPtr("isc", 100);
-    ASSERT_TRUE(opt_ptr);
+    ASSERT_TRUE(opt_ptr.get() != 0);
 
     // Verify that the option definition is correct.
     std::string val = "type=100, len=4, data fields:\n "
@@ -562,7 +562,7 @@ TEST_F(ParseConfigTest, optionDataCSVFormatWithOptionDef) {
     // Verify that the option data is correct.
     OptionCustomPtr addr_opt = boost::dynamic_pointer_cast<
         OptionCustom>(getOptionPtr("dhcp4", 16));
-    ASSERT_TRUE(addr_opt);
+    ASSERT_TRUE(addr_opt.get() != 0);
     EXPECT_EQ("192.0.2.0", addr_opt->readAddress().toText());
 
     // Explicitly enable csv-format.
@@ -582,7 +582,7 @@ TEST_F(ParseConfigTest, optionDataCSVFormatWithOptionDef) {
     // Verify that the option data is correct.
     addr_opt = boost::dynamic_pointer_cast<
         OptionCustom>(getOptionPtr("dhcp4", 16));
-    ASSERT_TRUE(addr_opt);
+    ASSERT_TRUE(addr_opt.get() != 0);
     EXPECT_EQ("192.0.2.0", addr_opt->readAddress().toText());
 
     // Explicitly disable csv-format and use hex instead.
@@ -602,7 +602,7 @@ TEST_F(ParseConfigTest, optionDataCSVFormatWithOptionDef) {
     // Verify that the option data is correct.
     addr_opt = boost::dynamic_pointer_cast<
         OptionCustom>(getOptionPtr("dhcp4", 16));
-    ASSERT_TRUE(addr_opt);
+    ASSERT_TRUE(addr_opt.get() != 0);
     EXPECT_EQ("192.0.2.0", addr_opt->readAddress().toText());
 }
 
@@ -657,7 +657,7 @@ TEST_F(ParseConfigTest, optionDataCSVFormatNoOptionDef) {
     ASSERT_NO_THROW(rcode = parseConfiguration(config));
     ASSERT_EQ(0, rcode);
     OptionPtr opt = getOptionPtr("dhcp6", 25000);
-    ASSERT_TRUE(opt);
+    ASSERT_TRUE(opt.get() != 0);
     ASSERT_EQ(1, opt->getData().size());
     EXPECT_EQ(0, opt->getData()[0]);
 
@@ -676,7 +676,7 @@ TEST_F(ParseConfigTest, optionDataCSVFormatNoOptionDef) {
     ASSERT_NO_THROW(rcode = parseConfiguration(config));
     EXPECT_EQ(0, rcode);
     opt = getOptionPtr("dhcp6", 25000);
-    ASSERT_TRUE(opt);
+    ASSERT_TRUE(opt.get() != 0);
     ASSERT_EQ(3, opt->getData().size());
     EXPECT_EQ(0x12, opt->getData()[0]);
     EXPECT_EQ(0x34, opt->getData()[1]);
@@ -699,7 +699,7 @@ TEST_F(ParseConfigTest, optionDataNoName) {
     EXPECT_EQ(0, rcode);
     Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
         Option6AddrLst>(getOptionPtr("dhcp6", 23));
-    ASSERT_TRUE(opt);
+    ASSERT_TRUE(opt.get() != 0);
     ASSERT_EQ(1, opt->getAddresses().size());
     EXPECT_EQ( "2001:db8:1::1", opt->getAddresses()[0].toText());
 }
@@ -720,7 +720,7 @@ TEST_F(ParseConfigTest, optionDataNoCode) {
     EXPECT_EQ(0, rcode);
     Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
         Option6AddrLst>(getOptionPtr("dhcp6", 23));
-    ASSERT_TRUE(opt);
+    ASSERT_TRUE(opt.get() != 0);
     ASSERT_EQ(1, opt->getAddresses().size());
     EXPECT_EQ( "2001:db8:1::1", opt->getAddresses()[0].toText());
 }
@@ -739,7 +739,7 @@ TEST_F(ParseConfigTest, optionDataMinimal) {
     EXPECT_EQ(0, rcode);
     Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
         Option6AddrLst>(getOptionPtr("dhcp6", 23));
-    ASSERT_TRUE(opt);
+    ASSERT_TRUE(opt.get() != 0);
     ASSERT_EQ(1, opt->getAddresses().size());
     EXPECT_EQ( "2001:db8:1::10", opt->getAddresses()[0].toText());
 
@@ -756,7 +756,7 @@ TEST_F(ParseConfigTest, optionDataMinimal) {
     EXPECT_EQ(0, rcode);
     opt = boost::dynamic_pointer_cast<Option6AddrLst>(getOptionPtr("dhcp6",
                                                                    23));
-    ASSERT_TRUE(opt);
+    ASSERT_TRUE(opt.get() != 0);
     ASSERT_EQ(1, opt->getAddresses().size());
     EXPECT_EQ( "2001:db8:1::20", opt->getAddresses()[0].toText());
 }
@@ -787,7 +787,7 @@ TEST_F(ParseConfigTest, optionDataMinimalWithOptionDef) {
     EXPECT_EQ(0, rcode);
     Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
         Option6AddrLst>(getOptionPtr("dhcp6", 2345));
-    ASSERT_TRUE(opt);
+    ASSERT_TRUE(opt.get() != 0);
     ASSERT_EQ(2, opt->getAddresses().size());
     EXPECT_EQ("2001:db8:1::10", opt->getAddresses()[0].toText());
     EXPECT_EQ("2001:db8:1::123", opt->getAddresses()[1].toText());
@@ -815,7 +815,7 @@ TEST_F(ParseConfigTest, optionDataMinimalWithOptionDef) {
     EXPECT_EQ(0, rcode);
     opt = boost::dynamic_pointer_cast<Option6AddrLst>(getOptionPtr("dhcp6",
                                                                    2345));
-    ASSERT_TRUE(opt);
+    ASSERT_TRUE(opt.get() != 0);
     ASSERT_EQ(2, opt->getAddresses().size());
     EXPECT_EQ("2001:db8:1::10", opt->getAddresses()[0].toText());
     EXPECT_EQ("2001:db8:1::123", opt->getAddresses()[1].toText());
@@ -971,7 +971,7 @@ TEST_F(ParseConfigTest, validD2Config) {
     EXPECT_TRUE(CfgMgr::instance().ddnsEnabled());
     D2ClientConfigPtr d2_client_config;
     ASSERT_NO_THROW(d2_client_config = CfgMgr::instance().getD2ClientConfig());
-    ASSERT_TRUE(d2_client_config);
+    ASSERT_TRUE(d2_client_config.get() != 0);
 
     // Verify that the configuration values are as expected.
     EXPECT_TRUE(d2_client_config->getEnableUpdates());
@@ -1016,7 +1016,7 @@ TEST_F(ParseConfigTest, validD2Config) {
     // Verify that DHCP-DDNS is disabled and we can fetch the configuration.
     EXPECT_FALSE(CfgMgr::instance().ddnsEnabled());
     ASSERT_NO_THROW(d2_client_config = CfgMgr::instance().getD2ClientConfig());
-    ASSERT_TRUE(d2_client_config);
+    ASSERT_TRUE(d2_client_config.get() != 0);
 
     // Verify that the configuration values are as expected.
     EXPECT_FALSE(d2_client_config->getEnableUpdates());
@@ -1054,7 +1054,7 @@ TEST_F(ParseConfigTest, validDisabledD2Config) {
     // Make sure fetched config agrees.
     D2ClientConfigPtr d2_client_config;
     ASSERT_NO_THROW(d2_client_config = CfgMgr::instance().getD2ClientConfig());
-    EXPECT_TRUE(d2_client_config);
+    EXPECT_TRUE(d2_client_config.get() != 0);
     EXPECT_FALSE(d2_client_config->getEnableUpdates());
 }
 
@@ -1083,7 +1083,7 @@ TEST_F(ParseConfigTest, parserDefaultsD2Config) {
     // Make sure fetched config is correct.
     D2ClientConfigPtr d2_client_config;
     ASSERT_NO_THROW(d2_client_config = CfgMgr::instance().getD2ClientConfig());
-    EXPECT_TRUE(d2_client_config);
+    EXPECT_TRUE(d2_client_config.get() != 0);
     EXPECT_TRUE(d2_client_config->getEnableUpdates());
     EXPECT_EQ(D2ClientConfig::DFT_SERVER_IP,
               d2_client_config->getServerIp().toText());
@@ -1397,7 +1397,7 @@ public:
         ParserContext ctx(Option::V6);
 
         // Set boolean parameter 'foo'.
-        ASSERT_TRUE(ctx.boolean_values_);
+        ASSERT_TRUE(ctx.boolean_values_.get() != 0);
         ctx.boolean_values_->setParam("foo", true,
                                       Element::Position("kea.conf", 123, 234));
 
@@ -1411,7 +1411,7 @@ public:
                                       Element::Position("kea.conf", 100, 200));
 
         // Set uint32 parameter 'foo'.
-        ASSERT_TRUE(ctx.uint32_values_);
+        ASSERT_TRUE(ctx.uint32_values_.get() != 0);
         ctx.uint32_values_->setParam("foo", 123,
                                      Element::Position("kea.conf", 123, 234));
 
@@ -1425,7 +1425,7 @@ public:
                                       Element::Position("kea.conf", 100, 200));
 
         // Ser string parameter 'foo'.
-        ASSERT_TRUE(ctx.string_values_);
+        ASSERT_TRUE(ctx.string_values_.get() != 0);
         ctx.string_values_->setParam("foo", "some string",
                                      Element::Position("kea.conf", 123, 234));
 
@@ -1453,7 +1453,7 @@ public:
         }
 
         // New context has the same boolean value.
-        ASSERT_TRUE(ctx_new->boolean_values_);
+        ASSERT_TRUE(ctx_new->boolean_values_.get() != 0);
         {
             SCOPED_TRACE("Check that boolean values are equal in both"
                          " contexts");
@@ -1473,7 +1473,7 @@ public:
         }
 
         // New context has the same uint32 value.
-        ASSERT_TRUE(ctx_new->uint32_values_);
+        ASSERT_TRUE(ctx_new->uint32_values_.get() != 0);
         {
             SCOPED_TRACE("Check that uint32_t values are equal in both"
                          " contexts");
@@ -1500,7 +1500,7 @@ public:
         }
 
         // New context has the same string value.
-        ASSERT_TRUE(ctx_new->string_values_);
+        ASSERT_TRUE(ctx_new->string_values_.get() != 0);
         {
             SCOPED_TRACE("Check that string values are equal in both contexts");
             checkValueEq(ctx.string_values_, ctx_new->string_values_);
@@ -1519,7 +1519,7 @@ public:
         }
 
         // New context has the same hooks library.
-        ASSERT_TRUE(ctx_new->hooks_libraries_);
+        ASSERT_TRUE(ctx_new->hooks_libraries_.get() != 0);
         {
             ASSERT_EQ(1, ctx_new->hooks_libraries_->size());
             EXPECT_EQ("library1", (*ctx_new->hooks_libraries_)[0]);

@@ -41,7 +41,7 @@ TEST_F(AllocEngine4Test, constructor) {
                                             false)));
 
     // There should be V4 allocator
-    ASSERT_TRUE(x->getAllocator(Lease::TYPE_V4));
+    ASSERT_TRUE(x->getAllocator(Lease::TYPE_V4).get() != 0);
 
     // Check that allocators for V6 stuff are not created
     EXPECT_THROW(x->getAllocator(Lease::TYPE_NA), BadValue);
@@ -55,7 +55,7 @@ TEST_F(AllocEngine4Test, simpleAlloc4) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
                                                  100, false)));
-    ASSERT_TRUE(engine);
+    ASSERT_TRUE(engine.get() != 0);
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
                                     false, true, "somehost.example.com.", false);
@@ -65,14 +65,14 @@ TEST_F(AllocEngine4Test, simpleAlloc4) {
     EXPECT_FALSE(ctx.old_lease_);
 
     // Check that we got a lease
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
 
     // Do all checks on the lease
     checkLease4(lease);
 
     // Check that the lease is indeed in LeaseMgr
     Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
-    ASSERT_TRUE(from_mgr);
+    ASSERT_TRUE(from_mgr.get() != 0);
 
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease(lease, from_mgr);
@@ -83,7 +83,7 @@ TEST_F(AllocEngine4Test, fakeAlloc4) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
                                                  100, false)));
-    ASSERT_TRUE(engine);
+    ASSERT_TRUE(engine.get() != 0);
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
                                     IOAddress("0.0.0.0"), false, true,
@@ -95,7 +95,7 @@ TEST_F(AllocEngine4Test, fakeAlloc4) {
     EXPECT_FALSE(ctx.old_lease_);
 
     // Check that we got a lease
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
 
     // Do all checks on the lease
     checkLease4(lease);
@@ -112,7 +112,7 @@ TEST_F(AllocEngine4Test, allocWithValidHint4) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
                                                  100, false)));
-    ASSERT_TRUE(engine);
+    ASSERT_TRUE(engine.get() != 0);
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
                                     IOAddress("192.0.2.105"), true, true,
@@ -120,7 +120,7 @@ TEST_F(AllocEngine4Test, allocWithValidHint4) {
     Lease4Ptr lease = engine->allocateLease4(ctx);
 
     // Check that we got a lease
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
 
     // We have allocated the new lease, so the old lease should not exist.
     EXPECT_FALSE(ctx.old_lease_);
@@ -133,7 +133,7 @@ TEST_F(AllocEngine4Test, allocWithValidHint4) {
 
     // Check that the lease is indeed in LeaseMgr
     Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
-    ASSERT_TRUE(from_mgr);
+    ASSERT_TRUE(from_mgr.get() != 0);
 
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease(lease, from_mgr);
@@ -146,7 +146,7 @@ TEST_F(AllocEngine4Test, allocWithUsedHint4) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
                                                  100, false)));
-    ASSERT_TRUE(engine);
+    ASSERT_TRUE(engine.get() != 0);
 
     // Let's create a lease and put it in the LeaseMgr
     uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
@@ -169,7 +169,7 @@ TEST_F(AllocEngine4Test, allocWithUsedHint4) {
     EXPECT_FALSE(ctx.old_lease_);
 
     // Check that we got a lease
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
 
     // Allocated address must be different
     EXPECT_NE(used->addr_, lease->addr_);
@@ -192,7 +192,7 @@ TEST_F(AllocEngine4Test, allocBogusHint4) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
                                                  100, false)));
-    ASSERT_TRUE(engine);
+    ASSERT_TRUE(engine.get() != 0);
 
     // Client would like to get a 10.1.1.1 lease, which does not belong to any
     // supported lease. Allocation engine should ignore it and carry on
@@ -202,7 +202,7 @@ TEST_F(AllocEngine4Test, allocBogusHint4) {
                                     "", true);
     Lease4Ptr lease = engine->allocateLease4(ctx);
     // Check that we got a lease
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
 
     // We have allocated a new lease, so the old lease should not exist.
     EXPECT_FALSE(ctx.old_lease_);
@@ -223,7 +223,7 @@ TEST_F(AllocEngine4Test, allocateLease4Nulls) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
                                                  100, false)));
-    ASSERT_TRUE(engine);
+    ASSERT_TRUE(engine.get() != 0);
 
     // Allocations without subnet are not allowed
     AllocEngine::ClientContext4 ctx1(Subnet4Ptr(), clientid_, hwaddr_,
@@ -249,7 +249,7 @@ TEST_F(AllocEngine4Test, allocateLease4Nulls) {
     lease = engine->allocateLease4(ctx3);
 
     // Check that we got a lease
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     // New lease has been allocated, so the old lease should not exist.
     EXPECT_FALSE(ctx3.old_lease_);
 
@@ -258,7 +258,7 @@ TEST_F(AllocEngine4Test, allocateLease4Nulls) {
 
     // Check that the lease is indeed in LeaseMgr
     Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
-    ASSERT_TRUE(from_mgr);
+    ASSERT_TRUE(from_mgr.get() != 0);
 
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease(lease, from_mgr);
@@ -341,7 +341,7 @@ TEST_F(AllocEngine4Test, smallPool4) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
                                                  100, false)));
-    ASSERT_TRUE(engine);
+    ASSERT_TRUE(engine.get() != 0);
 
     IOAddress addr("192.0.2.17");
     CfgMgr& cfg_mgr = CfgMgr::instance();
@@ -361,7 +361,7 @@ TEST_F(AllocEngine4Test, smallPool4) {
     Lease4Ptr lease = engine->allocateLease4(ctx);
 
     // Check that we got that single lease
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
 
     // We have allocated new lease, so the old lease should not exist.
     EXPECT_FALSE(ctx.old_lease_);
@@ -373,7 +373,7 @@ TEST_F(AllocEngine4Test, smallPool4) {
 
     // Check that the lease is indeed in LeaseMgr
     Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
-    ASSERT_TRUE(from_mgr);
+    ASSERT_TRUE(from_mgr.get() != 0);
 
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease(lease, from_mgr);
@@ -385,7 +385,7 @@ TEST_F(AllocEngine4Test, outOfAddresses4) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
                                                  100, false)));
-    ASSERT_TRUE(engine);
+    ASSERT_TRUE(engine.get() != 0);
 
     IOAddress addr("192.0.2.17");
     CfgMgr& cfg_mgr = CfgMgr::instance();
@@ -425,7 +425,7 @@ TEST_F(AllocEngine4Test, discoverReuseExpiredLease4) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
                                                  100, false)));
-    ASSERT_TRUE(engine);
+    ASSERT_TRUE(engine.get() != 0);
 
     IOAddress addr("192.0.2.15");
     CfgMgr& cfg_mgr = CfgMgr::instance();
@@ -460,13 +460,13 @@ TEST_F(AllocEngine4Test, discoverReuseExpiredLease4) {
                                     "", true);
     lease = engine->allocateLease4(ctx1);
     // Check that we got that single lease
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(addr, lease->addr_);
 
     // We are reusing expired lease, the old (expired) instance should be
     // returned. The returned instance should be the same as the original
     // lease.
-    ASSERT_TRUE(ctx1.old_lease_);
+    ASSERT_TRUE(ctx1.old_lease_.get() != 0);
     EXPECT_TRUE(original_lease == *ctx1.old_lease_);
 
     // Do all checks on the lease (if subnet-id, preferred/valid times are ok etc.)
@@ -478,12 +478,12 @@ TEST_F(AllocEngine4Test, discoverReuseExpiredLease4) {
                                     "", true);
     lease = engine->allocateLease4(ctx2);
     // Check that we got that single lease
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(addr, lease->addr_);
 
     // We are updating expired lease. The copy of the old lease should be
     // returned and it should be equal to the original lease.
-    ASSERT_TRUE(ctx2.old_lease_);
+    ASSERT_TRUE(ctx2.old_lease_.get() != 0);
     EXPECT_TRUE(*ctx2.old_lease_ == original_lease);
 }
 
@@ -492,7 +492,7 @@ TEST_F(AllocEngine4Test, requestReuseExpiredLease4) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
                                                  100, false)));
-    ASSERT_TRUE(engine);
+    ASSERT_TRUE(engine.get() != 0);
 
     IOAddress addr("192.0.2.105");
 
@@ -520,19 +520,19 @@ TEST_F(AllocEngine4Test, requestReuseExpiredLease4) {
     lease = engine->allocateLease4(ctx);
 
     // Check that he got that single lease
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ(addr, lease->addr_);
 
     // Check that the lease is indeed updated in LeaseMgr
     Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(addr);
-    ASSERT_TRUE(from_mgr);
+    ASSERT_TRUE(from_mgr.get() != 0);
 
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease(lease, from_mgr);
 
     // The allocation engine should return a copy of the old lease. This
     // lease should be equal to the original lease.
-    ASSERT_TRUE(ctx.old_lease_);
+    ASSERT_TRUE(ctx.old_lease_.get() != 0);
     EXPECT_TRUE(*ctx.old_lease_ == original_lease);
 }
 
@@ -573,7 +573,7 @@ TEST_F(AllocEngine4Test, requestOtherClientLease) {
     // different address than requested.
     ctx.fake_allocation_ = true;
     new_lease = engine.allocateLease4(ctx);
-    ASSERT_TRUE(new_lease);
+    ASSERT_TRUE(new_lease.get() != 0);
     EXPECT_EQ("192.0.2.101", new_lease->addr_.toText());
 }
 
@@ -607,13 +607,13 @@ TEST_F(AllocEngine4Test, reservedAddressNoHint) {
     AllocEngine::findReservation(ctx);
     Lease4Ptr lease = engine.allocateLease4(ctx);
 
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ("192.0.2.123", lease->addr_.toText());
 
     // Make sure that the lease has been committed to the lease database.
     // And that the committed lease is equal to the one returned.
     Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
-    ASSERT_TRUE(from_mgr);
+    ASSERT_TRUE(from_mgr.get() != 0);
     detailCompareLease(lease, from_mgr);
 
     // Initially, there was no lease for this client, so the returned old
@@ -644,7 +644,7 @@ TEST_F(AllocEngine4Test,reservedAddressNoHintFakeAllocation) {
     AllocEngine::findReservation(ctx);
     Lease4Ptr lease = engine.allocateLease4(ctx);
 
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     // The allocation engine should return a reserved address.
     EXPECT_EQ("192.0.2.123", lease->addr_.toText());
 
@@ -694,13 +694,13 @@ TEST_F(AllocEngine4Test, reservedAddressHint) {
                                     "", false);
     AllocEngine::findReservation(ctx2);
     lease = engine.allocateLease4(ctx2);
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     EXPECT_EQ("192.0.2.123", lease->addr_.toText());
 
     // Make sure that the lease has been committed to the lease database.
     // And that the committed lease is equal to the one returned.
     Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
-    ASSERT_TRUE(from_mgr);
+    ASSERT_TRUE(from_mgr.get() != 0);
     detailCompareLease(lease, from_mgr);
 
     EXPECT_FALSE(ctx2.old_lease_);
@@ -731,7 +731,7 @@ TEST_F(AllocEngine4Test, reservedAddressHintFakeAllocation) {
     AllocEngine::findReservation(ctx);
     Lease4Ptr lease = engine.allocateLease4(ctx);
 
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     // Allocation engine should return reserved address.
     EXPECT_EQ("192.0.2.123", lease->addr_.toText());
 
@@ -777,18 +777,18 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLease) {
     AllocEngine::findReservation(ctx);
     Lease4Ptr allocated_lease = engine.allocateLease4(ctx);
 
-    ASSERT_TRUE(allocated_lease);
+    ASSERT_TRUE(allocated_lease.get() != 0);
     // The engine should have allocated the reserved address.
     EXPECT_EQ("192.0.2.123", allocated_lease->addr_.toText());
 
     // Make sure that the lease has been committed to the lease database.
     Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(allocated_lease->addr_);
-    ASSERT_TRUE(from_mgr);
+    ASSERT_TRUE(from_mgr.get() != 0);
     detailCompareLease(allocated_lease, from_mgr);
 
     // The previous lease should have been replaced by a new one. The previous
     // lease should be returned by the allocation engine to the caller.
-    ASSERT_TRUE(ctx.old_lease_);
+    ASSERT_TRUE(ctx.old_lease_.get() != 0);
     EXPECT_EQ("192.0.2.101", ctx.old_lease_->addr_.toText());
     detailCompareLease(ctx.old_lease_, lease);
 }
@@ -832,7 +832,7 @@ TEST_F(AllocEngine4Test, reservedAddressHijacked) {
     // Make sure that the allocation engine didn't modify the lease of the
     // client A.
     Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
-    ASSERT_TRUE(from_mgr);
+    ASSERT_TRUE(from_mgr.get() != 0);
     detailCompareLease(lease, from_mgr);
 
     // Try doing the same thing, but this time do not request any specific
@@ -846,7 +846,7 @@ TEST_F(AllocEngine4Test, reservedAddressHijacked) {
     EXPECT_FALSE(ctx2.old_lease_);
 
     from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
-    ASSERT_TRUE(from_mgr);
+    ASSERT_TRUE(from_mgr.get() != 0);
     detailCompareLease(lease, from_mgr);
 }
 
@@ -884,7 +884,7 @@ TEST_F(AllocEngine4Test, reservedAddressHijackedFakeAllocation) {
 
     // The allocation engine should return a lease but for a different address
     // than requested because this address is in use.
-    ASSERT_TRUE(allocated_lease);
+    ASSERT_TRUE(allocated_lease.get() != 0);
     EXPECT_FALSE(ctx1.old_lease_);
     EXPECT_NE(allocated_lease->addr_.toText(), "192.0.2.123");
     EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, allocated_lease->addr_));
@@ -898,7 +898,7 @@ TEST_F(AllocEngine4Test, reservedAddressHijackedFakeAllocation) {
     AllocEngine::findReservation(ctx2);
     allocated_lease = engine.allocateLease4(ctx2);
 
-    ASSERT_TRUE(allocated_lease);
+    ASSERT_TRUE(allocated_lease.get() != 0);
     EXPECT_NE(allocated_lease->addr_.toText(), "192.0.2.123");
     EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, allocated_lease->addr_));
     EXPECT_FALSE(ctx2.old_lease_);
@@ -993,14 +993,14 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseFakeAllocation) {
     Lease4Ptr allocated_lease = engine.allocateLease4(ctx1);
 
     // Server should offer a lease for a reserved address.
-    ASSERT_TRUE(allocated_lease);
+    ASSERT_TRUE(allocated_lease.get() != 0);
     EXPECT_EQ("192.0.2.123", allocated_lease->addr_.toText());
 
     // The lease should not be allocated until the client sends a DHCPREQUEST.
     EXPECT_FALSE(LeaseMgrFactory::instance().getLease4(allocated_lease->addr_));
 
     // Old lease should contain the currently used lease.
-    ASSERT_TRUE(ctx1.old_lease_);
+    ASSERT_TRUE(ctx1.old_lease_.get() != 0);
     EXPECT_EQ("192.0.2.101", ctx1.old_lease_->addr_.toText());
 
     // Repeat the test but this time ask for the address for which the
@@ -1013,11 +1013,11 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseFakeAllocation) {
 
     // The server should offer the lease, but not for the address that
     // the client requested. The server should offer a reserved address.
-    ASSERT_TRUE(allocated_lease);
+    ASSERT_TRUE(allocated_lease.get() != 0);
     EXPECT_EQ("192.0.2.123", allocated_lease->addr_.toText());
 
     // Old lease should contain the currently used lease.
-    ASSERT_TRUE(ctx2.old_lease_);
+    ASSERT_TRUE(ctx2.old_lease_.get() != 0);
     EXPECT_EQ("192.0.2.101", ctx2.old_lease_->addr_.toText());
 }
 
@@ -1055,7 +1055,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseNoHint) {
     Lease4Ptr allocated_lease = engine.allocateLease4(ctx);
 
     // The reserved address should be allocated.
-    ASSERT_TRUE(allocated_lease);
+    ASSERT_TRUE(allocated_lease.get() != 0);
     EXPECT_EQ("192.0.2.123", allocated_lease->addr_.toText());
 
     // The previous lease should be removed.
@@ -1064,11 +1064,11 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseNoHint) {
     // Make sure that the allocated lease is committed in the lease database.
     Lease4Ptr from_mgr =
         LeaseMgrFactory::instance().getLease4(allocated_lease->addr_);
-    ASSERT_TRUE(from_mgr);
+    ASSERT_TRUE(from_mgr.get() != 0);
     detailCompareLease(allocated_lease, from_mgr);
 
     // Old lease should be returned.
-    ASSERT_TRUE(ctx.old_lease_);
+    ASSERT_TRUE(ctx.old_lease_.get() != 0);
     detailCompareLease(lease, ctx.old_lease_);
 }
 
@@ -1107,7 +1107,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseNoHintFakeAllocation) {
     Lease4Ptr allocated_lease = engine.allocateLease4(ctx);
 
     // The server should offer the reserved address.
-    ASSERT_TRUE(allocated_lease);
+    ASSERT_TRUE(allocated_lease.get() != 0);
     EXPECT_EQ("192.0.2.123", allocated_lease->addr_.toText());
 
     // The lease should not be committed to the lease database until the
@@ -1115,9 +1115,9 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseNoHintFakeAllocation) {
     EXPECT_FALSE(LeaseMgrFactory::instance().getLease4(allocated_lease->addr_));
 
     // The old lease should reflect what is in the database.
-    ASSERT_TRUE(ctx.old_lease_);
+    ASSERT_TRUE(ctx.old_lease_.get() != 0);
     Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
-    ASSERT_TRUE(from_mgr);
+    ASSERT_TRUE(from_mgr.get() != 0);
     detailCompareLease(lease, from_mgr);
 
 
@@ -1191,7 +1191,7 @@ TEST_F(AllocEngine4Test, reservedAddressConflictResolution) {
                                     "", true);
     AllocEngine::findReservation(ctx3);
     offered_lease = engine.allocateLease4(ctx3);
-    ASSERT_TRUE(offered_lease);
+    ASSERT_TRUE(offered_lease.get() != 0);
     EXPECT_NE(offered_lease->addr_.toText(), "192.0.2.101");
 
     // Client A tries to acquire the lease. It should succeed. At this point
@@ -1203,7 +1203,7 @@ TEST_F(AllocEngine4Test, reservedAddressConflictResolution) {
     AllocEngine::findReservation(ctx4);
     Lease4Ptr allocated_lease = engine.allocateLease4(ctx4);
 
-    ASSERT_TRUE(allocated_lease);
+    ASSERT_TRUE(allocated_lease.get() != 0);
     EXPECT_NE(allocated_lease->addr_.toText(), "192.0.2.101");
 
     // Client B tries to get the lease again. It should be offered
@@ -1214,7 +1214,7 @@ TEST_F(AllocEngine4Test, reservedAddressConflictResolution) {
     AllocEngine::findReservation(ctx5);
     offered_lease = engine.allocateLease4(ctx5);
 
-    ASSERT_TRUE(offered_lease);
+    ASSERT_TRUE(offered_lease.get() != 0);
     EXPECT_EQ("192.0.2.101", offered_lease->addr_.toText());
 
     // Client B requests allocation of the lease and it should succeed.
@@ -1223,7 +1223,7 @@ TEST_F(AllocEngine4Test, reservedAddressConflictResolution) {
                                     "", false);
     allocated_lease = engine.allocateLease4(ctx6);
 
-    ASSERT_TRUE(allocated_lease);
+    ASSERT_TRUE(allocated_lease.get() != 0);
     EXPECT_EQ("192.0.2.101", allocated_lease->addr_.toText());
 }
 
@@ -1249,11 +1249,11 @@ TEST_F(AllocEngine4Test, reservedAddressVsDynamicPool) {
     AllocEngine::findReservation(ctx);
     Lease4Ptr allocated_lease = engine.allocateLease4(ctx);
 
-    ASSERT_TRUE(allocated_lease);
+    ASSERT_TRUE(allocated_lease.get() != 0);
     EXPECT_NE(allocated_lease->addr_.toText(), "192.0.2.100");
 
     Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(allocated_lease->addr_);
-    ASSERT_TRUE(from_mgr);
+    ASSERT_TRUE(from_mgr.get() != 0);
     detailCompareLease(allocated_lease, from_mgr);
 }
 
@@ -1288,7 +1288,7 @@ TEST_F(AllocEngine4Test, reservedAddressHintUsedByOtherClient) {
     AllocEngine::findReservation(ctx2);
     allocated_lease = engine.allocateLease4(ctx2);
 
-    ASSERT_TRUE(allocated_lease);
+    ASSERT_TRUE(allocated_lease.get() != 0);
     // Make sure the lease obtained is for a different address.
     EXPECT_NE(allocated_lease->addr_.toText(), "192.0.2.100");
 }
@@ -1329,7 +1329,7 @@ TEST_F(AllocEngine4Test, reservedAddressShortPool) {
     AllocEngine::findReservation(ctx2);
     allocated_lease = engine.allocateLease4(ctx2);
 
-    ASSERT_TRUE(allocated_lease);
+    ASSERT_TRUE(allocated_lease.get() != 0);
     EXPECT_EQ("192.0.2.100", allocated_lease->addr_.toText());
 }
 
@@ -1354,14 +1354,14 @@ TEST_F(AllocEngine4Test, reservedHostname) {
                                     "foo.example.org", true);
     AllocEngine::findReservation(ctx);
     Lease4Ptr allocated_lease = engine.allocateLease4(ctx);
-    ASSERT_TRUE(allocated_lease);
+    ASSERT_TRUE(allocated_lease.get() != 0);
     ASSERT_FALSE(allocated_lease->addr_.isV4Zero());
     ASSERT_EQ("192.0.2.109", allocated_lease->addr_.toText());
 
     ctx.requested_address_ = allocated_lease->addr_;
     ctx.fake_allocation_ = false;
     allocated_lease = engine.allocateLease4(ctx);
-    ASSERT_TRUE(allocated_lease);
+    ASSERT_TRUE(allocated_lease.get() != 0);
     EXPECT_EQ("192.0.2.109", allocated_lease->addr_.toText());
 }
 
@@ -1392,7 +1392,7 @@ TEST_F(AllocEngine4Test, findReservation) {
 
     // This time the reservation should be returned.
     ASSERT_NO_THROW(engine.findReservation(ctx));
-    EXPECT_TRUE(ctx.host_);
+    EXPECT_TRUE(ctx.host_.get() != 0);
     EXPECT_EQ(ctx.host_->getIPv4Reservation(), host->getIPv4Reservation());
 
     // If the host reservation mode for the subnet is disabled, the
@@ -1405,7 +1405,7 @@ TEST_F(AllocEngine4Test, findReservation) {
     // Check the third possible reservation mode.
     subnet_->setHostReservationMode(Subnet::HR_OUT_OF_POOL);
     ASSERT_NO_THROW(engine.findReservation(ctx));
-    EXPECT_TRUE(ctx.host_);
+    EXPECT_TRUE(ctx.host_.get() != 0);
     EXPECT_EQ(ctx.host_->getIPv4Reservation(), host->getIPv4Reservation());
 
     // This time use the client identifier to search for the host.
@@ -1417,7 +1417,7 @@ TEST_F(AllocEngine4Test, findReservation) {
     CfgMgr::instance().commit();
 
     ASSERT_NO_THROW(engine.findReservation(ctx));
-    EXPECT_TRUE(ctx.host_);
+    EXPECT_TRUE(ctx.host_.get() != 0);
     EXPECT_EQ(ctx.host_->getIPv4Reservation(), host->getIPv4Reservation());
 
     // Remove the subnet. Subnet id is required to find host reservations, so

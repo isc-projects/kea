@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -86,7 +86,7 @@ TEST(CfgOptionDefTest, getAll) {
 
     // Sanity check that all 10 option definitions are there.
     OptionDefContainerPtr option_defs1 = cfg.getAll("isc");
-    ASSERT_TRUE(option_defs1);
+    ASSERT_TRUE(option_defs1.get() != 0);
     ASSERT_EQ(10, option_defs1->size());
 
     // Iterate over all option definitions and check that they have
@@ -96,13 +96,13 @@ TEST(CfgOptionDefTest, getAll) {
     for (OptionDefContainer::const_iterator it = option_defs1->begin();
          it != option_defs1->end(); ++it, ++code) {
         OptionDefinitionPtr def(*it);
-        ASSERT_TRUE(def);
+        ASSERT_TRUE(def.get() != 0);
         EXPECT_EQ(code, def->getCode());
     }
 
     // Sanity check that all 10 option definitions are there.
     OptionDefContainerPtr option_defs2 = cfg.getAll("abcde");
-    ASSERT_TRUE(option_defs2);
+    ASSERT_TRUE(option_defs2.get() != 0);
     ASSERT_EQ(10, option_defs2->size());
 
     // Check that the option codes are valid.
@@ -110,14 +110,14 @@ TEST(CfgOptionDefTest, getAll) {
     for (OptionDefContainer::const_iterator it = option_defs2->begin();
          it != option_defs2->end(); ++it, ++code) {
         OptionDefinitionPtr def(*it);
-        ASSERT_TRUE(def);
+        ASSERT_TRUE(def.get() != 0);
         EXPECT_EQ(code, def->getCode());
     }
 
     // Let's make one more check that the empty set is returned when
     // invalid option space is used.
     OptionDefContainerPtr option_defs3 = cfg.getAll("non-existing");
-    ASSERT_TRUE(option_defs3);
+    ASSERT_TRUE(option_defs3.get() != 0);
     EXPECT_TRUE(option_defs3->empty());
 }
 
@@ -152,7 +152,7 @@ TEST(CfgOptionDefTest, get) {
     // that we expect to be there.
     for (uint16_t code = 100; code < 110; ++code) {
         OptionDefinitionPtr def = cfg.get("isc", code);
-        ASSERT_TRUE(def);
+        ASSERT_TRUE(def.get() != 0);
         // Check that the option name is in the format of 'option-[code]'.
         // That way we make sure that the options that have the same codes
         // within different option spaces are different.
@@ -164,14 +164,14 @@ TEST(CfgOptionDefTest, get) {
         // Try to get the same option definition using an option name as
         // a key.
         def = cfg.get("isc", option_name.str());
-        ASSERT_TRUE(def);
+        ASSERT_TRUE(def.get() != 0);
         EXPECT_EQ(code, def->getCode());
     }
 
     // Check that the option codes are valid.
     for (uint16_t code = 105; code < 115; ++code) {
         OptionDefinitionPtr def = cfg.get("abcde", code);
-        ASSERT_TRUE(def);
+        ASSERT_TRUE(def.get() != 0);
         // Check that the option name is in the format of 'option-other-[code]'.
         // That way we make sure that the options that have the same codes
         // within different option spaces are different.
@@ -183,7 +183,7 @@ TEST(CfgOptionDefTest, get) {
         // Try to get the same option definition using an option name as
         // a key.
         def = cfg.get("abcde", option_name.str());
-        ASSERT_TRUE(def);
+        ASSERT_TRUE(def.get() != 0);
         EXPECT_EQ(code, def->getCode());
     }
 

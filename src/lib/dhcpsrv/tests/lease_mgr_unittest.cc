@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -301,7 +301,7 @@ TEST_F(LeaseMgrTest, getLease6) {
     EXPECT_NO_THROW(lease = mgr->getLease6(leasetype6_[1], *leases[1]->duid_,
                                            leases[1]->iaid_,
                                            leases[1]->subnet_id_));
-    EXPECT_TRUE(lease);
+    EXPECT_TRUE(lease.get() != 0);
 
     EXPECT_NO_THROW(detailCompareLease(lease, leases[1]));
 

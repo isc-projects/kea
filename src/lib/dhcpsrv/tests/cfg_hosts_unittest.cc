@@ -243,7 +243,7 @@ TEST_F(CfgHostsTest, get4) {
         // HW address.
         HostPtr host = cfg.get4(SubnetID(1 + i % 2), hwaddrs_[i],
                                 duids_[i + 25]);
-        ASSERT_TRUE(host);
+        ASSERT_TRUE(host.get() != 0);
         EXPECT_EQ(1 + i % 2, host->getIPv4SubnetID());
         EXPECT_EQ(increase(IOAddress("192.0.2.5"), i),
                   host->getIPv4Reservation());
@@ -252,7 +252,7 @@ TEST_F(CfgHostsTest, get4) {
         // reservation made for the HW address so the reservation is returned
         // for the DUID.
         host = cfg.get4(SubnetID(1 + i % 2), hwaddrs_[i + 25], duids_[i]);
-        ASSERT_TRUE(host);
+        ASSERT_TRUE(host.get() != 0);
         EXPECT_EQ(1 + i % 2, host->getIPv4SubnetID());
         EXPECT_EQ(increase(IOAddress("192.0.2.100"), i),
                   host->getIPv4Reservation());
@@ -297,7 +297,7 @@ TEST_F(CfgHostsTest, get6) {
         // HW address.
         HostPtr host = cfg.get6(SubnetID(1 + i % 2), duids_[i + 25],
                                 hwaddrs_[i]);
-        ASSERT_TRUE(host);
+        ASSERT_TRUE(host.get() != 0);
         EXPECT_EQ(1 + i % 2, host->getIPv6SubnetID());
         IPv6ResrvRange reservations =
             host->getIPv6Reservations(IPv6Resrv::TYPE_NA);
@@ -309,7 +309,7 @@ TEST_F(CfgHostsTest, get6) {
         // reservation made for the HW address so the reservation is returned
         // for the DUID.
         host = cfg.get6(SubnetID(1 + i % 2), duids_[i], hwaddrs_[i + 25]);
-        ASSERT_TRUE(host);
+        ASSERT_TRUE(host.get() != 0);
         EXPECT_EQ(1 + i % 2, host->getIPv6SubnetID());
         reservations = host->getIPv6Reservations(IPv6Resrv::TYPE_NA);
         ASSERT_EQ(1, std::distance(reservations.first, reservations.second));
@@ -344,7 +344,7 @@ TEST_F(CfgHostsTest, get6ByAddr) {
         // Retrieve host by (subnet-id,address).
         HostPtr host = cfg.get6(SubnetID(1 + i % 2),
                                 increase(IOAddress("2001:db8:2::1"), i));
-        ASSERT_TRUE(host);
+        ASSERT_TRUE(host.get() != 0);
 
         EXPECT_EQ(1 + i % 2, host->getIPv6SubnetID());
         IPv6ResrvRange reservations =
@@ -386,7 +386,7 @@ TEST_F(CfgHostsTest, get6MultipleAddrs) {
 
         // Check that the host is there.
         HostPtr by_duid = cfg.get6(SubnetID(1 + i % 2), duids_[i], hwaddr_not_used);
-        ASSERT_TRUE(by_duid);
+        ASSERT_TRUE(by_duid.get() != 0);
 
         for (int j = 0; j < 5; ++j) {
             std::stringstream tmp;
@@ -394,7 +394,7 @@ TEST_F(CfgHostsTest, get6MultipleAddrs) {
 
             // Retrieve host by (subnet-id,address).
             HostPtr by_addr = cfg.get6(SubnetID(1 + i % 2), tmp.str());
-            ASSERT_TRUE(by_addr);
+            ASSERT_TRUE(by_addr.get() != 0);
 
             // The pointers should match. Maybe we should compare contents
             // rather than just pointers? I think there's no reason why

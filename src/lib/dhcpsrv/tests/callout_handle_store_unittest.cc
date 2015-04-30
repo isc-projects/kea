@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -37,8 +37,8 @@ TEST(CalloutHandleStoreTest, StoreRetrieve) {
 
     // Check that the pointers point to objects that are different, and that
     // the pointers are the only pointers pointing to the packets.
-    ASSERT_TRUE(pktptr_1);
-    ASSERT_TRUE(pktptr_2);
+    ASSERT_TRUE(pktptr_1.get() != 0);
+    ASSERT_TRUE(pktptr_2.get() != 0);
 
     ASSERT_TRUE(pktptr_1 != pktptr_2);
     EXPECT_EQ(1, pktptr_1.use_count());
@@ -46,7 +46,7 @@ TEST(CalloutHandleStoreTest, StoreRetrieve) {
 
     // Get the CalloutHandle for the first packet.
     CalloutHandlePtr chptr_1 = getCalloutHandle(pktptr_1);
-    ASSERT_TRUE(chptr_1);
+    ASSERT_TRUE(chptr_1.get() != 0);
 
     // Reference counts on both the callout handle and the packet should have
     // been incremented because of the stored data.  The reference count on the
@@ -63,7 +63,7 @@ TEST(CalloutHandleStoreTest, StoreRetrieve) {
     CalloutHandlePtr chptr_2 = getCalloutHandle(pktptr_temp);
     pktptr_temp.reset();
 
-    ASSERT_TRUE(chptr_2);
+    ASSERT_TRUE(chptr_2.get() != 0);
     EXPECT_TRUE(chptr_1 == chptr_2);
 
     // Reference count is now 3 on the callout handle - two for pointers here,
@@ -112,7 +112,7 @@ TEST(CalloutHandleStoreTest, SeparateCompilationUnit) {
     // Access the template function here.
     Pkt6Ptr pktptr_1(new Pkt6(DHCPV6_ADVERTISE, 4321));
     CalloutHandlePtr chptr_1 = getCalloutHandle(pktptr_1);
-    ASSERT_TRUE(chptr_1);
+    ASSERT_TRUE(chptr_1.get() != 0);
 
     // Access it from within another compilation unit.
     CalloutHandlePtr chptr_2 = isc::dhcp::test::testGetCalloutHandle(pktptr_1);

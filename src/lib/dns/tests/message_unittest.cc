@@ -181,14 +181,13 @@ TEST_F(MessageTest, headerFlag) {
                  InvalidMessageOperation);
 }
 TEST_F(MessageTest, getEDNS) {
-    ConstEDNSPtr ep(message_parse.getEDNS());
-    EXPECT_FALSE(ep); // by default EDNS isn't set
+    EXPECT_FALSE(message_parse.getEDNS()); // by default EDNS isn't set
 
     factoryFromFile(message_parse, "message_fromWire10.wire");
-    EXPECT_TRUE(ep.get() != 0);
-    EXPECT_EQ(0, ep->getVersion());
-    EXPECT_EQ(4096, ep->getUDPSize());
-    EXPECT_TRUE(ep->getDNSSECAwareness());
+    EXPECT_TRUE(message_parse.getEDNS().get() != 0);
+    EXPECT_EQ(0, message_parse.getEDNS()->getVersion());
+    EXPECT_EQ(4096, message_parse.getEDNS()->getUDPSize());
+    EXPECT_TRUE(message_parse.getEDNS()->getDNSSECAwareness());
 }
 
 TEST_F(MessageTest, setEDNS) {

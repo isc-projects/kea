@@ -139,7 +139,7 @@ TEST_F(CSVLeaseFile4Test, parse) {
     {
     SCOPED_TRACE("First lease valid");
     EXPECT_TRUE(lf->next(lease));
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     checkStats(*lf, 1, 1, 0, 0, 0, 0);
 
     // Verify that the lease attributes are correct.
@@ -167,14 +167,14 @@ TEST_F(CSVLeaseFile4Test, parse) {
     {
     SCOPED_TRACE("Third lease valid");
     EXPECT_TRUE(lf->next(lease));
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
     checkStats(*lf, 3, 2, 1, 0, 0, 0);
 
     // Verify that the third lease is correct.
     EXPECT_EQ("192.0.3.15", lease->addr_.toText());
     HWAddr hwaddr3(*lease->hwaddr_);
     EXPECT_EQ("dd:de:ba:0d:1b:2e:3e:4f", hwaddr3.toText(false));
-    ASSERT_TRUE(lease->client_id_);
+    ASSERT_TRUE(lease->client_id_.get() != 0);
     EXPECT_EQ("0a:00:01:04", lease->client_id_->toText());
     EXPECT_EQ(100, lease->valid_lft_);
     EXPECT_EQ(0, lease->cltt_);

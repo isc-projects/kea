@@ -138,7 +138,8 @@ AllocEngine6Test::allocateTest(AllocEngine& engine, const Pool6Ptr& pool,
                                                                    (*it)->addr_);
         if (!fake) {
             // This is a real (REQUEST) allocation, the lease must be in the DB
-            EXPECT_TRUE(from_mgr) << "Lease " << from_mgr->addr_.toText()
+            EXPECT_TRUE(from_mgr.get() != 0)
+                                  << "Lease " << from_mgr->addr_.toText()
                                   << " returned by allocateLeases6(), "
                                   << "but was not present in LeaseMgr";
             if (!from_mgr) {
@@ -172,7 +173,7 @@ AllocEngine6Test::simpleAlloc6Test(const Pool6Ptr& pool, const IOAddress& hint,
     EXPECT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
                                                  100)));
     // We can't use ASSERT macros in non-void methods
-    EXPECT_TRUE(engine);
+    EXPECT_TRUE(engine.get() != 0);
     if (!engine) {
         return (Lease6Ptr());
     }
@@ -185,7 +186,7 @@ AllocEngine6Test::simpleAlloc6Test(const Pool6Ptr& pool, const IOAddress& hint,
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
 
     // Check that we got a lease
-    EXPECT_TRUE(lease);
+    EXPECT_TRUE(lease.get() != 0);
     if (!lease) {
         return (Lease6Ptr());
     }
@@ -197,7 +198,7 @@ AllocEngine6Test::simpleAlloc6Test(const Pool6Ptr& pool, const IOAddress& hint,
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(type, lease->addr_);
     if (!fake) {
         // This is a real (REQUEST) allocation, the lease must be in the DB
-        EXPECT_TRUE(from_mgr);
+        EXPECT_TRUE(from_mgr.get() != 0);
         if (!from_mgr) {
             return (Lease6Ptr());
         }
@@ -243,7 +244,8 @@ AllocEngine6Test::renewTest(AllocEngine& engine, const Pool6Ptr& pool,
                                                                    (*it)->addr_);
 
         // This is a real (REQUEST) allocation, the lease must be in the DB
-        EXPECT_TRUE(from_mgr) << "Lease " << from_mgr->addr_.toText()
+        EXPECT_TRUE(from_mgr.get() != 0)
+                              << "Lease " << from_mgr->addr_.toText()
                               << " returned by allocateLeases6(), "
                               << "but was not present in LeaseMgr";
         if (!from_mgr) {
@@ -263,7 +265,7 @@ AllocEngine6Test::allocWithUsedHintTest(Lease::Type type, IOAddress used_addr,
                                         uint8_t expected_pd_len) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
-    ASSERT_TRUE(engine);
+    ASSERT_TRUE(engine.get() != 0);
 
     // Let's create a lease and put it in the LeaseMgr
     DuidPtr duid2 = boost::shared_ptr<DUID>(new DUID(vector<uint8_t>(8, 0xff)));
@@ -281,7 +283,7 @@ AllocEngine6Test::allocWithUsedHintTest(Lease::Type type, IOAddress used_addr,
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
 
     // Check that we got a lease
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
 
     // Allocated address must be different
     EXPECT_NE(used_addr, lease->addr_);
@@ -295,7 +297,7 @@ AllocEngine6Test::allocWithUsedHintTest(Lease::Type type, IOAddress used_addr,
     // Check that the lease is indeed in LeaseMgr
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
                                                                lease->addr_);
-    ASSERT_TRUE(from_mgr);
+    ASSERT_TRUE(from_mgr.get() != 0);
 
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease(lease, from_mgr);
@@ -306,7 +308,7 @@ AllocEngine6Test::allocBogusHint6(Lease::Type type, asiolink::IOAddress hint,
                                   uint8_t expected_pd_len) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
-    ASSERT_TRUE(engine);
+    ASSERT_TRUE(engine.get() != 0);
 
     // Client would like to get a 3000::abc lease, which does not belong to any
     // supported lease. Allocation engine should ignore it and carry on
@@ -317,7 +319,7 @@ AllocEngine6Test::allocBogusHint6(Lease::Type type, asiolink::IOAddress hint,
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
 
     // Check that we got a lease
-    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease.get() != 0);
 
     // We should NOT get what we asked for, because it is used already
     EXPECT_NE(hint, lease->addr_);
@@ -328,7 +330,7 @@ AllocEngine6Test::allocBogusHint6(Lease::Type type, asiolink::IOAddress hint,
     // Check that the lease is indeed in LeaseMgr
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
                                                                lease->addr_);
-    ASSERT_TRUE(from_mgr);
+    ASSERT_TRUE(from_mgr.get() != 0);
 
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease(lease, from_mgr);
