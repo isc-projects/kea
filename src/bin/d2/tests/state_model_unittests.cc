@@ -238,7 +238,7 @@ public:
         EventPtr event;
         try  {
             event = getEvent(value);
-            EXPECT_TRUE(event);
+            EXPECT_TRUE(event.get() != 0);
             EXPECT_EQ(value, event->getValue());
             EXPECT_EQ(label, event->getLabel());
         } catch (const std::exception& ex) {
@@ -253,7 +253,7 @@ public:
         EventPtr state;
         try  {
             state = getState(value);
-            EXPECT_TRUE(state);
+            EXPECT_TRUE(state.get() != 0);
             EXPECT_EQ(value, state->getValue());
             EXPECT_EQ(label, state->getLabel());
         } catch (const std::exception& ex) {
@@ -379,7 +379,7 @@ TEST_F(StateModelTest, stateDefinition) {
     // Verify that we can find the state by its value.
     StatePtr state;
     EXPECT_NO_THROW(state = getState(READY_ST));
-    EXPECT_TRUE(state);
+    EXPECT_TRUE(state.get() != 0);
 
     // Verify the state's value and label.
     EXPECT_EQ(READY_ST, state->getValue());

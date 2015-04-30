@@ -99,7 +99,7 @@ public:
         if (getForwardDomain()) {
             initServerSelection(getForwardDomain());
             selectNextServer();
-            return (getCurrentServer());
+            return (getCurrentServer().get() != 0);
         }
 
         return (false);
@@ -459,7 +459,7 @@ TEST_F(NameChangeTransactionTest, accessors) {
 
     // Verify that fetching the NameChangeRequest works.
     dhcp_ddns::NameChangeRequestPtr ncr = name_change->getNcr();
-    ASSERT_TRUE(ncr);
+    ASSERT_TRUE(ncr.get() != 0);
 
     // Verify that getTransactionKey works.
     EXPECT_EQ(ncr->getDhcid(), name_change->getTransactionKey());
@@ -469,11 +469,11 @@ TEST_F(NameChangeTransactionTest, accessors) {
     EXPECT_EQ(dhcp_ddns::ST_FAILED, ncr->getStatus());
 
     // Verify that the forward domain can be retrieved.
-    ASSERT_TRUE(name_change->getForwardDomain());
+    ASSERT_TRUE(name_change->getForwardDomain().get() != 0);
     EXPECT_EQ(forward_domain_, name_change->getForwardDomain());
 
     // Verify that the reverse domain can be retrieved.
-    ASSERT_TRUE(name_change->getReverseDomain());
+    ASSERT_TRUE(name_change->getReverseDomain().get() != 0);
     EXPECT_EQ(reverse_domain_, name_change->getReverseDomain());
 
     // Neither of these have direct setters, but are tested under server
@@ -511,7 +511,7 @@ TEST_F(NameChangeTransactionTest, dnsUpdateRequestAccessors) {
     ASSERT_NO_THROW(name_change->setDnsUpdateRequest(req));
 
     // Post set, we should be able to fetch it.
-    ASSERT_TRUE(name_change->getDnsUpdateRequest());
+    ASSERT_TRUE(name_change->getDnsUpdateRequest().get() != 0);
 
     // Should be able to clear it.
     ASSERT_NO_THROW(name_change->clearDnsUpdateRequest());
@@ -537,7 +537,7 @@ TEST_F(NameChangeTransactionTest, dnsUpdateResponseAccessors) {
     ASSERT_NO_THROW(name_change->setDnsUpdateResponse(resp));
 
     // Post set, we should be able to fetch it.
-    EXPECT_TRUE(name_change->getDnsUpdateResponse());
+    EXPECT_TRUE(name_change->getDnsUpdateResponse().get() != 0);
 
     // Should be able to clear it.
     ASSERT_NO_THROW(name_change->clearDnsUpdateResponse());
@@ -657,9 +657,9 @@ TEST_F(NameChangeTransactionTest, serverSelectionTest) {
 
     // Verify that the forward domain and its list of servers can be retrieved.
     DdnsDomainPtr& domain = name_change->getForwardDomain();
-    ASSERT_TRUE(domain);
+    ASSERT_TRUE(domain.get() != 0);
     DnsServerInfoStoragePtr servers = domain->getServers();
-    ASSERT_TRUE(servers);
+    ASSERT_TRUE(servers.get() != 0);
 
     // Get the number of entries in the server list.
     int num_servers = servers->size();
@@ -685,7 +685,7 @@ TEST_F(NameChangeTransactionTest, serverSelectionTest) {
     D2UpdateMessagePtr dummyResp;
     dummyResp.reset(new D2UpdateMessage(D2UpdateMessage::INBOUND));
     ASSERT_NO_THROW(name_change->setDnsUpdateResponse(dummyResp));
-    ASSERT_TRUE(name_change->getDnsUpdateResponse());
+    ASSERT_TRUE(name_change->getDnsUpdateResponse().get() != 0);
 
     // Iteratively select through the list of servers.
     int passes = 0;
@@ -696,8 +696,8 @@ TEST_F(NameChangeTransactionTest, serverSelectionTest) {
         D2UpdateMessagePtr response = name_change->getDnsUpdateResponse();
 
         // Verify that the new values are not empty.
-        EXPECT_TRUE(server);
-        EXPECT_TRUE(client);
+        EXPECT_TRUE(server.get() != 0);
+        EXPECT_TRUE(client.get() != 0);
 
         // Verify response pointer is now empty.
         EXPECT_FALSE(name_change->getDnsUpdateResponse());
@@ -713,7 +713,7 @@ TEST_F(NameChangeTransactionTest, serverSelectionTest) {
         // Create new dummy response.
         dummyResp.reset(new D2UpdateMessage(D2UpdateMessage::INBOUND));
         ASSERT_NO_THROW(name_change->setDnsUpdateResponse(dummyResp));
-        ASSERT_TRUE(name_change->getDnsUpdateResponse());
+        ASSERT_TRUE(name_change->getDnsUpdateResponse().get() != 0);
 
         ++passes;
     }
@@ -724,9 +724,9 @@ TEST_F(NameChangeTransactionTest, serverSelectionTest) {
     // Repeat the same test using the reverse domain.
     // Verify that the reverse domain and its list of servers can be retrieved.
     domain = name_change->getReverseDomain();
-    ASSERT_TRUE(domain);
+    ASSERT_TRUE(domain.get() != 0);
     servers = domain->getServers();
-    ASSERT_TRUE(servers);
+    ASSERT_TRUE(servers.get() != 0);
 
     // Get the number of entries in the server list.
     num_servers = servers->size();
@@ -753,8 +753,8 @@ TEST_F(NameChangeTransactionTest, serverSelectionTest) {
         D2UpdateMessagePtr response = name_change->getDnsUpdateResponse();
 
         // Verify that the new values are not empty.
-        EXPECT_TRUE(server);
-        EXPECT_TRUE(client);
+        EXPECT_TRUE(server.get() != 0);
+        EXPECT_TRUE(client.get() != 0);
 
         // Verify response pointer is now empty.
         EXPECT_FALSE(name_change->getDnsUpdateResponse());
@@ -770,7 +770,7 @@ TEST_F(NameChangeTransactionTest, serverSelectionTest) {
         // Create new dummy response.
         dummyResp.reset(new D2UpdateMessage(D2UpdateMessage::INBOUND));
         ASSERT_NO_THROW(name_change->setDnsUpdateResponse(dummyResp));
-        ASSERT_TRUE(name_change->getDnsUpdateResponse());
+        ASSERT_TRUE(name_change->getDnsUpdateResponse().get() != 0);
 
         ++passes;
     }
@@ -1034,10 +1034,10 @@ TEST_F(NameChangeTransactionTest, sendUpdate) {
     // Verify that we have a response and it's Rcode is NOERROR,
     // and the zone is as expected.
     D2UpdateMessagePtr response = name_change->getDnsUpdateResponse();
-    ASSERT_TRUE(response);
+    ASSERT_TRUE(response.get() != 0);
     ASSERT_EQ(dns::Rcode::NOERROR().getCode(), response->getRcode().getCode());
     D2ZonePtr zone = response->getZone();
-    EXPECT_TRUE(zone);
+    EXPECT_TRUE(zone.get() != 0);
     EXPECT_EQ("response.example.com.", zone->getName().toText());
 }
 
@@ -1066,7 +1066,7 @@ TEST_F(NameChangeTransactionTest, tsigUnsignedResponse) {
     // unpacked.  In this case, it should be NOERROR but have no other
     // information.
     D2UpdateMessagePtr response = name_change->getDnsUpdateResponse();
-    ASSERT_TRUE(response);
+    ASSERT_TRUE(response.get() != 0);
     ASSERT_EQ(dns::Rcode::NOERROR().getCode(), response->getRcode().getCode());
     EXPECT_FALSE(response->getZone());
 }
@@ -1097,7 +1097,7 @@ TEST_F(NameChangeTransactionTest, tsigInvalidResponse) {
     // unpacked.  In this case, it should be NOERROR but have no other
     // information.
     D2UpdateMessagePtr response = name_change->getDnsUpdateResponse();
-    ASSERT_TRUE(response);
+    ASSERT_TRUE(response.get() != 0);
     ASSERT_EQ(dns::Rcode::NOERROR().getCode(), response->getRcode().getCode());
     EXPECT_FALSE(response->getZone());
 }
@@ -1126,10 +1126,10 @@ TEST_F(NameChangeTransactionTest, tsigUnexpectedSignedResponse) {
     ASSERT_EQ(DNSClient::SUCCESS, name_change->getDnsUpdateStatus());
 
     D2UpdateMessagePtr response = name_change->getDnsUpdateResponse();
-    ASSERT_TRUE(response);
+    ASSERT_TRUE(response.get() != 0);
     ASSERT_EQ(dns::Rcode::NOERROR().getCode(), response->getRcode().getCode());
     D2ZonePtr zone = response->getZone();
-    EXPECT_TRUE(zone);
+    EXPECT_TRUE(zone.get() != 0);
     EXPECT_EQ("response.example.com.", zone->getName().toText());
 }
 
@@ -1173,11 +1173,11 @@ TEST_F(NameChangeTransactionTest, tsigAllValid) {
         ASSERT_EQ(DNSClient::SUCCESS, name_change->getDnsUpdateStatus());
 
         D2UpdateMessagePtr response = name_change->getDnsUpdateResponse();
-        ASSERT_TRUE(response);
+        ASSERT_TRUE(response.get() != 0);
         ASSERT_EQ(dns::Rcode::NOERROR().getCode(),
                   response->getRcode().getCode());
         D2ZonePtr zone = response->getZone();
-        EXPECT_TRUE(zone);
+        EXPECT_TRUE(zone.get() != 0);
         EXPECT_EQ("response.example.com.", zone->getName().toText());
     }
 }
@@ -1221,7 +1221,7 @@ TEST_F(NameChangeTransactionTest, addLeaseAddressRData) {
     // Verify the Rdata was added and the value is correct.
     ASSERT_EQ(1, rrset->getRdataCount());
     dns::RdataIteratorPtr rdata_it = rrset->getRdataIterator();
-    ASSERT_TRUE(rdata_it);
+    ASSERT_TRUE(rdata_it.get() != 0);
     EXPECT_EQ(ncr->getIpAddress(), rdata_it->getCurrent().toText());
 
 }
@@ -1240,7 +1240,7 @@ TEST_F(NameChangeTransactionTest, addDhcidRdata) {
     // Verify the Rdata was added and the value is correct.
     ASSERT_EQ(1, rrset->getRdataCount());
     dns::RdataIteratorPtr rdata_it = rrset->getRdataIterator();
-    ASSERT_TRUE(rdata_it);
+    ASSERT_TRUE(rdata_it.get() != 0);
 
     const std::vector<uint8_t>& ncr_dhcid = ncr->getDhcid().getBytes();
     util::InputBuffer buffer(ncr_dhcid.data(), ncr_dhcid.size());
@@ -1262,7 +1262,7 @@ TEST_F(NameChangeTransactionTest, addPtrRdata) {
     // Verify the Rdata was added and the value is correct.
     ASSERT_EQ(1, rrset->getRdataCount());
     dns::RdataIteratorPtr rdata_it = rrset->getRdataIterator();
-    ASSERT_TRUE(rdata_it);
+    ASSERT_TRUE(rdata_it.get() != 0);
 
     EXPECT_EQ(ncr->getFqdn(), rdata_it->getCurrent().toText());
 }

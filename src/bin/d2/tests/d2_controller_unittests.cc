@@ -92,7 +92,7 @@ TEST_F(D2ControllerTest, basicInstanceTesting) {
     // Verify the we can the singleton instance can be fetched and that
     // it is the correct type.
     DControllerBasePtr& controller = DControllerTest::getController();
-    ASSERT_TRUE(controller);
+    ASSERT_TRUE(controller.get() != 0);
     ASSERT_NO_THROW(boost::dynamic_pointer_cast<D2Controller>(controller));
 
     // Verify that controller's app name is correct.
@@ -243,7 +243,7 @@ TEST_F(D2ControllerTest, invalidConfigReload) {
     // valid_d2_config (see d_test_stubs.cc)
     D2CfgMgrPtr d2_cfg_mgr = getD2CfgMgr();
     D2ParamsPtr d2_params = d2_cfg_mgr->getD2Params();
-    ASSERT_TRUE(d2_params);
+    ASSERT_TRUE(d2_params.get() != 0);
 
     EXPECT_EQ("127.0.0.1", d2_params->getIpAddress().toText());
     EXPECT_EQ(5031, d2_params->getPort());
@@ -281,7 +281,7 @@ TEST_F(D2ControllerTest, validConfigReload) {
     // Check to see that our configuration matches the replacement config.
     D2CfgMgrPtr d2_cfg_mgr = getD2CfgMgr();
     D2ParamsPtr d2_params = d2_cfg_mgr->getD2Params();
-    ASSERT_TRUE(d2_params);
+    ASSERT_TRUE(d2_params.get() != 0);
 
     EXPECT_EQ("192.168.77.1", d2_params->getIpAddress().toText());
     EXPECT_EQ(777, d2_params->getPort());

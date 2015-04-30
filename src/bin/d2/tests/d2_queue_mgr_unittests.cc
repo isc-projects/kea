@@ -160,7 +160,7 @@ TEST(D2QueueMgrBasicTest, basicQueue) {
         EXPECT_NO_THROW(ncr = queue_mgr->peek());
 
         // Verify the peeked entry is the one it should be.
-        ASSERT_TRUE(ncr);
+        ASSERT_TRUE(ncr.get() != 0);
         EXPECT_TRUE (*(ref_msgs[i]) == *ncr);
 
         // Verify that peek did not alter the queue size.

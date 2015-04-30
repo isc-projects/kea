@@ -681,11 +681,11 @@ TEST_F(D2UpdateMgrTest, addTransaction) {
     TransactionList::iterator pos = update_mgr_->transactionListBegin();
     ASSERT_TRUE (pos != update_mgr_->transactionListEnd());
     NameChangeTransactionPtr trans = (*pos).second;
-    ASSERT_TRUE(trans);
+    ASSERT_TRUE(trans.get() != 0);
 
     // At this point the transaction should have constructed
     // and sent the DNS request.
-    ASSERT_TRUE(trans->getCurrentServer());
+    ASSERT_TRUE(trans->getCurrentServer().get() != 0);
     ASSERT_TRUE(trans->isModelRunning());
     ASSERT_EQ(1, trans->getUpdateAttempts());
     ASSERT_EQ(StateModel::NOP_EVT, trans->getNextEvent());
@@ -734,11 +734,11 @@ TEST_F(D2UpdateMgrTest, removeTransaction) {
     TransactionList::iterator pos = update_mgr_->transactionListBegin();
     ASSERT_TRUE (pos != update_mgr_->transactionListEnd());
     NameChangeTransactionPtr trans = (*pos).second;
-    ASSERT_TRUE(trans);
+    ASSERT_TRUE(trans.get() != 0);
 
     // At this point the transaction should have constructed
     // and sent the DNS request.
-    ASSERT_TRUE(trans->getCurrentServer());
+    ASSERT_TRUE(trans->getCurrentServer().get() != 0);
     ASSERT_TRUE(trans->isModelRunning());
     ASSERT_EQ(1, trans->getUpdateAttempts());
     ASSERT_EQ(StateModel::NOP_EVT, trans->getNextEvent());
@@ -785,12 +785,12 @@ TEST_F(D2UpdateMgrTest, errorTransaction) {
     TransactionList::iterator pos = update_mgr_->transactionListBegin();
     ASSERT_TRUE (pos != update_mgr_->transactionListEnd());
     NameChangeTransactionPtr trans = (*pos).second;
-    ASSERT_TRUE(trans);
+    ASSERT_TRUE(trans.get() != 0);
 
     ASSERT_TRUE(trans->isModelRunning());
     ASSERT_EQ(1, trans->getUpdateAttempts());
     ASSERT_EQ(StateModel::NOP_EVT, trans->getNextEvent());
-    ASSERT_TRUE(trans->getCurrentServer());
+    ASSERT_TRUE(trans->getCurrentServer().get() != 0);
 
     // Create a server and start it listening.
     FauxServer server(*io_service_, *(trans->getCurrentServer()));

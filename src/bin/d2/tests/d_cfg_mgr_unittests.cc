@@ -108,7 +108,7 @@ TEST(DCfgMgrBase, construction) {
 
     // Verify that the context can be retrieved and is not null.
     DCfgContextBasePtr context = cfg_mgr->getContext();
-    EXPECT_TRUE(context);
+    EXPECT_TRUE(context.get() != 0);
 
     // Verify that the manager can be destructed without error.
     EXPECT_NO_THROW(cfg_mgr.reset());
@@ -291,7 +291,7 @@ TEST_F(DStubCfgMgrTest, simpleTypesTest) {
     answer_ = cfg_mgr_->parseConfig(config_set_);
     ASSERT_TRUE(checkAnswer(0));
     DStubContextPtr context = getStubContext();
-    ASSERT_TRUE(context);
+    ASSERT_TRUE(context.get() != 0);
 
     // Verify that the boolean parameter was parsed correctly by retrieving
     // its value from the context.
@@ -313,10 +313,10 @@ TEST_F(DStubCfgMgrTest, simpleTypesTest) {
 
     isc::data::ConstElementPtr object;
     EXPECT_NO_THROW(context->getObjectParam("map_test", object));
-    EXPECT_TRUE(object);
+    EXPECT_TRUE(object.get() != 0);
 
     EXPECT_NO_THROW(context->getObjectParam("list_test", object));
-    EXPECT_TRUE(object);
+    EXPECT_TRUE(object.get() != 0);
 
     // Create a configuration which "updates" all of the parameter values.
     string config2 = "{ \"bool_test\": false , "
@@ -330,7 +330,7 @@ TEST_F(DStubCfgMgrTest, simpleTypesTest) {
     answer_ = cfg_mgr_->parseConfig(config_set_);
     EXPECT_TRUE(checkAnswer(0));
     context = getStubContext();
-    ASSERT_TRUE(context);
+    ASSERT_TRUE(context.get() != 0);
 
     // Verify that the boolean parameter was updated correctly by retrieving
     // its value from the context.
@@ -358,11 +358,11 @@ TEST_F(DStubCfgMgrTest, simpleTypesTest) {
 
     // Verify new map object is there.
     EXPECT_NO_THROW(context->getObjectParam("map_test2", object));
-    EXPECT_TRUE(object);
+    EXPECT_TRUE(object.get() != 0);
 
     // Verify new list object is there.
     EXPECT_NO_THROW(context->getObjectParam("list_test2", object));
-    EXPECT_TRUE(object);
+    EXPECT_TRUE(object.get() != 0);
 }
 
 /// @brief Tests that the configuration context is preserved after failure
@@ -381,7 +381,7 @@ TEST_F(DStubCfgMgrTest, rollBackTest) {
     answer_ = cfg_mgr_->parseConfig(config_set_);
     EXPECT_TRUE(checkAnswer(0));
     DStubContextPtr context = getStubContext();
-    ASSERT_TRUE(context);
+    ASSERT_TRUE(context.get() != 0);
 
     // Verify that all of parameters have the expected values.
     bool actual_bool = false;
@@ -398,10 +398,10 @@ TEST_F(DStubCfgMgrTest, rollBackTest) {
 
     isc::data::ConstElementPtr object;
     EXPECT_NO_THROW(context->getObjectParam("map_test", object));
-    EXPECT_TRUE(object);
+    EXPECT_TRUE(object.get() != 0);
 
     EXPECT_NO_THROW(context->getObjectParam("list_test", object));
-    EXPECT_TRUE(object);
+    EXPECT_TRUE(object.get() != 0);
 
     // Create a configuration which "updates" all of the parameter values
     // plus one unknown at the end.
@@ -418,7 +418,7 @@ TEST_F(DStubCfgMgrTest, rollBackTest) {
     answer_ = cfg_mgr_->parseConfig(config_set_);
     EXPECT_TRUE(checkAnswer(1));
     context = getStubContext();
-    ASSERT_TRUE(context);
+    ASSERT_TRUE(context.get() != 0);
 
     // Verify that all of parameters have the original values.
     actual_bool = false;
@@ -434,10 +434,10 @@ TEST_F(DStubCfgMgrTest, rollBackTest) {
     EXPECT_EQ("hmmm chewy", actual_string);
 
     EXPECT_NO_THROW(context->getObjectParam("map_test", object));
-    EXPECT_TRUE(object);
+    EXPECT_TRUE(object.get() != 0);
 
     EXPECT_NO_THROW(context->getObjectParam("list_test", object));
-    EXPECT_TRUE(object);
+    EXPECT_TRUE(object.get() != 0);
 }
 
 // Tests that configuration element position is returned by getParam variants.
@@ -453,7 +453,7 @@ TEST_F(DStubCfgMgrTest, paramPosition) {
     answer_ = cfg_mgr_->parseConfig(config_set_);
     ASSERT_TRUE(checkAnswer(0));
     DStubContextPtr context = getStubContext();
-    ASSERT_TRUE(context);
+    ASSERT_TRUE(context.get() != 0);
 
     // Verify that the boolean parameter was parsed correctly by retrieving
     // its value from the context.

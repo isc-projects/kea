@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -121,12 +121,12 @@ public:
                 // We should have received a response.
                 EXPECT_EQ(DNSClient::SUCCESS, status_);
 
-                ASSERT_TRUE(response_);
+                ASSERT_TRUE(response_.get() != 0);
                 EXPECT_EQ(D2UpdateMessage::RESPONSE, response_->getQRFlag());
                 ASSERT_EQ(1,
                           response_->getRRCount(D2UpdateMessage::SECTION_ZONE));
                 D2ZonePtr zone = response_->getZone();
-                ASSERT_TRUE(zone);
+                ASSERT_TRUE(zone.get() != 0);
                 EXPECT_EQ("example.com.", zone->getName().toText());
                 EXPECT_EQ(RRClass::IN().getCode(), zone->getClass().getCode());
 

@@ -157,13 +157,13 @@ TEST(D2Process, construction) {
     D2Process d2process("TestProcess", lcl_io_service);
 
     D2CfgMgrPtr cfg_mgr = d2process.getD2CfgMgr();
-    ASSERT_TRUE(cfg_mgr);
+    ASSERT_TRUE(cfg_mgr.get() != 0);
 
     D2QueueMgrPtr queue_mgr = d2process.getD2QueueMgr();
-    ASSERT_TRUE(queue_mgr);
+    ASSERT_TRUE(queue_mgr.get() != 0);
 
     const D2UpdateMgrPtr& update_mgr = d2process.getD2UpdateMgr();
-    ASSERT_TRUE(update_mgr);
+    ASSERT_TRUE(update_mgr.get() != 0);
 }
 
 /// @brief Verifies basic configure method behavior.
@@ -178,7 +178,7 @@ TEST(D2Process, construction) {
 TEST_F(D2ProcessTest, configure) {
     // Verify the queue manager is not yet initialized.
     D2QueueMgrPtr queue_mgr = getD2QueueMgr();
-    ASSERT_TRUE(queue_mgr);
+    ASSERT_TRUE(queue_mgr.get() != 0);
     ASSERT_EQ(D2QueueMgr::NOT_INITTED, queue_mgr->getMgrState());
 
     // Verify that reconfigure queue manager flag is false.
@@ -360,7 +360,7 @@ TEST_F(D2ProcessTest, queueErrorRecovery) {
 /// and to subsequently recover given a usable configuration.
 TEST_F(D2ProcessTest, badConfigureRecovery) {
     D2QueueMgrPtr queue_mgr = getD2QueueMgr();
-    ASSERT_TRUE(queue_mgr);
+    ASSERT_TRUE(queue_mgr.get() != 0);
 
     // Verify the queue manager is not initialized.
     EXPECT_EQ(D2QueueMgr::NOT_INITTED, queue_mgr->getMgrState());
@@ -541,7 +541,7 @@ TEST_F(D2ProcessTest, canShutdown) {
     // Now use update manager to dequeue the request and make a transaction.
     // This lets us verify transaction list not empty logic.
     const D2UpdateMgrPtr& update_mgr = getD2UpdateMgr();
-    ASSERT_TRUE(update_mgr);
+    ASSERT_TRUE(update_mgr.get() != 0);
     ASSERT_NO_THROW(update_mgr->sweep());
     ASSERT_EQ(0, queue_mgr->getQueueSize());
     ASSERT_EQ(1, update_mgr->getTransactionCount());

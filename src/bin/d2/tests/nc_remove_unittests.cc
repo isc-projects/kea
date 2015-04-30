@@ -136,7 +136,7 @@ public:
         if (getForwardDomain()) {
             initServerSelection(getForwardDomain());
             selectNextServer();
-            return (getCurrentServer());
+            return (getCurrentServer().get() != 0);
         }
 
         return (false);
@@ -150,7 +150,7 @@ public:
         if (getReverseDomain()) {
             initServerSelection(getReverseDomain());
             selectNextServer();
-            return (getCurrentServer());
+            return (getCurrentServer().get() != 0);
         }
 
         return (false);
@@ -476,7 +476,7 @@ TEST_F(NameRemoveTransactionTest, selectingFwdServerHandler) {
                         << " selections: " << i;
 
         // Verify that a server was selected.
-        ASSERT_TRUE(name_remove->getCurrentServer())
+        ASSERT_TRUE(name_remove->getCurrentServer().get() != 0)
                     << " num_servers: " << num_servers << " selections: " << i;
 
         // Verify that we transitioned correctly.
@@ -709,7 +709,7 @@ TEST_F(NameRemoveTransactionTest, removingFwdAddrsHandler_Timeout) {
         if (i == 1) {
             // First time around we should build the message.
             EXPECT_FALSE(prev_msg);
-            EXPECT_TRUE(curr_msg);
+            EXPECT_TRUE(curr_msg.get() != 0);
         } else {
             // Subsequent passes should reuse the request. We are only
             // looking to check that we have not replaced the pointer value
@@ -1062,7 +1062,7 @@ TEST_F(NameRemoveTransactionTest, removingFwdRRsHandler_Timeout) {
         if (i == 1) {
             // First time around we should build the message.
             EXPECT_FALSE(prev_msg);
-            EXPECT_TRUE(curr_msg);
+            EXPECT_TRUE(curr_msg.get() != 0);
         } else {
             // Subsequent passes should reuse the request. We are only
             // looking to check that we have not replaced the pointer value
@@ -1132,7 +1132,7 @@ TEST_F(NameRemoveTransactionTest, removingFwdRRsHandler_InvalidResponse) {
         if (i == 1) {
             // First time around we should build the message.
             EXPECT_FALSE(prev_msg);
-            EXPECT_TRUE(curr_msg);
+            EXPECT_TRUE(curr_msg.get() != 0);
         } else {
             // Subsequent passes should reuse the request. We are only
             // looking to check that we have not replaced the pointer value
@@ -1197,7 +1197,7 @@ TEST_F(NameRemoveTransactionTest, selectingRevServerHandler) {
                         << " selections: " << i;
 
         // Verify that a server was selected.
-        ASSERT_TRUE(name_remove->getCurrentServer())
+        ASSERT_TRUE(name_remove->getCurrentServer().get() != 0)
                     << " num_servers: " << num_servers
                     << " selections: " << i;
 
@@ -1436,7 +1436,7 @@ TEST_F(NameRemoveTransactionTest, removingRevPtrsHandler_Timeout) {
         if (i == 1) {
             // First time around we should build the message.
             EXPECT_FALSE(prev_msg);
-            EXPECT_TRUE(curr_msg);
+            EXPECT_TRUE(curr_msg.get() != 0);
         } else {
             // Subsequent passes should reuse the request. We are only
             // looking to check that we have not replaced the pointer value
@@ -1505,7 +1505,7 @@ TEST_F(NameRemoveTransactionTest, removingRevPtrsHandler_CorruptResponse) {
         if (i == 1) {
             // First time around we should build the message.
             EXPECT_FALSE(prev_msg);
-            EXPECT_TRUE(curr_msg);
+            EXPECT_TRUE(curr_msg.get() != 0);
         } else {
             // Subsequent passes should reuse the request. We are only
             // looking to check that we have not replaced the pointer value

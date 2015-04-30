@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -115,7 +115,7 @@ TEST_F(D2UpdateMessageTest, setZone) {
     // via getter.
     msg.setZone(Name("example.com"), RRClass::ANY());
     zone = msg.getZone();
-    EXPECT_TRUE(zone);
+    EXPECT_TRUE(zone.get() != 0);
     EXPECT_EQ("example.com.", zone->getName().toText());
     EXPECT_EQ(RRClass::ANY().getCode(), zone->getClass().getCode());
 
@@ -123,7 +123,7 @@ TEST_F(D2UpdateMessageTest, setZone) {
     // overriden with a new one.
     msg.setZone(Name("foo.example.com"), RRClass::NONE());
     zone = msg.getZone();
-    EXPECT_TRUE(zone);
+    EXPECT_TRUE(zone.get() != 0);
     EXPECT_EQ("foo.example.com.", zone->getName().toText());
     EXPECT_EQ(RRClass::NONE().getCode(), zone->getClass().getCode());
 }
@@ -218,7 +218,7 @@ TEST_F(D2UpdateMessageTest, fromWire) {
     // the name, class and type of the zone and verify they are valid.
     ASSERT_EQ(1, msg.getRRCount(D2UpdateMessage::SECTION_ZONE));
     D2ZonePtr zone = msg.getZone();
-    ASSERT_TRUE(zone);
+    ASSERT_TRUE(zone.get() != 0);
     EXPECT_EQ("example.com.", zone->getName().toText());
     EXPECT_EQ(RRClass::IN().getCode(), zone->getClass().getCode());
 
@@ -229,7 +229,7 @@ TEST_F(D2UpdateMessageTest, fromWire) {
     RRsetIterator rrset_it =
         msg.beginSection(D2UpdateMessage::SECTION_PREREQUISITE);
     RRsetPtr prereq1 = *rrset_it;
-    ASSERT_TRUE(prereq1);
+    ASSERT_TRUE(prereq1.get() != 0);
     // Check record fields.
     EXPECT_EQ("foo.example.com.", prereq1->getName().toText()); // NAME
     EXPECT_EQ(RRType::AAAA().getCode(), prereq1->getType().getCode()); // TYPE
@@ -241,7 +241,7 @@ TEST_F(D2UpdateMessageTest, fromWire) {
     // Move to next prerequisite section.
     ++rrset_it;
     RRsetPtr prereq2 = *rrset_it;
-    ASSERT_TRUE(prereq2);
+    ASSERT_TRUE(prereq2.get() != 0);
     // Check record fields.
     EXPECT_EQ("bar.example.com.", prereq2->getName().toText()); // NAME
     EXPECT_EQ(RRType::AAAA().getCode(), prereq2->getType().getCode()); // TYPE
@@ -254,7 +254,7 @@ TEST_F(D2UpdateMessageTest, fromWire) {
     ASSERT_EQ(1, msg.getRRCount(D2UpdateMessage::SECTION_UPDATE));
     rrset_it = msg.beginSection(D2UpdateMessage::SECTION_UPDATE);
     RRsetPtr update = *rrset_it;
-    ASSERT_TRUE(update);
+    ASSERT_TRUE(update.get() != 0);
     // Check the record fields.
     EXPECT_EQ("foo.example.com.", update->getName().toText()); // NAME
     EXPECT_EQ(RRType::AAAA().getCode(), update->getType().getCode()); // TYPE
@@ -266,7 +266,7 @@ TEST_F(D2UpdateMessageTest, fromWire) {
     // address using compare function.
     ASSERT_EQ(1, update->getRdataCount());
     RdataIteratorPtr rdata_it = update->getRdataIterator();
-    ASSERT_TRUE(rdata_it);
+    ASSERT_TRUE(rdata_it.get() != 0);
     in::AAAA rdata_ref("2001:db8:1::1");
     EXPECT_EQ(0, rdata_ref.compare(rdata_it->getCurrent()));
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -30,7 +30,7 @@ TEST(LabeledValue, construction) {
     /// Verify that a valid constructor works.
     LabeledValuePtr lvp;
     ASSERT_NO_THROW(lvp.reset(new LabeledValue(1, "NotBlank")));
-    ASSERT_TRUE(lvp);
+    ASSERT_TRUE(lvp.get() != 0);
 
     // Verify that the value can be accessed.
     EXPECT_EQ(1, lvp->getValue());

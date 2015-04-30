@@ -196,21 +196,21 @@ TEST(IOSignalQueue, constructionAndQueuing) {
     // Check the middle one.
     IOSignalPtr signal;
     ASSERT_NO_THROW(signal = queue->popSignal(ids[1]));
-    ASSERT_TRUE(signal);
+    ASSERT_TRUE(signal.get() != 0);
     EXPECT_EQ(ids[1], signal->getSequenceId());
     EXPECT_EQ(SIGUSR1, signal->getSignum());
     ASSERT_THROW(queue->popSignal(ids[1]), IOSignalError);
 
     // Check the first one.
     ASSERT_NO_THROW(signal = queue->popSignal(ids[0]));
-    ASSERT_TRUE(signal);
+    ASSERT_TRUE(signal.get() != 0);
     EXPECT_EQ(ids[0], signal->getSequenceId());
     EXPECT_EQ(SIGINT, signal->getSignum());
     ASSERT_THROW(queue->popSignal(ids[0]), IOSignalError);
 
     // Check the last one.
     ASSERT_NO_THROW(signal = queue->popSignal(ids[2]));
-    ASSERT_TRUE(signal);
+    ASSERT_TRUE(signal.get() != 0);
     EXPECT_EQ(ids[2], signal->getSequenceId());
     EXPECT_EQ(SIGUSR2, signal->getSignum());
     ASSERT_THROW(queue->popSignal(ids[2]), IOSignalError);

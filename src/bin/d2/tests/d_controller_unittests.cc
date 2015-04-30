@@ -51,7 +51,7 @@ public:
 TEST_F(DStubControllerTest, basicInstanceTesting) {
     // Verify that the singleton exists and it is the correct type.
     DControllerBasePtr& controller = DControllerTest::getController();
-    ASSERT_TRUE(controller);
+    ASSERT_TRUE(controller.get() != 0);
     ASSERT_NO_THROW(boost::dynamic_pointer_cast<DStubController>(controller));
 
     // Verify that controller's app name is correct.

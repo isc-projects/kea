@@ -134,7 +134,7 @@ public:
 
         // Verify that the global scalars have the proper values.
         d2_params_ = context->getD2Params();
-        ASSERT_TRUE(d2_params_);
+        ASSERT_TRUE(d2_params_.get() != 0);
     }
 
     /// @brief Check parse result against expected outcome and position info
@@ -214,7 +214,7 @@ bool checkServer(DnsServerInfoPtr server, const char* hostname,
     bool result = true;
 
     if (!server) {
-        EXPECT_TRUE(server);
+        EXPECT_TRUE(server.get() != 0);
         return false;
     }
 
@@ -1071,29 +1071,29 @@ TEST_F(DdnsDomainTest, ddnsDomainParsing) {
     // Verify the name and key_name values.
     EXPECT_EQ("tmark.org", domain->getName());
     EXPECT_EQ("d2_key.tmark.org", domain->getKeyName());
-    ASSERT_TRUE(domain->getTSIGKeyInfo());
-    ASSERT_TRUE(domain->getTSIGKeyInfo()->getTSIGKey());
+    ASSERT_TRUE(domain->getTSIGKeyInfo().get() != 0);
+    ASSERT_TRUE(domain->getTSIGKeyInfo()->getTSIGKey().get() != 0);
 
     // Verify that the server list exists and contains the correct number of
     // servers.
     const DnsServerInfoStoragePtr& servers = domain->getServers();
-    EXPECT_TRUE(servers);
+    EXPECT_TRUE(servers.get() != 0);
     count =  servers->size();
     EXPECT_EQ(3, count);
 
     // Fetch each server and verify its contents.
     DnsServerInfoPtr server = (*servers)[0];
-    EXPECT_TRUE(server);
+    EXPECT_TRUE(server.get() != 0);
 
     EXPECT_TRUE(checkServer(server, "", "127.0.0.1", 100));
 
     server = (*servers)[1];
-    EXPECT_TRUE(server);
+    EXPECT_TRUE(server.get() != 0);
 
     EXPECT_TRUE(checkServer(server, "", "127.0.0.2", 200));
 
     server = (*servers)[2];
-    EXPECT_TRUE(server);
+    EXPECT_TRUE(server.get() != 0);
 
     EXPECT_TRUE(checkServer(server, "", "127.0.0.3", 300));
 }
@@ -1154,25 +1154,25 @@ TEST_F(DdnsDomainTest, DdnsDomainListParsing) {
     // Verify the name and key_name values of the first domain.
     EXPECT_EQ("tmark.org", domain->getName());
     EXPECT_EQ("d2_key.tmark.org", domain->getKeyName());
-    ASSERT_TRUE(domain->getTSIGKeyInfo());
-    ASSERT_TRUE(domain->getTSIGKeyInfo()->getTSIGKey());
+    ASSERT_TRUE(domain->getTSIGKeyInfo().get() != 0);
+    ASSERT_TRUE(domain->getTSIGKeyInfo()->getTSIGKey().get() != 0);
 
     // Verify the each of the first domain's servers
     DnsServerInfoStoragePtr servers = domain->getServers();
-    EXPECT_TRUE(servers);
+    EXPECT_TRUE(servers.get() != 0);
     count =  servers->size();
     EXPECT_EQ(3, count);
 
     DnsServerInfoPtr server = (*servers)[0];
-    EXPECT_TRUE(server);
+    EXPECT_TRUE(server.get() != 0);
     EXPECT_TRUE(checkServer(server, "", "127.0.0.1", 100));
 
     server = (*servers)[1];
-    EXPECT_TRUE(server);
+    EXPECT_TRUE(server.get() != 0);
     EXPECT_TRUE(checkServer(server, "", "127.0.0.2", 200));
 
     server = (*servers)[2];
-    EXPECT_TRUE(server);
+    EXPECT_TRUE(server.get() != 0);
     EXPECT_TRUE(checkServer(server, "", "127.0.0.3", 300));
 
     // Verify second domain
@@ -1183,25 +1183,25 @@ TEST_F(DdnsDomainTest, DdnsDomainListParsing) {
     // Verify the name and key_name values of the second domain.
     EXPECT_EQ("billcat.net", domain->getName());
     EXPECT_EQ("d2_key.billcat.net", domain->getKeyName());
-    ASSERT_TRUE(domain->getTSIGKeyInfo());
-    ASSERT_TRUE(domain->getTSIGKeyInfo()->getTSIGKey());
+    ASSERT_TRUE(domain->getTSIGKeyInfo().get() != 0);
+    ASSERT_TRUE(domain->getTSIGKeyInfo()->getTSIGKey().get() != 0);
 
     // Verify the each of second domain's servers
     servers = domain->getServers();
-    EXPECT_TRUE(servers);
+    EXPECT_TRUE(servers.get() != 0);
     count =  servers->size();
     EXPECT_EQ(3, count);
 
     server = (*servers)[0];
-    EXPECT_TRUE(server);
+    EXPECT_TRUE(server.get() != 0);
     EXPECT_TRUE(checkServer(server, "", "127.0.0.4", 400));
 
     server = (*servers)[1];
-    EXPECT_TRUE(server);
+    EXPECT_TRUE(server.get() != 0);
     EXPECT_TRUE(checkServer(server, "", "127.0.0.5", 500));
 
     server = (*servers)[2];
-    EXPECT_TRUE(server);
+    EXPECT_TRUE(server.get() != 0);
     EXPECT_TRUE(checkServer(server, "", "127.0.0.6", 600));
 }
 
@@ -1243,13 +1243,13 @@ TEST(D2CfgMgr, construction) {
     // Verify that the context can be retrieved and is not null.
     D2CfgContextPtr context;
     ASSERT_NO_THROW(context = cfg_mgr->getD2CfgContext());
-    EXPECT_TRUE(context);
+    EXPECT_TRUE(context.get() != 0);
 
     // Verify that the forward manager can be retrieved and is not null.
-    EXPECT_TRUE(context->getForwardMgr());
+    EXPECT_TRUE(context->getForwardMgr().get() != 0);
 
     // Verify that the reverse manager can be retrieved and is not null.
-    EXPECT_TRUE(context->getReverseMgr());
+    EXPECT_TRUE(context->getReverseMgr().get() != 0);
 
     // Verify that the manager can be destructed without error.
     EXPECT_NO_THROW(delete cfg_mgr);
@@ -1331,7 +1331,7 @@ TEST_F(D2CfgMgrTest, fullConfig) {
 
     // Verify that the global scalars have the proper values.
     D2ParamsPtr& d2_params = context->getD2Params();
-    ASSERT_TRUE(d2_params);
+    ASSERT_TRUE(d2_params.get() != 0);
 
     EXPECT_EQ(isc::asiolink::IOAddress("192.168.1.33"),
               d2_params->getIpAddress());
@@ -1342,11 +1342,11 @@ TEST_F(D2CfgMgrTest, fullConfig) {
 
     // Verify that the forward manager can be retrieved.
     DdnsDomainListMgrPtr mgr = context->getForwardMgr();
-    ASSERT_TRUE(mgr);
+    ASSERT_TRUE(mgr.get() != 0);
 
     // Verify that the forward manager has the correct number of domains.
     DdnsDomainMapPtr domains = mgr->getDomains();
-    ASSERT_TRUE(domains);
+    ASSERT_TRUE(domains.get() != 0);
     int count =  domains->size();
     EXPECT_EQ(2, count);
 
@@ -1359,13 +1359,13 @@ TEST_F(D2CfgMgrTest, fullConfig) {
         DdnsDomainPtr domain = domain_pair.second;
         DnsServerInfoStoragePtr servers = domain->getServers();
         count = servers->size();
-        EXPECT_TRUE(servers);
+        EXPECT_TRUE(servers.get() != 0);
         EXPECT_EQ(3, count);
     }
 
     // Verify that the reverse manager can be retrieved.
     mgr = context->getReverseMgr();
-    ASSERT_TRUE(mgr);
+    ASSERT_TRUE(mgr.get() != 0);
 
     // Verify that the reverse manager has the correct number of domains.
     domains = mgr->getDomains();
@@ -1380,7 +1380,7 @@ TEST_F(D2CfgMgrTest, fullConfig) {
         DdnsDomainPtr domain = domain_pair.second;
         DnsServerInfoStoragePtr servers = domain->getServers();
         count = servers->size();
-        EXPECT_TRUE(servers);
+        EXPECT_TRUE(servers.get() != 0);
         EXPECT_EQ(3, count);
     }
 
@@ -1729,8 +1729,8 @@ TEST_F(D2CfgMgrTest, configPermutations) {
 
         // Grab the test's configuration data.
         isc::data::ConstElementPtr data = test->get("data");
-        ASSERT_TRUE(data) << "No data for test: "
-                          << " : " << test->getPosition();
+        ASSERT_TRUE(data.get() != 0)
+               << "No data for test: " << test->getPosition();
 
         // Attempt to parse the configuration. We verify that we get the expected
         // outcome, and if it was supposed to fail if the explanation contains
