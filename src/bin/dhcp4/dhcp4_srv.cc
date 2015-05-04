@@ -1662,34 +1662,30 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
 
         if (!lease) {
             // No such lease - bogus release
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL,
-                      DHCP4_RELEASE_FAIL_NO_LEASE)
-                      .arg(client_id ? client_id->toText() : "(no client-id)")
-                      .arg(release->getHWAddr() ?
-                           release->getHWAddr()->toText() : "(no hwaddr info)")
-                      .arg(release->getCiaddr().toText());
+            LOG_DEBUG(lease_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_NO_LEASE)
+                .arg(release->getLabel())
+                .arg(release->getCiaddr().toText());
             return;
         }
 
         // Does the hardware address match? We don't want one client releasing
-        // second client's leases. Note that we're comparing the hardware
+        // another client's leases. Note that we're comparing the hardware
         // addresses only, not hardware types or sources of the hardware
         // addresses. Thus we don't use HWAddr::equals().
         if (lease->hwaddr_->hwaddr_ != release->getHWAddr()->hwaddr_) {
-            /// @todo: Print hwaddr from lease as part of ticket #2589
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_WRONG_HWADDR)
+            LOG_DEBUG(lease_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_WRONG_HWADDR)
+                .arg(release->getLabel())
                 .arg(release->getCiaddr().toText())
-                .arg(client_id ? client_id->toText() : "(no client-id)")
-                .arg(release->getHWAddr()->toText());
+                .arg(lease->hwaddr_->toText(false));
             return;
         }
 
         // Does the lease have client-id info? If it has, then check it with what
         // the client sent us.
         if (lease->client_id_ && client_id && *lease->client_id_ != *client_id) {
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_WRONG_CLIENT_ID)
+            LOG_DEBUG(lease_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_WRONG_CLIENT_ID)
+                .arg(release->getLabel())
                 .arg(release->getCiaddr().toText())
-                .arg(client_id->toText())
                 .arg(lease->client_id_->toText());
             return;
         }
@@ -1718,41 +1714,40 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
             // stage means "drop response".
             if (callout_handle->getSkip()) {
                 skip = true;
-                LOG_DEBUG(dhcp4_logger, DBG_DHCP4_HOOKS,
-                          DHCP4_HOOK_LEASE4_RELEASE_SKIP);
+                LOG_DEBUG(srv_hooks_logger, DBG_DHCP4_HOOKS,
+                          DHCP4_HOOK_LEASE4_RELEASE_SKIP)
+                    .arg(release->getLabel());
             }
         }
 
-        // Ok, hw and client-id match - let's release the lease.
+        // Callout didn't indicate to skip the release process. Let's release
+        // the lease.
         if (!skip) {
             bool success = LeaseMgrFactory::instance().deleteLease(lease->addr_);
 
             if (success) {
                 // Release successful
-                LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE)
-                    .arg(lease->addr_.toText())
-                    .arg(client_id ? client_id->toText() : "(no client-id)")
-                    .arg(release->getHWAddr()->toText());
+                LOG_DEBUG(lease_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE)
+                    .arg(release->getLabel())
+                    .arg(lease->addr_.toText());
 
                 if (CfgMgr::instance().ddnsEnabled()) {
                     // Remove existing DNS entries for the lease, if any.
                     queueNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, lease);
                 }
             } else {
-                // Release failed -
-                LOG_ERROR(dhcp4_logger, DHCP4_RELEASE_FAIL)
-                    .arg(lease->addr_.toText())
-                .arg(client_id ? client_id->toText() : "(no client-id)")
-                    .arg(release->getHWAddr()->toText());
+                // Release failed
+                LOG_ERROR(lease_logger, DHCP4_RELEASE_FAIL)
+                    .arg(release->getLabel())
+                    .arg(lease->addr_.toText());
             }
         }
     } catch (const isc::Exception& ex) {
-        // Rethrow the exception with a bit more data.
-        LOG_ERROR(dhcp4_logger, DHCP4_RELEASE_EXCEPTION)
-            .arg(ex.what())
-            .arg(release->getYiaddr());
+        LOG_ERROR(lease_logger, DHCP4_RELEASE_EXCEPTION)
+            .arg(release->getLabel())
+            .arg(release->getCiaddr())
+            .arg(ex.what());
     }
-
 }
 
 void
@@ -1780,6 +1775,9 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
     // be cleared (these fields were copied by the copyDefaultFields function).
     // Also Relay Agent Options should be removed if present.
     if (ack->getRemoteAddr() != inform->getGiaddr()) {
+        LOG_DEBUG(packet_logger, DBG_DHCP4_DETAIL, DHCP4_INFORM_DIRECT_REPLY)
+            .arg(inform->getLabel())
+            .arg(ack->getRemoteAddr());
         ack->setHops(0);
         ack->setGiaddr(IOAddress::IPV4_ZERO_ADDRESS());
         ack->delOption(DHO_DHCP_AGENT_OPTIONS);
@@ -1791,8 +1789,8 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
     /// @todo: decide whether we want to add a new hook point for
     /// doing class specific processing.
     if (!classSpecificProcessing(ex)) {
-        /// @todo add more verbosity here
-        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_INFORM_CLASS_PROCESSING_FAILED);
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_INFORM_CLASS_PROCESSING_FAILED)
+            .arg(inform->getLabel());
     }
 
     return (ex.getResponse());
