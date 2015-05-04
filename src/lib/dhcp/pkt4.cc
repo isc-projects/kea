@@ -301,9 +301,9 @@ std::string
 Pkt4::makeLabel(const HWAddrPtr& hwaddr, const ClientIdPtr& client_id,
                 const uint32_t transid) {
     stringstream label;
-    label << "hwaddr=[" << (hwaddr ? hwaddr->toText() : "no info")
-          << "], client-id=[" << (client_id ? client_id->toText() : "no info")
-          << "], transid=0x" << hex << transid << dec;
+    label << "[" << (hwaddr ? hwaddr->toText() : "no hwaddr info")
+          << "], cid=[" << (client_id ? client_id->toText() : "no info")
+          << "], tid=0x" << hex << transid << dec;
 
     return label.str();
 }
