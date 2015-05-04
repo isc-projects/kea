@@ -465,7 +465,7 @@ Dhcpv4Srv::run() {
         int type = query->getType();
         LOG_DEBUG(packet_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_RECEIVED)
             .arg(query->getLabel())
-            .arg(serverReceivedPacketName(type))
+            .arg(query->getName())
             .arg(type)
             .arg(query->getRemoteAddr())
             .arg(query->getLocalAddr())
@@ -633,12 +633,13 @@ Dhcpv4Srv::run() {
             LOG_DEBUG(options_logger, DBG_DHCP4_DETAIL_DATA,
                       DHCP4_RESPONSE_DATA)
                 .arg(rsp->getLabel())
+                .arg(rsp->getName())
                 .arg(static_cast<int>(rsp->getType()))
                 .arg(rsp->toText());
 
             LOG_DEBUG(packet_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_SEND)
                 .arg(rsp->getLabel())
-                .arg("fixme")
+                .arg(rsp->getName())
                 .arg(static_cast<int>(rsp->getType()))
                 .arg(rsp->getLocalAddr())
                 .arg(rsp->getLocalPort())
@@ -1138,7 +1139,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         LOG_ERROR(bad_packet_logger, DHCP4_PACKET_NAK_0001)
             .arg(query->getLabel())
             .arg(query->getRemoteAddr().toText())
-            .arg(serverReceivedPacketName(query->getType()));
+            .arg(query->getName());
         resp->setType(DHCPNAK);
         resp->setYiaddr(IOAddress::IPV4_ZERO_ADDRESS());
         return;
@@ -1796,37 +1797,6 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
     return (ex.getResponse());
 }
 
-const char*
-Dhcpv4Srv::serverReceivedPacketName(uint8_t type) {
-    static const char* DISCOVER = "DISCOVER";
-    static const char* REQUEST = "REQUEST";
-    static const char* RELEASE = "RELEASE";
-    static const char* DECLINE = "DECLINE";
-    static const char* INFORM = "INFORM";
-    static const char* UNKNOWN = "UNKNOWN";
-
-    switch (type) {
-    case DHCPDISCOVER:
-        return (DISCOVER);
-
-    case DHCPREQUEST:
-        return (REQUEST);
-
-    case DHCPRELEASE:
-        return (RELEASE);
-
-    case DHCPDECLINE:
-        return (DECLINE);
-
-    case DHCPINFORM:
-        return (INFORM);
-
-    default:
-        ;
-    }
-    return (UNKNOWN);
-}
-
 bool
 Dhcpv4Srv::accept(const Pkt4Ptr& query) const {
     // Check that the message type is accepted by the server. We rely on the
@@ -1983,7 +1953,7 @@ Dhcpv4Srv::sanityCheck(const Pkt4Ptr& query, RequirementLevel serverid) {
         if (server_id) {
             isc_throw(RFCViolation, "Server-id option was not expected, but "
                       << "received in "
-                      << serverReceivedPacketName(query->getType()));
+                      << query->getName());
         }
         break;
 
@@ -1991,7 +1961,7 @@ Dhcpv4Srv::sanityCheck(const Pkt4Ptr& query, RequirementLevel serverid) {
         if (!server_id) {
             isc_throw(RFCViolation, "Server-id option was expected, but not "
                       " received in message "
-                      << serverReceivedPacketName(query->getType()));
+                      << query->getName());
         }
         break;
 
@@ -2013,7 +1983,7 @@ Dhcpv4Srv::sanityCheck(const Pkt4Ptr& query, RequirementLevel serverid) {
     if (!client_id || client_id->len() == client_id->getHeaderLen()) {
         isc_throw(RFCViolation, "Missing or useless client-id and no HW address "
                   " provided in message "
-                  << serverReceivedPacketName(query->getType()));
+                  << query->getName());
     }
 }
 
