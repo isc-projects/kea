@@ -884,11 +884,11 @@ TEST_F(Pkt4Test, getLabel) {
     Pkt4 pkt(DHCPOFFER, 1234);
 
     // Verify makeLabel() handles empty values
-    EXPECT_EQ ("hwaddr=[no info], client-id=[no info], transid=0x0",
+    EXPECT_EQ ("[no hwaddr info], cid=[no info], tid=0x0",
                Pkt4::makeLabel(HWAddrPtr(), ClientIdPtr(), 0));
 
     // Verify an "empty" packet label is as we expect
-    EXPECT_EQ ("hwaddr=[hwtype=1 ], client-id=[no info], transid=0x4d2",
+    EXPECT_EQ ("[hwtype=1 ], cid=[no info], tid=0x4d2",
                pkt.getLabel());
 
     // Set that packet hardware address, then verify getLabel
@@ -897,8 +897,8 @@ TEST_F(Pkt4Test, getLabel) {
     HWAddrPtr dummy_hwaddr(new HWAddr(hw, sizeof(hw), hw_type));
     pkt.setHWAddr(dummy_hwaddr);
 
-    EXPECT_EQ ("hwaddr=[hwtype=123 02:04:06:08:0a:0c],"
-               " client-id=[no info], transid=0x4d2", pkt.getLabel());
+    EXPECT_EQ ("[hwtype=123 02:04:06:08:0a:0c],"
+               " cid=[no info], tid=0x4d2", pkt.getLabel());
 
     // Add a client id to the packet then verify getLabel
     OptionBuffer clnt_id(4);
@@ -907,11 +907,11 @@ TEST_F(Pkt4Test, getLabel) {
     }
 
     OptionPtr opt(new Option(Option::V4, DHO_DHCP_CLIENT_IDENTIFIER,
-                                 clnt_id.begin(), clnt_id.begin() + 4));
+                             clnt_id.begin(), clnt_id.begin() + 4));
     pkt.addOption(opt);
 
-    EXPECT_EQ ("hwaddr=[hwtype=123 02:04:06:08:0a:0c],"
-               " client-id=[64:65:66:67], transid=0x4d2",
+    EXPECT_EQ ("[hwtype=123 02:04:06:08:0a:0c],"
+               " cid=[64:65:66:67], tid=0x4d2",
                pkt.getLabel());
 
 }
