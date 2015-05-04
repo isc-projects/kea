@@ -282,6 +282,54 @@ void Pkt4::setType(uint8_t dhcp_type) {
     }
 }
 
+const char*
+Pkt4::getName(const uint8_t type) {
+    static const char* DHCPDISCOVER_NAME = "DHCPDISCOVER";
+    static const char* DHCPOFFER_NAME = "DHCPOFFER";
+    static const char* DHCPREQUEST_NAME = "DHCPREQUEST";
+    static const char* DHCPDECLINE_NAME = "DHCPDECLINE";
+    static const char* DHCPACK_NAME = "DHCPACK";
+    static const char* DHCPNAK_NAME = "DHCPNAK";
+    static const char* DHCPRELEASE_NAME = "DHCPRELEASE";
+    static const char* DHCPINFORM_NAME = "DHCPINFORM";
+    static const char* UNKNOWN_NAME = "UNKNOWN";
+
+    switch (type) {
+        case DHCPDISCOVER:
+            return (DHCPDISCOVER_NAME);
+
+        case DHCPOFFER:
+            return (DHCPOFFER_NAME);
+
+        case DHCPREQUEST:
+            return (DHCPREQUEST_NAME);
+
+        case DHCPDECLINE:
+            return (DHCPDECLINE_NAME);
+
+        case DHCPACK:
+            return (DHCPACK_NAME);
+
+        case DHCPNAK:
+            return (DHCPNAK_NAME);
+
+        case DHCPRELEASE:
+            return (DHCPRELEASE_NAME);
+
+        case DHCPINFORM:
+            return (DHCPINFORM_NAME);
+
+        default:
+            ;
+    }
+    return (UNKNOWN_NAME);
+}
+
+const char*
+Pkt4::getName() const {
+    return (Pkt4::getName(getType()));
+}
+
 std::string
 Pkt4::getLabel() const {
 
@@ -320,7 +368,7 @@ Pkt4::toText() {
     for (isc::dhcp::OptionCollection::iterator opt=options_.begin();
          opt != options_.end();
          ++opt) {
-        tmp << "  " << opt->second->toText() << std::endl;
+        tmp << "  " << opt->second->toText();
     }
 
 

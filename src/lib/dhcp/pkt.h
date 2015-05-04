@@ -193,6 +193,17 @@ public:
     /// @param type message type to be set
     virtual void setType(uint8_t type) = 0;
 
+    /// @brief Returns name of the DHCP message.
+    ///
+    /// For all unsupported messages the derived classes must return
+    /// "UNKNOWN".
+    ///
+    /// @return Ponter to "const" string containing DHCP message name.
+    /// The implementations in the derived classes should statically
+    /// allocate returned strings and the caller must not release the
+    /// returned pointer.
+    virtual const char* getName() const = 0;
+
     /// @brief Sets transaction-id value.
     ///
     /// @param transid transaction-id to be set.
