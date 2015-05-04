@@ -916,4 +916,50 @@ TEST_F(Pkt4Test, getLabel) {
 
 }
 
+// Tests that the correct DHCPv4 message name is returned for various
+// message types.
+TEST_F(Pkt4Test, getName) {
+    // Check all possible packet types
+    for (int itype = 0; itype < 256; ++itype) {
+        uint8_t type = itype;
+
+        switch (type) {
+        case DHCPDISCOVER:
+            EXPECT_STREQ("DHCPDISCOVER", Pkt4::getName(type));
+            break;
+
+        case DHCPOFFER:
+            EXPECT_STREQ("DHCPOFFER", Pkt4::getName(type));
+            break;
+
+        case DHCPREQUEST:
+            EXPECT_STREQ("DHCPREQUEST", Pkt4::getName(type));
+            break;
+
+        case DHCPDECLINE:
+            EXPECT_STREQ("DHCPDECLINE", Pkt4::getName(type));
+            break;
+
+        case DHCPACK:
+            EXPECT_STREQ("DHCPACK", Pkt4::getName(type));
+            break;
+
+        case DHCPNAK:
+            EXPECT_STREQ("DHCPNAK", Pkt4::getName(type));
+            break;
+
+        case DHCPRELEASE:
+            EXPECT_STREQ("DHCPRELEASE", Pkt4::getName(type));
+            break;
+
+        case DHCPINFORM:
+            EXPECT_STREQ("DHCPINFORM", Pkt4::getName(type));
+            break;
+
+        default:
+            EXPECT_STREQ("UNKNOWN", Pkt4::getName(type));
+        }
+    }
+}
+
 } // end of anonymous namespace

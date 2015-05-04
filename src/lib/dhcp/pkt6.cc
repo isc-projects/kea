@@ -525,7 +525,7 @@ Pkt6::getOptions(uint16_t opt_type) {
 }
 
 const char*
-Pkt6::getName(uint8_t type) {
+Pkt6::getName(const uint8_t type) {
     static const char* CONFIRM = "CONFIRM";
     static const char* DECLINE = "DECLINE";
     static const char* INFORMATION_REQUEST = "INFORMATION_REQUEST";

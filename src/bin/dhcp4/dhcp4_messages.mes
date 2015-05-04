@@ -477,7 +477,7 @@ client class has reported a failure. The response packet will not be sent.
 The argument contains the client and transaction identification
 information.
 
-% DHCP4_RESPONSE_DATA %1: responding with packet type %2, packet details: "%3"
+% DHCP4_RESPONSE_DATA %1: responding with packet %2 (type %3), packet details: "%4"
 A debug message including the detailed data about the packet being sent
 to the client.
 
