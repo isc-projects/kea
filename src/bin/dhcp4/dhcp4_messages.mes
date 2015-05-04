@@ -175,7 +175,7 @@ setting of the flag by a callout instructs the server to drop the packet.
 Server completed all the processing (e.g. may have assigned, updated
 or released leases), but the response will not be send to the client.
 
-% DHCP4_HOOK_LEASE4_RELEASE_SKIP DHCPv4 lease was not released because a callout set the skip flag.
+% DHCP4_HOOK_LEASE4_RELEASE_SKIP %1: lease was not released because a callout set the skip flag.
 This debug message is printed when a callout installed on lease4_release
 hook point set the skip flag. For this particular hook point, the
 setting of the flag by a callout instructs the server to not release
@@ -203,6 +203,12 @@ will be only able to offer global options - no addresses will be assigned.
 % DHCP4_INFORM_CLASS_PROCESSING_FAILED client class specific processing failed for DHCPINFORM
 This debug message means that the server processing that is unique for each
 client class has reported a failure. The response packet will not be sent.
+
+% DHCP4_INFORM_DIRECT_REPLY %1: DHCPACK in reply to the DHCPINFORM will be sent directly to %2
+This debug message is issued when the DHCPACK will be sent directly to the
+client, rather than via a relay. The first argument contains the client
+and transaction identification information. The second argument contains
+the client's address to which the response will be sent.
 
 % DHCP4_INIT_FAIL failed to initialize Kea server: %1
 The server has failed to initialize. This may be because the configuration
@@ -402,18 +408,18 @@ a DNS entries for a particular lease has been queued. The first parameter of
 this log message indicates whether the DNS entry is to be added or removed.
 The second parameter carries the details of the NameChangeRequest.
 
-% DHCP4_RELEASE address %1 belonging to client-id %2, hwaddr %3 was released properly.
+% DHCP4_RELEASE %1: address %2 was released properly.
 This debug message indicates that an address was released properly. It
 is a normal operation during client shutdown.
 
-% DHCP4_RELEASE_EXCEPTION exception %1 while trying to release address %2
+% DHCP4_RELEASE_EXCEPTION %1: while trying to release address %2 an exception occured: %3
 This message is output when an error was encountered during an attempt
 to process a RELEASE message. The error will not affect the client,
 which does not expect any response from the server for RELEASE
 messages. Depending on the nature of problem, it may affect future
 server operation.
 
-% DHCP4_RELEASE_FAIL failed to remove lease for address %1 for duid %2, hwaddr %3
+% DHCP4_RELEASE_FAIL %1: failed to remove lease for address %2
 This error message indicates that the software failed to remove a
 lease from the lease database. It is probably due to an error during a
 database operation: resolution will most likely require administrator
@@ -421,18 +427,20 @@ intervention (e.g. check if DHCP process has sufficient privileges to
 update the database). It may also be triggered if a lease was manually
 removed from the database during RELEASE message processing.
 
-% DHCP4_RELEASE_FAIL_NO_LEASE client (client-id %1, hwaddr %2) tried to release address, %3, but there is no such lease.
-This warning message is printed when client attempts to release a lease,
-but no such lease is known to the server.
+% DHCP4_RELEASE_FAIL_NO_LEASE %1: client is trying to release non-existing lease %2
+This debug message is printed when client attempts to release a lease,
+but no such lease is known to the server. The first argument contains
+the client and transaction identification information. The second
+argument contains the address which the client is trying to release.
 
-% DHCP4_RELEASE_FAIL_WRONG_CLIENT_ID client (client-id %2) tried to release address %1, but it belongs to client (client-id %3)
+% DHCP4_RELEASE_FAIL_WRONG_CLIENT_ID %1: client tried to release address %2, but this address is leased to different client using client id %3
 This warning message indicates that client tried to release an address
 that belongs to a different client. This should not happen in normal
 circumstances and may indicate a misconfiguration of the client.  However,
 since the client releasing the address will stop using it anyway, there
 is a good chance that the situation will correct itself.
 
-% DHCP4_RELEASE_FAIL_WRONG_HWADDR client (client-id %2) tried to release address %1, but sent from a wrong hardware address (%3)
+% DHCP4_RELEASE_FAIL_WRONG_HWADDR %1: client tried to release address %2, but this address is leased to different client using HW address %3
 This warning message indicates that client tried to release an address
 that does belong to it, but the lease information was associated with
 a different hardware address. One possible reason for using different
@@ -463,9 +471,11 @@ supplied its hostname. The first argument includes the client and the
 transaction identification information. The second argument holds the
 generated hostname.
 
-% DHCP4_REQUEST_CLASS_PROCESSING_FAILED client class specific processing failed for DHCPREQUEST
+% DHCP4_REQUEST_CLASS_PROCESSING_FAILED %1: client class specific processing failed for DHCPREQUEST
 This debug message means that the server processing that is unique for each
 client class has reported a failure. The response packet will not be sent.
+The argument contains the client and transaction identification
+information.
 
 % DHCP4_RESPONSE_DATA %1: responding with packet type %2, packet details: "%3"
 A debug message including the detailed data about the packet being sent
