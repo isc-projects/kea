@@ -137,7 +137,7 @@ public:
     /// This function is useful mainly for debugging.
     ///
     /// @return string with text representation
-    std::string toText();
+    std::string toText() const;
 
     /// @brief Returns the size of the required buffer to build the packet.
     ///
