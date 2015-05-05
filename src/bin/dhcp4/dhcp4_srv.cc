@@ -279,13 +279,31 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query) const {
         // will be selected. Packet processing will continue, but it will
         // be severely limited (i.e. only global options will be assigned)
         if (callout_handle->getSkip()) {
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_HOOKS,
-                      DHCP4_HOOK_SUBNET4_SELECT_SKIP);
+            LOG_DEBUG(srv_hooks_logger, DBG_DHCP4_HOOKS,
+                      DHCP4_HOOK_SUBNET4_SELECT_SKIP)
+                .arg(query->getLabel());
             return (Subnet4Ptr());
         }
 
         // Use whatever subnet was specified by the callout
         callout_handle->getArgument("subnet4", subnet);
+    }
+
+    if (subnet) {
+        // Log at higher debug level that subnet has been found.
+        LOG_DEBUG(packet_logger, DBG_DHCP4_DETAIL, DHCP4_SUBNET_SELECTED)
+            .arg(query->getLabel())
+            .arg(subnet->getID());
+        // Log detailed information about the selected subnet at the
+        // lower debug level.
+        LOG_DEBUG(packet_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_SUBNET_DATA)
+            .arg(query->getLabel())
+            .arg(subnet->toText());
+
+    } else {
+        LOG_DEBUG(packet_logger, DBG_DHCP4_DETAIL,
+                  DHCP4_SUBNET_SELECTION_FAILED)
+            .arg(query->getLabel());
     }
 
     return (subnet);
@@ -539,17 +557,10 @@ Dhcpv4Srv::run() {
             // (The problem is logged as a debug message because debug is
             // disabled by default - it prevents a DDOS attack based on the
             // sending of problem packets.)
-            if (dhcp4_logger.isDebugEnabled(DBG_DHCP4_BASIC)) {
-                std::string source = "unknown";
-                HWAddrPtr hwptr = query->getHWAddr();
-                if (hwptr) {
-                    source = hwptr->toText();
-                }
-                LOG_DEBUG(bad_packet_logger, DBG_DHCP4_BASIC,
-                          DHCP4_PACKET_DROP_0007)
-                    .arg(query->getLabel())
-                    .arg(e.what());
-            }
+            LOG_DEBUG(bad_packet_logger, DBG_DHCP4_BASIC,
+                      DHCP4_PACKET_DROP_0007)
+                .arg(query->getLabel())
+                .arg(e.what());
         }
 
         if (!rsp) {
@@ -892,7 +903,7 @@ Dhcpv4Srv::processClientName(Dhcpv4Exchange& ex) {
                 processHostnameOption(ex);
             }
         }
-    } catch (const Exception& ex) {
+    } catch (const Exception& e) {
         // In some rare cases it is possible that the client's name processing
         // fails. For example, the Hostname option may be malformed, or there
         // may be an error in the server's logic which would cause multiple
@@ -901,8 +912,9 @@ Dhcpv4Srv::processClientName(Dhcpv4Exchange& ex) {
         // from the log. We don't want to throw an exception here because,
         // it will impact the processing of the whole packet. We rather want
         // the processing to continue, even if the client's name is wrong.
-        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_CLIENT_NAME_PROC_FAIL)
-            .arg(ex.what());
+        LOG_DEBUG(hostname_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_CLIENT_NAME_PROC_FAIL)
+            .arg(ex.getQuery()->getLabel())
+            .arg(e.what());
     }
 }
 
@@ -983,7 +995,8 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
     /// @todo It would be more liberal to accept this and let it fall into
     /// the case  of replace or less than two below.
     if (label_count == 0) {
-        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_EMPTY_HOSTNAME);
+        LOG_DEBUG(hostname_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_EMPTY_HOSTNAME)
+            .arg(ex.getQuery()->getLabel());
         return;
     }
     // Copy construct the hostname provided by the client. It is entirely
@@ -1095,7 +1108,7 @@ queueNameChangeRequest(const isc::dhcp_ddns::NameChangeType chg_type,
     try {
         dhcid  = computeDhcid(lease);
     } catch (const DhcidComputeError& ex) {
-        LOG_ERROR(dhcp4_logger, DHCP4_DHCID_COMPUTE_ERROR)
+        LOG_ERROR(hostname_logger, DHCP4_DHCID_COMPUTE_ERROR)
             .arg(lease->toText())
             .arg(ex.what());
         return;
@@ -1111,7 +1124,7 @@ queueNameChangeRequest(const isc::dhcp_ddns::NameChangeType chg_type,
                                                     lease->valid_lft_),
                                                    lease->valid_lft_));
 
-    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_QUEUE_NCR)
+    LOG_DEBUG(hostname_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_QUEUE_NCR)
         .arg(chg_type == CHG_ADD ? "add" : "remove")
         .arg(ncr->toText());
 
@@ -1151,9 +1164,6 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     // at once.
     /// @todo: move subnet selection to a common code
     resp->setSiaddr(subnet->getSiaddr());
-
-    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_SUBNET_SELECTED)
-        .arg(subnet->toText());
 
     // Get client-id. It is not mandatory in DHCPv4.
     ClientIdPtr client_id = ex.getContext()->clientid_;
@@ -1330,7 +1340,9 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
                 }
 
             } catch (const Exception& ex) {
-                LOG_ERROR(dhcp4_logger, DHCP4_NAME_GEN_UPDATE_FAIL)
+                LOG_ERROR(hostname_logger, DHCP4_NAME_GEN_UPDATE_FAIL)
+                    .arg(query->getLabel())
+                    .arg(lease->hostname_)
                     .arg(ex.what());
             }
         }
@@ -1590,7 +1602,8 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
     /// doing class specific processing.
     if (!classSpecificProcessing(ex)) {
         /// @todo add more verbosity here
-        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_DISCOVER_CLASS_PROCESSING_FAILED);
+        LOG_DEBUG(options_logger, DBG_DHCP4_DETAIL, DHCP4_DISCOVER_CLASS_PROCESSING_FAILED)
+            .arg(discover->getLabel());
     }
 
     return (ex.getResponse());
@@ -1639,7 +1652,8 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
     /// doing class specific processing.
     if (!classSpecificProcessing(ex)) {
         /// @todo add more verbosity here
-        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_REQUEST_CLASS_PROCESSING_FAILED);
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_REQUEST_CLASS_PROCESSING_FAILED)
+            .arg(ex.getQuery()->getLabel());
     }
 
     return (ex.getResponse());
@@ -1790,7 +1804,8 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
     /// @todo: decide whether we want to add a new hook point for
     /// doing class specific processing.
     if (!classSpecificProcessing(ex)) {
-        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_INFORM_CLASS_PROCESSING_FAILED)
+        LOG_DEBUG(options_logger, DBG_DHCP4_DETAIL,
+                  DHCP4_INFORM_CLASS_PROCESSING_FAILED)
             .arg(inform->getLabel());
     }
 
@@ -2122,7 +2137,8 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
     }
 
     if (!classes.empty()) {
-        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
+        LOG_DEBUG(options_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
+            .arg(pkt->getLabel())
             .arg(classes);
     }
 }
@@ -2185,7 +2201,7 @@ void
 Dhcpv4Srv::d2ClientErrorHandler(const
                                 dhcp_ddns::NameChangeSender::Result result,
                                 dhcp_ddns::NameChangeRequestPtr& ncr) {
-    LOG_ERROR(dhcp4_logger, DHCP4_DDNS_REQUEST_SEND_FAILED).
+    LOG_ERROR(hostname_logger, DHCP4_DDNS_REQUEST_SEND_FAILED).
               arg(result).arg((ncr ? ncr->toText() : " NULL "));
     // We cannot communicate with kea-dhcp-ddns, suspend further updates.
     /// @todo We may wish to revisit this, but for now we will simply turn
