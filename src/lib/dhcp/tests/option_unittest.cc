@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -233,7 +233,7 @@ TEST_F(OptionTest, v4_toText) {
 
     Option opt(Option::V4, 253, buf);
 
-    EXPECT_EQ("type=253, len=3: 00:0f:ff", opt.toText());
+    EXPECT_EQ("type=253, len=003: 00:0f:ff", opt.toText());
 }
 
 // Tests simple constructor
@@ -443,7 +443,7 @@ TEST_F(OptionTest, v6_toText) {
     buf_[2] = 0xff;
 
     OptionPtr opt(new Option(Option::V6, 258, buf_.begin(), buf_.begin() + 3 ));
-    EXPECT_EQ("type=258, len=3: 00:0f:ff", opt->toText());
+    EXPECT_EQ("type=00258, len=00003: 00:0f:ff", opt->toText());
 }
 
 

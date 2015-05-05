@@ -18,7 +18,9 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/docsis3_option_defs.h>
+#include <dhcp/option_int.h>
 #include <dhcp/option_string.h>
+#include <dhcp/option4_addrlst.h>
 #include <dhcp/pkt4.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
@@ -960,6 +962,27 @@ TEST_F(Pkt4Test, getName) {
             EXPECT_STREQ("UNKNOWN", Pkt4::getName(type));
         }
     }
+}
+
+// This test checks that the packet data are correctly converted to the
+// textual format.
+TEST_F(Pkt4Test, toText) {
+    Pkt4 pkt(DHCPDISCOVER, 2543);
+    pkt.setLocalAddr(IOAddress("192.0.2.34"));
+    pkt.setRemoteAddr(IOAddress("192.10.33.4"));
+
+    pkt.addOption(OptionPtr(new Option4AddrLst(123, IOAddress("192.0.2.3"))));
+    pkt.addOption(OptionPtr(new OptionUint32(Option::V4, 156, 123456)));
+    pkt.addOption(OptionPtr(new OptionString(Option::V4, 87, "lorem ipsum")));
+
+    EXPECT_EQ("local_address=192.0.2.34:67, remote_adress=192.10.33.4:68, "
+              "msg_type=1, transid=0x9ef,\n"
+              "options:\n"
+              "  type=053, len=001: 01\n"
+              "  type=087, len=011: \"lorem ipsum\" (string)\n"
+              "  type=123, len=004: 192.0.2.3\n"
+              "  type=156, len=004: 123456 (uint32)",
+              pkt.toText());
 }
 
 } // end of anonymous namespace

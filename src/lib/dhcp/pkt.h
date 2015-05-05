@@ -161,7 +161,7 @@ public:
     /// implementations of this method.
     ///
     /// @return string with text representation
-    virtual std::string toText() = 0;
+    virtual std::string toText() const = 0;
 
     /// @brief Returns packet size in binary format.
     ///
