@@ -90,6 +90,38 @@ const char* CONFIGS[] = {
             "\"enable-updates\": true,"
             "\"qualifying-suffix\": \"fake-suffix.isc.org.\""
         "}"
+    "}",
+    // Simple config with DDNS updates disabled.  Note pool is one address
+    // large to ensure we get a specific address back.
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 3000,"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1,"
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.10\" } ]"
+        " }],"
+        "\"dhcp-ddns\": {"
+            "\"enable-updates\": false,"
+            "\"qualifying-suffix\": \"fake-suffix.isc.org.\""
+        "}"
+    "}",
+    // Simple config with DDNS updates enabled.  Note pool is one address
+    // large to ensure we get a specific address back.
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 3000,"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1,"
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.10\" } ]"
+        " }],"
+        "\"dhcp-ddns\": {"
+            "\"enable-updates\": true,"
+            "\"qualifying-suffix\": \"fake-suffix.isc.org.\""
+        "}"
     "}"
 };
 
@@ -1129,7 +1161,7 @@ TEST_F(NameDhcpv4SrvTest, fqdnReservation) {
                                 "0D280858B1ED7696E174C4479E3372",
                                 time(NULL), subnet_->getValid(), true);
     }
-    
+
     // And that this FQDN has been stored in the lease database.
     Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(client.config_.lease_.addr_);
     ASSERT_TRUE(lease);
@@ -1211,7 +1243,7 @@ TEST_F(NameDhcpv4SrvTest, hostnameReservation) {
 
     // Obtain the Hostname option sent in the response and make sure that the server
     // has used the hostname reserved for this client.
-    OptionStringPtr hostname; 
+    OptionStringPtr hostname;
     hostname = boost::dynamic_pointer_cast<OptionString>(resp->getOption(DHO_HOST_NAME));
     ASSERT_TRUE(hostname);
     EXPECT_EQ("unique-host.example.org", hostname->getValue());
@@ -1298,5 +1330,59 @@ TEST_F(NameDhcpv4SrvTest, hostnameReservation) {
     }
 }
 
+// Test verifies that the server properly generates a FQDN when the client
+// FQDN name is blank, whether or not DDNS updates are enabled.
+TEST_F(NameDhcpv4SrvTest, emptyFqdn) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+
+    // Load a configuration with DDNS updates disabled
+    configure(CONFIGS[2], *client.getServer());
+    ASSERT_FALSE(CfgMgr::instance().ddnsEnabled());
+
+    // Include the Client FQDN option.
+    ASSERT_NO_THROW(client.includeFQDN((Option4ClientFqdn::FLAG_S
+                                        | Option4ClientFqdn::FLAG_E),
+                                       "", Option4ClientFqdn::PARTIAL));
+
+    // Send the DHCPDISCOVER
+    ASSERT_NO_THROW(client.doDiscover());
+
+    // Make sure that the server responded.
+    Pkt4Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+    ASSERT_EQ(DHCPOFFER, static_cast<int>(resp->getType()));
+
+    // Make sure the response FQDN has the generated name and FQDN flags are
+    // correct for updated disabled.
+    Option4ClientFqdnPtr fqdn;
+    fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>(resp->getOption(DHO_FQDN));
+    ASSERT_TRUE(fqdn);
+    EXPECT_EQ("myhost-10-0-0-10.fake-suffix.isc.org.", fqdn->getDomainName());
+    checkFqdnFlags(resp, (Option4ClientFqdn::FLAG_N |
+                          Option4ClientFqdn::FLAG_E |
+                          Option4ClientFqdn::FLAG_O));
+
+    // Now test with updates enabled
+    configure(CONFIGS[3], *client.getServer());
+    ASSERT_TRUE(CfgMgr::instance().ddnsEnabled());
+    ASSERT_NO_THROW(client.getServer()->startD2());
+
+    // Send the DHCPDISCOVER
+    ASSERT_NO_THROW(client.doDiscover());
+
+    // Make sure that the server responded.
+    resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+    ASSERT_EQ(DHCPOFFER, static_cast<int>(resp->getType()));
+
+    // Make sure the response FQDN has the generated name and FQDN flags are
+    // correct for updates enabled.
+    fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>(resp->getOption(DHO_FQDN));
+    ASSERT_TRUE(fqdn);
+    EXPECT_EQ("myhost-10-0-0-10.fake-suffix.isc.org.", fqdn->getDomainName());
+    checkFqdnFlags(resp, (Option4ClientFqdn::FLAG_E |
+                          Option4ClientFqdn::FLAG_S));
+
+}
 
 } // end of anonymous namespace
