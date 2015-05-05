@@ -358,21 +358,22 @@ Pkt4::makeLabel(const HWAddrPtr& hwaddr, const ClientIdPtr& client_id,
 
 
 std::string
-Pkt4::toText() {
-    stringstream tmp;
-    tmp << "localAddr=" << local_addr_ << ":" << local_port_
-        << " remoteAddr=" << remote_addr_
-        << ":" << remote_port_ << ", msgtype=" << static_cast<int>(getType())
-        << ", transid=0x" << hex << transid_ << dec << endl;
+Pkt4::toText() const {
+    stringstream output;
+    output << "local_address=" << local_addr_ << ":" << local_port_
+        << ", remote_adress=" << remote_addr_
+        << ":" << remote_port_ << ", msg_type=" << static_cast<int>(getType())
+        << ", transid=0x" << hex << transid_ << dec;
 
-    for (isc::dhcp::OptionCollection::iterator opt=options_.begin();
-         opt != options_.end();
-         ++opt) {
-        tmp << "  " << opt->second->toText();
+    if (!options_.empty()) {
+        output << "," << std::endl << "options:";
+        for (isc::dhcp::OptionCollection::const_iterator opt = options_.begin();
+             opt != options_.end(); ++opt) {
+            output << std::endl << opt->second->toText(2);
+        }
     }
 
-
-    return tmp.str();
+    return (output.str());
 }
 
 void

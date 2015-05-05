@@ -162,7 +162,7 @@ public:
     /// This function is useful mainly for debugging.
     ///
     /// @return string with text representation
-    virtual std::string toText();
+    virtual std::string toText() const;
 
     /// @brief Returns length of the packet.
     ///
