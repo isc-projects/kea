@@ -49,7 +49,7 @@ using namespace std;
 namespace {
 
 // Maximum number of parameters used in any single query
-const size_t MAX_PARAMETERS_IN_QUERY = 13;
+const size_t MAX_PARAMETERS_IN_QUERY = 14;
 
 /// @brief  Defines a single query
 struct TaggedStatement {
@@ -146,7 +146,7 @@ TaggedStatement tagged_statements[] = {
       "get_lease6_addr",
       "SELECT address, duid, valid_lifetime, "
         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
-        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
+        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, hwaddr "
       "FROM lease6 "
       "WHERE address = $1 AND lease_type = $2"},
 
@@ -155,7 +155,7 @@ TaggedStatement tagged_statements[] = {
        "get_lease6_duid_iaid",
        "SELECT address, duid, valid_lifetime, "
          "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
-         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
+         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, hwaddr "
        "FROM lease6 "
        "WHERE duid = $1 AND iaid = $2 AND lease_type = $3"},
 
@@ -164,7 +164,7 @@ TaggedStatement tagged_statements[] = {
       "get_lease6_duid_iaid_subid",
       "SELECT address, duid, valid_lifetime, "
         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
-        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
+        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, hwaddr "
       "FROM lease6 "
       "WHERE lease_type = $1 "
         "AND duid = $2 AND iaid = $3 AND subnet_id = $4"},
@@ -183,14 +183,14 @@ TaggedStatement tagged_statements[] = {
       "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"},
 
     // INSERT_LEASE6
-    { 12, { OID_VARCHAR, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
+    { 13, { OID_VARCHAR, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
             OID_INT8, OID_INT2, OID_INT8, OID_INT2, OID_BOOL, OID_BOOL,
-            OID_VARCHAR },
+            OID_VARCHAR, OID_BYTEA },
       "insert_lease6",
       "INSERT INTO lease6(address, duid, valid_lifetime, "
         "expire, subnet_id, pref_lifetime, "
-        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname) "
-      "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"},
+        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, hwaddr) "
+      "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)"},
 
     // UPDATE_LEASE4
     { 10, { OID_INT8, OID_BYTEA, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
@@ -202,15 +202,16 @@ TaggedStatement tagged_statements[] = {
       "WHERE address = $10"},
 
     // UPDATE_LEASE6
-    { 13, { OID_VARCHAR, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8, OID_INT8,
+    { 14, { OID_VARCHAR, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8, OID_INT8,
             OID_INT2, OID_INT8, OID_INT2, OID_BOOL, OID_BOOL, OID_VARCHAR,
-            OID_VARCHAR },
+            OID_BYTEA, OID_VARCHAR },
       "update_lease6",
       "UPDATE lease6 SET address = $1, duid = $2, "
         "valid_lifetime = $3, expire = $4, subnet_id = $5, "
         "pref_lifetime = $6, lease_type = $7, iaid = $8, "
-        "prefix_len = $9, fqdn_fwd = $10, fqdn_rev = $11, hostname = $12 "
-      "WHERE address = $13"},
+        "prefix_len = $9, fqdn_fwd = $10, fqdn_rev = $11, hostname = $12, "
+        "hwaddr = $13"
+      "WHERE address = $14"},
 
     // End of list sentinel
     { 0,  { 0 }, NULL, NULL}
@@ -750,19 +751,23 @@ private:
     static const int FQDN_FWD_COL = 9;
     static const int FQDN_REV_COL = 10;
     static const int HOSTNAME_COL = 11;
+    static const int HWADDR_COL = 12;
+
     //@}
-    /// @brief Number of columns in the table holding DHCPv4 leases.
-    static const size_t LEASE_COLUMNS = 12;
+    /// @brief Number of columns in the table holding DHCPv6 leases.
+    static const size_t LEASE_COLUMNS = 13;
 
 public:
     PgSqlLease6Exchange()
         : lease_(), duid_length_(0), duid_(), iaid_(0), iaid_str_(""),
          lease_type_(Lease6::TYPE_NA), lease_type_str_(""), prefix_len_(0),
-         prefix_len_str_(""), pref_lifetime_(0), preferred_lft_str_("") {
+         prefix_len_str_(""), pref_lifetime_(0), preferred_lft_str_(""),
+         hwaddr_length_(0), hwaddr_(hwaddr_length_) {
 
-        BOOST_STATIC_ASSERT(11 < LEASE_COLUMNS);
+        BOOST_STATIC_ASSERT(12 < LEASE_COLUMNS);
 
         memset(duid_buffer_, 0, sizeof(duid_buffer_));
+        memset(hwaddr_buffer_, 0, sizeof(hwaddr_buffer_));
 
         // Set the column names (for error messages)
         column_labels_.push_back("address");
@@ -777,6 +782,7 @@ public:
         column_labels_.push_back("fqdn_fwd");
         column_labels_.push_back("fqdn_rev");
         column_labels_.push_back("hostname");
+        column_labels_.push_back("hwaddr");
     }
 
     /// @brief Creates the bind array for sending Lease6 data to the database.
@@ -838,6 +844,22 @@ public:
             bind_array.add(lease->fqdn_rev_);
 
             bind_array.add(lease->hostname_);
+
+            if (lease->hwaddr_ && !lease->hwaddr_->hwaddr_.empty()) {
+                // PostgreSql does not provide MAX on variable length types
+                // so we have to enforce it ourselves.
+                if (lease->hwaddr_->hwaddr_.size() > HWAddr::MAX_HWADDR_LEN) {
+                        isc_throw(DbOperationError, "Hardware address length : "
+                                  << lease_->hwaddr_->hwaddr_.size()
+                                  << " exceeds maximum allowed of: "
+                                  << HWAddr::MAX_HWADDR_LEN);
+                }
+                bind_array.add(lease->hwaddr_->hwaddr_);
+            } else {
+                bind_array.add("");
+            }
+
+
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
                       "Could not create bind array from Lease6: "
@@ -881,10 +903,13 @@ public:
             getColumnValue(r, row, FQDN_FWD_COL, fqdn_fwd_);
             getColumnValue(r, row, FQDN_REV_COL, fqdn_rev_);
 
+            convertFromBytea(r, row, HWADDR_COL, hwaddr_buffer_,
+                             sizeof(hwaddr_buffer_), hwaddr_length_);
+
             hostname_ = getRawColumnValue(r, row, HOSTNAME_COL);
 
-            /// @todo: implement this in #3557.
-            HWAddrPtr hwaddr;
+            HWAddrPtr hwaddr(new HWAddr(hwaddr_buffer_, hwaddr_length_,
+                                        HTYPE_ETHER));
 
             Lease6Ptr result(new Lease6(lease_type_, addr, duid_ptr, iaid_,
                                         pref_lifetime_, valid_lifetime_, 0, 0,
@@ -939,6 +964,9 @@ private:
     std::string prefix_len_str_;
     uint32_t        pref_lifetime_;
     std::string preferred_lft_str_;
+    size_t          hwaddr_length_;
+    std::vector<uint8_t> hwaddr_;
+    uint8_t         hwaddr_buffer_[HWAddr::MAX_HWADDR_LEN];
     //@}
 };
 
