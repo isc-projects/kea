@@ -41,7 +41,7 @@ public:
 /// implementations: boost::posix_time::{hours,minutes,seconds,millisec,nanosec}.
 /// For statistics purposes, the most appropriate choice seems to be milliseconds
 /// precision, so we'll stick with that.
-typedef boost::posix_time::millisec::time_duration StatsDuration;
+typedef boost::posix_time::microsec::time_duration StatsDuration;
 
 /// @defgroup stat_samples Specifies supported observation types.
 ///
@@ -99,23 +99,27 @@ class Observation {
 
     /// @brief Constructor for integer observations
     ///
+    /// @param name observation name
     /// @param value integer value observed.
-    Observation(uint64_t value);
+    Observation(const std::string& name, uint64_t value);
 
     /// @brief Constructor for floating point observations
     ///
+    /// @param name observation name
     /// @param value floating point value observed.
-    Observation(double value);
+    Observation(const std::string& name, double value);
 
     /// @brief Constructor for duration observations
     ///
+    /// @param name observation name
     /// @param value duration observed.
-    Observation(StatsDuration value);
+    Observation(const std::string& name, StatsDuration value);
 
     /// @brief Constructor for string observations
     ///
+    /// @param name observation name
     /// @param value string observed.
-    Observation(const std::string& value);
+    Observation(const std::string& name, const std::string& value);
 
     /// @brief Records absolute integer observation
     ///
@@ -178,65 +182,102 @@ class Observation {
 
     /// @brief Returns observed integer sample
     /// @return observed sample (value + timestamp)
+    /// @throw InvalidStatType if statistic is not integer
     IntegerSample getInteger();
 
     /// @brief Returns observed float sample
     /// @return observed sample (value + timestamp)
+    /// @throw InvalidStatType if statistic is not fp
     FloatSample getFloat();
 
     /// @brief Returns observed duration sample
     /// @return observed sample (value + timestamp)
+    /// @throw InvalidStatType if statistic is not time duration
     DurationSample getDuration();
 
     /// @brief Returns observed string sample
     /// @return observed sample (value + timestamp)
+    /// @throw InvalidStatType if statistic is not a string
     StringSample getString();
 
-    const std::list<IntegerSample>& getIntegerList() {
-        return (integer_samples_);
-    }
-
-    const std::list<FloatSample>& getFloatList() {
-        return (float_samples_);
-    }
-
-    const std::list<DurationSample>& getDurationList() {
-        return (duration_samples_);
-    }
-
-    const std::list<StringSample>& getStringList() {
-        return (string_samples_);
-    }
-
-    /// Returns as a JSON structure
+    /// @brief Returns as a JSON structure
+    /// @return JSON structures representing all observations
     isc::data::ConstElementPtr getJSON();
 
+    /// @brief Converts statistic type to string
+    /// @return textual name of statistic type
     static std::string typeToText(Type type);
 
+    /// @brief Converts ptime structure to text
+    /// @return a string representing time
     static std::string ptimeToText(boost::posix_time::ptime time);
 
+    /// @brief Converts StatsDuration to text
+    /// @return a string representing time
     static std::string durationToText(StatsDuration dur);
 
- protected:
-    template<typename SampleType, typename StorageType>
-        void setValueInternal(SampleType value, StorageType& storage,
-            Type exp_type);
+    /// @brief Returns observation name
+    std::string getName() {
+        return (name_);
+    }
 
+ protected:
+    /// @brief Records absolute sample (internal version)
+    ///
+    /// This method records an absolute value of an observation.
+    /// It is used by public methods to add sample to one of
+    /// available storages.
+    ///
+    /// @tparam SampleType type of sample (e.g. IntegerSample)
+    /// @tparam StorageType type of storage (e.g. list<IntegerSample>)
+    /// @param value observation to be recorded
+    /// @param storage observation will be stored here
+    /// @param exp_type expected observation type (used for sanity checking)
+    /// @throw InvalidStatType if observation type mismatches
+    template<typename SampleType, typename StorageType>
+    void setValueInternal(SampleType value, StorageType& storage,
+                          Type exp_type);
+
+    /// @brief Returns a sample
+    ///
+    /// @tparam SampleType type of sample (e.g. IntegerSample)
+    /// @tparam StorageType type of storage (e.g. list<IntegerSample>)
+    /// @param observation storage
+    /// @param exp_type expected observation type (used for sanity checking)
+    /// @throw InvalidStatType if observation type mismatches
+    /// @return Observed sample
     template<typename SampleType, typename Storage>
     SampleType getValueInternal(Storage& storage, Type exp_type);
 
+    /// @brief Observation (statistic) name
     std::string name_;
+
+    /// @brief Observation (statistic) type)
     Type type_;
 
-    size_t max_samples_;
+    /// @defgroup samples_storage Storage for supported observations
+    ///
+    /// @brief The following containers serve as a storage for all supported
+    /// observation types.
+    ///
+    /// @{
 
+    /// @brief Storage for integer samples
     std::list<IntegerSample> integer_samples_;
+
+    /// @brief Storage for floating point samples
     std::list<FloatSample> float_samples_;
+
+    /// @brief Storage for time duration samples
     std::list<DurationSample> duration_samples_;
+
+    /// @brief Storage for string samples
     std::list<StringSample> string_samples_;
+    /// @}
 };
 
- typedef boost::shared_ptr<Observation> ObservationPtr;
+/// @brief Observation pointer
+typedef boost::shared_ptr<Observation> ObservationPtr;
 
 };
 };

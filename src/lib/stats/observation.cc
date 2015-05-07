@@ -1,4 +1,3 @@
-
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <stats/observation.h>
 #include <cc/data.h>
@@ -11,23 +10,23 @@ using namespace boost::posix_time;
 namespace isc {
 namespace stats {
 
-Observation::Observation(uint64_t value)
-    :type_(STAT_INTEGER), max_samples_(1) {
+Observation::Observation(const std::string& name, uint64_t value)
+    :name_(name), type_(STAT_INTEGER) {
     setValue(value);
 }
 
-Observation::Observation(double value)
-    :type_(STAT_FLOAT), max_samples_(1) {
+Observation::Observation(const std::string& name, double value)
+    :name_(name), type_(STAT_FLOAT) {
     setValue(value);
 }
 
-Observation::Observation(StatsDuration value)
-    :type_(STAT_DURATION), max_samples_(1) {
+Observation::Observation(const std::string& name, StatsDuration value)
+    :name_(name), type_(STAT_DURATION) {
     setValue(value);
 }
 
-Observation::Observation(const std::string& value)
-    :type_(STAT_STRING), max_samples_(1) {
+Observation::Observation(const std::string& name, const std::string& value)
+    :name_(name), type_(STAT_STRING) {
     setValue(value);
 }
 
@@ -158,9 +157,12 @@ Observation::durationToText(StatsDuration dur) {
 isc::data::ConstElementPtr
 Observation::getJSON() {
 
-    ElementPtr list = isc::data::Element::createList();
+    ElementPtr entry = isc::data::Element::createList(); // a single observation
     ElementPtr value;
     ElementPtr timestamp;
+
+    /// @todo: Add support for retrieving more than one sample for a given
+    /// observation
 
     switch (type_) {
     case STAT_INTEGER: {
@@ -191,8 +193,11 @@ Observation::getJSON() {
         isc_throw(InvalidStatType, "Unknown stat type: " << typeToText(type_));
     };
 
-    list->add(value);
-    list->add(timestamp);
+    entry->add(value);
+    entry->add(timestamp);
+
+    ElementPtr list = isc::data::Element::createList(); // a single observation
+    list->add(entry);
 
     return (list);
 }
