@@ -35,10 +35,10 @@ namespace {
 class ObservationTest : public ::testing::Test {
 public:
     ObservationTest()
-        :a(static_cast<uint64_t>(1234)), // integer
-         b(12.34), // float
-         c(millisec::time_duration(1,2,3,4)), // duration
-         d("1234") { // string
+        :a("alpha", static_cast<uint64_t>(1234)), // integer
+         b("beta", 12.34), // float
+         c("gamma", millisec::time_duration(1,2,3,4)), // duration
+         d("delta", "1234") { // string
     }
 
     Observation a;
@@ -135,42 +135,6 @@ TEST_F(ObservationTest, addValue) {
     EXPECT_EQ("1234fiveSixSevenEight", d.getString().first);
 }
 
-// Observation will be extended to cover multiple samples of the same
-// property. That is not implemented for now, so regardless of the
-// number of recorded observation, always the last one is kept.
-TEST_F(ObservationTest, getLists) {
-
-    // Let's record some data!
-    for (int i = 0; i <= 42; ++i) {
-
-        a.setValue(static_cast<uint64_t>(i));
-        b.setValue(0.25*i);
-        c.setValue(millisec::time_duration(0,0,i,0));
-
-        std::stringstream tmp;
-        tmp << i;
-        d.setValue(tmp.str());
-    }
-
-    // Get the lists.
-    std::list<IntegerSample> int_list = a.getIntegerList();
-    std::list<FloatSample> float_list = b.getFloatList();
-    std::list<DurationSample> dur_list = c.getDurationList();
-    std::list<StringSample> str_list = d.getStringList();
-
-    // Check that they have only one observation.
-    ASSERT_EQ(1, int_list.size());
-    ASSERT_EQ(1, float_list.size());
-    ASSERT_EQ(1, dur_list.size());
-    ASSERT_EQ(1, str_list.size());
-
-    // Now check that that the recorded value is correct.
-    EXPECT_EQ(42, int_list.begin()->first);
-    EXPECT_EQ(10.5, float_list.begin()->first);
-    EXPECT_EQ(millisec::time_duration(0,0,42,0), dur_list.begin()->first);
-    EXPECT_EQ("42", str_list.begin()->first);
-}
-
 // Test checks whether timing is reported properly.
 TEST_F(ObservationTest, timers) {
     ptime min = microsec_clock::local_time();
@@ -197,8 +161,8 @@ TEST_F(ObservationTest, integerToJSON) {
 
     a.setValue(static_cast<uint64_t>(1234));
 
-    std::string exp = "[ 1234, \""
-        + Observation::ptimeToText(a.getInteger().second) + "\" ]";
+    std::string exp = "[ [ 1234, \""
+        + Observation::ptimeToText(a.getInteger().second) + "\" ] ]";
 
     std::cout << a.getJSON()->str() << std::endl;
     EXPECT_EQ(exp, a.getJSON()->str());
@@ -212,8 +176,8 @@ TEST_F(ObservationTest, floatToJSON) {
     // No need to deal with infinite fractions in binary systems.
     b.setValue(1234.5);
 
-    std::string exp = "[ 1234.5, \""
-        + Observation::ptimeToText(b.getFloat().second) + "\" ]";
+    std::string exp = "[ [ 1234.5, \""
+        + Observation::ptimeToText(b.getFloat().second) + "\" ] ]";
 
     std::cout << b.getJSON()->str() << std::endl;
     EXPECT_EQ(exp, b.getJSON()->str());
@@ -226,8 +190,8 @@ TEST_F(ObservationTest, durationToJSON) {
     // 1 hour 2 minutes 3 seconds and 4 milliseconds
     c.setValue(time_duration(1,2,3,4));
 
-    std::string exp = "[ \"01:02:03.000004\", \""
-        + Observation::ptimeToText(c.getDuration().second) + "\" ]";
+    std::string exp = "[ [ \"01:02:03.000004\", \""
+        + Observation::ptimeToText(c.getDuration().second) + "\" ] ]";
 
     std::cout << c.getJSON()->str() << std::endl;
     EXPECT_EQ(exp, c.getJSON()->str());
@@ -240,8 +204,8 @@ TEST_F(ObservationTest, stringToJSON) {
     //
     d.setValue("Lorem ipsum dolor sit amet");
 
-    std::string exp = "[ \"Lorem ipsum dolor sit amet\", \""
-        + Observation::ptimeToText(d.getString().second) + "\" ]";
+    std::string exp = "[ [ \"Lorem ipsum dolor sit amet\", \""
+        + Observation::ptimeToText(d.getString().second) + "\" ] ]";
 
     std::cout << d.getJSON()->str() << std::endl;
     EXPECT_EQ(exp, d.getJSON()->str());
@@ -258,6 +222,14 @@ TEST_F(ObservationTest, reset) {
     EXPECT_EQ(0.0, b.getFloat().first);
     EXPECT_EQ(time_duration(0,0,0,0), c.getDuration().first);
     EXPECT_EQ("", d.getString().first);
+}
+
+// Checks whether an observation can keep its name.
+TEST_F(ObservationTest, names) {
+    EXPECT_EQ("alpha", a.getName());
+    EXPECT_EQ("beta", b.getName());
+    EXPECT_EQ("gamma", c.getName());
+    EXPECT_EQ("delta", d.getName());
 }
 
 };
