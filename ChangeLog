@@ -1,3 +1,7 @@
+926.	[bug]		marcin
+	Fixed the crash during the logging deinitialization.
+	(Trac #3823, git 435b958860ec7b921645bd5923fff96ea4341f19)
+
 925.	[func]		marcin
 	libkea-hooks logs when the callouts execution begins or ends
 	for the particular hook. It also logs the execution time of
