@@ -1,4 +1,3 @@
-
 // Copyright (C) 2011,2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
