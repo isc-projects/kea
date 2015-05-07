@@ -291,7 +291,7 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query) const {
 
     if (subnet) {
         // Log at higher debug level that subnet has been found.
-        LOG_DEBUG(packet_logger, DBG_DHCP4_DETAIL, DHCP4_SUBNET_SELECTED)
+        LOG_DEBUG(packet_logger, DBG_DHCP4_BASIC_DATA, DHCP4_SUBNET_SELECTED)
             .arg(query->getLabel())
             .arg(subnet->getID());
         // Log detailed information about the selected subnet at the
@@ -347,7 +347,7 @@ Dhcpv4Srv::run() {
             // point are: the interface, source address and destination addresses
             // and ports.
             if (query) {
-                LOG_DEBUG(packet_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_RECEIVED)
+                LOG_DEBUG(packet_logger, DBG_DHCP4_BASIC, DHCP4_BUFFER_RECEIVED)
                     .arg(query->getRemoteAddr().toText())
                     .arg(query->getRemotePort())
                     .arg(query->getLocalAddr().toText())
@@ -481,7 +481,7 @@ Dhcpv4Srv::run() {
         // We have sanity checked (in accept() that the Message Type option
         // exists, so we can safely get it here.
         int type = query->getType();
-        LOG_DEBUG(packet_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_RECEIVED)
+        LOG_DEBUG(packet_logger, DBG_DHCP4_BASIC_DATA, DHCP4_PACKET_RECEIVED)
             .arg(query->getLabel())
             .arg(query->getName())
             .arg(type)
@@ -641,14 +641,7 @@ Dhcpv4Srv::run() {
                 callout_handle->getArgument("response4", rsp);
             }
 
-            LOG_DEBUG(options_logger, DBG_DHCP4_DETAIL_DATA,
-                      DHCP4_RESPONSE_DATA)
-                .arg(rsp->getLabel())
-                .arg(rsp->getName())
-                .arg(static_cast<int>(rsp->getType()))
-                .arg(rsp->toText());
-
-            LOG_DEBUG(packet_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_SEND)
+            LOG_DEBUG(packet_logger, DBG_DHCP4_BASIC, DHCP4_PACKET_SEND)
                 .arg(rsp->getLabel())
                 .arg(rsp->getName())
                 .arg(static_cast<int>(rsp->getType()))
@@ -657,7 +650,13 @@ Dhcpv4Srv::run() {
                 .arg(rsp->getRemoteAddr())
                 .arg(rsp->getRemotePort())
                 .arg(rsp->getIface());
-                
+
+            LOG_DEBUG(packet_logger, DBG_DHCP4_DETAIL_DATA,
+                      DHCP4_RESPONSE_DATA)
+                .arg(rsp->getLabel())
+                .arg(rsp->getName())
+                .arg(static_cast<int>(rsp->getType()))
+                .arg(rsp->toText());
             sendPacket(rsp);
         } catch (const std::exception& e) {
             LOG_ERROR(packet_logger, DHCP4_PACKET_SEND_FAIL)
@@ -890,7 +889,7 @@ Dhcpv4Srv::processClientName(Dhcpv4Exchange& ex) {
         Option4ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>
             (ex.getQuery()->getOption(DHO_FQDN));
         if (fqdn) {
-            LOG_DEBUG(hostname_logger, DBG_DHCP4_BASIC, DHCP4_CLIENT_FQDN_PROCESS)
+            LOG_DEBUG(hostname_logger, DBG_DHCP4_DETAIL, DHCP4_CLIENT_FQDN_PROCESS)
                 .arg(ex.getQuery()->getLabel());
             processClientFqdnOption(ex);
 
@@ -898,7 +897,7 @@ Dhcpv4Srv::processClientName(Dhcpv4Exchange& ex) {
             OptionStringPtr hostname = boost::dynamic_pointer_cast<OptionString>
                 (ex.getQuery()->getOption(DHO_HOST_NAME));
             if (hostname) {
-                LOG_DEBUG(hostname_logger, DBG_DHCP4_BASIC, DHCP4_CLIENT_HOSTNAME_PROCESS)
+                LOG_DEBUG(hostname_logger, DBG_DHCP4_DETAIL, DHCP4_CLIENT_HOSTNAME_PROCESS)
                     .arg(ex.getQuery()->getLabel());
                 processHostnameOption(ex);
             }
@@ -1285,7 +1284,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     if (lease) {
         // We have a lease! Let's set it in the packet and send it back to
         // the client.
-        LOG_DEBUG(lease_logger, DBG_DHCP4_DETAIL, fake_allocation?
+        LOG_DEBUG(lease_logger, DBG_DHCP4_BASIC_DATA, fake_allocation?
                   DHCP4_LEASE_ADVERT : DHCP4_LEASE_ALLOC)
             .arg(query->getLabel())
             .arg(lease->addr_.toText());
@@ -1652,7 +1651,7 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
     /// doing class specific processing.
     if (!classSpecificProcessing(ex)) {
         /// @todo add more verbosity here
-        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_REQUEST_CLASS_PROCESSING_FAILED)
+        LOG_DEBUG(options_logger, DBG_DHCP4_DETAIL, DHCP4_REQUEST_CLASS_PROCESSING_FAILED)
             .arg(ex.getQuery()->getLabel());
     }
 
