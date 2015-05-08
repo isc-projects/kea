@@ -1233,10 +1233,13 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
             // any potential exceptions (e.g. invalid lease database backend
             // implementation) and log an error.
             try {
-                // The lease update should be safe, because the lease should
-                // be already in the database. In most cases the exception
-                // would be thrown if the lease was missing.
-                LeaseMgrFactory::instance().updateLease4(lease);
+                if (!fake_allocation) {
+                    // The lease update should be safe, because the lease should
+                    // be already in the database. In most cases the exception
+                    // would be thrown if the lease was missing.
+                    LeaseMgrFactory::instance().updateLease4(lease);
+                }
+
                 // The name update in the option should be also safe,
                 // because the generated name is well formed.
                 if (fqdn) {
