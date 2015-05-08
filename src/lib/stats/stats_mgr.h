@@ -26,21 +26,78 @@
 namespace isc {
 namespace stats {
 
+/// @brief Statistics Manager class
+///
+/// StatsMgr is a singleton class that represents a subsystem that manages
+/// collection, storage and reporting of various types of statistics.
+/// It is also the intended API for both core code and hooks.
 class StatsMgr : public boost::noncopyable {
  public:
 
     /// @brief Statistics Manager accessor method.
     static StatsMgr& instance();
 
-    // methods used data producers
-    void addValue(const std::string& name, uint64_t value);
-    void addValue(const std::string& name, double value);
-    void addValue(const std::string& name, StatsDuration time);
-    void addValue(const std::string& name, const std::string& value);
+    /// @defgroup producer_methods Methods are used by data producers.
+    ///
+    /// @brief The following methods are used by data producers:
+    ///
+    /// @{
+
+    /// @brief Records absolute integer observation
+    ///
+    /// @param name name of the observation
+    /// @param value integer value observed
+    /// @throw InvalidStatType if statistic is not integer
     void setValue(const std::string& name, uint64_t value);
+
+    /// @brief Records absolute floating point observation
+    ///
+    /// @param name name of the observation
+    /// @param value floating point value observed
+    /// @throw InvalidStatType if statistic is not fp
     void setValue(const std::string& name, double value);
+
+    /// @brief Records absolute duration observation
+    ///
+    /// @param name name of the observation
+    /// @param value duration value observed
+    /// @throw InvalidStatType if statistic is not time duration
     void setValue(const std::string& name, StatsDuration value);
+
+    /// @brief Records absolute string observation
+    ///
+    /// @param name name of the observation
+    /// @param value string value observed
+    /// @throw InvalidStatType if statistic is not a string
     void setValue(const std::string& name, const std::string& value);
+
+    /// @brief Records incremental integer observation
+    ///
+    /// @param name name of the observation
+    /// @param value integer value observed
+    /// @throw InvalidStatType if statistic is not integer
+    void addValue(const std::string& name, uint64_t value);
+
+    /// @brief Records incremental floating point observation
+    ///
+    /// @param name name of the observation
+    /// @param value floating point value observed
+    /// @throw InvalidStatType if statistic is not fp
+    void addValue(const std::string& name, double value);
+
+    /// @brief Records incremental duration observation
+    ///
+    /// @param name name of the observation
+    /// @param value duration value observed
+    /// @throw InvalidStatType if statistic is not time duration
+    void addValue(const std::string& name, StatsDuration time);
+
+    /// @brief Records incremental string observation.
+    ///
+    /// @param name name of the observation
+    /// @param value string value observed
+    /// @throw InvalidStatType if statistic is not a string
+    void addValue(const std::string& name, const std::string& value);
 
     /// @brief determines whether a given statistic is kept as a single value
     ///        or as a number of values
@@ -73,6 +130,14 @@ class StatsMgr : public boost::noncopyable {
     /// setMaxSampleCount("incoming-packets", 100);
     void setMaxSampleCount(const std::string& name, uint32_t max_samples);
 
+    /// @}
+
+    /// @defgroup consumer_methods Methods are used by data consumers.
+    ///
+    /// @brief The following methods are used by data consumers:
+    ///
+    /// @{
+
     /// @brief Resets specified statistic.
     ///
     /// This is a convenience function and is equivalent to setValue(name,
@@ -104,6 +169,8 @@ class StatsMgr : public boost::noncopyable {
     /// @return JSON structures representing all statistics
     isc::data::ConstElementPtr getAll() const;
 
+    /// @}
+
     /// @brief Returns an observation
     ///
     /// Used in testing only. Production code should use @ref get() method.
@@ -113,6 +180,16 @@ class StatsMgr : public boost::noncopyable {
 
  private:
 
+    /// @brief Sets a given statistic to specified value (internal version)
+    ///
+    /// This template method sets statistic identified by name to a value
+    /// specified by value. This internal method is used by public @ref setValue
+    /// methods.
+    ///
+    /// @tparam DataType one of uint64_t, double DurationStat or string
+    /// @param name name of the statistic
+    /// @param value specified statistic will be set to this value
+    /// @throw InvalidStatType is statistic exists and has a different type.
     template<typename DataType>
     void setValueInternal(const std::string& name, DataType value) {
         ObservationPtr stat = getObservation(name);
@@ -124,6 +201,16 @@ class StatsMgr : public boost::noncopyable {
         }
     }
 
+    /// @brief Adds specified value to a given statistic (internal version)
+    ///
+    /// This template method adds specified value to a given statistic (identified
+    /// by name to a value). This internal method is used by public @ref setValue
+    /// methods.
+    ///
+    /// @tparam DataType one of uint64_t, double DurationStat or string
+    /// @param name name of the statistic
+    /// @param value specified statistic will be set to this value
+    /// @throw InvalidStatType is statistic exists and has a different type.
     template<typename DataType>
     void addValueInternal(const std::string& name, DataType value) {
         ObservationPtr existing = getObservation(name);

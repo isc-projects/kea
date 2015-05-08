@@ -182,6 +182,8 @@ TEST_F(StatsMgrTest, getGetAll) {
     ConstElementPtr rep_all = StatsMgr::instance().getAll();
     ASSERT_TRUE(rep_all);
 
+    std::cout << rep_all->str() << std::endl;
+
     // Verifying this is a bit more involved, as we don't know whether the
     // order would be preserved or not.
     EXPECT_EQ(4, rep_all->size());

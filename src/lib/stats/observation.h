@@ -38,9 +38,9 @@ public:
 /// @brief Defines duration resolution
 ///
 /// Boost offers a base boost::posix_time::time_duration class, that has specific
-/// implementations: boost::posix_time::{hours,minutes,seconds,millisec,nanosec}.
-/// For statistics purposes, the most appropriate choice seems to be milliseconds
-/// precision, so we'll stick with that.
+/// implementations: boost::posix_time::{hours,minutes,seconds,millisec,microsec,
+/// nanosec}. For statistics purposes, the most appropriate choice seems to be
+/// microseconds precision, so we'll stick with that.
 typedef boost::posix_time::microsec::time_duration StatsDuration;
 
 /// @defgroup stat_samples Specifies supported observation types.
@@ -82,7 +82,7 @@ typedef std::pair<std::string, boost::posix_time::ptime> StringSample;
 class Observation {
  public:
 
-    /// @brief type of available statistics
+    /// @brief Type of available statistics
     ///
     /// Note that those will later be exposed using control socket. Therefore
     /// an easy to understand names were chosen (integer instead of uint64).
@@ -151,7 +151,7 @@ class Observation {
     /// @throw InvalidStatType if statistic is not integer
     void addValue(uint64_t value = 1);
 
-    /// @brief Records inremental floating point observation
+    /// @brief Records incremental floating point observation
     ///
     /// @param value floating point value observed
     /// @throw InvalidStatType if statistic is not fp
