@@ -120,11 +120,6 @@ initializer_unittests_1_CXXFLAGS = $(AM_CXXFLAGS)
 initializer_unittests_1_LDADD    = $(AM_LDADD)
 initializer_unittests_1_LDFLAGS  = $(AM_LDFLAGS)
 
-initializer_unittests_2_CPPFLAGS = $(AM_CPPFLAGS)
-initializer_unittests_2_CXXFLAGS = $(AM_CXXFLAGS)
-initializer_unittests_2_LDADD    = $(AM_LDADD)
-initializer_unittests_2_LDFLAGS  = $(AM_LDFLAGS)
-
 noinst_PROGRAMS += $(TESTS)
 endif
 
