@@ -18,8 +18,8 @@
 namespace isc {
 namespace stats {
 
-ObservationPtr StatContext::get(const std::string& name) {
-    std::map<std::string, ObservationPtr>::iterator obs = stats_.find(name);
+ObservationPtr StatContext::get(const std::string& name) const {
+    std::map<std::string, ObservationPtr>::const_iterator obs = stats_.find(name);
     if (obs == stats_.end()) {
         return (ObservationPtr());
     } else {
@@ -28,8 +28,8 @@ ObservationPtr StatContext::get(const std::string& name) {
 }
 
 void StatContext::add(const ObservationPtr& obs) {
-    std::map<std::string, ObservationPtr>::iterator obs = stats_.find(name);
-    if (obs == stats_.end()) {
+    std::map<std::string, ObservationPtr>::iterator existing = stats_.find(obs->getName());
+    if (existing == stats_.end()) {
         stats_.insert(make_pair(obs->getName() ,obs));
     } else {
         isc_throw(InvalidStatType, "Statistic named " << obs->getName()
