@@ -1332,12 +1332,12 @@ TEST_F(NameDhcpv4SrvTest, hostnameReservation) {
 
 // Test verifies that the server properly generates a FQDN when the client
 // FQDN name is blank, whether or not DDNS updates are enabled.  It also
-// verifies that the lease is only in the database following a REQUEST and
+// verifies that the lease is only in the database following a DHCPREQUEST and
 // that the lesae contains the generated FQDN.
 TEST_F(NameDhcpv4SrvTest, emptyFqdn) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
-    isc::asiolink::IOAddress expectedAddress("10.0.0.10");
-    std::string expectedFqdn("myhost-10-0-0-10.fake-suffix.isc.org.");
+    isc::asiolink::IOAddress expected_address("10.0.0.10");
+    std::string expected_fqdn("myhost-10-0-0-10.fake-suffix.isc.org.");
 
     // Load a configuration with DDNS updates disabled
     configure(CONFIGS[2], *client.getServer());
@@ -1361,13 +1361,13 @@ TEST_F(NameDhcpv4SrvTest, emptyFqdn) {
     Option4ClientFqdnPtr fqdn;
     fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>(resp->getOption(DHO_FQDN));
     ASSERT_TRUE(fqdn);
-    EXPECT_EQ(expectedFqdn, fqdn->getDomainName());
+    EXPECT_EQ(expected_fqdn, fqdn->getDomainName());
     checkFqdnFlags(resp, (Option4ClientFqdn::FLAG_N |
                           Option4ClientFqdn::FLAG_E |
                           Option4ClientFqdn::FLAG_O));
 
     // Make sure the lease is NOT in the database.
-    Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(IOAddress(expectedAddress));
+    Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(IOAddress(expected_address));
     ASSERT_FALSE(lease);
 
     // Now test with updates enabled
@@ -1387,12 +1387,12 @@ TEST_F(NameDhcpv4SrvTest, emptyFqdn) {
     // correct for updates enabled.
     fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>(resp->getOption(DHO_FQDN));
     ASSERT_TRUE(fqdn);
-    EXPECT_EQ(expectedFqdn, fqdn->getDomainName());
+    EXPECT_EQ(expected_fqdn, fqdn->getDomainName());
     checkFqdnFlags(resp, (Option4ClientFqdn::FLAG_E |
                           Option4ClientFqdn::FLAG_S));
 
     // Make sure the lease is NOT in the database.
-    lease = LeaseMgrFactory::instance().getLease4(IOAddress(expectedAddress));
+    lease = LeaseMgrFactory::instance().getLease4(IOAddress(expected_address));
     ASSERT_FALSE(lease);
 
     // Do a DORA and verify that the lease exists and the name is correct.
@@ -1407,14 +1407,14 @@ TEST_F(NameDhcpv4SrvTest, emptyFqdn) {
     // correct for updates enabled.
     fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>(resp->getOption(DHO_FQDN));
     ASSERT_TRUE(fqdn);
-    EXPECT_EQ(expectedFqdn, fqdn->getDomainName());
+    EXPECT_EQ(expected_fqdn, fqdn->getDomainName());
     checkFqdnFlags(resp, (Option4ClientFqdn::FLAG_E |
                           Option4ClientFqdn::FLAG_S));
 
     // Make sure the lease is in the database and hostname is correct.
-    lease = LeaseMgrFactory::instance().getLease4(IOAddress(expectedAddress));
+    lease = LeaseMgrFactory::instance().getLease4(IOAddress(expected_address));
     ASSERT_TRUE(lease);
-    EXPECT_EQ(expectedFqdn, lease->hostname_);
+    EXPECT_EQ(expected_fqdn, lease->hostname_);
 
 }
 
