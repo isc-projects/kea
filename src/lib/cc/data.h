@@ -675,6 +675,14 @@ public:
     // a MapElement)
     bool find(const std::string& id, ConstElementPtr& t) const;
 
+    /// @brief Returns number of stored elements
+    ///
+    /// @note: this is costly operation for a map!
+    /// @return number of elements.
+    size_t size() const {
+        return (m.size());
+    }
+
     bool equals(const Element& other) const;
 };
 
