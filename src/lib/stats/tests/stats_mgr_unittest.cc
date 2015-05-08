@@ -286,4 +286,108 @@ TEST_F(StatsMgrTest, removeAll) {
     EXPECT_FALSE(StatsMgr::instance().getObservation("delta"));
 }
 
+// This is a performance benchmark that checks how long does it take
+// to increment a single statistic million times.
+//
+// Data points:
+// It took 00:00:00.363709 (363ms) on late 2013 Mac with Mac OS X 10.9.5.
+TEST_F(StatsMgrTest, DISABLED_performanceSingleAdd) {
+    StatsMgr::instance().removeAll();
+
+    uint32_t cycles = 1000000;
+
+    ptime before = microsec_clock::local_time();
+    for (uint32_t i = 0; i < cycles; ++i) {
+        StatsMgr::instance().addValue("metric1", 0.1*i);
+    }
+    ptime after = microsec_clock::local_time();
+
+    time_duration dur = after - before;
+
+    std::cout << "Incrementing a single statistic " << cycles << " times took: "
+              << Observation::durationToText(dur) << std::endl;
+}
+
+// This is a performance benchmark that checks how long does it take
+// to set absolute value of a single statistic million times.
+//
+// Data points:
+// It took 00:00:00.361003 (361ms) on late 2013 Mac with Mac OS X 10.9.5.
+TEST_F(StatsMgrTest, DISABLED_performanceSingleSet) {
+    StatsMgr::instance().removeAll();
+
+    uint32_t cycles = 1000000;
+
+    ptime before = microsec_clock::local_time();
+    for (uint32_t i = 0; i < cycles; ++i) {
+        StatsMgr::instance().setValue("metric1", 0.1*i);
+    }
+    ptime after = microsec_clock::local_time();
+
+    time_duration dur = after - before;
+
+    std::cout << "Setting a single statistic " << cycles << " times took: "
+              << Observation::durationToText(dur) << std::endl;
+}
+
+// This is a performance benchmark that checks how long does it take to
+// increment one statistic a million times, when there is 1000 other statistics
+// present.
+//
+// Data points:
+// 00:00:00.436943 (436ms) on late 2013 Mac with Mac OS X 10.9.5
+TEST_F(StatsMgrTest, DISABLED_performanceMultipleAdd) {
+    StatsMgr::instance().removeAll();
+
+    uint32_t cycles = 1000000;
+    uint32_t stats = 1000;
+
+    for (uint32_t i = 0; i < stats; ++i) {
+        std::stringstream tmp;
+        tmp << "statistic" << i;
+        StatsMgr::instance().setValue(tmp.str(), static_cast<uint64_t>(i));
+    }
+
+    ptime before = microsec_clock::local_time();
+    for (uint32_t i = 0; i < cycles; ++i) {
+        StatsMgr::instance().addValue("metric1", static_cast<uint64_t>(i));
+    }
+    ptime after = microsec_clock::local_time();
+
+    time_duration dur = after - before;
+
+    std::cout << "Incrementing one of " << stats << " statistics " << cycles
+              << " times took: " << Observation::durationToText(dur) << std::endl;
+}
+
+// This is a performance benchmark that checks how long does it take to
+// set one statistic to a given value a million times, when there is 1000 other
+// statistics present.
+//
+// Data points:
+// 00:00:00.424518 (424ms) on late 2013 Mac with Mac OS X 10.9.5
+TEST_F(StatsMgrTest, DISABLED_performanceMultipleSet) {
+    StatsMgr::instance().removeAll();
+
+    uint32_t cycles = 1000000;
+    uint32_t stats = 1000;
+
+    for (uint32_t i = 0; i < stats; ++i) {
+        std::stringstream tmp;
+        tmp << "statistic" << i;
+        StatsMgr::instance().setValue(tmp.str(), static_cast<uint64_t>(i));
+    }
+
+    ptime before = microsec_clock::local_time();
+    for (uint32_t i = 0; i < cycles; ++i) {
+        StatsMgr::instance().setValue("metric1", static_cast<uint64_t>(i));
+    }
+    ptime after = microsec_clock::local_time();
+
+    time_duration dur = after - before;
+
+    std::cout << "Setting one of " << stats << " statistics " << cycles
+              << " times took: " << Observation::durationToText(dur) << std::endl;
+}
+
 };
