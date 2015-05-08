@@ -84,24 +84,24 @@ void Observation::setValueInternal(SampleType value, StorageType& storage,
     }
 }
 
-IntegerSample Observation::getInteger() {
+IntegerSample Observation::getInteger() const {
     return (getValueInternal<IntegerSample>(integer_samples_, STAT_INTEGER));
 }
 
-FloatSample Observation::getFloat() {
+FloatSample Observation::getFloat() const {
     return (getValueInternal<FloatSample>(float_samples_, STAT_FLOAT));
 }
 
-DurationSample Observation::getDuration() {
+DurationSample Observation::getDuration() const {
     return (getValueInternal<DurationSample>(duration_samples_, STAT_DURATION));
 }
 
-StringSample Observation::getString() {
+StringSample Observation::getString() const {
     return (getValueInternal<StringSample>(string_samples_, STAT_STRING));
 }
 
 template<typename SampleType, typename Storage>
-SampleType Observation::getValueInternal(Storage& storage, Type exp_type) {
+SampleType Observation::getValueInternal(Storage& storage, Type exp_type) const {
     if (type_ != exp_type) {
         isc_throw(InvalidStatType, "Invalid statistic type requested: "
                   << typeToText(exp_type) << ", but the actual type is "
@@ -155,7 +155,7 @@ Observation::durationToText(StatsDuration dur) {
 }
 
 isc::data::ConstElementPtr
-Observation::getJSON() {
+Observation::getJSON() const {
 
     ElementPtr entry = isc::data::Element::createList(); // a single observation
     ElementPtr value;

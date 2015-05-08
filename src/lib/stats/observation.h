@@ -183,26 +183,26 @@ class Observation {
     /// @brief Returns observed integer sample
     /// @return observed sample (value + timestamp)
     /// @throw InvalidStatType if statistic is not integer
-    IntegerSample getInteger();
+    IntegerSample getInteger() const;
 
     /// @brief Returns observed float sample
     /// @return observed sample (value + timestamp)
     /// @throw InvalidStatType if statistic is not fp
-    FloatSample getFloat();
+    FloatSample getFloat() const;
 
     /// @brief Returns observed duration sample
     /// @return observed sample (value + timestamp)
     /// @throw InvalidStatType if statistic is not time duration
-    DurationSample getDuration();
+    DurationSample getDuration() const;
 
     /// @brief Returns observed string sample
     /// @return observed sample (value + timestamp)
     /// @throw InvalidStatType if statistic is not a string
-    StringSample getString();
+    StringSample getString() const;
 
     /// @brief Returns as a JSON structure
     /// @return JSON structures representing all observations
-    isc::data::ConstElementPtr getJSON();
+    isc::data::ConstElementPtr getJSON() const;
 
     /// @brief Converts statistic type to string
     /// @return textual name of statistic type
@@ -217,7 +217,7 @@ class Observation {
     static std::string durationToText(StatsDuration dur);
 
     /// @brief Returns observation name
-    std::string getName() {
+    std::string getName() const {
         return (name_);
     }
 
@@ -247,7 +247,7 @@ class Observation {
     /// @throw InvalidStatType if observation type mismatches
     /// @return Observed sample
     template<typename SampleType, typename Storage>
-    SampleType getValueInternal(Storage& storage, Type exp_type);
+    SampleType getValueInternal(Storage& storage, Type exp_type) const;
 
     /// @brief Observation (statistic) name
     std::string name_;
