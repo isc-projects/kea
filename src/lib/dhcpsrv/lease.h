@@ -217,6 +217,32 @@ struct Lease4 : public Lease {
         }
     }
 
+    /// @brief Constructor.
+    ///
+    /// @param address IPv4 address.
+    /// @param hw_address Pointer to client's HW addresss.
+    /// @param client_id  pointer to the client id structure.
+    /// @param valid_lifetime Valid lifetime value.
+    /// @param t1 Renew timer.
+    /// @param t2 Rebind timer.
+    /// @param cltt Timestamp when the lease is acquired, renewed.
+    /// @param subnet_id Subnet identifier.
+    /// @param fqdn_fwd Forward DNS update performed.
+    /// @param fqdn_rev Reverse DNS update performed.
+    /// @param hostname Client's name for the DNS update..
+    Lease4(const isc::asiolink::IOAddress& address,
+           const HWAddrPtr& hw_address,
+           const ClientIdPtr& client_id,
+           const uint32_t valid_lifetime,
+           const uint32_t t1,
+           const uint32_t t2,
+           const time_t cltt,
+           const SubnetID subnet_id,
+           const bool fqdn_fwd = false,
+           const bool fqdn_rev = false,
+           const std::string& hostname = "");
+
+
     /// @brief Default constructor
     ///
     /// Initialize fields that don't have a default constructor.
@@ -252,6 +278,68 @@ struct Lease4 : public Lease {
     ///
     /// @return true if the selected parameters of the two leases match.
     bool matches(const Lease4& other) const;
+
+    /// @brief Check if the lease belongs to the client with the given
+    /// identifiers.
+    ///
+    /// This method checks if the lease belongs to the client using the
+    /// specified HW address and/or client identifier. Note that any of the
+    /// pointers passed to this method may be set to null, in which case
+    /// they are treated as unspecified and are not used for matching the
+    /// client with the lease.
+    ///
+    /// According to the DHCPv4 specifications, the client identifier takes
+    /// precedence over the HW address when identifying the lease for the
+    /// client on the server side. In particular, the RFC4361 introduces the
+    /// use of DUID for DHCPv4 which should be a stable identifier for the
+    /// client. The use of stable identifier allows for the correlation of the
+    /// DHCPv4 and DHCPv6 clients in the dual stack networks. It also allows
+    /// for allocating the same lease to the client which hardware (and thus
+    /// MAC address) has changed.
+    ///
+    /// By default, Kea respects the precedence of the client identifier over
+    /// MAC address and when this method finds the match of the client
+    /// identifier with the client identifier stored in the lease, it will
+    /// treat the lease as the lease of this client, even when the HW
+    /// address doesn't match.
+    ///
+    /// The HW address is used for matching the client with the lease only
+    /// when the lease is not associated with any client identifier (client
+    /// identifier for the lease is null) or when the client identifier
+    /// parameter passed to this method is null. This facilitates the following
+    /// cases:
+    /// - client didn't generate client identifier and is only using the chaddr
+    ///   field to identify itself.
+    /// - server's administrator configured the server to ignore client identifier,
+    ///   the client obtained the new lease, and the administrator reconfigured
+    ///   the server to NOT ignore the client identifier. The client is trying
+    ///   to renew its lease and both the client identifier and HW address is
+    ///   used for matching the lease which doesn't have the record of the
+    ///   client identifier.
+    /// - client obtained the lease using the HW address and client identifier,
+    ///   the server's administrator configured the server to ignore the client
+    ///   identifier, and the client returns to renew the lease. This time, the
+    ///   lease has a record of both client identifier and the HW address but
+    ///   only the HW address is used for matching the client to the lease.
+    ///
+    /// Note that the typical case when the server's administrator may want to
+    /// force ignoring client identifier passed in the client's message is when
+    /// the client is performing multi-stage boot. In such case, the client
+    /// identifiers may change on various stages of the boot, but the HW address
+    /// will remain stable. The server's administrator prefers to use the
+    /// HW address for client identification in this case.
+    ///
+    /// It may also be useful to ignore client identifiers to mitigate the
+    /// problem of broken client implementations which generate new client
+    /// identifiers every time they connect to the network.
+    ///
+    /// @param hw_address Pointer to the HW address of the client.
+    /// @param client_id Pointer to the client identifier structure.
+    ///
+    /// @return true if the lease belongs to the client using the specified
+    /// hardware address and/or client identifier.
+    bool belongsToClient(const HWAddrPtr& hw_address,
+                         const ClientIdPtr& client_id) const;
 
     /// @brief Assignment operator.
     ///
