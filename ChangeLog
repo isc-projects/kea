@@ -1,3 +1,8 @@
+927.	[bug]		tmark
+	DHCPv4 no longer attempts to update the lease database with the 
+	generated FQDN when processing DHCPDISCOVERs.
+	(Trac #3779, git 0b413ee8aba1afa1643b216a1e8c35103c6c975b)
+
 926.	[bug]		marcin
 	Fixed the crash during the logging deinitialization.
 	(Trac #3823, git 435b958860ec7b921645bd5923fff96ea4341f19)
