@@ -32,7 +32,7 @@ void StatContext::add(const ObservationPtr& obs) {
     if (existing == stats_.end()) {
         stats_.insert(make_pair(obs->getName() ,obs));
     } else {
-        isc_throw(InvalidStatType, "Statistic named " << obs->getName()
+        isc_throw(DuplicateStat, "Statistic named " << obs->getName()
                   << " already exists.");
     }
 
