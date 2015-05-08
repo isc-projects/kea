@@ -35,7 +35,7 @@ public:
 /// related to a given context together. Two examples of such contexts are
 /// all statistics related to a given subnet or all statistics related to a
 /// given network interface.
-class StatContext {
+struct StatContext {
  public:
 
     /// @brief attempts to get an observation
@@ -63,6 +63,7 @@ class StatContext {
     std::map<std::string, ObservationPtr> stats_;
 };
 
+/// @brief Pointer to the statistics context
 typedef boost::shared_ptr<StatContext> StatContextPtr;
 
 };
