@@ -41,7 +41,7 @@ class StatContext {
     /// @brief attempts to get an observation
     /// @param name name of the statistic
     /// @return appropriate Observation object (or NULL)
-    ObservationPtr get(const std::string& name);
+    ObservationPtr get(const std::string& name) const;
 
     /// @brief Adds a new observation
     /// @param obs observation to be added
