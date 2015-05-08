@@ -29,6 +29,7 @@ namespace stats {
 class StatsMgr : public boost::noncopyable {
  public:
 
+    /// @brief Statistics Manager accessor method.
     static StatsMgr& instance();
 
     // methods used data producers
@@ -36,9 +37,9 @@ class StatsMgr : public boost::noncopyable {
     void addValue(const std::string& name, double value);
     void addValue(const std::string& name, StatsDuration time);
     void addValue(const std::string& name, const std::string& value);
-    void setValue(const std::string& name, uint64_t value = 1);
-    void setValue(const std::string& name, double value = 1.0f);
-    void setValue(const std::string& name, StatsDuration time);
+    void setValue(const std::string& name, uint64_t value);
+    void setValue(const std::string& name, double value);
+    void setValue(const std::string& name, StatsDuration value);
     void setValue(const std::string& name, const std::string& value);
 
     /// @brief determines whether a given statistic is kept as a single value
@@ -83,7 +84,7 @@ class StatsMgr : public boost::noncopyable {
     /// @brief Removes specified statistic.
     /// @param name name of the statistic to be removed.
     /// @return true if successful, false if there's no such statistic
-    bool remove(const std::string& name);
+    bool del(const std::string& name);
 
     /// @brief Resets all collected statistics back to zero.
     void resetAll();
@@ -93,26 +94,69 @@ class StatsMgr : public boost::noncopyable {
 
     /// @brief Returns number of available statistics.
     /// @return number of recorded statistics.
-    size_t count();
+    size_t count() const;
 
     /// @brief Returns a single statistic as a JSON structure
     /// @return JSON structures representing a single statistic
-    isc::data::ConstElementPtr get(const std::string& name);
+    isc::data::ConstElementPtr get(const std::string& name) const;
 
     /// @brief Returns all statistics as a JSON structure
     /// @return JSON structures representing all statistics
-    isc::data::ConstElementPtr getAll();
+    isc::data::ConstElementPtr getAll() const;
 
     /// @brief Returns an observation
     ///
     /// Used in testing only. Production code should use @ref get() method.
     /// @param name name of the statistic
     /// @return Pointer to the Observation object
-    ObservationPtr getObservation(const std::string& name);
+    ObservationPtr getObservation(const std::string& name) const;
 
  private:
-    /// @brief returns a context for specified name
-    StatContextPtr getContext(const std::string& name);
+
+    template<typename DataType>
+    void setValueInternal(const std::string& name, DataType value) {
+        ObservationPtr stat = getObservation(name);
+        if (stat) {
+            stat->setValue(value);
+        } else {
+            stat.reset(new Observation(name, value));
+            addObservation(stat);
+        }
+    }
+
+    template<typename DataType>
+    void addValueInternal(const std::string& name, DataType value) {
+        ObservationPtr existing = getObservation(name);
+        if (!existing) {
+            // We tried to add to a non-existing statistic. We can recover from
+            // that. Simply add the new incremental value as a new statistic and
+            // we're done.
+            setValue(name, value);
+            return;
+        } else {
+            // Let's hope it is of correct type. If not, the underlying
+            // addValue() method will throw.
+            existing->addValue(value);
+        }
+    }
+
+    /// @brief Private constructor
+    /// StatsMgr is a singleton. It should be accessed using @ref instance
+    /// method.
+    StatsMgr();
+
+    /// @brief Adds a new observation
+    ///
+    /// That's an utility method used by public @ref setValue() and
+    /// @ref addValue() methods.
+    /// @param obs observation
+    void addObservation(const ObservationPtr& o);
+
+    /// @brief Tries to delete an observation
+    ///
+    /// @param name of the statistic to be deleted
+    /// @return true if deleted, false if not found
+    bool deleteObservation(const std::string& name);
 
     // This is a global context. All stats will initially be stored here.
     StatContextPtr global_;
