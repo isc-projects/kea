@@ -62,8 +62,8 @@ TEST_F(StatsMgrTest, integerStat) {
     EXPECT_NO_THROW(alpha = StatsMgr::instance().getObservation("alpha"));
     EXPECT_TRUE(alpha);
 
-    std::string exp = "\"alpha\": [ [ 1234, \""
-        + Observation::ptimeToText(alpha->getInteger().second) + "\" ] ]";
+    std::string exp = "{ \"alpha\": [ [ 1234, \""
+        + Observation::ptimeToText(alpha->getInteger().second) + "\" ] ] }";
 
     EXPECT_EQ(exp, StatsMgr::instance().get("alpha")->str());
 }
@@ -77,8 +77,8 @@ TEST_F(StatsMgrTest, floatStat) {
     EXPECT_NO_THROW(beta = StatsMgr::instance().getObservation("beta"));
     EXPECT_TRUE(beta);
 
-    std::string exp = "\"beta\": [ [ 12.34, \""
-        + Observation::ptimeToText(beta->getFloat().second) + "\" ] ]";
+    std::string exp = "{ \"beta\": [ [ 12.34, \""
+        + Observation::ptimeToText(beta->getFloat().second) + "\" ] ] }";
 
     EXPECT_EQ(exp, StatsMgr::instance().get("beta")->str());
 }
@@ -90,11 +90,11 @@ TEST_F(StatsMgrTest, durationStat) {
                                                   microsec::time_duration(1,2,3,4)));
 
     ObservationPtr gamma;
-    EXPECT_NO_THROW(gamma = StatsMgr::instance().getObservation("beta"));
+    EXPECT_NO_THROW(gamma = StatsMgr::instance().getObservation("gamma"));
     EXPECT_TRUE(gamma);
 
-    std::string exp = "\"gamma\": [ [ \"01:02:03.000004\", \""
-        + Observation::ptimeToText(gamma->getDuration().second) + "\" ] ]";
+    std::string exp = "{ \"gamma\": [ [ \"01:02:03.000004\", \""
+        + Observation::ptimeToText(gamma->getDuration().second) + "\" ] ] }";
 
     EXPECT_EQ(exp, StatsMgr::instance().get("gamma")->str());
 }
@@ -109,8 +109,8 @@ TEST_F(StatsMgrTest, stringStat) {
     EXPECT_NO_THROW(delta = StatsMgr::instance().getObservation("delta"));
     EXPECT_TRUE(delta);
 
-    std::string exp = "\"delta\": [ [ \"Lorem impsum\", \""
-        + Observation::ptimeToText(delta->getString().second) + "\" ] ]";
+    std::string exp = "{ \"delta\": [ [ \"Lorem ipsum\", \""
+        + Observation::ptimeToText(delta->getString().second) + "\" ] ] }";
 
     EXPECT_EQ(exp, StatsMgr::instance().get("delta")->str());
 }
@@ -156,37 +156,45 @@ TEST_F(StatsMgrTest, getGetAll) {
     ASSERT_TRUE(rep_gamma);
     ASSERT_TRUE(rep_delta);
 
-    std::string exp_str_alpha = "\"alpha\": [ [ 1234, \""
+    std::string exp_str_alpha = "[ [ 6912, \""
         + Observation::ptimeToText(StatsMgr::instance().getObservation("alpha")
                                    ->getInteger().second) + "\" ] ]";
-    std::string exp_str_beta = "\"beta\": [ [ 12.34, \""
+    std::string exp_str_beta = "[ [ 69.12, \""
         + Observation::ptimeToText(StatsMgr::instance().getObservation("beta")
                                    ->getFloat().second) + "\" ] ]";
-    std::string exp_str_gamma = "\"gamma\": [ [ \"01:02:03.000004\", \""
+    std::string exp_str_gamma = "[ [ \"06:08:10.000012\", \""
         + Observation::ptimeToText(StatsMgr::instance().getObservation("gamma")
                                    ->getDuration().second) + "\" ] ]";
-    std::string exp_str_delta = "\"delta\": [ [ \"Lorem impsum\", \""
+    std::string exp_str_delta = "[ [ \"Lorem ipsum\", \""
         + Observation::ptimeToText(StatsMgr::instance().getObservation("delta")
                                    ->getString().second) + "\" ] ]";
 
     // Check that individual stats are reported properly
-    EXPECT_EQ(exp_str_alpha, rep_alpha->str());
-    EXPECT_EQ(exp_str_beta, rep_beta->str());
-    EXPECT_EQ(exp_str_gamma, rep_gamma->str());
-    EXPECT_EQ(exp_str_delta, rep_delta->str());
+    EXPECT_EQ("{ \"alpha\": " + exp_str_alpha + " }", rep_alpha->str());
+    EXPECT_EQ("{ \"beta\": " + exp_str_beta + " }", rep_beta->str());
+    EXPECT_EQ("{ \"gamma\": " + exp_str_gamma + " }", rep_gamma->str());
+    EXPECT_EQ("{ \"delta\": " + exp_str_delta + " }", rep_delta->str());
 
     // Check that non-existent metric is not reported.
-    EXPECT_FALSE(StatsMgr::instance().get("epsilon"));
+    EXPECT_EQ("{  }", StatsMgr::instance().get("epsilon")->str());
 
     // Check that all of them can be reported at once
     ConstElementPtr rep_all = StatsMgr::instance().getAll();
     ASSERT_TRUE(rep_all);
 
-    // This may not be the best verification. There's no guarantee that the
-    // statistics will be reported in this specific order.
-    std::string exp_all = exp_str_alpha + ", " + exp_str_beta + ", "
-        + exp_str_gamma + ", " + exp_str_delta;
-    EXPECT_EQ(exp_all, rep_all->str());
+    // Verifying this is a bit more involved, as we don't know whether the
+    // order would be preserved or not.
+    EXPECT_EQ(4, rep_all->size());
+    ASSERT_TRUE(rep_all->get("alpha"));
+    ASSERT_TRUE(rep_all->get("beta"));
+    ASSERT_TRUE(rep_all->get("delta"));
+    ASSERT_TRUE(rep_all->get("gamma"));
+    EXPECT_FALSE(rep_all->get("epsilon"));
+
+    EXPECT_EQ(exp_str_alpha, rep_all->get("alpha")->str());
+    EXPECT_EQ(exp_str_beta, rep_all->get("beta")->str());
+    EXPECT_EQ(exp_str_gamma, rep_all->get("gamma")->str());
+    EXPECT_EQ(exp_str_delta, rep_all->get("delta")->str());
 }
 
 // This test checks whether existing statistics can be reset.
@@ -264,10 +272,10 @@ TEST_F(StatsMgrTest, removeAll) {
     EXPECT_EQ(0, StatsMgr::instance().count());
 
     // There should be no such statistics anymore
-    EXPECT_FALSE(StatsMgr::instance().get("alpha"));
-    EXPECT_FALSE(StatsMgr::instance().get("beta"));
-    EXPECT_FALSE(StatsMgr::instance().get("gamma"));
-    EXPECT_FALSE(StatsMgr::instance().get("delta"));
+    EXPECT_EQ("{  }", StatsMgr::instance().get("alpha")->str());
+    EXPECT_EQ("{  }", StatsMgr::instance().get("beta")->str());
+    EXPECT_EQ("{  }", StatsMgr::instance().get("gamma")->str());
+    EXPECT_EQ("{  }", StatsMgr::instance().get("delta")->str());
 
     // There should be no such statistics anymore
     EXPECT_FALSE(StatsMgr::instance().getObservation("alpha"));
