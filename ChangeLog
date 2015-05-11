@@ -2,7 +2,7 @@
 	Corrected problem in build system whereby specifying an
 	installation directory on the "configure" command line that
 	included a "+" in the name caused the build to fail.
-	(Trac #3713, git xxx)
+	(Trac #3713, git 741ff09b743307bad28ae13db440e5e0f402d319)
 
 928.	[build]		fdupont
 	A CONFIG_H_WAS_INCLUDED define has been added to provide
