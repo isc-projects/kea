@@ -10,6 +10,10 @@ libkea_stats_la_SOURCES += stats_mgr.h stats_mgr.cc
 
 libkea_stats_la_LIBADD  = $(top_builddir)/src/lib/cc/libkea-cc.la
 
+# This library seem to be required when certain methods are called from
+# boost::posix_time. In particular, to_simple_string(ptime) and
+# to_simple_string(time_duration) require it on Ubuntu. It doesn't seem
+# to be required on Mac OS, though.
 libkea_stats_la_LIBADD += -lboost_date_time
 
 libkea_stats_includedir = $(includedir)/$(PACKAGE_NAME)/stats
