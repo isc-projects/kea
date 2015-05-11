@@ -79,7 +79,7 @@ MessageInitializer::~MessageInitializer() {
         while (values_[i]) {
             // Check if the unloaded message is registered as duplicate. If it is,
             // remove it from the duplicates list.
-            LoggerDuplicatesList::const_iterator dup =
+            LoggerDuplicatesList::iterator dup =
                 std::find(global_logger_duplicates_->begin(),
                           global_logger_duplicates_->end(),
                           values_[i]);
