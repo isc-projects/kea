@@ -969,29 +969,21 @@ Dhcpv4Srv::createNameChangeRequests(const Lease4Ptr& lease,
     // We may also decide not to generate any requests at all. This is when
     // we discover that nothing has changed in the client's FQDN data.
     if (old_lease) {
-        if (!lease->matches(*old_lease)) {
-            isc_throw(isc::Unexpected,
-                      "there is no match between the current instance of the"
-                      " lease: " << lease->toText() << ", and the previous"
-                      " instance: " << lease->toText());
-        } else {
-            // There will be a NameChangeRequest generated to remove existing
-            // DNS entries if the following conditions are met:
-            // - The hostname is set for the existing lease, we can't generate
-            //   removal request for non-existent hostname.
-            // - A server has performed reverse, forward or both updates.
-            // - FQDN data between the new and old lease do not match.
-            if (!lease->hasIdenticalFqdn(*old_lease)) {
-                queueNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE,
-                                       old_lease);
+        // There will be a NameChangeRequest generated to remove existing
+        // DNS entries if the following conditions are met:
+        // - The hostname is set for the existing lease, we can't generate
+        //   removal request for non-existent hostname.
+        // - A server has performed reverse, forward or both updates.
+        // - FQDN data between the new and old lease do not match.
+        if (!lease->hasIdenticalFqdn(*old_lease)) {
+            queueNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, old_lease);
 
             // If FQDN data from both leases match, there is no need to update.
-            } else if (lease->hasIdenticalFqdn(*old_lease)) {
-                return;
-
-            }
+        } else if (lease->hasIdenticalFqdn(*old_lease)) {
+            return;
 
         }
+
     }
 
     // We may need to generate the NameChangeRequest for the new lease. It
