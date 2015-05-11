@@ -1,3 +1,9 @@
+929	[build]		fdupont
+	Corrected problem in build system whereby specifying an
+	installation directory on the "configure" command line that
+	included a "+" in the name caused the build to fail.
+	(Trac #3713, git xxx)
+
 928.	[build]		fdupont
 	A CONFIG_H_WAS_INCLUDED define has been added to provide
 	a way in source files to check whether config.h has been included.
