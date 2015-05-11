@@ -44,6 +44,20 @@ fi
 # This will be either "tarball" or "git abcd".
 AC_DEFINE_UNQUOTED([EXTENDED_VERSION], ["${KEA_SRCID}"], [Extended Kea version])
 
+# Find a separator for path_replacer
+for sep in "+" "," ";" "&" "__NONE__"; do
+	if `pwd | grep -q $sep`; then continue; fi
+	if `echo ${prefix} | grep -q $sep`; then continue; fi
+	if `echo ${sysconfdir} | grep -q $sep`; then continue; fi
+	if `echo ${localstatedir} | grep -q $sep`; then continue; fi
+	SEP=$sep
+	break
+done
+if test "$sep" = "__NONE__"; then
+	AC_MSG_ERROR([can't find a separator character in '+,;&' for the path_replacer shell script])
+fi
+AC_SUBST(SEP)
+
 # Enable low-performing debugging facilities? This option optionally
 # enables some debugging aids that perform slowly and hence aren't built
 # by default.
