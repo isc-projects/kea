@@ -31,6 +31,23 @@ namespace stats {
 /// StatsMgr is a singleton class that represents a subsystem that manages
 /// collection, storage and reporting of various types of statistics.
 /// It is also the intended API for both core code and hooks.
+///
+/// As of May 2015, Tomek ran performance benchmarks (see unit-tests in
+/// stats_mgr_unittest.cc with performance in their names) and it seems
+/// the code is able to register ~2.5-3 million observations per second, even
+/// with 1000 different statistics recored. That seems sufficient for now,
+/// so there is no immediate need to develop any multi-threading solutions
+/// for now. However, should this decision be revised in the future, the
+/// best place for it would to be modify @ref addObservation method here.
+/// It's the common code point that all new observations must pass through.
+/// One possible way to enable multi-threading would be to run a separate
+/// thread handling collection. The main thread would call @ref addValue and
+/// @ref setValue methods that would end up calling @ref addObservation.
+/// That method would pass the data to separate thread to be collected and
+/// would immediately return. Further processing would be mostly as it
+/// is today, except happening in a separate thread. One unsolved issue in
+/// this approach is how to extract data, but that will remain unsolvable
+/// until we get the control socket implementation.
 class StatsMgr : public boost::noncopyable {
  public:
 
@@ -101,7 +118,7 @@ class StatsMgr : public boost::noncopyable {
 
     /// @brief determines whether a given statistic is kept as a single value
     ///        or as a number of values
-    /// 
+    ///
     /// Specifies that statistic name should be stored not as a single value,
     /// but rather as a set of values. duration determines the timespan.
     /// Samples older than duration will be discarded. This is time-constrained
