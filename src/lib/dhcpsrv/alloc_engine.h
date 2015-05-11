@@ -760,45 +760,6 @@ public:
                        const bool fwd_dns_update, const bool rev_dns_update,
                        const std::string& hostname, const bool fake_allocation);
 
-        /// @brief Check if the specified lease belongs to the client.
-        ///
-        /// This method compares the hardware address and the client id
-        /// in the lease with the relevant values in the context. That
-        /// way the method determines whether the lease belongs to the
-        /// client which message the server is processing.
-        ///
-        /// @return true if the lease belongs to the client for which
-        /// the context has been created, false otherwise.
-        bool myLease(const Lease4& lease) const;
-
-        /// @brief Check if the lease conflicts with the context.
-        ///
-        /// This method is used in cases when there is a lease in the lease database
-        /// for the client and the server receives the message from another client
-        /// which may be potentially using the same client identifier or HW address.
-        ///
-        /// Currently the allocation engine allows for allocating a lease for the
-        /// client which is using the same HW address or client identifier as the
-        /// client which already has a lease in the database. However, the value of
-        /// one of the identifiers must be unique. In other words, two clients may
-        /// have the same client identifier but different HW addresses and the
-        /// leases can be allocated for both (there is no conflict).
-        ///
-        /// The other possible case is that one of the clients uses both HW address
-        /// and client identifier, and another client is using only one of those
-        /// and its value is the same as for the former client. The allocation
-        /// engine treats it as a conflict because there is no unique value in the
-        /// lease database by which the server could distinguish the clients.
-        /// Hence, it doesn't allocate the lease from the context in conflict.
-        ///
-        /// This method detects the conflict described above.
-        ///
-        /// @param lease Existing lease to be checked.
-        ///
-        /// @return true if the lease is in conflict with the context, false
-        /// otherwise.
-        bool isInConflict(const Lease4& lease) const;
-
     };
 
     /// @brief Pointer to the @c ClientContext4.
