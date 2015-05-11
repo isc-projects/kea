@@ -386,7 +386,7 @@ public:
     }
 
     // Checks if the lease sent to client is present in the database
-    // and is valid when checked agasint the configured subnet
+    // and is valid when checked against the configured subnet
     isc::dhcp::Lease6Ptr checkLease
         (const isc::dhcp::DuidPtr& duid, const isc::dhcp::OptionPtr& ia_na,
          boost::shared_ptr<isc::dhcp::Option6IAAddr> addr);

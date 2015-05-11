@@ -130,38 +130,6 @@ Lease::getHWAddrVector() const {
 }
 
 bool
-Lease4::matches(const Lease4& other) const {
-    if ((client_id_ && !other.client_id_) ||
-        (!client_id_ && other.client_id_)) {
-        // One lease has client-id, but the other doesn't
-        return false;
-    }
-
-    if (client_id_ && other.client_id_ &&
-        *client_id_ != *other.client_id_) {
-        // Different client-ids
-        return false;
-    }
-
-    // Note that hwaddr_ is now a poiner to the HWAddr structure.
-    // We can't simply compare smart pointers, we need to compare the
-    // actual objects they point to. If one of the leases had a hardware address
-    // and the other doesn't, they clearly don't match.
-    if ( (!hwaddr_ && other.hwaddr_) ||
-         (hwaddr_ && !other.hwaddr_) ) {
-        return (false);
-    }
-
-    // The lease is equal if addresses and extensions match and there is
-    // either the same hardware address on both or neither have hardware address
-    // specified.
-    return (addr_ == other.addr_ &&
-            ext_ == other.ext_ &&
-            (!hwaddr_ ||
-             *hwaddr_ == *other.hwaddr_) );
-}
-
-bool
 Lease4::belongsToClient(const HWAddrPtr& hw_address,
                         const ClientIdPtr& client_id) const {
     // If client id matches, lease matches.
@@ -295,19 +263,10 @@ Lease4::toText() const {
 
 bool
 Lease4::operator==(const Lease4& other) const {
-    if ( (client_id_ && !other.client_id_) ||
-         (!client_id_ && other.client_id_) ) {
-        // One lease has client-id, but the other doesn't
-        return false;
-    }
-
-    if (client_id_ && other.client_id_ &&
-        *client_id_ != *other.client_id_) {
-        // Different client-ids
-        return false;
-    }
-
-    return (matches(other) &&
+    return (nullOrEqualValues(hwaddr_, other.hwaddr_) &&
+            nullOrEqualValues(client_id_, other.client_id_) &&
+            addr_ == other.addr_ &&
+            ext_ == other.ext_ &&
             subnet_id_ == other.subnet_id_ &&
             t1_ == other.t1_ &&
             t2_ == other.t2_ &&
@@ -321,29 +280,13 @@ Lease4::operator==(const Lease4& other) const {
 }
 
 bool
-Lease6::matches(const Lease6& other) const {
-
-    // One lease has a hardware address, the other doesn't.
-    if ( (!hwaddr_ && other.hwaddr_) ||
-         (hwaddr_ && !other.hwaddr_) ) {
-        return (false);
-    }
-
-    // Both leases have hardware address, but they are not equal.
-    if (hwaddr_ && (*hwaddr_ != *other.hwaddr_)) {
-        return (false);
-    }
-
-    return (addr_ == other.addr_ &&
+Lease6::operator==(const Lease6& other) const {
+    return (nullOrEqualValues(duid_, other.duid_) &&
+            nullOrEqualValues(hwaddr_, other.hwaddr_) &&
+            addr_ == other.addr_ &&
             type_ == other.type_ &&
             prefixlen_ == other.prefixlen_ &&
             iaid_ == other.iaid_ &&
-            *duid_ == *other.duid_);
-}
-
-bool
-Lease6::operator==(const Lease6& other) const {
-    return (matches(other) &&
             preferred_lft_ == other.preferred_lft_ &&
             valid_lft_ == other.valid_lft_ &&
             t1_ == other.t1_ &&
