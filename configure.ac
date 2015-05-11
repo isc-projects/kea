@@ -1387,6 +1387,8 @@ AC_TRY_LINK(
 AM_CONDITIONAL(HAVE_OPTRESET, test "x$var_optreset_exists" != "xno")
 AM_COND_IF([HAVE_OPTRESET], [AC_DEFINE([HAVE_OPTRESET], [1], [Check for optreset?])])
 
+AC_DEFINE([CONFIG_H_WAS_INCLUDED], [1], [config.h inclusion marker])
+
 AC_CONFIG_FILES([compatcheck/Makefile
                  dns++.pc
                  doc/design/datasrc/Makefile
