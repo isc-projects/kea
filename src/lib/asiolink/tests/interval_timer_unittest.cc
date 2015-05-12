@@ -191,7 +191,8 @@ TEST_F(IntervalTimerTest, startIntervalTimer) {
     // Expect TimerCallBack is called; timer_called_ is true
     EXPECT_TRUE(timer_called_);
     // Expect test_runtime is 100 milliseconds or longer.
-    EXPECT_TRUE(test_runtime > boost::posix_time::milliseconds(100)) <<
+    // Allow 1% of clock skew
+    EXPECT_TRUE(test_runtime >= boost::posix_time::milliseconds(99)) <<
                 "test runtime " << test_runtime.total_milliseconds() <<
                 "msec " << ">= 100";
 }
