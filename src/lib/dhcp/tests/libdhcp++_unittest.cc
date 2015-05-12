@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -309,7 +309,7 @@ TEST_F(LibDhcpTest, packOptions6) {
     isc::dhcp::OptionCollection opts; // list of options
 
     // generate content for options
-    for (int i = 0; i < 64; i++) {
+    for (unsigned i = 0; i < 64; i++) {
         buf[i]=i+100;
     }
 
@@ -476,7 +476,7 @@ static uint8_t v4_opts[] = {
 TEST_F(LibDhcpTest, packOptions4) {
 
     vector<uint8_t> payload[5];
-    for (int i = 0; i < 5; i++) {
+    for (unsigned i = 0; i < 5; i++) {
         payload[i].resize(3);
         payload[i][0] = i*10;
         payload[i][1] = i*10+1;

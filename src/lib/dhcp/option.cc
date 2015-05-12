@@ -151,7 +151,7 @@ uint16_t Option::len() {
     // option header)
 
     // length of the whole option is header and data stored in this option...
-    int length = getHeaderLen() + data_.size();
+    size_t length = getHeaderLen() + data_.size();
 
     // ... and sum of lengths of all suboptions
     for (OptionCollection::iterator it = options_.begin();
