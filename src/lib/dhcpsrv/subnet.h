@@ -543,20 +543,20 @@ public:
     isc::asiolink::IOAddress getSiaddr() const;
 
     /// @brief Sets the flag indicating if the client identifier should be
-    /// ignored in the client's message.
+    /// recorded in the lease database.
     ///
     /// @param ignore If this value is true, the client identifiers are ignored
     /// in the messages from the clients for this subnet.
-    void setIgnoreClientId(const bool ignore) {
-        ignore_client_id_ = ignore;
+    void setRecordClientId(const bool record) {
+        record_client_id_ = record;
     }
 
     /// @brief Returns the flag indicating if the client identifiers should
-    /// be ignored for this subnet.
+    /// be recorded in the lease database.
     ///
-    /// @return true if client identifiers should be ignored, false otherwise.
-    bool getIgnoreClientId() const {
-        return (ignore_client_id_);
+    /// @return true if client identifiers should be recorded, false otherwise.
+    bool getRecordClientId() const {
+        return (record_client_id_);
     }
 
 private:
@@ -578,8 +578,8 @@ private:
     /// @brief siaddr value for this subnet
     isc::asiolink::IOAddress siaddr_;
 
-    /// @brief Should server ignore client identifiers.
-    bool ignore_client_id_;
+    /// @brief Should server record client identifiers.
+    bool record_client_id_;
 };
 
 /// @brief A pointer to a @c Subnet4 object
