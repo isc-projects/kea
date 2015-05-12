@@ -1030,7 +1030,9 @@ PoolParser::commit() {
 SubnetConfigParser::SubnetConfigParser(const std::string&,
                                        ParserContextPtr global_context,
                                        const isc::asiolink::IOAddress& default_addr)
-    : uint32_values_(new Uint32Storage()), string_values_(new StringStorage()),
+    : uint32_values_(new Uint32Storage()),
+      string_values_(new StringStorage()),
+      boolean_values_(new BooleanStorage()),
       pools_(new PoolStorage()), global_context_(global_context),
       relay_info_(new isc::dhcp::Subnet::RelayInfo(default_addr)),
       options_(new CfgOption()) {

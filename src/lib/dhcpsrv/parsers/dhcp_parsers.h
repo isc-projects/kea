@@ -1063,6 +1063,9 @@ protected:
     /// Storage for subnet-specific string values.
     StringStoragePtr string_values_;
 
+    /// Storage for subnet-specific boolean values.
+    BooleanStoragePtr boolean_values_;
+
     /// Storage for pools belonging to this subnet.
     PoolStoragePtr pools_;
 
