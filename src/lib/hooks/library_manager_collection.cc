@@ -63,7 +63,7 @@ LibraryManagerCollection::loadLibraries() {
     callout_manager_.reset(new CalloutManager(library_names_.size()));
 
     // Now iterate through the libraries are load them one by one.  We'll
-    for (int i = 0; i < library_names_.size(); ++i) {
+    for (size_t i = 0; i < library_names_.size(); ++i) {
         // Create a pointer to the new library manager.  The index of this
         // library is determined by the number of library managers currently
         // loaded: note that the library indexes run from 1 to (number of loaded
@@ -116,7 +116,7 @@ LibraryManagerCollection::validateLibraries(
                           const std::vector<std::string>& libraries) {
 
     std::vector<std::string> failures;
-    for (int i = 0; i < libraries.size(); ++i) {
+    for (size_t i = 0; i < libraries.size(); ++i) {
         if (!LibraryManager::validateLibrary(libraries[i])) {
             failures.push_back(libraries[i]);
         }

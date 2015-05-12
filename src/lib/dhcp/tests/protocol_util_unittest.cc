@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -247,12 +247,12 @@ TEST(ProtocolUtilTest, writeEthernetHeader) {
     // get exact values that are mismatched. If memcmp was used
     // the error message would not indicate the values of
     // mismatched bytes.
-    for (int i = 0; i < 6; ++i) {
+    for (unsigned i = 0; i < 6; ++i) {
         EXPECT_EQ(dest_hw_addr[i], buf[i]);
     }
     // Verify that following 6 bytes comprise the valid source
     // HW address.
-    for (int i = 0; i < 6; ++i) {
+    for (unsigned i = 0; i < 6; ++i) {
         EXPECT_EQ(src_hw_addr[i], buf[i + 6]);
     }
 

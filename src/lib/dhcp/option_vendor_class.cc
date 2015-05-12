@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -174,7 +174,7 @@ OptionVendorClass::toText(int indent) {
     s << "type=" << getType() << ", len=" << len() - getHeaderLen() << ", "
         " enterprise id=0x" << std::hex << getVendorId() << std::dec;
     // Iterate over all tuples and print their size and contents.
-    for (int i = 0; i < getTuplesNum(); ++i) {
+    for (unsigned i = 0; i < getTuplesNum(); ++i) {
         // The DHCPv4 V-I Vendor Class has enterprise id before every tuple.
         if ((getUniverse() == V4) && (i > 0)) {
             s << ", enterprise id=0x" << std::hex << getVendorId() << std::dec;

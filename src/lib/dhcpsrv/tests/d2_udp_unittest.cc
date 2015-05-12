@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -431,7 +431,7 @@ TEST_F(D2ClientMgrTest, ifaceRegister) {
     ASSERT_NO_THROW(startSender(getErrorHandler()));
 
     // Queue three messages.
-    for (int i = 0; i < 3; ++i) {
+    for (unsigned i = 0; i < 3; ++i) {
         dhcp_ddns::NameChangeRequestPtr ncr = buildTestNcr();
         ASSERT_NO_THROW(sendRequest(ncr));
     }
@@ -472,7 +472,7 @@ TEST_F(D2ClientMgrTest, udpSuspendUpdates) {
     ASSERT_NO_THROW(startSender(getErrorHandler()));
 
     // Send a test request.
-    for (int i = 0; i < 3; ++i) {
+    for (unsigned i = 0; i < 3; ++i) {
         dhcp_ddns::NameChangeRequestPtr ncr = buildTestNcr();
         ASSERT_NO_THROW(sendRequest(ncr));
     }
