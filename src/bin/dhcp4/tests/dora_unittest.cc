@@ -363,6 +363,7 @@ TEST_F(DORATest, initRebootRequest) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(DORA_CONFIGS[0], *client.getServer());
+    client.includeClientId("11:22");
     // Obtain a lease from the server using the 4-way exchange.
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
                                   IOAddress>(new IOAddress("10.0.0.50"))));
@@ -405,11 +406,32 @@ TEST_F(DORATest, initRebootRequest) {
     resp = client.getContext().response_;
     EXPECT_EQ(DHCPNAK, static_cast<int>(resp->getType()));
 
-    // Try to request from a different client.
+    // Change client identifier. The server should treat the request
+    // as a resquest from unknown client and ignore it.
+    client.includeClientId("12:34");
+    ASSERT_NO_THROW(client.doRequest());
+    ASSERT_FALSE(client.getContext().response_);
+
+    // Now let's fix the IP address. The client identifier is still
+    // invalid so the message should be dropped.
+    client.config_.lease_.addr_ = IOAddress("10.0.0.50");
+    ASSERT_NO_THROW(client.doRequest());
+    ASSERT_FALSE(client.getContext().response_);
+
+    // Restore original client identifier.
+    client.includeClientId("11:22");
+
+    // Try to request from a different HW address. This should be successful
+    // because the client identifier matches.
     client.modifyHWAddr();
     ASSERT_NO_THROW(client.doRequest());
-    // The server should not respond.
-    EXPECT_FALSE(client.getContext().response_);
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Make sure that the client has got the lease with the requested address.
+    ASSERT_EQ("10.0.0.50", client.config_.lease_.addr_.toText());
 }
 
 // Check that the ciaddr returned by the server is correct for DHCPOFFER and
