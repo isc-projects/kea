@@ -100,11 +100,7 @@ public:
     /// @param value New actual value.
     void specify(const T& value) {
         set(value);
-        specify(true);
-    }
-
-    void specify(const OptionalValueState& state) {
-        specified_ = state.specified_;
+        specify(OptionalValueState(true));
     }
 
     /// @brief Sets the value to "specified" or "unspecified".
@@ -112,8 +108,8 @@ public:
     /// It does not alter the actual value. It only marks it "specified" or
     /// "unspecified".
     /// @param specified boolean that determined if a value is specified or not
-    void specify(const bool specified) {
-        specified_ = specified;
+    void specify(const OptionalValueState& state) {
+        specified_ = state.specified_;
     }
 
     /// @brief Checks if the value is specified or unspecified.
