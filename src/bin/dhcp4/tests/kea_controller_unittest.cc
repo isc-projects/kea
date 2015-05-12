@@ -59,7 +59,7 @@ public:
 
     ~JSONFileBackendTest() {
         isc::log::setDefaultLoggingOutput();
-        static_cast<void>(unlink(TEST_FILE));
+        static_cast<void>(remove(TEST_FILE));
     };
 
     /// @brief writes specified content to a well known file
@@ -69,7 +69,7 @@ public:
     ///
     /// @param content content to be written to file
     void writeFile(const std::string& content) {
-        static_cast<void>(unlink(TEST_FILE));
+        static_cast<void>(remove(TEST_FILE));
 
         ofstream out(TEST_FILE, ios::trunc);
         EXPECT_TRUE(out.is_open());

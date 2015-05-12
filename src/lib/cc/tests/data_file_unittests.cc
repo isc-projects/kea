@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -35,7 +35,7 @@ public:
     /// @param content text to be written to disk
     void writeFile(const std::string& content) {
         // Write sample content to disk
-        unlink(TEMP_FILE);
+        remove(TEMP_FILE);
         std::ofstream write_me(TEMP_FILE);
         EXPECT_TRUE(write_me.is_open());
         write_me << content;
@@ -44,7 +44,7 @@ public:
 
     /// destructor
     ~DataFileTest() {
-        static_cast<void>(unlink(TEMP_FILE));
+        static_cast<void>(remove(TEMP_FILE));
     }
 
     /// Name of the temporary file

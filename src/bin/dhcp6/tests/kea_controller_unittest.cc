@@ -54,11 +54,11 @@ public:
 
     ~JSONFileBackendTest() {
         isc::log::setDefaultLoggingOutput();
-        static_cast<void>(unlink(TEST_FILE));
+        static_cast<void>(remove(TEST_FILE));
     };
 
     void writeFile(const std::string& file_name, const std::string& content) {
-        static_cast<void>(unlink(file_name.c_str()));
+        static_cast<void>(remove(file_name.c_str()));
 
         ofstream out(file_name.c_str(), ios::trunc);
         EXPECT_TRUE(out.is_open());
