@@ -136,7 +136,7 @@ public:
 
     NakedDhcpv6SrvTest() : rcode_(-1) {
         // it's ok if that fails. There should not be such a file anyway
-        unlink(DUID_FILE);
+        remove(DUID_FILE);
 
         const isc::dhcp::IfaceMgr::IfaceCollection& ifaces =
             isc::dhcp::IfaceMgr::instance().getIfaces();
@@ -288,7 +288,7 @@ public:
 
     virtual ~NakedDhcpv6SrvTest() {
         // Let's clean up if there is such a file.
-        unlink(DUID_FILE);
+        remove(DUID_FILE);
         isc::hooks::HooksManager::preCalloutsLibraryHandle()
             .deregisterAllCallouts("buffer6_receive");
         isc::hooks::HooksManager::preCalloutsLibraryHandle()
