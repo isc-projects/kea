@@ -61,7 +61,7 @@ CSVLeaseFile6::append(const Lease6& lease) {
     }
     try {
         CSVFile::append(row);
-    } catch (const std::exception& ex) {
+    } catch (const std::exception&) {
         // Catch any errors so we can bump the error counter than rethrow it
         ++write_errs_;
         throw;

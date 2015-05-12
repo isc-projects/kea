@@ -235,7 +235,7 @@ Generic::constructFromLexer(MasterLexer& lexer) {
 
     try {
         rdlen = lexer.getNextToken(MasterToken::NUMBER).getNumber();
-    } catch (const MasterLexer::LexerError& ex) {
+    } catch (const MasterLexer::LexerError&) {
         isc_throw(InvalidRdataLength,
                   "Unknown RDATA length is invalid");
     }
