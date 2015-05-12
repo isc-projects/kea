@@ -35,7 +35,7 @@ namespace {
 // Then the find_if doesn't work.
 bool
 myIsalpha(char c) {
-    return (isalpha(c));
+    return (isalpha(c) != 0);
 }
 
 // The conversion of units to their size
