@@ -542,7 +542,24 @@ public:
     /// @return siaddr value
     isc::asiolink::IOAddress getSiaddr() const;
 
-protected:
+    /// @brief Sets the flag indicating if the client identifier should be
+    /// ignored in the client's message.
+    ///
+    /// @param ignore If this value is true, the client identifiers are ignored
+    /// in the messages from the clients for this subnet.
+    void setIgnoreClientId(const bool ignore) {
+        ignore_client_id_ = ignore;
+    }
+
+    /// @brief Returns the flag indicating if the client identifiers should
+    /// be ignored for this subnet.
+    ///
+    /// @return true if client identifiers should be ignored, false otherwise.
+    bool getIgnoreClientId() const {
+        return (ignore_client_id_);
+    }
+
+private:
 
     /// @brief Returns default address for pool selection
     /// @return ANY IPv4 address
@@ -560,6 +577,9 @@ protected:
 
     /// @brief siaddr value for this subnet
     isc::asiolink::IOAddress siaddr_;
+
+    /// @brief Should server ignore client identifiers.
+    bool ignore_client_id_;
 };
 
 /// @brief A pointer to a @c Subnet4 object
