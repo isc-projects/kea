@@ -116,20 +116,20 @@ TEST(Subnet4Test, siaddr) {
         BadValue);
 }
 
-// Checks if the ignore-client-id flag can be set and retrieved.
-TEST(Subnet4Test, ignoreClientId) {
+// Checks if the record-client-id flag can be set and retrieved.
+TEST(Subnet4Test, recordClientId) {
     Subnet4 subnet(IOAddress("192.0.2.1"), 24, 1000, 2000, 3000);
 
-    // By default the flag should be set to false.
-    EXPECT_FALSE(subnet.getIgnoreClientId());
+    // By default the flag should be set to true.
+    EXPECT_TRUE(subnet.getRecordClientId());
 
     // Modify it and retrieve.
-    subnet.setIgnoreClientId(true);
-    EXPECT_TRUE(subnet.getIgnoreClientId());
+    subnet.setRecordClientId(false);
+    EXPECT_FALSE(subnet.getRecordClientId());
 
     // Modify again.
-    subnet.setIgnoreClientId(false);
-    EXPECT_FALSE(subnet.getIgnoreClientId());
+    subnet.setRecordClientId(true);
+    EXPECT_TRUE(subnet.getRecordClientId());
 }
 
 TEST(Subnet4Test, Pool4InSubnet4) {
