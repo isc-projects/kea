@@ -254,6 +254,25 @@ Dhcp4Client::doInform(const bool set_ciaddr) {
 }
 
 void
+Dhcp4Client::doRelease() {
+    if (config_.lease_.addr_ == IOAddress::IPV4_ZERO_ADDRESS()) {
+        isc_throw(Dhcp4ClientError, "failed to send the release"
+                  " message because client doesn't have a lease");
+    }
+    context_.query_ = createMsg(DHCPRELEASE);
+    // Set ciaddr to the address which we want to release.
+    context_.query_->setCiaddr(config_.lease_.addr_);
+    // Include client identifier.
+    appendClientId();
+
+    // Remove configuration.
+    config_.reset();
+
+    // Send the message to the server.
+    sendMsg(context_.query_);
+}
+
+void
 Dhcp4Client::doRequest() {
     context_.query_ = createMsg(DHCPREQUEST);
 

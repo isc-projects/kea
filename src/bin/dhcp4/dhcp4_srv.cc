@@ -1579,26 +1579,9 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
             return;
         }
 
-        // Does the hardware address match? We don't want one client releasing
-        // second client's leases. Note that we're comparing the hardware
-        // addresses only, not hardware types or sources of the hardware
-        // addresses. Thus we don't use HWAddr::equals().
-        if (lease->hwaddr_->hwaddr_ != release->getHWAddr()->hwaddr_) {
-            /// @todo: Print hwaddr from lease as part of ticket #2589
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_WRONG_HWADDR)
-                .arg(release->getCiaddr().toText())
-                .arg(client_id ? client_id->toText() : "(no client-id)")
-                .arg(release->getHWAddr()->toText());
-            return;
-        }
-
-        // Does the lease have client-id info? If it has, then check it with what
-        // the client sent us.
-        if (lease->client_id_ && client_id && *lease->client_id_ != *client_id) {
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_WRONG_CLIENT_ID)
-                .arg(release->getCiaddr().toText())
-                .arg(client_id->toText())
-                .arg(lease->client_id_->toText());
+        if (!lease->belongsToClient(release->getHWAddr(), client_id)) {
+            /// @todo add debug message here when we merge the code with the
+            /// changes from #3806.
             return;
         }
 
