@@ -349,20 +349,6 @@ removed from the database during RELEASE message processing.
 This warning message is printed when client attempts to release a lease,
 but no such lease is known to the server.
 
-% DHCP4_RELEASE_FAIL_WRONG_CLIENT_ID client (client-id %2) tried to release address %1, but it belongs to client (client-id %3)
-This warning message indicates that client tried to release an address
-that belongs to a different client. This should not happen in normal
-circumstances and may indicate a misconfiguration of the client.  However,
-since the client releasing the address will stop using it anyway, there
-is a good chance that the situation will correct itself.
-
-% DHCP4_RELEASE_FAIL_WRONG_HWADDR client (client-id %2) tried to release address %1, but sent from a wrong hardware address (%3)
-This warning message indicates that client tried to release an address
-that does belong to it, but the lease information was associated with
-a different hardware address. One possible reason for using different
-hardware address is that a cloned virtual machine was not updated and
-both clones use the same client-id.
-
 % DHCP4_REQUEST_CLASS_PROCESSING_FAILED client class specific processing failed for DHCPREQUEST
 This debug message means that the server processing that is unique for each
 client class has reported a failure. The response packet will not be sent.
