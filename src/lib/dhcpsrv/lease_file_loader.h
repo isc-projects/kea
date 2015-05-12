@@ -199,7 +199,7 @@ public:
              ++lease) {
             try {
                 lease_file.append(**lease);
-            } catch (const isc::Exception& ex) {
+            } catch (const isc::Exception&) {
             // Close the file
             lease_file.close();
             throw;
