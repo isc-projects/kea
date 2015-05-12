@@ -116,6 +116,22 @@ TEST(Subnet4Test, siaddr) {
         BadValue);
 }
 
+// Checks if the ignore-client-id flag can be set and retrieved.
+TEST(Subnet4Test, ignoreClientId) {
+    Subnet4 subnet(IOAddress("192.0.2.1"), 24, 1000, 2000, 3000);
+
+    // By default the flag should be set to false.
+    EXPECT_FALSE(subnet.getIgnoreClientId());
+
+    // Modify it and retrieve.
+    subnet.setIgnoreClientId(true);
+    EXPECT_TRUE(subnet.getIgnoreClientId());
+
+    // Modify again.
+    subnet.setIgnoreClientId(false);
+    EXPECT_FALSE(subnet.getIgnoreClientId());
+}
+
 TEST(Subnet4Test, Pool4InSubnet4) {
 
     Subnet4Ptr subnet(new Subnet4(IOAddress("192.1.2.0"), 24, 1, 2, 3));
