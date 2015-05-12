@@ -74,10 +74,10 @@
         "item_default": true
       },
 
-      { "item_name": "ignore-client-id",
+      { "item_name": "record-client-id",
         "item_type": "boolean",
         "item_optional": true,
-        "item_default": false
+        "item_default": true
       },
 
       { "item_name": "option-def",
@@ -275,10 +275,10 @@
                   "item_default": "0.0.0.0"
                 },
 
-                { "item_name": "ignore-client-id",
+                { "item_name": "record-client-id",
                   "item_type": "boolean",
                   "item_optional": true,
-                  "item_default": false
+                  "item_default": true
                 },
 
                 { "item_name": "pool",

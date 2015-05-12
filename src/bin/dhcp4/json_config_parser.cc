@@ -194,7 +194,7 @@ protected:
             parser = new RelayInfoParser(config_id, relay_info_, Option::V4);
         } else if (config_id.compare("option-data") == 0) {
             parser = new OptionDataListParser(config_id, options_, AF_INET);
-        } else if (config_id.compare("ignore-client-id") == 0) {
+        } else if (config_id.compare("record-client-id") == 0) {
             parser = new BooleanParser(config_id, boolean_values_);
         } else {
             isc_throw(NotImplemented, "unsupported parameter: " << config_id);
@@ -252,26 +252,26 @@ protected:
         Subnet4Ptr subnet4(new Subnet4(addr, len, t1, t2, valid, subnet_id));
         subnet_ = subnet4;
 
-        // ignore-client-id
-        isc::util::OptionalValue<bool> ignore_client_id;
+        // record-client-id
+        isc::util::OptionalValue<bool> record_client_id;
         try {
-            ignore_client_id = boolean_values_->getParam("ignore-client-id");
+            record_client_id = boolean_values_->getParam("record-client-id");
 
         } catch (...) {
             // Ignore because this parameter is optional and it may be specified
             // in the global scope.
         }
 
-        // If the ignore-client-id wasn't specified as a subnet specific parameter
+        // If the record-client-id wasn't specified as a subnet specific parameter
         // check if there is global value specified.
-        if (!ignore_client_id.isSpecified()) {
+        if (!record_client_id.isSpecified()) {
             // If not specified, use false.
-            ignore_client_id.specify(globalContext()->boolean_values_->
-                                     getOptionalParam("ignore-client-id", false));
+            record_client_id.specify(globalContext()->boolean_values_->
+                                     getOptionalParam("record-client-id", true));
         }
 
-        // Set the ignore-client-id value for the subnet.
-        subnet4->setIgnoreClientId(ignore_client_id.get());
+        // Set the record-client-id value for the subnet.
+        subnet4->setRecordClientId(record_client_id.get());
 
         // next-server
         try {
@@ -397,7 +397,7 @@ namespace dhcp {
         parser = new BooleanParser(config_id, globalContext()->boolean_values_);
     } else if (config_id.compare("dhcp-ddns") == 0) {
         parser = new D2ClientConfigParser(config_id);
-    } else if (config_id.compare("ignore-client-id") == 0) {
+    } else if (config_id.compare("record-client-id") == 0) {
         parser = new BooleanParser(config_id, globalContext()->boolean_values_);
     } else {
         isc_throw(DhcpConfigError,
