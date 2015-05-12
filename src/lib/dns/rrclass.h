@@ -31,6 +31,10 @@
 
 #include <boost/optional.hpp>
 
+#if defined(_WIN32) && defined(IN)
+#undef IN
+#endif
+
 namespace isc {
 namespace util {
 class InputBuffer;
