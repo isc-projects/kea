@@ -102,7 +102,7 @@ public:
 class OptionTest : public ::testing::Test {
 public:
     OptionTest(): buf_(255), outBuf_(255) {
-        for (int i = 0; i < 255; i++) {
+        for (unsigned i = 0; i < 255; i++) {
             buf_[i] = 255 - i;
         }
     }
@@ -251,7 +251,7 @@ TEST_F(OptionTest, v6_basic) {
 
 // Tests constructor used in packet reception.  Option contains actual data
 TEST_F(OptionTest, v6_data1) {
-    for (int i = 0; i < 32; i++) {
+    for (unsigned i = 0; i < 32; i++) {
         buf_[i] = 100 + i;
     }
 
@@ -324,7 +324,7 @@ TEST_F(OptionTest, v6_data2) {
 //  +----opt3
 //
 TEST_F(OptionTest, v6_suboptions1) {
-    for (int i = 0; i < 128; i++) {
+    for (unsigned i = 0; i < 128; i++) {
         buf_[i] = 100 + i;
     }
 
@@ -367,7 +367,7 @@ TEST_F(OptionTest, v6_suboptions1) {
 //        +----opt3
 //
 TEST_F(OptionTest, v6_suboptions2) {
-    for (int i = 0; i < 128; i++) {
+    for (unsigned i = 0; i < 128; i++) {
         buf_[i] = 100 + i;
     }
 
@@ -399,7 +399,7 @@ TEST_F(OptionTest, v6_suboptions2) {
 }
 
 TEST_F(OptionTest, v6_addgetdel) {
-    for (int i = 0; i < 128; i++) {
+    for (unsigned i = 0; i < 128; i++) {
         buf_[i] = 100 + i;
     }
 

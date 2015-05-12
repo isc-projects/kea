@@ -275,7 +275,7 @@ TEST_F(Pkt4Test, constructor) {
 
     // Just some dummy payload.
     uint8_t testData[250];
-    for (int i = 0; i < 250; i++) {
+    for (unsigned i = 0; i < 250; i++) {
         testData[i] = i;
     }
 
@@ -418,7 +418,7 @@ TEST_F(Pkt4Test, hwAddr) {
             mac[i] = 0;
             expectedChaddr[i] = 0;
         }
-        for (int i = 0; i < macLen; i++) {
+        for (unsigned i = 0; i < macLen; i++) {
             mac[i] = 128 + i;
             expectedChaddr[i] = 128 + i;
         }
@@ -492,10 +492,10 @@ TEST_F(Pkt4Test, sname) {
     scoped_ptr<Pkt4> pkt;
     // Let's test each sname length, from 0 till 64
     for (int snameLen = 0; snameLen < Pkt4::MAX_SNAME_LEN; ++snameLen) {
-        for (int i = 0; i < snameLen; ++i) {
+        for (unsigned i = 0; i < snameLen; ++i) {
             sname[i] = i + 1;
         }
-        for (int i = snameLen; i < Pkt4::MAX_SNAME_LEN; ++i) {
+        for (unsigned i = snameLen; i < Pkt4::MAX_SNAME_LEN; ++i) {
             sname[i] = 0;
         }
 
@@ -530,10 +530,10 @@ TEST_F(Pkt4Test, file) {
     scoped_ptr<Pkt4> pkt;
     // Let's test each file length, from 0 till 128.
     for (int fileLen = 0; fileLen < Pkt4::MAX_FILE_LEN; ++fileLen) {
-        for (int i = 0; i < fileLen; ++i) {
+        for (unsigned i = 0; i < fileLen; ++i) {
             file[i] = i + 1;
         }
-        for (int i = fileLen; i < Pkt4::MAX_FILE_LEN; ++i) {
+        for (unsigned i = fileLen; i < Pkt4::MAX_FILE_LEN; ++i) {
             file[i] = 0;
         }
 
@@ -565,7 +565,7 @@ TEST_F(Pkt4Test, options) {
     scoped_ptr<Pkt4> pkt(new Pkt4(DHCPOFFER, 0));
 
     vector<uint8_t> payload[5];
-    for (int i = 0; i < 5; i++) {
+    for (unsigned i = 0; i < 5; i++) {
         payload[i].push_back(i * 10);
         payload[i].push_back(i * 10 + 1);
         payload[i].push_back(i * 10 + 2);

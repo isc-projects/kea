@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -356,7 +356,7 @@ TEST_F(OptionDefinitionTest, ipv6AddressArray) {
 
     // Write addresses to the buffer.
     OptionBuffer buf(addrs.size() * asiolink::V6ADDRESS_LEN);
-    for (int i = 0; i < addrs.size(); ++i) {
+    for (size_t i = 0; i < addrs.size(); ++i) {
         const std::vector<uint8_t>& vec = addrs[i].toBytes();
         ASSERT_EQ(asiolink::V6ADDRESS_LEN, vec.size());
         std::copy(vec.begin(), vec.end(),
@@ -454,7 +454,7 @@ TEST_F(OptionDefinitionTest, ipv4AddressArray) {
 
     // Write addresses to the buffer.
     OptionBuffer buf(addrs.size() * asiolink::V4ADDRESS_LEN);
-    for (int i = 0; i < addrs.size(); ++i) {
+    for (size_t i = 0; i < addrs.size(); ++i) {
         const std::vector<uint8_t> vec = addrs[i].toBytes();
         ASSERT_EQ(asiolink::V4ADDRESS_LEN, vec.size());
         std::copy(vec.begin(), vec.end(),
@@ -613,7 +613,7 @@ TEST_F(OptionDefinitionTest, binary) {
 
     // Prepare some dummy data (serverid): 0, 1, 2 etc.
     OptionBuffer buf(14);
-    for (int i = 0; i < 14; ++i) {
+    for (unsigned i = 0; i < 14; ++i) {
         buf[i] = i;
     }
     // Create option instance with the factory function.
@@ -666,7 +666,7 @@ TEST_F(OptionDefinitionTest, recordIA6) {
 
     // Check the positive scenario.
     OptionBuffer buf(12);
-    for (int i = 0; i < buf.size(); ++i) {
+    for (size_t i = 0; i < buf.size(); ++i) {
         buf[i] = i;
     }
     OptionPtr option_v6;
@@ -708,7 +708,9 @@ TEST_F(OptionDefinitionTest, recordIAAddr6) {
     ASSERT_EQ(asiolink::V6ADDRESS_LEN, vec.size());
     std::copy(vec.begin(), vec.end(), buf.begin());
 
-    for (int i = 0; i < option6_iaaddr_len - asiolink::V6ADDRESS_LEN; ++i) {
+    for (unsigned i = 0;
+         i < option6_iaaddr_len - asiolink::V6ADDRESS_LEN;
+         ++i) {
         buf.push_back(i);
     }
     ASSERT_NO_THROW(option_v6 = opt_def.optionFactory(Option::V6, D6O_IAADDR, buf));
@@ -1030,7 +1032,7 @@ TEST_F(OptionDefinitionTest, uint16Array) {
     // multiple of uint16_t size.
     // buffer elements will be: 0x112233.
     OptionBuffer buf(6);
-    for (int i = 0; i < 6; ++i) {
+    for (unsigned i = 0; i < 6; ++i) {
         buf[i] = i / 2;
     }
     // Constructor should succeed because buffer has correct size.
@@ -1042,7 +1044,7 @@ TEST_F(OptionDefinitionTest, uint16Array) {
         boost::static_pointer_cast<OptionIntArray<uint16_t> >(option_v6);
     // Get the values from the initiated options and validate.
     std::vector<uint16_t> values = option_cast_v6->getValues();
-    for (int i = 0; i < values.size(); ++i) {
+    for (size_t i = 0; i < values.size(); ++i) {
         // Expected value is calculated using on the same pattern
         // as the one we used to initiate buffer:
         // for i=0, expected = 0x00, for i = 1, expected == 0x11 etc.
@@ -1103,7 +1105,7 @@ TEST_F(OptionDefinitionTest, uint32Array) {
     // multiple of uint16_t size.
     // buffer elements will be: 0x111122223333.
     OptionBuffer buf(12);
-    for (int i = 0; i < buf.size(); ++i) {
+    for (size_t i = 0; i < buf.size(); ++i) {
         buf[i] = i / 4;
     }
     // Constructor should succeed because buffer has correct size.
@@ -1115,7 +1117,7 @@ TEST_F(OptionDefinitionTest, uint32Array) {
         boost::static_pointer_cast<OptionIntArray<uint32_t> >(option_v6);
     // Get the values from the initiated options and validate.
     std::vector<uint32_t> values = option_cast_v6->getValues();
-    for (int i = 0; i < values.size(); ++i) {
+    for (size_t i = 0; i < values.size(); ++i) {
         // Expected value is calculated using on the same pattern
         // as the one we used to initiate buffer:
         // for i=0, expected = 0x0000, for i = 1, expected == 0x1111 etc.

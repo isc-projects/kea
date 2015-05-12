@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -79,7 +79,8 @@ protected:
     // the caller can check other cases.
     void checkIssues() {
         EXPECT_EQ(expected_errors_.size(), errors_.size());
-        for (int i = 0; i < std::min(expected_errors_.size(), errors_.size());
+        for (size_t i = 0;
+             i < std::min(expected_errors_.size(), errors_.size());
              ++i) {
             // The actual message should begin with the expected message.
             EXPECT_EQ(0, errors_[0].find(expected_errors_[0]))
@@ -87,7 +88,8 @@ protected:
                 expected_errors_[0];
         }
         EXPECT_EQ(expected_warns_.size(), warns_.size());
-        for (int i = 0; i < std::min(expected_warns_.size(), warns_.size());
+        for (size_t i = 0;
+             i < std::min(expected_warns_.size(), warns_.size());
              ++i) {
             EXPECT_EQ(0, warns_[0].find(expected_warns_[0]))
                 << "actual message: " << warns_[0] << " expected: " <<

@@ -821,7 +821,7 @@ MasterLoader::MasterLoaderImpl::doGenerate() {
     }
 
     // Generate and add the records.
-    for (int i = start; i <= stop; i += step) {
+    for (unsigned int i = start; i <= stop; i += step) {
         // Get generated strings for LHS and RHS. LHS goes to form the
         // name, RHS goes to form the RDATA of the RR.
         const std::string generated_name = generateForIter(lhs, i);

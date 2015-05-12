@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -257,7 +257,7 @@ TEST_F(Rdata_SSHFP_Test, getFingerprint) {
 
     EXPECT_EQ(rdata_sshfp.getFingerprintLength(),
               fingerprint.size());
-    for (int i = 0; i < fingerprint.size(); ++i) {
+    for (size_t i = 0; i < fingerprint.size(); ++i) {
         EXPECT_EQ(rdata_sshfp_wiredata[i + 2],
                   fingerprint.at(i));
     }
