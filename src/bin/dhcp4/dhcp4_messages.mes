@@ -31,6 +31,20 @@ to establish a session with the Kea control channel.
 This debug message informs that incoming packet has been assigned to specified
 class or classes. This is a normal behavior and indicates successful operation.
 
+% DHCP4_CLIENTID_IGNORED_FOR_LEASES %1: not using client identifier for lease allocation for subnet %2
+This debug message is issued when the server is processing the DHCPv4 message
+for which client identifier will not be used when allocating new lease or
+renewing existing lease. The server is explicitly configured to not use
+client identifier to lookup existing leases for the client and will not
+record client identifier in the lease database. This mode of operation
+is useful when clients don't use stable client identifiers, e.g. multi
+stage booting. Note that the client identifier may be used for other
+operations than lease allocation, e.g. identifying host reservations
+for the client using client identifier. The first argument includes the
+client and transaction identification information. The second argument
+specifies the identifier of the subnet where the client is connected
+and for which this mode of operation is configured on the server.
+
 % DHCP4_CLIENT_NAME_PROC_FAIL failed to process the fqdn or hostname sent by a client: %1
 This debug message is issued when the DHCP server was unable to process the
 FQDN or Hostname option sent by a client. This is likely because the client's

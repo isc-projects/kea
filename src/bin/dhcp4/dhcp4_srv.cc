@@ -107,10 +107,22 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
     context_->subnet_ = subnet;
     // Hardware address.
     context_->hwaddr_ = query->getHWAddr();
-    // Client Identifier
-    OptionPtr opt_clientid = query->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
-    if (opt_clientid) {
-        context_->clientid_.reset(new ClientId(opt_clientid->getData()));
+
+    // Set client identifier if the record-client-id flag is enabled (default).
+    // If the subnet wasn't found it doesn't matter because we will not be
+    // able to allocate a lease anyway so this context will not be used.
+    if (subnet) {
+        if (subnet->getRecordClientId()) {
+            OptionPtr opt_clientid = query->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
+            if (opt_clientid) {
+                context_->clientid_.reset(new ClientId(opt_clientid->getData()));
+            }
+        } else {
+            /// @todo When merging with #3806 use different logger.
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_CLIENTID_IGNORED_FOR_LEASES)
+                .arg(query->getLabel())
+                .arg(subnet->getID());
+        }
     }
     // Check for static reservations.
     alloc_engine->findReservation(*context_);
@@ -1073,9 +1085,6 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_SUBNET_SELECTED)
         .arg(subnet->toText());
 
-    // Get client-id. It is not mandatory in DHCPv4.
-    ClientIdPtr client_id = ex.getContext()->clientid_;
-
     // Get the server identifier. It will be used to determine the state
     // of the client.
     OptionCustomPtr opt_serverid = boost::dynamic_pointer_cast<
@@ -1104,6 +1113,9 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     // allocation.
     bool fake_allocation = (query->getType() == DHCPDISCOVER);
 
+    // Get client-id. It is not mandatory in DHCPv4.
+    ClientIdPtr client_id = ex.getContext()->clientid_;
+
     // If there is no server id and there is a Requested IP Address option
     // the client is in the INIT-REBOOT state in which the server has to
     // determine whether the client's notion of the address is correct
@@ -1121,6 +1133,10 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         // Check the first error case: unknown client. We check this before
         // validating the address sent because we don't want to respond if
         // we don't know this client.
+        /// @todo The client_id logged here should be the client_id from the message
+        /// rather than effective client id which is null when the
+        /// record-client-id is set to false. This is addressed by the #3806
+        /// which is under review.
         if (!lease || !lease->belongsToClient(hwaddr, client_id)) {
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL,
                       DHCP4_NO_LEASE_INIT_REBOOT)
@@ -1561,7 +1577,16 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
     /// @todo Uncomment this (see ticket #3116)
     /// sanityCheck(release, MANDATORY);
 
-    // Try to find client-id
+    // Try to find client-id. Note that for the DHCPRELEASE we don't check if the
+    // record-client-id configuration parameter is disabled because this parameter
+    // is configured for subnets and we don't select subnet for the DHCPRELEASE.
+    // Bogus clients usually generate new client identifiers when they first
+    // connect to the network, so whatever client identifier has been used to
+    // acquire the lease, the client identifier carried in the DHCPRELEASE is
+    // likely to be the same and the lease will be correctly identified in the
+    // lease database. If supplied client identifier differs from the one used
+    // to acquire the lease then the lease will remain in the database and
+    // simply expire.
     ClientIdPtr client_id;
     OptionPtr opt = release->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
     if (opt) {

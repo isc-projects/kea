@@ -57,6 +57,13 @@ namespace {
 ///   - 1 subnet: 10.0.0.0/24
 ///   - One reservation for the client using MAC address:
 ///     aa:bb:cc:dd:ee:ff, reserved address 10.0.0.7
+///
+/// - Configuration 3:
+///   - Use for testing record-client-id flag
+///   - 1 subnet: 10.0.0.0/24
+///   - 1 pool: 10.0.0.10-10.0.0.100
+///   - record-client-id flag is set to false, thus the server
+///     uses HW address for lease lookup, rather than client id
 const char* DORA_CONFIGS[] = {
 // Configuration 0
     "{ \"interfaces-config\": {"
@@ -152,7 +159,27 @@ const char* DORA_CONFIGS[] = {
         "       }"
         "    ]"
         "} ]"
-    "}"
+    "}",
+
+// Configuration 3
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"record-client-id\": false,"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1,"
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+        "    \"option-data\": [ {"
+        "        \"name\": \"routers\","
+        "        \"code\": 3,"
+        "        \"data\": \"10.0.0.200,10.0.0.201\","
+        "        \"csv-format\": true,"
+        "        \"space\": \"dhcp4\""
+        "    } ]"
+        " } ]"
+    "}",
 };
 
 /// @brief Test fixture class for testing 4-way (DORA) exchanges.
@@ -682,6 +709,78 @@ TEST_F(DORATest, reservation) {
     ASSERT_TRUE(subnet);
     // Make sure that the address has been allocated from the dynamic pool.
     ASSERT_TRUE(subnet->inPool(Lease::TYPE_V4, clientB.config_.lease_.addr_));
+}
+
+// This test checks that setting the record-client-id value to false causes
+// the server to ignore changing client identifier when the client is
+// using consistent HW address.
+TEST_F(DORATest, ignoreChangingClientId) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Configure DHCP server.
+    configure(DORA_CONFIGS[3], *client.getServer());
+    client.includeClientId("12:12");
+    // Obtain the lease using 4-way exchange.
+    ASSERT_NO_THROW(client.doDORA());
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+    // Remember address which the client has obtained.
+    IOAddress leased_address = client.config_.lease_.addr_;
+
+    // Modify client id. Because we have set the configuration flag which
+    // forces the server to lookup leases using the HW address, the
+    // client id modification should not matter and the client should
+    // obtain the same lease.
+    client.includeClientId("14:14");
+    // Obtain the lease using 4-way exchange.
+    ASSERT_NO_THROW(client.doDORA());
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Make sure that the server assigned the same address, even though the
+    // client id has changed.
+    EXPECT_EQ(leased_address, client.config_.lease_.addr_);
+}
+
+// This test checks that the record-client-id parameter doesn't have
+// effect on the lease lookup using the HW address.
+TEST_F(DORATest, changingHWAddress) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Configure DHCP server.
+    configure(DORA_CONFIGS[3], *client.getServer());
+    client.includeClientId("12:12");
+    client.setHWAddress("00:01:02:03:04:05");
+    // Obtain the lease using 4-way exchange.
+    ASSERT_NO_THROW(client.doDORA());
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+    // Remember address which the client has obtained.
+    IOAddress leased_address = client.config_.lease_.addr_;
+
+    // Modify HW address but leave client id in place. The value of the
+    // record-client-id set to false must not have any effect on the
+    // case when the HW address is changing. In such case the server will
+    // allocate the new address for the client.
+    client.setHWAddress("01:01:01:01:01:01");
+    // Obtain a lease.
+    ASSERT_NO_THROW(client.doDORA());
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Client must assign different address because the client id is
+    // ignored and the HW address was changed.
+    EXPECT_NE(client.config_.lease_.addr_, leased_address);
 }
 
 // This test checks the following scenario:
