@@ -1,4 +1,4 @@
-// Copyright (C) 2009,2015  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -84,7 +84,7 @@ public:
 
     ~TestDomainSocket() {
         socket_.close();
-        unlink(BUNDY_TEST_SOCKET_FILE);
+        remove(BUNDY_TEST_SOCKET_FILE);
     }
 
     static void acceptHandler(const asio::error_code&) {
@@ -164,8 +164,8 @@ class SessionTest : public ::testing::Test {
 protected:
     SessionTest() : sess(my_io_service), work(my_io_service) {
         // The TestDomainSocket is held as a 'new'-ed pointer,
-        // so we can call unlink() first.
-        unlink(BUNDY_TEST_SOCKET_FILE);
+        // so we can call remove() first.
+        remove(BUNDY_TEST_SOCKET_FILE);
         tds = new TestDomainSocket(my_io_service, BUNDY_TEST_SOCKET_FILE);
     }
 
