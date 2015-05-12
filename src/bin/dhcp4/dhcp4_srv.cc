@@ -1110,15 +1110,30 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     // and whether the client is known, i.e., has a lease.
     if (!fake_allocation && !opt_serverid && opt_requested_address) {
         Lease4Ptr lease;
-        if (hwaddr) {
-            lease = LeaseMgrFactory::instance().getLease4(*hwaddr,
-                                                          subnet->getID());
+        if (client_id) {
+            lease = LeaseMgrFactory::instance().getLease4(*client_id, subnet->getID());
         }
-        if (!lease && client_id) {
-            lease = LeaseMgrFactory::instance().getLease4(*client_id,
-                                                          subnet->getID());
+
+        if (!lease && hwaddr) {
+            lease = LeaseMgrFactory::instance().getLease4(*hwaddr, subnet->getID());
         }
-        // Got a lease so we can check the address.
+
+        // Check the first error case: unknown client. We check this before
+        // validating the address sent because we don't want to respond if
+        // we don't know this client.
+        if (!lease || !lease->belongsToClient(hwaddr, client_id)) {
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL,
+                      DHCP4_NO_LEASE_INIT_REBOOT)
+                .arg(hint.toText())
+                .arg(client_id ? client_id->toText():"(no client-id)")
+                .arg(hwaddr ? hwaddr->toText():"(no hwaddr info)");
+
+            ex.deleteResponse();
+            return;
+        }
+
+        // We know this client so we can now check if his notion of the
+        // IP address is correct.
         if (lease && (lease->addr_ != hint)) {
             LOG_DEBUG(bad_packet_logger, DBG_DHCP4_DETAIL,
                       DHCP4_PACKET_NAK_0002)
@@ -1127,17 +1142,6 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
 
             resp->setType(DHCPNAK);
             resp->setYiaddr(IOAddress::IPV4_ZERO_ADDRESS());
-            return;
-        }
-        // Now check the second error case: unknown client.
-        if (!lease) {
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL,
-                      DHCP4_NO_LEASE_INIT_REBOOT)
-                .arg(hint.toText())
-                .arg(client_id ? client_id->toText():"(no client-id)")
-                .arg(hwaddr ? hwaddr->toText():"(no hwaddr info)");
-
-            ex.deleteResponse();
             return;
         }
     }
