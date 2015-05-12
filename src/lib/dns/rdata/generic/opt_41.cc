@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -211,7 +211,9 @@ OPT::appendPseudoRR(uint16_t code, const uint8_t* data, uint16_t length) {
 
     boost::shared_ptr<std::vector<uint8_t> >
         option_data(new std::vector<uint8_t>(length));
-    std::memcpy(&(*option_data)[0], data, length);
+    if (length != 0) {
+        std::memcpy(&(*option_data)[0], data, length);
+    }
     impl_->pseudo_rrs_.push_back(PseudoRR(code, option_data));
     impl_->rdlength_ += length;
 }

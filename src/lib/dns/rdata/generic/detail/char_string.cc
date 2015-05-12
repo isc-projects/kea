@@ -186,6 +186,15 @@ int compareCharStrings(const detail::CharString& self,
     const size_t self_len = self[0];
     const size_t other_len = other[0];
     const size_t cmp_len = std::min(self_len, other_len);
+    if (cmp_len == 0) {
+        if (self_len < other_len) {
+            return (-1);
+        } else if (self_len > other_len) {
+            return (1);
+        } else {
+            return (0);
+        }
+    }
     const int cmp = std::memcmp(&self[1], &other[1], cmp_len);
     if (cmp < 0) {
         return (-1);
