@@ -2238,6 +2238,8 @@ TEST_F(Dhcp6ParserTest, optionDataEncapsulate) {
     // configuration manager sends whole configuration for the lists
     // where at least one element is being modified or added.
     config = "{ " + genIfaceConfig() + ","
+        "\"preferred-lifetime\": 3000,"
+        "\"valid-lifetime\": 4000,"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"

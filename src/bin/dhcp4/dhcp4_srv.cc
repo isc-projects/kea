@@ -108,11 +108,11 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
     // Hardware address.
     context_->hwaddr_ = query->getHWAddr();
 
-    // Set client identifier if the record-client-id flag is enabled (default).
+    // Set client identifier if the match-client-id flag is enabled (default).
     // If the subnet wasn't found it doesn't matter because we will not be
     // able to allocate a lease anyway so this context will not be used.
     if (subnet) {
-        if (subnet->getRecordClientId()) {
+        if (subnet->getMatchClientId()) {
             OptionPtr opt_clientid = query->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
             if (opt_clientid) {
                 context_->clientid_.reset(new ClientId(opt_clientid->getData()));
@@ -1135,7 +1135,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         // we don't know this client.
         /// @todo The client_id logged here should be the client_id from the message
         /// rather than effective client id which is null when the
-        /// record-client-id is set to false. This is addressed by the #3806
+        /// match-client-id is set to false. This is addressed by the #3806
         /// which is under review.
         if (!lease || !lease->belongsToClient(hwaddr, client_id)) {
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL,
@@ -1578,7 +1578,7 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
     /// sanityCheck(release, MANDATORY);
 
     // Try to find client-id. Note that for the DHCPRELEASE we don't check if the
-    // record-client-id configuration parameter is disabled because this parameter
+    // match-client-id configuration parameter is disabled because this parameter
     // is configured for subnets and we don't select subnet for the DHCPRELEASE.
     // Bogus clients usually generate new client identifiers when they first
     // connect to the network, so whatever client identifier has been used to

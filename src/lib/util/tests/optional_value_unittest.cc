@@ -47,7 +47,7 @@ TEST(OptionalValueTest, set) {
     ASSERT_FALSE(value.isSpecified());
 
     // Mark value "specified". The value itself should not change.
-    value.specify(true);
+    value.specify(OptionalValueState(true));
     ASSERT_EQ(100, value.get());
     ASSERT_TRUE(value.isSpecified());
 
@@ -57,7 +57,7 @@ TEST(OptionalValueTest, set) {
     ASSERT_TRUE(value.isSpecified());
 
     // Mark it "unspecified". The value should remain the same.
-    value.specify(false);
+    value.specify(OptionalValueState(false));
     ASSERT_EQ(5, value.get());
     ASSERT_FALSE(value.isSpecified());
 }
@@ -110,7 +110,7 @@ TEST(OptionalValueTest, equalityOperators) {
     EXPECT_FALSE(value == 123);
     EXPECT_TRUE(value != 123);
 
-    value.specify(true);
+    value.specify(OptionalValueState(true));
 
     EXPECT_TRUE(value == 10);
     EXPECT_FALSE(value != 10);
@@ -123,7 +123,7 @@ TEST(OptionalValueTest, equalityOperators) {
     EXPECT_FALSE(value == 10);
     EXPECT_TRUE(value != 10);
 
-    value.specify(false);
+    value.specify(OptionalValueState(false));
 
     EXPECT_FALSE(value == 123);
     EXPECT_TRUE(value != 123);

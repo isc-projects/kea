@@ -1102,9 +1102,9 @@ TEST_F(Dhcp4ParserTest, echoClientId) {
     CfgMgr::instance().echoClientId(true);
 }
 
-// This test checks that the global record-client-id parameter is optional
+// This test checks that the global match-client-id parameter is optional
 // and that values under the subnet are used.
-TEST_F(Dhcp4ParserTest, recordClientIdNoGlobal) {
+TEST_F(Dhcp4ParserTest, matchClientIdNoGlobal) {
     ConstElementPtr status;
 
     std::string config = "{ " + genIfaceConfig() + "," +
@@ -1112,12 +1112,12 @@ TEST_F(Dhcp4ParserTest, recordClientIdNoGlobal) {
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ "
         "{"
-        "    \"record-client-id\": true,"
+        "    \"match-client-id\": true,"
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\""
         "},"
         "{"
-        "    \"record-client-id\": false,"
+        "    \"match-client-id\": false,"
         "    \"pools\": [ { \"pool\": \"192.0.3.1 - 192.0.3.100\" } ],"
         "    \"subnet\": \"192.0.3.0/24\""
         "} ],"
@@ -1130,26 +1130,26 @@ TEST_F(Dhcp4ParserTest, recordClientIdNoGlobal) {
     CfgSubnets4Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
     Subnet4Ptr subnet1 = cfg->selectSubnet(IOAddress("192.0.2.1"));
     ASSERT_TRUE(subnet1);
-    EXPECT_TRUE(subnet1->getRecordClientId());
+    EXPECT_TRUE(subnet1->getMatchClientId());
 
     Subnet4Ptr subnet2 = cfg->selectSubnet(IOAddress("192.0.3.1"));
     ASSERT_TRUE(subnet2);
-    EXPECT_FALSE(subnet2->getRecordClientId());
+    EXPECT_FALSE(subnet2->getMatchClientId());
 }
 
-// This test checks that the global record-client-id parameter is used
+// This test checks that the global match-client-id parameter is used
 // when there is no such parameter under subnet and that the parameter
 // specified for a subnet overrides the global setting.
-TEST_F(Dhcp4ParserTest, recordClientIdGlobal) {
+TEST_F(Dhcp4ParserTest, matchClientIdGlobal) {
     ConstElementPtr status;
 
     std::string config = "{ " + genIfaceConfig() + "," +
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
-        "\"record-client-id\": true,"
+        "\"match-client-id\": true,"
         "\"subnet4\": [ "
         "{"
-        "    \"record-client-id\": false,"
+        "    \"match-client-id\": false,"
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\""
         "},"
@@ -1166,11 +1166,11 @@ TEST_F(Dhcp4ParserTest, recordClientIdGlobal) {
     CfgSubnets4Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
     Subnet4Ptr subnet1 = cfg->selectSubnet(IOAddress("192.0.2.1"));
     ASSERT_TRUE(subnet1);
-    EXPECT_FALSE(subnet1->getRecordClientId());
+    EXPECT_FALSE(subnet1->getMatchClientId());
 
     Subnet4Ptr subnet2 = cfg->selectSubnet(IOAddress("192.0.3.1"));
     ASSERT_TRUE(subnet2);
-    EXPECT_TRUE(subnet2->getRecordClientId());
+    EXPECT_TRUE(subnet2->getMatchClientId());
 }
 
 // This test checks if it is possible to override global values
@@ -2076,6 +2076,7 @@ TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
     // configuration manager sends whole configuration for the lists
     // where at least one element is being modified or added.
     config = "{ " + genIfaceConfig() + "," +
+        "\"valid-lifetime\": 3000,"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -2656,6 +2657,7 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
     // they should be included as sub-options in the 'vendor-opts'
     // option.
     config = "{ " + genIfaceConfig() + "," +
+        "\"valid-lifetime\": 3000,"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
