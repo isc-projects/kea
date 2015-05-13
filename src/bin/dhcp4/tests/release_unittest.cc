@@ -56,62 +56,6 @@ const char* RELEASE_CONFIGS[] = {
         "        \"space\": \"dhcp4\""
         "    } ]"
         " } ]"
-    "}",
-
-// Configuration 1
-    "{ \"interfaces-config\": {"
-        "      \"interfaces\": [ \"*\" ]"
-        "},"
-
-        "\"valid-lifetime\": 600,"
-        "\"subnet4\": [ { "
-        "    \"subnet\": \"192.0.2.0/24\", "
-        "    \"option-data\": [ {"
-        "        \"name\": \"routers\","
-        "        \"code\": 3,"
-        "        \"data\": \"192.0.2.200,192.0.2.201\","
-        "        \"csv-format\": true,"
-        "        \"space\": \"dhcp4\""
-        "    },"
-        "    {"
-        "        \"name\": \"domain-name-servers\","
-        "        \"code\": 6,"
-        "        \"data\": \"192.0.2.202,192.0.2.203\","
-        "        \"csv-format\": true,"
-        "        \"space\": \"dhcp4\""
-        "    },"
-        "    {"
-        "        \"name\": \"log-servers\","
-        "        \"code\": 7,"
-        "        \"data\": \"10.0.0.200,10.0.0.201\","
-        "        \"csv-format\": true,"
-        "        \"space\": \"dhcp4\""
-        "    },"
-        "    {"
-        "        \"name\": \"cookie-servers\","
-        "        \"code\": 8,"
-        "        \"data\": \"10.0.0.202,10.0.0.203\","
-        "        \"csv-format\": true,"
-        "        \"space\": \"dhcp4\""
-        "    } ]"
-        " } ]"
-    "}",
-
-// Configuration 2
-    "{ \"interfaces-config\": {"
-        "      \"interfaces\": [ \"*\" ]"
-        "},"
-        "\"valid-lifetime\": 600,"
-        "\"subnet4\": [ { "
-        "    \"subnet\": \"10.0.0.0/24\", "
-        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
-        "    \"reservations\": [ "
-        "       {"
-        "         \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
-        "         \"ip-address\": \"10.0.0.7\""
-        "       }"
-        "    ]"
-        "} ]"
     "}"
 };
 
@@ -190,6 +134,7 @@ ReleaseTest::successfulRelease(const std::string& hw_address_1,
                                const std::string& client_id_1,
                                const std::string& hw_address_2,
                                const std::string& client_id_2) {
+    CfgMgr::instance().clear();
     Dhcp4Client client(Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(RELEASE_CONFIGS[0], *client.getServer());
