@@ -59,10 +59,10 @@ namespace {
 ///     aa:bb:cc:dd:ee:ff, reserved address 10.0.0.7
 ///
 /// - Configuration 3:
-///   - Use for testing record-client-id flag
+///   - Use for testing match-client-id flag
 ///   - 1 subnet: 10.0.0.0/24
 ///   - 1 pool: 10.0.0.10-10.0.0.100
-///   - record-client-id flag is set to false, thus the server
+///   - match-client-id flag is set to false, thus the server
 ///     uses HW address for lease lookup, rather than client id
 const char* DORA_CONFIGS[] = {
 // Configuration 0
@@ -166,7 +166,7 @@ const char* DORA_CONFIGS[] = {
         "      \"interfaces\": [ \"*\" ]"
         "},"
         "\"valid-lifetime\": 600,"
-        "\"record-client-id\": false,"
+        "\"match-client-id\": false,"
         "\"subnet4\": [ { "
         "    \"subnet\": \"10.0.0.0/24\", "
         "    \"id\": 1,"
@@ -711,7 +711,7 @@ TEST_F(DORATest, reservation) {
     ASSERT_TRUE(subnet->inPool(Lease::TYPE_V4, clientB.config_.lease_.addr_));
 }
 
-// This test checks that setting the record-client-id value to false causes
+// This test checks that setting the match-client-id value to false causes
 // the server to ignore changing client identifier when the client is
 // using consistent HW address.
 TEST_F(DORATest, ignoreChangingClientId) {
@@ -747,7 +747,7 @@ TEST_F(DORATest, ignoreChangingClientId) {
     EXPECT_EQ(leased_address, client.config_.lease_.addr_);
 }
 
-// This test checks that the record-client-id parameter doesn't have
+// This test checks that the match-client-id parameter doesn't have
 // effect on the lease lookup using the HW address.
 TEST_F(DORATest, changingHWAddress) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
@@ -767,7 +767,7 @@ TEST_F(DORATest, changingHWAddress) {
     IOAddress leased_address = client.config_.lease_.addr_;
 
     // Modify HW address but leave client id in place. The value of the
-    // record-client-id set to false must not have any effect on the
+    // match-client-id set to false must not have any effect on the
     // case when the HW address is changing. In such case the server will
     // allocate the new address for the client.
     client.setHWAddress("01:01:01:01:01:01");

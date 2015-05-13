@@ -74,7 +74,7 @@
         "item_default": true
       },
 
-      { "item_name": "record-client-id",
+      { "item_name": "match-client-id",
         "item_type": "boolean",
         "item_optional": true,
         "item_default": true
@@ -275,7 +275,7 @@
                   "item_default": "0.0.0.0"
                 },
 
-                { "item_name": "record-client-id",
+                { "item_name": "match-client-id",
                   "item_type": "boolean",
                   "item_optional": true,
                   "item_default": true

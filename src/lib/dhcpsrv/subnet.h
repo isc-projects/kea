@@ -543,20 +543,20 @@ public:
     isc::asiolink::IOAddress getSiaddr() const;
 
     /// @brief Sets the flag indicating if the client identifier should be
-    /// recorded in the lease database.
+    /// used to identify the client's lease.
     ///
-    /// @param ignore If this value is true, the client identifiers are ignored
-    /// in the messages from the clients for this subnet.
-    void setRecordClientId(const bool record) {
-        record_client_id_ = record;
+    /// @param match If this value is true, the client identifiers are not
+    /// used for lease lookup.
+    void setMatchClientId(const bool match) {
+        match_client_id_ = match;
     }
 
     /// @brief Returns the flag indicating if the client identifiers should
-    /// be recorded in the lease database.
+    /// be used to identify the client's lease.
     ///
-    /// @return true if client identifiers should be recorded, false otherwise.
-    bool getRecordClientId() const {
-        return (record_client_id_);
+    /// @return true if client identifiers should be used, false otherwise.
+    bool getMatchClientId() const {
+        return (match_client_id_);
     }
 
 private:
@@ -578,8 +578,9 @@ private:
     /// @brief siaddr value for this subnet
     isc::asiolink::IOAddress siaddr_;
 
-    /// @brief Should server record client identifiers.
-    bool record_client_id_;
+    /// @brief Should server use client identifiers for client lease
+    /// lookup.
+    bool match_client_id_;
 };
 
 /// @brief A pointer to a @c Subnet4 object
