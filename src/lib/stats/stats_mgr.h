@@ -60,54 +60,54 @@ class StatsMgr : public boost::noncopyable {
     ///
     /// @{
 
-    /// @brief Records absolute integer observation
+    /// @brief Records absolute integer observation.
     ///
     /// @param name name of the observation
     /// @param value integer value observed
     /// @throw InvalidStatType if statistic is not integer
-    void setValue(const std::string& name, uint64_t value);
+    void setValue(const std::string& name, const uint64_t value);
 
-    /// @brief Records absolute floating point observation
+    /// @brief Records absolute floating point observation.
     ///
     /// @param name name of the observation
     /// @param value floating point value observed
     /// @throw InvalidStatType if statistic is not fp
-    void setValue(const std::string& name, double value);
+    void setValue(const std::string& name, const double value);
 
-    /// @brief Records absolute duration observation
+    /// @brief Records absolute duration observation.
     ///
     /// @param name name of the observation
     /// @param value duration value observed
     /// @throw InvalidStatType if statistic is not time duration
-    void setValue(const std::string& name, StatsDuration value);
+    void setValue(const std::string& name, const StatsDuration& value);
 
-    /// @brief Records absolute string observation
+    /// @brief Records absolute string observation.
     ///
     /// @param name name of the observation
     /// @param value string value observed
     /// @throw InvalidStatType if statistic is not a string
     void setValue(const std::string& name, const std::string& value);
 
-    /// @brief Records incremental integer observation
+    /// @brief Records incremental integer observation.
     ///
     /// @param name name of the observation
     /// @param value integer value observed
     /// @throw InvalidStatType if statistic is not integer
-    void addValue(const std::string& name, uint64_t value);
+    void addValue(const std::string& name, const uint64_t value);
 
-    /// @brief Records incremental floating point observation
+    /// @brief Records incremental floating point observation.
     ///
     /// @param name name of the observation
     /// @param value floating point value observed
     /// @throw InvalidStatType if statistic is not fp
-    void addValue(const std::string& name, double value);
+    void addValue(const std::string& name, const double value);
 
-    /// @brief Records incremental duration observation
+    /// @brief Records incremental duration observation.
     ///
     /// @param name name of the observation
     /// @param value duration value observed
     /// @throw InvalidStatType if statistic is not time duration
-    void addValue(const std::string& name, StatsDuration time);
+    void addValue(const std::string& name, const StatsDuration& time);
 
     /// @brief Records incremental string observation.
     ///
@@ -116,8 +116,7 @@ class StatsMgr : public boost::noncopyable {
     /// @throw InvalidStatType if statistic is not a string
     void addValue(const std::string& name, const std::string& value);
 
-    /// @brief determines whether a given statistic is kept as a single value
-    ///        or as a number of values
+    /// @brief Determines maximum age of samples.
     ///
     /// Specifies that statistic name should be stored not as a single value,
     /// but rather as a set of values. duration determines the timespan.
@@ -131,10 +130,9 @@ class StatsMgr : public boost::noncopyable {
     /// call setMaxSampleAge("incoming-packets", time_duration(0,5,0,0));
     /// to revert statistic to a single value, call:
     /// setMaxSampleAge("incoming-packets" time_duration(0,0,0,0))
-    void setMaxSampleAge(const std::string& name,
-                         boost::posix_time::time_duration duration);
+    void setMaxSampleAge(const std::string& name, const StatsDuration& duration);
 
-    /// @brief determines how many samples of a given statistic should be kept.
+    /// @brief Determines how many samples of a given statistic should be kept.
     ///
     /// Specifies that statistic name should be stored not as single value, but
     /// rather as a set of values. In this form, at most max_samples will be kept.
@@ -164,6 +162,7 @@ class StatsMgr : public boost::noncopyable {
     bool reset(const std::string& name);
 
     /// @brief Removes specified statistic.
+    ///
     /// @param name name of the statistic to be removed.
     /// @return true if successful, false if there's no such statistic
     bool del(const std::string& name);
@@ -175,20 +174,23 @@ class StatsMgr : public boost::noncopyable {
     void removeAll();
 
     /// @brief Returns number of available statistics.
+    ///
     /// @return number of recorded statistics.
     size_t count() const;
 
-    /// @brief Returns a single statistic as a JSON structure
+    /// @brief Returns a single statistic as a JSON structure.
+    ///
     /// @return JSON structures representing a single statistic
     isc::data::ConstElementPtr get(const std::string& name) const;
 
-    /// @brief Returns all statistics as a JSON structure
+    /// @brief Returns all statistics as a JSON structure.
+    ///
     /// @return JSON structures representing all statistics
     isc::data::ConstElementPtr getAll() const;
 
     /// @}
 
-    /// @brief Returns an observation
+    /// @brief Returns an observation.
     ///
     /// Used in testing only. Production code should use @ref get() method.
     /// @param name name of the statistic
@@ -197,13 +199,13 @@ class StatsMgr : public boost::noncopyable {
 
  private:
 
-    /// @brief Sets a given statistic to specified value (internal version)
+    /// @brief Sets a given statistic to specified value (internal version).
     ///
     /// This template method sets statistic identified by name to a value
     /// specified by value. This internal method is used by public @ref setValue
     /// methods.
     ///
-    /// @tparam DataType one of uint64_t, double DurationStat or string
+    /// @tparam DataType one of uint64_t, double, StatsDuration or string
     /// @param name name of the statistic
     /// @param value specified statistic will be set to this value
     /// @throw InvalidStatType is statistic exists and has a different type.
@@ -218,13 +220,13 @@ class StatsMgr : public boost::noncopyable {
         }
     }
 
-    /// @brief Adds specified value to a given statistic (internal version)
+    /// @brief Adds specified value to a given statistic (internal version).
     ///
     /// This template method adds specified value to a given statistic (identified
     /// by name to a value). This internal method is used by public @ref setValue
     /// methods.
     ///
-    /// @tparam DataType one of uint64_t, double DurationStat or string
+    /// @tparam DataType one of uint64_t, double, StatsDuration or string
     /// @param name name of the statistic
     /// @param value specified statistic will be set to this value
     /// @throw InvalidStatType is statistic exists and has a different type.
@@ -244,25 +246,25 @@ class StatsMgr : public boost::noncopyable {
         }
     }
 
-    /// @brief Private constructor
+    /// @brief Private constructor.
     /// StatsMgr is a singleton. It should be accessed using @ref instance
     /// method.
     StatsMgr();
 
-    /// @brief Adds a new observation
+    /// @brief Adds a new observation.
     ///
     /// That's an utility method used by public @ref setValue() and
     /// @ref addValue() methods.
     /// @param obs observation
     void addObservation(const ObservationPtr& o);
 
-    /// @brief Tries to delete an observation
+    /// @brief Tries to delete an observation.
     ///
     /// @param name of the statistic to be deleted
     /// @return true if deleted, false if not found
     bool deleteObservation(const std::string& name);
 
-    // This is a global context. All stats will initially be stored here.
+    // This is a global context. All statistics will initially be stored here.
     StatContextPtr global_;
 };
 

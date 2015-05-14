@@ -30,30 +30,30 @@ StatsMgr::StatsMgr()
 
 }
 
-void StatsMgr::setValue(const std::string& name, uint64_t value) {
+void StatsMgr::setValue(const std::string& name, const uint64_t value) {
     setValueInternal(name, value);
 }
 
-void StatsMgr::setValue(const std::string& name, double value) {
+void StatsMgr::setValue(const std::string& name, const double value) {
     setValueInternal(name, value);
 }
 
-void StatsMgr::setValue(const std::string& name, StatsDuration value) {
+void StatsMgr::setValue(const std::string& name, const StatsDuration& value) {
     setValueInternal(name, value);
 }
 void StatsMgr::setValue(const std::string& name, const std::string& value) {
     setValueInternal(name, value);
 }
 
-void StatsMgr::addValue(const std::string& name, uint64_t value) {
+void StatsMgr::addValue(const std::string& name, const uint64_t value) {
     addValueInternal(name, value);
 }
 
-void StatsMgr::addValue(const std::string& name, double value) {
+void StatsMgr::addValue(const std::string& name, const double value) {
     addValueInternal(name, value);
 }
 
-void StatsMgr::addValue(const std::string& name, StatsDuration value) {
+void StatsMgr::addValue(const std::string& name, const StatsDuration& value) {
     addValueInternal(name, value);
 }
 
@@ -63,24 +63,24 @@ void StatsMgr::addValue(const std::string& name, const std::string& value) {
 
 ObservationPtr StatsMgr::getObservation(const std::string& name) const {
     /// @todo: Implement contexts.
-    // Currently we keep everyting is a global context.
+    // Currently we keep everyting in a global context.
     return (global_->get(name));
 }
 
 void StatsMgr::addObservation(const ObservationPtr& stat) {
     /// @todo: Implement contexts.
-    // Currently we keep everyting is a global context.
+    // Currently we keep everyting in a global context.
     return (global_->add(stat));
 }
 
 bool StatsMgr::deleteObservation(const std::string& name) {
     /// @todo: Implement contexts.
-    // Currently we keep everyting is a global context.
+    // Currently we keep everyting in a global context.
     return (global_->del(name));
 }
 
 void StatsMgr::setMaxSampleAge(const std::string& ,
-                               boost::posix_time::time_duration) {
+                               const StatsDuration&) {
     isc_throw(NotImplemented, "setMaxSampleAge not implemented");
 }
 
