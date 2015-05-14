@@ -16,9 +16,10 @@
 
 #include <stats/stats_mgr.h>
 #include <exceptions/exceptions.h>
+#include <cc/data.h>
+#include <util/boost_time_utils.h>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/shared_ptr.hpp>
-#include <cc/data.h>
 #include <gtest/gtest.h>
 
 #include <iostream>
@@ -31,12 +32,20 @@ using namespace boost::posix_time;
 
 namespace {
 
+/// @brief Fixture class for StatsMgr testing
+///
+/// Very simple class that makes sure that StatsMgr is indeed instantiated
+/// before the test and any statistics are wiped out after it.
 class StatsMgrTest : public ::testing::Test {
 public:
+    /// @brief Constructor
+    /// Makes sure that the Statistics Manager is instantiated.
     StatsMgrTest() {
         StatsMgr::instance();
     }
 
+    /// @brief Destructor
+    /// Removes all statistics.
     ~StatsMgrTest() {
         StatsMgr::instance().removeAll();
     }
@@ -60,10 +69,10 @@ TEST_F(StatsMgrTest, integerStat) {
 
     ObservationPtr alpha;
     EXPECT_NO_THROW(alpha = StatsMgr::instance().getObservation("alpha"));
-    EXPECT_TRUE(alpha);
+    ASSERT_TRUE(alpha);
 
     std::string exp = "{ \"alpha\": [ [ 1234, \""
-        + Observation::ptimeToText(alpha->getInteger().second) + "\" ] ] }";
+        + isc::util::ptimeToText(alpha->getInteger().second) + "\" ] ] }";
 
     EXPECT_EQ(exp, StatsMgr::instance().get("alpha")->str());
 }
@@ -75,10 +84,10 @@ TEST_F(StatsMgrTest, floatStat) {
 
     ObservationPtr beta;
     EXPECT_NO_THROW(beta = StatsMgr::instance().getObservation("beta"));
-    EXPECT_TRUE(beta);
+    ASSERT_TRUE(beta);
 
     std::string exp = "{ \"beta\": [ [ 12.34, \""
-        + Observation::ptimeToText(beta->getFloat().second) + "\" ] ] }";
+        + isc::util::ptimeToText(beta->getFloat().second) + "\" ] ] }";
 
     EXPECT_EQ(exp, StatsMgr::instance().get("beta")->str());
 }
@@ -91,10 +100,10 @@ TEST_F(StatsMgrTest, durationStat) {
 
     ObservationPtr gamma;
     EXPECT_NO_THROW(gamma = StatsMgr::instance().getObservation("gamma"));
-    EXPECT_TRUE(gamma);
+    ASSERT_TRUE(gamma);
 
     std::string exp = "{ \"gamma\": [ [ \"01:02:03.000004\", \""
-        + Observation::ptimeToText(gamma->getDuration().second) + "\" ] ] }";
+        + isc::util::ptimeToText(gamma->getDuration().second) + "\" ] ] }";
 
     EXPECT_EQ(exp, StatsMgr::instance().get("gamma")->str());
 }
@@ -107,10 +116,10 @@ TEST_F(StatsMgrTest, stringStat) {
 
     ObservationPtr delta;
     EXPECT_NO_THROW(delta = StatsMgr::instance().getObservation("delta"));
-    EXPECT_TRUE(delta);
+    ASSERT_TRUE(delta);
 
     std::string exp = "{ \"delta\": [ [ \"Lorem ipsum\", \""
-        + Observation::ptimeToText(delta->getString().second) + "\" ] ] }";
+        + isc::util::ptimeToText(delta->getString().second) + "\" ] ] }";
 
     EXPECT_EQ(exp, StatsMgr::instance().get("delta")->str());
 }
@@ -157,16 +166,16 @@ TEST_F(StatsMgrTest, getGetAll) {
     ASSERT_TRUE(rep_delta);
 
     std::string exp_str_alpha = "[ [ 6912, \""
-        + Observation::ptimeToText(StatsMgr::instance().getObservation("alpha")
+        + isc::util::ptimeToText(StatsMgr::instance().getObservation("alpha")
                                    ->getInteger().second) + "\" ] ]";
     std::string exp_str_beta = "[ [ 69.12, \""
-        + Observation::ptimeToText(StatsMgr::instance().getObservation("beta")
+        + isc::util::ptimeToText(StatsMgr::instance().getObservation("beta")
                                    ->getFloat().second) + "\" ] ]";
     std::string exp_str_gamma = "[ [ \"06:08:10.000012\", \""
-        + Observation::ptimeToText(StatsMgr::instance().getObservation("gamma")
+        + isc::util::ptimeToText(StatsMgr::instance().getObservation("gamma")
                                    ->getDuration().second) + "\" ] ]";
     std::string exp_str_delta = "[ [ \"Lorem ipsum\", \""
-        + Observation::ptimeToText(StatsMgr::instance().getObservation("delta")
+        + isc::util::ptimeToText(StatsMgr::instance().getObservation("delta")
                                    ->getString().second) + "\" ] ]";
 
     // Check that individual stats are reported properly
@@ -181,8 +190,6 @@ TEST_F(StatsMgrTest, getGetAll) {
     // Check that all of them can be reported at once
     ConstElementPtr rep_all = StatsMgr::instance().getAll();
     ASSERT_TRUE(rep_all);
-
-    std::cout << rep_all->str() << std::endl;
 
     // Verifying this is a bit more involved, as we don't know whether the
     // order would be preserved or not.
@@ -305,7 +312,7 @@ TEST_F(StatsMgrTest, DISABLED_performanceSingleAdd) {
     time_duration dur = after - before;
 
     std::cout << "Incrementing a single statistic " << cycles << " times took: "
-              << Observation::durationToText(dur) << std::endl;
+              << isc::util::durationToText(dur) << std::endl;
 }
 
 // This is a performance benchmark that checks how long does it take
@@ -327,7 +334,7 @@ TEST_F(StatsMgrTest, DISABLED_performanceSingleSet) {
     time_duration dur = after - before;
 
     std::cout << "Setting a single statistic " << cycles << " times took: "
-              << Observation::durationToText(dur) << std::endl;
+              << isc::util::durationToText(dur) << std::endl;
 }
 
 // This is a performance benchmark that checks how long does it take to
@@ -357,7 +364,7 @@ TEST_F(StatsMgrTest, DISABLED_performanceMultipleAdd) {
     time_duration dur = after - before;
 
     std::cout << "Incrementing one of " << stats << " statistics " << cycles
-              << " times took: " << Observation::durationToText(dur) << std::endl;
+              << " times took: " << isc::util::durationToText(dur) << std::endl;
 }
 
 // This is a performance benchmark that checks how long does it take to
@@ -387,7 +394,7 @@ TEST_F(StatsMgrTest, DISABLED_performanceMultipleSet) {
     time_duration dur = after - before;
 
     std::cout << "Setting one of " << stats << " statistics " << cycles
-              << " times took: " << Observation::durationToText(dur) << std::endl;
+              << " times took: " << isc::util::durationToText(dur) << std::endl;
 }
 
 };

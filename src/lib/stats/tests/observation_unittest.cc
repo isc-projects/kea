@@ -16,7 +16,7 @@
 
 #include <stats/observation.h>
 #include <exceptions/exceptions.h>
-
+#include <util/boost_time_utils.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <gtest/gtest.h>
@@ -32,8 +32,15 @@ using namespace boost::posix_time;
 
 namespace {
 
+/// @brief Test class for Observation
+///
+/// This simple fixture class initializes four observations:
+/// a (integer), b (float), c(time duration) and d (string).
 class ObservationTest : public ::testing::Test {
 public:
+
+    /// @brief Constructor
+    /// Initializes four observations.
     ObservationTest()
         :a("alpha", static_cast<uint64_t>(1234)), // integer
          b("beta", 12.34), // float
@@ -47,8 +54,8 @@ public:
     Observation d;
 };
 
-// Basic tests for V4 functionality. This test checks whether parameters
-// passed to constructor initialize the object properly.
+// Basic tests for the Obseration constructors. This test checks whether
+// parameters passed to the constructor initialize the object properly.
 TEST_F(ObservationTest, constructor) {
 
     EXPECT_EQ(Observation::STAT_INTEGER, a.getType());
@@ -137,12 +144,12 @@ TEST_F(ObservationTest, addValue) {
 
 // Test checks whether timing is reported properly.
 TEST_F(ObservationTest, timers) {
-    ptime min = microsec_clock::local_time();
-    b.setValue(123.0); // set it to a random value
+    ptime before = microsec_clock::local_time();
+    b.setValue(123.0); // Set it to a random value and record the time.
 
-    // Allow a bit of inprecision. This test allows 5ms. That's ok, when running
-    // on virtual machines.
-    ptime max = min + millisec::time_duration(0,0,0,5);
+    // Allow a bit of inprecision. This test allows 50ms. That should be ok,
+    // when running on virtual machines.
+    ptime after = before + millisec::time_duration(0,0,0,50);
 
     // Now wait some time. We want to confirm that the timestamp recorded is the
     // time the observation took place, not current time.
@@ -150,9 +157,10 @@ TEST_F(ObservationTest, timers) {
 
     FloatSample sample = b.getFloat();
 
-    // Let's check that the timestamp is within (min,max) range.
-    EXPECT_TRUE(min <= sample.second);
-    EXPECT_TRUE(sample.second <= max);
+    // Let's check that the timestamp is within (before,after) range:
+    // before < sample-time < after
+    EXPECT_TRUE(before <= sample.second);
+    EXPECT_TRUE(sample.second <= after);
 }
 
 // Checks whether an integer statistic can generate proper JSON structures.
@@ -162,7 +170,7 @@ TEST_F(ObservationTest, integerToJSON) {
     a.setValue(static_cast<uint64_t>(1234));
 
     std::string exp = "[ [ 1234, \""
-        + Observation::ptimeToText(a.getInteger().second) + "\" ] ]";
+        + isc::util::ptimeToText(a.getInteger().second) + "\" ] ]";
 
     std::cout << a.getJSON()->str() << std::endl;
     EXPECT_EQ(exp, a.getJSON()->str());
@@ -177,7 +185,7 @@ TEST_F(ObservationTest, floatToJSON) {
     b.setValue(1234.5);
 
     std::string exp = "[ [ 1234.5, \""
-        + Observation::ptimeToText(b.getFloat().second) + "\" ] ]";
+        + isc::util::ptimeToText(b.getFloat().second) + "\" ] ]";
 
     std::cout << b.getJSON()->str() << std::endl;
     EXPECT_EQ(exp, b.getJSON()->str());
@@ -191,7 +199,7 @@ TEST_F(ObservationTest, durationToJSON) {
     c.setValue(time_duration(1,2,3,4));
 
     std::string exp = "[ [ \"01:02:03.000004\", \""
-        + Observation::ptimeToText(c.getDuration().second) + "\" ] ]";
+        + isc::util::ptimeToText(c.getDuration().second) + "\" ] ]";
 
     std::cout << c.getJSON()->str() << std::endl;
     EXPECT_EQ(exp, c.getJSON()->str());
@@ -205,7 +213,7 @@ TEST_F(ObservationTest, stringToJSON) {
     d.setValue("Lorem ipsum dolor sit amet");
 
     std::string exp = "[ [ \"Lorem ipsum dolor sit amet\", \""
-        + Observation::ptimeToText(d.getString().second) + "\" ] ]";
+        + isc::util::ptimeToText(d.getString().second) + "\" ] ]";
 
     std::cout << d.getJSON()->str() << std::endl;
     EXPECT_EQ(exp, d.getJSON()->str());

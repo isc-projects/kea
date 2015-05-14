@@ -9,7 +9,8 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
 lib_LTLIBRARIES = libkea-util.la
-libkea_util_la_SOURCES  = csv_file.h csv_file.cc
+libkea_util_la_SOURCES  = boost_time_utils.h boost_time_utils.cc
+libkea_util_la_SOURCES += csv_file.h csv_file.cc
 libkea_util_la_SOURCES += filename.h filename.cc
 libkea_util_la_SOURCES += locks.h lru_list.h
 libkea_util_la_SOURCES += strutil.h strutil.cc
