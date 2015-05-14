@@ -25,8 +25,8 @@ libstats_unittests_CXXFLAGS = $(AM_CXXFLAGS)
 libstats_unittests_LDADD  = $(top_builddir)/src/lib/stats/libkea-stats.la
 libstats_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libstats_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
+libstats_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 libstats_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-libstats_unittests_LDADD  += -lboost_date_time
 libstats_unittests_LDADD += $(GTEST_LDADD)
 
 endif

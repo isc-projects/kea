@@ -1,6 +1,22 @@
-#include <boost/date_time/posix_time/posix_time.hpp>
+// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 #include <stats/observation.h>
+#include <util/boost_time_utils.h>
 #include <cc/data.h>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/date_time/gregorian/gregorian.hpp>
 #include <utility>
 
 using namespace std;
@@ -10,17 +26,17 @@ using namespace boost::posix_time;
 namespace isc {
 namespace stats {
 
-Observation::Observation(const std::string& name, uint64_t value)
+Observation::Observation(const std::string& name, const uint64_t value)
     :name_(name), type_(STAT_INTEGER) {
     setValue(value);
 }
 
-Observation::Observation(const std::string& name, double value)
+Observation::Observation(const std::string& name, const double value)
     :name_(name), type_(STAT_FLOAT) {
     setValue(value);
 }
 
-Observation::Observation(const std::string& name, StatsDuration value)
+Observation::Observation(const std::string& name, const StatsDuration value)
     :name_(name), type_(STAT_DURATION) {
     setValue(value);
 }
@@ -30,17 +46,17 @@ Observation::Observation(const std::string& name, const std::string& value)
     setValue(value);
 }
 
-void Observation::addValue(uint64_t value) {
+void Observation::addValue(const uint64_t value) {
     IntegerSample current = getInteger();
     setValue(current.first + value);
 }
 
-void Observation::addValue(double value) {
+void Observation::addValue(const double value) {
     FloatSample current = getFloat();
     setValue(current.first + value);
 }
 
-void Observation::addValue(StatsDuration value) {
+void Observation::addValue(const StatsDuration& value) {
     DurationSample current = getDuration();
     setValue(current.first + value);
 }
@@ -50,15 +66,15 @@ void Observation::addValue(const std::string& value) {
     setValue(current.first + value);
 }
 
-void Observation::setValue(uint64_t value) {
+void Observation::setValue(const uint64_t value) {
     setValueInternal(value, integer_samples_, STAT_INTEGER);
 }
 
-void Observation::setValue(double value) {
+void Observation::setValue(const double value) {
     setValueInternal(value, float_samples_, STAT_FLOAT);
 }
 
-void Observation::setValue(StatsDuration value) {
+void Observation::setValue(const StatsDuration& value) {
     setValueInternal(value, duration_samples_, STAT_DURATION);
 }
 
@@ -140,20 +156,6 @@ std::string Observation::typeToText(Type type) {
     return (tmp.str());
 }
 
-std::string
-Observation::ptimeToText(ptime t) {
-
-    // The alternative would be to call to_simple_string(ptime), but unfortunately
-    // that requires linking with boost libraries.
-
-    return (to_simple_string(t));
-}
-
-std::string
-Observation::durationToText(StatsDuration dur) {
-    return (to_simple_string(dur));
-}
-
 isc::data::ConstElementPtr
 Observation::getJSON() const {
 
@@ -168,29 +170,30 @@ Observation::getJSON() const {
     case STAT_INTEGER: {
         IntegerSample s = getInteger();
         value = isc::data::Element::create(static_cast<int64_t>(s.first));
-        timestamp = isc::data::Element::create(ptimeToText(s.second));
+        timestamp = isc::data::Element::create(isc::util::ptimeToText(s.second));
         break;
     }
     case STAT_FLOAT: {
         FloatSample s = getFloat();
         value = isc::data::Element::create(s.first);
-        timestamp = isc::data::Element::create(ptimeToText(s.second));
+        timestamp = isc::data::Element::create(isc::util::ptimeToText(s.second));
         break;
     }
     case STAT_DURATION: {
         DurationSample s = getDuration();
-        value = isc::data::Element::create(durationToText(s.first));
-        timestamp = isc::data::Element::create(ptimeToText(s.second));
+        value = isc::data::Element::create(isc::util::durationToText(s.first));
+        timestamp = isc::data::Element::create(isc::util::ptimeToText(s.second));
         break;
     }
     case STAT_STRING: {
         StringSample s = getString();
         value = isc::data::Element::create(s.first);
-        timestamp = isc::data::Element::create(ptimeToText(s.second));
+        timestamp = isc::data::Element::create(isc::util::ptimeToText(s.second));
         break;
     }
     default:
-        isc_throw(InvalidStatType, "Unknown stat type: " << typeToText(type_));
+        isc_throw(InvalidStatType, "Unknown statistic type: "
+                  << typeToText(type_));
     };
 
     entry->add(value);
@@ -221,7 +224,8 @@ void Observation::reset() {
         return;
     }
     default:
-        isc_throw(InvalidStatType, "Unknown stat type: " << typeToText(type_));
+        isc_throw(InvalidStatType, "Unknown statistic type: "
+                  << typeToText(type_));
     };
 }
 

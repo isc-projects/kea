@@ -15,12 +15,13 @@
 #ifndef OBSERVATION_H
 #define OBSERVATION_H
 
-#include <boost/shared_ptr.hpp>
-#include <exceptions/exceptions.h>
 #include <cc/data.h>
+#include <exceptions/exceptions.h>
+#include <boost/shared_ptr.hpp>
 #include <boost/date_time/time_duration.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <list>
+#include <stdint.h>
 
 namespace isc {
 namespace stats {
@@ -37,11 +38,7 @@ public:
 
 /// @brief Defines duration resolution
 ///
-/// Boost offers a base boost::posix_time::time_duration class, that has specific
-/// implementations: boost::posix_time::{hours,minutes,seconds,millisec,microsec,
-/// nanosec}. For statistics purposes, the most appropriate choice seems to be
-/// microseconds precision, so we'll stick with that.
-typedef boost::posix_time::microsec::time_duration StatsDuration;
+typedef boost::posix_time::time_duration StatsDuration;
 
 /// @defgroup stat_samples Specifies supported observation types.
 ///
@@ -101,19 +98,19 @@ class Observation {
     ///
     /// @param name observation name
     /// @param value integer value observed.
-    Observation(const std::string& name, uint64_t value);
+    Observation(const std::string& name, const uint64_t value);
 
     /// @brief Constructor for floating point observations
     ///
     /// @param name observation name
     /// @param value floating point value observed.
-    Observation(const std::string& name, double value);
+    Observation(const std::string& name, const double value);
 
     /// @brief Constructor for duration observations
     ///
     /// @param name observation name
     /// @param value duration observed.
-    Observation(const std::string& name, StatsDuration value);
+    Observation(const std::string& name, const StatsDuration value);
 
     /// @brief Constructor for string observations
     ///
@@ -125,43 +122,43 @@ class Observation {
     ///
     /// @param value integer value observed
     /// @throw InvalidStatType if statistic is not integer
-    void setValue(uint64_t value);
+    void setValue(const uint64_t value);
 
     /// @brief Records absolute floating point observation
     ///
     /// @param value floating point value observed
     /// @throw InvalidStatType if statistic is not fp
-    void setValue(double value);
+    void setValue(const double value);
 
     /// @brief Records absolute duration observation
     ///
     /// @param value duration value observed
     /// @throw InvalidStatType if statistic is not time duration
-    void setValue(StatsDuration duration);
+    void setValue(const StatsDuration& duration);
 
     /// @brief Records absolute string observation
     ///
     /// @param value string value observed
     /// @throw InvalidStatType if statistic is not a string
-    void setValue(const std::string& value = "");
+    void setValue(const std::string& value);
 
     /// @brief Records incremental integer observation
     ///
     /// @param value integer value observed
     /// @throw InvalidStatType if statistic is not integer
-    void addValue(uint64_t value = 1);
+    void addValue(const uint64_t value = 1);
 
     /// @brief Records incremental floating point observation
     ///
     /// @param value floating point value observed
     /// @throw InvalidStatType if statistic is not fp
-    void addValue(double value = 1.0f);
+    void addValue(const double value = 1.0f);
 
     /// @brief Records incremental duration observation
     ///
     /// @param value duration value observed
     /// @throw InvalidStatType if statistic is not time duration
-    void addValue(StatsDuration value = StatsDuration(0,0,0,0));
+    void addValue(const StatsDuration& value = StatsDuration(0,0,1,0));
 
     /// @brief Records incremental string observation.
     ///
@@ -208,20 +205,12 @@ class Observation {
     /// @return textual name of statistic type
     static std::string typeToText(Type type);
 
-    /// @brief Converts ptime structure to text
-    /// @return a string representing time
-    static std::string ptimeToText(boost::posix_time::ptime time);
-
-    /// @brief Converts StatsDuration to text
-    /// @return a string representing time
-    static std::string durationToText(StatsDuration dur);
-
     /// @brief Returns observation name
     std::string getName() const {
         return (name_);
     }
 
- protected:
+private:
     /// @brief Records absolute sample (internal version)
     ///
     /// This method records an absolute value of an observation.
@@ -238,7 +227,7 @@ class Observation {
     void setValueInternal(SampleType value, StorageType& storage,
                           Type exp_type);
 
-    /// @brief Returns a sample
+    /// @brief Returns a sample (internal version)
     ///
     /// @tparam SampleType type of sample (e.g. IntegerSample)
     /// @tparam StorageType type of storage (e.g. list<IntegerSample>)
