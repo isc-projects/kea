@@ -180,15 +180,15 @@
           </listitem>
           <listitem>
             <simpara><command>kea-dhcp4.hooks</command> - this logger is used
-            by the hooks framework to log messages related to the execution of
-            callouts for various hook points. This logger doesn't log messages
-            which pertain to actions on the server side being the result of
-            the callout execution, e.g. skipping packet parsing by the server
+            by the libkea-hooks library to log messages related to the execution
+            of callouts for various hook points. This logger doesn't log messages
+            pertaining to actions on the server, being the result of the
+            callout execution, e.g. skipping packet parsing by the server
             because the callout has indicated that it has parsed the packet
             already.</simpara>
           </listitem>
           <listitem>
-            <simpara><command>kea-dhcp4.hostname</command> - this logger is
+            <simpara><command>kea-dhcp4.ddns</command> - this logger is
             used by the DHCPv4 server to log messages related to the Client
             FQDN and Hostname option processing. It also includes log messages
             related to the relevant DNS updates.</simpara>
@@ -200,11 +200,10 @@
             and adding new reservations.</simpara>
           </listitem>
           <listitem>
-            <simpara><command>kea-dhcp4.lease</command> - this logger is used
+            <simpara><command>kea-dhcp4.leases</command> - this logger is used
             by the DHCPv4 server to log messages related to the lease allocation.
-            These messages are logged for each processed packet. The messages
-            include detailed information about the allocated or offered leases,
-            errors during the lease allocation etc.
+            The messages include detailed information about the allocated or
+            offered leases, errors during the lease allocation etc.
             </simpara>
           </listitem>
           <listitem>
@@ -215,7 +214,7 @@
             using options contained in the received packets.</simpara>
           </listitem>
           <listitem>
-            <simpara><command>kea-dhcp4.packet</command> - this logger
+            <simpara><command>kea-dhcp4.packets</command> - this logger
             is mostly used to log messages related to transmission of the DHCPv4
             packets, i.e. packet reception and sending a response. Such messages
             include the information about the source and destination IP addresses
@@ -227,7 +226,7 @@
             </simpara>
           </listitem>
           <listitem>
-            <simpara><command>kea-dhcp4.server-hook</command> - this logger is
+            <simpara><command>kea-dhcp4.server-hooks</command> - this logger is
             used by the DHCPv4 server to log messages pertaining to the
             preparations for the callouts execution by the server and to the
             actions taken by the server as a result of the callouts execution.

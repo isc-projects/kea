@@ -883,7 +883,7 @@ Dhcpv4Srv::processClientName(Dhcpv4Exchange& ex) {
         Option4ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>
             (ex.getQuery()->getOption(DHO_FQDN));
         if (fqdn) {
-            LOG_DEBUG(hostname_logger, DBG_DHCP4_DETAIL, DHCP4_CLIENT_FQDN_PROCESS)
+            LOG_DEBUG(ddns_logger, DBG_DHCP4_DETAIL, DHCP4_CLIENT_FQDN_PROCESS)
                 .arg(ex.getQuery()->getLabel());
             processClientFqdnOption(ex);
 
@@ -891,7 +891,7 @@ Dhcpv4Srv::processClientName(Dhcpv4Exchange& ex) {
             OptionStringPtr hostname = boost::dynamic_pointer_cast<OptionString>
                 (ex.getQuery()->getOption(DHO_HOST_NAME));
             if (hostname) {
-                LOG_DEBUG(hostname_logger, DBG_DHCP4_DETAIL, DHCP4_CLIENT_HOSTNAME_PROCESS)
+                LOG_DEBUG(ddns_logger, DBG_DHCP4_DETAIL, DHCP4_CLIENT_HOSTNAME_PROCESS)
                     .arg(ex.getQuery()->getLabel());
                 processHostnameOption(ex);
             }
@@ -905,7 +905,7 @@ Dhcpv4Srv::processClientName(Dhcpv4Exchange& ex) {
         // from the log. We don't want to throw an exception here because,
         // it will impact the processing of the whole packet. We rather want
         // the processing to continue, even if the client's name is wrong.
-        LOG_DEBUG(hostname_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_CLIENT_NAME_PROC_FAIL)
+        LOG_DEBUG(ddns_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_CLIENT_NAME_PROC_FAIL)
             .arg(ex.getQuery()->getLabel())
             .arg(e.what());
     }
@@ -917,7 +917,7 @@ Dhcpv4Srv::processClientFqdnOption(Dhcpv4Exchange& ex) {
     Option4ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
         Option4ClientFqdn>(ex.getQuery()->getOption(DHO_FQDN));
 
-    LOG_DEBUG(hostname_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_CLIENT_FQDN_DATA)
+    LOG_DEBUG(ddns_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_CLIENT_FQDN_DATA)
         .arg(ex.getQuery()->getLabel())
         .arg(fqdn->toText());
 
@@ -957,7 +957,7 @@ Dhcpv4Srv::processClientFqdnOption(Dhcpv4Exchange& ex) {
     // If we don't store the option in the response message, we will have to
     // propagate it in the different way to the functions which acquire the
     // lease. This would require modifications to the API of this class.
-    LOG_DEBUG(hostname_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_RESPONSE_FQDN_DATA)
+    LOG_DEBUG(ddns_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_RESPONSE_FQDN_DATA)
         .arg(ex.getQuery()->getLabel())
         .arg(fqdn_resp->toText());
     ex.getResponse()->addOption(fqdn_resp);
@@ -969,7 +969,7 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
     OptionStringPtr opt_hostname = boost::dynamic_pointer_cast<OptionString>
         (ex.getQuery()->getOption(DHO_HOST_NAME));
 
-    LOG_DEBUG(hostname_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_CLIENT_HOSTNAME_DATA)
+    LOG_DEBUG(ddns_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_CLIENT_HOSTNAME_DATA)
         .arg(ex.getQuery()->getLabel())
         .arg(opt_hostname->getValue());
 
@@ -988,7 +988,7 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
     /// @todo It would be more liberal to accept this and let it fall into
     /// the case  of replace or less than two below.
     if (label_count == 0) {
-        LOG_DEBUG(hostname_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_EMPTY_HOSTNAME)
+        LOG_DEBUG(ddns_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_EMPTY_HOSTNAME)
             .arg(ex.getQuery()->getLabel());
         return;
     }
@@ -1033,7 +1033,7 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
         opt_hostname_resp->setValue(d2_mgr.qualifyName(hostname, false));
     }
     
-    LOG_DEBUG(hostname_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_RESPONSE_HOSTNAME_DATA)
+    LOG_DEBUG(ddns_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_RESPONSE_HOSTNAME_DATA)
         .arg(ex.getQuery()->getLabel())
         .arg(opt_hostname_resp->getValue());
     ex.getResponse()->addOption(opt_hostname_resp);
@@ -1101,7 +1101,7 @@ queueNameChangeRequest(const isc::dhcp_ddns::NameChangeType chg_type,
     try {
         dhcid  = computeDhcid(lease);
     } catch (const DhcidComputeError& ex) {
-        LOG_ERROR(hostname_logger, DHCP4_DHCID_COMPUTE_ERROR)
+        LOG_ERROR(ddns_logger, DHCP4_DHCID_COMPUTE_ERROR)
             .arg(lease->toText())
             .arg(ex.what());
         return;
@@ -1117,7 +1117,7 @@ queueNameChangeRequest(const isc::dhcp_ddns::NameChangeType chg_type,
                                                     lease->valid_lft_),
                                                    lease->valid_lft_));
 
-    LOG_DEBUG(hostname_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_QUEUE_NCR)
+    LOG_DEBUG(ddns_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_QUEUE_NCR)
         .arg(chg_type == CHG_ADD ? "add" : "remove")
         .arg(ncr->toText());
 
@@ -1311,7 +1311,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
             lease->hostname_ = CfgMgr::instance().getD2ClientMgr()
                 .generateFqdn(lease->addr_, static_cast<bool>(fqdn));
 
-            LOG_DEBUG(hostname_logger, DBG_DHCP4_DETAIL, DHCP4_RESPONSE_HOSTNAME_GENERATE)
+            LOG_DEBUG(ddns_logger, DBG_DHCP4_DETAIL, DHCP4_RESPONSE_HOSTNAME_GENERATE)
                 .arg(query->getLabel())
                 .arg(lease->hostname_);
 
@@ -1333,7 +1333,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
                 }
 
             } catch (const Exception& ex) {
-                LOG_ERROR(hostname_logger, DHCP4_NAME_GEN_UPDATE_FAIL)
+                LOG_ERROR(ddns_logger, DHCP4_NAME_GEN_UPDATE_FAIL)
                     .arg(query->getLabel())
                     .arg(lease->hostname_)
                     .arg(ex.what());
@@ -1368,12 +1368,12 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         // real allocation.
         if (!fake_allocation && CfgMgr::instance().ddnsEnabled()) {
             try {
-                LOG_DEBUG(hostname_logger, DBG_DHCP4_DETAIL, DHCP4_NCR_CREATE)
+                LOG_DEBUG(ddns_logger, DBG_DHCP4_DETAIL, DHCP4_NCR_CREATE)
                     .arg(query->getLabel());
                 createNameChangeRequests(lease, ctx->old_lease_);
 
             } catch (const Exception& ex) {
-                LOG_ERROR(hostname_logger, DHCP4_NCR_CREATION_FAILED)
+                LOG_ERROR(ddns_logger, DHCP4_NCR_CREATION_FAILED)
                     .arg(query->getLabel())
                     .arg(ex.what());
             }
@@ -2195,7 +2195,7 @@ void
 Dhcpv4Srv::d2ClientErrorHandler(const
                                 dhcp_ddns::NameChangeSender::Result result,
                                 dhcp_ddns::NameChangeRequestPtr& ncr) {
-    LOG_ERROR(hostname_logger, DHCP4_DDNS_REQUEST_SEND_FAILED).
+    LOG_ERROR(ddns_logger, DHCP4_DDNS_REQUEST_SEND_FAILED).
               arg(result).arg((ncr ? ncr->toText() : " NULL "));
     // We cannot communicate with kea-dhcp-ddns, suspend further updates.
     /// @todo We may wish to revisit this, but for now we will simply turn
