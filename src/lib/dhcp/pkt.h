@@ -161,7 +161,7 @@ public:
     /// implementations of this method.
     ///
     /// @return string with text representation
-    virtual std::string toText() = 0;
+    virtual std::string toText() const = 0;
 
     /// @brief Returns packet size in binary format.
     ///
@@ -192,6 +192,17 @@ public:
     ///
     /// @param type message type to be set
     virtual void setType(uint8_t type) = 0;
+
+    /// @brief Returns name of the DHCP message.
+    ///
+    /// For all unsupported messages the derived classes must return
+    /// "UNKNOWN".
+    ///
+    /// @return Ponter to "const" string containing DHCP message name.
+    /// The implementations in the derived classes should statically
+    /// allocate returned strings and the caller must not release the
+    /// returned pointer.
+    virtual const char* getName() const = 0;
 
     /// @brief Sets transaction-id value.
     ///

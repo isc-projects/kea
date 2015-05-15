@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013, 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013,2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -349,17 +349,17 @@ OptionCustom::dataFieldToText(const OptionDataType data_type,
         text << readAddress(index);
         break;
     case OPT_FQDN_TYPE:
-        text << readFqdn(index);
+        text << "\"" << readFqdn(index) << "\"";
         break;
     case OPT_STRING_TYPE:
-        text << readString(index);
+        text << "\"" << readString(index) << "\"";
         break;
     default:
         ;
     }
 
     // Append data field type in brackets.
-    text << " ( " << OptionDataTypeUtil::getDataTypeName(data_type) << " ) ";
+    text << " (" << OptionDataTypeUtil::getDataTypeName(data_type) << ")";
 
     return (text.str());
 }
@@ -532,13 +532,9 @@ void OptionCustom::initialize(const OptionBufferConstIter first,
 }
 
 std::string OptionCustom::toText(int indent) {
-    std::stringstream tmp;
+    std::stringstream output;
 
-    for (int i = 0; i < indent; ++i)
-        tmp << " ";
-
-    tmp << "type=" << type_ << ", len=" << len()-getHeaderLen()
-        << ", data fields:" << std::endl;
+    output << headerToText(indent) << ":";
 
     OptionDataType data_type = definition_.getType();
     if (data_type == OPT_RECORD_TYPE) {
@@ -550,13 +546,8 @@ std::string OptionCustom::toText(int indent) {
         // with them.
         for (OptionDefinition::RecordFieldsConstIter field = fields.begin();
              field != fields.end(); ++field) {
-            for (int j = 0; j < indent + 2; ++j) {
-                tmp << " ";
-            }
-            tmp << "#" << std::distance(fields.begin(), field) << " "
-                << dataFieldToText(*field, std::distance(fields.begin(),
-                                                         field))
-                << std::endl;
+            output << " " << dataFieldToText(*field, std::distance(fields.begin(),
+                                                                   field));
         }
     } else {
         // For non-record types we iterate over all buffers
@@ -565,22 +556,14 @@ std::string OptionCustom::toText(int indent) {
         // and non-arrays as they only differ in such a way that
         // non-arrays have just single data field.
         for (unsigned int i = 0; i < getDataFieldsNum(); ++i) {
-            for (int j = 0; j < indent + 2; ++j) {
-                tmp << " ";
-            }
-            tmp << "#" << i << " "
-                << dataFieldToText(definition_.getType(), i)
-                << std::endl;
+            output << " " << dataFieldToText(definition_.getType(), i);
         }
     }
 
-    // print suboptions
-    for (OptionCollection::const_iterator opt = options_.begin();
-         opt != options_.end();
-         ++opt) {
-        tmp << (*opt).second->toText(indent+2);
-    }
-    return tmp.str();
+    // Append suboptions.
+    output << suboptionsToText(indent + 2);
+
+    return (output.str());
 }
 
 } // end of isc::dhcp namespace
