@@ -18,7 +18,9 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/docsis3_option_defs.h>
+#include <dhcp/option_int.h>
 #include <dhcp/option_string.h>
+#include <dhcp/option4_addrlst.h>
 #include <dhcp/pkt4.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
@@ -884,11 +886,11 @@ TEST_F(Pkt4Test, getLabel) {
     Pkt4 pkt(DHCPOFFER, 1234);
 
     // Verify makeLabel() handles empty values
-    EXPECT_EQ ("hwaddr=[no info], client-id=[no info], transid=0x0",
+    EXPECT_EQ ("[no hwaddr info], cid=[no info], tid=0x0",
                Pkt4::makeLabel(HWAddrPtr(), ClientIdPtr(), 0));
 
     // Verify an "empty" packet label is as we expect
-    EXPECT_EQ ("hwaddr=[hwtype=1 ], client-id=[no info], transid=0x4d2",
+    EXPECT_EQ ("[hwtype=1 ], cid=[no info], tid=0x4d2",
                pkt.getLabel());
 
     // Set that packet hardware address, then verify getLabel
@@ -897,8 +899,8 @@ TEST_F(Pkt4Test, getLabel) {
     HWAddrPtr dummy_hwaddr(new HWAddr(hw, sizeof(hw), hw_type));
     pkt.setHWAddr(dummy_hwaddr);
 
-    EXPECT_EQ ("hwaddr=[hwtype=123 02:04:06:08:0a:0c],"
-               " client-id=[no info], transid=0x4d2", pkt.getLabel());
+    EXPECT_EQ ("[hwtype=123 02:04:06:08:0a:0c],"
+               " cid=[no info], tid=0x4d2", pkt.getLabel());
 
     // Add a client id to the packet then verify getLabel
     OptionBuffer clnt_id(4);
@@ -907,12 +909,92 @@ TEST_F(Pkt4Test, getLabel) {
     }
 
     OptionPtr opt(new Option(Option::V4, DHO_DHCP_CLIENT_IDENTIFIER,
-                                 clnt_id.begin(), clnt_id.begin() + 4));
+                             clnt_id.begin(), clnt_id.begin() + 4));
     pkt.addOption(opt);
 
-    EXPECT_EQ ("hwaddr=[hwtype=123 02:04:06:08:0a:0c],"
-               " client-id=[64:65:66:67], transid=0x4d2",
+    EXPECT_EQ ("[hwtype=123 02:04:06:08:0a:0c],"
+               " cid=[64:65:66:67], tid=0x4d2",
                pkt.getLabel());
+
+}
+
+// Tests that the correct DHCPv4 message name is returned for various
+// message types.
+TEST_F(Pkt4Test, getName) {
+    // Check all possible packet types
+    for (int itype = 0; itype < 256; ++itype) {
+        uint8_t type = itype;
+
+        switch (type) {
+        case DHCPDISCOVER:
+            EXPECT_STREQ("DHCPDISCOVER", Pkt4::getName(type));
+            break;
+
+        case DHCPOFFER:
+            EXPECT_STREQ("DHCPOFFER", Pkt4::getName(type));
+            break;
+
+        case DHCPREQUEST:
+            EXPECT_STREQ("DHCPREQUEST", Pkt4::getName(type));
+            break;
+
+        case DHCPDECLINE:
+            EXPECT_STREQ("DHCPDECLINE", Pkt4::getName(type));
+            break;
+
+        case DHCPACK:
+            EXPECT_STREQ("DHCPACK", Pkt4::getName(type));
+            break;
+
+        case DHCPNAK:
+            EXPECT_STREQ("DHCPNAK", Pkt4::getName(type));
+            break;
+
+        case DHCPRELEASE:
+            EXPECT_STREQ("DHCPRELEASE", Pkt4::getName(type));
+            break;
+
+        case DHCPINFORM:
+            EXPECT_STREQ("DHCPINFORM", Pkt4::getName(type));
+            break;
+
+        default:
+            EXPECT_STREQ("UNKNOWN", Pkt4::getName(type));
+        }
+    }
+}
+
+// This test checks that the packet data are correctly converted to the
+// textual format.
+TEST_F(Pkt4Test, toText) {
+    Pkt4 pkt(DHCPDISCOVER, 2543);
+    pkt.setLocalAddr(IOAddress("192.0.2.34"));
+    pkt.setRemoteAddr(IOAddress("192.10.33.4"));
+
+    pkt.addOption(OptionPtr(new Option4AddrLst(123, IOAddress("192.0.2.3"))));
+    pkt.addOption(OptionPtr(new OptionUint32(Option::V4, 156, 123456)));
+    pkt.addOption(OptionPtr(new OptionString(Option::V4, 87, "lorem ipsum")));
+
+    EXPECT_EQ("local_address=192.0.2.34:67, remote_adress=192.10.33.4:68, "
+              "msg_type=DHCPDISCOVER (1), transid=0x9ef,\n"
+              "options:\n"
+              "  type=053, len=001: 01\n"
+              "  type=087, len=011: \"lorem ipsum\" (string)\n"
+              "  type=123, len=004: 192.0.2.3\n"
+              "  type=156, len=004: 123456 (uint32)",
+              pkt.toText());
+
+    // Now remove all options, including Message Type and check if the
+    // information about lack of any options is displayed properly.
+    pkt.delOption(123);
+    pkt.delOption(156);
+    pkt.delOption(87);
+    pkt.delOption(53);
+
+    EXPECT_EQ("local_address=192.0.2.34:67, remote_adress=192.10.33.4:68, "
+              "msg_type=(missing), transid=0x9ef, "
+              "message contains no options",
+              pkt.toText());
 
 }
 

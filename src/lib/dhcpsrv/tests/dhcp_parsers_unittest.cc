@@ -533,8 +533,7 @@ TEST_F(ParseConfigTest, basicOptionDataTest) {
     ASSERT_TRUE(opt_ptr);
 
     // Verify that the option definition is correct.
-    std::string val = "type=100, len=4, data fields:\n "
-                      " #0 192.0.2.0 ( ipv4-address ) \n";
+    std::string val = "type=00100, len=00004: 192.0.2.0 (ipv4-address)";
 
     EXPECT_EQ(val, opt_ptr->toText());
 }

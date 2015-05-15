@@ -137,7 +137,7 @@ public:
     /// This function is useful mainly for debugging.
     ///
     /// @return string with text representation
-    std::string toText();
+    std::string toText() const;
 
     /// @brief Returns the size of the required buffer to build the packet.
     ///
@@ -243,6 +243,22 @@ public:
     ///
     /// @param type message type to be set
     void setType(uint8_t type);
+
+    /// @brief Returns name of the DHCP message.
+    ///
+    /// @param type DHCPv4 message type which name should be returned.
+    ///
+    /// @return Pointer to the "const" string containing DHCP message name.
+    /// If the message type is unsupported the "UNKNOWN" is returned.
+    /// The caller must not release the returned pointer.
+    static const char* getName(const uint8_t type);
+
+    /// @brief Returns name of the DHCP message.
+    ///
+    /// @return Pointer to the "const" string containing DHCP message name.
+    /// If the message type is unsupported the "UNKNOWN" is returned.
+    /// The caller must not release the returned pointer.
+    const char* getName() const;
 
     /// @brief Returns sname field
     ///
