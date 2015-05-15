@@ -13,6 +13,8 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <util/boost_time_utils.h>
+#include <sstream>
+#include <iomanip>
 
 std::string
 isc::util::ptimeToText(boost::posix_time::ptime t) {
