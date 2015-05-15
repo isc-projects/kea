@@ -29,6 +29,7 @@
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <stats/stats_mgr.h>
 
 using namespace std;
 using namespace isc::asiolink;
@@ -53,6 +54,9 @@ Dhcpv4SrvTest::Dhcpv4SrvTest()
     CfgMgr::instance().clear();
     CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
     CfgMgr::instance().commit();
+
+    // Let's wipe all existing statistics.
+    isc::stats::StatsMgr::instance().removeAll();
 }
 
 Dhcpv4SrvTest::~Dhcpv4SrvTest() {
@@ -60,6 +64,9 @@ Dhcpv4SrvTest::~Dhcpv4SrvTest() {
     // Make sure that we revert to default value
     CfgMgr::instance().clear();
     CfgMgr::instance().echoClientId(true);
+
+    // Let's wipe all existing statistics.
+    isc::stats::StatsMgr::instance().removeAll();
 }
 
 void Dhcpv4SrvTest::addPrlOption(Pkt4Ptr& pkt) {

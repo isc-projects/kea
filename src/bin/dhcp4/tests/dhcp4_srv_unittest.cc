@@ -43,6 +43,7 @@
 #include <hooks/server_hooks.h>
 #include <hooks/hooks_manager.h>
 #include <config/ccsession.h>
+#include <stats/stats_mgr.h>
 
 #include <boost/scoped_ptr.hpp>
 
@@ -60,6 +61,26 @@ using namespace isc::dhcp::test;
 using namespace isc::test;
 
 namespace {
+
+const char* CONFIGS[] = {
+    // Configuration 0:
+    // - 1 subnet: 10.254.226.0/25
+    // - used for recorded traffic (see PktCaptures::captureRelayedDiscover)
+    "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"10.254.226.0/25\" } ],"
+        "    \"subnet\": \"10.254.226.0/24\", "
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"valid-lifetime\": 4000,"
+        "    \"interface\": \"eth0\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }"
+};
 
 // This test verifies that the destination address of the response
 // message is set to giaddr, when giaddr is set to non-zero address
@@ -1085,22 +1106,7 @@ TEST_F(Dhcpv4SrvTest, relayAgentInfoEcho) {
     // subnet 10.254.226.0/24 is in use, because this packet
     // contains the giaddr which belongs to this subnet and
     // this giaddr is used to select the subnet
-    std::string config = "{ \"interfaces-config\": {"
-        "    \"interfaces\": [ \"*\" ]"
-        "},"
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"subnet4\": [ { "
-        "    \"pools\": [ { \"pool\": \"10.254.226.0/25\" } ],"
-        "    \"subnet\": \"10.254.226.0/24\", "
-        "    \"rebind-timer\": 2000, "
-        "    \"renew-timer\": 1000, "
-        "    \"valid-lifetime\": 4000,"
-        "    \"interface\": \"eth0\" "
-        " } ],"
-        "\"valid-lifetime\": 4000 }";
-
-    configure(config);
+    configure(CONFIGS[0]);
 
     // Let's create a relayed DISCOVER. This particular relayed DISCOVER has
     // added option 82 (relay agent info) with 3 suboptions. The server
@@ -3502,6 +3508,39 @@ TEST_F(Dhcpv4SrvTest, acceptMessageType) {
                                                             1234))))
             << "Test failed for message type " << i;
     }
+}
+
+TEST_F(Dhcpv4SrvTest, statisticsDecline) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Use of the captured DHCPDISCOVER packet requires that
+    // subnet 10.254.226.0/24 is in use, because this packet
+    // contains the giaddr which belongs to this subnet and
+    // this giaddr is used to select the subnet
+    configure(CONFIGS[0]);
+
+    Pkt4Ptr decline = PktCaptures::captureRelayedDiscover();
+    decline->setType(DHCPDECLINE);
+
+    // Simulate that we have received that traffic
+    srv.fakeReceive(decline);
+    srv.run();
+
+    using namespace isc::stats;
+    StatsMgr& mgr = StatsMgr::instance();
+    ObservationPtr pkt4_rcvd = mgr.getObservation("pkt4-received");
+    ObservationPtr pkt4_decline_rcvd = mgr.getObservation("pkt4-decline-received");
+
+    // All expected statstics must be present.
+    ASSERT_TRUE(pkt4_rcvd);
+    ASSERT_TRUE(pkt4_decline_rcvd);
+
+    // They also must have expected values.
+    EXPECT_EQ(1, pkt4_rcvd->getInteger().first);
+    EXPECT_EQ(1, pkt4_decline_rcvd->getInteger().first);
 }
 
 }; // end of anonymous namespace
