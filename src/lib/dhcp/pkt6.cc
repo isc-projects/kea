@@ -496,14 +496,14 @@ Pkt6::getMACFromDUID() {
 }
 
 std::string
-Pkt6::toText() {
+Pkt6::toText() const {
     stringstream tmp;
     tmp << "localAddr=[" << local_addr_ << "]:" << local_port_
         << " remoteAddr=[" << remote_addr_
         << "]:" << remote_port_ << endl;
     tmp << "msgtype=" << static_cast<int>(msg_type_) << ", transid=0x" <<
         hex << transid_ << dec << endl;
-    for (isc::dhcp::OptionCollection::iterator opt=options_.begin();
+    for (isc::dhcp::OptionCollection::const_iterator opt=options_.begin();
          opt != options_.end();
          ++opt) {
         tmp << opt->second->toText() << std::endl;
@@ -525,7 +525,7 @@ Pkt6::getOptions(uint16_t opt_type) {
 }
 
 const char*
-Pkt6::getName(uint8_t type) {
+Pkt6::getName(const uint8_t type) {
     static const char* CONFIRM = "CONFIRM";
     static const char* DECLINE = "DECLINE";
     static const char* INFORMATION_REQUEST = "INFORMATION_REQUEST";

@@ -282,6 +282,54 @@ void Pkt4::setType(uint8_t dhcp_type) {
     }
 }
 
+const char*
+Pkt4::getName(const uint8_t type) {
+    static const char* DHCPDISCOVER_NAME = "DHCPDISCOVER";
+    static const char* DHCPOFFER_NAME = "DHCPOFFER";
+    static const char* DHCPREQUEST_NAME = "DHCPREQUEST";
+    static const char* DHCPDECLINE_NAME = "DHCPDECLINE";
+    static const char* DHCPACK_NAME = "DHCPACK";
+    static const char* DHCPNAK_NAME = "DHCPNAK";
+    static const char* DHCPRELEASE_NAME = "DHCPRELEASE";
+    static const char* DHCPINFORM_NAME = "DHCPINFORM";
+    static const char* UNKNOWN_NAME = "UNKNOWN";
+
+    switch (type) {
+        case DHCPDISCOVER:
+            return (DHCPDISCOVER_NAME);
+
+        case DHCPOFFER:
+            return (DHCPOFFER_NAME);
+
+        case DHCPREQUEST:
+            return (DHCPREQUEST_NAME);
+
+        case DHCPDECLINE:
+            return (DHCPDECLINE_NAME);
+
+        case DHCPACK:
+            return (DHCPACK_NAME);
+
+        case DHCPNAK:
+            return (DHCPNAK_NAME);
+
+        case DHCPRELEASE:
+            return (DHCPRELEASE_NAME);
+
+        case DHCPINFORM:
+            return (DHCPINFORM_NAME);
+
+        default:
+            ;
+    }
+    return (UNKNOWN_NAME);
+}
+
+const char*
+Pkt4::getName() const {
+    return (Pkt4::getName(getType()));
+}
+
 std::string
 Pkt4::getLabel() const {
 
@@ -301,30 +349,47 @@ std::string
 Pkt4::makeLabel(const HWAddrPtr& hwaddr, const ClientIdPtr& client_id,
                 const uint32_t transid) {
     stringstream label;
-    label << "hwaddr=[" << (hwaddr ? hwaddr->toText() : "no info")
-          << "], client-id=[" << (client_id ? client_id->toText() : "no info")
-          << "], transid=0x" << hex << transid << dec;
+    label << "[" << (hwaddr ? hwaddr->toText() : "no hwaddr info")
+          << "], cid=[" << (client_id ? client_id->toText() : "no info")
+          << "], tid=0x" << hex << transid << dec;
 
     return label.str();
 }
 
 
 std::string
-Pkt4::toText() {
-    stringstream tmp;
-    tmp << "localAddr=" << local_addr_ << ":" << local_port_
-        << " remoteAddr=" << remote_addr_
-        << ":" << remote_port_ << ", msgtype=" << static_cast<int>(getType())
-        << ", transid=0x" << hex << transid_ << dec << endl;
+Pkt4::toText() const {
+    stringstream output;
+    output << "local_address=" << local_addr_ << ":" << local_port_
+        << ", remote_adress=" << remote_addr_
+        << ":" << remote_port_ << ", msg_type=";
 
-    for (isc::dhcp::OptionCollection::iterator opt=options_.begin();
-         opt != options_.end();
-         ++opt) {
-        tmp << "  " << opt->second->toText() << std::endl;
+    // Try to obtain message type. This may throw if the Message Type option is
+    // not present. Therefore we guard it with try-catch, because we don't want
+    // toText method to throw.
+    try {
+        uint8_t msg_type = getType();
+        output << getName(msg_type) << " (" << static_cast<int>(msg_type) << ")";
+
+    } catch (...) {
+        // Message Type option is missing.
+        output << "(missing)";
     }
 
+    output << ", transid=0x" << hex << transid_ << dec;
 
-    return tmp.str();
+    if (!options_.empty()) {
+        output << "," << std::endl << "options:";
+        for (isc::dhcp::OptionCollection::const_iterator opt = options_.begin();
+             opt != options_.end(); ++opt) {
+            output << std::endl << opt->second->toText(2);
+        }
+
+    } else {
+        output << ", message contains no options";
+    }
+
+    return (output.str());
 }
 
 void

@@ -162,7 +162,7 @@ public:
     /// This function is useful mainly for debugging.
     ///
     /// @return string with text representation
-    virtual std::string toText();
+    virtual std::string toText() const;
 
     /// @brief Returns length of the packet.
     ///
@@ -232,7 +232,7 @@ public:
     /// @param relay structure with necessary relay information
     void addRelayInfo(const RelayInfo& relay);
 
-    /// @brief Return textual type of packet.
+    /// @brief Returns name of the DHCPv6 message.
     ///
     /// Returns the name of valid packet received by the server (e.g. SOLICIT).
     /// If the packet is unknown - or if it is a valid DHCP packet but not one
@@ -248,7 +248,7 @@ public:
     /// @return Pointer to "const" string containing the packet name.
     ///         Note that this string is statically allocated and MUST NOT
     ///         be freed by the caller.
-    static const char* getName(uint8_t type);
+    static const char* getName(const uint8_t type);
 
     /// @brief returns textual representation of packet type.
     ///

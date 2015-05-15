@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013,2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -1568,6 +1568,40 @@ TEST_F(OptionCustomTest, invalidIndex) {
     // Check that index value beyond 9 is not accepted.
     EXPECT_THROW(option->readInteger<uint32_t>(10), isc::OutOfRange);
     EXPECT_THROW(option->readInteger<uint32_t>(11), isc::OutOfRange);
+}
+
+// This test checks that the custom option holding a record of data
+// fields can be presented in the textual format.
+TEST_F(OptionCustomTest, toTextRecord) {
+    OptionDefinition opt_def("foo", 123, "record");
+    opt_def.addRecordField("uint32");
+    opt_def.addRecordField("string");
+
+    OptionCustom option(opt_def, Option::V4);
+    option.writeInteger<uint32_t>(10);
+    option.writeString("lorem ipsum", 1);
+
+    EXPECT_EQ("type=123, len=015: 10 (uint32) \"lorem ipsum\" (string)",
+              option.toText());
+}
+
+// This test checks that the custom option holding other data type
+// than "record" be presented in the textual format.
+TEST_F(OptionCustomTest, toTextNoRecord) {
+    OptionDefinition opt_def("foo", 234, "uint32");
+
+    OptionCustom option(opt_def, Option::V6);
+    option.writeInteger<uint32_t>(123456);
+
+    OptionDefinition sub_opt_def("bar", 333, "fqdn");
+    OptionCustomPtr sub_opt(new OptionCustom(sub_opt_def, Option::V6));
+    sub_opt->writeFqdn("myhost.example.org.");
+    option.addOption(sub_opt);
+
+    EXPECT_EQ("type=00234, len=00028: 123456 (uint32),\n"
+              "options:\n"
+              "  type=00333, len=00020: \"myhost.example.org.\" (fqdn)",
+              option.toText());
 }
 
 } // anonymous namespace
