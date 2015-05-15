@@ -1510,6 +1510,8 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/testutils/Makefile
                  src/lib/testutils/dhcp_test_lib.sh
                  src/lib/testutils/testdata/Makefile
+                 src/lib/stats/Makefile
+                 src/lib/stats/tests/Makefile
                  src/lib/util/Makefile
                  src/lib/util/io/Makefile
                  src/lib/util/python/Makefile
