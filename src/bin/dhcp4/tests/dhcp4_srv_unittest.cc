@@ -3510,37 +3510,61 @@ TEST_F(Dhcpv4SrvTest, acceptMessageType) {
     }
 }
 
+// Test checks whether statistic is bumped up appropriately when Decline
+// message is received.
 TEST_F(Dhcpv4SrvTest, statisticsDecline) {
-    IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
-
     NakedDhcpv4Srv srv(0);
 
-    // Use of the captured DHCPDISCOVER packet requires that
-    // subnet 10.254.226.0/24 is in use, because this packet
-    // contains the giaddr which belongs to this subnet and
-    // this giaddr is used to select the subnet
-    configure(CONFIGS[0]);
+    pretendReceivingPkt(srv, CONFIGS[0], DHCPDECLINE, "pkt4-decline-received");
+}
 
-    Pkt4Ptr decline = PktCaptures::captureRelayedDiscover();
-    decline->setType(DHCPDECLINE);
+// Test checks whether statistic is bumped up appropriately when Offer
+// message is received (this should never happen in a sane metwork).
+TEST_F(Dhcpv4SrvTest, statisticsOfferRcvd) {
+    NakedDhcpv4Srv srv(0);
 
-    // Simulate that we have received that traffic
-    srv.fakeReceive(decline);
-    srv.run();
+    pretendReceivingPkt(srv, CONFIGS[0], DHCPOFFER, "pkt4-offer-received");
+}
 
+// Test checks whether statistic is bumped up appropriately when Ack
+// message is received (this should never happen in a sane metwork).
+TEST_F(Dhcpv4SrvTest, statisticsAckRcvd) {
+    NakedDhcpv4Srv srv(0);
+
+    pretendReceivingPkt(srv, CONFIGS[0], DHCPACK, "pkt4-ack-received");
+}
+
+// Test checks whether statistic is bumped up appropriately when Nak
+// message is received (this should never happen in a sane metwork).
+TEST_F(Dhcpv4SrvTest, statisticsNakRcvd) {
+    NakedDhcpv4Srv srv(0);
+
+    pretendReceivingPkt(srv, CONFIGS[0], DHCPNAK, "pkt4-nak-received");
+}
+
+// Test checks whether statistic is bumped up appropriately when Release
+// message is received.
+TEST_F(Dhcpv4SrvTest, statisticsReleaseRcvd) {
+    NakedDhcpv4Srv srv(0);
+
+    pretendReceivingPkt(srv, CONFIGS[0], DHCPRELEASE, "pkt4-release-received");
+}
+
+// Test checks whether statistic is bumped up appropriately when unknown
+// message is received.
+TEST_F(Dhcpv4SrvTest, statisticsUnknownRcvd) {
+    NakedDhcpv4Srv srv(0);
+
+    pretendReceivingPkt(srv, CONFIGS[0], 200, "pkt4-unknown-received");
+
+    // There should also be pkt4-receive-drop stat bumped up
     using namespace isc::stats;
     StatsMgr& mgr = StatsMgr::instance();
-    ObservationPtr pkt4_rcvd = mgr.getObservation("pkt4-received");
-    ObservationPtr pkt4_decline_rcvd = mgr.getObservation("pkt4-decline-received");
+    ObservationPtr drop_stat = mgr.getObservation("pkt4-receive-drop");
 
-    // All expected statstics must be present.
-    ASSERT_TRUE(pkt4_rcvd);
-    ASSERT_TRUE(pkt4_decline_rcvd);
-
-    // They also must have expected values.
-    EXPECT_EQ(1, pkt4_rcvd->getInteger().first);
-    EXPECT_EQ(1, pkt4_decline_rcvd->getInteger().first);
+    // This statistic must be present and must be set to 1.
+    ASSERT_TRUE(drop_stat);
+    EXPECT_EQ(1, drop_stat->getInteger().first);
 }
 
 }; // end of anonymous namespace

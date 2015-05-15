@@ -480,6 +480,7 @@ Dhcpv4Srv::run() {
         // Check whether the message should be further processed or discarded.
         // There is no need to log anything here. This function logs by itself.
         if (!accept(query)) {
+            isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop", 1ul);
             continue;
         }
 
