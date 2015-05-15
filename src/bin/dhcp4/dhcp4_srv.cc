@@ -381,12 +381,10 @@ Dhcpv4Srv::run() {
         // select() function is called. If the function was called before
         // receivePacket the process could wait up to the duration of timeout
         // of select() to terminate.
-        // fixme
         handleSignal();
 
         // Execute ready timers for the lease database, e.g. Lease File Cleanup.
         try {
-            // fixme
             LeaseMgrFactory::instance().getIOService()->poll();
 
         } catch (const std::exception& ex) {
@@ -407,7 +405,6 @@ Dhcpv4Srv::run() {
         // available in the libdhcp, so we need to supply our own implementation
         // of the option parsing function here, which would rely on the
         // configuration data.
-        // fixme
         query->setCallback(boost::bind(&Dhcpv4Srv::unpackOptions, this,
                                        _1, _2, _3));
 
@@ -467,12 +464,10 @@ Dhcpv4Srv::run() {
         // Assign this packet to one or more classes if needed. We need to do
         // this before calling accept(), because getSubnet4() may need client
         // class information.
-        //  fixme
         classifyPacket(query);
 
         // Check whether the message should be further processed or discarded.
         // There is no need to log anything here. This function logs by itself.
-        // fixme
         if (!accept(query)) {
             continue;
         }
