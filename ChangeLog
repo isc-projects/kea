@@ -1,3 +1,11 @@
+931.	[func]		marcin
+	Improved log messages emitted by the DHCPv4 server. Also,
+	the server is now using multiple distinct loggers for logging
+	messages pertaining to different functional parts of the
+	code, e.g. packet transmission, lease allocation, DDNS etc.
+	For complete list of logger names see User Guide.
+	(Trac #3806, git 7b148c2dd5e2696a541883223ce1efd2de81f143)
+
 930.	[func]		tomek
 	Statistics Manager is now implemented. There is a new library
 	libkea-stats that governs statistics collection. Its usage will
