@@ -38,6 +38,7 @@
 #include <dhcpsrv/utils.h>
 #include <dhcpsrv/utils.h>
 #include <hooks/callout_handle.h>
+#include <hooks/hooks_log.h>
 #include <hooks/hooks_manager.h>
 #include <util/strutil.h>
 
@@ -278,7 +279,7 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query) const {
         // will be selected. Packet processing will continue, but it will
         // be severely limited (i.e. only global options will be assigned)
         if (callout_handle->getSkip()) {
-            LOG_DEBUG(srv_hooks_logger, DBG_DHCP4_HOOKS,
+            LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
                       DHCP4_HOOK_SUBNET4_SELECT_SKIP)
                 .arg(query->getLabel());
             return (Subnet4Ptr());
@@ -430,7 +431,7 @@ Dhcpv4Srv::run() {
             // stage means that callouts did the parsing already, so server
             // should skip parsing.
             if (callout_handle->getSkip()) {
-                LOG_DEBUG(srv_hooks_logger, DBG_DHCP4_DETAIL, DHCP4_HOOK_BUFFER_RCVD_SKIP)
+                LOG_DEBUG(hooks_logger, DBG_DHCP4_DETAIL, DHCP4_HOOK_BUFFER_RCVD_SKIP)
                     .arg(query->getRemoteAddr().toText())
                     .arg(query->getLocalAddr().toText())
                     .arg(query->getIface());
@@ -504,7 +505,7 @@ Dhcpv4Srv::run() {
             // processing step would to process the packet, so skip at this
             // stage means drop.
             if (callout_handle->getSkip()) {
-                LOG_DEBUG(srv_hooks_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_PACKET_RCVD_SKIP)
+                LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_PACKET_RCVD_SKIP)
                     .arg(query->getLabel());
                 continue;
             }
@@ -586,7 +587,7 @@ Dhcpv4Srv::run() {
             // processing step would to send the packet, so skip at this
             // stage means "drop response".
             if (callout_handle->getSkip()) {
-                LOG_DEBUG(srv_hooks_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_PACKET_SEND_SKIP)
+                LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_PACKET_SEND_SKIP)
                     .arg(query->getLabel());
                 skip_pack = true;
             }
@@ -626,7 +627,7 @@ Dhcpv4Srv::run() {
                 // processing step would to parse the packet, so skip at this
                 // stage means drop.
                 if (callout_handle->getSkip()) {
-                    LOG_DEBUG(srv_hooks_logger, DBG_DHCP4_HOOKS,
+                    LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
                               DHCP4_HOOK_BUFFER_SEND_SKIP)
                         .arg(rsp->getLabel());
                     continue;
@@ -1722,7 +1723,7 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
             // stage means "drop response".
             if (callout_handle->getSkip()) {
                 skip = true;
-                LOG_DEBUG(srv_hooks_logger, DBG_DHCP4_HOOKS,
+                LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
                           DHCP4_HOOK_LEASE4_RELEASE_SKIP)
                     .arg(release->getLabel());
             }
