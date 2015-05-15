@@ -36,7 +36,7 @@ Observation::Observation(const std::string& name, const double value)
     setValue(value);
 }
 
-Observation::Observation(const std::string& name, const StatsDuration value)
+Observation::Observation(const std::string& name, const StatsDuration& value)
     :name_(name), type_(STAT_DURATION) {
     setValue(value);
 }

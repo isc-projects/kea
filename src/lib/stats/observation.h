@@ -110,7 +110,7 @@ class Observation {
     ///
     /// @param name observation name
     /// @param value duration observed.
-    Observation(const std::string& name, const StatsDuration value);
+    Observation(const std::string& name, const StatsDuration& value);
 
     /// @brief Constructor for string observations
     ///
@@ -146,25 +146,25 @@ class Observation {
     ///
     /// @param value integer value observed
     /// @throw InvalidStatType if statistic is not integer
-    void addValue(const uint64_t value = 1);
+    void addValue(const uint64_t value);
 
     /// @brief Records incremental floating point observation
     ///
     /// @param value floating point value observed
     /// @throw InvalidStatType if statistic is not fp
-    void addValue(const double value = 1.0f);
+    void addValue(const double value);
 
     /// @brief Records incremental duration observation
     ///
     /// @param value duration value observed
     /// @throw InvalidStatType if statistic is not time duration
-    void addValue(const StatsDuration& value = StatsDuration(0,0,1,0));
+    void addValue(const StatsDuration& value);
 
     /// @brief Records incremental string observation.
     ///
     /// @param value string value observed
     /// @throw InvalidStatType if statistic is not a string
-    void addValue(const std::string& value = "");
+    void addValue(const std::string& value);
 
     /// @brief Resets statistic.
     ///
