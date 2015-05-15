@@ -84,7 +84,7 @@ extern const char* DHCP4_PACKET_LOGGER_NAME;
 extern const char* DHCP4_OPTIONS_LOGGER_NAME;
 
 /// @brief Name of the logger for hostname or FQDN processing.
-extern const char* DHCP4_HOSTNAME_LOGGER_NAME;
+extern const char* DHCP4_DDNS_LOGGER_NAME;
 
 /// @brief Name of the logger for lease allocation logic.
 extern const char* DHCP4_LEASE_LOGGER_NAME;
@@ -102,7 +102,7 @@ extern isc::log::Logger dhcp4_logger;
 
 /// @brief Logger for rejected packets.
 ///
-/// Here "bad packet" are packets that are either dropped (i.e malformed,
+/// Here "bad packets" are packets that are either dropped (i.e malformed,
 /// unsupported types) or packets that are rejected and NAKed for logical
 /// reasons.
 extern isc::log::Logger bad_packet_logger;
@@ -119,11 +119,11 @@ extern isc::log::Logger packet_logger;
 /// DHCP options 
 extern isc::log::Logger options_logger;
 
-/// @brief Logger for hostname or FQDN processing.
+/// @brief Logger for Hostname or FQDN processing.
 ///
 /// This logger is used to issue log messages related to processing the
 /// hostnames, FQDNs and sending name change requests to D2.
-extern isc::log::Logger hostname_logger;
+extern isc::log::Logger ddns_logger;
 
 /// @brief Logger for lease allocation logic.
 ///
