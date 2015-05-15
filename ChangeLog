@@ -1,3 +1,9 @@
+932.	[func]		kalmus
+	MySQL schema has been extended with tables that can store
+	host reservation. This ticket updates database schema only,
+	the tables are not in use yet.
+	(Trac #3567, git d2cd5d53b3f31422a342c9bb8946dad9ed1ea032)
+
 931.	[func]		marcin
 	Improved log messages emitted by the DHCPv4 server. Also,
 	the server is now using multiple distinct loggers for logging
