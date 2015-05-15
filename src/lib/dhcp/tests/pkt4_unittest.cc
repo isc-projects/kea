@@ -976,13 +976,26 @@ TEST_F(Pkt4Test, toText) {
     pkt.addOption(OptionPtr(new OptionString(Option::V4, 87, "lorem ipsum")));
 
     EXPECT_EQ("local_address=192.0.2.34:67, remote_adress=192.10.33.4:68, "
-              "msg_type=1, transid=0x9ef,\n"
+              "msg_type=DHCPDISCOVER (1), transid=0x9ef,\n"
               "options:\n"
               "  type=053, len=001: 01\n"
               "  type=087, len=011: \"lorem ipsum\" (string)\n"
               "  type=123, len=004: 192.0.2.3\n"
               "  type=156, len=004: 123456 (uint32)",
               pkt.toText());
+
+    // Now remove all options, including Message Type and check if the
+    // information about lack of any options is displayed properly.
+    pkt.delOption(123);
+    pkt.delOption(156);
+    pkt.delOption(87);
+    pkt.delOption(53);
+
+    EXPECT_EQ("local_address=192.0.2.34:67, remote_adress=192.10.33.4:68, "
+              "msg_type=(missing), transid=0x9ef, "
+              "message contains no options",
+              pkt.toText());
+
 }
 
 } // end of anonymous namespace

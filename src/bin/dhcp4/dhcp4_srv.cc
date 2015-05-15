@@ -194,7 +194,6 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const bool use_bcast,
       use_bcast_(use_bcast), hook_index_pkt4_receive_(-1),
       hook_index_subnet4_select_(-1), hook_index_pkt4_send_(-1) {
 
-    // fixme: either remove or change its name.
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_OPEN_SOCKET).arg(port);
     try {
         // Port 0 is used for testing purposes where we don't open broadcast
@@ -1791,7 +1790,8 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
     if (ack->getRemoteAddr() != inform->getGiaddr()) {
         LOG_DEBUG(packet_logger, DBG_DHCP4_DETAIL, DHCP4_INFORM_DIRECT_REPLY)
             .arg(inform->getLabel())
-            .arg(ack->getRemoteAddr());
+            .arg(ack->getRemoteAddr())
+            .arg(ack->getIface());
         ack->setHops(0);
         ack->setGiaddr(IOAddress::IPV4_ZERO_ADDRESS());
         ack->delOption(DHO_DHCP_AGENT_OPTIONS);

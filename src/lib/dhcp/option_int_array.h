@@ -262,7 +262,7 @@ public:
         std::string data_type = OptionDataTypeUtil::getDataTypeName(OptionDataTypeTraits<T>::type);
         for (typename std::vector<T>::const_iterator value = values_.begin();
              value != values_.end(); ++value) {
-            output << " " << *value << " (" << data_type << ")";
+            output << " " << *value << "(" << data_type << ")";
         }
 
         return (output.str());

@@ -362,8 +362,21 @@ Pkt4::toText() const {
     stringstream output;
     output << "local_address=" << local_addr_ << ":" << local_port_
         << ", remote_adress=" << remote_addr_
-        << ":" << remote_port_ << ", msg_type=" << static_cast<int>(getType())
-        << ", transid=0x" << hex << transid_ << dec;
+        << ":" << remote_port_ << ", msg_type=";
+
+    // Try to obtain message type. This may throw if the Message Type option is
+    // not present. Therefore we guard it with try-catch, because we don't want
+    // toText method to throw.
+    try {
+        uint8_t msg_type = getType();
+        output << getName(msg_type) << " (" << static_cast<int>(msg_type) << ")";
+
+    } catch (...) {
+        // Message Type option is missing.
+        output << "(missing)";
+    }
+
+    output << ", transid=0x" << hex << transid_ << dec;
 
     if (!options_.empty()) {
         output << "," << std::endl << "options:";
@@ -371,6 +384,9 @@ Pkt4::toText() const {
              opt != options_.end(); ++opt) {
             output << std::endl << opt->second->toText(2);
         }
+
+    } else {
+        output << ", message contains no options";
     }
 
     return (output.str());
