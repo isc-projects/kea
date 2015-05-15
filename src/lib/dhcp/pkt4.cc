@@ -239,9 +239,9 @@ Pkt4::unpack() {
     // }
     (void)offset;
 
-    // @todo check will need to be called separately, so hooks can be called
-    // after the packet is parsed, but before its content is verified
-    check();
+    // No need to call check() here. There are thorough tests for this
+    // later (see Dhcp4Srv::accept()). We want to drop the packet later,
+    // so we'll be able to log more detailed drop reason.
 }
 
 void Pkt4::check() {
@@ -272,8 +272,15 @@ uint8_t Pkt4::getType() const {
 void Pkt4::setType(uint8_t dhcp_type) {
     OptionPtr opt = getOption(DHO_DHCP_MESSAGE_TYPE);
     if (opt) {
+
         // There is message type option already, update it
-        opt->setUint8(dhcp_type);
+        boost::shared_ptr<OptionInt<uint8_t> > type_opt =
+            boost::dynamic_pointer_cast<OptionInt<uint8_t> >(opt);
+        if (type_opt) {
+            return (type_opt->setValue(dhcp_type));
+        } else {
+            opt->setUint8(dhcp_type);
+        }
     } else {
         // There is no message type option yet, add it
         std::vector<uint8_t> tmp(1, dhcp_type);
