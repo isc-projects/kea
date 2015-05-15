@@ -1,4 +1,10 @@
-929	[build]		fdupont
+930.	[func]		tomek
+	Statistics Manager is now implemented. There is a new library
+	libkea-stats that governs statistics collection. Its usage will
+	be added in the upcoming tickets.
+	(Trac #3793, git 68e9554ecabfc2a79731eeec1c706522e4d39332)
+
+929.	[build]		fdupont
 	Corrected problem in build system whereby specifying an
 	installation directory on the "configure" command line that
 	included a "+" in the name caused the build to fail.
@@ -10,7 +16,7 @@
 	(Trac #3812, git cbb135d5f217b0692dcdbc9cfcc04f6a0dbc3922)
 
 927.	[bug]		tmark
-	DHCPv4 no longer attempts to update the lease database with the 
+	DHCPv4 no longer attempts to update the lease database with the
 	generated FQDN when processing DHCPDISCOVERs.
 	(Trac #3779, git 0b413ee8aba1afa1643b216a1e8c35103c6c975b)
 
