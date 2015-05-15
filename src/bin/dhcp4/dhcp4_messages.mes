@@ -277,8 +277,9 @@ The third argument contains the error details.
 This debug message message is issued when the server is starting to send
 name change requests to the D2 module to update records for the client
 in the DNS. This includes removal of old records and addition of the
-new records as required. The argument includes the client and the
-transaction identification information.
+new records as required. Details of the name change requests will be
+logged in additional log entries. The argument includes the client
+and the transaction identification information.
 
 % DHCP4_NCR_CREATION_FAILED %1: failed to generate name change requests for DNS: %2
 This message indicates that server was unable to generate NameChangeRequests

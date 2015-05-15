@@ -89,9 +89,6 @@ extern const char* DHCP4_DDNS_LOGGER_NAME;
 /// @brief Name of the logger for lease allocation logic.
 extern const char* DHCP4_LEASE_LOGGER_NAME;
 
-/// @brief Name of the logger for hooks execution by the server.
-extern const char* DHCP4_SRV_HOOKS_LOGGER_NAME;
-
 //@}
 
 /// @name Loggers used by the DHCPv4 server
@@ -129,12 +126,6 @@ extern isc::log::Logger ddns_logger;
 ///
 /// This logger is used to issue log messages related to lease allocation.
 extern isc::log::Logger lease_logger;
-
-/// @brief Logger for hooks execution by the server.
-///
-/// This logger is used to issue log messages related to use of hooks in
-/// the DHCPv4 server.
-extern isc::log::Logger srv_hooks_logger;
 
 //@}
 

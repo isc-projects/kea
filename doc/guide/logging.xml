@@ -180,12 +180,10 @@
           </listitem>
           <listitem>
             <simpara><command>kea-dhcp4.hooks</command> - this logger is used
-            by the libkea-hooks library to log messages related to the execution
-            of callouts for various hook points. This logger doesn't log messages
-            pertaining to actions on the server, being the result of the
-            callout execution, e.g. skipping packet parsing by the server
-            because the callout has indicated that it has parsed the packet
-            already.</simpara>
+            to log messages pertaining to management of hooks libraries, e.g.
+            registration and deregistration of the libraries, and to the
+            initialization of callouts execution for various hook points within
+            the DHCPv4 server.</simpara>
           </listitem>
           <listitem>
             <simpara><command>kea-dhcp4.ddns</command> - this logger is
@@ -226,15 +224,6 @@
             </simpara>
           </listitem>
           <listitem>
-            <simpara><command>kea-dhcp4.server-hooks</command> - this logger is
-            used by the DHCPv4 server to log messages pertaining to the
-            preparations for the callouts execution by the server and to the
-            actions taken by the server as a result of the callouts execution.
-            Note that it is a different logger than the
-            <command>kea-dhcp4.hooks</command> logger.
-          </simpara>
-          </listitem>
-          <listitem>
             <simpara><command>kea-dhcp6</command> - this is the root logger for
             the DHCPv6 server. All components used by the DHCPv6 server inherit
             the settings from this logger if there is no specialized logger
@@ -253,12 +242,8 @@
           </listitem>
           <listitem>
             <simpara><command>kea-dhcp6.hooks</command> - this logger is used
-            by the hooks framework to log messages related to the execution of
-            callouts for various hook points. This logger doesn't log messages
-            which pertain to actions on the server side being the result of
-            the callout execution, e.g. skipping packet parsing by the server
-            because the callout has indicated that it has parsed the packet
-            already.</simpara>
+            to log messages pertaining to management of hooks libraries, e.g.
+            registration and deregistration of the libraries.</simpara>
           </listitem>
           <listitem>
             <simpara><command>kea-dhcp6.hosts</command> - this logger is used
