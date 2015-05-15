@@ -25,7 +25,7 @@ occurred during this attempt. The reason for the error is included in
 the message.
 
 % DHCP4_BUFFER_RECEIVED received buffer from %1:%2 to %3:%4 over interface %5
-This debug message is logged when the server has received some packet
+This debug message is logged when the server has received a packet
 over the socket. When the message is logged the contents of the received
 packet hasn't been parsed yet. The only available information is the
 interface and the source and destination addresses/ports.
@@ -72,11 +72,11 @@ information. The second argument includes all classes to which the
 packet has been assigned.
 
 % DHCP4_CLIENT_FQDN_PROCESS %1: processing Client FQDN option
-This debug message is issued when the server starts to process the Client
+This debug message is issued when the server starts processing the Client
 FQDN option sent in the client's query. The argument includes the
 client and transaction identification information.
 
-% DHCP4_CLIENT_FQDN_DATA %1: Client FQDN option information: %2
+% DHCP4_CLIENT_FQDN_DATA %1: Client sent FQDN option: %2
 This debug message includes the detailed information extracted from the
 Client FQDN option sent in the query. The first argument includes the
 client and transaction identification information. The second argument
@@ -84,11 +84,11 @@ specifies the detailed information about the FQDN option received
 by the server.
 
 % DHCP4_CLIENT_HOSTNAME_PROCESS %1: processing client's Hostname option
-This debug message is issued when the server starts to process the Hostname
+This debug message is issued when the server starts processing the Hostname
 option sent in the client's query. The argument includes the client and
 transaction identification information.
 
-% DHCP4_CLIENT_HOSTNAME_DATA %1: client Hostname option information: %2
+% DHCP4_CLIENT_HOSTNAME_DATA %1: client sent Hostname option: %2
 This debug message includes the detailed information extracted from the
 Hostname option sent in the query. The first argument includes the
 client and transaction identification information. The second argument
@@ -226,11 +226,12 @@ client class has reported a failure. The response packet will not be sent.
 The argument specifies the client and the transaction identification
 information.
 
-% DHCP4_INFORM_DIRECT_REPLY %1: DHCPACK in reply to the DHCPINFORM will be sent directly to %2
+% DHCP4_INFORM_DIRECT_REPLY %1: DHCPACK in reply to the DHCPINFORM will be sent directly to %2 over %3
 This debug message is issued when the DHCPACK will be sent directly to the
 client, rather than via a relay. The first argument contains the client
 and transaction identification information. The second argument contains
-the client's address to which the response will be sent.
+the client's address to which the response will be sent. The third argument
+contains the local interface name.
 
 % DHCP4_INIT_FAIL failed to initialize Kea server: %1
 The server has failed to initialize. This may be because the configuration
@@ -541,7 +542,7 @@ client class has reported a failure. The response packet will not be sent.
 The argument contains the client and transaction identification
 information.
 
-% DHCP4_RESPONSE_DATA %1: responding with packet %2 (type %3), packet details: "%4"
+% DHCP4_RESPONSE_DATA %1: responding with packet %2 (type %3), packet details: %4
 A debug message including the detailed data about the packet being sent
 to the client. The first argument contains the client and the transaction
 identification information. The second and third argument contains the

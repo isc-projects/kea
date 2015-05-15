@@ -46,7 +46,7 @@ const int DBG_DHCP4_HOOKS = DBGLVL_TRACE_BASIC;
 /// @brief Debug level used to log the traces with some basic data.
 ///
 /// The basic data includes summary information, e.g. summary of the
-/// information returned by the particular function. It may also include
+/// information returned by a particular function. It may also include
 /// more detailed information in cases when it is warranted and the
 /// extraction of the data doesn't impact the server's performance
 /// significantly.

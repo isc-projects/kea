@@ -464,13 +464,15 @@ TEST_F(OptionIntArrayTest, addValuesInt32) {
     addValuesTest<int16_t>();
 }
 
+// This test checks that the option is correctly converted into
+// the textual format.
 TEST_F(OptionIntArrayTest, toText) {
     OptionUint32Array option(Option::V4, 128);
     option.addValue(1);
     option.addValue(32);
     option.addValue(324);
 
-    EXPECT_EQ("type=128, len=012: 1 (uint32) 32 (uint32) 324 (uint32)",
+    EXPECT_EQ("type=128, len=012: 1(uint32) 32(uint32) 324(uint32)",
               option.toText());
 }
 
