@@ -107,7 +107,7 @@ TEST_F(DhcpParserTest, booleanParserTest) {
     EXPECT_NO_THROW(parser.build(element));
 
     // Verify that commit updates storage.
-    actual_value = ~test_value;
+    actual_value = !test_value;
     parser.commit();
     EXPECT_NO_THROW((actual_value = storage->getParam(name)));
     EXPECT_EQ(test_value, actual_value);
