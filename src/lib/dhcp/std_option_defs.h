@@ -30,7 +30,7 @@ namespace {
 /// @param name name of the array being declared.
 /// @param types data types of fields that belong to the record.
 #ifndef RECORD_DECL
-#define RECORD_DECL(name, types...) const OptionDataType name[] = { types }
+#define RECORD_DECL(name, ...) const OptionDataType name[] = { __VA_ARGS__ }
 #endif
 
 /// @brief A pair of values: one pointing to the array holding types of
