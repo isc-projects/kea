@@ -203,9 +203,9 @@ An example file could be:
 
 $NAMESPACE isc::log
 
-% LOG_UNRECOGNISED_DIRECTIVE line %1: unrecognised directive '%2'
+% LOG_UNRECOGNIZED_DIRECTIVE line %1: unrecognized directive '%2'
 A line starting with a dollar symbol was found, but the first word on the line
-(shown in the message) was not a recognised message compiler directive.
+(shown in the message) was not a recognized message compiler directive.
 
 % LOG_WRITE_ERROR error writing to %1: %2
 The specified error was encountered by the message compiler when writing to
@@ -224,7 +224,7 @@ be on a line by themselves; inline comments will be interpreted as part
 of the text of that line.</li>
 
 <li>Lines starting with "$" are directives.  At present, just one
-directive is recognised:
+directive is recognized:
     <dl>
         <dt>$NAMESPACE &lt;namespace-name&gt;</dt>
         <dd>The sole argument is the name of the namespace in which the
