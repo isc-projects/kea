@@ -129,7 +129,7 @@ LoggingInfo::toSpec() const {
             }
 
         } else {
-            // Not a recognised destination, assume a file.
+            // Not a recognized destination, assume a file.
             option.destination = OutputOption::DEST_FILE;
             option.filename = dest->output_;
         }
