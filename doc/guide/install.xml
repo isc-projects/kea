@@ -334,6 +334,12 @@ Debian and Ubuntu:
           dependencies.
         </para>
 
+        <para>
+          <userinput>./configure</userinput> when it succeeds displays a report
+          with the building parameters. This report is saved into 
+          <filename>config.report</filename> and embedded into executable
+          binaries, e.g., <userinput>kea-dhcp4</userinput>.
+        </para>
 
       </section>
 

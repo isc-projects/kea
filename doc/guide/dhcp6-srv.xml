@@ -56,6 +56,17 @@
       </itemizedlist>
 
       <para>
+            As for any Kea executable binary, the <filename>config.report</filename>
+            file produced by <userinput>./configure</userinput> is embbeded.
+            The command extracting it is:
+<screen>
+strings <userinput>path</userinput>/kea-dhcp6 | sed -n 's/;;;; //p'
+</screen>
+            Beware the <userinput>path</userinput> to use for a binary
+            in the build tree finishes by <filename>.libs</filename>.
+      </para>
+
+      <para>
 	    When running in a console, the server can be shut down by
 	    pressing ctrl-c. It detects the key combination and shuts
 	    down gracefully.
