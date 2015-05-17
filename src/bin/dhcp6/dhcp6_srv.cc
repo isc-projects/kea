@@ -46,6 +46,8 @@
 #include <util/encode/hex.h>
 #include <util/io_utilities.h>
 #include <util/range_utilities.h>
+#include <log/logger.h>
+#include <cryptolink/cryptolink.h>
 
 #include <asio.hpp>
 
@@ -62,9 +64,11 @@
 
 using namespace isc;
 using namespace isc::asiolink;
-using namespace isc::dhcp_ddns;
+using namespace isc::cryptolink;
 using namespace isc::dhcp;
+using namespace isc::dhcp_ddns;
 using namespace isc::hooks;
+using namespace isc::log;
 using namespace isc::util;
 using namespace std;
 
@@ -2760,10 +2764,19 @@ Daemon::getVersion(bool extended) {
     tmp << VERSION;
     if (extended) {
         tmp << endl << EXTENDED_VERSION;
-
-        // @todo print more details (is it Botan or OpenSSL build,
-        // with or without MySQL/Postgres? What compilation options were
-        // used? etc)
+        tmp << endl << EXTENDED_VERSION << endl;
+        tmp << "linked with " << Logger::getVersion() << endl;
+        tmp << "and " << CryptoLink::getVersion() << endl;
+#ifdef HAVE_MYSQL
+        tmp << "database: MySQL";
+#else
+#ifdef HAVE_PGSQL
+        tmp << "database: PostgreSQL";
+#else
+        tmp << "no database";
+#endif
+#endif
+        // @todo: more details about database runtime
     }
 
     return (tmp.str());
