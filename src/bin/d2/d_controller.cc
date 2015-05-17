@@ -19,6 +19,8 @@
 #include <exceptions/exceptions.h>
 #include <log/logger_support.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <cryptolink/cryptolink.h>
+#include <log/logger.h>
 
 #include <sstream>
 #include <unistd.h>
@@ -451,11 +453,20 @@ isc::dhcp::Daemon::getVersion(bool extended) {
 
     tmp << VERSION;
     if (extended) {
-        tmp << std::endl << EXTENDED_VERSION;
-
-        // @todo print more details (is it Botan or OpenSSL build,
-        // with or without MySQL/Postgres? What compilation options were
-        // used? etc)
+        tmp << std::endl << EXTENDED_VERSION << std::endl;
+        tmp << "linked with " << isc::log::Logger::getVersion() << std::endl;
+        tmp << "and " << isc::cryptolink::CryptoLink::getVersion()
+            << std::endl;
+#ifdef HAVE_MYSQL
+        tmp << "database: MySQL";
+#else
+#ifdef HAVE_PGSQL
+        tmp << "database: PostgreSQL";
+#else
+        tmp << "no database";
+#endif
+#endif
+        // @todo: more details about database runtime
     }
 
     return (tmp.str());
