@@ -21,6 +21,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <cryptolink/cryptolink.h>
 #include <log/logger.h>
+#include <cfgrpt/config_report.h>
 
 #include <sstream>
 #include <unistd.h>
@@ -442,6 +443,9 @@ DControllerBase::usage(const std::string & text)
 
 DControllerBase::~DControllerBase() {
 }
+
+// Refer to config_report so it will be embedded in the binary
+const char* const* d2_config_report = isc::detail::config_report;
 
 }; // namespace isc::d2
 

@@ -64,5 +64,6 @@ kea_lfc_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
+kea_lfc_LDADD += $(top_builddir)/src/bin/cfgrpt/libcfgrpt.la
 
 kea_lfcdir = $(pkgdatadir)
