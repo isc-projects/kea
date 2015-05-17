@@ -18,6 +18,7 @@
 #include <exceptions/exceptions.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/duid.h>
+#include <cfgrpt/config_report.h>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -34,6 +35,9 @@ using namespace isc;
 
 namespace isc {
 namespace perfdhcp {
+
+// Refer to config_report so it will be embedded in the binary
+const char* const* perfdhcp_config_report = isc::detail::config_report;
 
 CommandOptions::LeaseType::LeaseType()
     : type_(ADDRESS) {

@@ -48,6 +48,7 @@
 #include <util/range_utilities.h>
 #include <log/logger.h>
 #include <cryptolink/cryptolink.h>
+#include <cfgrpt/config_report.h>
 
 #include <asio.hpp>
 
@@ -2756,6 +2757,9 @@ Dhcpv6Srv::d2ClientErrorHandler(const
     /// them off.
     CfgMgr::instance().getD2ClientMgr().suspendUpdates();
 }
+
+// Refer to config_report so it will be embedded in the binary
+const char* const* dhcp6_config_report = isc::detail::config_report;
 
 std::string
 Daemon::getVersion(bool extended) {

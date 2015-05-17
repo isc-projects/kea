@@ -1412,7 +1412,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  doc/version.ent
                  ext/asio/asio/Makefile
                  ext/asio/Makefile
-		 ext/gtest/Makefile
+                 ext/gtest/Makefile
                  ext/Makefile
                  m4macros/Makefile
                  Makefile
@@ -1423,6 +1423,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/d2/tests/Makefile
                  src/bin/d2/tests/d2_process_tests.sh
                  src/bin/d2/tests/test_data_files_config.h
+                 src/bin/cfgrpt/Makefile
                  src/bin/dhcp4/Makefile
                  src/bin/dhcp4/spec_config.h.pre
                  src/bin/dhcp4/tests/Makefile
@@ -1455,7 +1456,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/admin/tests/mysql_tests.sh
                  src/bin/admin/scripts/mysql/Makefile
                  src/bin/admin/scripts/mysql/upgrade_1.0_to_2.0.sh
-		 src/bin/admin/scripts/mysql/upgrade_2.0_to_3.0.sh
+                 src/bin/admin/scripts/mysql/upgrade_2.0_to_3.0.sh
                  src/bin/admin/scripts/pgsql/Makefile
                  src/hooks/Makefile
                  src/hooks/dhcp/Makefile
@@ -1679,6 +1680,10 @@ Developer:
   Generate Documentation: $enable_generate_docs
 
 END
+
+# Create config_report.cc with embedded config.report
+chmod +x ${srcdir}/tools/mk_cfgrpt.sh
+${srcdir}/tools/mk_cfgrpt.sh ${srcdir}/src/bin/cfgrpt/config_report.cc
 
 cat config.report
 cat <<EOF
