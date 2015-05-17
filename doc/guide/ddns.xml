@@ -94,6 +94,17 @@
       </itemizedlist>
 
       <para>
+      As for any Kea executable binary, the <filename>config.report</filename>
+      file produced by <userinput>./configure</userinput> is embbeded.
+      The command extracting it is:
+<screen>
+strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
+</screen>
+      Beware the <userinput>path</userinput> to use for a binary
+      in the build tree finishes by <filename>.libs</filename>.
+      </para>
+
+      <para>
       Upon start up the module will load its configuration and begin listening
       for NCRs based on that configuration.
       </para>
