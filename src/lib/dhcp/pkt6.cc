@@ -562,17 +562,27 @@ Pkt6::getOptions(uint16_t opt_type) {
 
 const char*
 Pkt6::getName(const uint8_t type) {
+    static const char* ADVERTISE = "ADVERTISE";
     static const char* CONFIRM = "CONFIRM";
     static const char* DECLINE = "DECLINE";
     static const char* INFORMATION_REQUEST = "INFORMATION_REQUEST";
+    static const char* LEASEQUERY = "LEASEQUERY";
+    static const char* LEASEQUERY_REPLY = "LEASEQUERY_REPLY";
     static const char* REBIND = "REBIND";
+    static const char* RECONFIGURE = "RECONFIGURE";
+    static const char* RELAY_FORW = "RELAY_FORWARD";
+    static const char* RELAY_REPL = "RELAY_REPLY";
     static const char* RELEASE = "RELEASE";
     static const char* RENEW = "RENEW";
+    static const char* REPLY = "REPLY";
     static const char* REQUEST = "REQUEST";
     static const char* SOLICIT = "SOLICIT";
     static const char* UNKNOWN = "UNKNOWN";
 
     switch (type) {
+    case DHCPV6_ADVERTISE:
+        return (ADVERTISE);
+
     case DHCPV6_CONFIRM:
         return (CONFIRM);
 
@@ -582,14 +592,32 @@ Pkt6::getName(const uint8_t type) {
     case DHCPV6_INFORMATION_REQUEST:
         return (INFORMATION_REQUEST);
 
+    case DHCPV6_LEASEQUERY:
+        return (LEASEQUERY);
+
+    case DHCPV6_LEASEQUERY_REPLY:
+        return (LEASEQUERY_REPLY);
+
     case DHCPV6_REBIND:
         return (REBIND);
+
+    case DHCPV6_RECONFIGURE:
+        return (RECONFIGURE);
+
+    case DHCPV6_RELAY_FORW:
+        return (RELAY_FORW);
+
+    case DHCPV6_RELAY_REPL:
+        return (RELAY_REPL);
 
     case DHCPV6_RELEASE:
         return (RELEASE);
 
     case DHCPV6_RENEW:
         return (RENEW);
+
+    case DHCPV6_REPLY:
+        return (REPLY);
 
     case DHCPV6_REQUEST:
         return (REQUEST);
