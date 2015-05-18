@@ -54,12 +54,6 @@ events is called.  This only happens during initial startup.
 A debug message indicating that the controller has received an
 updated configuration from the Kea configuration system.
 
-% DCTL_DISCONNECT_FAIL %1 controller failed to end session with Bundy: %2
-This message indicates that while shutting down, the DHCP-DDNS controller
-encountered an error terminating communication with the Bundy configuration
-system. The service will still exit.  While theoretically possible,
-this situation is rather unlikely.
-
 % DCTL_INIT_PROCESS %1 initializing the application
 This debug message is issued just before the controller attempts
 to create and initialize its application instance.

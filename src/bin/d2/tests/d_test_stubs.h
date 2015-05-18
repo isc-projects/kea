@@ -202,8 +202,6 @@ public:
 /// without polluting production derivations (e.g. D2Process).  It uses
 /// DStubProcess as its application process class.  It is a full enough
 /// implementation to support running both stand alone and integrated.
-/// Obviously Bundy connectivity is not available under unit tests, so
-/// testing here is limited to "failures" to communicate with Bundy.
 class DStubController : public DControllerBase {
 public:
     /// @brief Static singleton instance method. This method returns the

@@ -56,13 +56,7 @@ libdhcp4_la_SOURCES += json_config_parser.cc json_config_parser.h
 libdhcp4_la_SOURCES += dhcp4_log.cc dhcp4_log.h
 libdhcp4_la_SOURCES += dhcp4_srv.cc dhcp4_srv.h
 
-if CONFIG_BACKEND_BUNDY
-libdhcp4_la_SOURCES += bundy_controller.cc
-endif
-
-if CONFIG_BACKEND_JSON
 libdhcp4_la_SOURCES += kea_controller.cc
-endif
 
 nodist_libdhcp4_la_SOURCES = dhcp4_messages.h dhcp4_messages.cc
 EXTRA_DIST += dhcp4_messages.mes
