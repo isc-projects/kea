@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -52,10 +52,11 @@ Kea uses the modified data in the remainder of its processing.
 
 In order to minimize the interaction between Kea and the user
 code, the latter is built independently of Kea in the form of
-a shared library (or libraries).  These are made known to Kea
-through its configuration mechanism, and Kea loads the library at
-run time. Libraries can be unloaded and reloaded as needed while Kea
-is running.
+a dynamic shared object (or objects). Even they are conceptually
+different dynamic shared objects are called here shared libraries.
+These are made known to Kea through its configuration mechanism, and
+Kea loads the library at run time. Libraries can be unloaded and
+reloaded as needed while Kea is running.
 
 Use of a defined API and the Kea configuration mechanism means that
 as new versions of Kea are released, there is no need to modify
