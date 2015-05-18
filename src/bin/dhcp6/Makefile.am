@@ -58,13 +58,7 @@ libdhcp6_la_SOURCES += dhcp6_srv.cc dhcp6_srv.h
 libdhcp6_la_SOURCES += ctrl_dhcp6_srv.cc ctrl_dhcp6_srv.h
 libdhcp6_la_SOURCES += json_config_parser.cc json_config_parser.h
 
-if CONFIG_BACKEND_BUNDY
-libdhcp6_la_SOURCES += bundy_controller.cc
-endif
-
-if CONFIG_BACKEND_JSON
 libdhcp6_la_SOURCES += kea_controller.cc
-endif
 
 nodist_libdhcp6_la_SOURCES = dhcp6_messages.h dhcp6_messages.cc
 EXTRA_DIST += dhcp6_messages.mes

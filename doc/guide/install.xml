@@ -389,28 +389,11 @@ Debian and Ubuntu:
     <section id="dhcp-config-backend">
       <title>Selecting the Configuration Backend</title>
       <para>Kea 0.9 has introduced configuration backends that are
-      switchable during the compilation phase. The backend is chosen using
-      the --with-kea-config switch when running the configure script. It
-      currently supports two values: BUNDY and JSON. JSON is the default.
+      switchable during the compilation phase. Only one backend, JSON,
+      is currently supported.
       </para>
 
       <variablelist>
-
-        <varlistentry>
-          <term>BUNDY</term>
-          <listitem>
-            <simpara>BUNDY means
-            that Kea is linked with the Bundy configuration backend that
-            connects to the Bundy framework and in general works exactly the
-	    same as Kea 0.8 and earlier BIND10 versions. The benefits
-	    of that backend are uniform integration with the Bundy
-	    framework, easy on-line reconfiguration using bindctl,
-	    available RESTful API. On the other hand, it requires
-	    the whole heavy Bundy framework that requires Python3
-	    to be present. That backend is likely to go away with
-	    the release of Kea 1.0.</simpara>
-          </listitem>
-        </varlistentry>
 
         <varlistentry>
           <term>JSON</term>

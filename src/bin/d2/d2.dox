@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -54,8 +54,7 @@ an application process class derived from isc::d2::DProcess. These services incl
     - Command line argument handling
     - Process instantiation and initialization
     - Support for stand-alone execution
-    - Support for integrated operation as a BUNDY module (session management
-      and event handling)
+    - Support for integrated operation
     - Process event loop invocation and shutdown
 
     It creates and manages an instance of isc::d2::DProcessBase.  The CPL is
@@ -208,28 +207,8 @@ in the diagram below:
 - isc::d2::D2Controller - entry point for running D2, it processes command line
 options, starts and controls the application process, @c D2Process.
 
-Currently there are two implementations of D2Controller selected through the
-configuration script switch, "--with-kea-config":
-
--# --with-kea-config=JSON - The implementation is contained in isc/d2/d2_controller.*.  This form allows D2 to run as a stand-alone process configured via JSON
-text file specified as a command line argument.  The file content is described
-in isc/d2/dhcp-ddns.spec, unit tests are in
-isc/d2/tests/bundy_d2_controller_unittests.cc.  As of Kea 0.9, this form will
-be the default form.
--# --with-kea-config=BUNDY - The implementation is contained in
-isc/d2/bundy_d2_controller.*, unit tests are in isc/d2/tests/d2_controller_unittests.cc and d_controller_unittests.cc  This form allows D2 to run as a Bundy
-module. It creates a BUNDY Session, allowing it to receive control commands
-such as configuration updates, status requests, and shutdown.  BUNDY modules
-are required to supply two callbacks: one for configuration events and one for
-command events.  This form of D2Controller supplies these callbacks which
-largely pass the information through to its @c D2Process instance.   If the
-controller cannot establish a BUNDY session it will exit with a fatal error.
-
-The configuration switch determines which of two forms and tests are compiled
-and they are mutually exclusive.
-
-@note The inclusion of the BUNDY form should be considered temporary. Long range
-planning should be based on the JSON form.
+There were two implementations of D2Controller, today the only available
+form is JSON.
 
 - isc::d2::D2Process - creates and manages D2's primary resources and implements
 the main event loop described in @ref d2EventLoop.

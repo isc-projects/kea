@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -309,10 +309,10 @@ public:
 void
 Session::establish(const char* socket_file) {
     if (socket_file == NULL) {
-        socket_file = getenv("BUNDY_MSGQ_SOCKET_FILE");
+        socket_file = getenv("MSGQ_SOCKET_FILE");
     }
     if (socket_file == NULL) {
-        socket_file = BUNDY_MSGQ_SOCKET_FILE;
+        socket_file = MSGQ_SOCKET_FILE;
     }
 
     impl_->establish(*socket_file);
