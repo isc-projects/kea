@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -232,6 +232,23 @@ TEST_F(Option6AddrLstTest, setAddress) {
     EXPECT_EQ("2001:db8:1::2", addrs[0].toText());
 
     EXPECT_NO_THROW(opt1.reset());
+}
+
+// This test checks that the option holding IPv6 address list can
+// be converted to textual format.
+TEST_F(Option6AddrLstTest, toText) {
+    Option6AddrLst opt(1234, IOAddress("2001:db8:1::1"));
+    // Generate a few IPv6 addresses.
+    Option6AddrLst::AddressContainer addresses;
+    for (int i = 2; i < 6; ++i) {
+        std::stringstream s;
+        s << "2001:db8:1::" << i;
+        addresses.push_back(IOAddress(s.str()));
+    }
+    opt.setAddresses(addresses);
+
+    EXPECT_EQ("type=01234, len=00064: 2001:db8:1::2 2001:db8:1::3 "
+              "2001:db8:1::4 2001:db8:1::5", opt.toText());
 }
 
 } // namespace

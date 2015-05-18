@@ -214,14 +214,20 @@ std::string Option::toText(int indent) {
 }
 
 std::string
-Option::headerToText(const int indent) {
+Option::headerToText(const int indent, const std::string& type_name) {
     std::stringstream output;
     for (int i = 0; i < indent; i++)
         output << " ";
 
     int field_len = (getUniverse() == V4 ? 3 : 5);
     output << "type=" << std::setw(field_len) << std::setfill('0')
-           << type_ << ", len=" << std::setw(field_len) << std::setfill('0')
+           << type_;
+
+    if (!type_name.empty()) {
+        output << "(" << type_name << ")";
+    }
+
+    output << ", len=" << std::setw(field_len) << std::setfill('0')
            << len()-getHeaderLen();
     return (output.str());
 }
