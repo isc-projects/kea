@@ -120,7 +120,7 @@
             with the root logger <quote>kea-dhcp4</quote> logging at the
             INFO level. In order to enable DEBUG verbosity for the DHCPv4
             packet drops, you must create configuration entry for the
-            logger called <quote>kea-dhcp4.bad_packet</quote> and specify
+            logger called <quote>kea-dhcp4.bad-packets</quote> and specify
             severity DEBUG for this logger. All other configuration
             parameters may be omited for this logger if the logger should
             use the default values specified in the root logger's
@@ -161,29 +161,11 @@
             provided.</simpara>
           </listitem>
           <listitem>
-            <simpara><command>kea-dhcp4.bad_packet</command> - this is the
+            <simpara><command>kea-dhcp4.bad-packets</command> - this is the
             logger used by the DHCPv4 server deamon for logging inbound client
             packets that were dropped or to which the server responded with a
             DHCPNAK. The allows adminstrators to configure a separate log
             output that contains only packet drop and reject entries.</simpara>
-          </listitem>
-          <listitem>
-            <simpara><command>kea-dhcp4.dhcp4</command> - this is the logger
-            used solely by the DHCPv4 server deamon. This logger does not
-            specify logging settings for libraries used by the deamon.</simpara>
-          </listitem>
-          <listitem>
-            <simpara><command>kea-dhcp4.dhcpsrv</command> - this logger is used
-            by the libdhcpsrv library. This covers mostly DHCP engine (the lease
-            allocation and renewal process), database operations and
-            configuration.</simpara>
-          </listitem>
-          <listitem>
-            <simpara><command>kea-dhcp4.hooks</command> - this logger is used
-            to log messages related to management of hooks libraries, e.g.
-            registration and deregistration of the libraries, and to the
-            initialization of the callouts execution for various hook points
-            within the DHCPv4 server.</simpara>
           </listitem>
           <listitem>
             <simpara><command>kea-dhcp4.callouts</command> - this logger is used
@@ -196,6 +178,21 @@
             the DHCPv4 server to log messages related to the Client FQDN and
             Hostname option processing. It also includes log messages
             related to the relevant DNS updates.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><command>kea-dhcp4.dhcp4</command> - this is the logger
+            by the DHCPv4 server deamon to log basic operations.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><command>kea-dhcp4.dhcpsrv</command> - this is a base
+            logger for the libdhcpsrv library.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><command>kea-dhcp4.hooks</command> - this logger is used
+            to log messages related to management of hooks libraries, e.g.
+            registration and deregistration of the libraries, and to the
+            initialization of the callouts execution for various hook points
+            within the DHCPv4 server.</simpara>
           </listitem>
           <listitem>
             <simpara><command>kea-dhcp4.hosts</command> - this logger is used
@@ -236,20 +233,9 @@
             provided.</simpara>
           </listitem>
           <listitem>
-            <simpara><command>kea-dhcp6.dhcp6</command> - this is the logger
-            used solely by the DHCPv6 server deamon. This logger does not
-            specify logging settings for libraries used by the daemon.</simpara>
-          </listitem>
-          <listitem>
-            <simpara><command>kea-dhcp6.dhcpsrv</command> - this logger is used
-            by the libdhcpsrv library. This covers mostly DHCP engine (the lease
-            allocation and renewal process), database operations and
-            configuration.</simpara>
-          </listitem>
-          <listitem>
-            <simpara><command>kea-dhcp6.hooks</command> - this logger is used
-            during DHCPv6 hooks operation, i.e. anything related to user
-            registration and deregistration of the libraries.</simpara>
+            <simpara><command>kea-dhcp6.bad-packets</command> - this is the
+            logger used by the DHCPv6 server deamon for logging inbound client
+            packets that were dropped.</simpara>
           </listitem>
           <listitem>
             <simpara><command>kea-dhcp6.callouts</command> - this logger is used
@@ -258,10 +244,57 @@
             </simpara>
           </listitem>
           <listitem>
+            <simpara><command>kea-dhcp6.ddns</command> - this logger is used by
+            the DHCPv6 server to log messages related to the Client FQDN option
+            processing. It also includes log messages related to the relevant
+            DNS updates.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><command>kea-dhcp6.dhcp6</command> - this is the logger
+            used DHCPv6 server deamon to log basic operations.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><command>kea-dhcp6.dhcpsrv</command> - this is a base
+            logger for the libdhcpsrv library.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><command>kea-dhcp6.hooks</command> - this logger is used
+            to log messages related to management of hooks libraries, e.g.
+            registration and deregistration of the libraries, and to the
+            initialization of the callouts execution for various hook points
+            within the DHCPv6 server.</simpara>
+          </listitem>
+          <listitem>
             <simpara><command>kea-dhcp6.hosts</command> - this logger is used
             within the libdhcpsrv and it logs messages related to the management
             of the DHCPv6 host reservations, i.e. retrieval of the resevations
             and adding new reservations.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><command>kea-dhcp6.leases</command> - this logger is used
+            by the DHCPv6 server to log messages related to the lease allocation.
+            The messages include detailed information about the allocated or
+            offered leases, errors during the lease allocation etc.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara><command>kea-dhcp6.options</command> - this logger is
+            used by the DHCPv6 server to log messages related to processing
+            of the options in the DHCPv6 messages, i.e. parsing options,
+            encoding options into on-wire format and packet classification
+            using options contained in the received packets.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><command>kea-dhcp6.packets</command> - this logger
+            is mostly used to log messages related to transmission of the DHCPv6
+            packets, i.e. packet reception and sending a response. Such messages
+            include the information about the source and destination IP addresses
+            and interfaces used to transmit packets. This logger is also used
+            to log messages related to subnet selection, as this selection is
+            usually based on the IP addresses and/or interface names, which can
+            be retrieved from the received packet, even before the DHCPv6 message
+            carried in the packet is parsed.
+            </simpara>
           </listitem>
           <listitem>
             <simpara><command>kea-dhcp-ddns</command> - this is the root logger for
