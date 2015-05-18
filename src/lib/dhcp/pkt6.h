@@ -266,32 +266,27 @@ public:
     /// @param relay structure with necessary relay information
     void addRelayInfo(const RelayInfo& relay);
 
-    /// @brief Returns name of the DHCPv6 message.
-    ///
-    /// Returns the name of valid packet received by the server (e.g. SOLICIT).
-    /// If the packet is unknown - or if it is a valid DHCP packet but not one
-    /// expected to be received by the server (such as an ADVERTISE), the string
-    /// "UNKNOWN" is returned.  This method is used in debug messages.
+    /// @brief Returns name of the DHCPv6 message for a given type number.
     ///
     /// As the operation of the method does not depend on any server state, it
     /// is declared static. There is also non-static getName() method that
     /// works on Pkt6 objects.
     ///
-    /// @param type DHCPv6 packet type
+    /// @param type DHCPv6 message type which name should be returned.
     ///
-    /// @return Pointer to "const" string containing the packet name.
-    ///         Note that this string is statically allocated and MUST NOT
-    ///         be freed by the caller.
+    /// @return Pointer to "const" string containing the message name. If
+    /// the message type is unknnown the "UNKNOWN" is returned. The caller
+    /// must not release the returned pointer.
     static const char* getName(const uint8_t type);
 
-    /// @brief returns textual representation of packet type.
+    /// @brief Returns name of the DHCPv6 message.
     ///
     /// This method requires an object. There is also static version, which
     /// requires one parameter (type).
     ///
-    /// @return Pointer to "const" string containing packet name.
-    ///         Note that this string is statically allocated and MUST NOT
-    ///         be freed by the caller.
+    /// @return Pointer to "const" string containing the message name. If
+    /// the message type is unknnown the "UNKNOWN" is returned. The caller
+    /// must not release the returned pointer.
     const char* getName() const;
 
     /// @brief copies relay information from client's packet to server's response
