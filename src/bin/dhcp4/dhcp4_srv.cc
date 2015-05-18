@@ -465,6 +465,10 @@ Dhcpv4Srv::run() {
                     .arg(query->getLocalAddr().toText())
                     .arg(query->getIface())
                     .arg(e.what());
+
+                // Increase the statistics of parse failues and dropped packets.
+                isc::stats::StatsMgr::instance().addValue("pkt4-parse-failed", 1ul);
+                isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop", 1ul);
                 continue;
             }
         }
@@ -480,6 +484,7 @@ Dhcpv4Srv::run() {
         // Check whether the message should be further processed or discarded.
         // There is no need to log anything here. This function logs by itself.
         if (!accept(query)) {
+            // Increase the statistic of dropped packets.
             isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop", 1ul);
             continue;
         }
@@ -567,6 +572,9 @@ Dhcpv4Srv::run() {
                       DHCP4_PACKET_DROP_0007)
                 .arg(query->getLabel())
                 .arg(e.what());
+
+            // Increase the statistic of dropped packets.
+            isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop", 1ul);
         }
 
         if (!rsp) {
