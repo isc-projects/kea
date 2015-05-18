@@ -1976,7 +1976,7 @@ temporarily override a list of interface names and listen on all interfaces.
       </itemizedlist>
       </para>
 
-      <para>The DHCPv4 makes use of two distinct identifiers which are placed
+      <para>DHCPv4 makes use of two distinct identifiers which are placed
       by the client in the queries sent to the server and copied by the server
       to its responses to the client: 'chaddr' and 'client identifier'. The
       former was introduced as a part of the BOOTP specification and it is also
@@ -2006,38 +2006,37 @@ temporarily override a list of interface names and listen on all interfaces.
       the client's lease.
       </para>
 
-      <para>When the server receives DHCPDISCOVER or DHCPREQUEST message from the
+      <para>When the server receives a DHCPDISCOVER or DHCPREQUEST message from the
       client, it will try to find out if the client already has a lease in the
       database and will hand out the existing lease rather than allocate
       a new one. Each lease in the lease database is associated with the
       'client identifier' and/or 'chaddr'. The server will first use the
       'client identifer' (if present) to search the lease. If the lease is
-      found, the server will consider that this lease belongs to this client,
-      regardless if the current 'chaddr' and the 'chaddr' associated with
-      the lease match. This facilitates the scenario when the network card
+      found, the server will treat this lease as belonging to the client
+      even if the current 'chaddr' and the 'chaddr' associated with
+      the lease do not match. This facilitates the scenario when the network card
       on the client system has been replaced and thus the new MAC address
       appears in the messages sent by the DHCP client. If the server fails
-      to find the lease using the 'client identifier' it will use the 'chaddr'
-      and will perform another lookup. If this lookup returns no result, the
-      client is considered to not have a lease and the new lease will
-      be created.
+      to find the lease using the 'client identifier' it will perform another lookup
+      using the 'chaddr'. If this lookup returns no result, the client is 
+      considered as not having a lease and the new lease will be created.
       </para>
 
-      <para>A common problem reported by the network operators is that bogus
-      client implementations do not use stable client identifiers, e.g.
-      new 'client identifier' is generated every time when the client connects
+      <para>A common problem reported by network operators is that bogus
+      client implementations do not use stable client identifiers such as 
+      generating a new 'client identifier' each time the client connects
       to the network. Another well known case is when the client changes its
-      'client identifier' during the multi-stage boot process (PXE). In those
+      'client identifier' during the multi-stage boot process (PXE). In such
       cases, the MAC address of the client's interface remains stable and
       using 'chaddr' field to identify the client guarantees that the
       particular system is considered to be the same client, even though its
-      'client identifier' gets changed.
+      'client identifier' changes.
       </para>
 
-      <para>To address this problem Kea includes a configuration option
-      which enables client identification using 'chaddr' and causes the
-      server to "ignore" the 'client identifier' during the lease lookup
-      and allocation for a particular subnet. Consider the following
+      <para>To address this problem, Kea includes a configuration option
+      which enables client identification using 'chaddr' only by instructing
+      the server to disregard server to "ignore" the 'client identifier' during
+      lease lookups and allocations for a particular subnet. Consider the following
       simplified server configuration:</para>
 <screen>
 "Dhcp4": {
@@ -2090,7 +2089,7 @@ temporarily override a list of interface names and listen on all interfaces.
      (if supplied) and 'chaddr' in the lease database. When the setting is
      changed and the client renews the lease the server will determine that
      it should use the 'chaddr' to search for the existing lease. If the
-     clien't hasn't changed its MAC address the server should successfully
+     client hasn't changed its MAC address the server should successfully
      find the existing lease. The 'client identifier' associated with the
      returned lease is ignored and the client is allowed to use this lease.
      When the lease is renewed only the 'chaddr' is recorded for this
@@ -2103,10 +2102,10 @@ temporarily override a list of interface names and listen on all interfaces.
      the server will first try to use the 'client identifier' to find the
      existing client's lease. This will return no results because the
      'client identifier' was not recorded for this lease. The server will
-     then use the 'chaddr' and the lease will be successfully found. If the
-     lease appears to have no 'client identifier' recorded, the server will
-     assume that this lease belongs to the client and that it was created
-     with the previous setting of the <command>match-client-id</command>.
+     then use the 'chaddr' and the lease will be found. If the lease appears
+     to have no 'client identifier' recorded, the server will assume that 
+     this lease belongs to the client and that it was created with the previous
+     setting of the <command>match-client-id</command>.
      However, if the lease contains 'client identifier' which is different
      from the 'client identifier' used by the client the lease will be
      assumed to belong to another client and the new lease will be
