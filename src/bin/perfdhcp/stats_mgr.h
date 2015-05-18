@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -665,7 +665,7 @@ public:
                      << "std deviation: " << getStdDevDelay() * 1e3 << " ms"
                      << endl
                      << "collected packets: " << getCollectedNum() << endl;
-            } catch (const Exception& e) {
+            } catch (const Exception&) {
                 cout << "Delay summary unavailable! No packets received." << endl;
             }
         }
