@@ -2018,12 +2018,12 @@ temporarily override a list of interface names and listen on all interfaces.
       on the client system has been replaced and thus the new MAC address
       appears in the messages sent by the DHCP client. If the server fails
       to find the lease using the 'client identifier' it will perform another lookup
-      using the 'chaddr'. If this lookup returns no result, the client is 
+      using the 'chaddr'. If this lookup returns no result, the client is
       considered as not having a lease and the new lease will be created.
       </para>
 
       <para>A common problem reported by network operators is that bogus
-      client implementations do not use stable client identifiers such as 
+      client implementations do not use stable client identifiers such as
       generating a new 'client identifier' each time the client connects
       to the network. Another well known case is when the client changes its
       'client identifier' during the multi-stage boot process (PXE). In such
@@ -2103,7 +2103,7 @@ temporarily override a list of interface names and listen on all interfaces.
      existing client's lease. This will return no results because the
      'client identifier' was not recorded for this lease. The server will
      then use the 'chaddr' and the lease will be found. If the lease appears
-     to have no 'client identifier' recorded, the server will assume that 
+     to have no 'client identifier' recorded, the server will assume that
      this lease belongs to the client and that it was created with the previous
      setting of the <command>match-client-id</command>.
      However, if the lease contains 'client identifier' which is different
@@ -2419,18 +2419,18 @@ temporarily override a list of interface names and listen on all interfaces.
 
       <para>
         An example configuration that disables reservation looks like follows:
-	<screen>
+<screen>
 "Dhcp4": {
     "subnet4": [
-	{
+    {
         "subnet": "192.0.2.0/24",
         <userinput>"reservation-mode": "disabled"</userinput>,
         ...
-	}
+    }
     ]
 }
 </screen>
-      </para>        
+      </para>
    </section>
 
   </section>
