@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -220,7 +220,7 @@ Dhcpv4SrvTest::noRequestedOptions(const Pkt4Ptr& pkt) {
 OptionPtr Dhcpv4SrvTest::generateClientId(size_t size /*= 4*/) {
 
     OptionBuffer clnt_id(size);
-    for (int i = 0; i < size; i++) {
+    for (size_t i = 0; i < size; i++) {
         clnt_id[i] = 100 + i;
     }
 
@@ -234,7 +234,7 @@ OptionPtr Dhcpv4SrvTest::generateClientId(size_t size /*= 4*/) {
 HWAddrPtr Dhcpv4SrvTest::generateHWAddr(size_t size /*= 6*/) {
     const uint8_t hw_type = 123; // Just a fake number (typically 6=HTYPE_ETHER, see dhcp4.h)
     OptionBuffer mac(size);
-    for (int i = 0; i < size; ++i) {
+    for (size_t i = 0; i < size; ++i) {
         mac[i] = 50 + i;
     }
     return (HWAddrPtr(new HWAddr(mac, hw_type)));
@@ -427,12 +427,12 @@ Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
 
     // Initialize the source HW address.
     vector<uint8_t> mac(6);
-    for (int i = 0; i < 6; ++i) {
+    for (uint8_t i = 0; i < 6; ++i) {
         mac[i] = i * 10;
     }
     // Initialized the destination HW address.
     vector<uint8_t> dst_mac(6);
-    for (int i = 0; i < 6; ++i) {
+    for (uint8_t i = 0; i < 6; ++i) {
         dst_mac[i] = i * 20;
     }
     // Create a DHCP message. It will be used to simulate the

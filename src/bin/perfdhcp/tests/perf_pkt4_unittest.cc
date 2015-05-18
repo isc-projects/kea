@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -114,7 +114,7 @@ public:
 TEST_F(PerfPkt4Test, Constructor) {
     // Initialize some dummy payload.
     uint8_t data[250];
-    for (int i = 0; i < 250; ++i) {
+    for (uint8_t i = 0; i < 250; ++i) {
         data[i] = i;
     }
 
@@ -354,7 +354,7 @@ TEST_F(PerfPkt4Test, UnpackTransactionId) {
 
     // Assume that transaction id is at offset 100.
     // Fill 4 bytes at offset 100 with dummy transaction id.
-    for (int i = 100; i < 104; ++i) {
+    for (uint8_t i = 100; i < 104; ++i) {
         in_data[i] = i - 99;
     }
 
@@ -386,7 +386,7 @@ TEST_F(PerfPkt4Test, Writes) {
     dhcp::OptionBuffer in_data(260, 1);
     // Initialize buffer to be used for write: 1,2,3,4,...,9
     dhcp::OptionBuffer write_buf(10);
-    for (int i = 0; i < write_buf.size(); ++i) {
+    for (size_t i = 0; i < write_buf.size(); ++i) {
         write_buf[i] = i;
     }
     // Create packet from the input buffer.

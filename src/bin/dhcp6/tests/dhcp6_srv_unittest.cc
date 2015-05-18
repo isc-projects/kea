@@ -2114,7 +2114,7 @@ OptionPtr createRSOO(const std::vector<uint16_t> codes, uint8_t payload = 0) {
     }
     OptionPtr rsoo_container(new OptionCustom(*def, Option::V6));
 
-    for (int i = 0; i < codes.size(); ++i) {
+    for (size_t i = 0; i < codes.size(); ++i) {
         OptionBuffer buf(10, payload ? payload : codes[i]); // let's make the option 10 bytes long
         rsoo_container->addOption(OptionPtr(new Option(Option::V6, codes[i], buf)));
     }

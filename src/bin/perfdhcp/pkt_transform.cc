@@ -147,7 +147,7 @@ PktTransform::packOptions(const OptionBuffer& in_buffer,
             // inject contents of temporary buffer to output buffer.
             const uint8_t *buf_data =
                 static_cast<const uint8_t*>(buf.getData());
-            for (int i = 0; i < buf.getLength(); ++i) {
+            for (size_t i = 0; i < buf.getLength(); ++i) {
                 out_buffer.writeUint8At(buf_data[i], offset + i);
             }
         }

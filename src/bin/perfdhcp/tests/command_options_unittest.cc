@@ -218,11 +218,11 @@ protected:
         EXPECT_EQ(0, opt.getBase().size());
         EXPECT_EQ(0, opt.getNumRequests().size());
         EXPECT_EQ(0, opt.getPeriod());
-        for (int i = 0; i < opt.getDropTime().size(); ++i) {
+        for (size_t i = 0; i < opt.getDropTime().size(); ++i) {
             EXPECT_DOUBLE_EQ(1, opt.getDropTime()[i]);
         }
         ASSERT_EQ(opt.getMaxDrop().size(), opt.getMaxDropPercentage().size());
-        for (int i = 0; i < opt.getMaxDrop().size(); ++i) {
+        for (size_t i = 0; i < opt.getMaxDrop().size(); ++i) {
             EXPECT_EQ(0, opt.getMaxDrop()[i]);
             EXPECT_EQ(0, opt.getMaxDropPercentage()[i]);
         }
