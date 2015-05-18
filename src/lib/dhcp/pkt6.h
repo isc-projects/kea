@@ -16,6 +16,7 @@
 #define PKT6_H
 
 #include <asiolink/io_address.h>
+#include <dhcp/duid.h>
 #include <dhcp/option.h>
 #include <dhcp/pkt.h>
 
@@ -157,6 +158,34 @@ public:
         proto_ = proto;
     }
 
+    /// @brief Returns text representation of the given packet identifiers.
+    ///
+    /// @note The parameters are ordered from the one that should be available
+    /// almost at all times, to the one that is optional. This allows for
+    /// providing default values for the parameters that may not be available
+    /// in some places in the code where @c Pkt6::makeLabel is called.
+    ///
+    /// @param duid Pointer to the client identifier or NULL.
+    /// @param transid Numeric transaction id to include in the string.
+    /// @param hwaddr Hardware address to include in the string or NULL.
+    ///
+    /// @return String with text representation of the packet identifiers.
+    static std::string makeLabel(const DuidPtr duid, const uint32_t transid,
+                                 const HWAddrPtr& hwaddr);
+
+    /// @brief Returns text representation of the primary packet identifiers
+    ///
+    /// This method is intended to be used to provide a consistent way to
+    /// identify packets within log statements.  It is an instance-level
+    /// wrapper around static makeLabel(). See this method for string
+    /// content.
+    ///
+    /// @note Currently this method doesn't include the HW address in the
+    /// returned text.
+    ///
+    /// @return string with text representation
+    virtual std::string getLabel() const;
+
     /// @brief Returns text representation of the packet.
     ///
     /// This function is useful mainly for debugging.
@@ -185,6 +214,11 @@ public:
     ///
     /// @param type message type to be set
     virtual void setType(uint8_t type) { msg_type_=type; };
+
+    /// @brief Retrieves the DUID from the Client Identifier option.
+    ///
+    /// @return Pointer to the DUID or NULL if the option doesn't exist.
+    DuidPtr getClientId() const;
 
     /// @brief returns option inserted by relay
     ///

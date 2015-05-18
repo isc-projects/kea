@@ -737,12 +737,6 @@ private:
                                const std::string& hostname,
                                bool do_fwd, bool do_rev);
 
-    /// @brief Utility method that extracts DUID from client-id option
-    ///
-    /// @param pkt the message that contains client-id option
-    /// @return extracted DUID (or NULL if client-id is missing)
-    DuidPtr extractClientId(const Pkt6Ptr& pkt);
-
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using
     /// It must be a pointer, because we will support changing engines
