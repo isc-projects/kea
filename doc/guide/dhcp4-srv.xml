@@ -2418,6 +2418,158 @@ temporarily override a list of interface names and listen on all interfaces.
 
     </section>
 
+    <section id="dhcp4-stats">
+      <title>Statistics in DHCPv4 server</title>
+      <note>
+        <para>This section describes DHCPv4-specific statistics. For a general
+        overview and usage of statistics, see <xref linkend="stats" />.</para>
+      </note>
+
+      <para>
+        The DHCPv4 server supports the following statistics:
+      </para>
+      <para>
+        <itemizedlist>
+          <listitem>
+            <simpara><emphasis>pkt4-received</emphasis> (integer) - this
+            statistic shows the the number of received packets. That includes
+            all packets: valid, bogus, corrupted, rejected etc. This statistic
+            is expected to grow rapidly.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><emphasis>pkt4-discover-received</emphasis> (integer) -
+            specifies the number of received DHCPDISCOVER packets. This statistic
+            is expected to grow. Its increase means that clients that just booted
+            started their configuration process and their initial packets reached
+            your server.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><emphasis>pkt4-offer-received</emphasis> (integer) -
+            specifies the number of received DHCPOFFER packets. This statistic
+            is expected to remain zero at all times, as DHCPOFFER packets are sent
+            by the server and the server is never expected to receive them. Non-zero
+            value indicates an error. One likely cause would be a misbehaving relay
+            agent that incorrectly forwards DHCPOFFER messages towards the server,
+            rather back to the clients.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><emphasis>pkt4-request-received</emphasis> (integer) -
+            specifies the number of received DHCPREQUEST packets. This statistic
+            is expected to grow. Its increase means that clients that just booted
+            received server's response (DHCPOFFER), accepted it and now requesting
+            an address (DHCPREQUEST).</simpara>
+          </listitem>
+          <listitem>
+            <simpara><emphasis>pkt4-ack-received</emphasis> (integer) -
+            specifies the number of received DHCPACK packets. This statistic
+            is expected to remain zero at all times, as DHCPACK packets are sent
+            by the server and the server is never expected to receive them. Non-zero
+            value indicates an error. One likely cause would be a misbehaving relay
+            agent that incorrectly forwards DHCPACK messages towards the server,
+            rather back to the clients.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><emphasis>pkt4-nak-received</emphasis> (integer) -
+            specifies the number of received DHCPNAK packets. This statistic
+            is expected to remain zero at all times, as DHCPNAK packets are sent
+            by the server and the server is never expected to receive them. Non-zero
+            value indicates an error. One likely cause would be a misbehaving relay
+            agent that incorrectly forwards DHCPNAK messages towards the server,
+            rather back to the clients.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><emphasis>pkt4-release-received</emphasis> (integer) -
+            specifies the number of received DHCPRELEASE packets. This statistic
+            is expected to grow. Its increase means that clients that had an address
+            are shutting down or stop using their addresses.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><emphasis>pkt4-decline-received</emphasis> (integer) -
+            specifies the number of received DHCPDECLINE packets. This statistic
+            is expected to remain close to zero. Its increase means that clients
+            that leased an address, but discovered that the address is currently
+            used by an unknown device in your network.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><emphasis>pkt4-decline-received</emphasis> (integer) -
+            specifies the number of received DHCPDECLINE packets. This statistic
+            is expected to remain close to zero. Its increase means that a client
+            that leased an address, but discovered that the address is currently
+            used by an unknown device in your network.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><emphasis>pkt4-inform-received</emphasis> (integer) -
+            specifies the number of received DHCPINFORM packets. This statistic
+            is expected to grow. Its increase means that there are clients that
+            either do not need an address or already have an address and are
+            interested only in getting additional configuration parameters.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara><emphasis>pkt4-unknown-received</emphasis> (integer) -
+            specifies the number of received packets of uknown type. Non-zero
+            value of this statistic indicates that the server received a packet
+            that it wasn't able to recognize: either with unsupported type
+            or possibly malformed (without message type option).</simpara>
+          </listitem>
+          <listitem>
+            <simpara><emphasis>pkt4-sent</emphasis> (integer) - specifies the
+            number of sent DHCPv4 packets. This statistic is expected to grow
+            every time the server transmits a packet. In general, it should
+            roughly match pkt4-received, as most incoming packets cause
+            server to respond. There are exceptions (e.g. DHCPRELEASE), so
+            do not worry, if it is lesser than pkt4-received.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><emphasis>pkt4-sent</emphasis> (integer) - specifies the
+            number of sent DHCPv4 packets. This statistic is expected to grow
+            every time the server transmits a packet. In general, it should
+            roughly match pkt4-received, as most incoming packets cause
+            server to respond. There are exceptions (e.g. DHCPRELEASE), so
+            do not worry, if it is lesser than pkt4-received.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><emphasis>pkt4-offer-sent</emphasis> (integer) - specifies
+            the number of sent DHCPOFFER packets. This statistic is expected to
+            grow in most cases after a DHCPDISCOVER is processed. There are
+            certain uncommon, but valid cases where incoming DHCPDISCOVER is
+            dropped, but in general this statistic is expected to be close to
+            pkt4-discover-received.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><emphasis>pkt4-ack-sent</emphasis> (integer) - specifies
+            the number of sent DHCPACK packets. This statistic is expected to
+            grow in most cases after a DHCPREQUEST is processed. There are
+            certain cases where DHCPNAK is sent instead. In general, the sum of
+            pkt4-ack-sent and pkt4-nak-sent should be close to
+            pkt4-request-received.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><emphasis>pkt4-nak-sent</emphasis> (integer) - specifies
+            the number of sent DHCPNAK packets. This statistic is expected to
+            grow when the server choses to not honor the address requested by a
+            client. In general, the sum of pkt4-ack-sent and pkt4-nak-sent
+            should be close to pkt4-request-received.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><emphasis>pkt4-parse-failed</emphasis> (integer) - this
+            statistic denote the number of packets that were received, but the
+            Kea server was unable to parse it. Non-zero value of this statistic
+            indicates that the server received malformed or truncated packet.
+            This may indicate problems in your network, faulty clients or server
+            code bug.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><emphasis>pkt4-receive-drop</emphasis> (integer) - this
+            statistic indicate number of incoming packets that were dropped.
+            Exact reason for dropping packets is logged, but the most common
+            reasons may be not accepted packet type, direct responses are
+            forbidden or the server-id the client had sent doesn't match the
+            server's.</simpara>
+          </listitem>
+      </itemizedlist>
+      </para>
+    </section>
 
     <section id="dhcp4-std">
       <title>Supported DHCP Standards</title>

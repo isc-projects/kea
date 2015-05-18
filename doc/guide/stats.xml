@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+<!ENTITY mdash  "&#x2014;" >
+]>
+
+  <!-- Note: Please use the following terminology:
+       - daemon - one process (e.g. kea-dhcp4)
+       - component - one piece of code within a daemon (e.g. libdhcp or hooks)
+       - server - currently equal to daemon, but the difference will be more
+                  prominent once we add client or relay support
+       - logger - one instance of isc::log::Logger
+       - structure - an element in config file (e.g. "Dhcp4")
+
+       Do not use:
+       - module => daemon
+    -->
+
+<chapter id="stats">
+  <title>Statistics</title>
+
+  <section>
+    <title>Statistics Overview</title>
+    
+    <para>
+      TODO: Describe statistics collection here as part of ticket #3800.
+      For DHCPv4 specific statistics, see <xref linkend="dhcp4-stats"/>.
+      For DHCPv6 specific statistics, see TODO.
+      For DDNS specific statistics, see TODO.
+    </para>
+  </section>
+</chapter>
+
