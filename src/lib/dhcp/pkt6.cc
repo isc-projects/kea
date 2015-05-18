@@ -496,6 +496,36 @@ Pkt6::getMACFromDUID() {
 }
 
 std::string
+Pkt6::makeLabel(const DuidPtr duid, const uint32_t transid,
+                const HWAddrPtr& hwaddr) {
+    std::stringstream label;
+    // DUID should be present at all times, so explicitly inform when
+    // it is no present (no info).
+    label << "duid=[" << (duid ? duid->toText() : "no info")
+          << "],";
+
+    // HW address is typically not carried in the DHCPv6 mmessages
+    // and can be extracted using various, but not fully reliable,
+    // techniques. If it is not present, don't print anything.
+    if (hwaddr) {
+        label << " [" << hwaddr->toText() << "],";
+    }
+
+    // Transaction id is always there.
+    label << " tid=0x" << std::hex << transid << std::dec;
+
+    return (label.str());
+}
+
+std::string
+Pkt6::getLabel() const {
+    /// @todo Do not print HW address as it is unclear how it should
+    /// be retrieved if there is no access to user configuration which
+    /// specifies the order of various techniques to be used to retrieve
+    /// it.
+    return (makeLabel(getClientId(), getTransid(), HWAddrPtr()));}
+
+std::string
 Pkt6::toText() const {
     stringstream tmp;
     tmp << "localAddr=[" << local_addr_ << "]:" << local_port_
@@ -509,6 +539,12 @@ Pkt6::toText() const {
         tmp << opt->second->toText() << std::endl;
     }
     return tmp.str();
+}
+
+DuidPtr
+Pkt6::getClientId() const {
+    OptionPtr opt_duid = getOption(D6O_CLIENTID);
+    return (opt_duid ? DuidPtr(new DUID(opt_duid->getData())) : DuidPtr());
 }
 
 isc::dhcp::OptionCollection
