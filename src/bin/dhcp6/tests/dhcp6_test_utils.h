@@ -170,7 +170,7 @@ public:
     isc::dhcp::OptionPtr generateClientId(size_t duid_size = 32) {
 
         isc::dhcp::OptionBuffer clnt_duid(duid_size);
-        for (int i = 0; i < duid_size; i++) {
+        for (size_t i = 0; i < duid_size; i++) {
             clnt_duid[i] = 100 + i;
         }
 

@@ -438,7 +438,7 @@ TEST_F(Dhcpv4SrvTest, processDecline) {
 
 TEST_F(Dhcpv4SrvTest, serverReceivedPacketName) {
     // Check all possible packet types
-    for (int itype = 0; itype < 256; ++itype) {
+    for (unsigned itype = 0; itype < 256; ++itype) {
         uint8_t type = itype;
 
         switch (type) {
@@ -3511,7 +3511,7 @@ TEST_F(Dhcpv4SrvTest, acceptMessageType) {
     };
     size_t allowed_size = sizeof(allowed) / sizeof(allowed[0]);
     // Check that the server actually accepts these message types.
-    for (int i = 0; i < allowed_size; ++i) {
+    for (size_t i = 0; i < allowed_size; ++i) {
         EXPECT_TRUE(srv.acceptMessageType(Pkt4Ptr(new Pkt4(allowed[i], 1234))))
             << "Test failed for message type " << i;
     }
@@ -3529,7 +3529,7 @@ TEST_F(Dhcpv4SrvTest, acceptMessageType) {
     };
     size_t not_allowed_size = sizeof(not_allowed) / sizeof(not_allowed[0]);
     // Actually check that the server will drop these messages.
-    for (int i = 0; i < not_allowed_size; ++i) {
+    for (size_t i = 0; i < not_allowed_size; ++i) {
         EXPECT_FALSE(srv.acceptMessageType(Pkt4Ptr(new Pkt4(not_allowed[i],
                                                             1234))))
             << "Test failed for message type " << i;
