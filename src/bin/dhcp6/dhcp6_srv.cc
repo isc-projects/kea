@@ -224,25 +224,11 @@ Dhcpv6Srv::testUnicast(const Pkt6Ptr& pkt) const {
     return (true);
 }
 
-DuidPtr
-Dhcpv6Srv::extractClientId(const Pkt6Ptr& pkt) {
-    // Let's find client's DUID. Client is supposed to include its client-id
-    // option almost all the time (the only exception is an anonymous inf-request,
-    // but that is mostly a theoretical case). Our allocation engine needs DUID
-    // and will refuse to allocate anything to anonymous clients.
-    OptionPtr opt_duid = pkt->getOption(D6O_CLIENTID);
-    if (opt_duid) {
-        return (DuidPtr(new DUID(opt_duid->getData())));
-    } else {
-        return (DuidPtr());
-    }
-}
-
 AllocEngine::ClientContext6
 Dhcpv6Srv::createContext(const Pkt6Ptr& pkt) {
     AllocEngine::ClientContext6 ctx;
     ctx.subnet_ = selectSubnet(pkt);
-    ctx.duid_ = extractClientId(pkt);
+    ctx.duid_ = pkt->getClientId();
     ctx.hwaddr_ = getMAC(pkt);
     alloc_engine_->findReservation(ctx);
 
