@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,7 +20,9 @@
 The hooks framework is a Kea system that simplifies the way that
 users can write code to modify the behavior of Kea.  Instead of
 altering the Kea source code, they write functions that are compiled
-and linked into a shared library.  The library is specified in the Kea
+and linked into a dynamic shared object called here a shared library
+(even the concepts are different they are implemented in the same
+way with a common naming).  The library is specified in the Kea
 configuration and at run time Kea dynamically loads the library
 into its address space.  At various points in the processing, the component
 "calls out" to functions in the library, passing to them the data is it
