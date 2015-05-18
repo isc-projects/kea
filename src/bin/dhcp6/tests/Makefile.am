@@ -1,9 +1,7 @@
 SHTESTS =
 # The test of dynamic reconfiguration based on signals will work only
 # if we are using file based configuration approach.
-if CONFIG_BACKEND_JSON
 SHTESTS += dhcp6_process_tests.sh
-endif
 
 noinst_SCRIPTS = dhcp6_process_tests.sh
 
@@ -88,15 +86,7 @@ dhcp6_unittests_SOURCES += confirm_unittest.cc
 dhcp6_unittests_SOURCES += infrequest_unittest.cc
 dhcp6_unittests_SOURCES += dhcp6_message_test.cc dhcp6_message_test.h
 
-if CONFIG_BACKEND_BUNDY
-# For Bundy backend, we only need to run the usual tests. There are no
-# Bundy-specific tests yet.
-dhcp6_unittests_SOURCES += bundy_controller_unittest.cc
-endif
-
-if CONFIG_BACKEND_JSON
 dhcp6_unittests_SOURCES += kea_controller_unittest.cc
-endif
 
 nodist_dhcp6_unittests_SOURCES  = marker_file.h test_libraries.h
 

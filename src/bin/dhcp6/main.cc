@@ -144,8 +144,7 @@ main(int argc, char* argv[]) {
 
         try {
             // Initialize the server, e.g. establish control session
-            // if Bundy backend is used or read a configuration file
-            // if Kea backend is used.
+            // Read a configuration file
             server.init(config_file);
 
         } catch (const std::exception& ex) {

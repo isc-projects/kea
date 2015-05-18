@@ -1,4 +1,4 @@
-// Copyright (C) 2009,2015  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -84,7 +84,7 @@ public:
 
     ~TestDomainSocket() {
         socket_.close();
-        unlink(BUNDY_TEST_SOCKET_FILE);
+        unlink(TEST_SOCKET_FILE);
     }
 
     static void acceptHandler(const asio::error_code&) {
@@ -165,8 +165,8 @@ protected:
     SessionTest() : sess(my_io_service), work(my_io_service) {
         // The TestDomainSocket is held as a 'new'-ed pointer,
         // so we can call unlink() first.
-        unlink(BUNDY_TEST_SOCKET_FILE);
-        tds = new TestDomainSocket(my_io_service, BUNDY_TEST_SOCKET_FILE);
+        unlink(TEST_SOCKET_FILE);
+        tds = new TestDomainSocket(my_io_service, TEST_SOCKET_FILE);
     }
 
     ~SessionTest() {
@@ -226,25 +226,25 @@ TEST_F(SessionTest, timeout_on_connect) {
     sess.setTimeout(100);
     EXPECT_EQ(100, sess.getTimeout());
     // no answer, should timeout
-    EXPECT_THROW(sess.establish(BUNDY_TEST_SOCKET_FILE), SessionTimeout);
+    EXPECT_THROW(sess.establish(TEST_SOCKET_FILE), SessionTimeout);
 }
 
 TEST_F(SessionTest, connect_ok) {
     tds->setSendLname();
-    sess.establish(BUNDY_TEST_SOCKET_FILE);
+    sess.establish(TEST_SOCKET_FILE);
 }
 
 TEST_F(SessionTest, connect_ok_no_timeout) {
     tds->setSendLname();
 
     sess.setTimeout(0);
-    sess.establish(BUNDY_TEST_SOCKET_FILE);
+    sess.establish(TEST_SOCKET_FILE);
 }
 
 TEST_F(SessionTest, connect_ok_connection_reset) {
     tds->setSendLname();
 
-    sess.establish(BUNDY_TEST_SOCKET_FILE);
+    sess.establish(TEST_SOCKET_FILE);
     // Close the session again, so the next recv() should throw
     sess.disconnect();
 
@@ -255,7 +255,7 @@ TEST_F(SessionTest, connect_ok_connection_reset) {
 TEST_F(SessionTest, run_with_handler) {
     tds->setSendLname();
 
-    sess.establish(BUNDY_TEST_SOCKET_FILE);
+    sess.establish(TEST_SOCKET_FILE);
     sess.startRead(boost::bind(&SessionTest::someHandler, this));
 
     isc::data::ElementPtr env = isc::data::Element::fromJSON("{ \"to\": \"me\" }");
@@ -279,7 +279,7 @@ TEST_F(SessionTest, run_with_handler) {
 TEST_F(SessionTest, run_with_handler_timeout) {
     tds->setSendLname();
 
-    sess.establish(BUNDY_TEST_SOCKET_FILE);
+    sess.establish(TEST_SOCKET_FILE);
     sess.startRead(boost::bind(&SessionTest::someHandler, this));
     sess.setTimeout(100);
 
@@ -299,7 +299,7 @@ TEST_F(SessionTest, run_with_handler_timeout) {
 
 TEST_F(SessionTest, get_socket_descr) {
     tds->setSendLname();
-    sess.establish(BUNDY_TEST_SOCKET_FILE);
+    sess.establish(TEST_SOCKET_FILE);
 
     int socket = 0;
     // session is established, so getSocketDesc() should work
@@ -313,7 +313,7 @@ TEST_F(SessionTest, get_socket_descr) {
 TEST_F(SessionTest, group_sendmsg) {
     // Connect (to set the lname, so we can see it sets the from)
     tds->setSendLname();
-    sess.establish(BUNDY_TEST_SOCKET_FILE);
+    sess.establish(TEST_SOCKET_FILE);
     // Eat the "get_lname" message, so it doesn't confuse the
     // test below.
     sess.getSentMessage();
