@@ -244,7 +244,7 @@ public:
     /// @param type message type to be set
     void setType(uint8_t type);
 
-    /// @brief Returns name of the DHCP message.
+    /// @brief Returns name of the DHCP message for a given type number.
     ///
     /// @param type DHCPv4 message type which name should be returned.
     ///

@@ -509,6 +509,10 @@ TEST_F(Pkt6Test, getName) {
         uint8_t type = itype;
 
         switch (type) {
+        case DHCPV6_ADVERTISE:
+            EXPECT_STREQ("ADVERTISE", Pkt6::getName(type));
+            break;
+
         case DHCPV6_CONFIRM:
             EXPECT_STREQ("CONFIRM", Pkt6::getName(type));
             break;
@@ -522,8 +526,28 @@ TEST_F(Pkt6Test, getName) {
                          Pkt6::getName(type));
             break;
 
+        case DHCPV6_LEASEQUERY:
+            EXPECT_STREQ("LEASEQUERY", Pkt6::getName(type));
+            break;
+
+        case DHCPV6_LEASEQUERY_REPLY:
+            EXPECT_STREQ("LEASEQUERY_REPLY", Pkt6::getName(type));
+            break;
+
         case DHCPV6_REBIND:
             EXPECT_STREQ("REBIND", Pkt6::getName(type));
+            break;
+
+        case DHCPV6_RECONFIGURE:
+            EXPECT_STREQ("RECONFIGURE", Pkt6::getName(type));
+            break;
+
+        case DHCPV6_RELAY_FORW:
+            EXPECT_STREQ("RELAY_FORWARD", Pkt6::getName(type));
+            break;
+
+        case DHCPV6_RELAY_REPL:
+            EXPECT_STREQ("RELAY_REPLY", Pkt6::getName(type));
             break;
 
         case DHCPV6_RELEASE:
@@ -532,6 +556,10 @@ TEST_F(Pkt6Test, getName) {
 
         case DHCPV6_RENEW:
             EXPECT_STREQ("RENEW", Pkt6::getName(type));
+            break;
+
+        case DHCPV6_REPLY:
+            EXPECT_STREQ("REPLY", Pkt6::getName(type));
             break;
 
         case DHCPV6_REQUEST:
