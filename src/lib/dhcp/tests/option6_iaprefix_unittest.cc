@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 
 #include <dhcp/dhcp6.h>
 #include <dhcp/option.h>
+#include <dhcp/option_int.h>
 #include <dhcp/option6_iaprefix.h>
 #include <util/buffer.h>
 
@@ -254,6 +255,25 @@ TEST_F(Option6IAPrefixTest, negative) {
     EXPECT_THROW(Option6IAPrefix(12345, IOAddress("192.0.2.1"),
                                  255, 1000, 2000),
                  BadValue);
+}
+
+// Checks if the option is converted to textual format correctly.
+TEST_F(Option6IAPrefixTest, toText) {
+    // Create option without suboptions.
+    Option6IAPrefix opt(D6O_IAPREFIX, IOAddress("2001:db8:1::"), 64, 300, 400);
+    EXPECT_EQ("type=00026(IAPREFIX), len=00025: prefix=2001:db8:1::/64,"
+              " preferred-lft=300, valid-lft=400",
+              opt.toText());
+
+    // Add suboptions and make sure they are printed.
+    opt.addOption(OptionPtr(new OptionUint32(Option::V6, 123, 234)));
+    opt.addOption(OptionPtr(new OptionUint32(Option::V6, 222, 333)));
+
+    EXPECT_EQ("type=00026(IAPREFIX), len=00041: prefix=2001:db8:1::/64,"
+              " preferred-lft=300, valid-lft=400,\noptions:\n"
+              "  type=00123, len=00004: 234 (uint32)\n"
+              "  type=00222, len=00004: 333 (uint32)",
+              opt.toText());
 }
 
 }

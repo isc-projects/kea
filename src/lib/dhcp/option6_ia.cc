@@ -84,32 +84,24 @@ void Option6IA::unpack(OptionBufferConstIter begin,
     unpackOptions(OptionBuffer(begin, end));
 }
 
-std::string Option6IA::toText(int indent /* = 0*/) {
-    stringstream tmp;
+std::string Option6IA::toText(int indent) {
+    stringstream output;
 
-    for (int i=0; i<indent; i++)
-        tmp << " ";
-    tmp << "type=" << type_;
-
-    switch (type_) {
+    switch(getType()) {
     case D6O_IA_NA:
-        tmp << "(IA_NA)";
+        output << headerToText(indent, "IA_NA");
         break;
     case D6O_IA_PD:
-        tmp << "(IA_PD)";
+        output << headerToText(indent, "IA_PD");
         break;
     default:
-        tmp << "(unknown)";
+        output << headerToText(indent);
     }
-    tmp << " iaid=" << iaid_ << ", t1=" << t1_ << ", t2=" << t2_
-        << " " << options_.size() << " sub-options:" << endl;
 
-    for (OptionCollection::const_iterator opt=options_.begin();
-         opt!=options_.end();
-         ++opt) {
-        tmp << (*opt).second->toText(indent+2);
-    }
-    return tmp.str();
+    output << ": iaid=" << iaid_ << ", t1=" << t1_ << ", t2=" << t2_
+           << suboptionsToText(indent + 2);
+
+    return (output.str());
 }
 
 uint16_t Option6IA::len() {
