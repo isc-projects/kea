@@ -32,6 +32,10 @@
 #include <iostream>
 #include <queue>
 
+#ifdef OPTIONAL
+#undef OPTIONAL
+#endif
+
 namespace isc {
 namespace dhcp {
 
