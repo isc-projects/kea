@@ -353,8 +353,7 @@ TEST_F(Pkt6Test, unpackMalformed) {
     Pkt6Ptr too_short_pkt(new Pkt6(&shorty[0], shorty.size()));
     EXPECT_THROW(too_short_pkt->unpack(), isc::BadValue);
 
-    // The code should complain about remaining bytes that can't
-    // be parsed.
+    // The code should complain about remaining bytes that can't be parsed.
     Pkt6Ptr trailing_garbage(new Pkt6(&malform1[0], malform1.size()));
     EXPECT_NO_THROW(trailing_garbage->unpack());
 
@@ -392,7 +391,7 @@ TEST_F(Pkt6Test, unpackVendorMalformed) {
     orig.push_back(17);
     orig.push_back(0);
     size_t len_index = orig.size();
-    orig.push_back(20); // length=18
+    orig.push_back(18); // length=18
     orig.push_back(1); // vendor_id=0x1020304
     orig.push_back(2);
     orig.push_back(3);
@@ -406,7 +405,7 @@ TEST_F(Pkt6Test, unpackVendorMalformed) {
     orig.push_back(111);
     orig.push_back(1); // suboption type=0x102
     orig.push_back(2);
-    orig.push_back(0); // suboption lenth=3
+    orig.push_back(0); // suboption length=3
     orig.push_back(3);
     orig.push_back(99); // data="bar'
     orig.push_back(98);
@@ -417,16 +416,23 @@ TEST_F(Pkt6Test, unpackVendorMalformed) {
 
     // Truncated vendor option is not accepted but doesn't throw
     vector<uint8_t> shortv = orig;
-    shortv.resize(orig.size() - 2);
+    shortv[len_index] = 20;
     Pkt6Ptr too_short_vendor_pkt(new Pkt6(&shortv[0], shortv.size()));
     EXPECT_NO_THROW(too_short_vendor_pkt->unpack());
     
-    // Truncated data is not accepted but doesn't throw
+    // Truncated option header is not accepted
+    vector<uint8_t> shorth = orig;
+    shorth.resize(orig.size() - 4);
+    shorth[len_index] = 12;
+    Pkt6Ptr too_short_header_pkt(new Pkt6(&shorth[0], shorth.size()));
+    EXPECT_THROW(too_short_header_pkt->unpack(), OutOfRange);
+
+    // Truncated option data is not accepted
     vector<uint8_t> shorto = orig;
     shorto.resize(orig.size() - 2);
-    shorto[len_index] = 18;
+    shorto[len_index] = 16;
     Pkt6Ptr too_short_option_pkt(new Pkt6(&shorto[0], shorto.size()));
-    EXPECT_NO_THROW(too_short_option_pkt->unpack());
+    EXPECT_THROW(too_short_option_pkt->unpack(), OutOfRange);
 }
 
 // This test verifies that it is possible to specify custom implementation of
