@@ -682,13 +682,19 @@ TEST_F(Pkt4Test, unpackMalformed) {
     vector<uint8_t> nolength = orig;
     nolength.resize(orig.size() - 4);
     Pkt4Ptr no_length_pkt(new Pkt4(&nolength[0], nolength.size()));
-    EXPECT_THROW(no_length_pkt->unpack(), OutOfRange);
+    EXPECT_NO_THROW(no_length_pkt->unpack());
+
+    // The unpack() operation doesn't throw but there is no option 12
+    EXPECT_FALSE(no_length_pkt->getOption(12));
 
     // Truncated data is not accepted too but doesn't throw
     vector<uint8_t> shorty = orig;
     shorty.resize(orig.size() - 1);
     Pkt4Ptr too_short_pkt(new Pkt4(&shorty[0], shorty.size()));
     EXPECT_NO_THROW(too_short_pkt->unpack());
+
+    // The unpack() operation doesn't throw but there is no option 12
+    EXPECT_FALSE(no_length_pkt->getOption(12));
 }
 
 // Checks if the code is able to handle a malformed vendor option
@@ -734,7 +740,7 @@ TEST_F(Pkt4Test, unpackVendorMalformed) {
     baddatalen.resize(orig.size() - 5);
     baddatalen[full_len_index] = 10;
     Pkt4Ptr bad_data_len_pkt(new Pkt4(&baddatalen[0], baddatalen.size()));
-    EXPECT_NO_THROW(bad_data_len_pkt->unpack());
+    EXPECT_THROW(bad_data_len_pkt->unpack(), InvalidOptionValue);
 
     // At the exception of END and PAD, a suboption must have a length byte
     vector<uint8_t> nolength = orig;
