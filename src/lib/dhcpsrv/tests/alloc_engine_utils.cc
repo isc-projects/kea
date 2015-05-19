@@ -351,6 +351,8 @@ AllocEngine4Test::AllocEngine4Test() {
     HostMgr::instance().create();
 
     clientid_ = ClientIdPtr(new ClientId(vector<uint8_t>(8, 0x44)));
+    clientid2_ = ClientIdPtr(new ClientId(vector<uint8_t>(8, 0x56)));
+
     uint8_t mac[] = { 0, 1, 22, 33, 44, 55};
 
     // Let's use odd hardware type to check if there is no Ethernet

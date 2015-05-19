@@ -20,6 +20,7 @@ libkea_util_la_SOURCES += memory_segment.h
 libkea_util_la_SOURCES += memory_segment_local.h memory_segment_local.cc
 libkea_util_la_SOURCES += optional_value.h
 libkea_util_la_SOURCES += pid_file.h pid_file.cc
+libkea_util_la_SOURCES += pointer_util.h
 libkea_util_la_SOURCES += process_spawn.h process_spawn.cc
 libkea_util_la_SOURCES += range_utilities.h
 libkea_util_la_SOURCES += signal_set.cc signal_set.h

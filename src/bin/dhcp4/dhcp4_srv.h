@@ -378,7 +378,7 @@ protected:
     /// @return ACK or NAK message
     Pkt4Ptr processRequest(Pkt4Ptr& request);
 
-    /// @brief Stub function that will handle incoming RELEASE messages.
+    /// @brief Processes incoming DHCPRELEASE messages.
     ///
     /// In DHCPv4, server does not respond to RELEASE messages, therefore
     /// this function does not return anything.
@@ -391,9 +391,11 @@ protected:
     /// @param decline message received from client
     void processDecline(Pkt4Ptr& decline);
 
-    /// @brief Stub function that will handle incoming INFORM messages.
+    /// @brief Processes incoming DHCPINFORM messages.
     ///
     /// @param inform message received from client
+    ///
+    /// @return DHCPACK to be sent to the client.
     Pkt4Ptr processInform(Pkt4Ptr& inform);
 
     /// @brief Appends options requested by client.

@@ -71,6 +71,20 @@ The first argument specifies the client and transaction identification
 information. The second argument includes all classes to which the
 packet has been assigned.
 
+% DHCP4_CLIENTID_IGNORED_FOR_LEASES %1: not using client identifier for lease allocation for subnet %2
+This debug message is issued when the server is processing the DHCPv4 message
+for which client identifier will not be used when allocating new lease or
+renewing existing lease. The server is explicitly configured to not use
+client identifier to lookup existing leases for the client and will not
+record client identifier in the lease database. This mode of operation
+is useful when clients don't use stable client identifiers, e.g. multi
+stage booting. Note that the client identifier may be used for other
+operations than lease allocation, e.g. identifying host reservations
+for the client using client identifier. The first argument includes the
+client and transaction identification information. The second argument
+specifies the identifier of the subnet where the client is connected
+and for which this mode of operation is configured on the server.
+
 % DHCP4_CLIENT_FQDN_PROCESS %1: processing Client FQDN option
 This debug message is issued when the server starts processing the Client
 FQDN option sent in the client's query. The argument includes the
@@ -496,22 +510,13 @@ but no such lease is known to the server. The first argument contains
 the client and transaction identification information. The second
 argument contains the address which the client is trying to release.
 
-% DHCP4_RELEASE_FAIL_WRONG_CLIENT_ID %1: client tried to release address %2, but this address is leased to different client using client id %3
-This warning message indicates that client tried to release an address
-that belongs to a different client. This should not happen in normal
-circumstances and may indicate a misconfiguration of the client.  However,
-since the client releasing the address will stop using it anyway, there
-is a good chance that the situation will correct itself.
-
-% DHCP4_RELEASE_FAIL_WRONG_HWADDR %1: client tried to release address %2, but this address is leased to different client using HW address %3
-This warning message indicates that client tried to release an address
-that does belong to it, but the lease information was associated with
-a different hardware address. One possible reason for using different
-hardware address is that a cloned virtual machine was not updated and
-both clones use the same client-id. The first argument includes the
-client and the transaction identification information. The second
-argument includes the address which release was attempted. The
-third argumnet includes the HW address of the lease owner.
+% DHCP4_RELEASE_FAIL_WRONG_CLIENT %1: client is trying to release the lease %2 which belongs to a different client
+This debug message is issued when a client is trying to release the
+lease for the address which is currently used by another client, i.e.
+the 'client identifier' or 'chaddr' doesn't match between the client
+and the lease. The first argument includes the client and the
+transaction identification information. The second argument specifies
+the leased address.
 
 % DHCP4_RESPONSE_FQDN_DATA %1: including FQDN option in the server's response: %2
 This debug message is issued when the server is adding the Client FQDN

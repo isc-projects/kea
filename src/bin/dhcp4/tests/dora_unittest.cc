@@ -57,6 +57,13 @@ namespace {
 ///   - 1 subnet: 10.0.0.0/24
 ///   - One reservation for the client using MAC address:
 ///     aa:bb:cc:dd:ee:ff, reserved address 10.0.0.7
+///
+/// - Configuration 3:
+///   - Use for testing match-client-id flag
+///   - 1 subnet: 10.0.0.0/24
+///   - 1 pool: 10.0.0.10-10.0.0.100
+///   - match-client-id flag is set to false, thus the server
+///     uses HW address for lease lookup, rather than client id
 const char* DORA_CONFIGS[] = {
 // Configuration 0
     "{ \"interfaces-config\": {"
@@ -152,7 +159,27 @@ const char* DORA_CONFIGS[] = {
         "       }"
         "    ]"
         "} ]"
-    "}"
+    "}",
+
+// Configuration 3
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"match-client-id\": false,"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1,"
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+        "    \"option-data\": [ {"
+        "        \"name\": \"routers\","
+        "        \"code\": 3,"
+        "        \"data\": \"10.0.0.200,10.0.0.201\","
+        "        \"csv-format\": true,"
+        "        \"space\": \"dhcp4\""
+        "    } ]"
+        " } ]"
+    "}",
 };
 
 /// @brief Test fixture class for testing 4-way (DORA) exchanges.
@@ -173,70 +200,29 @@ public:
         IfaceMgr::instance().openSockets4();
     }
 
-    /// @brief Test that server doesn't allocate the lease for a client
-    /// which has the same address or client identifier as another client.
+    /// @brief Test that server returns the same lease for the client which is
+    /// sometimes using client identifier, sometimes not.
     ///
     /// This test checks the server's behavior in the following scenario:
-    /// - Client A identifies itself to the server using the hardware address
-    ///   and client identifier or only one of those.
-    /// - Client A performs the 4-way exchange and obtains a lease from the server.
-    /// - Client B uses the same HW address or client identifier as the client A.
-    /// - Client B uses both HW address and client identifier if the client A is using
-    ///   only one of them. Client B uses one of the HW address or client
-    ///   identifier if the client A is using both.
-    /// - Client B sends the DHCPDISCOVER to the server.
-    ///   The server determines that there is a lease for the client A using the
-    ///   same HW address as the client B. Server discards the client's message and
-    ///   doesn't offer the lease for the client B to prevent allocation of the
-    ///   lease without a unique identifier.
-    /// - The client sends the DHCPREQUEST and the server sends the DHCPNAK for the
-    ///   same reason.
-    /// - The client A renews its address successfully.
+    /// - Client identifies itself to the server using HW address, and may use
+    ///   client identifier.
+    /// - Client performs the 4-way exchange and obtains a lease from the server.
+    /// - If the client identifier was in use when the client has acquired the lease,
+    ///   the client uses null client identifier in the next exchange with the server.
+    /// - If the client identifier was not in use when the client has acquired the
+    ///   lease, the client uses client identifier in the next exchange with the
+    ///   server.
+    /// - When the client contacts the server for the second time using the
+    ///   DHCPDISCOVER the server determines (using HW address) that the client
+    ///   already has a lease and returns this lease to the client.
+    /// - The client renews the existing lease.
     ///
-    /// The specific test cases using this test must make sure that one of the
-    /// provided parameters is an empty string. This simulates the situation where
-    /// one of the clients has only one of the identifiers and the other one has
-    /// two.
-    ///
-    /// @param hwaddr_a HW address of client A.
-    /// @param clientid_a Client id of client A.
-    /// @param hwaddr_b HW address of client B.
-    /// @param clientid_b Client id of client B.
-    void oneAllocationOverlapTest(const std::string& hwaddr_a,
-                                  const std::string& clientid_a,
-                                  const std::string& hwaddr_b,
+    /// @param clientid_a Client identifier when the client initially allocates
+    /// the lease. An empty value means "no client identifier".
+    /// @param clientid_b Client identifier when the client sends the DHCPDISCOVER
+    /// and then DHCPREQUEST to renew lease.
+    void oneAllocationOverlapTest(const std::string& clientid_a,
                                   const std::string& clientid_b);
-
-    /// @brief Test that server can allocate the lease for a client having
-    /// the same HW Address or client id as another client.
-    ///
-    /// This test checks the server behavior in the following situation:
-    /// - Client A identifies itself to the server using client identifier
-    ///   and the hardware address and requests allocation of the new lease.
-    /// - Server allocates the lease to the client.
-    /// - Client B has a different hardware address or client identifier than
-    ///   the client A, but the other identifier is equal to the corresponding
-    ///   identifier of the client A.
-    /// - Client B sends DHCPDISCOVER.
-    /// - Server should determine that the client B is not client A, because
-    ///   it is using a different hadrware address or client identifier.
-    ///   As a consequence, the server should offer a different address to the
-    ///   client B.
-    /// - The client B performs the 4-way exchange again, and the server
-    ///   allocates a new address to the client, which should be different
-    ///   than the address used by the client A.
-    /// - Client B is in the renewing state and it successfully renews its
-    ///   address.
-    /// - The client A also renews its address successfully.
-    ///
-    /// @param hwaddr_a HW address of client A.
-    /// @param clientid_a Client id of client A.
-    /// @param hwaddr_b HW address of client B.
-    /// @param clientid_b Client id of client B.
-    void twoAllocationsOverlapTest(const std::string& hwaddr_a,
-                                   const std::string& clientid_a,
-                                   const std::string& hwaddr_b,
-                                   const std::string& clientid_b);
 
     /// @brief Interface Manager's fake configuration control.
     IfaceMgrTestConfig iface_mgr_test_config_;
@@ -404,6 +390,7 @@ TEST_F(DORATest, initRebootRequest) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(DORA_CONFIGS[0], *client.getServer());
+    client.includeClientId("11:22");
     // Obtain a lease from the server using the 4-way exchange.
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
                                   IOAddress>(new IOAddress("10.0.0.50"))));
@@ -446,11 +433,32 @@ TEST_F(DORATest, initRebootRequest) {
     resp = client.getContext().response_;
     EXPECT_EQ(DHCPNAK, static_cast<int>(resp->getType()));
 
-    // Try to request from a different client.
+    // Change client identifier. The server should treat the request
+    // as a resquest from unknown client and ignore it.
+    client.includeClientId("12:34");
+    ASSERT_NO_THROW(client.doRequest());
+    ASSERT_FALSE(client.getContext().response_);
+
+    // Now let's fix the IP address. The client identifier is still
+    // invalid so the message should be dropped.
+    client.config_.lease_.addr_ = IOAddress("10.0.0.50");
+    ASSERT_NO_THROW(client.doRequest());
+    ASSERT_FALSE(client.getContext().response_);
+
+    // Restore original client identifier.
+    client.includeClientId("11:22");
+
+    // Try to request from a different HW address. This should be successful
+    // because the client identifier matches.
     client.modifyHWAddr();
     ASSERT_NO_THROW(client.doRequest());
-    // The server should not respond.
-    EXPECT_FALSE(client.getContext().response_);
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Make sure that the client has got the lease with the requested address.
+    ASSERT_EQ("10.0.0.50", client.config_.lease_.addr_.toText());
 }
 
 // Check that the ciaddr returned by the server is correct for DHCPOFFER and
@@ -507,14 +515,67 @@ TEST_F(DORATest, ciaddr) {
 }
 
 void
-DORATest::twoAllocationsOverlapTest(const std::string& hwaddr_a,
-                                    const std::string& clientid_a,
-                                    const std::string& hwaddr_b,
-                                    const std::string& clientid_b) {
+DORATest::oneAllocationOverlapTest(const std::string& clientid_a,
+                                   const std::string& clientid_b) {
+    // Allocate a lease by client using the 4-way exchange.
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    client.includeClientId(clientid_a);
+    client.setHWAddress("01:02:03:04:05:06");
+    configure(DORA_CONFIGS[0], *client.getServer());
+    ASSERT_NO_THROW(client.doDORA());
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    Lease4Ptr lease_a = LeaseMgrFactory::instance().getLease4(client.config_.lease_.addr_);
+    ASSERT_TRUE(lease_a);
+    // Remember the allocated address.
+    IOAddress yiaddr = lease_a->addr_;
+
+    // Change client identifier. If parameters clientid_a and clientid_b
+    // are specified correctly, this removes the client identifier from
+    // client's requests if the lease has been acquired with the client
+    // identifier, or adds the client identifier otherwise.
+    client.includeClientId(clientid_b);
+
+    // Check if the server will offer the same address.
+    ASSERT_NO_THROW(client.doDiscover());
+    resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+    EXPECT_EQ(yiaddr, resp->getYiaddr());
+
+    // Client should also be able to renew its address.
+    client.setState(Dhcp4Client::RENEWING);
+    ASSERT_NO_THROW(client.doRequest());
+    ASSERT_TRUE(client.getContext().response_);
+    resp = client.getContext().response_;
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    ASSERT_EQ(yiaddr, client.config_.lease_.addr_);
+}
+
+// This test checks the server behavior in the following situation:
+// - Client A identifies itself to the server using client identifier
+//   and the hardware address and requests allocation of the new lease.
+// - Server allocates the lease to the client.
+// - Client B has the same hardware address but is using a different
+//   client identifier then Client A.
+// - Client B sends DHCPDISCOVER.
+// - Server should determine that the client B is not client A, because
+//   it is using a different client identifier, even though they use the
+//   same HW address. As a consequence, the server should offer a
+//    different address to the client B.
+// - The client B performs the 4-way exchange again and the server
+//   allocates a new address to the client, which should be different
+//   than the address used by the client A.
+// - Client B is in the renewing state and it successfully renews its
+//   address.
+// - Client A also renews its address successfully.
+TEST_F(DORATest, twoAllocationsOverlap) {
     // Allocate a lease by client A using the 4-way exchange.
     Dhcp4Client client_a(Dhcp4Client::SELECTING);
-    client_a.includeClientId(clientid_a);
-    client_a.setHWAddress(hwaddr_a);
+    client_a.includeClientId("12:34");
+    client_a.setHWAddress("01:02:03:04:05:06");
     configure(DORA_CONFIGS[0], *client_a.getServer());
     ASSERT_NO_THROW(client_a.doDORA());
     // Make sure that the server responded.
@@ -529,8 +590,8 @@ DORATest::twoAllocationsOverlapTest(const std::string& hwaddr_a,
 
     // Create client B.
     Dhcp4Client client_b(client_a.getServer(), Dhcp4Client::SELECTING);
-    client_b.setHWAddress(hwaddr_b);
-    client_b.includeClientId(clientid_b);
+    client_b.setHWAddress("01:02:03:04:05:06");
+    client_b.includeClientId("45:67");
     // Send DHCPDISCOVER and expect the response.
     ASSERT_NO_THROW(client_b.doDiscover());
     Pkt4Ptr resp_b = client_b.getContext().response_;
@@ -581,86 +642,6 @@ DORATest::twoAllocationsOverlapTest(const std::string& hwaddr_a,
     ASSERT_NE(client_a.config_.lease_.addr_, client_b.config_.lease_.addr_);
 }
 
-void
-DORATest::oneAllocationOverlapTest(const std::string& hwaddr_a,
-                                   const std::string& clientid_a,
-                                   const std::string& hwaddr_b,
-                                   const std::string& clientid_b) {
-    // Allocate a lease by client A using the 4-way exchange.
-    Dhcp4Client client_a(Dhcp4Client::SELECTING);
-    client_a.includeClientId(clientid_a);
-    client_a.setHWAddress(hwaddr_a);
-    configure(DORA_CONFIGS[0], *client_a.getServer());
-    ASSERT_NO_THROW(client_a.doDORA());
-    // Make sure that the server responded.
-    ASSERT_TRUE(client_a.getContext().response_);
-    Pkt4Ptr resp_a = client_a.getContext().response_;
-    // Make sure that the server has responded with DHCPACK.
-    ASSERT_EQ(DHCPACK, static_cast<int>(resp_a->getType()));
-    Lease4Ptr lease_a = LeaseMgrFactory::instance().getLease4(client_a.config_.lease_.addr_);
-    ASSERT_TRUE(lease_a);
-
-    // Client B sends a DHCPDISCOVER.
-    Dhcp4Client client_b(client_a.getServer(), Dhcp4Client::SELECTING);
-    client_b.setHWAddress(hwaddr_b);
-    client_b.includeClientId(clientid_b);
-    // Client A and Client B have one common identifier (HW address
-    // or client identifier) and one of them is missing the other
-    // identifier. The allocation engine can't offer an address for
-    // the client which has the same identifier as the other client and
-    // which doesn't have any other (unique) identifier. It should
-    // discard the DHCPDISCOVER.
-    ASSERT_NO_THROW(client_b.doDiscover());
-    Pkt4Ptr resp_b = client_b.getContext().response_;
-    ASSERT_FALSE(resp_b);
-
-    // Now repeat the same test but send the DHCPREQUEST. This time the
-    // server should send the DHCPNAK.
-    client_b.config_.lease_.addr_ = IOAddress::IPV4_ZERO_ADDRESS();
-    client_b.setState(Dhcp4Client::INIT_REBOOT);
-    ASSERT_NO_THROW(client_b.doRequest());
-    resp_b = client_b.getContext().response_;
-    ASSERT_TRUE(resp_b);
-    ASSERT_EQ(DHCPNAK, static_cast<int>(resp_b->getType()));
-
-    // Client A should also be able to renew its address.
-    client_a.setState(Dhcp4Client::RENEWING);
-    ASSERT_NO_THROW(client_a.doRequest());
-    ASSERT_TRUE(client_a.getContext().response_);
-    resp_b = client_a.getContext().response_;
-    ASSERT_EQ(DHCPACK, static_cast<int>(resp_b->getType()));
-    ASSERT_NE(client_a.config_.lease_.addr_, client_b.config_.lease_.addr_);
-}
-
-// This test checks the server behavior in the following situation:
-// - Client A identifies itself to the server using client identifier
-//   and the hardware address and requests allocation of the new lease.
-// - Server allocates the lease to the client.
-// - Client B has a different hardware address but is using the same
-//   client identifier as Client A.
-// - Client B sends DHCPDISCOVER.
-// - Server should determine that the client B is not client A, because
-//   it is using a different hadrware address, even though they use the
-//   same client identifier. As a consequence, the server should offer
-//   a different address to the client B.
-// - The client B performs the 4-way exchange again and the server
-//   allocates a new address to the client, which should be different
-//   than the address used by the client A.
-// - Client B is in the renewing state and it successfully renews its
-//   address.
-// - Client A also renews its address successfully.
-TEST_F(DORATest, twoAllocationsOverlap1) {
-    twoAllocationsOverlapTest("01:02:03:04:05:06", "12:34",
-                              "02:02:03:03:04:04", "12:34");
-}
-
-// This test is similar to twoAllocationsOverlap1, but the
-// clients differ by client identifier.
-TEST_F(DORATest, twoAllocationsOverlap2) {
-    twoAllocationsOverlapTest("01:02:03:04:05:06", "12:34",
-                              "01:02:03:04:05:06", "22:34");
-}
-
 // This test checks the server behavior in the following situation:
 // - Client A identifies itself to the server using the hardware address
 //   and client identifier.
@@ -676,16 +657,14 @@ TEST_F(DORATest, twoAllocationsOverlap2) {
 //   same reason.
 // - Client A renews its address successfully.
 TEST_F(DORATest, oneAllocationOverlap1) {
-    oneAllocationOverlapTest("01:02:03:04:05:06", "12:34",
-                             "01:02:03:04:05:06", "");
+    oneAllocationOverlapTest("12:34", "");
 }
 
 // This test is similar to oneAllocationOverlap2 but this time the client A
 // uses no client identifier, and the client B uses the HW address and the
 // client identifier. The server behaves as previously.
 TEST_F(DORATest, oneAllocationOverlap2) {
-    oneAllocationOverlapTest("01:02:03:04:05:06", "",
-                             "01:02:03:04:05:06", "12:34");
+    oneAllocationOverlapTest("", "12:34");
 }
 
 // This is a simple test for the host reservation. It creates a reservation
@@ -730,6 +709,85 @@ TEST_F(DORATest, reservation) {
     ASSERT_TRUE(subnet);
     // Make sure that the address has been allocated from the dynamic pool.
     ASSERT_TRUE(subnet->inPool(Lease::TYPE_V4, clientB.config_.lease_.addr_));
+}
+
+// This test checks that setting the match-client-id value to false causes
+// the server to ignore changing client identifier when the client is
+// using consistent HW address.
+TEST_F(DORATest, ignoreChangingClientId) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Configure DHCP server.
+    configure(DORA_CONFIGS[3], *client.getServer());
+    client.includeClientId("12:12");
+    // Obtain the lease using 4-way exchange.
+    ASSERT_NO_THROW(client.doDORA());
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    EXPECT_FALSE(client.config_.lease_.client_id_);
+
+    // Remember address which the client has obtained.
+    IOAddress leased_address = client.config_.lease_.addr_;
+
+    // Modify client id. Because we have set the configuration flag which
+    // forces the server to lookup leases using the HW address, the
+    // client id modification should not matter and the client should
+    // obtain the same lease.
+    client.includeClientId("14:14");
+    // Obtain the lease using 4-way exchange.
+    ASSERT_NO_THROW(client.doDORA());
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Make sure that the server assigned the same address, even though the
+    // client id has changed.
+    EXPECT_EQ(leased_address, client.config_.lease_.addr_);
+    // Check that the client id is not present in the lease.
+    EXPECT_FALSE(client.config_.lease_.client_id_);
+}
+
+// This test checks that the match-client-id parameter doesn't have
+// effect on the lease lookup using the HW address.
+TEST_F(DORATest, changingHWAddress) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Configure DHCP server.
+    configure(DORA_CONFIGS[3], *client.getServer());
+    client.includeClientId("12:12");
+    client.setHWAddress("00:01:02:03:04:05");
+    // Obtain the lease using 4-way exchange.
+    ASSERT_NO_THROW(client.doDORA());
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Check that the client id is not present in the lease.
+    EXPECT_FALSE(client.config_.lease_.client_id_);
+
+    // Remember address which the client has obtained.
+    IOAddress leased_address = client.config_.lease_.addr_;
+
+    // Modify HW address but leave client id in place. The value of the
+    // match-client-id set to false must not have any effect on the
+    // case when the HW address is changing. In such case the server will
+    // allocate the new address for the client.
+    client.setHWAddress("01:01:01:01:01:01");
+    // Obtain a lease.
+    ASSERT_NO_THROW(client.doDORA());
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Client must assign different address because the client id is
+    // ignored and the HW address was changed.
+    EXPECT_NE(client.config_.lease_.addr_, leased_address);
+    // Check that the client id is not present in the lease.
+    EXPECT_FALSE(client.config_.lease_.client_id_);
 }
 
 // This test checks the following scenario:

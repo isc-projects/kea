@@ -108,10 +108,22 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
     context_->subnet_ = subnet;
     // Hardware address.
     context_->hwaddr_ = query->getHWAddr();
-    // Client Identifier
-    OptionPtr opt_clientid = query->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
-    if (opt_clientid) {
-        context_->clientid_.reset(new ClientId(opt_clientid->getData()));
+
+    // Set client identifier if the match-client-id flag is enabled (default).
+    // If the subnet wasn't found it doesn't matter because we will not be
+    // able to allocate a lease anyway so this context will not be used.
+    if (subnet) {
+        if (subnet->getMatchClientId()) {
+            OptionPtr opt_clientid = query->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
+            if (opt_clientid) {
+                context_->clientid_.reset(new ClientId(opt_clientid->getData()));
+            }
+        } else {
+            /// @todo When merging with #3806 use different logger.
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_CLIENTID_IGNORED_FOR_LEASES)
+                .arg(query->getLabel())
+                .arg(subnet->getID());
+        }
     }
     // Check for static reservations.
     alloc_engine->findReservation(*context_);
@@ -1055,29 +1067,21 @@ Dhcpv4Srv::createNameChangeRequests(const Lease4Ptr& lease,
     // We may also decide not to generate any requests at all. This is when
     // we discover that nothing has changed in the client's FQDN data.
     if (old_lease) {
-        if (!lease->matches(*old_lease)) {
-            isc_throw(isc::Unexpected,
-                      "there is no match between the current instance of the"
-                      " lease: " << lease->toText() << ", and the previous"
-                      " instance: " << lease->toText());
-        } else {
-            // There will be a NameChangeRequest generated to remove existing
-            // DNS entries if the following conditions are met:
-            // - The hostname is set for the existing lease, we can't generate
-            //   removal request for non-existent hostname.
-            // - A server has performed reverse, forward or both updates.
-            // - FQDN data between the new and old lease do not match.
-            if (!lease->hasIdenticalFqdn(*old_lease)) {
-                queueNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE,
-                                       old_lease);
+        // There will be a NameChangeRequest generated to remove existing
+        // DNS entries if the following conditions are met:
+        // - The hostname is set for the existing lease, we can't generate
+        //   removal request for non-existent hostname.
+        // - A server has performed reverse, forward or both updates.
+        // - FQDN data between the new and old lease do not match.
+        if (!lease->hasIdenticalFqdn(*old_lease)) {
+            queueNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, old_lease);
 
             // If FQDN data from both leases match, there is no need to update.
-            } else if (lease->hasIdenticalFqdn(*old_lease)) {
-                return;
-
-            }
+        } else if (lease->hasIdenticalFqdn(*old_lease)) {
+            return;
 
         }
+
     }
 
     // We may need to generate the NameChangeRequest for the new lease. It
@@ -1159,9 +1163,6 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     /// @todo: move subnet selection to a common code
     resp->setSiaddr(subnet->getSiaddr());
 
-    // Get client-id. It is not mandatory in DHCPv4.
-    ClientIdPtr client_id = ex.getContext()->clientid_;
-
     // Get the server identifier. It will be used to determine the state
     // of the client.
     OptionCustomPtr opt_serverid = boost::dynamic_pointer_cast<
@@ -1190,6 +1191,9 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     // allocation.
     bool fake_allocation = (query->getType() == DHCPDISCOVER);
 
+    // Get client-id. It is not mandatory in DHCPv4.
+    ClientIdPtr client_id = ex.getContext()->clientid_;
+
     // If there is no server id and there is a Requested IP Address option
     // the client is in the INIT-REBOOT state in which the server has to
     // determine whether the client's notion of the address is correct
@@ -1201,15 +1205,29 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
             .arg(hint.toText());
 
         Lease4Ptr lease;
-        if (hwaddr) {
-            lease = LeaseMgrFactory::instance().getLease4(*hwaddr,
-                                                          subnet->getID());
+        if (client_id) {
+            lease = LeaseMgrFactory::instance().getLease4(*client_id, subnet->getID());
         }
-        if (!lease && client_id) {
-            lease = LeaseMgrFactory::instance().getLease4(*client_id,
-                                                          subnet->getID());
+
+        if (!lease && hwaddr) {
+            lease = LeaseMgrFactory::instance().getLease4(*hwaddr, subnet->getID());
         }
-        // Got a lease so we can check the address.
+
+        // Check the first error case: unknown client. We check this before
+        // validating the address sent because we don't want to respond if
+        // we don't know this client.
+        if (!lease || !lease->belongsToClient(hwaddr, client_id)) {
+            LOG_DEBUG(bad_packet_logger, DBG_DHCP4_DETAIL,
+                      DHCP4_NO_LEASE_INIT_REBOOT)
+                .arg(query->getLabel())
+                .arg(hint.toText());
+
+            ex.deleteResponse();
+            return;
+        }
+
+        // We know this client so we can now check if his notion of the
+        // IP address is correct.
         if (lease && (lease->addr_ != hint)) {
             LOG_DEBUG(bad_packet_logger, DBG_DHCP4_DETAIL,
                       DHCP4_PACKET_NAK_0002)
@@ -1218,16 +1236,6 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
 
             resp->setType(DHCPNAK);
             resp->setYiaddr(IOAddress::IPV4_ZERO_ADDRESS());
-            return;
-        }
-        // Now check the second error case: unknown client.
-        if (!lease) {
-            LOG_DEBUG(bad_packet_logger, DBG_DHCP4_DETAIL,
-                      DHCP4_NO_LEASE_INIT_REBOOT)
-                .arg(query->getLabel())
-                .arg(hint.toText());
-
-            ex.deleteResponse();
             return;
         }
     }
@@ -1661,7 +1669,16 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
     /// @todo Uncomment this (see ticket #3116)
     /// sanityCheck(release, MANDATORY);
 
-    // Try to find client-id
+    // Try to find client-id. Note that for the DHCPRELEASE we don't check if the
+    // match-client-id configuration parameter is disabled because this parameter
+    // is configured for subnets and we don't select subnet for the DHCPRELEASE.
+    // Bogus clients usually generate new client identifiers when they first
+    // connect to the network, so whatever client identifier has been used to
+    // acquire the lease, the client identifier carried in the DHCPRELEASE is
+    // likely to be the same and the lease will be correctly identified in the
+    // lease database. If supplied client identifier differs from the one used
+    // to acquire the lease then the lease will remain in the database and
+    // simply expire.
     ClientIdPtr client_id;
     OptionPtr opt = release->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
     if (opt) {
@@ -1680,25 +1697,10 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
             return;
         }
 
-        // Does the hardware address match? We don't want one client releasing
-        // another client's leases. Note that we're comparing the hardware
-        // addresses only, not hardware types or sources of the hardware
-        // addresses. Thus we don't use HWAddr::equals().
-        if (lease->hwaddr_->hwaddr_ != release->getHWAddr()->hwaddr_) {
-            LOG_DEBUG(lease_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_WRONG_HWADDR)
+        if (!lease->belongsToClient(release->getHWAddr(), client_id)) {
+            LOG_DEBUG(lease_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_WRONG_CLIENT)
                 .arg(release->getLabel())
-                .arg(release->getCiaddr().toText())
-                .arg(lease->hwaddr_->toText(false));
-            return;
-        }
-
-        // Does the lease have client-id info? If it has, then check it with what
-        // the client sent us.
-        if (lease->client_id_ && client_id && *lease->client_id_ != *client_id) {
-            LOG_DEBUG(lease_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_WRONG_CLIENT_ID)
-                .arg(release->getLabel())
-                .arg(release->getCiaddr().toText())
-                .arg(lease->client_id_->toText());
+                .arg(release->getCiaddr().toText());
             return;
         }
 

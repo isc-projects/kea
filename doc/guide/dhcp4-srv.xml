@@ -1950,6 +1950,170 @@ temporarily override a list of interface names and listen on all interfaces.
 </screen>
     </section>
 
+    <section id="dhcp4-match-client-id">
+      <title>Using Client Identifier and Hardware Address</title>
+      <para>DHCP server must be able to identify the client (distinguish it from
+      other clients) from which it receives the message. There are many reasons
+      why this identification is required and the most important ones are listed
+      below.
+      <itemizedlist>
+        <listitem><simpara>When the client contacts the server to allocate a new
+        lease, the server must store the client identification information in
+        the lease database as a search key.</simpara></listitem>
+        <listitem><simpara>When the client is trying to renew or release the existing
+        lease, the server must be able to find the existing lease entry in the
+        database for this client, using the client identification information as a
+        search key.</simpara></listitem>
+        <listitem><simpara>Some configurations use static reservations for the IP
+        addreses and other configuration information. The server's administrator
+        uses client identification information to create these static assignments.
+        </simpara></listitem>
+        <listitem><simpara>In the dual stack networks there is often a need to
+        correlate the lease information stored in DHCPv4 and DHCPv6 server for
+        a particular host. Using common identification information by the DHCPv4
+        and DHCPv6 client allows the network administrator to achieve this
+        correlation and better administer the network.</simpara></listitem>
+      </itemizedlist>
+      </para>
+
+      <para>DHCPv4 makes use of two distinct identifiers which are placed
+      by the client in the queries sent to the server and copied by the server
+      to its responses to the client: 'chaddr' and 'client identifier'. The
+      former was introduced as a part of the BOOTP specification and it is also
+      used by DHCP to carry the hardware address of the interface used to send
+      the query to the server (MAC address for the Ethernet). The latter is
+      carried in the Client-identifier option, introduced in the
+      <ulink url="http://tools.ietf.org/html/rfc2132">RFC 2132</ulink>.
+      </para>
+
+      <para>The <ulink url="http://tools.ietf.org/html/rfc2131">RFC 2131</ulink>
+      indicates that the server may use both of these identifiers to identify
+      the client but the 'client identifier', if present, takes precedence
+      over 'chaddr'. One of the reasons for this is that 'client identifier'
+      is independent from the hardware used by the client to communicate with
+      the server. For example, if the client obtained the lease using one
+      network card and then the network card is moved to another host, the
+      server will wrongly identify this host is the one which has obtained
+      the lease. Moreover, the
+      <ulink url="https://tools.ietf.org/html/rfc4361">RFC 4361</ulink> gives
+      the recommendation to use DUID
+      (see <ulink url="https://tools.ietf.org/html/rfc3315">DHCPv6 specification</ulink>)
+      carried as 'client identifier' when dual stack networks are in use,
+      to provide consistent identification information of the client, regardless
+      of the protocol type it is using. Kea adheres to these specifications and
+      the 'client identifier' by default takes precedence over the value carried
+      in 'chaddr' field when the server searches, creates, updates or removes
+      the client's lease.
+      </para>
+
+      <para>When the server receives a DHCPDISCOVER or DHCPREQUEST message from the
+      client, it will try to find out if the client already has a lease in the
+      database and will hand out the existing lease rather than allocate
+      a new one. Each lease in the lease database is associated with the
+      'client identifier' and/or 'chaddr'. The server will first use the
+      'client identifer' (if present) to search the lease. If the lease is
+      found, the server will treat this lease as belonging to the client
+      even if the current 'chaddr' and the 'chaddr' associated with
+      the lease do not match. This facilitates the scenario when the network card
+      on the client system has been replaced and thus the new MAC address
+      appears in the messages sent by the DHCP client. If the server fails
+      to find the lease using the 'client identifier' it will perform another lookup
+      using the 'chaddr'. If this lookup returns no result, the client is
+      considered as not having a lease and the new lease will be created.
+      </para>
+
+      <para>A common problem reported by network operators is that bogus
+      client implementations do not use stable client identifiers such as
+      generating a new 'client identifier' each time the client connects
+      to the network. Another well known case is when the client changes its
+      'client identifier' during the multi-stage boot process (PXE). In such
+      cases, the MAC address of the client's interface remains stable and
+      using 'chaddr' field to identify the client guarantees that the
+      particular system is considered to be the same client, even though its
+      'client identifier' changes.
+      </para>
+
+      <para>To address this problem, Kea includes a configuration option
+      which enables client identification using 'chaddr' only by instructing
+      the server to disregard server to "ignore" the 'client identifier' during
+      lease lookups and allocations for a particular subnet. Consider the following
+      simplified server configuration:</para>
+<screen>
+"Dhcp4": {
+    ...
+    <userinput>"match-client-id": true,</userinput>
+    ...
+    "subnet4": [
+    {
+        "subnet": "192.0.10.0/24",
+        "pools": [ { "pool": "192.0.2.23-192.0.2.87" } ],
+        <userinput>"match-client-id": false</userinput>
+    },
+    {
+        "subnet": "10.0.0.0/8",
+        "pools": [ { "pool": "10.0.0.23-10.0.2.99" } ],
+    }
+    ]
+}
+</screen>
+
+     <para>The <command>match-client-id</command> is a boolean value which
+     controls this behavior. The default value of <userinput>true</userinput>
+     indicates that the server will use the 'client identifier' for lease
+     lookups and 'chaddr' if the first lookup returns no results. The
+     <command>false</command> means that the server will only
+     use the 'chaddr' to search for client's lease. Whether the DHCID for
+     DNS updates is generated from the 'client identifier' or 'chaddr' is
+     controlled through the same parameter accordingly.</para>
+
+     <para>The <command>match-client-id</command> parameter may appear
+     both in the global configuration scope and/or under any subnet
+     declaration. In the example shown above, the effective value of the
+     <command>match-client-id</command> will be <userinput>false</userinput>
+     for the subnet 192.0.10.0/24, because the subnet specific setting
+     of the parameter overrides the global value of the parameter. The
+     effective value of the <command>match-client-id</command> for the subnet
+     10.0.0.0/8 will be set to <userinput>true</userinput> because the
+     subnet declaration lacks this parameter and the global setting is
+     by default used for this subnet. In fact, the global entry for this
+     parameter could be omitted in this case, because
+     <userinput>true</userinput> is the default value.
+     </para>
+
+     <para>It is important to explain what happens when the client obtains
+     its lease for one setting of the <command>match-client-id</command>
+     and then renews when the setting has been changed. Let's first consider
+     the case when the client obtains the lease when the
+     <command>match-client-id</command> is set to <userinput>true</userinput>.
+     The server will store the lease information including 'client identifier'
+     (if supplied) and 'chaddr' in the lease database. When the setting is
+     changed and the client renews the lease the server will determine that
+     it should use the 'chaddr' to search for the existing lease. If the
+     client hasn't changed its MAC address the server should successfully
+     find the existing lease. The 'client identifier' associated with the
+     returned lease is ignored and the client is allowed to use this lease.
+     When the lease is renewed only the 'chaddr' is recorded for this
+     lease according to the new server setting.
+     </para>
+
+     <para>In the second case the client has the lease with only a 'chaddr'
+     value recorded. When the setting is changed to
+     <command>match-client-id</command> set to <userinput>true</userinput>
+     the server will first try to use the 'client identifier' to find the
+     existing client's lease. This will return no results because the
+     'client identifier' was not recorded for this lease. The server will
+     then use the 'chaddr' and the lease will be found. If the lease appears
+     to have no 'client identifier' recorded, the server will assume that
+     this lease belongs to the client and that it was created with the previous
+     setting of the <command>match-client-id</command>.
+     However, if the lease contains 'client identifier' which is different
+     from the 'client identifier' used by the client the lease will be
+     assumed to belong to another client and the new lease will be
+     allocated.
+     </para>
+
+    </section>
+
   </section> <!-- end of configuring kea-dhcp4 server section with many subsections -->
 
   <!-- Host reservation is a large topic. There will be many subsections,
@@ -2255,18 +2419,18 @@ temporarily override a list of interface names and listen on all interfaces.
 
       <para>
         An example configuration that disables reservation looks like follows:
-	<screen>
+<screen>
 "Dhcp4": {
     "subnet4": [
-	{
+    {
         "subnet": "192.0.2.0/24",
         <userinput>"reservation-mode": "disabled"</userinput>,
         ...
-	}
+    }
     ]
 }
 </screen>
-      </para>        
+      </para>
    </section>
 
   </section>

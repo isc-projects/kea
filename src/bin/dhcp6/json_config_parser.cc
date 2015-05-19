@@ -704,6 +704,9 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND,
               DHCP6_CONFIG_START).arg(config_set->str());
 
+    // Reset global context.
+    globalContext().reset(new ParserContext(Option::V6));
+
     // Before starting any subnet operations, let's reset the subnet-id counter,
     // so newly recreated configuration starts with first subnet-id equal 1.
     Subnet::resetSubnetID();

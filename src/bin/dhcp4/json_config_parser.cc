@@ -194,6 +194,8 @@ protected:
             parser = new RelayInfoParser(config_id, relay_info_, Option::V4);
         } else if (config_id.compare("option-data") == 0) {
             parser = new OptionDataListParser(config_id, options_, AF_INET);
+        } else if (config_id.compare("match-client-id") == 0) {
+            parser = new BooleanParser(config_id, boolean_values_);
         } else {
             isc_throw(NotImplemented, "unsupported parameter: " << config_id);
         }
@@ -250,7 +252,28 @@ protected:
         Subnet4Ptr subnet4(new Subnet4(addr, len, t1, t2, valid, subnet_id));
         subnet_ = subnet4;
 
-        // Try global value first
+        // match-client-id
+        isc::util::OptionalValue<bool> match_client_id;
+        try {
+            match_client_id = boolean_values_->getParam("match-client-id");
+
+        } catch (...) {
+            // Ignore because this parameter is optional and it may be specified
+            // in the global scope.
+        }
+
+        // If the match-client-id wasn't specified as a subnet specific parameter
+        // check if there is global value specified.
+        if (!match_client_id.isSpecified()) {
+            // If not specified, use false.
+            match_client_id.specify(globalContext()->boolean_values_->
+                                    getOptionalParam("match-client-id", true));
+        }
+
+        // Set the match-client-id value for the subnet.
+        subnet4->setMatchClientId(match_client_id.get());
+
+        // next-server
         try {
             string next_server = globalContext()->string_values_->getParam("next-server");
             if (!next_server.empty()) {
@@ -374,6 +397,8 @@ namespace dhcp {
         parser = new BooleanParser(config_id, globalContext()->boolean_values_);
     } else if (config_id.compare("dhcp-ddns") == 0) {
         parser = new D2ClientConfigParser(config_id);
+    } else if (config_id.compare("match-client-id") == 0) {
+        parser = new BooleanParser(config_id, globalContext()->boolean_values_);
     } else {
         isc_throw(DhcpConfigError,
                 "unsupported global configuration parameter: "
@@ -407,6 +432,9 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
 
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND,
               DHCP4_CONFIG_START).arg(config_set->str());
+
+    // Reset global context.
+    globalContext().reset(new ParserContext(Option::V4));
 
     // Before starting any subnet operations, let's reset the subnet-id counter,
     // so newly recreated configuration starts with first subnet-id equal 1.
