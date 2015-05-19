@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/duid.h>
 #include <dhcpsrv/lease.h>
+#include <util/pointer_util.h>
 #include <gtest/gtest.h>
 #include <vector>
 #include <sstream>
@@ -96,8 +97,8 @@ TEST_F(Lease4Test, constructor) {
 
         EXPECT_EQ(ADDRESS[i], static_cast<uint32_t>(lease.addr_));
         EXPECT_EQ(0, lease.ext_);
-        EXPECT_TRUE(hwaddr_ == lease.hwaddr_);
-        EXPECT_TRUE(*clientid_ == *lease.client_id_);
+        EXPECT_TRUE(util::equalValues(hwaddr_, lease.hwaddr_));
+        EXPECT_TRUE(util::equalValues(clientid_, lease.client_id_));
         EXPECT_EQ(0, lease.t1_);
         EXPECT_EQ(0, lease.t2_);
         EXPECT_EQ(VALID_LIFETIME, lease.valid_lft_);
@@ -188,90 +189,62 @@ TEST_F(Lease4Test, operatorAssign) {
 // belongs to the particular client identified by the client identifier
 // and hw address.
 TEST_F(Lease4Test, leaseBelongsToClient) {
+    // Client identifier that matches the one in the lease.
+    ClientIdPtr matching_client_id = ClientId::fromText("01:02:03:04");
+    // Client identifier that doesn't match the one in the lease.
+    ClientIdPtr diff_client_id = ClientId::fromText("01:02:03:05");
+    // Null (no) client identifier.
+    ClientIdPtr null_client_id;
+
+    // HW Address that matches the one in the lease.
+    HWAddrPtr matching_hw(new HWAddr(HWAddr::fromText("00:01:02:03:04:05",
+                                                      HTYPE_ETHER)));
+    // HW Address that doesn't match the one in the lease.
+    HWAddrPtr diff_hw(new HWAddr(HWAddr::fromText("00:01:02:03:04:06",
+                                                  HTYPE_ETHER)));
+    // Null HW Address.
+    HWAddrPtr null_hw;
+
     // Create the lease with MAC address and Client Identifier.
-    Lease4 lease(IOAddress("192.0.2.1"),
-                 HWAddrPtr(new HWAddr(HWAddr::fromText("00:01:02:03:04:05", HTYPE_ETHER))),
-                 ClientId::fromText("01:02:03:04"),
+    Lease4 lease(IOAddress("192.0.2.1"), matching_hw, matching_client_id,
                  60, time(NULL), 0, 0, 1);
 
-    // Create HW address and Client Id objects which match those held by the
-    // lease. This is a full match, so the lease belongs to the client.
-    HWAddrPtr hwaddr(new HWAddr(HWAddr::fromText("00:01:02:03:04:05", HTYPE_ETHER)));
-    ClientIdPtr clientid = ClientId::fromText("01:02:03:04");
-    EXPECT_TRUE(lease.belongsToClient(hwaddr, clientid));
+    // Verify cases for lease that has both hw address and client identifier.
+    EXPECT_TRUE(lease.belongsToClient(matching_hw, matching_client_id));
+    EXPECT_FALSE(lease.belongsToClient(matching_hw, diff_client_id));
+    EXPECT_TRUE(lease.belongsToClient(matching_hw, null_client_id));
+    EXPECT_TRUE(lease.belongsToClient(diff_hw, matching_client_id));
+    EXPECT_FALSE(lease.belongsToClient(diff_hw, diff_client_id));
+    EXPECT_FALSE(lease.belongsToClient(diff_hw, null_client_id));
+    EXPECT_TRUE(lease.belongsToClient(null_hw, matching_client_id));
+    EXPECT_FALSE(lease.belongsToClient(null_hw, diff_client_id));
+    EXPECT_FALSE(lease.belongsToClient(null_hw, null_client_id));
 
-    // Modify the HW address. The lease should still belong to the client
-    // because the client identifier matches.
-    hwaddr.reset(new HWAddr(HWAddr::fromText("00:01:02:03:04:06", HTYPE_ETHER)));
-    EXPECT_TRUE(lease.belongsToClient(hwaddr, clientid));
 
-    // Use the correct HW address, but modify the client identifier. The client
-    // identifier must match if present. If it doesn't match, the lease doesn't
-    // belong to the client.
-    hwaddr.reset(new HWAddr(HWAddr::fromText("00:01:02:03:04:05", HTYPE_ETHER)));
-    clientid = ClientId::fromText("01:02:03:05");
-    EXPECT_FALSE(lease.belongsToClient(hwaddr, clientid));
+    // Verify cases for lease that has only HW address.
+    lease.client_id_ = null_client_id;
+    EXPECT_TRUE(lease.belongsToClient(matching_hw, matching_client_id));
+    EXPECT_TRUE(lease.belongsToClient(matching_hw, diff_client_id));
+    EXPECT_TRUE(lease.belongsToClient(matching_hw, null_client_id));
+    EXPECT_FALSE(lease.belongsToClient(diff_hw, matching_client_id));
+    EXPECT_FALSE(lease.belongsToClient(diff_hw, diff_client_id));
+    EXPECT_FALSE(lease.belongsToClient(diff_hw, null_client_id));
+    EXPECT_FALSE(lease.belongsToClient(null_hw, matching_client_id));
+    EXPECT_FALSE(lease.belongsToClient(null_hw, diff_client_id));
+    EXPECT_FALSE(lease.belongsToClient(null_hw, null_client_id));
 
-    // Set client id to null and leave only HW address. It coveres the case when
-    // the client id is ignored by the server (e.g. multi-stage boot case), but
-    // the client has a lease already.
-    clientid.reset();
-    EXPECT_TRUE(lease.belongsToClient(hwaddr, clientid));
-
-    // Now use the correct client id and the null HW address. The client id
-    // should be sufficient to match the lease.
-    clientid = ClientId::fromText("01:02:03:04");
-    hwaddr.reset();
-    EXPECT_TRUE(lease.belongsToClient(hwaddr, clientid));
-
-    // Use both HW address and client id set to null. There must be no match.
-    hwaddr.reset();
-    clientid.reset();
-    EXPECT_FALSE(lease.belongsToClient(hwaddr, clientid));
-
-    // This time both HW address and client identifier are different than
-    // those held by the lease. There should be no match.
-    hwaddr.reset(new HWAddr(HWAddr::fromText("00:01:02:03:04:06", HTYPE_ETHER)));
-    clientid = ClientId::fromText("01:02:03:05");
-    EXPECT_FALSE(lease.belongsToClient(hwaddr, clientid));
-
-    // Use the correct HW address and client id to match the lease, but set the
-    // client id for the lease to null. This covers the case when the lease
-    // has been acquired without client identifier but then the client is
-    // renewing using some client identifier (or server is configured to
-    // not ignore the client identifier). The client should obtain the lease.
-    hwaddr.reset(new HWAddr(HWAddr::fromText("00:01:02:03:04:05", HTYPE_ETHER)));
-    lease.client_id_.reset();
-    EXPECT_TRUE(lease.belongsToClient(hwaddr, clientid));
-
-    // Change HW address. This time, the HW address doesn't match and client id
-    // can't be compared so it is considered as no match.
-    hwaddr.reset(new HWAddr(HWAddr::fromText("00:01:02:03:04:06", HTYPE_ETHER)));
-    EXPECT_FALSE(lease.belongsToClient(hwaddr, clientid));
-
-    // The lease now holds the client id by the HW address is null for the lease.
-    // Also, we're using correct client id to match the lease and some HW address.
-    // There should be a match because client id is ok.
-    lease.client_id_ = ClientId::fromText("01:02:03:04");
-    lease.hwaddr_.reset();
-    clientid = ClientId::fromText("01:02:03:04");
-    hwaddr.reset(new HWAddr(HWAddr::fromText("00:01:02:03:04:05", HTYPE_ETHER)));
-    EXPECT_TRUE(lease.belongsToClient(hwaddr, clientid));
-
-    // If client id is wrong, there should be no match.
-    clientid = ClientId::fromText("01:02:03:05");
-    EXPECT_FALSE(lease.belongsToClient(hwaddr, clientid));
-
-    // Setting HW address to null shouldn't matter and we should still have a
-    // match if the client id is correct.
-    clientid = ClientId::fromText("01:02:03:04");
-    hwaddr.reset();
-    EXPECT_TRUE(lease.belongsToClient(hwaddr, clientid));
-
-    // But with the null HW address and non-matching client id there should be
-    // no match whatsoever.
-    clientid = ClientId::fromText("01:02:03:06");
-    EXPECT_FALSE(lease.belongsToClient(hwaddr, clientid));
+    // Verify cases for lease that has only client identifier.
+    lease.client_id_ = matching_client_id;
+    lease.hwaddr_ = null_hw;
+    EXPECT_TRUE(lease.belongsToClient(matching_hw, matching_client_id));
+    EXPECT_FALSE(lease.belongsToClient(matching_hw, diff_client_id));
+    EXPECT_FALSE(lease.belongsToClient(matching_hw, null_client_id));
+    EXPECT_TRUE(lease.belongsToClient(diff_hw, matching_client_id));
+    EXPECT_FALSE(lease.belongsToClient(diff_hw, diff_client_id));
+    EXPECT_FALSE(lease.belongsToClient(diff_hw, null_client_id));
+    EXPECT_TRUE(lease.belongsToClient(null_hw, matching_client_id));
+    EXPECT_FALSE(lease.belongsToClient(null_hw, diff_client_id));
+    EXPECT_FALSE(lease.belongsToClient(null_hw, null_client_id));
 }
 
 /// @brief Lease4 Equality Test

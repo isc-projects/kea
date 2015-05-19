@@ -32,7 +32,7 @@ namespace util {
 /// @return true only if both pointers are non-null and the values which they
 /// point to are equal.
 template<typename T>
-bool equalValues(const T& ptr1, const T& ptr2) {
+inline bool equalValues(const T& ptr1, const T& ptr2) {
     return (ptr1 && ptr2 && (*ptr1 == *ptr2));
 }
 
@@ -47,7 +47,7 @@ bool equalValues(const T& ptr1, const T& ptr2) {
 /// @return true if both pointers are null or if they are both non-null
 /// and the values pointed to are equal.
 template<typename T>
-bool nullOrEqualValues(const T& ptr1, const T& ptr2) {
+inline bool nullOrEqualValues(const T& ptr1, const T& ptr2) {
     return ((!ptr1 && !ptr2) || equalValues(ptr1, ptr2));
 }
 
