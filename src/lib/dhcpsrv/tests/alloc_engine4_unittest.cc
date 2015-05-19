@@ -554,6 +554,7 @@ TEST_F(AllocEngine4Test, identifyClientLease) {
     EXPECT_EQ("192.0.2.101", identified_lease->addr_.toText());
 
     ctx.hwaddr_ = hwaddr2_;
+    ctx.clientid_ = clientid_;
     identified_lease = engine.allocateLease4(ctx);
     ASSERT_TRUE(identified_lease);
     EXPECT_EQ("192.0.2.101", identified_lease->addr_.toText());
@@ -564,12 +565,14 @@ TEST_F(AllocEngine4Test, identifyClientLease) {
     ASSERT_TRUE(identified_lease);
     EXPECT_NE(identified_lease->addr_.toText(), "192.0.2.101");
 
+    ctx.hwaddr_ = hwaddr_;
     ctx.clientid_.reset();
     identified_lease = engine.allocateLease4(ctx);
     ASSERT_TRUE(identified_lease);
     EXPECT_EQ("192.0.2.101", identified_lease->addr_.toText());
 
     ctx.hwaddr_ = hwaddr2_;
+    ctx.clientid_.reset();
     identified_lease = engine.allocateLease4(ctx);
     ASSERT_TRUE(identified_lease);
     EXPECT_NE(identified_lease->addr_.toText(), "192.0.2.101");
@@ -583,13 +586,14 @@ TEST_F(AllocEngine4Test, identifyClientLease) {
     ASSERT_TRUE(identified_lease);
     EXPECT_EQ("192.0.2.101", identified_lease->addr_.toText());
 
+    ctx.hwaddr_ = hwaddr_;
     ctx.clientid_.reset();
     identified_lease = engine.allocateLease4(ctx);
     ASSERT_TRUE(identified_lease);
     EXPECT_EQ("192.0.2.101", identified_lease->addr_.toText());
 
-    ctx.clientid_ = clientid_;
     ctx.hwaddr_ = hwaddr2_;
+    ctx.clientid_ = clientid_;
     identified_lease = engine.allocateLease4(ctx);
     ASSERT_TRUE(identified_lease);
     EXPECT_NE(identified_lease->addr_.toText(), "192.0.2.101");

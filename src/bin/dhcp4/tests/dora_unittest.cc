@@ -726,6 +726,7 @@ TEST_F(DORATest, ignoreChangingClientId) {
     Pkt4Ptr resp = client.getContext().response_;
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    EXPECT_FALSE(client.config_.lease_.client_id_);
 
     // Remember address which the client has obtained.
     IOAddress leased_address = client.config_.lease_.addr_;
@@ -745,6 +746,8 @@ TEST_F(DORATest, ignoreChangingClientId) {
     // Make sure that the server assigned the same address, even though the
     // client id has changed.
     EXPECT_EQ(leased_address, client.config_.lease_.addr_);
+    // Check that the client id is not present in the lease.
+    EXPECT_FALSE(client.config_.lease_.client_id_);
 }
 
 // This test checks that the match-client-id parameter doesn't have
@@ -762,6 +765,8 @@ TEST_F(DORATest, changingHWAddress) {
     Pkt4Ptr resp = client.getContext().response_;
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Check that the client id is not present in the lease.
+    EXPECT_FALSE(client.config_.lease_.client_id_);
 
     // Remember address which the client has obtained.
     IOAddress leased_address = client.config_.lease_.addr_;
@@ -781,6 +786,8 @@ TEST_F(DORATest, changingHWAddress) {
     // Client must assign different address because the client id is
     // ignored and the HW address was changed.
     EXPECT_NE(client.config_.lease_.addr_, leased_address);
+    // Check that the client id is not present in the lease.
+    EXPECT_FALSE(client.config_.lease_.client_id_);
 }
 
 // This test checks the following scenario:

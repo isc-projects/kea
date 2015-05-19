@@ -296,28 +296,29 @@ struct Lease4 : public Lease {
     /// cases:
     /// - client didn't generate client identifier and is only using the chaddr
     ///   field to identify itself.
-    /// - server's administrator configured the server to ignore client identifier,
-    ///   the client obtained the new lease, and the administrator reconfigured
-    ///   the server to NOT ignore the client identifier. The client is trying
-    ///   to renew its lease and both the client identifier and HW address is
-    ///   used for matching the lease which doesn't have the record of the
-    ///   client identifier.
+    /// - server's administrator configured the server to NOT match client
+    ///   identifiers, the client obtained the new lease, and the administrator
+    ///   reconfigured the server to match the client identifiers. The client
+    ///   is trying to renew its lease and both the client identifier and HW
+    ///   address is used for matching the lease which doesn't have the record
+    ///   of the client identifier.
     /// - client obtained the lease using the HW address and client identifier,
-    ///   the server's administrator configured the server to ignore the client
-    ///   identifier, and the client returns to renew the lease. This time, the
-    ///   lease has a record of both client identifier and the HW address but
-    ///   only the HW address is used for matching the client to the lease.
+    ///   the server's administrator configured the server to NOT match the
+    ///   client identifiers, and the client returns to renew the lease. This
+    ///   time, the lease has a record of both client identifier and the HW
+    ///   address but only the HW address is used for matching the client to
+    ///   the lease.
     ///
     /// Note that the typical case when the server's administrator may want to
-    /// force ignoring client identifier passed in the client's message is when
-    /// the client is performing multi-stage boot. In such case, the client
-    /// identifiers may change on various stages of the boot, but the HW address
-    /// will remain stable. The server's administrator prefers to use the
-    /// HW address for client identification in this case.
+    /// disable matching the client identifier passed in the client's message
+    /// is when the client is performing multi-stage boot. In such case, the
+    /// client identifiers may change on various stages of the boot, but the
+    /// HW address will remain stable. The server's administrator prefers
+    /// using the HW address for client identification in this case.
     ///
-    /// It may also be useful to ignore client identifiers to mitigate the
-    /// problem of broken client implementations which generate new client
-    /// identifiers every time they connect to the network.
+    /// It may also be useful to disable matching client identifiers to
+    /// mitigate the problem of broken client implementations which generate
+    /// new client identifiers every time they connect to the network.
     ///
     /// @param hw_address Pointer to the HW address of the client.
     /// @param client_id Pointer to the client identifier structure.
