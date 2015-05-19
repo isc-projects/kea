@@ -24,7 +24,6 @@
 
 using namespace isc::data;
 using namespace isc::config;
-using namespace isc::cc;
 using namespace std;
 
 namespace {
@@ -50,16 +49,17 @@ protected:
 TEST_F(CCSessionTest, createAnswer) {
     ConstElementPtr answer;
     answer = createAnswer();
-    EXPECT_EQ("{ \"result\": [ 0 ] }", answer->str());
+    EXPECT_EQ("{ \"result\": 0 }", answer->str());
     answer = createAnswer(1, "error");
-    EXPECT_EQ("{ \"result\": [ 1, \"error\" ] }", answer->str());
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"error\" }", answer->str());
 
-    EXPECT_THROW(createAnswer(1, ElementPtr()), CCSessionError);
-    EXPECT_THROW(createAnswer(1, Element::create(1)), CCSessionError);
+    EXPECT_THROW(createAnswer(1, ElementPtr()), CtrlChannelError);
+    EXPECT_THROW(createAnswer(1, Element::create(1)), CtrlChannelError);
 
     ConstElementPtr arg = el("[ \"just\", \"some\", \"data\" ]");
     answer = createAnswer(0, arg);
-    EXPECT_EQ("{ \"result\": [ 0, [ \"just\", \"some\", \"data\" ] ] }", answer->str());
+    EXPECT_EQ("{ \"arguments\": [ \"just\", \"some\", \"data\" ], \"result\": 0 }",
+              answer->str());
 }
 
 TEST_F(CCSessionTest, parseAnswer) {
@@ -67,27 +67,26 @@ TEST_F(CCSessionTest, parseAnswer) {
     ConstElementPtr arg;
     int rcode;
 
-    EXPECT_THROW(parseAnswer(rcode, ElementPtr()), CCSessionError);
-    EXPECT_THROW(parseAnswer(rcode, el("1")), CCSessionError);
-    EXPECT_THROW(parseAnswer(rcode, el("[]")), CCSessionError);
-    EXPECT_THROW(parseAnswer(rcode, el("{  }")), CCSessionError);
-    EXPECT_THROW(parseAnswer(rcode, el("{ \"something\": 1 }")), CCSessionError);
-    EXPECT_THROW(parseAnswer(rcode, el("{ \"result\": 0 }")), CCSessionError);
-    EXPECT_THROW(parseAnswer(rcode, el("{ \"result\": 1 }")), CCSessionError);
-    EXPECT_THROW(parseAnswer(rcode, el("{ \"result\": [ 1 ] }")), CCSessionError);
-    EXPECT_THROW(parseAnswer(rcode, el("{ \"result\": [ 1, 1 ] }")), CCSessionError);
+    EXPECT_THROW(parseAnswer(rcode, ElementPtr()), CtrlChannelError);
+    EXPECT_THROW(parseAnswer(rcode, el("1")), CtrlChannelError);
+    EXPECT_THROW(parseAnswer(rcode, el("[]")), CtrlChannelError);
+    EXPECT_THROW(parseAnswer(rcode, el("{  }")), CtrlChannelError);
+    EXPECT_THROW(parseAnswer(rcode, el("{ \"something\": 1 }")), CtrlChannelError);
+    EXPECT_THROW(parseAnswer(rcode, el("{ \"result\": [ 0 ] }")), CtrlChannelError);
+    EXPECT_THROW(parseAnswer(rcode, el("{ \"result\": [ 1 ] }")), CtrlChannelError);
+    EXPECT_THROW(parseAnswer(rcode, el("{ \"result\": [ 1, 1 ] }")), CtrlChannelError);
     
-    answer = el("{ \"result\": [ 0 ] }");
+    answer = el("{ \"result\": 0 }");
     arg = parseAnswer(rcode, answer);
     EXPECT_EQ(0, rcode);
     EXPECT_TRUE(isNull(arg));
 
-    answer = el("{ \"result\": [ 1, \"error\"] }");
+    answer = el("{ \"result\": 1, \"text\": \"error\" }");
     arg = parseAnswer(rcode, answer);
     EXPECT_EQ(1, rcode);
     EXPECT_EQ("error", arg->stringValue());
 
-    answer = el("{ \"result\": [ 0, [ \"just\", \"some\", \"data\" ] ] }");
+    answer = el("{ \"result\": 0, \"arguments\": [ \"just\", \"some\", \"data\" ] }");
     arg = parseAnswer(rcode, answer);
     EXPECT_EQ(0, rcode);
     EXPECT_EQ("[ \"just\", \"some\", \"data\" ]", arg->str());
@@ -98,19 +97,22 @@ TEST_F(CCSessionTest, createCommand) {
     ConstElementPtr arg;
 
     command = createCommand("my_command");
-    ASSERT_EQ("{ \"command\": [ \"my_command\" ] }", command->str());
+    ASSERT_EQ("{ \"command\": \"my_command\" }", command->str());
 
     arg = el("1");
     command = createCommand("my_command", arg);
-    ASSERT_EQ("{ \"command\": [ \"my_command\", 1 ] }", command->str());
+    ASSERT_EQ("{ \"arguments\": 1, \"command\": \"my_command\" }",
+              command->str());
 
     arg = el("[ \"a\", \"b\" ]");
     command = createCommand("my_cmd", arg);
-    ASSERT_EQ("{ \"command\": [ \"my_cmd\", [ \"a\", \"b\" ] ] }", command->str());
+    ASSERT_EQ("{ \"arguments\": [ \"a\", \"b\" ], \"command\": \"my_cmd\" }",
+              command->str());
 
     arg = el("{ \"a\": \"map\" }");
     command = createCommand("foo", arg);
-    ASSERT_EQ("{ \"command\": [ \"foo\", { \"a\": \"map\" } ] }", command->str());
+    ASSERT_EQ("{ \"arguments\": { \"a\": \"map\" }, \"command\": \"foo\" }",
+              command->str());
 }
 
 TEST_F(CCSessionTest, parseCommand) {
@@ -118,24 +120,26 @@ TEST_F(CCSessionTest, parseCommand) {
     std::string cmd;
 
     // should throw
-    EXPECT_THROW(parseCommand(arg, ElementPtr()), CCSessionError);
-    EXPECT_THROW(parseCommand(arg, el("1")), CCSessionError);
-    EXPECT_THROW(parseCommand(arg, el("{  }")), CCSessionError);
-    EXPECT_THROW(parseCommand(arg, el("{ \"not a command\": 1 }")), CCSessionError);
-    EXPECT_THROW(parseCommand(arg, el("{ \"command\": 1 }")), CCSessionError);
-    EXPECT_THROW(parseCommand(arg, el("{ \"command\": [] }")), CCSessionError);
-    EXPECT_THROW(parseCommand(arg, el("{ \"command\": [ 1 ] }")), CCSessionError);
+    EXPECT_THROW(parseCommand(arg, ElementPtr()), CtrlChannelError);
+    EXPECT_THROW(parseCommand(arg, el("1")), CtrlChannelError);
+    EXPECT_THROW(parseCommand(arg, el("{  }")), CtrlChannelError);
+    EXPECT_THROW(parseCommand(arg, el("{ \"not a command\": 1 }")), CtrlChannelError);
+    EXPECT_THROW(parseCommand(arg, el("{ \"command\": 1 }")), CtrlChannelError);
+    EXPECT_THROW(parseCommand(arg, el("{ \"command\": [] }")), CtrlChannelError);
+    EXPECT_THROW(parseCommand(arg, el("{ \"command\": [ 1 ] }")), CtrlChannelError);
 
-    cmd = parseCommand(arg, el("{ \"command\": [ \"my_command\" ] }"));
+    cmd = parseCommand(arg, el("{ \"command\": \"my_command\" }"));
     EXPECT_EQ("my_command", cmd);
-    EXPECT_EQ(*arg, *Element::createMap());
+    EXPECT_FALSE(arg);
 
-    cmd = parseCommand(arg, el("{ \"command\": [ \"my_command\", 1 ] }"));
+    cmd = parseCommand(arg, el("{ \"command\": \"my_command\", \"arguments\": 1 }"));
+    ASSERT_TRUE(arg);
     EXPECT_EQ("my_command", cmd);
     EXPECT_EQ("1", arg->str());
 
-    parseCommand(arg, el("{ \"command\": [ \"my_command\", [ \"some\", \"argument\", \"list\" ] ] }"));
+    parseCommand(arg, el("{ \"command\": \"my_command\", \"arguments\": [ \"some\", \"argument\", \"list\" ] }"));
     EXPECT_EQ("my_command", cmd);
+    ASSERT_TRUE(arg);
     EXPECT_EQ("[ \"some\", \"argument\", \"list\" ]", arg->str());
 
 }

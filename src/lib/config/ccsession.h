@@ -19,7 +19,6 @@
 #include <config/module_spec.h>
 
 #include <cc/data.h>
-#include <cc/proto_defs.h>
 
 #include <string>
 #include <list>
@@ -28,112 +27,97 @@
 namespace isc {
 namespace config {
 
-///
-/// \brief Creates a standard config/command level success answer message
-///        (i.e. of the form { "result": [ 0 ] }
-/// \return Standard command/config success answer message
+extern const char *CONTROL_COMMAND;
+
+extern const char *CONTROL_RESULT;
+extern const char *CONTROL_TEXT;
+extern const char *CONTROL_ARGUMENTS;
+
+const int CONTROL_RESULT_SUCCESS = 0;
+const int CONTROL_RESULT_ERROR = 1;
+
+/// @brief Creates a standard config/command level success answer message
+///        (i.e. of the form { "result": 0 }
+/// @return Standard command/config success answer message
 isc::data::ConstElementPtr createAnswer();
 
+/// @brief Creates a standard config/command level answer message
+/// (i.e. of the form { "result": 1, "text": "Invalid command received" }
 ///
-/// \brief Creates a standard config/command level answer message
-///        (i.e. of the form { "result": [ rcode, arg ] }
+/// @param status_code The return code (0 for success)
+/// @param status_text A string to put into the "text" argument
+/// @return Standard command/config answer message
+isc::data::ConstElementPtr createAnswer(const int status_code,
+                                        const std::string& status_text);
+
+/// @brief Creates a standard config/command level answer message
+/// (i.e. of the form { "result": status_code, "arguments": arg }
+///
+/// @param status_code The return code (0 for success)
+/// @param status_text A string to put into the "text" argument
+/// @return Standard command/config answer message
+isc::data::ConstElementPtr createAnswer(const int status_code,
+                                        const isc::data::ConstElementPtr& arg);
+
+/// @brief Creates a standard config/command level answer message
+///        (i.e. of the form { "result": X, "[ rcode, arg ] }
 /// If rcode != 0, arg must be a StringElement
 ///
-/// \param rcode The return code (0 for success)
-/// \param arg For rcode == 0, this is an optional argument of any
-///            Element type. For rcode == 1, this argument is mandatory,
-///            and must be a StringElement containing an error description
-/// \return Standard command/config answer message
-isc::data::ConstElementPtr createAnswer(const int rcode,
-                                        isc::data::ConstElementPtr arg);
+/// @param status_code The return code (0 for success)
+/// @param arg For status_code == 0, this is an optional argument of any
+///            Element type. For status_code == 1, this argument is mandatory,
+///            and may be any type of ElementPtr.
+/// @return Standard command/config answer message
+isc::data::ConstElementPtr createAnswer(const int status_code,
+                                        const std::string& status,
+                                        const isc::data::ConstElementPtr& arg);
 
+/// @brief Parses a standard config/command level answer message.
 ///
-/// \brief Creates a standard config/command level answer message
-/// (i.e. of the form { "result": [ rcode, arg ] }
-///
-/// \param rcode The return code (0 for success)
-/// \param arg A string to put into the StringElement argument
-/// \return Standard command/config answer message
-isc::data::ConstElementPtr createAnswer(const int rcode,
-                                        const std::string& arg);
-
-///
-/// Parses a standard config/command level answer message
-/// 
-/// \param rcode This value will be set to the return code contained in
+/// @param status_code This value will be set to the return code contained in
 ///              the message
-/// \param msg The message to parse
-/// \return The optional argument in the message, or an empty ElementPtr
+/// @param msg The message to parse
+/// @return The optional argument in the message, or an empty ElementPtr
 ///         if there was no argument. If rcode != 0, this contains a
 ///         StringElement with the error description.
-isc::data::ConstElementPtr parseAnswer(int &rcode,
-                                       isc::data::ConstElementPtr msg);
+isc::data::ConstElementPtr parseAnswer(int &status_code,
+                                       const isc::data::ConstElementPtr& msg);
 
+/// @brief Creates a standard config/command command message with no
+/// argument (of the form { "command": "my_command" }
 ///
-/// \brief Creates a standard config/command command message with no
-/// argument (of the form { "command": [ "my_command" ] }
-/// 
-/// \param command The command string
-/// \return The created message
+/// @param command The command string
+/// @return The created message
 isc::data::ConstElementPtr createCommand(const std::string& command);
 
+/// @brief Creates a standard config/command command message with the
+/// given argument (of the form { "command": "my_command", "arguments": arg }
 ///
-/// \brief Creates a standard config/command command message with the
-/// given argument (of the form { "command": [ "my_command", arg ] }
-/// 
-/// \param command The command string
-/// \param arg The optional argument for the command. This can be of 
+/// @param command The command string
+/// @param arg The optional argument for the command. This can be of
 ///        any Element type, but it should conform to the .spec file.
-/// \return The created message
+/// @return The created message
 isc::data::ConstElementPtr createCommand(const std::string& command,
                                          isc::data::ConstElementPtr arg);
 
-///
-/// \brief Parses the given command into a string containing the actual
+/// @brief Parses the given command into a string containing the actual
 ///        command and an ElementPtr containing the optional argument.
 ///
-/// Raises a CCSessionError if this is not a well-formed command
+/// @throw Raises a CtrlChannelError if this is not a well-formed command
 ///
-/// Example code: (command_message is a ConstElementPtr that is
-/// passed here)
-/// \code
-/// ElementPtr command_message = Element::fromJSON("{ \"command\": [\"foo\", { \"bar\": 123 } ] }");
-/// try {
-///     ConstElementPtr args;
-///     std::string command_str = parseCommand(args, command_message);
-///     if (command_str == "foo") {
-///         std::cout << "The command 'foo' was given" << std::endl;
-///         if (args->contains("bar")) {
-///             std::cout << "It had argument name 'bar' set, which has"
-///                       << "value " 
-///                       << args->get("bar")->intValue();
-///         }
-///     } else {
-///         std::cout << "Unknown command '" << command_str << std::endl;
-///     }
-/// } catch (CCSessionError cse) {
-///     std::cerr << "Bad command in CC Session: "
-///     << cse.what() << std::endl;
-/// }
-/// \endcode
-/// 
-/// \param arg This value will be set to the ElementPtr pointing to
+/// @param arg This value will be set to the ElementPtr pointing to
 ///        the argument, or to an empty Map (ElementPtr) if there was none.
-/// \param command The command message containing the command (as made
+/// @param command The command message containing the command (as made
 ///        by createCommand()
 /// \return The command name
 std::string parseCommand(isc::data::ConstElementPtr& arg,
                          isc::data::ConstElementPtr command);
 
-
-///
-/// \brief A standard cc session exception that is thrown if a function
+/// @brief A standard control channel exception that is thrown if a function
 /// is there is a problem with one of the messages
-///
-// todo: include types and called function in the exception
-class CCSessionError : public isc::Exception {
+class CtrlChannelError : public isc::Exception {
 public:
-    CCSessionError(const char* file, size_t line, const char* what) :
+    CtrlChannelError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
 
