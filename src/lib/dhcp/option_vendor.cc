@@ -58,7 +58,7 @@ void OptionVendor::unpack(OptionBufferConstIter begin,
 
     vendor_id_ = isc::util::readUint32(&(*begin), distance(begin, end));
 
-    OptionBuffer vendor_buffer(begin +4, end);
+    OptionBuffer vendor_buffer(begin + 4, end);
 
     if (universe_ == Option::V6) {
         LibDHCP::unpackVendorOptions6(vendor_id_, vendor_buffer, options_);

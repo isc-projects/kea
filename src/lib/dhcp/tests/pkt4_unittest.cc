@@ -654,6 +654,105 @@ TEST_F(Pkt4Test, unpackOptions) {
     verifyParsedOptions(pkt);
 }
 
+// Checks if the code is able to handle a malformed option
+TEST_F(Pkt4Test, unpackMalformed) {
+
+    vector<uint8_t> orig = generateTestPacket2();
+
+    orig.push_back(0x63);
+    orig.push_back(0x82);
+    orig.push_back(0x53);
+    orig.push_back(0x63);
+
+    orig.push_back(53); // Message Type 
+    orig.push_back(1); // length=1
+    orig.push_back(2); // type=2
+
+    orig.push_back(12); // Hostname
+    orig.push_back(3); // length=3
+    orig.push_back(102); // data="foo"
+    orig.push_back(111);
+    orig.push_back(111);
+
+    // That's our original content. It should be sane.
+    Pkt4Ptr success(new Pkt4(&orig[0], orig.size()));
+    EXPECT_NO_THROW(success->unpack());
+
+    // At the exception of END and PAD an option must have a length byte
+    vector<uint8_t> nolength = orig;
+    nolength.resize(orig.size() - 4);
+    Pkt4Ptr no_length_pkt(new Pkt4(&nolength[0], nolength.size()));
+    EXPECT_THROW(no_length_pkt->unpack(), OutOfRange);
+
+    // Truncated data is not accepted too but doesn't throw
+    vector<uint8_t> shorty = orig;
+    shorty.resize(orig.size() - 1);
+    Pkt4Ptr too_short_pkt(new Pkt4(&shorty[0], shorty.size()));
+    EXPECT_NO_THROW(too_short_pkt->unpack());
+}
+
+// Checks if the code is able to handle a malformed vendor option
+TEST_F(Pkt4Test, unpackVendorMalformed) {
+
+    vector<uint8_t> orig = generateTestPacket2();
+
+    orig.push_back(0x63);
+    orig.push_back(0x82);
+    orig.push_back(0x53);
+    orig.push_back(0x63);
+
+    orig.push_back(53); // Message Type 
+    orig.push_back(1); // length=1
+    orig.push_back(2); // type=2
+
+    orig.push_back(125); // vivso suboptions
+    size_t full_len_index = orig.size();
+    orig.push_back(15); // length=15
+    orig.push_back(1); // vendor_id=0x1020304
+    orig.push_back(2);
+    orig.push_back(3);
+    orig.push_back(4);
+    size_t data_len_index = orig.size();
+    orig.push_back(10); // data-len=10
+    orig.push_back(128); // suboption type=128
+    orig.push_back(3); // suboption length=3
+    orig.push_back(102); // data="foo"
+    orig.push_back(111);
+    orig.push_back(111);
+    orig.push_back(129); // suboption type=129
+    orig.push_back(3); // suboption length=3
+    orig.push_back(99); // data="bar"
+    orig.push_back(98);
+    orig.push_back(114);
+
+    // That's our original content. It should be sane.
+    Pkt4Ptr success(new Pkt4(&orig[0], orig.size()));
+    EXPECT_NO_THROW(success->unpack());
+
+    // Data-len must match but it doesn't throw
+    vector<uint8_t> baddatalen = orig;
+    baddatalen.resize(orig.size() - 5);
+    baddatalen[full_len_index] = 10;
+    Pkt4Ptr bad_data_len_pkt(new Pkt4(&baddatalen[0], baddatalen.size()));
+    EXPECT_NO_THROW(bad_data_len_pkt->unpack());
+
+    // At the exception of END and PAD, a suboption must have a length byte
+    vector<uint8_t> nolength = orig;
+    nolength.resize(orig.size() - 4);
+    nolength[full_len_index] = 11;
+    nolength[data_len_index] = 6;
+    Pkt4Ptr no_length_pkt(new Pkt4(&nolength[0], nolength.size()));
+    EXPECT_THROW(no_length_pkt->unpack(), InvalidOptionValue);
+
+    // Truncated data is not accepted too
+    vector<uint8_t> shorty = orig;
+    shorty.resize(orig.size() - 1);
+    shorty[full_len_index] = 14;
+    shorty[data_len_index] = 9;
+    Pkt4Ptr too_short_pkt(new Pkt4(&shorty[0], shorty.size()));
+    EXPECT_THROW(too_short_pkt->unpack(), InvalidOptionValue);
+}
+
 // This test verifies that it is possible to specify custom implementation of
 // the option parsing algorithm by installing a callback function.
 TEST_F(Pkt4Test, unpackOptionsWithCallback) {
