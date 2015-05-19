@@ -17,6 +17,7 @@
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/json_config_parser.h>
 #include <config/ccsession.h>
+#include <util/pointer_util.h>
 #include <string.h>
 
 using namespace isc::data;
@@ -134,7 +135,9 @@ Dhcpv6SrvTest::checkLease(const isc::dhcp::Lease6& lease) {
         return (Lease6Ptr());
     }
 
-    EXPECT_TRUE(lease_db->matches(lease));
+    EXPECT_TRUE(util::nullOrEqualValues(lease_db->hwaddr_, lease.hwaddr_));
+    EXPECT_TRUE(util::nullOrEqualValues(lease_db->duid_, lease.duid_));
+
     return (lease_db);
 }
 

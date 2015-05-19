@@ -116,6 +116,22 @@ TEST(Subnet4Test, siaddr) {
         BadValue);
 }
 
+// Checks if the match-client-id flag can be set and retrieved.
+TEST(Subnet4Test, matchClientId) {
+    Subnet4 subnet(IOAddress("192.0.2.1"), 24, 1000, 2000, 3000);
+
+    // By default the flag should be set to true.
+    EXPECT_TRUE(subnet.getMatchClientId());
+
+    // Modify it and retrieve.
+    subnet.setMatchClientId(false);
+    EXPECT_FALSE(subnet.getMatchClientId());
+
+    // Modify again.
+    subnet.setMatchClientId(true);
+    EXPECT_TRUE(subnet.getMatchClientId());
+}
+
 TEST(Subnet4Test, Pool4InSubnet4) {
 
     Subnet4Ptr subnet(new Subnet4(IOAddress("192.1.2.0"), 24, 1, 2, 3));

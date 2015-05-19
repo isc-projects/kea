@@ -797,20 +797,6 @@ TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsRenew) {
 
 }
 
-// This test verifies that exception is thrown when leases passed to the
-// createNameChangeRequests function do not match, i.e. they comprise
-// different IP addresses, client ids etc.
-TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsLeaseMismatch) {
-    Lease4Ptr lease1 = createLease(IOAddress("192.0.2.3"),
-                                   "lease1.example.com.",
-                                   true, true);
-    Lease4Ptr lease2 = createLease(IOAddress("192.0.2.4"),
-                                   "lease2.example.com.",
-                                   true, true);
-    EXPECT_THROW(srv_->createNameChangeRequests(lease2, lease1),
-                 isc::Unexpected);
-}
-
 // Test that the OFFER message generated as a result of the DISCOVER message
 // processing will not result in generation of the NameChangeRequests.
 TEST_F(NameDhcpv4SrvTest, processDiscover) {

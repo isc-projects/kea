@@ -383,6 +383,7 @@ public:
     }
 
     ClientIdPtr clientid_;      ///< Client-identifier (value used in tests)
+    ClientIdPtr clientid2_;     ///< Alternative client-identifier.
     HWAddrPtr hwaddr_;          ///< Hardware address (value used in tests)
     HWAddrPtr hwaddr2_;         ///< Alternative hardware address.
     Subnet4Ptr subnet_;         ///< Subnet4 (used in tests)
