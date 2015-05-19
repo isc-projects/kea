@@ -18,7 +18,6 @@
 #include <asiolink/io_service.h>
 
 #include <cc/data.h>
-#include <cc/session.h>
 #include <config/ccsession.h>
 
 #include <d2/d_controller.h>

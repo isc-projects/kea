@@ -17,7 +17,6 @@
 
 #include <asiolink/asiolink.h>
 #include <cc/data.h>
-#include <cc/session.h>
 #include <config/ccsession.h>
 #include <dhcp4/dhcp4_srv.h>
 
