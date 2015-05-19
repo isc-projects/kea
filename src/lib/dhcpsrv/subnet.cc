@@ -179,8 +179,8 @@ Subnet4::Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,
                  const Triplet<uint32_t>& t2,
                  const Triplet<uint32_t>& valid_lifetime,
                  const SubnetID id)
-:Subnet(prefix, length, t1, t2, valid_lifetime,
-        RelayInfo(IOAddress("0.0.0.0")), id), siaddr_(IOAddress("0.0.0.0")) {
+    : Subnet(prefix, length, t1, t2, valid_lifetime, RelayInfo(IOAddress("0.0.0.0")), id),
+      siaddr_(IOAddress("0.0.0.0")), match_client_id_(true) {
     if (!prefix.isV4()) {
         isc_throw(BadValue, "Non IPv4 prefix " << prefix.toText()
                   << " specified in subnet4");

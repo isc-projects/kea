@@ -166,6 +166,12 @@ public:
     /// an error occurs.
     void doInform(const bool set_ciaddr = true);
 
+    /// @brief Sends DHCPRELEASE Message to the server.
+    ///
+    /// This method simulates sending the DHCPRELEASE message to the server.
+    /// The released lease is removed from the client's configuration.
+    void doRelease();
+
     /// @brief Sends DHCPREQUEST Message to the server and receives a response.
     ///
     /// This method simulates sending the DHCPREQUEST message to the server and

@@ -542,7 +542,24 @@ public:
     /// @return siaddr value
     isc::asiolink::IOAddress getSiaddr() const;
 
-protected:
+    /// @brief Sets the flag indicating if the client identifier should be
+    /// used to identify the client's lease.
+    ///
+    /// @param match If this value is true, the client identifiers are not
+    /// used for lease lookup.
+    void setMatchClientId(const bool match) {
+        match_client_id_ = match;
+    }
+
+    /// @brief Returns the flag indicating if the client identifiers should
+    /// be used to identify the client's lease.
+    ///
+    /// @return true if client identifiers should be used, false otherwise.
+    bool getMatchClientId() const {
+        return (match_client_id_);
+    }
+
+private:
 
     /// @brief Returns default address for pool selection
     /// @return ANY IPv4 address
@@ -560,6 +577,10 @@ protected:
 
     /// @brief siaddr value for this subnet
     isc::asiolink::IOAddress siaddr_;
+
+    /// @brief Should server use client identifiers for client lease
+    /// lookup.
+    bool match_client_id_;
 };
 
 /// @brief A pointer to a @c Subnet4 object

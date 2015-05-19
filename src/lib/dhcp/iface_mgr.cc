@@ -238,7 +238,7 @@ Iface::setActive(const IOAddress& address, const bool active) {
     for (AddressCollection::iterator addr_it = addrs_.begin();
          addr_it != addrs_.end(); ++addr_it) {
         if (address == addr_it->get()) {
-            addr_it->specify(active);
+            addr_it->specify(OptionalValueState(active));
             return;
         }
     }
@@ -250,7 +250,7 @@ void
 Iface::setActive(const bool active) {
     for (AddressCollection::iterator addr_it = addrs_.begin();
          addr_it != addrs_.end(); ++addr_it) {
-        addr_it->specify(active);
+        addr_it->specify(OptionalValueState(active));
     }
 }
 

@@ -536,6 +536,69 @@ TEST_F(AllocEngine4Test, requestReuseExpiredLease4) {
     EXPECT_TRUE(*ctx.old_lease_ == original_lease);
 }
 
+// This test checks that the Allocation Engine correcly identifies the
+// existing client's lease in the lease database, using the client
+// identifier and HW address.
+TEST_F(AllocEngine4Test, identifyClientLease) {
+    Lease4Ptr lease(new Lease4(IOAddress("192.0.2.101"), hwaddr_, clientid_,
+                               100, 30, 60, time(NULL), subnet_->getID()));
+    LeaseMgrFactory::instance().addLease(lease);
+
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
+                                    IOAddress::IPV4_ZERO_ADDRESS(),
+                                    false, false, "", true);
+
+    Lease4Ptr identified_lease = engine.allocateLease4(ctx);
+    ASSERT_TRUE(identified_lease);
+    EXPECT_EQ("192.0.2.101", identified_lease->addr_.toText());
+
+    ctx.hwaddr_ = hwaddr2_;
+    ctx.clientid_ = clientid_;
+    identified_lease = engine.allocateLease4(ctx);
+    ASSERT_TRUE(identified_lease);
+    EXPECT_EQ("192.0.2.101", identified_lease->addr_.toText());
+
+    ctx.hwaddr_ = hwaddr_;
+    ctx.clientid_ = clientid2_;
+    identified_lease = engine.allocateLease4(ctx);
+    ASSERT_TRUE(identified_lease);
+    EXPECT_NE(identified_lease->addr_.toText(), "192.0.2.101");
+
+    ctx.hwaddr_ = hwaddr_;
+    ctx.clientid_.reset();
+    identified_lease = engine.allocateLease4(ctx);
+    ASSERT_TRUE(identified_lease);
+    EXPECT_EQ("192.0.2.101", identified_lease->addr_.toText());
+
+    ctx.hwaddr_ = hwaddr2_;
+    ctx.clientid_.reset();
+    identified_lease = engine.allocateLease4(ctx);
+    ASSERT_TRUE(identified_lease);
+    EXPECT_NE(identified_lease->addr_.toText(), "192.0.2.101");
+
+    lease->client_id_.reset();
+    ASSERT_NO_THROW(LeaseMgrFactory::instance().updateLease4(lease));
+
+    ctx.hwaddr_ = hwaddr_;
+    ctx.clientid_ = clientid_;
+    identified_lease = engine.allocateLease4(ctx);
+    ASSERT_TRUE(identified_lease);
+    EXPECT_EQ("192.0.2.101", identified_lease->addr_.toText());
+
+    ctx.hwaddr_ = hwaddr_;
+    ctx.clientid_.reset();
+    identified_lease = engine.allocateLease4(ctx);
+    ASSERT_TRUE(identified_lease);
+    EXPECT_EQ("192.0.2.101", identified_lease->addr_.toText());
+
+    ctx.hwaddr_ = hwaddr2_;
+    ctx.clientid_ = clientid_;
+    identified_lease = engine.allocateLease4(ctx);
+    ASSERT_TRUE(identified_lease);
+    EXPECT_NE(identified_lease->addr_.toText(), "192.0.2.101");
+}
+
 // This test checks that when the client requests the address which belongs
 // to another client, the allocation engine returns NULL (for the
 // DHCPREQUEST case) or a lease for the address which belongs to this
@@ -924,7 +987,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseInvalidHint) {
     CfgMgr::instance().commit();
 
     // Create a lease for the client for a different address than reserved.
-    Lease4Ptr lease(new Lease4(IOAddress("192.0.2.101"), hwaddr_, 0, 0,
+    Lease4Ptr lease(new Lease4(IOAddress("192.0.2.101"), hwaddr_, ClientIdPtr(),
                                100, 30, 60, time(NULL), subnet_->getID(),
                                false, false, ""));
     LeaseMgrFactory::instance().addLease(lease);
@@ -946,6 +1009,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseInvalidHint) {
     AllocEngine::ClientContext4 ctx2(subnet_, clientid_, hwaddr_,
                                     IOAddress("192.0.2.101"), false, false,
                                     "", false);
+    AllocEngine::findReservation(ctx2);
     allocated_lease = engine.allocateLease4(ctx2);
     // The client has reservation so the server wants to allocate a
     // reserved address and doesn't want to renew the address that the
