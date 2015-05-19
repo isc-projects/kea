@@ -330,7 +330,7 @@ DdnsDomainListMgr::matchDomain(const std::string& fqdn, DdnsDomainPtr& domain) {
             return (true);
         }
 
-        LOG_WARN(dctl_logger, DHCP_DDNS_NO_MATCH).arg(fqdn);
+        LOG_WARN(dhcp_to_d2_logger, DHCP_DDNS_NO_MATCH).arg(fqdn);
         return (false);
     }
 

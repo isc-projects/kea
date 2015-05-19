@@ -464,6 +464,9 @@ TEST_F(NameChangeTransactionTest, accessors) {
     // Verify that getTransactionKey works.
     EXPECT_EQ(ncr->getDhcid(), name_change->getTransactionKey());
 
+    // Verify that getRequestId works.
+    EXPECT_EQ(ncr->getRequestId(), name_change->getRequestId());
+
     // Verify that NcrStatus can be set and retrieved.
     EXPECT_NO_THROW(name_change->setNcrStatus(dhcp_ddns::ST_FAILED));
     EXPECT_EQ(dhcp_ddns::ST_FAILED, ncr->getStatus());

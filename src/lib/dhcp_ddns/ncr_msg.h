@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -582,6 +582,18 @@ public:
     /// @throw NcrMessageError if the input data contains non-digits
     /// or there is an odd number of digits.
     void setDhcid(isc::data::ConstElementPtr element);
+
+    /// @brief Fetches the request ID.
+    ///
+    /// @todo Currently this is the DHCID, in the future we may add a unique ID per
+    /// request to allow for correlating messages and events between the DHCP servers
+    /// and the D2 server.  If we do that we shall also need to add or update other
+    /// functions to: set the request ID, add it to the JSON strings, etc.
+    ///
+    /// @return a string with the the request's request ID (currently DHCID)
+    std::string getRequestId() const {
+        return (dhcid_.toStr());
+    }
 
     /// @brief Fetches the request lease expiration
     ///
