@@ -256,7 +256,7 @@ void
 Pkt6::packTCP() {
     /// TODO Implement this function.
     isc_throw(NotImplemented, "DHCPv6 over TCP (bulk leasequery and failover)"
-              "not implemented yet.");
+              " not implemented yet.");
 }
 
 void
