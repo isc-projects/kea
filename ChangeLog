@@ -1,3 +1,11 @@
+933.	[func]*		marcin
+	DHCPv4 server by default identifies a client using the
+	client-identifier, if present. The new configuration
+	parameter 'match-client-id' allows for disabling this
+	behavior, i.e. 'chaddr' field is used to identify the
+	client instead.
+	(Trac #3747, git b9dc6ffd0f3396e9da8e0c83fd82164b8b8af011)
+
 932.	[func]		kalmus
 	MySQL schema has been extended with tables that can store
 	host reservation. This ticket updates database schema only,
