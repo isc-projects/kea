@@ -439,6 +439,14 @@ public:
     /// @return A const reference to the TransactionKey.
     const TransactionKey& getTransactionKey() const;
 
+    /// @brief Fetches the request id that identifies this transaction.
+    ///
+    /// This is a wrapper around getRequestID which currently returns DHCID
+    /// in the future we may include a distinct request id.
+    ///
+    /// @return a string with the the request's request ID (currently DHCID)
+    std::string getRequestId() const;
+
     /// @brief Fetches the NameChangeRequest status of the transaction.
     ///
     /// This is the current status of the NameChangeRequest, not to

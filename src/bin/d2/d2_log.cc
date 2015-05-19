@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,8 @@ namespace d2 {
 
 /// @brief Defines the logger used within D2.
 isc::log::Logger dctl_logger("dhcpddns");
+isc::log::Logger dhcp_to_d2_logger("dchp_to_d2");
+isc::log::Logger d2_to_dns_logger("d2_to_dns");
 
 } // namespace d2
 } // namespace isc

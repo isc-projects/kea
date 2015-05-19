@@ -147,7 +147,7 @@ DNSClientImpl::operator()(asiodns::IOFetch::Result result) {
                                 tsig_context_.get());
         } catch (const isc::Exception& ex) {
             status = DNSClient::INVALID_RESPONSE;
-            LOG_DEBUG(dctl_logger, DBGLVL_TRACE_DETAIL,
+            LOG_DEBUG(d2_to_dns_logger, DBGLVL_TRACE_DETAIL,
                       DHCP_DDNS_INVALID_RESPONSE).arg(ex.what());
 
         }

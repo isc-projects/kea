@@ -134,7 +134,7 @@ public:
         return (boost::dynamic_pointer_cast<D2CfgContext>(getContext()));
     }
 
-    /// @brief Returns whether not forward updates are enabled.
+    /// @brief Returns whether or not forward updates are enabled.
     ///
     /// This method currently uses the presence or absence of Foward DDNS
     /// Domains to determine if forward updates are enabled or disabled.
@@ -144,7 +144,7 @@ public:
     /// @return true if forward updates are enabled, false otherwise.
     bool forwardUpdatesEnabled();
 
-    /// @brief Returns whether not reverse updates are enabled.
+    /// @brief Returns whether or not reverse updates are enabled.
     ///
     /// This method currently uses the presence or absence of Reverse DDNS
     /// Domains to determine if reverse updates are enabled or disabled.
