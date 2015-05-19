@@ -72,10 +72,10 @@ public:
 
 /// @brief D2QueueMgr creates and manages a queue of DNS update requests.
 ///
-/// D2QueueMgr is class specifically designed as an integral part of DHCP-DDNS.
+/// D2QueueMgr is a class specifically designed as an integral part of DHCP-DDNS.
 /// Its primary responsibility is to listen for NameChangeRequests from
 /// DHCP-DDNS clients (e.g. DHCP servers) and queue them for processing. In
-/// addition it may provide a number services to locate entries in the queue
+/// addition it may provide a number of services to locate entries in the queue
 /// such as by FQDN or DHCID.  These services may eventually be used
 /// for processing optimization.  The initial implementation will support
 /// simple FIFO access.
