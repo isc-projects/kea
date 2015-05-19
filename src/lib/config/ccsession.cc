@@ -53,70 +53,78 @@ using isc::data::JSONError;
 namespace isc {
 namespace config {
 
-/// Creates a standard config/command protocol answer message
+const char *CONTROL_COMMAND="command";
+
+const char *CONTROL_RESULT="result";
+const char *CONTROL_TEXT="text";
+const char *CONTROL_ARGUMENTS="arguments";
+
+// Full version, with status, text and arguments
+ConstElementPtr
+createAnswer(const int status_code, const std::string& text,
+             const ConstElementPtr& arg) {
+    if (status_code != 0 && text.empty()) {
+        isc_throw(CtrlChannelError, "Text has to be provided for status_code != 0");
+    }
+
+    ElementPtr answer = Element::createMap();
+    ElementPtr result = Element::create(status_code);
+    answer->set(CONTROL_RESULT, result);
+
+    if (!text.empty()) {
+        answer->set(CONTROL_TEXT, Element::create(text));
+    }
+    if (arg) {
+        answer->set(CONTROL_ARGUMENTS, arg);
+    }
+    return (answer);
+}
+
 ConstElementPtr
 createAnswer() {
-    ElementPtr answer = Element::createMap();
-    ElementPtr answer_content = Element::createList();
-    answer_content->add(Element::create(isc::cc::CC_REPLY_SUCCESS));
-    answer->set(isc::cc::CC_PAYLOAD_RESULT, answer_content);
-
-    return (answer);
+    return (createAnswer(0, string(""), ConstElementPtr()));
 }
 
 ConstElementPtr
-createAnswer(const int rcode, ConstElementPtr arg) {
-    if (rcode != 0 && (!arg || arg->getType() != Element::string)) {
-        isc_throw(CCSessionError, "Bad or no argument for rcode != 0");
+createAnswer(const int status_code, const std::string& text) {
+    return (createAnswer(status_code, text, ElementPtr()));
+}
+
+ConstElementPtr
+createAnswer(const int status_code, const ConstElementPtr& arg) {
+    return (createAnswer(status_code, "", arg));
+}
+
+ConstElementPtr
+parseAnswer(int &rcode, const ConstElementPtr& msg) {
+    if (!msg) {
+        isc_throw(CtrlChannelError, "No answer specified");
     }
-    ElementPtr answer = Element::createMap();
-    ElementPtr answer_content = Element::createList();
-    answer_content->add(Element::create(rcode));
-    answer_content->add(arg);
-    answer->set(isc::cc::CC_PAYLOAD_RESULT, answer_content);
-
-    return (answer);
-}
-
-ConstElementPtr
-createAnswer(const int rcode, const std::string& arg) {
-    ElementPtr answer = Element::createMap();
-    ElementPtr answer_content = Element::createList();
-    answer_content->add(Element::create(rcode));
-    answer_content->add(Element::create(arg));
-    answer->set(isc::cc::CC_PAYLOAD_RESULT, answer_content);
-
-    return (answer);
-}
-
-ConstElementPtr
-parseAnswer(int &rcode, ConstElementPtr msg) {
-    if (msg &&
-        msg->getType() == Element::map &&
-        msg->contains(isc::cc::CC_PAYLOAD_RESULT)) {
-        ConstElementPtr result = msg->get(isc::cc::CC_PAYLOAD_RESULT);
-        if (result->getType() != Element::list) {
-            isc_throw(CCSessionError, "Result element in answer message is not a list");
-        } else if (result->get(0)->getType() != Element::integer) {
-            isc_throw(CCSessionError, "First element of result is not an rcode in answer message");
-        }
-        rcode = result->get(0)->intValue();
-        if (result->size() > 1) {
-            if (rcode == 0 || result->get(1)->getType() == Element::string) {
-                return (result->get(1));
-            } else {
-                isc_throw(CCSessionError, "Error description in result with rcode != 0 is not a string");
-            }
-        } else {
-            if (rcode == 0) {
-                return (ElementPtr());
-            } else {
-                isc_throw(CCSessionError, "Result with rcode != 0 does not have an error description");
-            }
-        }
-    } else {
-        isc_throw(CCSessionError, "No result part in answer message");
+    if (msg->getType() != Element::map) {
+        isc_throw(CtrlChannelError,
+                  "Invalid answer Element specified, expected map");
     }
+    if (!msg->contains(CONTROL_RESULT)) {
+        isc_throw(CtrlChannelError,
+                  "Invalid answer specified, does not contain mandatory 'result'");
+    }
+
+    ConstElementPtr result = msg->get(CONTROL_RESULT);
+    if (result->getType() != Element::integer) {
+            isc_throw(CtrlChannelError,
+                      "Result element in answer message is not a string");
+    }
+
+    rcode = result->intValue();
+
+    // If there are arguments, return them.
+    ConstElementPtr args = msg->get(CONTROL_ARGUMENTS);
+    if (args) {
+        return (args);
+    }
+
+    // There are no arguments, let's try to return just the text status
+    return (msg->get(CONTROL_TEXT));
 }
 
 ConstElementPtr
@@ -126,37 +134,37 @@ createCommand(const std::string& command) {
 
 ConstElementPtr
 createCommand(const std::string& command, ConstElementPtr arg) {
-    ElementPtr cmd = Element::createMap();
-    ElementPtr cmd_parts = Element::createList();
-    cmd_parts->add(Element::create(command));
+    ElementPtr query = Element::createMap();
+    ElementPtr cmd = Element::create(command);
+    query->set(CONTROL_COMMAND, cmd);
     if (arg) {
-        cmd_parts->add(arg);
+        query->set(CONTROL_ARGUMENTS, arg);
     }
-    cmd->set(isc::cc::CC_PAYLOAD_COMMAND, cmd_parts);
-    return (cmd);
+    return (query);
 }
 
 std::string
 parseCommand(ConstElementPtr& arg, ConstElementPtr command) {
-    if (command &&
-        command->getType() == Element::map &&
-        command->contains(isc::cc::CC_PAYLOAD_COMMAND)) {
-        ConstElementPtr cmd = command->get(isc::cc::CC_PAYLOAD_COMMAND);
-        if (cmd->getType() == Element::list &&
-            !cmd->empty() &&
-            cmd->get(0)->getType() == Element::string) {
-            if (cmd->size() > 1) {
-                arg = cmd->get(1);
-            } else {
-                arg = Element::createMap();
-            }
-            return (cmd->get(0)->stringValue());
-        } else {
-            isc_throw(CCSessionError, "Command part in command message missing, empty, or not a list");
-        }
-    } else {
-        isc_throw(CCSessionError, "Command Element empty or not a map with \"command\"");
+    if (!command) {
+        isc_throw(CtrlChannelError, "No command specified");
     }
+    if (command->getType() != Element::map) {
+        isc_throw(CtrlChannelError, "Invalid command Element specified, expected map");
+    }
+    if (!command->contains(CONTROL_COMMAND)) {
+        isc_throw(CtrlChannelError,
+                  "Invalid answer specified, does not contain mandatory 'command'");
+    }
+
+    ConstElementPtr cmd = command->get(CONTROL_COMMAND);
+    if (cmd->getType() != Element::string) {
+        isc_throw(CtrlChannelError,
+                  "'command' element in command message is not a string");
+    }
+
+    arg = command->get(CONTROL_ARGUMENTS);
+
+    return (cmd->stringValue());
 }
 
 namespace {
