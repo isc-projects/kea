@@ -982,6 +982,16 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
     // Initialize a vector with the FQDN data.
     std::vector<uint8_t> fqdn_buf(data, data + sizeof(data));
 
+    // Prepare buffer holding a vendor option
+    const char vopt_data[] = {
+        1, 2, 3, 4,                               // enterprise=0x1020304
+        0, 100,                                   // type=100
+	0, 6,                                     // length=6
+	102, 111, 111, 98, 97, 114                // data="foobar"
+    };
+    // Initialize a vector with the suboption data.
+    std::vector<uint8_t> vopt_buf(vopt_data, vopt_data + sizeof(vopt_data));
+
     // The CLIENT_FQDN holds a uint8_t value and FQDN. We have
     // to add the uint8_t value to it and then append the buffer
     // holding some valid FQDN.
@@ -1038,7 +1048,8 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
                                     vclass_buf.end(),
                                     typeid(OptionVendorClass));
 
-    LibDhcpTest::testStdOptionDefs6(D6O_VENDOR_OPTS, begin, end,
+    LibDhcpTest::testStdOptionDefs6(D6O_VENDOR_OPTS, vopt_buf.begin(),
+				    vopt_buf.end(),
                                     typeid(OptionVendor),
                                     "vendor-opts-space");
 
