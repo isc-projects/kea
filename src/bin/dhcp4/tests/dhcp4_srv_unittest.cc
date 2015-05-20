@@ -2432,6 +2432,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectSimple) {
 
     // Server is supposed to report two subnets
     ASSERT_EQ(exp_subnets->size(), callback_subnet4collection_->size());
+    ASSERT_GE(exp_subnets->size(), 2);
 
     // Compare that the available subnets are reported as expected
     EXPECT_TRUE((*exp_subnets)[0].get() == (*callback_subnet4collection_)[0].get());

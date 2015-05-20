@@ -1,3 +1,10 @@
+936.	[bug]		fdupont
+	Added an ASSERT to avoid a crash in HooksDhcpv4SrvTest
+	subnet4SelectSimple unit test. Fixed out of bounds vector accesses
+	in perfdhcp (which should not be able to handle links
+	with long (i.e., more than 6 bytes) link-layer addresses).
+	(Trac #3868, git xxx)
+
 935.	[bug]		fdupont
 	Fixed 3 out of bounds accesses on vectors in DHCP++ code.
 	(Trac #3854, git de263ad0008f3494a85592f78db1ec662b68e689)

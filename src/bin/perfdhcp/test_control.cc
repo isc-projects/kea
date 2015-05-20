@@ -1702,7 +1702,10 @@ TestControl::sendRequest4(const TestControlSocket& socket,
     HWAddrPtr hwaddr = offer_pkt4->getHWAddr();
     std::vector<uint8_t> mac_address(HW_ETHER_LEN, 0);
     uint8_t hw_len = hwaddr->hwaddr_.size();
-    memcpy(&mac_address[0], &hwaddr->hwaddr_[0], hw_len > 16 ? 16 : hw_len);
+    if (hw_len != 0) {
+        memcpy(&mac_address[0], &hwaddr->hwaddr_[0],
+               hw_len > HW_ETHER_LEN ? HW_ETHER_LEN : hw_len);
+    }
     pkt4->writeAt(rand_offset, mac_address.begin(), mac_address.end());
 
     // Set elapsed time.
