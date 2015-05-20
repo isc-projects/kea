@@ -33,6 +33,10 @@ db_user="keatest"
 db_password="keatest"
 db_name="keatest"
 
+# lease dump parameters
+dump_type=0
+dump_file=""
+
 # Include utilities. Use installed version if available and
 # use build version if it isn't.
 if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
@@ -56,6 +60,7 @@ usage() {
     printf " - lease-version: Checks version of the existing lease database scheme. Useful\n"
     printf " -                for checking lease DB version when preparing for an upgrade.\n"
     printf " - lease-upgrade: Upgrades your lease database scheme\n"
+    printf " - lease-dump: Dump current leases to a CSV file\n"
     printf "\n"
     printf "BACKEND - one of the supported backends: memfile|mysql|pgsql\n"
     printf "\n"
@@ -65,6 +70,11 @@ usage() {
     printf " -p or --password pass - specifies a password when connecting to a database\n"
     printf " -n or --name database - specifies a database name to connect to\n"
     printf " -d or --directory - path to upgrade scripts (default: ${SCRIPTS_DIR_DEFAULT})\n"
+    printf "\n"
+    printf " Parameters specific to lease-dump:\n"
+    printf "     -4 to dump IPv4 leases to file\n"
+    printf "     -6 to dump IPv6 leases to file\n"
+    printf "     -o or --output - name of file to which leases will be dumped\n"
 }
 
 
@@ -221,6 +231,122 @@ pgsql_upgrade() {
     log_error "NOT IMPLEMENTED"
 }
 
+### Functions used for dump
+memfile_dump() {
+    log_error "lease-dump is not supported for memfile"
+    exit 1
+}
+
+### Functions used for dump
+mysql_dump() {
+
+    # Construct the SQL text to dump the leases based on protocol type
+    case ${dump_type} in
+        4)
+            qry="\
+SELECT 'address', 'hwaddr', 'client_id', 'valid_lifetime', 'expire',\
+'subnet_id', 'fqdn_fwd', 'fqdn_rev', 'hostname';\
+SELECT INET_NTOA(address), IFNULL(HEX(hwaddr), ''), IFNULL(HEX(client_id), ''),\
+valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname from lease4"
+            ;;
+        6)
+            qry="\
+SELECT 'address', 'duid', 'valid_lifetime', 'expire',\
+'subnet_id', 'pref_lifetime', 'lease_type', 'iaid', 'prefix_len', 'fqdn_fwd',\
+'fqdn_rev', 'hostname', 'hwaddr', 'hwtype', 'hwaddr_source';\
+SELECT a.address, IFNULL(HEX(a.duid), ''), a.valid_lifetime,\
+a.expire, a.subnet_id, a.pref_lifetime, IFNULL(b.name, ''), a.iaid, a.prefix_len,\
+a.fqdn_fwd, a.fqdn_rev, hostname, IFNULL(HEX(hwaddr), ''), IFNULL(hwtype, ''),\
+IFNULL(hwaddr_source, '') \
+FROM lease6 a left outer join lease6_types b on (a.lease_type = b.lease_type)"
+            ;;
+        *)
+            log_error "you must specify -4 or -6 for lease-dump"
+            usage
+            exit 1
+            ;;
+    esac
+
+    # Make sure they specified a file
+    if [ "$dump_file" = "" ]; then
+        log_error "you must specify an output file for lease-dump"
+        usage
+        exit 1
+
+    fi
+
+    # Call mysql directly so we can redirect its output to tr to translate tabs to commas
+    # then to the output file. "mysql_execute" function stores the query result in
+    # environment variable and for large DBs this might be an issue.
+    # We also do not use MySQL's output to file as that requires linux superuser privileges to
+    # execute the select.
+    mysql -N -B --user=$db_user --password=$db_password -e "${qry}" $db_name | tr '\t' ',' >$dump_file
+
+    # Check for errors
+    if [ ${PIPESTATUS[0]} -ne 0 ]; then
+        log_error "lease-dump failed";
+        exit 1
+    fi
+
+    echo lease$dump_type successfully dumped to $dump_file
+    exit 0
+}
+
+### Functions used for dump
+pgsql_dump() {
+
+    # Construct the SQL text to dump the leases based on protocol type
+    case ${dump_type} in
+        4)
+            qry="\
+SELECT 'address', 'hwaddr', 'client_id', 'valid_lifetime', 'expire',\
+'subnet_id', 'fqdn_fwd', 'fqdn_rev', 'hostname';\
+SELECT ('0.0.0.0'::inet + address) AS address,\
+encode(hwaddr,'hex'), encode(client_id,'hex'), valid_lifetime,\
+expire, subnet_id, fqdn_fwd::int AS fqdn_fwd, fqdn_rev::int AS fqdn_rev,\
+hostname FROM lease4"
+            ;;
+        6)
+            qry="\
+SELECT 'address', 'duid', 'valid_lifetime', 'expire',\
+'subnet_id', 'pref_lifetime', 'lease_type', 'iaid', 'prefix_len', 'fqdn_fwd',\
+'fqdn_rev', 'hostname';\
+SELECT a.address, encode(a.duid,'hex'), a.valid_lifetime,\
+a.expire, a.subnet_id, a.pref_lifetime, b.name, a.iaid, a.prefix_len,\
+a.fqdn_fwd, a.fqdn_rev, hostname \
+FROM lease6 a left outer join lease6_types b on (a.lease_type = b.lease_type)"
+            ;;
+        *)
+            log_error "you must specify -4 or -6 for lease-dump"
+            usage
+            exit 1
+            ;;
+    esac
+
+    # Make sure they specified a file
+    if [ "$dump_file" = "" ]; then
+        log_error "you must specify an output file for lease-dump"
+        usage
+        exit 1
+
+    fi
+
+    # psql does not accept password as a parameter but will look in the environment
+    export PGPASSWORD=$db_password
+
+    # Call psql and redirect output to the dump file. We don't use psql "to csv"
+    # as it can only be run as db superuser.
+    echo "$header;$qry" | psql -t -q --user=$db_user --dbname=$db_name -w --no-align --field-separator=',' >$dump_file
+
+    # Check for errors.
+    if [ ${PIPESTATUS[1]} -ne 0 ]; then
+        log_error "lease-dump failed";
+        exit 1
+    fi
+
+    echo lease$dump_type successfully dumped to $dump_file
+    exit 0
+}
 
 ### Script starts here ###
 
@@ -231,7 +357,7 @@ if [ -z ${command} ]; then
     usage
     exit 1
 fi
-is_in_list "${command}" "lease-init lease-version lease-upgrade"
+is_in_list "${command}" "lease-init lease-version lease-upgrade lease-dump"
 if [ ${_inlist} -eq 0 ]; then
     log_error "invalid command: ${command}"
     exit 1
@@ -296,6 +422,34 @@ do
                 exit 1
             fi
             ;;
+        # specify DHCPv4 lease type
+        -4)
+            if [ $dump_type -eq 6 ]; then
+                log_error "you may not specify both -4 and -6"
+                usage
+                exit 1
+            fi
+            dump_type=4
+            ;;
+        # specify DHCPv6 lease type
+        -6)
+            if [ $dump_type -eq 4 ]; then
+                log_error "you may not specify both -4 and -6"
+                usage
+                exit 1
+            fi
+            dump_type=6
+            ;;
+        # specify output file, currently only used by lease dump
+        -o|--output)
+            shift
+            dump_file=${1}
+            if [ -z ${dump_file} ]; then
+                log_error "-o or --output requires a parameter"
+                usage
+                exit 1
+            fi
+            ;;
         *)
             log_error "invalid option: ${option}"
             usage
@@ -343,6 +497,19 @@ case ${command} in
                 ;;
             pgsql)
                 pgsql_upgrade
+                ;;
+            esac
+        ;;
+    lease-dump)
+        case ${backend} in
+            memfile)
+                memfile_dump
+                ;;
+            mysql)
+                mysql_dump
+                ;;
+            pgsql)
+                pgsql_dump
                 ;;
             esac
         ;;
