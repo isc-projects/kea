@@ -362,7 +362,7 @@ TEST(NameChangeUDPSenderBasicTest, basicSendTests) {
     int select_fd = sender.getSelectFd();
 
     // Verify select_fd is valid and currently shows no ready to read.
-    ASSERT_NE(dhcp_ddns::WatchSocket::INVALID_SOCKET, select_fd);
+    ASSERT_NE(dhcp_ddns::WatchSocket::SOCKET_NOT_VALID, select_fd);
 
     // Make sure select_fd does evaluates to not ready via select and
     // that ioReady() method agrees.

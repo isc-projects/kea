@@ -1,3 +1,9 @@
+934.	[bug]		fdupont
+	Renamed the DHCP-DDNS constant INVALID_SOCKET to SOCKET_NOT_VALID
+	to avoid conflicting with a constant of that name defined on some
+	operating systems.
+	(Trac #3861, git xxx)
+
 933.	[func]*		marcin
 	DHCPv4 server by default identifies a client using the
 	client-identifier, if present. The new configuration

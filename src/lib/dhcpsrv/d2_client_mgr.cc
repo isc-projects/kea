@@ -30,7 +30,7 @@ namespace dhcp {
 
 D2ClientMgr::D2ClientMgr() : d2_client_config_(new D2ClientConfig()),
     name_change_sender_(), private_io_service_(),
-    registered_select_fd_(dhcp_ddns::WatchSocket::INVALID_SOCKET) {
+    registered_select_fd_(dhcp_ddns::WatchSocket::SOCKET_NOT_VALID) {
     // Default constructor initializes with a disabled configuration.
 }
 
@@ -275,9 +275,9 @@ D2ClientMgr::amSending() const {
 void
 D2ClientMgr::stopSender() {
     /// Unregister sender's select-fd.
-    if (registered_select_fd_ != dhcp_ddns::WatchSocket::INVALID_SOCKET) {
+    if (registered_select_fd_ != dhcp_ddns::WatchSocket::SOCKET_NOT_VALID) {
         IfaceMgr::instance().deleteExternalSocket(registered_select_fd_);
-        registered_select_fd_ = dhcp_ddns::WatchSocket::INVALID_SOCKET;
+        registered_select_fd_ = dhcp_ddns::WatchSocket::SOCKET_NOT_VALID;
     }
 
     // If its not null, call stop.
