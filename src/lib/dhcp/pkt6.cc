@@ -378,7 +378,7 @@ Pkt6::unpackRelayMsg() {
         bufsize -= DHCPV6_RELAY_HDR_LEN; // 34 bytes (1+1+16+16)
 
         // parse the rest as options
-        OptionBuffer opt_buffer(&data_[offset], &data_[offset+bufsize]);
+        OptionBuffer opt_buffer(&data_[offset], &data_[offset] + bufsize);
 
         // If custom option parsing function has been set, use this function
         // to parse options. Otherwise, use standard function from libdhcp.
