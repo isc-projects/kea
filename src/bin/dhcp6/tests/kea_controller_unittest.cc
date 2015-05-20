@@ -14,7 +14,7 @@
 
 #include <config.h>
 
-#include <config/ccsession.h>
+#include <config/command_interpreter.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcpsrv/cfgmgr.h>

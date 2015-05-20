@@ -14,7 +14,7 @@
 
 #include <config.h>
 
-#include <config/ccsession.h>
+#include <config/command_interpreter.h>
 #include <d_test_stubs.h>
 #include <d2/spec_config.h>
 
