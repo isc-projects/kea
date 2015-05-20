@@ -14,7 +14,7 @@
 
 #include <config.h>
 
-#include <config/ccsession.h>
+#include <config/command_interpreter.h>
 #include <d2/d2_log.h>
 #include <d2/d2_cfg_mgr.h>
 #include <d2/d2_process.h>

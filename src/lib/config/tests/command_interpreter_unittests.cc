@@ -15,7 +15,7 @@
 #include <config.h>
 
 #include <gtest/gtest.h>
-#include <config/ccsession.h>
+#include <config/command_interpreter.h>
 #include <config/tests/data_def_unittests_config.h>
 #include <log/logger_name.h>
 #include <boost/scoped_ptr.hpp>
@@ -37,16 +37,7 @@ el(const std::string& str) {
     return (Element::fromJSON(str));
 }
 
-class CCSessionTest : public ::testing::Test {
-protected:
-    CCSessionTest()
-    {
-    }
-    ~CCSessionTest() {
-    }
-};
-
-TEST_F(CCSessionTest, createAnswer) {
+TEST(CommandInterpreterTest, createAnswer) {
     ConstElementPtr answer;
     answer = createAnswer();
     EXPECT_EQ("{ \"result\": 0 }", answer->str());
@@ -62,7 +53,7 @@ TEST_F(CCSessionTest, createAnswer) {
               answer->str());
 }
 
-TEST_F(CCSessionTest, parseAnswer) {
+TEST(CommandInterpreterTest, parseAnswer) {
     ConstElementPtr answer;
     ConstElementPtr arg;
     int rcode;
@@ -92,7 +83,7 @@ TEST_F(CCSessionTest, parseAnswer) {
     EXPECT_EQ("[ \"just\", \"some\", \"data\" ]", arg->str());
 }
 
-TEST_F(CCSessionTest, createCommand) {
+TEST(CommandInterpreterTest, createCommand) {
     ConstElementPtr command;
     ConstElementPtr arg;
 
@@ -115,7 +106,7 @@ TEST_F(CCSessionTest, createCommand) {
               command->str());
 }
 
-TEST_F(CCSessionTest, parseCommand) {
+TEST(CommandInterpreterTest, parseCommand) {
     ConstElementPtr arg;
     std::string cmd;
 

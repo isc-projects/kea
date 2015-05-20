@@ -16,7 +16,7 @@
 #include <sstream>
 
 #include <asiolink/io_address.h>
-#include <config/ccsession.h>
+#include <config/command_interpreter.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp/tests/pkt_captures.h>
 #include <dhcp/dhcp4.h>
@@ -42,7 +42,6 @@
 #include <gtest/gtest.h>
 #include <hooks/server_hooks.h>
 #include <hooks/hooks_manager.h>
-#include <config/ccsession.h>
 
 #include <boost/scoped_ptr.hpp>
 

@@ -36,7 +36,7 @@
 #include <exceptions/exceptions.h>
 
 #include <config/config_log.h>
-#include <config/ccsession.h>
+#include <config/command_interpreter.h>
 
 #include <log/logger_support.h>
 #include <log/logger_specification.h>
@@ -166,6 +166,9 @@ parseCommand(ConstElementPtr& arg, ConstElementPtr command) {
 
     return (cmd->stringValue());
 }
+
+/// @todo: The code below should be reviewed whether it's still in use. If it is,
+/// it should be moved to a separate file.
 
 namespace {
 // Temporary workaround functions for missing functionality in

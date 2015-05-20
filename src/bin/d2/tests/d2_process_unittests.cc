@@ -15,7 +15,7 @@
 #include <config.h>
 
 #include <asiolink/io_service.h>
-#include <config/ccsession.h>
+#include <config/command_interpreter.h>
 #include <d2/d2_process.h>
 #include <dhcp_ddns/ncr_io.h>
 #include <d_test_stubs.h>
