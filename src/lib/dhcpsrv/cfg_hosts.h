@@ -35,7 +35,7 @@ namespace dhcp {
 /// which can be retrieved using different search criteria.
 ///
 /// In the typical case the reservations are searched using the client's MAC
-/// address of DUID and a subnet that the client is connected to. The
+/// address or DUID and a subnet that the client is connected to. The
 /// reservations can be also retrieved using other parameters, such as reserved
 /// IP address.
 ///
