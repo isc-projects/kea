@@ -3,7 +3,7 @@
 	subnet4SelectSimple unit test. Fixed out of bounds vector accesses
 	in perfdhcp (which should not be able to handle links
 	with long (i.e., more than 6 bytes) link-layer addresses).
-	(Trac #3868, git xxx)
+	(Trac #3868, git c20f47e19d6060605c0611754db7b66b08553caa)
 
 935.	[bug]		fdupont
 	Fixed 3 out of bounds accesses on vectors in DHCP++ code.
