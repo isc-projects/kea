@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
-#include <config/ccsession.h>
+#include <config/command_interpreter.h>
 #include <cc/data.h>
 #include <dhcp/option.h>
 #include <dhcp/option_custom.h>
