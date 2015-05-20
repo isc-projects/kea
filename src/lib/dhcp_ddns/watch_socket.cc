@@ -25,11 +25,11 @@ namespace isc {
 namespace dhcp_ddns {
 
 
-const int WatchSocket::INVALID_SOCKET;
+const int WatchSocket::SOCKET_NOT_VALID;
 const uint32_t WatchSocket::MARKER;
 
 WatchSocket::WatchSocket()
-    : source_(INVALID_SOCKET), sink_(INVALID_SOCKET) {
+    : source_(SOCKET_NOT_VALID), sink_(SOCKET_NOT_VALID) {
     // Open the pipe.
     int fds[2];
     if (pipe(fds)) {
@@ -79,7 +79,7 @@ WatchSocket::markReady() {
 bool
 WatchSocket::isReady() {
     // Report it as not ready rather than error here.
-    if (sink_ == INVALID_SOCKET) {
+    if (sink_ == SOCKET_NOT_VALID) {
         return (false);
     }
 
@@ -122,24 +122,24 @@ WatchSocket::closeSocket() {
     // but there's no recovery for it either.  If one does fail we log it
     // and go on. Plus this is called by the destructor and no one likes
     // destructors that throw.
-    if (source_ != INVALID_SOCKET) {
+    if (source_ != SOCKET_NOT_VALID) {
         if (close(source_)) {
             const char* errstr = strerror(errno);
             LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_WATCH_SOURCE_CLOSE_ERROR)
                       .arg(errstr);
         }
 
-        source_ = INVALID_SOCKET;
+        source_ = SOCKET_NOT_VALID;
     }
 
-    if (sink_ != INVALID_SOCKET) {
+    if (sink_ != SOCKET_NOT_VALID) {
         if (close(sink_)) {
             const char* errstr = strerror(errno);
             LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_WATCH_SINK_CLOSE_ERROR)
                       .arg(errstr);
         }
 
-        sink_ = INVALID_SOCKET;
+        sink_ = SOCKET_NOT_VALID;
     }
 }
 

@@ -54,7 +54,7 @@ public:
 class WatchSocket {
 public:
     /// @brief Value used to signify an invalid descriptor.
-    static const int INVALID_SOCKET = -1;
+    static const int SOCKET_NOT_VALID = -1;
     /// @brief Value written to the source when marking the socket as ready.
     /// The value itself is arbitrarily chosen as one that is unlikely to occur
     /// otherwise and easy to debug.
@@ -88,7 +88,7 @@ public:
     /// select_fd.  Rather than track what the status "should be" it tests the status.
     /// This should eliminate conditions where the select-fd appear to be perpetually
     /// ready.
-    /// @return  Returns true if select_fd is not INVALID_SOCKET and select() reports it
+    /// @return  Returns true if select_fd is not SOCKET_NOT_VALID and select() reports it
     /// as !EWOULDBLOCK, otherwise it returns false.
     /// This method is guaranteed NOT to throw.
     bool isReady();
