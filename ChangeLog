@@ -1,6 +1,6 @@
 935.	[bug]		fdupont
 	Fixed 3 out of bounds accesses on vectors in DHCP++ code.
-	(Trac #3854, git xxx)
+	(Trac #3854, git de263ad0008f3494a85592f78db1ec662b68e689)
 
 934.	[bug]		fdupont
 	Renamed the DHCP-DDNS constant INVALID_SOCKET to SOCKET_NOT_VALID
