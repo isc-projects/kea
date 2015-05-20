@@ -1,3 +1,7 @@
+935.	[bug]		fdupont
+	Fixed 3 out of bounds accesses on vectors in DHCP++ code.
+	(Trac #3854, git xxx)
+
 934.	[bug]		fdupont
 	Renamed the DHCP-DDNS constant INVALID_SOCKET to SOCKET_NOT_VALID
 	to avoid conflicting with a constant of that name defined on some

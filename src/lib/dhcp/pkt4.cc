@@ -124,7 +124,7 @@ Pkt4::pack() {
         buffer_out_.writeUint32(giaddr_);
 
 
-        if (hw_len <= MAX_CHADDR_LEN) {
+        if ((hw_len > 0) && (hw_len <= MAX_CHADDR_LEN)) {
             // write up to 16 bytes of the hardware address (CHADDR field is 16
             // bytes long in DHCPv4 message).
             buffer_out_.writeData(&hwaddr_->hwaddr_[0],
@@ -136,8 +136,10 @@ Pkt4::pack() {
         }
 
         // write (len) bytes of padding
-        vector<uint8_t> zeros(hw_len, 0);
-        buffer_out_.writeData(&zeros[0], hw_len);
+        if (hw_len > 0) {
+            vector<uint8_t> zeros(hw_len, 0);
+            buffer_out_.writeData(&zeros[0], hw_len);
+        }
 
         buffer_out_.writeData(sname_, MAX_SNAME_LEN);
         buffer_out_.writeData(file_, MAX_FILE_LEN);
