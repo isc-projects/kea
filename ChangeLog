@@ -1,7 +1,7 @@
 938.	[build]		fdupont
 	Removed Python from the log library (code, message compiler and
 	documentation)
-	(Trac #3734, git xxx)
+	(Trac #3734, git d24b7c9716c6eb7a3e9dd2cb3fd2d1bfe4e1201f)
 
 937.	[bug]		fdupont
 	The log ID LOG_UNRECOGNISED_DIRECTIVE was changed to
