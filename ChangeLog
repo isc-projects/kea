@@ -1,3 +1,8 @@
+937.	[bug]		fdupont
+	The log ID LOG_UNRECOGNISED_DIRECTIVE was changed to
+	LOG_UNRECOGNIZED_DIRECTIVE to follow US English spelling.
+	(Trac #3762, git xxx)
+
 936.	[bug]		fdupont
 	Added an ASSERT to avoid a crash in HooksDhcpv4SrvTest
 	subnet4SelectSimple unit test. Fixed out of bounds vector accesses
