@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -45,11 +45,6 @@
 /// In this way users can have some expectation of what will be output when
 /// enabling debugging.  Symbols are prefixed DBGLVL so as not to clash with
 /// DBG_ symbols in the various modules.
-///
-/// \note If the names of debug constants are changed, or if ones are added or
-/// removed, edit the file src/lib/python/isc/log/log.cc to update the log
-/// level definitions available to Python.  The change does not need to be
-/// made if only the numeric values of constants are updated.
 
 namespace {
 

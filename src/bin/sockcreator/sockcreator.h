@@ -97,7 +97,7 @@ getSock(const int type, struct sockaddr* bind_addr, const socklen_t addr_len,
         const close_t close_fun);
 
 // Define some types for functions used to perform socket-related operations.
-// These are typedefed so that alternatives can be passed through to the
+// These are typedef'ed so that alternatives can be passed through to the
 // main functions for testing purposes.
 
 // Type of the function to get a socket and to pass it as parameter.
@@ -131,11 +131,11 @@ typedef int (*send_fd_t)(const int, const int);
 ///        a file descriptor. This should be left on the default value, it is
 ///        here for testing purposes.
 /// \param close_fun The close function used to close sockets, coming from
-///        unistd.h. It can be overriden in tests.
+///        unistd.h. It can be overridden in tests.
 ///
 /// \exception isc::socket_creator::ReadError Error reading from input
 /// \exception isc::socket_creator::WriteError Error writing to output
-/// \exception isc::socket_creator::ProtocolError Unrecognised command received
+/// \exception isc::socket_creator::ProtocolError Unrecognized command received
 /// \exception isc::socket_creator::InternalError Other error
 void
 run(const int input_fd, const int output_fd, get_sock_t get_sock_fun,
