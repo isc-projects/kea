@@ -282,7 +282,7 @@ run(const int input_fd, const int output_fd, get_sock_t get_sock,
             case 'T':   // The "terminate" command
                 return;
 
-            default:    // Don't recognise anything else
+            default:    // Don't recognize anything else
                 protocolError(output_fd);
         }
     }
