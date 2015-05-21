@@ -1,7 +1,7 @@
 937.	[bug]		fdupont
 	The log ID LOG_UNRECOGNISED_DIRECTIVE was changed to
 	LOG_UNRECOGNIZED_DIRECTIVE to follow US English spelling.
-	(Trac #3762, git xxx)
+	(Trac #3762, git 235e3304746352e9341008225f9f2392586a9f66)
 
 936.	[bug]		fdupont
 	Added an ASSERT to avoid a crash in HooksDhcpv4SrvTest
