@@ -1,4 +1,4 @@
-// Copyright (C) 2011,2015  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -58,16 +58,15 @@ static const char* VERSION = "1.0-0";
 /// \b Invocation<BR>
 /// The program is invoked with the command:
 ///
-/// <tt>message [-v | -h | -p | -d &lt;dir&gt; | <message-file>]</tt>
+/// <tt>message [-v | -h | -d &lt;dir&gt; | <message-file>]</tt>
 ///
 /// It reads the message file and writes out two files of the same
 /// name in the current working directory (unless -d is used) but
-/// with extensions of .h and .cc, or .py if -p is used.
+/// with extensions of .h and .cc.
 ///
-/// -v causes it to print the version number and exit. -h prints a help
-/// message (and exits). -p sets the output to python. -d &lt;dir&gt; will make
-/// it write the output file(s) to dir instead of current working
-/// directory
+/// -v causes it to print the version number and exit. -h prints a
+/// help message (and exits). -d &lt;dir&gt; will make it write the
+/// output file(s) to dir instead of current working directory
 
 
 /// \brief Print Version
@@ -86,11 +85,10 @@ version() {
 void
 usage() {
     cout <<
-        "Usage: message [-h] [-v] [-p] [-d dir] <message-file>\n" <<
+        "Usage: message [-h] [-v] [-d dir] <message-file>\n" <<
         "\n" <<
         "-h       Print this message and exit\n" <<
         "-v       Print the program version and exit\n" <<
-        "-p       Output python source instead of C++ ones\n" <<
         "-d <dir> Place output files in given directory\n" <<
         "\n" <<
         "<message-file> is the name of the input message file.\n";
@@ -247,53 +245,6 @@ writeClosingNamespace(ostream& output, const vector<string>& ns) {
         }
         output << "\n";
     }
-}
-
-/// \brief Write python file
-///
-/// Writes the python file containing the symbol definitions as module level
-/// constants. These are objects which register themselves at creation time,
-/// so they can be replaced by dictionary later.
-///
-/// \param file Name of the message file. The source code is written to a file
-///     file of the same name but with a .py suffix.
-/// \param dictionary The dictionary holding the message definitions.
-/// \param output_directory if not null NULL, output files are written
-///     to the given directory. If NULL, they are written to the current
-///     working directory.
-///
-/// \note We don't use the namespace as in C++. We don't need it, because
-///     python file/module works as implicit namespace as well.
-
-void
-writePythonFile(const string& file, MessageDictionary& dictionary,
-                const char* output_directory)
-{
-    Filename message_file(file);
-    Filename python_file(Filename(message_file.name()).useAsDefault(".py"));
-    if (output_directory != NULL) {
-        python_file.setDirectory(output_directory);
-    }
-
-    // Open the file for writing
-    ofstream pyfile(python_file.fullName().c_str());
-
-    // Write the comment and imports
-    pyfile <<
-        "# File created from " << message_file.fullName() << " on " <<
-            currentTime() << "\n" <<
-        "\n" <<
-        "import isc.log\n" <<
-        "\n";
-
-    vector<string> idents(sortedIdentifiers(dictionary));
-    BOOST_FOREACH(const string& ident, idents) {
-        pyfile << ident << " = isc.log.create_message(\"" <<
-            ident << "\", \"" << quoteString(dictionary.getText(ident)) <<
-            "\")\n";
-    }
-
-    pyfile.close();
 }
 
 /// \brief Write Header File
@@ -541,17 +492,12 @@ main(int argc, char* argv[]) {
     optind = 1;             // Ensure we start a new scan
     int  opt;               // Value of the option
 
-    bool doPython = false;
     const char *output_directory = NULL;
 
     while ((opt = getopt(argc, argv, soptions)) != -1) {
         switch (opt) {
             case 'd':
                 output_directory = optarg;
-                break;
-
-            case 'p':
-                doPython = true;
                 break;
 
             case 'h':
@@ -592,29 +538,18 @@ main(int argc, char* argv[]) {
         // Error (and quit) if there are of any duplicates encountered.
         errorDuplicates(reader);
 
-        if (doPython) {
-            // Warn in case of ignored directives
-            if (!reader.getNamespace().empty()) {
-                cerr << "Python mode, ignoring the $NAMESPACE directive" <<
-                    endl;
-            }
+        // Get the namespace into which the message definitions will be put and
+        // split it into components.
+	vector<string> ns_components =
+            splitNamespace(reader.getNamespace());
 
-            // Write the whole python file
-            writePythonFile(message_file, dictionary, output_directory);
-        } else {
-            // Get the namespace into which the message definitions will be put and
-            // split it into components.
-            vector<string> ns_components =
-                splitNamespace(reader.getNamespace());
+        // Write the header file.
+        writeHeaderFile(message_file, ns_components, dictionary,
+                        output_directory);
 
-            // Write the header file.
-            writeHeaderFile(message_file, ns_components, dictionary,
-                            output_directory);
-
-            // Write the file that defines the message symbols and text
-            writeProgramFile(message_file, ns_components, dictionary,
-                             output_directory);
-        }
+        // Write the file that defines the message symbols and text
+        writeProgramFile(message_file, ns_components, dictionary,
+                         output_directory);
 
     }
     catch (const MessageException& e) {
