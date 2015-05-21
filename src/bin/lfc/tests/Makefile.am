@@ -57,6 +57,7 @@ lfc_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
+lfc_unittests_LDADD += $(top_builddir)/src/bin/cfgrpt/libcfgrpt.la
 
 endif
 
