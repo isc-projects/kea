@@ -26,7 +26,7 @@ extern const isc::log::MessageID LOG_PREFIX_EXTRA_ARGS;
 extern const isc::log::MessageID LOG_PREFIX_INVALID_ARG;
 extern const isc::log::MessageID LOG_READING_LOCAL_FILE;
 extern const isc::log::MessageID LOG_READ_ERROR;
-extern const isc::log::MessageID LOG_UNRECOGNISED_DIRECTIVE;
+extern const isc::log::MessageID LOG_UNRECOGNIZED_DIRECTIVE;
 extern const isc::log::MessageID LOG_WRITE_ERROR;
 
 } // namespace log

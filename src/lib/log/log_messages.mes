@@ -1,4 +1,4 @@
-# Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -32,7 +32,7 @@ should be one of "DEBUG", "INFO", "WARN", "ERROR", "FATAL" or "NONE".
 
 % LOG_BAD_STREAM bad log console output stream: %1
 Logging has been configured so that output is written to the terminal
-(console) but the stream on which it is to be written is not recognised.
+(console) but the stream on which it is to be written is not recognized.
 Allowed values are "stdout" and "stderr".
 
 % LOG_DUPLICATE_MESSAGE_ID duplicate message ID (%1) in compiled code
@@ -136,10 +136,10 @@ one or more messages; the ID of the message will not be changed though.)
 % LOG_READ_ERROR error reading from message file %1: %2
 The specified error was encountered reading from the named message file.
 
-% LOG_UNRECOGNISED_DIRECTIVE line %1: unrecognised directive '%2'
+% LOG_UNRECOGNIZED_DIRECTIVE line %1: unrecognized directive '%2'
 Within a message file, a line starting with a dollar symbol was found
 (indicating the presence of a directive) but the first word on the line
-(shown in the message) was not recognised.
+(shown in the message) was not recognized.
 
 % LOG_WRITE_ERROR error writing to %1: %2
 The specified error was encountered by the message compiler when writing
