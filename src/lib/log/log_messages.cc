@@ -25,7 +25,7 @@ extern const isc::log::MessageID LOG_PREFIX_EXTRA_ARGS = "LOG_PREFIX_EXTRA_ARGS"
 extern const isc::log::MessageID LOG_PREFIX_INVALID_ARG = "LOG_PREFIX_INVALID_ARG";
 extern const isc::log::MessageID LOG_READING_LOCAL_FILE = "LOG_READING_LOCAL_FILE";
 extern const isc::log::MessageID LOG_READ_ERROR = "LOG_READ_ERROR";
-extern const isc::log::MessageID LOG_UNRECOGNISED_DIRECTIVE = "LOG_UNRECOGNISED_DIRECTIVE";
+extern const isc::log::MessageID LOG_UNRECOGNIZED_DIRECTIVE = "LOG_UNRECOGNIZED_DIRECTIVE";
 extern const isc::log::MessageID LOG_WRITE_ERROR = "LOG_WRITE_ERROR";
 
 } // namespace log
@@ -52,7 +52,7 @@ const char* values[] = {
     "LOG_PREFIX_INVALID_ARG", "line %1: $PREFIX directive has an invalid argument ('%2')",
     "LOG_READING_LOCAL_FILE", "reading local message file %1",
     "LOG_READ_ERROR", "error reading from message file %1: %2",
-    "LOG_UNRECOGNISED_DIRECTIVE", "line %1: unrecognised directive '%2'",
+    "LOG_UNRECOGNIZED_DIRECTIVE", "line %1: unrecogniszd directive '%2'",
     "LOG_WRITE_ERROR", "error writing to %1: %2",
     NULL
 };
