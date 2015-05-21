@@ -2403,6 +2403,9 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectSimple) {
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
 
+    // Commit the config
+    CfgMgr::instance().commit();
+
     // Prepare discover packet. Server should select first subnet for it
     Pkt4Ptr sol = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
     sol->setRemoteAddr(IOAddress("192.0.2.1"));
