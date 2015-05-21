@@ -31,6 +31,14 @@ public:
         isc::Exception(file, line, what) { };
 };
 
+/// @brief Exception thrown when an address is already reserved by a @c Host
+/// object (DuplicateHost is same identity, ReservedAddress same address).
+class ReservedAddress : public Exception {
+public:
+    ReservedAddress(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
 /// @brief Exception thrown when invalid IP address has been specified for
 /// @c Host.
 class BadHostAddress : public isc::BadValue {
