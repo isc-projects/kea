@@ -153,6 +153,10 @@ public:
     /// also additional information about sources. It is expected to
     /// return extra information about dependencies and used DB backends.
     ///
+    /// As there is no static virtual methods in C++ this class method
+    /// has to be redefined in derived classes and called with the
+    /// derived class name or a child name.
+    ///
     /// @param extended print additional information?
     /// @return text string
     static std::string getVersion(bool extended);
