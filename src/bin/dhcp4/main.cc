@@ -76,11 +76,11 @@ main(int argc, char* argv[]) {
             break;
 
         case 'v':
-            cout << Daemon::getVersion(false) << endl;
+            cout << Dhcpv4Srv::getVersion(false) << endl;
             return (EXIT_SUCCESS);
 
         case 'V':
-            cout << Daemon::getVersion(true) << endl;
+            cout << Dhcpv4Srv::getVersion(true) << endl;
             return (EXIT_SUCCESS);
 
         case 'p':

@@ -186,6 +186,10 @@ public:
     /// @brief Destructor. Used during DHCPv4 service shutdown.
     virtual ~Dhcpv4Srv();
 
+    /// @brief returns Kea version on stdout and exit.
+    /// redeclaration/redefinition. @ref Daemon::getVersion())
+    static std::string getVersion(bool extended);
+ 
     /// @brief Main server processing loop.
     ///
     /// Main server processing loop. Receives incoming packets, verifies

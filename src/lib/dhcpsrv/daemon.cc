@@ -1,4 +1,4 @@
-// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -90,6 +90,10 @@ void Daemon::loggerInit(const char* name, bool verbose) {
 
     // Apply default configuration (log INFO or DEBUG to stdout)
     isc::log::setDefaultLoggingOutput(verbose);
+}
+
+std::string Daemon::getVersion(bool /*extended*/) {
+    isc_throw(isc::NotImplemented, "Daemon::getVersion() called");
 }
 
 };
