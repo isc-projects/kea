@@ -1,3 +1,7 @@
+939.	[bug]		fdupont
+	Small fix in HooksDhcpv4SrvTest.subnet4SelectSimple unit-test.
+	(Trac 3881, git a21afdffec41fceb61e6760d4108d670b2eabe75)
+
 938.	[build]		fdupont
 	Removed Python from the log library (code, message compiler and
 	documentation)
