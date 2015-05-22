@@ -2762,7 +2762,7 @@ Dhcpv6Srv::d2ClientErrorHandler(const
 const char* const* dhcp6_config_report = isc::detail::config_report;
 
 std::string
-Daemon::getVersion(bool extended) {
+Dhcpv6Srv::getVersion(bool extended) {
     std::stringstream tmp;
 
     tmp << VERSION;
