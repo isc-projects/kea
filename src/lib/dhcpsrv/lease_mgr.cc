@@ -61,5 +61,10 @@ LeaseMgr::getLease6(Lease::Type type, const DUID& duid,
     return (*col.begin());
 }
 
+std::string
+LeaseMgr::getDBVersion() {
+    isc_throw(NotImplemented, "LeaseMgr::getDBVersion() called");
+}
+
 } // namespace isc::dhcp
 } // namespace isc

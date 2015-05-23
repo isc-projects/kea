@@ -19,6 +19,19 @@
 #include <exceptions/exceptions.h>
 #include <log/logger_support.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <cryptolink/cryptolink.h>
+#include <log/logger.h>
+#include <cfgrpt/config_report.h>
+
+#ifdef HAVE_MYSQL
+#include <dhcpsrv/mysql_lease_mgr.h>
+#else
+#ifdef HAVE_PGSQL
+#include <dhcpsrv/pgsql_lease_mgr.h>
+#else
+#include <dhcpsrv/memfile_lease_mgr.h>
+#endif
+#endif
 
 #include <sstream>
 #include <unistd.h>
@@ -441,22 +454,34 @@ DControllerBase::usage(const std::string & text)
 DControllerBase::~DControllerBase() {
 }
 
-}; // namespace isc::d2
-
-}; // namespace isc
+// Refer to config_report so it will be embedded in the binary
+const char* const* d2_config_report = isc::detail::config_report;
 
 std::string
-isc::dhcp::Daemon::getVersion(bool extended) {
+DControllerBase::getVersion(bool extended) {
     std::stringstream tmp;
 
     tmp << VERSION;
     if (extended) {
-        tmp << std::endl << EXTENDED_VERSION;
-
-        // @todo print more details (is it Botan or OpenSSL build,
-        // with or without MySQL/Postgres? What compilation options were
-        // used? etc)
+        tmp << std::endl << EXTENDED_VERSION << std::endl;
+        tmp << "linked with " << log::Logger::getVersion() << std::endl;
+        tmp << "and " << cryptolink::CryptoLink::getVersion()
+            << std::endl;
+#ifdef HAVE_MYSQL
+        tmp << "database: " << isc::dhcp::MySqlLeaseMgr::getDBVersion();
+#else
+#ifdef HAVE_PGSQL
+        tmp << "database: " << isc::dhcp::PgSqlLeaseMgr::getDBVersion();
+#else
+        tmp << "database: " << isc::dhcp::Memfile_LeaseMgr::getDBVersion();
+#endif
+#endif
+        // @todo: more details about database runtime
     }
 
     return (tmp.str());
 }
+
+}; // namespace isc::d2
+
+}; // namespace isc

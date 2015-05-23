@@ -78,11 +78,11 @@ main(int argc, char* argv[]) {
             break;
 
         case 'v':
-            cout << Daemon::getVersion(false) << endl;
+            cout << Dhcpv6Srv::getVersion(false) << endl;
             return (EXIT_SUCCESS);
 
         case 'V':
-            cout << Daemon::getVersion(true) << endl;
+            cout << Dhcpv6Srv::getVersion(true) << endl;
             return (EXIT_SUCCESS);
 
         case 'p': // port number

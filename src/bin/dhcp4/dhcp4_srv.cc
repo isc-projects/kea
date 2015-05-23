@@ -41,6 +41,19 @@
 #include <hooks/hooks_log.h>
 #include <hooks/hooks_manager.h>
 #include <util/strutil.h>
+#include <log/logger.h>
+#include <cryptolink/cryptolink.h>
+#include <cfgrpt/config_report.h>
+
+#ifdef HAVE_MYSQL
+#include <dhcpsrv/mysql_lease_mgr.h>
+#else
+#ifdef HAVE_PGSQL
+#include <dhcpsrv/pgsql_lease_mgr.h>
+#else
+#include <dhcpsrv/memfile_lease_mgr.h>
+#endif
+#endif
 
 #include <asio.hpp>
 #include <boost/bind.hpp>
@@ -51,6 +64,7 @@
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::cryptolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp_ddns;
 using namespace isc::hooks;
@@ -2209,17 +2223,28 @@ Dhcpv4Srv::d2ClientErrorHandler(const
     CfgMgr::instance().getD2ClientMgr().suspendUpdates();
 }
 
+// Refer to config_report so it will be embedded in the binary
+const char* const* dhcp4_config_report = isc::detail::config_report;
+
 std::string
-Daemon::getVersion(bool extended) {
+Dhcpv4Srv::getVersion(bool extended) {
     std::stringstream tmp;
 
     tmp << VERSION;
     if (extended) {
-        tmp << endl << EXTENDED_VERSION;
-
-        // @todo print more details (is it Botan or OpenSSL build,
-        // with or without MySQL/Postgres? What compilation options were
-        // used? etc)
+        tmp << endl << EXTENDED_VERSION << endl;
+        tmp << "linked with " << Logger::getVersion() << endl;
+        tmp << "and " << CryptoLink::getVersion() << endl;
+#ifdef HAVE_MYSQL
+        tmp << "database: " << MySqlLeaseMgr::getDBVersion();
+#else
+#ifdef HAVE_PGSQL
+        tmp << "database: " << PgSqlLeaseMgr::getDBVersion();
+#else
+        tmp << "database: " << Memfile_LeaseMgr::getDBVersion();
+#endif
+#endif
+        // @todo: more details about database runtime
     }
 
     return (tmp.str());
