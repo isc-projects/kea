@@ -1,4 +1,4 @@
-// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -39,7 +39,7 @@ private:
     /// \exception UnsupportedAlgorithmException if the given algorithm
     ///            is unknown or not supported by the underlying library
     /// \exception LibraryError if there was any unexpected exception
-    ///                         in the underlying library
+    ///            in the underlying library
     ///
     /// \param hash_algorithm The hash algorithm
     Hash(const HashAlgorithm hash_algorithm);
@@ -58,10 +58,10 @@ public:
     /// \brief Add data to digest
     ///
     /// \exception LibraryError if there was any unexpected exception
-    ///                         in the underlying library
+    ///            in the underlying library
     ///
     /// \param data The data to add
-    /// \param len The size of the data
+    /// \param len  The size of the data
     void update(const void* data, const size_t len);
 
     /// \brief Calculate the final digest
@@ -69,13 +69,13 @@ public:
     /// The result will be appended to the given outputbuffer
     ///
     /// \exception LibraryError if there was any unexpected exception
-    ///                         in the underlying library
+    ///            in the underlying library
     ///
     /// \param result The OutputBuffer to append the result to
-    /// \param len The number of bytes from the result to copy. If this
-    ///        value is smaller than the algorithms output size, the
-    ///        result will be truncated. If this value is larger,
-    ///        only output size bytes will be copied
+    /// \param len    The number of bytes from the result to copy. If this
+    ///               value is smaller than the algorithms output size, the
+    ///               result will be truncated. If this value is larger,
+    ///               only output size bytes will be copied
     void final(isc::util::OutputBuffer& result, size_t len);
 
     /// \brief Calculate the final digest
@@ -85,13 +85,13 @@ public:
     /// will be copied. If it is smaller, the output will be truncated
     ///
     /// \exception LibraryError if there was any unexpected exception
-    ///                         in the underlying library
+    ///            in the underlying library
     ///
     /// At least len bytes of data must be available for writing at
     /// result.
     ///
     /// \param result The memory location the digest will be written to
-    /// \param len Specifies the size of the result location available
+    /// \param len    Specifies the size of the result location available
     void final(void* result, size_t len);
 
     /// \brief Calculate the final digest
@@ -99,13 +99,13 @@ public:
     /// The result will be returned as a std::vector<uint8_t>
     ///
     /// \exception LibraryError if there was any unexpected exception
-    ///                         in the underlying library
+    ///            in the underlying library
     ///
     /// \param len The number of bytes from the result to copy. If this
-    ///        value is smaller than the algorithms output size, the
-    ///        result will be truncated. If this value is larger,
-    ///        only output size bytes will be copied
-    /// \return a vector containing the signature
+    ///            value is smaller than the algorithms output size, the
+    ///            result will be truncated. If this value is larger,
+    ///            only output size bytes will be copied
+    /// \return    a vector containing the signature
     std::vector<uint8_t> final(size_t len);
 
 private:
@@ -122,15 +122,14 @@ private:
 /// \exception UnsupportedAlgorithm if the given algorithm is unknown
 ///            or not supported by the underlying library
 /// \exception LibraryError if there was any unexpected exception
-///                         in the underlying library
+///            in the underlying library
 ///
-/// \param data The data to digest
-/// \param data_len The length of the data
+/// \param data           The data to digest
+/// \param data_len       The length of the data
 /// \param hash_algorithm The hash algorithm
-/// \param result The digest will be appended to this buffer
-/// \param len If this is non-zero and less than the output size, the result
-///            will be truncated to len bytes. If greater than output size
-///            (or equal to zero) only output size bytes are written
+/// \param result         The digest will be appended to this buffer
+/// \param len            If this is non-zero and less than the output size,
+///                       the result will be truncated to len bytes
 void digest(const void* data,
             const size_t data_len,
             const HashAlgorithm hash_algorithm,

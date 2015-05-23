@@ -293,7 +293,6 @@ TEST(HMACTest, HMAC_MD5_RFC2202_SIGN) {
                std::string(80, 0xaa).c_str(), 80, MD5, hmac_expected7, 16);
 }
 
-// Temporarily disabled
 TEST(HMACTest, HMAC_MD5_RFC2202_SIGN_TRUNCATED) {
     const uint8_t secret5[] = { 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c,
                                 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c,
@@ -378,7 +377,6 @@ TEST(HMACTest, HMAC_SHA1_RFC2202_SIGN) {
                std::string(80, 0xaa).c_str(), 80, SHA1, hmac_expected7, 20);
 }
 
-// Temporarily disabled
 TEST(HMACTest, HMAC_SHA1_RFC2202_SIGN_TRUNCATED) {
     const uint8_t secret5[] = { 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c,
                                 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c,

@@ -18,6 +18,8 @@
 
 #include <openssl/crypto.h>
 
+#include <openssl/evp.h>
+
 namespace isc {
 namespace cryptolink {
 
@@ -27,6 +29,7 @@ class CryptoLinkImpl {
 };
 
 CryptoLink::~CryptoLink() {
+    EVP_cleanup();
     delete impl_;
 }
 
@@ -36,6 +39,7 @@ CryptoLink::initialize() {
     if (c.impl_ == NULL) {
         try {
             c.impl_ = new CryptoLinkImpl();
+            OpenSSL_add_all_algorithms();
         } catch (const std::exception &ex) {
             // Should never happen
             isc_throw(InitializationError,

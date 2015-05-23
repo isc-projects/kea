@@ -29,19 +29,40 @@ namespace cryptolink {
 
 /// \brief Hash algorithm identifiers
 enum HashAlgorithm {
-    UNKNOWN_HASH = 0,   ///< This value can be used in conversion
-                        ///  functions, to be returned when the
-                        ///  input is unknown (but a value MUST be
-                        ///  returned), for instance when the input
-                        ///  is a Name or a string, and the return
-                        ///  value is a HashAlgorithm.
-    MD5 = 1,            ///< MD5
-    SHA1 = 2,           ///< SHA-1
-    SHA256 = 3,         ///< SHA-256
-    SHA224 = 4,         ///< SHA-224
-    SHA384 = 5,         ///< SHA-384
-    SHA512 = 6          ///< SHA-512
+    UNKNOWN_HASH = 0,    ///< This value can be used in conversion
+                         ///  functions, to be returned when the
+                         ///  input is unknown (but a value MUST be
+                         ///  returned), for instance when the input
+                         ///  is a Name or a string, and the return
+                         ///  value is a HashAlgorithm.
+    MD5 = 1,             ///< MD5
+    SHA1 = 2,            ///< SHA-1
+    SHA256 = 3,          ///< SHA-256
+    SHA224 = 4,          ///< SHA-224
+    SHA384 = 5,          ///< SHA-384
+    SHA512 = 6           ///< SHA-512
 
+};
+
+/// \brief Asymmetrical cryptography algorithm identifiers
+enum AsymAlgorithm {
+    DSA_ = 0,            ///< DSA
+    RSA_ = 1,            ///< RSA
+    ECDSA_ = 2           ///< ECDSA (NIST P-256 and P-384 curves)
+};
+
+/// \brief Asymmetrical cryptography key kinds
+enum AsymKeyKind {
+    PRIVATE = 0,         ///< Private Key
+    PUBLIC = 1,          ///< Public Key
+    CERT = 2             ///< Public Key Certificate
+};
+
+/// \brief Asymmetrical cryptography format
+enum AsymFormat {
+    BASIC = 0,           ///< simplest format (e.g., PKCS#1)
+    ASN1 = 1,            ///< DER/PEM (PKCS#8, SubjectPublicKeyInfo, ...)
+    DNS = 2              ///< DNS wire format, BIND9 key files,
 };
 
 // Forward declaration for createHash()
@@ -49,6 +70,9 @@ class Hash;
 
 // Forward declaration for createHMAC()
 class HMAC;
+
+// Forward declaration for createAsym()
+class Asym;
 
 /// General exception class that is the base for all crypto-related
 /// exceptions
@@ -80,6 +104,13 @@ class BadKey : public CryptoLinkError {
 public:
     BadKey(const char* file, size_t line, const char* what) :
         CryptoLinkError(file, line, what) {}
+};
+
+/// This exception is thrown when a certification is invalid
+class InvalidCert : public CryptoLinkError {
+public:
+   InvalidCert(const char* file, size_t line, const char* what) :
+       CryptoLinkError(file, line, what) {}
 };
 
 /// This exception is raised when a general error that was not
@@ -178,10 +209,10 @@ public:
     /// you can use the function deleteHash() as defined in
     /// crypto_hash.h
     ///
-    /// \exception UnsupportedAlgorithmException if the given algorithm
+    /// \exception UnsupportedAlgorithm if the given algorithm
     ///            is unknown or not supported by the underlying library
     /// \exception LibraryError if there was any unexpected exception
-    ///                         in the underlying library
+    ///            in the underlying library
     ///
     /// \param hash_algorithm The hash algorithm
     Hash* createHash(const HashAlgorithm hash_algorithm);
@@ -205,17 +236,73 @@ public:
     /// you can use the function deleteHMAC() as defined in
     /// crypto_hmac.h
     ///
-    /// \exception UnsupportedAlgorithmException if the given algorithm
+    /// \exception UnsupportedAlgorithm if the given algorithm
     ///            is unknown or not supported by the underlying library
-    /// \exception InvalidKeyLength if the given key secret_len is bad
+    /// \exception BadKey if the given key secret_len is bad
     /// \exception LibraryError if there was any unexpected exception
-    ///                         in the underlying library
+    ///            in the underlying library
     ///
-    /// \param secret The secret to sign with
-    /// \param secret_len The length of the secret
+    /// \param secret         The secret to sign with
+    /// \param secret_len     The length of the secret
     /// \param hash_algorithm The hash algorithm
     HMAC* createHMAC(const void* secret, size_t secret_len,
                      const HashAlgorithm hash_algorithm);
+
+    /// \brief Factory function for Asymmetrical cryptography (Asym) objects
+    ///
+    /// CryptoLink objects cannot be constructed directly. This
+    /// function creates a new Asym object usable for signing or
+    /// verification.
+    ///
+    /// The caller is responsible for deleting the object, and it is
+    /// therefore highly recommended to place the return value of this
+    /// function in a scoped_ptr or shared_ptr.
+    ///
+    /// If you want to safely delete objects created with this method,
+    /// you can use the function deleteAsym() as defined in
+    /// crypto_asym.h
+    ///
+    /// \exception UnsupportedAlgorithm if the given algorithm
+    ///            is unknown or not supported by the underlying library
+    /// \exception BadKey if the given key length is bad
+    /// \exception InvalidCert if the certification fails to validate
+    /// \exception LibraryError if there was any unexpected exception
+    ///            in the underlying library
+    /// \param key            The key to sign or verify with
+    /// \param key_len        The length of the key
+    /// \param asym_algorithm The asymmetrical cryptography algorithm
+    /// \param hash_algorithm The hash algorithm
+    /// \param key_kind       The key kind
+    /// \param key_format     The key binary format
+    Asym* createAsym(const void* key, size_t key_len,
+		     const AsymAlgorithm asym_algorithm,
+		     const HashAlgorithm hash_algorithm,
+		     const AsymKeyKind key_kind,
+		     const AsymFormat key_format);
+    ///
+    /// \param key            The key to sign or verify with
+    /// \param asym_algorithm The asymmetrical cryptography algorithm
+    /// \param hash_algorithm The hash algorithm
+    /// \param key_kind       The key kind
+    /// \param key_format     The key binary format
+    Asym* createAsym(const std::vector<uint8_t> key,
+		     const AsymAlgorithm asym_algorithm,
+		     const HashAlgorithm hash_algorithm,
+		     const AsymKeyKind key_kind,
+		     const AsymFormat key_format);
+    ///
+    /// \param filename       The key file name/path
+    /// \param password       The PKCS#8 password
+    /// \param asym_algorithm The asymmetrical cryptography algorithm
+    /// \param hash_algorithm The hash algorithm
+    /// \param key_kind       The key kind
+    /// \param file_format    The key file format
+    Asym* createAsym(const std::string& filename,
+		     const std::string& password,
+		     const AsymAlgorithm asym_algorithm,
+		     const HashAlgorithm hash_algorithm,
+		     const AsymKeyKind key_kind,
+		     const AsymFormat file_format);
 
 private:
     // To enable us to use an optional explicit initialization call,
