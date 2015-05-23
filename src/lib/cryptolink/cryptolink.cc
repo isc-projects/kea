@@ -50,25 +50,25 @@ CryptoLink::createHMAC(const void* secret, size_t secret_len,
 
 Asym*
 CryptoLink::createAsym(const void* key, size_t key_len,
-		       const AsymAlgorithm asym_algorithm,
-		       const HashAlgorithm hash_algorithm,
-		       const AsymKeyKind key_kind,
-		       const AsymFormat key_format)
+                       const AsymAlgorithm asym_algorithm,
+                       const HashAlgorithm hash_algorithm,
+                       const AsymKeyKind key_kind,
+                       const AsymFormat key_format)
 {
     return (new Asym(key, key_len, asym_algorithm, hash_algorithm,
-		     key_kind, key_format));
+                     key_kind, key_format));
 }
 
 Asym*
 CryptoLink::createAsym(const std::string& filename,
-		       const std::string& password,
-		       const AsymAlgorithm asym_algorithm,
-		       const HashAlgorithm hash_algorithm,
-		       const AsymKeyKind key_kind,
-		       const AsymFormat file_format)
+                       const std::string& password,
+                       const AsymAlgorithm asym_algorithm,
+                       const HashAlgorithm hash_algorithm,
+                       const AsymKeyKind key_kind,
+                       const AsymFormat file_format)
 {
     return (new Asym(filename, password, asym_algorithm, hash_algorithm,
-		     key_kind, file_format));
+                     key_kind, file_format));
 }
 
 } // namespace cryptolink

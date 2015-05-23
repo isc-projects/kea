@@ -32,6 +32,22 @@ run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 endif
 
-noinst_PROGRAMS = $(TESTS)
+noinst_PROGRAMS = $(TESTS) from_bind9 to_bind9
+
+from_bind9_SOURCES = from_bind9.cc
+from_bind9_CPPFLAGS = $(AM_CPPFLAGS)
+from_bind9_LDFLAGS = $(CRYPTO_LDFLAGS) $(AM_LDFLAGS)
+from_bind9_LDADD = $(CRYPTO_LIBS)
+from_bind9_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
+from_bind9_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
+from_bind9_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+
+to_bind9_SOURCES = to_bind9.cc
+to_bind9_CPPFLAGS = $(AM_CPPFLAGS)
+to_bind9_LDFLAGS = $(CRYPTO_LDFLAGS) $(AM_LDFLAGS)
+to_bind9_LDADD = $(CRYPTO_LIBS)
+to_bind9_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
+to_bind9_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
+to_bind9_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 
 #EXTRA_DIST += testdata/xxx

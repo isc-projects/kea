@@ -1,4 +1,4 @@
-// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -1033,7 +1033,7 @@ public:
                 isc_throw(LibraryError, "i2d_RSA_PUBKEY");
             }
             return der;
-        } else if ((kind_ == PUBLIC) && (key_format == DNS)) {
+        } else if ((key_kind == PUBLIC) && (key_format == DNS)) {
             // RFC 3110 DNS wire format
             RSA* rsa = EVP_PKEY_get1_RSA(pkey_);
             if (!rsa) {
@@ -1057,11 +1057,11 @@ public:
             BN_bn2bin(rsa->n, &rdata[x_bytes + e_bytes]);
             RSA_free(rsa);
             return rdata;
-        } else if (kind_ == PUBLIC) {
+        } else if (key_kind == PUBLIC) {
             isc_throw(UnsupportedAlgorithm,
                       "Unknown RSA Public Key format: " <<
                       static_cast<int>(key_format));
-        } else if ((kind_ == CERT) && (key_format == ASN1)) {
+        } else if ((key_kind == CERT) && (key_format == ASN1)) {
             // X.509 Public Key Certificate
             if (kind_ != CERT) {
                 isc_throw(UnsupportedAlgorithm, "Have no Certificate");
@@ -1077,14 +1077,14 @@ public:
                 isc_throw(LibraryError, "i2d_X509");
             }
             return ber;
-        } else if (kind_ == CERT) {
+        } else if (key_kind == CERT) {
             isc_throw(UnsupportedAlgorithm,
                       "Unknown Certificate format: " <<
                       static_cast<int>(key_format));
         } else {
             isc_throw(UnsupportedAlgorithm,
                       "Unknown RSA Key kind: " <<
-                      static_cast<int>(kind_));
+                      static_cast<int>(key_kind));
         }
     }
 
@@ -1140,48 +1140,48 @@ public:
                 fclose(fp);
                 isc_throw(LibraryError, "EVP_PKEY_get1_RSA");
             }
-            fprintf(fp, "Private-key-format: v1.2");
+            fprintf(fp, "Private-key-format: v1.2\n");
             if (hash_ == MD5) {
-                fprintf(fp, "Algorithm: 1 (RSA)");
+                fprintf(fp, "Algorithm: 1 (RSA)\n");
             } else if (hash_ == SHA1) {
-                fprintf(fp, "Algorithm: 5 (RSASHA1)");
+                fprintf(fp, "Algorithm: 5 (RSASHA1)\n");
             } else if (hash_ == SHA256) {
-                fprintf(fp, "Algorithm: 8 (RSASHA256)");
+                fprintf(fp, "Algorithm: 8 (RSASHA256)\n");
             } else if (hash_ == SHA512) {
-                fprintf(fp, "Algorithm: 10 (RSASHA512)");
+                fprintf(fp, "Algorithm: 10 (RSASHA512)\n");
             }
             std::vector<uint8_t> bin;
             bin.resize(BN_num_bytes(rsa->n));
             BN_bn2bin(rsa->n, &bin[0]);
-            fprintf(fp, "Modulus: %s",
+            fprintf(fp, "Modulus: %s\n",
                     util::encode::encodeBase64(bin).c_str());
             bin.resize(BN_num_bytes(rsa->e));
             BN_bn2bin(rsa->e, &bin[0]);
-            fprintf(fp, "PublicExponent: %s",
+            fprintf(fp, "PublicExponent: %s\n",
                     util::encode::encodeBase64(bin).c_str());
             bin.resize(BN_num_bytes(rsa->d));
             BN_bn2bin(rsa->d, &bin[0]);
-            fprintf(fp, "PrivateExponent: %s",
+            fprintf(fp, "PrivateExponent: %s\n",
                     util::encode::encodeBase64(bin).c_str());
             bin.resize(BN_num_bytes(rsa->p));
             BN_bn2bin(rsa->p, &bin[0]);
-            fprintf(fp, "Prime1: %s",
+            fprintf(fp, "Prime1: %s\n",
                     util::encode::encodeBase64(bin).c_str());
             bin.resize(BN_num_bytes(rsa->q));
             BN_bn2bin(rsa->q, &bin[0]);
-            fprintf(fp, "Prime2: %s",
+            fprintf(fp, "Prime2: %s\n",
                     util::encode::encodeBase64(bin).c_str());
             bin.resize(BN_num_bytes(rsa->dmp1));
             BN_bn2bin(rsa->dmp1, &bin[0]);
-            fprintf(fp, "Exponent1: %s",
+            fprintf(fp, "Exponent1: %s\n",
                     util::encode::encodeBase64(bin).c_str());
             bin.resize(BN_num_bytes(rsa->dmq1));
             BN_bn2bin(rsa->dmq1, &bin[0]);
-            fprintf(fp, "Exponent2: %s",
+            fprintf(fp, "Exponent2: %s\n",
                     util::encode::encodeBase64(bin).c_str());
             bin.resize(BN_num_bytes(rsa->iqmp));
             BN_bn2bin(rsa->iqmp, &bin[0]);
-            fprintf(fp, "Coefficient: %s",
+            fprintf(fp, "Coefficient: %s\n",
                     util::encode::encodeBase64(bin).c_str());
             fclose(fp);
             RSA_free(rsa);
@@ -1195,7 +1195,7 @@ public:
         } else if ((key_kind == PUBLIC) && (key_format == BASIC)) {
             // PKCS#1 PEM file
             // warn when password not empty
-            FILE* fp = fopen(filename.c_str(), "r");
+            FILE* fp = fopen(filename.c_str(), "w");
             if (!fp) {
                 isc_throw(BadKey, "Can't open file: " << filename);
             }
@@ -1214,7 +1214,7 @@ public:
         } else if ((key_kind == PUBLIC) && (key_format == ASN1)) {
             // SubjectPublicKeyInfo PEM file
             // warn when password not empty
-            FILE* fp = fopen(filename.c_str(), "r");
+            FILE* fp = fopen(filename.c_str(), "w");
             if (!fp) {
                 isc_throw(BadKey, "Can't open file: " << filename);
             }
@@ -1227,7 +1227,7 @@ public:
             // bind9 .key file (RDATA)
             // warn when password not empty
             std::vector<uint8_t> bin = exportkey(key_kind, key_format);
-            FILE* fp = fopen(filename.c_str(), "r");
+            FILE* fp = fopen(filename.c_str(), "w");
             if (!fp) {
                 isc_throw(BadKey, "Can't open file: " << filename);
             }
@@ -1238,13 +1238,13 @@ public:
             isc_throw(UnsupportedAlgorithm,
                       "Unknown RSA Public Key format: " <<
                       static_cast<int>(key_format));
-        } else if ((kind_ == CERT) && (key_format == ASN1)) {
+        } else if ((key_kind == CERT) && (key_format == ASN1)) {
             // Public Key Certificate PEM file
             // warn when password not empty
             if (!x509_) {
                 isc_throw(UnsupportedAlgorithm, "Have no Certificate");
             }
-            FILE* fp = fopen(filename.c_str(), "r");
+            FILE* fp = fopen(filename.c_str(), "w");
             if (!fp) {
                 isc_throw(BadKey, "Can't open file: " << filename);
             }
@@ -1253,7 +1253,7 @@ public:
                 isc_throw(LibraryError, "PEM_write_X509");
             }
             fclose(fp);
-        } else if (kind_ == CERT) {
+        } else if (key_kind == CERT) {
             if (!x509_) {
                 isc_throw(UnsupportedAlgorithm, "Have no Certificate");
             }
@@ -1263,7 +1263,7 @@ public:
         } else {
             isc_throw(UnsupportedAlgorithm,
                       "Unknown RSA Key kind: " <<
-                      static_cast<int>(kind_));
+                      static_cast<int>(key_kind));
         }
     }
 

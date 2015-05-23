@@ -275,10 +275,10 @@ public:
     /// \param key_kind       The key kind
     /// \param key_format     The key binary format
     Asym* createAsym(const void* key, size_t key_len,
-		     const AsymAlgorithm asym_algorithm,
-		     const HashAlgorithm hash_algorithm,
-		     const AsymKeyKind key_kind,
-		     const AsymFormat key_format);
+                     const AsymAlgorithm asym_algorithm,
+                     const HashAlgorithm hash_algorithm,
+                     const AsymKeyKind key_kind,
+                     const AsymFormat key_format);
     ///
     /// \param key            The key to sign or verify with
     /// \param asym_algorithm The asymmetrical cryptography algorithm
@@ -286,10 +286,10 @@ public:
     /// \param key_kind       The key kind
     /// \param key_format     The key binary format
     Asym* createAsym(const std::vector<uint8_t> key,
-		     const AsymAlgorithm asym_algorithm,
-		     const HashAlgorithm hash_algorithm,
-		     const AsymKeyKind key_kind,
-		     const AsymFormat key_format);
+                     const AsymAlgorithm asym_algorithm,
+                     const HashAlgorithm hash_algorithm,
+                     const AsymKeyKind key_kind,
+                     const AsymFormat key_format);
     ///
     /// \param filename       The key file name/path
     /// \param password       The PKCS#8 password
@@ -298,11 +298,11 @@ public:
     /// \param key_kind       The key kind
     /// \param file_format    The key file format
     Asym* createAsym(const std::string& filename,
-		     const std::string& password,
-		     const AsymAlgorithm asym_algorithm,
-		     const HashAlgorithm hash_algorithm,
-		     const AsymKeyKind key_kind,
-		     const AsymFormat file_format);
+                     const std::string& password,
+                     const AsymAlgorithm asym_algorithm,
+                     const HashAlgorithm hash_algorithm,
+                     const AsymKeyKind key_kind,
+                     const AsymFormat file_format);
 
 private:
     // To enable us to use an optional explicit initialization call,

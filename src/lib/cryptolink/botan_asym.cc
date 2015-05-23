@@ -1,4 +1,4 @@
-// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -124,7 +124,7 @@ public:
                 isc_throw(BadKey, "not a RSA Public Key");
             }
             pub_.reset(dynamic_cast<Botan::RSA_PublicKey*>(key));
-            if (!pub_.get()) {
+            if (!pub_) {
                 delete key;
                 isc_throw(LibraryError, "dynamic_cast");
             }
@@ -179,7 +179,7 @@ public:
                 isc_throw(BadKey, "X509_Certificate: " << exc.what());
             }
             const Botan::AlgorithmIdentifier
-                sig_algo(x509_.get()->signature_algorithm());
+                sig_algo(x509_->signature_algorithm());
             if (hash_ == MD5) {
                 const Botan::AlgorithmIdentifier
                     rsa_md5("1.2.840.113549.1.1.4",
@@ -234,14 +234,14 @@ public:
                           "Bad hash algorithm for certificate: " <<
                           static_cast<int>(hash_));
             }
-            Botan::Public_Key* key = x509_.get()->subject_public_key();
+            Botan::Public_Key* key = x509_->subject_public_key();
             if (key->algo_name().compare("RSA") != 0) {
                 delete key;
                 x509_.reset();
                 isc_throw(BadKey, "not a RSA Certificate");
             }
             pub_.reset(dynamic_cast<Botan::RSA_PublicKey*>(key));
-            if (!pub_.get()) {
+            if (!pub_) {
                 delete key;
                 x509_.reset();
                 isc_throw(LibraryError, "dynamic_cast");
@@ -258,13 +258,21 @@ public:
 
         if (kind_ == PRIVATE) {
             try {
-                signer_.reset(new Botan::PK_Signer(*priv_.get(), emsa));
+                if (!pub_) {
+                    pub_.reset(new Botan::RSA_PublicKey(priv_->get_n(),
+                                                        priv_->get_e()));
+                }
+            } catch (const std::exception& exc) {
+                isc_throw(BadKey, "priv to pub: " << exc.what());
+            }
+            try {
+                signer_.reset(new Botan::PK_Signer(*priv_, emsa));
             } catch (const std::exception& exc) {
                 isc_throw(BadKey, "PK_Signer: " << exc.what());
             }
         } else {
             try {
-                verifier_.reset(new Botan::PK_Verifier(*pub_.get(), emsa));
+                verifier_.reset(new Botan::PK_Verifier(*pub_, emsa));
             } catch (const std::exception& exc) {
                 isc_throw(BadKey, "PK_Verifier: " << exc.what());
             }
@@ -318,7 +326,7 @@ public:
                 isc_throw(BadKey, "not a RSA Private Key");
             }
             priv_.reset(dynamic_cast<Botan::RSA_PrivateKey*>(key));
-            if (!priv_.get()) {
+            if (!priv_) {
                 delete key;
                 isc_throw(LibraryError, "dynamic_cast");
             }
@@ -513,7 +521,7 @@ public:
                 isc_throw(BadKey, "not a RSA Public Key");
             }
             pub_.reset(dynamic_cast<Botan::RSA_PublicKey*>(key));
-            if (!pub_.get()) {
+            if (!pub_) {
                 delete key;
                 isc_throw(LibraryError, "dynamic_cast");
             }
@@ -606,7 +614,7 @@ public:
                 isc_throw(BadKey, "X509_Certificate: " << exc.what());
             }
             const Botan::AlgorithmIdentifier
-                sig_algo(x509_.get()->signature_algorithm());
+                sig_algo(x509_->signature_algorithm());
             if (hash_ == MD5) {
                 const Botan::AlgorithmIdentifier
                     rsa_md5("1.2.840.113549.1.1.4",
@@ -663,7 +671,7 @@ public:
             }
             Botan::Public_Key* key;
             try {
-                key = x509_.get()->subject_public_key();
+                key = x509_->subject_public_key();
             } catch (const std::exception& exc) {
                 x509_.reset();
                 isc_throw(BadKey, "subject_public_key: " << exc.what());
@@ -674,7 +682,7 @@ public:
                 isc_throw(BadKey, "not a RSA Public Key");
             }
             pub_.reset(dynamic_cast<Botan::RSA_PublicKey*>(key));
-            if (!pub_.get()) {
+            if (!pub_) {
                 delete key;
                 x509_.reset();
                 isc_throw(LibraryError, "dynamic_cast");
@@ -691,13 +699,21 @@ public:
 
         if (kind_ == PRIVATE) {
             try {
-                signer_.reset(new Botan::PK_Signer(*priv_.get(), emsa));
+                if (!pub_) {
+                    pub_.reset(new Botan::RSA_PublicKey(priv_->get_n(),
+                                                        priv_->get_e()));
+                }
+            } catch (const std::exception& exc) {
+                isc_throw(BadKey, "priv to pub: " << exc.what());
+            }
+            try {
+                signer_.reset(new Botan::PK_Signer(*priv_, emsa));
             } catch (const std::exception& exc) {
                 isc_throw(BadKey, "PK_Signer: " << exc.what());
             }
         } else {
             try {
-                verifier_.reset(new Botan::PK_Verifier(*pub_.get(), emsa));
+                verifier_.reset(new Botan::PK_Verifier(*pub_, emsa));
             } catch (const std::exception& exc) {
                 isc_throw(BadKey, "PK_Verifier: " << exc.what());
             }
@@ -711,9 +727,9 @@ public:
     ///
     size_t getKeySize() const {
         if (kind_ == PRIVATE) {
-            return (priv_.get()->get_n().bits());
+            return (priv_->get_n().bits());
         } else {
-            return (pub_.get()->get_n().bits());
+            return (pub_->get_n().bits());
         }
     }
 
@@ -729,9 +745,9 @@ public:
             case DNS:
                 // In all cases a big integer of the size of n
                 if (kind_ == PRIVATE) {
-                    return (priv_.get()->get_n().bytes());
+                    return (priv_->get_n().bytes());
                 } else {
-                    return (pub_.get()->get_n().bytes());
+                    return (pub_->get_n().bytes());
                 }
             default:
                 isc_throw(UnsupportedAlgorithm,
@@ -751,10 +767,10 @@ public:
     void update(const void* data, const size_t len) {
         try {
             if (kind_ == PRIVATE) {
-                signer_.get()->update(
+                signer_->update(
                     reinterpret_cast<const Botan::byte*>(data), len);
             } else {
-                verifier_.get()->update(
+                verifier_->update(
                     reinterpret_cast<const Botan::byte*>(data), len);
             }            
         } catch (const std::exception& exc) {
@@ -770,7 +786,7 @@ public:
         try {
             Botan::SecureVector<Botan::byte> b_result;
             Botan::AutoSeeded_RNG rng;
-            b_result = signer_.get()->signature(rng);
+            b_result = signer_->signature(rng);
             if (len > b_result.size()) {
                 len = b_result.size();
             }
@@ -787,7 +803,7 @@ public:
         try {
             Botan::SecureVector<Botan::byte> b_result;
             Botan::AutoSeeded_RNG rng;
-            b_result = signer_.get()->signature(rng);
+            b_result = signer_->signature(rng);
             size_t output_size = getSignatureLength(sig_format);
             if (output_size > len) {
                 output_size = len;
@@ -805,7 +821,7 @@ public:
         try {
             Botan::SecureVector<Botan::byte> b_result;
             Botan::AutoSeeded_RNG rng;
-            b_result = signer_.get()->signature(rng);
+            b_result = signer_->signature(rng);
             if (len > b_result.size()) {
                 return (std::vector<uint8_t>(b_result.begin(), b_result.end()));
             } else {
@@ -826,7 +842,7 @@ public:
         }
         const Botan::byte* sigbuf = reinterpret_cast<const Botan::byte*>(sig);
         try {
-            return verifier_.get()->check_signature(sigbuf, len);
+            return verifier_->check_signature(sigbuf, len);
         } catch (const std::exception& exc) {
             isc_throw(LibraryError, "check_signature: " << exc.what());
         }
@@ -844,7 +860,7 @@ public:
             }
             Botan::MemoryVector<Botan::byte> der;
             try {
-                der = priv_.get()->pkcs8_private_key();
+                der = priv_->pkcs8_private_key();
             } catch (const std::exception& exc) {
                 isc_throw(LibraryError, "pkcs8_private_key: " << exc.what());
             }
@@ -857,7 +873,7 @@ public:
             // PKCS#1 Public Key
             Botan::MemoryVector<Botan::byte> der;
             try {
-                der = pub_.get()->x509_subject_public_key();
+                der = pub_->x509_subject_public_key();
             } catch (const std::exception& exc) {
                 isc_throw(LibraryError,
                           "x509_subject_public_key: "
@@ -868,15 +884,15 @@ public:
             // SubjectPublicKeyInfo
             Botan::MemoryVector<Botan::byte> ber;
             try {
-                ber = Botan::X509::BER_encode(*pub_.get());
+                ber = Botan::X509::BER_encode(*pub_);
             } catch (const std::exception& exc) {
                 isc_throw(LibraryError, "X509::BER_encode: " << exc.what());
             }
             return std::vector<uint8_t>(ber.begin(), ber.end());
-        } else if ((kind_ == PUBLIC) && (key_format == DNS)) {
+        } else if ((key_kind == PUBLIC) && (key_format == DNS)) {
             // RFC 3110 DNS wire format
-            size_t e_bytes = pub_.get()->get_e().bytes();
-            size_t mod_bytes = pub_.get()->get_n().bytes();
+            size_t e_bytes = pub_->get_e().bytes();
+            size_t mod_bytes = pub_->get_n().bytes();
             size_t x_bytes = 1;
             if (e_bytes >= 256) {
                 x_bytes += 2;
@@ -889,33 +905,33 @@ public:
                 rdata[1] = (e_bytes >> 8) & 0xff;
                 rdata[2] = e_bytes & 0xff;
             }
-            pub_.get()->get_e().binary_encode(&rdata[x_bytes]);
-            pub_.get()->get_n().binary_encode(&rdata[x_bytes + e_bytes]);
+            pub_->get_e().binary_encode(&rdata[x_bytes]);
+            pub_->get_n().binary_encode(&rdata[x_bytes + e_bytes]);
             return rdata;
-        } else if (kind_ == PUBLIC) {
+        } else if (key_kind == PUBLIC) {
             isc_throw(UnsupportedAlgorithm,
                       "Unknown RSA Public Key format: " <<
                       static_cast<int>(key_format));
-        } else if ((kind_ == CERT) && (key_format == ASN1)) {
+        } else if ((key_kind == CERT) && (key_format == ASN1)) {
             // X.509 Public Key Certificate
             if (kind_ != CERT) {
                 isc_throw(UnsupportedAlgorithm, "Have no Certificate");
             }
             Botan::MemoryVector<Botan::byte> ber;
             try {
-                ber = x509_.get()->BER_encode();
+                ber = x509_->BER_encode();
             } catch (const std::exception& exc) {
                 isc_throw(LibraryError, "BER_encode" << exc.what());
             }
             return std::vector<uint8_t>(ber.begin(), ber.end());
-        } else if (kind_ == CERT) {
+        } else if (key_kind == CERT) {
             isc_throw(UnsupportedAlgorithm,
                       "Unknown Certificate format: " <<
                       static_cast<int>(key_format));
         } else {
             isc_throw(UnsupportedAlgorithm,
                       "Unknown RSA Key kind: " <<
-                      static_cast<int>(kind_));
+                      static_cast<int>(key_kind));
         }
     }
 
@@ -931,7 +947,7 @@ public:
             std::string pem;
             Botan::AutoSeeded_RNG rng;
             try {
-                pem = Botan::PKCS8::PEM_encode(*priv_.get(), rng,
+                pem = Botan::PKCS8::PEM_encode(*priv_, rng,
                                                password, "AES-128/CBC");
             } catch (const std::exception& exc) {
                 isc_throw(LibraryError, "PKCS8::PEM_encode: " << exc.what());
@@ -971,31 +987,31 @@ public:
                 fp << "Algorithm: 10 (RSASHA512)\n";
             }
             std::vector<uint8_t> bin;
-            bin.resize(priv_.get()->get_n().bytes());
-            priv_.get()->get_n().binary_encode(&bin[0]);
+            bin.resize(priv_->get_n().bytes());
+            priv_->get_n().binary_encode(&bin[0]);
             fp << "Modulus: " << util::encode::encodeBase64(bin) << '\n';
-            bin.resize(priv_.get()->get_e().bytes());
-            priv_.get()->get_e().binary_encode(&bin[0]);
+            bin.resize(priv_->get_e().bytes());
+            priv_->get_e().binary_encode(&bin[0]);
             fp << "PublicExponent: " <<
                 util::encode::encodeBase64(bin) << '\n';
-            bin.resize(priv_.get()->get_d().bytes());
-            priv_.get()->get_d().binary_encode(&bin[0]);
+            bin.resize(priv_->get_d().bytes());
+            priv_->get_d().binary_encode(&bin[0]);
             fp << "PrivateExponent: " <<
                 util::encode::encodeBase64(bin) << '\n';
-            bin.resize(priv_.get()->get_p().bytes());
-            priv_.get()->get_p().binary_encode(&bin[0]);
+            bin.resize(priv_->get_p().bytes());
+            priv_->get_p().binary_encode(&bin[0]);
             fp << "Prime1: " << util::encode::encodeBase64(bin) << '\n';
-            bin.resize(priv_.get()->get_q().bytes());
-            priv_.get()->get_q().binary_encode(&bin[0]);
+            bin.resize(priv_->get_q().bytes());
+            priv_->get_q().binary_encode(&bin[0]);
             fp << "Prime2: " << util::encode::encodeBase64(bin) << '\n';
-            bin.resize(priv_.get()->get_d1().bytes());
-            priv_.get()->get_d1().binary_encode(&bin[0]);
+            bin.resize(priv_->get_d1().bytes());
+            priv_->get_d1().binary_encode(&bin[0]);
             fp << "Exponent1: " << util::encode::encodeBase64(bin) << '\n';
-            bin.resize(priv_.get()->get_d2().bytes());
-            priv_.get()->get_d2().binary_encode(&bin[0]);
+            bin.resize(priv_->get_d2().bytes());
+            priv_->get_d2().binary_encode(&bin[0]);
             fp << "Exponent2: " << util::encode::encodeBase64(bin) << '\n';
-            bin.resize(priv_.get()->get_c().bytes());
-            priv_.get()->get_c().binary_encode(&bin[0]);
+            bin.resize(priv_->get_c().bytes());
+            priv_->get_c().binary_encode(&bin[0]);
             fp << "Coefficient: " << util::encode::encodeBase64(bin) << '\n';
             fp.close();
         } else if (key_kind == PRIVATE) {
@@ -1010,7 +1026,7 @@ public:
             // warn when password not empty
             std::string pem;
             try {
-                pem = Botan::X509::PEM_encode(*pub_.get());
+                pem = Botan::X509::PEM_encode(*pub_);
             } catch (const std::exception& exc) {
                 isc_throw(LibraryError, "X509::PEM_encode: " << exc.what());
             }
@@ -1038,7 +1054,7 @@ public:
             isc_throw(UnsupportedAlgorithm,
                       "Unknown RSA Public Key format: " <<
                       static_cast<int>(key_format));
-        } else if ((kind_ == CERT) && (key_format == ASN1)) {
+        } else if ((key_kind == CERT) && (key_format == ASN1)) {
             // Public Key Certificate PEM file
             // warn when password not empty
             if (!x509_) {
@@ -1046,7 +1062,7 @@ public:
             }
             std::string pem;
             try {
-                pem = x509_.get()->PEM_encode();
+                pem = x509_->PEM_encode();
             } catch (const std::exception& exc) {
                 isc_throw(LibraryError, "PEM_encode: " << exc.what());
             }
@@ -1058,7 +1074,7 @@ public:
             } else {
                 isc_throw(BadKey, "Can't open file: " << filename);
             }
-        } else if (kind_ == CERT) {
+        } else if (key_kind == CERT) {
             if (!x509_) {
                 isc_throw(UnsupportedAlgorithm, "Have no Certificate");
             }
@@ -1068,7 +1084,7 @@ public:
         } else {
             isc_throw(UnsupportedAlgorithm,
                       "Unknown RSA Key kind: " <<
-                      static_cast<int>(kind_));
+                      static_cast<int>(key_kind));
         }
     }
 
@@ -1083,19 +1099,19 @@ public:
         case PUBLIC:
             // what to do?
             try {
-                return pub_.get()->check_key(rng, true);
+                return pub_->check_key(rng, true);
             } catch (const std::exception& exc) {
                 isc_throw(LibraryError, "check_key: " << exc.what());
             }
         case PRIVATE:
             try {
-                return priv_.get()->check_key(rng, true);
+                return priv_->check_key(rng, true);
             } catch (const std::exception& exc) {
                 isc_throw(LibraryError, "check_key: " << exc.what());
             }
         case CERT:
-            store.add_cert(*x509_.get(), true);
-            status = store.validate_cert(*x509_.get());
+            store.add_cert(*x509_, true);
+            status = store.validate_cert(*x509_);
             if (status == Botan::VERIFIED) {
                 return true;
             }
@@ -1114,7 +1130,7 @@ public:
         case CERT:
             // Special case for cert - cert
             if ((kind_ == CERT) && (other->kind_ == CERT)) {
-                return (*x509_.get() == *other->x509_.get());
+                return (*x509_ == *other->x509_);
             }
             // At least one should be a cert
             if ((kind_ != CERT) && (other->kind_ != CERT)) {
@@ -1124,20 +1140,20 @@ public:
             // Falls into
         case PUBLIC:
             if (kind_ == PRIVATE) {
-                e = priv_.get()->get_e();
-                n = priv_.get()->get_n();;
+                e = priv_->get_e();
+                n = priv_->get_n();;
             } else if ((kind_ == PUBLIC) || (kind_ == CERT)) {
-                e = pub_.get()->get_e();
-                n = pub_.get()->get_n();
+                e = pub_->get_e();
+                n = pub_->get_n();
             } else {
                 return false;
             }
             if (other->kind_ == PRIVATE) {
-                return ((e == other->priv_.get()->get_e()) &&
-                        (n == other->priv_.get()->get_n()));
+                return ((e == other->priv_->get_e()) &&
+                        (n == other->priv_->get_n()));
             } else if ((other->kind_ == PUBLIC) || (other->kind_ == CERT)) {
-                return ((e == other->pub_.get()->get_e()) &&
-                        (n == other->pub_.get()->get_n()));
+                return ((e == other->pub_->get_e()) &&
+                        (n == other->pub_->get_n()));
             } else {
                 return false;
             }
@@ -1146,8 +1162,8 @@ public:
                 return false;
             }
             // If public keys match so private too
-            return ((priv_.get()->get_e() == other->priv_.get()->get_e()) &&
-                    (priv_.get()->get_n() == other->priv_.get()->get_n()));
+            return ((priv_->get_e() == other->priv_->get_e()) &&
+                    (priv_->get_n() == other->priv_->get_n()));
         default:
             return false;
         }

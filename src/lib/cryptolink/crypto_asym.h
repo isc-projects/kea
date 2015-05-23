@@ -51,10 +51,10 @@ private:
     /// \param key_kind       The key kind
     /// \param key_format     The key binary format
     Asym(const void* key, size_t key_len,
-	 const AsymAlgorithm asym_algorithm,
-	 const HashAlgorithm hash_algorithm,
-	 const AsymKeyKind key_kind,
-	 const AsymFormat key_format);
+         const AsymAlgorithm asym_algorithm,
+         const HashAlgorithm hash_algorithm,
+         const AsymKeyKind key_kind,
+         const AsymFormat key_format);
     ///
     /// \param key            The key to sign/verify with
     /// \param asym_algorithm The asymmetrical cryptography algorithm
@@ -62,10 +62,10 @@ private:
     /// \param key_kind       The key kind
     /// \param key_format     The key binary format
     Asym(const std::vector<uint8_t> key,
-	 const AsymAlgorithm asym_algorithm,
-	 const HashAlgorithm hash_algorithm,
-	 const AsymKeyKind key_kind,
-	 const AsymFormat key_format);
+         const AsymAlgorithm asym_algorithm,
+         const HashAlgorithm hash_algorithm,
+         const AsymKeyKind key_kind,
+         const AsymFormat key_format);
     ///
     /// \param filename       The key file name/path
     /// \param password       The PKCS#8 password
@@ -74,29 +74,29 @@ private:
     /// \param key_kind       The key kind
     /// \param file_format    The key file format
     Asym(const std::string& filename, const std::string& password,
-	 const AsymAlgorithm asym_algorithm,
+         const AsymAlgorithm asym_algorithm,
          const HashAlgorithm hash_algorithm,
          const AsymKeyKind key_kind,
-	 const AsymFormat file_format);
+         const AsymFormat file_format);
 
     friend Asym* CryptoLink::createAsym(const void*, size_t,
-					const AsymAlgorithm,
-					const HashAlgorithm,
-					const AsymKeyKind,
-					const AsymFormat);
+                                        const AsymAlgorithm,
+                                        const HashAlgorithm,
+                                        const AsymKeyKind,
+                                        const AsymFormat);
 
     friend Asym* CryptoLink::createAsym(const std::vector<uint8_t>,
-					const AsymAlgorithm,
-					const HashAlgorithm,
-					const AsymKeyKind,
-					const AsymFormat);
+                                        const AsymAlgorithm,
+                                        const HashAlgorithm,
+                                        const AsymKeyKind,
+                                        const AsymFormat);
 
     friend Asym* CryptoLink::createAsym(const std::string&,
-					const std::string&,
-					const AsymAlgorithm,
-					const HashAlgorithm,
-					const AsymKeyKind,
-					const AsymFormat);
+                                        const std::string&,
+                                        const AsymAlgorithm,
+                                        const HashAlgorithm,
+                                        const AsymKeyKind,
+                                        const AsymFormat);
 
 public:
     /// \brief Destructor
@@ -134,7 +134,7 @@ public:
     ///                   only output size bytes will be copied
     /// \param sig_format The signature binary format
     void sign(isc::util::OutputBuffer& result, size_t len,
-	      const AsymFormat sig_format);
+              const AsymFormat sig_format);
 
     /// \brief Calculate the final signature
     ///
@@ -190,7 +190,7 @@ public:
     /// \param key_kind       The key kind
     /// \param key_format     The key binary format
     std::vector<uint8_t> exportkey(const AsymKeyKind key_kind,
-				   const AsymFormat key_format) const;
+                                   const AsymFormat key_format) const;
 
     /// \brief Export the key value
     ///
@@ -205,9 +205,9 @@ public:
     /// \param key_kind       The key kind    
     /// \param file_format    The key file format
     void exportkey(const std::string& filename,
-		   const std::string& password,
-		   const AsymKeyKind key_kind,
-		   const AsymFormat file_format) const;
+                   const std::string& password,
+                   const AsymKeyKind key_kind,
+                   const AsymFormat file_format) const;
 
     /// \brief Check the validity
     ///

@@ -40,7 +40,7 @@ using namespace isc::cryptolink;
 
 namespace {
 
-#define MODULUS	\
+#define MODULUS \
 0xb3, 0x25, 0xc2, 0x01, 0xee, 0x8c, 0x91, 0x5d, \
 0xa3, 0xea, 0x55, 0x90, 0xa2, 0x2c, 0xb3, 0xb1, \
 0x35, 0x18, 0x7b, 0xa1, 0x00, 0x80, 0x4f, 0x21, \
@@ -585,9 +585,9 @@ TEST(AsymTest, RSA_PUB_DNS) {
 
     const std::string dnsfile = TEST_DATA_SRCDIR "/Kexample.+005+18330.key";
     boost::shared_ptr<Asym> dns_key(crypto.createAsym(dnsfile, "",
-						      RSA_, SHA1,
-						      PUBLIC, DNS),
-				    deleteAsym);
+                                                      RSA_, SHA1,
+                                                      PUBLIC, DNS),
+                                    deleteAsym);
     EXPECT_TRUE(dns_key.get()->compare(ref_key.get(), PUBLIC));
     EXPECT_TRUE(ref_key.get()->compare(dns_key.get(), PUBLIC));
 }
