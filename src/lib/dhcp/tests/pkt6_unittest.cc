@@ -286,7 +286,10 @@ TEST_F(Pkt6Test, unpack_solicit1) {
     ASSERT_NO_THROW(sol->unpack());
 
     // Check for length
-    EXPECT_EQ(98, sol->len() );
+    EXPECT_EQ(98, sol->len());
+    size_t raw_len = std::distance(sol->rawBegin(), sol->rawEnd());
+    EXPECT_EQ(98, raw_len);
+    EXPECT_EQ(0, sol->getSignatureOffset());
 
     // Check for type
     EXPECT_EQ(DHCPV6_SOLICIT, sol->getType() );
@@ -302,6 +305,7 @@ TEST_F(Pkt6Test, unpack_solicit1) {
     EXPECT_FALSE(sol->getOption(D6O_SERVERID)); // server-id is missing
     EXPECT_FALSE(sol->getOption(D6O_IA_TA));
     EXPECT_FALSE(sol->getOption(D6O_IAADDR));
+
 }
 
 TEST_F(Pkt6Test, packUnpack) {
@@ -567,6 +571,13 @@ TEST_F(Pkt6Test, relayUnpack) {
     EXPECT_EQ(217, msg->len());
 
     ASSERT_EQ(2, msg->relay_info_.size());
+
+    // Check the raw stuff
+    OptionBufferConstIter begin = msg->rawBegin();
+    OptionBufferConstIter end = msg->rawEnd();
+    EXPECT_EQ(DHCPV6_SOLICIT, *begin);
+    EXPECT_EQ(54, std::distance(begin, end));
+    EXPECT_EQ(0, msg->getSignatureOffset());
 
     OptionPtr opt;
 

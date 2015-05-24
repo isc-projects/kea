@@ -115,6 +115,7 @@ TEST_F(HostReservationParserTest, dhcp4HWaddr) {
     EXPECT_EQ(0, hosts[0]->getIPv6SubnetID());
     EXPECT_EQ("192.0.2.134", hosts[0]->getIPv4Reservation().toText());
     EXPECT_EQ("foo.example.com", hosts[0]->getHostname());
+    EXPECT_TRUE(hosts[0]->getCredential().empty());
 }
 
 // This test verfies that the parser can parse the reservation entry for
@@ -139,6 +140,7 @@ TEST_F(HostReservationParserTest, dhcp4DUID) {
     EXPECT_EQ(0, hosts[0]->getIPv6SubnetID());
     EXPECT_EQ("192.0.2.112", hosts[0]->getIPv4Reservation().toText());
     EXPECT_TRUE(hosts[0]->getHostname().empty());
+    EXPECT_TRUE(hosts[0]->getCredential().empty());
 }
 
 // This test verifies that the parser can parse the reservation entry
@@ -162,6 +164,7 @@ TEST_F(HostReservationParserTest, dhcp4NoHostname) {
     EXPECT_EQ(0, hosts[0]->getIPv6SubnetID());
     EXPECT_EQ("192.0.2.10", hosts[0]->getIPv4Reservation().toText());
     EXPECT_TRUE(hosts[0]->getHostname().empty());
+    EXPECT_TRUE(hosts[0]->getCredential().empty());
 }
 
 
@@ -222,6 +225,7 @@ TEST_F(HostReservationParserTest, noIPAddress) {
     EXPECT_EQ(0, hosts[0]->getIPv6SubnetID());
     EXPECT_EQ("0.0.0.0", hosts[0]->getIPv4Reservation().toText());
     EXPECT_EQ("foo.example.com", hosts[0]->getHostname());
+    EXPECT_TRUE(hosts[0]->getCredential().empty());
 }
 
 // This test verifies  that the configuration parser for host reservations
@@ -296,6 +300,7 @@ TEST_F(HostReservationParserTest, dhcp6HWaddr) {
     EXPECT_EQ(0, hosts[0]->getIPv4SubnetID());
     EXPECT_EQ(10, hosts[0]->getIPv6SubnetID());
     EXPECT_EQ("foo.example.com", hosts[0]->getHostname());
+    EXPECT_TRUE(hosts[0]->getCredential().empty());
 
     IPv6ResrvRange addresses = hosts[0]->
         getIPv6Reservations(IPv6Resrv::TYPE_NA);
@@ -343,6 +348,7 @@ TEST_F(HostReservationParserTest, dhcp6DUID) {
     EXPECT_EQ(0, hosts[0]->getIPv4SubnetID());
     EXPECT_EQ(12, hosts[0]->getIPv6SubnetID());
     EXPECT_EQ("foo.example.com", hosts[0]->getHostname());
+    EXPECT_TRUE(hosts[0]->getCredential().empty());
 
     IPv6ResrvRange addresses = hosts[0]->
         getIPv6Reservations(IPv6Resrv::TYPE_NA);
@@ -380,6 +386,7 @@ TEST_F(HostReservationParserTest, dhcp6NoHostname) {
     EXPECT_EQ(0, hosts[0]->getIPv4SubnetID());
     EXPECT_EQ(12, hosts[0]->getIPv6SubnetID());
     EXPECT_TRUE(hosts[0]->getHostname().empty());
+    EXPECT_TRUE(hosts[0]->getCredential().empty());
 
     IPv6ResrvRange addresses = hosts[0]->
         getIPv6Reservations(IPv6Resrv::TYPE_NA);
@@ -483,5 +490,82 @@ TEST_F(HostReservationParserTest, dhcp6DuplicatedPrefix) {
     EXPECT_THROW(parser.build(config_element), DhcpConfigError);
 }
 
+// This test verifies that the configuration parser ignores a public key
+// in DHCPv4
+TEST_F(HostReservationParserTest, dhcp4PublicKey) {
+    std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
+        "\"ip-address\": \"192.0.2.134\","
+        "\"public-key\": \"foobar\" }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser4 parser(SubnetID(1));
+    ASSERT_NO_THROW(parser.build(config_element));
+
+    CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    HostCollection hosts;
+    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(hwaddr_, DuidPtr()));
+
+    ASSERT_EQ(1, hosts.size());
+    EXPECT_TRUE(hosts[0]->getCredential().empty());
+}
+
+// This test verifies that the configuration parser handles a public key
+TEST_F(HostReservationParserTest, dhcp6PublicKey) {
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "\"ip-addresses\": [ \"2001:db8:1::100\" ],"
+        "\"public-key\": \"foobar\" }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser6 parser(SubnetID(1));
+    ASSERT_NO_THROW(parser.build(config_element));
+
+    CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    HostCollection hosts;
+    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(HWAddrPtr(), duid_));
+
+    ASSERT_EQ(1, hosts.size());
+    EXPECT_EQ("foobar", hosts[0]->getCredential());
+}
+
+// This test verifies that the configuration parser ignores a certificate
+// in DHCPv4
+TEST_F(HostReservationParserTest, dhcp4Certificate) {
+    std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
+        "\"ip-address\": \"192.0.2.134\","
+        "\"certificate\": \"foobar\" }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser4 parser(SubnetID(1));
+    ASSERT_NO_THROW(parser.build(config_element));
+
+    CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    HostCollection hosts;
+    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(hwaddr_, DuidPtr()));
+
+    ASSERT_EQ(1, hosts.size());
+    EXPECT_TRUE(hosts[0]->getCredential().empty());
+}
+
+// This test verifies that the configuration parser handles a certificate
+TEST_F(HostReservationParserTest, dhcp6Certificate) {
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "\"ip-addresses\": [ \"2001:db8:1::100\" ],"
+        "\"certificate\": \"foobar\" }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser6 parser(SubnetID(1));
+    ASSERT_NO_THROW(parser.build(config_element));
+
+    CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    HostCollection hosts;
+    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(HWAddrPtr(), duid_));
+
+    ASSERT_EQ(1, hosts.size());
+    EXPECT_EQ("foobar", hosts[0]->getCredential());
+}
 
 } // end of anonymous namespace

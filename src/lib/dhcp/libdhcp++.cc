@@ -246,7 +246,8 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
                                const std::string& option_space,
                                isc::dhcp::OptionCollection& options,
                                size_t* relay_msg_offset /* = 0 */,
-                               size_t* relay_msg_len /* = 0 */) {
+                               size_t* relay_msg_len /* = 0 */,
+			       size_t* signature_offset /* = 0 */) {
     size_t offset = 0;
     size_t length = buf.size();
 
@@ -291,6 +292,12 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
             offset += opt_len;
             continue;
         }
+
+	if (opt_type == D6O_SIGNATURE && signature_offset) {
+	    // remember offset of the beginning of the signature option
+	    // should check if there is only most one
+	    *signature_offset = offset;
+	}
 
         if (opt_type == D6O_VENDOR_OPTS) {
             if (offset + 4 > length) {

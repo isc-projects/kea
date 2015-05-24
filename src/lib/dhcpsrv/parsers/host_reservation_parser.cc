@@ -190,6 +190,10 @@ HostReservationParser6::build(isc::data::ConstElementPtr reservation_data) {
                               << prefix_element->getPosition() << ")");
                 }
             }
+        } else if (element.first == "public-key" ||
+                   element.first == "certificate") {
+            // Set the credential (filename of public key or certificate)
+            host_->setCredential(element.second->stringValue());
         }
     }
 

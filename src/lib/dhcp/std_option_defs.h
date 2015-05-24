@@ -237,6 +237,11 @@ RECORD_DECL(REMOTE_ID_RECORDS, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
 RECORD_DECL(STATUS_CODE_RECORDS, OPT_UINT16_TYPE, OPT_STRING_TYPE);
 // vendor-class
 RECORD_DECL(VENDOR_CLASS_RECORDS, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
+// sedhcpv6 signature
+RECORD_DECL(SIGNATURE_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE,
+            OPT_BINARY_TYPE);
+// sedhcpv6 timestamp (should be uint64)
+RECORD_DECL(TIMESTAMP_RECORDS, OPT_UINT32_TYPE, OPT_UINT32_TYPE);
 
 /// Standard DHCPv6 option definitions.
 ///
@@ -331,7 +336,15 @@ const OptionDefParams OPTION_DEF_PARAMS6[] = {
       NO_RECORD_DEF, "" },
     { "rsoo", D6O_RSOO, OPT_EMPTY_TYPE, false, NO_RECORD_DEF, "rsoo-opts" },
     { "client-linklayer-addr", D6O_CLIENT_LINKLAYER_ADDR, OPT_BINARY_TYPE, false,
-        NO_RECORD_DEF, "" }
+      NO_RECORD_DEF, "" },
+    { "public-key", D6O_PUBLIC_KEY, OPT_BINARY_TYPE, false,
+      NO_RECORD_DEF, "" },
+    { "certificate", D6O_CERTIFICATE, OPT_BINARY_TYPE, false,
+      NO_RECORD_DEF, "" },
+    { "signature", D6O_SIGNATURE, OPT_RECORD_TYPE, false,
+      RECORD_DEF(SIGNATURE_RECORDS), "" },
+    { "timestamp", D6O_TIMESTAMP, OPT_RECORD_TYPE, false,
+      RECORD_DEF(TIMESTAMP_RECORDS), "" }
 
     // @todo There is still a bunch of options for which we have to provide
     // definitions but we don't do it because they are not really

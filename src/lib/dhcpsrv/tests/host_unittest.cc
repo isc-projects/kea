@@ -511,6 +511,18 @@ TEST(HostTest, addClientClasses) {
     EXPECT_TRUE(host->getClientClasses6().contains("bar"));
 }
 
+// Test credential management
+TEST(HostTest, setCredential) {
+    boost::scoped_ptr<Host> host;
+    ASSERT_NO_THROW(host.reset(new Host("01:02:03:04:05:06", "hw-address",
+                                        SubnetID(1), SubnetID(2),
+                                        IOAddress("192.0.2.3"))));
+
+    EXPECT_EQ("", host->getCredential());
+    host->setCredential("foobar");
+    EXPECT_EQ("foobar", host->getCredential());
+}
+
 TEST(HostTest, getIdentifierAsText) {
     Host host1("01:02:03:04:05:06", "hw-address",
                SubnetID(1), SubnetID(2),

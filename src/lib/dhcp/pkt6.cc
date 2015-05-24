@@ -40,17 +40,17 @@ namespace dhcp {
 
 Pkt6::RelayInfo::RelayInfo()
     :msg_type_(0), hop_count_(0), linkaddr_(DEFAULT_ADDRESS6),
-    peeraddr_(DEFAULT_ADDRESS6), relay_msg_len_(0) {
+     peeraddr_(DEFAULT_ADDRESS6), relay_msg_len_(0) {
 }
 
 Pkt6::Pkt6(const uint8_t* buf, uint32_t buf_len, DHCPv6Proto proto /* = UDP */)
-   :Pkt(buf, buf_len, DEFAULT_ADDRESS6, DEFAULT_ADDRESS6, 0, 0),
-    proto_(proto), msg_type_(0) {
+    :Pkt(buf, buf_len, DEFAULT_ADDRESS6, DEFAULT_ADDRESS6, 0, 0),
+     proto_(proto), msg_type_(0), signature_offset_(0) {
 }
 
 Pkt6::Pkt6(uint8_t msg_type, uint32_t transid, DHCPv6Proto proto /*= UDP*/)
-:Pkt(transid, DEFAULT_ADDRESS6, DEFAULT_ADDRESS6, 0, 0), proto_(proto),
-    msg_type_(msg_type) {
+    :Pkt(transid, DEFAULT_ADDRESS6, DEFAULT_ADDRESS6, 0, 0), proto_(proto),
+     msg_type_(msg_type), signature_offset_() {
 }
 
 size_t Pkt6::len() {
@@ -300,14 +300,17 @@ Pkt6::unpackUDP() {
 }
 
 void
-Pkt6::unpackMsg(OptionBuffer::const_iterator begin,
-                OptionBuffer::const_iterator end) {
+Pkt6::unpackMsg(OptionBufferConstIter begin, OptionBufferConstIter end) {
     size_t size = std::distance(begin, end);
     if (size < 4) {
         // truncated message (less than 4 bytes)
         isc_throw(BadValue, "Received truncated UDP DHCPv6 packet of size "
                   << data_.size() << ", DHCPv6 header alone has 4 bytes.");
     }
+
+    // Keep begin and end for secure DHCPv6
+    raw_begin_ = begin;
+    raw_end_ = end;
 
     msg_type_ = *begin++;
 
@@ -326,7 +329,8 @@ Pkt6::unpackMsg(OptionBuffer::const_iterator begin,
     // to parse options. Otherwise, use standard function from libdhcp.
     size_t offset;
     if (callback_.empty()) {
-        offset = LibDHCP::unpackOptions6(opt_buffer, "dhcp6", options_);
+	offset = LibDHCP::unpackOptions6(opt_buffer, "dhcp6", options_,
+					 0, 0, &signature_offset_);
     } else {
         // The last two arguments hold the DHCPv6 Relay message offset and
         // length. Setting them to NULL because we are dealing with the

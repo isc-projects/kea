@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -152,32 +152,41 @@ public:
                                  const std::string& option_space,
                                  isc::dhcp::OptionCollection& options);
 
-    /// @brief Parses provided buffer as DHCPv6 options and creates Option objects.
+    /// @brief Parses provided buffer as DHCPv6 options and creates
+    /// Option objects.
     ///
-    /// Parses provided buffer and stores created Option objects in options
-    /// container. The last two parameters are optional and are used in
-    /// relay parsing. If they are specified, relay-msg option is not created,
-    /// but rather those two parameters are specified to point out where
-    /// the relay-msg option resides and what is its length. This is perfromance
-    /// optimization that avoids unnecessary copying of potentially large
-    /// relay-msg option. It is not used for anything, except in the next
-    /// iteration its content will be treated as buffer to be parsed.
+
+    /// Parses provided buffer and stores created Option objects in
+    /// options container. The last three parameters are optional and
+    /// are used in relay parsing and secure DHCPv6. If the first two
+    /// are specified, relay-msg option is not created, but rather
+    /// those two parameters are specified to point out where the
+    /// relay-msg option resides and what is its length. This is
+    /// performance optimization that avoids unnecessary copying of
+    /// potentially large relay-msg option. It is not used for
+    /// anything, except in the next iteration its content will be
+    /// treated as buffer to be parsed.
     ///
     /// @param buf Buffer to be parsed.
     /// @param option_space A name of the option space which holds definitions
     /// of to be used to parse options in the packets.
     /// @param options Reference to option container. Options will be
     ///        put here.
-    /// @param relay_msg_offset reference to a size_t structure. If specified,
+    /// @param relay_msg_offset reference to a size_t. If specified,
     ///        offset to beginning of relay_msg option will be stored in it.
-    /// @param relay_msg_len reference to a size_t structure. If specified,
+    /// @param relay_msg_len reference to a size_t. If specified,
     ///        length of the relay_msg option will be stored in it.
-    /// @return offset to the first byte after the last successfully parsed option
+    /// @param signature_offset reference to a size_t. If specified
+    ///        offset to beginning of signautre option will be stored in it.
+    /// @return offset to the first byte after the last successfully
+    /// parsed option
+
     static size_t unpackOptions6(const OptionBuffer& buf,
                                  const std::string& option_space,
                                  isc::dhcp::OptionCollection& options,
                                  size_t* relay_msg_offset = 0,
-                                 size_t* relay_msg_len = 0);
+                                 size_t* relay_msg_len = 0,
+                                 size_t* signature_offset = 0);
 
     /// Registers factory method that produces options of specific option types.
     ///

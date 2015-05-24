@@ -164,6 +164,21 @@ public:
     /// @return string with text representation
     virtual std::string toText() const;
 
+    /// @brief Returns the begin of the (possibly relayed) packet
+    OptionBufferConstIter rawBegin() const {
+        return (raw_begin_);
+    }
+
+    /// @brief Returns the end of the (possibly relayed) packet
+    OptionBufferConstIter rawEnd() const {
+        return (raw_end_);
+    }
+
+    /// @brief Returns the offset of the signature option (or 0)
+    size_t getSignatureOffset() const {
+        return (signature_offset_);
+    }
+
     /// @brief Returns length of the packet.
     ///
     /// This function returns size required to hold this packet.
@@ -395,8 +410,7 @@ protected:
     /// @param begin start of the buffer
     /// @param end end of the buffer
     /// @throw tbd
-    void unpackMsg(OptionBuffer::const_iterator begin,
-                   OptionBuffer::const_iterator end);
+    void unpackMsg(OptionBufferConstIter begin, OptionBufferConstIter end);
 
     /// @brief Unpacks relayed message (RELAY-FORW or RELAY-REPL).
     ///
@@ -429,6 +443,15 @@ protected:
 
     /// DHCPv6 message type
     uint8_t msg_type_;
+
+    /// Begin of the raw packet
+    OptionBufferConstIter raw_begin_;
+
+    /// End of the raw packet
+    OptionBufferConstIter raw_end_;
+
+    /// Offset of the signature option
+    size_t signature_offset_;
 
 }; // Pkt6 class
 

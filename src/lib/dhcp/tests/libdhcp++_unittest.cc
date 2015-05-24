@@ -1148,6 +1148,18 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
     LibDhcpTest::testStdOptionDefs6(D6O_ERP_LOCAL_DOMAIN_NAME,
                                     fqdn_buf.begin(), fqdn_buf.end(),
                                     typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_PUBLIC_KEY, begin, end,
+                                    typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_CERTIFICATE, begin, end,
+                                    typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_SIGNATURE, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_TIMESTAMP, begin, begin + 8,
+                                    typeid(OptionCustom));
 }
 
 // This test checks if the DHCPv6 option definition can be searched by

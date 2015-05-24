@@ -137,6 +137,8 @@ typedef std::pair<IPv6ResrvIterator, IPv6ResrvIterator> IPv6ResrvRange;
 /// DHCPv6 exchanges.
 /// - client classes which the client is associated with
 /// - DHCP options specifically configured for the device
+/// - filename of public key or certificate of the client for
+/// secure DHCPv6.
 ///
 /// Note, that "host" in this context has a different meaning from
 /// host construed as device attached to a network with (possibly) multiple
@@ -168,6 +170,7 @@ typedef std::pair<IPv6ResrvIterator, IPv6ResrvIterator> IPv6ResrvRange;
 /// - remove and replace IPv6 reservations
 /// - remove and replace client classes
 /// - disable IPv4 reservation without a need to set it to the 0.0.0.0 address
+/// - implement Trust-on-first-use for secure DHCPv6
 /// Note that the last three operations are mainly required for managing
 /// host reservations which will be implemented later.
 class Host {
@@ -417,6 +420,18 @@ public:
         return (dhcp6_client_classes_);
     }
 
+    /// @brief Sets new credential (public key or certificate)
+    ///
+    /// @param filename New filename to the public key or certificate.
+    void setCredential(const std::string& filename) {
+        credential_ = filename;
+    }
+
+    /// @brief Returns credential
+    const std::string& getCredential() const {
+        return (credential_);
+    }
+
     /// @brief Returns information about the host in the textual format.
     std::string toText() const;
 
@@ -455,6 +470,8 @@ private:
     ClientClasses dhcp4_client_classes_;
     /// @brief Collection of classes associated with a DHCPv6 client.
     ClientClasses dhcp6_client_classes_;
+    /// @brief Credential (filename of public key or certificate)
+    std::string credential_;
 };
 
 /// @brief Pointer to the @c Host object.
