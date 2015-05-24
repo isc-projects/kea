@@ -124,6 +124,11 @@ extern const int dhcpv6_type_name_max;
 #define HWTYPE_ETHERNET    0x0001
 #define HWTYPE_INFINIBAND  0x0020
 
+// Secure DHCPv6 (draft-ietf-dhc-sedhcpv6-07.txt)
+#define SHA_256                 1
+#define SHA_512                 2
+#define RSASSA_PKCS1v1_5        1
+
 // Taken from http://www.iana.org/assignments/enterprise-numbers
 #define ENTERPRISE_ID_ISC 2495
 

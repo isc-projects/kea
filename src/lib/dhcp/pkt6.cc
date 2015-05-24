@@ -244,7 +244,15 @@ Pkt6::packUDP() {
         buffer_out_.writeUint8( (transid_) & 0xff );
 
         // the rest are options
-        LibDHCP::packOptions(buffer_out_, options_);
+        // LibDHCP::packOptions(buffer_out_, options_);
+        for (OptionCollection::const_iterator it = options_.begin();
+             it != options_.end(); ++it) {
+            // Remember where the certificate is inserted
+            if (it->first == D6O_CERTIFICATE) {
+                signature_offset_ = buffer_out_.getLength();
+            }
+            it->second->pack(buffer_out_);
+        }
     }
     catch (const Exception& e) {
        // An exception is thrown and message will be written to Logger
@@ -329,13 +337,14 @@ Pkt6::unpackMsg(OptionBufferConstIter begin, OptionBufferConstIter end) {
     // to parse options. Otherwise, use standard function from libdhcp.
     size_t offset;
     if (callback_.empty()) {
-	offset = LibDHCP::unpackOptions6(opt_buffer, "dhcp6", options_,
-					 0, 0, &signature_offset_);
+        offset = LibDHCP::unpackOptions6(opt_buffer, "dhcp6", options_,
+                                         0, 0, &signature_offset_);
     } else {
         // The last two arguments hold the DHCPv6 Relay message offset and
         // length. Setting them to NULL because we are dealing with the
         // not-relayed message.
-        offset = callback_(opt_buffer, "dhcp6", options_, NULL, NULL);
+        offset = callback_(opt_buffer, "dhcp6", options_,
+                           NULL, NULL, &signature_offset_);
     }
 
     // If offset is not equal to the size, then something is wrong here. We
@@ -388,10 +397,10 @@ Pkt6::unpackRelayMsg() {
         // to parse options. Otherwise, use standard function from libdhcp.
         if (callback_.empty()) {
             LibDHCP::unpackOptions6(opt_buffer, "dhcp6", relay.options_,
-                                    &relay_msg_offset, &relay_msg_len);
+                                    &relay_msg_offset, &relay_msg_len, NULL);
         } else {
             callback_(opt_buffer, "dhcp6", relay.options_,
-                      &relay_msg_offset, &relay_msg_len);
+                      &relay_msg_offset, &relay_msg_len, NULL);
         }
 
         /// @todo: check that each option appears at most once

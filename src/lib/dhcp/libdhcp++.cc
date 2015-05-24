@@ -294,8 +294,7 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
         }
 
 	if (opt_type == D6O_SIGNATURE && signature_offset) {
-	    // remember offset of the beginning of the signature option
-	    // should check if there is only most one
+	    // remember offset of the beginning of the (last) signature option
 	    *signature_offset = offset;
 	}
 

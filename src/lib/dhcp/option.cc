@@ -130,7 +130,7 @@ Option::unpackOptions(const OptionBuffer& buf) {
     // If custom option parsing function has been set, use this function
     // to parse options. Otherwise, use standard function from libdhcp++.
     if (!callback_.empty()) {
-        callback_(buf, getEncapsulatedSpace(), options_, 0, 0);
+        callback_(buf, getEncapsulatedSpace(), options_, 0, 0, 0);
         return;
     }
 

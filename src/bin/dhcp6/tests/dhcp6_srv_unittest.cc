@@ -1780,7 +1780,7 @@ TEST_F(Dhcpv6SrvTest, unpackOptions) {
     // Parse options.
     NakedDhcpv6Srv srv(0);
     OptionCollection options;
-    ASSERT_NO_THROW(srv.unpackOptions(buf, "space-foobar", options, 0, 0));
+    ASSERT_NO_THROW(srv.unpackOptions(buf, "space-foobar", options, 0, 0, 0));
 
     // There should be one top level option.
     ASSERT_EQ(1, options.size());

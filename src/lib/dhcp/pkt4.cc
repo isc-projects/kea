@@ -222,7 +222,7 @@ Pkt4::unpack() {
         // specific to DHCPv6 options parsing. They are unused for
         // DHCPv4 case. In DHCPv6 case they hold are the relay message
         // offset and length.
-        offset = callback_(opts_buffer, "dhcp4", options_, NULL, NULL);
+        offset = callback_(opts_buffer, "dhcp4", options_, NULL, NULL, NULL);
     }
 
     // If offset is not equal to the size, then something is wrong here. We

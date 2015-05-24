@@ -653,8 +653,8 @@ namespace dhcp {
 /// @return parser for specified global DHCPv6 parameter
 /// @throw NotImplemented if trying to create a parser for unknown config
 /// element
-    DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id,
-                                                    ConstElementPtr element) {
+DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id,
+                                                ConstElementPtr element) {
     DhcpConfigParser* parser = NULL;
     if ((config_id.compare("preferred-lifetime") == 0)  ||
         (config_id.compare("valid-lifetime") == 0)  ||

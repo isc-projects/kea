@@ -327,7 +327,7 @@ bool Dhcpv6Srv::run() {
         // of the option parsing function here, which would rely on the
         // configuration data.
         query->setCallback(boost::bind(&Dhcpv6Srv::unpackOptions, this, _1, _2,
-                                       _3, _4, _5));
+                                       _3, _4, _5, _6));
 
         bool skip_unpack = false;
 
@@ -486,6 +486,8 @@ bool Dhcpv6Srv::run() {
 
         if (rsp) {
 
+            appendSeDhcpOptions(rsp);
+
             // Process relay-supplied options. It is important to call this very
             // late in the process, because we now have all the options the
             // server wanted to send already set. This is important, because
@@ -585,6 +587,10 @@ bool Dhcpv6Srv::run() {
                     }
 
                     callout_handle->getArgument("response6", rsp);
+                }
+
+                if (rsp->getSignatureOffset()) {
+                    finalizeSignature(rsp);
                 }
 
                 LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA,
@@ -2325,7 +2331,6 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
 }
 
 
-
 Pkt6Ptr
 Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
 
@@ -2338,6 +2343,10 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
 
     copyClientOptions(solicit, advertise);
     appendDefaultOptions(solicit, advertise);
+
+    if (!validateSeDhcpOptions(solicit, advertise, ctx)) {
+        return (advertise);
+    }
     appendRequestedOptions(solicit, advertise, ctx);
     appendRequestedVendorOptions(solicit, advertise, ctx);
 
@@ -2364,6 +2373,10 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
 
     copyClientOptions(request, reply);
     appendDefaultOptions(request, reply);
+
+    if (!validateSeDhcpOptions(request, reply, ctx)) {
+        return (reply);
+    }
     appendRequestedOptions(request, reply, ctx);
     appendRequestedVendorOptions(request, reply, ctx);
 
@@ -2387,6 +2400,10 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
 
     copyClientOptions(renew, reply);
     appendDefaultOptions(renew, reply);
+
+    if (!validateSeDhcpOptions(renew, reply, ctx)) {
+        return (reply);
+    }
     appendRequestedOptions(renew, reply, ctx);
 
     processClientFqdn(renew, reply, ctx);
@@ -2407,6 +2424,10 @@ Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
 
     copyClientOptions(rebind, reply);
     appendDefaultOptions(rebind, reply);
+
+    if (!validateSeDhcpOptions(rebind, reply, ctx)) {
+        return (reply);
+    }
     appendRequestedOptions(rebind, reply, ctx);
 
     processClientFqdn(rebind, reply, ctx);
@@ -2435,6 +2456,10 @@ Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm) {
     // Make sure that the necessary options are included.
     copyClientOptions(confirm, reply);
     appendDefaultOptions(confirm, reply);
+
+    if (!validateSeDhcpOptions(confirm, reply, ctx)) {
+        return (reply);
+    }
     // Indicates if at least one address has been verified. If no addresses
     // are verified it means that the client has sent no IA_NA options
     // or no IAAddr options and that client's message has to be discarded.
@@ -2514,6 +2539,9 @@ Dhcpv6Srv::processRelease(const Pkt6Ptr& release) {
     copyClientOptions(release, reply);
     appendDefaultOptions(release, reply);
 
+    if (!validateSeDhcpOptions(release, reply, ctx)) {
+        return (reply);
+    }
     releaseLeases(release, reply, ctx);
 
     // @todo If client sent a release and we should remove outstanding
@@ -2546,6 +2574,11 @@ Dhcpv6Srv::processInfRequest(const Pkt6Ptr& inf_request) {
     // options once we start supporting authentication)
     appendDefaultOptions(inf_request, reply);
 
+    // Validate secure DHCPv6 options
+    if (!validateSeDhcpOptions(inf_request, reply, ctx)) {
+        return (reply);
+    }
+
     // Try to assign options that were requested by the client.
     appendRequestedOptions(inf_request, reply, ctx);
 
@@ -2557,7 +2590,8 @@ Dhcpv6Srv::unpackOptions(const OptionBuffer& buf,
                          const std::string& option_space,
                          isc::dhcp::OptionCollection& options,
                          size_t* relay_msg_offset,
-                         size_t* relay_msg_len) {
+                         size_t* relay_msg_len,
+                         size_t* signature_offset) {
     size_t offset = 0;
     size_t length = buf.size();
 
@@ -2610,6 +2644,11 @@ Dhcpv6Srv::unpackOptions(const OptionBuffer& buf,
             continue;
         }
 
+        if (opt_type == D6O_SIGNATURE && signature_offset) {
+            // remember offset of the beginning of the signature option
+            *signature_offset = offset;
+        }
+
         // Get all definitions with the particular option code. Note that option
         // code is non-unique within this container however at this point we
         // expect to get one option definition with the particular code. If more
@@ -2644,7 +2683,7 @@ Dhcpv6Srv::unpackOptions(const OptionBuffer& buf,
                                      buf.begin() + offset,
                                      buf.begin() + offset + opt_len,
                                      boost::bind(&Dhcpv6Srv::unpackOptions, this, _1, _2,
-                                                 _3, _4, _5));
+                                                 _3, _4, _5, _6));
         }
         // add option to options
         options.insert(std::make_pair(opt_type, opt));
@@ -2828,6 +2867,100 @@ void Dhcpv6Srv::processRSOO(const Pkt6Ptr& query, const Pkt6Ptr& rsp) {
             }
         }
     }
+}
+
+bool Dhcpv6Srv::validateSeDhcpOptions(const Pkt6Ptr& query, Pkt6Ptr& answer,
+                                      const AllocEngine::ClientContext6 ctx) {
+    // TODO return true if secure DHCPv6 is not enabled
+    if (true) {
+        return (true);
+    }
+    bool has_pubkey = false;
+    if (query->getOption(D6O_PUBLIC_KEY)) {
+        has_pubkey = true;
+        if (query->getOptions(D6O_PUBLIC_KEY).size() > 1) {
+            answer->addOption(createStatusCode(STATUS_UnspecFail,
+                                               "More than one "
+                                               "public key option"));
+            return (false);
+        }
+    }
+    bool has_cert = false;
+    if (query->getOption(D6O_CERTIFICATE)) {
+        has_cert = true;
+        if (query->getOptions(D6O_CERTIFICATE).size() > 1) {
+            answer->addOption(createStatusCode(STATUS_UnspecFail,
+                                               "More than one "
+                                               "certificate option"));
+            return (false);
+        }
+    }
+    if (has_pubkey && has_cert) {
+        answer->addOption(createStatusCode(STATUS_UnspecFail,
+                                           "Both public key and "
+                                           "certificate options"));
+        return (false);
+    }
+    if (!has_pubkey && !has_cert) {
+        answer->addOption(createStatusCode(STATUS_UnspecFail,
+                                           "No public key or "
+                                           "certificate options"));
+        return (false);
+    }
+    OptionPtr signopt = query->getOption(D6O_SIGNATURE);
+    if (!signopt) {
+        answer->addOption(createStatusCode(STATUS_UnspecFail,
+                                           "No signature option"));
+        return (false);
+    }
+    if (query->getOptions(D6O_SIGNATURE).size() > 1) {
+        answer->addOption(createStatusCode(STATUS_UnspecFail,
+                                           "More than one signature options"));
+        return (false);
+    }
+    OptionCustomPtr signature =
+        boost::dynamic_pointer_cast<OptionCustom>(signopt);
+    if (!signature) {
+        answer->addOption(createStatusCode(STATUS_UnspecFail,
+                                           "Invalid signature option"));
+        return (false);
+    }
+    uint8_t ha_id = signature->readInteger<uint8_t>(0);
+    if ((ha_id != SHA_256) && (ha_id != SHA_512)) {
+        answer->addOption(createStatusCode(STATUS_AlgorithmNotSupported,
+                                           "Unsupported hash algorithm"));
+        return (false);
+    }
+    uint8_t sa_id = signature->readInteger<uint8_t>(1);
+    if (sa_id != RSASSA_PKCS1v1_5) {
+        answer->addOption(createStatusCode(STATUS_AlgorithmNotSupported,
+                                           "Unsupported signature algorithm"));
+        return (false);
+    }
+    if (!ctx.host_ || ctx.host_->getCredential().empty()) {
+        answer->addOption(createStatusCode(STATUS_AuthenticationFail,
+                                           "No configured credentials"));
+        return (false);
+    }
+    // TODO map ha_id and sa_id, get public key or certificate, compare
+    // TODO... timestamp
+    // TODO check signature
+    return (true);
+}
+
+void Dhcpv6Srv::appendSeDhcpOptions(Pkt6Ptr& /*answer*/) {
+    // TODO return if secure DHCPv6 is not enabled
+    // TODO add public key or certificate
+    // TODO add signature
+    // TODO... add timestamp
+}
+
+void Dhcpv6Srv::finalizeSignature(Pkt6Ptr& tbs) {
+    // TODO (sanity) throw if secure DHCPv6 is not enabled
+    if (!tbs->getSignatureOffset()) {
+        isc_throw(isc::Unexpected, "null signature offset");
+    }
+    // TODO
 }
 
 };

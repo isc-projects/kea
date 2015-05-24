@@ -172,11 +172,11 @@ public:
     /// of to be used to parse options in the packets.
     /// @param options Reference to option container. Options will be
     ///        put here.
-    /// @param relay_msg_offset reference to a size_t. If specified,
+    /// @param relay_msg_offset reference to a size_t value. If specified,
     ///        offset to beginning of relay_msg option will be stored in it.
-    /// @param relay_msg_len reference to a size_t. If specified,
+    /// @param relay_msg_len reference to a size_t value. If specified,
     ///        length of the relay_msg option will be stored in it.
-    /// @param signature_offset reference to a size_t. If specified
+    /// @param signature_offset reference to a size_t value. If specified
     ///        offset to beginning of signautre option will be stored in it.
     /// @return offset to the first byte after the last successfully
     /// parsed option

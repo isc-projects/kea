@@ -64,13 +64,17 @@ typedef std::multimap<unsigned int, OptionPtr> OptionCollection;
 /// @param relay_msg_len A pointer to a size_t value. It holds the length of
 /// of the relay_msg option. This parameter should be specified for DHCPv6
 /// options only.
+/// @param signature_offset reference to a size_t value. It indicates the
+/// offset to beginning of signature option. This parameter should be
+/// specified for DHCPv6 options only.
 ///
 /// @return An offset to the first byte after last parsed option.
 typedef boost::function< size_t(const OptionBuffer& buffer,
                                 const std::string encapsulated_space,
                                 OptionCollection& options,
                                 size_t* relay_msg_offset,
-                                size_t* relay_msg_len)
+                                size_t* relay_msg_len,
+                                size_t* signature_offset)
                          > UnpackOptionsCallback;
 
 
