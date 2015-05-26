@@ -22,16 +22,17 @@
 #     more convenient to use if the script didn't parse db_user db_password
 #     and db_name.
 #
-# @todo: Catch mysql return code. I tried to use PIPESTATUS[X], but it doesn't
-# seem to work (or at least I don't know how to use it).
 mysql_execute() {
     if [ $# -gt 1 ]; then
-        QUERY=$1
+        QUERY="$1"
         shift
-        _RESULT=`echo $QUERY | mysql -N -B $@`
+        _RESULT=$(mysql -N -B  $* -e "${QUERY}")
+        retcode=$?
     else
         _RESULT=$(mysql -N -B --user=$db_user --password=$db_password -e "${1}" $db_name)
+        retcode=$?
     fi
+    return $retcode
 }
 
 mysql_version() {
