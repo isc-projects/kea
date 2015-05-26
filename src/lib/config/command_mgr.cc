@@ -25,9 +25,9 @@ CommandMgr::CommandMgr() {
         boost::bind(&CommandMgr::listCommandsHandler, this, _1, _2));
 }
 
-void CommandMgr::configureCtrlSocket(const isc::data::ConstElementPtr& socket_info) {
+int CommandMgr::openCtrlSocket(const isc::data::ConstElementPtr& socket_info) {
     if (socket_info_) {
-        isc_throw(CommandSocketError, "There is already a control socket open");
+        isc_throw(SocketError, "There is already a control socket open");
     }
 
     socket_ = CommandSocketFactory::create(socket_info);
@@ -38,10 +38,11 @@ void CommandMgr::configureCtrlSocket(const isc::data::ConstElementPtr& socket_in
 }
 
 void CommandMgr::closeCtrlSocket() {
-    CommandSocketFactory::close(socket_, socket_info_);
-
-    socket_ = 0;
-    socket_info_.reset();
+    if (socket_info_) {
+        CommandSocketFactory::close(socket_, socket_info_);
+        socket_ = 0;
+        socket_info_.reset();
+    }
 }
 
 CommandMgr&
