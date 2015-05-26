@@ -20,6 +20,21 @@
 namespace isc {
 namespace config {
 
+/// @brief An exception indicating that specified socket parameters are invalid
+class BadSocketInfo : public Exception {
+public:
+    BadSocketInfo(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
+/// @brief An exception indicating a problem with socket operation
+class SocketError : public Exception {
+public:
+    SocketError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
+
 /// A factory class for opening command socket
 ///
 /// This class provides an interface for opening command socket.
@@ -46,7 +61,7 @@ public:
     /// closing.
     /// @param socket_fd file descriptor of the socket
     /// @param socket_info structure that was used to open the socket
-    static int close(int socket_fd, const isc::data::ConstElementPtr& socket_info);
+    static void close(int socket_fd, const isc::data::ConstElementPtr& socket_info);
 };
 
 

@@ -39,15 +39,6 @@ public:
         isc::Exception(file, line, what) { };
 };
 
-/// @brief An exception indicating that operation on the command socket failed
-class CommandSocketError : public Exception {
-public:
-    CommandSocketError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
-};
-
-
-
 /// @brief Commands Manager, responsible for processing external commands
 ///
 /// Commands Manager is a generic interface for handling external commands.
@@ -96,7 +87,7 @@ public:
     /// @return the only existing instance of the manager
     static CommandMgr& instance();
 
-    /// @brief Configured control socket with paramters specified in socket_info
+    /// @brief Opens control socket with paramters specified in socket_info
     ///
     /// Currently supported types are:
     /// - unix (required parameters: socket-type: unix, socket-name:/unix/path)
@@ -104,7 +95,8 @@ public:
     /// @throw CommandSocketError if socket creation fails
     ///
     /// @param socket_info describes control socket parameters
-    void configureCtrlSocket(const isc::data::ConstElementPtr& socket_info);
+    /// @return socket descriptor of the socket created
+    int openCtrlSocket(const isc::data::ConstElementPtr& socket_info);
 
     /// @brief Shuts down any open control sockets
     void closeCtrlSocket();
