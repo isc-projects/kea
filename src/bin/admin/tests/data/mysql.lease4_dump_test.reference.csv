@@ -1,0 +1,2 @@
+address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname
+0.0.0.10,3230,3330,40,0000-00-00 00:00:00,50,1,1,example.com
