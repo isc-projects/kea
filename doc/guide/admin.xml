@@ -90,6 +90,15 @@
             upgrading Kea.
           </simpara>
         </listitem>
+
+        <listitem>
+          <simpara>
+            <command>lease-dump</command> &mdash;
+            Dumps the contents of the lease database (for MySQL or PostgreSQL
+            backends) to CSV text file. The first line of the file contains
+            the column names.
+          </simpara>
+        </listitem>
       </itemizedlist>
 
       <command>backend</command> specifies the backend type. Currently
