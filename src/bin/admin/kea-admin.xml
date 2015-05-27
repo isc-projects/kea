@@ -49,6 +49,8 @@
       <arg><option>-p <replaceable class="parameter">database password</replaceable></option></arg>
       <arg><option>-n <replaceable class="parameter">database name</replaceable></option></arg>
       <arg><option>-d <replaceable class="parameter">scripts directory</replaceable></option></arg>
+      <arg><option>-4 | -6</option></arg>
+      <arg><option>-o <replaceable class="parameter">output file</replaceable></option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -56,7 +58,7 @@
     <title>DESCRIPTION</title>
     <para>
       kea-admin is a shell script which offers database maintenance. In particular,
-      it features database initialization, database version checking and 
+      it features database initialization, database version checking and
       database schema upgrade.
     </para>
   </refsect1>
@@ -98,6 +100,16 @@
               </listitem>
             </varlistentry>
           </variablelist>
+
+            <varlistentry>
+              <term>lease-dump</term>
+              <listitem>
+                <para>Dumps the contents of the lease database (MySQL and PostgreSQL
+                backends) to text file. The content of the file consists of comma-separated-values
+                (CSV) where each line in the file contains all of the values for a single lease.
+                The first line of file is a header line containing the column names.</para>
+              </listitem>
+            </varlistentry>
 
         </listitem>
       </varlistentry>
@@ -149,6 +161,33 @@
             Used for override scripts directory. That script is used during upgrades,
             database initialization and possibly other operations. If not specified,
             the default value of (prefix)/share/kea/scripts/ is used.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-o|--output <replaceable class="parameter">output_file</replaceable></option></term>
+        <listitem>
+          <para>
+            Required for lease-dump, Specifies the file to which the lease data will be dumped.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-4</option></term>
+        <listitem>
+          <para>
+            Directs kea-admin to lease-dump the DHCPv4 leases. Incompatible with the -6 option.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-6</option></term>
+        <listitem>
+          <para>
+            Directs kea-admin to lease-dump the DHCPv6 leases. Incompatible with the -4 option.
           </para>
         </listitem>
       </varlistentry>
