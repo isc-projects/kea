@@ -1,4 +1,4 @@
-// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -38,7 +38,8 @@ public:
     /// @param secret_len The length of the secret
     /// @param hash_algorithm The hash algorithm
     explicit HMACImpl(const void* secret, size_t secret_len,
-                      const HashAlgorithm hash_algorithm) {
+                      const HashAlgorithm hash_algorithm)
+    : hash_algorithm_(hash_algorithm), md_() {
         const EVP_MD* algo = ossl::getHashAlgorithm(hash_algorithm);
         if (algo == 0) {
             isc_throw(UnsupportedAlgorithm,
@@ -62,6 +63,11 @@ public:
         if (md_) {
             HMAC_CTX_cleanup(md_.get());
         }
+    }
+
+    /// @brief Returns the HashAlgorithm of the object
+    HashAlgorithm getHashAlgorithm() const {
+        return (hash_algorithm_);
     }
 
     /// @brief Returns the output size of the digest
@@ -138,6 +144,8 @@ public:
     }
 
 private:
+    /// @brief The hash algorithm
+    HashAlgorithm hash_algorithm_;
 
     /// @brief The protected pointer to the OpenSSL HMAC_CTX structure
     boost::scoped_ptr<HMAC_CTX> md_;
@@ -151,6 +159,11 @@ HMAC::HMAC(const void* secret, size_t secret_length,
 
 HMAC::~HMAC() {
     delete impl_;
+}
+
+HashAlgorithm
+HMAC::getHashAlgorithm() const {
+    return (impl_->getHashAlgorithm());
 }
 
 size_t

@@ -1,4 +1,4 @@
-// Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -561,6 +561,28 @@ TEST(HMACTest, HMAC_SHA256_RFC2202_SIGN_TRUNCATED) {
                                        0x2b };
     doHMACTest("Test With Truncation", secret5, 20, SHA256,
                hmac_expected5, 16);
+}
+
+namespace {
+    /// @brief Get the hash algorithm
+    /// @param alg Hash algorithm enum
+    /// @return Hash algorithm enum
+    HashAlgorithm
+    signHashAlgorithm(HashAlgorithm alg) {
+        boost::shared_ptr<HMAC> hmac_sign(
+            CryptoLink::getCryptoLink().createHMAC("asdf", 4, alg),
+            deleteHMAC);
+        return (hmac_sign->getHashAlgorithm());
+    }
+}
+
+TEST(HMACTest, HashAlgorithm) {
+    EXPECT_EQ(MD5, signHashAlgorithm(MD5));
+    EXPECT_EQ(SHA1, signHashAlgorithm(SHA1));
+    EXPECT_EQ(SHA256, signHashAlgorithm(SHA256));
+    EXPECT_EQ(SHA224, signHashAlgorithm(SHA224));
+    EXPECT_EQ(SHA384, signHashAlgorithm(SHA384));
+    EXPECT_EQ(SHA512, signHashAlgorithm(SHA512));
 }
 
 namespace {

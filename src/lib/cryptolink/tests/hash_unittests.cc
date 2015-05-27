@@ -1,4 +1,4 @@
-// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -524,6 +524,28 @@ TEST(HashTest, SHA512_RFC6234) {
                "01234567012345670123456701234567"
                "01234567012345670123456701234567",
                SHA512, hash_expected4, 64);
+}
+
+namespace {
+    /// @brief Get the hash algorithm
+    /// @param alg Hash algorithm enum
+    /// @return Hash algorithm enum
+    HashAlgorithm
+    digestHashAlgorithm(HashAlgorithm alg) {
+        boost::shared_ptr<Hash> hash_digest(
+            CryptoLink::getCryptoLink().createHash(alg),
+            deleteHash);
+        return (hash_digest->getHashAlgorithm());
+    }
+}
+
+TEST(HashTest, HashAlgorithm) {
+    EXPECT_EQ(MD5, digestHashAlgorithm(MD5));
+    EXPECT_EQ(SHA1, digestHashAlgorithm(SHA1));
+    EXPECT_EQ(SHA256, digestHashAlgorithm(SHA256));
+    EXPECT_EQ(SHA224, digestHashAlgorithm(SHA224));
+    EXPECT_EQ(SHA384, digestHashAlgorithm(SHA384));
+    EXPECT_EQ(SHA512, digestHashAlgorithm(SHA512));
 }
 
 namespace {

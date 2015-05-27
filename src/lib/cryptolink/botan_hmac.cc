@@ -1,4 +1,4 @@
-// Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -42,7 +42,8 @@ public:
     /// @param secret_len The length of the secret
     /// @param hash_algorithm The hash algorithm
     explicit HMACImpl(const void* secret, size_t secret_len,
-                      const HashAlgorithm hash_algorithm) {
+                      const HashAlgorithm hash_algorithm)
+    : hash_algorithm_(hash_algorithm), hmac_() {
         Botan::HashFunction* hash;
         try {
             hash = Botan::get_hash(btn::getHashAlgorithmName(hash_algorithm));
@@ -93,6 +94,11 @@ public:
 
     /// @brief Destructor
     ~HMACImpl() {
+    }
+
+    /// @brief Returns the HashAlgorithm of the object
+    HashAlgorithm getHashAlgorithm() const {
+        return (hash_algorithm_);
     }
 
     /// @brief Returns the output size of the digest
@@ -195,7 +201,10 @@ public:
     }
 
 private:
-    /// \brief The protected pointer to the Botan HMAC object
+    /// @brief The hash algorithm
+    HashAlgorithm hash_algorithm_;
+
+    /// @brief The protected pointer to the Botan HMAC object
     boost::scoped_ptr<Botan::HMAC> hmac_;
 };
 
@@ -207,6 +216,11 @@ HMAC::HMAC(const void* secret, size_t secret_length,
 
 HMAC::~HMAC() {
     delete impl_;
+}
+
+HashAlgorithm
+HMAC:getHashAlgorithm() const {
+    return (impl_->getHashAlgorithm());
 }
 
 size_t

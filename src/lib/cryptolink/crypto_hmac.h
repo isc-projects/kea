@@ -60,6 +60,9 @@ public:
     /// \brief Destructor
     ~HMAC();
 
+    /// \brief Returns the HashAlgorithm of the object
+    HashAlgorithm getHashAlgorithm() const;
+
     /// \brief Returns the output size of the digest
     ///
     /// \return output size of the digest
