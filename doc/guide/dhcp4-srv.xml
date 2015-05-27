@@ -2583,6 +2583,41 @@ temporarily override a list of interface names and listen on all interfaces.
     </section>
 
 
+<!-- proper section structure added in ticket 3794, will merge it
+appropiately -->
+
+
+<section id="dummy">
+  <title>MERGE ME</title>
+  <para>
+    <itemizedlist>
+      <listitem>
+        <simpara><emphasis>subnet[id].total-addresses</emphasis> (integer) -
+        this statistic shows the total number of addresses available for the
+        DHCPv4 management. In other words, this is the sum of all addresses in
+        all configured pools. This statistic changes only during configuration
+        changes. Note it does not take into account any addresses that may be
+        reserved due to host reservation. The <emphasis>id</emphasis> is the
+        subnet-id of a given subnet. This statistic is exposed for each subnet
+	separately. This statistic is reset during reconfiguration event.
+	</simpara>
+      </listitem>
+      <listitem>
+        <simpara><emphasis>subnet[id].assigned-addresses</emphasis> (integer) -
+        this statistic shows the number of assigned addresses in a given subnet.
+        This statistic increases every time a new lease is allocated (as a result
+        of receiving a REQUEST message) and is decreased every time a lease is
+        released (a RELEASE message is received). When proper lease expiration
+        is implemented (planned for Kea 1.0), it will also decrease when a lease
+        is expired. The <emphasis>id</emphasis> is the subnet-id of a given
+        subnet. This statistic is exposed for each subnet separately. This
+        statistic is reset during reconfiguration event.
+	</simpara>
+      </listitem>
+    </itemizedlist>
+    </para>
+</section>
+
     <section id="dhcp4-std">
       <title>Supported DHCP Standards</title>
       <para>The following standards are currently supported:</para>

@@ -19,10 +19,13 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/subnet_id.h>
+#include <stats/stats_mgr.h>
+#include <sstream>
 #include <string>
 
 using namespace isc::asiolink;
 using namespace isc::util;
+using namespace isc::stats;
 
 namespace isc {
 namespace dhcp {
@@ -116,6 +119,12 @@ CfgMgr::clear() {
 
 void
 CfgMgr::commit() {
+
+    // First we need to remove statistics. The new configuration can have fewer
+    // subnets. Also, it may change subnet-ids. So we need to remove them all
+    // and add it back.
+    removeStatistics();
+
     ensureCurrentAllocated();
     if (!configs_.back()->sequenceEquals(*configuration_)) {
         configuration_ = configs_.back();
@@ -127,6 +136,9 @@ CfgMgr::commit() {
             configs_.erase(configs_.begin(), it);
         }
     }
+
+    // Now we need to set the statistics back.
+    updateStatistics();
 }
 
 void
@@ -184,6 +196,40 @@ CfgMgr::getStagingCfg() {
         configs_.push_back(SrvConfigPtr(new SrvConfig(++sequence)));
     }
     return (configs_.back());
+}
+
+void
+CfgMgr::removeStatistics() {
+    const Subnet4Collection* subnets = getCurrentCfg()->getCfgSubnets4()->getAll();
+
+    // For each subnet currently configured, remove the statistic
+    for (Subnet4Collection::const_iterator subnet = subnets->begin();
+         subnet != subnets->end(); ++subnet) {
+
+        /// @todo: Once stat contexts are implemented, we'll need to remove all
+        /// statistics from the subnet[subnet-id] context.
+        std::stringstream stat1;
+        stat1 << "subnet[" << (*subnet)->getID() << "].total-addresses";
+        StatsMgr::instance().del(stat1.str());
+
+        std::stringstream stat2;
+        stat2 << "subnet[" << (*subnet)->getID() << "].assigned-addresses";
+        isc::stats::StatsMgr::instance().del(stat2.str());
+    }
+}
+
+void
+CfgMgr::updateStatistics() {
+    const Subnet4Collection* subnets = getCurrentCfg()->getCfgSubnets4()->getAll();
+
+    for (Subnet4Collection::const_iterator subnet = subnets->begin();
+         subnet != subnets->end(); ++subnet) {
+        std::stringstream name;
+        name << "subnet[" << (*subnet)->getID() << "].total-addresses";
+
+        StatsMgr::instance().setValue(name.str(),
+                                      (*subnet)->getPoolCapacity(Lease::TYPE_V4));
+    }
 }
 
 CfgMgr::CfgMgr()
