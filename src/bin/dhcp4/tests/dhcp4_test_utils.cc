@@ -29,6 +29,7 @@
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <stats/stats_mgr.h>
 
 using namespace std;
 using namespace isc::asiolink;
@@ -40,6 +41,10 @@ namespace test {
 
 Dhcpv4SrvTest::Dhcpv4SrvTest()
 :rcode_(-1), srv_(0) {
+
+    // Wipe any existing statistics
+    isc::stats::StatsMgr::instance().removeAll();
+
     subnet_ = Subnet4Ptr(new Subnet4(IOAddress("192.0.2.0"), 24, 1000,
                                      2000, 3000));
     pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"), IOAddress("192.0.2.110")));
@@ -60,6 +65,9 @@ Dhcpv4SrvTest::~Dhcpv4SrvTest() {
     // Make sure that we revert to default value
     CfgMgr::instance().clear();
     CfgMgr::instance().echoClientId(true);
+
+    // Wipe any existing statistics
+    isc::stats::StatsMgr::instance().removeAll();
 }
 
 void Dhcpv4SrvTest::addPrlOption(Pkt4Ptr& pkt) {
