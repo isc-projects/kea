@@ -40,6 +40,7 @@
 #include <hooks/callout_handle.h>
 #include <hooks/hooks_log.h>
 #include <hooks/hooks_manager.h>
+#include <stats/stats_mgr.h>
 #include <util/strutil.h>
 
 #include <asio.hpp>
@@ -1744,6 +1745,12 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
                 LOG_DEBUG(lease_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE)
                     .arg(release->getLabel())
                     .arg(lease->addr_.toText());
+
+                // Need to decrease statistic for assigned addresses.
+                std::stringstream name;
+                name << "subnet[" << lease->subnet_id_ << "].assigned-addresses";
+                isc::stats::StatsMgr::instance().addValue(name.str(),
+                                                          static_cast<uint64_t>(-1));
 
                 if (CfgMgr::instance().ddnsEnabled()) {
                     // Remove existing DNS entries for the lease, if any.
