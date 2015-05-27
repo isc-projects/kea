@@ -15,10 +15,12 @@
 #include <config.h>
 #include <dhcpsrv/tests/alloc_engine_utils.h>
 #include <dhcpsrv/tests/test_utils.h>
+#include <stats/stats_mgr.h>
 
 using namespace std;
 using namespace isc::hooks;
 using namespace isc::asiolink;
+using namespace isc::stats;
 
 namespace isc {
 namespace dhcp {
@@ -1501,6 +1503,114 @@ TEST_F(AllocEngine4Test, findReservation) {
 
     ASSERT_NO_THROW(engine.findReservation(ctx));
     EXPECT_FALSE(ctx.host_);
+}
+
+// This test checks if the simple IPv4 allocation can succeed and that
+// statistic for allocated addresses is increased appropriately.
+TEST_F(AllocEngine4Test, simpleAlloc4Stats) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 100, false)));
+    ASSERT_TRUE(engine);
+
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
+                                    false, true, "somehost.example.com.", false);
+
+    // Let's pretend 100 addresses were allocated already
+    stringstream name;
+    name << "subnet[" << subnet_->getID() << "].assigned-addresses";
+    StatsMgr::instance().addValue(name.str(), static_cast<uint64_t>(100));
+
+    Lease4Ptr lease = engine->allocateLease4(ctx);
+    // The new lease has been allocated, so the old lease should not exist.
+    EXPECT_FALSE(ctx.old_lease_);
+
+    // Check that we got a lease
+    ASSERT_TRUE(lease);
+
+    // The statistic should be there and it should be increased by 1 (to 101).
+    ObservationPtr stat = StatsMgr::instance().getObservation(name.str());
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(101, stat->getInteger().first);
+}
+
+// This test checks if the fake allocation (for DISCOVER) can succeed
+// and that it doesn't increase allocated-addresses statistic.
+TEST_F(AllocEngine4Test, fakeAlloc4Stat) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 100, false)));
+    ASSERT_TRUE(engine);
+
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
+                                    IOAddress("0.0.0.0"), false, true,
+                                    "host.example.com.", true);
+
+    // Let's pretend 100 addresses were allocated already
+    stringstream name;
+    name << "subnet[" << subnet_->getID() << "].assigned-addresses";
+    StatsMgr::instance().addValue(name.str(), static_cast<uint64_t>(100));
+
+    Lease4Ptr lease = engine->allocateLease4(ctx);
+
+    // The new lease has been allocated, so the old lease should not exist.
+    EXPECT_FALSE(ctx.old_lease_);
+
+    // Check that we got a lease
+    ASSERT_TRUE(lease);
+
+    // The statistic should be there and it should not be increased
+    // (should be still equal to 100).
+    ObservationPtr stat = StatsMgr::instance().getObservation(name.str());
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(100, stat->getInteger().first);
+}
+
+// This test checks that the allocated-addresses statistic is decreased when
+// the client has a lease and a reservation for a different address is
+// available.
+TEST_F(AllocEngine4Test, reservedAddressExistingLeaseStat) {
+    // Create the reservation for the client.
+    HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
+                          Host::IDENT_HWADDR, subnet_->getID(),
+                          SubnetID(0), IOAddress("192.0.2.123")));
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    // Create a lease for the client with a different address than the reserved
+    // one.
+    Lease4Ptr lease(new Lease4(IOAddress("192.0.2.101"), hwaddr_,
+                               &clientid_->getClientId()[0],
+                               clientid_->getClientId().size(),
+                               100, 30, 60, time(NULL), subnet_->getID(),
+                               false, false, ""));
+    LeaseMgrFactory::instance().addLease(lease);
+
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+
+    // Let's pretend 100 addresses were allocated already
+    stringstream name;
+    name << "subnet[" << subnet_->getID() << "].assigned-addresses";
+    StatsMgr::instance().addValue(name.str(), static_cast<uint64_t>(100));
+
+    // Request allocation of the reserved address.
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
+                                    IOAddress("192.0.2.123"), false, false,
+                                    "", false);
+    AllocEngine::findReservation(ctx);
+    Lease4Ptr allocated_lease = engine.allocateLease4(ctx);
+
+    ASSERT_TRUE(allocated_lease);
+
+    // The statistic should be still at 100. Note that it was decreased
+    // (because old lease was removed), but also increased (because the
+    // new lease was immediately allocated).
+    ObservationPtr stat = StatsMgr::instance().getObservation(name.str());
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(100, stat->getInteger().first);
+
+    // Lets' double check that the actual allocation took place.
+    EXPECT_FALSE(ctx.fake_allocation_);
 }
 
 }; // namespace test
