@@ -497,11 +497,14 @@ TEST(AsymTest, RSA_PUB_PKCS1) {
                                                       RSA_, SHA1,
                                                       PUBLIC, BASIC),
                                     deleteAsym);
-    ASSERT_TRUE(pub_key.get()->validate());
-    EXPECT_EQ(1024, pub_key.get()->getKeySize());
-    EXPECT_EQ(128, pub_key.get()->getSignatureLength(BASIC));
-    EXPECT_EQ(128, pub_key.get()->getSignatureLength(ASN1));
-    EXPECT_EQ(128, pub_key.get()->getSignatureLength(DNS));
+    ASSERT_TRUE(pub_key->validate());
+    EXPECT_EQ(RSA_, pub_key->getAsymAlgorithm());
+    EXPECT_EQ(SHA1, pub_key->getHashAlgorithm());
+    EXPECT_EQ(PUBLIC, pub_key->getAsymKeyKind());
+    EXPECT_EQ(1024, pub_key->getKeySize());
+    EXPECT_EQ(128, pub_key->getSignatureLength(BASIC));
+    EXPECT_EQ(128, pub_key->getSignatureLength(ASN1));
+    EXPECT_EQ(128, pub_key->getSignatureLength(DNS));
 
     EXPECT_THROW(crypto.createAsym(pubpkcs1, pubpkcs1len - 1,
                                    RSA_, SHA1, PUBLIC, BASIC),
@@ -511,13 +514,12 @@ TEST(AsymTest, RSA_PUB_PKCS1) {
                                                       RSA_, SHA1,
                                                       PUBLIC, ASN1),
                                     deleteAsym);
-    EXPECT_TRUE(pub_key.get()->compare(ref_key.get(), PUBLIC));
-    EXPECT_TRUE(ref_key.get()->compare(pub_key.get(), PUBLIC));
-    EXPECT_FALSE(pub_key.get()->compare(ref_key.get(), PRIVATE));
-    EXPECT_FALSE(pub_key.get()->compare(ref_key.get(), CERT));
+    EXPECT_TRUE(pub_key->compare(ref_key.get(), PUBLIC));
+    EXPECT_TRUE(ref_key->compare(pub_key.get(), PUBLIC));
+    EXPECT_FALSE(pub_key->compare(ref_key.get(), PRIVATE));
+    EXPECT_FALSE(pub_key->compare(ref_key.get(), CERT));
 
-    const std::vector<uint8_t> pubbin =
-        ref_key.get()->exportkey(PUBLIC, BASIC);
+    const std::vector<uint8_t> pubbin = ref_key->exportkey(PUBLIC, BASIC);
     checkData(&pubbin[0], pubpkcs1, pubpkcs1len);
 }
 
@@ -527,8 +529,11 @@ TEST(AsymTest, RSA_PUB_SPKI) {
                                                       RSA_, SHA1,
                                                       PUBLIC, ASN1),
                                     deleteAsym);
-    ASSERT_TRUE(pub_key.get()->validate());
-    EXPECT_EQ(1024, pub_key.get()->getKeySize());
+    ASSERT_TRUE(pub_key->validate());
+    EXPECT_EQ(RSA_, pub_key->getAsymAlgorithm());
+    EXPECT_EQ(SHA1, pub_key->getHashAlgorithm());
+    EXPECT_EQ(PUBLIC, pub_key->getAsymKeyKind());
+    EXPECT_EQ(1024, pub_key->getKeySize());
 
     EXPECT_THROW(crypto.createAsym(pubspki, pubspkilen - 1,
                                    RSA_, SHA1, PUBLIC, ASN1),
@@ -541,13 +546,12 @@ TEST(AsymTest, RSA_PUB_SPKI) {
                                                       RSA_, SHA1,
                                                       PUBLIC, ASN1),
                                     deleteAsym);
-    EXPECT_TRUE(pub_key.get()->compare(ref_key.get(), PUBLIC));
-    EXPECT_TRUE(ref_key.get()->compare(pub_key.get(), PUBLIC));
-    EXPECT_FALSE(pub_key.get()->compare(ref_key.get(), PRIVATE));
-    EXPECT_FALSE(pub_key.get()->compare(ref_key.get(), CERT));
+    EXPECT_TRUE(pub_key->compare(ref_key.get(), PUBLIC));
+    EXPECT_TRUE(ref_key->compare(pub_key.get(), PUBLIC));
+    EXPECT_FALSE(pub_key->compare(ref_key.get(), PRIVATE));
+    EXPECT_FALSE(pub_key->compare(ref_key.get(), CERT));
 
-    const std::vector<uint8_t> pubbin =
-        ref_key.get()->exportkey(PUBLIC, ASN1);
+    const std::vector<uint8_t> pubbin = ref_key->exportkey(PUBLIC, ASN1);
     checkData(&pubbin[0], pubspki, pubspkilen);
 }
 
@@ -557,20 +561,22 @@ TEST(AsymTest, RSA_PUB_DNS) {
                                                       RSA_, SHA1,
                                                       PUBLIC, DNS),
                                     deleteAsym);
-    ASSERT_TRUE(pub_key.get()->validate());
-    EXPECT_EQ(1024, pub_key.get()->getKeySize());
+    ASSERT_TRUE(pub_key->validate());
+    EXPECT_EQ(RSA_, pub_key->getAsymAlgorithm());
+    EXPECT_EQ(SHA1, pub_key->getHashAlgorithm());
+    EXPECT_EQ(PUBLIC, pub_key->getAsymKeyKind());
+    EXPECT_EQ(1024, pub_key->getKeySize());
 
     boost::shared_ptr<Asym> ref_key(crypto.createAsym(pubfile, "",
                                                       RSA_, SHA1,
                                                       PUBLIC, ASN1),
                                     deleteAsym);
-    EXPECT_TRUE(pub_key.get()->compare(ref_key.get(), PUBLIC));
-    EXPECT_TRUE(ref_key.get()->compare(pub_key.get(), PUBLIC));
-    EXPECT_FALSE(pub_key.get()->compare(ref_key.get(), PRIVATE));
-    EXPECT_FALSE(pub_key.get()->compare(ref_key.get(), CERT));
+    EXPECT_TRUE(pub_key->compare(ref_key.get(), PUBLIC));
+    EXPECT_TRUE(ref_key->compare(pub_key.get(), PUBLIC));
+    EXPECT_FALSE(pub_key->compare(ref_key.get(), PRIVATE));
+    EXPECT_FALSE(pub_key->compare(ref_key.get(), CERT));
 
-    const std::vector<uint8_t> pubbin =
-        ref_key.get()->exportkey(PUBLIC, DNS);
+    const std::vector<uint8_t> pubbin = ref_key->exportkey(PUBLIC, DNS);
     EXPECT_EQ(pubbin.size(), pubdnslen);
     checkData(&pubbin[0], pubdns, pubdnslen);
 
@@ -588,8 +594,8 @@ TEST(AsymTest, RSA_PUB_DNS) {
                                                       RSA_, SHA1,
                                                       PUBLIC, DNS),
                                     deleteAsym);
-    EXPECT_TRUE(dns_key.get()->compare(ref_key.get(), PUBLIC));
-    EXPECT_TRUE(ref_key.get()->compare(dns_key.get(), PUBLIC));
+    EXPECT_TRUE(dns_key->compare(ref_key.get(), PUBLIC));
+    EXPECT_TRUE(ref_key->compare(dns_key.get(), PUBLIC));
 }
 
 TEST(AsymTest, RSA_PRIV_PKCS1) {
@@ -598,11 +604,14 @@ TEST(AsymTest, RSA_PRIV_PKCS1) {
                                                       RSA_, SHA1,
                                                       PRIVATE, BASIC),
                                     deleteAsym);
-    ASSERT_TRUE(priv_key.get()->validate());
-    EXPECT_EQ(1024, priv_key.get()->getKeySize());
-    EXPECT_EQ(128, priv_key.get()->getSignatureLength(BASIC));
-    EXPECT_EQ(128, priv_key.get()->getSignatureLength(ASN1));
-    EXPECT_EQ(128, priv_key.get()->getSignatureLength(DNS));
+    ASSERT_TRUE(priv_key->validate());
+    EXPECT_EQ(RSA_, priv_key->getAsymAlgorithm());
+    EXPECT_EQ(SHA1, priv_key->getHashAlgorithm());
+    EXPECT_EQ(PRIVATE, priv_key->getAsymKeyKind());
+    EXPECT_EQ(1024, priv_key->getKeySize());
+    EXPECT_EQ(128, priv_key->getSignatureLength(BASIC));
+    EXPECT_EQ(128, priv_key->getSignatureLength(ASN1));
+    EXPECT_EQ(128, priv_key->getSignatureLength(DNS));
 
     EXPECT_THROW(crypto.createAsym(privpkcs1, privpkcs1len - 1,
                                    RSA_, SHA1, PRIVATE, BASIC),
@@ -612,21 +621,20 @@ TEST(AsymTest, RSA_PRIV_PKCS1) {
                                                       RSA_, SHA1,
                                                       PRIVATE, ASN1),
                                     deleteAsym);
-    EXPECT_TRUE(priv_key.get()->compare(ref_key.get(), PRIVATE));
-    EXPECT_TRUE(ref_key.get()->compare(priv_key.get(), PRIVATE));
-    EXPECT_TRUE(priv_key.get()->compare(ref_key.get(), PUBLIC));
-    EXPECT_FALSE(priv_key.get()->compare(ref_key.get(), CERT));
+    EXPECT_TRUE(priv_key->compare(ref_key.get(), PRIVATE));
+    EXPECT_TRUE(ref_key->compare(priv_key.get(), PRIVATE));
+    EXPECT_TRUE(priv_key->compare(ref_key.get(), PUBLIC));
+    EXPECT_FALSE(priv_key->compare(ref_key.get(), CERT));
 
-    const std::vector<uint8_t> privbin =
-        ref_key.get()->exportkey(PRIVATE, BASIC);
+    const std::vector<uint8_t> privbin = ref_key->exportkey(PRIVATE, BASIC);
     checkData(&privbin[0], privpkcs1, privpkcs1len);
 
     boost::shared_ptr<Asym> pub_key(crypto.createAsym(pubfile, "",
                                                       RSA_, SHA1,
                                                       PUBLIC, ASN1),
                                     deleteAsym);
-    EXPECT_TRUE(priv_key.get()->compare(pub_key.get(), PUBLIC));
-    EXPECT_TRUE(pub_key.get()->compare(priv_key.get(), PUBLIC));
+    EXPECT_TRUE(priv_key->compare(pub_key.get(), PUBLIC));
+    EXPECT_TRUE(pub_key->compare(priv_key.get(), PUBLIC));
 }
 
 TEST(AsymTest, RSA_PRIV_PKCS) {
@@ -641,9 +649,9 @@ TEST(AsymTest, RSA_PRIV_PKCS) {
                                                         RSA_, SHA1,
                                                         PRIVATE, BASIC),
                                     deleteAsym);
-    EXPECT_TRUE(pkcs1_key.get()->validate());
-    EXPECT_TRUE(pkcs1_key.get()->compare(ref_key.get(), PRIVATE));
-    EXPECT_TRUE(ref_key.get()->compare(pkcs1_key.get(), PRIVATE));
+    EXPECT_TRUE(pkcs1_key->validate());
+    EXPECT_TRUE(pkcs1_key->compare(ref_key.get(), PRIVATE));
+    EXPECT_TRUE(ref_key->compare(pkcs1_key.get(), PRIVATE));
 #endif
 
     // PKCS#8 without encryption
@@ -652,9 +660,9 @@ TEST(AsymTest, RSA_PRIV_PKCS) {
                                                      RSA_, SHA1,
                                                      PRIVATE, ASN1),
                                    deleteAsym);
-    EXPECT_TRUE(ne_key.get()->validate());
-    EXPECT_TRUE(ne_key.get()->compare(ref_key.get(), PRIVATE));
-    EXPECT_TRUE(ref_key.get()->compare(ne_key.get(), PRIVATE));
+    EXPECT_TRUE(ne_key->validate());
+    EXPECT_TRUE(ne_key->compare(ref_key.get(), PRIVATE));
+    EXPECT_TRUE(ref_key->compare(ne_key.get(), PRIVATE));
 }
 
 TEST(AsymTest, RSA_PRIV_DNS) {
@@ -665,8 +673,11 @@ TEST(AsymTest, RSA_PRIV_DNS) {
                                                       RSA_, SHA1,
                                                       PRIVATE, DNS),
                                     deleteAsym);
-    EXPECT_TRUE(dns_key.get()->validate());
-    EXPECT_EQ(1024, dns_key.get()->getKeySize());
+    EXPECT_TRUE(dns_key->validate());
+    EXPECT_EQ(RSA_, dns_key->getAsymAlgorithm());
+    EXPECT_EQ(SHA1, dns_key->getHashAlgorithm());
+    EXPECT_EQ(PRIVATE, dns_key->getAsymKeyKind());
+    EXPECT_EQ(1024, dns_key->getKeySize());
 
 #ifndef WITH_BOTAN
     EXPECT_THROW(crypto.createAsym(privdnsfile, "",
@@ -696,14 +707,14 @@ TEST(AsymTest, RSA_PRIV_DNS) {
                                                       RSA_, SHA1,
                                                       PRIVATE, ASN1),
                                     deleteAsym);
-    EXPECT_TRUE(dns_key.get()->compare(ref_key.get(), PRIVATE));
-    EXPECT_TRUE(ref_key.get()->compare(dns_key.get(), PRIVATE));
-    EXPECT_TRUE(dns_key.get()->compare(ref_key.get(), PUBLIC));
-    EXPECT_FALSE(dns_key.get()->compare(ref_key.get(), CERT));
+    EXPECT_TRUE(dns_key->compare(ref_key.get(), PRIVATE));
+    EXPECT_TRUE(ref_key->compare(dns_key.get(), PRIVATE));
+    EXPECT_TRUE(dns_key->compare(ref_key.get(), PUBLIC));
+    EXPECT_FALSE(dns_key->compare(ref_key.get(), CERT));
 
     char tempname[] = "/tmp/privateXXXXXX";
     const std::string testfile = mktemp(tempname);
-    ref_key.get()->exportkey(testfile, "", PRIVATE, DNS);
+    ref_key->exportkey(testfile, "", PRIVATE, DNS);
     FILE* fp;
     fp = fopen(testfile.c_str(), "r");
     ASSERT_TRUE(fp != NULL);
@@ -728,8 +739,11 @@ TEST(AsymTest, CERTIFICATE) {
                                                         RSA_, SHA1,
                                                         CERT, ASN1),
                                       deleteAsym);
-    EXPECT_TRUE(from_file.get()->validate());
-    EXPECT_EQ(1024, from_file.get()->getKeySize());
+    EXPECT_TRUE(from_file->validate());
+    EXPECT_EQ(RSA_, from_file->getAsymAlgorithm());
+    EXPECT_EQ(SHA1, from_file->getHashAlgorithm());
+    EXPECT_EQ(CERT, from_file->getAsymKeyKind());
+    EXPECT_EQ(1024, from_file->getKeySize());
 
     EXPECT_THROW(crypto.createAsym(certfile, "", RSA_, SHA1, PUBLIC, ASN1),
                  BadKey);
@@ -754,22 +768,22 @@ TEST(AsymTest, CERTIFICATE) {
                                                       RSA_, SHA1,
                                                       PUBLIC, ASN1),
                                     deleteAsym);
-    EXPECT_TRUE(from_file.get()->compare(pub_key.get(), PUBLIC));
-    EXPECT_TRUE(pub_key.get()->compare(from_file.get(), PUBLIC));
-    EXPECT_FALSE(from_file.get()->compare(pub_key.get(), PRIVATE));
-    EXPECT_FALSE(pub_key.get()->compare(from_file.get(), PRIVATE));
+    EXPECT_TRUE(from_file->compare(pub_key.get(), PUBLIC));
+    EXPECT_TRUE(pub_key->compare(from_file.get(), PUBLIC));
+    EXPECT_FALSE(from_file->compare(pub_key.get(), PRIVATE));
+    EXPECT_FALSE(pub_key->compare(from_file.get(), PRIVATE));
 
-    std::vector<uint8_t> certbin = from_file.get()->exportkey(CERT, ASN1);
+    std::vector<uint8_t> certbin = from_file->exportkey(CERT, ASN1);
     boost::shared_ptr<Asym> from_bin(crypto.createAsym(&certbin[0],
                                                        certbin.size(),
                                                        RSA_, SHA1,
                                                        CERT, ASN1),
                                      deleteAsym);
-    EXPECT_TRUE(from_bin.get()->validate());
-    EXPECT_TRUE(from_file.get()->compare(from_bin.get(), PUBLIC));
-    EXPECT_TRUE(from_bin.get()->compare(from_file.get(), PUBLIC));
-    EXPECT_TRUE(from_file.get()->compare(from_bin.get(), CERT));
-    EXPECT_TRUE(from_bin.get()->compare(from_file.get(), CERT));
+    EXPECT_TRUE(from_bin->validate());
+    EXPECT_TRUE(from_file->compare(from_bin.get(), PUBLIC));
+    EXPECT_TRUE(from_bin->compare(from_file.get(), PUBLIC));
+    EXPECT_TRUE(from_file->compare(from_bin.get(), CERT));
+    EXPECT_TRUE(from_bin->compare(from_file.get(), CERT));
 
     EXPECT_THROW(crypto.createAsym(&certbin[0], certbin.size() - 1,
                                    RSA_, SHA1, CERT, ASN1),
@@ -802,5 +816,5 @@ TEST(AsymTest, CERTIFICATE) {
                                                       RSA_, SHA1,
                                                       CERT, ASN1),
                                     deleteAsym);
-    EXPECT_FALSE(bad_bin.get()->validate());
+    EXPECT_FALSE(bad_bin->validate());
 }

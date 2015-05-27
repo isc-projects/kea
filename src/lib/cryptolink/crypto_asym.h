@@ -1,4 +1,4 @@
-// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -101,6 +101,15 @@ private:
 public:
     /// \brief Destructor
     ~Asym();
+
+    /// \brief Returns the AsymAlgorithm of the object
+    AsymAlgorithm getAsymAlgorithm() const;
+
+    /// \brief Returns the HashAlgorithm of the object
+    HashAlgorithm getHashAlgorithm() const;
+
+    /// \brief Returns the AsymKeyKind of the object
+    AsymKeyKind getAsymKeyKind() const;
 
     /// \brief Returns the key size in bits
     ///

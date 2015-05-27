@@ -723,6 +723,21 @@ public:
     /// @brief Destructor
     ~AsymImpl() { }
 
+    /// @brief Returns the AsymAlgorithm of the object
+    AsymAlgorithm getAsymAlgorithm() const {
+        return (algo_);
+    }
+
+    /// @brief Returns the HashAlgorithm of the object
+    HashAlgorithm getHashAlgorithm() const {
+        return (hash_);
+    }
+
+    /// @brief Returns the AsymKeyKind of the object
+    AsymKeyKind getAsymKeyKind() const {
+        return (kind_);
+    }
+
     /// @brief Returns the key size in bits
     ///
     size_t getKeySize() const {
@@ -1224,6 +1239,21 @@ Asym::Asym(const std::string& filename,
 
 Asym::~Asym() {
     delete impl_;
+}
+
+AsymAlgorithm
+Asym::getAsymAlgorithm() const {
+    return (impl_->getAsymAlgorithm());
+}
+
+HashAlgorithm
+Asym::getHashAlgorithm() const {
+    return (impl_->getHashAlgorithm());
+}
+
+AsymKeyKind
+Asym::getAsymKeyKind() const {
+    return (impl_->getAsymKeyKind());
 }
 
 size_t
