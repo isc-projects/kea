@@ -20,11 +20,12 @@
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcp/dhcp6.h>
-
+#include <stats/stats_mgr.h>
 #include <hooks/server_hooks.h>
 #include <hooks/hooks_manager.h>
 
 #include <cstring>
+#include <sstream>
 #include <limits>
 #include <vector>
 #include <stdint.h>
@@ -1546,6 +1547,12 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
     if (new_lease && client_lease) {
         ctx.old_lease_ = Lease4Ptr(new Lease4(*client_lease));
         lease_mgr.deleteLease(client_lease->addr_);
+
+        // Need to decrease statistic for assigned addresses.
+        std::stringstream name;
+        name << "subnet[" << ctx.subnet_->getID() << "].assigned-addresses";
+        isc::stats::StatsMgr::instance().addValue(name.str(),
+                                                  static_cast<uint64_t>(-1));
     }
 
     // Return the allocated lease or NULL pointer if allocation was
@@ -1622,6 +1629,13 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr) {
         // That is a real (REQUEST) allocation
         bool status = LeaseMgrFactory::instance().addLease(lease);
         if (status) {
+
+            // The lease insertion succeeded, let's bump up the statistic.
+            std::stringstream name;
+            name << "subnet[" << ctx.subnet_->getID() << "].assigned-addresses";
+            isc::stats::StatsMgr::instance().addValue(name.str(),
+                                                      static_cast<uint64_t>(1));
+
             return (lease);
         } else {
             // One of many failures with LeaseMgr (e.g. lost connection to the
