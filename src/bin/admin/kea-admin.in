@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -158,18 +158,36 @@ mysql_init() {
 }
 
 pgsql_init() {
-    log_error "NOT IMPLEMENTED"
-    exit 1
+    printf "Checking if there is a database initialized already. Please ignore errors.\n"
+
+    # Let's try to count the number of tables. Anything above 0 means that there
+    # is some database in place. If there is anything, we abort.
+    pgsql_execute "\d"
+    COUNT=`echo "$_RESULT" | wc -w`
+    if [ $COUNT -gt 0 ]; then
+        printf "\n"
+        log_error "Expected empty database $db_name, but the following tables are present \n$_RESULT. Aborting."
+        exit 2
+    fi
+
+    init_script="$scripts_dir/pgsql/dhcpdb_create.pgsql"
+    printf "Initializing database using script %s\n" $init_script
+    pgsql_execute_script $init_script
+    ERRCODE=$?
+    if [ "$ERRCODE" -ne 0 ]; then
+        log_error "Database initializatio failed, status code: $ERRCODE?"
+        exit 1
+    fi
+
+    printf "Lease DB version reported after initialization: "
+    pgsql_version_print
+    printf "\n"
+    exit 0
 }
 
 ### Functions that implement database version checking commands
 memfile_version() {
     # @todo Implement this as part of #3601
-    log_error "NOT IMPLEMENTED"
-    exit 1
-}
-
-pgsql_version() {
     log_error "NOT IMPLEMENTED"
     exit 1
 }
@@ -218,7 +236,37 @@ mysql_upgrade() {
 }
 
 pgsql_upgrade() {
-    log_error "NOT IMPLEMENTED"
+    # @todo - When PostgreSQL has a schema greater than 1.0, this will need
+    # to be implemented
+#    log_error "Cannot upgrade: PostgreSQL backend only supports schema version 1.0."
+#    exit 1
+
+    pgysql_version_print
+    printf "\n"
+
+    # Check if the scripts directory exists at all.
+    if [ ! -d ${scripts_dir}/pgsql ]; then
+        log_error "Invalid scripts directory: ${scripts_dir}/pgsql"
+        exit 1
+    fi
+
+    # Check if there are any files in it
+    num_files=$(find ${scripts_dir}/pgsql/upgrade*.sh -type f | wc -l)
+    if [ $num_files -eq 0 ]; then
+        log_error "No scripts in ${scripts_dir}/pgsql or the directory is not readable or does not have any upgrade* scripts."
+        exit 1
+    fi
+
+    for script in ${scripts_dir}/pgsql/upgrade*.sh
+    do
+        echo "Processing $script file..."
+        sh ${script} --user=${db_user} --password=${db_password} ${db_name}
+    done
+
+    printf "Lease DB version reported after upgrade: "
+    pgsql_version_print
+    printf "\n"
+    exit 0
 }
 
 
@@ -329,7 +377,7 @@ case ${command} in
                 printf "\n"
                 ;;
             pgsql)
-                pgsql_version
+                pgsql_version_print
                 ;;
             esac
         ;;
