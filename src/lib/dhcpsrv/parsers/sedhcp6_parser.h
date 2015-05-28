@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef DBACCESS_PARSER_H
-#define DBACCESS_PARSER_H
+#ifndef SEDHCP6_PARSER_H
+#define SEDHCP6_PARSER_H
 
 #include <cc/data.h>
 #include <dhcpsrv/parsers/dhcp_config_parser.h>
@@ -25,67 +25,48 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Exception thrown when 'type' keyword is missing from string
+/// @brief Secure DHCPv6 Parameters
 ///
-/// This condition is checked, but should never occur because 'type' is marked
-/// as mandatory in the .spec file for the server.
-class TypeKeywordMissing : public isc::Exception {
-public:
-    TypeKeywordMissing(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
-};
-
-/// @brief Parse Lease Database Parameters
-///
-/// This class is the parser for the lease database configuration.  This is a
-/// map under the top-level "lease-database" element, and comprises a map of
+/// This class is the parser for the secure DHCPv6 configuration.  This is a
+/// map under the top-level "secure" element, and comprises a map of
 /// strings.
-///
-/// Only the "type" sub-element is mandatory: the remaining sub-elements 
-/// depend on the database chosen.
-class DbAccessParser: public DhcpConfigParser {
+class SeDhcp6Parser: public DhcpConfigParser {
 public:
     /// @brief Keyword and associated value
     typedef std::pair<std::string, std::string> StringPair;
 
-    /// @brief Keyword/value collection of database access parameters
+    /// @brief Keyword/value collection of secure DHCPv6 parameters
     typedef std::map<std::string, std::string> StringPairMap;
 
     /// @brief Constructor
     ///
-    /// @param param_name Name of the parameter under which the database
-    ///        access details are held.
+    /// @param param_name Name of the parameter under which the secure
+    ///        DHCPv6 details are held.
     /// @param ctx Parser context.
-    DbAccessParser(const std::string& param_name, const ParserContext& ctx);
+    SeDhcp6Parser(const std::string& param_name, const ParserContext& ctx);
 
     /// The destructor.
-    virtual ~DbAccessParser()
+    virtual ~SeDhcp6Parser()
     {}
 
     /// @brief Prepare configuration value.
     ///
-    /// Parses the set of strings forming the database access specification and
+    /// Parses the set of strings forming the secure DHCPv6 specification and
     /// checks that all are OK.  In particular it checks:
     ///
-    /// - "type" is "memfile", "mysql" or "postgresql"
-    /// - "lfc-interval" is a number from the range of 0 to 4294967295.
+    /// TODO
     ///
-    /// Once all has been validated, constructs the database access string
-    /// expected by the lease manager.
+    /// Once all has been validated, TODO
     ///
-    /// @param config_value The configuration value for the "lease-database"
+    /// @param config_value The configuration value for the "secure""
     ///        identifier.
     ///
-    /// @throw isc::BadValue The 'type' keyword contains an unknown database
-    ///        type.
-    /// @throw isc::dhcp::MissingTypeKeyword The 'type' keyword is missing from
-    ///        the list of database access keywords.
+    /// @throw TODO
     virtual void build(isc::data::ConstElementPtr config_value);
 
     /// @brief Apply the prepared configuration value to the server.
     ///
-    /// With the string validated, this closes the currently open database (if
-    /// any), then opens a database corresponding to the stored string.
+    /// With the string validated, TODO
     ///
     /// This method is expected to be called after \c build(), and only once.
     /// The result is undefined otherwise.
@@ -99,32 +80,27 @@ public:
     ///         configuration.
     /// @param ctx Parser context.
     ///
-    /// @return Pointer to a DbAccessParser.  The caller is responsible for
+    /// @return Pointer to a SeDhcp6Parser.  The caller is responsible for
     ///         destroying the parser after use.
     static DhcpConfigParser* factory(const std::string& param_name,
                                      const ParserContext& ctx) {
-        return (new DbAccessParser(param_name, ctx));
+        return (new SeDhcp6Parser(param_name, ctx));
     }
 
 protected:
-    /// @brief Get database access parameters
+    /// @brief Get secure DHCPv6 parameters
     ///
     /// Used in testing to check that the configuration information has been
     /// parsed correctly.
     ///
     /// @return Reference to the internal map of keyword/value pairs
-    ///         representing database access information.  This is valid only
+    ///         representing secure DHCPv6 information.  This is valid only
     ///         for so long as the the parser remains in existence.
-    const StringPairMap& getDbAccessParameters() const {
+    const StringPairMap& getSeDhcp6Parameters() const {
         return (values_);
     }
 
-    /// @brief Construct database access string
-    ///
-    /// Constructs the database access string from the stored parameters.
-    ///
-    /// @return Database access string
-    std::string getDbAccessString() const;
+    /// TODO
 
 private:
 
@@ -137,4 +113,4 @@ private:
 };  // namespace isc
 
 
-#endif // DBACCESS_PARSER_H
+#endif // SEDHCP6_PARSER_H

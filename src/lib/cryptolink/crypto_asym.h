@@ -40,7 +40,6 @@ private:
     /// \exception UnsupportedAlgorithm if the given algorithm
     ///            is unknown or not supported by the underlying library
     /// \exception Badkey if the given key length is bad
-    /// \exception InvalidCert if the certification fails to validate
     /// \exception LibraryError if there was any unexpected exception
     ///            in the underlying library
     ///

@@ -33,6 +33,8 @@ EXTRA_DIST += parsers/dhcp_parsers.h
 EXTRA_DIST += parsers/host_reservation_parser.cc
 EXTRA_DIST += parsers/host_reservation_parser.h
 EXTRA_DIST += parsers/host_reservations_list_parser.h
+EXTRA_DIST += parsers/sedhcp6_parser.cc
+EXTRA_DIST += parsers/sedhcp6_parser.h
 
 # Define rule to build logging source files from message file
 dhcpsrv_messages.h dhcpsrv_messages.cc hosts_messages.h hosts_messages.cc: s-messages
@@ -127,7 +129,8 @@ libkea_dhcpsrv_la_SOURCES += parsers/host_reservation_parser.h
 libkea_dhcpsrv_la_SOURCES += parsers/host_reservations_list_parser.h
 libkea_dhcpsrv_la_SOURCES += parsers/ifaces_config_parser.cc
 libkea_dhcpsrv_la_SOURCES += parsers/ifaces_config_parser.h
-
+libkea_dhcpsrv_la_SOURCES += parsers/sedhcp6_parser.cc
+libkea_dhcpsrv_la_SOURCES += parsers/sedhcp6_parser.h
 
 nodist_libkea_dhcpsrv_la_SOURCES = dhcpsrv_messages.h dhcpsrv_messages.cc
 nodist_libkea_dhcpsrv_la_SOURCES += hosts_messages.h hosts_messages.cc

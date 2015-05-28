@@ -2221,6 +2221,34 @@ should include options from the isc option space:
       </para>
    </section>
 
+   <section id="reservation6-secure">
+      <title>Secure DHCPv6 Authorization in Host Reservation</title>
+
+      <note>Secure DHCPv6 is experimental</note>
+
+      <para>Host reservations are used too in secure DHCPv6 to provide
+      the authorization, i.e., a way the check the association between
+      the public key or the certificate presented in a packet protected
+      by secure DHCPv6 and a particular client.
+      </para>
+
+      <para>A client is configured in a host reservation with the
+      filename of its public key or certificate (the two keywords can
+      be used indifferently: the key type always follows the secure DHCPv6
+      option type). The two 
+      <itemizedlist>
+      <listitem><simpara> <command>public-key</command> specifies
+      the name of a file containing the public key.
+      </simpara></listitem>
+      <listitem><simpara> <command>certificate</command> specifies
+      the name of a file containing the certificate.
+      </simpara></listitem>
+      </itemizedlist>
+      The format of the file content must follow the checking operation,
+      e.g., when it is a bit-to-bit compare it must be encoded in DER.
+      </para>
+   </section>
+
     <!-- @todo: add support for per IA reservation (that specifies IAID in
                 the ip-addresses and prefixes) -->
   </section>

@@ -106,13 +106,6 @@ public:
         CryptoLinkError(file, line, what) {}
 };
 
-/// This exception is thrown when a certification is invalid
-class InvalidCert : public CryptoLinkError {
-public:
-   InvalidCert(const char* file, size_t line, const char* what) :
-       CryptoLinkError(file, line, what) {}
-};
-
 /// This exception is raised when a general error that was not
 /// specifically caught is thrown by the underlying library. It
 /// is replaced by this one so as not have 'external' exceptions
@@ -265,7 +258,6 @@ public:
     /// \exception UnsupportedAlgorithm if the given algorithm
     ///            is unknown or not supported by the underlying library
     /// \exception BadKey if the given key length is bad
-    /// \exception InvalidCert if the certification fails to validate
     /// \exception LibraryError if there was any unexpected exception
     ///            in the underlying library
     /// \param key            The key to sign or verify with

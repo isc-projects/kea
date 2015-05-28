@@ -38,6 +38,72 @@
         ]
       },
 
+      { "item_name": "secure-Dhcp6",
+        "item_type": "map",
+        "item_optional": true,
+        "item_default": {},
+        "map_item_spec": [
+        {
+            "item_name": "sign-answers",
+            "item_type": "boolean",
+            "item_optional": true;
+            "item_default": false
+        },
+        {
+            "item_name": "signature-algorithm"
+            "item_type": "string",
+            "item_optional": true,
+            "item_default": "RSA"
+        },
+        {
+            "item_name": "hash-algorithm"
+            "item_type": "string",
+            "item_optional": true,
+            "item_default": "SHA-256"
+        },
+        {
+            "item_name": "public-key"
+            "item_type": "string",
+            "item_optional": true,
+            "item_default": ""
+        },
+        {
+            "item_name": "certificate"
+            "item_type": "string",
+            "item_optional": true,
+            "item_default": ""
+        },
+        {
+            "item_name": "timestamp-answers",
+            "item_type": "boolean",
+            "item_optional": true,
+            "item_default": false
+        },
+        {
+            "item_name": "check-signatures",
+            "item_type": "boolean",
+            "item_optional": true,
+            "item_default": false
+        },
+        {
+            "item_name": "check-timestamps",
+            "item_type": "boolean",
+            "item_optional": true,
+            "item_default": false
+        },
+        {
+            "item_name": "check-authorizations",
+            "item_type": "boolean",
+            "item_optional": true,
+            "item_default": false
+        },
+        {
+            "item_name": "validation-policy"
+            "item_type": "string",
+            "item_optional": true,
+            "item_default": "offline"
+        }
+      },
       { "item_name": "renew-timer",
         "item_type": "integer",
         "item_optional": false,
@@ -431,6 +497,18 @@
                             "item_optional": false,
                             "item_default": ""
                         }
+                      },
+                      {
+                        "item_name": "public-key",
+                        "item_type": "string",
+                        "item_optional": true,
+                        "item_default": ""
+                      },
+                      {
+                        "item_name": "certificate",
+                        "item_type": "string",
+                        "item_optional": true,
+                        "item_default": ""
                       } ]
                   }
                 },
