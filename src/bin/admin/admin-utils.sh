@@ -1,4 +1,4 @@
-# Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -41,4 +41,45 @@ mysql_version() {
 mysql_version_print() {
     mysql_version "$@"
     printf "%s" $_RESULT
+}
+
+pgsql_execute() {
+    QUERY=$1
+    shift
+    if [ $# -gt 0 ]; then
+        _RESULT=$(echo $QUERY | psql --set ON_ERROR_STOP=1 -A -t -q $*)
+        retcode=$?
+    else
+        export PGPASSWORD=$db_password
+        _RESULT=$(echo $QUERY | psql --set ON_ERROR_STOP=1 -A -t -q -U $db_user -d $db_name)
+        retcode=$?
+    fi
+    return $retcode
+}
+
+pgsql_execute_script() {
+    file=$1
+    shift
+    if [ $# -gt 0 ]; then
+        _RESULT=$(psql --set ON_ERROR_STOP=1 -A -t -q -f $file $*)
+        retcode=$?
+    else
+        export PGPASSWORD=$db_password
+        _RESULT=$(psql --set ON_ERROR_STOP=1 -A -t -q -U $db_user -d $db_name -f $file)
+        retcode=$?
+    fi
+    return $retcode
+}
+
+
+pgsql_version() {
+    pgsql_execute "SELECT version || '.' || minor FROM schema_version" "$@"
+    return $?
+}
+
+pgsql_version_print() {
+    pgsql_version "$@"
+    retcode=$?
+    printf "%s" $_RESULT
+    return $?
 }
