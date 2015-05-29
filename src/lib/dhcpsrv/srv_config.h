@@ -20,6 +20,7 @@
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfg_option_def.h>
 #include <dhcpsrv/cfg_rsoo.h>
+#include <dhcpsrv/cfg_sedhcp6.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/cfg_subnets6.h>
 #include <dhcpsrv/cfg_mac_source.h>
@@ -258,6 +259,23 @@ public:
         return (cfg_rsoo_);
     }
 
+    /// @brief Returns pointer to the non-const object representing
+    /// state of secure DHCPv6.
+    ///
+    /// @return Pointer to the non-const object holding secure DHCPv6
+    /// state
+    CfgSeDhcp6Ptr getCfgSeDhcp6() {
+        return (cfg_sedhcp6_);
+    }
+
+    /// @brief Returns pointer to the const object representing state
+    /// of secure DHCPv6.
+    ///
+    /// @return Pointer to the const object holding secure DHCPv6 state
+    ConstCfgSeDhcp6Ptr getCfgSeDhcp6() const {
+        return (cfg_sedhcp6_);
+    }
+
     //@}
 
     /// @brief Returns non-const reference to an array that stores
@@ -396,6 +414,12 @@ private:
     /// This object holds a set of RSOO-enabled options. See
     /// RFC 6422 for the definition of the RSOO-enabled option.
     CfgRSOOPtr cfg_rsoo_;
+
+    /// @brief Pointer to the configuration state for secure DHCPv6.
+    ///
+    /// This object holds the configuration state for secure DHCPv6.
+    CfgSeDhcp6Ptr cfg_sedhcp6_;
+
 };
 
 /// @name Pointers to the @c SrvConfig object.

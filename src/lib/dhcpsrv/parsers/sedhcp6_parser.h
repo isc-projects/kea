@@ -18,6 +18,7 @@
 #include <cc/data.h>
 #include <dhcpsrv/parsers/dhcp_config_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
+#include <dhcpsrv/cfg_sedhcp6.h>
 #include <exceptions/exceptions.h>
 
 #include <string>
@@ -42,8 +43,8 @@ public:
     ///
     /// @param param_name Name of the parameter under which the secure
     ///        DHCPv6 details are held.
-    /// @param ctx Parser context.
-    SeDhcp6Parser(const std::string& param_name, const ParserContext& ctx);
+    /// @param universe Parser universe.
+    SeDhcp6Parser(const std::string& param_name, Option::Universe universe);
 
     /// The destructor.
     virtual ~SeDhcp6Parser()
@@ -54,59 +55,33 @@ public:
     /// Parses the set of strings forming the secure DHCPv6 specification and
     /// checks that all are OK.  In particular it checks:
     ///
-    /// TODO
+    /// - public and private keys and certificate
+    /// - algorithms and validation policy
     ///
-    /// Once all has been validated, TODO
+    /// Once all has been validated, update the configuration values
     ///
     /// @param config_value The configuration value for the "secure""
     ///        identifier.
     ///
-    /// @throw TODO
+    /// @throw isc::data::TypeError
+    /// @throw DhcpConfigError
     virtual void build(isc::data::ConstElementPtr config_value);
 
-    /// @brief Apply the prepared configuration value to the server.
-    ///
-    /// With the string validated, TODO
+    /// @brief Apply the prepared configuration values to the server.
     ///
     /// This method is expected to be called after \c build(), and only once.
-    /// The result is undefined otherwise.
     virtual void commit();
 
-    /// @brief Factory method to create parser
-    ///
-    /// Creates an instance of this parser.
-    ///
-    /// @param param_name Name of the parameter used to access the
-    ///         configuration.
-    /// @param ctx Parser context.
-    ///
-    /// @return Pointer to a SeDhcp6Parser.  The caller is responsible for
-    ///         destroying the parser after use.
-    static DhcpConfigParser* factory(const std::string& param_name,
-                                     const ParserContext& ctx) {
-        return (new SeDhcp6Parser(param_name, ctx));
-    }
-
-protected:
-    /// @brief Get secure DHCPv6 parameters
-    ///
-    /// Used in testing to check that the configuration information has been
-    /// parsed correctly.
-    ///
-    /// @return Reference to the internal map of keyword/value pairs
-    ///         representing secure DHCPv6 information.  This is valid only
-    ///         for so long as the the parser remains in existence.
-    const StringPairMap& getSeDhcp6Parameters() const {
-        return (values_);
-    }
-
-    /// TODO
+    /// @brief Deletes all of the entries from the store.
+    void clear();
 
 private:
+    /// @brief Create a new secure DHCPv6 state with new parameters
+    CfgSeDhcp6 create() const;
 
     std::map<std::string, std::string> values_; ///< Stored parameter values
 
-    ParserContext ctx_; ///< Parser context
+    Option::Universe universe_; ///< Parser universe
 };
 
 };  // namespace dhcp

@@ -1907,7 +1907,107 @@ should include options from the isc option space:
       </para>
     </section>
 
+    <section id="secure-DHCPv6">
+     <title>Secure DHCPv6 support</title>
+
+     <note>Secure DHCPv6 (draft-ietf-dhc-sedhcpv6-07.txt) support is
+     experimental.</note>
+
+     <para>Secure DHCPv6 support is specific to DHCPv6 server. This
+     support is disabled by default (so all boolean configuration
+     knobs have a false default value).</para>
+
+     <para>The entry name is <command>secure-dhcp6</command>with
+     the following knobs and settable values:
+     <itemizedlist>
+     <listitem><simpara>
+     <command>"sign-answers": false</command>
+     When this configuration flag is true DHCPv6 packets sent by the
+     server are protected by secure DHCPv6.
+     </simpara></listitem>
+     <listitem><simpara>
+     <command>"signature-algorithm": "RSA"</command>
+     Specifies the signature algorithm to use. Currently
+     only <userinput>RSA</userinput> (RSASSA-PKCS1-v1_5) is supported.
+     </simpara></listitem>
+     <listitem><simpara>
+     <command>"hash-algorithm": "SHA-256"</command>
+     Specifies the hash algorithm to
+     use. Currently <userinput>SHA-256</userinput>
+     and <userinput>SHA-512</userinput> are supported.
+     </simpara></listitem>
+     <listitem><simpara>
+     <command>"public-key": ""</command>
+     Specifies the name of the file which contains the public key
+     (PKCS#1 or SubjectPublicKeyInfo object) in PEM format. The
+     content of this file will be used to build the public key option.
+     </simpara></listitem>
+     <listitem><simpara>
+     <command>"certificate": ""</command>
+     Specifies the name of the file which contains the certificate
+     (X.509 public key certificate) in PEM format. The content of this
+     file will be used to build the certificate option. When answer
+     signing is enabled, either the <command>public-key</command>
+     or <command>certificate</command> must be configured.
+     </simpara></listitem>
+     <listitem><simpara>
+     <command>"private-key": ""</command> Specifies the name of the
+     file which contains the private key (clear text PKCS#8) in PEM
+     format. Mandatory when answer signing is enabled.
+     </simpara></listitem>
+     <listitem><simpara>
+     <command>"timestamp-answers": false</command>
+     When this configuration flag is true a timestamp option is
+     inserted into DHCPv6 packets sent by the server.
+     </simpara></listitem>
+     <listitem><simpara>
+     <command>"check-signatures": false</command>
+     When this configuration flag is true signature options in
+     incoming packets are verified by the server.
+     </simpara></listitem>
+     <listitem><simpara>
+     <command>"check-timestamps": false</command>
+     When this configuration flag is true timestamps options in
+     incoming packets are verified by the server.
+     </simpara></listitem>
+     <listitem><simpara>
+     <command>"check-authorizations": false</command>
+     When this configuration flag is true the association between a
+     public key or a certificate option and a client with host
+     reservation (<emphasis>the authorization</emphasis>) is checked:
+     unprotected and not matching incoming packets are rejected.
+     </simpara></listitem>
+     <listitem><simpara>
+     <command>"validation-policy": "offline"</command>
+     Specifies the policy to use for certificate validation. When the
+     value is <userinput>offline</userinput> the certificate is
+     considered to have been validated before the configuration, when
+     the value is <userinput>online</userinput> the cryptographic
+     backend validation routine is called. Currently this means
+     self-signed certificates are accepted.
+     </simpara></listitem>
+     </itemizedlist>
+     </para>
+
+     <para>A basic example of a secure DHCPv6 configuration is:
+
+<screen>
+"Dhcp6": {
+    <userinput>"secure-dhcp6": {
+        "sign-answers": true,
+        "timestamp-answers": true,
+        "certificate": "server-cert.pem",
+        "private-key": "server-private-key.pem",
+        "check-signatures": true,
+        "check-authorizations": true,
+        "check-timestamps": true
+    },</userinput>
+    ...
+}
+</screen>
+     </para>
    </section>
+  </section>
 
   <!-- Host reservation is a large topic. There will be many subsections,
    so it should be a section on its own. -->

@@ -17,10 +17,12 @@
 #include <cc/data.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/parsers/sedhcp6_parser.h>
+#include <cryptolink/crypto_asym.h>
 #include <gtest/gtest.h>
 
 using namespace isc::data;
 using namespace isc::dhcp;
+using namespace isc::cryptolink;
 
 namespace {
 
@@ -56,10 +58,8 @@ TEST_F(SeDhcp6ParserTest, dhcpv6Universe) {
 
     ElementPtr config_element = Element::fromJSON(config);
 
-    ParserContextPtr parser_context(new ParserContext(Option::V6));
-
-    SeDhcp6Parser parser("secure-Dhcp6", *parser_context);
-    ASSERT_NO_THROW(parser.build(config_element));
+    SeDhcp6Parser parser("secure-dhcp6", Option::V6);
+    EXPECT_NO_THROW(parser.build(config_element));
 }
 
 // This test checks the parser requires DHCPv6 context
@@ -68,10 +68,8 @@ TEST_F(SeDhcp6ParserTest, dhcpv4Universe) {
 
     ElementPtr config_element = Element::fromJSON(config);
 
-    ParserContextPtr parser_context(new ParserContext(Option::V4));
-
-    SeDhcp6Parser parser("secure-Dhcp6", *parser_context);
-    ASSERT_THROW(parser.build(config_element), DhcpConfigError);
+    SeDhcp6Parser parser("secure-dhcp6", Option::V4);
+    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
 }
 
 // This test checks unknown parameters
@@ -80,16 +78,18 @@ TEST_F(SeDhcp6ParserTest, unknownParameters) {
 
     ElementPtr config_element = Element::fromJSON(config);
 
-    ParserContextPtr parser_context(new ParserContext(Option::V6));
-
-    SeDhcp6Parser parser("secure-Dhcp6", *parser_context);
-    ASSERT_THROW(parser.build(config_element), DhcpConfigError);
+    SeDhcp6Parser parser("secure-dhcp6", Option::V6);
+    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
 
     config = "{ \"unknown-string\": \"foobar\" }";
-    ASSERT_THROW(parser.build(config_element), DhcpConfigError);
+    config_element = Element::fromJSON(config);
+    parser.clear();
+    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
 
     config = "{ \"unknown-integer\": 1234 }";
-    ASSERT_THROW(parser.build(config_element), DhcpConfigError);
+    config_element = Element::fromJSON(config);
+    parser.clear();
+    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
 }
 
 // This test checks the boolean parameters
@@ -98,71 +98,88 @@ TEST_F(SeDhcp6ParserTest, booleanParameters) {
 
     ElementPtr config_element = Element::fromJSON(config);
 
-    ParserContextPtr parser_context(new ParserContext(Option::V6));
-
-    SeDhcp6Parser parser("secure-Dhcp6", *parser_context);
-    ASSERT_NO_THROW(parser.build(config_element));
+    SeDhcp6Parser parser("secure-dhcp6", Option::V6);
+    EXPECT_NO_THROW(parser.build(config_element));
 
     config = "{ \"sign-answers\": \"foo\" }";
     config_element = Element::fromJSON(config);
-    ASSERT_THROW(parser.build(config_element), TypeError);
+    parser.clear();
+    EXPECT_THROW(parser.build(config_element), TypeError);
 
     config = "{ \"timestamp-answers\": true }";
     config_element = Element::fromJSON(config);
-    ASSERT_NO_THROW(parser.build(config_element));
+    parser.clear();
+    EXPECT_NO_THROW(parser.build(config_element));
 
     config = "{ \"timestamp-answers\": \"foobar\" }";
     config_element = Element::fromJSON(config);
-    ASSERT_THROW(parser.build(config_element), TypeError);
+    parser.clear();
+    EXPECT_THROW(parser.build(config_element), TypeError);
 
     config = "{ \"check-authorizations\": true }";
     config_element = Element::fromJSON(config);
-    ASSERT_NO_THROW(parser.build(config_element));
+    parser.clear();
+    EXPECT_NO_THROW(parser.build(config_element));
 
     config = "{ \"check-authorizations\": \"foobar\" }";
     config_element = Element::fromJSON(config);
-    ASSERT_THROW(parser.build(config_element), TypeError);
+    parser.clear();
+    EXPECT_THROW(parser.build(config_element), TypeError);
 
     config = "{ \"check-signatures\": true }";
     config_element = Element::fromJSON(config);
-    ASSERT_NO_THROW(parser.build(config_element));
+    parser.clear();
+    EXPECT_NO_THROW(parser.build(config_element));
 
     config = "{ \"check-signatures\": \"foobar\" }";
     config_element = Element::fromJSON(config);
-    ASSERT_THROW(parser.build(config_element), TypeError);
+    parser.clear();
+    EXPECT_THROW(parser.build(config_element), TypeError);
 
     config = "{ \"check-timestamps\": true }";
     config_element = Element::fromJSON(config);
-    ASSERT_NO_THROW(parser.build(config_element));
+    parser.clear();
+    EXPECT_NO_THROW(parser.build(config_element));
 
     config = "{ \"check-timestamps\": \"foobar\" }";
     config_element = Element::fromJSON(config);
-    ASSERT_THROW(parser.build(config_element), TypeError);
+    parser.clear();
+    EXPECT_THROW(parser.build(config_element), TypeError);
 }
 
 // This test checks string parameters
 TEST_F(SeDhcp6ParserTest, stringParameters) {
-    std::string config = "{ \"public-key\": \"foobar\" }";
+    std::string config = "{ \"public-key\": \"my-public-key\","
+        " \"private-key\": \"my-private-key\" }";
 
     ElementPtr config_element = Element::fromJSON(config);
 
-    ParserContextPtr parser_context(new ParserContext(Option::V6));
+    SeDhcp6Parser parser("secure-dhcp6", Option::V6);
+    EXPECT_NO_THROW(parser.build(config_element));
 
-    SeDhcp6Parser parser("secure-Dhcp6", *parser_context);
-    ASSERT_NO_THROW(parser.build(config_element));
-
-    config = "{ \"public-key\": true }";
+    config = "{ \"public-key\": true,"
+        " \"private-key\": \"my-private-key\" }";
     config_element = Element::fromJSON(config);
-    ASSERT_THROW(parser.build(config_element), TypeError);
+    parser.clear();
+    EXPECT_THROW(parser.build(config_element), TypeError);
 
-    config = "{ \"certificate\": \"foobar\" }";
+    config = "{ \"public-key\": \"my-public-key\","
+        " \"private-key\": true }";
     config_element = Element::fromJSON(config);
-    SeDhcp6Parser parser2("secure-Dhcp6", *parser_context);
-    ASSERT_NO_THROW(parser2.build(config_element));
+    parser.clear();
+    EXPECT_THROW(parser.build(config_element), TypeError);
 
-    config = "{ \"certificate\": false }";
+    config = "{ \"certificate\": \"foobar\","
+        " \"private-key\": \"my-private-key\" }";
     config_element = Element::fromJSON(config);
-    ASSERT_THROW(parser2.build(config_element), TypeError);
+    parser.clear();
+    EXPECT_NO_THROW(parser.build(config_element));
+
+    config = "{ \"certificate\": false,"
+        " \"private-key\": \"my-private-key\" }";
+    config_element = Element::fromJSON(config);
+    parser.clear();
+    EXPECT_THROW(parser.build(config_element), TypeError);
 
     // other string parameters have constrainted values
 }
@@ -173,28 +190,28 @@ TEST_F(SeDhcp6ParserTest, algorithms) {
 
     ElementPtr config_element = Element::fromJSON(config);
 
-    ParserContextPtr parser_context(new ParserContext(Option::V6));
-
-    SeDhcp6Parser parser("secure-Dhcp6", *parser_context);
-    ASSERT_NO_THROW(parser.build(config_element));
+    SeDhcp6Parser parser("secure-dhcp6", Option::V6);
+    EXPECT_NO_THROW(parser.build(config_element));
 
     config = "{ \"signature-algorithm\": \"DSA\" }";
     config_element = Element::fromJSON(config);
-    ASSERT_THROW(parser.build(config_element), DhcpConfigError);
+    parser.clear();
+    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
 
     config = "{ \"hash-algorithm\": \"SHA-256\" }";
     config_element = Element::fromJSON(config);
-    ASSERT_NO_THROW(parser.build(config_element));
+    parser.clear();
+    EXPECT_NO_THROW(parser.build(config_element));
 
     config = "{ \"hash-algorithm\": \"SHA-512\" }";
     config_element = Element::fromJSON(config);
-    ASSERT_NO_THROW(parser.build(config_element));
+    parser.clear();
+    EXPECT_NO_THROW(parser.build(config_element));
 
     config = "{ \"hash-algorithm\": \"MD5\" }";
     config_element = Element::fromJSON(config);
-    ASSERT_THROW(parser.build(config_element), DhcpConfigError);
-
-    // Verify the default
+    parser.clear();
+    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
 }
 
 // This test checks enabled signing of answers
@@ -203,34 +220,43 @@ TEST_F(SeDhcp6ParserTest, signing) {
 
     ElementPtr config_element = Element::fromJSON(config);
 
-    ParserContextPtr parser_context(new ParserContext(Option::V6));
-
-    SeDhcp6Parser parser("secure-Dhcp6", *parser_context);
-    ASSERT_NO_THROW(parser.build(config_element));
+    SeDhcp6Parser parser("secure-dhcp6", Option::V6);
+    EXPECT_NO_THROW(parser.build(config_element));
 
     // Not public key and certificate at the same time
-    // Need real files!
-    config = "{ \"public-key\": \"my-pub-key\","
-        " \"certificate\": \"my-certificate\" }";
+    config = "{ \"public-key\": \"" SEDHCP6_DATA_DIR "/pub.pem\","
+        " \"certificate\": \"" SEDHCP6_DATA_DIR "/cert.pem\" }";
     config_element = Element::fromJSON(config);
-    ASSERT_THROW(parser.build(config_element), DhcpConfigError);
+    parser.clear();
+    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
 
-    // Either public key or certificate when signing is enabled
-    config = "{  \"sign-answers\": true }";
+    // Private key is required when signing is enabled
+    config = "{  \"sign-answers\": true,"
+        " \"certificate\": \"" SEDHCP6_DATA_DIR "/cert.pem\" }";
     config_element = Element::fromJSON(config);
-    SeDhcp6Parser parser2("secure-Dhcp6", *parser_context);
-    ASSERT_THROW(parser2.build(config_element), DhcpConfigError);
+    parser.clear();
+    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+
+    // Either public key or certificate are required when signing is enabled
+    config = "{  \"sign-answers\": true,"
+        " \"private-key\": \"" SEDHCP6_DATA_DIR "/priv.pem\" }";
+    config_element = Element::fromJSON(config);
+    parser.clear();
+    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
 
     config = "{  \"sign-answers\": true,"
-        " \"public-key\": \"my-pub-key\" }";
+        " \"public-key\": \"" SEDHCP6_DATA_DIR "/pub.pem\","
+        " \"private-key\": \"" SEDHCP6_DATA_DIR "/priv.pem\" }";
     config_element = Element::fromJSON(config);
-    ASSERT_NO_THROW(parser2.build(config_element));
+    parser.clear();
+    EXPECT_NO_THROW(parser.build(config_element));
 
     config = "{  \"sign-answers\": true,"
-        " \"certificate\": \"my-certificate\" }";
+        " \"certificate\": \"" SEDHCP6_DATA_DIR "/cert.pem\","
+        " \"private-key\": \"" SEDHCP6_DATA_DIR "/priv.pem\" }";
     config_element = Element::fromJSON(config);
-    SeDhcp6Parser parser3("secure-Dhcp6", *parser_context);
-    ASSERT_NO_THROW(parser3.build(config_element));
+    parser.clear();
+    EXPECT_NO_THROW(parser.build(config_element));
 }
 
 // This test checks the parsing of validation policy syntax
@@ -239,18 +265,205 @@ TEST_F(SeDhcp6ParserTest, validationPolicy) {
 
     ElementPtr config_element = Element::fromJSON(config);
 
-    ParserContextPtr parser_context(new ParserContext(Option::V6));
-
-    SeDhcp6Parser parser("secure-Dhcp6", *parser_context);
-    ASSERT_NO_THROW(parser.build(config_element));
+    SeDhcp6Parser parser("secure-dhcp6", Option::V6);
+    EXPECT_NO_THROW(parser.build(config_element));
 
     config = "{ \"validation-policy\": \"online\" }";
     config_element = Element::fromJSON(config);
-    ASSERT_NO_THROW(parser.build(config_element));
+    parser.clear();
+    EXPECT_NO_THROW(parser.build(config_element));
 
     config = "{ \"validation-policy\": \"forever\" }";
     config_element = Element::fromJSON(config);
-    ASSERT_THROW(parser.build(config_element), DhcpConfigError);
+    parser.clear();
+    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
 }
+
+// This test checks the parsing of a full config using a public key
+TEST_F(SeDhcp6ParserTest, fullWithPublicKey) {
+    std::string config = "{ \"sign-answers\": true,"
+        " \"private-key\": \"" SEDHCP6_DATA_DIR "/priv.pem\","
+        " \"public-key\": \"" SEDHCP6_DATA_DIR "/pub.pem\" }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    SeDhcp6Parser parser("secure-dhcp6", Option::V6);
+    ASSERT_NO_THROW(parser.build(config_element));
+    ASSERT_NO_THROW(parser.commit());
+
+    CfgSeDhcp6Ptr state = CfgMgr::instance().getStagingCfg()->getCfgSeDhcp6();
+    ASSERT_TRUE(state);
+
+    EXPECT_TRUE(state->getSignAnswers());
+    EXPECT_FALSE(state->getTimestampAnswers());
+    EXPECT_FALSE(state->getCheckSignatures());
+    EXPECT_FALSE(state->getCheckAuthorizations());
+    EXPECT_FALSE(state->getCheckTimestamps());
+    EXPECT_FALSE(state->getOnlineValidation());
+
+    CfgSeDhcp6::AsymPtr priv_key(state->getPrivateKey());
+    ASSERT_TRUE(priv_key);
+    EXPECT_EQ(priv_key->getAsymAlgorithm(), RSA_);
+    EXPECT_EQ(priv_key->getHashAlgorithm(), SHA256);
+    EXPECT_EQ(priv_key->getAsymKeyKind(), PRIVATE);
+
+    CfgSeDhcp6::AsymPtr pub_key(state->getCredential());
+    ASSERT_TRUE(pub_key);
+    EXPECT_EQ(pub_key->getAsymAlgorithm(), RSA_);
+    EXPECT_EQ(pub_key->getHashAlgorithm(), SHA256);
+    EXPECT_EQ(pub_key->getAsymKeyKind(), PUBLIC);
+}
+
+// This test checks a public key config with signing disabled
+TEST_F(SeDhcp6ParserTest, fullPubKeyNoSign) {
+    std::string config = "{ \"sign-answers\": false,"
+        " \"check-signatures\": true,"
+        " \"check-authorizations\": true,"
+        " \"check-timestamps\": true,"
+        " \"private-key\": \"" SEDHCP6_DATA_DIR "/priv.pem\","
+        " \"public-key\": \"" SEDHCP6_DATA_DIR "/pub.pem\" }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    SeDhcp6Parser parser("secure-dhcp6", Option::V6);
+    ASSERT_NO_THROW(parser.build(config_element));
+    ASSERT_NO_THROW(parser.commit());
+
+    CfgSeDhcp6Ptr state = CfgMgr::instance().getStagingCfg()->getCfgSeDhcp6();
+    ASSERT_TRUE(state);
+
+    EXPECT_FALSE(state->getSignAnswers());
+    EXPECT_FALSE(state->getTimestampAnswers());
+    EXPECT_TRUE(state->getCheckSignatures());
+    EXPECT_TRUE(state->getCheckAuthorizations());
+    EXPECT_TRUE(state->getCheckTimestamps());
+    EXPECT_FALSE(state->getOnlineValidation());
+
+    CfgSeDhcp6::AsymPtr priv_key(state->getPrivateKey());
+    ASSERT_FALSE(priv_key);
+
+    CfgSeDhcp6::AsymPtr pub_key(state->getCredential());
+    ASSERT_FALSE(pub_key);
+}
+
+// This test checks a public key config with SHA-512
+TEST_F(SeDhcp6ParserTest, fullPubKeySha512) {
+    std::string config = "{ \"sign-answers\": true,"
+        " \"hash-algorithm\": \"SHA-512\","
+        " \"private-key\": \"" SEDHCP6_DATA_DIR "/priv.pem\","
+        " \"public-key\": \"" SEDHCP6_DATA_DIR "/pub.pem\" }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    SeDhcp6Parser parser("secure-dhcp6", Option::V6);
+    ASSERT_NO_THROW(parser.build(config_element));
+    ASSERT_NO_THROW(parser.commit());
+
+    CfgSeDhcp6Ptr state = CfgMgr::instance().getStagingCfg()->getCfgSeDhcp6();
+    ASSERT_TRUE(state);
+
+    EXPECT_TRUE(state->getSignAnswers());
+    EXPECT_FALSE(state->getTimestampAnswers());
+    EXPECT_FALSE(state->getCheckSignatures());
+    EXPECT_FALSE(state->getCheckAuthorizations());
+    EXPECT_FALSE(state->getCheckTimestamps());
+    EXPECT_FALSE(state->getOnlineValidation());
+
+    CfgSeDhcp6::AsymPtr priv_key(state->getPrivateKey());
+    ASSERT_TRUE(priv_key);
+    EXPECT_EQ(priv_key->getAsymAlgorithm(), RSA_);
+    EXPECT_EQ(priv_key->getHashAlgorithm(), SHA512);
+    EXPECT_EQ(priv_key->getAsymKeyKind(), PRIVATE);
+
+    CfgSeDhcp6::AsymPtr pub_key(state->getCredential());
+    ASSERT_TRUE(pub_key);
+    EXPECT_EQ(pub_key->getAsymAlgorithm(), RSA_);
+    EXPECT_EQ(pub_key->getHashAlgorithm(), SHA512);
+    EXPECT_EQ(pub_key->getAsymKeyKind(), PUBLIC);
+}
+
+// This test checks the parsing of a full config using a certificate
+TEST_F(SeDhcp6ParserTest, fullWithCertificate) {
+    std::string config = "{ \"sign-answers\": true,"
+        " \"private-key\": \"" SEDHCP6_DATA_DIR "/priv.pem\","
+        " \"certificate\": \"" SEDHCP6_DATA_DIR "/cert.pem\" }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    SeDhcp6Parser parser("secure-dhcp6", Option::V6);
+    ASSERT_NO_THROW(parser.build(config_element));
+    ASSERT_NO_THROW(parser.commit());
+
+    CfgSeDhcp6Ptr state = CfgMgr::instance().getStagingCfg()->getCfgSeDhcp6();
+    ASSERT_TRUE(state);
+
+    EXPECT_TRUE(state->getSignAnswers());
+    EXPECT_FALSE(state->getTimestampAnswers());
+    EXPECT_FALSE(state->getCheckSignatures());
+    EXPECT_FALSE(state->getCheckAuthorizations());
+    EXPECT_FALSE(state->getCheckTimestamps());
+    EXPECT_FALSE(state->getOnlineValidation());
+
+    CfgSeDhcp6::AsymPtr priv_key(state->getPrivateKey());
+    ASSERT_TRUE(priv_key);
+    EXPECT_EQ(priv_key->getAsymAlgorithm(), RSA_);
+    EXPECT_EQ(priv_key->getHashAlgorithm(), SHA256);
+    EXPECT_EQ(priv_key->getAsymKeyKind(), PRIVATE);
+
+    CfgSeDhcp6::AsymPtr cert(state->getCredential());
+    ASSERT_TRUE(cert);
+    EXPECT_EQ(cert->getAsymAlgorithm(), RSA_);
+    EXPECT_EQ(cert->getHashAlgorithm(), SHA256);
+    EXPECT_EQ(cert->getAsymKeyKind(), CERT);
+}
+
+// This test checks a certificate config with signing disabled
+TEST_F(SeDhcp6ParserTest, fullCertNoSign) {
+    std::string config = "{ \"sign-answers\": false,"
+        " \"check-signatures\": true,"
+        " \"check-authorizations\": true,"
+        " \"check-timestamps\": true,"
+        " \"private-key\": \"" SEDHCP6_DATA_DIR "/priv.pem\","
+        " \"certificate\": \"" SEDHCP6_DATA_DIR "/cert.pem\" }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    SeDhcp6Parser parser("secure-dhcp6", Option::V6);
+    ASSERT_NO_THROW(parser.build(config_element));
+    ASSERT_NO_THROW(parser.commit());
+
+    CfgSeDhcp6Ptr state = CfgMgr::instance().getStagingCfg()->getCfgSeDhcp6();
+    ASSERT_TRUE(state);
+
+    EXPECT_FALSE(state->getSignAnswers());
+    EXPECT_FALSE(state->getTimestampAnswers());
+    EXPECT_TRUE(state->getCheckSignatures());
+    EXPECT_TRUE(state->getCheckAuthorizations());
+    EXPECT_TRUE(state->getCheckTimestamps());
+    EXPECT_FALSE(state->getOnlineValidation());
+
+    CfgSeDhcp6::AsymPtr priv_key(state->getPrivateKey());
+    ASSERT_FALSE(priv_key);
+
+    CfgSeDhcp6::AsymPtr cert(state->getCredential());
+    ASSERT_FALSE(cert);
+}
+
+// This test checks a certificate config with SHA-512
+TEST_F(SeDhcp6ParserTest, fullCertSha512) {
+    std::string config = "{ \"sign-answers\": true,"
+        " \"hash-algorithm\": \"SHA-512\","
+        " \"private-key\": \"" SEDHCP6_DATA_DIR "/priv.pem\","
+        " \"certificate\": \"" SEDHCP6_DATA_DIR "/cert.pem\" }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    SeDhcp6Parser parser("secure-dhcp6", Option::V6);
+    ASSERT_NO_THROW(parser.build(config_element));
+
+    // The hash algorithm in the signatureAlgorithm will mismatch
+    EXPECT_THROW(parser.commit(), DhcpConfigError);
+}
+
 
 } // end of anonymous namespace

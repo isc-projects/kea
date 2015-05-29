@@ -26,6 +26,7 @@
 #include <dhcpsrv/addr_utilities.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_hosts.h>
+#include <dhcpsrv/cfg_sedhcp6.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_selector.h>
 #include <dhcpsrv/testutils/config_result_check.h>
@@ -3631,6 +3632,67 @@ TEST_F(Dhcp6ParserTest, reservationBogus) {
 
 }
 
+// This test verifies that secure DHCPv6 additions to host reservation
+// is parsed.
+TEST_F(Dhcp6ParserTest, reservationSeDhcp6) {
+    ConstElementPtr x;
+    string config = "{ " + genIfaceConfig() + ","
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ "
+        " { "
+        "    \"pools\": [ ],"
+        "    \"subnet\": \"2001:db8:3::/64\", "
+        "    \"id\": 234,"
+        "    \"reservations\": ["
+        "      {"
+        "        \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "        \"prefixes\": [ \"2001:db8:3:2::/96\" ],"
+        "        \"hostname\": \"\","
+        "        \"public-key\": \"spki.der\""
+        "      },"
+        "      {"
+        "        \"hw-address\": \"01:02:03:04:05:06\","
+        "        \"ip-addresses\": [ \"2001:db8:2::abcd\" ],"
+        "        \"hostname\": \"\","
+        "        \"certificate\": \"cert.der\""
+        "      }"
+        "    ]"
+        " } "
+        "], "
+        "\"preferred-lifetime\": 3000,"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    checkResult(x, 0);
+
+    // Hosts configuration must be available.
+    CfgHostsPtr hosts_cfg = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    ASSERT_TRUE(hosts_cfg);
+
+    // Do the same test for the DUID based reservation.
+    std::vector<uint8_t> duid_vec;
+    for (int i = 1; i < 0xb; ++i) {
+        duid_vec.push_back(static_cast<uint8_t>(i));
+    }
+    DuidPtr duid(new DUID(duid_vec));
+    ConstHostPtr host = hosts_cfg->get6(234, duid);
+    ASSERT_TRUE(host);
+    EXPECT_EQ("spki.der", host->getCredential());
+
+    std::vector<uint8_t> hwaddr_vec;
+    for (int i = 1; i < 7; ++i) {
+        hwaddr_vec.push_back(static_cast<uint8_t>(i));
+    }
+    HWAddrPtr hwaddr(new HWAddr(hwaddr_vec, HTYPE_ETHER));
+    // Retrieve the reservation and sanity check the address reserved.
+    host = hosts_cfg->get6(234, DuidPtr(), hwaddr);
+    ASSERT_TRUE(host);
+    EXPECT_EQ("cert.der", host->getCredential());
+}
+
 /// The goal of this test is to verify that configuration can include
 /// MAC/Hardware sources. This test also checks if the aliases are
 /// handled properly (rfc6939 = client-addr-relay, rfc4649 = remote-id,
@@ -3896,6 +3958,34 @@ TEST_F(Dhcp6ParserTest, rsooBogusName) {
     // returned value should be 0 (success)
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+}
+
+// This test verifies that secure DHCPv6 server configuration parses
+TEST_F(Dhcp6ParserTest, secureDhcp6) {
+    ConstElementPtr x;
+    string config = "{ " + genIfaceConfig() + ","
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ {"
+        "    \"pools\": [ ],"
+        "    \"subnet\": \"2001:db8:1::/64\" } ],"
+        "\"secure-dhcp6\": {"
+        "    \"sign-answers\": false,"
+        "    \"check-signatures\": true },"
+        "\"preferred-lifetime\": 3000,"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    checkResult(x, 0);
+
+    // Get secure DHCPv6 configuration state
+    CfgSeDhcp6Ptr state = CfgMgr::instance().getStagingCfg()->getCfgSeDhcp6();
+    ASSERT_TRUE(state);
+
+    EXPECT_FALSE(state->getSignAnswers());
+    EXPECT_TRUE(state->getCheckSignatures());
 }
 
 };
