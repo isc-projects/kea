@@ -15,6 +15,9 @@
 #include <cmath>
 #include <util/ntp_utils.h>
 
+using namespace boost::posix_time;
+using namespace boost::gregorian;
+
 namespace isc {
 namespace util {
 
@@ -33,6 +36,10 @@ const double FUZZ = 1.;
 const double DRIFT = .01;
 }
 
+bool Ntp::is_zero() const {
+    return (ntp_sec_ == 0);
+}
+
 Ntp::Ntp() : ntp_sec_(0), ntp_fraction_(0)
 {
 }
@@ -42,10 +49,20 @@ Ntp::Ntp(uint64_t sec, uint16_t fraction)
 {
 }
 
-Ntp::Ntp(struct timeval tv)
+Ntp::Ntp(const struct timeval* tv)
 {
-    ntp_sec_ = static_cast<uint32_t>(tv.tv_sec) + EPOCH_ADJUST;
-    uint32_t fcvt = (tv.tv_usec * 65536U) / 1000000UL;
+    ntp_sec_ = static_cast<uint32_t>(tv->tv_sec) + EPOCH_ADJUST;
+    uint32_t fcvt = (tv->tv_usec * 65536U) / 1000000UL;
+    ntp_fraction_ = static_cast<uint16_t>(fcvt & 0xffff);
+}
+
+Ntp::Ntp(const ptime pt)
+{
+    ptime epoch(date(1900, Jan, 1));
+    time_duration dur(pt - epoch);
+    ntp_sec_ = static_cast<uint64_t>(dur.total_seconds());
+    uint64_t fcvt = dur.fractional_seconds() * 65536U;
+    fcvt /= time_duration::ticks_per_second();
     ntp_fraction_ = static_cast<uint16_t>(fcvt & 0xffff);
 }
 
@@ -57,7 +74,7 @@ Ntp::Ntp(double secs, time_t base)
     ntp_fraction_ = static_cast<uint16_t>(floor(fracpart * 65536.));
 }
 
-bool Ntp::from_binary(std::vector<uint8_t> binary)
+bool Ntp::from_binary(const std::vector<uint8_t> binary)
 {
     if (binary.size() != 8) {
         return (false);
@@ -94,8 +111,9 @@ double Ntp::secs(time_t base) const
     return (ret);
 }
 
-bool Ntp::verify_new(const Ntp& rd_new, const Ntp& ts_new, time_t base)
+bool Ntp::verify_new(const Ntp& rd_new, const Ntp& ts_new)
 {
+    time_t base = time(NULL);
     double drd_new = rd_new.secs(base);
     double dts_new = ts_new.secs(base);
     if (drd_new >= dts_new) {
@@ -114,9 +132,9 @@ bool Ntp::verify_new(const Ntp& rd_new, const Ntp& ts_new, time_t base)
 }
 
 bool Ntp::verify(const Ntp& rd_new, const Ntp& ts_new,
-                 const Ntp& rd_last, const Ntp& ts_last,
-                 time_t base, bool* to_update)
+                 const Ntp& rd_last, const Ntp& ts_last, bool* to_update)
 {
+    time_t base = time(NULL);
     double drd_new = rd_new.secs(base);
     double drd_last = rd_last.secs(base);
     if (drd_new < drd_last) {

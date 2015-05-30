@@ -45,9 +45,11 @@
 #include <hooks/hooks_manager.h>
 #include <util/encode/hex.h>
 #include <util/io_utilities.h>
+#include <util/ntp_utils.h>
 #include <util/range_utilities.h>
 #include <log/logger.h>
 #include <cryptolink/cryptolink.h>
+#include <cryptolink/crypto_asym.h>
 #include <cfgrpt/config_report.h>
 
 #ifdef HAVE_MYSQL
@@ -2871,94 +2873,274 @@ void Dhcpv6Srv::processRSOO(const Pkt6Ptr& query, const Pkt6Ptr& rsp) {
 
 bool Dhcpv6Srv::validateSeDhcpOptions(const Pkt6Ptr& query, Pkt6Ptr& answer,
                                       const AllocEngine::ClientContext6 ctx) {
-    // TODO return true if secure DHCPv6 is not enabled
-    if (true) {
+    // Get the secure DHCPv6 global configuration state
+    ConstCfgSeDhcp6Ptr state =
+        CfgMgr::instance().getCurrentCfg()->getCfgSeDhcp6();
+    // If doesn't exit give up
+    if (!state) {
         return (true);
     }
-    bool has_pubkey = false;
-    if (query->getOption(D6O_PUBLIC_KEY)) {
-        has_pubkey = true;
-        if (query->getOptions(D6O_PUBLIC_KEY).size() > 1) {
+
+    // Is check-signatures enabled
+    if (state->getCheckSignatures()) {
+        // Get the public key option
+        bool has_pubkey = false;
+        if (query->getOption(D6O_PUBLIC_KEY)) {
+            has_pubkey = true;
+            if (query->getOptions(D6O_PUBLIC_KEY).size() > 1) {
+                answer->addOption(createStatusCode(STATUS_UnspecFail,
+                            "More than one public key option"));
+                return (false);
+            }
+        }
+        // Get the certificate option
+        bool has_cert = false;
+        if (query->getOption(D6O_CERTIFICATE)) {
+            has_cert = true;
+            if (query->getOptions(D6O_CERTIFICATE).size() > 1) {
+                answer->addOption(createStatusCode(STATUS_UnspecFail,
+                            "More than one certificate option"));
+                return (false);
+            }
+        }
+        // Both must not be presented at the same time
+        if (has_pubkey && has_cert) {
             answer->addOption(createStatusCode(STATUS_UnspecFail,
-                                               "More than one "
-                                               "public key option"));
+                        "Both public key and certificate options"));
             return (false);
         }
-    }
-    bool has_cert = false;
-    if (query->getOption(D6O_CERTIFICATE)) {
-        has_cert = true;
-        if (query->getOptions(D6O_CERTIFICATE).size() > 1) {
-            answer->addOption(createStatusCode(STATUS_UnspecFail,
-                                               "More than one "
-                                               "certificate option"));
+        // Is signature required?
+        bool signopt_required = state->getCheckAuthorizations();
+        string host_credential = "";
+        if (ctx.host_) {
+            host_credential = ctx.host_->getCredential();
+        }
+        if (signopt_required && host_credential.empty()) {
+            answer->addOption(createStatusCode(STATUS_AuthenticationFail,
+                        "No configured credentials"));
             return (false);
         }
+        // Get the signature option
+        OptionPtr signopt = query->getOption(D6O_SIGNATURE);
+        if (signopt_required && !signopt) {
+            answer->addOption(createStatusCode(STATUS_UnspecFail,
+                        "No signature option"));
+            return (false);
+        }
+        // Unsecure
+        if (!signopt_required && !signopt) {
+            return (true);
+        }
+        // signopt is true
+        // Either public key or certificate must available
+        if (!has_pubkey && !has_cert) {
+            answer->addOption(createStatusCode(STATUS_UnspecFail,
+                        "No public key or certificate options"));
+            return (false);
+        }
+        if (query->getOptions(D6O_SIGNATURE).size() > 1) {
+            answer->addOption(createStatusCode(STATUS_UnspecFail,
+                        "More than one signature options"));
+            return (false);
+        }
+        OptionCustomPtr signature =
+            boost::dynamic_pointer_cast<OptionCustom>(signopt);
+        if (!signature) {
+            answer->addOption(createStatusCode(STATUS_UnspecFail,
+                        "Invalid signature option"));
+            return (false);
+        }
+        // Check algorithms
+        uint8_t ha_id = signature->readInteger<uint8_t>(0);
+        if ((ha_id != SHA_256) && (ha_id != SHA_512)) {
+            answer->addOption(createStatusCode(STATUS_AlgorithmNotSupported,
+                        "Unsupported hash algorithm"));
+            return (false);
+        }
+        HashAlgorithm hash_algo = SHA256;
+        if (ha_id == SHA_512) {
+            hash_algo = SHA512;
+        }
+        uint8_t sa_id = signature->readInteger<uint8_t>(1);
+        if (sa_id != RSASSA_PKCS1v1_5) {
+            answer->addOption(createStatusCode(STATUS_AlgorithmNotSupported,
+                        "Unsupported signature algorithm"));
+            return (false);
+        }
+        AsymAlgorithm sign_algo = RSA_;
+        AsymKeyKind key_kind = PUBLIC;
+        if (has_cert) {
+            key_kind = CERT;
+        }
+        // Create the asym crypto object
+        vector<uint8_t> keybin;
+        if (has_pubkey) {
+            keybin = query->getOption(D6O_PUBLIC_KEY)->getData();
+        } else {
+            keybin = query->getOption(D6O_CERTIFICATE)->getData();
+        }
+        CryptoLink& crypto = CryptoLink::getCryptoLink();
+        CfgSeDhcp6::AsymPtr key(crypto.createAsym(keybin,
+                                                  sign_algo,
+                                                  hash_algo,
+                                                  key_kind,
+                                                  ASN1),
+                                deleteAsym);
+        if (!key && has_pubkey) {
+            answer->addOption(createStatusCode(STATUS_UnspecFail,
+                        "Malformed public key option"));
+            return (false);
+        }
+        if (!key) {
+            answer->addOption(createStatusCode(STATUS_UnspecFail,
+                        "Malformed certificate option"));
+            return (false);
+        }
+        // Compare with the credential when it is available
+        if (!host_credential.empty()) {
+            CfgSeDhcp6::AsymPtr cred(crypto.createAsym(host_credential,
+                                                       "",
+                                                       sign_algo,
+                                                       hash_algo,
+                                                       key_kind,
+                                                       ASN1),
+                                     deleteAsym);
+            if (!cred) {
+                answer->addOption(createStatusCode(STATUS_AuthenticationFail,
+                            "Bad configured credentials"));
+                return (false);
+            }
+            if (!cred->compare(key.get(), key_kind)) {
+                answer->addOption(createStatusCode(STATUS_AuthenticationFail,
+                            "Credential mismatch"));
+                return (false);
+            }
+        }
+        // Handle the timestamp option
+        OptionPtr tmstmp_opt;
+        Ntp rd_new;
+        Ntp ts_new;
+        Ntp rd_last;
+        Ntp ts_last;
+        bool update_tmstmp = false;
+        if (state->getCheckTimestamps()) {
+            tmstmp_opt = query->getOption(D6O_TIMESTAMP);
+        }
+        if (tmstmp_opt) {
+            // Get timestamps in NTP format
+            vector<uint8_t> tmstmp_bin = tmstmp_opt->getData();
+            if (!ts_new.from_binary(tmstmp_bin)) {
+                answer->addOption(createStatusCode(STATUS_UnspecFail,
+                            "Malformed timestamp option"));
+                return (false);
+            }
+            rd_new = Ntp(query->getTimestamp());
+            if (ctx.host_) {
+                rd_last = Ntp(ctx.host_->getRDlast());
+                ts_last = Ntp(ctx.host_->getTSlast());
+            }
+            // Verify the given timestamp
+            bool valid = false;
+            if (rd_last.is_zero() || ts_last.is_zero()) {
+                valid = Ntp::verify_new(rd_new, ts_new);
+                if (!valid) {
+                    answer->addOption(createStatusCode(STATUS_TimestampFail,
+                                "New timestamp too far"));
+                    return (false);
+                }
+                if (valid && ctx.host_) {
+                    update_tmstmp = true;
+                }
+            } else {
+                valid = Ntp::verify(rd_new, ts_new, rd_last, ts_last,
+                                    &update_tmstmp);
+                if (!valid) {
+                    answer->addOption(createStatusCode(STATUS_TimestampFail,
+                                "Timestamp out of acceptable range"));
+                    return (false);
+                }
+            }
+        }
+
+        // TODO check signature
+
+        // Update timestamps
+        if (update_tmstmp) {
+            // TODO (ctx.host_ is a const)
+            // ctx.host_->setRDlast(rd_new);
+            // ctx.host_->setTSlast(ts_new);
+        }
     }
-    if (has_pubkey && has_cert) {
-        answer->addOption(createStatusCode(STATUS_UnspecFail,
-                                           "Both public key and "
-                                           "certificate options"));
-        return (false);
-    }
-    if (!has_pubkey && !has_cert) {
-        answer->addOption(createStatusCode(STATUS_UnspecFail,
-                                           "No public key or "
-                                           "certificate options"));
-        return (false);
-    }
-    OptionPtr signopt = query->getOption(D6O_SIGNATURE);
-    if (!signopt) {
-        answer->addOption(createStatusCode(STATUS_UnspecFail,
-                                           "No signature option"));
-        return (false);
-    }
-    if (query->getOptions(D6O_SIGNATURE).size() > 1) {
-        answer->addOption(createStatusCode(STATUS_UnspecFail,
-                                           "More than one signature options"));
-        return (false);
-    }
-    OptionCustomPtr signature =
-        boost::dynamic_pointer_cast<OptionCustom>(signopt);
-    if (!signature) {
-        answer->addOption(createStatusCode(STATUS_UnspecFail,
-                                           "Invalid signature option"));
-        return (false);
-    }
-    uint8_t ha_id = signature->readInteger<uint8_t>(0);
-    if ((ha_id != SHA_256) && (ha_id != SHA_512)) {
-        answer->addOption(createStatusCode(STATUS_AlgorithmNotSupported,
-                                           "Unsupported hash algorithm"));
-        return (false);
-    }
-    uint8_t sa_id = signature->readInteger<uint8_t>(1);
-    if (sa_id != RSASSA_PKCS1v1_5) {
-        answer->addOption(createStatusCode(STATUS_AlgorithmNotSupported,
-                                           "Unsupported signature algorithm"));
-        return (false);
-    }
-    if (!ctx.host_ || ctx.host_->getCredential().empty()) {
-        answer->addOption(createStatusCode(STATUS_AuthenticationFail,
-                                           "No configured credentials"));
-        return (false);
-    }
-    // TODO map ha_id and sa_id, get public key or certificate, compare
-    // TODO... timestamp
-    // TODO check signature
+
+    // Done
     return (true);
 }
 
-void Dhcpv6Srv::appendSeDhcpOptions(Pkt6Ptr& /*answer*/) {
-    // TODO return if secure DHCPv6 is not enabled
-    // TODO add public key or certificate
-    // TODO add signature
-    // TODO... add timestamp
+void Dhcpv6Srv::appendSeDhcpOptions(Pkt6Ptr& answer) {
+    // Get the secure DHCPv6 global configuration state
+    ConstCfgSeDhcp6Ptr state =
+        CfgMgr::instance().getCurrentCfg()->getCfgSeDhcp6();
+    // If doesn't exit give up
+    if (!state) {
+        return;
+    }
+
+    CfgSeDhcp6::AsymPtr key = state->getPrivateKey();
+    CfgSeDhcp6::AsymPtr cred = state->getCredential();
+    if (state->getSignAnswers() && key && cred) {
+        // Add the credential (public key or certificate) option
+        uint16_t cred_type = D6O_PUBLIC_KEY;
+        if (cred->getAsymKeyKind() == CERT) {
+            cred_type = D6O_CERTIFICATE;
+        }
+        OptionBuffer buf = cred->exportkey(cred->getAsymKeyKind(), ASN1);
+        OptionPtr cred_opt(new Option(Option::V6, cred_type, buf));
+        answer->addOption(cred_opt);
+
+        // Add the signature option
+        uint8_t ha_id = SHA_256;
+        if (key->getHashAlgorithm() == SHA512) {
+            ha_id = SHA_512;
+        }
+        uint8_t sa_id = RSASSA_PKCS1v1_5;
+        size_t sig_len = (key->getKeySize() + 7) / 8;
+        OptionBuffer sig(sig_len + 2);
+        sig[0] = ha_id;
+        sig[1] = sa_id;
+        OptionDefinitionPtr sig_def =
+            LibDHCP::getOptionDef(Option::V6, D6O_SIGNATURE);
+        assert(sig_def);
+        OptionCustomPtr sig_opt(new OptionCustom(*sig_def, Option::V6, sig));
+        answer->addOption(sig_opt);
+    }
+
+    // Add timestamps
+    if (state->getTimestampAnswers()) {
+        struct timeval now;
+        gettimeofday(&now, NULL);
+        const Ntp val(&now);
+        const OptionBuffer buf = val.to_binary();
+        OptionPtr tmsmtp_opt(new Option(Option::V6, D6O_TIMESTAMP, buf));
+        answer->addOption(tmsmtp_opt);
+    }
 }
 
 void Dhcpv6Srv::finalizeSignature(Pkt6Ptr& tbs) {
-    // TODO (sanity) throw if secure DHCPv6 is not enabled
+    // Get the secure DHCPv6 global configuration state
+    ConstCfgSeDhcp6Ptr state =
+        CfgMgr::instance().getCurrentCfg()->getCfgSeDhcp6();
+    if (!state) {
+        isc_throw(Unexpected, "no secure DHCPv6 configuration state");
+    }
+    if (!state->getSignAnswers()) {
+        isc_throw(Unexpected, "Signing answers is disabled");
+    }
+    CfgSeDhcp6::AsymPtr key = state->getPrivateKey();
+    if (!key) {
+        isc_throw(Unexpected, "No private key configured");
+    }
     if (!tbs->getSignatureOffset()) {
-        isc_throw(isc::Unexpected, "null signature offset");
+        isc_throw(Unexpected, "null signature offset");
     }
     // TODO
 }

@@ -240,8 +240,6 @@ RECORD_DECL(VENDOR_CLASS_RECORDS, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
 // sedhcpv6 signature
 RECORD_DECL(SIGNATURE_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE,
             OPT_BINARY_TYPE);
-// sedhcpv6 timestamp (should be uint64)
-RECORD_DECL(TIMESTAMP_RECORDS, OPT_UINT32_TYPE, OPT_UINT32_TYPE);
 
 /// Standard DHCPv6 option definitions.
 ///
@@ -343,8 +341,8 @@ const OptionDefParams OPTION_DEF_PARAMS6[] = {
       NO_RECORD_DEF, "" },
     { "signature", D6O_SIGNATURE, OPT_RECORD_TYPE, false,
       RECORD_DEF(SIGNATURE_RECORDS), "" },
-    { "timestamp", D6O_TIMESTAMP, OPT_RECORD_TYPE, false,
-      RECORD_DEF(TIMESTAMP_RECORDS), "" }
+    { "timestamp", D6O_TIMESTAMP, OPT_BINARY_TYPE, false,
+      NO_RECORD_DEF, "" }
 
     // @todo There is still a bunch of options for which we have to provide
     // definitions but we don't do it because they are not really

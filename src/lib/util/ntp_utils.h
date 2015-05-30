@@ -21,6 +21,8 @@
 #include <stdint.h>
 #include <sys/time.h>
 
+#include <boost/date_time/posix_time/posix_time.hpp>
+
 namespace isc {
 namespace util {
 
@@ -36,6 +38,9 @@ struct Ntp {
     // \brief 1/65536th of seconds
     uint16_t ntp_fraction_;
 
+    // \brief Test if the object got a value
+    bool is_zero() const;
+
     // \brief Default constructor
     Ntp();
 
@@ -43,13 +48,16 @@ struct Ntp {
     Ntp(uint64_t sec, uint16_t fraction);
 
     // \brief Conversion from timeval
-    Ntp(struct timeval tv);
+    Ntp(const struct timeval* tv);
+
+    // \brief Conversion from boost posix_time
+    Ntp(const boost::posix_time::ptime pt);
 
     // \brief Conversion from based double
     Ntp(double secs, time_t base);
 
     // \brief Conversion from network
-    bool from_binary(std::vector<uint8_t> binary);
+    bool from_binary(const std::vector<uint8_t> binary);
 
     // \brief Conversion to network
     std::vector<uint8_t> to_binary() const;
@@ -58,12 +66,12 @@ struct Ntp {
     double secs(time_t base) const;
 
     // \brief Verify a timestamp without cache
-    static bool verify_new(const Ntp& rd_new, const Ntp& ts_new, time_t base);
+    static bool verify_new(const Ntp& rd_new, const Ntp& ts_new);
 
     // \brief Verify a timestamp with cache
     static bool verify(const Ntp& rd_new, const Ntp& ts_new,
                        const Ntp& rd_last, const Ntp& ts_last,
-                       time_t base, bool* to_update);
+                       bool* to_update);
 };
 
 } // end of isc::util namespace

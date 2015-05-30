@@ -20,6 +20,7 @@
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/subnet_id.h>
+#include <util/ntp_utils.h>
 #include <boost/shared_ptr.hpp>
 #include <list>
 #include <map>
@@ -432,6 +433,30 @@ public:
         return (credential_);
     }
 
+    /// @brief Sets the date of the last received and accepted packet
+    ///
+    /// @param timestamp Date in NTP format
+    void setRDlast(const isc::util::Ntp& timestamp) {
+	rd_last_ = timestamp;
+    }
+
+    /// @brief Returns RDlast
+    const isc::util::Ntp& getRDlast() const {
+	return (rd_last_);
+    }
+
+    /// @brief Sets the date of the last received and accepted timestamp
+    ///
+    /// @param timestamp Date in NTP format
+    void setTSlast(const isc::util::Ntp& timestamp) {
+	ts_last_ = timestamp;
+    }
+
+    /// @brief Returns TSlast
+    const isc::util::Ntp& getTSlast() const {
+	return (ts_last_);
+    }
+
     /// @brief Returns information about the host in the textual format.
     std::string toText() const;
 
@@ -472,6 +497,10 @@ private:
     ClientClasses dhcp6_client_classes_;
     /// @brief Credential (filename of public key or certificate)
     std::string credential_;
+    /// @brief Date of the last received and accepted packet
+    isc::util::Ntp rd_last_;
+    /// @brief Date of the last received and accepted timestamp
+    isc::util::Ntp ts_last_;
 };
 
 /// @brief Pointer to the @c Host object.
