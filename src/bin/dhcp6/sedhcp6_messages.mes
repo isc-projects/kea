@@ -22,6 +22,11 @@ to an answer packet.
 This debug message is printed when a secure DHCPv6 option is found
 during incoming packet validation.
 
+% SEDHCP6_SIGNATURE_CHECK_FAIL signature check error: %1
+This error message indicates that the signature check has failed.
+This is a "should not happen" condition which reflects an internal
+error.
+
 % SEDHCP6_SIGNATURE_FINALIZE_FAIL signature finalize error: %1
 This error message indicates that the signature finalize has failed.
 This is a "should not happen" condition which reflects an internal
@@ -29,6 +34,10 @@ error.
 
 % SEDHCP6_TIMESTAMP_UPDATED timestamps have been updated
 This debug message is printed when the host timestamps have been updated.
+
+% SEDHCP6_INCOMING_TRACE secure DHCPv6 processing: %1
+This debug message is a generic trace for secure DHCPv6 incoming packet
+processing.
 
 % SEDHCP6_UNSECURE incoming packet is unsecure
 This debug message is printed when the secure DHCPv6 validation

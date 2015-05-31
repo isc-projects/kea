@@ -31,7 +31,7 @@ class CfgSeDhcp6 {
 public:
 
     /// @brief Pointer to constant asym crypto objet
-    typedef boost::shared_ptr<const isc::cryptolink::Asym> AsymPtr;
+    typedef boost::shared_ptr<isc::cryptolink::Asym> AsymPtr;
 
     /// @brief Constructor.
     CfgSeDhcp6(bool sign_answers = false,

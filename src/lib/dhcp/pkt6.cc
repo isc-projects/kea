@@ -189,6 +189,8 @@ Pkt6::pack() {
 
 void
 Pkt6::packUDP() {
+    size_t begin_offset;
+    size_t end_offset;
     try {
         // Make sure that the buffer is empty before we start writting to it.
         buffer_out_.clear();
@@ -236,6 +238,9 @@ Pkt6::packUDP() {
 
         }
 
+        // Keep the offset at the beginning, i.e., after headers
+        begin_offset = buffer_out_.getLength();
+
         // DHCPv6 header: message-type (1 octect) + transaction id (3 octets)
         buffer_out_.writeUint8(msg_type_);
         // store 3-octet transaction-id
@@ -253,11 +258,19 @@ Pkt6::packUDP() {
             }
             it->second->pack(buffer_out_);
         }
+
+        // Keep the offset at the end, i.e., before tailers
+        end_offset = buffer_out_.getLength();
     }
     catch (const Exception& e) {
        // An exception is thrown and message will be written to Logger
        isc_throw(InvalidOperation, e.what());
     }
+    // Record the (possibly relayed) packet's boundaries
+    raw_begin_ = static_cast<const uint8_t*>(buffer_out_.getData())
+        + begin_offset;
+    raw_end_ = static_cast<const uint8_t*>(buffer_out_.getData())
+        + end_offset;
 }
 
 void
@@ -317,8 +330,8 @@ Pkt6::unpackMsg(OptionBufferConstIter begin, OptionBufferConstIter end) {
     }
 
     // Keep begin and end for secure DHCPv6
-    raw_begin_ = begin;
-    raw_end_ = end;
+    raw_begin_ = &(*begin);
+    raw_end_ = raw_begin_ + std::distance(begin, end);
 
     msg_type_ = *begin++;
 

@@ -58,10 +58,10 @@ Ntp::Ntp(const struct timeval* tv)
 
 Ntp::Ntp(const ptime pt)
 {
-    ptime epoch(date(1900, Jan, 1));
+    ptime epoch(date(1970, Jan, 1));
     time_duration dur(pt - epoch);
-    ntp_sec_ = static_cast<uint64_t>(dur.total_seconds());
-    uint64_t fcvt = dur.fractional_seconds() * 65536U;
+    ntp_sec_ = static_cast<uint32_t>(dur.total_seconds()) + EPOCH_ADJUST;
+    uint64_t fcvt = static_cast<uint64_t>(dur.fractional_seconds()) * 65536U;
     fcvt /= time_duration::ticks_per_second();
     ntp_fraction_ = static_cast<uint16_t>(fcvt & 0xffff);
 }
@@ -79,13 +79,19 @@ bool Ntp::from_binary(const std::vector<uint8_t> binary)
     if (binary.size() != 8) {
         return (false);
     }
-    ntp_sec_ = static_cast<uint64_t>(binary[0]) << 40;
-    ntp_sec_ |= static_cast<uint64_t>(binary[1]) << 32;
-    ntp_sec_ |= binary[2] << 24;
-    ntp_sec_ |= binary[3] << 16;
-    ntp_sec_ |= binary[4] << 8;
+    ntp_sec_ = binary[0];
+    ntp_sec_ <<= 8;
+    ntp_sec_ |= binary[1];
+    ntp_sec_ <<= 8;
+    ntp_sec_ |= binary[2];
+    ntp_sec_ <<= 8;
+    ntp_sec_ |= binary[3];
+    ntp_sec_ <<= 8;
+    ntp_sec_ |= binary[4];
+    ntp_sec_ <<= 8;
     ntp_sec_ |= binary[5];
-    ntp_fraction_ = binary[6] << 8;
+    ntp_fraction_ = binary[6];
+    ntp_fraction_ <<= 8;
     ntp_fraction_ |= binary[7];
     return (true);
 }
@@ -106,8 +112,9 @@ std::vector<uint8_t> Ntp::to_binary() const
 
 double Ntp::secs(time_t base) const
 {
-    double ret = static_cast<double>(ntp_sec_ - base - EPOCH_ADJUST);
-    ret += static_cast<double>(ntp_fraction_ * (1./65536.));
+    double ret = static_cast<double>(ntp_sec_);
+    ret -= base + EPOCH_ADJUST;
+    ret += static_cast<double>(ntp_fraction_) * (1./65536.);
     return (ret);
 }
 

@@ -165,12 +165,12 @@ public:
     virtual std::string toText() const;
 
     /// @brief Returns the begin of the (possibly relayed) packet
-    OptionBufferConstIter rawBegin() const {
+    const uint8_t* rawBegin() const {
         return (raw_begin_);
     }
 
     /// @brief Returns the end of the (possibly relayed) packet
-    OptionBufferConstIter rawEnd() const {
+    const uint8_t* rawEnd() const {
         return (raw_end_);
     }
 
@@ -445,10 +445,10 @@ protected:
     uint8_t msg_type_;
 
     /// Begin of the raw packet
-    OptionBufferConstIter raw_begin_;
+    const uint8_t* raw_begin_;
 
     /// End of the raw packet
-    OptionBufferConstIter raw_end_;
+    const uint8_t* raw_end_;
 
     /// Offset of the signature option
     size_t signature_offset_;

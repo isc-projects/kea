@@ -287,7 +287,7 @@ TEST_F(Pkt6Test, unpack_solicit1) {
 
     // Check for length
     EXPECT_EQ(98, sol->len());
-    size_t raw_len = std::distance(sol->rawBegin(), sol->rawEnd());
+    size_t raw_len = sol->rawEnd() - sol->rawBegin();
     EXPECT_EQ(98, raw_len);
     EXPECT_EQ(0, sol->getSignatureOffset());
 
@@ -573,10 +573,10 @@ TEST_F(Pkt6Test, relayUnpack) {
     ASSERT_EQ(2, msg->relay_info_.size());
 
     // Check the raw stuff
-    OptionBufferConstIter begin = msg->rawBegin();
-    OptionBufferConstIter end = msg->rawEnd();
+    const uint8_t* begin = msg->rawBegin();
+    const uint8_t* end = msg->rawEnd();
     EXPECT_EQ(DHCPV6_SOLICIT, *begin);
-    EXPECT_EQ(54, std::distance(begin, end));
+    EXPECT_EQ(54, end - begin);
     EXPECT_EQ(0, msg->getSignatureOffset());
 
     OptionPtr opt;
