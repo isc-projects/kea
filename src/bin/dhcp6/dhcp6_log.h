@@ -16,6 +16,7 @@
 #define DHCP6_LOG_H
 
 #include <dhcp6/dhcp6_messages.h>
+#include <dhcp6/sedhcp6_messages.h>
 #include <log/logger_support.h>
 #include <log/macros.h>
 

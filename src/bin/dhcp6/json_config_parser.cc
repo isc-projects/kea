@@ -686,7 +686,7 @@ DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id,
     } else if (config_id.compare("relay-supplied-options") == 0) {
         parser = new RSOOListConfigParser(config_id);
     } else if (config_id.compare("secure-dhcp6") == 0) {
-	parser = new SeDhcp6Parser(config_id, Option::V6);
+        parser = new SeDhcp6Parser(config_id, Option::V6);
     } else {
         isc_throw(DhcpConfigError,
                 "unsupported global configuration parameter: "

@@ -437,24 +437,24 @@ public:
     ///
     /// @param timestamp Date in NTP format
     void setRDlast(const isc::util::Ntp& timestamp) {
-	rd_last_ = timestamp;
+        rd_last_ = timestamp;
     }
 
     /// @brief Returns RDlast
     const isc::util::Ntp& getRDlast() const {
-	return (rd_last_);
+        return (rd_last_);
     }
 
     /// @brief Sets the date of the last received and accepted timestamp
     ///
     /// @param timestamp Date in NTP format
     void setTSlast(const isc::util::Ntp& timestamp) {
-	ts_last_ = timestamp;
+        ts_last_ = timestamp;
     }
 
     /// @brief Returns TSlast
     const isc::util::Ntp& getTSlast() const {
-	return (ts_last_);
+        return (ts_last_);
     }
 
     /// @brief Returns information about the host in the textual format.

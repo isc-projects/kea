@@ -248,7 +248,7 @@ Pkt6::packUDP() {
         for (OptionCollection::const_iterator it = options_.begin();
              it != options_.end(); ++it) {
             // Remember where the certificate is inserted
-            if (it->first == D6O_CERTIFICATE) {
+            if (it->first == D6O_SIGNATURE) {
                 signature_offset_ = buffer_out_.getLength();
             }
             it->second->pack(buffer_out_);

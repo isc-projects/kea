@@ -1159,7 +1159,7 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
                                     typeid(OptionCustom));
 
     LibDhcpTest::testStdOptionDefs6(D6O_TIMESTAMP, begin, begin + 8,
-                                    typeid(OptionCustom));
+                                    typeid(Option));
 }
 
 // This test checks if the DHCPv6 option definition can be searched by

@@ -125,6 +125,7 @@ extern const int dhcpv6_type_name_max;
 #define HWTYPE_INFINIBAND  0x0020
 
 // Secure DHCPv6 (draft-ietf-dhc-sedhcpv6-07.txt)
+// (can't use an enum because HashAlgorithm name is already taken)
 #define SHA_256                 1
 #define SHA_512                 2
 #define RSASSA_PKCS1v1_5        1

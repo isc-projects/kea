@@ -52,7 +52,7 @@ Ntp::Ntp(uint64_t sec, uint16_t fraction)
 Ntp::Ntp(const struct timeval* tv)
 {
     ntp_sec_ = static_cast<uint32_t>(tv->tv_sec) + EPOCH_ADJUST;
-    uint32_t fcvt = (tv->tv_usec * 65536U) / 1000000UL;
+    uint64_t fcvt = (static_cast<uint64_t>(tv->tv_usec) * 65536U) / 1000000UL;
     ntp_fraction_ = static_cast<uint16_t>(fcvt & 0xffff);
 }
 

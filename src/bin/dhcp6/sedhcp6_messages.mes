@@ -1,0 +1,36 @@
+# Copyright (C) 2015  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+$NAMESPACE isc::dhcp
+
+% SEDHCP6_OPTION_ADDED secure DHCPv6 option has been added: type %1, size %2
+This debug message is printed when a secure DHCPv6 option is added
+to an answer packet.
+
+% SEDHCP6_OPTION_RECEIVED secure DHCPv6 option has been received: type %1
+This debug message is printed when a secure DHCPv6 option is found
+during incoming packet validation.
+
+% SEDHCP6_SIGNATURE_FINALIZE_FAIL signature finalize error: %1
+This error message indicates that the signature finalize has failed.
+This is a "should not happen" condition which reflects an internal
+error.
+
+% SEDHCP6_TIMESTAMP_UPDATED timestamps have been updated
+This debug message is printed when the host timestamps have been updated.
+
+% SEDHCP6_UNSECURE incoming packet is unsecure
+This debug message is printed when the secure DHCPv6 validation
+concludes the incoming packet is unsecure.
+

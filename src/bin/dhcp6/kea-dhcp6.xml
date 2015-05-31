@@ -1,6 +1,6 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
-	       [<!ENTITY mdash "&#8212;">]>
+               [<!ENTITY mdash "&#8212;">]>
 <!--
  - Copyright (C) 2011, 2014 Internet Systems Consortium, Inc. ("ISC")
  -

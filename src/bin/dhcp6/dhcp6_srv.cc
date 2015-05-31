@@ -2887,6 +2887,8 @@ bool Dhcpv6Srv::validateSeDhcpOptions(const Pkt6Ptr& query, Pkt6Ptr& answer,
         bool has_pubkey = false;
         if (query->getOption(D6O_PUBLIC_KEY)) {
             has_pubkey = true;
+	    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, SEDHCP6_OPTION_RECEIVED)
+		.arg("public key");
             if (query->getOptions(D6O_PUBLIC_KEY).size() > 1) {
                 answer->addOption(createStatusCode(STATUS_UnspecFail,
                             "More than one public key option"));
@@ -2897,6 +2899,8 @@ bool Dhcpv6Srv::validateSeDhcpOptions(const Pkt6Ptr& query, Pkt6Ptr& answer,
         bool has_cert = false;
         if (query->getOption(D6O_CERTIFICATE)) {
             has_cert = true;
+	    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, SEDHCP6_OPTION_RECEIVED)
+		.arg("certificate");
             if (query->getOptions(D6O_CERTIFICATE).size() > 1) {
                 answer->addOption(createStatusCode(STATUS_UnspecFail,
                             "More than one certificate option"));
@@ -2929,6 +2933,7 @@ bool Dhcpv6Srv::validateSeDhcpOptions(const Pkt6Ptr& query, Pkt6Ptr& answer,
         }
         // Unsecure
         if (!signopt_required && !signopt) {
+	    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, SEDHCP6_UNSECURE);
             return (true);
         }
         // signopt is true
@@ -3027,6 +3032,8 @@ bool Dhcpv6Srv::validateSeDhcpOptions(const Pkt6Ptr& query, Pkt6Ptr& answer,
             tmstmp_opt = query->getOption(D6O_TIMESTAMP);
         }
         if (tmstmp_opt) {
+	    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, SEDHCP6_OPTION_RECEIVED)
+		.arg("timestamp");
             // Get timestamps in NTP format
             vector<uint8_t> tmstmp_bin = tmstmp_opt->getData();
             if (!ts_new.from_binary(tmstmp_bin)) {
@@ -3066,9 +3073,11 @@ bool Dhcpv6Srv::validateSeDhcpOptions(const Pkt6Ptr& query, Pkt6Ptr& answer,
 
         // Update timestamps
         if (update_tmstmp) {
-            // TODO (ctx.host_ is a const)
-            // ctx.host_->setRDlast(rd_new);
-            // ctx.host_->setTSlast(ts_new);
+	    Host* hp = const_cast<Host*>(ctx.host_.get());
+            hp->setRDlast(rd_new);
+            hp->setTSlast(ts_new);
+	    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
+		      SEDHCP6_TIMESTAMP_UPDATED);
         }
     }
 
@@ -3090,12 +3099,17 @@ void Dhcpv6Srv::appendSeDhcpOptions(Pkt6Ptr& answer) {
     if (state->getSignAnswers() && key && cred) {
         // Add the credential (public key or certificate) option
         uint16_t cred_type = D6O_PUBLIC_KEY;
+	string opt_name = "public key";
         if (cred->getAsymKeyKind() == CERT) {
             cred_type = D6O_CERTIFICATE;
+	    opt_name = "certificate";
         }
         OptionBuffer buf = cred->exportkey(cred->getAsymKeyKind(), ASN1);
         OptionPtr cred_opt(new Option(Option::V6, cred_type, buf));
         answer->addOption(cred_opt);
+	LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, SEDHCP6_OPTION_ADDED)
+	    .arg(opt_name)
+	    .arg(cred_opt->len());
 
         // Add the signature option
         uint8_t ha_id = SHA_256;
@@ -3112,6 +3126,9 @@ void Dhcpv6Srv::appendSeDhcpOptions(Pkt6Ptr& answer) {
         assert(sig_def);
         OptionCustomPtr sig_opt(new OptionCustom(*sig_def, Option::V6, sig));
         answer->addOption(sig_opt);
+	LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, SEDHCP6_OPTION_ADDED)
+	    .arg("signature")
+	    .arg(sig_opt->len());
     }
 
     // Add timestamps
@@ -3122,6 +3139,9 @@ void Dhcpv6Srv::appendSeDhcpOptions(Pkt6Ptr& answer) {
         const OptionBuffer buf = val.to_binary();
         OptionPtr tmsmtp_opt(new Option(Option::V6, D6O_TIMESTAMP, buf));
         answer->addOption(tmsmtp_opt);
+	LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, SEDHCP6_OPTION_ADDED)
+	    .arg("timestamp")
+	    .arg(tmsmtp_opt->len());
     }
 }
 
@@ -3130,17 +3150,25 @@ void Dhcpv6Srv::finalizeSignature(Pkt6Ptr& tbs) {
     ConstCfgSeDhcp6Ptr state =
         CfgMgr::instance().getCurrentCfg()->getCfgSeDhcp6();
     if (!state) {
-        isc_throw(Unexpected, "no secure DHCPv6 configuration state");
+	LOG_ERROR(dhcp6_logger, SEDHCP6_SIGNATURE_FINALIZE_FAIL)
+	    .arg("no secure DHCPv6 configuration state");
+	return;
     }
     if (!state->getSignAnswers()) {
-        isc_throw(Unexpected, "Signing answers is disabled");
+	LOG_ERROR(dhcp6_logger, SEDHCP6_SIGNATURE_FINALIZE_FAIL)
+	    .arg("Signing answers is disabled");
+	return;
     }
     CfgSeDhcp6::AsymPtr key = state->getPrivateKey();
     if (!key) {
-        isc_throw(Unexpected, "No private key configured");
+	LOG_ERROR(dhcp6_logger, SEDHCP6_SIGNATURE_FINALIZE_FAIL)
+	    .arg("No private key configured");
+	return;
     }
     if (!tbs->getSignatureOffset()) {
-        isc_throw(Unexpected, "null signature offset");
+	LOG_ERROR(dhcp6_logger, SEDHCP6_SIGNATURE_FINALIZE_FAIL)
+	    .arg("null signature offset");
+	return;
     }
     // TODO
 }
