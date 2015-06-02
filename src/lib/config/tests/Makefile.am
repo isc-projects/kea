@@ -30,6 +30,7 @@ run_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 run_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
+run_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 
 endif
 

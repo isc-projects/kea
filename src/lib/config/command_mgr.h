@@ -121,6 +121,26 @@ public:
     /// it may be called by external code explicitly. Hence this method is public.
     isc::data::ConstElementPtr processCommand(const isc::data::ConstElementPtr& cmd);
 
+    /// @brief Callback used to accept incoming connections.
+    ///
+    /// This callback is used on a control socket. Once called, it will accept
+    /// incoming connection, create new socket for it and install @ref commandReader
+    /// for that new socket in @ref isc::dhcp::IfaceMgr.
+    ///
+    /// @param sockfd socket descriptor of a socket capable of accepting
+    ///               incoming connections
+    static void connectionAcceptor(int sockfd);
+
+    /// @brief Reads data from a socket, parses as JSON command and processes it
+    ///
+    /// This method is used to handle traffic on connected socket. This callback
+    /// is installed by the @ref connectionAcceptor once the incoming connection
+    /// is accepted. If end-of-file is detected, this method will close the socket
+    /// and will uninstall itself from @ref isc::dhcp::IfaceMgr.
+    ///
+    /// @param sockfd socket descriptor of a connected socket
+    static void commandReader(int sockfd);
+
     /// @brief Auxiliary method that removes all installed commands.
     ///
     /// The only unwipeable method is list-commands, which is internally
