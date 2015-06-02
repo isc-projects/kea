@@ -25,6 +25,7 @@
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_iaprefix.h>
+#include <dhcp/option6_status_code.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option.h>
@@ -101,7 +102,6 @@ public:
     using Dhcpv6Srv::processClientFqdn;
     using Dhcpv6Srv::createNameChangeRequests;
     using Dhcpv6Srv::createRemovalNameChangeRequest;
-    using Dhcpv6Srv::createStatusCode;
     using Dhcpv6Srv::selectSubnet;
     using Dhcpv6Srv::testServerID;
     using Dhcpv6Srv::testUnicast;
@@ -256,8 +256,8 @@ public:
     void checkMsgStatusCode(const isc::dhcp::Pkt6Ptr& msg,
                             uint16_t expected_status)
     {
-        isc::dhcp::OptionCustomPtr status =
-            boost::dynamic_pointer_cast<isc::dhcp::OptionCustom>
+        isc::dhcp::Option6StatusCodePtr status =
+            boost::dynamic_pointer_cast<isc::dhcp::Option6StatusCode>
                 (msg->getOption(D6O_STATUS_CODE));
 
         // It is ok to not include status success as this is the default
@@ -273,7 +273,7 @@ public:
             // status code option content is just a text explanation
             // what went wrong.
             EXPECT_EQ(static_cast<uint16_t>(expected_status),
-                      status->readInteger<uint16_t>(0));
+                      status->getStatusCode());
         }
     }
 
