@@ -364,7 +364,7 @@ Dhcpv4Srv::run() {
             // This is not an error because we might have received a SIGTERM,
             // SIGINT or SIGHUP which are handled by the server. For signals
             // that are not handled by the server we rely on the default
-            // behavior of the system, but there is nothing we should log here.
+            // behavior of the system.
             LOG_DEBUG(packet_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT_SIGNAL)
                 .arg(signal_set_->getNext());
         } catch (const std::exception& e) {

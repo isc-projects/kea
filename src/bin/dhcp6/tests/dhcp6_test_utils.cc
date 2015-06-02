@@ -14,6 +14,7 @@
 
 #include <config.h>
 #include <gtest/gtest.h>
+#include <dhcp/option6_status_code.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/json_config_parser.h>
 #include <config/ccsession.h>
@@ -829,8 +830,8 @@ NakedDhcpv6SrvTest::checkIA_NAStatusCode(
     EXPECT_EQ(expected_t1, ia->getT1());
     EXPECT_EQ(expected_t2, ia->getT2());
 
-    isc::dhcp::OptionCustomPtr status =
-        boost::dynamic_pointer_cast<isc::dhcp::OptionCustom>
+    isc::dhcp::Option6StatusCodePtr status =
+        boost::dynamic_pointer_cast<isc::dhcp::Option6StatusCode>
         (ia->getOption(D6O_STATUS_CODE));
 
     // It is ok to not include status success as this is the default
@@ -847,7 +848,7 @@ NakedDhcpv6SrvTest::checkIA_NAStatusCode(
         // status code option content is just a text explanation
         // what went wrong.
         EXPECT_EQ(static_cast<uint16_t>(expected_status_code),
-                  status->readInteger<uint16_t>(0));
+                  status->getStatusCode());
     }
 }
 
