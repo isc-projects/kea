@@ -25,6 +25,7 @@ libkea_cfgclient_la_SOURCES += config_log.h config_log.cc
 libkea_cfgclient_la_LIBADD = $(top_builddir)/src/lib/cc/libkea-cc.la
 libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
+libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 
 libkea_cfgclient_la_LDFLAGS = -no-undefined -version-info 1:0:1
 
