@@ -1,4 +1,4 @@
-# Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011, 2014-2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -13,6 +13,66 @@
 # PERFORMANCE OF THIS SOFTWARE.
 
 $NAMESPACE isc::config
+
+% COMMAND_PROCESS_ERROR Error while processing command: %1
+This warning message indicates that the server encountered an error while
+processing received command. Additional information will be provided, if
+available. Additional log messages may provide more details.
+
+% COMMAND_RECEIVED Received command '%1'
+This informational message indicates that a command was received over command
+socket. The nature of this command and its possible results will be logged
+with separate messages.
+
+% COMMAND_RESPONSE_ERROR Server failed to generate response for command: %1
+This error message indicates that the server failed to generate response for
+specified command. This likely indicates a server logic error, as the server
+is expected to generate valid responses for all commands, even malformed
+ones.
+
+% COMMAND_SOCKET_READ Received %1 bytes over command socket %2
+This debug message indicates that specified number of bytes was received
+over command socket identified by specified file descriptor.
+
+% COMMAND_SOCKET_READ_FAIL Encountered error %1 while reading from command socket %2
+This warning message indicates that an error was encountered while
+reading from command socket.
+
+% COMMAND_SOCKET_WRITE Sent response of %1 bytes over command socket %2
+This debug message indicates that the specified number of bytes was sent
+over command socket identifier by the specified file descriptor.
+
+% COMMAND_SOCKET_WRITE_FAIL Error while writing %1 bytes to command socket %2
+This warning message indicates that an error was encountered while
+attempting to send a response to the command socket.
+
+% COMMAND_SOCKET_UNIX_OPEN Command socket opened: UNIX, fd=%1, path=%2
+This informational message indicates that the daemon opened a command
+processing socket. This is a UNIX socket. It was opened with the file
+descriptor and path specified.
+
+% COMMAND_SOCKET_UNIX_CLOSE Command socket closed: UNIX, fd=%1, path=%2
+This informational message indicates that the daemon closed a command
+processing socket. This was a UNIX socket. It was opened with the file
+descriptor and path specified.
+
+% COMMAND_SOCKET_CONNECTION_OPENED Opened socket %1 for incoming command connection on socket %2
+This is an informational message that a new incoming command connection was
+detected and a dedicated socket was opened for that connection.
+
+% COMMAND_SOCKET_CONNECTION_CLOSED Closed socket %1 for existing command connection
+This is an informational message that the socket created for handling
+client's connection is closed. This usually means that the client disconnected,
+but may also mean a timeout.
+
+% COMMAND_REGISTERED Command %1 registered
+This debug message indicates that the daemon started supporting specified
+command. If the command socket is open, this command can now be issued.
+
+% COMMAND_DEREGISTERED Command %1 deregistered
+This debug message indicates that the daemon stopped supporting specified
+command. This command can no longer be issued. If the command socket is
+open and this command is issued, the daemon will not be able to process it.
 
 % CONFIG_CCSESSION_MSG error in CC session message: %1
 There was a problem with an incoming message on the command and control
