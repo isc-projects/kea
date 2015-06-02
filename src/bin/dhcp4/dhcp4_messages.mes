@@ -404,9 +404,12 @@ The second argument includes the error string.
 
 % DHCP4_PACKET_RECEIVED %1: %2 (type %3) received from %4 to %5 on interface %6
 A debug message noting that the server has received the specified type of
-packet on the specified interface.  Note that a packet marked as UNKNOWN
-may well be a valid DHCP packet, just a type not expected by the server
-(e.g. it will report a received OFFER packet as UNKNOWN).
+packet on the specified interface. The first argument specifies the
+client and transaction identification information. The second and third
+argument specify the name of the DHCPv4 message and its numeric type
+respectively. The remaining arguments specify the source address,
+destination IP address and the name of the interface on which the
+message has been received.
 
 % DHCP4_PACKET_SEND %1: sending packet %2 (type %3) from %4:%5 to %6:%7 on interface %8
 This debug message is issued when the server is sending the response to
@@ -584,7 +587,7 @@ It lists some information about the parameters with which the server
 is running.
 
 % DHCP4_SUBNET_DATA %1: the selected subnet details: %2
-This debug message includes the details of the subnet selected fot
+This debug message includes the details of the subnet selected for
 the client. The first argument includes the client and the
 transaction identification information. The second arguments
 includes the subnet details.

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -25,6 +25,7 @@
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_iaprefix.h>
+#include <dhcp/option6_status_code.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
@@ -1026,7 +1027,7 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
                                     typeid(Option));
 
     LibDhcpTest::testStdOptionDefs6(D6O_STATUS_CODE, begin, end,
-                                    typeid(OptionCustom));
+                                    typeid(Option6StatusCode));
 
     LibDhcpTest::testStdOptionDefs6(D6O_RAPID_COMMIT, begin, end,
                                     typeid(Option));
