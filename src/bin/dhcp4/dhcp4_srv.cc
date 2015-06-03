@@ -1687,11 +1687,12 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
 
     Subnet4Ptr subnet = selectSubnet(release);
     if (!subnet) {
-	// No subnet - release no sent from the proper location
-	LOG_DEBUG(lease_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_NO_SUBNET)
-	    .arg(release->getLabel())
-	    .arg(release->getCiaddr().toText());
-	return;
+        // No subnet - release no sent from the proper location
+        LOG_DEBUG(bad_packet_logger, DBG_DHCP4_DETAIL,
+                  DHCP4_RELEASE_FAIL_NO_SUBNET)
+            .arg(release->getLabel())
+            .arg(release->getCiaddr().toText());
+        return;
     }
 
     try {
