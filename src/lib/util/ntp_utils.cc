@@ -34,6 +34,25 @@ const double FUZZ = 1.;
 
 // \brief Allowed clock drift (.01s)
 const double DRIFT = .01;
+
+// \brief Normalized unsigned number of seconds
+uint64_t nuns(time_t t) {
+    // time_t can be a signed 32 bit integer
+    if (sizeof(time_t) == 4) {
+        // First/sign bit will be set after 20380118
+        uint32_t repr = static_cast<uint32_t>(t);
+        return (static_cast<uint64_t>(repr));
+    }
+    // or time_t is a signed 64 bit integer
+    return (static_cast<uint64_t>(t));
+}
+
+// \brief Normalized fractional seconds
+int64_t nfs(long f) {
+    // fractional seconds is a signed integer representing less than 1 second
+    return (static_cast<int64_t>(f));
+}
+
 }
 
 bool Ntp::is_zero() const {
@@ -51,8 +70,8 @@ Ntp::Ntp(uint64_t sec, uint16_t fraction)
 
 Ntp::Ntp(const struct timeval* tv)
 {
-    ntp_sec_ = static_cast<uint32_t>(tv->tv_sec) + EPOCH_ADJUST;
-    uint64_t fcvt = (static_cast<uint64_t>(tv->tv_usec) * 65536U) / 1000000UL;
+    ntp_sec_ = nuns(tv->tv_sec) + EPOCH_ADJUST;
+    int64_t fcvt = (nfs(static_cast<long>(tv->tv_usec)) * 65536) / 1000000;
     ntp_fraction_ = static_cast<uint16_t>(fcvt & 0xffff);
 }
 
@@ -60,9 +79,9 @@ Ntp::Ntp(const ptime pt)
 {
     ptime epoch(date(1970, Jan, 1));
     time_duration dur(pt - epoch);
-    ntp_sec_ = static_cast<uint32_t>(dur.total_seconds()) + EPOCH_ADJUST;
-    uint64_t fcvt = static_cast<uint64_t>(dur.fractional_seconds()) * 65536U;
-    fcvt /= time_duration::ticks_per_second();
+    ntp_sec_ = nuns(static_cast<unsigned>(dur.total_seconds())) + EPOCH_ADJUST;
+    int64_t fcvt = (nfs(static_cast<long>(dur.fractional_seconds())) * 65536U)
+        / time_duration::ticks_per_second();
     ntp_fraction_ = static_cast<uint16_t>(fcvt & 0xffff);
 }
 
@@ -70,7 +89,7 @@ Ntp::Ntp(double secs, time_t base)
 {
     double intpart;
     double fracpart = std::modf(secs, &intpart);
-    ntp_sec_ = static_cast<uint64_t>(intpart) + base + EPOCH_ADJUST;
+    ntp_sec_ = static_cast<uint64_t>(intpart) + nuns(base) + EPOCH_ADJUST;
     ntp_fraction_ = static_cast<uint16_t>(floor(fracpart * 65536.));
 }
 
@@ -113,8 +132,8 @@ std::vector<uint8_t> Ntp::to_binary() const
 double Ntp::secs(time_t base) const
 {
     double ret = static_cast<double>(ntp_sec_);
-    ret -= base + EPOCH_ADJUST;
-    ret += static_cast<double>(ntp_fraction_) * (1./65536.);
+    ret -= nuns(base) + EPOCH_ADJUST;
+    ret += static_cast<double>(ntp_fraction_) / 65536.;
     return (ret);
 }
 

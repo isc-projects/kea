@@ -2335,17 +2335,15 @@ should include options from the isc option space:
       <para>A client is configured in a host reservation with the
       filename of its public key or certificate (the two keywords can
       be used indifferently: the key type always follows the secure DHCPv6
-      option type). The two 
+      option type). The two parameters are:
       <itemizedlist>
       <listitem><simpara> <command>public-key</command> specifies
-      the name of a file containing the public key.
+      the name of a file containing the public key in PEM format.
       </simpara></listitem>
       <listitem><simpara> <command>certificate</command> specifies
-      the name of a file containing the certificate.
+      the name of a file containing the certificate in PEM format.
       </simpara></listitem>
       </itemizedlist>
-      The format of the file content must follow the checking operation,
-      e.g., when it is a bit-to-bit compare it must be encoded in DER.
       </para>
    </section>
 

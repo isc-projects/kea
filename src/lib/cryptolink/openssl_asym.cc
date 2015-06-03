@@ -979,6 +979,29 @@ public:
         }
     }
 
+    /// @brief Clear the crypto state and go back to the initial state
+    /// (must be called before reusing an Asym object)
+    void clear() {
+        if (mdctx_) {
+            EVP_MD_CTX_cleanup(mdctx_.get());
+        } else {
+            mdctx_.reset(new EVP_MD_CTX);
+        }
+        EVP_MD_CTX_init(mdctx_.get());
+        const EVP_MD* md = ossl::getHashAlgorithm(hash_);
+        if (md == 0) {
+            isc_throw(UnsupportedAlgorithm,
+                      "Unknown hash algorithm: " <<
+                      static_cast<int>(hash_));
+        }
+        if (!EVP_DigestInit_ex(mdctx_.get(), md, NULL)) {
+            EVP_MD_CTX_cleanup(mdctx_.get());
+            EVP_PKEY_free(pkey_);
+            pkey_ =NULL;
+            isc_throw(LibraryError, "EVP_DigestInit_ex");
+        }
+    }
+
     /// @brief Export the key value (binary)
     ///
     /// See @ref isc::cryptolink::Asym::exportkey() for details
@@ -1519,6 +1542,11 @@ Asym::sign(size_t len, const AsymFormat sig_format) {
 bool
 Asym::verify(const void* sig, size_t len, const AsymFormat sig_format) {
     return (impl_->verify(sig, len, sig_format));
+}
+
+void
+Asym::clear() {
+    impl_->clear();
 }
 
 std::vector<uint8_t>

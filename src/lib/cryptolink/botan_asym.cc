@@ -863,6 +863,31 @@ public:
         }
     }
 
+    /// \brief Clear the crypto state and go back to the initial state
+    /// (must be called before reusing an Asym object)
+    void clear() {
+        std::string hash = btn::getHashAlgorithmName(hash_);
+        if (hash.compare("Unknown") == 0) {
+            isc_throw(UnsupportedAlgorithm,
+                      "Unknown hash algorithm: " <<
+                      static_cast<int>(hash_));
+        }
+        std::string emsa = "EMSA3(" + hash + ")";
+        if (kind_ == PRIVATE) {
+            try {
+                signer_.reset(new Botan::PK_Signer(*priv_, emsa));
+            } catch (const std::exception& exc) {
+                isc_throw(BadKey, "PK_Signer: " << exc.what());
+            }
+        } else {
+            try {
+                verifier_.reset(new Botan::PK_Verifier(*pub_, emsa));
+            } catch (const std::exception& exc) {
+                isc_throw(BadKey, "PK_Verifier: " << exc.what());
+            }
+        }
+    }
+
     /// @brief Export the key value (binary)
     ///
     /// See @ref isc::cryptolink::Asym::exportkey() for details
@@ -1290,6 +1315,11 @@ Asym::sign(size_t len, const AsymFormat sig_format) {
 bool
 Asym::verify(const void* sig, size_t len, const AsymFormat sig_format) {
     return (impl_->verify(sig, len, sig_format));
+}
+
+void
+Asym::clear() {
+    impl_->clear();
 }
 
 std::vector<uint8_t>

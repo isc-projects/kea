@@ -188,6 +188,10 @@ public:
     /// called multiple times with different signatures.
     bool verify(const void* sig, size_t len, const AsymFormat sig_format);
 
+    /// \brief Clear the crypto state and go back to the initial state
+    /// (must be called before reusing an Asym object)
+    void clear();
+
     /// \brief Export the key value
     ///
     /// The result will be returned as a std::vector<uint8_t>

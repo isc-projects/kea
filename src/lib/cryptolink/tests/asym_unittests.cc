@@ -1,4 +1,4 @@
-// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -817,4 +817,84 @@ TEST(AsymTest, CERTIFICATE) {
                                                       CERT, ASN1),
                                     deleteAsym);
     EXPECT_FALSE(bad_bin->validate());
+}
+
+//
+// Multiple signatures
+//
+TEST(AsymTest, doubleSign) {
+    std::string data = "Kea provides DHCPv4 and DHCPv6 servers";
+    OutputBuffer data_buf(data.size());
+    data_buf.writeData(data.c_str(), data.size());
+    CryptoLink& crypto = CryptoLink::getCryptoLink();
+
+    // Sign it
+    boost::shared_ptr<Asym> rsa_sign(crypto.createAsym(privfile, "1234",
+                                                       RSA_, SHA1,
+                                                       PRIVATE, ASN1),
+                                     deleteAsym);
+    ASSERT_TRUE(rsa_sign);
+
+    OutputBuffer sig1(1);
+    size_t sig1_len = rsa_sign->getSignatureLength(BASIC);
+    EXPECT_EQ(128, sig1_len);
+    rsa_sign->update(data_buf.getData(), data_buf.getLength());
+    rsa_sign->sign(sig1, sig1_len, BASIC);
+    ASSERT_EQ(sig1_len, sig1.getLength());
+
+    // Clear state
+    rsa_sign->clear();
+
+    // Sign it again
+    OutputBuffer sig2(1);
+    size_t sig2_len = rsa_sign->getSignatureLength(BASIC);
+    EXPECT_EQ(128, sig2_len);
+    rsa_sign->update(data_buf.getData(), data_buf.getLength());
+    rsa_sign->sign(sig2, sig2_len, BASIC);
+    EXPECT_EQ(sig2_len, sig2.getLength());
+
+    // Compare
+    ASSERT_EQ(sig1_len, sig2_len);
+    EXPECT_TRUE(std::memcmp(sig1.getData(), sig2.getData(), sig1_len) == 0);
+}
+
+//
+// Multiple verifies
+//
+TEST(AsymTest, doubleVerify) {
+    std::string data = "Kea provides DHCPv4 and DHCPv6 servers";
+    OutputBuffer data_buf(data.size());
+    data_buf.writeData(data.c_str(), data.size());
+    CryptoLink& crypto = CryptoLink::getCryptoLink();
+
+    // Sign it
+    boost::shared_ptr<Asym> rsa_sign(crypto.createAsym(privfile, "1234",
+                                                       RSA_, SHA1,
+                                                       PRIVATE, ASN1),
+                                     deleteAsym);
+    ASSERT_TRUE(rsa_sign);
+
+    OutputBuffer sig(1);
+    size_t sig_len = rsa_sign->getSignatureLength(BASIC);
+    EXPECT_EQ(128, sig_len);
+    rsa_sign->update(data_buf.getData(), data_buf.getLength());
+    rsa_sign->sign(sig, sig_len, BASIC);
+    EXPECT_EQ(sig_len, sig.getLength());
+
+    // Verify
+    boost::shared_ptr<Asym> rsa_verify(crypto.createAsym(pubfile, "",
+                                                         RSA_, SHA1,
+                                                         PUBLIC, ASN1),
+                                       deleteAsym);
+    ASSERT_TRUE(rsa_verify);
+
+    rsa_verify->update(data_buf.getData(), data_buf.getLength());
+    EXPECT_TRUE(rsa_verify->verify(sig.getData(), sig.getLength(), BASIC));
+
+    // Clear state
+    rsa_verify->clear();
+
+    // Verify again
+    rsa_verify->update(data_buf.getData(), data_buf.getLength());
+    EXPECT_TRUE(rsa_verify->verify(sig.getData(), sig.getLength(), BASIC));
 }

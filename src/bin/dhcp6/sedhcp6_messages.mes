@@ -27,6 +27,9 @@ This error message indicates that the signature check has failed.
 This is a "should not happen" condition which reflects an internal
 error.
 
+% SEDHCP6_SIGNATURE_DUMP final signature: %1
+This debug message dumps the final content of the signature.
+
 % SEDHCP6_SIGNATURE_FINALIZE_FAIL signature finalize error: %1
 This error message indicates that the signature finalize has failed.
 This is a "should not happen" condition which reflects an internal

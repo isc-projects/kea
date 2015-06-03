@@ -219,7 +219,7 @@ HMAC::~HMAC() {
 }
 
 HashAlgorithm
-HMAC:getHashAlgorithm() const {
+HMAC::getHashAlgorithm() const {
     return (impl_->getHashAlgorithm());
 }
 

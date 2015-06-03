@@ -29,6 +29,8 @@ namespace util {
 ///
 /// \brief NTP (RFC 5905) time
 ///
+/// The \c Ntp class implements NTP timestamps
+///
 /// External representation: uint64_t seconds, uint16_t fractional
 /// Network representation: 48+16 bit unsigned fixed point
 struct Ntp {
@@ -54,6 +56,11 @@ struct Ntp {
     Ntp(const boost::posix_time::ptime pt);
 
     // \brief Conversion from based double
+    //
+    // In place of implementing full fixed point arithmetics
+    // \c Ntp objects are converted to small floating point values.
+    // The \param base (usually set to current time) helps to keep
+    // a good accuracy.
     Ntp(double secs, time_t base);
 
     // \brief Conversion from network

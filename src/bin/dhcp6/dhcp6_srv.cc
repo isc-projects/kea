@@ -3262,6 +3262,7 @@ void Dhcpv6Srv::finalizeSignature(Pkt6Ptr& tbs) {
     try {
         key->update(tbs->rawBegin(), tbs->rawEnd() - tbs->rawBegin());
         key->sign(start + sig_off, sig_len, BASIC);
+        key->clear();
     } catch (const Exception& ex) {
         ostringstream sigmsg("signature sign failed: ");
         sigmsg << ex.what();
@@ -3271,6 +3272,10 @@ void Dhcpv6Srv::finalizeSignature(Pkt6Ptr& tbs) {
         LOG_ERROR(dhcp6_logger, SEDHCP6_SIGNATURE_FINALIZE_FAIL)
             .arg("signature sign failed?!");
     }
+    vector<uint8_t> dump(sig_len);
+    memcpy(&dump[0], start + sig_off, sig_len);
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA, SEDHCP6_SIGNATURE_DUMP)
+        .arg(encode::encodeHex(dump));
 }
 
 };

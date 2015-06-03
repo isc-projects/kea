@@ -180,7 +180,7 @@ Hash::~Hash() {
 }
 
 HashAlgorithm
-Hash:getHashAlgorithm() const {
+Hash::getHashAlgorithm() const {
     return (impl_->getHashAlgorithm());
 }
 
