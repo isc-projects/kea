@@ -27,6 +27,7 @@
 #include <dhcpsrv/parsers/host_reservation_parser.h>
 #include <dhcpsrv/parsers/host_reservations_list_parser.h>
 #include <dhcpsrv/parsers/ifaces_config_parser.h>
+#include <config/command_mgr.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 
@@ -399,6 +400,8 @@ namespace dhcp {
         parser = new D2ClientConfigParser(config_id);
     } else if (config_id.compare("match-client-id") == 0) {
         parser = new BooleanParser(config_id, globalContext()->boolean_values_);
+    } else if (config_id.compare("control-socket") == 0) {
+        parser = new ControlSocketParser(config_id);
     } else {
         isc_throw(DhcpConfigError,
                 "unsupported global configuration parameter: "
@@ -530,6 +533,26 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
         if (subnet_config != values_map.end()) {
             config_pair.first = "subnet4";
             subnet_parser->build(subnet_config->second);
+        }
+
+        // Get command socket configuration from the config file.
+        // This code expects the following structure:
+        // {
+        //     "socket-type": "unix",
+        //     "socket-name": "/tmp/kea4.sock"
+        // }
+        ConstElementPtr sock_cfg =
+            CfgMgr::instance().getStagingCfg()->getControlSocketInfo();
+
+        // Close existing socket (if any).
+        isc::config::CommandMgr::instance().closeCommandSocket();
+        if (sock_cfg) {
+            // This will create a control socket and will install external socket
+            // in IfaceMgr. That socket will be monitored when Dhcp4Srv::receivePacket()
+            // calls IfaceMgr::receive4() and callback in CommandMgr will be called,
+            // if necessary. If there were previously open command socket, it will
+            // be closed.
+            isc::config::CommandMgr::instance().openCommandSocket(sock_cfg);
         }
 
         // the leases database parser is the last to be run.

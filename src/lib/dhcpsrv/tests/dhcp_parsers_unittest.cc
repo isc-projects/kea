@@ -1757,3 +1757,7 @@ TEST_F(ParseConfigTest, validRelayInfo6) {
     // Unparseable text that looks like IPv6 address, but has too many colons
     EXPECT_THROW(parser->build(json_bogus2), DhcpConfigError);
 }
+
+// There's no test for ControlSocketParser, as it is tested in the DHCPv4 code
+// (see CtrlDhcpv4SrvTest.commandSocketBasic in
+// src/bin/dhcp4/tests/ctrl_dhcp4_srv_unittest.cc).

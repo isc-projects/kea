@@ -17,6 +17,7 @@
 #include <cc/data.h>
 #include <config/command_mgr.h>
 #include <config/command_socket_factory.h>
+#include <cstdio>
 
 using namespace isc::config;
 using namespace isc::data;
@@ -27,18 +28,22 @@ public:
 
     /// Default constructor
     CommandSocketFactoryTest() {
-        unlink(SOCKET_NAME);
+        // Remove any stale socket files
+        remove(SOCKET_NAME.c_str());
     }
 
     /// Default destructor
     ~CommandSocketFactoryTest() {
-        unlink(SOCKET_NAME);
+
+        // Remove any stale socket files
+        remove(SOCKET_NAME.c_str());
     }
 
-    static const char* SOCKET_NAME;
+    static const std::string SOCKET_NAME;
 };
 
-const char* CommandSocketFactoryTest::SOCKET_NAME = "test-socket";
+const std::string CommandSocketFactoryTest::SOCKET_NAME =
+    std::string(TEST_DATA_DIR) + "/test-socket";
 
 TEST_F(CommandSocketFactoryTest, unixCreate) {
     // Null pointer is obviously a bad idea.
@@ -67,3 +72,4 @@ TEST_F(CommandSocketFactoryTest, unixCreate) {
     // It should be possible to close the socket.
     EXPECT_NO_THROW(CommandSocketFactory::close(fd, socket_info));
 }
+
