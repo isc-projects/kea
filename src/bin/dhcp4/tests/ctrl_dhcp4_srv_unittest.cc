@@ -15,6 +15,7 @@
 #include <config.h>
 
 #include <cc/command_interpreter.h>
+#include <config/command_mgr.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <hooks/hooks_manager.h>
@@ -155,5 +156,90 @@ TEST_F(CtrlDhcpv4SrvTest, libreload) {
     EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "21"));
     EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "1212"));
 }
+
+// This test checks which commands are registered by the DHCPv4 server.
+TEST_F(CtrlDhcpv4SrvTest, commandsRegistration) {
+
+    ConstElementPtr list_cmds = createCommand("list-commands");
+    ConstElementPtr answer;
+
+    // By default the list should be empty (except the standard list-commands
+    // supported by the CommandMgr itself)
+    EXPECT_NO_THROW(answer = CommandMgr::instance().processCommand(list_cmds));
+    ASSERT_TRUE(answer);
+    ASSERT_TRUE(answer->get("arguments"));
+    EXPECT_EQ("[ \"list-commands\" ]", answer->get("arguments")->str());
+
+    // Created server should register several additional commands.
+    boost::scoped_ptr<ControlledDhcpv4Srv> srv;
+    ASSERT_NO_THROW(
+        srv.reset(new ControlledDhcpv4Srv(0));
+    );
+
+    EXPECT_NO_THROW(answer = CommandMgr::instance().processCommand(list_cmds));
+    ASSERT_TRUE(answer);
+    ASSERT_TRUE(answer->get("arguments"));
+    EXPECT_EQ("[ \"list-commands\", \"shutdown\" ]", answer->get("arguments")->str());
+
+    // Ok, and now delete the server. It should deregister its commands.
+    srv.reset();
+
+    // The list should be (almost) empty again.
+    EXPECT_NO_THROW(answer = CommandMgr::instance().processCommand(list_cmds));
+    ASSERT_TRUE(answer);
+    ASSERT_TRUE(answer->get("arguments"));
+    EXPECT_EQ("[ \"list-commands\" ]", answer->get("arguments")->str());
+}
+
+// Checks if the server is able to parse control socket configuration and
+// configures the command socket properly.
+TEST_F(CtrlDhcpv4SrvTest, commandSocketBasic) {
+
+    string socket_path = string(TEST_DATA_DIR) + "/kea4.sock";
+
+    // Just a simple config. The important part here is the socket
+    // location information.
+    std::string config_txt =
+        "{"
+        "    \"interfaces-config\": {"
+        "        \"interfaces\": [ \"*\" ]"
+        "    },"
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"subnet4\": [ ],"
+        "    \"valid-lifetime\": 4000,"
+        "    \"control-socket\": {"
+        "        \"socket-type\": \"unix\","
+        "        \"socket-name\": \"" + socket_path + "\""
+        "    }"
+        "}";
+
+    boost::scoped_ptr<ControlledDhcpv4Srv> srv;
+    ASSERT_NO_THROW(
+        srv.reset(new ControlledDhcpv4Srv(0));
+    );
+
+    ConstElementPtr config = Element::fromJSON(config_txt);
+
+    ConstElementPtr answer = srv->processConfig(config);
+    ASSERT_TRUE(answer);
+
+    int status = 0;
+    isc::config::parseAnswer(status, answer);
+    EXPECT_EQ(0, status);
+
+    // Now check that the socket was indeed open.
+    EXPECT_TRUE(isc::config::CommandMgr::instance().getControlSocketFD() > 0);
+}
+
+/// @todo: Implement system tests for the control socket.
+/// It is tricky in unit-tests, as it would require running two processes
+/// (one for the server itself and a second one for the test that sends
+/// command and receives an aswer).
+///
+/// Alternatively, we could use shell tests. It would be much simpler,
+/// but that requires using socat, a tool that is typically not installed.
+/// So we'd need a check in configure to check if it's available and
+/// fail configure process if missing (or disable the tests).
 
 } // End of anonymous namespace
