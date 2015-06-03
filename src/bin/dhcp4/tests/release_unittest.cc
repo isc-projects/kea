@@ -259,4 +259,27 @@ TEST_F(ReleaseTest, releaseNonMatchingIPAddress) {
     ASSERT_TRUE(lease);
 }
 
+// This test verifies that incoming RELEASE from a bad location
+// is correctly dropped.
+TEST_F(ReleaseTest, ReleaseNoSubnet) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Configure DHCP server.
+    configure(RELEASE_CONFIGS[0], *client.getServer());
+    // Perform 4-way exchange to obtain a new lease.
+    acquireLease(client);
+
+    // Remember the acquired address.
+    IOAddress leased_address = client.config_.lease_.addr_;
+
+    // Release is as it was relayed
+    client.useRelay(true);
+
+    // Send the release
+    ASSERT_NO_THROW(client.doRelease());
+
+    // Check that the lease was not removed (due to no subnet)
+    Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(leased_address);
+    EXPECT_TRUE(lease);
+}
+
 } // end of anonymous namespace
