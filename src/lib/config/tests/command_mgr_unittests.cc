@@ -32,13 +32,13 @@ public:
         handler_called = false;
 
         CommandMgr::instance().deregisterAll();
-        CommandMgr::instance().closeCtrlSocket();
+        CommandMgr::instance().closeCommandSocket();
     }
 
     /// Default destructor
     ~CommandMgrTest() {
         CommandMgr::instance().deregisterAll();
-        CommandMgr::instance().closeCtrlSocket();
+        CommandMgr::instance().closeCommandSocket();
     }
 
     /// @brief A simple command handler that always returns an eror

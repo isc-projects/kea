@@ -92,14 +92,17 @@ public:
     /// Currently supported types are:
     /// - unix (required parameters: socket-type: unix, socket-name:/unix/path)
     ///
-    /// @throw CommandSocketError if socket creation fails
+    /// This method will close previously open command socket (if exists).
+    ///
+    /// @throw CommandSocketError if socket creation fails.
+    /// @throw SocketError if command socket is already open.
     ///
     /// @param socket_info describes control socket parameters
     /// @return socket descriptor of the socket created
-    int openCtrlSocket(const isc::data::ConstElementPtr& socket_info);
+    int openCommandSocket(const isc::data::ConstElementPtr& socket_info);
 
     /// @brief Shuts down any open control sockets
-    void closeCtrlSocket();
+    void closeCommandSocket();
 
     /// @brief Registers specified command handler for a given command
     ///
@@ -147,6 +150,14 @@ public:
     /// handled at all times.
     void deregisterAll();
 
+
+    /// @brief Returns control socket descriptor
+    ///
+    /// This method should be used only in tests.
+    int getControlSocketFD() const {
+        return (socket_);
+    }
+
 private:
 
     /// @brief Private constructor
@@ -175,6 +186,9 @@ private:
 
     /// @brief Parameters for control socket
     isc::data::ConstElementPtr socket_info_;
+
+    /// @brief Socket descriptors for open connections
+    std::list<int> connections_;
 };
 
 }; // end of isc::config namespace

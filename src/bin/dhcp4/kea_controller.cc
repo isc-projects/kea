@@ -104,6 +104,8 @@ void configure(const std::string& file_name) {
         CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
 
         // Use new configuration.
+        /// @todo: This commit should be moved to
+        /// CtrlDhcp4Srv::commandConfigReloadHandler.
         CfgMgr::instance().commit();
 
     }  catch (const std::exception& ex) {
@@ -171,7 +173,6 @@ ControlledDhcpv4Srv::init(const std::string& file_name) {
     signal_set_.reset(new isc::util::SignalSet(SIGINT, SIGHUP, SIGTERM));
     // Set the pointer to the handler function.
     signal_handler_ = signalHandler;
-
 }
 
 void ControlledDhcpv4Srv::cleanup() {

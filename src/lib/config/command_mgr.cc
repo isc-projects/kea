@@ -29,7 +29,7 @@ CommandMgr::CommandMgr() {
         boost::bind(&CommandMgr::listCommandsHandler, this, _1, _2));
 }
 
-int CommandMgr::openCtrlSocket(const isc::data::ConstElementPtr& socket_info) {
+int CommandMgr::openCommandSocket(const isc::data::ConstElementPtr& socket_info) {
     if (socket_info_) {
         isc_throw(SocketError, "There is already a control socket open");
     }
@@ -44,7 +44,7 @@ int CommandMgr::openCtrlSocket(const isc::data::ConstElementPtr& socket_info) {
     return (socket_);
 }
 
-void CommandMgr::closeCtrlSocket() {
+void CommandMgr::closeCommandSocket() {
     if (socket_info_) {
 
         isc::dhcp::IfaceMgr::instance().deleteExternalSocket(socket_);
@@ -125,6 +125,10 @@ CommandMgr::connectionAcceptor(int sockfd) {
     isc::dhcp::IfaceMgr::instance().addExternalSocket(fd2,
         boost::bind(&isc::config::CommandMgr::commandReader, fd2));
 
+    // Remember this socket descriptor. It will be needed when we shut down the
+    // server.
+    instance().connections_.push_back(fd2);
+
     LOG_INFO(command_logger, COMMAND_SOCKET_CONNECTION_OPENED).arg(fd2).arg(sockfd);
 }
 
@@ -141,6 +145,9 @@ CommandMgr::commandReader(int sockfd) {
     if (rval < 0) {
         // Read failed
         LOG_WARN(command_logger, COMMAND_SOCKET_READ_FAIL).arg(rval).arg(sockfd);
+
+        /// @todo: Should we close the connection, similar to what is already
+        /// being done for rval == 0?
         return;
     } else if (rval == 0) {
 
@@ -154,6 +161,10 @@ CommandMgr::commandReader(int sockfd) {
 
         // Close the socket.
         close(sockfd);
+
+        // Remove it from the active connections list.
+        instance().connections_.remove(sockfd);
+
         return;
     }
 
