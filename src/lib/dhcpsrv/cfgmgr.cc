@@ -109,9 +109,11 @@ CfgMgr::ensureCurrentAllocated() {
 }
 
 void
-CfgMgr::clear() {
+CfgMgr::clear(bool reinit) {
     configs_.clear();
-    ensureCurrentAllocated();
+    if (reinit) {
+        ensureCurrentAllocated();
+    }
 }
 
 void

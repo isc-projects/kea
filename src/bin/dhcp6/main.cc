@@ -172,6 +172,10 @@ main(int argc, char* argv[]) {
 
         LOG_INFO(dhcp6_logger, DHCP6_SHUTDOWN);
 
+        // Avoid a static destruction order fiasco with secure DHCPv6
+        // and Botan crypto backend...
+        CfgMgr::instance().clear(false);
+
     } catch (const std::exception& ex) {
 
         // First, we print the error on stderr (that should always work)
@@ -183,6 +187,9 @@ main(int argc, char* argv[]) {
         // the logger subsystem)
         LOG_FATAL(dhcp6_logger, DHCP6_SERVER_FAILED).arg(ex.what());
         ret = EXIT_FAILURE;
+
+        // No finally in C++?
+        CfgMgr::instance().clear(false);
     }
 
     return (ret);
