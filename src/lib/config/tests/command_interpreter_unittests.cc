@@ -27,10 +27,6 @@ using namespace isc::config;
 using namespace std;
 
 namespace {
-std::string
-ccspecfile(const std::string& name) {
-    return (std::string(TEST_DATA_PATH) + "/" + name);
-}
 
 ElementPtr
 el(const std::string& str) {
