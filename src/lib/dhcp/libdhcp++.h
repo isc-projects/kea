@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -144,7 +144,7 @@ public:
     ///
     /// @param buf Buffer to be parsed.
     /// @param option_space A name of the option space which holds definitions
-    /// of to be used to parse options in the packets.
+    ///        to be used to parse options in the packets.
     /// @param options Reference to option container. Options will be
     ///        put here.
     /// @return offset to the first byte after the last successfully parsed option
@@ -158,14 +158,14 @@ public:
     /// container. The last two parameters are optional and are used in
     /// relay parsing. If they are specified, relay-msg option is not created,
     /// but rather those two parameters are specified to point out where
-    /// the relay-msg option resides and what is its length. This is perfromance
+    /// the relay-msg option resides and what is its length. This is a performance
     /// optimization that avoids unnecessary copying of potentially large
     /// relay-msg option. It is not used for anything, except in the next
     /// iteration its content will be treated as buffer to be parsed.
     ///
     /// @param buf Buffer to be parsed.
     /// @param option_space A name of the option space which holds definitions
-    /// of to be used to parse options in the packets.
+    ///        to be used to parse options in the packets.
     /// @param options Reference to option container. Options will be
     ///        put here.
     /// @param relay_msg_offset reference to a size_t structure. If specified,

@@ -296,8 +296,8 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
 
         if (opt_type == D6O_VENDOR_OPTS) {
             if (offset + 4 > length) {
-                // Truncated vendor-option. There is expected at least
-                // 4 bytes long enterprise-id field. Let's roll back
+                // Truncated vendor-option. We expect at least
+                // 4 bytes for the enterprise-id field. Let's roll back
                 // option code + option length (4 bytes) and return.
                 return (offset - 4);
             }
@@ -310,7 +310,6 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
             offset += opt_len;
             continue;
         }
-
 
         // Get all definitions with the particular option code. Note
         // that option code is non-unique within this container
@@ -562,7 +561,7 @@ size_t LibDHCP::unpackVendorOptions4(const uint32_t vendor_id, const OptionBuffe
     while (offset + 1 <= buf.size()) {
         // Note that Vendor-Specific info option (RFC3925) has a
         // different option format than Vendor-Spec info for
-        // DHCPv6. (there's additional layer of data-length
+        // DHCPv6. (there's additional layer of data-length)
         uint8_t data_len = buf[offset++];
 
         if (offset + data_len > buf.size()) {

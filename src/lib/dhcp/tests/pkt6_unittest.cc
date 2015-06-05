@@ -340,7 +340,7 @@ TEST_F(Pkt6Test, unpackMalformed) {
     // Let's check a truncated packet. Moderately sane DHCPv6 packet should at
     // least have four bytes header. Zero bytes is definitely not a valid one.
     OptionBuffer empty(1); // Let's allocate one byte, so we won't be
-                           // dereferencing and empty buffer.
+                           // dereferencing an empty buffer.
 
     Pkt6Ptr empty_pkt(new Pkt6(&empty[0], 0));
     EXPECT_THROW(empty_pkt->unpack(), isc::BadValue);
