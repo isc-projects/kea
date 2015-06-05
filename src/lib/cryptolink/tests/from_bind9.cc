@@ -35,26 +35,21 @@ int main(int argc, char* argv[]) {
     // Get the public key from DNS
     CryptoLink& crypto = CryptoLink::getCryptoLink();
     string keyfile = argv[1];
-    keyfile += ".key";
+    keyfile += ".private";
     boost::shared_ptr<Asym> key(crypto.createAsym(keyfile, "",
                                                   RSA_, SHA256,
-                                                  PUBLIC, DNS),
+                                                  PRIVATE, DNS),
                                 deleteAsym);
     if (!key) {
         cerr << "createAsym failed" << endl;
         return (-1);
     }
 
-    // Export the public key in SubjectPublicKeyInfo der on stdout
-    const std::vector<uint8_t> keybin = key->exportkey(PUBLIC, ASN1);
-    const ssize_t cc = write(1, &keybin[0], keybin.size());
-    if (cc < 0) {
-        cerr << "write failed" << endl;
-        return (-1);
-    }
-    if (static_cast<size_t>(cc) != keybin.size()) {
-        cerr << "truncated write" << endl;
-        return (-1);
-    }
+    // Export the private key in PKCS#8 format
+
+    keyfile = argv[1];
+    keyfile += ".pkcs8";
+    key->exportkey(keyfile, "", PRIVATE, ASN1);
+
     return (0);
 }
