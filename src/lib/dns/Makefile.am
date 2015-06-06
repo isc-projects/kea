@@ -158,6 +158,7 @@ libkea_dns___la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_dns___la_LIBADD = $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 libkea_dns___la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_dns___la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libkea_dns___la_LIBADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 
 # The following files used to be generated, but they are now part of the git tree:
 # rrclass.h rrtype.h rrparamregistry.cc rdataclass.h rdataclass.cc

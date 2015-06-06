@@ -25,6 +25,9 @@
 
 #include <util/encode/base64.h>
 
+#include <hooks/hooks_manager.h>
+#include <hooks/callout_handle.h>
+
 #include <cryptolink/cryptolink.h>
 #include <cryptolink/crypto_asym.h>
 
@@ -897,4 +900,52 @@ TEST(AsymTest, doubleVerify) {
     // Verify again
     rsa_verify->update(data_buf.getData(), data_buf.getLength());
     EXPECT_TRUE(rsa_verify->verify(sig.getData(), sig.getLength(), BASIC));
+}
+
+namespace {
+
+std::string callout_name("");
+std::vector<uint8_t> callout_cert;
+std::vector<std::string> callout_argument_names;
+
+int
+validate_certificate_callout(isc::hooks::CalloutHandle& callout_handle) {
+    callout_name = "validate-certificate";
+    callout_handle.getArgument("certificate", callout_cert);
+    callout_argument_names = callout_handle.getArgumentNames();
+    return (0);
+}
+
+}
+
+//
+// Hooks
+//
+TEST(AsymTest, callout) {
+    using namespace isc::hooks;
+
+    // Initialize Hooks Manager
+    std::vector<std::string> libraries; // no libraries
+    HooksManager::loadLibraries(libraries);
+
+    // Install validate_certificate_callout
+    LibraryHandle& preCLH = HooksManager::preCalloutsLibraryHandle();
+    EXPECT_NO_THROW(preCLH.registerCallout("validate_certificate",
+					   validate_certificate_callout));
+
+    // Get a certificate and validate it
+    CryptoLink& crypto = CryptoLink::getCryptoLink();
+    boost::shared_ptr<Asym> cert(crypto.createAsym(certfile, "",
+						   RSA_, SHA1,
+						   CERT, ASN1),
+				 deleteAsym);
+    EXPECT_TRUE(cert->validate());
+
+    // Check that callouts were indeed called
+    EXPECT_EQ("validate-certificate", callout_name);
+    std::vector<uint8_t> bin = cert->exportkey(CERT, ASN1);
+    ASSERT_EQ(bin.size(), callout_cert.size());
+    EXPECT_TRUE(std::memcmp(&bin[0], &callout_cert[0], bin.size()) == 0);
+    ASSERT_EQ(1, callout_argument_names.size());
+    EXPECT_TRUE(callout_argument_names[0].compare("certificate") == 0);
 }

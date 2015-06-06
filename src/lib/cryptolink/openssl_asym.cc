@@ -23,10 +23,20 @@
 #include <openssl/x509.h>
 
 #include <util/encode/base64.h>
+#include <hooks/hooks_manager.h>
+#include <hooks/callout_handle.h>
 #include <cryptolink/openssl_common.h>
 
 #include <cstdio>
 #include <cstring>
+
+namespace {
+
+///< index of "validate_certificate" hook point
+int hook_point_validate_certificate =
+    isc::hooks::HooksManager::registerHook("validate_certificate");
+
+} // anonymous namespace
 
 namespace isc {
 namespace cryptolink {
@@ -1565,6 +1575,33 @@ Asym::exportkey(const std::string& filename,
 
 bool
 Asym::validate() const {
+    // Hook only certificate validation
+    if (getAsymKeyKind() != CERT) {
+        return (impl_->validate());
+    }
+
+    // Call the hook if available
+    using namespace isc::hooks;
+    if (HooksManager::calloutsPresent(hook_point_validate_certificate)) {
+        // Callout handle
+        CalloutHandlePtr callout_handle_ = HooksManager::createCalloutHandle();
+
+        // Delete add previous arguments
+        callout_handle_->deleteAllArguments();
+
+        // Pass the certificate (der in a vector)
+        callout_handle_->setArgument("certificate", exportkey(CERT, ASN1));
+
+        // Call the callouts
+        HooksManager::callCallouts(hook_point_validate_certificate,
+                                   *callout_handle_);
+
+        // Callouts decided to skip the action. This means that
+        // validation failed, so return false.
+        return (!callout_handle_->getSkip());
+    }
+
+    // No hooks
     return (impl_->validate());
 }
 

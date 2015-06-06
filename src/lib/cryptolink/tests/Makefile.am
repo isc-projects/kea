@@ -30,6 +30,7 @@ run_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 run_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+run_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 endif
 
 noinst_PROGRAMS = $(TESTS) from_bind9 to_bind9
