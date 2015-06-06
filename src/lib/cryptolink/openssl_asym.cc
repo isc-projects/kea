@@ -43,7 +43,7 @@ namespace cryptolink {
 
 /// @brief OpenSSL implementation of asymmetrical cryptography (Asym).
 // Each method is the counterpart of the Asym corresponding method.
-class AsymImpl {
+class RsaAsymImpl : public AsymImpl {
 public:
     /// @brief Constructor from a key, asym and hash algorithm,
     ///        key kind and key binary format
@@ -52,25 +52,18 @@ public:
     ///
     /// @param key            The key to sign/verify with
     /// @param len            The length of the key
-    /// @param asym_algorithm The asymmetrical cryptography algorithm
     /// @param hash_algorithm The hash algorithm
     /// @param key_kind       The key kind
     /// @param key_format     The key binary format
-    explicit AsymImpl(const void* key, size_t key_len,
-                      const AsymAlgorithm asym_algorithm,
-                      const HashAlgorithm hash_algorithm,
-                      const AsymKeyKind key_kind,
-                      const AsymFormat key_format) {
-        algo_ = asym_algorithm;
+    RsaAsymImpl(const void* key, size_t key_len,
+                const HashAlgorithm hash_algorithm,
+                const AsymKeyKind key_kind,
+                const AsymFormat key_format) {
+        algo_ = RSA_;
         hash_ = hash_algorithm;
         kind_ = key_kind;
         pkey_ = NULL;
         x509_ = NULL;
-        if (algo_ != RSA_) {
-            isc_throw(UnsupportedAlgorithm,
-                      "Unknown asym algorithm: " <<
-                      static_cast<int>(algo_));
-        }
         const EVP_MD* md = ossl::getHashAlgorithm(hash_);
         if (md == 0) {
             isc_throw(UnsupportedAlgorithm,
@@ -301,26 +294,19 @@ public:
     ///
     /// @param filename       The key file name/path
     /// @param password       The PKCS#8 password
-    /// @param asym_algorithm The asymmetrical cryptography algorithm
     /// @param hash_algorithm The hash algorithm
     /// @param key_kind       The key kind
     /// @param key_format     The key binary format
-    explicit AsymImpl(const std::string& filename,
-                      const std::string& password,
-                      const AsymAlgorithm asym_algorithm,
-                      const HashAlgorithm hash_algorithm,
-                      const AsymKeyKind key_kind,
-                      const AsymFormat key_format) {
-        algo_ = asym_algorithm;
+    RsaAsymImpl(const std::string& filename,
+                const std::string& password,
+                const HashAlgorithm hash_algorithm,
+                const AsymKeyKind key_kind,
+                const AsymFormat key_format) {
+        algo_ = RSA_;
         hash_ = hash_algorithm;
         kind_ = key_kind;
         pkey_ = NULL;
         x509_ = NULL;
-        if (algo_ != RSA_) {
-            isc_throw(UnsupportedAlgorithm,
-                      "Unknown asym algorithm: " <<
-                      static_cast<int>(algo_));
-        }
         const EVP_MD* md = ossl::getHashAlgorithm(hash_);
         if (md == 0) {
             isc_throw(UnsupportedAlgorithm,
@@ -853,7 +839,7 @@ public:
     }
 
     /// @brief Destructor
-    ~AsymImpl() {
+    virtual ~RsaAsymImpl() {
         if (mdctx_) {
             EVP_MD_CTX_cleanup(mdctx_.get());
         }
@@ -892,29 +878,22 @@ public:
     ///
     /// \param sig_format The signature binary format
     size_t getSignatureLength(const AsymFormat sig_format) const {
-        switch (algo_) {
-        case RSA_:
-            switch (sig_format) {
-            case BASIC:
-            case ASN1:
-            case DNS:
-                // In all cases a big integer of the size of n
-                return (static_cast<size_t>(EVP_PKEY_size(pkey_)));
-            default:
-                isc_throw(UnsupportedAlgorithm,
-                          "Unknown RSA Signature format: " <<
-                          static_cast<int>(sig_format));
-            }
+        switch (sig_format) {
+        case BASIC:
+        case ASN1:
+        case DNS:
+            // In all cases a big integer of the size of n
+            return (static_cast<size_t>(EVP_PKEY_size(pkey_)));
         default:
             isc_throw(UnsupportedAlgorithm,
-                      "Unknown asym algorithm: " <<
-                      static_cast<int>(algo_));
+                      "Unknown RSA Signature format: " <<
+                      static_cast<int>(sig_format));
         }
     }           
 
     /// @brief Add data to digest
     ///
-    /// See @ref isc::cryptolink::Asym::update() for details.
+    /// See @ref isc::cryptolink::AsymBase::update() for details.
     void update(const void* data, const size_t len) {
         if (!EVP_DigestUpdate(mdctx_.get(), data, len)) {
             isc_throw(LibraryError, "EVP_DigestUpdate");
@@ -923,7 +902,7 @@ public:
 
     /// @brief Calculate the final signature
     ///
-    /// See @ref isc::cryptolink::Asym::sign() for details.
+    /// See @ref isc::cryptolink::AsymBase::sign() for details.
     void sign(isc::util::OutputBuffer& result, size_t len,
               const AsymFormat sig_format) {
         unsigned int size = getSignatureLength(sig_format);
@@ -939,7 +918,7 @@ public:
 
     /// @brief Calculate the final signature
     ///
-    /// See @ref isc::cryptolink::Asym::sign() for details.
+    /// See @ref isc::cryptolink::AsymBase::sign() for details.
     void sign(void* result, size_t len, const AsymFormat sig_format) {
         unsigned int size = getSignatureLength(sig_format);
         ossl::SecBuf<unsigned char> sig(size);
@@ -954,7 +933,7 @@ public:
 
     /// @brief Calculate the final signature
     ///
-    /// See @ref isc::cryptolink::Asym::sign() for details.
+    /// See @ref isc::cryptolink::AsymBase::sign() for details.
     std::vector<uint8_t> sign(size_t len, const AsymFormat sig_format) {
         unsigned int size = getSignatureLength(sig_format);
         ossl::SecBuf<unsigned char> sig(size);
@@ -968,7 +947,7 @@ public:
 
     /// @brief Verify an existing signature
     ///
-    /// See @ref isc::cryptolink::Asym::verify() for details.
+    /// See @ref isc::cryptolink::AsymBase::verify() for details.
     bool verify(const void* sig, size_t len, const AsymFormat sig_format) {
         size_t size = getSignatureLength(sig_format);
         if (len != size) {
@@ -1014,7 +993,7 @@ public:
 
     /// @brief Export the key value (binary)
     ///
-    /// See @ref isc::cryptolink::Asym::exportkey() for details
+    /// See @ref isc::cryptolink::AsymBase::exportkey() for details
     std::vector<uint8_t> exportkey(const AsymKeyKind key_kind,
                                    const AsymFormat key_format) const {
         if ((key_kind == PRIVATE) && (key_format == BASIC)) {
@@ -1138,7 +1117,7 @@ public:
 
     /// @brief Export the key value (file)
     ///
-    /// See @ref isc::cryptolink::Asym::exportkey() for details
+    /// See @ref isc::cryptolink::AsymBase::exportkey() for details
     void exportkey(const std::string& filename,
                    const std::string& password,
                    const AsymKeyKind key_kind,
@@ -1317,7 +1296,7 @@ public:
 
     /// @brief Check the validity
     ///
-    /// See @ref isc::cryptolink::Asym::validate() for details
+    /// See @ref isc::cryptolink::AsymBase::validate() for details
     bool validate() const {
         RSA* rsa;
         X509_STORE* store;
@@ -1379,7 +1358,10 @@ public:
     /// @brief Compare two keys
     ///
     /// See @ref isc::cryptolink::Asym::compare() for details
-    bool compare(const AsymImpl* other, const AsymKeyKind key_kind) const {
+    bool compare(const RsaAsymImpl* other, const AsymKeyKind key_kind) const {
+        if (!other || (other->algo_ != RSA_)) {
+            return false;
+        }
         int status;
         switch (key_kind) {
         case CERT:
@@ -1471,9 +1453,16 @@ Asym::Asym(const void* key, size_t key_len,
            const AsymKeyKind key_kind,
            const AsymFormat key_format)
 {
-    impl_ = new AsymImpl(key, key_len,
-                         asym_algorithm, hash_algorithm,
-                         key_kind, key_format);
+    switch (asym_algorithm) {
+    case RSA_:
+        impl_ = new RsaAsymImpl(key, key_len, hash_algorithm,
+                                key_kind, key_format);
+        return;
+    default:
+        isc_throw(UnsupportedAlgorithm,
+                  "Unknown asym algorithm: " <<
+                  static_cast<int>(asym_algorithm));
+    }
 }
 
 Asym::Asym(const std::vector<uint8_t> key,
@@ -1482,9 +1471,16 @@ Asym::Asym(const std::vector<uint8_t> key,
            const AsymKeyKind key_kind,
            const AsymFormat key_format)
 {
-    impl_ = new AsymImpl(&key[0], key.size(),
-                         asym_algorithm, hash_algorithm,
-                         key_kind, key_format);
+    switch (asym_algorithm) {
+    case RSA_:
+        impl_ = new RsaAsymImpl(&key[0], key.size(), hash_algorithm,
+                                key_kind, key_format);
+        return;
+    default:
+        isc_throw(UnsupportedAlgorithm,
+                  "Unknown asym algorithm: " <<
+                  static_cast<int>(asym_algorithm));
+    }
 }
 
 Asym::Asym(const std::string& filename,
@@ -1494,9 +1490,16 @@ Asym::Asym(const std::string& filename,
            const AsymKeyKind key_kind,
            const AsymFormat key_format)
 {
-    impl_ = new AsymImpl(filename, password,
-                         asym_algorithm, hash_algorithm,
-                         key_kind, key_format);
+    switch (asym_algorithm) {
+    case RSA_:
+        impl_ = new RsaAsymImpl(filename, password, hash_algorithm,
+                                key_kind, key_format);
+        return;
+    default:
+        isc_throw(UnsupportedAlgorithm,
+                  "Unknown asym algorithm: " <<
+                  static_cast<int>(asym_algorithm));
+    }
 }
 
 Asym::~Asym() {
@@ -1607,7 +1610,20 @@ Asym::validate() const {
 
 bool
 Asym::compare(const Asym* other, const AsymKeyKind key_kind) const {
-    return (impl_->compare(other->impl_, key_kind));
+    if (getAsymAlgorithm() != other->getAsymAlgorithm()) {
+        return false;
+    }
+    if (getAsymAlgorithm() == RSA_) {
+        const RsaAsymImpl* impl = dynamic_cast<const RsaAsymImpl*>(impl_);
+        // Should not happen but to test is better than to crash
+        if (!impl) {
+            isc_throw(Unexpected, "dynamic_cast failed on RsaAsymImpl*");
+        }
+        const RsaAsymImpl* oimpl =
+            dynamic_cast<const RsaAsymImpl*>(other->impl_);
+        return (impl->compare(oimpl, key_kind));
+    }
+    isc_throw(UnsupportedAlgorithm, "compare");
 }
 
 } // namespace cryptolink

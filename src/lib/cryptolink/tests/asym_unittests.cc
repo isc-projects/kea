@@ -931,14 +931,14 @@ TEST(AsymTest, callout) {
     // Install validate_certificate_callout
     LibraryHandle& preCLH = HooksManager::preCalloutsLibraryHandle();
     EXPECT_NO_THROW(preCLH.registerCallout("validate_certificate",
-					   validate_certificate_callout));
+                                           validate_certificate_callout));
 
     // Get a certificate and validate it
     CryptoLink& crypto = CryptoLink::getCryptoLink();
     boost::shared_ptr<Asym> cert(crypto.createAsym(certfile, "",
-						   RSA_, SHA1,
-						   CERT, ASN1),
-				 deleteAsym);
+                                                   RSA_, SHA1,
+                                                   CERT, ASN1),
+                                 deleteAsym);
     EXPECT_TRUE(cert->validate());
 
     // Check that callouts were indeed called

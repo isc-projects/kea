@@ -104,7 +104,7 @@ public:
     /// result
     void sign(void* result, size_t len);
 
-    /// \brief Calculate the final signatre
+    /// \brief Calculate the final signature
     ///
     /// The result will be returned as a std::vector<uint8_t>
     ///
