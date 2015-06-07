@@ -133,8 +133,12 @@ private:
     HashAlgorithm hash_;
     /// @brief The key kind
     AsymKeyKind kind_;
-    /// @brief The to be signed cache
-    ossl::SecBuf<uint8_t> tbs_;
+    /// @brief the hash algorithm
+    const EVP_MD* md_;
+    /// @brief The protected pointer to the OpenSSL EVP_MD_CTX structure
+    boost::scoped_ptr<EVP_MD_CTX> mdctx_;
+    /// @brief The curve (group)
+    const EC_GROUP* group_;
     /// @brief The raw pointer to the OpenSSL EC_KEY structure
     /// There is no EC_PKEY_init() or EC_PKEY_cleanup() so
     /// a smart pointer cannot be used.

@@ -18,6 +18,7 @@
 #include <boost/scoped_ptr.hpp>
 
 #include <openssl/pem.h>
+#include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/ec.h>
 #include <openssl/ecdsa.h>
@@ -37,6 +38,38 @@
 #error "P-384 group is not known (NID_secp384r1)"
 #endif
 
+namespace {
+
+/// @brief Class for the curves/groups
+class EcDsaGroup {
+public:
+    // @brief Constructor
+    // Get the group and set the curve name flag for ASN.1
+    EcDsaGroup(int nid) {
+        group_ = EC_GROUP_new_by_curve_name(nid);
+        if (!group_) {
+            isc_throw(isc::Unexpected, "EC_GROUP_new_by_curve_name");
+        }
+        EC_GROUP_set_asn1_flag(group_, OPENSSL_EC_NAMED_CURVE);
+    }
+
+    // @brief Destructor
+    ~EcDsaGroup() {
+        if (group_) {
+            EC_GROUP_free(group_);
+            group_ = NULL;
+        }
+    }
+
+    // @brief The group
+    EC_GROUP* group_;
+};
+
+const EcDsaGroup prime256v1(NID_X9_62_prime256v1);
+const EcDsaGroup secp384r1(NID_secp384r1);
+
+} // anonymous namespace
+
 namespace isc {
 namespace cryptolink {
 
@@ -51,13 +84,14 @@ EcDsaAsymImpl::EcDsaAsymImpl(const void* key, size_t key_len,
     kind_ = key_kind;
     eckey_ = NULL;
     x509_ = NULL;
-    int curve_nid = 0;
     switch (hash_) {
     case SHA256:
-        curve_nid = NID_X9_62_prime256v1;
+        md_ = EVP_sha256();
+        group_ = prime256v1.group_;
         break;
     case SHA384:
-        curve_nid = NID_secp384r1;
+        md_ = EVP_sha512();
+        group_ = secp384r1.group_;
         break;
     default:
         isc_throw(UnsupportedAlgorithm,
@@ -75,12 +109,17 @@ EcDsaAsymImpl::EcDsaAsymImpl(const void* key, size_t key_len,
         if (!privkey) {
             throw std::bad_alloc();
         }
-        eckey_ = EC_KEY_new_by_curve_name(curve_nid);
+        eckey_ = EC_KEY_new();
         if (!eckey_) {
             BN_clear_free(privkey);
-            isc_throw(LibraryError, "EC_KEY_new_by_curve_name");
+            isc_throw(LibraryError, "EC_KEY_new");
         }
-        EC_KEY_set_asn1_flag(eckey_, OPENSSL_EC_NAMED_CURVE);
+        if (!EC_KEY_set_group(eckey_, group_)) {
+            BN_clear_free(privkey);
+            EC_KEY_free(eckey_);
+            eckey_ = NULL;
+            isc_throw(LibraryError, "EC_KEY_set_group");
+        }
         if (!EC_KEY_set_private_key(eckey_, privkey)) {
             BN_clear_free(privkey);
             EC_KEY_free(eckey_);
@@ -88,13 +127,12 @@ EcDsaAsymImpl::EcDsaAsymImpl(const void* key, size_t key_len,
             isc_throw(LibraryError, "EC_KEY_set_private_key");
         }
         // Compute the public key
-        const EC_GROUP* grp = EC_KEY_get0_group(eckey_);
-        EC_POINT* pubkey = EC_POINT_new(grp);
+        EC_POINT* pubkey = EC_POINT_new(group_);
         if (!pubkey) {
             BN_clear_free(privkey);
             throw std::bad_alloc();
         }
-        if (!EC_POINT_mul(grp, pubkey, privkey, NULL, NULL, NULL)) {
+        if (!EC_POINT_mul(group_, pubkey, privkey, NULL, NULL, NULL)) {
             EC_POINT_free(pubkey);
             BN_clear_free(privkey);
             EC_KEY_free(eckey_);
@@ -126,15 +164,8 @@ EcDsaAsymImpl::EcDsaAsymImpl(const void* key, size_t key_len,
             eckey_ = NULL;
             isc_throw(BadKey, "EC_KEY_check_key");
         }
-        EC_GROUP* wanted = EC_GROUP_new_by_curve_name(curve_nid);
-        if (!wanted) {
-            EC_KEY_free(eckey_);
-            eckey_ = NULL;
-            isc_throw(LibraryError, "EC_GROUP_new_by_curve_name");
-        }
         const int status =
-            EC_GROUP_cmp(EC_KEY_get0_group(eckey_), wanted, NULL);
-        EC_GROUP_free(wanted);
+            EC_GROUP_cmp(EC_KEY_get0_group(eckey_), group_, NULL);
         if (status < 0) {
             EC_KEY_free(eckey_);
             eckey_ = NULL;
@@ -165,11 +196,15 @@ EcDsaAsymImpl::EcDsaAsymImpl(const void* key, size_t key_len,
         pubbin[0] = POINT_CONVERSION_UNCOMPRESSED;
         std::memcpy(&pubbin[1], key, len);
         const uint8_t* p = &pubbin[0];
-        eckey_ = EC_KEY_new_by_curve_name(curve_nid);
+        eckey_ = EC_KEY_new();
         if (!eckey_) {
-            isc_throw(LibraryError, "EC_KEY_new_by_curve_name");
+            isc_throw(LibraryError, "EC_KEY_new");
         }
-        EC_KEY_set_asn1_flag(eckey_, OPENSSL_EC_NAMED_CURVE);
+        if (!EC_KEY_set_group(eckey_, group_)) {
+             EC_KEY_free(eckey_);
+            eckey_ = NULL;
+            isc_throw(LibraryError, "EC_KEY_set_group");
+        }
         if (o2i_ECPublicKey(&eckey_, &p,
                             static_cast<long>(len + 1)) == NULL) {
             EC_KEY_free(eckey_);
@@ -227,6 +262,16 @@ EcDsaAsymImpl::EcDsaAsymImpl(const void* key, size_t key_len,
         isc_throw(UnsupportedAlgorithm,
                   "Unknown ECDSA Key kind: " << static_cast<int>(kind_));
     }
+
+    mdctx_.reset(new EVP_MD_CTX);
+    EVP_MD_CTX_init(mdctx_.get());
+
+    if (!EVP_DigestInit_ex(mdctx_.get(), md_, NULL)) {
+        EVP_MD_CTX_cleanup(mdctx_.get());
+        EC_KEY_free(eckey_);
+        eckey_ = NULL;
+        isc_throw(LibraryError, "EVP_DigestInit_ex");
+    }
 }
 
 /// @brief Constructor from a key file with password,
@@ -241,13 +286,14 @@ EcDsaAsymImpl::EcDsaAsymImpl(const std::string& filename,
     kind_ = key_kind;
     eckey_ = NULL;
     x509_ = NULL;
-    int curve_nid = 0;
     switch (hash_) {
     case SHA256:
-        curve_nid = NID_X9_62_prime256v1;
+        md_ = EVP_sha256();
+        group_ = prime256v1.group_;
         break;
     case SHA384:
-        curve_nid = NID_secp384r1;
+        md_ = EVP_sha512();
+        group_ = secp384r1.group_;
         break;
     default:
         isc_throw(UnsupportedAlgorithm,
@@ -271,13 +317,12 @@ EcDsaAsymImpl::EcDsaAsymImpl(const std::string& filename,
         }
         if (!EC_KEY_get0_public_key(eckey_)) {
             // Compute the public key as a side effect
-            const EC_GROUP* grp = EC_KEY_get0_group(eckey_);
             const BIGNUM* privkey = EC_KEY_get0_private_key(eckey_);
-            EC_POINT* pubkey = EC_POINT_new(grp);
+            EC_POINT* pubkey = EC_POINT_new(group_);
             if (!pubkey) {
                 throw std::bad_alloc();
             }
-            if (!EC_POINT_mul(grp, pubkey, privkey, NULL, NULL, NULL)) {
+            if (!EC_POINT_mul(group_, pubkey, privkey, NULL, NULL, NULL)) {
                 EC_POINT_free(pubkey);
                 EC_KEY_free(eckey_);
                 eckey_ = NULL;
@@ -296,15 +341,8 @@ EcDsaAsymImpl::EcDsaAsymImpl(const std::string& filename,
             eckey_ = NULL;
             isc_throw(BadKey, "EC_KEY_check_key");
         }
-        EC_GROUP* wanted = EC_GROUP_new_by_curve_name(curve_nid);
-        if (!wanted) {
-            EC_KEY_free(eckey_);
-            eckey_ = NULL;
-            isc_throw(LibraryError, "EC_GROUP_new_by_curve_name");
-        }
         const int status =
-            EC_GROUP_cmp(EC_KEY_get0_group(eckey_), wanted, NULL);
-        EC_GROUP_free(wanted);
+            EC_GROUP_cmp(EC_KEY_get0_group(eckey_), group_, NULL);
         if (status < 0) {
             EC_KEY_free(eckey_);
             eckey_ = NULL;
@@ -378,12 +416,17 @@ EcDsaAsymImpl::EcDsaAsymImpl(const std::string& filename,
             BN_clear_free(privkey);
             isc_throw(BadKey, "Missing Algorithm entry");
         }
-        eckey_ = EC_KEY_new_by_curve_name(curve_nid);
+        eckey_ = EC_KEY_new();
         if (!eckey_) {
             BN_clear_free(privkey);
-            isc_throw(LibraryError, "EC_KEY_new_by_curve_name");
+            isc_throw(LibraryError, "EC_KEY_new");
         }
-        EC_KEY_set_asn1_flag(eckey_, OPENSSL_EC_NAMED_CURVE);
+        if (!EC_KEY_set_group(eckey_, group_)) {
+            BN_clear_free(privkey);
+            EC_KEY_free(eckey_);
+            eckey_ = NULL;
+            isc_throw(LibraryError, "EC_KEY_set_group");
+        }
         if (!EC_KEY_set_private_key(eckey_, privkey)) {
             BN_clear_free(privkey);
             EC_KEY_free(eckey_);
@@ -418,15 +461,8 @@ EcDsaAsymImpl::EcDsaAsymImpl(const std::string& filename,
             eckey_ = NULL;
             isc_throw(BadKey, "EC_KEY_check_key");
         }
-        EC_GROUP* wanted = EC_GROUP_new_by_curve_name(curve_nid);
-        if (!wanted) {
-            EC_KEY_free(eckey_);
-            eckey_ = NULL;
-            isc_throw(LibraryError, "EC_GROUP_new_by_curve_name");
-        }
         const int status =
-            EC_GROUP_cmp(EC_KEY_get0_group(eckey_), wanted, NULL);
-        EC_GROUP_free(wanted);
+            EC_GROUP_cmp(EC_KEY_get0_group(eckey_), group_, NULL);
         if (status < 0) {
             EC_KEY_free(eckey_);
             eckey_ = NULL;
@@ -492,11 +528,15 @@ EcDsaAsymImpl::EcDsaAsymImpl(const std::string& filename,
         }
         bin.insert(bin.begin(), POINT_CONVERSION_UNCOMPRESSED);
         const uint8_t* p = &bin[0];
-        eckey_ = EC_KEY_new_by_curve_name(curve_nid);
+        eckey_ = EC_KEY_new();
         if (!eckey_) {
-            isc_throw(LibraryError, "EC_KEY_new_by_curve_name");
+            isc_throw(LibraryError, "EC_KEY_new");
         }
-        EC_KEY_set_asn1_flag(eckey_, OPENSSL_EC_NAMED_CURVE);
+        if (!EC_KEY_set_group(eckey_, group_)) {
+            EC_KEY_free(eckey_);
+            eckey_ = NULL;
+            isc_throw(LibraryError, "EC_KEY_set_group");
+        }
         if (o2i_ECPublicKey(&eckey_, &p,
                             static_cast<long>(len + 1)) == NULL) {
             EC_KEY_free(eckey_);
@@ -559,11 +599,23 @@ EcDsaAsymImpl::EcDsaAsymImpl(const std::string& filename,
         isc_throw(UnsupportedAlgorithm,
                   "Unknown ECDSA Key kind: " << static_cast<int>(kind_));
     }
+
+    mdctx_.reset(new EVP_MD_CTX);
+    EVP_MD_CTX_init(mdctx_.get());
+
+    if (!EVP_DigestInit_ex(mdctx_.get(), md_, NULL)) {
+        EVP_MD_CTX_cleanup(mdctx_.get());
+        EC_KEY_free(eckey_);
+        eckey_ = NULL;
+        isc_throw(LibraryError, "EVP_DigestInit_ex");
+    }
 }
 
 /// @brief Destructor
 EcDsaAsymImpl::~EcDsaAsymImpl() {
-    tbs_.clear();
+    if (mdctx_) {
+        EVP_MD_CTX_cleanup(mdctx_.get());
+    }
     if (eckey_) {
         EC_KEY_free(eckey_);
         eckey_ = NULL;
@@ -613,14 +665,15 @@ size_t EcDsaAsymImpl::getSignatureLength(const AsymFormat sig_format) const {
 
 /// @brief Add data to digest
 void EcDsaAsymImpl::update(const void* data, const size_t len) {
-    const size_t old = tbs_.size();
-    tbs_.resize(old + len);
-    std::memcpy(&tbs_[old], data, len);
+    if (!EVP_DigestUpdate(mdctx_.get(), data, len)) {
+        isc_throw(LibraryError, "EVP_DigestUpdate");
+    }
 }
 
 /// @brief Calculate the final signature
 void EcDsaAsymImpl::sign(isc::util::OutputBuffer& result, size_t len,
                          const AsymFormat sig_format) {
+    // Check the signature format
     if ((sig_format != BASIC) &&
         (sig_format != ASN1) &&
         (sig_format != DNS)) {
@@ -628,14 +681,25 @@ void EcDsaAsymImpl::sign(isc::util::OutputBuffer& result, size_t len,
                   "Unknown Signature format: " <<
                   static_cast<int>(sig_format));
     }
+
+    // Get the digest
+    size_t digest_len = EVP_MD_CTX_size(mdctx_.get());
+    ossl::SecBuf<uint8_t> digest(digest_len);
+    if (!EVP_DigestFinal_ex(mdctx_.get(), &digest[0], NULL)) {
+        isc_throw(LibraryError, "EVP_DigestFinal_ex");
+    }
+
+    // Get the signature
     size_t size = getSignatureLength(sig_format);
     ossl::SecBuf<uint8_t> buf(size);
-    ECDSA_SIG* sig = ECDSA_do_sign(&tbs_[0],
-                                   static_cast<int>(tbs_.size()),
+    ECDSA_SIG* sig = ECDSA_do_sign(&digest[0],
+                                   static_cast<int>(digest_len),
                                    eckey_);
     if (!sig) {
         isc_throw(LibraryError, "ECDSA_do_sign");
     }
+
+    // Build the result
     if ((sig_format == BASIC) || (sig_format == DNS)) {
         // Store the 2 integers with padding
         BN_bn2bin(sig->r, &buf[(size / 2) - BN_num_bytes(sig->r)]);
@@ -669,6 +733,7 @@ void EcDsaAsymImpl::sign(isc::util::OutputBuffer& result, size_t len,
 /// @brief Calculate the final signature
 void EcDsaAsymImpl::sign(void* result, size_t len,
                          const AsymFormat sig_format) {
+    // Check the signature format
     if ((sig_format != BASIC) &&
         (sig_format != ASN1) &&
         (sig_format != DNS)) {
@@ -676,14 +741,25 @@ void EcDsaAsymImpl::sign(void* result, size_t len,
                   "Unknown Signature format: " <<
                   static_cast<int>(sig_format));
     }
+
+    // Get the digest
+    size_t digest_len = EVP_MD_CTX_size(mdctx_.get());
+    ossl::SecBuf<uint8_t> digest(digest_len);
+    if (!EVP_DigestFinal_ex(mdctx_.get(), &digest[0], NULL)) {
+        isc_throw(LibraryError, "EVP_DigestFinal_ex");
+    }
+
+    // Get the signature
     size_t size = getSignatureLength(sig_format);
     ossl::SecBuf<uint8_t> buf(size);
-    ECDSA_SIG* sig = ECDSA_do_sign(&tbs_[0],
-                                   static_cast<int>(tbs_.size()),
+    ECDSA_SIG* sig = ECDSA_do_sign(&digest[0],
+                                   static_cast<int>(digest_len),
                                    eckey_);
     if (!sig) {
         isc_throw(LibraryError, "ECDSA_do_sign");
     }
+
+    // Build the result
     if ((sig_format == BASIC) || (sig_format == DNS)) {
         // Store the 2 integers with padding
         BN_bn2bin(sig->r, &buf[(size / 2) - BN_num_bytes(sig->r)]);
@@ -717,6 +793,7 @@ void EcDsaAsymImpl::sign(void* result, size_t len,
 /// @brief Calculate the final signature
 std::vector<uint8_t> EcDsaAsymImpl::sign(size_t len,
                                          const AsymFormat sig_format) {
+    // Check the signature format
     if ((sig_format != BASIC) &&
         (sig_format != ASN1) &&
         (sig_format != DNS)) {
@@ -724,14 +801,25 @@ std::vector<uint8_t> EcDsaAsymImpl::sign(size_t len,
                   "Unknown Signature format: " <<
                   static_cast<int>(sig_format));
     }
+
+    // Get the digest
+    size_t digest_len = EVP_MD_CTX_size(mdctx_.get());
+    ossl::SecBuf<uint8_t> digest(digest_len);
+    if (!EVP_DigestFinal_ex(mdctx_.get(), &digest[0], NULL)) {
+        isc_throw(LibraryError, "EVP_DigestFinal_ex");
+    }
+
+    // Get the signature
     size_t size = getSignatureLength(sig_format);
     ossl::SecBuf<uint8_t> buf(size);
-    ECDSA_SIG* sig = ECDSA_do_sign(&tbs_[0],
-                                   static_cast<int>(tbs_.size()),
+    ECDSA_SIG* sig = ECDSA_do_sign(&digest[0],
+                                   static_cast<int>(digest_len),
                                    eckey_);
     if (!sig) {
         isc_throw(LibraryError, "ECDSA_do_sign");
     }
+
+    // Build the result
     if ((sig_format == BASIC) || (sig_format == DNS)) {
         // Store the 2 integers with padding
         BN_bn2bin(sig->r, &buf[(size / 2) - BN_num_bytes(sig->r)]);
@@ -763,6 +851,7 @@ std::vector<uint8_t> EcDsaAsymImpl::sign(size_t len,
 /// @brief Verify an existing signature
 bool EcDsaAsymImpl::verify(const void* sig, size_t len,
                            const AsymFormat sig_format) {
+    // Check the signature format
     if ((sig_format != BASIC) &&
         (sig_format != ASN1) &&
         (sig_format != DNS)) {
@@ -770,6 +859,22 @@ bool EcDsaAsymImpl::verify(const void* sig, size_t len,
                   "Unknown Signature format: " <<
                   static_cast<int>(sig_format));
     }
+
+    // Get the digest from a copy of the context
+    EVP_MD_CTX tmp;
+    EVP_MD_CTX_init(&tmp);
+    if (!EVP_MD_CTX_copy_ex(&tmp, mdctx_.get())) {
+        isc_throw(LibraryError, "EVP_MD_CTX_copy_ex");
+    }
+    size_t digest_len = EVP_MD_CTX_size(mdctx_.get());
+    ossl::SecBuf<uint8_t> digest(digest_len);
+    if (!EVP_DigestFinal_ex(&tmp, &digest[0], NULL)) {
+        EVP_MD_CTX_cleanup(&tmp);
+        isc_throw(LibraryError, "EVP_DigestFinal_ex");
+    }
+    EVP_MD_CTX_cleanup(&tmp);
+
+    // Get the signature
     ECDSA_SIG* asn_sig;
     const uint8_t* sigbuf =
         reinterpret_cast<const uint8_t*>(const_cast<void*>(sig));
@@ -805,7 +910,10 @@ bool EcDsaAsymImpl::verify(const void* sig, size_t len,
             return false;
         }
     }
-    int status = ECDSA_do_verify(&tbs_[0], static_cast<int>(tbs_.size()),
+
+    // Check the signature
+    int status = ECDSA_do_verify(&digest[0],
+                                 static_cast<int>(digest_len),
                                  asn_sig, eckey_);
     ECDSA_SIG_free(asn_sig);
     switch (status) {
@@ -821,7 +929,18 @@ bool EcDsaAsymImpl::verify(const void* sig, size_t len,
 
 /// @brief Clear the crypto state and go back to the initial state
 void EcDsaAsymImpl::clear() {
-    tbs_.clear();
+    if (mdctx_) {
+        EVP_MD_CTX_cleanup(mdctx_.get());
+    } else {
+        mdctx_.reset(new EVP_MD_CTX);
+    }
+    EVP_MD_CTX_init(mdctx_.get());
+    if (!EVP_DigestInit_ex(mdctx_.get(), md_, NULL)) {
+        EVP_MD_CTX_cleanup(mdctx_.get());
+        EC_KEY_free(eckey_);
+        eckey_ = NULL;
+        isc_throw(LibraryError, "EVP_DigestInit_ex");
+    }
 }
 
 /// @brief Export the key value (binary)
@@ -1092,8 +1211,6 @@ bool EcDsaAsymImpl::compare(const EcDsaAsymImpl* other,
     if (!other || (other->algo_ != ECDSA_)) {
         return false;
     }
-    const EC_GROUP* grp = EC_KEY_get0_group(eckey_);
-    const EC_GROUP* ogrp = EC_KEY_get0_group(other->eckey_);
     const EC_POINT* pub = EC_KEY_get0_public_key(eckey_);
     const EC_POINT* opub = EC_KEY_get0_public_key(other->eckey_);
     int status;
@@ -1127,7 +1244,7 @@ bool EcDsaAsymImpl::compare(const EcDsaAsymImpl* other,
             return false;
         }
     cmppub:
-        status = EC_GROUP_cmp(grp, ogrp, NULL);
+        status = EC_GROUP_cmp(group_, other->group_, NULL);
         switch (status) {
         case 0:
             // match but not finished
@@ -1139,7 +1256,7 @@ bool EcDsaAsymImpl::compare(const EcDsaAsymImpl* other,
             // errors
             return false;
         }
-        status = EC_POINT_cmp(grp, pub, opub, NULL);
+        status = EC_POINT_cmp(group_, pub, opub, NULL);
         switch (status) {
         case 0:
             // match

@@ -17,6 +17,7 @@ namespace cryptolink {
 
 /// @brief Botan implementation of asymmetrical cryptography (Asym).          
 // Each method is the counterpart of the Asym corresponding method.
+// RSA
 class RsaAsymImpl : public AsymImpl {
 public:
     /// @brief Constructor from a key, asym and hash algorithm,

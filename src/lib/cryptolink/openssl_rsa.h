@@ -17,6 +17,7 @@ namespace cryptolink {
 
 /// @brief OpenSSL implementation of asymmetrical cryptography (Asym).
 // Each method is the counterpart of the Asym corresponding method.
+// RSA
 class RsaAsymImpl : public AsymImpl {
 public:
     /// @brief Constructor from a key, asym and hash algorithm,
@@ -132,6 +133,8 @@ private:
     HashAlgorithm hash_;
     /// @brief The key kind
     AsymKeyKind kind_;
+    /// @brief the hash algorithm
+    const EVP_MD* md_;
     /// @brief The protected pointer to the OpenSSL EVP_MD_CTX structure
     boost::scoped_ptr<EVP_MD_CTX> mdctx_;
     /// @brief The raw pointer to the OpenSSL EVP_PKEY structure

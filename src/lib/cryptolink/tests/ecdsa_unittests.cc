@@ -108,7 +108,7 @@ namespace {
     /// @brief ASN.1 ECDSA Signature layout
     const uint8_t asn1sig[] = {
         0x30, // tag=SEQUENCE
-        0x45, // length=69
+        0x46, // length=70
          0x02, // tag=INTEGER
          0x21, // length=33
           0x00, SIGNATURE_R,
@@ -398,12 +398,12 @@ TEST(EcDSATest, SHA256) {
     size_t nsig_len = ecdsa_sign->getSignatureLength(BASIC);
     ecdsa_sign->sign(nsig, nsig_len, BASIC);
 
-    boost::shared_ptr<Asym> ecdsa_verify(crypto.createAsym(pubfile,
-                                                           "",
+    boost::shared_ptr<Asym> ecdsa_verify(crypto.createAsym(pubkey,
+                                                           pubkeylen,
                                                            ECDSA_,
                                                            SHA256,
                                                            PUBLIC,
-                                                           ASN1),
+                                                           DNS),
                                          deleteAsym);
     ASSERT_TRUE(ecdsa_verify);
 

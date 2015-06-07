@@ -35,16 +35,16 @@ namespace cryptolink {
 /// @brief Constructor from a key, asym and hash algorithm,
 ///        key kind and key binary format
 RsaAsymImpl::RsaAsymImpl(const void* key, size_t key_len,
-			 const HashAlgorithm hash_algorithm,
-			 const AsymKeyKind key_kind,
-			 const AsymFormat key_format) {
+                         const HashAlgorithm hash_algorithm,
+                         const AsymKeyKind key_kind,
+                         const AsymFormat key_format) {
     algo_ = RSA_;
     hash_ = hash_algorithm;
     kind_ = key_kind;
     pkey_ = NULL;
     x509_ = NULL;
-    const EVP_MD* md = ossl::getHashAlgorithm(hash_);
-    if (md == 0) {
+    md_ = ossl::getHashAlgorithm(hash_);
+    if (md_ == 0) {
         isc_throw(UnsupportedAlgorithm,
                   "Unknown hash algorithm: " << static_cast<int>(hash_));
     }
@@ -247,10 +247,10 @@ RsaAsymImpl::RsaAsymImpl(const void* key, size_t key_len,
     mdctx_.reset(new EVP_MD_CTX);
     EVP_MD_CTX_init(mdctx_.get());
 
-    if (!EVP_DigestInit_ex(mdctx_.get(), md, NULL)) {
+    if (!EVP_DigestInit_ex(mdctx_.get(), md_, NULL)) {
         EVP_MD_CTX_cleanup(mdctx_.get());
         EVP_PKEY_free(pkey_);
-        pkey_ =NULL;
+        pkey_ = NULL;
         isc_throw(LibraryError, "EVP_DigestInit_ex");
     }
 }
@@ -258,17 +258,17 @@ RsaAsymImpl::RsaAsymImpl(const void* key, size_t key_len,
 /// @brief Constructor from a key file with password,
 ///        asym and hash algorithm, key kind and key binary format
 RsaAsymImpl::RsaAsymImpl(const std::string& filename,
-			 const std::string& password,
-			 const HashAlgorithm hash_algorithm,
-			 const AsymKeyKind key_kind,
-			 const AsymFormat key_format) {
+                         const std::string& password,
+                         const HashAlgorithm hash_algorithm,
+                         const AsymKeyKind key_kind,
+                         const AsymFormat key_format) {
     algo_ = RSA_;
     hash_ = hash_algorithm;
     kind_ = key_kind;
     pkey_ = NULL;
     x509_ = NULL;
-    const EVP_MD* md = ossl::getHashAlgorithm(hash_);
-    if (md == 0) {
+    md_ = ossl::getHashAlgorithm(hash_);
+    if (md_ == 0) {
         isc_throw(UnsupportedAlgorithm,
                   "Unknown hash algorithm: " << static_cast<int>(hash_));
     }
@@ -380,7 +380,7 @@ RsaAsymImpl::RsaAsymImpl(const std::string& filename,
                 int len = static_cast<int>(bin.size());
                 rsa->n = BN_bin2bn(&bin[0], len, NULL);
           } else if (strncmp(line, "PublicExponent:",
-			     strlen("PublicExponent:")) == 0) {
+                             strlen("PublicExponent:")) == 0) {
                 if (got_pub_exponent) {
                     RSA_free(rsa);
                     fclose(fp);
@@ -454,7 +454,7 @@ RsaAsymImpl::RsaAsymImpl(const std::string& filename,
                 int len = static_cast<int>(bin.size());
                 rsa->q = BN_bin2bn(&bin[0], len, NULL);
             } else if (strncmp(line, "Exponent1:",
-			       strlen("Exponent1:")) == 0) {
+                               strlen("Exponent1:")) == 0) {
                 if (got_exponent1) {
                     RSA_free(rsa);
                     fclose(fp);
@@ -786,10 +786,10 @@ RsaAsymImpl::RsaAsymImpl(const std::string& filename,
     mdctx_.reset(new EVP_MD_CTX);
     EVP_MD_CTX_init(mdctx_.get());
 
-    if (!EVP_DigestInit_ex(mdctx_.get(), md, NULL)) {
+    if (!EVP_DigestInit_ex(mdctx_.get(), md_, NULL)) {
         EVP_MD_CTX_cleanup(mdctx_.get());
         EVP_PKEY_free(pkey_);
-        pkey_ =NULL;
+        pkey_ = NULL;
         isc_throw(LibraryError, "EVP_DigestInit_ex");
     }
 }
@@ -853,7 +853,7 @@ void RsaAsymImpl::update(const void* data, const size_t len) {
 
 /// @brief Calculate the final signature
 void RsaAsymImpl::sign(isc::util::OutputBuffer& result, size_t len,
-		       const AsymFormat sig_format) {
+                       const AsymFormat sig_format) {
     unsigned int size = getSignatureLength(sig_format);
     ossl::SecBuf<unsigned char> sig(size);
     if (!EVP_SignFinal(mdctx_.get(), &sig[0], &size, pkey_)) {
@@ -880,7 +880,7 @@ void RsaAsymImpl::sign(void* result, size_t len, const AsymFormat sig_format) {
 
 /// @brief Calculate the final signature
 std::vector<uint8_t> RsaAsymImpl::sign(size_t len,
-				       const AsymFormat sig_format) {
+                                       const AsymFormat sig_format) {
     unsigned int size = getSignatureLength(sig_format);
     ossl::SecBuf<unsigned char> sig(size);
     if (!EVP_SignFinal(mdctx_.get(), &sig[0], &size, pkey_)) {
@@ -893,7 +893,7 @@ std::vector<uint8_t> RsaAsymImpl::sign(size_t len,
 
 /// @brief Verify an existing signature
 bool RsaAsymImpl::verify(const void* sig, size_t len,
-			 const AsymFormat sig_format) {
+                         const AsymFormat sig_format) {
     size_t size = getSignatureLength(sig_format);
     if (len != size) {
         return false;
@@ -921,16 +921,10 @@ void RsaAsymImpl::clear() {
         mdctx_.reset(new EVP_MD_CTX);
     }
     EVP_MD_CTX_init(mdctx_.get());
-    const EVP_MD* md = ossl::getHashAlgorithm(hash_);
-    if (md == 0) {
-        isc_throw(UnsupportedAlgorithm,
-                  "Unknown hash algorithm: " <<
-                  static_cast<int>(hash_));
-    }
-    if (!EVP_DigestInit_ex(mdctx_.get(), md, NULL)) {
+    if (!EVP_DigestInit_ex(mdctx_.get(), md_, NULL)) {
         EVP_MD_CTX_cleanup(mdctx_.get());
         EVP_PKEY_free(pkey_);
-        pkey_ =NULL;
+        pkey_ = NULL;
         isc_throw(LibraryError, "EVP_DigestInit_ex");
     }
 }
@@ -938,7 +932,7 @@ void RsaAsymImpl::clear() {
 /// @brief Export the key value (binary)
 std::vector<uint8_t>
 RsaAsymImpl::exportkey(const AsymKeyKind key_kind,
-		       const AsymFormat key_format) const {
+                       const AsymFormat key_format) const {
     if ((key_kind == PRIVATE) && (key_format == BASIC)) {
         // PKCS#1 Private Key
         if (kind_ != PRIVATE) {
@@ -1060,9 +1054,9 @@ RsaAsymImpl::exportkey(const AsymKeyKind key_kind,
 
 /// @brief Export the key value (file)
 void RsaAsymImpl::exportkey(const std::string& filename,
-			    const std::string& password,
-			    const AsymKeyKind key_kind,
-			    const AsymFormat key_format) const {
+                            const std::string& password,
+                            const AsymKeyKind key_kind,
+                            const AsymFormat key_format) const {
     if ((key_kind == PRIVATE) && (key_format == ASN1)) {
         // PKCS#8 Private Key PEM file
         if (kind_ != PRIVATE) {
@@ -1296,7 +1290,7 @@ bool RsaAsymImpl::validate() const {
 
 /// @brief Compare two keys
 bool RsaAsymImpl::compare(const RsaAsymImpl* other,
-			  const AsymKeyKind key_kind) const {
+                          const AsymKeyKind key_kind) const {
     if (!other || (other->algo_ != RSA_)) {
         return false;
     }
