@@ -44,11 +44,10 @@ pgsql_wipe() {
 
     # Make a set of drop commands, one for each table owned by keatest
     pgsql_execute "SELECT 'drop table if exists '||t.tablename || ' cascade;' as dcmd FROM pg_catalog.pg_tables t WHERE t.tableowner = 'keatest';"
-    assert_eq 0 $? "pgsql_wipe select failed, exit code: $?"
-
+    assert_eq 0 $? "pgsql_wipe select failed, exit code: %d, expected: %d"
     # Now execute the set of drop commands from the result set returned
     pgsql_execute "$_RESULT"
-    assert_eq 0 $? "pgsql_wipe drop failed, exit code: $?"
+    assert_eq 0 $? "pgsql_wipe drop failed, exit code: %d, expected: %d"
 }
 
 pgsql_lease_init_test() {
@@ -59,32 +58,32 @@ pgsql_lease_init_test() {
 
     # Create the database
     ${keaadmin} lease-init pgsql -u $db_user -p $db_password -n $db_name -d $scripts_dir
-    assert_eq 0 $? "kea-admin lease-init pgsql failed, exit code: $?"
+    assert_eq 0 $? "kea-admin lease-init pgsql failed, exit code: %d, expected: %d"
 
     # Verify that all the expected tables exist
 
     # Check schema_version table
     pgsql_execute "SELECT version, minor FROM schema_version;"
-    assert_eq 0 $? "schema_vesion table check failed, exit code: $?"
+    assert_eq 0 $? "schema_vesion table check failed, exit code: %d, expected: %d"
 
     # Check lease4 table
     pgsql_execute "SELECT address, hwaddr, client_id, valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname FROM lease4;"
-    assert_eq 0 $? "lease4 table check failed, exit code: $?"
+    assert_eq 0 $? "lease4 table check failed, exit code: %d, expected: %d"
 
     # Check lease6 table
     pgsql_execute "SELECT address, duid, valid_lifetime, expire, subnet_id, pref_lifetime, lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname FROM lease6;"
-    assert_eq 0 $? "lease6 table check failed, exit code: $?"
+    assert_eq 0 $? "lease6 table check failed, exit code: %d, expected: %d"
 
     # Check lease6_types table
     pgsql_execute "SELECT lease_type, name FROM lease6_types;"
-    assert_eq 0 $? "lease6_types table check failed, exit code: $?"
+    assert_eq 0 $? "lease6_types table check failed, exit code: %d, expected: %d"
 
-    # Trying to create it again should fail.  This verifies the db present 
-    # check 
+    # Trying to create it again should fail.  This verifies the db present
+    # check
     echo ""
     echo "DB created successfully, make sure we aren't allowed to try it again:"
     ${keaadmin} lease-init pgsql -u $db_user -p $db_password -n $db_name -d $scripts_dir
-    assert_eq 2 $? "kea-admin failed to deny lease-init, exit code: $?"
+    assert_eq 2 $? "kea-admin failed to deny lease-init, exit code: %d, expected: %d"
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -99,10 +98,10 @@ pgsql_lease_version_test() {
     pgsql_wipe
 
     # Create the database
-    ${keaadmin} lease-init pgsql -u $db_user -p $db_password -n $db_name -d $scripts_dir 
-    assert_eq 0 $? "cannot initialize the database, exit code: $?"
+    ${keaadmin} lease-init pgsql -u $db_user -p $db_password -n $db_name -d $scripts_dir
+    assert_eq 0 $? "cannot initialize the database, exit code: %d, expected: %d"
 
-    # Verfiy that kea-admin lease-version returns the correct version 
+    # Verfiy that kea-admin lease-version returns the correct version
     version=$(${keaadmin} lease-version pgsql -u $db_user -p $db_password -n $db_name)
     assert_str_eq "1.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
@@ -115,8 +114,8 @@ pgsql_lease_version_test() {
 pgsql_upgrade_test() {
     test_start "pgsql.upgrade-test"
 
-    ${keaadmin} lease-upgrade pgsql -u $db_user -p $db_password -n $db_name -d $scripts_dir 
-    assert_eq 1 $? "lease-upgrade should have failed, exit code: $?"
+    ${keaadmin} lease-upgrade pgsql -u $db_user -p $db_password -n $db_name -d $scripts_dir
+    assert_eq 1 $? "lease-upgrade should have failed, exit code: %d, expected: %d"
 
     test_finish 0
 }
