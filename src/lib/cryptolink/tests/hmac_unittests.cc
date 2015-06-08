@@ -133,6 +133,13 @@ namespace {
         hmac_sig.writeUint8At(~hmac_sig[0], 0);
         EXPECT_FALSE(hmac_verify->verify(hmac_sig.getData(),
                                          hmac_sig.getLength()));
+
+        // Restore the sig by flipping the first octet, and check
+        // whether verification succeeds then
+        hmac_sig.writeUint8At(~hmac_sig[0], 0);
+        EXPECT_TRUE(hmac_verify->verify(hmac_sig.getData(),
+                                        hmac_sig.getLength()));
+
     }
 
     /// @brief Sign and verify with vector representation of signature
@@ -196,6 +203,9 @@ namespace {
 
         sig[0] = ~sig[0];
         EXPECT_FALSE(hmac_verify->verify(sig, hmac_len));
+
+        sig[0] = ~sig[0];
+        EXPECT_TRUE(hmac_verify->verify(sig, hmac_len));
 
         delete[] sig;
     }

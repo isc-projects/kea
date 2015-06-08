@@ -76,7 +76,7 @@ public:
     size_t getOutputLength() const {
         int size = HMAC_size(md_.get());
         if (size < 0) {
-            isc_throw(isc::cryptolink::LibraryError, "EVP_MD_CTX_size");
+            isc_throw(LibraryError, "HMAC_size");
         }
         return (static_cast<size_t>(size));
     }
@@ -131,12 +131,23 @@ public:
     ///
     /// See @ref isc::cryptolink::HMAC::verify() for details.
     bool verify(const void* sig, size_t len) {
+        // Check the length
         size_t size = getOutputLength();
         if (len < 10 || len < size / 2) {
             return (false);
         }
+        // Get the digest from a copy of the context
+        HMAC_CTX tmp;
+        HMAC_CTX_init(&tmp);
+        if (!HMAC_CTX_copy(&tmp, md_.get())) {
+            isc_throw(LibraryError, "HMAC_CTX_copy");
+        }
         ossl::SecBuf<unsigned char> digest(size);
-        HMAC_Final(md_.get(), &digest[0], NULL);
+        if (!HMAC_Final(&tmp, &digest[0], NULL)) {
+            HMAC_CTX_cleanup(&tmp);
+            isc_throw(LibraryError, "HMAC_Final");
+        }
+        HMAC_CTX_cleanup(&tmp);
         if (len > size) {
             len = size;
         }
