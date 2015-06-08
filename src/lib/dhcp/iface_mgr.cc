@@ -320,6 +320,11 @@ IfaceMgr::deleteExternalSocket(int socketfd) {
 }
 
 void
+IfaceMgr::deleteAllExternalSockets() {
+    callbacks_.clear();
+}
+
+void
 IfaceMgr::setPacketFilter(const PktFilterPtr& packet_filter) {
     // Do not allow NULL pointer.
     if (!packet_filter) {
