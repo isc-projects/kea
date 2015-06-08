@@ -292,6 +292,10 @@ IfaceMgr::isDirectResponseSupported() const {
 
 void
 IfaceMgr::addExternalSocket(int socketfd, SocketCallback callback) {
+    if (socketfd < 0) {
+        isc_throw(BadValue, "Attempted to install callback for invalid socket "
+                  << socketfd);
+    }
     BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
         // There's such a socket description there already.
         // Update the callback and we're done
