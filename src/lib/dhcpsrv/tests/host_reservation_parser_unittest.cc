@@ -273,6 +273,19 @@ TEST_F(HostReservationParserTest, bcastAddress) {
     EXPECT_THROW(parser.build(config_element), DhcpConfigError);
 }
 
+// This test verifies that the configuration parser for host reservations
+// throws an exception when unsupported parameter is specified.
+TEST_F(HostReservationParserTest, invalidParameterName) {
+    std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
+        "\"hostname\": \"foo.bar.isc.org\","
+        "\"ip-addresses\": \"192.0.2.3\" }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser4 parser(SubnetID(10));
+    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+}
+
 // This test verfies that the parser can parse the IPv6 reservation entry for
 // which hw-address is a host identifier.
 TEST_F(HostReservationParserTest, dhcp6HWaddr) {
