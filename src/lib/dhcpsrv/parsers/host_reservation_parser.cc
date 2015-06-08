@@ -23,6 +23,46 @@
 using namespace isc::asiolink;
 using namespace isc::data;
 
+namespace {
+
+/// @brief Returns set of the supported parameters for DHCPv4.
+///
+/// This function returns the set of supported parameters for
+/// host reservation in DHCPv4.
+const std::set<std::string>& getSupportedParams4() {
+    static const char* params[] = {
+        "duid", "hw-address", "hostname", "ip-address"
+    };
+    static const size_t params_num = static_cast<const size_t>(sizeof(params) / sizeof(char*));
+    static std::set<std::string> params_set;
+    if (params_set.empty()) {
+        for (int i = 0; i < params_num; ++i) {
+            params_set.insert(std::string(params[i]));
+        }
+    }
+    return (params_set);
+}
+
+/// @brief Returns set of the supported parameters for DHCPv4.
+///
+/// This function returns the set of supported parameters for
+/// host reservation in DHCPv6.
+const std::set<std::string>& getSupportedParams6() {
+    static const char* params[] = {
+        "duid", "hw-address", "hostname", "ip-addresses", "prefixes"
+    };
+    static const size_t params_num = static_cast<const size_t>(sizeof(params) / sizeof(char*));
+    static std::set<std::string> params_set;
+    if (params_set.empty()) {
+        for (int i = 0; i < params_num; ++i) {
+            params_set.insert(std::string(params[i]));
+        }
+    }
+    return (params_set);
+}
+
+}
+
 namespace isc {
 namespace dhcp {
 
@@ -40,6 +80,12 @@ HostReservationParser::build(isc::data::ConstElementPtr reservation_data) {
     // reservations.
     BOOST_FOREACH(ConfigPair element, reservation_data->mapValue()) {
         try {
+            // Check if we support this parameter.
+            if (!isSupportedParameter(element.first)) {
+                isc_throw(DhcpConfigError, "unsupported configuration"
+                          " parameter '" << element.first << "'");
+            }
+
             if (element.first == "hw-address" || element.first == "duid") {
                 if (!identifier_name.empty()) {
                     isc_throw(DhcpConfigError, "the 'hw-address' and 'duid'"
@@ -114,6 +160,11 @@ HostReservationParser4::build(isc::data::ConstElementPtr reservation_data) {
     }
 
     addHost(reservation_data);
+}
+
+bool
+HostReservationParser4::isSupportedParameter(const std::string& param_name) const {
+    return (getSupportedParams4().count(param_name) > 0);
 }
 
 HostReservationParser6::HostReservationParser6(const SubnetID& subnet_id)
@@ -195,6 +246,11 @@ HostReservationParser6::build(isc::data::ConstElementPtr reservation_data) {
 
     // This may fail, but the addHost function will handle this on its own.
     addHost(reservation_data);
+}
+
+bool
+HostReservationParser6::isSupportedParameter(const std::string& param_name) const {
+    return (getSupportedParams6().count(param_name) > 0);
 }
 
 } // end of namespace isc::dhcp
