@@ -124,8 +124,7 @@ public:
     /// \param sig_format The signature binary format
     /// \return           true if the signature is correct, false otherwise
     ///
-    /// \note verify() does not destroy its context so it can be
-    /// called multiple times with different signatures.
+    /// \note verify() destroys its context: use clear().
     virtual bool verify(const void* sig, size_t len,
                         const AsymFormat sig_format) = 0;
 

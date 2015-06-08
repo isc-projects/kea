@@ -49,7 +49,7 @@ RsaAsymImpl::RsaAsymImpl(const void* key, size_t key_len,
         isc_throw(UnsupportedAlgorithm,
                   "Unknown hash algorithm: " << static_cast<int>(hash_));
     }
-    std::string emsa = "EMSA3(" + hash + ")";
+    emsa_ = "EMSA3(" + hash + ")";
     if (key_len == 0) {
         isc_throw(BadKey, "Bad RSA " <<
                   (kind_ != CERT ? "key" : "cert") << " length: 0");
@@ -239,13 +239,13 @@ RsaAsymImpl::RsaAsymImpl(const void* key, size_t key_len,
             isc_throw(BadKey, "priv to pub: " << exc.what());
         }
         try {
-            signer_.reset(new Botan::PK_Signer(*priv_, emsa));
+            signer_.reset(new Botan::PK_Signer(*priv_, emsa_));
         } catch (const std::exception& exc) {
             isc_throw(BadKey, "PK_Signer: " << exc.what());
         }
     } else {
         try {
-            verifier_.reset(new Botan::PK_Verifier(*pub_, emsa));
+            verifier_.reset(new Botan::PK_Verifier(*pub_, emsa_));
         } catch (const std::exception& exc) {
             isc_throw(BadKey, "PK_Verifier: " << exc.what());
         }
@@ -267,7 +267,7 @@ RsaAsymImpl::RsaAsymImpl(const std::string& filename,
         isc_throw(UnsupportedAlgorithm,
                   "Unknown hash algorithm: " << static_cast<int>(hash_));
     }
-    std::string emsa = "EMSA3(" + hash + ")";
+    emsa_ = "EMSA3(" + hash + ")";
 
     if ((kind_ == PRIVATE) && (key_format == ASN1)) {
         // PKCS#8 Private Key PEM file
@@ -663,13 +663,13 @@ RsaAsymImpl::RsaAsymImpl(const std::string& filename,
             isc_throw(BadKey, "priv to pub: " << exc.what());
         }
         try {
-            signer_.reset(new Botan::PK_Signer(*priv_, emsa));
+            signer_.reset(new Botan::PK_Signer(*priv_, emsa_));
         } catch (const std::exception& exc) {
             isc_throw(BadKey, "PK_Signer: " << exc.what());
         }
     } else {
         try {
-            verifier_.reset(new Botan::PK_Verifier(*pub_, emsa));
+            verifier_.reset(new Botan::PK_Verifier(*pub_, emsa_));
         } catch (const std::exception& exc) {
             isc_throw(BadKey, "PK_Verifier: " << exc.what());
         }
@@ -800,21 +800,15 @@ bool RsaAsymImpl::verify(const void* sig, size_t len,
 
 /// \brief Clear the crypto state and go back to the initial state
 void RsaAsymImpl::clear() {
-    std::string hash = btn::getHashAlgorithmName(hash_);
-    if (hash.compare("Unknown") == 0) {
-        isc_throw(UnsupportedAlgorithm,
-                  "Unknown hash algorithm: " << static_cast<int>(hash_));
-    }
-    std::string emsa = "EMSA3(" + hash + ")";
     if (kind_ == PRIVATE) {
         try {
-            signer_.reset(new Botan::PK_Signer(*priv_, emsa));
+            signer_.reset(new Botan::PK_Signer(*priv_, emsa_));
         } catch (const std::exception& exc) {
             isc_throw(BadKey, "PK_Signer: " << exc.what());
         }
     } else {
         try {
-            verifier_.reset(new Botan::PK_Verifier(*pub_, emsa));
+            verifier_.reset(new Botan::PK_Verifier(*pub_, emsa_));
         } catch (const std::exception& exc) {
             isc_throw(BadKey, "PK_Verifier: " << exc.what());
         }

@@ -131,6 +131,8 @@ private:
     HashAlgorithm hash_;
     /// @brief The key kind
     AsymKeyKind kind_;
+    /// @brief The encodding method for signatures
+    std::string emsa_;
     /// @brief The protected pointer to the Botan private key
     boost::scoped_ptr<Botan::RSA_PrivateKey> priv_;
     /// @brief The protected pointer to the Botan public key
