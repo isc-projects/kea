@@ -55,6 +55,8 @@ public:
     /// \brief Returns the output size of the signature
     ///
     /// \param sig_format The signature binary format
+    ///
+    /// \note for ASN.1 format the returned value is the maximum size
     virtual size_t getSignatureLength(const AsymFormat sig_format) const = 0;
 
     /// \brief Add data to digest

@@ -382,7 +382,7 @@ EcDsaAsymImpl::EcDsaAsymImpl(const std::string& filename,
                     // ECDSAP384SHA384
                     if (hash_ != SHA384) {
                         fclose(fp);
-                        isc_throw(BadKey, "Require an ECDSA SHA384 key");
+                        isc_throw(BadKey, "Require an ECDSA P384 key");
                     }
                 } else {
                     fclose(fp);
@@ -1084,7 +1084,7 @@ void EcDsaAsymImpl::exportkey(const std::string& filename,
         if (hash_ == SHA256) {
             fprintf(fp, "Algorithm: 13 (ECDSAP256SHA256)\n");
         } else if (hash_ == SHA256) {
-            fprintf(fp, "Algorithm: 1 (ECDSAP384SHA384)\n");
+            fprintf(fp, "Algorithm: 14 (ECDSAP384SHA384)\n");
         }
         std::vector<uint8_t> bin;
         bin.resize(BN_num_bytes(privkey));

@@ -114,7 +114,8 @@ namespace {
           0x00, SIGNATURE_R,
          0x02, // tag=INTEGER
          0x21, // length=33
-        0x00, SIGNATURE_S
+        0x00, SIGNATURE_S,
+        0x00 // pad
     };
     size_t asn1siglen = 72;
 
@@ -194,25 +195,42 @@ namespace {
 
         // Check if the signature we expect can verify
         // (beware we can't compare signature as they are random)
+        ecdsa_verify->clear();
+        ecdsa_verify->update(data_buf.getData(), data_buf.getLength());
         EXPECT_TRUE(ecdsa_verify->verify(expected_sig,
                                          sig_len,
                                          sig_format));
 
         // Change the length and check whether verification fails then
         // Relies on the fact the length is checked first
+        ecdsa_verify->clear();
+        ecdsa_verify->update(data_buf.getData(), data_buf.getLength());
         EXPECT_FALSE(ecdsa_verify->verify(sig.getData(),
                                           sig.getLength() - 1,
                                           sig_format));
+        ecdsa_verify->clear();
+        ecdsa_verify->update(data_buf.getData(), data_buf.getLength());
         EXPECT_FALSE(ecdsa_verify->verify(sig.getData(),
                                           sig.getLength() + 1,
                                           sig_format));
 
         // Change the sig by flipping the first octet, and check
         // whether verification fails then
+        ecdsa_verify->clear();
+        ecdsa_verify->update(data_buf.getData(), data_buf.getLength());
         sig.writeUint8At(~sig[0], 0);
         EXPECT_FALSE(ecdsa_verify->verify(sig.getData(),
                                           sig.getLength(),
                                           sig_format));
+
+        // Restore the sig by flipping the first octet, and check
+        // whether verification succeeds then
+        ecdsa_verify->clear();
+        ecdsa_verify->update(data_buf.getData(), data_buf.getLength());
+        sig.writeUint8At(~sig[0], 0);
+        EXPECT_TRUE(ecdsa_verify->verify(sig.getData(),
+                                         sig.getLength(),
+                                         sig_format));
     }
 
     /// @brief Sign and verify with vector representation of signature
@@ -249,19 +267,32 @@ namespace {
         ecdsa_verify->update(data.c_str(), data.size());
         EXPECT_TRUE(ecdsa_verify->verify(&sig[0], sig.size(), sig_format));
 
+        ecdsa_verify->clear();
+        ecdsa_verify->update(data.c_str(), data.size());
         EXPECT_TRUE(ecdsa_verify->verify(expected_sig,
                                          sig_len,
                                          sig_format));
 
+        ecdsa_verify->clear();
+        ecdsa_verify->update(data.c_str(), data.size());
         EXPECT_FALSE(ecdsa_verify->verify(&sig[0],
                                           sig.size() - 1,
                                           sig_format));
+        ecdsa_verify->clear();
+        ecdsa_verify->update(data.c_str(), data.size());
         EXPECT_FALSE(ecdsa_verify->verify(&sig[0],
                                           sig.size() + 1,
                                           sig_format));
 
+        ecdsa_verify->clear();
+        ecdsa_verify->update(data.c_str(), data.size());
         sig[0] = ~sig[0];
         EXPECT_FALSE(ecdsa_verify->verify(&sig[0], sig.size(), sig_format));
+
+        ecdsa_verify->clear();
+        ecdsa_verify->update(data.c_str(), data.size());
+        sig[0] = ~sig[0];
+        EXPECT_TRUE(ecdsa_verify->verify(&sig[0], sig.size(), sig_format));
     }
 
     /// @brief Sign and verify with array representation of signature
@@ -303,11 +334,24 @@ namespace {
         ecdsa_verify->update(data.c_str(), data.size());
         EXPECT_TRUE(ecdsa_verify->verify(sig, sig_len, sig_format));
 
+        ecdsa_verify->clear();
+        ecdsa_verify->update(data.c_str(), data.size());
         EXPECT_TRUE(ecdsa_verify->verify(expected_sig, sig_len, sig_format));
 
+        ecdsa_verify->clear();
+        ecdsa_verify->update(data.c_str(), data.size());
         EXPECT_FALSE(ecdsa_verify->verify(sig, sig_len - 1, sig_format));
+        ecdsa_verify->clear();
+        ecdsa_verify->update(data.c_str(), data.size());
         EXPECT_FALSE(ecdsa_verify->verify(sig, sig_len + 1, sig_format));
 
+        ecdsa_verify->clear();
+        ecdsa_verify->update(data.c_str(), data.size());
+        sig[0] = ~sig[0];
+        EXPECT_FALSE(ecdsa_verify->verify(sig, sig_len, sig_format));
+
+        ecdsa_verify->clear();
+        ecdsa_verify->update(data.c_str(), data.size());
         sig[0] = ~sig[0];
         EXPECT_FALSE(ecdsa_verify->verify(sig, sig_len, sig_format));
 
@@ -386,9 +430,9 @@ TEST(EcDSATest, SHA256) {
     std::vector<uint8_t> basicprivkey = ecdsa_sign->exportkey(PRIVATE, BASIC);
     ASSERT_EQ(32, basicprivkey.size());
     EXPECT_TRUE(std::memcmp(privkey, &basicprivkey[0], privkeylen) == 0);
-    std::vector<uint8_t> ans1pubkey = ecdsa_sign->exportkey(PUBLIC, ASN1);
-    ASSERT_EQ(pubspkilen, ans1pubkey.size());
-    EXPECT_TRUE(std::memcmp(pubspki, &ans1pubkey[0], pubspkilen) == 0);
+    std::vector<uint8_t> asn1pubkey = ecdsa_sign->exportkey(PUBLIC, ASN1);
+    ASSERT_EQ(pubspkilen, asn1pubkey.size());
+    EXPECT_TRUE(std::memcmp(pubspki, &asn1pubkey[0], pubspkilen) == 0);
     std::vector<uint8_t> dnspubkey = ecdsa_sign->exportkey(PUBLIC, DNS);
     ASSERT_EQ(64, dnspubkey.size());
     EXPECT_TRUE(std::memcmp(pubkey, &dnspubkey[0], pubkeylen) == 0);
@@ -410,8 +454,12 @@ TEST(EcDSATest, SHA256) {
     ecdsa_verify->update(data, datalen);
     EXPECT_TRUE(ecdsa_verify->verify(nsig.getData(), nsig.getLength(), BASIC));
 
+    ecdsa_verify->clear();
+    ecdsa_verify->update(data, datalen);
     EXPECT_TRUE(ecdsa_verify->verify(sig, siglen, DNS));
 
+    ecdsa_verify->clear();
+    ecdsa_verify->update(data, datalen);
     EXPECT_TRUE(ecdsa_verify->verify(asn1sig, asn1siglen, ASN1));
 }
 
@@ -460,9 +508,12 @@ TEST(EcDsaTest, doubleSign) {
     ASSERT_TRUE(ecdsa_verify);
 
     ecdsa_verify->update(data_buf.getData(), data_buf.getLength());
-    EXPECT_TRUE(ecdsa_verify->verify(sig1.getData(), sig1.getLength(), BASIC));
     EXPECT_TRUE(ecdsa_verify->verify(sig2.getData(), sig2.getLength(), BASIC));
 
+    ecdsa_verify->clear();
+
+    ecdsa_verify->update(data_buf.getData(), data_buf.getLength());
+    EXPECT_TRUE(ecdsa_verify->verify(sig1.getData(), sig1.getLength(), BASIC));
 }
 
 //

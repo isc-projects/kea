@@ -300,19 +300,34 @@ namespace {
 
         // Change the length and check whether verification fails then
         // Relies on the fact the length is checked first
+        rsa_verify->clear();
+        rsa_verify->update(data_buf.getData(), data_buf.getLength());
         EXPECT_FALSE(rsa_verify->verify(sig.getData(),
                                         sig.getLength() - 1,
                                         sig_format));
+        rsa_verify->clear();
+        rsa_verify->update(data_buf.getData(), data_buf.getLength());
         EXPECT_FALSE(rsa_verify->verify(sig.getData(),
                                         sig.getLength() + 1,
                                         sig_format));
 
         // Change the sig by flipping the first octet, and check
         // whether verification fails then
+        rsa_verify->clear();
+        rsa_verify->update(data_buf.getData(), data_buf.getLength());
         sig.writeUint8At(~sig[0], 0);
         EXPECT_FALSE(rsa_verify->verify(sig.getData(),
                                         sig.getLength(),
                                         sig_format));
+
+        // Restore the sig by flipping the first octet, and check
+        // whether verification succeeds then
+        rsa_verify->clear();
+        rsa_verify->update(data_buf.getData(), data_buf.getLength());
+        sig.writeUint8At(~sig[0], 0);
+        EXPECT_TRUE(rsa_verify->verify(sig.getData(),
+                                       sig.getLength(),
+                                       sig_format));
     }
 
     /// @brief Sign and verify with vector representation of signature
@@ -350,11 +365,22 @@ namespace {
         rsa_verify->update(data.c_str(), data.size());
         EXPECT_TRUE(rsa_verify->verify(&sig[0], sig.size(), sig_format));
 
+        rsa_verify->clear();
+        rsa_verify->update(data.c_str(), data.size());
         EXPECT_FALSE(rsa_verify->verify(&sig[0], sig.size() - 1, sig_format));
+        rsa_verify->clear();
+        rsa_verify->update(data.c_str(), data.size());
         EXPECT_FALSE(rsa_verify->verify(&sig[0], sig.size() + 1, sig_format));
 
+        rsa_verify->clear();
+        rsa_verify->update(data.c_str(), data.size());
         sig[0] = ~sig[0];
         EXPECT_FALSE(rsa_verify->verify(&sig[0], sig.size(), sig_format));
+
+        rsa_verify->clear();
+        rsa_verify->update(data.c_str(), data.size());
+        sig[0] = ~sig[0];
+        EXPECT_TRUE(rsa_verify->verify(&sig[0], sig.size(), sig_format));
     }
 
     /// @brief Sign and verify with array representation of signature
@@ -397,11 +423,22 @@ namespace {
         rsa_verify->update(data.c_str(), data.size());
         EXPECT_TRUE(rsa_verify->verify(sig, sig_len, sig_format));
 
+        rsa_verify->clear();
+        rsa_verify->update(data.c_str(), data.size());
         EXPECT_FALSE(rsa_verify->verify(sig, sig_len - 1, sig_format));
+        rsa_verify->clear();
+        rsa_verify->update(data.c_str(), data.size());
         EXPECT_FALSE(rsa_verify->verify(sig, sig_len + 1, sig_format));
 
+        rsa_verify->clear();
+        rsa_verify->update(data.c_str(), data.size());
         sig[0] = ~sig[0];
         EXPECT_FALSE(rsa_verify->verify(sig, sig_len, sig_format));
+
+        rsa_verify->clear();
+        rsa_verify->update(data.c_str(), data.size());
+        sig[0] = ~sig[0];
+        EXPECT_TRUE(rsa_verify->verify(sig, sig_len, sig_format));
 
         delete[] sig;
     }

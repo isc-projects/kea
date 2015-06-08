@@ -19,11 +19,13 @@
 #include <botan/botan.h>
 #include <botan/pubkey.h>
 #include <botan/rsa.h>
+#include <botan/ecdsa.h>
 #include <botan/x509stor.h>
 
 #include <hooks/hooks_manager.h>
 #include <hooks/callout_handle.h>
 #include <cryptolink/botan_rsa.h>
+#include <cryptolink/botan_ecdsa.h>
 
 namespace {
 
@@ -47,6 +49,10 @@ Asym::Asym(const void* key, size_t key_len,
         impl_ = new RsaAsymImpl(key, key_len, hash_algorithm,
                                 key_kind, key_format);
         return;
+    case ECDSA_:
+        impl_ = new EcDsaAsymImpl(key, key_len, hash_algorithm,
+                                  key_kind, key_format);
+        return;
     default:
         isc_throw(UnsupportedAlgorithm,
                   "Unknown asym algorithm: " <<
@@ -64,6 +70,10 @@ Asym::Asym(const std::vector<uint8_t> key,
     case RSA_:
         impl_ = new RsaAsymImpl(&key[0], key.size(), hash_algorithm,
                                 key_kind, key_format);
+        return;
+    case ECDSA_:
+        impl_ = new EcDsaAsymImpl(&key[0], key.size(), hash_algorithm,
+                                  key_kind, key_format);
         return;
     default:
         isc_throw(UnsupportedAlgorithm,
@@ -83,6 +93,10 @@ Asym::Asym(const std::string& filename,
     case RSA_:
         impl_ = new RsaAsymImpl(filename, password, hash_algorithm,
                                 key_kind, key_format);
+        return;
+    case ECDSA_:
+        impl_ = new EcDsaAsymImpl(filename, password, hash_algorithm,
+                                  key_kind, key_format);
         return;
     default:
         isc_throw(UnsupportedAlgorithm,
@@ -210,6 +224,15 @@ Asym::compare(const Asym* other, const AsymKeyKind key_kind) const {
         }
         const RsaAsymImpl* oimpl =
             dynamic_cast<const RsaAsymImpl*>(other->impl_);
+        return (impl->compare(oimpl, key_kind));
+    } else if (getAsymAlgorithm() == ECDSA_) {
+        const EcDsaAsymImpl* impl = dynamic_cast<const EcDsaAsymImpl*>(impl_);
+        // Should not happen but to test is better than to crash
+        if (!impl) {
+            isc_throw(Unexpected, "dynamic_cast failed on EcDsaAsymImpl*");
+        }
+        const EcDsaAsymImpl* oimpl =
+            dynamic_cast<const EcDsaAsymImpl*>(other->impl_);
         return (impl->compare(oimpl, key_kind));
     }
     isc_throw(UnsupportedAlgorithm, "compare");
