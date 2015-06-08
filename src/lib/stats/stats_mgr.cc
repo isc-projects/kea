@@ -14,8 +14,12 @@
 
 #include <exceptions/exceptions.h>
 #include <stats/stats_mgr.h>
+#include <cc/data.h>
+#include <config/command_interpreter.h>
 
 using namespace std;
+using namespace isc::data;
+using namespace isc::config;
 
 namespace isc {
 namespace stats {
@@ -142,6 +146,95 @@ size_t StatsMgr::count() const {
     return (global_->stats_.size());
 }
 
+isc::data::ConstElementPtr
+StatsMgr::statisticGetHandler(const std::string& /*name*/,
+                              const isc::data::ConstElementPtr& params) {
+    if (!params) {
+        return (createAnswer(CONTROL_RESULT_ERROR,
+                             "Missing mandatory 'name' parameter."));
+    }
+    ConstElementPtr stat_name = params->get("name");
+    if (!stat_name) {
+        return (createAnswer(CONTROL_RESULT_ERROR,
+                             "Missing mandatory 'name' parameter."));
+    }
+    if (stat_name->getType() != Element::string) {
+        return (createAnswer(CONTROL_RESULT_ERROR,
+                             "'name' parameter expected to be a string."));
+    }
+    return (createAnswer(CONTROL_RESULT_SUCCESS, get(stat_name->stringValue())));
+}
+
+isc::data::ConstElementPtr
+StatsMgr::statisticResetHandler(const std::string& /*name*/,
+                                const isc::data::ConstElementPtr& params) {
+    if (!params) {
+        return (createAnswer(CONTROL_RESULT_ERROR,
+                             "Missing mandatory 'name' parameter."));
+    }
+    ConstElementPtr stat_name = params->get("name");
+    if (!stat_name) {
+        return (createAnswer(CONTROL_RESULT_ERROR,
+                             "Missing mandatory 'name' parameter."));
+    }
+    if (stat_name->getType() != Element::string) {
+        return (createAnswer(CONTROL_RESULT_ERROR,
+                             "'name' parameter expected to be a string."));
+    }
+
+    if (reset(stat_name->stringValue())) {
+        return (createAnswer(CONTROL_RESULT_SUCCESS,
+                             "Statistic '" + stat_name->stringValue() + "' reset."));
+    } else {
+        return (createAnswer(CONTROL_RESULT_ERROR,
+                             "No '" + stat_name->stringValue() + "' statistic found"));
+    }
+}
+
+isc::data::ConstElementPtr
+StatsMgr::statisticRemoveHandler(const std::string& /*name*/,
+                                 const isc::data::ConstElementPtr& params) {
+    if (!params) {
+        return (createAnswer(CONTROL_RESULT_ERROR,
+                             "Missing mandatory 'name' parameter."));
+    }
+    ConstElementPtr stat_name = params->get("name");
+    if (!stat_name) {
+        return (createAnswer(CONTROL_RESULT_ERROR,
+                             "Missing mandatory 'name' parameter."));
+    }
+    if (del(stat_name->stringValue())) {
+        return (createAnswer(CONTROL_RESULT_SUCCESS,
+                             "Statistic '" + stat_name->stringValue() + "' removed."));
+    } else {
+        return (createAnswer(CONTROL_RESULT_ERROR,
+                             "No '" + stat_name->stringValue() + "' statistic found"));
+    }
+
+}
+
+isc::data::ConstElementPtr
+StatsMgr::statisticRemoveAllHandler(const std::string& /*name*/,
+                                    const isc::data::ConstElementPtr& /*params*/) {
+    removeAll();
+    return (createAnswer(CONTROL_RESULT_SUCCESS,
+                         "All statistics removed."));
+}
+
+isc::data::ConstElementPtr
+StatsMgr::statisticGetAllHandler(const std::string& /*name*/,
+                                 const isc::data::ConstElementPtr& /*params*/) {
+    ConstElementPtr all_stats = getAll();
+    return (createAnswer(CONTROL_RESULT_SUCCESS, all_stats));
+}
+
+isc::data::ConstElementPtr
+StatsMgr::statisticResetAllHandler(const std::string& /*name*/,
+                                   const isc::data::ConstElementPtr& /*params*/) {
+    resetAll();
+    return (createAnswer(CONTROL_RESULT_SUCCESS,
+                         "All statistics reset to neutral values."));
+}
 
 
 };
