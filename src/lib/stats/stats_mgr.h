@@ -197,6 +197,104 @@ class StatsMgr : public boost::noncopyable {
     /// @return Pointer to the Observation object
     ObservationPtr getObservation(const std::string& name) const;
 
+    /// @defgroup command_methods Methods are used to handle commands.
+    ///
+    /// @brief The following methods are used to handle commands:
+    ///
+    /// @{
+
+    /// @brief Handles statistic-get command
+    ///
+    /// This method handles statistic-get command, which returns value
+    /// of a given statistic). It expects one parameter stored in params map:
+    /// name: name-of-the-statistic
+    ///
+    /// Example params structure:
+    /// {
+    ///     "name": "packets-received"
+    /// }
+    ///
+    /// @param name name of the command (ignored, should be "statistic-get")
+    /// @param params structure containing a map that contains "name"
+    /// @param return answer containing details of specified statistic
+    isc::data::ConstElementPtr
+    statisticGetHandler(const std::string& name,
+                        const isc::data::ConstElementPtr& params);
+
+    /// @param Handles statistic-reset command
+    ///
+    /// This method handles statistic-reset command, which resets value
+    /// of a given statistic. It expects one parameter stored in params map:
+    /// name: name-of-the-statistic
+    ///
+    /// Example params structure:
+    /// {
+    ///     "name": "packets-received"
+    /// }
+    ///
+    /// @param name name of the command (ignored, should be "statistic-reset")
+    /// @param params structure containing a map that contains "name"
+    /// @param return answer containing confirmation
+    isc::data::ConstElementPtr
+    statisticResetHandler(const std::string& name,
+                          const isc::data::ConstElementPtr& params);
+
+    /// @param Handles statistic-remove command
+    ///
+    /// This method handles statistic-reset command, which removes a given
+    /// statistic completely. It expects one parameter stored in params map:
+    /// name: name-of-the-statistic
+    ///
+    /// Example params structure:
+    /// {
+    ///     "name": "packets-received"
+    /// }
+    ///
+    /// @param name name of the command (ignored, should be "statistic-remove")
+    /// @param params structure containing a map that contains "name" element
+    /// @param return answer containing confirmation
+    isc::data::ConstElementPtr
+    statisticRemoveHandler(const std::string& name,
+                           const isc::data::ConstElementPtr& params);
+
+    /// @brief Handles statistic-get-all command
+    ///
+    /// This method handles statistic-get-all command, which returns values
+    /// of all statistics. Params parameter is ignored.
+    ///
+    /// @param name name of the command (ignored, should be "statistic-get-all")
+    /// @param params ignored
+    /// @param return answer containing values of all statistic
+    isc::data::ConstElementPtr
+    statisticGetAllHandler(const std::string& name,
+                           const isc::data::ConstElementPtr& params);
+
+    /// @brief Handles statistic-reset-all command
+    ///
+    /// This method handles statistic-reset-all command, which sets values of
+    /// all statistics back to zero. Params parameter is ignored.
+    ///
+    /// @param name name of the command (ignored, should be "statistic-reset-all")
+    /// @param params ignored
+    /// @param return answer confirming success of this operation
+    isc::data::ConstElementPtr
+    statisticResetAllHandler(const std::string& name,
+                             const isc::data::ConstElementPtr& params);
+
+    /// @brief Handles statistic-remove-all command
+    ///
+    /// This method handles statistic-remove-all command, which removes all
+    /// statistics. Params parameter is ignored.
+    ///
+    /// @param name name of the command (ignored, should be "statistic-remove-all")
+    /// @param params ignored
+    /// @param return answer confirming success of this operation
+    isc::data::ConstElementPtr
+    statisticRemoveAllHandler(const std::string& name,
+                              const isc::data::ConstElementPtr& params);
+
+    /// @}
+
  private:
 
     /// @brief Sets a given statistic to specified value (internal version).
