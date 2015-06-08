@@ -217,7 +217,7 @@ class StatsMgr : public boost::noncopyable {
     /// @param name name of the command (ignored, should be "statistic-get")
     /// @param params structure containing a map that contains "name"
     /// @param return answer containing details of specified statistic
-    isc::data::ConstElementPtr
+    static isc::data::ConstElementPtr
     statisticGetHandler(const std::string& name,
                         const isc::data::ConstElementPtr& params);
 
@@ -235,7 +235,7 @@ class StatsMgr : public boost::noncopyable {
     /// @param name name of the command (ignored, should be "statistic-reset")
     /// @param params structure containing a map that contains "name"
     /// @param return answer containing confirmation
-    isc::data::ConstElementPtr
+    static isc::data::ConstElementPtr
     statisticResetHandler(const std::string& name,
                           const isc::data::ConstElementPtr& params);
 
@@ -253,7 +253,7 @@ class StatsMgr : public boost::noncopyable {
     /// @param name name of the command (ignored, should be "statistic-remove")
     /// @param params structure containing a map that contains "name" element
     /// @param return answer containing confirmation
-    isc::data::ConstElementPtr
+    static isc::data::ConstElementPtr
     statisticRemoveHandler(const std::string& name,
                            const isc::data::ConstElementPtr& params);
 
@@ -265,7 +265,7 @@ class StatsMgr : public boost::noncopyable {
     /// @param name name of the command (ignored, should be "statistic-get-all")
     /// @param params ignored
     /// @param return answer containing values of all statistic
-    isc::data::ConstElementPtr
+    static isc::data::ConstElementPtr
     statisticGetAllHandler(const std::string& name,
                            const isc::data::ConstElementPtr& params);
 
@@ -277,7 +277,7 @@ class StatsMgr : public boost::noncopyable {
     /// @param name name of the command (ignored, should be "statistic-reset-all")
     /// @param params ignored
     /// @param return answer confirming success of this operation
-    isc::data::ConstElementPtr
+    static isc::data::ConstElementPtr
     statisticResetAllHandler(const std::string& name,
                              const isc::data::ConstElementPtr& params);
 
@@ -289,7 +289,7 @@ class StatsMgr : public boost::noncopyable {
     /// @param name name of the command (ignored, should be "statistic-remove-all")
     /// @param params ignored
     /// @param return answer confirming success of this operation
-    isc::data::ConstElementPtr
+    static isc::data::ConstElementPtr
     statisticRemoveAllHandler(const std::string& name,
                               const isc::data::ConstElementPtr& params);
 

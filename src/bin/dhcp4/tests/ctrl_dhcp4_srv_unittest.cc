@@ -243,7 +243,11 @@ TEST_F(CtrlDhcpv4SrvTest, commandsRegistration) {
     EXPECT_NO_THROW(answer = CommandMgr::instance().processCommand(list_cmds));
     ASSERT_TRUE(answer);
     ASSERT_TRUE(answer->get("arguments"));
-    EXPECT_EQ("[ \"list-commands\", \"shutdown\" ]", answer->get("arguments")->str());
+    EXPECT_EQ("[ \"list-commands\", \"shutdown\", "
+              "\"statistic-get\", \"statistic-get-all\", "
+              "\"statistic-remove\", \"statistic-remove-all\", "
+              "\"statistic-reset\", \"statistic-reset-all\" ]",
+              answer->get("arguments")->str());
 
     // Ok, and now delete the server. It should deregister its commands.
     srv.reset();

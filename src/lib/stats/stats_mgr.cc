@@ -162,7 +162,8 @@ StatsMgr::statisticGetHandler(const std::string& /*name*/,
         return (createAnswer(CONTROL_RESULT_ERROR,
                              "'name' parameter expected to be a string."));
     }
-    return (createAnswer(CONTROL_RESULT_SUCCESS, get(stat_name->stringValue())));
+    return (createAnswer(CONTROL_RESULT_SUCCESS,
+                         instance().get(stat_name->stringValue())));
 }
 
 isc::data::ConstElementPtr
@@ -182,7 +183,7 @@ StatsMgr::statisticResetHandler(const std::string& /*name*/,
                              "'name' parameter expected to be a string."));
     }
 
-    if (reset(stat_name->stringValue())) {
+    if (instance().reset(stat_name->stringValue())) {
         return (createAnswer(CONTROL_RESULT_SUCCESS,
                              "Statistic '" + stat_name->stringValue() + "' reset."));
     } else {
@@ -203,7 +204,7 @@ StatsMgr::statisticRemoveHandler(const std::string& /*name*/,
         return (createAnswer(CONTROL_RESULT_ERROR,
                              "Missing mandatory 'name' parameter."));
     }
-    if (del(stat_name->stringValue())) {
+    if (instance().del(stat_name->stringValue())) {
         return (createAnswer(CONTROL_RESULT_SUCCESS,
                              "Statistic '" + stat_name->stringValue() + "' removed."));
     } else {
@@ -216,7 +217,7 @@ StatsMgr::statisticRemoveHandler(const std::string& /*name*/,
 isc::data::ConstElementPtr
 StatsMgr::statisticRemoveAllHandler(const std::string& /*name*/,
                                     const isc::data::ConstElementPtr& /*params*/) {
-    removeAll();
+    instance().removeAll();
     return (createAnswer(CONTROL_RESULT_SUCCESS,
                          "All statistics removed."));
 }
@@ -224,14 +225,14 @@ StatsMgr::statisticRemoveAllHandler(const std::string& /*name*/,
 isc::data::ConstElementPtr
 StatsMgr::statisticGetAllHandler(const std::string& /*name*/,
                                  const isc::data::ConstElementPtr& /*params*/) {
-    ConstElementPtr all_stats = getAll();
+    ConstElementPtr all_stats = instance().getAll();
     return (createAnswer(CONTROL_RESULT_SUCCESS, all_stats));
 }
 
 isc::data::ConstElementPtr
 StatsMgr::statisticResetAllHandler(const std::string& /*name*/,
                                    const isc::data::ConstElementPtr& /*params*/) {
-    resetAll();
+    instance().resetAll();
     return (createAnswer(CONTROL_RESULT_SUCCESS,
                          "All statistics reset to neutral values."));
 }
