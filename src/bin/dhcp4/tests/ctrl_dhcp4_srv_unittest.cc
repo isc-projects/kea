@@ -264,6 +264,9 @@ TEST_F(CtrlDhcpv4SrvTest, commandsRegistration) {
 /// work correctly after fork or develop a small tool that will send data
 /// from stdin to specified UNIX socket, print out the responses on stdout
 /// and develop shell tests for this.
+///
+/// Note that the test passes when run on its own, but not when run along with
+/// other unit-tests.
 TEST_F(CtrlDhcpv4SrvTest, DISABLED_commandSocketBasic) {
 
     string socket_path = string(TEST_DATA_DIR) + "/kea4.sock";
