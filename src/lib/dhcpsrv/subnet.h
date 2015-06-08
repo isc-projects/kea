@@ -639,7 +639,23 @@ public:
         return interface_id_;
     }
 
-protected:
+    /// @brief Enables or disables Rapid Commit option support for the subnet.
+    ///
+    /// @param rapid_commit A boolean value indicating that the Rapid Commit
+    /// option support is enabled (if true), or disabled (if false).
+    void setRapidCommit(const bool rapid_commit) {
+        rapid_commit_ = rapid_commit;
+    };
+
+    /// @brief Returns boolean value indicating that the Rapid Commit option
+    /// is supported or unsupported for the subnet.
+    ///
+    /// @return true if the Rapid Commit option is supported, false otherwise.
+    bool getRapidCommit() const {
+        return (rapid_commit_);
+    }
+
+private:
 
     /// @brief Returns default address for pool selection
     /// @return ANY IPv6 address
@@ -660,6 +676,10 @@ protected:
 
     /// @brief a triplet with preferred lifetime (in seconds)
     Triplet<uint32_t> preferred_;
+
+    /// @brief A flag indicating if Rapid Commit option is supported
+    /// for this subnet.
+    bool rapid_commit_;
 };
 
 /// @brief A pointer to a Subnet6 object
