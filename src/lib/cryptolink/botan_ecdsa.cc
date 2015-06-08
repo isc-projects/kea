@@ -139,21 +139,14 @@ EcDsaAsymImpl::EcDsaAsymImpl(const void* key, size_t key_len,
         } catch (const std::exception& exc) {
             isc_throw(BadKey, "X509_Certificate: " << exc.what());
         }
-        const Botan::AlgorithmIdentifier
-            sig_algo(x509_->signature_algorithm());
+        const Botan::OID oid = x509_->signature_algorithm().oid;
         if (hash_ == SHA256) {
-            const Botan::AlgorithmIdentifier
-                ecdsa_sha256("1.2.840.10045.4.3.2",
-                             Botan::AlgorithmIdentifier::USE_NULL_PARAM);
-            if (sig_algo != ecdsa_sha256) {
+            if (!(oid == Botan::OID("1.2.840.10045.4.3.2"))) {
                 x509_.reset();
                 isc_throw(BadKey, "Require a ECDSA SHA256 certificate");
             }
         } else if (hash_ == SHA384) {
-            const Botan::AlgorithmIdentifier
-                ecdsa_sha384("1.2.840.10045.4.3.3",
-                             Botan::AlgorithmIdentifier::USE_NULL_PARAM);
-            if (sig_algo != ecdsa_sha384) {
+            if (!(oid == Botan::OID("1.2.840.10045.4.3.3"))) {
                 x509_.reset();
                 isc_throw(BadKey, "Require a ECDSA SHA384 certificate");
             }
@@ -420,21 +413,14 @@ EcDsaAsymImpl::EcDsaAsymImpl(const std::string& filename,
         } catch (const std::exception& exc) {
             isc_throw(BadKey, "X509_Certificate: " << exc.what());
         }
-        const Botan::AlgorithmIdentifier
-            sig_algo(x509_->signature_algorithm());
+        const Botan::OID oid = x509_->signature_algorithm().oid;
         if (hash_ == SHA256) {
-            const Botan::AlgorithmIdentifier
-                ecdsa_sha256("1.2.840.10045.4.3.2",
-                             Botan::AlgorithmIdentifier::USE_NULL_PARAM);
-            if (sig_algo != ecdsa_sha256) {
+            if (!(oid == Botan::OID("1.2.840.10045.4.3.2"))) {
                 x509_.reset();
                 isc_throw(BadKey, "Require a ECDSA SHA256 certificate");
             }
         } else if (hash_ == SHA384) {
-            const Botan::AlgorithmIdentifier
-                ecdsa_sha384("1.2.840.10045.4.3.3",
-                             Botan::AlgorithmIdentifier::USE_NULL_PARAM);
-            if (sig_algo != ecdsa_sha384) {
+            if (!(oid == Botan::OID("1.2.840.10045.4.3.3"))) {
                 x509_.reset();
                 isc_throw(BadKey, "Require a ECDSA SHA384 certificate");
             }

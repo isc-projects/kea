@@ -66,6 +66,16 @@ namespace {
 0xeb, 0xcb, 0x4b, 0xf2, 0x46, 0xb8, 0x09, 0x45, \
 0xcd, 0xdf, 0xe7, 0xd5, 0x09, 0xbb, 0xfd, 0x7d
 
+#define PUBLIC_KEY2 \
+0xa0, 0x00, 0x7d, 0x8f, 0x36, 0x48, 0x46, 0xe4, \
+0x34, 0x30, 0x89, 0x2f, 0x52, 0xb7, 0xea, 0xad, \
+0x5f, 0x9b, 0x1f, 0x99, 0xab, 0xfb, 0x11, 0x37, \
+0x2d, 0xcc, 0xf5, 0xeb, 0x69, 0x2f, 0x9e, 0xac, \
+0xc5, 0x6f, 0x65, 0x52, 0xa3, 0xd3, 0x62, 0x08, \
+0x1a, 0x41, 0x18, 0xe5, 0x20, 0xbd, 0xa8, 0xa2, \
+0xb2, 0xfd, 0x54, 0xf4, 0x8b, 0x17, 0xc3, 0xab, \
+0xd5, 0x33, 0xaf, 0xa6, 0x3a, 0x6d, 0x45, 0x25
+
 #define TBS_DATA \
 0x61, 0x62, 0x63
 
@@ -98,6 +108,14 @@ namespace {
          0x00, 0x04, PUBLIC_KEY
     };
     size_t pubspkilen = 91;
+
+    /// @brief Another Public Key in SubjectPublicKeyInfo format
+    const uint8_t pubspki2[] = {
+        0x30, 0x59, 0x30, 0x13, 0x06, 0x07, 0x2a, 0x86,
+        0x48, 0xce, 0x3d, 0x02, 0x01, 0x06, 0x08, 0x2a,
+        0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07, 0x03,
+        0x42, 0x00, 0x04, PUBLIC_KEY2
+    };
 
     /// @brief Public Key in DNSSEC format (length 132)
     const uint8_t pubdns[] = {
@@ -179,6 +197,10 @@ namespace {
                                            deleteAsym);
         ecdsa_sign->update(data_buf.getData(), data_buf.getLength());
         ecdsa_sign->sign(sig, sig_len, sig_format);
+
+        // Signatures are random
+        // checkBuffer(sig, expected_sig, sig_len);
+        checkBuffer(sig, static_cast<const uint8_t*>(sig.getData()), sig_len);
 
         // Check whether we can verify it ourselves
         boost::shared_ptr<Asym> ecdsa_verify(crypto.createAsym(pubfilename,
@@ -353,7 +375,7 @@ namespace {
         ecdsa_verify->clear();
         ecdsa_verify->update(data.c_str(), data.size());
         sig[0] = ~sig[0];
-        EXPECT_FALSE(ecdsa_verify->verify(sig, sig_len, sig_format));
+        EXPECT_TRUE(ecdsa_verify->verify(sig, sig_len, sig_format));
 
         delete[] sig;
     }
@@ -392,7 +414,7 @@ namespace {
 //
 // Test values
 //
-TEST(EcDSATest, SHA256) {
+TEST(EcDsATest, SHA256) {
     uint8_t privkey[] = {
         PRIVATE_KEY
     };
@@ -461,6 +483,267 @@ TEST(EcDSATest, SHA256) {
     ecdsa_verify->clear();
     ecdsa_verify->update(data, datalen);
     EXPECT_TRUE(ecdsa_verify->verify(asn1sig, asn1siglen, ASN1));
+}
+
+TEST(EcDsaTest, ECDSA_PUB_SPKI) {
+    CryptoLink& crypto = CryptoLink::getCryptoLink();
+    boost::shared_ptr<Asym> pub_key(crypto.createAsym(pubspki2, pubspkilen,
+                                                      ECDSA_, SHA256,
+                                                      PUBLIC, ASN1),
+                                    deleteAsym);
+    ASSERT_TRUE(pub_key->validate());
+    EXPECT_EQ(ECDSA_, pub_key->getAsymAlgorithm());
+    EXPECT_EQ(SHA256, pub_key->getHashAlgorithm());
+    EXPECT_EQ(PUBLIC, pub_key->getAsymKeyKind());
+    EXPECT_EQ(256, pub_key->getKeySize());
+
+    EXPECT_THROW(crypto.createAsym(pubspki2, pubspkilen - 1,
+                                   ECDSA_, SHA256, PUBLIC, ASN1),
+                 BadKey);
+    EXPECT_THROW(crypto.createAsym(pubspki2, pubspkilen,
+                                   ECDSA_, SHA256, PUBLIC, BASIC),
+                 UnsupportedAlgorithm);
+    EXPECT_THROW(crypto.createAsym(pubspki2, pubspkilen,
+                                   ECDSA_, SHA384, PUBLIC, ASN1),
+                 BadKey);
+
+    boost::shared_ptr<Asym> ref_key(crypto.createAsym(pubfile, "",
+                                                      ECDSA_, SHA256,
+                                                      PUBLIC, ASN1),
+                                    deleteAsym);
+    EXPECT_TRUE(pub_key->compare(ref_key.get(), PUBLIC));
+    EXPECT_TRUE(ref_key->compare(pub_key.get(), PUBLIC));
+    EXPECT_FALSE(pub_key->compare(ref_key.get(), PRIVATE));
+    EXPECT_FALSE(pub_key->compare(ref_key.get(), CERT));
+
+    const std::vector<uint8_t> pubbin = ref_key->exportkey(PUBLIC, ASN1);
+    checkData(&pubbin[0], pubspki2, pubspkilen);
+}
+
+TEST(EcDsaTest, ECDSA_PUB_DNS) {
+    CryptoLink& crypto = CryptoLink::getCryptoLink();
+    boost::shared_ptr<Asym> pub_key(crypto.createAsym(pubdns, pubdnslen,
+                                                      ECDSA_, SHA256,
+                                                      PUBLIC, DNS),
+                                    deleteAsym);
+    ASSERT_TRUE(pub_key->validate());
+    EXPECT_EQ(ECDSA_, pub_key->getAsymAlgorithm());
+    EXPECT_EQ(SHA256, pub_key->getHashAlgorithm());
+    EXPECT_EQ(PUBLIC, pub_key->getAsymKeyKind());
+    EXPECT_EQ(256, pub_key->getKeySize());
+
+    boost::shared_ptr<Asym> ref_key(crypto.createAsym(pubspki, pubspkilen,
+                                                      ECDSA_, SHA256,
+                                                      PUBLIC, ASN1),
+                                    deleteAsym);
+    EXPECT_TRUE(pub_key->compare(ref_key.get(), PUBLIC));
+    EXPECT_TRUE(ref_key->compare(pub_key.get(), PUBLIC));
+    EXPECT_FALSE(pub_key->compare(ref_key.get(), PRIVATE));
+    EXPECT_FALSE(pub_key->compare(ref_key.get(), CERT));
+
+    const std::vector<uint8_t> pubbin = ref_key->exportkey(PUBLIC, DNS);
+    EXPECT_EQ(pubbin.size(), pubdnslen);
+    checkData(&pubbin[0], pubdns, pubdnslen);
+}
+
+TEST(EcDsaTest, ECDSA_PRIV_PKCS8) {
+    CryptoLink& crypto = CryptoLink::getCryptoLink();
+    boost::shared_ptr<Asym> ref_key(crypto.createAsym(privfile, "1234",
+                                                      ECDSA_, SHA256,
+                                                      PRIVATE, ASN1),
+                                    deleteAsym);
+
+    // PKCS#8 without encryption
+    const std::string nefile = TEST_DATA_SRCDIR "/ecpkcs8ne.pem";
+    boost::shared_ptr<Asym> ne_key(crypto.createAsym(nefile, "",
+                                                     ECDSA_, SHA256,
+                                                     PRIVATE, ASN1),
+                                   deleteAsym);
+    EXPECT_TRUE(ne_key->validate());
+    EXPECT_TRUE(ne_key->compare(ref_key.get(), PRIVATE));
+    EXPECT_TRUE(ref_key->compare(ne_key.get(), PRIVATE));
+}
+
+TEST(EcDsaTest, CERTIFICATE) {
+    CryptoLink& crypto = CryptoLink::getCryptoLink();
+    boost::shared_ptr<Asym> from_file(crypto.createAsym(certfile, "",
+                                                        ECDSA_, SHA256,
+                                                        CERT, ASN1),
+                                      deleteAsym);
+    EXPECT_TRUE(from_file->validate());
+    EXPECT_EQ(ECDSA_, from_file->getAsymAlgorithm());
+    EXPECT_EQ(SHA256, from_file->getHashAlgorithm());
+    EXPECT_EQ(CERT, from_file->getAsymKeyKind());
+    EXPECT_EQ(256, from_file->getKeySize());
+
+    EXPECT_THROW(crypto.createAsym(certfile, "",
+                                   ECDSA_, SHA256, PUBLIC, ASN1),
+                 BadKey);
+    EXPECT_THROW(crypto.createAsym(certfile, "",
+                                   ECDSA_, SHA256, PRIVATE, ASN1),
+                 BadKey);
+    EXPECT_THROW(crypto.createAsym(certfile, "",
+                                   ECDSA_, SHA256, CERT, BASIC),
+                 UnsupportedAlgorithm);
+    EXPECT_THROW(crypto.createAsym(certfile, "",
+                                   ECDSA_, SHA256, CERT, DNS),
+                 UnsupportedAlgorithm);
+    EXPECT_THROW(crypto.createAsym(certfile, "",
+                                   ECDSA_, MD5, CERT, ASN1),
+                 UnsupportedAlgorithm);
+    EXPECT_THROW(crypto.createAsym(certfile, "",
+                                   ECDSA_, SHA1, CERT, ASN1),
+                 UnsupportedAlgorithm);
+    EXPECT_THROW(crypto.createAsym(certfile, "",
+                                   ECDSA_, SHA224, CERT, ASN1),
+                 UnsupportedAlgorithm);
+    EXPECT_THROW(crypto.createAsym(certfile, "",
+                                   ECDSA_, SHA384, CERT, ASN1),
+                 BadKey);
+    EXPECT_THROW(crypto.createAsym(certfile, "",
+                                   ECDSA_, SHA512, CERT, ASN1),
+                 UnsupportedAlgorithm);
+
+    boost::shared_ptr<Asym> pub_key(crypto.createAsym(pubfile, "",
+                                                      ECDSA_, SHA256,
+                                                      PUBLIC, ASN1),
+                                    deleteAsym);
+    EXPECT_TRUE(from_file->compare(pub_key.get(), PUBLIC));
+    EXPECT_TRUE(pub_key->compare(from_file.get(), PUBLIC));
+    EXPECT_FALSE(from_file->compare(pub_key.get(), PRIVATE));
+    EXPECT_FALSE(pub_key->compare(from_file.get(), PRIVATE));
+
+    std::vector<uint8_t> certbin = from_file->exportkey(CERT, ASN1);
+    boost::shared_ptr<Asym> from_bin(crypto.createAsym(&certbin[0],
+                                                       certbin.size(),
+                                                       ECDSA_, SHA256,
+                                                       CERT, ASN1),
+                                     deleteAsym);
+    EXPECT_TRUE(from_bin->validate());
+    EXPECT_TRUE(from_file->compare(from_bin.get(), PUBLIC));
+    EXPECT_TRUE(from_bin->compare(from_file.get(), PUBLIC));
+    EXPECT_TRUE(from_file->compare(from_bin.get(), CERT));
+    EXPECT_TRUE(from_bin->compare(from_file.get(), CERT));
+
+    EXPECT_THROW(crypto.createAsym(&certbin[0], certbin.size() - 1,
+                                   ECDSA_, SHA256, CERT, ASN1),
+                 BadKey);
+    EXPECT_THROW(crypto.createAsym(&certbin[0], certbin.size(),
+                                   ECDSA_, SHA256, CERT, BASIC),
+                 UnsupportedAlgorithm);
+    EXPECT_THROW(crypto.createAsym(&certbin[0], certbin.size(),
+                                   ECDSA_, SHA256, CERT, DNS),
+                 UnsupportedAlgorithm);
+    EXPECT_THROW(crypto.createAsym(&certbin[0], certbin.size(),
+                                   ECDSA_, MD5, CERT, ASN1),
+                 UnsupportedAlgorithm);
+    EXPECT_THROW(crypto.createAsym(&certbin[0], certbin.size(),
+                                   ECDSA_, SHA1, CERT, ASN1),
+                 UnsupportedAlgorithm);
+    EXPECT_THROW(crypto.createAsym(&certbin[0], certbin.size(),
+                                   ECDSA_, SHA224, CERT, ASN1),
+                 UnsupportedAlgorithm);
+    EXPECT_THROW(crypto.createAsym(&certbin[0], certbin.size(),
+                                   ECDSA_, SHA384, CERT, ASN1),
+                 BadKey);
+    EXPECT_THROW(crypto.createAsym(&certbin[0], certbin.size(),
+                                   ECDSA_, SHA512, CERT, ASN1),
+                 UnsupportedAlgorithm);
+
+    certbin[certbin.size() - 1]  = ~certbin[certbin.size() - 1];
+    boost::shared_ptr<Asym> bad_bin(crypto.createAsym(&certbin[0],
+                                                      certbin.size(),
+                                                      ECDSA_, SHA256,
+                                                      CERT, ASN1),
+                                    deleteAsym);
+    EXPECT_FALSE(bad_bin->validate());
+}
+
+TEST(EcDsaTest, ECDSA) {
+    const uint8_t sig_expected[] = {
+        0xf0, 0xb7, 0xce, 0x08, 0x42, 0xb4, 0x52, 0x31,
+        0xc8, 0x69, 0x8e, 0x92, 0x1e, 0x6f, 0xd0, 0xd8,
+        0x8d, 0xbb, 0x1f, 0x2e, 0xdc, 0x8f, 0xdf, 0x08,
+        0xf8, 0x83, 0xe3, 0x74, 0x7c, 0x8c, 0x0a, 0xe0,
+        0x05, 0xb5, 0x16, 0x96, 0xf4, 0xee, 0xff, 0x10,
+        0x9b, 0x1e, 0xea, 0x5c, 0x45, 0x5c, 0xff, 0x40,
+        0x26, 0x09, 0xaa, 0xd9, 0x13, 0xaf, 0x76, 0x89,
+        0x5b, 0xd5, 0xd8, 0xcc, 0xd9, 0x62, 0x38, 0x1b,
+        // pad
+        0x00 
+    };
+    const size_t sig_len = 64;
+    doEcDsaTest("Permission to use, copy, modify, and/or "
+                "distribute this software\n",
+                privfile, "1234", pubfile, ECDSA_, SHA256, BASIC,
+                sig_expected, sig_len);
+}
+
+///
+/// Multiple updates
+///
+TEST(EcDsaTest, multipleUpdate) {
+    std::string data = "Limitations and known issues with this DHCP"
+             " release can be found\n"
+             "at http://kea.isc.org/wiki/KeaKnownIssues\n";
+    OutputBuffer data_buf(data.size());
+    data_buf.writeData(data.c_str(), data.size());
+    const uint8_t* data_ptr = static_cast<const uint8_t*>(data_buf.getData());
+    CryptoLink& crypto = CryptoLink::getCryptoLink();
+
+    // Sign it in one pass
+    boost::shared_ptr<Asym> ecdsa_sign1(crypto.createAsym(privfile, "1234",
+                                                          ECDSA_, SHA256,
+                                                          PRIVATE, ASN1),
+                                        deleteAsym);
+    ASSERT_TRUE(ecdsa_sign1);
+
+    OutputBuffer sig1(1);
+    size_t sig1_len = ecdsa_sign1->getSignatureLength(BASIC);
+    EXPECT_EQ(64, sig1_len);
+    ecdsa_sign1->update(data_ptr, data_buf.getLength());
+    ecdsa_sign1->sign(sig1, sig1_len, BASIC);
+    EXPECT_EQ(sig1_len, sig1.getLength());
+
+    // Verify in 3 segments
+    boost::shared_ptr<Asym> ecdsa_verify1(crypto.createAsym(pubfile, "",
+                                                            ECDSA_, SHA256,
+                                                            PUBLIC, ASN1),
+                                          deleteAsym);
+    ASSERT_TRUE(ecdsa_verify1);
+    ecdsa_verify1->update(data_ptr, 40);
+    ecdsa_verify1->update(data_ptr + 40, 5);
+    ecdsa_verify1->update(data_ptr + 45, data_buf.getLength() - 45);
+    EXPECT_TRUE(ecdsa_verify1->verify(sig1.getData(),
+                                      sig1.getLength(),
+                                      BASIC));
+
+    // Sign it in 3 segments
+    boost::shared_ptr<Asym> ecdsa_sign2(crypto.createAsym(privfile, "1234",
+                                                          ECDSA_, SHA256,
+                                                          PRIVATE, ASN1),
+                                        deleteAsym);
+    ASSERT_TRUE(ecdsa_sign2);
+
+    OutputBuffer sig2(1);
+    size_t sig2_len = ecdsa_sign2->getSignatureLength(BASIC);
+    EXPECT_EQ(64, sig2_len);
+    ecdsa_sign2->update(data_ptr, 40);
+    ecdsa_sign2->update(data_ptr + 40, 5);
+    ecdsa_sign2->update(data_ptr + 45, data_buf.getLength() - 45);
+    ecdsa_sign2->sign(sig2, sig2_len, BASIC);
+    EXPECT_EQ(sig2_len, sig2.getLength());
+
+    // Verify in one pass
+    boost::shared_ptr<Asym> ecdsa_verify2(crypto.createAsym(pubfile, "",
+                                                            ECDSA_, SHA256,
+                                                            PUBLIC, ASN1),
+                                          deleteAsym);
+    ASSERT_TRUE(ecdsa_verify2);
+    ecdsa_verify2->update(data_ptr, data_buf.getLength());
+    EXPECT_TRUE(ecdsa_verify2->verify(sig2.getData(),
+                                      sig2.getLength(),
+                                      BASIC));
 }
 
 //

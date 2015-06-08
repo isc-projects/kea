@@ -833,6 +833,69 @@ TEST(RsaTest, CERTIFICATE) {
     EXPECT_FALSE(bad_bin->validate());
 }
 
+///
+/// Multiple updates
+///
+TEST(RsaTest, multipleUpdate) {
+    std::string data = "Limitations and known issues with this DHCP"
+             " release can be found\n"
+             "at http://kea.isc.org/wiki/KeaKnownIssues\n";
+    OutputBuffer data_buf(data.size());
+    data_buf.writeData(data.c_str(), data.size());
+    const uint8_t* data_ptr = static_cast<const uint8_t*>(data_buf.getData());
+    CryptoLink& crypto = CryptoLink::getCryptoLink();
+
+    // Sign it in one pass
+    boost::shared_ptr<Asym> rsa_sign1(crypto.createAsym(privfile, "1234",
+                                                        RSA_, SHA1,
+                                                        PRIVATE, ASN1),
+                                      deleteAsym);
+    ASSERT_TRUE(rsa_sign1);
+
+    OutputBuffer sig1(1);
+    size_t sig1_len = rsa_sign1->getSignatureLength(BASIC);
+    EXPECT_EQ(128, sig1_len);
+    rsa_sign1->update(data_ptr, data_buf.getLength());
+    rsa_sign1->sign(sig1, sig1_len, BASIC);
+    EXPECT_EQ(sig1_len, sig1.getLength());
+
+    // Verify in 3 segments
+    boost::shared_ptr<Asym> rsa_verify1(crypto.createAsym(pubfile, "",
+                                                          RSA_, SHA1,
+                                                          PUBLIC, ASN1),
+                                        deleteAsym);
+    ASSERT_TRUE(rsa_verify1);
+    rsa_verify1->update(data_ptr, 40);
+    rsa_verify1->update(data_ptr + 40, 5);
+    rsa_verify1->update(data_ptr + 45, data_buf.getLength() - 45);
+    EXPECT_TRUE(rsa_verify1->verify(sig1.getData(), sig1.getLength(), BASIC));
+
+    // Sign it in 3 segments
+    boost::shared_ptr<Asym> rsa_sign2(crypto.createAsym(privfile, "1234",
+                                                        RSA_, SHA1,
+                                                        PRIVATE, ASN1),
+                                      deleteAsym);
+    ASSERT_TRUE(rsa_sign2);
+
+    OutputBuffer sig2(1);
+    size_t sig2_len = rsa_sign2->getSignatureLength(BASIC);
+    EXPECT_EQ(128, sig2_len);
+    rsa_sign2->update(data_ptr, 40);
+    rsa_sign2->update(data_ptr + 40, 5);
+    rsa_sign2->update(data_ptr + 45, data_buf.getLength() - 45);
+    rsa_sign2->sign(sig2, sig2_len, BASIC);
+    EXPECT_EQ(sig2_len, sig2.getLength());
+
+    // Verify in one pass
+    boost::shared_ptr<Asym> rsa_verify2(crypto.createAsym(pubfile, "",
+                                                          RSA_, SHA1,
+                                                          PUBLIC, ASN1),
+                                        deleteAsym);
+    ASSERT_TRUE(rsa_verify2);
+    rsa_verify2->update(data_ptr, data_buf.getLength());
+    EXPECT_TRUE(rsa_verify2->verify(sig2.getData(), sig2.getLength(), BASIC));
+}
+
 //
 // Multiple signatures
 //
