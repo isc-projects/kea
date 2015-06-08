@@ -382,6 +382,21 @@ TEST_F(SeDhcp6ParserTest, fullPubKeySha512) {
     EXPECT_EQ(pub_key->getAsymKeyKind(), PUBLIC);
 }
 
+// This test checks another public key config
+TEST_F(SeDhcp6ParserTest, fullPubKeyBadKey) {
+    std::string config = "{ \"sign-answers\": true,"
+        " \"private-key\": \"" SEDHCP6_DATA_DIR "/priv2.pem\","
+        " \"public-key\": \"" SEDHCP6_DATA_DIR "/pub.pem\" }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    SeDhcp6Parser parser("secure-dhcp6", Option::V6);
+    ASSERT_NO_THROW(parser.build(config_element));
+
+    // Keys don't match
+    ASSERT_THROW(parser.commit(), DhcpConfigError);
+}
+
 // This test checks the parsing of a full config using a certificate
 TEST_F(SeDhcp6ParserTest, fullWithCertificate) {
     std::string config = "{ \"sign-answers\": true,"

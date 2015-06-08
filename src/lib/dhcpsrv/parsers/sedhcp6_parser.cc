@@ -230,21 +230,21 @@ CfgSeDhcp6 SeDhcp6Parser::create() const {
 
     // When signing is disabled this is almost done
     if (!sign_answers) {
-	try {
-	    return (CfgSeDhcp6(sign_answers,
-			       timestamp_answers,
-			       check_signatures,
-			       check_authorizations,
-			       check_timestamps,
-			       online_validation));
-	} catch (const std::exception& ex) {
-	    isc_throw(DhcpConfigError, "Failed to build the secure "
-		      "DHCPv6 configuration state: " << ex.what());
-	} catch (...) {
-	    isc_throw(DhcpConfigError, "Failed to build the secure "
-		      "DHCPv6 configuration state");
-	}
-	// unreachable
+        try {
+            return (CfgSeDhcp6(sign_answers,
+                               timestamp_answers,
+                               check_signatures,
+                               check_authorizations,
+                               check_timestamps,
+                               online_validation));
+        } catch (const std::exception& ex) {
+            isc_throw(DhcpConfigError, "Failed to build the secure "
+                      "DHCPv6 configuration state: " << ex.what());
+        } catch (...) {
+            isc_throw(DhcpConfigError, "Failed to build the secure "
+                      "DHCPv6 configuration state");
+        }
+        // unreachable
     }
 
     // Signing is enabled, we need more
@@ -291,7 +291,7 @@ CfgSeDhcp6 SeDhcp6Parser::create() const {
     CryptoLink& crypto = CryptoLink::getCryptoLink();
     std::ostringstream errmsg;
     try {
-        errmsg.str("Failed to get the private key from '");
+        errmsg << "Failed to get the private key from '";
         errmsg << private_key.c_str() << "'";
         AsymPtr priv_key(crypto.createAsym(private_key,
                                            "",
@@ -301,9 +301,10 @@ CfgSeDhcp6 SeDhcp6Parser::create() const {
                                            ASN1),
                          deleteAsym);
 
-        errmsg.str("Failed to get the ");
+        errmsg.str("");
+        errmsg << "Failed to get the ";
         errmsg << (public_key.empty() ? "certificate" : "public key")
-	       << " from '" << credential.c_str() << "'";
+               << " from '" << credential.c_str() << "'";
         AsymPtr cred(crypto.createAsym(credential,
                                        "",
                                        signature_algorithm,
@@ -312,19 +313,29 @@ CfgSeDhcp6 SeDhcp6Parser::create() const {
                                        ASN1),
                      deleteAsym);
 
-        errmsg.str("Failed to build the secure DHCPv6 configuration state");
-	return (CfgSeDhcp6(sign_answers,
-			   timestamp_answers,
-			   check_signatures,
-			   check_authorizations,
-			   check_timestamps,
-			   online_validation,
-			   priv_key,
-			   cred));
+        errmsg.str("");
+        errmsg << "Mismatch between the private key and the";
+        errmsg << (public_key.empty() ? "certificate" : "public key");
+        if (!priv_key->compare(cred.get(), PUBLIC)) {
+            isc_throw(DhcpConfigError, errmsg.str());
+        }
+
+        errmsg.str("");
+        errmsg << "Failed to build the secure DHCPv6 configuration state";
+        return (CfgSeDhcp6(sign_answers,
+                           timestamp_answers,
+                           check_signatures,
+                           check_authorizations,
+                           check_timestamps,
+                           online_validation,
+                           priv_key,
+                           cred));
+    } catch (const DhcpConfigError&) {
+        throw;
     } catch (const std::exception& ex) {
         isc_throw(DhcpConfigError, errmsg << ": " << ex.what());
     } catch (...) {
-	isc_throw(DhcpConfigError, errmsg);
+        isc_throw(DhcpConfigError, errmsg.str());
     }
     // unreachable
 }

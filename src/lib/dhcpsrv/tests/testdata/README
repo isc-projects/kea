@@ -34,3 +34,11 @@ cert2.pem: another X.509 certificate with a different serial
 $ openssl x509 -in cert.pem -text
 
 displays the certificate content
+
+$ openssl ecparam -genkey -name prime256v1 -out ec
+
+ec: P256 key pair
+
+$ openssl ecparam -list_curves
+
+lists available curves

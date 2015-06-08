@@ -3123,8 +3123,8 @@ bool Dhcpv6Srv::validateSeDhcpOptions(const Pkt6Ptr& query, Pkt6Ptr& answer,
         key->update(&tbs[0], tbs.size());
         valid = key->verify(&sig[0], sig_len, BASIC);
     } catch (const Exception& ex) {
-        vermsg.str("signature verify failed: ");
-        vermsg << ex.what();
+        vermsg.str("");
+        vermsg << "signature verify failed: " << ex.what();
     } catch (...) {
         vermsg.str("signature verify failed?!");
     }
