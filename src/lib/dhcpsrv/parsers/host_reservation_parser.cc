@@ -30,11 +30,11 @@ namespace {
 /// This function returns the set of supported parameters for
 /// host reservation in DHCPv4.
 const std::set<std::string>& getSupportedParams4() {
-    static const char* params[] = {
-        "duid", "hw-address", "hostname", "ip-address", NULL
-    };
     static std::set<std::string> params_set;
     if (params_set.empty()) {
+        const char* params[] = {
+            "duid", "hw-address", "hostname", "ip-address", NULL
+        };
         for (int i = 0; params[i] != NULL; ++i) {
             params_set.insert(std::string(params[i]));
         }
@@ -47,12 +47,11 @@ const std::set<std::string>& getSupportedParams4() {
 /// This function returns the set of supported parameters for
 /// host reservation in DHCPv6.
 const std::set<std::string>& getSupportedParams6() {
-    static const char* params[] = {
-        "duid", "hw-address", "hostname", "ip-addresses", "prefixes", NULL
-    };
-    static const size_t params_num = static_cast<const size_t>(sizeof(params) / sizeof(char*));
     static std::set<std::string> params_set;
     if (params_set.empty()) {
+        const char* params[] = {
+            "duid", "hw-address", "hostname", "ip-addresses", "prefixes", NULL
+        };
         for (int i = 0; params[i] != NULL; ++i) {
             params_set.insert(std::string(params[i]));
         }
