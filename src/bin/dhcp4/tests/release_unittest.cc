@@ -261,7 +261,7 @@ TEST_F(ReleaseTest, releaseNonMatchingIPAddress) {
 
 // This test verifies that incoming RELEASE from a bad location
 // is correctly dropped.
-TEST_F(ReleaseTest, ReleaseNoSubnet) {
+TEST_F(ReleaseTest, releaseNoSubnet) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(RELEASE_CONFIGS[0], *client.getServer());
