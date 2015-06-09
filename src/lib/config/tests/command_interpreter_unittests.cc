@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009,2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -28,27 +28,43 @@ using namespace std;
 
 namespace {
 
+
+/// @brief Shortcut method for creating elements from JSON string
+///
+/// @param str string to be converted
+/// @return Element structure
 ElementPtr
 el(const std::string& str) {
     return (Element::fromJSON(str));
 }
 
+// This test verifies that that createAnswer method is able to generate
+// various answers.
 TEST(CommandInterpreterTest, createAnswer) {
     ConstElementPtr answer;
+
+    // By default the answer is a successful one.
     answer = createAnswer();
     EXPECT_EQ("{ \"result\": 0 }", answer->str());
+
+    // Let's check if we can generate an error.
     answer = createAnswer(1, "error");
     EXPECT_EQ("{ \"result\": 1, \"text\": \"error\" }", answer->str());
 
+    // This is expected to throw. When status code is non-zero (indicating error),
+    // textual explanation is mandatory.
     EXPECT_THROW(createAnswer(1, ElementPtr()), CtrlChannelError);
     EXPECT_THROW(createAnswer(1, Element::create(1)), CtrlChannelError);
 
+    // Let's check if answer can be generate with some data in it.
     ConstElementPtr arg = el("[ \"just\", \"some\", \"data\" ]");
     answer = createAnswer(0, arg);
     EXPECT_EQ("{ \"arguments\": [ \"just\", \"some\", \"data\" ], \"result\": 0 }",
               answer->str());
 }
 
+// This test checks whether parseAnswer is able to handle well and malformed
+// answers.
 TEST(CommandInterpreterTest, parseAnswer) {
     ConstElementPtr answer;
     ConstElementPtr arg;
@@ -79,6 +95,8 @@ TEST(CommandInterpreterTest, parseAnswer) {
     EXPECT_EQ("[ \"just\", \"some\", \"data\" ]", arg->str());
 }
 
+// This test checks whether createCommand function is able to create commands
+// with and without parameters.
 TEST(CommandInterpreterTest, createCommand) {
     ConstElementPtr command;
     ConstElementPtr arg;
@@ -102,6 +120,8 @@ TEST(CommandInterpreterTest, createCommand) {
               command->str());
 }
 
+// This test checks whether parseCommand function is able to parse various valid
+// and malformed commands.
 TEST(CommandInterpreterTest, parseCommand) {
     ConstElementPtr arg;
     std::string cmd;
@@ -124,71 +144,12 @@ TEST(CommandInterpreterTest, parseCommand) {
     EXPECT_EQ("my_command", cmd);
     EXPECT_EQ("1", arg->str());
 
-    parseCommand(arg, el("{ \"command\": \"my_command\", \"arguments\": [ \"some\", \"argument\", \"list\" ] }"));
+    parseCommand(arg, el("{ \"command\": \"my_command\", \"arguments\": "
+                         "[ \"some\", \"argument\", \"list\" ] }"));
     EXPECT_EQ("my_command", cmd);
     ASSERT_TRUE(arg);
     EXPECT_EQ("[ \"some\", \"argument\", \"list\" ]", arg->str());
 
-}
-
-void doRelatedLoggersTest(const char* input, const char* expected) {
-    ConstElementPtr all_conf = isc::data::Element::fromJSON(input);
-    ConstElementPtr expected_conf = isc::data::Element::fromJSON(expected);
-    EXPECT_EQ(*expected_conf, *isc::config::getRelatedLoggers(all_conf));
-}
-
-TEST(LogConfigTest, relatedLoggersTest) {
-    // make sure logger configs for 'other' programs are ignored,
-    // and that * is substituted correctly
-    // We'll use a root logger name of "kea-test".
-    isc::log::setRootLoggerName("kea-test");
-
-    doRelatedLoggersTest("[{ \"name\": \"other_module\" }]",
-                         "[]");
-    doRelatedLoggersTest("[{ \"name\": \"other_module.somelib\" }]",
-                         "[]");
-    doRelatedLoggersTest("[{ \"name\": \"test_other\" }]",
-                         "[]");
-    doRelatedLoggersTest("[{ \"name\": \"test_other.somelib\" }]",
-                         "[]");
-    doRelatedLoggersTest("[ { \"name\": \"other_module\" },"
-                         "  { \"name\": \"test\" }]",
-                         "[ { \"name\": \"kea-test\" } ]");
-    doRelatedLoggersTest("[ { \"name\": \"test\" }]",
-                         "[ { \"name\": \"kea-test\" } ]");
-    doRelatedLoggersTest("[ { \"name\": \"test.somelib\" }]",
-                         "[ { \"name\": \"kea-test.somelib\" } ]");
-    doRelatedLoggersTest("[ { \"name\": \"other_module.somelib\" },"
-                         "  { \"name\": \"test.somelib\" }]",
-                         "[ { \"name\": \"kea-test.somelib\" } ]");
-    doRelatedLoggersTest("[ { \"name\": \"other_module.somelib\" },"
-                         "  { \"name\": \"test\" },"
-                         "  { \"name\": \"test.somelib\" }]",
-                         "[ { \"name\": \"kea-test\" },"
-                         "  { \"name\": \"kea-test.somelib\" } ]");
-    doRelatedLoggersTest("[ { \"name\": \"*\" }]",
-                         "[ { \"name\": \"kea-test\" } ]");
-    doRelatedLoggersTest("[ { \"name\": \"*.somelib\" }]",
-                         "[ { \"name\": \"kea-test.somelib\" } ]");
-    doRelatedLoggersTest("[ { \"name\": \"*\", \"severity\": \"DEBUG\" },"
-                         "  { \"name\": \"test\", \"severity\": \"WARN\"}]",
-                         "[ { \"name\": \"kea-test\", \"severity\": \"WARN\"} ]");
-    doRelatedLoggersTest("[ { \"name\": \"*\", \"severity\": \"DEBUG\" },"
-                         "  { \"name\": \"some_module\", \"severity\": \"WARN\"}]",
-                         "[ { \"name\": \"kea-test\", \"severity\": \"DEBUG\"} ]");
-    doRelatedLoggersTest("[ { \"name\": \"kea-test\" }]",
-                         "[]");
-    // make sure 'bad' things like '*foo.x' or '*lib' are ignored
-    // (cfgmgr should have already caught it in the logconfig plugin
-    // check, and is responsible for reporting the error)
-    doRelatedLoggersTest("[ { \"name\": \"*foo\" }]",
-                         "[ ]");
-    doRelatedLoggersTest("[ { \"name\": \"*foo.bar\" }]",
-                         "[ ]");
-    doRelatedLoggersTest("[ { \"name\": \"*foo\" },"
-                         "  { \"name\": \"*foo.lib\" },"
-                         "  { \"name\": \"test\" } ]",
-                         "[ { \"name\": \"kea-test\" } ]");
 }
 
 }
