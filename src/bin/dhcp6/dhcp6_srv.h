@@ -298,10 +298,12 @@ protected:
     /// allocation failure.
     ///
     /// @param query client's message (typically SOLICIT or REQUEST)
+    /// @param answer server's response to the client's message.
     /// @param orig_ctx client context (contains subnet, duid and other parameters)
     /// @param ia pointer to client's IA_PD option (client's request)
     /// @return IA_PD option (server's response)
     OptionPtr assignIA_PD(const Pkt6Ptr& query,
+                          const isc::dhcp::Pkt6Ptr& answer,
                           AllocEngine::ClientContext6& orig_ctx,
                           boost::shared_ptr<Option6IA> ia);
 

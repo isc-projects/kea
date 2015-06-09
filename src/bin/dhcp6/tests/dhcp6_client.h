@@ -18,6 +18,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
+#include <dhcp/option6_client_fqdn.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
@@ -427,9 +428,27 @@ public:
 
     /// @brief Controls whether the client should send a client-id or not
     /// @param send should the client-id be sent?
-    void useClientId(bool send) {
+    void useClientId(const bool send) {
         use_client_id_ = send;
     }
+
+    /// @brief Specifies if the Rapid Commit option should be included in
+    /// the Solicit message.
+    ///
+    /// @param rapid_commit Boolean parameter controlling if the Rapid Commit
+    /// option must be included in the Solicit (if true), or not (if false).
+    void useRapidCommit(const bool rapid_commit) {
+        use_rapid_commit_ = rapid_commit;
+    }
+
+    /// @brief Creates an instance of the Client FQDN option to be included
+    /// in the client's message.
+    ///
+    /// @param flags Flags.
+    /// @param fqdn_name Name in the textual format.
+    /// @param fqdn_type Type of the name (fully qualified or partial).
+    void useFQDN(const uint8_t flags, const std::string& fqdn_name,
+                 Option6ClientFqdn::DomainNameType fqdn_type);
 
     /// @brief Lease configuration obtained by the client.
     Configuration config_;
@@ -491,6 +510,12 @@ private:
     ///
     /// @param lease_info Structure holding new lease information.
     void applyLease(const LeaseInfo& lease_info);
+
+    /// @brief Includes CLient FQDN in the client's message.
+    ///
+    /// This method checks if @c fqdn_ is specified and includes it in
+    /// the client's message.
+    void appendFQDN();
 
     /// @brief Copy IA options from one message to another.
     ///
@@ -568,6 +593,7 @@ private:
 
     bool use_oro_;  ///< Conth
     bool use_client_id_;
+    bool use_rapid_commit_;
 
     /// @brief Pointer to the option holding a prefix hint.
     Option6IAPrefixPtr prefix_hint_;
@@ -577,6 +603,9 @@ private:
     /// Content of this vector will be sent as ORO if use_oro_ is set
     /// to true. See @ref sendORO for details.
     std::vector<uint16_t> oro_;
+
+    /// @brief FQDN requested by the client.
+    Option6ClientFqdnPtr fqdn_;
 };
 
 } // end of namespace isc::dhcp::test
