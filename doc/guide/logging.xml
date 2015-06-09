@@ -236,13 +236,13 @@
             for libraries used by the deamon.</simpara>
           </listitem>
           <listitem>
-            <simpara><command>kea-dhcp-ddns.dhcp_to_d2</command> - this is the logger
+            <simpara><command>kea-dhcp-ddns.dhcp-to-d2</command> - this is the logger
             used by the kea-dhcp-ddns deamon for logging information about events
             dealing with receving messages from the DHCP servers and adding them
             to the queue for processing.</simpara>
           </listitem>
           <listitem>
-            <simpara><command>kea-dhcp-ddns.d2_to_dns</command> - this is the logger
+            <simpara><command>kea-dhcp-ddns.d2-to-dns</command> - this is the logger
             used by the kea-dhcp-ddns deamon for logging information about events
             dealing with sending and receiving messages with the DNS servers.
             </simpara>
