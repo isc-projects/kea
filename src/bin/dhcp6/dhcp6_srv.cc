@@ -2321,8 +2321,11 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
     if (ctx.subnet_ && ctx.subnet_->getRapidCommit()) {
         OptionPtr opt_rapid_commit = solicit->getOption(D6O_RAPID_COMMIT);
         if (opt_rapid_commit) {
-            LOG_DEBUG(options_logger, DBG_DHCP6_DETAIL, DHCP6_RAPID_COMMIT)
-                .arg(solicit->getLabel());
+
+            /// @todo uncomment when #3807 is merged!
+/*            LOG_DEBUG(options_logger, DBG_DHCP6_DETAIL, DHCP6_RAPID_COMMIT)
+                .arg(solicit->getLabel()); */
+
             // If Rapid Commit has been sent by the client, change the
             // response type to Reply and include Rapid Commit option.
             response->setType(DHCPV6_REPLY);
