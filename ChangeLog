@@ -1,3 +1,8 @@
+942.	[func]		tomek
+	18 new statistics added in DHCPv4 server: generic packet counters,
+	per packet type counters, parsing failure and packet drops.
+	(Trac #3794, git a61f40c44910a09699a9a566a5ec35ab758564ba)
+
 941.	[bug]		marcin
 	Configuration parser for host reservations returns an error
 	when an unsupported parameter is specified.
