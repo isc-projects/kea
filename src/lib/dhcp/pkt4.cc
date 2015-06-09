@@ -244,14 +244,6 @@ Pkt4::unpack() {
     // so we'll be able to log more detailed drop reason.
 }
 
-void Pkt4::check() {
-    uint8_t msg_type = getType();
-    if (msg_type > DHCPLEASEACTIVE) {
-        isc_throw(BadValue, "Invalid DHCP message type received: "
-                  << static_cast<int>(msg_type));
-    }
-}
-
 uint8_t Pkt4::getType() const {
     OptionPtr generic = getOption(DHO_DHCP_MESSAGE_TYPE);
     if (!generic) {
@@ -273,18 +265,29 @@ void Pkt4::setType(uint8_t dhcp_type) {
     OptionPtr opt = getOption(DHO_DHCP_MESSAGE_TYPE);
     if (opt) {
 
-        // There is message type option already, update it
+        // There is message type option already, update it. It seems that
+        // we do have two types of objects representing message-type option.
+        // It would be more preferable to use only one type, but there's no
+        // easy way to enforce it.
+        //
+        // One is an instance of the Option class. It stores type in
+        // Option::data_, so Option::setUint8() and Option::getUint8() can be
+        // used. The other one is an instance of OptionInt<uint8_t> and
+        // it stores message type as integer, hence
+        // OptionInt<uint8_t>::getValue() and OptionInt<uint8_t>::setValue()
+        // should be used.
         boost::shared_ptr<OptionInt<uint8_t> > type_opt =
             boost::dynamic_pointer_cast<OptionInt<uint8_t> >(opt);
         if (type_opt) {
-            return (type_opt->setValue(dhcp_type));
+            type_opt->setValue(dhcp_type);
         } else {
             opt->setUint8(dhcp_type);
         }
     } else {
         // There is no message type option yet, add it
         std::vector<uint8_t> tmp(1, dhcp_type);
-        opt = OptionPtr(new Option(Option::V4, DHO_DHCP_MESSAGE_TYPE, tmp));
+        opt = OptionPtr(new OptionInt<uint8_t>(Option::V4, DHO_DHCP_MESSAGE_TYPE,
+                                               tmp.begin(), tmp.end()));
         addOption(opt);
     }
 }

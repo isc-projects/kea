@@ -405,7 +405,8 @@ Dhcpv4Srv::run() {
         // failures in unpacking will cause the packet to be dropped. We
         // will increase type specific packets further down the road.
         // See processStatsReceived().
-        isc::stats::StatsMgr::instance().addValue("pkt4-received", 1ul);
+        isc::stats::StatsMgr::instance().addValue("pkt4-received",
+                                                  static_cast<uint64_t>(1));
 
         // In order to parse the DHCP options, the server needs to use some
         // configuration information such as: existing option spaces, option
@@ -467,8 +468,10 @@ Dhcpv4Srv::run() {
                     .arg(e.what());
 
                 // Increase the statistics of parse failues and dropped packets.
-                isc::stats::StatsMgr::instance().addValue("pkt4-parse-failed", 1ul);
-                isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop", 1ul);
+                isc::stats::StatsMgr::instance().addValue("pkt4-parse-failed",
+                                                          static_cast<uint64_t>(1));
+                isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
+                                                          static_cast<uint64_t>(1));
                 continue;
             }
         }
@@ -485,7 +488,8 @@ Dhcpv4Srv::run() {
         // There is no need to log anything here. This function logs by itself.
         if (!accept(query)) {
             // Increase the statistic of dropped packets.
-            isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop", 1ul);
+            isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
+                                                      static_cast<uint64_t>(1));
             continue;
         }
 
@@ -574,7 +578,8 @@ Dhcpv4Srv::run() {
                 .arg(e.what());
 
             // Increase the statistic of dropped packets.
-            isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop", 1ul);
+            isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
+                                                      static_cast<uint64_t>(1));
         }
 
         if (!rsp) {
@@ -1056,7 +1061,7 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
         // clients do not handle the hostnames with the trailing dot.
         opt_hostname_resp->setValue(d2_mgr.qualifyName(hostname, false));
     }
-    
+
     LOG_DEBUG(ddns_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_RESPONSE_HOSTNAME_DATA)
         .arg(ex.getQuery()->getLabel())
         .arg(opt_hostname_resp->getValue());
@@ -2289,7 +2294,8 @@ void Dhcpv4Srv::processStatsReceived(const Pkt4Ptr& query) {
         // name of pkt4-unknown-received.
     }
 
-    isc::stats::StatsMgr::instance().addValue(stat_name, 1ul);
+    isc::stats::StatsMgr::instance().addValue(stat_name,
+                                              static_cast<uint64_t>(1));
 }
 
 void Dhcpv4Srv::processStatsSent(const Pkt4Ptr& response) {
@@ -2311,7 +2317,7 @@ void Dhcpv4Srv::processStatsSent(const Pkt4Ptr& response) {
         break;
     default:
         // That should never happen
-        stat_name = "pkt4-unknown-received";
+        return;
     }
 
     isc::stats::StatsMgr::instance().addValue(stat_name, 1ul);

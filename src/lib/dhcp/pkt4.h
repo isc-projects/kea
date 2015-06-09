@@ -96,19 +96,6 @@ public:
     /// Method with throw exception if packet parsing fails.
     virtual void unpack();
 
-    /// @brief performs sanity check on a packet.
-    ///
-    /// This is usually performed after unpack(). It checks if packet is sane:
-    /// required options are present, fields have sane content etc.
-    /// For example verifies that DHCP_MESSAGE_TYPE is present and have
-    /// reasonable value. This method is expected to grow significantly.
-    /// It makes sense to separate unpack() and check() for testing purposes.
-    ///
-    /// @todo It is called from unpack() directly. It should be separated.
-    ///
-    /// Method will throw exception if anomaly is found.
-    void check();
-
     /// @brief Returns text representation of the primary packet identifiers
     ///
     /// This method is intended to be used to provide a consistent way to
