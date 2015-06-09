@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,8 @@
 
 #include <gtest/gtest.h>
 
+#include <util/unittests/test_exceptions.h>
+
 using isc::Exception;
 
 namespace {
@@ -28,6 +30,10 @@ protected:
     ExceptionTest() : teststring("test") {}
     const char* teststring;
 };
+
+void raise_foobar() {
+    isc_throw(Exception, "foobar");
+}
 
 TEST_F(ExceptionTest, basicMethods) {
     try {
@@ -47,4 +53,10 @@ TEST_F(ExceptionTest, stdInheritance) {
         EXPECT_EQ(std::string(ex.what()), std::string(teststring));
     }
 }
+
+// Test matching message
+TEST_F(ExceptionTest, gtestThrowWith) {
+    EXPECT_THROW_WITH(raise_foobar(), Exception, "foobar");
+}
+
 }
