@@ -58,14 +58,18 @@
       </itemizedlist>
 
       <para>
-            As for any Kea executable binary, the <filename>config.report</filename>
-            file produced by <userinput>./configure</userinput> is embbeded.
-            The command extracting it is:
+            All of the executable binaries in Kea contain an embedded
+            copy of the <filename>config.report</filename>
+            file produced by <userinput>./configure</userinput>.
+            The following command may be used to extract this information.
+            The binary <userinput>path</userinput>, may be found in the
+            install directory or in the <filename>.libs</filename>
+            subdirectory in the source treee. For example
+            <filename>kea/src/bin/dhcp4/.libs/kea-dhcp4</filename>.
+
 <screen>
 strings <userinput>path</userinput>/kea-dhcp4 | sed -n 's/;;;; //p'
 </screen>
-            Beware the <userinput>path</userinput> to use for a binary
-            in the build tree finishes by <filename>.libs</filename>.
       </para>
 
       <para>
