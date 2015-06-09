@@ -2221,8 +2221,9 @@ Daemon::getVersion(bool extended) {
     tmp << VERSION;
     if (extended) {
         tmp << endl << EXTENDED_VERSION << endl;
-        tmp << "linked with " << Logger::getVersion() << endl;
-        tmp << "and " << CryptoLink::getVersion() << endl;
+        tmp << "linked with:" << endl;
+        tmp << Logger::getVersion() << endl;
+        tmp << CryptoLink::getVersion() << endl;
 #ifdef HAVE_MYSQL
         tmp << "database: MySQL";
 #else
