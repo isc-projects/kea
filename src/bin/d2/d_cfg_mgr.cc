@@ -289,7 +289,7 @@ void DCfgMgrBase::buildAndCommit(std::string& element_id,
     // and store them in parser's local storage.
     parser->build(value);
 
-    // Invoke the parser's commit method. This "writes" the the data
+    // Invoke the parser's commit method. This "writes" the data
     // item(s) stored locally by the parser into the context.  (Note that
     // parsers are free to do more than update the context, but that is an
     // nothing something we are concerned with here.)

@@ -90,7 +90,6 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
                    "Application Process initialization failed: " << ex.what());
     }
 
-
     LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DCTL_STANDALONE).arg(app_name_);
 
     // Step 3 is to load configuration from file.
@@ -305,20 +304,20 @@ isc::data::ConstElementPtr
 DControllerBase::executeCommand(const std::string& command,
                             isc::data::ConstElementPtr args) {
     // Shutdown is universal.  If its not that, then try it as
-    // an custom command supported by the derivation.  If that
+    // a custom command supported by the derivation.  If that
     // doesn't pan out either, than send to it the application
     // as it may be supported there.
     isc::data::ConstElementPtr answer;
     if (command.compare(SHUT_DOWN_COMMAND) == 0) {
         answer = shutdownProcess(args);
     } else {
-        // It wasn't shutdown, so may be a custom controller command.
+        // It wasn't shutdown, so it may be a custom controller command.
         int rcode = 0;
         answer = customControllerCommand(command, args);
         isc::config::parseAnswer(rcode, answer);
         if (rcode == COMMAND_INVALID)
         {
-            // It wasn't controller command, so may be an application command.
+            // It wasn't a controller command, so it may be an application command.
             answer = process_->command(command, args);
         }
     }
