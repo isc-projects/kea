@@ -12,6 +12,8 @@ s-messages: config_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/config/config_messages.mes
 	touch $@
 
+EXTRA_DIST = command-socket.dox
+
 BUILT_SOURCES = config_messages.h config_messages.cc
 
 lib_LTLIBRARIES = libkea-cfgclient.la
