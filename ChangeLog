@@ -1,3 +1,8 @@
+940.	[bug]		fdupont
+	DHCPv4 server drops DHCPRELEASE messages sent from a bad
+	location (i.e., no subnet can be selected)
+	(Trac 3504, git xxx)
+
 939.	[bug]		fdupont
 	Small fix in HooksDhcpv4SrvTest.subnet4SelectSimple unit-test.
 	(Trac 3881, git a21afdffec41fceb61e6760d4108d670b2eabe75)
