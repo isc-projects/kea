@@ -3,7 +3,7 @@
 	allow the administrator finer control over debugging messages.
 	Messages pertaining to the name change requests processing include
 	an ID, currently the DHCID, to identify the transactions.
-	(Trac #3808, git <TBD>)
+	(Trac #3808, git 4fbe08234049de6ef67bb5cdb244d180a7a4c3a9)
 
 942.	[func]		tomek
 	18 new statistics added in DHCPv4 server: generic packet counters,
