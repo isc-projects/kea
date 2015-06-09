@@ -1,3 +1,10 @@
+xxx	[func]		sar
+	Split the DHCP-DDNS logging messages amongst several loggers to
+	allow the administrator finer control over debugging messages.
+	Messages pertaining to the name change requests processing include
+	an ID, currently the DHCID, to identify the transactions.
+	(Trac #3808, git <TBD>)
+
 929	[build]		fdupont
 	Corrected problem in build system whereby specifying an
 	installation directory on the "configure" command line that
