@@ -43,6 +43,7 @@
 #include <hooks/server_hooks.h>
 #include <hooks/hooks_manager.h>
 #include <config/ccsession.h>
+#include <stats/stats_mgr.h>
 
 #include <boost/scoped_ptr.hpp>
 
@@ -60,6 +61,26 @@ using namespace isc::dhcp::test;
 using namespace isc::test;
 
 namespace {
+
+const char* CONFIGS[] = {
+    // Configuration 0:
+    // - 1 subnet: 10.254.226.0/25
+    // - used for recorded traffic (see PktCaptures::captureRelayedDiscover)
+    "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"10.254.226.0/25\" } ],"
+        "    \"subnet\": \"10.254.226.0/24\", "
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"valid-lifetime\": 4000,"
+        "    \"interface\": \"eth0\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }"
+};
 
 // This test verifies that the destination address of the response
 // message is set to giaddr, when giaddr is set to non-zero address
@@ -922,22 +943,7 @@ TEST_F(Dhcpv4SrvTest, relayAgentInfoEcho) {
     // subnet 10.254.226.0/24 is in use, because this packet
     // contains the giaddr which belongs to this subnet and
     // this giaddr is used to select the subnet
-    std::string config = "{ \"interfaces-config\": {"
-        "    \"interfaces\": [ \"*\" ]"
-        "},"
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"subnet4\": [ { "
-        "    \"pools\": [ { \"pool\": \"10.254.226.0/25\" } ],"
-        "    \"subnet\": \"10.254.226.0/24\", "
-        "    \"rebind-timer\": 2000, "
-        "    \"renew-timer\": 1000, "
-        "    \"valid-lifetime\": 4000,"
-        "    \"interface\": \"eth0\" "
-        " } ],"
-        "\"valid-lifetime\": 4000 }";
-
-    configure(config);
+    configure(CONFIGS[0]);
 
     // Let's create a relayed DISCOVER. This particular relayed DISCOVER has
     // added option 82 (relay agent info) with 3 suboptions. The server
@@ -3343,6 +3349,63 @@ TEST_F(Dhcpv4SrvTest, acceptMessageType) {
                                                             1234))))
             << "Test failed for message type " << i;
     }
+}
+
+// Test checks whether statistic is bumped up appropriately when Decline
+// message is received.
+TEST_F(Dhcpv4SrvTest, statisticsDecline) {
+    NakedDhcpv4Srv srv(0);
+
+    pretendReceivingPkt(srv, CONFIGS[0], DHCPDECLINE, "pkt4-decline-received");
+}
+
+// Test checks whether statistic is bumped up appropriately when Offer
+// message is received (this should never happen in a sane metwork).
+TEST_F(Dhcpv4SrvTest, statisticsOfferRcvd) {
+    NakedDhcpv4Srv srv(0);
+
+    pretendReceivingPkt(srv, CONFIGS[0], DHCPOFFER, "pkt4-offer-received");
+}
+
+// Test checks whether statistic is bumped up appropriately when Ack
+// message is received (this should never happen in a sane metwork).
+TEST_F(Dhcpv4SrvTest, statisticsAckRcvd) {
+    NakedDhcpv4Srv srv(0);
+
+    pretendReceivingPkt(srv, CONFIGS[0], DHCPACK, "pkt4-ack-received");
+}
+
+// Test checks whether statistic is bumped up appropriately when Nak
+// message is received (this should never happen in a sane metwork).
+TEST_F(Dhcpv4SrvTest, statisticsNakRcvd) {
+    NakedDhcpv4Srv srv(0);
+
+    pretendReceivingPkt(srv, CONFIGS[0], DHCPNAK, "pkt4-nak-received");
+}
+
+// Test checks whether statistic is bumped up appropriately when Release
+// message is received.
+TEST_F(Dhcpv4SrvTest, statisticsReleaseRcvd) {
+    NakedDhcpv4Srv srv(0);
+
+    pretendReceivingPkt(srv, CONFIGS[0], DHCPRELEASE, "pkt4-release-received");
+}
+
+// Test checks whether statistic is bumped up appropriately when unknown
+// message is received.
+TEST_F(Dhcpv4SrvTest, statisticsUnknownRcvd) {
+    NakedDhcpv4Srv srv(0);
+
+    pretendReceivingPkt(srv, CONFIGS[0], 200, "pkt4-unknown-received");
+
+    // There should also be pkt4-receive-drop stat bumped up
+    using namespace isc::stats;
+    StatsMgr& mgr = StatsMgr::instance();
+    ObservationPtr drop_stat = mgr.getObservation("pkt4-receive-drop");
+
+    // This statistic must be present and must be set to 1.
+    ASSERT_TRUE(drop_stat);
+    EXPECT_EQ(1, drop_stat->getInteger().first);
 }
 
 }; // end of anonymous namespace

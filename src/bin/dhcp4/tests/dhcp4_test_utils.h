@@ -391,6 +391,20 @@ public:
     void configure(const std::string& config, NakedDhcpv4Srv& srv,
                    const bool commit = true);
 
+    /// @brief Pretents a packet of specified type was received.
+    ///
+    /// Instantiates fake network interfaces, configures passed Dhcpv4Srv,
+    /// then creates a message of specified type and sends it to the
+    /// server and then checks whether expected statstics were set
+    /// appropriately.
+    ///
+    /// @param srv the DHCPv4 server to be used
+    /// @param config JSON configuration to be used
+    /// @param pkt_type type of the packet to be faked
+    /// @param stat_name name of the expected statistic
+    void pretendReceivingPkt(NakedDhcpv4Srv& srv, const std::string& config,
+                             uint8_t pkt_type, const std::string& stat_name);
+
     /// @brief Create @c Dhcpv4Exchange from client's query.
     Dhcpv4Exchange createExchange(const Pkt4Ptr& query);
 

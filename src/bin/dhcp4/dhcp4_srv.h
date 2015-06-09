@@ -738,6 +738,13 @@ private:
     /// @return Option that contains netmask information
     static OptionPtr getNetmaskOption(const Subnet4Ptr& subnet);
 
+    /// @brief Updates statistics for received packets
+    /// @param query packet received
+    static void processStatsReceived(const Pkt4Ptr& query);
+
+    /// @brief Updates statistics for transmitted packets
+    /// @param query packet transmitted
+    static void processStatsSent(const Pkt4Ptr& response);
 
     uint16_t port_;  ///< UDP port number on which server listens.
     bool use_bcast_; ///< Should broadcast be enabled on sockets (if true).

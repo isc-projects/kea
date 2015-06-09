@@ -73,6 +73,8 @@
 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks.xml" />
 
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="stats.xml" />
+
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="libdhcp.xml" />
 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="logging.xml" />

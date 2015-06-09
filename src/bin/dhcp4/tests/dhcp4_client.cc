@@ -142,6 +142,8 @@ Dhcp4Client::applyConfiguration() {
         return;
     }
 
+    // Let's keep the old lease in case this is a response to Inform.
+    Lease4 old_lease = config_.lease_;
     config_.reset();
 
     // Routers
@@ -175,11 +177,17 @@ Dhcp4Client::applyConfiguration() {
         config_.serverid_ = opt_serverid->readAddress();
     }
 
-    /// @todo Set the valid lifetime, t1, t2 etc.
-    config_.lease_ = Lease4(IOAddress(context_.response_->getYiaddr()),
-                            context_.response_->getHWAddr(),
-                            0, 0, 0, 0, 0, time(NULL), 0, false, false,
-                            "");
+    // If the message sent was Inform, we don't want to throw
+    // away the old lease info, just the bits about options.
+    if (context_.query_->getType() == DHCPINFORM) {
+        config_.lease_ = old_lease;
+    } else {
+        /// @todo Set the valid lifetime, t1, t2 etc.
+        config_.lease_ = Lease4(IOAddress(context_.response_->getYiaddr()),
+                                context_.response_->getHWAddr(),
+                                0, 0, 0, 0, 0, time(NULL), 0, false, false,
+                                "");
+    }
 }
 
 void

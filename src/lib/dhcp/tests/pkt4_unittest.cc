@@ -978,7 +978,7 @@ TEST_F(Pkt4Test, toText) {
     EXPECT_EQ("local_address=192.0.2.34:67, remote_adress=192.10.33.4:68, "
               "msg_type=DHCPDISCOVER (1), transid=0x9ef,\n"
               "options:\n"
-              "  type=053, len=001: 01\n"
+              "  type=053, len=001: 1 (uint8)\n"
               "  type=087, len=011: \"lorem ipsum\" (string)\n"
               "  type=123, len=004: 192.0.2.3\n"
               "  type=156, len=004: 123456 (uint32)",

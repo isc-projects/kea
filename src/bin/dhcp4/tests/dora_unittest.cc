@@ -24,6 +24,7 @@
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp4/tests/dhcp4_client.h>
 #include <boost/shared_ptr.hpp>
+#include <stats/stats_mgr.h>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -198,6 +199,17 @@ public:
         : Dhcpv4SrvTest(),
           iface_mgr_test_config_(true) {
         IfaceMgr::instance().openSockets4();
+
+        // Let's wipe all existing statistics.
+        isc::stats::StatsMgr::instance().removeAll();
+    }
+
+    /// @brief Desctructor.
+    ///
+    /// Cleans up statistics after the test.
+    ~DORATest() {
+        // Let's wipe all existing statistics.
+        isc::stats::StatsMgr::instance().removeAll();
     }
 
     /// @brief Test that server returns the same lease for the client which is
@@ -1015,6 +1027,109 @@ TEST_F(DORATest, reservationsWithConflicts) {
     resp = clientB.getContext().response_;
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
     ASSERT_EQ(in_pool_addr, clientB.config_.lease_.addr_);
+}
+
+/// This test verifies that after a client completes its DORA exchange,
+/// appropriate statistics are updated.
+TEST_F(DORATest, statisticsDORA) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Configure DHCP server.
+    configure(DORA_CONFIGS[0], *client.getServer());
+
+    // Perform 4-way exchange with the server but to not request any
+    // specific address in the DHCPDISCOVER message.
+    ASSERT_NO_THROW(client.doDORA());
+
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+    // Ok, let's check the statistics.
+    using namespace isc::stats;
+    StatsMgr& mgr = StatsMgr::instance();
+    ObservationPtr pkt4_received = mgr.getObservation("pkt4-received");
+    ObservationPtr pkt4_discover_received = mgr.getObservation("pkt4-discover-received");
+    ObservationPtr pkt4_offer_sent = mgr.getObservation("pkt4-offer-sent");
+    ObservationPtr pkt4_request_received = mgr.getObservation("pkt4-request-received");
+    ObservationPtr pkt4_ack_sent = mgr.getObservation("pkt4-ack-sent");
+    ObservationPtr pkt4_sent = mgr.getObservation("pkt4-sent");
+
+    // All expected statstics must be present.
+    ASSERT_TRUE(pkt4_received);
+    ASSERT_TRUE(pkt4_discover_received);
+    ASSERT_TRUE(pkt4_offer_sent);
+    ASSERT_TRUE(pkt4_request_received);
+    ASSERT_TRUE(pkt4_ack_sent);
+    ASSERT_TRUE(pkt4_sent);
+
+    // They also must have expected values.
+    EXPECT_EQ(2, pkt4_received->getInteger().first);
+    EXPECT_EQ(1, pkt4_discover_received->getInteger().first);
+    EXPECT_EQ(1, pkt4_offer_sent->getInteger().first);
+    EXPECT_EQ(1, pkt4_request_received->getInteger().first);
+    EXPECT_EQ(1, pkt4_ack_sent->getInteger().first);
+    EXPECT_EQ(2, pkt4_sent->getInteger().first);
+
+    // Let the client send request 3 times, which should make the server
+    // to send 3 acks.
+    client.setState(Dhcp4Client::RENEWING);
+    ASSERT_NO_THROW(client.doRequest());
+    ASSERT_NO_THROW(client.doRequest());
+    ASSERT_NO_THROW(client.doRequest());
+
+    // Let's see if the stats are properly updated.
+    EXPECT_EQ(5, pkt4_received->getInteger().first);
+    EXPECT_EQ(1, pkt4_discover_received->getInteger().first);
+    EXPECT_EQ(1, pkt4_offer_sent->getInteger().first);
+    EXPECT_EQ(4, pkt4_request_received->getInteger().first);
+    EXPECT_EQ(4, pkt4_ack_sent->getInteger().first);
+    EXPECT_EQ(5, pkt4_sent->getInteger().first);
+}
+
+// This test verifies that after a client completes an exchange that result
+// in NAK, appropriate statistics are updated.
+TEST_F(DORATest, statisticsNAK) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Configure DHCP server.
+    configure(DORA_CONFIGS[0], *client.getServer());
+    // Obtain a lease from the server using the 4-way exchange.
+
+    // Get a lease.
+    client.doDORA();
+
+    // Wipe all stats.
+    isc::stats::StatsMgr::instance().removeAll();
+
+    client.setState(Dhcp4Client::INIT_REBOOT);
+    client.config_.lease_.addr_ = IOAddress("10.0.0.30");
+    ASSERT_NO_THROW(client.doRequest());
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    EXPECT_EQ(DHCPNAK, static_cast<int>(resp->getType()));
+
+    using namespace isc::stats;
+    StatsMgr& mgr = StatsMgr::instance();
+    ObservationPtr pkt4_received = mgr.getObservation("pkt4-received");
+    ObservationPtr pkt4_request_received = mgr.getObservation("pkt4-request-received");
+    ObservationPtr pkt4_ack_sent = mgr.getObservation("pkt4-ack-sent");
+    ObservationPtr pkt4_nak_sent = mgr.getObservation("pkt4-nak-sent");
+    ObservationPtr pkt4_sent = mgr.getObservation("pkt4-sent");
+
+    // All expected statstics must be present.
+    ASSERT_TRUE(pkt4_received);
+    ASSERT_TRUE(pkt4_request_received);
+    ASSERT_FALSE(pkt4_ack_sent); // No acks were sent, no such statistic expected.
+    ASSERT_TRUE(pkt4_nak_sent);
+    ASSERT_TRUE(pkt4_sent);
+
+    // They also must have expected values.
+    EXPECT_EQ(1, pkt4_received->getInteger().first);
+    EXPECT_EQ(1, pkt4_request_received->getInteger().first);
+    EXPECT_EQ(1, pkt4_nak_sent->getInteger().first);
+    EXPECT_EQ(1, pkt4_sent->getInteger().first);
 }
 
 } // end of anonymous namespace
