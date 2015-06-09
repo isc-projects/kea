@@ -2262,16 +2262,18 @@ void Dhcpv4Srv::processStatsReceived(const Pkt4Ptr& query) {
             stat_name = "pkt4-discover-received";
             break;
         case DHCPOFFER:
-            // should not happen, but we'll keep a counter for it anyway
+            // Should not happen, but let's keep a counter for it
             stat_name = "pkt4-offer-received";
             break;
         case DHCPREQUEST:
             stat_name = "pkt4-request-received";
             break;
         case DHCPACK:
+            // Should not happen, but let's keep a counter for it
             stat_name = "pkt4-ack-received";
             break;
         case DHCPNAK:
+            // Should not happen, but let's keep a counter for it
             stat_name = "pkt4-nak-received";
             break;
         case DHCPRELEASE:
@@ -2306,7 +2308,6 @@ void Dhcpv4Srv::processStatsSent(const Pkt4Ptr& response) {
     string stat_name;
     switch (response->getType()) {
     case DHCPOFFER:
-        // should not happen, but we'll keep a counter for it anyway
         stat_name = "pkt4-offer-sent";
         break;
     case DHCPACK:
