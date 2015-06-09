@@ -72,7 +72,8 @@ isc::data::ConstElementPtr createAnswer(const int status_code,
 /// (i.e. of the form { "result": status_code, "arguments": arg }
 ///
 /// @param status_code The return code (0 for success)
-/// @param arg argument (any data to be passed in the response, may be null)
+/// @param arg The optional argument for the answer. This can be of
+///        any Element type. May be NULL.
 /// @return Standard command/config answer message
 isc::data::ConstElementPtr createAnswer(const int status_code,
                                         const isc::data::ConstElementPtr& arg);
@@ -81,7 +82,8 @@ isc::data::ConstElementPtr createAnswer(const int status_code,
 ///
 /// @param status_code The return code (0 for success)
 /// @param status textual represenation of the status (used mostly for errors)
-/// @param arg argument (any data to be passed in the response, may be null)
+/// @param arg The optional argument for the answer. This can be of
+///        any Element type. May be NULL.
 /// @return Standard command/config answer message
 isc::data::ConstElementPtr createAnswer(const int status_code,
                                         const std::string& status,
@@ -108,7 +110,7 @@ isc::data::ConstElementPtr createCommand(const std::string& command);
 ///
 /// @param command The command string
 /// @param arg The optional argument for the command. This can be of
-///        any Element type, but it should conform to the .spec file.
+///        any Element type. May be NULL.
 /// @return The created message
 isc::data::ConstElementPtr createCommand(const std::string& command,
                                          isc::data::ConstElementPtr arg);
