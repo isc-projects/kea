@@ -1,3 +1,8 @@
+941.	[bug]		marcin
+	Configuration parser for host reservations returns an error
+	when an unsupported parameter is specified.
+	(Trac 3810, git 54ee0f6328a303c366dd8239e768dfc4a23a5d9b)
+
 940.	[bug]		fdupont
 	DHCPv4 server drops DHCPRELEASE messages sent from a bad
 	location (i.e., no subnet can be selected)
