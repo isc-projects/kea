@@ -452,7 +452,7 @@ TEST(NameChangeTransaction, construction) {
 }
 
 /// @brief General testing of member accessors.
-/// Most if not all of these are also tested as a byproduct off larger tests.
+/// Most if not all of these are also tested as a byproduct of larger tests.
 TEST_F(NameChangeTransactionTest, accessors) {
     NameChangeStubPtr name_change;
     ASSERT_NO_THROW(name_change = makeCannedTransaction());
