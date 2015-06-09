@@ -2582,6 +2582,216 @@ temporarily override a list of interface names and listen on all interfaces.
 
     </section>
 
+    <section id="dhcp4-stats">
+      <title>Statistics in DHCPv4 server</title>
+      <note>
+        <para>This section describes DHCPv4-specific statistics. For a general
+        overview and usage of statistics, see <xref linkend="stats" />.</para>
+      </note>
+
+      <para>
+        The DHCPv4 server supports the following statistics:
+      </para>
+        <table frame="all" id="dhcp4-statistics">
+          <title>DHCPv4 Statistics</title>
+          <tgroup cols='3'>
+          <colspec colname='statistic' align='center'/>
+          <colspec colname='type' align='center'/>
+          <colspec colname='description' align='left'/>
+          <thead>
+            <row>
+              <entry>Statistic</entry>
+              <entry>Data Type</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+
+            <row>
+            <entry>pkt4-received</entry>
+            <entry>integer</entry>
+            <entry>
+            Number of packets received. This includes all packets: valid, bogus, corrupted,
+            rejected etc.  This statistic is expected to grow rapidly.
+            </entry>
+            </row>
+            <row>
+
+            <entry>pkt4-discover-received</entry>
+            <entry>integer</entry>
+            <entry>
+            Number of DHCPDISCOVER packets received. This statistic is expected to grow.
+            Its increase means that clients that just booted started their configuration process
+            and their initial packets reached your server.
+            </entry>
+            </row>
+
+            <row>
+            <entry>pkt4-offer-received</entry>
+            <entry>integer</entry>
+            <entry>
+            Number of DHCPOFFER packets received. This statistic
+            is expected to remain zero at all times, as DHCPOFFER packets are sent
+            by the server and the server is never expected to receive them. Non-zero
+            value indicates an error. One likely cause would be a misbehaving relay
+            agent that incorrectly forwards DHCPOFFER messages towards the server,
+            rather back to the clients.
+            </entry>
+            </row>
+
+            <row>
+            <entry>pkt4-request-received</entry>
+            <entry>integer</entry>
+            <entry>
+            Number of DHCPREQUEST packets received. This statistic
+            is expected to grow. Its increase means that clients that just booted
+            received server's response (DHCPOFFER), accepted it and now requesting
+            an address (DHCPREQUEST).
+            </entry>
+            </row>
+
+            <row>
+            <entry>pkt4-ack-received</entry>
+            <entry>integer</entry>
+            <entry>
+            Number of DHCPACK packets received. This statistic
+            is expected to remain zero at all times, as DHCPACK packets are sent
+            by the server and the server is never expected to receive them. Non-zero
+            value indicates an error. One likely cause would be a misbehaving relay
+            agent that incorrectly forwards DHCPACK messages towards the server,
+            rather back to the clients.
+            </entry>
+            </row>
+
+            <row>
+            <entry>pkt4-nak-received</entry>
+            <entry>integer</entry>
+            <entry>
+            Number of DHCPNAK packets received. This statistic
+            is expected to remain zero at all times, as DHCPNAK packets are sent
+            by the server and the server is never expected to receive them. Non-zero
+            value indicates an error. One likely cause would be a misbehaving relay
+            agent that incorrectly forwards DHCPNAK messages towards the server,
+            rather back to the clients.
+            </entry>
+            </row>
+
+            <row>
+            <entry>pkt4-release-received</entry>
+            <entry>integer</entry>
+            <entry>
+            Number of DHCPRELEASE packets received. This statistic
+            is expected to grow. Its increase means that clients that had an address
+            are shutting down or stop using their addresses.
+            </entry>
+            </row>
+
+            <row>
+            <entry>pkt4-decline-received</entry>
+            <entry>integer</entry>
+            <entry>
+            Number of DHCPDECLINE packets received. This statistic
+            is expected to remain close to zero. Its increase means that a client
+            that leased an address, but discovered that the address is currently
+            used by an unknown device in your network.
+            </entry>
+            </row>
+
+            <row>
+            <entry>pkt4-inform-received</entry>
+            <entry>integer</entry>
+            <entry>
+            Number of DHCPINFORM packets received. This statistic
+            is expected to grow. Its increase means that there are clients that
+            either do not need an address or already have an address and are
+            interested only in getting additional configuration parameters.
+            </entry>
+            </row>
+
+            <row>
+            <entry>pkt4-unknown-received</entry>
+            <entry>integer</entry>
+            <entry>
+            Number of packets received of an unknown type. Non-zero
+            value of this statistic indicates that the server received a packet
+            that it wasn't able to recognize: either with unsupported type
+            or possibly malformed (without message type option).
+            </entry>
+            </row>
+
+            <row>
+            <entry>pkt4-sent</entry>
+            <entry>integer</entry>
+            <entry>
+            Number of DHCPv4 packets sent. This statistic is expected to grow
+            every time the server transmits a packet. In general, it should
+            roughly match pkt4-received, as most incoming packets cause
+            server to respond. There are exceptions (e.g. DHCPRELEASE), so
+            do not worry, if it is lesser than pkt4-received.
+            </entry>
+            </row>
+
+            <row>
+            <entry>pkt4-offer-sent</entry>
+            <entry>integer</entry>
+            <entry>
+            Number of DHCPOFFER packets sent. This statistic is expected to
+            grow in most cases after a DHCPDISCOVER is processed. There are
+            certain uncommon, but valid cases where incoming DHCPDISCOVER is
+            dropped, but in general this statistic is expected to be close to
+            pkt4-discover-received.
+            </entry>
+            </row>
+
+            <row>
+            <entry>pkt4-ack-sent</entry>
+            <entry>integer</entry>
+            <entry>
+            Number of DHCPACK packets sent. This statistic is expected to
+            grow in most cases after a DHCPREQUEST is processed. There are
+            certain cases where DHCPNAK is sent instead. In general, the sum of
+            pkt4-ack-sent and pkt4-nak-sent should be close to
+            pkt4-request-received.
+            </entry>
+            </row>
+
+            <row>
+            <entry>pkt4-nak-sent</entry>
+            <entry>integer</entry>
+            <entry>
+            Number of DHCPNAK packets sent. This statistic is expected to
+            grow when the server choses to not honor the address requested by a
+            client. In general, the sum of pkt4-ack-sent and pkt4-nak-sent
+            should be close to pkt4-request-received.
+            </entry>
+            </row>
+
+            <row>
+            <entry>pkt4-parse-failed</entry>
+            <entry>integer</entry>
+            <entry>
+            Number of incoming packets that could not be parsed.  Non-zero value of
+            this statistic indicates that the server received malformed or truncated packet.
+            This may indicate problems in your network, faulty clients or server code bug.
+            </entry>
+            </row>
+
+            <row>
+            <entry>pkt4-receive-drop</entry>
+            <entry>integer</entry>
+            <entry>
+            Number of incoming packets that were dropped.
+            Exact reason for dropping packets is logged, but the most common
+            reasons may be: an unacceptable packet type, direct responses are
+            forbidden, or the server-id sent by the client does not match
+            the server's server-id.
+            </entry>
+            </row>
+
+        </tbody>
+        </tgroup>
+        </table>
+    </section>
 
     <section id="dhcp4-std">
       <title>Supported DHCP Standards</title>

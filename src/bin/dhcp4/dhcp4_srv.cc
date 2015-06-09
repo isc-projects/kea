@@ -41,6 +41,7 @@
 #include <hooks/hooks_log.h>
 #include <hooks/hooks_manager.h>
 #include <util/strutil.h>
+#include <stats/stats_mgr.h>
 
 #include <asio.hpp>
 #include <boost/bind.hpp>
@@ -412,6 +413,13 @@ Dhcpv4Srv::run() {
             continue;
         }
 
+        // Log reception of the packet. We need to increase it early, as any
+        // failures in unpacking will cause the packet to be dropped. We
+        // will increase type specific packets further down the road.
+        // See processStatsReceived().
+        isc::stats::StatsMgr::instance().addValue("pkt4-received",
+                                                  static_cast<uint64_t>(1));
+
         // In order to parse the DHCP options, the server needs to use some
         // configuration information such as: existing option spaces, option
         // definitions etc. This is the kind of information which is not
@@ -470,9 +478,18 @@ Dhcpv4Srv::run() {
                     .arg(query->getLocalAddr().toText())
                     .arg(query->getIface())
                     .arg(e.what());
+
+                // Increase the statistics of parse failues and dropped packets.
+                isc::stats::StatsMgr::instance().addValue("pkt4-parse-failed",
+                                                          static_cast<uint64_t>(1));
+                isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
+                                                          static_cast<uint64_t>(1));
                 continue;
             }
         }
+
+        // Update statistics accordingly for received packet.
+        processStatsReceived(query);
 
         // Assign this packet to one or more classes if needed. We need to do
         // this before calling accept(), because getSubnet4() may need client
@@ -482,6 +499,9 @@ Dhcpv4Srv::run() {
         // Check whether the message should be further processed or discarded.
         // There is no need to log anything here. This function logs by itself.
         if (!accept(query)) {
+            // Increase the statistic of dropped packets.
+            isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
+                                                      static_cast<uint64_t>(1));
             continue;
         }
 
@@ -568,6 +588,10 @@ Dhcpv4Srv::run() {
                       DHCP4_PACKET_DROP_0007)
                 .arg(query->getLabel())
                 .arg(e.what());
+
+            // Increase the statistic of dropped packets.
+            isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
+                                                      static_cast<uint64_t>(1));
         }
 
         if (!rsp) {
@@ -665,6 +689,10 @@ Dhcpv4Srv::run() {
                 .arg(static_cast<int>(rsp->getType()))
                 .arg(rsp->toText());
             sendPacket(rsp);
+
+            // Update statistics accordingly for sent packet.
+            processStatsSent(rsp);
+
         } catch (const std::exception& e) {
             LOG_ERROR(packet_logger, DHCP4_PACKET_SEND_FAIL)
                 .arg(rsp->getLabel())
@@ -1045,7 +1073,7 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
         // clients do not handle the hostnames with the trailing dot.
         opt_hostname_resp->setValue(d2_mgr.qualifyName(hostname, false));
     }
-    
+
     LOG_DEBUG(ddns_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_RESPONSE_HOSTNAME_DATA)
         .arg(ex.getQuery()->getLabel())
         .arg(opt_hostname_resp->getValue());
@@ -2233,6 +2261,81 @@ Daemon::getVersion(bool extended) {
     }
 
     return (tmp.str());
+}
+
+void Dhcpv4Srv::processStatsReceived(const Pkt4Ptr& query) {
+    // Note that we're not bumping pkt4-received statistic as it was
+    // increased early in the packet reception code.
+
+    string stat_name = "pkt4-unknown-received";
+    try {
+        switch (query->getType()) {
+        case DHCPDISCOVER:
+            stat_name = "pkt4-discover-received";
+            break;
+        case DHCPOFFER:
+            // Should not happen, but let's keep a counter for it
+            stat_name = "pkt4-offer-received";
+            break;
+        case DHCPREQUEST:
+            stat_name = "pkt4-request-received";
+            break;
+        case DHCPACK:
+            // Should not happen, but let's keep a counter for it
+            stat_name = "pkt4-ack-received";
+            break;
+        case DHCPNAK:
+            // Should not happen, but let's keep a counter for it
+            stat_name = "pkt4-nak-received";
+            break;
+        case DHCPRELEASE:
+            stat_name = "pkt4-release-received";
+        break;
+        case DHCPDECLINE:
+            stat_name = "pkt4-decline-received";
+            break;
+        case DHCPINFORM:
+            stat_name = "pkt4-inform-received";
+            break;
+        default:
+            ; // do nothing
+        }
+    }
+    catch (...) {
+        // If the incoming packet doesn't have option 53 (message type)
+        // or a hook set pkt4_receive_skip, then Pkt4::getType() may
+        // throw an exception. That's ok, we'll then use the default
+        // name of pkt4-unknown-received.
+    }
+
+    isc::stats::StatsMgr::instance().addValue(stat_name,
+                                              static_cast<uint64_t>(1));
+}
+
+void Dhcpv4Srv::processStatsSent(const Pkt4Ptr& response) {
+    // Increase generic counter for sent packets.
+    isc::stats::StatsMgr::instance().addValue("pkt4-sent",
+                                              static_cast<uint64_t>(1));
+
+    // Increase packet type specific counter for packets sent.
+    string stat_name;
+    switch (response->getType()) {
+    case DHCPOFFER:
+        stat_name = "pkt4-offer-sent";
+        break;
+    case DHCPACK:
+        stat_name = "pkt4-ack-sent";
+        break;
+    case DHCPNAK:
+        stat_name = "pkt4-nak-sent";
+        break;
+    default:
+        // That should never happen
+        return;
+    }
+
+    isc::stats::StatsMgr::instance().addValue(stat_name,
+                                              static_cast<uint64_t>(1));
 }
 
 }   // namespace dhcp
