@@ -18,6 +18,7 @@
 #include <gtest/gtest.h>
 
 #include <config/command_interpreter.h>
+#include <config/module_spec.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcp4/json_config_parser.h>
 #include <dhcp/option4_addrlst.h>
