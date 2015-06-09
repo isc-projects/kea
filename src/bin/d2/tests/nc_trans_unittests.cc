@@ -452,7 +452,7 @@ TEST(NameChangeTransaction, construction) {
 }
 
 /// @brief General testing of member accessors.
-/// Most if not all of these are also tested as a byproduct off larger tests.
+/// Most if not all of these are also tested as a byproduct of larger tests.
 TEST_F(NameChangeTransactionTest, accessors) {
     NameChangeStubPtr name_change;
     ASSERT_NO_THROW(name_change = makeCannedTransaction());
@@ -463,6 +463,9 @@ TEST_F(NameChangeTransactionTest, accessors) {
 
     // Verify that getTransactionKey works.
     EXPECT_EQ(ncr->getDhcid(), name_change->getTransactionKey());
+
+    // Verify that getRequestId works.
+    EXPECT_EQ(ncr->getRequestId(), name_change->getRequestId());
 
     // Verify that NcrStatus can be set and retrieved.
     EXPECT_NO_THROW(name_change->setNcrStatus(dhcp_ddns::ST_FAILED));

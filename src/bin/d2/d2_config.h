@@ -70,7 +70,7 @@ namespace d2 {
 /// any scalars which belong to the manager as well as creating and invoking a
 /// DdnsDomainListParser to parse its list of domain entries.
 ///
-/// A DdnsDomainListParser creates and invokes DdnsDomainListParser for each
+/// A DdnsDomainListParser creates and invokes a DdnsDomainParser for each
 /// domain entry in its list.
 ///
 /// A DdnsDomainParser handles the scalars which belong to the domain as well as
