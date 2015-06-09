@@ -1037,7 +1037,7 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
             break;
         }
         case D6O_IA_PD: {
-            OptionPtr answer_opt = assignIA_PD(question, ctx,
+            OptionPtr answer_opt = assignIA_PD(question, answer, ctx,
                                                boost::dynamic_pointer_cast<
                                                Option6IA>(opt->second));
             if (answer_opt) {
@@ -1318,11 +1318,7 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     // the user selects this server to do actual allocation (i.e. sends REQUEST)
     // it should include this hint. That will help us during the actual lease
     // allocation.
-    bool fake_allocation = false;
-    if (query->getType() == DHCPV6_SOLICIT) {
-        /// @todo: Check if we support rapid commit
-        fake_allocation = true;
-    }
+    bool fake_allocation = (answer->getType() != DHCPV6_REPLY);
 
     // Get DDNS update direction flags
     bool do_fwd = false;
@@ -1433,7 +1429,7 @@ Dhcpv6Srv::conditionalNCRRemoval(Lease6Ptr& old_lease, Lease6Ptr& new_lease,
 }
 
 OptionPtr
-Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query,
+Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
                        AllocEngine::ClientContext6& orig_ctx,
                        boost::shared_ptr<Option6IA> ia) {
 
@@ -1477,7 +1473,7 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query,
     // the user selects this server to do actual allocation (i.e. sends REQUEST)
     // it should include this hint. That will help us during the actual lease
     // allocation.
-    bool fake_allocation = (query->getType() == DHCPV6_SOLICIT);
+    bool fake_allocation = (answer->getType() != DHCPV6_REPLY);
 
     // Use allocation engine to pick a lease for this client. Allocation engine
     // will try to honour the hint, but it is just a hint - some other address
@@ -2319,22 +2315,34 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx = createContext(solicit);
 
-    Pkt6Ptr advertise(new Pkt6(DHCPV6_ADVERTISE, solicit->getTransid()));
+    Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, solicit->getTransid()));
 
-    copyClientOptions(solicit, advertise);
-    appendDefaultOptions(solicit, advertise);
-    appendRequestedOptions(solicit, advertise, ctx);
-    appendRequestedVendorOptions(solicit, advertise, ctx);
+    // Handle Rapid Commit option, if prsent.
+    if (ctx.subnet_ && ctx.subnet_->getRapidCommit()) {
+        OptionPtr opt_rapid_commit = solicit->getOption(D6O_RAPID_COMMIT);
+        if (opt_rapid_commit) {
+            // If Rapid Commit has been sent by the client, change the
+            // response type to Reply and include Rapid Commit option.
+            response->setType(DHCPV6_REPLY);
+            response->addOption(opt_rapid_commit);
+        }
+    }
 
-    processClientFqdn(solicit, advertise, ctx);
-    assignLeases(solicit, advertise, ctx);
-    // Note, that we don't create NameChangeRequests here because we don't
-    // perform DNS Updates for Solicit. Client must send Request to update
-    // DNS.
+    copyClientOptions(solicit, response);
+    appendDefaultOptions(solicit, response);
+    appendRequestedOptions(solicit, response, ctx);
+    appendRequestedVendorOptions(solicit, response, ctx);
 
-    generateFqdn(advertise);
+    processClientFqdn(solicit, response, ctx);
+    assignLeases(solicit, response, ctx);
 
-    return (advertise);
+    // Only generate name change requests if sending a Reply as a result
+    // of receiving Rapid Commit option.
+    if (response->getType() == DHCPV6_REPLY) {
+        createNameChangeRequests(response);
+    }
+
+    return (response);
 }
 
 Pkt6Ptr
