@@ -84,9 +84,7 @@ Option6StatusCode::len() {
 std::string
 Option6StatusCode::toText(int indent) {
     std::ostringstream output;
-    output << headerToText(indent) << ": "
-        << getStatusCodeName() << "(" << getStatusCode() << ") "
-        << dataToText();
+    output << headerToText(indent) << ": " << dataToText();
 
     return (output.str());
 }
