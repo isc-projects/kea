@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -56,6 +56,13 @@ protected:
     /// @throw DhcpConfigError When operation to add a configured host fails.
     void addHost(isc::data::ConstElementPtr reservation_data);
 
+    /// @brief Checks if the specified parameter is supported by the parser.
+    ///
+    /// @param param_name Parameter name.
+    ///
+    /// @return true if the parameter is supported, false otherwise.
+    virtual bool isSupportedParameter(const std::string& param_name) const = 0;
+
     /// @brief Identifier of the subnet that the host is connected to.
     SubnetID subnet_id_;
 
@@ -82,6 +89,15 @@ public:
     ///
     /// @throw DhcpConfigError If the configuration is invalid.
     virtual void build(isc::data::ConstElementPtr reservation_data);
+
+protected:
+
+    /// @brief Checks if the specified parameter is supported by the parser.
+    ///
+    /// @param param_name Parameter name.
+    ///
+    /// @return true if the parameter is supported, false otherwise.
+    virtual bool isSupportedParameter(const std::string& param_name) const;
 };
 
 /// @brief Parser for a single host reservation for DHCPv6.
@@ -101,6 +117,15 @@ public:
     ///
     /// @throw DhcpConfigError If the configuration is invalid.
     virtual void build(isc::data::ConstElementPtr reservation_data);
+
+protected:
+
+    /// @brief Checks if the specified parameter is supported by the parser.
+    ///
+    /// @param param_name Parameter name.
+    ///
+    /// @return true if the parameter is supported, false otherwise.
+    virtual bool isSupportedParameter(const std::string& param_name) const;
 };
 
 
