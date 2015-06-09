@@ -458,9 +458,9 @@ isc::dhcp::Daemon::getVersion(bool extended) {
     tmp << VERSION;
     if (extended) {
         tmp << std::endl << EXTENDED_VERSION << std::endl;
-        tmp << "linked with " << isc::log::Logger::getVersion() << std::endl;
-        tmp << "and " << isc::cryptolink::CryptoLink::getVersion()
-            << std::endl;
+        tmp << "linked with:" << std::endl;
+        tmp << isc::log::Logger::getVersion() << std::endl;
+        tmp << isc::cryptolink::CryptoLink::getVersion() << std::endl;
 #ifdef HAVE_MYSQL
         tmp << "database: MySQL";
 #else
