@@ -75,7 +75,6 @@ libco2_la_LDFLAGS = -avoid-version -export-dynamic -module -rpath /nowhere
 TESTS += dhcp4_unittests
 
 dhcp4_unittests_SOURCES  = d2_unittest.h d2_unittest.cc
-dhcp4_unittests_SOURCES += dhcp4_test_utils.h
 dhcp4_unittests_SOURCES += dhcp4_unittests.cc
 dhcp4_unittests_SOURCES += dhcp4_srv_unittest.cc
 dhcp4_unittests_SOURCES += dhcp4_test_utils.cc dhcp4_test_utils.h
