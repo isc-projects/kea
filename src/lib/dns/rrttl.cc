@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -35,7 +35,7 @@ namespace {
 // Then the find_if doesn't work.
 bool
 myIsalpha(char c) {
-    return (isalpha(c));
+    return (isalpha(c) != 0);
 }
 
 // The conversion of units to their size
