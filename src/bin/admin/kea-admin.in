@@ -238,7 +238,7 @@ mysql_upgrade() {
 pgsql_upgrade() {
     # @todo - When PostgreSQL has a schema greater than 1.0, this will need
     # to be implemented. See ticket #3600
-    pgysql_version_print
+    pgsql_version_print
     printf "\n"
 
     # Check if the scripts directory exists at all.
