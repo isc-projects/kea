@@ -97,12 +97,12 @@ application in standalone mode. This means it will not connected to the Kea
 message queue. Standalone mode is only useful during program development,
 and should not be used in a production environment.
 
-% DHCP_DDNS_ADD_FAILED DHCP_DDNS Transaction outcome: %1
+% DHCP_DDNS_ADD_FAILED DHCP_DDNS Request ID %1: Transaction outcome %2
 This is an error message issued after DHCP_DDNS attempts to submit DNS mapping
 entry additions have failed.  The precise reason for the failure should be
 documented in preceding log entries.
 
-% DHCP_DDNS_ADD_SUCCEEDED DHCP_DDNS successfully added the DNS mapping addition for this request: %1
+% DHCP_DDNS_ADD_SUCCEEDED DHCP_DDNS Request ID %1: successfully added the DNS mapping addition for this request: %2
 This is an informational message issued after DHCP_DDNS has submitted DNS
 mapping additions which were received and accepted by an appropriate DNS server.
 
@@ -136,110 +136,110 @@ has been invoked.
 This is a debug message issued when the DHCP-DDNS application encounters an
 unrecoverable error from within the event loop.
 
-% DHCP_DDNS_FORWARD_ADD_BAD_DNSCLIENT_STATUS DHCP_DDNS received an unknown DNSClient status: %1, while adding a forward address mapping for FQDN %2 to DNS server %3
+% DHCP_DDNS_FORWARD_ADD_BAD_DNSCLIENT_STATUS DHCP_DDNS Request ID %1: received an unknown DNSClient status: %2, while adding a forward address mapping for FQDN %3 to DNS server %4
 This is an error message issued when DNSClient returns an unrecognized status
 while DHCP_DDNS was adding a forward address mapping.  The request will be
 aborted.  This is most likely a programmatic issue and should be reported.
 
-% DHCP_DDNS_FORWARD_ADD_BUILD_FAILURE DNS udpate message to add a forward DNS entry could not be constructed for this request: %1, reason: %2
+% DHCP_DDNS_FORWARD_ADD_BUILD_FAILURE DNS Request ID %1:  udpate message to add a forward DNS entry could not be constructed for this request: %2, reason: %3
 This is an error message issued when an error occurs attempting to construct
 the server bound packet requesting a forward address addition.  This is due
 to invalid data contained in the NameChangeRequest. The request will be aborted.
 This is most likely a configuration issue.
 
-% DHCP_DDNS_FORWARD_ADD_IO_ERROR DHCP_DDNS encountered an IO error sending a forward mapping add for FQDN %1 to DNS server %2
+% DHCP_DDNS_FORWARD_ADD_IO_ERROR DHCP_DDNS Request ID %1: encountered an IO error sending a forward mapping add for FQDN %2 to DNS server %3
 This is an error message issued when a communication error occurs while
 DHCP_DDNS is carrying out a forward address update.  The application will
 retry against the same server or others as appropriate.
 
-% DHCP_DDNS_FORWARD_ADD_REJECTED DNS Server, %1, rejected a DNS update request to add the address mapping for FQDN, %2, with an RCODE: %3
+% DHCP_DDNS_FORWARD_ADD_REJECTED DNS Request ID %1: Server, %2, rejected a DNS update request to add the address mapping for FQDN, %3, with an RCODE: %4
 This is an error message issued when an update was rejected by the DNS server
 it was sent to for the reason given by the RCODE. The rcode values are defined
 in RFC 2136.
 
-% DHCP_DDNS_FORWARD_ADD_RESP_CORRUPT DHCP_DDNS received a corrupt response from the DNS server, %1, while adding forward address mapping for FQDN, %2
+% DHCP_DDNS_FORWARD_ADD_RESP_CORRUPT DHCP_DDNS Request ID %1: received a corrupt response from the DNS server, %2, while adding forward address mapping for FQDN, %3
 This is an error message issued when the response received by DHCP_DDNS, to a
 update request to add a forward address mapping,  is mangled or malformed.
 The application will retry against the same server or others as appropriate.
 
-% DHCP_DDNS_FORWARD_REMOVE_ADDRS_BAD_DNSCLIENT_STATUS DHCP_DDNS received an unknown DNSClient status: %1, while removing a forward address mapping for FQDN %2 to DNS server %3
+% DHCP_DDNS_FORWARD_REMOVE_ADDRS_BAD_DNSCLIENT_STATUS DHCP_DDNS Request ID %1: received an unknown DNSClient status: %2, while removing a forward address mapping for FQDN %3 to DNS server %4
 This is an error message issued when DNSClient returns an unrecognized status
 while DHCP_DDNS was removing a forward address mapping.  The request will be
 aborted.  This is most likely a programmatic issue and should be reported.
 
-% DHCP_DDNS_FORWARD_REMOVE_ADDRS_BUILD_FAILURE DNS udpate message to remove a forward DNS Address entry could not be constructed for this request: %1,  reason: %2
+% DHCP_DDNS_FORWARD_REMOVE_ADDRS_BUILD_FAILURE DNS Request ID %1: udpate message to remove a forward DNS Address entry could not be constructed for this request: %2, reason: %3
 This is an error message issued when an error occurs attempting to construct
 the server bound packet requesting a forward address (A or AAAA) removal.  This
 is due to invalid data contained in the NameChangeRequest. The request will be
 aborted.  This is most likely a configuration issue.
-
-% DHCP_DDNS_FORWARD_REMOVE_ADDRS_IO_ERROR DHCP_DDNS encountered an IO error sending a forward mapping address removal for FQDN %1 to DNS server %2
+/*sar*/
+% DHCP_DDNS_FORWARD_REMOVE_ADDRS_IO_ERROR DHCP_DDNS Request ID %1: encountered an IO error sending a forward mapping address removal for FQDN %2 to DNS server %3
 This is an error message issued when a communication error occurs while
 DHCP_DDNS is carrying out a forward address remove.  The application will retry
 against the same server or others as appropriate.
 
-% DHCP_DDNS_FORWARD_REMOVE_ADDRS_REJECTED DNS Server, %1, rejected a DNS update request to remove the forward address mapping for FQDN, %2, with an RCODE: %3
+% DHCP_DDNS_FORWARD_REMOVE_ADDRS_REJECTED DNS Request ID %1: Server, %2, rejected a DNS update request to remove the forward address mapping for FQDN, %3, with an RCODE: %4
 This is an error message issued when an update was rejected by the DNS server
 it was sent to for the reason given by the RCODE. The rcode values are defined
 in RFC 2136.
 
-% DHCP_DDNS_FORWARD_REMOVE_ADDRS_RESP_CORRUPT DHCP_DDNS received a corrupt response from the DNS server, %1, while removing forward address mapping for FQDN, %2
+% DHCP_DDNS_FORWARD_REMOVE_ADDRS_RESP_CORRUPT DHCP_DDNS Request ID %1: received a corrupt response from the DNS server, %2, while removing forward address mapping for FQDN, %3
 This is an error message issued when the response received by DHCP_DDNS, to a
 update request to remove a forward address mapping, is mangled or malformed.
 The application will retry against the same server or others as appropriate.
 
-% DHCP_DDNS_FORWARD_REMOVE_RRS_BAD_DNSCLIENT_STATUS DHCP_DDNS received an unknown DNSClient status: %1, while removing forward RRs for FQDN %2 to DNS server %3
+% DHCP_DDNS_FORWARD_REMOVE_RRS_BAD_DNSCLIENT_STATUS DHCP_DDNS Request ID %1: received an unknown DNSClient status: %2, while removing forward RRs for FQDN %3 to DNS server %4
 This is an error message issued when DNSClient returns an unrecognized status
 while DHCP_DDNS was removing forward RRs.  The request will be aborted. This is
 most likely a programmatic issue and should be reported.
 
-% DHCP_DDNS_FORWARD_REMOVE_RRS_BUILD_FAILURE DNS udpate message to remove forward DNS RR entries could not be constructed for this request: %1,  reason: %2
+% DHCP_DDNS_FORWARD_REMOVE_RRS_BUILD_FAILURE DNS Request ID %1: udpate message to remove forward DNS RR entries could not be constructed for this request: %2,  reason: %3
 This is an error message issued when an error occurs attempting to construct
 the server bound packet requesting forward RR (DHCID RR) removal.  This is due
 to invalid data contained in the NameChangeRequest. The request will be aborted.This is most likely a configuration issue.
 
-% DHCP_DDNS_FORWARD_REMOVE_RRS_IO_ERROR DHCP_DDNS encountered an IO error sending a forward RR removal for FQDN %1 to DNS server %2
+% DHCP_DDNS_FORWARD_REMOVE_RRS_IO_ERROR DHCP_DDNS Request ID %1: encountered an IO error sending a forward RR removal for FQDN %2 to DNS server %3
 This is an error message issued when a communication error occurs while
 DHCP_DDNS is carrying out a forward RR remove.  The application will retry
 against the same server.
 
-% DHCP_DDNS_FORWARD_REMOVE_RRS_REJECTED DNS Server, %1, rejected a DNS update request to remove forward RR entries for FQDN, %2, with an RCODE: %3
+% DHCP_DDNS_FORWARD_REMOVE_RRS_REJECTED DNS Request ID %1: Server, %2, rejected a DNS update request to remove forward RR entries for FQDN, %3, with an RCODE: %4
 This is an error message issued when an update was rejected by the DNS server
 it was sent to for the reason given by the RCODE. The rcode values are defined
 in RFC 2136.
 
-% DHCP_DDNS_FORWARD_REMOVE_RRS_RESP_CORRUPT DHCP_DDNS received a corrupt response from the DNS server, %1, while removing forward RRs for FQDN, %2
+% DHCP_DDNS_FORWARD_REMOVE_RRS_RESP_CORRUPT DHCP_DDNS Request ID %1: received a corrupt response from the DNS server, %2, while removing forward RRs for FQDN, %3
 This is an error message issued when the response received by DHCP_DDNS, to a
 update request to remove forward RRs mapping, is mangled or malformed.
 The application will retry against the same server or others as appropriate.
-
-% DHCP_DDNS_FORWARD_REPLACE_BAD_DNSCLIENT_STATUS DHCP_DDNS received an unknown DNSClient status: %1, while replacing forward address mapping for FQDN %2 to DNS server %3
+/*sar*/
+% DHCP_DDNS_FORWARD_REPLACE_BAD_DNSCLIENT_STATUS DHCP_DDNS Request ID %1: received an unknown DNSClient status: %2, while replacing forward address mapping for FQDN %3 to DNS server %4
 This is an error message issued when DNSClient returns an unrecognized status
 while DHCP_DDNS was replacing a forward address mapping.  The request will be
 aborted.  This is most likely a programmatic issue and should be reported.
 
-% DHCP_DDNS_FORWARD_REPLACE_BUILD_FAILURE DNS update message to replace a forward DNS entry could not be constructed from this request: %1, reason: %2
+% DHCP_DDNS_FORWARD_REPLACE_BUILD_FAILURE DNS Request ID %1: update message to replace a forward DNS entry could not be constructed from this request: %2, reason: %3
 This is an error message issued when an error occurs attempting to construct
 the server bound packet requesting a forward address replacement.  This is
 due to invalid data contained in the NameChangeRequest. The request will be
 aborted.  This is most likely a configuration issue.
 
-% DHCP_DDNS_FORWARD_REPLACE_IO_ERROR DHCP_DDNS encountered an IO error sending a forward mapping replace for FQDN %1 to DNS server %2
+% DHCP_DDNS_FORWARD_REPLACE_IO_ERROR DHCP_DDNS Request ID %1: encountered an IO error sending a forward mapping replace for FQDN %2 to DNS server %3
 This is an error message issued when a communication error occurs while
 DHCP_DDNS is carrying out a forward address update.  The application will
 retry against the same server or others as appropriate.
 
-% DHCP_DDNS_FORWARD_REPLACE_REJECTED DNS Server, %1, rejected a DNS update request to replace the address mapping for FQDN, %2, with an RCODE: %3
+% DHCP_DDNS_FORWARD_REPLACE_REJECTED DNS Request ID %1: Server, %2, rejected a DNS update request to replace the address mapping for FQDN, %3, with an RCODE: %4
 This is an error message issued when an update was rejected by the DNS server
 it was sent to for the reason given by the RCODE. The rcode values are defined
 in RFC 2136.
 
-% DHCP_DDNS_FORWARD_REPLACE_RESP_CORRUPT DHCP_DDNS received a corrupt response from the DNS server, %1, while replacing forward address mapping for FQDN, %2
+% DHCP_DDNS_FORWARD_REPLACE_RESP_CORRUPT DHCP_DDNS Request ID %1: received a corrupt response from the DNS server, %2, while replacing forward address mapping for FQDN, %3
 This is an error message issued when the response received by DHCP_DDNS, to a
 update request to replace a forward address mapping,  is mangled or malformed.
 The application will retry against the same server or others as appropriate.
 
-% DHCP_DDNS_FWD_REQUEST_IGNORED Forward updates are disabled, the forward portion of request will be ignored: %1
+% DHCP_DDNS_FWD_REQUEST_IGNORED Request ID %1: Forward updates are disabled, the forward portion of request will be ignored: %2
 This is a debug message issued when forward DNS updates are disabled and
 DHCP_DDNS receives an update request containing a forward DNS update. The
 forward update will not performed.
@@ -257,12 +257,12 @@ change entries in the DNS. For this reason, addresses other than the IPv4 or
 IPv6 loopback addresses should only be used for testing purposes. A future
 version of Kea will implement authentication to guard against such attacks.
 
-% DHCP_DDNS_NO_ELIGIBLE_JOBS although there are queued requests, there are pending transactions for each Queue count: %1  Transaction count: %2
+% DHCP_DDNS_NO_ELIGIBLE_JOBS although there are queued requests, there are pending transactions for each, Queue count: %1  Transaction count: %2
 This is a debug message issued when all of the queued requests represent clients
 for which there is a an update already in progress.  This may occur under
 normal operations but should be temporary situation.
 
-% DHCP_DDNS_NO_FWD_MATCH_ERROR the configured list of forward DDNS domains does not contain a match for: %1  The request has been discarded.
+% DHCP_DDNS_NO_FWD_MATCH_ERROR Request ID %1: the configured list of forward DDNS domains does not contain a match for: %2  The request has been discarded.
 This is an error message that indicates that DHCP_DDNS received a request to
 update a the forward DNS information for the given FQDN but for which there are
 no configured DDNS domains in the DHCP_DDNS configuration.  Either the DHCP_DDNS
@@ -274,7 +274,7 @@ This is warning message issued when there are no domains in the configuration
 which match the cited fully qualified domain name (FQDN).  The DNS Update
 request for the FQDN cannot be processed.
 
-% DHCP_DDNS_NO_REV_MATCH_ERROR the configured list of reverse DDNS domains does not contain a match for: %1  The request has been discarded.
+% DHCP_DDNS_NO_REV_MATCH_ERROR Request ID %1: the configured list of reverse DDNS domains does not contain a match for: %2  The request has been discarded.
 This is an error message that indicates that DHCP_DDNS received a request to
 update a the reverse DNS information for the given FQDN but for which there are
 no configured DDNS domains in the DHCP_DDNS configuration.  Either the DHCP_DDNS
@@ -292,6 +292,11 @@ needs to be increased, the DHCP-DDNS clients are simply generating too many
 requests too quickly, or perhaps upstream DNS servers are experiencing
 load issues.
 
+% DHCP_DDNS_QUEUE_MGR_QUEUE_RECEIVE Request ID %1: received and queued a request.
+This is an informational message indicating that the NameChangeREquest listener used
+by DHCP-DDNS to receive a request has received a request and queued it for further
+processing.
+
 % DHCP_DDNS_QUEUE_MGR_RECONFIGURING application is reconfiguring the queue manager
 This is an informational message indicating that DHCP_DDNS is reconfiguring the queue manager as part of normal startup or in response to a new configuration.
 
@@ -302,7 +307,7 @@ requests.
 
 % DHCP_DDNS_QUEUE_MGR_RECV_ERROR application's queue manager was notified of a request receive error by its listener.
 This is an error message indicating that the NameChangeRequest listener used by
-DHCP-DDNS to receive requests encountered a IO error.  There should be
+DHCP-DDNS to receive requests encountered an IO error.  There should be
 corresponding log messages from the listener layer with more details. This may
 indicate a network connectivity or system resource issue.
 
@@ -359,74 +364,74 @@ receive was unexpected interrupted.  Normally, the read is receive is only
 interrupted as a normal part of stopping the queue manager.  This is most
 likely a programmatic issue that should be reported.
 
-% DHCP_DDNS_REMOVE_FAILED DHCP_DDNS Transaction outcome: %1
+% DHCP_DDNS_REMOVE_FAILED DHCP_DDNS Request ID %1: Transaction outcome: %2
 This is an error message issued after DHCP_DDNS attempts to submit DNS mapping
 entry removals have failed.  The precise reason for the failure should be
 documented in preceding log entries.
 
-% DHCP_DDNS_REMOVE_SUCCEEDED DHCP_DDNS successfully removed the DNS mapping addition for this request: %1
+% DHCP_DDNS_REMOVE_SUCCEEDED DHCP_DDNS Request ID %1: successfully removed the DNS mapping addition for this request: %2
 This is an informational message issued after DHCP_DDNS has submitted DNS
 mapping removals which were received and accepted by an appropriate DNS server.
 
-% DHCP_DDNS_REQUEST_DROPPED Request contains no enabled update requests and will be dropped: %1
+% DHCP_DDNS_REQUEST_DROPPED Request ID %1: Request contains no enabled update requests and will be dropped: %2
 This is a debug message issued when DHCP_DDNS receives a request which does not
 contain updates in a direction that is enabled.  In other words, if only forward
 updates are enabled and request is recevied that asks only for reverse updates
 then the request is dropped.
 
-% DHCP_DDNS_REVERSE_REMOVE_BAD_DNSCLIENT_STATUS DHCP_DDNS received an unknown DNSClient status: %1, while removing reverse address mapping for FQDN %2 to DNS server %3
+% DHCP_DDNS_REVERSE_REMOVE_BAD_DNSCLIENT_STATUS DHCP_DDNS Request ID %1: received an unknown DNSClient status: %2, while removing reverse address mapping for FQDN %3 to DNS server %4
 This is an error message issued when DNSClient returns an unrecognized status
 while DHCP_DDNS was removing a reverse address mapping.  The request will be
 aborted.  This is most likely a programmatic issue and should be reported.
 
-% DHCP_DDNS_REVERSE_REMOVE_BUILD_FAILURE DNS update message to remove a reverse DNS entry could not be constructed from this request: %1,  reason: %2
+% DHCP_DDNS_REVERSE_REMOVE_BUILD_FAILURE DNS Request ID %1: update message to remove a reverse DNS entry could not be constructed from this request: %2,  reason: %3
 This is an error message issued when an error occurs attempting to construct
 the server bound packet requesting a reverse PTR removal.  This is
 due to invalid data contained in the NameChangeRequest. The request will be
 aborted.  This is most likely a configuration issue.
 
-% DHCP_DDNS_REVERSE_REMOVE_IO_ERROR DHCP_DDNS encountered an IO error sending a reverse mapping remove for FQDN %1 to DNS server %2
+% DHCP_DDNS_REVERSE_REMOVE_IO_ERROR DHCP_DDNS Request ID %1: encountered an IO error sending a reverse mapping remove for FQDN %2 to DNS server %3
 This is an error message issued when a communication error occurs while
 DHCP_DDNS is carrying out a reverse address update.  The application will
 retry against the same server or others as appropriate.
 
-% DHCP_DDNS_REVERSE_REMOVE_REJECTED DNS Server, %1, rejected a DNS update request to remove the reverse mapping for FQDN, %2, with an RCODE: %3
+% DHCP_DDNS_REVERSE_REMOVE_REJECTED DNS Request ID %1: Server, %2, rejected a DNS update request to remove the reverse mapping for FQDN, %3, with an RCODE: %4
 This is an error message issued when an update was rejected by the DNS server
 it was sent to for the reason given by the RCODE. The rcode values are defined
 in RFC 2136.
 
-% DHCP_DDNS_REVERSE_REMOVE_RESP_CORRUPT DHCP_DDNS received a corrupt response from the DNS server, %1, while removing reverse address mapping for FQDN, %2
+% DHCP_DDNS_REVERSE_REMOVE_RESP_CORRUPT DHCP_DDNS Request ID %1: received a corrupt response from the DNS server, %2, while removing reverse address mapping for FQDN, %3
 This is an error message issued when the response received by DHCP_DDNS, to a
 update request to remove a reverse address,  is mangled or malformed.
 The application will retry against the same server or others as appropriate.
 
-% DHCP_DDNS_REVERSE_REPLACE_BAD_DNSCLIENT_STATUS DHCP_DDNS received an unknown DNSClient status: %1, while replacing reverse address mapping for FQDN %2 to DNS server %3
+% DHCP_DDNS_REVERSE_REPLACE_BAD_DNSCLIENT_STATUS DHCP_DDNS Request ID %1: received an unknown DNSClient status: %2, while replacing reverse address mapping for FQDN %3 to DNS server %4
 This is an error message issued when DNSClient returns an unrecognized status
 while DHCP_DDNS was replacing a reverse address mapping.  The request will be
 aborted.  This is most likely a programmatic issue and should be reported.
 
-% DHCP_DDNS_REVERSE_REPLACE_BUILD_FAILURE DNS update message to replace a reverse DNS entry could not be constructed from this request: %1, reason: %2
+% DHCP_DDNS_REVERSE_REPLACE_BUILD_FAILURE DNS Request ID %1: update message to replace a reverse DNS entry could not be constructed from this request: %2, reason: %3
 This is an error message issued when an error occurs attempting to construct
 the server bound packet requesting a reverse PTR replacement.  This is
 due to invalid data contained in the NameChangeRequest. The request will be
 aborted.  This is most likely a configuration issue.
 
-% DHCP_DDNS_REVERSE_REPLACE_IO_ERROR DHCP_DDNS encountered an IO error sending a reverse mapping replacement for FQDN %1 to DNS server %2
+% DHCP_DDNS_REVERSE_REPLACE_IO_ERROR DHCP_DDNS Request ID %1: encountered an IO error sending a reverse mapping replacement for FQDN %2 to DNS server %3
 This is an error message issued when a communication error occurs while
 DHCP_DDNS is carrying out a reverse address update.  The application will
 retry against the same server or others as appropriate.
 
-% DHCP_DDNS_REVERSE_REPLACE_REJECTED DNS Server, %1, rejected a DNS update request to replace the reverse mapping for FQDN, %2, with an RCODE: %3
+% DHCP_DDNS_REVERSE_REPLACE_REJECTED DNS Request ID %1: Server, %2, rejected a DNS update request to replace the reverse mapping for FQDN, %3, with an RCODE: %4
 This is an error message issued when an update was rejected by the DNS server
 it was sent to for the reason given by the RCODE. The rcode values are defined
 in RFC 2136.
 
-% DHCP_DDNS_REVERSE_REPLACE_RESP_CORRUPT DHCP_DDNS received a corrupt response from the DNS server, %1, while replacing reverse address mapping for FQDN, %2
+% DHCP_DDNS_REVERSE_REPLACE_RESP_CORRUPT DHCP_DDNS Request ID %1: received a corrupt response from the DNS server, %2, while replacing reverse address mapping for FQDN, %3
 This is an error message issued when the response received by DHCP_DDNS, to a
 update request to replace a reverse address,  is mangled or malformed.
 The application will retry against the same server or others as appropriate.
 
-% DHCP_DDNS_REV_REQUEST_IGNORED Reverse updates are disabled, the reverse portion of request will be ignored: %1
+% DHCP_DDNS_REV_REQUEST_IGNORED Request ID %1: Reverse updates are disabled, the reverse portion of request will be ignored: %2
 This is a debug message issued when reverse DNS updates are disabled and
 DHCP_DDNS receives an update request containing a reverse DNS update.  The
 reverse update will not performed.
@@ -462,19 +467,19 @@ The version is also printed.
 This is an informational message issued when controller for the
 service first starts. Version is also reported.
 
-% DHCP_DDNS_STARTING_TRANSACTION Transaction Key: %1
+% DHCP_DDNS_STARTING_TRANSACTION Request ID %1:
 This is a debug message issued when DHCP-DDNS has begun a transaction for
 a given request.
 
-% DHCP_DDNS_STATE_MODEL_UNEXPECTED_ERROR application encountered an unexpected error while carrying out a NameChangeRequest: %1
+% DHCP_DDNS_STATE_MODEL_UNEXPECTED_ERROR Request ID %1: application encountered an unexpected error while carrying out a NameChangeRequest: %2
 This is error message issued when the application fails to process a
 NameChangeRequest correctly. Some or all of the DNS updates requested as part
 of this update did not succeed. This is a programmatic error and should be
 reported.
 
-% DHCP_DDNS_TRANS_SEND_ERROR application encountered an unexpected error while attempting to send a DNS update: %1
+% DHCP_DDNS_TRANS_SEND_ERROR Request ID %1: application encountered an unexpected error while attempting to send a DNS update: %2
 This is error message issued when the application is able to construct an update
-message but the attempt to send it suffered a unexpected error. This is most
+message but the attempt to send it suffered an unexpected error. This is most
 likely a programmatic error, rather than a communications issue. Some or all
 of the DNS updates requested as part of this request did not succeed.
 
@@ -484,10 +489,10 @@ unsupported signal.  This is a programming error indicating that the
 application has registered to receive the signal but no associated
 processing logic has been added.
 
-% DHCP_DDNS_UPDATE_REQUEST_SENT %1 for transaction key: %2 to server: %3
+% DHCP_DDNS_UPDATE_REQUEST_SENT Request ID %1: %2 to server: %3
 This is a debug message issued when DHCP_DDNS sends a DNS request to a DNS
 server.
 
-% DHCP_DDNS_UPDATE_RESPONSE_RECEIVED for transaction key: %1  to server: %2 status: %3
+% DHCP_DDNS_UPDATE_RESPONSE_RECEIVED Request ID %1: to server: %2 status: %3
 This is a debug message issued when DHCP_DDNS receives sends a DNS update
 response from a DNS server.

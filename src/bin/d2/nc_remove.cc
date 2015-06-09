@@ -200,8 +200,9 @@ NameRemoveTransaction::removingFwdAddrsHandler() {
                 // While unlikely, the build might fail if we have invalid
                 // data.  Should that be the case, we need to fail the
                 // transaction.
-                LOG_ERROR(dctl_logger,
+                LOG_ERROR(d2_to_dns_logger,
                           DHCP_DDNS_FORWARD_REMOVE_ADDRS_BUILD_FAILURE)
+                          .arg(getRequestId())
                           .arg(getNcr()->toText())
                           .arg(ex.what());
                 transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
@@ -230,7 +231,8 @@ NameRemoveTransaction::removingFwdAddrsHandler() {
                 // Per RFC4703 any other value means cease.
                 // If we get not authorized should we try the next server in
                 // the list? @todo  This needs some discussion perhaps.
-                LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REMOVE_ADDRS_REJECTED)
+                LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_FORWARD_REMOVE_ADDRS_REJECTED)
+                          .arg(getRequestId())
                           .arg(getCurrentServer()->toText())
                           .arg(getNcr()->getFqdn())
                           .arg(rcode.getCode());
@@ -246,7 +248,8 @@ NameRemoveTransaction::removingFwdAddrsHandler() {
             // to select the next server for a retry.
             // @note For now we treat OTHER as an IO error like TIMEOUT. It
             // is not entirely clear if this is accurate.
-            LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REMOVE_ADDRS_IO_ERROR)
+            LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_FORWARD_REMOVE_ADDRS_IO_ERROR)
+                      .arg(getRequestId())
                       .arg(getNcr()->getFqdn())
                       .arg(getCurrentServer()->toText());
 
@@ -256,7 +259,8 @@ NameRemoveTransaction::removingFwdAddrsHandler() {
         case DNSClient::INVALID_RESPONSE:
             // A response was received but was corrupt. Retry it like an IO
             // error.
-            LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REMOVE_ADDRS_RESP_CORRUPT)
+            LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_FORWARD_REMOVE_ADDRS_RESP_CORRUPT)
+                      .arg(getRequestId())
                       .arg(getCurrentServer()->toText())
                       .arg(getNcr()->getFqdn());
 
@@ -266,8 +270,9 @@ NameRemoveTransaction::removingFwdAddrsHandler() {
         default:
             // Any other value and we will fail this transaction, something
             // bigger is wrong.
-            LOG_ERROR(dctl_logger,
+            LOG_ERROR(d2_to_dns_logger,
                       DHCP_DDNS_FORWARD_REMOVE_ADDRS_BAD_DNSCLIENT_STATUS)
+                      .arg(getRequestId())
                       .arg(getDnsUpdateStatus())
                       .arg(getNcr()->getFqdn())
                       .arg(getCurrentServer()->toText());
@@ -306,8 +311,9 @@ NameRemoveTransaction::removingFwdRRsHandler() {
                 // While unlikely, the build might fail if we have invalid
                 // data.  Should that be the case, we need to fail the
                 // transaction.
-                LOG_ERROR(dctl_logger,
+                LOG_ERROR(d2_to_dns_logger,
                           DHCP_DDNS_FORWARD_REMOVE_RRS_BUILD_FAILURE)
+                          .arg(getRequestId())
                           .arg(getNcr()->toText())
                           .arg(ex.what());
                 transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
@@ -345,7 +351,8 @@ NameRemoveTransaction::removingFwdRRsHandler() {
                 // Per RFC4703 any other value means cease.
                 // If we get not authorized should try the next server in
                 // the list? @todo  This needs some discussion perhaps.
-                LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REMOVE_RRS_REJECTED)
+                LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_FORWARD_REMOVE_RRS_REJECTED)
+                          .arg(getRequestId())
                           .arg(getCurrentServer()->toText())
                           .arg(getNcr()->getFqdn())
                           .arg(rcode.getCode());
@@ -361,7 +368,8 @@ NameRemoveTransaction::removingFwdRRsHandler() {
             // to select the next server for a retry.
             // @note For now we treat OTHER as an IO error like TIMEOUT. It
             // is not entirely clear if this is accurate.
-            LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REMOVE_RRS_IO_ERROR)
+            LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_FORWARD_REMOVE_RRS_IO_ERROR)
+                      .arg(getRequestId())
                       .arg(getNcr()->getFqdn())
                       .arg(getCurrentServer()->toText());
 
@@ -379,7 +387,8 @@ NameRemoveTransaction::removingFwdRRsHandler() {
         case DNSClient::INVALID_RESPONSE:
             // A response was received but was corrupt. Retry it like an IO
             // error.
-            LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REMOVE_RRS_RESP_CORRUPT)
+            LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_FORWARD_REMOVE_RRS_RESP_CORRUPT)
+                      .arg(getRequestId())
                       .arg(getCurrentServer()->toText())
                       .arg(getNcr()->getFqdn());
 
@@ -391,8 +400,9 @@ NameRemoveTransaction::removingFwdRRsHandler() {
         default:
             // Any other value and we will fail this transaction, something
             // bigger is wrong.
-            LOG_ERROR(dctl_logger,
+            LOG_ERROR(d2_to_dns_logger,
                       DHCP_DDNS_FORWARD_REMOVE_RRS_BAD_DNSCLIENT_STATUS)
+                      .arg(getRequestId())
                       .arg(getDnsUpdateStatus())
                       .arg(getNcr()->getFqdn())
                       .arg(getCurrentServer()->toText());
@@ -460,7 +470,8 @@ NameRemoveTransaction::removingRevPtrsHandler() {
                 // While unlikely, the build might fail if we have invalid
                 // data.  Should that be the case, we need to fail the
                 // transaction.
-                LOG_ERROR(dctl_logger, DHCP_DDNS_REVERSE_REMOVE_BUILD_FAILURE)
+                LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_REVERSE_REMOVE_BUILD_FAILURE)
+                          .arg(getRequestId())
                           .arg(getNcr()->toText())
                           .arg(ex.what());
                 transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
@@ -491,7 +502,8 @@ NameRemoveTransaction::removingRevPtrsHandler() {
                 // Per RFC4703 any other value means cease.
                 // If we get not authorized should try the next server in
                 // the list? @todo  This needs some discussion perhaps.
-                LOG_ERROR(dctl_logger, DHCP_DDNS_REVERSE_REMOVE_REJECTED)
+                LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_REVERSE_REMOVE_REJECTED)
+                          .arg(getRequestId())
                           .arg(getCurrentServer()->toText())
                           .arg(getNcr()->getFqdn())
                           .arg(rcode.getCode());
@@ -507,7 +519,8 @@ NameRemoveTransaction::removingRevPtrsHandler() {
             // to select the next server for a retry.
             // @note For now we treat OTHER as an IO error like TIMEOUT. It
             // is not entirely clear if this is accurate.
-            LOG_ERROR(dctl_logger, DHCP_DDNS_REVERSE_REMOVE_IO_ERROR)
+            LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_REVERSE_REMOVE_IO_ERROR)
+                      .arg(getRequestId())
                       .arg(getNcr()->getFqdn())
                       .arg(getCurrentServer()->toText());
 
@@ -519,7 +532,8 @@ NameRemoveTransaction::removingRevPtrsHandler() {
         case DNSClient::INVALID_RESPONSE:
             // A response was received but was corrupt. Retry it like an IO
             // error.
-            LOG_ERROR(dctl_logger, DHCP_DDNS_REVERSE_REMOVE_RESP_CORRUPT)
+            LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_REVERSE_REMOVE_RESP_CORRUPT)
+                      .arg(getRequestId())
                       .arg(getCurrentServer()->toText())
                       .arg(getNcr()->getFqdn());
 
@@ -531,8 +545,9 @@ NameRemoveTransaction::removingRevPtrsHandler() {
         default:
             // Any other value and we will fail this transaction, something
             // bigger is wrong.
-            LOG_ERROR(dctl_logger,
+            LOG_ERROR(d2_to_dns_logger,
                       DHCP_DDNS_REVERSE_REMOVE_BAD_DNSCLIENT_STATUS)
+                      .arg(getRequestId())
                       .arg(getDnsUpdateStatus())
                       .arg(getNcr()->getFqdn())
                       .arg(getCurrentServer()->toText());
@@ -556,7 +571,8 @@ void
 NameRemoveTransaction::processRemoveOkHandler() {
     switch(getNextEvent()) {
     case UPDATE_OK_EVT:
-        LOG_INFO(dctl_logger, DHCP_DDNS_REMOVE_SUCCEEDED)
+        LOG_INFO(d2_to_dns_logger, DHCP_DDNS_REMOVE_SUCCEEDED)
+                .arg(getRequestId())
                 .arg(getNcr()->toText());
         setNcrStatus(dhcp_ddns::ST_COMPLETED);
         endModel();
@@ -575,7 +591,8 @@ NameRemoveTransaction::processRemoveFailedHandler() {
     case NO_MORE_SERVERS_EVT:
     case SERVER_IO_ERROR_EVT:
         setNcrStatus(dhcp_ddns::ST_FAILED);
-        LOG_ERROR(dctl_logger, DHCP_DDNS_REMOVE_FAILED)
+        LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_REMOVE_FAILED)
+                  .arg(getRequestId())
                   .arg(transactionOutcomeString());
         endModel();
         break;

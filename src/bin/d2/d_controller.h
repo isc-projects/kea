@@ -244,7 +244,7 @@ protected:
     /// any prefixing hyphen(s)
     /// @param optarg is the argument value (if one) associated with the option
     ///
-    /// @return must return true if the option was valid, false is it is
+    /// @return must return true if the option was valid, false if it is
     /// invalid. (Note the default implementation always returns false.)
     virtual bool customOption(int option, char *optarg);
 
@@ -305,12 +305,12 @@ protected:
     /// -# SIGHUP - instigates reloading the configuration file
     /// -# SIGINT - instigates a graceful shutdown
     /// -# SIGTERM - instigates a graceful shutdown
-    /// If received any other signal, it will issue a debug statement and
+    /// If it receives any other signal, it will issue a debug statement and
     /// discard it.
     /// Derivations wishing to support additional signals could override this
     /// method with one that: processes the signal if it is one of additional
     /// signals, otherwise invoke this method (DControllerBase::processSignal())
-    /// with signal value.
+    /// with the signal value.
     /// @todo Provide a convenient way for derivations to register additional
     /// signals.
     virtual void processSignal(int signum);
@@ -370,7 +370,7 @@ protected:
     /// @brief Processes the command line arguments. It is the first step
     /// taken after the controller has been launched.  It combines the stock
     /// list of options with those returned by getCustomOpts(), and uses
-    /// cstdlib's getopt to loop through the command line.  The stock options
+    /// cstdlib's getopt to loop through the command line.
     /// It handles stock options directly, and passes any custom options into
     /// the customOption method.  Currently there are only two stock options
     /// -c for specifying the configuration file, and -v for verbose logging.

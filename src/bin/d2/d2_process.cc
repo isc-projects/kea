@@ -319,7 +319,7 @@ D2Process::reconfigureQueueMgr() {
     // a valid configuration to work with so if we fail below, it will be
     // an operational issue, such as a busy IP address. That will leave
     // queue manager in INITTED state, which is fine.
-    // What we dont' want is to continually attempt to reconfigure so set
+    // What we don't want is to continually attempt to reconfigure so set
     // the flag false now.
     // @todo This method assumes only 1 type of listener.  This will change
     // to support at least a TCP version, possibly some form of RDBMS listener

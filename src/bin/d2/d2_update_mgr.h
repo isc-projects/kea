@@ -49,7 +49,7 @@ typedef std::map<TransactionKey, NameChangeTransactionPtr> TransactionList;
 ///
 /// D2UpdateMgr uses the services of D2QueueMgr to monitor the queue of
 /// NameChangeRequests and select and dequeue requests for processing.
-/// When request is dequeued for processing it is removed from the queue and
+/// When a request is dequeued for processing it is removed from the queue and
 /// wrapped in NameChangeTransaction and added to the D2UpdateMgr's list of
 /// transactions.
 ///
@@ -65,7 +65,7 @@ typedef std::map<TransactionKey, NameChangeTransactionPtr> TransactionList;
 /// transactions complete,  D2UpdateMgr removes them from the transaction list,
 /// replacing them with new transactions.
 ///
-/// D2UpdateMgr carries out each of the above steps, from with a method called
+/// D2UpdateMgr carries out each of the above steps, with a method called
 /// sweep().  This method is intended to be called as IO events complete.
 /// The upper layer(s) are responsible for calling sweep in a timely and cyclic
 /// manner.
@@ -154,7 +154,7 @@ protected:
     ///
     /// If updates in a given direction are disabled requests for updates in
     /// that direction will be ignored.  For example: If a request is received
-    /// which asks for updates both directions but only forward updates are
+    /// which asks for updates in both directions but only forward updates are
     /// enabled; only the forward update will be attempted.  Effectively, the
     /// request will be treated as if it only asked for forward updates.
     ///
