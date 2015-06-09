@@ -2302,7 +2302,8 @@ void Dhcpv4Srv::processStatsReceived(const Pkt4Ptr& query) {
 
 void Dhcpv4Srv::processStatsSent(const Pkt4Ptr& response) {
     // Increase generic counter for sent packets.
-    isc::stats::StatsMgr::instance().addValue("pkt4-sent", 1ul);
+    isc::stats::StatsMgr::instance().addValue("pkt4-sent",
+                                              static_cast<uint64_t>(1));
 
     // Increase packet type specific counter for packets sent.
     string stat_name;
@@ -2321,7 +2322,8 @@ void Dhcpv4Srv::processStatsSent(const Pkt4Ptr& response) {
         return;
     }
 
-    isc::stats::StatsMgr::instance().addValue(stat_name, 1ul);
+    isc::stats::StatsMgr::instance().addValue(stat_name,
+                                              static_cast<uint64_t>(1));
 }
 
 }   // namespace dhcp
