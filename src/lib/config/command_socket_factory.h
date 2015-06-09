@@ -47,7 +47,7 @@ public:
     /// Currently supported types are:
     /// - unix
     ///
-    /// See @ref CommandMgr::configureCtrlSocket for detailed description.
+    /// See @ref CommandMgr::openCommandSocket for detailed description.
     /// @throw CommandSocketError
     ///
     /// @param socket_info structure that describes the socket
