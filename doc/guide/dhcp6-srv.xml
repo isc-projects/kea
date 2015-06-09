@@ -1304,6 +1304,40 @@ should include options from the isc option space:
         </para>
       </section>
 
+      <section id="dhcp6-rapid-commit">
+        <title>Rapid Commit</title>
+        <para>The Rapid Commit option, described in
+        <ulink url="http://tools.ietf.org/html/rfc3315">RFC 3315</ulink>, is supported
+        by the Kea DHCPv6 server. However, support is disabled by default for
+        all subnets. It can be enabled for a particular subnet using the
+        <command>rapid-commit</command> parameter as shown below:
+<screen>
+"Dhcp6": {
+    "subnet6": [
+        {
+            "subnet": "2001:db8:beef::/48",
+            <userinput>"rapid-commit": true</userinput>,
+            "pools": [
+                 {
+                     "pool": "2001:db8:beef::1-2001:db8:beef::10"
+                 }
+             ],
+        }
+    ],
+    ...
+}
+</screen>
+        </para>
+        <para>
+          This setting is solely effective for a subnet for which the
+          <command>rapid-commit</command> is set to <command>true</command>.
+          For clients connected to other subnets, the server will ignore the
+          Rapid Commit option sent by the client and will follow the 4-way
+          exchange procedure, i.e. respond with the Advertise for the Solicit
+          containing Rapid Commit option.
+        </para>
+      </section>
+
       <section id="dhcp6-relays">
         <title>DHCPv6 Relays</title>
         <para>
