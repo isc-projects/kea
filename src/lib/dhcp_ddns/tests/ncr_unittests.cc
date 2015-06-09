@@ -493,7 +493,7 @@ TEST(NameChangeRequestTest, basicJsonTest) {
 
     // Verify that the request ID matches the string from the DHCID.
     std::string dhcid_str = "010203040A7F8E3D";
-    EXPECT_EQ(ncr->getRequestId(), dhcid_str);
+    EXPECT_EQ(dhcid_str, ncr->getRequestId());
 }
 
 /// @brief Tests a variety of invalid JSON message strings.

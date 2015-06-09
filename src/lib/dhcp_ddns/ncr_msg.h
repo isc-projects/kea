@@ -588,7 +588,9 @@ public:
     /// @todo Currently this is the DHCID, in the future we may add a unique ID per
     /// request to allow for correlating messages and events between the DHCP servers
     /// and the D2 server.  If we do that we shall also need to add or update other
-    /// functions to: set the request ID, add it to the JSON strings, etc.
+    /// functions to: set the request ID, add it to the JSON strings, etc.  The
+    /// primary purpose of this function is to provide a consistent way to identify
+    /// requests for logging purposes.
     ///
     /// @return a string with the the request's request ID (currently DHCID)
     std::string getRequestId() const {

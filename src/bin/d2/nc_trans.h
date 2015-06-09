@@ -441,8 +441,10 @@ public:
 
     /// @brief Fetches the request id that identifies this transaction.
     ///
-    /// This is a wrapper around getRequestID which currently returns DHCID
-    /// in the future we may include a distinct request id.
+    /// This is a wrapper around getRequestId from the NCR which currently
+    /// returns DHCID. In the future we may include a distinct request id.
+    /// The primary purpose of this function is to provide a consistent way
+    /// to identify requests for logging purposes.
     ///
     /// @return a string with the the request's request ID (currently DHCID)
     std::string getRequestId() const;
