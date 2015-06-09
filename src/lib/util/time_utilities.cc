@@ -150,7 +150,7 @@ checkRange(const int min, const int max, const int value,
     if ((value >= min) && (value <= max)) {
         return;
     }
-    isc_throw(InvalidTime, "Invalid " << valname << "value: " << value);
+    isc_throw(InvalidTime, "Invalid " << valname << " value: " << value);
 }
 }
 
