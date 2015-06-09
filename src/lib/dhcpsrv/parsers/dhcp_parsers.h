@@ -1057,9 +1057,6 @@ private:
 
 protected:
 
-    /// Storage for subnet-specific boolean values.
-    BooleanStoragePtr boolean_values_;
-
     /// Storage for subnet-specific integer values.
     Uint32StoragePtr uint32_values_;
 
