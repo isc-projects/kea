@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -42,6 +42,7 @@
 #include <util/io/fd_share.h>
 #include <util/io/socketsession.h>
 #include <util/io/sockaddr_util.h>
+#include <util/unittests/test_exceptions.h>
 
 using namespace std;
 using namespace isc;
@@ -363,8 +364,10 @@ TEST_F(ForwardTest, construct) {
 
     // But too long a path should be rejected
     struct sockaddr_un s;     // can't be const; some compiler complains
-    EXPECT_THROW(SocketSessionForwarder(string(sizeof(s.sun_path), 'x')),
-                 SocketSessionError);
+    EXPECT_THROW_WITH(SocketSessionForwarder(string(sizeof(s.sun_path), 'x')),
+                      SocketSessionError,
+                      "File name for a UNIX domain socket is too long: "
+                      << string(sizeof(s.sun_path), 'x'));
     // If it's one byte shorter it should be okay
     SocketSessionForwarder(string(sizeof(s.sun_path) - 1, 'x'));
 }
@@ -372,10 +375,13 @@ TEST_F(ForwardTest, construct) {
 TEST_F(ForwardTest, connect) {
     // File doesn't exist (we assume the file "no_such_file" doesn't exist)
     SocketSessionForwarder forwarder("no_such_file");
-    EXPECT_THROW(forwarder.connectToReceiver(), SocketSessionError);
+    EXPECT_THROW_WITH(forwarder.connectToReceiver(), SocketSessionError,
+                      "Failed to connect to UNIX domain endpoint "
+                      "no_such_file: " << strerror(ENOENT));
     // The socket should be closed internally, so close() should result in
     // error.
-    EXPECT_THROW(forwarder.close(), BadValue);
+    EXPECT_THROW_WITH(forwarder.close(), BadValue,
+                      "Attempt of close before connect");
 
     // Set up the receiver and connect.  It should succeed.
     SocketSessionForwarder forwarder2(TEST_UNIX_FILE);
@@ -384,14 +390,17 @@ TEST_F(ForwardTest, connect) {
     // And it can be closed successfully.
     forwarder2.close();
     // Duplicate close should fail
-    EXPECT_THROW(forwarder2.close(), BadValue);
+    EXPECT_THROW_WITH(forwarder2.close(), BadValue,
+                      "Attempt of close before connect");
     // Once closed, reconnect is okay.
     forwarder2.connectToReceiver();
     forwarder2.close();
 
     // Duplicate connect should be rejected
     forwarder2.connectToReceiver();
-    EXPECT_THROW(forwarder2.connectToReceiver(), BadValue);
+    EXPECT_THROW_WITH(forwarder2.connectToReceiver(), BadValue,
+                      "Duplicate connect to UNIX domain endpoint "
+                      << TEST_UNIX_FILE);
 
     // Connect then destroy.  Should be internally closed, but unfortunately
     // it's not easy to test it directly.  We only check no disruption happens.
@@ -403,7 +412,8 @@ TEST_F(ForwardTest, connect) {
 
 TEST_F(ForwardTest, close) {
     // can't close before connect
-    EXPECT_THROW(SocketSessionForwarder(TEST_UNIX_FILE).close(), BadValue);
+    EXPECT_THROW_WITH(SocketSessionForwarder(TEST_UNIX_FILE).close(), BadValue,
+                      "Attempt of close before connect");
 }
 
 void
@@ -607,11 +617,11 @@ TEST_F(ForwardTest, pushAndPop) {
 
 TEST_F(ForwardTest, badPush) {
     // push before connect
-    EXPECT_THROW(forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
-                                 *getSockAddr("192.0.2.1", "53").first,
-                                 *getSockAddr("192.0.2.2", "53").first,
-                                 TEST_DATA, sizeof(TEST_DATA)),
-                 BadValue);
+    EXPECT_THROW_WITH(forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
+                                      *getSockAddr("192.0.2.1", "53").first,
+                                      *getSockAddr("192.0.2.2", "53").first,
+                                      TEST_DATA, sizeof(TEST_DATA)),
+                      BadValue, "Attempt of push before connect");
 
     // Now connect the forwarder for the rest of tests
     startListen();
@@ -620,57 +630,74 @@ TEST_F(ForwardTest, badPush) {
     // Invalid address family
     struct sockaddr sockaddr_unspec;
     sockaddr_unspec.sa_family = AF_UNSPEC;
-    EXPECT_THROW(forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
-                                 sockaddr_unspec,
-                                 *getSockAddr("192.0.2.2", "53").first,
-                                 TEST_DATA, sizeof(TEST_DATA)),
-                 BadValue);
-    EXPECT_THROW(forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
-                                 *getSockAddr("192.0.2.2", "53").first,
-                                 sockaddr_unspec, TEST_DATA,
-                                 sizeof(TEST_DATA)),
-                 BadValue);
+    EXPECT_THROW_WITH(forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
+                                      sockaddr_unspec,
+                                      *getSockAddr("192.0.2.2", "53").first,
+                                      TEST_DATA, sizeof(TEST_DATA)),
+                      BadValue,
+                      "Invalid address family: must be "
+                      "AF_INET or AF_INET6; " << AF_UNSPEC
+                      << ", " << AF_INET << " given");
+    EXPECT_THROW_WITH(forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
+                                      *getSockAddr("192.0.2.2", "53").first,
+                                      sockaddr_unspec, TEST_DATA,
+                                      sizeof(TEST_DATA)),
+                      BadValue,
+                      "Invalid address family: must be "
+                      "AF_INET or AF_INET6; " << AF_INET
+                      << ", " << AF_UNSPEC << " given");
 
     // Inconsistent address family
-    EXPECT_THROW(forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
-                                 *getSockAddr("2001:db8::1", "53").first,
-                                 *getSockAddr("192.0.2.2", "53").first,
-                                 TEST_DATA, sizeof(TEST_DATA)),
-                 BadValue);
-    EXPECT_THROW(forwarder_.push(1, AF_INET6, SOCK_DGRAM, IPPROTO_UDP,
-                                 *getSockAddr("2001:db8::1", "53").first,
-                                 *getSockAddr("192.0.2.2", "53").first,
-                                 TEST_DATA, sizeof(TEST_DATA)),
-                 BadValue);
+    EXPECT_THROW_WITH(forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
+                                      *getSockAddr("2001:db8::1", "53").first,
+                                      *getSockAddr("192.0.2.2", "53").first,
+                                      TEST_DATA, sizeof(TEST_DATA)),
+                      BadValue,
+                      "Inconsistent address family: must be "
+                      << AF_INET << "; " << AF_INET6 << ", "
+                      << AF_INET << " given");
+    EXPECT_THROW_WITH(forwarder_.push(1, AF_INET6, SOCK_DGRAM, IPPROTO_UDP,
+                                      *getSockAddr("2001:db8::1", "53").first,
+                                      *getSockAddr("192.0.2.2", "53").first,
+                                      TEST_DATA, sizeof(TEST_DATA)),
+                      BadValue,
+                      "Inconsistent address family: must be "
+                      << AF_INET6 << "; " << AF_INET6 << ", "
+                      << AF_INET << " given");
 
     // Empty data: we reject them at least for now
-    EXPECT_THROW(forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
+    EXPECT_THROW_WITH(forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
+                                      *getSockAddr("192.0.2.1", "53").first,
+                                      *getSockAddr("192.0.2.2", "53").first,
+                                      TEST_DATA, 0),
+                      BadValue,
+                      "Data for a socket session must not be empty");
+    EXPECT_THROW_WITH(forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
                                  *getSockAddr("192.0.2.1", "53").first,
-                                 *getSockAddr("192.0.2.2", "53").first,
-                                 TEST_DATA, 0),
-                 BadValue);
-    EXPECT_THROW(forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
-                                 *getSockAddr("192.0.2.1", "53").first,
-                                 *getSockAddr("192.0.2.2", "53").first,
-                                 NULL, sizeof(TEST_DATA)),
-                 BadValue);
+                                      *getSockAddr("192.0.2.2", "53").first,
+                                      NULL, sizeof(TEST_DATA)),
+                      BadValue,
+                      "Data for a socket session must not be empty");
 
     // Too big data: we reject them at least for now
-    EXPECT_THROW(forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
-                                 *getSockAddr("192.0.2.1", "53").first,
-                                 *getSockAddr("192.0.2.2", "53").first,
-                                 string(65536, 'd').c_str(), 65536),
-                 BadValue);
+    EXPECT_THROW_WITH(forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
+                                      *getSockAddr("192.0.2.1", "53").first,
+                                      *getSockAddr("192.0.2.2", "53").first,
+                                      string(65536, 'd').c_str(), 65536),
+                      BadValue,
+                      "Invalid socket session data size: 65536"
+                      ", must not exceed 65535");
 
     // Close the receiver before push.  It will result in SIGPIPE (should be
     // ignored) and EPIPE, which will be converted to SocketSessionError.
     const int receiver_fd = acceptForwarder();
     close(receiver_fd);
-    EXPECT_THROW(forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
-                                 *getSockAddr("192.0.2.1", "53").first,
-                                 *getSockAddr("192.0.2.2", "53").first,
-                                 TEST_DATA, sizeof(TEST_DATA)),
-                 SocketSessionError);
+    EXPECT_THROW_WITH(forwarder_.push(1, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
+                                      *getSockAddr("192.0.2.1", "53").first,
+                                      *getSockAddr("192.0.2.2", "53").first,
+                                      TEST_DATA, sizeof(TEST_DATA)),
+                      SocketSessionError,
+                      "FD passing failed: " << strerror(EPIPE));
 }
 
 // A subroutine for pushTooFast, continuously pushing socket sessions
@@ -699,9 +726,12 @@ TEST_F(ForwardTest, pushTooFast) {
     // It should eventually fail without blocking.
     startListen();
     forwarder_.connectToReceiver();
-    EXPECT_THROW(multiPush(forwarder_, *getSockAddr("192.0.2.1", "53").first,
-                           large_text_.c_str(), large_text_.length()),
-                 SocketSessionError);
+    EXPECT_THROW_WITH(multiPush(forwarder_,
+                                *getSockAddr("192.0.2.1", "53").first,
+                                large_text_.c_str(), large_text_.length()),
+                      SocketSessionError,
+                      "Write failed in forwarding a socket session: "
+                      << strerror(EWOULDBLOCK));
 }
 
 TEST_F(ForwardTest, badPop) {
@@ -710,34 +740,43 @@ TEST_F(ForwardTest, badPop) {
     // Close the forwarder socket before pop() without sending anything.
     pushSessionHeader(0, 0, false);
     dummy_forwarder_.reset(-1);
-    EXPECT_THROW(receiver_->pop(), SocketSessionError);
+    EXPECT_THROW_WITH(receiver_->pop(), SocketSessionError,
+                      "Receiving a forwarded FD failed: "
+                      << strerror(ECONNRESET));
 
     // Pretending to be a forwarder but don't actually pass FD.
     pushSessionHeader(0, 1, false);
     dummy_forwarder_.reset(-1);
-    EXPECT_THROW(receiver_->pop(), SocketSessionError);
+    EXPECT_THROW_WITH(receiver_->pop(), SocketSessionError,
+                      "Receiving a forwarded FD failed: "
+                      << strerror(ECONNRESET));
 
     // Pass a valid FD (stdin), but provide short data for the hdrlen
     pushSessionHeader(0, 1);
     dummy_forwarder_.reset(-1);
-    EXPECT_THROW(receiver_->pop(), SocketSessionError);
+    EXPECT_THROW_WITH(receiver_->pop(), SocketSessionError,
+                      "Incomplete data from SocketSessionForwarder: 1/2");
 
     // Pass a valid FD, but provides too large hdrlen
     pushSessionHeader(0xffff);
     dummy_forwarder_.reset(-1);
-    EXPECT_THROW(receiver_->pop(), SocketSessionError);
+    EXPECT_THROW_WITH(receiver_->pop(), SocketSessionError,
+                      "Too large header length: 65535");
 
     // Don't provide full header
     pushSessionHeader(sizeof(uint32_t));
     dummy_forwarder_.reset(-1);
-    EXPECT_THROW(receiver_->pop(), SocketSessionError);
+    EXPECT_THROW_WITH(receiver_->pop(), SocketSessionError,
+                      "Incomplete data from SocketSessionForwarder: 0/4");
 
     // Pushed header is too short
     const uint8_t dummy_data = 0;
     pushSessionHeader(1);
     send(dummy_forwarder_.fd, &dummy_data, 1, 0);
     dummy_forwarder_.reset(-1);
-    EXPECT_THROW(receiver_->pop(), SocketSessionError);
+    EXPECT_THROW_WITH(receiver_->pop(), SocketSessionError,
+                      "bogus socket session header: "
+                      "read beyond end of buffer");
 
     // socket addresses commonly used below (the values don't matter).
     const SockAddrInfo sai_local(getSockAddr("192.0.2.1", "53535"));
@@ -748,68 +787,87 @@ TEST_F(ForwardTest, badPop) {
     pushSession(AF_UNSPEC, SOCK_DGRAM, IPPROTO_UDP, sai_local.second,
                 *sai_local.first, sai_remote.second, *sai_remote.first);
     dummy_forwarder_.reset(-1);
-    EXPECT_THROW(receiver_->pop(), SocketSessionError);
+    EXPECT_THROW_WITH(receiver_->pop(), SocketSessionError,
+                      "Unsupported address family is passed: " << AF_UNSPEC);
 
     // Pass inconsistent address family for local
     pushSession(AF_INET, SOCK_DGRAM, IPPROTO_UDP, sai6.second,
                 *sai6.first, sai_remote.second, *sai_remote.first);
     dummy_forwarder_.reset(-1);
-    EXPECT_THROW(receiver_->pop(), SocketSessionError);
+    EXPECT_THROW_WITH(receiver_->pop(), SocketSessionError,
+                      "SA family inconsistent: " << AF_INET6 << ", "
+                      << AF_INET << " given, must be " << AF_INET);
 
     // Same for remote
     pushSession(AF_INET, SOCK_DGRAM, IPPROTO_UDP, sai_local.second,
                 *sai_local.first, sai6.second, *sai6.first);
     dummy_forwarder_.reset(-1);
-    EXPECT_THROW(receiver_->pop(), SocketSessionError);
+    EXPECT_THROW_WITH(receiver_->pop(), SocketSessionError,
+                      "SA family inconsistent: " << AF_INET << ", "
+                      << AF_INET6 << " given, must be " << AF_INET);
 
     // Pass too big sa length for local
     pushSession(AF_INET, SOCK_DGRAM, IPPROTO_UDP,
                 sizeof(struct sockaddr_storage) + 1, *sai_local.first,
                 sai_remote.second, *sai_remote.first);
     dummy_forwarder_.reset(-1);
-    EXPECT_THROW(receiver_->pop(), SocketSessionError);
+    EXPECT_THROW_WITH(receiver_->pop(), SocketSessionError,
+                      "Invalid local SA length: "
+                      << sizeof(struct sockaddr_storage) + 1);
 
     // Same for remote
     pushSession(AF_INET, SOCK_DGRAM, IPPROTO_UDP, sai_local.second,
                 *sai_local.first, sizeof(struct sockaddr_storage) + 1,
                 *sai_remote.first);
     dummy_forwarder_.reset(-1);
-    EXPECT_THROW(receiver_->pop(), SocketSessionError);
+    EXPECT_THROW_WITH(receiver_->pop(), SocketSessionError,
+                      "Invalid remote SA length: "
+                      << sizeof(struct sockaddr_storage) + 1);
 
     // Pass too small sa length for local
     pushSession(AF_INET, SOCK_DGRAM, IPPROTO_UDP,
                 sizeof(struct sockaddr_in) - 1, *sai_local.first,
                 sai_remote.second, *sai_remote.first);
     dummy_forwarder_.reset(-1);
-    EXPECT_THROW(receiver_->pop(), SocketSessionError);
+    EXPECT_THROW_WITH(receiver_->pop(), SocketSessionError,
+                      "Invalid local SA length: "
+                      << sizeof(struct sockaddr_in) - 1);
 
     // Same for remote
     pushSession(AF_INET6, SOCK_DGRAM, IPPROTO_UDP,
                 sai6.second, *sai6.first, sizeof(struct sockaddr_in6) - 1,
                 *sai6.first);
     dummy_forwarder_.reset(-1);
-    EXPECT_THROW(receiver_->pop(), SocketSessionError);
+    EXPECT_THROW_WITH(receiver_->pop(), SocketSessionError,
+                      "Invalid remote SA length: "
+                      << sizeof(struct sockaddr_in6) - 1);
 
     // Data length is too large
     pushSession(AF_INET, SOCK_DGRAM, IPPROTO_UDP, sai_local.second,
                 *sai_local.first, sai_remote.second,
                 *sai_remote.first, 65536);
     dummy_forwarder_.reset(-1);
-    EXPECT_THROW(receiver_->pop(), SocketSessionError);
+    EXPECT_THROW_WITH(receiver_->pop(), SocketSessionError,
+                      "Invalid socket session data size: 65536"
+                      ", must be > 0 and <= 65535");
 
     // Empty data
     pushSession(AF_INET, SOCK_DGRAM, IPPROTO_UDP, sai_local.second,
                 *sai_local.first, sai_remote.second,
                 *sai_remote.first, 0);
     dummy_forwarder_.reset(-1);
-    EXPECT_THROW(receiver_->pop(), SocketSessionError);
+    EXPECT_THROW_WITH(receiver_->pop(), SocketSessionError,
+                      "Invalid socket session data size: 0"
+                      ", must be > 0 and <= 65535");
 
     // Not full data are passed
     pushSession(AF_INET, SOCK_DGRAM, IPPROTO_UDP, sai_local.second,
                 *sai_local.first, sai_remote.second,
                 *sai_remote.first, sizeof(TEST_DATA) + 1);
     dummy_forwarder_.reset(-1);
-    EXPECT_THROW(receiver_->pop(), SocketSessionError);
+    EXPECT_THROW_WITH(receiver_->pop(), SocketSessionError,
+                      "Incomplete data from SocketSessionForwarder: "
+                      << sizeof(TEST_DATA) << "/" << sizeof(TEST_DATA) + 1);
 
     // Check the forwarded FD is closed on failure
     ScopedSocket sock(createSocket(AF_INET, SOCK_DGRAM, IPPROTO_UDP,
@@ -817,7 +875,8 @@ TEST_F(ForwardTest, badPop) {
                                    false));
     pushSessionHeader(0, 1, true, sock.fd);
     dummy_forwarder_.reset(-1);
-    EXPECT_THROW(receiver_->pop(), SocketSessionError);
+    EXPECT_THROW_WITH(receiver_->pop(), SocketSessionError,
+                      "Incomplete data from SocketSessionForwarder: 1/2");
     // Close the original socket
     sock.reset(-1);
     // The passed one should have been closed, too, so we should be able
@@ -833,20 +892,23 @@ TEST(SocketSessionTest, badValue) {
 
     SockAddrCreator addr_creator;
 
-    EXPECT_THROW(SocketSession(42, AF_INET, SOCK_DGRAM, IPPROTO_UDP, NULL,
-                               addr_creator.get("192.0.2.1", "53").first,
-                               TEST_DATA, sizeof(TEST_DATA)),
-                 BadValue);
-    EXPECT_THROW(SocketSession(42, AF_INET6, SOCK_STREAM, IPPROTO_TCP,
-                               addr_creator.get("2001:db8::1", "53").first,
-                               NULL, TEST_DATA , sizeof(TEST_DATA)), BadValue);
-    EXPECT_THROW(SocketSession(42, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
-                               addr_creator.get("192.0.2.1", "53").first,
-                               addr_creator.get("192.0.2.2", "5300").first,
-                               TEST_DATA, 0), BadValue);
-    EXPECT_THROW(SocketSession(42, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
-                               addr_creator.get("192.0.2.1", "53").first,
-                               addr_creator.get("192.0.2.2", "5300").first,
-                               NULL, sizeof(TEST_DATA)), BadValue);
+    EXPECT_THROW_WITH(SocketSession(42, AF_INET, SOCK_DGRAM, IPPROTO_UDP, NULL,
+                                    addr_creator.get("192.0.2.1", "53").first,
+                                    TEST_DATA, sizeof(TEST_DATA)),
+                      BadValue, "sockaddr must be non NULL for SocketSession");
+    EXPECT_THROW_WITH(SocketSession(42, AF_INET6, SOCK_STREAM, IPPROTO_TCP,
+                                    addr_creator.get("2001:db8::1", "53").first,
+                                    NULL, TEST_DATA, sizeof(TEST_DATA)),
+                      BadValue, "sockaddr must be non NULL for SocketSession");
+    EXPECT_THROW_WITH(SocketSession(42, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
+                                    addr_creator.get("192.0.2.1", "53").first,
+                                    addr_creator.get("192.0.2.2", "5300").first,
+                                    TEST_DATA, 0),
+                      BadValue, "data_len must be non 0 for SocketSession");
+    EXPECT_THROW_WITH(SocketSession(42, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
+                                    addr_creator.get("192.0.2.1", "53").first,
+                                    addr_creator.get("192.0.2.2", "5300").first,
+                                    NULL, sizeof(TEST_DATA)),
+                      BadValue, "data must be non NULL for SocketSession");
 }
 }

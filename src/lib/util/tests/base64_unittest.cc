@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,8 @@
 #include <util/encode/base64.h>
 
 #include <gtest/gtest.h>
+
+#include <util/unittests/test_exceptions.h>
 
 using namespace std;
 using namespace isc;
@@ -71,21 +73,27 @@ TEST_F(Base64Test, decode) {
     decodeCheck("\n\t", decoded_data, "");
 
     // incomplete input
-    EXPECT_THROW(decodeBase64("Zm9vYmF", decoded_data), BadValue);
+    EXPECT_THROW_WITH(decodeBase64("Zm9vYmF", decoded_data), BadValue,
+                      "Incomplete input for base64: Zm9vYmF");
 
     // only up to 2 padding characters are allowed
-    EXPECT_THROW(decodeBase64("A===", decoded_data), BadValue);
-    EXPECT_THROW(decodeBase64("A= ==", decoded_data), BadValue);
+    EXPECT_THROW_WITH(decodeBase64("A===", decoded_data), BadValue,
+                      "Too many base64 padding characters: A===");
+    EXPECT_THROW_WITH(decodeBase64("A= ==", decoded_data), BadValue,
+                      "Too many base64 padding characters: A= ==");
 
     // intermediate padding isn't allowed
-    EXPECT_THROW(decodeBase64("YmE=YmE=", decoded_data), BadValue);
+    EXPECT_THROW_WITH(decodeBase64("YmE=YmE=", decoded_data), BadValue,
+                      "Intermediate padding found");
 
     // Non canonical form isn't allowed.
     // Z => 25(011001), m => 38(100110), 9 => 60(111101), so the padding
     // byte would be 0100 0000.
-    EXPECT_THROW(decodeBase64("Zm9=", decoded_data), BadValue);
+    EXPECT_THROW_WITH(decodeBase64("Zm9=", decoded_data), BadValue,
+                      "Non 0 bits included in base64 padding: Zm9=");
     // Same for the 1st padding byte.  This would make it 01100000.
-    EXPECT_THROW(decodeBase64("Zm==", decoded_data), BadValue);
+    EXPECT_THROW_WITH(decodeBase64("Zm==", decoded_data), BadValue,
+                      "Non 0 bits included in base64 padding: Zm==");
 }
 
 TEST_F(Base64Test, encode) {

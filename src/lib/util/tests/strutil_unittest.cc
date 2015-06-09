@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,8 @@
 #include <gtest/gtest.h>
 
 #include <util/strutil.h>
+
+#include <util/unittests/test_exceptions.h>
 
 using namespace isc;
 using namespace isc::util;
@@ -214,7 +216,9 @@ TEST(StringUtilTest, getToken) {
     EXPECT_EQ("a", isc::util::str::getToken(ss));
     EXPECT_EQ("b", isc::util::str::getToken(ss));
     EXPECT_EQ("c", isc::util::str::getToken(ss));
-    EXPECT_THROW(isc::util::str::getToken(ss), isc::util::str::StringTokenError);
+    EXPECT_THROW_WITH(isc::util::str::getToken(ss),
+                      isc::util::str::StringTokenError,
+                      "could not read token from string");
 }
 
 int32_t tokenToNumCall_32_16(const string& token) {
@@ -233,18 +237,24 @@ TEST(StringUtilTest, tokenToNum) {
     num32 = tokenToNumCall_32_16("65535");
     EXPECT_EQ(65535, num32);
 
-    EXPECT_THROW(tokenToNumCall_32_16(""),
-                 isc::util::str::StringTokenError);
-    EXPECT_THROW(tokenToNumCall_32_16("a"),
-                 isc::util::str::StringTokenError);
-    EXPECT_THROW(tokenToNumCall_32_16("-1"),
-                 isc::util::str::StringTokenError);
-    EXPECT_THROW(tokenToNumCall_32_16("65536"),
-                 isc::util::str::StringTokenError);
-    EXPECT_THROW(tokenToNumCall_32_16("1234567890"),
-                 isc::util::str::StringTokenError);
-    EXPECT_THROW(tokenToNumCall_32_16("-1234567890"),
-                 isc::util::str::StringTokenError);
+    EXPECT_THROW_WITH(tokenToNumCall_32_16(""),
+                      isc::util::str::StringTokenError,
+                      "Invalid SRV numeric parameter: ");
+    EXPECT_THROW_WITH(tokenToNumCall_32_16("a"),
+                      isc::util::str::StringTokenError,
+                      "Invalid SRV numeric parameter: a");
+    EXPECT_THROW_WITH(tokenToNumCall_32_16("-1"),
+                      isc::util::str::StringTokenError,
+                      "Numeric SRV parameter out of range: -1");
+    EXPECT_THROW_WITH(tokenToNumCall_32_16("65536"),
+                      isc::util::str::StringTokenError,
+                      "Numeric SRV parameter out of range: 65536");
+    EXPECT_THROW_WITH(tokenToNumCall_32_16("1234567890"),
+                      isc::util::str::StringTokenError,
+                      "Numeric SRV parameter out of range: 1234567890");
+    EXPECT_THROW_WITH(tokenToNumCall_32_16("-1234567890"),
+                      isc::util::str::StringTokenError,
+                      "Numeric SRV parameter out of range: -1234567890");
 
     uint16_t num16 = tokenToNumCall_16_8("123");
     EXPECT_EQ(123, num16);
@@ -253,17 +263,22 @@ TEST(StringUtilTest, tokenToNum) {
     num16 = tokenToNumCall_16_8("255");
     EXPECT_EQ(255, num16);
 
-    EXPECT_THROW(tokenToNumCall_16_8(""),
-                 isc::util::str::StringTokenError);
-    EXPECT_THROW(tokenToNumCall_16_8("a"),
-                 isc::util::str::StringTokenError);
-    EXPECT_THROW(tokenToNumCall_16_8("-1"),
-                 isc::util::str::StringTokenError);
-    EXPECT_THROW(tokenToNumCall_16_8("256"),
-                 isc::util::str::StringTokenError);
-    EXPECT_THROW(tokenToNumCall_16_8("1234567890"),
-                 isc::util::str::StringTokenError);
-    EXPECT_THROW(tokenToNumCall_16_8("-1234567890"),
-                 isc::util::str::StringTokenError);
-
+    EXPECT_THROW_WITH(tokenToNumCall_16_8(""),
+                      isc::util::str::StringTokenError,
+                      "Invalid SRV numeric parameter: ");
+    EXPECT_THROW_WITH(tokenToNumCall_16_8("a"),
+                      isc::util::str::StringTokenError,
+                      "Invalid SRV numeric parameter: a");
+    EXPECT_THROW_WITH(tokenToNumCall_16_8("-1"),
+                      isc::util::str::StringTokenError,
+                      "Numeric SRV parameter out of range: -1");;
+    EXPECT_THROW_WITH(tokenToNumCall_16_8("256"),
+                      isc::util::str::StringTokenError,
+                      "Numeric SRV parameter out of range: 256");
+    EXPECT_THROW_WITH(tokenToNumCall_16_8("1234567890"),
+                      isc::util::str::StringTokenError,
+                      "Invalid SRV numeric parameter: 1234567890");
+    EXPECT_THROW_WITH(tokenToNumCall_16_8("-1234567890"),
+                      isc::util::str::StringTokenError,
+                      "Invalid SRV numeric parameter: -1234567890");
 }

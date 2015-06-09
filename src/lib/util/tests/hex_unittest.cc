@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -22,6 +22,8 @@
 #include <util/encode/hex.h>
 
 #include <gtest/gtest.h>
+
+#include <util/unittests/test_exceptions.h>
 
 using namespace std;
 using namespace isc;
@@ -81,11 +83,13 @@ TEST_F(HexTest, decodeHex) {
 
     // Bogus input: should fail
     result.clear();
-    EXPECT_THROW(decodeHex("1x", result), BadValue);
+    EXPECT_THROW_WITH(decodeHex("1x", result), BadValue,
+                      "attempt to decode a value not in base16 char set");
 
     // Bogus input: encoded string must have an even number of characters.
     result.clear();
-    EXPECT_THROW(decodeHex("dea", result), BadValue);
+    EXPECT_THROW_WITH(decodeHex("dea", result), BadValue,
+                      "Incomplete input for base16: dea");
 }
 
 // For Hex encode/decode we use handmade mappings, so it's prudent to test the

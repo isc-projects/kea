@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 
 #include <exceptions/exceptions.h>
 #include <util/unittests/check_valgrind.h>
+#include <util/unittests/test_exceptions.h>
 
 #include <util/threads/sync.h>
 #include <util/threads/thread.h>
@@ -165,7 +166,8 @@ TEST_F(CondVarTest,
 
 TEST_F(CondVarTest, badWait) {
     // In our implementation, wait() requires acquiring the lock beforehand.
-    EXPECT_THROW(condvar_.wait(mutex_), isc::InvalidOperation);
+    EXPECT_THROW_WITH(condvar_.wait(mutex_), isc::InvalidOperation,
+                      "Unlock attempt for unlocked mutex");
 }
 
 #endif // ENABLE_DEBUG

@@ -14,6 +14,7 @@
 
 #include <util/process_spawn.h>
 #include <gtest/gtest.h>
+#include <util/unittests/test_exceptions.h>
 #include <signal.h>
 #include <stdint.h>
 #include <sys/types.h>
@@ -91,11 +92,17 @@ TEST(ProcessSpawn, spawnTwoProcesses) {
     // for the cleared process should result in exception. But, there should
     // be no exception for the second process.
     process.clearState(pid1);
-    EXPECT_THROW(process.getExitStatus(pid1), InvalidOperation);
+    EXPECT_THROW_WITH(process.getExitStatus(pid1), InvalidOperation,
+                      "the process with the pid '" << pid1
+                      << "' hasn't been spawned and it status cannot be"
+                      << " returned");
     EXPECT_NO_THROW(process.getExitStatus(pid2));
 
     process.clearState(pid2);
-    EXPECT_THROW(process.getExitStatus(pid2), InvalidOperation);
+    EXPECT_THROW_WITH(process.getExitStatus(pid2), InvalidOperation,
+                      "the process with the pid '" << pid2
+                      << "' hasn't been spawned and it status cannot be"
+                      << " returned");
 }
 
 // This test verifies that the external application can be ran without

@@ -14,6 +14,7 @@
 
 #include <util/pid_file.h>
 #include <gtest/gtest.h>
+#include <util/unittests/test_exceptions.h>
 #include <fstream>
 #include <signal.h>
 #include <stdint.h>
@@ -176,7 +177,9 @@ TEST_F(PIDFileTest, pidGarbage) {
     fs.close();
 
     // Run the check, we expect to get an exception
-    EXPECT_THROW(pid_file.check(), PIDCantReadPID);
+    EXPECT_THROW_WITH(pid_file.check(), PIDCantReadPID,
+                      "Unable to read PID from file '"
+                      << absolutePath(TESTNAME).c_str() << "'");
 }
 
 /// @brief Test failing to write a file.
@@ -189,7 +192,9 @@ TEST_F(PIDFileTest, pidWriteFail) {
     chmod(absolutePath(TESTNAME).c_str(), S_IRUSR);
 
     // Now try a write to the file, expecting an exception
-    EXPECT_THROW(pid_file.write(10), PIDFileError);
+    EXPECT_THROW_WITH(pid_file.write(10), PIDFileError,
+                      "Unable to open PID file '"
+                      << absolutePath(TESTNAME).c_str() << "' for write");
 }
 
 /// @brief Test deleting a file that doesn't exist

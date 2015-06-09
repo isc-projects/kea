@@ -22,6 +22,7 @@
 #include <util/unittests/resource.h>
 #include <util/unittests/check_valgrind.h>
 #endif /* EXPECT_DEATH */
+#include <util/unittests/test_exceptions.h>
 
 #include <util/buffer.h>
 
@@ -71,20 +72,29 @@ TEST_F(BufferTest, inputBufferRead) {
 }
 
 TEST_F(BufferTest, inputBufferException) {
-    EXPECT_THROW(ibuffer.setPosition(6), isc::util::InvalidBufferPosition);
+    EXPECT_THROW_WITH(ibuffer.setPosition(6),
+                      isc::util::InvalidBufferPosition,
+                      "position is too large");
 
     ibuffer.setPosition(sizeof(testdata));
-    EXPECT_THROW(ibuffer.readUint8(), isc::util::InvalidBufferPosition);
+    EXPECT_THROW_WITH(ibuffer.readUint8(),
+                      isc::util::InvalidBufferPosition,
+                      "read beyond end of buffer");
 
     ibuffer.setPosition(sizeof(testdata) - 1);
-    EXPECT_THROW(ibuffer.readUint16(), isc::util::InvalidBufferPosition);
+    EXPECT_THROW_WITH(ibuffer.readUint16(),
+                      isc::util::InvalidBufferPosition,
+                      "read beyond end of buffer");
 
     ibuffer.setPosition(sizeof(testdata) - 3);
-    EXPECT_THROW(ibuffer.readUint32(), isc::util::InvalidBufferPosition);
+    EXPECT_THROW_WITH(ibuffer.readUint32(),
+                      isc::util::InvalidBufferPosition,
+                      "read beyond end of buffer");
 
     ibuffer.setPosition(sizeof(testdata) - 4);
-    EXPECT_THROW(ibuffer.readData(vdata, sizeof(vdata)),
-                 isc::util::InvalidBufferPosition);
+    EXPECT_THROW_WITH(ibuffer.readData(vdata, sizeof(vdata)),
+                      isc::util::InvalidBufferPosition,
+                      "read beyond end of buffer");
 }
 
 TEST_F(BufferTest, outputBufferExtend) {
@@ -151,16 +161,21 @@ TEST_F(BufferTest, outputBufferWriteat) {
     EXPECT_EQ(2, *(cp + 2));
     EXPECT_EQ(3, *(cp + 3));
 
-    EXPECT_THROW(obuffer.writeUint8At(data16, 5),
-                 isc::util::InvalidBufferPosition);
-    EXPECT_THROW(obuffer.writeUint8At(data16, 4),
-                 isc::util::InvalidBufferPosition);
-    EXPECT_THROW(obuffer.writeUint16At(data16, 3),
-                 isc::util::InvalidBufferPosition);
-    EXPECT_THROW(obuffer.writeUint16At(data16, 4),
-                 isc::util::InvalidBufferPosition);
-    EXPECT_THROW(obuffer.writeUint16At(data16, 5),
-                 isc::util::InvalidBufferPosition);
+    EXPECT_THROW_WITH(obuffer.writeUint8At(data16, 5),
+                      isc::util::InvalidBufferPosition,
+                      "write at invalid position");
+    EXPECT_THROW_WITH(obuffer.writeUint8At(data16, 4),
+                      isc::util::InvalidBufferPosition,
+                      "write at invalid position");
+    EXPECT_THROW_WITH(obuffer.writeUint16At(data16, 3),
+                      isc::util::InvalidBufferPosition,
+                      "write at invalid position");
+    EXPECT_THROW_WITH(obuffer.writeUint16At(data16, 4),
+                      isc::util::InvalidBufferPosition,
+                      "write at invalid position");
+    EXPECT_THROW_WITH(obuffer.writeUint16At(data16, 5),
+                      isc::util::InvalidBufferPosition,
+                      "write at invalid position");
 }
 
 TEST_F(BufferTest, outputBufferSkip) {
@@ -181,7 +196,8 @@ TEST_F(BufferTest, outputBufferTrim) {
     obuffer.trim(2);
     EXPECT_EQ(2, obuffer.getLength());
 
-    EXPECT_THROW(obuffer.trim(3), OutOfRange);
+    EXPECT_THROW_WITH(obuffer.trim(3), OutOfRange,
+                      "trimming too large from output buffer");
 }
 
 TEST_F(BufferTest, outputBufferReadAt) {
@@ -289,9 +305,10 @@ TEST_F(BufferTest, inputBufferReadVectorAll) {
     EXPECT_EQ(0, memcmp(&vec[0], testdata, 5));
 
     // ibuffer is 5 bytes long. Can't read past it.
-    EXPECT_THROW(
+    EXPECT_THROW_WITH(
         ibuffer.readVector(vec, 1),
-        isc::util::InvalidBufferPosition
+        isc::util::InvalidBufferPosition,
+        "read beyond end of buffer"
     );
 }
 

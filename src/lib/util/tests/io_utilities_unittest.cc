@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,6 +24,7 @@
 
 #include <util/buffer.h>
 #include <util/io_utilities.h>
+#include <util/unittests/test_exceptions.h>
 
 using namespace isc::util;
 
@@ -49,7 +50,9 @@ TEST(asioutil, readUint16) {
 
 TEST(asioutil, readUint16OutOfRange) {
     uint8_t data;
-    EXPECT_THROW(readUint16(&data, sizeof(data)), isc::OutOfRange);
+    EXPECT_THROW_WITH(readUint16(&data, sizeof(data)), isc::OutOfRange,
+                      "Length (1) of buffer is insufficient "
+                      "to read a uint16_t");
 }
 
 TEST(asioutil, writeUint16) {
@@ -80,7 +83,9 @@ TEST(asioutil, writeUint16) {
 TEST(asioutil, writeUint16OutOfRange) {
     uint16_t i16 = 42;
     uint8_t data;
-    EXPECT_THROW(writeUint16(i16, &data, sizeof(data)), isc::OutOfRange);
+    EXPECT_THROW_WITH(writeUint16(i16, &data, sizeof(data)), isc::OutOfRange,
+                      "Length (1) of buffer is insufficient "
+                      "to write a uint16_t");
 }
 
 // test data shared amount readUint32 and writeUint32 tests
@@ -110,7 +115,9 @@ TEST(asioutil, readUint32) {
 
 TEST(asioutil, readUint32OutOfRange) {
     uint8_t data[3];
-    EXPECT_THROW(readUint32(data, sizeof(data)), isc::OutOfRange);
+    EXPECT_THROW_WITH(readUint32(data, sizeof(data)), isc::OutOfRange,
+                      "Length (3) of buffer is insufficient "
+                      "to read a uint32_t");
 }
 
 TEST(asioutil, writeUint32) {
@@ -136,5 +143,7 @@ TEST(asioutil, writeUint32) {
 TEST(asioutil, writeUint32OutOfRange) {
     uint32_t i32 = 28;
     uint8_t data[3];
-    EXPECT_THROW(writeUint32(i32, data, sizeof(data)), isc::OutOfRange);
+    EXPECT_THROW_WITH(writeUint32(i32, data, sizeof(data)), isc::OutOfRange,
+                      "Length (3) of buffer is insufficient "
+                      "to write a uint32_t");
 }

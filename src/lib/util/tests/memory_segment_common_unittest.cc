@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,8 @@
 
 #include <gtest/gtest.h>
 
+#include <util/unittests/test_exceptions.h>
+
 #include <cstring>
 #include <stdint.h>
 
@@ -28,7 +30,8 @@ namespace test {
 void
 checkSegmentNamedAddress(MemorySegment& segment, bool out_of_segment_ok) {
     // NULL name is not allowed.
-    EXPECT_THROW(segment.getNamedAddress(NULL), InvalidParameter);
+    EXPECT_THROW_WITH(segment.getNamedAddress(NULL), InvalidParameter,
+                      "NULL is invalid for a name.");
 
     // If the name does not exist, false should be returned.
     EXPECT_FALSE(segment.getNamedAddress("test address").first);
@@ -40,19 +43,31 @@ checkSegmentNamedAddress(MemorySegment& segment, bool out_of_segment_ok) {
     EXPECT_FALSE(segment.setNamedAddress("test address", ptr32));
 
     // NULL name isn't allowed.
-    EXPECT_THROW(segment.setNamedAddress(NULL, ptr32), InvalidParameter);
-    EXPECT_THROW(segment.getNamedAddress(NULL), InvalidParameter);
-    EXPECT_THROW(segment.clearNamedAddress(NULL), InvalidParameter);
+    EXPECT_THROW_WITH(segment.setNamedAddress(NULL, ptr32), InvalidParameter,
+                      "NULL is invalid for a name.");
+    EXPECT_THROW_WITH(segment.getNamedAddress(NULL), InvalidParameter,
+                      "NULL is invalid for a name.");
+    EXPECT_THROW_WITH(segment.clearNamedAddress(NULL), InvalidParameter,
+                      "NULL is invalid for a name.");
 
     // Empty names are not allowed.
-    EXPECT_THROW(segment.setNamedAddress("", ptr32), InvalidParameter);
-    EXPECT_THROW(segment.getNamedAddress(""), InvalidParameter);
-    EXPECT_THROW(segment.clearNamedAddress(""), InvalidParameter);
+    EXPECT_THROW_WITH(segment.setNamedAddress("", ptr32), InvalidParameter,
+                      "Empty names are invalid.");
+    EXPECT_THROW_WITH(segment.getNamedAddress(""), InvalidParameter,
+                      "Empty names are invalid.");
+    EXPECT_THROW_WITH(segment.clearNamedAddress(""), InvalidParameter,
+                      "Empty names are invalid.");
 
     // Names beginning with _ are not allowed.
-    EXPECT_THROW(segment.setNamedAddress("_foo", ptr32), InvalidParameter);
-    EXPECT_THROW(segment.getNamedAddress("_foo"), InvalidParameter);
-    EXPECT_THROW(segment.clearNamedAddress("_foo"), InvalidParameter);
+    EXPECT_THROW_WITH(segment.setNamedAddress("_foo", ptr32),
+                      InvalidParameter, "Names beginning with '_' are "
+                      "reserved for internal use only.");
+    EXPECT_THROW_WITH(segment.getNamedAddress("_foo"), InvalidParameter,
+                      "Names beginning with '_' are reserved for "
+                      "internal use only.");
+    EXPECT_THROW_WITH(segment.clearNamedAddress("_foo"), InvalidParameter,
+                      "Names beginning with '_' are reserved for "
+                      "internal use only.");
 
     // we can now get it; the stored value should be intact.
     MemorySegment::NamedAddressResult result =
@@ -97,7 +112,8 @@ checkSegmentNamedAddress(MemorySegment& segment, bool out_of_segment_ok) {
     EXPECT_FALSE(segment.allMemoryDeallocated());
     EXPECT_TRUE(segment.clearNamedAddress("null address"));
     // null name isn't allowed:
-    EXPECT_THROW(segment.clearNamedAddress(NULL), InvalidParameter);
+    EXPECT_THROW_WITH(segment.clearNamedAddress(NULL), InvalidParameter,
+                      "NULL is invalid for a name.");
     EXPECT_TRUE(segment.allMemoryDeallocated()); // now everything is gone
 }
 

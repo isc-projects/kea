@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,8 @@
 #include <util/time_utilities.h>
 
 #include <gtest/gtest.h>
+
+#include <util/unittests/test_exceptions.h>
 
 using namespace std;
 using namespace isc::util;
@@ -49,16 +51,23 @@ TEST_F(DNSSECTimeTest, fromText) {
     // return different values will be tested at the end of this test case.
 
     // These are bogus and should be rejected
-    EXPECT_THROW(timeFromText32("2011 101120000"), InvalidTime);
-    EXPECT_THROW(timeFromText32("201101011200-0"), InvalidTime);
+    EXPECT_THROW_WITH(timeFromText32("2011 101120000"), InvalidTime,
+                      "Couldn't convert non-numeric time value: "
+                      "2011 101120000");
+    EXPECT_THROW_WITH(timeFromText32("201101011200-0"), InvalidTime,
+                      "Couldn't convert non-numeric time value: "
+                      "201101011200-0");
 
     // Short length (or "decimal integer" version of representation;
     // it's valid per RFC4034, but is not supported in this implementation)
-    EXPECT_THROW(timeFromText32("20100223"), InvalidTime);
+    EXPECT_THROW_WITH(timeFromText32("20100223"), InvalidTime,
+                      "Couldn't convert time value: 20100223");
 
     // Leap year checks
-    EXPECT_THROW(timeFromText32("20110229120000"), InvalidTime);
-    EXPECT_THROW(timeFromText32("21000229120000"), InvalidTime);
+    EXPECT_THROW_WITH(timeFromText32("20110229120000"), InvalidTime,
+                      "Invalid day value: 29");
+    EXPECT_THROW_WITH(timeFromText32("21000229120000"), InvalidTime,
+                      "Invalid day value: 29");
     EXPECT_NO_THROW(timeFromText32("20000229120000"));
     EXPECT_NO_THROW(timeFromText32("20120229120000"));
 
@@ -66,15 +75,24 @@ TEST_F(DNSSECTimeTest, fromText) {
     EXPECT_NO_THROW(timeFromText32("20110101120060"));
 
     // Out of range parameters
-    EXPECT_THROW(timeFromText32("19100223214617"), InvalidTime); // YY<1970
-    EXPECT_THROW(timeFromText32("20110001120000"), InvalidTime); // MM=00
-    EXPECT_THROW(timeFromText32("20111301120000"), InvalidTime); // MM=13
-    EXPECT_THROW(timeFromText32("20110100120000"), InvalidTime); // DD=00
-    EXPECT_THROW(timeFromText32("20110132120000"), InvalidTime); // DD=32
-    EXPECT_THROW(timeFromText32("20110431120000"), InvalidTime); // 'Apr31'
-    EXPECT_THROW(timeFromText32("20110101250000"), InvalidTime); // HH=25
-    EXPECT_THROW(timeFromText32("20110101126000"), InvalidTime); // mm=60
-    EXPECT_THROW(timeFromText32("20110101120061"), InvalidTime); // SS=61
+    EXPECT_THROW_WITH(timeFromText32("19100223214617"), InvalidTime, // YY<1970
+                      "Invalid year value: 1910");
+    EXPECT_THROW_WITH(timeFromText32("20110001120000"), InvalidTime, // MM=00
+                      "Invalid month value: 0");
+    EXPECT_THROW_WITH(timeFromText32("20111301120000"), InvalidTime, // MM=13
+                      "Invalid month value: 13");
+    EXPECT_THROW_WITH(timeFromText32("20110100120000"), InvalidTime, // DD=00
+                      "Invalid day value: 0");
+    EXPECT_THROW_WITH(timeFromText32("20110132120000"), InvalidTime, // DD=32
+                      "Invalid day value: 32");
+    EXPECT_THROW_WITH(timeFromText32("20110431120000"), InvalidTime, // 'Apr31'
+                      "Invalid day value: 31");
+    EXPECT_THROW_WITH(timeFromText32("20110101250000"), InvalidTime, // HH=25
+                      "Invalid hour value: 25");
+    EXPECT_THROW_WITH(timeFromText32("20110101126000"), InvalidTime, // mm=60
+                      "Invalid minute value: 60");
+    EXPECT_THROW_WITH(timeFromText32("20110101120061"), InvalidTime, // SS=61
+                      "Invalid second value: 61");
 
     // Feb 7, 06:28:15 UTC 2106 is the possible maximum time that can be
     // represented as an unsigned 32bit integer without overflow.
@@ -153,9 +171,11 @@ TEST_F(DNSSECTimeTest, toText) {
 
 TEST_F(DNSSECTimeTest, overflow) {
     // Jan 1, Year 10,000.
-    EXPECT_THROW(timeToText64(253402300800LL), InvalidTime);
+    EXPECT_THROW_WITH(timeToText64(253402300800LL), InvalidTime,
+                      "Time value out of range (year > 9999): 10000");
     detail::gettimeFunction = testGetTime<YEAR10K_EVE - 10>;
-    EXPECT_THROW(timeToText32(4294197632LU), InvalidTime);
+    EXPECT_THROW_WITH(timeToText32(4294197632LU), InvalidTime,
+                      "Time value out of range (year > 9999): 10000");
 }
 
 }

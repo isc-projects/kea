@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,7 @@
 #include <util/memory_segment_local.h>
 #include <exceptions/exceptions.h>
 #include <gtest/gtest.h>
+#include <util/unittests/test_exceptions.h>
 #include <memory>
 #include <limits.h>
 
@@ -65,7 +66,7 @@ TEST(MemorySegmentLocal, DISABLED_TestTooMuchMemory) {
     // Valgrind appears to be using the signed value and hence the
     // maximum positive value is LONG_MAX for Valgrind. But, this
     // should be sufficient to test the "too much memory" conditions.
-    EXPECT_THROW(segment->allocate(LONG_MAX), bad_alloc);
+    EXPECT_THROW_WITH(segment->allocate(LONG_MAX), bad_alloc, "");
 }
 
 TEST(MemorySegmentLocal, TestBadDeallocate) {
@@ -92,7 +93,9 @@ TEST(MemorySegmentLocal, TestBadDeallocate) {
 
     // This should throw as the size passed to deallocate() is larger
     // than what was allocated.
-    EXPECT_THROW(segment->deallocate(ptr, 2048), isc::OutOfRange);
+    EXPECT_THROW_WITH(segment->deallocate(ptr, 2048), isc::OutOfRange,
+                      "Invalid size to deallocate: 2048; "
+                      "currently allocated size: 1024");
 
     // This should not throw
     EXPECT_NO_THROW(segment->deallocate(ptr, 1024));

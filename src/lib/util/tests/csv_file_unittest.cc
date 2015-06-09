@@ -16,6 +16,7 @@
 #include <util/csv_file.h>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
+#include <util/unittests/test_exceptions.h>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -86,8 +87,12 @@ TEST(CSVRow, writeAt) {
     EXPECT_EQ("foo", row.readAt(1));
     EXPECT_EQ("bar", row.readAt(2));
 
-    EXPECT_THROW(row.writeAt(3, 20), CSVFileError);
-    EXPECT_THROW(row.writeAt(3, "foo"), CSVFileError);
+    EXPECT_THROW_WITH(row.writeAt(3, 20), CSVFileError,
+                      "value index '3' of the CSV row"
+                      " is out of bounds; maximal index is '2'");
+    EXPECT_THROW_WITH(row.writeAt(3, "foo"), CSVFileError,
+                      "value index '3' of the CSV row"
+                      " is out of bounds; maximal index is '2'");
 }
 
 // Checks whether writeAt() and append() can be mixed together.
@@ -218,8 +223,10 @@ TEST_F(CSVFileTest, addColumn) {
     ASSERT_NO_THROW(csv->addColumn("animal"));
     ASSERT_NO_THROW(csv->addColumn("color"));
     // Make sure we can't add duplicates.
-    EXPECT_THROW(csv->addColumn("animal"), CSVFileError);
-    EXPECT_THROW(csv->addColumn("color"), CSVFileError);
+    EXPECT_THROW_WITH(csv->addColumn("animal"), CSVFileError,
+                      "attempt to add duplicate column 'animal'");
+    EXPECT_THROW_WITH(csv->addColumn("color"), CSVFileError,
+                      "attempt to add duplicate column 'color'");
     // But we should still be able to add unique columns.
     EXPECT_NO_THROW(csv->addColumn("age"));
     EXPECT_NO_THROW(csv->addColumn("comments"));
@@ -229,7 +236,9 @@ TEST_F(CSVFileTest, addColumn) {
     ASSERT_TRUE(exists());
 
     // Make sure we can't add columns (even unique) when the file is open.
-    ASSERT_THROW(csv->addColumn("zoo"), CSVFileError);
+    ASSERT_THROW_WITH(csv->addColumn("zoo"), CSVFileError,
+                      "attempt to add a column 'zoo' while the file '"
+                      << testfile_ << "' is open");
     // Close the file.
     ASSERT_NO_THROW(csv->close());
     // And check that now it is possible to add the column.
@@ -302,7 +311,9 @@ TEST_F(CSVFileTest, openReadAllWrite) {
 
     // Any attempt to read from the file or write to it should now fail.
     EXPECT_FALSE(csv->next(row));
-    EXPECT_THROW(csv->append(row_write), CSVFileError);
+    EXPECT_THROW_WITH(csv->append(row_write), CSVFileError,
+                      "NULL stream pointer when performing 'append' on file '"
+                      << testfile_ << "'");
 
     CSVRow row_write2(3);
     row_write2.writeAt(0, "bird");
@@ -461,7 +472,9 @@ TEST_F(CSVFileTest, validateHeader) {
     csv->addColumn("color");
     csv->addColumn("animal");
     csv->addColumn("age");
-    EXPECT_THROW(csv->open(), CSVFileError);
+    EXPECT_THROW_WITH(csv->open(), CSVFileError,
+                      "invalid header 'animal,age,color' in CSV file '"
+                      << testfile_ << "'");
 
     // Too many columns.
     csv.reset(new CSVFile(testfile_));
@@ -469,13 +482,17 @@ TEST_F(CSVFileTest, validateHeader) {
     csv->addColumn("age");
     csv->addColumn("color");
     csv->addColumn("notes");
-    EXPECT_THROW(csv->open(), CSVFileError);
+    EXPECT_THROW_WITH(csv->open(), CSVFileError,
+                      "invalid header 'animal,age,color' in CSV file '"
+                      << testfile_ << "'");
 
     // Too few columns.
     csv.reset(new CSVFile(testfile_));
     csv->addColumn("animal");
     csv->addColumn("age");
-    EXPECT_THROW(csv->open(), CSVFileError);
+    EXPECT_THROW_WITH(csv->open(), CSVFileError,
+                      "invalid header 'animal,age,color' in CSV file '"
+                      << testfile_ << "'");
 }
 
 // This test checks that the exists method of the CSVFile class properly

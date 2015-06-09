@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
+#include <util/unittests/test_exceptions.h>
 #include <signal.h>
 
 namespace {
@@ -172,16 +173,20 @@ TEST_F(SignalSetTest, remove) {
     ASSERT_NO_THROW(secondary_signal_set_.reset(new SignalSet(SIGINT)));
     // The SIGHUP has been already registered with the other signal
     // set, so it should not be possible to register it again.
-    ASSERT_THROW(secondary_signal_set_->add(SIGHUP), SignalSetError);
+    ASSERT_THROW_WITH(secondary_signal_set_->add(SIGHUP), SignalSetError,
+                      "attempt to register a duplicate signal " << SIGHUP);
     // It shouldn't be possible to remove the signal registered in a different
     // signal set.
-    ASSERT_THROW(secondary_signal_set_->remove(SIGHUP), SignalSetError);
+    ASSERT_THROW_WITH(secondary_signal_set_->remove(SIGHUP), SignalSetError,
+                      "failed to unregister signal " << SIGHUP
+                      << ": this signal is not owned by the signal set");
     // Remove all signals from the first signal set. The signals registered
     // with the other signal signal set should be preserved.
     ASSERT_NO_THROW(signal_set_->clear());
     // Check indirectly that the SIGINT is still registered. An attempt to
     // register registered signal should result in failure.
-    EXPECT_THROW(secondary_signal_set_->add(SIGINT), SignalSetError);
+    EXPECT_THROW_WITH(secondary_signal_set_->add(SIGINT), SignalSetError,
+                      "attempt to register a duplicate signal "<< SIGINT);
     // But, we should be able to register SIGHUP.
     EXPECT_NO_THROW(secondary_signal_set_->add(SIGHUP));
 }
@@ -190,7 +195,8 @@ TEST_F(SignalSetTest, remove) {
 TEST_F(SignalSetTest, duplicates) {
     ASSERT_NO_THROW(signal_set_.reset(new SignalSet(SIGHUP)));
     // It shouldn't be possible to register the same signal.
-    EXPECT_THROW(signal_set_->add(SIGHUP), SignalSetError);
+    EXPECT_THROW_WITH(signal_set_->add(SIGHUP), SignalSetError,
+                      "attempt to register a duplicate signal "<< SIGHUP);
     // But ok to register a different one.
     EXPECT_NO_THROW(signal_set_->add(SIGTERM));
     // Now, let's define other signal set.
@@ -200,7 +206,8 @@ TEST_F(SignalSetTest, duplicates) {
     ASSERT_NO_THROW(other.reset(new SignalSet(SIGINT)));
     // SIGHUP has been already registered in the first signal set so
     // an attempt to register it again should result in a failure.
-    EXPECT_THROW(other->add(SIGHUP), SignalSetError);
+    EXPECT_THROW_WITH(other->add(SIGHUP), SignalSetError,
+                      "attempt to register a duplicate signal "<< SIGHUP);
 }
 
 /// Check that on-receipt processing works.

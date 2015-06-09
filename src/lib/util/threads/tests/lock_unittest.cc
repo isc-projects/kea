@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,7 @@
 #include <util/threads/sync.h>
 #include <util/threads/thread.h>
 #include <util/unittests/check_valgrind.h>
+#include <util/unittests/test_exceptions.h>
 
 #include <boost/bind.hpp>
 #include <unistd.h>
@@ -40,9 +41,9 @@ TEST(MutexTest, lockMultiple) {
     Mutex::Locker l1(mutex);
     EXPECT_TRUE(mutex.locked()); // Debug-only build
 
-    EXPECT_THROW({
+    EXPECT_THROW_WITH({
         Mutex::Locker l2(mutex); // Attempt to lock again.
-    }, isc::InvalidOperation);
+    }, isc::InvalidOperation, strerror(EDEADLK));
     EXPECT_TRUE(mutex.locked()); // Debug-only build
 
     // block=true explicitly.
@@ -58,9 +59,9 @@ testThread(Mutex* mutex)
     // block=false (tryLock).  This should not block indefinitely, but
     // throw AlreadyLocked. If block were true, this would block
     // indefinitely here.
-    EXPECT_THROW({
+    EXPECT_THROW_WITH({
         Mutex::Locker l3(*mutex, false);
-    }, Mutex::Locker::AlreadyLocked);
+    }, Mutex::Locker::AlreadyLocked, "The mutex is already locked");
 
     EXPECT_TRUE(mutex->locked()); // Debug-only build
 }
@@ -73,9 +74,9 @@ TEST(MutexTest, lockNonBlocking) {
     EXPECT_TRUE(mutex.locked()); // Debug-only build
 
     // First, try another locker from the same thread.
-    EXPECT_THROW({
+    EXPECT_THROW_WITH({
         Mutex::Locker l2(mutex, false);
-    }, Mutex::Locker::AlreadyLocked);
+    }, Mutex::Locker::AlreadyLocked, "The mutex is already locked");
 
     EXPECT_TRUE(mutex.locked()); // Debug-only build
 

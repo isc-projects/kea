@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,6 +24,8 @@
 #include <util/encode/base32hex.h>
 
 #include <gtest/gtest.h>
+
+#include <util/unittests/test_exceptions.h>
 
 using namespace std;
 using namespace isc;
@@ -83,20 +85,25 @@ TEST_F(Base32HexTest, decode) {
     decodeCheck(" ", decoded_data, "");
 
     // Incomplete input
-    EXPECT_THROW(decodeBase32Hex("CPNMUOJ", decoded_data), BadValue);
+    EXPECT_THROW_WITH(decodeBase32Hex("CPNMUOJ", decoded_data), BadValue,
+                      "Incomplete input for base32hex: CPNMUOJ");
 
     // invalid number of padding characters
-    EXPECT_THROW(decodeBase32Hex("CPNMU0==", decoded_data), BadValue);
-    EXPECT_THROW(decodeBase32Hex("CO0=====", decoded_data), BadValue);
-    EXPECT_THROW(decodeBase32Hex("CO=======", decoded_data), // too many ='s
-                 BadValue);
+    EXPECT_THROW_WITH(decodeBase32Hex("CPNMU0==", decoded_data), BadValue,
+                      "Invalid base32hex padding: CPNMU0==");
+    EXPECT_THROW_WITH(decodeBase32Hex("CO0=====", decoded_data), BadValue,
+                      "Invalid base32hex padding: CO0=====");
+    EXPECT_THROW_WITH(decodeBase32Hex("CO=======", decoded_data), BadValue,
+                      "Too many base32hex padding characters: CO=======");
 
     // intermediate padding isn't allowed
-    EXPECT_THROW(decodeBase32Hex("CPNMUOG=CPNMUOG=", decoded_data), BadValue);
+    EXPECT_THROW_WITH(decodeBase32Hex("CPNMUOG=CPNMUOG=", decoded_data),
+                      BadValue, "Intermediate padding found");
 
     // Non canonical form isn't allowed.
     // P => 25(11001), so the padding byte would be 01000000
-    EXPECT_THROW(decodeBase32Hex("0P======", decoded_data), BadValue);
+    EXPECT_THROW_WITH(decodeBase32Hex("0P======", decoded_data), BadValue,
+                      "Non 0 bits included in base32hex padding: 0P======");
 }
 
 TEST_F(Base32HexTest, decodeLower) {

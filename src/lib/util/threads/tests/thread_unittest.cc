@@ -16,6 +16,7 @@
 
 #include <util/threads/thread.h>
 #include <util/unittests/check_valgrind.h>
+#include <util/unittests/test_exceptions.h>
 
 #include <boost/bind.hpp>
 
@@ -67,7 +68,8 @@ TEST(ThreadTest, wait) {
             thread.wait();
             ASSERT_TRUE(mark) << "Not finished yet in " << i << "th iteration";
             // Can't wait second time
-            ASSERT_THROW(thread.wait(), isc::InvalidOperation);
+            ASSERT_THROW_WITH(thread.wait(), isc::InvalidOperation,
+                              "Wait called and no thread to wait for");
         }
     }
 }
@@ -100,8 +102,10 @@ TEST(ThreadTest, exception) {
         for (size_t i = 0; i < iterations; ++i) {
             Thread thread(throwSomething);
             Thread thread2(throwException);
-            ASSERT_THROW(thread.wait(), Thread::UncaughtException);
-            ASSERT_THROW(thread2.wait(), Thread::UncaughtException);
+            ASSERT_THROW_WITH(thread.wait(), Thread::UncaughtException,
+                              "Unknown exception");
+            ASSERT_THROW_WITH(thread2.wait(), Thread::UncaughtException,
+                              "std::exception");
         }
     }
 }

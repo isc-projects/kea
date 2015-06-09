@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 #include <config.h>
 
 #include <util/random/random_number_generator.h>
+#include <util/unittests/test_exceptions.h>
 
 #include <gtest/gtest.h>
 #include <boost/shared_ptr.hpp>
@@ -63,7 +64,9 @@ private:
 // Test of the constructor
 TEST_F(UniformRandomIntegerGeneratorTest, Constructor) {
     // The range must be min<=max
-    ASSERT_THROW(UniformRandomIntegerGenerator(3, 2), InvalidLimits);
+    ASSERT_THROW_WITH(UniformRandomIntegerGenerator(3, 2), InvalidLimits,
+                      "minimum limit is greater than maximum "
+                      "when initializing UniformRandomIntegerGenerator");
 }
 #endif
 
@@ -114,28 +117,34 @@ TEST_F(WeightedRandomIntegerGeneratorTest, Constructor) {
     //The probability must be >= 0
     probabilities.push_back(-0.1);
     probabilities.push_back(1.1);
-    ASSERT_THROW(WeightedRandomIntegerGenerator gen2(probabilities),
-                 InvalidProbValue);
+    ASSERT_THROW_WITH(WeightedRandomIntegerGenerator gen2(probabilities),
+                      InvalidProbValue,
+                      "probability must be in the range 0..1");
 
     //The probability must be <= 1.0
     probabilities.clear();
     probabilities.push_back(0.1);
     probabilities.push_back(1.1);
-    ASSERT_THROW(WeightedRandomIntegerGenerator gen3(probabilities),
-                 InvalidProbValue);
+    ASSERT_THROW_WITH(WeightedRandomIntegerGenerator gen3(probabilities),
+                      InvalidProbValue,
+                      "probability must be in the range 0..1");
 
     //The sum must be equal to 1.0
     probabilities.clear();
     probabilities.push_back(0.2);
     probabilities.push_back(0.9);
-    ASSERT_THROW(WeightedRandomIntegerGenerator gen4(probabilities), SumNotOne);
+    ASSERT_THROW_WITH(WeightedRandomIntegerGenerator gen4(probabilities),
+                      SumNotOne,
+                      "Sum of probabilities is not equal to 1");
 
     //The sum must be equal to 1.0
     probabilities.clear();
     probabilities.push_back(0.3);
     probabilities.push_back(0.2);
     probabilities.push_back(0.1);
-    ASSERT_THROW(WeightedRandomIntegerGenerator gen5(probabilities), SumNotOne);
+    ASSERT_THROW_WITH(WeightedRandomIntegerGenerator gen5(probabilities),
+                      SumNotOne,
+                      "Sum of probabilities is not equal to 1");
 #endif
 }
 
