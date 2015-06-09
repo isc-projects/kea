@@ -504,12 +504,11 @@ first argument includes the client and the transaction identification
 information. The second argument holds the IP address which release
 was attempted.
 
-% DHCP4_RELEASE_FAIL_NO_SUBNET %1: client is trying to release a lease %2
-from a subnet which cannot be selected. This warning message indicates
-that client tried to release an address from an improper location.
-The first argument contains the client and transaction identification
-information. The second argument contains the address which the client
-is trying to release.
+% DHCP4_RELEASE_FAIL_NO_SUBNET %1: client is trying to release a lease %2 from a subnet which cannot be selected.
+This warning message indicates that client tried to release an address
+from an improper location.  The first argument contains the client and
+transaction identification information. The second argument contains
+the address which the client is trying to release.
 
 % DHCP4_RELEASE_FAIL_NO_LEASE %1: client is trying to release non-existing lease %2
 This debug message is printed when client attempts to release a lease,
