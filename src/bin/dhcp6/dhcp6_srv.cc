@@ -1281,7 +1281,7 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     const Subnet6Ptr& subnet = orig_ctx.subnet_;
     const DuidPtr& duid = orig_ctx.duid_;
 
-    // If there is no subnet selected for handling this IA_NA, the only thing to do left is
+    // If there is no subnet selected for handling this IA_NA, the only thing left to do is
     // to say that we are sorry, but the user won't get an address. As a convenience, we
     // use a different status text to indicate that (compare to the same status code,
     // but different wording below)
@@ -1441,8 +1441,8 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     // as we can initialize IAID using a constructor.
     boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_PD, ia->getIAID()));
 
-    // If there is no subnet selected for handling this IA_PD, the only thing to
-    // do left is to say that we are sorry, but the user won't get an address.
+    // If there is no subnet selected for handling this IA_PD, the only thing
+    // left to do is to say that we are sorry, but the user won't get an address.
     // As a convenience, we use a different status text to indicate that
     // (compare to the same status code, but different wording below)
     if (!subnet) {
@@ -1454,7 +1454,7 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     }
 
     // Check if the client sent us a hint in his IA_PD. Clients may send an
-    // address in their IA_NA options as a suggestion (e.g. the last address
+    // address in their IA_PD options as a suggestion (e.g. the last address
     // they used before).
     boost::shared_ptr<Option6IAPrefix> hint_opt =
       boost::dynamic_pointer_cast<Option6IAPrefix>(ia->getOption(D6O_IAPREFIX));
@@ -2317,7 +2317,7 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
 
     Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, solicit->getTransid()));
 
-    // Handle Rapid Commit option, if prsent.
+    // Handle Rapid Commit option, if present.
     if (ctx.subnet_ && ctx.subnet_->getRapidCommit()) {
         OptionPtr opt_rapid_commit = solicit->getOption(D6O_RAPID_COMMIT);
         if (opt_rapid_commit) {

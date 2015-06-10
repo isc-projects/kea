@@ -1042,7 +1042,7 @@ TEST(Subnet6Test, interfaceId) {
 }
 
 // This test checks that the Rapid Commit support can be enabled or
-// disabled for a subnet. It also checks that the Rapid Commit is
+// disabled for a subnet. It also checks that the Rapid Commit
 // support is disabled by default.
 TEST(Subnet6Test, rapidCommit) {
     Subnet6 subnet(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4);
