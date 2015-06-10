@@ -17,7 +17,7 @@
 #include <asiolink/asiolink.h>
 #include <cc/data.h>
 #include <cc/session.h>
-#include <config/command_interpreter.h>
+#include <cc/command_interpreter.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/dhcp_config_parser.h>
 #include <dhcpsrv/cfgmgr.h>

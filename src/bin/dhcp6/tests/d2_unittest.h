@@ -18,7 +18,7 @@
 #define D2_UNITTEST_H
 
 #include <dhcp6/dhcp6_srv.h>
-#include <config/command_interpreter.h>
+#include <cc/command_interpreter.h>
 
 #include <gtest/gtest.h>
 

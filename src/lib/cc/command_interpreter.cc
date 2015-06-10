@@ -15,7 +15,7 @@
 #include <config.h>
 
 #include <exceptions/exceptions.h>
-#include <config/command_interpreter.h>
+#include <cc/command_interpreter.h>
 #include <string>
 #include <cc/data.h>
 

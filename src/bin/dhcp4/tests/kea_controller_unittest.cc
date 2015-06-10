@@ -14,7 +14,7 @@
 
 #include <config.h>
 
-#include <config/command_interpreter.h>
+#include <cc/command_interpreter.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcpsrv/cfgmgr.h>

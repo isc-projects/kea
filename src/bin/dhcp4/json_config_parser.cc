@@ -14,7 +14,7 @@
 
 #include <config.h>
 
-#include <config/command_interpreter.h>
+#include <cc/command_interpreter.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_definition.h>

@@ -18,7 +18,7 @@
 #define D2_UNITTEST_H
 
 #include <dhcp4/dhcp4_srv.h>
-#include <config/command_interpreter.h>
+#include <cc/command_interpreter.h>
 
 #include <gtest/gtest.h>
 
