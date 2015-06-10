@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -851,11 +851,13 @@ MessageImpl::addTSIG(Message::Section section, unsigned int count,
         isc_throw(DNSMessageFORMERR,
                   "TSIG RR found in an invalid section");
     }
-    if (count != counts_[section] - 1) {
-        isc_throw(DNSMessageFORMERR, "TSIG RR is not the last record");
-    }
     if (tsig_rr_) {
         isc_throw(DNSMessageFORMERR, "multiple TSIG RRs found");
+    }
+    // Check this after as when there are two TSIGs the first
+    // cannot be the last RR...
+    if (count != counts_[section] - 1) {
+        isc_throw(DNSMessageFORMERR, "TSIG RR is not the last record");
     }
     tsig_rr_ = ConstTSIGRecordPtr(new TSIGRecord(name, rrclass,
                                                  ttl, rdata,
