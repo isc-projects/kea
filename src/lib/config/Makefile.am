@@ -12,8 +12,6 @@ s-messages: config_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/config/config_messages.mes
 	touch $@
 
-EXTRA_DIST = command-socket.dox
-
 BUILT_SOURCES = config_messages.h config_messages.cc
 
 lib_LTLIBRARIES = libkea-cfgclient.la
@@ -33,6 +31,6 @@ libkea_cfgclient_la_LDFLAGS = -no-undefined -version-info 1:0:1
 nodist_libkea_cfgclient_la_SOURCES  = config_messages.h config_messages.cc
 
 # The message file should be in the distribution.
-EXTRA_DIST = config_messages.mes
+EXTRA_DIST = config_messages.mes command-socket.dox
 
 CLEANFILES = *.gcno *.gcda config_messages.h config_messages.cc s-messages
