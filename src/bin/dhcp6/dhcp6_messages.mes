@@ -50,18 +50,20 @@ to wait for the packet. When this time elapses the server will pass
 through its main loop to perform handling of any pending signals
 and timers. After that, it will enter the wait state again.
 
+% DHCP6_BUFFER_WAIT_INTERRUPTED interrupted wait for the next packet due to timeout, signal or external socket callback (timeout value is %1)
+This debug message is issued when the server intrrupts waiting
+for reception of the next DHCPv6 message due to timeout, signal
+or reception of the data over socket other than used for DHCPv6
+message transmission. The server will now handle signals
+received and ready timers before waiting for next packets again.
+The argument specifies the timeout value in milliseconds.
+
 % DHCP6_BUFFER_WAIT_SIGNAL signal received while waiting for next packet, next waiting signal is %1
 This debug message is issued when the server was waiting for the
 packet, but the wait has been interrupted by the signal received
 by the process. The signal will be handled before the server starts
 waiting for next packets. The argument specifies the next signal to
 be handled by the server.
-
-% DHCP6_BUFFER_WAIT_TIMEOUT timeout %1 ms reached while waiting for the next packet
-This debug message is issued when the timeout has occurred while
-waiting for the next packet. The server will now handle signals
-received and ready timers before waiting for next packets again.
-The argument specifies the timeout value in milliseconds.
 
 % DHCP6_CCSESSION_STARTED control channel session started on socket %1
 A debug message issued during startup after the IPv6 DHCP server has
@@ -190,7 +192,7 @@ the lease is acquired for the client.
 This debug message is logged when server includes an DHCPv6 Client FQDN Option
 in its response to the client.
 
-% DHCP6_DDNS_SKIP_REMOVE_NAME_CHANGE_REQUEST %1: skip creating name change request for lease: %2
+% DHCP6_DDNS_SKIP_REMOVE_NAME_CHANGE_REQUEST %1: name change request creation skipped for lease: %2
 This debug message is logged when the server determines that removal
 name change request should not be sent to the DNS, because the DNS
 updates are disabled on the DHCP server, or no DNS update has been
@@ -564,7 +566,7 @@ support for multiple addresses is flawed.
 This debug message indicates that a prefix was released properly. It
 is a normal operation during client shutdown. The first argument holds
 the client and transaction identification information. The second and
-third argument define the prefix and its length. The forth argument
+third argument define the prefix and its length. The fourth argument
 holds IAID.
 
 % DHCP6_RELEASE_PD_FAIL %1: failed to release prefix %2/%3 for iaid=%4
@@ -576,7 +578,7 @@ update the database). It may also be triggered if a lease was manually
 removed from the database during RELEASE message processing. The
 first argument hold the client and transaction identification
 information. The second and third argument define the prefix and
-its length. The forth argument holds the IAID.
+its length. The fourth argument holds the IAID.
 
 % DHCP6_RELEASE_PD_FAIL_WRONG_DUID %1: client tried to release prefix %2/%3, but it belongs to another client (duid=%4)
 This warning message indicates that client tried to release a prefix
@@ -595,7 +597,7 @@ that does belong to it, but the address was expected to be in a different
 IA (identity association) container. This probably means that the client's
 support for multiple prefixes is flawed. The first argument includes the
 client and transaction identification information. The second and third
-argument identify the prefix. The forth and fifth argument hold the
+argument identify the prefix. The fourth and fifth argument hold the
 expected IAID and IAID found respectively.
 
 % DHCP6_REQUIRED_OPTIONS_CHECK_FAIL %1 message received from %2 failed the following check: %3
@@ -681,7 +683,7 @@ is running.
 % DHCP6_SUBNET_DATA %1: the selected subnet details: %2
 This debug message includes the details of the subnet selected for
 the client. The first argument includes the client and the
-transaction identification information. The second arguments
+transaction identification information. The second argument
 includes the subnet details.
 
 % DHCP6_SUBNET_SELECTED %1: the subnet with ID %2 was selected for client assignments

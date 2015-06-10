@@ -99,7 +99,7 @@ struct Dhcp6Hooks {
 // module is called.
 Dhcp6Hooks Hooks;
 
-/// @brief Creates instanace of the Status Code option.
+/// @brief Creates instance of the Status Code option.
 ///
 /// This variant of the function is used when the Status Code option
 /// is added as a top-level option. It logs the debug message and
@@ -121,7 +121,7 @@ createStatusCode(const Pkt6& pkt, const uint16_t status_code,
     return (option_status);
 }
 
-/// @brief Creates instanace of the Status Code option.
+/// @brief Creates instance of the Status Code option.
 ///
 /// This variant of the function is used when the Status Code option
 /// is added to one of the IA options. It logs the debug message and
@@ -325,7 +325,7 @@ bool Dhcpv6Srv::run() {
                     .arg(query->getIface());
 
             } else {
-                LOG_DEBUG(packet_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_WAIT_TIMEOUT)
+                LOG_DEBUG(packet_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_WAIT_INTERRUPTED)
                     .arg(timeout);
             }
 
@@ -1506,8 +1506,9 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query,
                        boost::shared_ptr<Option6IA> ia) {
 
     // Check if the client sent us a hint in his IA_PD. Clients may send an
-    // address in their IA_NA options as a suggestion (e.g. the last address
-    // they used before).
+    // address in their IA_PD options as a suggestion (e.g. the last address
+    // they used before). While the hint consists of a full prefix (prefix +
+    // length), getting just the prefix is sufficient to identify a lease.
     Option6IAPrefixPtr hint_opt =
         boost::dynamic_pointer_cast<Option6IAPrefix>(ia->getOption(D6O_IAPREFIX));
     IOAddress hint = IOAddress::IPV6_ZERO_ADDRESS();
@@ -1851,7 +1852,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
         if (!prf) {
             // That's weird. Option code was ok, but the object type was not.
             // As we use Dhcpv6Srv::unpackOptions() that is guaranteed to use
-            // Option6IAAddr for D6O_IAPREFIX, this should never happen. The only
+            // Option6IAPrefix for D6O_IAPREFIX, this should never happen. The only
             // case would be with badly mis-implemented hook libraries that
             // insert invalid option objects. There's no way to protect against
             // this.
