@@ -1329,7 +1329,7 @@ should include options from the isc option space:
 </screen>
         </para>
         <para>
-          This setting is solely effective for a subnet for which the
+          This setting only affects the subnet for which the
           <command>rapid-commit</command> is set to <command>true</command>.
           For clients connected to other subnets, the server will ignore the
           Rapid Commit option sent by the client and will follow the 4-way
