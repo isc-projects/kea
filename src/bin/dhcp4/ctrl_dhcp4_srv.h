@@ -17,7 +17,7 @@
 
 #include <asiolink/asiolink.h>
 #include <cc/data.h>
-#include <config/command_interpreter.h>
+#include <cc/command_interpreter.h>
 #include <dhcp4/dhcp4_srv.h>
 
 namespace isc {

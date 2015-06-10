@@ -15,7 +15,7 @@
 #include <config.h>
 
 #include <gtest/gtest.h>
-#include <config/command_interpreter.h>
+#include <cc/command_interpreter.h>
 #include <config/tests/data_def_unittests_config.h>
 #include <log/logger_name.h>
 #include <boost/scoped_ptr.hpp>
@@ -29,7 +29,7 @@ using namespace std;
 namespace {
 
 
-/// @brief Shortcut method for creating elements from JSON string
+/// @brief Convenience method for creating elements from JSON string
 ///
 /// @param str string to be converted
 /// @return Element structure

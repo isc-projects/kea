@@ -14,7 +14,7 @@
 
 #include <config.h>
 
-#include <config/command_interpreter.h>
+#include <cc/command_interpreter.h>
 #include <config/module_spec.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option6_ia.h>

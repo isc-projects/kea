@@ -16,7 +16,7 @@
 
 #include <asiolink/io_address.h>
 #include <cc/data.h>
-#include <config/command_interpreter.h>
+#include <cc/command_interpreter.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/dhcp6_log.h>
