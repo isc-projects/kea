@@ -89,21 +89,15 @@ void Option6IAAddr::unpack(OptionBuffer::const_iterator begin,
     unpackOptions(OptionBuffer(begin, end));
 }
 
-std::string Option6IAAddr::toText(int indent /* =0 */) {
-    stringstream tmp;
-    for (int i=0; i<indent; i++)
-        tmp << " ";
+std::string Option6IAAddr::toText(int indent) {
+    std::stringstream output;
+    output << headerToText(indent, "IAADDR") << ": "
+           << "address=" << addr_
+           << ", preferred-lft=" << preferred_
+           << ", valid-lft=" << valid_;
 
-    tmp << "type=" << type_ << "(IAADDR) addr=" << addr_
-        << ", preferred-lft=" << preferred_  << ", valid-lft="
-        << valid_ << endl;
-
-    for (OptionCollection::const_iterator opt=options_.begin();
-         opt!=options_.end();
-         ++opt) {
-        tmp << (*opt).second->toText(indent+2);
-    }
-    return tmp.str();
+    output << suboptionsToText(indent + 2);
+    return (output.str());
 }
 
 uint16_t Option6IAAddr::len() {
