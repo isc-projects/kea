@@ -851,13 +851,13 @@ MessageImpl::addTSIG(Message::Section section, unsigned int count,
         isc_throw(DNSMessageFORMERR,
                   "TSIG RR found in an invalid section");
     }
-    if (tsig_rr_) {
-        isc_throw(DNSMessageFORMERR, "multiple TSIG RRs found");
-    }
-    // Check this after as when there are two TSIGs the first
-    // cannot be the last RR...
     if (count != counts_[section] - 1) {
         isc_throw(DNSMessageFORMERR, "TSIG RR is not the last record");
+    }
+    // This check will never fail as the multiple TSIG RR case is
+    // caught before by the not the last record check...
+    if (tsig_rr_) {
+        isc_throw(DNSMessageFORMERR, "multiple TSIG RRs found");
     }
     tsig_rr_ = ConstTSIGRecordPtr(new TSIGRecord(name, rrclass,
                                                  ttl, rdata,
