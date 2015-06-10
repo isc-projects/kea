@@ -97,21 +97,15 @@ void Option6IAPrefix::unpack(OptionBuffer::const_iterator begin,
     unpackOptions(OptionBuffer(begin, end));
 }
 
-std::string Option6IAPrefix::toText(int indent /* =0 */) {
-    stringstream tmp;
-    for (int i=0; i<indent; i++)
-        tmp << " ";
+std::string Option6IAPrefix::toText(int indent) {
+    std::stringstream output;
+    output << headerToText(indent, "IAPREFIX") << ": "
+           << "prefix=" << addr_ << "/" << static_cast<int>(prefix_len_)
+           << ", preferred-lft=" << preferred_
+           << ", valid-lft=" << valid_;
 
-    tmp << "type=" << type_ << "(IAPREFIX) prefix=" << addr_ << "/"
-        << static_cast<int>(prefix_len_) << ", preferred-lft="
-        << preferred_ << ", valid-lft=" << valid_ << endl;
-
-    for (OptionCollection::const_iterator opt=options_.begin();
-         opt!=options_.end();
-         ++opt) {
-        tmp << (*opt).second->toText(indent + 2);
-    }
-    return tmp.str();
+    output << suboptionsToText(indent + 2);
+    return (output.str());
 }
 
 uint16_t Option6IAPrefix::len() {

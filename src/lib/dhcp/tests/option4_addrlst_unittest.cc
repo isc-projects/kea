@@ -252,4 +252,21 @@ TEST_F(Option4AddrLstTest, setAddresses) {
     EXPECT_NO_THROW(opt.reset());
 }
 
+// This test checks that the option holding IPv4 address list can
+// be converted to textual format.
+TEST_F(Option4AddrLstTest, toText) {
+    Option4AddrLst opt(111);
+    // Generate a few IPv4 addresses.
+    Option4AddrLst::AddressContainer addresses;
+    for (int i = 2; i < 6; ++i) {
+        std::stringstream s;
+        s << "192.0.2." << i;
+        addresses.push_back(IOAddress(s.str()));
+    }
+    opt.setAddresses(addresses);
+
+    EXPECT_EQ("type=111, len=016: 192.0.2.2 192.0.2.3 192.0.2.4 192.0.2.5",
+              opt.toText());
+}
+
 } // namespace

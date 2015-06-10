@@ -17,6 +17,7 @@
 #include <dhcp/option_custom.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
+#include <dhcp/option6_status_code.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/lease.h>
@@ -143,10 +144,10 @@ Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply) {
                 {
                     // Check if the server has sent status code. If no status
                     // code, assume the status code to be 0.
-                    OptionCustomPtr status_code = boost::dynamic_pointer_cast<
-                        OptionCustom>(ia->getOption(D6O_STATUS_CODE));
+                    Option6StatusCodePtr status_code = boost::dynamic_pointer_cast<
+                        Option6StatusCode>(ia->getOption(D6O_STATUS_CODE));
                     lease_info.status_code_ =
-                        status_code ? status_code->readInteger<uint16_t>(0) : 0;
+                        status_code ? status_code->getStatusCode() : 0;
                 }
                 break;
 
@@ -159,13 +160,13 @@ Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply) {
     }
 
     // Get the global status code.
-    OptionCustomPtr status_code = boost::dynamic_pointer_cast<
-        OptionCustom>(reply->getOption(D6O_STATUS_CODE));
+    Option6StatusCodePtr status_code = boost::dynamic_pointer_cast<
+        Option6StatusCode>(reply->getOption(D6O_STATUS_CODE));
     // If status code has been sent, we override the default status code:
     // Success and record that we have received the status code.
     if (status_code) {
         config_.received_status_code_ = true;
-        config_.status_code_ = status_code->readInteger<uint16_t>(0);
+        config_.status_code_ = status_code->getStatusCode();
     }
 }
 
