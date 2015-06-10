@@ -1,4 +1,4 @@
-// Copyright (C) 2011,2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 #include <gtest/gtest.h>
 #include <log/logger_support.h>
 #include <log/log_messages.h>
+#include <util/unittests/test_exceptions.h>
 
 using namespace isc::log;
 
@@ -73,8 +74,14 @@ TEST_F(LoggerSupportTest, LoggingInitializationCheck) {
     setLoggingInitialized(false);
     isc::log::Logger test_logger("test");
 
-    EXPECT_THROW(test_logger.isDebugEnabled(), LoggingNotInitialized);
-    EXPECT_THROW(test_logger.info(LOG_INPUT_OPEN_FAIL), LoggingNotInitialized);
+    EXPECT_THROW_WITH(test_logger.isDebugEnabled(),
+                      LoggingNotInitialized,
+                      "attempt to access logging function "
+                      "before logging has been initialized");
+    EXPECT_THROW_WITH(test_logger.info(LOG_INPUT_OPEN_FAIL),
+                      LoggingNotInitialized,
+                      "attempt to access logging function "
+                      "before logging has been initialized");
 
     // ... and check that they work when logging is initialized.
     setLoggingInitialized(true);

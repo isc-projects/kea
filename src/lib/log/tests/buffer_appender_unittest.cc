@@ -25,6 +25,8 @@
 #include <log4cplus/nullappender.h>
 #include <log4cplus/spi/loggingevent.h>
 
+#include <util/unittests/test_exceptions.h>
+
 using namespace isc::log;
 using namespace isc::log::internal;
 
@@ -106,7 +108,9 @@ TEST_F(BufferAppenderTest, flush) {
 TEST_F(BufferAppenderTest, addAfterFlush) {
     logger.addAppender(appender1);
     buffer_appender1->flush();
-    EXPECT_THROW(LOG4CPLUS_INFO(logger, "Foo"), LogBufferAddAfterFlush);
+    EXPECT_THROW_WITH(LOG4CPLUS_INFO(logger, "Foo"),
+                      LogBufferAddAfterFlush,
+                      "Internal log buffer has been flushed already");
     // It should not have been added
     ASSERT_EQ(0, buffer_appender1->getBufferSize());
 

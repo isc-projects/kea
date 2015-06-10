@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,7 @@
 
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
+#include <util/unittests/test_exceptions.h>
 
 #include <algorithm>
 #include <climits>
@@ -178,7 +179,10 @@ TEST_F(CalloutManagerTest, BadConstructorParameters) {
     boost::scoped_ptr<CalloutManager> cm;
 
     // Invalid number of libraries
-    EXPECT_THROW(cm.reset(new CalloutManager(-1)), BadValue);
+    EXPECT_THROW_WITH(cm.reset(new CalloutManager(-1)),
+		      BadValue,
+		      "number of libraries passed to the "
+		      "CalloutManager must be >= 0");
 }
 
 // Check the number of libraries is reported successfully.
@@ -221,8 +225,14 @@ TEST_F(CalloutManagerTest, CheckLibraryIndex) {
     EXPECT_EQ(INT_MAX, getCalloutManager()->getLibraryIndex());
 
     // Check invalid ones
-    EXPECT_THROW(getCalloutManager()->setLibraryIndex(-2), NoSuchLibrary);
-    EXPECT_THROW(getCalloutManager()->setLibraryIndex(11), NoSuchLibrary);
+    EXPECT_THROW_WITH(getCalloutManager()->setLibraryIndex(-2),
+		      NoSuchLibrary,
+		      "library index -2 is not valid for the number "
+		      "of loaded libraries (10)");
+    EXPECT_THROW_WITH(getCalloutManager()->setLibraryIndex(11),
+		      NoSuchLibrary,
+		      "library index 11 is not valid for the number "
+                      "of loaded libraries (10)");
 }
 
 // Check that we can only register callouts on valid hook names.
@@ -230,8 +240,10 @@ TEST_F(CalloutManagerTest, CheckLibraryIndex) {
 TEST_F(CalloutManagerTest, ValidHookNames) {
     getCalloutManager()->setLibraryIndex(0);
     EXPECT_NO_THROW(getCalloutManager()->registerCallout("alpha", callout_one));
-    EXPECT_THROW(getCalloutManager()->registerCallout("unknown", callout_one),
-                                                      NoSuchHook);
+    EXPECT_THROW_WITH(getCalloutManager()->registerCallout("unknown",
+							   callout_one),
+		      NoSuchHook,
+		      "hook name unknown is not recognized");
 }
 
 
@@ -332,8 +344,14 @@ TEST_F(CalloutManagerTest, CalloutsPresent) {
     EXPECT_TRUE(getCalloutManager()->calloutsPresent(delta_index_));
 
     // Check we fail on an invalid hook index.
-    EXPECT_THROW(getCalloutManager()->calloutsPresent(42), NoSuchHook);
-    EXPECT_THROW(getCalloutManager()->calloutsPresent(-1), NoSuchHook);
+    EXPECT_THROW_WITH(getCalloutManager()->calloutsPresent(42),
+		      NoSuchHook,
+		      "hook index 42 is not valid for the list "
+		      "of registered hooks");
+    EXPECT_THROW_WITH(getCalloutManager()->calloutsPresent(-1),
+		      NoSuchHook,
+		      "hook index -1 is not valid for the list "
+                      "of registered hooks");
 }
 
 // Test that calling a hook with no callouts on it returns success.

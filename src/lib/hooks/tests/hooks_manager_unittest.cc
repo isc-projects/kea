@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
+#include <util/unittests/test_exceptions.h>
 
 #include <algorithm>
 #include <string>
@@ -408,8 +409,9 @@ TEST_F(HooksManagerTest, RegisterHooks) {
     EXPECT_EQ(2, HooksManager::registerHook(string("alpha")));
     EXPECT_EQ(3, HooksManager::registerHook(string("beta")));
     EXPECT_EQ(4, HooksManager::registerHook(string("gamma")));
-    EXPECT_THROW(static_cast<void>(HooksManager::registerHook(string("alpha"))),
-                 DuplicateHook);
+    EXPECT_THROW_WITH(static_cast<void>(HooksManager::registerHook(string("alpha"))),
+                      DuplicateHook,
+                      "hook with name alpha is already registered");
 
     // ... an check the hooks are as we expect.
     EXPECT_EQ(5, ServerHooks::getServerHooks().getCount());

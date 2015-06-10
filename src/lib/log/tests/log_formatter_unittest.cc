@@ -17,6 +17,7 @@
 
 #include <util/unittests/resource.h>
 #include <util/unittests/check_valgrind.h>
+#include <util/unittests/test_exceptions.h>
 
 #include <log/log_formatter.h>
 #include <log/logger_level.h>
@@ -112,9 +113,12 @@ TEST_F(FormatterTest, multiArg) {
 TEST_F(FormatterTest, mismatchedPlaceholders) {
     // Throws MismatchedPlaceholders exception if the placeholder is missing
     // for a supplied argument.
-    EXPECT_THROW(Formatter(isc::log::INFO, s("Missing the second %1"), this).
-                 arg("argument").arg("missing"),
-                 isc::log::MismatchedPlaceholders);
+    EXPECT_THROW_WITH(Formatter(isc::log::INFO,
+                                s("Missing the second %1"),
+                                this).arg("argument").arg("missing"),
+                      isc::log::MismatchedPlaceholders,
+                      "Missing logger placeholder in message: "
+                      "Missing the second argument");
 
 #ifdef EXPECT_DEATH
     // Likewise, if there's a redundant placeholder (or missing argument), the
@@ -130,9 +134,12 @@ TEST_F(FormatterTest, mismatchedPlaceholders) {
 #endif /* EXPECT_DEATH */
     // Mixed case of above two: the exception will be thrown due to the missing
     // placeholder. The other check is disabled due to that.
-    EXPECT_THROW(Formatter(isc::log::INFO, s("Missing the first %2"), this).
-                 arg("missing").arg("argument"),
-                 isc::log::MismatchedPlaceholders);
+    EXPECT_THROW_WITH(Formatter(isc::log::INFO,
+                                s("Missing the first %2"),
+                                this).arg("missing").arg("argument"),
+                      isc::log::MismatchedPlaceholders,
+                      "Missing logger placeholder in message: "
+                      "Missing the first argument");
 }
 
 #else

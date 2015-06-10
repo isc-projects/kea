@@ -18,6 +18,7 @@
 
 #include <util/unittests/resource.h>
 #include <util/unittests/check_valgrind.h>
+#include <util/unittests/test_exceptions.h>
 
 #include <log/logger.h>
 #include <log/logger_manager.h>
@@ -360,7 +361,9 @@ TEST_F(LoggerTest, IsDebugEnabledLevel) {
 
 TEST_F(LoggerTest, LoggerNameLength) {
     // Null name
-    EXPECT_THROW(Logger(NULL), LoggerNameNull);
+    EXPECT_THROW_WITH(Logger(NULL),
+                      LoggerNameNull,
+                      "logger names may not be null");
 
     // Declare space for the logger name.  The length of names checked
     // will range from 0 through MAX_LOGGER_NAME_SIZE + 1: to allow for
@@ -370,9 +373,11 @@ TEST_F(LoggerTest, LoggerNameLength) {
 
     // Zero-length name should throw an exception
     name[0] = '\0';
-    EXPECT_THROW({
-            Logger dummy(name);
-            }, LoggerNameError);
+    EXPECT_THROW_WITH({
+        Logger dummy(name);
+    }, LoggerNameError,
+    "'' is not a valid name for a logger: valid names must be between 1 and "
+    << Logger::MAX_LOGGER_NAME_SIZE << " characters in length");
 
     // Work through all valid names.
     for (size_t i = 0; i < Logger::MAX_LOGGER_NAME_SIZE; ++i) {
@@ -389,17 +394,20 @@ TEST_F(LoggerTest, LoggerNameLength) {
     // ... and check that an overly long name throws an exception.
     name[Logger::MAX_LOGGER_NAME_SIZE] = 'X';
     name[Logger::MAX_LOGGER_NAME_SIZE + 1] = '\0';
-    EXPECT_THROW({
-            Logger dummy(name);
-            }, LoggerNameError);
-
+    EXPECT_THROW_WITH({
+        Logger dummy(name);
+    }, LoggerNameError, "'" << name
+    << "' is not a valid name for a logger: valid names must be between 1 and "
+    << Logger::MAX_LOGGER_NAME_SIZE << " characters in length");
 }
 
 TEST_F(LoggerTest, setInterprocessSync) {
     // Create a logger
     Logger logger("alpha");
 
-    EXPECT_THROW(logger.setInterprocessSync(NULL), BadInterprocessSync);
+    EXPECT_THROW_WITH(logger.setInterprocessSync(NULL),
+                      BadInterprocessSync,
+                      "NULL was passed to setInterprocessSync()");
 }
 
 class MockSync : public isc::log::interprocess::InterprocessSync {

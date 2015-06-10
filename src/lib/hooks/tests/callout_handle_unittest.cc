@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,8 @@
 #include <boost/shared_ptr.hpp>
 
 #include <gtest/gtest.h>
+
+#include <util/unittests/test_exceptions.h>
 
 using namespace isc::hooks;
 using namespace std;
@@ -109,7 +111,9 @@ TEST_F(CalloutHandleTest, ArgumentUnknownName) {
 
     // Check that getting an unknown name throws an exception.
     int c = 0;
-    EXPECT_THROW(handle.getArgument("unknown", c), NoSuchArgument);
+    EXPECT_THROW_WITH(handle.getArgument("unknown", c),
+                      NoSuchArgument,
+                      "unable to find argument with name unknown");
 }
 
 // Test that trying to get an argument with an incorrect type throws an
@@ -259,7 +263,9 @@ TEST_F(CalloutHandleTest, DeleteArgument) {
     EXPECT_EQ(1, value);
     handle.deleteArgument("one");
 
-    EXPECT_THROW(handle.getArgument("one", value), NoSuchArgument);
+    EXPECT_THROW_WITH(handle.getArgument("one", value),
+                      NoSuchArgument,
+                      "unable to find argument with name one");
     handle.getArgument("two", value);
     EXPECT_EQ(2, value);
     handle.getArgument("three", value);
@@ -272,10 +278,14 @@ TEST_F(CalloutHandleTest, DeleteArgument) {
     EXPECT_EQ(3, value);
     handle.deleteArgument("three");
 
-    EXPECT_THROW(handle.getArgument("one", value), NoSuchArgument);
+    EXPECT_THROW_WITH(handle.getArgument("one", value),
+                      NoSuchArgument,
+                      "unable to find argument with name one");
     handle.getArgument("two", value);
     EXPECT_EQ(2, value);
-    EXPECT_THROW(handle.getArgument("three", value), NoSuchArgument);
+    EXPECT_THROW_WITH(handle.getArgument("three", value),
+                      NoSuchArgument,
+                      "unable to find argument with name three");
     handle.getArgument("four", value);
     EXPECT_EQ(4, value);
 }
@@ -301,10 +311,18 @@ TEST_F(CalloutHandleTest, DeleteAllArguments) {
     handle.deleteAllArguments();
 
     // ... and check that none are left.
-    EXPECT_THROW(handle.getArgument("one", value), NoSuchArgument);
-    EXPECT_THROW(handle.getArgument("two", value), NoSuchArgument);
-    EXPECT_THROW(handle.getArgument("three", value), NoSuchArgument);
-    EXPECT_THROW(handle.getArgument("four", value), NoSuchArgument);
+    EXPECT_THROW_WITH(handle.getArgument("one", value),
+                      NoSuchArgument,
+                      "unable to find argument with name one");
+    EXPECT_THROW_WITH(handle.getArgument("two", value),
+                      NoSuchArgument,
+                      "unable to find argument with name two");
+    EXPECT_THROW_WITH(handle.getArgument("three", value),
+                      NoSuchArgument,
+                      "unable to find argument with name three");
+    EXPECT_THROW_WITH(handle.getArgument("four", value),
+                      NoSuchArgument,
+                      "unable to find argument with name four");
 }
 
 // Test the "skip" flag.
