@@ -63,7 +63,7 @@ TEST(CommandInterpreterTest, createAnswer) {
               answer->str());
 }
 
-// This test checks whether parseAnswer is able to handle well and malformed
+// This test checks whether parseAnswer is able to handle good and malformed
 // answers.
 TEST(CommandInterpreterTest, parseAnswer) {
     ConstElementPtr answer;
