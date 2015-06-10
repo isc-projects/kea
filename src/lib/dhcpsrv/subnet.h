@@ -679,6 +679,9 @@ private:
 
     /// @brief A flag indicating if Rapid Commit option is supported
     /// for this subnet.
+    ///
+    /// It's default value is false, which indicates that the Rapid
+    /// Commit is disabled for the subnet.
     bool rapid_commit_;
 };
 
