@@ -12,20 +12,29 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef CONFIG_REPORT_H
-#define CONFIG_REPORT_H
+#include <sstream>
+
+#include <cfgrpt/config_report.h>
 
 namespace isc {
 namespace detail {
 
-extern const char* const config_report[];
-
 // The config_report array finished by an empty line ("")
 // Each line before this final one begins by four semicolons (;;;;)
 // in order to be easy to extract from binaries.
-std::string getConfigReport();
+std::string
+getConfigReport() {
+    std::stringstream tmp;
+
+    size_t linenum = 0;
+    for (;;) {
+        const char* const line = config_report[linenum++];
+        if (line[0] == '\0')
+            break;
+        tmp << line + 4 << std::endl;
+    }
+    return (tmp.str());
+}
 
 }
 }
-
-#endif // CONFIG_REPORT_H
