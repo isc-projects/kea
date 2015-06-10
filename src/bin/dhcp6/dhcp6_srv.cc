@@ -1312,12 +1312,17 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
         .arg(duid ? duid->toText() : "(no-duid)").arg(ia->getIAID())
         .arg(hint_opt ? hint.toText() : "(no hint)");
 
-    // "Fake" allocation is processing of SOLICIT message. We pretend to do an
-    // allocation, but we do not put the lease in the database. That is ok,
-    // because we do not guarantee that the user will get that exact lease. If
-    // the user selects this server to do actual allocation (i.e. sends REQUEST)
-    // it should include this hint. That will help us during the actual lease
-    // allocation.
+    // "Fake" allocation is the case when the server is processing the Solicit
+    // message without the Rapid Commit option and advertises a lease to
+    // the client, but doesn't commit this lease to the lease database. If
+    // the Solicit contains the Rapid Commit option and the server is
+    // configured to honor the Rapid Commit option, or the client has sent
+    // the Request message, the lease will be committed to the lease
+    // database. The type of the server's response may be used to determine
+    // if this is the fake allocation case or not. When the server sends
+    // Reply message it means that it is committing leases. Other message
+    // type (Advertise) means that server is not committing leases (fake
+    // allocation).
     bool fake_allocation = (answer->getType() != DHCPV6_REPLY);
 
     // Get DDNS update direction flags
@@ -1467,12 +1472,17 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
         .arg(duid ? duid->toText() : "(no-duid)").arg(ia->getIAID())
         .arg(hint_opt ? hint.toText() : "(no hint)");
 
-    // "Fake" allocation is processing of SOLICIT message. We pretend to do an
-    // allocation, but we do not put the lease in the database. That is ok,
-    // because we do not guarantee that the user will get that exact lease. If
-    // the user selects this server to do actual allocation (i.e. sends REQUEST)
-    // it should include this hint. That will help us during the actual lease
-    // allocation.
+    // "Fake" allocation is the case when the server is processing the Solicit
+    // message without the Rapid Commit option and advertises a lease to
+    // the client, but doesn't commit this lease to the lease database. If
+    // the Solicit contains the Rapid Commit option and the server is
+    // configured to honor the Rapid Commit option, or the client has sent
+    // the Request message, the lease will be committed to the lease
+    // database. The type of the server's response may be used to determine
+    // if this is the fake allocation case or not. When the server sends
+    // Reply message it means that it is committing leases. Other message
+    // type (Advertise) means that server is not committing leases (fake
+    // allocation).
     bool fake_allocation = (answer->getType() != DHCPV6_REPLY);
 
     // Use allocation engine to pick a lease for this client. Allocation engine

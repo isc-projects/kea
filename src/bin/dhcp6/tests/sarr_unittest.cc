@@ -37,17 +37,12 @@ namespace {
 ///     match the subnet prefix
 ///
 /// - Configuration 1:
-///   - one subnet 2001:db8:1::/48 used on eth0 interface
-///   - one pool in a range of 2001:db8:1::1 - 2001:db8:1::10
-///   - enables Rapid Commit for the subnet and can be used for testing
-///     Rapid Commit option support
-///   - DNS updates enabled
-///
-/// - Configuration 2:
-///   - one subnet 2001:db8:1::/48 used on eth0 interface
-///   - one pool in a range of 2001:db8:1::1 - 2001:db8:1::10
-///   - disables Rapid Commit for the subnet and can be used for testing
-///     that server ignores Rapid Commit option from the client.
+///   - two subnets 2001:db8:1::/48 and 2001:db8:2::/48
+///   - first subnet assigned to interface eth0, another one assigned to eth1
+///   - one pool for subnet in a range of 2001:db8:X::1 - 2001:db8:X::10,
+///     where X is 1 or 2
+///   - enables Rapid Commit for the first subnet and disables for the second
+///     one
 ///   - DNS updates enabled
 ///
 const char* CONFIGS[] = {
@@ -82,6 +77,12 @@ const char* CONFIGS[] = {
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"interface\": \"eth0\","
         "    \"rapid-commit\": True"
+        " },"
+        " {"
+        "    \"pools\": [ { \"pool\": \"2001:db8:2::1 - 2001:db8:2::10\" } ],"
+        "    \"subnet\": \"2001:db8:2::/48\", "
+        "    \"interface\": \"eth1\","
+        "    \"rapid-commit\": False"
         " } ],"
         "\"valid-lifetime\": 4000,"
         " \"dhcp-ddns\" : {"
@@ -101,6 +102,12 @@ const char* CONFIGS[] = {
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"interface\": \"eth0\","
         "    \"rapid-commit\": False"
+        " },"
+        " {"
+        "    \"pools\": [ { \"pool\": \"2001:db8:2::1 - 2001:db8:2::10\" } ],"
+        "    \"subnet\": \"2001:db8:2::/48\", "
+        "    \"interface\": \"eth1\","
+        "    \"rapid-commit\": True"
         " } ],"
         "\"valid-lifetime\": 4000,"
         " \"dhcp-ddns\" : {"
@@ -202,7 +209,7 @@ TEST_F(SARRTest, rapidCommitEnable) {
     // Make sure we ended-up having expected number of subnets configured.
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->getAll();
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(2, subnets->size());
     // Perform 2-way exchange.
     client.useRapidCommit(true);
     // Include FQDN to trigger generation of name change requests.
@@ -229,19 +236,51 @@ TEST_F(SARRTest, rapidCommitEnable) {
     EXPECT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
 }
 
+// Check that the server responds with Advertise if the client hasn't
+// included the Rapid Commit option in the Solicit.
+TEST_F(SARRTest, rapidCommitNoOption) {
+    Dhcp6Client client;
+    // Configure client to request IA_NA
+    client.useNA();
+    configure(CONFIGS[1], *client.getServer());
+    ASSERT_NO_THROW(client.getServer()->startD2());
+    // Make sure we ended-up having expected number of subnets configured.
+    const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets6()->getAll();
+    ASSERT_EQ(2, subnets->size());
+    // Include FQDN to test that the server will not create name change
+    // requests when it sends Advertise (Rapid Commit disabled).
+    ASSERT_NO_THROW(client.useFQDN(Option6ClientFqdn::FLAG_S,
+                                   "client-name.example.org",
+                                   Option6ClientFqdn::FULL));
+    ASSERT_NO_THROW(client.doSolicit());
+    // There should be no lease because the server should have responded
+    // with Advertise.
+    ASSERT_EQ(0, client.getLeaseNum());
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    EXPECT_EQ(DHCPV6_ADVERTISE, client.getContext().response_->getType());
+    // Make sure that the Rapid Commit option is not included.
+    EXPECT_FALSE(client.getContext().response_->getOption(D6O_RAPID_COMMIT));
+    // There should be no name change request generated.
+    EXPECT_EQ(0, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+}
+
 // Check that when the Rapid Commit support is disabled for the subnet
 // the server replies with an Advertise and ignores the Rapid Commit
 // option sent by the client.
 TEST_F(SARRTest, rapidCommitDisable) {
     Dhcp6Client client;
+    // The subnet assigned to eth1 has Rapid Commit disabled.
+    client.setInterface("eth1");
     // Configure client to request IA_NA
     client.useNA();
-    configure(CONFIGS[2], *client.getServer());
+    configure(CONFIGS[1], *client.getServer());
     ASSERT_NO_THROW(client.getServer()->startD2());
     // Make sure we ended-up having expected number of subnets configured.
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->getAll();
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(2, subnets->size());
     // Send Rapid Commit option to the server.
     client.useRapidCommit(true);
     // Include FQDN to test that the server will not create name change

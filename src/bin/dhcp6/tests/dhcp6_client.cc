@@ -38,13 +38,14 @@ Dhcp6Client::Dhcp6Client() :
     dest_addr_(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
     duid_(generateDUID(DUID::DUID_LLT)),
     link_local_("fe80::3a60:77ff:fed5:cdef"),
+    iface_name_("eth0"),
     srv_(boost::shared_ptr<NakedDhcpv6Srv>(new NakedDhcpv6Srv(0))),
     use_na_(false),
     use_pd_(false),
     use_relay_(false),
     use_oro_(false),
     use_client_id_(true),
-    use_rapid_commit_(true),
+    use_rapid_commit_(false),
     prefix_hint_(),
     fqdn_() {
 }
@@ -55,13 +56,14 @@ Dhcp6Client::Dhcp6Client(boost::shared_ptr<NakedDhcpv6Srv>& srv) :
     dest_addr_(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
     duid_(generateDUID(DUID::DUID_LLT)),
     link_local_("fe80::3a60:77ff:fed5:cdef"),
+    iface_name_("eth0"),
     srv_(srv),
     use_na_(false),
     use_pd_(false),
     use_relay_(false),
     use_oro_(false),
     use_client_id_(true),
-    use_rapid_commit_(true),
+    use_rapid_commit_(false),
     prefix_hint_(),
     fqdn_() {
 }
@@ -532,7 +534,7 @@ Dhcp6Client::sendMsg(const Pkt6Ptr& msg) {
                               msg->getBuffer().getLength()));
     msg_copy->setRemoteAddr(link_local_);
     msg_copy->setLocalAddr(dest_addr_);
-    msg_copy->setIface("eth0");
+    msg_copy->setIface(iface_name_);
     srv_->fakeReceive(msg_copy);
     srv_->run();
 }

@@ -525,6 +525,9 @@ public:
 
         // Check the Rapid Commit flag for the subnet.
         EXPECT_EQ(exp_rapid_commit, subnet->getRapidCommit());
+
+        // Clear any existing configuration.
+        CfgMgr::instance().clear();
     }
 
     int rcode_;          ///< Return code (see @ref isc::config::parseAnswer)
@@ -1138,8 +1141,8 @@ TEST_F(Dhcp6ParserTest, subnetRapidCommit) {
     }
 
     {
-        SCOPED_TRACE("Enable Rapid Commit");
         // rapid-commit explicitly set to true.
+        SCOPED_TRACE("Enable Rapid Commit");
         testRapidCommit("{ \"preferred-lifetime\": 3000,"
                         "\"rebind-timer\": 2000, "
                         "\"renew-timer\": 1000, "
@@ -1153,8 +1156,8 @@ TEST_F(Dhcp6ParserTest, subnetRapidCommit) {
     }
 
     {
-        SCOPED_TRACE("Disable Rapid Commit");
         // rapid-commit explicitly set to false.
+        SCOPED_TRACE("Disable Rapid Commit");
         testRapidCommit("{ \"preferred-lifetime\": 3000,"
                         "\"rebind-timer\": 2000, "
                         "\"renew-timer\": 1000, "
