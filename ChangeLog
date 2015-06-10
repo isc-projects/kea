@@ -1,3 +1,8 @@
+946.	[doc]		tmark
+	Added doucmentation for kea-admin "lease-dump" command to the
+	Kea Admininstrator's Guide and kea-admin man page.
+	(Trac #3803, git 54b59b7ef02f6428405794066ea779e9bd4c0b6e)
+
 945.	[func]		marcin
 	Improved log messages emitted by the DHCPv6 server. Also,
 	the server is now using multiple distinct loggers for logging
