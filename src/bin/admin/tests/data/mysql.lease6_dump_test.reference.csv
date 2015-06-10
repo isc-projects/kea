@@ -1,2 +1,4 @@
 address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,hwtype,hwaddr_source
-10,3230,30,0000-00-00 00:00:00,40,50,IA_TA,60,70,1,1,example.com,3830,90,100
+10,3230,30,0000-00-00 00:00:00,40,50,IA_TA,60,70,1,1,one.example.com,3830,90,100
+11,,30,0000-00-00 00:00:00,40,50,IA_TA,60,70,1,1,,3830,90,100
+12,3231,30,0000-00-00 00:00:00,40,50,IA_TA,60,70,1,1,three.example.com,3830,90,100
