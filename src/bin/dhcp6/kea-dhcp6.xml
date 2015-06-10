@@ -1,8 +1,8 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
-	       [<!ENTITY mdash "&#8212;">]>
+               [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2011, 2014 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2011, 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>July 1, 2014</date>
+    <date>June 10, 2015</date>
   </refentryinfo>
 
   <refmeta>
@@ -36,7 +36,7 @@
 
   <docinfo>
     <copyright>
-      <year>2014</year>
+      <year>2014-215</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -45,6 +45,9 @@
     <cmdsynopsis>
       <command>kea-dhcp6</command>
       <arg><option>-v</option></arg>
+      <arg><option>-V</option></arg>
+      <arg><option>-W</option></arg>
+      <arg><option>-d</option></arg>
       <arg><option>-c<replaceable class="parameter">config-file</replaceable></option></arg>
       <arg><option>-p<replaceable class="parameter">port-number</replaceable></option></arg>
     </cmdsynopsis>
@@ -69,7 +72,28 @@
       <varlistentry>
         <term><option>-v</option></term>
         <listitem><para>
-          Enable verbose mode.
+          Display the version.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-V</option></term>
+        <listitem><para>
+          Display the extended version.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-W</option></term>
+        <listitem><para>
+          Display the configuration report.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-d</option></term>
+        <listitem><para>
+          Enable the debug mode with extra verbosity.
 <!-- TODO: what does this do? -->
         </para></listitem>
       </varlistentry>
