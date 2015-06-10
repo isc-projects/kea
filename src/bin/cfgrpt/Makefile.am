@@ -1,3 +1,5 @@
+AM_CPPFLAGS = -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
+
 # Get rid of generated message files on a clean
 CLEANFILES = *.gcno *.gcda
 
@@ -7,4 +9,4 @@ DISTCLEANFILES = config_report.cc
 # convenience archive
 noinst_LTLIBRARIES = libcfgrpt.la
 
-libcfgrpt_la_SOURCES = config_report.h config_report.cc
+libcfgrpt_la_SOURCES = config_report.h config_report.cc cfgrpt.cc

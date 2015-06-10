@@ -20,6 +20,7 @@
 #include <log/logger_support.h>
 #include <log/logger_manager.h>
 #include <exceptions/exceptions.h>
+#include <cfgrpt/config_report.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -50,10 +51,11 @@ usage() {
     cerr << "Kea DHCPv6 server, version " << VERSION << endl;
     cerr << endl;
     cerr << "Usage: " << DHCP6_NAME
-         << " [-c cfgfile] [-v] [-V] [-d] [-p port_number]" << endl;
+         << " [-c cfgfile] -[v|V|W] [-d] [-p port_number]" << endl;
     cerr << "  -c file: specify configuration file" << endl;
     cerr << "  -v: print version number and exit." << endl;
     cerr << "  -V: print extended version and exit" << endl;
+    cerr << "  -W: display the configuration report and exit" << endl;
     cerr << "  -d: debug mode with extra verbosity (former -v)" << endl;
     cerr << "  -p number: specify non-standard port number 1-65535 "
          << "(useful for testing only)" << endl;
@@ -71,7 +73,7 @@ main(int argc, char* argv[]) {
     // The standard config file
     std::string config_file("");
 
-    while ((ch = getopt(argc, argv, "dvVp:c:")) != -1) {
+    while ((ch = getopt(argc, argv, "dvVWp:c:")) != -1) {
         switch (ch) {
         case 'd':
             verbose_mode = true;
@@ -83,6 +85,10 @@ main(int argc, char* argv[]) {
 
         case 'V':
             cout << Daemon::getVersion(true) << endl;
+            return (EXIT_SUCCESS);
+
+        case 'W':
+            cout << isc::detail::getConfigReport() << endl;
             return (EXIT_SUCCESS);
 
         case 'p': // port number
