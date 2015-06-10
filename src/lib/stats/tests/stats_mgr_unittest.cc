@@ -17,7 +17,7 @@
 #include <stats/stats_mgr.h>
 #include <exceptions/exceptions.h>
 #include <cc/data.h>
-#include <config/command_interpreter.h>
+#include <cc/command_interpreter.h>
 #include <util/boost_time_utils.h>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/shared_ptr.hpp>
