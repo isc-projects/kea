@@ -185,7 +185,19 @@ mysql_lease4_dump_test() {
     test_dir="@abs_top_srcdir@/src/bin/admin/tests"
     script_dir="@abs_top_srcdir@/src/bin/admin/scripts"
     output_file="$test_dir/data/lease4_dump_test.output.csv"
+    tmp_file="$test_dir/data/lease4_dump_test.output.csv.tmp"
     ref_file="$test_dir/data/mysql.lease4_dump_test.reference.csv"
+
+    # wipe out any residuals from prior failed runs
+    if [ -e $output_file ]
+    then
+        rm $output_file
+    fi
+
+    if [ -e $tmp_file ]
+    then
+        rm $tmp_file
+    fi
 
     # Let's wipe the whole database
     mysql_wipe
@@ -196,7 +208,11 @@ mysql_lease4_dump_test() {
     assert_eq 0 $ERRCODE "could not create database,  status code %d"
 
     # Insert the reference record
-    insert_sql="insert into lease4 values(10,20,30,40,0,50,1,1,\"example.com\");"
+    insert_sql="\
+insert into lease4 values(10,20,30,40,0,50,1,1,\"one.example.com\");\
+insert into lease4 values(11,NULL,123,40,0,50,1,1,\"\");\
+insert into lease4 values(12,22,NULL,40,0,50,1,1,\"three.example.com\");"
+
     mysql_execute "$insert_sql"
     ERRCODE=$?
     assert_eq 0 $ERRCODE "insert into lease4 failed, status code %d"
@@ -226,7 +242,19 @@ mysql_lease6_dump_test() {
     test_dir="@abs_top_srcdir@/src/bin/admin/tests"
     script_dir="@abs_top_srcdir@/src/bin/admin/scripts"
     output_file="$test_dir/data/lease6_dump_test.output.csv"
+    tmp_file="$test_dir/data/lease6_dump_test.output.csv.tmp"
     ref_file="$test_dir/data/mysql.lease6_dump_test.reference.csv"
+
+    # wipe out any residuals from prior failed runs
+    if [ -e $output_file ]
+    then
+        rm $output_file
+    fi
+
+    if [ -e $tmp_file ]
+    then
+        rm $tmp_file
+    fi
 
     # Let's wipe the whole database
     mysql_wipe
@@ -237,7 +265,10 @@ mysql_lease6_dump_test() {
     assert_eq 0 $ERRCODE "could not create database,  status code %d"
 
     # Insert the reference record
-    insert_sql="insert into lease6 values(10,20,30,0,40,50,1,60,70,1,1,\"example.com\",80,90,100);"
+    insert_sql="\
+insert into lease6 values(10,20,30,0,40,50,1,60,70,1,1,\"one.example.com\",80,90,100);\
+insert into lease6 values(11,NULL,30,0,40,50,1,60,70,1,1,\"\",80,90,100);\
+insert into lease6 values(12,21,30,0,40,50,1,60,70,1,1,\"three.example.com\",80,90,100);"
 
     mysql_execute "$insert_sql"
     ERRCODE=$?

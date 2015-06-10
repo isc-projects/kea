@@ -22,24 +22,26 @@
 #     more convenient to use if the script didn't parse db_user db_password
 #     and db_name.
 #
+# It saves mysql command exit status both to the env variable _ADMIN_STATUS
+# as well as returning it as $? to the caller.
+
 mysql_execute() {
     if [ $# -gt 1 ]; then
         QUERY="$1"
         shift
-        _RESULT=$(mysql -N -B  $* -e "${QUERY}")
+        mysql -N -B  $* -e "${QUERY}"
         retcode=$?
     else
-        _RESULT=$(mysql -N -B --user=$db_user --password=$db_password -e "${1}" $db_name)
-        retcode=$?
+        mysql -N -B --user=$db_user --password=$db_password -e "${1}" $db_name
+        retcode="$?"
     fi
+
     return $retcode
 }
 
+
 mysql_version() {
     mysql_execute "SELECT CONCAT(version,\".\",minor) FROM schema_version" "$@"
+    return $?
 }
 
-mysql_version_print() {
-    mysql_version "$@"
-    printf "%s" $_RESULT
-}
