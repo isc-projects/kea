@@ -29,7 +29,7 @@
 
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp/tests/pkt_captures.h>
-#include <config/ccsession.h>
+#include <cc/command_interpreter.h>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 #include <unistd.h>
