@@ -16,7 +16,7 @@
 #include <sstream>
 
 #include <asiolink/io_address.h>
-#include <config/command_interpreter.h>
+#include <cc/command_interpreter.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp/tests/pkt_captures.h>
 #include <dhcp/dhcp4.h>

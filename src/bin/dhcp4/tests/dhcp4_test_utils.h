@@ -30,7 +30,7 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <asiolink/io_address.h>
-#include <config/command_interpreter.h>
+#include <cc/command_interpreter.h>
 #include <list>
 
 #include <boost/shared_ptr.hpp>

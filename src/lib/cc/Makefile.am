@@ -15,6 +15,7 @@ endif
 
 lib_LTLIBRARIES = libkea-cc.la
 libkea_cc_la_SOURCES = data.cc data.h
+libkea_cc_la_SOURCES += command_interpreter.cc command_interpreter.h
 libkea_cc_la_SOURCES += logger.cc logger.h
 nodist_libkea_cc_la_SOURCES = cc_messages.cc cc_messages.h
 libkea_cc_la_LIBADD = $(top_builddir)/src/lib/log/libkea-log.la

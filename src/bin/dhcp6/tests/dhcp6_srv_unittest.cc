@@ -42,7 +42,7 @@
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/dhcp6_client.h>
 #include <dhcp/tests/pkt_captures.h>
-#include <config/command_interpreter.h>
+#include <cc/command_interpreter.h>
 #include <boost/pointer_cast.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
