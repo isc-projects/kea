@@ -22,6 +22,7 @@
 #include <dhcp/option6_client_fqdn.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
+#include <dhcp/option6_status_code.h>
 #include <dhcp/option_int_array.h>
 #include <dhcpsrv/lease.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
@@ -256,16 +257,9 @@ public:
     /// Status Code option.
     ///
     /// @return An object representing the Status Code option.
-    OptionCustomPtr createStatusCode(const uint16_t code,
+    Option6StatusCodePtr createStatusCode(const uint16_t code,
                                      const std::string& msg) {
-        OptionDefinition def("status-code", D6O_STATUS_CODE, "record");
-        def.addRecordField("uint16");
-        def.addRecordField("string");
-        OptionCustomPtr opt_status(new OptionCustom(def, Option::V6));
-        opt_status->writeInteger(code);
-        if (!msg.empty()) {
-            opt_status->writeString(msg, 1);
-        }
+        Option6StatusCodePtr opt_status(new Option6StatusCode(code, msg));
         return (opt_status);
     }
 
@@ -731,7 +725,8 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestFwdRev) {
     // as if we typed domain-name in lower case.
     lease_->hostname_ = "MYHOST.example.com.";
 
-    ASSERT_NO_THROW(srv_->createRemovalNameChangeRequest(lease_));
+    Pkt6Ptr pkt(new Pkt6(DHCPREQUEST, 1234));
+    ASSERT_NO_THROW(srv_->createRemovalNameChangeRequest(pkt, lease_));
 
     ASSERT_EQ(1, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
@@ -756,7 +751,8 @@ TEST_F(FqdnDhcpv6SrvTest, noRemovalsWhenDisabled) {
     lease_->hostname_ = "MYHOST.example.com.";
 
     // When DDNS is disabled an attempt to send a request will throw.
-    ASSERT_NO_THROW(srv_->createRemovalNameChangeRequest(lease_));
+    Pkt6Ptr pkt(new Pkt6(DHCPREQUEST, 1234));
+    ASSERT_NO_THROW(srv_->createRemovalNameChangeRequest(pkt, lease_));
 }
 
 
@@ -767,7 +763,8 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestRev) {
     lease_->fqdn_rev_ = true;
     lease_->hostname_ = "myhost.example.com.";
 
-    ASSERT_NO_THROW(srv_->createRemovalNameChangeRequest(lease_));
+    Pkt6Ptr pkt(new Pkt6(DHCPREQUEST, 1234));
+    ASSERT_NO_THROW(srv_->createRemovalNameChangeRequest(pkt, lease_));
 
     ASSERT_EQ(1, d2_mgr_.getQueueSize());
 
@@ -785,7 +782,8 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestNoUpdate) {
     lease_->fqdn_fwd_ = false;
     lease_->fqdn_rev_ = false;
 
-    ASSERT_NO_THROW(srv_->createRemovalNameChangeRequest(lease_));
+    Pkt6Ptr pkt(new Pkt6(DHCPREQUEST, 1234));
+    ASSERT_NO_THROW(srv_->createRemovalNameChangeRequest(pkt, lease_));
 
     ASSERT_EQ(0, d2_mgr_.getQueueSize());
 
@@ -798,7 +796,8 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestNoHostname) {
     lease_->fqdn_rev_ = true;
     lease_->hostname_ = "";
 
-    ASSERT_NO_THROW(srv_->createRemovalNameChangeRequest(lease_));
+    Pkt6Ptr pkt(new Pkt6(DHCPREQUEST, 1234));
+    ASSERT_NO_THROW(srv_->createRemovalNameChangeRequest(pkt, lease_));
 
     ASSERT_EQ(0, d2_mgr_.getQueueSize());
 
@@ -812,7 +811,8 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestWrongHostname) {
     lease_->fqdn_rev_ = true;
     lease_->hostname_ = "myhost..example.com.";
 
-    ASSERT_NO_THROW(srv_->createRemovalNameChangeRequest(lease_));
+    Pkt6Ptr pkt(new Pkt6(DHCPREQUEST, 1234));
+    ASSERT_NO_THROW(srv_->createRemovalNameChangeRequest(pkt, lease_));
 
     ASSERT_EQ(0, d2_mgr_.getQueueSize());
 

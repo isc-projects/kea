@@ -255,13 +255,6 @@ protected:
     /// @return Reply message to be sent to the client.
     Pkt6Ptr processInfRequest(const Pkt6Ptr& inf_request);
 
-    /// @brief Creates status-code option.
-    ///
-    /// @param code status code value (see RFC3315)
-    /// @param text textual explanation (will be sent in status code option)
-    /// @return status-code option
-    OptionPtr createStatusCode(uint16_t code, const std::string& text);
-
     /// @brief Selects a subnet for a given client's packet.
     ///
     /// @param question client's message
@@ -530,9 +523,12 @@ protected:
     /// own.
     /// If ddns updates are disabled, this method returns immediately.
     ///
+    /// @param query A pointer to the packet sent by the client for which the
+    /// name change request should be sent.
     /// @param lease A lease for which the the removal of corresponding DNS
     /// records will be performed.
-    void createRemovalNameChangeRequest(const Lease6Ptr& lease);
+    void createRemovalNameChangeRequest(const Pkt6Ptr& query,
+                                        const Lease6Ptr& lease);
 
     /// @brief Attempts to extend the lifetime of IAs.
     ///
@@ -728,20 +724,15 @@ private:
     /// If there are any differences (different fwd or rev flags, or different
     /// hostname) a DNS update for removing entry will be generated.
     ///
+    /// @param query a pointer to the client's message
     /// @param old_lease old version of the lease
     /// @param new_lease new version of the lease (may be NULL)
     /// @param hostname specifies hostname (for printing purposes)
     /// @param do_fwd specifies if reverse updates are enabled (for printing purposes)
     /// @param do_rev specifies if reverse updates are enabled (for printing purposes)
-    void conditionalNCRRemoval(Lease6Ptr& old_lease, Lease6Ptr& new_lease,
-                               const std::string& hostname,
+    void conditionalNCRRemoval(const Pkt6Ptr& query, Lease6Ptr& old_lease,
+                               Lease6Ptr& new_lease, const std::string& hostname,
                                bool do_fwd, bool do_rev);
-
-    /// @brief Utility method that extracts DUID from client-id option
-    ///
-    /// @param pkt the message that contains client-id option
-    /// @return extracted DUID (or NULL if client-id is missing)
-    DuidPtr extractClientId(const Pkt6Ptr& pkt);
 
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using

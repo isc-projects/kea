@@ -1019,30 +1019,6 @@ TEST_F(Dhcpv6SrvTest, pdReleaseReject) {
     testReleaseReject(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"));
 }
 
-// This test verifies if the status code option is generated properly.
-TEST_F(Dhcpv6SrvTest, StatusCode) {
-    NakedDhcpv6Srv srv(0);
-
-    // a dummy content for client-id
-    uint8_t expected[] = {
-        0x0, 0xD, // option code = 13
-        0x0, 0x7, // option length = 7
-        0x0, 0x3, // status code = 3
-        0x41, 0x42, 0x43, 0x44, 0x45 // string value ABCDE
-    };
-    // Create the option.
-    OptionPtr status = srv.createStatusCode(3, "ABCDE");
-    // Allocate an output buffer. We will store the option
-    // in wire format here.
-    OutputBuffer buf(sizeof(expected));
-    // Prepare the wire format.
-    ASSERT_NO_THROW(status->pack(buf));
-    // Check that the option buffer has valid length (option header + data).
-    ASSERT_EQ(sizeof(expected), buf.getLength());
-    // Verify the contents of the option.
-    EXPECT_EQ(0, memcmp(expected, buf.getData(), sizeof(expected)));
-}
-
 // This test verifies if the sanityCheck() really checks options presence.
 TEST_F(Dhcpv6SrvTest, sanityCheck) {
     NakedDhcpv6Srv srv(0);
