@@ -54,8 +54,8 @@
     <para>
       To manage the databases, Kea provides the
       <command>kea-admin</command> tool. It is able to initialize
-      a new database, check its version number, and perform a
-      database upgrade.
+      a new database, check its version number, perform a
+      database upgrade, and dump lease data to a text file.
     </para>
 
     <para>
@@ -88,6 +88,16 @@
             <command>lease-upgrade</command> &mdash;
             Conducts a lease database upgrade. This is useful when
             upgrading Kea.
+          </simpara>
+        </listitem>
+
+        <listitem>
+          <simpara>
+            <command>lease-dump</command> &mdash;
+            Dumps the contents of the lease database (for MySQL or PostgreSQL
+            backends) to CSV text file. The first line of the file contains
+            the column names.  This is meant to be used as a diagnostic
+            tool that provides a portable, human-readable form of lease data.
           </simpara>
         </listitem>
       </itemizedlist>
