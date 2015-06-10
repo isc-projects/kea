@@ -384,6 +384,13 @@ public:
         dest_addr_ = dest_addr;
     }
 
+    /// @brief Sets the interface to be used by the client.
+    ///
+    /// @param iface_name Interface name.
+    void setInterface(const std::string& iface_name) {
+        iface_name_ = iface_name;
+    }
+
     /// @brief Sets a prefix hint to be sent to a server.
     ///
     /// @param pref_lft Preferred lifetime.
@@ -575,7 +582,7 @@ private:
     /// @biref Current transaction id (altered on each send).
     uint32_t curr_transid_;
 
-    /// @brief Currently use destination address.
+    /// @brief Currently used destination address.
     asiolink::IOAddress dest_addr_;
 
     /// @brief Currently used DUID.
@@ -583,6 +590,9 @@ private:
 
     /// @brief Currently used link local address.
     asiolink::IOAddress link_local_;
+
+    /// @brief Currently used interface.
+    std::string iface_name_;
 
     /// @brief Pointer to the server that the client is communicating with.
     boost::shared_ptr<isc::test::NakedDhcpv6Srv> srv_;
