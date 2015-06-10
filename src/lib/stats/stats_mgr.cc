@@ -15,7 +15,7 @@
 #include <exceptions/exceptions.h>
 #include <stats/stats_mgr.h>
 #include <cc/data.h>
-#include <config/command_interpreter.h>
+#include <cc/command_interpreter.h>
 
 using namespace std;
 using namespace isc::data;
