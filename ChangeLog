@@ -1,9 +1,16 @@
+945.	[func]		marcin
+	Improved log messages emitted by the DHCPv6 server. Also,
+	the server is now using multiple distinct loggers for logging
+	messages pertaining to different functional parts of the
+	code, e.g. packet transmission, lease allocation, DDNS etc.
+	(Trac #3807, git c95ebdaf39c3d8d78d83d53db15824c60078f566)
+
 944.    [func]      tmark
 	kea-admin commands lease-init, lease-version, and lease-upgrade
 	now support PostgreSQL. Note that at this time the PostgreSQL
 	backend only supports Kea schema version 1.0, so there are no
 	upgrades available.
-	(Trac #3883, git 990a0d72fa247e4a12e2608994204c48274e4cd6) 
+	(Trac #3883, git 990a0d72fa247e4a12e2608994204c48274e4cd6)
 
 943.	[func]		sar
 	Split the DHCP-DDNS logging messages amongst several loggers to
