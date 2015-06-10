@@ -20,8 +20,8 @@ namespace detail {
 
 extern const char* const config_report[];
 
-// The config_report array finished by an empty line ("")
-// Each line before this final one begins by four semicolons (;;;;)
+// The config_report array ends with an empty line ("")
+// Each line before this final one starts with four semicolons (;;;;)
 // in order to be easy to extract from binaries.
 std::string getConfigReport();
 
