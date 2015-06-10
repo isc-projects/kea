@@ -93,7 +93,6 @@ protected:
                              const char* const address = DEFAULT_REMOTE_ADDRESS,
                              uint16_t port = DEFAULT_REMOTE_PORT);
 
-    MockSession notify_session;
     MockServer dnsserv;
     isc::dns::Message request_message;
     isc::dns::MessagePtr parse_message;

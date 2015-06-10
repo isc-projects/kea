@@ -14,7 +14,7 @@
 
 #include <config.h>
 
-#include <config/ccsession.h>
+#include <cc/command_interpreter.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <hooks/hooks_manager.h>

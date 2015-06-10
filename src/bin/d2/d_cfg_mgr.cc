@@ -14,7 +14,7 @@
 
 #include <config.h>
 
-#include <config/ccsession.h>
+#include <cc/command_interpreter.h>
 #include <d2/d2_log.h>
 #include <dhcp/libdhcp++.h>
 #include <d2/d_cfg_mgr.h>
