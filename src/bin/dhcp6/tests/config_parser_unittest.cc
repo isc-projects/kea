@@ -495,7 +495,7 @@ public:
         CfgMgr::instance().clear();
     }
 
-    /// @brief Tests teh Rapid Commit configuration for a subnet.
+    /// @brief Tests the Rapid Commit configuration for a subnet.
     ///
     /// This test configures the server with a given configuration and
     /// verifies if the Rapid Commit has been configured successfully
