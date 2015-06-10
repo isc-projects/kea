@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -32,6 +32,7 @@
 
 #include <dns/tests/unittest_util.h>
 #include <util/unittests/wiredata.h>
+#include <util/unittests/test_exceptions.h>
 
 using namespace std;
 using namespace isc::dns;
@@ -68,7 +69,9 @@ const RRTTL rrttl_do_off(0);         // DO=off
 const RRTTL rrttl_badver(0x00018000); // version=1, DO=on
 
 TEST_F(EDNSTest, badVerConstruct) {
-    EXPECT_THROW(EDNS(1), isc::InvalidParameter);
+    EXPECT_THROW_WITH(EDNS(1),
+		      isc::InvalidParameter,
+		      "failed to construct EDNS: unsupported version: 1");
 }
 
 TEST_F(EDNSTest, DNSSECDOBit) {
@@ -121,16 +124,24 @@ TEST_F(EDNSTest, getVersion) {
 
 TEST_F(EDNSTest, BadWireData) {
     // Incompatible RR type
-    EXPECT_THROW(EDNS(Name::ROOT_NAME(), rrclass, RRType::A(),
-                      rrttl_do_on, *opt_rdata), isc::InvalidParameter);
+    EXPECT_THROW_WITH(EDNS(Name::ROOT_NAME(), rrclass, RRType::A(),
+			   rrttl_do_on, *opt_rdata),
+		      isc::InvalidParameter,
+		      "EDNS is being created with incompatible RR type: "
+		      << RRType::A());
 
     // OPT RR of a non root name
-    EXPECT_THROW(EDNS(Name("example.com"), rrclass, rrtype,
-                      rrttl_do_on, *opt_rdata), DNSMessageFORMERR);
+    EXPECT_THROW_WITH(EDNS(Name("example.com"), rrclass, rrtype,
+			   rrttl_do_on, *opt_rdata),
+		      DNSMessageFORMERR,
+		      "invalid owner name for EDNS OPT RR: "
+		      << Name("example.com"));
                  
     // Unsupported Version
-    EXPECT_THROW(EDNS(Name::ROOT_NAME(), rrclass, rrtype,
-                      rrttl_badver, *opt_rdata), DNSMessageBADVERS);
+    EXPECT_THROW_WITH(EDNS(Name::ROOT_NAME(), rrclass, rrtype,
+			   rrttl_badver, *opt_rdata),
+		      DNSMessageBADVERS,
+		      "unsupported EDNS version: 1");
 }
 
 TEST_F(EDNSTest, toText) {
@@ -249,9 +260,11 @@ TEST_F(EDNSTest, createFromRR) {
 
     // creation triggers an exception.  extended_rcode must be intact.
     extended_rcode = 0;
-    EXPECT_THROW(createEDNSFromRR(Name::ROOT_NAME(), rrclass, rrtype,
-                                  rrttl_badver, *opt_rdata, extended_rcode),
-                 DNSMessageBADVERS);
+    EXPECT_THROW_WITH(createEDNSFromRR(Name::ROOT_NAME(), rrclass, rrtype,
+				       rrttl_badver, *opt_rdata,
+				       extended_rcode),
+		      DNSMessageBADVERS,
+		      "unsupported EDNS version: 1");
     EXPECT_EQ(0, static_cast<int>(extended_rcode));
 }
 

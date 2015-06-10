@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,8 @@
 #include <dns/master_lexer_state.h>
 
 #include <gtest/gtest.h>
+
+#include <util/unittests/test_exceptions.h>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/function.hpp>
@@ -86,7 +88,9 @@ TEST_F(MasterLexerTest, pushStreamFail) {
     ss << "test";
     ss.setstate(std::ios_base::badbit);
 
-    EXPECT_THROW(lexer.pushSource(ss), isc::Unexpected);
+    EXPECT_THROW_WITH(lexer.pushSource(ss), isc::Unexpected,
+                      "Failed to push a stream to lexer: "
+                      "failed to seek end of input source");
 }
 
 TEST_F(MasterLexerTest, pushFile) {
@@ -116,7 +120,8 @@ TEST_F(MasterLexerTest, pushFile) {
 }
 
 TEST_F(MasterLexerTest, pushBadFileName) {
-    EXPECT_THROW(lexer.pushSource(NULL), isc::InvalidParameter);
+  EXPECT_THROW_WITH(lexer.pushSource(NULL), isc::InvalidParameter,
+                    "NULL filename for MasterLexer::pushSource");
 }
 
 TEST_F(MasterLexerTest, pushFileFail) {
@@ -194,12 +199,14 @@ TEST_F(MasterLexerTest, unknownSourceSize) {
 
 TEST_F(MasterLexerTest, invalidPop) {
     // popSource() cannot be called if the sources stack is empty.
-    EXPECT_THROW(lexer.popSource(), isc::InvalidOperation);
+    EXPECT_THROW_WITH(lexer.popSource(), isc::InvalidOperation,
+                      "MasterLexer::popSource on an empty source");
 }
 
 // Test it is not possible to get token when no source is available.
 TEST_F(MasterLexerTest, noSource) {
-    EXPECT_THROW(lexer.getNextToken(), isc::InvalidOperation);
+    EXPECT_THROW_WITH(lexer.getNextToken(), isc::InvalidOperation,
+                      "No source to read tokens from");
 }
 
 // Test getting some tokens.  It also check basic behavior of getPosition().
@@ -352,13 +359,15 @@ TEST_F(MasterLexerTest, ungetTwice) {
     // Unget the token. It can be done once
     lexer.ungetToken();
     // But not twice
-    EXPECT_THROW(lexer.ungetToken(), isc::InvalidOperation);
+    EXPECT_THROW_WITH(lexer.ungetToken(), isc::InvalidOperation,
+                      "No token to unget ready");
 }
 
 // Test we can't unget a token before we get one
 TEST_F(MasterLexerTest, ungetBeforeGet) {
     lexer.pushSource(ss); // Just to eliminate the missing source problem
-    EXPECT_THROW(lexer.ungetToken(), isc::InvalidOperation);
+    EXPECT_THROW_WITH(lexer.ungetToken(), isc::InvalidOperation,
+                      "No token to unget ready");
 }
 
 // Test we can't unget a token after a source switch, even when we got
@@ -371,12 +380,14 @@ TEST_F(MasterLexerTest, ungetAfterSwitch) {
     std::stringstream ss2;
     ss2 << "\n\n";
     lexer.pushSource(ss2);
-    EXPECT_THROW(lexer.ungetToken(), isc::InvalidOperation);
+    EXPECT_THROW_WITH(lexer.ungetToken(), isc::InvalidOperation,
+                      "No token to unget ready");
     // We can get from the new source
     EXPECT_EQ(MasterToken::END_OF_LINE, lexer.getNextToken().getType());
     // And when we drop the current source, we can't unget again
     lexer.popSource();
-    EXPECT_THROW(lexer.ungetToken(), isc::InvalidOperation);
+    EXPECT_THROW_WITH(lexer.ungetToken(), isc::InvalidOperation,
+                      "No token to unget ready");
 }
 
 // Common checks for the case when getNextToken() should result in LexerError
@@ -508,14 +519,22 @@ TEST_F(MasterLexerTest, getNextTokenErrors) {
     lexer.pushSource(ss);
 
     // Only string/qstring/number can be "expected".
-    EXPECT_THROW(lexer.getNextToken(MasterToken::END_OF_LINE),
-                 isc::InvalidParameter);
-    EXPECT_THROW(lexer.getNextToken(MasterToken::END_OF_FILE),
-                 isc::InvalidParameter);
-    EXPECT_THROW(lexer.getNextToken(MasterToken::INITIAL_WS),
-                 isc::InvalidParameter);
-    EXPECT_THROW(lexer.getNextToken(MasterToken::ERROR),
-                 isc::InvalidParameter);
+    EXPECT_THROW_WITH(lexer.getNextToken(MasterToken::END_OF_LINE),
+                      isc::InvalidParameter,
+                      "expected type for getNextToken not supported: "
+                      << MasterToken::END_OF_LINE);
+    EXPECT_THROW_WITH(lexer.getNextToken(MasterToken::END_OF_FILE),
+                      isc::InvalidParameter,
+                      "expected type for getNextToken not supported: "
+                      << MasterToken::END_OF_FILE);
+    EXPECT_THROW_WITH(lexer.getNextToken(MasterToken::INITIAL_WS),
+                      isc::InvalidParameter,
+                      "expected type for getNextToken not supported: "
+                      << MasterToken::INITIAL_WS);
+    EXPECT_THROW_WITH(lexer.getNextToken(MasterToken::ERROR),
+                      isc::InvalidParameter,
+                      "expected type for getNextToken not supported: "
+                      << MasterToken::ERROR);
 
     // If it encounters a syntax error, it results in LexerError exception.
     lexerErrorCheck(lexer, MasterToken::STRING, MasterToken::UNBALANCED_PAREN);

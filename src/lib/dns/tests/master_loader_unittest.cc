@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -22,6 +22,7 @@
 #include <dns/rdata.h>
 
 #include <gtest/gtest.h>
+#include <util/unittests/test_exceptions.h>
 
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
@@ -1348,14 +1349,15 @@ TEST_F(MasterLoaderTest, ttlOverflow) {
 
 // Test the constructor rejects empty add callback.
 TEST_F(MasterLoaderTest, emptyCallback) {
-    EXPECT_THROW(MasterLoader(TEST_DATA_SRCDIR "/example.org",
-                              Name("example.org"), RRClass::IN(), callbacks_,
-                              AddRRCallback()), isc::InvalidParameter);
+    EXPECT_THROW_WITH(MasterLoader(TEST_DATA_SRCDIR "/example.org",
+                                   Name("example.org"), RRClass::IN(),
+                                   callbacks_, AddRRCallback()),
+                      isc::InvalidParameter, "Empty add RR callback");
     // And the same with the second constructor
     stringstream ss("");
-    EXPECT_THROW(MasterLoader(ss, Name("example.org"), RRClass::IN(),
-                              callbacks_, AddRRCallback()),
-                 isc::InvalidParameter);
+    EXPECT_THROW_WITH(MasterLoader(ss, Name("example.org"), RRClass::IN(),
+                                   callbacks_, AddRRCallback()),
+                      isc::InvalidParameter, "Empty add RR callback");
 }
 
 // Check it throws when we try to load after loading was complete.
@@ -1364,7 +1366,8 @@ TEST_F(MasterLoaderTest, loadTwice) {
               RRClass::IN(), MasterLoader::MANY_ERRORS);
 
     loader_->load();
-    EXPECT_THROW(loader_->load(), isc::InvalidOperation);
+    EXPECT_THROW_WITH(loader_->load(), isc::InvalidOperation,
+                      "Trying to load when already loaded");
     // Don't check them, they are not interesting, so suppress the error
     // at TearDown
     rrsets_.clear();
@@ -1374,7 +1377,8 @@ TEST_F(MasterLoaderTest, loadTwice) {
 TEST_F(MasterLoaderTest, loadZero) {
     setLoader(TEST_DATA_SRCDIR "/example.org", Name("example.org."),
               RRClass::IN(), MasterLoader::MANY_ERRORS);
-    EXPECT_THROW(loader_->loadIncremental(0), isc::InvalidParameter);
+    EXPECT_THROW_WITH(loader_->loadIncremental(0), isc::InvalidParameter,
+                      "Count limit set to 0");
 }
 
 // Test there's a warning when the file terminates without end of

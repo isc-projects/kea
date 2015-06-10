@@ -1,4 +1,4 @@
-// Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -28,6 +28,8 @@
 
 #include <util/buffer.h>
 #include <exceptions/exceptions.h>
+
+#include <util/unittests/test_exceptions.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -639,20 +641,25 @@ TEST(HMACTest, BadKey) {
     OutputBuffer hmac_sig(0);
     CryptoLink& crypto = CryptoLink::getCryptoLink();
 
-    EXPECT_THROW(crypto.createHMAC(NULL, 0, MD5), BadKey);
-    EXPECT_THROW(crypto.createHMAC(NULL, 0, UNKNOWN_HASH), UnsupportedAlgorithm);
+    EXPECT_THROW_WITH(crypto.createHMAC(NULL, 0, MD5),
+                      BadKey, "Bad HMAC secret length: 0");
+    EXPECT_THROW_WITH(crypto.createHMAC(NULL, 0, UNKNOWN_HASH),
+                      UnsupportedAlgorithm,
+                      "Unknown hash algorithm: 0");
 
-    EXPECT_THROW(signHMAC(data_buf.getData(), data_buf.getLength(),
-                          NULL, 0, MD5, hmac_sig), BadKey);
-    EXPECT_THROW(signHMAC(data_buf.getData(), data_buf.getLength(),
-                          NULL, 0, UNKNOWN_HASH, hmac_sig),
-                          UnsupportedAlgorithm);
+    EXPECT_THROW_WITH(signHMAC(data_buf.getData(), data_buf.getLength(),
+                               NULL, 0, MD5, hmac_sig),
+                      BadKey, "Bad HMAC secret length: 0");
+    EXPECT_THROW_WITH(signHMAC(data_buf.getData(), data_buf.getLength(),
+                               NULL, 0, UNKNOWN_HASH, hmac_sig),
+                      UnsupportedAlgorithm, "Unknown hash algorithm: 0");
 
-    EXPECT_THROW(verifyHMAC(data_buf.getData(), data_buf.getLength(),
-                            NULL, 0, MD5, hmac_sig.getData(),
-                            hmac_sig.getLength()), BadKey);
-    EXPECT_THROW(verifyHMAC(data_buf.getData(), data_buf.getLength(),
-                            NULL, 0, UNKNOWN_HASH, hmac_sig.getData(),
-                            hmac_sig.getLength()),
-                            UnsupportedAlgorithm);
+    EXPECT_THROW_WITH(verifyHMAC(data_buf.getData(), data_buf.getLength(),
+                                 NULL, 0, MD5, hmac_sig.getData(),
+                                 hmac_sig.getLength()),
+                      BadKey, "Bad HMAC secret length: 0");
+    EXPECT_THROW_WITH(verifyHMAC(data_buf.getData(), data_buf.getLength(),
+                                 NULL, 0, UNKNOWN_HASH, hmac_sig.getData(),
+                                 hmac_sig.getLength()),
+                      UnsupportedAlgorithm, "Unknown hash algorithm: 0");
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,8 @@
 #include <dns/master_lexer.h>
 
 #include <gtest/gtest.h>
+
+#include <util/unittests/test_exceptions.h>
 
 #include <string>
 
@@ -76,12 +78,24 @@ TEST_F(MasterLexerTokenTest, strings) {
               getType());
 
     // getString/StringRegion() aren't allowed for non string(-variant) types
-    EXPECT_THROW(token_eof.getString(), isc::InvalidOperation);
-    EXPECT_THROW(token_eof.getString(strval), isc::InvalidOperation);
-    EXPECT_THROW(token_num.getString(), isc::InvalidOperation);
-    EXPECT_THROW(token_num.getString(strval), isc::InvalidOperation);
-    EXPECT_THROW(token_eof.getStringRegion(), isc::InvalidOperation);
-    EXPECT_THROW(token_num.getStringRegion(), isc::InvalidOperation);
+    EXPECT_THROW_WITH(token_eof.getString(),
+                      isc::InvalidOperation,
+                      "Token::getString() for non string-variant type");
+    EXPECT_THROW_WITH(token_eof.getString(strval),
+                      isc::InvalidOperation,
+                      "Token::getString() for non string-variant type");
+    EXPECT_THROW_WITH(token_num.getString(),
+                      isc::InvalidOperation,
+                      "Token::getString() for non string-variant type");
+    EXPECT_THROW_WITH(token_num.getString(strval),
+                      isc::InvalidOperation,
+                      "Token::getString() for non string-variant type");
+    EXPECT_THROW_WITH(token_eof.getStringRegion(),
+                      isc::InvalidOperation,
+                      "Token::getStringRegion() for non string-variant type");
+    EXPECT_THROW_WITH(token_num.getStringRegion(),
+                      isc::InvalidOperation,
+                      "Token::getStringRegion() for non string-variant type");
 }
 
 TEST_F(MasterLexerTokenTest, numbers) {
@@ -106,8 +120,12 @@ TEST_F(MasterLexerTokenTest, numbers) {
     EXPECT_EQ(4294967295u, token.getNumber());
 
     // getNumber() isn't allowed for non number types
-    EXPECT_THROW(token_eof.getNumber(), isc::InvalidOperation);
-    EXPECT_THROW(token_str.getNumber(), isc::InvalidOperation);
+    EXPECT_THROW_WITH(token_eof.getNumber(),
+                      isc::InvalidOperation,
+                      "Token::getNumber() for non number type");
+    EXPECT_THROW_WITH(token_str.getNumber(),
+                      isc::InvalidOperation,
+                      "Token::getNumber() for non number type");
 }
 
 TEST_F(MasterLexerTokenTest, novalues) {
@@ -119,10 +137,22 @@ TEST_F(MasterLexerTokenTest, novalues) {
               MasterToken(MasterToken::INITIAL_WS).getType());
 
     // Special types of tokens cannot have value-based types
-    EXPECT_THROW(MasterToken t(MasterToken::STRING), isc::InvalidParameter);
-    EXPECT_THROW(MasterToken t(MasterToken::QSTRING), isc::InvalidParameter);
-    EXPECT_THROW(MasterToken t(MasterToken::NUMBER), isc::InvalidParameter);
-    EXPECT_THROW(MasterToken t(MasterToken::ERROR), isc::InvalidParameter);
+    EXPECT_THROW_WITH(MasterToken t(MasterToken::STRING),
+                      isc::InvalidParameter,
+                      "Token per-type constructor called with invalid type: "
+                      << MasterToken::STRING);
+    EXPECT_THROW_WITH(MasterToken t(MasterToken::QSTRING),
+                      isc::InvalidParameter,
+                      "Token per-type constructor called with invalid type: "
+                      << MasterToken::QSTRING);
+    EXPECT_THROW_WITH(MasterToken t(MasterToken::NUMBER),
+                      isc::InvalidParameter,
+                      "Token per-type constructor called with invalid type: "
+                      << MasterToken::NUMBER);
+    EXPECT_THROW_WITH(MasterToken t(MasterToken::ERROR),
+                      isc::InvalidParameter,
+                      "Token per-type constructor called with invalid type: "
+                      << MasterToken::ERROR);
 }
 
 TEST_F(MasterLexerTokenTest, errors) {
@@ -147,8 +177,12 @@ TEST_F(MasterLexerTokenTest, errors) {
               MasterToken(MasterToken::UNEXPECTED_QUOTES).getErrorText());
 
     // getErrorCode/Text() isn't allowed for non number types
-    EXPECT_THROW(token_num.getErrorCode(), isc::InvalidOperation);
-    EXPECT_THROW(token_num.getErrorText(), isc::InvalidOperation);
+    EXPECT_THROW_WITH(token_num.getErrorCode(),
+                      isc::InvalidOperation,
+                      "Token::getErrorCode() for non error type");
+    EXPECT_THROW_WITH(token_num.getErrorText(),
+                      isc::InvalidOperation,
+                      "MasterToken::getErrorText() for non error type");
 
     // Only the pre-defined error code is accepted.  Hardcoding '8' (max code
     // + 1) is intentional; it'd be actually better if we notice it when we
@@ -156,8 +190,9 @@ TEST_F(MasterLexerTokenTest, errors) {
     //
     // Note: if you fix this testcase, you probably want to update the
     // getErrorText() tests above too.
-    EXPECT_THROW(MasterToken(MasterToken::ErrorCode(8)),
-                 isc::InvalidParameter);
+    EXPECT_THROW_WITH(MasterToken(MasterToken::ErrorCode(8)),
+                      isc::InvalidParameter,
+                      "Invalid master lexer error code: 8");
 
     // Check the coexistence of "from number" and "from error-code"
     // constructors won't cause confusion.

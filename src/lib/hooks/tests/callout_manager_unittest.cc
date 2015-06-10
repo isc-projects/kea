@@ -180,9 +180,9 @@ TEST_F(CalloutManagerTest, BadConstructorParameters) {
 
     // Invalid number of libraries
     EXPECT_THROW_WITH(cm.reset(new CalloutManager(-1)),
-		      BadValue,
-		      "number of libraries passed to the "
-		      "CalloutManager must be >= 0");
+                      BadValue,
+                      "number of libraries passed to the "
+                      "CalloutManager must be >= 0");
 }
 
 // Check the number of libraries is reported successfully.
@@ -226,12 +226,12 @@ TEST_F(CalloutManagerTest, CheckLibraryIndex) {
 
     // Check invalid ones
     EXPECT_THROW_WITH(getCalloutManager()->setLibraryIndex(-2),
-		      NoSuchLibrary,
-		      "library index -2 is not valid for the number "
-		      "of loaded libraries (10)");
+                      NoSuchLibrary,
+                      "library index -2 is not valid for the number "
+                      "of loaded libraries (10)");
     EXPECT_THROW_WITH(getCalloutManager()->setLibraryIndex(11),
-		      NoSuchLibrary,
-		      "library index 11 is not valid for the number "
+                      NoSuchLibrary,
+                      "library index 11 is not valid for the number "
                       "of loaded libraries (10)");
 }
 
@@ -241,9 +241,9 @@ TEST_F(CalloutManagerTest, ValidHookNames) {
     getCalloutManager()->setLibraryIndex(0);
     EXPECT_NO_THROW(getCalloutManager()->registerCallout("alpha", callout_one));
     EXPECT_THROW_WITH(getCalloutManager()->registerCallout("unknown",
-							   callout_one),
-		      NoSuchHook,
-		      "hook name unknown is not recognized");
+                                                           callout_one),
+                      NoSuchHook,
+                      "hook name unknown is not recognized");
 }
 
 
@@ -345,12 +345,12 @@ TEST_F(CalloutManagerTest, CalloutsPresent) {
 
     // Check we fail on an invalid hook index.
     EXPECT_THROW_WITH(getCalloutManager()->calloutsPresent(42),
-		      NoSuchHook,
-		      "hook index 42 is not valid for the list "
-		      "of registered hooks");
+                      NoSuchHook,
+                      "hook index 42 is not valid for the list "
+                      "of registered hooks");
     EXPECT_THROW_WITH(getCalloutManager()->calloutsPresent(-1),
-		      NoSuchHook,
-		      "hook index -1 is not valid for the list "
+                      NoSuchHook,
+                      "hook index -1 is not valid for the list "
                       "of registered hooks");
 }
 

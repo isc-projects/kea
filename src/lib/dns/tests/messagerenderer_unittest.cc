@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,7 @@
 
 #include <dns/tests/unittest_util.h>
 #include <util/unittests/wiredata.h>
+#include <util/unittests/test_exceptions.h>
 
 #include <gtest/gtest.h>
 
@@ -150,8 +151,10 @@ TEST_F(MessageRendererTest, writeNameMixedCaseCompress) {
 
     // Change the compression mode in the middle of rendering.  This is not
     // allowed in this implementation.
-    EXPECT_THROW(renderer.setCompressMode(MessageRenderer::CASE_INSENSITIVE),
-                 isc::InvalidParameter);
+    EXPECT_THROW_WITH(renderer.setCompressMode(
+                            MessageRenderer::CASE_INSENSITIVE),
+                      isc::InvalidParameter,
+                      "compress mode cannot be changed during rendering");
 
     // Once the renderer is cleared, it's okay again.
     renderer.clear();
@@ -264,16 +267,19 @@ TEST_F(MessageRendererTest, setBufferErrors) {
 
     // Buffer cannot be reset when the renderer is in use.
     renderer.writeUint32(10);
-    EXPECT_THROW(renderer.setBuffer(&new_buffer), isc::InvalidParameter);
+    EXPECT_THROW_WITH(renderer.setBuffer(&new_buffer), isc::InvalidParameter,
+                      "MessageRenderer buffer cannot be set when in use");
 
     renderer.clear();
     renderer.setBuffer(&new_buffer);
     renderer.writeUint32(10);
-    EXPECT_THROW(renderer.setBuffer(&new_buffer), isc::InvalidParameter);
+    EXPECT_THROW_WITH(renderer.setBuffer(&new_buffer), isc::InvalidParameter,
+                      "MessageRenderer buffer cannot be set when in use");
 
     // Resetting the buffer isn't allowed for the default buffer.
     renderer.setBuffer(NULL);
-    EXPECT_THROW(renderer.setBuffer(NULL), isc::InvalidParameter);
+    EXPECT_THROW_WITH(renderer.setBuffer(NULL), isc::InvalidParameter,
+                      "Default MessageRenderer buffer cannot be reset");
 
     // It's okay to reset a temporary buffer without using it.
     renderer.setBuffer(&new_buffer);

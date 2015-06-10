@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,8 @@
 #include <exceptions/exceptions.h>
 
 #include <gtest/gtest.h>
+
+#include <util/unittests/test_exceptions.h>
 
 #include <boost/functional/hash.hpp>
 
@@ -490,16 +492,40 @@ TEST_F(LabelSequenceTest, stripRight) {
 }
 
 TEST_F(LabelSequenceTest, stripOutOfRange) {
-    EXPECT_THROW(ls1.stripLeft(100), isc::OutOfRange);
-    EXPECT_THROW(ls1.stripLeft(5), isc::OutOfRange);
-    EXPECT_THROW(ls1.stripLeft(4), isc::OutOfRange);
-    EXPECT_THROW(ls1.stripLeft(3), isc::OutOfRange);
+    EXPECT_THROW_WITH(ls1.stripLeft(100),
+                      isc::OutOfRange,
+                      "Cannot strip to zero or less labels; 100 "
+                      "(labelcount: 3)");
+    EXPECT_THROW_WITH(ls1.stripLeft(5),
+                      isc::OutOfRange,
+                      "Cannot strip to zero or less labels; 5 "
+                      "(labelcount: 3)");
+    EXPECT_THROW_WITH(ls1.stripLeft(4),
+                      isc::OutOfRange,
+                      "Cannot strip to zero or less labels; 4 "
+                      "(labelcount: 3)");
+    EXPECT_THROW_WITH(ls1.stripLeft(3),
+                      isc::OutOfRange,
+                      "Cannot strip to zero or less labels; 3 "
+                      "(labelcount: 3)");
     getDataCheck("\007example\003org\000", 13, ls1);
 
-    EXPECT_THROW(ls1.stripRight(100), isc::OutOfRange);
-    EXPECT_THROW(ls1.stripRight(5), isc::OutOfRange);
-    EXPECT_THROW(ls1.stripRight(4), isc::OutOfRange);
-    EXPECT_THROW(ls1.stripRight(3), isc::OutOfRange);
+    EXPECT_THROW_WITH(ls1.stripRight(100),
+                      isc::OutOfRange,
+                      "Cannot strip to zero or less labels; 100 "
+                      "(labelcount: 3)");
+    EXPECT_THROW_WITH(ls1.stripRight(5),
+                      isc::OutOfRange,
+                      "Cannot strip to zero or less labels; 5 "
+                      "(labelcount: 3)");
+    EXPECT_THROW_WITH(ls1.stripRight(4),
+                      isc::OutOfRange,
+                      "Cannot strip to zero or less labels; 4 "
+                      "(labelcount: 3)");
+    EXPECT_THROW_WITH(ls1.stripRight(3),
+                      isc::OutOfRange,
+                      "Cannot strip to zero or less labels; 3 "
+                      "(labelcount: 3)");
     getDataCheck("\007example\003org\000", 13, ls1);
 }
 
@@ -586,7 +612,10 @@ TEST_F(LabelSequenceTest, toText) {
     EXPECT_EQ("foo.example.org", ls8.toText());
 
     EXPECT_EQ(".", ls7.toText());
-    EXPECT_THROW(ls7.stripLeft(1), isc::OutOfRange);
+    EXPECT_THROW_WITH(ls7.stripLeft(1),
+                      isc::OutOfRange,
+                      "Cannot strip to zero or less labels; 1 "
+                      "(labelcount: 1)");
 
     Name n_long1("012345678901234567890123456789"
                  "012345678901234567890123456789012."
@@ -827,13 +856,16 @@ TEST_F(LabelSequenceTest, serialize) {
         //                           olen,odata,ndata
 
         // end of buffer would be the first byte of offsets: invalid.
-        EXPECT_THROW(LabelSequence(bp + serialized_len).
-                     serialize(bp + 2, serialized_len),
-                     isc::BadValue);
+        EXPECT_THROW_WITH(LabelSequence(bp + serialized_len).
+                          serialize(bp + 2, serialized_len),
+                          isc::BadValue,
+                          "serialize would break the source sequence");
         // begin of buffer would be the last byte of ndata: invalid.
-        EXPECT_THROW(LabelSequence(bp + serialized_len).
-                     serialize(bp + (2 * serialized_len) - 1, serialized_len),
-                     isc::BadValue);
+        EXPECT_THROW_WITH(LabelSequence(bp + serialized_len).
+                          serialize(bp + (2 * serialized_len) - 1,
+                                    serialized_len),
+                          isc::BadValue,
+                          "serialize would break the source sequence");
         // A boundary safe case: buffer is placed after the sequence data.
         // should cause no disruption.
         LabelSequence(bp + serialized_len).
@@ -845,8 +877,9 @@ TEST_F(LabelSequenceTest, serialize) {
                      serialize(bp + 1, serialized_len);
     }
 
-    EXPECT_THROW(ls1.serialize(labels_buf, ls1.getSerializedLength() - 1),
-                 isc::BadValue);
+    EXPECT_THROW_WITH(ls1.serialize(labels_buf, ls1.getSerializedLength() - 1),
+                      isc::BadValue,
+                      "buffer too short for LabelSequence::serialize");
 }
 
 #ifdef ENABLE_DEBUG
@@ -854,29 +887,41 @@ TEST_F(LabelSequenceTest, serialize) {
 // These checks are enabled only in debug mode in the LabelSequence
 // class.
 TEST_F(LabelSequenceTest, badDeserialize) {
-    EXPECT_THROW(LabelSequence(NULL), isc::BadValue);
+    EXPECT_THROW_WITH(LabelSequence(NULL), isc::BadValue,
+                      "Null pointer passed to LabelSequence constructor");
     const uint8_t zero_offsets[] = { 0 };
-    EXPECT_THROW(LabelSequence ls(zero_offsets), isc::BadValue);
+    EXPECT_THROW_WITH(LabelSequence ls(zero_offsets), isc::BadValue,
+                      "Bad offsets len in serialized LabelSequence data: 0");
     const uint8_t toomany_offsets[] = { Name::MAX_LABELS + 1 };
-    EXPECT_THROW(LabelSequence ls(toomany_offsets), isc::BadValue);
+    EXPECT_THROW_WITH(LabelSequence ls(toomany_offsets), isc::BadValue,
+                      "Bad offsets len in serialized LabelSequence data: "
+                      << Name::MAX_LABELS + 1);
 
     // (second) offset does not match actual label length
     const uint8_t offsets_wrongoffset[] = { 2, 0, 64, 1 };
-    EXPECT_THROW(LabelSequence ls(offsets_wrongoffset), isc::BadValue);
+    EXPECT_THROW_WITH(LabelSequence ls(offsets_wrongoffset), isc::BadValue,
+                      "Broken offset or name data in serialized "
+                      "LabelSequence data");
 
-    // offset matches, but exceeds MAX_LABEL_LEN
+    // offset matches, but exceeds MAX_LABELLEN
     const uint8_t offsets_toolonglabel[] = { 2, 0, 64, 64 };
-    EXPECT_THROW(LabelSequence ls(offsets_toolonglabel), isc::BadValue);
+    EXPECT_THROW_WITH(LabelSequence ls(offsets_toolonglabel), isc::BadValue,
+                      "Broken offset or name data in serialized "
+                      "LabelSequence data");
 
     // Inconsistent data: an offset is lower than the previous offset
     const uint8_t offsets_lower[] = { 3, // # of offsets
                                       0, 2, 1, // offsets
                                       1, 'a', 1, 'b', 0};
-    EXPECT_THROW(LabelSequence ls(offsets_lower), isc::BadValue);
+    EXPECT_THROW_WITH(LabelSequence ls(offsets_lower), isc::BadValue,
+                      "Broken offset or name data in serialized "
+                      "LabelSequence data");
 
     // Inconsistent data: an offset is equal to the previous offset
     const uint8_t offsets_noincrease[] = { 2, 0, 0, 0, 0 };
-    EXPECT_THROW(LabelSequence ls(offsets_noincrease), isc::BadValue);
+    EXPECT_THROW_WITH(LabelSequence ls(offsets_noincrease), isc::BadValue,
+                      "Broken offset or name data in serialized "
+                      "LabelSequence data");
 }
 
 #endif
@@ -1156,7 +1201,8 @@ TEST_F(ExtendableLabelSequenceTest, extendBadData) {
     LabelSequence els(ls1, buf);
 
     // try use with unrelated labelsequence
-    EXPECT_THROW(ls1.extend(ls1, buf), isc::BadValue);
+    EXPECT_THROW_WITH(ls1.extend(ls1, buf), isc::BadValue,
+                      "extend() called with unrelated buffer");
 
     // Create a long name, but so that we can still extend once
     Name longlabel("1234567890123456789012345678901234567890"
@@ -1182,7 +1228,9 @@ TEST_F(ExtendableLabelSequenceTest, extendBadData) {
     check_equal(full_ls, els);
 
     // But now, even the shortest extension should fail
-    EXPECT_THROW(els.extend(LabelSequence(Name("1")), buf), isc::BadValue);
+    EXPECT_THROW_WITH(els.extend(LabelSequence(Name("1")), buf),
+                      isc::BadValue,
+                      "extend() would exceed maximum wire length");
 
     // Check it hasn't been changed
     EXPECT_TRUE(els.isAbsolute());
@@ -1207,7 +1255,8 @@ TEST_F(ExtendableLabelSequenceTest, extendBadData) {
     EXPECT_TRUE(els.isAbsolute());
     check_equal(full_ls2, els);
 
-    EXPECT_THROW(els.extend(short_ls, buf), isc::BadValue);
+    EXPECT_THROW_WITH(els.extend(short_ls, buf), isc::BadValue,
+                      "extend() would exceed maximum number of labels");
 
     EXPECT_TRUE(els.isAbsolute());
     check_equal(full_ls2, els);

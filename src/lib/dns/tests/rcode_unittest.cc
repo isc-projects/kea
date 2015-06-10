@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,8 @@
 
 #include <gtest/gtest.h>
 
+#include <util/unittests/test_exceptions.h>
+
 using namespace std;
 using namespace isc::dns;
 
@@ -31,15 +33,18 @@ TEST(RcodeTest, constructFromCode) {
     EXPECT_EQ(0xfff, Rcode(0xfff).getCode()); // possible max code
 
     // should fail on attempt of construction with an out of range code
-    EXPECT_THROW(Rcode(0x1000), isc::OutOfRange);
-    EXPECT_THROW(Rcode(0xffff), isc::OutOfRange);
+    EXPECT_THROW_WITH(Rcode(0x1000), isc::OutOfRange,
+		      "Rcode is too large to construct");
+    EXPECT_THROW_WITH(Rcode(0xffff), isc::OutOfRange,
+		      "Rcode is too large to construct");
 }
 
 TEST(RcodeTest, constructFromCodePair) {
     EXPECT_EQ(3, Rcode(Rcode::NXDOMAIN_CODE, 0).getCode());
     EXPECT_EQ(Rcode::BADVERS_CODE, Rcode(0, 1).getCode());
     EXPECT_EQ(0xfff, Rcode(0xf, 0xff).getCode());
-    EXPECT_THROW(Rcode(0x10, 0xff), isc::OutOfRange);
+    EXPECT_THROW_WITH(Rcode(0x10, 0xff), isc::OutOfRange,
+		      "Base Rcode is too large to construct: 16");
 }
 
 TEST(RcodeTest, getExtendedCode) {

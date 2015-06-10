@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -40,6 +40,7 @@
 
 #include <gtest/gtest.h>
 
+#include <util/unittests/test_exceptions.h>
 #include <dns/tests/unittest_util.h>
 #include <util/unittests/wiredata.h>
 
@@ -158,27 +159,37 @@ TEST_F(MessageTest, headerFlag) {
     EXPECT_FALSE(message_render.getHeaderFlag(Message::HEADERFLAG_AA));
 
     // Invalid flag values
-    EXPECT_THROW(message_render.setHeaderFlag(
-                     static_cast<Message::HeaderFlag>(0)), InvalidParameter);
-    EXPECT_THROW(message_render.setHeaderFlag(
-                     static_cast<Message::HeaderFlag>(0x7000)),
-                 InvalidParameter);
-    EXPECT_THROW(message_render.setHeaderFlag(
-                     static_cast<Message::HeaderFlag>(0x0800)),
-                 InvalidParameter);
-    EXPECT_THROW(message_render.setHeaderFlag(
-                     static_cast<Message::HeaderFlag>(0x0040)),
-                 InvalidParameter);
-    EXPECT_THROW(message_render.setHeaderFlag(
-                     static_cast<Message::HeaderFlag>(0x10000)),
-                 InvalidParameter);
-    EXPECT_THROW(message_render.setHeaderFlag(
-                     static_cast<Message::HeaderFlag>(0x80000000)),
-                 InvalidParameter);
+    EXPECT_THROW_WITH(
+        message_render.setHeaderFlag(static_cast<Message::HeaderFlag>(0)),
+        InvalidParameter,
+        "Message::getHeaderFlag:: Invalid flag is specified: 0x0");
+    EXPECT_THROW_WITH(
+        message_render.setHeaderFlag(static_cast<Message::HeaderFlag>(0x7000)),
+        InvalidParameter,
+        "Message::getHeaderFlag:: Invalid flag is specified: 0x7000");
+    EXPECT_THROW_WITH(
+        message_render.setHeaderFlag(static_cast<Message::HeaderFlag>(0x0800)),
+        InvalidParameter,
+        "Message::getHeaderFlag:: Invalid flag is specified: 0x800");
+    EXPECT_THROW_WITH(
+        message_render.setHeaderFlag(static_cast<Message::HeaderFlag>(0x0040)),
+        InvalidParameter,
+        "Message::getHeaderFlag:: Invalid flag is specified: 0x40");
+    EXPECT_THROW_WITH(
+        message_render.setHeaderFlag(
+            static_cast<Message::HeaderFlag>(0x10000)),
+        InvalidParameter,
+        "Message::getHeaderFlag:: Invalid flag is specified: 0x10000");
+    EXPECT_THROW_WITH(
+        message_render.setHeaderFlag(
+            static_cast<Message::HeaderFlag>(0x80000000)),
+        InvalidParameter,
+        "Message::getHeaderFlag:: Invalid flag is specified: 0x80000000");
 
     // set operation isn't allowed in the parse mode.
-    EXPECT_THROW(message_parse.setHeaderFlag(Message::HEADERFLAG_QR),
-                 InvalidMessageOperation);
+    EXPECT_THROW_WITH(message_parse.setHeaderFlag(Message::HEADERFLAG_QR),
+                      InvalidMessageOperation,
+                      "setHeaderFlag performed in non-render mode");
 }
 TEST_F(MessageTest, getEDNS) {
     EXPECT_FALSE(message_parse.getEDNS()); // by default EDNS isn't set
@@ -192,8 +203,9 @@ TEST_F(MessageTest, getEDNS) {
 
 TEST_F(MessageTest, setEDNS) {
     // setEDNS() isn't allowed in the parse mode
-    EXPECT_THROW(message_parse.setEDNS(EDNSPtr(new EDNS())),
-                 InvalidMessageOperation);
+    EXPECT_THROW_WITH(message_parse.setEDNS(EDNSPtr(new EDNS())),
+                      InvalidMessageOperation,
+                      "setEDNS performed in non-render mode");
 
     EDNSPtr edns = EDNSPtr(new EDNS());
     message_render.setEDNS(edns);
@@ -205,7 +217,9 @@ TEST_F(MessageTest, fromWireWithTSIG) {
     EXPECT_EQ(static_cast<void*>(NULL), message_parse.getTSIGRecord());
 
     // getTSIGRecord() is only valid in the parse mode.
-    EXPECT_THROW(message_render.getTSIGRecord(), InvalidMessageOperation);
+    EXPECT_THROW_WITH(message_render.getTSIGRecord(),
+                      InvalidMessageOperation,
+                      "getTSIGRecord performed in non-parse mode");
 
     factoryFromFile(message_parse, "message_toWire2.wire");
     const uint8_t expected_mac[] = {
@@ -244,18 +258,24 @@ TEST_F(MessageTest, fromWireWithTSIGCompressed) {
 
 TEST_F(MessageTest, fromWireWithBadTSIG) {
     // Multiple TSIG RRs
-    EXPECT_THROW(factoryFromFile(message_parse, "message_fromWire13.wire"),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(factoryFromFile(message_parse,
+                                      "message_fromWire13.wire"),
+                      DNSMessageFORMERR,
+                      "TSIG RR is not the last record");
     message_parse.clear(Message::PARSE);
 
     // TSIG in the answer section (must be in additional)
-    EXPECT_THROW(factoryFromFile(message_parse, "message_fromWire14.wire"),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(factoryFromFile(message_parse,
+                                      "message_fromWire14.wire"),
+                      DNSMessageFORMERR,
+                      "TSIG RR found in an invalid section");
     message_parse.clear(Message::PARSE);
 
     // TSIG is not the last record.
-    EXPECT_THROW(factoryFromFile(message_parse, "message_fromWire15.wire"),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(factoryFromFile(message_parse,
+                                      "message_fromWire15.wire"),
+                      DNSMessageFORMERR,
+                      "TSIG RR is not the last record");
     message_parse.clear(Message::PARSE);
 
     // Unexpected RR Class (this will fail in constructing TSIGRecord)
@@ -286,7 +306,8 @@ TEST_F(MessageTest, getRRCount) {
     EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_ADDITIONAL));
 
     // out-of-band section ID
-    EXPECT_THROW(message_parse.getRRCount(bogus_section), OutOfRange);
+    EXPECT_THROW_WITH(message_parse.getRRCount(bogus_section), OutOfRange,
+                      "Invalid message section: " << bogus_section);
 }
 
 TEST_F(MessageTest, addRRset) {
@@ -310,14 +331,20 @@ TEST_F(MessageTest, addRRset) {
 
 TEST_F(MessageTest, badAddRRset) {
     // addRRset() isn't allowed in the parse mode.
-    EXPECT_THROW(message_parse.addRRset(Message::SECTION_ANSWER,
-                                        rrset_a), InvalidMessageOperation);
+    EXPECT_THROW_WITH(message_parse.addRRset(Message::SECTION_ANSWER,
+                                             rrset_a),
+                      InvalidMessageOperation,
+                      "addRRset performed in non-render mode");
     // out-of-band section ID
-    EXPECT_THROW(message_render.addRRset(bogus_section, rrset_a), OutOfRange);
+    EXPECT_THROW_WITH(message_render.addRRset(bogus_section, rrset_a),
+                      OutOfRange, "Invalid message section: "
+                      << bogus_section);
 
     // NULL RRset
-    EXPECT_THROW(message_render.addRRset(Message::SECTION_ANSWER, RRsetPtr()),
-                 InvalidParameter);
+    EXPECT_THROW_WITH(message_render.addRRset(Message::SECTION_ANSWER,
+                                              RRsetPtr()),
+                      InvalidParameter,
+                      "NULL RRset is given to Message::addRRset");
 }
 
 TEST_F(MessageTest, hasRRset) {
@@ -339,9 +366,10 @@ TEST_F(MessageTest, hasRRset) {
                                         RRClass::IN(), RRType::AAAA()));
 
     // out-of-band section ID
-    EXPECT_THROW(message_render.hasRRset(bogus_section, test_name,
-                                         RRClass::IN(), RRType::A()),
-                 OutOfRange);
+    EXPECT_THROW_WITH(message_render.hasRRset(bogus_section, test_name,
+                                              RRClass::IN(), RRType::A()),
+                      OutOfRange, "Invalid message section: "
+                      << bogus_section);
 
     // Repeat the checks having created an RRset of the appropriate type.
 
@@ -362,7 +390,9 @@ TEST_F(MessageTest, hasRRset) {
     RRsetPtr rrs5(new RRset(test_name, RRClass::IN(), RRType::AAAA(), RRTTL(5)));
     EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ANSWER, rrs4));
 
-    EXPECT_THROW(message_render.hasRRset(bogus_section, rrs1), OutOfRange);
+    EXPECT_THROW_WITH(message_render.hasRRset(bogus_section, rrs1),
+                      OutOfRange, "Invalid message section: "
+                      << bogus_section);
 }
 
 TEST_F(MessageTest, removeRRset) {
@@ -461,32 +491,40 @@ TEST_F(MessageTest, clearAdditionalSection) {
 
 TEST_F(MessageTest, badClearSection) {
     // attempt of clearing a message in the parse mode.
-    EXPECT_THROW(message_parse.clearSection(Message::SECTION_QUESTION),
-                 InvalidMessageOperation);
+    EXPECT_THROW_WITH(message_parse.clearSection(Message::SECTION_QUESTION),
+                      InvalidMessageOperation,
+                      "clearSection performed in non-render mode");
     // attempt of clearing out-of-range section
-    EXPECT_THROW(message_render.clearSection(bogus_section), OutOfRange);
+    EXPECT_THROW_WITH(message_render.clearSection(bogus_section),
+                      OutOfRange, "Invalid message section: "
+                      << bogus_section);
 }
 
 TEST_F(MessageTest, badBeginSection) {
     // valid cases are tested via other tests
-    EXPECT_THROW(message_render.beginSection(Message::SECTION_QUESTION),
-                 InvalidMessageSection);
-    EXPECT_THROW(message_render.beginSection(bogus_section), OutOfRange);
+    EXPECT_THROW_WITH(message_render.beginSection(Message::SECTION_QUESTION),
+                      InvalidMessageSection,
+                      "RRset iterator is requested for question");
+    EXPECT_THROW_WITH(message_render.beginSection(bogus_section), OutOfRange,
+                      "Invalid message section: " << bogus_section);
 }
 
 TEST_F(MessageTest, badEndSection) {
     // valid cases are tested via other tests
-    EXPECT_THROW(message_render.endSection(Message::SECTION_QUESTION),
-                 InvalidMessageSection);
-    EXPECT_THROW(message_render.endSection(bogus_section), OutOfRange);
+    EXPECT_THROW_WITH(message_render.endSection(Message::SECTION_QUESTION),
+                      InvalidMessageSection,
+                      "RRset iterator is requested for question");
+    EXPECT_THROW_WITH(message_render.endSection(bogus_section), OutOfRange,
+                      "Invalid message section: " << bogus_section);
 }
 
 TEST_F(MessageTest, appendSection) {
     Message target(Message::RENDER);
 
     // Section check
-    EXPECT_THROW(target.appendSection(bogus_section, message_render),
-                 OutOfRange);
+    EXPECT_THROW_WITH(target.appendSection(bogus_section, message_render),
+                      OutOfRange, "Invalid message section: "
+                      << bogus_section);
 
     // Make sure nothing is copied if there is nothing to copy
     target.appendSection(Message::SECTION_QUESTION, message_render);
@@ -544,7 +582,9 @@ TEST_F(MessageTest, parseHeader) {
 
     // parseHeader() isn't allowed in the render mode.
     InputBuffer buffer(&received_data[0], received_data.size());
-    EXPECT_THROW(message_render.parseHeader(buffer), InvalidMessageOperation);
+    EXPECT_THROW_WITH(message_render.parseHeader(buffer),
+                      InvalidMessageOperation,
+                      "Message parse attempted in non parse mode");
 
     message_parse.parseHeader(buffer);
     EXPECT_EQ(0x1035, message_parse.getQid());
@@ -610,8 +650,9 @@ checkMessageFromWire(const Message& message_parse,
 
 TEST_F(MessageTest, fromWire) {
     // fromWire() isn't allowed in the render mode.
-    EXPECT_THROW(factoryFromFile(message_render, "message_fromWire1"),
-                 InvalidMessageOperation);
+    EXPECT_THROW_WITH(factoryFromFile(message_render, "message_fromWire1"),
+                      InvalidMessageOperation,
+                      "Message parse attempted in non parse mode");
 
     factoryFromFile(message_parse, "message_fromWire1");
     checkMessageFromWire(message_parse, test_name);
@@ -643,7 +684,9 @@ TEST_F(MessageTest, fromWireShortBuffer) {
     // fromWire() should throw an exception while parsing the trimmed RR.
     UnitTestUtil::readWireData("message_fromWire22.wire", received_data);
     InputBuffer buffer(&received_data[0], received_data.size() - 1);
-    EXPECT_THROW(message_parse.fromWire(buffer), InvalidBufferPosition);
+    EXPECT_THROW_WITH(message_parse.fromWire(buffer),
+                      InvalidBufferPosition,
+                      "read beyond end of buffer");
 }
 
 TEST_F(MessageTest, fromWireCombineRRs) {
@@ -732,12 +775,13 @@ TEST_F(MessageTest, EDNS0ExtRcode) {
 
 TEST_F(MessageTest, BadEDNS0) {
     // OPT RR in the answer section
-    EXPECT_THROW(factoryFromFile(message_parse, "message_fromWire4"),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(factoryFromFile(message_parse, "message_fromWire4"),
+                      DNSMessageFORMERR,
+                      "EDNS OPT RR found in an invalid section");
     // multiple OPT RRs (in the additional section)
     message_parse.clear(Message::PARSE);
-    EXPECT_THROW(factoryFromFile(message_parse, "message_fromWire5"),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(factoryFromFile(message_parse, "message_fromWire5"),
+                      DNSMessageFORMERR, "multiple EDNS OPT RR found");
 }
 
 TEST_F(MessageTest, toWire) {
@@ -846,7 +890,9 @@ TEST_F(MessageTest, toWireSignedAndTruncated) {
 
 TEST_F(MessageTest, toWireInParseMode) {
     // toWire() isn't allowed in the parse mode.
-    EXPECT_THROW(message_parse.toWire(renderer), InvalidMessageOperation);
+    EXPECT_THROW_WITH(message_parse.toWire(renderer),
+                      InvalidMessageOperation,
+                      "Message rendering attempted in non render mode");
 }
 
 // See dnssectime_unittest.cc
@@ -1085,36 +1131,46 @@ TEST_F(MessageTest, toWireTSIGLengthErrors) {
     // Use commonTSIGToWireCheck() only to call toWire() with otherwise valid
     // conditions.  The checks inside it don't matter because we expect an
     // exception before any of the checks.
-    EXPECT_THROW(commonTSIGToWireCheck(message_render, renderer, tsig_ctx,
-                                       "message_toWire2.wire"),
-                 InvalidParameter);
+    EXPECT_THROW_WITH(commonTSIGToWireCheck(message_render, renderer, tsig_ctx,
+                                            "message_toWire2.wire"),
+                      InvalidParameter,
+                      "Failed to render DNS message: "
+                      "too small limit for a TSIG ("
+                      << tsig_ctx.getTSIGLength() - 1 << ")");
 
     // This one is large enough for TSIG, but the remaining limit isn't
     // even enough for the Header section.
     renderer.clear();
     message_render.clear(Message::RENDER);
     renderer.setLengthLimit(tsig_ctx.getTSIGLength() + 1);
-    EXPECT_THROW(commonTSIGToWireCheck(message_render, renderer, tsig_ctx,
-                                       "message_toWire2.wire"),
-                 InvalidParameter);
+    EXPECT_THROW_WITH(commonTSIGToWireCheck(message_render, renderer, tsig_ctx,
+                                            "message_toWire2.wire"),
+                      InvalidParameter,
+                      "Failed to render DNS message: "
+                      "too small limit for a Header");
 
     // Trying to render a message with TSIG using a buggy renderer.
     BadRenderer bad_renderer;
     bad_renderer.setLengthLimit(512);
     message_render.clear(Message::RENDER);
-    EXPECT_THROW(commonTSIGToWireCheck(message_render, bad_renderer, tsig_ctx,
-                                       "message_toWire2.wire"),
-                 Unexpected);
+    EXPECT_THROW_WITH(commonTSIGToWireCheck(message_render,
+                                            bad_renderer, tsig_ctx,
+                                            "message_toWire2.wire"),
+                      Unexpected, "Failed to render a TSIG RR");
 }
 
 TEST_F(MessageTest, toWireWithoutOpcode) {
     message_render.setRcode(Rcode::NOERROR());
-    EXPECT_THROW(message_render.toWire(renderer), InvalidMessageOperation);
+    EXPECT_THROW_WITH(message_render.toWire(renderer),
+                      InvalidMessageOperation,
+                      "Message rendering attempted without Opcode set");
 }
 
 TEST_F(MessageTest, toWireWithoutRcode) {
     message_render.setOpcode(Opcode::QUERY());
-    EXPECT_THROW(message_render.toWire(renderer), InvalidMessageOperation);
+    EXPECT_THROW_WITH(message_render.toWire(renderer),
+                      InvalidMessageOperation,
+                      "Message rendering attempted without Rcode set");
 }
 
 TEST_F(MessageTest, toText) {
@@ -1158,11 +1214,13 @@ TEST_F(MessageTest, toText) {
 
 TEST_F(MessageTest, toTextWithoutOpcode) {
     message_render.setRcode(Rcode::NOERROR());
-    EXPECT_THROW(message_render.toText(), InvalidMessageOperation);
+    EXPECT_THROW_WITH(message_render.toText(), InvalidMessageOperation,
+                      "Message::toText() attempted without Opcode set");
 }
 
 TEST_F(MessageTest, toTextWithoutRcode) {
     message_render.setOpcode(Opcode::QUERY());
-    EXPECT_THROW(message_render.toText(), InvalidMessageOperation);
+    EXPECT_THROW_WITH(message_render.toText(), InvalidMessageOperation,
+                      "Message::toText() attempted without Rcode set");
 }
 }

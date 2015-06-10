@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,8 @@
 #include <exceptions/exceptions.h>
 
 #include <gtest/gtest.h>
+
+#include <util/unittests/test_exceptions.h>
 
 #include <iostream>
 #include <sstream>
@@ -64,9 +66,12 @@ TEST_F(InputSourceTest, getName) {
 }
 
 TEST_F(InputSourceTest, nonExistentFile) {
-    EXPECT_THROW({
+    EXPECT_THROW_WITH({
         InputSource source(TEST_DATA_SRCDIR "/does-not-exist");
-    }, InputSource::OpenError);
+    }, InputSource::OpenError,
+    "Error opening the input source file: "
+    << TEST_DATA_SRCDIR "/does-not-exist"
+    << "; possible cause: " << strerror(ENOENT));
 }
 
 // getChar() should return characters from the input stream in
@@ -124,7 +129,9 @@ checkGetAndUngetChar(InputSource& source,
     }
 
     // Skipping past the start of buffer should throw.
-    EXPECT_THROW(source.ungetChar(), InputSource::UngetBeforeBeginning);
+    EXPECT_THROW_WITH(source.ungetChar(),
+                      InputSource::UngetBeforeBeginning,
+                      "Cannot skip before the start of buffer");
 }
 
 TEST_F(InputSourceTest, stream) {
@@ -165,7 +172,9 @@ TEST_F(InputSourceTest, compact) {
     source_.compact();
 
     // Ungetting here must throw.
-    EXPECT_THROW(source_.ungetChar(), InputSource::UngetBeforeBeginning);
+    EXPECT_THROW_WITH(source_.ungetChar(),
+                      InputSource::UngetBeforeBeginning,
+                      "Cannot skip before the start of buffer");
 
     for (size_t i = 0; i < str_length_; ++i) {
         EXPECT_EQ(str_[i], source_.getChar());
@@ -196,7 +205,9 @@ TEST_F(InputSourceTest, compact) {
     source_.ungetChar();
 
     // Ungetting here must throw.
-    EXPECT_THROW(source_.ungetChar(), InputSource::UngetBeforeBeginning);
+    EXPECT_THROW_WITH(source_.ungetChar(),
+                      InputSource::UngetBeforeBeginning,
+                      "Cannot skip before the start of buffer");
 
     EXPECT_EQ(InputSource::END_OF_STREAM, source_.getChar());
     EXPECT_TRUE(source_.atEOF());
@@ -221,7 +232,9 @@ TEST_F(InputSourceTest, markDuring) {
     source_.mark();
 
     // Ungetting here must throw.
-    EXPECT_THROW(source_.ungetChar(), InputSource::UngetBeforeBeginning);
+    EXPECT_THROW_WITH(source_.ungetChar(),
+                      InputSource::UngetBeforeBeginning,
+                      "Cannot skip before the start of buffer");
 
     for (size_t i = 13; i < str_length_; ++i) {
         EXPECT_EQ(str_[i], source_.getChar());
@@ -241,7 +254,9 @@ TEST_F(InputSourceTest, markDuring) {
     source_.ungetAll();
 
     // Ungetting here must throw.
-    EXPECT_THROW(source_.ungetChar(), InputSource::UngetBeforeBeginning);
+    EXPECT_THROW_WITH(source_.ungetChar(),
+                      InputSource::UngetBeforeBeginning,
+                      "Cannot skip before the start of buffer");
 
     for (size_t i = 13; i < str_length_; ++i) {
         EXPECT_EQ(str_[i], source_.getChar());
@@ -296,14 +311,15 @@ TEST_F(InputSourceTest, lines) {
     EXPECT_TRUE(source_.atEOF());
     EXPECT_EQ(4, line);
 
-    EXPECT_THROW({
+    EXPECT_THROW_WITH({
         while (true) {
             source_.ungetChar();
             EXPECT_TRUE(((line == source_.getCurrentLine()) ||
                          ((line - 1) == source_.getCurrentLine())));
             line = source_.getCurrentLine();
         }
-    }, InputSource::UngetBeforeBeginning);
+    }, InputSource::UngetBeforeBeginning,
+    "Cannot skip before the start of buffer");
 
     // Now we are back to where we started.
     EXPECT_EQ(1, source_.getCurrentLine());
@@ -357,7 +373,9 @@ TEST_F(InputSourceTest, getSize) {
     // Pretend there's a *critical* error in the stream.  The constructor will
     // throw in the attempt of getting the input size.
     iss.setstate(std::ios_base::badbit);
-    EXPECT_THROW(InputSource isrc(iss), InputSource::OpenError);
+    EXPECT_THROW_WITH(InputSource isrc(iss),
+                      InputSource::OpenError,
+                      "failed to seek end of input source");
 
     // Check with input source from file name.  We hardcode the file size
     // for simplicity.  It won't change too often.

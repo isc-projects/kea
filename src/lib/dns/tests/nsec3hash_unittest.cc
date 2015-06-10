@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -22,6 +22,7 @@
 #include <dns/labelsequence.h>
 #include <dns/rdataclass.h>
 #include <util/encode/hex.h>
+#include <util/unittests/test_exceptions.h>
 
 using boost::scoped_ptr;
 using namespace std;
@@ -66,19 +67,23 @@ protected:
 };
 
 TEST_F(NSEC3HashTest, unknownAlgorithm) {
-    EXPECT_THROW(NSEC3HashPtr(
-                     NSEC3Hash::create(
-                         generic::NSEC3PARAM("2 0 12 aabbccdd"))),
-                     UnknownNSEC3HashAlgorithm);
-    EXPECT_THROW(NSEC3HashPtr(
-                     NSEC3Hash::create(
-                         generic::NSEC3("2 0 12 aabbccdd " +
-                                        string(nsec3_common)))),
-                     UnknownNSEC3HashAlgorithm);
+    EXPECT_THROW_WITH(NSEC3HashPtr(
+                         NSEC3Hash::create(
+                             generic::NSEC3PARAM("2 0 12 aabbccdd"))),
+                      UnknownNSEC3HashAlgorithm,
+                      "Unknown NSEC3 algorithm: 2");
+    EXPECT_THROW_WITH(NSEC3HashPtr(
+                         NSEC3Hash::create(
+                             generic::NSEC3("2 0 12 aabbccdd " +
+                                            string(nsec3_common)))),
+                      UnknownNSEC3HashAlgorithm,
+                      "Unknown NSEC3 algorithm: 2");
 
     const uint8_t salt[] = {0xaa, 0xbb, 0xcc, 0xdd};
-    EXPECT_THROW(NSEC3HashPtr(NSEC3Hash::create(2, 12, salt, sizeof(salt))),
-                 UnknownNSEC3HashAlgorithm);
+    EXPECT_THROW_WITH(NSEC3HashPtr(NSEC3Hash::create(2, 12, salt,
+                                                     sizeof(salt))),
+                      UnknownNSEC3HashAlgorithm,
+                      "Unknown NSEC3 algorithm: 2");
 }
 
 // Common checks for NSEC3 hash calculation

@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,8 @@
 #include <dns/rrclass.h>
 
 #include <exceptions/exceptions.h>
+
+#include <util/unittests/test_exceptions.h>
 
 #include <gtest/gtest.h>
 #include <boost/bind.hpp>
@@ -60,11 +62,13 @@ protected:
 
 // Check the constructor rejects empty callbacks, but accepts non-empty ones
 TEST_F(MasterLoaderCallbacksTest, constructor) {
-    EXPECT_THROW(MasterLoaderCallbacks(MasterLoaderCallbacks::IssueCallback(),
-                                       warning_), isc::InvalidParameter);
-    EXPECT_THROW(MasterLoaderCallbacks(error_,
-                                       MasterLoaderCallbacks::IssueCallback()),
-                 isc::InvalidParameter);
+    EXPECT_THROW_WITH(
+        MasterLoaderCallbacks(MasterLoaderCallbacks::IssueCallback(),
+                              warning_),
+        isc::InvalidParameter, "Empty function passed as callback");
+    EXPECT_THROW_WITH(
+        MasterLoaderCallbacks(error_, MasterLoaderCallbacks::IssueCallback()),
+        isc::InvalidParameter, "Empty function passed as callback");
     EXPECT_NO_THROW(MasterLoaderCallbacks(error_, warning_));
 }
 

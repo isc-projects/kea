@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -26,6 +26,7 @@
 
 #include <dns/tests/unittest_util.h>
 #include <util/unittests/wiredata.h>
+#include <util/unittests/test_exceptions.h>
 
 #include <gtest/gtest.h>
 
@@ -303,7 +304,8 @@ TEST_F(NameTest, copyOrigin) {
     EXPECT_EQ(origin_name, Name("@", 1, &origin_name_upper, true));
     EXPECT_EQ(origin_name_upper, Name("@", 1, &origin_name_upper, true));
     // If we don't provide the origin, it throws
-    EXPECT_THROW(Name("@", 1, NULL), MissingNameOrigin);
+    EXPECT_THROW_WITH(Name("@", 1, NULL), MissingNameOrigin,
+                      "No origin available and name is relative");
 }
 
 // Test the master-file constructor does not append the origin when the
@@ -328,25 +330,31 @@ TEST_F(NameTest, appendOrigin) {
     // Check we can prepend more than one label
     EXPECT_EQ(Name("a.b.c.d.example.com."), Name("a.b.c.d", 7, &origin_name));
     // When the name is relative, we throw.
-    EXPECT_THROW(Name("www", 3, NULL), MissingNameOrigin);
+    EXPECT_THROW_WITH(Name("www", 3, NULL), MissingNameOrigin,
+                      "No origin available and name is relative");
 }
 
 // When we don't provide the data, it throws
 TEST_F(NameTest, noDataProvided) {
-    EXPECT_THROW(Name(NULL, 10, NULL), isc::InvalidParameter);
-    EXPECT_THROW(Name(NULL, 10, &origin_name), isc::InvalidParameter);
-    EXPECT_THROW(Name("www", 0, NULL), isc::InvalidParameter);
-    EXPECT_THROW(Name("www", 0, &origin_name), isc::InvalidParameter);
+    EXPECT_THROW_WITH(Name(NULL, 10, NULL), isc::InvalidParameter,
+                      "No data provided to Name constructor");
+    EXPECT_THROW_WITH(Name(NULL, 10, &origin_name), isc::InvalidParameter,
+                      "No data provided to Name constructor");
+    EXPECT_THROW_WITH(Name("www", 0, NULL), isc::InvalidParameter,
+                      "No data provided to Name constructor");
+    EXPECT_THROW_WITH(Name("www", 0, &origin_name), isc::InvalidParameter,
+                      "No data provided to Name constructor");
 }
 
 // When we combine the first part and the origin together, the resulting name
 // is too long. It should throw. Other test checks this is valid when alone
 // (without the origin appended).
 TEST_F(NameTest, combinedTooLong) {
-    EXPECT_THROW(Name(max_len_str, strlen(max_len_str), &origin_name),
-                 TooLongName);
-    EXPECT_THROW(Name(max_labels_str, strlen(max_labels_str), &origin_name),
-                 TooLongName);
+    EXPECT_THROW_WITH(Name(max_len_str, strlen(max_len_str), &origin_name),
+                      TooLongName, "Combined name is too long");
+    EXPECT_THROW_WITH(Name(max_labels_str, strlen(max_labels_str),
+                           &origin_name),
+                      TooLongName, "Combined name is too long");
     // Appending the root should be OK
     EXPECT_NO_THROW(Name(max_len_str, strlen(max_len_str),
                          &Name::ROOT_NAME()));
@@ -359,7 +367,8 @@ TEST_F(NameTest, combinedTooLong) {
 TEST_F(NameTest, atSign) {
     // If it is alone, it is the origin
     EXPECT_EQ(origin_name, Name("@", 1, &origin_name));
-    EXPECT_THROW(Name("@", 1, NULL), MissingNameOrigin);
+    EXPECT_THROW_WITH(Name("@", 1, NULL), MissingNameOrigin,
+                      "No origin available and name is relative");
     EXPECT_EQ(Name::ROOT_NAME(), Name("@"));
 
     // It is not alone. It is taken verbatim. We check the name converted
@@ -387,23 +396,33 @@ TEST_F(NameTest, fromWire) {
                         nameFactoryFromWire("name_fromWire1", 25),
                         Name("vix.com"));
     // bogus label character (looks like a local compression pointer)
-    EXPECT_THROW(nameFactoryFromWire("name_fromWire2", 25), DNSMessageFORMERR);
+    EXPECT_THROW_WITH(nameFactoryFromWire("name_fromWire2", 25),
+                      DNSMessageFORMERR,
+                      "unknown label character: 131");
     // a bad compression pointer (too big)
-    EXPECT_THROW(nameFactoryFromWire("name_fromWire3_1", 25),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(nameFactoryFromWire("name_fromWire3_1", 25),
+                      DNSMessageFORMERR,
+                      "bad compression pointer (out of range): 12300");
     // forward reference
-    EXPECT_THROW(nameFactoryFromWire("name_fromWire3_2", 25),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(nameFactoryFromWire("name_fromWire3_2", 25),
+                      DNSMessageFORMERR,
+		      "bad compression pointer (out of range): 48");
     // invalid name length
-    EXPECT_THROW(nameFactoryFromWire("name_fromWire4", 550), DNSMessageFORMERR);
+    EXPECT_THROW_WITH(nameFactoryFromWire("name_fromWire4", 550),
+                      DNSMessageFORMERR,
+		      "wire name is too long: 258 bytes");
 
     // skip test for from Wire5.  It's for disabling decompression, but our
     // implementation always allows it.
 
     // bad pointer (too big)
-    EXPECT_THROW(nameFactoryFromWire("name_fromWire6", 25), DNSMessageFORMERR);
+    EXPECT_THROW_WITH(nameFactoryFromWire("name_fromWire6", 25),
+                      DNSMessageFORMERR,
+		      "bad compression pointer (out of range): 12300");
     // input ends unexpectedly
-    EXPECT_THROW(nameFactoryFromWire("name_fromWire7", 25), DNSMessageFORMERR);
+    EXPECT_THROW_WITH(nameFactoryFromWire("name_fromWire7", 25),
+                      DNSMessageFORMERR,
+		      "incomplete wire-format name");
     // many hops of compression but valid.  should succeed.
     EXPECT_PRED_FORMAT2(UnitTestUtil::matchName,
                         nameFactoryFromWire("name_fromWire8", 383),
@@ -416,15 +435,18 @@ TEST_F(NameTest, fromWire) {
     // large names, a long but valid one, and invalid (too long) one.
     EXPECT_EQ(Name::MAX_WIRE,
               nameFactoryFromWire("name_fromWire9", 0).getLength());
-    EXPECT_THROW(nameFactoryFromWire("name_fromWire10", 0).getLength(),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(nameFactoryFromWire("name_fromWire10", 0).getLength(),
+                      DNSMessageFORMERR,
+                      "wire name is too long: 256 bytes");
 
     // A name with possible maximum number of labels; awkward but valid
     EXPECT_EQ(nameFactoryFromWire("name_fromWire11", 0).getLabelCount(),
               Name::MAX_LABELS);
 
     // Wire format including an invalid label length
-    EXPECT_THROW(nameFactoryFromWire("name_fromWire12", 0), DNSMessageFORMERR);
+    EXPECT_THROW_WITH(nameFactoryFromWire("name_fromWire12", 0),
+                      DNSMessageFORMERR,
+                      "unknown label character: 64");
 
     // converting upper-case letters to down-case
     EXPECT_EQ("vix.com.",
@@ -621,7 +643,8 @@ TEST_F(NameTest, concatenate) {
     Name n2("123456789.123456789.123456789.123456789.123456789."
             "123456789.123456789.123456789.123456789.123456789."
             "1234.");
-    EXPECT_THROW(n1.concatenate(n2), TooLongName);
+    EXPECT_THROW_WITH(n1.concatenate(n2), TooLongName,
+                      "names are too long to concatenate");
 }
 
 TEST_F(NameTest, reverse) {
@@ -646,13 +669,16 @@ TEST_F(NameTest, split) {
     EXPECT_PRED_FORMAT2(UnitTestUtil::matchName, example_name.split(3, 1),
                         Name("."));
     // invalid range: an exception should be thrown.
-    EXPECT_THROW(example_name.split(1, 0), OutOfRange);
-    EXPECT_THROW(example_name.split(2, 3), OutOfRange);
+    EXPECT_THROW_WITH(example_name.split(1, 0), OutOfRange,
+                      "Name::split: invalid split range");
+    EXPECT_THROW_WITH(example_name.split(2, 3), OutOfRange,
+                      "Name::split: invalid split range");
 
     // invalid range: the following parameters would cause overflow,
     // bypassing naive validation.
-    EXPECT_THROW(example_name.split(1, numeric_limits<unsigned int>::max()),
-                 OutOfRange);
+    EXPECT_THROW_WITH(example_name.split(1,
+                                         numeric_limits<unsigned int>::max()),
+                      OutOfRange, "Name::split: invalid split range");
 }
 
 TEST_F(NameTest, split_for_suffix) {
@@ -664,7 +690,9 @@ TEST_F(NameTest, split_for_suffix) {
                         Name("."));
 
     // Invalid case: the level must be less than the original label count.
-    EXPECT_THROW(example_name.split(4), OutOfRange);
+    EXPECT_THROW_WITH(example_name.split(4), OutOfRange,
+		      "invalid level for name split (4) "
+		      "for name www.example.com.");
 }
 
 TEST_F(NameTest, downcase) {
@@ -691,7 +719,8 @@ TEST_F(NameTest, at) {
                   buffer_expected.getData(), buffer_expected.getLength());
 
     // Out-of-range access: should trigger an exception.
-    EXPECT_THROW(example_name.at(example_name.getLength()), OutOfRange);
+    EXPECT_THROW_WITH(example_name.at(example_name.getLength()), OutOfRange,
+                      "Out of range access in Name::at()");
 }
 
 //

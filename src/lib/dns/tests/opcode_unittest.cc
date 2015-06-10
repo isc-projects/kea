@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,8 @@
 
 #include <gtest/gtest.h>
 
+#include <util/unittests/test_exceptions.h>
+
 using namespace std;
 using namespace isc::dns;
 
@@ -30,7 +32,8 @@ TEST(OpcodeTest, construct) {
     EXPECT_EQ(0, Opcode(0).getCode());
     EXPECT_EQ(15, Opcode(Opcode::RESERVED15_CODE).getCode());
 
-    EXPECT_THROW(Opcode(16), isc::OutOfRange);
+    EXPECT_THROW_WITH(Opcode(16), isc::OutOfRange,
+                      "DNS Opcode is too large to construct: 16");
 }
 
 TEST(OpcodeTest, constants) {

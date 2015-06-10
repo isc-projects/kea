@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -27,6 +27,7 @@
 
 #include <gtest/gtest.h>
 
+#include <util/unittests/test_exceptions.h>
 #include <dns/tests/unittest_util.h>
 #include <util/unittests/wiredata.h>
 
@@ -83,8 +84,12 @@ TEST_F(QuestionTest, fromWire) {
 
     // Pathological cases: Corresponding exceptions will be thrown from
     // the underlying parser.
-    EXPECT_THROW(questionFromWire("question_fromWire", 31), DNSMessageFORMERR);
-    EXPECT_THROW(questionFromWire("question_fromWire", 36), IncompleteRRClass);
+    EXPECT_THROW_WITH(questionFromWire("question_fromWire", 31),
+                      DNSMessageFORMERR,
+                      "bad compression pointer (out of range): 16128");
+    EXPECT_THROW_WITH(questionFromWire("question_fromWire", 36),
+                      IncompleteRRClass,
+                      "incomplete wire-format RR class");
 }
 
 TEST_F(QuestionTest, toText) {
