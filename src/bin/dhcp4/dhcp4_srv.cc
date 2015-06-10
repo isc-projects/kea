@@ -355,7 +355,7 @@ Dhcpv4Srv::run() {
                     .arg(query->getIface());
 
             } else {
-                LOG_DEBUG(packet_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT_TIMEOUT)
+                LOG_DEBUG(packet_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT_INTERRUPTED)
                     .arg(timeout);
             }
 
