@@ -134,7 +134,7 @@ DControllerBase::parseArgs(int argc, char* argv[])
     int ch;
     opterr = 0;
     optind = 1;
-    std::string opts("dvVc:" + getCustomOpts());
+    std::string opts("dvVWc:" + getCustomOpts());
     while ((ch = getopt(argc, argv, opts.c_str())) != -1) {
         switch (ch) {
         case 'd':
@@ -154,6 +154,12 @@ DControllerBase::parseArgs(int argc, char* argv[])
             isc_throw(VersionMessage, getVersion(true));
             break;
             
+        case 'W':
+            // gather Kea config report and throw so main() can catch and
+            // return rather than calling exit() here which disrupts gtest.
+            isc_throw(VersionMessage, isc::detail::getConfigReport());
+            break;
+
         case 'c':
             // config file name
             if (optarg == NULL) {
@@ -435,6 +441,8 @@ DControllerBase::usage(const std::string & text)
               << "  -d: optional, verbose output " << std::endl
               << "  -v: print version number and exit" << std::endl
               << "  -V: print extended version information and exit"
+              << std::endl
+              << "  -W: display the configuration report and exit"
               << std::endl;
 
     // add any derivation specific usage
