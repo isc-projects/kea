@@ -406,11 +406,11 @@ TEST_F(NameTest, fromWire) {
     // forward reference
     EXPECT_THROW_WITH(nameFactoryFromWire("name_fromWire3_2", 25),
                       DNSMessageFORMERR,
-		      "bad compression pointer (out of range): 48");
+                      "bad compression pointer (out of range): 48");
     // invalid name length
     EXPECT_THROW_WITH(nameFactoryFromWire("name_fromWire4", 550),
                       DNSMessageFORMERR,
-		      "wire name is too long: 258 bytes");
+                      "wire name is too long: 258 bytes");
 
     // skip test for from Wire5.  It's for disabling decompression, but our
     // implementation always allows it.
@@ -418,11 +418,11 @@ TEST_F(NameTest, fromWire) {
     // bad pointer (too big)
     EXPECT_THROW_WITH(nameFactoryFromWire("name_fromWire6", 25),
                       DNSMessageFORMERR,
-		      "bad compression pointer (out of range): 12300");
+                      "bad compression pointer (out of range): 12300");
     // input ends unexpectedly
     EXPECT_THROW_WITH(nameFactoryFromWire("name_fromWire7", 25),
                       DNSMessageFORMERR,
-		      "incomplete wire-format name");
+                      "incomplete wire-format name");
     // many hops of compression but valid.  should succeed.
     EXPECT_PRED_FORMAT2(UnitTestUtil::matchName,
                         nameFactoryFromWire("name_fromWire8", 383),
@@ -691,8 +691,8 @@ TEST_F(NameTest, split_for_suffix) {
 
     // Invalid case: the level must be less than the original label count.
     EXPECT_THROW_WITH(example_name.split(4), OutOfRange,
-		      "invalid level for name split (4) "
-		      "for name www.example.com.");
+                      "invalid level for name split (4) "
+                      "for name www.example.com.");
 }
 
 TEST_F(NameTest, downcase) {

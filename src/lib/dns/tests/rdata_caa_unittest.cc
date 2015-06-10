@@ -1,4 +1,4 @@
-// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -27,6 +27,7 @@
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
 #include <util/unittests/wiredata.h>
+#include <util/unittests/test_exceptions.h>
 
 #include <boost/algorithm/string.hpp>
 
@@ -124,18 +125,21 @@ TEST_F(Rdata_CAA_Test, fields) {
     EXPECT_NO_THROW(const generic::CAA rdata_caa2("0 issue"));
 
     // > 255 would be broken
-    EXPECT_THROW(const generic::CAA rdata_caa2("256 issue \"ca.example.net\""),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(const generic::CAA
+                          rdata_caa2("256 issue \"ca.example.net\""),
+                      InvalidRdataText, "CAA flags field out of range");
 
     // Missing tag causes the value to be parsed as the tag field. As
     // the tag field does not allow quoted strings, this throws.
-    EXPECT_THROW(const generic::CAA rdata_caa2("0 \"ca.example.net\""),
-                 InvalidRdataText);
-
+    EXPECT_THROW_WITH(const generic::CAA rdata_caa2("0 \"ca.example.net\""),
+                      InvalidRdataText,
+                      "Failed to construct CAA from '"
+                      "0 \"ca.example.net\"': unexpected quotes");
     // Tag is too long
     const std::string tag(256, 'a');
     const std::string rdata_txt("0 " + tag + " \"ca.example.net\"");
-    EXPECT_THROW(const generic::CAA rdata_caa2(rdata_txt), InvalidRdataText);
+    EXPECT_THROW_WITH(const generic::CAA rdata_caa2(rdata_txt),
+                      InvalidRdataText, "CAA tag field is too large: 256");
 }
 
 TEST_F(Rdata_CAA_Test, characterStringValue) {
@@ -155,8 +159,10 @@ TEST_F(Rdata_CAA_Test, characterStringValue) {
 TEST_F(Rdata_CAA_Test, badText) {
     checkFromText_LexerError("0");
     checkFromText_LexerError("ZERO issue \"ca.example.net\"");
-    EXPECT_THROW(const generic::CAA rdata_caa2(caa_txt + " extra text"),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(const generic::CAA rdata_caa2(caa_txt + " extra text"),
+                      InvalidRdataText,
+                      "extra input text for CAA: "
+                      "0 issue \"ca.example.net\" extra text");
 
     // Yes, this is redundant to the last test cases in the .fields test
     checkFromText_InvalidText("2345 issue \"ca.example.net\"");
@@ -192,19 +198,19 @@ TEST_F(Rdata_CAA_Test, createFromWire) {
                                          "rdata_caa_fromWire3.wire"));
 
     // Tag field is empty
-    EXPECT_THROW(rdataFactoryFromFile(RRType("CAA"), RRClass("IN"),
-                                      "rdata_caa_fromWire4.wire"),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType("CAA"), RRClass("IN"),
+                                           "rdata_caa_fromWire4.wire"),
+                      InvalidRdataText, "CAA tag field is empty");
 
     // Value field is shorter than rdata len
-    EXPECT_THROW(rdataFactoryFromFile(RRType("CAA"), RRClass("IN"),
-                                      "rdata_caa_fromWire5"),
-                 InvalidBufferPosition);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType("CAA"), RRClass("IN"),
+                                           "rdata_caa_fromWire5"),
+                      InvalidBufferPosition, "read beyond end of buffer");
 
     // all RDATA is missing
-    EXPECT_THROW(rdataFactoryFromFile(RRType("CAA"), RRClass("IN"),
-                                      "rdata_caa_fromWire6"),
-                 InvalidBufferPosition);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType("CAA"), RRClass("IN"),
+                                           "rdata_caa_fromWire6"),
+                      InvalidBufferPosition, "read beyond end of buffer");
 }
 
 TEST_F(Rdata_CAA_Test, createFromParams) {
@@ -218,18 +224,20 @@ TEST_F(Rdata_CAA_Test, createFromParams) {
     EXPECT_EQ(0, rdata_caa5.compare(rdata_caa));
 
     // Tag is empty
-    EXPECT_THROW(const generic::CAA rdata_caa3(0, "", "ca.example.net"),
-                 isc::InvalidParameter);
+    EXPECT_THROW_WITH(const generic::CAA rdata_caa3(0, "", "ca.example.net"),
+                      isc::InvalidParameter, "CAA tag field is empty");
 
     // Tag is too long
     const std::string tag(256, 'a');
-    EXPECT_THROW(const generic::CAA rdata_caa3(0, tag, "ca.example.net"),
-                 isc::InvalidParameter);
+    EXPECT_THROW_WITH(const generic::CAA rdata_caa3(0, tag, "ca.example.net"),
+                      isc::InvalidParameter,
+                      "CAA tag field is too large: 256");
 
     // Value is too long
     const std::string value(65536, 'a');
-    EXPECT_THROW(const generic::CAA rdata_caa3(0, "issue", value),
-                 InvalidRdataLength);
+    EXPECT_THROW_WITH(const generic::CAA rdata_caa3(0, "issue", value),
+                      InvalidRdataLength,
+                      "CAA Value field is too large: 65536");
 }
 
 TEST_F(Rdata_CAA_Test, toText) {

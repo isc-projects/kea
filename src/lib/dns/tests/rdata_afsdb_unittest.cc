@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -25,6 +25,7 @@
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
 #include <util/unittests/wiredata.h>
+#include <util/unittests/test_exceptions.h>
 
 using namespace std;
 using namespace isc::dns;
@@ -61,21 +62,37 @@ TEST_F(Rdata_AFSDB_Test, createFromText) {
 
 TEST_F(Rdata_AFSDB_Test, badText) {
     // subtype is too large
-    EXPECT_THROW(const generic::AFSDB rdata_afsdb("99999999 afsdb.example.com."),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(const generic::AFSDB
+                          rdata_afsdb("99999999 afsdb.example.com."),
+                      InvalidRdataText, "Invalid AFSDB subtype: 99999999");
     // incomplete text
-    EXPECT_THROW(const generic::AFSDB rdata_afsdb("10"), InvalidRdataText);
-    EXPECT_THROW(const generic::AFSDB rdata_afsdb("SPOON"), InvalidRdataText);
-    EXPECT_THROW(const generic::AFSDB rdata_afsdb("1root.example.com."), InvalidRdataText);
+    EXPECT_THROW_WITH(const generic::AFSDB rdata_afsdb("10"),
+                      InvalidRdataText,
+                      "Failed to construct AFSDB from '10': "
+                      "unexpected end of input");
+    EXPECT_THROW_WITH(const generic::AFSDB rdata_afsdb("SPOON"),
+                      InvalidRdataText,
+                      "Failed to construct AFSDB from 'SPOON': "
+                      "not a valid number");
+    EXPECT_THROW_WITH(const generic::AFSDB rdata_afsdb("1root.example.com."),
+                      InvalidRdataText,
+                      "Failed to construct AFSDB from '1root.example.com.': "
+                      "not a valid number");
     // number of fields (must be 2) is incorrect
-    EXPECT_THROW(const generic::AFSDB rdata_afsdb("10 afsdb. example.com."),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(const generic::AFSDB
+                          rdata_afsdb("10 afsdb. example.com."),
+                      InvalidRdataText,
+                      "extra input text for AFSDB: 10 afsdb. example.com.");
+                      
     // No origin and relative
-    EXPECT_THROW(const generic::AFSDB rdata_afsdb("1 afsdb.example.com"),
-                 MissingNameOrigin);
+    EXPECT_THROW_WITH(const generic::AFSDB rdata_afsdb("1 afsdb.example.com"),
+                      MissingNameOrigin,
+                      "No origin available and name is relative");
     // bad name
-    EXPECT_THROW(const generic::AFSDB rdata_afsdb("1 afsdb.example.com." +
-                 string(too_long_label)), TooLongLabel);
+    EXPECT_THROW_WITH(const generic::AFSDB rdata_afsdb("1 afsdb.example.com." +
+                                                       string(too_long_label)),
+                      TooLongLabel, "label is too long in "
+                      << "afsdb.example.com." + string(too_long_label));
 }
 
 TEST_F(Rdata_AFSDB_Test, copy) {
@@ -110,18 +127,18 @@ TEST_F(Rdata_AFSDB_Test, createFromWire) {
                   *rdataFactoryFromFile(RRType::AFSDB(), RRClass::IN(),
                                      "rdata_afsdb_fromWire2.wire", 13)));
     // RDLENGTH is too short
-    EXPECT_THROW(rdataFactoryFromFile(RRType::AFSDB(), RRClass::IN(),
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType::AFSDB(), RRClass::IN(),
                                      "rdata_afsdb_fromWire3.wire"),
-                 InvalidRdataLength);
+                      InvalidRdataLength, "RDLENGTH mismatch: 21 != 3");
     // RDLENGTH is too long
-    EXPECT_THROW(rdataFactoryFromFile(RRType::AFSDB(), RRClass::IN(),
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType::AFSDB(), RRClass::IN(),
                                       "rdata_afsdb_fromWire4.wire"),
-                 InvalidRdataLength);
+                      InvalidRdataLength, "RDLENGTH mismatch: 21 != 80");
     // bogus server name, the error should be detected in the name
     // constructor
-    EXPECT_THROW(rdataFactoryFromFile(RRType::AFSDB(), RRClass::IN(),
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType::AFSDB(), RRClass::IN(),
                                       "rdata_afsdb_fromWire5.wire"),
-                 DNSMessageFORMERR);
+                      DNSMessageFORMERR, "unknown label character: 67");
 }
 
 TEST_F(Rdata_AFSDB_Test, createFromLexer) {

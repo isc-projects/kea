@@ -34,9 +34,9 @@ TEST(RcodeTest, constructFromCode) {
 
     // should fail on attempt of construction with an out of range code
     EXPECT_THROW_WITH(Rcode(0x1000), isc::OutOfRange,
-		      "Rcode is too large to construct");
+                      "Rcode is too large to construct");
     EXPECT_THROW_WITH(Rcode(0xffff), isc::OutOfRange,
-		      "Rcode is too large to construct");
+                      "Rcode is too large to construct");
 }
 
 TEST(RcodeTest, constructFromCodePair) {
@@ -44,7 +44,7 @@ TEST(RcodeTest, constructFromCodePair) {
     EXPECT_EQ(Rcode::BADVERS_CODE, Rcode(0, 1).getCode());
     EXPECT_EQ(0xfff, Rcode(0xf, 0xff).getCode());
     EXPECT_THROW_WITH(Rcode(0x10, 0xff), isc::OutOfRange,
-		      "Base Rcode is too large to construct: 16");
+                      "Base Rcode is too large to construct: 16");
 }
 
 TEST(RcodeTest, getExtendedCode) {

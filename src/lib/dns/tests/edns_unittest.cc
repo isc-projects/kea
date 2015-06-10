@@ -70,8 +70,8 @@ const RRTTL rrttl_badver(0x00018000); // version=1, DO=on
 
 TEST_F(EDNSTest, badVerConstruct) {
     EXPECT_THROW_WITH(EDNS(1),
-		      isc::InvalidParameter,
-		      "failed to construct EDNS: unsupported version: 1");
+                      isc::InvalidParameter,
+                      "failed to construct EDNS: unsupported version: 1");
 }
 
 TEST_F(EDNSTest, DNSSECDOBit) {
@@ -125,23 +125,23 @@ TEST_F(EDNSTest, getVersion) {
 TEST_F(EDNSTest, BadWireData) {
     // Incompatible RR type
     EXPECT_THROW_WITH(EDNS(Name::ROOT_NAME(), rrclass, RRType::A(),
-			   rrttl_do_on, *opt_rdata),
-		      isc::InvalidParameter,
-		      "EDNS is being created with incompatible RR type: "
-		      << RRType::A());
+                           rrttl_do_on, *opt_rdata),
+                      isc::InvalidParameter,
+                      "EDNS is being created with incompatible RR type: "
+                      << RRType::A());
 
     // OPT RR of a non root name
     EXPECT_THROW_WITH(EDNS(Name("example.com"), rrclass, rrtype,
-			   rrttl_do_on, *opt_rdata),
-		      DNSMessageFORMERR,
-		      "invalid owner name for EDNS OPT RR: "
-		      << Name("example.com"));
+                           rrttl_do_on, *opt_rdata),
+                      DNSMessageFORMERR,
+                      "invalid owner name for EDNS OPT RR: "
+                      << Name("example.com"));
                  
     // Unsupported Version
     EXPECT_THROW_WITH(EDNS(Name::ROOT_NAME(), rrclass, rrtype,
-			   rrttl_badver, *opt_rdata),
-		      DNSMessageBADVERS,
-		      "unsupported EDNS version: 1");
+                           rrttl_badver, *opt_rdata),
+                      DNSMessageBADVERS,
+                      "unsupported EDNS version: 1");
 }
 
 TEST_F(EDNSTest, toText) {
@@ -261,10 +261,10 @@ TEST_F(EDNSTest, createFromRR) {
     // creation triggers an exception.  extended_rcode must be intact.
     extended_rcode = 0;
     EXPECT_THROW_WITH(createEDNSFromRR(Name::ROOT_NAME(), rrclass, rrtype,
-				       rrttl_badver, *opt_rdata,
-				       extended_rcode),
-		      DNSMessageBADVERS,
-		      "unsupported EDNS version: 1");
+                                       rrttl_badver, *opt_rdata,
+                                       extended_rcode),
+                      DNSMessageBADVERS,
+                      "unsupported EDNS version: 1");
     EXPECT_EQ(0, static_cast<int>(extended_rcode));
 }
 

@@ -43,7 +43,7 @@ replacePlaceholder(string* message, const string& arg,
     else {
         // We're missing the placeholder, so throw an exception
         isc_throw(MismatchedPlaceholders,
-		  "Missing logger placeholder in message: " << *message);
+                  "Missing logger placeholder in message: " << *message);
     }
 #else
     else {

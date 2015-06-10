@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -174,7 +174,7 @@ TEST_F(MasterLoadTest, loadRRsigs) {
 TEST_F(MasterLoadTest, DISABLED_loadRRWithComment) {
     // Comment at the end of line should be ignored and the RR should be
     // accepted.
-    rr_stream << "example.com. 3600 IN DNSKEY	256 3 7 "
+    rr_stream << "example.com. 3600 IN DNSKEY   256 3 7 "
         "AwEAAaetidLzsKWUt4swWR8yu0wPHPiUi8LUsAD0QPWU+wzt89epO6tH "
         "zkMBVDkC7qphQO2hTY4hHn9npWFRw5BYubE=  ; key id = 40430\n";
     masterLoad(rr_stream, origin, zclass, callback);
@@ -191,7 +191,7 @@ TEST_F(MasterLoadTest, DISABLED_loadRRWithComment) {
 TEST_F(MasterLoadTest, DISABLED_loadRRWithCommentNoSpace) {
     // Similar to the previous one, but there's no space before comments.
     // It should still work.
-    rr_stream << "example.com. 3600 IN DNSKEY	256 3 7 "
+    rr_stream << "example.com. 3600 IN DNSKEY   256 3 7 "
         "AwEAAaetidLzsKWUt4swWR8yu0wPHPiUi8LUsAD0QPWU+wzt89epO6tH "
         "zkMBVDkC7qphQO2hTY4hHn9npWFRw5BYubE=; key id = 40430\n";
     masterLoad(rr_stream, origin, zclass, callback);
@@ -208,7 +208,7 @@ TEST_F(MasterLoadTest, DISABLED_loadRRWithCommentNoSpace) {
 TEST_F(MasterLoadTest, DISABLED_loadRRWithCommentEmptyComment) {
     // Similar to the previous one, but there's no data after the ;
     // It should still work.
-    rr_stream << "example.com. 3600 IN DNSKEY	256 3 7 "
+    rr_stream << "example.com. 3600 IN DNSKEY   256 3 7 "
         "AwEAAaetidLzsKWUt4swWR8yu0wPHPiUi8LUsAD0QPWU+wzt89epO6tH "
         "zkMBVDkC7qphQO2hTY4hHn9npWFRw5BYubE= ;\n";
     masterLoad(rr_stream, origin, zclass, callback);
@@ -225,7 +225,7 @@ TEST_F(MasterLoadTest, DISABLED_loadRRWithCommentEmptyComment) {
 TEST_F(MasterLoadTest, DISABLED_loadRRWithCommentEmptyCommentNoSpace) {
     // Similar to the previous one, but there's no space before or after ;
     // It should still work.
-    rr_stream << "example.com. 3600 IN DNSKEY	256 3 7 "
+    rr_stream << "example.com. 3600 IN DNSKEY   256 3 7 "
         "AwEAAaetidLzsKWUt4swWR8yu0wPHPiUi8LUsAD0QPWU+wzt89epO6tH "
         "zkMBVDkC7qphQO2hTY4hHn9npWFRw5BYubE=;\n";
     masterLoad(rr_stream, origin, zclass, callback);
