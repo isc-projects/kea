@@ -15,7 +15,7 @@
 #include <gtest/gtest.h>
 
 #include <config/command_mgr.h>
-#include <config/command_interpreter.h>
+#include <cc/command_interpreter.h>
 
 using namespace isc::data;
 using namespace isc::config;

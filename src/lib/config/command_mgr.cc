@@ -15,6 +15,7 @@
 #include <config/command_mgr.h>
 #include <config/command_socket_factory.h>
 #include <cc/data.h>
+#include <cc/command_interpreter.h>
 #include <dhcp/iface_mgr.h>
 #include <config/config_log.h>
 #include <boost/bind.hpp>

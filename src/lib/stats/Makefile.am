@@ -11,7 +11,6 @@ libkea_stats_la_SOURCES += stats_mgr.h stats_mgr.cc
 
 libkea_stats_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_stats_la_LIBADD  = $(top_builddir)/src/lib/cc/libkea-cc.la
-libkea_stats_la_LIBADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 libkea_stats_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 
 libkea_stats_includedir = $(includedir)/$(PACKAGE_NAME)/stats

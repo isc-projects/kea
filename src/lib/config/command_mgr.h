@@ -15,11 +15,11 @@
 #ifndef COMMAND_MGR_H
 #define COMMAND_MGR_H
 
-#include <config/command_interpreter.h>
 #include <cc/data.h>
 #include <boost/noncopyable.hpp>
-#include <boost/any.hpp>
+#include <boost/function.hpp>
 #include <string>
+#include <list>
 #include <map>
 
 namespace isc {
