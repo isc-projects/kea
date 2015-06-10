@@ -14,7 +14,7 @@
 
 #include <config.h>
 #include <d2/d2_log.h>
-#include <config/ccsession.h>
+#include <cc/command_interpreter.h>
 #include <d2/d_controller.h>
 #include <exceptions/exceptions.h>
 #include <log/logger_support.h>

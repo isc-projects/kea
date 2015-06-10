@@ -16,8 +16,8 @@
 #include <gtest/gtest.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/json_config_parser.h>
-#include <config/ccsession.h>
 #include <util/pointer_util.h>
+#include <cc/command_interpreter.h>
 #include <string.h>
 
 using namespace isc::data;

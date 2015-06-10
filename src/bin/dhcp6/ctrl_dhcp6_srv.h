@@ -17,8 +17,7 @@
 
 #include <asiolink/asiolink.h>
 #include <cc/data.h>
-#include <cc/session.h>
-#include <config/ccsession.h>
+#include <cc/command_interpreter.h>
 #include <dhcp6/dhcp6_srv.h>
 
 namespace isc {

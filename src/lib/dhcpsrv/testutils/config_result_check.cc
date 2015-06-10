@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <cc/proto_defs.h>
+#include <cc/command_interpreter.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/constants.hpp>
@@ -28,15 +28,16 @@ using namespace isc::data;
 
 bool errorContainsPosition(ConstElementPtr error_element,
                            const std::string& file_name) {
-    if (error_element->contains(isc::cc::CC_PAYLOAD_RESULT)) {
-        ConstElementPtr result = error_element->get(isc::cc::CC_PAYLOAD_RESULT);
-        if ((result->getType() != Element::list) || (result->size() < 2) ||
-            (result->get(1)->getType() != Element::string)) {
+    if (error_element->contains(isc::config::CONTROL_RESULT)) {
+        ConstElementPtr result = error_element->get(isc::config::CONTROL_RESULT);
+        ConstElementPtr text = error_element->get(isc::config::CONTROL_TEXT);
+        if (!result || (result->getType() != Element::integer) || !text
+            || (text->getType() != Element::string)) {
             return (false);
         }
 
         // Get the error message in the textual format.
-        std::string error_string = result->get(1)->stringValue();
+        std::string error_string = text->stringValue();
 
         // The position of the data element causing an error has the following
         // format: <filename>:<linenum>:<pos>. The <filename> has been specified
