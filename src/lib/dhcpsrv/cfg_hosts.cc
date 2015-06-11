@@ -494,6 +494,18 @@ CfgHosts::add4(const HostPtr& host) {
                   << "' as this host has already been added");
     }
 
+    // Check if the address is already reserved for the specified IPv4 subnet.
+    if (!host->getIPv4Reservation().isV4Zero() &&
+        (host->getIPv4SubnetID() > 0) &&
+        get4(host->getIPv4SubnetID(), host->getIPv4Reservation())) {
+        isc_throw(ReservedAddress, "failed to add new host using the HW"
+                  " address '" << (hwaddr ? hwaddr->toText(false) : "(null)")
+                  << " and DUID '" << (duid ? duid->toText() : "(null)")
+                  << "' to the IPv4 subnet id '" << host->getIPv4SubnetID()
+                  << "' for the address " << host->getIPv4Reservation()
+                  << ": There's already a reservation for this address");
+    }
+
     /// @todo This may need further sanity checks.
 
     // This is a new instance - add it.
