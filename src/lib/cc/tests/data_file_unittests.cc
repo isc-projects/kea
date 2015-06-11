@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,7 @@
 #include <dhcpsrv/daemon.h>
 #include <gtest/gtest.h>
 #include <cc/data.h>
+#include <util/unittests/test_exceptions.h>
 #include <fstream>
 
 using namespace isc;
@@ -90,7 +91,8 @@ TEST_F(DataFileTest, readFileComments) {
     writeFile(commented_content);
 
     // Check that the read will fail (without comment elimination)
-    EXPECT_THROW(Element::fromJSONFile(TEMP_FILE), JSONError);
+    EXPECT_THROW_WITH(Element::fromJSONFile(TEMP_FILE), JSONError,
+                      "error: unexpected character # in temp-file.json:1:2");
 
     // Check that the read content is correct (with comment elimination)
     EXPECT_NO_THROW(Element::fromJSONFile(TEMP_FILE, true));
@@ -101,7 +103,10 @@ TEST_F(DataFileTest, readFileComments) {
 TEST_F(DataFileTest, readFileError) {
 
     // Check that the read content is correct
-    EXPECT_THROW(Element::fromJSONFile("no-such-file.txt"), isc::InvalidOperation);
+    EXPECT_THROW_WITH(Element::fromJSONFile("no-such-file.txt"),
+                      isc::InvalidOperation,
+                      "failed to read file 'no-such-file.txt': "
+                      << strerror(ENOENT));
 }
 
 };

@@ -1,4 +1,4 @@
-// Copyright (C) 2009, 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,8 @@
 #include <climits>
 
 #include <cc/data.h>
+
+#include <util/unittests/test_exceptions.h>
 
 using namespace isc::data;
 
@@ -66,7 +68,8 @@ TEST(Element, TypeNameConversion) {
     EXPECT_EQ(Element::map, Element::nameToType("map"));
     EXPECT_EQ(Element::null, Element::nameToType("null"));
     EXPECT_EQ(Element::any, Element::nameToType("any"));
-    EXPECT_THROW(Element::nameToType("somethingunknown"), TypeError);
+    EXPECT_THROW_WITH(Element::nameToType("somethingunknown"), TypeError,
+                      "somethingunknown is not a valid type name");
 
     EXPECT_EQ("integer", Element::typeToName(Element::integer));
     EXPECT_EQ("real", Element::typeToName(Element::real));
@@ -197,11 +200,25 @@ TEST(Element, from_and_to_json) {
     EXPECT_EQ("[  ]", Element::fromJSON("[  \n  \r \f \t  \b  ]")->str());
 
     // number overflows
-    EXPECT_THROW(Element::fromJSON("12345678901234567890")->str(), JSONError);
-    EXPECT_THROW(Element::fromJSON("1.1e12345678901234567890")->str(), JSONError);
-    EXPECT_THROW(Element::fromJSON("-1.1e12345678901234567890")->str(), JSONError);
-    EXPECT_THROW(Element::fromJSON("1e12345678901234567890")->str(), JSONError);
-    EXPECT_THROW(Element::fromJSON("1e50000")->str(), JSONError);
+    EXPECT_THROW_WITH(Element::fromJSON("12345678901234567890")->str(),
+                      JSONError,
+                      "Number overflow: 12345678901234567890"
+                      " in <string>:1:1");
+    EXPECT_THROW_WITH(Element::fromJSON("1.1e12345678901234567890")->str(),
+                      JSONError,
+                      "Number overflow: 1.1e12345678901234567890"
+                      " in <string>:1:1");
+    EXPECT_THROW_WITH(Element::fromJSON("-1.1e12345678901234567890")->str(),
+                      JSONError,
+                      "Number overflow: -1.1e12345678901234567890"
+                      " in <string>:1:1");
+    EXPECT_THROW_WITH(Element::fromJSON("1e12345678901234567890")->str(),
+                      JSONError,
+                      "Number overflow: 1e12345678901234567890"
+                      " in <string>:1:1");
+    EXPECT_THROW_WITH(Element::fromJSON("1e50000")->str(),
+                      JSONError,
+                      "Number overflow: 1e50000 in <string>:1:1");
     // number underflow
     // EXPECT_THROW(Element::fromJSON("1.1e-12345678901234567890")->str(), JSONError);
 
@@ -225,11 +242,16 @@ testGetValueInt() {
     EXPECT_NO_THROW({
        EXPECT_EQ(1, el->intValue());
     });
-    EXPECT_THROW(el->doubleValue(), TypeError);
-    EXPECT_THROW(el->boolValue(), TypeError);
-    EXPECT_THROW(el->stringValue(), TypeError);
-    EXPECT_THROW(el->listValue(), TypeError);
-    EXPECT_THROW(el->mapValue(), TypeError);
+    EXPECT_THROW_WITH(el->doubleValue(), TypeError,
+                      "doubleValue() called on non-double Element");
+    EXPECT_THROW_WITH(el->boolValue(), TypeError,
+                      "boolValue() called on non-Bool Element");
+    EXPECT_THROW_WITH(el->stringValue(), TypeError,
+                      "stringValue() called on non-string Element");
+    EXPECT_THROW_WITH(el->listValue(), TypeError,
+                      "listValue() called on non-list Element");
+    EXPECT_THROW_WITH(el->mapValue(), TypeError,
+                      "mapValue() called on non-map Element");
     EXPECT_TRUE(el->getValue(i));
     EXPECT_FALSE(el->getValue(d));
     EXPECT_FALSE(el->getValue(b));
@@ -282,12 +304,17 @@ testGetValueDouble() {
     std::map<std::string, ConstElementPtr> m;
 
     el = Element::create(1.1);
-    EXPECT_THROW(el->intValue(), TypeError);
+    EXPECT_THROW_WITH(el->intValue(), TypeError,
+                      "intValue() called on non-integer Element");
     EXPECT_NO_THROW(el->doubleValue());
-    EXPECT_THROW(el->boolValue(), TypeError);
-    EXPECT_THROW(el->stringValue(), TypeError);
-    EXPECT_THROW(el->listValue(), TypeError);
-    EXPECT_THROW(el->mapValue(), TypeError);
+    EXPECT_THROW_WITH(el->boolValue(), TypeError,
+                      "boolValue() called on non-Bool Element");
+    EXPECT_THROW_WITH(el->stringValue(), TypeError,
+                      "stringValue() called on non-string Element");
+    EXPECT_THROW_WITH(el->listValue(), TypeError,
+                      "listValue() called on non-list Element");
+    EXPECT_THROW_WITH(el->mapValue(), TypeError,
+                      "mapValue() called on non-map Element");
     EXPECT_FALSE(el->getValue(i));
     EXPECT_TRUE(el->getValue(d));
     EXPECT_FALSE(el->getValue(b));
@@ -309,12 +336,17 @@ testGetValueBool() {
     std::map<std::string, ConstElementPtr> m;
 
     el = Element::create(true);
-    EXPECT_THROW(el->intValue(), TypeError);
-    EXPECT_THROW(el->doubleValue(), TypeError);
+    EXPECT_THROW_WITH(el->intValue(), TypeError,
+                      "intValue() called on non-integer Element");
+    EXPECT_THROW_WITH(el->doubleValue(), TypeError,
+                      "doubleValue() called on non-double Element");
     EXPECT_NO_THROW(el->boolValue());
-    EXPECT_THROW(el->stringValue(), TypeError);
-    EXPECT_THROW(el->listValue(), TypeError);
-    EXPECT_THROW(el->mapValue(), TypeError);
+    EXPECT_THROW_WITH(el->stringValue(), TypeError,
+                      "stringValue() called on non-string Element");
+    EXPECT_THROW_WITH(el->listValue(), TypeError,
+                      "listValue() called on non-list Element");
+    EXPECT_THROW_WITH(el->mapValue(), TypeError,
+                      "mapValue() called on non-map Element");
     EXPECT_FALSE(el->getValue(i));
     EXPECT_FALSE(el->getValue(d));
     EXPECT_TRUE(el->getValue(b));
@@ -336,12 +368,17 @@ testGetValueString() {
     std::map<std::string, ConstElementPtr> m;
 
     el = Element::create("foo");
-    EXPECT_THROW(el->intValue(), TypeError);
-    EXPECT_THROW(el->doubleValue(), TypeError);
-    EXPECT_THROW(el->boolValue(), TypeError);
+    EXPECT_THROW_WITH(el->intValue(), TypeError,
+                      "intValue() called on non-integer Element");
+    EXPECT_THROW_WITH(el->doubleValue(), TypeError,
+                      "doubleValue() called on non-double Element");
+    EXPECT_THROW_WITH(el->boolValue(), TypeError,
+                      "boolValue() called on non-Bool Element");
     EXPECT_NO_THROW(el->stringValue());
-    EXPECT_THROW(el->listValue(), TypeError);
-    EXPECT_THROW(el->mapValue(), TypeError);
+    EXPECT_THROW_WITH(el->listValue(), TypeError,
+                      "listValue() called on non-list Element");
+    EXPECT_THROW_WITH(el->mapValue(), TypeError,
+                      "mapValue() called on non-map Element");
     EXPECT_FALSE(el->getValue(i));
     EXPECT_FALSE(el->getValue(d));
     EXPECT_FALSE(el->getValue(b));
@@ -363,12 +400,17 @@ testGetValueList() {
     std::map<std::string, ConstElementPtr> m;
 
     el = Element::createList();
-    EXPECT_THROW(el->intValue(), TypeError);
-    EXPECT_THROW(el->doubleValue(), TypeError);
-    EXPECT_THROW(el->boolValue(), TypeError);
-    EXPECT_THROW(el->stringValue(), TypeError);
+    EXPECT_THROW_WITH(el->intValue(), TypeError,
+                      "intValue() called on non-integer Element");
+    EXPECT_THROW_WITH(el->doubleValue(), TypeError,
+                      "doubleValue() called on non-double Element");
+    EXPECT_THROW_WITH(el->boolValue(), TypeError,
+                      "boolValue() called on non-Bool Element");
+    EXPECT_THROW_WITH(el->stringValue(), TypeError,
+                      "stringValue() called on non-string Element");
     EXPECT_NO_THROW(el->listValue());
-    EXPECT_THROW(el->mapValue(), TypeError);
+    EXPECT_THROW_WITH(el->mapValue(), TypeError,
+                      "mapValue() called on non-map Element");
     EXPECT_FALSE(el->getValue(i));
     EXPECT_FALSE(el->getValue(d));
     EXPECT_FALSE(el->getValue(b));
@@ -390,11 +432,16 @@ testGetValueMap() {
     std::map<std::string, ConstElementPtr> m;
 
     el = Element::createMap();
-    EXPECT_THROW(el->intValue(), TypeError);
-    EXPECT_THROW(el->doubleValue(), TypeError);
-    EXPECT_THROW(el->boolValue(), TypeError);
-    EXPECT_THROW(el->stringValue(), TypeError);
-    EXPECT_THROW(el->listValue(), TypeError);
+    EXPECT_THROW_WITH(el->intValue(), TypeError,
+                      "intValue() called on non-integer Element");
+    EXPECT_THROW_WITH(el->doubleValue(), TypeError,
+                      "doubleValue() called on non-double Element");
+    EXPECT_THROW_WITH(el->boolValue(), TypeError,
+                      "boolValue() called on non-Bool Element");
+    EXPECT_THROW_WITH(el->stringValue(), TypeError,
+                      "stringValue() called on non-string Element");
+    EXPECT_THROW_WITH(el->listValue(), TypeError,
+                      "listValue() called on non-list Element");
     EXPECT_NO_THROW(el->mapValue());
     EXPECT_FALSE(el->getValue(i));
     EXPECT_FALSE(el->getValue(d));
@@ -430,16 +477,26 @@ TEST(Element, create_and_value_throws) {
     EXPECT_FALSE(el->setValue(s));
     EXPECT_FALSE(el->setValue(v));
     EXPECT_FALSE(el->setValue(m));
-    EXPECT_THROW(el->get(1), TypeError);
-    EXPECT_THROW(el->set(1, el), TypeError);
-    EXPECT_THROW(el->add(el), TypeError);
-    EXPECT_THROW(el->remove(1), TypeError);
-    EXPECT_THROW(el->size(), TypeError);
-    EXPECT_THROW(el->empty(), TypeError);
-    EXPECT_THROW(el->get("foo"), TypeError);
-    EXPECT_THROW(el->set("foo", el), TypeError);
-    EXPECT_THROW(el->remove("foo"), TypeError);
-    EXPECT_THROW(el->contains("foo"), TypeError);
+    EXPECT_THROW_WITH(el->get(1), TypeError,
+                      "get(int) called on a non-list Element");
+    EXPECT_THROW_WITH(el->set(1, el), TypeError,
+                      "set(int, element) called on a non-list Element");
+    EXPECT_THROW_WITH(el->add(el), TypeError,
+                      "add() called on a non-list Element");
+    EXPECT_THROW_WITH(el->remove(1), TypeError,
+                      "remove(int) called on a non-list Element");
+    EXPECT_THROW_WITH(el->size(), TypeError,
+                      "size() called on a non-list Element");
+    EXPECT_THROW_WITH(el->empty(), TypeError,
+                      "empty() called on a non-list Element");
+    EXPECT_THROW_WITH(el->get("foo"), TypeError,
+                      "get(string) called on a non-map Element");
+    EXPECT_THROW_WITH(el->set("foo", el), TypeError,
+                      "set(name, element) called on a non-map Element");
+    EXPECT_THROW_WITH(el->remove("foo"), TypeError,
+                      "remove(string) called on a non-map Element");
+    EXPECT_THROW_WITH(el->contains("foo"), TypeError,
+                      "contains(string) called on a non-map Element");
     EXPECT_FALSE(el->find("foo", tmp));
 
     testGetValueDouble<ElementPtr>();
@@ -454,16 +511,26 @@ TEST(Element, create_and_value_throws) {
     EXPECT_FALSE(el->setValue(s));
     EXPECT_FALSE(el->setValue(v));
     EXPECT_FALSE(el->setValue(m));
-    EXPECT_THROW(el->get(1), TypeError);
-    EXPECT_THROW(el->set(1, el), TypeError);
-    EXPECT_THROW(el->add(el), TypeError);
-    EXPECT_THROW(el->remove(1), TypeError);
-    EXPECT_THROW(el->size(), TypeError);
-    EXPECT_THROW(el->empty(), TypeError);
-    EXPECT_THROW(el->get("foo"), TypeError);
-    EXPECT_THROW(el->set("foo", el), TypeError);
-    EXPECT_THROW(el->remove("foo"), TypeError);
-    EXPECT_THROW(el->contains("foo"), TypeError);
+    EXPECT_THROW_WITH(el->get(1), TypeError,
+                      "get(int) called on a non-list Element");
+    EXPECT_THROW_WITH(el->set(1, el), TypeError,
+                      "set(int, element) called on a non-list Element");
+    EXPECT_THROW_WITH(el->add(el), TypeError,
+                      "add() called on a non-list Element");
+    EXPECT_THROW_WITH(el->remove(1), TypeError,
+                      "remove(int) called on a non-list Element");
+    EXPECT_THROW_WITH(el->size(), TypeError,
+                      "size() called on a non-list Element");
+    EXPECT_THROW_WITH(el->empty(), TypeError,
+                      "empty() called on a non-list Element");
+    EXPECT_THROW_WITH(el->get("foo"), TypeError,
+                      "get(string) called on a non-map Element");
+    EXPECT_THROW_WITH(el->set("foo", el), TypeError,
+                      "set(name, element) called on a non-map Element");
+    EXPECT_THROW_WITH(el->remove("foo"), TypeError,
+                      "remove(string) called on a non-map Element");
+    EXPECT_THROW_WITH(el->contains("foo"), TypeError,
+                      "contains(string) called on a non-map Element");
     EXPECT_FALSE(el->find("foo", tmp));
 
     testGetValueBool<ElementPtr>();
@@ -478,16 +545,26 @@ TEST(Element, create_and_value_throws) {
     EXPECT_FALSE(el->setValue(s));
     EXPECT_FALSE(el->setValue(v));
     EXPECT_FALSE(el->setValue(m));
-    EXPECT_THROW(el->get(1), TypeError);
-    EXPECT_THROW(el->set(1, el), TypeError);
-    EXPECT_THROW(el->add(el), TypeError);
-    EXPECT_THROW(el->remove(1), TypeError);
-    EXPECT_THROW(el->size(), TypeError);
-    EXPECT_THROW(el->empty(), TypeError);
-    EXPECT_THROW(el->get("foo"), TypeError);
-    EXPECT_THROW(el->set("foo", el), TypeError);
-    EXPECT_THROW(el->remove("foo"), TypeError);
-    EXPECT_THROW(el->contains("foo"), TypeError);
+    EXPECT_THROW_WITH(el->get(1), TypeError,
+                      "get(int) called on a non-list Element");
+    EXPECT_THROW_WITH(el->set(1, el), TypeError,
+                      "set(int, element) called on a non-list Element");
+    EXPECT_THROW_WITH(el->add(el), TypeError,
+                      "add() called on a non-list Element");
+    EXPECT_THROW_WITH(el->remove(1), TypeError,
+                      "remove(int) called on a non-list Element");
+    EXPECT_THROW_WITH(el->size(), TypeError,
+                      "size() called on a non-list Element");
+    EXPECT_THROW_WITH(el->empty(), TypeError,
+                      "empty() called on a non-list Element");
+    EXPECT_THROW_WITH(el->get("foo"), TypeError,
+                      "get(string) called on a non-map Element");
+    EXPECT_THROW_WITH(el->set("foo", el), TypeError,
+                      "set(name, element) called on a non-map Element");
+    EXPECT_THROW_WITH(el->remove("foo"), TypeError,
+                      "remove(string) called on a non-map Element");
+    EXPECT_THROW_WITH(el->contains("foo"), TypeError,
+                      "contains(string) called on a non-map Element");
     EXPECT_FALSE(el->find("foo", tmp));
 
     testGetValueString<ElementPtr>();
@@ -502,16 +579,26 @@ TEST(Element, create_and_value_throws) {
     EXPECT_FALSE(el->setValue(d));
     EXPECT_FALSE(el->setValue(v));
     EXPECT_FALSE(el->setValue(m));
-    EXPECT_THROW(el->get(1), TypeError);
-    EXPECT_THROW(el->set(1, el), TypeError);
-    EXPECT_THROW(el->add(el), TypeError);
-    EXPECT_THROW(el->remove(1), TypeError);
-    EXPECT_THROW(el->size(), TypeError);
-    EXPECT_THROW(el->empty(), TypeError);
-    EXPECT_THROW(el->get("foo"), TypeError);
-    EXPECT_THROW(el->set("foo", el), TypeError);
-    EXPECT_THROW(el->remove("foo"), TypeError);
-    EXPECT_THROW(el->contains("foo"), TypeError);
+    EXPECT_THROW_WITH(el->get(1), TypeError,
+                      "get(int) called on a non-list Element");
+    EXPECT_THROW_WITH(el->set(1, el), TypeError,
+                      "set(int, element) called on a non-list Element");
+    EXPECT_THROW_WITH(el->add(el), TypeError,
+                      "add() called on a non-list Element");
+    EXPECT_THROW_WITH(el->remove(1), TypeError,
+                      "remove(int) called on a non-list Element");
+    EXPECT_THROW_WITH(el->size(), TypeError,
+                      "size() called on a non-list Element");
+    EXPECT_THROW_WITH(el->empty(), TypeError,
+                      "empty() called on a non-list Element");
+    EXPECT_THROW_WITH(el->get("foo"), TypeError,
+                      "get(string) called on a non-map Element");
+    EXPECT_THROW_WITH(el->set("foo", el), TypeError,
+                      "set(name, element) called on a non-map Element");
+    EXPECT_THROW_WITH(el->remove("foo"), TypeError,
+                      "remove(string) called on a non-map Element");
+    EXPECT_THROW_WITH(el->contains("foo"), TypeError,
+                      "contains(string) called on a non-map Element");
     EXPECT_FALSE(el->find("foo", tmp));
 
     testGetValueList<ElementPtr>();
@@ -559,10 +646,13 @@ TEST(Element, escape) {
     escapeHelper("foo\rbar", "\"foo\\rbar\"");
     escapeHelper("foo\tbar", "\"foo\\tbar\"");
     // Bad escapes
-    EXPECT_THROW(Element::fromJSON("\\a"), JSONError);
-    EXPECT_THROW(Element::fromJSON("\\"), JSONError);
+    EXPECT_THROW_WITH(Element::fromJSON("\\a"), JSONError,
+                      "error: unexpected character \\ in <string>:1:2");
+    EXPECT_THROW_WITH(Element::fromJSON("\\"), JSONError,
+                      "error: unexpected character \\ in <string>:1:2");
     // Can't have escaped quotes outside strings
-    EXPECT_THROW(Element::fromJSON("\\\"\\\""), JSONError);
+    EXPECT_THROW_WITH(Element::fromJSON("\\\"\\\""), JSONError,
+                      "error: unexpected character \\ in <string>:1:2");
     // Inside strings is OK
     EXPECT_NO_THROW(Element::fromJSON("\"\\\"\\\"\""));
     // A whitespace test
@@ -667,24 +757,48 @@ TEST(Element, to_and_from_wire) {
     EXPECT_EQ("1", Element::fromWire(ss, 1)->str());
 
     // Some malformed JSON input
-    EXPECT_THROW(Element::fromJSON("{ "), isc::data::JSONError);
-    EXPECT_THROW(Element::fromJSON("{ \"a\" "), isc::data::JSONError);
-    EXPECT_THROW(Element::fromJSON("{ \"a\": "), isc::data::JSONError);
-    EXPECT_THROW(Element::fromJSON("{ \"a\": \"b\""), isc::data::JSONError);
-    EXPECT_THROW(Element::fromJSON("{ \"a\": {"), isc::data::JSONError);
-    EXPECT_THROW(Element::fromJSON("{ \"a\": {}"), isc::data::JSONError);
-    EXPECT_THROW(Element::fromJSON("{ \"a\": []"), isc::data::JSONError);
-    EXPECT_THROW(Element::fromJSON("{ \"a\": [ }"), isc::data::JSONError);
-    EXPECT_THROW(Element::fromJSON("{\":"), isc::data::JSONError);
-    EXPECT_THROW(Element::fromJSON("]"), isc::data::JSONError);
-    EXPECT_THROW(Element::fromJSON("[ 1, 2, }"), isc::data::JSONError);
-    EXPECT_THROW(Element::fromJSON("[ 1, 2, {}"), isc::data::JSONError);
-    EXPECT_THROW(Element::fromJSON("[ 1, 2, { ]"), isc::data::JSONError);
-    EXPECT_THROW(Element::fromJSON("[ "), isc::data::JSONError);
-    EXPECT_THROW(Element::fromJSON("{{}}"), isc::data::JSONError);
-    EXPECT_THROW(Element::fromJSON("{[]}"), isc::data::JSONError);
-    EXPECT_THROW(Element::fromJSON("{ \"a\", \"b\" }"), isc::data::JSONError);
-    EXPECT_THROW(Element::fromJSON("[ \"a\": \"b\" ]"), isc::data::JSONError);
+    EXPECT_THROW_WITH(Element::fromJSON("{ "), isc::data::JSONError,
+                      "Unterminated map, <string> or } "
+                      "expected in <string>:1:3");
+    EXPECT_THROW_WITH(Element::fromJSON("{ \"a\" "), isc::data::JSONError,
+                      "EOF read, one of \":\" expected in <string>:1:8");
+    EXPECT_THROW_WITH(Element::fromJSON("{ \"a\": "), isc::data::JSONError,
+                      "nothing read");
+    EXPECT_THROW_WITH(Element::fromJSON("{ \"a\": \"b\""),
+                      isc::data::JSONError,
+                      "EOF read, one of \",}\" expected in <string>:1:12");
+    EXPECT_THROW_WITH(Element::fromJSON("{ \"a\": {"), isc::data::JSONError,
+                      "Unterminated map, <string> or } "
+                      "expected in <string>:1:9");
+    EXPECT_THROW_WITH(Element::fromJSON("{ \"a\": {}"), isc::data::JSONError,
+                      "EOF read, one of \",}\" expected in <string>:1:10");
+    EXPECT_THROW_WITH(Element::fromJSON("{ \"a\": []"), isc::data::JSONError,
+                      "EOF read, one of \",}\" "
+                      "expected in <string>:1:11");
+    EXPECT_THROW_WITH(Element::fromJSON("{ \"a\": [ }"), isc::data::JSONError,
+                      "error: unexpected character } in <string>:1:11");
+    EXPECT_THROW_WITH(Element::fromJSON("{\":"), isc::data::JSONError,
+                      "Unterminated string in <string>:1:5");
+    EXPECT_THROW_WITH(Element::fromJSON("]"), isc::data::JSONError,
+                      "error: unexpected character ] in <string>:1:2");
+    EXPECT_THROW_WITH(Element::fromJSON("[ 1, 2, }"), isc::data::JSONError,
+                      "error: unexpected character } in <string>:1:10");
+    EXPECT_THROW_WITH(Element::fromJSON("[ 1, 2, {}"), isc::data::JSONError,
+                      "EOF read, one of \",]\" expected in <string>:1:11");
+    EXPECT_THROW_WITH(Element::fromJSON("[ 1, 2, { ]"), isc::data::JSONError,
+                      "String expected in <string>:1:12");
+    EXPECT_THROW_WITH(Element::fromJSON("[ "), isc::data::JSONError,
+                      "nothing read");
+    EXPECT_THROW_WITH(Element::fromJSON("{{}}"), isc::data::JSONError,
+                      "String expected in <string>:1:3");
+    EXPECT_THROW_WITH(Element::fromJSON("{[]}"), isc::data::JSONError,
+                      "String expected in <string>:1:3");
+    EXPECT_THROW_WITH(Element::fromJSON("{ \"a\", \"b\" }"),
+                      isc::data::JSONError,
+                      "',' read, one of \":\" expected in <string>:1:7");
+    EXPECT_THROW_WITH(Element::fromJSON("[ \"a\": \"b\" ]"),
+                      isc::data::JSONError,
+                      "':' read, one of \",]\" expected in <string>:1:7");
 }
 
 ConstElementPtr
@@ -800,7 +914,8 @@ TEST(Element, removeIdentical) {
     removeIdentical(a, b);
     EXPECT_EQ(*a, *c);
 
-    EXPECT_THROW(removeIdentical(Element::create(1), Element::create(2)), TypeError);
+    EXPECT_THROW_WITH(removeIdentical(Element::create(1), Element::create(2)),
+                      TypeError, "Non-map Elements passed to removeIdentical");
 }
 
 TEST(Element, constRemoveIdentical) {
@@ -849,8 +964,8 @@ TEST(Element, constRemoveIdentical) {
     c = Element::fromJSON("{ \"a\": 1 }");
     EXPECT_EQ(*removeIdentical(a, b), *c);
 
-    EXPECT_THROW(removeIdentical(Element::create(1), Element::create(2)),
-                 TypeError);
+    EXPECT_THROW_WITH(removeIdentical(Element::create(1), Element::create(2)),
+                      TypeError, "Non-map Elements passed to removeIdentical");
 }
 
 TEST(Element, merge) {
@@ -862,7 +977,8 @@ TEST(Element, merge) {
 
     a = Element::fromJSON("1");
     b = Element::createMap();
-    EXPECT_THROW(merge(a, b), TypeError);
+    EXPECT_THROW_WITH(merge(a, b), TypeError,
+                      "merge arguments not MapElements");
 
     a = Element::createMap();
     b = Element::fromJSON("{ \"a\": 1 }");
@@ -985,12 +1101,18 @@ TEST(Element, preprocessor) {
     EXPECT_TRUE(exp->equals(*Element::fromJSON(dbl_tail_comment, true)));
 
     // With preprocessing disabled, it should fail all around
-    EXPECT_THROW(Element::fromJSON(head_comment), JSONError);
-    EXPECT_THROW(Element::fromJSON(mid_comment), JSONError);
-    EXPECT_THROW(Element::fromJSON(tail_comment), JSONError);
-    EXPECT_THROW(Element::fromJSON(dbl_head_comment), JSONError);
-    EXPECT_THROW(Element::fromJSON(dbl_mid_comment), JSONError);
-    EXPECT_THROW(Element::fromJSON(dbl_tail_comment), JSONError);
+    EXPECT_THROW_WITH(Element::fromJSON(head_comment), JSONError,
+                      "error: unexpected character # in <string>:1:2");
+    EXPECT_THROW_WITH(Element::fromJSON(mid_comment), JSONError,
+                      "String expected in <string>:2:2");
+    EXPECT_THROW_WITH(Element::fromJSON(tail_comment), JSONError,
+                      "Extra data in <string>:2:9");
+    EXPECT_THROW_WITH(Element::fromJSON(dbl_head_comment), JSONError,
+                      "error: unexpected character # in <string>:1:2");
+    EXPECT_THROW_WITH(Element::fromJSON(dbl_mid_comment), JSONError,
+                      "String expected in <string>:2:2");
+    EXPECT_THROW_WITH(Element::fromJSON(dbl_tail_comment), JSONError,
+                      "Extra data in <string>:2:9");
 }
 
 TEST(Element, getPosition) {

@@ -1,4 +1,4 @@
-// Copyright (C) 2009,2015  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -28,6 +28,8 @@
 
 #include <exceptions/exceptions.h>
 
+#include <util/unittests/test_exceptions.h>
+
 #include <utility>
 #include <list>
 #include <string>
@@ -47,7 +49,8 @@ TEST(AsioSession, establish) {
     Session sess(io_service_);
 
     // can't return socket descriptor before session is established
-    EXPECT_THROW(sess.getSocketDesc(), isc::InvalidOperation);
+    EXPECT_THROW_WITH(sess.getSocketDesc(), isc::InvalidOperation,
+                      "Can't return socket descriptor: no socket opened.");
 
     EXPECT_THROW(
         sess.establish("/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/"
@@ -226,7 +229,8 @@ TEST_F(SessionTest, timeout_on_connect) {
     sess.setTimeout(100);
     EXPECT_EQ(100, sess.getTimeout());
     // no answer, should timeout
-    EXPECT_THROW(sess.establish(BUNDY_TEST_SOCKET_FILE), SessionTimeout);
+    EXPECT_THROW_WITH(sess.establish(BUNDY_TEST_SOCKET_FILE), SessionTimeout,
+                      "Timeout while reading data from cc session");
 }
 
 TEST_F(SessionTest, connect_ok) {
@@ -249,7 +253,10 @@ TEST_F(SessionTest, connect_ok_connection_reset) {
     sess.disconnect();
 
     isc::data::ConstElementPtr env, msg;
-    EXPECT_THROW(sess.group_recvmsg(env, msg, false, -1), SessionError);
+    EXPECT_THROW_WITH(sess.group_recvmsg(env, msg, false, -1),
+                      SessionError,
+                      "Error while reading data from cc session: "
+                      << strerror(EBADF));
 }
 
 TEST_F(SessionTest, run_with_handler) {
@@ -294,7 +301,8 @@ TEST_F(SessionTest, run_with_handler_timeout) {
     tds->sendmsg(env, msg);
 
     // No follow-up message, should time out.
-    ASSERT_THROW(my_io_service.run(), SessionTimeout);
+    ASSERT_THROW_WITH(my_io_service.run(), SessionTimeout,
+                      "Timeout while reading data from cc session");
 }
 
 TEST_F(SessionTest, get_socket_descr) {
