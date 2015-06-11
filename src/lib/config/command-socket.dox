@@ -17,25 +17,27 @@
 
 @section ctrlSocketOverview Control Channel Overview
 
-In many cases it is useful to manage certain aspects of the DHCP servers.
-DHCPv4 component in Kea supports control channel. It allows external entity
-(e.g. a tool run by a sysadmin or a script) to influence the server and extract
-certain information out from it. Several notable examples envisaged are:
-reconfiguration, statistics retrival and manipulation and shutdown.
+In many cases it is useful to manage certain aspects of the DHCP servers
+while they are running. In Kea, this may be done via the Control Channel.
+Control Channel allows an external entity (e.g. a tool run by a sysadmin
+or a script) to issue commands to the server which can influence the its
+behavior or retreive information from it. Several notable examples
+envisioned are: reconfiguration, statistics retrival and manipulation,
+and shutdown.  
+@note Currently, only the DHCPv4 component supports Control Channel.
+@todo: Update this text once Control Channel support in DHCPv6 is added.
 
-@todo: Update this text once control channel support in DHCPv6 is added.
-
-Communication over control channel is conducted using JSON structures.
+Communication over Control Channel is conducted using JSON structures.
 Currently (Kea 0.9.2) the only supported communication channel is UNIX stream
-socket, but additional types may be added in the future.
+sockets, but additional types may be added in the future.
 
 If configured, Kea will open a socket and will listen for any incoming
 connections. A process connecting to this socket is expected to send JSON
-structure in the following format:
+commands structured as follows:
 
 @code
 {
-    "command": "foo", 
+    "command": "foo",
     "arguments": {
         "param_foo": "value1",
         "param_bar": "value2",
@@ -44,10 +46,11 @@ structure in the following format:
 }
 @endcode
 
-command field is mandatory. Depending on the actual command, the arguments field
-may be absent, it may contain a single parameter or a map or parameters.  The
-exact format is command specific. The server will process incoming command and
-send a response:
+- command - is the name of command to execute and is mandatory. 
+- arguments - it may be absent, contain a single parameter or a map or parameters
+required to carry out the given command.  The exact content and format is command specific.
+
+The server will process the incoming command and then send a response of the form:
 
 @code
 {
@@ -61,22 +64,24 @@ send a response:
 }
 @endcode
 
-Result designates outcome of the command. 0 means a success and any non-zero
-value designates an error. Currently 1 is used as a generic error, but additional
-error codes may be added in the future. text field typically appears when
-result is non-zero and contains description of the error encountered.
-arguments map always appears, even if there are no parameters.
+- result - indicates the outcome of the command. A value of 0 means a success while
+any non-zero value designates an error. Currently 1 is used as a generic error, but additional
+error codes may be added in the future.
+- text field - typically appears when result is non-zero and contains description of the error
+encountered.
+- arguments - is a map of additional data values returned by the server, specific to the 
+command issue. The map is always present, even if it contains no data values.
 
-@section ctrlSocketClient Using control channel
+@section ctrlSocketClient Using Control Channel
 
-Here are two examples of how to access the control channel:
+Here are two examples of how to access the Control Channel:
 
 1. Use socat tool, which is available in many Linux and BSD distributions.
 See http://www.dest-unreach.org/socat/ for details. To use it:
 @code
 socat UNIX:/var/run/kea/kea4.sock -
 @endcode
-You then can type JSON commands an get responses (also in JSON format).
+You then can type JSON commands and get responses (also in JSON format).
 
 2. Here's an example C code that connects and gets a list of supported commands:
 @code
@@ -100,7 +105,7 @@ You then can type JSON commands an get responses (also in JSON format).
 #include <string.h>
 #include <unistd.h>
 
-int main(int argc, const char* argv[]) { 
+int main(int argc, const char* argv[]) {
 
     if (argc != 2) {
         printf("Usage: %s socket_path\n", argv[0]);
@@ -116,7 +121,7 @@ int main(int argc, const char* argv[]) {
     }
 
     // Specify the address to connect to (unix path)
-    struct sockaddr_un srv_addr; 
+    struct sockaddr_un srv_addr;
     memset(&srv_addr, 0, sizeof(struct sockaddr_un));
     srv_addr.sun_family = AF_UNIX;
     strcpy(srv_addr.sun_path, argv[1]);
@@ -161,13 +166,13 @@ There are 3 main methods that are expected to be used by developers:
   command.
 
 There are also two methods for managing control sockets. They are not expected
-to be used directly, unless someone implements a new control channel (e.g. TCP
+to be used directly, unless someone implements a new Control Channel (e.g. TCP
 or HTTPS connection):
 
 - @ref isc::config::CommandMgr::openCommandSocket that passes structure defined
   in the configuration file. Currently only two parameters are supported: socket-type
   (which must contain value 'unix') and socket-name (which contains unix path for
-  the named socket to be created). This method calls @ref 
+  the named socket to be created). This method calls @ref
   isc::config::CommandSocketFactory::create method, which in turn calls type specific
   creation method. Again, currently only UNIX type is supported, but the factory
   class is expected to be extended to cover additional types.
@@ -178,14 +183,14 @@ or HTTPS connection):
 
 @section ctrlSocketConnections Accepting connections
 
-Command channel is connection oriented communication. In that sense it is
+Control Channel is connection oriented communication. In that sense it is
 different than all other communications supported so far in Kea. To facilitate
-connections, several mechanisms were implemented. Once control socket is opened,
+connections, several mechanisms were implemented. Once the control socket is opened,
 a special callback (@ref isc::config::CommandMgr::connectionAcceptor) is
-installed to process incoming connections. When select called in
+installed to process incoming connections. When the select call in
 @ref isc::dhcp::IfaceMgr::receive4 indicates that there is some data to be
 processed, this callback calls accept, which creates a new socket for handling
-this particular incoming connection. Also, it install another callback 
+this particular incoming connection. It installs another callback
 (@ref isc::config::CommandMgr::commandReader) that will process incoming
 data or will close the socket when necessary. CommandReader reads data from
 incoming socket and attempts to parse it as JSON structures. If successful,
