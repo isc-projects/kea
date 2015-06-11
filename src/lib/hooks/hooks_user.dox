@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -109,7 +109,7 @@ the hardware address and allocated IP address for the clients of interest.
 The following sections describe how to implement these requirements.
 The code presented here is not efficient and there are better ways of
 doing the task.  The aim however, is to illustrate the main features of
-§user hook code not to provide an optimal solution.
+user hooks code, not to provide an optimal solution.
 
 
 @subsection hooksdgFrameworkFunctions Framework Functions
@@ -581,32 +581,32 @@ int pkt4_send(CalloutHandle& handle) {
 Hooks libraries take part in the DHCP message processing. They also often
 modify the server's behavior by taking responsibility for processing
 the DHCP message at certain stages and instructing the server to skip
-this processing stage. Thus, hooks libraries play an important role in the
-DHCP server operation and, depeneding on their purpose, they may
-have high complexity, which increases likehood of the defects in the
-libraries.
+the default processing for that stage. Thus, hooks libraries play an
+important role in the DHCP server operation and, depending on their
+purpose, they may have high complexity, which increases likehood of the
+defects in the libraries.
 
-All hooks libraries must use Kea logging system to faciliate diagnostics
+All hooks libraries should use Kea logging system to faciliate diagnostics
 of the defects in the libraries and issues with the DHCP server's operation.
-Even if the issue doesn't origin in the hooks library itself, the use
-of the library may uncover issues in the Kea code, which only
-manifest in some special circumstances.
+Even if the issue doesn't originate in the hooks library itself, the use
+of the library may uncover issues in the Kea code that only
+manifest themselves in some special circumstances.
 
 Hooks libraries use the Kea logging system in the same way as any other
-standard Kea library. Hooks library must have at least one logger
-defined, but it may also have multiple loggers if it is desired
+standard Kea library. A hooks library should have at least one logger
+defined, but may have multiple loggers if it is desired
 to separate log messages from different functional parts of the library.
 
-Hooks library implementor must select the unique name for the logger,
-and this name should correspond with the name of the library, so as it is
+Assuming that it has been decided to use logging in the hooks library, the
+implementor must select a unique name for the logger. Ideally the name
+should have some relationship with the name of the library so that it is
 easy to distinguish messages logged from this library. For example,
 if the hooks library is used to capture incoming and outgoing DHCP
 messages, and the name of the library is "libkea-packet-capture",
-the suitable logger name could be "packet-capture", or other name that
-can be easily associated with the library and its purpose.
+a suitable logger name could be "packet-capture".
 
-In order to create a logger within the library, it should be declared
-in the new header file, which must be included in all files using
+In order to use a logger within the library, the logger should be declared
+in a header file, which must be included in all files using
 the logger:
 
 @code
@@ -626,8 +626,8 @@ extern isc::log::Logger packet_capture_logger;
 #endif
 @endcode
 
-Then the logger should be initialized in the implementation file
-like this:
+The logger should be defined and initialized in the implementation file,
+as illustrated below:
 
 @code
 #include <packet_capture_log.h>
@@ -645,29 +645,28 @@ when the use of more than one logger is desired.
 The next step is to add the appropriate message file as described in the
 @ref logMessageFiles.
 
-Implementor must make sure that log messages appear in the right places
-and that they are logged at the appropriate level. Choice of the place
-where the message should appear is not always obvious. It depends if the
-particular function being called already logs enough information, and
-adding log message before and/or after the call to this function would
-simply duplicate some messages. Sometimes the choice whether the log message
-should appear within the function or outside of it depends on the level
-of details available for logging in the function and outside of it. For
-example, in most cases it is desired to log the client identifier or
-transaction id of the DHCP packet being processed, and for which the
-particular message is logged. If this information is available at the
-higher level, but not available in the function being called, it is
-often better to place the log message at higher level, where client
-identifier and/or transaction id is present and can be included in
-the logged message. Alternatively, the function parameters list can
-be extended to include additional information to be logged.
+The implementor must make sure that log messages appear in the right
+places and that they are logged at the appropriate level. The choice
+of the place where the message should appear is not always obvious:
+it depends if the particular function being called already logs enough
+information and whether adding log message before and/or after the
+call to this function would simply duplicate some messages. Sometimes
+the choice whether the log message should appear within the function or
+outside of it depends on the level of details available for logging. For
+example, in many cases it is desirable to include the client identifier
+or transaction id of the DHCP packet being processed in logging message.
+If this information is available at the higher level but not in the
+function being called, it is often better to place the log message at
+higher level.  However, the function parameters list could be extended
+to include the additional information, and to be logged and the logging
+call made from within the function.
 
 Ideally, the hooks library should contain debug log messages (traces)
-in all significant decision points in the code, with the information
+in all significant decision points in the code, with the information as to
 how the code hit this decision point, how it will proceed and why.
 However, care should be taken when selecting the log level for those
 messages, because selecting too high logging level may impact the
-performance of the system. This also means that traces (messages of
+performance of the system. For this reason, traces (messages of
 the debug severity) should use different debug levels for the
 messages of different importance or having different performance
 requirements to generate the log message. For example, generation of
@@ -681,9 +680,9 @@ All loggers defined within the hooks libraries derive the default
 configuration from the root logger. For example, when the hooks
 library is attached to the DHCPv4 server, the root logger name is
 "kea-dhcp4", and the library by default uses configuration of this
-logger. The configuration of the logger used within the library can
-be modified by putting the configuration entry for the library
-logger in the configuration file. In case of the "packet-capture"
+logger. The configuration of the library's logger can
+be modified by putting adding a configuration entry for it
+to the configuration file. In case of the "packet-capture"
 logger declared above, the full name of the logger in the
 configuration file will be "kea-dhcp4.packet-capture". The
 configuration specified for this logger will override the default

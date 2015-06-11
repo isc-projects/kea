@@ -48,10 +48,10 @@
           Within Kea, a message is logged through an entity called a
           "logger". Different components log messages through different
           loggers, and each logger can be configured independently of
-          one another. Some components, in particular DHCP server
+          one another. Some components, in particular the DHCP server
           processes, may use multiple loggers to log messages pertaining
           to different logical functions of the component. For example,
-          the DHCPv4 server is using different logger for messages
+          the DHCPv4 server is using one logger for messages
           pertaining to packet reception and transmission, another
           logger for messages related to lease allocation and so on.
           Some of the libraries used by the Kea servers, e.g. libdhcpsrv
@@ -59,14 +59,16 @@
         </para>
 
         <para>
-          Users implementing hooks libraries, attached to the server at
-          runtime, are responsible for creating loggers exclusively used
-          by those libraries. Such loggers are configured independently
-          from other loggers and should have unique names to allow for
-          distingushing messages emitted from the hook library from
-          messages emitted by the core Kea code. Whenever it makes sense,
-          hook library can use multiple loggers to log messages pertaining
-          to different logical parts of the library.
+          Users implementing hooks libraries (code attached to the server at
+          runtime) are responsible for creating the loggers used by those
+          libraries. Such loggers should have unique names, different
+          from the logger names used by Kea. In this way the
+          messages emitted from the hooks library can be distingued from
+          messages issued by the core Kea code. Unique names also allow
+          the loggers to be configured independently of loggers used
+          by Kea.  Whenever it makes sense, a hook library can use multiple
+          loggers to log messages pertaining to different logical parts
+          of the library.
         </para>
 
         <para>
@@ -341,7 +343,7 @@
         </itemizedlist>
 
         <para>
-          Note that user defined hook libraries should not use any of those
+          Note that user-defined hook libraries should not use any of those
           loggers, and should define new loggers with names that correspond to
           the libraries using them. Suppose that the user created the library called
           <quote>libpacket-capture</quote> to dump packets received and
@@ -359,7 +361,7 @@
         <para>
           The list of loggers above excludes any loggers implemented in hooks
           libraries. Please consult the documentation of the specific hooks
-          libraries for the names of loggers they define!
+          libraries for the names of loggers they define.
         </para>
 
         <para>Additional loggers may be defined in the future. The easiest
