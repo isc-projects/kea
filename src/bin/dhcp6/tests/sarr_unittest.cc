@@ -88,31 +88,6 @@ const char* CONFIGS[] = {
         " \"dhcp-ddns\" : {"
         "     \"enable-updates\" : True, "
         "     \"qualifying-suffix\" : \"example.com\" }"
-    "}",
-
-// Configuration 2
-    "{ \"interfaces-config\": {"
-        "  \"interfaces\": [ \"*\" ]"
-        "},"
-        "\"preferred-lifetime\": 3000,"
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"subnet6\": [ { "
-        "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::10\" } ],"
-        "    \"subnet\": \"2001:db8:1::/48\", "
-        "    \"interface\": \"eth0\","
-        "    \"rapid-commit\": False"
-        " },"
-        " {"
-        "    \"pools\": [ { \"pool\": \"2001:db8:2::1 - 2001:db8:2::10\" } ],"
-        "    \"subnet\": \"2001:db8:2::/48\", "
-        "    \"interface\": \"eth1\","
-        "    \"rapid-commit\": True"
-        " } ],"
-        "\"valid-lifetime\": 4000,"
-        " \"dhcp-ddns\" : {"
-        "     \"enable-updates\" : True, "
-        "     \"qualifying-suffix\" : \"example.com\" }"
     "}"
 };
 
