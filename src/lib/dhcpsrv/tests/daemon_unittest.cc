@@ -123,6 +123,10 @@ TEST_F(DaemonTest, getVersion) {
 
     ASSERT_NO_THROW(DaemonImpl::getVersion(false));
 
+    EXPECT_EQ(DaemonImpl::getVersion(false), "BASIC");
+
+    ASSERT_NO_THROW(DaemonImpl::getVersion(true));
+
     EXPECT_EQ(DaemonImpl::getVersion(true), "EXTENDED");
 }
 
