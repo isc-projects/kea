@@ -78,7 +78,7 @@ public:
     virtual ~Dhcpv6Srv();
 
     /// @brief returns Kea version on stdout and exit.
-    /// redeclaration/redefinition. @ref Daemon::getVersion())
+    /// redeclaration/redefinition. @ref Daemon::getVersion()
     static std::string getVersion(bool extended);
  
     /// @brief Returns server-indentifier option.
