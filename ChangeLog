@@ -1,3 +1,7 @@
+947.	[func]		marcin
+	DHCPv6 server now supports Rapid Commit option.
+	(Trac #3070, git a6b6156aaa95ab74c69a537e90483f82e9fbe4a2)
+
 946.	[doc]		tmark
 	Added doucmentation for kea-admin "lease-dump" command to the
 	Kea Admininstrator's Guide and kea-admin man page.
