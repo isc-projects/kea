@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -25,6 +25,7 @@
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
 #include <util/unittests/wiredata.h>
+#include <util/unittests/test_exceptions.h>
 
 using namespace std;
 using namespace isc::dns;
@@ -60,19 +61,24 @@ TEST_F(Rdata_HINFO_Test, createFromText) {
 
 TEST_F(Rdata_HINFO_Test, badText) {
     // Only 2 fields must exist
-    EXPECT_THROW(const HINFO hinfo("\"Pentium\"\"Linux\"\"Computer\""),
-                 InvalidRdataText);
-    EXPECT_THROW(const HINFO hinfo("\"Pentium\" \"Linux\" \"Computer\""),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(const HINFO hinfo("\"Pentium\"\"Linux\"\"Computer\""),
+                      InvalidRdataText,
+                      "Invalid HINFO text format: too many fields.");
+    EXPECT_THROW_WITH(const HINFO hinfo("\"Pentium\" \"Linux\" \"Computer\""),
+                      InvalidRdataText,
+                      "Invalid HINFO text format: too many fields.");
     // Field cannot be missing
-    EXPECT_THROW(const HINFO hinfo("Pentium"), InvalidRdataText);
+    EXPECT_THROW_WITH(const HINFO hinfo("Pentium"), InvalidRdataText,
+                      "Failed to construct HINFO RDATA from Pentium': "
+                      "unexpected end of input");
     // The <character-string> cannot exceed 255 characters
     string hinfo_str;
     for (int i = 0; i < 257; ++i) {
         hinfo_str += 'A';
     }
     hinfo_str += " Linux";
-    EXPECT_THROW(const HINFO hinfo(hinfo_str), CharStringTooLong);
+    EXPECT_THROW_WITH(const HINFO hinfo(hinfo_str), CharStringTooLong,
+                      "character-string is too long: 257(+1) characters");
 }
 
 TEST_F(Rdata_HINFO_Test, createFromWire) {

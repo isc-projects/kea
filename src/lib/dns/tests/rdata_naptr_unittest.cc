@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -25,6 +25,7 @@
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
 #include <util/unittests/wiredata.h>
+#include <util/unittests/test_exceptions.h>
 
 using namespace std;
 using namespace isc::dns;
@@ -87,29 +88,59 @@ TEST_F(Rdata_NAPTR_Test, createFromText) {
 
 TEST_F(Rdata_NAPTR_Test, badText) {
     // Order number cannot exceed 65535
-    EXPECT_THROW(const NAPTR naptr("65536 10 S SIP \"\" _sip._udp.example.com."),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(const NAPTR naptr(
+                        "65536 10 S SIP \"\" _sip._udp.example.com."),
+                      InvalidRdataText,
+                      "Invalid NAPTR text format: order out of range: 65536");
     // Preference number cannot exceed 65535
-    EXPECT_THROW(const NAPTR naptr("100 65536 S SIP \"\" _sip._udp.example.com."),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(const NAPTR naptr(
+                         "100 65536 S SIP \"\" _sip._udp.example.com."),
+                      InvalidRdataText,
+                      "Invalid NAPTR text format: "
+                      "preference out of range: 65536");
     // No regexp given
-    EXPECT_THROW(const NAPTR naptr("100 10 S SIP _sip._udp.example.com."),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(const NAPTR naptr("100 10 S SIP _sip._udp.example.com."),
+                      InvalidRdataText,
+                      "Failed to construct NAPTR RDATA from "
+                      "100 10 S SIP _sip._udp.example.com.': "
+                      "unexpected end of input");
     // The double quotes seperator must match
-    EXPECT_THROW(const NAPTR naptr("100 10 \"S SIP \"\" _sip._udp.example.com."),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(const NAPTR naptr(
+                        "100 10 \"S SIP \"\" _sip._udp.example.com."),
+                      InvalidRdataText,
+                      "Failed to construct NAPTR RDATA from "
+                      "100 10 \"S SIP \"\" _sip._udp.example.com.': "
+                      "unexpected end of input");
     // Order or preference cannot be missed
-    EXPECT_THROW(const NAPTR naptr("10 \"S\" SIP \"\" _sip._udp.example.com."),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(const NAPTR naptr(
+                        "10 \"S\" SIP \"\" _sip._udp.example.com."),
+                      InvalidRdataText,
+                      "Failed to construct NAPTR RDATA from "
+                      "10 \"S\" SIP \"\" _sip._udp.example.com.': "
+                      "unexpected quotes");
     // Unquoted fields must be seperated by spaces
-    EXPECT_THROW(const NAPTR naptr("100 10S SIP \"\" _sip._udp.example.com."),
-                 InvalidRdataText);
-    EXPECT_THROW(const NAPTR naptr("10010 \"S\" \"SIP\" \"\" _sip._udp.example.com."),
-                 InvalidRdataText);
-    EXPECT_THROW(const NAPTR naptr("100 10 SSIP \"\" _sip._udp.example.com."),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(const NAPTR naptr(
+                        "100 10S SIP \"\" _sip._udp.example.com."),
+                      InvalidRdataText,
+                      "Failed to construct NAPTR RDATA from "
+                      "100 10S SIP \"\" _sip._udp.example.com.': "
+                      "not a valid number");
+    EXPECT_THROW_WITH(const NAPTR naptr(
+                        "10010 \"S\" \"SIP\" \"\" _sip._udp.example.com."),
+                      InvalidRdataText,
+                      "Failed to construct NAPTR RDATA from "
+                      "10010 \"S\" \"SIP\" \"\" _sip._udp.example.com.': "
+                      "unexpected quotes");
+    EXPECT_THROW_WITH(const NAPTR naptr(
+                        "100 10 SSIP \"\" _sip._udp.example.com."),
+                      InvalidRdataText,
+                      "Failed to construct NAPTR RDATA from "
+                      "100 10 SSIP \"\" _sip._udp.example.com.': "
+                      "unexpected end of input");
     // Field cannot be missing
-    EXPECT_THROW(const NAPTR naptr("100 10 \"S\""), InvalidRdataText);
+    EXPECT_THROW_WITH(const NAPTR naptr("100 10 \"S\""), InvalidRdataText,
+                      "Failed to construct NAPTR RDATA from 100 10 \"S\"': "
+                      "unexpected end of input");
 
     // The <character-string> cannot exceed 255 characters
     string naptr_str;
@@ -118,7 +149,8 @@ TEST_F(Rdata_NAPTR_Test, badText) {
         naptr_str += 'A';
     }
     naptr_str += " SIP \"\" _sip._udp.example.com.";
-    EXPECT_THROW(const NAPTR naptr(naptr_str), CharStringTooLong);
+    EXPECT_THROW_WITH(const NAPTR naptr(naptr_str), CharStringTooLong,
+                      "character-string is too long: 257(+1) characters");
 }
 
 TEST_F(Rdata_NAPTR_Test, createFromWire) {

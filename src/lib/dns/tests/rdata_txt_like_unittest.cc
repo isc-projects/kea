@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,6 +24,8 @@
 #include <util/unittests/wiredata.h>
 
 #include <gtest/gtest.h>
+
+#include <util/unittests/test_exceptions.h>
 
 #include <boost/bind.hpp>
 
@@ -164,16 +166,22 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromText) {
     EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
 
     // Too long text for a valid character-string.
-    EXPECT_THROW(TypeParam(string(256, 'a')), CharStringTooLong);
-    EXPECT_THROW(TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
-                           this->loader_cb), CharStringTooLong);
+    EXPECT_THROW_WITH(TypeParam(string(256, 'a')), CharStringTooLong,
+                      "character-string is too long: 256(+1) characters");
+    EXPECT_THROW_WITH(TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
+                                this->loader_cb), CharStringTooLong,
+                      "character-string is too long: 256(+1) characters");
     EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
 
     // The escape character makes the double quote a part of character-string,
     // so this is invalid input and should be rejected.
-    EXPECT_THROW(TypeParam("\"Test-String\\\""), InvalidRdataText);
-    EXPECT_THROW(TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
-                           this->loader_cb), MasterLexer::LexerError);
+    EXPECT_THROW_WITH(TypeParam("\"Test-String\\\""), InvalidRdataText,
+                      "Failed to construct " << RRTYPE<TypeParam>()
+                      << " RDATA from '\"Test-String\\\"': "
+                      "unexpected end of input");
+    EXPECT_THROW_WITH(TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
+                                this->loader_cb), MasterLexer::LexerError,
+                      "unbalanced quotes");
     EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
 }
 
@@ -218,17 +226,31 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createMultiStringsFromText) {
 TYPED_TEST(Rdata_TXT_LIKE_Test, createFromTextExtra) {
     // This is for the std::string version only: the input must end with EOF;
     // an extra new-line will result in an exception.
-    EXPECT_THROW(TypeParam("\"Test-String\"\n"), InvalidRdataText);
+    EXPECT_THROW_WITH(TypeParam("\"Test-String\"\n"), InvalidRdataText,
+                      "Failed to construct " << RRTYPE<TypeParam>()
+                      << " RDATA from '\"Test-String\"\n': "
+                      "extra new line");
     // Same if there's a space before '\n'
-    EXPECT_THROW(TypeParam("\"Test-String\" \n"), InvalidRdataText);
+    EXPECT_THROW_WITH(TypeParam("\"Test-String\" \n"), InvalidRdataText,
+                      "Failed to construct " << RRTYPE<TypeParam>()
+                      << " RDATA from '\"Test-String\" \n': "
+                      "extra new line");
 }
 
 TYPED_TEST(Rdata_TXT_LIKE_Test, fromTextEmpty) {
     // If the input text doesn't contain any character-string, it should be
     // rejected
-    EXPECT_THROW(TypeParam(""), InvalidRdataText);
-    EXPECT_THROW(TypeParam(" "), InvalidRdataText); // even with a space
-    EXPECT_THROW(TypeParam("(\n)"), InvalidRdataText); // or multi-line with ()
+    EXPECT_THROW_WITH(TypeParam(""), InvalidRdataText,
+                      "Failed to construct " << RRTYPE<TypeParam>()
+                      << " RDATA: empty input");
+    // even with a space
+    EXPECT_THROW_WITH(TypeParam(" "), InvalidRdataText,
+                      "Failed to construct " << RRTYPE<TypeParam>()
+                      << " RDATA: empty input");
+    // or multi-line with ()
+    EXPECT_THROW_WITH(TypeParam("(\n)"), InvalidRdataText,
+                      "Failed to construct " << RRTYPE<TypeParam>()
+                      <<" RDATA: empty input");
 }
 
 void
@@ -292,17 +314,24 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromWire) {
     // length is validated.  But this should be checked explicitly.
     InputBuffer ibuffer2(&largest_txt_like_data[0],
                          largest_txt_like_data.size());
-    EXPECT_THROW(TypeParam(ibuffer2, 65536), InvalidRdataLength);
+    EXPECT_THROW_WITH(TypeParam(ibuffer2, 65536), InvalidRdataLength,
+                      "RDLENGTH too large: 65536");
 
     // RDATA is empty, which is invalid for TXT_LIKE.
-    EXPECT_THROW(this->rdataFactoryFromFile(RRTYPE<TypeParam>(), RRClass("IN"),
-                                      "rdata_txt_fromWire4.wire"),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(this->rdataFactoryFromFile(RRTYPE<TypeParam>(),
+                                                 RRClass("IN"),
+                                                 "rdata_txt_fromWire4.wire"),
+                      DNSMessageFORMERR, "Error in parsing "
+                      << RRTYPE<TypeParam>()
+                      << " RDATA: 0-length character string");
 
     // character-string length is too large, which could cause overrun.
-    EXPECT_THROW(this->rdataFactoryFromFile(RRTYPE<TypeParam>(), RRClass("IN"),
-                                      "rdata_txt_fromWire5.wire"),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(this->rdataFactoryFromFile(RRTYPE<TypeParam>(),
+                                                 RRClass("IN"),
+                                                 "rdata_txt_fromWire5.wire"),
+                      DNSMessageFORMERR, "Error in parsing "
+                      << RRTYPE<TypeParam>()
+                      << " RDATA: character string length is too large: 255");
 }
 
 TYPED_TEST(Rdata_TXT_LIKE_Test, createFromLexer) {
@@ -394,8 +423,7 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, compare) {
     EXPECT_GT(TypeParam(txt4).compare(TypeParam(txt5)), 0);
 
     // comparison attempt between incompatible RR types should be rejected
-    EXPECT_THROW(TypeParam(txt1).compare(*this->rdata_nomatch),
-                 bad_cast);
+    EXPECT_THROW(TypeParam(txt1).compare(*this->rdata_nomatch), bad_cast);
 }
 
 }

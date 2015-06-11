@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -23,6 +23,7 @@
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
 #include <util/unittests/wiredata.h>
+#include <util/unittests/test_exceptions.h>
 
 using namespace std;
 using namespace isc::util;
@@ -126,24 +127,24 @@ TEST_F(Rdata_RP_Test, createFromWire) {
 
 TEST_F(Rdata_RP_Test, badFromWire) {
     // RDLEN is too short
-    EXPECT_THROW(rdataFactoryFromFile(RRType::RP(), RRClass::IN(),
-                                      "rdata_rp_fromWire3.wire"),
-                 InvalidRdataLength);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType::RP(), RRClass::IN(),
+                                           "rdata_rp_fromWire3.wire"),
+                      InvalidRdataLength, "RDLENGTH mismatch: 39 != 38");
 
     // RDLEN is too long
-    EXPECT_THROW(rdataFactoryFromFile(RRType::RP(), RRClass::IN(),
-                                      "rdata_rp_fromWire4.wire"),
-                 InvalidRdataLength);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType::RP(), RRClass::IN(),
+                                           "rdata_rp_fromWire4.wire"),
+                      InvalidRdataLength, "RDLENGTH mismatch: 39 != 40");
 
     // bogus mailbox name
-    EXPECT_THROW(rdataFactoryFromFile(RRType::RP(), RRClass::IN(),
-                                      "rdata_rp_fromWire5.wire"),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType::RP(), RRClass::IN(),
+                                           "rdata_rp_fromWire5.wire"),
+                      DNSMessageFORMERR, "unknown label character: 67");
 
     // bogus text name
-    EXPECT_THROW(rdataFactoryFromFile(RRType::RP(), RRClass::IN(),
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType::RP(), RRClass::IN(),
                                       "rdata_rp_fromWire6.wire"),
-                 DNSMessageFORMERR);
+                      DNSMessageFORMERR, "unknown label character: 67");
 }
 
 TEST_F(Rdata_RP_Test, createFromParams) {

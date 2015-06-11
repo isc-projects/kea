@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -25,6 +25,7 @@
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
 #include <util/unittests/wiredata.h>
+#include <util/unittests/test_exceptions.h>
 
 using namespace std;
 using namespace isc::dns;
@@ -74,7 +75,9 @@ TEST_F(Rdata_PTR_Test, createFromText) {
 
 TEST_F(Rdata_PTR_Test, badText) {
     // Extra text at end of line
-    EXPECT_THROW(generic::PTR("foo.example.com. extra."), InvalidRdataText);
+    EXPECT_THROW_WITH(generic::PTR("foo.example.com. extra."),
+                      InvalidRdataText,
+                      "extra input text for PTR: foo.example.com. extra.");
 }
 
 TEST_F(Rdata_PTR_Test, createFromWire) {
@@ -82,24 +85,24 @@ TEST_F(Rdata_PTR_Test, createFromWire) {
                   *rdataFactoryFromFile(RRType("PTR"), RRClass("IN"),
                                         "rdata_ns_fromWire")));
     // RDLENGTH is too short
-    EXPECT_THROW(rdataFactoryFromFile(RRType("PTR"), RRClass("IN"),
-                                      "rdata_ns_fromWire", 18),
-                 InvalidRdataLength);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType("PTR"), RRClass("IN"),
+                                           "rdata_ns_fromWire", 18),
+                      InvalidRdataLength, "RDLENGTH mismatch: 16 != 15");
     // RDLENGTH is too long
-    EXPECT_THROW(rdataFactoryFromFile(RRType("PTR"), RRClass("IN"),
-                                      "rdata_ns_fromWire", 36),
-                 InvalidRdataLength);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType("PTR"), RRClass("IN"),
+                                           "rdata_ns_fromWire", 36),
+                      InvalidRdataLength, "RDLENGTH mismatch: 16 != 17");
     // incomplete name.  the error should be detected in the name constructor
-    EXPECT_THROW(rdataFactoryFromFile(RRType("PTR"), RRClass("IN"),
-                                      "rdata_ns_fromWire", 71),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType("PTR"), RRClass("IN"),
+                                           "rdata_ns_fromWire", 71),
+                      DNSMessageFORMERR, "incomplete wire-format name");
 
     EXPECT_EQ(0, generic::PTR("ns2.example.com.").compare(
                   *rdataFactoryFromFile(RRType("PTR"), RRClass("IN"),
                                         "rdata_ns_fromWire", 55)));
-    EXPECT_THROW(*rdataFactoryFromFile(RRType("PTR"), RRClass("IN"),
-                                       "rdata_ns_fromWire", 63),
-                 InvalidRdataLength);
+    EXPECT_THROW_WITH(*rdataFactoryFromFile(RRType("PTR"), RRClass("IN"),
+                                            "rdata_ns_fromWire", 63),
+                      InvalidRdataLength, "RDLENGTH mismatch: 6 != 17");
 }
 
 TEST_F(Rdata_PTR_Test, createFromLexer) {

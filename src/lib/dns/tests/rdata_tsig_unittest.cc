@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -30,6 +30,7 @@
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
 #include <util/unittests/wiredata.h>
+#include <util/unittests/test_exceptions.h>
 
 using namespace std;
 using namespace isc;
@@ -258,25 +259,25 @@ TEST_F(Rdata_TSIG_Test, createFromWireWithCompression) {
 
 TEST_F(Rdata_TSIG_Test, badFromWire) {
     // RDLENGTH is too short:
-    EXPECT_THROW(rdataFactoryFromFile(RRType::TSIG(), RRClass::ANY(),
-                                      "rdata_tsig_fromWire5.wire"),
-                 InvalidRdataLength);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType::TSIG(), RRClass::ANY(),
+                                           "rdata_tsig_fromWire5.wire"),
+                      InvalidRdataLength, "RDLENGTH mismatch: 61 != 60");
     // RDLENGTH is too long:
-    EXPECT_THROW(rdataFactoryFromFile(RRType::TSIG(), RRClass::ANY(),
-                                      "rdata_tsig_fromWire6.wire"),
-                 InvalidRdataLength);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType::TSIG(), RRClass::ANY(),
+                                           "rdata_tsig_fromWire6.wire"),
+                      InvalidRdataLength, "RDLENGTH mismatch: 61 != 63");
     // Algorithm name is broken:
-    EXPECT_THROW(rdataFactoryFromFile(RRType::TSIG(), RRClass::ANY(),
-                                      "rdata_tsig_fromWire7.wire"),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType::TSIG(), RRClass::ANY(),
+                                           "rdata_tsig_fromWire7.wire"),
+                      DNSMessageFORMERR, "unknown label character: 67");
     // MAC size is bogus:
-    EXPECT_THROW(rdataFactoryFromFile(RRType::TSIG(), RRClass::ANY(),
-                                      "rdata_tsig_fromWire8.wire"),
-                 InvalidBufferPosition);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType::TSIG(), RRClass::ANY(),
+                                           "rdata_tsig_fromWire8.wire"),
+                      InvalidBufferPosition, "read beyond end of buffer");
     // Other-data length is bogus:
-    EXPECT_THROW(rdataFactoryFromFile(RRType::TSIG(), RRClass::ANY(),
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType::TSIG(), RRClass::ANY(),
                                       "rdata_tsig_fromWire9.wire"),
-                 InvalidBufferPosition);
+                      InvalidBufferPosition, "read beyond end of buffer");
 }
 
 TEST_F(Rdata_TSIG_Test, copyConstruct) {
@@ -306,21 +307,26 @@ TEST_F(Rdata_TSIG_Test, createFromParams) {
                   any::TSIG(Name("hmac-sha1"), 1286779327, 300, 12,
                             fake_data, 16020, 18, 6, fake_data2)));
 
-    EXPECT_THROW(any::TSIG(Name("hmac-sha256"), 1ULL << 48, 300, 12,
-                           fake_data, 16020, 18, 6, fake_data2),
-                 isc::OutOfRange);
-    EXPECT_THROW(any::TSIG(Name("hmac-sha256"), 0, 300, 0, fake_data, 16020,
-                           18, 0, NULL),
-                 isc::InvalidParameter);
-    EXPECT_THROW(any::TSIG(Name("hmac-sha256"), 0, 300, 12, NULL, 16020,
-                           18, 0, NULL),
-                 isc::InvalidParameter);
-    EXPECT_THROW(any::TSIG(Name("hmac-sha256"), 0, 300, 0, NULL, 16020,
-                           18, 0, fake_data),
-                 isc::InvalidParameter);
-    EXPECT_THROW(any::TSIG(Name("hmac-sha256"), 0, 300, 0, NULL, 16020,
-                           18, 6, NULL),
-                 isc::InvalidParameter);
+    EXPECT_THROW_WITH(any::TSIG(Name("hmac-sha256"), 1ULL << 48, 300, 12,
+                                fake_data, 16020, 18, 6, fake_data2),
+                      isc::OutOfRange,
+                      "TSIG Time Signed is too large: " << (1ULL << 48));
+    EXPECT_THROW_WITH(any::TSIG(Name("hmac-sha256"), 0, 300, 0,
+                                fake_data, 16020, 18, 0, NULL),
+                      isc::InvalidParameter,
+                      "TSIG MAC size and data inconsistent");
+    EXPECT_THROW_WITH(any::TSIG(Name("hmac-sha256"), 0, 300, 12, NULL, 16020,
+                                18, 0, NULL),
+                      isc::InvalidParameter,
+                      "TSIG MAC size and data inconsistent");
+    EXPECT_THROW_WITH(any::TSIG(Name("hmac-sha256"), 0, 300, 0, NULL, 16020,
+                                18, 0, fake_data),
+                      isc::InvalidParameter,
+                      "TSIG Other data length and data inconsistent");
+    EXPECT_THROW_WITH(any::TSIG(Name("hmac-sha256"), 0, 300, 0, NULL, 16020,
+                                18, 6, NULL),
+                      isc::InvalidParameter,
+                      "TSIG Other data length and data inconsistent");
 }
 
 TEST_F(Rdata_TSIG_Test, assignment) {

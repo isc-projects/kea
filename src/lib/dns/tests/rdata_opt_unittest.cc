@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,6 +24,7 @@
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
 #include <util/unittests/wiredata.h>
+#include <util/unittests/test_exceptions.h>
 
 using namespace std;
 using namespace isc::dns;
@@ -48,7 +49,8 @@ const uint8_t rdata_opt_wiredata[] = {
 
 TEST_F(Rdata_OPT_Test, createFromText) {
     // OPT RR cannot be created from text.
-    EXPECT_THROW(generic::OPT("this does not matter"), InvalidRdataText);
+    EXPECT_THROW_WITH(generic::OPT("this does not matter"), InvalidRdataText,
+                      "OPT RR cannot be constructed from text");
 }
 
 TEST_F(Rdata_OPT_Test, createFromWire) {
@@ -61,22 +63,26 @@ TEST_F(Rdata_OPT_Test, createFromWire) {
 
     // Short RDLEN. This throws InvalidRdataLength even if subsequent
     // pseudo RRs cause RDLEN size to be exhausted.
-    EXPECT_THROW(rdataFactoryFromFile(RRType::OPT(), RRClass::IN(),
-                                      "rdata_opt_fromWire2"),
-                 InvalidRdataLength);
-    EXPECT_THROW(rdataFactoryFromFile(RRType::OPT(), RRClass::IN(),
-                                      "rdata_opt_fromWire3"),
-                 InvalidRdataLength);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType::OPT(), RRClass::IN(),
+                                           "rdata_opt_fromWire2"),
+                      InvalidRdataLength,
+                      "Pseudo OPT RR record too short: 1 bytes");
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType::OPT(), RRClass::IN(),
+                                           "rdata_opt_fromWire3"),
+                      InvalidRdataLength,
+                      "Pseudo OPT RR record too short: 1 bytes");
     // Option lengths can add up and overflow RDLEN. Unlikely when
     // parsed from wire data, but we'll check for it anyway.
-    EXPECT_THROW(rdataFactoryFromFile(RRType::OPT(), RRClass::IN(),
-                                      "rdata_opt_fromWire4"),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType::OPT(), RRClass::IN(),
+                                           "rdata_opt_fromWire4"),
+                      InvalidRdataText,
+                      "Option length 65535 would overflow "
+                      "OPT RR RDLEN (currently 3).");
 
     // short buffer case.
-    EXPECT_THROW(rdataFactoryFromFile(RRType::OPT(), RRClass::IN(),
-                                      "rdata_opt_fromWire1", 11),
-                 InvalidBufferPosition);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType::OPT(), RRClass::IN(),
+                                           "rdata_opt_fromWire1", 11),
+                      InvalidBufferPosition, "read beyond end of buffer");
 }
 
 TEST_F(Rdata_OPT_Test, createFromLexer) {
@@ -116,23 +122,27 @@ TEST_F(Rdata_OPT_Test, toText) {
     // empty OPT
     const generic::OPT rdata_opt;
 
-    EXPECT_THROW(rdata_opt.toText(),
-                 isc::InvalidOperation);
+    EXPECT_THROW_WITH(rdata_opt.toText(), isc::InvalidOperation,
+                      "OPT RRs do not have a presentation format");
 }
 
 TEST_F(Rdata_OPT_Test, compare) {
     // empty OPT
     const generic::OPT rdata_opt;
 
-    EXPECT_THROW(rdata_opt.compare(
-                  *rdataFactoryFromFile(RRType::OPT(), RRClass::CH(),
-                                        "rdata_opt_fromWire1", 2)),
-                 isc::InvalidOperation);
+    EXPECT_THROW_WITH(rdata_opt.compare(
+                          *rdataFactoryFromFile(RRType::OPT(), RRClass::CH(),
+                                                "rdata_opt_fromWire1", 2)),
+                      isc::InvalidOperation,
+                      "It is meaningless to compare a set of OPT pseudo RRs; "
+                      "they have unspecified order");
 
     // comparison attempt between incompatible RR types also results in
     // isc::InvalidOperation.
-    EXPECT_THROW(rdata_opt.compare(*RdataTest::rdata_nomatch),
-                 isc::InvalidOperation);
+    EXPECT_THROW_WITH(rdata_opt.compare(*RdataTest::rdata_nomatch),
+                      isc::InvalidOperation,
+                      "It is meaningless to compare a set of OPT pseudo RRs; "
+                      "they have unspecified order");
 }
 
 TEST_F(Rdata_OPT_Test, appendPseudoRR) {
@@ -150,8 +160,11 @@ TEST_F(Rdata_OPT_Test, appendPseudoRR) {
 
     // When option length may overflow RDLEN, append should throw.
     const std::vector<uint8_t> buffer((1 << 16) - 1);
-    EXPECT_THROW(rdata_opt.appendPseudoRR(0x0044, &buffer[0], buffer.size()),
-                 isc::InvalidParameter);
+    EXPECT_THROW_WITH(rdata_opt.appendPseudoRR(0x0044, &buffer[0],
+                                               buffer.size()),
+                      isc::InvalidParameter,
+                      "Option length 65535 would overflow "
+                      "OPT RR RDLEN (currently 10).");
 
     const uint8_t rdata_opt_wiredata2[] = {
         // OPTION #1

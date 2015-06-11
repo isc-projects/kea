@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -29,6 +29,7 @@
 #include <dns/tests/rdata_unittest.h>
 
 #include <util/unittests/wiredata.h>
+#include <util/unittests/test_exceptions.h>
 
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
@@ -300,38 +301,60 @@ TEST_F(Rdata_Unknown_Test, createFromText) {
                   generic::Generic(ibuffer, v.size())));
 
     // the length field must match the encoding data length.
-    EXPECT_THROW(generic::Generic("\\# 4 1080c0ff00"), InvalidRdataLength);
-    EXPECT_THROW(generic::Generic("\\# 5 1080c0ff"), InvalidRdataLength);
+    EXPECT_THROW_WITH(generic::Generic("\\# 4 1080c0ff00"),
+                      InvalidRdataLength,
+                      "Size of unknown RDATA hex data doesn't "
+                      "match RDLENGTH: 5 vs. 4");
+    EXPECT_THROW_WITH(generic::Generic("\\# 5 1080c0ff"),
+                      InvalidRdataLength,
+                      "Size of unknown RDATA hex data doesn't "
+                      "match RDLENGTH: 4 vs. 5");
     // RDATA encoding part must consist of an even number of hex digits.
-    EXPECT_THROW(generic::Generic("\\# 1 1"), InvalidRdataText);
-    EXPECT_THROW(generic::Generic("\\# 1 ax"), InvalidRdataText);
+    EXPECT_THROW_WITH(generic::Generic("\\# 1 1"),
+                      InvalidRdataText,
+                      "Invalid hex encoding of generic RDATA: "
+                      "Incomplete input for base16: 1");
+    EXPECT_THROW_WITH(generic::Generic("\\# 1 ax"),
+                      InvalidRdataText,
+                      "Invalid hex encoding of generic RDATA: "
+                      "attempt to decode a value not in base16 char set");
     // the length should be 16-bit unsigned integer
-    EXPECT_THROW(generic::Generic("\\# 65536 a1b2c30d"), InvalidRdataLength);
-    EXPECT_THROW(generic::Generic("\\# -1 a1b2c30d"), InvalidRdataLength);
-    EXPECT_THROW(generic::Generic("\\# 1.1 a1"), InvalidRdataLength);
-    EXPECT_THROW(generic::Generic("\\# 0a 00010203040506070809"),
-                 InvalidRdataLength);
+    EXPECT_THROW_WITH(generic::Generic("\\# 65536 a1b2c30d"),
+                      InvalidRdataLength,
+                      "Unknown RDATA length is out of range: 65536");
+    EXPECT_THROW_WITH(generic::Generic("\\# -1 a1b2c30d"),
+                      InvalidRdataLength, "Unknown RDATA length is invalid");
+    EXPECT_THROW_WITH(generic::Generic("\\# 1.1 a1"), InvalidRdataLength,
+                      "Unknown RDATA length is invalid");
+    EXPECT_THROW_WITH(generic::Generic("\\# 0a 00010203040506070809"),
+                      InvalidRdataLength, "Unknown RDATA length is invalid");
     // should reject if the special token is missing.
-    EXPECT_THROW(generic::Generic("4 a1b2c30d"), InvalidRdataText);
+    EXPECT_THROW_WITH(generic::Generic("4 a1b2c30d"), InvalidRdataText,
+                      "Missing the special token (\\#) for "
+                      "unknown RDATA encoding");
     // the special token, the RDLENGTH and the data must be space separated.
-    EXPECT_THROW(generic::Generic("\\#0"), InvalidRdataText);
-    EXPECT_THROW(generic::Generic("\\# 1ff"), InvalidRdataLength);
+    EXPECT_THROW_WITH(generic::Generic("\\#0"), InvalidRdataText,
+                      "Missing the special token (\\#) for "
+                      "unknown RDATA encoding");
+    EXPECT_THROW_WITH(generic::Generic("\\# 1ff"), InvalidRdataLength,
+                      "Unknown RDATA length is invalid");
 }
 
 TEST_F(Rdata_Unknown_Test, createFromWire) {
     // normal case (including 0-length data) is covered in createFromText.
 
     // buffer too short.  the error should be detected in buffer read
-    EXPECT_THROW(rdataFactoryFromFile(unknown_rrtype, RRClass::IN(),
-                                      "rdata_unknown_fromWire", 8),
-                 InvalidBufferPosition);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(unknown_rrtype, RRClass::IN(),
+                                           "rdata_unknown_fromWire", 8),
+                      InvalidBufferPosition, "read beyond end of buffer");
 
     // too large data
     vector<uint8_t> v;
     getLongestRdataWire(v);
     v.push_back(0);             // making it too long
     InputBuffer ibuffer(&v[0], v.size());
-    EXPECT_THROW(generic::Generic(ibuffer, v.size()), InvalidRdataLength);
+    EXPECT_THROW_WITH(generic::Generic(ibuffer, v.size()), InvalidRdataLength,
+                      "RDLENGTH too large");
 }
 
 // The following 3 sets of tests check the behavior of createRdata() variants

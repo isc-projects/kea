@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -26,6 +26,7 @@
 
 #include <gtest/gtest.h>
 
+#include <util/unittests/test_exceptions.h>
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
 
@@ -159,19 +160,20 @@ TEST_F(Rdata_NSEC3_Test, createFromWire) {
     // Invalid bitmap cases are tested in Rdata_NSECBITMAP_Test.
 
     // hash length is too large
-    EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
-                                      "rdata_nsec3_fromWire12.wire"),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
+                                           "rdata_nsec3_fromWire12.wire"),
+                      DNSMessageFORMERR, "NSEC3 invalid hash length: 20");
 
     // empty hash.  invalid.
-    EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
-                                      "rdata_nsec3_fromWire14.wire"),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
+                                           "rdata_nsec3_fromWire14.wire"),
+                      DNSMessageFORMERR,  "NSEC3 invalid hash length: 0");
 
     // RDLEN is too short to hold the hash length field
-    EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
-                                      "rdata_nsec3_fromWire17.wire"),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
+                                           "rdata_nsec3_fromWire17.wire"),
+                      DNSMessageFORMERR,
+                      "NSEC3 too short to contain hash length, length: 10");
 
     // Short buffer cases.  The data is valid NSEC3 RDATA, but the buffer
     // is trimmed at the end.  All cases should result in an exception from

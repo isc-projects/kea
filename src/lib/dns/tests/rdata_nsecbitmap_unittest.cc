@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -22,6 +22,7 @@
 
 #include <gtest/gtest.h>
 
+#include <util/unittests/test_exceptions.h>
 #include <dns/tests/rdata_unittest.h>
 #include <util/unittests/wiredata.h>
 
@@ -121,28 +122,36 @@ NSECLikeBitmapTest<generic::NSEC3>::getCommonText() {
 // to test for only one RR type.  But we check for both just in case.
 TYPED_TEST(NSECLikeBitmapTest, createFromWire) {
     // A malformed NSEC bitmap length field that could cause overflow.
-    EXPECT_THROW(this->rdataFactoryFromFile(this->getType(), RRClass::IN(),
-                                            (this->getWireFilePrefix() +
-                                             "fromWire4.wire").c_str()),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(this->rdataFactoryFromFile(this->getType(),
+                                                 RRClass::IN(),
+                                                 (this->getWireFilePrefix() +
+                                                  "fromWire4.wire").c_str()),
+                      DNSMessageFORMERR, this->getType()
+                      << " RDATA from wire: bitmap length too large: 31");
 
     // The bitmap field is incomplete (only the first byte is included)
-    EXPECT_THROW(this->rdataFactoryFromFile(this->getType(), RRClass::IN(),
-                                            (this->getWireFilePrefix() +
-                                             "fromWire5.wire").c_str()),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(this->rdataFactoryFromFile(this->getType(),
+                                                 RRClass::IN(),
+                                                 (this->getWireFilePrefix() +
+                                                  "fromWire5.wire").c_str()),
+                      DNSMessageFORMERR, this->getType()
+                      << " RDATA from wire: incomplete bit map field");
 
     // Bitmap length is 0, which is invalid.
-    EXPECT_THROW(this->rdataFactoryFromFile(this->getType(), RRClass::IN(),
-                                            (this->getWireFilePrefix() +
-                                             "fromWire6.wire").c_str()),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(this->rdataFactoryFromFile(this->getType(),
+                                                 RRClass::IN(),
+                                                 (this->getWireFilePrefix() +
+                                                  "fromWire6.wire").c_str()),
+                      DNSMessageFORMERR, this->getType()
+                      << " RDATA from wire: Invalid bitmap length: 0");
 
     // Too large bitmap length with a short buffer.
-    EXPECT_THROW(this->rdataFactoryFromFile(this->getType(), RRClass::IN(),
-                                            (this->getWireFilePrefix() +
-                                             "fromWire3").c_str()),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(this->rdataFactoryFromFile(this->getType(),
+                                                 RRClass::IN(),
+                                                 (this->getWireFilePrefix() +
+                                                  "fromWire3").c_str()),
+                      DNSMessageFORMERR, this->getType()
+                      << " RDATA from wire: Invalid bitmap length: 255");
 
     // A boundary case: longest possible bitmaps (32 maps).  This should be
     // accepted.
@@ -151,24 +160,31 @@ TYPED_TEST(NSECLikeBitmapTest, createFromWire) {
                                                 "fromWire7.wire").c_str()));
 
     // Another boundary condition: 33 bitmaps, which should be rejected.
-    EXPECT_THROW(this->rdataFactoryFromFile(this->getType(), RRClass::IN(),
-                                            (this->getWireFilePrefix() +
-                                             "fromWire8.wire").c_str()),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(this->rdataFactoryFromFile(this->getType(),
+                                                 RRClass::IN(),
+                                                 (this->getWireFilePrefix() +
+                                                  "fromWire8.wire").c_str()),
+                      DNSMessageFORMERR, this->getType()
+                      << " RDATA from wire: Invalid bitmap length: 33");
 
     // Disordered bitmap window blocks.
-    EXPECT_THROW(this->rdataFactoryFromFile(this->getType(), RRClass::IN(),
-                                            (this->getWireFilePrefix() +
-                                             "fromWire9.wire").c_str()),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(this->rdataFactoryFromFile(this->getType(),
+                                                 RRClass::IN(),
+                                                 (this->getWireFilePrefix() +
+                                                  "fromWire9.wire").c_str()),
+                      DNSMessageFORMERR, this->getType()
+                      << " RDATA from wire: Disordered window blocks found: "
+                      << "2 then 1");
 
     // Bitmap ending with all-zero bytes.  Not necessarily harmful except
     // the additional overhead of parsing, but invalid according to the
     // spec anyway.
-    EXPECT_THROW(this->rdataFactoryFromFile(this->getType(), RRClass::IN(),
-                                            (this->getWireFilePrefix() +
-                                             "fromWire10.wire").c_str()),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(this->rdataFactoryFromFile(this->getType(),
+                                                 RRClass::IN(),
+                                                 (this->getWireFilePrefix() +
+                                                  "fromWire10.wire").c_str()),
+                      DNSMessageFORMERR, this->getType()
+                      << " RDATA from wire: bitmap ending an all-zero byte");
 }
 
 // This tests the result of toText() with various kinds of NSEC/NSEC3 bitmaps.
@@ -227,12 +243,16 @@ TYPED_TEST(NSECLikeBitmapTest, compare) {
 
 // NSEC bitmaps must not be empty
 TEST_F(NSECBitmapTest, emptyMap) {
-    EXPECT_THROW(this->fromText("next.example.").toText(), InvalidRdataText);
+    EXPECT_THROW_WITH(this->fromText("next.example.").toText(),
+                      InvalidRdataText, this->getType()
+                      << " record does not end with RR type mnemonic");
 
-    EXPECT_THROW(this->rdataFactoryFromFile(this->getType(), RRClass::IN(),
-                                            (this->getWireFilePrefix() +
-                                             "fromWire16.wire").c_str()),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(this->rdataFactoryFromFile(this->getType(),
+                                                 RRClass::IN(),
+                                                 (this->getWireFilePrefix() +
+                                                  "fromWire16.wire").c_str()),
+                      DNSMessageFORMERR, this->getType()
+                      << " RDATA from wire too short: 18bytes");
 }
 
 // NSEC3 bitmaps can be empty

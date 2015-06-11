@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -25,6 +25,7 @@
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
 #include <util/unittests/wiredata.h>
+#include <util/unittests/test_exceptions.h>
 
 using namespace std;
 using namespace isc::dns;
@@ -98,17 +99,23 @@ TEST_F(Rdata_IN_AAAA_Test, createFromWire) {
                   *rdataFactoryFromFile(RRType::AAAA(), RRClass::IN(),
                                         "rdata_in_aaaa_fromWire")));
     // RDLENGTH is too short
-    EXPECT_THROW(rdataFactoryFromFile(RRType::AAAA(), RRClass::IN(),
-                                      "rdata_in_aaaa_fromWire", 18),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType::AAAA(), RRClass::IN(),
+                                           "rdata_in_aaaa_fromWire", 18),
+                      DNSMessageFORMERR,
+                      "IN/AAAA RDATA construction from wire failed: "
+                      "Invalid length: 8");
     // RDLENGTH is too long
-    EXPECT_THROW(rdataFactoryFromFile(RRType::AAAA(), RRClass::IN(),
-                                      "rdata_in_aaaa_fromWire", 36),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType::AAAA(), RRClass::IN(),
+                                           "rdata_in_aaaa_fromWire", 36),
+                      DNSMessageFORMERR,
+                      "IN/AAAA RDATA construction from wire failed: "
+                      "Invalid length: 17");
     // buffer too short.
-    EXPECT_THROW(rdataFactoryFromFile(RRType::AAAA(), RRClass::IN(),
-                                      "rdata_in_aaaa_fromWire", 55),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType::AAAA(), RRClass::IN(),
+                                           "rdata_in_aaaa_fromWire", 55),
+                      DNSMessageFORMERR,
+                      "IN/AAAA RDATA construction from wire failed: "
+                      "insufficient buffer length: 4");
 }
 
 TEST_F(Rdata_IN_AAAA_Test, createFromLexer) {

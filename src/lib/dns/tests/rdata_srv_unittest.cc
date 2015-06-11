@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for generic
 // purpose with or without fee is hereby granted, provided that the above
@@ -25,6 +25,7 @@
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
 #include <util/unittests/wiredata.h>
+#include <util/unittests/test_exceptions.h>
 
 using namespace std;
 using namespace isc::dns;
@@ -70,24 +71,42 @@ TEST_F(Rdata_SRV_Test, createFromText) {
 
 TEST_F(Rdata_SRV_Test, badText) {
     // priority is too large (2814...6 is 2^48)
-    EXPECT_THROW(in::SRV("281474976710656 5 1500 a.example.com."),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(in::SRV("281474976710656 5 1500 a.example.com."),
+                      InvalidRdataText,
+                      "Failed to construct SRV from "
+                      "'281474976710656 5 1500 a.example.com.': "
+                      "number out of range");
     // weight is too large
-    EXPECT_THROW(in::SRV("1 281474976710656 1500 a.example.com."),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(in::SRV("1 281474976710656 1500 a.example.com."),
+                      InvalidRdataText,
+                      "Failed to construct SRV from "
+                      "'1 281474976710656 1500 a.example.com.': "
+                      "number out of range");
     // port is too large
-    EXPECT_THROW(in::SRV("1 5 281474976710656 a.example.com."),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(in::SRV("1 5 281474976710656 a.example.com."),
+                      InvalidRdataText,
+                      "Failed to construct SRV from "
+                      "'1 5 281474976710656 a.example.com.': "
+                      "number out of range");
     // incomplete text
-    EXPECT_THROW(in::SRV("1 5 a.example.com."),
-                 InvalidRdataText);
-    EXPECT_THROW(in::SRV("1 5 1500a.example.com."),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(in::SRV("1 5 a.example.com."),
+                      InvalidRdataText,
+                      "Failed to construct SRV from '1 5 a.example.com.': "
+                      "not a valid number");
+    EXPECT_THROW_WITH(in::SRV("1 5 1500a.example.com."),
+                      InvalidRdataText,
+                      "Failed to construct SRV from '1 5 1500a.example.com.': "
+                      "not a valid number");
     // bad name
-    EXPECT_THROW(in::SRV("1 5 1500 a.example.com." + too_long_label),
-                 TooLongLabel);
+    EXPECT_THROW_WITH(in::SRV("1 5 1500 a.example.com." + too_long_label),
+                      TooLongLabel, "label is too long in "
+                      << "a.example.com." + too_long_label);
+                      
     // Extra text at end of line
-    EXPECT_THROW(in::SRV("1 5 1500 a.example.com. extra."), InvalidRdataText);
+    EXPECT_THROW_WITH(in::SRV("1 5 1500 a.example.com. extra."),
+                      InvalidRdataText,
+                      "extra input text for SRV: "
+                      "1 5 1500 a.example.com. extra.");
 }
 
 TEST_F(Rdata_SRV_Test, assignment) {
@@ -112,17 +131,17 @@ TEST_F(Rdata_SRV_Test, createFromWire) {
                   *rdataFactoryFromFile(RRType("SRV"), RRClass("IN"),
                                         "rdata_srv_fromWire")));
     // RDLENGTH is too short
-    EXPECT_THROW(rdataFactoryFromFile(RRType("SRV"), RRClass("IN"),
-                                      "rdata_srv_fromWire", 23),
-                 InvalidRdataLength);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType("SRV"), RRClass("IN"),
+                                           "rdata_srv_fromWire", 23),
+                      InvalidRdataLength, "RDLENGTH mismatch: 21 != 18");
     // RDLENGTH is too long
-    EXPECT_THROW(rdataFactoryFromFile(RRType("SRV"), RRClass("IN"),
-                                      "rdata_srv_fromWire", 46),
-                 InvalidRdataLength);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType("SRV"), RRClass("IN"),
+                                           "rdata_srv_fromWire", 46),
+                      InvalidRdataLength, "RDLENGTH mismatch: 21 != 25");
     // incomplete name.  the error should be detected in the name constructor
-    EXPECT_THROW(rdataFactoryFromFile(RRType("SRV"), RRClass("IN"),
-                                      "rdata_cname_fromWire", 69),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType("SRV"), RRClass("IN"),
+                                           "rdata_cname_fromWire", 69),
+                      DNSMessageFORMERR, "unknown label character: 101");
     // parse compressed target name
     EXPECT_EQ(0, rdata_srv.compare(
                   *rdataFactoryFromFile(RRType("SRV"), RRClass("IN"),

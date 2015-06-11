@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -23,6 +23,7 @@
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
 #include <util/unittests/wiredata.h>
+#include <util/unittests/test_exceptions.h>
 
 using namespace std;
 using namespace isc;
@@ -111,7 +112,8 @@ TEST_F(Rdata_DHCID_Test, createFromWire) {
                                         "rdata_dhcid_fromWire")));
 
     InputBuffer buffer(NULL, 0);
-    EXPECT_THROW(in::DHCID(buffer, 0), InvalidRdataLength);
+    EXPECT_THROW_WITH(in::DHCID(buffer, 0), InvalidRdataLength,
+                      "Missing DHCID rdata");
 
     // TBD: more tests
 }

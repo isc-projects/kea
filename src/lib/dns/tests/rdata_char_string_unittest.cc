@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,7 @@
 #include <dns/rdata/generic/detail/char_string.h>
 #include <util/buffer.h>
 
+#include <util/unittests/test_exceptions.h>
 #include <gtest/gtest.h>
 
 #include <string>
@@ -121,32 +122,38 @@ TEST_F(CharStringTest, normalConversion) {
 
 TEST_F(CharStringTest, badConversion) {
     // string cannot exceed 255 bytes
-    EXPECT_THROW(stringToCharString(createStringRegion(std::string(256, 'a')),
-                                    chstr),
-                 CharStringTooLong);
+    EXPECT_THROW_WITH(stringToCharString(createStringRegion(std::string(256,
+                                                                        'a')),
+                                         chstr),
+                      CharStringTooLong,
+                      "character-string is too long: 256(+1) characters");
 
     // input string ending with (non escaped) '\'
     chstr.clear();
-    EXPECT_THROW(stringToCharString(createStringRegion("foo\\"), chstr),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(stringToCharString(createStringRegion("foo\\"),
+                                         chstr),
+                      InvalidRdataText, "character-string ends with '\\'");
 }
 
 TEST_F(CharStringTest, badDDD) {
     // Check various type of bad form of \DDD
 
     // Not a number
-    EXPECT_THROW(stringToCharString(createStringRegion("\\1a2"), chstr),
-                 InvalidRdataText);
-    EXPECT_THROW(stringToCharString(createStringRegion("\\12a"), chstr),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(stringToCharString(createStringRegion("\\1a2"),
+                                         chstr),
+                      InvalidRdataText,
+                      "Invalid form for escaped digits: 1a2");
+    EXPECT_THROW_WITH(stringToCharString(createStringRegion("\\12a"), chstr),
+                      InvalidRdataText,
+                      "Invalid form for escaped digits: 12a");
 
     // Not in the range of uint8_t
-    EXPECT_THROW(stringToCharString(createStringRegion("\\256"), chstr),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(stringToCharString(createStringRegion("\\256"), chstr),
+                      InvalidRdataText,  "Escaped digits too large: 256");
 
     // Short buffer
-    EXPECT_THROW(stringToCharString(createStringRegion("\\42"), chstr),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(stringToCharString(createStringRegion("\\42"), chstr),
+                      InvalidRdataText, "Escaped digits too short");
 }
 
 const struct TestData {
@@ -193,14 +200,17 @@ TEST_F(CharStringTest, bufferToCharString_bad) {
     ASSERT_EQ("Test String", charStringToString(chstr));
 
     // Should be at end of buffer now, so it should fail
-    EXPECT_THROW(bufferToCharString(buf, chstr_size - 1, chstr),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(bufferToCharString(buf, chstr_size - 1, chstr),
+                      DNSMessageFORMERR,
+                      "insufficient data to read character-string length");
     EXPECT_EQ("Test String", charStringToString(chstr));
 
     // reset and try to read with too low rdata_len
     buf.setPosition(0);
-    EXPECT_THROW(bufferToCharString(buf, chstr_size - 1, chstr),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(bufferToCharString(buf, chstr_size - 1, chstr),
+                      DNSMessageFORMERR,
+                      "character string length is too large: "
+                      << chstr_size - 1);
     EXPECT_EQ("Test String", charStringToString(chstr));
 
     // set internal charstring len too high
@@ -209,8 +219,9 @@ TEST_F(CharStringTest, bufferToCharString_bad) {
         'T', 'e', 's', 't', ' ', 'S', 't', 'r', 'i', 'n', 'g'
     };
     buf = isc::util::InputBuffer(test_charstr_err, sizeof(test_charstr_err));
-    EXPECT_THROW(bufferToCharString(buf, chstr_size, chstr),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(bufferToCharString(buf, chstr_size, chstr),
+                      DNSMessageFORMERR,
+                      "character string length is too large: 13");
     EXPECT_EQ("Test String", charStringToString(chstr));
 
 }

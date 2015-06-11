@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -27,6 +27,7 @@
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
 #include <util/unittests/wiredata.h>
+#include <util/unittests/test_exceptions.h>
 
 using namespace std;
 using namespace isc::dns;
@@ -48,10 +49,12 @@ TEST_F(Rdata_NSEC_Test, toText_NSEC) {
 }
 
 TEST_F(Rdata_NSEC_Test, badText_NSEC) {
-    EXPECT_THROW(generic::NSEC rdata_nsec("www.isc.org. BIFF POW SPOON"),
-                 InvalidRdataText);
-    EXPECT_THROW(generic::NSEC rdata_nsec("www.isc.org."),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(generic::NSEC rdata_nsec("www.isc.org. BIFF POW SPOON"),
+                      InvalidRdataText,
+                      "Invalid RRtype in NSEC bitmap: BIFF");
+    EXPECT_THROW_WITH(generic::NSEC rdata_nsec("www.isc.org."),
+                      InvalidRdataText,
+                      "NSEC record does not end with RR type mnemonic");
 }
 
 TEST_F(Rdata_NSEC_Test, createFromWire_NSEC) {
@@ -61,9 +64,10 @@ TEST_F(Rdata_NSEC_Test, createFromWire_NSEC) {
                                         "rdata_nsec_fromWire1")));
 
     // Too short RDLENGTH
-    EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC(), RRClass::IN(),
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType::NSEC(), RRClass::IN(),
                                       "rdata_nsec_fromWire2"),
-                 DNSMessageFORMERR);
+                      DNSMessageFORMERR,
+                      "NSEC RDATA from wire too short: 13bytes");
 
     // Invalid bitmap cases are tested in Rdata_NSECBITMAP_Test.
 }

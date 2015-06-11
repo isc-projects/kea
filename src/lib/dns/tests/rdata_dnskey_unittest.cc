@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -28,6 +28,7 @@
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
 #include <util/unittests/wiredata.h>
+#include <util/unittests/test_exceptions.h>
 
 using namespace std;
 using namespace isc;
@@ -188,7 +189,8 @@ TEST_F(Rdata_DNSKEY_Test, getTag) {
 
     // Short keydata with algorithm RSA/MD5 must throw.
     const generic::DNSKEY rdata_dnskey_short_keydata1("1 1 1 YQ==");
-    EXPECT_THROW(rdata_dnskey_short_keydata1.getTag(), isc::OutOfRange);
+    EXPECT_THROW_WITH(rdata_dnskey_short_keydata1.getTag(), isc::OutOfRange,
+                      "DNSKEY keydata too short for tag extraction");
 
     // Short keydata with algorithm not RSA/MD5 must not throw.
     const generic::DNSKEY rdata_dnskey_short_keydata2("257 3 5 YQ==");

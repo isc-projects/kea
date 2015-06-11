@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -23,6 +23,7 @@
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
 #include <util/unittests/wiredata.h>
+#include <util/unittests/test_exceptions.h>
 
 #include <string>
 #include <vector>
@@ -140,40 +141,51 @@ TYPED_TEST(NSEC3PARAMLikeTest, fromText) {
 
 TYPED_TEST(NSEC3PARAMLikeTest, badText) {
     // Bad salt hex
-    EXPECT_THROW(this->fromText("1 1 1 SPORK0" + this->getCommonText()),
-                 isc::BadValue);
-    EXPECT_THROW(this->fromText("1 1 1 ADDAFEE" + this->getCommonText()),
-                 isc::BadValue);
+    EXPECT_THROW_WITH(this->fromText("1 1 1 SPORK0" + this->getCommonText()),
+                      isc::BadValue,
+                      "attempt to decode a value not in base16 char set");
+    EXPECT_THROW_WITH(this->fromText("1 1 1 ADDAFEE" + this->getCommonText()),
+                      isc::BadValue, "Incomplete input for base16: ADDAFEE");
 
     // Space within salt
-    EXPECT_THROW(this->fromText("1 1 1 ADDAFE ADDAFEEE" +
+    EXPECT_THROW(this->fromText("1 1 1 ADDAFE ADDAFEEE" + 
                                 this->getCommonText()),
                  InvalidRdataText);
 
     // Similar to empty salt, but not really.  This shouldn't cause confusion.
-    EXPECT_THROW(this->fromText("1 1 1 --" + this->getCommonText()),
-                 isc::BadValue);
+    EXPECT_THROW_WITH(this->fromText("1 1 1 --" + this->getCommonText()),
+                      isc::BadValue,
+                      "attempt to decode a value not in base16 char set");
 
     // Too large algorithm
-    EXPECT_THROW(this->fromText("1000000 1 1 ADDAFEEE" + this->getCommonText()),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(this->fromText("1000000 1 1 ADDAFEEE" +
+                                     this->getCommonText()),
+                      InvalidRdataText, this->getType()
+                      << " hash algorithm out of range: 1000000");
 
     // Too large flags
-    EXPECT_THROW(this->fromText("1 1000000 1 ADDAFEEE" + this->getCommonText()),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(this->fromText("1 1000000 1 ADDAFEEE" +
+                                     this->getCommonText()),
+                      InvalidRdataText, this->getType()
+                      << " flags out of range: 1000000");
 
     // Too large iterations
-    EXPECT_THROW(this->fromText("1 1 65536 ADDAFEEE" + this->getCommonText()),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(this->fromText("1 1 65536 ADDAFEEE" + this->getCommonText()),
+                      InvalidRdataText, this->getType()
+                      << " iterations out of range: 65536");
 
     // There should be a space between "1" and "D399EAAB" (salt)
-    EXPECT_THROW(this->fromText("1 1 1D399EAAB" + this->getCommonText()),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(this->fromText("1 1 1D399EAAB" + this->getCommonText()),
+                      InvalidRdataText,
+                      "Failed to construct " << this->getType()
+                      << " from '1 1 1D399EAAB" << this->getCommonText()
+                      << "': not a valid number");
 
     // Salt is too long (possible max + 1 bytes)
-    EXPECT_THROW(this->fromText("1 1 1 " + string(256 * 2, '0') +
-                                this->getCommonText()),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(this->fromText("1 1 1 " + string(256 * 2, '0') +
+                                     this->getCommonText()),
+                      InvalidRdataText, this->getType()
+                      << " salt is too long: 512 (encoded) bytes");
 }
 
 TYPED_TEST(NSEC3PARAMLikeTest, toText) {
@@ -192,16 +204,20 @@ TYPED_TEST(NSEC3PARAMLikeTest, createFromWire) {
                                                "fromWire1").c_str())));
 
     // Too short RDLENGTH: it doesn't even contain the first 5 octets.
-    EXPECT_THROW(this->rdataFactoryFromFile(this->getType(), RRClass::IN(),
-                                            (this->getWireFilePrefix() +
-                                             "fromWire2.wire").c_str()),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(this->rdataFactoryFromFile(this->getType(),
+                                                 RRClass::IN(),
+                                                 (this->getWireFilePrefix() +
+                                                  "fromWire2.wire").c_str()),
+                      DNSMessageFORMERR,
+                      this->getType() << " too short, length: 4");
 
     // salt length is too large
-    EXPECT_THROW(this->rdataFactoryFromFile(this->getType(), RRClass::IN(),
-                                            (this->getWireFilePrefix() +
-                                             "fromWire11.wire").c_str()),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(this->rdataFactoryFromFile(this->getType(),
+                                                 RRClass::IN(),
+                                                 (this->getWireFilePrefix() +
+                                                  "fromWire11.wire").c_str()),
+                      DNSMessageFORMERR,
+                      this->getType() << " salt length is too large: 5");
 
     // empty salt.  not so usual, but valid.
     ConstRdataPtr rdata =

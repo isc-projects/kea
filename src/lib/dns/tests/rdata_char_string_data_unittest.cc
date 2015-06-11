@@ -1,4 +1,4 @@
-// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,7 @@
 #include <dns/rdata/generic/detail/char_string.h>
 #include <util/buffer.h>
 
+#include <util/unittests/test_exceptions.h>
 #include <gtest/gtest.h>
 
 #include <string>
@@ -106,26 +107,33 @@ TEST_F(CharStringDataTest, normalConversion) {
 TEST_F(CharStringDataTest, badConversion) {
     // input string ending with (non escaped) '\'
     chstr.clear();
-    EXPECT_THROW(stringToCharStringData(createStringRegion("foo\\"), chstr),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(stringToCharStringData(createStringRegion("foo\\"),
+                                             chstr),
+                      InvalidRdataText, "character-string ends with '\\'");
 }
 
 TEST_F(CharStringDataTest, badDDD) {
     // Check various type of bad form of \DDD
 
     // Not a number
-    EXPECT_THROW(stringToCharStringData(createStringRegion("\\1a2"), chstr),
-                 InvalidRdataText);
-    EXPECT_THROW(stringToCharStringData(createStringRegion("\\12a"), chstr),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(stringToCharStringData(createStringRegion("\\1a2"),
+                                             chstr),
+                      InvalidRdataText,
+                      "Invalid form for escaped digits: 1a2");
+    EXPECT_THROW_WITH(stringToCharStringData(createStringRegion("\\12a"),
+                                             chstr),
+                      InvalidRdataText,
+                      "Invalid form for escaped digits: 12a");
 
     // Not in the range of uint8_t
-    EXPECT_THROW(stringToCharStringData(createStringRegion("\\256"), chstr),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(stringToCharStringData(createStringRegion("\\256"),
+                                             chstr),
+                      InvalidRdataText, "Escaped digits too large: 256");
 
     // Short buffer
-    EXPECT_THROW(stringToCharStringData(createStringRegion("\\42"), chstr),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(stringToCharStringData(createStringRegion("\\42"),
+                                             chstr),
+                      InvalidRdataText, "Escaped digits too short");
 }
 
 const struct TestData {

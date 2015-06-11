@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -27,6 +27,7 @@
 #include <dns/tests/unittest_util.h>
 #include <util/unittests/wiredata.h>
 #include <dns/tests/rdata_unittest.h>
+#include <util/unittests/test_exceptions.h>
 
 using namespace std;
 using namespace isc;
@@ -368,8 +369,8 @@ TEST_F(Rdata_RRSIG_Test, createFromWire) {
                                           "rdata_rrsig_fromWire1")));
 
     // RDLEN is too short
-    EXPECT_THROW(rdataFactoryFromFile(RRType::RRSIG(), RRClass::IN(),
-                                      "rdata_rrsig_fromWire2.wire"),
-                 InvalidRdataLength);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType::RRSIG(), RRClass::IN(),
+                                           "rdata_rrsig_fromWire2.wire"),
+                      InvalidRdataLength, "RRSIG too short");
 }
 }

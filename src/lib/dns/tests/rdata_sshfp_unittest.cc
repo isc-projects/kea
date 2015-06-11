@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -27,6 +27,7 @@
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
 #include <util/unittests/wiredata.h>
+#include <util/unittests/test_exceptions.h>
 
 #include <boost/algorithm/string.hpp>
 
@@ -126,10 +127,12 @@ TEST_F(Rdata_SSHFP_Test, algorithmTypes) {
     EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("1 0 12ab"));
 
     // > 255 would be broken
-    EXPECT_THROW(const generic::SSHFP rdata_sshfp("256 1 12ab"),
-                 InvalidRdataText);
-    EXPECT_THROW(const generic::SSHFP rdata_sshfp("2 256 12ab"),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(const generic::SSHFP rdata_sshfp("256 1 12ab"),
+                      InvalidRdataText,
+                      "SSHFP algorithm number out of range");
+    EXPECT_THROW_WITH(const generic::SSHFP rdata_sshfp("2 256 12ab"),
+                      InvalidRdataText,
+                      "SSHFP fingerprint type out of range");
 }
 
 TEST_F(Rdata_SSHFP_Test, badText) {
@@ -194,19 +197,19 @@ TEST_F(Rdata_SSHFP_Test, createFromWire) {
                                          "rdata_sshfp_fromWire8.wire"));
 
     // fingerprint is shorter than rdata len
-    EXPECT_THROW(rdataFactoryFromFile(RRType("SSHFP"), RRClass("IN"),
-                                      "rdata_sshfp_fromWire9"),
-                 InvalidBufferPosition);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType("SSHFP"), RRClass("IN"),
+                                           "rdata_sshfp_fromWire9"),
+                      InvalidBufferPosition, "read beyond end of buffer");
 
     // fingerprint is missing
-    EXPECT_THROW(rdataFactoryFromFile(RRType("SSHFP"), RRClass("IN"),
-                                      "rdata_sshfp_fromWire10"),
-                 InvalidBufferPosition);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType("SSHFP"), RRClass("IN"),
+                                           "rdata_sshfp_fromWire10"),
+                      InvalidBufferPosition, "read beyond end of buffer");
 
     // all rdata is missing
-    EXPECT_THROW(rdataFactoryFromFile(RRType("SSHFP"), RRClass("IN"),
-                                      "rdata_sshfp_fromWire11"),
-                 InvalidBufferPosition);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType("SSHFP"), RRClass("IN"),
+                                           "rdata_sshfp_fromWire11"),
+                      InvalidBufferPosition, "read beyond end of buffer");
 }
 
 TEST_F(Rdata_SSHFP_Test, createFromParams) {

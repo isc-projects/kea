@@ -1,4 +1,4 @@
-// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -27,6 +27,7 @@
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
 #include <util/unittests/wiredata.h>
+#include <util/unittests/test_exceptions.h>
 
 #include <boost/algorithm/string.hpp>
 
@@ -135,12 +136,14 @@ TEST_F(Rdata_TLSA_Test, fields) {
     EXPECT_NO_THROW(const generic::TLSA rdata_tlsa("0 0 255 12ab"));
 
     // > 255 would be broken
-    EXPECT_THROW(const generic::TLSA rdata_tlsa("256 0 1 12ab"),
-                 InvalidRdataText);
-    EXPECT_THROW(const generic::TLSA rdata_tlsa("0 256 1 12ab"),
-                 InvalidRdataText);
-    EXPECT_THROW(const generic::TLSA rdata_tlsa("0 0 256 12ab"),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(const generic::TLSA rdata_tlsa("256 0 1 12ab"),
+                      InvalidRdataText,
+                      "TLSA certificate usage field out of range");
+    EXPECT_THROW_WITH(const generic::TLSA rdata_tlsa("0 256 1 12ab"),
+                      InvalidRdataText, "TLSA selector field out of range");
+    EXPECT_THROW_WITH(const generic::TLSA rdata_tlsa("0 0 256 12ab"),
+                      InvalidRdataText,
+                      "TLSA matching type field out of range");
 }
 
 TEST_F(Rdata_TLSA_Test, badText) {
@@ -211,24 +214,25 @@ TEST_F(Rdata_TLSA_Test, createFromWire) {
                                          "rdata_tlsa_fromWire8.wire"));
 
     // certificate association data is shorter than rdata len
-    EXPECT_THROW(rdataFactoryFromFile(RRType("TLSA"), RRClass("IN"),
-                                      "rdata_tlsa_fromWire9"),
-                 InvalidBufferPosition);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType("TLSA"), RRClass("IN"),
+                                           "rdata_tlsa_fromWire9"),
+                      InvalidBufferPosition, "read beyond end of buffer");
 
     // certificate association data is missing
-    EXPECT_THROW(rdataFactoryFromFile(RRType("TLSA"), RRClass("IN"),
-                                      "rdata_tlsa_fromWire10"),
-                 InvalidBufferPosition);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType("TLSA"), RRClass("IN"),
+                                           "rdata_tlsa_fromWire10"),
+                      InvalidBufferPosition, "read beyond end of buffer");
 
     // certificate association data is empty
-    EXPECT_THROW(rdataFactoryFromFile(RRType("TLSA"), RRClass("IN"),
-                                      "rdata_tlsa_fromWire12"),
-                 InvalidRdataLength);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType("TLSA"), RRClass("IN"),
+                                           "rdata_tlsa_fromWire12"),
+                      InvalidRdataLength,
+                      "Empty TLSA certificate association data");
 
     // all RDATA is missing
-    EXPECT_THROW(rdataFactoryFromFile(RRType("TLSA"), RRClass("IN"),
-                                      "rdata_tlsa_fromWire11"),
-                 InvalidBufferPosition);
+    EXPECT_THROW_WITH(rdataFactoryFromFile(RRType("TLSA"), RRClass("IN"),
+                                           "rdata_tlsa_fromWire11"),
+                      InvalidBufferPosition, "read beyond end of buffer");
 }
 
 TEST_F(Rdata_TLSA_Test, createFromParams) {
@@ -238,8 +242,9 @@ TEST_F(Rdata_TLSA_Test, createFromParams) {
     EXPECT_EQ(0, rdata_tlsa2.compare(rdata_tlsa));
 
     // empty certificate association data should throw
-    EXPECT_THROW(const generic::TLSA rdata_tlsa2(0, 0, 1, ""),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(const generic::TLSA rdata_tlsa2(0, 0, 1, ""),
+                      InvalidRdataText,
+                      "Empty TLSA certificate association data");
 }
 
 TEST_F(Rdata_TLSA_Test, toText) {

@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,6 +24,7 @@
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
 #include <util/unittests/wiredata.h>
+#include <util/unittests/test_exceptions.h>
 
 using namespace std;
 using namespace isc::dns;
@@ -48,17 +49,25 @@ TEST_F(Rdata_MX_Test, createFromText) {
 }
 
 TEST_F(Rdata_MX_Test, badText) {
-    EXPECT_THROW(const generic::MX rdata_mx("99999999 mx."), InvalidRdataText);
-    EXPECT_THROW(const generic::MX rdata_mx("10"), InvalidRdataText);
-    EXPECT_THROW(const generic::MX rdata_mx("SPOON"), InvalidRdataText);
-    EXPECT_THROW(const generic::MX rdata_mx("10 mx. example.com."),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(const generic::MX rdata_mx("99999999 mx."),
+                      InvalidRdataText, "Invalid MX preference: 99999999");
+    EXPECT_THROW_WITH(const generic::MX rdata_mx("10"), InvalidRdataText,
+                      "Failed to construct MX from '10': "
+                      "unexpected end of input");
+    EXPECT_THROW_WITH(const generic::MX rdata_mx("SPOON"), InvalidRdataText,
+                      "Failed to construct MX from 'SPOON': "
+                      "not a valid number");
+    EXPECT_THROW_WITH(const generic::MX rdata_mx("10 mx. example.com."),
+                      InvalidRdataText,
+                      "extra input text for MX: 10 mx. example.com.");
     // No origin and relative
-    EXPECT_THROW(const generic::MX rdata_mx("10 mx.example.com"),
-                 MissingNameOrigin);
+    EXPECT_THROW_WITH(const generic::MX rdata_mx("10 mx.example.com"),
+                      MissingNameOrigin,
+                      "No origin available and name is relative");
     // Extra text at end of line
-    EXPECT_THROW(const generic::MX rdata_mx("10 mx.example.com. extra."),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(const generic::MX rdata_mx("10 mx.example.com. extra."),
+                      InvalidRdataText,
+                      "extra input text for MX: 10 mx.example.com. extra.");
 }
 
 TEST_F(Rdata_MX_Test, copy) {
