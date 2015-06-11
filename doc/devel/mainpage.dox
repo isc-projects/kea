@@ -49,7 +49,6 @@
  *
  * @section dhcpMaintenanceGuide DHCP Maintenance Guide
  * - @subpage dhcp4
- *   - @subpage dhcpv4Session
  *   - @subpage dhcpv4ConfigParser
  *   - @subpage dhcpv4ConfigInherit
  *   - @subpage dhcpv4OptionsParse
@@ -59,7 +58,6 @@
  *   - @subpage dhcpv4SignalBasedReconfiguration
  *   - @subpage dhcpv4Other
  * - @subpage dhcp6
- *   - @subpage dhcpv6Session
  *   - @subpage dhcpv6ConfigParser
  *   - @subpage dhcpv6ConfigInherit
  *   - @subpage dhcpv6DDNSIntegration
