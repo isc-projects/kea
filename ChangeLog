@@ -1,7 +1,7 @@
 948.	[bug]		fdupont
 	libdhcpsrv: check if new host reservation tries to use an already
 	reserved address.
-	(Trac #3652, git xxx)
+	(Trac #3652, git 4f10b78341b197bd321fbf2ec71db7420e40718d)
 
 947.	[func]		marcin
 	DHCPv6 server now supports Rapid Commit option.
