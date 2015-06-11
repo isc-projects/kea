@@ -29,10 +29,6 @@ DHCPv4 server component does not support direct traffic (relayed
 only), as support for transmission to hosts without IPv4 address
 assigned is not implemented in IfaceMgr yet.
 
-@section dhcpv4Session
-
-No longer applicable.
-
 @section dhcpv4ConfigParser Configuration Parser in DHCPv4
 
 This parser follows exactly the same logic as its DHCPv6 counterpart.
