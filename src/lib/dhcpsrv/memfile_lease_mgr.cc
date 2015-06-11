@@ -754,7 +754,7 @@ void Memfile_LeaseMgr::loadLeasesFromFiles(const std::string& filename,
     // future lease updates.
     lease_file.reset(new LeaseFileType(filename));
     LeaseFileLoader::load<LeaseObjectType>(*lease_file, storage,
-                                           MAX_LEASE_ERRORS, false);;
+                                           MAX_LEASE_ERRORS, false);
 }
 
 
