@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -25,6 +25,8 @@
 #include <dns/rrparamregistry.h>
 #include <dns/rrtype.h>
 #include <dns/master_loader.h>
+
+#include <util/unittests/test_exceptions.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/bind.hpp>
@@ -96,13 +98,15 @@ TEST_F(RRParamRegistryTest, addRemove) {
 TEST_F(RRParamRegistryTest, addError) {
     // An attempt to override a pre-registered class should fail with an
     // exception, and the pre-registered one should remain in the registry.
-    EXPECT_THROW(RRParamRegistry::getRegistry().addClass(test_class_str, 1),
-                 RRClassExists);
+    EXPECT_THROW_WITH(RRParamRegistry::getRegistry()
+                          .addClass(test_class_str, 1),
+                      RRClassExists, "Duplicate RR parameter registration");
     EXPECT_EQ("IN", RRClass(1).toText());
 
     // Same for RRType
-    EXPECT_THROW(RRParamRegistry::getRegistry().addType(test_type_str, 1),
-                 RRTypeExists);
+    EXPECT_THROW_WITH(RRParamRegistry::getRegistry()
+                          .addType(test_type_str, 1),
+                      RRTypeExists, "Duplicate RR parameter registration");
     EXPECT_EQ("A", RRType(1).toText());
 }
 
@@ -123,9 +127,12 @@ public:
 TEST_F(RRParamRegistryTest, addRemoveFactory) {
     // By default, the test type/code pair should be considered "unknown",
     // so the following should trigger an exception.
-    EXPECT_THROW(createRdata(RRType(test_type_code), RRClass(test_class_code),
-                             "192.0.2.1"),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(createRdata(RRType(test_type_code),
+                                  RRClass(test_class_code),
+                                  "192.0.2.1"),
+                      InvalidRdataText,
+                      "Missing the special token (\\#) "
+                      "for unknown RDATA encoding");
     // Add factories so that we can treat this pair just like in::A.
     RRParamRegistry::getRegistry().add(test_type_str, test_type_code,
                                        test_class_str, test_class_code,
@@ -137,9 +144,11 @@ TEST_F(RRParamRegistryTest, addRemoveFactory) {
                               "192.0.2.1")));
     // It should still fail with other classes as we specified the factories
     // as class-specific.
-    EXPECT_THROW(createRdata(RRType(test_type_code), RRClass("IN"),
-                             "192.0.2.1"),
-                 InvalidRdataText);
+    EXPECT_THROW_WITH(createRdata(RRType(test_type_code), RRClass("IN"),
+                                  "192.0.2.1"),
+                      InvalidRdataText,
+                      "Missing the special token (\\#) "
+                      "for unknown RDATA encoding");
     // Add the factories also as a class independent RRtype
     RRParamRegistry::getRegistry().add(test_type_str, test_type_code,
                                        RdataFactoryPtr(new TestRdataFactory));

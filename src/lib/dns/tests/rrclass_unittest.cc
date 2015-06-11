@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,7 @@
 
 #include <dns/tests/unittest_util.h>
 #include <util/unittests/wiredata.h>
+#include <util/unittests/test_exceptions.h>
 
 #include <boost/scoped_ptr.hpp>
 
@@ -72,22 +73,29 @@ TEST_F(RRClassTest, fromTextConstructor) {
 
     // some uncommon cases: see the corresponding RRType tests.
     EXPECT_EQ(53, RRClass("CLASS00053").getCode());
-    EXPECT_THROW(RRClass("CLASS000053"), InvalidRRClass);
+    EXPECT_THROW_WITH(RRClass("CLASS000053"), InvalidRRClass,
+                      "Unrecognized RR class string: CLASS000053");
 
     // bogus CLASSnnn representations: should trigger an exception
-    EXPECT_THROW(RRClass("CLASS"), InvalidRRClass);
-    EXPECT_THROW(RRClass("CLASS-1"), InvalidRRClass);
-    EXPECT_THROW(RRClass("CLASSxxx"), InvalidRRClass);
-    EXPECT_THROW(RRClass("CLASS65536"), InvalidRRClass);
-    EXPECT_THROW(RRClass("CLASS6500x"), InvalidRRClass);
-    EXPECT_THROW(RRClass("CLASS65000 "), InvalidRRClass);
+    EXPECT_THROW_WITH(RRClass("CLASS"), InvalidRRClass,
+                      "Unrecognized RR class string: CLASS");
+    EXPECT_THROW_WITH(RRClass("CLASS-1"), InvalidRRClass,
+                      "Unrecognized RR class string: CLASS-1");
+    EXPECT_THROW_WITH(RRClass("CLASSxxx"), InvalidRRClass,
+                      "Unrecognized RR class string: CLASSxxx");
+    EXPECT_THROW_WITH(RRClass("CLASS65536"), InvalidRRClass,
+                      "Unrecognized RR class string: CLASS65536");
+    EXPECT_THROW_WITH(RRClass("CLASS6500x"), InvalidRRClass,
+                      "Unrecognized RR class string: CLASS6500x");
+    EXPECT_THROW_WITH(RRClass("CLASS65000 "), InvalidRRClass,
+                      "Unrecognized RR class string: CLASS65000 ");
 }
 
 TEST_F(RRClassTest, fromWire) {
     EXPECT_EQ(0x1234,
               rrclassFactoryFromWire("rrcode16_fromWire1").getCode());
-    EXPECT_THROW(rrclassFactoryFromWire("rrcode16_fromWire2"),
-                 IncompleteRRClass);
+    EXPECT_THROW_WITH(rrclassFactoryFromWire("rrcode16_fromWire2"),
+                      IncompleteRRClass, "incomplete wire-format RR class");
 }
 
 TEST_F(RRClassTest, caseConstruct) {

@@ -1,4 +1,4 @@
-// Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -22,6 +22,8 @@
 #include <dns/rcode.h>
 #include <dns/tsigerror.h>
 
+#include <util/unittests/test_exceptions.h>
+
 using namespace std;
 using namespace isc;
 using namespace isc::dns;
@@ -41,7 +43,8 @@ TEST(TSIGErrorTest, constructFromRcode) {
 
     // From error code 16 TSIG errors define a separate space, so passing
     // corresponding RCODE for such code values should be prohibited.
-    EXPECT_THROW(TSIGError(Rcode(16)).getCode(), OutOfRange);
+    EXPECT_THROW_WITH(TSIGError(Rcode(16)).getCode(), OutOfRange,
+                      "Invalid RCODE for TSIG Error: " << Rcode(16));
 }
 
 TEST(TSIGErrorTest, constants) {

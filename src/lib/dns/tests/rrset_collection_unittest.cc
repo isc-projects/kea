@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,8 @@
 #include <dns/rdataclass.h>
 
 #include <gtest/gtest.h>
+
+#include <util/unittests/test_exceptions.h>
 
 #include <list>
 #include <fstream>
@@ -120,9 +122,11 @@ doAddAndRemove(RRsetCollection& collection, const RRClass& rrclass) {
     EXPECT_TRUE(collection.end() != collection.begin());
 
     // Adding a duplicate RRset must throw.
-    EXPECT_THROW({
+    EXPECT_THROW_WITH({
         collection.addRRset(rrset);
-    }, isc::InvalidParameter);
+    }, isc::InvalidParameter,
+    "RRset for " << rrset->getName() << "/" << rrset->getClass()
+    << " with type " << rrset->getType() << " already exists");
 
     // Remove foo.example.org/A, which should pass
     EXPECT_TRUE(collection.removeRRset(Name("foo.example.org"),

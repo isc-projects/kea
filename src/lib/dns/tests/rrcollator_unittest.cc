@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,6 +24,8 @@
 #include <dns/rrttl.h>
 
 #include <gtest/gtest.h>
+
+#include <util/unittests/test_exceptions.h>
 
 #include <boost/bind.hpp>
 
@@ -187,8 +189,9 @@ TEST_F(RRCollatorTest, throwFromCallback) {
     // Adding a TXT RR, which would trigger RRset callback, but in this test
     // it throws.  The added TXT RR will be effectively lost.
     throw_from_callback_ = true;
-    EXPECT_THROW(rr_callback_(origin_, rrclass_, RRType::TXT(), rrttl_,
-                              txt_rdata_), isc::Unexpected);
+    EXPECT_THROW_WITH(rr_callback_(origin_, rrclass_, RRType::TXT(),
+                                   rrttl_, txt_rdata_),
+                      isc::Unexpected, "faked failure");
 
     // We'll only see the A RR.
     throw_from_callback_ = false;

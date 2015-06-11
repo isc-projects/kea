@@ -24,6 +24,7 @@
 
 #include <dns/tests/unittest_util.h>
 #include <util/unittests/wiredata.h>
+#include <util/unittests/test_exceptions.h>
 
 using namespace std;
 using namespace isc::dns;
@@ -86,9 +87,11 @@ TEST_F(TSIGKeyTest, construct) {
                   key_short_md5.getSecret(), key_short_md5.getSecretLength());
 
     // "unknown" algorithm is only accepted with empty secret.
-    EXPECT_THROW(TSIGKey(key_name, Name("unknown-alg"),
-                         secret.c_str(), secret.size()),
-                 isc::InvalidParameter);
+    EXPECT_THROW_WITH(TSIGKey(key_name, Name("unknown-alg"),
+                              secret.c_str(), secret.size()),
+                      isc::InvalidParameter,
+                      "TSIGKey with unknown algorithm has non empty secret: "
+                      << key_name << ":unknown-alg.");
     TSIGKey key2(key_name, Name("unknown-alg"), NULL, 0);
     EXPECT_EQ(key_name, key2.getKeyName());
     EXPECT_EQ(Name("unknown-alg"), key2.getAlgorithmName());
@@ -112,10 +115,15 @@ TEST_F(TSIGKeyTest, construct) {
     EXPECT_EQ(key_trunc.getDigestbits(), 120);
 
     // Invalid combinations of secret and secret_len:
-    EXPECT_THROW(TSIGKey(key_name, TSIGKey::HMACSHA1_NAME(), secret.c_str(), 0),
-                 isc::InvalidParameter);
-    EXPECT_THROW(TSIGKey(key_name, TSIGKey::HMACSHA256_NAME(), NULL, 16),
-                 isc::InvalidParameter);
+    EXPECT_THROW_WITH(TSIGKey(key_name, TSIGKey::HMACSHA1_NAME(),
+                              secret.c_str(), 0),
+                      isc::InvalidParameter,
+                      "TSIGKey secret and its length are inconsistent: "
+                      << key_name << ":" << TSIGKey::HMACSHA1_NAME());
+    EXPECT_THROW_WITH(TSIGKey(key_name, TSIGKey::HMACSHA256_NAME(), NULL, 16),
+                      isc::InvalidParameter,
+                      "TSIGKey secret and its length are inconsistent: "
+                      << key_name << ":" << TSIGKey::HMACSHA256_NAME()); 
 
     // Empty secret
     TSIGKey keye = TSIGKey(key_name, TSIGKey::HMACSHA256_NAME(), NULL, 0);
@@ -336,19 +344,36 @@ TEST(TSIGStringTest, TSIGKeyFromToString) {
     EXPECT_EQ(Name("test.example."), k6.getKeyName());
     EXPECT_EQ(Name("unknown"), k6.getAlgorithmName());
 
-    EXPECT_THROW(TSIGKey(""), isc::InvalidParameter);
-    EXPECT_THROW(TSIGKey(":"), isc::InvalidParameter);
-    EXPECT_THROW(TSIGKey("::"), isc::InvalidParameter);
-    EXPECT_THROW(TSIGKey("..:aa:"), isc::InvalidParameter);
-    EXPECT_THROW(TSIGKey("test.example:xxxx:"), isc::InvalidParameter);
-    EXPECT_THROW(TSIGKey("test.example.::"), isc::InvalidParameter);
-    EXPECT_THROW(TSIGKey("test.example.:"), isc::InvalidParameter);
-    EXPECT_THROW(TSIGKey("test.example.:MSG6Ng==:"), isc::InvalidParameter);
-    EXPECT_THROW(TSIGKey("test.example.:MSG6Ng==:unknown"), isc::InvalidParameter);
-    EXPECT_THROW(TSIGKey("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.:"),
-                 isc::InvalidParameter);
-    EXPECT_THROW(TSIGKey("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.:xxx"),
-                 isc::InvalidParameter);
+    EXPECT_THROW_WITH(TSIGKey(""), isc::InvalidParameter,
+                      "Invalid TSIG key string: ");
+    EXPECT_THROW_WITH(TSIGKey(":"), isc::InvalidParameter,
+                      "Invalid TSIG key string: :");
+    EXPECT_THROW_WITH(TSIGKey("::"), isc::InvalidParameter,
+                      "Invalid TSIG key string: ::");
+    EXPECT_THROW_WITH(TSIGKey("..:aa:"), isc::InvalidParameter,
+                      "Invalid TSIG key string: ..:aa:");
+    EXPECT_THROW_WITH(TSIGKey("test.example:xxxx:"), isc::InvalidParameter,
+                      "Invalid TSIG key string: test.example:xxxx:");
+    EXPECT_THROW_WITH(TSIGKey("test.example.::"), isc::InvalidParameter,
+                      "Invalid TSIG key string: test.example.::");
+    EXPECT_THROW_WITH(TSIGKey("test.example.:"), isc::InvalidParameter,
+                      "Invalid TSIG key string: test.example.:");
+    EXPECT_THROW_WITH(TSIGKey("test.example.:MSG6Ng==:"),
+                      isc::InvalidParameter,
+                      "Invalid TSIG key string: test.example.:MSG6Ng==:");
+    EXPECT_THROW_WITH(TSIGKey("test.example.:MSG6Ng==:unknown"),
+                      isc::InvalidParameter,
+                      "TSIG key with unknown algorithm has non empty secret: "
+                      "test.example.:MSG6Ng==:unknown");
+    EXPECT_THROW_WITH(TSIGKey(
+                          "test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.:"),
+                      isc::InvalidParameter,
+                      "Invalid TSIG key string: "
+                      "test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.:");
+    EXPECT_THROW_WITH(TSIGKey(
+                    "test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.:xxx"),
+                      isc::InvalidParameter,
+                      "TSIG key with non-numeric digestbits: xxx");
 }
 
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -41,6 +41,7 @@
 
 #include <dns/tests/unittest_util.h>
 #include <util/unittests/wiredata.h>
+#include <util/unittests/test_exceptions.h>
 
 using namespace std;
 using namespace isc;
@@ -247,7 +248,8 @@ commonVerifyChecks(TSIGContext& ctx, const TSIGRecord* record,
     EXPECT_EQ(expected_error, ctx.getError());
     EXPECT_EQ(expected_new_state, ctx.getState());
     if (last_should_throw) {
-        EXPECT_THROW(ctx.lastHadSignature(), TSIGContextError);
+        EXPECT_THROW_WITH(ctx.lastHadSignature(), TSIGContextError,
+                          "No message was verified yet");
     } else {
         EXPECT_EQ(record != NULL, ctx.lastHadSignature());
     }
@@ -261,7 +263,8 @@ TEST_F(TSIGTest, initialState) {
     EXPECT_EQ(TSIGError(Rcode::NOERROR()), tsig_ctx->getError());
 
     // Nothing verified yet
-    EXPECT_THROW(tsig_ctx->lastHadSignature(), TSIGContextError);
+    EXPECT_THROW_WITH(tsig_ctx->lastHadSignature(), TSIGContextError,
+                      "No message was verified yet");
 }
 
 TEST_F(TSIGTest, constructFromKeyRing) {
@@ -374,27 +377,33 @@ TEST_F(TSIGTest, signAtActualTime) {
 TEST_F(TSIGTest, signBadData) {
     // some specific bad data should be rejected proactively.
     const unsigned char dummy_data = 0;
-    EXPECT_THROW(tsig_ctx->sign(0, NULL, 10), InvalidParameter);
-    EXPECT_THROW(tsig_ctx->sign(0, &dummy_data, 0), InvalidParameter);
+    EXPECT_THROW_WITH(tsig_ctx->sign(0, NULL, 10), InvalidParameter,
+                      "TSIG sign error: empty data is given");
+    EXPECT_THROW_WITH(tsig_ctx->sign(0, &dummy_data, 0), InvalidParameter,
+                      "TSIG sign error: empty data is given");
 }
 
 TEST_F(TSIGTest, verifyBadData) {
     // the data must at least hold the DNS message header and the specified
     // TSIG.
-    EXPECT_THROW(tsig_ctx->verify(&dummy_record, &dummy_data[0],
-                                  12 + dummy_record.getLength() - 1),
-                 InvalidParameter);
+    EXPECT_THROW_WITH(tsig_ctx->verify(&dummy_record, &dummy_data[0],
+                                       12 + dummy_record.getLength() - 1),
+                      InvalidParameter,
+                      "TSIG verify: data length is invalid: "
+                      << 12 + dummy_record.getLength() - 1);
 
     // Still nothing verified
-    EXPECT_THROW(tsig_ctx->lastHadSignature(), TSIGContextError);
+    EXPECT_THROW_WITH(tsig_ctx->lastHadSignature(), TSIGContextError,
+                      "No message was verified yet");
 
     // And the data must not be NULL.
-    EXPECT_THROW(tsig_ctx->verify(&dummy_record, NULL,
-                                  12 + dummy_record.getLength()),
-                 InvalidParameter);
+    EXPECT_THROW_WITH(tsig_ctx->verify(&dummy_record, NULL,
+                                       12 + dummy_record.getLength()),
+                      InvalidParameter, "TSIG verify: empty data is invalid");
 
     // Still nothing verified
-    EXPECT_THROW(tsig_ctx->lastHadSignature(), TSIGContextError);
+    EXPECT_THROW_WITH(tsig_ctx->lastHadSignature(), TSIGContextError,
+                      "No message was verified yet");
 
 }
 
@@ -925,10 +934,11 @@ TEST_F(TSIGTest, verifyAfterSendResponse) {
 
     // Now trying further verification.
     createMessageFromFile("message_toWire2.wire");
-    EXPECT_THROW(tsig_verify_ctx->verify(message.getTSIGRecord(),
-                                         &received_data[0],
-                                         received_data.size()),
-                 TSIGContextError);
+    EXPECT_THROW_WITH(tsig_verify_ctx->verify(message.getTSIGRecord(),
+                                              &received_data[0],
+                                              received_data.size()),
+                      TSIGContextError,
+                      "TSIG verify attempt after sending a response");
 }
 
 TEST_F(TSIGTest, signAfterVerified) {
@@ -945,8 +955,9 @@ TEST_F(TSIGTest, signAfterVerified) {
     EXPECT_EQ(TSIGContext::VERIFIED_RESPONSE, tsig_ctx->getState());
 
     // Now trying further signing.
-    EXPECT_THROW(createMessageAndSign(qid, test_name, tsig_ctx.get()),
-                 TSIGContextError);
+    EXPECT_THROW_WITH(createMessageAndSign(qid, test_name, tsig_ctx.get()),
+                      TSIGContextError,
+                      "TSIG sign attempt after verifying a response");
 }
 
 TEST_F(TSIGTest, tooShortMAC) {

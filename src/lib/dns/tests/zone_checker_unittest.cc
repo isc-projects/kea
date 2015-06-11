@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -25,6 +25,8 @@
 #include <dns/rrset_collection.h>
 
 #include <gtest/gtest.h>
+
+#include <util/unittests/test_exceptions.h>
 
 #include <boost/bind.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -154,7 +156,8 @@ TEST_F(ZoneCheckerTest, checkSOA) {
     rrsets_->removeRRset(zname_, zclass_, RRType::SOA());
     soa_.reset(new RRset(zname_, zclass_, RRType::SOA(), RRTTL(60)));
     rrsets_->addRRset(soa_);
-    EXPECT_THROW(checkZone(zname_, zclass_, *rrsets_, callbacks_), Unexpected);
+    EXPECT_THROW_WITH(checkZone(zname_, zclass_, *rrsets_, callbacks_),
+                      Unexpected, "Zone checker found an empty SOA RRset");
     checkIssues();              // no error/warning should be reported
 
     // Likewise, if the SOA RRset contains non SOA Rdata, it should be a bug.
@@ -162,7 +165,8 @@ TEST_F(ZoneCheckerTest, checkSOA) {
     soa_.reset(new RRset(zname_, zclass_, RRType::SOA(), RRTTL(60)));
     soa_->addRdata(createRdata(RRType::NS(), zclass_, "ns.example.com."));
     rrsets_->addRRset(soa_);
-    EXPECT_THROW(checkZone(zname_, zclass_, *rrsets_, callbacks_), Unexpected);
+    EXPECT_THROW_WITH(checkZone(zname_, zclass_, *rrsets_, callbacks_),
+                      Unexpected, "Zone checker found bad RDATA in SOA");
     checkIssues();              // no error/warning should be reported
 }
 
@@ -176,14 +180,16 @@ TEST_F(ZoneCheckerTest, checkNS) {
     // Check two buggy cases like the SOA tests
     ns_.reset(new RRset(zname_, zclass_, RRType::NS(), RRTTL(60)));
     rrsets_->addRRset(ns_);
-    EXPECT_THROW(checkZone(zname_, zclass_, *rrsets_, callbacks_), Unexpected);
+    EXPECT_THROW_WITH(checkZone(zname_, zclass_, *rrsets_, callbacks_),
+                      Unexpected, "Zone checker found an empty NS RRset");
     checkIssues();              // no error/warning should be reported
 
     rrsets_->removeRRset(zname_, zclass_, RRType::NS());
     ns_.reset(new RRset(zname_, zclass_, RRType::NS(), RRTTL(60)));
     ns_->addRdata(createRdata(RRType::TXT(), zclass_, "ns.example.com"));
     rrsets_->addRRset(ns_);
-    EXPECT_THROW(checkZone(zname_, zclass_, *rrsets_, callbacks_), Unexpected);
+    EXPECT_THROW_WITH(checkZone(zname_, zclass_, *rrsets_, callbacks_),
+                      Unexpected, "Zone checker found bad RDATA in NS");
     checkIssues();              // no error/warning should be reported
 }
 

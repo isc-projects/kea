@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -30,6 +30,7 @@
 
 #include <dns/tests/unittest_util.h>
 #include <util/unittests/wiredata.h>
+#include <util/unittests/test_exceptions.h>
 
 using namespace std;
 using namespace isc::util;
@@ -94,17 +95,24 @@ TEST_F(TSIGRecordTest, fromParams) {
                                TSIGRecord::getTTL(), test_rdata, 65536));
 
     // RDATA must indeed be TSIG
-    EXPECT_THROW(TSIGRecord(test_name, TSIGRecord::getClass(),
-                            TSIGRecord::getTTL(), in::A("192.0.2.1"), 85),
-                 DNSMessageFORMERR);
+    EXPECT_THROW_WITH(TSIGRecord(test_name, TSIGRecord::getClass(),
+                                 TSIGRecord::getTTL(), in::A("192.0.2.1"), 85),
+                      DNSMessageFORMERR,
+                      "TSIG record is being constructed from "
+                      "incompatible RDATA: 192.0.2.1");
 
     // Unexpected class
-    EXPECT_THROW(TSIGRecord(test_name, RRClass::IN(), TSIGRecord::getTTL(),
-                            test_rdata, 85), DNSMessageFORMERR);
+    EXPECT_THROW_WITH(TSIGRecord(test_name, RRClass::IN(),
+                                 TSIGRecord::getTTL(),
+                                 test_rdata, 85),
+                      DNSMessageFORMERR,
+                      "Unexpected TSIG RR class: " << RRClass::IN());
 
     // Unexpected TTL
-    EXPECT_THROW(TSIGRecord(test_name, TSIGRecord::getClass(),
-                            RRTTL(3600), test_rdata, 85), DNSMessageFORMERR);
+    EXPECT_THROW_WITH(TSIGRecord(test_name, TSIGRecord::getClass(),
+                                 RRTTL(3600), test_rdata, 85),
+                      DNSMessageFORMERR,
+                      "Unexpected TSIG TTL: " << RRTTL(3600));
 }
 
 TEST_F(TSIGRecordTest, recordToWire) {

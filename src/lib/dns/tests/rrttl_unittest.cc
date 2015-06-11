@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,7 @@
 
 #include <dns/tests/unittest_util.h>
 #include <util/unittests/wiredata.h>
+#include <util/unittests/test_exceptions.h>
 
 #include <boost/scoped_ptr.hpp>
 
@@ -90,10 +91,16 @@ TEST_F(RRTTLTest, fromText) {
     EXPECT_EQ(4294967295U, RRTTL("4294967295").getValue());
 
     // Invalid cases
-    EXPECT_THROW(RRTTL("0xdeadbeef"), InvalidRRTTL); // must be decimal
-    EXPECT_THROW(RRTTL("-1"), InvalidRRTTL); // must be positive
-    EXPECT_THROW(RRTTL("1.1"), InvalidRRTTL); // must be integer
-    EXPECT_THROW(RRTTL("4294967296"), InvalidRRTTL); // must be 32-bit
+    // must be decimal
+    EXPECT_THROW_WITH(RRTTL("0xdeadbeef"), InvalidRRTTL,
+                      "Unknown unit used: x in: 0xdeadbeef");
+    // must be positive
+    EXPECT_THROW_WITH(RRTTL("-1"), InvalidRRTTL, "TTL out of range: -1");
+    // must be integer
+    EXPECT_THROW_WITH(RRTTL("1.1"), InvalidRRTTL, "invalid TTL: 1.1");
+    // must be 32-bit
+    EXPECT_THROW_WITH(RRTTL("4294967296"), InvalidRRTTL,
+                      "TTL out of range: 4294967296");
 }
 
 TEST_F(RRTTLTest, createFromText) {
@@ -144,40 +151,50 @@ TEST_F(RRTTLTest, fromTextUnit) {
 
     // Negative number in part of the expression, but the total is positive.
     // Rejected.
-    EXPECT_THROW(RRTTL("-1S1H"), InvalidRRTTL);
+    EXPECT_THROW_WITH(RRTTL("-1S1H"), InvalidRRTTL,
+                      "Part of TTL out of range: -1S1H");
 
     // Some things out of range in the ttl, but it wraps to number in range
     // in int64_t. Should still not get fooled and reject it.
 
     // First part out of range
-    EXPECT_THROW(RRTTL("9223372036854775807S9223372036854775807S2S"),
-                 InvalidRRTTL);
+    EXPECT_THROW_WITH(RRTTL("9223372036854775807S9223372036854775807S2S"),
+                      InvalidRRTTL, "Part of TTL out of range: "
+                      "9223372036854775807S9223372036854775807S2S");
     // Second part out of range, but it immediately wraps (2S+2^64-2S)
-    EXPECT_THROW(RRTTL("2S18446744073709551614S"), InvalidRRTTL);
+    EXPECT_THROW_WITH(RRTTL("2S18446744073709551614S"), InvalidRRTTL,
+                      "Part of TTL out of range: 2S18446744073709551614S");
     // The whole thing wraps right away (2^64S)
-    EXPECT_THROW(RRTTL("18446744073709551616S"), InvalidRRTTL);
+    EXPECT_THROW_WITH(RRTTL("18446744073709551616S"), InvalidRRTTL,
+                      "invalid TTL: 18446744073709551616S");
     // Second part out of range, and will become negative with the unit,
-    EXPECT_THROW(RRTTL("256S307445734561825856M"), InvalidRRTTL);
+    EXPECT_THROW_WITH(RRTTL("256S307445734561825856M"), InvalidRRTTL,
+                      "Part of TTL out of range: 256S307445734561825856M");
 
     // Missing before unit.
-    EXPECT_THROW(RRTTL("W5H"), InvalidRRTTL);
-    EXPECT_THROW(RRTTL("5hW"), InvalidRRTTL);
+    EXPECT_THROW_WITH(RRTTL("W5H"), InvalidRRTTL,
+                      "Missing number in TTL: W5H");
+    EXPECT_THROW_WITH(RRTTL("5hW"), InvalidRRTTL,
+                      "Missing number in TTL: 5hW");
 
     // Empty string is not allowed
-    EXPECT_THROW(RRTTL(""), InvalidRRTTL);
+    EXPECT_THROW_WITH(RRTTL(""), InvalidRRTTL, "Empty TTL string");
     // Missing the last unit is not allowed
-    EXPECT_THROW(RRTTL("3D5"), InvalidRRTTL);
+    EXPECT_THROW_WITH(RRTTL("3D5"), InvalidRRTTL,
+                      "Missing the last unit: 3D5");
 
     // There are some wrong units
-    EXPECT_THROW(RRTTL("13X"), InvalidRRTTL);
-    EXPECT_THROW(RRTTL("3D5F"), InvalidRRTTL);
+    EXPECT_THROW_WITH(RRTTL("13X"), InvalidRRTTL,
+                      "Unknown unit used: X in: 13X");
+    EXPECT_THROW_WITH(RRTTL("3D5F"), InvalidRRTTL,
+                      "Unknown unit used: F in: 3D5F");
 }
 
 TEST_F(RRTTLTest, fromWire) {
     EXPECT_EQ(0x12345678,
               rrttlFactoryFromWire("rrcode32_fromWire1").getValue());
-    EXPECT_THROW(rrttlFactoryFromWire("rrcode32_fromWire2"),
-                 IncompleteRRTTL);
+    EXPECT_THROW_WITH(rrttlFactoryFromWire("rrcode32_fromWire2"),
+                      IncompleteRRTTL, "incomplete wire-format TTL value");
 }
 
 TEST_F(RRTTLTest, toText) {

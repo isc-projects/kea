@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -25,6 +25,7 @@
 #include <dns/tests/unittest_util.h>
 
 #include <util/unittests/wiredata.h>
+#include <util/unittests/test_exceptions.h>
 
 #include <gtest/gtest.h>
 
@@ -307,12 +308,17 @@ TEST_F(RdataFieldsTest, invalidFieldLength) {
         RdataFields::FieldSpec(RdataFields::DATA, 14)
     };
     // sum of field len < data len
-    EXPECT_THROW(RdataFields(specs, 3, &fields_wire[0], fields_wire.size()),
-                 isc::InvalidParameter);
+    EXPECT_THROW_WITH(RdataFields(specs, 3, &fields_wire[0],
+                                  fields_wire.size()),
+                      isc::InvalidParameter,
+                      "Inconsistent parameters for RdataFields: "
+                      "fields_length (3) and fields conflict each other");
     // sum of field len > data len
-    EXPECT_THROW(RdataFields(specs, 3, &fields_wire[0],
-                             fields_wire.size() - 2),
-                 isc::InvalidParameter);
+    EXPECT_THROW_WITH(RdataFields(specs, 3, &fields_wire[0],
+                                  fields_wire.size() - 2),
+                      isc::InvalidParameter,
+                      "Inconsistent parameters for RdataFields: "
+                      "fields_length (3) and fields conflict each other");
 }
 
 // Invalid input to the "from parameter" constructor: NULL vs length mismatch
@@ -320,16 +326,30 @@ TEST_F(RdataFieldsTest, mismatchFieldLengthAndData) {
     const unsigned char dummy_data = 0;
     const RdataFields::FieldSpec dummy_spec(RdataFields::DATA, 1);
 
-    EXPECT_THROW(RdataFields(NULL, 1, &dummy_data, 1), isc::InvalidParameter);
-    EXPECT_THROW(RdataFields(&dummy_spec, 0, NULL, 0), isc::InvalidParameter);
-    EXPECT_THROW(RdataFields(&dummy_spec, 1, NULL, 1), isc::InvalidParameter);
-    EXPECT_THROW(RdataFields(NULL, 0, &dummy_data, 0), isc::InvalidParameter);
+    EXPECT_THROW_WITH(RdataFields(NULL, 1, &dummy_data, 1),
+                      isc::InvalidParameter,
+                      "Inconsistent parameters for RdataFields: "
+                      "fields len: 0 data len: 1");
+    EXPECT_THROW_WITH(RdataFields(&dummy_spec, 0, NULL, 0),
+                      isc::InvalidParameter,
+                      "Inconsistent parameters for RdataFields: "
+                      "fields_length (0) and fields conflict each other");
+    EXPECT_THROW_WITH(RdataFields(&dummy_spec, 1, NULL, 1),
+                      isc::InvalidParameter,
+                      "Inconsistent parameters for RdataFields: "
+                      "fields_length (1) and fields conflict each other");
+    EXPECT_THROW_WITH(RdataFields(NULL, 0, &dummy_data, 0),
+                      isc::InvalidParameter,
+                      "Inconsistent parameters for RdataFields: "
+                      "data length (0) and data conflict each other");
 }
 
 // Bogus input to getFieldSpec()
 TEST_F(RdataFieldsTest, getFieldSpecWithBadFieldId) {
     const RdataFields fields_in_a(in::A("192.0.2.1"));
-    EXPECT_THROW(fields_in_a.getFieldSpec(1), isc::OutOfRange);
+    EXPECT_THROW_WITH(fields_in_a.getFieldSpec(1), isc::OutOfRange,
+                      "Rdata field ID is out of range: "
+                      << RRType::A().getCode());
 }
 
 // Tests for unexpected methods in RdataFieldComposerTest.  Confirm
@@ -367,6 +387,8 @@ private:
 };
 
 TEST(RdataFieldComposerTest, unusedMethods) {
-    EXPECT_THROW(RdataFields(DummyRdata(DummyRdata::CLEAR)), isc::Unexpected);
+    EXPECT_THROW_WITH(RdataFields(DummyRdata(DummyRdata::CLEAR)),
+                      isc::Unexpected,
+                      "unexpected clear() for RdataFieldComposer");
 }
 }

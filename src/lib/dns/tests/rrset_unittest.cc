@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,6 +24,7 @@
 
 #include <dns/tests/unittest_util.h>
 #include <util/unittests/wiredata.h>
+#include <util/unittests/test_exceptions.h>
 
 #include <gtest/gtest.h>
 
@@ -184,7 +185,9 @@ TEST_F(RRsetTest, addRdataString) {
 
     // String version of addRdata() will throw for bad RDATA for
     // RRType::A().
-    EXPECT_THROW(rrset_a_empty.addRdata("ns.example.com."), InvalidRdataText);
+    EXPECT_THROW_WITH(rrset_a_empty.addRdata("ns.example.com."),
+                      InvalidRdataText,
+                      "Bad IN/A RDATA text: 'ns.example.com.'");
     addRdataTestCommon(rrset_a_empty);
 }
 
@@ -216,7 +219,8 @@ TEST_F(RRsetTest, toText) {
               rrset_a.toText());
 
     // toText() cannot be performed for an empty RRset
-    EXPECT_THROW(rrset_a_empty.toText(), EmptyRRset);
+    EXPECT_THROW_WITH(rrset_a_empty.toText(), EmptyRRset,
+                      "toText() is attempted for an empty RRset");
 
     // Unless it is type ANY or NONE
     EXPECT_EQ("test.example.com. 3600 ANY A\n",
@@ -227,7 +231,8 @@ TEST_F(RRsetTest, toText) {
 
 TEST_F(RRsetTest, getLength) {
     // Empty RRset should throw
-    EXPECT_THROW(rrset_a_empty.getLength(), EmptyRRset);
+  EXPECT_THROW_WITH(rrset_a_empty.getLength(), EmptyRRset,
+                    "getLength() is attempted for an empty RRset");
 
     // Unless it is type ANY or NONE:
     // test.example.com = 1 + 4 + 1 + 7 + 1 + 3 + 1 = 18 octets
@@ -259,7 +264,8 @@ TEST_F(RRsetTest, toWireBuffer) {
     // toWire() cannot be performed for an empty RRset except when
     // class=ANY or class=NONE.
     buffer.clear();
-    EXPECT_THROW(rrset_a_empty.toWire(buffer), EmptyRRset);
+    EXPECT_THROW_WITH(rrset_a_empty.toWire(buffer), EmptyRRset,
+                      "toWire() is attempted for an empty RRset");
 
     // When class=ANY or class=NONE, toWire() can also be performed for
     // an empty RRset.
@@ -291,7 +297,8 @@ TEST_F(RRsetTest, toWireRenderer) {
     // toWire() cannot be performed for an empty RRset except when
     // class=ANY or class=NONE.
     renderer.clear();
-    EXPECT_THROW(rrset_a_empty.toWire(renderer), EmptyRRset);
+    EXPECT_THROW_WITH(rrset_a_empty.toWire(renderer), EmptyRRset,
+                      "toWire() is attempted for an empty RRset");
 
     // When class=ANY or class=NONE, toWire() can also be performed for
     // an empty RRset.
