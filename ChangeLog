@@ -1,3 +1,9 @@
+949.	[func]		tmark
+	kea-admin now supports dumping MySQL and PostgreSQL lease tables
+	to CSV file, via a new command "lease-dump".  This is primarily
+	intended for use as a diagnostic tool.
+	(Trac #3802, git 6ec774e8523e7f8415d6cd18c34062489e127847)
+
 948.	[bug]		fdupont
 	libdhcpsrv: check if new host reservation tries to use an already
 	reserved address.
