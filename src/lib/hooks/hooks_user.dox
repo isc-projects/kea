@@ -681,7 +681,7 @@ configuration from the root logger. For example, when the hooks
 library is attached to the DHCPv4 server, the root logger name is
 "kea-dhcp4", and the library by default uses configuration of this
 logger. The configuration of the library's logger can
-be modified by putting adding a configuration entry for it
+be modified by adding a configuration entry for it
 to the configuration file. In case of the "packet-capture"
 logger declared above, the full name of the logger in the
 configuration file will be "kea-dhcp4.packet-capture". The
