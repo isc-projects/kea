@@ -2114,9 +2114,12 @@ TEST_F(IfaceMgrTest, iface_methods) {
     iface.setHWType(42);
     EXPECT_EQ(42, iface.getHWType());
 
+    ASSERT_LT(Iface::MAX_MAC_LEN + 10, 255);
+
     uint8_t mac[Iface::MAX_MAC_LEN+10];
-    for (uint8_t i = 0; i < Iface::MAX_MAC_LEN + 10; i++)
+    for (uint8_t i = 0; i < Iface::MAX_MAC_LEN + 10; i++) {
         mac[i] = 255 - i;
+    }
 
     EXPECT_EQ("foo", iface.getName());
     EXPECT_EQ(1234, iface.getIndex());
