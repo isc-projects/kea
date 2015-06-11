@@ -28,10 +28,6 @@
  DHCPv6 server component does not support relayed traffic yet, as
  support for relay decapsulation is not implemented yet.
 
- @section dhcpv6Session
-
- No longer applicable.
-
  @section dhcpv6ConfigParser Configuration Parser in DHCPv6
 
  \note With the implementation of the Kea ticket #3534 we're moving away from

@@ -309,10 +309,10 @@ public:
 void
 Session::establish(const char* socket_file) {
     if (socket_file == NULL) {
-        socket_file = getenv("MSGQ_SOCKET_FILE");
+        socket_file = getenv("KEA_MSGQ_SOCKET_FILE");
     }
     if (socket_file == NULL) {
-        socket_file = MSGQ_SOCKET_FILE;
+        socket_file = KEA_MSGQ_SOCKET_FILE;
     }
 
     impl_->establish(*socket_file);
