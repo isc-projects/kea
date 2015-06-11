@@ -519,7 +519,7 @@ OptionCustom::len() {
         length += (*it).second->len();
     }
 
-    return (length);
+    return (static_cast<uint16_t>(length));
 }
 
 void OptionCustom::initialize(const OptionBufferConstIter first,
