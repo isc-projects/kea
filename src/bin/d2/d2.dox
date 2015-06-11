@@ -54,7 +54,6 @@ an application process class derived from isc::d2::DProcess. These services incl
     - Command line argument handling
     - Process instantiation and initialization
     - Support for stand-alone execution
-    - Support for integrated operation
     - Process event loop invocation and shutdown
 
     It creates and manages an instance of isc::d2::DProcessBase.  The CPL is
@@ -207,11 +206,8 @@ in the diagram below:
 - isc::d2::D2Controller - entry point for running D2, it processes command line
 options, starts and controls the application process, @c D2Process.
 
-There were two implementations of D2Controller, today the only available
-form is JSON.
-
-- isc::d2::D2Process - creates and manages D2's primary resources and implements
-the main event loop described in @ref d2EventLoop.
+- isc::d2::D2Process - creates and manages D2's primary resources and
+implements the main event loop described in @ref d2EventLoop.
 
 - isc::d2::D2CfgMgr - creates, updates, and provides access to D2's application
 configuration which is embodied by @c D2CfgContext.

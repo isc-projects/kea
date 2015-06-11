@@ -6,8 +6,10 @@
 <chapter id="kea-config">
   <title>Kea configuration</title>
 
-  <para>The following section describe details of the only configuration
-    backend which can be configured and used.</para>
+  <para>Kea is designed to allow different methods by which it can be
+    configured, each method being implemented by a component known as a
+    configuration backend.  At present, only one such backend is
+    available, that allowing configuration by means of a JSON file.</para>
 
   <section id="json-backend">
     <title>JSON configuration backend</title>
