@@ -96,7 +96,7 @@ public:
     /// Creates an instance of this parser.
     ///
     /// @param param_name Name of the parameter used to access the
-    /// 	configuration.
+    ///         configuration.
     /// @param ctx Parser context.
     ///
     /// @return Pointer to a DbAccessParser.  The caller is responsible for

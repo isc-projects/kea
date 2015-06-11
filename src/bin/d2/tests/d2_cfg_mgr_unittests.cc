@@ -251,7 +251,7 @@ bool checkServer(DnsServerInfoPtr server, const char* hostname,
 /// @return returns true if there is a match across the board, otherwise it
 /// returns false.
 bool checkKey(TSIGKeyInfoPtr key, const std::string& name,
-	      const std::string& algorithm, const std::string& secret,
+              const std::string& algorithm, const std::string& secret,
               uint32_t digestbits = 0) {
     // Return value, assume its a match.
     return (((key) &&

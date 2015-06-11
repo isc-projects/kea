@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -138,8 +138,8 @@ TSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
     } else if (error_txt == "BADTRUNC") {
         error = TSIGError::BAD_TRUNC_CODE;
     } else {
-	/// we cast to uint32_t and range-check, because casting directly to
-	/// uint16_t will convert negative numbers to large positive numbers
+        /// we cast to uint32_t and range-check, because casting directly to
+        /// uint16_t will convert negative numbers to large positive numbers
         try {
             error = boost::lexical_cast<uint32_t>(error_txt);
         } catch (const boost::bad_lexical_cast&) {

@@ -540,7 +540,7 @@ main(int argc, char* argv[]) {
 
         // Get the namespace into which the message definitions will be put and
         // split it into components.
-	vector<string> ns_components =
+        vector<string> ns_components =
             splitNamespace(reader.getNamespace());
 
         // Write the header file.

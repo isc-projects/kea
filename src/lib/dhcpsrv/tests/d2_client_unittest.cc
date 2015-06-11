@@ -618,7 +618,7 @@ TEST(D2ClientMgr, qualifyName) {
     EXPECT_EQ("somehost.suffix.com.", qualified_name);
 
 
-	//append suffix but dot
+        //append suffix but dot
     ASSERT_NO_THROW(cfg.reset(new D2ClientConfig(true,
                                   isc::asiolink::IOAddress("127.0.0.1"), 477,
                                   isc::asiolink::IOAddress("127.0.0.1"), 478,
@@ -632,7 +632,7 @@ TEST(D2ClientMgr, qualifyName) {
     EXPECT_EQ("somehost.suffix.com", qualified_name);
 
 
-	//append no suffix and not dot
+        //append no suffix and not dot
     ASSERT_NO_THROW(cfg.reset(new D2ClientConfig(true,
                                   isc::asiolink::IOAddress("127.0.0.1"), 477,
                                   isc::asiolink::IOAddress("127.0.0.1"), 478,
