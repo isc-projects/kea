@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -28,7 +28,7 @@ else
 fi
 
 db_user="keatest"
-db_pass="keatest"
+db_password="keatest"
 db_name="keatest"
 
 # Set location of the kea-admin.
@@ -37,17 +37,26 @@ keaadmin=@abs_top_builddir@/src/bin/admin/kea-admin
 # Wipe all tables from the DB:
 mysql_wipe() {
     printf "Wiping whole database %s\n" $db_name
-    mysql -u$db_user -p$db_pass $db_name >/dev/null 2>&1 <<EOF
-SET @tables = NULL;
-SELECT GROUP_CONCAT(table_schema, '.', table_name) INTO @tables
-  FROM information_schema.tables
-  WHERE table_schema = 'keatest';
 
-SET @tables = CONCAT('DROP TABLE ', @tables);
-PREPARE stmt FROM @tables;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
-EOF
+    # First we build the list of drop table commands
+    # We don't bother with "cascade" because as of MySQL
+    # 5.1 it is only there to ease porting, it doesn't
+    # actually do anything.
+    qry="\
+SELECT CONCAT('DROP TABLE ', table_schema, '.', table_name, ';') \
+FROM information_schema.tables \
+WHERE table_schema = 'keatest';"
+
+    drop_sql=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "mysql-wipe: table query failed, exit code %d, expected %d"
+
+    # We need to turn off referrential integrity checks so tables
+    # are dropped regardless of whether they are used in foreign keys.
+    # (This is what cascade would normally do)
+    mysql_execute "SET SESSION FOREIGN_KEY_CHECKS = 0;$drop_sql"
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "mysql-wipe: drop table sql failed, exit code %d, expected %d"
 }
 
 mysql_lease_init_test() {
@@ -57,42 +66,42 @@ mysql_lease_init_test() {
     mysql_wipe
 
     # Ok, now let's initalize the database
-    ${keaadmin} lease-init mysql -u $db_user -p $db_pass -n $db_name -d @abs_top_srcdir@/src/bin/admin/scripts
+    ${keaadmin} lease-init mysql -u $db_user -p $db_password -n $db_name -d @abs_top_srcdir@/src/bin/admin/scripts
     ERRCODE=$?
 
     assert_eq 0 $ERRCODE "kea-admin lease-init mysql returned non-zero status code %d, expected %d"
 
     # Ok, now let's check if the tables are indeed there.
     # First table: schema_version. Should have 2 columns: version and minor.
-    mysql -u$db_user -p$db_pass $db_name >/dev/null 2>&1 <<EOF
+    mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT version, minor FROM schema_version;
 EOF
     ERRCODE=$?
     assert_eq 0 $ERRCODE "schema_version table is missing or broken. (returned status code %d, expected %d)"
 
     # Second table: lease4
-    mysql -u$db_user -p$db_pass $db_name >/dev/null 2>&1 <<EOF
+    mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT address, hwaddr, client_id, valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname FROM lease4;
 EOF
     ERRCODE=$?
     assert_eq 0 $ERRCODE "lease4 table is missing or broken. (returned status code %d, expected %d)"
 
     # Third table: lease6
-    mysql -u$db_user -p$db_pass $db_name >/dev/null 2>&1 <<EOF
+    mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT address, duid, valid_lifetime, expire, subnet_id, pref_lifetime, lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, hwaddr, hwtype, hwaddr_source FROM lease6;
 EOF
     ERRCODE=$?
     assert_eq 0 $ERRCODE "lease6 table is missing or broken. (returned status code %d, expected %d)"
 
     # Fourth table: lease6_types
-    mysql -u$db_user -p$db_pass $db_name >/dev/null 2>&1 <<EOF
+    mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT lease_type, name FROM lease6_types;
 EOF
     ERRCODE=$?
     assert_eq 0 $ERRCODE "lease6_types table is missing or broken. (returned status code %d, expected %d)"
 
     # Fifth table: lease_hwaddr_source
-    mysql -u$db_user -p$db_pass $db_name >/dev/null 2>&1 <<EOF
+    mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT hwaddr_source, name FROM lease_hwaddr_source;
 EOF
     ERRCODE=$?
@@ -111,7 +120,7 @@ mysql_lease_version_test() {
     mysql_wipe
 
     # Ok, now let's create a version 1.7
-    mysql -u$db_user -p$db_pass $db_name >/dev/null 2>&1 <<EOF
+    mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
 CREATE TABLE schema_version (
     version INT PRIMARY KEY NOT NULL,
     minor INT
@@ -119,7 +128,7 @@ CREATE TABLE schema_version (
 INSERT INTO schema_version VALUES (1, 7);
 EOF
 
-    version=$(${keaadmin} lease-version mysql -u $db_user -p $db_pass -n $db_name)
+    version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name)
 
     assert_str_eq "1.7" ${version} "Expected kea-admin to return %s, returned value was %s"
 
@@ -136,42 +145,42 @@ mysql_host_reservation_init_test() {
     mysql_wipe
 
     # Ok, now let's initalize the database
-    ${keaadmin} lease-init mysql -u $db_user -p $db_pass -n $db_name -d @abs_top_srcdir@/src/bin/admin/scripts
+    ${keaadmin} lease-init mysql -u $db_user -p $db_password -n $db_name -d @abs_top_srcdir@/src/bin/admin/scripts
     ERRCODE=$?
 
     assert_eq 0 $ERRCODE "kea-admin lease-init mysql returned non-zero status code %d, expected %d"
 
     # Ok, now let's check if the tables are indeed there.
     # First table: schema_version. Should have 2 columns: version and minor.
-    mysql -u$db_user -p$db_pass $db_name >/dev/null 2>&1 <<EOF
+    mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT version, minor FROM schema_version;
 EOF
     ERRCODE=$?
     assert_eq 0 $ERRCODE "schema_version table is missing or broken. (returned status code %d, expected %d)"
 
     # Second table: hosts
-    mysql -u$db_user -p$db_pass $db_name >/dev/null 2>&1 <<EOF
+    mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT host_id, dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, dhcp4_client_classes, dhcp6_client_classes FROM hosts;
 EOF
     ERRCODE=$?
     assert_eq 0 $ERRCODE "hosts table is missing or broken. (returned status code %d, expected %d)"
 
     # Third table: ipv6_reservations
-    mysql -u$db_user -p$db_pass $db_name >/dev/null 2>&1 <<EOF
+    mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT reservation_id, address, prefix_len, type, dhcp6_iaid, host_id FROM ipv6_reservations;
 EOF
     ERRCODE=$?
     assert_eq 0 $ERRCODE "ipv6_reservations table is missing or broken. (returned status code %d, expected %d)"
 
     # Fourth table: dhcp4_options
-    mysql -u$db_user -p$db_pass $db_name >/dev/null 2>&1 <<EOF
+    mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT option_id, code, value, formatted_value, space, persistent, dhcp_client_class, dhcp4_subnet_id, host_id FROM dhcp4_options;
 EOF
     ERRCODE=$?
     assert_eq 0 $ERRCODE "dhcp4_options table is missing or broken. (returned status code %d, expected %d)"
 
     # Fifth table: dhcp6_options
-    mysql -u$db_user -p$db_pass $db_name >/dev/null 2>&1 <<EOF
+    mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT option_id, code, value, formatted_value, space, persistent, dhcp_client_class, dhcp6_subnet_id, host_id FROM dhcp6_options;
 EOF
     ERRCODE=$?
@@ -191,15 +200,15 @@ mysql_upgrade_test() {
     mysql_wipe
 
     # Initialize database to scheme 1.0.
-    mysql -u$db_user -p$db_pass $db_name < @abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql
+    mysql -u$db_user -p$db_password $db_name < @abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql
 
     # Sanity check - verify that it reports version 1.0.
-    version=$(${keaadmin} lease-version mysql -u $db_user -p $db_pass -n $db_name -d @abs_top_srcdir@/src/bin/admin/scripts)
+    version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name -d @abs_top_srcdir@/src/bin/admin/scripts)
 
     assert_str_eq "1.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
     # Ok, we have a 1.0 database. Let's upgrade it to 3.0
-    ${keaadmin} lease-upgrade mysql -u $db_user -p $db_pass -n $db_name -d @abs_top_srcdir@/src/bin/admin/scripts
+    ${keaadmin} lease-upgrade mysql -u $db_user -p $db_password -n $db_name -d @abs_top_srcdir@/src/bin/admin/scripts
     ERRCODE=$?
 
     assert_eq 0 $ERRCODE "kea-admin lease-upgrade mysql returned non-zero status code %d, expected %d"
@@ -207,42 +216,42 @@ mysql_upgrade_test() {
     # Let's check that the new tables are indeed there.
 
     #table: lease6 (upgrade 1.0 -> 2.0)
-    mysql -u$db_user -p$db_pass $db_name >/dev/null 2>&1 <<EOF
+    mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT hwaddr, hwtype, hwaddr_source FROM lease6;
 EOF
     ERRCODE=$?
     assert_eq 0 $ERRCODE "lease6 table not upgraded to 2.0 (returned status code %d, expected %d)"
 
     #table: lease_hwaddr_source (upgrade 1.0 -> 2.0)
-    mysql -u$db_user -p$db_pass $db_name >/dev/null 2>&1 <<EOF
+    mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT hwaddr_source, name FROM lease_hwaddr_source;
 EOF
     ERRCODE=$?
     assert_eq 0 $ERRCODE "lease_hwaddr_source table is missing or broken. (returned status code %d, expected %d)"
 
     #table: hosts (upgrade 2.0 -> 3.0)
-    mysql -u$db_user -p$db_pass $db_name >/dev/null 2>&1 <<EOF
+    mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT host_id, dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, dhcp4_client_classes, dhcp6_client_classes FROM hosts;
 EOF
     ERRCODE=$?
     assert_eq 0 $ERRCODE "hosts table is missing or broken. (returned status code %d, expected %d)"
 
     #table: ipv6_reservations (upgrade 2.0 -> 3.0)
-    mysql -u$db_user -p$db_pass $db_name >/dev/null 2>&1 <<EOF
+    mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT reservation_id, address, prefix_len, type, dhcp6_iaid, host_id FROM ipv6_reservations;
 EOF
     ERRCODE=$?
     assert_eq 0 $ERRCODE "ipv6_reservations table is missing or broken. (returned status code %d, expected %d)"
 
     #table: dhcp4_options (upgrade 2.0 -> 3.0)
-    mysql -u$db_user -p$db_pass $db_name >/dev/null 2>&1 <<EOF
+    mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT option_id, code, value, formatted_value, space, persistent, dhcp_client_class, dhcp4_subnet_id, host_id FROM dhcp4_options;
 EOF
     ERRCODE=$?
     assert_eq 0 $ERRCODE "dhcp4_options table is missing or broken. (returned status code %d, expected %d)"
 
     #table: dhcp6_options (upgrade 2.0 -> 3.0)
-    mysql -u$db_user -p$db_pass $db_name >/dev/null 2>&1 <<EOF
+    mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT option_id, code, value, formatted_value, space, persistent, dhcp_client_class, dhcp6_subnet_id, host_id FROM dhcp6_options;
 EOF
     ERRCODE=$?
@@ -250,7 +259,7 @@ EOF
 
 
     # Verify that it reports version 3.0.
-    version=$(${keaadmin} lease-version mysql -u $db_user -p $db_pass -n $db_name)
+    version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name)
 
     assert_str_eq "3.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
@@ -260,7 +269,124 @@ EOF
     test_finish 0
 }
 
+mysql_lease4_dump_test() {
+    test_start "mysql.lease4_dump_test"
+
+    test_dir="@abs_top_srcdir@/src/bin/admin/tests"
+    script_dir="@abs_top_srcdir@/src/bin/admin/scripts"
+    output_file="$test_dir/data/lease4_dump_test.output.csv"
+    tmp_file="$test_dir/data/lease4_dump_test.output.csv.tmp"
+    ref_file="$test_dir/data/mysql.lease4_dump_test.reference.csv"
+
+    # wipe out any residuals from prior failed runs
+    if [ -e $output_file ]
+    then
+        rm $output_file
+    fi
+
+    if [ -e $tmp_file ]
+    then
+        rm $tmp_file
+    fi
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # Ok, now let's initalize the database
+    ${keaadmin} lease-init mysql -u $db_user -p $db_password -n $db_name -d $script_dir
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "could not create database,  status code %d"
+
+    # Insert the reference record
+    insert_sql="\
+insert into lease4 values(10,20,30,40,0,50,1,1,\"one.example.com\");\
+insert into lease4 values(11,NULL,123,40,0,50,1,1,\"\");\
+insert into lease4 values(12,22,NULL,40,0,50,1,1,\"three.example.com\");"
+
+    mysql_execute "$insert_sql"
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "insert into lease4 failed, status code %d"
+
+    # Dump lease4 to output_file
+    ${keaadmin} lease-dump mysql -4 -u $db_user -p $db_password -n $db_name -d $script_dir -o $output_file
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "kea-admin lease-dump -4 failed,  status code %d"
+
+    # Compare the dump output to reference file, they should be identical
+    cmp -s $output_file  $ref_file
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dump file does not match reference file"
+
+    # remove the output file
+    rm $output_file
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    test_finish 0
+}
+
+mysql_lease6_dump_test() {
+    test_start "mysql.lease6_dump_test"
+
+    test_dir="@abs_top_srcdir@/src/bin/admin/tests"
+    script_dir="@abs_top_srcdir@/src/bin/admin/scripts"
+    output_file="$test_dir/data/lease6_dump_test.output.csv"
+    tmp_file="$test_dir/data/lease6_dump_test.output.csv.tmp"
+    ref_file="$test_dir/data/mysql.lease6_dump_test.reference.csv"
+
+    # wipe out any residuals from prior failed runs
+    if [ -e $output_file ]
+    then
+        rm $output_file
+    fi
+
+    if [ -e $tmp_file ]
+    then
+        rm $tmp_file
+    fi
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # Ok, now let's initalize the database
+    ${keaadmin} lease-init mysql -u $db_user -p $db_password -n $db_name -d $script_dir
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "could not create database,  status code %d"
+
+    # Insert the reference record
+    insert_sql="\
+insert into lease6 values(10,20,30,0,40,50,1,60,70,1,1,\"one.example.com\",80,90,100);\
+insert into lease6 values(11,NULL,30,0,40,50,1,60,70,1,1,\"\",80,90,100);\
+insert into lease6 values(12,21,30,0,40,50,1,60,70,1,1,\"three.example.com\",80,90,100);"
+
+    mysql_execute "$insert_sql"
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "insert into lease6 failed, status code %d"
+
+    # Dump lease4 to output_file
+    ${keaadmin} lease-dump mysql -6 -u $db_user -p $db_password -n $db_name -d $script_dir -o $output_file
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "kea-admin lease-dump -6 failed, status code %d"
+
+    # Compare the dump output to reference file, they should be identical
+    cmp -s $output_file  $ref_file
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dump file does not match reference file"
+
+    # remove the output file
+    rm $output_file
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    test_finish 0
+}
+
+
 mysql_lease_init_test
 mysql_host_reservation_init_test
 mysql_lease_version_test
 mysql_upgrade_test
+mysql_lease4_dump_test
+mysql_lease6_dump_test
