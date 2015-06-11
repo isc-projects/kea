@@ -1033,7 +1033,8 @@ SubnetConfigParser::SubnetConfigParser(const std::string&,
     : uint32_values_(new Uint32Storage()),
       string_values_(new StringStorage()),
       boolean_values_(new BooleanStorage()),
-      pools_(new PoolStorage()), global_context_(global_context),
+      pools_(new PoolStorage()),
+      global_context_(global_context),
       relay_info_(new isc::dhcp::Subnet::RelayInfo(default_addr)),
       options_(new CfgOption()) {
     // The first parameter should always be "subnet", but we don't check
