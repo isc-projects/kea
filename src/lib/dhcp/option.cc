@@ -160,10 +160,10 @@ uint16_t Option::len() {
         length += (*it).second->len();
     }
 
-    // note that this is not equal to lenght field. This value denotes
+    // note that this is not equal to length field. This value denotes
     // number of bytes required to store this option. length option should
     // contain (len()-getHeaderLen()) value.
-    return (length);
+    return (static_cast<uint16_t>(length));
 }
 
 bool
