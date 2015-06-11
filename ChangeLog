@@ -1,3 +1,9 @@
+950.	[doc]		marcin
+	Updated section about logging in the User Guide. Also,
+	updated Hooks Developer's Guide with the recommendations for
+	the developers about use of logging in hooks libraries.
+	(Trac #3805, git b403de1f335a2fb5098c9abc0858b8137892f868)
+
 949.	[func]		tmark
 	kea-admin now supports dumping MySQL and PostgreSQL lease tables
 	to CSV file, via a new command "lease-dump".  This is primarily
