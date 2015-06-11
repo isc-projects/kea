@@ -45,6 +45,7 @@ const bool Dhcp6SrvD2Test::SHOULD_PASS;
 const bool Dhcp6SrvD2Test::SHOULD_FAIL;
 
 Dhcp6SrvD2Test::Dhcp6SrvD2Test() : rcode_(-1) {
+    reset();
 }
 
 Dhcp6SrvD2Test::~Dhcp6SrvD2Test() {
