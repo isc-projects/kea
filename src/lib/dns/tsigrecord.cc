@@ -64,7 +64,7 @@ castToTSIGRdata(const rdata::Rdata& rdata) {
     if (!tsig_rdata) {
         isc_throw(DNSMessageFORMERR,
                   "TSIG record is being constructed from "
-                  "incompatible RDATA:" << rdata.toText());
+                  "incompatible RDATA: " << rdata.toText());
     }
     return (*tsig_rdata);
 }
