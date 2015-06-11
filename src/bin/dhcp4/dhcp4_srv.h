@@ -187,7 +187,7 @@ public:
     virtual ~Dhcpv4Srv();
 
     /// @brief returns Kea version on stdout and exit.
-    /// redeclaration/redefinition. @ref Daemon::getVersion())
+    /// redeclaration/redefinition. @ref Daemon::getVersion()
     static std::string getVersion(bool extended);
  
     /// @brief Main server processing loop.
