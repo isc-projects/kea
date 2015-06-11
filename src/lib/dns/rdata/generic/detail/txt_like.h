@@ -126,7 +126,7 @@ private:
         lexer.ungetToken();
 
         if (string_list_.empty()) {
-            isc_throw(InvalidRdataText, "Failed to construct" <<
+            isc_throw(InvalidRdataText, "Failed to construct " <<
                       RRType(typeCode) << " RDATA: empty input");
         }
     }
