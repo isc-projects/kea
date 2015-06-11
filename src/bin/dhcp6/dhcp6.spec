@@ -245,6 +245,12 @@
                   "item_default": ""
                 },
 
+                { "item_name": "rapid-commit",
+                  "item_type": "boolean",
+                  "item_optional": false,
+                  "item_default": false
+                },
+
                 { "item_name": "renew-timer",
                   "item_type": "integer",
                   "item_optional": false,

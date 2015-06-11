@@ -1041,6 +1041,24 @@ TEST(Subnet6Test, interfaceId) {
 
 }
 
+// This test checks that the Rapid Commit support can be enabled or
+// disabled for a subnet. It also checks that the Rapid Commit
+// support is disabled by default.
+TEST(Subnet6Test, rapidCommit) {
+    Subnet6 subnet(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4);
+
+    // By default, the RC should be disabled.
+    EXPECT_FALSE(subnet.getRapidCommit());
+
+    // Enable Rapid Commit.
+    subnet.setRapidCommit(true);
+    EXPECT_TRUE(subnet.getRapidCommit());
+
+    // Disable again.
+    subnet.setRapidCommit(false);
+    EXPECT_FALSE(subnet.getRapidCommit());
+}
+
 // Checks if last allocated address/prefix is stored/retrieved properly
 TEST(Subnet6Test, lastAllocated) {
     IOAddress ia("2001:db8:1::1");
