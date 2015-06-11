@@ -28,9 +28,6 @@ namespace dhcp {
 ///
 /// This is a class that is responsible for DHCPv4 server being controllable,
 /// by reading configuration file from disk.
-///
-/// For detailed explanation or relations between main(), ControlledDhcpv4Srv,
-/// Dhcpv4Srv and other classes, see \ref dhcpv4Session.
 class ControlledDhcpv4Srv : public isc::dhcp::Dhcpv4Srv {
 public:
 
