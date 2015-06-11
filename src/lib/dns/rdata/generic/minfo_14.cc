@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -57,8 +57,8 @@ MINFO::MINFO(const std::string& minfo_str) :
         MasterLexer lexer;
         lexer.pushSource(ss);
 
-	rmailbox_ = createNameFromLexer(lexer, NULL);
-	emailbox_ = createNameFromLexer(lexer, NULL);
+        rmailbox_ = createNameFromLexer(lexer, NULL);
+        emailbox_ = createNameFromLexer(lexer, NULL);
 
         if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
             isc_throw(InvalidRdataText, "extra input text for MINFO: "
