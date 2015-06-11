@@ -56,6 +56,9 @@ public:
     std::vector<HWAddrPtr> hwaddrs_;
     /// @brief Collection of DUIDs allocated for unit tests.
     std::vector<DuidPtr> duids_;
+    /// @brief Collection of IPv4 address objects allocated for unit tests.
+    std::vector<IOAddress> addressesa_;
+    std::vector<IOAddress> addressesb_;
 };
 
 CfgHostsTest::CfgHostsTest() {
@@ -80,6 +83,15 @@ CfgHostsTest::CfgHostsTest() {
         DuidPtr duid(new DUID(vec));
         duids_.push_back(duid);
     }
+
+    const uint32_t addra_template = 0xc0000205; // 192.0.2.5
+    const uint32_t addrb_template = 0xc00a020a; // 192.10.2.10
+    for (int i = 0; i < 50; ++i) {
+        IOAddress addra(addra_template + i);
+        addressesa_.push_back(addra);
+        IOAddress addrb(addrb_template + i);
+        addressesb_.push_back(addrb);
+    }
 }
 
 IOAddress
@@ -102,11 +114,11 @@ TEST_F(CfgHostsTest, getAllNonRepeatingHosts) {
         cfg.add(HostPtr(new Host(hwaddrs_[i]->toText(false),
                                  "hw-address",
                                  SubnetID(i % 10 + 1), SubnetID(i % 5 + 1),
-                                 IOAddress("192.0.2.5"))));
+                                 addressesa_[i])));
 
         cfg.add(HostPtr(new Host(duids_[i]->toText(), "duid",
                                  SubnetID(i % 5 + 1), SubnetID(i % 10 + 1),
-                                 IOAddress("192.0.2.10"))));
+                                 addressesb_[i])));
 
     }
 
@@ -118,14 +130,16 @@ TEST_F(CfgHostsTest, getAllNonRepeatingHosts) {
         HostCollection hosts = cfg.getAll(hwaddrs_[i], duids_[i + 25]);
         ASSERT_EQ(1, hosts.size());
         EXPECT_EQ(i % 10 + 1, hosts[0]->getIPv4SubnetID());
-        EXPECT_EQ("192.0.2.5", hosts[0]->getIPv4Reservation().toText());
+        EXPECT_EQ(addressesa_[i].toText(),
+                  hosts[0]->getIPv4Reservation().toText());
 
         // Get host identified by DUID. The HW address is non-null but it
         // points to a host for which the reservation hasn't been added.
         hosts = cfg.getAll(hwaddrs_[i + 25], duids_[i]);
         ASSERT_EQ(1, hosts.size());
         EXPECT_EQ(i % 5 + 1, hosts[0]->getIPv4SubnetID());
-        EXPECT_EQ("192.0.2.10", hosts[0]->getIPv4Reservation().toText());
+        EXPECT_EQ(addressesb_[i].toText(),
+                  hosts[0]->getIPv4Reservation().toText());
     }
 
     // Make sure that the reservations do not exist for the hardware addresses
@@ -142,23 +156,23 @@ TEST_F(CfgHostsTest, getAllRepeatingHosts) {
     CfgHosts cfg;
     // Add hosts.
     for (int i = 0; i < 25; ++i) {
-        // Add two hosts, using the same HW address to two distnict subnets.
+        // Add two hosts, using the same HW address to two distinct subnets.
         cfg.add(HostPtr(new Host(hwaddrs_[i]->toText(false),
                                  "hw-address",
                                  SubnetID(1), SubnetID(2),
-                                 IOAddress("192.0.2.5"))));
+                                 addressesa_[i])));
         cfg.add(HostPtr(new Host(hwaddrs_[i]->toText(false),
                                  "hw-address",
                                  SubnetID(2), SubnetID(3),
-                                 IOAddress("10.0.0.5"))));
+                                 addressesb_[i])));
 
-        // Add two hosts, using the same DUID to two distnict subnets.
+        // Add two hosts, using the same DUID to two distinct subnets.
         cfg.add(HostPtr(new Host(duids_[i]->toText(), "duid",
                                  SubnetID(1), SubnetID(2),
-                                 IOAddress("192.0.2.10"))));
+                                 addressesb_[i])));
         cfg.add(HostPtr(new Host(duids_[i]->toText(), "duid",
                                  SubnetID(2), SubnetID(3),
-                                 IOAddress("10.0.2.10"))));
+                                 addressesa_[i])));
     }
 
     // Verify that hosts can be retrieved.
@@ -169,9 +183,9 @@ TEST_F(CfgHostsTest, getAllRepeatingHosts) {
         HostCollection hosts = cfg.getAll(hwaddrs_[i], duids_[i + 25]);
         ASSERT_EQ(2, hosts.size());
         EXPECT_EQ(1, hosts[0]->getIPv4SubnetID());
-        EXPECT_EQ("192.0.2.5", hosts[0]->getIPv4Reservation().toText());
+        EXPECT_EQ(addressesa_[i], hosts[0]->getIPv4Reservation().toText());
         EXPECT_EQ(2, hosts[1]->getIPv4SubnetID());
-        EXPECT_EQ("10.0.0.5", hosts[1]->getIPv4Reservation().toText());
+        EXPECT_EQ(addressesb_[i], hosts[1]->getIPv4Reservation().toText());
 
         // Get host by DUID. The HW address is non-null but the reservation
         // should be returned for the DUID because there are no
@@ -405,6 +419,30 @@ TEST_F(CfgHostsTest, get6MultipleAddrs) {
     }
 }
 
+
+// Checks that it's not possible for a second host to reserve an address
+// which is already reserved.
+TEST_F(CfgHostsTest, add4AlreadyReserved) {
+    CfgHosts cfg;
+
+    // First host has a reservation for address 192.0.2.1
+    HostPtr host1 = HostPtr(new Host(hwaddrs_[0]->toText(false),
+                                     "hw-address",
+                                     SubnetID(1), SubnetID(0),
+                                     IOAddress("192.0.2.1")));
+    // Adding this should work.
+    EXPECT_NO_THROW(cfg.add(host1));
+
+    // The second host has a reservation for the same address.
+    HostPtr host2 = HostPtr(new Host(hwaddrs_[1]->toText(false),
+                                     "hw-address",
+                                     SubnetID(1), SubnetID(0),
+                                     IOAddress("192.0.2.1")));
+
+    // This second host has a reservation for an address that is already
+    // reserved for the first host, so it should be rejected.
+    EXPECT_THROW(cfg.add(host2), isc::dhcp::ReservedAddress);
+}
 
 // Checks that it's not possible for two hosts to have the same address
 // reserved at the same time.
