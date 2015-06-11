@@ -45,18 +45,37 @@
         <title>Loggers</title>
 
         <para>
-          Within Kea, a message is logged through an entity
-          called a "logger". Different parts of the code log messages
-          through different loggers, and each logger can be configured
-          independently of one another. For example there are different
-          components that deal with hooks ("hooks" logger) and with
-          DHCP engine ("dhcpsrv" logger).
+          Within Kea, a message is logged through an entity called a
+          "logger". Different components log messages through different
+          loggers, and each logger can be configured independently of
+          one another. Some components, in particular the DHCP server
+          processes, may use multiple loggers to log messages pertaining
+          to different logical functions of the component. For example,
+          the DHCPv4 server is using one logger for messages
+          pertaining to packet reception and transmission, another
+          logger for messages related to lease allocation and so on.
+          Some of the libraries used by the Kea servers, e.g. libdhcpsrv
+          or libhooks library, use their own loggers.
         </para>
 
         <para>
-          In the Logging structure in a configuration file you can
-          specify the configuration for zero or more loggers. If there are
-          no loggers specified, the code will use default values which
+          Users implementing hooks libraries (code attached to the server at
+          runtime) are responsible for creating the loggers used by those
+          libraries. Such loggers should have unique names, different
+          from the logger names used by Kea. In this way the
+          messages emitted from the hooks library can be distingued from
+          messages issued by the core Kea code. Unique names also allow
+          the loggers to be configured independently of loggers used
+          by Kea.  Whenever it makes sense, a hook library can use multiple
+          loggers to log messages pertaining to different logical parts
+          of the library.
+        </para>
+
+        <para>
+          In the <quote>Logging</quote> structure of a configuration file
+          you can specify the configuration for zero or more loggers
+          (including loggers used by the proprietary hooks libraries). If
+          there are no loggers specified, the code will use default values which
           cause Kea to log messages on at least INFO severity to standard
           output.
           <!-- @todo: add reference to section about controlling default
@@ -85,7 +104,7 @@
           </para>
 
           <para>
-            When diagnosing the problem with the server's operation it is often
+            When diagnosing the problem with the server's operation, it is often
             desired to use the DEBUG logging level to obtain the verbose output
             from the server and libraries it uses. However, high verbosity may
             be an overkill for the logging system in cases when the server
@@ -322,6 +341,28 @@
           </listitem>
 
         </itemizedlist>
+
+        <para>
+          Note that user-defined hook libraries should not use any of those
+          loggers, and should define new loggers with names that correspond to
+          the libraries using them. Suppose that the user created the library called
+          <quote>libpacket-capture</quote> to dump packets received and
+          transmitted by the server to the file. The appropriate name for the
+          logger could be <command>kea-dhcp4.packet-capture</command>. Note
+          that the hook library implementor only specifies the second part
+          of this name, i.e. <quote>packet-capture</quote>. The first part is
+          a root logger name and is prepended by the Kea logging system.
+          It is also important to note that since this new logger is a child
+          of a root logger, it inherits the configuration from the root logger,
+          unless there is a separate configuration entry for the child logger
+          which overrides the default configuration.
+        </para>
+
+        <para>
+          The list of loggers above excludes any loggers implemented in hooks
+          libraries. Please consult the documentation of the specific hooks
+          libraries for the names of loggers they define.
+        </para>
 
         <para>Additional loggers may be defined in the future. The easiest
         way to find out the logger name is to configure all logging to go
