@@ -329,8 +329,8 @@ Subnet6::Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length,
                  const Triplet<uint32_t>& preferred_lifetime,
                  const Triplet<uint32_t>& valid_lifetime,
                  const SubnetID id)
-:Subnet(prefix, length, t1, t2, valid_lifetime, RelayInfo(IOAddress("::")), id),
-     preferred_(preferred_lifetime) {
+    :Subnet(prefix, length, t1, t2, valid_lifetime, RelayInfo(IOAddress("::")), id),
+     preferred_(preferred_lifetime), rapid_commit_(false) {
     if (!prefix.isV6()) {
         isc_throw(BadValue, "Non IPv6 prefix " << prefix
                   << " specified in subnet6");
