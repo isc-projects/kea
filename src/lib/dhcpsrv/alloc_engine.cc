@@ -15,6 +15,7 @@
 #include <config.h>
 
 #include <dhcpsrv/alloc_engine.h>
+#include <dhcpsrv/alloc_engine_log.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/host.h>
@@ -484,12 +485,12 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
         }
 
         // Unable to allocate an address, return an empty lease.
-        LOG_WARN(dhcpsrv_logger, DHCPSRV_ADDRESS6_ALLOC_FAIL).arg(attempts_);
+        LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_ADDRESS6_ALLOC_FAIL).arg(attempts_);
 
     } catch (const isc::Exception& e) {
 
         // Some other error, return an empty lease.
-        LOG_ERROR(dhcpsrv_logger, DHCPSRV_ADDRESS6_ALLOC_ERROR).arg(e.what());
+        LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_ADDRESS6_ALLOC_ERROR).arg(e.what());
     }
 
     return (Lease6Collection());
@@ -706,10 +707,10 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx, Lease6Collection& exis
             existing_leases.push_back(lease);
 
             if (ctx.type_ == Lease::TYPE_NA) {
-                LOG_INFO(dhcpsrv_logger, DHCPSRV_HR_RESERVED_ADDR_GRANTED)
+                LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_HR_RESERVED_ADDR_GRANTED)
                     .arg(addr.toText()).arg(ctx.duid_->toText());
             } else {
-                LOG_INFO(dhcpsrv_logger, DHCPSRV_HR_RESERVED_PREFIX_GRANTED)
+                LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_HR_RESERVED_PREFIX_GRANTED)
                     .arg(addr.toText()).arg(static_cast<int>(prefix_len))
                     .arg(ctx.duid_->toText());
             }
@@ -759,11 +760,11 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
         // Ok, we have a problem. This host has a lease that is reserved
         // for someone else. We need to recover from this.
         if (ctx.type_ == Lease::TYPE_NA) {
-            LOG_INFO(dhcpsrv_logger, DHCPSRV_HR_REVOKED_ADDR6_LEASE)
+            LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_HR_REVOKED_ADDR6_LEASE)
                 .arg((*candidate)->addr_.toText()).arg(ctx.duid_->toText())
                 .arg(host->getIdentifierAsText());
         } else {
-            LOG_INFO(dhcpsrv_logger, DHCPSRV_HR_REVOKED_PREFIX6_LEASE)
+            LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_HR_REVOKED_PREFIX6_LEASE)
                 .arg((*candidate)->addr_.toText())
                 .arg(static_cast<int>((*candidate)->prefixlen_))
                 .arg(ctx.duid_->toText())
@@ -1316,12 +1317,12 @@ AllocEngine::allocateLease4(ClientContext4& ctx) {
         new_lease = ctx.fake_allocation_ ? discoverLease4(ctx) : requestLease4(ctx);
         if (!new_lease) {
             // Unable to allocate an address, return an empty lease.
-            LOG_WARN(dhcpsrv_logger, DHCPSRV_ADDRESS4_ALLOC_FAIL).arg(attempts_);
+            LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_ADDRESS4_ALLOC_FAIL).arg(attempts_);
         }
 
     } catch (const isc::Exception& e) {
         // Some other error, return an empty lease.
-        LOG_ERROR(dhcpsrv_logger, DHCPSRV_ADDRESS4_ALLOC_ERROR).arg(e.what());
+        LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_ADDRESS4_ALLOC_ERROR).arg(e.what());
     }
 
     return (new_lease);
@@ -1375,7 +1376,7 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
             // allocate in the DHCPREQUEST time.
             new_lease = allocateOrReuseLease4(ctx.host_->getIPv4Reservation(), ctx);
             if (!new_lease) {
-                LOG_WARN(dhcpsrv_logger, DHCPSRV_DISCOVER_ADDRESS_CONFLICT)
+                LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_DISCOVER_ADDRESS_CONFLICT)
                     .arg(ctx.host_->getIPv4Reservation().toText())
                     .arg(ctx.conflicting_lease_ ? ctx.conflicting_lease_->toText() :
                          "(no lease info)");
