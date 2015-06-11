@@ -299,7 +299,7 @@ PktFilterBPF::openSocket(Iface& iface,
                   << ver.bv_major << "." << ver.bv_minor
                   << " Expected at least version:"
                   << BPF_MAJOR_VERSION << "."
-                  << BPF_MINOR_VERSION);;
+                  << BPF_MINOR_VERSION);
     }
 
     // Get the size of the read buffer for this device. We will need to
