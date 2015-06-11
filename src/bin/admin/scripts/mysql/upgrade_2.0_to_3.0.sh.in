@@ -8,8 +8,7 @@ else
     . @abs_top_builddir@/src/bin/admin/admin-utils.sh
 fi
 
-mysql_version "$@"
-VERSION=$_RESULT
+VERSION=`mysql_version "$@"`
 
 if [ "$VERSION" != "2.0" ]; then
     printf "This script upgrades 2.0 to 3.0. Reported version is $VERSION. Skipping upgrade.\n"
