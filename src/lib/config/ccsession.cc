@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -887,9 +887,9 @@ ModuleCCSession::rpcCall(const std::string &command, const std::string &group,
     int rcode;
     const ConstElementPtr result(parseAnswer(rcode, answer));
     if (rcode == isc::cc::CC_REPLY_NO_RECPT) {
-        isc_throw(RPCRecipientMissing, result);
+        isc_throw(RPCRecipientMissing, *answer);
     } else if (rcode != isc::cc::CC_REPLY_SUCCESS) {
-        isc_throw_1(RPCError, result, rcode);
+        isc_throw_1(RPCError, *answer, rcode);
     } else {
         return (result);
     }
