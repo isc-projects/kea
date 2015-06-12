@@ -157,6 +157,7 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
     Lease6Ptr lease;
     AllocEngine::ClientContext6 ctx(subnet_, duid_, iaid_, IOAddress("::"),
                                     Lease::TYPE_NA, false, false, "", false);
+    ctx.query_.reset(new Pkt6(DHCPV6_REQUEST, 1234));
     ctx.callout_handle_ = callout_handle;
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
     // Check that we got a lease
@@ -229,6 +230,7 @@ TEST_F(HookAllocEngine6Test, change_lease6_select) {
     Lease6Ptr lease;
     AllocEngine::ClientContext6 ctx(subnet_, duid_, iaid_, IOAddress("::"),
                                     Lease::TYPE_NA, false, false, "", false);
+    ctx.query_.reset(new Pkt6(DHCPV6_REQUEST, 1234));
     ctx.callout_handle_ = callout_handle;
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
     // Check that we got a lease
@@ -386,6 +388,7 @@ TEST_F(HookAllocEngine4Test, lease4_select) {
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
                                     IOAddress("0.0.0.0"),
                                     false, false, "", false);
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
     ctx.callout_handle_ = callout_handle;
 
     Lease4Ptr lease = engine->allocateLease4(ctx);
@@ -454,6 +457,7 @@ TEST_F(HookAllocEngine4Test, change_lease4_select) {
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
                                     false, true, "somehost.example.com.", false);
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
     ctx.callout_handle_ = callout_handle;
 
     // Call allocateLease4. Callouts should be triggered here.

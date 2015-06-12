@@ -527,13 +527,6 @@ lease from the PostgreSQL database for the specified address.
 A debug message issued when the server is attempting to update IPv6
 lease from the PostgreSQL database for the specified address.
 
-% DHCPSRV_RENEW6_ERROR allocation engine experienced error with attempting to renew a lease: %1
-This error message indicates that an error was experienced during Renew
-or Rebind processing. Additional explanation is provided with this
-message. Depending on its nature, manual intervention may be required to
-continue processing messages from this particular client; other clients
-will be unaffected.
-
 % DHCPSRV_UNEXPECTED_NAME database access parameters passed through '%1', expected 'lease-database'
 The parameters for access the lease database were passed to the server through
 the named configuration parameter, but the code was expecting them to be

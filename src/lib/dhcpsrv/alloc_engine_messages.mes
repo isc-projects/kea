@@ -85,3 +85,154 @@ This is a normal occurrence during conflict resolution, which can occur
 in cases such as the system administrator adding a reservation for an
 address that is currently in use by another client.  The server will fully
 recover from this situation, but clients will change their prefixes.
+
+% ALLOC_ENGINE_V4_DISCOVER_HR %1: client sending DHCPDISCOVER has reservation for the address %2
+This message is issued when the allocation engine determines that the
+client sending the DHCPDISCOVER has a reservation for the specified
+address. The allocation engine will try to offer this address to
+the client.
+
+% ALLOC_ENGINE_V4_OFFER_EXISTING_LEASE %1: allocation engine will try to offer existing lease to the client
+This message is issued when the allocation engine determines that
+the client has a lease in the lease database, it doesn't have
+reservation for any other lease, and the leased address is not
+reserved for any other client. The allocation engine will try
+to offer the same lease to the client.
+
+% ALLOC_ENGINE_V4_OFFER_NEW_LEASE %1: allocation engine will try to offer new lease to the client
+This message is issued when the allocation engine will try to
+offer new lease to the client. This is the case when the
+client doesn't have any existing lease, it has no reservation
+or the existing or reserved address is leased to another client.
+Also, the client didn't specify the hint, or the address in
+the hint is in use.
+
+% ALLOC_ENGINE_V4_OFFER_REQUESTED_LEASE %1: allocation engine will try to offer requested lease to the client
+This message is issued when the allocation engine will try to
+offer lease specified in the hint, because the client doesn't
+have any reservations or the reserved or currently allocated
+address is leased to another client.
+
+% ALLOC_ENGINE_V4_REQUEST_ADDRESS_RESERVED %1: requested address is reserved
+This message is issued when the allocation engine refused to
+allocate address requested by the client, because this
+address is reserved for another client.
+
+% ALLOC_ENGINE_V4_REQUEST_ALLOC_REQUESTED %1: trying to allocate requested address %2
+This message is issued when the allocation engine is trying
+to allocate (or reuse expired) address which has been
+requested by the client.
+
+% ALLOC_ENGINE_V4_REQUEST_EXTEND_LEASE %1: extending lifetime of the lease for address %2
+This message is issued when the allocation engine determines
+that the client already has a lease which lifetime can be
+extended, and which can be returned to the client.
+
+% ALLOC_ENGINE_V4_REQUEST_IN_USE %1: requested address %2 is in use
+This message is issued when the client is requesting or has a
+reservation for an address which is in use.
+
+% ALLOC_ENGINE_V4_REQUEST_INVALID %1: client having a reservation for address %2 is requesting invalid address %3
+This message is logged when the client having a reservation for
+one address, is requesting a different address. The client is
+only allowed to do it when the reserved address is in use by
+another client. However, the allocation engine has now
+determined that the reserved address is available and the
+client should request the reserved address.
+
+% ALLOC_ENGINE_V4_REQUEST_OUT_OF_POOL %1: client which doesn't have reservation requested address of the dynamic pool
+This message is issued when the client has requested allocation
+of the address which doesn't belong to any address pool from
+which addresses are dynamically allocated. The client also
+doesn't have reservation for this address. This address
+could only be allocated if the client had reservation for it.
+
+% ALLOC_ENGINE_V4_REQUEST_PICK_ADDRESS %1: client hasn't requested any address - picking available address from the pool
+This message is logged when the client hasn't specified any address
+to be allocated. Client should always do it, but we want to be
+liberal. The allocation engine will try to pick an available
+address from the dynamic pool and allocate to the client.
+
+% ALLOC_ENGINE_V4_REQUEST_REMOVE_LEASE %1: removing previous client's lease %2
+This message is logged when the allocation engine removes previous
+lease for the client, because the cliet has been allocated new
+lease.
+
+% ALLOC_ENGINE_V4_REQUEST_USE_HR %1: client hasn't requested specific address, using reserved address %2
+This message is issued when the client is not requesting any specific
+address and the allocation engine determines that there is a
+reservation for this client. The allocation engine will try to
+allocate the reserved address.
+
+% ALLOC_ENGINE_V6_ALLOC_LEASES_HR %1: leases and static reservations found for client
+This message is logged when the allocation engine is in the process of
+allocating leases for the client, it found existing leases and static
+reservations for the client. The allocation angine will verify if
+existing leases match reservations. Those leases that are reserved for
+other clients and those that are not reserved for the client will
+be removed. All leases matching the reservations will be renewed
+and returned.
+
+% ALLOC_ENGINE_V6_ALLOC_NO_LEASES_HR %1: no leases found but reservations exist for client
+This message is logged when the allocation engine is in the process of
+allocating leases for the client, it hasn't found any existing leases
+for this client, but the client appears to have static reservations.
+The allocation engine will try to allocate the reserved resources for
+the client.
+
+% ALLOC_ENGINE_V6_ALLOC_LEASES_NO_HR %1: no reservations found but leases exist for client
+This message is logged when the allocation engine is in the process if
+allocating leases for the client, there are no static reservations,
+but lease(s) exist for the client. The allocation engine will remove
+leases which are reserved for other clients, and return all
+remaning leases to the client.
+
+% ALLOC_ENGINE_V6_ALLOC_UNRESERVED %1: no static reservations: trying to dynamically allocate leases
+This debug message is issued when the allocation engine will attempt
+to allocate leases from the dynamic pools, rather than reserved
+leases.
+
+% ALLOC_ENGINE_V6_EXTEND_ALLOC_UNRESERVED %1: allocate new (unreserved) leases for the renewing client
+This debug message is issued when the allocation engine is trying to
+allocate new leases for the renewing client, because it was unable to
+renew any of the existing client's leases, e.g. because leases are
+reserved for another client or for any other reason.
+
+% ALLOC_ENGINE_V6_EXTEND_LEASE %1: extending lifetime of the lease type %2, address %3
+This debug message is issued when the allocation engine is trying
+to extend lifetime of the lease.
+
+% ALLOC_ENGINE_V6_EXTEND_LEASE_DATA %1: detailed information about the lease being extended: %2
+This debug message prints detailed information about the lease which
+lifetime is being extended (renew or rebind).
+
+% ALLOC_ENGINE_V6_EXTEND_NEW_LEASE_DATA %1: new lease information for the lease being extended: %2
+This debug message prints updated information about the lease to be
+extended. If the lease update is successful, the information printed
+by this message will be stored in the database for this lease.
+
+% ALLOC_ENGINE_V6_EXTEND_ERROR %1: allocation engine experienced error with attempting to extend lease lifetime: %2
+This error message indicates that an error was experienced during Renew
+or Rebind processing. Additional explanation is provided with this
+message. Depending on its nature, manual intervention may be required to
+continue processing messages from this particular client; other clients
+will be unaffected.
+
+% ALLOC_ENGINE_V6_RENEW_HR %1: allocating leases reserved for the client as a result of Renew
+This debug message is issued when the allocation engine will try to
+allocate reserved leases for the client sending a Renew message.
+The server will also remove any leases that the client is trying
+to renew, which are not reserved for the client.
+
+% ALLOC_ENGINE_V6_RENEW_REMOVE_RESERVED %1: checking if existing client's leases are reseved for another client
+This message is logged when the allocation engine finds leases for
+the client and will check if these leases are reserved for another
+client. If they are, they will not be renewed for the client
+requsting their renewal.
+
+% ALLOC_ENGINE_V6_RENEW_REMOVE_UNRESERVED %1: dynamically allocating leases for the renewing client
+This debug message is issued when the allocation engine is trying
+to dynamically allocate new leases for the renewing client. This
+is the case when the server couldn't renew any of the existing
+client's leases, e.g. because leased resources are reserved for
+another client.
