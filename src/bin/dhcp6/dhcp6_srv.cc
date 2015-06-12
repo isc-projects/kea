@@ -285,6 +285,7 @@ Dhcpv6Srv::createContext(const Pkt6Ptr& pkt) {
     ctx.subnet_ = selectSubnet(pkt);
     ctx.duid_ = pkt->getClientId();
     ctx.hwaddr_ = getMAC(pkt);
+    ctx.query_ = pkt;
     alloc_engine_->findReservation(ctx);
 
     return (ctx);
@@ -1406,6 +1407,7 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     ctx.callout_handle_ = getCalloutHandle(query);
     ctx.hwaddr_ = orig_ctx.hwaddr_;
     ctx.host_ = orig_ctx.host_;
+    ctx.query_ = orig_ctx.query_;
 
     Lease6Collection leases = alloc_engine_->allocateLeases6(ctx);
 
@@ -1566,6 +1568,7 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     ctx.callout_handle_ = getCalloutHandle(query);
     ctx.hwaddr_ = orig_ctx.hwaddr_;
     ctx.host_ = orig_ctx.host_;
+    ctx.query_ = orig_ctx.query_;
 
     Lease6Collection leases = alloc_engine_->allocateLeases6(ctx);
 

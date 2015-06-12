@@ -381,6 +381,10 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
         // Case 1: There are no leases and there's a reservation for this host.
         if (leases.empty() && ctx.host_) {
 
+            LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                      ALLOC_ENGINE_V6_ALLOC_NO_LEASES_HR)
+                .arg(ctx.query_->getLabel());
+
             // Try to allocate leases that match reservations. Typically this will
             // succeed, except cases where the reserved addresses are used by
             // someone else.
@@ -406,6 +410,10 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
         // FQDN information.
         } else if (!leases.empty() && !ctx.host_) {
 
+            LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                      ALLOC_ENGINE_V6_ALLOC_LEASES_NO_HR)
+                .arg(ctx.query_->getLabel());
+
             // Check if the existing leases are reserved for someone else.
             // If they're not, we're ok to keep using them.
             removeNonmatchingReservedLeases6(ctx, leases);
@@ -423,6 +431,10 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
 
         // Case 3: There are leases and there are reservations.
         } else if (!leases.empty() && ctx.host_) {
+
+            LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                      ALLOC_ENGINE_V6_ALLOC_LEASES_HR)
+                .arg(ctx.query_->getLabel());
 
             // First, check if have leases matching reservations, and add new
             // leases if we don't have them.
@@ -477,6 +489,10 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
         // In any case, we need to go through normal lease assignment process
         // for now. This is also a catch-all or last resort approach, when we
         // couldn't find any reservations (or couldn't use them).
+
+        LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                  ALLOC_ENGINE_V6_ALLOC_UNRESERVED)
+            .arg(ctx.query_->getLabel());
 
         leases = allocateUnreservedLeases6(ctx);
 
@@ -1024,12 +1040,21 @@ AllocEngine::renewLeases6(ClientContext6& ctx) {
             .getLeases6(ctx.type_, *ctx.duid_, ctx.iaid_, ctx.subnet_->getID());
 
         if (!leases.empty()) {
+            LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                      ALLOC_ENGINE_V6_RENEW_REMOVE_RESERVED)
+                .arg(ctx.query_->getLabel());
+
             // Check if the existing leases are reserved for someone else.
             // If they're not, we're ok to keep using them.
             removeNonmatchingReservedLeases6(ctx, leases);
         }
 
         if (ctx.host_) {
+
+            LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                      ALLOC_ENGINE_V6_RENEW_HR)
+                .arg(ctx.query_->getLabel());
+
             // If we have host reservation, allocate those leases.
             allocateReservedLeases6(ctx, leases);
 
@@ -1045,11 +1070,21 @@ AllocEngine::renewLeases6(ClientContext6& ctx) {
         // new leases during renewals. This is controlled with the
         // allow_new_leases_in_renewals_ field.
         if (leases.empty() && ctx.allow_new_leases_in_renewals_) {
+
+            LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                      ALLOC_ENGINE_V6_EXTEND_ALLOC_UNRESERVED)
+                .arg(ctx.query_->getLabel());
+
             leases = allocateUnreservedLeases6(ctx);
         }
 
         // Extend all existing leases that passed all checks.
         for (Lease6Collection::iterator l = leases.begin(); l != leases.end(); ++l) {
+            LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE_DETAIL,
+                      ALLOC_ENGINE_V6_EXTEND_LEASE)
+                .arg(ctx.query_->getLabel())
+                .arg((*l)->typeToText((*l)->type_))
+                .arg((*l)->addr_);
             extendLease6(ctx, *l);
         }
 
@@ -1058,7 +1093,9 @@ AllocEngine::renewLeases6(ClientContext6& ctx) {
     } catch (const isc::Exception& e) {
 
         // Some other error, return an empty lease.
-        LOG_ERROR(dhcpsrv_logger, DHCPSRV_RENEW6_ERROR).arg(e.what());
+        LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_V6_EXTEND_ERROR)
+            .arg(ctx.query_->getLabel())
+            .arg(e.what());
     }
 
     return (Lease6Collection());
@@ -1070,6 +1107,11 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
     if (!lease || !ctx.subnet_) {
         return;
     }
+
+    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE_DETAIL_DATA,
+              ALLOC_ENGINE_V6_EXTEND_LEASE_DATA)
+        .arg(ctx.query_->getLabel())
+        .arg(lease->toText());
 
     // Check if the lease still belongs to the subnet. If it doesn't,
     // we'll need to remove it.
@@ -1097,6 +1139,11 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
     lease->fqdn_fwd_ = ctx.fwd_dns_update_;
     lease->fqdn_rev_ = ctx.rev_dns_update_;
     lease->hwaddr_ = ctx.hwaddr_;
+
+    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE_DETAIL_DATA,
+              ALLOC_ENGINE_V6_EXTEND_NEW_LEASE_DATA)
+        .arg(ctx.query_->getLabel())
+        .arg(lease->toText());
 
     bool skip = false;
     // Get the callouts specific for the processed message and execute them.
@@ -1278,7 +1325,7 @@ AllocEngine::ClientContext4::ClientContext4()
       requested_address_(IOAddress::IPV4_ZERO_ADDRESS()),
       fwd_dns_update_(false), rev_dns_update_(false),
       hostname_(""), callout_handle_(), fake_allocation_(false),
-      old_lease_(), host_(), conflicting_lease_() {
+      old_lease_(), host_(), conflicting_lease_(), query_() {
 }
 
 AllocEngine::ClientContext4::ClientContext4(const Subnet4Ptr& subnet,
@@ -1363,6 +1410,12 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
     // Check if there is a reservation for the client. If there is, we want to
     // assign the reserved address, rather than any other one.
     if (hasAddressReservation(ctx)) {
+
+        LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                  ALLOC_ENGINE_V4_DISCOVER_HR)
+            .arg(ctx.query_->getLabel())
+            .arg(ctx.host_->getIPv4Reservation().toText());
+
         // If the client doesn't have a lease or the leased address is different
         // than the reserved one then let's try to allocate the reserved address.
         // Otherwise the address that the client has is the one for which it
@@ -1400,6 +1453,10 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
         ctx.subnet_->inPool(Lease::TYPE_V4, client_lease->addr_) &&
         !addressReserved(client_lease->addr_, ctx)) {
 
+        LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                  ALLOC_ENGINE_V4_OFFER_EXISTING_LEASE)
+            .arg(ctx.query_->getLabel());
+
         new_lease = renewLease4(client_lease, ctx);
     }
 
@@ -1414,6 +1471,10 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
         ctx.subnet_->inPool(Lease::TYPE_V4, ctx.requested_address_) &&
         !addressReserved(ctx.requested_address_, ctx)) {
 
+        LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                  ALLOC_ENGINE_V4_OFFER_NEW_LEASE)
+            .arg(ctx.query_->getLabel());
+
         new_lease = allocateOrReuseLease4(ctx.requested_address_, ctx);
     }
 
@@ -1421,6 +1482,11 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
     // addresses. We will now use the allocator to pick the address
     // from the dynamic pool.
     if (!new_lease) {
+
+        LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                  ALLOC_ENGINE_V4_OFFER_NEW_LEASE)
+            .arg(ctx.query_->getLabel());
+
         new_lease = allocateUnreservedLease4(ctx);
     }
 
@@ -1456,6 +1522,12 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
         // is not reserved for another client. If it is, stop here because
         // we can't allocate this address.
         if (addressReserved(ctx.requested_address_, ctx)) {
+
+            LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                      ALLOC_ENGINE_V4_REQUEST_ADDRESS_RESERVED)
+                .arg(ctx.query_->getLabel())
+                .arg(ctx.requested_address_.toText());
+
             return (Lease4Ptr());
         }
 
@@ -1465,6 +1537,11 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
         // If there is a reservation for the client, let's try to
         // allocate the reserved address.
         ctx.requested_address_ = ctx.host_->getIPv4Reservation();
+
+        LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                  ALLOC_ENGINE_V4_REQUEST_USE_HR)
+            .arg(ctx.query_->getLabel())
+            .arg(ctx.requested_address_.toText());
     }
 
     if (!ctx.requested_address_.isV4Zero()) {
@@ -1477,6 +1554,12 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
         // allocated.
         if (existing && !existing->expired() &&
             !existing->belongsToClient(ctx.hwaddr_, ctx.clientid_)) {
+
+            LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                      ALLOC_ENGINE_V4_REQUEST_IN_USE)
+                .arg(ctx.query_->getLabel())
+                .arg(ctx.requested_address_.toText());
+
             return (Lease4Ptr());
         }
 
@@ -1492,6 +1575,13 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
             // address, return NULL. The client should go back to the
             // DHCPDISCOVER and the reserved address will be offered.
             if (!existing || existing->expired()) {
+
+                LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                          ALLOC_ENGINE_V4_REQUEST_INVALID)
+                    .arg(ctx.query_->getLabel())
+                    .arg(ctx.host_->getIPv4Reservation().toText())
+                    .arg(ctx.requested_address_.toText());
+
                 return (Lease4Ptr());
             }
         }
@@ -1502,6 +1592,12 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
         if ((!hasAddressReservation(ctx) ||
              (ctx.host_->getIPv4Reservation() != ctx.requested_address_)) &&
             !ctx.subnet_->inPool(Lease4::TYPE_V4, ctx.requested_address_)) {
+
+            LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                      ALLOC_ENGINE_V4_REQUEST_OUT_OF_POOL)
+                .arg(ctx.query_->getLabel())
+                .arg(ctx.requested_address_);
+
             return (Lease4Ptr());
         }
     }
@@ -1515,6 +1611,12 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
     if (client_lease) {
         if ((client_lease->addr_ == ctx.requested_address_) ||
             ctx.requested_address_.isV4Zero()) {
+
+            LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                      ALLOC_ENGINE_V4_REQUEST_EXTEND_LEASE)
+                .arg(ctx.query_->getLabel())
+                .arg(ctx.requested_address_);
+
             return (renewLease4(client_lease, ctx));
         }
     }
@@ -1526,6 +1628,12 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
     // The client doesn't have the lease or it is requesting an address
     // which it doesn't have. Let's try to allocate the requested address.
     if (!ctx.requested_address_.isV4Zero()) {
+
+        LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                  ALLOC_ENGINE_V4_REQUEST_ALLOC_REQUESTED)
+            .arg(ctx.query_->getLabel())
+            .arg(ctx.requested_address_.toText());
+
         // The call below will return a pointer to the lease allocated
         // for the client if there is no lease for the requested address,
         // or the existing lease has expired. If the allocation fails,
@@ -1534,6 +1642,10 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
         new_lease = allocateOrReuseLease4(ctx.requested_address_, ctx);
 
     } else {
+
+        LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                  ALLOC_ENGINE_V4_REQUEST_PICK_ADDRESS)
+            .arg(ctx.query_->getLabel());
 
         // We will only get here if the client didn't specify which
         // address it wanted to be allocated. The allocation engine will
@@ -1546,6 +1658,12 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
     // the previous lease needs to be removed from the lease database.
     if (new_lease && client_lease) {
         ctx.old_lease_ = Lease4Ptr(new Lease4(*client_lease));
+
+        LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                  ALLOC_ENGINE_V4_REQUEST_REMOVE_LEASE)
+            .arg(ctx.query_->getLabel())
+            .arg(client_lease->addr_.toText());
+
         lease_mgr.deleteLease(client_lease->addr_);
     }
 

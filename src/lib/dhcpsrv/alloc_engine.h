@@ -18,6 +18,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
+#include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/option6_ia.h>
 #include <dhcpsrv/host.h>
@@ -736,6 +737,12 @@ public:
         /// the lease can't be allocated because there is another lease
         /// which is in conflict with this allocation.
         Lease4Ptr conflicting_lease_;
+
+        /// @brief A pointer to the client's message.
+        ///
+        /// This is used in logging to retrieve the client's and the
+        /// transaction identification information.
+        Pkt4Ptr query_;
 
         /// @brief Default constructor.
         ClientContext4();
