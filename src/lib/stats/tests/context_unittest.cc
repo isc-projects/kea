@@ -16,6 +16,7 @@
 
 #include <stats/context.h>
 #include <gtest/gtest.h>
+#include <util/unittests/test_exceptions.h>
 
 using namespace isc::stats;
 
@@ -39,7 +40,8 @@ TEST(ContextTest, basic) {
     EXPECT_NO_THROW(ctx.add(a));
 
     // We can't add a duplicate.
-    EXPECT_THROW(ctx.add(a), DuplicateStat);
+    EXPECT_THROW_WITH(ctx.add(a), DuplicateStat, "Statistic named "
+                      << a->getName() << " already exists.");
 
     // It should be ok to add other statistics
     EXPECT_NO_THROW(ctx.add(b));

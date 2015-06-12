@@ -20,6 +20,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <gtest/gtest.h>
+#include <util/unittests/test_exceptions.h>
 
 #include <iostream>
 #include <sstream>
@@ -71,21 +72,69 @@ TEST_F(ObservationTest, constructor) {
 
     // Let's check that attempting to get a different type
     // than used will cause an exception.
-    EXPECT_THROW(a.getFloat(), InvalidStatType);
-    EXPECT_THROW(a.getDuration(), InvalidStatType);
-    EXPECT_THROW(a.getString(), InvalidStatType);
+    EXPECT_THROW_WITH(a.getFloat(), InvalidStatType,
+                      "Invalid statistic type requested: "
+                      << Observation::typeToText(Observation::STAT_FLOAT)
+                      << ", but the actual type is "
+                      << Observation::typeToText(a.getType()));
+    EXPECT_THROW_WITH(a.getDuration(), InvalidStatType,
+                      "Invalid statistic type requested: "
+                      << Observation::typeToText(Observation::STAT_DURATION)
+                      << ", but the actual type is "
+                      << Observation::typeToText(a.getType()));
+    EXPECT_THROW_WITH(a.getString(), InvalidStatType,
+                      "Invalid statistic type requested: "
+                      << Observation::typeToText(Observation::STAT_STRING)
+                      << ", but the actual type is "
+                      << Observation::typeToText(a.getType()));
 
-    EXPECT_THROW(b.getInteger(), InvalidStatType);
-    EXPECT_THROW(b.getDuration(), InvalidStatType);
-    EXPECT_THROW(b.getString(), InvalidStatType);
+    EXPECT_THROW_WITH(b.getInteger(), InvalidStatType,
+                      "Invalid statistic type requested: "
+                      << Observation::typeToText(Observation::STAT_INTEGER)
+                      << ", but the actual type is "
+                      << Observation::typeToText(b.getType()));
+    EXPECT_THROW_WITH(b.getDuration(), InvalidStatType,
+                      "Invalid statistic type requested: "
+                      << Observation::typeToText(Observation::STAT_DURATION)
+                      << ", but the actual type is "
+                      << Observation::typeToText(b.getType()));
+    EXPECT_THROW_WITH(b.getString(), InvalidStatType,
+                      "Invalid statistic type requested: "
+                      << Observation::typeToText(Observation::STAT_STRING)
+                      << ", but the actual type is "
+                      << Observation::typeToText(b.getType()));
 
-    EXPECT_THROW(c.getInteger(), InvalidStatType);
-    EXPECT_THROW(c.getFloat(), InvalidStatType);
-    EXPECT_THROW(c.getString(), InvalidStatType);
+    EXPECT_THROW_WITH(c.getInteger(), InvalidStatType,
+                      "Invalid statistic type requested: "
+                      << Observation::typeToText(Observation::STAT_INTEGER)
+                      << ", but the actual type is "
+                      << Observation::typeToText(c.getType()));
+    EXPECT_THROW_WITH(c.getFloat(), InvalidStatType,
+                      "Invalid statistic type requested: "
+                      << Observation::typeToText(Observation::STAT_FLOAT)
+                      << ", but the actual type is "
+                      << Observation::typeToText(c.getType()));
+    EXPECT_THROW_WITH(c.getString(), InvalidStatType,
+                      "Invalid statistic type requested: "
+                      << Observation::typeToText(Observation::STAT_STRING)
+                      << ", but the actual type is "
+                      << Observation::typeToText(c.getType()));
 
-    EXPECT_THROW(d.getInteger(), InvalidStatType);
-    EXPECT_THROW(d.getFloat(), InvalidStatType);
-    EXPECT_THROW(d.getDuration(), InvalidStatType);
+    EXPECT_THROW_WITH(d.getInteger(), InvalidStatType,
+                      "Invalid statistic type requested: "
+                      << Observation::typeToText(Observation::STAT_INTEGER)
+                      << ", but the actual type is "
+                      << Observation::typeToText(d.getType()));
+    EXPECT_THROW_WITH(d.getFloat(), InvalidStatType,
+                      "Invalid statistic type requested: "
+                      << Observation::typeToText(Observation::STAT_FLOAT)
+                      << ", but the actual type is "
+                      << Observation::typeToText(d.getType()));
+    EXPECT_THROW_WITH(d.getDuration(), InvalidStatType,
+                      "Invalid statistic type requested: "
+                      << Observation::typeToText(Observation::STAT_DURATION)
+                      << ", but the actual type is "
+                      << Observation::typeToText(d.getType()));
 }
 
 // This test checks whether it is possible to set to an absolute value for all
@@ -106,21 +155,75 @@ TEST_F(ObservationTest, setValue) {
 
     // Now check whether setting value to a different type does
     // throw an exception
-    EXPECT_THROW(a.setValue(56e+78), InvalidStatType);
-    EXPECT_THROW(a.setValue(millisec::time_duration(5,6,7,8)), InvalidStatType);
-    EXPECT_THROW(a.setValue("fiveSixSevenEight"), InvalidStatType);
+    EXPECT_THROW_WITH(a.setValue(56e+78), InvalidStatType,
+                      "Invalid statistic type requested: "
+                      << Observation::typeToText(Observation::STAT_FLOAT)
+                      << ", but the actual type is "
+                      << Observation::typeToText(a.getType()));
+    EXPECT_THROW_WITH(a.setValue(millisec::time_duration(5,6,7,8)),
+                      InvalidStatType,
+                      "Invalid statistic type requested: "
+                      << Observation::typeToText(Observation::STAT_DURATION)
+                      << ", but the actual type is "
+                      << Observation::typeToText(a.getType()));
+    EXPECT_THROW_WITH(a.setValue("fiveSixSevenEight"), InvalidStatType,
+                      "Invalid statistic type requested: "
+                      << Observation::typeToText(Observation::STAT_STRING)
+                      << ", but the actual type is "
+                      << Observation::typeToText(a.getType()));
 
-    EXPECT_THROW(b.setValue(static_cast<uint64_t>(5678)), InvalidStatType);
-    EXPECT_THROW(b.setValue(millisec::time_duration(5,6,7,8)), InvalidStatType);
-    EXPECT_THROW(b.setValue("fiveSixSevenEight"), InvalidStatType);
+    EXPECT_THROW_WITH(b.setValue(static_cast<uint64_t>(5678)),
+                      InvalidStatType,
+                      "Invalid statistic type requested: "
+                      << Observation::typeToText(Observation::STAT_INTEGER)
+                      << ", but the actual type is "
+                      << Observation::typeToText(b.getType()));
+    EXPECT_THROW_WITH(b.setValue(millisec::time_duration(5,6,7,8)),
+                      InvalidStatType,
+                      "Invalid statistic type requested: "
+                      << Observation::typeToText(Observation::STAT_DURATION)
+                      << ", but the actual type is "
+                      << Observation::typeToText(b.getType()));
+    EXPECT_THROW_WITH(b.setValue("fiveSixSevenEight"), InvalidStatType,
+                      "Invalid statistic type requested: "
+                      << Observation::typeToText(Observation::STAT_STRING)
+                      << ", but the actual type is "
+                      << Observation::typeToText(b.getType()));
 
-    EXPECT_THROW(c.setValue(static_cast<uint64_t>(5678)), InvalidStatType);
-    EXPECT_THROW(c.setValue(56e+78), InvalidStatType);
-    EXPECT_THROW(c.setValue("fiveSixSevenEight"), InvalidStatType);
+    EXPECT_THROW_WITH(c.setValue(static_cast<uint64_t>(5678)),
+                      InvalidStatType,
+                      "Invalid statistic type requested: "
+                      << Observation::typeToText(Observation::STAT_INTEGER)
+                      << ", but the actual type is "
+                      << Observation::typeToText(c.getType()));
+    EXPECT_THROW_WITH(c.setValue(56e+78), InvalidStatType,
+                      "Invalid statistic type requested: "
+                      << Observation::typeToText(Observation::STAT_FLOAT)
+                      << ", but the actual type is "
+                      << Observation::typeToText(c.getType()));
+    EXPECT_THROW_WITH(c.setValue("fiveSixSevenEight"), InvalidStatType,
+                            "Invalid statistic type requested: "
+                      << Observation::typeToText(Observation::STAT_STRING)
+                      << ", but the actual type is "
+                      << Observation::typeToText(c.getType()));
 
-    EXPECT_THROW(d.setValue(static_cast<uint64_t>(5678)), InvalidStatType);
-    EXPECT_THROW(d.setValue(56e+78), InvalidStatType);
-    EXPECT_THROW(d.setValue(millisec::time_duration(5,6,7,8)), InvalidStatType);
+    EXPECT_THROW_WITH(d.setValue(static_cast<uint64_t>(5678)),
+                      InvalidStatType,
+                      "Invalid statistic type requested: "
+                      << Observation::typeToText(Observation::STAT_INTEGER)
+                      << ", but the actual type is "
+                      << Observation::typeToText(d.getType()));
+    EXPECT_THROW_WITH(d.setValue(56e+78), InvalidStatType,
+                      "Invalid statistic type requested: "
+                      << Observation::typeToText(Observation::STAT_FLOAT)
+                      << ", but the actual type is "
+                      << Observation::typeToText(d.getType()));
+    EXPECT_THROW_WITH(d.setValue(millisec::time_duration(5,6,7,8)),
+                      InvalidStatType,
+                      "Invalid statistic type requested: "
+                      << Observation::typeToText(Observation::STAT_DURATION)
+                      << ", but the actual type is "
+                      << Observation::typeToText(d.getType()));
 }
 
 // This test checks whether it is possible to add value to existing
