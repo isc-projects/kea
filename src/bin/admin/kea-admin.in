@@ -180,26 +180,31 @@ pgsql_init() {
 
     # Let's try to count the number of tables. Anything above 0 means that there
     # is some database in place. If there is anything, we abort.
-    pgsql_execute "\d"
-    COUNT=`echo "$_RESULT" | wc -w`
+    RESULT=`pgsql_execute "\d"`
+    ERRCODE=$?
+    if [ "$ERRCODE" -ne 0 ]; then
+        log_error "pgsql_init: table query failed, status code: $ERRCODE?"
+        exit 1
+    fi
+
+    COUNT=`echo "$RESULT" | wc -w`
     if [ $COUNT -gt 0 ]; then
         printf "\n"
-        log_error "Expected empty database $db_name, but the following tables are present \n$_RESULT. Aborting."
+        log_error "Expected empty database $db_name, but the following tables are present \n$RESULT. Aborting."
         exit 2
     fi
 
     init_script="$scripts_dir/pgsql/dhcpdb_create.pgsql"
     printf "Initializing database using script %s\n" $init_script
-    pgsql_execute_script $init_script
+    RESULT=`pgsql_execute_script $init_script`
     ERRCODE=$?
     if [ "$ERRCODE" -ne 0 ]; then
         log_error "Database initialization failed, status code: $ERRCODE?"
         exit 1
     fi
 
-    printf "Lease DB version reported after initialization: "
-    pgsql_version_print
-    printf "\n"
+    version=`pgsql_version`
+    printf "Lease DB version reported after initialization: $version\n"
     exit 0
 }
 
@@ -254,10 +259,8 @@ mysql_upgrade() {
 }
 
 pgsql_upgrade() {
-    # @todo - When PostgreSQL has a schema greater than 1.0, this will need
-    # to be implemented. See ticket #3600
-    pgsql_version_print
-    printf "\n"
+    version=`pgsql_version`
+    printf "Lease DB version reported before upgrade: $version\n"
 
     # Check if the scripts directory exists at all.
     if [ ! -d ${scripts_dir}/pgsql ]; then
@@ -278,9 +281,8 @@ pgsql_upgrade() {
         sh ${script} --user=${db_user} --password=${db_password} ${db_name}
     done
 
-    printf "Lease DB version reported after upgrade: "
-    pgsql_version_print
-    printf "\n"
+    version=`pgsql_version`
+    printf "Lease DB version reported after upgrade: $version\n"
     exit 0
 }
 
@@ -410,9 +412,7 @@ mysql_dump() {
 
 ### Functions used for dump
 pgsql_dump() {
-
-    # @todo use pgsql_version once implemented. See #3883
-    version='1.0'
+    version=`pgsql_version`
     get_dump_query $version
 
     # Make sure they specified a file
@@ -579,7 +579,7 @@ case ${command} in
                 printf "\n"
                 ;;
             pgsql)
-                pgsql_version_print
+                pgsql_version
                 ;;
             esac
         ;;
