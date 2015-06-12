@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -22,7 +22,7 @@
  the @ref hooksdgDevelopersGuide.  Information for Kea maintainers can be
  found in the @ref hooksComponentDeveloperGuide.
 
- This manual is more specialised and is aimed at developers of hook
+ This manual is more specialized and is aimed at developers of hook
  code for the DHCPv6 server. It describes each hook point, what the callouts
  attached to the hook are able to do, and the arguments passed to the
  callouts.  Each entry in this manual has the following information:

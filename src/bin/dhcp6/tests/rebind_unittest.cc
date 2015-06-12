@@ -463,7 +463,7 @@ TEST_F(RebindTest, relayedClientLostLease) {
 }
 
 // Check that relayed client receives the IA with lifetimes of 0, when
-// client is tgrying to Rebind using an address it doesn't have.
+// client is trying to Rebind using an address it doesn't have.
 TEST_F(RebindTest, relayedClientChangingAddress) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
@@ -514,7 +514,7 @@ TEST_F(RebindTest, relayedClientChangingAddress) {
     // Check that server still has the same lease.
     Lease6Ptr lease_server = checkLease(lease_client);
     EXPECT_TRUE(lease_server);
-    // Make sure that the lease in the data base hasn't been addected.
+    // Make sure that the lease in the data base hasn't been added.
     EXPECT_NE(0, lease_server->valid_lft_);
     EXPECT_NE(0, lease_server->preferred_lft_);
 }
@@ -661,13 +661,13 @@ TEST_F(RebindTest, directClientPDChangingPrefix) {
     // Check that server still has the same lease.
     Lease6Ptr lease_server = checkLease(lease_client);
     ASSERT_TRUE(lease_server);
-    // Make sure that the lease in the data base hasn't been addected.
+    // Make sure that the lease in the data base hasn't been added.
     EXPECT_NE(0, lease_server->valid_lft_);
     EXPECT_NE(0, lease_server->preferred_lft_);
 }
 
 /// @todo Extend PD tests for relayed messages.
-/// @todo Extend PD tests to cover same prefix buyt different length.
+/// @todo Extend PD tests to cover same prefix by different length.
 
 // This test checks that the Rebind message is discarded by the server if it
 // has been sent to unicast address (RFC3315, section 15).

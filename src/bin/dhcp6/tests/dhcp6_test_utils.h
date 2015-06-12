@@ -321,7 +321,7 @@ class Dhcpv6SrvTest : public NakedDhcpv6SrvTest {
 public:
     /// Name of the server-id file (used in server-id tests)
 
-    /// @brief Constructor that initalizes a simple default configuration
+    /// @brief Constructor that initializes a simple default configuration
     ///
     /// Sets up a single subnet6 with one pool for addresses and second
     /// pool for prefixes.
