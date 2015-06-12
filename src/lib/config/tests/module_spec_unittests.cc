@@ -1,4 +1,4 @@
-// Copyright (C) 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,8 @@
 #include <boost/foreach.hpp>
 
 #include <config/tests/data_def_unittests_config.h>
+
+#include <util/unittests/test_exceptions.h>
 
 using namespace isc::data;
 using namespace isc::config;
@@ -66,12 +68,19 @@ TEST(ModuleSpec, ReadingSpecfiles) {
     dd = moduleSpecFromFile(specfile("spec25.spec"));
     EXPECT_EQ("Spec25", dd.getModuleName());
     EXPECT_EQ("Just an empty module", dd.getModuleDescription());
-    EXPECT_THROW(moduleSpecFromFile(specfile("spec26.spec")), ModuleSpecError);
+    EXPECT_THROW_WITH(moduleSpecFromFile(specfile("spec26.spec")),
+                      ModuleSpecError,
+                      "module_description not of type string");
     EXPECT_THROW(moduleSpecFromFile(specfile("spec34.spec")), ModuleSpecError);
     EXPECT_THROW(moduleSpecFromFile(specfile("spec35.spec")), ModuleSpecError);
-    EXPECT_THROW(moduleSpecFromFile(specfile("spec36.spec")), ModuleSpecError);
-    EXPECT_THROW(moduleSpecFromFile(specfile("spec37.spec")), ModuleSpecError);
-    EXPECT_THROW(moduleSpecFromFile(specfile("spec38.spec")), ModuleSpecError);
+    EXPECT_THROW_WITH(moduleSpecFromFile(specfile("spec36.spec")),
+                      ModuleSpecError,
+                      "item_default not valid type of item_format");
+    EXPECT_THROW_WITH(moduleSpecFromFile(specfile("spec37.spec")),
+                      ModuleSpecError, "statistics is not a list of elements");
+    EXPECT_THROW_WITH(moduleSpecFromFile(specfile("spec38.spec")),
+                      ModuleSpecError,
+                      "item_default not valid type of item_format");
 
     std::ifstream file;
     file.open(specfile("spec1.spec").c_str());
@@ -83,7 +92,8 @@ TEST(ModuleSpec, ReadingSpecfiles) {
 
     std::ifstream file2;
     file2.open(specfile("spec8.spec").c_str());
-    EXPECT_THROW(moduleSpecFromFile(file2), ModuleSpecError);
+    EXPECT_THROW_WITH(moduleSpecFromFile(file2), ModuleSpecError,
+                      "No module_spec in specification");
 
 }
 

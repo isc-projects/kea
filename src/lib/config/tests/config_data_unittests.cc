@@ -1,5 +1,4 @@
-
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +16,8 @@
 
 #include <config/tests/data_def_unittests_config.h>
 #include <config/config_data.h>
+
+#include <util/unittests/test_exceptions.h>
 
 #include <iostream>
 
@@ -67,16 +68,24 @@ TEST(ConfigData, getValue) {
     EXPECT_EQ("[  ]", cd.getDefaultValue("value8")->str());
     EXPECT_EQ("empty", cd.getValue("value8/a")->stringValue());
 
-    EXPECT_THROW(cd.getValue("")->str(), DataNotFoundError);
-    EXPECT_THROW(cd.getValue("/")->str(), DataNotFoundError);
-    EXPECT_THROW(cd.getValue("no_such_item")->str(), DataNotFoundError);
-    EXPECT_THROW(cd.getValue("value6/a")->str(), DataNotFoundError);
-    EXPECT_THROW(cd.getValue("value6/no_such_item")->str(), DataNotFoundError);
-    EXPECT_THROW(cd.getValue("value8/b")->str(), DataNotFoundError);
+    EXPECT_THROW_WITH(cd.getValue("")->str(), DataNotFoundError,
+                      "Empty identifier");
+    EXPECT_THROW_WITH(cd.getValue("/")->str(), DataNotFoundError,
+                      " in / not found");
+    EXPECT_THROW_WITH(cd.getValue("no_such_item")->str(), DataNotFoundError,
+                      "no_such_item in no_such_item not found");
+    EXPECT_THROW_WITH(cd.getValue("value6/a")->str(), DataNotFoundError,
+                      "a in value6/a not found");
+    EXPECT_THROW_WITH(cd.getValue("value6/no_such_item")->str(),
+                      DataNotFoundError,
+                      "no_such_item in value6/no_such_item not found");
+    EXPECT_THROW_WITH(cd.getValue("value8/b")->str(), DataNotFoundError,
+                      "b in value8/b not found");
 
     ModuleSpec spec1 = moduleSpecFromFile(std::string(TEST_DATA_PATH) + "/spec1.spec");
     ConfigData cd1 = ConfigData(spec1);
-    EXPECT_THROW(cd1.getValue("anything")->str(), DataNotFoundError);
+    EXPECT_THROW_WITH(cd1.getValue("anything")->str(), DataNotFoundError,
+                      "Empty specification");
 }
 
 TEST(ConfigData, getDefaultValue) {
@@ -88,8 +97,16 @@ TEST(ConfigData, getDefaultValue) {
     EXPECT_EQ("[  ]", cd.getDefaultValue("first_list_items/second_list_items/map_element/list1")->str());
     EXPECT_EQ("1", cd.getDefaultValue("first_list_items/second_list_items/map_element/list1/number")->str());
 
-    EXPECT_THROW(cd.getDefaultValue("doesnotexist")->str(), DataNotFoundError);
-    EXPECT_THROW(cd.getDefaultValue("first_list_items/second_list_items/map_element/list1/doesnotexist")->str(), DataNotFoundError);
+    EXPECT_THROW_WITH(cd.getDefaultValue("doesnotexist")->str(),
+                      DataNotFoundError,
+                      "doesnotexist in doesnotexist not found");
+    EXPECT_THROW_WITH(cd.getDefaultValue("first_list_items/second_list_items/map_element/list1/doesnotexist")->str(), DataNotFoundError,
+                      "Element above doesnotexist in "
+                      "first_list_items/second_list_items/map_element/list1/doesnotexist"
+                      " is not a map: "
+                      "{ \"item_default\": 1, \"item_name\": \"number\", "
+                      "\"item_optional\": false, "
+                      "\"item_type\": \"integer\" }");
 }
 
 

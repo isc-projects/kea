@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -25,6 +25,8 @@
 #include <config/tests/data_def_unittests_config.h>
 
 #include <log/logger_name.h>
+
+#include <util/unittests/test_exceptions.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/bind.hpp>
@@ -162,18 +164,20 @@ TEST_F(CCSessionTest, rpcCallSuccessNone) {
 
 // Test it successfully raises CCSessionError if the answer is malformed.
 TEST_F(CCSessionTest, rpcCallMalformedAnswer) {
-    EXPECT_THROW(rpcCheck("[\"Nonsense\"]"), CCSessionError);
+    EXPECT_THROW_WITH(rpcCheck("[\"Nonsense\"]"), CCSessionError,
+                      "No result part in answer message");
 }
 
 // Test it raises exception when the remote side reports an error
 TEST_F(CCSessionTest, rpcCallError) {
-    EXPECT_THROW(rpcCheck("{\"result\": [1, \"Error\"]}"), RPCError);
+  EXPECT_THROW_WITH(rpcCheck("{\"result\": [1, \"Error\"]}"), RPCError,
+		    *createAnswer(1, "Error"));
 }
 
 // Test it raises exception when the remote side doesn't exist
 TEST_F(CCSessionTest, rpcNoRecpt) {
-    EXPECT_THROW(rpcCheck("{\"result\": [-1, \"Error\"]}"),
-                 RPCRecipientMissing);
+    EXPECT_THROW_WITH(rpcCheck("{\"result\": [-1, \"Error\"]}"),
+                      RPCRecipientMissing, *createAnswer(-1, "Error"));
 }
 
 // Test sending a notification
@@ -234,8 +238,10 @@ TEST_F(CCSessionTest, createAnswer) {
     answer = createAnswer(1, "error");
     EXPECT_EQ("{ \"result\": [ 1, \"error\" ] }", answer->str());
 
-    EXPECT_THROW(createAnswer(1, ElementPtr()), CCSessionError);
-    EXPECT_THROW(createAnswer(1, Element::create(1)), CCSessionError);
+    EXPECT_THROW_WITH(createAnswer(1, ElementPtr()), CCSessionError,
+                      "Bad or no argument for rcode != 0");
+    EXPECT_THROW_WITH(createAnswer(1, Element::create(1)), CCSessionError,
+                      "Bad or no argument for rcode != 0");
 
     ConstElementPtr arg = el("[ \"just\", \"some\", \"data\" ]");
     answer = createAnswer(0, arg);
@@ -247,15 +253,31 @@ TEST_F(CCSessionTest, parseAnswer) {
     ConstElementPtr arg;
     int rcode;
 
-    EXPECT_THROW(parseAnswer(rcode, ElementPtr()), CCSessionError);
-    EXPECT_THROW(parseAnswer(rcode, el("1")), CCSessionError);
-    EXPECT_THROW(parseAnswer(rcode, el("[]")), CCSessionError);
-    EXPECT_THROW(parseAnswer(rcode, el("{  }")), CCSessionError);
-    EXPECT_THROW(parseAnswer(rcode, el("{ \"something\": 1 }")), CCSessionError);
-    EXPECT_THROW(parseAnswer(rcode, el("{ \"result\": 0 }")), CCSessionError);
-    EXPECT_THROW(parseAnswer(rcode, el("{ \"result\": 1 }")), CCSessionError);
-    EXPECT_THROW(parseAnswer(rcode, el("{ \"result\": [ 1 ] }")), CCSessionError);
-    EXPECT_THROW(parseAnswer(rcode, el("{ \"result\": [ 1, 1 ] }")), CCSessionError);
+    EXPECT_THROW_WITH(parseAnswer(rcode, ElementPtr()), CCSessionError,
+                      "No result part in answer message");
+    EXPECT_THROW_WITH(parseAnswer(rcode, el("1")), CCSessionError,
+                      "No result part in answer message");
+    EXPECT_THROW_WITH(parseAnswer(rcode, el("[]")), CCSessionError,
+                      "No result part in answer message");
+    EXPECT_THROW_WITH(parseAnswer(rcode, el("{  }")), CCSessionError,
+                      "No result part in answer message");
+    EXPECT_THROW_WITH(parseAnswer(rcode, el("{ \"something\": 1 }")),
+                      CCSessionError,
+                      "No result part in answer message");
+    EXPECT_THROW_WITH(parseAnswer(rcode, el("{ \"result\": 0 }")),
+                      CCSessionError,
+                      "Result element in answer message is not a list");
+    EXPECT_THROW_WITH(parseAnswer(rcode, el("{ \"result\": 1 }")),
+                      CCSessionError,
+                      "Result element in answer message is not a list");
+    EXPECT_THROW_WITH(parseAnswer(rcode, el("{ \"result\": [ 1 ] }")),
+                      CCSessionError,
+                      "Result with rcode != 0 does not have "
+                      "an error description");
+    EXPECT_THROW_WITH(parseAnswer(rcode, el("{ \"result\": [ 1, 1 ] }")),
+                      CCSessionError,
+                      "Error description in result with rcode != 0 "
+                      "is not a string");
     
     answer = el("{ \"result\": [ 0 ] }");
     arg = parseAnswer(rcode, answer);
@@ -298,13 +320,27 @@ TEST_F(CCSessionTest, parseCommand) {
     std::string cmd;
 
     // should throw
-    EXPECT_THROW(parseCommand(arg, ElementPtr()), CCSessionError);
-    EXPECT_THROW(parseCommand(arg, el("1")), CCSessionError);
-    EXPECT_THROW(parseCommand(arg, el("{  }")), CCSessionError);
-    EXPECT_THROW(parseCommand(arg, el("{ \"not a command\": 1 }")), CCSessionError);
-    EXPECT_THROW(parseCommand(arg, el("{ \"command\": 1 }")), CCSessionError);
-    EXPECT_THROW(parseCommand(arg, el("{ \"command\": [] }")), CCSessionError);
-    EXPECT_THROW(parseCommand(arg, el("{ \"command\": [ 1 ] }")), CCSessionError);
+    EXPECT_THROW_WITH(parseCommand(arg, ElementPtr()), CCSessionError,
+                      "Command Element empty or not a map with \"command\"");
+    EXPECT_THROW_WITH(parseCommand(arg, el("1")), CCSessionError,
+                      "Command Element empty or not a map with \"command\"");
+    EXPECT_THROW_WITH(parseCommand(arg, el("{  }")), CCSessionError,
+                      "Command Element empty or not a map with \"command\"");
+    EXPECT_THROW_WITH(parseCommand(arg, el("{ \"not a command\": 1 }")),
+                      CCSessionError,
+                      "Command Element empty or not a map with \"command\"");
+    EXPECT_THROW_WITH(parseCommand(arg, el("{ \"command\": 1 }")),
+                      CCSessionError,
+                      "Command part in command message missing, "
+                      "empty, or not a list");
+    EXPECT_THROW_WITH(parseCommand(arg, el("{ \"command\": [] }")),
+                      CCSessionError,
+                      "Command part in command message missing, "
+                      "empty, or not a list");
+    EXPECT_THROW_WITH(parseCommand(arg, el("{ \"command\": [ 1 ] }")),
+                      CCSessionError,
+                      "Command part in command message missing, "
+                      "empty, or not a list");
 
     cmd = parseCommand(arg, el("{ \"command\": [ \"my_command\" ] }"));
     EXPECT_EQ("my_command", cmd);
@@ -624,7 +660,9 @@ TEST_F(CCSessionTest, remoteConfig) {
     // Remove it and see we get an error asking for a config value
     mccs.removeRemoteConfig(module_name);
     EXPECT_FALSE(session.haveSubscription("Spec2", "*"));
-    EXPECT_THROW(mccs.getRemoteConfigValue(module_name, "item1"), CCSessionError);
+    EXPECT_THROW_WITH(mccs.getRemoteConfigValue(module_name, "item1"),
+                      CCSessionError, "Remote module "
+                      << module_name << " not found.");
 
     // Now re-add it, with a specific config value, and see we get that
     session.getMessages()->add(createAnswer(0, el("{ \"item1\": 2 }")));
@@ -641,13 +679,19 @@ TEST_F(CCSessionTest, remoteConfig) {
     // remove, re-add, now with a *bad* config request answer
     mccs.removeRemoteConfig(module_name);
     session.getMessages()->add(el("{}"));
-    EXPECT_THROW(mccs.addRemoteConfig(ccspecfile("spec2.spec")), CCSessionError);
+    EXPECT_THROW_WITH(mccs.addRemoteConfig(ccspecfile("spec2.spec")),
+                      CCSessionError, "No result part in answer message");
     
     session.getMessages()->add(createAnswer(1, "my_error"));
-    EXPECT_THROW(mccs.addRemoteConfig(ccspecfile("spec2.spec")), CCSessionError);
+    EXPECT_THROW_WITH(mccs.addRemoteConfig(ccspecfile("spec2.spec")),
+                      CCSessionError,
+                      "Error getting config for Spec2: "
+		      << *createAnswer(1, "my_error"));
     
     session.getMessages()->add(createAnswer());
-    EXPECT_THROW(mccs.addRemoteConfig(ccspecfile("spec2.spec")), CCSessionError);
+    EXPECT_THROW_WITH(mccs.addRemoteConfig(ccspecfile("spec2.spec")),
+                      CCSessionError,
+                      "Error getting config for Spec2: " << *createAnswer());
 
     {
         SCOPED_TRACE("With module name");
@@ -685,8 +729,9 @@ TEST_F(CCSessionTest, remoteConfig) {
         ModuleSpec spec(moduleSpecFromFile(ccspecfile("spec2.spec")));
         session.getMessages()->add(createAnswer(0, spec.getFullSpec()));
 
-        EXPECT_THROW(module_name = mccs.addRemoteConfig("Spec1", NULL, false),
-                     CCSessionError);
+        EXPECT_THROW_WITH(module_name =
+                              mccs.addRemoteConfig("Spec1", NULL, false),
+                          CCSessionError, "Module name mismatch");
     }
 
     {
@@ -821,21 +866,23 @@ TEST_F(CCSessionTest, ignoreRemoteConfigCommands) {
 
 TEST_F(CCSessionTest, initializationFail) {
     // bad specification
-    EXPECT_THROW(ModuleCCSession(ccspecfile("spec8.spec"), session,
-                                 NULL, NULL), CCSessionInitError);
+    EXPECT_THROW_WITH(ModuleCCSession(ccspecfile("spec8.spec"), session,
+                                      NULL, NULL), CCSessionInitError,
+                      "No module_spec in specification");
 
     // file that does not exist
-    EXPECT_THROW(ModuleCCSession(ccspecfile("does_not_exist_spec"),
-                                 session, NULL, NULL),
-                                 CCSessionInitError);
+    EXPECT_THROW_WITH(ModuleCCSession(ccspecfile("does_not_exist_spec"),
+                                      session, NULL, NULL),
+                      CCSessionInitError, "Undefined error: 0");
 
 
     session.getMessages()->add(createAnswer(1, el("\"just an error\"")));
 
     EXPECT_FALSE(session.haveSubscription("Spec29", "*"));
-    EXPECT_THROW(ModuleCCSession(ccspecfile("spec29.spec"), session,
-                                 my_config_handler, my_command_handler),
-                                 CCSessionInitError);
+    EXPECT_THROW_WITH(ModuleCCSession(ccspecfile("spec29.spec"), session,
+                                      my_config_handler, my_command_handler),
+                      CCSessionInitError,
+		      *createAnswer(1, el("\"just an error\"")));
     EXPECT_TRUE(session.haveSubscription("Spec29", "*"));
 }
 
@@ -843,7 +890,8 @@ TEST_F(CCSessionTest, initializationFail) {
 TEST_F(CCSessionTest, doubleStartImplicit) {
     ModuleCCSession mccs(ccspecfile("spec29.spec"), session, NULL, NULL,
                          true, false);
-    EXPECT_THROW(mccs.start(), CCSessionError);
+    EXPECT_THROW_WITH(mccs.start(), CCSessionError,
+                      "Module CC session already started");
 }
 
 // The same, but both starts are explicit
@@ -851,7 +899,8 @@ TEST_F(CCSessionTest, doubleStartExplicit) {
     ModuleCCSession mccs(ccspecfile("spec29.spec"), session, NULL, NULL,
                          false, false);
     mccs.start();
-    EXPECT_THROW(mccs.start(), CCSessionError);
+    EXPECT_THROW_WITH(mccs.start(), CCSessionError,
+                      "Module CC session already started");
 }
 
 // Test we can request synchronous receive before we start the session,
