@@ -43,10 +43,10 @@ pgsql_wipe() {
     export PGPASSWORD=$db_password
 
     # Make a set of drop commands, one for each table owned by keatest
-    pgsql_execute "SELECT 'drop table if exists '||t.tablename || ' cascade;' as dcmd FROM pg_catalog.pg_tables t WHERE t.tableowner = 'keatest';"
+    RESULT=`pgsql_execute "SELECT 'drop table if exists '||t.tablename || ' cascade;' as dcmd FROM pg_catalog.pg_tables t WHERE t.tableowner = 'keatest';"`
     assert_eq 0 $? "pgsql_wipe select failed, expected exit code: %d, actual: %d"
     # Now execute the set of drop commands from the result set returned
-    pgsql_execute "$_RESULT"
+    RESULT=`pgsql_execute "$RESULT"`
     assert_eq 0 $? "pgsql_wipe drop failed, expected exit code: %d, actual: %d"
 }
 
@@ -63,19 +63,19 @@ pgsql_lease_init_test() {
     # Verify that all the expected tables exist
 
     # Check schema_version table
-    pgsql_execute "SELECT version, minor FROM schema_version;"
+    RESULT=`pgsql_execute "SELECT version, minor FROM schema_version;"`
     assert_eq 0 $? "schema_vesion table check failed, expected exit code: %d, actual: %d"
 
     # Check lease4 table
-    pgsql_execute "SELECT address, hwaddr, client_id, valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname FROM lease4;"
+    RESULT=`pgsql_execute "SELECT address, hwaddr, client_id, valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname FROM lease4;"`
     assert_eq 0 $? "lease4 table check failed, expected exit code: %d, actual: %d"
 
     # Check lease6 table
-    pgsql_execute "SELECT address, duid, valid_lifetime, expire, subnet_id, pref_lifetime, lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname FROM lease6;"
+    RESULT=`pgsql_execute "SELECT address, duid, valid_lifetime, expire, subnet_id, pref_lifetime, lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname FROM lease6;"`
     assert_eq 0 $? "lease6 table check failed, expected exit code: %d, actual: %d"
 
     # Check lease6_types table
-    pgsql_execute "SELECT lease_type, name FROM lease6_types;"
+    RESULT=`pgsql_execute "SELECT lease_type, name FROM lease6_types;"`
     assert_eq 0 $? "lease6_types table check failed, expected exit code: %d, actual: %d"
 
     # Trying to create it again should fail.  This verifies the db present
