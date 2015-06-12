@@ -469,7 +469,7 @@ public:
     /// NameChangeRequest.
     /// @param dhcid An expected DHCID value.
     /// @note This value is the value that is produced by
-    /// dhcp_ddns::D2Dhcid::crateDigest() with the appropriate arguments. This
+    /// dhcp_ddns::D2Dhcid::createDigest() with the appropriate arguments. This
     /// method uses encryption tools to produce the value which cannot be
     /// easily duplicated by hand.  It is more or less necessary to generate
     /// these values programmatically and place them here. Should the
@@ -540,7 +540,7 @@ public:
 
 };
 
-// A set of tests verifying server's behaviour when it receives the DHCPv6
+// A set of tests verifying server's behavior when it receives the DHCPv6
 // Client Fqdn Option.
 
 // Test server's response when client requests that server performs AAAA update.

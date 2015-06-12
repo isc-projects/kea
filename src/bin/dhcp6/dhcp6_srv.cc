@@ -244,7 +244,7 @@ Dhcpv6Srv::testServerID(const Pkt6Ptr& pkt) {
     OptionPtr server_id = pkt->getOption(D6O_SERVERID);
     if (server_id){
         // Let us test received ServerID if it is same as ServerID
-        // which is beeing used by server
+        // which is being used by server
         if (getServerID()->getData() != server_id->getData()){
             LOG_DEBUG(bad_packet_logger, DBG_DHCP6_DETAIL_DATA,
                       DHCP6_PACKET_DROP_SERVERID_MISMATCH)
@@ -254,7 +254,7 @@ Dhcpv6Srv::testServerID(const Pkt6Ptr& pkt) {
             return (false);
         }
     }
-    // retun True if: no serverid received or ServerIDs matching
+    // return True if: no serverid received or ServerIDs matching
     return (true);
 }
 
@@ -453,7 +453,7 @@ bool Dhcpv6Srv::run() {
             .arg(query->toText());
 
         // At this point the information in the packet has been unpacked into
-        // the various packet fields and option objects has been cretated.
+        // the various packet fields and option objects has been created.
         // Execute callouts registered for packet6_receive.
         if (HooksManager::calloutsPresent(Hooks.hook_index_pkt6_receive_)) {
             CalloutHandlePtr callout_handle = getCalloutHandle(query);
@@ -754,7 +754,7 @@ Dhcpv6Srv::generateServerID() {
 
         // MAC address should be at least 6 bytes. Although there is no such
         // requirement in any RFC, all decent physical interfaces (Ethernet,
-        // WiFi, Infiniband, etc.) have 6 bytes long MAC address. We want to
+        // WiFi, InfiniBand, etc.) have 6 bytes long MAC address. We want to
         // base our DUID on real hardware address, rather than virtual
         // interface that pretends that underlying IP address is its MAC.
         if (iface->getMacLen() < MIN_MAC_LEN) {
@@ -782,7 +782,8 @@ Dhcpv6Srv::generateServerID() {
         // it. See RFC3315, Section 9.2 for details.
 
         // DUID uses seconds since midnight of 01-01-2000, time() returns
-        // seconds since 01-01-1970. DUID_TIME_EPOCH substution corrects that.
+        // seconds since 01-01-1970. DUID_TIME_EPOCH substitution corrects
+        // that.
         time_t seconds = time(NULL);
         seconds -= DUID_TIME_EPOCH;
 
@@ -1026,9 +1027,10 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
         // Call user (and server-side) callouts
         HooksManager::callCallouts(Hooks.hook_index_subnet6_select_, *callout_handle);
 
-        // Callouts decided to skip this step. This means that no subnet will be
-        // selected. Packet processing will continue, but it will be severly limited
-        // (i.e. only global options will be assigned)
+        // Callouts decided to skip this step. This means that no
+        // subnet will be selected. Packet processing will continue,
+        // but it will be severely limited (i.e. only global options
+        // will be assigned)
         if (callout_handle->getSkip()) {
             LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_SUBNET6_SELECT_SKIP)
                 .arg(question->getLabel());
@@ -1197,7 +1199,7 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer) {
     }
 
     // Get the Client Id. It is mandatory and a function creating a response
-    // would have thrown an exception if it was missing. Thus throwning
+    // would have thrown an exception if it was missing. Thus throwing
     // Unexpected if it is missing as it is a programming error.
     OptionPtr opt_duid = answer->getOption(D6O_CLIENTID);
     if (!opt_duid) {
@@ -1397,7 +1399,7 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     }
 
     // Use allocation engine to pick a lease for this client. Allocation engine
-    // will try to honour the hint, but it is just a hint - some other address
+    // will try to honor the hint, but it is just a hint - some other address
     // may be used instead. If fake_allocation is set to false, the lease will
     // be inserted into the LeaseMgr as well.
     AllocEngine::ClientContext6 ctx(subnet, duid, ia->getIAID(),
@@ -1557,7 +1559,7 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     bool fake_allocation = (answer->getType() != DHCPV6_REPLY);
 
     // Use allocation engine to pick a lease for this client. Allocation engine
-    // will try to honour the hint, but it is just a hint - some other address
+    // will try to honor the hint, but it is just a hint - some other address
     // may be used instead. If fake_allocation is set to false, the lease will
     // be inserted into the LeaseMgr as well.
     Lease6Collection old_leases;
@@ -1632,7 +1634,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     Option6IAPtr ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
 
     if (!subnet) {
-        /// @todo For simpliclty and due to limitations of LeaseMgr we don't
+        /// @todo For simplicity and due to limitations of LeaseMgr we don't
         /// get the binding for the client for which we don't get subnet id.
         /// Subnet id is a required value when searching for the bindings.
         /// The fact that we can't identify the subnet for the returning client
@@ -1695,7 +1697,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     // we extend, cancel or otherwise deal with the leases.
     bool hints_present = !ctx.hints_.empty();
 
-    /// @todo: This was clarfied in draft-ietf-dhc-dhcpv6-stateful-issues that
+    /// @todo: This was clarified in draft-ietf-dhc-dhcpv6-stateful-issues that
     /// the server is allowed to assign new leases in both Renew and Rebind. For
     /// now, we only support it in Renew, because it breaks a lot of Rebind
     /// unit-tests. Ultimately, whether we allow it or not, should be exposed
@@ -2171,7 +2173,7 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
     }
 
     // Ok, we've passed all checks. Let's release this address.
-    bool success = false; // was the removal operation succeessful?
+    bool success = false; // was the removal operation successful?
 
     if (!skip) {
         success = LeaseMgrFactory::instance().deleteLease(lease->addr_);
@@ -2315,7 +2317,7 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
     }
 
     // Ok, we've passed all checks. Let's release this prefix.
-    bool success = false; // was the removal operation succeessful?
+    bool success = false; // was the removal operation successful?
 
     if (!skip) {
         success = LeaseMgrFactory::instance().deleteLease(lease->addr_);
@@ -2612,7 +2614,7 @@ Dhcpv6Srv::unpackOptions(const OptionBuffer& buf,
 
     OptionDefContainer option_defs;
     if (option_space == "dhcp6") {
-        // Get the list of stdandard option definitions.
+        // Get the list of standard option definitions.
         option_defs = LibDHCP::getOptionDefs(Option::V6);
     } else if (!option_space.empty()) {
         OptionDefContainerPtr option_defs_ptr =
@@ -2820,8 +2822,8 @@ Dhcpv6Srv::d2ClientErrorHandler(const
                                 dhcp_ddns::NameChangeRequestPtr& ncr) {
     LOG_ERROR(ddns_logger, DHCP6_DDNS_REQUEST_SEND_FAILED).
               arg(result).arg((ncr ? ncr->toText() : " NULL "));
-    // We cannot communicate with kea-dhcp-ddns, suspend futher updates.
-    /// @todo We may wish to revisit this, but for now we will simpy turn
+    // We cannot communicate with kea-dhcp-ddns, suspend further updates.
+    /// @todo We may wish to revisit this, but for now we will simply turn
     /// them off.
     CfgMgr::instance().getD2ClientMgr().suspendUpdates();
 }

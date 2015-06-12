@@ -288,7 +288,7 @@ TEST_F(ConfirmTest, relayedClientNoSubnet) {
     EXPECT_FALSE(client.getContext().response_);
 }
 
-// This test checks that the relayed Confirm messsage is processed by the server
+// This test checks that the relayed Confirm message is processed by the server
 // when sent to unicast address RFC3315, section 18.2.8).
 TEST_F(ConfirmTest, relayedUnicast) {
     Dhcp6Client client;

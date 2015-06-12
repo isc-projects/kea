@@ -21,7 +21,7 @@
  especially lib::dhcp::Pkt6, isc::dhcp::Option and
  isc::dhcp::IfaceMgr classes. Currently this code offers skeleton
  functionality, i.e. it is able to receive and process incoming
- requests and trasmit responses. However, it does not have database
+ requests and transmit responses. However, it does not have database
  management, so it returns only one, hardcoded lease to whoever asks
  for it.
 
@@ -167,8 +167,8 @@ different way. If the server overrides client's preference it will communicate i
 by sending the DHCPv6 Client FQDN Option in its responses to a client, with
 appropriate flags set.
 
-@todo Note, that current implementation doesn't allow configuration of the server's behaviour
-with respect to DNS Updates. This is planned for the future. The default behaviour is
+@todo Note, that current implementation doesn't allow configuration of the server's behavior
+with respect to DNS Updates. This is planned for the future. The default behavior is
 constituted by the set of constants defined in the (upper part of) dhcp6_srv.cc file.
 Once the configuration is implemented, these constants will be removed.
 
@@ -216,11 +216,11 @@ name.
 In principle any given packet can belong to zero or more classes. As the current
 classifier is very modest, there's only one way to assign a class (based on vendor class
 option), the ability to assign more than one class to a packet is not yet exercised.
-Neverthless, there is such a possibility and it will be used in a near future. To
+Nevertheless, there is such a possibility and it will be used in a near future. To
 check whether a packet belongs to given class, isc::dhcp::Pkt6::inClass method should
 be used.
 
-Currently there is no class behaviour coded in DHCPv6, hence no v6 equivalent of
+Currently there is no class behavior coded in DHCPv6, hence no v6 equivalent of
 @ref isc::dhcp::Dhcpv4Srv::classSpecificProcessing. Should any need for such a code arise,
 it will be conducted in an external hooks library.
 
