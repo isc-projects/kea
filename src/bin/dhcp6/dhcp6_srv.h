@@ -77,7 +77,7 @@ public:
     /// @brief Destructor. Used during DHCPv6 service shutdown.
     virtual ~Dhcpv6Srv();
 
-    /// @brief Returns server-indentifier option.
+    /// @brief Returns server-identifier option.
     ///
     /// @return server-id option
     OptionPtr getServerID() { return serverid_; }
@@ -326,7 +326,7 @@ protected:
     /// message should contain Client FQDN option being sent by the server
     /// to the client (if the client sent this option to the server).
     /// @param orig_ctx client context (contains subnet, duid and other parameters)
-    /// @param ia IA_NA option which carries adress for which lease lifetime
+    /// @param ia IA_NA option which carries address for which lease lifetime
     /// will be extended.
     /// @return IA_NA option (server's response)
     OptionPtr extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
@@ -470,7 +470,7 @@ protected:
     /// - If there is no Client FQDN and no reserved hostname then there
     /// will no be DNS updates and the lease hostname will be empty.
     ///
-    /// - If there is no Client FQDN but there is reserverd hostname then
+    /// - If there is no Client FQDN but there is reserved hostname then
     /// there will be no DNS updates and the lease hostname will be equal
     /// to reserved hostname.
     ///
@@ -478,7 +478,7 @@ protected:
     /// FQDN and lease hostname will be equal to reserved hostname with
     /// the qualifying suffix appended.
     ///
-    /// - If there is a Client FQDN but no reserverd hostname then both the
+    /// - If there is a Client FQDN but no reserved hostname then both the
     /// FQDN and lease hostname will be equal to the name provided in the
     /// client FQDN adjusted according the the DhcpDdns configuration
     /// parameters (e.g.replace-client-name, qualifying suffix...).
@@ -509,7 +509,7 @@ protected:
     ///
     /// @todo Add support for multiple IAADDR options in the IA_NA.
     ///
-    /// @param answer A message beging sent to the Client. If it holds the
+    /// @param answer A message begins sent to the Client. If it holds the
     /// Client FQDN option, this option is used to create NameChangeRequests.
     void createNameChangeRequests(const Pkt6Ptr& answer);
 

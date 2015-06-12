@@ -351,7 +351,7 @@ public:
     static int
     subnet6_select_different_subnet_callout(CalloutHandle& callout_handle) {
 
-        // Call the basic calllout to record all passed values
+        // Call the basic callout to record all passed values
         subnet6_select_callout(callout_handle);
 
         const Subnet6Collection* subnets;
@@ -569,7 +569,7 @@ TEST_F(HooksDhcpv6SrvTest, valueChange_buffer6_receive) {
     // In particular, it should call registered pkt6_receive callback.
     srv_->run();
 
-    // Check that the server did send a reposonce
+    // Check that the server did send a response
     ASSERT_EQ(1, srv_->fake_sent_.size());
 
     // Make sure that we received a response
@@ -690,7 +690,7 @@ TEST_F(HooksDhcpv6SrvTest, valueChange_pkt6_receive) {
     // In particular, it should call registered pkt6_receive callback.
     srv_->run();
 
-    // Check that the server did send a reposonce
+    // Check that the server did send a response
     ASSERT_EQ(1, srv_->fake_sent_.size());
 
     // Make sure that we received a response

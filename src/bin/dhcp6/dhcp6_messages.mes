@@ -51,7 +51,7 @@ through its main loop to perform handling of any pending signals
 and timers. After that, it will enter the wait state again.
 
 % DHCP6_BUFFER_WAIT_INTERRUPTED interrupted wait for the next packet due to timeout, signal or external socket callback (timeout value is %1)
-This debug message is issued when the server intrrupts waiting
+This debug message is issued when the server interrupts waiting
 for reception of the next DHCPv6 message due to timeout, signal
 or reception of the data over socket other than used for DHCPv6
 message transmission. The server will now handle signals
@@ -75,7 +75,7 @@ to establish a session with the Kea control channel.
 
 % DHCP6_CLASS_ASSIGNED client packet has been assigned to the following class(es): %1
 This debug message informs that incoming packet has been assigned to specified
-class or classes. This is a norma
+class or classes.
 
 % DHCP6_COMMAND_RECEIVED received command %1, arguments: %2
 A debug message listing the command (and possible arguments) received
@@ -177,7 +177,7 @@ information.
 
 % DHCP6_DDNS_REQUEST_SEND_FAILED failed sending a request to kea-dhcp-ddns, error: %1,  ncr: %2
 This error message indicates that IPv6 DHCP server failed to send a DDNS
-update reqeust to the DHCP-DDNS server. This is most likely a configuration or
+update request to the DHCP-DDNS server. This is most likely a configuration or
 networking error.
 
 % DHCP6_DDNS_RESPONSE_FQDN_DATA %1: including FQDN option in the server's response: %2
@@ -205,7 +205,7 @@ This message is printed when DHCPv6 server disables an interface from being
 used to receive DHCPv6 traffic. Sockets on this interface will not be opened
 by the Interface Manager until interface is enabled.
 
-% DHCP6_DYNAMIC_RECONFIGURATION initate server reconfiguration using file: %1, after receiving SIGHUP signal
+% DHCP6_DYNAMIC_RECONFIGURATION initiate server reconfiguration using file: %1, after receiving SIGHUP signal
 This is the info message logged when the DHCPv6 server starts reconfiguration
 as a result of receiving SIGHUP signal.
 
@@ -295,7 +295,7 @@ identification information.
 
 % DHCP6_INIT_FAIL failed to initialize Kea server: %1
 The server has failed to establish communication with the rest of Kea,
-failed to read JSON configuration file or excountered any other critical
+failed to read JSON configuration file or encountered any other critical
 issue that prevents it from starting up properly. Attached error message
 provides more details about the issue.
 
@@ -383,7 +383,7 @@ server is about to open sockets on the specified port.
 A warning message issued when IfaceMgr fails to open and bind a socket. The reason
 for the failure is appended as an argument of the log message.
 
-% DHCP6_PACKET_DROP_PARSE_FAIL failed to parse packet from %1 to %2, received over interace %3, reason: %4
+% DHCP6_PACKET_DROP_PARSE_FAIL failed to parse packet from %1 to %2, received over interface %3, reason: %4
 The DHCPv4 server has received a packet that it is unable to
 interpret. The reason why the packet is invalid is included in the message.
 
@@ -484,7 +484,7 @@ message, the server successfully granted an non-temporary address
 lease. This is a normal behavior and indicates successful operation.
 The first argument includes the client and transaction identification
 information. The remaining arguments hold the allocated prefix,
-prefix lenngth and and IAID.
+prefix length and and IAID.
 
 % DHCP6_PD_LEASE_ALLOC_FAIL %1: failed to grant a prefix lease for iaid=%2
 This message indicates that in response to a received REQUEST, the server
@@ -535,7 +535,7 @@ argument includes the client and the transaction identification
 information.
 
 % DHCP6_RAPID_COMMIT %1: Rapid Commit option received, following 2-way exchange
-This debug messgage is issued when the server found a Rapid Commit option
+This debug message is issued when the server found a Rapid Commit option
 in the client's message and 2-way exchanges are supported by the
 server for the subnet on which the client is connected. The argument
 specifies the client and transaction identification information.

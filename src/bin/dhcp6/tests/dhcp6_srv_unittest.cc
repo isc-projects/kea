@@ -1092,7 +1092,7 @@ TEST_F(Dhcpv6SrvTest, testServerID) {
         Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
     std::vector<uint8_t> bin;
 
-    // diud_llt constructed with: time = 0, macaddress = 00:00:00:00:00:00
+    // duid_llt constructed with: time = 0, macaddress = 00:00:00:00:00:00
     // it's necessary to generate server identifier option
     isc::util::encode::decodeHex("0001000100000000000000000000", bin);
     // Now create server identifier option
@@ -1103,7 +1103,7 @@ TEST_F(Dhcpv6SrvTest, testServerID) {
     // server is using.
     req->addOption(serverid);
 
-    // Message shoud be dropped
+    // Message should be dropped
     EXPECT_FALSE(srv.testServerID(req));
 
     // Delete server identifier option and add new one, with same value as
@@ -1635,7 +1635,7 @@ TEST_F(Dhcpv6SrvTest, vendorOptionsORO) {
     adv = srv_.processSolicit(sol);
     ASSERT_TRUE(adv);
 
-    // Check if thre is vendor option response
+    // Check if there is vendor option response
     OptionPtr tmp = adv->getOption(D6O_VENDOR_OPTS);
     ASSERT_TRUE(tmp);
 
@@ -1860,7 +1860,7 @@ TEST_F(Dhcpv6SrvTest, clientClassify2) {
     // Still not supported, because it belongs to wrong class.
     EXPECT_FALSE(srv_.selectSubnet(sol));
 
-    // Let's add it to maching class.
+    // Let's add it to matching class.
     sol->addClass("foo");
 
     // This time it should work

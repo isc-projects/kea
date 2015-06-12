@@ -177,7 +177,7 @@ public:
     /// @param lease A lease to be applied for the client.
     void createLease(const Lease6& lease);
 
-    /// @brief Performs a 4-way echange between the client and the server.
+    /// @brief Performs a 4-way exchange between the client and the server.
     ///
     /// If the 4-way exchange is successful, the client should acquire leases
     /// according to the server's current configuration and the type of leases
@@ -375,7 +375,7 @@ public:
     ///
     /// By default, the client uses All_DHCP_Relay_Agents_and_Servers
     /// multicast address to communicate with the server. In certain cases
-    /// it ay be desired that different address is used (e.g. unicast in Renew).
+    /// it may be desired that different address is used (e.g. unicast in Renew).
     /// This function sets the new address for all future exchanges with the
     /// server.
     ///
@@ -465,7 +465,7 @@ public:
 
     /// @brief RelayInfo (information about relays)
     ///
-    /// Dhcp6Client will typically contruct this info itself, but if
+    /// Dhcp6Client will typically construct this info itself, but if
     /// it is provided here by the test, this data will be used as is.
     std::vector<Pkt6::RelayInfo> relay_info_;
 
@@ -579,7 +579,7 @@ private:
     /// @brief Current context (sent and received message).
     Context context_;
 
-    /// @biref Current transaction id (altered on each send).
+    /// @brief Current transaction id (altered on each send).
     uint32_t curr_transid_;
 
     /// @brief Currently used destination address.

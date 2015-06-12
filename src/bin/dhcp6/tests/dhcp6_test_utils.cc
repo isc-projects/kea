@@ -106,7 +106,7 @@ Dhcpv6SrvTest::checkIA_PD(const Pkt6Ptr& rsp, uint32_t expected_iaid,
 }
 
 // Checks if the lease sent to client is present in the database
-// and is valid when checked agasint the configured subnet
+// and is valid when checked against the configured subnet
 Lease6Ptr
 Dhcpv6SrvTest::checkLease(const DuidPtr& duid, const OptionPtr& ia_na,
                           boost::shared_ptr<Option6IAAddr> addr) {

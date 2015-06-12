@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -99,7 +99,7 @@ public:
     /// @param exp_result indicates if configuration should pass or fail
     void configure(const std::string& config, bool exp_result = SHOULD_PASS);
 
-    /// @brief Contructs a NameChangeRequest message from a fixed JSON string.
+    /// @brief Constructs a NameChangeRequest message from a fixed JSON string.
     ///
     /// @param dhcid_id_num Integer value to use as the DHCID.
     dhcp_ddns::NameChangeRequestPtr buildTestNcr(uint32_t
@@ -108,7 +108,7 @@ public:
     /// @brief Stores the return code of the last configuration attempt.
     int rcode_;
 
-    /// @brief Stores the message component of the last configuration tattempt.
+    /// @brief Stores the message component of the last configuration attempt.
     isc::data::ConstElementPtr comment_;
 
     /// @brief Server object under test.

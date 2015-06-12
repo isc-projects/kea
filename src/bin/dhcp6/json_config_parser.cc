@@ -130,7 +130,7 @@ protected:
 /// This class handles prefix delegation pool definitions for IPv6 subnets
 /// Pool6 objects are created and stored in the given PoolStorage container.
 ///
-/// PdPool defintions currently support three elements: prefix, prefix-len,
+/// PdPool definitions currently support three elements: prefix, prefix-len,
 /// and delegated-len, as shown in the example JSON text below:
 ///
 /// @code
@@ -321,7 +321,7 @@ public:
     /// @brief Constructor
     ///
     /// @param ignored first parameter
-    /// stores global scope parameters, options, option defintions.
+    /// stores global scope parameters, options, option definitions.
     Subnet6ConfigParser(const std::string&)
         :SubnetConfigParser("", globalContext(), IOAddress("::")) {
     }
@@ -341,7 +341,7 @@ public:
                           "Invalid cast in Subnet6ConfigParser::commit");
             }
 
-            // Set relay infomation if it was provided
+            // Set relay information if it was provided
             if (relay_info_) {
                 sub6ptr->setRelayInfo(*relay_info_);
             }
@@ -447,7 +447,7 @@ protected:
             static_cast<SubnetID>(uint32_values_->getOptionalParam("id", 0));
 
         // Get interface-id option content. For now we support string
-        // represenation only
+        // representation only
         std::string ifaceid;
         try {
             ifaceid = string_values_->getParam("interface-id");
@@ -751,7 +751,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
 
     // answer will hold the result.
     ConstElementPtr answer;
-    // rollback informs whether error occured and original data
+    // rollback informs whether error occurred and original data
     // have to be restored to global storages.
     bool rollback = false;
     // config_pair holds ther details of the current parser when iterating over
@@ -828,7 +828,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
         LOG_ERROR(dhcp6_logger, DHCP6_PARSER_FAIL)
                   .arg(config_pair.first).arg(ex.what());
         answer = isc::config::createAnswer(1, ex.what());
-        // An error occured, so make sure that we restore original data.
+        // An error occurred, so make sure that we restore original data.
         rollback = true;
 
     } catch (...) {
@@ -836,7 +836,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
         LOG_ERROR(dhcp6_logger, DHCP6_PARSER_EXCEPTION).arg(config_pair.first);
         answer = isc::config::createAnswer(1, "undefined configuration"
                                            " processing error");
-        // An error occured, so make sure that we restore original data.
+        // An error occurred, so make sure that we restore original data.
         rollback = true;
     }
 
@@ -863,14 +863,14 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
         catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_FAIL).arg(ex.what());
             answer = isc::config::createAnswer(2, ex.what());
-            // An error occured, so make sure to restore the original data.
+            // An error occurred, so make sure to restore the original data.
             rollback = true;
         } catch (...) {
             // for things like bad_cast in boost::lexical_cast
             LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_EXCEPTION);
             answer = isc::config::createAnswer(2, "undefined configuration"
                                                " parsing error");
-            // An error occured, so make sure to restore the original data.
+            // An error occurred, so make sure to restore the original data.
             rollback = true;
         }
     }
