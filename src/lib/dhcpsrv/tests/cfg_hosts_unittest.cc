@@ -65,7 +65,7 @@ CfgHostsTest::CfgHostsTest() {
     const uint8_t mac_template[] = {
         0x01, 0x02, 0x0A, 0xBB, 0x03, 0x00
     };
-    for (int i = 0; i < 50; ++i) {
+    for (unsigned i = 0; i < 50; ++i) {
         std::vector<uint8_t> vec(mac_template,
                                  mac_template + sizeof(mac_template));
         vec[vec.size() - 1] = i;
@@ -76,7 +76,7 @@ CfgHostsTest::CfgHostsTest() {
     const uint8_t duid_template[] = {
         0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x00
     };
-    for (int i = 0; i < 50; ++i) {
+    for (unsigned i = 0; i < 50; ++i) {
         std::vector<uint8_t> vec(duid_template,
                                  duid_template + sizeof(mac_template));
         vec[vec.size() - 1] = i;
@@ -238,7 +238,7 @@ TEST_F(CfgHostsTest, getAll4ByAddress) {
 TEST_F(CfgHostsTest, get4) {
     CfgHosts cfg;
     // Add hosts.
-    for (int i = 0; i < 25; ++i) {
+    for (unsigned i = 0; i < 25; ++i) {
         // Add host identified by HW address.
         cfg.add(HostPtr(new Host(hwaddrs_[i]->toText(false),
                                  "hw-address",
@@ -251,7 +251,7 @@ TEST_F(CfgHostsTest, get4) {
                                  increase(IOAddress("192.0.2.100"), i))));
     }
 
-    for (int i = 0; i < 25; ++i) {
+    for (unsigned i = 0; i < 25; ++i) {
         // Retrieve host by HW address. The DUID is non-null but there is no
         // reservation made for the DUID so the reservation is returned for
         // HW address.
@@ -284,7 +284,7 @@ TEST_F(CfgHostsTest, get4) {
 TEST_F(CfgHostsTest, get6) {
     CfgHosts cfg;
     // Add hosts.
-    for (int i = 0; i < 25; ++i) {
+    for (unsigned i = 0; i < 25; ++i) {
         // Add host identified by HW address.
         HostPtr host = HostPtr(new Host(hwaddrs_[i]->toText(false),
                                         "hw-address",
@@ -305,7 +305,7 @@ TEST_F(CfgHostsTest, get6) {
         cfg.add(host);
     }
 
-    for (int i = 0; i < 25; ++i) {
+    for (unsigned i = 0; i < 25; ++i) {
         // Retrieve host by HW address. The DUID is non-null but there is no
         // reservation made for the DUID so the reservation is returned for
         // HW address.
@@ -342,7 +342,7 @@ TEST_F(CfgHostsTest, get6) {
 TEST_F(CfgHostsTest, get6ByAddr) {
     CfgHosts cfg;
     // Add hosts.
-    for (int i = 0; i < 25; ++i) {
+    for (unsigned i = 0; i < 25; ++i) {
 
         // Add host identified by DUID.
         HostPtr host = HostPtr(new Host(duids_[i]->toText(), "duid",
@@ -354,7 +354,7 @@ TEST_F(CfgHostsTest, get6ByAddr) {
         cfg.add(host);
     }
 
-    for (int i = 0; i < 25; ++i) {
+    for (unsigned i = 0; i < 25; ++i) {
         // Retrieve host by (subnet-id,address).
         HostPtr host = cfg.get6(SubnetID(1 + i % 2),
                                 increase(IOAddress("2001:db8:2::1"), i));
@@ -375,7 +375,7 @@ TEST_F(CfgHostsTest, get6MultipleAddrs) {
     CfgHosts cfg;
 
     // Add 25 hosts. Each host has reservations for 5 addresses.
-    for (int i = 0; i < 25; ++i) {
+    for (unsigned i = 0; i < 25; ++i) {
 
         // Add host identified by DUID.
         HostPtr host = HostPtr(new Host(duids_[i]->toText(), "duid",
@@ -396,13 +396,13 @@ TEST_F(CfgHostsTest, get6MultipleAddrs) {
 
     // Now check if we can retrieve each of those 25 hosts by using each
     // of their addresses.
-    for (int i = 0; i < 25; ++i) {
+    for (unsigned i = 0; i < 25; ++i) {
 
         // Check that the host is there.
         HostPtr by_duid = cfg.get6(SubnetID(1 + i % 2), duids_[i], hwaddr_not_used);
         ASSERT_TRUE(by_duid);
 
-        for (int j = 0; j < 5; ++j) {
+        for (unsigned j = 0; j < 5; ++j) {
             std::stringstream tmp;
             tmp << "2001:db8:" << i << "::" << j;
 

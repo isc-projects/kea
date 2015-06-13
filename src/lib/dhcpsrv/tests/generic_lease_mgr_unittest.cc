@@ -335,13 +335,13 @@ template <typename T>
 void GenericLeaseMgrTest::checkLeasesDifferent(const std::vector<T>& leases) const {
 
     // Check they were created
-    for (int i = 0; i < leases.size(); ++i) {
+    for (size_t i = 0; i < leases.size(); ++i) {
         ASSERT_TRUE(leases[i]);
     }
 
     // Check they are different
-    for (int i = 0; i < (leases.size() - 1); ++i) {
-        for (int j = (i + 1); j < leases.size(); ++j) {
+    for (size_t i = 0; i < (leases.size() - 1); ++i) {
+        for (size_t j = (i + 1); j < leases.size(); ++j) {
             stringstream s;
             s << "Comparing leases " << i << " & " << j << " for equality";
             SCOPED_TRACE(s.str());
@@ -355,7 +355,7 @@ GenericLeaseMgrTest::createLeases4() {
 
     // Create leases for each address
     vector<Lease4Ptr> leases;
-    for (int i = 0; i < straddress4_.size(); ++i) {
+    for (size_t i = 0; i < straddress4_.size(); ++i) {
         leases.push_back(initializeLease4(straddress4_[i]));
     }
     EXPECT_EQ(8, leases.size());
@@ -371,7 +371,7 @@ GenericLeaseMgrTest::createLeases6() {
 
     // Create leases for each address
     vector<Lease6Ptr> leases;
-    for (int i = 0; i < straddress6_.size(); ++i) {
+    for (size_t i = 0; i < straddress6_.size(); ++i) {
         leases.push_back(initializeLease6(straddress6_[i]));
     }
     EXPECT_EQ(8, leases.size());
@@ -525,7 +525,7 @@ void
 GenericLeaseMgrTest::testGetLease4HWAddr2() {
     // Get the leases to be used for the test and add to the database
     vector<Lease4Ptr> leases = createLeases4();
-    for (int i = 0; i < leases.size(); ++i) {
+    for (size_t i = 0; i < leases.size(); ++i) {
         EXPECT_TRUE(lmptr_->addLease(leases[i]));
     }
 
@@ -1038,7 +1038,7 @@ void
 GenericLeaseMgrTest::testGetLease4HWAddrSubnetId() {
     // Get the leases to be used for the test and add to the database
     vector<Lease4Ptr> leases = createLeases4();
-    for (int i = 0; i < leases.size(); ++i) {
+    for (size_t i = 0; i < leases.size(); ++i) {
         EXPECT_TRUE(lmptr_->addLease(leases[i]));
     }
 
@@ -1116,7 +1116,7 @@ void
 GenericLeaseMgrTest::testGetLease4ClientId2() {
     // Get the leases to be used for the test and add to the database
     vector<Lease4Ptr> leases = createLeases4();
-    for (int i = 0; i < leases.size(); ++i) {
+    for (size_t i = 0; i < leases.size(); ++i) {
         EXPECT_TRUE(lmptr_->addLease(leases[i]));
     }
 
@@ -1191,7 +1191,7 @@ void
 GenericLeaseMgrTest::testGetLease4ClientIdSubnetId() {
     // Get the leases to be used for the test and add to the database
     vector<Lease4Ptr> leases = createLeases4();
-    for (int i = 0; i < leases.size(); ++i) {
+    for (size_t i = 0; i < leases.size(); ++i) {
         EXPECT_TRUE(lmptr_->addLease(leases[i]));
     }
 
@@ -1228,7 +1228,7 @@ GenericLeaseMgrTest::testGetLeases6DuidIaid() {
     ASSERT_LE(6, leases.size());    // Expect to access leases 0 through 5
 
     // Add them to the database
-    for (int i = 0; i < leases.size(); ++i) {
+    for (size_t i = 0; i < leases.size(); ++i) {
         EXPECT_TRUE(lmptr_->addLease(leases[i]));
     }
 
@@ -1391,7 +1391,7 @@ void
 GenericLeaseMgrTest::testGetLease6DuidIaidSubnetId() {
     // Get the leases to be used for the test and add them to the database.
     vector<Lease6Ptr> leases = createLeases6();
-    for (int i = 0; i < leases.size(); ++i) {
+    for (size_t i = 0; i < leases.size(); ++i) {
         EXPECT_TRUE(lmptr_->addLease(leases[i]));
     }
 
@@ -1457,7 +1457,7 @@ void
 GenericLeaseMgrTest::testUpdateLease4() {
     // Get the leases to be used for the test and add them to the database.
     vector<Lease4Ptr> leases = createLeases4();
-    for (int i = 0; i < leases.size(); ++i) {
+    for (size_t i = 0; i < leases.size(); ++i) {
         EXPECT_TRUE(lmptr_->addLease(leases[i]));
     }
 

@@ -1,3 +1,9 @@
+952.	[bug]		fdupont
+	Made some loop indexes an unsigned type to avoid compiler warnings
+	where the termination condition is comparison with an unsigned
+	value.
+	(Trac #3833, git xxx)
+
 951.	[build]		fdupont
 	Removed BUNDY configuration backend.
 	(Trac #3732, git 96364cbbb15318c8f55d5b287cda0990d3eaae32)

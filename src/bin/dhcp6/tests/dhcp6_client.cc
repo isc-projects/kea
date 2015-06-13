@@ -179,7 +179,7 @@ Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply) {
 void
 Dhcp6Client::applyLease(const LeaseInfo& lease_info) {
     // Go over existing leases and try to match the one that we have.
-    for (int i = 0; i < config_.leases_.size(); ++i) {
+    for (size_t i = 0; i < config_.leases_.size(); ++i) {
         Lease6 existing_lease = config_.leases_[i].lease_;
         // If IAID is matching and there is an actual address assigned
         // replace the current lease. The default address is :: if the
@@ -422,7 +422,7 @@ Dhcp6Client::doConfirm() {
 void
 Dhcp6Client::fastFwdTime(const uint32_t secs) {
     // Iterate over all leases and move their cltt backwards.
-    for (int i = 0; i < config_.leases_.size(); ++i) {
+    for (size_t i = 0; i < config_.leases_.size(); ++i) {
         config_.leases_[i].lease_.cltt_ -= secs;
     }
 }

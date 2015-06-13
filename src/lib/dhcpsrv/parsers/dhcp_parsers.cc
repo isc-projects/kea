@@ -254,7 +254,7 @@ HooksLibrariesParser::build(ConstElementPtr value) {
 
         // Construct the list of libraries in error for the message.
         string error_list = error_libs[0];
-        for (int i = 1; i < error_libs.size(); ++i) {
+        for (size_t i = 1; i < error_libs.size(); ++i) {
             error_list += (string(", ") + error_libs[i]);
         }
         isc_throw(DhcpConfigError, "hooks libraries failed to validate - "

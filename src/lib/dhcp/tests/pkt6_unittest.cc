@@ -505,7 +505,7 @@ TEST_F(Pkt6Test, Timestamp) {
 // packet type names.
 TEST_F(Pkt6Test, getName) {
     // Check all possible packet types
-    for (int itype = 0; itype < 256; ++itype) {
+    for (unsigned itype = 0; itype < 256; ++itype) {
         uint8_t type = itype;
 
         switch (type) {

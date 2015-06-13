@@ -38,7 +38,7 @@ namespace {
 class Option6IAPrefixTest : public ::testing::Test {
 public:
     Option6IAPrefixTest() : buf_(255), out_buf_(255) {
-        for (int i = 0; i < 255; i++) {
+        for (unsigned i = 0; i < 255; i++) {
             buf_[i] = 255 - i;
         }
     }

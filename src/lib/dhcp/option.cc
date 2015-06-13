@@ -151,7 +151,7 @@ uint16_t Option::len() {
     // option header)
 
     // length of the whole option is header and data stored in this option...
-    int length = getHeaderLen() + data_.size();
+    size_t length = getHeaderLen() + data_.size();
 
     // ... and sum of lengths of all suboptions
     for (OptionCollection::iterator it = options_.begin();
@@ -160,10 +160,10 @@ uint16_t Option::len() {
         length += (*it).second->len();
     }
 
-    // note that this is not equal to lenght field. This value denotes
+    // note that this is not equal to length field. This value denotes
     // number of bytes required to store this option. length option should
     // contain (len()-getHeaderLen()) value.
-    return (length);
+    return (static_cast<uint16_t>(length));
 }
 
 bool

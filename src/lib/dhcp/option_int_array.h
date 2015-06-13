@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013,2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -143,7 +143,7 @@ public:
         // Pack option header.
         packHeader(buf);
         // Pack option data.
-        for (int i = 0; i < values_.size(); ++i) {
+        for (size_t i = 0; i < values_.size(); ++i) {
             // Depending on the data type length we use different utility functions
             // writeUint16 or writeUint32 which write the data in the network byte
             // order to the provided buffer. The same functions can be safely used
