@@ -617,7 +617,7 @@ CommandOptions::decodeDuid(const std::string& base) {
     check(b.length() == 0, "no duid specified");
 
     // Turn pairs of hexadecimal digits into vector of octets
-    for (int i = 0; i < b.length(); i += 2) {
+    for (size_t i = 0; i < b.length(); i += 2) {
         unsigned int ui = 0;
         try {
             // Do actual conversion
@@ -671,7 +671,7 @@ uint8_t
 CommandOptions::convertHexString(const std::string& text) const {
     unsigned int ui = 0;
     // First, check if we are dealing with hexadecimal digits only
-    for (int i = 0; i < text.length(); ++i) {
+    for (size_t i = 0; i < text.length(); ++i) {
         if (!std::isxdigit(text[i])) {
             isc_throw(isc::InvalidParameter,
                       "The following digit: " << text[i] << " in "
@@ -840,22 +840,22 @@ CommandOptions::printCommandLine() const {
     if (clients_num_ != 0) {
         std::cout << "clients=" << clients_num_ << std::endl;
     }
-    for (int i = 0; i < base_.size(); ++i) {
+    for (size_t i = 0; i < base_.size(); ++i) {
         std::cout << "base[" << i << "]=" << base_[i] <<  std::endl;
     }
-    for (int i = 0; i < num_request_.size(); ++i) {
+    for (size_t i = 0; i < num_request_.size(); ++i) {
         std::cout << "num-request[" << i << "]=" << num_request_[i] << std::endl;
     }
     if (period_ != 0) {
         std::cout << "test-period=" << period_ << std::endl;
     }
-    for (int i = 0; i < drop_time_.size(); ++i) {
+    for (size_t i = 0; i < drop_time_.size(); ++i) {
         std::cout << "drop-time[" << i << "]=" << drop_time_[i] << std::endl;
     }
-    for (int i = 0; i < max_drop_.size(); ++i) {
+    for (size_t i = 0; i < max_drop_.size(); ++i) {
         std::cout << "max-drop{" << i << "]=" << max_drop_[i] << std::endl;
     }
-    for (int i = 0; i < max_pdrop_.size(); ++i) {
+    for (size_t i = 0; i < max_pdrop_.size(); ++i) {
         std::cout << "max-pdrop{" << i << "]=" << max_pdrop_[i] << std::endl;
     }
     if (preload_ != 0) {
@@ -877,16 +877,16 @@ CommandOptions::printCommandLine() const {
     if (use_first_) {
         std::cout << "use-first" << std::endl;
     }
-    for (int i = 0; i < template_file_.size(); ++i) {
+    for (size_t i = 0; i < template_file_.size(); ++i) {
         std::cout << "template-file[" << i << "]=" << template_file_[i] << std::endl;
     }
-    for (int i = 0; i < xid_offset_.size(); ++i) {
+    for (size_t i = 0; i < xid_offset_.size(); ++i) {
         std::cout << "xid-offset[" << i << "]=" << xid_offset_[i] << std::endl;
     }
     if (elp_offset_ != 0) {
         std::cout << "elp-offset=" << elp_offset_ << std::endl;
     }
-    for (int i = 0; i < rnd_offset_.size(); ++i) {
+    for (size_t i = 0; i < rnd_offset_.size(); ++i) {
         std::cout << "rnd-offset[" << i << "]=" << rnd_offset_[i] << std::endl;
     }
     if (sid_offset_ != 0) {

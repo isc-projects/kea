@@ -710,7 +710,7 @@ void initOptionSpace(OptionDefContainer& defs,
                      size_t params_size) {
     defs.clear();
 
-    for (int i = 0; i < params_size; ++i) {
+    for (size_t i = 0; i < params_size; ++i) {
         std::string encapsulates(params[i].encapsulates);
         if (!encapsulates.empty() && params[i].array) {
             isc_throw(isc::BadValue, "invalid standard option definition: "
@@ -740,7 +740,7 @@ void initOptionSpace(OptionDefContainer& defs,
 
         }
 
-        for (int rec = 0; rec < params[i].records_size; ++rec) {
+        for (size_t rec = 0; rec < params[i].records_size; ++rec) {
             definition->addRecordField(params[i].records[rec]);
         }
 

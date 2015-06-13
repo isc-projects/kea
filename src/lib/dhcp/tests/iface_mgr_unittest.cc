@@ -77,14 +77,14 @@ TEST(IfaceTest, readBuffer) {
     ASSERT_FALSE(buf_ptr == NULL);
 
     // Use the pointer to set some data.
-    for (int i = 0; i < iface.getReadBufferSize(); ++i) {
+    for (size_t i = 0; i < iface.getReadBufferSize(); ++i) {
         buf_ptr[i] = i;
     }
 
     // Get the pointer again and validate the data.
     buf_ptr = iface.getReadBuffer();
     ASSERT_EQ(256, iface.getReadBufferSize());
-    for (int i = 0; i < iface.getReadBufferSize(); ++i) {
+    for (size_t i = 0; i < iface.getReadBufferSize(); ++i) {
         // Use assert so as it fails on the first failure, no need
         // to continue further checks.
         ASSERT_EQ(i, buf_ptr[i]);
@@ -552,7 +552,7 @@ TEST_F(IfaceMgrTest, closeSockets) {
 
     // Create set of V4 and V6 sockets on the loopback interface.
     // They must differ by a port they are bound to.
-    for (int i = 0; i < 6; ++i) {
+    for (unsigned i = 0; i < 6; ++i) {
         // Every other socket will be IPv4.
         if (i % 2) {
             ASSERT_NO_THROW(
@@ -1099,7 +1099,7 @@ TEST_F(IfaceMgrTest, sendReceive6) {
 
     // prepare dummy payload
     uint8_t data[128];
-    for (int i = 0; i < 128; i++) {
+    for (uint8_t i = 0; i < 128; i++) {
         data[i] = i;
     }
     Pkt6Ptr sendPkt = Pkt6Ptr(new Pkt6(data, 128));
@@ -2114,9 +2114,12 @@ TEST_F(IfaceMgrTest, iface_methods) {
     iface.setHWType(42);
     EXPECT_EQ(42, iface.getHWType());
 
+    ASSERT_LT(Iface::MAX_MAC_LEN + 10, 255);
+
     uint8_t mac[Iface::MAX_MAC_LEN+10];
-    for (int i = 0; i < Iface::MAX_MAC_LEN + 10; i++)
+    for (uint8_t i = 0; i < Iface::MAX_MAC_LEN + 10; i++) {
         mac[i] = 255 - i;
+    }
 
     EXPECT_EQ("foo", iface.getName());
     EXPECT_EQ(1234, iface.getIndex());

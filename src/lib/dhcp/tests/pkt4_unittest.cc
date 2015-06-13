@@ -277,7 +277,7 @@ TEST_F(Pkt4Test, constructor) {
 
     // Just some dummy payload.
     uint8_t testData[250];
-    for (int i = 0; i < 250; i++) {
+    for (uint8_t i = 0; i < 250; i++) {
         testData[i] = i;
     }
 
@@ -415,12 +415,12 @@ TEST_F(Pkt4Test, hwAddr) {
 
     scoped_ptr<Pkt4> pkt;
     // let's test each hlen, from 0 till 16
-    for (int macLen = 0; macLen < Pkt4::MAX_CHADDR_LEN; macLen++) {
-        for (int i = 0; i < Pkt4::MAX_CHADDR_LEN; i++) {
+    for (size_t macLen = 0; macLen < Pkt4::MAX_CHADDR_LEN; macLen++) {
+        for (size_t i = 0; i < Pkt4::MAX_CHADDR_LEN; i++) {
             mac[i] = 0;
             expectedChaddr[i] = 0;
         }
-        for (int i = 0; i < macLen; i++) {
+        for (size_t i = 0; i < macLen; i++) {
             mac[i] = 128 + i;
             expectedChaddr[i] = 128 + i;
         }
@@ -473,7 +473,7 @@ TEST_F(Pkt4Test, msgTypes) {
     };
 
     scoped_ptr<Pkt4> pkt;
-    for (int i = 0; i < sizeof(types) / sizeof(msgType); i++) {
+    for (size_t i = 0; i < sizeof(types) / sizeof(msgType); i++) {
         pkt.reset(new Pkt4(types[i].dhcp, 0));
         EXPECT_EQ(types[i].dhcp, pkt->getType());
         EXPECT_EQ(types[i].bootp, pkt->getOp());
@@ -493,11 +493,11 @@ TEST_F(Pkt4Test, sname) {
 
     scoped_ptr<Pkt4> pkt;
     // Let's test each sname length, from 0 till 64
-    for (int snameLen = 0; snameLen < Pkt4::MAX_SNAME_LEN; ++snameLen) {
-        for (int i = 0; i < snameLen; ++i) {
+    for (size_t snameLen = 0; snameLen < Pkt4::MAX_SNAME_LEN; ++snameLen) {
+        for (size_t i = 0; i < snameLen; ++i) {
             sname[i] = i + 1;
         }
-        for (int i = snameLen; i < Pkt4::MAX_SNAME_LEN; ++i) {
+        for (size_t i = snameLen; i < Pkt4::MAX_SNAME_LEN; ++i) {
             sname[i] = 0;
         }
 
@@ -531,11 +531,11 @@ TEST_F(Pkt4Test, file) {
 
     scoped_ptr<Pkt4> pkt;
     // Let's test each file length, from 0 till 128.
-    for (int fileLen = 0; fileLen < Pkt4::MAX_FILE_LEN; ++fileLen) {
-        for (int i = 0; i < fileLen; ++i) {
+    for (size_t fileLen = 0; fileLen < Pkt4::MAX_FILE_LEN; ++fileLen) {
+        for (size_t i = 0; i < fileLen; ++i) {
             file[i] = i + 1;
         }
-        for (int i = fileLen; i < Pkt4::MAX_FILE_LEN; ++i) {
+        for (size_t i = fileLen; i < Pkt4::MAX_FILE_LEN; ++i) {
             file[i] = 0;
         }
 
@@ -567,7 +567,7 @@ TEST_F(Pkt4Test, options) {
     scoped_ptr<Pkt4> pkt(new Pkt4(DHCPOFFER, 0));
 
     vector<uint8_t> payload[5];
-    for (int i = 0; i < 5; i++) {
+    for (uint8_t i = 0; i < 5; i++) {
         payload[i].push_back(i * 10);
         payload[i].push_back(i * 10 + 1);
         payload[i].push_back(i * 10 + 2);
@@ -638,7 +638,7 @@ TEST_F(Pkt4Test, unpackOptions) {
     expectedFormat.push_back(0x53);
     expectedFormat.push_back(0x63);
 
-    for (int i = 0; i < sizeof(v4_opts); i++) {
+    for (size_t i = 0; i < sizeof(v4_opts); i++) {
         expectedFormat.push_back(v4_opts[i]);
     }
 
@@ -664,7 +664,7 @@ TEST_F(Pkt4Test, unpackOptionsWithCallback) {
     expectedFormat.push_back(0x53);
     expectedFormat.push_back(0x63);
 
-    for (int i = 0; i < sizeof(v4_opts); i++) {
+    for (size_t i = 0; i < sizeof(v4_opts); i++) {
         expectedFormat.push_back(v4_opts[i]);
     }
 
@@ -904,7 +904,7 @@ TEST_F(Pkt4Test, getLabel) {
 
     // Add a client id to the packet then verify getLabel
     OptionBuffer clnt_id(4);
-    for (int i = 0; i < 4; i++) {
+    for (uint8_t i = 0; i < 4; i++) {
         clnt_id[i] = 100 + i;
     }
 

@@ -28,7 +28,7 @@ ClientClasses::ClientClasses(const std::string& class_names)
     std::vector<std::string> split_text;
     boost::split(split_text, class_names, boost::is_any_of(","),
                  boost::algorithm::token_compress_off);
-    for (int i = 0; i < split_text.size(); ++i) {
+    for (size_t i = 0; i < split_text.size(); ++i) {
         std::string trimmed = util::str::trim(split_text[i]);
         // Ignore empty class names.
         if (!trimmed.empty()) {
