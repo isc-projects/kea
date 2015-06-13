@@ -175,7 +175,7 @@ RdataFields::RdataFields(const void* fields, const unsigned int fields_length,
     }
     if (total_length != data_length_) {
         isc_throw(InvalidParameter,
-                  "Inconsistent parameters for RdataFields; "
+                  "Inconsistent parameters for RdataFields: "
                   "fields len: " << total_length <<
                   " data len: " << data_length_);
     }
