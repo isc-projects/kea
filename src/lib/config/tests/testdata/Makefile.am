@@ -1,4 +1,4 @@
-EXTRA_DIST += data22_1.data
+EXTRA_DIST  = data22_1.data
 EXTRA_DIST += data22_2.data
 EXTRA_DIST += data22_3.data
 EXTRA_DIST += data22_4.data
