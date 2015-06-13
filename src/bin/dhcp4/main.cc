@@ -49,14 +49,14 @@ usage() {
     cerr << "Kea DHCPv4 server, version " << VERSION << endl;
     cerr << endl;
     cerr << "Usage: " << DHCP4_NAME
-         << " -[v|V|W] [-d] [-p number] [-c file]" << endl;
-    cerr << "  -c file: specify configuration file" << endl;
-    cerr << "  -d: debug mode with extra verbosity (former -v)" << endl;
-    cerr << "  -p number: specify non-standard port number 1-65535 "
-         << "(useful for testing only)" << endl;
+         << " -[v|V|W] [-d] [-c file] [-p number]" << endl;
     cerr << "  -v: print version number and exit" << endl;
     cerr << "  -V: print extended version and exit" << endl;
     cerr << "  -W: display the configuration report and exit" << endl;
+    cerr << "  -d: debug mode with extra verbosity (former -v)" << endl;
+    cerr << "  -c file: specify configuration file" << endl;
+    cerr << "  -p number: specify non-standard port number 1-65535 "
+         << "(useful for testing only)" << endl;
     exit(EXIT_FAILURE);
 }
 } // end of anonymous namespace
@@ -71,7 +71,7 @@ main(int argc, char* argv[]) {
     // The standard config file
     std::string config_file("");
 
-    while ((ch = getopt(argc, argv, "dvVWp:c:")) != -1) {
+    while ((ch = getopt(argc, argv, "dvVWc:p:")) != -1) {
         switch (ch) {
         case 'd':
             verbose_mode = true;
@@ -89,6 +89,10 @@ main(int argc, char* argv[]) {
             cout << isc::detail::getConfigReport() << endl;
             return (EXIT_SUCCESS);
 
+        case 'c': // config file
+            config_file = optarg;
+            break;
+
         case 'p':
             try {
                 port_number = boost::lexical_cast<int>(optarg);
@@ -102,10 +106,6 @@ main(int argc, char* argv[]) {
                      << "], 1-65535 allowed." << endl;
                 usage();
             }
-            break;
-
-        case 'c': // config file
-            config_file = optarg;
             break;
 
         default:
