@@ -854,6 +854,8 @@ MessageImpl::addTSIG(Message::Section section, unsigned int count,
     if (count != counts_[section] - 1) {
         isc_throw(DNSMessageFORMERR, "TSIG RR is not the last record");
     }
+    // This check will never fail as the multiple TSIG RR case is
+    // caught before by the not the last record check...
     if (tsig_rr_) {
         isc_throw(DNSMessageFORMERR, "multiple TSIG RRs found");
     }
