@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,6 +14,7 @@
 
 #include <config.h>
 #include <gtest/gtest.h>
+#include <util/unittests/test_exceptions.h>
 
 #include <asio.hpp>
 #include <asiolink/io_endpoint.h>
@@ -699,13 +700,17 @@ TYPED_TEST(DNSServerTest, stopTCPServeMoreThanOnce) {
 TYPED_TEST(DNSServerTestBase, invalidFamily) {
     // We abuse DNSServerTestBase for this test, as we don't need the
     // initialization.
-    EXPECT_THROW(TCPServer(this->service, 0, AF_UNIX,
-                           this->lookup_, this->answer_),
-                 isc::InvalidParameter);
+    EXPECT_THROW_WITH(TCPServer(this->service, 0, AF_UNIX,
+                                this->lookup_, this->answer_),
+                      isc::InvalidParameter,
+                      "Address family must be either AF_INET "
+                      "or AF_INET6, not " << AF_UNIX);
 }
 
 TYPED_TEST(DNSServerTest, invalidFamilyUDP) {
-    EXPECT_THROW(this->createServer(0, AF_UNIX), isc::InvalidParameter);
+    EXPECT_THROW_WITH(this->createServer(0, AF_UNIX), isc::InvalidParameter,
+                      "Address family must be either AF_INET"
+                      " or AF_INET6, not " << AF_UNIX);
 }
 
 // It raises an exception when invalid address family is passed
@@ -721,9 +726,9 @@ TYPED_TEST(DNSServerTestBase, invalidTCPFD) {
     EXPECT_THROW(UDPServer(service, -1, AF_INET, lookup_,
                            answer_), isc::asiolink::IOError);
     */
-    EXPECT_THROW(TCPServer(this->service, -1, AF_INET,
-                           this->lookup_, this->answer_),
-                 isc::asiolink::IOError);
+    EXPECT_THROW_WITH(TCPServer(this->service, -1, AF_INET,
+                                this->lookup_, this->answer_),
+                      isc::asiolink::IOError, strerror(EBADF));
 }
 
 TYPED_TEST(DNSServerTest, DISABLED_invalidUDPFD) {
@@ -739,21 +744,28 @@ TYPED_TEST(DNSServerTest, DISABLED_invalidUDPFD) {
 
 // Check it rejects some of the unsupported operations
 TEST_F(SyncServerTest, unsupportedOps) {
-    EXPECT_THROW(udp_server_->clone(), isc::Unexpected);
-    EXPECT_THROW(udp_server_->asyncLookup(), isc::Unexpected);
+    EXPECT_THROW_WITH(udp_server_->clone(), isc::Unexpected,
+                      "SyncUDPServer can't be cloned.");
+                      
+    EXPECT_THROW_WITH(udp_server_->asyncLookup(), isc::Unexpected,
+                      "SyncUDPServer doesn't support asyncLookup by "
+                      "design, use UDPServer if you need it.");
 }
 
 // Check it rejects forgotten resume (eg. insists that it is synchronous)
 TEST_F(SyncServerTest, mustResume) {
     lookup_->allow_resume_ = false;
-    ASSERT_THROW(testStopServerByStopper(*udp_server_, udp_client_, lookup_),
-                 isc::Unexpected);
+    ASSERT_THROW_WITH(testStopServerByStopper(*udp_server_, udp_client_,
+                                              lookup_),
+                      isc::Unexpected,
+                      "No resume called from the lookup callback");
 }
 
 // SyncUDPServer doesn't allow NULL lookup callback.
 TEST_F(SyncServerTest, nullLookupCallback) {
-    EXPECT_THROW(SyncUDPServer::create(service, 0, AF_INET, NULL),
-                 isc::InvalidParameter);
+    EXPECT_THROW_WITH(SyncUDPServer::create(service, 0, AF_INET, NULL),
+                      isc::InvalidParameter, 
+                      "null lookup callback given to SyncUDPServer");
 }
 
 TEST_F(SyncServerTest, resetUDPServerBeforeEvent) {

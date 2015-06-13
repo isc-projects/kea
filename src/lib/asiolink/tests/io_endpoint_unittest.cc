@@ -200,10 +200,10 @@ TEST(IOEndpointTest, equality) {
 
 TEST(IOEndpointTest, createIPProto) {
     EXPECT_THROW_WITH(IOEndpoint::create(IPPROTO_IP, IOAddress("192.0.2.1"),
-					 53210)->getAddress().toText(),
-		      IOError, "IOEndpoint creation attempt "
-		      "for unsupported protocol: " << IPPROTO_IP);
-		      
+                                         53210)->getAddress().toText(),
+                      IOError, "IOEndpoint creation attempt "
+                      "for unsupported protocol: " << IPPROTO_IP);
+                      
 }
 
 void

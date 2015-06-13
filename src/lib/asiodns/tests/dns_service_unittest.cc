@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,6 +14,7 @@
 
 #include <config.h>
 #include <gtest/gtest.h>
+#include <util/unittests/test_exceptions.h>
 
 #include <exceptions/exceptions.h>
 
@@ -223,10 +224,13 @@ TEST_F(UDPDNSServiceTest, syncUDPServerFromFD) {
 
 TEST_F(UDPDNSServiceTest, addUDPServerFromFDWithUnknownOption) {
     // Use of undefined/incompatible options should result in an exception.
-    EXPECT_THROW(dns_service.addServerUDPFromFD(
-                     getSocketFD(AF_INET6, TEST_IPV6_ADDR, TEST_SERVER_PORT),
-                     AF_INET6, static_cast<DNSService::ServerFlag>(2)),
-                 isc::InvalidParameter);
+    EXPECT_THROW_WITH(dns_service.addServerUDPFromFD(
+                         getSocketFD(AF_INET6, TEST_IPV6_ADDR,
+                                     TEST_SERVER_PORT),
+                         AF_INET6,
+                         static_cast<DNSService::ServerFlag>(2)),
+                      isc::InvalidParameter,
+                      "Invalid DNS/UDP server option: 2");
 }
 
 } // unnamed namespace
