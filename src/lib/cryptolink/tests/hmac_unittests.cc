@@ -1,4 +1,4 @@
-// Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -37,6 +37,17 @@ using namespace isc::util::encode;
 using namespace isc::cryptolink;
 
 namespace {
+    /// @brief Fill a string with copies of an out of char range value
+    /// @param data String to fill
+    /// @param len Number of copies
+    /// @param val Value
+    void fillString(std::string& data, size_t len, int val) {
+        data.resize(len);
+        if (len != 0) {
+            std::memset(&data[0], val, len);
+        }
+    }
+
     /// @brief Compare data with expected value
     /// @param data Value to compare
     /// @param expected Expected value
@@ -244,6 +255,8 @@ TEST(HMACTest, HMAC_MD5_RFC2202_SIGN) {
     doHMACTest("what do ya want for nothing?", "Jefe", 4, MD5,
                hmac_expected2, 16);
 
+    std::string data3;
+    fillString(data3, 50, 0xdd);
     const uint8_t secret3[] = { 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
                                 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
                                 0xaa, 0xaa, 0xaa, 0xaa };
@@ -251,9 +264,10 @@ TEST(HMACTest, HMAC_MD5_RFC2202_SIGN) {
                                        0x14, 0x4c, 0x88, 0xdb, 0xb8,
                                        0xc7, 0x33, 0xf0, 0xe8, 0xb3,
                                        0xf6};
-    doHMACTest(std::string(50, 0xdd), secret3, 16, MD5, hmac_expected3, 16);
+    doHMACTest(data3, secret3, 16, MD5, hmac_expected3, 16);
 
-    const std::string data4(50, 0xcd);
+    std::string data4;
+    fillString(data4, 50, 0xcd);
     const uint8_t secret4[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
                                 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c,
                                 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12,
@@ -277,20 +291,24 @@ TEST(HMACTest, HMAC_MD5_RFC2202_SIGN) {
     doHMACTest("Test With Truncation", secret5, 16, MD5,
                hmac_expected5, 12);
 
+    std::string secret6;
+    fillString(secret6, 80, 0xaa);
     const uint8_t hmac_expected6[] = { 0x6b, 0x1a, 0xb7, 0xfe, 0x4b,
                                        0xd7, 0xbf, 0x8f, 0x0b, 0x62,
                                        0xe6, 0xce, 0x61, 0xb9, 0xd0,
                                        0xcd };
     doHMACTest("Test Using Larger Than Block-Size Key - Hash Key First",
-               std::string(80, 0xaa).c_str(), 80, MD5, hmac_expected6, 16);
+               secret6.c_str(), 80, MD5, hmac_expected6, 16);
 
+    std::string secret7;
+    fillString(secret7, 80, 0xaa);
     const uint8_t hmac_expected7[] = { 0x6f, 0x63, 0x0f, 0xad, 0x67,
                                        0xcd, 0xa0, 0xee, 0x1f, 0xb1,
                                        0xf5, 0x62, 0xdb, 0x3a, 0xa5,
                                        0x3e };
     doHMACTest("Test Using Larger Than Block-Size Key and Larger Than "
                "One Block-Size Data",
-               std::string(80, 0xaa).c_str(), 80, MD5, hmac_expected7, 16);
+               secret7.c_str(), 80, MD5, hmac_expected7, 16);
 }
 
 // Temporarily disabled
@@ -328,6 +346,8 @@ TEST(HMACTest, HMAC_SHA1_RFC2202_SIGN) {
     doHMACTest("what do ya want for nothing?", "Jefe", 4, SHA1,
                hmac_expected2, 20);
 
+    std::string data3;
+    fillString(data3, 50, 0xdd);
     const uint8_t secret3[] = { 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
                                 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
                                 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
@@ -336,8 +356,10 @@ TEST(HMACTest, HMAC_SHA1_RFC2202_SIGN) {
                                        0xac, 0x11, 0xcd, 0x91, 0xa3,
                                        0x9a, 0xf4, 0x8a, 0xa1, 0x7b,
                                        0x4f, 0x63, 0xf1, 0x75, 0xd3 };
-    doHMACTest(std::string(50, 0xdd), secret3, 20, SHA1, hmac_expected3, 20);
+    doHMACTest(data3, secret3, 20, SHA1, hmac_expected3, 20);
 
+    std::string data4;
+    fillString(data4, 50, 0xcd);
     const uint8_t secret4[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
                                 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c,
                                 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12,
@@ -347,7 +369,7 @@ TEST(HMACTest, HMAC_SHA1_RFC2202_SIGN) {
                                        0x62, 0x50, 0xc6, 0xbc, 0x84,
                                        0x14, 0xf9, 0xbf, 0x50, 0xc8,
                                        0x6c, 0x2d, 0x72, 0x35, 0xda };
-    doHMACTest(std::string(50, 0xcd), secret4, 25, SHA1, hmac_expected4, 20);
+    doHMACTest(data4, secret4, 25, SHA1, hmac_expected4, 20);
 
     const uint8_t secret5[] = { 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c,
                                 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c,
@@ -362,20 +384,24 @@ TEST(HMACTest, HMAC_SHA1_RFC2202_SIGN) {
     doHMACTest("Test With Truncation", secret5, 20, SHA1,
                hmac_expected5, 12);
 
+    std::string secret6;
+    fillString(secret6, 80, 0xaa);
     const uint8_t hmac_expected6[] = { 0xaa, 0x4a, 0xe5, 0xe1, 0x52,
                                        0x72, 0xd0, 0x0e, 0x95, 0x70,
                                        0x56, 0x37, 0xce, 0x8a, 0x3b,
                                        0x55, 0xed, 0x40, 0x21, 0x12 };
     doHMACTest("Test Using Larger Than Block-Size Key - Hash Key First",
-               std::string(80, 0xaa).c_str(), 80, SHA1, hmac_expected6, 20);
+               secret6.c_str(), 80, SHA1, hmac_expected6, 20);
 
+    std::string secret7;
+    fillString(secret7, 80, 0xaa);
     const uint8_t hmac_expected7[] = { 0xe8, 0xe9, 0x9d, 0x0f, 0x45,
                                        0x23, 0x7d, 0x78, 0x6d, 0x6b,
                                        0xba, 0xa7, 0x96, 0x5c, 0x78,
                                        0x08, 0xbb, 0xff, 0x1a, 0x91 };
     doHMACTest("Test Using Larger Than Block-Size Key and Larger Than "
                "One Block-Size Data",
-               std::string(80, 0xaa).c_str(), 80, SHA1, hmac_expected7, 20);
+               secret7.c_str(), 80, SHA1, hmac_expected7, 20);
 }
 
 // Temporarily disabled
@@ -409,8 +435,12 @@ doRFC4231Tests(HashAlgorithm hash_algorithm,
 
     data_list.push_back("Hi There");
     data_list.push_back("what do ya want for nothing?");
-    data_list.push_back(std::string(50, 0xdd));
-    data_list.push_back(std::string(50, 0xcd));
+    std::string fiftydd;
+    fillString(fiftydd, 50, 0xdd);
+    data_list.push_back(fiftydd);
+    std::string fiftycd;
+    fillString(fiftycd, 50, 0xcd);
+    data_list.push_back(fiftycd);
     data_list.push_back("Test With Truncation");
     data_list.push_back("Test Using Larger Than Block-Size Key - "
                         "Hash Key First");
@@ -419,9 +449,13 @@ doRFC4231Tests(HashAlgorithm hash_algorithm,
                         "needs to be hashed before being used by the HMAC "
                         "algorithm.");
 
-    secret_list.push_back(std::string(20, 0x0b));
+    std::string twenty0b;
+    fillString(twenty0b, 20, 0x0b);
+    secret_list.push_back(twenty0b);
     secret_list.push_back("Jefe");
-    secret_list.push_back(std::string(20, 0xaa));
+    std::string twentyaa;
+    fillString(twentyaa, 20, 0xaa);
+    secret_list.push_back(twentyaa);
     const uint8_t secret_array[] = {
         0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
         0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c,
@@ -431,9 +465,13 @@ doRFC4231Tests(HashAlgorithm hash_algorithm,
     };
     secret_list.push_back(std::string(secret_array,
                                       secret_array + sizeof(secret_array)));
-    secret_list.push_back(std::string(20, 0x0c));
-    secret_list.push_back(std::string(131, 0xaa));
-    secret_list.push_back(std::string(131, 0xaa));
+    std::string twenty0c;
+    fillString(twenty0c, 20, 0x0c);
+    secret_list.push_back(twenty0c);
+    std::string alotofaa;
+    fillString(alotofaa, 131, 0xaa);
+    secret_list.push_back(alotofaa);
+    secret_list.push_back(alotofaa);
 
     // Make sure we provide a consistent size of test data
     ASSERT_EQ(secret_list.size(), data_list.size());
