@@ -691,18 +691,18 @@ public:
 bool isNull(ConstElementPtr p);
 
 ///
-/// \brief Remove all values from the first ElementPtr that are
-/// equal in the second. Both ElementPtrs MUST be MapElements
-/// The use for this function is to end up with a MapElement that
-/// only contains new and changed values (for ModuleCCSession and
-/// configuration update handlers)
+/// \brief Remove all values from the first ElementPtr that are equal
+/// in the second. Both ElementPtrs MUST be MapElements The use for
+/// this function is to end up with a MapElement that only contains
+/// new and changed values (for configuration update handlers)
 /// Raises a TypeError if a or b are not MapElements
 void removeIdentical(ElementPtr a, ConstElementPtr b);
 
-/// \brief Create a new ElementPtr from the first ElementPtr, removing all
-/// values that are equal in the second. Both ElementPtrs MUST be MapElements.
-/// The returned ElementPtr will be a MapElement that only contains new and
-/// changed values (for ModuleCCSession and configuration update handlers).
+/// \brief Create a new ElementPtr from the first ElementPtr, removing
+/// all values that are equal in the second. Both ElementPtrs MUST be
+/// MapElements.  The returned ElementPtr will be a MapElement that
+/// only contains new and changed values (for configuration update
+/// handlers).
 /// Raises a TypeError if a or b are not MapElements
 ConstElementPtr removeIdentical(ConstElementPtr a, ConstElementPtr b);
 
