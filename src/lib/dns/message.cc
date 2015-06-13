@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -398,7 +398,7 @@ Message::getHeaderFlag(const HeaderFlag flag) const {
     if (flag == 0 || (flag & ~HEADERFLAG_MASK) != 0) {
         isc_throw(InvalidParameter,
                   "Message::getHeaderFlag:: Invalid flag is specified: " <<
-                  flag);
+                  "0x" << std::hex << flag);
     }
     return ((impl_->flags_ & flag) != 0);
 }
@@ -412,7 +412,7 @@ Message::setHeaderFlag(const HeaderFlag flag, const bool on) {
     if (flag == 0 || (flag & ~HEADERFLAG_MASK) != 0) {
         isc_throw(InvalidParameter,
                   "Message::getHeaderFlag:: Invalid flag is specified: " <<
-                  flag);
+                  "0x" << std::hex << flag);
     }
     if (on) {
         impl_->flags_ |= flag;
