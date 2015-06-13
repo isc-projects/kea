@@ -2,7 +2,7 @@
 	Made some loop indexes an unsigned type to avoid compiler warnings
 	where the termination condition is comparison with an unsigned
 	value.
-	(Trac #3833, git xxx)
+	(Trac #3833, git 3db9f1d78f59856b982a1ff84c3b5a1ba7ea39df)
 
 951.	[build]		fdupont
 	Removed BUNDY configuration backend.
