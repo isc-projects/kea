@@ -1441,9 +1441,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/asiolink/Makefile
                  src/lib/asiolink/tests/Makefile
                  src/lib/cc/Makefile
-                 src/lib/cc/session_config.h.pre
                  src/lib/cc/tests/Makefile
-                 src/lib/cc/tests/session_unittests_config.h
                  src/lib/config/Makefile
                  src/lib/config/tests/Makefile
                  src/lib/config/tests/data_def_unittests_config.h
