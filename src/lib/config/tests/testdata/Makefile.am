@@ -1,17 +1,3 @@
-CLEANFILES = b10-config.db
-
-BUILT_SOURCES = b10-config.db
-
-# cfgmgr_test (under lib/python) will override b10-config.db, so we make a
-# writable copy in the builddir.
-b10-config.db: b10-config.db.master
-	cp $(srcdir)/b10-config.db.master $@
-
-EXTRA_DIST =  b10-config-bad1.db
-EXTRA_DIST += b10-config-bad2.db
-EXTRA_DIST += b10-config-bad3.db
-EXTRA_DIST += b10-config-bad4.db
-EXTRA_DIST += b10-config.db.master #.db will be auto-generated
 EXTRA_DIST += data22_1.data
 EXTRA_DIST += data22_2.data
 EXTRA_DIST += data22_3.data
