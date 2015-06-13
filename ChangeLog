@@ -1,3 +1,7 @@
+951.	[build]		fdupont
+	Removed BUNDY configuration backend.
+	(Trac #3732, git xxx)
+
 950.	[doc]		marcin
 	Updated section about logging in the User Guide. Also,
 	updated Hooks Developer's Guide with the recommendations for

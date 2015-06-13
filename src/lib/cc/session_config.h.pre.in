@@ -1,2 +1,0 @@
-#define KEA_MSGQ_SOCKET_FILE "@@LOCALSTATEDIR@@/@PACKAGE@/kea_msgq_socket"
-

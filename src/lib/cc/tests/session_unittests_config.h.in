@@ -1,2 +1,0 @@
-#define TEST_SOCKET_FILE "@builddir@/test_socket.sock"
-
