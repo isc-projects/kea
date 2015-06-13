@@ -62,21 +62,23 @@
       </itemizedlist>
 
       <para>
-            The <command>-V</command> returns the versions of the
-            external libraries dynamically linked, at the opposite
-            the <command>-W</command> describes the environment used
-            to build Kea.
+            The <command>-V</command> command returns the versions of the
+            external libraries dynamically linked.
       </para>
 
       <para>
-            All of the executable binaries in Kea contain an embedded
-            copy of the <filename>config.report</filename>
-            file produced by <userinput>./configure</userinput>
-            and displayed by the <command>-W</command> command,
-            but is accessible in some other ways when needed.
-            The following command may be used to extract this information.
-            The binary <userinput>path</userinput> may be found in the
-            install directory or in the <filename>.libs</filename>
+            The <command>-W</command> command describes the environment used
+            to build Kea.  This command displays a copy of the
+            <filename>config.report</filename> file produced by
+            <userinput>./configure</userinput> that is embedded in the
+            executable binary.
+      </para>
+
+      <para>
+            The <filename>config.report</filename> may also be accessed more
+            directly.  The following command may be used to extract this
+            information.  The binary <userinput>path</userinput> may be found
+            in the install directory or in the <filename>.libs</filename>
             subdirectory in the source treee. For example
             <filename>kea/src/bin/dhcp6/.libs/kea-dhcp6</filename>.
 
