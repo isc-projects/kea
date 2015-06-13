@@ -74,6 +74,7 @@ EcDsaAsymImpl::EcDsaAsymImpl(const void* key, size_t key_len,
         } catch (const std::exception& exc) {
             isc_throw(BadKey, "ECDSA_PrivateKey: " << exc.what());
         }
+        priv_->set_parameter_encoding(Botan::EC_DOMPAR_ENC_OID);
     } else if (kind_ == PRIVATE) {
         isc_throw(UnsupportedAlgorithm,
                   "Unknown ECDSA Private Key format: " <<
@@ -100,6 +101,7 @@ EcDsaAsymImpl::EcDsaAsymImpl(const void* key, size_t key_len,
         if (pub_->domain() != group_) {
             isc_throw(BadKey, "ECDSA Public Key not for the right curve");
         }
+        pub_->set_parameter_encoding(Botan::EC_DOMPAR_ENC_OID);
     } else if ((kind_ == PUBLIC) && (key_format == DNS)) {
         // RFC 6605 DNS wire format
         // key_len == 0 was already checked
@@ -126,6 +128,7 @@ EcDsaAsymImpl::EcDsaAsymImpl(const void* key, size_t key_len,
         } catch (const std::exception& exc) {
             isc_throw(BadKey, "ECDSA_PublicKey: " << exc.what());
         }
+        pub_->set_parameter_encoding(Botan::EC_DOMPAR_ENC_OID);
     } else if (kind_ == PUBLIC) {
         isc_throw(UnsupportedAlgorithm,
                   "Unknown ECDSA Public Key format: " <<
@@ -182,6 +185,7 @@ EcDsaAsymImpl::EcDsaAsymImpl(const void* key, size_t key_len,
             if (!pub_) {
                 pub_.reset(new Botan::ECDSA_PublicKey(group_,
                                                       priv_->public_point()));
+                pub_->set_parameter_encoding(Botan::EC_DOMPAR_ENC_OID);
             }
         } catch (const std::exception& exc) {
             isc_throw(BadKey, "priv to pub: " << exc.what());
@@ -316,6 +320,7 @@ EcDsaAsymImpl::EcDsaAsymImpl(const std::string& filename,
         } catch (const std::exception& exc) {
             isc_throw(BadKey, "ECDSA_PrivateKey" << exc.what());
         }
+        priv_->set_parameter_encoding(Botan::EC_DOMPAR_ENC_OID);
     } else if (kind_ == PRIVATE) {
         isc_throw(UnsupportedAlgorithm,
                   "Unknown ECDSA Private Key format: " <<
@@ -341,6 +346,7 @@ EcDsaAsymImpl::EcDsaAsymImpl(const std::string& filename,
         if (pub_->domain() != group_) {
             isc_throw(BadKey, "ECDSA Public Key not for the right curve");
         }
+        pub_->set_parameter_encoding(Botan::EC_DOMPAR_ENC_OID);
     } else if ((kind_ == PUBLIC) && (key_format == DNS)) {
         // bind9 .key file (RDATA)
         // warn when password not empty
@@ -401,6 +407,7 @@ EcDsaAsymImpl::EcDsaAsymImpl(const std::string& filename,
         } catch (const std::exception& exc) {
             isc_throw(BadKey, "ECDSA_PublicKey: " << exc.what());
         }
+        pub_->set_parameter_encoding(Botan::EC_DOMPAR_ENC_OID);
     } else if (kind_ == PUBLIC) {
         isc_throw(UnsupportedAlgorithm,
                   "Unknown ECDSA Public Key format: " <<
@@ -462,6 +469,7 @@ EcDsaAsymImpl::EcDsaAsymImpl(const std::string& filename,
             if (!pub_) {
                 pub_.reset(new Botan::ECDSA_PublicKey(group_,
                                                       priv_->public_point()));
+                pub_->set_parameter_encoding(Botan::EC_DOMPAR_ENC_OID);
             }
         } catch (const std::exception& exc) {
             isc_throw(BadKey, "priv to pub: " << exc.what());
@@ -741,20 +749,17 @@ std::vector<uint8_t>
                   static_cast<int>(key_format));
     } else if ((key_kind == PUBLIC) && (key_format == ASN1)) {
         // SubjectPublicKeyInfo
-        // Expand encoding to force namedCurve and uncompressed
+        // Expand encoding to force uncompressed point
+        // @note this is critical for secure DHCPv6
         Botan::MemoryVector<Botan::byte> ber;
         try {
             // ber = Botan::X509::BER_encode(*pub_);
-            const Botan::MemoryVector<Botan::byte> parameters =
-                pub_->domain().DER_encode(Botan::EC_DOMPAR_ENC_OID);
-            const Botan::AlgorithmIdentifier alg_id(pub_->get_oid(),
-                                                    parameters);
             const Botan::MemoryVector<Botan::byte> pubkey =
                 Botan::EC2OSP(pub_->public_point(),
                               Botan::PointGFp::UNCOMPRESSED);
             ber = Botan::DER_Encoder()
                      .start_cons(Botan::SEQUENCE)
-                        .encode(alg_id)
+                        .encode(pub_->algorithm_identifier())
                         .encode(pubkey, Botan::BIT_STRING)
                     .end_cons()
                 .get_contents();
@@ -849,22 +854,18 @@ void EcDsaAsymImpl::exportkey(const std::string& filename,
     } else if ((key_kind == PUBLIC) && (key_format == ASN1)) {
         // SubjectPublicKeyInfo PEM file
         // warn when password not empty
-        // Expand encoding to force namedCurve
+        // Expand encoding to force uncompressed point
         std::string pem;
         try {
             // pem = Botan::X509::PEM_encode(*pub_);
             Botan::MemoryVector<Botan::byte> ber;
             // ber = Botan::X509::BER_encode(*pub_);
-            const Botan::MemoryVector<Botan::byte> parameters =
-                pub_->domain().DER_encode(Botan::EC_DOMPAR_ENC_OID);
-            const Botan::AlgorithmIdentifier alg_id(pub_->get_oid(),
-                                                    parameters);
             const Botan::MemoryVector<Botan::byte> pubkey =
                 Botan::EC2OSP(pub_->public_point(),
                               Botan::PointGFp::UNCOMPRESSED);
             ber = Botan::DER_Encoder()
                      .start_cons(Botan::SEQUENCE)
-                        .encode(alg_id)
+                        .encode(pub_->algorithm_identifier())
                         .encode(pubkey, Botan::BIT_STRING)
                     .end_cons()
                 .get_contents();
