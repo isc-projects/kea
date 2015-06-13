@@ -1,4 +1,4 @@
-// Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,6 +14,7 @@
 
 #include <config.h>
 #include <gtest/gtest.h>
+#include <util/unittests/test_exceptions.h>
 
 #include <asio.hpp>
 #include <asiolink/asiolink.h>
@@ -161,11 +162,13 @@ TEST_F(IntervalTimerTest, invalidArgumentToIntervalTimer) {
     // Create asio_link::IntervalTimer and setup.
     IntervalTimer itimer(io_service_);
     // expect throw if call back function is empty
-    EXPECT_THROW(itimer.setup(IntervalTimer::Callback(), 1),
-                 isc::InvalidParameter);
+    EXPECT_THROW_WITH(itimer.setup(IntervalTimer::Callback(), 1),
+                      isc::InvalidParameter, "Callback function is empty");
     // expect throw if interval is not greater than 0
-    EXPECT_THROW(itimer.setup(TimerCallBack(this), 0), isc::BadValue);
-    EXPECT_THROW(itimer.setup(TimerCallBack(this), -1), isc::BadValue);
+    EXPECT_THROW_WITH(itimer.setup(TimerCallBack(this), 0), isc::BadValue,
+                      "Interval should not be less than or equal to 0");
+    EXPECT_THROW_WITH(itimer.setup(TimerCallBack(this), -1), isc::BadValue,
+                      "Interval should not be less than or equal to 0");
 }
 
 TEST_F(IntervalTimerTest, startIntervalTimer) {

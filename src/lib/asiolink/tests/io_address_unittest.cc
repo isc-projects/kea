@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012,2014-2015  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012, 2014-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,7 @@
 #include <asiolink/io_error.h>
 #include <asiolink/io_address.h>
 #include <exceptions/exceptions.h>
+#include <util/unittests/test_exceptions.h>
 
 #include <algorithm>
 #include <cstring>
@@ -34,16 +35,24 @@ TEST(IOAddressTest, fromText) {
     EXPECT_EQ("2001:db8::1234", io_address_v6.toText());
 
     // bogus IPv4 address-like input
-    EXPECT_THROW(IOAddress("192.0.2.2.1"), IOError);
+    EXPECT_THROW_WITH(IOAddress("192.0.2.2.1"), IOError,
+                      "Failed to convert string to address '192.0.2.2.1': "
+                      << strerror(EINVAL));
 
     // bogus IPv4 address-like input: out-of-range octet
-    EXPECT_THROW(IOAddress("192.0.2.300"), IOError);
+    EXPECT_THROW_WITH(IOAddress("192.0.2.300"), IOError,
+                      "Failed to convert string to address '192.0.2.300': "
+                      << strerror(EINVAL));
 
     // bogus IPv6 address-like input
-    EXPECT_THROW(IOAddress("2001:db8:::1234"), IOError);
+    EXPECT_THROW_WITH(IOAddress("2001:db8:::1234"), IOError,
+                      "Failed to convert string to address '2001:db8:::1234': "
+                      << strerror(EINVAL));
 
     // bogus IPv6 address-like input
-    EXPECT_THROW(IOAddress("2001:db8::efgh"), IOError);
+    EXPECT_THROW_WITH(IOAddress("2001:db8::efgh"), IOError,
+                      "Failed to convert string to address '2001:db8::efgh': "
+                      << strerror(EINVAL));
 }
 
 TEST(IOAddressTest, Equality) {
@@ -325,8 +334,10 @@ TEST(IOAddressTest, subtract) {
               IOAddress::subtract(addr7, addr8).toText());
 
     // Inter-family relations are not allowed.
-    EXPECT_THROW(IOAddress::subtract(addr1, addr6), isc::BadValue);
-    EXPECT_THROW(IOAddress::subtract(addr6, addr1), isc::BadValue);
+    EXPECT_THROW_WITH(IOAddress::subtract(addr1, addr6), isc::BadValue,
+                      "Both addresses have to be the same family");
+    EXPECT_THROW_WITH(IOAddress::subtract(addr6, addr1), isc::BadValue,
+                      "Both addresses have to be the same family");
 }
 
 // Test checks whether an address can be increased.

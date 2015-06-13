@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,8 @@
 #include <asiolink/io_error.h>
 
 #include <gtest/gtest.h>
+
+#include <util/unittests/test_exceptions.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -197,9 +199,11 @@ TEST(IOEndpointTest, equality) {
 }
 
 TEST(IOEndpointTest, createIPProto) {
-    EXPECT_THROW(IOEndpoint::create(IPPROTO_IP, IOAddress("192.0.2.1"),
-                                    53210)->getAddress().toText(),
-                 IOError);
+    EXPECT_THROW_WITH(IOEndpoint::create(IPPROTO_IP, IOAddress("192.0.2.1"),
+					 53210)->getAddress().toText(),
+		      IOError, "IOEndpoint creation attempt "
+		      "for unsupported protocol: " << IPPROTO_IP);
+		      
 }
 
 void

@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,8 @@
 #include <asiolink/io_error.h>
 
 #include <gtest/gtest.h>
+
+#include <util/unittests/test_exceptions.h>
 
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -115,7 +117,10 @@ TEST_F(LocalSocketTest, constructError) {
     // fail.
     const int fd = sock_pair_[0].release();
     EXPECT_EQ(0, close(fd));
-    EXPECT_THROW(LocalSocket(io_service_, fd), IOError);
+    EXPECT_THROW_WITH(LocalSocket(io_service_, fd), IOError,
+                      "failed to open local socket with FD " << fd
+                      << " (local endpoint unknown): "
+                      << strerror(ENOTSOCK));
 }
 
 TEST_F(LocalSocketTest, autoClose) {
