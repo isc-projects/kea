@@ -25,18 +25,8 @@ namespace dhcp {
 
 /// @brief Controlled version of the DHCPv6 server
 ///
-<<<<<<< HEAD
-/// This is a class that is responsible for DHCPv6 server being controllable.
-/// It does various things, depending on the configuration backend.
-/// For Bundy backend it establishes a connection with msgq and later receives
-/// commands over it. For Kea backend, it reads configuration file from disk.
-///
-/// For detailed explanation or relations between main(), ControlledDhcpv6Srv,
-/// Dhcpv6Srv and other classes, see \ref dhcpv6Session.
-=======
 /// This is a class that is responsible for DHCPv6 server being controllable,
 /// by reading configuration file from disk.
->>>>>>> trac3732
 class ControlledDhcpv6Srv : public isc::dhcp::Dhcpv6Srv {
 public:
 
