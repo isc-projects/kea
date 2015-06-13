@@ -69,13 +69,7 @@ libd2_la_SOURCES += nc_remove.cc nc_remove.h
 libd2_la_SOURCES += nc_trans.cc nc_trans.h
 libd2_la_SOURCES += state_model.cc state_model.h
 
-if CONFIG_BACKEND_BUNDY
-libd2_la_SOURCES += bundy_d2_controller.cc bundy_d2_controller.h
-else
-if CONFIG_BACKEND_JSON
 libd2_la_SOURCES += d2_controller.cc d2_controller.h
-endif
-endif
 
 nodist_libd2_la_SOURCES = d2_messages.h d2_messages.cc
 EXTRA_DIST += d2_messages.mes

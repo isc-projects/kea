@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -28,49 +28,6 @@ for it.
 DHCPv4 server component does not support direct traffic (relayed
 only), as support for transmission to hosts without IPv4 address
 assigned is not implemented in IfaceMgr yet.
-
-@section dhcpv4Session Bundy message queue integration
-
-DHCPv4 server now has two configuration backends: JSON and Bundy. The
-following section applies only to the Bundy backend.
-
-DHCPv4 server component is now integrated with Bundy message queue.
-The integration is performed by establishSession() and disconnectSession()
-functions in isc::dhcp::ControlledDhcpv4Srv class. main() method defined
-in the src/bin/dhcp4/main.cc file instantiates isc::dhcp::ControlledDhcpv4Srv
-class that establishes connection with msgq and install necessary handlers
-for receiving commands and configuration updates. It is derived from
-a base isc::dhcp::Dhcpv4Srv class that implements DHCPv4 server functionality,
-without any controlling mechanisms.
-
-ControlledDhcpv4Srv instantiates several components to make management
-session possible. In particular, isc::cc::Session cc_session
-object uses ASIO for establishing connection. It registers its socket
-in isc::asiolink::IOService io_service object. Typically, other components
-(e.g. auth or resolver) that use ASIO for their communication, register their
-other sockets in the
-same io_service and then just call io_service.run() method that does
-not return, until one of the callback decides that it is time to shut down
-the whole component cal calls io_service.stop(). DHCPv4 works in a
-different way. It does receive messages using select()
-(see isc::dhcp::IfaceMgr::receive4()), which is incompatible with ASIO.
-To solve this problem, socket descriptor is extracted from cc_session
-object and is passed to IfaceMgr by using isc::dhcp::IfaceMgr::set_session_socket().
-IfaceMgr then uses this socket in its select() call. If there is some
-data to be read, it calls registered callback that is supposed to
-read and process incoming data.
-
-This somewhat complicated approach is needed for a simple reason. In
-embedded deployments there will be no message queue. Not referring directly
-to anything related to message queue in isc::dhcp::Dhcpv4Srv and
-isc::dhcp::IfaceMgr classes brings in two benefits. First, the can
-be used with and without message queue. Second benefit is related to the
-first one: \ref libdhcp is supposed to be simple and robust and not require
-many dependencies. One notable example of a use case that benefits from
-this approach is a perfdhcp tool. Finally, the idea is that it should be
-possible to instantiate Dhcpv4Srv object directly, thus getting a server
-that does not support msgq. That is useful for embedded environments.
-It may also be useful in validation.
 
 @section dhcpv4ConfigParser Configuration Parser in DHCPv4
 
@@ -196,23 +153,13 @@ limited.
 
  @section dhcpv4ConfigBackend Configuration backend for DHCPv4
 
-There are many theoretical ways in which server configuration can be stored. Kea 0.8 and
-earlier versions used BIND10/Bundy framework and its internal storage for DHCPv6 server configuration.
+There are many theoretical ways in which server configuration can be stored.
 The legacy ISC-DHCP implementation uses flat files. Configuration stored in JSON files is
 becoming more and more popular among various projects. There are unofficial patches for
 ISC-DHCP that keep parts of the configuration in LDAP. It was also suggested that in some
 cases it would be convenient to keep configuration in XML files.
 
-Kea 0.9 has introduced configuration backends that are switchable during compilation phase.
-There is a new parameter for configure script: --with-kea-config. It currently supports
-two values: BUNDY and JSON.
-
-BUNDY (which is the default value as of May 2014) means that Kea4 is linked with the
-Bundy (former BIND10) configuration backend that connects to the Bundy/BIND10 framework and in general works
-exactly the same as Kea 0.8 and earlier versions. The benefits of that backend are uniform
-integration with Bundy/BIND10 framework, easy on-line reconfiguration using bindctl, available
-RESTful API. On the other hand, it requires the whole heavy Bundy framework that requires
-Python3 to be present. That framework is going away with the release of Kea 0.9.
+Kea 0.9 has introduced configuration backends that are switchable during compilation phase. Currently the only choice is JSON.
 
 JSON is a new configuration backend that causes Kea to read JSON configuration file from
 disk. It does not require any framework and thus is considered more lightweight. It will
@@ -221,10 +168,7 @@ API). This configuration backend is expected to be the default for upcoming Kea 
 requires <tt> -c config-file </tt> command-line option.
 
 Internally, configuration backends are implemented as different implementations of the
-isc::dhcp::ControlledDhcpv4Srv class, stored in {kea,bundy}_controller.cc files. Depending on
-the choice made by ./configure script, only one of those files is compiled and linked.
-There are backend specific tests in src/bin/dhcp4/tests/{kea,bundy}_controller_unittest.cc.
-Only tests specific to selected backend are linked and executed during make distcheck.
+isc::dhcp::ControlledDhcpv4Srv class, stored in kea_controller.cc files.
 
 While it is unlikely that ISC will support more than one backend at any given time, there
 are several aspects that make that approach appealing in the long term. First, having
