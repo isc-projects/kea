@@ -1,4 +1,4 @@
-// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -43,11 +43,10 @@ decided to keep it. However, even though the Kea team is focused on a
 backend that reads a JSON configuration file from disk, it decided to
 make it easy for others to use different backends.
 
-While ISC currently (May 2014) plans to maintain only one configuration backend
-(a JSON file read from disk), there may be other organizations (e.g.
-the Bundy project community) that will maintain other backends. It is quite
-possible that additional backends (e.g. using LDAP or XML) will be
-developed and maintained by other organizations.
+While ISC currently (May 2015) maintains only one configuration backend
+(a JSON file read from disk), it is quite possible that additional backends
+(e.g. using LDAP or XML) will be developed in the future by ISC or other
+organizations.
 
 @section configBackendAdding How to Add a New Configuration Backend
 
@@ -87,13 +86,12 @@ The following are some details of the JSON backend framework.
 -# A switch called --with-kea-config has been implemented in the
    configure script. It allows the selection at compilation time of how the
    servers will be configured. Currently (June 2014),
-   there are two values: JSON (the default, read configuration from a JSON file)
-   and BUNDY (use the BUNDY/BIND10 framework).  Although the Bundy/BIND10
-   framework has been removed from Kea, the configuration choice
-   is available for other projects (e.g. Bundy) that want to include an
-   implementation of Kea using that backend.  Such projects are advised to
-   import the Kea modules and compile them with the Bundy backend
-   enabled.<br/><br/>
+   there is one value: JSON (read configuration from a JSON file)
+   Although the Bundy/BIND10 framework has been removed from Kea, the
+   configuration choice is available for other projects (e.g. Bundy)
+   that want to include an implementation of Kea using that backend.
+   Such projects are advised to import the Kea modules and compile
+   them with the Bundy backend enabled.<br/><br/>
    This switchable backend concept is quite simple. There are different
    implementations of ControlledXSrv class, each backend keeping its code
    in a separate file. It is a matter of compiling/linking

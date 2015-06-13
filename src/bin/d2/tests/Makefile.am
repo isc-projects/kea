@@ -1,9 +1,7 @@
 SHTESTS =
 # The test of dynamic reconfiguration based on signals will work only
 # if we are using file based configuration approach.
-if CONFIG_BACKEND_JSON
 SHTESTS += d2_process_tests.sh
-endif
 
 noinst_SCRIPTS = d2_process_tests.sh
 
@@ -68,14 +66,8 @@ d2_unittests_SOURCES += nc_test_utils.cc nc_test_utils.h
 d2_unittests_SOURCES += nc_trans_unittests.cc
 d2_unittests_SOURCES += state_model_unittests.cc
 
-if CONFIG_BACKEND_BUNDY
-d2_unittests_SOURCES += bundy_d2_controller_unittests.cc
-else
-if CONFIG_BACKEND_JSON
 d2_unittests_SOURCES += d2_controller_unittests.cc
 d2_unittests_SOURCES += d_controller_unittests.cc
-endif
-endif
 
 d2_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 d2_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
