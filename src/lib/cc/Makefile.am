@@ -2,16 +2,7 @@ SUBDIRS = . tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
-
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
-if USE_GXX
-# ASIO header files used in session.cc will trigger the "unused-parameter"
-# warning.  Unfortunately there doesn't seem to be an easy way to selectively
-# avoid the error.  As a short term workaround we suppress this warning
-# for the entire this module.  See also src/bin/auth/Makefile.am.
-AM_CXXFLAGS += -Wno-unused-parameter
-AM_CXXFLAGS += -fno-strict-aliasing
-endif
 
 lib_LTLIBRARIES = libkea-cc.la
 libkea_cc_la_SOURCES = data.cc data.h
