@@ -1569,8 +1569,9 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr) {
     if (ctx.clientid_) {
         local_copy = ctx.clientid_->getDuid();
     }
+    const uint8_t* local_copy0 = local_copy.empty() ? 0 : &local_copy[0];
 
-    Lease4Ptr lease(new Lease4(addr, ctx.hwaddr_, &local_copy[0], local_copy.size(),
+    Lease4Ptr lease(new Lease4(addr, ctx.hwaddr_, local_copy0, local_copy.size(),
                                ctx.subnet_->getValid(), ctx.subnet_->getT1(),
                                ctx.subnet_->getT2(),
                                now, ctx.subnet_->getID()));

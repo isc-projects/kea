@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013,2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -196,7 +196,7 @@ TEST_F(OptionCustomTest, binaryData) {
     // used as reference when we read back the data from a created
     // option.
     OptionBuffer buf_in(14);
-    for (int i = 0; i < 14; ++i) {
+    for (unsigned i = 0; i < 14; ++i) {
         buf_in[i] = i;
     }
 
@@ -603,7 +603,7 @@ TEST_F(OptionCustomTest, uint32DataArray) {
 
     // Store these values in a buffer.
     OptionBuffer buf;
-    for (int i = 0; i < values.size(); ++i) {
+    for (size_t i = 0; i < values.size(); ++i) {
         writeInt<uint32_t>(values[i], buf);
     }
     // Create custom option using the input buffer.
@@ -649,7 +649,7 @@ TEST_F(OptionCustomTest, ipv4AddressDataArray) {
 
     // Store the collection of IPv4 addresses into the buffer.
     OptionBuffer buf;
-    for (int i = 0; i < addresses.size(); ++i) {
+    for (size_t i = 0; i < addresses.size(); ++i) {
         writeAddress(addresses[i], buf);
     }
 
@@ -699,7 +699,7 @@ TEST_F(OptionCustomTest, ipv6AddressDataArray) {
 
     // Store the collection of IPv6 addresses into the buffer.
     OptionBuffer buf;
-    for (int i = 0; i < addresses.size(); ++i) {
+    for (size_t i = 0; i < addresses.size(); ++i) {
         writeAddress(addresses[i], buf);
     }
 
@@ -968,7 +968,7 @@ TEST_F(OptionCustomTest, setBinaryData) {
     EXPECT_TRUE(buf.empty());
     // Prepare input buffer with some dummy data.
     OptionBuffer buf_in(10);
-    for (int i = 0; i < buf_in.size(); ++i) {
+    for (size_t i = 0; i < buf_in.size(); ++i) {
         buf_in[i] = i;
     }
     // Try to override the default binary buffer.
@@ -1433,7 +1433,7 @@ TEST_F(OptionCustomTest, unpack) {
 
     // Store the collection of IPv4 addresses into the buffer.
     OptionBuffer buf;
-    for (int i = 0; i < addresses.size(); ++i) {
+    for (size_t i = 0; i < addresses.size(); ++i) {
         writeAddress(addresses[i], buf);
     }
 
@@ -1464,7 +1464,7 @@ TEST_F(OptionCustomTest, unpack) {
 
     // Clear the buffer as we need to store new addresses in it.
     buf.clear();
-    for (int i = 0; i < addresses.size(); ++i) {
+    for (size_t i = 0; i < addresses.size(); ++i) {
         writeAddress(addresses[i], buf);
     }
 
@@ -1495,7 +1495,7 @@ TEST_F(OptionCustomTest, initialize) {
 
     // Store the collection of IPv6 addresses into the buffer.
     OptionBuffer buf;
-    for (int i = 0; i < addresses.size(); ++i) {
+    for (size_t i = 0; i < addresses.size(); ++i) {
         writeAddress(addresses[i], buf);
     }
 
@@ -1525,7 +1525,7 @@ TEST_F(OptionCustomTest, initialize) {
 
     // Clear the buffer as we need to store new addresses in it.
     buf.clear();
-    for (int i = 0; i < addresses.size(); ++i) {
+    for (size_t i = 0; i < addresses.size(); ++i) {
         writeAddress(addresses[i], buf);
     }
 

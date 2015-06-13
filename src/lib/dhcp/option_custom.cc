@@ -504,7 +504,7 @@ OptionCustom::unpack(OptionBufferConstIter begin,
 uint16_t
 OptionCustom::len() {
     // The length of the option is a sum of option header ...
-    int length = getHeaderLen();
+    size_t length = getHeaderLen();
 
     // ... lengths of all buffers that hold option data ...
     for (std::vector<OptionBuffer>::const_iterator buf = buffers_.begin();
@@ -519,7 +519,7 @@ OptionCustom::len() {
         length += (*it).second->len();
     }
 
-    return (length);
+    return (static_cast<uint16_t>(length));
 }
 
 void OptionCustom::initialize(const OptionBufferConstIter first,

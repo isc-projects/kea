@@ -16,6 +16,7 @@
 #define PKT6_H
 
 #include <asiolink/io_address.h>
+#include <dhcp/duid.h>
 #include <dhcp/option.h>
 #include <dhcp/pkt.h>
 
@@ -157,6 +158,34 @@ public:
         proto_ = proto;
     }
 
+    /// @brief Returns text representation of the given packet identifiers.
+    ///
+    /// @note The parameters are ordered from the one that should be available
+    /// almost at all times, to the one that is optional. This allows for
+    /// providing default values for the parameters that may not be available
+    /// in some places in the code where @c Pkt6::makeLabel is called.
+    ///
+    /// @param duid Pointer to the client identifier or NULL.
+    /// @param transid Numeric transaction id to include in the string.
+    /// @param hwaddr Hardware address to include in the string or NULL.
+    ///
+    /// @return String with text representation of the packet identifiers.
+    static std::string makeLabel(const DuidPtr duid, const uint32_t transid,
+                                 const HWAddrPtr& hwaddr);
+
+    /// @brief Returns text representation of the primary packet identifiers
+    ///
+    /// This method is intended to be used to provide a consistent way to
+    /// identify packets within log statements.  It is an instance-level
+    /// wrapper around static makeLabel(). See this method for string
+    /// content.
+    ///
+    /// @note Currently this method doesn't include the HW address in the
+    /// returned text.
+    ///
+    /// @return string with text representation
+    virtual std::string getLabel() const;
+
     /// @brief Returns text representation of the packet.
     ///
     /// This function is useful mainly for debugging.
@@ -185,6 +214,11 @@ public:
     ///
     /// @param type message type to be set
     virtual void setType(uint8_t type) { msg_type_=type; };
+
+    /// @brief Retrieves the DUID from the Client Identifier option.
+    ///
+    /// @return Pointer to the DUID or NULL if the option doesn't exist.
+    DuidPtr getClientId() const;
 
     /// @brief returns option inserted by relay
     ///
@@ -232,32 +266,27 @@ public:
     /// @param relay structure with necessary relay information
     void addRelayInfo(const RelayInfo& relay);
 
-    /// @brief Returns name of the DHCPv6 message.
-    ///
-    /// Returns the name of valid packet received by the server (e.g. SOLICIT).
-    /// If the packet is unknown - or if it is a valid DHCP packet but not one
-    /// expected to be received by the server (such as an ADVERTISE), the string
-    /// "UNKNOWN" is returned.  This method is used in debug messages.
+    /// @brief Returns name of the DHCPv6 message for a given type number.
     ///
     /// As the operation of the method does not depend on any server state, it
     /// is declared static. There is also non-static getName() method that
     /// works on Pkt6 objects.
     ///
-    /// @param type DHCPv6 packet type
+    /// @param type DHCPv6 message type which name should be returned.
     ///
-    /// @return Pointer to "const" string containing the packet name.
-    ///         Note that this string is statically allocated and MUST NOT
-    ///         be freed by the caller.
+    /// @return Pointer to "const" string containing the message name. If
+    /// the message type is unknnown the "UNKNOWN" is returned. The caller
+    /// must not release the returned pointer.
     static const char* getName(const uint8_t type);
 
-    /// @brief returns textual representation of packet type.
+    /// @brief Returns name of the DHCPv6 message.
     ///
     /// This method requires an object. There is also static version, which
     /// requires one parameter (type).
     ///
-    /// @return Pointer to "const" string containing packet name.
-    ///         Note that this string is statically allocated and MUST NOT
-    ///         be freed by the caller.
+    /// @return Pointer to "const" string containing the message name. If
+    /// the message type is unknnown the "UNKNOWN" is returned. The caller
+    /// must not release the returned pointer.
     const char* getName() const;
 
     /// @brief copies relay information from client's packet to server's response

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 
 #include <dhcp/dhcp6.h>
 #include <dhcp/option.h>
+#include <dhcp/option_int.h>
 #include <dhcp/option6_iaaddr.h>
 #include <util/buffer.h>
 
@@ -29,6 +30,7 @@
 
 using namespace std;
 using namespace isc;
+using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::util;
 
@@ -36,7 +38,7 @@ namespace {
 class Option6IAAddrTest : public ::testing::Test {
 public:
     Option6IAAddrTest() : buf_(255), outBuf_(255) {
-        for (int i = 0; i < 255; i++) {
+        for (unsigned i = 0; i < 255; i++) {
             buf_[i] = 255 - i;
         }
     }
@@ -119,6 +121,26 @@ TEST_F(Option6IAAddrTest, negative) {
     // This option is for IPv6 addresses only
     EXPECT_THROW(Option6IAAddr(D6O_IAADDR, isc::asiolink::IOAddress("192.0.2.1"),
                                1000, 2000), BadValue);
+}
+
+// Tests that option can be converted to textual format.
+TEST_F(Option6IAAddrTest, toText) {
+    // Create option without suboptions.
+    Option6IAAddr opt(D6O_IAADDR, IOAddress("2001:db8:1::1"), 300, 400);
+    EXPECT_EQ("type=00005(IAADDR), len=00024: address=2001:db8:1::1,"
+              " preferred-lft=300, valid-lft=400",
+              opt.toText());
+
+    // Add suboptions and make sure they are printed.
+    opt.addOption(OptionPtr(new OptionUint32(Option::V6, 123, 234)));
+    opt.addOption(OptionPtr(new OptionUint32(Option::V6, 222, 333)));
+
+    EXPECT_EQ("type=00005(IAADDR), len=00040: address=2001:db8:1::1,"
+              " preferred-lft=300, valid-lft=400,\noptions:\n"
+              "  type=00123, len=00004: 234 (uint32)\n"
+              "  type=00222, len=00004: 333 (uint32)",
+              opt.toText());
+
 }
 
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -48,7 +48,7 @@
 ///   class, NameChangeListener.
 ///
 ///    * senders - sends NCRs to a given target.  DHCP servers are senders.
-///   Senders are embodied by the class, NameChangeListener.
+///   Senders are embodied by the class, NameChangeSender.
 ///
 /// These two classes present a public interface for asynchronous
 /// communications that is independent of the IO layer mechanisms.  While the
@@ -393,7 +393,7 @@ public:
 /// It implements the high level logic flow to queue requests for delivery,
 /// and ship them one at a time, waiting for the send to complete prior to
 /// sending the next request in the queue.  If a send fails, the request
-/// will remain at the front of queue and will be the send will be retried
+/// will remain at the front of queue and the send will be retried
 /// endlessly unless the caller dequeues the request.  Note, it is presumed that
 /// a send failure is some form of IO error such as loss of connectivity and
 /// not a message content error.  It should not be possible to queue an invalid

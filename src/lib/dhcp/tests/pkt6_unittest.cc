@@ -129,9 +129,9 @@ public:
     /// length as an input. This constructor is normally used to parse
     /// received packets. It stores the packet in a data_ field and
     /// therefore unpack() can be called to parse it.
-    Pkt6Ptr packAndClone() {
-        Pkt6Ptr parent(new Pkt6(DHCPV6_SOLICIT, 0x020304));
-
+    ///
+    /// @param parent Packet from which the new packet should be created.
+    Pkt6Ptr packAndClone(Pkt6Ptr& parent) {
         OptionPtr opt1(new Option(Option::V6, 1));
         OptionPtr opt2(new Option(Option::V6, 2));
         OptionPtr opt3(new Option(Option::V6, 100));
@@ -141,16 +141,7 @@ public:
         parent->addOption(opt2);
         parent->addOption(opt3);
 
-        EXPECT_EQ(DHCPV6_SOLICIT, parent->getType());
-
-        // Calculated length should be 16
-        EXPECT_EQ(Pkt6::DHCPV6_PKT_HDR_LEN + 3 * Option::OPTION6_HDR_LEN,
-                  parent->len());
-
         EXPECT_NO_THROW(parent->pack());
-
-        EXPECT_EQ(Pkt6::DHCPV6_PKT_HDR_LEN + 3 * Option::OPTION6_HDR_LEN,
-                  parent->len());
 
         // Create second packet,based on assembled data from the first one
         Pkt6Ptr clone(new Pkt6(static_cast<const uint8_t*>
@@ -306,7 +297,8 @@ TEST_F(Pkt6Test, unpack_solicit1) {
 
 TEST_F(Pkt6Test, packUnpack) {
     // Create an on-wire representation of the test packet and clone it.
-    Pkt6Ptr clone = packAndClone();
+    Pkt6Ptr pkt(new Pkt6(DHCPV6_SOLICIT, 0x020304));
+    Pkt6Ptr clone = packAndClone(pkt);
 
     // Now recreate options list
     ASSERT_NO_THROW(clone->unpack());
@@ -383,7 +375,8 @@ TEST_F(Pkt6Test, unpackMalformed) {
 // the option parsing algorithm by installing a callback function.
 TEST_F(Pkt6Test, packUnpackWithCallback) {
     // Create an on-wire representation of the test packet and clone it.
-    Pkt6Ptr clone = packAndClone();
+    Pkt6Ptr pkt(new Pkt6(DHCPV6_SOLICIT, 0x020304));
+    Pkt6Ptr clone = packAndClone(pkt);
 
     // Install the custom callback function. We expect that this function
     // will be called to parse options in the packet instead of
@@ -512,10 +505,14 @@ TEST_F(Pkt6Test, Timestamp) {
 // packet type names.
 TEST_F(Pkt6Test, getName) {
     // Check all possible packet types
-    for (int itype = 0; itype < 256; ++itype) {
+    for (unsigned itype = 0; itype < 256; ++itype) {
         uint8_t type = itype;
 
         switch (type) {
+        case DHCPV6_ADVERTISE:
+            EXPECT_STREQ("ADVERTISE", Pkt6::getName(type));
+            break;
+
         case DHCPV6_CONFIRM:
             EXPECT_STREQ("CONFIRM", Pkt6::getName(type));
             break;
@@ -529,8 +526,28 @@ TEST_F(Pkt6Test, getName) {
                          Pkt6::getName(type));
             break;
 
+        case DHCPV6_LEASEQUERY:
+            EXPECT_STREQ("LEASEQUERY", Pkt6::getName(type));
+            break;
+
+        case DHCPV6_LEASEQUERY_REPLY:
+            EXPECT_STREQ("LEASEQUERY_REPLY", Pkt6::getName(type));
+            break;
+
         case DHCPV6_REBIND:
             EXPECT_STREQ("REBIND", Pkt6::getName(type));
+            break;
+
+        case DHCPV6_RECONFIGURE:
+            EXPECT_STREQ("RECONFIGURE", Pkt6::getName(type));
+            break;
+
+        case DHCPV6_RELAY_FORW:
+            EXPECT_STREQ("RELAY_FORWARD", Pkt6::getName(type));
+            break;
+
+        case DHCPV6_RELAY_REPL:
+            EXPECT_STREQ("RELAY_REPLY", Pkt6::getName(type));
             break;
 
         case DHCPV6_RELEASE:
@@ -539,6 +556,10 @@ TEST_F(Pkt6Test, getName) {
 
         case DHCPV6_RENEW:
             EXPECT_STREQ("RENEW", Pkt6::getName(type));
+            break;
+
+        case DHCPV6_REPLY:
+            EXPECT_STREQ("REPLY", Pkt6::getName(type));
             break;
 
         case DHCPV6_REQUEST:
@@ -1327,5 +1348,82 @@ TEST_F(Pkt6Test, rsoo) {
 
 }
 
+// Verify that the DUID can be extracted from the DHCPv6 packet
+// holding Client Identifier option.
+TEST_F(Pkt6Test, getClientId) {
+    // Create a packet.
+    Pkt6Ptr pkt(new Pkt6(DHCPV6_SOLICIT, 0x2312));
+    // Initially, the packet should hold no DUID.
+    EXPECT_FALSE(pkt->getClientId());
+
+    // Create DUID and add it to the packet.
+    const uint8_t duid_data[] = { 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 0 };
+    OptionBuffer duid_vec(duid_data, duid_data + sizeof(duid_data) - 1);
+    pkt->addOption(OptionPtr(new Option(Option::V6, D6O_CLIENTID,
+                                        duid_vec.begin(),
+                                        duid_vec.end())));
+
+    // Simulate the packet transmission over the wire, i.e. create on
+    // wire representation of the packet, and then parse it.
+    Pkt6Ptr pkt_clone = packAndClone(pkt);
+    ASSERT_NO_THROW(pkt_clone->unpack());
+
+    // This time the DUID should be returned.
+    DuidPtr duid = pkt_clone->getClientId();
+    ASSERT_TRUE(duid);
+
+    // And it should be equal to the one that we used to create
+    // the packet.
+    EXPECT_TRUE(duid->getDuid() == duid_vec);
+}
+
+// This test verfies that it is possible to obtain the packet
+// identifiers (DUID, HW Address, transaction id) in the textual
+// format.
+TEST_F(Pkt6Test, makeLabel) {
+    DuidPtr duid(new DUID(DUID::fromText("0102020202030303030303")));
+    HWAddrPtr hwaddr(new HWAddr(HWAddr::fromText("01:02:03:04:05:06",
+                                                 HTYPE_ETHER)));
+
+    // Specify DUID and no HW Address.
+    EXPECT_EQ("duid=[01:02:02:02:02:03:03:03:03:03:03], tid=0x123",
+              Pkt6::makeLabel(duid, 0x123, HWAddrPtr()));
+
+    // Specify HW Address and no DUID.
+    EXPECT_EQ("duid=[no info], [hwtype=1 01:02:03:04:05:06], tid=0x123",
+              Pkt6::makeLabel(DuidPtr(), 0x123, hwaddr));
+
+    // Specify both DUID and HW Address.
+    EXPECT_EQ("duid=[01:02:02:02:02:03:03:03:03:03:03], "
+              "[hwtype=1 01:02:03:04:05:06], tid=0x123",
+              Pkt6::makeLabel(duid, 0x123, hwaddr));
+
+    // Specify neither DUID nor HW Address.
+    EXPECT_EQ("duid=[no info], tid=0x0",
+              Pkt6::makeLabel(DuidPtr(), 0x0, HWAddrPtr()));
+}
+
+// This test verifies that it is possible to obtain the packet
+// identifiers in the textual format from the packet instance.
+TEST_F(Pkt6Test, getLabel) {
+    // Create a packet.
+    Pkt6Ptr pkt(new Pkt6(DHCPV6_SOLICIT, 0x2312));
+    EXPECT_EQ("duid=[no info], tid=0x2312",
+              pkt->getLabel());
+
+    DuidPtr duid(new DUID(DUID::fromText("0102020202030303030303")));
+    pkt->addOption(OptionPtr(new Option(Option::V6, D6O_CLIENTID,
+                                        duid->getDuid().begin(),
+                                        duid->getDuid().end())));
+
+    // Simulate the packet transmission over the wire, i.e. create on
+    // wire representation of the packet, and then parse it.
+    Pkt6Ptr pkt_clone = packAndClone(pkt);
+    ASSERT_NO_THROW(pkt_clone->unpack());
+
+    EXPECT_EQ("duid=[01:02:02:02:02:03:03:03:03:03:03], tid=0x2312",
+              pkt_clone->getLabel());
+
+}
 
 }

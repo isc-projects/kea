@@ -254,7 +254,7 @@ HooksLibrariesParser::build(ConstElementPtr value) {
 
         // Construct the list of libraries in error for the message.
         string error_list = error_libs[0];
-        for (int i = 1; i < error_libs.size(); ++i) {
+        for (size_t i = 1; i < error_libs.size(); ++i) {
             error_list += (string(", ") + error_libs[i]);
         }
         isc_throw(DhcpConfigError, "hooks libraries failed to validate - "
@@ -1033,7 +1033,8 @@ SubnetConfigParser::SubnetConfigParser(const std::string&,
     : uint32_values_(new Uint32Storage()),
       string_values_(new StringStorage()),
       boolean_values_(new BooleanStorage()),
-      pools_(new PoolStorage()), global_context_(global_context),
+      pools_(new PoolStorage()),
+      global_context_(global_context),
       relay_info_(new isc::dhcp::Subnet::RelayInfo(default_addr)),
       options_(new CfgOption()) {
     // The first parameter should always be "subnet", but we don't check

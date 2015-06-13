@@ -429,9 +429,12 @@ protected:
     /// their respective @c toText implementations.
     ///
     /// @param indent Number of spaces to insert before the text.
+    /// @param type_name Option type name. If empty, the option name
+    /// is omitted.
     ///
     /// @return Option header in the textual format.
-    std::string headerToText(const int indent = 0);
+    std::string headerToText(const int indent = 0,
+                             const std::string& type_name = "");
 
     /// @brief Returns collection of suboptions in the textual format.
     ///
