@@ -1,3 +1,8 @@
+953.	[bug]		fdupont
+	Corrected the setting of string characters to values above 127
+	in HMAC tests.
+	(Trac #3829, git xxx)
+
 952.	[bug]		fdupont
 	Made some loop indexes an unsigned type to avoid compiler warnings
 	where the termination condition is comparison with an unsigned
