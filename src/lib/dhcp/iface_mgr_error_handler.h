@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -40,12 +40,12 @@
 /// @param stream stream object holding an error string.
 #define IFACEMGR_ERROR(ex_type, handler, stream) \
 { \
-    std::ostringstream oss__; \
-    oss__ << stream; \
+    std::ostringstream ieoss__; \
+    ieoss__ << stream; \
     if (handler) { \
-        handler(oss__.str()); \
+        handler(ieoss__.str()); \
     } else { \
-        isc_throw(ex_type, oss__); \
+        isc_throw(ex_type, ieoss__.str()); \
     } \
 } \
 
