@@ -365,7 +365,7 @@ BaseNTransformer<BitsPerChunk, BaseZeroCode, Encoder, Decoder>::decode(
     // 0      7 (bits)
     // The following check rejects this type of invalid encoding.
     if (padbits > BitsPerChunk * (padchars + 1)) {
-        isc_throw(BadValue, "Invalid " << algorithm << "padding: " << input);
+        isc_throw(BadValue, "Invalid " << algorithm << " padding: " << input);
     }
 
     // convert the number of bits in bytes for convenience.
