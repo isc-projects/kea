@@ -28,32 +28,7 @@
  DHCPv6 server component does not support relayed traffic yet, as
  support for relay decapsulation is not implemented yet.
 
- @section dhcpv6Session Bundy message queue integration
-
-DHCPv6 server now has two configuration backends: JSON and Bundy. The
-following section applies only to the Bundy backend.
-
- DHCPv6 server component is now integrated with Bundy/BIND10 message queue.
- It follows the same principle as DHCPv4. See \ref dhcpv4Session for
- details.
-
  @section dhcpv6ConfigParser Configuration Parser in DHCPv6
-
- kea-dhcp6 compiled with Bundy backend uses Bundy cfgmgr for commands and
- configuration. During initial configuration (See \ref
- isc::dhcp::ControlledDhcpv6Srv::init() in bundy_controller.cc), the configuration handler
- callback is installed (see bundyConfigHandler().
- It is called every time there is a new configuration. In particular, it is
- called every time during daemon start process. It contains a
- isc::data::ConstElementPtr to a new configuration.  This simple handler calls
- \ref isc::dhcp::configureDhcp6Server() method that processes received configuration.
-
- This method iterates over list of received configuration elements and creates a
- list of parsers for each received entry. Parser is an object that is derived
- from a DhcpConfigParser class. Once a parser is created
- (constructor), its value is set (using build() method). Once all parsers are
- build, the configuration is then applied ("committed") and commit() method is
- called.
 
  \note With the implementation of the Kea ticket #3534 we're moving away from
  the concept of commit being called for individual parsers. When this ticket
@@ -232,23 +207,13 @@ limited.
 
  @section dhcpv6ConfigBackend Configuration backend for DHCPv6
 
-There are many theoretical ways in which server configuration can be stored. Kea 0.8 and
-earlier versions used Bundy/BIND10 framework and its internal storage for DHCPv6 server configuration.
+There are many theoretical ways in which server configuration can be stored.
 The legacy ISC-DHCP implementation uses flat files. Configuration stored in JSON files is
 becoming more and more popular among various projects. There are unofficial patches for
 ISC-DHCP that keep parts of the configuration in LDAP. It was also suggested that in some
 cases it would be convenient to keep configuration in XML files.
 
-Kea 0.9 has introduced configuration backends that are switchable during compilation phase.
-There is a new parameter for configure script: --with-kea-config. It currently supports
-two values: BUNDY and JSON.
-
-BUNDY (which is the default value as of April 2014) means that Kea6 is linked with the
-Bundy (former BIND10) configuration backend that connects to the Bundy/BIND10 framework and in general works
-exactly the same as Kea 0.8 and earlier versions. The benefits of that backend are uniform
-integration with Bundy/BIND10 framework, easy on-line reconfiguration using bindctl, available
-RESTful API. On the other hand, it requires the whole heavy Bundy framework that requires
-Python3 to be present. That framework is going away with the release of Kea 0.9.
+Kea 0.9 has introduced configuration backends that are switchable during compilation phase. Currently the only choice is JSON.
 
 JSON is a new configuration backend that causes Kea to read JSON configuration file from
 disk. It does not require any framework and thus is considered more lightweight. It will
@@ -256,11 +221,8 @@ allow dynamic on-line reconfiguration, but will lack remote capabilities (i.e. n
 API). This configuration backend is expected to be the default for upcoming Kea 0.9. It
 requires <tt> -c config-file </tt> command-line option.
 
-Internally, configuration backends are implemented as different implementations of the
-isc::dhcp::ControlledDhcpv6Srv class, stored in {kea,bundy}_controller.cc files. Depending on
-the choice made by ./configure script, only one of those files is compiled and linked.
-There are backend specific tests in src/bin/dhcp6/tests/{kea,bundy}_controller_unittest.cc.
-Only tests specific to selected backend are linked and executed during make distcheck.
+Internally, the configuration backend is implemented as am implementations of the
+isc::dhcp::ControlledDhcpv6Srv class, stored in kea_controller.cc files.
 
 While it is unlikely that ISC will support more than one backend at any given time, there
 are several aspects that make that approach appealing in the long term. First, having
