@@ -40,7 +40,7 @@ namespace {
 class Option6IATest : public ::testing::Test {
 public:
     Option6IATest(): buf_(255), outBuf_(255) {
-        for (int i = 0; i < 255; i++) {
+        for (unsigned i = 0; i < 255; i++) {
             buf_[i] = 255 - i;
         }
     }

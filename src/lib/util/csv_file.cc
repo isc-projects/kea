@@ -49,7 +49,7 @@ CSVRow::readAt(const size_t at) const {
 std::string
 CSVRow::render() const {
     std::ostringstream s;
-    for (int i = 0; i < values_.size(); ++i) {
+    for (size_t i = 0; i < values_.size(); ++i) {
         // Do not put separator before the first value.
         if (i > 0) {
             s << separator_;
@@ -203,9 +203,9 @@ CSVFile::size() const {
 
 int
 CSVFile::getColumnIndex(const std::string& col_name) const {
-    for (int i = 0; i < cols_.size(); ++i) {
+    for (size_t i = 0; i < cols_.size(); ++i) {
         if (cols_[i] == col_name) {
-            return (i);
+            return (static_cast<int>(i));
         }
     }
     return (-1);
@@ -347,7 +347,7 @@ CSVFile::recreate() {
     // Opened successfully. Write a header to it.
     try {
         CSVRow header(getColumnCount());
-        for (int i = 0; i < getColumnCount(); ++i) {
+        for (size_t i = 0; i < getColumnCount(); ++i) {
             header.writeAt(i, getColumnName(i));
         }
         *fs_ << header << std::endl;
@@ -383,7 +383,7 @@ CSVFile::validateHeader(const CSVRow& header) {
         return (false);
     }
 
-    for (int i = 0; i < getColumnCount(); ++i) {
+    for (size_t i = 0; i < getColumnCount(); ++i) {
         if (getColumnName(i) != header.readAt(i)) {
             return (false);
         }

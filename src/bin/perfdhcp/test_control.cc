@@ -393,7 +393,7 @@ TestControl::factoryIana6(Option::Universe, uint16_t,
         0, 0, 5400 >> 8, 5400 & 0xff,   // T2 = 5400
     };
     OptionBuffer buf_ia_na(buf_array, buf_array + sizeof(buf_array));
-    for (int i = 0;  i < buf.size(); ++i) {
+    for (size_t i = 0;  i < buf.size(); ++i) {
         buf_ia_na.push_back(buf[i]);
     }
     return (OptionPtr(new Option(Option::V6, D6O_IA_NA, buf_ia_na)));
@@ -1036,7 +1036,7 @@ TestControl::readPacketTemplate(const std::string& file_name) {
     // apart from spaces the file contains hexadecimal digits
     // only.
     std::vector<char> hex_digits;
-    for (int i = 0; i < file_contents.size(); ++i) {
+    for (size_t i = 0; i < file_contents.size(); ++i) {
         if (isxdigit(file_contents[i])) {
             hex_digits.push_back(file_contents[i]);
         } else if (!isxdigit(file_contents[i]) &&
@@ -1052,7 +1052,7 @@ TestControl::readPacketTemplate(const std::string& file_name) {
         isc_throw(OutOfRange, "template file " << file_name << " is empty");
     }
     std::vector<uint8_t> binary_stream;
-    for (int i = 0; i < hex_digits.size(); i += 2) {
+    for (size_t i = 0; i < hex_digits.size(); i += 2) {
         stringstream s;
         s << "0x" << hex_digits[i] << hex_digits[i+1];
         int b;

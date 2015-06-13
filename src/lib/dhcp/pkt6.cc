@@ -639,7 +639,7 @@ void Pkt6::copyRelayInfo(const Pkt6Ptr& question) {
 
     // We use index rather than iterator, because we need that as a parameter
     // passed to getRelayOption()
-    for (int i = 0; i < question->relay_info_.size(); ++i) {
+    for (size_t i = 0; i < question->relay_info_.size(); ++i) {
         RelayInfo info;
         info.msg_type_ = DHCPV6_RELAY_REPL;
         info.hop_count_ = question->relay_info_[i].hop_count_;
