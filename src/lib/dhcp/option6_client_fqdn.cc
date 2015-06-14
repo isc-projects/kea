@@ -250,7 +250,7 @@ Option6ClientFqdnImpl::parseWireData(OptionBufferConstIter first,
             try {
                 domain_name_.reset(new isc::dns::Name(name_buf, true));
             } catch (const Exception& ex) {
-                isc_throw(InvalidOption6FqdnDomainName, "failed to parse"
+                isc_throw(InvalidOption6FqdnDomainName, "failed to parse "
                           "partial domain-name from wire format");
             }
             // Terminating zero was missing, so set the domain-name type
@@ -265,7 +265,7 @@ Option6ClientFqdnImpl::parseWireData(OptionBufferConstIter first,
             try {
                 domain_name_.reset(new isc::dns::Name(name_buf, true));
             } catch (const Exception& ex) {
-                isc_throw(InvalidOption6FqdnDomainName, "failed to parse"
+                isc_throw(InvalidOption6FqdnDomainName, "failed to parse "
                           "fully qualified domain-name from wire format");
             }
             // Set the domain-type to fully qualified domain name.
