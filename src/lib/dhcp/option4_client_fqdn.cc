@@ -384,7 +384,7 @@ Option4ClientFqdn::setFlag(const uint8_t flag, const bool set_flag) {
     // multiple flags concurrently.
     if (((flag & ~FLAG_MASK) != 0) || (flag == 0)) {
         isc_throw(InvalidOption4FqdnFlags, "invalid DHCPv4 Client FQDN"
-                  << " Option flag " << std::hex
+                  << " Option flag 0x" << std::hex
                   << static_cast<int>(flag) << std::dec
                   << " is being set. Expected combination of E, N, S and O");
     }
