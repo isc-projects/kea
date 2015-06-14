@@ -477,7 +477,7 @@ TEST_F(OptionCustomTest, ipv6AddressData) {
     // Check that option is not created if the provided buffer is
     // too short (use 15 bytes instead of 16).
     EXPECT_THROW(
-        option.reset(new OptionCustom(opt_def, Option::V4, buf.begin(),
+        option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(),
                                       buf.begin() + 15)),
         isc::OutOfRange
     );
