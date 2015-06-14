@@ -39,8 +39,9 @@ Option6IAPrefix::Option6IAPrefix(uint16_t type, const isc::asiolink::IOAddress& 
     setEncapsulatedSpace("dhcp6");
     // Option6IAAddr will check if prefix is IPv6 and will throw if it is not
     if (prefix_len > 128) {
-        isc_throw(BadValue, prefix_len << " is not a valid prefix length. "
-                  << "Allowed range is 0..128");
+      isc_throw(BadValue, static_cast<unsigned>(prefix_len)
+                << " is not a valid prefix length. "
+                << "Allowed range is 0..128");
     }
 }
 
