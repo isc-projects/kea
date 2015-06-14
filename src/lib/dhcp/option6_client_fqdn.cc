@@ -332,9 +332,9 @@ Option6ClientFqdn::setFlag(const uint8_t flag, const bool set_flag) {
     // checked here so it will work.
     if (((flag & ~FLAG_MASK) != 0) || (flag == 0)) {
         isc_throw(InvalidOption6FqdnFlags, "invalid DHCPv6 Client FQDN"
-                  << " Option flag " << std::hex
+                  << " Option flag 0x" << std::hex
                   << static_cast<int>(flag) << std::dec
-                  << "is being set. Expected: N, S or O");
+                  << " is being set. Expected: N, S or O");
     }
 
     // Copy the current flags into local variable. That way we will be able
