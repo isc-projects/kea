@@ -386,7 +386,7 @@ Option4ClientFqdn::setFlag(const uint8_t flag, const bool set_flag) {
         isc_throw(InvalidOption4FqdnFlags, "invalid DHCPv4 Client FQDN"
                   << " Option flag " << std::hex
                   << static_cast<int>(flag) << std::dec
-                  << "is being set. Expected combination of E, N, S and O");
+                  << " is being set. Expected combination of E, N, S and O");
     }
 
     // Copy the current flags into local variable. That way we will be able
