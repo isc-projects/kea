@@ -454,12 +454,8 @@ DControllerBase::~DControllerBase() {
 // Refer to config_report so it will be embedded in the binary
 const char* const* d2_config_report = isc::detail::config_report;
 
-}; // namespace isc::d2
-
-}; // namespace isc
-
 std::string
-isc::dhcp::Daemon::getVersion(bool extended) {
+DControllerBase::getVersion(bool extended) {
     std::stringstream tmp;
 
     tmp << VERSION;
@@ -468,17 +464,21 @@ isc::dhcp::Daemon::getVersion(bool extended) {
         tmp << "linked with:" << std::endl;
         tmp << isc::log::Logger::getVersion() << std::endl;
         tmp << isc::cryptolink::CryptoLink::getVersion() << std::endl;
+        tmp << "database:" << std::endl; 
 #ifdef HAVE_MYSQL
-        tmp << "database: MySQL";
-#else
+        tmp << "MySQL backend" << std::endl;
+#endif
 #ifdef HAVE_PGSQL
-        tmp << "database: PostgreSQL";
-#else
-        tmp << "no database";
+        tmp << "PostgreSQL backend" << std::endl;
 #endif
-#endif
+        tmp << "Memfile backend";
+
         // @todo: more details about database runtime
     }
 
     return (tmp.str());
 }
+
+}; // namespace isc::d2
+
+}; // namespace isc

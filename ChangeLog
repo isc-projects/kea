@@ -6,6 +6,7 @@
 	"-W" provides the configure report from the configuration step
 	during the build of Kea.
 	(Trac #3513, git 584cf666e101c6cb5c9af76175ddd867ece85764)
+	(Trac #3859, git xxx)
 
 953.	[bug]		fdupont
 	Corrected the setting of string characters to values above 127
