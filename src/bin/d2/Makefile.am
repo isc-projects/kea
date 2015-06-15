@@ -91,6 +91,8 @@ kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
+kea_dhcp_ddns_LDADD += $(top_builddir)/src/bin/cfgrpt/libcfgrpt.la
 
 kea_dhcp_ddnsdir = $(pkgdatadir)
 kea_dhcp_ddns_DATA = dhcp-ddns.spec

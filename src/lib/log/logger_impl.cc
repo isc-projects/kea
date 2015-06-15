@@ -1,4 +1,4 @@
-// Copyright (C) 2011,2014-2015  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,10 +19,12 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <cstring>
+#include <sstream>
 #include <boost/lexical_cast.hpp>
 #include <boost/static_assert.hpp>
 #include <boost/algorithm/string.hpp>
 
+#include <log4cplus/version.h>
 #include <log4cplus/configurator.h>
 #include <log4cplus/loggingmacros.h>
 
@@ -82,6 +84,15 @@ LoggerImpl::LoggerImpl(const string& name) :
 
 LoggerImpl::~LoggerImpl() {
     delete sync_;
+}
+
+/// \brief Version
+std::string
+LoggerImpl::getVersion() {
+    std::ostringstream ver;
+    ver << "log4plus ";
+    ver << log4cplus::versionStr;
+    return (ver.str());
 }
 
 // Set the severity for logging.

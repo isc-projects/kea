@@ -91,7 +91,38 @@
               additional parameters and exits.
             </simpara>
           </listitem>
+          <listitem>
+            <simpara>
+              <command>-W</command> - prints out Kea configuration report
+              and exits.
+            </simpara>
+          </listitem>
       </itemizedlist>
+
+      <para>
+            The <command>-V</command> command returns the versions of the
+            external libraries dynamically linked.
+      </para>
+
+      <para>
+            The <command>-W</command> command describes the environment used
+            to build Kea.  This command displays a copy of the
+            <filename>config.report</filename> file produced by
+            <userinput>./configure</userinput> that is embedded in the
+            executable binary.
+      </para>
+
+      <para>
+            The <filename>config.report</filename> may also be accessed more
+            directly.  The following command may be used to extract this
+            information.  The binary <userinput>path</userinput> may be found
+            in the install directory or in the <filename>.libs</filename>
+            subdirectory in the source treee. For example
+            <filename>kea/src/bin/d2/.libs/kea-dhcp-ddns</filename>.
+<screen>
+strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
+</screen>
+      </para>
 
       <para>
       Upon start up the module will load its configuration and begin listening

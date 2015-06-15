@@ -19,6 +19,9 @@
 #include <exceptions/exceptions.h>
 #include <log/logger_support.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <cryptolink/cryptolink.h>
+#include <log/logger.h>
+#include <cfgrpt/config_report.h>
 
 #include <sstream>
 #include <unistd.h>
@@ -130,7 +133,7 @@ DControllerBase::parseArgs(int argc, char* argv[])
     int ch;
     opterr = 0;
     optind = 1;
-    std::string opts("dvVc:" + getCustomOpts());
+    std::string opts("dvVWc:" + getCustomOpts());
     while ((ch = getopt(argc, argv, opts.c_str())) != -1) {
         switch (ch) {
         case 'd':
@@ -150,6 +153,12 @@ DControllerBase::parseArgs(int argc, char* argv[])
             isc_throw(VersionMessage, getVersion(true));
             break;
             
+        case 'W':
+            // gather Kea config report and throw so main() can catch and
+            // return rather than calling exit() here which disrupts gtest.
+            isc_throw(VersionMessage, isc::detail::getConfigReport());
+            break;
+
         case 'c':
             // config file name
             if (optarg == NULL) {
@@ -426,12 +435,14 @@ DControllerBase::usage(const std::string & text)
     }
 
     std::cerr << "Usage: " << bin_name_ <<  std::endl
-              << "  -c <config file name> : mandatory,"
-              <<   " specifies name of configuration file " << std::endl
-              << "  -d: optional, verbose output " << std::endl
               << "  -v: print version number and exit" << std::endl
               << "  -V: print extended version information and exit"
-              << std::endl;
+              << std::endl
+              << "  -W: display the configuration report and exit"
+              << std::endl
+              << "  -d: optional, verbose output " << std::endl
+              << "  -c <config file name> : mandatory,"
+              <<   " specifies name of configuration file " << std::endl;
 
     // add any derivation specific usage
     std::cerr << getUsageText() << std::endl;
@@ -439,6 +450,9 @@ DControllerBase::usage(const std::string & text)
 
 DControllerBase::~DControllerBase() {
 }
+
+// Refer to config_report so it will be embedded in the binary
+const char* const* d2_config_report = isc::detail::config_report;
 
 }; // namespace isc::d2
 
@@ -450,11 +464,20 @@ isc::dhcp::Daemon::getVersion(bool extended) {
 
     tmp << VERSION;
     if (extended) {
-        tmp << std::endl << EXTENDED_VERSION;
-
-        // @todo print more details (is it Botan or OpenSSL build,
-        // with or without MySQL/Postgres? What compilation options were
-        // used? etc)
+        tmp << std::endl << EXTENDED_VERSION << std::endl;
+        tmp << "linked with:" << std::endl;
+        tmp << isc::log::Logger::getVersion() << std::endl;
+        tmp << isc::cryptolink::CryptoLink::getVersion() << std::endl;
+#ifdef HAVE_MYSQL
+        tmp << "database: MySQL";
+#else
+#ifdef HAVE_PGSQL
+        tmp << "database: PostgreSQL";
+#else
+        tmp << "no database";
+#endif
+#endif
+        // @todo: more details about database runtime
     }
 
     return (tmp.str());

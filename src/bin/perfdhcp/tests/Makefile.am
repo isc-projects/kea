@@ -47,6 +47,7 @@ run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 run_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
+run_unittests_LDADD += $(top_builddir)/src/bin/cfgrpt/libcfgrpt.la
 run_unittests_LDADD += $(GTEST_LDADD)
 endif
 

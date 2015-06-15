@@ -1,3 +1,12 @@
+954.	[func]		fdupont
+	Enhance the versioning information printed by the executables and
+	make it more consistent across all of the executables. "-v" is for
+	basic Kea version information, "-V" provides more detailed
+	versioning and versions for external dynamic libraries, finally
+	"-W" provides the configure report from the configuration step
+	during the build of Kea.
+	(Trac #3513, git xxx)
+
 953.	[bug]		fdupont
 	Corrected the setting of string characters to values above 127
 	in HMAC tests.
