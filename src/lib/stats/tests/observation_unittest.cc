@@ -42,7 +42,7 @@ public:
     /// @brief Constructor
     /// Initializes four observations.
     ObservationTest()
-        :a("alpha", static_cast<uint64_t>(1234)), // integer
+        :a("alpha", static_cast<int64_t>(1234)), // integer
          b("beta", 12.34), // float
          c("gamma", millisec::time_duration(1,2,3,4)), // duration
          d("delta", "1234") { // string
@@ -92,7 +92,7 @@ TEST_F(ObservationTest, constructor) {
 // given types.
 TEST_F(ObservationTest, setValue) {
 
-    EXPECT_NO_THROW(a.setValue(static_cast<uint64_t>(5678)));
+    EXPECT_NO_THROW(a.setValue(static_cast<int64_t>(5678)));
     EXPECT_NO_THROW(b.setValue(56e+78));
     EXPECT_NO_THROW(c.setValue(millisec::time_duration(5,6,7,8)));
     EXPECT_NO_THROW(d.setValue("fiveSixSevenEight"));
@@ -110,15 +110,15 @@ TEST_F(ObservationTest, setValue) {
     EXPECT_THROW(a.setValue(millisec::time_duration(5,6,7,8)), InvalidStatType);
     EXPECT_THROW(a.setValue("fiveSixSevenEight"), InvalidStatType);
 
-    EXPECT_THROW(b.setValue(static_cast<uint64_t>(5678)), InvalidStatType);
+    EXPECT_THROW(b.setValue(static_cast<int64_t>(5678)), InvalidStatType);
     EXPECT_THROW(b.setValue(millisec::time_duration(5,6,7,8)), InvalidStatType);
     EXPECT_THROW(b.setValue("fiveSixSevenEight"), InvalidStatType);
 
-    EXPECT_THROW(c.setValue(static_cast<uint64_t>(5678)), InvalidStatType);
+    EXPECT_THROW(c.setValue(static_cast<int64_t>(5678)), InvalidStatType);
     EXPECT_THROW(c.setValue(56e+78), InvalidStatType);
     EXPECT_THROW(c.setValue("fiveSixSevenEight"), InvalidStatType);
 
-    EXPECT_THROW(d.setValue(static_cast<uint64_t>(5678)), InvalidStatType);
+    EXPECT_THROW(d.setValue(static_cast<int64_t>(5678)), InvalidStatType);
     EXPECT_THROW(d.setValue(56e+78), InvalidStatType);
     EXPECT_THROW(d.setValue(millisec::time_duration(5,6,7,8)), InvalidStatType);
 }
@@ -130,7 +130,7 @@ TEST_F(ObservationTest, addValue) {
     // Note: all Observations were set to 1234,12.34 or similar in
     // ObservationTest constructor.
 
-    EXPECT_NO_THROW(a.addValue(static_cast<uint64_t>(5678)));
+    EXPECT_NO_THROW(a.addValue(static_cast<int64_t>(5678)));
     EXPECT_NO_THROW(b.addValue(56.78));
     EXPECT_NO_THROW(c.addValue(millisec::time_duration(5,6,7,8)));
     EXPECT_NO_THROW(d.addValue("fiveSixSevenEight"));
@@ -167,7 +167,7 @@ TEST_F(ObservationTest, timers) {
 // See http://kea.isc.org/wiki/StatsDesign for details.
 TEST_F(ObservationTest, integerToJSON) {
 
-    a.setValue(static_cast<uint64_t>(1234));
+    a.setValue(static_cast<int64_t>(1234));
 
     std::string exp = "[ [ 1234, \""
         + isc::util::ptimeToText(a.getInteger().second) + "\" ] ]";

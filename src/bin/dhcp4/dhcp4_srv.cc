@@ -56,6 +56,7 @@ using namespace isc::dhcp;
 using namespace isc::dhcp_ddns;
 using namespace isc::hooks;
 using namespace isc::log;
+using namespace isc::stats;
 using namespace std;
 
 /// Structure that holds registered hook indexes
@@ -1747,10 +1748,9 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
                     .arg(lease->addr_.toText());
 
                 // Need to decrease statistic for assigned addresses.
-                std::stringstream name;
-                name << "subnet[" << lease->subnet_id_ << "].assigned-addresses";
-                isc::stats::StatsMgr::instance().addValue(name.str(),
-                                                          static_cast<uint64_t>(-1));
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-addresses"),
+                    static_cast<int64_t>(-1));
 
                 if (CfgMgr::instance().ddnsEnabled()) {
                     // Remove existing DNS entries for the lease, if any.

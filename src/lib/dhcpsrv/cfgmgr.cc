@@ -228,7 +228,7 @@ CfgMgr::updateStatistics() {
         name << "subnet[" << (*subnet)->getID() << "].total-addresses";
 
         StatsMgr::instance().setValue(name.str(),
-                                      (*subnet)->getPoolCapacity(Lease::TYPE_V4));
+            static_cast<int64_t>((*subnet)->getPoolCapacity(Lease::TYPE_V4)));
     }
 }
 
