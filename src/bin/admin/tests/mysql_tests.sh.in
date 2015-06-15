@@ -299,9 +299,9 @@ mysql_lease4_dump_test() {
 
     # Insert the reference record
     insert_sql="\
-insert into lease4 values(10,20,30,40,0,50,1,1,\"one.example.com\");\
-insert into lease4 values(11,NULL,123,40,0,50,1,1,\"\");\
-insert into lease4 values(12,22,NULL,40,0,50,1,1,\"three.example.com\");"
+insert into lease4 values(10,20,30,40,\"2015-01-01 01:15:30\",50,1,1,\"one.example.com\");\
+insert into lease4 values(11,NULL,123,40,\"2015-02-02 02:30:45\",50,1,1,\"\");\
+insert into lease4 values(12,22,NULL,40,\"2015-03-03 11:01:07\",50,1,1,\"three.example.com\");"
 
     mysql_execute "$insert_sql"
     ERRCODE=$?
@@ -356,13 +356,13 @@ mysql_lease6_dump_test() {
 
     # Insert the reference record
     insert_sql="\
-insert into lease6 values(10,20,30,0,40,50,1,60,70,1,1,\"one.example.com\",80,90,100);\
-insert into lease6 values(11,NULL,30,0,40,50,1,60,70,1,1,\"\",80,90,100);\
-insert into lease6 values(12,21,30,0,40,50,1,60,70,1,1,\"three.example.com\",80,90,100);"
+insert into lease6 values(10,20,30,\"2015-04-04 01:15:30\",40,50,1,60,70,1,1,\"one.example.com\",80,90,100);\
+insert into lease6 values(11,NULL,30,\"2015-05-05 02:30:45\",40,50,1,60,70,1,1,\"\",80,90,100);\
+insert into lease6 values(12,21,30,\"2015-06-06 11:01:07\",40,50,1,60,70,1,1,\"three.example.com\",80,90,100);"
 
     mysql_execute "$insert_sql"
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "insert into lease6 failed, expected exit code %, actual %d"
+    assert_eq 0 $ERRCODE "insert into lease6 failed, expected exit code %d, actual %d"
 
     # Dump lease4 to output_file
     ${keaadmin} lease-dump mysql -6 -u $db_user -p $db_password -n $db_name -d $script_dir -o $output_file
@@ -372,7 +372,7 @@ insert into lease6 values(12,21,30,0,40,50,1,60,70,1,1,\"three.example.com\",80,
     # Compare the dump output to reference file, they should be identical
     cmp -s $output_file  $ref_file
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "dump file does not match reference file, expected exit code %, actual %d"
+    assert_eq 0 $ERRCODE "dump file does not match reference file, expected exit code %d, actual %d"
 
     # remove the output file
     rm $output_file

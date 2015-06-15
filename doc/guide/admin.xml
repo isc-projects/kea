@@ -366,12 +366,14 @@ $
 
             <listitem>
               <para>
-                Create the database tables using the new user's
-                credentials and the dhcpdb_create.pgsql script supplied
-                with Kea.  After entering the following command, you
-                will be prompted for the new user's password. When the
-                command completes you will be returned to the shell
-                prompt. You should see output similar to following:
+                At this point you are ready to create the database tables.
+                This can be done using the <command>kea-admin</command> tool
+                as explained in the next section (recommended), or manually.
+                To create the tables manually enter the following command.
+                Note that PostgreSQL will prompt you to enter the new user's
+                password you specified in Step 3. When the command completes
+                you will be returned to the shell prompt. You should see output
+                similar to following:
 <screen>
 $ <userinput>psql -d <replaceable>database-name</replaceable> -U <replaceable>user-name</replaceable> -f <replaceable>path-to-kea</replaceable>/share/kea/scripts/pgsql/dhcpdb_create.pgsql</userinput>
 Password for user <replaceable>user-name</replaceable>:
@@ -434,12 +436,28 @@ host    <replaceable>database-name</replaceable>    <replaceable>user-name</repl
 
       <section>
         <title>Initialize the PostgreSQL Database Using kea-admin</title>
-
         <para>
-          Support for PostgreSQL in <command>kea-admin</command> is
-          currently not implemented.
+          If you elected not to create the tables manually, you can do
+          so now by running the <command>kea-admin</command> tool:
+<screen>
+$ <userinput>kea-admin lease-init pgsql -u <replaceable>database-user</replaceable> -p <replaceable>database-password</replaceable> -n <replaceable>database-name</replaceable></userinput>
+</screen>
+          Do not do this if you already created the tables in manually.
+          <command>kea-admin</command> implements rudimentary checks:
+          it will refuse to initialize a database that contains any
+          existing tables. If you want to start from scratch, you
+          must remove all data manually. (This process is a manual
+          operation on purpose to avoid possibly irretrievable mistakes
+          by <command>kea-admin</command>.)
         </para>
-        <!-- @todo: document PgSQL upgrade once they are implemented in kea-admin -->
+      </section>
+      <section id="pgsql-upgrade">
+        <title>Upgrading a PostgreSQL Database from an Earlier Version of Kea</title>
+        <para>
+          Currently, PostgreSQL only supports Kea schema version 1.0 so no upgrades
+          are available.  As upgrades become available, <command>kea-admin</command>
+          will support them.
+        </para>
       </section>
     </section> <!-- end of PostgreSQL sections -->
     <section>
