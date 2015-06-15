@@ -47,11 +47,11 @@ mysql_version() {
 # pgsql_execute SQL_QUERY - This call is simpler, but requires db_user,
 #     db_password and db_name variables to be set.
 # pgsql_execute SQL_QUERY PARAM1 PARAM2 .. PARAMN - Additional parameters
-#     may be specified. They are passed directly to mysql. This one is
+#     may be specified. They are passed directly to pgsql. This one is
 #     more convenient to use if the script didn't parse db_user db_password
 #     and db_name.
 #
-# It returns the mysql command exit status to the caller as $?
+# It returns the pgsql command exit status to the caller as $?
 pgsql_execute() {
     QUERY=$1
     shift
@@ -71,11 +71,11 @@ pgsql_execute() {
 # pgsql_execute SQL_FILE - This call is simpler, but requires db_user,
 #     db_password and db_name variables to be set.
 # pgsql_execute SQL_FILE PARAM1 PARAM2 .. PARAMN - Additional parameters
-#     may be specified. They are passed directly to mysql. This one is
+#     may be specified. They are passed directly to pgsql. This one is
 #     more convenient to use if the script didn't parse db_user db_password
 #     and db_name.
 #
-# It returns the mysql command exit status to the caller as $?
+# It returns the pgsql command exit status to the caller as $?
 pgsql_execute_script() {
     file=$1
     shift

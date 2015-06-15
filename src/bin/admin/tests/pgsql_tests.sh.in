@@ -65,7 +65,7 @@ pgsql_lease_init_test() {
 
     # Check schema_version table
     RESULT=`pgsql_execute "SELECT version, minor FROM schema_version;"`
-    assert_eq 0 $? "schema_vesion table check failed, expected exit code: %d, actual: %d"
+    assert_eq 0 $? "schema_version table check failed, expected exit code: %d, actual: %d"
 
     # Check lease4 table
     RESULT=`pgsql_execute "SELECT address, hwaddr, client_id, valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname FROM lease4;"`
