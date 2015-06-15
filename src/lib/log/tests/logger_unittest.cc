@@ -48,6 +48,11 @@ public:
     }
 };
 
+// Check version
+
+TEST_F(LoggerTest, Version) {
+    EXPECT_NO_THROW(Logger::getVersion());
+}
 
 // Checks that the logger is named correctly.
 

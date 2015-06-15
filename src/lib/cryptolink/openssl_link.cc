@@ -1,4 +1,4 @@
-// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,8 @@
 #include <cryptolink/cryptolink.h>
 #include <cryptolink/crypto_hash.h>
 #include <cryptolink/crypto_hmac.h>
+
+#include <openssl/crypto.h>
 
 namespace isc {
 namespace cryptolink {
@@ -44,6 +46,11 @@ CryptoLink::initialize() {
                       "Error during OpenSSL initialization");
         }
     }
+}
+
+std::string
+CryptoLink::getVersion() {
+    return (SSLeay_version(SSLEAY_VERSION));
 }
 
 } // namespace cryptolink
