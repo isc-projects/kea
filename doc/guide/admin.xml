@@ -425,9 +425,12 @@ host    <replaceable>database-name</replaceable>    <replaceable>user-name</repl
               </para>
 
               <para>
-                Please consult your PostgreSQL user manual before making
-                these changes as they may expose your other databases
-                that you run on the same system.
+                These edits are primarily intended as a starting point
+                not a definitive reference on PostgreSQL administration or
+                database security.  Please consult your PostgreSQL user
+                manual before making these changes as they may expose
+                other databases that you run.  It may be necessary to
+                restart PostgreSQL in order for these changes to take effect.
               </para>
             </listitem>
           </orderedlist>
