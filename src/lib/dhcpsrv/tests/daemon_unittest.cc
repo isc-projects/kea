@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -27,13 +27,25 @@ using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::data;
 
-std::string isc::dhcp::Daemon::getVersion(bool extended) {
+namespace isc {
+namespace dhcp {
+
+// @brief Derived Daemon class
+class DaemonImpl : public Daemon {
+public:
+    static std::string getVersion(bool extended);
+};
+
+std::string DaemonImpl::getVersion(bool extended) {
     if (extended) {
         return (std::string("EXTENDED"));
     } else {
         return (std::string("BASIC"));
     }
 }
+
+};
+};
 
 namespace {
 
@@ -103,6 +115,19 @@ TEST_F(DaemonTest, parsingConsoleOutput) {
 
     ASSERT_EQ(1, storage->getLoggingInfo()[0].destinations_.size());
     EXPECT_EQ("stdout" , storage->getLoggingInfo()[0].destinations_[0].output_);
+}
+
+// Test the getVersion() redefinition
+TEST_F(DaemonTest, getVersion) {
+    EXPECT_THROW(Daemon::getVersion(false), NotImplemented);
+
+    ASSERT_NO_THROW(DaemonImpl::getVersion(false));
+
+    EXPECT_EQ(DaemonImpl::getVersion(false), "BASIC");
+
+    ASSERT_NO_THROW(DaemonImpl::getVersion(true));
+
+    EXPECT_EQ(DaemonImpl::getVersion(true), "EXTENDED");
 }
 
 
