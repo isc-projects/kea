@@ -2255,7 +2255,7 @@ Dhcpv4Srv::d2ClientErrorHandler(const
 const char* const* dhcp4_config_report = isc::detail::config_report;
 
 std::string
-Daemon::getVersion(bool extended) {
+Dhcpv4Srv::getVersion(bool extended) {
     std::stringstream tmp;
 
     tmp << VERSION;
