@@ -501,12 +501,16 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
         }
 
         // Unable to allocate an address, return an empty lease.
-        LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_ADDRESS6_ALLOC_FAIL).arg(attempts_);
+        LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V6_ALLOC_FAIL)
+            .arg(ctx.query_->getLabel())
+            .arg(attempts_);
 
     } catch (const isc::Exception& e) {
 
         // Some other error, return an empty lease.
-        LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_ADDRESS6_ALLOC_ERROR).arg(e.what());
+        LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_V6_ALLOC_ERROR)
+            .arg(ctx.query_->getLabel())
+            .arg(e.what());
     }
 
     return (Lease6Collection());
@@ -527,7 +531,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
     Lease6Collection leases;
 
-    IOAddress hint("::");
+    IOAddress hint = IOAddress::IPV6_ZERO_ADDRESS();
     if (!ctx.hints_.empty()) {
         /// @todo: We support only one hint for now
         hint = ctx.hints_[0].first;
@@ -571,7 +575,13 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                     collection.push_back(lease);
                     return (collection);
                 }
+            } else {
+                LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                          ALLOC_ENGINE_V6_HINT_RESERVED)
+                    .arg(ctx.query_->getLabel())
+                    .arg(hint.toText());
             }
+
         } else {
 
             // If the lease is expired, we may likely reuse it, but...
@@ -596,6 +606,12 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                     /// @todo: We support only one lease per ia for now
                     leases.push_back(lease);
                     return (leases);
+
+                } else {
+                    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                              ALLOC_ENGINE_V6_EXPIRED_HINT_RESERVED)
+                        .arg(ctx.query_->getLabel())
+                        .arg(hint.toText());
                 }
             }
         }
@@ -684,6 +700,9 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx, Lease6Collection& exis
 
     // If there are no reservations or the reservation is v4, there's nothing to do.
     if (!ctx.host_ || !ctx.host_->hasIPv6Reservation()) {
+        LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                  ALLOC_ENGINE_V6_ALLOC_NO_V6_HR)
+            .arg(ctx.query_->getLabel());
         return;
     }
 
@@ -692,12 +711,6 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx, Lease6Collection& exis
 
     // Get the IPv6 reservations of specified type.
     const IPv6ResrvRange& reservs = ctx.host_->getIPv6Reservations(type);
-
-    if (std::distance(reservs.first, reservs.second) == 0) {
-        // No reservations? We're done here.
-        return;
-    }
-
     for (IPv6ResrvIterator resv = reservs.first; resv != reservs.second; ++resv) {
         // We do have a reservation for addr.
         IOAddress addr = resv->second.getPrefix();
@@ -709,6 +722,11 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx, Lease6Collection& exis
 
             // Ok, we already have a lease for this reservation and it's usable
             if (((*l)->addr_ == addr) && (*l)->valid_lft_ != 0) {
+                LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                          ALLOC_ENGINE_V6_ALLOC_HR_LEASE_EXISTS)
+                    .arg(ctx.query_->getLabel())
+                    .arg((*l)->typeToText((*l)->type_))
+                    .arg((*l)->addr_.toText());
                 return;
             }
         }
@@ -723,10 +741,10 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx, Lease6Collection& exis
             existing_leases.push_back(lease);
 
             if (ctx.type_ == Lease::TYPE_NA) {
-                LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_HR_RESERVED_ADDR_GRANTED)
+                LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_HR_ADDR_GRANTED)
                     .arg(addr.toText()).arg(ctx.duid_->toText());
             } else {
-                LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_HR_RESERVED_PREFIX_GRANTED)
+                LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_HR_PREFIX_GRANTED)
                     .arg(addr.toText()).arg(static_cast<int>(prefix_len))
                     .arg(ctx.duid_->toText());
             }
@@ -776,11 +794,11 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
         // Ok, we have a problem. This host has a lease that is reserved
         // for someone else. We need to recover from this.
         if (ctx.type_ == Lease::TYPE_NA) {
-            LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_HR_REVOKED_ADDR6_LEASE)
+            LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_REVOKED_ADDR_LEASE)
                 .arg((*candidate)->addr_.toText()).arg(ctx.duid_->toText())
                 .arg(host->getIdentifierAsText());
         } else {
-            LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_HR_REVOKED_PREFIX6_LEASE)
+            LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_REVOKED_PREFIX_LEASE)
                 .arg((*candidate)->addr_.toText())
                 .arg(static_cast<int>((*candidate)->prefixlen_))
                 .arg(ctx.duid_->toText())
@@ -897,8 +915,10 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
     expired->fqdn_rev_ = ctx.rev_dns_update_;
     expired->prefixlen_ = prefix_len;
 
-    /// @todo: log here that the lease was reused (there's ticket #2524 for
-    /// logging in libdhcpsrv)
+    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE_DETAIL_DATA,
+              ALLOC_ENGINE_V6_REUSE_EXPIRED_LEASE_DATA)
+        .arg(ctx.query_->getLabel())
+        .arg(expired->toText());
 
     // Let's execute all callouts registered for lease6_select
     if (ctx.callout_handle_ &&
@@ -1364,12 +1384,16 @@ AllocEngine::allocateLease4(ClientContext4& ctx) {
         new_lease = ctx.fake_allocation_ ? discoverLease4(ctx) : requestLease4(ctx);
         if (!new_lease) {
             // Unable to allocate an address, return an empty lease.
-            LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_ADDRESS4_ALLOC_FAIL).arg(attempts_);
+            LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V4_ALLOC_FAIL)
+                .arg(ctx.query_->getLabel())
+                .arg(attempts_);
         }
 
     } catch (const isc::Exception& e) {
         // Some other error, return an empty lease.
-        LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_ADDRESS4_ALLOC_ERROR).arg(e.what());
+        LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_V4_ALLOC_ERROR)
+            .arg(ctx.query_->getLabel())
+            .arg(e.what());
     }
 
     return (new_lease);
@@ -1843,8 +1867,10 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
     updateLease4Information(expired, ctx);
     expired->fixed_ = false;
 
-    /// @todo: log here that the lease was reused (there's ticket #2524 for
-    /// logging in libdhcpsrv)
+    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE_DETAIL_DATA,
+              ALLOC_ENGINE_V4_REUSE_EXPIRED_LEASE_DATA)
+        .arg(ctx.query_->getLabel())
+        .arg(expired->toText());
 
     // Let's execute all callouts registered for lease4_select
     if (ctx.callout_handle_ &&  HooksManager::getHooksManager()
