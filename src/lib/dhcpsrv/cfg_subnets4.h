@@ -125,6 +125,23 @@ public:
                             const ClientClasses& client_classes
                             = ClientClasses()) const;
 
+    /// @brief Updates statistics.
+    ///
+    /// This method updates statistics that are affected by the newly committed
+    /// configuration. In particular, it updates the number of available addresses
+    /// in each subnet. Other statistics may be added in the future. In general,
+    /// these are statistics that are dependant only on configuration, so they are
+    /// not expected to change until the next reconfiguration event.
+    void updateStatistics();
+
+    /// @brief Removes statistics.
+    ///
+    /// During commitment of a new configuration, we need to get rid of the old
+    /// statistics for the old configuration. In particular, we need to remove
+    /// anything related to subnets, as there may be fewer subnets in the new
+    /// configuration and also subnet-ids may change.
+    void removeStatistics();
+
 private:
 
     /// @brief Checks that the IPv4 subnet with the given id already exists.
