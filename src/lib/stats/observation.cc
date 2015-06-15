@@ -26,7 +26,7 @@ using namespace boost::posix_time;
 namespace isc {
 namespace stats {
 
-Observation::Observation(const std::string& name, const uint64_t value)
+Observation::Observation(const std::string& name, const int64_t value)
     :name_(name), type_(STAT_INTEGER) {
     setValue(value);
 }
@@ -46,7 +46,7 @@ Observation::Observation(const std::string& name, const std::string& value)
     setValue(value);
 }
 
-void Observation::addValue(const uint64_t value) {
+void Observation::addValue(const int64_t value) {
     IntegerSample current = getInteger();
     setValue(current.first + value);
 }
@@ -66,7 +66,7 @@ void Observation::addValue(const std::string& value) {
     setValue(current.first + value);
 }
 
-void Observation::setValue(const uint64_t value) {
+void Observation::setValue(const int64_t value) {
     setValueInternal(value, integer_samples_, STAT_INTEGER);
 }
 
@@ -208,7 +208,7 @@ Observation::getJSON() const {
 void Observation::reset() {
     switch(type_) {
     case STAT_INTEGER: {
-        setValue(static_cast<uint64_t>(0));
+        setValue(static_cast<int64_t>(0));
         return;
     }
     case STAT_FLOAT: {

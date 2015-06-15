@@ -80,7 +80,7 @@ TEST_F(AllocEngine4Test, simpleAlloc4) {
     detailCompareLease(lease, from_mgr);
 }
 
-// This test checks if the fake allocation (for DISCOVER) can succeed
+// This test checks if the fake allocation (for DHCPDISCOVER) can succeed
 TEST_F(AllocEngine4Test, fakeAlloc4) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
@@ -422,7 +422,8 @@ TEST_F(AllocEngine4Test, outOfAddresses4) {
     EXPECT_FALSE(ctx.old_lease_);
 }
 
-// This test checks if an expired lease can be reused in DISCOVER (fake allocation)
+// This test checks if an expired lease can be reused in DHCPDISCOVER (fake
+// allocation)
 TEST_F(AllocEngine4Test, discoverReuseExpiredLease4) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
@@ -1519,7 +1520,7 @@ TEST_F(AllocEngine4Test, simpleAlloc4Stats) {
     // Let's pretend 100 addresses were allocated already
     stringstream name;
     name << "subnet[" << subnet_->getID() << "].assigned-addresses";
-    StatsMgr::instance().addValue(name.str(), static_cast<uint64_t>(100));
+    StatsMgr::instance().addValue(name.str(), static_cast<int64_t>(100));
 
     Lease4Ptr lease = engine->allocateLease4(ctx);
     // The new lease has been allocated, so the old lease should not exist.
@@ -1534,7 +1535,7 @@ TEST_F(AllocEngine4Test, simpleAlloc4Stats) {
     EXPECT_EQ(101, stat->getInteger().first);
 }
 
-// This test checks if the fake allocation (for DISCOVER) can succeed
+// This test checks if the fake allocation (for DHCPDISCOVER) can succeed
 // and that it doesn't increase allocated-addresses statistic.
 TEST_F(AllocEngine4Test, fakeAlloc4Stat) {
     boost::scoped_ptr<AllocEngine> engine;
@@ -1549,7 +1550,7 @@ TEST_F(AllocEngine4Test, fakeAlloc4Stat) {
     // Let's pretend 100 addresses were allocated already
     stringstream name;
     name << "subnet[" << subnet_->getID() << "].assigned-addresses";
-    StatsMgr::instance().addValue(name.str(), static_cast<uint64_t>(100));
+    StatsMgr::instance().addValue(name.str(), static_cast<int64_t>(100));
 
     Lease4Ptr lease = engine->allocateLease4(ctx);
 
@@ -1591,7 +1592,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseStat) {
     // Let's pretend 100 addresses were allocated already
     stringstream name;
     name << "subnet[" << subnet_->getID() << "].assigned-addresses";
-    StatsMgr::instance().addValue(name.str(), static_cast<uint64_t>(100));
+    StatsMgr::instance().addValue(name.str(), static_cast<int64_t>(100));
 
     // Request allocation of the reserved address.
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,

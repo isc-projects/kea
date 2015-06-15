@@ -34,6 +34,7 @@
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::hooks;
+using namespace isc::stats;
 
 namespace {
 
@@ -1549,10 +1550,9 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
         lease_mgr.deleteLease(client_lease->addr_);
 
         // Need to decrease statistic for assigned addresses.
-        std::stringstream name;
-        name << "subnet[" << ctx.subnet_->getID() << "].assigned-addresses";
-        isc::stats::StatsMgr::instance().addValue(name.str(),
-                                                  static_cast<uint64_t>(-1));
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", ctx.subnet_->getID(), "assigned-addresses"),
+            static_cast<int64_t>(-1));
     }
 
     // Return the allocated lease or NULL pointer if allocation was
@@ -1631,10 +1631,9 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr) {
         if (status) {
 
             // The lease insertion succeeded, let's bump up the statistic.
-            std::stringstream name;
-            name << "subnet[" << ctx.subnet_->getID() << "].assigned-addresses";
-            isc::stats::StatsMgr::instance().addValue(name.str(),
-                                                      static_cast<uint64_t>(1));
+            isc::stats::StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", ctx.subnet_->getID(), "assigned-addresses"),
+                static_cast<int64_t>(1));
 
             return (lease);
         } else {
