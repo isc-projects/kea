@@ -1,3 +1,10 @@
+955.	[func]		tmark
+	Added unit tests to kea-admin for testing the lease-dump command
+	with a PostgreSQL backend. Updated PostgreSQL database installation
+	instructions in Kea Administrator's guide to include use of kea-admin
+	tool.
+	(Trac #3884, git 0772b7df2a89e1019141be1d0ddec30d53c4b919)
+
 954.	[func]		fdupont
 	Enhance the versioning information printed by the executables and
 	make it more consistent across all of the executables. "-v" is for
