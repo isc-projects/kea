@@ -24,13 +24,13 @@
 #
 # It returns the mysql command exit status to the caller as $?
 mysql_execute() {
+    QUERY=$1
+    shift
     if [ $# -gt 1 ]; then
-        QUERY="$1"
-        shift
         mysql -N -B  $* -e "${QUERY}"
         retcode=$?
     else
-        mysql -N -B --user=$db_user --password=$db_password -e "${1}" $db_name
+        mysql -N -B --user=$db_user --password=$db_password -e "${QUERY}" $db_name
         retcode="$?"
     fi
 
@@ -89,7 +89,6 @@ pgsql_execute_script() {
     fi
     return $retcode
 }
-
 
 pgsql_version() {
     pgsql_execute "SELECT version || '.' || minor FROM schema_version" "$@"
